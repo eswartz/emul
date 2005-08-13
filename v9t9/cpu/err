@@ -1,0 +1,2835 @@
+execve("/usr/local/lib/jdk/bin/java", ["java", "-cp", ".:v9t9", "-classpath", ".:v9t9:/usr/share/java/bcel.jar", "org.apache.bcel.verifier.Verifier", "CodeBlock$CPU_ROM0000"], [/* 49 vars */]) = 0
+uname({sys="Linux", node="juncture", ...}) = 0
+brk(0)                                  = 0x8058000
+old_mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40017000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.preload", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/mmx/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/mmx", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/i686", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/mmx/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/mmx", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/i686/mmx/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/i686/mmx", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/i686/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/i686", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/mmx/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/mmx", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/libpthread.so.0", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/libpthread.so.0", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("mmx/libpthread.so.0", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("cmov/libpthread.so.0", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("libpthread.so.0", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/i686/mmx/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/i686/mmx", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/i686/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/i686", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/mmx/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/mmx", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/i686/mmx/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/i686/mmx", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/i686/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/i686", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/mmx/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/mmx", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/cmov", 0xbfffef78) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=124407, ...}) = 0
+old_mmap(NULL, 124407, PROT_READ, MAP_PRIVATE, 3, 0) = 0x40018000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libpthread.so.0", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\0G\0\000"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=82632, ...}) = 0
+old_mmap(NULL, 64932, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x40037000
+old_mmap(0x40044000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0xd000) = 0x40044000
+old_mmap(0x40045000, 7588, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x40045000
+close(3)                                = 0
+open("tls/i686/mmx/cmov/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/cmov/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/libdl.so.2", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("tls/mmx/cmov/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/libdl.so.2", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("tls/cmov/libdl.so.2", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("tls/libdl.so.2", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("i686/mmx/cmov/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/libdl.so.2", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("i686/cmov/libdl.so.2", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("i686/libdl.so.2", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("mmx/cmov/libdl.so.2", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("mmx/libdl.so.2", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("cmov/libdl.so.2", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("libdl.so.2", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libdl.so.2", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\260\32"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=9872, ...}) = 0
+old_mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40047000
+old_mmap(NULL, 8632, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x40048000
+old_mmap(0x4004a000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x2000) = 0x4004a000
+close(3)                                = 0
+open("tls/i686/mmx/cmov/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/cmov/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("tls/mmx/cmov/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/libc.so.6", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("tls/cmov/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("tls/libc.so.6", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("i686/mmx/cmov/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("i686/cmov/libc.so.6", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("i686/libc.so.6", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("mmx/cmov/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("mmx/libc.so.6", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("cmov/libc.so.6", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("libc.so.6", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libc.so.6", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\360Y\1"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=1253924, ...}) = 0
+old_mmap(NULL, 1260140, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x4004b000
+old_mmap(0x40174000, 32768, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x129000) = 0x40174000
+old_mmap(0x4017c000, 10860, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4017c000
+close(3)                                = 0
+set_thread_area({entry_number:-1 -> 6, base_addr:0x40047a20, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}) = 0
+munmap(0x40018000, 124407)              = 0
+set_tid_address(0x40047a68)             = 5060
+rt_sigaction(SIGRTMIN, {0x4003b660, [], SA_SIGINFO}, NULL, 8) = 0
+rt_sigprocmask(SIG_UNBLOCK, [RTMIN], NULL, 8) = 0
+getrlimit(RLIMIT_STACK, {rlim_cur=8192*1024, rlim_max=RLIM_INFINITY}) = 0
+brk(0)                                  = 0x8058000
+brk(0x8079000)                          = 0x8079000
+brk(0)                                  = 0x8079000
+readlink("/proc/self/exe", "/usr/local/lib/jdk1.5.0/bin/java", 4095) = 32
+access("/usr/local/lib/jdk1.5.0/lib/i386/libjava.so", F_OK) = -1 ENOENT (No such file or directory)
+access("/usr/local/lib/jdk1.5.0/jre/lib/i386/libjava.so", F_OK) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/jvm.cfg", O_RDONLY) = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=689, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40018000
+read(3, "#\n# @(#)jvm.cfg\t1.8 04/02/02\n# \n"..., 4096) = 689
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0x40018000, 4096)                = 0
+open("/etc/mtab", O_RDONLY)             = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=805, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40018000
+read(3, "/dev/hde2 / ext3 rw 0 0\nproc /pr"..., 4096) = 805
+close(3)                                = 0
+munmap(0x40018000, 4096)                = 0
+open("/proc/meminfo", O_RDONLY)         = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40018000
+read(3, "MemTotal:      1036392 kB\nMemFre"..., 1024) = 572
+close(3)                                = 0
+munmap(0x40018000, 4096)                = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libjvm.so", {st_mode=S_IFREG|0755, st_size=4269852, ...}) = 0
+getgid32()                              = 100
+getegid32()                             = 100
+getuid32()                              = 500
+geteuid32()                             = 500
+execve("/usr/local/lib/jdk1.5.0/bin/java", ["java", "-cp", ".:v9t9", "-classpath", ".:v9t9:/usr/share/java/bcel.jar", "org.apache.bcel.verifier.Verifie"..., "CodeBlock$CPU_ROM0000"], [/* 49 vars */]) = 0
+uname({sys="Linux", node="juncture", ...}) = 0
+brk(0)                                  = 0x8058000
+old_mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40017000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.preload", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/i686/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/i686/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/i686/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/i686", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/tls", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/i686/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/i686/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/i686/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/i686", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/i686/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/i686/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/i686/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/i686", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/tls", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/i686/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/i686/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/i686/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/i686", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/i686/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/i686/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/i686/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/i686", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/tls", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/i686/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/i686/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/i686/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/i686", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/../lib/i386/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/../lib/i386", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/i686", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/tls/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/tls", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/i686/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/i686/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/i686/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/i686", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/src/qt-2.3.2-nat/lib/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/qt-2.3.2-nat/lib", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/libpthread.so.0", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/libpthread.so.0", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("mmx/libpthread.so.0", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("cmov/libpthread.so.0", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("libpthread.so.0", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/i686/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/i686/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/i686/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/i686", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/tls/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/tls", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/i686/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/i686/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/i686/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/i686/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/i686/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/i686/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/i686/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/i686", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/mmx/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/mmx/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/mmx/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/mmx", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/cmov/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/cmov", 0xbfffeef8) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=124407, ...}) = 0
+old_mmap(NULL, 124407, PROT_READ, MAP_PRIVATE, 3, 0) = 0x40018000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libpthread.so.0", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\0G\0\000"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=82632, ...}) = 0
+old_mmap(NULL, 64932, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x40037000
+old_mmap(0x40044000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0xd000) = 0x40044000
+old_mmap(0x40045000, 7588, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x40045000
+close(3)                                = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/cmov/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/cmov/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/libdl.so.2", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("tls/mmx/cmov/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/libdl.so.2", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("tls/cmov/libdl.so.2", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("tls/libdl.so.2", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("i686/mmx/cmov/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/libdl.so.2", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("i686/cmov/libdl.so.2", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("i686/libdl.so.2", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("mmx/cmov/libdl.so.2", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("mmx/libdl.so.2", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("cmov/libdl.so.2", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("libdl.so.2", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libdl.so.2", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\260\32"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=9872, ...}) = 0
+old_mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40047000
+old_mmap(NULL, 8632, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x40048000
+old_mmap(0x4004a000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x2000) = 0x4004a000
+close(3)                                = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/cmov/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/cmov/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("tls/mmx/cmov/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/libc.so.6", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("tls/cmov/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("tls/libc.so.6", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("i686/mmx/cmov/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("i686/cmov/libc.so.6", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("i686/libc.so.6", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("mmx/cmov/libc.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("mmx/libc.so.6", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("cmov/libc.so.6", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("libc.so.6", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libc.so.6", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\360Y\1"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=1253924, ...}) = 0
+old_mmap(NULL, 1260140, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x4004b000
+old_mmap(0x40174000, 32768, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x129000) = 0x40174000
+old_mmap(0x4017c000, 10860, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4017c000
+close(3)                                = 0
+old_mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x4017f000
+set_thread_area({entry_number:-1 -> 6, base_addr:0x4017f080, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}) = 0
+munmap(0x40018000, 124407)              = 0
+set_tid_address(0x4017f0c8)             = 5060
+rt_sigaction(SIGRTMIN, {0x4003b660, [], SA_SIGINFO}, NULL, 8) = 0
+rt_sigprocmask(SIG_UNBLOCK, [RTMIN], NULL, 8) = 0
+getrlimit(RLIMIT_STACK, {rlim_cur=8192*1024, rlim_max=RLIM_INFINITY}) = 0
+brk(0)                                  = 0x8058000
+brk(0x8079000)                          = 0x8079000
+brk(0)                                  = 0x8079000
+readlink("/proc/self/exe", "/usr/local/lib/jdk1.5.0/bin/java", 4095) = 32
+access("/usr/local/lib/jdk1.5.0/lib/i386/libjava.so", F_OK) = -1 ENOENT (No such file or directory)
+access("/usr/local/lib/jdk1.5.0/jre/lib/i386/libjava.so", F_OK) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/jvm.cfg", O_RDONLY) = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=689, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40018000
+read(3, "#\n# @(#)jvm.cfg\t1.8 04/02/02\n# \n"..., 4096) = 689
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0x40018000, 4096)                = 0
+open("/etc/mtab", O_RDONLY)             = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=805, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40018000
+read(3, "/dev/hde2 / ext3 rw 0 0\nproc /pr"..., 4096) = 805
+close(3)                                = 0
+munmap(0x40018000, 4096)                = 0
+open("/proc/meminfo", O_RDONLY)         = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40018000
+read(3, "MemTotal:      1036392 kB\nMemFre"..., 1024) = 572
+close(3)                                = 0
+munmap(0x40018000, 4096)                = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libjvm.so", {st_mode=S_IFREG|0755, st_size=4269852, ...}) = 0
+getgid32()                              = 100
+getegid32()                             = 100
+getuid32()                              = 500
+geteuid32()                             = 500
+futex(0x4004a1b4, FUTEX_WAKE, 2147483647) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libjvm.so", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0000\222"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0755, st_size=4269852, ...}) = 0
+old_mmap(NULL, 7674588, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x40180000
+old_mmap(0x4049f000, 122880, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x31e000) = 0x4049f000
+old_mmap(0x404bd000, 4279004, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x404bd000
+close(3)                                = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/cmov/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/cmov/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/libm.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("tls/mmx/cmov/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/libm.so.6", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("tls/cmov/libm.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("tls/libm.so.6", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("i686/mmx/cmov/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/libm.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("i686/cmov/libm.so.6", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("i686/libm.so.6", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("mmx/cmov/libm.so.6", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("mmx/libm.so.6", O_RDONLY)         = -1 ENOENT (No such file or directory)
+open("cmov/libm.so.6", O_RDONLY)        = -1 ENOENT (No such file or directory)
+open("libm.so.6", O_RDONLY)             = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=124407, ...}) = 0
+old_mmap(NULL, 124407, PROT_READ, MAP_PRIVATE, 3, 0) = 0x408d2000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libm.so.6", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\00005\0\000"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=134144, ...}) = 0
+old_mmap(NULL, 136640, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x408f1000
+old_mmap(0x40912000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x20000) = 0x40912000
+close(3)                                = 0
+munmap(0x408d2000, 124407)              = 0
+getpid()                                = 5060
+open("/etc/mtab", O_RDONLY)             = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=805, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x408d2000
+read(3, "/dev/hde2 / ext3 rw 0 0\nproc /pr"..., 4096) = 805
+close(3)                                = 0
+munmap(0x408d2000, 4096)                = 0
+open("/proc/stat", O_RDONLY)            = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x408d2000
+read(3, "cpu  49007 38514 8626 817818 244"..., 1024) = 671
+read(3, "", 1024)                       = 0
+close(3)                                = 0
+munmap(0x408d2000, 4096)                = 0
+open("/etc/mtab", O_RDONLY)             = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=805, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x408d2000
+read(3, "/dev/hde2 / ext3 rw 0 0\nproc /pr"..., 4096) = 805
+close(3)                                = 0
+munmap(0x408d2000, 4096)                = 0
+open("/proc/meminfo", O_RDONLY)         = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x408d2000
+read(3, "MemTotal:      1036392 kB\nMemFre"..., 1024) = 572
+close(3)                                = 0
+munmap(0x408d2000, 4096)                = 0
+gettimeofday({1104539785, 784051}, NULL) = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/i386", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libjvm.so", {st_mode=S_IFREG|0755, st_size=4269852, ...}) = 0
+open(".hotspotrc", O_RDONLY)            = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/endorsed", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 784570}, NULL) = 0
+mmap2(NULL, 4096, PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x408d2000
+rt_sigaction(SIGSEGV, NULL, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGSEGV, {0x403d6340, ~[RTMIN], SA_RESTART|SA_SIGINFO}, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGPIPE, NULL, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGPIPE, {0x403d6340, ~[RTMIN], SA_RESTART|SA_SIGINFO}, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGBUS, NULL, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGBUS, {0x403d6340, ~[RTMIN], SA_RESTART|SA_SIGINFO}, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGILL, NULL, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGILL, {0x403d6340, ~[RTMIN], SA_RESTART|SA_SIGINFO}, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGFPE, NULL, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGFPE, {0x403d6340, ~[RTMIN], SA_RESTART|SA_SIGINFO}, {SIG_DFL}, 8) = 0
+getrlimit(RLIMIT_STACK, {rlim_cur=8192*1024, rlim_max=RLIM_INFINITY}) = 0
+open("/proc/self/maps", O_RDONLY)       = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x408d3000
+read(3, "08048000-08056000 r-xp 00000000 "..., 1024) = 1024
+read(3, "lib/jdk1.5.0/jre/lib/i386/client"..., 1024) = 515
+close(3)                                = 0
+munmap(0x408d3000, 4096)                = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigaction(SIGUSR2, {0x403d8410, [], SA_RESTART|SA_SIGINFO}, NULL, 8) = 0
+getrlimit(RLIMIT_NOFILE, {rlim_cur=1024, rlim_max=1024}) = 0
+setrlimit(RLIMIT_NOFILE, {rlim_cur=1024, rlim_max=1024}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/native_threads/libhpi.so", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0P\"\0\000"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0755, st_size=27896, ...}) = 0
+old_mmap(NULL, 27072, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x408d3000
+old_mmap(0x408d9000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x6000) = 0x408d9000
+close(3)                                = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libnsl.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/libnsl.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/cmov/libnsl.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/libnsl.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/cmov/libnsl.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/libnsl.so.1", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("tls/mmx/cmov/libnsl.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/libnsl.so.1", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("tls/cmov/libnsl.so.1", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("tls/libnsl.so.1", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("i686/mmx/cmov/libnsl.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/libnsl.so.1", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("i686/cmov/libnsl.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/libnsl.so.1", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("mmx/cmov/libnsl.so.1", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("mmx/libnsl.so.1", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("cmov/libnsl.so.1", O_RDONLY)      = -1 ENOENT (No such file or directory)
+open("libnsl.so.1", O_RDONLY)           = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libnsl.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=124407, ...}) = 0
+old_mmap(NULL, 124407, PROT_READ, MAP_PRIVATE, 3, 0) = 0x40913000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libnsl.so.1", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0 <\0\000"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=73304, ...}) = 0
+old_mmap(NULL, 80544, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x40932000
+old_mmap(0x40943000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x11000) = 0x40943000
+old_mmap(0x40944000, 6816, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x40944000
+close(3)                                = 0
+munmap(0x40913000, 124407)              = 0
+geteuid32()                             = 500
+socket(PF_FILE, SOCK_STREAM, 0)         = 3
+connect(3, {sa_family=AF_FILE, path="/var/run/.nscd_socket"}, 110) = -1 ENOENT (No such file or directory)
+close(3)                                = 0
+open("/etc/nsswitch.conf", O_RDONLY)    = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=465, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x40913000
+read(3, "# /etc/nsswitch.conf\n#\n# Example"..., 4096) = 465
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0x40913000, 4096)                = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/cmov/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/cmov/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/cmov/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/cmov/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/cmov/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/cmov/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("mmx/cmov/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("mmx/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("cmov/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("libnss_compat.so.2", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libnss_compat.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=124407, ...}) = 0
+old_mmap(NULL, 124407, PROT_READ, MAP_PRIVATE, 3, 0) = 0x40913000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libnss_compat.so.2", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0000\22\0"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=28616, ...}) = 0
+old_mmap(NULL, 31628, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x40946000
+old_mmap(0x4094d000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x6000) = 0x4094d000
+close(3)                                = 0
+munmap(0x40913000, 124407)              = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/cmov/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/cmov/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/cmov/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/cmov/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/libnss_nis.so.2", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("i686/mmx/cmov/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/cmov/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/libnss_nis.so.2", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("mmx/cmov/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("mmx/libnss_nis.so.2", O_RDONLY)   = -1 ENOENT (No such file or directory)
+open("cmov/libnss_nis.so.2", O_RDONLY)  = -1 ENOENT (No such file or directory)
+open("libnss_nis.so.2", O_RDONLY)       = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libnss_nis.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=124407, ...}) = 0
+old_mmap(NULL, 124407, PROT_READ, MAP_PRIVATE, 3, 0) = 0x40913000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libnss_nis.so.2", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\20\34\0"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=33504, ...}) = 0
+old_mmap(NULL, 36684, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x4094e000
+old_mmap(0x40956000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x7000) = 0x40956000
+close(3)                                = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/cmov/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/mmx/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/cmov/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/i686/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/cmov/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/mmx/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/cmov/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("tls/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/cmov/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/mmx/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/cmov/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("i686/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("mmx/cmov/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("mmx/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("cmov/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("libnss_files.so.2", O_RDONLY)     = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/libnss_files.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libnss_files.so.2", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\200\35"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=34748, ...}) = 0
+old_mmap(NULL, 38044, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x40957000
+old_mmap(0x40960000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x8000) = 0x40960000
+close(3)                                = 0
+munmap(0x40913000, 124407)              = 0
+open("/etc/passwd", O_RDONLY)           = 3
+fcntl64(3, F_GETFD)                     = 0
+fcntl64(3, F_SETFD, FD_CLOEXEC)         = 0
+_llseek(3, 0, [0], SEEK_CUR)            = 0
+fstat64(3, {st_mode=S_IFREG|0644, st_size=1766, ...}) = 0
+mmap2(NULL, 1766, PROT_READ, MAP_SHARED, 3, 0) = 0x40913000
+_llseek(3, 1766, [1766], SEEK_SET)      = 0
+munmap(0x40913000, 1766)                = 0
+close(3)                                = 0
+open("/tmp/hsperfdata_ejs", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY) = 3
+fstat64(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+fcntl64(3, F_SETFD, FD_CLOEXEC)         = 0
+lstat64("/tmp/hsperfdata_ejs", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+getdents64(3, /* 3 entries */, 4096)    = 72
+kill(3714, SIG_0)                       = 0
+getdents64(3, /* 0 entries */, 4096)    = 0
+close(3)                                = 0
+mkdir("/tmp/hsperfdata_ejs", 0755)      = -1 EEXIST (File exists)
+lstat64("/tmp/hsperfdata_ejs", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open("/tmp/hsperfdata_ejs/5060", O_RDWR|O_CREAT|O_TRUNC, 0600) = 3
+ftruncate(3, 32768)                     = 0
+mmap2(NULL, 32768, PROT_READ|PROT_WRITE, MAP_SHARED, 3, 0) = 0x40913000
+close(3)                                = 0
+gettid()                                = 5060
+rt_sigprocmask(SIG_SETMASK, ~[RTMIN], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigaction(SIGHUP, NULL, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGINT, NULL, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGTERM, NULL, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_UNBLOCK, [HUP INT QUIT USR2 TERM CHLD], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [QUIT], NULL, 8) = 0
+mmap2(0xbfe00000, 12288, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xbfe00000
+mprotect(0xbfe00000, 12288, PROT_NONE)  = 0
+gettimeofday({1104539785, 791062}, NULL) = 0
+gettimeofday({1104539785, 791096}, NULL) = 0
+gettimeofday({1104539785, 791126}, NULL) = 0
+gettimeofday({1104539785, 791160}, NULL) = 0
+gettimeofday({1104539785, 791191}, NULL) = 0
+gettimeofday({1104539785, 791222}, NULL) = 0
+gettimeofday({1104539785, 791252}, NULL) = 0
+gettimeofday({1104539785, 791283}, NULL) = 0
+gettimeofday({1104539785, 791314}, NULL) = 0
+gettimeofday({1104539785, 791344}, NULL) = 0
+gettimeofday({1104539785, 791374}, NULL) = 0
+gettimeofday({1104539785, 791407}, NULL) = 0
+gettimeofday({1104539785, 791438}, NULL) = 0
+gettimeofday({1104539785, 791468}, NULL) = 0
+gettimeofday({1104539785, 791511}, NULL) = 0
+gettimeofday({1104539785, 791542}, NULL) = 0
+gettimeofday({1104539785, 791572}, NULL) = 0
+gettimeofday({1104539785, 791603}, NULL) = 0
+gettimeofday({1104539785, 791632}, NULL) = 0
+gettimeofday({1104539785, 791663}, NULL) = 0
+gettimeofday({1104539785, 791748}, NULL) = 0
+gettimeofday({1104539785, 791781}, NULL) = 0
+gettimeofday({1104539785, 791811}, NULL) = 0
+gettimeofday({1104539785, 791842}, NULL) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/libverify.so", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\320 \0"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0755, st_size=48912, ...}) = 0
+old_mmap(NULL, 47428, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x4091b000
+old_mmap(0x40926000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0xb000) = 0x40926000
+close(3)                                = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/libjava.so", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\220\221"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0755, st_size=140760, ...}) = 0
+old_mmap(NULL, 139792, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x40961000
+old_mmap(0x40982000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x20000) = 0x40982000
+close(3)                                = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/libzip.so", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\260\34"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0755, st_size=83088, ...}) = 0
+old_mmap(NULL, 85504, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0x40984000
+old_mmap(0x40997000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x12000) = 0x40997000
+close(3)                                = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+_llseek(3, 0, [39542796], SEEK_END)     = 0
+mmap2(NULL, 39542796, PROT_READ, MAP_SHARED, 3, 0) = 0x40999000
+close(3)                                = 0
+mmap2(NULL, 425984, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x42f50000
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i18n.jar", 0xbfffcb9c) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/sunrsasign.jar", 0xbfffcb9c) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+_llseek(3, 0, [548670], SEEK_END)       = 0
+mmap2(NULL, 548670, PROT_READ, MAP_SHARED, 3, 0) = 0x42fb8000
+close(3)                                = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+_llseek(3, 0, [81615], SEEK_END)        = 0
+mmap2(NULL, 81615, PROT_READ, MAP_SHARED, 3, 0) = 0x4303e000
+close(3)                                = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+_llseek(3, 0, [8628003], SEEK_END)      = 0
+mmap2(NULL, 8628003, PROT_READ, MAP_SHARED, 3, 0) = 0x43052000
+close(3)                                = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/classes", 0xbfffcb9c) = -1 ENOENT (No such file or directory)
+mmap2(NULL, 33554432, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x4388d000
+mmap2(0x4388d000, 163840, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4388d000
+mmap2(NULL, 524288, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x4588d000
+mmap2(0x4588d000, 4096, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4588d000
+uname({sys="Linux", node="juncture", ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/i386/client/classes.jsa", O_RDONLY) = 3
+read(3, "\242\253\v\360\1\0\0\0\0\20\0\0\0\0\222m\0\0\200\0\0zW"..., 440) = 440
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+gettimeofday({1104539785, 803396}, NULL) = 0
+gettimeofday({1104539785, 803432}, NULL) = 0
+gettimeofday({1104539785, 803468}, NULL) = 0
+gettimeofday({1104539785, 803512}, NULL) = 0
+gettimeofday({1104539785, 803545}, NULL) = 0
+gettimeofday({1104539785, 803577}, NULL) = 0
+gettimeofday({1104539785, 803610}, NULL) = 0
+gettimeofday({1104539785, 803640}, NULL) = 0
+mmap2(NULL, 163577856, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x4590d000
+mmap2(NULL, 163577856, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x4f50d000
+mmap2(NULL, 163577856, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x5910d000
+mmap2(NULL, 163577856, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x62d0d000
+munmap(0x65920000, 117362688)           = 0
+mmap2(NULL, 163577856, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x65920000
+munmap(0x4590d000, 163577856)           = 0
+munmap(0x4f50d000, 163577856)           = 0
+munmap(0x5910d000, 163577856)           = 0
+munmap(0x62d0d000, 46215168)            = 0
+mmap2(NULL, 307200, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x4590d000
+mmap2(0x45957000, 4096, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x45957000
+mmap2(0x65920000, 655360, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x65920000
+gettimeofday({1104539785, 804041}, NULL) = 0
+gettimeofday({1104539785, 804080}, NULL) = 0
+gettimeofday({1104539785, 804117}, NULL) = 0
+gettimeofday({1104539785, 804153}, NULL) = 0
+gettimeofday({1104539785, 804190}, NULL) = 0
+gettimeofday({1104539785, 804227}, NULL) = 0
+gettimeofday({1104539785, 804264}, NULL) = 0
+gettimeofday({1104539785, 804301}, NULL) = 0
+gettimeofday({1104539785, 804338}, NULL) = 0
+gettimeofday({1104539785, 804375}, NULL) = 0
+gettimeofday({1104539785, 804411}, NULL) = 0
+gettimeofday({1104539785, 804448}, NULL) = 0
+gettimeofday({1104539785, 804485}, NULL) = 0
+gettimeofday({1104539785, 804531}, NULL) = 0
+gettimeofday({1104539785, 804567}, NULL) = 0
+gettimeofday({1104539785, 804604}, NULL) = 0
+gettimeofday({1104539785, 804641}, NULL) = 0
+gettimeofday({1104539785, 804678}, NULL) = 0
+gettimeofday({1104539785, 804714}, NULL) = 0
+gettimeofday({1104539785, 804751}, NULL) = 0
+gettimeofday({1104539785, 804789}, NULL) = 0
+gettimeofday({1104539785, 804826}, NULL) = 0
+gettimeofday({1104539785, 804863}, NULL) = 0
+gettimeofday({1104539785, 804899}, NULL) = 0
+gettimeofday({1104539785, 804936}, NULL) = 0
+gettimeofday({1104539785, 804973}, NULL) = 0
+gettimeofday({1104539785, 805009}, NULL) = 0
+gettimeofday({1104539785, 805046}, NULL) = 0
+gettimeofday({1104539785, 805087}, NULL) = 0
+gettimeofday({1104539785, 805124}, NULL) = 0
+gettimeofday({1104539785, 805168}, NULL) = 0
+gettimeofday({1104539785, 805205}, NULL) = 0
+gettimeofday({1104539785, 805240}, NULL) = 0
+mmap2(0x4590d000, 4096, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4590d000
+gettimeofday({1104539785, 805316}, NULL) = 0
+gettimeofday({1104539785, 805350}, NULL) = 0
+gettimeofday({1104539785, 805381}, NULL) = 0
+gettimeofday({1104539785, 805414}, NULL) = 0
+gettimeofday({1104539785, 805445}, NULL) = 0
+gettimeofday({1104539785, 805482}, NULL) = 0
+gettimeofday({1104539785, 805525}, NULL) = 0
+gettimeofday({1104539785, 805557}, NULL) = 0
+gettimeofday({1104539785, 805588}, NULL) = 0
+gettimeofday({1104539785, 805620}, NULL) = 0
+gettimeofday({1104539785, 805659}, NULL) = 0
+gettimeofday({1104539785, 805692}, NULL) = 0
+gettimeofday({1104539785, 805725}, NULL) = 0
+gettimeofday({1104539785, 805759}, NULL) = 0
+gettimeofday({1104539785, 805792}, NULL) = 0
+gettimeofday({1104539785, 805830}, NULL) = 0
+gettimeofday({1104539785, 805863}, NULL) = 0
+gettimeofday({1104539785, 805895}, NULL) = 0
+gettimeofday({1104539785, 805928}, NULL) = 0
+gettimeofday({1104539785, 805960}, NULL) = 0
+gettimeofday({1104539785, 805997}, NULL) = 0
+gettimeofday({1104539785, 806030}, NULL) = 0
+gettimeofday({1104539785, 806063}, NULL) = 0
+gettimeofday({1104539785, 806095}, NULL) = 0
+gettimeofday({1104539785, 806127}, NULL) = 0
+mmap2(0x65e00000, 1441792, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x65e00000
+mmap2(NULL, 122880, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x45958000
+mmap2(0x45958000, 4096, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x45958000
+mmap2(0x4590f000, 8192, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4590f000
+gettimeofday({1104539785, 806297}, NULL) = 0
+gettimeofday({1104539785, 806331}, NULL) = 0
+gettimeofday({1104539785, 806363}, NULL) = 0
+gettimeofday({1104539785, 806394}, NULL) = 0
+gettimeofday({1104539785, 806430}, NULL) = 0
+gettimeofday({1104539785, 806466}, NULL) = 0
+gettimeofday({1104539785, 806509}, NULL) = 0
+gettimeofday({1104539785, 806540}, NULL) = 0
+gettimeofday({1104539785, 806572}, NULL) = 0
+gettimeofday({1104539785, 806604}, NULL) = 0
+gettimeofday({1104539785, 806640}, NULL) = 0
+gettimeofday({1104539785, 806677}, NULL) = 0
+gettimeofday({1104539785, 806710}, NULL) = 0
+gettimeofday({1104539785, 806742}, NULL) = 0
+gettimeofday({1104539785, 806775}, NULL) = 0
+mmap2(0x69920000, 8388608, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x69920000
+mmap2(NULL, 135168, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x45976000
+mmap2(0x45976000, 20480, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x45976000
+mmap2(0x4592d000, 16384, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4592d000
+mmap2(NULL, 20480, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x45997000
+mmap2(0x45997000, 20480, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x45997000
+mmap2(NULL, 28672, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x4599c000
+mmap2(0x4599c000, 28672, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4599c000
+mmap2(0x4594d000, 40960, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4594d000
+munmap(0x6d920000, 5734400)             = 0
+mmap2(0x6d920000, 5734400, PROT_READ, MAP_SHARED|MAP_FIXED, 3, 0x1) = 0x6d920000
+munmap(0x6e120000, 5988352)             = 0
+mmap2(0x6e120000, 5988352, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x579) = 0x6e120000
+munmap(0x6ed20000, 847872)              = 0
+mmap2(0x6ed20000, 847872, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0xb2f) = 0x6ed20000
+munmap(0x6f120000, 16384)               = 0
+mmap2(0x6f120000, 16384, PROT_READ|PROT_EXEC, MAP_SHARED|MAP_FIXED, 3, 0xbfe) = 0x6f120000
+gettimeofday({1104539785, 807325}, NULL) = 0
+gettimeofday({1104539785, 807359}, NULL) = 0
+gettimeofday({1104539785, 807391}, NULL) = 0
+gettimeofday({1104539785, 807423}, NULL) = 0
+gettimeofday({1104539785, 807455}, NULL) = 0
+gettimeofday({1104539785, 807491}, NULL) = 0
+gettimeofday({1104539785, 807535}, NULL) = 0
+gettimeofday({1104539785, 807567}, NULL) = 0
+gettimeofday({1104539785, 807599}, NULL) = 0
+gettimeofday({1104539785, 807632}, NULL) = 0
+gettimeofday({1104539785, 807669}, NULL) = 0
+gettimeofday({1104539785, 807701}, NULL) = 0
+gettimeofday({1104539785, 807732}, NULL) = 0
+gettimeofday({1104539785, 807766}, NULL) = 0
+gettimeofday({1104539785, 807798}, NULL) = 0
+gettimeofday({1104539785, 807829}, NULL) = 0
+gettimeofday({1104539785, 807861}, NULL) = 0
+gettimeofday({1104539785, 807892}, NULL) = 0
+gettimeofday({1104539785, 807923}, NULL) = 0
+gettimeofday({1104539785, 807954}, NULL) = 0
+gettimeofday({1104539785, 807985}, NULL) = 0
+gettimeofday({1104539785, 808017}, NULL) = 0
+close(3)                                = 0
+mmap2(0x438b5000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x438b5000
+brk(0)                                  = 0x8079000
+brk(0x809b000)                          = 0x809b000
+gettimeofday({1104539785, 810630}, NULL) = 0
+mmap2(0x438bd000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x438bd000
+mmap2(0x438c5000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x438c5000
+mmap2(0x438cd000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x438cd000
+mmap2(0x4588e000, 4096, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4588e000
+mmap2(0x438d5000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x438d5000
+mmap2(0x438dd000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x438dd000
+mmap2(0x438e5000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x438e5000
+mmap2(0x438ed000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x438ed000
+mmap2(0x438f5000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x438f5000
+mmap2(0x438fd000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x438fd000
+open(".hotspot_compiler", O_RDONLY)     = -1 ENOENT (No such file or directory)
+mmap2(0x43905000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x43905000
+mmap2(NULL, 528384, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x459a3000
+mprotect(0x459a3000, 4096, PROT_NONE)   = 0
+clone(child_stack=0x45a23b48, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID|CLONE_DETACHED, parent_tidptr=0x45a23bf8, {entry_number:6, base_addr:0x45a23bb0, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}, child_tidptr=0x45a23bf8) = 5061
+futex(0x8096fb0, FUTEX_WAKE, 1)         = 1
+futex(0x8096fe8, FUTEX_WAIT, 0, NULL)   = 0
+futex(0x8096fd8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x8096fd8, FUTEX_WAKE, 1)         = 0
+futex(0x805b0c0, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x805b0c0, FUTEX_WAKE, 1)         = 0
+gettimeofday({1104539785, 812175}, NULL) = 0
+gettimeofday({1104539785, 812200}, NULL) = 0
+gettimeofday({1104539785, 812239}, NULL) = 0
+gettimeofday({1104539785, 812263}, NULL) = 0
+gettimeofday({1104539785, 812286}, NULL) = 0
+gettimeofday({1104539785, 812308}, NULL) = 0
+gettimeofday({1104539785, 812333}, NULL) = 0
+gettimeofday({1104539785, 812354}, NULL) = 0
+gettimeofday({1104539785, 812382}, NULL) = 0
+gettimeofday({1104539785, 812404}, NULL) = 0
+gettimeofday({1104539785, 812489}, NULL) = 0
+mmap2(0x4390d000, 32768, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4390d000
+mmap2(0x4588f000, 4096, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4588f000
+gettimeofday({1104539785, 812682}, NULL) = 0
+gettimeofday({1104539785, 812707}, NULL) = 0
+gettimeofday({1104539785, 812840}, NULL) = 0
+gettimeofday({1104539785, 812863}, NULL) = 0
+gettimeofday({1104539785, 812889}, NULL) = 0
+gettimeofday({1104539785, 812911}, NULL) = 0
+gettimeofday({1104539785, 812962}, NULL) = 0
+gettimeofday({1104539785, 812988}, NULL) = 0
+gettimeofday({1104539785, 813010}, NULL) = 0
+gettimeofday({1104539785, 813048}, NULL) = 0
+gettimeofday({1104539785, 813122}, NULL) = 0
+gettimeofday({1104539785, 813157}, NULL) = 0
+gettimeofday({1104539785, 813184}, NULL) = 0
+gettimeofday({1104539785, 813211}, NULL) = 0
+gettimeofday({1104539785, 813237}, NULL) = 0
+gettimeofday({1104539785, 813259}, NULL) = 0
+gettimeofday({1104539785, 813284}, NULL) = 0
+gettimeofday({1104539785, 813305}, NULL) = 0
+gettimeofday({1104539785, 813353}, NULL) = 0
+gettimeofday({1104539785, 813375}, NULL) = 0
+gettimeofday({1104539785, 813490}, NULL) = 0
+gettimeofday({1104539785, 813527}, NULL) = 0
+gettimeofday({1104539785, 813552}, NULL) = 0
+gettimeofday({1104539785, 813574}, NULL) = 0
+gettimeofday({1104539785, 813635}, NULL) = 0
+gettimeofday({1104539785, 813754}, NULL) = 0
+gettimeofday({1104539785, 813777}, NULL) = 0
+gettimeofday({1104539785, 813802}, NULL) = 0
+gettimeofday({1104539785, 813823}, NULL) = 0
+gettimeofday({1104539785, 813853}, NULL) = 0
+gettimeofday({1104539785, 813874}, NULL) = 0
+gettimeofday({1104539785, 813904}, NULL) = 0
+gettimeofday({1104539785, 813926}, NULL) = 0
+gettimeofday({1104539785, 814026}, NULL) = 0
+gettimeofday({1104539785, 814049}, NULL) = 0
+gettimeofday({1104539785, 814080}, NULL) = 0
+gettimeofday({1104539785, 814125}, NULL) = 0
+gettimeofday({1104539785, 814164}, NULL) = 0
+gettimeofday({1104539785, 814185}, NULL) = 0
+gettimeofday({1104539785, 814258}, NULL) = 0
+gettimeofday({1104539785, 814282}, NULL) = 0
+gettimeofday({1104539785, 814328}, NULL) = 0
+gettimeofday({1104539785, 814351}, NULL) = 0
+gettimeofday({1104539785, 814399}, NULL) = 0
+gettimeofday({1104539785, 814421}, NULL) = 0
+gettimeofday({1104539785, 814509}, NULL) = 0
+gettimeofday({1104539785, 814532}, NULL) = 0
+gettimeofday({1104539785, 814556}, NULL) = 0
+gettimeofday({1104539785, 814578}, NULL) = 0
+gettimeofday({1104539785, 814665}, NULL) = 0
+gettimeofday({1104539785, 814687}, NULL) = 0
+gettimeofday({1104539785, 814716}, NULL) = 0
+gettimeofday({1104539785, 814738}, NULL) = 0
+gettimeofday({1104539785, 814791}, NULL) = 0
+gettimeofday({1104539785, 814813}, NULL) = 0
+gettimeofday({1104539785, 814838}, NULL) = 0
+gettimeofday({1104539785, 814860}, NULL) = 0
+gettimeofday({1104539785, 814883}, NULL) = 0
+gettimeofday({1104539785, 814904}, NULL) = 0
+gettimeofday({1104539785, 814930}, NULL) = 0
+gettimeofday({1104539785, 814951}, NULL) = 0
+gettimeofday({1104539785, 815180}, NULL) = 0
+gettimeofday({1104539785, 815203}, NULL) = 0
+gettimeofday({1104539785, 815306}, NULL) = 0
+gettimeofday({1104539785, 815329}, NULL) = 0
+gettimeofday({1104539785, 815354}, NULL) = 0
+gettimeofday({1104539785, 815375}, NULL) = 0
+gettimeofday({1104539785, 815429}, NULL) = 0
+gettimeofday({1104539785, 815452}, NULL) = 0
+gettimeofday({1104539785, 815526}, NULL) = 0
+gettimeofday({1104539785, 815548}, NULL) = 0
+gettimeofday({1104539785, 815649}, NULL) = 0
+gettimeofday({1104539785, 815671}, NULL) = 0
+gettimeofday({1104539785, 815696}, NULL) = 0
+gettimeofday({1104539785, 815718}, NULL) = 0
+gettimeofday({1104539785, 815751}, NULL) = 0
+gettimeofday({1104539785, 815772}, NULL) = 0
+gettimeofday({1104539785, 815812}, NULL) = 0
+gettimeofday({1104539785, 815833}, NULL) = 0
+gettimeofday({1104539785, 815879}, NULL) = 0
+gettimeofday({1104539785, 815901}, NULL) = 0
+gettimeofday({1104539785, 815957}, NULL) = 0
+gettimeofday({1104539785, 815979}, NULL) = 0
+gettimeofday({1104539785, 816002}, NULL) = 0
+gettimeofday({1104539785, 816023}, NULL) = 0
+gettimeofday({1104539785, 816177}, NULL) = 0
+gettimeofday({1104539785, 816200}, NULL) = 0
+gettimeofday({1104539785, 816331}, NULL) = 0
+gettimeofday({1104539785, 816354}, NULL) = 0
+gettimeofday({1104539785, 816582}, NULL) = 0
+gettimeofday({1104539785, 816607}, NULL) = 0
+gettimeofday({1104539785, 816646}, NULL) = 0
+gettimeofday({1104539785, 816667}, NULL) = 0
+gettimeofday({1104539785, 816693}, NULL) = 0
+gettimeofday({1104539785, 816714}, NULL) = 0
+gettimeofday({1104539785, 816739}, NULL) = 0
+gettimeofday({1104539785, 816761}, NULL) = 0
+gettimeofday({1104539785, 816785}, NULL) = 0
+gettimeofday({1104539785, 816807}, NULL) = 0
+gettimeofday({1104539785, 816918}, NULL) = 0
+gettimeofday({1104539785, 817065}, NULL) = 0
+gettimeofday({1104539785, 817088}, NULL) = 0
+gettimeofday({1104539785, 817121}, NULL) = 0
+gettimeofday({1104539785, 817155}, NULL) = 0
+sched_setscheduler(5060, SCHED_OTHER, { 5 }) = -1 EINVAL (Invalid argument)
+gettimeofday({1104539785, 817292}, NULL) = 0
+gettimeofday({1104539785, 817314}, NULL) = 0
+gettimeofday({1104539785, 817349}, NULL) = 0
+gettimeofday({1104539785, 817371}, NULL) = 0
+gettimeofday({1104539785, 817397}, NULL) = 0
+gettimeofday({1104539785, 817418}, NULL) = 0
+gettimeofday({1104539785, 817475}, NULL) = 0
+gettimeofday({1104539785, 817525}, NULL) = 0
+gettimeofday({1104539785, 817548}, NULL) = 0
+gettimeofday({1104539785, 817612}, NULL) = 0
+gettimeofday({1104539785, 817636}, NULL) = 0
+gettimeofday({1104539785, 817669}, NULL) = 0
+gettimeofday({1104539785, 817695}, NULL) = 0
+gettimeofday({1104539785, 817716}, NULL) = 0
+gettimeofday({1104539785, 817746}, NULL) = 0
+gettimeofday({1104539785, 817768}, NULL) = 0
+gettimeofday({1104539785, 817792}, NULL) = 0
+gettimeofday({1104539785, 817813}, NULL) = 0
+gettimeofday({1104539785, 817844}, NULL) = 0
+gettimeofday({1104539785, 817889}, NULL) = 0
+gettimeofday({1104539785, 817911}, NULL) = 0
+gettimeofday({1104539785, 818015}, NULL) = 0
+gettimeofday({1104539785, 818038}, NULL) = 0
+mmap2(NULL, 528384, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x45a24000
+clone(child_stack=0x45aa4b48, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID|CLONE_DETACHED, parent_tidptr=0x45aa4bf8, {entry_number:6, base_addr:0x45aa4bb0, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}, child_tidptr=0x45aa4bf8) = 5062
+sched_setscheduler(5062, SCHED_OTHER, { 10 }) = -1 EINVAL (Invalid argument)
+futex(0x8099af8, FUTEX_WAKE, 1)         = 1
+gettimeofday({1104539785, 818372}, NULL) = 0
+gettimeofday({1104539785, 818396}, NULL) = 0
+gettimeofday({1104539785, 818418}, NULL) = 0
+gettimeofday({1104539785, 818441}, NULL) = 0
+gettimeofday({1104539785, 818635}, NULL) = 0
+gettimeofday({1104539785, 818663}, NULL) = 0
+brk(0)                                  = 0x809b000
+brk(0x80bc000)                          = 0x80bc000
+mmap2(NULL, 528384, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x45aa5000
+clone(child_stack=0x45b25b48, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID|CLONE_DETACHED, parent_tidptr=0x45b25bf8, {entry_number:6, base_addr:0x45b25bb0, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}, child_tidptr=0x45b25bf8) = 5063
+sched_setscheduler(5063, SCHED_OTHER, { 8 }) = -1 EINVAL (Invalid argument)
+futex(0x809ba18, FUTEX_WAKE, 1)         = 1
+gettimeofday({1104539785, 818938}, NULL) = 0
+gettimeofday({1104539785, 818974}, NULL) = 0
+gettimeofday({1104539785, 818997}, NULL) = 0
+gettimeofday({1104539785, 819027}, NULL) = 0
+gettimeofday({1104539785, 819049}, NULL) = 0
+gettimeofday({1104539785, 819107}, NULL) = 0
+gettimeofday({1104539785, 819129}, NULL) = 0
+gettimeofday({1104539785, 819175}, NULL) = 0
+gettimeofday({1104539785, 819197}, NULL) = 0
+gettimeofday({1104539785, 819220}, NULL) = 0
+gettimeofday({1104539785, 819266}, NULL) = 0
+gettimeofday({1104539785, 819288}, NULL) = 0
+gettimeofday({1104539785, 819313}, NULL) = 0
+gettimeofday({1104539785, 819334}, NULL) = 0
+gettimeofday({1104539785, 819401}, NULL) = 0
+gettimeofday({1104539785, 819424}, NULL) = 0
+gettimeofday({1104539785, 819450}, NULL) = 0
+gettimeofday({1104539785, 819471}, NULL) = 0
+gettimeofday({1104539785, 819597}, NULL) = 0
+gettimeofday({1104539785, 819625}, NULL) = 0
+gettimeofday({1104539785, 819659}, NULL) = 0
+uname({sys="Linux", node="juncture", ...}) = 0
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=3199424, ...}) = 0
+mmap2(NULL, 2097152, PROT_READ, MAP_PRIVATE, 3, 0) = 0x45b26000
+close(3)                                = 0
+getuid32()                              = 500
+open("/etc/passwd", O_RDONLY)           = 3
+fcntl64(3, F_GETFD)                     = 0
+fcntl64(3, F_SETFD, FD_CLOEXEC)         = 0
+_llseek(3, 0, [0], SEEK_CUR)            = 0
+fstat64(3, {st_mode=S_IFREG|0644, st_size=1766, ...}) = 0
+mmap2(NULL, 1766, PROT_READ, MAP_SHARED, 3, 0) = 0x45d26000
+_llseek(3, 1766, [1766], SEEK_SET)      = 0
+munmap(0x45d26000, 1766)                = 0
+close(3)                                = 0
+open("/usr/share/zoneinfo/America/Chicago", O_RDONLY) = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=1279, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x45d26000
+read(3, "TZif\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\5\0\0\0\5\0"..., 4096) = 1279
+close(3)                                = 0
+munmap(0x45d26000, 4096)                = 0
+getcwd("/usr/local/src/V9t9j/v9t9/cpu", 4095) = 30
+gettimeofday({1104539785, 820633}, NULL) = 0
+gettimeofday({1104539785, 820658}, NULL) = 0
+gettimeofday({1104539785, 820690}, NULL) = 0
+gettimeofday({1104539785, 820712}, NULL) = 0
+gettimeofday({1104539785, 820746}, NULL) = 0
+gettimeofday({1104539785, 820769}, NULL) = 0
+gettimeofday({1104539785, 821116}, NULL) = 0
+gettimeofday({1104539785, 821163}, NULL) = 0
+gettimeofday({1104539785, 821205}, NULL) = 0
+gettimeofday({1104539785, 821270}, NULL) = 0
+gettimeofday({1104539785, 821293}, NULL) = 0
+gettimeofday({1104539785, 821319}, NULL) = 0
+gettimeofday({1104539785, 821340}, NULL) = 0
+gettimeofday({1104539785, 821367}, NULL) = 0
+gettimeofday({1104539785, 821388}, NULL) = 0
+gettimeofday({1104539785, 821544}, NULL) = 0
+gettimeofday({1104539785, 821567}, NULL) = 0
+gettimeofday({1104539785, 821608}, NULL) = 0
+gettimeofday({1104539785, 821630}, NULL) = 0
+gettimeofday({1104539785, 821778}, NULL) = 0
+gettimeofday({1104539785, 821802}, NULL) = 0
+gettimeofday({1104539785, 821872}, NULL) = 0
+gettimeofday({1104539785, 821895}, NULL) = 0
+gettimeofday({1104539785, 821977}, NULL) = 0
+gettimeofday({1104539785, 822000}, NULL) = 0
+gettimeofday({1104539785, 822058}, NULL) = 0
+gettimeofday({1104539785, 822221}, NULL) = 0
+gettimeofday({1104539785, 822244}, NULL) = 0
+gettimeofday({1104539785, 822271}, NULL) = 0
+gettimeofday({1104539785, 822293}, NULL) = 0
+gettimeofday({1104539785, 822364}, NULL) = 0
+gettimeofday({1104539785, 822385}, NULL) = 0
+gettimeofday({1104539785, 822537}, NULL) = 0
+gettimeofday({1104539785, 822572}, NULL) = 0
+gettimeofday({1104539785, 822595}, NULL) = 0
+gettimeofday({1104539785, 822617}, NULL) = 0
+gettimeofday({1104539785, 822793}, NULL) = 0
+gettimeofday({1104539785, 822818}, NULL) = 0
+gettimeofday({1104539785, 822842}, NULL) = 0
+gettimeofday({1104539785, 822864}, NULL) = 0
+gettimeofday({1104539785, 822897}, NULL) = 0
+gettimeofday({1104539785, 822919}, NULL) = 0
+gettimeofday({1104539785, 822980}, NULL) = 0
+gettimeofday({1104539785, 823003}, NULL) = 0
+gettimeofday({1104539785, 823030}, NULL) = 0
+gettimeofday({1104539785, 823052}, NULL) = 0
+gettimeofday({1104539785, 823169}, NULL) = 0
+gettimeofday({1104539785, 823192}, NULL) = 0
+gettimeofday({1104539785, 823254}, NULL) = 0
+gettimeofday({1104539785, 823289}, NULL) = 0
+gettimeofday({1104539785, 823323}, NULL) = 0
+gettimeofday({1104539785, 823345}, NULL) = 0
+gettimeofday({1104539785, 823373}, NULL) = 0
+gettimeofday({1104539785, 823395}, NULL) = 0
+gettimeofday({1104539785, 823518}, NULL) = 0
+gettimeofday({1104539785, 823541}, NULL) = 0
+gettimeofday({1104539785, 823569}, NULL) = 0
+gettimeofday({1104539785, 823634}, NULL) = 0
+gettimeofday({1104539785, 823656}, NULL) = 0
+gettimeofday({1104539785, 823685}, NULL) = 0
+gettimeofday({1104539785, 823707}, NULL) = 0
+gettimeofday({1104539785, 823756}, NULL) = 0
+gettimeofday({1104539785, 823835}, NULL) = 0
+gettimeofday({1104539785, 823857}, NULL) = 0
+gettimeofday({1104539785, 823883}, NULL) = 0
+gettimeofday({1104539785, 823905}, NULL) = 0
+gettimeofday({1104539785, 823977}, NULL) = 0
+gettimeofday({1104539785, 823999}, NULL) = 0
+gettimeofday({1104539785, 824027}, NULL) = 0
+gettimeofday({1104539785, 824099}, NULL) = 0
+gettimeofday({1104539785, 824122}, NULL) = 0
+gettimeofday({1104539785, 824184}, NULL) = 0
+gettimeofday({1104539785, 824206}, NULL) = 0
+gettimeofday({1104539785, 824251}, NULL) = 0
+gettimeofday({1104539785, 824273}, NULL) = 0
+gettimeofday({1104539785, 824315}, NULL) = 0
+gettimeofday({1104539785, 824337}, NULL) = 0
+gettimeofday({1104539785, 824435}, NULL) = 0
+gettimeofday({1104539785, 824458}, NULL) = 0
+gettimeofday({1104539785, 824706}, NULL) = 0
+gettimeofday({1104539785, 824729}, NULL) = 0
+gettimeofday({1104539785, 824815}, NULL) = 0
+gettimeofday({1104539785, 824837}, NULL) = 0
+gettimeofday({1104539785, 824898}, NULL) = 0
+gettimeofday({1104539785, 824921}, NULL) = 0
+gettimeofday({1104539785, 824980}, NULL) = 0
+gettimeofday({1104539785, 825002}, NULL) = 0
+gettimeofday({1104539785, 825059}, NULL) = 0
+gettimeofday({1104539785, 825081}, NULL) = 0
+gettimeofday({1104539785, 825265}, NULL) = 0
+gettimeofday({1104539785, 825288}, NULL) = 0
+gettimeofday({1104539785, 825406}, NULL) = 0
+gettimeofday({1104539785, 825461}, NULL) = 0
+gettimeofday({1104539785, 825484}, NULL) = 0
+gettimeofday({1104539785, 825589}, NULL) = 0
+gettimeofday({1104539785, 825612}, NULL) = 0
+gettimeofday({1104539785, 825941}, NULL) = 0
+gettimeofday({1104539785, 825966}, NULL) = 0
+gettimeofday({1104539785, 826264}, NULL) = 0
+gettimeofday({1104539785, 826288}, NULL) = 0
+gettimeofday({1104539785, 826325}, NULL) = 0
+gettimeofday({1104539785, 826347}, NULL) = 0
+gettimeofday({1104539785, 826389}, NULL) = 0
+gettimeofday({1104539785, 826410}, NULL) = 0
+gettimeofday({1104539785, 826473}, NULL) = 0
+gettimeofday({1104539785, 826510}, NULL) = 0
+gettimeofday({1104539785, 826580}, NULL) = 0
+gettimeofday({1104539785, 826603}, NULL) = 0
+gettimeofday({1104539785, 826679}, NULL) = 0
+gettimeofday({1104539785, 826702}, NULL) = 0
+gettimeofday({1104539785, 826761}, NULL) = 0
+gettimeofday({1104539785, 826784}, NULL) = 0
+gettimeofday({1104539785, 826842}, NULL) = 0
+gettimeofday({1104539785, 827032}, NULL) = 0
+gettimeofday({1104539785, 827056}, NULL) = 0
+gettimeofday({1104539785, 827083}, NULL) = 0
+gettimeofday({1104539785, 827105}, NULL) = 0
+gettimeofday({1104539785, 827185}, NULL) = 0
+gettimeofday({1104539785, 827208}, NULL) = 0
+gettimeofday({1104539785, 827233}, NULL) = 0
+gettimeofday({1104539785, 827256}, NULL) = 0
+gettimeofday({1104539785, 827280}, NULL) = 0
+gettimeofday({1104539785, 827301}, NULL) = 0
+gettimeofday({1104539785, 827327}, NULL) = 0
+gettimeofday({1104539785, 827349}, NULL) = 0
+gettimeofday({1104539785, 827375}, NULL) = 0
+gettimeofday({1104539785, 827397}, NULL) = 0
+gettimeofday({1104539785, 827419}, NULL) = 0
+gettimeofday({1104539785, 827441}, NULL) = 0
+gettimeofday({1104539785, 827463}, NULL) = 0
+gettimeofday({1104539785, 827484}, NULL) = 0
+gettimeofday({1104539785, 827545}, NULL) = 0
+gettimeofday({1104539785, 827567}, NULL) = 0
+gettimeofday({1104539785, 827594}, NULL) = 0
+gettimeofday({1104539785, 827615}, NULL) = 0
+gettimeofday({1104539785, 827755}, NULL) = 0
+gettimeofday({1104539785, 827779}, NULL) = 0
+gettimeofday({1104539785, 827808}, NULL) = 0
+gettimeofday({1104539785, 827866}, NULL) = 0
+gettimeofday({1104539785, 827987}, NULL) = 0
+gettimeofday({1104539785, 828010}, NULL) = 0
+gettimeofday({1104539785, 828038}, NULL) = 0
+gettimeofday({1104539785, 828080}, NULL) = 0
+gettimeofday({1104539785, 828145}, NULL) = 0
+gettimeofday({1104539785, 828167}, NULL) = 0
+gettimeofday({1104539785, 828197}, NULL) = 0
+gettimeofday({1104539785, 828218}, NULL) = 0
+gettimeofday({1104539785, 828325}, NULL) = 0
+gettimeofday({1104539785, 828348}, NULL) = 0
+gettimeofday({1104539785, 828373}, NULL) = 0
+gettimeofday({1104539785, 828394}, NULL) = 0
+gettimeofday({1104539785, 828420}, NULL) = 0
+gettimeofday({1104539785, 828441}, NULL) = 0
+gettimeofday({1104539785, 828464}, NULL) = 0
+gettimeofday({1104539785, 828485}, NULL) = 0
+gettimeofday({1104539785, 828567}, NULL) = 0
+gettimeofday({1104539785, 828590}, NULL) = 0
+gettimeofday({1104539785, 828617}, NULL) = 0
+gettimeofday({1104539785, 828638}, NULL) = 0
+gettimeofday({1104539785, 828665}, NULL) = 0
+gettimeofday({1104539785, 828687}, NULL) = 0
+gettimeofday({1104539785, 828710}, NULL) = 0
+gettimeofday({1104539785, 828731}, NULL) = 0
+gettimeofday({1104539785, 828815}, NULL) = 0
+gettimeofday({1104539785, 828838}, NULL) = 0
+gettimeofday({1104539785, 828874}, NULL) = 0
+gettimeofday({1104539785, 828896}, NULL) = 0
+gettimeofday({1104539785, 828923}, NULL) = 0
+gettimeofday({1104539785, 828975}, NULL) = 0
+gettimeofday({1104539785, 828999}, NULL) = 0
+gettimeofday({1104539785, 829037}, NULL) = 0
+gettimeofday({1104539785, 829085}, NULL) = 0
+gettimeofday({1104539785, 829108}, NULL) = 0
+gettimeofday({1104539785, 829134}, NULL) = 0
+gettimeofday({1104539785, 829174}, NULL) = 0
+gettimeofday({1104539785, 829235}, NULL) = 0
+gettimeofday({1104539785, 829258}, NULL) = 0
+gettimeofday({1104539785, 829284}, NULL) = 0
+gettimeofday({1104539785, 829337}, NULL) = 0
+gettimeofday({1104539785, 829378}, NULL) = 0
+gettimeofday({1104539785, 829401}, NULL) = 0
+gettimeofday({1104539785, 829430}, NULL) = 0
+gettimeofday({1104539785, 829596}, NULL) = 0
+gettimeofday({1104539785, 829619}, NULL) = 0
+gettimeofday({1104539785, 829646}, NULL) = 0
+gettimeofday({1104539785, 829667}, NULL) = 0
+gettimeofday({1104539785, 829719}, NULL) = 0
+gettimeofday({1104539785, 829743}, NULL) = 0
+gettimeofday({1104539785, 829781}, NULL) = 0
+gettimeofday({1104539785, 829927}, NULL) = 0
+gettimeofday({1104539785, 829950}, NULL) = 0
+gettimeofday({1104539785, 829989}, NULL) = 0
+gettimeofday({1104539785, 830010}, NULL) = 0
+gettimeofday({1104539785, 830068}, NULL) = 0
+gettimeofday({1104539785, 830091}, NULL) = 0
+gettimeofday({1104539785, 830113}, NULL) = 0
+gettimeofday({1104539785, 830135}, NULL) = 0
+gettimeofday({1104539785, 830197}, NULL) = 0
+gettimeofday({1104539785, 830219}, NULL) = 0
+gettimeofday({1104539785, 830302}, NULL) = 0
+gettimeofday({1104539785, 830324}, NULL) = 0
+gettimeofday({1104539785, 830423}, NULL) = 0
+gettimeofday({1104539785, 830446}, NULL) = 0
+gettimeofday({1104539785, 830506}, NULL) = 0
+gettimeofday({1104539785, 830613}, NULL) = 0
+gettimeofday({1104539785, 830696}, NULL) = 0
+gettimeofday({1104539785, 830718}, NULL) = 0
+gettimeofday({1104539785, 830745}, NULL) = 0
+gettimeofday({1104539785, 830785}, NULL) = 0
+gettimeofday({1104539785, 830857}, NULL) = 0
+gettimeofday({1104539785, 830880}, NULL) = 0
+gettimeofday({1104539785, 830904}, NULL) = 0
+gettimeofday({1104539785, 830926}, NULL) = 0
+gettimeofday({1104539785, 830986}, NULL) = 0
+gettimeofday({1104539785, 831008}, NULL) = 0
+gettimeofday({1104539785, 831058}, NULL) = 0
+gettimeofday({1104539785, 831081}, NULL) = 0
+gettimeofday({1104539785, 831130}, NULL) = 0
+gettimeofday({1104539785, 831152}, NULL) = 0
+gettimeofday({1104539785, 832228}, NULL) = 0
+gettimeofday({1104539785, 832256}, NULL) = 0
+gettimeofday({1104539785, 832285}, NULL) = 0
+gettimeofday({1104539785, 832340}, NULL) = 0
+gettimeofday({1104539785, 832405}, NULL) = 0
+gettimeofday({1104539785, 832428}, NULL) = 0
+gettimeofday({1104539785, 832453}, NULL) = 0
+gettimeofday({1104539785, 832475}, NULL) = 0
+gettimeofday({1104539785, 832516}, NULL) = 0
+gettimeofday({1104539785, 832539}, NULL) = 0
+gettimeofday({1104539785, 832573}, NULL) = 0
+gettimeofday({1104539785, 832595}, NULL) = 0
+gettimeofday({1104539785, 832617}, NULL) = 0
+gettimeofday({1104539785, 832687}, NULL) = 0
+gettimeofday({1104539785, 832750}, NULL) = 0
+gettimeofday({1104539785, 832773}, NULL) = 0
+gettimeofday({1104539785, 832800}, NULL) = 0
+gettimeofday({1104539785, 832857}, NULL) = 0
+gettimeofday({1104539785, 832925}, NULL) = 0
+gettimeofday({1104539785, 832948}, NULL) = 0
+gettimeofday({1104539785, 832972}, NULL) = 0
+gettimeofday({1104539785, 832994}, NULL) = 0
+gettimeofday({1104539785, 833022}, NULL) = 0
+gettimeofday({1104539785, 833043}, NULL) = 0
+gettimeofday({1104539785, 833076}, NULL) = 0
+gettimeofday({1104539785, 833098}, NULL) = 0
+gettimeofday({1104539785, 833120}, NULL) = 0
+gettimeofday({1104539785, 833164}, NULL) = 0
+gettimeofday({1104539785, 833238}, NULL) = 0
+gettimeofday({1104539785, 833261}, NULL) = 0
+gettimeofday({1104539785, 833293}, NULL) = 0
+gettimeofday({1104539785, 833315}, NULL) = 0
+gettimeofday({1104539785, 833347}, NULL) = 0
+gettimeofday({1104539785, 833369}, NULL) = 0
+gettimeofday({1104539785, 833391}, NULL) = 0
+gettimeofday({1104539785, 833436}, NULL) = 0
+gettimeofday({1104539785, 833458}, NULL) = 0
+gettimeofday({1104539785, 833570}, NULL) = 0
+gettimeofday({1104539785, 833593}, NULL) = 0
+gettimeofday({1104539785, 833819}, NULL) = 0
+gettimeofday({1104539785, 833966}, NULL) = 0
+gettimeofday({1104539785, 833990}, NULL) = 0
+gettimeofday({1104539785, 834023}, NULL) = 0
+gettimeofday({1104539785, 834045}, NULL) = 0
+gettimeofday({1104539785, 834105}, NULL) = 0
+gettimeofday({1104539785, 834128}, NULL) = 0
+gettimeofday({1104539785, 834150}, NULL) = 0
+gettimeofday({1104539785, 834172}, NULL) = 0
+gettimeofday({1104539785, 834212}, NULL) = 0
+gettimeofday({1104539785, 834234}, NULL) = 0
+gettimeofday({1104539785, 834263}, NULL) = 0
+gettimeofday({1104539785, 834286}, NULL) = 0
+gettimeofday({1104539785, 834354}, NULL) = 0
+gettimeofday({1104539785, 834377}, NULL) = 0
+gettimeofday({1104539785, 834412}, NULL) = 0
+gettimeofday({1104539785, 834434}, NULL) = 0
+gettimeofday({1104539785, 834467}, NULL) = 0
+gettimeofday({1104539785, 834489}, NULL) = 0
+gettimeofday({1104539785, 834524}, NULL) = 0
+gettimeofday({1104539785, 834545}, NULL) = 0
+gettimeofday({1104539785, 834604}, NULL) = 0
+gettimeofday({1104539785, 834650}, NULL) = 0
+gettimeofday({1104539785, 834690}, NULL) = 0
+gettimeofday({1104539785, 834712}, NULL) = 0
+gettimeofday({1104539785, 834761}, NULL) = 0
+gettimeofday({1104539785, 834783}, NULL) = 0
+gettimeofday({1104539785, 834811}, NULL) = 0
+gettimeofday({1104539785, 834925}, NULL) = 0
+gettimeofday({1104539785, 834966}, NULL) = 0
+gettimeofday({1104539785, 834988}, NULL) = 0
+gettimeofday({1104539785, 835015}, NULL) = 0
+gettimeofday({1104539785, 835037}, NULL) = 0
+gettimeofday({1104539785, 835134}, NULL) = 0
+gettimeofday({1104539785, 835157}, NULL) = 0
+gettimeofday({1104539785, 835193}, NULL) = 0
+gettimeofday({1104539785, 835241}, NULL) = 0
+gettimeofday({1104539785, 835325}, NULL) = 0
+gettimeofday({1104539785, 835348}, NULL) = 0
+gettimeofday({1104539785, 835385}, NULL) = 0
+gettimeofday({1104539785, 835406}, NULL) = 0
+gettimeofday({1104539785, 835434}, NULL) = 0
+gettimeofday({1104539785, 835479}, NULL) = 0
+gettimeofday({1104539785, 835514}, NULL) = 0
+gettimeofday({1104539785, 835552}, NULL) = 0
+gettimeofday({1104539785, 835708}, NULL) = 0
+gettimeofday({1104539785, 835731}, NULL) = 0
+gettimeofday({1104539785, 835760}, NULL) = 0
+gettimeofday({1104539785, 835800}, NULL) = 0
+gettimeofday({1104539785, 835924}, NULL) = 0
+gettimeofday({1104539785, 835947}, NULL) = 0
+gettimeofday({1104539785, 835982}, NULL) = 0
+gettimeofday({1104539785, 836013}, NULL) = 0
+gettimeofday({1104539785, 836305}, NULL) = 0
+gettimeofday({1104539785, 836331}, NULL) = 0
+gettimeofday({1104539785, 836371}, NULL) = 0
+gettimeofday({1104539785, 836411}, NULL) = 0
+gettimeofday({1104539785, 836490}, NULL) = 0
+gettimeofday({1104539785, 836527}, NULL) = 0
+gettimeofday({1104539785, 836579}, NULL) = 0
+gettimeofday({1104539785, 836649}, NULL) = 0
+gettimeofday({1104539785, 836672}, NULL) = 0
+gettimeofday({1104539785, 836775}, NULL) = 0
+gettimeofday({1104539785, 836798}, NULL) = 0
+gettimeofday({1104539785, 836919}, NULL) = 0
+gettimeofday({1104539785, 836943}, NULL) = 0
+gettimeofday({1104539785, 837010}, NULL) = 0
+gettimeofday({1104539785, 837033}, NULL) = 0
+gettimeofday({1104539785, 837095}, NULL) = 0
+gettimeofday({1104539785, 837117}, NULL) = 0
+gettimeofday({1104539785, 837178}, NULL) = 0
+gettimeofday({1104539785, 837201}, NULL) = 0
+gettimeofday({1104539785, 837235}, NULL) = 0
+gettimeofday({1104539785, 837258}, NULL) = 0
+gettimeofday({1104539785, 837420}, NULL) = 0
+gettimeofday({1104539785, 838355}, NULL) = 0
+gettimeofday({1104539785, 838388}, NULL) = 0
+gettimeofday({1104539785, 838425}, NULL) = 0
+gettimeofday({1104539785, 838449}, NULL) = 0
+gettimeofday({1104539785, 838623}, NULL) = 0
+gettimeofday({1104539785, 838648}, NULL) = 0
+gettimeofday({1104539785, 838675}, NULL) = 0
+gettimeofday({1104539785, 838697}, NULL) = 0
+gettimeofday({1104539785, 838725}, NULL) = 0
+gettimeofday({1104539785, 838747}, NULL) = 0
+gettimeofday({1104539785, 838770}, NULL) = 0
+gettimeofday({1104539785, 838791}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/libzip.so", {st_mode=S_IFREG|0755, st_size=83088, ...}) = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/i386", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/libzip.so", {st_mode=S_IFREG|0755, st_size=83088, ...}) = 0
+gettimeofday({1104539785, 839621}, NULL) = 0
+gettimeofday({1104539785, 839646}, NULL) = 0
+gettimeofday({1104539785, 839677}, NULL) = 0
+gettimeofday({1104539785, 839699}, NULL) = 0
+gettimeofday({1104539785, 839731}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/libzip.so", {st_mode=S_IFREG|0755, st_size=83088, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/libzip.so", {st_mode=S_IFREG|0755, st_size=83088, ...}) = 0
+gettimeofday({1104539785, 840036}, NULL) = 0
+gettimeofday({1104539785, 840124}, NULL) = 0
+gettimeofday({1104539785, 840147}, NULL) = 0
+gettimeofday({1104539785, 840177}, NULL) = 0
+gettimeofday({1104539785, 840199}, NULL) = 0
+gettimeofday({1104539785, 840435}, NULL) = 0
+gettimeofday({1104539785, 840460}, NULL) = 0
+gettimeofday({1104539785, 840487}, NULL) = 0
+gettimeofday({1104539785, 840538}, NULL) = 0
+gettimeofday({1104539785, 840582}, NULL) = 0
+gettimeofday({1104539785, 840604}, NULL) = 0
+gettimeofday({1104539785, 840631}, NULL) = 0
+gettimeofday({1104539785, 840653}, NULL) = 0
+gettimeofday({1104539785, 840679}, NULL) = 0
+gettimeofday({1104539785, 840701}, NULL) = 0
+gettimeofday({1104539785, 840753}, NULL) = 0
+gettimeofday({1104539785, 840776}, NULL) = 0
+gettimeofday({1104539785, 840806}, NULL) = 0
+gettimeofday({1104539785, 840862}, NULL) = 0
+rt_sigaction(SIGHUP, NULL, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGHUP, {0x403d7fb0, ~[RTMIN], SA_RESTART|SA_SIGINFO}, {SIG_DFL}, 8) = 0
+gettimeofday({1104539785, 841053}, NULL) = 0
+gettimeofday({1104539785, 841081}, NULL) = 0
+gettimeofday({1104539785, 841103}, NULL) = 0
+gettimeofday({1104539785, 841147}, NULL) = 0
+rt_sigaction(SIGINT, NULL, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGINT, {0x403d7fb0, ~[RTMIN], SA_RESTART|SA_SIGINFO}, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGTERM, NULL, {SIG_DFL}, 8) = 0
+rt_sigaction(SIGTERM, {0x403d7fb0, ~[RTMIN], SA_RESTART|SA_SIGINFO}, {SIG_DFL}, 8) = 0
+gettimeofday({1104539785, 841410}, NULL) = 0
+gettimeofday({1104539785, 841434}, NULL) = 0
+gettimeofday({1104539785, 841460}, NULL) = 0
+gettimeofday({1104539785, 841481}, NULL) = 0
+gettimeofday({1104539785, 841521}, NULL) = 0
+gettimeofday({1104539785, 841544}, NULL) = 0
+gettimeofday({1104539785, 841585}, NULL) = 0
+gettimeofday({1104539785, 841608}, NULL) = 0
+gettimeofday({1104539785, 841633}, NULL) = 0
+gettimeofday({1104539785, 841679}, NULL) = 0
+gettimeofday({1104539785, 841712}, NULL) = 0
+gettimeofday({1104539785, 841734}, NULL) = 0
+gettimeofday({1104539785, 841760}, NULL) = 0
+gettimeofday({1104539785, 841782}, NULL) = 0
+gettimeofday({1104539785, 841807}, NULL) = 0
+gettimeofday({1104539785, 841828}, NULL) = 0
+gettimeofday({1104539785, 841851}, NULL) = 0
+gettimeofday({1104539785, 841872}, NULL) = 0
+gettimeofday({1104539785, 841903}, NULL) = 0
+gettimeofday({1104539785, 841925}, NULL) = 0
+gettimeofday({1104539785, 841951}, NULL) = 0
+gettimeofday({1104539785, 841973}, NULL) = 0
+gettimeofday({1104539785, 841998}, NULL) = 0
+gettimeofday({1104539785, 842020}, NULL) = 0
+gettimeofday({1104539785, 842045}, NULL) = 0
+gettimeofday({1104539785, 842066}, NULL) = 0
+gettimeofday({1104539785, 842088}, NULL) = 0
+gettimeofday({1104539785, 842110}, NULL) = 0
+gettimeofday({1104539785, 842132}, NULL) = 0
+gettimeofday({1104539785, 842154}, NULL) = 0
+gettimeofday({1104539785, 842177}, NULL) = 0
+gettimeofday({1104539785, 842199}, NULL) = 0
+gettimeofday({1104539785, 842223}, NULL) = 0
+gettimeofday({1104539785, 842245}, NULL) = 0
+gettimeofday({1104539785, 842269}, NULL) = 0
+gettimeofday({1104539785, 842290}, NULL) = 0
+gettimeofday({1104539785, 842315}, NULL) = 0
+gettimeofday({1104539785, 842337}, NULL) = 0
+gettimeofday({1104539785, 842366}, NULL) = 0
+gettimeofday({1104539785, 842388}, NULL) = 0
+gettimeofday({1104539785, 842412}, NULL) = 0
+gettimeofday({1104539785, 842434}, NULL) = 0
+gettimeofday({1104539785, 842458}, NULL) = 0
+gettimeofday({1104539785, 842480}, NULL) = 0
+gettimeofday({1104539785, 842515}, NULL) = 0
+gettimeofday({1104539785, 842536}, NULL) = 0
+gettimeofday({1104539785, 842569}, NULL) = 0
+gettimeofday({1104539785, 842591}, NULL) = 0
+gettimeofday({1104539785, 842618}, NULL) = 0
+gettimeofday({1104539785, 842680}, NULL) = 0
+gettimeofday({1104539785, 842703}, NULL) = 0
+gettimeofday({1104539785, 842804}, NULL) = 0
+gettimeofday({1104539785, 842883}, NULL) = 0
+gettimeofday({1104539785, 842905}, NULL) = 0
+gettimeofday({1104539785, 842956}, NULL) = 0
+gettimeofday({1104539785, 842978}, NULL) = 0
+gettimeofday({1104539785, 843006}, NULL) = 0
+gettimeofday({1104539785, 843052}, NULL) = 0
+gettimeofday({1104539785, 843074}, NULL) = 0
+gettimeofday({1104539785, 843123}, NULL) = 0
+gettimeofday({1104539785, 843145}, NULL) = 0
+gettimeofday({1104539785, 843234}, NULL) = 0
+gettimeofday({1104539785, 843257}, NULL) = 0
+gettimeofday({1104539785, 843294}, NULL) = 0
+gettimeofday({1104539785, 843316}, NULL) = 0
+gettimeofday({1104539785, 843352}, NULL) = 0
+gettimeofday({1104539785, 843374}, NULL) = 0
+gettimeofday({1104539785, 843420}, NULL) = 0
+gettimeofday({1104539785, 843442}, NULL) = 0
+gettimeofday({1104539785, 843566}, NULL) = 0
+gettimeofday({1104539785, 843590}, NULL) = 0
+gettimeofday({1104539785, 843761}, NULL) = 0
+gettimeofday({1104539785, 843785}, NULL) = 0
+gettimeofday({1104539785, 843809}, NULL) = 0
+gettimeofday({1104539785, 843831}, NULL) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/ext", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY) = 3
+fstat64(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+fcntl64(3, F_SETFD, FD_CLOEXEC)         = 0
+getdents64(3, /* 6 entries */, 4096)    = 200
+getdents64(3, /* 0 entries */, 4096)    = 0
+close(3)                                = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/ext", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunjce_provider.jar", {st_mode=S_IFREG|0444, st_size=153036, ...}) = 0
+gettimeofday({1104539785, 844833}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunjce_provider.jar", {st_mode=S_IFREG|0444, st_size=153036, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunjce_provider.jar", {st_mode=S_IFREG|0444, st_size=153036, ...}) = 0
+gettimeofday({1104539785, 845048}, NULL) = 0
+gettimeofday({1104539785, 845120}, NULL) = 0
+gettimeofday({1104539785, 845144}, NULL) = 0
+gettimeofday({1104539785, 845211}, NULL) = 0
+gettimeofday({1104539785, 845234}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunjce_provider.jar", {st_mode=S_IFREG|0444, st_size=153036, ...}) = 0
+gettimeofday({1104539785, 845576}, NULL) = 0
+gettimeofday({1104539785, 845599}, NULL) = 0
+gettimeofday({1104539785, 845717}, NULL) = 0
+gettimeofday({1104539785, 845740}, NULL) = 0
+gettimeofday({1104539785, 845840}, NULL) = 0
+gettimeofday({1104539785, 845863}, NULL) = 0
+gettimeofday({1104539785, 846555}, NULL) = 0
+gettimeofday({1104539785, 846578}, NULL) = 0
+gettimeofday({1104539785, 846775}, NULL) = 0
+gettimeofday({1104539785, 846799}, NULL) = 0
+gettimeofday({1104539785, 846830}, NULL) = 0
+gettimeofday({1104539785, 846852}, NULL) = 0
+gettimeofday({1104539785, 847085}, NULL) = 0
+gettimeofday({1104539785, 847147}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunpkcs11.jar", {st_mode=S_IFREG|0444, st_size=173235, ...}) = 0
+gettimeofday({1104539785, 847387}, NULL) = 0
+gettimeofday({1104539785, 847439}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/dnsns.jar", {st_mode=S_IFREG|0644, st_size=8173, ...}) = 0
+gettimeofday({1104539785, 847657}, NULL) = 0
+gettimeofday({1104539785, 847701}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/localedata.jar", {st_mode=S_IFREG|0644, st_size=802499, ...}) = 0
+gettimeofday({1104539785, 847991}, NULL) = 0
+gettimeofday({1104539785, 848015}, NULL) = 0
+gettimeofday({1104539785, 848172}, NULL) = 0
+gettimeofday({1104539785, 848195}, NULL) = 0
+gettimeofday({1104539785, 848295}, NULL) = 0
+gettimeofday({1104539785, 848318}, NULL) = 0
+gettimeofday({1104539785, 848534}, NULL) = 0
+gettimeofday({1104539785, 848557}, NULL) = 0
+gettimeofday({1104539785, 848719}, NULL) = 0
+gettimeofday({1104539785, 848743}, NULL) = 0
+gettimeofday({1104539785, 848863}, NULL) = 0
+gettimeofday({1104539785, 848886}, NULL) = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/src", {st_mode=S_IFDIR|0755, st_size=28672, ...}) = 0
+lstat64("/usr/local/src/V9t9j", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/src/V9t9j/v9t9", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/src/V9t9j/v9t9/cpu", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+gettimeofday({1104539785, 849345}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/src", {st_mode=S_IFDIR|0755, st_size=28672, ...}) = 0
+lstat64("/usr/local/src/V9t9j", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/src/V9t9j/v9t9", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/src/V9t9j/v9t9/cpu", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/src/V9t9j/v9t9/cpu/v9t9", 0xbfffa6f8) = -1 ENOENT (No such file or directory)
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/src", {st_mode=S_IFDIR|0755, st_size=28672, ...}) = 0
+lstat64("/usr/local/src/V9t9j", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/src/V9t9j/v9t9", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/src/V9t9j/v9t9/cpu", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+gettimeofday({1104539785, 850056}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/v9t9", 0xbfffc780) = -1 ENOENT (No such file or directory)
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/share", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/share/java", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/share/java/bcel.jar", {st_mode=S_IFLNK|0755, st_size=12, ...}) = 0
+readlink("/usr/share/java/bcel.jar", "bcel-5.1.jar", 4096) = 12
+lstat64("/usr/share/java/bcel-5.1.jar", {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+gettimeofday({1104539785, 850459}, NULL) = 0
+stat64("/usr/share/java/bcel-5.1.jar", {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+gettimeofday({1104539785, 850754}, NULL) = 0
+gettimeofday({1104539785, 850816}, NULL) = 0
+gettimeofday({1104539785, 850840}, NULL) = 0
+gettimeofday({1104539785, 850873}, NULL) = 0
+gettimeofday({1104539785, 850896}, NULL) = 0
+mmap2(NULL, 528384, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x45d26000
+clone(child_stack=0x45da6b48, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID|CLONE_DETACHED, parent_tidptr=0x45da6bf8, {entry_number:6, base_addr:0x45da6bb0, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}, child_tidptr=0x45da6bf8) = 5064
+futex(0x809f648, FUTEX_WAKE, 1)         = 1
+rt_sigaction(SIGQUIT, {0x403d7fb0, ~[RTMIN], SA_RESTART|SA_SIGINFO}, {SIG_DFL}, 8) = 0
+gettimeofday({1104539785, 851232}, NULL) = 0
+gettimeofday({1104539785, 851269}, NULL) = 0
+gettimeofday({1104539785, 851302}, NULL) = 0
+gettimeofday({1104539785, 851334}, NULL) = 0
+mmap2(NULL, 528384, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x45da7000
+mprotect(0x45da7000, 4096, PROT_NONE)   = 0
+clone(child_stack=0x45e27b48, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID|CLONE_DETACHED, parent_tidptr=0x45e27bf8, {entry_number:6, base_addr:0x45e27bb0, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}, child_tidptr=0x45e27bf8) = 5065
+futex(0x80a0588, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80a0588, FUTEX_WAKE, 1)         = 0
+sched_setscheduler(5065, SCHED_OTHER, { 10 }) = -1 EINVAL (Invalid argument)
+futex(0x80a06a0, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80a06b0, FUTEX_WAKE, 1)         = 0
+futex(0x80a06a0, FUTEX_WAKE, 1)         = 0
+sched_yield()                           = 0
+gettimeofday({1104539785, 851737}, NULL) = 0
+gettimeofday({1104539785, 851769}, NULL) = 0
+gettimeofday({1104539785, 851799}, NULL) = 0
+gettimeofday({1104539785, 851830}, NULL) = 0
+gettimeofday({1104539785, 851860}, NULL) = 0
+gettimeofday({1104539785, 851890}, NULL) = 0
+gettimeofday({1104539785, 851920}, NULL) = 0
+gettimeofday({1104539785, 851950}, NULL) = 0
+gettimeofday({1104539785, 851981}, NULL) = 0
+gettimeofday({1104539785, 852011}, NULL) = 0
+gettimeofday({1104539785, 852041}, NULL) = 0
+gettimeofday({1104539785, 852071}, NULL) = 0
+gettimeofday({1104539785, 852101}, NULL) = 0
+gettimeofday({1104539785, 852131}, NULL) = 0
+gettimeofday({1104539785, 852161}, NULL) = 0
+gettimeofday({1104539785, 852191}, NULL) = 0
+gettimeofday({1104539785, 852222}, NULL) = 0
+gettimeofday({1104539785, 852253}, NULL) = 0
+gettimeofday({1104539785, 852284}, NULL) = 0
+gettimeofday({1104539785, 852314}, NULL) = 0
+gettimeofday({1104539785, 852344}, NULL) = 0
+gettimeofday({1104539785, 852374}, NULL) = 0
+mmap2(NULL, 528384, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x45e28000
+clone(child_stack=0x45ea8b48, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID|CLONE_DETACHED, parent_tidptr=0x45ea8bf8, {entry_number:6, base_addr:0x45ea8bb0, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}, child_tidptr=0x45ea8bf8) = 5066
+futex(0x80a1b60, FUTEX_WAKE, 1)         = 1
+gettimeofday({1104539785, 852563}, NULL) = 0
+gettimeofday({1104539785, 852620}, NULL) = 0
+gettimeofday({1104539785, 852666}, NULL) = 0
+gettimeofday({1104539785, 852713}, NULL) = 0
+gettimeofday({1104539785, 852757}, NULL) = 0
+gettimeofday({1104539785, 852800}, NULL) = 0
+gettimeofday({1104539785, 852843}, NULL) = 0
+gettimeofday({1104539785, 852886}, NULL) = 0
+gettimeofday({1104539785, 852931}, NULL) = 0
+gettimeofday({1104539785, 852975}, NULL) = 0
+gettimeofday({1104539785, 853019}, NULL) = 0
+gettimeofday({1104539785, 853062}, NULL) = 0
+gettimeofday({1104539785, 853105}, NULL) = 0
+gettimeofday({1104539785, 853151}, NULL) = 0
+gettimeofday({1104539785, 853200}, NULL) = 0
+gettimeofday({1104539785, 853232}, NULL) = 0
+gettimeofday({1104539785, 853265}, NULL) = 0
+gettimeofday({1104539785, 853296}, NULL) = 0
+gettimeofday({1104539785, 853327}, NULL) = 0
+gettimeofday({1104539785, 853359}, NULL) = 0
+gettimeofday({1104539785, 853380}, NULL) = 0
+mmap2(NULL, 528384, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x45ea9000
+mprotect(0x45ea9000, 4096, PROT_NONE)   = 0
+clone(child_stack=0x45f29b48, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID|CLONE_DETACHED, parent_tidptr=0x45f29bf8, {entry_number:6, base_addr:0x45f29bb0, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}, child_tidptr=0x45f29bf8) = 5067
+sched_setscheduler(5067, SCHED_OTHER, { 10 }) = -1 EINVAL (Invalid argument)
+futex(0x80a2e00, FUTEX_WAKE, 1)         = 1
+gettimeofday({1104539785, 853559}, NULL) = 0
+gettimeofday({1104539785, 853585}, NULL) = 0
+gettimeofday({1104539785, 853961}, NULL) = 0
+gettimeofday({1104539785, 853996}, NULL) = 0
+gettimeofday({1104539785, 854029}, NULL) = 0
+gettimeofday({1104539785, 854052}, NULL) = 0
+gettimeofday({1104539785, 854095}, NULL) = 0
+gettimeofday({1104539785, 854117}, NULL) = 0
+gettimeofday({1104539785, 854250}, NULL) = 0
+gettimeofday({1104539785, 854274}, NULL) = 0
+gettimeofday({1104539785, 854302}, NULL) = 0
+gettimeofday({1104539785, 854324}, NULL) = 0
+gettimeofday({1104539785, 854623}, NULL) = 0
+gettimeofday({1104539785, 854650}, NULL) = 0
+gettimeofday({1104539785, 854680}, NULL) = 0
+gettimeofday({1104539785, 854702}, NULL) = 0
+gettimeofday({1104539785, 854783}, NULL) = 0
+gettimeofday({1104539785, 854807}, NULL) = 0
+gettimeofday({1104539785, 854835}, NULL) = 0
+gettimeofday({1104539785, 854857}, NULL) = 0
+gettimeofday({1104539785, 854890}, NULL) = 0
+gettimeofday({1104539785, 854940}, NULL) = 0
+gettimeofday({1104539785, 854964}, NULL) = 0
+gettimeofday({1104539785, 854985}, NULL) = 0
+gettimeofday({1104539785, 855168}, NULL) = 0
+gettimeofday({1104539785, 855191}, NULL) = 0
+gettimeofday({1104539785, 855218}, NULL) = 0
+gettimeofday({1104539785, 855240}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunjce_provider.jar", {st_mode=S_IFREG|0444, st_size=153036, ...}) = 0
+gettimeofday({1104539785, 855564}, NULL) = 0
+gettimeofday({1104539785, 855587}, NULL) = 0
+gettimeofday({1104539785, 855611}, NULL) = 0
+gettimeofday({1104539785, 855633}, NULL) = 0
+gettimeofday({1104539785, 855673}, NULL) = 0
+gettimeofday({1104539785, 855694}, NULL) = 0
+gettimeofday({1104539785, 855732}, NULL) = 0
+gettimeofday({1104539785, 855775}, NULL) = 0
+gettimeofday({1104539785, 855797}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/libzip.so", {st_mode=S_IFREG|0755, st_size=83088, ...}) = 0
+gettimeofday({1104539785, 856011}, NULL) = 0
+gettimeofday({1104539785, 856133}, NULL) = 0
+gettimeofday({1104539785, 856158}, NULL) = 0
+gettimeofday({1104539785, 856205}, NULL) = 0
+gettimeofday({1104539785, 856228}, NULL) = 0
+gettimeofday({1104539785, 856256}, NULL) = 0
+gettimeofday({1104539785, 856278}, NULL) = 0
+gettimeofday({1104539785, 856352}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunjce_provider.jar", {st_mode=S_IFREG|0444, st_size=153036, ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunjce_provider.jar", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=153036, ...}) = 0
+_llseek(3, 0, [153036], SEEK_END)       = 0
+mmap2(NULL, 153036, PROT_READ, MAP_SHARED, 3, 0) = 0x45f2a000
+close(3)                                = 0
+gettimeofday({1104539785, 856995}, NULL) = 0
+gettimeofday({1104539785, 857020}, NULL) = 0
+gettimeofday({1104539785, 857053}, NULL) = 0
+gettimeofday({1104539785, 857075}, NULL) = 0
+gettimeofday({1104539785, 857142}, NULL) = 0
+gettimeofday({1104539785, 857165}, NULL) = 0
+gettimeofday({1104539785, 857192}, NULL) = 0
+gettimeofday({1104539785, 857214}, NULL) = 0
+gettimeofday({1104539785, 857321}, NULL) = 0
+gettimeofday({1104539785, 857344}, NULL) = 0
+gettimeofday({1104539785, 857388}, NULL) = 0
+gettimeofday({1104539785, 857409}, NULL) = 0
+gettimeofday({1104539785, 857434}, NULL) = 0
+gettimeofday({1104539785, 857456}, NULL) = 0
+gettimeofday({1104539785, 857572}, NULL) = 0
+gettimeofday({1104539785, 857595}, NULL) = 0
+gettimeofday({1104539785, 857617}, NULL) = 0
+gettimeofday({1104539785, 857717}, NULL) = 0
+gettimeofday({1104539785, 857919}, NULL) = 0
+gettimeofday({1104539785, 857943}, NULL) = 0
+gettimeofday({1104539785, 857973}, NULL) = 0
+gettimeofday({1104539785, 857994}, NULL) = 0
+gettimeofday({1104539785, 858021}, NULL) = 0
+gettimeofday({1104539785, 858043}, NULL) = 0
+gettimeofday({1104539785, 858066}, NULL) = 0
+gettimeofday({1104539785, 858107}, NULL) = 0
+gettimeofday({1104539785, 858180}, NULL) = 0
+gettimeofday({1104539785, 858204}, NULL) = 0
+gettimeofday({1104539785, 858233}, NULL) = 0
+gettimeofday({1104539785, 858256}, NULL) = 0
+gettimeofday({1104539785, 858426}, NULL) = 0
+gettimeofday({1104539785, 858450}, NULL) = 0
+gettimeofday({1104539785, 858481}, NULL) = 0
+gettimeofday({1104539785, 858590}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunpkcs11.jar", {st_mode=S_IFREG|0444, st_size=173235, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunpkcs11.jar", {st_mode=S_IFREG|0444, st_size=173235, ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunpkcs11.jar", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=173235, ...}) = 0
+_llseek(3, 0, [173235], SEEK_END)       = 0
+mmap2(NULL, 173235, PROT_READ, MAP_SHARED, 3, 0) = 0x45f50000
+close(3)                                = 0
+gettimeofday({1104539785, 859509}, NULL) = 0
+gettimeofday({1104539785, 859534}, NULL) = 0
+gettimeofday({1104539785, 859581}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/libzip.so", {st_mode=S_IFREG|0755, st_size=83088, ...}) = 0
+gettimeofday({1104539785, 859817}, NULL) = 0
+gettimeofday({1104539785, 859933}, NULL) = 0
+gettimeofday({1104539785, 860074}, NULL) = 0
+gettimeofday({1104539785, 860127}, NULL) = 0
+gettimeofday({1104539785, 860162}, NULL) = 0
+gettimeofday({1104539785, 860184}, NULL) = 0
+gettimeofday({1104539785, 860212}, NULL) = 0
+gettimeofday({1104539785, 860234}, NULL) = 0
+gettimeofday({1104539785, 860258}, NULL) = 0
+gettimeofday({1104539785, 860279}, NULL) = 0
+gettimeofday({1104539785, 860382}, NULL) = 0
+gettimeofday({1104539785, 860406}, NULL) = 0
+gettimeofday({1104539785, 860435}, NULL) = 0
+gettimeofday({1104539785, 860456}, NULL) = 0
+gettimeofday({1104539785, 860520}, NULL) = 0
+gettimeofday({1104539785, 860542}, NULL) = 0
+gettimeofday({1104539785, 860618}, NULL) = 0
+gettimeofday({1104539785, 860641}, NULL) = 0
+gettimeofday({1104539785, 860672}, NULL) = 0
+gettimeofday({1104539785, 860694}, NULL) = 0
+gettimeofday({1104539785, 860718}, NULL) = 0
+gettimeofday({1104539785, 860739}, NULL) = 0
+gettimeofday({1104539785, 860771}, NULL) = 0
+gettimeofday({1104539785, 860793}, NULL) = 0
+gettimeofday({1104539785, 860815}, NULL) = 0
+gettimeofday({1104539785, 860836}, NULL) = 0
+gettimeofday({1104539785, 861084}, NULL) = 0
+gettimeofday({1104539785, 861108}, NULL) = 0
+gettimeofday({1104539785, 861142}, NULL) = 0
+gettimeofday({1104539785, 861164}, NULL) = 0
+gettimeofday({1104539785, 861192}, NULL) = 0
+gettimeofday({1104539785, 861214}, NULL) = 0
+gettimeofday({1104539785, 861236}, NULL) = 0
+gettimeofday({1104539785, 861258}, NULL) = 0
+gettimeofday({1104539785, 861315}, NULL) = 0
+gettimeofday({1104539785, 861339}, NULL) = 0
+gettimeofday({1104539785, 861374}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i386/libzip.so", {st_mode=S_IFREG|0755, st_size=83088, ...}) = 0
+gettimeofday({1104539785, 861633}, NULL) = 0
+gettimeofday({1104539785, 861739}, NULL) = 0
+gettimeofday({1104539785, 862433}, NULL) = 0
+gettimeofday({1104539785, 862465}, NULL) = 0
+gettimeofday({1104539785, 862522}, NULL) = 0
+gettimeofday({1104539785, 862581}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/dnsns.jar", {st_mode=S_IFREG|0644, st_size=8173, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/dnsns.jar", {st_mode=S_IFREG|0644, st_size=8173, ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/ext/dnsns.jar", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=8173, ...}) = 0
+_llseek(3, 0, [8173], SEEK_END)         = 0
+mmap2(NULL, 8173, PROT_READ, MAP_SHARED, 3, 0) = 0x45f7b000
+close(3)                                = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/localedata.jar", {st_mode=S_IFREG|0644, st_size=802499, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/localedata.jar", {st_mode=S_IFREG|0644, st_size=802499, ...}) = 0
+futex(0x80a0788, FUTEX_WAKE, 1)         = 1
+futex(0x80af9b0, FUTEX_WAIT, 0, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/ext/localedata.jar", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=802499, ...}) = 0
+_llseek(3, 0, [802499], SEEK_END)       = 0
+mmap2(NULL, 802499, PROT_READ, MAP_SHARED, 3, 0) = 0x45f7d000
+close(3)                                = 0
+gettimeofday({1104539785, 874007}, NULL) = 0
+gettimeofday({1104539785, 874033}, NULL) = 0
+gettimeofday({1104539785, 874075}, NULL) = 0
+gettimeofday({1104539785, 874097}, NULL) = 0
+gettimeofday({1104539785, 874250}, NULL) = 0
+gettimeofday({1104539785, 874274}, NULL) = 0
+gettimeofday({1104539785, 874303}, NULL) = 0
+gettimeofday({1104539785, 874325}, NULL) = 0
+futex(0x80af9b0, FUTEX_WAIT, 1, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/verifier/Verifier.class", 0xbfffcbbc) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/src/V9t9j/v9t9/cpu/v9t9", 0xbfffc738) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 875795}, NULL) = 0
+gettimeofday({1104539785, 875821}, NULL) = 0
+gettimeofday({1104539785, 875852}, NULL) = 0
+gettimeofday({1104539785, 875873}, NULL) = 0
+gettimeofday({1104539785, 875899}, NULL) = 0
+gettimeofday({1104539785, 875921}, NULL) = 0
+gettimeofday({1104539785, 875968}, NULL) = 0
+gettimeofday({1104539785, 875991}, NULL) = 0
+stat64("/usr/share/java/bcel-5.1.jar", {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+stat64("/usr/share/java/bcel-5.1.jar", {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+open("/usr/share/java/bcel-5.1.jar", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+_llseek(3, 0, [518983], SEEK_END)       = 0
+mmap2(NULL, 518983, PROT_READ, MAP_SHARED, 3, 0) = 0x46041000
+close(3)                                = 0
+gettimeofday({1104539785, 877287}, NULL) = 0
+gettimeofday({1104539785, 877321}, NULL) = 0
+gettimeofday({1104539785, 877360}, NULL) = 0
+gettimeofday({1104539785, 877382}, NULL) = 0
+gettimeofday({1104539785, 877414}, NULL) = 0
+gettimeofday({1104539785, 877436}, NULL) = 0
+gettimeofday({1104539785, 877460}, NULL) = 0
+gettimeofday({1104539785, 877481}, NULL) = 0
+gettimeofday({1104539785, 877628}, NULL) = 0
+gettimeofday({1104539785, 877651}, NULL) = 0
+gettimeofday({1104539785, 877692}, NULL) = 0
+gettimeofday({1104539785, 877751}, NULL) = 0
+gettimeofday({1104539785, 878066}, NULL) = 0
+gettimeofday({1104539785, 878093}, NULL) = 0
+gettimeofday({1104539785, 878128}, NULL) = 0
+gettimeofday({1104539785, 878151}, NULL) = 0
+gettimeofday({1104539785, 878194}, NULL) = 0
+gettimeofday({1104539785, 878216}, NULL) = 0
+gettimeofday({1104539785, 878251}, NULL) = 0
+gettimeofday({1104539785, 878273}, NULL) = 0
+gettimeofday({1104539785, 878332}, NULL) = 0
+gettimeofday({1104539785, 878356}, NULL) = 0
+gettimeofday({1104539785, 878400}, NULL) = 0
+gettimeofday({1104539785, 878423}, NULL) = 0
+gettimeofday({1104539785, 878516}, NULL) = 0
+gettimeofday({1104539785, 878539}, NULL) = 0
+gettimeofday({1104539785, 878572}, NULL) = 0
+gettimeofday({1104539785, 878595}, NULL) = 0
+futex(0x80af9b0, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+gettimeofday({1104539785, 912367}, NULL) = 0
+gettimeofday({1104539785, 912397}, NULL) = 0
+gettimeofday({1104539785, 912434}, NULL) = 0
+gettimeofday({1104539785, 912686}, NULL) = 0
+gettimeofday({1104539785, 912756}, NULL) = 0
+gettimeofday({1104539785, 912779}, NULL) = 0
+gettimeofday({1104539785, 912809}, NULL) = 0
+gettimeofday({1104539785, 912863}, NULL) = 0
+gettimeofday({1104539785, 913003}, NULL) = 0
+gettimeofday({1104539785, 913026}, NULL) = 0
+gettimeofday({1104539785, 913055}, NULL) = 0
+gettimeofday({1104539785, 913094}, NULL) = 0
+gettimeofday({1104539785, 913175}, NULL) = 0
+gettimeofday({1104539785, 913198}, NULL) = 0
+gettimeofday({1104539785, 913234}, NULL) = 0
+gettimeofday({1104539785, 913257}, NULL) = 0
+gettimeofday({1104539785, 913653}, NULL) = 0
+gettimeofday({1104539785, 913680}, NULL) = 0
+gettimeofday({1104539785, 913711}, NULL) = 0
+gettimeofday({1104539785, 913795}, NULL) = 0
+gettimeofday({1104539785, 913818}, NULL) = 0
+gettimeofday({1104539785, 913891}, NULL) = 0
+gettimeofday({1104539785, 913913}, NULL) = 0
+gettimeofday({1104539785, 913981}, NULL) = 0
+gettimeofday({1104539785, 914004}, NULL) = 0
+gettimeofday({1104539785, 914074}, NULL) = 0
+gettimeofday({1104539785, 914097}, NULL) = 0
+gettimeofday({1104539785, 914186}, NULL) = 0
+gettimeofday({1104539785, 914210}, NULL) = 0
+gettimeofday({1104539785, 914273}, NULL) = 0
+gettimeofday({1104539785, 914296}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/security/java.security", {st_mode=S_IFREG|0444, st_size=10151, ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/security/java.security", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=10151, ...}) = 0
+gettimeofday({1104539785, 914787}, NULL) = 0
+gettimeofday({1104539785, 914811}, NULL) = 0
+read(3, "#\n# This is the \"master security"..., 8192) = 8192
+futex(0x80af9b0, FUTEX_WAIT, 3, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+futex(0x80af9b0, FUTEX_WAIT, 4, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+read(3, "r when the default does not appl"..., 8192) = 1959
+fstat64(3, {st_mode=S_IFREG|0444, st_size=10151, ...}) = 0
+_llseek(3, 0, [10151], SEEK_CUR)        = 0
+_llseek(3, 0, [10151], SEEK_END)        = 0
+_llseek(3, 10151, [10151], SEEK_SET)    = 0
+read(3, "", 8192)                       = 0
+close(3)                                = 0
+gettimeofday({1104539785, 919265}, NULL) = 0
+gettimeofday({1104539785, 919290}, NULL) = 0
+gettimeofday({1104539785, 919330}, NULL) = 0
+gettimeofday({1104539785, 919352}, NULL) = 0
+gettimeofday({1104539785, 919545}, NULL) = 0
+gettimeofday({1104539785, 919569}, NULL) = 0
+gettimeofday({1104539785, 919596}, NULL) = 0
+gettimeofday({1104539785, 919618}, NULL) = 0
+gettimeofday({1104539785, 919656}, NULL) = 0
+gettimeofday({1104539785, 919678}, NULL) = 0
+gettimeofday({1104539785, 919773}, NULL) = 0
+gettimeofday({1104539785, 919796}, NULL) = 0
+gettimeofday({1104539785, 919844}, NULL) = 0
+gettimeofday({1104539785, 919866}, NULL) = 0
+gettimeofday({1104539785, 919904}, NULL) = 0
+gettimeofday({1104539785, 919925}, NULL) = 0
+gettimeofday({1104539785, 920112}, NULL) = 0
+gettimeofday({1104539785, 920135}, NULL) = 0
+gettimeofday({1104539785, 920425}, NULL) = 0
+gettimeofday({1104539785, 920451}, NULL) = 0
+gettimeofday({1104539785, 920541}, NULL) = 0
+gettimeofday({1104539785, 920564}, NULL) = 0
+gettimeofday({1104539785, 920678}, NULL) = 0
+gettimeofday({1104539785, 920701}, NULL) = 0
+gettimeofday({1104539785, 920784}, NULL) = 0
+gettimeofday({1104539785, 920807}, NULL) = 0
+gettimeofday({1104539785, 920858}, NULL) = 0
+gettimeofday({1104539785, 920881}, NULL) = 0
+gettimeofday({1104539785, 921096}, NULL) = 0
+gettimeofday({1104539785, 921119}, NULL) = 0
+gettimeofday({1104539785, 921168}, NULL) = 0
+gettimeofday({1104539785, 921190}, NULL) = 0
+gettimeofday({1104539785, 921243}, NULL) = 0
+gettimeofday({1104539785, 921266}, NULL) = 0
+gettimeofday({1104539785, 921342}, NULL) = 0
+gettimeofday({1104539785, 921364}, NULL) = 0
+gettimeofday({1104539785, 921425}, NULL) = 0
+gettimeofday({1104539785, 921449}, NULL) = 0
+gettimeofday({1104539785, 921504}, NULL) = 0
+gettimeofday({1104539785, 921526}, NULL) = 0
+gettimeofday({1104539785, 921585}, NULL) = 0
+gettimeofday({1104539785, 921607}, NULL) = 0
+gettimeofday({1104539785, 921717}, NULL) = 0
+gettimeofday({1104539785, 921740}, NULL) = 0
+gettimeofday({1104539785, 921797}, NULL) = 0
+gettimeofday({1104539785, 921819}, NULL) = 0
+gettimeofday({1104539785, 922016}, NULL) = 0
+gettimeofday({1104539785, 922039}, NULL) = 0
+gettimeofday({1104539785, 922104}, NULL) = 0
+gettimeofday({1104539785, 922127}, NULL) = 0
+gettimeofday({1104539785, 922185}, NULL) = 0
+gettimeofday({1104539785, 922208}, NULL) = 0
+gettimeofday({1104539785, 922333}, NULL) = 0
+gettimeofday({1104539785, 922356}, NULL) = 0
+gettimeofday({1104539785, 922385}, NULL) = 0
+gettimeofday({1104539785, 922407}, NULL) = 0
+gettimeofday({1104539785, 922462}, NULL) = 0
+gettimeofday({1104539785, 922496}, NULL) = 0
+gettimeofday({1104539785, 922548}, NULL) = 0
+gettimeofday({1104539785, 922570}, NULL) = 0
+gettimeofday({1104539785, 922621}, NULL) = 0
+gettimeofday({1104539785, 922643}, NULL) = 0
+gettimeofday({1104539785, 922693}, NULL) = 0
+gettimeofday({1104539785, 922716}, NULL) = 0
+gettimeofday({1104539785, 922774}, NULL) = 0
+gettimeofday({1104539785, 922797}, NULL) = 0
+gettimeofday({1104539785, 922847}, NULL) = 0
+gettimeofday({1104539785, 922870}, NULL) = 0
+gettimeofday({1104539785, 922920}, NULL) = 0
+gettimeofday({1104539785, 922942}, NULL) = 0
+gettimeofday({1104539785, 922993}, NULL) = 0
+gettimeofday({1104539785, 923015}, NULL) = 0
+gettimeofday({1104539785, 923066}, NULL) = 0
+gettimeofday({1104539785, 923088}, NULL) = 0
+gettimeofday({1104539785, 923138}, NULL) = 0
+gettimeofday({1104539785, 923160}, NULL) = 0
+gettimeofday({1104539785, 923219}, NULL) = 0
+gettimeofday({1104539785, 923242}, NULL) = 0
+gettimeofday({1104539785, 923293}, NULL) = 0
+gettimeofday({1104539785, 923315}, NULL) = 0
+gettimeofday({1104539785, 923365}, NULL) = 0
+gettimeofday({1104539785, 923388}, NULL) = 0
+gettimeofday({1104539785, 923438}, NULL) = 0
+gettimeofday({1104539785, 923460}, NULL) = 0
+gettimeofday({1104539785, 923519}, NULL) = 0
+gettimeofday({1104539785, 923542}, NULL) = 0
+gettimeofday({1104539785, 923653}, NULL) = 0
+gettimeofday({1104539785, 923677}, NULL) = 0
+gettimeofday({1104539785, 923884}, NULL) = 0
+gettimeofday({1104539785, 923908}, NULL) = 0
+gettimeofday({1104539785, 923957}, NULL) = 0
+gettimeofday({1104539785, 923980}, NULL) = 0
+gettimeofday({1104539785, 924199}, NULL) = 0
+gettimeofday({1104539785, 924222}, NULL) = 0
+gettimeofday({1104539785, 924436}, NULL) = 0
+gettimeofday({1104539785, 924460}, NULL) = 0
+gettimeofday({1104539785, 924500}, NULL) = 0
+gettimeofday({1104539785, 924522}, NULL) = 0
+gettimeofday({1104539785, 924569}, NULL) = 0
+gettimeofday({1104539785, 924591}, NULL) = 0
+stat64("/dev/random", {st_mode=S_IFCHR|0666, st_rdev=makedev(1, 8), ...}) = 0
+stat64("/dev/urandom", {st_mode=S_IFCHR|0444, st_rdev=makedev(1, 9), ...}) = 0
+gettimeofday({1104539785, 924843}, NULL) = 0
+gettimeofday({1104539785, 924865}, NULL) = 0
+open("/dev/random", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFCHR|0666, st_rdev=makedev(1, 8), ...}) = 0
+open("/dev/urandom", O_RDONLY|O_LARGEFILE) = 4
+fstat64(4, {st_mode=S_IFCHR|0444, st_rdev=makedev(1, 9), ...}) = 0
+open("/dev/random", O_WRONLY|O_APPEND|O_CREAT|O_LARGEFILE, 0666) = 5
+fstat64(5, {st_mode=S_IFCHR|0666, st_rdev=makedev(1, 8), ...}) = 0
+gettimeofday({1104539785, 926027}, NULL) = 0
+gettimeofday({1104539785, 926161}, NULL) = 0
+gettimeofday({1104539785, 926186}, NULL) = 0
+gettimeofday({1104539785, 926223}, NULL) = 0
+gettimeofday({1104539785, 926245}, NULL) = 0
+gettimeofday({1104539785, 926273}, NULL) = 0
+gettimeofday({1104539785, 926295}, NULL) = 0
+gettimeofday({1104539785, 926317}, NULL) = 0
+gettimeofday({1104539785, 926853}, NULL) = 0
+gettimeofday({1104539785, 927086}, NULL) = 0
+gettimeofday({1104539785, 927110}, NULL) = 0
+gettimeofday({1104539785, 927141}, NULL) = 0
+gettimeofday({1104539785, 927257}, NULL) = 0
+gettimeofday({1104539785, 927680}, NULL) = 0
+gettimeofday({1104539785, 927705}, NULL) = 0
+gettimeofday({1104539785, 927740}, NULL) = 0
+gettimeofday({1104539785, 927762}, NULL) = 0
+gettimeofday({1104539785, 927862}, NULL) = 0
+gettimeofday({1104539785, 927885}, NULL) = 0
+gettimeofday({1104539785, 927915}, NULL) = 0
+gettimeofday({1104539785, 927936}, NULL) = 0
+gettimeofday({1104539785, 927965}, NULL) = 0
+gettimeofday({1104539785, 927987}, NULL) = 0
+gettimeofday({1104539785, 928010}, NULL) = 0
+gettimeofday({1104539785, 928166}, NULL) = 0
+gettimeofday({1104539785, 928349}, NULL) = 0
+gettimeofday({1104539785, 928373}, NULL) = 0
+gettimeofday({1104539785, 928428}, NULL) = 0
+gettimeofday({1104539785, 928450}, NULL) = 0
+gettimeofday({1104539785, 928503}, NULL) = 0
+gettimeofday({1104539785, 928525}, NULL) = 0
+gettimeofday({1104539785, 928563}, NULL) = 0
+gettimeofday({1104539785, 928637}, NULL) = 0
+gettimeofday({1104539785, 928660}, NULL) = 0
+gettimeofday({1104539785, 928686}, NULL) = 0
+gettimeofday({1104539785, 928708}, NULL) = 0
+gettimeofday({1104539785, 928749}, NULL) = 0
+gettimeofday({1104539785, 928772}, NULL) = 0
+gettimeofday({1104539785, 928794}, NULL) = 0
+gettimeofday({1104539785, 928816}, NULL) = 0
+gettimeofday({1104539785, 928850}, NULL) = 0
+gettimeofday({1104539785, 928922}, NULL) = 0
+gettimeofday({1104539785, 928945}, NULL) = 0
+gettimeofday({1104539785, 928979}, NULL) = 0
+gettimeofday({1104539785, 929001}, NULL) = 0
+gettimeofday({1104539785, 929104}, NULL) = 0
+gettimeofday({1104539785, 929127}, NULL) = 0
+gettimeofday({1104539785, 929164}, NULL) = 0
+gettimeofday({1104539785, 929186}, NULL) = 0
+gettimeofday({1104539785, 929258}, NULL) = 0
+gettimeofday({1104539785, 929280}, NULL) = 0
+gettimeofday({1104539785, 929308}, NULL) = 0
+gettimeofday({1104539785, 929330}, NULL) = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/share", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/share/java", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/share/java/bcel-5.1.jar", {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+gettimeofday({1104539785, 929685}, NULL) = 0
+gettimeofday({1104539785, 929801}, NULL) = 0
+gettimeofday({1104539785, 929824}, NULL) = 0
+gettimeofday({1104539785, 929878}, NULL) = 0
+gettimeofday({1104539785, 929967}, NULL) = 0
+gettimeofday({1104539785, 930101}, NULL) = 0
+gettimeofday({1104539785, 930125}, NULL) = 0
+gettimeofday({1104539785, 930154}, NULL) = 0
+gettimeofday({1104539785, 930243}, NULL) = 0
+gettimeofday({1104539785, 930327}, NULL) = 0
+gettimeofday({1104539785, 930350}, NULL) = 0
+gettimeofday({1104539785, 930382}, NULL) = 0
+gettimeofday({1104539785, 930420}, NULL) = 0
+gettimeofday({1104539785, 930702}, NULL) = 0
+gettimeofday({1104539785, 931159}, NULL) = 0
+gettimeofday({1104539785, 931299}, NULL) = 0
+gettimeofday({1104539785, 931359}, NULL) = 0
+gettimeofday({1104539785, 931425}, NULL) = 0
+gettimeofday({1104539785, 932191}, NULL) = 0
+gettimeofday({1104539785, 932261}, NULL) = 0
+gettimeofday({1104539785, 932284}, NULL) = 0
+write(1, "JustIce by Enver Haase, (C) 2001"..., 102JustIce by Enver Haase, (C) 2001-2002.
+<http://bcel.sourceforge.net>
+<http://jakarta.apache.org/bcel>
+) = 102
+write(1, "\n", 1
+)                       = 1
+write(1, "Now verifying: CodeBlock$CPU_ROM"..., 37Now verifying: CodeBlock$CPU_ROM0000
+) = 37
+write(1, "\n", 1
+)                       = 1
+futex(0x80af9b0, FUTEX_WAIT, 5, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+gettimeofday({1104539785, 934429}, NULL) = 0
+gettimeofday({1104539785, 934467}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/verifier/VerifierFactory.class", 0xbfffc668) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 936408}, NULL) = 0
+gettimeofday({1104539785, 937246}, NULL) = 0
+gettimeofday({1104539785, 937288}, NULL) = 0
+gettimeofday({1104539785, 937353}, NULL) = 0
+gettimeofday({1104539785, 937437}, NULL) = 0
+gettimeofday({1104539785, 937630}, NULL) = 0
+gettimeofday({1104539785, 937675}, NULL) = 0
+gettimeofday({1104539785, 937834}, NULL) = 0
+gettimeofday({1104539785, 937965}, NULL) = 0
+gettimeofday({1104539785, 937989}, NULL) = 0
+gettimeofday({1104539785, 938021}, NULL) = 0
+gettimeofday({1104539785, 938044}, NULL) = 0
+gettimeofday({1104539785, 938170}, NULL) = 0
+gettimeofday({1104539785, 938203}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/verifier/statics/Pass1Verifier.class", 0xbfffc80c) = -1 ENOENT (No such file or directory)
+futex(0x80af9b0, FUTEX_WAIT, 6, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+gettimeofday({1104539785, 940322}, NULL) = 0
+gettimeofday({1104539785, 940549}, NULL) = 0
+gettimeofday({1104539785, 940635}, NULL) = 0
+gettimeofday({1104539785, 940666}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/verifier/PassVerifier.class", 0xbfffb520) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 941383}, NULL) = 0
+gettimeofday({1104539785, 941565}, NULL) = 0
+gettimeofday({1104539785, 941596}, NULL) = 0
+gettimeofday({1104539785, 941653}, NULL) = 0
+gettimeofday({1104539785, 941712}, NULL) = 0
+gettimeofday({1104539785, 941748}, NULL) = 0
+gettimeofday({1104539785, 941793}, NULL) = 0
+gettimeofday({1104539785, 941951}, NULL) = 0
+gettimeofday({1104539785, 941995}, NULL) = 0
+gettimeofday({1104539785, 942275}, NULL) = 0
+gettimeofday({1104539785, 942310}, NULL) = 0
+futex(0x80af9b0, FUTEX_WAIT, 7, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/verifier/exc/LoadingException.class", 0xbfffc0ec) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 944260}, NULL) = 0
+gettimeofday({1104539785, 944370}, NULL) = 0
+gettimeofday({1104539785, 944455}, NULL) = 0
+gettimeofday({1104539785, 944502}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/verifier/exc/VerifierConstraintViolatedException.class", 0xbfffae00) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 945179}, NULL) = 0
+gettimeofday({1104539785, 945320}, NULL) = 0
+gettimeofday({1104539785, 945351}, NULL) = 0
+gettimeofday({1104539785, 945413}, NULL) = 0
+gettimeofday({1104539785, 945472}, NULL) = 0
+gettimeofday({1104539785, 945522}, NULL) = 0
+gettimeofday({1104539785, 945750}, NULL) = 0
+gettimeofday({1104539785, 945808}, NULL) = 0
+gettimeofday({1104539785, 945831}, NULL) = 0
+gettimeofday({1104539785, 945854}, NULL) = 0
+gettimeofday({1104539785, 945876}, NULL) = 0
+gettimeofday({1104539785, 946057}, NULL) = 0
+gettimeofday({1104539785, 946091}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/Repository.class", 0xbfffc5b8) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 946867}, NULL) = 0
+gettimeofday({1104539785, 947209}, NULL) = 0
+gettimeofday({1104539785, 947241}, NULL) = 0
+gettimeofday({1104539785, 947299}, NULL) = 0
+gettimeofday({1104539785, 947369}, NULL) = 0
+gettimeofday({1104539785, 947542}, NULL) = 0
+gettimeofday({1104539785, 947574}, NULL) = 0
+futex(0x80af9b0, FUTEX_WAIT, 8, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/util/Repository.class", 0xbfffb958) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 949300}, NULL) = 0
+gettimeofday({1104539785, 949522}, NULL) = 0
+gettimeofday({1104539785, 949551}, NULL) = 0
+gettimeofday({1104539785, 949608}, NULL) = 0
+gettimeofday({1104539785, 949945}, NULL) = 0
+gettimeofday({1104539785, 949999}, NULL) = 0
+gettimeofday({1104539785, 950059}, NULL) = 0
+gettimeofday({1104539785, 950091}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/util/SyntheticRepository.class", 0xbfffc0a0) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 950877}, NULL) = 0
+gettimeofday({1104539785, 951183}, NULL) = 0
+gettimeofday({1104539785, 951212}, NULL) = 0
+gettimeofday({1104539785, 951281}, NULL) = 0
+gettimeofday({1104539785, 951352}, NULL) = 0
+gettimeofday({1104539785, 951404}, NULL) = 0
+gettimeofday({1104539785, 951444}, NULL) = 0
+gettimeofday({1104539785, 951914}, NULL) = 0
+gettimeofday({1104539785, 952002}, NULL) = 0
+gettimeofday({1104539785, 952034}, NULL) = 0
+futex(0x80af9b0, FUTEX_WAIT, 9, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+futex(0x80af9b0, FUTEX_WAIT, 10, NULL)  = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/util/ClassPath.class", 0xbfffbb88) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 955537}, NULL) = 0
+gettimeofday({1104539785, 955973}, NULL) = 0
+gettimeofday({1104539785, 956002}, NULL) = 0
+gettimeofday({1104539785, 956067}, NULL) = 0
+gettimeofday({1104539785, 956142}, NULL) = 0
+gettimeofday({1104539785, 956838}, NULL) = 0
+stat64(".", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat64("v9t9", 0xbfffc20c)              = -1 ENOENT (No such file or directory)
+stat64("/usr/share/java/bcel.jar", {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i18n.jar", 0xbfffc20c) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/sunrsasign.jar", 0xbfffc20c) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/classes", 0xbfffc20c) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+gettimeofday({1104539785, 958047}, NULL) = 0
+gettimeofday({1104539785, 958079}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/util/ClassPath$1.class", 0xbfffb7c0) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 958693}, NULL) = 0
+gettimeofday({1104539785, 958828}, NULL) = 0
+gettimeofday({1104539785, 958855}, NULL) = 0
+gettimeofday({1104539785, 958914}, NULL) = 0
+gettimeofday({1104539785, 958985}, NULL) = 0
+gettimeofday({1104539785, 959036}, NULL) = 0
+gettimeofday({1104539785, 959066}, NULL) = 0
+gettimeofday({1104539785, 959170}, NULL) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/ext", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY) = 6
+fstat64(6, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+fcntl64(6, F_SETFD, FD_CLOEXEC)         = 0
+getdents64(6, /* 6 entries */, 4096)    = 200
+getdents64(6, /* 0 entries */, 4096)    = 0
+close(6)                                = 0
+gettimeofday({1104539785, 959801}, NULL) = 0
+gettimeofday({1104539785, 959826}, NULL) = 0
+stat64(".", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat64(".", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+gettimeofday({1104539785, 960313}, NULL) = 0
+gettimeofday({1104539785, 960346}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/util/ClassPath$Dir.class", 0xbfffb7cc) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 960989}, NULL) = 0
+gettimeofday({1104539785, 961156}, NULL) = 0
+gettimeofday({1104539785, 961236}, NULL) = 0
+gettimeofday({1104539785, 961267}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/util/ClassPath$PathEntry.class", 0xbfffa4e0) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 961906}, NULL) = 0
+gettimeofday({1104539785, 962038}, NULL) = 0
+gettimeofday({1104539785, 962066}, NULL) = 0
+gettimeofday({1104539785, 962123}, NULL) = 0
+gettimeofday({1104539785, 962181}, NULL) = 0
+gettimeofday({1104539785, 962220}, NULL) = 0
+gettimeofday({1104539785, 962267}, NULL) = 0
+gettimeofday({1104539785, 962357}, NULL) = 0
+gettimeofday({1104539785, 962398}, NULL) = 0
+gettimeofday({1104539785, 962582}, NULL) = 0
+gettimeofday({1104539785, 962615}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/util/ClassPath$ClassFile.class", 0xbfffaafc) = -1 ENOENT (No such file or directory)
+futex(0x80af9b0, FUTEX_WAIT, 11, NULL)  = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+gettimeofday({1104539785, 965342}, NULL) = 0
+gettimeofday({1104539785, 965442}, NULL) = 0
+gettimeofday({1104539785, 965491}, NULL) = 0
+gettimeofday({1104539785, 965551}, NULL) = 0
+gettimeofday({1104539785, 965635}, NULL) = 0
+stat64("/usr/share/java/bcel.jar", {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+stat64("/usr/share/java/bcel.jar", {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+gettimeofday({1104539785, 965977}, NULL) = 0
+gettimeofday({1104539785, 966010}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/util/ClassPath$Zip.class", 0xbfffb7cc) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 966620}, NULL) = 0
+gettimeofday({1104539785, 966782}, NULL) = 0
+gettimeofday({1104539785, 966813}, NULL) = 0
+gettimeofday({1104539785, 966874}, NULL) = 0
+gettimeofday({1104539785, 966939}, NULL) = 0
+gettimeofday({1104539785, 967084}, NULL) = 0
+stat64("/usr/share/java/bcel.jar", {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+open("/usr/share/java/bcel.jar", O_RDONLY|O_LARGEFILE) = 6
+fstat64(6, {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+_llseek(6, 0, [518983], SEEK_END)       = 0
+mmap2(NULL, 518983, PROT_READ, MAP_SHARED, 6, 0) = 0x460c0000
+close(6)                                = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunjce_provider.jar", {st_mode=S_IFREG|0444, st_size=153036, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunjce_provider.jar", {st_mode=S_IFREG|0444, st_size=153036, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunjce_provider.jar", {st_mode=S_IFREG|0444, st_size=153036, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunpkcs11.jar", {st_mode=S_IFREG|0444, st_size=173235, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunpkcs11.jar", {st_mode=S_IFREG|0444, st_size=173235, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/sunpkcs11.jar", {st_mode=S_IFREG|0444, st_size=173235, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/dnsns.jar", {st_mode=S_IFREG|0644, st_size=8173, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/dnsns.jar", {st_mode=S_IFREG|0644, st_size=8173, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/dnsns.jar", {st_mode=S_IFREG|0644, st_size=8173, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/localedata.jar", {st_mode=S_IFREG|0644, st_size=802499, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/localedata.jar", {st_mode=S_IFREG|0644, st_size=802499, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext/localedata.jar", {st_mode=S_IFREG|0644, st_size=802499, ...}) = 0
+stat64(".", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+stat64("v9t9", 0xbfffc754)              = -1 ENOENT (No such file or directory)
+stat64("/usr/share/java/bcel.jar", {st_mode=S_IFREG|0644, st_size=518983, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i18n.jar", 0xbfffc754) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/sunrsasign.jar", 0xbfffc754) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/classes", 0xbfffc754) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/ext", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open("/usr/local/lib/jdk1.5.0/jre/lib/ext", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY) = 6
+fstat64(6, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+fcntl64(6, F_SETFD, FD_CLOEXEC)         = 0
+getdents64(6, /* 6 entries */, 4096)    = 200
+getdents64(6, /* 0 entries */, 4096)    = 0
+close(6)                                = 0
+gettimeofday({1104539785, 971252}, NULL) = 0
+gettimeofday({1104539785, 971536}, NULL) = 0
+gettimeofday({1104539785, 971562}, NULL) = 0
+gettimeofday({1104539785, 971596}, NULL) = 0
+gettimeofday({1104539785, 971619}, NULL) = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+gettimeofday({1104539785, 972053}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+gettimeofday({1104539785, 972230}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+gettimeofday({1104539785, 972390}, NULL) = 0
+futex(0x80af9b0, FUTEX_WAIT, 12, NULL)  = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+gettimeofday({1104539785, 972724}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i18n.jar", 0xbfffcbd8) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 972889}, NULL) = 0
+gettimeofday({1104539785, 972932}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/sunrsasign.jar", 0xbfffcbd8) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 973050}, NULL) = 0
+gettimeofday({1104539785, 973098}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+gettimeofday({1104539785, 973218}, NULL) = 0
+gettimeofday({1104539785, 973259}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+gettimeofday({1104539785, 973375}, NULL) = 0
+gettimeofday({1104539785, 973416}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre/classes", 0xbfffab50) = -1 ENOENT (No such file or directory)
+lstat64("/usr", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib", {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+lstat64("/usr/local/lib/jdk1.5.0/jre", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+gettimeofday({1104539785, 973969}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/classes", 0xbfffcb74) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/classes", 0xbfffcbd8) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/rt.jar", {st_mode=S_IFREG|0644, st_size=39542796, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/i18n.jar", 0xbfffcb58) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/sunrsasign.jar", 0xbfffcb58) = -1 ENOENT (No such file or directory)
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jsse.jar", {st_mode=S_IFREG|0644, st_size=548670, ...}) = 0
+gettimeofday({1104539785, 975225}, NULL) = 0
+gettimeofday({1104539785, 975251}, NULL) = 0
+gettimeofday({1104539785, 975279}, NULL) = 0
+gettimeofday({1104539785, 975300}, NULL) = 0
+gettimeofday({1104539785, 975337}, NULL) = 0
+gettimeofday({1104539785, 975359}, NULL) = 0
+gettimeofday({1104539785, 975389}, NULL) = 0
+gettimeofday({1104539785, 975489}, NULL) = 0
+gettimeofday({1104539785, 975513}, NULL) = 0
+gettimeofday({1104539785, 975546}, NULL) = 0
+gettimeofday({1104539785, 975641}, NULL) = 0
+gettimeofday({1104539785, 975664}, NULL) = 0
+gettimeofday({1104539785, 975689}, NULL) = 0
+gettimeofday({1104539785, 975737}, NULL) = 0
+gettimeofday({1104539785, 975778}, NULL) = 0
+gettimeofday({1104539785, 975800}, NULL) = 0
+gettimeofday({1104539785, 975826}, NULL) = 0
+gettimeofday({1104539785, 975847}, NULL) = 0
+gettimeofday({1104539785, 975888}, NULL) = 0
+gettimeofday({1104539785, 975911}, NULL) = 0
+gettimeofday({1104539785, 975937}, NULL) = 0
+gettimeofday({1104539785, 975959}, NULL) = 0
+gettimeofday({1104539785, 975997}, NULL) = 0
+gettimeofday({1104539785, 976019}, NULL) = 0
+gettimeofday({1104539785, 976089}, NULL) = 0
+gettimeofday({1104539785, 976112}, NULL) = 0
+gettimeofday({1104539785, 976184}, NULL) = 0
+gettimeofday({1104539785, 976231}, NULL) = 0
+gettimeofday({1104539785, 976388}, NULL) = 0
+gettimeofday({1104539785, 976411}, NULL) = 0
+gettimeofday({1104539785, 976437}, NULL) = 0
+gettimeofday({1104539785, 976459}, NULL) = 0
+gettimeofday({1104539785, 977523}, NULL) = 0
+gettimeofday({1104539785, 977547}, NULL) = 0
+gettimeofday({1104539785, 977574}, NULL) = 0
+gettimeofday({1104539785, 977596}, NULL) = 0
+gettimeofday({1104539785, 977668}, NULL) = 0
+gettimeofday({1104539785, 977690}, NULL) = 0
+gettimeofday({1104539785, 977715}, NULL) = 0
+gettimeofday({1104539785, 977737}, NULL) = 0
+futex(0x80af9b0, FUTEX_WAIT, 13, NULL)  = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+futex(0x80af9b0, FUTEX_WAIT, 14, NULL)  = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+gettimeofday({1104539785, 979430}, NULL) = 0
+gettimeofday({1104539785, 979458}, NULL) = 0
+gettimeofday({1104539785, 979507}, NULL) = 0
+gettimeofday({1104539785, 979530}, NULL) = 0
+gettimeofday({1104539785, 979617}, NULL) = 0
+gettimeofday({1104539785, 979641}, NULL) = 0
+gettimeofday({1104539785, 979667}, NULL) = 0
+gettimeofday({1104539785, 979712}, NULL) = 0
+gettimeofday({1104539785, 979750}, NULL) = 0
+gettimeofday({1104539785, 979772}, NULL) = 0
+gettimeofday({1104539785, 979799}, NULL) = 0
+gettimeofday({1104539785, 979821}, NULL) = 0
+gettimeofday({1104539785, 979865}, NULL) = 0
+gettimeofday({1104539785, 979888}, NULL) = 0
+gettimeofday({1104539785, 979913}, NULL) = 0
+gettimeofday({1104539785, 979935}, NULL) = 0
+gettimeofday({1104539785, 980047}, NULL) = 0
+gettimeofday({1104539785, 980180}, NULL) = 0
+gettimeofday({1104539785, 980209}, NULL) = 0
+gettimeofday({1104539785, 980260}, NULL) = 0
+gettimeofday({1104539785, 980323}, NULL) = 0
+gettimeofday({1104539785, 980346}, NULL) = 0
+gettimeofday({1104539785, 980485}, NULL) = 0
+gettimeofday({1104539785, 980509}, NULL) = 0
+gettimeofday({1104539785, 980537}, NULL) = 0
+gettimeofday({1104539785, 980559}, NULL) = 0
+gettimeofday({1104539785, 980644}, NULL) = 0
+gettimeofday({1104539785, 980666}, NULL) = 0
+gettimeofday({1104539785, 980697}, NULL) = 0
+gettimeofday({1104539785, 980719}, NULL) = 0
+gettimeofday({1104539785, 980757}, NULL) = 0
+gettimeofday({1104539785, 980779}, NULL) = 0
+gettimeofday({1104539785, 980816}, NULL) = 0
+gettimeofday({1104539785, 980838}, NULL) = 0
+gettimeofday({1104539785, 980861}, NULL) = 0
+gettimeofday({1104539785, 980904}, NULL) = 0
+gettimeofday({1104539785, 980947}, NULL) = 0
+gettimeofday({1104539785, 980969}, NULL) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/jce.jar", {st_mode=S_IFREG|0444, st_size=81615, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/lib/charsets.jar", {st_mode=S_IFREG|0644, st_size=8628003, ...}) = 0
+stat64("/usr/local/lib/jdk1.5.0/jre/classes", 0xbfffcb58) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 982005}, NULL) = 0
+gettimeofday({1104539785, 982030}, NULL) = 0
+gettimeofday({1104539785, 982065}, NULL) = 0
+gettimeofday({1104539785, 982088}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/CodeBlock$CPU_ROM0000.class", 0xbfffcc60) = -1 ENOENT (No such file or directory)
+stat64("./CodeBlock$CPU_ROM0000.class", 0xbfffd0d8) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 982957}, NULL) = 0
+gettimeofday({1104539785, 982991}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/verifier/VerificationResult.class", 0xbfffc7b4) = -1 ENOENT (No such file or directory)
+futex(0x80af9b0, FUTEX_WAIT, 15, NULL)  = 0
+futex(0x80afdc8, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x80afdc8, FUTEX_WAKE, 1)         = 0
+gettimeofday({1104539785, 984543}, NULL) = 0
+gettimeofday({1104539785, 984743}, NULL) = 0
+gettimeofday({1104539785, 984775}, NULL) = 0
+gettimeofday({1104539785, 984846}, NULL) = 0
+gettimeofday({1104539785, 984912}, NULL) = 0
+gettimeofday({1104539785, 985096}, NULL) = 0
+gettimeofday({1104539785, 985177}, NULL) = 0
+gettimeofday({1104539785, 985238}, NULL) = 0
+write(1, "Pass 1:\nVERIFIED_REJECTED\nReposi"..., 70Pass 1:
+VERIFIED_REJECTED
+Repository.lookup() failed. FILE NOT FOUND?
+) = 70
+write(1, "\n", 1
+)                       = 1
+gettimeofday({1104539785, 985687}, NULL) = 0
+gettimeofday({1104539785, 985722}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/verifier/statics/Pass2Verifier.class", 0xbfffc80c) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 986218}, NULL) = 0
+futex(0x8099b30, FUTEX_WAKE, 1)         = 1
+futex(0x8099b20, FUTEX_WAKE, 1)         = 1
+futex(0x805ae60, FUTEX_WAKE, 1)         = 1
+futex(0x805ad60, FUTEX_WAIT, 2, NULL)   = -1 EAGAIN (Resource temporarily unavailable)
+futex(0x8369d28, FUTEX_REQUEUE, 1, 2147483647, 0x805ad60) = 1
+futex(0x805ad60, FUTEX_WAKE, 1)         = 1
+futex(0x805ade0, FUTEX_WAIT, 2, NULL)   = 0
+futex(0x805ade0, FUTEX_WAKE, 1)         = 0
+futex(0x805aee0, FUTEX_WAKE, 1)         = 1
+futex(0x82bcd38, FUTEX_WAKE, 1)         = 1
+futex(0x82bcd48, FUTEX_WAIT, 0, NULL)   = -1 EAGAIN (Resource temporarily unavailable)
+futex(0x805aee0, FUTEX_WAKE, 1)         = 0
+gettimeofday({1104539785, 991428}, NULL) = 0
+gettimeofday({1104539785, 991817}, NULL) = 0
+gettimeofday({1104539785, 991852}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/Constants.class", 0xbfffb4f0) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 993780}, NULL) = 0
+gettimeofday({1104539785, 994926}, NULL) = 0
+gettimeofday({1104539785, 994962}, NULL) = 0
+gettimeofday({1104539785, 995078}, NULL) = 0
+gettimeofday({1104539785, 995340}, NULL) = 0
+gettimeofday({1104539785, 995367}, NULL) = 0
+gettimeofday({1104539785, 995416}, NULL) = 0
+gettimeofday({1104539785, 995464}, NULL) = 0
+mmap2(NULL, 237568, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x4613f000
+munmap(0x4613f000, 237568)              = 0
+gettimeofday({1104539785, 997964}, NULL) = 0
+gettimeofday({1104539785, 998095}, NULL) = 0
+gettimeofday({1104539785, 998632}, NULL) = 0
+gettimeofday({1104539785, 998668}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/verifier/exc/ClassConstraintException.class", 0xbfffbb3c) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539785, 999293}, NULL) = 0
+gettimeofday({1104539785, 999400}, NULL) = 0
+gettimeofday({1104539785, 999522}, NULL) = 0
+gettimeofday({1104539785, 999554}, NULL) = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/verifier/exc/VerificationException.class", 0xbfffa850) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539786, 109}, NULL)   = 0
+gettimeofday({1104539786, 209}, NULL)   = 0
+gettimeofday({1104539786, 242}, NULL)   = 0
+gettimeofday({1104539786, 310}, NULL)   = 0
+gettimeofday({1104539786, 369}, NULL)   = 0
+gettimeofday({1104539786, 405}, NULL)   = 0
+gettimeofday({1104539786, 769}, NULL)   = 0
+gettimeofday({1104539786, 804}, NULL)   = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/classfile/Visitor.class", 0xbfffbb3c) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539786, 1486}, NULL)  = 0
+gettimeofday({1104539786, 1738}, NULL)  = 0
+gettimeofday({1104539786, 1769}, NULL)  = 0
+gettimeofday({1104539786, 1832}, NULL)  = 0
+gettimeofday({1104539786, 2033}, NULL)  = 0
+gettimeofday({1104539786, 2066}, NULL)  = 0
+stat64("/usr/local/src/V9t9j/v9t9/cpu/org/apache/bcel/verifier/exc/AssertionViolatedException.class", 0xbfffbb3c) = -1 ENOENT (No such file or directory)
+gettimeofday({1104539786, 2698}, NULL)  = 0
+gettimeofday({1104539786, 2864}, NULL)  = 0
+gettimeofday({1104539786, 2897}, NULL)  = 0
+gettimeofday({1104539786, 2957}, NULL)  = 0
+gettimeofday({1104539786, 3145}, NULL)  = 0
+gettimeofday({1104539786, 3222}, NULL)  = 0
+gettimeofday({1104539786, 3246}, NULL)  = 0
+write(1, "Pass 2:\nVERIFIED_NOTYET\nNot yet "..., 42Pass 2:
+VERIFIED_NOTYET
+Not yet verified.
+) = 42
+write(1, "\n", 1
+)                       = 1
+write(1, "Warnings:", 9Warnings:)                = 9
+write(1, "\n", 1
+)                       = 1
+gettimeofday({1104539786, 3683}, NULL)  = 0
+gettimeofday({1104539786, 3731}, NULL)  = 0
+gettimeofday({1104539786, 3774}, NULL)  = 0
+gettimeofday({1104539786, 3797}, NULL)  = 0
+gettimeofday({1104539786, 3935}, NULL)  = 0
+gettimeofday({1104539786, 3959}, NULL)  = 0
+gettimeofday({1104539786, 3989}, NULL)  = 0
+gettimeofday({1104539786, 4011}, NULL)  = 0
+gettimeofday({1104539786, 4038}, NULL)  = 0
+gettimeofday({1104539786, 4060}, NULL)  = 0
+gettimeofday({1104539786, 4083}, NULL)  = 0
+gettimeofday({1104539786, 4105}, NULL)  = 0
+write(1, "<none>", 6<none>)                   = 6
+write(1, "\n", 1
+)                       = 1
+write(1, "\n", 1
+)                       = 1
+write(1, "\n", 1
+)                       = 1
+gettimeofday({1104539786, 4415}, NULL)  = 0
+futex(0x8099b30, FUTEX_WAKE, 1)         = 1
+futex(0x8099b20, FUTEX_WAKE, 1)         = 1
+futex(0x805ae60, FUTEX_WAKE, 1)         = 1
+futex(0x8369d28, FUTEX_REQUEUE, 1, 2147483647, 0x805ad60) = 1
+futex(0x805ad60, FUTEX_WAKE, 1)         = 1
+futex(0x805aee0, FUTEX_WAKE, 1)         = 1
+futex(0x82bcd38, FUTEX_WAKE, 1)         = 1
+futex(0x82bcd48, FUTEX_WAIT, 1, NULL)   = -1 EAGAIN (Resource temporarily unavailable)
+futex(0x805aee0, FUTEX_WAKE, 1)         = 0
+futex(0x809acb0, FUTEX_WAKE, 1)         = 1
+futex(0x809aca0, FUTEX_WAKE, 1)         = 1
+mmap2(0xbfe00000, 12288, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0xbfe00000
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+gettid()                                = 5060
+rt_sigprocmask(SIG_SETMASK, ~[RTMIN], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigaction(SIGHUP, NULL, {0x403d7fb0, ~[KILL STOP RTMIN], SA_RESTART|SA_SIGINFO}, 8) = 0
+rt_sigaction(SIGINT, NULL, {0x403d7fb0, ~[KILL STOP RTMIN], SA_RESTART|SA_SIGINFO}, 8) = 0
+rt_sigaction(SIGTERM, NULL, {0x403d7fb0, ~[KILL STOP RTMIN], SA_RESTART|SA_SIGINFO}, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_UNBLOCK, [HUP INT QUIT USR2 TERM CHLD], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [QUIT], NULL, 8) = 0
+sched_setscheduler(5060, SCHED_OTHER, { 5 }) = -1 EINVAL (Invalid argument)
+mmap2(0xbfe00000, 12288, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xbfe00000
+mprotect(0xbfe00000, 12288, PROT_NONE)  = 0
+gettimeofday({1104539786, 26790}, NULL) = 0
+gettimeofday({1104539786, 26814}, NULL) = 0
+gettimeofday({1104539786, 26847}, NULL) = 0
+gettimeofday({1104539786, 26894}, NULL) = 0
+gettimeofday({1104539786, 26917}, NULL) = 0
+gettimeofday({1104539786, 26961}, NULL) = 0
+futex(0x82f3148, FUTEX_WAIT, 0, NULL)   = 0
+futex(0x805afd0, FUTEX_WAKE, 1)         = 0
+gettimeofday({1104539786, 27098}, NULL) = 0
+futex(0x404c7000, FUTEX_WAKE, 1)        = 1
+mmap2(0xbfe00000, 12288, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0xbfe00000
+futex(0x8099b30, FUTEX_WAKE, 1)         = 1
+futex(0x8099b20, FUTEX_WAKE, 1)         = 1
+futex(0x805ae60, FUTEX_WAKE, 1)         = 1
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+unlink("/tmp/hsperfdata_ejs/5060")      = 0
+exit_group(0)                           = ?

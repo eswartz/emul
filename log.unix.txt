@@ -1,0 +1,79 @@
+Using GTK
+X-Window video: color class = DirectColor
+X-Window video: Detected X Window System...
+SVGALIB video: testing console video... cannot access.
+SVGALIB video: vmDetectModule:  not available
+Open Sound System: Detected Open Sound System...
+Linux PC speaker: vmDetectModule:  not available
+Linux SVGAlib keyboard: testing console keyboard... cannot access.
+Linux SVGAlib keyboard: vmDetectModule:  not available
+Initializing memory...
+9900 emulator: SelectModules: using
+GTK+ video: SelectModules: using
+Advanced Linux Sound Architecture: SelectModules: using
+GTK+ keyboard: SelectModules: using
+TI real-disk DSR: SelectModules: using
+Emulated disk DSR: SelectModules: using
+TI real-RS232 DSR: SelectModules: using
+Emulated PIO DSR: SelectModules: using
+TI real-disk DSR: setting up TI real-disk DSR ROM
+TI real-RS232 DSR: RS232/1 is /dev/ttyS0
+TI real-RS232 DSR: RS232/2 is /dev/ttyS1
+TI real-RS232 DSR: assigned 2 serial ports
+Setting up LPC speech...
+
+Loading ROM image /usr/local/src/v9t9-data/roms/994arom.bin... swapping bytes... done
+Loading ROM image /usr/local/src/v9t9-data/roms/994agrom.bin... done
+9900 emulator: SelectModules: using
+GTK+ video: SelectModules: using
+Advanced Linux Sound Architecture: SelectModules: using
+GTK+ keyboard: SelectModules: using
+TI real-disk DSR: SelectModules: using
+Emulated disk DSR: SelectModules: using
+TI real-RS232 DSR: SelectModules: using
+Emulated PIO DSR: SelectModules: using
+9900 emulator: SelectModules: using
+GTK+ video: SelectModules: using
+Advanced Linux Sound Architecture: SelectModules: using
+GTK+ keyboard: SelectModules: using
+TI real-disk DSR: SelectModules: using
+Emulated disk DSR: SelectModules: using
+TI real-RS232 DSR: SelectModules: using
+Emulated PIO DSR: SelectModules: using
+9900 emulator: SelectModules: using
+GTK+ video: SelectModules: using
+Open Sound System: SelectModules: using
+GTK+ keyboard: SelectModules: using
+TI real-disk DSR: SelectModules: using
+Emulated disk DSR: SelectModules: using
+TI real-RS232 DSR: SelectModules: using
+Emulated PIO DSR: SelectModules: using
+9900 emulator: SelectModules: using
+GTK+ video: SelectModules: using
+Open Sound System: SelectModules: using
+GTK+ keyboard: SelectModules: using
+TI real-disk DSR: SelectModules: using
+Emulated disk DSR: SelectModules: using
+TI real-RS232 DSR: SelectModules: using
+Emulated PIO DSR: SelectModules: using
+Loading PIO DSR ROM image /usr/local/src/V9t9/tools/DSRs/emupio.bin... swapping bytes... done
+GTK+ video: No writeable colors available
+Loading TI disk DSR ROM image /usr/local/src/v9t9-data/roms/disk.bin... swapping bytes... done
+Loading Emulated disk DSR ROM image /usr/local/src/V9t9/tools/DSRs/emu2disk.bin... swapping bytes... done
+Loading TI RS232 DSR ROM image /usr/local/src/v9t9-data/roms/rs232.bin... swapping bytes... done
+Loading ROM image /usr/local/src/v9t9-data/roms/spchrom.bin... done
+Cassette 0 is 0x80e4640 (Open Sound System)
+
+Cassette 1 is 0x80e4640 (Open Sound System)
+
+GTK+ keyboard: direct key
+GTK+ keyboard: direct key
+GTK+ keyboard: direct key
+GTK+ keyboard: direct key
+GTK+ keyboard: direct key
+GTK+ keyboard: direct key
+GTK+ keyboard: direct key
+GTK+ keyboard: direct key
+GTK+ video: vmRestopModule: internal error
+GTK+ video: vmRestopModule: internal error
+GTK+ video: vmDisableModule: internal error

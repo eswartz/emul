@@ -1,0 +1,661 @@
+execve("/usr/bin/cvs", ["cvs", "-d", "/u/cvsroot", "import", "V9t9j", "orig", "orig_0"], [/* 46 vars */]) = 0
+uname({sys="Linux", node="juncture", ...}) = 0
+brk(0)                                  = 0x80d4000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+old_mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe9000
+open("/etc/ld.so.preload", O_RDONLY)    = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=84975, ...}) = 0
+old_mmap(NULL, 84975, PROT_READ, MAP_PRIVATE, 3, 0) = 0xb7fd4000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/librt.so.1", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0P\33\0\000"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=23676, ...}) = 0
+old_mmap(NULL, 26444, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0xb7fcd000
+old_mmap(0xb7fd3000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x5000) = 0xb7fd3000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libcrypt.so.1", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\200\t\0"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=18300, ...}) = 0
+old_mmap(NULL, 181116, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0xb7fa0000
+old_mmap(0xb7fa5000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x4000) = 0xb7fa5000
+old_mmap(0xb7fa6000, 156540, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xb7fa6000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libnsl.so.1", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\200;\0"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=73304, ...}) = 0
+old_mmap(NULL, 80544, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0xb7f8c000
+old_mmap(0xb7f9d000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x11000) = 0xb7f9d000
+old_mmap(0xb7f9e000, 6816, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xb7f9e000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/usr/lib/libz.so.1", O_RDONLY)    = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0P\27\0\000"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=65256, ...}) = 0
+old_mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7f8b000
+old_mmap(NULL, 68316, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0xb7f7a000
+old_mmap(0xb7f8a000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0xf000) = 0xb7f8a000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/libpam.so.0", O_RDONLY)      = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0`\25\0\000"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=30360, ...}) = 0
+old_mmap(NULL, 29324, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0xb7f72000
+old_mmap(0xb7f79000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x7000) = 0xb7f79000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libc.so.6", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\215Y\1"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=1222116, ...}) = 0
+old_mmap(NULL, 1232428, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0xb7e45000
+old_mmap(0xb7f67000, 36864, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x121000) = 0xb7f67000
+old_mmap(0xb7f70000, 7724, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xb7f70000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libpthread.so.0", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\224E\0"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=78598, ...}) = 0
+old_mmap(NULL, 65028, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0xb7e35000
+old_mmap(0xb7e42000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0xc000) = 0xb7e42000
+old_mmap(0xb7e43000, 7684, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xb7e43000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libdl.so.2", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\276\31"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=9152, ...}) = 0
+old_mmap(NULL, 12008, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0xb7e32000
+old_mmap(0xb7e34000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x1000) = 0xb7e34000
+close(3)                                = 0
+old_mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7e31000
+set_thread_area({entry_number:-1 -> 6, base_addr:0xb7e317c0, limit:1048575, seg_32bit:1, contents:0, read_exec_only:0, limit_in_pages:1, seg_not_present:0, useable:1}) = 0
+munmap(0xb7fd4000, 84975)               = 0
+set_tid_address(0xb7e31808)             = 8400
+rt_sigaction(SIGRTMIN, {0xb7e39514, [], SA_SIGINFO}, NULL, 8) = 0
+rt_sigprocmask(SIG_UNBLOCK, [RTMIN], NULL, 8) = 0
+getrlimit(RLIMIT_STACK, {rlim_cur=8192*1024, rlim_max=RLIM_INFINITY}) = 0
+brk(0)                                  = 0x80d4000
+brk(0x80f5000)                          = 0x80f5000
+brk(0)                                  = 0x80f5000
+open("/etc/localtime", O_RDONLY)        = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=1279, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe8000
+read(3, "TZif\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\5\0\0\0\5\0"..., 4096) = 1279
+close(3)                                = 0
+munmap(0xb7fe8000, 4096)                = 0
+getuid32()                              = 500
+access("/home/ejs/.cvsrc", R_OK)        = -1 ENOENT (No such file or directory)
+getcwd("/mnt/old/local/src/V9t9j", 4098) = 25
+getpid()                                = 8400
+rt_sigprocmask(SIG_BLOCK, [ABRT], [], 8) = 0
+rt_sigaction(SIGABRT, {0x80aa1c6, [], 0}, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [HUP], [], 8) = 0
+rt_sigaction(SIGHUP, {0x80aa1c6, [], 0}, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [INT], [], 8) = 0
+rt_sigaction(SIGINT, {0x80aa1c6, [], 0}, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [QUIT], [], 8) = 0
+rt_sigaction(SIGQUIT, {0x80aa1c6, [], 0}, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [PIPE], [], 8) = 0
+rt_sigaction(SIGPIPE, {0x80aa1c6, [], 0}, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [TERM], [], 8) = 0
+rt_sigaction(SIGTERM, {0x80aa1c6, [], 0}, {SIG_DFL}, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+uname({sys="Linux", node="juncture", ...}) = 0
+getuid32()                              = 500
+socket(PF_FILE, SOCK_STREAM, 0)         = 3
+connect(3, {sa_family=AF_FILE, path="/var/run/.nscd_socket"}, 110) = -1 ENOENT (No such file or directory)
+close(3)                                = 0
+open("/etc/nsswitch.conf", O_RDONLY)    = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=465, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe8000
+read(3, "# /etc/nsswitch.conf\n#\n# Example"..., 4096) = 465
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0xb7fe8000, 4096)                = 0
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=84975, ...}) = 0
+old_mmap(NULL, 84975, PROT_READ, MAP_PRIVATE, 3, 0) = 0xb7fd4000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libnss_compat.so.2", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\0\22\0"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=28420, ...}) = 0
+old_mmap(NULL, 31432, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0xb7e29000
+old_mmap(0xb7e30000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x6000) = 0xb7e30000
+close(3)                                = 0
+munmap(0xb7fd4000, 84975)               = 0
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=84975, ...}) = 0
+old_mmap(NULL, 84975, PROT_READ, MAP_PRIVATE, 3, 0) = 0xb7fd4000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libnss_nis.so.2", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\340\33"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=32348, ...}) = 0
+old_mmap(NULL, 35528, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0xb7e20000
+old_mmap(0xb7e28000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x7000) = 0xb7e28000
+close(3)                                = 0
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/tls/i686/cmov/libnss_files.so.2", O_RDONLY) = 3
+read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0P\35\0\000"..., 512) = 512
+fstat64(3, {st_mode=S_IFREG|0644, st_size=34516, ...}) = 0
+old_mmap(NULL, 33716, PROT_READ|PROT_EXEC, MAP_PRIVATE, 3, 0) = 0xb7e17000
+old_mmap(0xb7e1f000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x8000) = 0xb7e1f000
+close(3)                                = 0
+munmap(0xb7fd4000, 84975)               = 0
+open("/etc/passwd", O_RDONLY)           = 3
+fcntl64(3, F_GETFD)                     = 0
+fcntl64(3, F_SETFD, FD_CLOEXEC)         = 0
+_llseek(3, 0, [0], SEEK_CUR)            = 0
+fstat64(3, {st_mode=S_IFREG|0644, st_size=1327, ...}) = 0
+mmap2(NULL, 1327, PROT_READ, MAP_SHARED, 3, 0) = 0xb7fe8000
+_llseek(3, 1327, [1327], SEEK_SET)      = 0
+munmap(0xb7fe8000, 1327)                = 0
+close(3)                                = 0
+access("/home/ejs/.cvsrc", R_OK)        = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/CVSROOT", R_OK|X_OK) = 0
+open("/u/cvsroot/CVSROOT/config", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=364, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe8000
+read(3, "# Set this to \"no\" if pserver sh"..., 4096) = 364
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0xb7fe8000, 4096)                = 0
+open("/u/cvsroot/CVSROOT/options", O_RDONLY|O_LARGEFILE) = -1 ENOENT (No such file or directory)
+rt_sigprocmask(SIG_BLOCK, [ABRT], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [HUP], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [INT], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [QUIT], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [PIPE], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [TERM], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+open("/u/cvsroot/CVSROOT/cvsignore", O_RDONLY|O_LARGEFILE) = -1 ENOENT (No such file or directory)
+getuid32()                              = 500
+open("/home/ejs/.cvsignore", O_RDONLY|O_LARGEFILE) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/CVSROOT/cvswrappers", F_OK) = 0
+open("/u/cvsroot/CVSROOT/cvswrappers", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=753, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe8000
+read(3, "# This file affects handling of "..., 4096) = 753
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0xb7fe8000, 4096)                = 0
+getuid32()                              = 500
+access("/home/ejs/.cvswrappers", F_OK)  = -1 ENOENT (No such file or directory)
+gettimeofday({1123972031, 834204}, NULL) = 0
+getpid()                                = 8400
+open("/tmp/cvshXV85F", O_RDWR|O_CREAT|O_EXCL|O_LARGEFILE, 0600) = 3
+fcntl64(3, F_GETFL)                     = 0x8002 (flags O_RDWR|O_LARGEFILE)
+fstat64(3, {st_mode=S_IFREG|0600, st_size=0, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe8000
+_llseek(3, 0, [0], SEEK_CUR)            = 0
+open("/u/cvsroot/CVSROOT/rcsinfo", O_RDONLY|O_LARGEFILE) = 4
+fstat64(4, {st_mode=S_IFREG|0444, st_size=649, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe7000
+read(4, "# The \"rcsinfo\" file is used to "..., 4096) = 649
+read(4, "", 4096)                       = 0
+close(4)                                = 0
+munmap(0xb7fe7000, 4096)                = 0
+write(3, "\nCVS: --------------------------"..., 230) = 230
+close(3)                                = 0
+munmap(0xb7fe8000, 4096)                = 0
+stat64("/tmp/cvshXV85F", {st_mode=S_IFREG|0600, st_size=230, ...}) = 0
+vfork()                                 = 8401
+rt_sigaction(SIGINT, {SIG_IGN}, {0x80aa1c6, [], 0}, 8) = 0
+rt_sigaction(SIGQUIT, {SIG_IGN}, {0x80aa1c6, [], 0}, 8) = 0
+waitpid(8401, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0) = 8401
+--- SIGCHLD (Child exited) @ 0 (0) ---
+rt_sigaction(SIGINT, {0x80aa1c6, [], 0}, NULL, 8) = 0
+rt_sigaction(SIGQUIT, {0x80aa1c6, [], 0}, NULL, 8) = 0
+open("/tmp/cvshXV85F", O_RDONLY|O_LARGEFILE) = 3
+stat64("/tmp/cvshXV85F", {st_mode=S_IFREG|0600, st_size=233, ...}) = 0
+fstat64(3, {st_mode=S_IFREG|0600, st_size=233, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe8000
+read(3, "ss \nCVS: -----------------------"..., 4096) = 233
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0xb7fe8000, 4096)                = 0
+unlink("/tmp/cvshXV85F")                = 0
+open("/u/cvsroot/CVSROOT/verifymsg", O_RDONLY|O_LARGEFILE) = 3
+fstat64(3, {st_mode=S_IFREG|0444, st_size=1026, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe8000
+read(3, "# The \"verifymsg\" file is used t"..., 4096) = 1026
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+munmap(0xb7fe8000, 4096)                = 0
+getcwd("/mnt/old/local/src/V9t9j", 4098) = 25
+stat64("/u/cvsroot", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+getcwd("/mnt/old/local/src/V9t9j", 4098) = 25
+chdir("/u/cvsroot")                     = 0
+getcwd("/mnt/old/u/cvsroot", 4098)      = 19
+chdir("/mnt/old/local/src/V9t9j")       = 0
+umask(02)                               = 022
+mkdir("/u/cvsroot/V9t9j", 0777)         = -1 EACCES (Permission denied)
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "cannot make path to ", 20cannot make path to )    = 20
+write(2, "/u/cvsroot/V9t9j", 16/u/cvsroot/V9t9j)        = 16
+write(2, ": ", 2: )                       = 2
+write(2, "Permission denied", 17Permission denied)       = 17
+write(2, "\n", 1
+)                       = 1
+getpid()                                = 8400
+open("/tmp/cvs6ETbwi", O_RDWR|O_CREAT|O_EXCL|O_LARGEFILE, 0600) = 3
+fcntl64(3, F_GETFL)                     = 0x8002 (flags O_RDWR|O_LARGEFILE)
+fstat64(3, {st_mode=S_IFREG|0600, st_size=0, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe8000
+_llseek(3, 0, [0], SEEK_CUR)            = 0
+unlink("/tmp/cvs6ETbwi")                = 0
+open(".cvsignore", O_RDONLY|O_LARGEFILE) = -1 ENOENT (No such file or directory)
+open(".cvswrappers", O_RDONLY|O_LARGEFILE) = -1 ENOENT (No such file or directory)
+open(".", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY) = 4
+fstat64(4, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+fcntl64(4, F_SETFD, FD_CLOEXEC)         = 0
+getdents64(4, /* 20 entries */, 4096)   = 608
+access("/u/cvsroot/V9t9j/.project,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/.project,v", F_OK) = -1 ENOENT (No such file or directory)
+fstat64(1, {st_mode=S_IFREG|0644, st_size=16490, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe7000
+lstat64(".project", {st_mode=S_IFREG|0644, st_size=508, ...}) = 0
+open(".project", O_RDONLY|O_LARGEFILE)  = 5
+open("/u/cvsroot/V9t9j/.project,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "\nVendor Tag:\torig\nRelease Tags:\t"..., 144) = 144
+write(1, "N V9t9j/.project\n", 17N V9t9j/.project
+)      = 17
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/.project,v", 27/u/cvsroot/V9t9j/.project,v) = 27
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/.classpath,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/.classpath,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64(".classpath", {st_mode=S_IFREG|0644, st_size=477, ...}) = 0
+open(".classpath", O_RDONLY|O_LARGEFILE) = 5
+open("/u/cvsroot/V9t9j/.classpath,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "N V9t9j/.classpath\ncvs: ERROR: c"..., 106) = 106
+write(1, "N V9t9j/.classpath\n", 19N V9t9j/.classpath
+)    = 19
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/.classpath,v", 29/u/cvsroot/V9t9j/.classpath,v) = 29
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/.cdtproject,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/.cdtproject,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64(".cdtproject", {st_mode=S_IFREG|0644, st_size=84, ...}) = 0
+open(".cdtproject", O_RDONLY|O_LARGEFILE) = 5
+open("/u/cvsroot/V9t9j/.cdtproject,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "N V9t9j/.cdtproject\ncvs: ERROR: "..., 108) = 108
+write(1, "N V9t9j/.cdtproject\n", 20N V9t9j/.cdtproject
+)   = 20
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/.cdtproject,v", 30/u/cvsroot/V9t9j/.cdtproject,v) = 30
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/log.unix.txt,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/log.unix.txt,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64("log.unix.txt", {st_mode=S_IFREG|0644, st_size=3289, ...}) = 0
+open("log.unix.txt", O_RDONLY|O_LARGEFILE) = 5
+open("/u/cvsroot/V9t9j/log.unix.txt,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "N V9t9j/log.unix.txt\ncvs: ERROR:"..., 110) = 110
+write(1, "N V9t9j/log.unix.txt\n", 21N V9t9j/log.unix.txt
+)  = 21
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/log.unix.txt,v", 31/u/cvsroot/V9t9j/log.unix.txt,v) = 31
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/digital.raw,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/digital.raw,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64("digital.raw", {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
+open("digital.raw", O_RDONLY|O_LARGEFILE) = 5
+open("/u/cvsroot/V9t9j/digital.raw,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "N V9t9j/digital.raw\ncvs: ERROR: "..., 108) = 108
+write(1, "N V9t9j/digital.raw\n", 20N V9t9j/digital.raw
+)   = 20
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/digital.raw,v", 30/u/cvsroot/V9t9j/digital.raw,v) = 30
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/mixed.raw,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/mixed.raw,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64("mixed.raw", {st_mode=S_IFREG|0644, st_size=1722368, ...}) = 0
+open("mixed.raw", O_RDONLY|O_LARGEFILE) = 5
+open("/u/cvsroot/V9t9j/mixed.raw,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "N V9t9j/mixed.raw\ncvs: ERROR: ca"..., 104) = 104
+write(1, "N V9t9j/mixed.raw\n", 18N V9t9j/mixed.raw
+)     = 18
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/mixed.raw,v", 28/u/cvsroot/V9t9j/mixed.raw,v) = 28
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/serial1.txt,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/serial1.txt,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64("serial1.txt", {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
+open("serial1.txt", O_RDONLY|O_LARGEFILE) = 5
+open("/u/cvsroot/V9t9j/serial1.txt,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "N V9t9j/serial1.txt\ncvs: ERROR: "..., 108) = 108
+write(1, "N V9t9j/serial1.txt\n", 20N V9t9j/serial1.txt
+)   = 20
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/serial1.txt,v", 30/u/cvsroot/V9t9j/serial1.txt,v) = 30
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/foo.class,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/foo.class,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64("foo.class", {st_mode=S_IFREG|0644, st_size=454, ...}) = 0
+open("foo.class", O_RDONLY|O_LARGEFILE) = 5
+open("/u/cvsroot/V9t9j/foo.class,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "N V9t9j/foo.class\ncvs: ERROR: ca"..., 104) = 104
+write(1, "N V9t9j/foo.class\n", 18N V9t9j/foo.class
+)     = 18
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/foo.class,v", 28/u/cvsroot/V9t9j/foo.class,v) = 28
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/goesbad.txt,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/goesbad.txt,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64("goesbad.txt", {st_mode=S_IFREG|0644, st_size=745, ...}) = 0
+open("goesbad.txt", O_RDONLY|O_LARGEFILE) = 5
+open("/u/cvsroot/V9t9j/goesbad.txt,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "N V9t9j/goesbad.txt\ncvs: ERROR: "..., 108) = 108
+write(1, "N V9t9j/goesbad.txt\n", 20N V9t9j/goesbad.txt
+)   = 20
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/goesbad.txt,v", 30/u/cvsroot/V9t9j/goesbad.txt,v) = 30
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/00.lst,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/00.lst,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64("00.lst", {st_mode=S_IFREG|0644, st_size=2282, ...}) = 0
+open("00.lst", O_RDONLY|O_LARGEFILE)    = 5
+open("/u/cvsroot/V9t9j/00.lst,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "N V9t9j/00.lst\ncvs: ERROR: canno"..., 98) = 98
+write(1, "N V9t9j/00.lst\n", 15N V9t9j/00.lst
+)        = 15
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/00.lst,v", 25/u/cvsroot/V9t9j/00.lst,v) = 25
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/01.lst,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/01.lst,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64("01.lst", {st_mode=S_IFREG|0644, st_size=2187, ...}) = 0
+open("01.lst", O_RDONLY|O_LARGEFILE)    = 5
+open("/u/cvsroot/V9t9j/01.lst,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "I V9t9j/00.lst~\nN V9t9j/01.lst\nc"..., 114) = 114
+write(1, "I V9t9j/00.lst~\nN V9t9j/01.lst\n", 31I V9t9j/00.lst~
+N V9t9j/01.lst
+) = 31
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/01.lst,v", 25/u/cvsroot/V9t9j/01.lst,v) = 25
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/foo.java,v", F_OK) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/foo.java,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64("foo.java", {st_mode=S_IFREG|0644, st_size=113, ...}) = 0
+open("foo.java", O_RDONLY|O_LARGEFILE)  = 5
+open("/u/cvsroot/V9t9j/foo.java,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "N V9t9j/foo.java\ncvs: ERROR: can"..., 102) = 102
+write(1, "N V9t9j/foo.java\n", 17N V9t9j/foo.java
+)      = 17
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/foo.java,v", 27/u/cvsroot/V9t9j/foo.java,v) = 27
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+access("/u/cvsroot/V9t9j/err,v", F_OK)  = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/Attic/err,v", F_OK) = -1 ENOENT (No such file or directory)
+lstat64("err", {st_mode=S_IFREG|0644, st_size=29589, ...}) = 0
+open("err", O_RDONLY|O_LARGEFILE)       = 5
+open("/u/cvsroot/V9t9j/err,v", O_RDWR|O_CREAT|O_TRUNC|O_LARGEFILE, 0666) = -1 ENOENT (No such file or directory)
+close(5)                                = 0
+write(3, "N V9t9j/err\ncvs: ERROR: cannot w"..., 92) = 92
+write(1, "N V9t9j/err\n", 12N V9t9j/err
+)           = 12
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot write file ", 25ERROR: cannot write file ) = 25
+write(2, "/u/cvsroot/V9t9j/err,v", 22/u/cvsroot/V9t9j/err,v)  = 22
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+getdents64(4, /* 0 entries */, 4096)    = 0
+close(4)                                = 0
+lstat64("v9t9", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open(".", O_RDONLY|O_LARGEFILE)         = 4
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "Importing ", 10Importing )              = 10
+write(2, "/u/cvsroot/V9t9j/v9t9", 21/u/cvsroot/V9t9j/v9t9)   = 21
+write(2, "\n", 1
+)                       = 1
+chdir("v9t9")                           = 0
+stat64("/u/cvsroot/V9t9j/v9t9", 0xbffff630) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/v9t9", F_OK)   = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/v9t9,v", F_OK) = -1 ENOENT (No such file or directory)
+mkdir("/u/cvsroot/V9t9j/v9t9", 0777)    = -1 ENOENT (No such file or directory)
+write(3, "cvs: ERROR: cannot mkdir /u/cvsr"..., 87) = 87
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot mkdir ", 20ERROR: cannot mkdir )    = 20
+write(2, "/u/cvsroot/V9t9j/v9t9", 21/u/cvsroot/V9t9j/v9t9)   = 21
+write(2, " -- not added", 13 -- not added)           = 13
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+fchdir(4)                               = 0
+close(4)                                = 0
+lstat64("tests", {st_mode=S_IFDIR|0754, st_size=4096, ...}) = 0
+open(".", O_RDONLY|O_LARGEFILE)         = 4
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "Importing ", 10Importing )              = 10
+write(2, "/u/cvsroot/V9t9j/tests", 22/u/cvsroot/V9t9j/tests)  = 22
+write(2, "\n", 1
+)                       = 1
+chdir("tests")                          = 0
+stat64("/u/cvsroot/V9t9j/tests", 0xbffff630) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/tests", F_OK)  = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/tests,v", F_OK) = -1 ENOENT (No such file or directory)
+mkdir("/u/cvsroot/V9t9j/tests", 0777)   = -1 ENOENT (No such file or directory)
+write(3, "cvs: ERROR: cannot mkdir /u/cvsr"..., 88) = 88
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot mkdir ", 20ERROR: cannot mkdir )    = 20
+write(2, "/u/cvsroot/V9t9j/tests", 22/u/cvsroot/V9t9j/tests)  = 22
+write(2, " -- not added", 13 -- not added)           = 13
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+fchdir(4)                               = 0
+close(4)                                = 0
+lstat64("sound", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open(".", O_RDONLY|O_LARGEFILE)         = 4
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "Importing ", 10Importing )              = 10
+write(2, "/u/cvsroot/V9t9j/sound", 22/u/cvsroot/V9t9j/sound)  = 22
+write(2, "\n", 1
+)                       = 1
+chdir("sound")                          = 0
+stat64("/u/cvsroot/V9t9j/sound", 0xbffff630) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/sound", F_OK)  = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/sound,v", F_OK) = -1 ENOENT (No such file or directory)
+mkdir("/u/cvsroot/V9t9j/sound", 0777)   = -1 ENOENT (No such file or directory)
+write(3, "cvs: ERROR: cannot mkdir /u/cvsr"..., 88) = 88
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot mkdir ", 20ERROR: cannot mkdir )    = 20
+write(2, "/u/cvsroot/V9t9j/sound", 22/u/cvsroot/V9t9j/sound)  = 22
+write(2, " -- not added", 13 -- not added)           = 13
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+fchdir(4)                               = 0
+close(4)                                = 0
+lstat64("proto", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open(".", O_RDONLY|O_LARGEFILE)         = 4
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "Importing ", 10Importing )              = 10
+write(2, "/u/cvsroot/V9t9j/proto", 22/u/cvsroot/V9t9j/proto)  = 22
+write(2, "\n", 1
+)                       = 1
+chdir("proto")                          = 0
+stat64("/u/cvsroot/V9t9j/proto", 0xbffff630) = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/proto", F_OK)  = -1 ENOENT (No such file or directory)
+access("/u/cvsroot/V9t9j/proto,v", F_OK) = -1 ENOENT (No such file or directory)
+mkdir("/u/cvsroot/V9t9j/proto", 0777)   = -1 ENOENT (No such file or directory)
+write(3, "cvs: ERROR: cannot mkdir /u/cvsr"..., 88) = 88
+write(2, "cvs", 3cvs)                      = 3
+write(2, " ", 1 )                        = 1
+write(2, "import", 6import)                   = 6
+write(2, ": ", 2: )                       = 2
+write(2, "ERROR: cannot mkdir ", 20ERROR: cannot mkdir )    = 20
+write(2, "/u/cvsroot/V9t9j/proto", 22/u/cvsroot/V9t9j/proto)  = 22
+write(2, " -- not added", 13 -- not added)           = 13
+write(2, ": ", 2: )                       = 2
+write(2, "No such file or directory", 25No such file or directory) = 25
+write(2, "\n", 1
+)                       = 1
+fchdir(4)                               = 0
+close(4)                                = 0
+open("/u/cvsroot/CVSROOT/loginfo", O_RDONLY|O_LARGEFILE) = 4
+fstat64(4, {st_mode=S_IFREG|0444, st_size=1141, ...}) = 0
+mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7fe6000
+read(4, "# The \"loginfo\" file controls wh"..., 4096) = 1141
+read(4, "", 4096)                       = 0
+close(4)                                = 0
+munmap(0xb7fe6000, 4096)                = 0
+write(3, "\nNo conflicts created by this im"..., 38) = 38
+close(3)                                = 0
+munmap(0xb7fe8000, 4096)                = 0
+unlink("/tmp/cvs6ETbwi")                = -1 ENOENT (No such file or directory)
+rt_sigprocmask(SIG_SETMASK, ~[RTMIN], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, ~[RTMIN], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, ~[RTMIN], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, ~[RTMIN], [], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+write(1, "\nNo conflicts created by this im"..., 38
+No conflicts created by this import
+
+) = 38
+munmap(0xb7fe7000, 4096)                = 0
+exit_group(1)                           = ?
