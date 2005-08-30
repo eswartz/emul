@@ -8,7 +8,9 @@ package v9t9;
 
 import v9t9.cpu.Cpu;
 import v9t9.cpu.Executor;
-import v9t9.vdp.Handler;
+import v9t9.demo.DemoClient;
+import v9t9.sound.SoundHandler;
+import v9t9.vdp.VdpHandler;
 
 /** Encapsulate all the information about a running emulated machine.
  * @author ejs
@@ -19,7 +21,7 @@ public class Machine {
     Cpu cpu;
     Executor executor;
     Client client;
-    Cru cru;
+    CruHandler cru;
     boolean bRunning;
     
     public Machine() {
@@ -46,6 +48,12 @@ public class Machine {
                "/usr/local/src/v9t9-data/modules/diagsg.bin", 0x0, false, false));
 
         bRunning = true;
+    }
+    
+    public void close() {
+        bRunning = false;
+        if (client != null)
+            client.close();
     }
     
     /* (non-Javadoc)
@@ -77,7 +85,7 @@ public class Machine {
     public static void main(String args[]) {
         Machine machine = new Machine();
         machine.setClient(new DemoClient(machine));
-        machine.setCru((Cru)machine.getClient());
+        machine.setCru((CruHandler)machine.getClient());
         
         machine.cpu.contextSwitch(0);
         long lastInterrupt = System.currentTimeMillis();
@@ -88,20 +96,26 @@ public class Machine {
         allowInterrupts = true;
         
         final int interruptTick = 1000 / 30;	// TODO: non-reduced rate
-        while (machine.isRunning()) {
-            long now = System.currentTimeMillis(); 
-            if (allowInterrupts && now >= lastInterrupt + interruptTick) { 
-                machine.cpu.holdpin(Cpu.INTPIN_INTREQ);
-                lastInterrupt += interruptTick;
+        try {
+            while (machine.isRunning()) {
+                long now = System.currentTimeMillis(); 
+                if (allowInterrupts && now >= lastInterrupt + interruptTick) { 
+                    machine.cpu.holdpin(Cpu.INTPIN_INTREQ);
+                    lastInterrupt += interruptTick;
+                }
+                if (now >= lastInfo + 1000) {
+                    upTime += now - lastInfo;
+                    System.out.println("# instructions / second: " + machine.executor.nInstructions);
+                    machine.executor.nInstructions = 0;
+                    lastInfo = now;
+                }
+                machine.executor.execute();
             }
-            if (now >= lastInfo + 1000) {
-                upTime += now - lastInfo;
-                System.out.println("# instructions / second: " + machine.executor.nInstructions);
-                machine.executor.nInstructions = 0;
-                lastInfo = now;
-            }
-            machine.executor.execute();
+        } finally {
+            System.out.println("time running: " + upTime);
+            machine.close();
         }
+        
         //machine = null;
     }
     
@@ -117,10 +131,10 @@ public class Machine {
     public void setClient(Client client) {
         this.client = client;
     }
-    public Cru getCru() {
+    public CruHandler getCru() {
         return cru;
     }
-    public void setCru(Cru cru) {
+    public void setCru(CruHandler cru) {
         this.cru = cru;
     }
     public Executor getExecutor() {
@@ -131,12 +145,12 @@ public class Machine {
     }
 }
 
-class DummyClient extends Client {
-    v9t9.vdp.Handler video;
-    sound.Handler sound;
+class DummyClient implements Client {
+    v9t9.vdp.VdpHandler video;
+    v9t9.sound.SoundHandler sound;
     
     public DummyClient() {
-        video = new v9t9.vdp.Handler() {
+        video = new v9t9.vdp.VdpHandler() {
 
             public void writeVdpReg(byte reg, byte val, byte old) {
             }
@@ -148,7 +162,7 @@ class DummyClient extends Client {
             public void writeVdpMemory(short vdpaddr, byte val) {
             }
         };
-        sound = new sound.Handler() {
+        sound = new v9t9.sound.SoundHandler() {
             public void writeSound(byte val) {
             }
         };
@@ -157,7 +171,7 @@ class DummyClient extends Client {
     /* (non-Javadoc)
      * @see v9t9.Client#getVideo()
      */
-    public Handler getVideo() {
+    public VdpHandler getVideoHandler() {
         // TODO Auto-generated method stub
         return video;
     }
@@ -165,7 +179,7 @@ class DummyClient extends Client {
     /* (non-Javadoc)
      * @see v9t9.Client#setVideo(vdp.Handler)
      */
-    public void setVideo(Handler video) {
+    public void setVideoHandler(VdpHandler video) {
         // TODO Auto-generated method stub
         this.video = video;
     }
@@ -173,7 +187,7 @@ class DummyClient extends Client {
     /* (non-Javadoc)
      * @see v9t9.Client#close()
      */
-    void close() {
+    public void close() {
         // TODO Auto-generated method stub
         
     }
@@ -186,10 +200,10 @@ class DummyClient extends Client {
         
     }
 
-    public sound.Handler getSound() {
+    public SoundHandler getSoundHandler() {
         return sound;
     }
-    public void setSound(sound.Handler sound) {
+    public void setSoundHandler(SoundHandler sound) {
         this.sound = sound;
     }
 }

@@ -6,19 +6,23 @@
  */
 package v9t9;
 
+import v9t9.sound.SoundHandler;
+import v9t9.vdp.VdpHandler;
+
 /** The client the emulated machine interacts with.  This could
  * be the emulator itself, hosting a window, keyboard, etc., 
  * or it could be a demo running, or it could be a remote host.
  * 
  * @author ejs
  */
-public abstract class Client {
-    abstract void close();
+public interface Client {
+    void close();
     
-    abstract public v9t9.vdp.Handler getVideo();
-    abstract public void setVideo(v9t9.vdp.Handler video);
+    VdpHandler getVideoHandler();
+    void setVideoHandler(VdpHandler video);
 
-    abstract public void timerTick();
-
-    abstract public sound.Handler getSound();
+    SoundHandler getSoundHandler();
+    void setSoundHandler(SoundHandler handler);
+    
+    void timerTick();
 }

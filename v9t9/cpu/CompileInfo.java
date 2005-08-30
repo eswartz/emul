@@ -11,8 +11,6 @@ import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 
-import v9t9.Memory;
-
 
 class CompileInfo {
     InstructionFactory ifact;

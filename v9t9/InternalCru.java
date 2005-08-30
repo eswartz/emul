@@ -11,7 +11,7 @@ import java.util.Iterator;
 /**
  * @author ejs
  */
-public class InternalCru implements Cru {
+public class InternalCru implements CruHandler {
     Machine machine;
     
     public interface CruReader {

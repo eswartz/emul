@@ -19,7 +19,51 @@ import java.util.TreeMap;
 import org.apache.bcel.Constants;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.classfile.Utility;
-import org.apache.bcel.generic.*;
+import org.apache.bcel.generic.ALOAD;
+import org.apache.bcel.generic.ASTORE;
+import org.apache.bcel.generic.ClassGen;
+import org.apache.bcel.generic.ConstantPoolGen;
+import org.apache.bcel.generic.DUP;
+import org.apache.bcel.generic.DUP_X2;
+import org.apache.bcel.generic.GETFIELD;
+import org.apache.bcel.generic.GOTO;
+import org.apache.bcel.generic.I2B;
+import org.apache.bcel.generic.I2S;
+import org.apache.bcel.generic.IADD;
+import org.apache.bcel.generic.IAND;
+import org.apache.bcel.generic.ICONST;
+import org.apache.bcel.generic.IDIV;
+import org.apache.bcel.generic.IFEQ;
+import org.apache.bcel.generic.IFNE;
+import org.apache.bcel.generic.IF_ICMPEQ;
+import org.apache.bcel.generic.IF_ICMPLE;
+import org.apache.bcel.generic.IINC;
+import org.apache.bcel.generic.ILOAD;
+import org.apache.bcel.generic.IMUL;
+import org.apache.bcel.generic.INEG;
+import org.apache.bcel.generic.IOR;
+import org.apache.bcel.generic.IREM;
+import org.apache.bcel.generic.ISHL;
+import org.apache.bcel.generic.ISHR;
+import org.apache.bcel.generic.ISTORE;
+import org.apache.bcel.generic.ISUB;
+import org.apache.bcel.generic.IUSHR;
+import org.apache.bcel.generic.IXOR;
+import org.apache.bcel.generic.InstructionConstants;
+import org.apache.bcel.generic.InstructionFactory;
+import org.apache.bcel.generic.InstructionHandle;
+import org.apache.bcel.generic.InstructionList;
+import org.apache.bcel.generic.LocalVariableGen;
+import org.apache.bcel.generic.MethodGen;
+import org.apache.bcel.generic.NOP;
+import org.apache.bcel.generic.ObjectType;
+import org.apache.bcel.generic.POP;
+import org.apache.bcel.generic.PUSH;
+import org.apache.bcel.generic.PUTFIELD;
+import org.apache.bcel.generic.SWAP;
+import org.apache.bcel.generic.Select;
+import org.apache.bcel.generic.TABLESWITCH;
+import org.apache.bcel.generic.Type;
 
 import v9t9.Machine;
 import v9t9.MemoryDomain;
@@ -688,7 +732,7 @@ public class Compiler {
             ilist.append(new ILOAD(info.localVal1));
             ilist.append(new PUSH(info.pgen, 1));
             ilist.append(new PUSH(info.pgen, 1));
-            ilist.append(info.ifact.createInvoke(v9t9.Cru.class.getName(),
+            ilist.append(info.ifact.createInvoke(v9t9.CruHandler.class.getName(),
                     "writeBits", Type.VOID, new Type[] { Type.INT, Type.INT,
                             Type.INT }, Constants.INVOKEINTERFACE));
             break;
@@ -699,7 +743,7 @@ public class Compiler {
             ilist.append(new ILOAD(info.localVal1));
             ilist.append(new PUSH(info.pgen, 0));
             ilist.append(new PUSH(info.pgen, 1));
-            ilist.append(info.ifact.createInvoke(v9t9.Cru.class.getName(),
+            ilist.append(info.ifact.createInvoke(v9t9.CruHandler.class.getName(),
                     "writeBits", Type.VOID, new Type[] { Type.INT, Type.INT,
                             Type.INT }, Constants.INVOKEINTERFACE));
             break;
@@ -709,7 +753,7 @@ public class Compiler {
             ilist.append(new GETFIELD(info.cruIndex));
             ilist.append(new ILOAD(info.localVal1));
             ilist.append(new PUSH(info.pgen, 1));
-            ilist.append(info.ifact.createInvoke(v9t9.Cru.class.getName(),
+            ilist.append(info.ifact.createInvoke(v9t9.CruHandler.class.getName(),
                     "readBits", Type.INT, new Type[] { Type.INT, Type.INT },
                     Constants.INVOKEINTERFACE));
             ilist.append(new I2S());
@@ -835,7 +879,7 @@ public class Compiler {
             Compiler.compileReadWord(info, ilist);
             ilist.append(new ILOAD(info.localVal1));
             ilist.append(new ILOAD(info.localVal2));
-            ilist.append(info.ifact.createInvoke(v9t9.Cru.class.getName(),
+            ilist.append(info.ifact.createInvoke(v9t9.CruHandler.class.getName(),
                     "writeBits", Type.VOID, new Type[] { Type.INT, Type.INT,
                             Type.INT }, Constants.INVOKEINTERFACE));
             break;
@@ -848,7 +892,7 @@ public class Compiler {
             ilist.append(new IADD());
             Compiler.compileReadWord(info, ilist);
             ilist.append(new ILOAD(info.localVal2));
-            ilist.append(info.ifact.createInvoke(v9t9.Cru.class.getName(),
+            ilist.append(info.ifact.createInvoke(v9t9.CruHandler.class.getName(),
                     "readBits", Type.INT, new Type[] { Type.INT, Type.INT },
                     Constants.INVOKEINTERFACE));
             ilist.append(new I2S());
@@ -1390,7 +1434,7 @@ public class Compiler {
                     Utility.getSignature(v9t9.MemoryDomain.class.getName()));
             int cruIndex = pgen.addFieldref(v9t9.cpu.CompiledCode.class.getName(), //className, 
                     "cru",
-                    Utility.getSignature(v9t9.Cru.class.getName()));
+                    Utility.getSignature(v9t9.CruHandler.class.getName()));
             int nInstsIndex = pgen.addFieldref(v9t9.cpu.CompiledCode.class.getName(), //className, 
                     "nInstructions", 
                     Utility.getSignature("int"));

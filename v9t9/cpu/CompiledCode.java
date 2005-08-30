@@ -6,7 +6,7 @@
  */
 package v9t9.cpu;
 
-import v9t9.Cru;
+import v9t9.CruHandler;
 import v9t9.MemoryDomain;
 
 /** This is the interface to the runtime-generated class. */
@@ -14,7 +14,7 @@ abstract public class CompiledCode {
     protected v9t9.cpu.Cpu cpu;
     protected MemoryDomain memory;
     protected Executor exec;
-    protected Cru cru;
+    protected CruHandler cru;
     protected v9t9.vdp.Vdp vdp;
     protected v9t9.Gpl gpl;
     protected int nInstructions;

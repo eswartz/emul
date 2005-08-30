@@ -7,7 +7,6 @@
 package v9t9.cpu;
 
 import java.io.PrintWriter;
-import java.util.HashMap;
 
 import v9t9.Machine;
 import v9t9.MemoryDomain;

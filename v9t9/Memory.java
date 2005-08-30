@@ -37,7 +37,7 @@ public class Memory {
     
     private v9t9.vdp.Vdp vdpMmio;
     
-    private sound.Sound soundMmio;
+    private v9t9.sound.Sound soundMmio;
     
     private java.util.List listeners;
     
@@ -96,7 +96,7 @@ public class Memory {
     private void initializeMmio() {
         vdpMmio = new v9t9.vdp.Vdp(machine);
         gplMmio = new Gpl(machine);
-        soundMmio = new sound.Sound(machine);
+        soundMmio = new v9t9.sound.Sound(machine);
         
         addAndMap(new MemoryEntry("Sound MMIO", CPU, 0x8400, 0x0400,
                 new ConsoleSoundArea(soundMmio)));
@@ -141,10 +141,10 @@ public class Memory {
     public interface ConsoleMmioWriter {
         void write(int addrMask, byte val);
     }
-    public sound.Sound getSoundMmio() {
+    public v9t9.sound.Sound getSoundMmio() {
         return soundMmio;
     }
-    public void setSoundMmio(sound.Sound soundMmio) {
+    public void setSoundMmio(v9t9.sound.Sound soundMmio) {
         this.soundMmio = soundMmio;
     }
     public v9t9.vdp.Vdp getVdpMmio() {
@@ -302,7 +302,7 @@ class DummyConsoleMmioHandler implements Memory.ConsoleMmioReader,
 }
 
 class ConsoleSoundArea extends ConsoleMmioWriteArea {
-    public ConsoleSoundArea(sound.Sound mmio) {
+    public ConsoleSoundArea(v9t9.sound.Sound mmio) {
         super(mmio);
     }
 }

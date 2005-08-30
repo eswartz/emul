@@ -6,18 +6,10 @@
  */
 package v9t9.cpu;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import v9t9.MemoryEntry;
-
-import org.apache.bcel.classfile.*;
-import org.apache.bcel.generic.*;
-import org.apache.bcel.Constants;
 
 /**	This represents a compiled block of code. */
 public class CodeBlock implements v9t9.Memory.Listener {
@@ -92,7 +84,7 @@ public class CodeBlock implements v9t9.Memory.Listener {
         /* now execute */
         running = true;
         code.nInstructions = 0;
-        int origpc = exec.cpu.getPC();
+        //int origpc = exec.cpu.getPC();
         boolean ret = false;
         try {
             ret = code.run();

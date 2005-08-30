@@ -8,5 +8,10 @@ package v9t9.cpu;
 
 
 public class AbortedException extends RuntimeException {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     AbortedException() {}
 }

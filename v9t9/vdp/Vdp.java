@@ -91,7 +91,7 @@ public class Vdp implements v9t9.Memory.ConsoleMmioReader, v9t9.Memory.ConsoleMm
 		    //System.out.println("vdp @" + Integer.toHexString(vdpaddr) + " = " + Integer.toHexString(val&0xff));
 
     		memory.writeByte(vdpaddr, val);
-    		machine.getClient().getVideo().writeVdpMemory(vdpaddr, val);
+    		machine.getClient().getVideoHandler().writeVdpMemory(vdpaddr, val);
 
     		vdpaddr = (short) ((vdpaddr + 1) & 0x3fff);
     		vdpreadahead = val;
@@ -119,7 +119,7 @@ public class Vdp implements v9t9.Memory.ConsoleMmioReader, v9t9.Memory.ConsoleMm
         byte val = (byte) (addr & 0xff);
         byte old = vdpregs[reg];
         vdpregs[reg] = val;
-        machine.getClient().getVideo().writeVdpReg(reg, val, old);
+        machine.getClient().getVideoHandler().writeVdpReg(reg, val, old);
     }
 
 }

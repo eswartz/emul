@@ -6,7 +6,19 @@
  */
 package v9t9.cpu;
 
-import org.apache.bcel.generic.*;
+import org.apache.bcel.generic.DUP;
+import org.apache.bcel.generic.DUP_X1;
+import org.apache.bcel.generic.I2S;
+import org.apache.bcel.generic.IADD;
+import org.apache.bcel.generic.IAND;
+import org.apache.bcel.generic.IFNE;
+import org.apache.bcel.generic.ILOAD;
+import org.apache.bcel.generic.ISTORE;
+import org.apache.bcel.generic.InstructionHandle;
+import org.apache.bcel.generic.InstructionList;
+import org.apache.bcel.generic.NOP;
+import org.apache.bcel.generic.POP;
+import org.apache.bcel.generic.PUSH;
 
 import v9t9.MemoryDomain;
 
