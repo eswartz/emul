@@ -1,0 +1,381 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+    <title>Target Communication Framework Services - Processes</title>
+</head>
+
+<body lang='EN-US'>
+  
+<h1>Target Communication Framework Services - Processes</h1>
+ 
+<ul>
+    <li><a href='#Cmds'>Commands</a>
+    <ul>
+        <li><a href='#CmdGetContext'>Get Context</a>
+        <li><a href='#CmdGetChildren'>Get Children</a>
+        <li><a href='#CmdAttach'>Attach</a>
+        <li><a href='#CmdDetach'>Detach</a>
+        <li><a href='#CmdTerminate'>Terminate</a>
+        <li><a href='#CmdSignal'>Signal</a>
+        <li><a href='#CmdStart'>Start</a>
+    </ul>
+    <li><a href='#Events'>Events</a>
+    <li><a href='#API'>API</a>
+</ul>
+
+<h1>Processes Service</h1>
+
+<p>Processes service provides access to the target OS's process 
+information, allows to start and terminate a process, and allows
+to attach and detach a process for debugging. Debug services,
+like Memory and Run Control, require a process to be attached
+before they can access it.</p>
+
+<p>Command and event parameters are encoded
+as zero terminated <a href='TCF Specification.html#JSON'>JSON</a> strings.</p>
+
+<p>The service uses standard format for error reports,
+see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
+ 
+<h2><a name='Cmds'>Commands</a></h2>
+
+<h3><a name='CmdGetContext'>Get Context</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Processes • getContext • <i>&lt;string: context ID&gt;</i> •
+</font></b></pre>
+
+<p>The command retrieves context info for given context ID.
+A context corresponds to an execution thread, process, address space, etc.
+Context IDs are valid across TCF services, so it is allowed to issue 'Processes.getContext'
+command with a context that was obtained, for example, from Memory service.
+However, 'Processes.getContext' is supposed to return only process specific data.
+If the ID is not a process ID, 'Processes.getContext' may not return any
+useful information.
+</p>
+ 
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;</i> •
+
+<i>&lt;context data&gt;</i>
+    <font face=Wingdings>Ø</font> null
+    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p>Context data object should, at least, contain member
+<b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string&gt;.</i></font></b>
+</p>
+
+<p>Predefined process context properties are:</p>
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string&gt;</i></font></b></code>
+    - ID of the context, same as getContext command argument.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ParentID" : <i>&lt;string&gt;</i></font></b></code>
+    - parent context ID.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Name" : <i>&lt;string&gt;</i></font></b></code>
+    - process name. Client UI can show this name to a user.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Attached" : <i>&lt;boolean&gt;</i></font></b></code>
+    - true if the context is attached to debugger.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"CanTerminate" : <i>&lt;boolean&gt;</i></font></b></code>
+    - true if the service can terminate the process.
+</ul>
+
+<h3><a name='CmdGetChildren'>Get Children</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Processes • getChildren • <i>&lt;string: parent context ID&gt;</i> •
+</font></b></pre>
+
+<p>The command requests a list of contexts available for process control commands.</p>
+ 
+<p>Parent context ID can be null – to retrieve top level of the hierarchy, can be one
+of context IDs retrieved by previous getChildren commands, or it can be obtained from another service.
+Contexts hierarchy can be simple plain list or it can form a tree. It is up to target agent developers to
+choose layout that is most descriptive for a given target.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of context IDs&gt;</i> •
+
+<i>&lt;array of context IDs&gt;</i>
+    <font face=Wingdings>Ø</font> null
+    <font face=Wingdings>Ø</font> [ ]
+    <font face=Wingdings>Ø</font> [ <i>&lt;context ID list&gt;</i> ]
+  
+<i>&lt;context ID list&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;string: context ID&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
+</font></b></pre>
+
+<h3><a name='CmdAttach'>Attach</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Processes • attach • <i>&lt;string: context ID&gt;</i> •
+</font></b></pre>
+
+<p>The command attaches debugger to a process.
+Services like Run Control, Memory, Breakpoints work only with attached processes.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdDetach'>Detach</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Processes • detach • <i>&lt;string: context ID&gt;</i> •
+</font></b></pre>
+
+<p>The command detaches debugger from a process.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdTerminate'>Terminate</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Processes • terminate • <i>&lt;string: context ID&gt;</i> •
+</font></b></pre>
+
+<p>The command terminates a process.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdSignal'>Signal</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Processes • signal • <i>&lt;string: context ID&gt;</i> • <i>&lt;int: signal&gt;</i> •
+</font></b></pre>
+
+<p>The command sends a signal to a process.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdStart'>Start</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Processes • start • <i>&lt;string: working directory&gt;</i> • <i>&lt;string: program image file&gt;</i> •
+    <i>&lt;string array: command line&gt;</i> • <i>&lt;string array: environment variables&gt;</i> • <i>&lt;boolean: attach&gt;</i> •
+
+<i>&lt;string array&gt;</i>
+    <font face=Wingdings>Ø</font> null
+    <font face=Wingdings>Ø</font> [ ]
+    <font face=Wingdings>Ø</font> [ <i>&lt;string list&gt;</i> ]
+  
+<i>&lt;string list&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;string&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;string list&gt;</i> , <i>&lt;string&gt;</i>
+</font></b></pre>
+
+<p>The command starts a new process on remote machine.
+<i>&lt;string: working directory&gt;</i> - initial value of working directory for the process.
+<i>&lt;string: program image file&gt;</i> - image file to start process with.
+<i>&lt;string array: command line&gt;</i> - command line arguments for the process.
+<i>&lt;string array: environment variables&gt;</i> - list of environment variables for the process,
+they will be added to default process environment. 
+<i>&lt;boolean: attach&gt;</i> - if true debugger should be attached to the process.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;</i> •
+</font></b></pre>
+
+<p>On success the command returns context data for created process. Context data has same format as Get Context result.</p>
+
+<h2><a name='Events'>Events</a></h2>
+
+<p>No events are currently defined for Processes service.</p>
+
+<h2><a name='API'>API</a></h2>
+ 
+<pre>
+<font color=#7F0055>public interface</font> IProcesses <font color=#7F0055>extends</font> IService {
+
+    <font color=#7F0055>static final</font> String NAME = "Processes";
+    
+    <font color=#3F5FBF>/**
+     * Retrieve context info for given context ID.
+     * A context corresponds to an execution thread, process, address space, etc.
+     * Context IDs are valid across TCF services, so it is allowed to issue
+     * 'IProcesses.getContext' command with a context that was obtained,
+     * for example, from Memory service.
+     * However, 'Processes.getContext' is supposed to return only process specific data,
+     * If the ID is not a process ID, 'IProcesses.getContext' may not return any
+     * useful information
+     *    
+     * <font color=#7F9FBF><font color=#7F9FBF>@param</font></font> id – context ID. 
+     * <font color=#7F9FBF><font color=#7F9FBF>@param</font></font> done - call back interface called when operation is completed.
+     */</font>
+    IToken getContext(String id, DoneGetContext done);
+
+    <font color=#3F5FBF>/**
+     * Client call back interface for getContext().
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetContext {
+        <font color=#3F5FBF>/**
+         * Called when contexts data retrieval is done.
+         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context – context data.
+         */</font>
+        <font color=#7F0055>void</font> doneGetContext(IToken token, Exception error, ProcessContext context);
+    }
+
+    <font color=#3F5FBF>/**
+     * Retrieve children of given context.
+     *   
+     * <font color=#7F9FBF>@param</font> parent_context_id – parent context ID. Can be null –
+     * to retrieve top level of the hierarchy, or one of context IDs retrieved
+     * by previous getContext or getChildren commands. 
+     * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+     */</font>
+    IToken getChildren(String parent_context_id, <font color=#7F0055>boolean</font> attached_only, DoneGetChildren done);
+
+    <font color=#3F5FBF>/**
+     * Client call back interface for getChildren().
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetChildren {
+        <font color=#3F5FBF>/**
+         * Called when contexts data retrieval is done.
+         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context_ids – array of available context IDs.
+         */</font>
+        <font color=#7F0055>void</font> doneGetChildren(IToken token, Exception error, String[] context_ids);
+    }
+    
+    <font color=#3F5FBF>/**
+     * Context property names.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        <font color=#3F5FBF>/** The TCF context ID */</font>
+        PROP_ID = "ID",
+        
+        <font color=#3F5FBF>/** The TCF parent context ID */</font>
+        PROP_PARENTID = "ParentID",
+        
+        <font color=#3F5FBF>/** Is the context attached */</font>
+        PROP_ATTACHED = "Attached",
+        
+        <font color=#3F5FBF>/** Can terminate the context */</font>
+        PROP_CAN_TERMINATE = "CanTerminate",
+        
+        <font color=#3F5FBF>/** Process name. Client UI can show this name to a user */</font>
+        PROP_NAME = "Name";
+    
+    <font color=#7F0055>interface</font> ProcessContext {
+        
+        <font color=#3F5FBF>/** 
+         * Get context ID.
+         * Same as getProperties().get(“ID”)
+         */</font>
+        String getID();
+
+        <font color=#3F5FBF>/**
+         * Get parent context ID.
+         * Same as getProperties().get(“ParentID”)
+         */</font>
+        String getParentID();
+
+        <font color=#3F5FBF>/**
+         * Get process name.
+         * Client UI can show this name to a user.
+         * Same as getProperties().get(“Name”)
+         */</font>
+        String getName();
+
+        <font color=#3F5FBF>/**
+         * Utility method to read context property PROP_ATTACHED.
+         * Services like IRunControl, IMemory, IBreakpoints work only with attached processes.
+         * <font color=#7F9FBF><font color=#7F9FBF>@return</font></font> value of PROP_ATTACHED.
+         */</font>
+        <font color=#7F0055>boolean</font> isAttached();
+
+        <font color=#3F5FBF>/**
+         * Utility method to read context property PROP_CAN_TERMINATE.
+         * <font color=#7F9FBF><font color=#7F9FBF>@return</font></font> value of PROP_CAN_TERMINATE.
+         */</font>
+        <font color=#7F0055>boolean</font> canTerminate();
+
+        <font color=#3F5FBF>/**
+         * Get all available context properties.
+         * <font color=#7F9FBF>@return</font> Map 'property name' -> 'property value'
+         */</font>
+        Map&lt;String, Object&gt; getProperties();
+        
+        <font color=#3F5FBF>/**
+         * Attach debugger to a process.
+         * Services like IRunControl, IMemory, IBreakpoints work only with attached processes.
+         * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+         * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
+         */</font>
+        IToken attach(DoneCommand done);
+
+        <font color=#3F5FBF>/**
+         * Detach debugger from a process.
+         * Process execution will continue without debugger supervision.
+         * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+         * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
+         */</font>
+        IToken detach(DoneCommand done);
+        
+        <font color=#3F5FBF>/**
+         * Terminate a process. 
+         * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+         * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
+         */</font>
+        IToken terminate(DoneCommand done);
+    
+        <font color=#3F5FBF>/**
+         * Send a signal to a process.
+         * <font color=#7F9FBF>@param</font> signal - signal ID.
+         * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+         * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
+         */</font>
+        IToken signal(<font color=#7F0055>int</font> signal, DoneCommand done);
+    }
+    
+    <font color=#7F0055>interface</font> DoneCommand {
+        <font color=#7F0055>void</font> doneCommand(IToken token, Exception error);
+    }
+
+    <font color=#3F5FBF>/**
+     * Start a new process on remote machine.
+     * <font color=#7F9FBF>@param</font> directory - initial value of working directory for the process.
+     * <font color=#7F9FBF>@param</font> file - process image file.
+     * <font color=#7F9FBF>@param</font> command_line - command line arguments for the process.
+     * <font color=#7F9FBF>@param</font> environment - list of environment variables for the process. 
+     * <font color=#7F9FBF>@param</font> attach - if true debugger should be attached to the process.
+     * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+     * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
+     */</font>
+    IToken start(String directory, String file,
+            String[] command_line, String[] environment, <font color=#7F0055>boolean</font> attach, DoneStart done);
+    
+    <font color=#7F0055>interface</font> DoneStart {
+        <font color=#7F0055>void</font> doneStart(IToken token, Exception error, ProcessContext process);
+    }
+}
+</pre>
+
+</body>
+</html>

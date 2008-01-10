@@ -1,0 +1,1212 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+    <title>Target Communication Framework Services - File System</title>
+</head>
+
+<body lang='EN-US'>
+  
+<h1>Target Communication Framework Services - File System</h1>
+ 
+<ul>
+    <li><a href='#ReqSync'>Request Synchronization and Reordering</a>
+    <li><a href='#FileNames'>File Names</a>
+    <li><a href='#FileModes'>File Open Modes</a>
+    <li><a href='#FileAttributes'>File Attributes</a>
+    <li><a href='#ErrorCodes'>Error Codes</a>
+    <li><a href='#Cmds'>Commands</a>
+    <ul>
+        <li><a href='#CmdOpen'>open</a>
+        <li><a href='#CmdClose'>close</a>
+        <li><a href='#CmdRead'>read</a>
+        <li><a href='#CmdWrite'>write</a>
+        <li><a href='#CmdStat'>stat</a>
+        <li><a href='#CmdLStat'>lstat</a>
+        <li><a href='#CmdFStat'>fstat</a>
+        <li><a href='#CmdSetStat'>setstat</a>
+        <li><a href='#CmdFSetStat'>fsetstat</a>
+        <li><a href='#CmdOpenDir'>opendir</a>
+        <li><a href='#CmdReadDir'>readdir</a>
+        <li><a href='#CmdMkDir'>mkdir</a>
+        <li><a href='#CmdRmDir'>rmdir</a>
+        <li><a href='#CmdRoots'>roots</a>
+        <li><a href='#CmdRemove'>remove</a>
+        <li><a href='#CmdRealPath'>realpath</a>
+        <li><a href='#CmdRename'>rename</a>
+        <li><a href='#CmdReadLink'>readlink</a>
+        <li><a href='#CmdSymLink'>symlink</a>
+        <li><a href='#CmdSymLink'>copy</a>
+        <li><a href='#CmdSymLink'>user</a>
+    </ul>
+    <li><a href='#API'>API</a>
+</ul>
+
+<h1>File System Service</h1>
+
+<p>File System service provides file transfer (and more generally file
+system access) functionality in TCF. The service design is
+derived from SSH File Transfer Protocol specifications.</p>
+ 
+<h2><a name='ReqSync'>Request Synchronization and Reordering</a></h2>
+
+<p>The protocol and implementations MUST process requests relating to
+the same file in the order in which they are received.  In other
+words, if an application submits multiple requests to the server, the
+results in the responses will be the same as if it had sent the
+requests one at a time and waited for the response in each case.  For
+example, the server may process non-overlapping read/write requests
+to the same file in parallel, but overlapping reads and writes cannot
+be reordered or parallelized.  However, there are no ordering
+restrictions on the server for processing requests from two different
+file transfer connections.  The server may interleave and parallelize
+them at will.</p>
+
+<p>There are no restrictions on the order in which responses to
+outstanding requests are delivered to the client, except that the
+server must ensure fairness in the sense that processing of no
+request will be indefinitely delayed even if the client is sending
+other requests so that there are multiple outstanding requests all
+the time.</p>
+
+<p>There is no limit on the number of outstanding (non-acknowledged)
+requests that the client may send to the server.  In practice this is
+limited by the buffering available on the data stream and the queuing
+performed by the server.  If the server's queues are full, it should
+not read any more data from the stream, and flow control will prevent
+the client from sending more requests.</p>
+
+<h2><a name='FileNames'>File Names</a></h2>
+
+<p>This protocol represents file names as strings.  File names are
+assumed to use the slash ('/') character as a directory separator.</p>
+
+<p>File names starting with a slash are "absolute", and are relative to
+the root of the file system.  Names starting with any other character
+are relative to the user's default directory (home directory). Client
+can use 'user()' command to retrieve current user home directory.</p>
+
+<p>Servers SHOULD interpret a path name component ".." as referring to
+the parent directory, and "." as referring to the current directory.
+If the server implementation limits access to certain parts of the
+file system, it must be extra careful in parsing file names when
+enforcing such restrictions.  There have been numerous reported
+security bugs where a ".." in a path name has allowed access outside
+the intended area.</p>
+
+<p>An empty path name is valid, and it refers to the user's default
+directory (usually the user's home directory).</p>
+
+<p>Otherwise, no syntax is defined for file names by this specification.
+Clients should not make any other assumptions; however, they can
+splice path name components returned by readdir() together
+using a slash ('/') as the separator, and that will work as expected.</p>
+
+<h2><a name='FileModes'>File Open Modes</a></h2>
+
+<p>File open mode is bitwise OR of mode flags:</p>
+
+<dl>
+    <dt><code>O_READ = 0x00000001</code>
+    <dd>Open the file for reading.
+
+    <dt><code>O_WRITE = 0x00000002</code>
+    <dd>Open the file for writing. If both this and O_READ are
+    specified, the file is opened for both reading and writing.
+
+    <dt><code>O_APPEND = 0x00000004</code>
+    <dd>Force all writes to append data at the end of the file.
+
+    <dt><code>O_CREAT = 0x00000008</code>
+    <dd>If this flag is specified, then a new file will be created if one
+    does not already exist (if O_TRUNC is specified, the new file will
+    be truncated to zero length if it previously exists).
+
+    <dt><code>O_TRUNC = 0x00000010</code>
+    <dd>Forces an existing file with the same name to be truncated to zero
+    length when creating a file by specifying O_CREAT.
+    O_CREAT MUST also be specified if this flag is used.
+    
+    <dt><code>O_EXCL = 0x00000020</code>
+    <dd>Causes the request to fail if the named file already exists.
+    O_CREAT MUST also be specified if this flag is used.
+</dl>
+
+<h2><a name='FileAttributes'>File Attributes</a></h2>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;file attributes&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p>All attributes are optional.
+Tools and targets can define additional attributes. Predefined attributes are:</p>
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Size" : <i>&lt;int&gt;</i></font></b></code>
+    - file size in bytes
+    <li><code><b><font face="Courier New" size=2 color=#333399>"UID" : <i>&lt;int&gt;</i></font></b></code>
+    - file owner user ID
+    <li><code><b><font face="Courier New" size=2 color=#333399>"GID" : <i>&lt;int&gt;</i></font></b></code>
+    - file owner group ID
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Permissions" : <i>&lt;int&gt;</i></font></b></code>
+    - file access permissions
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ATime" : <i>&lt;int&gt;</i></font></b></code>
+    - file last access time
+    <li><code><b><font face="Courier New" size=2 color=#333399>"MTime" : <i>&lt;int&gt;</i></font></b></code>
+    - file last modification time
+</ul>
+
+<h2><a name='ErrorCodes'>Error codes</a></h2>
+
+<p>The service uses standard format for error reports,
+see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
+
+<p>Currently, the following values are defined for error code (other values may be
+defined by future versions of this protocol):</p>
+
+<dl>
+    <dt><code>STATUS_OK = 0</code>
+    <dd>Indicates successful completion of the operation.
+
+    <dt><code>STATUS_EOF = 1</code>
+    <dd>Indicates end-of-file condition; for 'read' it means that no
+    more data is available in the file, and for 'readdir' it
+    indicates that no more files are contained in the directory.
+
+    <dt><code>STATUS_NO_SUCH_FILE = 2</code>
+    <dd>This code is returned when a reference is made to a file which
+    should exist but doesn't.
+
+    <dt><code>STATUS_PERMISSION_DENIED = 3</code>
+    <dd>is returned when the authenticated user does not have sufficient
+    permissions to perform the operation.
+
+    <dt><code>STATUS_FAILURE = 4</code>
+    <dd>is a generic catch-all error message; it should be returned if an
+    error occurs for which there is no more specific error code.
+
+    <dt><code>STATUS_BAD_MESSAGE = 5</code>
+    <dd>may be returned if a badly formatted packet or protocol
+    incompatibility is detected.
+
+    <dt><code>STATUS_NO_CONNECTION = 6</code>
+    <dd>is a pseudo-error which indicates that the client has no
+    connection to the server (it can only be generated locally by the
+    client, and MUST NOT be returned by servers).
+
+    <dt><code>STATUS_CONNECTION_LOST = 7</code>
+    <dd>is a pseudo-error which indicates that the connection to the
+    server has been lost (it can only be generated locally by the
+    client, and MUST NOT be returned by servers).
+
+    <dt><code>STATUS_OP_UNSUPPORTED = 8</code>
+    <dd>indicates that an attempt was made to perform an operation which
+    is not supported for the server (it may be generated locally by
+    the client if e.g.  the version number exchange indicates that a
+    required feature is not supported by the server, or it may be
+    returned by the server if the server does not implement an
+    operation).
+</dl>
+
+<h2><a name='Cmds'>Commands</a></h2>
+
+<h3><a name='CmdOpen'>open</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • open • <i>&lt;string: file name&gt;</i> • <i>&lt;int: mode&gt;</i> • <i>&lt;file attributes&gt;</i> •
+</font></b></pre>
+
+<p>The command opens or creates a file on a remote system. If mode contains O_CREAT then new file is created, otherwise exsting
+file is opened. If the file is created, file attributes is looked up for UID, GID and permissions. If no attribute value is found in
+the command parameters, a default value is used.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;file handle&gt;</i> •
+
+<i>&lt;file handle&gt;</i>
+    <font face=Wingdings>Ø</font> null
+    <font face=Wingdings>Ø</font> <i>&lt;string&gt;</i>
+</font></b></pre>
+
+<p>On success, the replay contains open file handle. The handle is encoded as a string of characters. Client should never try
+to decode the string, but should use it as is to issue further file access commands. Client should close the file when it is
+not needed any more. Server should close all files that were left open after client connection was closed ot terminated.</p>
+
+<h3><a name='CmdClose'>close</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • close • <i>&lt;string: file handle&gt;</i> •
+</font></b></pre>
+
+<p>The command closes a handle, which was open by 'open' or 'opendir' commands.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdRead'>read</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • read • <i>&lt;string: file handle&gt;</i> • <i>&lt;int: offset&gt;</i> • <i>&lt;int: size&gt;</i> •
+</font></b></pre>
+
+<p>The command reads bytes from an open file.
+In response to this request, the server will read as many bytes as it
+can from the file (up to `len'), and return them in a byte array.
+If an error occurs or EOF is encountered, the server may return
+fewer bytes then requested. Replay argument 'error report'
+will be not null in case of error, and argument 'eof' will be
+true in case of EOF. For normal disk files, it is guaranteed
+that this will read the specified number of bytes, or up to end of file
+or error. For e.g. device files this may return fewer bytes than requested.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;string: data&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;boolean: eof&gt;</i> •
+</font></b></pre>
+
+<p><i>&lt;string: data&gt;</i> is Base64 encoded byte array of file data. Number of bytes is determined by the string length.
+'eof' is true when 'data' contains all available bytes up to the end of the file.</p>
+
+<h3><a name='CmdWrite'>write</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • write • <i>&lt;string: file handle&gt;</i> • <i>&lt;int: offset&gt;</i> • <i>&lt;string: data&gt;</i> •
+</font></b></pre>
+
+<p>The command writes bytes into an open file.
+The write will extend the file if writing beyond the end of the file.
+It is legal to write way beyond the end of the file; the semantics
+are to write zeroes from the end of the file to the specified offset
+and then the data. <i>&lt;string: data&gt;</i> is Base64 encoded array of data bytes.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdStat'>stat</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • stat • <i>&lt;string: file name&gt;</i> •
+</font></b></pre>
+
+<p>The command retrieves file attributes.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;file attributes&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdLStat'>lstat</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • lstat • <i>&lt;string: file name&gt;</i> •
+</font></b></pre>
+
+<p>The command retrieves file attributes.
+Unlike 'stat', 'lstat' does not follow symbolic links.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;file attributes&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdFStat'>fstat</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • fstat • <i>&lt;string: file handle&gt;</i> •
+</font></b></pre>
+
+<p>The command retrieves file attributes for an open file (identified by the file handle).</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;file attributes&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdSetStat'>setstat</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • setstat • <i>&lt;string: file name&gt;</i> • <i>&lt;file attributes&gt;</i> •
+</font></b></pre>
+
+<p>The command sets file attributes.
+This request is used for operations such as changing the ownership,
+permissions or access times, as well as for truncating a file.
+An error will be returned if the specified file system object does
+not exist or the user does not have sufficient rights to modify the
+specified attributes.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdFSetStat'>fsetstat</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • fsetstat • <i>&lt;string: file handle&gt;</i> • <i>&lt;file attributes&gt;</i> •
+</font></b></pre>
+
+<p>The command sets file attributes for an open file (identified by the file handle).
+This request is used for operations such as changing the ownership,
+permissions or access times, as well as for truncating a file.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdOpenDir'>opendir</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • opendir • <i>&lt;string: path&gt;</i> •
+</font></b></pre>
+
+<p>The command opens a directory for reading.
+Once the directory has been successfully opened, files (and
+directories) contained in it can be listed using 'readdir' requests.
+When the client no longer wishes to read more names from the
+directory, it SHOULD call 'close' for the handle.  The handle
+should be closed regardless of whether a read errors have occurred or not.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;file handle&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdReadDir'>readdir</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • readdir • <i>&lt;string: file handle&gt;</i> •
+</font></b></pre>
+
+<p>The command returns one
+or more file names with full file attributes for each file.  The
+client should call 'readdir' repeatedly until it has found the
+file it is looking for or until the server responds with a
+message indicating an error or end of file. The client should then
+close the handle using the 'close' request.
+Note: directory entries "." and ".." are NOT included into readdir()
+response.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;array of directory entries&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;boolean: eof&gt;</i> •
+
+<i>&lt;array of directory entries&gt;</i>
+    <font face=Wingdings>Ø</font> null
+    <font face=Wingdings>Ø</font> [ ]
+    <font face=Wingdings>Ø</font> [ <i>&lt;directory entry list&gt;</i> ]
+  
+<i>&lt;directory entry list&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;directory entry&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&ltdirectory entry list&gt;</i> , <i>&lt;directory entry&gt;</i>
+
+<i>&lt;directory entry&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p>Directory entry attributes are:</p>
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"FileName" : <i>&lt;string&gt;</i></font></b></code>
+    - a file name being returned, it will be a relative name within the directory,
+    without any path components.
+    <li><code><b><font face="Courier New" size=2 color=#333399>"LongName" : <i>&lt;string&gt;</i></font></b></code>
+    - a human readable, expanded format for the file name, similar to what
+    is returned by "ls -l" on Unix systems
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Attrs" : <i>&lt;file attributes&gt;</i></font></b></code>
+    - the attributes of the file as described in Section <a href='#FileAttributes'>File Attributes</a>.
+</ul>
+
+<h3><a name='CmdMkDir'>mkdir</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • mkdir • <i>&lt;string: directory path&gt;</i> • <i>&lt;file attributes&gt;</i> •
+</font></b></pre>
+
+<p>The command creates a directory on the server.
+<i>&lt;string: directory path&gt;</i> specifies the directory to be created.
+<i>&lt;file attributes&gt;</i> specifies new directory attributes.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdRmDir'>rmdir</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • rmdir • <i>&lt;string: directory path&gt;</i> •
+</font></b></pre>
+
+<p>The command removes a directory.
+An error will be returned if no directory
+with the specified path exists, or if the specified directory is not
+empty, or if the path specified a file system object other than a
+directory. <i>&lt;string: directory path&gt;</i> - specifies the directory to be removed.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdRoots'>roots</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • roots •
+</font></b></pre>
+
+<p>The command retrieves file system roots - top level file system objects.
+UNIX file system can report just one root with path "/". Other types of systems
+can have more the one root. For example, Windows server can return multiple roots:
+one per disc (e.g. "/C:/", "/D:/", etc.). Note: even Windows implementation of
+the service must use forward slash as directory separator, and must start 
+absolute path with "/". Server should implement proper translation of
+protocol file names to OS native names and back.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of directory entries&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdRemove'>remove</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • remove • <i>&lt;string: path&gt;</i> •
+</font></b></pre>
+
+<p>The command removes a file or symbolic link.
+This request cannot be used to remove directories.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdRealPath'>realpath</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • realpath • <i>&lt;string: path&gt;</i> •
+</font></b></pre>
+
+<p>The command canonicalizes any given path name to an absolute path.
+This is useful for converting path names containing ".." components or
+relative pathnames without a leading slash into absolute paths.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;string: path&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdRename'>rename</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • rename • <i>&lt;string: old path&gt;</i> • <i>&lt;string: new path&gt;</i> •
+</font></b></pre>
+
+<p>The command renames a file.
+It is an error if there already exists a file
+with the name specified by <i>&lt;string: new path&gt;</i>.  The server may also fail rename
+requests in other situations, for example if <i>&lt;string: old path&gt;</i> and <i>&lt;string: new path&gt;</i>
+point to different file systems on the server.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdReadLink'>readlink</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • readlink • <i>&lt;string: link path&gt;</i> •
+</font></b></pre>
+
+<p>The command reads the target of a symbolic link.
+<i>&lt;string: link path&gt;</i> specifies the path name of the symbolic link to be read.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;string: path&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdSymLink'>symlink</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • symlink • <i>&lt;string: link path&gt;</i> • <i>&lt;string: target path&gt;</i> •
+</font></b></pre>
+
+<p>The command creates a symbolic link on the server.
+<i>&lt;string: link path&gt;</i> specifies the path name of the symbolic link to be created.
+<i>&lt;string: target path&gt;</i> specifies the target of the symbolic link.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdCopy'>copy</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • copy • <i>&lt;string: source path&gt;</i> • <i>&lt;string: destination path&gt;</i> •
+    <i>&lt;boolean: copy permissions&gt;</i> • <i>&lt;boolean: copy ownership&gt;</i> •
+</font></b></pre>
+
+<p>The command copies a file on remote system.
+<i>&lt;string: source path&gt;</i> specifies the path name of the file to be copied.
+<i>&lt;string: destination path&gt;</i> specifies destination file name.
+If <i>&lt;boolean: copy permissions&gt;</i> is true then copy source file permissions.
+If <i>&lt;boolean: copy ownership&gt;</i> is true then copy source file UID and GID.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdUser'>user</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • FileSystem • user •
+</font></b></pre>
+
+<p>The command retrieves information about user account, which is used by server 
+to access file system on behalf of the client.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;int: real UID&gt;</i> • <i>&lt;int: effective UID&gt;</i> •
+    <i>&lt;int: real GID&gt;</i> • <i>&lt;int: effective GID&gt;</i> • <i>&lt;string: home directory&gt;</i> •
+</font></b></pre>
+
+<h2><a name='API'>API</a></h2>
+ 
+<pre>
+<font color=#3F5FBF>/**
+ * File System service provides file transfer (and more generally file
+ * system access) functionality in TCF. The service design is
+ * derived from SSH File Transfer Protocol specifications.
+ */</font>
+<font color=#7F0055>public interface</font> IFileSystem <font color=#7F0055>extends</font> IService {
+    
+    <font color=#3F5FBF>/**
+     * Service name.
+     */</font>
+    <font color=#7F0055>static final</font> String NAME = "FileSystem";
+
+    <font color=#3F5FBF>/**
+     * Flags to be used with open() method.
+     */</font>
+    <font color=#7F0055>static final int</font>
+    
+        <font color=#3F5FBF>/**
+         * Open the file for reading.
+         */</font>
+        O_READ                  = 0x00000001,
+
+        <font color=#3F5FBF>/**
+         * Open the file for writing. If both this and O_READ are
+         * specified, the file is opened for both reading and writing.
+         */</font>
+        O_WRITE                 = 0x00000002,
+
+        <font color=#3F5FBF>/**
+         * Force all writes to append data at the end of the file.
+         */</font>
+        O_APPEND                = 0x00000004, 
+
+        <font color=#3F5FBF>/**
+         * If this flag is specified, then a new file will be created if one
+         * does not already exist (if O_TRUNC is specified, the new file will
+         * be truncated to zero length if it previously exists).
+         */</font>
+        O_CREAT                 = 0x00000008,
+
+        <font color=#3F5FBF>/**
+         * Forces an existing file with the same name to be truncated to zero
+         * length when creating a file by specifying O_CREAT.
+         * O_CREAT MUST also be specified if this flag is used.
+         */</font>
+        O_TRUNC                 = 0x00000010,
+
+        <font color=#3F5FBF>/**
+         * Causes the request to fail if the named file already exists.
+         * O_CREAT MUST also be specified if this flag is used.
+         */</font>
+        O_EXCL                  = 0x00000020;
+
+    <font color=#3F5FBF>/**
+     * Flags to be used together with FileAttrs.
+     * The flags specify which of the fields are present.  Those fields
+     * for which the corresponding flag is not set are not present (not
+     * included in the message).
+     */</font>
+    <font color=#7F0055>static final int</font>
+        ATTR_SIZE               = 0x00000001,
+        ATTR_UIDGID             = 0x00000002,
+        ATTR_PERMISSIONS        = 0x00000004,
+        ATTR_ACMODTIME          = 0x00000008;
+
+    <font color=#3F5FBF>/**
+     * FileAttrs is used both when returning file attributes from
+     * the server and when sending file attributes to the server.  When
+     * sending it to the server, the flags field specifies which attributes
+     * are included, and the server will use default values for the
+     * remaining attributes (or will not modify the values of remaining
+     * attributes).  When receiving attributes from the server, the flags
+     * specify which attributes are included in the returned data.  The
+     * server normally returns all attributes it knows about.
+     */</font>
+    <font color=#7F0055>final static class</font> FileAttrs {
+        
+        <font color=#3F5FBF>/**
+         * The `flags' specify which of the fields are present.
+         */</font>
+        <font color=#7F0055>public final int</font> flags;
+        
+        <font color=#3F5FBF>/**
+         * The `size' field specifies the size of the file in bytes.
+         */</font>
+        <font color=#7F0055>public final long</font> size;
+        
+        <font color=#3F5FBF>/**
+         * The `uid' and `gid' fields contain numeric Unix-like user and group
+         * identifiers, respectively.
+         */</font>
+        <font color=#7F0055>public final int</font> uid;
+        <font color=#7F0055>public final int</font> gid;
+        
+        <font color=#3F5FBF>/**
+         * The `permissions' field contains a bit mask of file permissions as
+         * defined by posix [1].
+         */</font>
+        <font color=#7F0055>public final int</font> permissions;
+        
+        <font color=#3F5FBF>/**
+         * The `atime' and `mtime' contain the access and modification times of
+         * the files, respectively. They are represented as milliseconds from
+         * midnight Jan 1, 1970 in UTC.
+         */</font>
+        <font color=#7F0055>public final long</font> atime;
+        <font color=#7F0055>public final long</font> mtime;
+
+        <font color=#3F5FBF>/**
+         * Additional (non-standard) attributes.
+         */</font>
+        <font color=#7F0055>public final</font> Map&lt;String,Object&gt; attributes;
+        
+        <font color=#7F0055>public</font> FileAttrs(<font color=#7F0055>int</font> flags, <font color=#7F0055>long</font> size, <font color=#7F0055>int</font> uid, <font color=#7F0055>int</font> gid,
+                <font color=#7F0055>int</font> permissions, <font color=#7F0055>long</font> atime, <font color=#7F0055>long</font> mtime, Map&lt;String,Object&gt; attributes);
+        
+        <font color=#3F5FBF>/**
+         * Determines if the file system object is a file on the remote file system.
+         * 
+         * @return true if and only if the object on the remote system can be considered to have "contents" that
+         * have the potential to be read and written as a byte stream.
+         */</font>
+        <font color=#7F0055>public boolean</font> isFile();
+
+        <font color=#3F5FBF>/**
+         * Determines if the file system object is a directory on the remote file system.
+         * 
+         * @return true if and only if the object on the remote system is a directory.
+         * That is, it contains entries that can be interpreted as other files.
+         */</font>
+        <font color=#7F0055>public boolean</font> isDirectory();
+    }
+    
+    <font color=#3F5FBF>/**
+     * The following flags are defined for the 'permissions' field:
+     */</font>
+    <font color=#7F0055>static final int</font>
+        S_IFMT     = 0170000,   // bitmask for the file type bitfields
+        S_IFSOCK   = 0140000,   // socket
+        S_IFLNK    = 0120000,   // symbolic link
+        S_IFREG    = 0100000,   // regular file
+        S_IFBLK    = 0060000,   // block device
+        S_IFDIR    = 0040000,   // directory
+        S_IFCHR    = 0020000,   // character device
+        S_IFIFO    = 0010000,   // fifo
+        S_ISUID    = 0004000,   // set UID bit
+        S_ISGID    = 0002000,   // set GID bit (see below)
+        S_ISVTX    = 0001000,   // sticky bit (see below)
+        S_IRWXU    = 00700,     // mask for file owner permissions
+        S_IRUSR    = 00400,     // owner has read permission
+        S_IWUSR    = 00200,     // owner has write permission
+        S_IXUSR    = 00100,     // owner has execute permission
+        S_IRWXG    = 00070,     // mask for group permissions
+        S_IRGRP    = 00040,     // group has read permission
+        S_IWGRP    = 00020,     // group has write permission
+        S_IXGRP    = 00010,     // group has execute permission
+        S_IRWXO    = 00007,     // mask for permissions for others (not in group)
+        S_IROTH    = 00004,     // others have read permission
+        S_IWOTH    = 00002,     // others have write permisson
+        S_IXOTH    = 00001;     // others have execute permission
+    
+    <font color=#7F0055>final static class</font> DirEntry {
+        <font color=#3F5FBF>/**
+         * `filename' is a file name being returned. It is a relative name within
+         * the directory, without any path components;
+         */</font>
+        <font color=#7F0055>public final</font> String filename;
+        
+        <font color=#3F5FBF>/**
+         * `longname' is an expanded format for the file name, similar to what
+         * is returned by "ls -l" on Unix systems.
+         * The format of the `longname' field is unspecified by this protocol.
+         * It MUST be suitable for use in the output of a directory listing
+         * command (in fact, the recommended operation for a directory listing
+         * command is to simply display this data).  However, clients SHOULD NOT
+         * attempt to parse the longname field for file attributes; they SHOULD
+         * use the attrs field instead.
+         */</font>
+        <font color=#7F0055>public final</font> String longname;
+        
+        <font color=#3F5FBF>/**
+         * `attrs' is the attributes of the file.
+         */</font>
+        <font color=#7F0055>public final</font> FileAttrs attrs;
+        
+        <font color=#7F0055>public</font> DirEntry(String filename, String longname, FileAttrs attrs);
+    }
+    
+    <font color=#3F5FBF>/**
+     * Opaque representation of open file handle.
+     * Note: open file handle can be used only with service instance that 
+     * created the handle.
+     */</font>
+    <font color=#7F0055>interface</font> IFileHandle {
+        IFileSystem getService();
+    }
+    
+    <font color=#3F5FBF>/**
+     * Status codes.
+     */</font>
+    <font color=#7F0055>static final int</font>
+    
+        <font color=#3F5FBF>/**
+         * Indicates successful completion of the operation.
+         */</font>
+        STATUS_OK = 0,
+
+        <font color=#3F5FBF>/**
+         * Indicates end-of-file condition; for read() it means that no
+         * more data is available in the file, and for readdir() it
+         * indicates that no more files are contained in the directory.
+         */</font>
+        STATUS_EOF = 1,
+
+        <font color=#3F5FBF>/**
+         * This code is returned when a reference is made to a file which
+         * should exist but doesn't.
+         */</font>
+        STATUS_NO_SUCH_FILE = 2,
+
+        <font color=#3F5FBF>/**
+         * is returned when the authenticated user does not have sufficient
+         * permissions to perform the operation.
+         */</font>
+        STATUS_PERMISSION_DENIED = 3,
+
+        <font color=#3F5FBF>/**
+         * is a generic catch-all error message; it should be returned if an
+         * error occurs for which there is no more specific error code.
+         * 
+         */</font>
+        STATUS_FAILURE = 4,
+
+        <font color=#3F5FBF>/**
+         * may be returned if a badly formatted packet or protocol
+         * incompatibility is detected.
+         */</font>
+        STATUS_BAD_MESSAGE = 5,
+
+        <font color=#3F5FBF>/**
+         * is a pseudo-error which indicates that the client has no
+         * connection to the server (it can only be generated locally by the
+         * client, and MUST NOT be returned by servers).
+         */</font>
+        STATUS_NO_CONNECTION = 6,
+
+        <font color=#3F5FBF>/**
+         * is a pseudo-error which indicates that the connection to the
+         * server has been lost (it can only be generated locally by the
+         * client, and MUST NOT be returned by servers).
+         */</font>
+        STATUS_CONNECTION_LOST = 7,
+
+        <font color=#3F5FBF>/**
+         * indicates that an attempt was made to perform an operation which
+         * is not supported for the server (it may be generated locally by
+         * the client if e.g.  the version number exchange indicates that a
+         * required feature is not supported by the server, or it may be
+         * returned by the server if the server does not implement an
+         * operation).
+         */</font>
+        STATUS_OP_UNSUPPORTED = 8;
+    
+    <font color=#7F0055>abstract static class</font> FileSystemException extends IOException {
+        
+        <font color=#7F0055>protected</font> FileSystemException(String message);
+        
+        <font color=#7F0055>protected</font> FileSystemException(Exception x)
+        
+        <font color=#7F0055>public abstract int</font> getStatus();
+    }
+
+    <font color=#3F5FBF>/**
+     * Open or create a file on a remote system.
+     * 
+     * @param file_name specifies the file name.  See 'File Names' for more information.
+     * @param flags is a bit mask of O_* flags.
+     * @param attrs specifies the initial attributes for the file.
+     *  Default values will be used for those attributes that are not specified.
+     * @param done is call back object.
+     * @return pending command handle.
+     */</font>
+    IToken open(String file_name, <font color=#7F0055>int</font> flags, FileAttrs attrs, DoneOpen done);
+    
+    <font color=#7F0055>interface</font> DoneOpen {
+        <font color=#7F0055>void</font> doneOpen(IToken token, FileSystemException error, IFileHandle handle);
+    }
+    
+    <font color=#3F5FBF>/**
+     * Close a file on a remote system.
+     * 
+     * @param handle is a handle previously returned in the response to
+     * open() or opendir().
+     * @param done is call back object.
+     * @return pending command handle.
+     */</font>
+    IToken close(IFileHandle handle, DoneClose done);
+    
+    <font color=#7F0055>interface</font> DoneClose {
+        <font color=#7F0055>void</font> doneClose(IToken token, FileSystemException error);
+    }
+    
+    <font color=#3F5FBF>/**
+     * Read bytes from an open file.
+     * In response to this request, the server will read as many bytes as it
+     * can from the file (up to `len'), and return them in a byte array.
+     * If an error occurs or EOF is encountered, the server may return
+     * fewer bytes then requested. Call back method doneRead() argument 'error'
+     * will be not null in case of error, and argument 'eof' will be
+     * true in case of EOF. For normal disk files, it is guaranteed
+     * that this will read the specified number of bytes, or up to end of file
+     * or error. For e.g. device files this may return fewer bytes than requested.
+     * 
+     * @param handle is an open file handle returned by open().
+     * @param offset is the offset (in bytes) relative
+     * to the beginning of the file from where to start reading.
+     * @param len is the maximum number of bytes to read.
+     * @param done is call back object.
+     * @return pending command handle.
+     */</font>
+    IToken read(IFileHandle handle, long offset, <font color=#7F0055>int</font> len, DoneRead done);
+    
+    <font color=#7F0055>interface</font> DoneRead {
+        <font color=#7F0055>void</font> doneRead(IToken token, FileSystemException error, byte[] data, boolean eof);
+    }
+
+    <font color=#3F5FBF>/**
+     * Write bytes into an open file.
+     * The write will extend the file if writing beyond the end of the file.
+     * It is legal to write way beyond the end of the file; the semantics
+     * are to write zeroes from the end of the file to the specified offset
+     * and then the data.
+     * 
+     * @param handle is an open file handle returned by open().
+     * @param offset is the offset (in bytes) relative
+     * to the beginning of the file from where to start writing.
+     * @param data is byte array that contains data for writing.
+     * @param data_pos if offset in 'data' of first byte to write.
+     * @param data_size is the number of bytes to write.
+     * @param done is call back object.
+     * @return pending command handle.
+     */</font>
+    IToken write(IFileHandle handle, long offset,
+            byte[] data, <font color=#7F0055>int</font> data_pos, <font color=#7F0055>int</font> data_size, DoneWrite done);
+
+    <font color=#7F0055>interface</font> DoneWrite {
+        <font color=#7F0055>void</font> doneWrite(IToken token, FileSystemException error);
+    }
+    
+    <font color=#3F5FBF>/**
+     * Retrieve file attributes.
+     * 
+     * @param path - specifies the file system object for which
+     * status is to be returned.
+     * @param done is call back object.
+     * @return pending command handle.
+     */</font>
+    IToken stat(String path, DoneStat done);
+
+    <font color=#3F5FBF>/**
+     * Retrieve file attributes.
+     * Unlike 'stat()', 'lstat()' does not follow symbolic links.
+     * 
+     * @param path - specifies the file system object for which
+     * status is to be returned.
+     * @param done is call back object.
+     * @return pending command handle.
+     */</font>
+    IToken lstat(String path, DoneStat done);
+    
+    <font color=#3F5FBF>/**
+     * Retrieve file attributes for an open file (identified by the file handle).
+     * 
+     * @param handle is a file handle returned by 'open()'.
+     * @param done is call back object.
+     * @return pending command handle.
+     */</font>
+    IToken fstat(IFileHandle handle, DoneStat done);
+    
+    <font color=#7F0055>interface</font> DoneStat {
+        <font color=#7F0055>void</font> doneStat(IToken token, FileSystemException error, FileAttrs attrs);
+    }
+    
+    <font color=#3F5FBF>/**
+     * Set file attributes.
+     * This request is used for operations such as changing the ownership,
+     * permissions or access times, as well as for truncating a file.
+     * An error will be returned if the specified file system object does
+     * not exist or the user does not have sufficient rights to modify the
+     * specified attributes.
+     * 
+     * @param path specifies the file system object (e.g. file or directory)
+     * whose attributes are to be modified.
+     * @param attrs specifies the modifications to be made to file attributes.
+     * @param done is call back object.
+     * @return pending command handle.
+     */</font>
+    IToken setstat(String path, FileAttrs attrs, DoneSetStat done);
+    
+    <font color=#3F5FBF>/**
+     * Set file attributes for an open file (identified by the file handle).
+     * This request is used for operations such as changing the ownership,
+     * permissions or access times, as well as for truncating a file.
+     * 
+     * @param handle is a file handle returned by 'open()'.
+     * @param attrs specifies the modifications to be made to file attributes.
+     * @param done is call back object.
+     * @return pending command handle.
+     */</font>
+    IToken fsetstat(IFileHandle handle, FileAttrs attrs, DoneSetStat done);
+    
+    <font color=#7F0055>interface</font> DoneSetStat {
+        <font color=#7F0055>void</font> doneSetStat(IToken token, FileSystemException error);
+    }
+    
+    <font color=#3F5FBF>/**
+     * The opendir() command opens a directory for reading.
+     * Once the directory has been successfully opened, files (and
+     * directories) contained in it can be listed using readdir() requests.
+     * When the client no longer wishes to read more names from the
+     * directory, it SHOULD call close() for the handle.  The handle
+     * should be closed regardless of whether an error has occurred or not.
+
+     * @param path - name of the directory to be listed (without any trailing slash).
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken opendir(String path, DoneOpen done);
+    
+    <font color=#3F5FBF>/**
+     * The files in a directory can be listed using the opendir() and
+     * readdir() requests.  Each readdir() request returns one
+     * or more file names with full file attributes for each file.  The
+     * client should call readdir() repeatedly until it has found the
+     * file it is looking for or until the server responds with a
+     * message indicating an error or end of file. The client should then
+     * close the handle using the close() request.
+     * Note: directory entries "." and ".." are NOT included into readdir()
+     * response.
+     * @param handle - file handle created by opendir()
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken readdir(IFileHandle handle, DoneReadDir done);
+    
+    <font color=#7F0055>interface</font> DoneReadDir {
+        <font color=#7F0055>void</font> doneReadDir(IToken token, FileSystemException error, DirEntry[] entries, boolean eof);
+    }
+    
+    <font color=#3F5FBF>/**
+     * Create a directory on the server.
+     * 
+     * @param path - specifies the directory to be created.
+     * @param attrs - new directory attributes.
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken mkdir(String path, FileAttrs attrs, DoneMkDir done);
+    
+    <font color=#7F0055>interface</font> DoneMkDir {
+        <font color=#7F0055>void</font> doneMkDir(IToken token, FileSystemException error);
+    }
+
+    <font color=#3F5FBF>/**
+     * Remove a directory.
+     * An error will be returned if no directory
+     * with the specified path exists, or if the specified directory is not
+     * empty, or if the path specified a file system object other than a
+     * directory.
+     * 
+     * @param path - specifies the directory to be removed.
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken rmdir(String path, DoneRemove done);
+    
+    <font color=#7F0055>interface</font> DoneRemove {
+        <font color=#7F0055>void</font> doneRemove(IToken token, FileSystemException error);
+    }
+
+    <font color=#3F5FBF>/**
+     * Retrieve file system roots - top level file system objects.
+     * UNIX file system can report just one root with path "/". Other types of systems
+     * can have more the one root. For example, Windows server can return multiple roots:
+     * one per disc (e.g. "/C:/", "/D:/", etc.). Note: even Windows implementation of
+     * the service must use forward slash as directory separator, and must start 
+     * absolute path with "/". Server should implement proper translation of
+     * protocol file names to OS native names and back. 
+     * 
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken roots(DoneRoots done);
+    
+    <font color=#7F0055>interface</font> DoneRoots {
+        <font color=#7F0055>void</font> doneRoots(IToken token, FileSystemException error, DirEntry[] entries);
+    }
+
+    <font color=#3F5FBF>/**
+     * Remove a file or symbolic link.
+     * This request cannot be used to remove directories.
+     * 
+     * @param file_name is the name of the file to be removed.
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken remove(String file_name, DoneRemove done);
+    
+    <font color=#3F5FBF>/**
+     * Canonicalize any given path name to an absolute path.
+     * This is useful for converting path names containing ".." components or
+     * relative pathnames without a leading slash into absolute paths.
+     * 
+     * @param path specifies the path name to be canonicalized.
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken realpath(String path, DoneRealPath done);
+    
+    <font color=#7F0055>interface</font> DoneRealPath {
+        <font color=#7F0055>void</font> doneRealPath(IToken token, FileSystemException error, String path);
+    }
+
+    <font color=#3F5FBF>/**
+     * Rename a file.
+     * It is an error if there already exists a file
+     * with the name specified by 'new_path'.  The server may also fail rename
+     * requests in other situations, for example if `old_path' and `new_path'
+     * point to different file systems on the server.
+     * 
+     * @param old_path is the name of an existing file or directory.
+     * @param new_path is the new name for the file or directory.
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken rename(String old_path, String new_path, DoneRename done);
+    
+    <font color=#7F0055>interface</font> DoneRename {
+        <font color=#7F0055>void</font> doneRename(IToken token, FileSystemException error);
+    }
+
+    <font color=#3F5FBF>/**
+     * Read the target of a symbolic link.
+     * 
+     * @param path specifies the path name of the symbolic link to be read.
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken readlink(String path, DoneReadLink done);
+    
+    <font color=#7F0055>interface</font> DoneReadLink {
+        <font color=#7F0055>void</font> doneReadLink(IToken token, FileSystemException error, String path);
+    }
+
+    <font color=#3F5FBF>/**
+     * Create a symbolic link on the server.
+     * 
+     * @param link_path specifies the path name of the symbolic link to be created.
+     * @param target_path specifies the target of the symbolic link.
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken symlink(String link_path, String target_path, DoneSymLink done);
+    
+    <font color=#7F0055>interface</font> DoneSymLink {
+        <font color=#7F0055>void</font> doneSymLink(IToken token, FileSystemException error);
+    }
+
+    <font color=#3F5FBF>/**
+     * Copy a file on remote system.
+     * 
+     * @param src_path specifies the path name of the file to be copied.
+     * @param dst_path specifies destination file name.
+     * @param copy_permissions - if true then copy source file permissions.
+     * @param copy_ownership - if true then copy source file UID and GID.
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken copy(String src_path, String dst_path,
+            boolean copy_permissions, boolean copy_ownership, DoneCopy done);
+    
+    <font color=#7F0055>interface</font> DoneCopy {
+        <font color=#7F0055>void</font> doneCopy(IToken token, FileSystemException error);
+    }
+    
+    <font color=#3F5FBF>/**
+     * Retrieve information about user account, which is used by server 
+     * to access file system on behalf of the client.
+     *   
+     * @param done - result call back object.
+     * @return pending command handle.
+     */</font>
+    IToken user(DoneUser done);
+    
+    <font color=#7F0055>interface</font> DoneUser {
+        <font color=#7F0055>void</font> doneUser(IToken token, FileSystemException error,
+                <font color=#7F0055>int</font> real_uid, <font color=#7F0055>int</font> effective_uid, <font color=#7F0055>int</font> real_gid, <font color=#7F0055>int</font> effective_gid,
+                String home);
+    }
+}
+</pre>
+
+</body>
+</html>
+
+

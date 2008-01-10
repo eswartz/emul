@@ -1,0 +1,654 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+    <title>Target Communication Framework Services - System Monitor</title>
+</head>
+
+<body lang='EN-US'>
+  
+<h1>Target Communication Framework Services - System Monitor</h1>
+ 
+<ul>
+    <li><a href='#Cmds'>Commands</a>
+    <ul>
+        <li><a href='#CmdGetContext'>Get Context</a>
+        <li><a href='#CmdGetChildren'>Get Children</a>
+        <li><a href='#CmdGetCommandLine'>Get Command Line</a>
+        <li><a href='#CmdGetEnvironment'>Get Environment</a>
+    </ul>
+    <li><a href='#Events'>Events</a>
+    <li><a href='#API'>API</a>
+</ul>
+
+<h1>System Monitor Service</h1>
+
+<p>The service can be used for monitoring system activity and utilization.
+It provides list of running processes, different process attributes like command line, environment, etc.,
+and some resource utilization data. The service can be used by a client to provide functionality
+similar to Unix 'top' utility or Windows 'Task Manager'.</p>
+
+<p>Command and event parameters are encoded
+as zero terminated <a href='TCF Specification.html#JSON'>JSON</a> strings.</p>
+
+<p>The service uses standard format for error reports,
+see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
+ 
+<h2><a name='Cmds'>Commands</a></h2>
+
+<h3><a name='CmdGetContext'>Get Context</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • SysMonitor • getContext • <i>&lt;string: context ID&gt;</i> •
+</font></b></pre>
+
+<p>The command retrieves context info for given context ID.
+A context corresponds to an execution thread or process.
+Context IDs are valid across TCF services, so it is allowed to issue 'SysMonitor.getContext'
+command with a context that was obtained from another service.</p>
+ 
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;</i> •
+
+<i>&lt;context data&gt;</i>
+    <font face=Wingdings>Ø</font> null
+    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p>Context data object should, at least, contain member
+<b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string&gt;.</i></font></b>
+</p>
+
+<p>Predefined context properties are:</p>
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string&gt;</i></font></b></code>
+    - ID of the context, same as getContext command argument.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ParentID" : <i>&lt;string&gt;</i></font></b></code>
+    - parent context ID.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"CWD" : <i>&lt;string&gt;</i></font></b></code>
+    - current working directory of the process.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Root" : <i>&lt;string&gt;</i></font></b></code>
+    - the process's root directory (as set by chroot).
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"UID" : <i>&lt;int&gt;</i></font></b></code>
+    - User ID of the process owner.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"UGID" : <i>&lt;int&gt;</i></font></b></code>
+    - Group ID of the process owner.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"UserName" : <i>&lt;string&gt;</i></font></b></code>
+    - user name of the process owner.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"GroupName" : <i>&lt;string&gt;</i></font></b></code>
+    - group name of the process owner.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"PID" : <i>&lt;int&gt;</i></font></b></code>
+    - system process ID.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"File" : <i>&lt;string&gt;</i></font></b></code>
+    - executable file of the process.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"State" : <i>&lt;string&gt;</i></font></b></code>
+    - one character from the string "RSDZTW"  where  R  is  running,  S  is
+    sleeping  in  an  interruptible wait, D is waiting in uninterruptible
+    disk sleep, Z is zombie, T is traced or stopped (on a signal), and  W
+    is paging.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"PPID" : <i>&lt;int&gt;</i></font></b></code>
+    - system ID of the parent process.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"PGRP" : <i>&lt;int&gt;</i></font></b></code>
+    - the process group ID of the process.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Session" : <i>&lt;int&gt;</i></font></b></code>
+    - the session ID of the process.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"TTY" : <i>&lt;int&gt;</i></font></b></code>
+    - the tty the process uses.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"TGID" : <i>&lt;int&gt;</i></font></b></code>
+    - the process group ID of the process which currently owns the tty that
+    the process is connected to.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"TracerPID" : <i>&lt;int&gt;</i></font></b></code>
+    - ID of a process that has attached this process for tracing or debugging.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Flags" : <i>&lt;int&gt;</i></font></b></code>
+    - the kernel flags word of the process. Details depend on the kernel.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"MinFlt" : <i>&lt;int&gt;</i></font></b></code>
+    - the  number  of  minor  faults  the  process  has made which have not
+    required loading a memory page from disk.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"CMinFlt" : <i>&lt;int&gt;</i></font></b></code>
+    - the number of minor faults that  the  process's  waited-for  children have made.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"MajFlt" : <i>&lt;int&gt;</i></font></b></code>
+    - the  number  of major faults the process has made which have required
+    loading a memory page from disk.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"CMajFlt" : <i>&lt;int&gt;</i></font></b></code>
+    - the number of major faults that  the  process's  waited-for  children
+    have made.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"UTime" : <i>&lt;int&gt;</i></font></b></code>
+    - the number of milliseconds that this process has been scheduled in user mode.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"STime" : <i>&lt;int&gt;</i></font></b></code>
+    - the number of milliseconds that this process has been scheduled in kernel mode.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"CUTime" : <i>&lt;int&gt;</i></font></b></code>
+    - the  number  of  jiffies that this process's waited-for children have
+    been scheduled in user mode.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"CSTime" : <i>&lt;int&gt;</i></font></b></code>
+    - the  number  of  jiffies that this process's waited-for children have
+    been scheduled in user mode.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Priority" : <i>&lt;int&gt;</i></font></b></code>
+    - the standard nice value.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Nice" : <i>&lt;int&gt;</i></font></b></code>
+    - the nice value.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ITRealValue" : <i>&lt;int&gt;</i></font></b></code>
+    - the time in milliseconds before the next SIGALRM is sent  to  the  process
+    due to an interval timer.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"StartTime" : <i>&lt;int&gt;</i></font></b></code>
+    - the time in milliseconds the process started after system boot.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"VSize" : <i>&lt;int&gt;</i></font></b></code>
+    - virtual memory size in bytes.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"PSize" : <i>&lt;int&gt;</i></font></b></code>
+    - memory pages size in bytes.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"RSS" : <i>&lt;int&gt;</i></font></b></code>
+    - resident  Set  Size:  number of pages the process has in real memory,
+    minus used for administrative purposes. This is  just  the  pages  which
+    count  towards  text,  data,  or  stack space.  This does not include
+    pages which have not been demand-loaded in, or which are swapped out.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"RLimit" : <i>&lt;int&gt;</i></font></b></code>
+    - current  limit in bytes on the rss of the process.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"CodeStart" : <i>&lt;int&gt;</i></font></b></code>
+    - the address above which program text can run.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"CodeEnd" : <i>&lt;int&gt;</i></font></b></code>
+    - the address below which program text can run.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"StackStart" : <i>&lt;int&gt;</i></font></b></code>
+    - the address of the start of the stack.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Signals" : <i>&lt;int&gt;</i></font></b></code>
+    - the bitmap of pending signals.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"SigBlock" : <i>&lt;int&gt;</i></font></b></code>
+    - the bitmap of blocked signals.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"SigIgnore" : <i>&lt;int&gt;</i></font></b></code>
+    - the bitmap of ignored signals.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"SigCatch" : <i>&lt;int&gt;</i></font></b></code>
+    - the bitmap of caught signals.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"WChan" : <i>&lt;int&gt;</i></font></b></code>
+    - this  is  the  "channel"  in which the process is waiting.  It is the
+    address of a system call, and can be looked up in a namelist  if  you
+    need  a  textual  name.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"NSwap" : <i>&lt;int&gt;</i></font></b></code>
+    - number of pages swapped.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"CNSwap" : <i>&lt;int&gt;</i></font></b></code>
+    - cumulative NSwap for child processes.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ExitSignal" : <i>&lt;int&gt;</i></font></b></code>
+    - signal to be sent to parent when this process exits.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Processor" : <i>&lt;int&gt;</i></font></b></code>
+    - CPU number last executed on.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"RTPriority" : <i>&lt;int&gt;</i></font></b></code>
+    - real-time scheduling priority.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Policy" : <i>&lt;int&gt;</i></font></b></code>
+    - scheduling policy.
+</ul>
+
+<h3><a name='CmdGetChildren'>Get Children</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • SysMonitor • getChildren • <i>&lt;string: parent context ID&gt;</i> •
+</font></b></pre>
+
+<p>The command requests a list of contexts available for System Monitor commands.</p>
+ 
+<p>Parent context ID can be null – to retrieve top level of the hierarchy, can be one
+of context IDs retrieved by previous getChildren commands, or it can be obtained from another service.
+Contexts hierarchy can be simple plain list or it can form a tree. It is up to target agent developers to
+choose layout that is most descriptive for a given target.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of context IDs&gt;</i> •
+
+<i>&lt;array of context IDs&gt;</i>
+    <font face=Wingdings>Ø</font> null
+    <font face=Wingdings>Ø</font> [ ]
+    <font face=Wingdings>Ø</font> [ <i>&lt;context ID list&gt;</i> ]
+  
+<i>&lt;context ID list&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;string: context ID&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
+</font></b></pre>
+
+<h3><a name='CmdGetCommandLine'>Get Command Line</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • SysMonitor • getCommandLine • <i>&lt;string: context ID&gt;</i> •
+</font></b></pre>
+
+<p>The command requests a list of progess command line arguments.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of string&gt;</i> •
+
+<i>&lt;array of string&gt;</i>
+    <font face=Wingdings>Ø</font> null
+    <font face=Wingdings>Ø</font> [ ]
+    <font face=Wingdings>Ø</font> [ <i>&lt;string list&gt;</i> ]
+  
+<i>&lt;string list&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;string&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;string list&gt;</i> , <i>&lt;string&gt;</i>
+</font></b></pre>
+
+<h3><a name='CmdGetEnvironment'>Get Environment</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • SysMonitor • getEnvironment • <i>&lt;string: context ID&gt;</i> •
+</font></b></pre>
+
+<p>The command requests a list of progess environment variables.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of string&gt;</i> •
+</font></b></pre>
+
+<h2><a name='Events'>Events</a></h2>
+
+<p>No events are currently defined for System Monitor service.</p>
+
+<h2><a name='API'>API</a></h2>
+ 
+<pre>
+<font color=#7F0055>public interface</font> ISysMonitor <font color=#7F0055>extends</font> IService {
+
+   <font color=#7F0055>static final</font> String NAME = "SysMonitor";
+
+    <font color=#3F5FBF>/**
+     * Retrieve context info for given context ID.
+     *   
+     * <font color=#7F9FBF>@param</font> id – context ID. 
+     * <font color=#7F9FBF>@param</font> done - callback interface called when operation is completed.
+     */</font>
+    IToken getContext(String id, DoneGetContext done);
+
+    <font color=#3F5FBF>/**
+     * Client callback interface for getContext().
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetContext {
+        <font color=#3F5FBF>/**
+         * Called when contexts data retrieval is done.
+         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context – context data.
+         */</font>
+        <font color=#7F0055>void</font> doneGetContext(IToken token, Exception error, SysMonitorContext context);
+    }
+
+    <font color=#3F5FBF>/**
+     * Retrieve children of given context.
+     *   
+     * <font color=#7F9FBF>@param</font> parent_context_id – parent context ID. Can be null –
+     * to retrieve top level of the hierarchy, or one of context IDs retrieved
+     * by previous getContext or getChildren commands. 
+     * <font color=#7F9FBF>@param</font> done - callback interface called when operation is completed.
+     */</font>
+    IToken getChildren(String parent_context_id, DoneGetChildren done);
+
+    <font color=#3F5FBF>/**
+     * Client callback interface for getChildren().
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetChildren {
+        <font color=#3F5FBF>/**
+         * Called when contexts data retrieval is done.
+         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context_ids – array of available context IDs.
+         */</font>
+        <font color=#7F0055>void</font> doneGetChildren(IToken token, Exception error, String[] context_ids);
+    }
+    
+    <font color=#3F5FBF>/**
+     * Context property names.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        <font color=#3F5FBF>/** The TCF context ID */</font>
+        PROP_ID = "ID",
+        
+        <font color=#3F5FBF>/** The TCF parent context ID */</font>
+        PROP_PARENTID = "ParentID",
+        
+        <font color=#3F5FBF>/** Current working directory of the process */</font>
+        PROP_CWD = "CWD",
+        
+        <font color=#3F5FBF>/** The process's root directory (as set by chroot) */</font>
+        PROP_ROOT = "Root",
+        
+        <font color=#3F5FBF>/** User ID of the process owner */</font>
+        PROP_UID = "UID",
+        
+        <font color=#3F5FBF>/** Group ID of the process owner */</font>
+        PROP_UGID = "UGID",
+        
+        <font color=#3F5FBF>/** User name of the process owner */</font>
+        PROP_USERNAME = "UserName",
+        
+        <font color=#3F5FBF>/** Group name of the process owner */</font>
+        PROP_GROUPNAME = "GroupName",
+        
+        <font color=#3F5FBF>/** System process ID */</font>
+        PROP_PID = "PID",
+        
+        <font color=#3F5FBF>/** Executable file of the process */</font>
+        PROP_FILE = "File",
+        
+        <font color=#3F5FBF>/** One character from the string "RSDZTW"  where  R  is  running,  S  is
+         *  sleeping  in  an  interruptible wait, D is waiting in uninterruptible
+         *  disk sleep, Z is zombie, T is traced or stopped (on a signal), and  W
+         *  is paging.*/</font>
+        PROP_STATE = "State",
+        
+        <font color=#3F5FBF>/** System ID of the parent process */</font>
+        PROP_PPID = "PPID",
+        
+        <font color=#3F5FBF>/** The process group ID of the process */</font>
+        PROP_PGRP = "PGRP",
+        
+        <font color=#3F5FBF>/** The session ID of the process */</font>
+        PROP_SESSION = "Session",
+        
+        <font color=#3F5FBF>/** The tty the process uses */</font>
+        PROP_TTY = "TTY",
+        
+        <font color=#3F5FBF>/** The process group ID of the process which currently owns the tty that
+         *  the process is connected to. */</font>
+        PROP_TGID = "TGID",
+        
+        <font color=#3F5FBF>/** ID of a process that has attached this process for tracing or debugging */</font>
+        PROP_TRACERPID = "TracerPID",
+        
+        <font color=#3F5FBF>/** The kernel flags word of the process. Details depend on the kernel */</font>
+        PROP_FLAGS = "Flags",
+        
+        <font color=#3F5FBF>/** The  number  of  minor  faults  the  process  has made which have not
+         *  required loading a memory page from disk */</font>
+        PROP_MINFLT = "MinFlt",
+        
+        <font color=#3F5FBF>/** The number of minor faults that  the  process's  waited-for  children have made */</font>
+        PROP_CMINFLT = "CMinFlt",       
+        
+        <font color=#3F5FBF>/** The  number  of major faults the process has made which have required
+         *  loading a memory page from disk */</font>
+        PROP_MAJFLT = "MajFlt",
+        
+        <font color=#3F5FBF>/** The number of major faults that  the  process's  waited-for  children
+         *  have made */</font>
+        PROP_CMAJFLT = "CMajFlt",
+        
+        <font color=#3F5FBF>/** The number of milliseconds that this process has been scheduled in user mode */</font>
+        PROP_UTIME = "UTime",
+        
+        <font color=#3F5FBF>/** The number of milliseconds that this process has been scheduled in kernel mode */</font>
+        PROP_STIME = "STime",
+        
+        <font color=#3F5FBF>/** The  number  of  jiffies that this process's waited-for children have
+         *  been scheduled in user mode */</font>
+        PROP_CUTIME = "CUTime",
+        
+        <font color=#3F5FBF>/** The  number  of  jiffies that this process's waited-for children have
+         *  been scheduled in user mode */</font>
+        PROP_CSTIME = "CSTime",
+        
+        <font color=#3F5FBF>/** The standard nice value */</font>
+        PROP_PRIORITY = "Priority",
+        
+        <font color=#3F5FBF>/** The nice value */</font>
+        PROP_NICE = "Nice",
+        
+        <font color=#3F5FBF>/** The time in milliseconds before the next SIGALRM is sent  to  the  process
+         *  due to an interval timer */</font>
+        PROP_ITREALVALUE = "ITRealValue",
+        
+        <font color=#3F5FBF>/** The time in milliseconds the process started after system boot */</font>
+        PROP_STARTTIME = "StartTime",
+        
+        <font color=#3F5FBF>/** Virtual memory size in bytes */</font>
+        PROP_VSIZE = "VSize",
+        
+        <font color=#3F5FBF>/** Memory pages size in bytes */</font>
+        PROP_PSIZE = "PSize",
+        
+        <font color=#3F5FBF>/** Resident  Set  Size:  number of pages the process has in real memory,
+         *  minus used for administrative purposes. This is  just  the  pages  which
+         *  count  towards  text,  data,  or  stack space.  This does not include
+         *  pages which have not been demand-loaded in, or which are swapped out */</font>
+        PROP_RSS = "RSS",
+        
+        <font color=#3F5FBF>/** Current  limit in bytes on the rss of the process */</font>
+        PROP_RLIMIT = "RLimit",
+        
+        <font color=#3F5FBF>/** The address above which program text can run */</font>
+        PROP_CODESTART = "CodeStart",
+        
+        <font color=#3F5FBF>/** The address below which program text can run */</font>
+        PROP_CODEEND = "CodeEnd",
+        
+        <font color=#3F5FBF>/** The address of the start of the stack */</font>
+        PROP_STACKSTART = "StackStart",
+        
+        <font color=#3F5FBF>/** The bitmap of pending signals */</font>
+        PROP_SIGNALS = "Signals",
+        
+        <font color=#3F5FBF>/** The bitmap of blocked signals */</font>
+        PROP_SIGBLOCK = "SigBlock",
+        
+        <font color=#3F5FBF>/** The bitmap of ignored signals */</font>
+        PROP_SIGIGNORE = "SigIgnore",
+        
+        <font color=#3F5FBF>/** The bitmap of caught signals */</font>
+        PROP_SIGCATCH = "SigCatch",
+        
+        <font color=#3F5FBF>/** This  is  the  "channel"  in which the process is waiting.  It is the
+         *  address of a system call, and can be looked up in a name list  if  you
+         *  need  a  textual  name */</font>
+        PROP_WCHAN = "WChan",
+        
+        <font color=#3F5FBF>/** Number of pages swapped */</font>
+        PROP_NSWAP = "NSwap",
+        
+        <font color=#3F5FBF>/** Cumulative NSwap for child processes */</font>
+        PROP_CNSWAP = "CNSwap",
+        
+        <font color=#3F5FBF>/** Signal to be sent to parent when this process exits */</font>
+        PROP_EXITSIGNAL = "ExitSignal",
+        
+        <font color=#3F5FBF>/** CPU number last executed on */</font>
+        PROP_PROCESSOR = "Processor",
+        
+        <font color=#3F5FBF>/** Real-time scheduling priority */</font>
+        PROP_RTPRIORITY = "RTPriority",
+        
+        <font color=#3F5FBF>/** Scheduling policy */</font>
+        PROP_POLICY = "Policy";
+        
+	    
+    <font color=#3F5FBF>/**
+     * A context corresponds to an execution thread, process, address space, etc.
+     * A context can belong to a parent context. Contexts hierarchy can be simple
+     * plain list or it can form a tree. It is up to target agent developers to choose
+     * layout that is most descriptive for a given target. Context IDs are valid across
+     * all services. In other words, all services access same hierarchy of contexts,
+     * with same IDs, however, each service accesses its own subset of context's
+     * attributes and functionality, which is relevant to that service. 
+     */</font>
+    <font color=#7F0055>interface</font> SysMonitorContext {
+    	
+        <font color=#3F5FBF>/** 
+         * Get context ID.
+         * Same as getProperties().get(“ID”)
+         */</font>
+        String getID();
+
+        <font color=#3F5FBF>/** 
+         * Get parent context ID.
+         * Same as getProperties().get(“ParentID”)
+         */</font>
+        String getParentID();
+
+        <font color=#3F5FBF>/** 
+         * Get process group ID.
+         * Same as getProperties().get(“PGRP”)
+         */</font>
+        <font color=#7F0055>long</font> getPGRP();
+
+        <font color=#3F5FBF>/** 
+         * Get process ID.
+         * Same as getProperties().get(“PID”)
+         */</font>
+        <font color=#7F0055>long</font> getPID();
+
+        <font color=#3F5FBF>/** 
+         * Get process parent ID.
+         * Same as getProperties().get(“PPID”)
+         */</font>
+        <font color=#7F0055>long</font> getPPID();
+
+        <font color=#3F5FBF>/** 
+         * Get process TTY group ID.
+         * Same as getProperties().get(“TGID”)
+         */</font>
+        <font color=#7F0055>long</font> getTGID();
+
+        <font color=#3F5FBF>/** 
+         * Get tracer process ID.
+         * Same as getProperties().get(“TracerPID”)
+         */</font>
+        <font color=#7F0055>long</font> getTracerPID();
+
+        <font color=#3F5FBF>/** 
+         * Get process owner user ID.
+         * Same as getProperties().get(“UID”)
+         */</font>
+        <font color=#7F0055>long</font> getUID();
+
+        <font color=#3F5FBF>/** 
+         * Get process owner user name.
+         * Same as getProperties().get(“UserName”)
+         */</font>
+        String getUserName();
+
+        <font color=#3F5FBF>/** 
+         * Get process owner user group ID.
+         * Same as getProperties().get(“UGID”)
+         */</font>
+        <font color=#7F0055>long</font> getUGID();
+
+        <font color=#3F5FBF>/** 
+         * Get process owner user group name.
+         * Same as getProperties().get(“GroupName”)
+         */</font>
+        String getGroupName();
+        
+        <font color=#3F5FBF>/** 
+         * Get process state.
+         * Same as getProperties().get(“State”)
+         */</font>
+        String getState();
+
+        <font color=#3F5FBF>/** 
+         * Get process virtual memory size in bytes.
+         * Same as getProperties().get(“VSize”)
+         */</font>
+        <font color=#7F0055>long</font> getVSize();
+
+        <font color=#3F5FBF>/** 
+         * Get process virtual memory page size in bytes.
+         * Same as getProperties().get(“PSize”)
+         */</font>
+        <font color=#7F0055>long</font> getPSize();
+
+        <font color=#3F5FBF>/** 
+         * Get number of memory pages in process resident set.
+         * Same as getProperties().get(“RSS”)
+         */</font>
+        <font color=#7F0055>long</font> getRSS();
+
+        <font color=#3F5FBF>/** 
+         * Get context executable file.
+         * Same as getProperties().get(“File”)
+         */</font>
+        String getFile();
+
+        <font color=#3F5FBF>/** 
+         * Get context current file system root.
+         * Same as getProperties().get(“Root”)
+         */</font>
+        String getRoot();
+
+        <font color=#3F5FBF>/** 
+         * Get context current working directory.
+         * Same as getProperties().get(“CWD”)
+         */</font>
+        String getCurrentWorkingDirectory();
+
+        <font color=#3F5FBF>/**
+         * Get all available context properties.
+         * @return Map 'property name' -> 'property value'
+         */</font>
+        Map&lt;String,Object&gt; getProperties();
+    }
+    
+    <font color=#3F5FBF>/** 
+     * Get context command line.
+     */</font>
+    IToken getCommandLine(String id, DoneGetCommandLine done);
+    
+    <font color=#7F0055>interface</font> DoneGetCommandLine {
+        <font color=#7F0055>void</font> doneGetCommandLine(IToken token, Exception error, String[] cmd_line);
+    }
+
+    <font color=#3F5FBF>/** 
+     * Get context environment variables.
+     */</font>
+    IToken getEnvironment(String id, DoneGetEnvironment done);
+    
+    <font color=#7F0055>interface</font> DoneGetEnvironment {
+        <font color=#7F0055>void</font> doneGetEnvironment(IToken token, Exception error, String[] environment);
+    }
+}
+</pre>
+
+</body>
+</html>

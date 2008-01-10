@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension-point id="startup" name="TCF Startup" schema="schema/startup.exsd"/>
+   <extension
+         point="org.eclipse.debug.core.breakpoints">
+      <breakpoint
+            markerType="com.windriver.debug.tcf.breakpoint.marker"
+            class="com.windriver.debug.tcf.core.model.TCFBreakpoint"
+            id="com.windriver.debug.tcf.breakpoint"
+            name="TCF Breakpoint">
+      </breakpoint>
+   </extension>
+   <extension
+         id="com.windriver.debug.tcf.breakpoint.marker"
+         point="org.eclipse.core.resources.markers">
+      <super type="org.eclipse.debug.core.breakpointMarker"/>
+      <persistent value="true"/>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            sourceLocatorId="com.windriver.debug.tcf.SourceLocator"
+            name="Target Communication Framework"
+            sourcePathComputerId="com.windriver.debug.tcf.SourcePathComputer"
+            delegate="com.windriver.debug.tcf.core.launch.TCFLaunchDelegate"
+            modes="run, debug"
+            id="com.windriver.debug.tcf.LaunchConfigurationType">
+      </launchConfigurationType>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.sourceLocators">
+      <sourceLocator
+            name="TCF Source Lookup Director"
+            class="com.windriver.debug.tcf.core.launch.TCFSourceLookupDirector"
+            id="com.windriver.debug.tcf.SourceLocator">
+      </sourceLocator>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.sourcePathComputers">
+      <sourcePathComputer
+            class="com.windriver.debug.tcf.core.launch.TCFSourcePathComputerDelegate"
+            id="com.windriver.debug.tcf.SourcePathComputer">
+      </sourcePathComputer>
+   </extension>
+</plugin>

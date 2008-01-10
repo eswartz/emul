@@ -1,0 +1,408 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+    <title>Target Communication Framework Services - Breakpoints</title>
+</head>
+
+<body lang='EN-US'>
+  
+<h1>Target Communication Framework Services - Breakpoints</h1>
+ 
+<ul>
+    <li><a href='#Cmds'>Commands</a>
+    <ul>
+        <li><a href='#CmdSet'>Set</a>
+        <li><a href='#CmdAdd'>Add</a>
+        <li><a href='#CmdChange'>Change</a>
+        <li><a href='#CmdEnable'>Enable</a>
+        <li><a href='#CmdDisable'>Disable</a>
+        <li><a href='#CmdRemove'>Remove</a>
+        <li><a href='#CmdGetIDs'>Get IDs</a>
+        <li><a href='#CmdGetProperties'>Get Properties</a>
+        <li><a href='#CmdGetStatus'>Get Status</a>
+    </ul>
+    <li><a href='#Events'>Events</a>
+    <li><a href='#API'>API</a>
+</ul>
+
+<h1>Breakpoints Service</h1>
+
+<p>Breakpoint is represented by unique identifier and set of properties.
+Breakpoint identifier (String id) needs to be unique across all hosts and targets</p>
+ 
+<p>Breakpoint properties is extendable collection of named attributes,
+which define breakpoint location and behavior. The service defines some common
+attribute names, host tools and target agents may support additional attributes.</p>
+
+<p>For each breakpoint a target agent maintains another extendable collection of named attributes:
+breakpoint status. While breakpoint properties are persistent and represent user input,
+breakpoint status reflects dynamic target agent reports about breakpoint current state,
+like actual addresses where breakpoint is planted or planting errors.</p>
+
+<p>Breakpoints are associated with communication channel and traget agent must remove them
+when the channel is closed. Target agent should maintain separate breakpoint table
+for each communication channel. It is allowed to set same breakpoint (same ID) through multiple
+channels, target agent should treat it as single breakpoint with maltiple references. Such breakpoint
+is removed when all refering channels are closed.</p>
+
+<p>The service uses standard format for error reports,
+see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
+ 
+<h2><a name='Cmds'>Commands</a></h2>
+
+<h3><a name='CmdSet'>Set</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Breakpoints • set • <i>&lt;array of breakpoints&gt;</i> •
+
+<i>&lt;array of breakpoints&gt;</i>
+    <font face=Wingdings>Ø</font> null
+    <font face=Wingdings>Ø</font> [ ]
+    <font face=Wingdings>Ø</font> [ <i>&lt;breakpoints list&gt;</i> ]
+
+<i>&lt;breakpoints list&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;breakpoint data&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;breakpoint data&gt;</i> , <i>&lt;breakpoint data&gt;</i>
+
+<i>&lt;breakpoint data&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p> The command downloads breakpoints data to a target agent.
+The command is intended to be used only to initialize target breakpoints table 
+when communication channel is open. After that, host should 
+notify target about (incremental) changes in breakpoint data by sending
+Add, Change and Remove commands.<p>
+
+<p>Breakpoint data consists of a list of breakpoint properties. All properties are optional, except ID.
+Tools and targets can define additional properties. Predefined properties are:</p>
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string&gt;</i></font></b></code>
+    - breakpoint ID
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Enabled" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true breakpoint is enabled
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Address" : <i>&lt;string&gt;</i></font></b></code>
+    - if preset, defines address of the breakpoint. Address is an expression that evaluates to breakpoint memory address.
+    Alternatively, breakpoint location can be given as File/Line/Column.
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Condition" : <i>&lt;string&gt;</i></font></b></code>
+    - a conditional expression that is evaluted every time execution hits the breakpoint. If condition is evaluated to false,
+    the breakpoint is skipped and execution is resumed without sending notifications to a host.
+    <li><code><b><font face="Courier New" size=2 color=#333399>"File" : <i>&lt;string&gt;</i></font></b></code>
+    - source code file name of breakpoint location.
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Line" : <i>&lt;int&gt;</i></font></b></code>
+    - source code line number of breakpoint location.
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Column" : <i>&lt;int&gt;</i></font></b></code>
+    - source code column number of breakpoint location.
+</ul>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdAdd'>Add</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Breakpoints • add • <i>&lt;breakpoint data&gt;</i> •
+</font></b></pre>
+
+<p>The command adds breakpoint to target agent breakpoint table. Host should send this command when user creates new breakpoint</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdChange'>Change</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Breakpoints • change • <i>&lt;breakpoint data&gt;</i> •
+</font></b></pre>
+
+<p>The command updates breakpoint data in target agent breakpoint table. Host should send this command when user modifies a breakpoint</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdEnable'>Enable</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Breakpoints • enable • <i>&lt;array of breakpoint IDs&gt;</i> •
+
+<i>&lt;array of breakpoint IDs&gt;</i>
+    <font face=Wingdings>Ø</font> null
+    <font face=Wingdings>Ø</font> [ ]
+    <font face=Wingdings>Ø</font> [ <i>&lt;breakpoint IDs list&gt;</i> ]
+
+<i>&lt;breakpoint IDs list&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;breakpoint ID&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;breakpoint ID&gt;</i> , <i>&lt;breakpoint ID&gt;</i>
+
+<i>&lt;breakpoint ID&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;string&gt;</i>
+</font></b></pre>
+
+<p>The command enables a list of breakpoints - sets brekpoint property "Enabled" to true.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdDisable'>Disable</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Breakpoints • disable • <i>&lt;array of breakpoint IDs&gt;</i> •
+</font></b></pre>
+
+<p>The command disables a list of breakpoints - sets brekpoint property "Enabled" to false.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdRemove'>Remove</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Breakpoints • remove • <i>&lt;array of breakpoint IDs&gt;</i> •
+</font></b></pre>
+
+<p>The command removes a list of breakpoints. Host should send this command when user deletes breakpoints.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdGetIDs'>Get IDs</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Breakpoints • getIDs •
+</font></b></pre>
+
+<p>The command uploads IDs of breakpoints known to target agent. Only breakpoints what are set through
+this communication channel are reported. Target agent should maintain separate breakpoint table
+for each communication channel.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of breakpoint IDs&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdGetProperties'>Get Properties</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Breakpoints • getProperties • <i>&lt;string: breakpoint ID&gt;</i> •
+</font></b></pre>
+
+<p>The command uploads properties of given breakpoint from target agent breakpoint table.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;;breakpoint data&gt;</i> •
+</font></b></pre>
+
+<h3><a name='CmdGetStatus'>Get Status</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Breakpoints • getStatus • <i>&lt;string: breakpoint ID&gt;</i> •
+</font></b></pre>
+
+<p>The command uploads status of given breakpoint from target agent.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;;breakpoint status&gt;</i> •
+
+<i>&lt;breakpoint status&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p>Breakpoint stat consists of a list of status properties. All properties are optional.
+Tools and targets can define additional properties. Predefined properties are:</p>
+
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Planted" : <i>&lt;array of addresses&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Error" : <i>&lt;string&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"File" : <i>&lt;string&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Line" : <i>&lt;int&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Column" : <i>&lt;int&gt;</i></font></b></code>
+</ul>
+
+<h2><a name='Events'>Events</a></h2>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+E • Breakpoints • status • <i>&lt;string: breakpoint ID&gt;</i> • <i>&lt;breakpoint status&gt;</i> •
+</font></b></pre>
+
+<dl>
+    <dt><b>status</b>
+        <dd>is sent when breakpoint status changes.
+</dl>
+
+<h2><a name='API'>API</a></h2>
+ 
+<pre>
+<font color=#3F5FBF>/**
+ * Breakpoint is represented by unique identifier and set of properties.
+ * Breakpoint identifier (String id) needs to be unique across all hosts and targets.
+ * 
+ * Breakpoint properties (Map<String,Object>) is extendable collection of named attributes,
+ * which define breakpoint location and behavior. This module defines some common
+ * attribute names (see PROP_*), host tools and target agents may support additional attributes.
+ * 
+ * For each breakpoint a target agent maintains another extendable collection of named attributes:
+ * breakpoint status (Map<String,Object>, see STATUS_*). While breakpoint properties are
+ * persistent and represent user input, breakpoint status reflects dynamic target agent reports
+ * about breakpoint current state, like actual addresses where breakpoint is planted or planting errors.
+ */</font>
+<font color=#7F0055>public interface</font> IBreakpoints <font color=#7F0055>extends</font> IService {
+
+    <font color=#3F5FBF>/**
+     * Service name.
+     */</font>
+    <font color=#7F0055>static final</font> String NAME = "Breakpoints";
+
+    <font color=#3F5FBF>/**
+     * Breakpoint property names.
+     */</font>
+    <font color=#7F0055>static final</font> String   
+        PROP_ID = "ID",                 // String
+        PROP_ENABLED = "Enabled",       // Boolean
+        PROP_ADDRESS = "Address",       // String
+        PROP_CONDITION = "Condition",   // String
+        PROP_FILE = "File",             // String
+        PROP_LINE = "Line",             // Number
+        PROP_COLUMN = "Column";         // Number
+
+    <font color=#3F5FBF>/**
+     * Breakpoint status field names.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        STATUS_PLANTED = "Planted",     // Array of addresses
+        STATUS_ERROR = "Error",         // String
+        STATUS_FILE = "File",           // String
+        STATUS_LINE = "Line",           // Number
+        STATUS_COLUMN = "Column";       // Number
+    
+    <font color=#3F5FBF>/**
+     * Call back interface for breakpoint service commands.
+     */</font>
+    <font color=#7F0055>interface</font> DoneCommand {
+        <font color=#7F0055>void</font> doneCommand(IToken token, Exception error);
+    }
+
+    <font color=#3F5FBF>/**
+     * Download breakpoints data to target agent.
+     * The command is intended to be used only to initialize target breakpoints table 
+     * when communication channel is open. After that, host should 
+     * notify target about (incremental) changes in breakpoint data by sending
+     * add, change and remove commands.
+     * 
+     * @param properties - array of breakpoints.
+     * @param done - command result call back object.
+     */</font>
+    IToken set(Map&lt;String,Object&gt;[] properties, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Called when breakpoint is added into breakpoints table.
+     * @param properties - breakpoint properties.
+     * @param done - command result call back object.
+     */</font>
+    IToken add(Map&lt;String,Object&gt; properties, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Called when breakpoint properties are changed.
+     * @param properties - breakpoint properties.
+     * @param done - command result call back object.
+     */</font>
+    IToken change(Map&lt;String,Object&gt; properties, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Tell target to change (only) PROP_ENABLED breakpoint property 'true'.
+     * @param ids - array of enabled breakpoint identifiers.
+     * @param done - command result call back object.
+     */</font>
+    IToken enable(String[] ids, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Tell target to change (only) PROP_ENABLED breakpoint property to 'false'.
+     * @param ids - array of disabled breakpoint identifiers.
+     * @param done - command result call back object.
+     */</font>
+    IToken disable(String[] ids, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Tell target to remove breakpoint.
+     * @param id - unique breakpoint identifier.
+     * @param done - command result call back object.
+     */</font>
+    IToken remove(String[] ids, DoneCommand done);
+    
+    <font color=#3F5FBF>/**
+     * Upload IDs of breakpoints known to target agent.
+     * @param done - command result call back object.
+     */</font>
+    IToken getIDs(DoneGetIDs done);
+
+    <font color=#7F0055>interface</font> DoneGetIDs {
+        <font color=#7F0055>void</font> doneGetIDs(IToken token, Exception error, String[] ids);
+    }
+
+    <font color=#3F5FBF>/**
+     * Upload properties of given breakpoint from target agent breakpoint table.
+     * @param id - unique breakpoint identifier.
+     * @param done - command result call back object.
+     */</font>
+    IToken getProperties(String id, DoneGetProperties done);
+
+    <font color=#7F0055>interface</font> DoneGetProperties {
+        <font color=#7F0055>void</font> doneGetProperties(IToken token, Exception error, Map&lt;String,Object&gt; properties);
+    }
+
+    <font color=#3F5FBF>/**
+     * Upload status of given breakpoint from target agent.
+     * @param id - unique breakpoint identifier.
+     * @param done - command result call back object.
+     */</font>
+    IToken getStatus(String id, DoneGetStatus done);
+
+    <font color=#7F0055>interface</font> DoneGetStatus {
+        <font color=#7F0055>void</font> doneGetStatus(IToken token, Exception error, Map&lt;String,Object&gt; status);
+    }
+
+    <font color=#3F5FBF>/**
+     * Breakpoints service events listener.
+     */</font>
+    <font color=#7F0055>interface</font> BreakpointsListener {
+
+        <font color=#3F5FBF>/**
+         * Called when breakpoint status changes.
+         * @param id - unique breakpoint identifier.
+         * @param status - breakpoint status.
+         */</font>
+        <font color=#7F0055>void</font> breakpointStatusChanged(String id, Map&lt;String,Object&gt; status);
+    }
+
+    <font color=#7F0055>void</font> addListener(BreakpointsListener listener);
+
+    <font color=#7F0055>void</font> removeListener(BreakpointsListener listener);
+}
+</pre>
+
+</body>
+</html>
+
+
