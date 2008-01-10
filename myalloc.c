@@ -1,0 +1,67 @@
+/*******************************************************************************
+ * Copyright (c) 2007 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Eclipse Public License v1.0 
+ * which accompanies this distribution, and is available at 
+ * http://www.eclipse.org/legal/epl-v10.html 
+ *  
+ * Contributors:
+ *     Wind River Systems - initial API and implementation
+ *******************************************************************************/
+
+/*
+ * Local memory heap manager.
+ */
+
+#include <string.h>
+#include "trace.h"
+#include "myalloc.h"
+
+void * loc_alloc(size_t size) {
+    void * p;
+
+    if (size == 0) {
+        size = 1;
+    }
+    if ((p = malloc(size)) == NULL) {
+        perror("malloc");
+        exit(1);
+    }
+    trace(LOG_ALLOC, "loc_alloc(%d) = %#x", size, p);
+    return p;
+}
+
+void * loc_alloc_zero(size_t size) {
+    void * p;
+
+    if (size == 0) {
+        size = 1;
+    }
+    if ((p = malloc(size)) == NULL) {
+        perror("malloc");
+        exit(1);
+    }
+    memset(p, 0, size);
+    trace(LOG_ALLOC, "loc_alloc_zero(%d) = %#x", size, p);
+    return p;
+}
+
+void * loc_realloc(void * ptr, size_t size) {
+    void * p;
+
+    if (size == 0) {
+        size = 1;
+    }
+    if ((p = realloc(ptr, size)) == NULL) {
+        perror("realloc");
+        exit(1);
+    }
+    trace(LOG_ALLOC, "loc_realloc(%#x, %d) = %#x", ptr, size, p);
+    return p;
+}
+
+void loc_free(void *p) {
+    trace(LOG_ALLOC, "loc_free %#x", p);
+    free(p);
+}
+

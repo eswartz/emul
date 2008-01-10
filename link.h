@@ -1,0 +1,46 @@
+/*******************************************************************************
+ * Copyright (c) 2007 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Eclipse Public License v1.0 
+ * which accompanies this distribution, and is available at 
+ * http://www.eclipse.org/legal/epl-v10.html 
+ *  
+ * Contributors:
+ *     Wind River Systems - initial API and implementation
+ *******************************************************************************/
+
+/*
+ * Double linked list support.
+ */
+
+#ifndef D_link
+#define D_link
+
+typedef struct LINK LINK;
+
+struct LINK {
+    LINK * next;
+    LINK * prev;
+};
+
+#define list_init(list) (list)->next = (list)->prev = (list)
+
+#define list_is_empty(list) ((list)->next == (list) && (list)->prev == (list))
+
+#define list_remove(item) (item)->prev->next = (item)->next; \
+        (item)->next->prev = (item)->prev
+
+#define list_add_first(item,list) (item)->next = (list)->next; (item)->prev = (list); \
+        (list)->next->prev = (item); (list)->next = (item)
+
+#define list_add_last(item,list)  (item)->next = (list); (item)->prev = (list)->prev; \
+        (list)->prev->next = (item); (list)->prev = (item)
+
+#define list_concat(item,list) if(!list_is_empty(list)) { \
+            (item)->prev->next = (list)->next; \
+            (list)->next->prev = (item)->prev; \
+            (item)->prev = (list)->prev; \
+            (list)->prev->next = (item); \
+        }
+
+#endif

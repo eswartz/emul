@@ -1,0 +1,80 @@
+          o   Shouldn't we separate command parsing from a service implementation?
+
+          o   we should use a typedef for addresses
+
+-        breakpoints.[ch]
+
+          o   We don’t have any way to specify context specific breakpoints yet, right?  I think breakpoint
+              should always be associated with a context and since contexts can be execution contexts or containers
+              on different levels it is possible to describe thread specific breakpoints, process specific breakpoints,
+              system global breakpoint and any levels in-between.
+
+-        context.c
+
+          o   event_pid_stopped() using the PTRACE_EVENT_CLONE to determine if the new context is a thread is not correct.  The only
+              way I know of is to look at the Tgid field of /proc/<pid>/status
+
+-        runctrl.c
+
+          o   command_resume() and command_step_into() share so much code that they could be unified.
+
+          o   Sometimes you flush “broadcast_stream.flush(&broadcast_stream);”.  What is the logic/rules?
+
+          o   After prototype stage, the safe event mechanism needs to have finer granularity so it does not stop more than the process.
+
+          o   VxWorks: Need Component Description File for the agent: C:\WindRiver-2.6\vxworks-6.5\target\config\comps\vxWorks
+
+11/1/2007
+
+-        It would be really good to put comments on at least the ­­all global functions in headers.
+
+-        Complex structures would also be very good to put comments on.  For example in breakpoints.c
+
+-        Somehow we should make it clear what needs to be done to add another transport layer.
+         Perhaps have a template or a readme file for it.
+
+-        breakpoints.c, line 190: if (!bi->ctx->exited && bi->ctx->stopped) {
+
+          o   Why is bi->ctx->stopped test needed?  It looks like we forget to unpatch the instruction is the target
+               happens to be running when we get to this point since after the if the “planted” flag is unconditionally
+               cleared.  Shouldn’t this be an assert instead?
+
+          o   Similar problem if context_write_mem() results in error then we clear the planted flag even though we haven’t
+               really unplanted it.
+
+-        breakpoints.c, line 231: if (bi->ctx->exited || !bi->ctx->stopped) {
+
+          o   What is the inside this used for?
+
+-        streams.h: 
+
+          o   It would be good if the InputStream and OutputStream was designed so characters could be read/written without
+               causing a function call in the normal case.  Something similar to stdio getc/putc.
+
+-        channel.c in function channels_suspend(): Should we add “assert(!suspended);” to make sure it is not called multiple
+         times since we don’t have a suspend count?
+
+-        context.c, line 891 & 928: 
+
+          o   should say “~(WORD_SIZE-1)” instead of “~3ul”
+
+-        processes.c, line 266: 
+
+          o   We should have an abstraction of the signal number or some way from the client to map between names and numbers
+               so clients don’t have to be target dependent.
+
+-        registers.c:
+
+          o   Get/set commands does not handle reading multiple registers.  Should it?
+
+          o   Why are register values returned as strings?
+
+-        runctrl.c, line 326
+
+          o   Should it not return the error code to the client?
+
+-        stacktrace.c
+
+          o   line 176: Don’t we need to check code[0] in this case?
+
+          o   Line 242: no error check on strtol.  Why not used id2pid?
