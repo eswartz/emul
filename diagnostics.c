@@ -31,42 +31,42 @@
 
 static const char * DIAGNOSTICS = "Diagnostics";
 
-static void command_echo(char * token, InputStream * inp, OutputStream * out) {
+static void command_echo(char * token, Channel * c) {
     char str[0x1000];
-    int len = json_read_string(inp, str, sizeof(str));
+    int len = json_read_string(&c->inp, str, sizeof(str));
     if (len >= sizeof(str)) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    json_write_string_len(out, str, len);
-    out->write(out, 0);
-    out->write(out, MARKER_EOM);
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    json_write_string_len(&c->out, str, len);
+    c->out.write(&c->out, 0);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_get_test_list(char * token, InputStream * inp, OutputStream * out) {
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    write_errno(out, 0);
-#if defined(WIN32)
-    write_stringz(out, "[]");
+static void command_get_test_list(char * token, Channel * c) {
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, 0);
+#if defined(WIN32) || defined(__CYGWIN__)
+    write_stringz(&c->out, "[]");
 #elif defined(_WRS_KERNEL)
-    write_stringz(out, "[\"RCBP1\"]");
+    write_stringz(&c->out, "[\"RCBP1\"]");
 #else
-    write_stringz(out, "[\"RCBP1\"]");
+    write_stringz(&c->out, "[\"RCBP1\"]");
 #endif
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_run_test(char * token, InputStream * inp, OutputStream * out) {
+static void command_run_test(char * token, Channel * c) {
     int err = 0;
     char id[256];
     pid_t pid = 0;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (strcmp(id, "RCBP1") == 0) {
         if (run_test_process(&pid) < 0) err = errno;
@@ -75,12 +75,12 @@ static void command_run_test(char * token, InputStream * inp, OutputStream * out
         err = EINVAL;
     }
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    write_errno(out, err);
-    json_write_string(out, err ? NULL : pid2id(pid, 0));
-    out->write(out, 0);
-    out->write(out, MARKER_EOM);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    json_write_string(&c->out, err ? NULL : pid2id(pid, 0));
+    c->out.write(&c->out, 0);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
 static void event_terminate(void * arg) {
@@ -94,13 +94,13 @@ static void event_terminate(void * arg) {
     context_unlock(ctx);
 }
 
-static void command_cancel_test(char * token, InputStream * inp, OutputStream * out) {
+static void command_cancel_test(char * token, Channel * c) {
     char id[256];
     Context * ctx = 0;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
 #if SERVICE_RunControl
     ctx = id2ctx(id);
@@ -110,24 +110,24 @@ static void command_cancel_test(char * token, InputStream * inp, OutputStream * 
     }
 #endif
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    write_errno(out, 0);
-    out->write(out, MARKER_EOM);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, 0);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_get_symbol(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_symbol(char * token, Channel * c) {
     char id[256];
     char name[0x1000];
     Context * ctx;
     Symbol sym;
     int error = 0;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(inp, name, sizeof(name));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, name, sizeof(name));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     
 #if SERVICE_RunControl && SERVICE_Symbols
     ctx = id2ctx(id);
@@ -142,44 +142,44 @@ static void command_get_symbol(char * token, InputStream * inp, OutputStream * o
     error = EINVAL;
 #endif
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    write_errno(out, error);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, error);
     if (error != 0) {
-        write_stringz(out, "null");
+        write_stringz(&c->out, "null");
     }
     else {
-        out->write(out, '{');
-        json_write_string(out, "Abs");
-        out->write(out, ':');
-        json_write_boolean(out, sym.abs);
-        out->write(out, ',');
-        json_write_string(out, "Value");
-        out->write(out, ':');
-        json_write_ulong(out, sym.value);
+        c->out.write(&c->out, '{');
+        json_write_string(&c->out, "Abs");
+        c->out.write(&c->out, ':');
+        json_write_boolean(&c->out, sym.abs);
+        c->out.write(&c->out, ',');
+        json_write_string(&c->out, "Value");
+        c->out.write(&c->out, ':');
+        json_write_ulong(&c->out, sym.value);
         if (sym.section != NULL) {
-            out->write(out, ',');
-            json_write_string(out, "Section");
-            out->write(out, ':');
-            json_write_string(out, sym.section);
+            c->out.write(&c->out, ',');
+            json_write_string(&c->out, "Section");
+            c->out.write(&c->out, ':');
+            json_write_string(&c->out, sym.section);
         }
         if (sym.storage != NULL) {
-            out->write(out, ',');
-            json_write_string(out, "Storage");
-            out->write(out, ':');
-            json_write_string(out, sym.storage);
+            c->out.write(&c->out, ',');
+            json_write_string(&c->out, "Storage");
+            c->out.write(&c->out, ':');
+            json_write_string(&c->out, sym.storage);
         }
-        out->write(out, '}');
-        out->write(out, 0);
+        c->out.write(&c->out, '}');
+        c->out.write(&c->out, 0);
     }
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-void ini_diagnostics_service(void) {
-    add_command_handler(DIAGNOSTICS, "echo", command_echo);
-    add_command_handler(DIAGNOSTICS, "getTestList", command_get_test_list);
-    add_command_handler(DIAGNOSTICS, "runTest", command_run_test);
-    add_command_handler(DIAGNOSTICS, "cancelTest", command_cancel_test);
-    add_command_handler(DIAGNOSTICS, "getSymbol", command_get_symbol);
+void ini_diagnostics_service(Protocol *proto) {
+    add_command_handler(proto, DIAGNOSTICS, "echo", command_echo);
+    add_command_handler(proto, DIAGNOSTICS, "getTestList", command_get_test_list);
+    add_command_handler(proto, DIAGNOSTICS, "runTest", command_run_test);
+    add_command_handler(proto, DIAGNOSTICS, "cancelTest", command_cancel_test);
+    add_command_handler(proto, DIAGNOSTICS, "getSymbol", command_get_symbol);
 }
 

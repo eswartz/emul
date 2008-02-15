@@ -19,7 +19,7 @@
 /*
  * Initialize memory service.
  */
-extern void ini_memory_service(void);
+extern void ini_memory_service(Protocol * proto, TCFBroadcastGroup * bcg);
 
 
 #endif

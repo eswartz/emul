@@ -18,9 +18,12 @@
 
 #include <stdlib.h>
 
-void * loc_alloc(size_t size);
-void * loc_alloc_zero(size_t size);
-void * loc_realloc(void *ptr, size_t size);
-void loc_free(void *p);
+extern void * loc_alloc(size_t size);
+extern void * loc_alloc_zero(size_t size);
+extern void * loc_realloc(void *ptr, size_t size);
+extern void loc_free(void *p);
+extern char * loc_strdup(const char *s);
+extern char * loc_strdup2(const char *s1, const char *s2);
+extern char * loc_strndup(const char *s, size_t len);
 
 #endif

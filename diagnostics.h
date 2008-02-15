@@ -17,6 +17,8 @@
 #ifndef D_diagnostics
 #define D_diagnostics
 
-extern void ini_diagnostics_service(void);
+#include "protocol.h"
+
+extern void ini_diagnostics_service(Protocol *);
 
 #endif

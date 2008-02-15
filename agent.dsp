@@ -107,6 +107,14 @@ SOURCE=.\channel.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\channel_tcp.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\channel_tcp.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\cmdline.c
 # End Source File
 # Begin Source File
@@ -132,6 +140,30 @@ SOURCE=.\diagnostics.c
 # Begin Source File
 
 SOURCE=.\diagnostics.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\discovery.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\discovery.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\discovery_help.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\discovery_help.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\discovery_udp.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\discovery_udp.h
 # End Source File
 # Begin Source File
 
@@ -195,6 +227,14 @@ SOURCE=.\filesystem.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\ip_ifc.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\ip_ifc.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\json.c
 # End Source File
 # Begin Source File
@@ -240,6 +280,14 @@ SOURCE=.\myalloc.c
 # Begin Source File
 
 SOURCE=.\myalloc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\peer.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\peer.h
 # End Source File
 # Begin Source File
 

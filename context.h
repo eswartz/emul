@@ -33,7 +33,7 @@ struct Context {
     LINK                pidl;
     LINK                cldl;
     LINK                children;
-    Context *           parent;
+    Context *           parent;             /* if this is not main thread in a process, parent points to main thread */
     unsigned int        ref_count;          /* reference count, see context_lock() and context_unlock() */
     pid_t               pid;                /* process or thread identifier */
     pid_t               mem;                /* context memory space identifier */
@@ -119,15 +119,16 @@ extern int context_write_mem(Context * ctx, unsigned long address, void * buf, s
 extern int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t size);
 
 typedef struct ContextEventListener {
-    void (*context_created)(Context * ctx);
-    void (*context_exited)(Context * ctx);
-    void (*context_stopped)(Context * ctx);
-    void (*context_started)(Context * ctx);
-    void (*context_changed)(Context * ctx);
+    void (*context_created)(Context * ctx, void * client_data);
+    void (*context_exited)(Context * ctx, void * client_data);
+    void (*context_stopped)(Context * ctx, void * client_data);
+    void (*context_started)(Context * ctx, void * client_data);
+    void (*context_changed)(Context * ctx, void * client_data);
+    void * client_data;
     struct ContextEventListener * next;
 } ContextEventListener;
 
-extern void add_context_event_listener(ContextEventListener * listener);
+extern void add_context_event_listener(ContextEventListener * listener, void * client_data);
 
 #ifdef _WRS_KERNEL
 extern VXDBG_CLNT_ID vxdbg_clnt_id;

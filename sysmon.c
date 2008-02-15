@@ -27,7 +27,7 @@
 
 static const char SYS_MON[] = "SysMonitor";
 
-#if defined(WIN32)
+#if defined(WIN32) || defined(__CYGWIN__)
 #  error "SysMonitor service is not supported for Windows"
 #elif defined(_WRS_KERNEL)
 #  error "SysMonitor service is not supported for VxWorks"
@@ -469,19 +469,19 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
     out->write(out, '}');
 }
 
-static void command_get_context(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_context(char * token, Channel * c) {
     char id[256];
     pid_t pid = 0;
     pid_t parent = 0;
     int err = 0;
     char dir[FILE_PATH_SIZE];
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
 
     pid = id2pid(id, &parent);
     if (pid != 0) {
@@ -496,71 +496,71 @@ static void command_get_context(char * token, InputStream * inp, OutputStream * 
         else if (!S_ISDIR(st.st_mode)) err = ERR_INV_CONTEXT;
     }
 
-    write_errno(out, err);
+    write_errno(&c->out, err);
     
     if (err == 0 && pid != 0) {
         char bf[256];
-        write_context(out, id, parent == 0 ? NULL : strcpy(bf, pid2id(parent, 0)), dir);
-        out->write(out, 0);
+        write_context(&c->out, id, parent == 0 ? NULL : strcpy(bf, pid2id(parent, 0)), dir);
+        c->out.write(&c->out, 0);
     }
     else {
-        write_stringz(out, "null");
+        write_stringz(&c->out, "null");
     }
 
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_get_children(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_children(char * token, Channel * c) {
     char id[256];
     DIR * proc = NULL;
     char dir[FILE_PATH_SIZE];
     pid_t pid = 0;
     pid_t parent = 0;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
 
     pid = id2pid(id, &parent);
     if (pid == 0) strcpy(dir, "/proc");
     else snprintf(dir, sizeof(dir), "/proc/%d/task", pid);
 
     if (parent != 0) {
-        write_errno(out, 0);
-        write_stringz(out, "null");
+        write_errno(&c->out, 0);
+        write_stringz(&c->out, "null");
     }
     else {
         proc = opendir(dir);
         if (proc == NULL) {
-            write_errno(out, errno);
-            write_stringz(out, "null");
+            write_errno(&c->out, errno);
+            write_stringz(&c->out, "null");
         }
         else {
             int cnt = 0;
-            write_errno(out, 0);
-            out->write(out, '[');
+            write_errno(&c->out, 0);
+            c->out.write(&c->out, '[');
             for (;;) {
                 struct dirent * ent = readdir(proc);
                 if (ent == NULL) break;
                 if (ent->d_name[0] >= '1' && ent->d_name[0] <= '9') {
-                    if (cnt > 0) out->write(out, ',');
-                    json_write_string(out, pid2id(atol(ent->d_name), pid));
+                    if (cnt > 0) c->out.write(&c->out, ',');
+                    json_write_string(&c->out, pid2id(atol(ent->d_name), pid));
                     cnt++;
                 }
             }
-            out->write(out, ']');
-            out->write(out, 0);
+            c->out.write(&c->out, ']');
+            c->out.write(&c->out, 0);
             closedir(proc);
         }
     }
 
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_get_command_line(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_command_line(char * token, Channel * c) {
     char id[256];
     pid_t pid = 0;
     pid_t parent = 0;
@@ -568,12 +568,12 @@ static void command_get_command_line(char * token, InputStream * inp, OutputStre
     char dir[256];
     int f;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
 
     pid = id2pid(id, &parent);
     if (pid != 0 && parent == 0) {
@@ -589,21 +589,21 @@ static void command_get_command_line(char * token, InputStream * inp, OutputStre
     if (err == 0 && chdir(dir) < 0) err = errno;
     if (err == 0 && (f = open("cmdline", O_RDONLY)) < 0) err = errno;
 
-    write_errno(out, err);
+    write_errno(&c->out, err);
     
     if (err == 0) {
-        write_string_array(out, f);
+        write_string_array(&c->out, f);
         close(f);
-        out->write(out, 0);
+        c->out.write(&c->out, 0);
     }
     else {
-        write_stringz(out, "null");
+        write_stringz(&c->out, "null");
     }
 
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_get_environment(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_environment(char * token, Channel * c) {
     char id[256];
     pid_t pid = 0;
     pid_t parent = 0;
@@ -611,12 +611,12 @@ static void command_get_environment(char * token, InputStream * inp, OutputStrea
     char dir[256];
     int f;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
 
     pid = id2pid(id, &parent);
     if (pid != 0 && parent == 0) {
@@ -632,25 +632,25 @@ static void command_get_environment(char * token, InputStream * inp, OutputStrea
     if (err == 0 && chdir(dir) < 0) err = errno;
     if (err == 0 && (f = open("environ", O_RDONLY)) < 0) err = errno;
 
-    write_errno(out, err);
+    write_errno(&c->out, err);
     
     if (err == 0) {
-        write_string_array(out, f);
+        write_string_array(&c->out, f);
         close(f);
-        out->write(out, 0);
+        c->out.write(&c->out, 0);
     }
     else {
-        write_stringz(out, "null");
+        write_stringz(&c->out, "null");
     }
 
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-extern void ini_sys_mon_service(void) {
-    add_command_handler(SYS_MON, "getContext", command_get_context);
-    add_command_handler(SYS_MON, "getChildren", command_get_children);
-    add_command_handler(SYS_MON, "getCommandLine", command_get_command_line);
-    add_command_handler(SYS_MON, "getEnvironment", command_get_environment);
+extern void ini_sys_mon_service(Protocol * proto) {
+    add_command_handler(proto, SYS_MON, "getContext", command_get_context);
+    add_command_handler(proto, SYS_MON, "getChildren", command_get_children);
+    add_command_handler(proto, SYS_MON, "getCommandLine", command_get_command_line);
+    add_command_handler(proto, SYS_MON, "getEnvironment", command_get_environment);
 }
 
 #endif

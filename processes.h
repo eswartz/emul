@@ -20,10 +20,12 @@
 #ifndef D_processes
 #define D_processes
 
+#include "protocol.h"
+
 /*
  * Initialize process control service.
  */
-extern void ini_processes_service(void);
+extern void ini_processes_service(Protocol *);
 
 
 #endif

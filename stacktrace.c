@@ -49,24 +49,24 @@ typedef struct StackFrame StackFrame;
 typedef struct StackTrace StackTrace;
 
 typedef void (*STACK_TRACE_CALLBAK)(
-    void  *,	/* address from which function was called */
-    int	   ,	/* address of function called */
-    int    ,	/* number of arguments in function call */
-    int *  ,	/* pointer to function args */
-    int	   ,	/* thread ID */
-    int  	/* TRUE if Kernel addresses */
+    void  *,    /* address from which function was called */
+    int    ,    /* address of function called */
+    int    ,    /* number of arguments in function call */
+    int *  ,    /* pointer to function args */
+    int    ,    /* thread ID */
+    int         /* TRUE if Kernel addresses */
 );
 
 static int stack_trace_max = 0;
 static StackTrace * stack_trace = NULL;
 
 static void stack_trace_callback(
-    void *	callAdrs,	/* address from which function was called */
-    int		funcAdrs,	/* address of function called */
-    int		nargs,		/* number of arguments in function call */
-    int *	args,		/* pointer to function args */
-    int		taskId,		/* task's ID */
-    int 	isKernelAdrs	/* TRUE if Kernel addresses */
+    void *      callAdrs,       /* address from which function was called */
+    int         funcAdrs,       /* address of function called */
+    int         nargs,          /* number of arguments in function call */
+    int *       args,           /* pointer to function args */
+    int         taskId,         /* task's ID */
+    int         isKernelAdrs    /* TRUE if Kernel addresses */
 )
 {
     StackFrame * f;
@@ -134,27 +134,27 @@ static unsigned long trace_jump(Context * ctx, unsigned long addr) {
     int cnt = 0;
     /* while instruction is a JMP, get destination adrs */
     while (cnt < 100) {
-        unsigned char instr;		/* instruction opcode at <addr> */
-        unsigned long dest;	/* Jump destination address */
+        unsigned char instr;            /* instruction opcode at <addr> */
+        unsigned long dest;     /* Jump destination address */
         if (context_read_mem(ctx, addr, &instr, 1) < 0) return addr;
 
-	/* If instruction is a JMP, get destination adrs */
+        /* If instruction is a JMP, get destination adrs */
         if (instr == JMPD08) {
             signed char disp08;
             if (context_read_mem(ctx, addr + 1, &disp08, 1) < 0) return addr;
             dest = addr + 2 + disp08;
         }
         else if (instr == JMPD32) {
-            int	disp32;
+            int disp32;
             assert(sizeof(disp32) == 4);
             if (context_read_mem(ctx, addr + 1, &disp32, 4) < 0) return addr;
             dest = addr + 5 + disp32;
         }
-	else {
-	    break;
+        else {
+            break;
         }
-	if (dest == addr) break;
-	addr = dest;
+        if (dest == addr) break;
+        addr = dest;
         cnt++;
     }
     return addr;
@@ -308,24 +308,24 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int leve
     out->write(out, '}');
 }
 
-static void command_get_context(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_context(char * token, Channel * c) {
     int err = 0;
     char ** ids;
     int id_cnt = 0;
     int i;
 
-    ids = json_read_alloc_string_array(inp, &id_cnt);
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    ids = json_read_alloc_string_array(&c->inp, &id_cnt);
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    out->write(out, '[');
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    c->out.write(&c->out, '[');
     for (i = 0; i < id_cnt; i++) {
         StackTrace * s = NULL;
         Context * ctx = NULL;
         int idx = 0;
-        if (i > 0) out->write(out, ',');
+        if (i > 0) c->out.write(&c->out, ',');
         if (id2frame(ids[i], &ctx, &idx) < 0) {
             err = errno;
         }
@@ -337,30 +337,30 @@ static void command_get_context(char * token, InputStream * inp, OutputStream * 
             s = (StackTrace *)ctx->stack_trace;
         }
         if (s == NULL || idx < 0 || idx >= s->frame_cnt) {
-            write_string(out, "null");
+            write_string(&c->out, "null");
         }
         else {
             int level = s->top_first ? s->frame_cnt - idx - 1 : idx;
-            write_context(out, ids[i], ctx, level, s->frames + idx);
+            write_context(&c->out, ids[i], ctx, level, s->frames + idx);
         }
     }
-    out->write(out, ']');
-    out->write(out, 0);
-    write_errno(out, err);
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, ']');
+    c->out.write(&c->out, 0);
+    write_errno(&c->out, err);
+    c->out.write(&c->out, MARKER_EOM);
     loc_free(ids);
 }
 
-static void command_get_children(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_children(char * token, Channel * c) {
     char id[256];
     int err = 0;
     pid_t pid, parent;
     Context * ctx = NULL;
     StackTrace * s = NULL;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     pid = id2pid(id, &parent);
     if (pid != 0 && parent != 0) {
@@ -376,38 +376,38 @@ static void command_get_children(char * token, InputStream * inp, OutputStream *
         }
     }
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
 
-    write_errno(out, s != NULL ? s->error : err);
+    write_errno(&c->out, s != NULL ? s->error : err);
 
     if (s == NULL) {
-        write_stringz(out, "null");
+        write_stringz(&c->out, "null");
     }
     else {
         int i;
         char frame_id[64];
-        out->write(out, '[');
+        c->out.write(&c->out, '[');
         for (i = 0; i < s->frame_cnt; i++) {
-            if (i > 0) out->write(out, ',');
+            if (i > 0) c->out.write(&c->out, ',');
             snprintf(frame_id, sizeof(frame_id), "FP%d.%d", ctx->pid, i);
-            json_write_string(out, frame_id);
+            json_write_string(&c->out, frame_id);
         }
-        out->write(out, ']');
-        out->write(out, 0);
+        c->out.write(&c->out, ']');
+        c->out.write(&c->out, 0);
     }
 
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void delete_stack_trace(Context * ctx) {
+static void delete_stack_trace(Context * ctx, void * client_data) {
     if (ctx->stack_trace != NULL) {
         loc_free(ctx->stack_trace);
         ctx->stack_trace = NULL;
     }
 }
 
-void ini_stack_trace_service(void) {
+void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup *bcg) {
     static ContextEventListener listener = {
         NULL,
         delete_stack_trace,
@@ -416,9 +416,9 @@ void ini_stack_trace_service(void) {
         delete_stack_trace,
         NULL
     };
-    add_context_event_listener(&listener);
-    add_command_handler(STACKTRACE, "getContext", command_get_context);
-    add_command_handler(STACKTRACE, "getChildren", command_get_children);
+    add_context_event_listener(&listener, bcg);
+    add_command_handler(proto, STACKTRACE, "getContext", command_get_context);
+    add_command_handler(proto, STACKTRACE, "getChildren", command_get_children);
 }
 
 #endif

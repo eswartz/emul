@@ -20,7 +20,7 @@
 #define D_breakpoints
 
 #include "context.h"
-#include "streams.h"
+#include "protocol.h"
 
 typedef unsigned long address_t;
 
@@ -31,7 +31,7 @@ struct SkipBreakpointInfo {
     address_t address;
     int pending_intercept;
     void (*done)(SkipBreakpointInfo *);
-    OutputStream * out;
+    Channel * c;
     char token[256];
     int error;
 };
@@ -42,6 +42,6 @@ extern int evaluate_breakpoint_condition(Context * ctx);
 
 extern SkipBreakpointInfo * skip_breakpoint(Context * ctx);
 
-extern void ini_breakpoints_service(void);
+extern void ini_breakpoints_service(Protocol *, TCFBroadcastGroup *);
 
 #endif

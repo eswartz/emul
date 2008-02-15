@@ -19,9 +19,11 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <assert.h>
+#include <signal.h>
 #include "mdep.h"
 #include "events.h"
 #include "trace.h"
+#include "myalloc.h"
 #include "expressions.h"
 #include "cmdline.h"
 #include "context.h"
@@ -39,21 +41,89 @@
 #include "linenumbers.h"
 #include "proxy.h"
 #include "sysmon.h"
+#include "discovery.h"
 
 static char * progname;
+static Protocol * proto;
+static ChannelServer * serv;
+static ChannelServer * serv2;
+static TCFBroadcastGroup * bcg;
+static TCFSuspendGroup * spg;
+
+static void channel_server_connecting(Channel * c) {
+    trace(LOG_ALWAYS, "channel server connecting");
+
+    send_hello_message(c->client_data, c);
+    discovery_channel_add(c);
+    c->out.flush(&c->out);
+}
+
+static void channel_server_connected(Channel * c) {
+    int i;
+
+    trace(LOG_ALWAYS, "channel server connected, peer services:");
+    for (i = 0; i < c->peer_service_cnt; i++) {
+        trace(LOG_ALWAYS, "  %s", c->peer_service_list[i]);
+    }
+}
+
+static void channel_server_receive(Channel * c) {
+    handle_protocol_message(c->client_data, c);
+}
+
+static void channel_server_disconnected(Channel * c) {
+    trace(LOG_ALWAYS, "channel server disconnected");
+    discovery_channel_remove(c);
+    protocol_channel_closed(c->client_data, c);
+}
+
+static ChannelCallbacks serverccb = {
+    channel_server_connecting,
+    channel_server_connected,
+    channel_server_receive,
+    channel_server_disconnected
+};
+
+static void channel_new_connection(ChannelServer * serv, Channel * c) {
+    Protocol * proto = serv->client_data;
+
+    c->client_data = proto;
+    c->cb = &serverccb;
+    c->spg = spg;
+    c->bcg = bcg;
+    protocol_channel_opened(proto, c);
+}
+
+static ChannelServerCallbacks servercb = {
+    channel_new_connection
+};
+
+static void became_discovery_master(void) {
+    PeerServer * ps = channel_peer_from_url(DEFAULT_DISCOVERY_URL);
+
+    serv2 = channel_server(ps, &servercb, proto);
+    if (serv2 == NULL) {
+        trace(LOG_ALWAYS, "cannot create second TCF server\n");
+    }
+}
 
 #if defined(_WRS_KERNEL)
 int tcf(void) {
-#else	
-int main(int argc, char **argv) {
+#else   
+int main(int argc, char ** argv) {
 #endif
     int c;
     int ind;
+    int ismaster;
     int interactive = 0;
-    char *s;
-    char *log_name = 0;
-    int port = 1534;
+    char * s;
+    char * log_name = 0;
+    char * url = "TCP:";
+    PeerServer * ps;
 
+#ifndef WIN32
+    signal(SIGPIPE, SIG_IGN);
+#endif
     ini_mdep();
     ini_trace();
     ini_events_queue();
@@ -84,6 +154,7 @@ int main(int argc, char **argv) {
 
             case 'l':
             case 'L':
+            case 's':
                 if (*s == '\0') {
                     if (++ind >= argc) {
                         fprintf(stderr, "%s: error: no argument given to option '%c'\n", progname, c);
@@ -98,6 +169,10 @@ int main(int argc, char **argv) {
 
                 case 'L':
                     log_name = s;
+                    break;
+
+                case 's':
+                    url = s;
                     break;
 
                 default:
@@ -130,41 +205,70 @@ int main(int argc, char **argv) {
 
     if (interactive) ini_cmdline_handler();
 
-    ini_protocol();
+    bcg = broadcast_group_alloc();
+    spg = suspend_group_alloc();
+    proto = protocol_alloc();
+
 #if SERVICE_RunControl
-    ini_run_ctrl_service();
+    ini_run_ctrl_service(proto, bcg, spg);
 #endif
 #if SERVICE_Breakpoints
-    ini_breakpoints_service();
+    ini_breakpoints_service(proto, bcg);
 #endif
 #if SERVICE_Memory
-    ini_memory_service();
+    ini_memory_service(proto, bcg);
 #endif
 #if SERVICE_Registers
-    ini_registers_service();
+    ini_registers_service(proto);
 #endif
 #if SERVICE_StackTrace
-    ini_stack_trace_service();
+    ini_stack_trace_service(proto, bcg);
 #endif
 #if SERVICE_Symbols
     ini_symbols_service();
 #endif
 #if SERVICE_LineNumbers
-    ini_line_numbers_service();
+    ini_line_numbers_service(proto);
 #endif
 #if SERVICE_Processes
-    ini_processes_service();
+    ini_processes_service(proto);
 #endif
 #if SERVICE_FileSystem
-    ini_file_system_service();
+    ini_file_system_service(proto);
 #endif
 #if SERVICE_SysMonitor
-    ini_sys_mon_service();
+    ini_sys_mon_service(proto);
 #endif
-    ini_diagnostics_service();
+    ini_diagnostics_service(proto);
     ini_proxy_service();
     ini_contexts();
-    ini_channel_manager(port);
+
+    ismaster = discovery_start(became_discovery_master);
+
+    ps = channel_peer_from_url(url);
+    if (ps == NULL) {
+        fprintf(stderr, "invalid server URL (-s option value): %s\n", url);
+        exit(1);
+    }
+    if (ismaster) {
+        if (!strcmp(peer_server_getprop(ps, "TransportName", ""), "TCP") &&
+                peer_server_getprop(ps, "Port", NULL) == NULL) {
+            peer_server_addprop(ps, loc_strdup("Port"), loc_strdup(DISCOVERY_TCF_PORT));
+        }
+        serv = channel_server(ps, &servercb, proto);
+        // TODO: replace 'ps' with actual peer object created for the server
+        if (strcmp(peer_server_getprop(ps, "TransportName", ""), "TCP") ||
+                strcmp(peer_server_getprop(ps, "Port", ""), DISCOVERY_TCF_PORT)) {
+            became_discovery_master();
+        }
+    }
+    else {
+        serv = channel_server(ps, &servercb, proto);
+    }
+    if (serv == NULL) {
+        fprintf(stderr, "cannot create TCF server\n");
+        exit(1);
+    }
 
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */

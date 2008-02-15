@@ -18,10 +18,12 @@
 #ifndef D_linenumbers
 #define D_linenumbers
 
+#include "protocol.h"
+
 /*
  * Initialize Line Numbers service.
  */
-extern void ini_line_numbers_service(void);
+extern void ini_line_numbers_service(Protocol *);
 
 
 #endif

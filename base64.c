@@ -16,7 +16,7 @@
  * Also TCF version of the encoding does not allow characters outside of the BASE64 alphabet. 
  */
 
-#if _WRS_KERNEL
+#if defined(_WRS_KERNEL)
 #  include <vxWorks.h>
 #endif
 #include <assert.h>
@@ -54,9 +54,9 @@ static const int char2int[] = {
     49, 50, 51
 };
 
-int write_base64(OutputStream * out, char * buf0, int len) {
+int write_base64(OutputStream * out, const char * buf0, int len) {
     int pos = 0;
-    unsigned char * buf = (unsigned char *)buf0;
+    const unsigned char * buf = (const unsigned char *)buf0;
 
     while (pos < len) {
         int byte0 = buf[pos++];

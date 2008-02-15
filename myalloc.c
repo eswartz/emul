@@ -65,3 +65,34 @@ void loc_free(void *p) {
     free(p);
 }
 
+
+/*
+ * strdup() with end-of-memory checking.
+ */
+char * loc_strdup(const char * s) {
+    char * rval = loc_alloc(strlen(s) + 1);
+    strcpy(rval, s);
+    return rval;
+}
+
+
+/*
+ * strdup2() with concatenation and  end-of-memory checking.
+ */
+char * loc_strdup2(const char * s1, const char * s2) {
+    char * rval = loc_alloc(strlen(s1) + strlen(s2) + 1);
+    strcpy(rval, s1);
+    strcat(rval, s2);
+    return rval;
+}
+
+
+/*
+ * strndup() with end-of-memory checking.
+ */
+char * loc_strndup(const char * s, size_t len) {
+    char * rval = loc_alloc(len + 1);
+    strncpy(rval, s, len);
+    rval[len] = '\0';
+    return rval;
+}

@@ -10,61 +10,107 @@
  *******************************************************************************/
 
 /*
- * Implements input and output stream over TCP/IP transport and UDP based auto discovery.
+ * Transport agnostic channel interface
  */
 
 #ifndef D_channel
 #define D_channel
 
 #include "streams.h"
+#include "link.h"
+#include "peer.h"
 
-extern OutputStream broadcast_stream;
+typedef struct TCFSuspendGroup TCFSuspendGroup;
+struct TCFSuspendGroup {
+    LINK channels;                      /* Channels in group */
+    int suspended;                      /* Receive suspended when true */
+};
 
-/*
- * Temporary suspend handling of incoming messages on all channels
- */
-extern void channels_suspend(void);
+typedef struct TCFBroadcastGroup TCFBroadcastGroup;
+struct TCFBroadcastGroup {
+    int magic;
+    OutputStream out;                   /* Broadcast stream */
+    LINK channels;                      /* Channels in group */
+};
 
-/*
- * Returns 1 if handling of incoming messages is suspended.
- */
-extern int are_channels_suspended(void);
+typedef struct Channel Channel;
+typedef struct ChannelCallbacks ChannelCallbacks;
 
-/*
- * Resume handling of messages on all channels.
- */
-extern void channels_resume(void);
- 
-/*
- * Return number of pending input messages on all channels.
- */
-extern int channels_get_message_count(void);
+struct Channel {
+    InputStream inp;                    /* Input stream */
+    OutputStream out;                   /* Output stream */
+    TCFSuspendGroup * spg;              /* Suspend group */
+    TCFBroadcastGroup * bcg;            /* Broadcast group */
+    void * client_data;                 /* Client data */
+    int peer_service_cnt;               /* Number of peer service names */
+    char ** peer_service_list;          /* List of peer service names */
+    LINK bclink;                        /* Broadcast list */
+    LINK susplink;                      /* Suspend list */
+    ChannelCallbacks *cb;               /* Client callback functions */
+    int congestion_level;               /* Congestion level */
 
-/*
- * Lock OutputStream to prevent it from being deleted.
- * A stream must be locked to keep a referense to it across event dispatch cycles.
- */
-extern void stream_lock(OutputStream * out);
-extern void stream_unlock(OutputStream * out);
+    void (*check_pending)(Channel *);   /* Check for pending messages */
+    int (*message_count)(Channel *);    /* Return number of pending messages */
+    void (*lock)(Channel *);            /* Lock channel from deletion */
+    void (*unlock)(Channel *);          /* Unlock channel */
+    int (*is_closed)(Channel *);        /* Return true if channel is closed */
+    void (*close)(Channel *, int);      /* Closed channel */
+};
 
-/*
- * Check if stream is closed. Onlu make sense when the stream is locked.
- * Unlocked stream is deleted when closed.
- */
-extern int is_stream_closed(OutputStream * out);
+struct ChannelCallbacks {
+    void (*connecting)(Channel *);
+    void (*connected)(Channel *);
+    void (*receive)(Channel *);
+    void (*disconnected)(Channel *);
+};
+
+typedef struct ChannelServer ChannelServer;
+typedef struct ChannelServerCallbacks ChannelServerCallbacks;
+
+struct ChannelServer {
+    void * client_data;                 /* Client data */
+    ChannelServerCallbacks * cb;        /* Call back handler */
+    void (*close)(ChannelServer *);     /* Closed channel server */
+};
+
+struct ChannelServerCallbacks {
+    void (*newConnection)(ChannelServer *, Channel *);
+};
 
 /*
  * Register channel close callback.
  * Service implementation can use the callback to deallocate resources
  * after a client disconnects.
  */
-typedef void (*ChannelCloseListener)(InputStream *, OutputStream *);
+typedef void (*ChannelCloseListener)(Channel *);
 extern void add_channel_close_listener(ChannelCloseListener listener);
- 
+
 /*
- * Initialize channel manager.
- * 'port' - listenig socket port.
+ * Start TCF channel server
  */
-extern void ini_channel_manager(int port);
+extern ChannelServer * channel_server(PeerServer * ps,
+    ChannelServerCallbacks * cb, void * client_data);
+
+/*
+ * Connect to TCF channel server
+ */
+extern Channel * channel_connect(PeerServer * ps, ChannelCallbacks * cb,
+    void * client_data, TCFSuspendGroup *, TCFBroadcastGroup *);
+
+extern TCFSuspendGroup * suspend_group_alloc(void);
+extern void suspend_group_free(TCFSuspendGroup *);
+
+extern TCFBroadcastGroup * broadcast_group_alloc(void);
+extern void broadcast_group_free(TCFBroadcastGroup *);
+
+extern void stream_lock(Channel *);
+extern void stream_unlock(Channel *);
+extern int is_stream_closed(Channel *);
+extern PeerServer * channel_peer_from_url(const char *);
+
+extern void channels_suspend(TCFSuspendGroup * p);
+extern int are_channels_suspended(TCFSuspendGroup * p);
+extern void channels_resume(TCFSuspendGroup * p);
+extern int channels_get_message_count(TCFSuspendGroup * p);
 
 #endif

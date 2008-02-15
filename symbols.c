@@ -19,7 +19,7 @@
 #  include <vxWorks.h>
 #  include <symLib.h>
 #  include <sysSymTbl.h>
-#elif defined(WIN32)
+#elif defined(WIN32) || defined(__CYGWIN__)
 #else
 #  include <elf.h>
 #  include <libelf.h>
@@ -53,9 +53,9 @@ static int calc_hash(char * s) {
     unsigned h = 0;
     while (*s) {
         unsigned g;
-	h = (h << 4) + *s++;
-	if (g = h & 0xf0000000) h ^= g >> 24;
-	h &= ~g;
+        h = (h << 4) + *s++;
+        if (g = h & 0xf0000000) h ^= g >> 24;
+        h &= ~g;
     }
     return h % SYM_HASH_SIZE;
 }
@@ -136,7 +136,7 @@ static int load_tables(ELF_File * file) {
 int find_symbol(Context * ctx, char * name, Symbol * sym) {
     int error = 0;
 
-#if defined(WIN32)
+#if defined(WIN32) || defined(__CYGWIN__)
 
     memset(sym, 0, sizeof(Symbol));
     error = EINVAL;

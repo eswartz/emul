@@ -23,14 +23,20 @@
 
 #define _WIN32_WINNT 0x0400
 #pragma warning(disable:4615)
-
+#pragma warning(disable:4996)
+#ifdef __GNUC__
 #include <windows.h>
 #include <winsock.h>
+#else
+#include <winsock2.h>
+#include <Ws2tcpip.h>
+#endif
 #include <memory.h>
 #include <process.h>
 #include <IPHlpApi.h>
 #include <time.h>
 #include <io.h>
+
 
 #define FILE_PATH_SIZE MAX_PATH
 
@@ -40,6 +46,7 @@ typedef int socklen_t;
 #else
 #define __i386__
 typedef unsigned long pid_t;
+extern int inet_aton(const char *cp, struct in_addr *inp);
 #endif
 typedef unsigned long useconds_t;
 
@@ -157,6 +164,10 @@ extern int geteuid(void);
 extern int getgid(void);
 extern int getegid(void);
 
+#define loc_freeaddrinfo freeaddrinfo
+#define loc_getaddrinfo getaddrinfo
+#define loc_gai_strerror gai_strerror
+
 #elif defined(_WRS_KERNEL)
 /* VxWork kernel module */
 
@@ -200,8 +211,13 @@ extern int geteuid(void);
 extern int getgid(void);
 extern int getegid(void);
 
+extern void loc_freeaddrinfo(struct addrinfo * ai);
+extern int loc_getaddrinfo(const char * nodename, const char * servname,
+       const struct addrinfo * hints, struct addrinfo ** res);
+extern const char * loc_gai_strerror(int ecode);
+
 #else
-/* Linux or UNIX */
+/* Linux, UNIX or CygWin */
 
 #ifndef _LARGEFILE_SOURCE
 #error "Need CC command line option: -D_LARGEFILE_SOURCE"
@@ -215,7 +231,6 @@ extern int getegid(void);
 #include <memory.h>
 #include <pthread.h>
 #include <netdb.h>
-#include <sys/user.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/time.h>
@@ -225,15 +240,67 @@ extern int getegid(void);
 #include <arpa/inet.h>
 #include <net/if.h> 
 
+#ifdef __CYGWIN__
+
+#include <sys/syslimits.h>
+
+typedef struct {
+    unsigned long ebx, ecx, edx, esi, edi, ebp, eax;
+    unsigned short ds, __ds, es, __es;
+    unsigned short fs, __fs, gs, __gs;
+    unsigned long orig_eax, eip;
+    unsigned short cs, __cs;
+    long eflags, esp;
+    unsigned short ss, __ss;
+} REG_SET;
+
+#define get_regs_PC(x) x.eip
+#define set_regs_PC(x,y) x.eip = (unsigned long)(y)
+
+#define AI_PASSIVE      1
+
+struct addrinfo {
+        int     ai_flags;
+        int     ai_family;
+        int     ai_socktype;
+        int     ai_protocol;
+        size_t  ai_addrlen;
+        char *  ai_canonname;
+        struct sockaddr * ai_addr;
+        struct addrinfo * ai_next;
+};
+
+extern void loc_freeaddrinfo(struct addrinfo * ai);
+extern int loc_getaddrinfo(const char * nodename, const char * servname,
+       const struct addrinfo * hints, struct addrinfo ** res);
+extern const char * loc_gai_strerror(int ecode);
+
+extern char * canonicalize_file_name(const char * path);
+
+#define O_LARGEFILE 0
+
+#else
+
+#include <sys/user.h>
+typedef struct user_regs_struct REG_SET; 
+
+#define loc_freeaddrinfo freeaddrinfo
+#define loc_getaddrinfo getaddrinfo
+#define loc_gai_strerror gai_strerror
+
+#define O_BINARY 0
+
+extern int tkill(pid_t pid, int signal);
+
+#endif
+
 #define FILE_PATH_SIZE PATH_MAX
 
 #define closesocket close
 
 typedef __int64_t int64;
 typedef __uint64_t uns64;
-typedef struct user_regs_struct REG_SET; 
 typedef struct stat struct_stat;
-#define O_BINARY 0
 
 #define get_regs_PC(x) x.eip
 #define set_regs_PC(x,y) x.eip = (unsigned long)(y)
@@ -263,8 +330,6 @@ static size_t get_sa_len(const struct sockaddr *addr) {
 #  endif /* HAVE_SOCKADDR_STORAGE */  
 # endif /* HAVE_SOCKADDR_SA_LEN */  
 #endif /* SA_LEN */  
-
-extern int tkill(pid_t pid, int signal);
 
 #endif
 

@@ -16,9 +16,10 @@
 #ifndef D_filesystem
 #define D_filesystem
 
+#include "protocol.h"
 /*
  * Initialize file system service.
  */
-extern void ini_file_system_service(void);
+extern void ini_file_system_service(Protocol *);
 
 #endif

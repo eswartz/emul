@@ -341,7 +341,7 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
                 state.epilogue_begin = 0;
             }
             else if (opcode == 0) {
-		U4_T op_size = dio_ReadLEB128();
+                U4_T op_size = dio_ReadLEB128();
                 U8_T op_pos = dio_GetPos();
                 switch (dio_ReadU1()) {
                 case DW_LNE_define_file: {
@@ -488,7 +488,7 @@ static void load_line_numbers_in_range(LineNumbersCache * cache, ADDR_T addr0, A
     }
 }
 
-static void command_map_to_source(char * token, InputStream * inp, OutputStream * out) {
+static void command_map_to_source(char * token, Channel * c) {
     int err = 0;
     char * err_msg = NULL;
     char id[256];
@@ -498,13 +498,13 @@ static void command_map_to_source(char * token, InputStream * inp, OutputStream 
     LineNumbersCache * cache = NULL;
     Trap trap;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    addr0 = json_read_ulong(inp);
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    addr1 = json_read_ulong(inp);
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    addr0 = json_read_ulong(&c->inp);
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    addr1 = json_read_ulong(&c->inp);
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     ctx = id2ctx(id);
     if (ctx == NULL) err = ERR_INV_CONTEXT;
@@ -522,16 +522,16 @@ static void command_map_to_source(char * token, InputStream * inp, OutputStream 
         }
     }
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    write_err_msg(out, err, err_msg);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_err_msg(&c->out, err, err_msg);
     if (err != 0) {
-        write_stringz(out, "null");
+        write_stringz(&c->out, "null");
     }
     else {
         int cnt = 0;
         FileInfo * file = NULL;
-        out->write(out, '[');
+        c->out.write(&c->out, '[');
         while (addr0 < addr1) {
             U4_T i;
             ADDR_T next = 0;
@@ -544,26 +544,26 @@ static void command_map_to_source(char * token, InputStream * inp, OutputStream 
                 LineNumbersState * next = unit->states + i + 1;
                 if (state->end_sequence) continue;
                 if (next->address > addr0 && state->address < addr1) {
-                    if (cnt > 0) out->write(out, ',');
-                    out->write(out, '{');
-                    json_write_string(out, "SLine");
-                    out->write(out, ':');
-                    json_write_ulong(out, state->line - 1);
+                    if (cnt > 0) c->out.write(&c->out, ',');
+                    c->out.write(&c->out, '{');
+                    json_write_string(&c->out, "SLine");
+                    c->out.write(&c->out, ':');
+                    json_write_ulong(&c->out, state->line - 1);
                     if (state->column > 0) {
-                        out->write(out, ',');
-                        json_write_string(out, "SCol");
-                        out->write(out, ':');
-                        json_write_ulong(out, state->column - 1);
+                        c->out.write(&c->out, ',');
+                        json_write_string(&c->out, "SCol");
+                        c->out.write(&c->out, ':');
+                        json_write_ulong(&c->out, state->column - 1);
                     }
-                    out->write(out, ',');
-                    json_write_string(out, "ELine");
-                    out->write(out, ':');
-                    json_write_ulong(out, next->line - 1);
+                    c->out.write(&c->out, ',');
+                    json_write_string(&c->out, "ELine");
+                    c->out.write(&c->out, ':');
+                    json_write_ulong(&c->out, next->line - 1);
                     if (next->column > 0) {
-                        out->write(out, ',');
-                        json_write_string(out, "ECol");
-                        out->write(out, ':');
-                        json_write_ulong(out, next->column - 1);
+                        c->out.write(&c->out, ',');
+                        json_write_string(&c->out, "ECol");
+                        c->out.write(&c->out, ':');
+                        json_write_ulong(&c->out, next->column - 1);
                     }
                     state_file = NULL;
                     if (state->file >= 1 && state->file <= unit->files_cnt) {
@@ -571,70 +571,70 @@ static void command_map_to_source(char * token, InputStream * inp, OutputStream 
                     }
                     if (file != state_file) {
                         file = state_file;
-                        out->write(out, ',');
-                        json_write_string(out, "File");
-                        out->write(out, ':');
-                        json_write_string(out, file == NULL ? NULL : file->name);
-                        out->write(out, ',');
-                        json_write_string(out, "Dir");
-                        out->write(out, ':');
-                        json_write_string(out, file == NULL ? NULL : file->dir);
+                        c->out.write(&c->out, ',');
+                        json_write_string(&c->out, "File");
+                        c->out.write(&c->out, ':');
+                        json_write_string(&c->out, file == NULL ? NULL : file->name);
+                        c->out.write(&c->out, ',');
+                        json_write_string(&c->out, "Dir");
+                        c->out.write(&c->out, ':');
+                        json_write_string(&c->out, file == NULL ? NULL : file->dir);
                     }
-                    out->write(out, ',');
-                    json_write_string(out, "SAddr");
-                    out->write(out, ':');
-                    json_write_ulong(out, state->address);
-                    out->write(out, ',');
-                    json_write_string(out, "EAddr");
-                    out->write(out, ':');
-                    json_write_ulong(out, next->address);
+                    c->out.write(&c->out, ',');
+                    json_write_string(&c->out, "SAddr");
+                    c->out.write(&c->out, ':');
+                    json_write_ulong(&c->out, state->address);
+                    c->out.write(&c->out, ',');
+                    json_write_string(&c->out, "EAddr");
+                    c->out.write(&c->out, ':');
+                    json_write_ulong(&c->out, next->address);
                     if (state->isa != 0) {
-                        out->write(out, ',');
-                        json_write_string(out, "ISA");
-                        out->write(out, ':');
-                        json_write_ulong(out, state->isa);
+                        c->out.write(&c->out, ',');
+                        json_write_string(&c->out, "ISA");
+                        c->out.write(&c->out, ':');
+                        json_write_ulong(&c->out, state->isa);
                     }
                     if (state->is_stmt) {
-                        out->write(out, ',');
-                        json_write_string(out, "IsStmt");
-                        out->write(out, ':');
-                        json_write_boolean(out, state->is_stmt);
+                        c->out.write(&c->out, ',');
+                        json_write_string(&c->out, "IsStmt");
+                        c->out.write(&c->out, ':');
+                        json_write_boolean(&c->out, state->is_stmt);
                     }
                     if (state->basic_block) {
-                        out->write(out, ',');
-                        json_write_string(out, "BasicBlock");
-                        out->write(out, ':');
-                        json_write_boolean(out, state->basic_block);
+                        c->out.write(&c->out, ',');
+                        json_write_string(&c->out, "BasicBlock");
+                        c->out.write(&c->out, ':');
+                        json_write_boolean(&c->out, state->basic_block);
                     }
                     if (state->prologue_end) {
-                        out->write(out, ',');
-                        json_write_string(out, "PrologueEnd");
-                        out->write(out, ':');
-                        json_write_boolean(out, state->prologue_end);
+                        c->out.write(&c->out, ',');
+                        json_write_string(&c->out, "PrologueEnd");
+                        c->out.write(&c->out, ':');
+                        json_write_boolean(&c->out, state->prologue_end);
                     }
                     if (state->epilogue_begin) {
-                        out->write(out, ',');
-                        json_write_string(out, "EpilogueBegin");
-                        out->write(out, ':');
-                        json_write_boolean(out, state->epilogue_begin);
+                        c->out.write(&c->out, ',');
+                        json_write_string(&c->out, "EpilogueBegin");
+                        c->out.write(&c->out, ':');
+                        json_write_boolean(&c->out, state->epilogue_begin);
                     }
-                    out->write(out, '}');
+                    c->out.write(&c->out, '}');
                     cnt++;
                 }
             }
 
             addr0 = next;
         }
-        out->write(out, ']');
-        out->write(out, 0);
+        c->out.write(&c->out, ']');
+        c->out.write(&c->out, 0);
     }
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
     if (cache != NULL) elf_close(cache->file);
 }
 
-void ini_line_numbers_service(void) {
+void ini_line_numbers_service(Protocol * proto) {
     elf_add_close_listener(free_line_numbers_cache);
-    add_command_handler(LINENUMBERS, "mapToSource", command_map_to_source);
+    add_command_handler(proto, LINENUMBERS, "mapToSource", command_map_to_source);
 }
 
 #endif

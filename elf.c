@@ -25,6 +25,7 @@
 
 #if defined(_WRS_KERNEL)
 #elif defined(WIN32)
+#elif defined(__CYGWIN__)
 #else
 #  include <libelf.h>
 #  define USE_LIBELF

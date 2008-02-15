@@ -24,7 +24,7 @@
 /*
  * Write BASE64 encoded array of bytes to output stream.
  */
-extern int write_base64(OutputStream * out, char * buf, int len);
+extern int write_base64(OutputStream * out, const char * buf, int len);
 
 /*
  * Read BASE64 encoded array of bytes from input stream.

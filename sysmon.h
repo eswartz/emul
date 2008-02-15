@@ -16,9 +16,11 @@
 #ifndef D_sysmon
 #define D_sysmon
 
+#include "protocol.h"
+
 /*
  * Initialize system monitor service.
  */
-extern void ini_sys_mon_service(void);
+extern void ini_sys_mon_service(Protocol *);
 
 #endif

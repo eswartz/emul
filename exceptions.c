@@ -27,7 +27,7 @@
  * Only main thread is allowed to use exceptions.
  */
 
-#if _WRS_KERNEL
+#if defined(_WRS_KERNEL)
 #  include <vxWorks.h>
 #endif
 

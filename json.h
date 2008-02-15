@@ -47,4 +47,34 @@ extern void json_write_boolean(OutputStream * out, int b);
 extern void write_errno(OutputStream * out, int err);
 extern void write_err_msg(OutputStream * out, int err, char * msg);
 
+/*
+ * The following API to stream binary data is designed to allow
+ * multiple encodings of the data.  The state structure is necessary
+ * because the streaming does not give visibility to all data at once
+ * and some encoding schemes require data to come in groups, for
+ * example for base64 data encodes 3 bytes at the time.  The members
+ * fo the state structures are private to the implementation and
+ * should not be used in any way by clients of the API.
+ */
+
+typedef struct JsonReadBinaryState {
+    /* Private members */
+    InputStream * inp;
+} JsonReadBinaryState;
+
+extern void json_read_binary_start(JsonReadBinaryState * state, InputStream * inp);
+extern size_t json_read_binary_data(JsonReadBinaryState * state, char * buf, size_t len);
+extern void json_read_binary_end(JsonReadBinaryState * state);
+
+typedef struct JsonWriteBinaryState {
+    /* Private members */
+    OutputStream * out;
+    int rem;
+    char buf[3];
+} JsonWriteBinaryState;
+
+extern void json_write_binary_start(JsonWriteBinaryState * state, OutputStream * out);
+extern void json_write_binary_data(JsonWriteBinaryState * state, const char * str, size_t len);
+extern void json_write_binary_end(JsonWriteBinaryState * state);
+
 #endif

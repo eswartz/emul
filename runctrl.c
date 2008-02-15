@@ -44,6 +44,7 @@
 #define STOP_ALL_MAX_CNT 20
 
 static const char RUN_CONTROL[] = "RunControl";
+static TCFSuspendGroup * suspend_group = NULL;
 
 typedef struct SafeEvent SafeEvent;
 
@@ -56,7 +57,7 @@ struct SafeEvent {
 typedef struct GetContextArgs GetContextArgs;
 
 struct GetContextArgs {
-    OutputStream * out;
+    Channel * c;
     char token[256];
     Context * ctx;
     pid_t parent;
@@ -192,42 +193,42 @@ static void write_context_state(OutputStream * out, Context * ctx) {
 
 static void event_get_context(void * arg) {
     GetContextArgs * s = (GetContextArgs *)arg;
-    OutputStream * out = s->out;
+    Channel * c = s->c;
     Context * ctx = s->ctx;
 
-    if (!is_stream_closed(out)) {
+    if (!is_stream_closed(c)) {
         int err = 0;
 
-        write_stringz(out, "R");
-        write_stringz(out, s->token);
+        write_stringz(&c->out, "R");
+        write_stringz(&c->out, s->token);
 
         if (ctx->exited) err = ERR_ALREADY_EXITED;
-        write_errno(out, err);
+        write_errno(&c->out, err);
     
         if (err == 0) {
-            write_context(out, ctx, s->parent != 0);
-            out->write(out, 0);
+            write_context(&c->out, ctx, s->parent != 0);
+            c->out.write(&c->out, 0);
         }
         else {
-            write_stringz(out, "null");
+            write_stringz(&c->out, "null");
         }
 
-        out->write(out, MARKER_EOM);
-        out->flush(out);
+        c->out.write(&c->out, MARKER_EOM);
+        c->out.flush(&c->out);
     }
-    stream_unlock(out);
+    stream_unlock(c);
     context_unlock(ctx);
     loc_free(s);
 }
 
-static void command_get_context(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_context(char * token, Channel * c) {
     int err = 0;
     char id[256];
     Context * ctx = NULL;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     ctx = id2ctx(id);
     
@@ -235,19 +236,19 @@ static void command_get_context(char * token, InputStream * inp, OutputStream * 
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
     
     if (err) {
-        write_stringz(out, "R");
-        write_stringz(out, token);
-        write_errno(out, err);
-        write_stringz(out, "null");
-        out->write(out, MARKER_EOM);
+        write_stringz(&c->out, "R");
+        write_stringz(&c->out, token);
+        write_errno(&c->out, err);
+        write_stringz(&c->out, "null");
+        c->out.write(&c->out, MARKER_EOM);
     }
     else {
         /* Need to stop everything to access context properties.
          * In particular, proc FS access can fail when process is running.
          */
         GetContextArgs * s = loc_alloc_zero(sizeof(GetContextArgs));
-        s->out = out;
-        stream_lock(out);
+        s->c = c;
+        stream_lock(c);
         strcpy(s->token, token);
         s->ctx = ctx;
         context_lock(ctx);
@@ -256,19 +257,19 @@ static void command_get_context(char * token, InputStream * inp, OutputStream * 
     }
 }
 
-static void command_get_children(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_children(char * token, Channel * c) {
     char id[256];
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
 
-    write_errno(out, 0);
+    write_errno(&c->out, 0);
 
-    out->write(out, '[');
+    c->out.write(&c->out, '[');
     if (id[0] == 0) {
         LINK * qp;
         int cnt = 0;
@@ -276,8 +277,8 @@ static void command_get_children(char * token, InputStream * inp, OutputStream *
             Context * ctx = ctxl2ctxp(qp);
             if (ctx->exited) continue;
             if (ctx->parent != NULL) continue;
-            if (cnt > 0) out->write(out, ',');
-            json_write_string(out, container_id(ctx));
+            if (cnt > 0) c->out.write(&c->out, ',');
+            json_write_string(&c->out, container_id(ctx));
             cnt++;
         }
     }
@@ -289,89 +290,89 @@ static void command_get_children(char * token, InputStream * inp, OutputStream *
         Context * parent = id2ctx(id);
         if (parent != NULL && parent->parent == NULL && ppd == 0) {
             if (!parent->exited) {
-                if (cnt > 0) out->write(out, ',');
-                json_write_string(out, thread_id(parent));
+                if (cnt > 0) c->out.write(&c->out, ',');
+                json_write_string(&c->out, thread_id(parent));
                 cnt++;
             }
             for (qp = parent->children.next; qp != &parent->children; qp = qp->next) {
                 Context * ctx = cldl2ctxp(qp);
-                if (ctx->exited) continue;
+                assert(!ctx->exited);
                 assert(ctx->parent == parent);
-                if (cnt > 0) out->write(out, ',');
-                json_write_string(out,thread_id(ctx));
+                if (cnt > 0) c->out.write(&c->out, ',');
+                json_write_string(&c->out,thread_id(ctx));
                 cnt++;
             }
         }
     }
-    out->write(out, ']');
-    out->write(out, 0);
+    c->out.write(&c->out, ']');
+    c->out.write(&c->out, 0);
 
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_get_state(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_state(char * token, Channel * c) {
     char id[256];
     Context * ctx;
     int err = 0;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     ctx = id2ctx(id);
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
 
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
-    write_errno(out, err);
+    write_errno(&c->out, err);
 
-    json_write_boolean(out, ctx != NULL && ctx->intercepted);
-    out->write(out, 0);
+    json_write_boolean(&c->out, ctx != NULL && ctx->intercepted);
+    c->out.write(&c->out, 0);
 
     if (err) {
-        write_stringz(out, "0");
-        write_stringz(out, "null");
-        write_stringz(out, "null");
+        write_stringz(&c->out, "0");
+        write_stringz(&c->out, "null");
+        write_stringz(&c->out, "null");
     }
     else {
-        write_context_state(out, ctx);
+        write_context_state(&c->out, ctx);
     }
 
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void send_simple_result(OutputStream * out, char * token, int err) {
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    write_errno(out, err);
-    out->write(out, MARKER_EOM);
+static void send_simple_result(Channel * c, char * token, int err) {
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
 static void send_event_context_resumed(OutputStream * out, Context * ctx);
 
 static void done_skip_breakpoint(SkipBreakpointInfo * s) {
-    OutputStream * out = s->out;
-    if (!is_stream_closed(out)) {
-        send_simple_result(out, s->token, s->error);
-        out->flush(out);
+    Channel * c = s->c;
+    if (!is_stream_closed(c)) {
+        send_simple_result(c, s->token, s->error);
+        c->out.flush(&c->out);
     }
 }
 
-static void command_resume(char * token, InputStream * inp, OutputStream * out) {
+static void command_resume(char * token, Channel * c) {
     char id[256];
     long mode;
     long count;
     Context * ctx;
     int err = 0;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    mode = json_read_long(inp);
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    count = json_read_long(inp);
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    mode = json_read_long(&c->inp);
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    count = json_read_long(&c->inp);
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     ctx = id2ctx(id);
     assert(safe_event_list == NULL);
 
@@ -392,12 +393,12 @@ static void command_resume(char * token, InputStream * inp, OutputStream * out) 
     }
     else if (mode == RM_RESUME || mode == RM_STEP_INTO) {
         SkipBreakpointInfo * sb = skip_breakpoint(ctx);
-        send_event_context_resumed(&broadcast_stream, ctx);
+        send_event_context_resumed(&c->bcg->out, ctx);
         if (sb != NULL) {
             if (mode == RM_STEP_INTO) sb->pending_intercept = 1;
             sb->done = done_skip_breakpoint;
-            sb->out = out;
-            stream_lock(out);
+            sb->c = c;
+            stream_lock(c);
             strcpy(sb->token, token);
             return;
         }
@@ -417,19 +418,19 @@ static void command_resume(char * token, InputStream * inp, OutputStream * out) 
         err = EINVAL;
     }
 
-    send_simple_result(out, token, err);
+    send_simple_result(c, token, err);
 }
 
 static void send_event_context_suspended(OutputStream * out, Context * ctx);
 
-static void command_suspend(char * token, InputStream * inp, OutputStream * out) {
+static void command_suspend(char * token, Channel * c) {
     char id[256];
     Context * ctx;
     int err = 0;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     ctx = id2ctx(id);
 
     if (ctx == NULL) {
@@ -442,24 +443,24 @@ static void command_suspend(char * token, InputStream * inp, OutputStream * out)
         err = ERR_ALREADY_STOPPED;
     }
     else if (ctx->stopped) {
-        send_event_context_suspended(&broadcast_stream, ctx);
+        send_event_context_suspended(&c->bcg->out, ctx);
     }
     else {
         ctx->pending_intercept = 1;
         if (context_stop(ctx) < 0) err = errno;
     }
 
-    send_simple_result(out, token, err);
+    send_simple_result(c, token, err);
 }
 
-static void command_not_supported(char * token, InputStream * inp, OutputStream * out) {
+static void command_not_supported(char * token, Channel * c) {
     char id[256];
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    send_simple_result(out, token, ENOSYS);
+    send_simple_result(c, token, ENOSYS);
 }
 
 static void send_event_context_added(OutputStream * out, Context * ctx) {
@@ -576,7 +577,7 @@ int is_all_stopped(void) {
         if (ctx->exited || ctx->exiting) continue;
         if (!ctx->stopped) return 0;
     }
-    return are_channels_suspended();
+    return are_channels_suspended(suspend_group);
 }
 
 static void continue_temporary_stopped(void * arg) {
@@ -585,7 +586,7 @@ static void continue_temporary_stopped(void * arg) {
     if ((int)arg != safe_event_generation) return;
     assert(safe_event_list == NULL);
 
-    if (channels_get_message_count() > 0) {
+    if (channels_get_message_count(suspend_group) > 0) {
         post_event(continue_temporary_stopped, (void *)safe_event_generation);
         return;
     }
@@ -605,7 +606,7 @@ static void run_safe_events(void * arg) {
 
     if ((int)arg != safe_event_generation) return;
     assert(safe_event_list != NULL);
-    assert(are_channels_suspended());
+    assert(are_channels_suspended(suspend_group));
 
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
         Context * ctx = ctxl2ctxp(qp);
@@ -654,12 +655,13 @@ static void run_safe_events(void * arg) {
         }
         assert(is_all_stopped());
         safe_event_list = i->next;
+        // TODO: neeed to handle exceptions in "safe events"
         i->done(i->arg);
         loc_free(i);
         if ((int)arg != safe_event_generation) return;
     }
 
-    channels_resume();
+    channels_resume(suspend_group);
     /* Lazily continue execution of temporary stopped contexts */
     post_event(continue_temporary_stopped, (void *)safe_event_generation);
 }
@@ -682,28 +684,33 @@ void post_safe_event(void (*done)(void *), void * arg) {
     i->arg = arg;
     if (safe_event_list == NULL) {
         assert(safe_event_pid_count == 0);
-        channels_suspend();
+        channels_suspend(suspend_group);
         post_event(run_safe_events, (void *)++safe_event_generation);
     }
-    assert(are_channels_suspended());
+    assert(are_channels_suspended(suspend_group));
     i->next = safe_event_list;
     safe_event_list = i;
 }
 
-static void event_context_created(Context * ctx) {
+static void event_context_created(Context * ctx, void * client_data) {
+    TCFBroadcastGroup * bcg = client_data;
     assert(!ctx->exited);
     assert(!ctx->intercepted);
     assert(!ctx->stopped);
-    send_event_context_added(&broadcast_stream, ctx);
-    broadcast_stream.flush(&broadcast_stream);
+    send_event_context_added(&bcg->out, ctx);
+    bcg->out.flush(&bcg->out);
 }
 
-static void event_context_changed(Context * ctx) {
-    send_event_context_changed(&broadcast_stream, ctx);
-    broadcast_stream.flush(&broadcast_stream);
+static void event_context_changed(Context * ctx, void * client_data) {
+    TCFBroadcastGroup * bcg = client_data;
+
+    send_event_context_changed(&bcg->out, ctx);
+    bcg->out.flush(&bcg->out);
 }
 
-static void event_context_stopped(Context * ctx) {
+static void event_context_stopped(Context * ctx, void * client_data) {
+    TCFBroadcastGroup * bcg = client_data;
+
     assert(ctx->stopped);
     assert(!ctx->intercepted);
     assert(!ctx->exited);
@@ -717,19 +724,21 @@ static void event_context_stopped(Context * ctx) {
         }
     }
     else if (ctx->signal != SIGSTOP && ctx->signal != SIGTRAP) {
-        send_event_context_exception(&broadcast_stream, ctx);
+        send_event_context_exception(&bcg->out, ctx);
         ctx->pending_intercept = 1;
     }
     if (ctx->pending_intercept) {
-        send_event_context_suspended(&broadcast_stream, ctx);
-        broadcast_stream.flush(&broadcast_stream);
+        send_event_context_suspended(&bcg->out, ctx);
+        bcg->out.flush(&bcg->out);
     }
     if (!ctx->intercepted && safe_event_list == NULL) {
         context_continue(ctx);
     }
 }
 
-static void event_context_started(Context * ctx) {
+static void event_context_started(Context * ctx, void * client_data) {
+    TCFBroadcastGroup *bcg = client_data;
+
     assert(!ctx->stopped);
     assert(!ctx->intercepted);
     ctx->stopped_by_bp = 0;
@@ -744,30 +753,32 @@ static void event_context_started(Context * ctx) {
     }
 }
 
-static void event_context_exited(Context * ctx) {
+static void event_context_exited(Context * ctx, void * client_data) {
+    TCFBroadcastGroup *bcg = client_data;
+
     assert(!ctx->stopped);
     assert(!ctx->intercepted);
     if (ctx->pending_safe_event) check_safe_events(ctx);
-    send_event_context_removed(&broadcast_stream, ctx);
-    broadcast_stream.flush(&broadcast_stream);
+    send_event_context_removed(&bcg->out, ctx);
+    bcg->out.flush(&bcg->out);
 }
 
-void ini_run_ctrl_service(void) {
+void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
     static ContextEventListener listener = {
         event_context_created,
         event_context_exited,
         event_context_stopped,
         event_context_started,
-        event_context_changed,
-        NULL
+        event_context_changed
     };
-    add_context_event_listener(&listener);
-    add_command_handler(RUN_CONTROL, "getContext", command_get_context);
-    add_command_handler(RUN_CONTROL, "getChildren", command_get_children);
-    add_command_handler(RUN_CONTROL, "getState", command_get_state);
-    add_command_handler(RUN_CONTROL, "resume", command_resume);
-    add_command_handler(RUN_CONTROL, "suspend", command_suspend);
-    add_command_handler(RUN_CONTROL, "terminate", command_not_supported);
+    suspend_group = spg;
+    add_context_event_listener(&listener, bcg);
+    add_command_handler(proto, RUN_CONTROL, "getContext", command_get_context);
+    add_command_handler(proto, RUN_CONTROL, "getChildren", command_get_children);
+    add_command_handler(proto, RUN_CONTROL, "getState", command_get_state);
+    add_command_handler(proto, RUN_CONTROL, "resume", command_resume);
+    add_command_handler(proto, RUN_CONTROL, "suspend", command_suspend);
+    add_command_handler(proto, RUN_CONTROL, "terminate", command_not_supported);
 }
 
 #endif

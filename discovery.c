@@ -1,0 +1,263 @@
+/*******************************************************************************
+ * Copyright (c) 2007 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Eclipse Public License v1.0 
+ * which accompanies this distribution, and is available at 
+ * http://www.eclipse.org/legal/epl-v10.html 
+ *  
+ * Contributors:
+ *     Wind River Systems - initial API and implementation
+ *******************************************************************************/
+
+/*
+ * Implements discovery.
+ */
+
+#if defined(_WRS_KERNEL)
+#  include <vxWorks.h>
+#endif
+#include <stddef.h>
+#include <errno.h>
+#include <assert.h>
+#include "mdep.h"
+#include "tcf.h"
+#include "discovery.h"
+#include "discovery_udp.h"
+#include "protocol.h"
+#include "channel.h"
+#include "myalloc.h"
+#include "events.h"
+#include "trace.h"
+#include "exceptions.h"
+#include "json.h"
+#include "peer.h"
+
+static const char * LOCATOR = "Locator";
+
+#define REFRESH_TIME            10
+#define STALE_TIME_DELTA        (REFRESH_TIME*3)
+
+static int chan_max;
+static int chan_ind;
+static Channel ** chan_list;
+static Channel * client_chan;
+static int discovery_ismaster;
+static DiscoveryMasterNotificationCB master_notifier;
+static void restart_discovery(void *);
+
+static void generate_peer_info(PeerServer * ps, OutputStream * out) {
+    int i;
+
+    out->write(out, '{');
+    json_write_string(out, "ID");
+    out->write(out, ':');
+    json_write_string(out, ps->id);
+    for (i = 0; i < ps->ind; i++) {
+        out->write(out, ',');
+        json_write_string(out, ps->list[i].name);
+        out->write(out, ':');
+        json_write_string(out, ps->list[i].value);
+    }
+    out->write(out, '}');
+}
+
+static void remote_peer_change(PeerServer * ps, int changeType, OutputStream * out) {
+    if ((ps->flags & PS_FLAG_DISCOVERABLE) == 0) return;
+    trace(LOG_DISCOVERY, "discovery: remote_peer_change, id %s, type %d", ps->id, changeType);
+    write_stringz(out, "E");
+    write_stringz(out, LOCATOR);
+    if (changeType >= 0) {
+        if (changeType > 0) {
+            write_stringz(out, "peerAdded");
+        }
+        else {
+            write_stringz(out, "peerChanged");
+        }
+        generate_peer_info(ps, out);
+    }
+    else {
+        write_stringz(out, "peerRemoved");
+        json_write_string(out, ps->id);
+    }
+    out->write(out, 0);
+    out->write(out, MARKER_EOM);
+    out->flush(out);
+}
+
+static int generate_peer_added_event(PeerServer * ps, void * x) {
+    OutputStream * out = x;
+
+    remote_peer_change(ps, 1, out);
+    return 0;
+}
+
+static void publish_peer_reply(Channel * c, void * client_data, int error) {
+    unsigned long refresh_time;
+    char msg[256];
+
+    trace(LOG_DISCOVERY, "discovery: publish peer reply");
+    if (error) {
+        trace(LOG_DISCOVERY, "  error %d", error);
+        return;
+    }
+    error = json_read_long(&c->inp);
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, msg, sizeof msg);
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    refresh_time = json_read_ulong(&c->inp);
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    trace(LOG_DISCOVERY, "  refresh_time %d", refresh_time);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+}
+
+static void generate_publish_peer_command(Channel * c, PeerServer *ps) {
+    if ((ps->flags & (PS_FLAG_LOCAL | PS_FLAG_PRIVATE | PS_FLAG_DISCOVERABLE)) != 
+        (PS_FLAG_LOCAL | PS_FLAG_DISCOVERABLE)) {
+        return;
+    }
+    trace(LOG_DISCOVERY, "discovery: publish peer command, id %s", ps->id);
+    protocol_send_command(c->client_data, c, LOCATOR, "publishPeer", publish_peer_reply, NULL);
+    generate_peer_info(ps, &c->out);
+    c->out.write(&c->out, 0);
+    c->out.write(&c->out, MARKER_EOM);
+    c->out.flush(&c->out);
+}
+
+/*
+ * Add channel to include in discovery updates
+ */
+void discovery_channel_add(Channel * c) {
+    if (chan_ind == chan_max) {
+        if (chan_list == NULL) {
+            chan_max = 1;
+            chan_list = loc_alloc(chan_max * sizeof *chan_list);
+        }
+        else {
+            chan_max *= 2;
+            chan_list = loc_realloc(chan_list, chan_max * sizeof *chan_list);
+        }
+        chan_list[chan_ind++] = c;
+    }
+    peer_server_iter(generate_peer_added_event, &c->out);
+}
+
+/*
+ * Remove channel from discovery updates
+ */
+void discovery_channel_remove(Channel * c) {
+    int i;
+
+    for (i = 0; i < chan_ind; i++) {
+        if (chan_list[i] == c) break;
+    }
+    chan_ind--;
+    for (; i < chan_ind; i++) {
+        chan_list[i] = chan_list[i+1];
+    }
+}
+
+static void channel_client_connecting(Channel * c) {
+    trace(LOG_DISCOVERY, "discovery: channel_client_connecting");
+
+    send_hello_message(c->client_data, c);
+    discovery_channel_add(c);
+    c->out.flush(&c->out);
+}
+
+static void channel_client_connected(Channel * c) {
+    int i;
+
+    trace(LOG_DISCOVERY, "discovery: channel_client_connected, peer services:");
+    for (i = 0; i < c->peer_service_cnt; i++) {
+        trace(LOG_DISCOVERY, "  %s", c->peer_service_list[i]);
+    }
+}
+
+static void channel_client_receive(Channel * c) {
+    handle_protocol_message(c->client_data, c);
+}
+
+static void channel_client_disconnected(Channel * c) {
+    trace(LOG_DISCOVERY, "discovery: channel_client_disconnected");
+    discovery_channel_remove(c);
+    protocol_channel_closed(c->client_data, c);
+    protocol_free(c->client_data);
+    post_event_with_delay(restart_discovery, NULL, 300*1000);
+}
+
+static ChannelCallbacks clientccb = {
+    channel_client_connecting,
+    channel_client_connected,
+    channel_client_receive,
+    channel_client_disconnected
+};
+
+static void peer_list_changed(PeerServer * ps, int changeType, void * client_data) {
+    int i;
+
+    if (client_chan != NULL && changeType > 0) {
+        generate_publish_peer_command(client_chan, ps);
+    }
+    for (i = 0; i < chan_ind; i++) {
+        remote_peer_change(ps, changeType, &chan_list[i]->out);
+    }
+}
+
+/*
+ * Make local peers discoverable
+ */
+static void make_local_discoverable(void) {
+    peer_server_add_listener(peer_list_changed, NULL);
+}
+
+/*
+ * Connect discovery client
+ */
+Channel * discovery_client(void) {
+    Protocol * proto;
+    Channel * c;
+    PeerServer * ps = channel_peer_from_url(DEFAULT_DISCOVERY_URL);
+
+    proto = protocol_alloc();
+    c = channel_connect(ps, &clientccb, proto, NULL, NULL);
+    peer_server_free(ps);
+    if (c == NULL) {
+        trace(LOG_DISCOVERY, "cannot connect to TCF discovery");
+        protocol_free(proto);
+        return NULL;
+    }
+    protocol_channel_opened(proto, c);
+    add_event_handler(c, LOCATOR, "peerAdded", event_locator_peer_added);
+    add_event_handler(c, LOCATOR, "peerChanged", event_locator_peer_changed);
+    add_event_handler(c, LOCATOR, "peerRemoved", event_locator_peer_removed);
+    return c;
+}
+
+static int start_discovery(void) {
+    assert(is_dispatch_thread());
+    assert(!discovery_ismaster);
+    trace(LOG_DISCOVERY, "discovery start");
+    if (discovery_udp_server(NULL) == 0) {
+        discovery_ismaster = 1;
+    }
+    else {
+        client_chan = discovery_client();
+        if (client_chan == NULL) {
+            post_event_with_delay(restart_discovery, NULL, 300*1000);
+        }
+    }
+    return discovery_ismaster;
+}
+
+static void restart_discovery(void * x) {
+    if (start_discovery()) {
+        master_notifier();
+    }
+}
+
+int discovery_start(DiscoveryMasterNotificationCB mastercb) {
+    assert(mastercb != NULL);
+    master_notifier = mastercb;
+    make_local_discoverable();
+    return start_discovery();
+}

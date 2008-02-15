@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <errno.h>
 #include "mdep.h"
+#include "myalloc.h"
 
 pthread_attr_t pthread_create_attr;
 
@@ -208,7 +209,7 @@ struct ThreadArgs {
 static void start_thread(void * x) {
     ThreadArgs a = *(ThreadArgs *)x;
 
-    free(x);
+    loc_free(x);
     ExitThread((DWORD)a.start(a.args));
 }
 
@@ -217,13 +218,13 @@ int pthread_create(pthread_t * thread, pthread_attr_t * attr,
     unsigned long r;
     ThreadArgs * a;
 
-    a = (ThreadArgs *)malloc(sizeof(ThreadArgs));
+    a = (ThreadArgs *)loc_alloc(sizeof(ThreadArgs));
     a->start = start;
     a->args = args;
     r = _beginthread(start_thread, 0, a);
     if (r == (unsigned long)-1) {
         int error = errno;
-        free(a);
+        loc_free(a);
         errno = error;
         return error;
     }
@@ -314,6 +315,12 @@ int wsa_socket(int af, int type, int protocol) {
     return res;
 }
 
+#ifndef __GNUC__
+int inet_aton(const char *cp, struct in_addr *inp) {
+    return ( ( inp->s_addr = inet_addr(cp) ) != INADDR_NONE );
+}
+#endif
+
 int truncate(const char * path, int64 size) {
     int res = 0;
     int f = _open(path, _O_RDWR | _O_BINARY);
@@ -347,7 +354,7 @@ int ftruncate(int fd, int64 size) {
 }
 
 DIR * opendir(const char *path) {
-    DIR * d = (DIR *)malloc(sizeof(DIR));
+    DIR * d = (DIR *)loc_alloc(sizeof(DIR));
     if (!d) { errno = ENOMEM; return 0; }
     strcpy(d->path, path);
     strcat(d->path, "/*.*");
@@ -386,28 +393,8 @@ int closedir(DIR * d) {
         return -1;
     }
     if (d->hdl >= 0) r = _findclose(d->hdl);
-    free(d);
+    loc_free(d);
     return r;
-}
-
-char * canonicalize_file_name(const char * path) {
-    char buf[MAX_PATH];
-    char * basename;
-    int i = 0;
-    DWORD len = GetFullPathName(path, sizeof(buf), buf, &basename);
-    if (len == 0) {
-        errno = ENOENT;
-        return NULL;
-    }
-    if (len > MAX_PATH - 1) {
-        errno = ENAMETOOLONG;
-        return NULL;
-    }
-    while (buf[i] != 0) {
-        if (buf[i] == '\\') buf[i] = '/';
-        i++;
-    }
-    return strdup(buf);
 }
 
 int getuid(void) {
@@ -492,62 +479,12 @@ int truncate(char * path, int64 size) {
     int f = open(path, O_RDWR, 0);
     if (f < 0) return -1;
     if (ftruncate(f, size) < 0) {
-	int err = errno;
-	close(f);
-	errno = err;
-	return -1;
+        int err = errno;
+        close(f);
+        errno = err;
+        return -1;
     }
     return close(f);
-}
-
-char * canonicalize_file_name(const char * path) {
-    char buf[PATH_MAX];
-    int i = 0, j = 0;
-    if (path[0] == '.' && (path[1] == '/' || path[1] == '\\' || path[1] == 0)) {
-    	getcwd(buf, sizeof(buf));
-    	j = strlen(buf);
-    	if (j == 1 && buf[0] == '/') j = 0;
-    	i = 1;
-    }
-    else if (path[0] == '.' && path[1] == '.' && (path[2] == '/' || path[2] == '\\' || path[2] == 0)) {
-    	getcwd(buf, sizeof(buf));
-    	j = strlen(buf);
-	while (j > 0 && buf[j - 1] != '/') j--;
-	if (j > 0 && buf[j - 1] == '/') j--;
-    	i = 2;
-    }
-    while (path[i] && j < PATH_MAX - 1) {
-    	char ch = path[i];
-    	if (ch == '\\') ch = '/';
-    	if (ch == '/') {
-    	    if (path[i + 1] == '/' || path[i + 1] == '\\') {
-        	i++;
-        	continue;
-    	    }
-    	    if (path[i + 1] == '.') {
-    		if (path[i + 2] == 0) {
-    		    break;
-    		}
-    		if (path[i + 2] == '/' || path[i + 2] == '\\') {
-    		    i += 2;
-    		    continue;
-    		}
-    		if ((j == 0 || buf[0] == '/') && path[i + 2] == '.') {
-    		    if (path[i + 3] == '/' || path[i + 3] == '\\' || path[i + 3] == 0) {
-    			while (j > 0 && buf[j - 1] != '/') j--;
-    			if (j > 0 && buf[j - 1] == '/') j--;
-    			i += 3;
-    			continue;
-    		    }
-    		}
-    	    }
-    	}
-    	buf[j++] = ch;
-    	i++;
-    }
-    if (j == 0 && path[0] != 0) buf[j++] = '/';
-    buf[j] = 0;
-    return strdup(buf);
 }
 
 int getuid(void) {
@@ -586,7 +523,9 @@ void ini_mdep(void) {
 
 #include <pwd.h>
 #include <sys/utsname.h>
+#ifndef __CYGWIN__
 #include <asm/unistd.h>
+#endif
 
 char * get_os_name(void) {
     static char str[256];
@@ -608,14 +547,293 @@ char * get_user_home(void) {
     return buf;
 }
 
+#ifndef __CYGWIN__
 int tkill(pid_t pid, int signal) {
     return syscall(__NR_tkill, pid, signal);
 }
+#endif
 
 void ini_mdep(void) {
     pthread_attr_init(&pthread_create_attr);
     pthread_attr_setstacksize(&pthread_create_attr, 0x8000);
+#if defined(__CYGWIN__)
+    /* Force initialization of WinSock library */
+    closesocket(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+#endif
 }
 
 #endif
 
+
+/** canonicalize_file_name ****************************************************/
+
+#if defined(WIN32)
+
+char * canonicalize_file_name(const char * path) {
+    char buf[MAX_PATH];
+    char * basename;
+    int i = 0;
+    DWORD len = GetFullPathName(path, sizeof(buf), buf, &basename);
+    if (len == 0) {
+        errno = ENOENT;
+        return NULL;
+    }
+    if (len > MAX_PATH - 1) {
+        errno = ENAMETOOLONG;
+        return NULL;
+    }
+    while (buf[i] != 0) {
+        if (buf[i] == '\\') buf[i] = '/';
+        i++;
+    }
+    return strdup(buf);
+}
+
+#elif defined(_WRS_KERNEL) || defined(__CYGWIN__)
+
+char * canonicalize_file_name(const char * path) {
+    char buf[PATH_MAX];
+    int i = 0, j = 0;
+    if (path[0] == '.' && (path[1] == '/' || path[1] == '\\' || path[1] == 0)) {
+        getcwd(buf, sizeof(buf));
+        j = strlen(buf);
+        if (j == 1 && buf[0] == '/') j = 0;
+        i = 1;
+    }
+    else if (path[0] == '.' && path[1] == '.' && (path[2] == '/' || path[2] == '\\' || path[2] == 0)) {
+        getcwd(buf, sizeof(buf));
+        j = strlen(buf);
+        while (j > 0 && buf[j - 1] != '/') j--;
+        if (j > 0 && buf[j - 1] == '/') j--;
+        i = 2;
+    }
+    while (path[i] && j < PATH_MAX - 1) {
+        char ch = path[i];
+        if (ch == '\\') ch = '/';
+        if (ch == '/') {
+            if (path[i + 1] == '/' || path[i + 1] == '\\') {
+                i++;
+                continue;
+            }
+            if (path[i + 1] == '.') {
+                if (path[i + 2] == 0) {
+                    break;
+                }
+                if (path[i + 2] == '/' || path[i + 2] == '\\') {
+                    i += 2;
+                    continue;
+                }
+                if ((j == 0 || buf[0] == '/') && path[i + 2] == '.') {
+                    if (path[i + 3] == '/' || path[i + 3] == '\\' || path[i + 3] == 0) {
+                        while (j > 0 && buf[j - 1] != '/') j--;
+                        if (j > 0 && buf[j - 1] == '/') j--;
+                        i += 3;
+                        continue;
+                    }
+                }
+            }
+        }
+        buf[j++] = ch;
+        i++;
+    }
+    if (j == 0 && path[0] != 0) buf[j++] = '/';
+    buf[j] = 0;
+    return strdup(buf);
+}
+
+#endif
+
+
+/** getaddrinfo ***************************************************************/
+
+#if defined(_WRS_KERNEL) && defined(USE_VXWORKS_GETADDRINFO)
+
+// TODO: VxWorks 6.6 getaddrinfo returns error when port is empty string, should return port 0
+// TODO: VxWorks 6.6 source (as shipped at 2007 fall release) does not include ipcom header files.
+extern void ipcom_freeaddrinfo();
+extern int ipcom_getaddrinfo();
+
+static struct ai_errlist {
+    const char * str;
+    int code;
+} ai_errlist[] = {
+    { "Success", 0 },
+    /*
+    { "Invalid value for ai_flags", IP_EAI_BADFLAGS },
+    { "Non-recoverable failure in name resolution", IP_EAI_FAIL },
+    { "ai_family not supported", IP_EAI_FAMILY },
+    { "Memory allocation failure", IP_EAI_MEMORY },
+    { "hostname nor servname provided, or not known", IP_EAI_NONAME },
+    { "servname not supported for ai_socktype",     IP_EAI_SERVICE },
+    { "ai_socktype not supported", IP_EAI_SOCKTYPE },
+    { "System error returned in errno", IP_EAI_SYSTEM },
+     */
+    /* backward compatibility with userland code prior to 2553bis-02 */
+    { "Address family for hostname not supported", 1 },
+    { "No address associated with hostname", 7 },
+    { NULL, -1 },
+};
+
+void loc_freeaddrinfo(struct addrinfo * ai) {
+    ipcom_freeaddrinfo(ai);
+}
+
+int loc_getaddrinfo(const char * nodename, const char * servname,
+       const struct addrinfo * hints, struct addrinfo ** res) {
+    return ipcom_getaddrinfo(nodename, servname, hints, res);
+}
+
+const char * loc_gai_strerror(int ecode) {
+    struct ai_errlist * p;
+    static char buf[32];
+    for (p = ai_errlist; p->str; p++) {
+        if (p->code == ecode) return p->str;
+    }
+    snprintf(buf, sizeof(buf), "Error code %d", ecode);
+    return buf;
+}
+
+#elif defined(_WRS_KERNEL)
+
+union sockaddr_union {
+    struct sockaddr sa;
+    struct sockaddr_in sin;
+    struct sockaddr_in6 sin6;
+};
+
+extern int ipcom_getsockaddrbyaddr();
+
+void loc_freeaddrinfo(struct addrinfo * ai) {
+    while (ai != NULL) {
+        struct addrinfo * next = ai->ai_next;
+        if (ai->ai_canonname != NULL) loc_free(ai->ai_canonname);
+        if (ai->ai_addr != NULL) loc_free(ai->ai_addr);
+        loc_free(ai);
+        ai = next;
+    }
+}
+
+int loc_getaddrinfo(const char * nodename, const char * servname,
+       const struct addrinfo * hints, struct addrinfo ** res) {
+    int family = 0;
+    int flags = 0;
+    int socktype = 0;
+    int protocol = 0;
+    int err = 0;
+    int port = 0;
+    char * canonname = NULL;
+    const char * host = NULL;
+    struct addrinfo * ai = NULL;
+    union sockaddr_union * sa = NULL;
+    
+    *res = NULL;
+    
+    if (hints != NULL) {
+        flags = hints->ai_flags;
+        family = hints->ai_family;
+        socktype = hints->ai_socktype;
+        protocol = hints->ai_protocol;
+    }
+    if (family == AF_UNSPEC) {
+        struct addrinfo lhints;
+        struct addrinfo ** tmp;
+        int err_v6;
+
+        if (hints == NULL) memset(&lhints, 0, sizeof(lhints));
+        else memcpy(&lhints, hints, sizeof(lhints));
+        lhints.ai_family = AF_INET6;
+        err_v6 = loc_getaddrinfo(nodename, servname, &lhints, res);
+        lhints.ai_family = AF_INET;
+        while (*res != NULL) res = &(*res)->ai_next;
+        err = loc_getaddrinfo(nodename, servname, &lhints, res);
+        return err && err_v6 ? err : 0;
+    }
+    if (servname != NULL && servname[0] != 0) {
+        char * p = NULL;
+        port = strtol(servname, &p, 10);
+        if (port < 0 || port > 0xffff || *p != '\0' || p == servname) {
+            return 1;
+        }
+    }
+    if (nodename != NULL && nodename[0] != 0) {
+        host = nodename;
+    }
+    else if (flags & AI_PASSIVE) {
+        host = family == AF_INET ? "0.0.0.0" : "::";
+    }
+    else {
+        host = family == AF_INET ? "127.0.0.1" : "::1";
+    }
+    if (socktype == 0) {
+        socktype = SOCK_STREAM;
+    }
+    if (protocol == 0) {
+        protocol = socktype == SOCK_STREAM ? IPPROTO_TCP : IPPROTO_UDP;
+    }
+    
+    sa = loc_alloc_zero(sizeof(*sa));
+    err = ipcom_getsockaddrbyaddr(family, host, (struct sockaddr *)sa);
+    if (err) {
+        loc_free(sa);
+        return err;
+    }
+    
+    ai = loc_alloc_zero(sizeof(*ai));
+    switch (family) {
+    case AF_INET:
+        assert(sa->sin.sin_family == AF_INET);
+        sa->sin.sin_port = htons(port);
+        ai->ai_addrlen = sizeof(struct sockaddr_in);
+        break;
+    case AF_INET6:
+        assert(sa->sin6.sin6_family == AF_INET6);
+        sa->sin6.sin6_port = htons(port);
+        ai->ai_addrlen = sizeof(struct sockaddr_in6);
+        break;
+    default:
+        loc_free(sa);
+        loc_free(ai);
+        return 2;
+    }
+    
+    ai->ai_flags = 0;
+    ai->ai_family = family;
+    ai->ai_socktype = socktype;
+    ai->ai_protocol = protocol;
+    ai->ai_canonname = canonname;
+    ai->ai_addr = (struct sockaddr *)sa;
+    ai->ai_next = NULL;
+    *res = ai;
+    return 0;
+}
+
+const char * loc_gai_strerror(int ecode) {
+    static char buf[32];
+    if (ecode == 0) return "Success";
+    snprintf(buf, sizeof(buf), "Error code %d", ecode);
+    return buf;
+}
+
+#elif defined(__CYGWIN__)
+
+extern void __stdcall freeaddrinfo(struct addrinfo *);
+extern int __stdcall getaddrinfo(const char *, const char *,
+                const struct addrinfo *, struct addrinfo **);
+
+void loc_freeaddrinfo(struct addrinfo * ai) {
+        freeaddrinfo(ai);
+}
+
+int loc_getaddrinfo(const char * nodename, const char * servname,
+       const struct addrinfo * hints, struct addrinfo ** res) {
+        return getaddrinfo(nodename, servname, hints, res);
+}
+
+const char * loc_gai_strerror(int ecode) {
+    static char buf[32];
+    if (ecode == 0) return "Success";
+    snprintf(buf, sizeof(buf), "Error code %d", ecode);
+    return buf;
+}
+
+#endif

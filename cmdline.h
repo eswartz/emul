@@ -16,6 +16,12 @@
 #ifndef D_cmdline
 #define D_cmdline
 
+#include "channel.h"
+
+extern Channel *chan;
+
+extern void cmdline_suspend(void);
+extern void cmdline_resume(void);
 extern void ini_cmdline_handler(void);
 
 #endif

@@ -16,10 +16,12 @@
 #ifndef D_registers
 #define D_registers
 
+#include "protocol.h"
+
 /*
  * Initialize registers service.
  */
-extern void ini_registers_service(void);
+extern void ini_registers_service(Protocol *);
 
 
 #endif

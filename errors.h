@@ -35,6 +35,9 @@
 #define ERR_INV_NUMBER          0x100e
 #define ERR_IS_RUNNING          0x100f
 #define ERR_DWARF               0x1010
+#define ERR_UNSUPPORTED         0x1011
+#define ERR_CHANNEL_CLOSED      0x1012
+#define ERR_COMMAND_CANCELLED   0x1013
 
 extern char * errno_to_str(int err);
 

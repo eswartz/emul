@@ -69,7 +69,7 @@ static void test_proc(void) {
 }
 
 int run_test_process(pid_t * res) {
-#if defined(WIN32)
+#if defined(WIN32) || defined(__CYGWIN__)
     errno = EINVAL;
     return -1;
 #elif defined(_WRS_KERNEL)

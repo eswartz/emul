@@ -18,6 +18,7 @@
 
 #include "mdep.h"
 #include "context.h"
+#include "protocol.h"
 
 /*
  * Add "safe" event.
@@ -36,6 +37,6 @@ extern int is_all_stopped(void);
 /*
  * Initialize run control service.
  */
-extern void ini_run_ctrl_service(void);
+extern void ini_run_ctrl_service(Protocol *, TCFBroadcastGroup *, TCFSuspendGroup * spg);
 
 #endif

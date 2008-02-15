@@ -41,9 +41,9 @@ static const char * REGISTERS = "Registers";
 #else
 
 typedef struct {
-    char	*regName;	/* pointer to register name */
-    int		regOff;		/* offset to entry in REG_SET */
-    int		regWidth;	/* register width in bytes */
+    char        *regName;       /* pointer to register name */
+    int         regOff;         /* offset to entry in REG_SET */
+    int         regWidth;       /* register width in bytes */
 } REG_INDEX;
 
 #define REG_WIDTH(x) (x).regWidth
@@ -162,49 +162,49 @@ static int id2register(char * id, Context ** ctx, REG_INDEX ** idx) {
     return 0;
 }
 
-static void command_get_context(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_context(char * token, Channel * c) {
     int err = 0;
     char id[256];
     Context * ctx = NULL;
     REG_INDEX * idx = NULL;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     id2register(id, &ctx, &idx);
     
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
     
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    write_errno(out, err);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
     if (err == 0) {
-        write_context(out, id, ctx, idx);
+        write_context(&c->out, id, ctx, idx);
     }
     else {
-        write_stringz(out, "null");
+        write_stringz(&c->out, "null");
     }
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_get_children(char * token, InputStream * inp, OutputStream * out) {
+static void command_get_children(char * token, Channel * c) {
     char id[256];
     pid_t pid, parent;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     pid = id2pid(id, &parent);
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
 
-    write_errno(out, 0);
+    write_errno(&c->out, 0);
 
-    out->write(out, '[');
+    c->out.write(&c->out, '[');
     if (pid != 0 && parent != 0) {
         Context * ctx = context_find_from_pid(pid);
         if (ctx != NULL) {
@@ -213,20 +213,20 @@ static void command_get_children(char * token, InputStream * inp, OutputStream *
             strcpy(t_id, thread_id(ctx));
             while (idx->regName != NULL) {
                 char r_id[128];
-                if (idx != regs_index) out->write(out, ',');
+                if (idx != regs_index) c->out.write(&c->out, ',');
                 snprintf(r_id, sizeof(r_id), "R%s.%s", idx->regName, t_id);
-                json_write_string(out, r_id);
+                json_write_string(&c->out, r_id);
                 idx ++;
             }
         }
     }
-    out->write(out, ']');
-    out->write(out, 0);
+    c->out.write(&c->out, ']');
+    c->out.write(&c->out, 0);
 
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_get(char * token, InputStream * inp, OutputStream * out) {
+static void command_get(char * token, Channel * c) {
     int err = 0;
     char id[256];
     char fmt[256];
@@ -234,11 +234,11 @@ static void command_get(char * token, InputStream * inp, OutputStream * out) {
     Context * ctx = NULL;
     REG_INDEX * idx = NULL;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(inp, fmt, sizeof(fmt));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, fmt, sizeof(fmt));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     id2register(id, &ctx, &idx);
     
@@ -248,9 +248,9 @@ static void command_get(char * token, InputStream * inp, OutputStream * out) {
     else if (strcmp(fmt, "Hex") == 0) hex = 1;
     else if (strcmp(fmt, "Decimal") != 0) err = ERR_INV_FORMAT;
     
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    write_errno(out, err);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
     if (err == 0) {
         int64 n = 0;
         char val[64];
@@ -277,29 +277,29 @@ static void command_get(char * token, InputStream * inp, OutputStream * out) {
             while (m != 0);
             if (neg) val[val_len++] = '-';
         }
-        out->write(out, '"');
-        while (val_len > 0) out->write(out, val[--val_len]);
-        out->write(out, '"');
-        out->write(out, 0);
+        c->out.write(&c->out, '"');
+        while (val_len > 0) c->out.write(&c->out, val[--val_len]);
+        c->out.write(&c->out, '"');
+        c->out.write(&c->out, 0);
     }
     else {
-        write_stringz(out, "null");
+        write_stringz(&c->out, "null");
     }
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void send_event_register_changed(OutputStream * out, char * id) {
-    write_stringz(out, "E");
-    write_stringz(out, REGISTERS);
-    write_stringz(out, "registerChanged");
+static void send_event_register_changed(Channel * c, char * id) {
+    write_stringz(&c->out, "E");
+    write_stringz(&c->out, REGISTERS);
+    write_stringz(&c->out, "registerChanged");
 
-    json_write_string(out, id);
-    out->write(out, 0);
+    json_write_string(&c->out, id);
+    c->out.write(&c->out, 0);
 
-    out->write(out, MARKER_EOM);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_set(char * token, InputStream * inp, OutputStream * out) {
+static void command_set(char * token, Channel * c) {
     int err = 0;
     char id[256];
     char fmt[256];
@@ -309,13 +309,13 @@ static void command_set(char * token, InputStream * inp, OutputStream * out) {
     Context * ctx = NULL;
     REG_INDEX * idx = NULL;
 
-    json_read_string(inp, id, sizeof(id));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(inp, fmt, sizeof(fmt));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(inp, val, sizeof(val));
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, id, sizeof(id));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, fmt, sizeof(fmt));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, val, sizeof(val));
+    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     id2register(id, &ctx, &idx);
     
@@ -355,21 +355,21 @@ static void command_set(char * token, InputStream * inp, OutputStream * out) {
                     (char *)&n + (BIG_ENDIAN_DATA ? sizeof(n) - REG_WIDTH(*idx) : 0),
                     REG_WIDTH(*idx));
             ctx->regs_dirty = 1;
-            send_event_register_changed(out, id);
+            send_event_register_changed(c, id);
         }
     }
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    write_errno(out, err);
-    out->write(out, MARKER_EOM);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
-void ini_registers_service(void) {
-    add_command_handler(REGISTERS, "getContext", command_get_context);
-    add_command_handler(REGISTERS, "getChildren", command_get_children);
-    add_command_handler(REGISTERS, "get", command_get);
-    add_command_handler(REGISTERS, "set", command_set);
+void ini_registers_service(Protocol * proto) {
+    add_command_handler(proto, REGISTERS, "getContext", command_get_context);
+    add_command_handler(proto, REGISTERS, "getChildren", command_get_children);
+    add_command_handler(proto, REGISTERS, "get", command_get);
+    add_command_handler(proto, REGISTERS, "set", command_set);
 }
 
 #endif

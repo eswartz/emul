@@ -20,6 +20,7 @@
 #include "assert.h"
 #include "myalloc.h"
 #include "exceptions.h"
+#include "base64.h"
 
 static char * buf = NULL;
 static unsigned buf_size = 0;
@@ -394,6 +395,60 @@ char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
         *pos = len_pos;
         return arr;
     }
+}
+
+void json_read_binary_start(JsonReadBinaryState * state, InputStream * inp) {
+    state->inp = inp;
+    if (inp->read(inp) != '"') exception(ERR_JSON_SYNTAX);
+}
+
+size_t json_read_binary_data(JsonReadBinaryState * state, char * buf, size_t len) {
+    return read_base64(state->inp, buf, len);
+}
+
+void json_read_binary_end(JsonReadBinaryState * state) {
+    if (state->inp->read(state->inp) != '"') exception(ERR_JSON_SYNTAX);
+}
+
+void json_write_binary_start(JsonWriteBinaryState * state, OutputStream * out) {
+    state->out = out;
+    state->rem = 0;
+    state->out->write(state->out, '"');
+}
+
+void json_write_binary_data(JsonWriteBinaryState * state, const char * str, size_t len) {
+    size_t rem = state->rem;
+
+    if (rem > 0) {
+        while (rem < 3 && len > 0) {
+            state->buf[rem++] = *str++;
+            len--;
+        }
+        assert(rem <= 3);
+        if (rem >= 3) {
+            write_base64(state->out, state->buf, rem);
+            rem = 0;
+        }
+    }
+    if (len > 0) {
+        assert(rem == 0);
+        rem = len % 3;
+        len -= rem;
+        write_base64(state->out, str, len);
+        if (rem > 0) {
+            memcpy(state->buf, str + len, rem);
+        }
+    }
+    state->rem = rem;
+}
+
+void json_write_binary_end(JsonWriteBinaryState * state) {
+    size_t rem;
+
+    if ((rem = state->rem) > 0) {
+        write_base64(state->out, state->buf, rem);
+    }
+    state->out->write(state->out, '"');
 }
 
 void json_skip_object(InputStream * inp) {

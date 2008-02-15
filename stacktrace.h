@@ -19,7 +19,7 @@
 /*
  * Initialize stack trace service.
  */
-extern void ini_stack_trace_service(void);
+extern void ini_stack_trace_service(Protocol *, TCFBroadcastGroup *);
 
 
 #endif

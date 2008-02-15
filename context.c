@@ -52,7 +52,7 @@ char * signal_name(int signal) {
     CASE(SIGPIPE)
     CASE(SIGALRM)
     CASE(SIGTERM)
-#ifndef _WRS_KERNEL
+#ifdef SIGSTKFLT
     CASE(SIGSTKFLT)
 #endif
     CASE(SIGCHLD)
@@ -66,9 +66,13 @@ char * signal_name(int signal) {
     CASE(SIGXFSZ)
     CASE(SIGVTALRM)
     CASE(SIGPROF)
-#ifndef _WRS_KERNEL
+#ifdef SIGWINCH
     CASE(SIGWINCH)
+#endif
+#ifdef SIGIO
     CASE(SIGIO)
+#endif
+#ifdef SIGPWR
     CASE(SIGPWR)
 #endif
     CASE(SIGSYS)
@@ -185,7 +189,9 @@ char * context_state_name(Context * ctx) {
 static void event_context_created(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     while (listener != NULL) {
-        if (listener->context_created != NULL) listener->context_created(ctx);
+        if (listener->context_created != NULL) {
+            listener->context_created(ctx, listener->client_data);
+        }
         listener = listener->next;
     }
 }
@@ -193,7 +199,9 @@ static void event_context_created(Context * ctx) {
 static void event_context_changed(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     while (listener != NULL) {
-        if (listener->context_changed != NULL) listener->context_changed(ctx);
+        if (listener->context_changed != NULL) {
+            listener->context_changed(ctx, listener->client_data);
+        }
         listener = listener->next;
     }
 }
@@ -201,7 +209,9 @@ static void event_context_changed(Context * ctx) {
 static void event_context_stopped(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     while (listener != NULL) {
-        if (listener->context_stopped != NULL) listener->context_stopped(ctx);
+        if (listener->context_stopped != NULL) {
+            listener->context_stopped(ctx, listener->client_data);
+        }
         listener = listener->next;
     }
 }
@@ -209,7 +219,9 @@ static void event_context_stopped(Context * ctx) {
 static void event_context_started(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     while (listener != NULL) {
-        if (listener->context_started != NULL) listener->context_started(ctx);
+        if (listener->context_started != NULL) {
+            listener->context_started(ctx, listener->client_data);
+        }
         listener = listener->next;
     }
 }
@@ -217,12 +229,14 @@ static void event_context_started(Context * ctx) {
 static void event_context_exited(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     while (listener != NULL) {
-        if (listener->context_exited != NULL) listener->context_exited(ctx);
+        if (listener->context_exited != NULL) {
+            listener->context_exited(ctx, listener->client_data);
+        }
         listener = listener->next;
     }
 }
 
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 
 /*
  * On Windows context management is not supported yet.
@@ -600,8 +614,8 @@ static void vxdbg_event_hook(
         VXDBG_CTX *     current_ctx,    /* context that hit breakpoint */
         VXDBG_CTX *     stopped_ctx,    /* context stopped by the breakpoint */
         REG_SET *       regs,           /* task registers before exception */
-        UINT32	        addr,           /* breakpoint addr */
-        VXDBG_BP_INFO *	bp_info) {      /* breakpoint information */
+        UINT32          addr,           /* breakpoint addr */
+        VXDBG_BP_INFO * bp_info) {      /* breakpoint information */
     
     struct event_info * info = event_info_alloc(EVENT_HOOK_BREAKPOINT);
     if (info != NULL) {
@@ -657,7 +671,7 @@ static void init(void) {
     taskCreateHookAdd((FUNCPTR)task_create_hook);
     taskDeleteHookAdd((FUNCPTR)task_delete_hook);
     vxdbgHookAdd(vxdbg_clnt_id, EVT_BP, vxdbg_event_hook);
-    vxdbgHookAdd(vxdbg_clnt_id, EVT_TRACE, vxdbg_event_hook);	
+    vxdbgHookAdd(vxdbg_clnt_id, EVT_TRACE, vxdbg_event_hook);   
     if (pthread_create(&events_thread, &pthread_create_attr, event_thread_func, NULL) != 0) {
         perror("pthread_create");
         exit(1);
@@ -963,6 +977,23 @@ static void event_pid_exited(void *arg) {
         assert(!ctx->stopped);
         assert(!ctx->intercepted);
         assert(!ctx->exited);
+        if (ctx->parent == NULL && !list_is_empty(&ctx->children)) {
+            /* Linux kernel 2.4 does not notify waitpid() when thread exits if the thread is not main thread.
+             * As workaround, assume all non-main thread have exited and remove them from ctx->children list.
+             */
+            LINK * qp;
+            for (qp = ctx->children.next; qp != &ctx->children; qp = qp->next) {
+                Context * c = cldl2ctxp(qp);
+                assert(!c->exited);
+                assert(c->parent == ctx);
+                c->exiting = 0;
+                c->exited = 1;
+                event_context_exited(c);
+                context_unlock(ctx);
+                c->parent = NULL;
+            }
+            list_init(&ctx->children);
+        }
         /* Note: ctx->exiting should be 1 here. However, PTRACE_EVENT_EXIT can be lost by PTRACE because of racing
          * between PTRACE_CONT and SIGTRAP/PTRACE_EVENT_EXIT. So, ctx->exiting can be 0.
          */
@@ -1143,7 +1174,8 @@ static void init(void) {
 
 #endif
 
-void add_context_event_listener(ContextEventListener * listener) {
+void add_context_event_listener(ContextEventListener * listener, void * client_data) {
+    listener->client_data = client_data;
     listener->next = event_listeners;
     event_listeners = listener;
 }
