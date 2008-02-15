@@ -48,7 +48,7 @@ import com.windriver.tcf.api.services.IRunControl;
 /**
  * TCFNode is base class for all TCF debug model elements.
  */
-public class TCFNode extends PlatformObject
+public abstract class TCFNode extends PlatformObject
 implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
 
     protected final String id;
@@ -57,13 +57,10 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
 
     protected boolean disposed;
 
-    protected TCFNode(TCFNode parent, String id) {
-        assert Protocol.isDispatchThread();
-        this.parent = parent;
-        this.id = id;
-        model = parent.model;
-    }
-
+    /**
+     * Constructor for a root node. There should be exactly one root in the model.
+     * @param model
+     */
     protected TCFNode(TCFModel model) {
         id = null;
         parent = null;
@@ -71,11 +68,26 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
     }
 
     /**
+     * Constructor for a node other then root. Node ID must be unique.
+     * @param parent - parent node.
+     * @param id - node ID.
+     */
+    protected TCFNode(TCFNode parent, String id) {
+        assert Protocol.isDispatchThread();
+        this.parent = parent;
+        this.id = id;
+        model = parent.model;
+        model.addNode(id, this);
+    }
+
+    /**
      * Dispose this node. The node is removed from the model.
+     * Subclasses should override the method to dispose children nodes, if any.
      */
     void dispose() {
         assert !disposed;
         if (parent != null) parent.dispose(id);
+        invalidateNode();
         model.removeNode(id);
         disposed = true;
     }
@@ -83,6 +95,9 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
     /**
      * A child node is being disposed.
      * The child should be removed from this node children lists.
+     * Base node class does not support any children, so the method is empty.
+     * Subclasses should override the method if they can have children.
+     * @param id - ID of a node being disposed.
      */
     void dispose(String id) {
     }
@@ -205,7 +220,7 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
                 if (!disposed) {
                     if (!validateNode(this)) return;
                     if (node_error != null) {
-                        result.setBackground(new RGB(255, 0, 0), 0);
+                        result.setForeground(new RGB(255, 0, 0), 0);
                         result.setLabel(node_error.getClass().getName() +
                             ": " + node_error.getMessage(), 0);
                     }
@@ -214,7 +229,7 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
                     }
                 }
                 else {
-                    result.setLabel("[Disposed]", 0);
+                    result.setLabel("...", 0);
                 }
                 result.setStatus(Status.OK_STATUS);
                 done();
@@ -268,23 +283,13 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
     
     /**
      * Create ModelDelta for changes in this node.
-     * @param flags - description of what has changed: CF_CONTEXT, CF_CHILDREN or CF_ALL.
+     * @param flags - description of what has changed: IModelDelta.ADDED, IModelDelta.REMOVED, etc.
      * @return - ModelDelta that describes node changes.
      */
     ModelDelta makeModelDelta(int flags) {
         int count = -1;
-        //if (node_valid == CF_ALL) count = children.size();
-        ModelDelta delta = model.getDelta(this);
         int index = -1;
-        /*
-        if (parent.node_valid == CF_ALL) {
-            index = 0;
-            for (Iterator<TCFNode> i = parent.children.values().iterator(); i.hasNext();) {
-                if (i.next() == this) break;
-                index++;
-            }
-        }
-        */
+        ModelDelta delta = model.getDelta(this);
         if (delta == null || delta.getChildCount() != count || delta.getIndex() != index) {
             ModelDelta parent_delta = parent.makeModelDelta(IModelDelta.NO_CHANGE);
             delta = parent_delta.addNode(this, index, flags, count);
@@ -296,105 +301,147 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
         return delta;
     }
 
-    void onContextAdded(IRunControl.RunControlContext context) {
-        assert !disposed;
-        // TODO: Bug in Eclipse: IModelDelta.INSERTED fails if this is root node
-        invalidateNode(CF_CHILDREN);
-        makeModelDelta(IModelDelta.CONTENT);
-    }
-
-    void onContextAdded(IMemory.MemoryContext context) {
-        assert !disposed;
-        // TODO: Bug in Eclipse: IModelDelta.INSERTED fails if this is root node
-        invalidateNode(CF_CHILDREN);
-        makeModelDelta(IModelDelta.CONTENT);
-    }
-
     /*--------------------------------------------------------------------------------------*/
     /* Node data retrieval state machine                                                    */
 
-    protected static final int 
-    	CF_CHILDREN     = 0x0001,
-        CF_CONTEXT      = 0x0002,
-        CF_ALL          = CF_CHILDREN | CF_CONTEXT;
-
-    protected int node_valid;
     protected Throwable node_error;
-    protected IToken data_command;
-    protected final Collection<TCFRunnable> wait_list = new ArrayList<TCFRunnable>();
+    protected IToken pending_command;
+    private final Collection<TCFRunnable> wait_list = new ArrayList<TCFRunnable>();
     
     /**
      * Invalidate the node - flush all cached data.
+     * Subclasses should override this method to flush any additional data.
+     * Subclasses should call super.invalidateNode(). 
      */
     public void invalidateNode() {
-        invalidateNode(CF_ALL);
-    }
-
-    protected void invalidateNode(int flags) {
-    	// flags - set of CF_*
-    	
         // cancel current data retrieval command
-        if (data_command != null) {
-            data_command.cancel();
-            data_command = null;
+        if (pending_command != null) {
+            pending_command.cancel();
+            pending_command = null;
         }
 
         // cancel waiting monitors
         if (!wait_list.isEmpty()) {
-            TCFRunnable[] arr = wait_list.toArray(new TCFRunnable[wait_list.size()]);
-            for (TCFRunnable r : arr) r.cancel();
+            for (TCFRunnable r : wait_list) r.cancel();
             wait_list.clear();
         }
 
-        if (flags == CF_ALL) { 
-            node_error = null;
-        }
-        
-        node_valid &= ~flags;
+        node_error = null;
     }
 
     /**
      * Validate node - retrieve and put into a cache missing data from remote peer.
-     * Validation is done asynchronously.
-     * @param done - call back, it is called when validation is done.
-     * @return true if the node is valid, false if validation is started.
+     * Validation is done asynchronously. If the node is already valid,
+     * the method should return true. Otherwise, it returns false,
+     * and later, when the node becomes valid, call-backs from 'wait_list' are invoked. 
+     * @return true if the node is already valid, false if validation is started.
      */
-    public boolean validateNode(TCFRunnable done) {
+    public final boolean validateNode() {
         assert Protocol.isDispatchThread();
-        assert (node_valid & ~CF_ALL) == 0;
-        if (data_command != null) {
-            if (done != null) wait_list.add(done);
+        assert !disposed;
+        if (pending_command != null) {
             return false;
         }
         else if (model.getLaunch().getChannel() == null) {
             node_error = null;
-            node_valid = CF_ALL;
         }
-        else {
-            if ((node_valid & CF_CONTEXT) == 0 && !validateContext(done)) return false;
-            if ((node_valid & CF_CHILDREN) == 0 && !validateChildren(done)) return false;
+        else if (node_error == null && !validateNodeData()) {
+            return false;
         }
-        assert node_valid == CF_ALL;
         if (!wait_list.isEmpty()) {
             Runnable[] arr = wait_list.toArray(new Runnable[wait_list.size()]);
             wait_list.clear();
-            for (int i = 0; i < arr.length; i++) arr[i].run();
+            for (Runnable r : arr) r.run();
         }
         return true;
     }
     
-    protected boolean validateContext(TCFRunnable done) {
-        node_valid |= CF_CONTEXT;
+    /**
+     * Validate node - retrieve and put into a cache missing data from remote peer.
+     * Validation is done asynchronously. If the node is already valid,
+     * the method should return true. Otherwise, it returns false,
+     * adds 'done' into 'wait_list', and later, when the node becomes valid,
+     * call-backs from 'wait_list' are invoked.
+     * @param done - call-back object to call when node becomes valid. 
+     * @return true if the node is already valid, false if validation is started.
+     */
+    public final boolean validateNode(TCFRunnable done) {
+        assert done != null;
+        if (!validateNode()) {
+            wait_list.add(done);
+            return false;
+        }
         return true;
+    }
+    
+    private class ValidateNodes extends TCFRunnable {
+        
+        int cnt = 0;
+        private IToken command;
+        
+        ValidateNodes(Collection<TCFNode> nodes) {
+            for (TCFNode n : nodes) {
+                if (!n.validateNode(this)) cnt++;
+            }
+            if (cnt > 0) {
+                pending_command = command = new IToken() {
+                    public boolean cancel() {
+                        return false;
+                    }
+                };
+            }
+        }
+        
+        public void run() {
+            cnt--;
+            assert cnt >= 0;
+            if (cnt != 0) return;
+            if (command != pending_command) return;
+            Protocol.invokeLater(new Runnable() {
+                public void run() {
+                    if (command != pending_command) return;
+                    pending_command = null;
+                    validateNode();
+                }
+            });
+        }
+        
+        @Override
+        public void cancel() {
+            run();
+        }
     }
 
-    protected boolean validateChildren(TCFRunnable done) {
-        node_valid |= CF_CHILDREN;
-        return true;
+    /**
+     * Subclasses can use this method to validate a collection of nodes.
+     * Validation of multiple nodes is expensive and should be avoided
+     * when possible.
+     * 
+     * Validation is performed in background, and call-backs from 'wait_list' are
+     * activated when validation is done.
+     *  
+     * @param nodes
+     * @return true if all nodes are already valid, false if validation is started.
+     */
+    protected boolean validateNodes(Collection<TCFNode> nodes) {
+        if (nodes.isEmpty()) return true;
+        if (pending_command != null) return false;
+        return new ValidateNodes(nodes).cnt == 0;
     }
+    
+    /**
+     * Subclasses should override this method to implement data retrieval that
+     * is specific for this node.
+     * 
+     * Data retrieval should be performed in background, and it should call
+     * validateNode() when retrieval is done.
+     *  
+     * @return true if the node is already valid, false if data retrieval is started.
+     */
+    protected abstract boolean validateNodeData();
 
     /*--------------------------------------------------------------------------------------*/
-    /* Memory Block Retrieval                                                                                 */
+    /* Memory Block Retrieval                                                               */
 
     public IMemoryBlockExtension getExtendedMemoryBlock(String addr, Object ctx) throws DebugException {
         assert ctx == this;

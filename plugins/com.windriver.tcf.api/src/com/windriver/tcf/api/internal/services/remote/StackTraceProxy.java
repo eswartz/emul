@@ -11,6 +11,7 @@
 package com.windriver.tcf.api.internal.services.remote;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.windriver.tcf.api.core.Command;
@@ -19,14 +20,15 @@ import com.windriver.tcf.api.protocol.IToken;
 import com.windriver.tcf.api.services.IStackTrace;
 
 public class StackTraceProxy implements IStackTrace {
-    
+
     private final IChannel channel;
-    
+
     private class Context implements StackTraceContext {
-        
+
         private final Map<String,Object> props;
-        
+
         Context(Map<String,Object> props) {
+            if (props == null) props = new HashMap<String,Object>();
             this.props = props;
         }
 

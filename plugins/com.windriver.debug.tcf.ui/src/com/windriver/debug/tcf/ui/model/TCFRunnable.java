@@ -19,6 +19,13 @@ public abstract class TCFRunnable implements Runnable {
 
     private final IRequest monitor;
     private final Display display;
+    
+    private boolean canceled;
+    
+    public TCFRunnable() {
+        monitor = null;
+        display = null;
+    }
 
     public TCFRunnable(Display display, IRequest monitor) {
         this.monitor = monitor;
@@ -27,6 +34,8 @@ public abstract class TCFRunnable implements Runnable {
     }
 
     public void cancel() {
+        canceled = true;
+        if (display == null) return;
         display.asyncExec(new Runnable() {
             public void run() {
                 monitor.cancel();
@@ -36,10 +45,15 @@ public abstract class TCFRunnable implements Runnable {
     }
 
     public void done() {
+        if (display == null) return;
         display.asyncExec(new Runnable() {
             public void run() {
                 monitor.done();
             }
         });
+    }
+    
+    public boolean isCanceled() {
+        return canceled;
     }
 }

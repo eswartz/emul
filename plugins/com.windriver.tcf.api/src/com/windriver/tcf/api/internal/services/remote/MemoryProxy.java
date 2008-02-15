@@ -127,9 +127,7 @@ public class MemoryProxy implements IMemory {
         }
 
         public String getParentID() {
-            String s = (String)props.get(PROP_PARENT_ID);
-            if (s == null) return "";
-            return s;
+            return (String)props.get(PROP_PARENT_ID);
         }
 
         public int getAddressSize() {

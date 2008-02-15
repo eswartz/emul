@@ -25,6 +25,7 @@ public interface IRunControl extends IService {
     static final String
         PROP_ID = "ID",
         PROP_PARENT_ID = "ParentID",
+        PROP_PROCESS_ID = "ProcessID",
         PROP_IS_CONTAINER = "IsContainer",
         PROP_HAS_STATE = "HasState",
         PROP_CAN_RESUME = "CanResume",

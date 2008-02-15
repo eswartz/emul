@@ -60,6 +60,7 @@ class TCFSelfTest {
     
     private int count_total;
     private int count_done;
+    private boolean cancel;
     private boolean canceled;
     private boolean memory_lock;
     
@@ -127,7 +128,7 @@ class TCFSelfTest {
 
                 public void onChannelClosed(Throwable error) {
                     channel.removeChannelListener(this);
-                    if (error == null && (!active_tests.isEmpty() || !pending_tests.isEmpty())) {
+                    if (error == null && (!active_tests.isEmpty() || !pending_tests.isEmpty()) && !cancel) {
                         error = new IOException("Remote peer closed connection before all tests finished");
                     }
                     int cnt = 0;
@@ -160,6 +161,7 @@ class TCFSelfTest {
     }
     
     void cancel() {
+        cancel = true;
         if (canceled) return;
         for (final Test t : active_tests.keySet()) {
             if (t instanceof TestRCBP1) {
@@ -265,6 +267,7 @@ class TCFSelfTest {
         private ISymbol func2;
         private ISymbol array;
         private int bp_cnt = 0;
+        private IToken cancel_test_cmd;
 
         private class SuspendedContext {
             final String id;
@@ -319,12 +322,12 @@ class TCFSelfTest {
         }
         
         public void doneRunTest(IToken token, Throwable error, String context_id) {
-            assert active_tests.get(this) != null;
-            assert this.context_id == null;
             if (error != null) {
                 exit(error);
             }
             else {
+                assert active_tests.get(this) != null;
+                assert this.context_id == null;
                 this.context_id = context_id;
                 if (pending_cancel != null) {
                     Protocol.invokeLater(pending_cancel);
@@ -341,12 +344,13 @@ class TCFSelfTest {
 
         @SuppressWarnings("unchecked")
         public void doneGetSymbol(IToken token, Throwable error, ISymbol symbol) {
-            assert active_tests.get(this) != null;
-            assert this.context_id != null;
             if (error != null) {
                 exit(error);
+                return;
             }
-            else if (!symbol.isGlobal()) {
+            assert active_tests.get(this) != null;
+            assert this.context_id != null;
+            if (!symbol.isGlobal()) {
                 exit(new Exception("Symbols 'tcf_test_*' must be global"));
             }
             else if (!symbol.isAbs()) {
@@ -402,7 +406,7 @@ class TCFSelfTest {
         }
 
         public void doneGetContext(IToken token, Exception error, RunControlContext context) {
-            if (canceled) return;
+            if (cancel) return;
             if (error != null) {
                 exit(error);
             }
@@ -424,7 +428,7 @@ class TCFSelfTest {
         }
 
         public void doneGetChildren(IToken token, Exception error, String[] contexts) {
-            if (canceled) return;
+            if (cancel) return;
             if (error != null) {
                 exit(error);
             }
@@ -437,7 +441,7 @@ class TCFSelfTest {
                 boolean suspended, String pc, String reason,
                 Map<String, Object> params) {
             final String id = get_state_cmds.remove(token);
-            if (canceled) return;
+            if (cancel) return;
             if (id == null) {
                 exit(new Exception("Invalid getState responce"));
             }
@@ -522,7 +526,7 @@ class TCFSelfTest {
                     exit(new Exception("Invalid contextAdded event"));
                     return;
                 }
-                if (context.getID().equals(contexts[i].getProperties().get("ParentID"))) {
+                if (context.getID().equals(contexts[i].getProperties().get(IRunControl.PROP_PROCESS_ID))) {
                     threads.put(contexts[i].getID(), contexts[i]);
                     running.add(contexts[i].getID());
                 }
@@ -534,7 +538,7 @@ class TCFSelfTest {
                 if (contexts[i].getID().equals(context.getID())) {
                     context = contexts[i];
                 }
-                if (context.getID().equals(contexts[i].getProperties().get("ProcessID"))) {
+                if (context.getID().equals(contexts[i].getProperties().get(IRunControl.PROP_PROCESS_ID))) {
                     threads.put(contexts[i].getID(), contexts[i]);
                 }
             }
@@ -547,7 +551,7 @@ class TCFSelfTest {
         }
 
         public void contextRemoved(String[] contexts) {
-            for (String id :  contexts) {
+            for (String id : contexts) {
                 if (suspended.get(id) != null) {
                     exit(new Exception("Invalid contextRemoved event"));
                     return;
@@ -663,7 +667,7 @@ class TCFSelfTest {
                 sc.resumed = true;
                 ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
-                        if (canceled) return;
+                        if (cancel) return;
                         if (active_tests.get(this) == null) return;
                         if (threads.get(sc.id) == null) return;
                         if (error != null) exit(error);
@@ -687,8 +691,8 @@ class TCFSelfTest {
                     if (!context_id.equals(mem_ctx.getID())) {
                         exit(new Exception("Bad memory context data: invalid ID"));
                     }
-                    Object pid = context.getProperties().get("ProcessID");
-                    if (pid != null && !pid.equals(mem_ctx.getProperties().get("ProcessID"))) {
+                    Object pid = context.getProperties().get(IRunControl.PROP_PROCESS_ID);
+                    if (pid != null && !pid.equals(mem_ctx.getProperties().get(IMemory.PROP_PROCESS_ID))) {
                         exit(new Exception("Bad memory context data: invalid ProcessID"));
                     }
                     final boolean big_endian = mem_ctx.isBigEndian();
@@ -869,20 +873,25 @@ class TCFSelfTest {
                     pending_cancel = done;
                 }
             }
-            else {
-                diag.cancelTest(context_id, new IDiagnostics.DoneCancelTest() {
+            else if (cancel_test_cmd == null) {
+                cancel_test_cmd = diag.cancelTest(context_id, new IDiagnostics.DoneCancelTest() {
                     public void doneCancelTest(IToken token, Throwable error) {
+                        cancel_test_cmd = null;
                         exit(error);
                         done.run();
                     }
                 });
+            }
+            else {
+                exit(new Exception("Cannot terminate remote test process"));
+                done.run();
             }
         }
 
         private void exit(Throwable x) {
             if (active_tests.get(this) == null) return;
             if (pending_cancel != null) {
-                pending_cancel.run();
+                Protocol.invokeLater(pending_cancel);
                 pending_cancel = null;
             }
             else {
@@ -1192,7 +1201,7 @@ class TCFSelfTest {
 
     private void runNextTest() {
         while (active_tests.isEmpty()) {
-            if (canceled || errors.size() > 0 || pending_tests.size() == 0) {
+            if (cancel || errors.size() > 0 || pending_tests.size() == 0) {
                 for (IChannel channel : channels) {
                     if (channel != null && channel.getState() != IChannel.STATE_CLOSED) {
                         if (errors.isEmpty()) channel.close();

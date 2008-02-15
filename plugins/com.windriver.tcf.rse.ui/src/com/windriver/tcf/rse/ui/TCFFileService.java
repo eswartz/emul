@@ -294,9 +294,9 @@ public class TCFFileService extends AbstractFileService implements ITCFFileServi
 
     protected IHostFile[] internalFetch(final String parent, final String filter, final int fileType, final IProgressMonitor monitor)
             throws SystemMessageException {
-    	final String path = toRemotePath(parent, null);
-    	final boolean wantFiles = (fileType==FILE_TYPE_FILES_AND_FOLDERS || (fileType&FILE_TYPE_FILES)!=0); 
-    	final boolean wantFolders = (fileType==FILE_TYPE_FILES_AND_FOLDERS || (fileType%FILE_TYPE_FOLDERS)!=0);
+        final String path = toRemotePath(parent, null);
+        final boolean wantFiles = (fileType==FILE_TYPE_FILES_AND_FOLDERS || (fileType&FILE_TYPE_FILES)!=0); 
+        final boolean wantFolders = (fileType==FILE_TYPE_FILES_AND_FOLDERS || (fileType%FILE_TYPE_FOLDERS)!=0);
         return new TCFRSETask<IHostFile[]>() {
             private IMatcher matcher = null;
             public void run() {
@@ -331,11 +331,11 @@ public class TCFFileService extends AbstractFileService implements ITCFFileServi
                                         // the entry is a broken symbolic link
                                     }
                                     else if (e.attrs.isDirectory()) {
-                                    	//dont filter folder names if getting both folders and files
-                                    	if (wantFolders && (matcher==null || fileType==FILE_TYPE_FILES_AND_FOLDERS || matcher.matches(e.filename))) {
+                                        //dont filter folder names if getting both folders and files
+                                        if (wantFolders && (matcher==null || fileType==FILE_TYPE_FILES_AND_FOLDERS || matcher.matches(e.filename))) {
                                             results.add(new TCFFileResource(TCFFileService.this,
                                                     path, e.filename, e.attrs, false));
-                                    	}
+                                        }
                                     }
                                     else if (e.attrs.isFile()) {
                                         if (wantFiles && (matcher == null || matcher.matches(e.filename))) {
@@ -414,7 +414,7 @@ public class TCFFileService extends AbstractFileService implements ITCFFileServi
                         List<TCFFileResource> l = new ArrayList<TCFFileResource>();
                         for (DirEntry e : entries) {
                             if (e.attrs == null) continue;
-                            l.add(new TCFFileResource(TCFFileService.this, "", e.filename, e.attrs, true));
+                            l.add(new TCFFileResource(TCFFileService.this, null, e.filename, e.attrs, true));
                         }
                         done(l.toArray(new IHostFile[l.size()]));
                     }

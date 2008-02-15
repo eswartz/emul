@@ -26,9 +26,9 @@ import org.eclipse.dd.dsf.concurrent.DsfExecutor;
 import com.windriver.tcf.api.protocol.Protocol;
 
 public class TCFDSFExecuter extends AbstractExecutorService implements DsfExecutor {
-    
+
     private class ScheduledFutureTask<V> extends FutureTask<V> implements ScheduledFuture<V> {
-        
+
         private long time; // Milliseconds
         private final int id;
         private final long period; // Milliseconds
@@ -39,7 +39,7 @@ public class TCFDSFExecuter extends AbstractExecutorService implements DsfExecut
             id = sf_count++;
             this.period = period;
         }
-        
+
         public ScheduledFutureTask(long delay, Callable<V> callable) {
             super(callable);
             time = System.currentTimeMillis() + delay;
@@ -79,13 +79,13 @@ public class TCFDSFExecuter extends AbstractExecutorService implements DsfExecut
             }
         }
     }
-    
+
     private static int sf_count = 0;
     private final TreeSet<ScheduledFutureTask<?>> queue = new TreeSet<ScheduledFutureTask<?>>();
     private final Thread thread;
     private boolean is_shutdown;
     private boolean is_terminated;
-    
+
     public TCFDSFExecuter() {
         thread = new Thread(new Runnable() {
             public void run() {

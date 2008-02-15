@@ -230,8 +230,8 @@ public interface ISysMonitor extends IService {
         
         /** Scheduling policy */
         PROP_POLICY = "Policy";
-        
-	    
+
+
     /**
      * A context corresponds to an execution thread, process, address space, etc.
      * A context can belong to a parent context. Contexts hierarchy can be simple
@@ -242,7 +242,7 @@ public interface ISysMonitor extends IService {
      * attributes and functionality, which is relevant to that service. 
      */
     interface SysMonitorContext {
-    	
+
         /** 
          * Get context ID.
          * Same as getProperties().get(“ID”)

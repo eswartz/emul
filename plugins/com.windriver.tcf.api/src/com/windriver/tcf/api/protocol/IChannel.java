@@ -181,7 +181,7 @@ public interface IChannel {
          */
         void event(String name, byte[] data);
     }
-	
+
     /**
      * Subscribe an event listener for given service.
      * @param service - remote service proxy
@@ -230,18 +230,29 @@ public interface IChannel {
     Collection<String> getRemoteServices();
 
     /**
-     * @return an object representing a service from remote peer.
+     * @return an object (proxy) representing a service from remote peer.
      * Return null if the service is not available.
+     * Return an instance of GenericProxy if 'service_name' is not a standard TCF service.
      */
     IService getRemoteService(String service_name);
 
     /**
-     * @return an object representing a service from remote peer.
-     * Service object should implement given interface.
+     * @return an object (proxy) representing a service from remote peer,
+     * which implements given interface.
      * Return null if implementation of the interface is not available.
      */
     <V extends IService> V getRemoteService(Class<V> service_interface);
-
+    
+    /**
+     * Install a service proxy object on this channel.
+     * This method can be called only from channel open call-back.
+     * It allows a client to extends TCF by adding proxy objects for non-standard services.
+     * Client, wishing to become service proxy provider, should register itself
+     * using either Protocol.addChannelOpenListener() or IChannel.addChannelListener().
+     * It is not allowed to register more then one proxy for a given service interface.   
+     */
+    <V extends IService> void setServiceProxy(Class<V> service_interface, IService service_proxy);
+    
     /**
      * Close communication channel.
      */

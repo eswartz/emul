@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: com.windriver.debug.tcf.ui;singleton:=true
-Bundle-Version: 0.1.0
+Bundle-Version: 0.2.0
 Bundle-Activator: com.windriver.debug.tcf.ui.TCFUI
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
@@ -13,6 +13,7 @@ Require-Bundle: org.eclipse.ui,
  com.windriver.debug.tcf.core,
  com.windriver.tcf.api
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-ActivationPolicy: lazy
 Eclipse-LazyStart: true
 Export-Package: com.windriver.debug.tcf.ui.adapters,
  com.windriver.debug.tcf.ui.launch

@@ -18,9 +18,45 @@ import org.eclipse.dd.dsf.service.IDsfService;
 
 public abstract class TCFDSFExecutionDMC extends AbstractDMContext implements IExecutionDMContext, IContainerDMContext {
     
+    interface DataCache {
+    }
+    
+    DataCache stack_frames_cache;
+    DataCache memory_cache;
+    DataCache registers_cache;
+    
     TCFDSFExecutionDMC(IDsfService service, IDMContext[] parents) {
         super(service, parents);
     }
     
+    /**
+     * Get TCF ID of execution context.
+     * @return TCF ID.
+     */
     public abstract String getTcfContextId();
+    
+    /**
+     * Check if this context object is disposed, because, for example, a thread has exited.
+     * @return true if context object is disposed.
+     */
+    public abstract boolean isDisposed();
+    
+    /**
+     * Validate execution state data.
+     * @return true if state is valid, false if data retrieval is started.
+     */
+    public abstract boolean validateState();
+    
+    /**
+     * Add a listener to be activated when state data retrieval is done. 
+     * @param req - listener object.
+     */
+    public abstract void addStateWaitingRequest(IDataRequest req);
+        
+    /**
+     * Get current program counter. This method must be called only when
+     * execution state data is valid - when validateState() return true.
+     * @return current program counter address.
+     */
+    public abstract TCFAddress getPC();
 }

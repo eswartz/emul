@@ -13,4 +13,5 @@ package com.windriver.debug.tcf.core.model;
 public interface ITCFBreakpointListener {
 
     public void breakpointStatusChanged(String id);
+    public void breakpointRemoved(String id);
 }

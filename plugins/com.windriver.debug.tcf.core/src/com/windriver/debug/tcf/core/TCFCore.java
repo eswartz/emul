@@ -10,11 +10,7 @@
  *******************************************************************************/
 package com.windriver.debug.tcf.core;
 
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IExtension;
-import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.osgi.framework.BundleContext;
@@ -41,7 +37,6 @@ public class TCFCore extends Plugin {
     public void start(BundleContext context) throws Exception {
         super.start(context);
         bp_model = new TCFBreakpointsModel();
-        runTCFStartup();
     }
 
     @Override
@@ -52,31 +47,6 @@ public class TCFCore extends Plugin {
         super.stop(context);
     }
     
-    private void runTCFStartup() {
-        try {
-            IExtensionPoint point = Platform.getExtensionRegistry().getExtensionPoint(PLUGIN_ID, "startup");
-            IExtension[] extensions = point.getExtensions();
-            for (int i = 0; i < extensions.length; i++) {
-                try {
-                    Platform.getBundle(extensions[i].getNamespaceIdentifier()).start();
-                    IConfigurationElement[] e = extensions[i].getConfigurationElements();
-                    for (int j = 0; j < e.length; j++) {
-                        String nm = e[j].getName();
-                        if (nm.equals("class")) { //$NON-NLS-1$
-                            Class.forName(e[j].getAttribute("name")); //$NON-NLS-1$
-                        }
-                    }
-                }
-                catch (Throwable x) {
-                    log("TCF startup error", x);
-                }
-            }
-        }
-        catch (Exception x) {
-            log("TCF startup error", x);
-        }
-    }
-
     /**
      * Returns the shared instance
      * 
@@ -96,7 +66,12 @@ public class TCFCore extends Plugin {
      * @param err - exception
      */
     public static void log(String msg, Throwable err) {
-        getDefault().getLog().log(new Status(IStatus.ERROR,
-                getDefault().getBundle().getSymbolicName(), IStatus.OK, msg, err));
+        if (plugin == null || plugin.getLog() == null) {
+            err.printStackTrace();
+        }
+        else {
+            plugin.getLog().log(new Status(IStatus.ERROR,
+                    plugin.getBundle().getSymbolicName(), IStatus.OK, msg, err));
+        }
     }  
 }

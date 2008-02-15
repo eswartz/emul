@@ -184,11 +184,11 @@ public interface IMemory extends IService {
 
         // Error may have per byte information
         final static int 
-	        BYTE_VALID        = 0x00,
-	        BYTE_UNKNOWN      = 0x01, // e.g. out of range
-	        BYTE_INVALID      = 0x02,
-	        BYTE_CANNOT_READ  = 0x04,
-	        BYTE_CANNOT_WRITE = 0x08;
+            BYTE_VALID        = 0x00,
+            BYTE_UNKNOWN      = 0x01, // e.g. out of range
+            BYTE_INVALID      = 0x02,
+            BYTE_CANNOT_READ  = 0x04,
+            BYTE_CANNOT_WRITE = 0x08;
 
         int getStatus(int offset);
 

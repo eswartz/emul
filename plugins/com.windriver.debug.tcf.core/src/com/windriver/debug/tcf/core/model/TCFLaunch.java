@@ -37,7 +37,7 @@ public class TCFLaunch extends Launch {
 
     public interface Listener {
 
-        public void onConnected(TCFLaunch launch);	
+        public void onConnected(TCFLaunch launch);      
 
         public void onDisconnected(TCFLaunch launch);
 
@@ -80,12 +80,12 @@ public class TCFLaunch extends Launch {
                     public void run() {
                         if (channel.getState() != IChannel.STATE_OPEN) return;
                         breakpoints_status = new TCFBreakpointsStatus(TCFLaunch.this);
-                        downloadApplication(done);
+                        runLaunchSequence(done);
                     }
                 });
             }
             else {
-                downloadApplication(done);
+                runLaunchSequence(done);
             }
         }
         catch (Exception x) {
@@ -94,7 +94,7 @@ public class TCFLaunch extends Launch {
     }
     
     @SuppressWarnings("unchecked")
-    protected void downloadApplication(final Runnable done) {
+    protected void runLaunchSequence(final Runnable done) {
         try {
             ILaunchConfiguration cfg = getLaunchConfiguration();
             final String file = cfg.getAttribute(TCFLaunchDelegate.ATTR_PROGRAM_FILE, "");

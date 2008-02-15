@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -114,6 +113,7 @@ public abstract class AbstractChannel implements IChannel {
     private final Map<String,Message> out_tokens = new HashMap<String,Message>();
     private final Thread inp_thread;
     private final Thread out_thread;
+    private boolean notifying_channel_opened;
     private boolean shutdown;
     private int state = STATE_OPENNING;
     private IToken redirect_command;
@@ -127,8 +127,8 @@ public abstract class AbstractChannel implements IChannel {
     private Collection<TraceListener> trace_listeners;
 
     public static final int
-        EOS = -1,
-        EOM = -2;
+        EOS = -1, // End Of Stream
+        EOM = -2; // End Of Message
 
     protected AbstractChannel(IPeer peer) {
         assert Protocol.isDispatchThread();
@@ -359,8 +359,7 @@ public abstract class AbstractChannel implements IChannel {
         if (state != STATE_OPENNING) throw new IOException("Invalid event: Locator.Hello");
         remote_service_by_class.clear();
         String pkg_name = LocatorProxy.class.getPackage().getName();
-        for (Iterator<String> i = c.iterator(); i.hasNext();) {
-            String service_name = i.next();
+        for (String service_name : c) {
             try {
                 Class<?> cls = Class.forName(pkg_name + "." + service_name + "Proxy");
                 IService service = (IService)cls.getConstructor(IChannel.class).newInstance(this);
@@ -397,15 +396,18 @@ public abstract class AbstractChannel implements IChannel {
         }
         else {
             state = STATE_OPEN;
+            notifying_channel_opened = true;
             Transport.channelOpened(this);
-            Protocol.invokeLater(new Runnable() {
-                public void run() {
-                    listeners_array = channel_listeners.toArray(listeners_array);
-                    for (int i = 0; i < listeners_array.length && listeners_array[i] != null; i++) {
-                        listeners_array[i].onChannelOpened();
-                    }
+            listeners_array = channel_listeners.toArray(listeners_array);
+            for (int i = 0; i < listeners_array.length && listeners_array[i] != null; i++) {
+                try {
+                    listeners_array[i].onChannelOpened();
                 }
-            });
+                catch (Throwable x) {
+                    Activator.log("Exception in channel listener", x);
+                }
+            }
+            notifying_channel_opened = false;
         }
     }
 
@@ -592,6 +594,13 @@ public abstract class AbstractChannel implements IChannel {
         return (V)remote_service_by_class.get(cls);
     }
     
+    public <V extends IService> void setServiceProxy(Class<V> service_interface, IService service_proxy) {
+        if (!notifying_channel_opened) new Error("setServiceProxe() can be called only from channel open call-back");
+        if (!(remote_service_by_name.get(service_proxy.getName()) instanceof GenericProxy)) throw new Error("Proxy already set"); 
+        if (remote_service_by_class.get(service_interface) != null) throw new Error("Proxy already set");
+        remote_service_by_class.put(service_interface, service_proxy);
+    }
+    
     public IService getLocalService(String service_name) {
         return local_service_by_name.get(service_name);
     }
@@ -755,13 +764,17 @@ public abstract class AbstractChannel implements IChannel {
 
     /**
      * Read one byte from the channel input stream.
-     * @return next data byte or -1 if end of stream is reached.
+     * @return next data byte or EOS (-1) if end of stream is reached,
+     * or EOM (-2) if end of message is reached.
      * @throws IOException
      */
     protected abstract int read() throws IOException;
 
     /**
      * Write one byte into the channel output stream.
+     * The method argument can be one of two special values:
+     *   EOS (-1) end of stream marker;
+     *   EOM (-2) end of message marker. 
      * The stream can put the byte into a buffer instead of transmitting it right away.
      * @param n - the data byte.
      * @throws IOException

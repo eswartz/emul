@@ -10,34 +10,48 @@
  *******************************************************************************/
 package com.windriver.debug.tcf.ui.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.windriver.tcf.api.protocol.IToken;
 import com.windriver.tcf.api.services.IRegisters;
 
 public class TCFChildrenRegisters extends TCFChildren {
 
+    private boolean running;
+
     TCFChildrenRegisters(TCFNode node) {
         super(node);
     }
 
+    /**
+     * Invalidate register values only, keep cached register attributes.
+     */
+    void onSuspended() {
+        if (running || node.node_error != null) invalidate();
+        for (TCFNode n : children.values()) ((TCFNodeRegister)n).onSuspended();
+    }
+
     @Override
-    boolean validate(TCFRunnable done) {
-        children_next.clear();
-        String addr = node.getAddress();
-        if (addr == null) {
-            doneValidate();
+    boolean validate() {
+        assert !node.disposed;
+        assert !valid;
+        final Map<String,TCFNode> new_children = new HashMap<String,TCFNode>();
+        running = !node.isSuspended(); 
+        if (running) {
+            valid = true;
             return true;
         }
         IRegisters regs = node.model.getLaunch().getService(IRegisters.class);
         if (regs == null) {
-            doneValidate();
+            doneValidate(new_children);
             return true;
         }
-        assert node.data_command == null;
-        if (done != null) node.wait_list.add(done);
-        node.data_command = regs.getChildren(node.id, new IRegisters.DoneGetChildren() {
+        assert node.pending_command == null;
+        node.pending_command = regs.getChildren(node.id, new IRegisters.DoneGetChildren() {
             public void doneGetChildren(IToken token, Exception error, String[] contexts) {
-                if (node.data_command != token) return;
-                node.data_command = null;
+                if (node.pending_command != token) return;
+                node.pending_command = null;
                 if (error != null) {
                     node.node_error = error;
                 }
@@ -45,11 +59,11 @@ public class TCFChildrenRegisters extends TCFChildren {
                     for (String id : contexts) {
                         TCFNode n = node.model.getNode(id);
                         if (n == null) n = new TCFNodeRegister(node, id);
-                        children_next.put(id, n);
+                        new_children.put(id, n);
                     }
                 }
-                doneValidate();
-                node.validateNode(null);
+                doneValidate(new_children);
+                node.validateNode();
             }
         });
         return false;

@@ -2,7 +2,7 @@
 <?eclipse version="3.2"?>
 <plugin>
 
-   <extension point="com.windriver.debug.tcf.core.startup"/>
+   <extension point="com.windriver.tcf.api.startup"/>
 
    <extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
       <launchConfigurationTabGroup
@@ -24,7 +24,6 @@
       <factory 
                 class="com.windriver.tcf.dsf.ui.AdapterFactory" 
                 adaptableType="com.windriver.tcf.dsf.core.launch.TCFDSFLaunch">
-         <adapter type="org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProvider"/>
          <adapter type="org.eclipse.debug.internal.ui.viewers.model.provisional.IElementContentProvider"/>
          <adapter type="org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory"/>
          <adapter type="org.eclipse.debug.internal.ui.viewers.model.provisional.IColumnPresentationFactory"/>
@@ -32,4 +31,15 @@
       </factory>         
    </extension> 
    
+   <extension point="org.eclipse.debug.ui.memoryRenderings">
+      <renderingBindings
+            defaultIds="org.eclipse.debug.ui.rendering.raw_memory"
+            primaryId="org.eclipse.debug.ui.rendering.raw_memory"
+            renderingIds="org.eclipse.debug.ui.rendering.raw_memory,org.eclipse.debug.ui.rendering.ascii,org.eclipse.debug.ui.rendering.signedint,org.eclipse.debug.ui.rendering.unsignedint">
+         <enablement>
+            <instanceof value="org.eclipse.dd.dsf.debug.model.DsfMemoryBlock"/>
+         </enablement>
+      </renderingBindings>
+   </extension>
+
 </plugin>

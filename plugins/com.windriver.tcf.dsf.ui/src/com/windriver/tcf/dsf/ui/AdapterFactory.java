@@ -37,7 +37,6 @@ import org.eclipse.debug.core.model.IDebugModelProvider;
 import org.eclipse.debug.core.sourcelookup.ISourceLookupDirector;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IColumnPresentationFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementContentProvider;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
 import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
 
@@ -49,95 +48,95 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
 
     @Immutable
     private final class SessionAdapterSet {
-        
-        private final DsfSession fSession;
-        final ViewModelAdapter fViewModelAdapter;
-        final MISourceDisplayAdapter fSourceDisplayAdapter;
-        final DsfStepIntoCommand fStepIntoCommand;
-        final DsfStepOverCommand fStepOverCommand;
-        final DsfStepReturnCommand fStepReturnCommand;
-        final DsfSuspendCommand fSuspendCommand;
-        final DsfResumeCommand fResumeCommand;
-        final DsfTerminateCommand fTerminateCommand;
-        final IDebugModelProvider fDebugModelProvider;
-        final TCFDSFLaunch fLaunch;
+
+        private final DsfSession session;
+        final ViewModelAdapter view_model_adapter;
+        final MISourceDisplayAdapter source_display_adapter;
+        final DsfStepIntoCommand step_into_command;
+        final DsfStepOverCommand step_over_command;
+        final DsfStepReturnCommand step_return_command;
+        final DsfSuspendCommand suspend_command;
+        final DsfResumeCommand resume_command;
+        final DsfTerminateCommand terminate_command;
+        final IDebugModelProvider debug_model_provider;
+        final TCFDSFLaunch lunch;
 
         SessionAdapterSet(DsfSession session, TCFDSFLaunch launch) {
-            fSession = session;
-            
-            fViewModelAdapter = new ViewModelAdapter(session, launch);
+            this.session = session;
+
+            view_model_adapter = new ViewModelAdapter(session, launch);
 
             if (launch.getSourceLocator() instanceof ISourceLookupDirector) {
-                fSourceDisplayAdapter = new MISourceDisplayAdapter(session, (ISourceLookupDirector)launch.getSourceLocator());
-            } else {
-                fSourceDisplayAdapter = null;
+                source_display_adapter = new MISourceDisplayAdapter(session, (ISourceLookupDirector)launch.getSourceLocator());
             }
-            session.registerModelAdapter(ISourceDisplay.class, fSourceDisplayAdapter);
-            
-            fStepIntoCommand = new DsfStepIntoCommand(session);
-            fStepOverCommand = new DsfStepOverCommand(session);
-            fStepReturnCommand = new DsfStepReturnCommand(session);
-            fSuspendCommand = new DsfSuspendCommand(session);
-            fResumeCommand = new DsfResumeCommand(session);
-            fTerminateCommand = new DsfTerminateCommand(session);
-            session.registerModelAdapter(IStepIntoHandler.class, fStepIntoCommand);
-            session.registerModelAdapter(IStepOverHandler.class, fStepOverCommand);
-            session.registerModelAdapter(IStepReturnHandler.class, fStepReturnCommand);
-            session.registerModelAdapter(ISuspendHandler.class, fSuspendCommand);
-            session.registerModelAdapter(IResumeHandler.class, fResumeCommand);
-            session.registerModelAdapter(ITerminateHandler.class, fTerminateCommand);
+            else {
+                source_display_adapter = null;
+            }
+            session.registerModelAdapter(ISourceDisplay.class, source_display_adapter);
 
-            fDebugModelProvider = new IDebugModelProvider() {
+            step_into_command = new DsfStepIntoCommand(session);
+            step_over_command = new DsfStepOverCommand(session);
+            step_return_command = new DsfStepReturnCommand(session);
+            suspend_command = new DsfSuspendCommand(session);
+            resume_command = new DsfResumeCommand(session);
+            terminate_command = new DsfTerminateCommand(session);
+            session.registerModelAdapter(IStepIntoHandler.class, step_into_command);
+            session.registerModelAdapter(IStepOverHandler.class, step_over_command);
+            session.registerModelAdapter(IStepReturnHandler.class, step_return_command);
+            session.registerModelAdapter(ISuspendHandler.class, suspend_command);
+            session.registerModelAdapter(IResumeHandler.class, resume_command);
+            session.registerModelAdapter(ITerminateHandler.class, terminate_command);
+
+            debug_model_provider = new IDebugModelProvider() {
                 // @see org.eclipse.debug.core.model.IDebugModelProvider#getModelIdentifiers()
                 public String[] getModelIdentifiers() {
                     return new String[] { ITCFConstants.ID_TCF_DEBUG_MODEL };
                 }
             };
-            session.registerModelAdapter(IDebugModelProvider.class, fDebugModelProvider);
+            session.registerModelAdapter(IDebugModelProvider.class, debug_model_provider);
 
-            fLaunch = launch;
-            
+            lunch = launch;
+
             /*
              * Registering the launch as an adapter, ensures that this launch, 
              * and debug model ID will be associated with all DMContexts from this 
              * session.  
              */  
-            session.registerModelAdapter(ILaunch.class, fLaunch);
+            session.registerModelAdapter(ILaunch.class, lunch);
         }
-        
-        void dispose() {
-            fViewModelAdapter.dispose();
 
-            fSession.unregisterModelAdapter(ISourceDisplay.class);
-            if (fSourceDisplayAdapter != null) fSourceDisplayAdapter.dispose();
-            
-            fSession.unregisterModelAdapter(IStepIntoHandler.class);
-            fSession.unregisterModelAdapter(IStepOverHandler.class);
-            fSession.unregisterModelAdapter(IStepReturnHandler.class);
-            fSession.unregisterModelAdapter(ISuspendHandler.class);
-            fSession.unregisterModelAdapter(IResumeHandler.class);
-            fSession.unregisterModelAdapter(ITerminateHandler.class);            
-            fStepIntoCommand.dispose();
-            fStepOverCommand.dispose();
-            fStepReturnCommand.dispose();
-            fSuspendCommand.dispose();
-            fResumeCommand.dispose();
-            fTerminateCommand.dispose();
+        void dispose() {
+            view_model_adapter.dispose();
+
+            session.unregisterModelAdapter(ISourceDisplay.class);
+            if (source_display_adapter != null) source_display_adapter.dispose();
+
+            session.unregisterModelAdapter(IStepIntoHandler.class);
+            session.unregisterModelAdapter(IStepOverHandler.class);
+            session.unregisterModelAdapter(IStepReturnHandler.class);
+            session.unregisterModelAdapter(ISuspendHandler.class);
+            session.unregisterModelAdapter(IResumeHandler.class);
+            session.unregisterModelAdapter(ITerminateHandler.class);            
+            step_into_command.dispose();
+            step_over_command.dispose();
+            step_return_command.dispose();
+            suspend_command.dispose();
+            resume_command.dispose();
+            terminate_command.dispose();
         }        
     }
-    
+
     @SuppressWarnings({ "unchecked", "restriction" })
     private final Class[] adapter_list = {
-        IElementLabelProvider.class,
         IElementContentProvider.class,
         IColumnPresentationFactory.class,
         IModelProxyFactory.class,
         ITerminateHandler.class
     };
 
-    private Map<String,SessionAdapterSet> fSessionAdapterSetMap = 
+    private Map<String,SessionAdapterSet> session_adapter_set_map = 
         Collections.synchronizedMap(new HashMap<String,SessionAdapterSet>());
-    
+
     public AdapterFactory() {
         DsfSession.addSessionEndedListener(this);
         DebugPlugin.getDefault().getLaunchManager().addLaunchListener(this);
@@ -156,20 +155,19 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
         if (session == null) return null;
 
         SessionAdapterSet adapter_set;
-        synchronized(fSessionAdapterSetMap) {
-            adapter_set = fSessionAdapterSetMap.get(session.getId());
+        synchronized(session_adapter_set_map) {
+            adapter_set = session_adapter_set_map.get(session.getId());
             if (adapter_set == null) {
                 adapter_set = new SessionAdapterSet(session, launch);
-                fSessionAdapterSetMap.put(session.getId(), adapter_set);
+                session_adapter_set_map.put(session.getId(), adapter_set);
             }
         }
-        
+
         // Returns the adapter type for the launch object.
-        if (adapterType.equals(IElementLabelProvider.class)) return adapter_set.fViewModelAdapter;
-        if (adapterType.equals(IElementContentProvider.class)) return adapter_set.fViewModelAdapter;
-        if (adapterType.equals(IModelProxyFactory.class)) return adapter_set.fViewModelAdapter;
-        if (adapterType.equals(IColumnPresentationFactory.class)) return adapter_set.fViewModelAdapter;
-        if (adapterType.equals(ITerminateHandler.class)) return adapter_set.fTerminateCommand;
+        if (adapterType.equals(IElementContentProvider.class)) return adapter_set.view_model_adapter;
+        if (adapterType.equals(IModelProxyFactory.class)) return adapter_set.view_model_adapter;
+        if (adapterType.equals(IColumnPresentationFactory.class)) return adapter_set.view_model_adapter;
+        if (adapterType.equals(ITerminateHandler.class)) return adapter_set.terminate_command;
         return null;
     }
 
@@ -195,10 +193,10 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
         for (ILaunch launch : launches) {
             if (launch instanceof TCFDSFLaunch) {
                 DsfSession session = ((TCFDSFLaunch)launch).getSession();
-                synchronized (fSessionAdapterSetMap) {
-                    if (fSessionAdapterSetMap.containsKey(session.getId())) {
-                        fSessionAdapterSetMap.get(session.getId()).dispose();
-                        fSessionAdapterSetMap.remove(session);
+                synchronized (session_adapter_set_map) {
+                    if (session_adapter_set_map.containsKey(session.getId())) {
+                        session_adapter_set_map.get(session.getId()).dispose();
+                        session_adapter_set_map.remove(session);
                     }
                 }
             }                

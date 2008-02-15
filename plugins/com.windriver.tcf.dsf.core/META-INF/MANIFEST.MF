@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: com.windriver.tcf.dsf.core;singleton:=true
-Bundle-Version: 0.1.0
+Bundle-Version: 0.2.0
 Bundle-Activator: com.windriver.tcf.dsf.core.Activator
 Bundle-Vendor: %providerName
 Require-Bundle: org.eclipse.core.runtime,
@@ -10,9 +10,11 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.core.resources,
  org.eclipse.dd.dsf,
  org.eclipse.dd.dsf.debug,
+ org.eclipse.cdt.core,
  com.windriver.tcf.api,
  com.windriver.debug.tcf.core
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-ActivationPolicy: lazy
 Eclipse-LazyStart: true
 Export-Package: com.windriver.tcf.dsf.core.launch,
  com.windriver.tcf.dsf.core.services

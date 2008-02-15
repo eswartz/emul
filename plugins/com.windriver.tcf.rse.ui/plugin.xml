@@ -47,7 +47,7 @@
             class="com.windriver.tcf.rse.ui.TCFSystemViewProcessAdapterFactory" 
             adaptableType="com.windriver.tcf.rse.ui.TCFRemoteProcess">
             <adapter type="org.eclipse.rse.ui.view.ISystemViewElementAdapter"/>
-            <adapter type="org.eclipse.rse.ui.view.ISystemDragDropAdapter"/>
+            <adapter type="org.eclipse.rse.core.subsystems.ISystemDragDropAdapter"/>
             <adapter type="org.eclipse.rse.ui.view.ISystemRemoteElementAdapter"/>
             <adapter type="org.eclipse.ui.views.properties.IPropertySource"/>
             <adapter type="org.eclipse.ui.model.IWorkbenchAdapter"/>

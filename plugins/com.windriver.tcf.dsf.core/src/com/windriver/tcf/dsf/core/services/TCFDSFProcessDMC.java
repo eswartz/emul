@@ -16,7 +16,7 @@ import org.eclipse.dd.dsf.debug.service.INativeProcesses.IProcessDMContext;
 import org.eclipse.dd.dsf.service.IDsfService;
 
 public abstract class TCFDSFProcessDMC extends AbstractDMContext implements IProcessDMContext {
-    
+
     TCFDSFProcessDMC(IDsfService service, IDMContext[] parents) {
         super(service, parents);
     }

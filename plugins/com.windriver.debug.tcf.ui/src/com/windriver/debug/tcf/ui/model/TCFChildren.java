@@ -17,7 +17,6 @@ public class TCFChildren {
 
     final TCFNode node;
     final Map<String,TCFNode> children = new HashMap<String,TCFNode>();
-    final Map<String,TCFNode> children_next = new HashMap<String,TCFNode>();
     
     protected boolean valid;
     
@@ -26,8 +25,8 @@ public class TCFChildren {
     }
     
     void dispose() {
-        TCFNode arr[] = children.values().toArray(new TCFNode[children.size()]);
-        for (int i = 0; i < arr.length; i++) arr[i].dispose();
+        TCFNode a[] = children.values().toArray(new TCFNode[children.size()]);
+        for (int i = 0; i < a.length; i++) a[i].dispose();
         assert children.isEmpty();
     }
     
@@ -35,31 +34,30 @@ public class TCFChildren {
         children.remove(id);
     }
     
-    void doneValidate() {
+    void doneValidate(Map<String,TCFNode> new_children) {
+        assert !node.disposed;
+        assert !valid;
         valid = true;
-        TCFNode[] a = children.values().toArray(new TCFNode[children.size()]);
-        for (TCFNode n : a) {
-            if (children_next.get(n.id) != n) n.dispose();
+        if (children.size() > 0) {
+            TCFNode[] a = children.values().toArray(new TCFNode[children.size()]);
+            for (TCFNode n : a) if (new_children.get(n.id) != n) n.dispose();
         }
-        for (TCFNode n : children_next.values()) {
-            if (children.get(n.id) == null) {
-                children.put(n.id, n);
-                n.model.addNode(n.id, n);
-            }
-            assert children.get(n.id) == n;
+        for (TCFNode n : new_children.values()) {
+            assert n.parent == node;
+            children.put(n.id, n);
         }
-        assert children.size() == children_next.size();
+        assert children.size() == new_children.size();
     }
     
-    boolean validate(TCFRunnable done) {
-        doneValidate();
+    boolean validate() {
+        doneValidate(new HashMap<String,TCFNode>());
         return true;
     }
     
     void invalidate() {
-        children_next.clear();
+        assert !node.disposed;
         TCFNode[] a = children.values().toArray(new TCFNode[children.size()]);
-        for (int i = 0; i < a.length; i++) a[i].invalidateNode(TCFNode.CF_ALL);
+        for (int i = 0; i < a.length; i++) a[i].invalidateNode();
         valid = false;
     }
     

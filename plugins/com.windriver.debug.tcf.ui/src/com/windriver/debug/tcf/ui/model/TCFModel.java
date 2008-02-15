@@ -12,6 +12,7 @@ package com.windriver.debug.tcf.ui.model;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 import org.eclipse.debug.core.commands.IDisconnectHandler;
 import org.eclipse.debug.core.commands.IResumeHandler;
@@ -46,6 +47,7 @@ import com.windriver.debug.tcf.ui.commands.SuspendCommand;
 import com.windriver.debug.tcf.ui.commands.TerminateCommand;
 import com.windriver.tcf.api.protocol.Protocol;
 import com.windriver.tcf.api.services.IMemory;
+import com.windriver.tcf.api.services.IRegisters;
 import com.windriver.tcf.api.services.IRunControl;
 
 public class TCFModel implements IElementContentProvider, IElementLabelProvider,
@@ -53,20 +55,83 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private final Display display;
     private final TCFLaunch launch;
-    private final TCFNode launch_node;
+    private final TCFNodeLaunch launch_node;
     private final Map<IPresentationContext,TCFModelProxy> model_proxies =
         new HashMap<IPresentationContext,TCFModelProxy>();
     private final Map<String,TCFNode> id2node = new HashMap<String,TCFNode>();
     private final Map<TCFNode,ModelDelta> deltas = new HashMap<TCFNode,ModelDelta>();
     @SuppressWarnings("unchecked")
     private final Map<Class,Object> commands = new HashMap<Class,Object>();
+    private final TreeSet<FutureTask> queue = new TreeSet<FutureTask>();
+
+    private boolean disposed;
+
+    private int future_task_cnt;
+
+    private static class FutureTask implements Comparable<FutureTask>{
+        final int id;
+        final long time;
+        final Runnable run;
+
+        FutureTask(int id, long time, Runnable run) {
+            this.id = id;
+            this.time = time;
+            this.run = run;
+        }
+
+        public int compareTo(FutureTask x) {
+            if (x == this) return 0;
+            if (time < x.time) return -1;
+            if (time > x.time) return +1;
+            if (id < x.id) return -1;
+            if (id > x.id) return +1;
+            assert false;
+            return 0;
+        }
+    }
+
+    private final Thread future_task_dispatcher = new Thread() {
+        public void run() {
+            try {
+                synchronized (queue) {
+                    while (!disposed) {
+                        if (queue.isEmpty()) {
+                            queue.wait();
+                        }
+                        else {
+                            long time = System.currentTimeMillis();
+                            FutureTask t = queue.first();
+                            if (t.time > time) {
+                                queue.wait(t.time - time);
+                            }
+                            else {
+                                queue.remove(t);
+                                Protocol.invokeLater(t.run);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Throwable x) {
+                x.printStackTrace();
+            }
+        }
+    };
 
     private final IMemory.MemoryListener mem_listener = new IMemory.MemoryListener() {
 
         public void contextAdded(IMemory.MemoryContext[] contexts) {
             for (int i = 0; i < contexts.length; i++) {
-                TCFNode node = getNode(contexts[i].getParentID());
-                if (node != null) node.onContextAdded(contexts[i]);
+                String id = contexts[i].getParentID();
+                if (id == null) {
+                    launch_node.onContextAdded(contexts[i]);
+                }
+                else {
+                    TCFNode node = getNode(id);
+                    if (node instanceof TCFNodeExecContext) {
+                        ((TCFNodeExecContext)node).onContextAdded(contexts[i]);
+                    }
+                }
             }
             fireModelChanged();
         }
@@ -129,8 +194,16 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
         public void contextAdded(IRunControl.RunControlContext[] contexts) {
             for (int i = 0; i < contexts.length; i++) {
-                TCFNode node = getNode(contexts[i].getParentID());
-                if (node != null) node.onContextAdded(contexts[i]);
+                String id = contexts[i].getParentID();
+                if (id == null) {
+                    launch_node.onContextAdded(contexts[i]);
+                }
+                else {
+                    TCFNode node = getNode(id);
+                    if (node instanceof TCFNodeExecContext) {
+                        ((TCFNodeExecContext)node).onContextAdded(contexts[i]);
+                    }
+                }
             }
             fireModelChanged();
         }
@@ -180,6 +253,26 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     };
 
+    private final IRegisters.RegistersListener reg_listener = new IRegisters.RegistersListener() {
+
+        public void contextChanged() {
+            for (TCFNode node : id2node.values()) {
+                if (node instanceof TCFNodeExecContext) {
+                    ((TCFNodeExecContext)node).onRegistersChanged();
+                }
+            }
+            fireModelChanged();
+        }
+
+        public void registerChanged(String context) {
+            TCFNode node = getNode(context);
+            if (node instanceof TCFNodeRegister) {
+                ((TCFNodeRegister)node).onValueChanged();
+            }
+            fireModelChanged();
+        }
+    };
+
     TCFModel(Display display, TCFLaunch launch) {
         this.display = display;
         this.launch = launch;
@@ -191,6 +284,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         commands.put(IStepIntoHandler.class, new StepIntoCommand(this));
         commands.put(IStepOverHandler.class, new StepOverCommand(this));
         commands.put(IStepReturnHandler.class, new StepReturnCommand(this));
+        future_task_dispatcher.setName("TCF Future Task Dispatcher");
+        future_task_dispatcher.start();
     }
 
     @SuppressWarnings("unchecked")
@@ -206,6 +301,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (mem != null) mem.addListener(mem_listener);
         IRunControl run = launch.getService(IRunControl.class);
         if (run != null) run.addListener(run_listener);
+        IRegisters reg = launch.getService(IRegisters.class);
+        if (reg != null) reg.addListener(reg_listener);
         launch_node.invalidateNode();
         launch_node.makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
         fireModelChanged();
@@ -236,13 +333,23 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             }
         });
     }
-    
+
     void launchChanged() {
         launch_node.makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
         fireModelChanged();
     }
 
     void dispose() {
+        synchronized (queue) {
+            disposed = true;
+            queue.notify();
+        }
+        try {
+            future_task_dispatcher.join();
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     void addNode(String id, TCFNode node) {
@@ -278,7 +385,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             for (TCFModelProxy p : model_proxies.values()) p.fireModelChanged(top);
         }
     }
-    
+
     public Display getDisplay() {
         return display;
     }
@@ -296,6 +403,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (id.equals("")) return launch_node;
         assert Protocol.isDispatchThread();
         return id2node.get(id);
+    }
+
+    public void invokeLater(long delay, Runnable run) {
+        synchronized (queue) {
+            queue.add(new FutureTask(future_task_cnt++, System.currentTimeMillis() + delay, run));
+            queue.notify();
+        }
     }
 
     public void update(IChildrenCountUpdate[] updates) {

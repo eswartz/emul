@@ -100,6 +100,10 @@ public class TCFModelPresentation implements IDebugModelPresentation {
         public void breakpointStatusChanged(String id) {
             refreshBreakpointView();
         }
+
+        public void breakpointRemoved(String id) {
+            refreshBreakpointView();
+        }
     };
     
     public TCFModelPresentation() {

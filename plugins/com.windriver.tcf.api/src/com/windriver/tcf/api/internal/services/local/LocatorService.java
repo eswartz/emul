@@ -151,9 +151,6 @@ public class LocatorService implements ILocator {
                 Collection<String> c = (Collection<String>)JSON.parseSequence(data)[0];
                 channel.onLocatorHello(c);
             }
-            else {
-                throw new IOException("Unknown event: Locator." + name);
-            }
         }
         catch (IOException e) {
             channel.terminate(e);

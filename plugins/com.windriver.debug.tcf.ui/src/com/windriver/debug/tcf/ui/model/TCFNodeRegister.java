@@ -11,13 +11,14 @@
 package com.windriver.debug.tcf.ui.model;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 
 import com.windriver.tcf.api.protocol.IToken;
 import com.windriver.tcf.api.services.IRegisters;
 
-// TODO: hierarchical registers
+//TODO: hierarchical registers
 public class TCFNodeRegister extends TCFNode {
-    
+
     /**
      * Presentation column IDs.
      */
@@ -34,7 +35,7 @@ public class TCFNodeRegister extends TCFNode {
         COL_VOLATILE = "Volatile",
         COL_FLOAT = "Float",
         COL_MNEMONIC = "Menimonic";
-        
+
 
     private IRegisters.RegistersContext context;
     private String hex_value;
@@ -43,7 +44,7 @@ public class TCFNodeRegister extends TCFNode {
     private boolean valid_context;
     private boolean valid_hex_value;
     private boolean valid_dec_value;
-    
+
     TCFNodeRegister(TCFNode parent, String id) {
         super(parent, id);
     }
@@ -78,11 +79,11 @@ public class TCFNodeRegister extends TCFNode {
             result.setLabel(id, 0);
         }
     }
-    
+
     private String bool(boolean b) {
         return b ? "yes" : "no";
     }
-    
+
     private String getMnemonic() {
         if (num_value != null) {
             IRegisters.NamedValue[] arr = context.getNamedValues();
@@ -102,36 +103,49 @@ public class TCFNodeRegister extends TCFNode {
         return "";
     }
 
-    @Override
-    protected void invalidateNode(int flags) {
-        super.invalidateNode(flags);
-        if ((flags & CF_CONTEXT) != 0) {
-            valid_context = false;
-            valid_hex_value = false;
-            valid_dec_value = false;
-            hex_value = null;
-            dec_value = null;
-            num_value = null;
-        }
+    void onValueChanged() {
+        onSuspended();
+    }
+
+    /**
+     * Invalidate register value only, keep cached register attributes.
+     */
+    void onSuspended() {
+        super.invalidateNode();
+        valid_hex_value = false;
+        valid_dec_value = false;
+        hex_value = null;
+        dec_value = null;
+        num_value = null;
+        makeModelDelta(IModelDelta.STATE);
     }
 
     @Override
-    protected boolean validateContext(TCFRunnable done) {
-        if (!valid_context && !validateRegisterContext(done)) return false;
-        if (!valid_hex_value && !validateRegisterHexValue(done)) return false;
-        if (!valid_dec_value && !validateRegisterDecValue(done)) return false;
-        node_valid |= CF_CONTEXT;
+    public void invalidateNode() {
+        super.invalidateNode();
+        valid_context = false;
+        valid_hex_value = false;
+        valid_dec_value = false;
+        hex_value = null;
+        dec_value = null;
+        num_value = null;
+    }
+
+    @Override
+    protected boolean validateNodeData() {
+        if (!valid_context && !validateRegisterContext()) return false;
+        if (!valid_hex_value && !validateRegisterHexValue()) return false;
+        if (!valid_dec_value && !validateRegisterDecValue()) return false;
         return true;
     }
-    
-    private boolean validateRegisterContext(TCFRunnable done) {
-        assert data_command == null;
+
+    private boolean validateRegisterContext() {
+        assert pending_command == null;
         IRegisters regs = model.getLaunch().getService(IRegisters.class);
-        if (done != null) wait_list.add(done);
-        data_command = regs.getContext(id, new IRegisters.DoneGetContext() {
+        pending_command = regs.getContext(id, new IRegisters.DoneGetContext() {
             public void doneGetContext(IToken token, Exception error, IRegisters.RegistersContext context) {
-                if (data_command != token) return;
-                data_command = null;
+                if (pending_command != token) return;
+                pending_command = null;
                 if (error != null) {
                     node_error = error;
                 }
@@ -139,15 +153,14 @@ public class TCFNodeRegister extends TCFNode {
                     TCFNodeRegister.this.context = context;
                 }
                 valid_context = true;
-                validateNode(null);
+                validateNode();
             }
         });
         return false;
     }
 
-    private boolean validateRegisterHexValue(TCFRunnable done) {
-        assert data_command == null;
-        if (done != null) wait_list.add(done);
+    private boolean validateRegisterHexValue() {
+        assert pending_command == null;
         String[] fmts = context.getAvailableFormats();
         String fmt = null;
         for (String s : fmts) {
@@ -157,27 +170,26 @@ public class TCFNodeRegister extends TCFNode {
             valid_hex_value = true;
             return true;
         }
-        data_command = context.get(fmt, new IRegisters.DoneGet() {
+        pending_command = context.get(fmt, new IRegisters.DoneGet() {
             public void doneGet(IToken token, Exception error, String value) {
-                if (data_command != token) return;
-                data_command = null;
+                if (pending_command != token) return;
+                pending_command = null;
                 if (error != null) {
                     node_error = error;
                 }
                 else {
                     hex_value = value;
+                    if (!context.isFloat()) num_value = Long.valueOf(value, 16);
                 }
                 valid_hex_value = true;
-                if (!context.isFloat()) num_value = Long.valueOf(value, 16);
-                validateNode(null);
+                validateNode();
             }
         });
         return false;
     }
 
-    private boolean validateRegisterDecValue(TCFRunnable done) {
-        assert data_command == null;
-        if (done != null) wait_list.add(done);
+    private boolean validateRegisterDecValue() {
+        assert pending_command == null;
         String[] fmts = context.getAvailableFormats();
         String fmt = null;
         for (String s : fmts) {
@@ -187,20 +199,20 @@ public class TCFNodeRegister extends TCFNode {
             valid_dec_value = true;
             return true;
         }
-        data_command = context.get(fmt, new IRegisters.DoneGet() {
+        pending_command = context.get(fmt, new IRegisters.DoneGet() {
             public void doneGet(IToken token, Exception error, String value) {
-                if (data_command != token) return;
-                data_command = null;
+                if (pending_command != token) return;
+                pending_command = null;
                 if (error != null) {
                     node_error = error;
                 }
                 else {
                     dec_value = value;
+                    if (!context.isFloat()) num_value = Long.valueOf(value, 10);
+                    else num_value = Double.valueOf(value);
                 }
                 valid_dec_value = true;
-                if (!context.isFloat()) num_value = Long.valueOf(value, 10);
-                else num_value = Double.valueOf(value);
-                validateNode(null);
+                validateNode();
             }
         });
         return false;

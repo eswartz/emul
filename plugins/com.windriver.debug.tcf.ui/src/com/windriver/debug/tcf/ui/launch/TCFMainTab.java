@@ -331,6 +331,11 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         program_text = new Text(group, SWT.SINGLE | SWT.BORDER);
         program_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         program_text.setFont(font);
+        program_text.addModifyListener(new ModifyListener() {
+                        public void modifyText(ModifyEvent e) {
+                updateLaunchConfigurationDialog();
+                        }
+        });
     }
     
     @Override

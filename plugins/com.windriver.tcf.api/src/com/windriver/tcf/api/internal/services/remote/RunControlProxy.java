@@ -46,9 +46,7 @@ public class RunControlProxy implements IRunControl {
         }
 
         public String getParentID() {
-            String s = (String)props.get(PROP_PARENT_ID);
-            if (s == null) return "";
-            return s;
+            return (String)props.get(PROP_PARENT_ID);
         }
 
         public boolean isContainer() {
@@ -148,7 +146,7 @@ public class RunControlProxy implements IRunControl {
     }
 
     public void addListener(final RunControlListener listener) {
-    	IChannel.IEventListener l = new IChannel.IEventListener() {
+        IChannel.IEventListener l = new IChannel.IEventListener() {
 
             @SuppressWarnings("unchecked")
             public void event(String name, byte[] data) {
@@ -207,7 +205,7 @@ public class RunControlProxy implements IRunControl {
     }
     
     public void removeListener(RunControlListener listener) {
-    	IChannel.IEventListener l = listeners.remove(listener);
+        IChannel.IEventListener l = listeners.remove(listener);
         if (l != null) channel.removeEventListener(this, l);
     }
 

@@ -22,10 +22,12 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
 import org.eclipse.swt.graphics.RGB;
 
 import com.windriver.debug.tcf.core.model.TCFLaunch;
+import com.windriver.tcf.api.services.IMemory;
+import com.windriver.tcf.api.services.IRunControl;
 
 public class TCFNodeLaunch extends TCFNode {
     
-    private final TCFChildren children; 
+    private final TCFChildrenExecContext children; 
 
     TCFNodeLaunch(TCFModel model) {
         super(model);
@@ -85,10 +87,17 @@ public class TCFNodeLaunch extends TCFNode {
         result.setLabel(label, 0);
     }
     
+    void onContextAdded(IRunControl.RunControlContext context) {
+        children.onContextAdded(context);
+    }
+
+    void onContextAdded(IMemory.MemoryContext context) {
+        children.onContextAdded(context);
+    }
+
     @Override
     ModelDelta makeModelDelta(int flags) {
         int count = -1;
-        //if (node_valid == CF_ALL) count = children.size();
         ModelDelta delta = model.getDelta(this);
         if (delta == null) {
             delta = new ModelDelta(DebugPlugin.getDefault().getLaunchManager(), IModelDelta.NO_CHANGE);
@@ -103,17 +112,14 @@ public class TCFNodeLaunch extends TCFNode {
     }
 
     @Override
-    protected void invalidateNode(int flags) {
-        super.invalidateNode(flags);
-        if ((flags & CF_CHILDREN) != 0) {
-            children.invalidate();
-        }
+    public void invalidateNode() {
+        super.invalidateNode();
+        children.invalidate();
     }
 
     @Override
-    protected boolean validateChildren(TCFRunnable done) {
-        if (!children.valid && !children.validate(done)) return false;
-        node_valid |= CF_CHILDREN;
+    protected boolean validateNodeData() {
+        if (!children.valid && !children.validate()) return false;
         return true;
     }
 

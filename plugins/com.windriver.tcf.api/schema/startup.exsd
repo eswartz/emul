@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="com.windriver.debug.tcf">
+<schema targetNamespace="com.windriver.tcf.api">
 <annotation>
    <appInfo>
-      <meta.schema plugin="com.windriver.debug.tcf.core" id="startup" name="TCF Startup"/>
+      <meta.schema plugin="com.windriver.tcf.api" id="startup" name="TCF Startup"/>
    </appInfo>
    <documentation>
       This extension point is used to register plugins
@@ -47,7 +47,7 @@
          <attribute name="name" type="string">
             <annotation>
                <documentation>
-               Class will be loaded during statup   
+               Class will be loaded and initialized during TCF statup   
                </documentation>
             </annotation>
          </attribute>

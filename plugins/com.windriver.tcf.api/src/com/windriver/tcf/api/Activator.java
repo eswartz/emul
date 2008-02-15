@@ -10,9 +10,14 @@
  *******************************************************************************/
 package com.windriver.tcf.api;
 
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtension;
+import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import com.windriver.tcf.api.protocol.Protocol;
@@ -36,12 +41,41 @@ public class Activator extends Plugin {
     public void start(BundleContext context) throws Exception {
         super.start(context);
         Protocol.setEventQueue(new EventQueue());
+        runTCFStartup();
     }
 
     @Override
     public void stop(BundleContext context) throws Exception {
         plugin = null;
         super.stop(context);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void runTCFStartup() {
+        try {
+            IExtensionPoint point = Platform.getExtensionRegistry().getExtensionPoint(PLUGIN_ID, "startup");
+            IExtension[] extensions = point.getExtensions();
+            for (int i = 0; i < extensions.length; i++) {
+                try {
+                    Bundle bundle = Platform.getBundle(extensions[i].getNamespaceIdentifier());
+                    bundle.start();
+                    IConfigurationElement[] e = extensions[i].getConfigurationElements();
+                    for (int j = 0; j < e.length; j++) {
+                        String nm = e[j].getName();
+                        if (nm.equals("class")) { //$NON-NLS-1$
+                            Class c = bundle.loadClass(e[j].getAttribute("name")); //$NON-NLS-1$
+                            Class.forName(c.getName(), true, c.getClassLoader());
+                        }
+                    }
+                }
+                catch (Throwable x) {
+                    log("TCF startup error", x);
+                }
+            }
+        }
+        catch (Exception x) {
+            log("TCF startup error", x);
+        }
     }
 
     /**
@@ -64,7 +98,7 @@ public class Activator extends Plugin {
         }
         else {
             plugin.getLog().log(new Status(IStatus.ERROR,
-                    getDefault().getBundle().getSymbolicName(), IStatus.OK, msg, err));
+                    plugin.getBundle().getSymbolicName(), IStatus.OK, msg, err));
         }
     }  
 }

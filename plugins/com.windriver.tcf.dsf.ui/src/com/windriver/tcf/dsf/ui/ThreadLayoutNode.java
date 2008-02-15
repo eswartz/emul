@@ -7,7 +7,7 @@
  * 
  * Contributors:
  *     Wind River Systems - initial API and implementation
- *     Ericsson 	  - Modified for multi threaded functionality	
+ *     Ericsson           - Modified for multi threaded functionality   
  *******************************************************************************/
 package com.windriver.tcf.dsf.ui;
 
@@ -136,10 +136,14 @@ public class ThreadLayoutNode extends AbstractDMVMLayoutNode {
 
     @Override
     protected int getNodeDeltaFlagsForDMEvent(IDMEvent<?> e) {
-        if(e instanceof IRunControl.IContainerResumedDMEvent || e instanceof IRunControl.IContainerSuspendedDMEvent || e instanceof IStartedDMEvent || e instanceof IExitedDMEvent) {
+        if (e instanceof IRunControl.IContainerResumedDMEvent ||
+                e instanceof IRunControl.IContainerSuspendedDMEvent ||
+                e instanceof IStartedDMEvent ||
+                e instanceof IExitedDMEvent) {
             return IModelDelta.CONTENT;
         }
-        if(e instanceof IRunControl.IResumedDMEvent || e instanceof IRunControl.ISuspendedDMEvent) {
+        if (e instanceof IRunControl.IResumedDMEvent ||
+                e instanceof IRunControl.ISuspendedDMEvent) {
             return IModelDelta.STATE;
         } 
         return IModelDelta.NO_CHANGE;
@@ -147,7 +151,7 @@ public class ThreadLayoutNode extends AbstractDMVMLayoutNode {
 
     @Override
     protected void buildDeltaForDMEvent(final IDMEvent<?> e, final VMDelta parentDelta, final int nodeOffset, final RequestMonitor requestMonitor) {
-        if(e instanceof IRunControl.IContainerResumedDMEvent || e instanceof IRunControl.IContainerSuspendedDMEvent) {
+        if (e instanceof IRunControl.IContainerResumedDMEvent || e instanceof IRunControl.IContainerSuspendedDMEvent) {
             // Since IContainerDMContext sub-classes IExecutionDMContext, container 
             // events require special processing:  
             // Retrieve all the thread elements and mark their state as changed.  

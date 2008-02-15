@@ -27,6 +27,7 @@ public class TCFBreakpointsStatus {
     private final IBreakpoints service;
     private final Map<String,Map<String,Object>> status = new HashMap<String,Map<String,Object>>();
     private final Set<ITCFBreakpointListener> listeners = new HashSet<ITCFBreakpointListener>();
+    private final Set<String> removed = new HashSet<String>();
     
     private static final Map<String,Object> status_not_supported = new HashMap<String,Object>();
     
@@ -42,6 +43,7 @@ public class TCFBreakpointsStatus {
 
                 public void breakpointStatusChanged(String id, Map<String, Object> status) {
                     assert Protocol.isDispatchThread();
+                    if (removed.contains(id)) return;
                     TCFBreakpointsStatus.this.status.put(id, status);
                     for (Iterator<ITCFBreakpointListener> i = listeners.iterator(); i.hasNext();) {
                         i.next().breakpointStatusChanged(id);
@@ -64,6 +66,14 @@ public class TCFBreakpointsStatus {
         if (marker == null) return null;
         return getStatus(marker.getAttribute(
                 ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID, null));
+    }
+    
+    public void removeStatus(String id) {
+        status.remove(id);
+        removed.add(id);
+        for (Iterator<ITCFBreakpointListener> i = listeners.iterator(); i.hasNext();) {
+            i.next().breakpointRemoved(id);
+        }
     }
     
     public void addListener(ITCFBreakpointListener listener) {

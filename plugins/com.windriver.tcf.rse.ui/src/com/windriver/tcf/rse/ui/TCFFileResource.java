@@ -31,6 +31,14 @@ public class TCFFileResource extends AbstractResource implements IHostFile {
                 name  = parent.substring(i + 1);
                 parent = parent.substring(0, i);
             }
+            else if (i == 0) {
+                name  = parent.substring(i + 1);
+                parent = "/";
+            }
+            else {
+                name = parent;
+                parent = null;
+            }
         }
         this.service = service;
         this.parent = parent;

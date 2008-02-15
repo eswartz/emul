@@ -151,7 +151,7 @@ public class ProcessesProxy implements IProcesses {
             public void done(Exception error, Object[] args) {
                 ProcessContext ctx = null;
                 if (error == null) {
-                    assert args.length == 2;
+                    assert args.length == 3;
                     error = toError(args[0], args[1]);
                     if (args[2] != null) { 
                         ctx = new ProcessContext((Map<String, Object>)args[2]);
