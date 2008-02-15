@@ -4,7 +4,7 @@ Bundle-Name: Examples Plug-in
 Bundle-SymbolicName: com.windriver.tcf.examples.daytime;singleton:=true
 Bundle-Version: 0.2.0
 Bundle-Activator: com.windriver.tcf.examples.daytime.Activator
-Bundle-Vendor: WINDRIVER
+Bundle-Vendor: Eclipse.org
 Require-Bundle: org.eclipse.core.runtime,
  com.windriver.tcf.api
 Eclipse-LazyStart: true
