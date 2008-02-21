@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="org.eclipse.rse.core.systemTypes">
+      <systemType
+            description="Connects using Target Commenucation Framework"
+            icon="icons/tcf.gif"
+            iconLive="icons/tcf.gif"
+            id="org.eclipse.tm.tcf.rse.systemType"
+            label="TCF"
+            name="TCF">
+      </systemType>
+   </extension>
+   <extension
+         point="org.eclipse.rse.core.subsystemConfigurations">
+      <configuration
+            category="processes"
+            class="org.eclipse.tm.internal.tcf.rse.processes.TCFProcessSubSystemConfiguration"
+            description="Processes"
+            icon="icons/system-processes.gif"
+            iconlive="icons/system-processes-live.gif"
+            id="org.eclipse.tm.tcf.rse.Processes"
+            name="Processes"
+            priority="200"
+            systemTypeIds="org.eclipse.tm.tcf.rse.systemType"
+            vendor="Wind River">
+      </configuration>
+      </extension>
+   <extension
+         point="org.eclipse.rse.core.subsystemConfigurations">
+      <configuration
+            category="files"
+            class="org.eclipse.tm.internal.tcf.rse.files.TCFFileSubSystemConfiguration"
+            description="Files"
+            icon="icons/system-files.gif"
+            iconlive="icons/system-files-live.gif"
+            id="org.eclipse.tm.tcf.rse.Files"
+            name="Files"
+            priority="200"
+            systemTypeIds="org.eclipse.tm.tcf.rse.systemType"
+            vendor="Wind River">
+      </configuration>
+   </extension>
+   <extension point="org.eclipse.core.runtime.adapters">
+      <factory 
+            class="org.eclipse.tm.internal.tcf.rse.processes.TCFSystemViewProcessAdapterFactory" 
+            adaptableType="org.eclipse.tm.internal.tcf.rse.processes.TCFRemoteProcess">
+            <adapter type="org.eclipse.rse.ui.view.ISystemViewElementAdapter"/>
+            <adapter type="org.eclipse.rse.core.subsystems.ISystemDragDropAdapter"/>
+            <adapter type="org.eclipse.rse.ui.view.ISystemRemoteElementAdapter"/>
+            <adapter type="org.eclipse.ui.views.properties.IPropertySource"/>
+            <adapter type="org.eclipse.ui.model.IWorkbenchAdapter"/>
+            <adapter type="org.eclipse.ui.IActionFilter"/>
+            <adapter type="org.eclipse.ui.progress.IDeferredWorkbenchAdapter"/>
+            <adapter type="org.eclipse.rse.core.subsystems.IRemoteObjectIdentifier"/>
+      </factory> 
+   </extension>
+</plugin>

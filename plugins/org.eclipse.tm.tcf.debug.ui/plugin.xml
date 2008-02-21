@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <extension point="org.eclipse.tm.tcf.startup"/>
+
+   <extension
+        id="org.eclipse.tm.tcf.debug.ui.adapters"
+        point="org.eclipse.core.runtime.adapters">
+      <factory 
+         class="org.eclipse.tm.internal.tcf.debug.ui.adapters.TCFLaunchAdapterFactory" 
+         adaptableType="org.eclipse.tm.internal.tcf.debug.model.TCFLaunch">
+         <adapter type="org.eclipse.debug.internal.ui.viewers.model.provisional.IElementContentProvider"/>
+         <adapter type="org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProvider"/>
+         <adapter type="org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory"/>
+         <adapter type="org.eclipse.debug.core.commands.ITerminateHandler"/>
+      </factory>
+      <factory
+         class="org.eclipse.tm.internal.tcf.debug.ui.adapters.TCFBreakpointAdapterFactory"
+         adaptableType="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
+         <adapter type="org.eclipse.debug.ui.actions.IToggleBreakpointsTarget"/>
+         <adapter type="org.eclipse.debug.ui.actions.IToggleBreakpointsTargetExtension"/>
+      </factory>
+   </extension>
+   
+   <extension
+        point="org.eclipse.debug.ui.debugModelPresentations">
+      <debugModelPresentation 
+         class = "org.eclipse.tm.internal.tcf.debug.ui.model.TCFModelPresentation"
+         id = "org.eclipse.tm.tcf.debug">
+      </debugModelPresentation>
+   </extension>
+   
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            icon="icons/tcf.gif"
+            configTypeID="org.eclipse.tm.tcf.debug.LaunchConfigurationType"
+            id="org.eclipse.tm.tcf.debug.LaunchConfigurationTypeImage">
+      </launchConfigurationTypeImage>
+   </extension>
+   
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            type="org.eclipse.tm.tcf.debug.LaunchConfigurationType"
+            description="Run or debug a program using Target Communication Framework"
+            class="org.eclipse.tm.internal.tcf.debug.ui.launch.TCFTabGroup"
+            id="org.eclipse.tm.tcf.debug.LaunchConfigurationTabGroup">
+      </launchConfigurationTabGroup>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.contexts">
+      <context
+            name="Debugging using Target Communication Framework"
+            description="Debugging using Target Communication Framework"
+            id="org.eclipse.tm.tcf.debug.ui.debugging"
+            parentId="org.eclipse.debug.ui.debugging">
+      </context>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            name="TCF Trace"
+            icon="icons/tcf.gif"
+            category="org.eclipse.debug.ui"
+            class="org.eclipse.tm.internal.tcf.debug.ui.trace.TraceView"
+            id="org.eclipse.tm.tcf.TraceView">
+      </view>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="org.eclipse.debug.ui.DebugPerspective">
+         <view
+               relative="org.eclipse.ui.console.ConsoleView"
+               relationship="stack"
+               id="org.eclipse.tm.tcf.TraceView">
+         </view>
+      </perspectiveExtension>
+   </extension>
+   
+</plugin>

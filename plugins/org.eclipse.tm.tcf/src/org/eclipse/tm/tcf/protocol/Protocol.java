@@ -1,0 +1,194 @@
+/*******************************************************************************
+ * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Eclipse Public License v1.0 
+ * which accompanies this distribution, and is available at 
+ * http://www.eclipse.org/legal/epl-v10.html 
+ *  
+ * Contributors:
+ *     Wind River Systems - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.tm.tcf.protocol;
+
+import org.eclipse.tm.internal.tcf.core.LocalPeer;
+import org.eclipse.tm.internal.tcf.core.Transport;
+import org.eclipse.tm.internal.tcf.services.local.LocatorService;
+import org.eclipse.tm.tcf.services.ILocator;
+
+
+/**
+ * 
+ * Class Protocol provides static methods to access Target Communication Framework root objects:
+ * 1. the framework event queue and dispatch thread;
+ * 2. local instance of Locator service, which maintains a list of available targets;
+ * 3. list of open communication channels.
+ */
+public class Protocol {
+
+    private static IEventQueue event_queue;
+
+    /**
+     * Before TCF can be used it should be given an object implementing IEventQueue interface.
+     * The implementation maintains a queue of objects implementing Runnable interface and
+     * executes <code>run</code> methods of that objects in a sequence by a single thread.
+     * The thread in referred as TCF event dispatch thread. Objects in the queue are called TCF events.
+     * Executing <code>run</code> method of an event is also called dispatching of event.
+     * 
+     * Only few methods in TCF APIs are thread safe - can be invoked from any thread.
+     * If a method description does not say "can be invoked from any thread" explicitly -  
+     * the method must be invoked from TCF event dispatch thread. All TCF listeners are
+     * invoked from the dispatch thread.
+     * 
+     * @param event_queue - IEventQueue implementation.
+     */
+    public static void setEventQueue(IEventQueue event_queue) {
+        assert Protocol.event_queue == null;
+        Protocol.event_queue = event_queue;
+        event_queue.invokeLater(new Runnable() {
+
+            public void run() {
+                new LocatorService();
+                new LocalPeer();
+            }
+        });
+    }
+
+    /**
+     * @return instance of IEventQueue that is used for TCF events.
+     */
+    public static IEventQueue getEventQueue() {
+        return event_queue;
+    }
+
+    /**
+     * Returns true if the calling thread is TCF event dispatch thread.
+     * Use this call the ensure that a given task is being executed (or not being)
+     * on dispatch thread.
+     *
+     * @return true if running on the dispatch thread.
+     */
+    public static boolean isDispatchThread() {
+        return event_queue != null && event_queue.isDispatchThread();
+    }
+
+    /**
+     * Causes <code>runnable</code> to have its <code>run</code>
+     * method called in the dispatch thread of the framework.
+     * Events are dispatched in same order as queued.
+     * If invokeLater is called from the dispatching thread
+     * the <i>runnable.run()</i> will still be deferred until
+     * all pending events have been processed.
+     *
+     * This method can be invoked from any thread.
+     *
+     * @param runnable  the <code>Runnable</code> whose <code>run</code>
+     *                  method should be executed asynchronously.
+     */
+    public static void invokeLater(Runnable runnable) {
+        event_queue.invokeLater(runnable);
+    }
+
+    /**
+     * Causes <code>runnable</code> to have its <code>run</code>
+     * method called in the dispatch thread of the framework.
+     * Calling thread is suspended until the method is executed.
+     *
+     * This method can be invoked from any thread.
+     *
+     * @param runnable  the <code>Runnable</code> whose <code>run</code>
+     *                  method should be executed on dispatch thread.
+     */
+    public static void invokeAndWait(final Runnable runnable) {
+        if (event_queue.isDispatchThread()) {
+            runnable.run();
+        }
+        else {
+            Runnable r = new Runnable() {
+                public void run() {
+                    try {
+                        runnable.run();
+                    }
+                    finally {
+                        synchronized (this) {
+                            notify();
+                        }
+                    }
+                }
+            };
+            synchronized (r) {
+                event_queue.invokeLater(r);
+                try {
+                    r.wait();
+                }
+                catch (InterruptedException x) {
+                    throw new Error(x);
+                }
+            }
+        }
+    }
+
+    /**
+     * Get instance of the framework locator service.
+     * The service can be used to discover available remote peers.
+     * 
+     * @return instance of ILocator.
+     */
+    public static ILocator getLocator() {
+        return LocatorService.getLocator();
+    }
+    
+    /**
+     * Return an array of all open channels.
+     * @return an array of IChannel
+     */
+    public static IChannel[] getOpenChannels() {
+        return Transport.getOpenChannels();
+    }
+    
+    /**
+     * Interface to be implemented by clients willing to be notified when
+     * new TCF communication channel is opened.
+     */
+    public interface ChannelOpenListener {
+        public void onChannelOpen(IChannel channel);
+    }
+    
+    /**
+     * Add a listener that will be notified when new channel is opened.
+     * @param listener
+     */
+    public static void addChannelOpenListener(ChannelOpenListener listener) {
+        Transport.addChanalOpenListener(listener);
+    }
+
+    /**
+     * Remove channel opening listener.
+     * @param listener
+     */
+    public static void removeChannelOpenListener(ChannelOpenListener listener) {
+        Transport.removeChanalOpenListener(listener);
+    }
+
+    /**
+     * Transmit TCF event message.
+     * The message is sent to all open communication channels – broadcasted.
+     */
+    public static void sendEvent(String service_name, String event_name, byte[] data) {
+        Transport.sendEvent(service_name, event_name, data);
+    }
+    
+    /**
+     * Call back after TCF messages sent by this host up to this moment are delivered
+     * to their intended target. This method is intended for synchronization of messages
+     * across multiple channels.
+     * 
+     * Note: Cross channel synchronization can reduce performance and throughput.
+     * Most clients don't need cross channel synchronization and should not call this method. 
+     *  
+     * @param done will be executed by dispatch thread after communication 
+     * messages are delivered to corresponding targets.
+     */
+    public static void sync(Runnable done) {
+        Transport.sync(done);
+    }
+}

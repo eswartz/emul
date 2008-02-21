@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="org.eclipse.debug.core.breakpoints">
+      <breakpoint
+            markerType="org.eclipse.tm.tcf.debug.breakpoint.marker"
+            class="org.eclipse.tm.internal.tcf.debug.model.TCFBreakpoint"
+            id="org.eclipse.tm.tcf.debug.breakpoint"
+            name="TCF Breakpoint">
+      </breakpoint>
+   </extension>
+   <extension
+         id="org.eclipse.tm.tcf.debug.breakpoint.marker"
+         point="org.eclipse.core.resources.markers">
+      <super type="org.eclipse.debug.core.breakpointMarker"/>
+      <persistent value="true"/>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            sourceLocatorId="org.eclipse.tm.tcf.debug.SourceLocator"
+            name="Target Communication Framework"
+            sourcePathComputerId="org.eclipse.tm.tcf.debug.SourcePathComputer"
+            delegate="org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate"
+            modes="run, debug"
+            id="org.eclipse.tm.tcf.debug.LaunchConfigurationType">
+      </launchConfigurationType>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.sourceLocators">
+      <sourceLocator
+            name="TCF Source Lookup Director"
+            class="org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupDirector"
+            id="org.eclipse.tm.tcf.debug.SourceLocator">
+      </sourceLocator>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.sourcePathComputers">
+      <sourcePathComputer
+            class="org.eclipse.tm.internal.tcf.debug.launch.TCFSourcePathComputerDelegate"
+            id="org.eclipse.tm.tcf.debug.SourcePathComputer">
+      </sourcePathComputer>
+   </extension>
+</plugin>
