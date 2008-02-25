@@ -14,6 +14,9 @@
  * SERVICE_* definitions control which service implementations are included into the agent.
  */
 
+#ifndef D_config
+#define D_config
+
 #if defined(WIN32) || defined(__CYGWIN__)
 #  define TARGET_WINDOWS    1
 #  define TARGET_VXWORKS    0
@@ -39,5 +42,61 @@
 #define SERVICE_FileSystem      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_SysMonitor      TARGET_UNIX
 
+#endif
 
+#ifdef CONFIG_MAIN
+/*
+ * This part of config.h contains services initialization code,
+ * which is executed during agent startup.
+ */
+
+#include "runctrl.h"
+#include "breakpoints.h"
+#include "memoryservice.h"
+#include "registers.h"
+#include "stacktrace.h"
+#include "symbols.h"
+#include "linenumbers.h"
+#include "processes.h"
+#include "filesystem.h"
+#include "sysmon.h"
+#include "diagnostics.h"
+#include "proxy.h"
+
+static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
+#if SERVICE_RunControl
+    ini_run_ctrl_service(proto, bcg, spg);
+#endif
+#if SERVICE_Breakpoints
+    ini_breakpoints_service(proto, bcg);
+#endif
+#if SERVICE_Memory
+    ini_memory_service(proto, bcg);
+#endif
+#if SERVICE_Registers
+    ini_registers_service(proto);
+#endif
+#if SERVICE_StackTrace
+    ini_stack_trace_service(proto, bcg);
+#endif
+#if SERVICE_Symbols
+    ini_symbols_service();
+#endif
+#if SERVICE_LineNumbers
+    ini_line_numbers_service(proto);
+#endif
+#if SERVICE_Processes
+    ini_processes_service(proto);
+#endif
+#if SERVICE_FileSystem
+    ini_file_system_service(proto);
+#endif
+#if SERVICE_SysMonitor
+    ini_sys_mon_service(proto);
+#endif
+    ini_diagnostics_service(proto);
+    ini_proxy_service();
+}
+
+#endif
 

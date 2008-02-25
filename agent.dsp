@@ -267,11 +267,11 @@ SOURCE=.\mdep.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\memory.c
+SOURCE=.\memoryservice.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\memory.h
+SOURCE=.\memoryservice.h
 # End Source File
 # Begin Source File
 

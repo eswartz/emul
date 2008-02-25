@@ -99,7 +99,7 @@ struct FileAttrs {
 
 static unsigned long handle_cnt = 0;
 
-#define HANDLE_HASH_SIZE 0x1000
+#define HANDLE_HASH_SIZE 0x100
 static LINK handle_hash[HANDLE_HASH_SIZE];
 static LINK file_info_ring = { NULL, NULL };
 

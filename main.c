@@ -13,6 +13,7 @@
  * Agent main module.
  */
 
+#define CONFIG_MAIN
 #include "config.h"
 
 #include <stdio.h>
@@ -29,18 +30,6 @@
 #include "context.h"
 #include "channel.h"
 #include "protocol.h"
-#include "runctrl.h"
-#include "registers.h"
-#include "stacktrace.h"
-#include "memory.h"
-#include "breakpoints.h"
-#include "diagnostics.h"
-#include "filesystem.h"
-#include "processes.h"
-#include "symbols.h"
-#include "linenumbers.h"
-#include "proxy.h"
-#include "sysmon.h"
 #include "discovery.h"
 
 static char * progname;
@@ -208,41 +197,8 @@ int main(int argc, char ** argv) {
     bcg = broadcast_group_alloc();
     spg = suspend_group_alloc();
     proto = protocol_alloc();
-
-#if SERVICE_RunControl
-    ini_run_ctrl_service(proto, bcg, spg);
-#endif
-#if SERVICE_Breakpoints
-    ini_breakpoints_service(proto, bcg);
-#endif
-#if SERVICE_Memory
-    ini_memory_service(proto, bcg);
-#endif
-#if SERVICE_Registers
-    ini_registers_service(proto);
-#endif
-#if SERVICE_StackTrace
-    ini_stack_trace_service(proto, bcg);
-#endif
-#if SERVICE_Symbols
-    ini_symbols_service();
-#endif
-#if SERVICE_LineNumbers
-    ini_line_numbers_service(proto);
-#endif
-#if SERVICE_Processes
-    ini_processes_service(proto);
-#endif
-#if SERVICE_FileSystem
-    ini_file_system_service(proto);
-#endif
-#if SERVICE_SysMonitor
-    ini_sys_mon_service(proto);
-#endif
-    ini_diagnostics_service(proto);
-    ini_proxy_service();
+    ini_services(proto, bcg, spg);
     ini_contexts();
-
     ismaster = discovery_start(became_discovery_master);
 
     ps = channel_peer_from_url(url);
