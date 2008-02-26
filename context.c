@@ -276,6 +276,26 @@ int context_write_mem(Context * ctx, unsigned long address, void * buf, size_t s
     return -1;
 }
 
+static void debug_event_handler(void * x) {
+    DEBUG_EVENT * debug_event = (DEBUG_EVENT *)x;
+
+    loc_free(debug_event);
+}
+
+static void * debug_event_func(void * x) {
+    for (;;) {
+        DEBUG_EVENT * debug_event = loc_alloc(sizeof *debug_event);
+        if (WaitForDebugEvent(debug_event, INFINITE) == 0) {
+            fprintf(stderr, "WaitForDebugEvent() error %d\n", GetLastError());
+            exit(1);
+        }
+        trace(LOG_WAITPID, "WaitForDebugEvent: event code %d, process %d, thread %d",
+            debug_event->dwDebugEventCode, debug_event->dwProcessId, debug_event->dwThreadId);
+        post_event(debug_event_handler, debug_event);
+    }
+    return NULL;
+}
+
 static void init(void) {
 }
 
@@ -1120,7 +1140,7 @@ static void event_pid_stopped(void * arg) {
     loc_free(eap);
 }
 
-static void *wpid_handler(void *x) {
+static void * wpid_handler(void * x) {
     pid_t pid;
     int status;
     struct timeval timeout;
