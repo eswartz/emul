@@ -28,6 +28,12 @@
 extern void post_event(void (*handler)(void *), void *arg);
 extern void post_event_with_delay(void (*handler)(void *), void *arg, unsigned long us_delay);
 
+/* Cancel pending event with matching 'handler' and 'arg', or if event
+ * is not pending and 'wait' is true then wait for matching event to
+ * be posted.  Can only be called from the dispatch thread.  Returns
+ * true if a posted event was cancelled. */
+extern int cancel_event(void (*handler)(void *), void *arg, int wait);
+
 extern int is_dispatch_thread(void);
 
 extern void run_event_loop(void);

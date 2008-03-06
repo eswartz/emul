@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <signal.h>
 #include "mdep.h"
+#include "asyncreq.h"
 #include "events.h"
 #include "trace.h"
 #include "cmdline.h"
@@ -48,6 +49,7 @@ int main(int argc, char **argv) {
 #endif
     ini_mdep();
     ini_trace();
+    ini_asyncreq();
     ini_events_queue();
 
 #if defined(_WRS_KERNEL)

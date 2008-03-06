@@ -22,7 +22,7 @@
 #include "context.h"
 #include "json.h"
 #include "exceptions.h"
-#include "memory.h"
+#include "memoryservice.h"
 #include "runctrl.h"
 #include "myalloc.h"
 #include "channel.h"

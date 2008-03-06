@@ -83,6 +83,14 @@ LINK32=link.exe
 # Name "agent - Win32 Debug"
 # Begin Source File
 
+SOURCE=.\asyncreq.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\asyncreq.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\base64.c
 # End Source File
 # Begin Source File

@@ -42,12 +42,15 @@ pthread_t event_thread = 0;
 
 static pthread_mutex_t event_lock;
 static pthread_cond_t event_cond;
+static pthread_cond_t cancel_cond;
 
 static event_node * event_queue = NULL;
 static event_node * event_last = NULL;
 static event_node * timer_queue = NULL;
 static event_node * free_queue = NULL;
 static int free_queue_size = 0;
+static void (*cancel_handler)(void *);
+static void *cancel_arg;
 
 static int time_cmp(const struct timespec *tv1, const struct timespec *tv2) {
     if (tv1->tv_sec < tv2->tv_sec) return -1;
@@ -102,6 +105,12 @@ void post_event_with_delay(void (*handler)(void *), void *arg, unsigned long del
     event_node ** qpp;
 
     pthread_mutex_lock(&event_lock);
+    if (cancel_handler == handler && cancel_arg == arg) {
+        cancel_handler = NULL;
+        pthread_cond_signal(&cancel_cond);
+        pthread_mutex_unlock(&event_lock);
+        return;
+    }
     ev = alloc_node(handler, arg);
     if (clock_gettime(CLOCK_REALTIME, &ev->runtime)) {
         perror("clock_gettime");
@@ -127,6 +136,12 @@ void post_event(void (*handler)(void *), void *arg) {
     event_node * ev;
 
     pthread_mutex_lock(&event_lock);
+    if (cancel_handler == handler && cancel_arg == arg) {
+        cancel_handler = NULL;
+        pthread_cond_signal(&cancel_cond);
+        pthread_mutex_unlock(&event_lock);
+        return;
+    }
     ev = alloc_node(handler, arg);
 
     if (event_queue == NULL) {
@@ -142,6 +157,74 @@ void post_event(void (*handler)(void *), void *arg) {
     pthread_mutex_unlock(&event_lock);
 }
 
+int cancel_event(void (*handler)(void *), void *arg, int wait) {
+    event_node * ev;
+    event_node * prev;
+
+    assert(is_dispatch_thread());
+    assert(handler != NULL);
+    assert(cancel_handler == NULL);
+
+    trace(LOG_EVENTCORE, "cancel_event: handler %#x, arg %#x, wait %d", handler, arg, wait);
+    pthread_mutex_lock(&event_lock);
+    prev = NULL;
+    ev = event_queue;
+    while (ev != NULL) {
+        if (ev->handler == handler && ev->arg == arg) {
+            if (prev == NULL) {
+                event_queue = ev->next;
+                if (event_queue == NULL) {
+                    assert(event_last == ev);
+                    event_last = NULL;
+                }
+            }
+            else {
+                prev->next = ev->next;
+                if (ev->next == NULL) {
+                    assert(event_last == ev);
+                    event_last = prev;
+                }
+            }
+            free_node(ev);
+            pthread_mutex_unlock(&event_lock);
+            return 1;
+        }
+        prev = ev;
+        ev = ev->next;
+    }
+
+    prev = NULL;
+    ev = timer_queue;
+    while (ev != NULL) {
+        if (ev->handler == handler && ev->arg == arg) {
+            if (prev == NULL) {
+                timer_queue = ev->next;
+            }
+            else {
+                prev->next = ev->next;
+            }
+            free_node(ev);
+            pthread_mutex_unlock(&event_lock);
+            return 1;
+        }
+        prev = ev;
+        ev = ev->next;
+    }
+
+    if (!wait) {
+        pthread_mutex_unlock(&event_lock);
+        return 0;
+    }
+
+    cancel_handler = handler;
+    cancel_arg = arg;
+    do {
+        pthread_cond_wait(&cancel_cond, &event_lock);
+    } while (cancel_handler != NULL);
+    pthread_mutex_unlock(&event_lock);
+    return 1;
+}
+
 int is_dispatch_thread(void) {
     return event_thread == pthread_self();
 }
@@ -151,6 +234,7 @@ void ini_events_queue(void) {
     event_thread = pthread_self();
     pthread_mutex_init(&event_lock, NULL);
     pthread_cond_init(&event_cond, NULL);
+    pthread_cond_init(&cancel_cond, NULL);
 }
 
 void run_event_loop(void) {
@@ -191,4 +275,5 @@ void run_event_loop(void) {
         free_node(ev);
     }
 }
+
 

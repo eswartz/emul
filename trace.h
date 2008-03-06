@@ -27,6 +27,7 @@
 #define LOG_PROTOCOL    0x20
 #define LOG_CONTEXT     0x40
 #define LOG_DISCOVERY   0x80
+#define LOG_ASYNCREQ    0x100
 
 extern FILE * log_file;
 extern int log_mode;

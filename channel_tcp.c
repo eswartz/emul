@@ -31,6 +31,7 @@
 #include "json.h"
 #include "peer.h"
 #include "ip_ifc.h"
+#include "asyncreq.h"
 
 #define ESC 3
 #define BUF_SIZE 0x1000
@@ -47,20 +48,16 @@ struct ChannelTCP {
     Channel chan;           /* Public channel information - must be first */
     int magic;              /* Magic number */
     int socket;             /* Socket file descriptor */
-    pthread_t thread;       /* Socket receiving thread */
-    int thread_exited;
-    pthread_mutex_t mutex;  /* Channel data access synchronization lock */
-    pthread_cond_t signal;
     int long_msg;           /* Message is longer then buffer, handlig should start before receiving EOM */
-    int waiting_space;      /* Receiving thread is waiting for buffer space */
-    int waiting_data;       /* Dispatch thread is waiting for data to read (long messages only) */
     int message_count;      /* Number of messages waiting to be dispatched */
-    int event_posted;       /* Message handling event is posted to event queue */
     int lock_cnt;           /* Stream lock count, when > 0 channel cannot be deleted */
-    int handling_msg;       /* Stream mutex is locked for input message handling */
+    int handling_msg;       /* Channel in the process of handling a message */
+    int read_pending;       /* Read request is pending */
 
     /* Input stream buffer */
     unsigned char ibuf[BUF_SIZE];
+    int ibuf_full;
+    int ibuf_esc;
     int ibuf_inp;
     int ibuf_out;
     int eof;
@@ -70,6 +67,9 @@ struct ChannelTCP {
     char obuf[BUF_SIZE];
     int obuf_inp;
     int out_errno;
+
+    /* Async read request */
+    AsyncReqInfo rdreq;
 };
 
 typedef struct ServerTCP ServerTCP;
@@ -79,9 +79,9 @@ struct ServerTCP {
     int sock;
     TCFSuspendGroup * spg;
     TCFBroadcastGroup * bcg;
-    pthread_t server_thread;
     PeerServer * ps;
     LINK servlink;
+    AsyncReqInfo accreq;
 };
 
 #define channel2tcp(A)  ((ChannelTCP *)((char *)(A) - offsetof(ChannelTCP, chan)))
@@ -93,6 +93,8 @@ struct ServerTCP {
 static ChannelCloseListener close_listeners[16];
 static int close_listeners_cnt = 0;
 static LINK server_list;
+static void tcp_channel_read_done(void * x);
+static void handle_channel_msg(void * x);
 
 static void delete_channel(ChannelTCP * c) {
     int i;
@@ -177,27 +179,44 @@ static void write_stream(OutputStream * out, int byte) {
     }
 }
 
+static void trigger_read(ChannelTCP * channel) {
+    if (channel->read_pending || channel->ibuf_full) return;
+#if 0
+    if (channel->ibuf_inp == channel->ibuf_out) {
+        /* Optimization to allow large read when fifo is empty */
+        channel->ibuf_inp = channel->ibuf_out = 0;
+    }
+#endif
+    channel->read_pending = 1;
+    channel->rdreq.u.sio.bufp = channel->ibuf + channel->ibuf_inp;
+    if (channel->ibuf_out <= channel->ibuf_inp) {
+        channel->rdreq.u.sio.bufsz = BUF_SIZE - channel->ibuf_inp;
+    }
+    else {
+        channel->rdreq.u.sio.bufsz = channel->ibuf_out - channel->ibuf_inp;
+    }
+    async_req_post(&channel->rdreq);
+}
+
 static int read_byte(ChannelTCP * channel) {
     int res;
+    int out;
+
     assert(channel->message_count > 0);
-    while (channel->ibuf_inp == channel->ibuf_out) {
+    while (channel->ibuf_inp == (out = channel->ibuf_out) && !channel->ibuf_full) {
         assert(channel->long_msg);
         assert(channel->message_count == 1);
-        if (channel->waiting_space) {
-            assert(!channel->waiting_data);
-            pthread_cond_signal(&channel->signal);
-            channel->waiting_space = 0;
-        }
         if (channel->eof) return MARKER_EOS;
         if (channel->socket < 0) return MARKER_EOS;
-        assert(!channel->waiting_data);
-        assert(!channel->waiting_space);
-        channel->waiting_data = 1;
-        pthread_cond_wait(&channel->signal, &channel->mutex);
-        assert(!channel->waiting_data);
+        trigger_read(channel);
+        cancel_event(tcp_channel_read_done, &channel->rdreq, 1);
+        tcp_channel_read_done(&channel->rdreq);
     }
-    res = channel->ibuf[channel->ibuf_out];
-    channel->ibuf_out = (channel->ibuf_out + 1) % BUF_SIZE;
+    res = channel->ibuf[out++];
+    if (out == BUF_SIZE) out = 0;
+    channel->ibuf_out = out;
+    channel->ibuf_full = 0;
+    trigger_read(channel);
     return res;
 }
 
@@ -207,6 +226,7 @@ static int read_stream(InputStream * inp) {
 
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
+    assert(c->handling_msg == 2);
 
     if (c->peek != MARKER_NULL) {
         assert(c->peek != MARKER_EOM);
@@ -214,10 +234,6 @@ static int read_stream(InputStream * inp) {
         c->peek = MARKER_NULL;
     }
     else {
-        if (!c->handling_msg) {
-            pthread_mutex_lock(&c->mutex);
-            c->handling_msg = 1;
-        }
         b = read_byte(c);
         if (b == ESC) {
             b = read_byte(c);
@@ -227,13 +243,13 @@ static int read_stream(InputStream * inp) {
             else if (b == 1) {
                 b = MARKER_EOM;
                 c->message_count--;
-                if (c->waiting_space) {
-                    assert(!c->waiting_data);
-                    pthread_cond_signal(&c->signal);
-                    c->waiting_space = 0;
+                if (c->message_count && !is_suspended(c)) {
+                    post_event(handle_channel_msg, c);
+                    c->handling_msg = 1;
                 }
-                pthread_mutex_unlock(&c->mutex);
-                c->handling_msg = 0;
+                else {
+                    c->handling_msg = 0;
+                }
             }
             else if (b == 2) {
                 b = MARKER_EOS;
@@ -264,61 +280,49 @@ static void send_eof_and_close(Channel * channel, int err) {
 static void handle_channel_msg(void * x) {
     Trap trap;
     ChannelTCP * c = (ChannelTCP *)x;
+
     assert(is_dispatch_thread());
-    for (;;) {
-        assert(c->magic == CHANNEL_MAGIC);
-        if (!c->handling_msg) {
-            pthread_mutex_lock(&c->mutex);
-            c->handling_msg = 1;
-        }
-        assert(c->event_posted);
-        if (c->thread_exited && (c->socket < 0 || c->message_count == 0 || c->long_msg)) {
-            void * res = NULL;
-            c->event_posted = 0;
-            c->handling_msg = 0;
-            pthread_mutex_unlock(&c->mutex);
-            if (c->thread) pthread_join(c->thread, &res);
-            if (c->socket >= 0) send_eof_and_close(&c->chan, 0);
-            tcp_unlock(&c->chan);
-            return;
-        }
-        if (c->message_count == 0 || is_suspended(c)) {
-            c->event_posted = 0;
-            c->handling_msg = 0;
-            pthread_mutex_unlock(&c->mutex);
-            break;
-        }
-        if (set_trap(&trap)) {
-            c->chan.cb->receive(&c->chan);
-            clear_trap(&trap);
-        }
-        else {
-            trace(LOG_ALWAYS, "Exception handling protocol message: %d %s",
-                trap.error, errno_to_str(trap.error));
-            c->peek = MARKER_NULL;
-            c->ibuf_out = c->ibuf_inp;
-            c->message_count = 0;
-            send_eof_and_close(&c->chan, trap.error);
-        }
+    assert(c->magic == CHANNEL_MAGIC);
+    assert(c->handling_msg == 1);
+    assert(c->message_count);
+
+    if (is_suspended(c)) {
+        /* Honor suspend before message processing started */
+        c->handling_msg = 0;
+        return;
     }
-    if (c->chan.bcg) {
-        c->chan.bcg->out.flush(&c->chan.bcg->out);
+    c->handling_msg = 2;                /* Processing message */
+    if (set_trap(&trap)) {
+        c->chan.cb->receive(&c->chan);
+        clear_trap(&trap);
     }
     else {
-        c->chan.out.flush(&c->chan.out);
+        trace(LOG_ALWAYS, "Exception handling protocol message: %d %s",
+              trap.error, errno_to_str(trap.error));
+        c->peek = MARKER_NULL;
+        c->ibuf_out = c->ibuf_inp;
+        c->ibuf_full = 0;
+        c->message_count = 0;
+        send_eof_and_close(&c->chan, trap.error);
+    }
+    if (c->handling_msg == 0) {
+        /* Completed processing of current message and there are no
+         * messages pending - flush output */
+        if (c->chan.bcg) {
+            c->chan.bcg->out.flush(&c->chan.bcg->out);
+        }
+        else {
+            c->chan.out.flush(&c->chan.out);
+        }
     }
 }
 
 static void channel_check_pending(Channel * c) {
     ChannelTCP * channel = channel2tcp(c);
     assert(is_dispatch_thread());
-    if (!is_suspended(channel)) {
-        pthread_mutex_lock(&channel->mutex);
-        if (channel->message_count > 0 && !channel->event_posted) {
-            post_event(handle_channel_msg, channel);
-            channel->event_posted = 1;
-        }
-        pthread_mutex_unlock(&channel->mutex);
+    if (!channel->handling_msg && channel->message_count && !is_suspended(channel)) {
+        post_event(handle_channel_msg, channel);
+        channel->handling_msg = 1;
     }
 }
 
@@ -326,119 +330,95 @@ static int channel_get_message_count(Channel * c) {
     ChannelTCP * channel = channel2tcp(c);
     int cnt;
     assert(is_dispatch_thread());
-    pthread_mutex_lock(&channel->mutex);
     cnt = channel->message_count;
-    pthread_mutex_unlock(&channel->mutex);
     return cnt;
 }
 
-static void * stream_socket_handler(void * x) {
-    int i;
-    int esc = 0;
-    ChannelTCP * channel = (ChannelTCP *)x;
-    unsigned char pkt[BUF_SIZE];
+static void tcp_channel_read_done(void * x) {
+    AsyncReqInfo * req = x;
+    ChannelTCP * c = req->client_data;
+    int inp;
+    int len;
+    int esc;
 
-    pthread_mutex_lock(&channel->mutex);
-    while (!channel->eof && channel->socket >= 0) {
-        int err = 0;
-        int rd = 0;
+    assert(is_dispatch_thread());
+    assert(c->magic == CHANNEL_MAGIC);
+    assert(c->read_pending != 0);
+    c->read_pending = 0;
+    if (req->error) {
+        trace(LOG_ALWAYS, "Can't read from socket: %s", errno_to_str(req->error));
+        if (c->socket < 0) return;
+        c->eof = 1;
+        return;
+    }
+    len = c->rdreq.u.sio.rval;
+    if (len == 0) {
+        trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel 0x%08x", c);
+        c->eof = 1;
+        return;
+    }
 
-        pthread_mutex_unlock(&channel->mutex);
-        rd = recv(channel->socket, (void *)pkt, sizeof(pkt), 0);
-        err = errno;
-        assert(channel->magic == CHANNEL_MAGIC);
-        pthread_mutex_lock(&channel->mutex);
-
-        if (rd < 0) {
-            trace(LOG_ALWAYS, "Can't read from socket: %s", errno_to_str(errno));
-            if (channel->socket < 0) break;
-            channel->eof = 1;
-            break;
-        }
-
-        if (rd == 0) {
-            trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel 0x%08x", channel);
-            channel->eof = 1;
-            break;
-        }
-
-        for (i = 0; i < rd && !channel->eof; i++) {
-            unsigned char ch = pkt[i];
-            int ibuf_next = (channel->ibuf_inp + 1) % BUF_SIZE;
-            while (ibuf_next == channel->ibuf_out) {
-                if (channel->message_count == 0 && !channel->long_msg) {
-                    channel->long_msg = 1;
-                    channel->message_count = 1;
-                    if (!is_suspended(channel) && !channel->event_posted) {
-                        post_event(handle_channel_msg, channel);
-                        channel->event_posted = 1;
+    /* Preprocess newly read data to count messages */
+    inp = c->ibuf_inp;
+    esc = c->ibuf_esc;
+    while (len-- > 0) {
+        unsigned char ch = c->ibuf[inp++];
+        if (inp == BUF_SIZE) inp = 0;
+        if (esc) {
+            esc = 0;
+            switch (ch) {
+            case 0:
+                /* ESC byte */
+                break;
+            case 1:
+                /* EOM - End Of Message */
+                if (c->long_msg) {
+                    c->long_msg = 0;
+                    assert(c->message_count == 1);
+                }
+                else {
+                    c->message_count++;
+                    if (!c->handling_msg && !is_suspended(c)) {
+                        post_event(handle_channel_msg, c);
+                        c->handling_msg = 1;
                     }
                 }
-                assert(channel->message_count > 0);
-                assert(!channel->waiting_data);
-                assert(!channel->waiting_space);
-                channel->waiting_space = 1;
-                pthread_cond_wait(&channel->signal, &channel->mutex);
-                assert(ibuf_next == (channel->ibuf_inp + 1) % BUF_SIZE);
-                assert(!channel->waiting_space);
+                break;
+            case 2:
+                /* EOS - End Of Stream */
+                trace(LOG_PROTOCOL, "End of stream on channel 0x%08x", c);
+                c->eof = 1;
+                break;
+            default:
+                /* Invalid escape sequence */
+                trace(LOG_ALWAYS, "Protocol: Invalid escape sequence");
+                c->eof = 1;
+                ch = 2;
+                break;
             }
-            if (esc) {
-                esc = 0;
-                switch (ch) {
-                case 0:
-                    /* ESC byte */
-                    break;
-                case 1:
-                    /* EOM - End Of Message */
-                    if (channel->long_msg) {
-                        channel->long_msg = 0;
-                        assert(channel->message_count == 1);
-                    }
-                    else {
-                        channel->message_count++;
-                        if (!is_suspended(channel) && !channel->event_posted) {
-                            post_event(handle_channel_msg, channel);
-                            channel->event_posted = 1;
-                        }
-                    }
-                    break;
-                case 2:
-                    /* EOS - End Of Stream */
-                    trace(LOG_PROTOCOL, "End of stream on channel 0x%08x", channel);
-                    channel->eof = 1;
-                    break;
-                default:
-                    /* Invalid escape sequence */
-                    trace(LOG_ALWAYS, "Protocol: Invalid escape sequence");
-                    channel->eof = 1;
-                    ch = 2;
-                    break;
-                }
-            }
-            else {
-                esc = ch == ESC;
-            }
-            channel->ibuf[channel->ibuf_inp] = ch;
-            channel->ibuf_inp = ibuf_next;
-            if (channel->waiting_data) {
-                assert(!channel->waiting_space);
-                pthread_cond_signal(&channel->signal);
-                channel->waiting_data = 0;
+        }
+        else if (ch == ESC) {
+            esc = 1;
+        }
+    }
+    c->ibuf_esc = esc;
+    c->ibuf_inp = inp;
+
+    if (inp == c->ibuf_out) {
+        c->ibuf_full = 1;
+        if (c->message_count == 0) {
+            /* Buffer full with incomplete message - start processing anyway */
+            c->long_msg = 1;
+            c->message_count++;
+            if (!c->handling_msg && !is_suspended(c)) {
+                post_event(handle_channel_msg, c);
+                c->handling_msg = 1;
             }
         }
     }
-    if (channel->waiting_data) {
-        assert(!channel->waiting_space);
-        pthread_cond_signal(&channel->signal);
-        channel->waiting_data = 0;
+    else {
+        trigger_read(c);
     }
-    if (!channel->event_posted) {
-        post_event(handle_channel_msg, channel);
-        channel->event_posted = 1;
-    }
-    channel->thread_exited = 1;
-    pthread_mutex_unlock(&channel->mutex);
-    return NULL;
 }
 
 static ChannelTCP * create_channel(int sock) {
@@ -453,8 +433,6 @@ static ChannelTCP * create_channel(int sock) {
 
     c = loc_alloc_zero(sizeof *c);
     c->magic = CHANNEL_MAGIC;
-    pthread_mutex_init(&c->mutex, NULL);
-    pthread_cond_init(&c->signal, NULL);
     c->chan.inp.read = read_stream;
     c->chan.inp.peek = peek_stream;
     c->chan.out.write = write_stream;
@@ -471,7 +449,6 @@ static ChannelTCP * create_channel(int sock) {
 }
 
 static void start_channel(ChannelTCP * c) {
-    int error;
 
     if (c->chan.spg) list_add_last(&c->chan.susplink, &c->chan.spg->channels);
     if (c->chan.bcg) list_add_last(&c->chan.bclink, &c->chan.bcg->channels);
@@ -481,12 +458,11 @@ static void start_channel(ChannelTCP * c) {
 
     c->chan.cb->connecting(&c->chan);
 
-    error = pthread_create(&c->thread, &pthread_create_attr, stream_socket_handler, c);
-    if (error) {
-        trace(LOG_ALWAYS, "Can't create a thread: %d %s", error, errno_to_str(error));
-        send_eof_and_close(&c->chan, 0);
-        tcp_unlock(&c->chan);
-    }
+    c->rdreq.done = tcp_channel_read_done;
+    c->rdreq.client_data = c;
+    c->rdreq.type = AsyncReqReadSock;
+    c->rdreq.u.sio.sock = c->socket;
+    trigger_read(c);
 }
 
 static void refresh_peer_server(int sock, PeerServer * ps) {
@@ -551,41 +527,27 @@ static void refresh_all_peer_server(void *x) {
     post_event_with_delay(refresh_all_peer_server, NULL, REFRESH_TIME*1000*1000);
 }
 
-struct NewChannelInfo {
-    int sock;
-    ServerTCP * si;
-};
-
-static void handle_channel_open(void * x) {
-    struct NewChannelInfo * i = x;
+static void tcp_server_accept_done(void * x) {
+    AsyncReqInfo * req = x;
+    ServerTCP * si = req->client_data;
     ChannelTCP * c;
+    int sock;
 
-    c = create_channel(i->sock);
-    i->si->serv.cb->newConnection(&i->si->serv, &c->chan);
-    start_channel(c);
-    loc_free(i);
-}
-
-static void * tcp_server_socket_handler(void * x) {
-    ServerTCP * si = x;
-
-    while (si->sock >= 0) {
-        struct NewChannelInfo *i;
-        int sock = accept(si->sock, NULL, NULL);
-        if (sock < 0) {
-            if (si->sock < 0) {
-                break;
-            }
-            trace(LOG_ALWAYS, "socket accept failed: %d %s", errno, errno_to_str(errno));
-            continue;
-        }
-        i = loc_alloc(sizeof *i);
-        i->sock = sock;
-        i->si = si;
-        post_event(handle_channel_open, i);
+    if (si->sock < 0) {
+        /* Server closed. */
+        loc_free(si);
+        return;
     }
-    loc_free(si);
-    return 0;
+    if (req->error) {
+        trace(LOG_ALWAYS, "socket accept failed: %d %s", req->error, errno_to_str(req->error));
+        async_req_post(req);
+        return;
+    }
+    sock = req->u.acc.rval;
+    async_req_post(req);
+    c = create_channel(sock);
+    si->serv.cb->newConnection(&si->serv, &c->chan);
+    start_channel(c);
 }
 
 static void server_close(ChannelServer * serv) {
@@ -678,10 +640,14 @@ ChannelServer * channel_tcp_server(PeerServer * ps, ChannelServerCallbacks * cb,
     }
     list_add_last(&si->servlink, &server_list);
     refresh_peer_server(sock, ps);
-    if (pthread_create(&si->server_thread, &pthread_create_attr, tcp_server_socket_handler, si) != 0) {
-        perror("Can't create socket listener thread");
-        return NULL;
-    }
+
+    si->accreq.done = tcp_server_accept_done;
+    si->accreq.client_data = si;
+    si->accreq.type = AsyncReqAccept;
+    si->accreq.u.acc.sock = sock;
+    si->accreq.u.acc.addr = NULL;
+    si->accreq.u.acc.addrlen = NULL;
+    async_req_post(&si->accreq);
     return &si->serv;
 }
 

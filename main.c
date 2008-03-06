@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <signal.h>
 #include "mdep.h"
+#include "asyncreq.h"
 #include "events.h"
 #include "trace.h"
 #include "myalloc.h"
@@ -115,6 +116,7 @@ int main(int argc, char ** argv) {
 #endif
     ini_mdep();
     ini_trace();
+    ini_asyncreq();
     ini_events_queue();
     ini_expression_library();
 
