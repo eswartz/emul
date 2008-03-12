@@ -124,7 +124,6 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
                             updateItems();
                         }
                     }
-                    assert false;
                 }
             });
         }
