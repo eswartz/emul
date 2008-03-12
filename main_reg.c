@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 #if defined(_WRS_KERNEL)
     
     progname = "tcf";
-    log_file = stdout;
+    open_log_file("-");
     log_mode = 0;
     
 #else
@@ -103,17 +103,7 @@ int main(int argc, char **argv) {
         }
     }
     
-    /* Create log file */
-    if (log_name == 0) {
-        log_file = NULL;
-    }
-    else if (strcmp(log_name, "-") == 0) {
-        log_file = stderr;
-    }
-    else if ((log_file = fopen(log_name, "a")) == NULL) {
-        fprintf(stderr, "%s: error: cannot create log file %s\n", progname, log_name);
-        exit(1);
-    }
+    open_log_file(log_name);
     
 #endif
 

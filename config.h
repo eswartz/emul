@@ -42,7 +42,7 @@
 #define SERVICE_FileSystem      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_SysMonitor      TARGET_UNIX
 
-#endif
+#define ENABLE_Trace 1
 
 #ifdef CONFIG_MAIN
 /*
@@ -97,6 +97,6 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
     ini_diagnostics_service(proto);
 }
 
-#endif
+#endif /* CONFIG_MAIN */
 
-
+#endif /* D_config */

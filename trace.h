@@ -16,6 +16,7 @@
 #ifndef D_trace
 #define D_trace
 
+#include "config.h"
 #include <stdio.h>
 
 #define LOG_ALWAYS      0x0
@@ -29,17 +30,32 @@
 #define LOG_DISCOVERY   0x80
 #define LOG_ASYNCREQ    0x100
 
-extern FILE * log_file;
 extern int log_mode;
+
+#if ENABLE_Trace
 
 /*
  * Print a trace message into log file.
- * Use macro 'trace' intead of calling this function directly.
+ * Use macro 'trace' instead of calling this function directly.
  */
-extern int print_trace(int mode, char *fmt, ...);
+extern int print_trace(int mode, char * fmt, ...);
+
+extern FILE * log_file;
 
 #define trace log_file && print_trace
 
+#else /* not ENABLE_Trace */
+
+#if _MSC_VER >= 1400 || __GNUC__
+#  define trace(...) ((void)0)
+#else
+#  define trace 0 &&
+#endif
+
+#endif /* ENABLE_Trace */
+
 extern void ini_trace(void);
+
+extern void open_log_file(char * name);
 
 #endif

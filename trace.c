@@ -9,15 +9,19 @@
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
+#include "mdep.h"
+#include "trace.h"
+
+int log_mode = LOG_EVENTS | LOG_CHILD | LOG_WAITPID | LOG_CONTEXT | LOG_PROTOCOL;
+
+#if ENABLE_Trace
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <errno.h>
-#include "mdep.h"
-#include "trace.h"
 
 FILE * log_file = NULL;
-int log_mode = LOG_EVENTS | LOG_CHILD | LOG_WAITPID | LOG_CONTEXT | LOG_PROTOCOL;
 
 static pthread_mutex_t mutex;
 
@@ -53,8 +57,27 @@ int print_trace(int mode, char *fmt, ...) {
     return 1;
 }
 
+#endif
+
+void open_log_file(char * log_name) {
+#if ENABLE_Trace
+    if (log_name == 0) {
+        log_file = NULL;
+    }
+    else if (strcmp(log_name, "-") == 0) {
+        log_file = stderr;
+    }
+    else if ((log_file = fopen(log_name, "a")) == NULL) {
+        fprintf(stderr, "TCF: error: cannot create log file %s\n", log_name);
+        exit(1);
+    }
+#endif
+}
+
 void ini_trace(void) {
+#if ENABLE_Trace
     pthread_mutex_init(&mutex, NULL);
+#endif
 }
 
 
