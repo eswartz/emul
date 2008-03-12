@@ -13,7 +13,7 @@
  * This module implements reading and caching of ELF files.
  */
 #include "config.h"
-#if SERVICE_LineNumbers || SERVICE_Symbols
+#if (SERVICE_LineNumbers) || (SERVICE_Symbols)
 
 #include <assert.h>
 #include <string.h>

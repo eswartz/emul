@@ -299,6 +299,7 @@ static int address_expression_identifier(char * name, Value * v) {
         string_value(v, thread_id(expression_context));
         return 0;
     }
+#if SERVICE_Symbols
     if (find_symbol(expression_context, name, &sym) < 0) {
         if (errno != ERR_SYM_NOT_FOUND) return -1;
     }
@@ -307,6 +308,7 @@ static int address_expression_identifier(char * name, Value * v) {
         v->value = sym.value;
         return 0;
     }
+#endif
     errno = ERR_SYM_NOT_FOUND;
     return -1;
 }

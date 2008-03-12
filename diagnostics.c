@@ -129,7 +129,7 @@ static void command_get_symbol(char * token, Channel * c) {
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     
-#if SERVICE_RunControl && SERVICE_Symbols
+#if (SERVICE_RunControl) && (SERVICE_Symbols)
     ctx = id2ctx(id);
     if (ctx == NULL || ctx->exited) {
         error = ERR_INV_CONTEXT;
