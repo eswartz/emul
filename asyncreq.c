@@ -91,7 +91,16 @@ static void * worker_thread_handler(void * x) {
         post_event(req->done, req);
         wt->req = NULL;
         list_add_last(&wt->wtlink, &wtlist);
-        pthread_cond_wait(&wt->cond, &wtlock);
+        for (;;) {
+            LINK *link;
+
+            pthread_cond_wait(&wt->cond, &wtlock);
+            if (wt->req != NULL) break;
+            for (link = wtlist.next; link != &wtlist; link = link->next) {
+                if (wtlink2wt(link) == wt) break;
+            }
+            assert(link != &wtlist);
+        }
         pthread_mutex_unlock(&wtlock);
     }
     return NULL;

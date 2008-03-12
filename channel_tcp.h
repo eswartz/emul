@@ -19,13 +19,11 @@
 /*
  * Start TCP channel listener
  */
-extern ChannelServer * channel_tcp_server(PeerServer * ps,
-    ChannelServerCallbacks * cb, void * client_data);
+extern ChannelServer * channel_tcp_server(PeerServer *);
 
 /*
  * Connect client side over TCP
  */
-extern Channel * channel_tcp_connect(PeerServer * ps, ChannelCallbacks * cb,
-    void *client_data, TCFSuspendGroup *, TCFBroadcastGroup *);
+extern Channel * channel_tcp_connect(PeerServer *);
 
 #endif

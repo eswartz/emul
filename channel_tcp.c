@@ -77,8 +77,6 @@ typedef struct ServerTCP ServerTCP;
 struct ServerTCP {
     ChannelServer serv;
     int sock;
-    TCFSuspendGroup * spg;
-    TCFBroadcastGroup * bcg;
     PeerServer * ps;
     LINK servlink;
     AsyncReqInfo accreq;
@@ -97,16 +95,11 @@ static void tcp_channel_read_done(void * x);
 static void handle_channel_msg(void * x);
 
 static void delete_channel(ChannelTCP * c) {
-    int i;
     trace(LOG_PROTOCOL, "Deleting channel 0x%08x", c);
     assert(c->lock_cnt == 0);
     assert(c->magic == CHANNEL_MAGIC);
-    c->chan.cb->disconnected(&c->chan);
-    for (i = 0; i < close_listeners_cnt; i++) {
-        close_listeners[i](&c->chan);
-    }
-    if (c->chan.bcg) list_remove(&c->chan.bclink);
-    if (c->chan.spg) list_remove(&c->chan.susplink);
+    channel_clear_broadcast_group(&c->chan);
+    channel_clear_suspend_group(&c->chan);
     c->magic = 0;
     loc_free(c);
 }
@@ -124,7 +117,9 @@ static void tcp_unlock(Channel * c) {
     assert(channel->magic == CHANNEL_MAGIC);
     assert(channel->lock_cnt > 0);
     channel->lock_cnt--;
-    if (channel->lock_cnt == 0) delete_channel(channel);
+    if (channel->lock_cnt == 0 && !channel->read_pending) {
+        delete_channel(channel);
+    }
 }
 
 static int tcp_is_closed(Channel * c) {
@@ -147,7 +142,7 @@ static void flush_stream(OutputStream * out) {
         int wr = send(channel->socket, channel->obuf + cnt, channel->obuf_inp - cnt, 0);
         if (wr < 0) {
             int err = errno;
-            trace(LOG_PROTOCOL, "Can't sent() on channel 0x%08x: %d %s", channel, err, errno_to_str(err));
+            trace(LOG_PROTOCOL, "Can't send() on channel 0x%08x: %d %s", channel, err, errno_to_str(err));
             channel->out_errno = err;
             return;
         }
@@ -180,7 +175,8 @@ static void write_stream(OutputStream * out, int byte) {
 }
 
 static void trigger_read(ChannelTCP * channel) {
-    if (channel->read_pending || channel->ibuf_full) return;
+    if (channel->read_pending || channel->ibuf_full ||
+        channel->socket < 0 || channel->eof) return;
 #if 0
     if (channel->ibuf_inp == channel->ibuf_out) {
         /* Optimization to allow large read when fifo is empty */
@@ -204,7 +200,7 @@ static int read_byte(ChannelTCP * channel) {
 
     assert(channel->message_count > 0);
     while (channel->ibuf_inp == (out = channel->ibuf_out) && !channel->ibuf_full) {
-        assert(channel->long_msg);
+        assert(channel->long_msg || channel->eof);
         assert(channel->message_count == 1);
         if (channel->eof) return MARKER_EOS;
         if (channel->socket < 0) return MARKER_EOS;
@@ -227,7 +223,6 @@ static int read_stream(InputStream * inp) {
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->handling_msg == 2);
-
     if (c->peek != MARKER_NULL) {
         assert(c->peek != MARKER_EOM);
         b = c->peek;
@@ -256,7 +251,6 @@ static int read_stream(InputStream * inp) {
             }
         }
     }
-
     return b;
 }
 
@@ -267,14 +261,21 @@ static int peek_stream(InputStream * inp) {
 
 static void send_eof_and_close(Channel * channel, int err) {
     ChannelTCP * c = channel2tcp(channel);
+    int i;
+
     assert(c->magic == CHANNEL_MAGIC);
+    if (c->socket < 0) return;
     write_stream(&c->chan.out, MARKER_EOS);
     write_errno(&c->chan.out, err);
     c->chan.out.write(&c->chan.out, MARKER_EOM);
     c->chan.out.flush(&c->chan.out);
-    trace(LOG_PROTOCOL, "Closing socket, channel 0x%08x", c);
     closesocket(c->socket);
     c->socket = -1;
+    for (i = 0; i < close_listeners_cnt; i++) {
+        close_listeners[i](&c->chan);
+    }
+    c->chan.disconnected(&c->chan);
+    tcp_unlock(&c->chan);
 }
 
 static void handle_channel_msg(void * x) {
@@ -292,8 +293,13 @@ static void handle_channel_msg(void * x) {
         return;
     }
     c->handling_msg = 2;                /* Processing message */
+    if (peek_stream(&c->chan.inp) == MARKER_EOS) {
+        trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel 0x%08x", c);
+        channel_close(&c->chan);
+        return;
+    }
     if (set_trap(&trap)) {
-        c->chan.cb->receive(&c->chan);
+        c->chan.receive(&c->chan);
         clear_trap(&trap);
     }
     else {
@@ -303,7 +309,8 @@ static void handle_channel_msg(void * x) {
         c->ibuf_out = c->ibuf_inp;
         c->ibuf_full = 0;
         c->message_count = 0;
-        send_eof_and_close(&c->chan, trap.error);
+        channel_close(&c->chan);
+        return;
     }
     if (c->handling_msg == 0) {
         /* Completed processing of current message and there are no
@@ -344,17 +351,26 @@ static void tcp_channel_read_done(void * x) {
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->read_pending != 0);
+    assert(!c->eof);
+    assert(c->lock_cnt != 0 || c->socket < 0);
     c->read_pending = 0;
-    if (req->error) {
-        trace(LOG_ALWAYS, "Can't read from socket: %s", errno_to_str(req->error));
-        if (c->socket < 0) return;
-        c->eof = 1;
+    if (c->socket < 0) {
+        if (c->lock_cnt == 0) {
+            delete_channel(c);
+        }
         return;
     }
     len = c->rdreq.u.sio.rval;
-    if (len == 0) {
-        trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel 0x%08x", c);
+    if (req->error || len == 0) {
+        if (req->error) {
+            trace(LOG_ALWAYS, "Can't read from socket: %s", errno_to_str(req->error));
+        }
         c->eof = 1;
+        c->message_count++;             /* Treat eof as a message */
+        if (!c->handling_msg && !is_suspended(c)) {
+            post_event(handle_channel_msg, c);
+            c->handling_msg = 1;
+        }
         return;
     }
 
@@ -421,10 +437,24 @@ static void tcp_channel_read_done(void * x) {
     }
 }
 
+static void start_channel(Channel * channel) {
+    ChannelTCP * c = channel2tcp(channel);
+
+    assert(is_dispatch_thread());
+    assert(c->magic == CHANNEL_MAGIC);
+    c->chan.connecting(&c->chan);
+    c->rdreq.done = tcp_channel_read_done;
+    c->rdreq.client_data = c;
+    c->rdreq.type = AsyncReqReadSock;
+    c->rdreq.u.sio.sock = c->socket;
+    trigger_read(c);
+}
+
 static ChannelTCP * create_channel(int sock) {
     const int i = 1;
     ChannelTCP * c;
 
+    assert(sock >= 0);
     if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&i, sizeof(i)) < 0) {
         trace(LOG_ALWAYS, "Can't set TCP_NODELAY option on a socket: %s", errno_to_str(errno));
         closesocket(sock);
@@ -437,6 +467,7 @@ static ChannelTCP * create_channel(int sock) {
     c->chan.inp.peek = peek_stream;
     c->chan.out.write = write_stream;
     c->chan.out.flush = flush_stream;
+    c->chan.start_comm = start_channel;
     c->chan.check_pending = channel_check_pending;
     c->chan.message_count = channel_get_message_count;
     c->chan.lock = tcp_lock;
@@ -445,24 +476,8 @@ static ChannelTCP * create_channel(int sock) {
     c->chan.close = send_eof_and_close;
     c->socket = sock;
     c->peek = MARKER_NULL;
+    c->lock_cnt = 1;
     return c;
-}
-
-static void start_channel(ChannelTCP * c) {
-
-    if (c->chan.spg) list_add_last(&c->chan.susplink, &c->chan.spg->channels);
-    if (c->chan.bcg) list_add_last(&c->chan.bclink, &c->chan.bcg->channels);
-
-    tcp_lock(&c->chan);
-    trace(LOG_PROTOCOL, "Starting channel 0x%08x", c);
-
-    c->chan.cb->connecting(&c->chan);
-
-    c->rdreq.done = tcp_channel_read_done;
-    c->rdreq.client_data = c;
-    c->rdreq.type = AsyncReqReadSock;
-    c->rdreq.u.sio.sock = c->socket;
-    trigger_read(c);
 }
 
 static void refresh_peer_server(int sock, PeerServer * ps) {
@@ -546,8 +561,7 @@ static void tcp_server_accept_done(void * x) {
     sock = req->u.acc.rval;
     async_req_post(req);
     c = create_channel(sock);
-    si->serv.cb->newConnection(&si->serv, &c->chan);
-    start_channel(c);
+    si->serv.new_conn(&si->serv, &c->chan);
 }
 
 static void server_close(ChannelServer * serv) {
@@ -563,7 +577,7 @@ static void server_close(ChannelServer * serv) {
     s->sock = -1;
 }
 
-ChannelServer * channel_tcp_server(PeerServer * ps, ChannelServerCallbacks * cb, void * client_data) {
+ChannelServer * channel_tcp_server(PeerServer * ps) {
     const int i = 1;
     int sock;
     int error;
@@ -629,8 +643,6 @@ ChannelServer * channel_tcp_server(PeerServer * ps, ChannelServerCallbacks * cb,
         return NULL;
     }
     si = loc_alloc(sizeof *si);
-    si->serv.client_data = client_data;
-    si->serv.cb = cb;
     si->serv.close = server_close;
     si->sock = sock;
     si->ps = ps;
@@ -651,8 +663,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps, ChannelServerCallbacks * cb,
     return &si->serv;
 }
 
-Channel * channel_tcp_connect(PeerServer * ps, ChannelCallbacks * cb,
-    void * client_data, TCFSuspendGroup * spg, TCFBroadcastGroup * bcg) {
+Channel * channel_tcp_connect(PeerServer * ps) {
     const int i = 1;
     int sock = -1;
     ChannelTCP * c = NULL;
@@ -701,10 +712,5 @@ Channel * channel_tcp_connect(PeerServer * ps, ChannelCallbacks * cb,
     if (c == NULL) {
         return NULL;
     }
-    c->chan.cb = cb;
-    c->chan.client_data = client_data;
-    c->chan.spg = spg;
-    c->chan.bcg = bcg;
-    start_channel(c);
     return &c->chan;
 }

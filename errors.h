@@ -38,6 +38,7 @@
 #define ERR_UNSUPPORTED         0x1011
 #define ERR_CHANNEL_CLOSED      0x1012
 #define ERR_COMMAND_CANCELLED   0x1013
+#define ERR_UNKNOWN_PEER        0x1014
 
 extern char * errno_to_str(int err);
 

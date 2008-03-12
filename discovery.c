@@ -42,8 +42,10 @@ static int chan_ind;
 static Channel ** chan_list;
 static Channel * client_chan;
 static int discovery_ismaster;
+static int publish_peer_refresh_active;
 static DiscoveryMasterNotificationCB master_notifier;
 static void restart_discovery(void *);
+static void generate_publish_peer_command(Channel * c, PeerServer *ps);
 
 static void generate_peer_info(PeerServer * ps, OutputStream * out) {
     int i;
@@ -91,8 +93,20 @@ static int generate_peer_added_event(PeerServer * ps, void * x) {
     return 0;
 }
 
+static int republish_one_peer(PeerServer * ps, void * x) {
+    generate_publish_peer_command(client_chan, ps);
+    return 0;
+}
+
+static void republish_all_peers(void *x) {
+    publish_peer_refresh_active = 0;
+    if (client_chan != NULL) {
+        peer_server_iter(republish_one_peer, NULL);
+    }
+}
+
 static void publish_peer_reply(Channel * c, void * client_data, int error) {
-    unsigned long refresh_time;
+    time_t refresh_time;
     char msg[256];
 
     trace(LOG_DISCOVERY, "discovery: publish peer reply");
@@ -108,6 +122,10 @@ static void publish_peer_reply(Channel * c, void * client_data, int error) {
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     trace(LOG_DISCOVERY, "  refresh_time %d", refresh_time);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (publish_peer_refresh_active == 0) {
+        publish_peer_refresh_active = 1;
+        post_event_with_delay(republish_all_peers, NULL, refresh_time*1000*1000);
+    }
 }
 
 static void generate_publish_peer_command(Channel * c, PeerServer *ps) {
@@ -150,9 +168,11 @@ void discovery_channel_remove(Channel * c) {
     for (i = 0; i < chan_ind; i++) {
         if (chan_list[i] == c) break;
     }
-    chan_ind--;
-    for (; i < chan_ind; i++) {
-        chan_list[i] = chan_list[i+1];
+    if (i < chan_ind) {
+        chan_ind--;
+        for (; i < chan_ind; i++) {
+            chan_list[i] = chan_list[i+1];
+        }
     }
 }
 
@@ -179,18 +199,17 @@ static void channel_client_receive(Channel * c) {
 
 static void channel_client_disconnected(Channel * c) {
     trace(LOG_DISCOVERY, "discovery: channel_client_disconnected");
+    assert(client_chan == c);
     discovery_channel_remove(c);
     protocol_channel_closed(c->client_data, c);
-    protocol_free(c->client_data);
+    protocol_release(c->client_data);
+    if (publish_peer_refresh_active) {
+        publish_peer_refresh_active = 0;
+        cancel_event(republish_all_peers, NULL, 0);
+    }
+    client_chan = NULL;
     post_event_with_delay(restart_discovery, NULL, 300*1000);
 }
-
-static ChannelCallbacks clientccb = {
-    channel_client_connecting,
-    channel_client_connected,
-    channel_client_receive,
-    channel_client_disconnected
-};
 
 static void peer_list_changed(PeerServer * ps, int changeType, void * client_data) {
     int i;
@@ -213,24 +232,32 @@ static void make_local_discoverable(void) {
 /*
  * Connect discovery client
  */
-Channel * discovery_client(void) {
+static void discovery_client(void) {
     Protocol * proto;
     Channel * c;
     PeerServer * ps = channel_peer_from_url(DEFAULT_DISCOVERY_URL);
 
+    if (client_chan != NULL) return;
     proto = protocol_alloc();
-    c = channel_connect(ps, &clientccb, proto, NULL, NULL);
+    ini_locator_service(proto);
+    c = channel_connect(ps);
     peer_server_free(ps);
     if (c == NULL) {
         trace(LOG_DISCOVERY, "cannot connect to TCF discovery");
-        protocol_free(proto);
-        return NULL;
+        protocol_release(proto);
+        return;
     }
+    c->connecting = channel_client_connecting;
+    c->connected = channel_client_connected;
+    c->receive = channel_client_receive;
+    c->disconnected = channel_client_disconnected;
+    c->client_data = proto;
     protocol_channel_opened(proto, c);
     add_event_handler(c, LOCATOR, "peerAdded", event_locator_peer_added);
     add_event_handler(c, LOCATOR, "peerChanged", event_locator_peer_changed);
     add_event_handler(c, LOCATOR, "peerRemoved", event_locator_peer_removed);
-    return c;
+    channel_start(c);
+    client_chan = c;
 }
 
 static int start_discovery(void) {
@@ -241,7 +268,7 @@ static int start_discovery(void) {
         discovery_ismaster = 1;
     }
     else {
-        client_chan = discovery_client();
+        discovery_client();
         if (client_chan == NULL) {
             post_event_with_delay(restart_discovery, NULL, 300*1000);
         }

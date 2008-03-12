@@ -34,8 +34,6 @@ struct TCFBroadcastGroup {
 };
 
 typedef struct Channel Channel;
-typedef struct ChannelCallbacks ChannelCallbacks;
-
 struct Channel {
     InputStream inp;                    /* Input stream */
     OutputStream out;                   /* Output stream */
@@ -46,35 +44,33 @@ struct Channel {
     char ** peer_service_list;          /* List of peer service names */
     LINK bclink;                        /* Broadcast list */
     LINK susplink;                      /* Suspend list */
-    ChannelCallbacks *cb;               /* Client callback functions */
     int congestion_level;               /* Congestion level */
 
+    /* Populated by channel implementation */
+    void (*start_comm)(Channel *);      /* Start communication */
     void (*check_pending)(Channel *);   /* Check for pending messages */
     int (*message_count)(Channel *);    /* Return number of pending messages */
     void (*lock)(Channel *);            /* Lock channel from deletion */
     void (*unlock)(Channel *);          /* Unlock channel */
     int (*is_closed)(Channel *);        /* Return true if channel is closed */
     void (*close)(Channel *, int);      /* Closed channel */
-};
 
-struct ChannelCallbacks {
-    void (*connecting)(Channel *);
-    void (*connected)(Channel *);
-    void (*receive)(Channel *);
-    void (*disconnected)(Channel *);
+    /* Populated by channel client */
+    void (*connecting)(Channel *);      /* Called when channel is ready for transmit */
+    void (*connected)(Channel *);       /* Called when channel negotiation is complete */
+    void (*receive)(Channel *);         /* Called when messages has been received */
+    void (*disconnected)(Channel *);    /* Called when channel is disconnected */
+
+    /* Channel redirecting handler. */
+    void (*redirecting)(Channel *, const char * token, const char * id);
 };
 
 typedef struct ChannelServer ChannelServer;
-typedef struct ChannelServerCallbacks ChannelServerCallbacks;
 
 struct ChannelServer {
     void * client_data;                 /* Client data */
-    ChannelServerCallbacks * cb;        /* Call back handler */
+    void (*new_conn)(ChannelServer *, Channel *); /* New connection call back */
     void (*close)(ChannelServer *);     /* Closed channel server */
-};
-
-struct ChannelServerCallbacks {
-    void (*newConnection)(ChannelServer *, Channel *);
 };
 
 /*
@@ -88,20 +84,32 @@ extern void add_channel_close_listener(ChannelCloseListener listener);
 /*
  * Start TCF channel server
  */
-extern ChannelServer * channel_server(PeerServer * ps,
-    ChannelServerCallbacks * cb, void * client_data);
+extern ChannelServer * channel_server(PeerServer *);
 
 /*
  * Connect to TCF channel server
  */
-extern Channel * channel_connect(PeerServer * ps, ChannelCallbacks * cb,
-    void * client_data, TCFSuspendGroup *, TCFBroadcastGroup *);
+extern Channel * channel_connect(PeerServer *);
+
+/*
+ * Start communication of a newly created channel
+ */
+extern void channel_start(Channel *);
+
+/*
+ * Close communication channel
+ */
+extern void channel_close(Channel *);
 
 extern TCFSuspendGroup * suspend_group_alloc(void);
 extern void suspend_group_free(TCFSuspendGroup *);
+extern void channel_set_suspend_group(Channel *, TCFSuspendGroup *);
+extern void channel_clear_suspend_group(Channel *);
 
 extern TCFBroadcastGroup * broadcast_group_alloc(void);
 extern void broadcast_group_free(TCFBroadcastGroup *);
+extern void channel_set_broadcast_group(Channel *, TCFBroadcastGroup *);
+extern void channel_clear_broadcast_group(Channel *);
 
 extern void stream_lock(Channel *);
 extern void stream_unlock(Channel *);

@@ -118,7 +118,6 @@ int main(int argc, char ** argv) {
     
 #endif
 
-    ini_proxy_service();
     if (discovery_start(discovery_default_master_notifier)) {
             discovery_default_master_notifier();
     }

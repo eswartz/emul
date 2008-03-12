@@ -56,6 +56,9 @@ extern void peer_server_free(PeerServer * ps);
 /* Add peer server information */
 extern PeerServer * peer_server_add(PeerServer * ps, unsigned int stale_delta);
 
+/* Find peer server based on ID */
+extern PeerServer * peer_server_find(const char *id);
+
 /* Remove peer server information */
 extern void peer_server_remove(const char *id);
 

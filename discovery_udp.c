@@ -80,19 +80,12 @@ static void app_strz(char * buf, int * pos, char * str) {
 }
 
 static int udp_send_peer_sever(PeerServer * ps, void * arg) {
-    struct sockaddr_in *addr = arg;
-    int i;
-    int pos = 0;
+    struct sockaddr_in * addr = arg;
     char * transport = NULL;
     char * host = NULL;
     char * port = NULL;
-    int seenName = 0;
-    int seenOSName = 0;
-    ip_ifc_info *ifc;
     struct in_addr src_addr;
-    struct sockaddr_in *dst_addr;
-    struct sockaddr_in dst_addr_buf;
-    char buf[PKT_SIZE];
+    ip_ifc_info * ifc;
 
     if ((ps->flags & (PS_FLAG_LOCAL | PS_FLAG_PRIVATE | PS_FLAG_DISCOVERABLE)) != 
         (PS_FLAG_LOCAL | PS_FLAG_DISCOVERABLE)) {
@@ -111,6 +104,13 @@ static int udp_send_peer_sever(PeerServer * ps, void * arg) {
     if (port == NULL) return 0;
 
     for (ifc = ifclist; ifc < &ifclist[ifcind]; ifc++) {
+        int i;
+        int pos = 0;
+        int seenName = 0;
+        int seenOSName = 0;
+        struct sockaddr_in * dst_addr;
+        struct sockaddr_in dst_addr_buf;
+        char buf[PKT_SIZE];
         if (src_addr.s_addr != INADDR_ANY &&
             (ifc->addr & ifc->mask) != (src_addr.s_addr & ifc->mask)) {
             /* Server address not matching this interface */
@@ -267,12 +267,11 @@ static void udp_receive_ack(void * arg) {
     PeerServer * ps = peer_server_alloc();
     char * p = m->buf + 8;
     char * e = m->buf + m->buf_len;
-    char * name;
-    char * value;
 
     assert(is_dispatch_thread());
     while (p < e) {
-        name = p;
+        char * name = p;
+        char * value = NULL;
         while (p < e && *p != '\0' && *p != '=') p++;
         if (p >= e || *p != '=') {
             p = NULL;

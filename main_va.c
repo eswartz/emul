@@ -26,12 +26,10 @@
 #include "events.h"
 #include "trace.h"
 #include "myalloc.h"
-#include "expressions.h"
-#include "cmdline.h"
-#include "context.h"
 #include "channel.h"
 #include "protocol.h"
 #include "discovery.h"
+#include "errors.h"
 
 static char * progname;
 static Protocol * proto;
@@ -67,6 +65,41 @@ static void channel_server_disconnected(Channel * c) {
     protocol_channel_closed(c->client_data, c);
 }
 
+static void initiate_redirect(Channel * c1, const char * token, const char * id) {
+    PeerServer * ps;
+    Channel * c2;
+    Protocol * p1;
+    Protocol * p2;
+
+    ps = peer_server_find(id);
+    if (ps == NULL) {
+        write_stringz(&c1->out, "R");
+        write_stringz(&c1->out, token);
+        write_errno(&c1->out, ERR_UNKNOWN_PEER);
+        c1->out.write(&c1->out, MARKER_EOM);
+        return;
+    }
+    c2 = channel_connect(ps);
+    if (c2 == NULL) {
+        write_stringz(&c1->out, "R");
+        write_stringz(&c1->out, token);
+        write_errno(&c1->out, ERR_UNKNOWN_PEER);
+        c1->out.write(&c1->out, MARKER_EOM);
+        return;
+    }
+    protocol_channel_closed(c1->client_data, c1);
+    protocol_release(c1->client_data);
+    proxy_create(c1, c2);
+    spg = suspend_group_alloc();
+    channel_set_suspend_group(c1, spg);
+    channel_set_suspend_group(c2, spg);
+    channel_start(c2);
+    write_stringz(&c1->out, "R");
+    write_stringz(&c1->out, token);
+    write_errno(&c1->out, 0);
+    c1->out.write(&c1->out, MARKER_EOM);
+}
+
 static void channel_new_connection(ChannelServer * serv, Channel * c) {
     protocol_reference(proto);
     c->client_data = proto;
@@ -76,6 +109,7 @@ static void channel_new_connection(ChannelServer * serv, Channel * c) {
     c->disconnected = channel_server_disconnected;
     channel_set_suspend_group(c, spg);
     channel_set_broadcast_group(c, bcg);
+    c->redirecting = initiate_redirect;
     channel_start(c);
     protocol_channel_opened(proto, c);
 }
@@ -87,7 +121,7 @@ static void became_discovery_master(void) {
         trace(LOG_ALWAYS, "cannot parse url: %s\n", DEFAULT_DISCOVERY_URL);
         return;
     }
-    peer_server_addprop(ps, "Description", "agent");
+    peer_server_addprop(ps, "Description", "value-add");
     serv2 = channel_server(ps);
     if (serv2 == NULL) {
         trace(LOG_ALWAYS, "cannot create second TCF server\n");
@@ -104,7 +138,6 @@ int main(int argc, char ** argv) {
     int c;
     int ind;
     int ismaster;
-    int interactive = 0;
     char * s;
     char * log_name = 0;
     char * url = "TCP:";
@@ -138,10 +171,6 @@ int main(int argc, char ** argv) {
         s++;
         while ((c = *s++) != '\0') {
             switch (c) {
-            case 'i':
-                interactive = 1;
-                break;
-
             case 'l':
             case 'L':
             case 's':
@@ -193,14 +222,11 @@ int main(int argc, char ** argv) {
     
 #endif
 
-    if (interactive) ini_cmdline_handler();
-
     bcg = broadcast_group_alloc();
     spg = suspend_group_alloc();
     proto = protocol_alloc();
     ini_locator_service(proto);
-    ini_services(proto, bcg, spg);
-    ini_contexts();
+    ini_diagnostics_service(proto);
     ismaster = discovery_start(became_discovery_master);
 
     ps = channel_peer_from_url(url);
@@ -208,7 +234,7 @@ int main(int argc, char ** argv) {
         fprintf(stderr, "invalid server URL (-s option value): %s\n", url);
         exit(1);
     }
-    peer_server_addprop(ps, "Description", "agent");
+    peer_server_addprop(ps, "Description", "value-add");
     if (ismaster) {
         if (!strcmp(peer_server_getprop(ps, "TransportName", ""), "TCP") &&
                 peer_server_getprop(ps, "Port", NULL) == NULL) {

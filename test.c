@@ -24,6 +24,10 @@
 #include "trace.h"
 #include "context.h"
 
+extern void tcf_test_func2(void);
+extern void tcf_test_func1(void);
+extern void tcf_test_func0(void);
+
 void tcf_test_func2(void) {
     usleep(1000);
 }
@@ -98,4 +102,5 @@ int run_test_process(pid_t * res) {
     return 0;
 #endif
 }
+
 

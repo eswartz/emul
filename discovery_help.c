@@ -21,6 +21,7 @@
 #include <assert.h>
 #include "mdep.h"
 #include "tcf.h"
+#include "discovery_help.h"
 #include "discovery.h"
 #include "protocol.h"
 #include "channel.h"
@@ -61,25 +62,18 @@ static void channel_server_disconnected(Channel *c) {
     protocol_channel_closed(c->client_data, c);
 }
 
-static ChannelCallbacks serverccb = {
-    channel_server_connecting,
-    channel_server_connected,
-    channel_server_receive,
-    channel_server_disconnected
-};
-
 /*
  * New incomming connection
  */
 static void discovery_new_connection(ChannelServer * serv, Channel * c) {
     c->client_data = serv->client_data;
-    c->cb = &serverccb;
+    c->connecting = channel_server_connecting;
+    c->connected = channel_server_connected;
+    c->receive = channel_server_receive;
+    c->disconnected = channel_server_disconnected;
+    channel_start(c);
     protocol_channel_opened(serv->client_data, c);
 }
-
-static ChannelServerCallbacks servercb = {
-    discovery_new_connection
-};
 
 /*
  * Create a simple default discovery server if client did not provide one
@@ -97,10 +91,13 @@ void discovery_default_master_notifier(void) {
     }
     ps->flags |= PS_FLAG_PRIVATE;
     proto = protocol_alloc();
-    serv = channel_server(ps, &servercb, proto);
+    ini_locator_service(proto);
+    serv = channel_server(ps);
     if (serv == NULL) {
         trace(LOG_ALWAYS, "cannot create TCF discovery server\n");
-        protocol_free(proto);
+        protocol_release(proto);
         return;
     }
+    serv->new_conn = discovery_new_connection;
+    serv->client_data = proto;
 }

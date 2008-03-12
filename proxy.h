@@ -17,7 +17,10 @@
 #ifndef D_proxy
 #define D_proxy
 
-extern void ini_proxy_service(void);
+#include "channel.h"
+
+extern void proxy_create(Channel * c1, Channel * c2);
 
 #endif
+
 

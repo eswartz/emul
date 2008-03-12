@@ -24,11 +24,6 @@
 #define DISCOVERY_TCF_PORT      "1534"
 
 /*
- * Connect discovery client
- */
-extern Channel * discovery_client(void);
-
-/*
  * Add channel to include in discovery updates
  */
 extern void discovery_channel_add(Channel *);

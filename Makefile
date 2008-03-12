@@ -1,8 +1,8 @@
 CC=gcc
-CFLAGS=-g -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE
+CFLAGS=-g -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -Wmissing-prototypes
 OFILES=$(filter-out main%.o,$(addsuffix .o,$(basename $(wildcard *.c))))
 HFILES=$(wildcard *.h)
-EXES=agent client tcfreg
+EXES=agent client tcfreg valueadd
 UNAME=$(shell uname -o)
 
 ifeq ($(UNAME),Cygwin)
@@ -22,8 +22,11 @@ client: main_client.o $(OFILES)
 tcfreg: main_reg.o $(OFILES)
 	$(CC) $(CFLAGS) -o $@ main_reg.o $(OFILES) $(LIBS)
 
+valueadd: main_va.o $(OFILES)
+	$(CC) $(CFLAGS) -o $@ main_va.o $(OFILES) $(LIBS)
+
 %.o: %.c $(HFILES)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f *.o $(EXES)
+	rm -f *.o *.exe $(EXES)

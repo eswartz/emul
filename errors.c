@@ -52,6 +52,14 @@ char * errno_to_str(int err) {
         return "Execution context is running";
     case ERR_DWARF:
         return "Error reading DWARF data";
+    case ERR_UNSUPPORTED:
+        return "Unsupported command";
+    case ERR_CHANNEL_CLOSED:
+        return "Channel closed";
+    case ERR_COMMAND_CANCELLED:
+        return "Command cancelled";
+    case ERR_UNKNOWN_PEER:
+        return "Unknown peer id";
     default:
         return strerror(err);
     }

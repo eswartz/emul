@@ -134,6 +134,18 @@ void suspend_group_free(TCFSuspendGroup * p) {
     loc_free(p);
 }
 
+void channel_set_suspend_group(Channel * c, TCFSuspendGroup * spg) {
+    if (c->spg != NULL) channel_clear_suspend_group(c);
+    list_add_last(&c->susplink, &spg->channels);
+    c->spg = spg;
+}
+
+void channel_clear_suspend_group(Channel * c) {
+    if (c->spg == NULL) return;
+    list_remove(&c->susplink);
+    c->spg = NULL;
+}
+
 TCFBroadcastGroup * broadcast_group_alloc(void) {
     TCFBroadcastGroup * p = loc_alloc(sizeof(TCFBroadcastGroup));
 
@@ -158,6 +170,18 @@ void broadcast_group_free(TCFBroadcastGroup * p) {
     assert(list_is_empty(&p->channels));
     p->magic = 0;
     loc_free(p);
+}
+
+void channel_set_broadcast_group(Channel * c, TCFBroadcastGroup * bcg) {
+    if (c->bcg != NULL) channel_clear_broadcast_group(c);
+    list_add_last(&c->bclink, &bcg->channels);
+    c->bcg = bcg;
+}
+
+void channel_clear_broadcast_group(Channel * c) {
+    if (c->bcg == NULL) return;
+    list_remove(&c->bclink);
+    c->bcg = NULL;
 }
 
 void stream_lock(Channel * c) {
@@ -247,12 +271,11 @@ PeerServer * channel_peer_from_url(const char * url) {
 /*
  * Start TCF channel server
  */
-ChannelServer * channel_server(PeerServer * ps,
-    ChannelServerCallbacks * cb, void * client_data) {
+ChannelServer * channel_server(PeerServer * ps) {
     char * transportname = peer_server_getprop(ps, "TransportName", "");
 
     if (strcmp(transportname, "TCP") == 0) {
-        return channel_tcp_server(ps, cb, client_data);
+        return channel_tcp_server(ps);
     }
     else {
         return NULL;
@@ -262,14 +285,29 @@ ChannelServer * channel_server(PeerServer * ps,
 /*
  * Connect to TCF channel server
  */
-Channel * channel_connect(PeerServer * ps, ChannelCallbacks * cb,
-    void * client_data, TCFSuspendGroup * spg, TCFBroadcastGroup * bcg) {
+Channel * channel_connect(PeerServer * ps) {
     char * transportname = peer_server_getprop(ps, "TransportName", "");
 
     if (strcmp(transportname, "TCP") == 0) {
-        return channel_tcp_connect(ps, cb, client_data, spg, bcg);
+        return channel_tcp_connect(ps);
     }
     else {
         return NULL;
     }
+}
+
+/*
+ * Start communication of a newly created channel
+ */
+void channel_start(Channel * c) {
+    trace(LOG_PROTOCOL, "Starting channel 0x%08x", c);
+    c->start_comm(c);
+}
+
+/*
+ * Close communication channel
+ */
+void channel_close(Channel *c) {
+    trace(LOG_PROTOCOL, "Closing channel 0x%08x", c);
+    c->close(c, 0);
 }

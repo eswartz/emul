@@ -19,8 +19,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "protocol.h"
 #include "trace.h"
+#include "events.h"
 #include "exceptions.h"
 #include "json.h"
 #include "myalloc.h"
@@ -36,13 +38,11 @@ struct ServiceInfo {
     struct ServiceInfo * next;
 };
 
-typedef struct ServiceInfo ServiceInfo;
-
 struct MessageHandlerInfo {
     Protocol * p;
     ServiceInfo * service;
     const char * name;
-    MessageHandler handler;
+    ProtocolCommandHandler handler;
     struct MessageHandlerInfo * next;
 };
 
@@ -52,7 +52,7 @@ struct EventHandlerInfo {
     Channel * c;
     ServiceInfo * service;
     const char * name;
-    EventHandler handler;
+    ProtocolEventHandler handler;
     struct EventHandlerInfo * next;
 };
 
@@ -76,7 +76,9 @@ static ReplyHandlerInfo * reply_handlers[REPLY_HASH_SIZE];
 static ServiceInfo * services;
 
 struct Protocol {
+    int lock_cnt;           /* Lock count, cannot delete when > 0 */
     unsigned long tokenid;
+    ProtocolMessageHandler default_handler;
 };
 
 static void read_stringz(InputStream * inp, char * str, size_t size) {
@@ -90,7 +92,7 @@ static void read_stringz(InputStream * inp, char * str, size_t size) {
     str[len] = 0;
 }
 
-static ServiceInfo * get_service(void * owner, const char * name) {
+ServiceInfo * protocol_get_service(void * owner, const char * name) {
     ServiceInfo * s = services;
 
     while (s != NULL && (s->owner != owner || strcmp(s->name, name) != 0)) s = s->next;
@@ -177,6 +179,8 @@ void handle_protocol_message(Protocol *p, Channel *c) {
     char token[256];
     char service[256];
     char name[256];
+    char *args[4];
+
     read_stringz(&c->inp, type, sizeof(type));
     if (strlen(type) != 1) {
         trace(LOG_ALWAYS, "Invalid TCF message: %s ...", type);
@@ -191,6 +195,14 @@ void handle_protocol_message(Protocol *p, Channel *c) {
         trace(LOG_PROTOCOL, "Command: C %s %s %s ...", token, service, name);
         mh = find_message_handler(p, service, name);
         if (mh == NULL) {
+            if (p->default_handler != NULL) {
+                args[0] = type;
+                args[1] = token;
+                args[2] = service;
+                args[3] = name;
+                p->default_handler(c, args, 4);
+                return;
+            }
             trace(LOG_ALWAYS, "Unsupported TCF command: %s %s ...", service, name);
             exception(ERR_PROTOCOL);
         }
@@ -215,6 +227,12 @@ void handle_protocol_message(Protocol *p, Channel *c) {
         tokenid = strtoul(token, &endptr, 10);
         if (errno != 0 || *endptr != '\0' ||
            (rh = find_reply_handler(c, tokenid, 1)) == NULL) {
+            if (p->default_handler != NULL) {
+                args[0] = type;
+                args[1] = token;
+                p->default_handler(c, args, 2);
+                return;
+            }
             trace(LOG_ALWAYS, "Reply with unexpected token: %s", token);
             exception(ERR_PROTOCOL);
         }
@@ -237,6 +255,13 @@ void handle_protocol_message(Protocol *p, Channel *c) {
         read_stringz(&c->inp, name, sizeof(name));
         trace(LOG_PROTOCOL, "Event: E %s %s ...", service, name);
         eh = find_event_handler(c, service, name);
+        if (eh == NULL && p->default_handler != NULL) {
+            args[0] = type;
+            args[1] = service;
+            args[2] = name;
+            p->default_handler(c, args, 3);
+            return;
+        }
         if (set_trap(&trap)) {
             if (eh != NULL) {
                 eh->handler(c);
@@ -270,27 +295,36 @@ void handle_protocol_message(Protocol *p, Channel *c) {
         c->congestion_level = n;
     }
     else {
+        if (p->default_handler != NULL) {
+            args[0] = type;
+            p->default_handler(c, args, 1);
+            return;
+        }
         trace(LOG_ALWAYS, "Invalid TCF message: %s ...", type);
         exception(ERR_PROTOCOL);
     }
 }
 
-void add_command_handler(Protocol *p, const char * service, const char * name, MessageHandler handler) {
+void set_default_message_handler(Protocol *p, ProtocolMessageHandler handler) {
+    p->default_handler = handler;
+}
+
+void add_command_handler(Protocol *p, const char * service, const char * name, ProtocolCommandHandler handler) {
     int h = message_hash(p, service, name);
     MessageHandlerInfo * mh = (MessageHandlerInfo *)loc_alloc(sizeof(MessageHandlerInfo));
     mh->p = p;
-    mh->service = get_service(p, service);
+    mh->service = protocol_get_service(p, service);
     mh->name = name;
     mh->handler = handler;
     mh->next = message_handlers[h];
     message_handlers[h] = mh;
 }
 
-void add_event_handler(Channel *c, const char * service, const char * name, EventHandler handler) {
+void add_event_handler(Channel *c, const char * service, const char * name, ProtocolEventHandler handler) {
     int h = event_hash(c, service, name);
     EventHandlerInfo * eh = (EventHandlerInfo *)loc_alloc(sizeof(EventHandlerInfo));
     eh->c = c;
-    eh->service = get_service(c, service);
+    eh->service = protocol_get_service(c, service);
     eh->name = name;
     eh->handler = handler;
     eh->next = event_handlers[h];
@@ -356,6 +390,10 @@ static void command_redirect(char * token, Channel *c) {
     json_read_string(&c->inp, id, sizeof(id));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (c->redirecting != NULL) {
+        c->redirecting(c, token, id);
+        return;
+    }
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, ERR_UNSUPPORTED);
@@ -392,7 +430,7 @@ static PeerServer * read_peer_properties(InputStream * inp) {
     return ps;
 }
 
-void command_publish_peer(char * token, Channel *c) {
+static void command_publish_peer(char * token, Channel *c) {
     PeerServer * ps = read_peer_properties(&c->inp);
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
@@ -448,7 +486,7 @@ static void event_locator_hello(Channel * c) {
     }
     c->peer_service_cnt = cnt;
     c->peer_service_list = list;
-    c->cb->connected(c);
+    c->connected(c);
 }
 
 void event_locator_peer_added(Channel * c) {
@@ -541,18 +579,27 @@ void protocol_channel_closed(Protocol * p, Channel * c) {
 
 Protocol * protocol_alloc(void) {
     Protocol * p = loc_alloc_zero(sizeof *p);
+
+    assert(is_dispatch_thread());
+    p->lock_cnt = 1;
     p->tokenid = 1;
-    add_command_handler(p, LOCATOR, "sync", command_sync);
-    add_command_handler(p, LOCATOR, "redirect", command_redirect);
-    add_command_handler(p, LOCATOR, "publishPeer", command_publish_peer);
     return p;
 }
 
-void protocol_free(Protocol * p) {
+void protocol_reference(Protocol * p) {
+    assert(is_dispatch_thread());
+    assert(p->lock_cnt > 0);
+    p->lock_cnt++;
+}
+
+void protocol_release(Protocol * p) {
     MessageHandlerInfo ** mhp;
     MessageHandlerInfo * mh;
     int i;
 
+    assert(is_dispatch_thread());
+    assert(p->lock_cnt > 0);
+    if (--p->lock_cnt != 0) return;
     for (i = 0; i < MESSAGE_HASH_SIZE; i++) {
         mhp = &message_handlers[i];
         while ((mh = *mhp) != NULL) {
@@ -566,4 +613,10 @@ void protocol_free(Protocol * p) {
         }
     }
     free_services(p);
+}
+
+void ini_locator_service(Protocol *p) {
+    add_command_handler(p, LOCATOR, "sync", command_sync);
+    add_command_handler(p, LOCATOR, "redirect", command_redirect);
+    add_command_handler(p, LOCATOR, "publishPeer", command_publish_peer);
 }

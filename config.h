@@ -95,8 +95,8 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
     ini_sys_mon_service(proto);
 #endif
     ini_diagnostics_service(proto);
-    ini_proxy_service();
 }
 
 #endif
+
 

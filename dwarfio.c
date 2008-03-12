@@ -164,7 +164,7 @@ void dio_Read(U1_T * Buf, U4_T Size) {
     }
 }
 
-U1_T dio_ReadU1F(void) {
+static U1_T dio_ReadU1F(void) {
     U1_T c;
     if (sDataPos >= sSection->size) exception(ERR_EOF);
     if (sBufPos < sBufLen) {

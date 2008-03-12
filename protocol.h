@@ -25,9 +25,9 @@
 typedef struct Protocol Protocol;
 typedef struct ReplyHandlerInfo ReplyHandlerInfo;
 
-
-typedef void (*MessageHandler)(char *, Channel *);
-typedef void (*EventHandler)(Channel *);
+typedef void (*ProtocolMessageHandler)(Channel *, char **, int);
+typedef void (*ProtocolCommandHandler)(char *, Channel *);
+typedef void (*ProtocolEventHandler)(Channel *);
 
 /*
  * Callback fucntion for replies of commands.  If error is non-zero
@@ -53,18 +53,26 @@ extern void event_locator_peer_changed(Channel * c);
 extern void event_locator_peer_removed(Channel * c);
 
 /*
+ * Lookup or allocate service handle for protocol or channel
+ */
+typedef struct ServiceInfo ServiceInfo;
+extern ServiceInfo * protocol_get_service(void * owner, const char * name);
+
+/*
  * Register command message handler.
  * The handler will be called for each incoming command message on the
  * specified protocl, that belongs to 'service' and has name 'name'.
  */
-extern void add_command_handler(Protocol *, const char * service, const char * name, MessageHandler handler);
+extern void add_command_handler(Protocol *, const char * service, const char * name, ProtocolCommandHandler handler);
 
 /*
  * Register event message handler.
  * The handler will be called for each incoming event message on the
  * specified channel, that belongs to 'service' and has name 'name'.
  */
-extern void add_event_handler(Channel *, const char * service, const char * name, EventHandler handler);
+extern void add_event_handler(Channel *, const char * service, const char * name, ProtocolEventHandler handler);
+
+extern void set_default_message_handler(Protocol *, ProtocolMessageHandler handler);
 
 /*
  * Send command header and register reply handler and associated client data.
@@ -98,8 +106,19 @@ extern void protocol_channel_closed(Protocol * p, Channel * c);
 extern Protocol * protocol_alloc(void);
 
 /*
- * Release protocol instance
+ * Record new reference to protocol
  */
-extern void protocol_free(Protocol *);
+extern void protocol_reference(Protocol *);
+
+/*
+ * Release protocol reference, protocol if freed when the last
+ * reference is released
+ */
+extern void protocol_release(Protocol *);
+
+/*
+ * Add locator service handlers
+ */
+extern void ini_locator_service(Protocol *p);
 
 #endif

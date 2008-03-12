@@ -199,6 +199,20 @@ PeerServer * peer_server_add(PeerServer * n, unsigned int stale_delta) {
     return n;
 }
 
+/* Find peer server based on ID */
+PeerServer * peer_server_find(const char *id) {
+    PeerServerList *pi = &peer_server_list;
+    PeerServer * s;
+
+    assert(is_dispatch_thread());
+    for (s = pi->root; s != NULL; s = s->next) {
+        if (strcmp(s->id, id) == 0) {
+            return s;
+        }
+    }
+    return NULL;
+}
+
 void peer_server_remove(const char *id) {
     PeerServerList *pi = &peer_server_list;
     PeerServer ** sp = &pi->root;

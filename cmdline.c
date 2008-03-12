@@ -60,14 +60,8 @@ static void channel_disconnected(Channel * c) {
     trace(LOG_ALWAYS, "channel_disconnected");
     discovery_channel_remove(c);
     protocol_channel_closed(c->client_data, c);
+    if (chan == c) chan = NULL;
 }
-
-static ChannelCallbacks ccb = {
-    channel_connecting,
-    channel_connected,
-    channel_receive,
-    channel_disconnected
-};
 
 static int cmd_exit(char * s) {
     exit(0);
@@ -100,6 +94,10 @@ static int cmd_tcf(char *s) {
     char * args[maxargs];
     Channel * c = chan;
 
+    if (c == NULL) {
+        printf("error: channel not connected, use 'connect' command\n");
+        return 0;
+    }
     ind = 0;
     args[ind] = strtok(s, " \t");
     while (args[ind] != NULL && ++ind < maxargs) {
@@ -118,22 +116,70 @@ static int cmd_tcf(char *s) {
     return 1;
 }
 
-static int print_peer_id(PeerServer * ps, void * client_data) {
+static int print_peer_flags(PeerServer * ps) {
     unsigned int flags = ps->flags;
+    int cnt;
+    int i;
+    struct {
+        unsigned int flag;
+        char *name;
+    } flagnames[] = {
+        { PS_FLAG_LOCAL, "local" },
+        { PS_FLAG_PRIVATE, "private" },
+        { PS_FLAG_DISCOVERABLE, "discoverable" },
+        { 0 }
+    };
+
+    cnt = 0;
+    for (i = 0; flagnames[i].flag != 0; i++) {
+        if (flags & flagnames[i].flag) {
+            if (cnt != 0) {
+                printf(", ");
+            }
+            cnt++;
+            printf("local");
+            flags &= ~flagnames[i].flag;
+        }
+    }
+    if (flags || cnt == 0) printf("0x%x", flags);
+    return 0;
+}
+
+static int print_peer_summary(PeerServer * ps, void * client_data) {
+    unsigned int flags = ps->flags;
+    char *s;
 
     printf("  %s", ps->id);
-    if (flags & PS_FLAG_LOCAL) printf(", local");
-    if (flags & PS_FLAG_PRIVATE) printf(", private");
-    if (flags & PS_FLAG_DISCOVERABLE) printf(", discoverable");
-    flags &= ~(PS_FLAG_LOCAL | PS_FLAG_PRIVATE | PS_FLAG_DISCOVERABLE);
-    if (flags) printf(", 0x%x", flags);
+    s = peer_server_getprop(ps, "Description", NULL);
+    if (s != NULL) {
+        printf(", %s", s);
+    }
     printf("\n");
     return 0;
 }
 
 static int cmd_peers(char * s) {
     printf("Peers:\n");
-    peer_server_iter(print_peer_id, NULL);
+    peer_server_iter(print_peer_summary, NULL);
+    return 0;
+}
+
+static int cmd_peerinfo(char * s) {
+    PeerServer * ps;
+    int i;
+
+    printf("Peer information: %s\n", s);
+    ps = peer_server_find(s);
+    if (ps == NULL) {
+        fprintf(stderr, "error: cannot find id: %s\n", s);
+        return 0;
+    }
+    printf("  ID: %s\n", ps->id);
+    for (i = 0; i < ps->ind; i++) {
+        printf("  %s: %s\n", ps->list[i].name, ps->list[i].value);
+    }
+    print_peer_flags(ps);
+    printf("\n");
     return 0;
 }
 
@@ -148,13 +194,20 @@ static int cmd_connect(char * s) {
         return 0;
     }
     proto = protocol_alloc();
-    c = channel_connect(ps, &ccb, proto, NULL, NULL);
+    ini_locator_service(proto);
+    c = channel_connect(ps);
     peer_server_free(ps);
     if (c == NULL) {
         fprintf(stderr, "error: cannot estabilish connection\n");
         return 0;
     }
+    c->connecting = channel_connecting;
+    c->connected = channel_connected;
+    c->receive = channel_receive;
+    c->disconnected = channel_disconnected;
+    c->client_data = proto;
     protocol_channel_opened(proto, c);
+    channel_start(c);
     chan = c;
     return 0;
 }
@@ -170,11 +223,16 @@ static void event_cmd_line(void * arg) {
         { "exit",               cmd_exit },
         { "tcf",                cmd_tcf },
         { "peers",              cmd_peers },
+        { "peerinfo",           cmd_peerinfo },
         { "connect",            cmd_connect },
         { 0 }
     }, *cp;
 
     while (*s && isspace(*s)) s++;
+    if (*s == '\0') {
+        cmdline_resume();
+        return;
+    }
     for (cp = cmds; cp->cmd != 0; cp++) {
         len = strlen(cp->cmd);
         if (strncmp(s, cp->cmd, len) == 0 && (s[len] == 0 || isspace(s[len]))) {
@@ -243,5 +301,6 @@ void ini_cmdline_handler(void) {
         exit(1);
     }
 }
+
 
 
