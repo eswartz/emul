@@ -31,7 +31,8 @@
 #define SERVICE_FileSystem      1
 #define SERVICE_SysMonitor      TARGET_UNIX
 
-#endif
+#define ENABLE_Trace 1
+
 
 #ifdef CONFIG_MAIN
 /*
@@ -55,5 +56,6 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
     ini_daytime_service(proto);
 }
 
-#endif
+#endif /* CONFIG_MAIN */
 
+#endif /* D_config */
