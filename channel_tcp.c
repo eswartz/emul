@@ -341,6 +341,14 @@ static int channel_get_message_count(Channel * c) {
     return cnt;
 }
 
+static void new_message(ChannelTCP * c) {
+    c->message_count++;
+    if (!c->handling_msg && !is_suspended(c)) {
+        post_event(handle_channel_msg, c);
+        c->handling_msg = 1;
+    }
+}
+
 static void tcp_channel_read_done(void * x) {
     AsyncReqInfo * req = x;
     ChannelTCP * c = req->client_data;
@@ -366,11 +374,7 @@ static void tcp_channel_read_done(void * x) {
             trace(LOG_ALWAYS, "Can't read from socket: %s", errno_to_str(req->error));
         }
         c->eof = 1;
-        c->message_count++;             /* Treat eof as a message */
-        if (!c->handling_msg && !is_suspended(c)) {
-            post_event(handle_channel_msg, c);
-            c->handling_msg = 1;
-        }
+        new_message(c);                 /* Treat eof as a message */
         return;
     }
 
@@ -393,22 +397,20 @@ static void tcp_channel_read_done(void * x) {
                     assert(c->message_count == 1);
                 }
                 else {
-                    c->message_count++;
-                    if (!c->handling_msg && !is_suspended(c)) {
-                        post_event(handle_channel_msg, c);
-                        c->handling_msg = 1;
-                    }
+                    new_message(c);
                 }
                 break;
             case 2:
                 /* EOS - End Of Stream */
                 trace(LOG_PROTOCOL, "End of stream on channel 0x%08x", c);
                 c->eof = 1;
+                new_message(c);         /* Treat eof as a message */
                 break;
             default:
                 /* Invalid escape sequence */
                 trace(LOG_ALWAYS, "Protocol: Invalid escape sequence");
                 c->eof = 1;
+                new_message(c);         /* Treat eof as a message */
                 ch = 2;
                 break;
             }
@@ -425,11 +427,7 @@ static void tcp_channel_read_done(void * x) {
         if (c->message_count == 0) {
             /* Buffer full with incomplete message - start processing anyway */
             c->long_msg = 1;
-            c->message_count++;
-            if (!c->handling_msg && !is_suspended(c)) {
-                post_event(handle_channel_msg, c);
-                c->handling_msg = 1;
-            }
+            new_message(c);
         }
     }
     else {
