@@ -39,6 +39,7 @@ struct Proxy {
     Protocol * proto;
     int other;
     int state;
+    int instance;
 };
 
 static void proxy_connecting(Channel * c) {
@@ -47,7 +48,7 @@ static void proxy_connecting(Channel * c) {
     assert(c == proxy->c);
     assert(proxy->state == ProxyStateInitial);
     proxy->state = ProxyStateConnecting;
-    trace(LOG_ALWAYS, "proxy connecting");
+    trace(LOG_PROXY, "proxy connecting");
     if (proxy[proxy->other].state == ProxyStateConnected) {
         send_hello_message(proxy->proto, c);
         c->out.flush(&c->out);
@@ -61,9 +62,9 @@ static void proxy_connected(Channel * c) {
     assert(c == proxy->c);
     assert(proxy->state == ProxyStateConnecting);
     proxy->state = ProxyStateConnected;
-    trace(LOG_ALWAYS, "proxy connected, peer services:");
+    trace(LOG_PROXY, "proxy connected, peer services:");
     for (i = 0; i < c->peer_service_cnt; i++) {
-        trace(LOG_ALWAYS, "  %s", c->peer_service_list[i]);
+        trace(LOG_PROXY, "  %s", c->peer_service_list[i]);
         /* Include service names in other protocol hello message */
         protocol_get_service(proxy[proxy->other].proto, c->peer_service_list[i]);
     }
@@ -86,7 +87,7 @@ static void proxy_disconnected(Channel * c) {
     assert(c == proxy->c);
     assert(proxy->state == ProxyStateConnecting || proxy->state == ProxyStateConnected);
     proxy->state = ProxyStateDisconnected;
-    trace(LOG_ALWAYS, "proxy disconnected");
+    trace(LOG_PROXY, "proxy disconnected");
     protocol_channel_closed(proxy->proto, c);
     if (proxy[proxy->other].state == ProxyStateDisconnected) {
         if (proxy->other == -1) proxy--;
@@ -97,9 +98,33 @@ static void proxy_disconnected(Channel * c) {
     }
 }
 
+static char logbuf[1024];
+
+static void logchr(char ** pp, int c) {
+    char * p = *pp;
+
+    if (p + 2 < logbuf+sizeof logbuf) {
+        *p++ = c;
+    }
+    *pp = p;
+}
+
+static void logstr(char ** pp, char * s) {
+    char * p = *pp;
+    int c;
+
+    while ((c = *s++) != '\0') {
+        if (p + 2 < logbuf+sizeof logbuf) {
+            *p++ = c;
+        }
+    }
+    *pp = p;
+}
+
 static void proxy_default_message_handler(Channel * c, char **argv, int argc) {
     Proxy * proxy = c->client_data;
     Channel * otherc = proxy[proxy->other].c;
+    char *p;
     int i = 0;
 
     assert(c == proxy->c);
@@ -123,25 +148,58 @@ static void proxy_default_message_handler(Channel * c, char **argv, int argc) {
         i++;
     }
 
+    p = logbuf;
+    if (log_mode & LOG_TCFLOG) {
+        logstr(&p, proxy->other > 0 ? "---> " : "<--- ");
+        for (i = 0; i < argc; i++) {
+            logstr(&p, argv[i]);
+            logchr(&p, ' ');
+        }
+    }
+
     /* Copy body of message */
     do {
         i = c->inp.read(&c->inp);
+        if (log_mode & LOG_TCFLOG) {
+            if (i > 0) {
+                logchr(&p, i);
+            }
+            else if (i == 0) {
+                logstr(&p, " ");
+            }
+            else if (i == MARKER_EOM) {
+                logstr(&p, "<eom>");
+            }
+            else if (i == MARKER_EOS) {
+                logstr(&p, "<eom>");
+            }
+            else {
+                logstr(&p, "<?>");
+            }
+        }
         otherc->out.write(&otherc->out, i);
-    } while (i != MARKER_EOM);
+    } while (i != MARKER_EOM && i != MARKER_EOS);
     otherc->out.flush(&otherc->out);
+    if (log_mode & LOG_TCFLOG) {
+        *p = '\0';
+        trace(LOG_TCFLOG, "%d: %s", proxy->instance, logbuf);
+    }
 }
 
 void proxy_create(Channel * c1, Channel * c2) {
     Proxy * proxy = loc_alloc_zero(2*sizeof *proxy);
+    static int instance;
 
     proxy[0].c = c1;
     proxy[0].proto = protocol_alloc();
     proxy[0].other = 1;
     proxy[0].state = ProxyStateConnecting;
+    proxy[0].instance = instance;
     proxy[1].c = c2;
     proxy[1].proto = protocol_alloc();
     proxy[1].other = -1;
     proxy[1].state = ProxyStateInitial;
+    proxy[1].instance = instance++;
 
     discovery_channel_remove(c1);
     c1->connecting = proxy_connecting;

@@ -30,6 +30,8 @@
 #define LOG_CONTEXT     0x40
 #define LOG_DISCOVERY   0x80
 #define LOG_ASYNCREQ    0x100
+#define LOG_PROXY       0x200
+#define LOG_TCFLOG      0x400
 
 extern int log_mode;
 

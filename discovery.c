@@ -188,6 +188,10 @@ static void channel_client_connected(Channel * c) {
     for (i = 0; i < c->peer_service_cnt; i++) {
         trace(LOG_DISCOVERY, "  %s", c->peer_service_list[i]);
     }
+    if (publish_peer_refresh_active == 0) {
+        publish_peer_refresh_active = 1;
+        post_event(republish_all_peers, NULL);
+    }
 }
 
 static void channel_client_receive(Channel * c) {
@@ -261,7 +265,7 @@ static int start_discovery(void) {
     assert(is_dispatch_thread());
     assert(!discovery_ismaster);
     trace(LOG_DISCOVERY, "discovery start");
-    if (discovery_udp_server(NULL) == 0) {
+    if (master_notifier != NULL && discovery_udp_server(NULL) == 0) {
         discovery_ismaster = 1;
     }
     else {
@@ -280,7 +284,6 @@ static void restart_discovery(void * x) {
 }
 
 int discovery_start(DiscoveryMasterNotificationCB mastercb) {
-    assert(mastercb != NULL);
     master_notifier = mastercb;
     make_local_discoverable();
     return start_discovery();
