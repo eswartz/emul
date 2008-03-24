@@ -13,6 +13,7 @@
  * Local memory heap manager.
  */
 
+#include "mdep.h"
 #include <string.h>
 #include "trace.h"
 #include "myalloc.h"

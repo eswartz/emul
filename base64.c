@@ -16,9 +16,7 @@
  * Also TCF version of the encoding does not allow characters outside of the BASE64 alphabet. 
  */
 
-#if defined(_WRS_KERNEL)
-#  include <vxWorks.h>
-#endif
+#include "mdep.h"
 #include <assert.h>
 #include "base64.h"
 #include "exceptions.h"

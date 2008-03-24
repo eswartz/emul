@@ -6,7 +6,7 @@ EXES=agent client tcfreg valueadd
 UNAME=$(shell uname -o)
 
 ifeq ($(UNAME),Cygwin)
-LIBS=-lpthread -lws2_32
+LIBS=-lws2_32 -liphlpapi
 else
 LIBS=-lpthread -lrt -lelf
 endif

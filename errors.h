@@ -40,6 +40,20 @@
 #define ERR_COMMAND_CANCELLED   0x1013
 #define ERR_UNKNOWN_PEER        0x1014
 
-extern char * errno_to_str(int err);
+/*
+ * Convert error code to human readable string
+ */
+extern char * errno_to_str(int error);
+
+/*
+ * check_error(): Check error code.
+ * If the code is not zero, add error report into trace log and call exit(1)
+ */
+#ifdef NDEBUG
+extern void check_error(int error);
+#else
+extern void check_error_debug(char * file, int line, int error);
+#define check_error(error) check_error_debug(__FILE__, __LINE__, error)
+#endif
 
 #endif

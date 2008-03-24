@@ -43,7 +43,10 @@ int print_trace(int mode, char *fmt, ...) {
     vsnprintf(tmpbuf, sizeof(tmpbuf), fmt, ap);
     va_end(ap);
 
-    pthread_mutex_lock(&mutex);
+    if (pthread_mutex_lock(&mutex) != 0) {
+        perror("pthread_mutex_lock");
+        exit(1);
+    }
 
     fprintf(log_file, "TCF %02d%02d.%03d: %s\n",
         timenow.tv_sec / 60 % 60,
@@ -52,7 +55,10 @@ int print_trace(int mode, char *fmt, ...) {
         tmpbuf);
     fflush(log_file);
 
-    pthread_mutex_unlock(&mutex);
+    if (pthread_mutex_unlock(&mutex) != 0) {
+        perror("pthread_mutex_unlock");
+        exit(1);
+    }
 
     return 1;
 }
@@ -76,7 +82,10 @@ void open_log_file(char * log_name) {
 
 void ini_trace(void) {
 #if ENABLE_Trace
-    pthread_mutex_init(&mutex, NULL);
+    if (pthread_mutex_init(&mutex, NULL) != 0) {
+        perror("pthread_mutex_init");
+        exit(1);
+    }
 #endif
 }
 

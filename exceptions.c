@@ -27,10 +27,7 @@
  * Only main thread is allowed to use exceptions.
  */
 
-#if defined(_WRS_KERNEL)
-#  include <vxWorks.h>
-#endif
-
+#include "mdep.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>

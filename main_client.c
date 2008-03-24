@@ -13,6 +13,8 @@
  * Agent main module.
  */
 
+#include "mdep.h"
+#define CONFIG_MAIN
 #include "config.h"
 
 #include <stdio.h>
@@ -20,7 +22,6 @@
 #include <errno.h>
 #include <assert.h>
 #include <signal.h>
-#include "mdep.h"
 #include "asyncreq.h"
 #include "events.h"
 #include "trace.h"
@@ -28,6 +29,7 @@
 #include "channel.h"
 #include "protocol.h"
 #include "proxy.h"
+#include "discovery.h"
 #include "discovery_help.h"
 
 static char * progname;

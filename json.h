@@ -19,8 +19,8 @@
 #ifndef D_json
 #define D_json
 
-#include <stdlib.h>
 #include "mdep.h"
+#include <stdlib.h>
 #include "streams.h"
 
 extern int json_read_string(InputStream * inp, char * str, size_t size);

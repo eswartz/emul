@@ -13,16 +13,19 @@
  * Target service implementation: stack trace (TCF name StackTrace)
  */
 
+#include "mdep.h"
 #include "config.h"
+
 #if SERVICE_StackTrace
 
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
-#include "mdep.h"
 #include "myalloc.h"
 #include "protocol.h"
+#include "trace.h"
 #include "context.h"
 #include "json.h"
 #include "exceptions.h"
@@ -49,24 +52,25 @@ typedef struct StackFrame StackFrame;
 typedef struct StackTrace StackTrace;
 
 typedef void (*STACK_TRACE_CALLBAK)(
-    void  *,    /* address from which function was called */
-    int    ,    /* address of function called */
-    int    ,    /* number of arguments in function call */
-    int *  ,    /* pointer to function args */
-    int    ,    /* thread ID */
-    int         /* TRUE if Kernel addresses */
+    void *,    /* address from which function was called */
+    int   ,    /* address of function called */
+    int   ,    /* number of arguments in function call */
+    int * ,    /* pointer to function args */
+    int   ,    /* thread ID */
+    int        /* TRUE if Kernel addresses */
 );
 
 static int stack_trace_max = 0;
 static StackTrace * stack_trace = NULL;
+static Context dump_stack_ctx;
 
 static void stack_trace_callback(
-    void *      callAdrs,       /* address from which function was called */
-    int         funcAdrs,       /* address of function called */
-    int         nargs,          /* number of arguments in function call */
-    int *       args,           /* pointer to function args */
-    int         taskId,         /* task's ID */
-    int         isKernelAdrs    /* TRUE if Kernel addresses */
+    void *     callAdrs,       /* address from which function was called */
+    int        funcAdrs,       /* address of function called */
+    int        nargs,          /* number of arguments in function call */
+    int *      args,           /* pointer to function args */
+    int        taskId,         /* task's ID */
+    int        isKernelAdrs    /* TRUE if Kernel addresses */
 )
 {
     StackFrame * f;
@@ -96,6 +100,14 @@ static void trace_stack(Context * ctx, STACK_TRACE_CALLBAK callback) {
 }
 
 #else
+
+static int read_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
+    if (ctx == &dump_stack_ctx) {
+        memmove(buf, (void *)address, size);
+        return 0;
+    }
+    return context_read_mem(ctx, address, buf, size);
+}
 
 #define MAX_FRAMES  1000
 
@@ -136,18 +148,18 @@ static unsigned long trace_jump(Context * ctx, unsigned long addr) {
     while (cnt < 100) {
         unsigned char instr;            /* instruction opcode at <addr> */
         unsigned long dest;     /* Jump destination address */
-        if (context_read_mem(ctx, addr, &instr, 1) < 0) return addr;
+        if (read_mem(ctx, addr, &instr, 1) < 0) return addr;
 
         /* If instruction is a JMP, get destination adrs */
         if (instr == JMPD08) {
             signed char disp08;
-            if (context_read_mem(ctx, addr + 1, &disp08, 1) < 0) return addr;
+            if (read_mem(ctx, addr + 1, &disp08, 1) < 0) return addr;
             dest = addr + 2 + disp08;
         }
         else if (instr == JMPD32) {
             int disp32;
             assert(sizeof(disp32) == 4);
-            if (context_read_mem(ctx, addr + 1, &disp32, 4) < 0) return addr;
+            if (read_mem(ctx, addr + 1, &disp32, 4) < 0) return addr;
             dest = addr + 5 + disp32;
         }
         else {
@@ -161,8 +173,8 @@ static unsigned long trace_jump(Context * ctx, unsigned long addr) {
 }
 
 static int trace_stack(Context * ctx, STACK_TRACE_CALLBAK callback) {
-    unsigned long pc = ctx->regs.eip;
-    unsigned long fp = ctx->regs.ebp;
+    unsigned long pc = get_regs_PC(ctx->regs);
+    unsigned long fp = get_regs_BP(ctx->regs);
     unsigned long fp_prev = 0;
 
     unsigned long addr = trace_jump(ctx, pc);
@@ -175,26 +187,28 @@ static int trace_stack(Context * ctx, STACK_TRACE_CALLBAK callback) {
      *  2) we are the first instruction of a subroutine (this may NOT be
      *     a PUSH %EBP MOV %ESP %EBP instruction with some compilers)
      */
-    if (context_read_mem(ctx, addr - 1, code, sizeof(code)) < 0) return -1;
+    if (read_mem(ctx, addr - 1, code, sizeof(code)) < 0) return -1;
 
     if (code[1] == PUSH_EBP && code[2] == MOV_ESP0 && code[3] == MOV_ESP1 ||
         code[1] == ENTER || code[1] == RET || code[1] == RETADD) {
         fp_prev = fp;
-        fp = ctx->regs.esp - 4;
+        fp = get_regs_SP(ctx->regs) - 4;
     }
     else if (code[0] == PUSH_EBP && code[1] == MOV_ESP0 && code[2] == MOV_ESP1) {
         fp_prev = fp;
-        fp = ctx->regs.esp;
+        fp = get_regs_SP(ctx->regs);
     }
 
     assert(stack_trace == NULL || stack_trace->frame_cnt == 0);
     while (fp != 0 && cnt < MAX_FRAMES) {
         unsigned long frame[2];
         unsigned long fp_next;
-        if (context_read_mem(ctx, fp, frame, sizeof(frame)) < 0) return -1;
+        if (read_mem(ctx, fp, frame, sizeof(frame)) < 0) return -1;
         callback((void *)frame[1], 0, 0, 0, ctx->pid, 0);
-        stack_trace->frames[stack_trace->frame_cnt - 1].fp = fp;
-        stack_trace->top_first = 1;
+        if (stack_trace != NULL) {
+            stack_trace->frames[stack_trace->frame_cnt - 1].fp = fp;
+            stack_trace->top_first = 1;
+        }
         cnt++;
         fp_next = fp_prev != 0 ? fp_prev : frame[0];
         fp_prev = 0;
@@ -400,6 +414,38 @@ static void command_get_children(char * token, Channel * c) {
     c->out.write(&c->out, MARKER_EOM);
 }
 
+static void dump_stack_callback(
+    void *     callAdrs,       /* address from which function was called */
+    int        funcAdrs,       /* address of function called */
+    int        nargs,          /* number of arguments in function call */
+    int *      args,           /* pointer to function args */
+    int        taskId,         /* task's ID */
+    int        isKernelAdrs    /* TRUE if Kernel addresses */
+    )
+{
+    trace(LOG_ALWAYS, "  0x%08x", callAdrs);
+}
+
+void dump_stack_trace(void) {
+    stack_trace = NULL;
+    stack_trace_max = 0;
+#ifdef WIN32
+    dump_stack_ctx.handle = OpenThread(THREAD_GET_CONTEXT, FALSE, GetCurrentThreadId());
+    memset(&dump_stack_ctx.regs, 0, sizeof(dump_stack_ctx.regs));
+    dump_stack_ctx.regs.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+    if (GetThreadContext(dump_stack_ctx.handle, &dump_stack_ctx.regs) == 0) {
+        trace(LOG_ALWAYS, "dump_stack_trace: Can't read thread registers: error %d", GetLastError());
+    }
+    else {
+        trace(LOG_ALWAYS, "Stack trace dumped:");
+        trace_stack(&dump_stack_ctx, dump_stack_callback);
+    }
+    CloseHandle(dump_stack_ctx.handle);
+#else
+    trace(LOG_ALWAYS, "dump_stack_trace: not implemented");
+#endif
+}
+
 static void delete_stack_trace(Context * ctx, void * client_data) {
     if (ctx->stack_trace != NULL) {
         loc_free(ctx->stack_trace);
@@ -407,7 +453,7 @@ static void delete_stack_trace(Context * ctx, void * client_data) {
     }
 }
 
-void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup *bcg) {
+void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     static ContextEventListener listener = {
         NULL,
         delete_stack_trace,
@@ -419,6 +465,7 @@ void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup *bcg) {
     add_context_event_listener(&listener, bcg);
     add_command_handler(proto, STACKTRACE, "getContext", command_get_context);
     add_command_handler(proto, STACKTRACE, "getChildren", command_get_children);
+    memset(&dump_stack_ctx, 0, sizeof(dump_stack_ctx));
 }
 
 #endif

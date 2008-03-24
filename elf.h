@@ -15,12 +15,11 @@
 #ifndef D_elf
 #define D_elf
 
-#include <sys/types.h>
-#if defined(WIN32)
-#else
+#include "mdep.h"
+//#include <sys/types.h>
+#if !defined(WIN32)
 #  include <elf.h>
 #endif
-#include "mdep.h"
 
 typedef unsigned char U1_T;
 typedef signed char I1_T;

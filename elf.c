@@ -12,7 +12,9 @@
 /*
  * This module implements reading and caching of ELF files.
  */
+#include "mdep.h"
 #include "config.h"
+
 #if (SERVICE_LineNumbers) || (SERVICE_Symbols)
 
 #include <assert.h>
@@ -25,7 +27,6 @@
 
 #if defined(_WRS_KERNEL)
 #elif defined(WIN32)
-#elif defined(__CYGWIN__)
 #else
 #  include <libelf.h>
 #  define USE_LIBELF

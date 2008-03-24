@@ -13,30 +13,38 @@
  * Machine and OS dependend definitions.
  * This module implements host OS abstraction layer that helps make
  * agent code portable between Linux, Windows, VxWorks and potentially other OSes.
+ * 
+ * mdep.h must be included first, before any other header files.
  */
 
 #ifndef D_mdep
 #define D_mdep
 
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 /* MS Windows NT/XP */
 
-#define _WIN32_WINNT 0x0400
-#pragma warning(disable:4615)
-#pragma warning(disable:4996)
-#ifdef __GNUC__
-#include <windows.h>
-#include <winsock.h>
-#else
-#include <winsock2.h>
-#include <Ws2tcpip.h>
+#define _WIN32_WINNT 0x0500
+
+#ifdef _MSC_VER 
+#  pragma warning(disable:4615)
+#  pragma warning(disable:4996)
+#  ifdef _DEBUG
+#    define _CRTDBG_MAP_ALLOC
+#    include <stdlib.h>
+#    include <crtdbg.h>
+#  endif
+#  define _WSPIAPI_H_
 #endif
-#include <memory.h>
-#include <process.h>
-#include <IPHlpApi.h>
-#include <time.h>
+
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+#include <sys/stat.h>
+#include <sys/utime.h>
 #include <io.h>
 
+typedef __int64 int64;
+typedef unsigned __int64 uns64;
 
 #define FILE_PATH_SIZE MAX_PATH
 
@@ -46,22 +54,39 @@ typedef int socklen_t;
 #else
 #define __i386__
 typedef unsigned long pid_t;
-extern int inet_aton(const char *cp, struct in_addr *inp);
+extern int inet_aton(const char * cp, struct in_addr * inp);
 #endif
+
 typedef unsigned long useconds_t;
 
-typedef struct {
-    unsigned long ebx, ecx, edx, esi, edi, ebp, eax;
-    unsigned short ds, __ds, es, __es;
-    unsigned short fs, __fs, gs, __gs;
-    unsigned long orig_eax, eip;
-    unsigned short cs, __cs;
-    long eflags, esp;
-    unsigned short ss, __ss;
-} REG_SET;
+typedef CONTEXT REG_SET;
+#define get_regs_SP(x) ((x).Esp)
+#define get_regs_BP(x) ((x).Ebp)
+#define get_regs_PC(x) ((x).Eip)
+#define set_regs_PC(x,y) (x).Eip = (y)
 
-#define get_regs_PC(x) x.eip
-#define set_regs_PC(x,y) x.eip = (unsigned long)(y)
+#ifdef __GNUC__
+
+#ifndef _LARGEFILE_SOURCE
+#error "Need CC command line option: -D_LARGEFILE_SOURCE"
+#endif
+
+#ifndef _GNU_SOURCE
+#error "Need CC command line option: -D_GNU_SOURCE"
+#endif
+
+#include <pthread.h>
+
+typedef struct stat struct_stat;
+
+extern void __stdcall freeaddrinfo(struct addrinfo *);
+extern int __stdcall getaddrinfo(const char *, const char *,
+                const struct addrinfo *, struct addrinfo **);
+extern const char * loc_gai_strerror(int ecode);
+
+#else /* not __GNUC__ */
+
+#include <direct.h>
 
 struct timespec {
     time_t  tv_sec;         /* seconds */
@@ -79,35 +104,31 @@ struct timespec {
 #define CLOCK_REALTIME 1
 typedef int clockid_t;
 extern int clock_gettime(clockid_t clock_id, struct timespec * tp); 
-
 extern void usleep(useconds_t useconds);
 
 /*
  * PThreads emulation.
  */
-typedef HANDLE pthread_t;
-typedef HANDLE pthread_mutex_t;
-typedef int pthread_attr_t;
-typedef struct {
-    int waiters_count;
-    CRITICAL_SECTION waiters_count_lock;
-    HANDLE sema;
-    HANDLE waiters_done;
-    size_t was_broadcast;
-} pthread_cond_t;
+typedef void * pthread_t;
+typedef void * pthread_attr_t;
+typedef void * pthread_mutex_t;
+typedef void * pthread_cond_t;
+typedef void * pthread_mutexattr_t;
+typedef void * pthread_condattr_t;
 
-extern void pthread_mutex_init(pthread_mutex_t * mutex, void * attr);
-extern void pthread_cond_init(pthread_cond_t * cond, void * attr);
+extern int pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr);
+extern int pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * attr);
+extern int pthread_cond_destroy(pthread_cond_t * cond);
 
-extern void pthread_cond_signal(pthread_cond_t * cond);
-extern void pthread_cond_broadcast(pthread_cond_t *cond);
+extern int pthread_cond_signal(pthread_cond_t * cond);
+extern int pthread_cond_broadcast(pthread_cond_t * cond);
 extern int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex);
 extern int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
-                                  struct timespec * timeout);
-extern void pthread_mutex_lock(pthread_mutex_t * mutex);
-extern void pthread_mutex_unlock(pthread_mutex_t * mutex);
+                                  const struct timespec * timeout);
+extern int pthread_mutex_lock(pthread_mutex_t * mutex);
+extern int pthread_mutex_unlock(pthread_mutex_t * mutex);
 extern pthread_t pthread_self(void);
-extern int pthread_create(pthread_t * thread, pthread_attr_t * attr,
+extern int pthread_create(pthread_t * thread, const pthread_attr_t * attr,
                           void * (*start_routine)(void *), void * arg);
 extern int pthread_join(pthread_t thread, void **value_ptr);
 
@@ -121,8 +142,6 @@ extern int pthread_join(pthread_t thread, void **value_ptr);
 extern int wsa_bind(int socket, const struct sockaddr * addr, int addr_size);
 extern int wsa_socket(int af, int type, int protocol);
 
-typedef __int64 int64;
-typedef unsigned __int64 uns64;
 #define lseek _lseeki64
 typedef struct _stati64 struct_stat;
 #define stat _stati64
@@ -155,6 +174,10 @@ extern DIR * opendir(const char * path);
 extern int closedir(DIR * dir);
 extern struct dirent * readdir(DIR * dir);
 
+#define loc_gai_strerror gai_strerror
+
+#endif /* __GNUC__ */
+
 extern char * canonicalize_file_name(const char * path);
 
 #define O_LARGEFILE 0
@@ -166,7 +189,6 @@ extern int getegid(void);
 
 #define loc_freeaddrinfo freeaddrinfo
 #define loc_getaddrinfo getaddrinfo
-#define loc_gai_strerror gai_strerror
 
 #elif defined(_WRS_KERNEL)
 /* VxWork kernel module */
@@ -174,6 +196,7 @@ extern int getegid(void);
 #define INET
 
 #include <vxWorks.h>
+#include <inetLib.h>
 #include <regs.h>
 #include <pthread.h>
 #include <sys/ioctl.h> 
@@ -217,7 +240,7 @@ extern int loc_getaddrinfo(const char * nodename, const char * servname,
 extern const char * loc_gai_strerror(int ecode);
 
 #else
-/* Linux, UNIX or CygWin */
+/* Linux, UNIX */
 
 #ifndef _LARGEFILE_SOURCE
 #error "Need CC command line option: -D_LARGEFILE_SOURCE"
@@ -240,47 +263,6 @@ extern const char * loc_gai_strerror(int ecode);
 #include <arpa/inet.h>
 #include <net/if.h> 
 
-#ifdef __CYGWIN__
-
-#include <sys/syslimits.h>
-
-typedef struct {
-    unsigned long ebx, ecx, edx, esi, edi, ebp, eax;
-    unsigned short ds, __ds, es, __es;
-    unsigned short fs, __fs, gs, __gs;
-    unsigned long orig_eax, eip;
-    unsigned short cs, __cs;
-    long eflags, esp;
-    unsigned short ss, __ss;
-} REG_SET;
-
-#define get_regs_PC(x) x.eip
-#define set_regs_PC(x,y) x.eip = (unsigned long)(y)
-
-#define AI_PASSIVE      1
-
-struct addrinfo {
-        int     ai_flags;
-        int     ai_family;
-        int     ai_socktype;
-        int     ai_protocol;
-        size_t  ai_addrlen;
-        char *  ai_canonname;
-        struct sockaddr * ai_addr;
-        struct addrinfo * ai_next;
-};
-
-extern void loc_freeaddrinfo(struct addrinfo * ai);
-extern int loc_getaddrinfo(const char * nodename, const char * servname,
-       const struct addrinfo * hints, struct addrinfo ** res);
-extern const char * loc_gai_strerror(int ecode);
-
-extern char * canonicalize_file_name(const char * path);
-
-#define O_LARGEFILE 0
-
-#else
-
 #include <sys/user.h>
 typedef struct user_regs_struct REG_SET; 
 
@@ -292,8 +274,6 @@ typedef struct user_regs_struct REG_SET;
 
 extern int tkill(pid_t pid, int signal);
 
-#endif
-
 #define FILE_PATH_SIZE PATH_MAX
 
 #define closesocket close
@@ -302,8 +282,10 @@ typedef __int64_t int64;
 typedef __uint64_t uns64;
 typedef struct stat struct_stat;
 
-#define get_regs_PC(x) x.eip
-#define set_regs_PC(x,y) x.eip = (unsigned long)(y)
+#define get_regs_SP(x) ((x).esp)
+#define get_regs_BP(x) ((x).ebp)
+#define get_regs_PC(x) ((x).eip)
+#define set_regs_PC(x,y) (x).eip = (unsigned long)(y)
 
 #ifndef SA_LEN  
 # ifdef HAVE_SOCKADDR_SA_LEN  

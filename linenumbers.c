@@ -15,7 +15,9 @@
  * machine instruction addresses in the executable object.
  */
 
+#include "mdep.h"
 #include "config.h"
+
 #if SERVICE_LineNumbers
 
 #include <errno.h>

@@ -17,7 +17,9 @@
  * require a process to be attached before they can access it.
  */
 
+#include "mdep.h"
 #include "config.h"
+
 #if SERVICE_Processes
 
 #include <stdlib.h>
@@ -26,7 +28,6 @@
 #include <errno.h>
 #include <signal.h>
 #include <assert.h>
-#include "mdep.h"
 #include "myalloc.h"
 #include "protocol.h"
 #include "context.h"
@@ -215,8 +216,6 @@ static void command_attach(char * token, Channel * c) {
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     pid = id2pid(id, &parent);
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
 
     if (parent != 0) {
         err = ERR_INV_CONTEXT;
@@ -228,6 +227,8 @@ static void command_attach(char * token, Channel * c) {
         if (context_attach(pid, NULL) < 0) err = errno;
     }
 
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
     write_errno(&c->out, err);
     c->out.write(&c->out, MARKER_EOM);
 }
@@ -348,7 +349,7 @@ static void command_start(char * token, Channel * c) {
 
         if (dir[0] != 0 && chdir(dir) < 0) err = errno;
         if (err == 0) {
-#if defined(WIN32) || defined(__CYGWIN__)
+#if defined(WIN32)
 #elif defined(_WRS_KERNEL)
             char * ptr;
             SYM_TYPE type;

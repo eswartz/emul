@@ -14,6 +14,8 @@
  * This service intended to be used when a client has no direct access to a target.
  */
 
+#include "mdep.h"
+#include "config.h"
 #include <assert.h>
 #include <string.h>
 #include "proxy.h"

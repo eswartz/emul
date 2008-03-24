@@ -13,13 +13,10 @@
  * Implements IP interface list.
  */
 
-#if _WRS_KERNEL
-#  include <vxWorks.h>
-#endif
+#include "mdep.h"
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
-#include "mdep.h"
 #include "ip_ifc.h"
 #include "myalloc.h"
 #include "events.h"

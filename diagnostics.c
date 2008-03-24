@@ -14,10 +14,8 @@
  * This service is used for framework and agents testing.
  */
 
+#include "mdep.h"
 #include "config.h"
-#if defined(_WRS_KERNEL)
-#  include <vxWorks.h>
-#endif
 #include <signal.h>
 #include <assert.h>
 #include <stdio.h>
@@ -49,13 +47,7 @@ static void command_get_test_list(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-#if defined(WIN32) || defined(__CYGWIN__)
-    write_stringz(&c->out, "[]");
-#elif defined(_WRS_KERNEL)
     write_stringz(&c->out, "[\"RCBP1\"]");
-#else
-    write_stringz(&c->out, "[\"RCBP1\"]");
-#endif
     c->out.write(&c->out, MARKER_EOM);
 }
 
@@ -129,7 +121,7 @@ static void command_get_symbol(char * token, Channel * c) {
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     
-#if (SERVICE_RunControl) && (SERVICE_Symbols)
+#if SERVICE_Symbols
     ctx = id2ctx(id);
     if (ctx == NULL || ctx->exited) {
         error = ERR_INV_CONTEXT;

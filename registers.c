@@ -13,14 +13,15 @@
  * TCF Registers - CPU registers access service.
  */
 
+#include "mdep.h"
 #include "config.h"
+
 #if SERVICE_Registers
 
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include "mdep.h"
 #include "protocol.h"
 #include "context.h"
 #include "json.h"
@@ -51,7 +52,23 @@ typedef struct {
 #define REG_OFFSET(name) offsetof(REG_SET, name)
 
 #if defined(__i386__)
+
 static REG_INDEX regs_index[] = {
+#ifdef WIN32
+    { "edi",    REG_OFFSET(Edi),    4},
+    { "esi",    REG_OFFSET(Esi),    4},
+    { "ebp",    REG_OFFSET(Ebp),    4},
+    { "esp",    REG_OFFSET(Esp),    4},
+    { "ebx",    REG_OFFSET(Ebx),    4},
+    { "edx",    REG_OFFSET(Edx),    4},
+    { "ecx",    REG_OFFSET(Ecx),    4},
+    { "eax",    REG_OFFSET(Eax),    4},
+    { "eflags", REG_OFFSET(EFlags), 4},
+    { "eip",    REG_OFFSET(Eip),    4},
+    { "cs",     REG_OFFSET(SegCs),  4},
+    { "ss",     REG_OFFSET(SegSs),  4},
+    { NULL,     0,                  0},
+#else
     { "edi",    REG_OFFSET(edi),    4},
     { "esi",    REG_OFFSET(esi),    4},
     { "ebp",    REG_OFFSET(ebp),    4},
@@ -63,6 +80,7 @@ static REG_INDEX regs_index[] = {
     { "eflags", REG_OFFSET(eflags), 4},
     { "eip",    REG_OFFSET(eip),    4},
     { NULL,     0,                  0},
+#endif
 };
 
 #else

@@ -13,14 +13,10 @@
  * Implements simple UDP based auto discovery.
  */
 
-#if defined(_WRS_KERNEL)
-#  include <vxWorks.h>
-#  include <inetLib.h>
-#endif
+#include "mdep.h"
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
-#include "mdep.h"
 #include "tcf.h"
 #include "discovery.h"
 #include "discovery_udp.h"
@@ -168,7 +164,7 @@ static int udp_send_peer_sever(PeerServer * ps, void * arg) {
             app_strz(buf, &pos, get_os_name());
         }
         if (sendto(udp_server_socket, buf, pos, 0, (struct sockaddr *)dst_addr, sizeof *dst_addr) < 0) {
-            trace(LOG_ALWAYS, "Can't send UDP packet to %s: %s",
+            trace(LOG_ALWAYS, "Can't send UDP discovery reply packet to %s: %s",
                   inet_ntoa(dst_addr->sin_addr), errno_to_str(errno));
         }
     }
@@ -201,7 +197,7 @@ static void udp_send_req(void) {
     buf[i++] = 0;
     buf[i++] = 0;
     if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)&dst_addr, sizeof dst_addr) < 0) {
-        trace(LOG_ALWAYS, "Can't send UDP packet to %s: %s",
+        trace(LOG_ALWAYS, "Can't send UDP discovery request packet to %s: %s",
               inet_ntoa(dst_addr.sin_addr), errno_to_str(errno));
     }
 }
@@ -246,9 +242,9 @@ static void udp_receive_req(void * arg) {
     udp_send_ack(&m->addr);
     loc_free(m);
 
-    pthread_mutex_lock(&udp_discovery_mutex);
+    check_error(pthread_mutex_lock(&udp_discovery_mutex));
     pending_info_req--;
-    pthread_mutex_unlock(&udp_discovery_mutex);
+    check_error(pthread_mutex_unlock(&udp_discovery_mutex));
 }
 
 static int is_remote_host(struct in_addr inaddr) {
@@ -297,9 +293,9 @@ static void udp_receive_ack(void * arg) {
     }
     loc_free(m);
 
-    pthread_mutex_lock(&udp_discovery_mutex);
+    check_error(pthread_mutex_lock(&udp_discovery_mutex));
     pending_info_ack--;
-    pthread_mutex_unlock(&udp_discovery_mutex);
+    check_error(pthread_mutex_unlock(&udp_discovery_mutex));
 }
 
 static void * udp_server_socket_handler(void * x) {
@@ -318,7 +314,7 @@ static void * udp_server_socket_handler(void * x) {
             trace(LOG_ALWAYS, "Received malformed UDP packet");
             continue;
         }
-        pthread_mutex_lock(&udp_discovery_mutex);
+        check_error(pthread_mutex_lock(&udp_discovery_mutex));
         if (m->buf[4] == UDP_REQ_INFO &&
             pending_info_req < MAX_PENDING_INFO_REQ &&
             is_remote_host(m->addr.sin_addr)) {
@@ -332,13 +328,13 @@ static void * udp_server_socket_handler(void * x) {
         else {
             loc_free(m);
         }
-        pthread_mutex_unlock(&udp_discovery_mutex);
+        check_error(pthread_mutex_unlock(&udp_discovery_mutex));
     }
     return NULL;
 }
 
 static void local_server_change(PeerServer * ps, int changeType, void * arg) {
-    trace(LOG_ALWAYS, "local_server_change: ps=0x%x, type=%d, arg=0x%x", ps, changeType, arg);
+    trace(LOG_DISCOVERY, "local_server_change: ps=0x%x, type=%d, arg=0x%x", ps, changeType, arg);
     if (changeType > 0) {
         /* Boardcast information about new peers */
         udp_send_peer_sever(ps, NULL);
@@ -354,7 +350,7 @@ int discovery_udp_server(const char * port) {
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;
 
-    pthread_mutex_init(&udp_discovery_mutex, NULL);
+    check_error(pthread_mutex_init(&udp_discovery_mutex, NULL));
     if (port == NULL) port = DISCOVERY_TCF_PORT;
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
@@ -403,10 +399,7 @@ int discovery_udp_server(const char * port) {
 
     udp_server_socket = sock;
     ifcind = build_ifclist(udp_server_socket, MAX_IFC, ifclist);
-    if ((error = pthread_create(&udp_server_thread, &pthread_create_attr, udp_server_socket_handler, 0)) != 0) {
-        trace(LOG_ALWAYS, "can't create a thread: %s", errno_to_str(error));
-        return error;
-    }
+    check_error(pthread_create(&udp_server_thread, &pthread_create_attr, udp_server_socket_handler, 0));
     peer_server_add_listener(local_server_change, NULL);
     return 0;
 }

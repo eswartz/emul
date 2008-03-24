@@ -13,7 +13,9 @@
  * Target service implementation: run control (TCF name RunControl)
  */
 
+#include "mdep.h"
 #include "config.h"
+
 #if SERVICE_RunControl
 
 #include <stdlib.h>
@@ -49,7 +51,7 @@ static TCFSuspendGroup * suspend_group = NULL;
 typedef struct SafeEvent SafeEvent;
 
 struct SafeEvent {
-    void (*done)(void *);
+    EventCallBack * done;
     void * arg;
     SafeEvent * next;
 };
@@ -153,12 +155,12 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     out->write(out, 0);
 
     /* String: Reason */
-    if (ctx->event != 0) {
+    if (is_stopped_by_breakpoint(ctx)) {
+        strcpy(reason, "Breakpoint");
+    }
+    else if (ctx->event != 0) {
         assert(ctx->signal == SIGTRAP);
         snprintf(reason, sizeof(reason), "Event: %s", event_name(ctx->event));
-    }
-    else if (is_stopped_by_breakpoint(ctx)) {
-        strcpy(reason, "Breakpoint");
     }
     else if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) {
         strcpy(reason, "Suspended");
@@ -289,7 +291,7 @@ static void command_get_children(char * token, Channel * c) {
         pid_t pid = id2pid(id, &ppd);
         Context * parent = id2ctx(id);
         if (parent != NULL && parent->parent == NULL && ppd == 0) {
-            if (!parent->exited) {
+            if (!parent->exited && context_has_state(parent)) {
                 if (cnt > 0) c->out.write(&c->out, ',');
                 json_write_string(&c->out, thread_id(parent));
                 cnt++;
@@ -472,9 +474,11 @@ static void send_event_context_added(OutputStream * out, Context * ctx) {
     out->write(out, '[');
     if (ctx->parent == NULL) {
         write_context(out, ctx, 0);
-        out->write(out, ',');
     }
-    write_context(out, ctx, 1);
+    if (context_has_state(ctx)) {
+        if (ctx->parent == NULL) out->write(out, ',');
+        write_context(out, ctx, 1);
+    }
     out->write(out, ']');
     out->write(out, 0);
 
@@ -490,9 +494,11 @@ static void send_event_context_changed(OutputStream * out, Context * ctx) {
     out->write(out, '[');
     if (ctx->parent == NULL) {
         write_context(out, ctx, 0);
-        out->write(out, ',');
     }
-    write_context(out, ctx, 1);
+    if (context_has_state(ctx)) {
+        if (ctx->parent == NULL) out->write(out, ',');
+        write_context(out, ctx, 1);
+    }
     out->write(out, ']');
     out->write(out, 0);
 
@@ -506,9 +512,9 @@ static void send_event_context_removed(OutputStream * out, Context * ctx) {
 
     /* <array of context IDs> */
     out->write(out, '[');
-    json_write_string(out, thread_id(ctx));
+    if (context_has_state(ctx)) json_write_string(out, thread_id(ctx));
     if (ctx->parent == NULL && list_is_empty(&ctx->children)) {
-        out->write(out, ',');
+        if (context_has_state(ctx)) out->write(out, ',');
         json_write_string(out, container_id(ctx));
     }
     out->write(out, ']');
@@ -575,6 +581,7 @@ int is_all_stopped(void) {
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
         Context * ctx = ctxl2ctxp(qp);
         if (ctx->exited || ctx->exiting) continue;
+        if (!context_has_state(ctx)) continue;
         if (!ctx->stopped) return 0;
     }
     return are_channels_suspended(suspend_group);
@@ -614,6 +621,7 @@ static void run_safe_events(void * arg) {
         if (!ctx->pending_step) {
             int error = 0;
             if (ctx->stopped) continue;
+            if (!context_has_state(ctx)) continue;
             if (context_stop(ctx) < 0) {
                 error = errno;
 #ifdef _WRS_KERNEL
@@ -678,7 +686,7 @@ static void check_safe_events(Context * ctx) {
     }
 }
 
-void post_safe_event(void (*done)(void *), void * arg) {
+void post_safe_event(EventCallBack * done, void * arg) {
     SafeEvent * i = (SafeEvent *)loc_alloc(sizeof(SafeEvent));
     i->done = done;
     i->arg = arg;
@@ -740,7 +748,9 @@ static void event_context_started(Context * ctx, void * client_data) {
     TCFBroadcastGroup *bcg = client_data;
 
     assert(!ctx->stopped);
-    assert(!ctx->intercepted);
+    if (ctx->intercepted) {
+        send_event_context_resumed(&bcg->out, ctx);
+    }
     ctx->stopped_by_bp = 0;
     if (safe_event_list) {
         if (!ctx->pending_step) {

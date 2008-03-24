@@ -13,11 +13,12 @@
  * TCF Memory - memory access service.
  */
 
+#include "mdep.h"
 #include "config.h"
+
 #if SERVICE_Memory
 
 #include <assert.h>
-#include "mdep.h"
 #include "protocol.h"
 #include "context.h"
 #include "json.h"
@@ -216,28 +217,17 @@ static struct MemoryCommandArgs * read_command_args(char * token, Channel * c, i
     else if (buf.ctx->exited) err = ERR_ALREADY_EXITED;
 
     if (err != 0) {
-        if (cmd == CMD_SET || cmd == CMD_FILL) {
-            if (c->inp.read(&c->inp) != '[') exception(ERR_JSON_SYNTAX);
-            if (c->inp.peek(&c->inp) == ']') {
-                c->inp.read(&c->inp);
+        if (cmd != CMD_GET) {
+            int ch;
+            while ((ch = c->inp.read(&c->inp)) != 0) {
+                if (ch == MARKER_EOM) exception(ERR_JSON_SYNTAX);
             }
-            else {
-                while (1) {
-                    char ch;
-                    json_read_ulong(&c->inp);
-                    ch = c->inp.read(&c->inp);
-                    if (ch == ',') continue;
-                    if (ch == ']') break;
-                    exception(ERR_JSON_SYNTAX);
-                }
-            }
-            if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+            if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
         }
-        if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
         write_stringz(&c->out, "R");
         write_stringz(&c->out, token);
-        write_stringz(&c->out, "null");
+        if (cmd == CMD_GET) write_stringz(&c->out, "null");
         write_errno(&c->out, err);
         write_stringz(&c->out, "null");
         c->out.write(&c->out, MARKER_EOM);

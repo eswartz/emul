@@ -14,7 +14,10 @@
  *
  * Functions in this module use exceptions to report errors, see exceptions.h
  */
+
+#include "mdep.h"
 #include "config.h"
+
 #if SERVICE_LineNumbers
 
 #include <assert.h>

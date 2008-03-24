@@ -13,6 +13,8 @@
  * Agent main module.
  */
 
+#include "mdep.h"
+#define CONFIG_MAIN
 #include "config.h"
 
 #include <stdio.h>
@@ -20,7 +22,6 @@
 #include <errno.h>
 #include <assert.h>
 #include <signal.h>
-#include "mdep.h"
 #include "asyncreq.h"
 #include "events.h"
 #include "trace.h"
@@ -108,7 +109,7 @@ int main(int argc, char **argv) {
 #endif
 
     if (discovery_start(discovery_default_master_notifier)) {
-            discovery_default_master_notifier();
+        discovery_default_master_notifier();
     }
 
     /* Process events - must run on the initial thread since ptrace()

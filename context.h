@@ -16,8 +16,8 @@
 #ifndef D_context
 #define D_context
 
-#include <sys/types.h>
 #include "mdep.h"
+#include <sys/types.h>
 #include "link.h"
 
 extern LINK context_root;
@@ -56,6 +56,12 @@ struct Context {
 #if defined(_WRS_KERNEL)
     VXDBG_BP_INFO       bp_info;            /* breakpoint information */
     pid_t               bp_pid;             /* process or thread that hit breakpoint */
+#endif
+#if defined(WIN32)
+    HANDLE              handle;
+    DWORD               suspend_cnt;
+    DWORD               context_exception_code;
+    DWORD               pending_exception_code;
 #endif
 };
 
@@ -112,6 +118,7 @@ extern void context_lock(Context * ctx);
  */
 extern void context_unlock(Context * ctx);
 
+extern int context_has_state(Context * ctx);
 extern int context_stop(Context * ctx);
 extern int context_continue(Context * ctx);
 extern int context_single_step(Context * ctx);

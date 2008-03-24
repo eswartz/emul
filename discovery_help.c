@@ -13,13 +13,10 @@
  * Implements discovery.
  */
 
-#if _WRS_KERNEL
-#  include <vxWorks.h>
-#endif
+#include "mdep.h"
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
-#include "mdep.h"
 #include "tcf.h"
 #include "discovery_help.h"
 #include "discovery.h"

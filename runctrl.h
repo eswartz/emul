@@ -17,6 +17,7 @@
 #define D_runctrl
 
 #include "mdep.h"
+#include "events.h"
 #include "context.h"
 #include "protocol.h"
 
@@ -26,7 +27,7 @@
  * Callback function 'done' will be called when everything is stopped and
  * it is safe to access debuggee memory, plant breakpoints, etc.
  */
-extern void post_safe_event(void (*done)(void *), void * arg);
+extern void post_safe_event(EventCallBack * done, void * arg);
 
 /*
  * Return 1 if all threads in debuggee are stopped and handling of incoming messages
@@ -37,6 +38,6 @@ extern int is_all_stopped(void);
 /*
  * Initialize run control service.
  */
-extern void ini_run_ctrl_service(Protocol *, TCFBroadcastGroup *, TCFSuspendGroup * spg);
+extern void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg);
 
 #endif

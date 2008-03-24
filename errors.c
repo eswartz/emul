@@ -13,8 +13,10 @@
  * This module defines agent error codes in addition to system codes defined in errno.h
  */
 
+#include "mdep.h"
 #include <string.h>
 #include "errors.h"
+#include "trace.h"
 
 char * errno_to_str(int err) {
     switch (err) {
@@ -64,3 +66,29 @@ char * errno_to_str(int err) {
         return strerror(err);
     }
 }
+
+#ifdef NDEBUG
+
+void check_error(int error) {
+    if (error == 0) return;
+    trace(LOG_ALWAYS, "Fatal error %d: %s", error, errno_to_str(error));
+    trace(LOG_ALWAYS, "  Exiting agent...");
+    exit(1);
+}
+
+#else
+
+void check_error_debug(char * file, int line, int error) {
+    if (error == 0) return;
+    if (log_file != stderr) {
+        trace(LOG_ALWAYS, "Fatal error %d: %s", error, errno_to_str(error));
+        trace(LOG_ALWAYS, "  At %s:%d", file, line);
+        trace(LOG_ALWAYS, "  Exiting agent...");
+    }
+    fprintf(stderr, "Fatal error %d: %s", error, errno_to_str(error));
+    fprintf(stderr, "  At %s:%d", file, line);
+    fprintf(stderr, "  Exiting agent...");
+    exit(1);
+}
+
+#endif

@@ -16,15 +16,13 @@
  * when a program's execution should be interrupted.
  */
 
+#include "mdep.h"
 #include "config.h"
 #if SERVICE_Breakpoints
 
 // TODO: breakpoint status reports
 // TODO: replant breakpoints when shared lib is loaded or unloaded
 
-#if defined(_WRS_KERNEL)
-#  include <vxWorks.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
@@ -150,6 +148,7 @@ static int id2bp_hash(char * id) {
 
 static void plant_instruction(BreakInstruction * bi) {
     assert(!bi->planted);
+    bi->error = 0;
 #if defined(_WRS_KERNEL)
     bi->vxdbg_ctx.ctxId = bi->ctx_cnt == 1 ? bi->ctx->pid : 0;
     bi->vxdbg_ctx.ctxId = 0;
@@ -270,7 +269,7 @@ static void delete_unused_instructions(void) {
 static BreakInstruction * find_instruction(Context * ctx, unsigned long address) {
     int hash = addr2instr_hash(address);
     LINK * l = addr2instr[hash].next;
-    assert(!ctx->exited && ctx->stopped);
+    assert(!ctx->exited && (ctx->stopped || !context_has_state(ctx)));
     while (l != addr2instr + hash) {
         BreakInstruction * bi = link_adr2bi(l);
         l = l->next;
@@ -288,7 +287,6 @@ static BreakInstruction * find_instruction(Context * ctx, unsigned long address)
 }
 
 static int address_expression_identifier(char * name, Value * v) {
-    Symbol sym;
     if (v == NULL) return 0;
     memset(v, 0, sizeof(Value));
     if (expression_context == NULL) {
@@ -296,17 +294,25 @@ static int address_expression_identifier(char * name, Value * v) {
         return -1;
     }
     if (strcmp(name, "$thread") == 0) {
-        string_value(v, thread_id(expression_context));
+        if (context_has_state(expression_context)) {
+            string_value(v, thread_id(expression_context));
+        }
+        else {
+            string_value(v, container_id(expression_context));
+        }
         return 0;
     }
 #if SERVICE_Symbols
-    if (find_symbol(expression_context, name, &sym) < 0) {
-        if (errno != ERR_SYM_NOT_FOUND) return -1;
-    }
-    else {
-        v->type = VALUE_UNS;
-        v->value = sym.value;
-        return 0;
+    {
+        Symbol sym;
+        if (find_symbol(expression_context, name, &sym) < 0) {
+            if (errno != ERR_SYM_NOT_FOUND) return -1;
+        }
+        else {
+            v->type = VALUE_UNS;
+            v->value = sym.value;
+            return 0;
+        }
     }
 #endif
     errno = ERR_SYM_NOT_FOUND;
@@ -362,7 +368,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         Context * ctx = ctxl2ctxp(qp);
 
         if (ctx->exited || ctx->exiting) continue;
-        assert(ctx->stopped);
+        assert(ctx->stopped || !context_has_state(ctx));
         if (context_sensitive) {
             expression_context = ctx;
             if (evaluate_expression(&bp_address_ctx, bp->address, &v) < 0) {
@@ -785,8 +791,18 @@ int is_stopped_by_breakpoint(Context * ctx) {
 
     assert(!ctx->exited);
     assert(ctx->stopped);
-#ifdef _WRS_KERNEL
-    return ctx->stopped_by_bp;
+#if defined(_WRS_KERNEL) || defined(WIN32)
+    if (ctx->stopped_by_bp == 1) {
+        bi = find_instruction(ctx, get_regs_PC(ctx->regs));
+        if (bi == NULL || bi->skip || bi->error) {
+            // Break instruction that is not planted by us
+            ctx->stopped_by_bp = 0;
+            ctx->pending_intercept = 1;
+            return 0;
+        }
+        ctx->stopped_by_bp = 2;
+    }
+    return ctx->stopped_by_bp != 0;
 #else
     if (ctx->signal != SIGTRAP) return 0;
     if (ctx->event != 0) return 0;
@@ -842,7 +858,6 @@ static void safe_restore_breakpoint(void * arg) {
     SkipBreakpointInfo * sb = (SkipBreakpointInfo *)arg;
     BreakInstruction * bi = find_instruction(sb->ctx, sb->address);
 
-    assert(sb->ctx->regs_error || get_regs_PC(sb->ctx->regs) != sb->address);
     if (bi != NULL && bi->skip) {
         assert(bi->error == 0);
         bi->skip = 0;

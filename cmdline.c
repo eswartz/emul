@@ -13,14 +13,15 @@
  * Command line interpreter.
  */
 
+#include "mdep.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include "cmdline.h"
-#include "mdep.h"
 #include "events.h"
+#include "errors.h"
 #include "myalloc.h"
 #include "peer.h"
 #include "protocol.h"
@@ -68,8 +69,7 @@ static int cmd_exit(char * s) {
     return 0;
 }
 
-static void display_tcf_reply(Channel * c, void * client_data, int error)
-{
+static void display_tcf_reply(Channel * c, void * client_data, int error) {
     int i;
 
     if (error) {
@@ -255,12 +255,12 @@ void cmdline_suspend(void) {
 }
 
 void cmdline_resume(void) {
-    pthread_mutex_lock(&cmdline_mutex);
+    check_error(pthread_mutex_lock(&cmdline_mutex));
     assert(cmdline_suspended);
-    pthread_cond_signal(&cmdline_signal);
+    check_error(pthread_cond_signal(&cmdline_signal));
     cmdline_suspended = 0;
 
-    pthread_mutex_unlock(&cmdline_mutex);
+    check_error(pthread_mutex_unlock(&cmdline_mutex));
 }
 
 static void * interactive_handler(void * x) {
@@ -268,10 +268,10 @@ static void * interactive_handler(void * x) {
     int len;
     char buf[1000];
 
-    pthread_mutex_lock(&cmdline_mutex);
+    check_error(pthread_mutex_lock(&cmdline_mutex));
     while (!done) {
         if (cmdline_suspended) {
-            pthread_cond_wait(&cmdline_signal, &cmdline_mutex);
+            check_error(pthread_cond_wait(&cmdline_signal, &cmdline_mutex));
             continue;
         }
         printf("> ");
@@ -287,19 +287,15 @@ static void * interactive_handler(void * x) {
         post_event(event_cmd_line, loc_strdup(buf));
         cmdline_suspended = 1;
     }
-    pthread_mutex_unlock(&cmdline_mutex);
+    check_error(pthread_mutex_unlock(&cmdline_mutex));
     return NULL;
 }
 
 void ini_cmdline_handler(void) {
-    pthread_mutex_init(&cmdline_mutex, NULL);
-    pthread_cond_init(&cmdline_signal, NULL);
-
+    check_error(pthread_mutex_init(&cmdline_mutex, NULL));
+    check_error(pthread_cond_init(&cmdline_signal, NULL));
     /* Create thread to read cmd line */
-    if (pthread_create(&interactive_thread, &pthread_create_attr, interactive_handler, 0) != 0) {
-        perror("pthread_create");
-        exit(1);
-    }
+    check_error(pthread_create(&interactive_thread, &pthread_create_attr, interactive_handler, 0));
 }
 
 

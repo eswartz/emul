@@ -9,9 +9,9 @@
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
+#include "mdep.h"
 #include <assert.h>
 #include <stddef.h>
-#include "mdep.h"
 #include "myalloc.h"
 #include "trace.h"
 #include "events.h"
@@ -69,7 +69,7 @@ static void * worker_thread_handler(void * x) {
             break;
 
 // Platform dependant IO methods
-#if defined(WIN32) || defined(__CYGWIN__)
+#if defined(WIN32)
 #elif defined(_WRS_KERNEL)
 #else
         case AsyncReqWaitpid:           /* Wait for process change */
@@ -85,7 +85,7 @@ static void * worker_thread_handler(void * x) {
             break;
         }
         trace(LOG_ASYNCREQ, "async_req_complete: req %p, type %d, error %d", req, req->type, req->error);
-        pthread_mutex_lock(&wtlock);
+        check_error(pthread_mutex_lock(&wtlock));
         /* Post event inside lock to make sure a new worker thread is
          * not created unnecessarily */
         post_event(req->done, req);
@@ -94,14 +94,14 @@ static void * worker_thread_handler(void * x) {
         for (;;) {
             LINK *link;
 
-            pthread_cond_wait(&wt->cond, &wtlock);
+            check_error(pthread_cond_wait(&wt->cond, &wtlock));
             if (wt->req != NULL) break;
             for (link = wtlist.next; link != &wtlist; link = link->next) {
                 if (wtlink2wt(link) == wt) break;
             }
             assert(link != &wtlist);
         }
-        pthread_mutex_unlock(&wtlock);
+        check_error(pthread_mutex_unlock(&wtlock));
     }
     return NULL;
 }
@@ -111,12 +111,12 @@ void async_req_post(AsyncReqInfo *req) {
 
     trace(LOG_ASYNCREQ, "async_req_post: req %p, type %d", req, req->type);
     if (wtlist.next == NULL) list_init(&wtlist);
-    pthread_mutex_lock(&wtlock);
+    check_error(pthread_mutex_lock(&wtlock));
     if (list_is_empty(&wtlist)) {
         int error;
 
         wt = loc_alloc_zero(sizeof *wt);
-        pthread_cond_init(&wt->cond, NULL);
+        check_error(pthread_cond_init(&wt->cond, NULL));
         wt->req = req;
         error = pthread_create(&wt->thread, &pthread_create_attr, worker_thread_handler, wt);
         if (error) {
@@ -131,11 +131,11 @@ void async_req_post(AsyncReqInfo *req) {
         list_remove(&wt->wtlink);
         assert(wt->req == NULL);
         wt->req = req;
-        pthread_cond_signal(&wt->cond);
+        check_error(pthread_cond_signal(&wt->cond));
     }
-    pthread_mutex_unlock(&wtlock);
+    check_error(pthread_mutex_unlock(&wtlock));
 }
 
 void ini_asyncreq(void) {
-    pthread_mutex_init(&wtlock, NULL);
+    check_error(pthread_mutex_init(&wtlock, NULL));
 }

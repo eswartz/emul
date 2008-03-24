@@ -13,6 +13,7 @@
  * Agent main module.
  */
 
+#include "mdep.h"
 #define CONFIG_MAIN
 #include "config.h"
 
@@ -21,14 +22,15 @@
 #include <errno.h>
 #include <assert.h>
 #include <signal.h>
-#include "mdep.h"
 #include "asyncreq.h"
 #include "events.h"
 #include "trace.h"
 #include "myalloc.h"
+#include "json.h"
 #include "channel.h"
 #include "protocol.h"
 #include "discovery.h"
+#include "expressions.h"
 #include "errors.h"
 
 static char * progname;
@@ -39,7 +41,7 @@ static TCFBroadcastGroup * bcg;
 static TCFSuspendGroup * spg;
 
 static void channel_server_connecting(Channel * c) {
-    trace(LOG_ALWAYS, "channel server connecting");
+    trace(LOG_PROTOCOL, "channel server connecting");
 
     send_hello_message(c->client_data, c);
     discovery_channel_add(c);
@@ -49,9 +51,9 @@ static void channel_server_connecting(Channel * c) {
 static void channel_server_connected(Channel * c) {
     int i;
 
-    trace(LOG_ALWAYS, "channel server connected, peer services:");
+    trace(LOG_PROTOCOL, "channel server connected, peer services:");
     for (i = 0; i < c->peer_service_cnt; i++) {
-        trace(LOG_ALWAYS, "  %s", c->peer_service_list[i]);
+        trace(LOG_PROTOCOL, "  %s", c->peer_service_list[i]);
     }
 }
 
@@ -60,7 +62,7 @@ static void channel_server_receive(Channel * c) {
 }
 
 static void channel_server_disconnected(Channel * c) {
-    trace(LOG_ALWAYS, "channel server disconnected");
+    trace(LOG_PROTOCOL, "channel server disconnected");
     discovery_channel_remove(c);
     protocol_channel_closed(c->client_data, c);
 }
@@ -131,7 +133,7 @@ static void became_discovery_master(void) {
 }
 
 #if defined(_WRS_KERNEL)
-int tcf(void) {
+int tcf_va(void) {
 #else   
 int main(int argc, char ** argv) {
 #endif

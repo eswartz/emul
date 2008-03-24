@@ -13,13 +13,13 @@
  * Agent self-testing service.
  */
 
+#include "mdep.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <signal.h>
 #include <assert.h>
 #include "myalloc.h"
-#include "mdep.h"
 #include "test.h"
 #include "trace.h"
 #include "context.h"
@@ -50,10 +50,18 @@ static void * test_sub(void * x) {
     return NULL;
 }
 
-static void test_proc(void) {
+void test_proc(void) {
     int i;
     pthread_t thread[4];
     int test_done = 0;
+#if defined(WIN32)
+    HANDLE h;
+    tcf_test_array = loc_alloc(0x1000);
+    h = OpenThread(THREAD_SUSPEND_RESUME, FALSE, GetCurrentThreadId());
+    SuspendThread(h);
+    CloseHandle(h);
+#endif
+    tcf_test_func0();
     for (i = 0; i < 4; i++) {
         thread[i] = 0;
     }
@@ -63,7 +71,7 @@ static void test_proc(void) {
             break;
         }
     }
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 9; i++) {
         tcf_test_func0();
     }
     test_done = 1;
@@ -73,9 +81,43 @@ static void test_proc(void) {
 }
 
 int run_test_process(pid_t * res) {
-#if defined(WIN32) || defined(__CYGWIN__)
-    errno = EINVAL;
-    return -1;
+#if defined(WIN32)
+    Context * ctx = NULL;
+    int r = 0;
+    int error = 0;
+    char fnm[FILE_PATH_SIZE];
+    char cmd[FILE_PATH_SIZE];
+    STARTUPINFO si;
+    PROCESS_INFORMATION prs;
+    memset(&si, 0, sizeof(si));
+    memset(&prs, 0, sizeof(prs));
+    if (GetModuleFileName(NULL, fnm, sizeof(fnm)) == 0) {
+        error = GetLastError();
+    }
+    si.cb = sizeof(si);
+    strcpy(cmd, "agent.exe -t");
+    if (error == 0 && CreateProcess(fnm, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &prs) == 0) {
+        error = GetLastError();
+    }
+    while (error == 0) {
+        DWORD cnt = SuspendThread(prs.hThread);
+        if (cnt == (DWORD)-1) {
+            error = GetLastError();
+            break;
+        }
+        ResumeThread(prs.hThread);
+        if (cnt > 0) break;
+        Sleep(10);
+    }
+    if (error != 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    if (res != NULL) *res = prs.dwProcessId;
+    r = context_attach(prs.dwProcessId, &ctx);
+    CloseHandle(prs.hThread);
+    CloseHandle(prs.hProcess);
+    return 0;
 #elif defined(_WRS_KERNEL)
     int tid = taskCreate("tTcf", 100, 0, 0x4000, (FUNCPTR)test_proc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     if (tid == 0) return -1;

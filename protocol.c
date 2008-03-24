@@ -17,11 +17,14 @@
  * protocol is used and what services do.
  */
 
+#include "mdep.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <assert.h>
 #include "protocol.h"
 #include "trace.h"
+#include "events.h"
 #include "events.h"
 #include "exceptions.h"
 #include "json.h"
@@ -174,12 +177,14 @@ static ReplyHandlerInfo * find_reply_handler(Channel *c, unsigned long tokenid, 
     return NULL;
 }
 
-void handle_protocol_message(Protocol *p, Channel *c) {
+void handle_protocol_message(Protocol * p, Channel * c) {
     char type[8];
     char token[256];
     char service[256];
     char name[256];
-    char *args[4];
+    char * args[4];
+
+    assert(is_dispatch_thread());
 
     read_stringz(&c->inp, type, sizeof(type));
     if (strlen(type) != 1) {
@@ -531,6 +536,7 @@ void protocol_channel_closed(Protocol * p, Channel * c) {
     int cnt;
     char ** list;
 
+    assert(is_dispatch_thread());
     for (i = 0; i < EVENT_HASH_SIZE; i++) {
         EventHandlerInfo ** ehp = &event_handlers[i];
         EventHandlerInfo * eh;

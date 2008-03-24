@@ -13,13 +13,10 @@
  * Implements input and output stream over TCP/IP transport.
  */
 
-#if defined(_WRS_KERNEL)
-#  include <vxWorks.h>
-#endif
+#include "mdep.h"
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
-#include "mdep.h"
 #include "tcf.h"
 #include "channel.h"
 #include "channel_tcp.h"
@@ -98,6 +95,7 @@ static void delete_channel(ChannelTCP * c) {
     trace(LOG_PROTOCOL, "Deleting channel 0x%08x", c);
     assert(c->lock_cnt == 0);
     assert(c->magic == CHANNEL_MAGIC);
+    assert(c->read_pending == 0);
     channel_clear_broadcast_group(&c->chan);
     channel_clear_suspend_group(&c->chan);
     c->magic = 0;
@@ -295,6 +293,7 @@ static void handle_channel_msg(void * x) {
     c->handling_msg = 2;                /* Processing message */
     if (peek_stream(&c->chan.inp) == MARKER_EOS) {
         trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel 0x%08x", c);
+        c->handling_msg = 0;
         channel_close(&c->chan);
         return;
     }
@@ -309,6 +308,7 @@ static void handle_channel_msg(void * x) {
         c->ibuf_out = c->ibuf_inp;
         c->ibuf_full = 0;
         c->message_count = 0;
+        c->handling_msg = 0;
         channel_close(&c->chan);
         return;
     }

@@ -15,21 +15,18 @@
  * agent code portable between Linux, Windows, VxWorks and potentially other OSes.
  */
 
+#include "mdep.h"
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>
-#include "mdep.h"
 #include "myalloc.h"
 
 pthread_attr_t pthread_create_attr;
 
-#ifdef WIN32
+#if defined(WIN32)
 
+#include <process.h>
 #include <fcntl.h>
-#include <shlobj.h>
-
-#define ERR_SOCKET (-1)
-#define ERR_WIN32  (-2)
 
 /*********************************************************************
     Support of pthreads on Windows is implemented according to
@@ -43,66 +40,81 @@ pthread_attr_t pthread_create_attr;
     Washington University, St. Louis, Missouri
 **********************************************************************/
 
-void pthread_mutex_init(pthread_mutex_t * mutex, void * attr) {
+typedef struct {
+    int waiters_count;
+    CRITICAL_SECTION waiters_count_lock;
+    HANDLE sema;
+    HANDLE waiters_done;
+    size_t was_broadcast;
+} PThreadCond;
+
+int pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr) {
     assert(attr == NULL);
     *mutex = CreateMutex(NULL, FALSE, NULL);
     if (*mutex == NULL) {
         fprintf(stderr, "Can't create mutex: error %d\n", GetLastError());
         exit(1);
     }
+    return 0;
 }
 
-void pthread_mutex_lock(pthread_mutex_t * mutex) {
+int pthread_mutex_lock(pthread_mutex_t * mutex) {
     assert(mutex != NULL);
     assert(*mutex != NULL);
     WaitForSingleObject(*mutex, INFINITE);
+    return 0;
 }
 
-void pthread_mutex_unlock(pthread_mutex_t * mutex) {
+int pthread_mutex_unlock(pthread_mutex_t * mutex) {
     assert(mutex != NULL);
     assert(*mutex != NULL);
     ReleaseMutex(*mutex);
+    return 0;
 }
 
-void pthread_cond_init(pthread_cond_t * cond, void * attr) {
+int pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * attr) {
+    PThreadCond * p = loc_alloc_zero(sizeof(PThreadCond));
     assert(attr == NULL);
-    cond->waiters_count = 0;
-    cond->was_broadcast = 0;
-    cond->sema = CreateSemaphore(NULL, 0, 0x7fffffff, NULL);
-    InitializeCriticalSection(&cond->waiters_count_lock);
-    cond->waiters_done = CreateEvent(NULL, FALSE, FALSE, NULL);
+    p->waiters_count = 0;
+    p->was_broadcast = 0;
+    p->sema = CreateSemaphore(NULL, 0, 0x7fffffff, NULL);
+    InitializeCriticalSection(&p->waiters_count_lock);
+    p->waiters_done = CreateEvent(NULL, FALSE, FALSE, NULL);
+    *cond = (pthread_cond_t)p;
+    return 0;
 }
 
 int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex) {
     DWORD res = 0;
     int last_waiter = 0;
+    PThreadCond * p = (PThreadCond *)*cond;
 
-    EnterCriticalSection(&cond->waiters_count_lock);
-    cond->waiters_count++;
-    LeaveCriticalSection(&cond->waiters_count_lock);
+    EnterCriticalSection(&p->waiters_count_lock);
+    p->waiters_count++;
+    LeaveCriticalSection(&p->waiters_count_lock);
 
     // This call atomically releases the mutex and waits on the
     // semaphore until <pthread_cond_signal> or <pthread_cond_broadcast>
     // are called by another thread.
-    res = SignalObjectAndWait(*mutex, cond->sema, INFINITE, FALSE);
+    res = SignalObjectAndWait(*mutex, p->sema, INFINITE, FALSE);
 
     // Reacquire lock to avoid race conditions.
-    EnterCriticalSection(&cond->waiters_count_lock);
+    EnterCriticalSection(&p->waiters_count_lock);
 
     // We're no longer waiting...
-    cond->waiters_count--;
+    p->waiters_count--;
 
     // Check to see if we're the last waiter after <pthread_cond_broadcast>.
-    last_waiter = cond->was_broadcast && cond->waiters_count == 0;
+    last_waiter = p->was_broadcast && p->waiters_count == 0;
 
-    LeaveCriticalSection(&cond->waiters_count_lock);
+    LeaveCriticalSection(&p->waiters_count_lock);
 
     // If we're the last waiter thread during this particular broadcast
     // then let all the other threads proceed.
     if (last_waiter) {
         // This call atomically signals the <waiters_done_> event and waits until
         // it can acquire the <mutex>.  This is required to ensure fairness. 
-        SignalObjectAndWait(cond->waiters_done, *mutex, INFINITE, FALSE);
+        SignalObjectAndWait(p->waiters_done, *mutex, INFINITE, FALSE);
     }
     else {
         // Always regain the external mutex since that's the guarantee we
@@ -113,36 +125,37 @@ int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex) {
     return 0;
 }
 
-int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, struct timespec * timeout) {
+int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const struct timespec * timeout) {
     DWORD res = 0;
     int last_waiter = 0;
+    PThreadCond * p = (PThreadCond *)*cond;
 
-    EnterCriticalSection(&cond->waiters_count_lock);
-    cond->waiters_count++;
-    LeaveCriticalSection(&cond->waiters_count_lock);
+    EnterCriticalSection(&p->waiters_count_lock);
+    p->waiters_count++;
+    LeaveCriticalSection(&p->waiters_count_lock);
 
     // This call atomically releases the mutex and waits on the
     // semaphore until <pthread_cond_signal> or <pthread_cond_broadcast>
     // are called by another thread.
-    res = SignalObjectAndWait(*mutex, cond->sema, timeout->tv_sec * 1000 + timeout->tv_nsec / 1000000, FALSE);
+    res = SignalObjectAndWait(*mutex, p->sema, timeout->tv_sec * 1000 + timeout->tv_nsec / 1000000, FALSE);
 
     // Reacquire lock to avoid race conditions.
-    EnterCriticalSection(&cond->waiters_count_lock);
+    EnterCriticalSection(&p->waiters_count_lock);
 
     // We're no longer waiting...
-    cond->waiters_count--;
+    p->waiters_count--;
 
     // Check to see if we're the last waiter after <pthread_cond_broadcast>.
-    last_waiter = cond->was_broadcast && cond->waiters_count == 0;
+    last_waiter = p->was_broadcast && p->waiters_count == 0;
 
-    LeaveCriticalSection(&cond->waiters_count_lock);
+    LeaveCriticalSection(&p->waiters_count_lock);
 
     // If we're the last waiter thread during this particular broadcast
     // then let all the other threads proceed.
     if (last_waiter) {
         // This call atomically signals the <waiters_done> event and waits until
         // it can acquire the <mutex>.  This is required to ensure fairness. 
-        SignalObjectAndWait(cond->waiters_done, *mutex, INFINITE, FALSE);
+        SignalObjectAndWait(p->waiters_done, *mutex, INFINITE, FALSE);
     }
     else {
         // Always regain the external mutex since that's the guarantee we
@@ -155,48 +168,64 @@ int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, struc
     return 0;
 }
 
-void pthread_cond_signal(pthread_cond_t *cond) {
+int pthread_cond_signal(pthread_cond_t * cond) {
     int have_waiters = 0;
+    PThreadCond * p = (PThreadCond *)*cond;
     
-    EnterCriticalSection(&cond->waiters_count_lock);
-    have_waiters = cond->waiters_count > 0;
-    LeaveCriticalSection(&cond->waiters_count_lock);
+    EnterCriticalSection(&p->waiters_count_lock);
+    have_waiters = p->waiters_count > 0;
+    LeaveCriticalSection(&p->waiters_count_lock);
 
     // If there aren't any waiters, then this is a no-op.  
-    if (have_waiters) ReleaseSemaphore(cond->sema, 1, 0);
+    if (have_waiters) ReleaseSemaphore(p->sema, 1, 0);
+    return 0;
 }
 
-void pthread_cond_broadcast(pthread_cond_t *cond) {
+int pthread_cond_broadcast(pthread_cond_t * cond) {
     int have_waiters = 0;
+    PThreadCond * p = (PThreadCond *)*cond;
 
     // This is needed to ensure that <waiters_count_> and <was_broadcast_> are
     // consistent relative to each other.
-    EnterCriticalSection(&cond->waiters_count_lock);
+    EnterCriticalSection(&p->waiters_count_lock);
 
-    if (cond->waiters_count > 0) {
+    if (p->waiters_count > 0) {
         // We are broadcasting, even if there is just one waiter...
         // Record that we are broadcasting, which helps optimize
         // <pthread_cond_wait> for the non-broadcast case.
-        cond->was_broadcast = 1;
+        p->was_broadcast = 1;
         have_waiters = 1;
     }
 
     if (have_waiters) {
         // Wake up all the waiters atomically.
-        ReleaseSemaphore(cond->sema, cond->waiters_count, 0);
+        ReleaseSemaphore(p->sema, p->waiters_count, 0);
 
-        LeaveCriticalSection(&cond->waiters_count_lock);
+        LeaveCriticalSection(&p->waiters_count_lock);
 
         // Wait for all the awakened threads to acquire the counting
         // semaphore. 
-        WaitForSingleObject(cond->waiters_done, INFINITE);
+        WaitForSingleObject(p->waiters_done, INFINITE);
         // This assignment is okay, even without the <waiters_count_lock_> held 
         // because no other waiter threads can wake up to access it.
-        cond->was_broadcast = 0;
+        p->was_broadcast = 0;
     }
     else {
-        LeaveCriticalSection(&cond->waiters_count_lock);
+        LeaveCriticalSection(&p->waiters_count_lock);
     }
+    return 0;
+}
+
+int pthread_cond_destroy(pthread_cond_t * cond) {
+    PThreadCond * p = (PThreadCond *)*cond;
+
+    DeleteCriticalSection(&p->waiters_count_lock);
+    CloseHandle(p->sema);
+    CloseHandle (p->waiters_done);
+
+    loc_free(p);
+    *cond = NULL;
+    return 0;
 }
 
 typedef struct ThreadArgs ThreadArgs;
@@ -213,30 +242,37 @@ static void start_thread(void * x) {
     ExitThread((DWORD)a.start(a.args));
 }
 
-int pthread_create(pthread_t * thread, pthread_attr_t * attr,
+int pthread_create(pthread_t * thread, const pthread_attr_t * attr,
                    void * (*start)(void *), void * args) {
-    unsigned long r;
+    HANDLE r;
     ThreadArgs * a;
 
     a = (ThreadArgs *)loc_alloc(sizeof(ThreadArgs));
     a->start = start;
     a->args = args;
-    r = _beginthread(start_thread, 0, a);
-    if (r == (unsigned long)-1) {
+#ifdef __CYGWIN__
+    r = CreateThread (0, 0, (LPTHREAD_START_ROUTINE)start_thread, a, 0, 0);
+    if (r == NULL) {
+        loc_free(a);
+        return errno = EINVAL;
+    }
+#else
+    r = (HANDLE)_beginthread(start_thread, 0, a);
+    if (r == (HANDLE)-1) {
         int error = errno;
         loc_free(a);
-        errno = error;
-        return error;
+        return errno = error;
     }
-    *thread = (HANDLE)r;
+#endif
+    *thread = r;
     return 0;
 }
 
-int pthread_join(pthread_t thread, void **value_ptr) {
+int pthread_join(pthread_t thread, void ** value_ptr) {
     if (WaitForSingleObject(thread, INFINITE) == WAIT_FAILED) {
         return EINVAL;
     }
-    if (!GetExitCodeThread(thread, (LPDWORD)value_ptr)) {
+    if (value_ptr != NULL && !GetExitCodeThread(thread, (LPDWORD)value_ptr)) {
         return EINVAL;
     }
     CloseHandle(thread);
@@ -246,6 +282,17 @@ int pthread_join(pthread_t thread, void **value_ptr) {
 pthread_t pthread_self(void) {
     return GetCurrentThread();
 }
+
+int pthread_attr_init(pthread_attr_t * attr) {
+    return 0;
+}
+
+#endif /* WIN32 */
+
+#if defined(WIN32) && defined(_MSC_VER)
+
+#define ERR_SOCKET (-1)
+#define ERR_WIN32  (-2)
 
 static __int64 file_time_to_unix_time (const FILETIME * ft) {
     __int64 res = (__int64)ft->dwHighDateTime << 32;
@@ -315,11 +362,9 @@ int wsa_socket(int af, int type, int protocol) {
     return res;
 }
 
-#ifndef __GNUC__
 int inet_aton(const char *cp, struct in_addr *inp) {
     return ( ( inp->s_addr = inet_addr(cp) ) != INADDR_NONE );
 }
-#endif
 
 int truncate(const char * path, int64 size) {
     int res = 0;
@@ -396,6 +441,12 @@ int closedir(DIR * d) {
     loc_free(d);
     return r;
 }
+#endif
+
+
+#if defined(WIN32)
+
+#include <shlobj.h>
 
 int getuid(void) {
     /* Windows user is always a superuser :) */
@@ -464,6 +515,7 @@ void ini_mdep(void) {
         WSACleanup();
         exit(1);
     }
+    pthread_attr_init(&pthread_create_attr);
 }
 
 #elif defined(_WRS_KERNEL)
@@ -523,9 +575,7 @@ void ini_mdep(void) {
 
 #include <pwd.h>
 #include <sys/utsname.h>
-#ifndef __CYGWIN__
 #include <asm/unistd.h>
-#endif
 
 char * get_os_name(void) {
     static char str[256];
@@ -547,19 +597,13 @@ char * get_user_home(void) {
     return buf;
 }
 
-#ifndef __CYGWIN__
 int tkill(pid_t pid, int signal) {
     return syscall(__NR_tkill, pid, signal);
 }
-#endif
 
 void ini_mdep(void) {
     pthread_attr_init(&pthread_create_attr);
     pthread_attr_setstacksize(&pthread_create_attr, 0x8000);
-#if defined(__CYGWIN__)
-    /* Force initialization of WinSock library */
-    closesocket(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
-#endif
 }
 
 #endif
@@ -589,7 +633,7 @@ char * canonicalize_file_name(const char * path) {
     return strdup(buf);
 }
 
-#elif defined(_WRS_KERNEL) || defined(__CYGWIN__)
+#elif defined(_WRS_KERNEL)
 
 char * canonicalize_file_name(const char * path) {
     char buf[PATH_MAX];
@@ -814,25 +858,21 @@ const char * loc_gai_strerror(int ecode) {
     return buf;
 }
 
-#elif defined(__CYGWIN__)
-
-extern void __stdcall freeaddrinfo(struct addrinfo *);
-extern int __stdcall getaddrinfo(const char *, const char *,
-                const struct addrinfo *, struct addrinfo **);
-
-void loc_freeaddrinfo(struct addrinfo * ai) {
-        freeaddrinfo(ai);
-}
-
-int loc_getaddrinfo(const char * nodename, const char * servname,
-       const struct addrinfo * hints, struct addrinfo ** res) {
-        return getaddrinfo(nodename, servname, hints, res);
-}
+#elif defined(WIN32) && defined(__GNUC__)
 
 const char * loc_gai_strerror(int ecode) {
-    static char buf[32];
+    static char buf[128];
     if (ecode == 0) return "Success";
-    snprintf(buf, sizeof(buf), "Error code %d", ecode);
+    FormatMessage(
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS |
+        FORMAT_MESSAGE_MAX_WIDTH_MASK,
+        NULL,
+        ecode,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        buf,
+        sizeof(buf),
+        NULL);
     return buf;
 }
 

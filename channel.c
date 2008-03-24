@@ -13,15 +13,12 @@
  * Implements input and output stream over TCP/IP transport and UDP based auto discovery.
  */
 
-#if defined(_WRS_KERNEL)
-#  include <vxWorks.h>
-#endif
+#include "mdep.h"
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
 #include <signal.h>
 #include <ctype.h>
-#include "mdep.h"
 #include "tcf.h"
 #include "channel.h"
 #include "channel_tcp.h"

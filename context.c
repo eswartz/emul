@@ -13,9 +13,7 @@
  * This module handles process/thread OS contexts and their state machine.
  */
 
-#if defined(_WRS_KERNEL)
-#  include <vxWorks.h>
-#endif
+#include "mdep.h"
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
@@ -131,6 +129,7 @@ char * pid2id(pid_t pid, pid_t parent) {
 }
 
 char * thread_id(Context * ctx) {
+    assert(context_has_state(ctx));
     if (ctx->parent == NULL) return pid2id(ctx->pid, ctx->pid);
     assert(ctx->parent->parent == NULL);
     return pid2id(ctx->pid, ctx->parent->pid);
@@ -236,44 +235,493 @@ static void event_context_exited(Context * ctx) {
     }
 }
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#if defined(WIN32)
 
-/*
- * On Windows context management is not supported yet.
- */
+struct DebugThreadArgs {
+    int error;
+    Context * ctx;
+    DWORD debug_thread_id;
+    HANDLE debug_thread;
+    HANDLE debug_thread_semaphore;
+};
+
+struct DebugEvent {
+    HANDLE event_semaphore;
+    DEBUG_EVENT event;
+};
+
+typedef struct DebugThreadArgs DebugThreadArgs;
+typedef struct DebugEvent DebugEvent;
 
 char * event_name(int event) {
+    static char buf[32];
+    snprintf(buf, sizeof(buf), "0x%08x", event);
+    return buf;
+}
+
+static char * win32_debug_event_name(int event) {
+    switch (event) {
+    case CREATE_PROCESS_DEBUG_EVENT:
+        return "CREATE_PROCESS_DEBUG_EVENT";
+    case CREATE_THREAD_DEBUG_EVENT:
+        return "CREATE_THREAD_DEBUG_EVENT";
+    case EXCEPTION_DEBUG_EVENT:
+        return "EXCEPTION_DEBUG_EVENT";
+    case EXIT_PROCESS_DEBUG_EVENT:
+        return "EXIT_PROCESS_DEBUG_EVENT";
+    case EXIT_THREAD_DEBUG_EVENT:
+        return "EXIT_THREAD_DEBUG_EVENT";
+    case LOAD_DLL_DEBUG_EVENT:
+        return "LOAD_DLL_DEBUG_EVENT";
+    case OUTPUT_DEBUG_STRING_EVENT:
+        return "OUTPUT_DEBUG_STRING_EVENT";
+    case UNLOAD_DLL_DEBUG_EVENT:
+        return "UNLOAD_DLL_DEBUG_EVENT";
+    }
     return "Unknown";
 }
 
-int context_attach(pid_t pid, Context ** res) {
+static void set_errno(DWORD win32_error_code) {
+    // TODO need better translation of WIN32 error codes to errno
     errno = EINVAL;
-    return -1;
+}
+
+static void event_win32_context_stopped(Context * ctx) {
+    unsigned long pc0 = !ctx->regs_error ? get_regs_PC(ctx->regs) : 0;
+
+    trace(LOG_CONTEXT, "context: stopped: ctx %#x, pid %d, exception 0x%08x",
+        ctx, ctx->pid, ctx->context_exception_code);
+    assert(is_dispatch_thread());
+    assert(!ctx->stopped);
+    assert(ctx->suspend_cnt > 0);
+    assert(ctx->handle != NULL);
+    assert(ctx->parent != NULL);
+    ctx->regs_error = 0;
+    memset(&ctx->regs, 0, sizeof(ctx->regs));
+    ctx->regs.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+    if (GetThreadContext(ctx->handle, &ctx->regs) == 0) {
+        set_errno(GetLastError());
+        ctx->regs_error = errno;
+        trace(LOG_ALWAYS, "Can't read thread registers: ctx %#x, pid %d, error %d",
+            ctx, ctx->pid, ctx->regs_error);
+    }
+    else {
+        trace(LOG_CONTEXT, "context: get regs OK: ctx %#x, pid %d, PC %#x",
+            ctx, ctx->pid, get_regs_PC(ctx->regs));
+    }
+    ctx->signal = SIGTRAP;
+    ctx->event = ctx->context_exception_code;
+    ctx->pending_step = 0;
+    ctx->stopped = 1;
+    if (ctx->context_exception_code != 0) {
+        switch (ctx->context_exception_code) {
+        case EXCEPTION_SINGLE_STEP:
+            break;
+        case EXCEPTION_BREAKPOINT:
+            set_regs_PC(ctx->regs, get_regs_PC(ctx->regs) - 1);
+            ctx->regs_dirty = 1;
+            ctx->stopped_by_bp = 1;
+            break;
+        default:
+            ctx->pending_intercept = 1;
+            break;
+        }
+    }
+    event_context_stopped(ctx);
+}
+
+static void event_win32_context_started(Context * ctx) {
+    trace(LOG_CONTEXT, "context: started: ctx %#x, pid %d", ctx, ctx->pid);
+    assert(ctx->stopped);
+    ctx->stopped = 0;
+    event_context_started(ctx);
+}
+
+static void event_win32_context_exited(Context * ctx) {
+    assert(!ctx->exited);
+    if (ctx->stopped) {
+        event_win32_context_started(ctx);
+    }
+    while (!list_is_empty(&ctx->children)) {
+        Context * c = cldl2ctxp(ctx->children.next);
+        assert(c->parent == ctx);
+        event_win32_context_exited(c);
+    }
+    ctx->exiting = 0;
+    ctx->exited = 1;
+    event_context_exited(ctx);
+    if (ctx->handle != NULL) {
+        CloseHandle(ctx->handle);
+        ctx->handle = NULL;
+    }
+    if (ctx->parent != NULL) {
+        list_remove(&ctx->cldl);
+        context_unlock(ctx->parent);
+        ctx->parent = NULL;
+    }
+    context_unlock(ctx);
+}
+
+static int win32_resume(Context * ctx) {
+    assert(ctx->suspend_cnt > 0);
+    if (ctx->regs_dirty && SetThreadContext(ctx->handle, &ctx->regs) == 0) {
+        int err = GetLastError();
+        trace(LOG_ALWAYS, "Can't write thread registers: ctx %#x, pid %d, error %d",
+            ctx, ctx->pid, err);
+        set_errno(err);
+        return -1;
+    }
+    ctx->regs_dirty = 0;
+    ctx->context_exception_code = 0;
+    if (ctx->pending_exception_code) {
+        ctx->context_exception_code = ctx->pending_exception_code;
+        ctx->pending_exception_code = 0;
+        event_win32_context_started(ctx);
+        post_event((EventCallBack *)event_win32_context_stopped, ctx);
+        return 0;
+    }
+    while (ctx->suspend_cnt > 0) {
+        DWORD cnt = ResumeThread(ctx->handle);
+        if (cnt == (DWORD)-1) {
+            DWORD err = GetLastError();
+            trace(LOG_ALWAYS, "Can't resume thread: error %d", err);
+            set_errno(err);
+            return -1;
+        }
+        ctx->suspend_cnt = cnt != 0 ? cnt - 1 : 0;
+    }
+    event_win32_context_started(ctx);
+    return 0;
+}
+
+static void debug_event_handler(void * x) {
+    DWORD cnt = 0;
+    DebugEvent * args = (DebugEvent *)x;
+    DEBUG_EVENT * debug_event = &args->event;
+    Context * prs = context_find_from_pid(debug_event->dwProcessId);
+    Context * ctx = context_find_from_pid(debug_event->dwThreadId);
+
+    assert(prs != NULL);
+    switch (debug_event->dwDebugEventCode) {
+    case CREATE_PROCESS_DEBUG_EVENT:
+        assert(ctx == NULL);
+        assert(prs->handle == NULL);
+        prs->handle = debug_event->u.CreateProcessInfo.hProcess;
+        event_context_created(prs);
+        ctx = create_context(debug_event->dwThreadId);
+        ctx->mem = debug_event->dwProcessId;
+        ctx->handle = debug_event->u.CreateProcessInfo.hThread;
+        ctx->parent = prs;
+        prs->ref_count++;
+        list_add_first(&ctx->cldl, &prs->children);
+        event_context_created(ctx);
+        ctx->pending_intercept = 1;
+        cnt = SuspendThread(ctx->handle);
+        if (cnt == (DWORD)-1) {
+            trace(LOG_ALWAYS, "Can't suspend thread on create process event: tid %d, error %d",
+                debug_event->dwThreadId, GetLastError());
+        }
+        else {
+            // Note: suspend counter for process main thread is
+            // adjusted (-1) for ResumeThread() hidded somewhere in the debug API
+            ctx->suspend_cnt = cnt;
+            event_win32_context_stopped(ctx);
+        }
+        CloseHandle(debug_event->u.CreateProcessInfo.hFile);
+        break;
+    case CREATE_THREAD_DEBUG_EVENT:
+        assert(ctx == NULL);
+        ctx = create_context(debug_event->dwThreadId);
+        ctx->mem = debug_event->dwProcessId;
+        ctx->handle = debug_event->u.CreateThread.hThread;
+        ctx->parent = prs;
+        prs->ref_count++;
+        list_add_first(&ctx->cldl, &prs->children);
+        event_context_created(ctx);
+        cnt = SuspendThread(ctx->handle);
+        if (cnt == (DWORD)-1) {
+            trace(LOG_ALWAYS, "Can't suspend thread on create thread event: tid %d, error %d",
+                debug_event->dwThreadId, GetLastError());
+        }
+        else {
+            ctx->suspend_cnt = cnt + 1;
+            event_win32_context_stopped(ctx);
+        }
+        break;
+    case EXCEPTION_DEBUG_EVENT:
+        {
+            DWORD exc_code = debug_event->u.Exception.ExceptionRecord.ExceptionCode;
+            assert(ctx != NULL);
+            if (ctx->suspend_cnt == 0) {
+                cnt = SuspendThread(ctx->handle);
+                if (cnt == (DWORD)-1) {
+                    trace(LOG_ALWAYS, "Can't suspend thread on exception event: tid %d, exception 0x%08x, error %d",
+                        debug_event->dwThreadId, exc_code, GetLastError());
+                }
+                else {
+                    assert(cnt == 0);
+                    ctx->suspend_cnt = cnt + 1;
+                    ctx->context_exception_code = exc_code;
+                    event_win32_context_stopped(ctx);
+                }
+            }
+            else {
+                assert(ctx->pending_exception_code == 0);
+                ctx->pending_exception_code = exc_code;
+            }
+        }
+        break;
+    case EXIT_THREAD_DEBUG_EVENT:
+        assert(ctx != NULL);
+        event_win32_context_exited(ctx);
+        ctx = NULL;
+        break;
+    case EXIT_PROCESS_DEBUG_EVENT:
+        assert(ctx != NULL);
+        event_win32_context_exited(ctx);
+        event_win32_context_exited(prs);
+        prs = ctx = NULL;
+        break;
+    case LOAD_DLL_DEBUG_EVENT:
+        CloseHandle(debug_event->u.LoadDll.hFile);
+        break;
+    case RIP_EVENT:
+        trace(LOG_ALWAYS, "System debugging error: debuggee pid %d, error type %d, error code %d",
+            debug_event->dwProcessId, debug_event->u.RipInfo.dwType, debug_event->u.RipInfo.dwError);
+        break;
+    }
+    assert(ctx == NULL || ctx->parent == prs);
+    ReleaseSemaphore(args->event_semaphore, 1, 0);
+}
+
+static void debugger_exit_handler(void * x) {
+    DebugThreadArgs * dbg = (DebugThreadArgs *)x;
+    Context * prs = dbg->ctx;
+
+    trace(LOG_WAITPID, "debugger thread %d exited, debuggee pid %d",
+        dbg->debug_thread_id, prs->pid);
+
+    WaitForSingleObject(dbg->debug_thread, INFINITE);
+    CloseHandle(dbg->debug_thread);
+    CloseHandle(dbg->debug_thread_semaphore);
+
+    if (!prs->exited) event_win32_context_exited(prs);
+
+    context_unlock(prs);
+    loc_free(dbg);
+}
+
+static DWORD WINAPI debugger_thread_func(LPVOID x) {
+    DebugThreadArgs * args = (DebugThreadArgs *)x;
+    HANDLE event_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
+    DebugEvent event_buffer;
+    int abort = 0;
+
+    if (event_semaphore == NULL) {
+        args->error = GetLastError();
+        trace(LOG_ALWAYS, "Can't create semaphore: error %d", args->error);
+        ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
+        return 0;
+    }
+
+    if (DebugActiveProcess(args->ctx->pid) == 0) {
+        args->error = GetLastError();
+        trace(LOG_ALWAYS, "Can't attach to a process: error %d", args->error);
+        ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
+        CloseHandle(event_semaphore);
+        return 0;
+    }
+
+    ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
+
+    while (!abort) {
+        DEBUG_EVENT * debug_event = &event_buffer.event;
+
+        memset(&event_buffer, 0, sizeof(event_buffer));
+        if (WaitForDebugEvent(debug_event, INFINITE) == 0) {
+            trace(LOG_ALWAYS, "WaitForDebugEvent() error %d\n", GetLastError());
+            break;
+        }
+        trace(LOG_WAITPID, "%s, process %d, thread %d",
+            win32_debug_event_name(debug_event->dwDebugEventCode),
+            debug_event->dwProcessId, debug_event->dwThreadId);
+        assert(args->ctx->pid == debug_event->dwProcessId);
+
+        event_buffer.event_semaphore = event_semaphore;
+        post_event(debug_event_handler, &event_buffer);
+        WaitForSingleObject(event_semaphore, INFINITE);
+
+        if (ContinueDebugEvent(debug_event->dwProcessId, debug_event->dwThreadId, DBG_CONTINUE) == 0) {
+            trace(LOG_ALWAYS, "Can't continue debug event: process %d, thread %d, error %d",
+                debug_event->dwProcessId, debug_event->dwThreadId, GetLastError());
+            break;
+        }
+
+        switch (debug_event->dwDebugEventCode) {
+        case EXIT_PROCESS_DEBUG_EVENT:
+        case RIP_EVENT:
+            abort = 1;
+            break;
+        }
+    }
+
+    CloseHandle(event_semaphore);
+    post_event(debugger_exit_handler, args);
+    return 0;
+}
+
+int context_attach(pid_t pid, Context ** res) {
+    DebugThreadArgs * dbg = (DebugThreadArgs *)loc_alloc_zero(sizeof(DebugThreadArgs));
+
+    dbg->ctx = create_context(pid);
+    dbg->ctx->mem = pid;
+    assert(dbg->ctx->ref_count == 1);
+    if (res != NULL) *res = dbg->ctx;
+    context_lock(dbg->ctx);
+
+    dbg->debug_thread_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
+    if (dbg->debug_thread_semaphore == NULL) {
+        DWORD err = GetLastError();
+        trace(LOG_ALWAYS, "Can't create semaphore: error %d", err);
+        loc_free(dbg);
+        set_errno(err);
+        return -1;
+    }
+    
+    dbg->debug_thread = CreateThread(NULL, 0, debugger_thread_func, dbg, 0, &dbg->debug_thread_id);
+    if (dbg->debug_thread == NULL) {
+        DWORD err = GetLastError();
+        trace(LOG_ALWAYS, "Can't create thread: error %d", err);
+        CloseHandle(dbg->debug_thread_semaphore);
+        loc_free(dbg);
+        set_errno(err);
+        return -1;
+    }
+
+
+    WaitForSingleObject(dbg->debug_thread_semaphore, INFINITE);
+
+    if (dbg->error) {
+        WaitForSingleObject(dbg->debug_thread, INFINITE);
+        CloseHandle(dbg->debug_thread);
+        CloseHandle(dbg->debug_thread_semaphore);
+        loc_free(dbg);
+        set_errno(dbg->error);
+        return -1;
+    }
+
+    return 0;
+}
+
+int context_has_state(Context * ctx) {
+    return ctx != NULL && ctx->pid != ctx->mem;
 }
 
 int context_stop(Context * ctx) {
-    errno = EINVAL;
-    return -1;
+    trace(LOG_CONTEXT, "context:%s suspending ctx %#x pid %d",
+        ctx->pending_intercept ? "" : " temporary", ctx, ctx->pid);
+    assert(context_has_state(ctx));
+    assert(!ctx->stopped);
+    if (ctx->pending_step) return 0;
+    assert(!ctx->exited);
+    if (ctx->suspend_cnt == 0) {
+        DWORD cnt = SuspendThread(ctx->handle);
+        if (cnt == (DWORD)-1) {
+            DWORD err = GetLastError();
+            if (err == ERROR_ACCESS_DENIED) {
+                // The thread is exiting
+                return 0;
+            }
+            trace(LOG_ALWAYS, "Can't suspend thread: ctx %#x, pid %d, error %d", ctx, ctx->pid, err);
+            set_errno(err);
+            return -1;
+        }
+        ctx->suspend_cnt = cnt + 1;
+        post_event((EventCallBack *)event_win32_context_stopped, ctx);
+    }
+    return 0;
 }
 
 int context_continue(Context * ctx) {
-    errno = EINVAL;
-    return -1;
+    trace(LOG_CONTEXT, "context: resuming ctx %#x, pid %d", ctx, ctx->pid);
+    assert(context_has_state(ctx));
+    assert(ctx->stopped);
+    assert(!ctx->intercepted);
+    assert(!ctx->pending_step);
+    assert(!ctx->exited);
+#ifdef __i386__
+    if (ctx->regs.EFlags & 0x100) {
+        ctx->regs.EFlags &= ~0x100;
+        ctx->regs_dirty = 1;
+    }
+#endif
+    if (ctx->regs_dirty && ctx->regs_error) {
+        trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#x, pid %d, error %d",
+            ctx, ctx->pid, ctx->regs_error);
+        errno = ctx->regs_error;
+        return -1;
+    }
+    return win32_resume(ctx);
 }
 
 int context_single_step(Context * ctx) {
-    errno = EINVAL;
-    return -1;
+    trace(LOG_CONTEXT, "context: single step ctx %#x, pid %d", ctx, ctx->pid);
+    assert(is_dispatch_thread());
+    assert(context_has_state(ctx));
+    assert(ctx->stopped);
+    assert(!ctx->pending_intercept);
+    assert(!ctx->pending_step);
+    assert(!ctx->exited);
+#ifdef __i386__
+    if (ctx->regs_error) {
+        trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#x, pid %d, error %d",
+            ctx, ctx->pid, ctx->regs_error);
+        errno = ctx->regs_error;
+        return -1;
+    }
+    ctx->regs.EFlags |= 0x100;
+    ctx->regs_dirty = 1;
+#else
+#   error "context_single_step() is not implemented for CPU other then X86"
+#endif
+    ctx->pending_step = 1;
+    return win32_resume(ctx);
 }
 
 int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
-    errno = EINVAL;
-    return -1;
+    SIZE_T bcnt = 0;
+    trace(LOG_CONTEXT, "context: read memory ctx %#x, pid %d, address 0x%08x, size %d", ctx, ctx->pid, address, size);
+    assert(is_dispatch_thread());
+    if (ctx->parent != NULL) ctx = ctx->parent;
+    assert(ctx->pid == ctx->mem);
+    if (ReadProcessMemory(ctx->handle, (LPCVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
+        DWORD err = GetLastError();
+        trace(LOG_ALWAYS, "Can't read process memory: pid %d, error %d", ctx->pid, err);
+        set_errno(err);
+        return -1;
+    }
+    return 0;
 }
 
 int context_write_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
-    errno = EINVAL;
-    return -1;
+    SIZE_T bcnt = 0;
+    trace(LOG_CONTEXT, "context: write memory ctx %#x, pid %d, address 0x%08x, size %d", ctx, ctx->pid, address, size);
+    assert(is_dispatch_thread());
+    if (ctx->parent != NULL) ctx = ctx->parent;
+    assert(ctx->pid == ctx->mem);
+    if (WriteProcessMemory(ctx->handle, (LPVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
+        DWORD err = GetLastError();
+        trace(LOG_ALWAYS, "Can't write process memory: pid %d, error %d", ctx->pid, err);
+        set_errno(err);
+        return -1;
+    }
+    if (FlushInstructionCache(ctx->handle, (LPCVOID)address, size) == 0) {
+        DWORD err = GetLastError();
+        trace(LOG_ALWAYS, "Can't flush instruction cache: pid %d, error %d", ctx->pid, err);
+        set_errno(err);
+        return -1;
+    }
+    return 0;
 }
 
 static void init(void) {
@@ -374,6 +822,10 @@ int context_attach(pid_t pid, Context ** res) {
     return 0;
 }
 
+int context_has_state(Context * ctx) {
+    return 1;
+}
+
 int context_stop(Context * ctx) {
     struct event_info * info;
     VXDBG_CTX vxdbg_ctx;
@@ -384,28 +836,40 @@ int context_stop(Context * ctx) {
     assert(!ctx->regs_dirty);
     assert(!ctx->intercepted);
     if (ctx->pending_intercept) {
-        trace(LOG_CONTEXT, "context: stop ctx %#x pid %d", ctx, ctx->pid);
+        trace(LOG_CONTEXT, "context: stop ctx %#x, id %#x", ctx, ctx->pid);
     }
     else {
-        trace(LOG_CONTEXT, "context: temporary stop ctx %#x pid %d", ctx, ctx->pid);
+        trace(LOG_CONTEXT, "context: temporary stop ctx %#x, id %#x", ctx, ctx->pid);
     }
     
     vxdbg_ctx.ctxId = ctx->pid;
     vxdbg_ctx.ctxType = VXDBG_CTX_TASK;
-    if (vxdbgStop(vxdbg_clnt_id, &vxdbg_ctx) != OK) return -1;
+    taskLock();
+    if (vxdbgStop(vxdbg_clnt_id, &vxdbg_ctx) != OK) {
+        int error = errno;
+        taskUnlock();
+        trace(LOG_ALWAYS, "context: can't stop ctx %#x, id %#x: %s",
+                ctx, ctx->pid, errno_to_str(error));
+        return -1;
+    }
     assert(taskIsStopped(ctx->pid));
-    
     info = event_info_alloc(EVENT_HOOK_STOP);
     if (info != NULL) {
         info->stopped_ctx.ctxId = ctx->pid;
         event_info_post(info);
     }
+    taskUnlock();
     return 0;
 }
 
 static int kill_context(Context * ctx) {
     ctx->pending_signals &= ~(1 << SIGKILL);
-    if (taskDelete(ctx->pid) != OK) return -1;
+    if (taskDelete(ctx->pid) != OK) {
+        int error = errno;
+        trace(LOG_ALWAYS, "context: can't kill ctx %#x, id %#x: %s",
+                ctx, ctx->pid, errno_to_str(error));
+        return -1;
+    }
     ctx->stopped = 0;
     event_context_started(ctx);
     ctx->exiting = 0;
@@ -428,10 +892,16 @@ int context_continue(Context * ctx) {
     assert(!ctx->pending_intercept);
     assert(!ctx->exited);
     assert(!ctx->pending_step);
-    trace(LOG_CONTEXT, "context: resume ctx %#x, pid %d", ctx, ctx->pid);
+    assert(taskIsStopped(ctx->pid));
+    trace(LOG_CONTEXT, "context: continue ctx %#x, id %#x", ctx, ctx->pid);
 
     if (ctx->regs_dirty) {
-        if (taskRegsSet(ctx->pid, &ctx->regs) != OK) return -1;
+        if (taskRegsSet(ctx->pid, &ctx->regs) != OK) {
+            int error = errno;
+            trace(LOG_ALWAYS, "context: can't set regs ctx %#x, id %#x: %s",
+                    ctx, ctx->pid, errno_to_str(error));
+            return -1;
+        }
         ctx->regs_dirty = 0;
     }
     
@@ -441,8 +911,17 @@ int context_continue(Context * ctx) {
 
     vxdbg_ctx.ctxId = ctx->pid;
     vxdbg_ctx.ctxType = VXDBG_CTX_TASK;
-    if (vxdbgCont(vxdbg_clnt_id, &vxdbg_ctx) != OK) return -1;
+    taskLock();
+    if (vxdbgCont(vxdbg_clnt_id, &vxdbg_ctx) != OK) {
+        int error = errno;
+        taskUnlock();
+        trace(LOG_ALWAYS, "context: can't continue ctx %#x, id %#x: %s",
+                ctx, ctx->pid, errno_to_str(error));
+        return -1;
+    }
+    assert(!taskIsStopped(ctx->pid));
     ctx->stopped = 0;
+    taskUnlock();
     event_context_started(ctx);
     return 0;
 }
@@ -456,10 +935,15 @@ int context_single_step(Context * ctx) {
     assert(!ctx->pending_intercept);
     assert(!ctx->pending_step);
     assert(!ctx->exited);
-    trace(LOG_CONTEXT, "context: single step ctx %#x, pid %d", ctx, ctx->pid);
+    trace(LOG_CONTEXT, "context: single step ctx %#x, id %#x", ctx, ctx->pid);
 
     if (ctx->regs_dirty) {
-        if (taskRegsSet(ctx->pid, &ctx->regs) != OK) return -1;
+        if (taskRegsSet(ctx->pid, &ctx->regs) != OK) {
+            int error = errno;
+            trace(LOG_ALWAYS, "context: can't set regs ctx %#x, id %#x: %s",
+                    ctx, ctx->pid, errno_to_str(error));
+            return -1;
+        }
         ctx->regs_dirty = 0;
     }
 
@@ -469,7 +953,12 @@ int context_single_step(Context * ctx) {
 
     vxdbg_ctx.ctxId = ctx->pid;
     vxdbg_ctx.ctxType = VXDBG_CTX_TASK;
-    if (vxdbgStep(vxdbg_clnt_id, &vxdbg_ctx, NULL, NULL) != OK) return -1;
+    if (vxdbgStep(vxdbg_clnt_id, &vxdbg_ctx, NULL, NULL) != OK) {
+        int error = errno;
+        trace(LOG_ALWAYS, "context: can't step ctx %#x, id %#x: %d",
+                ctx, ctx->pid, errno_to_str(error));
+        return -1;
+    }
     ctx->pending_step = 1;
     ctx->stopped = 0;
     event_context_started(ctx);
@@ -477,7 +966,7 @@ int context_single_step(Context * ctx) {
 }
 
 int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
-#ifdef  _WRS_PERSISTENT_SW_BP
+#ifdef _WRS_PERSISTENT_SW_BP
     vxdbgMemRead((void *)address, buf, size);
 #else    
     bcopy((void *)address, buf, size);
@@ -486,7 +975,7 @@ int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t si
 }
 
 int context_write_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
-#ifdef  _WRS_PERSISTENT_SW_BP
+#ifdef _WRS_PERSISTENT_SW_BP
     vxdbgMemWrite((void *)address, buf, size);
 #else
     bcopy(buf, (void *)address, size);
@@ -660,22 +1149,17 @@ static void init(void) {
     SPIN_LOCK_ISR_INIT(&events_lock, 0);
     main_thread = taskIdCurrent;
     if ((events_signal = semCInitialize(events_signal_mem, SEM_Q_FIFO, 0)) == NULL) {
-        perror("semCInitialize");
-        exit(1);
+        check_error(errno);
     }
     vxdbg_clnt_id = vxdbgClntRegister(EVT_BP);
     if (vxdbg_clnt_id == NULL) {
-        perror("vxdbgClntRegister");
-        exit(1);
+        check_error(errno);
     }
     taskCreateHookAdd((FUNCPTR)task_create_hook);
     taskDeleteHookAdd((FUNCPTR)task_delete_hook);
     vxdbgHookAdd(vxdbg_clnt_id, EVT_BP, vxdbg_event_hook);
     vxdbgHookAdd(vxdbg_clnt_id, EVT_TRACE, vxdbg_event_hook);   
-    if (pthread_create(&events_thread, &pthread_create_attr, event_thread_func, NULL) != 0) {
-        perror("pthread_create");
-        exit(1);
-    }
+    check_error(pthread_create(&events_thread, &pthread_create_attr, event_thread_func, NULL));
 }
 
 #else
@@ -751,12 +1235,12 @@ char * event_name(int event) {
 
 int context_attach(pid_t pid, Context ** res) {
     Context * ctx = NULL;
-    pthread_mutex_lock(&waitpid_lock);
+    check_error(pthread_mutex_lock(&waitpid_lock));
     if (ptrace(PTRACE_ATTACH, pid, 0, 0) < 0) {
         int err = errno;
         trace(LOG_ALWAYS, "error: ptrace(PTRACE_ATTACH) failed: pid %d, error %d %s",
             pid, err, errno_to_str(err));
-        pthread_mutex_unlock(&waitpid_lock);
+        check_error(pthread_mutex_unlock(&waitpid_lock));
         errno = err;
         return -1;
     }
@@ -766,24 +1250,24 @@ int context_attach(pid_t pid, Context ** res) {
     assert(ctx->ref_count == 1);
     event_context_created(ctx);
     attach_flag = 1;
-    pthread_cond_signal(&waitpid_cond);
-    pthread_mutex_unlock(&waitpid_lock);
+    check_error(pthread_cond_signal(&waitpid_cond));
+    check_error(pthread_mutex_unlock(&waitpid_lock));
     if (res != NULL) *res = ctx;
     return 0;
 }
 
+int context_has_state(Context * ctx) {
+    return 1;
+}
+
 int context_stop(Context * ctx) {
+    trace(LOG_CONTEXT, "context:%s suspending ctx %#x pid %d",
+        ctx->pending_intercept ? "" : " temporary", ctx, ctx->pid);
     assert(is_dispatch_thread());
     assert(!ctx->exited);
     assert(!ctx->stopped);
     assert(!ctx->regs_dirty);
     assert(!ctx->intercepted);
-    if (ctx->pending_intercept) {
-        trace(LOG_CONTEXT, "context: suspending ctx %#x pid %d", ctx, ctx->pid);
-    }
-    else {
-        trace(LOG_CONTEXT, "context: temporary suspending ctx %#x pid %d", ctx, ctx->pid);
-    }
     if (tkill(ctx->pid, SIGSTOP) < 0) {
         int err = errno;
         trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: ctx %#x, pid %d, error %d %s",
@@ -977,22 +1461,22 @@ static void event_pid_exited(void *arg) {
         assert(!ctx->stopped);
         assert(!ctx->intercepted);
         assert(!ctx->exited);
-        if (ctx->parent == NULL && !list_is_empty(&ctx->children)) {
+        if (!list_is_empty(&ctx->children)) {
             /* Linux kernel 2.4 does not notify waitpid() when thread exits if the thread is not main thread.
              * As workaround, assume all non-main thread have exited and remove them from ctx->children list.
              */
-            LINK * qp;
-            for (qp = ctx->children.next; qp != &ctx->children; qp = qp->next) {
-                Context * c = cldl2ctxp(qp);
+            while (!list_is_empty(&ctx->children)) {
+                Context * c = cldl2ctxp(ctx->children.next);
                 assert(!c->exited);
                 assert(c->parent == ctx);
                 c->exiting = 0;
                 c->exited = 1;
                 event_context_exited(c);
-                context_unlock(ctx);
+                list_remove(&c->cldl);
+                context_unlock(c->parent);
                 c->parent = NULL;
+                context_unlock(c);
             }
-            list_init(&ctx->children);
         }
         /* Note: ctx->exiting should be 1 here. However, PTRACE_EVENT_EXIT can be lost by PTRACE because of racing
          * between PTRACE_CONT and SIGTRAP/PTRACE_EVENT_EXIT. So, ctx->exiting can be 0.
@@ -1129,13 +1613,12 @@ static void * wpid_handler(void * x) {
         attach_flag = 0;
         if ((pid = waitpid(-1, &status, WUNTRACED | __WALL)) == (pid_t)-1) {
             if (errno == ECHILD) {
-                pthread_mutex_lock(&waitpid_lock);
-                if (!attach_flag) pthread_cond_wait(&waitpid_cond, &waitpid_lock);
-                pthread_mutex_unlock(&waitpid_lock);
+                check_error(pthread_mutex_lock(&waitpid_lock));
+                if (!attach_flag) check_error(pthread_cond_wait(&waitpid_cond, &waitpid_lock));
+                check_error(pthread_mutex_unlock(&waitpid_lock));
                 continue;
             }
-            perror("waitpid");
-            exit(1);
+            check_error(errno);
         }
         trace(LOG_WAITPID, "waitpid: pid %d status %#x", pid, status);
         if (WIFEXITED(status) || WIFSIGNALED(status)) {
@@ -1162,14 +1645,11 @@ static void * wpid_handler(void * x) {
 }
 
 static void init(void) {
-    pthread_mutex_init(&waitpid_lock, NULL);
-    pthread_cond_init(&waitpid_cond, NULL);
+    check_error(pthread_mutex_init(&waitpid_lock, NULL));
+    check_error(pthread_cond_init(&waitpid_cond, NULL));
     my_pid = getpid();
     /* Create thread to get process events using waitpid() */
-    if (pthread_create(&wpid_thread, &pthread_create_attr, wpid_handler, NULL) != 0) {
-        perror("pthread_create");
-        exit(1);
-    }
+    check_error(pthread_create(&wpid_thread, &pthread_create_attr, wpid_handler, NULL));
 }
 
 #endif

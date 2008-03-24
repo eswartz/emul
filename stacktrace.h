@@ -17,6 +17,12 @@
 #define D_stacktrace
 
 /*
+ * Dump current stack trace into log.
+ * The function can be used to debug the agent itself.
+ */
+extern void dump_stack_trace(void);
+
+/*
  * Initialize stack trace service.
  */
 extern void ini_stack_trace_service(Protocol *, TCFBroadcastGroup *);

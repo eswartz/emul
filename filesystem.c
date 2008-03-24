@@ -13,7 +13,9 @@
  * Target service implementation: file system access (TCF name FileSystem)
  */
 
+#include "mdep.h"
 #include "config.h"
+
 #if SERVICE_FileSystem
 
 #include <stdlib.h>
@@ -23,14 +25,10 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#ifdef WIN32
-#  include <sys/utime.h>
-#  include <direct.h>
-#else
+#ifndef _MSC_VER
 #  include <utime.h>
 #  include <dirent.h>
 #endif
-#include "mdep.h"
 #include "myalloc.h"
 #include "streams.h"
 #include "channel.h"
@@ -806,7 +804,7 @@ static void command_mkdir(char * token, Channel * c) {
     if (attrs.flags & ATTR_PERMISSIONS) {
         mode = attrs.permissions;
     }
-#if defined(WIN32) || defined(_WRS_KERNEL)
+#if defined(_MSC_VER) || defined(_WRS_KERNEL)
     if (mkdir(path) < 0) err = errno;
 #else
     if (mkdir(path, mode) < 0) err = errno;

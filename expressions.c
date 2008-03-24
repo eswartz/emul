@@ -13,11 +13,11 @@
  * Expression evaluation library.
  */
 
+#include "mdep.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include "mdep.h"
 #include "myalloc.h"
 #include "exceptions.h"
 #include "expressions.h"

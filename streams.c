@@ -13,6 +13,7 @@
  * Abstract byte stream. Bytes in the stream can be divided into groups - messages.
  */
 
+#include "mdep.h"
 #include "streams.h"
 
 void write_string(OutputStream * out, const char * str) {

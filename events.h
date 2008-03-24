@@ -25,14 +25,16 @@
 #ifndef D_events
 #define D_events
 
-extern void post_event(void (*handler)(void *), void *arg);
-extern void post_event_with_delay(void (*handler)(void *), void *arg, unsigned long us_delay);
+typedef void EventCallBack(void *);
+
+extern void post_event(EventCallBack * handler, void * arg);
+extern void post_event_with_delay(EventCallBack * handler, void * arg, unsigned long us_delay);
 
 /* Cancel pending event with matching 'handler' and 'arg', or if event
  * is not pending and 'wait' is true then wait for matching event to
  * be posted.  Can only be called from the dispatch thread.  Returns
  * true if a posted event was cancelled. */
-extern int cancel_event(void (*handler)(void *), void *arg, int wait);
+extern int cancel_event(EventCallBack * handler, void * arg, int wait);
 
 extern int is_dispatch_thread(void);
 

@@ -13,13 +13,10 @@
  * Implements peer server management.
  */
 
-#if defined(_WRS_KERNEL)
-#  include <vxWorks.h>
-#endif
+#include "mdep.h"
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
-#include "mdep.h"
 #include "tcf.h"
 #include "peer.h"
 #include "myalloc.h"

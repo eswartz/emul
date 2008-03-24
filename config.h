@@ -17,7 +17,9 @@
 #ifndef D_config
 #define D_config
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#include "mdep.h"
+
+#if defined(WIN32)
 #  define TARGET_WINDOWS    1
 #  define TARGET_VXWORKS    0
 #  define TARGET_UNIX       0
@@ -31,12 +33,12 @@
 #  define TARGET_UNIX       1
 #endif
 
-#define SERVICE_RunControl      TARGET_UNIX || TARGET_VXWORKS
-#define SERVICE_Breakpoints     TARGET_UNIX || TARGET_VXWORKS
-#define SERVICE_Memory          TARGET_UNIX || TARGET_VXWORKS
-#define SERVICE_Registers       TARGET_UNIX || TARGET_VXWORKS
-#define SERVICE_StackTrace      TARGET_UNIX || TARGET_VXWORKS
-#define SERVICE_Symbols         TARGET_UNIX || TARGET_VXWORKS
+#define SERVICE_RunControl      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
+#define SERVICE_Breakpoints     TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
+#define SERVICE_Memory          TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
+#define SERVICE_Registers       TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
+#define SERVICE_StackTrace      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
+#define SERVICE_Symbols         TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_LineNumbers     TARGET_UNIX
 #define SERVICE_Processes       TARGET_UNIX || TARGET_VXWORKS
 #define SERVICE_FileSystem      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS

@@ -16,6 +16,7 @@
 #ifndef D_trace
 #define D_trace
 
+#include "mdep.h"
 #include "config.h"
 #include <stdio.h>
 

@@ -16,6 +16,7 @@
  * JSON is TCF preffered marshaling format.
  */
 
+#include "mdep.h"
 #include "json.h"
 #include "assert.h"
 #include "myalloc.h"

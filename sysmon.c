@@ -9,7 +9,9 @@
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
+#include "mdep.h"
 #include "config.h"
+
 #if SERVICE_SysMonitor
 
 #include <stdlib.h>
@@ -18,7 +20,6 @@
 #include <errno.h>
 #include <assert.h>
 #include <sys/types.h>
-#include "mdep.h"
 #include "sysmon.h"
 #include "protocol.h"
 #include "json.h"
@@ -27,7 +28,7 @@
 
 static const char SYS_MON[] = "SysMonitor";
 
-#if defined(WIN32) || defined(__CYGWIN__)
+#if defined(WIN32)
 #  error "SysMonitor service is not supported for Windows"
 #elif defined(_WRS_KERNEL)
 #  error "SysMonitor service is not supported for VxWorks"
