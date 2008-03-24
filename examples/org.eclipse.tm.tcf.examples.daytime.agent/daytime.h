@@ -16,6 +16,7 @@
 #ifndef DAYTIME_H_
 #define DAYTIME_H_
 
+#include "mdep.h"
 #include "protocol.h"
 
 extern void ini_daytime_service(Protocol * proto);

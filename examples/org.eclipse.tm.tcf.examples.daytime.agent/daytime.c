@@ -13,6 +13,7 @@
  * Sample TCF service implementation.
  */
 
+#include "mdep.h"
 #include <time.h>
 #include "daytime.h"
 #include "json.h"

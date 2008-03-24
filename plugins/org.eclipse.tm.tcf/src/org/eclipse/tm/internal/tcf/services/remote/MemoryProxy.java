@@ -55,27 +55,30 @@ public class MemoryProxy implements IMemory {
         MemoryErrorReport(String msg, Number addr, Object ranges) {
             super(msg);
             Collection<Map<String,Object>> c = (Collection<Map<String,Object>>)ranges;
-            this.ranges = new Range[c.size()];
-            int n = 0;
-            BigInteger addr_bi = addr instanceof BigInteger ?
-                    (BigInteger)addr : new BigInteger(addr.toString());
-            for (Map<String,Object> m : c) {
-                Range r = new Range();
-                Number x = (Number)m.get("addr");
-                BigInteger y = x instanceof BigInteger ?
-                        (BigInteger)x : new BigInteger(x.toString());
-                r.offs = addr_bi.subtract(y).intValue();
-                r.size = ((Number)m.get("size")).intValue();
-                r.stat = ((Number)m.get("stat")).intValue();
-                r.msg = Command.toErrorString(m.get("msg"));
-                assert r.offs >= 0;
-                assert r.size >= 0;
-                this.ranges[n++] = r;
+            this.ranges = c == null ? null : new Range[c.size()];
+            if (c != null) {
+                int n = 0;
+                BigInteger addr_bi = addr instanceof BigInteger ?
+                        (BigInteger)addr : new BigInteger(addr.toString());
+                for (Map<String,Object> m : c) {
+                    Range r = new Range();
+                    Number x = (Number)m.get("addr");
+                    BigInteger y = x instanceof BigInteger ?
+                            (BigInteger)x : new BigInteger(x.toString());
+                    r.offs = addr_bi.subtract(y).intValue();
+                    r.size = ((Number)m.get("size")).intValue();
+                    r.stat = ((Number)m.get("stat")).intValue();
+                    r.msg = Command.toErrorString(m.get("msg"));
+                    assert r.offs >= 0;
+                    assert r.size >= 0;
+                    this.ranges[n++] = r;
+                }
+                Arrays.sort(this.ranges);
             }
-            Arrays.sort(this.ranges);
         }
 
         public String getMessage(int offset) {
+            if (ranges == null) return null;
             int l = 0;
             int h = ranges.length - 1;
             while (l <= h) {
@@ -95,6 +98,7 @@ public class MemoryProxy implements IMemory {
         }
 
         public int getStatus(int offset) {
+            if (ranges == null) return BYTE_UNKNOWN;
             int l = 0;
             int h = ranges.length - 1;
             while (l <= h) {

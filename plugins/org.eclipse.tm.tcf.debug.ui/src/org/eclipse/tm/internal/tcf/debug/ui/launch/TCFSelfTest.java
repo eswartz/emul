@@ -268,6 +268,8 @@ class TCFSelfTest {
         private ISymbol func2;
         private ISymbol array;
         private int bp_cnt = 0;
+        private boolean done_starting_test_process;
+        private int resume_cnt = 0;
         private IToken cancel_test_cmd;
 
         private class SuspendedContext {
@@ -349,13 +351,16 @@ class TCFSelfTest {
                 exit(error);
                 return;
             }
-            assert active_tests.get(this) != null;
+            if (active_tests.get(this) == null) return;
             assert this.context_id != null;
             if (!symbol.isGlobal()) {
                 exit(new Exception("Symbols 'tcf_test_*' must be global"));
             }
             else if (!symbol.isAbs()) {
                 exit(new Exception("Symbols 'tcf_test_*' must be absolute"));
+            }
+            else if (symbol.getValue().longValue() == 0) {
+                exit(new Exception("Symbols 'tcf_test_*' must not be NULL"));
             }
             else if (func0 == null) {
                 func0 = symbol;
@@ -399,7 +404,7 @@ class TCFSelfTest {
                             exit(error);
                         }
                         else {
-                            rc.getContext(context_id, TestRCBP1.this);
+                            get_state_cmds.put(rc.getContext(context_id, TestRCBP1.this), context_id);
                         }
                     }
                 });
@@ -407,34 +412,40 @@ class TCFSelfTest {
         }
 
         public void doneGetContext(IToken token, Exception error, RunControlContext context) {
+            get_state_cmds.remove(token);
             if (cancel) return;
             if (error != null) {
                 exit(error);
+                return;
             }
-            else {
-                if (this.context == null) {
-                    this.context = context;
-                    assert context_id.equals(context.getID());
-                    assert threads.isEmpty();
-                    assert running.isEmpty();
-                    assert suspended.isEmpty();
-                    rc.addListener(this);
-                }
-                rc.getChildren(context.getID(), this);
-                if (context.hasState()) {
-                    threads.put(context.getID(), context);
-                    get_state_cmds.put(context.getState(this), context.getID());
-                }
+            if (this.context == null) {
+                this.context = context;
+                assert context_id.equals(context.getID());
+                assert threads.isEmpty();
+                assert running.isEmpty();
+                assert suspended.isEmpty();
+                rc.addListener(this);
+            }
+            get_state_cmds.put(rc.getChildren(context.getID(), this), context.getID());
+            if (context.hasState()) {
+                threads.put(context.getID(), context);
+                get_state_cmds.put(context.getState(this), context.getID());
             }
         }
 
         public void doneGetChildren(IToken token, Exception error, String[] contexts) {
+            get_state_cmds.remove(token);
             if (cancel) return;
             if (error != null) {
                 exit(error);
+                return;
             }
-            else {
-                for (String id : contexts) rc.getContext(id, this);
+            for (String id : contexts) {
+                get_state_cmds.put(rc.getContext(id, this), id);
+            }
+            if (get_state_cmds.isEmpty()) {
+                // No more pending commands
+                doneStartingTestProcess();
             }
         }
 
@@ -443,6 +454,10 @@ class TCFSelfTest {
                 Map<String, Object> params) {
             final String id = get_state_cmds.remove(token);
             if (cancel) return;
+            if (error != null) {
+                exit(error);
+                return;
+            }
             if (id == null) {
                 exit(new Exception("Invalid getState responce"));
             }
@@ -470,41 +485,59 @@ class TCFSelfTest {
                         }
                     }
                     else {
-                        if (main_thread_id != null) {
+                        // Receiving context state for the first time
+                        if (resume_cnt > 0) {
                             exit(new Exception("Missing contextSuspended event for " + id));
                         }
                         else if ("Breakpoint".equals(reason)) {
                             exit(new Exception("Invalid suspend reason of main thread after test start: " + reason + " " + pc));
                         }
                         else {
-                            main_thread_id = id;
-                            final SuspendedContext sx = new SuspendedContext(id, pc, reason, params);
-                            this.suspended.put(id, sx);
-                            final String bp_id = "TcfTestBP3" + channel_id;
-                            Map<String,Object> m = new HashMap<String,Object>();
-                            m.put(IBreakpoints.PROP_ID, bp_id);
-                            m.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
-                            m.put(IBreakpoints.PROP_ADDRESS, "tcf_test_func2");
-                            m.put(IBreakpoints.PROP_CONDITION, "$thread==\"" + id + "\"");
-                            bp.change(m, new IBreakpoints.DoneCommand() {
-                                public void doneCommand(IToken token, Exception error) {
-                                    if (error != null) exit(error);
-                                }
-                            });
-                            Protocol.sync(new Runnable() {
-                                public void run() {
-                                    bp.enable(new String[]{ bp_id }, new IBreakpoints.DoneCommand() {
-                                        public void doneCommand(IToken token, Exception error) {
-                                            if (error != null) exit(error);
-                                        }
-                                    });
-                                    resume(sx);
-                                }
-                            });
+                            this.suspended.put(id, new SuspendedContext(id, pc, reason, params));
                         }
                     }
                 }
             }
+            if (get_state_cmds.isEmpty()) {
+                // No more pending commands
+                doneStartingTestProcess();
+            }
+        }
+        
+        private void doneStartingTestProcess() {
+            assert !done_starting_test_process;
+            assert resume_cnt == 0;
+            assert threads.size() == suspended.size() + running.size();
+            if (threads.size() == 0) return;
+            done_starting_test_process = true;
+            final String bp_id = "TcfTestBP3" + channel_id;
+            Map<String,Object> m = new HashMap<String,Object>();
+            m.put(IBreakpoints.PROP_ID, bp_id);
+            m.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
+            m.put(IBreakpoints.PROP_ADDRESS, "tcf_test_func2");
+            StringBuffer bf = new StringBuffer();
+            for (String id : threads.keySet()) {
+                if (bf.length() > 0) bf.append(" || ");
+                bf.append("$thread==\"");
+                bf.append(id);
+                bf.append('"');
+            }
+            m.put(IBreakpoints.PROP_CONDITION, bf.toString());
+            bp.change(m, new IBreakpoints.DoneCommand() {
+                public void doneCommand(IToken token, Exception error) {
+                    if (error != null) exit(error);
+                }
+            });
+            Protocol.sync(new Runnable() {
+                public void run() {
+                    bp.enable(new String[]{ bp_id }, new IBreakpoints.DoneCommand() {
+                        public void doneCommand(IToken token, Exception error) {
+                            if (error != null) exit(error);
+                        }
+                    });
+                    for (SuspendedContext s : suspended.values()) resume(s);
+                }
+            });
         }
         
         public void containerResumed(String[] context_ids) {
@@ -527,9 +560,17 @@ class TCFSelfTest {
                     exit(new Exception("Invalid contextAdded event"));
                     return;
                 }
-                if (context.getID().equals(contexts[i].getProperties().get(IRunControl.PROP_PROCESS_ID))) {
-                    threads.put(contexts[i].getID(), contexts[i]);
-                    running.add(contexts[i].getID());
+                String p = contexts[i].getParentID();
+                if (context.getID().equals(p) || threads.get(p) != null) {
+                    if (contexts[i].hasState()) {
+                        threads.put(contexts[i].getID(), contexts[i]);
+                        if (!done_starting_test_process) {
+                            get_state_cmds.put(contexts[i].getState(this), contexts[i].getID());
+                        }
+                        else {
+                            running.add(contexts[i].getID());
+                        }
+                    }
                 }
             }
         }
@@ -539,7 +580,7 @@ class TCFSelfTest {
                 if (contexts[i].getID().equals(context.getID())) {
                     context = contexts[i];
                 }
-                if (context.getID().equals(contexts[i].getProperties().get(IRunControl.PROP_PROCESS_ID))) {
+                if (threads.get(contexts[i].getID()) != null) {
                     threads.put(contexts[i].getID(), contexts[i]);
                 }
             }
@@ -585,7 +626,7 @@ class TCFSelfTest {
             if (func0.getValue().longValue() == addr) return "tcf_test_func0";
             if (func1.getValue().longValue() == addr) return "tcf_test_func1";
             if (func2.getValue().longValue() == addr) return "tcf_test_func2";
-            return "*no name*";
+            return "0x" + Long.toHexString(addr);
         }
         
         private void checkSuspendedContext(SuspendedContext sp, ISymbol sym) {
@@ -609,7 +650,6 @@ class TCFSelfTest {
 
         public void contextSuspended(String id, String pc, String reason, Map<String, Object> params) {
             if (threads.get(id) == null) return;
-            assert main_thread_id != null;
             running.remove(id);
             SuspendedContext sc = suspended.get(id);
             if (sc != null) {
@@ -620,25 +660,37 @@ class TCFSelfTest {
             else {
                 sc = new SuspendedContext(id, pc, reason, params);
                 suspended.put(id, sc);
-                if (!isAlienBreakpoint(sc)) {
-                    if ("Breakpoint".equals(reason) && id.equals(main_thread_id)) bp_cnt++;
-                    SuspendedContext sp = suspended_prev.get(id);
-                    if (sp != null) {
-                        if (Long.parseLong(sc.pc) == func2.getValue().longValue()) {
+            }
+            if (main_thread_id == null && "Breakpoint".equals(reason) && !isAlienBreakpoint(sc)) {
+                // Process main thread should be the first to hit a breakpoint in the test
+                if (!done_starting_test_process) {
+                    exit(new Exception("Unexpeceted breakpoint hit"));
+                    return;
+                }
+                main_thread_id = id;
+            }
+            if (main_thread_id == null) {
+                resume(sc);
+                return;
+            }
+            if (!isAlienBreakpoint(sc)) {
+                if ("Breakpoint".equals(reason) && id.equals(main_thread_id)) bp_cnt++;
+                SuspendedContext sp = suspended_prev.get(id);
+                if (sp != null) {
+                    if (Long.parseLong(sc.pc) == func2.getValue().longValue()) {
+                        checkSuspendedContext(sp, func1);
+                    }
+                    else if (Long.parseLong(sc.pc) == func1.getValue().longValue()) {
+                        checkSuspendedContext(sp, func0);
+                    }
+                    else if (Long.parseLong(sc.pc) == func0.getValue().longValue()) {
+                        if (id.equals(main_thread_id)) {
+                            if ("Breakpoint".equals(sp.reason)) {
+                                checkSuspendedContext(sp, func2);
+                            }
+                        }
+                        else {
                             checkSuspendedContext(sp, func1);
-                        }
-                        else if (Long.parseLong(sc.pc) == func1.getValue().longValue()) {
-                            checkSuspendedContext(sp, func0);
-                        }
-                        else if (Long.parseLong(sc.pc) == func0.getValue().longValue()) {
-                            if (id.equals(main_thread_id)) {
-                                if ("Breakpoint".equals(sp.reason)) {
-                                    checkSuspendedContext(sp, func2);
-                                }
-                            }
-                            else {
-                                checkSuspendedContext(sp, func1);
-                            }
                         }
                     }
                 }
@@ -663,6 +715,9 @@ class TCFSelfTest {
         }
         
         private void resume(final SuspendedContext sc) {
+            assert done_starting_test_process || resume_cnt == 0;
+            if (!done_starting_test_process) return;
+            resume_cnt++;
             IRunControl.RunControlContext ctx = threads.get(sc.id);
             if (ctx != null && !sc.resumed) {
                 sc.resumed = true;
@@ -685,6 +740,10 @@ class TCFSelfTest {
             memory_lock = true;
             mm.getContext(context_id, new IMemory.DoneGetContext() {
                 public void doneGetContext(IToken token, Exception error, final MemoryContext mem_ctx) {
+                    if (suspended.get(sc.id) != sc) {
+                        memory_lock = false;
+                        return;
+                    }
                     if (error != null) {
                         exit(error);
                         return;
@@ -701,6 +760,14 @@ class TCFSelfTest {
                     final byte[] buf = new byte[0x1000];
                     mem_ctx.get(array.getValue(), 1, buf, 0, addr_size, 0, new IMemory.DoneMemory() {
                         public void doneMemory(IToken token, MemoryError error) {
+                            if (suspended.get(sc.id) != sc) {
+                                memory_lock = false;
+                                return;
+                            }
+                            if (error != null) {
+                                exit(error);
+                                return;
+                            }
                             byte[] tmp = new byte[addr_size + 1];
                             tmp[0] = 0; // Extra byte to avoid sign extension by BigInteger
                             if (big_endian) {
@@ -712,6 +779,9 @@ class TCFSelfTest {
                                 }
                             }
                             Number mem_address = new BigInteger(tmp);
+                            if (mem_address.longValue() == 0) {
+                                exit(new Exception("Bad value of 'tcf_test_array': " + mem_address));
+                            }
                             testSetMemoryCommand(sc, mem_ctx, mem_address, buf);
                         }
                     });
@@ -726,12 +796,20 @@ class TCFSelfTest {
             new Random().nextBytes(data);
             mem_ctx.set(addr, 1, data, 0, data.length, 0, new IMemory.DoneMemory() {
                 public void doneMemory(IToken token, MemoryError error) {
+                    if (suspended.get(sc.id) != sc) {
+                        memory_lock = false;
+                        return;
+                    }
                     if (error != null) {
                         exit(error);
                         return;
                     }
                     mem_ctx.get(addr, 1, buf, 0, buf.length, 0, new IMemory.DoneMemory() {
                         public void doneMemory(IToken token, MemoryError error) {
+                            if (suspended.get(sc.id) != sc) {
+                                memory_lock = false;
+                                return;
+                            }
                             if (error != null) {
                                 exit(error);
                                 return;
@@ -758,12 +836,20 @@ class TCFSelfTest {
             new Random().nextBytes(data);
             mem_ctx.fill(addr, 1, data, buf.length, 0, new IMemory.DoneMemory() {
                 public void doneMemory(IToken token, MemoryError error) {
+                    if (suspended.get(sc.id) != sc) {
+                        memory_lock = false;
+                        return;
+                    }
                     if (error != null) {
                         exit(error);
                         return;
                     }
                     mem_ctx.get(addr, 1, buf, 0, buf.length, 0, new IMemory.DoneMemory() {
                         public void doneMemory(IToken token, MemoryError error) {
+                            if (suspended.get(sc.id) != sc) {
+                                memory_lock = false;
+                                return;
+                            }
                             if (error != null) {
                                 exit(error);
                                 return;
@@ -794,6 +880,10 @@ class TCFSelfTest {
                 cmds.add(rg.getChildren(sc.id, new IRegisters.DoneGetChildren() {
                     public void doneGetChildren(IToken token, Exception error, String[] context_ids) {
                         cmds.remove(token);
+                        if (suspended.get(sc.id) != sc) {
+                            regs.remove(sc.id);
+                            return;
+                        }
                         if (error != null) {
                             for (IToken t : cmds) t.cancel();
                             exit(error);
@@ -806,6 +896,10 @@ class TCFSelfTest {
                                         Exception error,
                                         RegistersContext context) {
                                     cmds.remove(token);
+                                    if (suspended.get(sc.id) != sc) {
+                                        regs.remove(sc.id);
+                                        return;
+                                    }
                                     if (error != null) {
                                         for (IToken t : cmds) t.cancel();
                                         exit(error);
@@ -837,6 +931,7 @@ class TCFSelfTest {
                     cmds.add(ctx.get(fmt, new IRegisters.DoneGet() {
                         public void doneGet(IToken token, Exception error, String value) {
                             cmds.remove(token);
+                            if (suspended.get(sc.id) != sc) return;
                             if (error != null) {
                                 for (IToken t : cmds) t.cancel();
                                 exit(error);
@@ -845,6 +940,7 @@ class TCFSelfTest {
                             cmds.add(ctx.set(fmt, value, new IRegisters.DoneSet() {
                                 public void doneSet(IToken token, Exception error) {
                                     cmds.remove(token);
+                                    if (suspended.get(sc.id) != sc) return;
                                     if (error != null) {
                                         for (IToken t : cmds) t.cancel();
                                         exit(error);
