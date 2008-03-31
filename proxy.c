@@ -124,7 +124,7 @@ static void logstr(char ** pp, char * s) {
 static void proxy_default_message_handler(Channel * c, char **argv, int argc) {
     Proxy * proxy = c->client_data;
     Channel * otherc = proxy[proxy->other].c;
-    char *p;
+    char * p;
     int i = 0;
 
     assert(c == proxy->c);

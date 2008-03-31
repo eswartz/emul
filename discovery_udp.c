@@ -285,6 +285,7 @@ static void udp_receive_ack(void * arg) {
     }
     if (p != NULL && ps->id != NULL) {
         trace(LOG_DISCOVERY, "udp_receive_ack: received UDP_ACK_INFO, ID=%s", ps->id);
+        ps->flags |= PS_FLAG_DISCOVERABLE;
         peer_server_add(ps, STALE_TIME_DELTA);
     }
     else {
@@ -342,9 +343,9 @@ static void local_server_change(PeerServer * ps, int changeType, void * arg) {
 }
 
 int discovery_udp_server(const char * port) {
-    int sock;
-    int error;
-    char *reason;
+    int sock = -1;
+    int error = 0;
+    char * reason = NULL;
     const int i = 1;
     struct addrinfo hints;
     struct addrinfo * reslist = NULL;
@@ -362,8 +363,6 @@ int discovery_udp_server(const char * port) {
         trace(LOG_ALWAYS, "getaddrinfo error: %s", loc_gai_strerror(error));
         return error;
     }
-    sock = -1;
-    reason = NULL;
     for (res = reslist; res != NULL; res = res->ai_next) {
         sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (sock < 0) {

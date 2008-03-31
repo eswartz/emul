@@ -88,7 +88,6 @@ static void became_discovery_master(void) {
         trace(LOG_ALWAYS, "cannot parse url: %s\n", DEFAULT_DISCOVERY_URL);
         return;
     }
-    peer_server_addprop(ps, "Description", "agent");
     serv2 = channel_server(ps);
     if (serv2 == NULL) {
         trace(LOG_ALWAYS, "cannot create second TCF server\n");
@@ -203,7 +202,6 @@ int main(int argc, char ** argv) {
         fprintf(stderr, "invalid server URL (-s option value): %s\n", url);
         exit(1);
     }
-    peer_server_addprop(ps, "Description", "agent");
     if (ismaster) {
         if (!strcmp(peer_server_getprop(ps, "TransportName", ""), "TCP") &&
                 peer_server_getprop(ps, "Port", NULL) == NULL) {

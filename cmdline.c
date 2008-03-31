@@ -150,7 +150,7 @@ static int print_peer_summary(PeerServer * ps, void * client_data) {
     char *s;
 
     printf("  %s", ps->id);
-    s = peer_server_getprop(ps, "Description", NULL);
+    s = peer_server_getprop(ps, "Name", NULL);
     if (s != NULL) {
         printf(", %s", s);
     }

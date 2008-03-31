@@ -154,7 +154,8 @@ int main(int argc, char ** argv) {
         fprintf(stderr, "invalid server URL (-s option value): %s\n", url);
         exit(1);
     }
-    peer_server_addprop(ps, "Description", "TCF Protocol Logger");
+    peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Protocol Logger"));
+    peer_server_addprop(ps, loc_strdup("Proxy"), loc_strdup(""));
     serv = channel_server(ps);
     if (serv == NULL) {
         fprintf(stderr, "cannot create TCF server\n");

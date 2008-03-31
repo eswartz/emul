@@ -37,8 +37,8 @@ struct PeerServer {
 
 enum {
     PS_FLAG_LOCAL = 1,
-    PS_FLAG_PRIVATE = PS_FLAG_LOCAL*2,
-    PS_FLAG_DISCOVERABLE = PS_FLAG_PRIVATE*2
+    PS_FLAG_PRIVATE = PS_FLAG_LOCAL * 2,
+    PS_FLAG_DISCOVERABLE = PS_FLAG_PRIVATE * 2
 };
 
 /* Allocate peer server object */

@@ -203,6 +203,9 @@ PeerServer * channel_peer_from_url(const char * url) {
     PeerServer * ps;
 
     ps = peer_server_alloc();
+    peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Agent"));
+    peer_server_addprop(ps, loc_strdup("OSName"), loc_strdup(get_os_name()));
+
     s = url;
     i = 0;
     while ((c = *s) != '\0' && c != ':' && isalpha(c) && i < sizeof transport) {

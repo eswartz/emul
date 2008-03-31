@@ -484,7 +484,7 @@ char * get_os_name(void) {
     case 6:
         return "Windows Vista";
     }
-    snprintf(str, sizeof(str), "Windows %d.%d", info.dwMajorVersion, info.dwMajorVersion);
+    snprintf(str, sizeof(str), "Windows %d.%d", info.dwMajorVersion, info.dwMinorVersion);
     return str;
 }
 

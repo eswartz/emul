@@ -78,7 +78,7 @@ static void discovery_new_connection(ChannelServer * serv, Channel * c) {
 void discovery_default_master_notifier(void) {
     PeerServer * ps;
     Protocol * proto;
-    ChannelServer *serv;
+    ChannelServer * serv;
 
     trace(LOG_DISCOVERY, "discovery_default_master_notifier");
     ps = channel_peer_from_url(DEFAULT_DISCOVERY_URL);

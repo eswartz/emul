@@ -116,6 +116,11 @@ static void channel_new_connection(ChannelServer * serv, Channel * c) {
     protocol_channel_opened(proto, c);
 }
 
+static void add_proxy_props(PeerServer * ps) {
+    peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Proxy"));
+    peer_server_addprop(ps, loc_strdup("Proxy"), loc_strdup(""));
+}
+
 static void became_discovery_master(void) {
     PeerServer * ps = channel_peer_from_url(DEFAULT_DISCOVERY_URL);
 
@@ -123,7 +128,7 @@ static void became_discovery_master(void) {
         trace(LOG_ALWAYS, "cannot parse url: %s\n", DEFAULT_DISCOVERY_URL);
         return;
     }
-    peer_server_addprop(ps, "Description", "value-add");
+    add_proxy_props(ps);
     serv2 = channel_server(ps);
     if (serv2 == NULL) {
         trace(LOG_ALWAYS, "cannot create second TCF server\n");
@@ -226,7 +231,7 @@ int main(int argc, char ** argv) {
         fprintf(stderr, "invalid server URL (-s option value): %s\n", url);
         exit(1);
     }
-    peer_server_addprop(ps, "Description", "value-add");
+    add_proxy_props(ps);
     if (ismaster) {
         if (!strcmp(peer_server_getprop(ps, "TransportName", ""), "TCP") &&
                 peer_server_getprop(ps, "Port", NULL) == NULL) {

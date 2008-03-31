@@ -42,7 +42,7 @@ static int discovery_ismaster;
 static int publish_peer_refresh_active;
 static DiscoveryMasterNotificationCB master_notifier;
 static void restart_discovery(void *);
-static void generate_publish_peer_command(Channel * c, PeerServer *ps);
+static void generate_publish_peer_command(Channel * c, PeerServer * ps);
 
 static void generate_peer_info(PeerServer * ps, OutputStream * out) {
     int i;
@@ -125,7 +125,7 @@ static void publish_peer_reply(Channel * c, void * client_data, int error) {
     }
 }
 
-static void generate_publish_peer_command(Channel * c, PeerServer *ps) {
+static void generate_publish_peer_command(Channel * c, PeerServer * ps) {
     if ((ps->flags & (PS_FLAG_LOCAL | PS_FLAG_PRIVATE | PS_FLAG_DISCOVERABLE)) != 
         (PS_FLAG_LOCAL | PS_FLAG_DISCOVERABLE)) {
         return;

@@ -26,12 +26,12 @@
 #define STALE_CHECK_TIME 20
 
 typedef struct PeerServerList {
-    PeerServer *root;
+    PeerServer * root;
     int ind;
     int max;
     struct {
         peer_server_listener fnp;
-        void *arg;
+        void * arg;
     } * list;
 } PeerServerList;
 
@@ -47,7 +47,7 @@ static void notify_listeners(PeerServerList * pi, PeerServer * ps, int changeTyp
     }
 }
 
-static int is_same(PeerServer *a, PeerServer *b) {
+static int is_same(PeerServer * a, PeerServer * b) {
     int i;
     int j;
 
@@ -61,7 +61,7 @@ static int is_same(PeerServer *a, PeerServer *b) {
             }
         }
         if (j >= b->ind) {
-            /* Name from a not found in b */
+            /* Name from "a" not found in "b" */
             return 0;
         }
         if (strcmp(a->list[i].value, b->list[j].value) != 0) {
@@ -71,10 +71,10 @@ static int is_same(PeerServer *a, PeerServer *b) {
     return 1;
 }
 
-static void clear_stale_peers(void *x) {
-    PeerServerList *pi = &peer_server_list;
-    PeerServer **sp = &pi->root;
-    PeerServer *s;
+static void clear_stale_peers(void * x) {
+    PeerServerList * pi = &peer_server_list;
+    PeerServer ** sp = &pi->root;
+    PeerServer * s;
     time_t timenow = time(NULL);
     int keep_timer = 0;
 
@@ -134,7 +134,7 @@ void peer_server_addprop(PeerServer * s, char * name, char * value) {
     s->ind++;
 }
 
-char *peer_server_getprop(PeerServer * s, char * name, char * default_value) {
+char * peer_server_getprop(PeerServer * s, char * name, char * default_value) {
     int i;
 
     for (i = 0; i < s->ind; i++) {
@@ -157,7 +157,7 @@ void peer_server_free(PeerServer * s) {
 }
 
 PeerServer * peer_server_add(PeerServer * n, unsigned int stale_delta) {
-    PeerServerList *pi = &peer_server_list;
+    PeerServerList * pi = &peer_server_list;
     PeerServer ** sp = &pi->root;
     PeerServer * s;
     int type = 1;
