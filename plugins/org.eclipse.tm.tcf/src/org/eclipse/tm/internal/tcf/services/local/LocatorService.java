@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.services.local;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
@@ -68,6 +66,7 @@ public class LocatorService implements ILocator {
     };
     
     private Thread input_thread = new Thread() {
+        // TODO: implement discovery in slave mode (not needed for Windows)
         public void run() {
             for (;;) {
                 try {
@@ -111,33 +110,17 @@ public class LocatorService implements ILocator {
         assert peers.get(peer.getID()) == null;
         if (peer instanceof LocalPeer) local_peer = (LocalPeer)peer;
         peers.put(peer.getID(), peer);
-        for (Iterator<LocatorListener> i = listeners.iterator(); i.hasNext(); ) {
-            i.next().peerAdded(peer);
-        }
+        for (LocatorListener l : listeners) l.peerAdded(peer);
     }
 
     public static void removePeer(IPeer peer) {
         assert peers.get(peer.getID()) == peer;
         peers.remove(peer);
         String id = peer.getID();
-        for (Iterator<LocatorListener> i = listeners.iterator(); i.hasNext(); ) {
-            i.next().peerRemoved(id);
-        }
-    }
-
-    private void notifyPeer(IPeer peer) {
-        assert peers.get(peer.getID()) == peer;
-        for (Iterator<LocatorListener> i = listeners.iterator(); i.hasNext(); ) {
-            i.next().peerChanged(peer);
-        }
+        for (LocatorListener l : listeners) l.peerRemoved(id);
     }
 
     public static void channelStarted(final AbstractChannel channel) {
-        channel.addEventListener(locator, new IChannel.IEventListener() {
-            public void event(String name, byte[] data) {
-                locator.event(channel, name, data);
-            }
-        });
         channel.addCommandServer(locator, new IChannel.ICommandServer() {
             public void command(IToken token, String name, byte[] data) {
                 locator.command(channel, token, name, data);
@@ -145,19 +128,6 @@ public class LocatorService implements ILocator {
         });
     }
 
-    @SuppressWarnings("unchecked")
-    private void event(AbstractChannel channel, String name, byte[] data) {
-        try {
-            if (name.equals("Hello")) {
-                Collection<String> c = (Collection<String>)JSON.parseSequence(data)[0];
-                channel.onLocatorHello(c);
-            }
-        }
-        catch (IOException e) {
-            channel.terminate(e);
-        }
-    }
-    
     private void command(AbstractChannel channel, IToken token, String name, byte[] data) {
         try {
             if (name.equals("redirect")) {
@@ -168,6 +138,11 @@ public class LocatorService implements ILocator {
             }
             else if (name.equals("sync")) {
                 channel.sendResult(token, null);
+            }
+            else if (name.equals("publishPeer")) {
+                // TODO: handle "publishPeer" command from discovery master
+                channel.sendResult(token, JSON.toJSONSequence(new Object[]{
+                        new Integer(0), null, new Integer(0) }));
             }
             else {
                 channel.terminate(new Exception("Illegal command: " + name));
@@ -299,7 +274,10 @@ public class LocatorService implements ILocator {
         IPeer peer = peers.get(id);
         if (peer instanceof RemotePeer) {
             if (((RemotePeer)peer).updateAttributes(map)) {
-                notifyPeer(peer);
+                for (LocatorListener l : listeners) l.peerChanged(peer);
+            }
+            else {
+                for (LocatorListener l : listeners) l.peerHeartBeat(id);
             }
         }
         else {

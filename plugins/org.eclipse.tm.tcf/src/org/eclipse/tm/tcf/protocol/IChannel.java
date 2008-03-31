@@ -266,7 +266,7 @@ public interface IChannel {
     
     /**
      * Redirect this channel to given peer using this channel remote peer locator service as a proxy.
-     * @param peer_id - peer that will become new remote communication endpoint of this channel
+     * @param peer - peer that will become new remote communication endpoint of this channel
      */
-    void redirect(String peer_id);
+    void redirect(IPeer peer);
 }

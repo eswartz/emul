@@ -68,7 +68,7 @@ public class LocatorProxy implements ILocator {
         public IChannel openChannel() {
             assert Protocol.isDispatchThread();
             IChannel c = channel.getRemotePeer().openChannel();
-            c.redirect(getID());
+            c.redirect(this);
             return c;
         }
     };

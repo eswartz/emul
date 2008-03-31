@@ -29,6 +29,7 @@ public interface IPeer {
         ATTR_NAME = "Name",
         ATTR_OS_NAME = "OSName",
         ATTR_TRANSPORT_NAME = "TransportName",
+        ATTR_PROXY = "Proxy",
         ATTR_IP_HOST = "Host",
         ATTR_IP_ALIASES = "Aliases",
         ATTR_IP_ADDRESSES = "Addresses",

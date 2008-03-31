@@ -101,7 +101,7 @@ public abstract class AbstractChannel implements IChannel {
 
     private static IChannelListener[] listeners_array = new IChannelListener[64];
 
-    private final LinkedList<String> redirect_queue = new LinkedList<String>();
+    private final LinkedList<IPeer> redirect_queue = new LinkedList<IPeer>();
     private final Map<Class<?>,IService> local_service_by_class = new HashMap<Class<?>,IService>();
     private final Map<Class<?>,IService> remote_service_by_class = new HashMap<Class<?>,IService>();
     private final Map<String,IService> local_service_by_name = new HashMap<String,IService>();
@@ -337,17 +337,28 @@ public abstract class AbstractChannel implements IChannel {
         LocatorService.channelStarted(this);
     }
 
-    public void redirect(String peer_id) {
+    public void redirect(IPeer peer) {
         assert Protocol.isDispatchThread();
         if (state == STATE_OPENNING) {
             assert redirect_command == null;
-            redirect_queue.add(peer_id);
+            redirect_queue.add(peer);
         }
         else {
             assert state == STATE_OPEN;
-            state = STATE_OPENNING;
             try {
-                onLocatorHello(new ArrayList<String>());
+                ILocator l = (ILocator)remote_service_by_class.get(ILocator.class);
+                if (l == null) throw new IOException("Peer " + peer.getID() + " has no locator service");
+                this.peer = peer;
+                redirect_command = l.redirect(peer.getID(), new ILocator.DoneRedirect() {
+                    public void doneRedirect(IToken token, Exception x) {
+                        assert redirect_command == token;
+                        state = STATE_OPENNING;
+                        redirect_command = null;
+                        remote_congestion_level = 0;
+                        if (x != null) terminate(x);
+                        // Wait for next "Hello"
+                    }
+                });
             }
             catch (Throwable x) {
                 terminate(x);
@@ -356,7 +367,7 @@ public abstract class AbstractChannel implements IChannel {
     }
 
     @SuppressWarnings("unchecked")
-    public void onLocatorHello(Collection<String> c) throws IOException {
+    private void onLocatorHello(Collection<String> c) throws IOException {
         if (state != STATE_OPENNING) throw new IOException("Invalid event: Locator.Hello");
         remote_service_by_class.clear();
         String pkg_name = LocatorProxy.class.getPackage().getName();
@@ -377,26 +388,12 @@ public abstract class AbstractChannel implements IChannel {
                 remote_service_by_name.put(service_name, service);
             }
         }
+        state = STATE_OPEN;
         assert redirect_command == null;
         if (redirect_queue.size() > 0) {
-            String id = redirect_queue.removeFirst();
-            ILocator l = (ILocator)remote_service_by_class.get(ILocator.NAME);
-            if (l == null) throw new IOException("Peer " + peer.getID() + " has no locator service");
-            peer = l.getPeers().get(id);
-            if (peer == null) throw new IOException("Unknown peer ID: " + id);
-            redirect_command = l.redirect(id, new ILocator.DoneRedirect() {
-                public void doneRedirect(IToken token, Exception x) {
-                    assert redirect_command == token;
-                    assert state == STATE_OPENNING;
-                    redirect_command = null;
-                    remote_congestion_level = 0;
-                    if (x != null) terminate(x);
-                    // Wait for next "Hello"
-                }
-            });
+            redirect(redirect_queue.removeFirst());
         }
         else {
-            state = STATE_OPEN;
             notifying_channel_opened = true;
             Transport.channelOpened(this);
             listeners_array = channel_listeners.toArray(listeners_array);
@@ -667,6 +664,7 @@ public abstract class AbstractChannel implements IChannel {
         addToOutQueue(msg);
     }
 
+    @SuppressWarnings("unchecked")
     private void handleInput(Message msg) {
         assert Protocol.isDispatchThread();
         synchronized (out_queue) {
@@ -711,13 +709,18 @@ public abstract class AbstractChannel implements IChannel {
                 token.getListener().result(token, msg.data);
                 break;
             case 'E':
-                list = event_listeners.get(msg.service);
-                if (list != null) {
-                    for (int i = 0; i < list.length; i++) {
-                        list[i].event(msg.name, msg.data);
-                    }
+                if (msg.service.equals(ILocator.NAME) && msg.name.equals("Hello")) {
+                    onLocatorHello((Collection<String>)JSON.parseSequence(msg.data)[0]);
                 }
-                sendCongestionLevel();
+                else {
+                    list = event_listeners.get(msg.service);
+                    if (list != null) {
+                        for (int i = 0; i < list.length; i++) {
+                            list[i].event(msg.name, msg.data);
+                        }
+                    }
+                    sendCongestionLevel();
+                }
                 break;
             case 'F':
                 remote_congestion_level = Integer.parseInt(new String(msg.data, "UTF8"));

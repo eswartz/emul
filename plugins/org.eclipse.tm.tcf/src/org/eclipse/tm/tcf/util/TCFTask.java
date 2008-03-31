@@ -103,7 +103,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
     public synchronized V get(long timeout, TimeUnit unit)
             throws InterruptedException, ExecutionException, TimeoutException {
         unit.toNanos(timeout);
-        // TODO Auto-generated method stub
+        // TODO: implement TCFTask.get() with timeout
         assert false;
         return null;
     }

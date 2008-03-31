@@ -91,10 +91,28 @@ public interface ILocator extends IService {
     void removeListener(LocatorListener listener);
 
     interface LocatorListener {
+        /**
+         * A new peer is added into locator peer table.
+         * @param peer
+         */
         void peerAdded(IPeer peer);
 
+        /**
+         * Peer attributes have changed.
+         * @param peer
+         */
         void peerChanged(IPeer peer);
 
+        /**
+         * A peer is removed from locator peer table.
+         * @param id - peer ID
+         */
         void peerRemoved(String id);
+        
+        /**
+         * Peer heart beat detected.
+         * @param id - peer ID
+         */
+        void peerHeartBeat(String id);
     }
 }
