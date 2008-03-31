@@ -181,6 +181,7 @@ static void command_get_children(char * token, Channel * c) {
         int cnt = 0;
         for (qp = context_root.next; qp != &context_root; qp = qp->next) {
             Context * ctx = ctxl2ctxp(qp);
+            if (ctx->pending_attach || ctx->pending_clone) continue;
             if (ctx->exited) continue;
             if (ctx->parent != NULL) continue;
             if (cnt > 0) c->out.write(&c->out, ',');
@@ -564,4 +565,5 @@ void ini_memory_service(Protocol * proto, TCFBroadcastGroup * bcg) {
 }
 
 #endif
+
 

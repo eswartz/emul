@@ -277,6 +277,7 @@ static void command_get_children(char * token, Channel * c) {
         int cnt = 0;
         for (qp = context_root.next; qp != &context_root; qp = qp->next) {
             Context * ctx = ctxl2ctxp(qp);
+            if (ctx->pending_attach || ctx->pending_clone) continue;
             if (ctx->exited) continue;
             if (ctx->parent != NULL) continue;
             if (cnt > 0) c->out.write(&c->out, ',');
@@ -600,6 +601,7 @@ static void continue_temporary_stopped(void * arg) {
 
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
         Context * ctx = ctxl2ctxp(qp);
+        if (ctx->pending_attach || ctx->pending_clone) continue;
         if (ctx->exited) continue;
         if (!ctx->stopped) continue;
         if (ctx->intercepted) continue;
@@ -618,7 +620,7 @@ static void run_safe_events(void * arg) {
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
         Context * ctx = ctxl2ctxp(qp);
         if (ctx->exited || ctx->exiting) continue;
-        if (!ctx->pending_step) {
+        if (!ctx->pending_step && !ctx->pending_attach && !ctx->pending_clone) {
             int error = 0;
             if (ctx->stopped) continue;
             if (!context_has_state(ctx)) continue;

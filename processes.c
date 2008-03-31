@@ -49,6 +49,14 @@ static const char * PROCESSES = "Processes";
 #  include <dirent.h>
 #endif
 
+typedef struct AttachDoneArgs AttachDoneArgs;
+
+struct AttachDoneArgs {
+    Channel * c;
+    Context * ctx;
+    char token[256];
+};
+
 static void write_context(OutputStream * out, char * id, char * dir) {
     Context * ctx = NULL;
 
@@ -206,10 +214,27 @@ static void command_get_children(char * token, Channel * c) {
     c->out.write(&c->out, MARKER_EOM);
 }
 
+static void attach_done(void * arg) {
+    AttachDoneArgs * p = arg;
+    Channel * c = p->c;
+
+    if (!is_stream_closed(c)) {
+        write_stringz(&c->out, "R");
+        write_stringz(&c->out, p->token);
+        write_errno(&c->out, 0);
+        c->out.write(&c->out, MARKER_EOM);
+    }
+    context_unlock(p->ctx);
+    c->out.flush(&c->out);
+    stream_unlock(c);
+    loc_free(p);
+}
+
 static void command_attach(char * token, Channel * c) {
     int err = 0;
     char id[256];
     pid_t pid, parent;
+    Context * ctx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -224,13 +249,23 @@ static void command_attach(char * token, Channel * c) {
         err = ERR_ALREADY_ATTACHED;
     }
     else {
-        if (context_attach(pid, NULL) < 0) err = errno;
+        if (context_attach(pid, &ctx, 0) < 0) err = errno;
     }
-
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    if (!err && ctx) {
+        AttachDoneArgs * p = loc_alloc_zero(sizeof *p);
+        p->c = c;
+        p->ctx = ctx;
+        strcpy(p->token, token);
+        stream_lock(c);
+        context_lock(ctx);
+        post_safe_event(attach_done, p);
+    }
+    else {
+        write_stringz(&c->out, "R");
+        write_stringz(&c->out, token);
+        write_errno(&c->out, err);
+        c->out.write(&c->out, MARKER_EOM);
+    }
 }
 
 static void command_detach(char * token, Channel * c) {
@@ -321,6 +356,28 @@ static void command_get_environment(char * token, Channel * c) {
     c->out.write(&c->out, MARKER_EOM);
 }
 
+static void start_done(void * arg) {
+    AttachDoneArgs * p = arg;
+    Channel * c = p->c;
+    char dir[FILE_PATH_SIZE];
+    char bf[256];
+
+    if (!is_stream_closed(c)) {
+        write_stringz(&c->out, "R");
+        write_stringz(&c->out, p->token);
+        write_errno(&c->out, 0);
+        write_stringz(&c->out, "null");
+        snprintf(dir, sizeof(dir), "/proc/%d", p->ctx->pid);
+        write_context(&c->out, strcpy(bf, ctx2id(p->ctx)), dir);
+        c->out.write(&c->out, 0);
+        c->out.write(&c->out, MARKER_EOM);
+    }
+    context_unlock(p->ctx);
+    c->out.flush(&c->out);
+    stream_unlock(c);
+    loc_free(p);
+}
+
 static void command_start(char * token, Channel * c) {
     Context * ctx = NULL;
     int pid = 0;
@@ -332,6 +389,7 @@ static void command_start(char * token, Channel * c) {
     int args_len = 0;
     int envp_len = 0;
     int attach = 0;
+    int selfattach = 0;
     Trap trap;
 
     if (set_trap(&trap)) {
@@ -374,29 +432,49 @@ static void command_start(char * token, Channel * c) {
             pid = fork();
             if (pid < 0) err = errno;
             if (pid == 0) {
-                if (attach) tkill(getpid(), SIGSTOP);
-                exit(execve(exe, args, envp));
+                int fd;
+
+                if (attach && context_attach_self() < 0) exit(1);
+                fd = sysconf(_SC_OPEN_MAX);
+                if (fd < 0) exit(2);
+                while (fd-- > 0) close(fd);
+                if (open("/dev/null", O_RDONLY) != 0) exit(3);
+                if (open("/dev/null", O_WRONLY) != 1) exit(4);
+                if (dup(1) != 2) exit(5);
+                execve(exe, args, envp);
+                exit(6);
             }
+            selfattach = 1;
 #endif            
         }
         if (attach) {
-            if (err == 0 && context_attach(pid, &ctx) < 0) err = errno;
+            if (err == 0 && context_attach(pid, &ctx, selfattach) < 0) err = errno;
             if (ctx != NULL && !ctx->stopped) ctx->pending_intercept = 1;
         }
-
-        write_stringz(&c->out, "R");
-        write_stringz(&c->out, token);
-        write_errno(&c->out, err);
-        if (err || pid == 0) {
-            write_stringz(&c->out, "null");
+        if (!err && ctx) {
+            AttachDoneArgs * p = loc_alloc_zero(sizeof *p);
+            p->c = c;
+            p->ctx = ctx;
+            strcpy(p->token, token);
+            stream_lock(c);
+            context_lock(ctx);
+            post_safe_event(start_done, p);
         }
         else {
-            char bf[256];
-            snprintf(dir, sizeof(dir), "/proc/%d", pid);
-            write_context(&c->out, strcpy(bf, pid2id(pid, 0)), dir);
-            c->out.write(&c->out, 0);
+            write_stringz(&c->out, "R");
+            write_stringz(&c->out, token);
+            write_errno(&c->out, err);
+            if (err || pid == 0) {
+                write_stringz(&c->out, "null");
+            }
+            else {
+                char bf[256];
+                snprintf(dir, sizeof(dir), "/proc/%d", pid);
+                write_context(&c->out, strcpy(bf, pid2id(pid, 0)), dir);
+                c->out.write(&c->out, 0);
+            }
+            c->out.write(&c->out, MARKER_EOM);
         }
-        c->out.write(&c->out, MARKER_EOM);
         clear_trap(&trap);
     }
 
@@ -418,4 +496,5 @@ void ini_processes_service(Protocol *proto) {
 }
 
 #endif
+
 

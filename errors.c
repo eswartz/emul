@@ -14,6 +14,7 @@
  */
 
 #include "mdep.h"
+#include <stdlib.h>
 #include <string.h>
 #include "errors.h"
 #include "trace.h"

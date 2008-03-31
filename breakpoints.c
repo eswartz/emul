@@ -367,8 +367,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         BreakInstruction * bi = NULL;
         Context * ctx = ctxl2ctxp(qp);
 
-        if (ctx->exited || ctx->exiting) continue;
-        assert(ctx->stopped || !context_has_state(ctx));
+        if (ctx->exited || ctx->exiting || !ctx->stopped) continue;
         if (context_sensitive) {
             expression_context = ctx;
             if (evaluate_expression(&bp_address_ctx, bp->address, &v) < 0) {

@@ -129,6 +129,7 @@ static void proxy_default_message_handler(Channel * c, char **argv, int argc) {
 
     assert(c == proxy->c);
     assert(argc > 0 && strlen(argv[0]) == 1);
+    if (proxy[proxy->other].state == ProxyStateDisconnected) return;
     if (argv[0][0] == 'C') {
         write_stringz(&otherc->out, argv[0]);
         /* Prefix token with 'R'emote to distinguish from locally
@@ -161,11 +162,17 @@ static void proxy_default_message_handler(Channel * c, char **argv, int argc) {
     do {
         i = c->inp.read(&c->inp);
         if (log_mode & LOG_TCFLOG) {
-            if (i > 0) {
+            if (i > ' ' && i < 127) {
+                /* Printable ASCII  */
                 logchr(&p, i);
             }
             else if (i == 0) {
                 logstr(&p, " ");
+            }
+            else if (i > 0) {
+                char buf[40];
+                snprintf(buf, sizeof buf, "\\x%02x", i);
+                logstr(&p, buf);
             }
             else if (i == MARKER_EOM) {
                 logstr(&p, "<eom>");

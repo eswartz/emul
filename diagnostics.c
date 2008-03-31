@@ -26,8 +26,17 @@
 #include "runctrl.h"
 #include "symbols.h"
 #include "test.h"
+#include "myalloc.h"
 
 static const char * DIAGNOSTICS = "Diagnostics";
+
+typedef struct RunTestDoneArgs RunTestDoneArgs;
+
+struct RunTestDoneArgs {
+    Channel * c;
+    Context * ctx;
+    char token[256];
+};
 
 static void command_echo(char * token, Channel * c) {
     char str[0x1000];
@@ -51,28 +60,56 @@ static void command_get_test_list(char * token, Channel * c) {
     c->out.write(&c->out, MARKER_EOM);
 }
 
+static void run_test_done(void * arg) {
+    RunTestDoneArgs * p = arg;
+    Channel * c = p->c;
+
+    if (!is_stream_closed(c)) {
+        write_stringz(&c->out, "R");
+        write_stringz(&c->out, p->token);
+        write_errno(&c->out, 0);
+        json_write_string(&c->out, ctx2id(p->ctx));
+        c->out.write(&c->out, 0);
+        c->out.write(&c->out, MARKER_EOM);
+    }
+    context_unlock(p->ctx);
+    c->out.flush(&c->out);
+    stream_unlock(c);
+    loc_free(p);
+}
+
 static void command_run_test(char * token, Channel * c) {
     int err = 0;
     char id[256];
-    pid_t pid = 0;
+    Context * ctx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (strcmp(id, "RCBP1") == 0) {
-        if (run_test_process(&pid) < 0) err = errno;
+        if (run_test_process(&ctx) < 0) err = errno;
     }
     else {
         err = EINVAL;
     }
-
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, err);
-    json_write_string(&c->out, err ? NULL : pid2id(pid, 0));
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    if (!err && ctx) {
+        RunTestDoneArgs * p = loc_alloc_zero(sizeof *p);
+        p->c = c;
+        p->ctx = ctx;
+        strcpy(p->token, token);
+        stream_lock(c);
+        context_lock(ctx);
+        post_safe_event(run_test_done, p);
+    }
+    else {
+        write_stringz(&c->out, "R");
+        write_stringz(&c->out, token);
+        write_errno(&c->out, err);
+        json_write_string(&c->out, err ? NULL : ctx2id(ctx));
+        c->out.write(&c->out, 0);
+        c->out.write(&c->out, MARKER_EOM);
+    }
 }
 
 static void event_terminate(void * arg) {
@@ -174,4 +211,5 @@ void ini_diagnostics_service(Protocol *proto) {
     add_command_handler(proto, DIAGNOSTICS, "cancelTest", command_cancel_test);
     add_command_handler(proto, DIAGNOSTICS, "getSymbol", command_get_symbol);
 }
+
 

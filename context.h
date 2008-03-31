@@ -45,6 +45,8 @@ struct Context {
     int                 pending_step;       /* context is executing single instruction step */
     int                 pending_intercept;  /* host is waiting for this context to be suspended */
     int                 pending_safe_event; /* safe events are waiting for this context to be stopped */
+    int                 pending_attach;     /* waiting for this context to be attached */
+    void *              pending_clone;      /* waiting for clone or fork to bind this to parent */
     unsigned long       pending_signals;    /* bitset of signals that were received, but not handled yet */
     int                 signal;             /* signal that stopped this context */
     int                 event;              /* tracing event code when signal is SIGTRAP */
@@ -77,6 +79,11 @@ extern char * context_state_name(Context * ctx);
 extern char * pid2id(pid_t pid, pid_t parent);
 
 /*
+ * Convert Context to TCF Context ID
+ */
+extern char * ctx2id(Context * ctx);
+
+/*
  * Get context thread ID
  */
 extern char * thread_id(Context * ctx);
@@ -102,9 +109,14 @@ extern Context * id2ctx(char * id);
 extern Context * context_find_from_pid(pid_t pid);
 
 /*
+ * Trigger self attachment e.g. of forked child
+ */
+extern int context_attach_self(void);
+
+/*
  * Start tracing of a process.
  */
-extern int context_attach(pid_t pid, Context ** ctx);
+extern int context_attach(pid_t pid, Context ** ctx, int selfattach);
 
 /*
  * Increment reference counter of Context object.

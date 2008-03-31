@@ -80,7 +80,7 @@ void test_proc(void) {
     }
 }
 
-int run_test_process(pid_t * res) {
+int run_test_process(Context ** res) {
 #if defined(WIN32)
     Context * ctx = NULL;
     int r = 0;
@@ -113,20 +113,23 @@ int run_test_process(pid_t * res) {
         errno = EINVAL;
         return -1;
     }
-    if (res != NULL) *res = prs.dwProcessId;
-    r = context_attach(prs.dwProcessId, &ctx);
+    r = context_attach(prs.dwProcessId, &ctx, 0);
+    if (res != NULL) *res = ctx;
     CloseHandle(prs.hThread);
     CloseHandle(prs.hProcess);
-    return 0;
+    return r;
 #elif defined(_WRS_KERNEL)
     int tid = taskCreate("tTcf", 100, 0, 0x4000, (FUNCPTR)test_proc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    Context * ctx = NULL;
+    int r = 0;
     if (tid == 0) return -1;
     taskStop(tid);
     taskActivate(tid);
     assert(taskIsStopped(tid));
     if (tcf_test_array == NULL) tcf_test_array = loc_alloc(0x1000);
-    if (res != NULL) *res = tid;
-    return context_attach(tid, NULL);
+    r = context_attach(tid, &ctx, 0);
+    if (res != NULL) *res = ctx;
+    return r;
 #else
     /* Create child process to debug */
     Context * ctx = NULL;
@@ -134,15 +137,22 @@ int run_test_process(pid_t * res) {
     if (pid < 0) return -1;
     if (pid == 0) {
         tcf_test_array = loc_alloc(0x1000);
-        tkill(getpid(), SIGSTOP);
+        if (context_attach_self() < 0) exit(1);
+        if (tkill(getpid(), SIGSTOP) < 0) {
+            int err = errno;
+            trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: pid %d, error %d %s",
+                  getpid(), err, errno_to_str(err));
+            errno = err;
+            return -1;
+        }
         test_proc();
         exit(0);
     }
-    if (res != NULL) *res = pid;
-    if (context_attach(pid, &ctx) < 0) return -1;
-    ctx->pending_intercept = 1;
+    if (context_attach(pid, &ctx, 1) < 0) return -1;
+    if (res != NULL) *res = ctx;
     return 0;
 #endif
 }
+
 
 

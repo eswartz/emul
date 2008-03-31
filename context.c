@@ -128,6 +128,15 @@ char * pid2id(pid_t pid, pid_t parent) {
     return p;
 }
 
+char * ctx2id(Context * ctx) {
+    /* For now this functions should only be used for processes, but
+     * once linux have a context for the process and a separate
+     * context for the initial thread, then this function can be used
+     * to get the context-id for any context. */
+    assert(ctx->parent == NULL);
+    return pid2id(ctx->pid, 0);
+}
+
 char * thread_id(Context * ctx) {
     assert(context_has_state(ctx));
     if (ctx->parent == NULL) return pid2id(ctx->pid, ctx->pid);
@@ -174,6 +183,7 @@ void context_unlock(Context * ctx) {
         assert(ctx->parent == NULL);
         list_remove(&ctx->ctxl);
         list_remove(&ctx->pidl);
+        if (ctx->pending_clone) loc_free(ctx->pending_clone);
         loc_free(ctx);
     }
 }
@@ -570,9 +580,10 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
     return 0;
 }
 
-int context_attach(pid_t pid, Context ** res) {
+int context_attach(pid_t pid, Context ** res, int selfattach) {
     DebugThreadArgs * dbg = (DebugThreadArgs *)loc_alloc_zero(sizeof(DebugThreadArgs));
 
+    assert(!selfattach);
     dbg->ctx = create_context(pid);
     dbg->ctx->mem = pid;
     assert(dbg->ctx->ref_count == 1);
@@ -803,10 +814,11 @@ static void event_info_post(struct event_info * info) {
     SPIN_LOCK_ISR_GIVE(&events_lock);
 }
 
-int context_attach(pid_t pid, Context ** res) {
+int context_attach(pid_t pid, Context ** res, int selfattach) {
     struct event_info * info;
     Context * ctx = create_context(pid);
 
+    assert(!selfattach);
     ctx->mem = taskIdSelf();
     assert(ctx->ref_count == 1);
     event_context_created(ctx);
@@ -1216,7 +1228,7 @@ static pthread_t wpid_thread;
 static pid_t my_pid = 0;
 static pthread_mutex_t waitpid_lock;
 static pthread_cond_t waitpid_cond;
-static int attach_flag = 0;
+static int attach_poll_rate;
 
 char * event_name(int event) {
     switch (event) {
@@ -1233,10 +1245,23 @@ char * event_name(int event) {
     }
 }
 
-int context_attach(pid_t pid, Context ** res) {
+int context_attach_self(void) {
+    pid_t pid = getpid();
+
+    if (ptrace(PTRACE_TRACEME, 0, 0, 0) < 0) {
+        int err = errno;
+        trace(LOG_ALWAYS, "error: ptrace(PTRACE_TRACEME) failed: pid %d, error %d %s",
+              pid, err, errno_to_str(err));
+        errno = err;
+        return -1;
+    }
+    return 0;
+}
+
+int context_attach(pid_t pid, Context ** res, int selfattach) {
     Context * ctx = NULL;
     check_error(pthread_mutex_lock(&waitpid_lock));
-    if (ptrace(PTRACE_ATTACH, pid, 0, 0) < 0) {
+    if (!selfattach && ptrace(PTRACE_ATTACH, pid, 0, 0) < 0) {
         int err = errno;
         trace(LOG_ALWAYS, "error: ptrace(PTRACE_ATTACH) failed: pid %d, error %d %s",
             pid, err, errno_to_str(err));
@@ -1245,11 +1270,13 @@ int context_attach(pid_t pid, Context ** res) {
         return -1;
     }
     ctx = create_context(pid);
+    ctx->pending_intercept = 1;
+    ctx->pending_attach = 1;
     /* TODO: context_attach works only for main task in a process */
     ctx->mem = pid;
     assert(ctx->ref_count == 1);
-    event_context_created(ctx);
-    attach_flag = 1;
+    attach_poll_rate = 1;
+    trace(LOG_WAITPID, "waitpid: poll rate reset");
     check_error(pthread_cond_signal(&waitpid_cond));
     check_error(pthread_mutex_unlock(&waitpid_lock));
     if (res != NULL) *res = ctx;
@@ -1457,10 +1484,17 @@ static void event_pid_exited(void *arg) {
         trace(LOG_EVENTS, "event: ctx not found, pid %d, exit status %d", eap->pid, eap->value);
     }
     else {
-        trace(LOG_EVENTS, "event: ctx %#x, pid %d, exit status %d", ctx, eap->pid, eap->value);
-        assert(!ctx->stopped);
-        assert(!ctx->intercepted);
-        assert(!ctx->exited);
+        if (ctx->stopped || ctx->intercepted || ctx->exited) {
+            trace(LOG_EVENTS, "event: ctx %#x, pid %d, exit status %d unexpected, stopped %d, intercepted %d, exited %d",
+                ctx, eap->pid, eap->value, ctx->stopped, ctx->intercepted, ctx->exited);
+            if (ctx->stopped) {
+                ctx->stopped = 0;
+                event_context_started(ctx);
+            }
+        }
+        else {
+            trace(LOG_EVENTS, "event: ctx %#x, pid %d, exit status %d", ctx, eap->pid, eap->value);
+        }
         if (!list_is_empty(&ctx->children)) {
             /* Linux kernel 2.4 does not notify waitpid() when thread exits if the thread is not main thread.
              * As workaround, assume all non-main thread have exited and remove them from ctx->children list.
@@ -1499,13 +1533,27 @@ static void event_pid_stopped(void * arg) {
     Context * ctx = NULL;
     Context * ctx2 = NULL;
     struct pid_stop_info * eap = arg;
+    struct pid_stop_info * pending_eap;
 
+process_event:
+    pending_eap = NULL;
     trace(LOG_EVENTS, "event: pid %d stopped, signal %d, event %s",
         eap->pid, eap->signal, event_name(eap->event));
 
     ctx = context_find_from_pid(eap->pid);
     if (ctx == NULL) {
-        trace(LOG_ALWAYS, "error: invalid event: pid %d is not traced", eap->pid);
+        /* Clone & fork notifications can arrive after child
+         * notification because the clone/fork notification comes from
+         * the parent while the stop notification comes from the child
+         * and Linux does not seem to order between them. */
+        trace(LOG_EVENTS, "event: pid %d is not traced - expecting OOO clone, fork or vfork event for pid", eap->pid);
+        ctx = create_context(eap->pid);
+        ctx->pending_clone = eap;
+        return;
+    }
+    else if (ctx->pending_clone != NULL) {
+        trace(LOG_ALWAYS, "event: pid %d received stop event before processing of pending_clone event - ignored", eap->pid);
+        loc_free(eap);
         return;
     }
     assert(!ctx->exited);
@@ -1525,14 +1573,24 @@ static void event_pid_stopped(void * arg) {
     case PTRACE_EVENT_FORK:
     case PTRACE_EVENT_VFORK:
     case PTRACE_EVENT_CLONE:
+        assert(!ctx->pending_attach);
         if (ptrace(PTRACE_GETEVENTMSG, eap->pid, 0, &msg) < 0) {
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETEVENTMSG) failed; pid %d, error %d %s",
                 eap->pid, errno, errno_to_str(errno));
             break;
         }
         assert(msg != 0);
-        ctx2 = create_context(msg);
+        ctx2 = context_find_from_pid(msg);
+        if (ctx2) {
+            assert(ctx2->pending_clone);
+            pending_eap = ctx2->pending_clone;
+            ctx2->pending_clone = NULL;
+        }
+        else {
+            ctx2 = create_context(msg);
+        }
         assert(ctx2->parent == NULL);
+        trace(LOG_EVENTS, "event: new context 0x%x, pid %d", ctx2, ctx2->pid);
         if (eap->event == PTRACE_EVENT_CLONE) {
             ctx2->mem = ctx->mem;
             ctx2->parent = ctx->parent != NULL ? ctx->parent : ctx;
@@ -1547,7 +1605,9 @@ static void event_pid_stopped(void * arg) {
         break;
 
     case PTRACE_EVENT_EXEC:
-        event_context_changed(ctx);
+        if (!ctx->pending_attach) {
+            event_context_changed(ctx);
+        }
         break;
     }
 
@@ -1559,7 +1619,10 @@ static void event_pid_stopped(void * arg) {
         ctx->exiting = 1;
         ctx->regs_dirty = 0;
     }
-
+    if (ctx->pending_attach) {
+        ctx->pending_attach = 0;
+        event_context_created(ctx);
+    }
     if (!ctx->stopped || !ctx->intercepted) {
         unsigned long pc0 = get_regs_PC(ctx->regs);
         assert(!ctx->regs_dirty);
@@ -1602,19 +1665,36 @@ static void event_pid_stopped(void * arg) {
     }
 
     loc_free(eap);
+    if (pending_eap != NULL) {
+        eap = pending_eap;
+        goto process_event;
+    }
 }
 
 static void * wpid_handler(void * x) {
     pid_t pid;
+    int err;
     int status;
-    struct timeval timeout;
+    struct timespec timeout;
 
+    attach_poll_rate = 1;
     for (;;) {
-        attach_flag = 0;
-        if ((pid = waitpid(-1, &status, WUNTRACED | __WALL)) == (pid_t)-1) {
+        if ((pid = waitpid(-1, &status, __WALL)) == (pid_t)-1) {
             if (errno == ECHILD) {
                 check_error(pthread_mutex_lock(&waitpid_lock));
-                if (!attach_flag) check_error(pthread_cond_wait(&waitpid_cond, &waitpid_lock));
+                if(attach_poll_rate < 60*1000) {
+                    attach_poll_rate = (attach_poll_rate*3 + 1)/2;
+                }
+                clock_gettime(CLOCK_REALTIME, &timeout);
+                timeout.tv_sec += attach_poll_rate / 1000;
+                timeout.tv_nsec += (attach_poll_rate % 1000) * 1000 * 1000;
+                if (timeout.tv_nsec >= 1000 * 1000 * 1000) {
+                    timeout.tv_nsec -= 1000 * 1000 * 1000;
+                    timeout.tv_sec++;
+                }
+                trace(LOG_WAITPID, "waitpid: poll rate = %d", attach_poll_rate);
+                err = pthread_cond_timedwait(&waitpid_cond, &waitpid_lock, &timeout);
+                if (err != ETIMEDOUT) check_error(err);
                 check_error(pthread_mutex_unlock(&waitpid_lock));
                 continue;
             }
