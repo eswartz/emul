@@ -366,7 +366,6 @@ static void start_done(void * arg) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, p->token);
         write_errno(&c->out, 0);
-        write_stringz(&c->out, "null");
         snprintf(dir, sizeof(dir), "/proc/%d", p->ctx->pid);
         write_context(&c->out, strcpy(bf, ctx2id(p->ctx)), dir);
         c->out.write(&c->out, 0);
