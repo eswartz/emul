@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.dsf.services;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -100,9 +101,6 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         RegisterGroupDMC(String session_id, IDMContext[] parents, final String id, RegistersCache children) {
             super(session_id, parents, id, children);
             context = new org.eclipse.tm.tcf.services.IRegisters.RegistersContext() {
-                public String[] getAvailableFormats() {
-                    return null;
-                }
                 public int[] getBitNumbers() {
                     return null;
                 }
@@ -121,10 +119,13 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                 public NamedValue[] getNamedValues() {
                     return null;
                 }
+                public int getSize() {
+                    return 0;
+                }
                 public String getParentID() {
                     return null;
                 }
-                public Map<String, Object> getProperties() {
+                public Map<String,Object> getProperties() {
                     return null;
                 }
                 public boolean hasSideEffects() {
@@ -154,10 +155,10 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                 public boolean isWriteable() {
                     return false;
                 }
-                public IToken get(String format, DoneGet done) {
+                public IToken get(DoneGet done) {
                     throw new Error();
                 }
-                public IToken set(String format, String value, DoneSet done) {
+                public IToken set(byte[] value, DoneSet done) {
                     throw new Error();
                 }
             };
@@ -494,8 +495,8 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             assert tcf_reg_service != null;
             assert context != null;
             assert !disposed;
-            command = context.get(fmt, new org.eclipse.tm.tcf.services.IRegisters.DoneGet() {
-                public void doneGet(IToken token, Exception err, String value) {
+            command = context.get(new org.eclipse.tm.tcf.services.IRegisters.DoneGet() {
+                public void doneGet(IToken token, Exception err, byte[] value) {
                     if (command != token) return;
                     command = null;
                     if (err != null) {
@@ -503,7 +504,32 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                         error = err;
                     }
                     else {
-                        data = new FormattedValueDMData(value);
+                        int radix = 10;
+                        if (fmt.equals(HEX_FORMAT)) radix = 16; 
+                        else if (fmt.equals(OCTAL_FORMAT)) radix = 8; 
+                        byte[] temp = new byte[value.length + 1];
+                        temp[0] = 0; // Extra byte to avoid sign extension by BigInteger
+                        if (context.isBigEndian()) {
+                            System.arraycopy(value, 0, temp, 1, value.length);
+                        }
+                        else {
+                            for (int i = 0; i < value.length; i++) {
+                                temp[temp.length - i - 1] = value[i];
+                            }
+                        }
+                        String s = new BigInteger(temp).toString(radix);
+                        switch (radix) {
+                        case 8:
+                            if (!s.startsWith("0")) s = "0" + s;
+                            break;
+                        case 16:
+                            int l = value.length * 2 - s.length();
+                            if (l < 0) l = 0;
+                            if (l > 16) l = 16;
+                            s = "0000000000000000".substring(0, l) + s;
+                            break;
+                        }
+                        data = new FormattedValueDMData(s);
                     }
                     valid = true;
                     validate();
@@ -588,6 +614,12 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
     private final IChannel channel;
     private final org.eclipse.tm.tcf.services.IRegisters tcf_reg_service;
     private final Map<String,ObjectDMC> model;
+    
+    private final String[] available_formats = {
+            HEX_FORMAT,
+            DECIMAL_FORMAT,
+            OCTAL_FORMAT
+    };
 
     public TCFDSFRegisters(DsfSession session, IChannel channel, final RequestMonitor monitor) {
         super(session);
@@ -885,7 +917,18 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                 rm.done();
                 return;
             }
-            ((ObjectDMC)dmc).context.set(fmt, val, new org.eclipse.tm.tcf.services.IRegisters.DoneSet() {
+            int radix = 10;
+            if (fmt.equals(HEX_FORMAT)) radix = 16; 
+            else if (fmt.equals(OCTAL_FORMAT)) radix = 8; 
+            byte[] data = new BigInteger(val, radix).toByteArray();
+            if (!((ObjectDMC)dmc).context.isBigEndian()) {
+                byte[] temp = new byte[data.length];
+                for (int i = 0; i < data.length; i++) {
+                    temp[temp.length - i - 1] = data[i];
+                }
+                data = temp;
+            }
+            ((ObjectDMC)dmc).context.set(data, new org.eclipse.tm.tcf.services.IRegisters.DoneSet() {
                 public void doneSet(IToken token, Exception error) {
                     if (rm.isCanceled()) return;
                     if (error != null) {
@@ -920,9 +963,8 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             if (arr != null) {
                 for (NamedValue nv : arr) {
                     if (nv.getName().equals(mnemonic.getShortName())) {
-                        String fmt = org.eclipse.tm.tcf.services.IRegisters.FORMAT_DECIMAL;
-                        String val = nv.getValue().toString();
-                        ((ObjectDMC)dmc).context.set(fmt, val, new org.eclipse.tm.tcf.services.IRegisters.DoneSet() {
+                        byte[] val = nv.getValue();
+                        ((ObjectDMC)dmc).context.set(val, new org.eclipse.tm.tcf.services.IRegisters.DoneSet() {
                             public void doneSet(IToken token, Exception error) {
                                 if (rm.isCanceled()) return;
                                 if (error != null) {
@@ -951,17 +993,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
     }
 
     public void getAvailableFormats(IFormattedDataDMContext dmc, DataRequestMonitor<String[]> rm) {
-        if (tcf_reg_service == null) {
-            rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                    INVALID_HANDLE, "Registers service is not available", null)); //$NON-NLS-1$
-        }
-        else if (dmc instanceof ObjectDMC) {
-            rm.setData(((ObjectDMC)dmc).context.getAvailableFormats());
-        }
-        else {
-            rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                    INVALID_HANDLE, "Unknown DMC type", null)); //$NON-NLS-1$
-        }
+        rm.setData(available_formats);
         rm.done();
     }
 

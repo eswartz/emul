@@ -32,7 +32,7 @@ public interface IRegisters extends IService {
         PROP_PROCESS_ID = "ProcessID",
         PROP_NAME = "Name",
         PROP_DESCRIPTION = "Description",
-        PROP_FORMATS = "Formats",
+        PROP_SIZE = "Size",
         PROP_READBLE = "Readable",
         PROP_READ_ONCE = "ReadOnce",
         PROP_WRITEABLE = "Writeable",
@@ -46,16 +46,6 @@ public interface IRegisters extends IService {
         PROP_BITS = "Bits",
         PROP_VALUES = "Values";
         
-    /**
-     * Standard known formats for register data.
-     */
-    static final String
-        FORMAT_BINARY   = "Binary",
-        FORMAT_OCTAL    = "Octal",
-        FORMAT_DECIMAL  = "Decimal",
-        FORMAT_HEX      = "Hex",
-        FORMAT_NATURAL  = "Natural";
-    
     /**
      * Retrieve context info for given context ID.
      *   
@@ -134,11 +124,14 @@ public interface IRegisters extends IService {
         String getDescription();
         
         /**
-         * Get value formats available for register get/set commands.
-         * See FORMAT_* for knows format IDs definition.
-         * @return array of supported format IDs.
+         * Get context size in bytes.
+         * Byte arrays in get()/set() methods should be same size.
+         * Hardware register can be smaller then this size, for example in case
+         * when register size is not an even number of bytes. In such case implementation
+         * should add/remove padding that consist of necessary number of zero bits.
+         * @return context size in bytes.
          */
-        String[] getAvailableFormats();
+        int getSize();
         
         /**
          * Check if context value can be read.
@@ -226,20 +219,18 @@ public interface IRegisters extends IService {
         
         /**
          * Read value of the context.
-         * @param format - ID of a format to use for result value. 
          * @param done - call back object.
          * @return - pending command handle.
          */
-        IToken get(String format, DoneGet done);
+        IToken get(DoneGet done);
         
         /**
          * Set value of the context.
-         * @param format - ID of a format used for value.
          * @param value - value to write into the context.
          * @param done - call back object.
          * @return - pending command handle.
          */
-        IToken set(String format, String value, DoneSet done);
+        IToken set(byte[] value, DoneSet done);
     }
     
     /**
@@ -248,10 +239,10 @@ public interface IRegisters extends IService {
      */
     interface NamedValue {
         /**
-         * Get number associated with this named value.
-         * @return the value as a number.
+         * Get value associated with the name.
+         * @return the value as an array of bytes.
          */
-        Number getValue();
+        byte[] getValue();
         
         /**
          * Get name (mnemonic) of the value.
@@ -270,7 +261,7 @@ public interface IRegisters extends IService {
      * 'get' command call back interface.
      */
     interface DoneGet {
-        void doneGet(IToken token, Exception error, String value);
+        void doneGet(IToken token, Exception error, byte[] value);
     }
     
     /**

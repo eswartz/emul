@@ -78,8 +78,11 @@ Service sends contextChanged event to notify changes in context data.</p>
     <li><code><b><font face="Courier New" size=2 color=#333399>"Description" : <i>&lt;string&gt;</i></font></b></code>
     - context description.
 
-    <li><code><b><font face="Courier New" size=2 color=#333399>"Formats" : <i>&lt;array of string&gt;</i></font></b></code>
-    - value formats available for register get/set commands.
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Size" : <i>&lt;boolean&gt;</i></font></b></code>
+    - context size in bytes. Byte arrays in get/set commandss should be same size.
+    Hardware register can be smaller then this size, for example in case
+    when register size is not an even number of bytes. In such case implementation
+    should add/remove padding that consists of necessary number of zero bits.
 
     <li><code><b><font face="Courier New" size=2 color=#333399>"Readable" : <i>&lt;boolean&gt;</i></font></b></code>
     - true if context value can be read.
@@ -151,12 +154,11 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of context
 <h3><a name='CmdSetRegister'>Set Register</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • &lt;token&gt; • Registers • set • <i>&lt;string: context ID&gt;</i> • <i>&lt;string: value format&gt;</i> • <i>&lt;string: value&gt;</i> •
+C • &lt;token&gt; • Registers • set • <i>&lt;string: context ID&gt;</i> • <i>&lt;string: value&gt;</i> •
 </font></b></pre>
 
 <p>Writes value into given register context. Context ID must be one returned by getContexts.
-Value format must be one that is supported by the register context.
-Client can get list of supported formats from context attributes.</p>
+Value is BASE64 encoded byte array of binary data. Array size should match the size of the register.</p>
   
 <p>Result message:</p>
  
@@ -170,12 +172,11 @@ of error.</p>
 <h3><a name='CmdGetRegister'>Get Register</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • &lt;token&gt; • Registers • get • <i>&lt;string: context ID&gt;</i> • <i>&lt;string: value format&gt;</i> •
+C • &lt;token&gt; • Registers • get • <i>&lt;string: context ID&gt;</i> •
 </font></b></pre>
 
 <p>Reads register value from given register context. Context ID must be one returned by getContexts.
-Value format must be one that is supported by the register context.
-Client can get list of supported formats from context attributes.</p>
+</p>
  
 <p>Result message:</p>
  
@@ -184,7 +185,7 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;string: value&gt
 </font></b></pre>
 
 <p>Error report provides integer error code and a short, human readable explanation
-of error. Value is formatted according to requested format.</p>
+of error. Value is BASE64 encoded byte array of binary data. Array size should match the size of the register.</p>
 
 <h2><a name='Events'>Events</a></h2>
  
@@ -215,7 +216,7 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
         PROP_PROCESS_ID = "ProcessID",
         PROP_NAME = "Name",
         PROP_DESCRIPTION = "Description",
-        PROP_FORMATS = "Formats",
+        PROP_SIZE = "Size",
         PROP_READBLE = "Readable",
         PROP_READ_ONCE = "ReadOnce",
         PROP_WRITEABLE = "Writeable",
@@ -317,11 +318,14 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
         String getDescription();
         
         <font color=#3F5FBF>/**
-         * Get value formats available for register get/set commands.
-         * See FORMAT_* for knows format IDs definition.
-         * <font color=#7F9FBF>@return</font> array of supported format IDs.
+         * Get context size in bytes.
+         * Byte arrays in get()/set() methods should be same size.
+         * Hardware register can be smaller then this size, for example in case
+         * when register size is not an even number of bytes. In such case implementation
+         * should add/remove padding that consists of necessary number of zero bits.
+         * @return context size in bytes.
          */</font>
-        String[] getAvailableFormats();
+        <font color=#7F0055>int</font> getSize();
         
         <font color=#3F5FBF>/**
          * Check if context value can be read.
@@ -409,20 +413,18 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
         
         <font color=#3F5FBF>/**
          * Read value of the context.
-         * <font color=#7F9FBF>@param</font> format - ID of a format to use for result value. 
          * <font color=#7F9FBF>@param</font> done - call back object.
          * <font color=#7F9FBF>@return</font> - pending command handle.
          */</font>
-        IToken get(String format, DoneGet done);
+        IToken get(DoneGet done);
         
         <font color=#3F5FBF>/**
          * Set value of the context.
-         * <font color=#7F9FBF>@param</font> format - ID of a format used for value.
          * <font color=#7F9FBF>@param</font> value - value to write into the context.
          * <font color=#7F9FBF>@param</font> done - call back object.
          * <font color=#7F9FBF>@return</font> - pending command handle.
          */</font>
-        IToken set(String format, String value, DoneSet done);
+        IToken set(byte[] value, DoneSet done);
     }
     
     <font color=#3F5FBF>/**
@@ -431,10 +433,10 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
      */</font>
     <font color=#7F0055>interface</font> NamedValue {
         <font color=#3F5FBF>/**
-         * Get number associated with this named value.
-         * <font color=#7F9FBF>@return</font> the value as a number.
+         * Get value associated with the name.
+         * <font color=#7F9FBF>@return</font> the value as an array of bytes.
          */</font>
-        Number getValue();
+        byte[] getValue();
         
         <font color=#3F5FBF>/**
          * Get name (mnemonic) of the value.
@@ -453,7 +455,7 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
      * 'get' command call back interface.
      */</font>
     <font color=#7F0055>interface</font> DoneGet {
-        <font color=#7F0055>void</font> doneGet(IToken token, Exception error, String value);
+        <font color=#7F0055>void</font> doneGet(IToken token, Exception error, byte[] value);
     }
     
     <font color=#3F5FBF>/**

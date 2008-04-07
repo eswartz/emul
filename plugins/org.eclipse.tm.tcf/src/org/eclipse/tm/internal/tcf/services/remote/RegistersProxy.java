@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -34,10 +35,6 @@ public class RegistersProxy implements IRegisters {
         
         Context(Map<String,Object> props) {
             this.props = props;
-        }
-
-        public String[] getAvailableFormats() {
-            return toStringArray(props.get(PROP_FORMATS));
         }
 
         public int[] getBitNumbers() {
@@ -68,6 +65,12 @@ public class RegistersProxy implements IRegisters {
 
         public String getParentID() {
             return (String)props.get(PROP_PARENT_ID);
+        }
+        
+        public int getSize() {
+            Number n = (Number)props.get(PROP_SIZE);
+            if (n == null) return 0;
+            return n.intValue();
         }
 
         public Map<String, Object> getProperties() {
@@ -128,25 +131,26 @@ public class RegistersProxy implements IRegisters {
             return n.booleanValue();
         }
 
-        public IToken get(String format, final DoneGet done) {
+        public IToken get(final DoneGet done) {
             return new Command(channel, RegistersProxy.this, "get",
-                    new Object[]{ getID(), format }) {
+                    new Object[]{ getID() }) {
                 @Override
                 public void done(Exception error, Object[] args) {
-                    String val = null;
+                    byte[] val = null;
                     if (error == null) {
                         assert args.length == 3;
                         error = toError(args[0], args[1]);
-                        val = (String)args[2];
+                        String str = (String)args[2];
+                        if (str != null) val = Base64.toByteArray(str.toCharArray());
                     }
                     done.doneGet(token, error, val);
                 }
             }.token;
         }
 
-        public IToken set(String format, String value, final DoneSet done) {
+        public IToken set(byte[] value, final DoneSet done) {
             return new Command(channel, RegistersProxy.this, "set",
-                    new Object[]{ getID(), format, value }) {
+                    new Object[]{ getID(), Base64.toBase64(value, 0, value.length) }) {
                 @Override
                 public void done(Exception error, Object[] args) {
                     if (error == null) {
@@ -252,6 +256,33 @@ public class RegistersProxy implements IRegisters {
         return arr;
     }
     
+    private static class NamedValueInfo implements NamedValue {
+        
+        private final String desc;
+        private final String name;
+        private final byte[] value;
+        
+        NamedValueInfo(Map<String,Object> m) {
+            desc = (String)m.get("Description");
+            name = (String)m.get("Name");
+            String str = (String)m.get("Value");
+            if (str == null) value = null;
+            else value = Base64.toByteArray(str.toCharArray());
+        }
+
+        public String getDescription() {
+            return desc;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public byte[] getValue() {
+            return value;
+        }
+    }
+    
     @SuppressWarnings("unchecked")
     private NamedValue[] toValuesArray(Object o) {
         Collection<Map<String,Object>> c = (Collection<Map<String,Object>>)o;
@@ -259,20 +290,7 @@ public class RegistersProxy implements IRegisters {
         int i = 0;
         NamedValue[] arr = new NamedValue[c.size()];
         for (final Map<String,Object> m : c) {
-            arr[i++] = new NamedValue() {
-
-                public String getDescription() {
-                    return (String)m.get("Description");
-                }
-
-                public String getName() {
-                    return (String)m.get("Name");
-                }
-
-                public Number getValue() {
-                    return (Number)m.get("Value");
-                }
-            };
+            arr[i++] = new NamedValueInfo(m);
         }
         return arr;
     }

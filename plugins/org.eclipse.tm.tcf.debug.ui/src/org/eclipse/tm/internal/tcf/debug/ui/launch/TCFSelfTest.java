@@ -926,34 +926,31 @@ class TCFSelfTest {
             for (final IRegisters.RegistersContext ctx : reg_map.values()) {
                 if (!ctx.isReadable()) continue;
                 if (ctx.isReadOnce()) continue;
-                String[] fmts = ctx.getAvailableFormats();
-                for (final String fmt : fmts) {
-                    cmds.add(ctx.get(fmt, new IRegisters.DoneGet() {
-                        public void doneGet(IToken token, Exception error, String value) {
-                            cmds.remove(token);
-                            if (suspended.get(sc.id) != sc) return;
-                            if (error != null) {
-                                for (IToken t : cmds) t.cancel();
-                                exit(error);
-                                return;
-                            }
-                            cmds.add(ctx.set(fmt, value, new IRegisters.DoneSet() {
-                                public void doneSet(IToken token, Exception error) {
-                                    cmds.remove(token);
-                                    if (suspended.get(sc.id) != sc) return;
-                                    if (error != null) {
-                                        for (IToken t : cmds) t.cancel();
-                                        exit(error);
-                                        return;
-                                    }
-                                    if (cmds.isEmpty()) {
-                                        resume(sc);
-                                    }
-                                }
-                            }));
+                cmds.add(ctx.get(new IRegisters.DoneGet() {
+                    public void doneGet(IToken token, Exception error, byte[] value) {
+                        cmds.remove(token);
+                        if (suspended.get(sc.id) != sc) return;
+                        if (error != null) {
+                            for (IToken t : cmds) t.cancel();
+                            exit(error);
+                            return;
                         }
-                    }));
-                }
+                        cmds.add(ctx.set(value, new IRegisters.DoneSet() {
+                            public void doneSet(IToken token, Exception error) {
+                                cmds.remove(token);
+                                if (suspended.get(sc.id) != sc) return;
+                                if (error != null) {
+                                    for (IToken t : cmds) t.cancel();
+                                    exit(error);
+                                    return;
+                                }
+                                if (cmds.isEmpty()) {
+                                    resume(sc);
+                                }
+                            }
+                        }));
+                    }
+                }));
             }
             if (cmds.isEmpty()) {
                 resume(sc);
