@@ -147,6 +147,7 @@ static int id2bp_hash(char * id) {
 }
 
 static void plant_instruction(BreakInstruction * bi) {
+    assert(!bi->skip);
     assert(!bi->planted);
     bi->error = 0;
 #if defined(_WRS_KERNEL)
@@ -322,6 +323,7 @@ static int address_expression_identifier(char * name, Value * v) {
 static void address_expression_error(BreakpointInfo * bp, char * msg) {
     // TODO: per-context address expression error report
     int size;
+    assert(errno != 0);
     if (bp->error) return;
     bp->error = errno;
     if (msg == NULL) msg = get_expression_error_msg();
@@ -340,7 +342,10 @@ static void plant_breakpoint(BreakpointInfo * bp) {
     assert(!bp->planted);
     assert(bp->enabled);
     bp->error = 0;
-    if (bp->err_msg != NULL) loc_free(bp->err_msg);
+    if (bp->err_msg != NULL) {
+        loc_free(bp->err_msg);
+        bp->err_msg = NULL;
+    }
 
     if (bp->address == NULL) {
         bp->error = ERR_INV_EXPRESSION;
@@ -880,11 +885,11 @@ static void safe_skip_breakpoint(void * arg) {
     if (sb->error == 0) {
         BreakInstruction * bi = find_instruction(sb->ctx, sb->address);
         if (bi != NULL && !bi->skip) {
+            if (bi->planted) remove_instruction(bi);
             if (bi->error) {
                 sb->error = bi->error;
             }
             else {
-                remove_instruction(bi);
                 bi->skip = 1;
             }
         }
