@@ -39,6 +39,7 @@
 #define ERR_CHANNEL_CLOSED      0x1012
 #define ERR_COMMAND_CANCELLED   0x1013
 #define ERR_UNKNOWN_PEER        0x1014
+#define ERR_INV_DATA_SIZE       0x1015
 
 /*
  * Convert error code to human readable string

@@ -63,6 +63,8 @@ char * errno_to_str(int err) {
         return "Command cancelled";
     case ERR_UNKNOWN_PEER:
         return "Unknown peer id";
+    case ERR_INV_DATA_SIZE:
+        return "Invalid data size";
     default:
         return strerror(err);
     }

@@ -115,6 +115,11 @@ static void write_context(OutputStream * out, char * id, Context * ctx, REG_INDE
     json_write_string(out, idx->regName);
 
     out->write(out, ',');
+    json_write_string(out, "Size");
+    out->write(out, ':');
+    json_write_long(out, REG_WIDTH(*idx));
+
+    out->write(out, ',');
     json_write_string(out, "Readable");
     out->write(out, ':');
     json_write_boolean(out, 1);
@@ -123,15 +128,6 @@ static void write_context(OutputStream * out, char * id, Context * ctx, REG_INDE
     json_write_string(out, "Writeable");
     out->write(out, ':');
     json_write_boolean(out, 1);
-
-    out->write(out, ',');
-    json_write_string(out, "Formats");
-    out->write(out, ':');
-    out->write(out, '[');
-    json_write_string(out, "Hex");
-    out->write(out, ',');
-    json_write_string(out, "Decimal");
-    out->write(out, ']');
 
 #if !defined(_WRS_KERNEL)
     out->write(out, ',');
@@ -247,14 +243,10 @@ static void command_get_children(char * token, Channel * c) {
 static void command_get(char * token, Channel * c) {
     int err = 0;
     char id[256];
-    char fmt[256];
-    int hex = 0;
     Context * ctx = NULL;
     REG_INDEX * idx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(&c->inp, fmt, sizeof(fmt));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
@@ -263,41 +255,18 @@ static void command_get(char * token, Channel * c) {
     if (ctx == NULL || idx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
     else if (!ctx->intercepted) err = ERR_IS_RUNNING;
-    else if (strcmp(fmt, "Hex") == 0) hex = 1;
-    else if (strcmp(fmt, "Decimal") != 0) err = ERR_INV_FORMAT;
     
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
     if (err == 0) {
-        int64 n = 0;
-        char val[64];
-        int val_len = 0;
-        assert(REG_WIDTH(*idx) <= sizeof(n));
-        memcpy( (char *)&n + (BIG_ENDIAN_DATA ? sizeof(n) - REG_WIDTH(*idx) : 0),
-                (char *)&ctx->regs + idx->regOff,
-                REG_WIDTH(*idx));
-        if (hex) {
-            while (val_len < REG_WIDTH(*idx) * 2) {
-                int i = (int)(n & 0xf);
-                val[val_len++] = i < 10 ? '0' + i : 'A' + i - 10;
-                n = n >> 4;
-            }
-        }
-        else {
-            int neg = n < 0;
-            uns64 m = neg ? -n : n;
-            do {
-                int i = (int)(m % 10);
-                val[val_len++] = '0' + i;
-                m = m / 10;
-            }
-            while (m != 0);
-            if (neg) val[val_len++] = '-';
-        }
-        c->out.write(&c->out, '"');
-        while (val_len > 0) c->out.write(&c->out, val[--val_len]);
-        c->out.write(&c->out, '"');
+        char * data = (char *)&ctx->regs + idx->regOff;
+        int size = REG_WIDTH(*idx);
+        JsonWriteBinaryState state;
+
+        json_write_binary_start(&state, &c->out);
+        json_write_binary_data(&state, data, size);
+        json_write_binary_end(&state);
         c->out.write(&c->out, 0);
     }
     else {
@@ -320,18 +289,22 @@ static void send_event_register_changed(Channel * c, char * id) {
 static void command_set(char * token, Channel * c) {
     int err = 0;
     char id[256];
-    char fmt[256];
     char val[256];
-    int hex = 0;
+    int val_len = 0;
+    JsonReadBinaryState state;
     char * ptr = NULL;
     Context * ctx = NULL;
     REG_INDEX * idx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(&c->inp, fmt, sizeof(fmt));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(&c->inp, val, sizeof(val));
+    json_read_binary_start(&state, &c->inp);
+    for (;;) {
+        int rd = json_read_binary_data(&state, val + val_len, sizeof(val) - val_len);
+        if (rd == 0) break;
+        val_len += rd;
+    }
+    json_read_binary_end(&state);
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
@@ -340,38 +313,15 @@ static void command_set(char * token, Channel * c) {
     if (ctx == NULL || idx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
     else if (!ctx->intercepted) err = ERR_IS_RUNNING;
-    else if (strcmp(fmt, "Hex") == 0) hex = 1;
-    else if (strcmp(fmt, "Decimal") != 0) err = ERR_INV_FORMAT;
     
     if (err == 0) {
-        int64 n = 0;
-        ptr = val;
-        if (hex) {
-            while (1) {
-                if (*ptr >= '0' && *ptr <= '9') n = (n << 4) | (int64)(*ptr++ - '0');
-                else if (*ptr >= 'A' && *ptr <= 'F') n = (n << 4) | (int64)(*ptr++ - 'A' + 10);
-                else if (*ptr >= 'a' && *ptr <= 'f') n = (n << 4) | (int64)(*ptr++ - 'a' + 10);
-                else break;
-            }
+        char * data = (char *)&ctx->regs + idx->regOff;
+        int size = REG_WIDTH(*idx);
+        if (val_len != size) {
+            err = ERR_INV_DATA_SIZE;
         }
         else {
-            uns64 m = 0;
-            int neg = *ptr == '-';
-            if (neg) ptr++;
-            while (1) {
-                if (*ptr >= '0' && *ptr <= '9') m = (m * 10) + (uns64)(*ptr++ - '0');
-                else break;
-            }
-            n = neg ? (~m + 1) : m;
-        }
-        if (*ptr != 0) {
-            err = ERR_INV_NUMBER;
-        }
-        else {
-            assert(REG_WIDTH(*idx) <= sizeof(n));
-            memcpy( (char *)&ctx->regs + idx->regOff,
-                    (char *)&n + (BIG_ENDIAN_DATA ? sizeof(n) - REG_WIDTH(*idx) : 0),
-                    REG_WIDTH(*idx));
+            memcpy(data, val, val_len);
             ctx->regs_dirty = 1;
             send_event_register_changed(c, id);
         }
