@@ -14,7 +14,9 @@ package org.eclipse.tm.internal.tcf.dsf.ui;
 
 import org.eclipse.dd.dsf.concurrent.DataRequestMonitor;
 import org.eclipse.dd.dsf.concurrent.RequestMonitor;
+import org.eclipse.dd.dsf.datamodel.IDMContext;
 import org.eclipse.dd.dsf.datamodel.IDMEvent;
+import org.eclipse.dd.dsf.debug.model.DsfMemoryBlockRetrieval;
 import org.eclipse.dd.dsf.debug.service.INativeProcesses;
 import org.eclipse.dd.dsf.debug.service.IRunControl;
 import org.eclipse.dd.dsf.debug.service.INativeProcesses.IProcessDMData;
@@ -24,19 +26,51 @@ import org.eclipse.dd.dsf.debug.service.IRunControl.IExitedDMEvent;
 import org.eclipse.dd.dsf.debug.service.IRunControl.IStartedDMEvent;
 import org.eclipse.dd.dsf.service.DsfSession;
 import org.eclipse.dd.dsf.ui.viewmodel.AbstractVMProvider;
+import org.eclipse.dd.dsf.ui.viewmodel.IVMContext;
 import org.eclipse.dd.dsf.ui.viewmodel.VMDelta;
 import org.eclipse.dd.dsf.ui.viewmodel.dm.AbstractDMVMLayoutNode;
+import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
+import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFRunControl;
 
 
 @SuppressWarnings("restriction")
 public class ContainerLayoutNode extends AbstractDMVMLayoutNode{
 
+    class ContainerVMContext extends DMVMContext {
+        DsfMemoryBlockRetrieval retrieval;
+        
+        public ContainerVMContext(IDMContext dmc) {
+            super(dmc);
+            try {
+                retrieval = new DsfMemoryBlockRetrieval(ITCFConstants.ID_TCF_DEBUG_MODEL, dmc);
+            }
+            catch (DebugException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        
+        @SuppressWarnings("unchecked")
+        @Override
+        public Object getAdapter(Class adapter) {
+            if (adapter.isInstance(retrieval)) {
+                return retrieval;
+            }
+            return super.getAdapter(adapter);
+        }
+    }
+
+    @Override
+    protected IVMContext createVMContext(IDMContext dmc) {
+        return new ContainerVMContext(dmc);
+    }
+    
     public ContainerLayoutNode(AbstractVMProvider provider, DsfSession session) {
         super(provider, session, IRunControl.IExecutionDMContext.class);
     }
@@ -117,7 +151,8 @@ public class ContainerLayoutNode extends AbstractDMVMLayoutNode{
             parentDelta.addNode(new DMVMContext(e.getDMContext()), IModelDelta.STATE);
         }
         if (e instanceof IStartedDMEvent || e instanceof IExitedDMEvent) {
-            parentDelta.addNode(new DMVMContext(e.getDMContext()), IModelDelta.CONTENT);
+            parentDelta.addFlags(IModelDelta.CONTENT);
+            //parentDelta.addNode(new DMVMContext(e.getDMContext()), IModelDelta.CONTENT);
         }            
         super.buildDeltaForDMEvent(e, parentDelta, nodeOffset, requestMonitor);
     }

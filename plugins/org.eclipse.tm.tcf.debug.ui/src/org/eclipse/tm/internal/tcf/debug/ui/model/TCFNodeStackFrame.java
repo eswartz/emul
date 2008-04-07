@@ -11,8 +11,8 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
@@ -20,6 +20,9 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdat
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.ui.IDebugUIConstants;
+import org.eclipse.swt.graphics.RGB;
+import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILineNumbers;
@@ -28,30 +31,107 @@ import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace;
 import org.eclipse.tm.tcf.services.ILineNumbers.CodeArea;
 
-
+@SuppressWarnings("serial")
 public class TCFNodeStackFrame extends TCFNode {
 
-    private IStackTrace.StackTraceContext stack_trace_context;
-    private ILineNumbers.CodeArea code_area;
-    private BigInteger code_address;
-
-    private final int frame_no;
+    private int frame_no;
     private final TCFChildrenRegisters children_regs;
-
-    TCFNodeStackFrame(TCFNode parent, String id, TCFChildrenRegisters children_regs) {
-        super(parent, id);
-        this.frame_no = 0;
-        this.children_regs = children_regs;
-    }
-
-    TCFNodeStackFrame(TCFNode parent, String id, int frame_no) {
+    private final TCFDataCache<IStackTrace.StackTraceContext> stack_trace_context;
+    private final TCFDataCache<TCFSourceRef> line_info;
+    
+    private TCFNodeStackFrame(final TCFNodeExecContext parent, final String id, final int frame_no, TCFChildrenRegisters regs) {
         super(parent, id);
         this.frame_no = frame_no;
-        children_regs = new TCFChildrenRegisters(this);
+        if (regs == null) regs = new TCFChildrenRegisters(this);
+        this.children_regs = regs;
+        IChannel channel = model.getLaunch().getChannel();
+        stack_trace_context = new TCFDataCache<IStackTrace.StackTraceContext>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                assert command == null;
+                if (frame_no == 0) {
+                    set(null, null, null);
+                    return true;
+                }
+                IStackTrace st = model.getLaunch().getService(IStackTrace.class);
+                command = st.getContext(new String[]{ id }, new IStackTrace.DoneGetContext() {
+                    public void doneGetContext(IToken token, Exception error, IStackTrace.StackTraceContext[] context) {
+                        set(token, error, context[0]);
+                    }
+                });
+                return false;
+            }
+        };
+        final Map<BigInteger,TCFSourceRef> line_info_cache = parent.getLineInfoCache();
+        line_info = new TCFDataCache<TCFSourceRef>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                BigInteger n = null;
+                if (frame_no == 0) {
+                    if (!parent.validateNode(this)) return false;
+                }
+                else {
+                    if (!stack_trace_context.validate()) {
+                        stack_trace_context.wait(this);
+                        return false;
+                    }
+                }
+                String s = getAddress();
+                if (s != null) n = new BigInteger(s);
+                if (n == null) {
+                    set(null, null, null);
+                    return true;
+                }
+                TCFSourceRef l = line_info_cache.get(n);
+                if (l != null) {
+                    set(null, null, l);
+                    return true;
+                }
+                ILineNumbers ln = model.getLaunch().getService(ILineNumbers.class);
+                if (ln == null) {
+                    l = new TCFSourceRef();
+                    l.address = n;
+                    set(null, null, l);
+                    return true;
+                }
+                final BigInteger n0 = n;
+                final BigInteger n1 = n0.add(BigInteger.valueOf(1));
+                command = ln.mapToSource(parent.id, n0, n1, new ILineNumbers.DoneMapToSource() {
+                    public void doneMapToSource(IToken token, Exception error, CodeArea[] areas) {
+                        TCFSourceRef l = new TCFSourceRef();
+                        l.address = n0;
+                        if (error == null && areas != null && areas.length > 0) {
+                            for (ILineNumbers.CodeArea area : areas) {
+                                if (l.area == null || area.start_line < l.area.start_line) {
+                                    l.area = area;
+                                }
+                            }
+                        }
+                        l.error = error;
+                        set(token, null, l);
+                        if (error == null) line_info_cache.put(l.address, l);
+                    }
+                });
+                return false;
+            }
+        };
+    }
+
+    TCFNodeStackFrame(TCFNodeExecContext parent, String id, TCFChildrenRegisters children_regs) {
+        this(parent, id, 0, children_regs);
+    }
+
+    TCFNodeStackFrame(TCFNodeExecContext parent, String id, int frame_no) {
+        this(parent, id, frame_no, null);
     }
 
     int getFrameNo() {
         return frame_no;
+    }
+    
+    void setFrameNo(int frame_no) {
+        assert this.frame_no != 0 && frame_no != 0;
+        this.frame_no = frame_no;
     }
 
     @Override
@@ -89,13 +169,15 @@ public class TCFNodeStackFrame extends TCFNode {
     public String getAddress() {
         assert Protocol.isDispatchThread();
         if (frame_no == 0) return parent.getAddress();
-        if (stack_trace_context != null) {
-            Number addr = stack_trace_context.getReturnAddress();
+        if (!stack_trace_context.isValid()) return null;
+        IStackTrace.StackTraceContext ctx = stack_trace_context.getData();
+        if (ctx != null) {
+            Number addr = ctx.getReturnAddress();
             if (addr != null) return addr.toString();
         }
         return null;
     }
-
+    
     @Override
     protected void getData(IChildrenCountUpdate result) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
@@ -139,25 +221,26 @@ public class TCFNodeStackFrame extends TCFNode {
 
     @Override
     protected void getData(ILabelUpdate result) {
-        result.setImageDescriptor(getImageDescriptor(getImageName()), 0);
-        String label = id;
-        Number n = null;
-        if (frame_no == 0 && parent.getAddress() != null) {
-            n = new BigInteger(parent.getAddress());
-        }
-        else if (stack_trace_context != null) {
-            n = stack_trace_context.getReturnAddress();
-        }
-        if (n == null) {
-            label = "...";
+        result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
+        Throwable error = stack_trace_context.getError();
+        if (error == null) error = line_info.getError();
+        if (error != null) {
+            result.setForeground(new RGB(255, 0, 0), 0);
+            result.setLabel(error.getClass().getName() + ": " + error.getMessage(), 0);
         }
         else {
-            label = makeHexAddrString(n);
-            if (code_area != null && code_area.file != null) {
-                label += ": " + code_area.file + ", line " + (code_area.start_line + 1);
+            TCFSourceRef l = line_info.getData();
+            if (l == null) {
+                result.setLabel("...", 0);
+            }
+            else {
+                String label = makeHexAddrString(l.address);
+                if (l.area != null && l.area.file != null) {
+                    label += ": " + l.area.file + ", line " + (l.area.start_line + 1);
+                }
+                result.setLabel(label, 0);
             }
         }
-        result.setLabel(label, 0);
     }
 
     private String makeHexAddrString(Number n) {
@@ -174,97 +257,47 @@ public class TCFNodeStackFrame extends TCFNode {
     }
 
     void onSourceMappingChange() {
-        super.invalidateNode();
-        code_address = null;
-        code_area = null;
+        line_info.reset();
         makeModelDelta(IModelDelta.STATE);
     }
 
     void onSuspended() {
-        super.invalidateNode();
-        stack_trace_context = null;
+        stack_trace_context.reset();
+        line_info.reset();
         children_regs.onSuspended();
         makeModelDelta(IModelDelta.STATE);
+    }
+    
+    void onRegistersChanged() {
+        children_regs.onRegistersChanged();
+        makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
     @Override
     public void invalidateNode() {
-        super.invalidateNode();
-        stack_trace_context = null;
-        code_address = null;
-        code_area = null;
-        children_regs.invalidate();
+        stack_trace_context.reset();
+        line_info.reset();
+        children_regs.reset();
     }
 
     @Override
-    protected boolean validateNodeData() {
-        assert pending_command == null;
-        if (node_error != null) return true;
-        if (frame_no == 0) {
-            if (!children_regs.valid) {
-                assert children_regs.node == parent;
-                // Need to validate parent for children_regs to be valid.
-                ArrayList<TCFNode> nodes = new ArrayList<TCFNode>();
-                nodes.add(parent);
-                if (!validateNodes(nodes)) return false;
-            }
-            return validateSourceMapping();
+    public boolean validateNode(Runnable done) {
+        if (frame_no == 0 && !parent.validateNode(done)) return false;
+        stack_trace_context.validate();
+        children_regs.validate();
+        if (!stack_trace_context.isValid()) {
+            stack_trace_context.wait(done);
+            return false;
         }
-        if (!children_regs.valid && !children_regs.validate()) return false;
-        if (stack_trace_context != null) return true;
-        IStackTrace st = model.getLaunch().getService(IStackTrace.class);
-        pending_command = st.getContext(new String[]{ id }, new IStackTrace.DoneGetContext() {
-            public void doneGetContext(IToken token, Exception error, IStackTrace.StackTraceContext[] context) {
-                if (pending_command != token) return;
-                pending_command = null;
-                if (error != null) {
-                    node_error = error;
-                }
-                else {
-                    stack_trace_context = context[0];
-                }
-                if (!validateSourceMapping()) return;
-                validateNode();
-            }
-        });
-        return false;
-    }
-
-    private boolean validateSourceMapping() {
-        BigInteger n = null;
-        ILineNumbers ln = model.getLaunch().getService(ILineNumbers.class);
-        if (node_error == null && ln != null) {
-            String s = getAddress();
-            if (s != null) n = new BigInteger(s);
+        if (!children_regs.isValid()) {
+            children_regs.wait(done);
+            return false;
         }
-        if (n != null && n.equals(code_address)) return true;
-        if (n == null) {
-            code_area = null;
-            code_address = null;
-            return true;
+        if (!line_info.validate()) {
+            line_info.wait(done);
+            return false;
         }
-        final BigInteger n0 = n;
-        final BigInteger n1 = n0.add(BigInteger.valueOf(1));
-        pending_command = ln.mapToSource(parent.id, n0, n1, new ILineNumbers.DoneMapToSource() {
-            public void doneMapToSource(IToken token, Exception error, CodeArea[] areas) {
-                if (pending_command != token) return;
-                pending_command = null;
-                code_area = null;
-                if (error != null) {
-                    node_error = error;
-                }
-                else if (areas != null && areas.length > 0) {
-                    for (ILineNumbers.CodeArea area : areas) {
-                        if (code_area == null || area.start_line < code_area.start_line) {
-                            code_area = area;
-                        }
-                    }
-                }
-                code_address = n0;
-                validateNode();
-            }
-        });
-        return false;
+        return true;
     }
 
     @Override

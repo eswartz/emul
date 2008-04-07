@@ -31,9 +31,14 @@ public class TCFLaunchAdapterFactory implements IAdapterFactory {
         ITerminateHandler.class
     };
 
+    private final IElementLabelProvider launch_label_provider = new TCFLaunchLabelProvider();
+
     @SuppressWarnings("unchecked")
     public Object getAdapter(final Object from, final Class to) {
         if (from instanceof TCFLaunch) {
+            if (to.equals(IElementLabelProvider.class)) {
+                return launch_label_provider;
+            }
             final Object[] res = new Object[1];
             Protocol.invokeAndWait(new Runnable() {
                 public void run() {
@@ -54,7 +59,6 @@ public class TCFLaunchAdapterFactory implements IAdapterFactory {
             });
             if (res[0] != null) return res[0];
         }
-        System.err.println(from.getClass().getName() + " -> " + to);
         return null;
     }
 

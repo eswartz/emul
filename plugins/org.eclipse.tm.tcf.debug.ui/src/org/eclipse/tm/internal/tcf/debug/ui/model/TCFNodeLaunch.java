@@ -16,11 +16,8 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
-import org.eclipse.swt.graphics.RGB;
-import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
 
@@ -67,26 +64,7 @@ public class TCFNodeLaunch extends TCFNode {
     protected void getData(IHasChildrenUpdate result) {
         result.setHasChilren(children.size() > 0);
     }
-    
-    @Override
-    protected void getData(ILabelUpdate result) {
-        result.setImageDescriptor(getImageDescriptor(getImageName()), 0);
-        String label = id;
-        TCFLaunch launch = model.getLaunch();
-        String status = "";
-        if (launch.isConnecting()) status = "Connecting";
-        else if (launch.isDisconnected()) status = "Disconnected";
-        else if (launch.isTerminated()) status = "Terminated";
-        Throwable error = launch.getError();
-        if (error != null) {
-            status += " - " + error;
-            result.setForeground(new RGB(255, 0, 0), 0);
-        }
-        if (status.length() > 0) status = " (" + status + ")";
-        label = launch.getLaunchConfiguration().getName() + status;
-        result.setLabel(label, 0);
-    }
-    
+        
     void onContextAdded(IRunControl.RunControlContext context) {
         children.onContextAdded(context);
     }
@@ -96,16 +74,14 @@ public class TCFNodeLaunch extends TCFNode {
     }
 
     @Override
-    ModelDelta makeModelDelta(int flags) {
-        int count = -1;
-        ModelDelta delta = model.getDelta(this);
+    ModelDelta makeModelDelta(TCFModelProxy p, int flags) {
+        ModelDelta delta = p.getDelta(this);
         if (delta == null) {
             delta = new ModelDelta(DebugPlugin.getDefault().getLaunchManager(), IModelDelta.NO_CHANGE);
-            delta = delta.addNode(model.getLaunch(), -1, flags, count);
-            model.addDelta(this, delta);
+            delta = delta.addNode(model.getLaunch(), -1, flags, -1);
+            p.addDelta(this, delta);
         }
         else {
-            assert delta.getChildCount() == count;
             delta.setFlags(delta.getFlags() | flags);
         }
         return delta;
@@ -113,18 +89,15 @@ public class TCFNodeLaunch extends TCFNode {
 
     @Override
     public void invalidateNode() {
-        super.invalidateNode();
-        children.invalidate();
+        children.reset();
     }
 
     @Override
-    protected boolean validateNodeData() {
-        if (!children.valid && !children.validate()) return false;
+    public boolean validateNode(Runnable done) {
+        if (!children.validate()) {
+            children.wait(done);
+            return false;
+        }
         return true;
-    }
-
-    @Override
-    protected String getImageName() {
-        return "icons/full/obj16/ldebug_obj.gif";
     }
 }

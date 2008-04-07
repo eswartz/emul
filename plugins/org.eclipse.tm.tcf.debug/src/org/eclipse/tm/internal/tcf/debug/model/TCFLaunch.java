@@ -208,7 +208,6 @@ public class TCFLaunch extends Launch {
 
     public IChannel getChannel() {
         assert Protocol.isDispatchThread();
-        if (channel == null || channel.getState() != IChannel.STATE_OPEN) return null;
         return channel;
     }
     

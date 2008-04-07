@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
@@ -33,7 +34,6 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
@@ -55,15 +55,14 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private final Display display;
     private final TCFLaunch launch;
-    private final TCFNodeLaunch launch_node;
     private final Map<IPresentationContext,TCFModelProxy> model_proxies =
         new HashMap<IPresentationContext,TCFModelProxy>();
     private final Map<String,TCFNode> id2node = new HashMap<String,TCFNode>();
-    private final Map<TCFNode,ModelDelta> deltas = new HashMap<TCFNode,ModelDelta>();
     @SuppressWarnings("unchecked")
     private final Map<Class,Object> commands = new HashMap<Class,Object>();
     private final TreeSet<FutureTask> queue = new TreeSet<FutureTask>();
 
+    private TCFNodeLaunch launch_node;
     private boolean disposed;
 
     private int future_task_cnt;
@@ -276,7 +275,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     TCFModel(Display display, TCFLaunch launch) {
         this.display = display;
         this.launch = launch;
-        launch_node = new TCFNodeLaunch(TCFModel.this);
         commands.put(ISuspendHandler.class, new SuspendCommand(this));
         commands.put(IResumeHandler.class, new ResumeCommand(this));
         commands.put(ITerminateHandler.class, new TerminateCommand(this));
@@ -297,13 +295,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     void onConnected() {
         assert Protocol.isDispatchThread();
+        launch_node = new TCFNodeLaunch(this);
         IMemory mem = launch.getService(IMemory.class);
         if (mem != null) mem.addListener(mem_listener);
         IRunControl run = launch.getService(IRunControl.class);
         if (run != null) run.addListener(run_listener);
         IRegisters reg = launch.getService(IRegisters.class);
         if (reg != null) reg.addListener(reg_listener);
-        launch_node.invalidateNode();
         launch_node.makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
         fireModelChanged();
     }
@@ -334,9 +332,15 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         });
     }
 
+    Collection<TCFModelProxy> getModelProxyList() {
+        return model_proxies.values();
+    }
+
     void launchChanged() {
-        launch_node.makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-        fireModelChanged();
+        if (launch_node != null) {
+            launch_node.makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+            fireModelChanged();
+        }
     }
 
     void dispose() {
@@ -365,25 +369,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         assert Protocol.isDispatchThread();
         id2node.remove(id);
     }
-
-    ModelDelta getDelta(TCFNode node) {
-        return deltas.get(node);
-    }
-
-    void addDelta(TCFNode node, ModelDelta delta) {
-        assert deltas.get(node) == null;
-        deltas.put(node, delta);
-    }
-
+    
     void fireModelChanged() {
         assert Protocol.isDispatchThread();
-        ModelDelta delta = deltas.get(launch_node);
-        assert (delta == null) == deltas.isEmpty();
-        if (delta != null) {
-            deltas.clear();
-            IModelDelta top = delta.getParentDelta();
-            for (TCFModelProxy p : model_proxies.values()) p.fireModelChanged(top);
-        }
+        for (TCFModelProxy p : model_proxies.values()) p.fireModelChanged();
     }
 
     public Display getDisplay() {
@@ -415,33 +404,61 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     public void update(IChildrenCountUpdate[] updates) {
         for (int i = 0; i < updates.length; i++) {
             Object o = updates[i].getElement();
-            if (o instanceof TCFLaunch) launch_node.update(updates[i]);
-            else ((TCFNode)o).update(updates[i]);
+            if (o instanceof TCFLaunch) {
+                if (launch_node != null) {
+                    launch_node.update(updates[i]);
+                }
+                else {
+                    updates[i].setChildCount(0);
+                    updates[i].done();
+                }
+            }
+            else {
+                ((TCFNode)o).update(updates[i]);
+            }
         }
     }
 
     public void update(IChildrenUpdate[] updates) {
         for (int i = 0; i < updates.length; i++) {
             Object o = updates[i].getElement();
-            if (o instanceof TCFLaunch) launch_node.update(updates[i]);
-            else ((TCFNode)o).update(updates[i]);
+            if (o instanceof TCFLaunch) {
+                if (launch_node != null) {
+                    launch_node.update(updates[i]);
+                }
+                else {
+                    updates[i].done();
+                }
+            }
+            else {
+                ((TCFNode)o).update(updates[i]);
+            }
         }
     }
 
     public void update(IHasChildrenUpdate[] updates) {
         for (int i = 0; i < updates.length; i++) {
             Object o = updates[i].getElement();
-            if (o instanceof TCFLaunch) launch_node.update(updates[i]);
-            else ((TCFNode)o).update(updates[i]);
+            if (o instanceof TCFLaunch) {
+                if (launch_node != null) { 
+                    launch_node.update(updates[i]);
+                }
+                else {
+                    updates[i].setHasChilren(false);
+                    updates[i].done();
+                }
+            }
+            else {
+                ((TCFNode)o).update(updates[i]);
+            }
         }
     }
 
     public void update(ILabelUpdate[] updates) {
         for (int i = 0; i < updates.length; i++) {
             Object o = updates[i].getElement();
-            assert o != launch_node;
-            if (o instanceof TCFLaunch) launch_node.update(updates[i]);
-            else ((TCFNode)o).update(updates[i]);
+            assert !(o instanceof TCFLaunch);
+            ((TCFNode)o).update(updates[i]);
         }
     }
 

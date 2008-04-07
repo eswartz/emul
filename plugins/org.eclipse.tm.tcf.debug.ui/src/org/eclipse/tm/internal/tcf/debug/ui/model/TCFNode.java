@@ -10,22 +10,11 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.ILaunch;
-import org.eclipse.debug.core.model.IMemoryBlock;
-import org.eclipse.debug.core.model.IMemoryBlockExtension;
-import org.eclipse.debug.core.model.IMemoryBlockRetrievalExtension;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IColumnPresentationFactory;
@@ -35,21 +24,19 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdat
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.graphics.RGB;
-import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
-import org.osgi.framework.Bundle;
 
 
 /**
  * TCFNode is base class for all TCF debug model elements.
  */
-public abstract class TCFNode extends PlatformObject
-implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
+public abstract class TCFNode extends PlatformObject implements Comparable<TCFNode> {
 
     protected final String id;
     protected final TCFNode parent;
@@ -152,6 +139,10 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
     public String getAddress() {
         return null;
     }
+    
+    boolean isNodeContentVisibleInContext(IPresentationContext p) {
+        return true;
+    }
 
     /**
      * Retrieve children count for a presentation context.
@@ -160,7 +151,8 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
     final void update(final IChildrenCountUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (!disposed && model.getLaunch().getChannel() != null) {
+                IChannel channel = model.getLaunch().getChannel();
+                if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                     if (!validateNode(this)) return;
                     getData(result);
                 }
@@ -180,7 +172,8 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
     final void update(final IChildrenUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (!disposed && model.getLaunch().getChannel() != null) {
+                IChannel channel = model.getLaunch().getChannel();
+                if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                     if (!validateNode(this)) return;
                     getData(result);
                 }
@@ -197,7 +190,8 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
     final void update(final IHasChildrenUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (!disposed && model.getLaunch().getChannel() != null) {
+                IChannel channel = model.getLaunch().getChannel();
+                if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                     if (!validateNode(this)) return;
                     getData(result);
                 }
@@ -217,16 +211,10 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
     final void update(final ILabelUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (!disposed) {
+                IChannel channel = model.getLaunch().getChannel();
+                if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                     if (!validateNode(this)) return;
-                    if (node_error != null) {
-                        result.setForeground(new RGB(255, 0, 0), 0);
-                        result.setLabel(node_error.getClass().getName() +
-                            ": " + node_error.getMessage(), 0);
-                    }
-                    else {
-                        getData(result);
-                    }
+                    getData(result);
                 }
                 else {
                     result.setLabel("...", 0);
@@ -277,23 +265,43 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
      * @param result - label update request.
      */
     protected void getData(ILabelUpdate result) {
-        result.setImageDescriptor(getImageDescriptor(getImageName()), 0);
+        result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
         result.setLabel(id, 0);
     }
     
     /**
-     * Create ModelDelta for changes in this node.
+     * Create and post ModelDelta for changes in this node.
+     * @param flags - description of what has changed: IModelDelta.ADDED, IModelDelta.REMOVED, etc.
+     */
+    final void makeModelDelta(int flags) {
+        for (TCFModelProxy p : model.getModelProxyList()) {
+            int f = flags & getRelevantModelDeltaFlags(p.getPresentationContext());
+            if (f != 0) makeModelDelta(p, f);
+        }
+    }
+    
+    /**
+     * Return bit set of model delta flags relevant for this node in given presentation context.
+     * Sub-classes are supposed to override this method.
+     * @param p - presentation context
+     * @return bit set of model delta flags
+     */
+    int getRelevantModelDeltaFlags(IPresentationContext p) {
+        return IModelDelta.CONTENT | IModelDelta.STATE;
+    }
+
+    /**
+     * Create and post ModelDelta for changes in this node, relevant for given presentation context.
+     * @param p - target presentation context.
      * @param flags - description of what has changed: IModelDelta.ADDED, IModelDelta.REMOVED, etc.
      * @return - ModelDelta that describes node changes.
      */
-    ModelDelta makeModelDelta(int flags) {
-        int count = -1;
-        int index = -1;
-        ModelDelta delta = model.getDelta(this);
-        if (delta == null || delta.getChildCount() != count || delta.getIndex() != index) {
-            ModelDelta parent_delta = parent.makeModelDelta(IModelDelta.NO_CHANGE);
-            delta = parent_delta.addNode(this, index, flags, count);
-            model.addDelta(this, delta);
+    ModelDelta makeModelDelta(TCFModelProxy p, int flags) {
+        ModelDelta delta = p.getDelta(this);
+        if (delta == null) {
+            ModelDelta parent_delta = parent.makeModelDelta(p, IModelDelta.NO_CHANGE);
+            delta = parent_delta.addNode(this, flags);
+            p.addDelta(this, delta);
         }
         else {
             delta.setFlags(delta.getFlags() | flags);
@@ -303,184 +311,49 @@ implements IMemoryBlockRetrievalExtension, Comparable<TCFNode> {
 
     /*--------------------------------------------------------------------------------------*/
     /* Node data retrieval state machine                                                    */
-
-    protected Throwable node_error;
-    protected IToken pending_command;
-    private final Collection<TCFRunnable> wait_list = new ArrayList<TCFRunnable>();
     
     /**
      * Invalidate the node - flush all cached data.
      * Subclasses should override this method to flush any additional data.
-     * Subclasses should call super.invalidateNode(). 
      */
-    public void invalidateNode() {
-        // cancel current data retrieval command
-        if (pending_command != null) {
-            pending_command.cancel();
-            pending_command = null;
-        }
-
-        // cancel waiting monitors
-        if (!wait_list.isEmpty()) {
-            for (TCFRunnable r : wait_list) r.cancel();
-            wait_list.clear();
-        }
-
-        node_error = null;
-    }
-
-    /**
-     * Validate node - retrieve and put into a cache missing data from remote peer.
-     * Validation is done asynchronously. If the node is already valid,
-     * the method should return true. Otherwise, it returns false,
-     * and later, when the node becomes valid, call-backs from 'wait_list' are invoked. 
-     * @return true if the node is already valid, false if validation is started.
-     */
-    public final boolean validateNode() {
-        assert Protocol.isDispatchThread();
-        assert !disposed;
-        if (pending_command != null) {
-            return false;
-        }
-        else if (model.getLaunch().getChannel() == null) {
-            node_error = null;
-        }
-        else if (node_error == null && !validateNodeData()) {
-            return false;
-        }
-        if (!wait_list.isEmpty()) {
-            Runnable[] arr = wait_list.toArray(new Runnable[wait_list.size()]);
-            wait_list.clear();
-            for (Runnable r : arr) r.run();
-        }
-        return true;
-    }
+    public abstract void invalidateNode();
     
     /**
      * Validate node - retrieve and put into a cache missing data from remote peer.
+     * The method should initiate retrieval of all data needed by TCFNode.update() methods.
      * Validation is done asynchronously. If the node is already valid,
      * the method should return true. Otherwise, it returns false,
-     * adds 'done' into 'wait_list', and later, when the node becomes valid,
-     * call-backs from 'wait_list' are invoked.
-     * @param done - call-back object to call when node becomes valid. 
+     * adds 'done' into 'wait_list', and later call-backs from 'wait_list' are invoked.
+     * Note: activation of call-back does not mean all data is retrieved,
+     * it only means that node state changed, client should call validateNode() again,
+     * until the method returns true.
+     * @param done - call-back object to call when node state changes. 
      * @return true if the node is already valid, false if validation is started.
      */
-    public final boolean validateNode(TCFRunnable done) {
-        assert done != null;
-        if (!validateNode()) {
-            wait_list.add(done);
-            return false;
-        }
-        return true;
-    }
+    public abstract boolean validateNode(Runnable done);
     
-    private class ValidateNodes extends TCFRunnable {
-        
-        int cnt = 0;
-        private IToken command;
-        
-        ValidateNodes(Collection<TCFNode> nodes) {
-            for (TCFNode n : nodes) {
-                if (!n.validateNode(this)) cnt++;
-            }
-            if (cnt > 0) {
-                pending_command = command = new IToken() {
-                    public boolean cancel() {
-                        return false;
-                    }
-                };
-            }
-        }
-        
-        public void run() {
-            cnt--;
-            assert cnt >= 0;
-            if (cnt != 0) return;
-            if (command != pending_command) return;
-            Protocol.invokeLater(new Runnable() {
-                public void run() {
-                    if (command != pending_command) return;
-                    pending_command = null;
-                    validateNode();
-                }
-            });
-        }
-        
-        @Override
-        public void cancel() {
-            run();
-        }
-    }
-
     /**
      * Subclasses can use this method to validate a collection of nodes.
      * Validation of multiple nodes is expensive and should be avoided
      * when possible.
      * 
-     * Validation is performed in background, and call-backs from 'wait_list' are
-     * activated when validation is done.
+     * Validation is performed in background, and 'done' call-back is
+     * activated when nodes state changes.
      *  
      * @param nodes
      * @return true if all nodes are already valid, false if validation is started.
      */
-    protected boolean validateNodes(Collection<TCFNode> nodes) {
-        if (nodes.isEmpty()) return true;
-        if (pending_command != null) return false;
-        return new ValidateNodes(nodes).cnt == 0;
+    protected boolean validateNodes(Collection<TCFNode> nodes, Runnable done) {
+        TCFNode pending = null;
+        for (TCFNode n : nodes) {
+            if (!n.validateNode(null)) pending = n;
+        }
+        if (pending != null && !pending.validateNode(done)) return false;
+        return true;
     }
-    
-    /**
-     * Subclasses should override this method to implement data retrieval that
-     * is specific for this node.
-     * 
-     * Data retrieval should be performed in background, and it should call
-     * validateNode() when retrieval is done.
-     *  
-     * @return true if the node is already valid, false if data retrieval is started.
-     */
-    protected abstract boolean validateNodeData();
-
-    /*--------------------------------------------------------------------------------------*/
-    /* Memory Block Retrieval                                                               */
-
-    public IMemoryBlockExtension getExtendedMemoryBlock(String addr, Object ctx) throws DebugException {
-        assert ctx == this;
-        return getMemoryBlock(addr, 0);
-    }
-
-    public IMemoryBlock getMemoryBlock(long addr, long length) throws DebugException {
-        return getMemoryBlock(Long.toString(addr), length);
-    }
-
-    public boolean supportsStorageRetrieval() {
-        return getMemoryContext() != null;
-    }
-
-    private IMemoryBlockExtension getMemoryBlock(String addr, long length) throws DebugException {
-        assert !Protocol.isDispatchThread();
-        // TODO: MemoryBlock
-        return null;
-    }
-    
+        
     /*--------------------------------------------------------------------------------------*/
     /* Misc                                                                                 */
-
-    private static final Map<String,ImageDescriptor> image_cache = new HashMap<String,ImageDescriptor>();
-
-    static ImageDescriptor getImageDescriptor(String name) {
-        if (name == null) return null;
-        ImageDescriptor descriptor = image_cache.get(name);
-        if (descriptor == null) {
-            descriptor = ImageDescriptor.getMissingImageDescriptor();
-            Bundle bundle = Platform.getBundle("org.eclipse.debug.ui");
-            if (bundle != null){
-                URL url = FileLocator.find(bundle, new Path(name), null);
-                descriptor = ImageDescriptor.createFromURL(url);
-            }
-            image_cache.put(name, descriptor);
-        }
-        return descriptor;
-    }
 
     protected String getImageName() {
         return null;

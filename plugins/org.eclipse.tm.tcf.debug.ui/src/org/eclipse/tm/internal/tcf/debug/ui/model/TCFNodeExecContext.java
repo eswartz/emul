@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
@@ -18,44 +20,109 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
 import org.eclipse.debug.ui.IDebugUIConstants;
+import org.eclipse.swt.graphics.RGB;
+import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
 
 
+@SuppressWarnings("serial")
 public class TCFNodeExecContext extends TCFNode {
 
     private final TCFChildrenExecContext children_exec;
     private final TCFChildrenStackTrace children_stack;
     private final TCFChildrenRegisters children_regs;
 
-    private IMemory.MemoryContext mem_context;
-    private IRunControl.RunControlContext run_context;
+    private final TCFDataCache<IMemory.MemoryContext> mem_context;
+    private final TCFDataCache<IRunControl.RunControlContext> run_context;
+    private final TCFDataCache<ContextState> state;
 
-    private boolean suspended;
-    private String suspended_pc;
-    private String suspended_reason;
-    @SuppressWarnings("unused")
-    private Map<String,Object> suspended_params;
-    private boolean running;
-    private boolean terminated;
-    @SuppressWarnings("unused")
-    private String exception_msg;
+    private final Map<BigInteger,TCFSourceRef> line_info_cache;
 
-    private boolean valid_mem_ctx;
-    private boolean valid_run_ctx;
-    private boolean valid_state;
+    private static class ContextState {
+        boolean suspended;
+        String suspended_pc;
+        String suspended_reason;
+        boolean terminated;
+    }
 
     private int resumed_cnt;
 
-    TCFNodeExecContext(TCFNode parent, String id) {
+    TCFNodeExecContext(TCFNode parent, final String id) {
         super(parent, id);
         children_exec = new TCFChildrenExecContext(this);
         children_regs = new TCFChildrenRegisters(this);
         children_stack = new TCFChildrenStackTrace(this, children_regs);
+        line_info_cache = new LinkedHashMap<BigInteger,TCFSourceRef>() {
+            @SuppressWarnings("unchecked")
+            protected boolean removeEldestEntry(Map.Entry eldest) {
+                return size() > 256;
+            }
+        };
+        IChannel channel = model.getLaunch().getChannel();
+        mem_context = new TCFDataCache<IMemory.MemoryContext>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                assert command == null;
+                IMemory mem = model.getLaunch().getService(IMemory.class);
+                if (mem == null) {
+                    set(null, null, null);
+                    return true;
+                }
+                command = mem.getContext(id, new IMemory.DoneGetContext() {
+                    public void doneGetContext(IToken token, Exception error, IMemory.MemoryContext context) {
+                        set(token, error, context);
+                    }
+                });
+                return false;
+            }
+        };
+        run_context = new TCFDataCache<IRunControl.RunControlContext>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                assert command == null;
+                IRunControl run = model.getLaunch().getService(IRunControl.class);
+                if (run == null) {
+                    set(null, null, null);
+                    return true;
+                }
+                command = run.getContext(id, new IRunControl.DoneGetContext() {
+                    public void doneGetContext(IToken token, Exception error, IRunControl.RunControlContext context) {
+                        set(token, error, context);
+                    }
+                });
+                return false;
+            }
+        };
+        state = new TCFDataCache<ContextState>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                assert command == null;
+                if (!run_context.validate()) {
+                    run_context.wait(this);
+                    return false;
+                }
+                IRunControl.RunControlContext ctx = run_context.getData();
+                if (ctx == null || !ctx.hasState()) {
+                    set(null, null, null);
+                    return true;
+                }
+                command = ctx.getState(new IRunControl.DoneGetState() {
+                    public void doneGetState(IToken token, Exception error, boolean suspended, String pc, String reason, Map<String,Object> params) {
+                        ContextState s = new ContextState();
+                        s.suspended = suspended;
+                        s.suspended_pc = pc;
+                        s.suspended_reason = reason;
+                        set(token, error, s);
+                    }
+                });
+                return false;
+            }
+        };
     }
 
     @Override
@@ -73,49 +140,70 @@ public class TCFNodeExecContext extends TCFNode {
         children_regs.dispose(id);
     }
 
-     void setRunContext(IRunControl.RunControlContext ctx) {
-        run_context = ctx;
-        valid_run_ctx = true;
+    void setRunContext(IRunControl.RunControlContext ctx) {
+        run_context.reset(ctx);
     }
 
     void setMemoryContext(IMemory.MemoryContext ctx) {
-        mem_context = ctx;
-        valid_mem_ctx = true;
+        mem_context.reset(ctx);
+    }
+    
+    Map<BigInteger,TCFSourceRef> getLineInfoCache() {
+        return line_info_cache;
     }
 
     @Override
     public IRunControl.RunControlContext getRunContext() {
         assert Protocol.isDispatchThread();
-        return run_context;
+        if (!run_context.isValid()) return null;
+        return run_context.getData();
     }
 
     @Override
     public IMemory.MemoryContext getMemoryContext() {
         assert Protocol.isDispatchThread();
-        return mem_context;
+        if (!mem_context.isValid()) return null;
+        return mem_context.getData();
     }
 
     @Override
     public boolean isRunning() {
         assert Protocol.isDispatchThread();
-        return running;
+        if (!run_context.isValid()) return false;
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx == null || !ctx.hasState()) return false;
+        if (!state.isValid()) return false;
+        ContextState s = state.getData();
+        return s != null && !s.suspended;
     }
 
     @Override
     public boolean isSuspended() {
         assert Protocol.isDispatchThread();
-        return suspended;
+        if (!run_context.isValid()) return false;
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx == null || !ctx.hasState()) return false;
+        if (!state.isValid()) return false;
+        ContextState s = state.getData();
+        return s != null && s.suspended;
     }
 
     @Override
     public String getAddress() {
         assert Protocol.isDispatchThread();
-        return suspended_pc;
+        if (!run_context.isValid()) return null;
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx == null || !ctx.hasState()) return null;
+        if (!state.isValid()) return null;
+        ContextState s = state.getData();
+        if (s == null) return null;
+        return s.suspended_pc;
     }
 
     @Override
     protected void getData(IChildrenCountUpdate result) {
-        if (run_context != null && run_context.hasState()) {
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx != null && ctx.hasState()) {
             if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
                 result.setChildCount(children_regs.size());
             }
@@ -132,7 +220,8 @@ public class TCFNodeExecContext extends TCFNode {
     protected void getData(IChildrenUpdate result) {
         int offset = 0;
         TCFNode[] arr = null;
-        if (run_context != null && run_context.hasState()) {
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx != null && ctx.hasState()) {
             if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
                 arr = children_regs.toArray();
             }
@@ -154,7 +243,8 @@ public class TCFNodeExecContext extends TCFNode {
 
     @Override
     protected void getData(IHasChildrenUpdate result) {
-        if (run_context != null && run_context.hasState()) {
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx != null && ctx.hasState()) {
             if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
                 result.setHasChilren(children_regs.size() > 0);
             }
@@ -169,32 +259,33 @@ public class TCFNodeExecContext extends TCFNode {
 
     @Override
     protected void getData(ILabelUpdate result) {
-        result.setImageDescriptor(getImageDescriptor(getImageName()), 0);
+        result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
         String label = id;
-        if (run_context != null) {
-            if (run_context.hasState()) {
-                if (running) {
+        Throwable error = run_context.getError();
+        if (error != null) {
+            result.setForeground(new RGB(255, 0, 0), 0);
+            label += ": " + error.getClass().getName() + ": " + error.getMessage();
+        }
+        else {
+            IRunControl.RunControlContext ctx = run_context.getData();
+            if (ctx != null) {
+                if (isRunning()) {
                     label += " (Running)";
                 }
-                else if (suspended) {
-                    if (suspended_reason != null) {
-                        label += " (" + suspended_reason + ")";
+                else if (isSuspended()) {
+                    String r = state.getData().suspended_reason;
+                    if (r != null) {
+                        label += " (" + r + ")";
                     }
                     else {
                         label += " (Suspended)";
                     }
                 }
+                String file = (String)ctx.getProperties().get("File");
+                if (file != null) label += " " + file;
             }
-            String file = (String)run_context.getProperties().get("File");
-            if (file != null) label += " " + file;
         }
         result.setLabel(label, 0);
-    }
-
-    @Override
-    ModelDelta makeModelDelta(int flags) {
-        if (run_context != null && run_context.isContainer()) flags |= IModelDelta.STATE;
-        return super.makeModelDelta(flags);
     }
 
     void onContextAdded(IRunControl.RunControlContext context) {
@@ -203,9 +294,7 @@ public class TCFNodeExecContext extends TCFNode {
 
     void onContextChanged(IRunControl.RunControlContext context) {
         assert !disposed;
-        if (!valid_run_ctx) invalidateNode();
-        run_context = context;
-        valid_run_ctx = true;
+        run_context.reset(context);
         resumed_cnt++;
         children_stack.onSourceMappingChange();
         makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
@@ -217,9 +306,7 @@ public class TCFNodeExecContext extends TCFNode {
 
     void onContextChanged(IMemory.MemoryContext context) {
         assert !disposed;
-        if (!valid_mem_ctx) invalidateNode();
-        mem_context = context;
-        valid_mem_ctx = true;
+        mem_context.reset(context);
         resumed_cnt++;
         makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
@@ -228,104 +315,70 @@ public class TCFNodeExecContext extends TCFNode {
         assert !disposed;
         resumed_cnt++;
         dispose();
-        if (parent instanceof TCFNodeExecContext &&
-                ((TCFNodeExecContext)parent).children_exec.valid) {
-            makeModelDelta(IModelDelta.REMOVED);
-        }
-        else {
-            parent.invalidateNode();
-            parent.makeModelDelta(IModelDelta.CONTENT);
-        }
+        parent.makeModelDelta(IModelDelta.CONTENT);
     }
 
     void onContainerSuspended() {
         assert !disposed;
-        if (valid_run_ctx) {
-            if (run_context == null) return;
-            if (!run_context.hasState()) return;
-            suspended = false;
-            running = false;
-            valid_state = false;
-            super.invalidateNode();
-            children_stack.onSuspended();
+        if (run_context.isValid()) {
+            IRunControl.RunControlContext ctx = run_context.getData();
+            if (ctx == null) return;
+            if (!ctx.hasState()) return;
         }
-        else {
-            invalidateNode();
-        }
+        state.reset();
+        children_stack.onSuspended();
         makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
     void onContainerResumed() {
         assert !disposed;
-        if (valid_run_ctx) {
-            if (run_context == null) return;
-            if (!run_context.hasState()) return;
-            suspended = false;
-            running = false;
-            valid_state = false;
-            super.invalidateNode();
-            children_stack.onResumed();
+        if (run_context.isValid()) {
+            IRunControl.RunControlContext ctx = run_context.getData();
+            if (ctx == null) return;
+            if (!ctx.hasState()) return;
         }
-        else {
-            invalidateNode();
-        }
+        state.reset();
         makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
     void onContextSuspended(String pc, String reason, Map<String,Object> params) {
         assert !disposed;
-        if (valid_run_ctx) {
-            if (run_context == null) return;
-            if (!run_context.hasState()) return;
-            super.invalidateNode();
-            children_stack.onSuspended();
-            suspended = true;
-            suspended_pc = pc;
-            suspended_reason = reason;
-            suspended_params = params;
-            running = false;
-            valid_state = true;
-        }
-        else {
-            invalidateNode();
-        }
+        ContextState s = new ContextState();
+        s.suspended = true;
+        s.suspended_pc = pc;
+        s.suspended_reason = reason;
+        state.reset(s);
+        children_stack.onSuspended();
         resumed_cnt++;
         makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
     void onContextResumed() {
         assert !disposed;
-        if (valid_run_ctx) {
-            if (run_context == null) return;
-            if (!run_context.hasState()) return;
-            super.invalidateNode();
-            exception_msg = null;
-            terminated = false;
-            suspended = false;
-            suspended_pc = null;
-            suspended_reason = null;
-            suspended_params = null;
-            running = true;
-            valid_state = true;
-        }
-        else {
-            invalidateNode();
-        }
-        makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        state.reset(new ContextState());
+        makeModelDelta(IModelDelta.STATE);
         final int cnt = ++resumed_cnt;
         model.invokeLater(250, new Runnable() {
             public void run() {
                 if (cnt != resumed_cnt) return;
+                if (disposed) return;
                 children_stack.onResumed();
+                if (!validateNode(this)) return;
                 makeModelDelta(IModelDelta.CONTENT);
+                if (parent instanceof TCFNodeExecContext) {
+                    ((TCFNodeExecContext)parent).onChildResumedOrSuspended();
+                }
             }
         });
     }
+    
+    void onChildResumedOrSuspended() {
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx != null && ctx.isContainer()) makeModelDelta(IModelDelta.STATE);
+        if (parent instanceof TCFNodeExecContext) ((TCFNodeExecContext)parent).onChildResumedOrSuspended();
+    }
 
     void onContextException(String msg) {
-        assert !disposed;
-        exception_msg = msg;
-        makeModelDelta(IModelDelta.STATE);
     }
 
     void onMemoryChanged(Number[] addr, long[] size) {
@@ -333,157 +386,117 @@ public class TCFNodeExecContext extends TCFNode {
     }
 
     void onRegistersChanged() {
-        super.invalidateNode();
-        children_regs.invalidate();
+        children_stack.onRegistersChanged();
         makeModelDelta(IModelDelta.CONTENT);
     }
 
     @Override
     public void invalidateNode() {
-        super.invalidateNode();
-        valid_mem_ctx = false;
-        valid_run_ctx = false;
-        valid_state = false;
-        running = false;
-        suspended = false;
-        children_exec.invalidate();
-        children_stack.invalidate();
-        children_regs.invalidate();
+        run_context.reset();
+        mem_context.reset();
+        state.reset();
+        children_exec.reset();
+        children_stack.reset();
+        children_regs.reset();
     }
     
     @Override
-    protected boolean validateNodeData() {
+    public boolean validateNode(Runnable done) {
         assert !disposed;
-        if (!valid_mem_ctx && !validateMemoryContext()) return false;
-        if (!valid_run_ctx && !validateRunControlContext()) return false;
-        if (!valid_state && !validateRunControlState()) return false;
-        if (!children_stack.valid && !children_stack.validate()) return false;
-        if (!children_regs.valid && !children_regs.validate()) return false;
-        if (!children_exec.valid && !children_exec.validate()) return false;
-        if (run_context != null && !run_context.hasState()) {
-            // Container need to validate children for hasSuspendedChildren() method
-            // to return valid value.
-            if (!validateNodes(children_exec.children.values())) return false;
+        mem_context.validate();
+        run_context.validate();
+        if (!mem_context.isValid()) {
+            mem_context.wait(done);
+            return false;
+        }
+        if (!run_context.isValid()) {
+            run_context.wait(done);
+            return false;
+        }
+        state.validate();
+        children_exec.validate();
+        if (!state.isValid()) {
+            state.wait(done);
+            return false;
+        }
+        if (!children_exec.isValid()) {
+            children_exec.wait(done);
+            return false;
+        }
+        children_regs.validate();
+        children_stack.validate();
+
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx != null && !ctx.hasState()) {
+            // Container need to validate children for
+            // hasSuspendedChildren() method to return valid value.
+            TCFDataCache<?> dt = validateChildrenState();
+            if (dt != null) {
+                dt.wait(done);
+                return false;
+            }
+        }
+        
+        if (!children_regs.isValid()) {
+            children_regs.wait(done);
+            return false;
+        }
+        if (!children_stack.isValid()) {
+            children_stack.wait(done);
+            return false;
         }
         return true;
     }
-
-    private boolean validateMemoryContext() {
-        assert pending_command == null;
-        IMemory mem = model.getLaunch().getService(IMemory.class);
-        if (mem == null) {
-            valid_mem_ctx = true;
-            return true;
-        }
-        pending_command = mem.getContext(id, new IMemory.DoneGetContext() {
-            public void doneGetContext(IToken token, Exception error, IMemory.MemoryContext context) {
-                if (pending_command != token) return;
-                pending_command = null;
-                if (error != null) {
-                    node_error = error;
-                }
-                else {
-                    mem_context = context;
-                }
-                valid_mem_ctx = true;
-                validateNode();
+    
+    // Validate children state for hasSuspendedChildren()
+    // Return TCFDataCache to wait for if validation is pending.
+    private TCFDataCache<?> validateChildrenState() {
+        if (!children_exec.validate()) return children_exec;
+        TCFDataCache<?> pending = null;
+        for (TCFNode n : children_exec.getData().values()) {
+            if (!(n instanceof TCFNodeExecContext)) continue;
+            TCFNodeExecContext e = (TCFNodeExecContext)n;
+            if (!e.run_context.validate()) {
+                pending = e.run_context;
+                continue;
             }
-        });
-        return false;
+            IRunControl.RunControlContext ctx = e.run_context.getData();
+            if (ctx == null) continue;
+            if (ctx.hasState() && !e.state.validate()) pending = e.state;
+            if (ctx.isContainer()) pending = e.validateChildrenState();
+        }
+        return pending;
     }
 
-    private boolean validateRunControlContext() {
-        assert pending_command == null;
-        IRunControl run = model.getLaunch().getService(IRunControl.class);
-        if (run == null) {
-            valid_run_ctx = true;
-            return true;
-        }
-        pending_command = run.getContext(id, new IRunControl.DoneGetContext() {
-            public void doneGetContext(IToken token, Exception error, IRunControl.RunControlContext context) {
-                if (pending_command != token) return;
-                pending_command = null;
-                if (error != null) {
-                    node_error = error;
-                }
-                else {
-                    run_context = context;
-                }
-                valid_run_ctx = true;
-                validateNode();
-            }
-        });
-        return false;
-    }
-
-    private boolean validateRunControlState() {
-        assert pending_command == null;
-        if (node_error != null || run_context == null || !run_context.hasState()) {
-            suspended = false;
-            suspended_pc = null;
-            suspended_reason = null;
-            suspended_params = null;
-            running = false;
-            valid_state = true;
-            return true;
-        }
-        pending_command = run_context.getState(new IRunControl.DoneGetState() {
-            public void doneGetState(IToken token, Exception error, boolean suspend, String pc, String reason, Map<String,Object> params) {
-                if (token != pending_command) return;
-                pending_command = null;
-                if (error != null) {
-                    suspended = false;
-                    suspended_pc = null;
-                    suspended_reason = null;
-                    suspended_params = null;
-                    node_error = error;
-                    running = false;
-                }
-                else {
-                    suspended = suspend;
-                    if (suspend) {
-                        suspended_pc = pc;
-                        suspended_reason = reason;
-                        suspended_params = params;
-                    }
-                    else {
-                        suspended_pc = null;
-                        suspended_reason = null;
-                        suspended_params = null;
-                    }
-                    running = !suspend;
-                }
-                valid_state = true;
-                validateNode();
-            }
-        });
-        return false;
-    }
-
+    // Return true if at least one child is suspended
+    // The method will fail if node is not validated, see validateChildrenState()
     private boolean hasSuspendedChildren() {
-        for (TCFNode n : children_exec.children.values()) {
-            if (n instanceof TCFNodeExecContext) {
-                TCFNodeExecContext e = (TCFNodeExecContext)n;
-                if (e.run_context != null) {
-                    if (e.run_context.hasState() && e.suspended) return true;
-                    if (e.run_context.isContainer() && e.hasSuspendedChildren()) return true;
-                }
-            }
+        Map<String,TCFNode> m = children_exec.getData();
+        if (m == null) return false;
+        for (TCFNode n : m.values()) {
+            if (!(n instanceof TCFNodeExecContext)) continue;
+            TCFNodeExecContext e = (TCFNodeExecContext)n;
+            IRunControl.RunControlContext ctx = e.run_context.getData();
+            if (ctx == null) continue;
+            if (ctx.hasState() && e.isSuspended()) return true;
+            if (ctx.isContainer() && e.hasSuspendedChildren()) return true;
         }
         return false;
     }
 
     @Override
     protected String getImageName() {
-        if (run_context != null && run_context.hasState()) {
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx != null && ctx.hasState()) {
             // Thread
-            if (terminated) return "icons/full/obj16/threadt_obj.gif";
-            if (suspended) return "icons/full/obj16/threads_obj.gif";
+            ContextState s = state.getData();
+            if (s != null && s.terminated) return "icons/full/obj16/threadt_obj.gif";
+            if (s != null && s.suspended) return "icons/full/obj16/threads_obj.gif";
             return "icons/full/obj16/thread_obj.gif";
         }
-        else if (run_context != null) {
+        else if (ctx != null) {
             // Thread container (process)
-            if (terminated) return "icons/full/obj16/debugtt_obj.gif";
+            //if (terminated) return "icons/full/obj16/debugtt_obj.gif";
             if (hasSuspendedChildren()) return "icons/full/obj16/debugts_obj.gif";
             return "icons/full/obj16/debugt_obj.gif";
         }

@@ -11,7 +11,6 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -29,8 +28,9 @@ import org.eclipse.tm.tcf.services.IRunControl;
 @SuppressWarnings("serial")
 public class TCFChildrenExecContext extends TCFChildren {
     
-    private Map<String,TCFNode> mem_children;
-    private Map<String,TCFNode> run_children;
+    private final TCFNode node;
+    private final TCFChildren mem_children;
+    private final TCFChildren run_children;
     
     // Track disposed IDs to detect violations of the communication protocol
     private LinkedHashMap<String,String> disposed_ids = new LinkedHashMap<String,String>() {
@@ -39,162 +39,127 @@ public class TCFChildrenExecContext extends TCFChildren {
         }
     };
 
-    TCFChildrenExecContext(TCFNode node) {
-        super(node);
+    TCFChildrenExecContext(final TCFNode node) {
+        super(node.model.getLaunch().getChannel());
+        this.node = node;
+        mem_children = new TCFChildren(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                IMemory mem = node.model.getLaunch().getService(IMemory.class);
+                if (mem == null) {
+                    set(null, null, new HashMap<String,TCFNode>());
+                    return true;
+                }
+                assert command == null;
+                command = mem.getChildren(node.id, new IMemory.DoneGetChildren() {
+                    public void doneGetChildren(IToken token, Exception error, String[] contexts) {
+                        Map<String,TCFNode> data = null;
+                        if (command == token && error == null) {
+                            data = new HashMap<String,TCFNode>();
+                            for (String id : contexts) {
+                                assert disposed_ids.get(id) == null;
+                                TCFNode n = node.model.getNode(id);
+                                if (n == null) n = new TCFNodeExecContext(node, id);
+                                data.put(id, n);
+                            }
+                        }
+                        set(token, error, data);
+                    }
+                });
+                return false;
+            }
+        };
+        run_children = new TCFChildren(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                IRunControl run = node.model.getLaunch().getService(IRunControl.class);
+                if (run == null) {
+                    set(null, null, new HashMap<String,TCFNode>());
+                    return true;
+                }
+                assert command == null;
+                command = run.getChildren(node.id, new IRunControl.DoneGetChildren() {
+                    public void doneGetChildren(IToken token, Exception error, String[] contexts) {
+                        Map<String,TCFNode> data = null;
+                        if (command == token && error == null) {
+                            data = new HashMap<String,TCFNode>();
+                            for (String id : contexts) {
+                                assert disposed_ids.get(id) == null;
+                                TCFNode n = node.model.getNode(id);
+                                if (n == null) n = new TCFNodeExecContext(node, id);
+                                data.put(id, n);
+                            }
+                        }
+                        set(token, error, data);
+                    }
+                });
+                return false;
+            }
+        };
     }
     
     @Override
-    void dispose() {
-        HashSet<TCFNode> s = new HashSet<TCFNode>();
-        s.addAll(children.values());
-        if (mem_children != null) s.addAll(mem_children.values());
-        if (run_children != null) s.addAll(run_children.values());
-        for (TCFNode n : s) n.dispose();
-        mem_children = null;
-        run_children = null;
+    protected void dispose() {
+        super.dispose();
+        mem_children.dispose();
+        run_children.dispose();
     }
 
     @Override
     void dispose(String id) {
         super.dispose(id);
-        if (mem_children != null) mem_children.remove(id);
-        if (run_children != null) run_children.remove(id);
+        mem_children.dispose(id);
+        run_children.dispose(id);
         disposed_ids.put(id, id);
     }
     
     @Override
-    boolean validate() {
-        assert !node.disposed;
-        Map<String,TCFNode> new_children = new HashMap<String,TCFNode>();
-        if (!validateMemoryChildren(new_children)) return false;
-        if (!validateRunControlChildren(new_children)) return false;
-        doneValidate(new_children);
+    protected boolean startDataRetrieval() {
+        TCFDataCache<?> pending = null;
+        if (!mem_children.validate()) pending = mem_children; 
+        if (!run_children.validate()) pending = run_children;
+        if (pending != null) {
+            pending.wait(this);
+            return false;
+        }
+        Throwable error = null;
+        Map<String,TCFNode> data = new HashMap<String,TCFNode>();
+        if (mem_children.getError() == null) data.putAll(mem_children.getData());
+        else error = mem_children.getError();
+        if (run_children.getError() == null) data.putAll(run_children.getData());
+        else error = run_children.getError();
+        set(null, error, data);
         return true;
     }
     
-    @Override
-    void invalidate() {
-        HashSet<TCFNode> s = new HashSet<TCFNode>();
-        s.addAll(children.values());
-        if (mem_children != null) s.addAll(mem_children.values());
-        if (run_children != null) s.addAll(run_children.values());
-        for (TCFNode n : s) n.invalidateNode();
-        mem_children = null;
-        run_children = null;
-        valid = false;
-    }
-
     void onContextAdded(IRunControl.RunControlContext context) {
-        assert !node.disposed;
-        if (run_children != null) {
-            String id = context.getID();
-            TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);
-            if (n == null) {
-                n = new TCFNodeExecContext(node, id);
-                n.setRunContext(context);
-                n.makeModelDelta(IModelDelta.INSERTED);
-            }
-            else {
-                n.setRunContext(context);
-                n.makeModelDelta(IModelDelta.STATE);
-            }
-            children.put(id, n);
-            run_children.put(id, n);
-        }
-        else { 
-            node.invalidateNode();
+        String id = context.getID();
+        TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);
+        if (n == null) {
+            n = new TCFNodeExecContext(node, id);
             node.makeModelDelta(IModelDelta.CONTENT);
         }
+        else {
+            n.makeModelDelta(IModelDelta.STATE);
+        }
+        add(n);
+        run_children.add(n);
+        n.setRunContext(context);
     }
 
     void onContextAdded(IMemory.MemoryContext context) {
         assert !node.disposed;
-        if (mem_children != null) {
-            String id = context.getID();
-            TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);
-            if (n == null) {
-                n = new TCFNodeExecContext(node, id);
-                n.setMemoryContext(context);
-                n.makeModelDelta(IModelDelta.INSERTED);
-            }
-            else {
-                n.setMemoryContext(context);
-                n.makeModelDelta(IModelDelta.STATE);
-            }
-            children.put(id, n);
-            mem_children.put(id, n);
-        }
-        else { 
-            node.invalidateNode();
+        String id = context.getID();
+        TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);
+        if (n == null) {
+            n = new TCFNodeExecContext(node, id);
             node.makeModelDelta(IModelDelta.CONTENT);
         }
-    }
-
-    private boolean validateMemoryChildren(final Map<String,TCFNode> new_children) {
-        if (mem_children != null) {
-            new_children.putAll(mem_children);
-            return true;
+        else {
+            n.makeModelDelta(IModelDelta.STATE);
         }
-        IMemory mem = node.model.getLaunch().getService(IMemory.class);
-        if (mem == null) {
-            mem_children = new HashMap<String,TCFNode>();
-            return true;
-        }
-        assert node.pending_command == null;
-        node.pending_command = mem.getChildren(node.id, new IMemory.DoneGetChildren() {
-            public void doneGetChildren(IToken token, Exception error, String[] contexts) {
-                if (node.pending_command != token) return;
-                node.pending_command = null;
-                mem_children = new_children;
-                mem_children.clear();
-                if (error != null) {
-                    node.node_error = error;
-                }
-                else {
-                    for (String id : contexts) {
-                        assert disposed_ids.get(id) == null;
-                        TCFNode n = node.model.getNode(id);
-                        if (n == null) n = new TCFNodeExecContext(node, id);
-                        mem_children.put(id, n);
-                    }
-                }
-                node.validateNode();
-            }
-        });
-        return false;
-    }
-
-    private boolean validateRunControlChildren(final Map<String,TCFNode> new_children) {
-        if (run_children != null) {
-            new_children.putAll(run_children);
-            return true;
-        }
-        IRunControl run = node.model.getLaunch().getService(IRunControl.class);
-        if (run == null) {
-            run_children = new HashMap<String,TCFNode>();
-            return true;
-        }
-        assert node.pending_command == null;
-        node.pending_command = run.getChildren(node.id, new IRunControl.DoneGetChildren() {
-            public void doneGetChildren(IToken token, Exception error, String[] contexts) {
-                if (node.pending_command != token) return;
-                node.pending_command = null;
-                run_children = new_children;
-                run_children.clear();
-                if (error != null) {
-                    node.node_error = error;
-                }
-                else {
-                    for (String id : contexts) {
-                        assert disposed_ids.get(id) == null;
-                        TCFNode n = node.model.getNode(id);
-                        if (n == null) n = new TCFNodeExecContext(node, id);
-                        run_children.put(id, n);
-                    }
-                }
-                node.validateNode();
-            }
-        });
-        return false;
+        add(n);
+        mem_children.add(n);
+        n.setMemoryContext(context);
     }
 }

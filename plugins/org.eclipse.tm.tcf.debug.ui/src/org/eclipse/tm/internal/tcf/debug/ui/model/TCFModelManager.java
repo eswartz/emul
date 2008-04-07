@@ -19,6 +19,7 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchesListener;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
 
@@ -102,7 +103,10 @@ public class TCFModelManager {
         if (model == null) {
             model = new TCFModel(display, launch);
             models.put(launch, model);
-            if (launch.getChannel() != null) tcf_launch_listener.onConnected(launch);
+            IChannel channel = launch.getChannel();
+            if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
+                tcf_launch_listener.onConnected(launch);
+            }
         }
         return model;
     }

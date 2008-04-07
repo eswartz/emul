@@ -60,6 +60,8 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
         final DsfTerminateCommand terminate_command;
         final IDebugModelProvider debug_model_provider;
         final TCFDSFLaunch lunch;
+        //final BreakpointCommand breakpoint_command; 
+        //final DsfMemoryBlockRetrieval memory_retrieval;
 
         SessionAdapterSet(DsfSession session, TCFDSFLaunch launch) {
             this.session = session;
@@ -80,12 +82,15 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
             suspend_command = new DsfSuspendCommand(session);
             resume_command = new DsfResumeCommand(session);
             terminate_command = new DsfTerminateCommand(session);
+            //breakpoint_command = new BreakpointCommand();
+            //memory_retrieval = new DsfMemoryBlockRetrieval(ITCFConstants.ID_TCF_DEBUG_MODEL, );
             session.registerModelAdapter(IStepIntoHandler.class, step_into_command);
             session.registerModelAdapter(IStepOverHandler.class, step_over_command);
             session.registerModelAdapter(IStepReturnHandler.class, step_return_command);
             session.registerModelAdapter(ISuspendHandler.class, suspend_command);
             session.registerModelAdapter(IResumeHandler.class, resume_command);
             session.registerModelAdapter(ITerminateHandler.class, terminate_command);
+            //session.registerModelAdapter(IToggleBreakpointsTarget.class, breakpoint_command);
 
             debug_model_provider = new IDebugModelProvider() {
                 // @see org.eclipse.debug.core.model.IDebugModelProvider#getModelIdentifiers()

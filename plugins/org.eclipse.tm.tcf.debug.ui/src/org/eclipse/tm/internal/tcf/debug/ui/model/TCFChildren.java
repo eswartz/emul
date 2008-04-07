@@ -10,62 +10,94 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class TCFChildren {
+import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IToken;
 
-    final TCFNode node;
-    final Map<String,TCFNode> children = new HashMap<String,TCFNode>();
+/**
+ * TCFChildren is a concrete type of TCF data cache that is used to cache a list of children. 
+ */
+public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     
-    protected boolean valid;
+    private final int pool_margin;
+    private final Map<String,TCFNode> node_pool = new LinkedHashMap<String,TCFNode>(32, 0.75f, true);
+
+    TCFChildren(IChannel channel) {
+        super(channel);
+        pool_margin = 0;
+    }
     
-    TCFChildren(TCFNode node) {
-        this.node = node;
+    TCFChildren(IChannel channel, int pool_margin) {
+        super(channel);
+        this.pool_margin = pool_margin;
     }
     
     void dispose() {
-        TCFNode a[] = children.values().toArray(new TCFNode[children.size()]);
+        if (node_pool.isEmpty()) return;
+        TCFNode a[] = node_pool.values().toArray(new TCFNode[node_pool.size()]);
         for (int i = 0; i < a.length; i++) a[i].dispose();
-        assert children.isEmpty();
+        assert node_pool.isEmpty();
     }
     
     void dispose(String id) {
-        children.remove(id);
+        node_pool.remove(id);
+        if (isValid()) getData().remove(id);
     }
     
-    void doneValidate(Map<String,TCFNode> new_children) {
-        assert !node.disposed;
-        assert !valid;
-        valid = true;
-        if (children.size() > 0) {
-            TCFNode[] a = children.values().toArray(new TCFNode[children.size()]);
-            for (TCFNode n : a) if (new_children.get(n.id) != n) n.dispose();
+    private void flush(Map<String,TCFNode> data) {
+        node_pool.putAll(data);
+        if (node_pool.size() > data.size() + pool_margin) {
+            String[] arr = node_pool.keySet().toArray(new String[node_pool.size()]);
+            for (String id : arr) {
+                if (data.get(id) == null) {
+                    node_pool.get(id).dispose();
+                    if (node_pool.size() <= data.size() + pool_margin) break;
+                }
+            }
         }
-        for (TCFNode n : new_children.values()) {
-            assert n.parent == node;
-            children.put(n.id, n);
+    }
+    
+    public void set(IToken token, Throwable error, Map<String,TCFNode> data) {
+        if (data != null) {
+            super.set(token, error, data);
+            flush(data);
         }
-        assert children.size() == new_children.size();
+        else {
+            super.set(token, error, new HashMap<String,TCFNode>());
+        }
     }
     
-    boolean validate() {
-        doneValidate(new HashMap<String,TCFNode>());
-        return true;
+    public void reset(Map<String,TCFNode> data) {
+        if (data != null) {
+            super.reset(data);
+            flush(data);
+        }
+        else {
+            super.reset(new HashMap<String,TCFNode>());
+        }
     }
     
-    void invalidate() {
-        assert !node.disposed;
-        TCFNode[] a = children.values().toArray(new TCFNode[children.size()]);
-        for (int i = 0; i < a.length; i++) a[i].invalidateNode();
-        valid = false;
+    void add(TCFNode n) {
+        node_pool.put(n.id, n);
+        if (isValid()) getData().put(n.id, n);
+    }
+    
+    Collection<TCFNode> getNodes() {
+        return node_pool.values();
     }
     
     int size() {
-        return children.size();
+        assert isValid();
+        return getData().size();
     }
     
     TCFNode[] toArray() {
-        return children.values().toArray(new TCFNode[children.size()]);
+        assert isValid();
+        Map<String,TCFNode> data = getData();
+        return data.values().toArray(new TCFNode[data.size()]);
     }
 }

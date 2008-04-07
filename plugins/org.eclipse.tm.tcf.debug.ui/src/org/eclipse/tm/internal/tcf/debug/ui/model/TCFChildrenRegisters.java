@@ -19,52 +19,44 @@ import org.eclipse.tm.tcf.services.IRegisters;
 
 public class TCFChildrenRegisters extends TCFChildren {
 
-    private boolean running;
+    private final TCFNode node;
 
     TCFChildrenRegisters(TCFNode node) {
-        super(node);
+        super(node.model.getLaunch().getChannel());
+        this.node = node;
     }
 
     /**
      * Invalidate register values only, keep cached register attributes.
      */
     void onSuspended() {
-        if (running || node.node_error != null) invalidate();
-        for (TCFNode n : children.values()) ((TCFNodeRegister)n).onSuspended();
+        for (TCFNode n : getNodes()) ((TCFNodeRegister)n).onSuspended();
+    }
+    
+    void onRegistersChanged() {
+        for (TCFNode n : getNodes()) ((TCFNodeRegister)n).onRegistersChanged();
     }
 
     @Override
-    boolean validate() {
-        assert !node.disposed;
-        assert !valid;
-        final Map<String,TCFNode> new_children = new HashMap<String,TCFNode>();
-        running = !node.isSuspended(); 
-        if (running) {
-            valid = true;
-            return true;
-        }
+    protected boolean startDataRetrieval() {
         IRegisters regs = node.model.getLaunch().getService(IRegisters.class);
         if (regs == null) {
-            doneValidate(new_children);
+            set(null, null, new HashMap<String,TCFNode>());
             return true;
         }
-        assert node.pending_command == null;
-        node.pending_command = regs.getChildren(node.id, new IRegisters.DoneGetChildren() {
+        assert command == null;
+        command = regs.getChildren(node.id, new IRegisters.DoneGetChildren() {
             public void doneGetChildren(IToken token, Exception error, String[] contexts) {
-                if (node.pending_command != token) return;
-                node.pending_command = null;
-                if (error != null) {
-                    node.node_error = error;
-                }
-                else {
+                Map<String,TCFNode> data = null;
+                if (command == token && error == null) {
+                    data = new HashMap<String,TCFNode>();
                     for (String id : contexts) {
                         TCFNode n = node.model.getNode(id);
                         if (n == null) n = new TCFNodeRegister(node, id);
-                        new_children.put(id, n);
+                        data.put(id, n);
                     }
                 }
-                doneValidate(new_children);
-                node.validateNode();
+                set(token, error, data);
             }
         });
         return false;
