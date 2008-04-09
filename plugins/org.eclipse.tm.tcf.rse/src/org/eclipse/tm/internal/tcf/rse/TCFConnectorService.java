@@ -17,9 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.rse.core.model.IHost;
-import org.eclipse.rse.core.subsystems.AbstractConnectorService;
+import org.eclipse.rse.core.subsystems.BasicConnectorService;
 import org.eclipse.rse.core.subsystems.CommunicationsEvent;
 import org.eclipse.tm.tcf.core.AbstractPeer;
 import org.eclipse.tm.tcf.core.ChannelTCP;
@@ -31,7 +30,7 @@ import org.eclipse.tm.tcf.services.ILocator;
 import org.eclipse.tm.tcf.services.ISysMonitor;
 
 
-public class TCFConnectorService extends AbstractConnectorService {
+public class TCFConnectorService extends BasicConnectorService {
 
     private IChannel channel;
     private Throwable channel_error;
@@ -75,28 +74,6 @@ public class TCFConnectorService extends AbstractConnectorService {
         if (res[0] != null) throw res[0];
     }
 
-    public void acquireCredentials(boolean refresh)
-            throws OperationCanceledException {
-    }
-
-    public void clearCredentials() {
-    }
-
-    public void clearPassword(boolean persist, boolean propagate) {
-    }
-
-    public String getUserId() {
-        return null;
-    }
-
-    public boolean hasPassword(boolean persistent) {
-        return false;
-    }
-
-    public boolean inheritsCredentials() {
-        return false;
-    }
-
     public boolean isConnected() {
         final boolean res[] = new boolean[1];
         Protocol.invokeAndWait(new Runnable() {
@@ -105,52 +82,6 @@ public class TCFConnectorService extends AbstractConnectorService {
             }
         });
         return res[0];
-    }
-
-    public boolean isSuppressed() {
-        return false;
-    }
-
-    public void removePassword() {
-    }
-
-    public void removeUserId() {
-    }
-
-    public boolean requiresPassword() {
-        return false;
-    }
-
-    public boolean requiresUserId() {
-        return false;
-    }
-
-    public void savePassword() {
-    }
-
-    public void saveUserId() {
-    }
-
-    public void setPassword(String matchingUserId, String password,
-            boolean persist, boolean propagate) {
-    }
-
-    public void setSuppressed(boolean suppress) {
-    }
-
-    public void setUserId(String userId) {
-    }
-
-    public boolean sharesCredentials() {
-        return false;
-    }
-
-    public boolean supportsPassword() {
-        return false;
-    }
-
-    public boolean supportsUserId() {
-        return false;
     }
 
     private void connectTCFChannel(final Exception[] res) {
