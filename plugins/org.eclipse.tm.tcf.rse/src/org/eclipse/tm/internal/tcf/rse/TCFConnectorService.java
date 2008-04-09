@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.subsystems.AbstractConnectorService;
 import org.eclipse.rse.core.subsystems.CommunicationsEvent;
@@ -31,11 +32,11 @@ import org.eclipse.tm.tcf.services.ISysMonitor;
 
 
 public class TCFConnectorService extends AbstractConnectorService {
-    
+
     private IChannel channel;
     private Throwable channel_error;
     private final List<Runnable> state_change = new ArrayList<Runnable>();
-    
+
     public TCFConnectorService(IHost host, int port) {
         super("TCF", "Target Communication Framework", host, port);
     }
@@ -74,7 +75,8 @@ public class TCFConnectorService extends AbstractConnectorService {
         if (res[0] != null) throw res[0];
     }
 
-    public void acquireCredentials(boolean refresh) throws InterruptedException {
+    public void acquireCredentials(boolean refresh)
+            throws OperationCanceledException {
     }
 
     public void clearCredentials() {
@@ -99,10 +101,10 @@ public class TCFConnectorService extends AbstractConnectorService {
         final boolean res[] = new boolean[1];
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
-               res[0] = channel != null && channel.getState() == IChannel.STATE_OPEN; 
+               res[0] = channel != null && channel.getState() == IChannel.STATE_OPEN;
             }
         });
-        return res[0]; 
+        return res[0];
     }
 
     public boolean isSuppressed() {
@@ -150,7 +152,7 @@ public class TCFConnectorService extends AbstractConnectorService {
     public boolean supportsUserId() {
         return false;
     }
-    
+
     private void connectTCFChannel(final Exception[] res) {
         if (channel != null) {
             switch (channel.getState()) {
@@ -197,19 +199,19 @@ public class TCFConnectorService extends AbstractConnectorService {
             }
             channel = peer.openChannel();
             channel.addChannelListener(new IChannel.IChannelListener() {
-    
+
                 public void onChannelOpened() {
                     onConnected();
                 }
-    
+
                 public void congestionLevel(int level) {
                 }
-    
+
                 public void onChannelClosed(Throwable error) {
                     channel.removeChannelListener(this);
                     onDisconnected(error);
                 }
-    
+
             });
             assert channel.getState() == IChannel.STATE_OPENNING;
         }
@@ -219,7 +221,7 @@ public class TCFConnectorService extends AbstractConnectorService {
             }
         });
     }
-    
+
     private void disconnectTCFChannel(final Exception[] res) {
         if (channel == null || channel.getState() == IChannel.STATE_CLOSED) {
             synchronized (res) {
@@ -235,7 +237,7 @@ public class TCFConnectorService extends AbstractConnectorService {
             }
         });
     }
-    
+
     private void onConnected() {
         assert channel != null;
         if (state_change.isEmpty()) return;
@@ -243,7 +245,7 @@ public class TCFConnectorService extends AbstractConnectorService {
         state_change.clear();
         for (int i = 0; i < r.length; i++) r[i].run();
     }
-    
+
     private void onDisconnected(Throwable error) {
         assert channel != null;
         channel_error = error;
@@ -258,7 +260,7 @@ public class TCFConnectorService extends AbstractConnectorService {
         channel = null;
         channel_error = null;
     }
-    
+
     public ISysMonitor getSysMonitorService() {
         if (channel == null || channel.getState() != IChannel.STATE_OPEN) throw new Error("Not connected");
         ISysMonitor m = channel.getRemoteService(ISysMonitor.class);
