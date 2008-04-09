@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -29,6 +29,7 @@ import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 import org.eclipse.rse.services.clientserver.processes.HostProcessFilterImpl;
 import org.eclipse.rse.services.clientserver.processes.IHostProcess;
 import org.eclipse.rse.services.clientserver.processes.IHostProcessFilter;
+import org.eclipse.rse.services.processes.AbstractProcessService;
 import org.eclipse.rse.services.processes.IProcessService;
 import org.eclipse.tm.internal.tcf.rse.ITCFSubSystem;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorService;
@@ -38,13 +39,14 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.ISysMonitor;
 
 
-public class TCFProcessService implements IProcessService {
-    
+public class TCFProcessService extends AbstractProcessService implements
+        IProcessService {
+
     private final TCFConnectorService connector;
     private final TCFProcessResource root;
     private final Map<String,TCFProcessResource> id2res = new HashMap<String,TCFProcessResource>();
     private final Map<Long,TCFProcessResource> pid2res = new HashMap<Long,TCFProcessResource>();
-    
+
     public TCFProcessService(IHost host) {
         connector = (TCFConnectorService)TCFConnectorServiceManager
             .getInstance().getConnectorService(host, ITCFSubSystem.class);
@@ -105,7 +107,7 @@ public class TCFProcessService implements IProcessService {
         // TODO Auto-generated method stub
         return false;
     }
-    
+
     private void sort(IHostProcess[] arr) {
         Comparator<IHostProcess> c = new Comparator<IHostProcess>() {
             public int compare(IHostProcess o1, IHostProcess o2) {
@@ -127,12 +129,12 @@ public class TCFProcessService implements IProcessService {
     public IHostProcess[] listAllProcesses(final IHostProcessFilter filter, IProgressMonitor monitor) throws SystemMessageException {
         return listAllProcesses(filter, root, monitor);
     }
-    
+
     private boolean eqaulIDs(String x, String y) {
         if (x == null) return y == null;
         return x.equals(y);
     }
-    
+
     public IHostProcess[] listAllProcesses(final IHostProcessFilter filter, final IHostProcess up, IProgressMonitor monitor) throws SystemMessageException {
         // TODO: figure out better way to flush the cache
         final TCFProcessResource parent = new TCFRSETask<TCFProcessResource>() {
@@ -204,7 +206,7 @@ public class TCFProcessService implements IProcessService {
         roots[0] = getProcess(1, monitor);
         return roots;
     }
-    
+
     private boolean loadProcesses(Runnable run, final TCFProcessResource parent) {
         if (parent.getChildrenLoading()) {
             parent.addChildrenWaitList(run);
@@ -255,7 +257,7 @@ public class TCFProcessService implements IProcessService {
             return true;
         }
     }
-    
+
     private void loadProcessesDone(TCFProcessResource parent, Throwable error, TCFProcessResource[] arr) {
         assert parent.getChildrenLoading();
         parent.setChildrenLoading(false);
