@@ -323,19 +323,6 @@ void usleep(useconds_t useconds) {
     Sleep(useconds / 1000);
 }
 
-void perror(const char * msg) {
-    int error = errno;
-    if (error == ERR_SOCKET) {
-        fprintf(stderr, "%s: socket error 0x%08x\n", msg, WSAGetLastError());
-    }
-    else if (error == ERR_WIN32) {
-        fprintf(stderr, "%s: Win32 error 0x%08x\n", msg, GetLastError());
-    }
-    else {
-        fprintf(stderr, "%s: %s\n", msg, strerror(error));
-    }
-}
-
 #undef bind
 int wsa_bind(int socket, const struct sockaddr * addr, int addr_size) {
     int res = 0;
@@ -441,12 +428,6 @@ int closedir(DIR * d) {
     loc_free(d);
     return r;
 }
-#endif
-
-
-#if defined(WIN32)
-
-#include <shlobj.h>
 
 int getuid(void) {
     /* Windows user is always a superuser :) */
@@ -464,6 +445,14 @@ int getgid(void) {
 int getegid(void) {
     return 0;
 }
+#endif
+
+
+#if defined(WIN32)
+
+#include <shlobj.h>
+
+unsigned char BREAK_INST[] = { 0xcc };
 
 char * get_os_name(void) {
     static char str[256];
@@ -576,6 +565,8 @@ void ini_mdep(void) {
 #include <pwd.h>
 #include <sys/utsname.h>
 #include <asm/unistd.h>
+
+unsigned char BREAK_INST[] = { 0xcc };
 
 char * get_os_name(void) {
     static char str[256];

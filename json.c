@@ -26,6 +26,20 @@
 static char * buf = NULL;
 static unsigned buf_size = 0;
 
+static void realloc_buf(int buf_pos) {
+    if (buf == NULL) {
+        buf_size = 0x1000;
+        buf = (char *)loc_alloc(buf_size);
+    }
+    else {
+        char * tmp = (char *)loc_alloc(buf_size * 2);
+        memcpy(tmp, buf, buf_pos);
+        loc_free(buf);
+        buf = tmp;
+        buf_size *= 2;
+    }
+}
+
 void json_write_ulong(OutputStream * out, unsigned long n) {
     if (n >= 10) {
         json_write_ulong(out, n / 10);
@@ -166,7 +180,7 @@ int json_read_string(InputStream * inp, char * str, size_t size) {
 
 char * json_read_alloc_string(InputStream * inp) {
     char * str = NULL;
-    unsigned i = 0;
+    unsigned buf_pos = 0;
     int ch = inp->read(inp);
     if (ch == 'n') {
         if (inp->read(inp) != 'u') exception(ERR_JSON_SYNTAX);
@@ -179,19 +193,13 @@ char * json_read_alloc_string(InputStream * inp) {
         ch = inp->read(inp);
         if (ch == '"') break;
         if (ch == '\\') ch = read_esc_char(inp);
-        if (i >= buf_size) {
-            int new_size = buf_size == 0 ? 0x1000 : buf_size * 2;
-            char * tmp = (char *)loc_alloc(new_size);
-            if (i > 0) memcpy(tmp, buf, i);
-            if (buf != NULL) loc_free(buf);
-            buf = tmp;
-            buf_size = new_size;
-        }
-        buf[i++] = (char)ch;
+        if (buf_pos >= buf_size) realloc_buf(buf_pos);
+        buf[buf_pos++] = (char)ch;
     }
-    str = (char *)loc_alloc(i + 1);
-    memcpy(str, buf, i);
-    str[i] = 0;
+    if (buf_pos >= buf_size) realloc_buf(buf_pos);
+    buf[buf_pos++] = 0;
+    str = (char *)loc_alloc(buf_pos);
+    memcpy(str, buf, buf_pos);
     return str;
 }
 
@@ -342,13 +350,13 @@ char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
         return NULL;
     }
     else {
-        static int * len_buf = NULL;
-        static int len_buf_size = 0;
+        static unsigned * len_buf = NULL;
+        static unsigned len_buf_size = 0;
 
-        int buf_pos = 0;
-        int len_pos = 0;
+        unsigned buf_pos = 0;
+        unsigned len_pos = 0;
 
-        int i, j;
+        unsigned i, j;
         char * str = NULL;
         char ** arr = NULL;
 
@@ -357,33 +365,39 @@ char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
         }
         else {
             while (1) {
-                int ch;
-                int len;
-                if (buf == NULL) {
-                    buf_size = 0x1000;
-                    buf = (char *)loc_alloc(buf_size);
-                }
-                else if (buf_size - buf_pos < 0x200) {
-                    char * tmp = (char *)loc_alloc(buf_size * 2);
-                    memcpy(tmp, buf, buf_pos);
-                    loc_free(buf);
-                    buf = tmp;
-                    buf_size *= 2;
-                }
+                int ch = inp->read(inp);
+                int len = 0;
                 if (len_pos >= len_buf_size) {
                     len_buf_size = len_buf_size == 0 ? 0x100 : len_buf_size * 2;
-                    len_buf = (int *)loc_realloc(len_buf, len_buf_size * sizeof(int));
+                    len_buf = (unsigned *)loc_realloc(len_buf, len_buf_size * sizeof(unsigned));
                 }
-                len = json_read_string(inp, buf + buf_pos, buf_size - buf_pos);
-                if (len >= (int)(buf_size - buf_pos)) exception(ERR_BUFFER_OVERFLOW);
+                if (ch == 'n') {
+                    if (inp->read(inp) != 'u') exception(ERR_JSON_SYNTAX);
+                    if (inp->read(inp) != 'l') exception(ERR_JSON_SYNTAX);
+                    if (inp->read(inp) != 'l') exception(ERR_JSON_SYNTAX);
+                }
+                else {
+                    if (ch != '"') exception(ERR_JSON_SYNTAX);
+                    for (;;) {
+                        ch = inp->read(inp);
+                        if (ch == '"') break;
+                        if (ch == '\\') ch = read_esc_char(inp);
+                        if (buf_pos >= buf_size) realloc_buf(buf_pos);
+                        buf[buf_pos++] = (char)ch;
+                        len++;
+                    }
+                }
+                if (buf_pos >= buf_size) realloc_buf(buf_pos);
+                buf[buf_pos++] = 0;
                 len_buf[len_pos++] = len;
-                buf_pos += len + 1;
                 ch = inp->read(inp);
                 if (ch == ',') continue;
                 if (ch == ']') break;
                 exception(ERR_JSON_SYNTAX);
             }
         }
+        if (buf_pos >= buf_size) realloc_buf(buf_pos);
+        buf[buf_pos++] = 0;
         arr = (char **)loc_alloc((len_pos + 1) * sizeof(char *) + buf_pos);
         str = (char *)(arr + len_pos + 1);
         memcpy(str, buf, buf_pos);

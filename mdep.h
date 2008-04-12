@@ -65,6 +65,9 @@ typedef CONTEXT REG_SET;
 #define get_regs_PC(x) ((x).Eip)
 #define set_regs_PC(x,y) (x).Eip = (y)
 
+extern unsigned char BREAK_INST[];  /* breakpoint instruction */
+#define BREAK_SIZE 1                /* breakpoint instruction size */
+
 #ifdef __GNUC__
 
 #ifndef _LARGEFILE_SOURCE
@@ -76,6 +79,7 @@ typedef CONTEXT REG_SET;
 #endif
 
 #include <pthread.h>
+#include <sys/unistd.h>
 
 typedef struct stat struct_stat;
 
@@ -176,16 +180,16 @@ extern struct dirent * readdir(DIR * dir);
 
 #define loc_gai_strerror gai_strerror
 
+extern int getuid(void);
+extern int geteuid(void);
+extern int getgid(void);
+extern int getegid(void);
+
 #endif /* __GNUC__ */
 
 extern char * canonicalize_file_name(const char * path);
 
 #define O_LARGEFILE 0
-
-extern int getuid(void);
-extern int geteuid(void);
-extern int getgid(void);
-extern int getegid(void);
 
 #define loc_freeaddrinfo freeaddrinfo
 #define loc_getaddrinfo getaddrinfo
@@ -286,6 +290,9 @@ typedef struct stat struct_stat;
 #define get_regs_BP(x) ((x).ebp)
 #define get_regs_PC(x) ((x).eip)
 #define set_regs_PC(x,y) (x).eip = (unsigned long)(y)
+
+extern unsigned char BREAK_INST[];  /* breakpoint instruction */
+#define BREAK_SIZE 1                /* breakpoint instruction size */
 
 #ifndef SA_LEN  
 # ifdef HAVE_SOCKADDR_SA_LEN  

@@ -30,15 +30,17 @@
 #include <assert.h>
 #include "myalloc.h"
 #include "protocol.h"
+#include "trace.h"
 #include "context.h"
 #include "json.h"
 #include "exceptions.h"
+#include "runctrl.h"
 #include "processes.h"
 
 static const char * PROCESSES = "Processes";
 
 #if defined(WIN32)
-#  include <direct.h>
+#  include "tlhelp32.h"
 #elif defined(_WRS_KERNEL)
 #  include <symLib.h>
 #  include <sysSymTbl.h>
@@ -57,7 +59,7 @@ struct AttachDoneArgs {
     char token[256];
 };
 
-static void write_context(OutputStream * out, char * id, char * dir) {
+static void write_context(OutputStream * out, int pid) {
     Context * ctx = NULL;
 
     out->write(out, '{');
@@ -65,26 +67,30 @@ static void write_context(OutputStream * out, char * id, char * dir) {
 #if defined(WIN32)
 #elif defined(_WRS_KERNEL)
 #else
-    if (chdir(dir) >= 0) {
-        int sz;
-        char fnm[FILE_PATH_SIZE + 1];
+    {
+        char dir[FILE_PATH_SIZE];
+        snprintf(dir, sizeof(dir), "/proc/%d", pid);
+        if (chdir(dir) >= 0) {
+            int sz;
+            char fnm[FILE_PATH_SIZE + 1];
 
-        json_write_string(out, "CanTerminate");
-        out->write(out, ':');
-        json_write_boolean(out, 1);
-        out->write(out, ',');
-
-        if ((sz = readlink("exe", fnm, FILE_PATH_SIZE)) > 0) {
-            fnm[sz] = 0;
-            json_write_string(out, "Name");
+            json_write_string(out, "CanTerminate");
             out->write(out, ':');
-            json_write_string(out, fnm);
+            json_write_boolean(out, 1);
             out->write(out, ',');
+
+            if ((sz = readlink("exe", fnm, FILE_PATH_SIZE)) > 0) {
+                fnm[sz] = 0;
+                json_write_string(out, "Name");
+                out->write(out, ':');
+                json_write_string(out, fnm);
+                out->write(out, ',');
+            }
         }
     }
 #endif
     
-    ctx = id2ctx(id);
+    ctx = context_find_from_pid(pid);
     if (ctx != NULL) {
         json_write_string(out, "Attached");
         out->write(out, ':');
@@ -94,7 +100,7 @@ static void write_context(OutputStream * out, char * id, char * dir) {
 
     json_write_string(out, "ID");
     out->write(out, ':');
-    json_write_string(out, id);
+    json_write_string(out, pid2id(pid, 0));
 
     out->write(out, '}');
 }
@@ -103,7 +109,6 @@ static void command_get_context(char * token, Channel * c) {
     int err = 0;
     char id[256];
     pid_t pid, parent;
-    char dir[FILE_PATH_SIZE];
 
     json_read_string(&c->inp, id, sizeof(id));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -114,13 +119,14 @@ static void command_get_context(char * token, Channel * c) {
     write_stringz(&c->out, token);
 
     pid = id2pid(id, &parent);
-    snprintf(dir, sizeof(dir), "/proc/%d", pid);
     if (pid != 0 && parent == 0) {
 #if defined(WIN32)
 #elif defined(_WRS_KERNEL)
         if (TASK_ID_VERIFY(pid) == ERROR) err = ERR_INV_CONTEXT;
 #else
         struct_stat st;
+        char dir[FILE_PATH_SIZE];
+        snprintf(dir, sizeof(dir), "/proc/%d", pid);
         if (lstat(dir, &st) < 0) err = errno;
         else if (!S_ISDIR(st.st_mode)) err = ERR_INV_CONTEXT;
 #endif
@@ -129,7 +135,7 @@ static void command_get_context(char * token, Channel * c) {
     write_errno(&c->out, err);
     
     if (err == 0 && pid != 0 && parent == 0) {
-        write_context(&c->out, id, dir);
+        write_context(&c->out, pid);
         c->out.write(&c->out, 0);
     }
     else {
@@ -141,7 +147,6 @@ static void command_get_context(char * token, Channel * c) {
 
 static void command_get_children(char * token, Channel * c) {
     char id[256];
-    pid_t parent = 0;
     int attached_only;
 
     json_read_string(&c->inp, id, sizeof(id));
@@ -159,6 +164,38 @@ static void command_get_children(char * token, Channel * c) {
     }
     else {
 #if defined(WIN32)
+    DWORD err = 0;
+    HANDLE snapshot;
+    PROCESSENTRY32 pe32;
+
+    snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snapshot == INVALID_HANDLE_VALUE) err = GetLastError();
+    pe32.dwSize = sizeof(PROCESSENTRY32);
+    if (!err && !Process32First(snapshot, &pe32)) {
+        err = GetLastError();
+        CloseHandle(snapshot);
+    }
+    if (err) {
+        // TODO need better translation of WIN32 error codes to errno
+        write_errno(&c->out, EINVAL);
+        write_stringz(&c->out, "null");
+    }
+    else {
+        int cnt = 0;
+        write_errno(&c->out, 0);
+        c->out.write(&c->out, '[');
+        do {
+            if (!attached_only || context_find_from_pid(pe32.th32ProcessID) != NULL) {
+                if (cnt > 0) c->out.write(&c->out, ',');
+                json_write_string(&c->out, pid2id(pe32.th32ProcessID, 0));
+                cnt++;
+            }
+        }
+        while (Process32Next(snapshot, &pe32));
+        c->out.write(&c->out, ']');
+        c->out.write(&c->out, 0);
+    }
+    if (snapshot != INVALID_HANDLE_VALUE) CloseHandle(snapshot);
 #elif defined(_WRS_KERNEL)
         int i = 0;
         int cnt = 0;
@@ -172,6 +209,7 @@ static void command_get_children(char * token, Channel * c) {
             ids_max *= 2;
             ids = (int *)loc_alloc(ids_max * sizeof(int));
         }
+        write_errno(&c->out, 0);
         c->out.write(&c->out, '[');
         for (i = 0; i < ids_cnt; i++) {
             if (!attached_only || context_find_from_pid(ids[i]) != NULL) {
@@ -359,15 +397,12 @@ static void command_get_environment(char * token, Channel * c) {
 static void start_done(void * arg) {
     AttachDoneArgs * p = arg;
     Channel * c = p->c;
-    char dir[FILE_PATH_SIZE];
-    char bf[256];
 
     if (!is_stream_closed(c)) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, p->token);
         write_errno(&c->out, 0);
-        snprintf(dir, sizeof(dir), "/proc/%d", p->ctx->pid);
-        write_context(&c->out, strcpy(bf, ctx2id(p->ctx)), dir);
+        write_context(&c->out, p->ctx->pid);
         c->out.write(&c->out, 0);
         c->out.write(&c->out, MARKER_EOM);
     }
@@ -407,6 +442,56 @@ static void command_start(char * token, Channel * c) {
         if (dir[0] != 0 && chdir(dir) < 0) err = errno;
         if (err == 0) {
 #if defined(WIN32)
+            STARTUPINFO si;
+            PROCESS_INFORMATION prs;
+            char * cmd = NULL;
+            if (args != NULL) {
+                int i = 0;
+                int cmd_size = 0;
+                int cmd_pos = 0;
+#               define cmd_append(ch) { \
+                    if (!cmd) { \
+                        cmd_size = 0x1000; \
+                        cmd = (char *)loc_alloc(cmd_size); \
+                    } \
+                    else if (cmd_pos >= cmd_size) { \
+                        char * tmp = (char *)loc_alloc(cmd_size * 2); \
+                        memcpy(tmp, cmd, cmd_pos); \
+                        loc_free(cmd); \
+                        cmd = tmp; \
+                        cmd_size *= 2; \
+                    }; \
+                    cmd[cmd_pos++] = (ch); \
+                }
+                while (args[i] != NULL) {
+                    char * p = args[i++];
+                    if (cmd_pos > 0) cmd_append(' ');
+                    cmd_append('"');
+                    while (*p) {
+                        if (*p == '"') cmd_append('\\');
+                        cmd_append(*p);
+                        p++;
+                    }
+                    cmd_append('"');
+                }
+                cmd_append(0);
+#               undef cmd_append
+            }
+            memset(&si, 0, sizeof(si));
+            memset(&prs, 0, sizeof(prs));
+            si.cb = sizeof(si);
+            if (CreateProcess(exe, cmd, NULL, NULL, FALSE, (attach ? CREATE_SUSPENDED : 0),
+                (envp ? envp[0] : NULL), (dir[0] ? dir : NULL), &si, &prs) == 0)
+            {
+                trace(LOG_ALWAYS, "Can't start process '%s': error %d", exe, GetLastError());
+                err = EINVAL;
+            }
+            if (!err) {
+                pid = prs.dwProcessId;
+                CloseHandle(prs.hThread);
+                CloseHandle(prs.hProcess);
+            }
+            loc_free(cmd);
 #elif defined(_WRS_KERNEL)
             char * ptr;
             SYM_TYPE type;
@@ -467,9 +552,7 @@ static void command_start(char * token, Channel * c) {
                 write_stringz(&c->out, "null");
             }
             else {
-                char bf[256];
-                snprintf(dir, sizeof(dir), "/proc/%d", pid);
-                write_context(&c->out, strcpy(bf, pid2id(pid, 0)), dir);
+                write_context(&c->out, pid);
                 c->out.write(&c->out, 0);
             }
             c->out.write(&c->out, MARKER_EOM);
@@ -483,7 +566,7 @@ static void command_start(char * token, Channel * c) {
     if (trap.error) exception(trap.error);
 }
 
-void ini_processes_service(Protocol *proto) {
+void ini_processes_service(Protocol * proto) {
     add_command_handler(proto, PROCESSES, "getContext", command_get_context);
     add_command_handler(proto, PROCESSES, "getChildren", command_get_children);
     add_command_handler(proto, PROCESSES, "attach", command_attach);

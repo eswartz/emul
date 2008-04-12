@@ -155,7 +155,7 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     out->write(out, 0);
 
     /* String: Reason */
-    if (is_stopped_by_breakpoint(ctx)) {
+    if (ctx->stopped_by_bp) {
         strcpy(reason, "Breakpoint");
     }
     else if (ctx->event != 0) {
@@ -529,6 +529,7 @@ static void send_event_context_suspended(OutputStream * out, Context * ctx) {
     assert(!ctx->intercepted);
     ctx->intercepted = 1;
     ctx->pending_intercept = 0;
+    ctx->pending_step = 0;
 
     write_stringz(out, "E");
     write_stringz(out, RUN_CONTROL);
@@ -605,7 +606,6 @@ static void continue_temporary_stopped(void * arg) {
         if (ctx->exited) continue;
         if (!ctx->stopped) continue;
         if (ctx->intercepted) continue;
-        if (ctx->pending_step) continue;
         context_continue(ctx);
     }
 }
@@ -620,10 +620,11 @@ static void run_safe_events(void * arg) {
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
         Context * ctx = ctxl2ctxp(qp);
         if (ctx->exited || ctx->exiting) continue;
-        if (!ctx->pending_step && !ctx->pending_attach && !ctx->pending_clone) {
+        if (!ctx->pending_attach && !ctx->pending_clone) {
             int error = 0;
             if (ctx->stopped) continue;
             if (!context_has_state(ctx)) continue;
+            if (ctx->pending_step && ctx->pending_safe_event < STOP_ALL_MAX_CNT / 2) continue;
             if (context_stop(ctx) < 0) {
                 error = errno;
 #ifdef _WRS_KERNEL
@@ -725,7 +726,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     assert(!ctx->intercepted);
     assert(!ctx->exited);
     if (ctx->pending_safe_event) check_safe_events(ctx);
-    if (is_stopped_by_breakpoint(ctx)) {
+    if (ctx->stopped_by_bp) {
         if (evaluate_breakpoint_condition(ctx)) {
             ctx->pending_intercept = 1;
         }

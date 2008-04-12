@@ -36,11 +36,15 @@ struct SkipBreakpointInfo {
     int error;
 };
 
-extern int is_stopped_by_breakpoint(Context * ctx);
-
 extern int evaluate_breakpoint_condition(Context * ctx);
 
 extern SkipBreakpointInfo * skip_breakpoint(Context * ctx);
+
+#if SERVICE_Breakpoints
+extern int is_breakpoint_address(Context * ctx, unsigned long address);
+#else
+#define is_breakpoint_address(ctx, address) 0
+#endif
 
 extern void ini_breakpoints_service(Protocol *, TCFBroadcastGroup *);
 

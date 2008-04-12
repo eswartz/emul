@@ -40,7 +40,8 @@ void tcf_test_func0(void) {
     tcf_test_func1();
 }
 
-char * tcf_test_array = NULL;
+static char array[0x1000];
+char * tcf_test_array = array;
 
 static void * test_sub(void * x) {
     volatile int * test_done = (int *)x;
@@ -54,13 +55,6 @@ void test_proc(void) {
     int i;
     pthread_t thread[4];
     int test_done = 0;
-#if defined(WIN32)
-    HANDLE h;
-    tcf_test_array = loc_alloc(0x1000);
-    h = OpenThread(THREAD_SUSPEND_RESUME, FALSE, GetCurrentThreadId());
-    SuspendThread(h);
-    CloseHandle(h);
-#endif
     tcf_test_func0();
     for (i = 0; i < 4; i++) {
         thread[i] = 0;
@@ -92,24 +86,12 @@ int run_test_process(Context ** res) {
     memset(&si, 0, sizeof(si));
     memset(&prs, 0, sizeof(prs));
     if (GetModuleFileName(NULL, fnm, sizeof(fnm)) == 0) {
-        error = GetLastError();
+        errno = EINVAL;
+        return -1;
     }
     si.cb = sizeof(si);
     strcpy(cmd, "agent.exe -t");
-    if (error == 0 && CreateProcess(fnm, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &prs) == 0) {
-        error = GetLastError();
-    }
-    while (error == 0) {
-        DWORD cnt = SuspendThread(prs.hThread);
-        if (cnt == (DWORD)-1) {
-            error = GetLastError();
-            break;
-        }
-        ResumeThread(prs.hThread);
-        if (cnt > 0) break;
-        Sleep(10);
-    }
-    if (error != 0) {
+    if (error == 0 && CreateProcess(fnm, cmd, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &prs) == 0) {
         errno = EINVAL;
         return -1;
     }
@@ -126,7 +108,6 @@ int run_test_process(Context ** res) {
     taskStop(tid);
     taskActivate(tid);
     assert(taskIsStopped(tid));
-    if (tcf_test_array == NULL) tcf_test_array = loc_alloc(0x1000);
     r = context_attach(tid, &ctx, 0);
     if (res != NULL) *res = ctx;
     return r;
@@ -136,7 +117,6 @@ int run_test_process(Context ** res) {
     int pid = fork();
     if (pid < 0) return -1;
     if (pid == 0) {
-        tcf_test_array = loc_alloc(0x1000);
         if (context_attach_self() < 0) exit(1);
         if (tkill(getpid(), SIGSTOP) < 0) {
             int err = errno;

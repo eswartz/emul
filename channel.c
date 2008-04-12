@@ -107,6 +107,13 @@ void add_channel_close_listener(ChannelCloseListener listener) {
     close_listeners[close_listeners_cnt++] = listener;
 }
 
+void notify_channel_closed(Channel * c) {
+    int i;
+    for (i = 0; i < close_listeners_cnt; i++) {
+        close_listeners[i](c);
+    }
+}
+
 TCFSuspendGroup * suspend_group_alloc(void) {
     TCFSuspendGroup * p = loc_alloc(sizeof(TCFSuspendGroup));
 

@@ -41,23 +41,8 @@
 #include "json.h"
 #include "link.h"
 
-#ifdef BREAK_INST
-#  undef BREAK_INST
-#endif
-
 #if defined(_WRS_KERNEL)
-
-#include <private/vxdbgLibP.h>
-
-#elif defined(__i386__)
-
-static unsigned char BREAK_INST[] = { 0xcc };   /* breakpoint instruction */
-#define BREAK_SIZE 1    /* breakpoint instruction size */
-
-#else
-
-#error "Unknown CPU"
-
+#  include <private/vxdbgLibP.h>
 #endif
 
 typedef struct BreakpointRef BreakpointRef;
@@ -270,7 +255,7 @@ static void delete_unused_instructions(void) {
 static BreakInstruction * find_instruction(Context * ctx, unsigned long address) {
     int hash = addr2instr_hash(address);
     LINK * l = addr2instr[hash].next;
-    assert(!ctx->exited && (ctx->stopped || !context_has_state(ctx)));
+    assert(!ctx->exited);
     while (l != addr2instr + hash) {
         BreakInstruction * bi = link_adr2bi(l);
         l = l->next;
@@ -790,35 +775,9 @@ static void command_bp_remove(char * token, Channel * c) {
     c->out.write(&c->out, MARKER_EOM);
 }
 
-int is_stopped_by_breakpoint(Context * ctx) {
-    BreakInstruction * bi;
-
-    assert(!ctx->exited);
-    assert(ctx->stopped);
-#if defined(_WRS_KERNEL) || defined(WIN32)
-    if (ctx->stopped_by_bp == 1) {
-        bi = find_instruction(ctx, get_regs_PC(ctx->regs));
-        if (bi == NULL || bi->skip || bi->error) {
-            // Break instruction that is not planted by us
-            ctx->stopped_by_bp = 0;
-            ctx->pending_intercept = 1;
-            return 0;
-        }
-        ctx->stopped_by_bp = 2;
-    }
-    return ctx->stopped_by_bp != 0;
-#else
-    if (ctx->signal != SIGTRAP) return 0;
-    if (ctx->event != 0) return 0;
-    if (ctx->regs_error) return 0;
-    if (ctx->stopped_by_bp) return 1;
-    bi = find_instruction(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE);
-    if (bi == NULL || bi->skip || bi->error) return 0;
-    set_regs_PC(ctx->regs, get_regs_PC(ctx->regs) - BREAK_SIZE);
-    ctx->regs_dirty = 1;
-    ctx->stopped_by_bp = 1;
-    return 1;
-#endif    
+int is_breakpoint_address(Context * ctx, unsigned long address) {
+    BreakInstruction * bi = find_instruction(ctx, address);
+    return bi != NULL && !bi->skip && !bi->error;
 }
 
 static int condition_expression_identifier(char * name, Value * v) {

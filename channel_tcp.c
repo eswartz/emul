@@ -85,8 +85,6 @@ struct ServerTCP {
 #define server2tcp(A)   ((ServerTCP *)((char *)(A) - offsetof(ServerTCP, serv)))
 #define servlink2tcp(A) ((ServerTCP *)((char *)(A) - offsetof(ServerTCP, servlink)))
 
-static ChannelCloseListener close_listeners[16];
-static int close_listeners_cnt = 0;
 static LINK server_list;
 static void tcp_channel_read_done(void * x);
 static void handle_channel_msg(void * x);
@@ -259,7 +257,6 @@ static int peek_stream(InputStream * inp) {
 
 static void send_eof_and_close(Channel * channel, int err) {
     ChannelTCP * c = channel2tcp(channel);
-    int i;
 
     assert(c->magic == CHANNEL_MAGIC);
     if (c->socket < 0) return;
@@ -269,11 +266,9 @@ static void send_eof_and_close(Channel * channel, int err) {
     c->chan.out.flush(&c->chan.out);
     closesocket(c->socket);
     c->socket = -1;
-    for (i = 0; i < close_listeners_cnt; i++) {
-        close_listeners[i](&c->chan);
-    }
-    c->chan.disconnected(&c->chan);
-    tcp_unlock(&c->chan);
+    notify_channel_closed(channel);
+    channel->disconnected(channel);
+    tcp_unlock(channel);
 }
 
 static void handle_channel_msg(void * x) {

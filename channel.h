@@ -82,6 +82,13 @@ typedef void (*ChannelCloseListener)(Channel *);
 extern void add_channel_close_listener(ChannelCloseListener listener);
 
 /*
+ * Notify listeners about channel being closed.
+ * The function is called from channel implementation code,
+ * it is not intended to be called by clients.
+ */
+extern void notify_channel_closed(Channel *);
+
+/*
  * Start TCF channel server
  */
 extern ChannelServer * channel_server(PeerServer *);
