@@ -368,6 +368,7 @@ public class TCFNodeExecContext extends TCFNode {
                 if (parent instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)parent).onChildResumedOrSuspended();
                 }
+                model.fireModelChanged();
             }
         });
     }

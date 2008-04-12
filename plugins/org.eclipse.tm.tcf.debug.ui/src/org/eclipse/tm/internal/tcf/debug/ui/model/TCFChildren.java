@@ -45,7 +45,10 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     
     void dispose(String id) {
         node_pool.remove(id);
-        if (isValid()) getData().remove(id);
+        if (isValid()) {
+            Map<String,TCFNode> map = getData();
+            if (map != null) map.remove(id);
+        }
     }
     
     private void flush(Map<String,TCFNode> data) {

@@ -118,7 +118,7 @@ public class TCFLaunch extends Launch {
                     Map<String,String> vars = new HashMap<String,String>();
                     if (append) vars.putAll(def);
                     if (env != null) vars.putAll(env);
-                    ps.start(dir, file, toArgsArray(args), vars, attach, new IProcesses.DoneStart() {
+                    ps.start(dir, file, toArgsArray(file, args), vars, attach, new IProcesses.DoneStart() {
                         public void doneStart(IToken token, Exception error, ProcessContext process) {
                             if (error != null) {
                                 channel.terminate(error);
@@ -138,10 +138,11 @@ public class TCFLaunch extends Launch {
         }
     }
     
-    private String[] toArgsArray(String cmd) {
+    private String[] toArgsArray(String file, String cmd) {
         int i = 0;
         int l = cmd.length();
         List<String> arr = new ArrayList<String>();
+        arr.add(file);
         for (;;) {
             while (i < l && cmd.charAt(i) == ' ') i++;
             if (i >= l) break;
@@ -174,6 +175,8 @@ public class TCFLaunch extends Launch {
         for (Iterator<Listener> i = listeners.iterator(); i.hasNext();) {
             i.next().onDisconnected(this);
         }
+        if (error != null) setError(error);
+        else fireChanged();
         if (DebugPlugin.getDefault() != null) fireTerminate();
     }
 

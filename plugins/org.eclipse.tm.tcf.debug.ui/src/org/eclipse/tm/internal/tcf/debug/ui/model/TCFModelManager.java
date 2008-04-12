@@ -103,9 +103,11 @@ public class TCFModelManager {
         if (model == null) {
             model = new TCFModel(display, launch);
             models.put(launch, model);
-            IChannel channel = launch.getChannel();
-            if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
-                tcf_launch_listener.onConnected(launch);
+            if (!launch.isConnecting()) {
+                IChannel channel = launch.getChannel();
+                if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
+                    tcf_launch_listener.onConnected(launch);
+                }
             }
         }
         return model;

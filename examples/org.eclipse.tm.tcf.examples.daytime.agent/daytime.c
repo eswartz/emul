@@ -44,6 +44,8 @@ static void command_get_time_of_day(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     // Send back the command token
     write_stringz(&c->out, token);
+    // Send error report, for now always "no error"
+    write_errno(&c->out, 0);
     // Send reply data
     json_write_string(&c->out, res);
     // JSON encoded data should end with zero byte

@@ -295,6 +295,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     void onConnected() {
         assert Protocol.isDispatchThread();
+        assert launch_node == null;
         launch_node = new TCFNodeLaunch(this);
         IMemory mem = launch.getService(IMemory.class);
         if (mem != null) mem.addListener(mem_listener);
@@ -312,8 +313,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         for (int i = 0; i < a.length; i++) {
             if (!a[i].isDisposed()) a[i].dispose();
         }
-        launch_node.makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-        fireModelChanged();
+        if (launch_node != null) {
+            launch_node.makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+            fireModelChanged();
+        }
     }
 
     void onProxyInstalled(final TCFModelProxy p) {

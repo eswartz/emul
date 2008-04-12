@@ -85,6 +85,7 @@ public class TCFFileResource extends AbstractResource implements IHostFile {
     }
 
     public synchronized String getParentPath() {
+        if (root) return null;
         return toLocalPath(parent);
     }
 

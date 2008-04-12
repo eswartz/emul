@@ -333,8 +333,7 @@ class TCFSelfTest {
                 assert this.context_id == null;
                 this.context_id = context_id;
                 if (pending_cancel != null) {
-                    Protocol.invokeLater(pending_cancel);
-                    pending_cancel = null;
+                    exit(null);
                 }
                 else {
                     diag.getSymbol(context_id, "tcf_test_func0", this);
