@@ -26,9 +26,8 @@
 #include "trace.h"
 #include "peer.h"
 #include "ip_ifc.h"
+#include "asyncreq.h"
 
-#define MAX_PENDING_INFO_REQ    10
-#define MAX_PENDING_INFO_ACK    10
 #define MAX_IFC                 10
 
 #define REFRESH_TIME            10
@@ -48,12 +47,11 @@ static int ifcind;
 static ip_ifc_info ifclist[MAX_IFC];
 static int refresh_timer_active;
 static time_t last_refresh_time;
-static int pending_info_req;
-static int pending_info_ack;
 static int discovery_port;
 static int udp_server_socket = -1;
-static pthread_t udp_server_thread = 0;
-static pthread_mutex_t udp_discovery_mutex;
+static AsyncReqInfo recvreq;
+static receive_message msg;
+static int recv_pending;
 
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 
@@ -73,6 +71,16 @@ static void app_str(char * buf, int * pos, char * str) {
 static void app_strz(char * buf, int * pos, char * str) {
     app_str(buf, pos, str);
     app_char(buf, pos, 0);
+}
+
+static void trigger_recv(void) {
+    if (recv_pending || udp_server_socket < 0) return;
+    recv_pending = 1;
+    recvreq.u.sio.bufp = msg.buf;
+    recvreq.u.sio.bufsz = sizeof msg.buf;
+    recvreq.u.sio.addr = (struct sockaddr *)&msg.addr;
+    recvreq.u.sio.addrlen = sizeof msg.addr;
+    async_req_post(&recvreq);
 }
 
 static int udp_send_peer_sever(PeerServer * ps, void * arg) {
@@ -240,11 +248,7 @@ static void udp_receive_req(void * arg) {
     receive_message * m = arg;
 
     udp_send_ack(&m->addr);
-    loc_free(m);
-
-    check_error(pthread_mutex_lock(&udp_discovery_mutex));
-    pending_info_req--;
-    check_error(pthread_mutex_unlock(&udp_discovery_mutex));
+    trigger_recv();
 }
 
 static int is_remote_host(struct in_addr inaddr) {
@@ -292,46 +296,34 @@ static void udp_receive_ack(void * arg) {
         trace(LOG_ALWAYS, "Received malformed UDP ACK packet");
         peer_server_free(ps);
     }
-    loc_free(m);
-
-    check_error(pthread_mutex_lock(&udp_discovery_mutex));
-    pending_info_ack--;
-    check_error(pthread_mutex_unlock(&udp_discovery_mutex));
+    trigger_recv();
 }
 
-static void * udp_server_socket_handler(void * x) {
-    post_event(udp_refresh_info, NULL);
-    for (;;) {
-        receive_message * m = loc_alloc(sizeof *m);
-        memset(&m->addr, 0, sizeof m->addr);
-        m->addr_len = sizeof m->addr;
-        m->buf_len = recvfrom(udp_server_socket, m->buf, sizeof m->buf, 0,
-                              (struct sockaddr *)&m->addr, &m->addr_len);
-        if (m->buf_len < 0) {
-            trace(LOG_ALWAYS, "UDP socket receive failed: %s", errno_to_str(errno));
-            continue;
-        }
-        if (m->buf_len < 8 || strncmp(m->buf, "TCF1", 4) != 0) {
-            trace(LOG_ALWAYS, "Received malformed UDP packet");
-            continue;
-        }
-        check_error(pthread_mutex_lock(&udp_discovery_mutex));
-        if (m->buf[4] == UDP_REQ_INFO &&
-            pending_info_req < MAX_PENDING_INFO_REQ &&
-            is_remote_host(m->addr.sin_addr)) {
-            pending_info_req++;
-            post_event(udp_receive_req, m);
-        }
-        else if (m->buf[4] == UDP_ACK_INFO && pending_info_ack < MAX_PENDING_INFO_ACK) {
-            pending_info_ack++;
-            post_event(udp_receive_ack, m);
-        }
-        else {
-            loc_free(m);
-        }
-        check_error(pthread_mutex_unlock(&udp_discovery_mutex));
+static void udp_server_recv(void * x) {
+    receive_message * m = &msg;
+
+    assert(recv_pending != 0);
+    recv_pending = 0;
+    if (recvreq.error != 0) {
+        trace(LOG_ALWAYS, "UDP socket receive failed: %s", errno_to_str(recvreq.error));
+        return;
     }
-    return NULL;
+    m->buf_len = recvreq.u.sio.rval;
+    m->addr_len = recvreq.u.sio.addrlen;
+    if (m->buf_len < 8 || strncmp(m->buf, "TCF1", 4) != 0) {
+        trace(LOG_ALWAYS, "Received malformed UDP packet");
+        trigger_recv();
+        return;
+    }
+    if (m->buf[4] == UDP_REQ_INFO && is_remote_host(m->addr.sin_addr)) {
+        post_event(udp_receive_req, m);
+    }
+    else if (m->buf[4] == UDP_ACK_INFO) {
+        post_event(udp_receive_ack, m);
+    }
+    else {
+        trigger_recv();
+    }
 }
 
 static void local_server_change(PeerServer * ps, int changeType, void * arg) {
@@ -351,7 +343,6 @@ int discovery_udp_server(const char * port) {
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;
 
-    check_error(pthread_mutex_init(&udp_discovery_mutex, NULL));
     if (port == NULL) port = DISCOVERY_TCF_PORT;
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
@@ -397,8 +388,15 @@ int discovery_udp_server(const char * port) {
     loc_freeaddrinfo(reslist);
 
     udp_server_socket = sock;
-    ifcind = build_ifclist(udp_server_socket, MAX_IFC, ifclist);
-    check_error(pthread_create(&udp_server_thread, &pthread_create_attr, udp_server_socket_handler, 0));
+    ifcind = build_ifclist(sock, MAX_IFC, ifclist);
+
+    recvreq.done = udp_server_recv;
+    recvreq.client_data = NULL;
+    recvreq.type = AsyncReqRecvFrom;
+    recvreq.u.sio.sock = sock;
+    recvreq.u.sio.flags = 0;
+    trigger_recv();
+
     peer_server_add_listener(local_server_change, NULL);
     return 0;
 }

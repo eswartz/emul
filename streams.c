@@ -16,6 +16,16 @@
 #include "mdep.h"
 #include "streams.h"
 
+int (read_stream)(InputStream * inp) {
+    if (inp->cur < inp->end) return *inp->cur++;
+    return inp->read(inp);
+}
+
+int (peek_stream)(InputStream * inp) {
+    if (inp->cur < inp->end) return *inp->cur;
+    return inp->peek(inp);
+}
+
 void write_string(OutputStream * out, const char * str) {
     while (*str) out->write(out, (*str++) & 0xff);
 }

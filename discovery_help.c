@@ -86,6 +86,7 @@ void discovery_default_master_notifier(void) {
         trace(LOG_ALWAYS, "invalid discovery server URL\n");
         return;
     }
+    peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Discovery Master"));
     ps->flags |= PS_FLAG_PRIVATE;
     proto = protocol_alloc();
     ini_locator_service(proto);

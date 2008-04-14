@@ -40,22 +40,50 @@ static void * worker_thread_handler(void * x) {
         assert(req != NULL);
         req->error = 0;
         switch(req->type) {
-        case AsyncReqReadSock:          /* Read from socket */
-            req->u.sio.rval = recv(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, 0);
+        case AsyncReqRead:              /* File read */
+            req->u.fio.rval = read(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz);
+            if (req->u.fio.rval == -1) {
+                req->error = errno;
+            }
+            break;
+
+        case AsyncReqWrite:             /* File write */
+            req->u.fio.rval = write(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz);
+            if (req->u.fio.rval == -1) {
+                req->error = errno;
+            }
+            break;
+
+        case AsyncReqRecv:              /* Socket recv */
+            req->u.sio.rval = recv(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, req->u.sio.flags);
             if (req->u.sio.rval == -1) {
                 req->error = errno;
             }
             break;
 
-        case AsyncReqWriteSock:         /* Write to socket */
-            req->u.sio.rval = send(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, 0);
+        case AsyncReqSend:              /* Socket send */
+            req->u.sio.rval = send(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, req->u.sio.flags);
+            if (req->u.sio.rval == -1) {
+                req->error = errno;
+            }
+            break;
+
+        case AsyncReqRecvFrom:          /* Socket recvfrom */
+            req->u.sio.rval = recvfrom(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, req->u.sio.flags, req->u.sio.addr, &req->u.sio.addrlen);
+            if (req->u.sio.rval == -1) {
+                req->error = errno;
+            }
+            break;
+
+        case AsyncReqSendTo:            /* Socket sendto */
+            req->u.sio.rval = sendto(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, req->u.sio.flags, req->u.sio.addr, req->u.sio.addrlen);
             if (req->u.sio.rval == -1) {
                 req->error = errno;
             }
             break;
 
         case AsyncReqAccept:            /* Accept socket connections */
-            req->u.acc.rval = accept(req->u.acc.sock, req->u.acc.addr, req->u.acc.addrlen);
+            req->u.acc.rval = accept(req->u.acc.sock, req->u.acc.addr, req->u.acc.addr ? &req->u.acc.addrlen : NULL);
             if (req->u.acc.rval == -1) {
                 req->error = errno;
             }

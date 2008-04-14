@@ -34,10 +34,17 @@ struct OutputStream {
 typedef struct InputStream InputStream;
 
 struct InputStream {
+    unsigned char *cur;
+    unsigned char *end;
     int (*read)(InputStream * stream);
     int (*peek)(InputStream * stream);
 };
 
+#define read_stream(inp) (((inp)->cur < (inp)->end) ? *(inp)->cur++ : (inp)->read((inp)))
+#define peek_stream(inp) (((inp)->cur < (inp)->end) ? *(inp)->cur : (inp)->peek((inp)))
+
+extern int (read_stream)(InputStream * inp);
+extern int (peek_stream)(InputStream * inp);
 extern void write_string(OutputStream * out, const char * str);
 extern void write_stringz(OutputStream * out, const char * str);
 

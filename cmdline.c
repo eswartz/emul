@@ -137,7 +137,7 @@ static int print_peer_flags(PeerServer * ps) {
                 printf(", ");
             }
             cnt++;
-            printf("local");
+            printf(flagnames[i].name);
             flags &= ~flagnames[i].flag;
         }
     }
@@ -297,6 +297,7 @@ void ini_cmdline_handler(void) {
     /* Create thread to read cmd line */
     check_error(pthread_create(&interactive_thread, &pthread_create_attr, interactive_handler, 0));
 }
+
 
 
 

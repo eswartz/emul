@@ -19,8 +19,12 @@
 #include "link.h"
 
 enum {
-    AsyncReqReadSock,                   /* Read from socket */
-    AsyncReqWriteSock,                  /* Write to socket */
+    AsyncReqRead,                       /* File read */
+    AsyncReqWrite,                      /* File write */
+    AsyncReqRecv,                       /* Socket recv */
+    AsyncReqSend,                       /* Socket send */
+    AsyncReqRecvFrom,                   /* Socket recvfrom */
+    AsyncReqSendTo,                     /* Socket sendto */
     AsyncReqAccept,                     /* Accept socket connections */
     AsyncReqConnect,                    /* Connect to socket */
     AsyncReqWaitpid                     /* Wait for process change */
@@ -34,9 +38,25 @@ struct AsyncReqInfo {
     union {
         struct {
             /* In */
+            int fd;
+            void *bufp;
+            size_t bufsz;
+
+            /* Out */
+            size_t rval;
+        } fio;
+        struct {
+            /* In */
             int sock;
             void *bufp;
             size_t bufsz;
+            int flags;
+            struct sockaddr *addr;
+#if defined(_WRS_KERNEL)
+            int addrlen;
+#else       
+            socklen_t addrlen;
+#endif
 
             /* Out */
             size_t rval;
@@ -46,9 +66,9 @@ struct AsyncReqInfo {
             int sock;
             struct sockaddr *addr;
 #if defined(_WRS_KERNEL)
-            int *addrlen;
+            int addrlen;
 #else       
-            socklen_t *addrlen;
+            socklen_t addrlen;
 #endif
             
             /* Out */

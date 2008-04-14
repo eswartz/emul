@@ -235,6 +235,14 @@ SOURCE=.\filesystem.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\inputbuf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\inputbuf.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\ip_ifc.c
 # End Source File
 # Begin Source File
