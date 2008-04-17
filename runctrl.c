@@ -666,7 +666,7 @@ static void run_safe_events(void * arg) {
         }
         assert(is_all_stopped());
         safe_event_list = i->next;
-        // TODO: neeed to handle exceptions in "safe events"
+        /* TODO: neeed to handle exceptions in "safe events" */
         i->done(i->arg);
         loc_free(i);
         if ((int)arg != safe_event_generation) return;

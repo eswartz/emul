@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
+ * http://www.eclipse.org/legal/epl-v10.html
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
@@ -151,71 +151,71 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
             memset(buf, 0, sizeof(buf));
             if ((sz = read(f, buf, sizeof(buf))) > 0) {
                 char * str = buf;
-                int pid = 0;                // The process ID.
-                char * comm = fnm;          // The  filename  of  the  executable,  in parentheses.  This is visible
-                                            // whether or not the executable is swapped out.
-                char state = 0;             // One character from the string "RSDZTW"  where  R  is  running,  S  is
-                                            // sleeping  in  an  interruptible wait, D is waiting in uninterruptible
-                                            // disk sleep, Z is zombie, T is traced or stopped (on a signal), and  W
-                                            // is paging.
-                int ppid = 0;               // The PID of the parent.
-                int pgrp = 0;               // The process group ID of the process.
-                int session = 0;            // The session ID of the process.
-                int tty_nr = 0;             // The tty the process uses.
-                int tpgid = 0;              // The process group ID of the process which currently owns the tty that
-                                            // the process is connected to.
-                unsigned long flags = 0;    // The kernel flags word of the process. For bit meanings, see the  PF_*
-                                            // defines in <linux/sched.h>.  Details depend on the kernel version.
-                unsigned long minflt = 0;   // The  number  of  minor  faults  the  process  has made which have not
-                                            // required loading a memory page from disk.
-                unsigned long cminflt = 0;  // The number of minor faults that  the  process's  waited-for  children
-                                            // have made.
-                unsigned long majflt = 0;   // The  number  of major faults the process has made which have required
-                                            // loading a memory page from disk.
-                unsigned long cmajflt = 0;  // The number of major faults that  the  process's  waited-for  children
-                                            // have made.
-                unsigned long utime = 0;    // The  number  of  jiffies that this process has been scheduled in user
-                                            // mode.
-                unsigned long stime = 0;    // The number of jiffies that this process has been scheduled in  kernel
-                                            // mode.
-                long cutime = 0;            // The  number  of  jiffies that this process's waited-for children have
-                                            // been scheduled in user mode. (See also times(2).)
-                long cstime = 0;            // The number of jiffies that this process's  waited-for  children  have
-                                            // been scheduled in kernel mode.
-                long priority = 0;          // The  standard  nice value, plus fifteen.  The value is never negative
-                                            // in the kernel.
-                long nice = 0;              // The nice value ranges from 19 (nicest) to -19 (not nice to others).
-                long dummy = 0;             // This value is hard coded to 0 as a placeholder for a removed field.
-                long itrealvalue = 0;       // The time in jiffies before the next SIGALRM is sent  to  the  process
-                                            // due to an interval timer.
-                unsigned long starttime = 0;// The time in jiffies the process started after system boot.
-                unsigned long vsize = 0;    // Virtual memory size in bytes.
-                long rss = 0;               // Resident  Set  Size:  number of pages the process has in real memory,
-                                            // minus 3 for administrative purposes. This is  just  the  pages  which
-                                            // count  towards  text,  data,  or  stack space.  This does not include
-                                            // pages which have not been demand-loaded in, or which are swapped out.
-                unsigned long rlim = 0;     // Current  limit in bytes on the rss of the process (usually 4294967295
-                                            // on i386).
-                unsigned long startcode = 0;// The address above which program text can run.
-                unsigned long endcode = 0;  // The address below which program text can run.
-                unsigned long startstack =0;// The address of the start of the stack.
-                unsigned long kstkesp = 0;  // The current value of esp (stack pointer),  as  found  in  the  kernel
-                                            // stack page for the process.
-                unsigned long kstkeip = 0;  // The current EIP (instruction pointer).
-                unsigned long signal = 0;   // The bitmap of pending signals.
-                unsigned long blocked = 0;  // The bitmap of blocked signals.
-                unsigned long sigignore = 0;// The bitmap of ignored signals.
-                unsigned long sigcatch = 0; // The bitmap of caught signals.
-                unsigned long wchan = 0;    // This  is  the  "channel"  in which the process is waiting.  It is the
-                                            // address of a system call, and can be looked up in a namelist  if  you
-                                            // need  a  textual  name.   (If you have an up-to-date /etc/psdatabase,
-                                            // then try ps -l to see the WCHAN field in action.)
-                unsigned long nswap = 0;    // Number of pages swapped (not maintained).
-                unsigned long cnswap = 0;   // Cumulative nswap for child processes (not maintained).
-                int exit_signal = 0;        // Signal to be sent to parent when we die.
-                int processor = 0;          // CPU number last executed on.
-                unsigned long rt_priority=0;// Real-time scheduling priority (see sched_setscheduler(2)).
-                unsigned long policy = 0;   // Scheduling policy (see sched_setscheduler(2)).
+                int pid = 0;                /* The process ID. */
+                char * comm = fnm;          /* The  filename  of  the  executable,  in parentheses.  This is visible */
+                                            /* whether or not the executable is swapped out. */
+                char state = 0;             /* One character from the string "RSDZTW"  where  R  is  running,  S  is */
+                                            /* sleeping  in  an  interruptible wait, D is waiting in uninterruptible */
+                                            /* disk sleep, Z is zombie, T is traced or stopped (on a signal), and  W */
+                                            /* is paging. */
+                int ppid = 0;               /* The PID of the parent. */
+                int pgrp = 0;               /* The process group ID of the process. */
+                int session = 0;            /* The session ID of the process. */
+                int tty_nr = 0;             /* The tty the process uses. */
+                int tpgid = 0;              /* The process group ID of the process which currently owns the tty that */
+                                            /* the process is connected to. */
+                unsigned long flags = 0;    /* The kernel flags word of the process. For bit meanings, see the  PF_* */
+                                            /* defines in <linux/sched.h>.  Details depend on the kernel version. */
+                unsigned long minflt = 0;   /* The  number  of  minor  faults  the  process  has made which have not */
+                                            /* required loading a memory page from disk. */
+                unsigned long cminflt = 0;  /* The number of minor faults that  the  process's  waited-for  children */
+                                            /* have made. */
+                unsigned long majflt = 0;   /* The  number  of major faults the process has made which have required */
+                                            /* loading a memory page from disk. */
+                unsigned long cmajflt = 0;  /* The number of major faults that  the  process's  waited-for  children */
+                                            /* have made. */
+                unsigned long utime = 0;    /* The  number  of  jiffies that this process has been scheduled in user */
+                                            /* mode. */
+                unsigned long stime = 0;    /* The number of jiffies that this process has been scheduled in  kernel */
+                                            /* mode. */
+                long cutime = 0;            /* The  number  of  jiffies that this process's waited-for children have */
+                                            /* been scheduled in user mode. (See also times(2).) */
+                long cstime = 0;            /* The number of jiffies that this process's  waited-for  children  have */
+                                            /* been scheduled in kernel mode. */
+                long priority = 0;          /* The  standard  nice value, plus fifteen.  The value is never negative */
+                                            /* in the kernel. */
+                long nice = 0;              /* The nice value ranges from 19 (nicest) to -19 (not nice to others). */
+                long dummy = 0;             /* This value is hard coded to 0 as a placeholder for a removed field. */
+                long itrealvalue = 0;       /* The time in jiffies before the next SIGALRM is sent  to  the  process */
+                                            /* due to an interval timer. */
+                unsigned long starttime = 0;/* The time in jiffies the process started after system boot. */
+                unsigned long vsize = 0;    /* Virtual memory size in bytes. */
+                long rss = 0;               /* Resident  Set  Size:  number of pages the process has in real memory, */
+                                            /* minus 3 for administrative purposes. This is  just  the  pages  which */
+                                            /* count  towards  text,  data,  or  stack space.  This does not include */
+                                            /* pages which have not been demand-loaded in, or which are swapped out. */
+                unsigned long rlim = 0;     /* Current  limit in bytes on the rss of the process (usually 4294967295 */
+                                            /* on i386). */
+                unsigned long startcode = 0;/* The address above which program text can run. */
+                unsigned long endcode = 0;  /* The address below which program text can run. */
+                unsigned long startstack =0;/* The address of the start of the stack. */
+                unsigned long kstkesp = 0;  /* The current value of esp (stack pointer),  as  found  in  the  kernel */
+                                            /* stack page for the process. */
+                unsigned long kstkeip = 0;  /* The current EIP (instruction pointer). */
+                unsigned long signal = 0;   /* The bitmap of pending signals. */
+                unsigned long blocked = 0;  /* The bitmap of blocked signals. */
+                unsigned long sigignore = 0;/* The bitmap of ignored signals. */
+                unsigned long sigcatch = 0; /* The bitmap of caught signals. */
+                unsigned long wchan = 0;    /* This  is  the  "channel"  in which the process is waiting.  It is the */
+                                            /* address of a system call, and can be looked up in a namelist  if  you */
+                                            /* need  a  textual  name.   (If you have an up-to-date /etc/psdatabase, */
+                                            /* then try ps -l to see the WCHAN field in action.) */
+                unsigned long nswap = 0;    /* Number of pages swapped (not maintained). */
+                unsigned long cnswap = 0;   /* Cumulative nswap for child processes (not maintained). */
+                int exit_signal = 0;        /* Signal to be sent to parent when we die. */
+                int processor = 0;          /* CPU number last executed on. */
+                unsigned long rt_priority=0;/* Real-time scheduling priority (see sched_setscheduler(2)). */
+                unsigned long policy = 0;   /* Scheduling policy (see sched_setscheduler(2)). */
 
                 assert(sz < sizeof(buf));
                 buf[sz] = 0;

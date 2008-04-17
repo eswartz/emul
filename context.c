@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
+ * http://www.eclipse.org/legal/epl-v10.html
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
@@ -294,7 +294,7 @@ static char * win32_debug_event_name(int event) {
 }
 
 static void set_errno(DWORD win32_error_code) {
-    // TODO need better translation of WIN32 error codes to errno
+    /* TODO need better translation of WIN32 error codes to errno */
     errno = EINVAL;
 }
 
@@ -333,7 +333,7 @@ static void event_win32_context_stopped(void * arg) {
 
     if (SuspendThread(ctx->handle) == (DWORD)-1) {
         DWORD err = GetLastError();
-        if (err == ERROR_ACCESS_DENIED && event_code == 0) return; // Already exited
+        if (err == ERROR_ACCESS_DENIED && event_code == 0) return; /* Already exited */
         trace(LOG_ALWAYS, "Can't suspend thread: tid %d, error %d", ctx->pid, err);
     }
 
@@ -565,10 +565,10 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 state++;
             }
             else {
-                // This looks like a bug in Windows:
-                // 1. according to documentation, we should get only one CREATE_PROCESS_DEBUG_EVENT event.
-                // 2. if second CREATE_PROCESS_DEBUG_EVENT is handled immediately, debugee crashes.
-                // TODO: Second CREATE_PROCESS_DEBUG_EVENT - search for better workaround
+                /* This looks like a bug in Windows: */
+                /* 1. according to documentation, we should get only one CREATE_PROCESS_DEBUG_EVENT event. */
+                /* 2. if second CREATE_PROCESS_DEBUG_EVENT is handled immediately, debugee crashes. */
+                /* TODO: Second CREATE_PROCESS_DEBUG_EVENT - search for better workaround */
                 loader = debug_event->dwThreadId;
                 CloseHandle(debug_event->u.CreateProcessInfo.hFile);
                 ResumeThread(create_process.event.u.CreateProcessInfo.hThread);
@@ -1043,7 +1043,7 @@ static void event_handler(void * arg) {
         stopped_ctx->event = 0;
         stopped_ctx->stopped_by_bp = info->bp_info_ok;
         if (stopped_ctx->stopped_by_bp && !is_breakpoint_address(stopped_ctx, get_regs_PC(stopped_ctx->regs))) {
-            // Break instruction that is not planted by us
+            /* Break instruction that is not planted by us */
             stopped_ctx->stopped_by_bp = 0;
             stopped_ctx->pending_intercept = 1;
         }
@@ -1467,7 +1467,7 @@ int context_write_mem(Context * ctx, unsigned long address, void * buf, size_t s
         }
         for (i = 0; i < WORD_SIZE; i++) {
             if (word_addr + i >= address && word_addr + i < address + size) {
-                // TODO: big endian support
+                /* TODO: big endian support */
                 ((unsigned char *)&word)[i] = ((unsigned char *)buf)[word_addr + i - address];
             }
         }
@@ -1502,7 +1502,7 @@ int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t si
         }
         for (i = 0; i < WORD_SIZE; i++) {
             if (word_addr + i >= address && word_addr + i < address + size) {
-                // TODO: big endian support
+                /* TODO: big endian support */
                 ((unsigned char *)buf)[word_addr + i - address] = ((unsigned char *)&word)[i];
             }
         }

@@ -176,7 +176,7 @@ static void command_get_children(char * token, Channel * c) {
         CloseHandle(snapshot);
     }
     if (err) {
-        // TODO need better translation of WIN32 error codes to errno
+        /* TODO need better translation of WIN32 error codes to errno */
         write_errno(&c->out, EINVAL);
         write_stringz(&c->out, "null");
     }
@@ -307,7 +307,7 @@ static void command_attach(char * token, Channel * c) {
 }
 
 static void command_detach(char * token, Channel * c) {
-    // TODO: implement command_detach()
+    /* TODO: implement command_detach() */
     exception(ERR_PROTOCOL);
 }
 
@@ -501,7 +501,7 @@ static void command_start(char * token, Channel * c) {
                 assert(err != 0);
             }
             else {
-                // TODO: arguments, environment
+                /* TODO: arguments, environment */
                 pid = taskCreate("tTcf", 100, 0, 0x4000, (FUNCPTR)ptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
                 if (attach) {
                     taskStop(pid);

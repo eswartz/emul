@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
+ * http://www.eclipse.org/legal/epl-v10.html
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
@@ -285,7 +285,7 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
         U4_T unit_size = 0;
         LineNumbersState state;
         
-        // Read header
+        /* Read header */
         unit_size = dio_ReadU4();
         if (unit_size == 0xffffffffu) {
             str_exception(ERR_DWARF, "64-bit DWARF is not supported yet");
@@ -304,14 +304,14 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
         memset(opcode_size, 0, sizeof(opcode_size));
         dio_Read(opcode_size + 1, opcode_base - 1);
 
-        // Read directory names
+        /* Read directory names */
         for (;;) {
             char * name = dio_ReadString();
             if (name == NULL) break;
             add_dir(unit, name);
         }
 
-        // Read source files info
+        /* Read source files info */
         for (;;) {
             U4_T dir = 0;
             FileInfo file;
@@ -325,7 +325,7 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
             add_file(unit, &file);
         }
 
-        // Run the program
+        /* Run the program */
         if (header_pos + header_size != dio_GetPos())
             str_exception(ERR_DWARF, "Invalid line info header");
         memset(&state, 0, sizeof(state));
@@ -436,7 +436,7 @@ static CompUnit * find_unit(LineNumbersCache * cache, ADDR_T addr0, ADDR_T addr1
     U4_T i;
     CompUnit * unit = NULL;
     ADDR_T low_pc = 0;
-    // TODO: faster unit search
+    /* TODO: faster unit search */
     for (i = 0; i < cache->units_cnt; i++) {
         CompUnit * u = cache->units + i;
         if (u->debug_ranges_offs != ~(U8_T)0) {

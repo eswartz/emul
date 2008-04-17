@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
+ * http://www.eclipse.org/legal/epl-v10.html
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
@@ -20,8 +20,8 @@
 #include "config.h"
 #if SERVICE_Breakpoints
 
-// TODO: breakpoint status reports
-// TODO: replant breakpoints when shared lib is loaded or unloaded
+/* TODO: breakpoint status reports */
+/* TODO: replant breakpoints when shared lib is loaded or unloaded */
 
 #include <stdlib.h>
 #include <string.h>
@@ -306,7 +306,7 @@ static int address_expression_identifier(char * name, Value * v) {
 }
 
 static void address_expression_error(BreakpointInfo * bp, char * msg) {
-    // TODO: per-context address expression error report
+    /* TODO: per-context address expression error report */
     int size;
     assert(errno != 0);
     if (bp->error) return;
@@ -640,17 +640,17 @@ static void command_ini_bps(char * token, Channel * c) {
 }
 
 static void command_get_bp_ids(char * token, Channel * c) {
-    // TODO: implement command_get_bp_ids()
+    /* TODO: implement command_get_bp_ids() */
     exception(ERR_PROTOCOL);
 }
 
 static void command_get_properties(char * token, Channel * c) {
-    // TODO: implement command_get_properties()
+    /* TODO: implement command_get_properties() */
     exception(ERR_PROTOCOL);
 }
 
 static void command_get_status(char * token, Channel * c) {
-    // TODO: implement command_get_status()
+    /* TODO: implement command_get_status() */
     exception(ERR_PROTOCOL);
 }
 

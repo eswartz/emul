@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
+ * http://www.eclipse.org/legal/epl-v10.html
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
@@ -99,7 +99,7 @@ static int udp_send_peer_sever(PeerServer * ps, void * arg) {
     if (strcmp(transport, "TCP") != 0 && strcmp(transport, "UDP") != 0) return 0;
     host = peer_server_getprop(ps, "Host", NULL);
 #ifdef _WRS_KERNEL
-    // VxWorks inet_aton() return codes are opposite to standard
+    /* VxWorks inet_aton() return codes are opposite to standard */
     if (host == NULL || inet_aton(host, &src_addr) != OK) return 0;
 #else
     if (host == NULL || inet_aton(host, &src_addr) == 0) return 0;

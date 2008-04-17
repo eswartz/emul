@@ -208,7 +208,7 @@ int main(int argc, char ** argv) {
             peer_server_addprop(ps, loc_strdup("Port"), loc_strdup(DISCOVERY_TCF_PORT));
         }
         serv = channel_server(ps);
-        // TODO: replace 'ps' with actual peer object created for the server
+        /* TODO: replace 'ps' with actual peer object created for the server */
         if (strcmp(peer_server_getprop(ps, "TransportName", ""), "TCP") ||
                 strcmp(peer_server_getprop(ps, "Port", ""), DISCOVERY_TCF_PORT)) {
             became_discovery_master();

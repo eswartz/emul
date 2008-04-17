@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
+ * http://www.eclipse.org/legal/epl-v10.html
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
@@ -508,17 +508,17 @@ static void primary_expression(Value * v) {
 }
 
 static void postfix_expression(Value * v) {
-    // TODO: postfix_expression()
+    /* TODO: postfix_expression() */
     primary_expression(v);
 }
 
 static void unary_expression(Value * v) {
-    // TODO: unary_expression()
+    /* TODO: unary_expression() */
     postfix_expression(v);
 }
 
 static void cast_expression(Value * v) {
-    // TODO: cast_expression()
+    /* TODO: cast_expression() */
     unary_expression(v);
 }
 
@@ -787,7 +787,7 @@ static void conditional_expression(Value * v) {
 }
 
 static void expression(Value * v) {
-    // TODO: assignments in expressions
+    /* TODO: assignments in expressions */
     conditional_expression(v);
 }
 

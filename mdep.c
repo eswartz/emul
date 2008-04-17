@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
+ * http://www.eclipse.org/legal/epl-v10.html
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
@@ -93,32 +93,32 @@ int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex) {
     p->waiters_count++;
     LeaveCriticalSection(&p->waiters_count_lock);
 
-    // This call atomically releases the mutex and waits on the
-    // semaphore until <pthread_cond_signal> or <pthread_cond_broadcast>
-    // are called by another thread.
+    /* This call atomically releases the mutex and waits on the */
+    /* semaphore until <pthread_cond_signal> or <pthread_cond_broadcast> */
+    /* are called by another thread. */
     res = SignalObjectAndWait(*mutex, p->sema, INFINITE, FALSE);
 
-    // Reacquire lock to avoid race conditions.
+    /* Reacquire lock to avoid race conditions. */
     EnterCriticalSection(&p->waiters_count_lock);
 
-    // We're no longer waiting...
+    /* We're no longer waiting... */
     p->waiters_count--;
 
-    // Check to see if we're the last waiter after <pthread_cond_broadcast>.
+    /* Check to see if we're the last waiter after <pthread_cond_broadcast>. */
     last_waiter = p->was_broadcast && p->waiters_count == 0;
 
     LeaveCriticalSection(&p->waiters_count_lock);
 
-    // If we're the last waiter thread during this particular broadcast
-    // then let all the other threads proceed.
+    /* If we're the last waiter thread during this particular broadcast */
+    /* then let all the other threads proceed. */
     if (last_waiter) {
-        // This call atomically signals the <waiters_done_> event and waits until
-        // it can acquire the <mutex>.  This is required to ensure fairness. 
+        /* This call atomically signals the <waiters_done_> event and waits until */
+        /* it can acquire the <mutex>.  This is required to ensure fairness.  */
         SignalObjectAndWait(p->waiters_done, *mutex, INFINITE, FALSE);
     }
     else {
-        // Always regain the external mutex since that's the guarantee we
-        // give to our callers. 
+        /* Always regain the external mutex since that's the guarantee we */
+        /* give to our callers.  */
         WaitForSingleObject(*mutex, INFINITE);
     }
     assert(res == WAIT_OBJECT_0);
@@ -134,32 +134,32 @@ int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const
     p->waiters_count++;
     LeaveCriticalSection(&p->waiters_count_lock);
 
-    // This call atomically releases the mutex and waits on the
-    // semaphore until <pthread_cond_signal> or <pthread_cond_broadcast>
-    // are called by another thread.
+    /* This call atomically releases the mutex and waits on the */
+    /* semaphore until <pthread_cond_signal> or <pthread_cond_broadcast> */
+    /* are called by another thread. */
     res = SignalObjectAndWait(*mutex, p->sema, timeout->tv_sec * 1000 + timeout->tv_nsec / 1000000, FALSE);
 
-    // Reacquire lock to avoid race conditions.
+    /* Reacquire lock to avoid race conditions. */
     EnterCriticalSection(&p->waiters_count_lock);
 
-    // We're no longer waiting...
+    /* We're no longer waiting... */
     p->waiters_count--;
 
-    // Check to see if we're the last waiter after <pthread_cond_broadcast>.
+    /* Check to see if we're the last waiter after <pthread_cond_broadcast>. */
     last_waiter = p->was_broadcast && p->waiters_count == 0;
 
     LeaveCriticalSection(&p->waiters_count_lock);
 
-    // If we're the last waiter thread during this particular broadcast
-    // then let all the other threads proceed.
+    /* If we're the last waiter thread during this particular broadcast */
+    /* then let all the other threads proceed. */
     if (last_waiter) {
-        // This call atomically signals the <waiters_done> event and waits until
-        // it can acquire the <mutex>.  This is required to ensure fairness. 
+        /* This call atomically signals the <waiters_done> event and waits until */
+        /* it can acquire the <mutex>.  This is required to ensure fairness.  */
         SignalObjectAndWait(p->waiters_done, *mutex, INFINITE, FALSE);
     }
     else {
-        // Always regain the external mutex since that's the guarantee we
-        // give to our callers. 
+        /* Always regain the external mutex since that's the guarantee we */
+        /* give to our callers.  */
         WaitForSingleObject(*mutex, INFINITE);
     }
 
@@ -176,7 +176,7 @@ int pthread_cond_signal(pthread_cond_t * cond) {
     have_waiters = p->waiters_count > 0;
     LeaveCriticalSection(&p->waiters_count_lock);
 
-    // If there aren't any waiters, then this is a no-op.  
+    /* If there aren't any waiters, then this is a no-op.   */
     if (have_waiters) ReleaseSemaphore(p->sema, 1, 0);
     return 0;
 }
@@ -185,29 +185,29 @@ int pthread_cond_broadcast(pthread_cond_t * cond) {
     int have_waiters = 0;
     PThreadCond * p = (PThreadCond *)*cond;
 
-    // This is needed to ensure that <waiters_count_> and <was_broadcast_> are
-    // consistent relative to each other.
+    /* This is needed to ensure that <waiters_count_> and <was_broadcast_> are */
+    /* consistent relative to each other. */
     EnterCriticalSection(&p->waiters_count_lock);
 
     if (p->waiters_count > 0) {
-        // We are broadcasting, even if there is just one waiter...
-        // Record that we are broadcasting, which helps optimize
-        // <pthread_cond_wait> for the non-broadcast case.
+        /* We are broadcasting, even if there is just one waiter... */
+        /* Record that we are broadcasting, which helps optimize */
+        /* <pthread_cond_wait> for the non-broadcast case. */
         p->was_broadcast = 1;
         have_waiters = 1;
     }
 
     if (have_waiters) {
-        // Wake up all the waiters atomically.
+        /* Wake up all the waiters atomically. */
         ReleaseSemaphore(p->sema, p->waiters_count, 0);
 
         LeaveCriticalSection(&p->waiters_count_lock);
 
-        // Wait for all the awakened threads to acquire the counting
-        // semaphore. 
+        /* Wait for all the awakened threads to acquire the counting */
+        /* semaphore.  */
         WaitForSingleObject(p->waiters_done, INFINITE);
-        // This assignment is okay, even without the <waiters_count_lock_> held 
-        // because no other waiter threads can wake up to access it.
+        /* This assignment is okay, even without the <waiters_count_lock_> held  */
+        /* because no other waiter threads can wake up to access it. */
         p->was_broadcast = 0;
     }
     else {
@@ -683,8 +683,8 @@ char * canonicalize_file_name(const char * path) {
 
 #if defined(_WRS_KERNEL) && defined(USE_VXWORKS_GETADDRINFO)
 
-// TODO: VxWorks 6.6 getaddrinfo returns error when port is empty string, should return port 0
-// TODO: VxWorks 6.6 source (as shipped at 2007 fall release) does not include ipcom header files.
+/* TODO: VxWorks 6.6 getaddrinfo returns error when port is empty string, should return port 0 */
+/* TODO: VxWorks 6.6 source (as shipped at 2007 fall release) does not include ipcom header files. */
 extern void ipcom_freeaddrinfo();
 extern int ipcom_getaddrinfo();
 

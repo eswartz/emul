@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
+ * http://www.eclipse.org/legal/epl-v10.html
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
@@ -298,7 +298,7 @@ static void safe_memory_set(void * parm) {
         int rd = json_read_binary_data(&state, buf, sizeof(buf));
         if (rd == 0) break;
         if (err == 0) {
-            // TODO: word size, mode
+            /* TODO: word size, mode */
             if (context_write_mem(ctx, addr, buf, rd) < 0) {
                 err = errno;
             }
@@ -361,7 +361,7 @@ static void safe_memory_get(void * parm) {
     while (err == 0 && addr < addr0 + size) {
         int rd = addr0 + size - addr;
         if (rd > BUF_SIZE) rd = BUF_SIZE;
-        // TODO: word size, mode
+        /* TODO: word size, mode */
         if (context_read_mem(ctx, addr, buf, rd) < 0) {
             err = errno;
         }
@@ -448,7 +448,7 @@ static void safe_memory_fill(void * parm) {
     while (err == 0 && addr < addr0 + size) {
         int wr = addr0 + size - addr;
         if (wr > buf_pos) wr = buf_pos;
-        // TODO: word size, mode
+        /* TODO: word size, mode */
         if (context_write_mem(ctx, addr, buf, wr) < 0) {
             err = errno;
         }

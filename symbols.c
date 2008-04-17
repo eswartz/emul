@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
+ * http://www.eclipse.org/legal/epl-v10.html
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
@@ -137,7 +137,7 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
     int error = 0;
 
 #if defined(WIN32)
-    // TODO symbols for WIN32
+    /* TODO symbols for WIN32 */
 
     extern void tcf_test_func0(void);
     extern void tcf_test_func1(void);
