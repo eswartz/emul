@@ -60,6 +60,8 @@ extern void write_err_msg(OutputStream * out, int err, char * msg);
 typedef struct JsonReadBinaryState {
     /* Private members */
     InputStream * inp;
+    unsigned rem;
+    char buf[3];
 } JsonReadBinaryState;
 
 extern void json_read_binary_start(JsonReadBinaryState * state, InputStream * inp);
@@ -69,7 +71,7 @@ extern void json_read_binary_end(JsonReadBinaryState * state);
 typedef struct JsonWriteBinaryState {
     /* Private members */
     OutputStream * out;
-    int rem;
+    unsigned rem;
     char buf[3];
 } JsonWriteBinaryState;
 

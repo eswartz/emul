@@ -43,6 +43,8 @@ struct InputStream {
 #define read_stream(inp) (((inp)->cur < (inp)->end) ? *(inp)->cur++ : (inp)->read((inp)))
 #define peek_stream(inp) (((inp)->cur < (inp)->end) ? *(inp)->cur : (inp)->peek((inp)))
 
+#define write_stream(out, b) (out)->write((out), (b))
+
 extern int (read_stream)(InputStream * inp);
 extern int (peek_stream)(InputStream * inp);
 extern void write_string(OutputStream * out, const char * str);

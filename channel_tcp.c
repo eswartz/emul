@@ -125,7 +125,7 @@ static int tcp_is_closed(Channel * c) {
     return channel->socket < 0;
 }
 
-static void flush_stream(OutputStream * out) {
+static void tcp_flush_stream(OutputStream * out) {
     int cnt = 0;
     ChannelTCP * channel = channel2tcp(out2channel(out));
     assert(is_dispatch_thread());
@@ -147,7 +147,7 @@ static void flush_stream(OutputStream * out) {
     channel->obuf_inp = 0;
 }
 
-static void write_stream(OutputStream * out, int byte) {
+static void tcp_write_stream(OutputStream * out, int byte) {
     ChannelTCP * channel = channel2tcp(out2channel(out));
     int b0 = byte;
     assert(is_dispatch_thread());
@@ -156,7 +156,7 @@ static void write_stream(OutputStream * out, int byte) {
     if (channel->out_errno) return;
     if (b0 < 0) byte = ESC;
     channel->obuf[channel->obuf_inp++] = byte;
-    if (channel->obuf_inp == BUF_SIZE) flush_stream(out);
+    if (channel->obuf_inp == BUF_SIZE) tcp_flush_stream(out);
     if (b0 < 0 || b0 == ESC) {
         if (b0 == ESC) byte = 0;
         else if (b0 == MARKER_EOM) byte = 1;
@@ -165,7 +165,7 @@ static void write_stream(OutputStream * out, int byte) {
         if (channel->socket < 0) return;
         if (channel->out_errno) return;
         channel->obuf[channel->obuf_inp++] = byte;
-        if (channel->obuf_inp == BUF_SIZE) flush_stream(out);
+        if (channel->obuf_inp == BUF_SIZE) tcp_flush_stream(out);
     }
 }
 
@@ -214,7 +214,7 @@ static void send_eof_and_close(Channel * channel, int err) {
     if (c->socket < 0) return;
     ibuf_flush(&c->ibuf, &c->chan.inp);
     ibuf_read_done(&c->ibuf, 0);      /* EOF */
-    write_stream(&c->chan.out, MARKER_EOS);
+    tcp_write_stream(&c->chan.out, MARKER_EOS);
     write_errno(&c->chan.out, err);
     c->chan.out.write(&c->chan.out, MARKER_EOM);
     c->chan.out.flush(&c->chan.out);
@@ -354,8 +354,8 @@ static ChannelTCP * create_channel(int sock) {
     c->magic = CHANNEL_MAGIC;
     c->chan.inp.read = tcp_read_stream;
     c->chan.inp.peek = tcp_peek_stream;
-    c->chan.out.write = write_stream;
-    c->chan.out.flush = flush_stream;
+    c->chan.out.write = tcp_write_stream;
+    c->chan.out.flush = tcp_flush_stream;
     c->chan.start_comm = start_channel;
     c->chan.check_pending = channel_check_pending;
     c->chan.message_count = channel_get_message_count;

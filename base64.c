@@ -58,23 +58,23 @@ int write_base64(OutputStream * out, const char * buf0, int len) {
 
     while (pos < len) {
         int byte0 = buf[pos++];
-        out->write(out, int2char[byte0 >> 2]);
+        write_stream(out, int2char[byte0 >> 2]);
         if (pos == len) {
-            out->write(out, int2char[(byte0 << 4) & 0x3f]);
-            out->write(out, '=');
-            out->write(out, '=');
+            write_stream(out, int2char[(byte0 << 4) & 0x3f]);
+            write_stream(out, '=');
+            write_stream(out, '=');
         }
         else {
             int byte1 = buf[pos++];
-            out->write(out, int2char[(byte0 << 4) & 0x3f | (byte1 >> 4)]);
+            write_stream(out, int2char[(byte0 << 4) & 0x3f | (byte1 >> 4)]);
             if (pos == len) {
-                out->write(out, int2char[(byte1 << 2) & 0x3f]);
-                out->write(out, '=');
+                write_stream(out, int2char[(byte1 << 2) & 0x3f]);
+                write_stream(out, '=');
             }
             else {
                 int byte2 = buf[pos++];
-                out->write(out, int2char[(byte1 << 2) & 0x3f | (byte2 >> 6)]);
-                out->write(out, int2char[byte2 & 0x3f]);
+                write_stream(out, int2char[(byte1 << 2) & 0x3f | (byte2 >> 6)]);
+                write_stream(out, int2char[byte2 & 0x3f]);
             }
         }
     }
@@ -86,16 +86,17 @@ int read_base64(InputStream * inp, char * buf, int buf_size) {
     int pos = 0;
     int ch_max = sizeof(char2int) / sizeof(int);
 
+    assert(buf_size >= 3);
     while (pos + 3 <= buf_size) {
         int n0, n1, n2, n3;
         int ch0, ch1, ch2, ch3;
 
-        ch0 = inp->peek(inp);
+        ch0 = peek_stream(inp);
         if (ch0 < 0 || ch0 >= ch_max || (n0 = char2int[ch0]) < 0) break;
-        inp->read(inp);
-        ch1 = inp->read(inp);
-        ch2 = inp->read(inp);
-        ch3 = inp->read(inp);
+        read_stream(inp);
+        ch1 = read_stream(inp);
+        ch2 = read_stream(inp);
+        ch3 = read_stream(inp);
         if (ch1 < 0 || ch1 >= ch_max || (n1 = char2int[ch1]) < 0) exception(ERR_BASE64);
         buf[pos++] = (char)((n0 << 2) | (n1 >> 4));
         if (ch2 == '=') break;

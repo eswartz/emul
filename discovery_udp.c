@@ -135,7 +135,8 @@ static int udp_send_peer_sever(PeerServer * ps, void * arg) {
         else {
             dst_addr = addr;
         }
-        trace(LOG_DISCOVERY, "udp_send_peer_sever: sending UDP_ACK_INFO, ID=%s:%s:%s, dst=%s", transport, host, port, inet_ntoa(dst_addr->sin_addr));
+        trace(LOG_DISCOVERY, "sending UDP_ACK_INFO to %s:%d",
+            inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port));
 
         buf[pos++] = 'T';
         buf[pos++] = 'C';
@@ -188,13 +189,9 @@ static void udp_send_ack(struct sockaddr_in * addr) {
 static void udp_send_req(void) {
     int i = 0;
     char buf[PKT_SIZE];
-    struct sockaddr_in dst_addr;
+    ip_ifc_info * ifc;
 
-    trace(LOG_DISCOVERY, "udp_send_req: sending UDP_REQ_INFO");
-    memset(&dst_addr, 0, sizeof dst_addr);
-    dst_addr.sin_family = AF_INET;
-    dst_addr.sin_port = htons((short)discovery_port);
-    dst_addr.sin_addr.s_addr = INADDR_BROADCAST;
+    trace(LOG_DISCOVERY, "sending UDP_REQ_INFO");
 
     buf[i++] = 'T';
     buf[i++] = 'C';
@@ -204,9 +201,17 @@ static void udp_send_req(void) {
     buf[i++] = 0;
     buf[i++] = 0;
     buf[i++] = 0;
-    if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)&dst_addr, sizeof dst_addr) < 0) {
-        trace(LOG_ALWAYS, "Can't send UDP discovery request packet to %s: %s",
-              inet_ntoa(dst_addr.sin_addr), errno_to_str(errno));
+
+    for (ifc = ifclist; ifc < &ifclist[ifcind]; ifc++) {
+        struct sockaddr_in dst_addr;
+        memset(&dst_addr, 0, sizeof dst_addr);
+        dst_addr.sin_family = AF_INET;
+        dst_addr.sin_port = htons((short)discovery_port);
+        dst_addr.sin_addr.s_addr = ifc->addr | ~ifc->mask;
+        if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)&dst_addr, sizeof dst_addr) < 0) {
+            trace(LOG_ALWAYS, "Can't send UDP discovery request packet to %s: %s",
+                  inet_ntoa(dst_addr.sin_addr), errno_to_str(errno));
+        }
     }
 }
 
@@ -216,13 +221,14 @@ static void udp_refresh_info(void * arg) {
     int delta;
 
     assert(is_dispatch_thread());
-    trace(LOG_DISCOVERY, "udp_refresh_info, implcit %d, active %d, timenow %ld, last_refresh_time %ld", implcit_refresh, refresh_timer_active, timenow, last_refresh_time);
+    trace(LOG_DISCOVERY, "udp_refresh_info, implcit %d, active %d, timenow %ld, last_refresh_time %ld",
+        implcit_refresh, refresh_timer_active, timenow, last_refresh_time);
     if (implcit_refresh) {
         assert(refresh_timer_active);
         if ((delta = timenow - last_refresh_time) < REFRESH_TIME) {
             /* Recent explicit refresh - wait a little longer */
             assert(delta > 0);
-            post_event_with_delay(udp_refresh_info, (void *)1, (REFRESH_TIME - delta)*1000*1000);
+            post_event_with_delay(udp_refresh_info, (void *)1, (REFRESH_TIME - delta) * 1000000);
             return;
         }
         refresh_timer_active = 0;
@@ -240,13 +246,14 @@ static void udp_refresh_info(void * arg) {
     last_refresh_time = timenow;
     if (!refresh_timer_active) {
         refresh_timer_active = 1;
-        post_event_with_delay(udp_refresh_info, (void *)1, REFRESH_TIME*1000*1000);
+        post_event_with_delay(udp_refresh_info, (void *)1, REFRESH_TIME * 1000000);
     }
 }
 
 static void udp_receive_req(void * arg) {
     receive_message * m = arg;
 
+    trace(LOG_DISCOVERY, "received UDP_REQ_INFO from %s", inet_ntoa(m->addr.sin_addr));
     udp_send_ack(&m->addr);
     trigger_recv();
 }
@@ -288,7 +295,7 @@ static void udp_receive_ack(void * arg) {
         p++;
     }
     if (p != NULL && ps->id != NULL) {
-        trace(LOG_DISCOVERY, "udp_receive_ack: received UDP_ACK_INFO, ID=%s", ps->id);
+        trace(LOG_DISCOVERY, "received UDP_ACK_INFO, ID=%s", ps->id);
         ps->flags |= PS_FLAG_DISCOVERABLE;
         peer_server_add(ps, STALE_TIME_DELTA);
     }
@@ -316,10 +323,10 @@ static void udp_server_recv(void * x) {
         return;
     }
     if (m->buf[4] == UDP_REQ_INFO && is_remote_host(m->addr.sin_addr)) {
-        post_event(udp_receive_req, m);
+        udp_receive_req(m);
     }
     else if (m->buf[4] == UDP_ACK_INFO) {
-        post_event(udp_receive_ack, m);
+        udp_receive_ack(m);
     }
     else {
         trigger_recv();
@@ -398,5 +405,6 @@ int discovery_udp_server(const char * port) {
     trigger_recv();
 
     peer_server_add_listener(local_server_change, NULL);
+    udp_refresh_info(NULL);
     return 0;
 }
