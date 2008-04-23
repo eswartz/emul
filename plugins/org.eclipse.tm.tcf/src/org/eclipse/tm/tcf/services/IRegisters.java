@@ -258,6 +258,43 @@ public interface IRegisters extends IService {
     }
     
     /**
+     * Read values of multiple locations in registers.
+     * @param locs - array of data locations.
+     * @param done - call back object.
+     * @return - pending command handle.
+     */
+    IToken getm(Location[] locs, DoneGet done);
+    
+    /**
+     * Set values of multiple locations in registers.
+     * @param locs - array of data locations.
+     * @param value - value to write into the context.
+     * @param done - call back object.
+     * @return - pending command handle.
+     */
+    IToken setm(Location[] locs, byte[] value, DoneSet done);
+
+    /**
+     * Class Location represents value location in register context
+     */
+    final class Location {
+        /** Register context ID */
+        public final String id; 
+
+        /** offset in the context, in bytes */
+        public final int offs;
+
+        /** value size in byte */
+        public final int size;
+
+        public Location(String id, int offs, int size) {
+            this.id = id;
+            this.offs = offs;
+            this.size = size;
+        }
+    }
+
+    /**
      * 'get' command call back interface.
      */
     interface DoneGet {

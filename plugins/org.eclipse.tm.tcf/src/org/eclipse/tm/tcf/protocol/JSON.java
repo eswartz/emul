@@ -30,9 +30,28 @@ import org.eclipse.tm.internal.tcf.core.ReadOnlyMap;
 
 /**
  * JSON is TCF preferred marshaling. This class implements generation and parsing of JSON strings.
- * The code is optimized for speed since it is a time-critical part of the framework. 
+ * The code is optimized for speed since it is a time-critical part of the framework.
+ *
+ * Reading of JSON produces data structure that consists of objects of these classes:
+ * Boolean, Number, String, Collection, Map.
+ * 
+ * Writing of JSON is supported for:
+ * Boolean, Number, String, char[], byte[], Object[], Collection, Map
+ * 
+ * Clients can enable writing support for objects of a other classes by
+ * registering ObjectWriter interface implementation.
  */
 public class JSON {
+    
+    /**
+     * Clients implement ObjectWriter interface when they want to enable marshaling of
+     * object classes that are not directly supported by JSON library.
+     */
+    public interface ObjectWriter {
+        void write(Object o) throws IOException;
+    }
+    
+    private static final Map<Class<?>,ObjectWriter> object_writers = new HashMap<Class<?>,ObjectWriter>(); 
     
     private static char[] tmp_buf = new char[0x1000];
     private static byte[] tmp_bbf = new byte[0x1000];
@@ -48,8 +67,22 @@ public class JSON {
     private static final char[] err_buf = new char[100];
     private static int err_buf_pos;
     private static int err_buf_cnt;
+    
+    /**
+     * Add a handler for converting objects of a particular class into JSON.
+     * @param cls - a class
+     * @param writer - ObjectWriter implementation that provides generation of JSON for a given class.
+     */
+    public static void addObjectWriter(Class<?> cls, ObjectWriter writer) {
+        object_writers.put(cls, writer);
+    }
 
-    private static void write(char ch) {
+    /**
+     * Write a character into JSON output buffer.
+     * Clients should not call this method directly, except from ObjectWriter implementation.
+     * @param ch
+     */
+    public static void write(char ch) {
         if (tmp_buf_pos >= tmp_buf.length) {
             char[] tmp = new char[tmp_buf.length * 2];
             System.arraycopy(tmp_buf, 0, tmp, 0, tmp_buf_pos);
@@ -58,7 +91,13 @@ public class JSON {
         tmp_buf[tmp_buf_pos++] = ch;
     }
     
-    private static void write(String s) {
+    /**
+     * Write a string into JSON output buffer.
+     * The string is written "as-is". Call writeObject() to convert a String into JSON string.
+     * Clients should not call this method directly, except from ObjectWriter implementation.
+     * @param s - a string
+     */
+    public static void write(String s) {
         int l = s.length();
         for (int i = 0; i < l; i++) {
             char ch = s.charAt(i);
@@ -67,7 +106,12 @@ public class JSON {
         }
     }
     
-    private static void writeUInt(int n) {
+    /**
+     * Write a non-negative integer number into JSON output buffer.
+     * Clients should not call this method directly, except from ObjectWriter implementation.
+     * @param n - a number
+     */
+    public static void writeUInt(int n) {
         assert n >= 0;
         if (n >= 10) writeUInt(n / 10);
         write((char)('0' + n % 10));
@@ -320,8 +364,13 @@ public class JSON {
         return l.toArray();
     }
     
+    /**
+     * Write an object into JSON output buffer.
+     * Clients should not call this method directly, except from ObjectWriter implementation.
+     * @param o - an object to write
+     */
     @SuppressWarnings("unchecked")
-    private static void writeObject(Object o) throws IOException {
+    public static void writeObject(Object o) throws IOException {
         if (o == null) {
             write("null");
         }
@@ -419,7 +468,13 @@ public class JSON {
             write('}');
         }
         else {
-            throw new IOException("JSON: unsupported object type");
+            ObjectWriter writer = object_writers.get(o.getClass());
+            if (writer != null) {
+                writer.write(o);
+            }
+            else {
+                throw new IOException("JSON: unsupported object type");
+            }
         }
     }
 

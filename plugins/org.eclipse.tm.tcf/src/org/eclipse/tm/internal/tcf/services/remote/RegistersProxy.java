@@ -208,6 +208,37 @@ public class RegistersProxy implements IRegisters {
         }.token;
     }
 
+    public IToken getm(Location[] locs, final DoneGet done) {
+        return new Command(channel, this, "getm", new Object[]{ locs }) {
+            @SuppressWarnings("unchecked")
+            @Override
+            public void done(Exception error, Object[] args) {
+                byte[] val = null;
+                if (error == null) {
+                    assert args.length == 3;
+                    error = toError(args[0], args[1]);
+                    String str = (String)args[2];
+                    if (str != null) val = Base64.toByteArray(str.toCharArray());
+                }
+                done.doneGet(token, error, val);
+            }
+        }.token;
+    }
+
+    public IToken setm(Location[] locs, byte[] value, final DoneSet done) {
+        return new Command(channel, this, "setm",
+                new Object[]{ locs, Base64.toBase64(value, 0, value.length) }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                if (error == null) {
+                    assert args.length == 2;
+                    error = toError(args[0], args[1]);
+                }
+                done.doneSet(token, error);
+            }
+        }.token;
+    }
+    
     public void addListener(final RegistersListener listener) {
         IChannel.IEventListener l = new IChannel.IEventListener() {
 
@@ -293,5 +324,20 @@ public class RegistersProxy implements IRegisters {
             arr[i++] = new NamedValueInfo(m);
         }
         return arr;
+    }
+    
+    static {
+        JSON.addObjectWriter(Location.class, new JSON.ObjectWriter() {
+            public void write(Object o) throws IOException {
+                Location l = (Location)o;
+                JSON.write('[');
+                JSON.writeObject(l.id);
+                JSON.write(',');
+                JSON.writeUInt(l.offs);
+                JSON.write(',');
+                JSON.writeUInt(l.size);
+                JSON.write(']');
+            }
+        });
     }
 }

@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -935,6 +936,46 @@ class TCFSelfTest {
                             return;
                         }
                         cmds.add(ctx.set(value, new IRegisters.DoneSet() {
+                            public void doneSet(IToken token, Exception error) {
+                                cmds.remove(token);
+                                if (suspended.get(sc.id) != sc) return;
+                                if (error != null) {
+                                    for (IToken t : cmds) t.cancel();
+                                    exit(error);
+                                    return;
+                                }
+                                if (cmds.isEmpty()) {
+                                    resume(sc);
+                                }
+                            }
+                        }));
+                    }
+                }));
+            }
+            if (!reg_map.isEmpty()) {
+                Random rnd = new Random();
+                List<IRegisters.Location> locs = new ArrayList<IRegisters.Location>();
+                String[] ids = reg_map.keySet().toArray(new String[reg_map.size()]);
+                for (int i = 0; i < rnd.nextInt(32); i++) {
+                    String id = ids[rnd.nextInt(ids.length)];
+                    IRegisters.RegistersContext ctx = reg_map.get(id);
+                    if (!ctx.isReadable()) continue;
+                    if (ctx.isReadOnce()) continue;
+                    int offs = rnd.nextInt(ctx.getSize());
+                    int size = rnd.nextInt(ctx.getSize() - offs) + 1;
+                    locs.add(new IRegisters.Location(id, offs, size));
+                }
+                final IRegisters.Location[] loc_arr = locs.toArray(new IRegisters.Location[locs.size()]);
+                cmds.add(rg.getm(loc_arr, new IRegisters.DoneGet() {
+                    public void doneGet(IToken token, Exception error, byte[] value) {
+                        cmds.remove(token);
+                        if (suspended.get(sc.id) != sc) return;
+                        if (error != null) {
+                            for (IToken t : cmds) t.cancel();
+                            exit(error);
+                            return;
+                        }
+                        cmds.add(rg.setm(loc_arr, value, new IRegisters.DoneSet() {
                             public void doneSet(IToken token, Exception error) {
                                 cmds.remove(token);
                                 if (suspended.get(sc.id) != sc) return;

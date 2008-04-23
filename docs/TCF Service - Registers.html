@@ -15,6 +15,8 @@
         <li><a href='#CmdGetChildren'>Get Children</a>
         <li><a href='#CmdSetRegister'>Set Register</a>
         <li><a href='#CmdGetRegister'>Get Register</a>
+        <li><a href='#CmdSetMultiple'>Set Multiple Registers</a>
+        <li><a href='#CmdGetMultiple'>Get Multiple Registers</a>
     </ul>
     <li><a href='#Events'>Events</a>
     <li><a href='#API'>API</a>
@@ -27,6 +29,14 @@ and event parameters are encoded as zero terminated <a href='TCF Specification.h
 
 <p>The service uses standard format for error reports,
 see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
+
+In addition to commands that can set/get individual register context values, the service defines commands to set/get values at
+multiple locations. This allows:
+<ol>
+    <li> to get/set multiple register contexts in one command
+    <li> to specify offset and size for get/set on large register groups
+    <li> to get/set trunkated register values, e.g. only the low 32 bits of a 64-bit register
+</ol>
  
 <h2><a name='Cmds'>Commands</a></h2>
 
@@ -187,6 +197,64 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;string: value&gt
 <p>Error report provides integer error code and a short, human readable explanation
 of error. Value is BASE64 encoded byte array of binary data. Array size should match the size of the register.</p>
 
+<h3><a name='CmdSetMultiple'>Set Multiple Registers</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • &lt;token&gt; • Registers • setm • <i>&lt;array of locations&gt;</i> • <i>&lt;string: value&gt;</i> •
+
+<i>&lt;array of locations&gt;</i>
+    <font face=Wingdings>Ø</font> [ <i>&lt;location list&gt;</i> ]
+
+<i>&lt;location list&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;location&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;location list&gt;</i> , <i>&lt;location&gt;</i>
+  
+<i>&lt;location&gt;</i>
+    <font face=Wingdings>Ø</font> [ <i>&lt;string: register context ID&gt;</i> , <i>&lt;int: offset in bytes&gt;</i> , <i>&lt;int: size in bytes&gt;</i> ]
+</font></b></pre>
+
+<p>Writes value into given list of locations in registers. Each location is represented by 3-element array that consists of
+context ID, offset in the context in bytes and value size in bytes.
+Value is BASE64 encoded byte array of binary data. Byte array size should match the sum of location sizes.</p>
+  
+<p>Result message:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+</font></b></pre>
+
+<p>Error report provides integer error code and a short, human readable explanation
+of error.</p>
+
+<h3><a name='CmdGetMultiple'>Get Multiple Registers</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • &lt;token&gt; • Registers • getm • <i>&lt;string: context ID&gt;</i> •
+
+<i>&lt;array of locations&gt;</i>
+    <font face=Wingdings>Ø</font> [ <i>&lt;location list&gt;</i> ]
+
+<i>&lt;location list&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;location&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;location list&gt;</i> , <i>&lt;location&gt;</i>
+  
+<i>&lt;location&gt;</i>
+    <font face=Wingdings>Ø</font> [ <i>&lt;string: register context ID&gt;</i> , <i>&lt;int: offset in bytes&gt;</i> , <i>&lt;int: size in bytes&gt;</i> ]
+</font></b></pre>
+
+<p>Reads register values from given list of locations in registers. Each location is represented by 3-element array that consists of
+context ID, offset in the context in bytes and value size in bytes.
+</p>
+ 
+<p>Result message:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;string: value&gt;</i> •
+</font></b></pre>
+
+<p>Error report provides integer error code and a short, human readable explanation
+of error. Value is BASE64 encoded byte array of binary data. Byte array size should match the sum of location sizes.</p>
+
 <h2><a name='Events'>Events</a></h2>
  
 <p>Registers service broadcasts notification events when registers contexts are changed, and when
@@ -230,16 +298,6 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
         PROP_BITS = "Bits",
         PROP_VALUES = "Values";
         
-    <font color=#3F5FBF>/**
-     * Standard known formats for register data.
-     */</font>
-    <font color=#7F0055>static final</font> String
-        FORMAT_BINARY   = "Binary",
-        FORMAT_OCTAL    = "Octal",
-        FORMAT_DECIMAL  = "Decimal",
-        FORMAT_HEX      = "Hex",
-        FORMAT_NATURAL  = "Natural";
-    
     <font color=#3F5FBF>/**
      * Retrieve context info for given context ID.
      *   
@@ -451,6 +509,43 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
         String getDescription();
     }
     
+    <font color=#3F5FBF>/**
+     * Read values of multiple locations in registers.
+     * <font color=#7F9FBF>@param</font> locs - array of data locations.
+     * <font color=#7F9FBF>@param</font> done - call back object.
+     * <font color=#7F9FBF>@return</font> - pending command handle.
+     */</font>
+    IToken getm(Location[] locs, DoneGet done);
+    
+    <font color=#3F5FBF>/**
+     * Set values of multiple locations in registers.
+     * <font color=#7F9FBF>@param</font> locs - array of data locations.
+     * <font color=#7F9FBF>@param</font> value - value to write into the context.
+     * <font color=#7F9FBF>@param</font> done - call back object.
+     * <font color=#7F9FBF>@return</font> - pending command handle.
+     */</font>
+    IToken setm(Location[] locs, byte[] value, DoneSet done);
+
+    <font color=#3F5FBF>/**
+     * Class Location represents value location in register context
+     */</font>
+    <font color=#7F0055>final class</font> Location {
+        <font color=#3F5FBF>/** Register context ID */</font>
+        <font color=#7F0055>public final</font> String id; 
+
+        <font color=#3F5FBF>/** offset in the context, in bytes */</font>
+        <font color=#7F0055>public final int</font> offs;
+
+        <font color=#3F5FBF>/** value size in byte */</font>
+        <font color=#7F0055>public final int</font> size;
+
+        <font color=#7F0055>public</font> Location(String id, <font color=#7F0055>int</font> offs, <font color=#7F0055>int</font> size) {
+            <font color=#7F0055>this</font>.id = id;
+            <font color=#7F0055>this</font>.offs = offs;
+            <font color=#7F0055>this</font>.size = size;
+        }
+    }
+
     <font color=#3F5FBF>/**
      * 'get' command call back interface.
      */</font>

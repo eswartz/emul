@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.services.local;
 
+import java.lang.reflect.Method;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
@@ -174,52 +176,61 @@ public class LocatorService implements ILocator {
                  *       socket.send(new DatagramPacket(buf, buf.length, ia.getBroadcast(), 1534));
                  *   }
                  */
-                Enumeration<InetAddress> n = f.getInetAddresses();
-                while (n.hasMoreElements()) {
-                    InetAddress ina = n.nextElement();
-                    byte[] adr = ina.getAddress();
-                    if (adr.length != 4) {
-                        // TODO: Support IPv6
-                        // System.out.println("Dont support IPv6: " + ina);
-                        continue;
+                try {
+                    Method m0 = f.getClass().getMethod("getInterfaceAddresses");
+                    for (Object ia : (List<?>)m0.invoke(f)) {
+                        Method m1 = ia.getClass().getMethod("getBroadcast");
+                        socket.send(new DatagramPacket(buf, buf.length, (InetAddress)m1.invoke(ia), 1534));
                     }
-                    /* Since we don't know actual broadcast address,
-                     * lets try different combinations.
-                     * Hopefully one of them will work.
-                     */
-                    int h = adr[0] & 0xff;
-                    if (h >= 1 && h <= 127 && h != 38) {
-                        adr[3] = (byte)255;
+                }
+                catch (Exception x) {
+                    Enumeration<InetAddress> n = f.getInetAddresses();
+                    while (n.hasMoreElements()) {
+                        InetAddress ina = n.nextElement();
+                        byte[] adr = ina.getAddress();
+                        if (adr.length != 4) {
+                            // TODO: Support IPv6
+                            // System.out.println("Don't support IPv6: " + ina);
+                            continue;
+                        }
+                        /* Since we don't know actual broadcast address,
+                         * lets try different combinations.
+                         * Hopefully one of them will work.
+                         */
+                        int h = adr[0] & 0xff;
+                        if (h >= 1 && h <= 127 && h != 38) {
+                            adr[3] = (byte)255;
+                            socket.send(new DatagramPacket(buf, buf.length,
+                                    InetAddress.getByAddress(null, adr), 1534));
+                            adr[2] = (byte)255;
+                            socket.send(new DatagramPacket(buf, buf.length,
+                                    InetAddress.getByAddress(null, adr), 1534));
+                            adr[1] = (byte)255;
+                        }
+                        else if (h >= 128 && h <= 191) {
+                            adr[3] = (byte)255;
+                            socket.send(new DatagramPacket(buf, buf.length,
+                                    InetAddress.getByAddress(null, adr), 1534));
+                            adr[2] = (byte)255;
+                        }
+                        else {
+                            adr[3] = (byte)(adr[3] | 0x0f);
+                            socket.send(new DatagramPacket(buf, buf.length,
+                                    InetAddress.getByAddress(null, adr), 1534));
+                            adr[3] = (byte)(adr[3] | 0x01f);
+                            socket.send(new DatagramPacket(buf, buf.length,
+                                    InetAddress.getByAddress(null, adr), 1534));
+                            adr[3] = (byte)(adr[3] | 0x03f);
+                            socket.send(new DatagramPacket(buf, buf.length,
+                                    InetAddress.getByAddress(null, adr), 1534));
+                            adr[3] = (byte)(adr[3] | 0x07f);
+                            socket.send(new DatagramPacket(buf, buf.length,
+                                    InetAddress.getByAddress(null, adr), 1534));
+                            adr[3] = (byte)255;
+                        }
                         socket.send(new DatagramPacket(buf, buf.length,
                                 InetAddress.getByAddress(null, adr), 1534));
-                        adr[2] = (byte)255;
-                        socket.send(new DatagramPacket(buf, buf.length,
-                                InetAddress.getByAddress(null, adr), 1534));
-                        adr[1] = (byte)255;
                     }
-                    else if (h >= 128 && h <= 191) {
-                        adr[3] = (byte)255;
-                        socket.send(new DatagramPacket(buf, buf.length,
-                                InetAddress.getByAddress(null, adr), 1534));
-                        adr[2] = (byte)255;
-                    }
-                    else {
-                        adr[3] = (byte)(adr[3] | 0x0f);
-                        socket.send(new DatagramPacket(buf, buf.length,
-                                InetAddress.getByAddress(null, adr), 1534));
-                        adr[3] = (byte)(adr[3] | 0x01f);
-                        socket.send(new DatagramPacket(buf, buf.length,
-                                InetAddress.getByAddress(null, adr), 1534));
-                        adr[3] = (byte)(adr[3] | 0x03f);
-                        socket.send(new DatagramPacket(buf, buf.length,
-                                InetAddress.getByAddress(null, adr), 1534));
-                        adr[3] = (byte)(adr[3] | 0x07f);
-                        socket.send(new DatagramPacket(buf, buf.length,
-                                InetAddress.getByAddress(null, adr), 1534));
-                        adr[3] = (byte)255;
-                    }
-                    socket.send(new DatagramPacket(buf, buf.length,
-                            InetAddress.getByAddress(null, adr), 1534));
                 }
             }
         }
