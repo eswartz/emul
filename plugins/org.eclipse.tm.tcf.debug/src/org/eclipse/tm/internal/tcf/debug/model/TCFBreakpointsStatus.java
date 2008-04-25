@@ -27,7 +27,6 @@ public class TCFBreakpointsStatus {
     private final IBreakpoints service;
     private final Map<String,Map<String,Object>> status = new HashMap<String,Map<String,Object>>();
     private final Set<ITCFBreakpointListener> listeners = new HashSet<ITCFBreakpointListener>();
-    private final Set<String> removed = new HashSet<String>();
     
     private static final Map<String,Object> status_not_supported = new HashMap<String,Object>();
     
@@ -41,39 +40,54 @@ public class TCFBreakpointsStatus {
         if (service != null) {
             service.addListener(new IBreakpoints.BreakpointsListener() {
 
-                public void breakpointStatusChanged(String id, Map<String, Object> status) {
+                public void breakpointStatusChanged(String id, Map<String,Object> m) {
                     assert Protocol.isDispatchThread();
-                    if (removed.contains(id)) return;
-                    TCFBreakpointsStatus.this.status.put(id, status);
+                    if (status.get(id) == null) return;
+                    status.put(id, m);
                     for (Iterator<ITCFBreakpointListener> i = listeners.iterator(); i.hasNext();) {
                         i.next().breakpointStatusChanged(id);
+                    }
+                }
+
+                public void contextAdded(Map<String,Object>[] bps) {
+                    for (Map<String,Object> bp : bps) {
+                        String id = (String)bp.get(IBreakpoints.PROP_ID);
+                        if (status.get(id) != null) continue;
+                        status.put(id, new HashMap<String,Object>());
+                        for (Iterator<ITCFBreakpointListener> i = listeners.iterator(); i.hasNext();) {
+                            i.next().breakpointStatusChanged(id);
+                        }
+                    }
+                }
+
+                public void contextChanged(Map<String,Object>[] bps) {
+                }
+
+                public void contextRemoved(String[] ids) {
+                    for (String id : ids) {
+                        if (status.remove(id) == null) continue;
+                        for (Iterator<ITCFBreakpointListener> i = listeners.iterator(); i.hasNext();) {
+                            i.next().breakpointRemoved(id);
+                        }
                     }
                 }
             });
         }
     }
     
-    public Map<String, Object> getStatus(String id) {
+    public Map<String,Object> getStatus(String id) {
         assert id != null;
         assert Protocol.isDispatchThread();
         if (service == null) return status_not_supported;
         return status.get(id);
     }
 
-    public Map<String, Object> getStatus(IBreakpoint bp) {
+    public Map<String,Object> getStatus(IBreakpoint bp) {
         if (!bp.getModelIdentifier().equals(ITCFConstants.ID_TCF_DEBUG_MODEL)) return status_not_supported;
         IMarker marker = bp.getMarker();
         if (marker == null) return null;
         return getStatus(marker.getAttribute(
                 ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID, null));
-    }
-    
-    public void removeStatus(String id) {
-        status.remove(id);
-        removed.add(id);
-        for (Iterator<ITCFBreakpointListener> i = listeners.iterator(); i.hasNext();) {
-            i.next().breakpointRemoved(id);
-        }
     }
     
     public void addListener(ITCFBreakpointListener listener) {

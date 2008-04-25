@@ -20,11 +20,11 @@ import org.eclipse.tm.tcf.protocol.IToken;
  * Breakpoint is represented by unique identifier and set of properties.
  * Breakpoint identifier (String id) needs to be unique across all hosts and targets.
  * 
- * Breakpoint properties (Map<String,Object>) is extendable collection of named attributes,
+ * Breakpoint properties (Map<String,Object>) is extendible collection of named attributes,
  * which define breakpoint location and behavior. This module defines some common
  * attribute names (see PROP_*), host tools and target agents may support additional attributes.
  * 
- * For each breakpoint a target agent maintains another extendable collection of named attributes:
+ * For each breakpoint a target agent maintains another extendible collection of named attributes:
  * breakpoint status (Map<String,Object>, see STATUS_*). While breakpoint properties are
  * persistent and represent user input, breakpoint status reflects dynamic target agent reports
  * about breakpoint current state, like actual addresses where breakpoint is planted or planting errors.
@@ -59,6 +59,16 @@ public interface IBreakpoints extends IService {
         STATUS_COLUMN = "Column";       // Number
     
     /**
+     * Breakpoint service capabilities.
+     */
+    static final String
+        CAPABILITY_CONTEXT_ID = "ID",                   // String
+        CAPABILITY_HAS_CHILDREN = "HasChildren",        // Boolean
+        CAPABILITY_ADDRESS = "Address",                 // Boolean
+        CAPABILITY_CONDITION = "Condition",             // Boolean
+        CAPABILITY_FILE_LINE = "FileLine";              // Boolean
+
+    /**
      * Call back interface for breakpoint service commands.
      */
     interface DoneCommand {
@@ -92,7 +102,7 @@ public interface IBreakpoints extends IService {
     IToken change(Map<String,Object> properties, DoneCommand done);
 
     /**
-     * Tell target to change (only) PROP_ENABLED breakpoint property 'true'.
+     * Tell target to change (only) PROP_ENABLED breakpoint property to 'true'.
      * @param ids - array of enabled breakpoint identifiers.
      * @param done - command result call back object.
      */
@@ -106,7 +116,7 @@ public interface IBreakpoints extends IService {
     IToken disable(String[] ids, DoneCommand done);
 
     /**
-     * Tell target to remove breakpoint.
+     * Tell target to remove breakpoints.
      * @param id - unique breakpoint identifier.
      * @param done - command result call back object.
      */
@@ -145,7 +155,26 @@ public interface IBreakpoints extends IService {
     }
 
     /**
+     * Report breakpoint service capabilities to clients so they
+     * can adjust to different implementations of the service.
+     * When called with a null ("") context ID the global capabilities are returned,
+     * otherwise context specific capabilities are returned.  A special capability
+     * property is used to indicate that all child contexts have the same
+     * capabilities.
+     * @param id - a context ID or null.
+     * @param done - command result call back object.
+     */
+    IToken getCapabilities(String id, DoneGetCapabilities done);
+
+    interface DoneGetCapabilities {
+        void doneGetCapabilities(IToken token, Exception error, Map<String,Object> capabilities);
+    }
+
+    /**
      * Breakpoints service events listener.
+     * Note that contextAdded, contextChanged and contextRemoved events carry exactly same set
+     * of breakpoint properties that was sent by a client to a target. The purpose of these events is to
+     * let all clients know about breakpoints that were created by other clients.
      */
     interface BreakpointsListener {
 
@@ -155,9 +184,35 @@ public interface IBreakpoints extends IService {
          * @param status - breakpoint status.
          */
         void breakpointStatusChanged(String id, Map<String,Object> status);
+
+        /**
+         * Called when a new breakpoints are added.
+         * @param bps - array of breakpoints.
+         */
+        void contextAdded(Map<String,Object>[] bps);
+
+        /**
+         * Called when breakpoint properties change.
+         * @param bps - array of breakpoints.
+         */
+        void contextChanged(Map<String,Object>[] bps);
+
+        /**
+         * Called when breakpoints are removed .
+         * @param ids - array of breakpoint IDs.
+         */
+        void contextRemoved(String[] ids);
     }
 
+    /**
+     * Add breakpoints service event listener.
+     * @param listener - object that implements BreakpointsListener interface.
+     */
     void addListener(BreakpointsListener listener);
 
+    /**
+     * Remove breakpoints service event listener.
+     * @param listener - object that implements BreakpointsListener interface.
+     */
     void removeListener(BreakpointsListener listener);
 }

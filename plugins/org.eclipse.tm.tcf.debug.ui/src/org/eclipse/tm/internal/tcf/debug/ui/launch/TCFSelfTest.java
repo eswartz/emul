@@ -259,6 +259,7 @@ class TCFSelfTest {
         private final Map<IToken,String> get_state_cmds = new HashMap<IToken,String>();
         private final Map<String,Map<String,IRegisters.RegistersContext>> regs =
             new HashMap<String,Map<String,IRegisters.RegistersContext>>();
+        private final Map<String,Map<String,Object>> bp_list = new HashMap<String,Map<String,Object>>(); 
         
         private String context_id; // Test process context ID
         private IRunControl.RunControlContext context;
@@ -287,6 +288,43 @@ class TCFSelfTest {
                 this.params = params;
             }
         }
+        
+        private final IBreakpoints.BreakpointsListener bp_listener = new IBreakpoints.BreakpointsListener() {
+
+            public void breakpointStatusChanged(String id, Map<String,Object> status) {
+            }
+
+            public void contextAdded(Map<String,Object>[] bps) {
+                for (Map<String,Object> m0 : bps) {
+                    String id = (String)m0.get(IBreakpoints.PROP_ID);
+                    Map<String,Object> m1 = bp_list.get(id);
+                    if (!checkBPData(m0, m1)) return;
+                }
+            }
+
+            public void contextChanged(Map<String,Object>[] bps) {
+                for (Map<String,Object> m0 : bps) {
+                    String id = (String)m0.get(IBreakpoints.PROP_ID);
+                    Map<String,Object> m1 = bp_list.get(id);
+                    if (!checkBPData(m0, m1)) return;
+                }
+            }
+
+            public void contextRemoved(String[] ids) {
+            }
+            
+            private boolean checkBPData(Map<String,Object> m0, Map<String,Object> m1) {
+                if (m1 == null) return true;
+                m0 = new HashMap<String,Object>(m0);
+                if (m0.get(IBreakpoints.PROP_ENABLED) == null) m0.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
+                if (m1.get(IBreakpoints.PROP_ENABLED) == null) m1.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
+                if (!m1.equals(m0)) {
+                    exit(new Exception("Invalid data in Breakpoints event"));
+                    return false;
+                }
+                return true;
+            }
+        };
 
         TestRCBP1(IChannel channel, int channel_id) {
             this.channel_id = channel_id;
@@ -307,6 +345,7 @@ class TCFSelfTest {
             else {
                 diag.getTestList(this);
             }
+            if (bp != null) bp.addListener(bp_listener);
         }
         
         public void doneGetTestList(IToken token, Throwable error, String[] list) {
@@ -397,6 +436,7 @@ class TCFSelfTest {
                         m[i].put(IBreakpoints.PROP_ADDRESS, "tcf_test_func2");
                         break;
                     }
+                    bp_list.put((String)m[i].get(IBreakpoints.PROP_ID), m[i]);
                 }
                 bp.set(m, new IBreakpoints.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
@@ -511,7 +551,7 @@ class TCFSelfTest {
             if (threads.size() == 0) return;
             done_starting_test_process = true;
             final String bp_id = "TcfTestBP3" + channel_id;
-            Map<String,Object> m = new HashMap<String,Object>();
+            final Map<String,Object> m = new HashMap<String,Object>();
             m.put(IBreakpoints.PROP_ID, bp_id);
             m.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
             m.put(IBreakpoints.PROP_ADDRESS, "tcf_test_func2");
@@ -523,6 +563,7 @@ class TCFSelfTest {
                 bf.append('"');
             }
             m.put(IBreakpoints.PROP_CONDITION, bf.toString());
+            bp_list.put(bp_id, m);
             bp.change(m, new IBreakpoints.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) exit(error);
@@ -530,6 +571,7 @@ class TCFSelfTest {
             });
             Protocol.sync(new Runnable() {
                 public void run() {
+                    m.put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
                     bp.enable(new String[]{ bp_id }, new IBreakpoints.DoneCommand() {
                         public void doneCommand(IToken token, Exception error) {
                             if (error != null) exit(error);
@@ -1032,6 +1074,7 @@ class TCFSelfTest {
                 if (x != null) errors.add(x);
                 if (rc != null) rc.removeListener(this);
             }
+            if (bp != null) bp.removeListener(bp_listener);
             done(this);
         }
     }

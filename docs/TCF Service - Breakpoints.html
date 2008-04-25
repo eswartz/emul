@@ -20,6 +20,7 @@
         <li><a href='#CmdGetIDs'>Get IDs</a>
         <li><a href='#CmdGetProperties'>Get Properties</a>
         <li><a href='#CmdGetStatus'>Get Status</a>
+        <li><a href='#CmdGetCapabilities'>Get Capabilities</a>
     </ul>
     <li><a href='#Events'>Events</a>
     <li><a href='#API'>API</a>
@@ -230,7 +231,7 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;;breakpoint stat
     <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
 </font></b></pre>
 
-<p>Breakpoint stat consists of a list of status properties. All properties are optional.
+<p>Breakpoint status consists of a list of status properties. All properties are optional.
 Tools and targets can define additional properties. Predefined properties are:</p>
 
 <ul>
@@ -241,15 +242,67 @@ Tools and targets can define additional properties. Predefined properties are:</
     <li><code><b><font face="Courier New" size=2 color=#333399>"Column" : <i>&lt;int&gt;</i></font></b></code>
 </ul>
 
+<h3><a name='CmdGetCapabilities'>Get Capabilities</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C • <i>&lt;token&gt;</i> • Breakpoints • getCapabilities • <i>&lt;string: context ID&gt;</i> •
+</font></b></pre>
+
+<p>The command reports breakpoint service capabilities to clients so they
+can adjust to different implementations of the service.
+When called with a null ("") context ID the global capabilities are returned,
+otherwise context specific capabilities are returned.  A special capability
+property is used to indicate that all child contexts have the same
+capabilities..</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;;service capabilities&gt;</i> •
+
+<i>&lt;service capabilities&gt;</i>
+    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p>Service capabilities consist of a list of properties. All properties are optional.
+Tools and targets can define additional properties. Predefined properties are:</p>
+
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string: context ID&gt;</i></font></b></code>
+    - ID of a context that was used to query capabilities
+    <li><code><b><font face="Courier New" size=2 color=#333399>"HasChildren" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, children of the context can have different capabilities
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Address" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "Address" breakpoint property is supported
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Condition" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "Condition" breakpoint property is supported
+    <li><code><b><font face="Courier New" size=2 color=#333399>"FileLine" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "File", "Line" and "Column" breakpoint properties are supported
+</ul>
+
 <h2><a name='Events'>Events</a></h2>
+
+<p>Breakpoints service events are user to notify clients about breakpoint properties and status changes.
+Note that contextAdded, contextChanged and contextRemoved events carry exactly same set
+of breakpoint properties that was sent by a client to a target. The purpose of these events is to
+let all clients know about breakpoints that were created by other clients.</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
 E • Breakpoints • status • <i>&lt;string: breakpoint ID&gt;</i> • <i>&lt;breakpoint status&gt;</i> •
+E • Breakpoints • contextAdded • <i>&lt;array of breakpoints&gt;</i> •
+E • Breakpoints • contextChanged • <i>&lt;array of breakpoints&gt;</i> •
+E • Breakpoints • contextRemoved • <i>&lt;array of breakpoint IDs&gt;</i> •
 </font></b></pre>
 
 <dl>
     <dt><b>status</b>
         <dd>is sent when breakpoint status changes.
+    <dt><b>contextAdded</b>
+        <dd>is sent when a new breakpoints are added.
+    <dt><b>contextChanged</b>
+        <dd>is sent when breakpoint properties change.
+    <dt><b>contextRemoved</b>
+        <dd>is sent when breakpoints are removed.
 </dl>
 
 <h2><a name='API'>API</a></h2>
@@ -259,12 +312,12 @@ E • Breakpoints • status • <i>&lt;string: breakpoint ID&gt;</i> • <i>&lt;breakpo
  * Breakpoint is represented by unique identifier and set of properties.
  * Breakpoint identifier (String id) needs to be unique across all hosts and targets.
  * 
- * Breakpoint properties (Map<String,Object>) is extendable collection of named attributes,
+ * Breakpoint properties (Map&lt;String,Object>) is extendible collection of named attributes,
  * which define breakpoint location and behavior. This module defines some common
  * attribute names (see PROP_*), host tools and target agents may support additional attributes.
  * 
- * For each breakpoint a target agent maintains another extendable collection of named attributes:
- * breakpoint status (Map<String,Object>, see STATUS_*). While breakpoint properties are
+ * For each breakpoint a target agent maintains another extendible collection of named attributes:
+ * breakpoint status (Map&lt;String,Object>, see STATUS_*). While breakpoint properties are
  * persistent and represent user input, breakpoint status reflects dynamic target agent reports
  * about breakpoint current state, like actual addresses where breakpoint is planted or planting errors.
  */</font>
@@ -297,6 +350,16 @@ E • Breakpoints • status • <i>&lt;string: breakpoint ID&gt;</i> • <i>&lt;breakpo
         STATUS_LINE = "Line",           // Number
         STATUS_COLUMN = "Column";       // Number
     
+    <font color=#3F5FBF>/**
+     * Breakpoint service capabilities.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        CAPABILITY_CONTEXT_ID = "ID",                   // String
+        CAPABILITY_HAS_CHILDREN = "HasChildren",        // Boolean
+        CAPABILITY_ADDRESS = "Address",                 // Boolean
+        CAPABILITY_CONDITION = "Condition",             // Boolean
+        CAPABILITY_FILE_LINE = "FileLine";              // Boolean
+
     <font color=#3F5FBF>/**
      * Call back interface for breakpoint service commands.
      */</font>
@@ -331,7 +394,7 @@ E • Breakpoints • status • <i>&lt;string: breakpoint ID&gt;</i> • <i>&lt;breakpo
     IToken change(Map&lt;String,Object&gt; properties, DoneCommand done);
 
     <font color=#3F5FBF>/**
-     * Tell target to change (only) PROP_ENABLED breakpoint property 'true'.
+     * Tell target to change (only) PROP_ENABLED breakpoint property to 'true'.
      * @param ids - array of enabled breakpoint identifiers.
      * @param done - command result call back object.
      */</font>
@@ -345,7 +408,7 @@ E • Breakpoints • status • <i>&lt;string: breakpoint ID&gt;</i> • <i>&lt;breakpo
     IToken disable(String[] ids, DoneCommand done);
 
     <font color=#3F5FBF>/**
-     * Tell target to remove breakpoint.
+     * Tell target to remove breakpoints.
      * @param id - unique breakpoint identifier.
      * @param done - command result call back object.
      */</font>
@@ -384,7 +447,26 @@ E • Breakpoints • status • <i>&lt;string: breakpoint ID&gt;</i> • <i>&lt;breakpo
     }
 
     <font color=#3F5FBF>/**
+     * Report breakpoint service capabilities to clients so they
+     * can adjust to different implementations of the service.
+     * When called with a null ("") context ID the global capabilities are returned,
+     * otherwise context specific capabilities are returned.  A special capability
+     * property is used to indicate that all child contexts have the same
+     * capabilities.
+     * @param id - a context ID or null.
+     * @param done - command result call back object.
+     */</font>
+    IToken getCapabilities(String id, DoneGetCapabilities done);
+
+    <font color=#7F0055>interface</font> DoneGetCapabilities {
+        void</font> doneGetCapabilities(IToken token, Exception error, Map&lt;String,Object&gt; capabilities);
+    }
+
+    <font color=#3F5FBF>/**
      * Breakpoints service events listener.
+     * Note that contextAdded, contextChanged and contextRemoved events carry exactly same set
+     * of breakpoint properties that was sent by a client to a target. The purpose of these events is to
+     * let all clients know about breakpoints that were created by other clients.
      */</font>
     <font color=#7F0055>interface</font> BreakpointsListener {
 
@@ -394,10 +476,36 @@ E • Breakpoints • status • <i>&lt;string: breakpoint ID&gt;</i> • <i>&lt;breakpo
          * @param status - breakpoint status.
          */</font>
         <font color=#7F0055>void</font> breakpointStatusChanged(String id, Map&lt;String,Object&gt; status);
+
+        <font color=#3F5FBF>/**
+         * Called when a new breakpoints are added.
+         * @param bps - array of breakpoints.
+         */</font>
+        <font color=#7F0055>void</font> contextAdded(Map&lt;String,Object&gt;[] bps);
+
+        <font color=#3F5FBF>/**
+         * Called when breakpoint properties change.
+         * @param bps - array of breakpoints.
+         */</font>
+        <font color=#7F0055>void</font> contextChanged(Map&lt;String,Object&gt;[] bps);
+
+        <font color=#3F5FBF>/**
+         * Called when breakpoints are removed.
+         * @param ids - array of breakpoint IDs.
+         */</font>
+        <font color=#7F0055>void</font> contextRemoved(String[] ids);
     }
 
+    <font color=#3F5FBF>/**
+     * Add breakpoints service event listener.
+     * @param listener - object that implements BreakpointsListener interface.
+     */</font>
     <font color=#7F0055>void</font> addListener(BreakpointsListener listener);
 
+    <font color=#3F5FBF>/**
+     * Remove breakpoints service event listener.
+     * @param listener - object that implements BreakpointsListener interface.
+     */</font>
     <font color=#7F0055>void</font> removeListener(BreakpointsListener listener);
 }
 </pre>

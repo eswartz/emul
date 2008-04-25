@@ -195,7 +195,6 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                     done = new IBreakpoints.DoneCommand() {
                         public void doneCommand(IToken token, Exception error) {
                             if (error != null) channel.terminate(error);
-                            else done(launch);
                         }
                     };
                     update();
@@ -210,9 +209,6 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             });
         };
         
-        void done(TCFLaunch launch) {
-        }
-
         abstract void update();
     }
 
@@ -296,10 +292,6 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                 @Override
                 void update() {
                     service.remove(new String[]{ (String)tcf_attrs.get(PROP_ID) }, done);
-                }
-                @Override
-                void done(TCFLaunch launch) {
-                    launch.getBreakpointsStatus().removeStatus((String)tcf_attrs.get(PROP_ID));
                 }
             }.exec();
         }

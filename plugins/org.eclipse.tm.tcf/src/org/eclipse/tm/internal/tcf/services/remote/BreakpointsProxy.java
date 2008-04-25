@@ -32,7 +32,7 @@ public class BreakpointsProxy implements IBreakpoints {
         this.channel = channel;
     }
 
-    public IToken set(Map<String, Object>[] properties, final DoneCommand done) {
+    public IToken set(Map<String,Object>[] properties, final DoneCommand done) {
         return new Command(channel, this, "set", new Object[]{ properties }) {
             @Override
             public void done(Exception error, Object[] args) {
@@ -45,7 +45,7 @@ public class BreakpointsProxy implements IBreakpoints {
         }.token;
     }
 
-    public IToken add(Map<String, Object> properties, final DoneCommand done) {
+    public IToken add(Map<String,Object> properties, final DoneCommand done) {
         return new Command(channel, this, "add", new Object[]{ properties }) {
             @Override
             public void done(Exception error, Object[] args) {
@@ -58,7 +58,7 @@ public class BreakpointsProxy implements IBreakpoints {
         }.token;
     }
 
-    public IToken change(Map<String, Object> properties, final DoneCommand done) {
+    public IToken change(Map<String,Object> properties, final DoneCommand done) {
         return new Command(channel, this, "change", new Object[]{ properties }) {
             @Override
             public void done(Exception error, Object[] args) {
@@ -157,6 +157,22 @@ public class BreakpointsProxy implements IBreakpoints {
         }.token;
     }
 
+    public IToken getCapabilities(String id, final DoneGetCapabilities done) {
+        return new Command(channel, this, "getCapabilities", new Object[]{ id }) {
+            @SuppressWarnings("unchecked")
+            @Override
+            public void done(Exception error, Object[] args) {
+                Map<String,Object> map = null;
+                if (error == null) {
+                    assert args.length == 3;
+                    error = toError(args[0], args[1]);
+                    map = (Map<String,Object>)args[2];
+                }
+                done.doneGetCapabilities(token, error, map);
+            }
+        }.token;
+    }
+
     public String getName() {
         return NAME;
     }
@@ -166,6 +182,13 @@ public class BreakpointsProxy implements IBreakpoints {
         Collection<String> c = (Collection<String>)o;
         if (c == null) return new String[0];
         return (String[])c.toArray(new String[c.size()]);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String,Object>[] toBreakpointArray(Object o) {
+        Collection<Map<String,Object>> c = (Collection<Map<String,Object>>)o;
+        if (c == null) return new Map[0];
+        return (Map<String,Object>[])c.toArray(new Map[c.size()]);
     }
 
     public void addListener(final BreakpointsListener listener) {
@@ -178,6 +201,18 @@ public class BreakpointsProxy implements IBreakpoints {
                     if (name.equals("status")) {
                         assert args.length == 2;
                         listener.breakpointStatusChanged((String)args[0], (Map<String,Object>)args[1]);
+                    }
+                    else if (name.equals("contextAdded")) {
+                        assert args.length == 1;
+                        listener.contextAdded(toBreakpointArray(args[0]));
+                    }
+                    else if (name.equals("contextChanged")) {
+                        assert args.length == 1;
+                        listener.contextChanged(toBreakpointArray(args[0]));
+                    }
+                    else if (name.equals("contextRemoved")) {
+                        assert args.length == 1;
+                        listener.contextRemoved(toStringArray(args[0]));
                     }
                     else {
                         throw new IOException("Breakpoints service: unknown event: " + name);
