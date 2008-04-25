@@ -24,9 +24,10 @@
 #include "base64.h"
 
 static char * buf = NULL;
+static unsigned buf_pos = 0;
 static unsigned buf_size = 0;
 
-static void realloc_buf(int buf_pos) {
+static void realloc_buf(void) {
     if (buf == NULL) {
         buf_size = 0x1000;
         buf = (char *)loc_alloc(buf_size);
@@ -39,6 +40,8 @@ static void realloc_buf(int buf_pos) {
         buf_size *= 2;
     }
 }
+
+#define buf_add(ch) { if (buf_pos >= buf_size) realloc_buf(); buf[buf_pos++] = ch; }
 
 void json_write_ulong(OutputStream * out, unsigned long n) {
     if (n >= 10) {
@@ -180,7 +183,6 @@ int json_read_string(InputStream * inp, char * str, size_t size) {
 
 char * json_read_alloc_string(InputStream * inp) {
     char * str = NULL;
-    unsigned buf_pos = 0;
     int ch = read_stream(inp);
     if (ch == 'n') {
         if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);
@@ -188,16 +190,15 @@ char * json_read_alloc_string(InputStream * inp) {
         if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
         return NULL;
     }
+    buf_pos = 0;
     if (ch != '"') exception(ERR_JSON_SYNTAX);
     for (;;) {
         ch = read_stream(inp);
         if (ch == '"') break;
         if (ch == '\\') ch = read_esc_char(inp);
-        if (buf_pos >= buf_size) realloc_buf(buf_pos);
-        buf[buf_pos++] = (char)ch;
+        buf_add(ch);
     }
-    if (buf_pos >= buf_size) realloc_buf(buf_pos);
-    buf[buf_pos++] = 0;
+    buf_add(0);
     str = (char *)loc_alloc(buf_pos);
     memcpy(str, buf, buf_pos);
     return str;
@@ -352,13 +353,13 @@ char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
     else {
         static unsigned * len_buf = NULL;
         static unsigned len_buf_size = 0;
-
-        unsigned buf_pos = 0;
         unsigned len_pos = 0;
 
         unsigned i, j;
         char * str = NULL;
         char ** arr = NULL;
+
+        buf_pos = 0;
 
         if (inp->peek(inp) == ']') {
             read_stream(inp);
@@ -382,13 +383,11 @@ char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
                         ch = read_stream(inp);
                         if (ch == '"') break;
                         if (ch == '\\') ch = read_esc_char(inp);
-                        if (buf_pos >= buf_size) realloc_buf(buf_pos);
-                        buf[buf_pos++] = (char)ch;
+                        buf_add(ch);
                         len++;
                     }
                 }
-                if (buf_pos >= buf_size) realloc_buf(buf_pos);
-                buf[buf_pos++] = 0;
+                buf_add(0);
                 len_buf[len_pos++] = len;
                 ch = read_stream(inp);
                 if (ch == ',') continue;
@@ -396,8 +395,7 @@ char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
                 exception(ERR_JSON_SYNTAX);
             }
         }
-        if (buf_pos >= buf_size) realloc_buf(buf_pos);
-        buf[buf_pos++] = 0;
+        buf_add(0);
         arr = (char **)loc_alloc((len_pos + 1) * sizeof(char *) + buf_pos);
         str = (char *)(arr + len_pos + 1);
         memcpy(str, buf, buf_pos);
@@ -495,21 +493,25 @@ void json_write_binary_end(JsonWriteBinaryState * state) {
     write_stream(state->out, '"');
 }
 
-void json_skip_object(InputStream * inp) {
+static int skip_char(InputStream * inp) {
     int ch = read_stream(inp);
+    buf_add(ch);
+    return ch;
+}
+
+static void skip_object(InputStream * inp) {
+    int ch = skip_char(inp);
     if (ch == 'n') {
-        if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);
-        if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
-        if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (skip_char(inp) != 'u') exception(ERR_JSON_SYNTAX);
+        if (skip_char(inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (skip_char(inp) != 'l') exception(ERR_JSON_SYNTAX);
         return;
     }
     if (ch == '"') {
         for (;;) {
-            ch = read_stream(inp);
+            ch = skip_char(inp);
             if (ch == '"') break;
-            if (ch == '\\') {
-                if (read_stream(inp) == 'u') readHexChar(inp);
-            }
+            if (ch == '\\') skip_char(inp);
         }
         return;
     }
@@ -517,19 +519,19 @@ void json_skip_object(InputStream * inp) {
         while (1) {
             ch = inp->peek(inp);
             if (ch < '0' || ch > '9') break;
-            read_stream(inp);
+            skip_char(inp);
         }
         return;
     }
     if (ch == '[') {
         if (inp->peek(inp) == ']') {
-            read_stream(inp);
+            skip_char(inp);
         }
         else {
             while (1) {
                 int ch;
-                json_skip_object(inp);
-                ch = read_stream(inp);
+                skip_object(inp);
+                ch = skip_char(inp);
                 if (ch == ',') continue;
                 if (ch == ']') break;
                 exception(ERR_JSON_SYNTAX);
@@ -539,15 +541,15 @@ void json_skip_object(InputStream * inp) {
     }
     if (ch == '{') {
         if (inp->peek(inp) == '}') {
-            read_stream(inp);
+            skip_char(inp);
         }
         else {
             while (1) {
                 int ch;
-                json_skip_object(inp);
-                if (read_stream(inp) != ':') exception(ERR_JSON_SYNTAX);
-                json_skip_object(inp);
-                ch = read_stream(inp);
+                skip_object(inp);
+                if (skip_char(inp) != ':') exception(ERR_JSON_SYNTAX);
+                skip_object(inp);
+                ch = skip_char(inp);
                 if (ch == ',') continue;
                 if (ch == '}') break;
                 exception(ERR_JSON_SYNTAX);
@@ -555,6 +557,16 @@ void json_skip_object(InputStream * inp) {
         }
     }
     exception(ERR_JSON_SYNTAX);
+}
+
+char * json_skip_object(InputStream * inp) {
+    char * str = NULL;
+    buf_pos = 0;
+    skip_object(inp);
+    buf_add(0);
+    str = (char *)loc_alloc(buf_pos);
+    memcpy(str, buf, buf_pos);
+    return str;
 }
 
 void write_errno(OutputStream * out, int err) {

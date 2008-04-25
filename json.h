@@ -34,7 +34,7 @@ extern char ** json_read_alloc_string_array(InputStream * inp, int * len);
 typedef void (*struct_call_back)(InputStream *, char *, void *);
 extern int json_read_struct(InputStream * inp, struct_call_back call_back, void * arg);
 
-extern void json_skip_object(InputStream * inp);
+extern char * json_skip_object(InputStream * inp);
 
 extern void json_write_ulong(OutputStream * out, unsigned long n);
 extern void json_write_long(OutputStream * out, long n);

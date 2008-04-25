@@ -250,27 +250,23 @@ static void udp_refresh_info(void * arg) {
     }
 }
 
-static void udp_receive_req(void * arg) {
-    receive_message * m = arg;
-
+static void udp_receive_req(receive_message * m) {
     trace(LOG_DISCOVERY, "received UDP_REQ_INFO from %s", inet_ntoa(m->addr.sin_addr));
     udp_send_ack(&m->addr);
     trigger_recv();
 }
 
-static int is_remote_host(struct in_addr inaddr) {
+static int is_remote(struct sockaddr_in * addr) {
     int i;
 
+    if (ntohs(addr->sin_port) != discovery_port) return 1;
     for (i = 0; i < ifcind; i++) {
-        if (inaddr.s_addr == ifclist[i].addr) {
-            return 0;
-        }
+        if (addr->sin_addr.s_addr == ifclist[i].addr) return 0;
     }
     return 1;
 }
 
-static void udp_receive_ack(void * arg) {
-    receive_message * m = arg;
+static void udp_receive_ack(receive_message * m) {
     PeerServer * ps = peer_server_alloc();
     char * p = m->buf + 8;
     char * e = m->buf + m->buf_len;
@@ -322,7 +318,10 @@ static void udp_server_recv(void * x) {
         trigger_recv();
         return;
     }
-    if (m->buf[4] == UDP_REQ_INFO && is_remote_host(m->addr.sin_addr)) {
+    if (!is_remote(&m->addr)) {
+        trigger_recv();
+    }
+    else if (m->buf[4] == UDP_REQ_INFO) {
         udp_receive_req(m);
     }
     else if (m->buf[4] == UDP_ACK_INFO) {
