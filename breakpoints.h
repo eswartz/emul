@@ -41,9 +41,22 @@ extern int evaluate_breakpoint_condition(Context * ctx);
 extern SkipBreakpointInfo * skip_breakpoint(Context * ctx);
 
 #if SERVICE_Breakpoints
+
+/* Return 1 if break instruction is planted at given address in the context memory */
 extern int is_breakpoint_address(Context * ctx, unsigned long address);
+
+/* Check if memory data buffer contans planted break instructions and remove them */
+extern void check_breakpoints_on_memory_read(Context * ctx, unsigned long address, void * buf, size_t size);
+
+/* Check if data is about to be written over planted break instructions and adjust the data and breakpoint backing storage */
+extern void check_breakpoints_on_memory_write(Context * ctx, unsigned long address, void * buf, size_t size);
+
 #else
+
 #define is_breakpoint_address(ctx, address) 0
+#define check_breakpoints_on_memory_read(ctx, address, buf, size)
+#define check_breakpoints_on_memory_write(ctx, address, buf, size)
+
 #endif
 
 extern void ini_breakpoints_service(Protocol *, TCFBroadcastGroup *);

@@ -24,6 +24,7 @@
 #include "json.h"
 #include "exceptions.h"
 #include "memoryservice.h"
+#include "breakpoints.h"
 #include "runctrl.h"
 #include "myalloc.h"
 #include "channel.h"
@@ -299,6 +300,7 @@ static void safe_memory_set(void * parm) {
         if (rd == 0) break;
         if (err == 0) {
             /* TODO: word size, mode */
+            check_breakpoints_on_memory_write(ctx, addr, buf, rd);
             if (context_write_mem(ctx, addr, buf, rd) < 0) {
                 err = errno;
             }
@@ -366,6 +368,7 @@ static void safe_memory_get(void * parm) {
             err = errno;
         }
         else {
+            check_breakpoints_on_memory_read(ctx, addr, buf, rd);
             json_write_binary_data(&state, buf, rd);
             addr += rd;
         }
@@ -446,10 +449,13 @@ static void safe_memory_fill(void * parm) {
     }
 
     while (err == 0 && addr < addr0 + size) {
+        char tmp[sizeof(buf)];
         int wr = addr0 + size - addr;
         if (wr > buf_pos) wr = buf_pos;
         /* TODO: word size, mode */
-        if (context_write_mem(ctx, addr, buf, wr) < 0) {
+        memcpy(tmp, buf, wr);
+        check_breakpoints_on_memory_write(ctx, addr, tmp, wr);
+        if (context_write_mem(ctx, addr, tmp, wr) < 0) {
             err = errno;
         }
         else {

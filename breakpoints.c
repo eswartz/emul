@@ -279,6 +279,49 @@ static BreakInstruction * find_instruction(Context * ctx, unsigned long address)
     return NULL;
 }
 
+void check_breakpoints_on_memory_read(Context * ctx, unsigned long address, void * p, size_t size) {
+#if !defined(_WRS_KERNEL)
+    int i;
+    char * buf = (char *)p;
+    LINK * l = instructions.next;
+    while (l != &instructions) {
+        BreakInstruction * bi = link_all2bi(l);
+        l = l->next;
+        if (!bi->planted) continue;
+        if (bi->ctx->mem != ctx->mem) continue;
+        if (bi->address + BREAK_SIZE <= address) continue;
+        if (bi->address >= address + size) continue;
+        for (i = 0; i < BREAK_SIZE; i++) {
+            if (bi->address + i < address) continue;
+            if (bi->address + i >= address + size) continue;
+            buf[bi->address + i - address] = bi->saved_code[i];
+        }
+    }
+#endif
+}
+
+void check_breakpoints_on_memory_write(Context * ctx, unsigned long address, void * p, size_t size) {
+#if !defined(_WRS_KERNEL)
+    int i;
+    char * buf = (char *)p;
+    LINK * l = instructions.next;
+    while (l != &instructions) {
+        BreakInstruction * bi = link_all2bi(l);
+        l = l->next;
+        if (!bi->planted) continue;
+        if (bi->ctx->mem != ctx->mem) continue;
+        if (bi->address + BREAK_SIZE <= address) continue;
+        if (bi->address >= address + size) continue;
+        for (i = 0; i < BREAK_SIZE; i++) {
+            if (bi->address + i < address) continue;
+            if (bi->address + i >= address + size) continue;
+            bi->saved_code[i] = buf[bi->address + i - address];
+            buf[bi->address + i - address] = BREAK_INST[i];
+        }
+    }
+#endif
+}
+
 static int address_expression_identifier(char * name, Value * v) {
     if (v == NULL) return 0;
     memset(v, 0, sizeof(Value));

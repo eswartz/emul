@@ -30,6 +30,7 @@
 #include "json.h"
 #include "exceptions.h"
 #include "stacktrace.h"
+#include "breakpoints.h"
 
 static const char * STACKTRACE = "StackTrace";
 
@@ -103,10 +104,16 @@ static void trace_stack(Context * ctx, STACK_TRACE_CALLBAK callback) {
 
 static int read_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
     if (ctx == &dump_stack_ctx) {
+        /* Tracing current thread stack */
         memmove(buf, (void *)address, size);
         return 0;
     }
-    return context_read_mem(ctx, address, buf, size);
+    else {
+        int err = 0;
+        if (context_read_mem(ctx, address, buf, size) < 0) err = errno;
+        check_breakpoints_on_memory_read(ctx, address, buf, size);
+        return err;
+    }
 }
 
 #define MAX_FRAMES  1000
