@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.rse.core.model.ISystemMessageObject;
 import org.eclipse.rse.core.model.ISystemResourceSet;
 import org.eclipse.rse.core.model.SystemMessageObject;
@@ -53,10 +54,10 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
     private static final Object[] EMPTY_LIST = new Object[0];
     private static IPropertyDescriptor[] properties = null;
     //private SystemKillProcessAction killProcessAction;
-    
-    private static final String PROP_PC_UTIME = "PCUTime"; 
-    private static final String PROP_PC_STIME = "PCSTime"; 
-    
+
+    private static final String PROP_PC_UTIME = "PCUTime";
+    private static final String PROP_PC_STIME = "PCSTime";
+
     public boolean canDrag(Object element) {
         return true;
     }
@@ -80,7 +81,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
                     killProcessAction = new SystemKillProcessAction(shell);
             menu.add(ISystemContextMenuConstants.GROUP_CHANGE, killProcessAction);
             */
-    
+
         if (copyClipboardAction == null) {
             Clipboard clipboard = RSEUIPlugin.getTheSystemRegistryUI().getSystemClipboard();
             copyClipboardAction = new SystemCopyToClipboardAction(shell, clipboard);
@@ -92,10 +93,10 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         if (element instanceof IRemoteProcess) {
             IRemoteProcess process = (IRemoteProcess)element;
             return process.getParentRemoteProcessSubSystem();
-        }               
+        }
         return super.getSubSystem(element);
     }
-    
+
     public ImageDescriptor getImageDescriptor(Object element) {
         IRemoteProcess process = (IRemoteProcess)element;
         TCFProcessResource r = (TCFProcessResource)process.getObject();
@@ -118,7 +119,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         String text = ((IRemoteProcess)element).getLabel();
         return (text == null) ? "" : text; //$NON-NLS-1$
     }
-    
+
     public String getAlternateText(Object element) {
         IRemoteProcess process = (IRemoteProcess)element;
         String allProperties = process.getAllProperties();
@@ -163,7 +164,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
             TCFProcessAdapter adapter = new TCFProcessAdapter();
             children1 = adapter.convertToRemoteProcesses(process.getContext(), process, nodes);
             if (children1 == null) children1 = EMPTY_LIST;
-            
+
             children2 = ss.listAllProcesses(newRpfs, process.getContext(), monitor);
             if (children2 == null) children2 = EMPTY_LIST;
         }
@@ -182,7 +183,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
     }
 
     protected IPropertyDescriptor[] internalGetPropertyDescriptors() {
-        if (properties != null) return properties;       
+        if (properties != null) return properties;
         List<IPropertyDescriptor> l = new ArrayList<IPropertyDescriptor>();
 
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_ID, Messages.PROCESS_ID_LABEL, Messages.PROCESS_ID_TOOLTIP));
@@ -190,7 +191,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_FILE, Messages.PROCESS_NAME_LABEL, Messages.PROCESS_NAME_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_CWD, Messages.PROCESS_CWD_LABEL, Messages.PROCESS_CWD_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_ROOT, Messages.PROCESS_ROOT_LABEL, Messages.PROCESS_ROOT_TOOLTIP));
-        l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_STATE, Messages.PROCESS_STATE_LABEL, Messages.PROCESS_STATE_TOOLTIP));                   
+        l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_STATE, Messages.PROCESS_STATE_LABEL, Messages.PROCESS_STATE_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_UID, Messages.PROCESS_UID_LABEL, Messages.PROCESS_UID_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_USERNAME, Messages.PROCESS_USERNAME_LABEL, Messages.PROCESS_USERNAME_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_UGID, Messages.PROCESS_GID_LABEL, Messages.PROCESS_GID_TOOLTIP));
@@ -233,7 +234,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_PROCESSOR, Messages.PROCESS_PROCESSOR_LABEL, Messages.PROCESS_PROCESSOR_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_RTPRIORITY, Messages.PROCESS_RTPRIORITY_LABEL, Messages.PROCESS_RTPRIORITY_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_POLICY, Messages.PROCESS_POLICY_LABEL, Messages.PROCESS_POLICY_TOOLTIP));
-        
+
         properties = l.toArray(new IPropertyDescriptor[l.size()]);
         return properties;
     }
@@ -245,10 +246,10 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
     protected Object internalGetPropertyValue(Object key) {
         return getPropertyValue(key, true);
     }
-    
+
     /**
      * Returns the current value for the named property.
-     * 
+     *
      * @param property the name or key of the property as named by its property descriptor
      * @param formatted indication of whether to return the value in formatted or raw form
      * @return the current value of the given property
@@ -256,14 +257,16 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
     public Object getPropertyValue(Object property, boolean formatted) {
         String name = (String)property;
         TCFRemoteProcess process = (TCFRemoteProcess)propertySourceInput;
-        Object p = process.getProperties().get((String)property);
-        
+        Object p = process.getProperties().get(property);
+
         if (formatted) {
             if (name.equals(ISysMonitor.PROP_VSIZE)) {
-                return sub(Messages.PROCESS_VMSIZE_VALUE, "&1", Long.toString(process.getVmSizeInKB()));
+            	return NLS.bind(Messages.PROCESS_VMSIZE_VALUE, Long
+                        .toString(process.getVmSizeInKB()));
             }
             if (name.equals(ISysMonitor.PROP_RSS)) {
-                return sub(Messages.PROCESS_VMRSS_VALUE, "&1", Long.toString(process.getVmRSSInKB()));
+                return NLS.bind(Messages.PROCESS_VMRSS_VALUE, Long
+                        .toString(process.getVmRSSInKB()));
             }
             if (name.equals(ISysMonitor.PROP_SIGNALS))return formatBitSet(p);
             if (name.equals(ISysMonitor.PROP_SIGBLOCK)) return formatBitSet(p);
@@ -283,12 +286,12 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
             if (name.equals(PROP_PC_UTIME)) return process.getUserTimePC();
             if (name.equals(PROP_PC_STIME)) return process.getSysTimePC();
         }
-        
+
         if (p == null) return null;
         if (formatted) return p.toString();
         return p;
     }
-    
+
     private String formatTime(Object o) {
         if (o instanceof Number) {
             BigInteger n = new BigInteger(o.toString());
@@ -315,7 +318,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         if (o == null) return null;
         return o.toString();
     }
-    
+
     private void formatHex(StringBuffer buf, BigInteger n, int cnt) {
         BigInteger m[] = n.divideAndRemainder(BigInteger.valueOf(16));
         if (cnt < 7 || !m[0].equals(BigInteger.ZERO)) {
@@ -324,7 +327,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         int d = m[1].intValue();
         buf.append((char)(d <= 9 ? '0' + d : 'a' + d - 10));
     }
-    
+
     protected String formatHex(Object o) {
         if (o instanceof Number) {
             BigInteger n = new BigInteger(o.toString());
@@ -336,7 +339,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         if (o == null) return null;
         return o.toString();
     }
-    
+
     protected String formatBitSet(Object o) {
         if (o instanceof Number) {
             StringBuffer buf = new StringBuffer();
@@ -358,11 +361,11 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         if (o == null) return null;
         return o.toString();
     }
-    
+
     protected String formatState(String state) {
         return state;
     }
-    
+
     /**
      * Return fully qualified name that uniquely identifies this remote object's remote parent within its subsystem
      */
@@ -378,7 +381,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
      * spawned it.
      * <p>
      * The shell is required in order to set the cursor to a busy state if a remote trip is required.
-     * 
+     *
      * @return an IRemoteProcess object for the parent
      */
     public Object getRemoteParent(Object element, IProgressMonitor monitor) throws Exception {
@@ -387,11 +390,11 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
 
     /**
      * Given a remote object, return the unqualified names of the objects contained in that parent. This is
-     *  used for testing for uniqueness on a rename operation, for example. Sometimes, it is not 
+     *  used for testing for uniqueness on a rename operation, for example. Sometimes, it is not
      *  enough to just enumerate all the objects in the parent for this purpose, because duplicate
-     *  names are allowed if the types are different, such as on iSeries. In this case return only 
+     *  names are allowed if the types are different, such as on iSeries. In this case return only
      *  the names which should be used to do name-uniqueness validation on a rename operation.
-     * 
+     *
      * @return an array of all file and folder names in the parent of the given IRemoteFile object
      */
     public String[] getRemoteParentNamesInUse(Object element, IProgressMonitor monitor) throws Exception {
@@ -429,7 +432,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         return ISystemProcessRemoteTypes.TYPECATEGORY;
     }
 
-    /** 
+    /**
      * Return the subsystem factory id that owns this remote object
      * The value must not be translated, so that property pages registered via xml can subset by it.
      */
