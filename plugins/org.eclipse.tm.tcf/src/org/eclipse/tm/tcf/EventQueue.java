@@ -43,7 +43,6 @@ class EventQueue implements IEventQueue, Runnable {
             }
 
             public void awake(IJobChangeEvent event) {
-                //job_cnt++;
             }
 
             public void done(IJobChangeEvent event) {
@@ -58,7 +57,6 @@ class EventQueue implements IEventQueue, Runnable {
             }
 
             public void sleeping(IJobChangeEvent event) {
-                //job_cnt--;
             }
         });
     }
@@ -92,6 +90,7 @@ class EventQueue implements IEventQueue, Runnable {
     }
 
     public synchronized void invokeLater(final Runnable r) {
+        assert r != null;
         queue.add(r);
         if (waiting) {
             waiting = false;
@@ -104,8 +103,8 @@ class EventQueue implements IEventQueue, Runnable {
     }
 
     public synchronized int getCongestion() {
-        int l0 = job_cnt / 100 - 100;
-        int l1 = queue.size() / 100 - 100;
+        int l0 = job_cnt / 10 - 100;
+        int l1 = queue.size() / 10 - 100;
         if (l1 > l0) l0 = l1;
         if (l0 > 100) l0 = 100;
         return l0;

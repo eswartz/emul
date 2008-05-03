@@ -230,7 +230,6 @@ public class RunControlProxy implements IRunControl {
 
     public IToken getChildren(String parent_context_id, final DoneGetChildren done) {
         return new Command(channel, this, "getChildren", new Object[]{ parent_context_id }) {
-            @SuppressWarnings("unchecked")
             @Override
             public void done(Exception error, Object[] args) {
                 String[] arr = null;

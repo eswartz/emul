@@ -89,7 +89,6 @@ public class StackTraceProxy implements IStackTrace {
 
     public IToken getContext(String[] id, final DoneGetContext done) {
         return new Command(channel, this, "getContext", new Object[]{ id }) {
-            @SuppressWarnings("unchecked")
             @Override
             public void done(Exception error, Object[] args) {
                 StackTraceContext[] arr = null;

@@ -11,6 +11,9 @@
 package org.eclipse.tm.tcf.core;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -120,12 +123,15 @@ public abstract class AbstractChannel implements IChannel {
     private IToken redirect_command;
     private IPeer peer;
 
-    private static final int pending_command_limit = 10;
+    private static final int pending_command_limit = 32;
     private int local_congestion_level = -100;
     private int remote_congestion_level = -100;
     private long local_congestion_time;
-    private int inp_queue_size = 0;
+    private int local_congestion_cnt;
     private Collection<TraceListener> trace_listeners;
+    
+    private static final MemoryMXBean mem_mbean = ManagementFactory.getMemoryMXBean();
+    private static final long mem_limit = 32000000;
 
     public static final int
         EOS = -1, // End Of Stream
@@ -203,16 +209,12 @@ public abstract class AbstractChannel implements IChannel {
                         default:
                             error();
                         }
-                        long delay = 0;
-                        synchronized (out_queue) {
-                            inp_queue_size++;
-                            if (inp_queue_size > 32) delay = inp_queue_size;
-                        }
                         Protocol.invokeLater(new Runnable() {
                             public void run() {
                                 handleInput(msg);
                             }
                         });
+                        int delay = local_congestion_level;
                         if (delay > 0) sleep(delay);
                     }
                     Protocol.invokeLater(new Runnable() {
@@ -366,7 +368,6 @@ public abstract class AbstractChannel implements IChannel {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void onLocatorHello(Collection<String> c) throws IOException {
         if (state != STATE_OPENNING) throw new IOException("Invalid event: Locator.Hello");
         remote_service_by_class.clear();
@@ -667,9 +668,6 @@ public abstract class AbstractChannel implements IChannel {
     @SuppressWarnings("unchecked")
     private void handleInput(Message msg) {
         assert Protocol.isDispatchThread();
-        synchronized (out_queue) {
-            inp_queue_size--;
-        }
         if (state == STATE_CLOSED) return;
         if (trace_listeners != null) {
             for (TraceListener l : trace_listeners) {
@@ -698,15 +696,16 @@ public abstract class AbstractChannel implements IChannel {
                 else {
                     throw new IOException("Unknown command " + msg.service + "." + msg.name);
                 }
-                sendCongestionLevel();
                 break;
             case 'P':
                 token = out_tokens.get(msg.token.getID()).token;
                 token.getListener().progress(token, msg.data);
+                sendCongestionLevel();
                 break;
             case 'R':
                 token = out_tokens.remove(msg.token.getID()).token;
                 token.getListener().result(token, msg.data);
+                sendCongestionLevel();
                 break;
             case 'E':
                 if (msg.service.equals(ILocator.NAME) && msg.name.equals("Hello")) {
@@ -723,7 +722,7 @@ public abstract class AbstractChannel implements IChannel {
                 }
                 break;
             case 'F':
-                remote_congestion_level = Integer.parseInt(new String(msg.data, "UTF8"));
+                remote_congestion_level = Integer.parseInt(new String(msg.data, "ASCII"));
                 break;
             default:
                 assert false;
@@ -736,23 +735,26 @@ public abstract class AbstractChannel implements IChannel {
     }
 
     private void sendCongestionLevel() throws IOException {
-        assert Protocol.isDispatchThread();
+        if (++local_congestion_cnt < 8) return;
+        local_congestion_cnt = 0;
         if (state != STATE_OPEN) return;
-        int level = Protocol.getEventQueue().getCongestion();
+        long time = System.currentTimeMillis();
+        if (time - local_congestion_time < 500) return;
+        assert Protocol.isDispatchThread();
+        int level = Protocol.getCongestionLevel();
         int n = inp_tokens.size() * 100 / pending_command_limit - 100;
+        if (n > level) level = n;
+        MemoryUsage mem_usage = mem_mbean.getHeapMemoryUsage();
+        long mem_free = mem_usage.getMax() - mem_usage.getUsed();
+        n = (int)((mem_limit - mem_free) * 100 / mem_limit);
+        if (n > 0) mem_mbean.gc();
+        if (n > level) level = n;
+        n = Protocol.getCongestionLevel();
         if (n > level) level = n;
         if (level > 100) level = 100;
         if (level == local_congestion_level) return;
-        long time = System.currentTimeMillis();
-        if (level < local_congestion_level) {
-            if (time - local_congestion_time < 500) return;
-            int i = (local_congestion_level - level) / 4;
-            if (i <= 0) i = 1;
-            local_congestion_level -= i;
-        }
-        else {
-            local_congestion_level = level;
-        }
+        int i = (level - local_congestion_level) / 8;
+        if (i != 0) level = local_congestion_level + i;
         local_congestion_time = time;
         synchronized (out_queue) {
             Message msg = out_queue.isEmpty() ? null : out_queue.get(0);
@@ -761,8 +763,9 @@ public abstract class AbstractChannel implements IChannel {
                 out_queue.add(0, msg);
                 out_queue.notify();
             }
-            msg.data = Integer.toString(local_congestion_level).getBytes("UTF8");
+            msg.data = Integer.toString(local_congestion_level).getBytes("ASCII");
             msg.trace = trace_listeners;
+            local_congestion_level = level;
         }
     }
 

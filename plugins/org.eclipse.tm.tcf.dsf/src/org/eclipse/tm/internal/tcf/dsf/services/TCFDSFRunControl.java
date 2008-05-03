@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.dsf.services;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,11 +24,11 @@ import org.eclipse.dd.dsf.concurrent.DataRequestMonitor;
 import org.eclipse.dd.dsf.concurrent.RequestMonitor;
 import org.eclipse.dd.dsf.datamodel.AbstractDMEvent;
 import org.eclipse.dd.dsf.datamodel.IDMContext;
-import org.eclipse.dd.dsf.datamodel.ServiceDMContext;
 import org.eclipse.dd.dsf.debug.model.DsfMemoryBlockRetrieval;
 import org.eclipse.dd.dsf.service.AbstractDsfService;
 import org.eclipse.dd.dsf.service.DsfSession;
 import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IMemoryBlockRetrieval;
 import org.eclipse.debug.core.model.IMemoryBlockRetrievalExtension;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
@@ -38,6 +37,7 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.osgi.framework.BundleContext;
 
 
@@ -79,37 +79,39 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             this.reason = toStateChangeReason(reason);
         }
 
-        public IExecutionDMContext getTriggeringContext() {
-            return cache.get(trigger_id);
-        }
-
         public StateChangeReason getReason() {
             return reason;
         }
+
+        public IExecutionDMContext[] getTriggeringContexts() {
+            IExecutionDMContext ctx = trigger_id == null ? null : cache.get(trigger_id);
+            return ctx == null ? new IExecutionDMContext[0] : new IExecutionDMContext[]{ ctx };
+        }
     }
 
-    public static class ContainerResumedEvent extends AbstractDMEvent<IExecutionDMContext> implements IContainerResumedDMEvent {
+    public class ContainerResumedEvent extends AbstractDMEvent<IExecutionDMContext> implements IContainerResumedDMEvent {
 
-        public ContainerResumedEvent(IExecutionDMContext dmc) {
+        private final String trigger_id;
+
+        public ContainerResumedEvent(IExecutionDMContext dmc, String trigger_id) {
             super(dmc);
+            this.trigger_id = trigger_id;
         }
 
         public StateChangeReason getReason() {
             return StateChangeReason.USER_REQUEST;
         }
+
+        public IExecutionDMContext[] getTriggeringContexts() {
+            IExecutionDMContext ctx = trigger_id == null ? null : cache.get(trigger_id);
+            return ctx == null ? new IExecutionDMContext[0] : new IExecutionDMContext[]{ ctx };
+        }
     }
 
-    public static class StartedEvent extends AbstractDMEvent<IContainerDMContext> implements IStartedDMEvent {
+    public static class StartedEvent extends AbstractDMEvent<IExecutionDMContext> implements IStartedDMEvent {
 
-        private final IExecutionDMContext exe;
-
-        public StartedEvent(IContainerDMContext dmc, IExecutionDMContext exe) {
+        public StartedEvent(IExecutionDMContext dmc) {
             super(dmc);
-            this.exe = exe;
-        }
-
-        public IExecutionDMContext getExecutionContext() {
-            return exe;
         }
     }
 
@@ -120,17 +122,10 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         }
     }
 
-    public static class ExitedEvent extends AbstractDMEvent<IContainerDMContext> implements IExitedDMEvent {
+    public static class ExitedEvent extends AbstractDMEvent<IExecutionDMContext> implements IExitedDMEvent {
 
-        private final IExecutionDMContext exe;
-
-        public ExitedEvent(IContainerDMContext dmc, IExecutionDMContext exe) {
+        public ExitedEvent(IContainerDMContext dmc) {
             super(dmc);
-            this.exe = exe;
-        }
-
-        public IExecutionDMContext getExecutionContext() {
-            return exe;
         }
     }
 
@@ -144,10 +139,10 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             }
             for (String id : context_ids) {
                 ExecutionDMC n = cache.get(id);
-                if (n != null && n.context.isValid()) {
-                    RunControlContext c = n.context.getData();
+                if (n != null && n.run_control_context_cache.isValid()) {
+                    RunControlContext c = n.run_control_context_cache.getData();
                     if (c.isContainer()) {
-                        getSession().dispatchEvent(new ContainerResumedEvent(n), getProperties());
+                        getSession().dispatchEvent(new ContainerResumedEvent(n, null), getProperties());
                     }
                 }
             }
@@ -167,8 +162,8 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             }
             for (String id : suspended_ids) {
                 ExecutionDMC n = cache.get(id);
-                if (n != null && n.context.isValid()) {
-                    RunControlContext c = n.context.getData();
+                if (n != null && n.run_control_context_cache.isValid()) {
+                    RunControlContext c = n.run_control_context_cache.getData();
                     if (c.isContainer()) {
                         getSession().dispatchEvent(new ContainerSuspendedEvent(n, trigger_id, reason), getProperties());
                     }
@@ -213,14 +208,6 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         }
     };
     
-    private static class ExecutionState {
-        boolean is_suspended;
-        boolean is_running;
-        String suspend_pc;
-        String suspend_reason;
-        Map<String,Object> suspend_params;
-    }
-
     private class ExecutionDMC extends TCFDSFExecutionDMC {
 
         final String id;
@@ -231,124 +218,31 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         int is_stepping;
         int is_resuming;
         
-        final TCFDataCache<RunControlContext> context; 
-        final TCFDataCache<Map<String,ExecutionDMC>> children; 
-        final TCFDataCache<ExecutionState> state; 
-
         public ExecutionDMC(ExecutionDMC parent, final String id) {
-            super(TCFDSFRunControl.this, parent == null ?
+            super(channel, TCFDSFRunControl.this, parent == null ?
                     new IDMContext[0] : new IDMContext[] { parent });
             this.parent = parent;
             this.id = id;
             DsfMemoryBlockRetrieval mr = null;
             try {
-                mr = new DsfMemoryBlockRetrieval(ITCFConstants.ID_TCF_DEBUG_MODEL, this);
+                mr = new DsfMemoryBlockRetrieval(ITCFConstants.ID_TCF_DEBUG_MODEL, config, getSession());
             }
             catch (DebugException e) {
                 e.printStackTrace();
             };
             mem_retrieval = mr;
-            context = new TCFDataCache<RunControlContext>(channel) {
-                @Override
-                public boolean startDataRetrieval() {
-                    assert command == null;
-                    if (id == null || tcf_run_service == null) {
-                        data = null;
-                        valid = true;
-                        return true;
-                    }
-                    command = tcf_run_service.getContext(id, new IRunControl.DoneGetContext() {
-                        public void doneGetContext(IToken token, Exception err, IRunControl.RunControlContext ctx) {
-                            if (command != token) return;
-                            command = null;
-                            if (err != null) {
-                                error = err;
-                            }
-                            else {
-                                data = ctx;
-                            }
-                            valid = true;
-                            validate();
-                        }
-                    });
-                    return false;
-                }
-            };
-            children = new TCFDataCache<Map<String,ExecutionDMC>>(channel) {
-                @Override
-                public boolean startDataRetrieval() {
-                    assert command == null;
-                    if (tcf_run_service == null) {
-                        data = null;
-                        valid = true;
-                        return true;
-                    }
-                    command = tcf_run_service.getChildren(id, new IRunControl.DoneGetChildren() {
-                        public void doneGetChildren(IToken token, Exception err, String[] contexts) {
-                            if (command != token) return;
-                            command = null;
-                            if (err != null) {
-                                data = null;
-                                error = err;
-                            }
-                            else {
-                                if (data == null) data = new HashMap<String,ExecutionDMC>();
-                                data.clear();
-                                for (int i = 0; i < contexts.length; i++) {
-                                    String id = contexts[i];
-                                    ExecutionDMC n = cache.get(id);
-                                    if (n == null) {
-                                        n = new ExecutionDMC(ExecutionDMC.this, id);
-                                        cache.put(n.id, n);
-                                    }
-                                    data.put(id, n);
-                                }
-                            }
-                            valid = true;
-                            validate();
-                        }
-                    });
-                    return false;
-                }
-            };
-            state = new TCFDataCache<ExecutionState>(channel) {
-                @Override
-                public boolean startDataRetrieval() {
-                    assert command == null;
-                    assert context.isValid();
-                    RunControlContext c = context.getData();
-                    if (c == null || !c.hasState()) {
-                        data = null;
-                        valid = true;
-                        return true;
-                    }
-                    command = c.getState(new IRunControl.DoneGetState() {
-                        public void doneGetState(IToken token, Exception err, boolean suspend, String pc, String reason, Map<String,Object> params) {
-                            if (token != command) return;
-                            command = null;
-                            if (err != null) {
-                                data = null;
-                                error = err;
-                            }
-                            else {
-                                data = new ExecutionState();
-                                data.is_running = !suspend;
-                                data.is_suspended = suspend;
-                                if (suspend) {
-                                    data.suspend_pc = pc;
-                                    data.suspend_reason = reason;
-                                    data.suspend_params = params;
-                                }
-                            }
-                            valid = true;
-                            validate();
-                        }
-                    });
-                    return false;
-                }
-            };
         }
 
+        @Override
+        protected TCFDSFExecutionDMC addChild(String id) {
+            ExecutionDMC n = cache.get(id);
+            if (n == null) {
+                n = new ExecutionDMC(ExecutionDMC.this, id);
+                cache.put(id, n);
+            }
+            return n;
+        }
+        
         @Override
         public String toString() {
             return baseToString() + ".context[" + id + "]"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -384,37 +278,20 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         }
 
         @Override
-        public void addStateWaitingRequest(IDataRequest req) {
-            state.addWaitingRequest(req);
-        }
-
-        @Override
-        public TCFAddress getPC() {
-            ExecutionState st = state.getData();
-            if (st == null) return null;
-            if (st.suspend_pc == null) return null;
-            return new TCFAddress(new BigInteger(st.suspend_pc));
-        }
-
-        @Override
-        public boolean validateState() {
-            return state.validate();
-        }
-
-        @Override
         public boolean isDisposed() {
             return disposed;
         }
         
-        void dispose() {
+        @Override
+        public void dispose() {
             assert !disposed;
-            context.cancel();
-            children.cancel();
-            state.cancel();
-            if (children.isValid()) {
-                Map<String,ExecutionDMC> m = children.getData();
+            run_control_context_cache.cancel();
+            run_control_children_cache.cancel();
+            run_control_state_cache.cancel();
+            if (run_control_children_cache.isValid()) {
+                Map<String,TCFDSFExecutionDMC> m = run_control_children_cache.getData();
                 if (m != null) {
-                    for (ExecutionDMC n : m.values()) n.dispose();
+                    for (TCFDSFExecutionDMC n : m.values()) n.dispose();
                 }
             }
             cache.remove(id);
@@ -429,59 +306,59 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             assert !disposed;
             assert cache.get(id) == null;
             ExecutionDMC n = new ExecutionDMC(this, id);
-            n.context.reset(c);
-            if (children.isValid()) {
-                Map<String,ExecutionDMC> m = children.getData();
+            n.run_control_context_cache.reset(c);
+            if (run_control_children_cache.isValid()) {
+                Map<String,TCFDSFExecutionDMC> m = run_control_children_cache.getData();
                 if (m != null) m.put(id, n);
             }
             cache.put(id, n);
-            getSession().dispatchEvent(new StartedEvent(this, n), getProperties());
+            getSession().dispatchEvent(new StartedEvent(n), getProperties());
         }
 
         void onContextChanged(IRunControl.RunControlContext c) {
             assert !disposed;
-            context.reset(c);
+            run_control_context_cache.reset(c);
             getSession().dispatchEvent(new ChangedEvent(this), getProperties());
         }
 
         void onContextRemoved() {
             assert !disposed;
-            if (parent != null && parent.children.isValid()) {
-                Map<String,ExecutionDMC> m = parent.children.getData();
+            if (parent != null && parent.run_control_children_cache.isValid()) {
+                Map<String,TCFDSFExecutionDMC> m = parent.run_control_children_cache.getData();
                 if (m != null) m.remove(id);
             }
             dispose();
-            getSession().dispatchEvent(new ExitedEvent(parent, this), getProperties());
+            getSession().dispatchEvent(new ExitedEvent(this), getProperties());
         }
 
         void onContainerSuspended(String reason) {
             assert !disposed;
-            if (!context.isValid()) return;
-            RunControlContext rc = context.getData();
+            if (!run_control_context_cache.isValid()) return;
+            RunControlContext rc = run_control_context_cache.getData();
             if (rc == null) return;
             if (!rc.hasState()) return;
-            state.reset();
+            run_control_state_cache.reset();
             getSession().dispatchEvent(new SuspendedEvent(this, reason), getProperties());
         }
 
         void onContextSuspended(String pc, String reason, Map<String,Object> params) {
             assert !disposed;
-            assert !context.isValid() || context.getData().hasState();
-            ExecutionState st = new ExecutionState();
+            assert !run_control_context_cache.isValid() || run_control_context_cache.getData().hasState();
+            TCFDSFRunControlState st = new TCFDSFRunControlState();
             st.is_suspended = true;
             st.suspend_pc = pc;
             st.suspend_reason = reason;
             st.suspend_params = params;
-            state.reset(st);
+            run_control_state_cache.reset(st);
             getSession().dispatchEvent(new SuspendedEvent(this, reason), getProperties());
         }
 
         void onContextResumed() {
             assert !disposed;
-            assert !context.isValid() || context.getData().hasState();
-            ExecutionState st = new ExecutionState();
+            assert !run_control_context_cache.isValid() || run_control_context_cache.getData().hasState();
+            TCFDSFRunControlState st = new TCFDSFRunControlState();
             st.is_running = true;
-            state.reset(st);
+            run_control_state_cache.reset(st);
             getSession().dispatchEvent(new ResumedEvent(this), getProperties());
         }
 
@@ -522,23 +399,23 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         return StateChangeReason.UNKNOWN;
     }
 
+    private final ILaunchConfiguration config;
     private final IChannel channel;
     private final org.eclipse.tm.tcf.services.IRunControl tcf_run_service;
     private final Map<String,ExecutionDMC> cache = new HashMap<String,ExecutionDMC>();
     private final ExecutionDMC root_dmc;
-    private IDMContext service_dmc;
 
-    public TCFDSFRunControl(DsfSession session, IChannel channel, final RequestMonitor monitor) {
+    public TCFDSFRunControl(ILaunchConfiguration config, DsfSession session, IChannel channel, final RequestMonitor monitor) {
         super(session);
+        this.config = config;
         this.channel = channel;
         tcf_run_service = channel.getRemoteService(org.eclipse.tm.tcf.services.IRunControl.class);
         if (tcf_run_service != null) tcf_run_service.addListener(run_listener);
-        service_dmc = new ServiceDMContext(this, "#run_control");
         root_dmc = new ExecutionDMC(null, null);
         cache.put(null, root_dmc);
         initialize(new RequestMonitor(getExecutor(), monitor) { 
             @Override
-            protected void handleOK() {
+            protected void handleSuccess() {
                 String[] class_names = {
                         org.eclipse.dd.dsf.debug.service.IRunControl.class.getName(),
                         TCFDSFRunControl.class.getName()
@@ -565,70 +442,54 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
     public void getModelData(IDMContext dmc, final DataRequestMonitor<?> rm) {
         if (dmc instanceof ExecutionDMC) {
             final ExecutionDMC ctx = (ExecutionDMC)dmc;
-            if (!ctx.context.validate()) {
-                ctx.context.addWaitingRequest(new IDataRequest() {
-                    public void cancel() {
-                        rm.setStatus(new Status(IStatus.CANCEL, Activator.PLUGIN_ID,
-                                REQUEST_FAILED, "Canceled", null)); //$NON-NLS-1$
-                        rm.setCanceled(true);
-                        rm.done();
-                    }
-                    public void done() {
+            if (!ctx.run_control_context_cache.validate()) {
+                ctx.run_control_context_cache.wait(new Runnable() {
+                    public void run() {
                         getModelData(ctx, rm);
                     }
                 });
                 return;
             }
-            if (ctx.context.getError() != null) {
+            if (ctx.run_control_context_cache.getError() != null) {
                 rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                        REQUEST_FAILED, "Data error", ctx.context.getError())); //$NON-NLS-1$
+                        REQUEST_FAILED, "Data error", ctx.run_control_context_cache.getError())); //$NON-NLS-1$
                 rm.done();
                 return;
             }
-            if (ctx.context.getData() == null) {
+            if (ctx.run_control_context_cache.getData() == null) {
                 ExecutionData dt = new ExecutionData(StateChangeReason.UNKNOWN);
                 ((DataRequestMonitor<IExecutionDMData>)rm).setData(dt);
                 rm.done();
                 return;
             }
-            if (!ctx.context.getData().hasState()) {
+            if (!ctx.run_control_context_cache.getData().hasState()) {
                 ExecutionData dt = new ExecutionData(StateChangeReason.UNKNOWN);
                 ((DataRequestMonitor<IExecutionDMData>)rm).setData(dt);
                 rm.done();
                 return;
             }
-            if (!ctx.state.validate()) {
-                ctx.state.addWaitingRequest(new IDataRequest() {
-                    public void cancel() {
-                        rm.setStatus(new Status(IStatus.CANCEL, Activator.PLUGIN_ID,
-                                REQUEST_FAILED, "Canceled", null)); //$NON-NLS-1$
-                        rm.setCanceled(true);
-                        rm.done();
-                    }
-                    public void done() {
+            if (!ctx.run_control_state_cache.validate()) {
+                ctx.run_control_state_cache.wait(new Runnable() {
+                    public void run() {
                         getModelData(ctx, rm);
                     }
                 });
                 return;
             }
-            if (ctx.state.getError() != null) {
+            if (ctx.run_control_state_cache.getError() != null) {
                 rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                        REQUEST_FAILED, "Data error", ctx.state.getError())); //$NON-NLS-1$
+                        REQUEST_FAILED, "Data error", ctx.run_control_state_cache.getError())); //$NON-NLS-1$
                 rm.done();
                 return;
             }
-            if (ctx.state.getData() == null) {
+            if (ctx.run_control_state_cache.getData() == null) {
                 ExecutionData dt = new ExecutionData(StateChangeReason.UNKNOWN);
                 ((DataRequestMonitor<IExecutionDMData>)rm).setData(dt);
                 rm.done();
                 return;
             }
-            ExecutionData dt = new ExecutionData(toStateChangeReason(ctx.state.getData().suspend_reason));
+            ExecutionData dt = new ExecutionData(toStateChangeReason(ctx.run_control_state_cache.getData().suspend_reason));
             ((DataRequestMonitor<IExecutionDMData>)rm).setData(dt);
-            rm.done();
-        }
-        else if (dmc == service_dmc) {
-            ((DataRequestMonitor<TCFDSFRunControl>)rm).setData(this);
             rm.done();
         }
         else {
@@ -638,59 +499,74 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         }
     }
 
-    public IDMContext getServiceContext() {
-        return service_dmc;
-    }
-
     public boolean isValid() {
         return true;
     }
 
-    public boolean canInstructionStep(IDMContext context) {
+    public void canResume(final IExecutionDMContext context, final DataRequestMonitor<Boolean> rm) {
         if (context instanceof ExecutionDMC) {
             ExecutionDMC ctx = (ExecutionDMC)context;
-            if (ctx.context.isValid()) {
-                RunControlContext c = ctx.context.getData();
-                return c != null && c.canResume(org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO);
+            if (!ctx.run_control_context_cache.validate()) {
+                ctx.run_control_context_cache.wait(new Runnable() {
+                    public void run() {
+                        canResume(context, rm);
+                    }
+                });
+            }
+            else {
+                RunControlContext c = ctx.run_control_context_cache.getData();
+                rm.setData(c != null && c.canResume(org.eclipse.tm.tcf.services.IRunControl.RM_RESUME));
+                rm.done();
             }
         }
-        return false;
+        else {
+            rm.setData(false);
+            rm.done();
+        }
     }
 
-    public boolean canResume(IDMContext context) {
+    public void canStep(final IExecutionDMContext context, final StepType step_type, final DataRequestMonitor<Boolean> rm) {
         if (context instanceof ExecutionDMC) {
             ExecutionDMC ctx = (ExecutionDMC)context;
-            if (ctx.context.isValid()) {
-                RunControlContext c = ctx.context.getData();
-                return c != null && c.canResume(org.eclipse.tm.tcf.services.IRunControl.RM_RESUME);
+            if (!ctx.run_control_context_cache.validate()) {
+                ctx.run_control_context_cache.wait(new Runnable() {
+                    public void run() {
+                        canStep(context, step_type, rm);
+                    }
+                });
+            }
+            else {
+                RunControlContext c = ctx.run_control_context_cache.getData();
+                rm.setData(c != null && c.canResume(toTCFStepType(step_type)));
+                rm.done();
             }
         }
-        return false;
+        else {
+            rm.setData(false);
+            rm.done();
+        }
     }
 
-    public boolean canStep(IDMContext context) {
+    public void canSuspend(final IExecutionDMContext context, final DataRequestMonitor<Boolean> rm) {
         if (context instanceof ExecutionDMC) {
             ExecutionDMC ctx = (ExecutionDMC)context;
-            if (ctx.context.isValid()) {
-                RunControlContext c = ctx.context.getData();
-                if (c != null) {
-                    if (c.canResume(org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO_LINE)) return true;
-                    if (c.canResume(org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO)) return true;
-                }
+            if (!ctx.run_control_context_cache.validate()) {
+                ctx.run_control_context_cache.wait(new Runnable() {
+                    public void run() {
+                        canSuspend(context, rm);
+                    }
+                });
+            }
+            else {
+                RunControlContext c = ctx.run_control_context_cache.getData();
+                rm.setData(c != null && c.canSuspend());
+                rm.done();
             }
         }
-        return false;
-    }
-
-    public boolean canSuspend(IDMContext context) {
-        if (context instanceof ExecutionDMC) {
-            ExecutionDMC ctx = (ExecutionDMC)context;
-            if (ctx.context.isValid()) {
-                RunControlContext c = ctx.context.getData();
-                return c != null && c.canSuspend();
-            }
+        else {
+            rm.setData(false);
+            rm.done();
         }
-        return false;
     }
 
     public TCFDSFExecutionDMC getContext(String id) {
@@ -698,29 +574,28 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
     }
 
     public void getContainerContexts(IContainerDMContext context, final DataRequestMonitor<IExecutionDMContext[]> rm) {
-        getContexts(context, rm, false);
+        getContexts(context, rm, false, false);
     }
 
     public void getExecutionContexts(IContainerDMContext context, final DataRequestMonitor<IExecutionDMContext[]> rm) {
-        getContexts(context, rm, true);
+        getContexts(context, rm, false, true);
+    }
+
+    public void getAllContexts(IContainerDMContext context, final DataRequestMonitor<IExecutionDMContext[]> rm) {
+        getContexts(context, rm, true, true);
     }
 
     public void getContexts(IContainerDMContext context,
-            final DataRequestMonitor<IExecutionDMContext[]> rm, final boolean has_state) {
+            final DataRequestMonitor<IExecutionDMContext[]> rm,
+            final boolean all, final boolean has_state) {
         if (context == null) context = root_dmc;
         if (context instanceof ExecutionDMC) {
             final ExecutionDMC ctx = (ExecutionDMC)context;
-            TCFDataCache<Map<String,ExecutionDMC>> cache = ctx.children;
+            TCFDataCache<Map<String,TCFDSFExecutionDMC>> cache = ctx.run_control_children_cache;
             if (!cache.validate()) {
-                cache.addWaitingRequest(new IDataRequest() {
-                    public void cancel() {
-                        rm.setStatus(new Status(IStatus.CANCEL, Activator.PLUGIN_ID,
-                                REQUEST_FAILED, "Canceled", null)); //$NON-NLS-1$
-                        rm.setCanceled(true);
-                        rm.done();
-                    }
-                    public void done() {
-                        getContexts(ctx, rm, has_state);
+                cache.wait(new Runnable() {
+                    public void run() {
+                        getContexts(ctx, rm, all, has_state);
                     }
                 });
                 return;
@@ -736,40 +611,34 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
                 rm.done();
                 return;
             }
-            final Set<IDataRequest> reqs = new HashSet<IDataRequest>();
-            for (ExecutionDMC e : cache.getData().values()) {
-                if (!e.context.validate()) {
-                    IDataRequest req = new IDataRequest() {
-                        public void cancel() {
-                            if (reqs.remove(this) && reqs.isEmpty()) getContexts(ctx, rm, has_state);
-                        }
-                        public void done() {
-                            if (reqs.remove(this) && reqs.isEmpty()) getContexts(ctx, rm, has_state);
+            final Set<Runnable> reqs = new HashSet<Runnable>();
+            for (TCFDSFExecutionDMC e : cache.getData().values()) {
+                if (!e.run_control_context_cache.validate()) {
+                    Runnable req = new Runnable() {
+                        public void run() {
+                            if (reqs.remove(this) && reqs.isEmpty()) getContexts(ctx, rm, all, has_state);
                         }
                     };
                     reqs.add(req);
-                    e.context.addWaitingRequest(req);
+                    e.run_control_context_cache.wait(req);
                 }
                 // TODO DSF service design does not support lazy retrieval of context state (because isSuspened() is not async)
-                else if (!e.state.validate()) {
-                    IDataRequest req = new IDataRequest() {
-                        public void cancel() {
-                            if (reqs.remove(this) && reqs.isEmpty()) getContexts(ctx, rm, has_state);
-                        }
-                        public void done() {
-                            if (reqs.remove(this) && reqs.isEmpty()) getContexts(ctx, rm, has_state);
+                else if (!e.run_control_state_cache.validate()) {
+                    Runnable req = new Runnable() {
+                        public void run() {
+                            if (reqs.remove(this) && reqs.isEmpty()) getContexts(ctx, rm, all, has_state);
                         }
                     };
                     reqs.add(req);
-                    e.state.addWaitingRequest(req);
+                    e.run_control_state_cache.wait(req);
                 }
             }
             if (reqs.isEmpty()) {
-                ArrayList<ExecutionDMC> l = new ArrayList<ExecutionDMC>();
-                for (ExecutionDMC e : cache.getData().values()) {
-                    assert e.context.isValid();
-                    RunControlContext c = e.context.getData();
-                    if (c.hasState() == has_state) l.add(e);
+                ArrayList<TCFDSFExecutionDMC> l = new ArrayList<TCFDSFExecutionDMC>();
+                for (TCFDSFExecutionDMC e : cache.getData().values()) {
+                    assert e.run_control_context_cache.isValid();
+                    RunControlContext c = e.run_control_context_cache.getData();
+                    if (all || has_state == c.hasState()) l.add(e);
                 }
                 rm.setData(l.toArray(new ExecutionDMC[l.size()]));
                 rm.done();
@@ -787,40 +656,32 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         for (ExecutionDMC dmc : cache.values()) l.add(dmc);
         return l;
     }
+    
+    public int toTCFStepType(StepType step_type) {
+        switch (step_type) {
+        case STEP_OVER:
+            return org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OVER_LINE;
+        case STEP_INTO:
+            return org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO_LINE;
+        case STEP_RETURN:
+            return org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OUT;
+        case INSTRUCTION_STEP_OVER:
+            return org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OVER;
+        case INSTRUCTION_STEP_INTO:
+            return org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO;
+        case INSTRUCTION_STEP_RETUTRN:
+            return org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OUT;
+        }
+        return -1;
+    }
 
-    public void step(IDMContext context, StepType stepType, final RequestMonitor rm) {
+    public void step(IExecutionDMContext context, StepType step_type, final RequestMonitor rm) {
         if (context instanceof ExecutionDMC) {
             final ExecutionDMC ctx = (ExecutionDMC)context;
-            if (ctx.context.isValid()) {
-                RunControlContext c = ctx.context.getData();
+            if (ctx.run_control_context_cache.isValid()) {
+                RunControlContext c = ctx.run_control_context_cache.getData();
                 if (c != null) {
-                    int md = -1;
-                    if (c.canResume(org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO_LINE)) {
-                        switch (stepType) {
-                        case STEP_OVER:
-                            md = org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OVER_LINE;
-                            break;
-                        case STEP_INTO:
-                            md = org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO_LINE;
-                            break;
-                        case STEP_RETURN:
-                            md = org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OUT;
-                            break;
-                        }
-                    }
-                    else {
-                        switch (stepType) {
-                        case STEP_OVER:
-                            md = org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OVER;
-                            break;
-                        case STEP_INTO:
-                            md = org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO;
-                            break;
-                        case STEP_RETURN:
-                            md = org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OUT;
-                            break;
-                        }
-                    }
+                    int md = toTCFStepType(step_type);
                     if (md < 0) {
                         rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                                 NOT_SUPPORTED, "Invalid step type", null)); //$NON-NLS-1$
@@ -854,58 +715,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         }
     }
 
-    public void instructionStep(IDMContext context, StepType stepType, final RequestMonitor rm) {
-        if (context instanceof ExecutionDMC) {
-            final ExecutionDMC ctx = (ExecutionDMC)context;
-            if (ctx.context.isValid()) {
-                RunControlContext c = ctx.context.getData();
-                if (c != null) {
-                    int md = -1;
-                    switch (stepType) {
-                    case STEP_OVER:
-                        md = org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OVER;
-                        break;
-                    case STEP_INTO:
-                        md = org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO;
-                        break;
-                    case STEP_RETURN:
-                        md = org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OUT;
-                        break;
-                    }
-                    if (md < 0) {
-                        rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                                NOT_SUPPORTED, "Invalid step type", null)); //$NON-NLS-1$
-                        rm.done();
-                    }
-                    else {
-                        c.resume(md, 1, new org.eclipse.tm.tcf.services.IRunControl.DoneCommand() {
-                            public void doneCommand(IToken token, Exception error) {
-                                if (rm.isCanceled()) return;
-                                if (error != null) {
-                                    rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                                            REQUEST_FAILED, "Command error", error)); //$NON-NLS-1$
-                                }
-                                ctx.is_stepping--;
-                                rm.done();
-                            }
-                        });
-                        ctx.is_stepping++;
-                    }
-                    return;
-                }
-            }
-            rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                    INVALID_HANDLE, "Invalid context", null)); //$NON-NLS-1$
-            rm.done();
-        }
-        else {
-            rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                    INVALID_HANDLE, "Unknown DMC type", null)); //$NON-NLS-1$
-            rm.done();
-        }
-    }
-
-    public boolean isStepping(IDMContext context) {
+    public boolean isStepping(IExecutionDMContext context) {
         if (context instanceof ExecutionDMC) {
             ExecutionDMC x = (ExecutionDMC)context;
             return x.is_stepping > 0;
@@ -913,11 +723,11 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         return false;
     }
 
-    public void resume(IDMContext context, final RequestMonitor rm) {
+    public void resume(IExecutionDMContext context, final RequestMonitor rm) {
         if (context instanceof ExecutionDMC) {
             final ExecutionDMC ctx = (ExecutionDMC)context;
-            if (ctx.context.isValid()) {
-                RunControlContext c = ctx.context.getData();
+            if (ctx.run_control_context_cache.isValid()) {
+                RunControlContext c = ctx.run_control_context_cache.getData();
                 if (c != null) {
                     c.resume(org.eclipse.tm.tcf.services.IRunControl.RM_RESUME, 1,
                             new org.eclipse.tm.tcf.services.IRunControl.DoneCommand() {
@@ -946,11 +756,11 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         }
     }
 
-    public void suspend(IDMContext context, final RequestMonitor rm) {
+    public void suspend(IExecutionDMContext context, final RequestMonitor rm) {
         if (context instanceof ExecutionDMC) {
             final ExecutionDMC ctx = (ExecutionDMC)context;
-            if (ctx.context.isValid()) {
-                RunControlContext c = ctx.context.getData();
+            if (ctx.run_control_context_cache.isValid()) {
+                RunControlContext c = ctx.run_control_context_cache.getData();
                 if (c != null) {
                     c.suspend(new org.eclipse.tm.tcf.services.IRunControl.DoneCommand() {
                         public void doneCommand(IToken token, Exception error) {
@@ -976,38 +786,41 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         }
     }
 
-    public boolean isSuspended(IDMContext context) {
+    public boolean hasState(IExecutionDMContext context) {
+        boolean r = false;
         if (context instanceof ExecutionDMC) {
             ExecutionDMC ctx = (ExecutionDMC)context;
-            boolean r = false;
-            if (ctx.context.isValid()) {
-                RunControlContext c = ctx.context.getData();
+            if (ctx.run_control_context_cache.isValid()) {
+                RunControlContext c = ctx.run_control_context_cache.getData();
+                return c != null && c.hasState();
+            }
+        }
+        return r;
+    }
+
+    public boolean isSuspended(IExecutionDMContext context) {
+        boolean r = false;
+        if (context instanceof ExecutionDMC) {
+            ExecutionDMC ctx = (ExecutionDMC)context;
+            if (ctx.run_control_context_cache.isValid()) {
+                RunControlContext c = ctx.run_control_context_cache.getData();
                 if (c != null && c.hasState()) {
-                    if (ctx.is_resuming == 0 && ctx.is_stepping == 0 && ctx.state.isValid()) {
-                        ExecutionState st = ctx.state.getData();
+                    if (ctx.is_resuming == 0 && ctx.is_stepping == 0 && ctx.run_control_state_cache.isValid()) {
+                        TCFDSFRunControlState st = ctx.run_control_state_cache.getData();
                         if (st != null) r = st.is_suspended;
                     }
                 }
-                else if (ctx.children.isValid()) {
-                    Map<String,ExecutionDMC> m = ctx.children.getData();
-                    if (m != null) {
-                        for (ExecutionDMC e : m.values()) {
-                            if (isSuspended(e)) r = true;
-                        }
-                    }
-                }
             }
-            return r;
         }
-        return false;
+        return r;
     }
 
     public void getExecutionData(IExecutionDMContext dmc, DataRequestMonitor<IExecutionDMData> rm) {
         if (dmc instanceof ExecutionDMC) {
             ExecutionDMC ctx = (ExecutionDMC)dmc;
             StateChangeReason r = StateChangeReason.UNKNOWN;
-            if (ctx.state.isValid()) {
-                ExecutionState st = ctx.state.getData();
+            if (ctx.run_control_state_cache.isValid()) {
+                TCFDSFRunControlState st = ctx.run_control_state_cache.getData();
                 if (st != null && st.suspend_reason != null) {
                     r = toStateChangeReason(st.suspend_reason); 
                 }

@@ -324,11 +324,11 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         m.put(IMarker.MESSAGE, "Breakpoint: " + msg);
         Number line = (Number)p.get(IBreakpoints.PROP_LINE);
         if (line != null) {
-            m.put(IMarker.LINE_NUMBER, Integer.toString(line.intValue() + 1));
+            m.put(IMarker.LINE_NUMBER, new Integer(line.intValue() + 1));
             Number column = (Number)p.get(IBreakpoints.PROP_COLUMN);
             if (column != null) {
-                m.put(IMarker.CHAR_START, column.toString());
-                m.put(IMarker.CHAR_END, Integer.toString(column.intValue() + 1));
+                m.put(IMarker.CHAR_START, new Integer(column.intValue()));
+                m.put(IMarker.CHAR_END, new Integer(column.intValue() + 1));
             }
         }
         return m;
@@ -350,13 +350,11 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         }
         if (file != null) {
             m.put(IBreakpoints.PROP_FILE, file);
-            String line = (String)p.get(IMarker.LINE_NUMBER);
+            Integer line = (Integer)p.get(IMarker.LINE_NUMBER);
             if (line != null) {
-                m.put(IBreakpoints.PROP_LINE, new Integer(Integer.parseInt(line) - 1));
-                String column = (String)p.get(IMarker.CHAR_START);
-                if (column != null) {
-                    m.put(IBreakpoints.PROP_COLUMN, new Integer(column));
-                }
+                m.put(IBreakpoints.PROP_LINE, new Integer(line.intValue() - 1));
+                Integer column = (Integer)p.get(IMarker.CHAR_START);
+                if (column != null) m.put(IBreakpoints.PROP_COLUMN, column);
             }
         }
         return m;

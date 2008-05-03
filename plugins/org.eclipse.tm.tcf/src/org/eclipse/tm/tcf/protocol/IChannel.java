@@ -88,14 +88,16 @@ public interface IChannel {
     void sendResult(IToken token, byte[] results);
 
     /**
-     * Get current level of outbound traffic congestion.
+     * Get current level of out-bound traffic congestion.
      * 
      * @return integer value in range –100..100, where –100 means no pending
      *         messages (no traffic), 0 means optimal load, and positive numbers
      *         indicate level of congestion.
      * 
-     * Note: inbound traffic congestion is detected by framework and reported to
-     * remote peer without client needed to be involved.
+     * Note: in-bound traffic congestion is detected by framework and reported to
+     * remote peer without client needed to be involved. Clients willing to provide
+     * additional data about local congestion should register itself using
+     * Protocol.addCongestionMonitor().
      */
     int getCongestion();
 
@@ -118,7 +120,7 @@ public interface IChannel {
         void onChannelClosed(Throwable error);
 
         /**
-         * Notifies listeners about channel congestion level changes.
+         * Notifies listeners about channel out-bound traffic congestion level changes.
          * When level > 0 client should delay sending more messages.
          * @param level - current congestion level
          */
@@ -127,7 +129,7 @@ public interface IChannel {
 
     /**
      * Subscribe a channel listener. The listener will be notified about changes of
-     * channel state and changes of outbound traffic congestion level.
+     * channel state and changes of out-bound traffic congestion level.
      * @param listener - channel listener implementation
      */
     void addChannelListener(IChannelListener listener);

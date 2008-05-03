@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.dd.dsf.concurrent.DataRequestMonitor;
 import org.eclipse.dd.dsf.concurrent.RequestMonitor;
+import org.eclipse.dd.dsf.datamodel.AbstractDMEvent;
 import org.eclipse.dd.dsf.datamodel.IDMContext;
 import org.eclipse.dd.dsf.service.AbstractDsfService;
 import org.eclipse.dd.dsf.service.DsfSession;
@@ -24,47 +25,26 @@ import org.eclipse.debug.core.model.MemoryByte;
 import org.eclipse.tm.internal.tcf.dsf.Activator;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IMemory.MemoryContext;
 import org.eclipse.tm.tcf.services.IMemory.MemoryError;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.osgi.framework.BundleContext;
 
 
 public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.dsf.debug.service.IMemory {
     
-    private class MemoryCache implements TCFDSFExecutionDMC.DataCache {
+    private static class MemoryChangedEvent extends AbstractDMEvent<IMemoryDMContext> implements IMemoryChangedEvent {
+        IAddress[] fAddresses;
+        IDMContext fContext;
         
-        final TCFDataCache<org.eclipse.tm.tcf.services.IMemory.MemoryContext> context;
-        
-        MemoryCache(final IChannel channel, final TCFDSFExecutionDMC exe) {
-            context = new TCFDataCache<org.eclipse.tm.tcf.services.IMemory.MemoryContext>(channel) {
-                @Override
-                public boolean startDataRetrieval() {
-                    assert command == null;
-                    String id = exe.getTcfContextId();
-                    if (id == null || tcf_mem_service == null) {
-                        data = null;
-                        valid = true;
-                        return true;
-                    }
-                    command = tcf_mem_service.getContext(id,
-                            new org.eclipse.tm.tcf.services.IMemory.DoneGetContext() {
-                        public void doneGetContext(IToken token, Exception err,
-                                org.eclipse.tm.tcf.services.IMemory.MemoryContext ctx) {
-                            if (command != token) return;
-                            command = null;
-                            if (err != null) {
-                                error = err;
-                            }
-                            else {
-                                data = ctx;
-                            }
-                            valid = true;
-                            validate();
-                        }
-                    });
-                    return false;
-                }
-            };
+        public MemoryChangedEvent(IMemoryDMContext context, IAddress[] addresses) {
+            super(context);
+            fAddresses = addresses;
+        }
+    
+        public IAddress[] getAddresses() {
+            return fAddresses;
         }
     }
     
@@ -83,7 +63,7 @@ public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.d
             public void memoryChanged(String context_id, Number[] addr, long[] size) {
                 TCFDSFRunControl rc = getServicesTracker().getService(TCFDSFRunControl.class);
                 TCFDSFExecutionDMC exe = rc.getContext(context_id);
-                if (exe == null || exe.memory_cache == null) return;
+                if (exe == null || exe.memory_context_cache == null) return;
                 for (int n = 0; n < addr.length; n++) {
                     long count = size[n];
                     // TODO: DSF does not support address ranges
@@ -97,17 +77,15 @@ public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.d
             }
     };
     
-    private final IChannel channel;
     private final org.eclipse.tm.tcf.services.IMemory tcf_mem_service;
 
     public TCFDSFMemory(DsfSession session, IChannel channel, final RequestMonitor monitor) {
         super(session);
-        this.channel = channel;
         tcf_mem_service = channel.getRemoteService(org.eclipse.tm.tcf.services.IMemory.class);
         if (tcf_mem_service != null) tcf_mem_service.addListener(mem_listener);
         initialize(new RequestMonitor(getExecutor(), monitor) { 
             @Override
-            protected void handleOK() {
+            protected void handleSuccess() {
                 String[] class_names = {
                         org.eclipse.dd.dsf.debug.service.IMemory.class.getName(),
                         TCFDSFMemory.class.getName()
@@ -129,7 +107,7 @@ public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.d
         return Activator.getBundleContext();
     }
 
-    public void fillMemory(final IDMContext dmc, final IAddress address, final long offset,
+    public void fillMemory(final IMemoryDMContext dmc, final IAddress address, final long offset,
             final int word_size, final int count, final byte[] pattern, final RequestMonitor rm) {
         if (tcf_mem_service == null) {
             rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
@@ -138,29 +116,22 @@ public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.d
         }
         else if (dmc instanceof TCFDSFExecutionDMC) {
             final TCFDSFExecutionDMC ctx = (TCFDSFExecutionDMC)dmc;
-            if (ctx.memory_cache == null) ctx.memory_cache = new MemoryCache(channel, ctx);
-            MemoryCache cache = (MemoryCache)ctx.memory_cache;
-            if (!cache.context.validate()) {
-                cache.context.addWaitingRequest(new IDataRequest() {
-                    public void cancel() {
-                        rm.setStatus(new Status(IStatus.CANCEL, Activator.PLUGIN_ID,
-                                REQUEST_FAILED, "Canceled", null)); //$NON-NLS-1$
-                        rm.setCanceled(true);
-                        rm.done();
-                    }
-                    public void done() {
+            TCFDataCache<IMemory.MemoryContext> cache = ctx.memory_context_cache;
+            if (!cache.validate()) {
+                cache.wait(new Runnable() {
+                    public void run() {
                         fillMemory(dmc, address, offset, word_size, count, pattern, rm);
                     }
                 });
                 return;
             }
-            if (cache.context.getError() != null) {
+            if (cache.getError() != null) {
                 rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                        REQUEST_FAILED, "Data error", cache.context.getError())); //$NON-NLS-1$
+                        REQUEST_FAILED, "Data error", cache.getError())); //$NON-NLS-1$
                 rm.done();
                 return;
             }
-            org.eclipse.tm.tcf.services.IMemory.MemoryContext mem = cache.context.getData();
+            org.eclipse.tm.tcf.services.IMemory.MemoryContext mem = cache.getData();
             if (mem == null) {
                 rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                         INVALID_HANDLE, "Invalid DMC", null)); //$NON-NLS-1$
@@ -186,7 +157,7 @@ public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.d
         }
     }
 
-    public void getMemory(final IDMContext dmc, final IAddress address, final long offset,
+    public void getMemory(final IMemoryDMContext dmc, final IAddress address, final long offset,
             final int word_size, final int count, final DataRequestMonitor<MemoryByte[]> rm) {
         if (tcf_mem_service == null) {
             rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
@@ -195,29 +166,22 @@ public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.d
         }
         else if (dmc instanceof TCFDSFExecutionDMC) {
             final TCFDSFExecutionDMC ctx = (TCFDSFExecutionDMC)dmc;
-            if (ctx.memory_cache == null) ctx.memory_cache = new MemoryCache(channel, ctx);
-            MemoryCache cache = (MemoryCache)ctx.memory_cache;
-            if (!cache.context.validate()) {
-                cache.context.addWaitingRequest(new IDataRequest() {
-                    public void cancel() {
-                        rm.setStatus(new Status(IStatus.CANCEL, Activator.PLUGIN_ID,
-                                REQUEST_FAILED, "Canceled", null)); //$NON-NLS-1$
-                        rm.setCanceled(true);
-                        rm.done();
-                    }
-                    public void done() {
+            TCFDataCache<IMemory.MemoryContext> cache = ctx.memory_context_cache;
+            if (!cache.validate()) {
+                cache.wait(new Runnable() {
+                    public void run() {
                         getMemory(dmc, address, offset, word_size, count, rm);
                     }
                 });
                 return;
             }
-            if (cache.context.getError() != null) {
+            if (cache.getError() != null) {
                 rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                        REQUEST_FAILED, "Data error", cache.context.getError())); //$NON-NLS-1$
+                        REQUEST_FAILED, "Data error", cache.getError())); //$NON-NLS-1$
                 rm.done();
                 return;
             }
-            org.eclipse.tm.tcf.services.IMemory.MemoryContext mem = cache.context.getData();
+            org.eclipse.tm.tcf.services.IMemory.MemoryContext mem = cache.getData();
             if (mem == null) {
                 rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                         INVALID_HANDLE, "Invalid DMC", null)); //$NON-NLS-1$
@@ -237,6 +201,7 @@ public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.d
                     for (int i = 0; i < buffer.length; i++) {
                         res[i] = new MemoryByte(buffer[i]);
                     }
+                    rm.setData(res);
                     rm.done();
                 }
             });
@@ -248,7 +213,7 @@ public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.d
         }
     }
 
-    public void setMemory(final IDMContext dmc, final IAddress address, final long offset,
+    public void setMemory(final IMemoryDMContext dmc, final IAddress address, final long offset,
             final int word_size, final int count, final byte[] buffer, final RequestMonitor rm) {
         if (tcf_mem_service == null) {
             rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
@@ -257,29 +222,22 @@ public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.d
         }
         else if (dmc instanceof TCFDSFExecutionDMC) {
             final TCFDSFExecutionDMC ctx = (TCFDSFExecutionDMC)dmc;
-            if (ctx.memory_cache == null) ctx.memory_cache = new MemoryCache(channel, ctx);
-            MemoryCache cache = (MemoryCache)ctx.memory_cache;
-            if (!cache.context.validate()) {
-                cache.context.addWaitingRequest(new IDataRequest() {
-                    public void cancel() {
-                        rm.setStatus(new Status(IStatus.CANCEL, Activator.PLUGIN_ID,
-                                REQUEST_FAILED, "Canceled", null)); //$NON-NLS-1$
-                        rm.setCanceled(true);
-                        rm.done();
-                    }
-                    public void done() {
+            TCFDataCache<IMemory.MemoryContext> cache = ctx.memory_context_cache;
+            if (!cache.validate()) {
+                cache.wait(new Runnable() {
+                    public void run() {
                         setMemory(dmc, address, offset, word_size, count, buffer, rm);
                     }
                 });
                 return;
             }
-            if (cache.context.getError() != null) {
+            if (cache.getError() != null) {
                 rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                        REQUEST_FAILED, "Data error", cache.context.getError())); //$NON-NLS-1$
+                        REQUEST_FAILED, "Data error", cache.getError())); //$NON-NLS-1$
                 rm.done();
                 return;
             }
-            org.eclipse.tm.tcf.services.IMemory.MemoryContext mem = cache.context.getData();
+            org.eclipse.tm.tcf.services.IMemory.MemoryContext mem = cache.getData();
             if (mem == null) {
                 rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                         INVALID_HANDLE, "Invalid DMC", null)); //$NON-NLS-1$

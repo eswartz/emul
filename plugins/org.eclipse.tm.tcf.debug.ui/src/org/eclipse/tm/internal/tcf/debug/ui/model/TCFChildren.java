@@ -17,6 +17,7 @@ import java.util.Map;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
 /**
  * TCFChildren is a concrete type of TCF data cache that is used to cache a list of children. 

@@ -151,6 +151,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final IChildrenCountUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
+                if (result.isCanceled()) return;
                 IChannel channel = model.getLaunch().getChannel();
                 if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                     if (!validateNode(this)) return;
@@ -172,6 +173,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final IChildrenUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
+                if (result.isCanceled()) return;
                 IChannel channel = model.getLaunch().getChannel();
                 if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                     if (!validateNode(this)) return;
@@ -190,6 +192,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final IHasChildrenUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
+                if (result.isCanceled()) return;
                 IChannel channel = model.getLaunch().getChannel();
                 if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                     if (!validateNode(this)) return;
@@ -211,6 +214,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final ILabelUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
+                if (result.isCanceled()) return;
                 IChannel channel = model.getLaunch().getChannel();
                 if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                     if (!validateNode(this)) return;

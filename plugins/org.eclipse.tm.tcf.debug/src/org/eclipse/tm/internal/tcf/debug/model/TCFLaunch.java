@@ -60,6 +60,8 @@ public class TCFLaunch extends Launch {
     private TCFBreakpointsStatus breakpoints_status;
     private String mode;
     private boolean connecting;
+    private boolean disconnected;
+    private boolean shutdown;
     private ProcessContext process;
 
     public TCFLaunch(ILaunchConfiguration launchConfiguration, String mode) {
@@ -67,6 +69,7 @@ public class TCFLaunch extends Launch {
     }
 
     private void onConnected() {
+        // The method is called when TCF channel is successfully connected.
         try {
             final Runnable done = new Runnable() {
                 public void run() {
@@ -91,6 +94,58 @@ public class TCFLaunch extends Launch {
         catch (Exception x) {
             channel.terminate(x);
         }
+    }
+    
+    private void onDisconnected(Throwable error) {
+        // The method is called when TCF channel is closed.
+        assert !disconnected;
+        assert !shutdown;
+        this.error = error;
+        breakpoints_status = null;
+        connecting = false;
+        disconnected = true;
+        for (Iterator<Listener> i = listeners.iterator(); i.hasNext();) {
+            i.next().onDisconnected(this);
+        }
+        if (error != null) setError(error);
+        else fireChanged();
+        runShutdownSequence(new Runnable() {
+            public void run() {
+                shutdown = true;
+                if (DebugPlugin.getDefault() != null) fireTerminate();
+            }
+        });
+    }
+
+    private String[] toArgsArray(String file, String cmd) {
+        // Create arguments list from a command line.
+        int i = 0;
+        int l = cmd.length();
+        List<String> arr = new ArrayList<String>();
+        arr.add(file);
+        for (;;) {
+            while (i < l && cmd.charAt(i) == ' ') i++;
+            if (i >= l) break;
+            String s = null;
+            if (cmd.charAt(i) == '"') {
+                i++;
+                StringBuffer bf = new StringBuffer();
+                while (i < l) {
+                    char ch = cmd.charAt(i++);
+                    if (ch == '"') break;
+                    if (ch == '\\' && i < l) ch = cmd.charAt(i++);
+                    bf.append(ch);
+                }
+                s = bf.toString();
+            }
+            else {
+                int i0 = i;
+                while (i < l && cmd.charAt(i) != ' ') i++;
+                s = cmd.substring(i0, i);
+            }
+            arr.add(s);
+        }
+        return arr.toArray(new String[arr.size()]);
     }
     
     @SuppressWarnings("unchecked")
@@ -138,48 +193,10 @@ public class TCFLaunch extends Launch {
         }
     }
     
-    private String[] toArgsArray(String file, String cmd) {
-        int i = 0;
-        int l = cmd.length();
-        List<String> arr = new ArrayList<String>();
-        arr.add(file);
-        for (;;) {
-            while (i < l && cmd.charAt(i) == ' ') i++;
-            if (i >= l) break;
-            String s = null;
-            if (cmd.charAt(i) == '"') {
-                i++;
-                StringBuffer bf = new StringBuffer();
-                while (i < l) {
-                    char ch = cmd.charAt(i++);
-                    if (ch == '"') break;
-                    if (ch == '\\' && i < l) ch = cmd.charAt(i++);
-                    bf.append(ch);
-                }
-                s = bf.toString();
-            }
-            else {
-                int i0 = i;
-                while (i < l && cmd.charAt(i) != ' ') i++;
-                s = cmd.substring(i0, i);
-            }
-            arr.add(s);
-        }
-        return arr.toArray(new String[arr.size()]);
+    protected void runShutdownSequence(final Runnable done) {
+        done.run();
     }
     
-    private void onDisconnected(Throwable error) {
-        this.error = error;
-        breakpoints_status = null;
-        connecting = false;
-        for (Iterator<Listener> i = listeners.iterator(); i.hasNext();) {
-            i.next().onDisconnected(this);
-        }
-        if (error != null) setError(error);
-        else fireChanged();
-        if (DebugPlugin.getDefault() != null) fireTerminate();
-    }
-
     /*--------------------------------------------------------------------------------------------*/
 
     public Throwable getError() {

@@ -18,6 +18,7 @@ public final class TCFAddress implements IAddress {
     
     private final BigInteger addr;
     
+    // TODO: TCFAddress should include memory space ID
     public TCFAddress(Number addr) {
         if (addr instanceof BigInteger) this.addr = (BigInteger)addr;
         else this.addr = new BigInteger(addr.toString(), 10);

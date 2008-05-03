@@ -261,7 +261,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
 
         if (formatted) {
             if (name.equals(ISysMonitor.PROP_VSIZE)) {
-            	return NLS.bind(Messages.PROCESS_VMSIZE_VALUE, Long
+                return NLS.bind(Messages.PROCESS_VMSIZE_VALUE, Long
                         .toString(process.getVmSizeInKB()));
             }
             if (name.equals(ISysMonitor.PROP_RSS)) {

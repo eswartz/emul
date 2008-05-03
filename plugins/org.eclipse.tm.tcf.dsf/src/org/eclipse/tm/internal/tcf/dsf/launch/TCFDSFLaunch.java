@@ -38,12 +38,11 @@ public class TCFDSFLaunch extends TCFLaunch {
                 if (channel != null) {
                     RequestMonitor monitor = new RequestMonitor(executor, null) {
                         @Override
-                        protected void handleOK() {
+                        protected void handleSuccess() {
                             done.run();
                         }
                     };
-                    TCFDSFLaunchSequence seq = new TCFDSFLaunchSequence(session, TCFDSFLaunch.this, monitor);
-                    executor.execute(seq);
+                    executor.execute(new TCFDSFLaunchSequence(session, TCFDSFLaunch.this, monitor));
                 }
                 else {
                     done.run();
@@ -52,6 +51,17 @@ public class TCFDSFLaunch extends TCFLaunch {
         });
     }
 
+    @Override
+    protected void runShutdownSequence(final Runnable done) {
+        RequestMonitor monitor = new RequestMonitor(executor, null) {
+            @Override
+            protected void handleSuccess() {
+                TCFDSFLaunch.super.runShutdownSequence(done);
+            }
+        };
+        executor.execute(new TCFDSFShutdownSequence(session, TCFDSFLaunch.this, monitor));
+    }
+    
     public DsfExecutor getDsfExecutor() {
         return executor;
     }

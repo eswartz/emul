@@ -28,6 +28,7 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
 @SuppressWarnings("serial")
@@ -218,7 +219,6 @@ public class TCFNodeExecContext extends TCFNode {
 
     @Override
     protected void getData(IChildrenUpdate result) {
-        int offset = 0;
         TCFNode[] arr = null;
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && ctx.hasState()) {
@@ -233,8 +233,11 @@ public class TCFNodeExecContext extends TCFNode {
             arr = children_exec.toArray();
         }
         Arrays.sort(arr);
+        int offset = 0;
+        int r_offset = result.getOffset(); 
+        int r_length = result.getLength(); 
         for (TCFNode n : arr) {
-            if (offset >= result.getOffset() && offset < result.getOffset() + result.getLength()) {
+            if (offset >= r_offset && offset < r_offset + r_length) {
                 result.setChild(n, offset);
             }
             offset++;

@@ -22,6 +22,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRegisters;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
 //TODO: hierarchical registers

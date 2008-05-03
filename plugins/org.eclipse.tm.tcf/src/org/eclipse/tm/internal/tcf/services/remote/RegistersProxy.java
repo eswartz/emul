@@ -210,7 +210,6 @@ public class RegistersProxy implements IRegisters {
 
     public IToken getm(Location[] locs, final DoneGet done) {
         return new Command(channel, this, "getm", new Object[]{ locs }) {
-            @SuppressWarnings("unchecked")
             @Override
             public void done(Exception error, Object[] args) {
                 byte[] val = null;

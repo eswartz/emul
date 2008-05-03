@@ -46,13 +46,14 @@ public interface IBreakpoints extends IService {
         PROP_CONDITION = "Condition",   // String
         PROP_FILE = "File",             // String
         PROP_LINE = "Line",             // Number
-        PROP_COLUMN = "Column";         // Number
+        PROP_COLUMN = "Column",         // Number
+        PROP_SKIP_COUNT = "SkipCount";  // Number
 
     /**
      * Breakpoint status field names.
      */
     static final String
-        STATUS_PLANTED = "Planted",     // Array of addresses
+        STATUS_PLANTED = "Planted",     // Map<String: Memory context ID,Collection<Number: address>>
         STATUS_ERROR = "Error",         // String
         STATUS_FILE = "File",           // String
         STATUS_LINE = "Line",           // Number

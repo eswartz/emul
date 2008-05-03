@@ -49,11 +49,13 @@ public class TCFNodeLaunch extends TCFNode {
     
     @Override
     protected void getData(IChildrenUpdate result) {
-        int offset = 0;
         TCFNode[] arr = children.toArray();
         Arrays.sort(arr);
+        int offset = 0;
+        int r_offset = result.getOffset(); 
+        int r_length = result.getLength(); 
         for (TCFNode n : arr) {
-            if (offset >= result.getOffset() && offset < result.getOffset() + result.getLength()) {
+            if (offset >= r_offset && offset < r_offset + r_length) {
                 result.setChild(n, offset);
             }
             offset++;

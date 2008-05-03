@@ -10,24 +10,130 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.dsf.services;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.dd.dsf.datamodel.AbstractDMContext;
 import org.eclipse.dd.dsf.datamodel.IDMContext;
+import org.eclipse.dd.dsf.debug.service.IBreakpoints.IBreakpointsTargetDMContext;
+import org.eclipse.dd.dsf.debug.service.IMemory.IMemoryDMContext;
 import org.eclipse.dd.dsf.debug.service.IRunControl.IContainerDMContext;
 import org.eclipse.dd.dsf.debug.service.IRunControl.IExecutionDMContext;
 import org.eclipse.dd.dsf.service.IDsfService;
+import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
-public abstract class TCFDSFExecutionDMC extends AbstractDMContext implements IExecutionDMContext, IContainerDMContext {
+public abstract class TCFDSFExecutionDMC extends AbstractDMContext
+        implements IExecutionDMContext, IContainerDMContext, IMemoryDMContext, IBreakpointsTargetDMContext {
     
-    interface DataCache {
-    }
+    public final TCFDataCache<IMemory.MemoryContext> memory_context_cache;
+    public final TCFDataCache<RunControlContext> run_control_context_cache; 
+    public final TCFDataCache<Map<String,TCFDSFExecutionDMC>> run_control_children_cache; 
+    public final TCFDataCache<TCFDSFRunControlState> run_control_state_cache; 
     
-    DataCache stack_frames_cache;
-    DataCache memory_cache;
-    DataCache registers_cache;
+    TCFDataCache<?> stack_frames_cache;
+    TCFDataCache<?> registers_cache;
     
-    TCFDSFExecutionDMC(IDsfService service, IDMContext[] parents) {
+    TCFDSFExecutionDMC(IChannel channel, IDsfService service, IDMContext[] parents) {
         super(service, parents);
+        final IMemory tcf_mem_service = channel.getRemoteService(IMemory.class);
+        final IRunControl tcf_run_service = channel.getRemoteService(IRunControl.class);
+        memory_context_cache = new TCFDataCache<IMemory.MemoryContext>(channel) {
+            @Override
+            public boolean startDataRetrieval() {
+                assert command == null;
+                String id = getTcfContextId();
+                if (id == null || tcf_mem_service == null) {
+                    reset(null);
+                    return true;
+                }
+                command = tcf_mem_service.getContext(id,
+                        new org.eclipse.tm.tcf.services.IMemory.DoneGetContext() {
+                    public void doneGetContext(IToken token, Exception err,
+                            org.eclipse.tm.tcf.services.IMemory.MemoryContext ctx) {
+                        set(token, err, ctx);
+                    }
+                });
+                return false;
+            }
+        };
+        run_control_context_cache = new TCFDataCache<RunControlContext>(channel) {
+            @Override
+            public boolean startDataRetrieval() {
+                assert command == null;
+                String id = getTcfContextId();
+                if (id == null || tcf_run_service == null) {
+                    reset(null);
+                    return true;
+                }
+                command = tcf_run_service.getContext(id, new IRunControl.DoneGetContext() {
+                    public void doneGetContext(IToken token, Exception err, IRunControl.RunControlContext ctx) {
+                        set(token, err, ctx);
+                    }
+                });
+                return false;
+            }
+        };
+        run_control_children_cache = new TCFDataCache<Map<String,TCFDSFExecutionDMC>>(channel) {
+            @Override
+            public boolean startDataRetrieval() {
+                assert command == null;
+                if (tcf_run_service == null) {
+                    reset(null);
+                    return true;
+                }
+                String id = getTcfContextId();
+                command = tcf_run_service.getChildren(id, new IRunControl.DoneGetChildren() {
+                    public void doneGetChildren(IToken token, Exception err, String[] contexts) {
+                        if (command != token) return;
+                        HashMap<String,TCFDSFExecutionDMC> data = new HashMap<String,TCFDSFExecutionDMC>();
+                        if (contexts != null) {
+                            for (int i = 0; i < contexts.length; i++) {
+                                String id = contexts[i];
+                                TCFDSFExecutionDMC n = addChild(id);
+                                data.put(id, n);
+                            }
+                        }
+                        set(token, err, data);
+                    }
+                });
+                return false;
+            }
+        };
+        run_control_state_cache = new TCFDataCache<TCFDSFRunControlState>(channel) {
+            @Override
+            public boolean startDataRetrieval() {
+                assert command == null;
+                assert run_control_context_cache.isValid();
+                RunControlContext c = run_control_context_cache.getData();
+                if (c == null || !c.hasState()) {
+                    reset(null);
+                    return true;
+                }
+                command = c.getState(new IRunControl.DoneGetState() {
+                    public void doneGetState(IToken token, Exception err, boolean suspend, String pc, String reason, Map<String,Object> params) {
+                        if (command != token) return;
+                        TCFDSFRunControlState data = new TCFDSFRunControlState();
+                        data.is_running = !suspend;
+                        data.is_suspended = suspend;
+                        if (suspend) {
+                            data.suspend_pc = pc;
+                            data.suspend_reason = reason;
+                            data.suspend_params = params;
+                        }
+                        set(token, err, data);
+                    }
+                });
+                return false;
+            }
+        };
     }
+    
+    public abstract void dispose();
     
     /**
      * Get TCF ID of execution context.
@@ -41,22 +147,5 @@ public abstract class TCFDSFExecutionDMC extends AbstractDMContext implements IE
      */
     public abstract boolean isDisposed();
     
-    /**
-     * Validate execution state data.
-     * @return true if state is valid, false if data retrieval is started.
-     */
-    public abstract boolean validateState();
-    
-    /**
-     * Add a listener to be activated when state data retrieval is done. 
-     * @param req - listener object.
-     */
-    public abstract void addStateWaitingRequest(IDataRequest req);
-        
-    /**
-     * Get current program counter. This method must be called only when
-     * execution state data is valid - when validateState() return true.
-     * @return current program counter address.
-     */
-    public abstract TCFAddress getPC();
+    protected abstract TCFDSFExecutionDMC addChild(String id);
 }

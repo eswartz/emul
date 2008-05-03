@@ -303,8 +303,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (run != null) run.addListener(run_listener);
         IRegisters reg = launch.getService(IRegisters.class);
         if (reg != null) reg.addListener(reg_listener);
-        launch_node.makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-        fireModelChanged();
+        launchChanged();
     }
 
     void onDisconnected() {
@@ -313,10 +312,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         for (int i = 0; i < a.length; i++) {
             if (!a[i].isDisposed()) a[i].dispose();
         }
-        if (launch_node != null) {
-            launch_node.makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-            fireModelChanged();
-        }
+        launchChanged();
     }
 
     void onProxyInstalled(final TCFModelProxy p) {

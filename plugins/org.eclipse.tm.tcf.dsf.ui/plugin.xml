@@ -7,7 +7,7 @@
    <extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
       <launchConfigurationTabGroup
             type="org.eclipse.tm.tcf.dsf.LaunchConfigurationType"
-            class="org.eclipse.tm.internal.tcf.dsf.ui.LaunchDialogTabGroup"
+            class="org.eclipse.tm.internal.tcf.dsf.ui.launch.LaunchDialogTabGroup"
             id="org.eclipse.dd.dsf.mi.launch.localRunLaunchTabGroup">
       </launchConfigurationTabGroup>
    </extension>

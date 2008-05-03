@@ -30,8 +30,8 @@ import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace;
 import org.eclipse.tm.tcf.services.ILineNumbers.CodeArea;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
-@SuppressWarnings("serial")
 public class TCFNodeStackFrame extends TCFNode {
 
     private int frame_no;
@@ -56,7 +56,7 @@ public class TCFNodeStackFrame extends TCFNode {
                 IStackTrace st = model.getLaunch().getService(IStackTrace.class);
                 command = st.getContext(new String[]{ id }, new IStackTrace.DoneGetContext() {
                     public void doneGetContext(IToken token, Exception error, IStackTrace.StackTraceContext[] context) {
-                        set(token, error, context[0]);
+                        set(token, error, context == null || context.length == 0 ? null : context[0]);
                     }
                 });
                 return false;
@@ -190,7 +190,6 @@ public class TCFNodeStackFrame extends TCFNode {
 
     @Override
     protected void getData(IChildrenUpdate result) {
-        int offset = 0;
         TCFNode[] arr = null;
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
             arr = children_regs.toArray();
@@ -200,8 +199,11 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         if (arr != null) {
             Arrays.sort(arr);
+            int offset = 0;
+            int r_offset = result.getOffset(); 
+            int r_length = result.getLength(); 
             for (TCFNode n : arr) {
-                if (offset >= result.getOffset() && offset < result.getOffset() + result.getLength()) {
+                if (offset >= r_offset && offset < r_offset + r_length) {
                     result.setChild(n, offset);
                 }
                 offset++;

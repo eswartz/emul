@@ -26,6 +26,7 @@ import org.eclipse.dd.dsf.concurrent.DataRequestMonitor;
 import org.eclipse.dd.dsf.concurrent.RequestMonitor;
 import org.eclipse.dd.dsf.datamodel.AbstractDMContext;
 import org.eclipse.dd.dsf.datamodel.AbstractDMEvent;
+import org.eclipse.dd.dsf.datamodel.CompositeDMContext;
 import org.eclipse.dd.dsf.datamodel.IDMContext;
 import org.eclipse.dd.dsf.debug.service.IRunControl.IExecutionDMContext;
 import org.eclipse.dd.dsf.debug.service.IRunControl.StateChangeReason;
@@ -38,6 +39,7 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRegisters.DoneGet;
 import org.eclipse.tm.tcf.services.IRegisters.DoneSet;
 import org.eclipse.tm.tcf.services.IRegisters.NamedValue;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.osgi.framework.BundleContext;
 
 
@@ -46,7 +48,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
     private class ObjectDMC extends AbstractDMContext implements IFormattedDataDMContext {
 
         final String id;
-        final RegistersCache children;
+        final RegisterChildrenCache children;
         final Map<String,ValueDMC> values;
         
         org.eclipse.tm.tcf.services.IRegisters.RegistersContext context;  
@@ -55,12 +57,12 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         ObjectDMC(String session_id, IDMContext[] parents, String id) {
             super(session_id, parents);
             this.id = id;
-            children = new RegistersCache(channel, id, new IDMContext[]{ this });
+            children = new RegisterChildrenCache(channel, id, new IDMContext[]{ this });
             values = new HashMap<String,ValueDMC>();
             model.put(id, this);
         }
 
-        ObjectDMC(String session_id, IDMContext[] parents, String id, RegistersCache children) {
+        ObjectDMC(String session_id, IDMContext[] parents, String id, RegisterChildrenCache children) {
             super(session_id, parents);
             this.id = id;
             this.children = children;
@@ -98,7 +100,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         }
         
         /* Constructor for a fake register group - DSF requires at least one group object */
-        RegisterGroupDMC(String session_id, IDMContext[] parents, final String id, RegistersCache children) {
+        RegisterGroupDMC(String session_id, IDMContext[] parents, final String id, RegisterChildrenCache children) {
             super(session_id, parents, id, children);
             context = new org.eclipse.tm.tcf.services.IRegisters.RegistersContext() {
                 public int[] getBitNumbers() {
@@ -367,23 +369,22 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         }
     }
     
-    private class RegistersCache extends TCFDataCache<Map<String,ObjectDMC>>
-            implements TCFDSFExecutionDMC.DataCache {
+    private class RegisterChildrenCache extends TCFDataCache<Map<String,ObjectDMC>> {
         
         final String id;
         final IDMContext[] parents;
         
+        Map<String,ObjectDMC> dmc_pool = new HashMap<String,ObjectDMC>();;
         boolean disposed;
         
-        public RegistersCache(IChannel channel, String id, IDMContext[] parents) {
+        public RegisterChildrenCache(IChannel channel, String id, IDMContext[] parents) {
             super(channel);
             this.id = id;
             this.parents = parents;
         }
 
         void invalidateRegContents() {
-            if (data == null) return;
-            for (ObjectDMC dmc : data.values()) {
+            for (ObjectDMC dmc : dmc_pool.values()) {
                 for (ValueDMC val : dmc.values.values()) val.cache.reset();
                 dmc.children.invalidateRegContents();
             }
@@ -391,10 +392,9 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         
         void dispose() {
             assert !disposed;
-            if (data != null) {
-                for (ObjectDMC dmc : data.values()) dmc.dispose();
-            }
             reset();
+            for (ObjectDMC dmc : dmc_pool.values()) dmc.dispose();
+            dmc_pool.clear();
             disposed = true;
         }
 
@@ -403,72 +403,56 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             assert command == null;
             assert !disposed;
             if (tcf_reg_service == null) {
-                data = null;
-                valid = true;
+                reset(null);
                 return true;
             }
             command = tcf_reg_service.getChildren(id, new org.eclipse.tm.tcf.services.IRegisters.DoneGetChildren() {
                 public void doneGetChildren(IToken token, Exception err, String[] contexts) {
                     if (command != token) return;
-                    command = null;
-                    if (err != null) {
-                        data = null;
-                        error = err;
+                    final LinkedHashMap<String,ObjectDMC> data = new LinkedHashMap<String,ObjectDMC>();
+                    if (err != null || contexts == null || contexts.length == 0) {
+                        set(token, err, data);
+                        return;
                     }
-                    else {
-                        data = new LinkedHashMap<String,ObjectDMC>();
-                        if (contexts.length > 0) {
-                            // TODO DSF service design does not support lazy retrieval of context attributes (because getName() is not async)
-                            final Set<IToken> cmds = new HashSet<IToken>();
-                            final IToken cb = new IToken() {
-                                public boolean cancel() {
-                                    for (IToken x : cmds) x.cancel();
-                                    return false;
-                                }
-                            };
-                            command = cb;
-                            org.eclipse.tm.tcf.services.IRegisters.DoneGetContext done = new org.eclipse.tm.tcf.services.IRegisters.DoneGetContext() {
-                                public void doneGetContext(IToken token, Exception err,
-                                        org.eclipse.tm.tcf.services.IRegisters.RegistersContext context) {
-                                    cmds.remove(token);
-                                    if (command != cb) return;
-                                    if (err != null) {
-                                        command.cancel();
-                                        command = null;
-                                        data = null;
-                                        error = err;
-                                        valid = true;
-                                        validate();
-                                        return;
-                                    }
-                                    String id = context.getID();
-                                    ObjectDMC dmc = null;
-                                    if (context.getBitNumbers() != null) {
-                                        dmc = new BitFieldDMC(getSession().getId(), parents, id);
-                                    }
-                                    else if (context.isReadable() || context.isWriteable()) {
-                                        dmc = new RegisterDMC(getSession().getId(), parents, id);
-                                    }
-                                    else {
-                                        dmc = new RegisterGroupDMC(getSession().getId(), parents, id);
-                                    }
-                                    dmc.context = context;
-                                    data.put(id, dmc);
-                                    if (cmds.isEmpty()) {
-                                        command = null;
-                                        valid = true;
-                                        validate();
-                                    }
-                                }
-                            };
-                            for (String id : contexts) {
-                                cmds.add(tcf_reg_service.getContext(id, done));
-                            }
-                            return;
+                    // TODO DSF service design does not support lazy retrieval of context attributes (because getName() is not async)
+                    final Set<IToken> cmds = new HashSet<IToken>();
+                    final IToken cb = new IToken() {
+                        public boolean cancel() {
+                            for (IToken x : cmds) x.cancel();
+                            return false;
                         }
-                    }
-                    valid = true;
-                    validate();
+                    };
+                    command = cb;
+                    org.eclipse.tm.tcf.services.IRegisters.DoneGetContext done = new org.eclipse.tm.tcf.services.IRegisters.DoneGetContext() {
+                        public void doneGetContext(IToken token, Exception err,
+                                org.eclipse.tm.tcf.services.IRegisters.RegistersContext context) {
+                            cmds.remove(token);
+                            if (command != cb) return;
+                            if (err != null) {
+                                command.cancel();
+                                set(cb, err, data);
+                                return;
+                            }
+                            String id = context.getID();
+                            ObjectDMC dmc = model.get(id);
+                            if (dmc == null) {
+                                if (context.getBitNumbers() != null) {
+                                    dmc = new BitFieldDMC(getSession().getId(), parents, id);
+                                }
+                                else if (context.isReadable() || context.isWriteable()) {
+                                    dmc = new RegisterDMC(getSession().getId(), parents, id);
+                                }
+                                else {
+                                    dmc = new RegisterGroupDMC(getSession().getId(), parents, id);
+                                }
+                            }
+                            dmc_pool.put(id, dmc);
+                            dmc.context = context;
+                            data.put(id, dmc);
+                            if (cmds.isEmpty()) set(cb, null, data);
+                        }
+                    };
+                    for (String id : contexts) cmds.add(tcf_reg_service.getContext(id, done));
                 }
             });
             return false;
@@ -498,12 +482,8 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             command = context.get(new org.eclipse.tm.tcf.services.IRegisters.DoneGet() {
                 public void doneGet(IToken token, Exception err, byte[] value) {
                     if (command != token) return;
-                    command = null;
-                    if (err != null) {
-                        data = null;
-                        error = err;
-                    }
-                    else {
+                    FormattedValueDMData data = null;
+                    if (value != null) {
                         int radix = 10;
                         if (fmt.equals(HEX_FORMAT)) radix = 16; 
                         else if (fmt.equals(OCTAL_FORMAT)) radix = 8; 
@@ -531,8 +511,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                         }
                         data = new FormattedValueDMData(s);
                     }
-                    valid = true;
-                    validate();
+                    set(token, err, data);
                 }
             });
             return false;
@@ -569,9 +548,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         }
     }
     
-    private static class GroupsChangedEvent
-            extends AbstractDMEvent<org.eclipse.dd.dsf.debug.service.IRunControl.IExecutionDMContext>
-            implements IGroupsChangedDMEvent {
+    private static class GroupsChangedEvent extends AbstractDMEvent<IDMContext> implements IGroupsChangedDMEvent {
 
         public GroupsChangedEvent(IExecutionDMContext context) {
             super(context);
@@ -584,7 +561,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             public void contextChanged() {
                 TCFDSFRunControl rc = getServicesTracker().getService(TCFDSFRunControl.class);
                 for (TCFDSFExecutionDMC dmc : rc.getCachedContexts()) {
-                    RegistersCache c = (RegistersCache)dmc.registers_cache;
+                    RegisterChildrenCache c = (RegisterChildrenCache)dmc.registers_cache;
                     if (c != null) {
                         c.dispose();
                         dmc.registers_cache = null;
@@ -629,7 +606,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         if (tcf_reg_service != null) tcf_reg_service.addListener(listener);
         initialize(new RequestMonitor(getExecutor(), monitor) { 
             @Override
-            protected void handleOK() {
+            protected void handleSuccess() {
                 String[] class_names = {
                         org.eclipse.dd.dsf.debug.service.IRegisters.class.getName(),
                         TCFDSFRegisters.class.getName()
@@ -715,10 +692,17 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         }
         rm.done();
     }
-
-    public void getRegisterGroups(final IDMContext dmc, final DataRequestMonitor<IRegisterGroupDMContext[]> rm) {
-        if (rm.isCanceled()) return;
-        RegistersCache cache = null;
+    
+    private RegisterChildrenCache getRegisterChildrenCache(IDMContext dmc, DataRequestMonitor<?> rm) {
+        RegisterChildrenCache cache = null;
+        if (dmc instanceof CompositeDMContext) {
+            for (IDMContext ctx : dmc.getParents()) {
+                if (ctx instanceof TCFDSFExecutionDMC || ctx instanceof TCFDSFStack.TCFFrameDMC) {
+                    dmc = ctx;
+                    break;
+                }
+            }
+        }
         if (tcf_reg_service == null) {
             rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                     INVALID_HANDLE, "Registers service is not available", null)); //$NON-NLS-1$
@@ -726,32 +710,38 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         else if (dmc instanceof TCFDSFExecutionDMC) {
             TCFDSFExecutionDMC exe = (TCFDSFExecutionDMC)dmc;
             if (exe.registers_cache == null) exe.registers_cache =
-                new RegistersCache(channel, exe.getTcfContextId(), new IDMContext[]{ exe });
-            cache = (RegistersCache)exe.registers_cache;
+                new RegisterChildrenCache(channel, exe.getTcfContextId(), new IDMContext[]{ exe });
+            cache = (RegisterChildrenCache)exe.registers_cache;
         }
         else if (dmc instanceof ObjectDMC) {
             if (((ObjectDMC)dmc).disposed) {
                 rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                         INVALID_HANDLE, "Disposed DMC", null)); //$NON-NLS-1$
-                rm.done();
-                return;
             }
-            cache = ((ObjectDMC)dmc).children;
+            else {
+                cache = ((ObjectDMC)dmc).children;
+            }
+        }
+        else if (dmc instanceof TCFDSFStack.TCFFrameDMC && ((TCFDSFStack.TCFFrameDMC)dmc).level == 0) {
+            TCFDSFExecutionDMC exe = ((TCFDSFStack.TCFFrameDMC)dmc).exe_dmc;
+            if (exe.registers_cache == null) exe.registers_cache =
+                new RegisterChildrenCache(channel, exe.getTcfContextId(), new IDMContext[]{ exe });
+            cache = (RegisterChildrenCache)exe.registers_cache;
         }
         else {
             rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                     INVALID_HANDLE, "Unknown DMC type", null)); //$NON-NLS-1$
         }
+        return cache;
+    }
+
+    public void getRegisterGroups(final IDMContext dmc, final DataRequestMonitor<IRegisterGroupDMContext[]> rm) {
+        if (rm.isCanceled()) return;
+        RegisterChildrenCache cache = getRegisterChildrenCache(dmc, rm);
         if (cache != null) {
             if (!cache.validate()) {
-                cache.addWaitingRequest(new IDataRequest() {
-                    public void cancel() {
-                        rm.setStatus(new Status(IStatus.CANCEL, Activator.PLUGIN_ID,
-                                REQUEST_FAILED, "Canceled", null)); //$NON-NLS-1$
-                        rm.setCanceled(true);
-                        rm.done();
-                    }
-                    public void done() {
+                cache.wait(new Runnable() {
+                    public void run() {
                         getRegisterGroups(dmc, rm);
                     }
                 });
@@ -768,20 +758,12 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             for (IDMContext x : c.values()) {
                 if (x instanceof RegisterGroupDMC) cnt++;
             }
-            if (cnt == 0 && c.size() > 0 && dmc instanceof TCFDSFExecutionDMC) {
-                // TODO DSF requires at least one group
-                RegisterGroupDMC[] arr = new RegisterGroupDMC[1];
-                arr[0] = new RegisterGroupDMC(getSession().getId(), cache.parents, cache.id, cache);
-                rm.setData(arr);
+            RegisterGroupDMC[] arr = new RegisterGroupDMC[cnt];
+            cnt = 0;
+            for (IDMContext x : c.values()) {
+                if (x instanceof RegisterGroupDMC) arr[cnt++] = (RegisterGroupDMC)x;
             }
-            else {
-                RegisterGroupDMC[] arr = new RegisterGroupDMC[cnt];
-                cnt = 0;
-                for (IDMContext x : c.values()) {
-                    if (x instanceof RegisterGroupDMC) arr[cnt++] = (RegisterGroupDMC)x;
-                }
-                rm.setData(arr);
-            }
+            rm.setData(arr);
         }
         rm.done();
     }
@@ -792,40 +774,11 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
 
     public void getRegisters(final IDMContext dmc, final DataRequestMonitor<IRegisterDMContext[]> rm) {
         if (rm.isCanceled()) return;
-        RegistersCache cache = null;
-        if (tcf_reg_service == null) {
-            rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                    INVALID_HANDLE, "Registers service is not available", null)); //$NON-NLS-1$
-        }
-        else if (dmc instanceof TCFDSFExecutionDMC) {
-            TCFDSFExecutionDMC exe = (TCFDSFExecutionDMC)dmc;
-            if (exe.registers_cache == null) exe.registers_cache =
-                new RegistersCache(channel, exe.getTcfContextId(), new IDMContext[]{ exe });
-            cache = (RegistersCache)exe.registers_cache;
-        }
-        else if (dmc instanceof ObjectDMC) {
-            if (((ObjectDMC)dmc).disposed) {
-                rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                        INVALID_HANDLE, "Disposed DMC", null)); //$NON-NLS-1$
-                rm.done();
-                return;
-            }
-            cache = ((ObjectDMC)dmc).children;
-        }
-        else {
-            rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                    INVALID_HANDLE, "Unknown DMC type", null)); //$NON-NLS-1$
-        }
+        RegisterChildrenCache cache = getRegisterChildrenCache(dmc, rm);
         if (cache != null) {
             if (!cache.validate()) {
-                cache.addWaitingRequest(new IDataRequest() {
-                    public void cancel() {
-                        rm.setStatus(new Status(IStatus.CANCEL, Activator.PLUGIN_ID,
-                                REQUEST_FAILED, "Canceled", null)); //$NON-NLS-1$
-                        rm.setCanceled(true);
-                        rm.done();
-                    }
-                    public void done() {
+                cache.wait(new Runnable() {
+                    public void run() {
                         getRegisters(dmc, rm);
                     }
                 });
@@ -854,27 +807,11 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
 
     public void getBitFields(final IDMContext dmc, final DataRequestMonitor<IBitFieldDMContext[]> rm) {
         if (rm.isCanceled()) return;
-        if (tcf_reg_service == null) {
-            rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                    INVALID_HANDLE, "Registers service is not available", null)); //$NON-NLS-1$
-        }
-        else if (dmc instanceof ObjectDMC) {
-            if (((ObjectDMC)dmc).disposed) {
-                rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                        INVALID_HANDLE, "Disposed DMC", null)); //$NON-NLS-1$
-                rm.done();
-                return;
-            }
-            RegistersCache cache = ((ObjectDMC)dmc).children;
+        RegisterChildrenCache cache = getRegisterChildrenCache(dmc, rm);
+        if (cache != null) {
             if (!cache.validate()) {
-                cache.addWaitingRequest(new IDataRequest() {
-                    public void cancel() {
-                        rm.setStatus(new Status(IStatus.CANCEL, Activator.PLUGIN_ID,
-                                REQUEST_FAILED, "Canceled", null)); //$NON-NLS-1$
-                        rm.setCanceled(true);
-                        rm.done();
-                    }
-                    public void done() {
+                cache.wait(new Runnable() {
+                    public void run() {
                         getBitFields(dmc, rm);
                     }
                 });
@@ -898,17 +835,119 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             }
             rm.setData(arr);
         }
-        else {
-            rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                    INVALID_HANDLE, "Unknown DMC type", null)); //$NON-NLS-1$
+        rm.done();
+    }
+
+    public void findBitField(final IDMContext dmc, final String name, final DataRequestMonitor<IBitFieldDMContext> rm) {
+        if (rm.isCanceled()) return;
+        RegisterChildrenCache cache = getRegisterChildrenCache(dmc, rm);
+        if (cache != null) {
+            if (!cache.validate()) {
+                cache.wait(new Runnable() {
+                    public void run() {
+                        findBitField(dmc, name, rm);
+                    }
+                });
+                return;
+            }
+            if (cache.getError() != null) {
+                rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                        REQUEST_FAILED, "Data error", cache.getError())); //$NON-NLS-1$
+                rm.done();
+                return;
+            }
+            Map<String,ObjectDMC> c = cache.getData();
+            BitFieldDMC res = null;
+            for (IDMContext x : c.values()) {
+                if (x instanceof BitFieldDMC) {
+                    if (((BitFieldDMC)x).getName().equals(name)) {
+                        res = (BitFieldDMC)x;
+                        break;
+                    }
+                }
+            }
+            if (res != null) rm.setData(res);
+            else rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                    REQUEST_FAILED, "Not found", null)); //$NON-NLS-1$
         }
         rm.done();
     }
 
-    public void writeBitField(IDMContext dmc, String val, String fmt, final RequestMonitor rm) {
+    public void findRegister(final IDMContext dmc, final String name, final DataRequestMonitor<IRegisterDMContext> rm) {
+        if (rm.isCanceled()) return;
+        RegisterChildrenCache cache = getRegisterChildrenCache(dmc, rm);
+        if (cache != null) {
+            if (!cache.validate()) {
+                cache.wait(new Runnable() {
+                    public void run() {
+                        findRegister(dmc, name, rm);
+                    }
+                });
+                return;
+            }
+            if (cache.getError() != null) {
+                rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                        REQUEST_FAILED, "Data error", cache.getError())); //$NON-NLS-1$
+                rm.done();
+                return;
+            }
+            Map<String,ObjectDMC> c = cache.getData();
+            RegisterDMC res = null;
+            for (IDMContext x : c.values()) {
+                if (x instanceof RegisterDMC) {
+                    if (((RegisterDMC)x).getName().equals(name)) {
+                        res = (RegisterDMC)x;
+                        break;
+                    }
+                }
+            }
+            if (res != null) rm.setData(res);
+            else rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                    REQUEST_FAILED, "Not found", null)); //$NON-NLS-1$
+        }
+        rm.done();
+    }
+
+    public void findRegisterGroup(final IDMContext dmc, final String name, final DataRequestMonitor<IRegisterGroupDMContext> rm) {
+        if (rm.isCanceled()) return;
+        RegisterChildrenCache cache = getRegisterChildrenCache(dmc, rm);
+        if (cache != null) {
+            if (!cache.validate()) {
+                cache.wait(new Runnable() {
+                    public void run() {
+                        findRegisterGroup(dmc, name, rm);
+                    }
+                });
+                return;
+            }
+            if (cache.getError() != null) {
+                rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                        REQUEST_FAILED, "Data error", cache.getError())); //$NON-NLS-1$
+                rm.done();
+                return;
+            }
+            Map<String,ObjectDMC> c = cache.getData();
+            RegisterGroupDMC res = null;
+            for (IDMContext x : c.values()) {
+                if (x instanceof RegisterGroupDMC) {
+                    if (((RegisterGroupDMC)x).getName().equals(name)) {
+                        res = (RegisterGroupDMC)x;
+                        break;
+                    }
+                }
+            }
+            if (res != null) rm.setData(res);
+            else rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                    REQUEST_FAILED, "Not found", null)); //$NON-NLS-1$
+        }
+        rm.done();
+    }
+
+    public void writeBitField(IBitFieldDMContext dmc, String val, String fmt, final RequestMonitor rm) {
         if (tcf_reg_service == null) {
             rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                     INVALID_HANDLE, "Registers service is not available", null)); //$NON-NLS-1$
+            rm.done();
         }
         else if (dmc instanceof ObjectDMC) {
             if (((ObjectDMC)dmc).disposed) {
@@ -938,16 +977,15 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                     rm.done();
                 }
             });
-            return;
         }
         else {
             rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                     INVALID_HANDLE, "Unknown DMC type", null)); //$NON-NLS-1$
+            rm.done();
         }
-        rm.done();
     }
 
-    public void writeBitField(IDMContext dmc, IMnemonic mnemonic, final RequestMonitor rm) {
+    public void writeBitField(IBitFieldDMContext dmc, IMnemonic mnemonic, final RequestMonitor rm) {
         if (tcf_reg_service == null) {
             rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                     INVALID_HANDLE, "Registers service is not available", null)); //$NON-NLS-1$
@@ -988,8 +1026,46 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         rm.done();
     }
 
-    public void writeRegister(IDMContext dmc, String val, String fmt, RequestMonitor rm) {
-        writeBitField(dmc, val, fmt, rm);
+    public void writeRegister(IRegisterDMContext dmc, String val, String fmt, final RequestMonitor rm) {
+        if (tcf_reg_service == null) {
+            rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                    INVALID_HANDLE, "Registers service is not available", null)); //$NON-NLS-1$
+            rm.done();
+        }
+        else if (dmc instanceof ObjectDMC) {
+            if (((ObjectDMC)dmc).disposed) {
+                rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                        INVALID_HANDLE, "Disposed DMC", null)); //$NON-NLS-1$
+                rm.done();
+                return;
+            }
+            int radix = 10;
+            if (fmt.equals(HEX_FORMAT)) radix = 16; 
+            else if (fmt.equals(OCTAL_FORMAT)) radix = 8; 
+            byte[] data = new BigInteger(val, radix).toByteArray();
+            if (!((ObjectDMC)dmc).context.isBigEndian()) {
+                byte[] temp = new byte[data.length];
+                for (int i = 0; i < data.length; i++) {
+                    temp[temp.length - i - 1] = data[i];
+                }
+                data = temp;
+            }
+            ((ObjectDMC)dmc).context.set(data, new org.eclipse.tm.tcf.services.IRegisters.DoneSet() {
+                public void doneSet(IToken token, Exception error) {
+                    if (rm.isCanceled()) return;
+                    if (error != null) {
+                        rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                                REQUEST_FAILED, "Command error", error)); //$NON-NLS-1$
+                    }
+                    rm.done();
+                }
+            });
+        }
+        else {
+            rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                    INVALID_HANDLE, "Unknown DMC type", null)); //$NON-NLS-1$
+            rm.done();
+        }
     }
 
     public void getAvailableFormats(IFormattedDataDMContext dmc, DataRequestMonitor<String[]> rm) {
@@ -1009,14 +1085,8 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                 return;
             }
             if (!vmc.cache.validate()) {
-                vmc.cache.addWaitingRequest(new IDataRequest() {
-                    public void cancel() {
-                        rm.setStatus(new Status(IStatus.CANCEL, Activator.PLUGIN_ID,
-                                REQUEST_FAILED, "Canceled", null)); //$NON-NLS-1$
-                        rm.setCanceled(true);
-                        rm.done();
-                    }
-                    public void done() {
+                vmc.cache.wait(new Runnable() {
+                    public void run() {
                         getFormattedExpressionValue(dmc, rm);
                     }
                 });
@@ -1073,20 +1143,20 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
     @DsfServiceEventHandler
     public void eventDispatched(org.eclipse.dd.dsf.debug.service.IRunControl.IResumedDMEvent e) {
         if (e.getReason() != StateChangeReason.STEP) {
-            RegistersCache cache = (RegistersCache)((TCFDSFExecutionDMC)e.getDMContext()).registers_cache;
+            RegisterChildrenCache cache = (RegisterChildrenCache)((TCFDSFExecutionDMC)e.getDMContext()).registers_cache;
             if (cache != null) cache.invalidateRegContents();
         }
     }
     
     @DsfServiceEventHandler
     public void eventDispatched(org.eclipse.dd.dsf.debug.service.IRunControl.ISuspendedDMEvent e) {
-        RegistersCache cache = (RegistersCache)((TCFDSFExecutionDMC)e.getDMContext()).registers_cache;
+        RegisterChildrenCache cache = (RegisterChildrenCache)((TCFDSFExecutionDMC)e.getDMContext()).registers_cache;
         if (cache != null) cache.invalidateRegContents();
     }
 
     @DsfServiceEventHandler
     public void eventDispatched(org.eclipse.dd.dsf.debug.service.IRunControl.IExitedDMEvent e) {
-        RegistersCache cache = (RegistersCache)((TCFDSFExecutionDMC)e.getExecutionContext()).registers_cache;
+        RegisterChildrenCache cache = (RegisterChildrenCache)((TCFDSFExecutionDMC)e.getDMContext()).registers_cache;
         if (cache != null) cache.dispose();
     }
 }

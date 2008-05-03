@@ -130,7 +130,6 @@ public class ProcessesProxy implements IProcesses {
     public IToken getChildren(String parent_context_id, boolean attached_only, final DoneGetChildren done) {
         return new Command(channel, this,
                 "getChildren", new Object[]{ parent_context_id, attached_only }) {
-            @SuppressWarnings("unchecked")
             @Override
             public void done(Exception error, Object[] args) {
                 String[] ids = null;
@@ -165,7 +164,6 @@ public class ProcessesProxy implements IProcesses {
 
     public IToken getEnvironment(final DoneGetEnvironment done) {
         return new Command(channel, this, "getEnvironment", null) {
-            @SuppressWarnings("unchecked")
             @Override
             public void done(Exception error, Object[] args) {
                 Map<String,String> env = null;

@@ -12,14 +12,13 @@ package org.eclipse.tm.internal.tcf.dsf.launch;
 
 import org.eclipse.dd.dsf.concurrent.RequestMonitor;
 import org.eclipse.dd.dsf.concurrent.Sequence;
+import org.eclipse.dd.dsf.debug.service.StepQueueManager;
 import org.eclipse.dd.dsf.service.DsfSession;
 import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFBreakpoints;
 import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFMemory;
-import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFNativeProcesses;
 import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFRegisters;
 import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFRunControl;
 import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFStack;
-import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFStepQueueManager;
 import org.eclipse.tm.tcf.protocol.IChannel;
 
 
@@ -34,19 +33,13 @@ class TCFDSFLaunchSequence extends Sequence {
                 new Step() {
                     @Override
                     public void execute(RequestMonitor monitor) {
-                        new TCFDSFNativeProcesses(session, channel, monitor);
+                        new TCFDSFRunControl(launch.getLaunchConfiguration(), session, channel, monitor);
                     }
                 },
                 new Step() {
                     @Override
                     public void execute(RequestMonitor monitor) {
-                        new TCFDSFRunControl(session, channel, monitor);
-                    }
-                },
-                new Step() {
-                    @Override
-                    public void execute(RequestMonitor monitor) {
-                        new TCFDSFStepQueueManager(session).initialize(monitor);
+                        new StepQueueManager(session).initialize(monitor);
                     }
                 },
                 new Step() {

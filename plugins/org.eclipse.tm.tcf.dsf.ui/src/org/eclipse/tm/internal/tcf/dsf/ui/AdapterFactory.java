@@ -21,9 +21,9 @@ import org.eclipse.dd.dsf.debug.ui.actions.DsfStepIntoCommand;
 import org.eclipse.dd.dsf.debug.ui.actions.DsfStepOverCommand;
 import org.eclipse.dd.dsf.debug.ui.actions.DsfStepReturnCommand;
 import org.eclipse.dd.dsf.debug.ui.actions.DsfSuspendCommand;
-import org.eclipse.dd.dsf.debug.ui.actions.DsfTerminateCommand;
-import org.eclipse.dd.dsf.debug.ui.sourcelookup.MISourceDisplayAdapter;
+import org.eclipse.dd.dsf.debug.ui.sourcelookup.DsfSourceDisplayAdapter;
 import org.eclipse.dd.dsf.service.DsfSession;
+import org.eclipse.dd.dsf.ui.concurrent.DisplayDsfExecutor;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchesListener2;
@@ -39,8 +39,12 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IColumnPresentati
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementContentProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
 import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.dsf.launch.TCFDSFLaunch;
+import org.eclipse.tm.internal.tcf.dsf.ui.actions.TcfTerminateCommand;
+import org.eclipse.tm.internal.tcf.dsf.ui.viewmodel.ViewModelAdapter;
+import org.eclipse.tm.tcf.protocol.Protocol;
 
 
 @SuppressWarnings("restriction")
@@ -51,13 +55,13 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
 
         private final DsfSession session;
         final ViewModelAdapter view_model_adapter;
-        final MISourceDisplayAdapter source_display_adapter;
+        final DsfSourceDisplayAdapter source_display_adapter;
         final DsfStepIntoCommand step_into_command;
         final DsfStepOverCommand step_over_command;
         final DsfStepReturnCommand step_return_command;
         final DsfSuspendCommand suspend_command;
         final DsfResumeCommand resume_command;
-        final DsfTerminateCommand terminate_command;
+        final TcfTerminateCommand terminate_command;
         final IDebugModelProvider debug_model_provider;
         final TCFDSFLaunch lunch;
         //final BreakpointCommand breakpoint_command; 
@@ -69,7 +73,8 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
             view_model_adapter = new ViewModelAdapter(session, launch);
 
             if (launch.getSourceLocator() instanceof ISourceLookupDirector) {
-                source_display_adapter = new MISourceDisplayAdapter(session, (ISourceLookupDirector)launch.getSourceLocator());
+                source_display_adapter = new DsfSourceDisplayAdapter(session,
+                        (ISourceLookupDirector)launch.getSourceLocator());
             }
             else {
                 source_display_adapter = null;
@@ -81,7 +86,7 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
             step_return_command = new DsfStepReturnCommand(session);
             suspend_command = new DsfSuspendCommand(session);
             resume_command = new DsfResumeCommand(session);
-            terminate_command = new DsfTerminateCommand(session);
+            terminate_command = new TcfTerminateCommand(session);
             //breakpoint_command = new BreakpointCommand();
             //memory_retrieval = new DsfMemoryBlockRetrieval(ITCFConstants.ID_TCF_DEBUG_MODEL, );
             session.registerModelAdapter(IStepIntoHandler.class, step_into_command);
@@ -131,23 +136,40 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
         }        
     }
 
-    @SuppressWarnings({ "unchecked", "restriction" })
-    private final Class[] adapter_list = {
+    private static final Class<?>[] adapter_list = {
         IElementContentProvider.class,
         IColumnPresentationFactory.class,
         IModelProxyFactory.class,
         ITerminateHandler.class
     };
 
-    private Map<String,SessionAdapterSet> session_adapter_set_map = 
+    private static final Map<String,SessionAdapterSet> session_adapter_set_map = 
         Collections.synchronizedMap(new HashMap<String,SessionAdapterSet>());
 
     public AdapterFactory() {
+        assert session_adapter_set_map.isEmpty();
         DsfSession.addSessionEndedListener(this);
         DebugPlugin.getDefault().getLaunchManager().addLaunchListener(this);
+        final Display display = Display.getDefault();
+        display.asyncExec(new Runnable() {
+            public void run() {
+                final DisplayDsfExecutor executer = DisplayDsfExecutor.getDisplayDsfExecutor(display);
+                Protocol.invokeLater(new Runnable() {
+                    public void run() {
+                        Protocol.addCongestionMonitor(new Protocol.CongestionMonitor() {
+                            public int getCongestionLevel() {
+                                int level = executer.getQueue().size() / 4 - 100;
+                                if (level > 100) level = 100;
+                                return level;
+                            }
+                        });
+                    }
+                });
+            }
+        });
     }
 
-    @SuppressWarnings({ "restriction", "unchecked" })
+    @SuppressWarnings("unchecked")
     public Object getAdapter(Object adaptableObject, Class adapterType) {
         if (!(adaptableObject instanceof TCFDSFLaunch)) return null; 
 
@@ -197,11 +219,10 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
         // Dispose the set of adapters for a launch only after the launch is removed.
         for (ILaunch launch : launches) {
             if (launch instanceof TCFDSFLaunch) {
-                DsfSession session = ((TCFDSFLaunch)launch).getSession();
+                String id = ((TCFDSFLaunch)launch).getSession().getId();
                 synchronized (session_adapter_set_map) {
-                    if (session_adapter_set_map.containsKey(session.getId())) {
-                        session_adapter_set_map.get(session.getId()).dispose();
-                        session_adapter_set_map.remove(session);
+                    if (session_adapter_set_map.containsKey(id)) {
+                        session_adapter_set_map.remove(id).dispose();
                     }
                 }
             }                

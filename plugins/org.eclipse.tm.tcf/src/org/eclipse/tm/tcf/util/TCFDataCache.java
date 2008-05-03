@@ -8,7 +8,7 @@
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.internal.tcf.debug.ui.model;
+package org.eclipse.tm.tcf.util;
 
 import java.util.HashSet;
 
@@ -41,7 +41,7 @@ public abstract class TCFDataCache<V> implements Runnable {
     }
     
     /**
-     * @return true if cache contains up-to-date data (or data error).
+     * @return true if cache contains up-to-date data (or data retrieval error).
      */
     public boolean isValid() {
         return valid;
@@ -73,8 +73,8 @@ public abstract class TCFDataCache<V> implements Runnable {
     }
     
     /**
-     * Notify waiting clients about cache state change and remove then from wait list.
-     * It is responsibility of clients to check if state change was one they are waiting for.
+     * Notify waiting clients about cache state change and remove them from wait list.
+     * It is responsibility of clients to check if the state change was one they are waiting for.
      */
     public void run() {
         if (waiting_list.isEmpty()) return;
@@ -94,7 +94,7 @@ public abstract class TCFDataCache<V> implements Runnable {
     
     /**
      * Initiate data retrieval if the cache is not valid.
-     * @return
+     * @return true if the cache is already valid
      */
     public boolean validate() {
         assert Protocol.isDispatchThread();

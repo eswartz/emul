@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.protocol;
 
+import java.util.ArrayList;
+
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
 import org.eclipse.tm.internal.tcf.core.Transport;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
@@ -17,7 +19,6 @@ import org.eclipse.tm.tcf.services.ILocator;
 
 
 /**
- * 
  * Class Protocol provides static methods to access Target Communication Framework root objects:
  * 1. the framework event queue and dispatch thread;
  * 2. local instance of Locator service, which maintains a list of available targets;
@@ -26,6 +27,8 @@ import org.eclipse.tm.tcf.services.ILocator;
 public class Protocol {
 
     private static IEventQueue event_queue;
+    
+    private static final ArrayList<CongestionMonitor> congestion_monitors = new ArrayList<CongestionMonitor>();
 
     /**
      * Before TCF can be used it should be given an object implementing IEventQueue interface.
@@ -92,6 +95,8 @@ public class Protocol {
      * Causes <code>runnable</code> to have its <code>run</code>
      * method called in the dispatch thread of the framework.
      * Calling thread is suspended until the method is executed.
+     * If invokeAndWait is called from the dispatching thread
+     * the <i>runnable.run()</i> is executed immediately.
      *
      * This method can be invoked from any thread.
      *
@@ -190,5 +195,65 @@ public class Protocol {
      */
     public static void sync(Runnable done) {
         Transport.sync(done);
+    }
+    
+    /**
+     * Clients implement CongestionMonitor interface to monitor usage of local resources,
+     * like, for example, display queue size - if the queue becomes too big, UI response time
+     * can become too high, or it can crash all together because of OutOfMemory errors.
+     * TCF flow control logic prevents such conditions by throttling traffic coming from remote peers.   
+     * Note: Local (in-bound traffic) congestion is detected by framework and reported to
+     * remote peer without client needed to be involved. Only clients willing to provide
+     * additional data about local congestion should implement CongestionMonitor and
+     * register it using Protocol.addCongestionMonitor().
+     */
+    public interface CongestionMonitor {
+        /**
+         * Get current level of client resource utilization. 
+         * @return integer value in range –100..100, where –100 means all resources are free,
+         *         0 means optimal load, and positive numbers indicate level of congestion.
+         */
+        int getCongestionLevel();
+    }
+    
+    /**
+     * Register a congestion monitor.
+     * @param monitor - client implementation of CongestionMonitor interface
+     */
+    public static void addCongestionMonitor(CongestionMonitor monitor) {
+        assert monitor != null;
+        assert isDispatchThread();
+        congestion_monitors.add(monitor);
+    }
+    
+    /**
+     * Unregister a congestion monitor.
+     * @param monitor - client implementation of CongestionMonitor interface
+     */
+    public static void removeCongestionMonitor(CongestionMonitor monitor) {
+        assert isDispatchThread();
+        congestion_monitors.remove(monitor);
+    }
+    
+    /**
+     * Get current level of local traffic congestion.
+     * 
+     * @return integer value in range –100..100, where –100 means no pending
+     *         messages (no traffic), 0 means optimal load, and positive numbers
+     *         indicate level of congestion.
+     */
+    public static int getCongestionLevel() {
+        assert isDispatchThread();
+        int level = -100;
+        for (CongestionMonitor m : congestion_monitors) {
+            int n = m.getCongestionLevel();
+            if (n > level) level = n;
+        }
+        if (event_queue != null) {
+            int n = event_queue.getCongestion();
+            if (n > level) level = n;
+        }
+        if (level > 100) level = 100;
+        return level;
     }
 }

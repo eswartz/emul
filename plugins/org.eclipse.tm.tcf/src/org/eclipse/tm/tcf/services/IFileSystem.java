@@ -353,6 +353,7 @@ public interface IFileSystem extends IService {
          */
         STATUS_OP_UNSUPPORTED = 8;
     
+    @SuppressWarnings("serial")
     abstract static class FileSystemException extends IOException {
         
         protected FileSystemException(String message) {
