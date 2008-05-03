@@ -167,9 +167,13 @@ static void tcp_write_stream(OutputStream * out, int byte) {
         channel->obuf[channel->obuf_inp++] = byte;
         if (channel->obuf_inp == BUF_SIZE) tcp_flush_stream(out);
     }
+    if (b0 == MARKER_EOM) {
+        int congestion_level = out2channel(out)->congestion_level;
+        if (congestion_level > 0) usleep(congestion_level * 2500);
+    }
 }
 
-static void tcp_post_read(InputBuf * ibuf, unsigned char *buf, int size) {
+static void tcp_post_read(InputBuf * ibuf, unsigned char * buf, int size) {
     ChannelTCP * channel = ibuf2tcp(ibuf);
 
     if (channel->read_pending || channel->socket < 0) return;

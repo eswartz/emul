@@ -269,6 +269,10 @@ static int id2frame(char * id, Context ** ctx, int * idx) {
     pid[i++] = 0;
     id++;
     *ctx = context_find_from_pid(strtol(pid, NULL, 10));
+    if (*ctx == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
     s = (*ctx)->stack_trace;
     if (s == NULL) {
         errno = ERR_INV_CONTEXT;

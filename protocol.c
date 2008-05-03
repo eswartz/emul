@@ -297,7 +297,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
             ch = c->inp.read(&c->inp);
         }
         if (ch != MARKER_EOM) exception(ERR_PROTOCOL);
-        c->congestion_level = n;
+        c->congestion_level = s ? -n : n;
     }
     else {
         if (p->default_handler != NULL) {
