@@ -43,7 +43,13 @@ public interface IRunControl extends IService {
         RM_STEP_INTO = 2,
         RM_STEP_OVER_LINE = 3,
         RM_STEP_INTO_LINE = 4,
-        RM_STEP_OUT = 5;
+        RM_STEP_OUT = 5,
+        RM_REVERSE_RESUME = 6,
+        RM_REVERSE_STEP_OVER = 7,
+        RM_REVERSE_STEP_INTO = 8,
+        RM_REVERSE_STEP_OVER_LINE = 9,
+        RM_REVERSE_STEP_INTO_LINE = 10,
+        RM_REVERSE_STEP_OUT = 11;
     
     /**
      * State change reason of a context.
@@ -272,7 +278,7 @@ public interface IRunControl extends IService {
 
         /**
          * Called when contexts are removed.
-         * @param context_ids - aray of removed context IDs.
+         * @param context_ids - array of removed context IDs.
          */
         void contextRemoved(String context_ids[]);
 
