@@ -31,7 +31,7 @@
 <p>A breakpoint is represented by a unique identifier and set of properties.
 A breakpoint identifier (String id) needs to be unique across all hosts and targets.</p>
  
-<p>A breakpoint's property set is an extendable collection of named attributes,
+<p>A breakpoint's property set is an extensible collection of named attributes,
 which define the breakpoint's location, the conditions that trigger the breakpoint, and the actions 
 executed as a result. As such, breakpoint properties are separated into three broad categories:
 <ul><b>
@@ -44,10 +44,10 @@ The Action properties dictate the effect of the breakpoint if it is triggered.
 
 <p>The split of Location and Condition properties is subjective and is
 not meant to describe how it is implemented.  Often, the Location
-properties dictate how a breakpoint is planted, and Condition
+properties dictate how a breakpoint is installed, and Condition
 properties dictate whether the breakpoint should be triggered.
 However, it is perfectly possible for an implementation to use
-Condition properties to control planting of a breakpoint and use
+Condition properties to control breakpoint installation and use
 Location properties each time the breakpoint is encountered to check
 if it should be triggered.
 
@@ -61,7 +61,7 @@ change in any of the attached contexts.  Adding properties reduces the
 <p>Context defining properties specifying which context a breakpoint applies to are provided through the <a href='#propContextIds'>ContextIds</a>, 
 <a href='#propContextNames'>ContextNames </a> or the <a href='#propExecPaths'>ExecutablePaths</a> properties. 
 
-<p>The presence of certain properties defines what kind of breakpoint is planted.
+<p>The presence of certain properties defines what kind of breakpoint is installed.
 <ul>
 <li>Instruction breakpoints are either Line Breakpoints, which are configured using the <a href='#propFile'>File</a>, 
 <a href='#propLine'>Line</a> and <a href='#propColumn'>Column</a> properties,
@@ -81,7 +81,7 @@ or Address breakpoints, which are configured using the <a href='#propLocation'>L
 
 <p><b>Action properties</b> contain the <a href='#propStopGroup'>StopGroup</a> and <a href='#propTemporary'>Temporary</a> properties.
 
-<p>For each breakpoint a target agent maintains another extendable collection of named attributes:
+<p>For each breakpoint a target agent maintains another extensible collection of named attributes:
 breakpoint status. While breakpoint properties are persistent and represent user input,
 breakpoint status reflects dynamic target agent reports about breakpoint current state,
 like actual addresses where breakpoint is installed or installation errors.
@@ -282,7 +282,7 @@ C • <i>&lt;token&gt;</i> • Breakpoints • add • <i>&lt;breakpoint data&gt;</i> •
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R Â• <i>&lt;token&gt;</i> Â• <i>&lt;error report&gt;</i> Â•
+R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
 </font></b></pre>
 
 <h3><a name='CmdChange'>Change</a></h3>
