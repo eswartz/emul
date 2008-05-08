@@ -766,7 +766,7 @@ class TCFSelfTest {
                 ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
                         if (cancel) return;
-                        if (active_tests.get(this) == null) return;
+                        if (active_tests.get(TestRCBP1.this) == null) return;
                         if (threads.get(sc.id) == null) return;
                         if (error != null) exit(error);
                     }
