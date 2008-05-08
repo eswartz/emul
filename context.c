@@ -298,31 +298,13 @@ static void set_errno(DWORD win32_error_code) {
     errno = EINVAL;
 }
 
-static void exception_not_handled(Context * ctx, DebugEvent * event) {
-    DWORD event_code = event->event.u.Exception.ExceptionRecord.ExceptionCode;
-
-    assert(!ctx->regs_dirty);
-    assert(!ctx->stopped);
-    event->continue_status = DBG_EXCEPTION_NOT_HANDLED;
-    trace(LOG_CONTEXT, "context: exception not handled: ctx %#x, pid %d, exception 0x%08x",
-        ctx, ctx->pid, event_code);
-    while (1) {
-        DWORD cnt = ResumeThread(ctx->handle);
-        if (cnt == (DWORD)-1) {
-            DWORD err = GetLastError();
-            trace(LOG_ALWAYS, "Can't resume thread: error %d", err);
-            break;
-        }
-        if (cnt <= 1) break;
-    }
-}
-
 static void event_win32_context_stopped(void * arg) {
     Context * ctx = (Context *)arg;
-    DWORD event_code = ctx->pending_event;
+    DWORD event_code = ctx->pending_event.ExceptionRecord.ExceptionCode;
 
     if (ctx->stopped && event_code == 0) return;
-    ctx->pending_event = 0;
+    memcpy(&ctx->suspend_reason, &ctx->pending_event, sizeof(EXCEPTION_DEBUG_INFO));
+    memset(&ctx->pending_event, 0, sizeof(EXCEPTION_DEBUG_INFO));
 
     trace(LOG_CONTEXT, "context: stopped: ctx %#x, pid %d, exception 0x%08x",
         ctx, ctx->pid, event_code);
@@ -417,7 +399,7 @@ static int win32_resume(Context * ctx) {
         return -1;
     }
     ctx->regs_dirty = 0;
-    if (ctx->pending_event != 0) {
+    if (ctx->pending_event.ExceptionRecord.ExceptionCode != 0) {
         event_win32_context_started(ctx);
         post_event(event_win32_context_stopped, ctx);
         return 0;
@@ -443,7 +425,6 @@ static void debug_event_handler(void * x) {
     Context * ctx = context_find_from_pid(debug_event->dwThreadId);
 
     assert(prs != NULL);
-    args->continue_status = DBG_CONTINUE;
     switch (debug_event->dwDebugEventCode) {
     case CREATE_PROCESS_DEBUG_EVENT:
         assert(ctx == NULL);
@@ -476,8 +457,15 @@ static void debug_event_handler(void * x) {
         break;
     case EXCEPTION_DEBUG_EVENT:
         if (ctx == NULL) break;
-        assert(ctx->pending_event == 0);
-        ctx->pending_event = args->event.u.Exception.ExceptionRecord.ExceptionCode;
+        assert(ctx->pending_event.ExceptionRecord.ExceptionCode == 0);
+        args->continue_status = DBG_EXCEPTION_NOT_HANDLED;
+        switch (args->event.u.Exception.ExceptionRecord.ExceptionCode) {
+        case EXCEPTION_SINGLE_STEP:
+        case EXCEPTION_BREAKPOINT:
+            args->continue_status = DBG_CONTINUE;
+            break;
+        }
+        memcpy(&ctx->pending_event, &args->event.u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
         if (!ctx->stopped) event_win32_context_stopped(ctx);
         break;
     case EXIT_THREAD_DEBUG_EVENT:
@@ -522,7 +510,7 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
     HANDLE event_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
     DebugEvent event_buffer;
     DebugEvent create_process;
-    DWORD loader = 0;
+    DebugEvent fantom_process;
     int state = 0;
     int abort = 0;
 
@@ -541,9 +529,10 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
         return 0;
     }
 
-    trace(LOG_WAITPID, "debugder thread %d started", GetCurrentThreadId());
+    trace(LOG_WAITPID, "debugger thread %d started", GetCurrentThreadId());
 
     memset(&create_process, 0, sizeof(create_process));
+    memset(&fantom_process, 0, sizeof(fantom_process));
     while (!abort) {
         DebugEvent * buf = NULL;
         DEBUG_EVENT * debug_event = &event_buffer.event;
@@ -553,10 +542,19 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
             trace(LOG_ALWAYS, "WaitForDebugEvent() error %d\n", GetLastError());
             break;
         }
-        trace(LOG_WAITPID, "%s, process %d, thread %d",
-            win32_debug_event_name(debug_event->dwDebugEventCode),
-            debug_event->dwProcessId, debug_event->dwThreadId);
+        if (debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
+            trace(LOG_WAITPID, "%s, process %d, thread %d, code 0x%08x",
+                win32_debug_event_name(debug_event->dwDebugEventCode),
+                debug_event->dwProcessId, debug_event->dwThreadId,
+                debug_event->u.Exception.ExceptionRecord.ExceptionCode);
+        }
+        else {
+            trace(LOG_WAITPID, "%s, process %d, thread %d",
+                win32_debug_event_name(debug_event->dwDebugEventCode),
+                debug_event->dwProcessId, debug_event->dwThreadId);
+        }
         assert(args->ctx->pid == debug_event->dwProcessId);
+        event_buffer.continue_status = DBG_CONTINUE;
 
         switch (debug_event->dwDebugEventCode) {
         case CREATE_PROCESS_DEBUG_EVENT:
@@ -566,25 +564,30 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
             }
             else {
                 /* This looks like a bug in Windows: */
-                /* 1. according to documentation, we should get only one CREATE_PROCESS_DEBUG_EVENT event. */
+                /* 1. according to the documentation, we should get only one CREATE_PROCESS_DEBUG_EVENT. */
                 /* 2. if second CREATE_PROCESS_DEBUG_EVENT is handled immediately, debugee crashes. */
-                /* TODO: Second CREATE_PROCESS_DEBUG_EVENT - search for better workaround */
-                loader = debug_event->dwThreadId;
-                CloseHandle(debug_event->u.CreateProcessInfo.hFile);
+                memcpy(&fantom_process, &event_buffer, sizeof(event_buffer));
+                CloseHandle(fantom_process.event.u.CreateProcessInfo.hFile);
                 ResumeThread(create_process.event.u.CreateProcessInfo.hThread);
-                Sleep(100);
+                SuspendThread(fantom_process.event.u.CreateProcessInfo.hThread);
             }
-            event_buffer.continue_status = DBG_CONTINUE;
             break;
         case LOAD_DLL_DEBUG_EVENT:
             CloseHandle(debug_event->u.LoadDll.hFile);
-            event_buffer.continue_status = DBG_CONTINUE;
             break;
         default:
-            if (loader == debug_event->dwThreadId) {
-                if (debug_event->dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT) loader = 0;
-                event_buffer.continue_status = DBG_CONTINUE;
+            if (fantom_process.event.dwThreadId == debug_event->dwThreadId) {
+                if (debug_event->dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT) {
+                    memset(&fantom_process, 0, sizeof(fantom_process));
+                }
+                else if (debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
+                    event_buffer.continue_status = DBG_EXCEPTION_NOT_HANDLED;
+                }
                 break;
+            }
+            if (fantom_process.event.u.CreateProcessInfo.hThread != NULL) {
+                ResumeThread(fantom_process.event.u.CreateProcessInfo.hThread);
+                fantom_process.event.u.CreateProcessInfo.hThread = NULL;
             }
             if (state == 1) {
                 ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
@@ -593,9 +596,11 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 WaitForSingleObject(event_semaphore, INFINITE);
                 state++;
             }
-            event_buffer.event_semaphore = event_semaphore;
-            post_event(debug_event_handler, &event_buffer);
-            WaitForSingleObject(event_semaphore, INFINITE);
+            if (state == 2) {
+                event_buffer.event_semaphore = event_semaphore;
+                post_event(debug_event_handler, &event_buffer);
+                WaitForSingleObject(event_semaphore, INFINITE);
+            }
             break;
         }
 

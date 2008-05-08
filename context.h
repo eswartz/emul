@@ -61,7 +61,8 @@ struct Context {
 #endif
 #if defined(WIN32)
     HANDLE              handle;
-    DWORD               pending_event;
+    EXCEPTION_DEBUG_INFO pending_event;
+    EXCEPTION_DEBUG_INFO suspend_reason;
 #endif
 };
 

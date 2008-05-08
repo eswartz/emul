@@ -83,11 +83,13 @@ void check_error(int error) {
 
 void check_error_debug(char * file, int line, int error) {
     if (error == 0) return;
+#if ENABLE_Trace
     if (log_file != stderr) {
         trace(LOG_ALWAYS, "Fatal error %d: %s", error, errno_to_str(error));
         trace(LOG_ALWAYS, "  At %s:%d", file, line);
         trace(LOG_ALWAYS, "  Exiting agent...");
     }
+#endif
     fprintf(stderr, "Fatal error %d: %s", error, errno_to_str(error));
     fprintf(stderr, "  At %s:%d", file, line);
     fprintf(stderr, "  Exiting agent...");

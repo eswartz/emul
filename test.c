@@ -91,14 +91,16 @@ int run_test_process(Context ** res) {
     }
     si.cb = sizeof(si);
     strcpy(cmd, "agent.exe -t");
-    if (error == 0 && CreateProcess(fnm, cmd, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &prs) == 0) {
+    if (error == 0 && CreateProcess(fnm, cmd, NULL, NULL,
+            FALSE, CREATE_SUSPENDED | CREATE_DEFAULT_ERROR_MODE,
+            NULL, NULL, &si, &prs) == 0) {
         errno = EINVAL;
         return -1;
     }
-    r = context_attach(prs.dwProcessId, &ctx, 0);
-    if (res != NULL) *res = ctx;
     CloseHandle(prs.hThread);
     CloseHandle(prs.hProcess);
+    r = context_attach(prs.dwProcessId, &ctx, 0);
+    if (res != NULL) *res = ctx;
     return r;
 #elif defined(_WRS_KERNEL)
     int tid = taskCreate("tTcf", 100, 0, 0x4000, (FUNCPTR)test_proc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
