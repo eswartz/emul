@@ -88,7 +88,7 @@ Service sends contextChanged event to notify changes in context data.</p>
     <li><code><b><font face="Courier New" size=2 color=#333399>"Description" : <i>&lt;string&gt;</i></font></b></code>
     - context description.
 
-    <li><code><b><font face="Courier New" size=2 color=#333399>"Size" : <i>&lt;boolean&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Size" : <i>&lt;int&gt;</i></font></b></code>
     - context size in bytes. Byte arrays in get/set commandss should be same size.
     Hardware register can be smaller then this size, for example in case
     when register size is not an even number of bytes. In such case implementation
@@ -229,7 +229,7 @@ of error.</p>
 <h3><a name='CmdGetMultiple'>Get Multiple Registers</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • &lt;token&gt; • Registers • getm • <i>&lt;string: context ID&gt;</i> •
+C • &lt;token&gt; • Registers • getm • <i>&lt;array of locations&gt;</i> •
 
 <i>&lt;array of locations&gt;</i>
     <font face=Wingdings>Ø</font> [ <i>&lt;location list&gt;</i> ]
@@ -536,7 +536,7 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
         <font color=#3F5FBF>/** offset in the context, in bytes */</font>
         <font color=#7F0055>public final int</font> offs;
 
-        <font color=#3F5FBF>/** value size in byte */</font>
+        <font color=#3F5FBF>/** value size in bytes */</font>
         <font color=#7F0055>public final int</font> size;
 
         <font color=#7F0055>public</font> Location(String id, <font color=#7F0055>int</font> offs, <font color=#7F0055>int</font> size) {
