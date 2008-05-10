@@ -48,8 +48,8 @@ using a simple variant of Backus-Naur Form. In particular:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;chars&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;char&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;chars&gt; &lt;char&gt;</i>
+    &rArr; <i>&lt;char&gt;</i>
+    &rArr; <i>&lt;chars&gt; &lt;char&gt;</i>
 </font></b></pre>
 
 <ul type='disc'>
@@ -58,7 +58,7 @@ using a simple variant of Backus-Naur Form. In particular:</p>
     <li>All text in the category definition, other than categories and spaces, is UTF-8
     based representation of a message bytes.
  
-    <li>The symbol ‘•’ designates a zero byte. 
+    <li>The symbol &lsquo;&bull;&rsquo; designates a zero byte. 
 </ul>
 
 <h2><a name='ErrorFormat'>Error Report Format</a></h2>
@@ -67,7 +67,7 @@ using a simple variant of Backus-Naur Form. In particular:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;error report&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;int: error code&gt;</i> • <i>&lt;error description&gt;</i>
+    &rArr; <i>&lt;int: error code&gt;</i> &bull; <i>&lt;error description&gt;</i>
 </font></b></pre>
 
 <p>Error code zero means success. Error description provides a short, localizable,
@@ -75,13 +75,13 @@ human readable explanation of error.</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;error description&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> <i>&lt;string&gt;</i>
-    <font face=Wingdings>Ø</font> { "format" : <i>&lt;string&gt;</i> , "params" : [ <i>&lt;params&gt;</i> ] }
+    &rArr; null
+    &rArr; <i>&lt;string&gt;</i>
+    &rArr; { "format" : <i>&lt;string&gt;</i> , "params" : [ <i>&lt;params&gt;</i> ] }
   
 <i>&lt;params&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;value&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;params&gt;</i> , <i>&lt;value&gt;</i>
+    &rArr; <i>&lt;value&gt;</i>
+    &rArr; <i>&lt;params&gt;</i> , <i>&lt;value&gt;</i>
 </font></b></pre>
 
 <p>For <b><i><font face="Courier New" size=2 color=#333399>&lt;string&gt;</font></i></b>

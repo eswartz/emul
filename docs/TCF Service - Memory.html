@@ -35,15 +35,15 @@ in addition to error report, describes data validity on per byte basis:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;array of error addresses&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ <i>&lt;error address list&gt;</i> ]
+    &rArr; null
+    &rArr; [ <i>&lt;error address list&gt;</i> ]
   
 <i>&lt;error address list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;error address&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;error address list&gt;</i> , <i>&lt;error address&gt;</i>
+    &rArr; <i>&lt;error address&gt;</i>
+    &rArr; <i>&lt;error address list&gt;</i> , <i>&lt;error address&gt;</i>
   
 <i>&lt;error address&gt;</i>
-    <font face=Wingdings>Ø</font> { "addr" : <i>&lt;int: range starting address&gt;</i> , "size" : <i>&lt;int: range length in bytes&gt;</i> , "stat" : <i>&lt;int: status code&gt;</i> , "msg" : <i>&lt;error description&gt;</i> }
+    &rArr; { "addr" : <i>&lt;int: range starting address&gt;</i> , "size" : <i>&lt;int: range length in bytes&gt;</i> , "stat" : <i>&lt;int: status code&gt;</i> , "msg" : <i>&lt;error description&gt;</i> }
 </font></b></pre>
 
 <p>If there is no entry in error addresses array for a data byte, then status of such
@@ -51,10 +51,10 @@ byte is defined by main error report.</p>
 
 <p>Status code is bitwise or of status flags:</p>
 <dl>
-    <dt><code><b>BYTE_VALID        = 0x00</b></code> <dd>no error for this byte
-    <dt><code><b>BYTE_UNKNOWN      = 0x01</b></code> <dd>status is unknown
-    <dt><code><b>BYTE_INVALID      = 0x02</b></code> <dd>byte value in invalid, error message describes the problem
-    <dt><code><b>BYTE_CANNOT_READ  = 0x04</b></code> <dd>cannot read the byte
+    <dt><code><b>BYTE_VALID        = 0x00</b></code> <dd>no error for this byte
+    <dt><code><b>BYTE_UNKNOWN      = 0x01</b></code> <dd>status is unknown
+    <dt><code><b>BYTE_INVALID      = 0x02</b></code> <dd>byte value in invalid, error message describes the problem
+    <dt><code><b>BYTE_CANNOT_READ  = 0x04</b></code> <dd>cannot read the byte
     <dt><code><b>BYTE_CANNOT_WRITE = 0x08</b></code> <dd>cannot write the byte
 </dl>
 
@@ -63,7 +63,7 @@ byte is defined by main error report.</p>
 <h3><a name='CmdGetContext'>Get Context</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Memory • getContext • <i>&lt;string: context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Memory &bull; getContext &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command retrieves context info for given context ID. A context corresponds to an
@@ -90,11 +90,11 @@ that is:</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;context data&gt;</i> &bull;
 
 <i>&lt;context data&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+    &rArr; null
+    &rArr; <i>&lt;object&gt;</i>
 </font></b></pre>
 
 <p>Context data object should, at least, contain member
@@ -120,12 +120,12 @@ Service sends contextChanged event to notify changes in context data.</p>
 <h3><a name='CmdGetChildren'>Get Children</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Memory • getChildren • <i>&lt;string: parent context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Memory &bull; getChildren &bull; <i>&lt;string: parent context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command requests a list of contexts available for memory access commands.</p>
  
-<p>Parent context ID can be null – to retrieve top level of the hierarchy, can be one
+<p>Parent context ID can be null &ndash; to retrieve top level of the hierarchy, can be one
 of context IDs retrieved by previous getChildren commands, or it can be obtained from another service.
 Contexts hierarchy can be simple plain list or it can form a tree. It is up to target agent developers to
 choose layout that is most descriptive for a given target.</p>
@@ -133,25 +133,25 @@ choose layout that is most descriptive for a given target.</p>
 <p>Reply:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of context IDs&gt;</i> •<i></i>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of context IDs&gt;</i> &bull;<i></i>
 
 <i>&lt;array of context IDs&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ ]
-    <font face=Wingdings>Ø</font> [ <i>&lt;context ID list&gt;</i> ]
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;context ID list&gt;</i> ]
   
 <i>&lt;context ID list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;string: context ID&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
+    &rArr; <i>&lt;string: context ID&gt;</i>
+    &rArr; <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
 
 </font></b></pre>
 
 <h3><a name='CmdSetMemory'>Set Memory</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • &lt;token&gt; • Memory • set • 
-    <i>&lt;string: context ID&gt;</i> • <i>&lt;int: address&gt;</i> • <i>&lt;int: word size&gt;</i> •
-    <i>&lt;int: byte count&gt;</i> • <i>&lt;int: mode&gt;</i> • <i>&lt;string: BASE64 encoded byte array&gt;</i> •
+C &bull; &lt;token&gt; &bull; Memory &bull; set &bull; 
+    <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;int: address&gt;</i> &bull; <i>&lt;int: word size&gt;</i> &bull;
+    <i>&lt;int: byte count&gt;</i> &bull; <i>&lt;int: mode&gt;</i> &bull; <i>&lt;string: BASE64 encoded byte array&gt;</i> &bull;
 </font></b></pre>
 
 <p>Writes data bytes at given address in memory, "word size" bytes at a time. Address
@@ -159,15 +159,15 @@ should be aligned by "word size". Context ID must be one returned by getContexts
 Mode is logical OR of any combination of:</p>
  
 <ul type='disc'>
-    <li>0x1 – continue on error (like bus error or page fault)
+    <li>0x1 &ndash; continue on error (like bus error or page fault)
  
-    <li>0x2 – verify data after writing by reading back and compare
+    <li>0x2 &ndash; verify data after writing by reading back and compare
 </ul>
  
 <p>Result message:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of error addresses&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of error addresses&gt;</i> &bull;
 </font></b></pre>
 
 <p>Error report provides integer error code and a short, human readable explanation
@@ -177,9 +177,9 @@ to be written into memory.</p>
 <h3><a name='CmdGetMemory'>Get Memory</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • &lt;token&gt; • Memory • get •
-    <i>&lt;string: context ID&gt;</i> • <i>&lt;int: address&gt;</i> • <i>&lt;int: word size&gt;</i> •
-    <i>&lt;int: byte count&gt;</i> • <i>&lt;int: mode&gt;</i> •
+C &bull; &lt;token&gt; &bull; Memory &bull; get &bull;
+    <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;int: address&gt;</i> &bull; <i>&lt;int: word size&gt;</i> &bull;
+    <i>&lt;int: byte count&gt;</i> &bull; <i>&lt;int: mode&gt;</i> &bull;
 </font></b></pre>
 
 <p>Reads data bytes at given address in memory, "word size" bytes at a time. Address
@@ -187,15 +187,15 @@ should be aligned by "word size". Context ID must be one returned by getContexts
 Mode is logical OR of any combination of:</p>
  
 <ul type='disc'>
-    <li>0x1 – continue on error (like bus error or page fault)
+    <li>0x1 &ndash; continue on error (like bus error or page fault)
  
-    <li>0x2 – verify data after reading by re-reading and compare
+    <li>0x2 &ndash; verify data after reading by re-reading and compare
 </ul>
  
 <p>Result message:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;string: BASE64 encoded byte array&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of error addresses&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;string: BASE64 encoded byte array&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of error addresses&gt;</i> &bull;
 </font></b></pre>
 
 <p>Error report provides integer error code and a short, human readable explanation
@@ -205,9 +205,9 @@ to be retrieved from memory.</p>
 <h3><a name='CmdFillMemory'>Fill Memory</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • &lt;token&gt; • Memory • fill • 
-    <i>&lt;string: context ID&gt;</i> • <i>&lt;int: address&gt;</i> • <i>&lt;int: word size&gt;</i> •
-    &lt;int: byte count&gt; • <i>&lt;int: mode&gt;</i> • <i>&lt;array: array of pattern bytes&gt;</i> •
+C &bull; &lt;token&gt; &bull; Memory &bull; fill &bull; 
+    <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;int: address&gt;</i> &bull; <i>&lt;int: word size&gt;</i> &bull;
+    &lt;int: byte count&gt; &bull; <i>&lt;int: mode&gt;</i> &bull; <i>&lt;array: array of pattern bytes&gt;</i> &bull;
 </font></b></pre>
 
 <p>Writes pattern bytes at given address in memory, "word size" bytes at a time. Address
@@ -216,15 +216,15 @@ pattern is repeated necessary number of times. Context ID must be one returned b
 getContexts. Mode is logical OR of any combination of:</p>
  
 <ul type='disc'>
-    <li>0x1 – continue on error (like bus error or page fault)
+    <li>0x1 &ndash; continue on error (like bus error or page fault)
  
-    <li>0x2 – verify data after writing by reading back and compare
+    <li>0x2 &ndash; verify data after writing by reading back and compare
 </ul>
   
 <p>Result message:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of error addresses&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of error addresses&gt;</i> &bull;
 </font></b></pre>
 
 <p>Error report provides integer error code and a short, human readable explanation
@@ -237,30 +237,30 @@ to be written into memory.</p>
 or changed, and when memory content is altered by "set" or "fill" commands.</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-E • Memory • contextAdded • <i>&lt;array of context data&gt;</i> •
-E • Memory • contextChanged • <i>&lt;array of context data&gt;</i> •
-E • Memory • contextRemoved • <i>&lt;array of context IDs&gt;</i> •
-E • Memory • memoryChanged • <i>&lt;string: context ID&gt;</i> • <i>&lt;array of address ranges&gt;</i> •
+E &bull; Memory &bull; contextAdded &bull; <i>&lt;array of context data&gt;</i> &bull;
+E &bull; Memory &bull; contextChanged &bull; <i>&lt;array of context data&gt;</i> &bull;
+E &bull; Memory &bull; contextRemoved &bull; <i>&lt;array of context IDs&gt;</i> &bull;
+E &bull; Memory &bull; memoryChanged &bull; <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;array of address ranges&gt;</i> &bull;
   
 <i>&lt;array of context data&gt;</i> <font face="Times New Roman" size=3>- see Get Contexts command.</font>
   
 <i>&lt;array of context IDs&gt;</i>
-    <font face=Wingdings>Ø</font> [ <i>&lt;context ID list&gt;</i> ]
+    &rArr; [ <i>&lt;context ID list&gt;</i> ]
   
 <i>&lt;context ID list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;string: context ID&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
+    &rArr; <i>&lt;string: context ID&gt;</i>
+    &rArr; <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
   
 <i>&lt;array of address ranges&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ <i>&lt;address ranges list&gt;</i> ]
+    &rArr; null
+    &rArr; [ <i>&lt;address ranges list&gt;</i> ]
   
 <i>&lt;address ranges list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;address range&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;address ranges list&gt;</i> , <i>&lt;address range&gt;</i>
+    &rArr; <i>&lt;address range&gt;</i>
+    &rArr; <i>&lt;address ranges list&gt;</i> , <i>&lt;address range&gt;</i>
 
 <i>&lt;address range&gt;</i>
-    <font face=Wingdings>Ø</font> { "addr" : <i>&lt;int: range starting address&gt;</i> , "size" : <i>&lt;int: range length in bytes&gt;</i> }
+    &rArr; { "addr" : <i>&lt;int: range starting address&gt;</i> , "size" : <i>&lt;int: range length in bytes&gt;</i> }
 </font></b></pre>
 
 <h2><a name='API'>API</a></h2>
@@ -276,19 +276,19 @@ E • Memory • memoryChanged • <i>&lt;string: context ID&gt;</i> • <i>&lt;array of
     <font color=#3F5FBF>/**
      * Retrieve context info for given context ID.
      *   
-     * <font color=#7F9FBF>@param</font> id – context ID. 
+     * <font color=#7F9FBF>@param</font> id &ndash; context ID. 
      * <font color=#7F9FBF>@param</font> done - callback interface called when operation is completed.
-     */</font>
+     */</font>
     IToken getContext(String id, DoneGetContext done);
 
     <font color=#3F5FBF>/**
      * Client callback interface for getContext().
-     */</font>
+     */</font>
     <font color=#7F0055>interface</font> DoneGetContext {
         <font color=#3F5FBF>/**
          * Called when contexts data retrieval is done.
-         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
-         * <font color=#7F9FBF>@param</font> context – context data.
+         * <font color=#7F9FBF>@param</font> error &ndash; error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context &ndash; context data.
          */</font>
         <font color=#7F0055>void</font> doneGetContext(IToken token, Exception error, MemoryContext context);
     }
@@ -303,7 +303,7 @@ E • Memory • memoryChanged • <i>&lt;string: context ID&gt;</i> • <i>&lt;array of
      * with same IDs, however, each service accesses its own subset of context's
      * attributes and functionality, which is relevant to that service.
      *  
-     * <font color=#7F9FBF>@param</font> parent_context_id – parent context ID. Can be null –
+     * <font color=#7F9FBF>@param</font> parent_context_id &ndash; parent context ID. Can be null &ndash;
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
      * by previous getContexts commands.
      * <font color=#7F9FBF>@param</font> done - callback interface called when operation is completed.
@@ -316,139 +316,139 @@ E • Memory • memoryChanged • <i>&lt;string: context ID&gt;</i> • <i>&lt;array of
     <font color=#7F0055>interface</font> DoneGetChildren {
         <font color=#3F5FBF>/**
          * Called when contexts data retrieval is done.
-         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
-         * <font color=#7F9FBF>@param</font> contexts – array of available context IDs.
+         * <font color=#7F9FBF>@param</font> error &ndash; error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> contexts &ndash; array of available context IDs.
          */</font>
         <font color=#7F0055>void</font> doneGetChildren(IToken token, Exception error, String[] context_ids);
     }
 
-    <font color=#3F5FBF>/**
-     * Memory access mode:
-     * Carry on when some of the memory cannot be accessed and
-     * return MemoryError at the end if any of the bytes
-     * were not processed correctly.
-     */</font>
-    <font color=#7F0055>final static int</font> MODE_CONTINUEONERROR = 0x1;
+    <font color=#3F5FBF>/**
+     * Memory access mode:
+     * Carry on when some of the memory cannot be accessed and
+     * return MemoryError at the end if any of the bytes
+     * were not processed correctly.
+     */</font>
+    <font color=#7F0055>final static int</font> MODE_CONTINUEONERROR = 0x1;
  
-    <font color=#3F5FBF>/**
-     * Memory access mode:
-     * Verify result of memory operations (by reading and comparing).
-     */</font>
-    <font color=#7F0055>final static int</font> MODE_VERIFY = 0x2;
+    <font color=#3F5FBF>/**
+     * Memory access mode:
+     * Verify result of memory operations (by reading and comparing).
+     */</font>
+    <font color=#7F0055>final static int</font> MODE_VERIFY = 0x2;
  
-    <font color=#7F0055>interface</font> MemoryContext {
+    <font color=#7F0055>interface</font> MemoryContext {
  
-        <font color=#3F5FBF>/** 
-         * Retrieve context ID.
-         * Same as getProperties().get("id")
-         */</font>
-        String getID();
+        <font color=#3F5FBF>/** 
+         * Retrieve context ID.
+         * Same as getProperties().get("id")
+         */</font>
+        String getID();
  
-        <font color=#3F5FBF>/** 
-         * Return true if the context has children.
-         * Same as getProperties().get("has_children")
-         * Children can be retrieved by getContexts call.
-         */</font>
-        <font color=#7F0055>boolean</font> hasChildren();
+        <font color=#3F5FBF>/** 
+         * Return true if the context has children.
+         * Same as getProperties().get("has_children")
+         * Children can be retrieved by getContexts call.
+         */</font>
+        <font color=#7F0055>boolean</font> hasChildren();
  
-        <font color=#3F5FBF>/** 
-         * Retrieve context properties.
-         */</font>
-        Map&lt;String,Object&gt; getProperties();
+        <font color=#3F5FBF>/** 
+         * Retrieve context properties.
+         */</font>
+        Map&lt;String,Object&gt; getProperties();
  
-        <font color=#3F5FBF>/**
-         * Set target memory.
-         * If 'word_size' is 0 it means client does not care about word size.
-         */</font>
-        <font color=#7F0055>void</font> set(long addr, <font color=#7F0055>int</font> word_size, byte[] buf,
-                         <font color=#7F0055>int</font> offs, <font color=#7F0055>int</font> size, <font color=#7F0055>int</font> mode, DoneMemory done);
+        <font color=#3F5FBF>/**
+         * Set target memory.
+         * If 'word_size' is 0 it means client does not care about word size.
+         */</font>
+        <font color=#7F0055>void</font> set(long addr, <font color=#7F0055>int</font> word_size, byte[] buf,
+                         <font color=#7F0055>int</font> offs, <font color=#7F0055>int</font> size, <font color=#7F0055>int</font> mode, DoneMemory done);
  
-        <font color=#3F5FBF>/**
-         * Read target memory.
-         */</font>
-        <font color=#7F0055>void</font> get(long addr, <font color=#7F0055>int</font> word_size, byte[] buf,
-                         <font color=#7F0055>int</font> offs, <font color=#7F0055>int</font> size, <font color=#7F0055>int</font> mode, DoneMemory done);
+        <font color=#3F5FBF>/**
+         * Read target memory.
+         */</font>
+        <font color=#7F0055>void</font> get(long addr, <font color=#7F0055>int</font> word_size, byte[] buf,
+                         <font color=#7F0055>int</font> offs, <font color=#7F0055>int</font> size, <font color=#7F0055>int</font> mode, DoneMemory done);
  
-        <font color=#3F5FBF>/**
-         * Fill target memory with given pattern.
-         * 'size' is number of bytes to fill.
-         */</font>
-        <font color=#7F0055>void</font> fill(long addr, <font color=#7F0055>int</font> word_size, byte[] value,
-                          <font color=#7F0055>int</font> size, <font color=#7F0055>int</font> mode, DoneMemory done);
-    
-        <font color=#3F5FBF>/**
-         * Client callback interface for set(), get() and fill().
-         */</font>
-        <font color=#7F0055>interface</font> DoneMemory {
-            <font color=#7F0055>void</font> doneMemory(MemoryError error);
-        }
-    }
+        <font color=#3F5FBF>/**
+         * Fill target memory with given pattern.
+         * 'size' is number of bytes to fill.
+         */</font>
+        <font color=#7F0055>void</font> fill(long addr, <font color=#7F0055>int</font> word_size, byte[] value,
+                          <font color=#7F0055>int</font> size, <font color=#7F0055>int</font> mode, DoneMemory done);
+    
+        <font color=#3F5FBF>/**
+         * Client callback interface for set(), get() and fill().
+         */</font>
+        <font color=#7F0055>interface</font> DoneMemory {
+            <font color=#7F0055>void</font> doneMemory(MemoryError error);
+        }
+    }
  
-    <font color=#7F0055>class</font> MemoryError <font color=#7F0055>extends</font> Exception {
-    }
+    <font color=#7F0055>class</font> MemoryError <font color=#7F0055>extends</font> Exception {
+    }
   
-    <font color=#3F5FBF>/**
-     * ErrorOffset interface can be implemented by MemoryError object,
-     * which is returned by get, set and fill commands.
-     *
-     * get/set/fill () returns this exception when reading failed
-     * for some but not all bytes, and MODE_CONTINUEONERROR
-     * has been set in mode. (For example, when only part of the request
-     * translates to valid memory addresses.)
-     * Exception.getMessage can be used for generalized message of the
-     * possible reasons of partial memory operation.
-     */</font>
-    <font color=#7F0055>interface</font> ErrorOffset {
-        
-        // Error may have per byte information
-        <font color=#7F0055>final static int</font> 
-            BYTE_VALID        = 0x00,
-            BYTE_UNKNOWN      = 0x01, // e.g. out of range
-            BYTE_INVALID      = 0x02,
-            BYTE_CANNOT_READ  = 0x04,
-            BYTE_CANNOT_WRITE = 0x08;
+    <font color=#3F5FBF>/**
+     * ErrorOffset interface can be implemented by MemoryError object,
+     * which is returned by get, set and fill commands.
+     *
+     * get/set/fill () returns this exception when reading failed
+     * for some but not all bytes, and MODE_CONTINUEONERROR
+     * has been set in mode. (For example, when only part of the request
+     * translates to valid memory addresses.)
+     * Exception.getMessage can be used for generalized message of the
+     * possible reasons of partial memory operation.
+     */</font>
+    <font color=#7F0055>interface</font> ErrorOffset {
+        
+        // Error may have per byte information
+        <font color=#7F0055>final static int</font> 
+            BYTE_VALID        = 0x00,
+            BYTE_UNKNOWN      = 0x01, // e.g. out of range
+            BYTE_INVALID      = 0x02,
+            BYTE_CANNOT_READ  = 0x04,
+            BYTE_CANNOT_WRITE = 0x08;
  
-        <font color=#7F0055>int</font> getStatus(<font color=#7F0055>int</font> offset);
+        <font color=#7F0055>int</font> getStatus(<font color=#7F0055>int</font> offset);
  
-        <font color=#3F5FBF>/**
-         * Returns the detail message string about the
-         * byte associated with specified location.
-         * <font color=#7F9FBF>@return</font>  the detail error message string.
-         */</font>
-        String getMessage(<font color=#7F0055>int</font> offset);
-        
-    }
+        <font color=#3F5FBF>/**
+         * Returns the detail message string about the
+         * byte associated with specified location.
+         * <font color=#7F9FBF>@return</font>  the detail error message string.
+         */</font>
+        String getMessage(<font color=#7F0055>int</font> offset);
+        
+    }
  
-    <font color=#7F0055>void</font> addListener(MemoryListener listener);
+    <font color=#7F0055>void</font> addListener(MemoryListener listener);
  
-    <font color=#7F0055>interface</font> MemoryListener {
+    <font color=#7F0055>interface</font> MemoryListener {
  
-        <font color=#3F5FBF>/**
-         * Called when a new memory access context(s) is created.
-         */</font>
-        <font color=#7F0055>void</font> contextAdded(Context[] contexts);
+        <font color=#3F5FBF>/**
+         * Called when a new memory access context(s) is created.
+         */</font>
+        <font color=#7F0055>void</font> contextAdded(Context[] contexts);
  
-        <font color=#3F5FBF>/**
-         * Called when a new memory access context(s) properties changed.
-         */</font>
-        <font color=#7F0055>void</font> contextChanged(Context[] contexts);
+        <font color=#3F5FBF>/**
+         * Called when a new memory access context(s) properties changed.
+         */</font>
+        <font color=#7F0055>void</font> contextChanged(Context[] contexts);
  
-        <font color=#3F5FBF>/**
-         * Called when memory access context(s) is removed.
-         */</font>
-        <font color=#7F0055>void</font> contextRemoved(String[] context_ids);
+        <font color=#3F5FBF>/**
+         * Called when memory access context(s) is removed.
+         */</font>
+        <font color=#7F0055>void</font> contextRemoved(String[] context_ids);
  
-        <font color=#3F5FBF>/**
-         * Called when target memory content was changed and clients 
-         * need to update themselves. Clients, at least, should invalidate
-         * corresponding cached memory data.
-         * Not every change is notified - it is not possible,
-         * only those, which are not caused by normal execution of the debuggee.
-         * ‘addr’ and ‘size’ can be null if unknown.
-         */</font>
-        <font color=#7F0055>void</font> memoryChanged(String context_id,
-               long[] addr, long[] size);
-    }
+        <font color=#3F5FBF>/**
+         * Called when target memory content was changed and clients 
+         * need to update themselves. Clients, at least, should invalidate
+         * corresponding cached memory data.
+         * Not every change is notified - it is not possible,
+         * only those, which are not caused by normal execution of the debuggee.
+         * &lsquo;addr&rsquo; and &lsquo;size&rsquo; can be null if unknown.
+         */</font>
+        <font color=#7F0055>void</font> memoryChanged(String context_id,
+               long[] addr, long[] size);
+    }
 }
 </pre>
 

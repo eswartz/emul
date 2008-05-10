@@ -42,7 +42,7 @@ see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
 <h3><a name='CmdGetContext'>Get Context</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Processes • getContext • <i>&lt;string: context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getContext &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command retrieves context info for given context ID.
@@ -57,11 +57,11 @@ useful information.
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;context data&gt;</i> &bull;
 
 <i>&lt;context data&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+    &rArr; null
+    &rArr; <i>&lt;object&gt;</i>
 </font></b></pre>
 
 <p>Context data object should, at least, contain member
@@ -89,12 +89,12 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;
 <h3><a name='CmdGetChildren'>Get Children</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Processes • getChildren • <i>&lt;string: parent context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getChildren &bull; <i>&lt;string: parent context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command requests a list of contexts available for process control commands.</p>
  
-<p>Parent context ID can be null – to retrieve top level of the hierarchy, can be one
+<p>Parent context ID can be null &ndash; to retrieve top level of the hierarchy, can be one
 of context IDs retrieved by previous getChildren commands, or it can be obtained from another service.
 Contexts hierarchy can be simple plain list or it can form a tree. It is up to target agent developers to
 choose layout that is most descriptive for a given target.</p>
@@ -102,22 +102,22 @@ choose layout that is most descriptive for a given target.</p>
 <p>Reply:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of context IDs&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of context IDs&gt;</i> &bull;
 
 <i>&lt;array of context IDs&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ ]
-    <font face=Wingdings>Ø</font> [ <i>&lt;context ID list&gt;</i> ]
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;context ID list&gt;</i> ]
   
 <i>&lt;context ID list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;string: context ID&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
+    &rArr; <i>&lt;string: context ID&gt;</i>
+    &rArr; <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
 </font></b></pre>
 
 <h3><a name='CmdAttach'>Attach</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Processes • attach • <i>&lt;string: context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; attach &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command attaches debugger to a process.
@@ -126,13 +126,13 @@ Services like Run Control, Memory, Breakpoints work only with attached processes
 <p>Reply:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdDetach'>Detach</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Processes • detach • <i>&lt;string: context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; detach &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command detaches debugger from a process.</p>
@@ -140,13 +140,13 @@ C • <i>&lt;token&gt;</i> • Processes • detach • <i>&lt;string: context ID&gt;</i
 <p>Reply:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdTerminate'>Terminate</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Processes • terminate • <i>&lt;string: context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; terminate &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command terminates a process.</p>
@@ -154,13 +154,13 @@ C • <i>&lt;token&gt;</i> • Processes • terminate • <i>&lt;string: context ID&gt;
 <p>Reply:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdSignal'>Signal</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Processes • signal • <i>&lt;string: context ID&gt;</i> • <i>&lt;int: signal&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; signal &bull; <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;int: signal&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command sends a signal to a process.</p>
@@ -168,23 +168,23 @@ C • <i>&lt;token&gt;</i> • Processes • signal • <i>&lt;string: context ID&gt;</i
 <p>Reply:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdStart'>Start</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Processes • start • <i>&lt;string: working directory&gt;</i> • <i>&lt;string: program image file&gt;</i> •
-    <i>&lt;string array: command line&gt;</i> • <i>&lt;string array: environment variables&gt;</i> • <i>&lt;boolean: attach&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; start &bull; <i>&lt;string: working directory&gt;</i> &bull; <i>&lt;string: program image file&gt;</i> &bull;
+    <i>&lt;string array: command line&gt;</i> &bull; <i>&lt;string array: environment variables&gt;</i> &bull; <i>&lt;boolean: attach&gt;</i> &bull;
 
 <i>&lt;string array&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ ]
-    <font face=Wingdings>Ø</font> [ <i>&lt;string list&gt;</i> ]
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;string list&gt;</i> ]
   
 <i>&lt;string list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;string&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;string list&gt;</i> , <i>&lt;string&gt;</i>
+    &rArr; <i>&lt;string&gt;</i>
+    &rArr; <i>&lt;string list&gt;</i> , <i>&lt;string&gt;</i>
 </font></b></pre>
 
 <p>The command starts a new process on remote machine.
@@ -198,7 +198,7 @@ they will be added to default process environment.
 <p>Reply:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;context data&gt;</i> &bull;
 </font></b></pre>
 
 <p>On success the command returns context data for created process. Context data has same format as Get Context result.</p>
@@ -224,7 +224,7 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;
      * If the ID is not a process ID, 'IProcesses.getContext' may not return any
      * useful information
      *    
-     * <font color=#7F9FBF><font color=#7F9FBF>@param</font></font> id – context ID. 
+     * <font color=#7F9FBF><font color=#7F9FBF>@param</font></font> id &ndash; context ID. 
      * <font color=#7F9FBF><font color=#7F9FBF>@param</font></font> done - call back interface called when operation is completed.
      */</font>
     IToken getContext(String id, DoneGetContext done);
@@ -235,8 +235,8 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;
     <font color=#7F0055>interface</font> DoneGetContext {
         <font color=#3F5FBF>/**
          * Called when contexts data retrieval is done.
-         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
-         * <font color=#7F9FBF>@param</font> context – context data.
+         * <font color=#7F9FBF>@param</font> error &ndash; error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context &ndash; context data.
          */</font>
         <font color=#7F0055>void</font> doneGetContext(IToken token, Exception error, ProcessContext context);
     }
@@ -244,7 +244,7 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;
     <font color=#3F5FBF>/**
      * Retrieve children of given context.
      *   
-     * <font color=#7F9FBF>@param</font> parent_context_id – parent context ID. Can be null –
+     * <font color=#7F9FBF>@param</font> parent_context_id &ndash; parent context ID. Can be null &ndash;
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
      * by previous getContext or getChildren commands. 
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
@@ -257,8 +257,8 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;
     <font color=#7F0055>interface</font> DoneGetChildren {
         <font color=#3F5FBF>/**
          * Called when contexts data retrieval is done.
-         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
-         * <font color=#7F9FBF>@param</font> context_ids – array of available context IDs.
+         * <font color=#7F9FBF>@param</font> error &ndash; error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context_ids &ndash; array of available context IDs.
          */</font>
         <font color=#7F0055>void</font> doneGetChildren(IToken token, Exception error, String[] context_ids);
     }
@@ -286,20 +286,20 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;
         
         <font color=#3F5FBF>/** 
          * Get context ID.
-         * Same as getProperties().get(“ID”)
+         * Same as getProperties().get(&ldquo;ID&rdquo;)
          */</font>
         String getID();
 
         <font color=#3F5FBF>/**
          * Get parent context ID.
-         * Same as getProperties().get(“ParentID”)
+         * Same as getProperties().get(&ldquo;ParentID&rdquo;)
          */</font>
         String getParentID();
 
         <font color=#3F5FBF>/**
          * Get process name.
          * Client UI can show this name to a user.
-         * Same as getProperties().get(“Name”)
+         * Same as getProperties().get(&ldquo;Name&rdquo;)
          */</font>
         String getName();
 

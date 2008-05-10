@@ -38,7 +38,7 @@ see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
 <h3><a name='CmdGetContext'>Get Context</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • SysMonitor • getContext • <i>&lt;string: context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; SysMonitor &bull; getContext &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command retrieves context info for given context ID.
@@ -49,11 +49,11 @@ command with a context that was obtained from another service.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;context data&gt;</i> &bull;
 
 <i>&lt;context data&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+    &rArr; null
+    &rArr; <i>&lt;object&gt;</i>
 </font></b></pre>
 
 <p>Context data object should, at least, contain member
@@ -225,12 +225,12 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;
 <h3><a name='CmdGetChildren'>Get Children</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • SysMonitor • getChildren • <i>&lt;string: parent context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; SysMonitor &bull; getChildren &bull; <i>&lt;string: parent context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command requests a list of contexts available for System Monitor commands.</p>
  
-<p>Parent context ID can be null – to retrieve top level of the hierarchy, can be one
+<p>Parent context ID can be null &ndash; to retrieve top level of the hierarchy, can be one
 of context IDs retrieved by previous getChildren commands, or it can be obtained from another service.
 Contexts hierarchy can be simple plain list or it can form a tree. It is up to target agent developers to
 choose layout that is most descriptive for a given target.</p>
@@ -238,22 +238,22 @@ choose layout that is most descriptive for a given target.</p>
 <p>Reply:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of context IDs&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of context IDs&gt;</i> &bull;
 
 <i>&lt;array of context IDs&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ ]
-    <font face=Wingdings>Ø</font> [ <i>&lt;context ID list&gt;</i> ]
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;context ID list&gt;</i> ]
   
 <i>&lt;context ID list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;string: context ID&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
+    &rArr; <i>&lt;string: context ID&gt;</i>
+    &rArr; <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
 </font></b></pre>
 
 <h3><a name='CmdGetCommandLine'>Get Command Line</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • SysMonitor • getCommandLine • <i>&lt;string: context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; SysMonitor &bull; getCommandLine &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command requests a list of progess command line arguments.</p>
@@ -261,22 +261,22 @@ C • <i>&lt;token&gt;</i> • SysMonitor • getCommandLine • <i>&lt;string: context 
 <p>Reply:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of string&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of string&gt;</i> &bull;
 
 <i>&lt;array of string&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ ]
-    <font face=Wingdings>Ø</font> [ <i>&lt;string list&gt;</i> ]
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;string list&gt;</i> ]
   
 <i>&lt;string list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;string&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;string list&gt;</i> , <i>&lt;string&gt;</i>
+    &rArr; <i>&lt;string&gt;</i>
+    &rArr; <i>&lt;string list&gt;</i> , <i>&lt;string&gt;</i>
 </font></b></pre>
 
 <h3><a name='CmdGetEnvironment'>Get Environment</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • SysMonitor • getEnvironment • <i>&lt;string: context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; SysMonitor &bull; getEnvironment &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command requests a list of progess environment variables.</p>
@@ -284,7 +284,7 @@ C • <i>&lt;token&gt;</i> • SysMonitor • getEnvironment • <i>&lt;string: context 
 <p>Reply:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of string&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of string&gt;</i> &bull;
 </font></b></pre>
 
 <h2><a name='Events'>Events</a></h2>
@@ -301,7 +301,7 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of string&
     <font color=#3F5FBF>/**
      * Retrieve context info for given context ID.
      *   
-     * <font color=#7F9FBF>@param</font> id – context ID. 
+     * <font color=#7F9FBF>@param</font> id &ndash; context ID. 
      * <font color=#7F9FBF>@param</font> done - callback interface called when operation is completed.
      */</font>
     IToken getContext(String id, DoneGetContext done);
@@ -312,8 +312,8 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of string&
     <font color=#7F0055>interface</font> DoneGetContext {
         <font color=#3F5FBF>/**
          * Called when contexts data retrieval is done.
-         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
-         * <font color=#7F9FBF>@param</font> context – context data.
+         * <font color=#7F9FBF>@param</font> error &ndash; error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context &ndash; context data.
          */</font>
         <font color=#7F0055>void</font> doneGetContext(IToken token, Exception error, SysMonitorContext context);
     }
@@ -321,7 +321,7 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of string&
     <font color=#3F5FBF>/**
      * Retrieve children of given context.
      *   
-     * <font color=#7F9FBF>@param</font> parent_context_id – parent context ID. Can be null –
+     * <font color=#7F9FBF>@param</font> parent_context_id &ndash; parent context ID. Can be null &ndash;
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
      * by previous getContext or getChildren commands. 
      * <font color=#7F9FBF>@param</font> done - callback interface called when operation is completed.
@@ -334,8 +334,8 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of string&
     <font color=#7F0055>interface</font> DoneGetChildren {
         <font color=#3F5FBF>/**
          * Called when contexts data retrieval is done.
-         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
-         * <font color=#7F9FBF>@param</font> context_ids – array of available context IDs.
+         * <font color=#7F9FBF>@param</font> error &ndash; error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context_ids &ndash; array of available context IDs.
          */</font>
         <font color=#7F0055>void</font> doneGetChildren(IToken token, Exception error, String[] context_ids);
     }
@@ -517,109 +517,109 @@ R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of string&
         
         <font color=#3F5FBF>/** 
          * Get context ID.
-         * Same as getProperties().get(“ID”)
+         * Same as getProperties().get(&ldquo;ID&rdquo;)
          */</font>
         String getID();
 
         <font color=#3F5FBF>/** 
          * Get parent context ID.
-         * Same as getProperties().get(“ParentID”)
+         * Same as getProperties().get(&ldquo;ParentID&rdquo;)
          */</font>
         String getParentID();
 
         <font color=#3F5FBF>/** 
          * Get process group ID.
-         * Same as getProperties().get(“PGRP”)
+         * Same as getProperties().get(&ldquo;PGRP&rdquo;)
          */</font>
         <font color=#7F0055>long</font> getPGRP();
 
         <font color=#3F5FBF>/** 
          * Get process ID.
-         * Same as getProperties().get(“PID”)
+         * Same as getProperties().get(&ldquo;PID&rdquo;)
          */</font>
         <font color=#7F0055>long</font> getPID();
 
         <font color=#3F5FBF>/** 
          * Get process parent ID.
-         * Same as getProperties().get(“PPID”)
+         * Same as getProperties().get(&ldquo;PPID&rdquo;)
          */</font>
         <font color=#7F0055>long</font> getPPID();
 
         <font color=#3F5FBF>/** 
          * Get process TTY group ID.
-         * Same as getProperties().get(“TGID”)
+         * Same as getProperties().get(&ldquo;TGID&rdquo;)
          */</font>
         <font color=#7F0055>long</font> getTGID();
 
         <font color=#3F5FBF>/** 
          * Get tracer process ID.
-         * Same as getProperties().get(“TracerPID”)
+         * Same as getProperties().get(&ldquo;TracerPID&rdquo;)
          */</font>
         <font color=#7F0055>long</font> getTracerPID();
 
         <font color=#3F5FBF>/** 
          * Get process owner user ID.
-         * Same as getProperties().get(“UID”)
+         * Same as getProperties().get(&ldquo;UID&rdquo;)
          */</font>
         <font color=#7F0055>long</font> getUID();
 
         <font color=#3F5FBF>/** 
          * Get process owner user name.
-         * Same as getProperties().get(“UserName”)
+         * Same as getProperties().get(&ldquo;UserName&rdquo;)
          */</font>
         String getUserName();
 
         <font color=#3F5FBF>/** 
          * Get process owner user group ID.
-         * Same as getProperties().get(“UGID”)
+         * Same as getProperties().get(&ldquo;UGID&rdquo;)
          */</font>
         <font color=#7F0055>long</font> getUGID();
 
         <font color=#3F5FBF>/** 
          * Get process owner user group name.
-         * Same as getProperties().get(“GroupName”)
+         * Same as getProperties().get(&ldquo;GroupName&rdquo;)
          */</font>
         String getGroupName();
         
         <font color=#3F5FBF>/** 
          * Get process state.
-         * Same as getProperties().get(“State”)
+         * Same as getProperties().get(&ldquo;State&rdquo;)
          */</font>
         String getState();
 
         <font color=#3F5FBF>/** 
          * Get process virtual memory size in bytes.
-         * Same as getProperties().get(“VSize”)
+         * Same as getProperties().get(&ldquo;VSize&rdquo;)
          */</font>
         <font color=#7F0055>long</font> getVSize();
 
         <font color=#3F5FBF>/** 
          * Get process virtual memory page size in bytes.
-         * Same as getProperties().get(“PSize”)
+         * Same as getProperties().get(&ldquo;PSize&rdquo;)
          */</font>
         <font color=#7F0055>long</font> getPSize();
 
         <font color=#3F5FBF>/** 
          * Get number of memory pages in process resident set.
-         * Same as getProperties().get(“RSS”)
+         * Same as getProperties().get(&ldquo;RSS&rdquo;)
          */</font>
         <font color=#7F0055>long</font> getRSS();
 
         <font color=#3F5FBF>/** 
          * Get context executable file.
-         * Same as getProperties().get(“File”)
+         * Same as getProperties().get(&ldquo;File&rdquo;)
          */</font>
         String getFile();
 
         <font color=#3F5FBF>/** 
          * Get context current file system root.
-         * Same as getProperties().get(“Root”)
+         * Same as getProperties().get(&ldquo;Root&rdquo;)
          */</font>
         String getRoot();
 
         <font color=#3F5FBF>/** 
          * Get context current working directory.
-         * Same as getProperties().get(“CWD”)
+         * Same as getProperties().get(&ldquo;CWD&rdquo;)
          */</font>
         String getCurrentWorkingDirectory();
 

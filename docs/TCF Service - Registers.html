@@ -43,7 +43,7 @@ multiple locations. This allows:
 <h3><a name='CmdGetContext'>Get Context</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Registers • getContext • <i>&lt;string: context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Registers &bull; getContext &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command retrieves context info for given context ID. A context corresponds to an
@@ -59,11 +59,11 @@ Target agent should define contexts hierarchy that is:</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;context data&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;context data&gt;</i> &bull;
 
 <i>&lt;context data&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+    &rArr; null
+    &rArr; <i>&lt;object&gt;</i>
 </font></b></pre>
 
 <p>Context data object should, at least, contain member
@@ -135,7 +135,7 @@ Service sends contextChanged event to notify changes in context data.</p>
 <h3><a name='CmdGetChildren'>Get Children</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Registers • getChildren • <i>&lt;string: parent context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Registers &bull; getChildren &bull; <i>&lt;string: parent context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command requests a list of contexts available for registers access commands.</p>
@@ -148,23 +148,23 @@ It is up to target agent developers to choose layout that is most descriptive fo
 <p>Reply:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of context IDs&gt;</i> •<i></i>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of context IDs&gt;</i> &bull;<i></i>
 
 <i>&lt;array of context IDs&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ ]
-    <font face=Wingdings>Ø</font> [ <i>&lt;context ID list&gt;</i> ]
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;context ID list&gt;</i> ]
   
 <i>&lt;context ID list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;string: context ID&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
+    &rArr; <i>&lt;string: context ID&gt;</i>
+    &rArr; <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
 
 </font></b></pre>
 
 <h3><a name='CmdSetRegister'>Set Register</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • &lt;token&gt; • Registers • set • <i>&lt;string: context ID&gt;</i> • <i>&lt;string: value&gt;</i> •
+C &bull; &lt;token&gt; &bull; Registers &bull; set &bull; <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;string: value&gt;</i> &bull;
 </font></b></pre>
 
 <p>Writes value into given register context. Context ID must be one returned by getContexts.
@@ -173,7 +173,7 @@ Value is BASE64 encoded byte array of binary data. Array size should match the s
 <p>Result message:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <p>Error report provides integer error code and a short, human readable explanation
@@ -182,7 +182,7 @@ of error.</p>
 <h3><a name='CmdGetRegister'>Get Register</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • &lt;token&gt; • Registers • get • <i>&lt;string: context ID&gt;</i> •
+C &bull; &lt;token&gt; &bull; Registers &bull; get &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>Reads register value from given register context. Context ID must be one returned by getContexts.
@@ -191,7 +191,7 @@ C • &lt;token&gt; • Registers • get • <i>&lt;string: context ID&gt;</i> •
 <p>Result message:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;string: value&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;string: value&gt;</i> &bull;
 </font></b></pre>
 
 <p>Error report provides integer error code and a short, human readable explanation
@@ -200,17 +200,17 @@ of error. Value is BASE64 encoded byte array of binary data. Array size should m
 <h3><a name='CmdSetMultiple'>Set Multiple Registers</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • &lt;token&gt; • Registers • setm • <i>&lt;array of locations&gt;</i> • <i>&lt;string: value&gt;</i> •
+C &bull; &lt;token&gt; &bull; Registers &bull; setm &bull; <i>&lt;array of locations&gt;</i> &bull; <i>&lt;string: value&gt;</i> &bull;
 
 <i>&lt;array of locations&gt;</i>
-    <font face=Wingdings>Ø</font> [ <i>&lt;location list&gt;</i> ]
+    &rArr; [ <i>&lt;location list&gt;</i> ]
 
 <i>&lt;location list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;location&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;location list&gt;</i> , <i>&lt;location&gt;</i>
+    &rArr; <i>&lt;location&gt;</i>
+    &rArr; <i>&lt;location list&gt;</i> , <i>&lt;location&gt;</i>
   
 <i>&lt;location&gt;</i>
-    <font face=Wingdings>Ø</font> [ <i>&lt;string: register context ID&gt;</i> , <i>&lt;int: offset in bytes&gt;</i> , <i>&lt;int: size in bytes&gt;</i> ]
+    &rArr; [ <i>&lt;string: register context ID&gt;</i> , <i>&lt;int: offset in bytes&gt;</i> , <i>&lt;int: size in bytes&gt;</i> ]
 </font></b></pre>
 
 <p>Writes value into given list of locations in registers. Each location is represented by 3-element array that consists of
@@ -220,7 +220,7 @@ Value is BASE64 encoded byte array of binary data. Byte array size should match 
 <p>Result message:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <p>Error report provides integer error code and a short, human readable explanation
@@ -229,17 +229,17 @@ of error.</p>
 <h3><a name='CmdGetMultiple'>Get Multiple Registers</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • &lt;token&gt; • Registers • getm • <i>&lt;array of locations&gt;</i> •
+C &bull; &lt;token&gt; &bull; Registers &bull; getm &bull; <i>&lt;array of locations&gt;</i> &bull;
 
 <i>&lt;array of locations&gt;</i>
-    <font face=Wingdings>Ø</font> [ <i>&lt;location list&gt;</i> ]
+    &rArr; [ <i>&lt;location list&gt;</i> ]
 
 <i>&lt;location list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;location&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;location list&gt;</i> , <i>&lt;location&gt;</i>
+    &rArr; <i>&lt;location&gt;</i>
+    &rArr; <i>&lt;location list&gt;</i> , <i>&lt;location&gt;</i>
   
 <i>&lt;location&gt;</i>
-    <font face=Wingdings>Ø</font> [ <i>&lt;string: register context ID&gt;</i> , <i>&lt;int: offset in bytes&gt;</i> , <i>&lt;int: size in bytes&gt;</i> ]
+    &rArr; [ <i>&lt;string: register context ID&gt;</i> , <i>&lt;int: offset in bytes&gt;</i> , <i>&lt;int: size in bytes&gt;</i> ]
 </font></b></pre>
 
 <p>Reads register values from given list of locations in registers. Each location is represented by 3-element array that consists of
@@ -249,7 +249,7 @@ context ID, offset in the context in bytes and value size in bytes.
 <p>Result message:</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;string: value&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;string: value&gt;</i> &bull;
 </font></b></pre>
 
 <p>Error report provides integer error code and a short, human readable explanation
@@ -261,8 +261,8 @@ of error. Value is BASE64 encoded byte array of binary data. Byte array size sho
 a register content is altered by "set" commands.</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-E • Registers • contextChanged •
-E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
+E &bull; Registers &bull; contextChanged &bull;
+E &bull; Registers &bull; registerChanged &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <h2><a name='API'>API</a></h2>
@@ -301,7 +301,7 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
     <font color=#3F5FBF>/**
      * Retrieve context info for given context ID.
      *   
-     * <font color=#7F9FBF>@param</font> id – context ID. 
+     * <font color=#7F9FBF>@param</font> id &ndash; context ID. 
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
      */</font>
     IToken getContext(String id, DoneGetContext done);
@@ -312,8 +312,8 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
     <font color=#7F0055>interface</font> DoneGetContext {
         <font color=#3F5FBF>/**
          * Called when contexts data retrieval is done.
-         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
-         * <font color=#7F9FBF>@param</font> context – context data.
+         * <font color=#7F9FBF>@param</font> error &ndash; error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context &ndash; context data.
          */</font>
         <font color=#7F0055>void</font> doneGetContext(IToken token, Exception error, RegistersContext context);
     }
@@ -328,7 +328,7 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
      * with same IDs, however, each service accesses its own subset of context's
      * attributes and functionality, which is relevant to that service.
      *  
-     * <font color=#7F9FBF>@param</font> parent_context_id – parent context ID. Can be null –
+     * <font color=#7F9FBF>@param</font> parent_context_id &ndash; parent context ID. Can be null &ndash;
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
      * by previous getChildren commands.
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
@@ -341,8 +341,8 @@ E • Registers • registerChanged • <i>&lt;string: context ID&gt;</i> •
     <font color=#7F0055>interface</font> DoneGetChildren {
         <font color=#3F5FBF>/**
          * Called when contexts data retrieval is done.
-         * <font color=#7F9FBF>@param</font> error – error description if operation failed, null if succeeded.
-         * <font color=#7F9FBF>@param</font> context_ids – array of available context IDs.
+         * <font color=#7F9FBF>@param</font> error &ndash; error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context_ids &ndash; array of available context IDs.
          */</font>
         <font color=#7F0055>void</font> doneGetChildren(IToken token, Exception error, String[] context_ids);
     }

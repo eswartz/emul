@@ -135,7 +135,7 @@ using a slash ('/') as the separator, and that will work as expected.</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;file attributes&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+    &rArr; <i>&lt;object&gt;</i>
 </font></b></pre>
 
 <p>All attributes are optional.
@@ -212,7 +212,7 @@ defined by future versions of this protocol):</p>
 <h3><a name='CmdOpen'>open</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • open • <i>&lt;string: file name&gt;</i> • <i>&lt;int: mode&gt;</i> • <i>&lt;file attributes&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; open &bull; <i>&lt;string: file name&gt;</i> &bull; <i>&lt;int: mode&gt;</i> &bull; <i>&lt;file attributes&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command opens or creates a file on a remote system. If mode contains O_CREAT then new file is created, otherwise exsting
@@ -222,11 +222,11 @@ the command parameters, a default value is used.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;file handle&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;file handle&gt;</i> &bull;
 
 <i>&lt;file handle&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> <i>&lt;string&gt;</i>
+    &rArr; null
+    &rArr; <i>&lt;string&gt;</i>
 </font></b></pre>
 
 <p>On success, the replay contains open file handle. The handle is encoded as a string of characters. Client should never try
@@ -236,7 +236,7 @@ not needed any more. Server should close all files that were left open after cli
 <h3><a name='CmdClose'>close</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • close • <i>&lt;string: file handle&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; close &bull; <i>&lt;string: file handle&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command closes a handle, which was open by 'open' or 'opendir' commands.</p>
@@ -244,13 +244,13 @@ C • <i>&lt;token&gt;</i> • FileSystem • close • <i>&lt;string: file handle&gt;</
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdRead'>read</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • read • <i>&lt;string: file handle&gt;</i> • <i>&lt;int: offset&gt;</i> • <i>&lt;int: size&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; read &bull; <i>&lt;string: file handle&gt;</i> &bull; <i>&lt;int: offset&gt;</i> &bull; <i>&lt;int: size&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command reads bytes from an open file.
@@ -266,7 +266,7 @@ or error. For e.g. device files this may return fewer bytes than requested.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;string: data&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;boolean: eof&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;string: data&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;boolean: eof&gt;</i> &bull;
 </font></b></pre>
 
 <p><i>&lt;string: data&gt;</i> is Base64 encoded byte array of file data. Number of bytes is determined by the string length.
@@ -275,7 +275,7 @@ R • <i>&lt;token&gt;</i> • <i>&lt;string: data&gt;</i> • <i>&lt;error report&gt;
 <h3><a name='CmdWrite'>write</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • write • <i>&lt;string: file handle&gt;</i> • <i>&lt;int: offset&gt;</i> • <i>&lt;string: data&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; write &bull; <i>&lt;string: file handle&gt;</i> &bull; <i>&lt;int: offset&gt;</i> &bull; <i>&lt;string: data&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command writes bytes into an open file.
@@ -287,13 +287,13 @@ and then the data. <i>&lt;string: data&gt;</i> is Base64 encoded array of data b
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdStat'>stat</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • stat • <i>&lt;string: file name&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; stat &bull; <i>&lt;string: file name&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command retrieves file attributes.</p>
@@ -301,13 +301,13 @@ C • <i>&lt;token&gt;</i> • FileSystem • stat • <i>&lt;string: file name&gt;</i> 
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;file attributes&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;file attributes&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdLStat'>lstat</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • lstat • <i>&lt;string: file name&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; lstat &bull; <i>&lt;string: file name&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command retrieves file attributes.
@@ -316,13 +316,13 @@ Unlike 'stat', 'lstat' does not follow symbolic links.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;file attributes&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;file attributes&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdFStat'>fstat</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • fstat • <i>&lt;string: file handle&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; fstat &bull; <i>&lt;string: file handle&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command retrieves file attributes for an open file (identified by the file handle).</p>
@@ -330,13 +330,13 @@ C • <i>&lt;token&gt;</i> • FileSystem • fstat • <i>&lt;string: file handle&gt;</
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;file attributes&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;file attributes&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdSetStat'>setstat</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • setstat • <i>&lt;string: file name&gt;</i> • <i>&lt;file attributes&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; setstat &bull; <i>&lt;string: file name&gt;</i> &bull; <i>&lt;file attributes&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command sets file attributes.
@@ -349,13 +349,13 @@ specified attributes.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdFSetStat'>fsetstat</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • fsetstat • <i>&lt;string: file handle&gt;</i> • <i>&lt;file attributes&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; fsetstat &bull; <i>&lt;string: file handle&gt;</i> &bull; <i>&lt;file attributes&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command sets file attributes for an open file (identified by the file handle).
@@ -365,13 +365,13 @@ permissions or access times, as well as for truncating a file.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdOpenDir'>opendir</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • opendir • <i>&lt;string: path&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; opendir &bull; <i>&lt;string: path&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command opens a directory for reading.
@@ -384,13 +384,13 @@ should be closed regardless of whether a read errors have occurred or not.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;file handle&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;file handle&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdReadDir'>readdir</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • readdir • <i>&lt;string: file handle&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; readdir &bull; <i>&lt;string: file handle&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command returns one
@@ -405,19 +405,19 @@ response.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;array of directory entries&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;boolean: eof&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;array of directory entries&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;boolean: eof&gt;</i> &bull;
 
 <i>&lt;array of directory entries&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ ]
-    <font face=Wingdings>Ø</font> [ <i>&lt;directory entry list&gt;</i> ]
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;directory entry list&gt;</i> ]
   
 <i>&lt;directory entry list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;directory entry&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&ltdirectory entry list&gt;</i> , <i>&lt;directory entry&gt;</i>
+    &rArr; <i>&lt;directory entry&gt;</i>
+    &rArr; <i>&ltdirectory entry list&gt;</i> , <i>&lt;directory entry&gt;</i>
 
 <i>&lt;directory entry&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+    &rArr; <i>&lt;object&gt;</i>
 </font></b></pre>
 
 <p>Directory entry attributes are:</p>
@@ -435,7 +435,7 @@ R • <i>&lt;token&gt;</i> • <i>&lt;array of directory entries&gt;</i> • <i>&lt;er
 <h3><a name='CmdMkDir'>mkdir</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • mkdir • <i>&lt;string: directory path&gt;</i> • <i>&lt;file attributes&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; mkdir &bull; <i>&lt;string: directory path&gt;</i> &bull; <i>&lt;file attributes&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command creates a directory on the server.
@@ -445,13 +445,13 @@ C • <i>&lt;token&gt;</i> • FileSystem • mkdir • <i>&lt;string: directory path&gt
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdRmDir'>rmdir</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • rmdir • <i>&lt;string: directory path&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; rmdir &bull; <i>&lt;string: directory path&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command removes a directory.
@@ -463,13 +463,13 @@ directory. <i>&lt;string: directory path&gt;</i> - specifies the directory to be
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdRoots'>roots</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • roots •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; roots &bull;
 </font></b></pre>
 
 <p>The command retrieves file system roots - top level file system objects.
@@ -483,13 +483,13 @@ protocol file names to OS native names and back.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of directory entries&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of directory entries&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdRemove'>remove</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • remove • <i>&lt;string: path&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; remove &bull; <i>&lt;string: path&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command removes a file or symbolic link.
@@ -498,13 +498,13 @@ This request cannot be used to remove directories.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdRealPath'>realpath</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • realpath • <i>&lt;string: path&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; realpath &bull; <i>&lt;string: path&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command canonicalizes any given path name to an absolute path.
@@ -514,13 +514,13 @@ relative pathnames without a leading slash into absolute paths.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;string: path&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;string: path&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdRename'>rename</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • rename • <i>&lt;string: old path&gt;</i> • <i>&lt;string: new path&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; rename &bull; <i>&lt;string: old path&gt;</i> &bull; <i>&lt;string: new path&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command renames a file.
@@ -532,13 +532,13 @@ point to different file systems on the server.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdReadLink'>readlink</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • readlink • <i>&lt;string: link path&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; readlink &bull; <i>&lt;string: link path&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command reads the target of a symbolic link.
@@ -547,13 +547,13 @@ C • <i>&lt;token&gt;</i> • FileSystem • readlink • <i>&lt;string: link path&gt;<
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;string: path&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;string: path&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdSymLink'>symlink</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • symlink • <i>&lt;string: link path&gt;</i> • <i>&lt;string: target path&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; symlink &bull; <i>&lt;string: link path&gt;</i> &bull; <i>&lt;string: target path&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command creates a symbolic link on the server.
@@ -563,14 +563,14 @@ C • <i>&lt;token&gt;</i> • FileSystem • symlink • <i>&lt;string: link path&gt;</
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdCopy'>copy</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • copy • <i>&lt;string: source path&gt;</i> • <i>&lt;string: destination path&gt;</i> •
-    <i>&lt;boolean: copy permissions&gt;</i> • <i>&lt;boolean: copy ownership&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; copy &bull; <i>&lt;string: source path&gt;</i> &bull; <i>&lt;string: destination path&gt;</i> &bull;
+    <i>&lt;boolean: copy permissions&gt;</i> &bull; <i>&lt;boolean: copy ownership&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command copies a file on remote system.
@@ -582,13 +582,13 @@ If <i>&lt;boolean: copy ownership&gt;</i> is true then copy source file UID and 
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdUser'>user</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • FileSystem • user •
+C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; user &bull;
 </font></b></pre>
 
 <p>The command retrieves information about user account, which is used by server 
@@ -597,8 +597,8 @@ to access file system on behalf of the client.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;int: real UID&gt;</i> • <i>&lt;int: effective UID&gt;</i> •
-    <i>&lt;int: real GID&gt;</i> • <i>&lt;int: effective GID&gt;</i> • <i>&lt;string: home directory&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;int: effective UID&gt;</i> &bull;
+    <i>&lt;int: real GID&gt;</i> &bull; <i>&lt;int: effective GID&gt;</i> &bull; <i>&lt;string: home directory&gt;</i> &bull;
 </font></b></pre>
 
 <h2><a name='API'>API</a></h2>

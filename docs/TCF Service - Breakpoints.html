@@ -101,19 +101,19 @@ see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
 <h3><a name='CmdSet'>Set</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Breakpoints • set • <i>&lt;array of breakpoints&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; set &bull; <i>&lt;array of breakpoints&gt;</i> &bull;
 
 <i>&lt;array of breakpoints&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ ]
-    <font face=Wingdings>Ø</font> [ <i>&lt;breakpoints list&gt;</i> ]
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;breakpoints list&gt;</i> ]
 
 <i>&lt;breakpoints list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;breakpoint data&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;breakpoints list&gt;</i>, <i>&lt;breakpoint data&gt;</i>
+    &rArr; <i>&lt;breakpoint data&gt;</i>
+    &rArr; <i>&lt;breakpoints list&gt;</i>, <i>&lt;breakpoint data&gt;</i>
 
 <i>&lt;breakpoint data&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+    &rArr; <i>&lt;object&gt;</i>
 </font></b></pre>
 
 <p> The command downloads breakpoint data to a target agent.
@@ -223,7 +223,7 @@ A breakpoint service implementation may not change the properties set by the cli
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <p><b>Examples:</b></p>
@@ -274,7 +274,7 @@ The following properties set a temporal breakpoint that stops <code>core0</code>
 <h3><a name='CmdAdd'>Add</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Breakpoints • add • <i>&lt;breakpoint data&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; add &bull; <i>&lt;breakpoint data&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command adds a breakpoint to the target agent breakpoint table. The host should send this command when the user creates a new breakpoint</p>
@@ -282,13 +282,13 @@ C • <i>&lt;token&gt;</i> • Breakpoints • add • <i>&lt;breakpoint data&gt;</i> •
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdChange'>Change</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Breakpoints • change • <i>&lt;breakpoint data&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; change &bull; <i>&lt;breakpoint data&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command updates the breakpoint data in the target agent breakpoint table. The host should send this command when the user modifies a breakpoint</p>
@@ -296,25 +296,25 @@ C • <i>&lt;token&gt;</i> • Breakpoints • change • <i>&lt;breakpoint data&gt;</i>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdEnable'>Enable</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Breakpoints • enable • <i>&lt;array of breakpoint IDs&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; enable &bull; <i>&lt;array of breakpoint IDs&gt;</i> &bull;
 
 <i>&lt;array of breakpoint IDs&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ ]
-    <font face=Wingdings>Ø</font> [ <i>&lt;breakpoint IDs list&gt;</i> ]
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;breakpoint IDs list&gt;</i> ]
 
 <i>&lt;breakpoint IDs list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;breakpoint ID&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;breakpoint IDs list&gt;</i>, <i>&lt;breakpoint ID&gt;</i>
+    &rArr; <i>&lt;breakpoint ID&gt;</i>
+    &rArr; <i>&lt;breakpoint IDs list&gt;</i>, <i>&lt;breakpoint ID&gt;</i>
 
 <i>&lt;breakpoint ID&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;string&gt;</i>
+    &rArr; <i>&lt;string&gt;</i>
 </font></b></pre>
 
 <p>The command enables a list of breakpoints - sets breakpoint property "Enabled" to true.</p>
@@ -322,13 +322,13 @@ C • <i>&lt;token&gt;</i> • Breakpoints • enable • <i>&lt;array of breakpoint IDs
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdDisable'>Disable</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Breakpoints • disable • <i>&lt;array of breakpoint IDs&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; disable &bull; <i>&lt;array of breakpoint IDs&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command disables a list of breakpoints - sets breakpoint property "Enabled" to false.</p>
@@ -336,13 +336,13 @@ C • <i>&lt;token&gt;</i> • Breakpoints • disable • <i>&lt;array of breakpoint ID
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdRemove'>Remove</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Breakpoints • remove • <i>&lt;array of breakpoint IDs&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; remove &bull; <i>&lt;array of breakpoint IDs&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command removes a list of breakpoints. Host should send this command when user deletes breakpoints.</p>
@@ -350,13 +350,13 @@ C • <i>&lt;token&gt;</i> • Breakpoints • remove • <i>&lt;array of breakpoint IDs
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdGetIDs'>Get IDs</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Breakpoints • getIDs •
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; getIDs &bull;
 </font></b></pre>
 
 <p>The command uploads IDs of breakpoints known to target agent,
@@ -368,13 +368,13 @@ channels.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;array of breakpoint IDs&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of breakpoint IDs&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdGetProperties'>Get Properties</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Breakpoints • getProperties • <i>&lt;string: breakpoint ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; getProperties &bull; <i>&lt;string: breakpoint ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command uploads the properties of the given breakpoint from the target agent breakpoint table.</p>
@@ -382,13 +382,13 @@ C • <i>&lt;token&gt;</i> • Breakpoints • getProperties • <i>&lt;string: breakpoi
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;breakpoint data&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;breakpoint data&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdGetStatus'>Get Status</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Breakpoints • getStatus • <i>&lt;string: breakpoint ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; getStatus &bull; <i>&lt;string: breakpoint ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command uploads the status of given the breakpoint from the target agent.</p>
@@ -396,10 +396,10 @@ C • <i>&lt;token&gt;</i> • Breakpoints • getStatus • <i>&lt;string: breakpoint I
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;breakpoint status&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;breakpoint status&gt;</i> &bull;
 
 <i>&lt;breakpoint status&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+    &rArr; <i>&lt;object&gt;</i>
 </font></b></pre>
 
 <p>Breakpoint status consists of a list of status properties. All properties are optional.
@@ -424,16 +424,16 @@ in a list of instance status data objects
 
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;array of instance status data&gt;</i>
-    <font face=Wingdings>Ø</font> null
-    <font face=Wingdings>Ø</font> [ ]
-    <font face=Wingdings>Ø</font> [ <i>&lt;Instance status data list&gt;</i> ]
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;Instance status data list&gt;</i> ]
 
 <i>&lt;Instance status data list&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;Instance status data&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;Instance staus data list&gt;</i>, <i>&lt;Instance status data&gt;</i>
+    &rArr; <i>&lt;Instance status data&gt;</i>
+    &rArr; <i>&lt;Instance staus data list&gt;</i>, <i>&lt;Instance status data&gt;</i>
   
 <i>&lt;Instance status data&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+    &rArr; <i>&lt;object&gt;</i>
 </font></b></pre>
 
 <p>Instance status data consists of a list of properties pertaining to each installed instance of the breakpoint.
@@ -449,7 +449,7 @@ in a list of instance status data objects
 <h3><a name='CmdGetCapabilities'>Get Capabilities</a></h3>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-C • <i>&lt;token&gt;</i> • Breakpoints • getCapabilities • <i>&lt;string: context ID&gt;</i> •
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; getCapabilities &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command reports breakpoint service capabilities to clients so they
@@ -462,10 +462,10 @@ capabilities.</p>
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R • <i>&lt;token&gt;</i> • <i>&lt;error report&gt;</i> • <i>&lt;service capabilities&gt;</i> •
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;service capabilities&gt;</i> &bull;
 
 <i>&lt;service capabilities&gt;</i>
-    <font face=Wingdings>Ø</font> <i>&lt;object&gt;</i>
+    &rArr; <i>&lt;object&gt;</i>
 </font></b></pre>
 
 <p>Service capabilities consist of a list of properties. All properties are optional.
@@ -492,10 +492,10 @@ of breakpoint properties that was sent by a client to a target. The purpose of t
 let all clients know about breakpoints that were created by other clients.</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-E • Breakpoints • status • <i>&lt;string: breakpoint ID&gt;</i> • <i>&lt;breakpoint status&gt;</i> •
-E • Breakpoints • contextAdded • <i>&lt;array of breakpoints&gt;</i> •
-E • Breakpoints • contextChanged • <i>&lt;array of breakpoints&gt;</i> •
-E • Breakpoints • contextRemoved • <i>&lt;array of breakpoint IDs&gt;</i> •
+E &bull; Breakpoints &bull; status &bull; <i>&lt;string: breakpoint ID&gt;</i> &bull; <i>&lt;breakpoint status&gt;</i> &bull;
+E &bull; Breakpoints &bull; contextAdded &bull; <i>&lt;array of breakpoints&gt;</i> &bull;
+E &bull; Breakpoints &bull; contextChanged &bull; <i>&lt;array of breakpoints&gt;</i> &bull;
+E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs&gt;</i> &bull;
 </font></b></pre>
 
 <dl>
