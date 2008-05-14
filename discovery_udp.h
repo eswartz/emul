@@ -19,6 +19,6 @@
 /*
  * Start discovery server
  */
-extern int discovery_udp_server(const char *port);
+extern int discovery_udp_server(const char * port);
 
 #endif

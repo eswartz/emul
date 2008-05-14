@@ -317,6 +317,7 @@ static void event_win32_context_stopped(void * arg) {
         DWORD err = GetLastError();
         if (err == ERROR_ACCESS_DENIED && event_code == 0) return; /* Already exited */
         trace(LOG_ALWAYS, "Can't suspend thread: tid %d, error %d", ctx->pid, err);
+        return;
     }
 
     ctx->regs_error = 0;
@@ -539,7 +540,7 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
 
         memset(&event_buffer, 0, sizeof(event_buffer));
         if (WaitForDebugEvent(debug_event, INFINITE) == 0) {
-            trace(LOG_ALWAYS, "WaitForDebugEvent() error %d\n", GetLastError());
+            trace(LOG_ALWAYS, "WaitForDebugEvent() error %d", GetLastError());
             break;
         }
         if (debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {

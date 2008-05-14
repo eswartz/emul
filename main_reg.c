@@ -108,9 +108,7 @@ int main(int argc, char **argv) {
     
 #endif
 
-    if (discovery_start(discovery_default_master_notifier)) {
-        discovery_default_master_notifier();
-    }
+    discovery_start(create_default_discovery_master);
 
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */

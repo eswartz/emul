@@ -14,6 +14,10 @@
  */
 
 #include "mdep.h"
+#include "config.h"
+
+#if ENABLE_Discovery
+
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
@@ -45,7 +49,7 @@ struct receive_message {
 
 static int ifcind;
 static ip_ifc_info ifclist[MAX_IFC];
-static int refresh_timer_active;
+static int refresh_timer_active = 0;
 static time_t last_refresh_time;
 static int discovery_port;
 static int udp_server_socket = -1;
@@ -228,6 +232,7 @@ static void udp_refresh_info(void * arg) {
         if ((delta = timenow - last_refresh_time) < REFRESH_TIME) {
             /* Recent explicit refresh - wait a little longer */
             assert(delta > 0);
+            trace(LOG_DISCOVERY, "post udp_refresh_info");
             post_event_with_delay(udp_refresh_info, (void *)1, (REFRESH_TIME - delta) * 1000000);
             return;
         }
@@ -245,6 +250,7 @@ static void udp_refresh_info(void * arg) {
     udp_send_req();
     last_refresh_time = timenow;
     if (!refresh_timer_active) {
+        trace(LOG_DISCOVERY, "posting udp_refresh_info");
         refresh_timer_active = 1;
         post_event_with_delay(udp_refresh_info, (void *)1, REFRESH_TIME * 1000000);
     }
@@ -349,12 +355,12 @@ int discovery_udp_server(const char * port) {
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;
 
-    if (port == NULL) port = DISCOVERY_TCF_PORT;
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
     hints.ai_flags = AI_PASSIVE;
+    if (port == NULL) port = "";
     error = loc_getaddrinfo(NULL, port, &hints, &reslist);
     if (error) {
         trace(LOG_ALWAYS, "getaddrinfo error: %s", loc_gai_strerror(error));
@@ -374,6 +380,10 @@ int discovery_udp_server(const char * port) {
             sock = -1;
             continue;
         }
+        if (res->ai_addr->sa_family == AF_INET) {
+            struct sockaddr_in * addr = (struct sockaddr_in *)res->ai_addr;
+            if (addr->sin_port == 0) addr->sin_port = htons(DISCOVERY_TCF_PORT);
+        }
         if (bind(sock, res->ai_addr, res->ai_addrlen)) {
             error = errno;
             reason = "bind";
@@ -392,6 +402,7 @@ int discovery_udp_server(const char * port) {
     }
     discovery_port = ntohs(((struct sockaddr_in *)res->ai_addr)->sin_port);
     loc_freeaddrinfo(reslist);
+    trace(LOG_DISCOVERY, "UDP discovery server created at port %d", discovery_port);
 
     udp_server_socket = sock;
     ifcind = build_ifclist(sock, MAX_IFC, ifclist);
@@ -407,3 +418,5 @@ int discovery_udp_server(const char * port) {
     udp_refresh_info(NULL);
     return 0;
 }
+
+#endif

@@ -128,7 +128,7 @@ extern int pthread_cond_signal(pthread_cond_t * cond);
 extern int pthread_cond_broadcast(pthread_cond_t * cond);
 extern int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex);
 extern int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
-                                  const struct timespec * timeout);
+                                  const struct timespec * abstime);
 extern int pthread_mutex_lock(pthread_mutex_t * mutex);
 extern int pthread_mutex_unlock(pthread_mutex_t * mutex);
 extern pthread_t pthread_self(void);
@@ -143,8 +143,22 @@ extern int pthread_join(pthread_t thread, void **value_ptr);
  */
 #define socket(af, type, protocol) wsa_socket(af, type, protocol)
 #define bind(socket, addr, addr_size) wsa_bind(socket, addr, addr_size)
-extern int wsa_bind(int socket, const struct sockaddr * addr, int addr_size);
+#define listen(socket, size) wsa_listen(socket, size)
+#define recv(socket, buf, size, flags) wsa_recv(socket, buf, size, flags)
+#define recvfrom(socket, buf, size, flags, addr, addr_size) wsa_recvfrom(socket, buf, size, flags, addr, addr_size)
+#define send(socket, buf, size, flags) wsa_send(socket, buf, size, flags)
+#define sendto(socket, buf, size, flags, dest_addr, dest_size) wsa_sendto(socket, buf, size, flags, dest_addr, dest_size)
+
 extern int wsa_socket(int af, int type, int protocol);
+extern int wsa_bind(int socket, const struct sockaddr * addr, int addr_size);
+extern int wsa_listen(int socket, int size);
+extern int wsa_recv(int socket, void * buf, size_t size, int flags);
+extern int wsa_recvfrom(int socket, void * buf, size_t size, int flags,
+                    struct sockaddr * addr, socklen_t * addr_size);
+extern int wsa_send(int socket, const void * buf, size_t size, int flags);
+extern int wsa_sendto(int socket, const void * buf, size_t size, int flags,
+                  const struct sockaddr * dest_addr, socklen_t dest_size);
+
 
 #define lseek _lseeki64
 typedef struct _stati64 struct_stat;

@@ -148,7 +148,6 @@ int main(int argc, char ** argv) {
 
 #endif
 
-    discovery_start(NULL);              /* Client only */
     ps = channel_peer_from_url(url);
     if (ps == NULL) {
         fprintf(stderr, "invalid server URL (-s option value): %s\n", url);
@@ -162,6 +161,8 @@ int main(int argc, char ** argv) {
         exit(1);
     }
     serv->new_conn = channel_new_connection;
+
+    discovery_start(NULL); /* Client only */
 
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */

@@ -53,7 +53,7 @@ static int free_queue_size = 0;
 static EventCallBack * cancel_handler = NULL;
 static void * cancel_arg = NULL;
 
-static int time_cmp(const struct timespec *tv1, const struct timespec *tv2) {
+static int time_cmp(const struct timespec * tv1, const struct timespec * tv2) {
     if (tv1->tv_sec < tv2->tv_sec) return -1;
     if (tv1->tv_sec > tv2->tv_sec) return 1;
     if (tv1->tv_nsec < tv2->tv_nsec) return -1;
@@ -64,7 +64,7 @@ static int time_cmp(const struct timespec *tv1, const struct timespec *tv2) {
 /*
  * Add microsecond value to timeval.
  */
-static void time_add_usec(struct timespec *tv, unsigned long usec) {
+static void time_add_usec(struct timespec * tv, unsigned long usec) {
     tv->tv_sec += usec / 1000000;
     tv->tv_nsec += (usec % 1000000) * 1000;
     if (tv->tv_nsec >= 1000000000) {
@@ -73,7 +73,7 @@ static void time_add_usec(struct timespec *tv, unsigned long usec) {
     }
 }
 
-static event_node * alloc_node(void (*handler)(void *), void *arg) {
+static event_node * alloc_node(void (*handler)(void *), void * arg) {
     event_node * node;
     if (free_queue != NULL) {
         node = free_queue;
@@ -128,7 +128,8 @@ void post_event_with_delay(EventCallBack * handler, void * arg, unsigned long de
         check_error(pthread_cond_signal(&event_cond));
     }
     trace(LOG_EVENTCORE, "post_event: event %#x handler %#x arg %#x runtime %02d%02d.%03d",
-        ev, ev->handler, ev->arg, ev->runtime.tv_sec/60%60, ev->runtime.tv_sec%60, ev->runtime.tv_nsec/1000000);
+        ev, ev->handler, ev->arg, ev->runtime.tv_sec / 60 % 60, ev->runtime.tv_sec % 60,
+        ev->runtime.tv_nsec / 1000000);
     check_error(pthread_mutex_unlock(&event_lock));
 }
 

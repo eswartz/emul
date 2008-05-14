@@ -14,6 +14,10 @@
  */
 
 #include "mdep.h"
+#include "config.h"
+
+#if ENABLE_Discovery
+
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
@@ -54,7 +58,7 @@ static void channel_server_receive(Channel *c) {
 }
 
 static void channel_server_disconnected(Channel *c) {
-    trace(LOG_DISCOVERY, "discovery_help: channel_server_disconnected\n");
+    trace(LOG_DISCOVERY, "discovery_help: channel_server_disconnected");
     discovery_channel_remove(c);
     protocol_channel_closed(c->client_data, c);
 }
@@ -73,17 +77,35 @@ static void discovery_new_connection(ChannelServer * serv, Channel * c) {
 }
 
 /*
+ * Check if agent is already listening on discovery master port.
+ */
+static int check_master(PeerServer * ps, void * arg) {
+    if (ps->flags & PS_FLAG_LOCAL) {
+        char * transport_name = peer_server_getprop(ps, "TransportName", "");
+        if (strcmp(transport_name, "TCP") == 0) {
+            char * port = peer_server_getprop(ps, "Port", "0");
+            if (atoi(port) == DISCOVERY_TCF_PORT) (*(int *)arg)++;
+        }
+    }
+    return 0;
+}
+
+/*
  * Create a simple default discovery server if client did not provide one
  */
-void discovery_default_master_notifier(void) {
+void create_default_discovery_master(void) {
     PeerServer * ps;
     Protocol * proto;
     ChannelServer * serv;
+    int already_master = 0;
 
-    trace(LOG_DISCOVERY, "discovery_default_master_notifier");
+    peer_server_iter(check_master, &already_master);
+    if (already_master) return;
+
+    trace(LOG_DISCOVERY, "create_default_discovery_master");
     ps = channel_peer_from_url(DEFAULT_DISCOVERY_URL);
     if (ps == NULL) {
-        trace(LOG_ALWAYS, "invalid discovery server URL\n");
+        trace(LOG_ALWAYS, "invalid discovery server URL");
         return;
     }
     peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Discovery Master"));
@@ -92,10 +114,13 @@ void discovery_default_master_notifier(void) {
     ini_locator_service(proto);
     serv = channel_server(ps);
     if (serv == NULL) {
-        trace(LOG_ALWAYS, "cannot create TCF discovery server\n");
+        trace(LOG_ALWAYS, "cannot create TCF discovery server");
         protocol_release(proto);
+        peer_server_free(ps);
         return;
     }
     serv->new_conn = discovery_new_connection;
     serv->client_data = proto;
 }
+
+#endif

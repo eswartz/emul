@@ -32,6 +32,7 @@
 #include "channel.h"
 #include "protocol.h"
 #include "discovery.h"
+#include "discovery_help.h"
 #include "test.h"
 
 static char * progname;
@@ -81,21 +82,6 @@ static void channel_new_connection(ChannelServer * serv, Channel * c) {
     protocol_channel_opened(proto, c);
 }
 
-static void became_discovery_master(void) {
-    PeerServer * ps = channel_peer_from_url(DEFAULT_DISCOVERY_URL);
-
-    if (ps == NULL) {
-        trace(LOG_ALWAYS, "cannot parse url: %s\n", DEFAULT_DISCOVERY_URL);
-        return;
-    }
-    serv2 = channel_server(ps);
-    if (serv2 == NULL) {
-        trace(LOG_ALWAYS, "cannot create second TCF server\n");
-        return;
-    }
-    serv2->new_conn = channel_new_connection;
-}
-
 #if defined(_WRS_KERNEL)
 int tcf(void) {
 #else   
@@ -103,7 +89,6 @@ int main(int argc, char ** argv) {
 #endif
     int c;
     int ind;
-    int ismaster;
     int interactive = 0;
     char * s;
     char * log_name = 0;
@@ -195,33 +180,20 @@ int main(int argc, char ** argv) {
     ini_locator_service(proto);
     ini_services(proto, bcg, spg);
     ini_contexts();
-    ismaster = discovery_start(became_discovery_master);
 
     ps = channel_peer_from_url(url);
     if (ps == NULL) {
         fprintf(stderr, "invalid server URL (-s option value): %s\n", url);
         exit(1);
     }
-    if (ismaster) {
-        if (!strcmp(peer_server_getprop(ps, "TransportName", ""), "TCP") &&
-                peer_server_getprop(ps, "Port", NULL) == NULL) {
-            peer_server_addprop(ps, loc_strdup("Port"), loc_strdup(DISCOVERY_TCF_PORT));
-        }
-        serv = channel_server(ps);
-        /* TODO: replace 'ps' with actual peer object created for the server */
-        if (strcmp(peer_server_getprop(ps, "TransportName", ""), "TCP") ||
-                strcmp(peer_server_getprop(ps, "Port", ""), DISCOVERY_TCF_PORT)) {
-            became_discovery_master();
-        }
-    }
-    else {
-        serv = channel_server(ps);
-    }
+    serv = channel_server(ps);
     if (serv == NULL) {
         fprintf(stderr, "cannot create TCF server\n");
         exit(1);
     }
     serv->new_conn = channel_new_connection;
+
+    discovery_start(create_default_discovery_master);
 
     if (interactive) ini_cmdline_handler();
     /* Process events - must run on the initial thread since ptrace()

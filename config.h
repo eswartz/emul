@@ -44,7 +44,8 @@
 #define SERVICE_FileSystem      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_SysMonitor      TARGET_UNIX
 
-#define ENABLE_Trace 1
+#define ENABLE_Trace        1
+#define ENABLE_Discovery    1
 
 #ifdef CONFIG_MAIN
 /*

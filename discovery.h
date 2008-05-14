@@ -16,12 +16,17 @@
 #ifndef D_discovery
 #define D_discovery
 
+#include "mdep.h"
+#include "config.h"
 #include "protocol.h"
 #include "channel.h"
 #include "link.h"
 
 #define DEFAULT_DISCOVERY_URL   "TCP::1534"
-#define DISCOVERY_TCF_PORT      "1534"
+#define DISCOVERY_TCF_PORT      1534
+typedef void (*DiscoveryMasterNotificationCB)(void);
+
+#if ENABLE_Discovery
 
 /*
  * Add channel to include in discovery updates
@@ -36,16 +41,20 @@ extern void discovery_channel_remove(Channel *);
 /*
  * Start discovery of remote peers.  If no other master exist on the
  * local machine, then this instance will become master, otherwise a
- * client will attempt to connect to the existing master.  If the
+ * agent will attempt to connect to the existing master.  If the
  * existing master disappears, then a new attempt will be made to
  * become master or connect as a client.
  *
- * Returns true if this is instance is the discovery master.
- * Otherwise returns false and the callback is invoked if this
- * instance becomes the master at a later stage.
+ * Callback is invoked every time this agent instance becomes the master.
  */
+extern void discovery_start(DiscoveryMasterNotificationCB);
 
-typedef void (*DiscoveryMasterNotificationCB)(void);
-extern int discovery_start(DiscoveryMasterNotificationCB);
+#else
+
+#define discovery_channel_add(channel)
+#define discovery_channel_remove(channel)
+#define discovery_start(call_back)
+
+#endif
 
 #endif

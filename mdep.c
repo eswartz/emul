@@ -125,10 +125,19 @@ int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex) {
     return 0;
 }
 
-int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const struct timespec * timeout) {
+int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const struct timespec * abstime) {
     DWORD res = 0;
     int last_waiter = 0;
     PThreadCond * p = (PThreadCond *)*cond;
+    DWORD timeout = 0;
+    struct timespec timenow;
+
+    if (clock_gettime(CLOCK_REALTIME, &timenow)) return errno;
+    if (abstime->tv_sec < timenow.tv_sec) return ETIMEDOUT;
+    if (abstime->tv_sec == timenow.tv_sec) {
+        if (abstime->tv_nsec <= timenow.tv_nsec) return ETIMEDOUT;
+    }
+    timeout = (abstime->tv_sec - timenow.tv_sec) * 1000 + (abstime->tv_nsec - timenow.tv_nsec) / 1000000 + 5;
 
     EnterCriticalSection(&p->waiters_count_lock);
     p->waiters_count++;
@@ -137,7 +146,7 @@ int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const
     /* This call atomically releases the mutex and waits on the */
     /* semaphore until <pthread_cond_signal> or <pthread_cond_broadcast> */
     /* are called by another thread. */
-    res = SignalObjectAndWait(*mutex, p->sema, timeout->tv_sec * 1000 + timeout->tv_nsec / 1000000, FALSE);
+    res = SignalObjectAndWait(*mutex, p->sema, timeout, FALSE);
 
     /* Reacquire lock to avoid race conditions. */
     EnterCriticalSection(&p->waiters_count_lock);
@@ -291,9 +300,6 @@ int pthread_attr_init(pthread_attr_t * attr) {
 
 #if defined(WIN32) && defined(_MSC_VER)
 
-#define ERR_SOCKET (-1)
-#define ERR_WIN32  (-2)
-
 static __int64 file_time_to_unix_time (const FILETIME * ft) {
     __int64 res = (__int64)ft->dwHighDateTime << 32;
 
@@ -323,19 +329,6 @@ void usleep(useconds_t useconds) {
     Sleep(useconds / 1000);
 }
 
-#undef bind
-int wsa_bind(int socket, const struct sockaddr * addr, int addr_size) {
-    int res = 0;
-    SetLastError(0);
-    WSASetLastError(0);
-    res = bind(socket, addr, addr_size);
-    if (res != 0) {
-        errno = ERR_SOCKET;
-        return -1;
-    }
-    return 0;
-}
-
 #undef socket
 int wsa_socket(int af, int type, int protocol) {
     int res = 0;
@@ -343,14 +336,94 @@ int wsa_socket(int af, int type, int protocol) {
     WSASetLastError(0);
     res = socket(af, type, protocol);
     if (res < 0) {
-        errno = ERR_SOCKET;
+        errno = WSAGetLastError();
+        return -1;
+    }
+    return res;
+}
+
+#undef bind
+int wsa_bind(int socket, const struct sockaddr * addr, int addr_size) {
+    int res = 0;
+    SetLastError(0);
+    WSASetLastError(0);
+    res = bind(socket, addr, addr_size);
+    if (res != 0) {
+        errno = WSAGetLastError();
+        return -1;
+    }
+    return 0;
+}
+
+#undef listen
+int wsa_listen(int socket, int size) {
+    int res = 0;
+    SetLastError(0);
+    WSASetLastError(0);
+    res = listen(socket, size);
+    if (res != 0) {
+        errno = WSAGetLastError();
+        return -1;
+    }
+    return 0;
+}
+
+#undef recv
+int wsa_recv(int socket, void * buf, size_t size, int flags) {
+    int res = 0;
+    SetLastError(0);
+    WSASetLastError(0);
+    res = recv(socket, buf, size, flags);
+    if (res < 0) {
+        errno = WSAGetLastError();
+        return -1;
+    }
+    return res;
+}
+
+#undef recvfrom
+int wsa_recvfrom(int socket, void * buf, size_t size, int flags,
+                 struct sockaddr * addr, socklen_t * addr_size) {
+    int res = 0;
+    SetLastError(0);
+    WSASetLastError(0);
+    res = recvfrom(socket, buf, size, flags, addr, addr_size);
+    if (res < 0) {
+        errno = WSAGetLastError();
+        return -1;
+    }
+    return res;
+}
+
+#undef send
+int wsa_send(int socket, const void * buf, size_t size, int flags) {
+    int res = 0;
+    SetLastError(0);
+    WSASetLastError(0);
+    res = send(socket, buf, size, flags);
+    if (res < 0) {
+        errno = WSAGetLastError();
+        return -1;
+    }
+    return res;
+}
+
+#undef sendto
+int wsa_sendto(int socket, const void * buf, size_t size, int flags,
+               const struct sockaddr * dest_addr, socklen_t dest_size) {
+    int res = 0;
+    SetLastError(0);
+    WSASetLastError(0);
+    res = sendto(socket, buf, size, flags, dest_addr, dest_size);
+    if (res < 0) {
+        errno = WSAGetLastError();
         return -1;
     }
     return res;
 }
 
 int inet_aton(const char *cp, struct in_addr *inp) {
-    return ( ( inp->s_addr = inet_addr(cp) ) != INADDR_NONE );
+    return ( inp->s_addr = inet_addr(cp) ) != INADDR_NONE;
 }
 
 int truncate(const char * path, int64 size) {

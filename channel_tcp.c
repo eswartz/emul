@@ -20,6 +20,7 @@
 #include "tcf.h"
 #include "channel.h"
 #include "channel_tcp.h"
+#include "discovery.h"
 #include "myalloc.h"
 #include "protocol.h"
 #include "events.h"
@@ -499,22 +500,22 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     sock = -1;
     reason = NULL;
     for (res = reslist; res != NULL; res = res->ai_next) {
+        int def_port = 0;
         sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (sock < 0) {
             error = errno;
             reason = "create";
             continue;
         }
-        /* Allow rapid reuse of this port. */
-        if (((struct sockaddr_in *)res->ai_addr)->sin_port != 0 &&
-            setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&i, sizeof(i)) < 0) {
-            error = errno;
-            reason = "setsockopt(reuse) for";
-            closesocket(sock);
-            sock = -1;
-            continue;
+        if (res->ai_addr->sa_family == AF_INET) {
+            struct sockaddr_in addr;
+            memcpy(&addr, res->ai_addr, sizeof(addr));
+            if (addr.sin_port == 0) {
+                addr.sin_port = htons(DISCOVERY_TCF_PORT);
+                if (!bind(sock, (struct sockaddr *)&addr, sizeof(addr))) def_port = 1;
+            }
         }
-        if (bind(sock, res->ai_addr, res->ai_addrlen)) {
+        if (!def_port && bind(sock, res->ai_addr, res->ai_addrlen)) {
             error = errno;
             reason = "bind";
             closesocket(sock);
@@ -544,7 +545,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     si->ps = ps;
     if (server_list.next == NULL) list_init(&server_list);
     if (list_is_empty(&server_list)) {
-            post_event_with_delay(refresh_all_peer_server, NULL, REFRESH_TIME * 1000 * 1000);
+        post_event_with_delay(refresh_all_peer_server, NULL, REFRESH_TIME * 1000 * 1000);
     }
     list_add_last(&si->servlink, &server_list);
     refresh_peer_server(sock, ps);

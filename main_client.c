@@ -110,9 +110,7 @@ int main(int argc, char ** argv) {
     
 #endif
 
-    if (discovery_start(discovery_default_master_notifier)) {
-            discovery_default_master_notifier();
-    }
+    discovery_start(create_default_discovery_master);
     ini_cmdline_handler();
 
     /* Process events - must run on the initial thread since ptrace()

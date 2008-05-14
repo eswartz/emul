@@ -17,9 +17,9 @@
 #define D_discovery_help
 
 /*
- * Default discovery master notifier that creates a simple server
- * supporting only basic services needed for discovery
+ * Create default discovery master server that
+ * supports only basic services needed for discovery.
  */
-extern void discovery_default_master_notifier(void);
+extern void create_default_discovery_master(void);
 
 #endif

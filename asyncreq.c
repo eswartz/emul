@@ -44,6 +44,7 @@ static void * worker_thread_handler(void * x) {
             req->u.fio.rval = read(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz);
             if (req->u.fio.rval == -1) {
                 req->error = errno;
+                assert(req->error);
             }
             break;
 
@@ -51,6 +52,7 @@ static void * worker_thread_handler(void * x) {
             req->u.fio.rval = write(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz);
             if (req->u.fio.rval == -1) {
                 req->error = errno;
+                assert(req->error);
             }
             break;
 
@@ -58,6 +60,7 @@ static void * worker_thread_handler(void * x) {
             req->u.sio.rval = recv(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, req->u.sio.flags);
             if (req->u.sio.rval == -1) {
                 req->error = errno;
+                assert(req->error);
             }
             break;
 
@@ -65,6 +68,7 @@ static void * worker_thread_handler(void * x) {
             req->u.sio.rval = send(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, req->u.sio.flags);
             if (req->u.sio.rval == -1) {
                 req->error = errno;
+                assert(req->error);
             }
             break;
 
@@ -72,6 +76,7 @@ static void * worker_thread_handler(void * x) {
             req->u.sio.rval = recvfrom(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, req->u.sio.flags, req->u.sio.addr, &req->u.sio.addrlen);
             if (req->u.sio.rval == -1) {
                 req->error = errno;
+                assert(req->error);
             }
             break;
 
@@ -79,6 +84,7 @@ static void * worker_thread_handler(void * x) {
             req->u.sio.rval = sendto(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, req->u.sio.flags, req->u.sio.addr, req->u.sio.addrlen);
             if (req->u.sio.rval == -1) {
                 req->error = errno;
+                assert(req->error);
             }
             break;
 
@@ -86,6 +92,7 @@ static void * worker_thread_handler(void * x) {
             req->u.acc.rval = accept(req->u.acc.sock, req->u.acc.addr, req->u.acc.addr ? &req->u.acc.addrlen : NULL);
             if (req->u.acc.rval == -1) {
                 req->error = errno;
+                assert(req->error);
             }
             break;
 
@@ -93,6 +100,7 @@ static void * worker_thread_handler(void * x) {
             req->u.acc.rval = connect(req->u.con.sock, req->u.con.addr, req->u.con.addrlen);
             if (req->u.con.rval == -1) {
                 req->error = errno;
+                assert(req->error);
             }
             break;
 
@@ -104,6 +112,7 @@ static void * worker_thread_handler(void * x) {
             req->u.wpid.rval = waitpid(req->u.wpid.pid, &req->u.wpid.status, req->u.wpid.options);
             if (req->u.con.rval == -1) {
                 req->error = errno;
+                assert(req->error);
             }
             break;
 #endif

@@ -14,6 +14,10 @@
  */
 
 #include "mdep.h"
+#include "config.h"
+
+#if ENABLE_Discovery
+
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
@@ -236,9 +240,17 @@ static void make_local_discoverable(void) {
 static void discovery_client(void) {
     Protocol * proto;
     Channel * c;
-    PeerServer * ps = channel_peer_from_url(DEFAULT_DISCOVERY_URL);
-
-    if (client_chan != NULL) return;
+    PeerServer * ps;
+    
+    ps = channel_peer_from_url(DEFAULT_DISCOVERY_URL);
+    if (ps == NULL) {
+        trace(LOG_ALWAYS, "invalid discovery server URL");
+        return;
+    }
+    if (client_chan != NULL) {
+        peer_server_free(ps);
+        return;
+    }
     proto = protocol_alloc();
     ini_locator_service(proto);
     c = channel_connect(ps);
@@ -278,13 +290,15 @@ static int start_discovery(void) {
 }
 
 static void restart_discovery(void * x) {
-    if (start_discovery()) {
+    if (start_discovery() && master_notifier != NULL) {
         master_notifier();
     }
 }
 
-int discovery_start(DiscoveryMasterNotificationCB mastercb) {
+void discovery_start(DiscoveryMasterNotificationCB mastercb) {
     master_notifier = mastercb;
     make_local_discoverable();
-    return start_discovery();
+    restart_discovery(NULL);
 }
+
+#endif

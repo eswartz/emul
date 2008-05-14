@@ -125,6 +125,7 @@ void ibuf_read_done(InputBuf * ibuf, int len) {
     unsigned char * inp;
     int esc;
 
+    assert(len >= 0);
     if (len == 0) {
         ibuf_eof(ibuf);
         return;
