@@ -63,16 +63,15 @@ change in any of the attached contexts.  Adding properties reduces the
 
 <p>The presence of certain properties defines what kind of breakpoint is installed.
 <ul>
-<li>Instruction breakpoints are either Line Breakpoints, which are configured using the <a href='#propFile'>File</a>, 
-<a href='#propLine'>Line</a> and <a href='#propColumn'>Column</a> properties,
-or Address breakpoints, which are configured using the <a href='#propLocation'>Location</a> property.
+<li>Line Breakpoints, which are configured using the <a href='#propFile'>File</a>, 
+<a href='#propLine'>Line</a> and <a href='#propColumn'>Column</a> properties
+
+<li>Address breakpoints and watchpoints are configured using the <a href='#propLocation'>Location</a>, 
+<a href='#propAccessMode'>AccessMode</a>, <a href='#propSize'>Size</a>, 
+<a href='#propMaskValue'>MaskValue </a>and <a href='#propMask'>Mask</a> properties.
 
 <li>Temporal breakpoints which are located on a time scale are configured using the <a href='#propTime'>Time</a>, 
 <a href='#propTimeScale'>TimeScale</a>, and <a href='#propTimeUnits'> TimeUnits</a> properties.
-
-<li>Watchpoints are configured using the <a href='#propLocation'>Location</a>, 
-<a href='#propAccessMode'>AccessMode</a>, <a href='#propSize'>Size</a>, 
-<a href='#propMaskValue'>MaskValue </a>and <a href='#propMask'>Mask</a> properties.
 </ul>
 
 <p>The <a href='#propType'>Type</a> property configures whether the breakpoint should be installed as hardware or a software breakpoint.
@@ -165,7 +164,7 @@ A breakpoint service implementation may not change the properties set by the cli
     <ul>
         <li><dt><code><b>READ = 0x01</b></code> <dd>Triggered by a read from the breakpoint location
         <li><dt><code><b>WRITE = 0x02</b></code> <dd>Triggered by a write to the breakpoint location
-        <li><dt><code><b>EXECUTE = 0x04</b></code> <dd>Triggered by an instruction execution at the breakpoint location. Whether the breakpoint is triggered before the instruction execution or after depends on the target support for this mode. 
+        <li><dt><code><b>EXECUTE = 0x04</b></code> <dd>Triggered by an instruction execution at the breakpoint location. Whether the breakpoint is triggered before the instruction execution or after depends on the target support for this mode. This is the default for Line and Address breakpoints.
         <li><dt><code><b>CHANGE = 0x08</b></code> <dd>Triggered by a data change (not an explicit write) at the breakpoint location
     </ul>
     </dl>
