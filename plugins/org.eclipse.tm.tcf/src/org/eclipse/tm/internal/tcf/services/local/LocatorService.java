@@ -107,6 +107,10 @@ public class LocatorService implements ILocator {
     public static LocalPeer getLocalPeer() {
         return local_peer;
     }
+    
+    public static Collection<LocatorListener> getListeners() {
+        return listeners;
+    }
 
     public static void addPeer(IPeer peer) {
         assert peers.get(peer.getID()) == null;
@@ -116,9 +120,9 @@ public class LocatorService implements ILocator {
     }
 
     public static void removePeer(IPeer peer) {
-        assert peers.get(peer.getID()) == peer;
-        peers.remove(peer);
         String id = peer.getID();
+        assert peers.get(id) == peer;
+        peers.remove(id);
         for (LocatorListener l : listeners) l.peerRemoved(id);
     }
 
@@ -284,12 +288,7 @@ public class LocatorService implements ILocator {
         if (id == null) throw new Exception("Invalid peer info: no ID");
         IPeer peer = peers.get(id);
         if (peer instanceof RemotePeer) {
-            if (((RemotePeer)peer).updateAttributes(map)) {
-                for (LocatorListener l : listeners) l.peerChanged(peer);
-            }
-            else {
-                for (LocatorListener l : listeners) l.peerHeartBeat(id);
-            }
+            ((RemotePeer)peer).updateAttributes(map);
         }
         else {
             new RemotePeer(map);

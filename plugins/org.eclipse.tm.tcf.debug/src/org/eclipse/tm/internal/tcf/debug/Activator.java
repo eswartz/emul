@@ -13,7 +13,9 @@ package org.eclipse.tm.internal.tcf.debug;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.tm.internal.tcf.debug.launch.TCFUserDefPeer;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsModel;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.osgi.framework.BundleContext;
 
 
@@ -37,6 +39,12 @@ public class Activator extends Plugin {
     public void start(BundleContext context) throws Exception {
         super.start(context);
         bp_model = new TCFBreakpointsModel();
+        Protocol.invokeLater(new Runnable() {
+
+            public void run() {
+                TCFUserDefPeer.loadPeers();
+            }
+        });
     }
 
     @Override

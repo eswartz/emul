@@ -29,8 +29,9 @@ import org.eclipse.swt.widgets.Text;
 
 class TestErrorsDialog extends Dialog {
     
-    private final int SIZING_TEXT_WIDTH = 600;
-    private final int SIZING_TEXT_HEIGHT = 400;
+    private static final int 
+        SIZING_TEXT_WIDTH = 600,
+        SIZING_TEXT_HEIGHT = 400;
     
     private Collection<Throwable> errors;
     private Image image;
@@ -42,16 +43,19 @@ class TestErrorsDialog extends Dialog {
         this.errors = errors;
     }
 
+    @Override
     protected void configureShell(Shell shell) {
         super.configureShell(shell);
         shell.setText("Connection Diagnostic errors");
         shell.setImage(image);
     }       
 
+    @Override
     protected void createButtonsForButtonBar(Composite parent) {
         createButton(parent, IDialogConstants.OK_ID, "&OK", true);
     }
 
+    @Override
     protected Control createDialogArea(Composite parent) {
         Composite composite = (Composite)super.createDialogArea(parent);
         composite.setSize(composite.computeSize(SWT.DEFAULT, SWT.DEFAULT));

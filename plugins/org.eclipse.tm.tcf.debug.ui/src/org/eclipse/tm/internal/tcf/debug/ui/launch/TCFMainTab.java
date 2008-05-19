@@ -24,13 +24,13 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
@@ -50,6 +50,7 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
+import org.eclipse.tm.internal.tcf.debug.launch.TCFUserDefPeer;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -67,6 +68,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
     private Text peer_id_text;
     private Text program_text;
     private Tree peer_tree;
+    private Runnable update_peer_buttons;
     private final PeerInfo peer_info = new PeerInfo();
     private Display display;
 
@@ -222,15 +224,26 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         createVerticalSpacer(group, top_layout.numColumns);
 
         Label peer_label = new Label(group, SWT.NONE);
-        peer_label.setText("Available targets:");
+        peer_label.setText("&Available targets:");
         peer_label.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
         peer_label.setFont(font);
                 
         loadChildren(peer_info);
+        createPeerListArea(group);
+    }
+    
+    private void createPeerListArea(Composite parent) {
+        Font font = parent.getFont();
+        Composite composite = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout(2, false);
+        composite.setFont(font);
+        composite.setLayout(layout);
+        composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
         
-        peer_tree = new Tree(group, SWT.VIRTUAL | SWT.BORDER | SWT.SINGLE);
-        GridData gd = new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1);
+        peer_tree = new Tree(composite, SWT.VIRTUAL | SWT.BORDER | SWT.SINGLE);
+        GridData gd = new GridData(GridData.FILL_BOTH);
         gd.minimumHeight = 150;
+        gd.minimumWidth = 470;
         peer_tree.setLayoutData(gd);
         
         for (int i = 0; i < 5; i++) {
@@ -283,10 +296,27 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
                 }
             }
         });
-        peer_tree.addSelectionListener(new SelectionListener() {
+        peer_tree.addSelectionListener(new SelectionAdapter() {
+            @Override
             public void widgetDefaultSelected(SelectionEvent e) {
+                TreeItem[] selections = peer_tree.getSelection();
+                if (selections.length == 0) return;
+                assert selections.length == 1;
+                final PeerInfo info = findPeerInfo(selections[0]);
+                if (info == null) return;
+                new PeerPropsDialog(getShell(), getImage(), info.attrs,
+                        info.peer instanceof TCFUserDefPeer).open();
+                if (!(info.peer instanceof TCFUserDefPeer)) return;
+                Protocol.invokeLater(new Runnable() {
+                    public void run() {
+                        ((TCFUserDefPeer)info.peer).updateAttributes(info.attrs);
+                        TCFUserDefPeer.savePeers();
+                    }
+                });
             }
+            @Override
             public void widgetSelected(SelectionEvent e) {
+                update_peer_buttons.run();
                 TreeItem[] selections = peer_tree.getSelection();
                 if (selections.length > 0) {
                     assert selections.length == 1;
@@ -295,13 +325,84 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
                 }
             }
         });
-
-        createVerticalSpacer(group, top_layout.numColumns);
         
-        Button button_test = new Button(group, SWT.PUSH);
-        button_test.setText("Run &Diagnostics");
-        button_test.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
+        createPeerButtons(composite);
+    }
+    
+    private void createPeerButtons(Composite parent) {
+        Font font = parent.getFont();
+        Composite composite = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        composite.setFont(font);
+        composite.setLayout(layout);
+        composite.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.VERTICAL_ALIGN_FILL));
+        
+        final Button button_new = new Button(composite, SWT.PUSH);
+        button_new.setText("N&ew...");
+        button_new.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
+        button_new.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                final Map<String,String> attrs = new HashMap<String,String>();
+                if (new PeerPropsDialog(getShell(), getImage(), attrs, true).open() != Window.OK) return;
+                Protocol.invokeLater(new Runnable() {
+                    public void run() {
+                        new TCFUserDefPeer(attrs);
+                        TCFUserDefPeer.savePeers();
+                    }
+                });
+            }
+        });
+
+        final Button button_edit = new Button(composite, SWT.PUSH);
+        button_edit.setText("E&dit...");
+        button_edit.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
+        button_edit.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                TreeItem[] selection = peer_tree.getSelection();
+                if (selection.length == 0) return;
+                final PeerInfo info = findPeerInfo(selection[0]);
+                if (info == null) return;
+                if (new PeerPropsDialog(getShell(), getImage(), info.attrs,
+                        info.peer instanceof TCFUserDefPeer).open() != Window.OK) return;
+                if (!(info.peer instanceof TCFUserDefPeer)) return;
+                Protocol.invokeLater(new Runnable() {
+                    public void run() {
+                        ((TCFUserDefPeer)info.peer).updateAttributes(info.attrs);
+                        TCFUserDefPeer.savePeers();
+                    }
+                });
+            }
+        });
+
+        final Button button_remove = new Button(composite, SWT.PUSH);
+        button_remove.setText("&Remove");
+        button_remove.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
+        button_remove.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                TreeItem[] selection = peer_tree.getSelection();
+                if (selection.length == 0) return;
+                final PeerInfo info = findPeerInfo(selection[0]);
+                if (info == null) return;
+                if (!(info.peer instanceof TCFUserDefPeer)) return;
+                Protocol.invokeLater(new Runnable() {
+                    public void run() {
+                        ((TCFUserDefPeer)info.peer).dispose();
+                        TCFUserDefPeer.savePeers();
+                    }
+                });
+            }
+        });
+        
+        createVerticalSpacer(composite, 20);
+
+        final Button button_test = new Button(composite, SWT.PUSH);
+        button_test.setText("Run &Tests");
+        button_test.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
         button_test.addSelectionListener(new SelectionAdapter() {
+            @Override
             public void widgetSelected(SelectionEvent e) {
                 TreeItem[] selection = peer_tree.getSelection();
                 if (selection.length > 0) {
@@ -311,10 +412,11 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             }
         });
 
-        Button button_loop = new Button(group, SWT.PUSH);
-        button_loop.setText("Diagnostics &Loop");
-        button_loop.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
+        final Button button_loop = new Button(composite, SWT.PUSH);
+        button_loop.setText("Tests &Loop");
+        button_loop.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
         button_loop.addSelectionListener(new SelectionAdapter() {
+            @Override
             public void widgetSelected(SelectionEvent e) {
                 TreeItem[] selection = peer_tree.getSelection();
                 if (selection.length > 0) {
@@ -323,6 +425,20 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
                 }
             }
         });
+        
+        update_peer_buttons = new Runnable() {
+
+            public void run() {
+                PeerInfo info = null;
+                TreeItem[] selection = peer_tree.getSelection();
+                if (selection.length > 0) info = findPeerInfo(selection[0]);
+                button_edit.setEnabled(info != null);
+                button_remove.setEnabled(info != null && info.peer instanceof TCFUserDefPeer);
+                button_test.setEnabled(info != null);
+                button_loop.setEnabled(info != null);
+            }
+        };
+        update_peer_buttons.run();
     }
 
     private void createProgramGroup(Composite parent) {
@@ -380,7 +496,10 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             if (id != null) {
                 peer_id_text.setText(id);
                 TreeItem item = findItem(findPeerInfo(id));
-                if (item != null) peer_tree.setSelection(item);
+                if (item != null) {
+                    peer_tree.setSelection(item);
+                    update_peer_buttons.run();
+                }
             }
             program_text.setText(configuration.getAttribute(
                     TCFLaunchDelegate.ATTR_PROGRAM_FILE, "")); //$NON-NLS-1$
@@ -540,7 +659,10 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             for (int i = 0; i < items.length; i++) fillItem(items[i], arr[i]);
             String id = peer_id_text.getText();
             TreeItem item = findItem(findPeerInfo(id));
-            if (item != null) peer_tree.setSelection(item);
+            if (item != null) {
+                peer_tree.setSelection(item);
+                update_peer_buttons.run();
+            }
         }
     }
 
@@ -606,6 +728,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         button_cancel.setText("&Cancel");
         button_cancel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         button_cancel.addSelectionListener(new SelectionAdapter() {
+            @Override
             public void widgetSelected(SelectionEvent e) {
                 Protocol.invokeLater(new Runnable() {
                     public void run() {

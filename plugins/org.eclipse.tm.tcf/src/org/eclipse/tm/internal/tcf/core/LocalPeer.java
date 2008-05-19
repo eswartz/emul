@@ -14,12 +14,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.core.AbstractPeer;
-import org.eclipse.tm.tcf.protocol.IChannel;
-
 
 public class LocalPeer extends AbstractPeer {
     
-    private static Map<String, String> createAttributes() {
+    private static Map<String,String> createAttributes() {
         Map<String, String> attrs = new HashMap<String, String>();
         attrs.put(ATTR_ID, "TCFLocal");
         attrs.put(ATTR_NAME, "Local Peer");
@@ -30,9 +28,5 @@ public class LocalPeer extends AbstractPeer {
 
     public LocalPeer() {
         super(createAttributes());
-    }
-
-    public IChannel openChannel() {
-        return new ChannelLoop(this);
     }
 }

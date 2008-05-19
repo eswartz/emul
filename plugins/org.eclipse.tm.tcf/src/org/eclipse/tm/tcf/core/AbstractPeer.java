@@ -10,14 +10,18 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.core;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.tm.internal.tcf.core.ReadOnlyMap;
 import org.eclipse.tm.internal.tcf.core.Transport;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.ILocator.LocatorListener;
 
 
 public abstract class AbstractPeer implements IPeer {
@@ -26,6 +30,7 @@ public abstract class AbstractPeer implements IPeer {
     private final Map<String, String> rw_attrs;
     
     public AbstractPeer(Map<String, String> attrs) {
+        assert Protocol.isDispatchThread();
         if (attrs != null) {
             rw_attrs = new HashMap<String, String>(attrs);
         }
@@ -37,9 +42,32 @@ public abstract class AbstractPeer implements IPeer {
         LocatorService.addPeer(this);
     }
 
-    protected Map<String, String> getAttributesStorage() {
-        assert Protocol.isDispatchThread();
-        return rw_attrs;
+    public void updateAttributes(Map<String,String> attrs) {
+        boolean equ = true;
+        assert attrs.get(ATTR_ID).equals(rw_attrs.get(ATTR_ID));
+        for (Iterator<String> i = rw_attrs.keySet().iterator(); i.hasNext();) {
+            String key = i.next();
+            if (!rw_attrs.get(key).equals(attrs.get(key))) {
+                equ = false;
+                break;
+            }
+        }
+        for (Iterator<String> i = attrs.keySet().iterator(); i.hasNext();) {
+            String key = i.next();
+            if (!attrs.get(key).equals(rw_attrs.get(key))) {
+                equ = false;
+                break;
+            }
+        }
+        Collection<LocatorListener> listeners = LocatorService.getListeners();
+        if (!equ) {
+            rw_attrs.clear();
+            rw_attrs.putAll(attrs);
+            for (LocatorListener l : listeners) l.peerChanged(this);
+        }
+        else {
+            for (LocatorListener l : listeners) l.peerHeartBeat(attrs.get(ATTR_ID));
+        }
     }
 
     public void dispose() {
@@ -71,5 +99,9 @@ public abstract class AbstractPeer implements IPeer {
     public String getTransportName() {
         assert Protocol.isDispatchThread();
         return ro_attrs.get(ATTR_TRANSPORT_NAME);
+    }
+    
+    public IChannel openChannel() {
+        return Transport.openChannel(this);
     }
 }

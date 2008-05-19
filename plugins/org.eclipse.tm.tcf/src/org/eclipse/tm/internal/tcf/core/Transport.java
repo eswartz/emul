@@ -15,12 +15,15 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.tm.tcf.Activator;
 import org.eclipse.tm.tcf.core.AbstractChannel;
 import org.eclipse.tm.tcf.core.AbstractPeer;
+import org.eclipse.tm.tcf.core.ChannelTCP;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -33,6 +36,24 @@ public class Transport {
         new LinkedList<AbstractChannel>();
     private static final Collection<Protocol.ChannelOpenListener> listeners = 
         new LinkedList<Protocol.ChannelOpenListener>();
+    
+    
+    public static IChannel openChannel(IPeer peer) {
+        String transport = peer.getTransportName();
+        if (transport == null) throw new Error("Unknown transport");
+        if (transport.equals("Loop")) {
+            return new ChannelLoop(peer);
+        }
+        if (transport.equals("TCP")) {
+            Map<String,String> attrs = peer.getAttributes();
+            String host = attrs.get(IPeer.ATTR_IP_HOST);
+            String port = attrs.get(IPeer.ATTR_IP_PORT);
+            if (host == null) throw new Error("No host name");
+            if (port == null) throw new Error("No port number");
+            return new ChannelTCP(peer, host, Integer.parseInt(port));
+        }
+        throw new Error("Unknown transport name: " + transport);
+    }
 
     public static void channelOpened(final AbstractChannel channel) {
         channels.add(channel);
