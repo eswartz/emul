@@ -31,6 +31,8 @@
 
 Channel * chan;
 
+static FILE * infile;
+static int interactive_flag;
 static int cmdline_suspended;
 static pthread_mutex_t cmdline_mutex;
 static pthread_cond_t cmdline_signal;
@@ -274,9 +276,11 @@ static void * interactive_handler(void * x) {
             check_error(pthread_cond_wait(&cmdline_signal, &cmdline_mutex));
             continue;
         }
-        printf("> ");
-        fflush(stdout);
-        if (fgets(buf, sizeof(buf), stdin) == NULL) {
+        if (interactive_flag) {
+            printf("> ");
+            fflush(stdout);
+        }
+        if (fgets(buf, sizeof(buf), infile) == NULL) {
             strcpy(buf, "exit");
             done = 1;
         }
@@ -291,13 +295,19 @@ static void * interactive_handler(void * x) {
     return NULL;
 }
 
-void ini_cmdline_handler(void) {
+void open_script_file(char * script_name) {
+    if (script_name == NULL || (infile = fopen(script_name, "r")) == NULL) {
+        if (script_name == NULL) script_name = "<null>";
+        fprintf(stderr, "TCF: error: cannot open script file %s\n", script_name);
+        exit(1);
+    }
+}
+
+void ini_cmdline_handler(int interactive) {
+    interactive_flag = interactive;
+    if (infile == NULL) infile = stdin;
     check_error(pthread_mutex_init(&cmdline_mutex, NULL));
     check_error(pthread_cond_init(&cmdline_signal, NULL));
     /* Create thread to read cmd line */
     check_error(pthread_create(&interactive_thread, &pthread_create_attr, interactive_handler, 0));
 }
-
-
-
-

@@ -195,7 +195,7 @@ int main(int argc, char ** argv) {
 
     discovery_start(create_default_discovery_master);
 
-    if (interactive) ini_cmdline_handler();
+    if (interactive) ini_cmdline_handler(interactive);
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */
     run_event_loop();

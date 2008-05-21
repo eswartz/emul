@@ -34,6 +34,17 @@
 
 static char * progname;
 
+/* 
+ * main entry point for TCF client
+ * 
+ * The client is a simple shell permitting communication with the TCF agent.
+ * By default the client will run in interactive mode. The client accepts
+ * 3 command line options:
+ * -L <log_file>        : specify a log file
+ * -l <log_mode>        : logging level see trace.c for more details
+ * -S <script_file>     : script of commands to run - non-interactive mode
+ */
+ 
 #if defined(_WRS_KERNEL)
 int tcf_client(void) {
 #else   
@@ -42,8 +53,10 @@ int main(int argc, char ** argv) {
     int c;
     int ind;
     int error;
+    int interactive = 1;
     char * s;
     char * log_name = 0;
+    char * script_name = 0;
     char * node = NULL;
     Protocol * proto;
 
@@ -76,6 +89,7 @@ int main(int argc, char ** argv) {
             switch (c) {
             case 'l':
             case 'L':
+            case 'S':
                 if (*s == '\0') {
                     if (++ind >= argc) {
                         fprintf(stderr, "%s: error: no argument given to option '%c'\n", progname, c);
@@ -90,6 +104,11 @@ int main(int argc, char ** argv) {
 
                 case 'L':
                     log_name = s;
+                    break;
+
+                case 'S':
+                    script_name = s;
+                    interactive = 0;
                     break;
 
                 default:
@@ -111,7 +130,8 @@ int main(int argc, char ** argv) {
 #endif
 
     discovery_start(create_default_discovery_master);
-    ini_cmdline_handler();
+    if (script_name != NULL) open_script_file(script_name);
+    ini_cmdline_handler(interactive);
 
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */
