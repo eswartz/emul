@@ -757,6 +757,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             private int last_count = 0;
             private int last_total = 0;
             public void progress(final String label_text, final int count_done, final int count_total) {
+                assert test[0] != null;
                 if ((label_text == null || last_text.equals(label_text)) &&
                         last_total == count_total &&
                         (count_done - last_count) / (float)count_total < 0.02f) return;
@@ -773,7 +774,8 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
                 });
             }
             public void done(final Collection<Throwable> errors) {
-                final boolean b = test[0] == null ? false : test[0].isCanceled();
+                assert test[0] != null;
+                final boolean b = test[0].isCanceled();
                 test[0] = null;
                 display.asyncExec(new Runnable() {
                     public void run() {
@@ -782,7 +784,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
                             new TestErrorsDialog(getControl().getShell(),
                                     getImage("icons/tcf.gif"), errors).open();
                         }
-                        else if (loop && !b) {
+                        else if (loop && !b && display != null) {
                             runDiagnostics(item, true, test, shell, label, bar);
                         }
                         else {

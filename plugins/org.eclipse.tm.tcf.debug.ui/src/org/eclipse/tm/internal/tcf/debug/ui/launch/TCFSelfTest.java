@@ -81,11 +81,16 @@ class TCFSelfTest {
     private interface Test {
     }
     
-    TCFSelfTest(IPeer peer, TestListener listener) throws IOException {
+    TCFSelfTest(final IPeer peer, TestListener listener) throws IOException {
         this.listener = listener;
         pending_tests.add(new Runnable() {
             public void run() {
                 for (IChannel channel : channels) new TestEcho(channel);
+            }
+        });
+        pending_tests.add(new Runnable() {
+            public void run() {
+                for (IChannel channel : channels) new TestAttachTerminate(channel);
             }
         });
         pending_tests.add(new Runnable() {
@@ -102,16 +107,25 @@ class TCFSelfTest {
         pending_tests.add(new Runnable() {
             public void run() {
                 for (int i = 0; i < channels.length; i++) {
-                    switch (i % 3) {
+                    switch (i % 4) {
                     case 0: new TestEcho(channels[i]); break;
-                    case 1: new TestRCBP1(channels[i], i); break;
-                    case 2: new TestFileSystem(channels[i]); break;
+                    case 1: new TestAttachTerminate(channels[i]); break;
+                    case 2: new TestRCBP1(channels[i], i); break;
+                    case 3: new TestFileSystem(channels[i]); break;
                     }
                 }
             }
         });
         count_total = NUM_CHANNELS * pending_tests.size() * 2;
         channels = new IChannel[NUM_CHANNELS];
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                openChannels(peer);
+            }
+        });
+    }
+    
+    private void openChannels(IPeer peer) {
         listener.progress("Openning communication channels...", count_done, count_total);
         for (int i = 0; i < channels.length; i++) {
             final IChannel channel = channels[i] = peer.openChannel();
@@ -235,6 +249,168 @@ class TCFSelfTest {
             }
             else if (msgs.isEmpty()){
                 done(this);
+            }
+        }
+    }
+    
+    private class TestAttachTerminate implements Test, IRunControl.RunControlListener {
+        
+        private final IDiagnostics diag;
+        private final IRunControl rc;
+        
+        private final HashMap<String,IRunControl.RunControlContext> map =
+            new HashMap<String,IRunControl.RunControlContext>();
+        private final HashSet<String> process_ids = new HashSet<String>();
+        
+        private int cnt;
+        private int sync_cnt;
+        
+        TestAttachTerminate(IChannel channel) {
+            diag = channel.getRemoteService(IDiagnostics.class);
+            rc = channel.getRemoteService(IRunControl.class);
+            active_tests.put(this, channel);
+            listener.progress("Running Debugger Attach/Terminate Test...", ++count_done, count_total);
+            if (diag == null) {
+                done(this);
+            }
+            else {
+                if (rc != null) rc.addListener(this);
+                diag.getTestList(new IDiagnostics.DoneGetTestList() {
+                    public void doneGetTestList(IToken token, Throwable error, String[] list) {
+                        assert active_tests.get(TestAttachTerminate.this) != null;
+                        if (error != null) {
+                            exit(error);
+                        }
+                        else {
+                            for (int i = 0; i < list.length; i++) {
+                                if (list[i].equals("RCBP1")) {
+                                    startProcess();
+                                    return;
+                                }
+                            }
+                        }
+                        exit(null);
+                    }
+                });
+            }
+        }
+        
+        private void startProcess() {
+            if (cancel || cnt == 4) {
+                if (!map.isEmpty()) {
+                    Protocol.sync(new Runnable() {
+                        public void run() {
+                            sync_cnt++;
+                            if (map.isEmpty()) {
+                                exit(null);
+                            }
+                            else if (sync_cnt < 1000) {
+                                Protocol.sync(this);
+                            }
+                            else {
+                                exit(new Error("Missing 'contextRemoved' event for " + map.keySet()));
+                            }
+                        }
+                    });
+                }
+                else {
+                    exit(null);
+                }
+                return;
+            }
+            cnt++;
+            diag.runTest("RCBP1", new IDiagnostics.DoneRunTest() {
+                public void doneRunTest(IToken token, Throwable error, String context_id) {
+                    if (error != null) {
+                        exit(error);
+                    }
+                    else {
+                        assert context_id != null;
+                        if (rc != null && map.get(context_id) == null) {
+                            exit(new Error("Missing 'contextAdded' event for context " + context_id));
+                        }
+                        process_ids.add(context_id);
+                        diag.cancelTest(context_id, new IDiagnostics.DoneCancelTest() {
+                            public void doneCancelTest(IToken token, Throwable error) {
+                                if (error != null) {
+                                    exit(error);
+                                }
+                                else {
+                                    startProcess();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        private void exit(Throwable x) {
+            if (active_tests.get(this) == null) return;
+            if (x != null) errors.add(x);
+            if (rc != null) rc.removeListener(this);
+            done(this);
+        }
+
+        public void containerResumed(String[] context_ids) {
+        }
+
+        public void containerSuspended(String main_context, String pc,
+                String reason, Map<String, Object> params,
+                String[] suspended_ids) {
+            for (String context : suspended_ids) {
+                assert context != null;
+                IRunControl.RunControlContext ctx = map.get(context);  
+                if (ctx == null) exit(new Error("Invalid 'contextSuspended' event for " + context));
+                if (process_ids.contains(context) || process_ids.contains(ctx.getParentID())) {
+                    ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+                        public void doneCommand(IToken token, Exception error) {
+                            if (error != null) exit(error);
+                        }
+                    });
+                }
+            }
+        }
+
+        public void contextAdded(RunControlContext[] contexts) {
+            for (RunControlContext ctx : contexts) {
+                if (map.get(ctx.getID()) != null) exit(new Error("Invalid 'contextAdded' event"));
+                map.put(ctx.getID(), ctx);
+            }
+        }
+
+        public void contextChanged(RunControlContext[] contexts) {
+            for (RunControlContext ctx : contexts) {
+                if (map.get(ctx.getID()) == null) exit(new Error("Invalid 'contextChanged' event"));
+                map.put(ctx.getID(), ctx);
+            }
+        }
+
+        public void contextException(String context, String msg) {
+            exit(new Error("Unexpected 'contextException' event for " + context + ": " + msg));
+        }
+
+        public void contextRemoved(String[] context_ids) {
+            for (String id : context_ids) {
+                if (map.get(id) == null) exit(new Error("Invalid 'contextRemoved' event"));
+                map.remove(id);
+            }
+        }
+
+        public void contextResumed(String context) {
+        }
+
+        public void contextSuspended(String context, String pc, String reason,
+                Map<String, Object> params) {
+            assert context != null;
+            IRunControl.RunControlContext ctx = map.get(context);  
+            if (ctx == null) exit(new Error("Invalid 'contextSuspended' event for " + context));
+            if (process_ids.contains(context) || process_ids.contains(ctx.getParentID())) {
+                ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+                    public void doneCommand(IToken token, Exception error) {
+                        if (error != null) exit(error);
+                    }
+                });
             }
         }
     }
@@ -640,9 +816,8 @@ class TCFSelfTest {
                     exit(new Exception("Invalid contextRemoved event"));
                     return;
                 }
-                threads.remove(id);
                 running.remove(id);
-                if (threads.isEmpty()) {
+                if (threads.remove(id) != null && threads.isEmpty()) {
                     if (bp_cnt != 30) {
                         exit(new Exception("Test main thread breakpoint count = " + bp_cnt + ", expected 30"));
                     }

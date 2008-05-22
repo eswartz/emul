@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFAnnotationManager;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModelManager;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
@@ -29,13 +32,20 @@ public class Activator extends AbstractUIPlugin {
     // The shared instance
     private static Activator plugin;
     private static TCFModelManager model_manager;
+    private static TCFAnnotationManager annotation_manager;
 
     private static final BundleListener bundle_listener = new BundleListener() {
         public void bundleChanged(BundleEvent event) {
             if (plugin != null && event.getBundle() == plugin.getBundle() &&
-                    plugin.getBundle().getState() != Bundle.ACTIVE && model_manager != null) {
-                model_manager.dispose();
-                model_manager = null;
+                    plugin.getBundle().getState() != Bundle.ACTIVE) {
+                if (model_manager != null) {
+                    model_manager.dispose();
+                    model_manager = null;
+                }
+                if (annotation_manager != null) {
+                    annotation_manager.dispose();
+                    annotation_manager = null;
+                }
             }
         }
     };
@@ -75,9 +85,9 @@ public class Activator extends AbstractUIPlugin {
     }
 
     /**
-     * Returns the shared TCFModel instance
+     * Returns the shared TCFModelManager instance
      *
-     * @return the shared TCFModel instance
+     * @return the shared TCFModelManager instance
      */
     public static TCFModelManager getModelManager() {
         if (plugin != null && model_manager == null && plugin.getBundle().getState() == Bundle.ACTIVE) {
@@ -85,4 +95,31 @@ public class Activator extends AbstractUIPlugin {
         }
         return model_manager;
     }
+
+    /**
+     * Returns the shared TCFAnnotationManager instance
+     *
+     * @return the shared TCFAnnotationManager instance
+     */
+    public static TCFAnnotationManager getAnnotationManager() {
+        if (plugin != null && annotation_manager == null && plugin.getBundle().getState() == Bundle.ACTIVE) {
+            annotation_manager = new TCFAnnotationManager();
+        }
+        return annotation_manager;
+    }
+
+    /**
+     * Send error message into Eclipse log.
+     * @param msg - error message test
+     * @param err - exception
+     */
+    public static void log(String msg, Throwable err) {
+        if (plugin == null || plugin.getLog() == null) {
+            err.printStackTrace();
+        }
+        else {
+            plugin.getLog().log(new Status(IStatus.ERROR,
+                    plugin.getBundle().getSymbolicName(), IStatus.OK, msg, err));
+        }
+    }  
 }

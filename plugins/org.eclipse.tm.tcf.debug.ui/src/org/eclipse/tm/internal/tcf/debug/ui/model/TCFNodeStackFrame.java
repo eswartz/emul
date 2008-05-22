@@ -126,12 +126,17 @@ public class TCFNodeStackFrame extends TCFNode {
     }
 
     int getFrameNo() {
+        assert Protocol.isDispatchThread();
         return frame_no;
     }
     
     void setFrameNo(int frame_no) {
         assert this.frame_no != 0 && frame_no != 0;
         this.frame_no = frame_no;
+    }
+    
+    TCFDataCache<TCFSourceRef> getLineInfo() {
+        return line_info;
     }
 
     @Override

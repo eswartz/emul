@@ -26,6 +26,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
+import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -104,9 +105,9 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         if (adapter == IElementLabelProvider.class) return model;
         if (adapter == IElementContentProvider.class) return model;
         if (adapter == IColumnPresentationFactory.class) return model;
+        if (adapter == ISourceDisplay.class) return model;
         Object o = model.getCommand(adapter);
         if (o != null) return o;
-        //System.err.println(adapter.getName());
         return super.getAdapter(adapter);
     }
 

@@ -12,14 +12,19 @@ package org.eclipse.tm.internal.tcf.debug.launch;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.sourcelookup.AbstractSourceLookupParticipant;
+import org.eclipse.tm.tcf.services.ILineNumbers;
 
 /**
- * The TCF source lookup participant knows how to translate a TCF stack frame
+ * The TCF source lookup participant knows how to translate a ILineNumbers.CodeArea
  * into a source file name
  */
 public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant {
 
     public String getSourceName(Object object) throws CoreException {
+        if (object instanceof ILineNumbers.CodeArea) {
+            ILineNumbers.CodeArea area = (ILineNumbers.CodeArea)object;
+            return area.file;
+        }
         return null;
     }
 }

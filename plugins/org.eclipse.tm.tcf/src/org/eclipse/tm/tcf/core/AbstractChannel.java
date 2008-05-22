@@ -159,7 +159,7 @@ public abstract class AbstractChannel implements IChannel {
                 for (;;) {
                     int n = read();
                     if (n == end) break;
-                    if (n < 0) error();
+                    if (n < 0) throw new IOException("Communication channel is closed by remote peer");
                     if (len >= buf.length) {
                         byte[] tmp = new byte[buf.length * 2];
                         System.arraycopy(buf, 0, tmp, 0, len);

@@ -83,4 +83,48 @@
       </perspectiveExtension>
    </extension>
    
+   <extension point="org.eclipse.ui.editors.annotationTypes">
+      <type
+         name="org.eclipse.tm.tcf.debug.top_frame">
+      </type>
+      <type
+         name="org.eclipse.tm.tcf.debug.stack_frame">
+      </type>
+   </extension>  
+   
+   <extension point="org.eclipse.ui.editors.markerAnnotationSpecification">
+      <specification
+         annotationImageProvider="org.eclipse.tm.internal.tcf.debug.ui.model.TCFAnnotationImageProvider"
+         annotationType="org.eclipse.tm.tcf.debug.top_frame"
+         colorPreferenceKey="currentIPColor"
+         colorPreferenceValue="198,219,174"
+         highlightPreferenceKey="currentIPHighlight"
+         highlightPreferenceValue="true"
+         label="%debugCurrentInstructionPointer"
+         overviewRulerPreferenceKey="currentIPOverviewRuler"
+         overviewRulerPreferenceValue="true"
+         presentationLayer="6"
+         textPreferenceKey="currentIPIndication"
+         textPreferenceValue="false"
+         verticalRulerPreferenceKey="currentIPVerticalRuler"
+         verticalRulerPreferenceValue="true">
+      </specification>
+      <specification
+         annotationImageProvider="org.eclipse.tm.internal.tcf.debug.ui.model.TCFAnnotationImageProvider"
+         annotationType="org.eclipse.tm.tcf.debug.stack_frame"
+         colorPreferenceKey="secondaryIPColor"
+         colorPreferenceValue="219,235,204"
+         highlightPreferenceKey="secondaryIPHighlight"
+         highlightPreferenceValue="true"
+         label="%debugCallStack"
+         overviewRulerPreferenceKey="secondaryIPOverviewRuler"
+         overviewRulerPreferenceValue="true"
+         presentationLayer="6"
+         textPreferenceKey="secondaryIPIndication"
+         textPreferenceValue="false"
+         verticalRulerPreferenceKey="secondaryIPVerticalRuler"
+         verticalRulerPreferenceValue="true">
+      </specification>
+   </extension>
+
 </plugin>

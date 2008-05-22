@@ -99,6 +99,7 @@ public class TCFModelManager {
     }
 
     public TCFModel getModel(TCFLaunch launch) {
+        assert Protocol.isDispatchThread();
         TCFModel model = models.get(launch);
         if (model == null) {
             model = new TCFModel(display, launch);

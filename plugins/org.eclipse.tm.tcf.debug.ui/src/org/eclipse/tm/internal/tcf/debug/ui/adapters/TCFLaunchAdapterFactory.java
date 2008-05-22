@@ -28,7 +28,7 @@ public class TCFLaunchAdapterFactory implements IAdapterFactory {
         IElementContentProvider.class,
         IElementLabelProvider.class,
         IModelProxyFactory.class,
-        ITerminateHandler.class
+        ITerminateHandler.class,
     };
 
     private final IElementLabelProvider launch_label_provider = new TCFLaunchLabelProvider();

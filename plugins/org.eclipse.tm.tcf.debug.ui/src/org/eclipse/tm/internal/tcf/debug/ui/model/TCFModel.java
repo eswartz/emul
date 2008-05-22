@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.commands.IDisconnectHandler;
 import org.eclipse.debug.core.commands.IResumeHandler;
 import org.eclipse.debug.core.commands.IStepIntoHandler;
@@ -22,6 +23,8 @@ import org.eclipse.debug.core.commands.IStepOverHandler;
 import org.eclipse.debug.core.commands.IStepReturnHandler;
 import org.eclipse.debug.core.commands.ISuspendHandler;
 import org.eclipse.debug.core.commands.ITerminateHandler;
+import org.eclipse.debug.core.model.ISourceLocator;
+import org.eclipse.debug.core.sourcelookup.ISourceLookupDirector;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IColumnPresentation;
@@ -35,8 +38,16 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.ui.IDebugUIConstants;
+import org.eclipse.debug.ui.ISourcePresentation;
+import org.eclipse.debug.ui.sourcelookup.CommonSourceNotFoundEditorInput;
+import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
+import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
+import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.DisconnectCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.ResumeCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.StepIntoCommand;
@@ -44,14 +55,22 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.StepOverCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.StepReturnCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.SuspendCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.TerminateCommand;
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.util.TCFDataCache;
+import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.texteditor.IDocumentProvider;
+import org.eclipse.ui.texteditor.ITextEditor;
 
 
 public class TCFModel implements IElementContentProvider, IElementLabelProvider,
-        IModelProxyFactory, IColumnPresentationFactory {
+        IModelProxyFactory, IColumnPresentationFactory, ISourceDisplay {
 
     private final Display display;
     private final TCFLaunch launch;
@@ -66,6 +85,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private boolean disposed;
 
     private int future_task_cnt;
+    
+    private int display_source_cnt;
 
     private static class FutureTask implements Comparable<FutureTask>{
         final int id;
@@ -145,9 +166,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             fireModelChanged();
         }
 
-        public void contextRemoved(String[] context_ids) {
-            for (int i = 0; i < context_ids.length; i++) {
-                TCFNode node = getNode(context_ids[i]);
+        public void contextRemoved(final String[] context_ids) {
+            for (String id : context_ids) {
+                TCFNode node = getNode(id);
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContextRemoved();
                 }
@@ -225,30 +246,47 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             fireModelChanged();
         }
 
-        public void contextRemoved(String[] context_ids) {
-            for (int i = 0; i < context_ids.length; i++) {
-                TCFNode node = getNode(context_ids[i]);
+        public void contextRemoved(final String[] context_ids) {
+            for (String id : context_ids) {
+                TCFNode node = getNode(id);
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContextRemoved();
                 }
             }
             fireModelChanged();
+            display.asyncExec(new Runnable() {
+                public void run() {
+                    for (String id : context_ids) {
+                        Activator.getAnnotationManager().onContextRemoved(TCFModel.this, id);
+                    }
+                }
+            });
         }
 
-        public void contextResumed(String context) {
+        public void contextResumed(final String context) {
             TCFNode node = getNode(context);
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onContextResumed();
             }
             fireModelChanged();
+            display.asyncExec(new Runnable() {
+                public void run() {
+                    Activator.getAnnotationManager().onContextResumed(TCFModel.this, context);
+                }
+            });
         }
 
-        public void contextSuspended(String context, String pc, String reason, Map<String,Object> params) {
+        public void contextSuspended(final String context, String pc, String reason, Map<String,Object> params) {
             TCFNode node = getNode(context);
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onContextSuspended(pc, reason, params);
             }
             fireModelChanged();
+            display.asyncExec(new Runnable() {
+                public void run() {
+                    Activator.getAnnotationManager().onContextSuspended(TCFModel.this, context);
+                }
+            });
         }
     };
 
@@ -478,4 +516,135 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
         return null;
     }
+    
+    /**
+     * Reveal source code associated with given model element.
+     */
+    public void displaySource(Object element, final IWorkbenchPage page, boolean forceSourceLookup) {
+        if (element instanceof TCFNodeStackFrame) {
+            final TCFNodeStackFrame stack_frame = (TCFNodeStackFrame)element;
+            final int cnt = ++display_source_cnt;
+            Protocol.invokeLater(new Runnable() {
+                public void run() {
+                    if (cnt != display_source_cnt) return;
+                    IChannel channel = getLaunch().getChannel();
+                    if (!disposed && channel.getState() == IChannel.STATE_OPEN && !stack_frame.disposed) {
+                        TCFDataCache<TCFSourceRef> line_info = stack_frame.getLineInfo();
+                        if (!line_info.validate()) {
+                            line_info.wait(this);
+                        }
+                        else {
+                            String editor_id = null;
+                            IEditorInput editor_input = null;
+                            Throwable error = line_info.getError();
+                            TCFSourceRef src_ref = line_info.getData();
+                            int line = 0;
+                            if (error == null && src_ref != null) error = src_ref.error;
+                            if (error != null) Activator.log("Error retrieving source mapping for a stack frame", error);
+                            if (src_ref != null && src_ref.area != null) {
+                                ISourceLocator locator = getLaunch().getSourceLocator();
+                                Object source_element = null;
+                                if (locator instanceof ISourceLookupDirector) {
+                                    source_element = ((ISourceLookupDirector)locator).getSourceElement(src_ref.area);
+                                }
+                                if (source_element == null) {
+                                    editor_input = new CommonSourceNotFoundEditorInput(src_ref.area);
+                                    editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
+                                }
+                                else {
+                                    ISourcePresentation presentation = TCFModelPresentation.getDefault();
+                                    if (presentation != null) {
+                                        editor_input = presentation.getEditorInput(source_element);
+                                    }
+                                    if (editor_input != null) {
+                                        editor_id = presentation.getEditorId(editor_input, source_element);
+                                    }                               
+                                    line = src_ref.area.start_line;
+                                }
+                            }
+                            displaySource(cnt, editor_id, editor_input, page, stack_frame.getRunContext().getID(),
+                                    stack_frame.getFrameNo() == 0, line);
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    private void displaySource(final int cnt,
+            final String id, final IEditorInput input, final IWorkbenchPage page,
+            final String exe_id, final boolean top_frame, final int line) {
+        display.asyncExec(new Runnable() {
+            public void run() {
+                if (cnt != display_source_cnt) return;
+                ITextEditor text_editor = null;
+                IRegion region = null;
+                if (input != null && id != null && page != null) {
+                    IEditorPart editor = openEditor(input, id, page);
+                    if (editor instanceof ITextEditor) {                                    
+                        text_editor = (ITextEditor)editor;
+                    }
+                    else {
+                        text_editor = (ITextEditor)editor.getAdapter(ITextEditor.class);
+                    }
+                }
+                if (text_editor != null) {
+                    region = getLineInformation(text_editor, line);
+                    if (region != null) text_editor.selectAndReveal(region.getOffset(), 0);
+                }
+                Activator.getAnnotationManager().addStackFrameAnnotation(TCFModel.this,
+                        exe_id, top_frame, page, text_editor, region);
+            }
+        });
+    }
+    
+    /**
+     * Open an editor for given editor input.
+     * @param input - IEditorInput representing a source file to be shown in the editor 
+     * @param id - editor type ID
+     * @param page - workbench page that will contain the editor
+     * @return - IEditorPart if the editor was opened successfully, or null otherwise.
+     */
+    private IEditorPart openEditor(final IEditorInput input, final String id, final IWorkbenchPage page) {
+        final IEditorPart[] editor = new IEditorPart[]{ null };
+        Runnable r = new Runnable() {
+            public void run() {
+                if (!page.getWorkbenchWindow().getWorkbench().isClosing()) {
+                    try {
+                        editor[0] = page.openEditor(input, id, false, IWorkbenchPage.MATCH_ID|IWorkbenchPage.MATCH_INPUT);
+                    }
+                    catch (PartInitException e) {
+                        Activator.log("Cannot open editor", e);
+                    }
+                }
+            }
+        }; 
+        BusyIndicator.showWhile(display, r);
+        return editor[0];
+    }   
+
+    /**
+     * Returns the line information for the given line in the given editor
+     */
+    private IRegion getLineInformation(ITextEditor editor, int lineNumber) {
+        IDocumentProvider provider = editor.getDocumentProvider();
+        IEditorInput input = editor.getEditorInput();
+        try {
+            provider.connect(input);
+        }
+        catch (CoreException e) {
+            return null;
+        }
+        try {
+            IDocument document = provider.getDocument(input);
+            if (document != null)
+                return document.getLineInformation(lineNumber);
+        }
+        catch (BadLocationException e) {
+        }
+        finally {
+            provider.disconnect(input);
+        }
+        return null;
+    }       
 }
