@@ -79,21 +79,28 @@ int run_test_process(Context ** res) {
     Context * ctx = NULL;
     int r = 0;
     int error = 0;
+    int cp_cnt = 0;
     char fnm[FILE_PATH_SIZE];
     char cmd[FILE_PATH_SIZE];
     STARTUPINFO si;
     PROCESS_INFORMATION prs;
     memset(&si, 0, sizeof(si));
     memset(&prs, 0, sizeof(prs));
+    memset(fnm, 0, sizeof(fnm));
     if (GetModuleFileName(NULL, fnm, sizeof(fnm)) == 0) {
         errno = EINVAL;
         return -1;
     }
     si.cb = sizeof(si);
     strcpy(cmd, "agent.exe -t");
-    if (error == 0 && CreateProcess(fnm, cmd, NULL, NULL,
+    while (error == 0 && CreateProcess(fnm, cmd, NULL, NULL,
             FALSE, CREATE_SUSPENDED | CREATE_DEFAULT_ERROR_MODE,
             NULL, NULL, &si, &prs) == 0) {
+        if (cp_cnt < 10 && GetLastError() == ERROR_INVALID_HANDLE) {
+            cp_cnt++;
+            Sleep(100);
+            continue;
+        }
         errno = EINVAL;
         return -1;
     }

@@ -136,30 +136,6 @@ extern int pthread_create(pthread_t * thread, const pthread_attr_t * attr,
                           void * (*start_routine)(void *), void * arg);
 extern int pthread_join(pthread_t thread, void **value_ptr);
 
-/*
- * Windows socket functions don't set errno as expected.
- * Wrappers are provided to workaround the problem.
- * TODO: more socket function wrappers are needed for better error reports on Windows
- */
-#define socket(af, type, protocol) wsa_socket(af, type, protocol)
-#define bind(socket, addr, addr_size) wsa_bind(socket, addr, addr_size)
-#define listen(socket, size) wsa_listen(socket, size)
-#define recv(socket, buf, size, flags) wsa_recv(socket, buf, size, flags)
-#define recvfrom(socket, buf, size, flags, addr, addr_size) wsa_recvfrom(socket, buf, size, flags, addr, addr_size)
-#define send(socket, buf, size, flags) wsa_send(socket, buf, size, flags)
-#define sendto(socket, buf, size, flags, dest_addr, dest_size) wsa_sendto(socket, buf, size, flags, dest_addr, dest_size)
-
-extern int wsa_socket(int af, int type, int protocol);
-extern int wsa_bind(int socket, const struct sockaddr * addr, int addr_size);
-extern int wsa_listen(int socket, int size);
-extern int wsa_recv(int socket, void * buf, size_t size, int flags);
-extern int wsa_recvfrom(int socket, void * buf, size_t size, int flags,
-                    struct sockaddr * addr, socklen_t * addr_size);
-extern int wsa_send(int socket, const void * buf, size_t size, int flags);
-extern int wsa_sendto(int socket, const void * buf, size_t size, int flags,
-                  const struct sockaddr * dest_addr, socklen_t dest_size);
-
-
 #define lseek _lseeki64
 typedef struct _stati64 struct_stat;
 #define stat _stati64
@@ -200,6 +176,29 @@ extern int getgid(void);
 extern int getegid(void);
 
 #endif /* __GNUC__ */
+
+/*
+ * Windows socket functions don't set errno as expected.
+ * Wrappers are provided to workaround the problem.
+ * TODO: more socket function wrappers are needed for better error reports on Windows
+ */
+#define socket(af, type, protocol) wsa_socket(af, type, protocol)
+#define bind(socket, addr, addr_size) wsa_bind(socket, addr, addr_size)
+#define listen(socket, size) wsa_listen(socket, size)
+#define recv(socket, buf, size, flags) wsa_recv(socket, buf, size, flags)
+#define recvfrom(socket, buf, size, flags, addr, addr_size) wsa_recvfrom(socket, buf, size, flags, addr, addr_size)
+#define send(socket, buf, size, flags) wsa_send(socket, buf, size, flags)
+#define sendto(socket, buf, size, flags, dest_addr, dest_size) wsa_sendto(socket, buf, size, flags, dest_addr, dest_size)
+
+extern int wsa_socket(int af, int type, int protocol);
+extern int wsa_bind(int socket, const struct sockaddr * addr, int addr_size);
+extern int wsa_listen(int socket, int size);
+extern int wsa_recv(int socket, void * buf, size_t size, int flags);
+extern int wsa_recvfrom(int socket, void * buf, size_t size, int flags,
+                    struct sockaddr * addr, socklen_t * addr_size);
+extern int wsa_send(int socket, const void * buf, size_t size, int flags);
+extern int wsa_sendto(int socket, const void * buf, size_t size, int flags,
+                  const struct sockaddr * dest_addr, socklen_t dest_size);
 
 extern char * canonicalize_file_name(const char * path);
 

@@ -112,30 +112,15 @@ static void command_run_test(char * token, Channel * c) {
     }
 }
 
-static void event_terminate(void * arg) {
-    Context * ctx = arg;
-    LINK * qp = ctx->children.next;
-    while (qp != &ctx->children) {
-        cldl2ctxp(qp)->pending_signals |= 1 << SIGKILL;
-        qp = qp->next;
-    }
-    ctx->pending_signals |= 1 << SIGKILL;
-    context_unlock(ctx);
-}
-
 static void command_cancel_test(char * token, Channel * c) {
     char id[256];
-    Context * ctx = 0;
+    int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    ctx = id2ctx(id);
-    if (ctx != NULL && !ctx->exited) {
-        context_lock(ctx);
-        post_safe_event(event_terminate, ctx);
-    }
+    if (terminate_debug_context(c->bcg, id2ctx(id)) != 0) err = errno;
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -202,7 +187,7 @@ static void command_get_symbol(char * token, Channel * c) {
     c->out.write(&c->out, MARKER_EOM);
 }
 
-void ini_diagnostics_service(Protocol *proto) {
+void ini_diagnostics_service(Protocol * proto) {
     add_command_handler(proto, DIAGNOSTICS, "echo", command_echo);
     add_command_handler(proto, DIAGNOSTICS, "getTestList", command_get_test_list);
     add_command_handler(proto, DIAGNOSTICS, "runTest", command_run_test);

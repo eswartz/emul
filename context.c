@@ -405,6 +405,13 @@ static int win32_resume(Context * ctx) {
         post_event(event_win32_context_stopped, ctx);
         return 0;
     }
+    if (ctx->parent->pending_signals & (1 << SIGKILL)) {
+        if (!TerminateProcess(ctx->parent->handle, 1)) {
+            set_errno(GetLastError());
+            return -1;
+        }
+        ctx->parent->pending_signals &= ~(1 << SIGKILL);
+    }
     while (1) {
         DWORD cnt = ResumeThread(ctx->handle);
         if (cnt == (DWORD)-1) {
@@ -591,9 +598,9 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 fantom_process.event.u.CreateProcessInfo.hThread = NULL;
             }
             if (state == 1) {
-                ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
                 create_process.event_semaphore = event_semaphore;
                 post_event(debug_event_handler, &create_process);
+                ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
                 WaitForSingleObject(event_semaphore, INFINITE);
                 state++;
             }

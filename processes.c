@@ -329,7 +329,14 @@ static void command_terminate(char * token, Channel * c) {
     }
     else {
 #if defined(WIN32)
-        err = ENOSYS;
+        HANDLE h = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+        if (h == NULL) {
+            err = ERR_INV_CONTEXT;
+        }
+        else {
+            TerminateProcess(h, 1);
+            CloseHandle(h);
+        }
 #elif defined(_WRS_KERNEL)
         if (kill(pid, SIGTERM) < 0) err = errno;
 #else

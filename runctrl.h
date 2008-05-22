@@ -41,6 +41,12 @@ extern void post_safe_event(EventCallBack * done, void * arg);
 extern int is_all_stopped(void);
 
 /*
+ * Terminate debug context - thread or process.
+ * Returns 0 if no errors, otherwise returns -1 and sets errno.
+ */
+extern int terminate_debug_context(TCFBroadcastGroup * bcg, Context * ctx);
+
+/*
  * Initialize run control service.
  */
 extern void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg);

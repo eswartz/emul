@@ -296,39 +296,6 @@ int pthread_attr_init(pthread_attr_t * attr) {
     return 0;
 }
 
-#endif /* WIN32 */
-
-#if defined(WIN32) && defined(_MSC_VER)
-
-static __int64 file_time_to_unix_time (const FILETIME * ft) {
-    __int64 res = (__int64)ft->dwHighDateTime << 32;
-
-    res |= ft->dwLowDateTime;
-    res /= 10;                  /* from 100 nano-sec periods to usec */
-    res -= 11644473600000000u;  /* from Win epoch to Unix epoch */
-    return res;
-}
-
-int clock_gettime(clockid_t clock_id, struct timespec * tp) {
-    FILETIME ft;
-    __int64 tim;
-
-    assert(clock_id == CLOCK_REALTIME);
-    if (!tp) {
-        errno = EINVAL;
-        return -1;
-    }
-    GetSystemTimeAsFileTime(&ft);
-    tim = file_time_to_unix_time(&ft);
-    tp->tv_sec  = (long)(tim / 1000000L);
-    tp->tv_nsec = (long)(tim % 1000000L) * 1000;
-    return 0;
-}
-
-void usleep(useconds_t useconds) {
-    Sleep(useconds / 1000);
-}
-
 #undef socket
 int wsa_socket(int af, int type, int protocol) {
     int res = 0;
@@ -420,6 +387,39 @@ int wsa_sendto(int socket, const void * buf, size_t size, int flags,
         return -1;
     }
     return res;
+}
+
+#endif /* WIN32 */
+
+#if defined(WIN32) && defined(_MSC_VER)
+
+static __int64 file_time_to_unix_time (const FILETIME * ft) {
+    __int64 res = (__int64)ft->dwHighDateTime << 32;
+
+    res |= ft->dwLowDateTime;
+    res /= 10;                  /* from 100 nano-sec periods to usec */
+    res -= 11644473600000000u;  /* from Win epoch to Unix epoch */
+    return res;
+}
+
+int clock_gettime(clockid_t clock_id, struct timespec * tp) {
+    FILETIME ft;
+    __int64 tim;
+
+    assert(clock_id == CLOCK_REALTIME);
+    if (!tp) {
+        errno = EINVAL;
+        return -1;
+    }
+    GetSystemTimeAsFileTime(&ft);
+    tim = file_time_to_unix_time(&ft);
+    tp->tv_sec  = (long)(tim / 1000000L);
+    tp->tv_nsec = (long)(tim % 1000000L) * 1000;
+    return 0;
+}
+
+void usleep(useconds_t useconds) {
+    Sleep(useconds / 1000);
 }
 
 int inet_aton(const char *cp, struct in_addr *inp) {

@@ -135,6 +135,12 @@ static void write_context(OutputStream * out, Context * ctx, int is_thread) {
         json_write_boolean(out, 1);
     }
 
+    out->write(out, ',');
+    json_write_string(out, "CanTerminate");
+    out->write(out, ':');
+    json_write_boolean(out, 1);
+    
+
     out->write(out, '}');
 }
 
@@ -456,14 +462,56 @@ static void command_suspend(char * token, Channel * c) {
     send_simple_result(c, token, err);
 }
 
-static void command_not_supported(char * token, Channel * c) {
+static void event_terminate(void * arg) {
+    Context * ctx = arg;
+    LINK * qp = ctx->children.next;
+    while (qp != &ctx->children) {
+        cldl2ctxp(qp)->pending_signals |= 1 << SIGKILL;
+        qp = qp->next;
+    }
+    ctx->pending_signals |= 1 << SIGKILL;
+    context_unlock(ctx);
+}
+
+int terminate_debug_context(TCFBroadcastGroup * bcg, Context * ctx) {
+    int err = 0;
+    if (ctx == NULL) {
+        err = ERR_INV_CONTEXT;
+    }
+    else if (ctx->exited) {
+        err = ERR_ALREADY_EXITED;
+    }
+    else {
+        LINK * qp = ctx->children.next;
+        while (qp != &ctx->children) {
+            Context * c = cldl2ctxp(qp);
+            if (c->intercepted) send_event_context_resumed(&bcg->out, c);
+            c->pending_intercept = 0;
+            qp = qp->next;
+        }
+        if (ctx->intercepted) send_event_context_resumed(&bcg->out, ctx);
+        ctx->pending_intercept = 0;
+        context_lock(ctx);
+        post_safe_event(event_terminate, ctx);
+    }
+    if (err) {
+        errno = err;
+        return -1;
+    }
+    return 0;
+}
+
+static void command_terminate(char * token, Channel * c) {
     char id[256];
+    int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    send_simple_result(c, token, ENOSYS);
+    if (terminate_debug_context(c->bcg, id2ctx(id)) != 0) err = errno;
+
+    send_simple_result(c, token, err);
 }
 
 static void send_event_context_added(OutputStream * out, Context * ctx) {
@@ -791,7 +839,7 @@ void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendG
     add_command_handler(proto, RUN_CONTROL, "getState", command_get_state);
     add_command_handler(proto, RUN_CONTROL, "resume", command_resume);
     add_command_handler(proto, RUN_CONTROL, "suspend", command_suspend);
-    add_command_handler(proto, RUN_CONTROL, "terminate", command_not_supported);
+    add_command_handler(proto, RUN_CONTROL, "terminate", command_terminate);
 }
 
 #endif
