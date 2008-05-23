@@ -823,6 +823,11 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
      * locally before transmission. Sending commands too fast can fill up
      * communication channel buffers. Calling thread will be blocked until
      * enough buffer space is freed up by transmitting pending messages.
+     * <font color=#7F9FBF>@param</font> service - a remote service that will be sent the command
+     * <font color=#7F9FBF>@param</font> name - command name
+     * <font color=#7F9FBF>@param</font> args - command arguments encoded into array of bytes
+     * <font color=#7F9FBF>@param</font> done - call back object
+     * <font color=#7F9FBF>@return</font> pending command handle 
      */</font>
     IToken sendCommand(IService service, String name, <font color=#7F0055>byte</font>[] args,
         ICommandListener done);
@@ -836,13 +841,24 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
         <font color=#3F5FBF>/**
          * Called when progress message (intermediate result) is received
          * from remote peer.
+         * <font color=#7F9FBF>@param</font> token - command handle
+         * <font color=#7F9FBF>@param</font> data - progress message arguments encoded into array of bytes
          */</font>
         <font color=#7F0055>void</font> progress(<font color=#7F0055>byte</font>[] data);
         
         <font color=#3F5FBF>/**
          * Called when command result received from remote peer.
+         * <font color=#7F9FBF>@param</font> token - command handle
+         * <font color=#7F9FBF>@param</font> data - command result message arguments encoded into array of bytes
          */</font>
         <font color=#7F0055>void</font> result(<font color=#7F0055>byte</font>[] data);
+
+        <font color=#3F5FBF>/**
+         * Called when communication channel was closed while command was waiting for result.
+         * <font color=#7F9FBF>@param</font> token - command handle
+         * <font color=#7F9FBF>@param</font> error - exception that forced the channel to close
+         */</font>
+        <font color=#7F0055>void</font> terminated(IToken token, Exception error);
     }
  
     <font color=#3F5FBF>/**
@@ -850,6 +866,8 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
      * transmission. Sending messages too fast can fill up communication channel
      * buffers. Calling thread will be blocked until enough buffer space is
      * freed up by transmitting pending messages.
+     * <font color=#7F9FBF>@param</font> token - command handle
+     * <font color=#7F9FBF>@param</font> results - result message arguments encoded into array of bytes
      */</font>
     <font color=#7F0055>void</font> sendResult(IToken token, <font color=#7F0055>byte</font>[] results);
  
@@ -860,8 +878,10 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
      * messages (no traffic), 0 means optimal load, and positive numbers
      * indicate level of congestion.
      * 
-     * Note: inbound traffic congestion is detected by framework and reported to
-     * remote peer without client needed to be involved.
+     * Note: in-bound traffic congestion is detected by framework and reported to
+     * remote peer without client needed to be involved. Clients willing to provide
+     * additional data about local congestion should register itself using
+     * Protocol.addCongestionMonitor().
      */</font>
     int getCongestion();
  
@@ -871,8 +891,22 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
     <font color=#7F0055>interface</font> IChannelListener {
  
         <font color=#3F5FBF>/**
+         * Called when a channel is opened.
+         */</font>
+        <font color=#7F0055>void</font> onChannelOpened();
+
+        <font color=#3F5FBF>/**
+         * Called when channel closed. If it is closed because of an error,
+         * ‘error’ parameter will describe the error. ‘error’ is null if channel
+         * is closed normally by calling Channel.close().
+         * <font color=#7F9FBF>@param</font> error - channel exception or null
+         */</font>
+        <font color=#7F0055>void</font> onChannelClosed(Throwable error);
+
+        <font color=#3F5FBF>/**
          * Notifies listeners about congestion level changes. When level &gt; 0
          * client should delay sending more messages.
+         * <font color=#7F9FBF>@param</font> level - current congestion level
          */</font>
         <font color=#7F0055>void</font> congestionLevel(int level);
     }
@@ -880,11 +914,13 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
     <font color=#3F5FBF>/**
      * Subscribe a channel listener. The listener will be notified about changes of
      * outbound traffic congestion level.
+     * <font color=#7F9FBF>@param</font> listener - channel listener implementation
      */</font>
     <font color=#7F0055>void</font> addChannelListener(IChannelListener listener);
  
     <font color=#3F5FBF>/**
      * Remove a channel listener.
+     * <font color=#7F9FBF>@param</font> listener - channel listener implementation
      */</font>
     <font color=#7F0055>void</font> removeChannelListener(IChannelListener listener);
  
@@ -896,6 +932,9 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
  
         <font color=#3F5FBF>/**
          * Called every time a command is received from remote peer.
+         * <font color=#7F9FBF>@param</font> token - command handle
+         * <font color=#7F9FBF>@param</font> name - command name
+         * <font color=#7F9FBF>@param</font> data - command arguments encoded into array of bytes
          */</font>
         <font color=#7F0055>void</font> command(IToken token, String name, <font color=#7F0055>byte</font>[] data);
     }
@@ -903,11 +942,15 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
     <font color=#3F5FBF>/**
      * Subscribe a command server. The server will be notified about command
      * messages received through this channel for given service.
+     * <font color=#7F9FBF>@param</font> service - local service implementation
+     * <font color=#7F9FBF>@param</font> server - implementation of service commands listener 
      */</font>
     <font color=#7F0055>void</font> addCommandServer(IService service, ICommandServer listener);
  
     <font color=#3F5FBF>/**
      * Remove a command server.
+     * <font color=#7F9FBF>@param</font> service - local service implementation
+     * <font color=#7F9FBF>@param</font> server - implementation of service commands listener 
      */</font>
     <font color=#7F0055>void</font> removeCommandServer(IService service, ICommandServer listener);
 
@@ -919,16 +962,25 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
      * unless no such interface is defined.
      */</font>
     <font color=#7F0055>interface</font> IEventListener {
+        <font color=#3F5FBF>/**
+         * Called when service event message is received
+         * <font color=#7F9FBF>@param</font> name - event name
+         * <font color=#7F9FBF>@param</font> data - event arguments encode as array of bytes
+         */</font>
         <font color=#7F0055>void</font> event(String name, <font color=#7F0055>byte</font>[] data);
     }
  
     <font color=#3F5FBF>/**
      * Subscribe an event message listener for given service.
+     * <font color=#7F9FBF>@param</font> service - remote service proxy
+     * <font color=#7F9FBF>@param</font> server - implementation of service event listener 
      */</font>
     <font color=#7F0055>void</font> addEventListener(IService service, IEventListener listener);
  
     <font color=#3F5FBF>/**
      * Unsubscribe an event message listener for given service.
+     * <font color=#7F9FBF>@param</font> service - remote service proxy
+     * <font color=#7F9FBF>@param</font> server - implementation of service event listener 
      */</font>
     <font color=#7F0055>void</font> removeEventListener(IService service, IEventListener listener);
  
@@ -943,17 +995,52 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
     IPeer getRemotePeer();
  
     <font color=#3F5FBF>/**
-     * <font color=#7F9FBF>@return</font> map of services available on local peer. It maps service names to
-     * IService implemetations.
+     * <font color=#7F9FBF>@return</font> collection of services available on local peer.
      */</font>
-    Map&lt;String, IService&gt; getLocalServices();
+    Collection&lt;String> getLocalServices();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> an object representing a service from local peer.
+     * Return null if the service is not available.
+     */</font>
+    IService getLocalService(String service_name);
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> an object representing a service from local peer.
+     * Service object should implement given interface.
+     * Return null if implementation of the interface is not available.
+     */</font>
+    &lt;V <font color=#7F0055>extends</font> IService> V getLocalService(Class&lt;V> service_interface);
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> collection of services available on remote peer.
+     */</font>
+    Collection&lt;String> getRemoteServices();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> an object (proxy) representing a service from remote peer.
+     * Return null if the service is not available.
+     * Return an instance of GenericProxy if 'service_name' is not a standard TCF service.
+     */</font>
+    IService getRemoteService(String service_name);
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> an object (proxy) representing a service from remote peer,
+     * which implements given interface.
+     * Return null if implementation of the interface is not available.
+     */</font>
+    &lt;V <font color=#7F0055>extends</font> IService> V getRemoteService(Class&lt;V> service_interface);
  
     <font color=#3F5FBF>/**
-     * <font color=#7F9FBF>@return</font> map of services available on removte peer. It maps service names to
-     * IService implemetations.
+     * Install a service proxy object on this channel.
+     * This method can be called only from channel open call-back.
+     * It allows a client to extends TCF by adding proxy objects for non-standard services.
+     * Client, wishing to become service proxy provider, should register itself
+     * using either Protocol.addChannelOpenListener() or IChannel.addChannelListener().
+     * It is not allowed to register more then one proxy for a given service interface.   
      */</font>
-    Map&lt;String, IService&gt; getRemoteServices();
- 
+    &lt;V <font color=#7F0055>extends</font> IService&gt; <font color=#7F0055>void</font> setServiceProxy(Class&lt;V&gt; service_interface, IService service_proxy);
+
     <font color=#3F5FBF>/**
      * Close communication channel.
      */</font>
@@ -961,16 +1048,15 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
  
     <font color=#3F5FBF>/**
      * Close channel in case of communication error.
-     * <font color=#7F9FBF>@param error</font>
+     * <font color=#7F9FBF>@param error</font> - cause of channel termination
      */</font>
     <font color=#7F0055>void</font> terminate(Throwable error);
     
     <font color=#3F5FBF>/**
-     * Redirect this channel to given peer using this channel remote peer
-     * locator service as a proxy.
-     * <font color=#7F9FBF>@param peer_id</font>
+     * Redirect this channel to given peer using this channel remote peer locator service as a proxy.
+     * <font color=#7F9FBF>@param peer_</font> - peer that will become new remote communication endpoint of this channel
      */</font>
-    <font color=#7F0055>void</font> redirect(String peer_id);
+    <font color=#7F0055>void</font> redirect(IPeer peer);
 }
  
  
@@ -1254,9 +1340,13 @@ E &bull; Locator &bull; peerRemoved &bull; <i>&lt;string: peer ID&gt;</i> &bull;
 
 <pre>
 <font color=#3F5FBF>/**
- * Base interface for all service interfaces.
- * A client can get list of available services by
- * calling IPeer.getLocalServices or IPeer.getRemoteServives
+ * Base interface for all service interfaces. A client can get list of available services
+ * by calling IChannel.getLocalServices() and IChannel.getRemoteServices().
+ * 
+ * Remote services are represented by a proxy objects that implement service interfaces by
+ * translating method calls to TCF messages and sending them to a remote peer.
+ * When communication channel is open, TCF automatically creates proxies for standard services.
+ * TCF clients can provides addition proxies for non-standard services by calling IChannel.setServiceProxy(). 
  */</font>
 <font color=#7F0055>public</font> interface IService {
  
