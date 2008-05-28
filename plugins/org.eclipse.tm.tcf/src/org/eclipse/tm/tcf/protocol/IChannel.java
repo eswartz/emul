@@ -172,8 +172,10 @@ public interface IChannel {
 
     /**
      * A generic interface for service event listener.
-     * Services usually define a service specific event listener interface.
-     * Clients should user service specific listener interface, unless no such interface is defined. 
+     * Services usually define a service specific event listener interface,
+     * which is implemented using this generic listener.
+     * Clients should user service specific listener interface,
+     * unless no such interface is defined. 
      */
     interface IEventListener {
         /**

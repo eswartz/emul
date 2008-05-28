@@ -12,7 +12,12 @@ package org.eclipse.tm.tcf.protocol;
 
 /**
  * Base interface for all service interfaces. A client can get list of available services
- * by calling Peer.getServices()
+ * by calling IChannel.getLocalServices() and IChannel.getRemoteServices().
+ * 
+ * Remote services are represented by a proxy objects that implement service interfaces by
+ * translating method calls to TCF messages and sending them to a remote peer.
+ * When communication channel is open, TCF automatically creates proxies for standard services.
+ * TCF clients can provides addition proxies for non-standard services by calling IChannel.setServiceProxy(). 
  */
 
 public interface IService {
