@@ -15,7 +15,7 @@
 #include "mdep.h"
 #include "config.h"
 
-#if (SERVICE_LineNumbers) || (SERVICE_Symbols)
+#if ((SERVICE_LineNumbers) || (SERVICE_Symbols)) && !defined(WIN32)
 
 #include <assert.h>
 #include <string.h>

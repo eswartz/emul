@@ -49,7 +49,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib WS2_32.lib Iphlpapi.lib /nologo /subsystem:console /machine:I386
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib WS2_32.lib Iphlpapi.lib dbghelp.lib /nologo /subsystem:console /machine:I386
 
 !ELSEIF  "$(CFG)" == "agent - Win32 Debug"
 
@@ -73,7 +73,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib WS2_32.lib Iphlpapi.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib WS2_32.lib Iphlpapi.lib  dbghelp.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
 
 !ENDIF 
 
@@ -259,11 +259,15 @@ SOURCE=.\json.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\linenumbers.c
+SOURCE=.\linenumbers.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\linenumbers.h
+SOURCE=.\linenumbers_elf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\linenumbers_win32.c
 # End Source File
 # Begin Source File
 
@@ -363,11 +367,15 @@ SOURCE=.\streams.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\symbols.c
+SOURCE=.\symbols.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\symbols.h
+SOURCE=.\symbols_elf.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\symbols_win32.c
 # End Source File
 # Begin Source File
 

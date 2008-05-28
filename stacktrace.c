@@ -445,7 +445,9 @@ void dump_stack_trace(void) {
     memset(&dump_stack_ctx.regs, 0, sizeof(dump_stack_ctx.regs));
     dump_stack_ctx.regs.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
     if (GetThreadContext(dump_stack_ctx.handle, &dump_stack_ctx.regs) == 0) {
-        trace(LOG_ALWAYS, "dump_stack_trace: Can't read thread registers: error %d", GetLastError());
+        set_win32_errno(GetLastError());
+        trace(LOG_ALWAYS, "dump_stack_trace: Can't read thread registers: %d: %s",
+            errno, errno_to_str(errno));
     }
     else {
         trace(LOG_ALWAYS, "Stack trace dumped:");

@@ -70,7 +70,7 @@ static int safe_event_pid_count = 0;
 static int safe_event_generation = 0;
 
 #if !defined(WIN32) && !defined(_WRS_KERNEL)
-static char *get_executable(pid_t pid) {
+static char * get_executable(pid_t pid) {
     static char s[FILE_PATH_SIZE + 1];
     char tmpbuf[100];
     int sz;

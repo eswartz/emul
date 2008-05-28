@@ -60,9 +60,6 @@ int main(int argc, char ** argv) {
     char * node = NULL;
     Protocol * proto;
 
-#ifndef WIN32
-    signal(SIGPIPE, SIG_IGN);
-#endif
     ini_mdep();
     ini_trace();
     ini_asyncreq();

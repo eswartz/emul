@@ -57,4 +57,12 @@ extern void check_error_debug(char * file, int line, int error);
 #define check_error(error) check_error_debug(__FILE__, __LINE__, error)
 #endif
 
+#ifdef WIN32
+/*
+ * Set errno to WIN32 error code.
+ */
+extern void set_win32_errno(DWORD win32_error_code);
+#endif
+
+
 #endif

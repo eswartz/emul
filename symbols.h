@@ -27,8 +27,24 @@ struct Symbol {
     int abs;
 };
 
+#ifdef WIN32
+/*
+ * Initialize dbghelp.dll symbol handler for a given context.
+ * Call this function right before calling any functions from dnghelp.dll.
+ * On error, returns -1 and sets errno.
+ */
+extern int set_symbol_context(Context * ctx);
+#endif
+
+/*
+ * Find symbol information for given symbol name in given context.
+ * On error, returns -1 and sets errno.
+ */
 extern int find_symbol(Context * ctx, char * name, Symbol * sym);
 
+/*
+ * Initialize symbol service.
+ */
 extern void ini_symbols_service(void);
 
 #endif

@@ -174,6 +174,10 @@ static int id2register(char * id, Context ** ctx, REG_INDEX ** idx) {
     }
     *ctx = id2ctx(id);
     *idx = regs_index + i;
+    if (*ctx == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
     if ((*ctx)->exited) {
         errno = ERR_ALREADY_EXITED;
         return -1;

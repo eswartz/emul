@@ -18,7 +18,7 @@
 #include "mdep.h"
 #include "config.h"
 
-#if SERVICE_LineNumbers
+#if (SERVICE_LineNumbers) && !defined(WIN32)
 
 #include <errno.h>
 #include <assert.h>
@@ -195,9 +195,7 @@ static LineNumbersCache * get_line_numbers_cache(Context * ctx) {
     ELF_File * file;
     char fnm[FILE_PATH_SIZE];
 
-#if defined(WIN32)
-    exception(EINVAL);
-#elif defined(_WRS_KERNEL)
+#if defined(_WRS_KERNEL)
     exception(EINVAL);
 #else
     snprintf(fnm, sizeof(fnm), "/proc/%d/exe", ctx->mem);

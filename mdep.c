@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <errno.h>
 #include "myalloc.h"
+#include "errors.h"
 
 pthread_attr_t pthread_create_attr;
 
@@ -303,7 +304,7 @@ int wsa_socket(int af, int type, int protocol) {
     WSASetLastError(0);
     res = socket(af, type, protocol);
     if (res < 0) {
-        errno = WSAGetLastError();
+        set_win32_errno(WSAGetLastError());
         return -1;
     }
     return res;
@@ -316,7 +317,7 @@ int wsa_bind(int socket, const struct sockaddr * addr, int addr_size) {
     WSASetLastError(0);
     res = bind(socket, addr, addr_size);
     if (res != 0) {
-        errno = WSAGetLastError();
+        set_win32_errno(WSAGetLastError());
         return -1;
     }
     return 0;
@@ -329,7 +330,7 @@ int wsa_listen(int socket, int size) {
     WSASetLastError(0);
     res = listen(socket, size);
     if (res != 0) {
-        errno = WSAGetLastError();
+        set_win32_errno(WSAGetLastError());
         return -1;
     }
     return 0;
@@ -342,7 +343,7 @@ int wsa_recv(int socket, void * buf, size_t size, int flags) {
     WSASetLastError(0);
     res = recv(socket, buf, size, flags);
     if (res < 0) {
-        errno = WSAGetLastError();
+        set_win32_errno(WSAGetLastError());
         return -1;
     }
     return res;
@@ -356,7 +357,7 @@ int wsa_recvfrom(int socket, void * buf, size_t size, int flags,
     WSASetLastError(0);
     res = recvfrom(socket, buf, size, flags, addr, addr_size);
     if (res < 0) {
-        errno = WSAGetLastError();
+        set_win32_errno(WSAGetLastError());
         return -1;
     }
     return res;
@@ -369,7 +370,7 @@ int wsa_send(int socket, const void * buf, size_t size, int flags) {
     WSASetLastError(0);
     res = send(socket, buf, size, flags);
     if (res < 0) {
-        errno = WSAGetLastError();
+        set_win32_errno(WSAGetLastError());
         return -1;
     }
     return res;
@@ -383,7 +384,7 @@ int wsa_sendto(int socket, const void * buf, size_t size, int flags,
     WSASetLastError(0);
     res = sendto(socket, buf, size, flags, dest_addr, dest_size);
     if (res < 0) {
-        errno = WSAGetLastError();
+        set_win32_errno(WSAGetLastError());
         return -1;
     }
     return res;

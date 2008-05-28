@@ -16,8 +16,62 @@
 #include "mdep.h"
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "errors.h"
+#include "events.h"
 #include "trace.h"
+
+#define ERR_SYSTEM              0x2000
+
+#ifdef WIN32
+
+static DWORD errno_win32 = 0;
+
+static char * system_strerror(void) {
+    static char msg[256];
+    LPVOID msg_buf;
+    assert(is_dispatch_thread());
+    if (!FormatMessage( 
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+        FORMAT_MESSAGE_FROM_SYSTEM | 
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        errno_win32,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR) &msg_buf,
+        0,
+        NULL))
+    {
+        snprintf(msg, sizeof(msg), "WIN32 error code 0x%08x", errno_win32);
+    }
+    else {
+        int l;
+        strncpy(msg, (char *)msg_buf, sizeof(msg));
+        LocalFree(msg_buf);
+        l = strlen(msg);
+        while (l > 0 && (msg[l - 1] == '\n' || msg[l - 1] == '\r')) l--;
+        msg[l] = 0;
+    }
+    return msg;
+}
+
+void set_win32_errno(DWORD win32_error_code) {
+    assert(is_dispatch_thread());
+    /* For WIN32 errors we always set errno to ERR_SYSTEM and
+     * store actual error code in errno_win32, which is used later
+     * when anyone calls errno_to_str() to get actual error message string.
+     */
+    errno = ERR_SYSTEM;
+    errno_win32 = win32_error_code;
+}
+
+#else
+
+static char * system_strerror(void) {
+    assert(0);
+}
+
+#endif
 
 char * errno_to_str(int err) {
     switch (err) {
@@ -65,6 +119,8 @@ char * errno_to_str(int err) {
         return "Unknown peer id";
     case ERR_INV_DATA_SIZE:
         return "Invalid data size";
+    case ERR_SYSTEM:
+        return system_strerror();
     default:
         return strerror(err);
     }

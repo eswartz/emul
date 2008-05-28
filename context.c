@@ -293,11 +293,6 @@ static char * win32_debug_event_name(int event) {
     return "Unknown";
 }
 
-static void set_errno(DWORD win32_error_code) {
-    /* TODO need better translation of WIN32 error codes to errno */
-    errno = EINVAL;
-}
-
 static void event_win32_context_stopped(void * arg) {
     Context * ctx = (Context *)arg;
     DWORD event_code = ctx->pending_event.ExceptionRecord.ExceptionCode;
@@ -327,7 +322,7 @@ static void event_win32_context_stopped(void * arg) {
         DWORD err = GetLastError();
         trace(LOG_ALWAYS, "Can't read thread registers: ctx %#x, pid %d, error %d",
             ctx, ctx->pid, err);
-        set_errno(err);
+        set_win32_errno(err);
         ctx->regs_error = errno;
     }
     else {
@@ -383,6 +378,10 @@ static void event_win32_context_exited(Context * ctx) {
         CloseHandle(ctx->handle);
         ctx->handle = NULL;
     }
+    if (ctx->file_handle != NULL) {
+        CloseHandle(ctx->file_handle);
+        ctx->file_handle = NULL;
+    }
     if (ctx->parent != NULL) {
         list_remove(&ctx->cldl);
         context_unlock(ctx->parent);
@@ -396,7 +395,7 @@ static int win32_resume(Context * ctx) {
         int err = GetLastError();
         trace(LOG_ALWAYS, "Can't write thread registers: ctx %#x, pid %d, error %d",
             ctx, ctx->pid, err);
-        set_errno(err);
+        set_win32_errno(err);
         return -1;
     }
     ctx->regs_dirty = 0;
@@ -407,7 +406,7 @@ static int win32_resume(Context * ctx) {
     }
     if (ctx->parent->pending_signals & (1 << SIGKILL)) {
         if (!TerminateProcess(ctx->parent->handle, 1)) {
-            set_errno(GetLastError());
+            set_win32_errno(GetLastError());
             return -1;
         }
         ctx->parent->pending_signals &= ~(1 << SIGKILL);
@@ -417,7 +416,7 @@ static int win32_resume(Context * ctx) {
         if (cnt == (DWORD)-1) {
             DWORD err = GetLastError();
             trace(LOG_ALWAYS, "Can't resume thread: error %d", err);
-            set_errno(err);
+            set_win32_errno(err);
             return -1;
         }
         if (cnt <= 1) break;
@@ -436,11 +435,15 @@ static void debug_event_handler(void * x) {
     switch (debug_event->dwDebugEventCode) {
     case CREATE_PROCESS_DEBUG_EVENT:
         assert(ctx == NULL);
+        assert(prs->handle == NULL);
         if (prs->handle != NULL) {
             CloseHandle(debug_event->u.CreateProcessInfo.hThread);
             break;
         }
         prs->handle = debug_event->u.CreateProcessInfo.hProcess;
+        prs->file_handle = debug_event->u.CreateProcessInfo.hFile;
+        prs->base_address = debug_event->u.CreateProcessInfo.lpBaseOfImage;
+        assert(prs->handle != NULL);
         event_context_created(prs);
         ctx = create_context(debug_event->dwThreadId);
         ctx->mem = debug_event->dwProcessId;
@@ -450,7 +453,6 @@ static void debug_event_handler(void * x) {
         list_add_first(&ctx->cldl, &prs->children);
         event_context_created(ctx);
         ctx->pending_intercept = 1;
-        CloseHandle(debug_event->u.CreateProcessInfo.hFile);
         break;
     case CREATE_THREAD_DEBUG_EVENT:
         assert(ctx == NULL);
@@ -594,7 +596,10 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 break;
             }
             if (fantom_process.event.u.CreateProcessInfo.hThread != NULL) {
-                ResumeThread(fantom_process.event.u.CreateProcessInfo.hThread);
+                /* It seems that leaving this thread suspended is not right thing to do,
+                 * however, resuming the thread causes debugee to crash for unknown reason.
+                 */
+                /* ResumeThread(fantom_process.event.u.CreateProcessInfo.hThread); */
                 fantom_process.event.u.CreateProcessInfo.hThread = NULL;
             }
             if (state == 1) {
@@ -648,7 +653,7 @@ int context_attach(pid_t pid, Context ** res, int selfattach) {
         DWORD err = GetLastError();
         trace(LOG_ALWAYS, "Can't create semaphore: error %d", err);
         loc_free(dbg);
-        set_errno(err);
+        set_win32_errno(err);
         return -1;
     }
     
@@ -658,7 +663,7 @@ int context_attach(pid_t pid, Context ** res, int selfattach) {
         trace(LOG_ALWAYS, "Can't create thread: error %d", err);
         CloseHandle(dbg->debug_thread_semaphore);
         loc_free(dbg);
-        set_errno(err);
+        set_win32_errno(err);
         return -1;
     }
 
@@ -670,7 +675,7 @@ int context_attach(pid_t pid, Context ** res, int selfattach) {
         CloseHandle(dbg->debug_thread);
         CloseHandle(dbg->debug_thread_semaphore);
         loc_free(dbg);
-        set_errno(dbg->error);
+        set_win32_errno(dbg->error);
         return -1;
     }
 
@@ -691,7 +696,7 @@ int context_stop(Context * ctx) {
         DWORD err = GetLastError();
         if (err == ERROR_ACCESS_DENIED) return 0;
         trace(LOG_ALWAYS, "Can't suspend thread: tid %d, error %d", ctx->pid, err);
-        set_errno(err);
+        set_win32_errno(err);
         return -1;
     }
     post_event(event_win32_context_stopped, ctx);
@@ -751,7 +756,7 @@ int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t si
     if (ReadProcessMemory(ctx->handle, (LPCVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
         DWORD err = GetLastError();
         trace(LOG_ALWAYS, "Can't read process memory: pid %d, addr %#x, error %d", ctx->pid, address, err);
-        set_errno(err);
+        set_win32_errno(err);
         return -1;
     }
     return 0;
@@ -766,13 +771,13 @@ int context_write_mem(Context * ctx, unsigned long address, void * buf, size_t s
     if (WriteProcessMemory(ctx->handle, (LPVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
         DWORD err = GetLastError();
         trace(LOG_ALWAYS, "Can't write process memory: pid %d, addr %#x, error %d", ctx->pid, address, err);
-        set_errno(err);
+        set_win32_errno(err);
         return -1;
     }
     if (FlushInstructionCache(ctx->handle, (LPCVOID)address, size) == 0) {
         DWORD err = GetLastError();
         trace(LOG_ALWAYS, "Can't flush instruction cache: pid %d, error %d", ctx->pid, err);
-        set_errno(err);
+        set_win32_errno(err);
         return -1;
     }
     return 0;

@@ -23,6 +23,7 @@
 #include "test.h"
 #include "trace.h"
 #include "context.h"
+#include "errors.h"
 
 extern void tcf_test_func2(void);
 extern void tcf_test_func1(void);
@@ -96,12 +97,13 @@ int run_test_process(Context ** res) {
     while (error == 0 && CreateProcess(fnm, cmd, NULL, NULL,
             FALSE, CREATE_SUSPENDED | CREATE_DEFAULT_ERROR_MODE,
             NULL, NULL, &si, &prs) == 0) {
-        if (cp_cnt < 10 && GetLastError() == ERROR_INVALID_HANDLE) {
+        DWORD win32_err = GetLastError();
+        if (cp_cnt < 10 && win32_err == ERROR_INVALID_HANDLE) {
             cp_cnt++;
             Sleep(100);
             continue;
         }
-        errno = EINVAL;
+        set_win32_errno(win32_err);
         return -1;
     }
     CloseHandle(prs.hThread);

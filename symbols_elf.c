@@ -10,17 +10,16 @@
  *******************************************************************************/
 
 /*
- * Symbols service.
+ * Symbols service.- ELF version
  */
 #include "mdep.h"
 #include "config.h"
 
-#if SERVICE_Symbols
+#if (SERVICE_Symbols) && !defined(WIN32)
 
 #if defined(_WRS_KERNEL)
 #  include <symLib.h>
 #  include <sysSymTbl.h>
-#elif defined(WIN32)
 #else
 #  include <elf.h>
 #  include <libelf.h>
@@ -72,9 +71,8 @@ static void free_sym_cache(ELF_File * file) {
 
 static int load_tables(ELF_File * file) {
     int error = 0;
-
-#ifdef ELFMAG
     unsigned idx;
+
     for (idx = 0; idx < file->section_cnt; idx++) {
         ELF_Section * sym_sec = file->sections[idx];
         if (sym_sec == NULL) continue;
@@ -120,10 +118,6 @@ static int load_tables(ELF_File * file) {
         }
     }
 
-#else
-    error = EINVAL;
-#endif
-
     if (error != 0) {
         free_sym_cache(file);
         errno = error;
@@ -136,35 +130,7 @@ static int load_tables(ELF_File * file) {
 int find_symbol(Context * ctx, char * name, Symbol * sym) {
     int error = 0;
 
-#if defined(WIN32)
-    /* TODO symbols for WIN32 */
-
-    extern void tcf_test_func0(void);
-    extern void tcf_test_func1(void);
-    extern void tcf_test_func2(void);
-    extern char * tcf_test_array;
-
-    memset(sym, 0, sizeof(Symbol));
-    sym->section = ".text";
-    sym->storage = "GLOBAL";
-    sym->abs = 1;
-    if (strcmp(name, "tcf_test_func0") == 0) {
-        sym->value = (unsigned long)tcf_test_func0;
-    }
-    else if (strcmp(name, "tcf_test_func1") == 0) {
-        sym->value = (unsigned long)tcf_test_func1;
-    }
-    else if (strcmp(name, "tcf_test_func2") == 0) {
-        sym->value = (unsigned long)tcf_test_func2;
-    }
-    else if (strcmp(name, "tcf_test_array") == 0) {
-        sym->value = (unsigned long)&tcf_test_array;
-    }
-    else {
-        error = EINVAL;
-    }
-
-#elif defined(_WRS_KERNEL)
+#if defined(_WRS_KERNEL)
     
     char * ptr;
     SYM_TYPE type;
