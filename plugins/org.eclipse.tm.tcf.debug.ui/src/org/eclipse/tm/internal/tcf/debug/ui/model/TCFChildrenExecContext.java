@@ -11,7 +11,6 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
@@ -26,20 +25,12 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
  * that are children of a given parent context. The job is slightly complicated by necessity
  * to merge results from two independent services. 
  */
-@SuppressWarnings("serial")
 public class TCFChildrenExecContext extends TCFChildren {
     
     private final TCFNode node;
     private final TCFChildren mem_children;
     private final TCFChildren run_children;
     
-    // Track disposed IDs to detect violations of the communication protocol
-    private LinkedHashMap<String,String> disposed_ids = new LinkedHashMap<String,String>() {
-        protected boolean removeEldestEntry(Map.Entry<String,String> eldest) {
-            return size() > 128;
-        }
-    };
-
     TCFChildrenExecContext(final TCFNode node) {
         super(node.model.getLaunch().getChannel());
         this.node = node;
@@ -58,7 +49,6 @@ public class TCFChildrenExecContext extends TCFChildren {
                         if (command == token && error == null) {
                             data = new HashMap<String,TCFNode>();
                             for (String id : contexts) {
-                                assert disposed_ids.get(id) == null;
                                 TCFNode n = node.model.getNode(id);
                                 if (n == null) n = new TCFNodeExecContext(node, id);
                                 data.put(id, n);
@@ -85,7 +75,6 @@ public class TCFChildrenExecContext extends TCFChildren {
                         if (command == token && error == null) {
                             data = new HashMap<String,TCFNode>();
                             for (String id : contexts) {
-                                assert disposed_ids.get(id) == null;
                                 TCFNode n = node.model.getNode(id);
                                 if (n == null) n = new TCFNodeExecContext(node, id);
                                 data.put(id, n);
@@ -111,7 +100,6 @@ public class TCFChildrenExecContext extends TCFChildren {
         super.dispose(id);
         mem_children.dispose(id);
         run_children.dispose(id);
-        disposed_ids.put(id, id);
     }
     
     @Override
