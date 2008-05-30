@@ -65,7 +65,7 @@ static void channel_new_connection(ChannelServer * serv, Channel * c) {
 }
 
 #if defined(_WRS_KERNEL)
-int tcf(void) {
+int tcf_log(void) {
 #else   
 int main(int argc, char ** argv) {
 #endif

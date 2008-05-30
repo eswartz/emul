@@ -462,15 +462,28 @@ static void command_suspend(char * token, Channel * c) {
     send_simple_result(c, token, err);
 }
 
-static void event_terminate(void * arg) {
-    Context * ctx = arg;
+typedef struct TerminateArgs {
+    Context * ctx;
+    TCFBroadcastGroup * bcg;
+} TerminateArgs;
+
+static void event_terminate(void * x) {
+    TerminateArgs * args = (TerminateArgs *)x;
+    Context * ctx = args->ctx;
+    TCFBroadcastGroup * bcg = args->bcg;
     LINK * qp = ctx->children.next;
     while (qp != &ctx->children) {
-        cldl2ctxp(qp)->pending_signals |= 1 << SIGKILL;
+        Context * c = cldl2ctxp(qp);
+        if (c->intercepted) send_event_context_resumed(&bcg->out, c);
+        c->pending_intercept = 0;
+        c->pending_signals |= 1 << SIGKILL;
         qp = qp->next;
     }
+    if (ctx->intercepted) send_event_context_resumed(&bcg->out, ctx);
+    ctx->pending_intercept = 0;
     ctx->pending_signals |= 1 << SIGKILL;
     context_unlock(ctx);
+    loc_free(args);
 }
 
 int terminate_debug_context(TCFBroadcastGroup * bcg, Context * ctx) {
@@ -482,17 +495,11 @@ int terminate_debug_context(TCFBroadcastGroup * bcg, Context * ctx) {
         err = ERR_ALREADY_EXITED;
     }
     else {
-        LINK * qp = ctx->children.next;
-        while (qp != &ctx->children) {
-            Context * c = cldl2ctxp(qp);
-            if (c->intercepted) send_event_context_resumed(&bcg->out, c);
-            c->pending_intercept = 0;
-            qp = qp->next;
-        }
-        if (ctx->intercepted) send_event_context_resumed(&bcg->out, ctx);
-        ctx->pending_intercept = 0;
+        TerminateArgs * args = (TerminateArgs *)loc_alloc(sizeof(TerminateArgs));
+        args->ctx = ctx;
+        args->bcg = bcg;
         context_lock(ctx);
-        post_safe_event(event_terminate, ctx);
+        post_safe_event(event_terminate, args);
     }
     if (err) {
         errno = err;

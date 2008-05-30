@@ -1013,14 +1013,17 @@ int context_single_step(Context * ctx) {
 
     vxdbg_ctx.ctxId = ctx->pid;
     vxdbg_ctx.ctxType = VXDBG_CTX_TASK;
+    taskLock();
     if (vxdbgStep(vxdbg_clnt_id, &vxdbg_ctx, NULL, NULL) != OK) {
         int error = errno;
+        taskUnlock();
         trace(LOG_ALWAYS, "context: can't step ctx %#x, id %#x: %d",
                 ctx, ctx->pid, errno_to_str(error));
         return -1;
     }
     ctx->pending_step = 1;
     ctx->stopped = 0;
+    taskUnlock();
     event_context_started(ctx);
     return 0;
 }
@@ -1059,6 +1062,8 @@ static void event_handler(void * arg) {
         stopped_ctx->signal = SIGTRAP;
         assert(get_regs_PC(stopped_ctx->regs) == info->addr);
         stopped_ctx->event = 0;
+        stopped_ctx->pending_step = 0;
+        stopped_ctx->stopped = 1;
         stopped_ctx->stopped_by_bp = info->bp_info_ok;
         if (stopped_ctx->stopped_by_bp && !is_breakpoint_address(stopped_ctx, get_regs_PC(stopped_ctx->regs))) {
             /* Break instruction that is not planted by us */
@@ -1067,8 +1072,7 @@ static void event_handler(void * arg) {
         }
         stopped_ctx->bp_info = info->bp_info;
         if (current_ctx != NULL) stopped_ctx->bp_pid = current_ctx->pid;
-        stopped_ctx->pending_step = 0;
-        stopped_ctx->stopped = 1;
+        assert(taskIsStopped(stopped_ctx->pid));
         event_context_stopped(stopped_ctx);
         break;
     case EVENT_HOOK_STEP_DONE:
@@ -1082,6 +1086,7 @@ static void event_handler(void * arg) {
         current_ctx->event = TRACE_EVENT_STEP;
         current_ctx->pending_step = 0;
         current_ctx->stopped = 1;
+        assert(taskIsStopped(current_ctx->pid));
         event_context_stopped(current_ctx);
         break;
     case EVENT_HOOK_STOP:
@@ -1096,6 +1101,7 @@ static void event_handler(void * arg) {
         stopped_ctx->event = 0;
         stopped_ctx->pending_step = 0;
         stopped_ctx->stopped = 1;
+        assert(taskIsStopped(stopped_ctx->pid));
         event_context_stopped(stopped_ctx);
         break;
     case EVENT_HOOK_TASK_ADD:
