@@ -26,7 +26,7 @@
 #include "breakpoints.h"
 
 #define CONTEXT_PID_ROOT_SIZE 1024
-#define CONTEXT_PID_HASH(PID) ((PID) % CONTEXT_PID_ROOT_SIZE)
+#define CONTEXT_PID_HASH(PID) ((unsigned)(PID) % CONTEXT_PID_ROOT_SIZE)
 static LINK context_pid_root[CONTEXT_PID_ROOT_SIZE];
 static ContextEventListener * event_listeners = NULL;
 
@@ -468,11 +468,13 @@ static void debug_event_handler(void * x) {
     case EXCEPTION_DEBUG_EVENT:
         if (ctx == NULL) break;
         assert(ctx->pending_event.ExceptionRecord.ExceptionCode == 0);
-        args->continue_status = DBG_EXCEPTION_NOT_HANDLED;
         switch (args->event.u.Exception.ExceptionRecord.ExceptionCode) {
         case EXCEPTION_SINGLE_STEP:
         case EXCEPTION_BREAKPOINT:
             args->continue_status = DBG_CONTINUE;
+            break;
+        default:
+            args->continue_status = DBG_EXCEPTION_NOT_HANDLED;
             break;
         }
         memcpy(&ctx->pending_event, &args->event.u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
@@ -522,7 +524,6 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
     DebugEvent create_process;
     DebugEvent fantom_process;
     int state = 0;
-    int abort = 0;
 
     if (event_semaphore == NULL) {
         args->error = GetLastError();
@@ -543,7 +544,7 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
 
     memset(&create_process, 0, sizeof(create_process));
     memset(&fantom_process, 0, sizeof(fantom_process));
-    while (!abort) {
+    while (1) {
         DebugEvent * buf = NULL;
         DEBUG_EVENT * debug_event = &event_buffer.event;
 
@@ -585,6 +586,8 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
         case LOAD_DLL_DEBUG_EVENT:
             CloseHandle(debug_event->u.LoadDll.hFile);
             break;
+        case UNLOAD_DLL_DEBUG_EVENT:
+            break;
         default:
             if (fantom_process.event.dwThreadId == debug_event->dwThreadId) {
                 if (debug_event->dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT) {
@@ -601,6 +604,11 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                  */
                 /* ResumeThread(fantom_process.event.u.CreateProcessInfo.hThread); */
                 fantom_process.event.u.CreateProcessInfo.hThread = NULL;
+            }
+            if (state == 0) {
+                if (debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
+                    event_buffer.continue_status = DBG_EXCEPTION_NOT_HANDLED;
+                }
             }
             if (state == 1) {
                 create_process.event_semaphore = event_semaphore;
@@ -623,12 +631,8 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
             break;
         }
 
-        switch (debug_event->dwDebugEventCode) {
-        case EXIT_PROCESS_DEBUG_EVENT:
-        case RIP_EVENT:
-            abort = 1;
-            break;
-        }
+        if (debug_event->dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) break;
+        if (debug_event->dwDebugEventCode == RIP_EVENT) break;
     }
 
     if (state < 2) ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);

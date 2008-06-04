@@ -65,6 +65,7 @@ struct Context {
     LPVOID              base_address;
     EXCEPTION_DEBUG_INFO pending_event;
     EXCEPTION_DEBUG_INFO suspend_reason;
+    int                 sym_handler_loaded;
 #endif
 };
 

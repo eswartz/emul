@@ -46,7 +46,7 @@ static char * system_strerror(void) {
     }
     else {
         int l;
-        strncpy(msg, (char *)msg_buf, sizeof(msg));
+        snprintf(msg, sizeof(msg), "0x%08x: %s", errno_win32, msg_buf, sizeof(msg));
         LocalFree(msg_buf);
         l = strlen(msg);
         while (l > 0 && (msg[l - 1] == '\n' || msg[l - 1] == '\r')) l--;

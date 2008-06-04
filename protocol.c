@@ -124,16 +124,16 @@ static void free_services(void * owner) {
     }
 }
 
-static int message_hash(Protocol *p, const char * service, const char * name) {
+static unsigned message_hash(Protocol * p, const char * service, const char * name) {
     int i;
-    int h = (unsigned long)p;
+    unsigned h = (unsigned)p;
     for (i = 0; service[i]; i++) h += service[i];
     for (i = 0; name[i]; i++) h += name[i];
     h = h + h / MESSAGE_HASH_SIZE;
     return h % MESSAGE_HASH_SIZE;
 }
 
-static MessageHandlerInfo * find_message_handler(Protocol *p, char * service, char * name) {
+static MessageHandlerInfo * find_message_handler(Protocol * p, char * service, char * name) {
     MessageHandlerInfo * mh = message_handlers[message_hash(p, service, name)];
     while (mh != NULL) {
         if (mh->p == p && !strcmp(mh->service->name, service) && !strcmp(mh->name, name)) return mh;
@@ -142,16 +142,16 @@ static MessageHandlerInfo * find_message_handler(Protocol *p, char * service, ch
     return NULL;
 }
 
-static int event_hash(Channel *c, const char * service, const char * name) {
+static unsigned event_hash(Channel * c, const char * service, const char * name) {
     int i;
-    int h = (unsigned long)c;
+    unsigned h = (unsigned)c;
     for (i = 0; service[i]; i++) h += service[i];
     for (i = 0; name[i]; i++) h += name[i];
     h = h + h / EVENT_HASH_SIZE;
     return h % EVENT_HASH_SIZE;
 }
 
-static EventHandlerInfo * find_event_handler(Channel *c, char * service, char * name) {
+static EventHandlerInfo * find_event_handler(Channel * c, char * service, char * name) {
     EventHandlerInfo * mh = event_handlers[event_hash(c, service, name)];
     while (mh != NULL) {
         if (mh->c == c && !strcmp(mh->service->name, service) && !strcmp(mh->name, name)) return mh;
@@ -160,11 +160,11 @@ static EventHandlerInfo * find_event_handler(Channel *c, char * service, char * 
     return NULL;
 }
 
-#define reply_hash(c, tokenid) ((((unsigned long)c)+(tokenid)) % REPLY_HASH_SIZE)
+#define reply_hash(c, tokenid) (((unsigned)(c)+(unsigned)(tokenid)) % REPLY_HASH_SIZE)
 
-static ReplyHandlerInfo * find_reply_handler(Channel *c, unsigned long tokenid, int take) {
-    ReplyHandlerInfo **rhp = &reply_handlers[reply_hash(c, tokenid)];
-    ReplyHandlerInfo *rh;
+static ReplyHandlerInfo * find_reply_handler(Channel * c, unsigned long tokenid, int take) {
+    ReplyHandlerInfo ** rhp = &reply_handlers[reply_hash(c, tokenid)];
+    ReplyHandlerInfo * rh;
     while ((rh = *rhp) != NULL) {
         if (rh->c == c && rh->tokenid == tokenid) {
             if (take) {
@@ -314,8 +314,8 @@ void set_default_message_handler(Protocol *p, ProtocolMessageHandler handler) {
     p->default_handler = handler;
 }
 
-void add_command_handler(Protocol *p, const char * service, const char * name, ProtocolCommandHandler handler) {
-    int h = message_hash(p, service, name);
+void add_command_handler(Protocol * p, const char * service, const char * name, ProtocolCommandHandler handler) {
+    unsigned h = message_hash(p, service, name);
     MessageHandlerInfo * mh = (MessageHandlerInfo *)loc_alloc(sizeof(MessageHandlerInfo));
     mh->p = p;
     mh->service = protocol_get_service(p, service);
@@ -325,8 +325,8 @@ void add_command_handler(Protocol *p, const char * service, const char * name, P
     message_handlers[h] = mh;
 }
 
-void add_event_handler(Channel *c, const char * service, const char * name, ProtocolEventHandler handler) {
-    int h = event_hash(c, service, name);
+void add_event_handler(Channel * c, const char * service, const char * name, ProtocolEventHandler handler) {
+    unsigned h = event_hash(c, service, name);
     EventHandlerInfo * eh = (EventHandlerInfo *)loc_alloc(sizeof(EventHandlerInfo));
     eh->c = c;
     eh->service = protocol_get_service(c, service);
@@ -336,7 +336,7 @@ void add_event_handler(Channel *c, const char * service, const char * name, Prot
     event_handlers[h] = eh;
 }
 
-ReplyHandlerInfo *protocol_send_command(Protocol *p, Channel *c, const char *service, const char *name, ReplyHandlerCB handler, void *client_data) {
+ReplyHandlerInfo * protocol_send_command(Protocol * p, Channel * c, const char *service, const char *name, ReplyHandlerCB handler, void *client_data) {
     ReplyHandlerInfo *rh;
     int h;
     unsigned long tokenid;
@@ -360,7 +360,7 @@ ReplyHandlerInfo *protocol_send_command(Protocol *p, Channel *c, const char *ser
     return rh;
 }
 
-void send_hello_message(Protocol *p, Channel *c) {
+void send_hello_message(Protocol * p, Channel * c) {
     ServiceInfo * s = services;
     int cnt = 0;
 
@@ -381,7 +381,7 @@ void send_hello_message(Protocol *p, Channel *c) {
     c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_sync(char * token, Channel *c) {
+static void command_sync(char * token, Channel * c) {
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -389,7 +389,7 @@ static void command_sync(char * token, Channel *c) {
     c->out.write(&c->out, MARKER_EOM);
 }
 
-static void command_redirect(char * token, Channel *c) {
+static void command_redirect(char * token, Channel * c) {
     char id[256];
 
     json_read_string(&c->inp, id, sizeof(id));
@@ -435,7 +435,7 @@ static PeerServer * read_peer_properties(InputStream * inp) {
     return ps;
 }
 
-static void command_publish_peer(char * token, Channel *c) {
+static void command_publish_peer(char * token, Channel * c) {
     PeerServer * ps = read_peer_properties(&c->inp);
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
@@ -621,7 +621,7 @@ void protocol_release(Protocol * p) {
     free_services(p);
 }
 
-void ini_locator_service(Protocol *p) {
+void ini_locator_service(Protocol * p) {
     add_command_handler(p, LOCATOR, "sync", command_sync);
     add_command_handler(p, LOCATOR, "redirect", command_redirect);
     add_command_handler(p, LOCATOR, "publishPeer", command_publish_peer);

@@ -44,9 +44,10 @@ extern U2_T dio_ReadU2(void);
 extern U4_T dio_ReadU4(void);
 extern U8_T dio_ReadU8(void);
 
-extern U4_T dio_ReadLEB128(void);
+extern U4_T dio_ReadULEB128(void);
+extern I4_T dio_ReadSLEB128(void);
 extern U8_T dio_ReadU8LEB128(void);
-extern I8_T dio_ReadI8LEB128(void);
+extern I8_T dio_ReadS8LEB128(void);
 
 extern U8_T dio_ReadUX(int Size);
 extern U8_T dio_ReadAddress(void);

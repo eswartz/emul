@@ -211,7 +211,7 @@ U8_T dio_ReadU8(void) {
     return sBigEndian ? (x0 << 32) | x1 : x0 | (x1 << 32);
 }
 
-U4_T dio_ReadLEB128(void) {
+U4_T dio_ReadULEB128(void) {
     U4_T res = 0;
     int i = 0;
     for (;; i += 7) {
@@ -220,6 +220,20 @@ U4_T dio_ReadLEB128(void) {
         if ((n & 0x80) == 0) break;
     }
     return res;
+}
+
+I4_T dio_ReadSLEB128(void) {
+    U4_T res = 0;
+    int i = 0;
+    for (;; i += 7) {
+        U1_T n = dio_ReadU1();
+        res |= (n & 0x7Fu) << i;
+        if ((n & 0x80) == 0) {
+            res |= -(n & 0x40) << i;
+            break;
+        }
+    }
+    return (I4_T)res;
 }
 
 U8_T dio_ReadU8LEB128(void) {
@@ -233,7 +247,7 @@ U8_T dio_ReadU8LEB128(void) {
     return res;
 }
 
-I8_T dio_ReadI8LEB128(void) {
+I8_T dio_ReadS8LEB128(void) {
     U8_T res = 0;
     int i = 0;
     for (;; i += 7) {
@@ -421,12 +435,12 @@ static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
     case FORM_BLOCK1    : dio_ReadFormBlock(Attr, dio_ReadU1()); break;
     case FORM_BLOCK2    : dio_ReadFormBlock(Attr, dio_ReadU2()); break;
     case FORM_BLOCK4    : dio_ReadFormBlock(Attr, dio_ReadU4()); break;
-    case FORM_BLOCK     : dio_ReadFormBlock(Attr, dio_ReadLEB128()); break;
+    case FORM_BLOCK     : dio_ReadFormBlock(Attr, dio_ReadULEB128()); break;
     case FORM_DATA1     : dio_ReadFormData(Attr, 1, dio_ReadU1()); break;
     case FORM_DATA2     : dio_ReadFormData(Attr, 2, dio_ReadU2()); break;
     case FORM_DATA4     : dio_ReadFormData(Attr, 4, dio_ReadU4()); break;
     case FORM_DATA8     : dio_ReadFormData(Attr, 8, dio_ReadU8()); break;
-    case FORM_SDATA     : dio_ReadFormData(Attr, 8, dio_ReadI8LEB128()); break;
+    case FORM_SDATA     : dio_ReadFormData(Attr, 8, dio_ReadS8LEB128()); break;
     case FORM_UDATA     : dio_ReadFormData(Attr, 8, dio_ReadU8LEB128()); break;
     case FORM_FLAG      : dio_ReadFormFlag(); break;
     case FORM_STRING    : dio_ReadFormString(); break;
@@ -436,7 +450,7 @@ static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
     case FORM_REF2      : dio_ReadFormRelRef(dio_ReadU2()); break;
     case FORM_REF4      : dio_ReadFormRelRef(dio_ReadU4()); break;
     case FORM_REF8      : dio_ReadFormRelRef(dio_ReadU8()); break;
-    case FORM_REF_UDATA : dio_ReadFormRelRef(dio_ReadLEB128()); break;
+    case FORM_REF_UDATA : dio_ReadFormRelRef(dio_ReadULEB128()); break;
     default: str_exception(ERR_DWARF, "invalid FORM");
     }
 }
@@ -449,7 +463,7 @@ static void dio_ReadEntry(DIO_EntryCallBack CallBack) {
     int Init = 1;
     dio_gEntryPos = dio_GetPos();
     if (dio_gVersion >= 2) {
-        U4_T AbbrCode = dio_ReadLEB128();
+        U4_T AbbrCode = dio_ReadULEB128();
         if (AbbrCode == 0) return;
         if (AbbrCode >= sAbbrevTableSize || sAbbrevTable[AbbrCode] == NULL) {
             str_exception(ERR_DWARF, "invalid abbreviation table");
@@ -479,7 +493,7 @@ static void dio_ReadEntry(DIO_EntryCallBack CallBack) {
             if (AttrPos < Abbr->mAttrLen) {
                 Attr = Abbr->mAttrs[AttrPos++];
                 Form = Abbr->mAttrs[AttrPos++];
-                if (Form == FORM_INDIRECT) Form = (U2_T)dio_ReadLEB128();
+                if (Form == FORM_INDIRECT) Form = (U2_T)dio_ReadULEB128();
             }
         }
         else {
@@ -537,7 +551,7 @@ void dio_ReadUnit(DIO_EntryCallBack CallBack) {
     }
 }
 
-#define dio_AbbrevTableHash(File, Offset) (((int)(File) + (int)(Offset)) / 4 % ABBREV_TABLE_SIZE)
+#define dio_AbbrevTableHash(File, Offset) (((unsigned)(File) + (unsigned)(Offset)) / 16 % ABBREV_TABLE_SIZE)
 
 static int dio_IsAbbrevSectionLoaded(ELF_File * File) {
     DIO_Cache * Cache = dio_GetCache(File);
@@ -580,7 +594,7 @@ void dio_LoadAbbrevTable(ELF_File * File) {
         U4_T AttrPos = 0;
         U2_T Tag = 0;
         U1_T Children = 0;
-        U4_T ID = dio_ReadLEB128();
+        U4_T ID = dio_ReadULEB128();
         if (ID == 0) {
             /* End of compilation unit */
             U4_T Hash = dio_AbbrevTableHash(File, TableOffset);
@@ -607,11 +621,11 @@ void dio_LoadAbbrevTable(ELF_File * File) {
             AbbrevTable = (DIO_Abbreviation **)loc_realloc(AbbrevTable, sizeof(DIO_Abbreviation *) * AbbrevTableSize);
             memset(AbbrevTable + Size, 0, sizeof(DIO_Abbreviation *) * (AbbrevTableSize - Size));
         }
-        Tag = (U2_T)dio_ReadLEB128();
+        Tag = (U2_T)dio_ReadULEB128();
         Children = (U2_T)dio_ReadU1() != 0;
         for (;;) {
-            U4_T Attr = dio_ReadLEB128();
-            U4_T Form = dio_ReadLEB128();
+            U4_T Attr = dio_ReadULEB128();
+            U4_T Form = dio_ReadULEB128();
             if (Attr >= 0x10000 || Form >= 0x10000) str_exception(ERR_DWARF, "invalid abbreviation table");
             if (Attr == 0 && Form == 0) {
                 DIO_Abbreviation * Abbr = AbbrevTable[ID];

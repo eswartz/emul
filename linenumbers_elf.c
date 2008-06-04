@@ -316,10 +316,10 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
             memset(&file, 0, sizeof(file));
             file.name = dio_ReadString();
             if (file.name == NULL) break;
-            dir = dio_ReadLEB128();
+            dir = dio_ReadULEB128();
             if (dir > 0 && dir <= unit->dirs_cnt) file.dir = unit->dirs[dir - 1];
-            file.mtime = dio_ReadLEB128();
-            file.size = dio_ReadLEB128();
+            file.mtime = dio_ReadULEB128();
+            file.size = dio_ReadULEB128();
             add_file(unit, &file);
         }
 
@@ -341,7 +341,7 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
                 state.epilogue_begin = 0;
             }
             else if (opcode == 0) {
-                U4_T op_size = dio_ReadLEB128();
+                U4_T op_size = dio_ReadULEB128();
                 U8_T op_pos = dio_GetPos();
                 switch (dio_ReadU1()) {
                 case DW_LNE_define_file: {
@@ -349,10 +349,10 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
                     FileInfo file;
                     memset(&file, 0, sizeof(file));
                     file.name = dio_ReadString();
-                    dir = dio_ReadLEB128();
+                    dir = dio_ReadULEB128();
                     if (dir > 0 && dir <= unit->dirs_cnt) file.dir = unit->dirs[dir - 1];
-                    file.mtime = dio_ReadLEB128();
-                    file.size = dio_ReadLEB128();
+                    file.mtime = dio_ReadULEB128();
+                    file.size = dio_ReadULEB128();
                     add_file(unit, &file);
                     break;
                 }
@@ -385,13 +385,13 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
                     state.address += (ADDR_T)(dio_ReadU8LEB128() * min_instruction_length);
                     break;
                 case DW_LNS_advance_line:
-                    state.line += dio_ReadLEB128();
+                    state.line += dio_ReadSLEB128();
                     break;
                 case DW_LNS_set_file:
-                    state.file = dio_ReadLEB128();
+                    state.file = dio_ReadULEB128();
                     break;
                 case DW_LNS_set_column:
-                    state.column = dio_ReadLEB128();
+                    state.column = dio_ReadULEB128();
                     break;
                 case DW_LNS_negate_stmt:
                     state.is_stmt = !state.is_stmt;
@@ -412,7 +412,7 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
                     state.epilogue_begin = 1;
                     break;
                 case DW_LNS_set_isa:
-                    state.isa = (U1_T)dio_ReadLEB128();
+                    state.isa = (U1_T)dio_ReadULEB128();
                     break;
                 default:
                     str_exception(ERR_DWARF, "Invalid line info op code");
@@ -488,6 +488,86 @@ static void load_line_numbers_in_range(LineNumbersCache * cache, ADDR_T addr0, A
     }
 }
 
+static int cmp_file(char * file, char * dir, char * name) {
+    int i;
+    if (file == NULL) return 0;
+    if (name == NULL) return 0;
+    if (strcmp(file, name) == 0) return 1;
+    i = strlen(name);
+    while (i > 0 && name[i - 1] != '/' && name[i - 1] != '\\') i--;
+    if (strcmp(file, name + i) == 0) return 1;
+    if (dir == NULL) return 0;
+    i = strlen(dir);
+    if (strncmp(dir, file, i) == 0 && (file[i] == '/' || file[i] == '\\') &&
+            strcmp(file + i + 1, name) == 0) return 1;
+    return 0;
+}
+
+int line_to_address(Context * ctx, char * file, int line, int column, line_to_address_callback callback, void * user_args) {
+    int err = 0;
+    Trap trap;
+    LineNumbersCache * cache = NULL;
+
+    if (ctx == NULL) err = ERR_INV_CONTEXT;
+    else if (ctx->exited) err = ERR_ALREADY_EXITED;
+
+    if (err == 0) {
+        if (set_trap(&trap)) {
+            int i;
+            cache = get_line_numbers_cache(ctx);
+            for (i = 0; i < cache->units_cnt; i++) {
+                CompUnit * unit = cache->units + i;
+                int equ = 0;
+                if (unit->dir != NULL && unit->name != NULL) {
+                    equ = cmp_file(file, unit->dir, unit->name);
+                }
+                if (!equ) {
+                    int j;
+                    for (j = 0; j < unit->files_cnt; j++) {
+                        FileInfo * f = unit->files + j;
+                        if (f->dir != NULL && f->name != NULL) {
+                            equ = cmp_file(file, f->dir, f->name);
+                            if (equ) break;
+                        }
+                    }
+                }
+                if (equ) {
+                    int j;
+                    load_line_numbers(cache, unit);
+                    for (j = 0; j < unit->states_cnt - 1; j++) {
+                        LineNumbersState * state = unit->states + j;
+                        LineNumbersState * next = unit->states + j + 1;
+                        char * state_dir = unit->dir;
+                        char * state_name = unit->name;
+                        if (state->end_sequence) continue;
+                        if (line < state->line) continue;
+                        if (line >= next->line) continue;
+                        if (state->file >= 1 && state->file <= unit->files_cnt) {
+                            FileInfo * f = unit->files + (state->file - 1);
+                            state_dir = f->dir;
+                            state_name = f->name;
+                        }
+                        if (!cmp_file(file, state_dir, state_name)) continue;
+                        callback(user_args, state->address);
+                    }
+                }
+            }
+            clear_trap(&trap);
+        }
+        else {
+            err = trap.error;
+        }
+    }
+
+    if (cache != NULL) elf_close(cache->file);
+
+    if (err != 0) {
+        errno = err;
+        return -1;
+    }
+    return 0;
+}
+
 static void command_map_to_source(char * token, Channel * c) {
     int err = 0;
     char * err_msg = NULL;
@@ -548,22 +628,22 @@ static void command_map_to_source(char * token, Channel * c) {
                     c->out.write(&c->out, '{');
                     json_write_string(&c->out, "SLine");
                     c->out.write(&c->out, ':');
-                    json_write_ulong(&c->out, state->line - 1);
+                    json_write_ulong(&c->out, state->line);
                     if (state->column > 0) {
                         c->out.write(&c->out, ',');
                         json_write_string(&c->out, "SCol");
                         c->out.write(&c->out, ':');
-                        json_write_ulong(&c->out, state->column - 1);
+                        json_write_ulong(&c->out, state->column);
                     }
                     c->out.write(&c->out, ',');
                     json_write_string(&c->out, "ELine");
                     c->out.write(&c->out, ':');
-                    json_write_ulong(&c->out, next->line - 1);
+                    json_write_ulong(&c->out, next->line);
                     if (next->column > 0) {
                         c->out.write(&c->out, ',');
                         json_write_string(&c->out, "ECol");
                         c->out.write(&c->out, ':');
-                        json_write_ulong(&c->out, next->column - 1);
+                        json_write_ulong(&c->out, next->column);
                     }
                     state_file = NULL;
                     if (state->file >= 1 && state->file <= unit->files_cnt) {

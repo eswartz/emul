@@ -40,6 +40,7 @@
 #include "symbols.h"
 #include "json.h"
 #include "link.h"
+#include "linenumbers.h"
 
 #if defined(_WRS_KERNEL)
 #  include <private/vxdbgLibP.h>
@@ -75,6 +76,13 @@ struct BreakpointInfo {
     char * err_msg;
     char * address;
     char * condition;
+#if SERVICE_LineNumbers
+    char * file;
+    int line;
+    int column;
+#endif
+    int skip_count;
+    int hit_count;
     BreakpointAttribute * unsupported;
 };
 
@@ -100,8 +108,10 @@ struct BreakInstruction {
 
 static const char * BREAKPOINTS = "Breakpoints";
 
+#define is_running(ctx) (!(ctx)->stopped && context_has_state(ctx))
+
 #define ADDR2INSTR_HASH_SIZE 1023
-#define addr2instr_hash(addr) (((addr) + ((addr) >> 8)) % ADDR2INSTR_HASH_SIZE)
+#define addr2instr_hash(addr) ((unsigned)((addr) + ((addr) >> 8)) % ADDR2INSTR_HASH_SIZE)
 
 #define link_all2bi(A)  ((BreakInstruction *)((char *)(A) - (int)&((BreakInstruction *)0)->link_all))
 #define link_adr2bi(A)  ((BreakInstruction *)((char *)(A) - (int)&((BreakInstruction *)0)->link_adr))
@@ -132,7 +142,7 @@ static int condition_expression_identifier(char * name, Value * v);
 static ExpressionContext bp_address_ctx = { address_expression_identifier, NULL };
 static ExpressionContext bp_condition_ctx = { condition_expression_identifier, NULL };
 
-static int id2bp_hash(char * id) {
+static unsigned id2bp_hash(char * id) {
     unsigned hash = 0;
     while (*id) hash = (hash >> 16) + hash + (unsigned char)*id++;
     return hash % ID2BP_HASH_SIZE;
@@ -189,7 +199,7 @@ static void remove_instruction(BreakInstruction * bi) {
         }
     }
 #else
-    if (!bi->ctx->exited && bi->ctx->stopped) {
+    if (!bi->ctx->exited && !is_running(bi->ctx)) {
         if (context_write_mem(bi->ctx, bi->address, bi->saved_code, BREAK_SIZE) < 0) {
             bi->error = errno;
         }
@@ -229,12 +239,12 @@ static void delete_unused_instructions(void) {
             list_remove(&bi->link_all);
             list_remove(&bi->link_adr);
             if (bi->planted) {
-                if (bi->ctx->exited || !bi->ctx->stopped) {
+                if (bi->ctx->exited || is_running(bi->ctx)) {
                     LINK * qp = context_root.next;
                     while (qp != &context_root) {
                         Context * ctx = ctxl2ctxp(qp);
                         qp = qp->next;
-                        if (ctx->mem == bi->ctx->mem && !ctx->exited && ctx->stopped) {
+                        if (ctx->mem == bi->ctx->mem && !ctx->exited && !is_running(ctx)) {
                             assert(bi->ctx != ctx);
                             context_unlock(bi->ctx);
                             context_lock(ctx);
@@ -267,7 +277,7 @@ static BreakInstruction * find_instruction(Context * ctx, unsigned long address)
         BreakInstruction * bi = link_adr2bi(l);
         l = l->next;
         if (bi->ctx->mem == ctx->mem && bi->address == address) {
-            if (bi->ctx->exited || !bi->ctx->stopped) {
+            if (bi->ctx->exited || is_running(bi->ctx)) {
                 assert(bi->ctx != ctx);
                 context_unlock(bi->ctx);
                 context_lock(ctx);
@@ -368,6 +378,42 @@ static void address_expression_error(BreakpointInfo * bp, char * msg) {
     snprintf(bp->err_msg, size, "Invalid breakpoint address '%s': %s", bp->address, msg);
 }
 
+static void plant_breakpoint_in_context(BreakpointInfo * bp, Context * ctx, unsigned long address) {
+    BreakInstruction * bi = NULL;
+    bi = find_instruction(ctx, address);
+    if (bi == NULL) {
+        bi = add_instruction(ctx, address);
+    }
+    else if (bp->planted) {
+        int i = 0;
+        while (i < bi->ref_cnt && bi->refs[i] != bp) i++;
+        if (i < bi->ref_cnt) return;
+    }
+    if (bi->ref_cnt >= bi->ref_size) {
+        bi->ref_size = bi->ref_size == 0 ? 8 : bi->ref_size * 2;
+        bi->refs = (BreakpointInfo **)loc_realloc(bi->refs, sizeof(BreakpointInfo *) * bi->ref_size);
+    }
+    bi->refs[bi->ref_cnt++] = bp;
+    if (bi->ctx != ctx) bi->ctx_cnt++;
+    if (bi->error) {
+        if (!bp->error) bp->error = bi->error;
+    }
+    else {
+        bp->planted = 1;
+        bp->hit_count = 0;
+    }
+}
+
+typedef struct PlantBreakpointArgs {
+    BreakpointInfo * bp;
+    Context * ctx;
+} PlantBreakpointArgs;
+
+static void plant_breakpoint_address_iterator(void * x, unsigned long address) {
+    PlantBreakpointArgs * args = (PlantBreakpointArgs *)x;
+    plant_breakpoint_in_context(args->bp, args->ctx, address);
+}
+
 static void plant_breakpoint(BreakpointInfo * bp) {
     LINK * qp;
     char * p = NULL;
@@ -382,45 +428,40 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         bp->err_msg = NULL;
     }
 
-    if (bp->address == NULL) {
+    if (bp->address != NULL) {
+        expression_context = NULL;
+        if (evaluate_expression(&bp_address_ctx, bp->address, &v) < 0) {
+            if (errno != ERR_INV_CONTEXT) {
+                address_expression_error(bp, NULL);
+                trace(LOG_ALWAYS, "Error: %s", bp->err_msg);
+                return;
+            }
+            context_sensitive = 1;
+        }
+        if (!context_sensitive && v.type != VALUE_INT && v.type != VALUE_UNS) {
+            errno = ERR_INV_EXPRESSION;
+            address_expression_error(bp, "Must be integer number");
+            trace(LOG_ALWAYS, "Error: %s", bp->err_msg);
+            return;
+        }
+    }
+#if SERVICE_LineNumbers
+    else if (bp->file != NULL) {
+        context_sensitive = 1;
+    }
+#endif
+    else {
         bp->error = ERR_INV_EXPRESSION;
         trace(LOG_ALWAYS, "No breakpoint address");
         return;
     }
-    expression_context = NULL;
-    if (evaluate_expression(&bp_address_ctx, bp->address, &v) < 0) {
-        if (errno != ERR_INV_CONTEXT) {
-            address_expression_error(bp, NULL);
-            trace(LOG_ALWAYS, "Error: %s", bp->err_msg);
-            return;
-        }
-        context_sensitive = 1;
-    }
-    if (!context_sensitive && v.type != VALUE_INT && v.type != VALUE_UNS) {
-        errno = ERR_INV_EXPRESSION;
-        address_expression_error(bp, "Must be integer number");
-        trace(LOG_ALWAYS, "Error: %s", bp->err_msg);
-        return;
-    }
 
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
-        BreakInstruction * bi = NULL;
         Context * ctx = ctxl2ctxp(qp);
 
-        if (ctx->exited || ctx->exiting || !ctx->stopped) continue;
-        if (context_sensitive) {
-            expression_context = ctx;
-            if (evaluate_expression(&bp_address_ctx, bp->address, &v) < 0) {
-                address_expression_error(bp, NULL);
-                trace(LOG_ALWAYS, "Error: %s", bp->err_msg);
-                continue;
-            }
-            if (v.type != VALUE_INT && v.type != VALUE_UNS) {
-                errno = ERR_INV_EXPRESSION;
-                address_expression_error(bp, "Must be integer number");
-                continue;
-            }
-        }
+        if (ctx->exited || ctx->exiting) continue;
+        if (is_running(ctx)) continue;
+
         if (bp->condition != NULL) {
             /* Optimize away the breakpoint if condition is always false for given context */
             Value c;
@@ -437,29 +478,69 @@ static void plant_breakpoint(BreakpointInfo * bp) {
                 }
             }
         }
-        bi = find_instruction(ctx, v.value);
-        if (bi == NULL) {
-            bi = add_instruction(ctx, v.value);
-        }
-        else if (bp->planted) {
-            int i = 0;
-            while (i < bi->ref_cnt && bi->refs[i] != bp) i++;
-            if (i < bi->ref_cnt) continue;
-        }
-        if (bi->ref_cnt >= bi->ref_size) {
-            bi->ref_size = bi->ref_size == 0 ? 8 : bi->ref_size * 2;
-            bi->refs = (BreakpointInfo **)loc_realloc(bi->refs, sizeof(BreakpointInfo *) * bi->ref_size);
-        }
-        bi->refs[bi->ref_cnt++] = bp;
-        if (bi->ctx != ctx) bi->ctx_cnt++;
-        if (bi->error) {
-            if (!bp->error) bp->error = bi->error;
+        if (context_sensitive) {
+            if (bp->address != NULL) {
+                expression_context = ctx;
+                if (evaluate_expression(&bp_address_ctx, bp->address, &v) < 0) {
+                    address_expression_error(bp, NULL);
+                    trace(LOG_ALWAYS, "BP Error: %s", bp->err_msg);
+                    continue;
+                }
+                if (v.type != VALUE_INT && v.type != VALUE_UNS) {
+                    errno = ERR_INV_EXPRESSION;
+                    address_expression_error(bp, "Must be integer number");
+                    continue;
+                }
+                plant_breakpoint_in_context(bp, ctx, v.value);
+            }
+#if SERVICE_LineNumbers
+            else if (bp->file != NULL) {
+                PlantBreakpointArgs args;
+                if (ctx->parent != NULL && ctx->mem == ctx->parent->mem) continue;
+                args.ctx = ctx;
+                args.bp = bp;
+                if (line_to_address(ctx, bp->file, bp->line, bp->column,
+                        plant_breakpoint_address_iterator, &args) < 0) {
+                    assert(errno != 0);
+                    if (bp->error == 0) {
+                        bp->error = errno;
+                        assert(bp->err_msg == NULL);
+                        bp->err_msg = loc_strdup(errno_to_str(bp->error));
+                        trace(LOG_ALWAYS, "BP Error: %s", bp->err_msg);
+                    }
+                }
+            }
+#endif
+            else {
+                assert(0);
+            }
         }
         else {
-            bp->planted = 1;
+            if (ctx->parent != NULL && ctx->mem == ctx->parent->mem) continue;
+            plant_breakpoint_in_context(bp, ctx, v.value);
         }
     }
     if (bp->planted) bp->error = 0;
+}
+
+static void free_bp(BreakpointInfo * bp) {
+    list_remove(&bp->link_all);
+    list_remove(&bp->link_id);
+    loc_free(bp->err_msg);
+    loc_free(bp->address);
+#if SERVICE_LineNumbers
+    loc_free(bp->file);
+#endif
+    loc_free(bp->condition);
+    while (bp->unsupported != NULL) {
+        BreakpointAttribute * u = bp->unsupported;
+        bp->unsupported = u->next;
+        loc_free(u->name);
+        loc_free(u->value);
+        loc_free(u);
+    }
+    assert(list_is_empty(&bp->refs));
+    loc_free(bp);
 }
 
 static void event_replant_breakpoints(void *arg) {
@@ -470,12 +551,7 @@ static void event_replant_breakpoints(void *arg) {
         BreakpointInfo * bp = link_all2bp(l);
         l = l->next;
         if (bp->deleted) {
-            list_remove(&bp->link_all);
-            list_remove(&bp->link_id);
-            loc_free(bp->err_msg);
-            loc_free(bp->address);
-            loc_free(bp->condition);
-            loc_free(bp);
+            free_bp(bp);
             continue;
         }
         bp->planted = 0;
@@ -528,10 +604,38 @@ static int copy_breakpoint_info(BreakpointInfo * dst, BreakpointInfo * src) {
     }
     src->condition = NULL;
 
+#if SERVICE_LineNumbers
+    if (!str_equ(dst->file, src->file)) {
+        loc_free(dst->file);
+        dst->file = src->file;
+        res = 1;
+    }
+    else {
+        loc_free(src->file);
+    }
+    src->file = NULL;
+
+    if (dst->line != src->line) {
+        dst->line = src->line;
+        res = 1;
+    }
+
+    if (dst->column != src->column) {
+        dst->column = src->column;
+        res = 1;
+    }
+#endif
+
+    if (dst->skip_count != src->skip_count) {
+        dst->skip_count = src->skip_count;
+        res = 1;
+    }
+
     if (dst->enabled != src->enabled) {
         dst->enabled = src->enabled;
         res = 1;
     }
+
     if (dst->unsupported != src->unsupported) {
         while (dst->unsupported != NULL) {
             BreakpointAttribute * u = dst->unsupported;
@@ -593,6 +697,20 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
             else if (strcmp(name, "Condition") == 0) {
                 bp->condition = json_read_alloc_string(inp);
             }
+#if SERVICE_LineNumbers
+            else if (strcmp(name, "File") == 0) {
+                bp->file = json_read_alloc_string(inp);
+            }
+            else if (strcmp(name, "Line") == 0) {
+                bp->line = json_read_long(inp);
+            }
+            else if (strcmp(name, "Column") == 0) {
+                bp->column = json_read_long(inp);
+            }
+#endif
+            else if (strcmp(name, "SkipCount") == 0) {
+                bp->skip_count = json_read_long(inp);
+            }
             else if (strcmp(name, "Enabled") == 0) {
                 bp->enabled = json_read_boolean(inp);
             }
@@ -634,6 +752,36 @@ static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp)
         json_write_string(out, bp->condition);
     }
 
+#if SERVICE_LineNumbers
+    if (bp->file != NULL) {
+        out->write(out, ',');
+        json_write_string(out, "File");
+        out->write(out, ':');
+        json_write_string(out, bp->file);
+    }
+
+    if (bp->line > 0) {
+        out->write(out, ',');
+        json_write_string(out, "Line");
+        out->write(out, ':');
+        json_write_long(out, bp->line);
+    }
+
+    if (bp->column > 0) {
+        out->write(out, ',');
+        json_write_string(out, "Column");
+        out->write(out, ':');
+        json_write_long(out, bp->column);
+    }
+#endif
+
+    if (bp->skip_count > 0) {
+        out->write(out, ',');
+        json_write_string(out, "SkipCount");
+        out->write(out, ':');
+        json_write_long(out, bp->skip_count);
+    }
+
     if (bp->enabled) {
         out->write(out, ',');
         json_write_string(out, "Enabled");
@@ -645,7 +793,7 @@ static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp)
         out->write(out, ',');
         json_write_string(out, u->name);
         out->write(out, ':');
-        json_write_string(out, u->value);
+        write_string(out, u->value);
         u = u->next;
     }
 
@@ -709,7 +857,7 @@ static void add_breakpoint(InputStream * inp, OutputStream * out, BreakpointInfo
     }
     r = find_breakpoint_ref(p, inp);
     if (r == NULL) {
-        int inp_hash = (int)inp / 16 % INP2BR_HASH_SIZE;
+        unsigned inp_hash = (unsigned)inp / 16 % INP2BR_HASH_SIZE;
         r = (BreakpointRef *)loc_alloc_zero(sizeof(BreakpointRef));
         list_add_last(&r->link_inp, inp2br + inp_hash);
         list_add_last(&r->link_bp, &p->refs);
@@ -735,11 +883,7 @@ static void remove_breakpoint(OutputStream * out, BreakpointInfo * bp) {
         replant_breakpoints();
     }
     else {
-        list_remove(&bp->link_all);
-        list_remove(&bp->link_id);
-        loc_free(bp->address);
-        loc_free(bp->condition);
-        loc_free(bp);
+        free_bp(bp);
     }
 }
 
@@ -752,7 +896,7 @@ static void remove_ref(OutputStream * out, BreakpointRef * br) {
 }
 
 static void delete_breakpoint_refs(InputStream * inp, OutputStream * out) {
-    int hash = (int)inp / 16 % INP2BR_HASH_SIZE;
+    unsigned hash = (unsigned)inp / 16 % INP2BR_HASH_SIZE;
     LINK * l = inp2br[hash].next;
     while (l != &inp2br[hash]) {
         BreakpointRef * br = link_inp2br(l);
@@ -788,7 +932,7 @@ static void command_ini_bps(char * token, Channel * c) {
 }
 
 static void command_get_bp_ids(char * token, Channel * c) {
-    int hash = (int)&c->inp / 16 % INP2BR_HASH_SIZE;
+    unsigned hash = (unsigned)&c->inp / 16 % INP2BR_HASH_SIZE;
     LINK * l = inp2br[hash].next;
     int cnt = 0;
 
@@ -846,9 +990,10 @@ static void command_get_status(char * token, Channel * c) {
 static void command_bp_add(char * token, Channel * c) {
     BreakpointInfo bp;
     read_breakpoint_properties(&c->inp, &bp);
-    add_breakpoint(&c->inp, &c->bcg->out, &bp);
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    add_breakpoint(&c->inp, &c->bcg->out, &bp);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -858,15 +1003,11 @@ static void command_bp_add(char * token, Channel * c) {
 
 static void command_bp_change(char * token, Channel * c) {
     BreakpointInfo bp;
-    BreakpointInfo * p;
     read_breakpoint_properties(&c->inp, &bp);
-    p = find_breakpoint(bp.id);
-    if (p != NULL && copy_breakpoint_info(p, &bp)) {
-        if (p->planted || p->enabled && p->unsupported == NULL) replant_breakpoints();
-        send_event_context_changed(&c->bcg->out, p);
-    }
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    add_breakpoint(&c->inp, &c->bcg->out, &bp);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -986,6 +1127,24 @@ static void command_get_capabilities(char * token, Channel * c) {
     json_write_string(&c->out, "Address");
     c->out.write(&c->out, ':');
     json_write_boolean(&c->out, 1);
+#if SERVICE_LineNumbers
+    c->out.write(&c->out, ',');
+    json_write_string(&c->out, "File");
+    c->out.write(&c->out, ':');
+    json_write_boolean(&c->out, 1);
+    c->out.write(&c->out, ',');
+    json_write_string(&c->out, "Line");
+    c->out.write(&c->out, ':');
+    json_write_boolean(&c->out, 1);
+    c->out.write(&c->out, ',');
+    json_write_string(&c->out, "Column");
+    c->out.write(&c->out, ':');
+    json_write_boolean(&c->out, 1);
+#endif
+    c->out.write(&c->out, ',');
+    json_write_string(&c->out, "SkipCount");
+    c->out.write(&c->out, ':');
+    json_write_boolean(&c->out, 1);
     c->out.write(&c->out, ',');
     json_write_string(&c->out, "Condition");
     c->out.write(&c->out, ':');
@@ -1011,27 +1170,34 @@ int evaluate_breakpoint_condition(Context * ctx) {
     if (bi == NULL) return 0;
     expression_context = ctx;
     for (i = 0; i < bi->ref_cnt; i++) {
-        Value v;
         BreakpointInfo * bp = bi->refs[i];
         assert(bp->planted);
         assert(bp->error == 0);
         if (bp->deleted) continue;
         if (bp->unsupported != NULL) continue;
         if (!bp->enabled) continue;
-        if (bp->condition == NULL) return 1;
-        if (evaluate_expression(&bp_condition_ctx, bp->condition, &v) < 0) {
-            trace(LOG_ALWAYS, "%s: %s", get_expression_error_msg(), bp->condition);
-            return 1;
+        if (bp->condition != NULL) {
+            Value v;
+            if (evaluate_expression(&bp_condition_ctx, bp->condition, &v) < 0) {
+                trace(LOG_ALWAYS, "%s: %s", get_expression_error_msg(), bp->condition);
+                return 1;
+            }
+            switch (v.type) {
+            case VALUE_INT:
+            case VALUE_UNS:
+                if (v.value == 0) continue;
+                break;
+            case VALUE_STR:
+                if (v.str == NULL) continue;
+                break;
+            }
         }
-        switch (v.type) {
-        case VALUE_INT:
-        case VALUE_UNS:
-            if (v.value) return 1;
-            break;
-        case VALUE_STR:
-            if (v.str != NULL) return 1;
-            break;
+        if (bp->skip_count > 0) {
+            bp->hit_count++;
+            if (bp->hit_count < bp->skip_count) continue;
+            bp->hit_count = 0;
         }
+        return 1;
     }
     return 0;
 }

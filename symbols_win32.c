@@ -32,40 +32,10 @@
 #  define MAX_SYM_NAME 2000
 #endif
 
-static HANDLE current_process = NULL;
-static ULONG current_base = 0;
-
-/*
-static BOOL CALLBACK EnumSymProc1( 
-    LPSTR SymbolName,
-    ULONG SymbolAddress,
-    ULONG SymbolSize,
-    PVOID UserContext)
-{
-    printf("%08X %4u %s\n", (long)SymbolAddress, SymbolSize, SymbolName);
-    return TRUE;
-}
-
-static void print_symbols(void) {
-    printf("process 0x%08x, base address 0x%08x\n", current_process, current_base);
-    if (!SymEnumerateSymbols(current_process, current_base, EnumSymProc1, NULL)) {
-        printf("SymEnumerateSymbols failed: %d\n", GetLastError());
-    }
-}
-*/
-
 int set_symbol_context(Context * ctx) {
     if (ctx->parent != NULL) ctx = ctx->parent;
     assert(ctx->pid == ctx->mem);
-    if (ctx->handle != current_process) {
-        if (current_process != NULL) {
-            if (!SymCleanup(current_process)) {
-                set_win32_errno(GetLastError());
-                trace(LOG_ALWAYS, "SymCleanup() error: %d: %s",
-                    errno, errno_to_str(errno));
-            }
-            current_process = NULL;
-        }
+    if (!ctx->sym_handler_loaded) {
         if (!SymInitialize(ctx->handle, NULL, FALSE)) {
             set_win32_errno(GetLastError());
             return -1;
@@ -74,8 +44,7 @@ int set_symbol_context(Context * ctx) {
             set_win32_errno(GetLastError());
             return -1;
         }
-        current_process = ctx->handle;
-        current_base = (ULONG)ctx->base_address;
+        ctx->sym_handler_loaded = 1;
     }
     return 0;
 }
@@ -147,13 +116,18 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
 
 static void event_context_exited(Context * ctx, void * client_data) {
     assert(ctx->handle != NULL);
-    if (ctx->handle == current_process) {
-        if (!SymCleanup(current_process)) {
+    if (ctx->sym_handler_loaded) {
+        if (!SymUnloadModule(ctx->handle, (DWORD)ctx->base_address)) {
+            set_win32_errno(GetLastError());
+            trace(LOG_ALWAYS, "SymUnloadModule() error: %d: %s",
+                errno, errno_to_str(errno));
+        }
+        if (!SymCleanup(ctx->handle)) {
             set_win32_errno(GetLastError());
             trace(LOG_ALWAYS, "SymCleanup() error: %d: %s",
                 errno, errno_to_str(errno));
         }
-        current_process = NULL;
+        ctx->sym_handler_loaded = 0;
     }
 }
 
