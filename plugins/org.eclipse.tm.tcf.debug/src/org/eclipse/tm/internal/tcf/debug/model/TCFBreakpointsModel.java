@@ -44,7 +44,6 @@ import org.eclipse.tm.tcf.services.IBreakpoints;
  */
 public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointManagerListener {
 
-    private static final String PROP_ID = "ID";
     private final IBreakpointManager bp_manager = DebugPlugin.getDefault().getBreakpointManager();
     
     public TCFBreakpointsModel() {
@@ -66,20 +65,31 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         return true;
     }
     
+    private String getBreakpointID(IBreakpoint bp) throws CoreException {
+        IMarker marker = bp.getMarker();
+        String id = (String)marker.getAttributes().get(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID);
+        if (id != null) return id;
+        id = marker.getResource().getLocationURI().toString();
+        if (id == null) return null;
+        return id + ':' + marker.getId();
+    }
+    
     @SuppressWarnings("unchecked")
     public void downloadBreakpoints(final IChannel channel, final Runnable done)
             throws IOException, CoreException {
         assert Protocol.isDispatchThread();
         IBreakpoints service = channel.getRemoteService(IBreakpoints.class);
         if (service != null) {
-            IBreakpoint[] arr = bp_manager.getBreakpoints(ITCFConstants.ID_TCF_DEBUG_MODEL);
+            IBreakpoint[] arr = bp_manager.getBreakpoints();
             if (arr != null && arr.length > 0) {
                 Map<String,Object>[] bps = new Map[arr.length];
                 for (int i = 0; i < arr.length; i++) {
                     if (!isSupported(channel, arr[i])) continue;
+                    String id = getBreakpointID(arr[i]);
+                    if (id == null) continue;
                     IMarker marker = arr[i].getMarker();
                     String file = getFilePath(marker.getResource());
-                    bps[i] = toBreakpointAttributes(file, marker.getAttributes());
+                    bps[i] = toBreakpointAttributes(id, file, marker.getAttributes());
                 }
                 service.set(bps, new IBreakpoints.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
@@ -95,15 +105,15 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
 
     public void breakpointManagerEnablementChanged(final boolean enabled) {
         try {
-            IBreakpoint[] arr = bp_manager.getBreakpoints(ITCFConstants.ID_TCF_DEBUG_MODEL);
+            IBreakpoint[] arr = bp_manager.getBreakpoints();
             if (arr == null || arr.length == 0) return;
             final Map<String,IBreakpoint> map = new HashMap<String,IBreakpoint>();
             for (int i = 0; i < arr.length; i++) {
                 IMarker marker = arr[i].getMarker();
                 Boolean b = marker.getAttribute(IBreakpoint.ENABLED, Boolean.FALSE);
                 if (!b.booleanValue()) continue;
-                String id = marker.getAttribute(ITCFConstants.ID_TCF_DEBUG_MODEL +
-                        '.' + IBreakpoints.PROP_ID, (String)null);
+                String id = getBreakpointID(arr[i]);
+                if (id == null) continue;
                 map.put(id, arr[i]);
             }
             if (map.isEmpty()) return;
@@ -162,6 +172,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         private final ILaunch[] launches;
         private final Map<String,Object> marker_attrs;
         private final String marker_file;
+        private final String marker_id;
         
         IBreakpoints service;
         IBreakpoints.DoneCommand done;
@@ -172,6 +183,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             this.breakpoint = breakpoint;
             marker_attrs = new HashMap<String,Object>(breakpoint.getMarker().getAttributes());
             marker_file = getFilePath(breakpoint.getMarker().getResource());
+            marker_id = getBreakpointID(breakpoint);
             launches = DebugPlugin.getDefault().getLaunchManager().getLaunches();
         }
         
@@ -182,22 +194,24 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         }
         
         public void run() {
-            tcf_attrs = toBreakpointAttributes(marker_file, marker_attrs);
-            for (int i = 0; i < launches.length; i++) {
-                if (launches[i] instanceof TCFLaunch) {
-                    final TCFLaunch launch = (TCFLaunch)launches[i];
-                    final IChannel channel = launch.getChannel();
-                    if (channel == null) continue;
-                    if (channel.getState() != IChannel.STATE_OPEN) continue;
-                    service = channel.getRemoteService(IBreakpoints.class);
-                    if (service == null) continue;
-                    if (!isSupported(channel, breakpoint)) continue;
-                    done = new IBreakpoints.DoneCommand() {
-                        public void doneCommand(IToken token, Exception error) {
-                            if (error != null) channel.terminate(error);
-                        }
-                    };
-                    update();
+            if (marker_id != null) {
+                tcf_attrs = toBreakpointAttributes(marker_id, marker_file, marker_attrs);
+                for (int i = 0; i < launches.length; i++) {
+                    if (launches[i] instanceof TCFLaunch) {
+                        final TCFLaunch launch = (TCFLaunch)launches[i];
+                        final IChannel channel = launch.getChannel();
+                        if (channel == null) continue;
+                        if (channel.getState() != IChannel.STATE_OPEN) continue;
+                        service = channel.getRemoteService(IBreakpoints.class);
+                        if (service == null) continue;
+                        if (!isSupported(channel, breakpoint)) continue;
+                        done = new IBreakpoints.DoneCommand() {
+                            public void doneCommand(IToken token, Exception error) {
+                                if (error != null) channel.terminate(error);
+                            }
+                        };
+                        update();
+                    }
                 }
             }
             Protocol.sync(new Runnable() {
@@ -221,7 +235,6 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
 
     public void breakpointAdded(IBreakpoint breakpoint) {
         try {
-            if (!breakpoint.getModelIdentifier().equals(ITCFConstants.ID_TCF_DEBUG_MODEL)) return;
             new BreakpointUpdate(breakpoint) {
                 @Override
                 void update() {
@@ -259,7 +272,6 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
 
     public void breakpointChanged(IBreakpoint breakpoint, IMarkerDelta delta) {
         try {
-            if (!breakpoint.getModelIdentifier().equals(ITCFConstants.ID_TCF_DEBUG_MODEL)) return;
             final Set<String> s = calcMarkerDeltaKeys(breakpoint.getMarker(), delta);
             if (s.isEmpty()) return;
             new BreakpointUpdate(breakpoint) {
@@ -268,10 +280,10 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                     if (s.size() == 1 && s.contains(IBreakpoint.ENABLED)) {
                         Boolean enabled = (Boolean)tcf_attrs.get(IBreakpoints.PROP_ENABLED);
                         if (enabled == null || !enabled.booleanValue()) {
-                            service.disable(new String[]{ (String)tcf_attrs.get(PROP_ID) }, done);
+                            service.disable(new String[]{ (String)tcf_attrs.get(IBreakpoints.PROP_ID) }, done);
                         }
                         else {
-                            service.enable(new String[]{ (String)tcf_attrs.get(PROP_ID) }, done);
+                            service.enable(new String[]{ (String)tcf_attrs.get(IBreakpoints.PROP_ID) }, done);
                         }
                     }
                     else {
@@ -287,11 +299,10 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
 
     public void breakpointRemoved(IBreakpoint breakpoint, IMarkerDelta delta) {
         try {
-            if (!breakpoint.getModelIdentifier().equals(ITCFConstants.ID_TCF_DEBUG_MODEL)) return;
             new BreakpointUpdate(breakpoint) {
                 @Override
                 void update() {
-                    service.remove(new String[]{ (String)tcf_attrs.get(PROP_ID) }, done);
+                    service.remove(new String[]{ (String)tcf_attrs.get(IBreakpoints.PROP_ID) }, done);
                 }
             }.exec();
         }
@@ -324,7 +335,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         m.put(IMarker.MESSAGE, "Breakpoint: " + msg);
         Number line = (Number)p.get(IBreakpoints.PROP_LINE);
         if (line != null) {
-            m.put(IMarker.LINE_NUMBER, new Integer(line.intValue() + 1));
+            m.put(IMarker.LINE_NUMBER, new Integer(line.intValue()));
             Number column = (Number)p.get(IBreakpoints.PROP_COLUMN);
             if (column != null) {
                 m.put(IMarker.CHAR_START, new Integer(column.intValue()));
@@ -334,9 +345,10 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         return m;
     }
     
-    public Map<String,Object> toBreakpointAttributes(String file, Map<String,Object> p) {
+    public Map<String,Object> toBreakpointAttributes(String id, String file, Map<String,Object> p) {
         assert Protocol.isDispatchThread();
         Map<String,Object> m = new HashMap<String,Object>();
+        m.put(IBreakpoints.PROP_ID, id);
         for (Iterator<Map.Entry<String,Object>> i = p.entrySet().iterator(); i.hasNext();) {
             Map.Entry<String,Object> e = i.next();
             String key = e.getKey();
@@ -349,14 +361,24 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             m.put(IBreakpoints.PROP_ENABLED, enabled);
         }
         if (file != null) {
-            m.put(IBreakpoints.PROP_FILE, file);
+            // Map file path to remote file system
+            int i = file.lastIndexOf('/');
+            int j = file.lastIndexOf('\\');
+            String name = file;
+            if (i > j) name = file.substring(i + 1);
+            else if (i < j) name = file.substring(j + 1);
+            m.put(IBreakpoints.PROP_FILE, name);
             Integer line = (Integer)p.get(IMarker.LINE_NUMBER);
             if (line != null) {
-                m.put(IBreakpoints.PROP_LINE, new Integer(line.intValue() - 1));
+                m.put(IBreakpoints.PROP_LINE, new Integer(line.intValue()));
                 Integer column = (Integer)p.get(IMarker.CHAR_START);
                 if (column != null) m.put(IBreakpoints.PROP_COLUMN, column);
             }
         }
+        String condition  = (String)p.get("org.eclipse.cdt.debug.core.condition");
+        if (condition != null && condition.length() > 0) m.put(IBreakpoints.PROP_CONDITION, condition);
+        Integer skip_count = (Integer)p.get("org.eclipse.cdt.debug.core.ignoreCount");
+        if (skip_count != null && skip_count.intValue() > 0) m.put(IBreakpoints.PROP_SKIP_COUNT, skip_count);
         return m;
     }
 }

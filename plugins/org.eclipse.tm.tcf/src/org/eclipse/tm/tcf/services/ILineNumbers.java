@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.services;
 
+import java.math.BigInteger;
+
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
 
@@ -24,7 +26,7 @@ public interface ILineNumbers extends IService {
     /**
      * TextArea represent a continues area in source text mapped to
      * continues range of code addresses.
-     * Line and columns are counted starting from 0.
+     * Line and columns are counted starting from 1.
      * File name can be relative path, in such case client should 
      * use TextArea directory name as origin for the path.
      * File and directory names are valid on a host where code was compiled.
@@ -62,6 +64,97 @@ public interface ILineNumbers extends IService {
             this.basic_block = basic_block;
             this.prologue_end = prologue_end;
             this.epilogue_begin = epilogue_begin;
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof CodeArea)) return false;
+            CodeArea a = (CodeArea)o;
+            if (start_line != a.start_line) return false;
+            if (start_column != a.start_column) return false;
+            if (end_line != a.end_line) return false;
+            if (end_column != a.end_column) return false;
+            if (isa != a.isa) return false;
+            if (is_statement != a.is_statement) return false;
+            if (basic_block != a.basic_block) return false;
+            if (prologue_end != a.prologue_end) return false;
+            if (epilogue_begin != a.epilogue_begin) return false;
+            if (start_address != null && !start_address.equals(a.start_address)) return false;
+            if (start_address == null && a.start_address != null) return false;
+            if (end_address != null && !end_address.equals(a.end_address)) return false;
+            if (end_address == null && a.end_address != null) return false;
+            if (file != null && !file.equals(a.file)) return false;
+            if (file == null && a.file != null) return false;
+            if (directory != null && !directory.equals(a.directory)) return false;
+            if (directory == null && a.directory != null) return false;
+            return true;
+        }
+        
+        @Override
+        public int hashCode() {
+            int h = 0;
+            if (file != null) h += file.hashCode();
+            return h + start_line + start_column + end_line + end_column;
+        }
+        
+        @Override
+        public String toString() {
+            StringBuffer bf = new StringBuffer();
+            bf.append('[');
+            if (directory != null) {
+                bf.append(directory);
+                bf.append(':');
+            }
+            if (file != null) {
+                bf.append(file);
+                bf.append(':');
+            }
+            bf.append(start_line);
+            if (start_column != 0) {
+                bf.append('.');
+                bf.append(start_column);
+            }
+            bf.append("..");
+            bf.append(end_line);
+            if (end_column != 0) {
+                bf.append('.');
+                bf.append(end_column);
+            }
+            bf.append(" -> ");
+            if (start_address != null) {
+                bf.append("0x");
+                bf.append(new BigInteger(start_address.toString()).toString(16));
+            }
+            else {
+                bf.append('0');
+            }
+            bf.append("..");
+            if (end_address != null) {
+                bf.append("0x");
+                bf.append(new BigInteger(end_address.toString()).toString(16));
+            }
+            else {
+                bf.append('0');
+            }
+            if (isa != 0) {
+                bf.append(",isa ");
+                bf.append(isa);
+            }
+            if (is_statement) {
+                bf.append(",statement");
+            }
+            if (basic_block) {
+                bf.append(",basic block");
+            }
+            if (prologue_end) {
+                bf.append(",prologue end");
+            }
+            if (epilogue_begin) {
+                bf.append(",epilogue begin");
+            }
+            bf.append(']');
+            return bf.toString();
         }
     }
     

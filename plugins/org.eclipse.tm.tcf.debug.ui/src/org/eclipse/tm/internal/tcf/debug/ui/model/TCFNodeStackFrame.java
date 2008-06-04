@@ -243,7 +243,7 @@ public class TCFNodeStackFrame extends TCFNode {
             else {
                 String label = makeHexAddrString(l.address);
                 if (l.area != null && l.area.file != null) {
-                    label += ": " + l.area.file + ", line " + (l.area.start_line + 1);
+                    label += ": " + l.area.file + ", line " + l.area.start_line;
                 }
                 result.setLabel(label, 0);
             }

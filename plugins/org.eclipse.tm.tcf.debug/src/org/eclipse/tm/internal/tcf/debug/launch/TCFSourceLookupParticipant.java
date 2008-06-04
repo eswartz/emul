@@ -10,7 +10,13 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.launch;
 
+import java.io.File;
+
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.sourcelookup.AbstractSourceLookupParticipant;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 
@@ -21,10 +27,40 @@ import org.eclipse.tm.tcf.services.ILineNumbers;
 public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant {
 
     public String getSourceName(Object object) throws CoreException {
+        if (object instanceof String) {
+            return (String)object;
+        }
         if (object instanceof ILineNumbers.CodeArea) {
             ILineNumbers.CodeArea area = (ILineNumbers.CodeArea)object;
+            // TODO: map file path from remote file system to local
+            if (area.directory != null && area.file != null) {
+                return new File(area.directory, area.file).getAbsolutePath();
+            }
             return area.file;
         }
         return null;
+    }
+
+    @Override
+    public Object[] findSourceElements(Object object) throws CoreException {
+        String name = getSourceName(object);
+        if (name != null) {
+            IPath path = new Path(name);
+            if (path.isAbsolute()) {
+                IFile[] arr = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocation(path);
+                if (arr != null && arr.length > 0) return arr;
+            }
+        }
+        Object[] res = super.findSourceElements(name);
+        if (name != null && (res == null || res.length == 0)) {
+            // Remove file path and search by file base name
+            String base = name;
+            int i = name.lastIndexOf('/');
+            int j = name.lastIndexOf('\\');
+            if (i > j) base = name.substring(i + 1);
+            if (j > i) base = name.substring(j + 1);
+            res = super.findSourceElements(base);
+        }
+        return res;
     }
 }

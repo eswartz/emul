@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.commands.IDisconnectHandler;
 import org.eclipse.debug.core.commands.IResumeHandler;
 import org.eclipse.debug.core.commands.IStepIntoHandler;
@@ -81,6 +82,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Map<Class,Object> commands = new HashMap<Class,Object>();
     private final TreeSet<FutureTask> queue = new TreeSet<FutureTask>();
 
+    private static final Map<ILaunchConfiguration,IEditorInput> editor_not_found = 
+        new HashMap<ILaunchConfiguration,IEditorInput>();
+    
     private TCFNodeLaunch launch_node;
     private boolean disposed;
 
@@ -548,7 +552,11 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                                     source_element = ((ISourceLookupDirector)locator).getSourceElement(src_ref.area);
                                 }
                                 if (source_element == null) {
-                                    editor_input = new CommonSourceNotFoundEditorInput(src_ref.area);
+                                    ILaunchConfiguration cfg = launch.getLaunchConfiguration();
+                                    editor_input = editor_not_found.get(cfg);
+                                    if (editor_input == null) {
+                                        editor_not_found.put(cfg, editor_input = new CommonSourceNotFoundEditorInput(cfg));
+                                    }
                                     editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
                                 }
                                 else {
@@ -638,7 +646,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         try {
             IDocument document = provider.getDocument(input);
             if (document != null)
-                return document.getLineInformation(lineNumber);
+                return document.getLineInformation(lineNumber - 1);
         }
         catch (BadLocationException e) {
         }

@@ -177,6 +177,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
     
     public void createControl(Composite parent) {
         display = parent.getDisplay();
+        assert display != null;
 
         Font font = parent.getFont();
         Composite comp = new Composite(parent, SWT.NONE);

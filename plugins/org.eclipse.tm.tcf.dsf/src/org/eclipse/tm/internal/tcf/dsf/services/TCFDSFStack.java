@@ -189,13 +189,13 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
         }
 
         public int getLine() {
-            if (code_area == null) return -1;
-            return code_area.start_line + 1;
+            if (code_area == null) return 0;
+            return code_area.start_line;
         }
 
         public int getColumn() {
-            if (code_area == null) return -1;
-            return code_area.start_column + 1;
+            if (code_area == null) return 0;
+            return code_area.start_column;
         }
     }
     
