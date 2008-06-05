@@ -40,24 +40,77 @@ public interface IBreakpoints extends IService {
      * Breakpoint property names.
      */
     static final String   
-        PROP_ID = "ID",                 // String
-        PROP_ENABLED = "Enabled",       // Boolean
-        PROP_ADDRESS = "Address",       // String
-        PROP_CONDITION = "Condition",   // String
-        PROP_FILE = "File",             // String
-        PROP_LINE = "Line",             // Number
-        PROP_COLUMN = "Column",         // Number
-        PROP_SKIP_COUNT = "SkipCount";  // Number
+        PROP_ID = "ID",                           // String
+        PROP_ENABLED = "Enabled",                 // Boolean
+        PROP_TYPE = "BreakpointType",             // String
+        PROP_CONTEXTNAMES = "ContextNames",       // Array
+        PROP_CONTEXTIDS = "ContextIds",           // Array
+        PROP_EXECUTABLEPATHS = "ExecPaths",       // Array
+        PROP_LOCATION = "Location",               // String
+        PROP_SIZE = "Size",                       // Number
+        PROP_ACCESSMODE = "AccessMode",           // Number
+        PROP_FILE = "File",                       // String
+        PROP_LINE = "Line",                       // Number
+        PROP_COLUMN = "Column",                   // Number
+        PROP_PATTERN = "MaskValue",               // Number
+        PROP_MASK = "Mask",                       // Number
+        PROP_STOP_GROUP = "StopGroup",            // Array
+        PROP_IGNORECOUNT = "IgnoreCount",         // Number
+        PROP_TIME = "Time",                       // Number
+        PROP_SCALE = "TimeScale",                 // String
+        PROP_UNITS = "TimeUnits",                 // String
+        PROP_CONDITION = "Condition",             // String
+        PROP_TEMPORARY = "Temporary";             // Boolean
+
+    /**
+     * BreakpointType values 
+     */
+    static final String
+        TYPE_RELATIVE = "Software",
+        TYPE_ABSOLUTE = "Hardware",
+        TYPE_AUTO = "Auto";
+
+    /** 
+     * AccessMode values 
+     */ 
+    static final int 
+        ACCESSMODE_READ    = 0x01,
+        ACCESSMODE_WRITE   = 0x02, 
+        ACCESSMODE_EXECUTE = 0x04,
+        ACCESSMODE_CHANGE  = 0x08;
+
+    /**
+     * TimeScale values 
+     */
+    static final String 
+        TIMESCALE_RELATIVE = "Relative",
+        TIMESCALE_ABSOLUTE = "Absolute";
+    
+    /**
+     * TimeUnits values 
+     */
+    static final String
+        TIMEUNIT_NSECS = "Nanoseconds",
+        TIMEUNIT_CYCLE_COUNT = "CycleCount",
+        TIMEUNIT_INSTRUCTION_COUNT = "InstructionCount";
 
     /**
      * Breakpoint status field names.
      */
     static final String
-        STATUS_PLANTED = "Planted",     // Map<String: Memory context ID,Collection<Number: address>>
+        STATUS_INSTANCES = "Instances", // Array of Map<String,Object>
         STATUS_ERROR = "Error",         // String
         STATUS_FILE = "File",           // String
         STATUS_LINE = "Line",           // Number
         STATUS_COLUMN = "Column";       // Number
+    
+    /**
+     * Breakpoint instance field names.
+     */
+    static final String
+        INSTANCE_ERROR = "Error",       // String
+        INSTANCE_CONTEXT = "LocationContext", // String
+        INSTANCE_ADDRESS = "Address";   // Number
     
     /**
      * Breakpoint service capabilities.
@@ -65,7 +118,7 @@ public interface IBreakpoints extends IService {
     static final String
         CAPABILITY_CONTEXT_ID = "ID",                   // String
         CAPABILITY_HAS_CHILDREN = "HasChildren",        // Boolean
-        CAPABILITY_ADDRESS = "Address",                 // Boolean
+        CAPABILITY_ADDRESS = "Location",                // Boolean
         CAPABILITY_CONDITION = "Condition",             // Boolean
         CAPABILITY_FILE_LINE = "FileLine";              // Boolean
 

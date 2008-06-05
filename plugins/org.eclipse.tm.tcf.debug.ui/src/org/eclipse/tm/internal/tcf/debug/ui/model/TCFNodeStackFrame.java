@@ -309,8 +309,8 @@ public class TCFNodeStackFrame extends TCFNode {
 
     @Override
     protected String getImageName() {
-        if (isRunning()) return "icons/full/obj16/stckframe_running_obj.gif";
-        return "icons/full/obj16/stckframe_obj.gif";
+        if (isRunning()) return ImageCache.IMG_STACK_FRAME_RUNNING;
+        return ImageCache.IMG_STACK_FRAME_SUSPENDED;
     }
 
     @Override

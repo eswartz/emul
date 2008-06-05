@@ -273,7 +273,7 @@ public class TCFAnnotationManager {
                         if (map != null) {
                             String status = null;
                             String error = (String)map.get(IBreakpoints.STATUS_ERROR);
-                            Object planted = map.get(IBreakpoints.STATUS_PLANTED);
+                            Object planted = map.get(IBreakpoints.STATUS_INSTANCES);
                             if (error != null) status = error;
                             else if (planted != null) status = "Planted";
                             if (status != null) text[0] += " (" + status + ")";

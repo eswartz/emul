@@ -58,7 +58,7 @@ public class BreakpointCommand implements IToggleBreakpointsTargetExtension {
                         if (addr == null) return;
                         Map<String,Object> m = new HashMap<String,Object>();
                         m.put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
-                        m.put(IBreakpoints.PROP_ADDRESS, addr);
+                        m.put(IBreakpoints.PROP_LOCATION, addr);
                         new TCFBreakpoint(ResourcesPlugin.getWorkspace().getRoot(), m);
                     }
                     catch (CoreException x) {

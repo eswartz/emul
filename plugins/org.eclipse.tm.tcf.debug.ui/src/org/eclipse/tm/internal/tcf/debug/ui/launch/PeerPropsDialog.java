@@ -212,13 +212,7 @@ class PeerPropsDialog extends Dialog {
         attr_table.setHeaderVisible(true);
         attr_table.setLinesVisible(true);
         
-        attr_image = ImageCache.getImageDescriptor("icons/attribute.gif").createImage();
-        attr_table.addDisposeListener(new DisposeListener() {
-            public void widgetDisposed(DisposeEvent e) {
-                attr_image.dispose();
-                attr_image = null;                   
-            }
-        });
+        attr_image = ImageCache.getImage(ImageCache.IMG_ATTRIBUTE);
 
         table_viewer = new TableViewer(attr_table);    
         table_viewer.setUseHashlookup(true);

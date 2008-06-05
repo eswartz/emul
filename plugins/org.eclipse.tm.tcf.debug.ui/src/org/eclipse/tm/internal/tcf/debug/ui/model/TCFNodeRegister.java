@@ -229,6 +229,6 @@ public class TCFNodeRegister extends TCFNode {
 
     @Override
     protected String getImageName() {
-        return "icons/full/obj16/genericregister_obj.gif";
+        return ImageCache.IMG_REGISTER;
     }
 }

@@ -79,10 +79,10 @@ public class TCFLaunch extends Launch {
                 }
             };
             if (mode.equals(ILaunchManager.DEBUG_MODE)) {
+                breakpoints_status = new TCFBreakpointsStatus(this);
                 Activator.getBreakpointsModel().downloadBreakpoints(channel, new Runnable() {
                     public void run() {
                         if (channel.getState() != IChannel.STATE_OPEN) return;
-                        breakpoints_status = new TCFBreakpointsStatus(TCFLaunch.this);
                         runLaunchSequence(done);
                     }
                 });

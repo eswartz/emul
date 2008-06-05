@@ -10,16 +10,11 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.launch;
 
-import java.net.URL;
-
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
 import org.eclipse.debug.ui.StringVariableSelectionDialog;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -34,7 +29,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
-import org.eclipse.tm.internal.tcf.debug.ui.Activator;
+import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 
 
 public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
@@ -43,7 +38,6 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
     private Button button_variables;
     private Text text_working_dir;
     private Button button_default_dir;
-    private Image image;
 
     public void createControl(Composite parent) {
         Font font = parent.getFont();
@@ -58,17 +52,6 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
 
         createArgumentsGroup(comp);
         createWorkingDirGroup(comp);
-        
-        URL url = FileLocator.find(Activator.getDefault().getBundle(),
-                new Path("icons/arguments_tab.gif"), null);
-        ImageDescriptor descriptor = null;
-        if (url == null) {
-            descriptor = ImageDescriptor.getMissingImageDescriptor();
-        }
-        else {
-            descriptor = ImageDescriptor.createFromURL(url);
-        }
-        image = descriptor.createImage(parent.getDisplay());
     }
 
     private void createArgumentsGroup(Composite comp) {
@@ -122,15 +105,6 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
         button_default_dir.setFont(font);
     }
     
-    @Override
-    public void dispose() {
-        if (image != null) {
-            image.dispose();
-            image = null;
-        }
-        super.dispose();
-    }
-
     /**
      * A variable entry button has been pressed for the given text
      * field. Prompt the user for a variable and enter the result
@@ -192,6 +166,6 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
     
     @Override
     public Image getImage() {
-        return image;
+        return ImageCache.getImageDescriptor(ImageCache.IMG_ARGUMENTS_TAB).createImage();
     }
 }

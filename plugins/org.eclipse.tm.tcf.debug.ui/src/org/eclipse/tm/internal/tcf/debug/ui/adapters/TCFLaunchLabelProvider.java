@@ -22,7 +22,7 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
         for (int i = 0; i < updates.length; i++) {
             ILabelUpdate result = updates[i];
             TCFLaunch launch = (TCFLaunch)result.getElement();
-            result.setImageDescriptor(ImageCache.getImageDescriptor("icons/tcf.gif"), 0);
+            result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_TCF), 0);
             String status = "";
             if (launch.isConnecting()) status = "Connecting";
             else if (launch.isDisconnected()) status = "Disconnected";

@@ -15,14 +15,17 @@ import java.util.HashSet;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.model.ILineBreakpoint;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.ui.IDebugModelPresentation;
 import org.eclipse.debug.ui.IValueDetailListener;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpoint;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
+import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorRegistry;
@@ -55,6 +58,20 @@ public class TCFModelPresentation implements IDebugModelPresentation {
     }
 
     public Image getImage(Object element) {
+        ImageDescriptor descriptor = null;
+        if (element instanceof TCFBreakpoint) {
+            TCFBreakpoint breakpoint = (TCFBreakpoint)element;
+            descriptor = ImageCache.getImageDescriptor(ImageCache.IMG_BREAKPOINT_DISABLED);
+            try {
+                if (breakpoint.isEnabled()) {
+                    descriptor = ImageCache.getImageDescriptor(ImageCache.IMG_BREAKPOINT_ENABLED);
+                }
+            }
+            catch (CoreException e) {
+            }
+            //descriptor = new OverlayImageDescriptor( fDebugImageRegistry.get( descriptor ), computeBreakpointOverlays( breakpoint ) ) );
+        }
+        if (descriptor != null) return ImageCache.getImage(descriptor);
         return null;
     }
 

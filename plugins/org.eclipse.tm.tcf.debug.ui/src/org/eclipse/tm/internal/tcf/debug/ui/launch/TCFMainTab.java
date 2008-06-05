@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.launch;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,12 +17,9 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
@@ -51,7 +47,7 @@ import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFUserDefPeer;
-import org.eclipse.tm.internal.tcf.debug.ui.Activator;
+import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -73,7 +69,6 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
     private Display display;
 
     private final Map<LocatorListener,ILocator> listeners = new HashMap<LocatorListener,ILocator>();
-    private final Map<String,Image> image_cache = new HashMap<String,Image>();
     
     private static class PeerInfo {
         PeerInfo parent;
@@ -476,8 +471,6 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
                 display = null;
             }
         });
-        for (Image i : image_cache.values()) i.dispose();
-        image_cache.clear();
         super.dispose();
     }
 
@@ -487,7 +480,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
     
     @Override
     public Image getImage() {
-        return getImage("icons/tcf.gif");
+        return ImageCache.getImage(ImageCache.IMG_TCF);
     }
 
     public void initializeFrom(ILaunchConfiguration configuration) {
@@ -783,7 +776,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
                         if (errors.size() > 0) {
                             shell.dispose();
                             new TestErrorsDialog(getControl().getShell(),
-                                    getImage("icons/tcf.gif"), errors).open();
+                                    ImageCache.getImage(ImageCache.IMG_TCF), errors).open();
                         }
                         else if (loop && !b && display != null) {
                             runDiagnostics(item, true, test, shell, label, bar);
@@ -819,7 +812,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         text[4] = info.attrs.get(IPeer.ATTR_IP_PORT);
         item.setText(text);
         item.setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
-        item.setImage(getImage(getImageName(info)));
+        item.setImage(ImageCache.getImage(getImageName(info)));
         if (!canHaveChildren(info)) item.setItemCount(0);
         else if (info.children == null || info.children_error != null) item.setItemCount(1);
         else item.setItemCount(info.children.length);
@@ -830,26 +823,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         return getPath(info.parent) + "/" + info.id;
     }
     
-    private Image getImage(String name) {
-        if (name == null) return null;
-        if (display == null) return null;
-        Image image = image_cache.get(name);
-        if (image == null) {
-            URL url = FileLocator.find(Activator.getDefault().getBundle(), new Path(name), null);
-            ImageDescriptor descriptor = null;
-            if (url == null) {
-                descriptor = ImageDescriptor.getMissingImageDescriptor();
-            }
-            else {
-                descriptor = ImageDescriptor.createFromURL(url);
-            }
-            image = descriptor.createImage(display);
-            image_cache.put(name, image);
-        }
-        return image;
-    }
-
     private String getImageName(PeerInfo info) {
-        return "icons/tcf.gif";
+        return ImageCache.IMG_TCF;
     }
 }

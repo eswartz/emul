@@ -177,14 +177,17 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
         @SuppressWarnings("unchecked")
         public IAddress[] getAddresses() {
             if (status == null) return null;
-            Map<String,Collection<Number>> arr = (Map<String,Collection<Number>>)status.get(IBreakpoints.STATUS_PLANTED);
+            Collection<Map<String,Object>> arr = (Collection<Map<String,Object>>)status.get(IBreakpoints.STATUS_INSTANCES);
             if (arr == null) return null;
             int cnt = 0;
-            for (Collection<Number> c : arr.values()) cnt += c.size(); 
+            for (Map<String,Object> m : arr) {
+                if (m.get(IBreakpoints.INSTANCE_ADDRESS) != null) cnt++; 
+            }
             IAddress[] res = new IAddress[cnt];
             int pos = 0;
-            for (Collection<Number> c : arr.values()) {
-                for (Number addr : c) res[pos++] = new TCFAddress(addr);
+            for (Map<String,Object> m : arr) {
+                Number n = (Number)m.get(IBreakpoints.INSTANCE_ADDRESS);
+                if (n != null) res[pos++] = new TCFAddress(n);
             }
             return res;
         }
@@ -213,7 +216,7 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
         }
 
         public int getIgnoreCount() {
-            Integer count = (Integer)attrs.get(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_SKIP_COUNT);
+            Integer count = (Integer)attrs.get(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_IGNORECOUNT);
             if (count != null) return count.intValue();
             return 0;
         }
@@ -242,9 +245,12 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
                 Set<IBreakpointsTargetDMContext> add_targets = new HashSet<IBreakpointsTargetDMContext>();
                 Set<IBreakpointsTargetDMContext> rem_targets = new HashSet<IBreakpointsTargetDMContext>();
                 if (map != null) {
-                    Map<String,Collection<Number>> arr = (Map<String,Collection<Number>>)map.get(IBreakpoints.STATUS_PLANTED);
+                    Collection<Map<String,Object>> arr = (Collection<Map<String,Object>>)map.get(IBreakpoints.STATUS_INSTANCES);
                     if (arr != null) {
-                        for (String ctx_id : arr.keySet()) add_targets.add(rc.getContext(ctx_id));
+                        for (Map<String,Object> m : arr) {
+                            String ctx_id = (String)m.get(IBreakpoints.INSTANCE_CONTEXT);
+                            if (ctx_id != null) add_targets.add(rc.getContext(ctx_id));
+                        }
                     }
                 }
                 for (IBreakpointsTargetDMContext t : dmc.targets) {

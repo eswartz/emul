@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
@@ -83,11 +83,14 @@ public class TCFBreakpointsStatus {
     }
 
     public Map<String,Object> getStatus(IBreakpoint bp) {
-        if (!bp.getModelIdentifier().equals(ITCFConstants.ID_TCF_DEBUG_MODEL)) return status_not_supported;
-        IMarker marker = bp.getMarker();
-        if (marker == null) return null;
-        return getStatus(marker.getAttribute(
-                ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID, null));
+        try {
+            String id = TCFBreakpointsModel.getBreakpointsModel().getBreakpointID(bp);
+            if (id == null) return status_not_supported;
+            return getStatus(id);
+        }
+        catch (CoreException e) {
+            return status_not_supported;
+        }
     }
     
     public void addListener(ITCFBreakpointListener listener) {

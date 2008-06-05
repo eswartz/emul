@@ -494,15 +494,15 @@ public class TCFNodeExecContext extends TCFNode {
         if (ctx != null && ctx.hasState()) {
             // Thread
             ContextState s = state.getData();
-            if (s != null && s.terminated) return "icons/full/obj16/threadt_obj.gif";
-            if (s != null && s.suspended) return "icons/full/obj16/threads_obj.gif";
-            return "icons/full/obj16/thread_obj.gif";
+            if (s != null && s.terminated) return ImageCache.IMG_THREAD_TERMINATED;
+            if (s != null && s.suspended) return ImageCache.IMG_THREAD_SUSPENDED;
+            return ImageCache.IMG_THREAD_RUNNNIG;
         }
         else if (ctx != null) {
             // Thread container (process)
-            //if (terminated) return "icons/full/obj16/debugtt_obj.gif";
-            if (hasSuspendedChildren()) return "icons/full/obj16/debugts_obj.gif";
-            return "icons/full/obj16/debugt_obj.gif";
+            //if (terminated) return ImageCache.IMG_PROCESS_TERMINATED;
+            if (hasSuspendedChildren()) return ImageCache.IMG_PROCESS_SUSPENDED;
+            return ImageCache.IMG_PROCESS_RUNNING;
         }
         return super.getImageName();
     }

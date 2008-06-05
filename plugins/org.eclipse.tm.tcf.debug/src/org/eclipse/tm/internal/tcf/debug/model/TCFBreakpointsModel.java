@@ -65,7 +65,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         return true;
     }
     
-    private String getBreakpointID(IBreakpoint bp) throws CoreException {
+    public String getBreakpointID(IBreakpoint bp) throws CoreException {
         IMarker marker = bp.getMarker();
         String id = (String)marker.getAttributes().get(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID);
         if (id != null) return id;
@@ -331,7 +331,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         m.put(IBreakpoint.PERSISTED, Boolean.TRUE);
         m.put(IBreakpoint.ID, ITCFConstants.ID_TCF_DEBUG_MODEL);
         String msg = "";
-        if (p.get(IBreakpoints.PROP_ADDRESS) != null) msg += p.get(IBreakpoints.PROP_ADDRESS); 
+        if (p.get(IBreakpoints.PROP_LOCATION) != null) msg += p.get(IBreakpoints.PROP_LOCATION); 
         m.put(IMarker.MESSAGE, "Breakpoint: " + msg);
         Number line = (Number)p.get(IBreakpoints.PROP_LINE);
         if (line != null) {
@@ -378,7 +378,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         String condition  = (String)p.get("org.eclipse.cdt.debug.core.condition");
         if (condition != null && condition.length() > 0) m.put(IBreakpoints.PROP_CONDITION, condition);
         Integer skip_count = (Integer)p.get("org.eclipse.cdt.debug.core.ignoreCount");
-        if (skip_count != null && skip_count.intValue() > 0) m.put(IBreakpoints.PROP_SKIP_COUNT, skip_count);
+        if (skip_count != null && skip_count.intValue() > 0) m.put(IBreakpoints.PROP_IGNORECOUNT, skip_count);
         return m;
     }
 }

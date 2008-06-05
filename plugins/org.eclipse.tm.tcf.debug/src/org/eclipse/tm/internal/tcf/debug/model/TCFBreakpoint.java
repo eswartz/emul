@@ -86,7 +86,7 @@ public class TCFBreakpoint extends Breakpoint {
             if (marker == null) return null;
             StringBuffer bf = new StringBuffer();
             String address = marker.getAttribute(
-                    ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ADDRESS, null);
+                    ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_LOCATION, null);
             if (address != null && address.length() > 0) {
                 bf.append("PC = ");
                 BigInteger n = new BigInteger(address, 10);

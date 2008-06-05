@@ -546,7 +546,6 @@ class TCFSelfTest {
             }
         }
 
-        @SuppressWarnings("unchecked")
         public void doneGetSymbol(IToken token, Throwable error, ISymbol symbol) {
             if (error != null) {
                 exit(error);
@@ -574,43 +573,59 @@ class TCFSelfTest {
             }
             else {
                 array = symbol;
-                Map<String,Object> m[] = new Map[4];
-                for (int i = 0; i < m.length; i++) {
-                    m[i] = new HashMap();
-                    m[i].put(IBreakpoints.PROP_ID, "TcfTestBP" + i);
-                    m[i].put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
-                    switch (i) {
-                    case 0:
-                        m[i].put(IBreakpoints.PROP_ADDRESS, func0.getValue().toString());
-                        m[i].put(IBreakpoints.PROP_CONDITION, "$thread!=\"\"");
-                        break;
-                    case 1:
-                        m[i].put(IBreakpoints.PROP_ADDRESS, "(31+1)/16+tcf_test_func1-2");
-                        m[i].put(IBreakpoints.PROP_CONDITION, "tcf_test_func0!=tcf_test_func1");
-                        break;
-                    case 2:
-                        m[i].put(IBreakpoints.PROP_ADDRESS, "tcf_test_func2");
-                        m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
-                        break;
-                    case 3:
-                        m[i].put(IBreakpoints.PROP_ID, "TcfTestBP3" + channel_id);
-                        m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
-                        m[i].put(IBreakpoints.PROP_ADDRESS, "tcf_test_func2");
-                        break;
-                    }
-                    bp_list.put((String)m[i].get(IBreakpoints.PROP_ID), m[i]);
-                }
-                bp.set(m, new IBreakpoints.DoneCommand() {
+                // Reset breakpoint list (previous tests might left breakpoints)
+                bp.set(null, new IBreakpoints.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
                         if (error != null) {
                             exit(error);
                         }
                         else {
-                            get_state_cmds.put(rc.getContext(context_id, TestRCBP1.this), context_id);
+                            // Create initial set of breakpoints
+                            iniBreakpoints();
                         }
                     }
                 });
             }
+        }
+        
+        @SuppressWarnings("unchecked")
+        private void iniBreakpoints() {
+            Map<String,Object> m[] = new Map[4];
+            for (int i = 0; i < m.length; i++) {
+                m[i] = new HashMap();
+                m[i].put(IBreakpoints.PROP_ID, "TcfTestBP" + i);
+                m[i].put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
+                switch (i) {
+                case 0:
+                    m[i].put(IBreakpoints.PROP_LOCATION, func0.getValue().toString());
+                    m[i].put(IBreakpoints.PROP_CONDITION, "$thread!=\"\"");
+                    break;
+                case 1:
+                    m[i].put(IBreakpoints.PROP_LOCATION, "(31+1)/16+tcf_test_func1-2");
+                    m[i].put(IBreakpoints.PROP_CONDITION, "tcf_test_func0!=tcf_test_func1");
+                    break;
+                case 2:
+                    m[i].put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
+                    m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
+                    break;
+                case 3:
+                    m[i].put(IBreakpoints.PROP_ID, "TcfTestBP3" + channel_id);
+                    m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
+                    m[i].put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
+                    break;
+                }
+                bp_list.put((String)m[i].get(IBreakpoints.PROP_ID), m[i]);
+            }
+            bp.set(m, new IBreakpoints.DoneCommand() {
+                public void doneCommand(IToken token, Exception error) {
+                    if (error != null) {
+                        exit(error);
+                    }
+                    else {
+                        get_state_cmds.put(rc.getContext(context_id, TestRCBP1.this), context_id);
+                    }
+                }
+            });
         }
 
         public void doneGetContext(IToken token, Exception error, RunControlContext context) {
@@ -716,7 +731,7 @@ class TCFSelfTest {
             final Map<String,Object> m = new HashMap<String,Object>();
             m.put(IBreakpoints.PROP_ID, bp_id);
             m.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
-            m.put(IBreakpoints.PROP_ADDRESS, "tcf_test_func2");
+            m.put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
             StringBuffer bf = new StringBuffer();
             for (String id : threads.keySet()) {
                 if (bf.length() > 0) bf.append(" || ");
