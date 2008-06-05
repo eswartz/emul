@@ -39,7 +39,7 @@ static ChannelCloseListener close_listeners[16];
 static int close_listeners_cnt = 0;
 
 static void flush_all(OutputStream * out) {
-    TCFBroadcastGroup *bcg = out2bcast(out);
+    TCFBroadcastGroup * bcg = out2bcast(out);
     LINK * l = bcg->channels.next;
 
     assert(is_dispatch_thread());

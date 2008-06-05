@@ -81,9 +81,14 @@ struct BreakpointInfo {
     int line;
     int column;
 #endif
-    int skip_count;
+    int ignore_count;
     int hit_count;
     BreakpointAttribute * unsupported;
+
+    /* Last status report contents: */
+    int status_unsupported;
+    int status_error;
+    int status_planted;
 };
 
 struct BreakInstruction {
@@ -332,6 +337,88 @@ void check_breakpoints_on_memory_write(Context * ctx, unsigned long address, voi
 #endif
 }
 
+static void write_breakpoint_status(OutputStream * out, BreakpointInfo * bp) {
+    BreakpointAttribute * u = bp->unsupported;
+
+    write_stream(out, '{');
+
+    if (u != NULL) {
+        char * msg = "Unsupported breakpoint properties: ";
+        json_write_string(out, "Error");
+        write_stream(out, ':');
+        write_stream(out, '"');
+        while (*msg) json_write_char(out, *msg++);
+        while (u != NULL) {
+            msg = u->name;
+            while (*msg) json_write_char(out, *msg++);
+            u = u->next;
+            if (u != NULL) {
+                json_write_char(out, ',');
+                json_write_char(out, ' ');
+            }
+        }
+        write_stream(out, '"');
+    }
+    else if (bp->planted) {
+        int cnt = 0;
+        LINK * l = instructions.next;
+        json_write_string(out, "Instances");
+        write_stream(out, ':');
+        write_stream(out, '[');
+        while (l != &instructions) {
+            int i = 0;
+            BreakInstruction * bi = link_all2bi(l);
+            l = l->next;
+            while (i < bi->ref_cnt && bi->refs[i] != bp) i++;
+            if (i >= bi->ref_cnt) continue;
+            if (cnt > 0) write_stream(out, ',');
+            write_stream(out, '{');
+            json_write_string(out, "LocationContext");
+            write_stream(out, ':');
+            json_write_string(out, container_id(bi->ctx));
+            write_stream(out, ',');
+            if (bi->error != 0) {
+                json_write_string(out, "Error");
+                write_stream(out, ':');
+                json_write_string(out, errno_to_str(bi->error));
+            }
+            else {
+                json_write_string(out, "Address");
+                write_stream(out, ':');
+                json_write_ulong(out, bi->address);
+            }
+            write_stream(out, '}');
+            cnt++;
+        }
+        write_stream(out, ']');
+        assert(cnt > 0);
+    }
+    else if (bp->error) {
+        json_write_string(out, "Error");
+        write_stream(out, ':');
+        if (bp->err_msg != NULL) {
+            json_write_string(out, bp->err_msg);
+        }
+        else {
+            json_write_string(out, errno_to_str(bp->error));
+        }
+    }
+
+    write_stream(out, '}');
+}
+
+static void send_event_breakpoint_status(OutputStream * out, BreakpointInfo * bp) {
+    write_stringz(out, "E");
+    write_stringz(out, BREAKPOINTS);
+    write_stringz(out, "status");
+
+    json_write_string(out, bp->id);
+    write_stream(out, 0);
+    write_breakpoint_status(out, bp);
+    write_stream(out, 0);
+    write_stream(out, MARKER_EOM);
+}
+
 static int address_expression_identifier(char * name, Value * v) {
     if (v == NULL) return 0;
     memset(v, 0, sizeof(Value));
@@ -399,7 +486,7 @@ static void plant_breakpoint_in_context(BreakpointInfo * bp, Context * ctx, unsi
         if (!bp->error) bp->error = bi->error;
     }
     else {
-        bp->planted = 1;
+        bp->planted++;
         bp->hit_count = 0;
     }
 }
@@ -543,8 +630,11 @@ static void free_bp(BreakpointInfo * bp) {
     loc_free(bp);
 }
 
-static void event_replant_breakpoints(void *arg) {
+static void event_replant_breakpoints(void * arg) {
+    int event_cnt = 0;
+    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)arg;
     LINK * l = breakpoints.next;
+
     replanting = 0;
     clear_instruction_refs();
     while (l != &breakpoints) {
@@ -558,15 +648,25 @@ static void event_replant_breakpoints(void *arg) {
         if (bp->enabled && bp->unsupported == NULL) {
             plant_breakpoint(bp);
         }
+        if (bp->status_unsupported != (bp->unsupported != NULL) ||
+            bp->status_error != bp->error ||
+            bp->status_planted != bp->planted) {
+            send_event_breakpoint_status(&bcg->out, bp);
+            bp->status_unsupported = bp->unsupported != NULL;
+            bp->status_error = bp->error;
+            bp->status_planted = bp->planted;
+            event_cnt++;
+        }
     }
     delete_unused_instructions();
+    if (event_cnt > 0) bcg->out.flush(&bcg->out);
 }
 
-static void replant_breakpoints(void) {
+static void replant_breakpoints(TCFBroadcastGroup * bcg) {
     if (list_is_empty(&breakpoints) && list_is_empty(&instructions)) return;
     if (replanting) return;
     replanting = 1;
-    post_safe_event(event_replant_breakpoints, NULL);
+    post_safe_event(event_replant_breakpoints, bcg);
 }
 
 static int str_equ(char * x, char * y) {
@@ -626,8 +726,8 @@ static int copy_breakpoint_info(BreakpointInfo * dst, BreakpointInfo * src) {
     }
 #endif
 
-    if (dst->skip_count != src->skip_count) {
-        dst->skip_count = src->skip_count;
+    if (dst->ignore_count != src->ignore_count) {
+        dst->ignore_count = src->ignore_count;
         res = 1;
     }
 
@@ -691,7 +791,7 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
             if (strcmp(name, "ID") == 0) {
                 json_read_string(inp, bp->id, sizeof(bp->id));
             }
-            else if (strcmp(name, "Address") == 0) {
+            else if (strcmp(name, "Location") == 0) {
                 bp->address = json_read_alloc_string(inp);
             }
             else if (strcmp(name, "Condition") == 0) {
@@ -708,8 +808,8 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
                 bp->column = json_read_long(inp);
             }
 #endif
-            else if (strcmp(name, "SkipCount") == 0) {
-                bp->skip_count = json_read_long(inp);
+            else if (strcmp(name, "IgnoreCount") == 0) {
+                bp->ignore_count = json_read_long(inp);
             }
             else if (strcmp(name, "Enabled") == 0) {
                 bp->enabled = json_read_boolean(inp);
@@ -732,72 +832,72 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
 static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp) {
     BreakpointAttribute * u = bp->unsupported;
 
-    out->write(out, '{');
+    write_stream(out, '{');
 
     json_write_string(out, "ID");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, bp->id);
 
     if (bp->address != NULL) {
-        out->write(out, ',');
-        json_write_string(out, "Address");
-        out->write(out, ':');
+        write_stream(out, ',');
+        json_write_string(out, "Location");
+        write_stream(out, ':');
         json_write_string(out, bp->address);
     }
 
     if (bp->condition != NULL) {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "Condition");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_string(out, bp->condition);
     }
 
 #if SERVICE_LineNumbers
     if (bp->file != NULL) {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "File");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_string(out, bp->file);
     }
 
     if (bp->line > 0) {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "Line");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_long(out, bp->line);
     }
 
     if (bp->column > 0) {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "Column");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_long(out, bp->column);
     }
 #endif
 
-    if (bp->skip_count > 0) {
-        out->write(out, ',');
-        json_write_string(out, "SkipCount");
-        out->write(out, ':');
-        json_write_long(out, bp->skip_count);
+    if (bp->ignore_count > 0) {
+        write_stream(out, ',');
+        json_write_string(out, "IgnoreCount");
+        write_stream(out, ':');
+        json_write_long(out, bp->ignore_count);
     }
 
     if (bp->enabled) {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "Enabled");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_boolean(out, bp->enabled);
     }
 
     while (u != NULL) {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, u->name);
-        out->write(out, ':');
+        write_stream(out, ':');
         write_string(out, u->value);
         u = u->next;
     }
 
-    out->write(out, '}');
+    write_stream(out, '}');
 }
 
 static void send_event_context_added(OutputStream * out, BreakpointInfo * bp) {
@@ -805,11 +905,11 @@ static void send_event_context_added(OutputStream * out, BreakpointInfo * bp) {
     write_stringz(out, BREAKPOINTS);
     write_stringz(out, "contextAdded");
 
-    out->write(out, '[');
+    write_stream(out, '[');
     write_breakpoint_properties(out, bp);
-    out->write(out, ']');
-    out->write(out, 0);
-    out->write(out, MARKER_EOM);
+    write_stream(out, ']');
+    write_stream(out, 0);
+    write_stream(out, MARKER_EOM);
 }
 
 static void send_event_context_changed(OutputStream * out, BreakpointInfo * bp) {
@@ -817,11 +917,11 @@ static void send_event_context_changed(OutputStream * out, BreakpointInfo * bp) 
     write_stringz(out, BREAKPOINTS);
     write_stringz(out, "contextChanged");
 
-    out->write(out, '[');
+    write_stream(out, '[');
     write_breakpoint_properties(out, bp);
-    out->write(out, ']');
-    out->write(out, 0);
-    out->write(out, MARKER_EOM);
+    write_stream(out, ']');
+    write_stream(out, 0);
+    write_stream(out, MARKER_EOM);
 }
 
 static void send_event_context_removed(OutputStream * out, BreakpointInfo * bp) {
@@ -829,14 +929,15 @@ static void send_event_context_removed(OutputStream * out, BreakpointInfo * bp) 
     write_stringz(out, BREAKPOINTS);
     write_stringz(out, "contextRemoved");
 
-    out->write(out, '[');
+    write_stream(out, '[');
     json_write_string(out, bp->id);
-    out->write(out, ']');
-    out->write(out, 0);
-    out->write(out, MARKER_EOM);
+    write_stream(out, ']');
+    write_stream(out, 0);
+    write_stream(out, MARKER_EOM);
 }
 
-static void add_breakpoint(InputStream * inp, OutputStream * out, BreakpointInfo * bp) {
+static void add_breakpoint(Channel * c, BreakpointInfo * bp) {
+    InputStream * inp = &c->inp;
     BreakpointRef * r = NULL;
     BreakpointInfo * p = NULL;
     int added = 0;
@@ -869,66 +970,87 @@ static void add_breakpoint(InputStream * inp, OutputStream * out, BreakpointInfo
         assert(!list_is_empty(&p->refs));
     }
     if (chng || added) {
-        if (p->planted || p->enabled && p->unsupported == NULL) replant_breakpoints();
+        if (p->planted || p->enabled && p->unsupported == NULL) replant_breakpoints(c->bcg);
     }
-    if (added) send_event_context_added(out, p);
-    else if (chng) send_event_context_changed(out, p);
+    if (added) send_event_context_added(&c->bcg->out, p);
+    else if (chng) send_event_context_changed(&c->bcg->out, p);
 }
 
-static void remove_breakpoint(OutputStream * out, BreakpointInfo * bp) {
+static void remove_breakpoint(Channel * c, BreakpointInfo * bp) {
     assert(list_is_empty(&bp->refs));
-    send_event_context_removed(out, bp);
+    send_event_context_removed(&c->bcg->out, bp);
     if (bp->planted) {
         bp->deleted = 1;
-        replant_breakpoints();
+        replant_breakpoints(c->bcg);
     }
     else {
         free_bp(bp);
     }
 }
 
-static void remove_ref(OutputStream * out, BreakpointRef * br) {
+static void remove_ref(Channel * c, BreakpointRef * br) {
     BreakpointInfo * bp = br->bp;
     list_remove(&br->link_inp);
     list_remove(&br->link_bp);
     loc_free(br);
-    if (list_is_empty(&bp->refs)) remove_breakpoint(out, bp);
+    if (list_is_empty(&bp->refs)) remove_breakpoint(c, bp);
 }
 
-static void delete_breakpoint_refs(InputStream * inp, OutputStream * out) {
+static void delete_breakpoint_refs(Channel * c) {
+    InputStream * inp = &c->inp;
     unsigned hash = (unsigned)inp / 16 % INP2BR_HASH_SIZE;
     LINK * l = inp2br[hash].next;
     while (l != &inp2br[hash]) {
         BreakpointRef * br = link_inp2br(l);
         l = l->next;
-        if (br->inp == inp) remove_ref(out, br);
+        if (br->inp == inp) remove_ref(c, br);
     }
 }
 
 static void command_ini_bps(char * token, Channel * c) {
-    delete_breakpoint_refs(&c->inp, &c->bcg->out);
-    if (c->inp.read(&c->inp) != '[') exception(ERR_PROTOCOL);
-    if (c->inp.peek(&c->inp) == ']') {
-        c->inp.read(&c->inp);
+    int ch;
+    LINK * l = breakpoints.next;
+    while (l != &breakpoints) {
+        BreakpointInfo * bp = link_all2bp(l);
+        l = l->next;
+        if (bp->deleted) continue;
+        send_event_context_added(&c->out, bp);
+        send_event_breakpoint_status(&c->out, bp);
+    }
+
+    delete_breakpoint_refs(c);
+    
+    ch = read_stream(&c->inp);
+    if (ch == 'n') {
+        if (read_stream(&c->inp) != 'u') exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 'l') exception(ERR_JSON_SYNTAX);
     }
     else {
-        while (1) {
-            int ch;
-            BreakpointInfo bp;
-            read_breakpoint_properties(&c->inp, &bp);
-            add_breakpoint(&c->inp, &c->bcg->out, &bp);
-            ch = c->inp.read(&c->inp);
-            if (ch == ',') continue;
-            if (ch == ']') break;
-            exception(ERR_JSON_SYNTAX);
+        if (ch != '[') exception(ERR_PROTOCOL);
+        if (peek_stream(&c->inp) == ']') {
+            read_stream(&c->inp);
+        }
+        else {
+            while (1) {
+                int ch;
+                BreakpointInfo bp;
+                read_breakpoint_properties(&c->inp, &bp);
+                add_breakpoint(c, &bp);
+                ch = read_stream(&c->inp);
+                if (ch == ',') continue;
+                if (ch == ']') break;
+                exception(ERR_JSON_SYNTAX);
+            }
         }
     }
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_bp_ids(char * token, Channel * c) {
@@ -936,25 +1058,25 @@ static void command_get_bp_ids(char * token, Channel * c) {
     LINK * l = inp2br[hash].next;
     int cnt = 0;
 
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-    c->out.write(&c->out, '[');
+    write_stream(&c->out, '[');
 
     while (l != &inp2br[hash]) {
         BreakpointRef * br = link_inp2br(l);
         l = l->next;
         if (br->inp == &c->inp) {
-            if (cnt > 0) c->out.write(&c->out, ',');
+            if (cnt > 0) write_stream(&c->out, ',');
             json_write_string(&c->out, br->bp->id);
             cnt++;
         }
     }
 
-    c->out.write(&c->out, ']');
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, ']');
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_properties(char * token, Channel * c) {
@@ -963,8 +1085,8 @@ static void command_get_properties(char * token, Channel * c) {
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     bp = find_breakpoint(id);
     if (bp == NULL) err = ERR_INV_CONTEXT;
@@ -977,182 +1099,226 @@ static void command_get_properties(char * token, Channel * c) {
     }
     else {
         write_breakpoint_properties(&c->out, bp);
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, 0);
     }
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_status(char * token, Channel * c) {
-    /* TODO: implement command_get_status() */
-    exception(ERR_PROTOCOL);
+    char id[256];
+    BreakpointInfo * bp = NULL;
+    int err = 0;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    bp = find_breakpoint(id);
+    if (bp == NULL) err = ERR_INV_CONTEXT;
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    if (err) {
+        write_stringz(&c->out, "null");
+    }
+    else {
+        write_breakpoint_status(&c->out, bp);
+        write_stream(&c->out, 0);
+    }
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_bp_add(char * token, Channel * c) {
     BreakpointInfo bp;
     read_breakpoint_properties(&c->inp, &bp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    add_breakpoint(&c->inp, &c->bcg->out, &bp);
+    add_breakpoint(c, &bp);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_bp_change(char * token, Channel * c) {
     BreakpointInfo bp;
     read_breakpoint_properties(&c->inp, &bp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    add_breakpoint(&c->inp, &c->bcg->out, &bp);
+    add_breakpoint(c, &bp);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_bp_enable(char * token, Channel * c) {
-    if (c->inp.read(&c->inp) != '[') exception(ERR_PROTOCOL);
-    if (c->inp.peek(&c->inp) == ']') {
-        c->inp.read(&c->inp);
+    int ch = read_stream(&c->inp);
+    if (ch == 'n') {
+        if (read_stream(&c->inp) != 'u') exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 'l') exception(ERR_JSON_SYNTAX);
     }
     else {
-        while (1) {
-            int ch;
-            char id[256];
-            BreakpointInfo * bp;
-            json_read_string(&c->inp, id, sizeof(id));
-            bp = find_breakpoint(id);
-            if (bp != NULL && !bp->enabled) {
-                bp->enabled = 1;
-                if (!bp->deleted && bp->unsupported == NULL) replant_breakpoints();
-                send_event_context_changed(&c->bcg->out, bp);
+        if (ch != '[') exception(ERR_PROTOCOL);
+        if (peek_stream(&c->inp) == ']') {
+            read_stream(&c->inp);
+        }
+        else {
+            while (1) {
+                int ch;
+                char id[256];
+                BreakpointInfo * bp;
+                json_read_string(&c->inp, id, sizeof(id));
+                bp = find_breakpoint(id);
+                if (bp != NULL && !bp->enabled) {
+                    bp->enabled = 1;
+                    if (!bp->deleted && bp->unsupported == NULL) replant_breakpoints(c->bcg);
+                    send_event_context_changed(&c->bcg->out, bp);
+                }
+                ch = read_stream(&c->inp);
+                if (ch == ',') continue;
+                if (ch == ']') break;
+                exception(ERR_JSON_SYNTAX);
             }
-            ch = c->inp.read(&c->inp);
-            if (ch == ',') continue;
-            if (ch == ']') break;
-            exception(ERR_JSON_SYNTAX);
         }
     }
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_bp_disable(char * token, Channel * c) {
-    if (c->inp.read(&c->inp) != '[') exception(ERR_PROTOCOL);
-    if (c->inp.peek(&c->inp) == ']') {
-        c->inp.read(&c->inp);
+    int ch = read_stream(&c->inp);
+    if (ch == 'n') {
+        if (read_stream(&c->inp) != 'u') exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 'l') exception(ERR_JSON_SYNTAX);
     }
     else {
-        while (1) {
-            int ch;
-            char id[256];
-            BreakpointInfo * bp;
-            json_read_string(&c->inp, id, sizeof(id));
-            bp = find_breakpoint(id);
-            if (bp != NULL && bp->enabled) {
-                bp->enabled = 0;
-                if (bp->planted) replant_breakpoints();
-                send_event_context_changed(&c->bcg->out, bp);
+        if (ch != '[') exception(ERR_PROTOCOL);
+        if (peek_stream(&c->inp) == ']') {
+            read_stream(&c->inp);
+        }
+        else {
+            while (1) {
+                int ch;
+                char id[256];
+                BreakpointInfo * bp;
+                json_read_string(&c->inp, id, sizeof(id));
+                bp = find_breakpoint(id);
+                if (bp != NULL && bp->enabled) {
+                    bp->enabled = 0;
+                    if (bp->planted) replant_breakpoints(c->bcg);
+                    send_event_context_changed(&c->bcg->out, bp);
+                }
+                ch = read_stream(&c->inp);
+                if (ch == ',') continue;
+                if (ch == ']') break;
+                exception(ERR_JSON_SYNTAX);
             }
-            ch = c->inp.read(&c->inp);
-            if (ch == ',') continue;
-            if (ch == ']') break;
-            exception(ERR_JSON_SYNTAX);
         }
     }
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_bp_remove(char * token, Channel * c) {
-    if (c->inp.read(&c->inp) != '[') exception(ERR_PROTOCOL);
-    if (c->inp.peek(&c->inp) == ']') {
-        c->inp.read(&c->inp);
+    int ch = read_stream(&c->inp);
+    if (ch == 'n') {
+        if (read_stream(&c->inp) != 'u') exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 'l') exception(ERR_JSON_SYNTAX);
     }
     else {
-        while (1) {
-            int ch;
-            char id[256];
-            BreakpointRef * br;
-            json_read_string(&c->inp, id, sizeof(id));
-            br = find_breakpoint_ref(find_breakpoint(id), &c->inp);
-            if (br != NULL) remove_ref(&c->bcg->out, br);
-            ch = c->inp.read(&c->inp);
-            if (ch == ',') continue;
-            if (ch == ']') break;
-            exception(ERR_JSON_SYNTAX);
+        if (ch != '[') exception(ERR_PROTOCOL);
+        if (peek_stream(&c->inp) == ']') {
+            read_stream(&c->inp);
+        }
+        else {
+            while (1) {
+                int ch;
+                char id[256];
+                BreakpointRef * br;
+                json_read_string(&c->inp, id, sizeof(id));
+                br = find_breakpoint_ref(find_breakpoint(id), &c->inp);
+                if (br != NULL) remove_ref(c, br);
+                ch = read_stream(&c->inp);
+                if (ch == ',') continue;
+                if (ch == ']') break;
+                exception(ERR_JSON_SYNTAX);
+            }
         }
     }
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_capabilities(char * token, Channel * c) {
     char id[256];
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
 
-    c->out.write(&c->out, '{');
+    write_stream(&c->out, '{');
     json_write_string(&c->out, "ID");
-    c->out.write(&c->out, ':');
+    write_stream(&c->out, ':');
     json_write_string(&c->out, id);
-    c->out.write(&c->out, ',');
-    json_write_string(&c->out, "Address");
-    c->out.write(&c->out, ':');
+    write_stream(&c->out, ',');
+    json_write_string(&c->out, "Location");
+    write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
 #if SERVICE_LineNumbers
-    c->out.write(&c->out, ',');
+    write_stream(&c->out, ',');
     json_write_string(&c->out, "File");
-    c->out.write(&c->out, ':');
+    write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
-    c->out.write(&c->out, ',');
+    write_stream(&c->out, ',');
     json_write_string(&c->out, "Line");
-    c->out.write(&c->out, ':');
+    write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
-    c->out.write(&c->out, ',');
+    write_stream(&c->out, ',');
     json_write_string(&c->out, "Column");
-    c->out.write(&c->out, ':');
+    write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
 #endif
-    c->out.write(&c->out, ',');
-    json_write_string(&c->out, "SkipCount");
-    c->out.write(&c->out, ':');
+    write_stream(&c->out, ',');
+    json_write_string(&c->out, "IgnoreCount");
+    write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
-    c->out.write(&c->out, ',');
+    write_stream(&c->out, ',');
     json_write_string(&c->out, "Condition");
-    c->out.write(&c->out, ':');
+    write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
-    c->out.write(&c->out, '}');
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, '}');
+    write_stream(&c->out, 0);
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 int is_breakpoint_address(Context * ctx, unsigned long address) {
@@ -1192,9 +1358,9 @@ int evaluate_breakpoint_condition(Context * ctx) {
                 break;
             }
         }
-        if (bp->skip_count > 0) {
+        if (bp->ignore_count > 0) {
             bp->hit_count++;
-            if (bp->hit_count < bp->skip_count) continue;
+            if (bp->hit_count < bp->ignore_count) continue;
             bp->hit_count = 0;
         }
         return 1;
@@ -1293,14 +1459,14 @@ SkipBreakpointInfo * skip_breakpoint(Context * ctx) {
 }
 
 static void event_context_created_or_exited(Context * ctx, void * client_data) {
-    if (ctx->parent == NULL) replant_breakpoints();
+    if (ctx->parent == NULL) replant_breakpoints((TCFBroadcastGroup *)client_data);
 }
 
 static void channel_close_listener(Channel * c) {
-    delete_breakpoint_refs(&c->inp, &c->bcg->out);
+    delete_breakpoint_refs(c);
 }
 
-void ini_breakpoints_service(Protocol *proto, TCFBroadcastGroup *bcg) {
+void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     int i;
     static ContextEventListener listener = {
         event_context_created_or_exited,

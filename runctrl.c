@@ -803,7 +803,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
 }
 
 static void event_context_started(Context * ctx, void * client_data) {
-    TCFBroadcastGroup *bcg = client_data;
+    TCFBroadcastGroup * bcg = client_data;
 
     assert(!ctx->stopped);
     if (ctx->intercepted) {
@@ -822,7 +822,7 @@ static void event_context_started(Context * ctx, void * client_data) {
 }
 
 static void event_context_exited(Context * ctx, void * client_data) {
-    TCFBroadcastGroup *bcg = client_data;
+    TCFBroadcastGroup * bcg = client_data;
 
     assert(!ctx->stopped);
     assert(!ctx->intercepted);
