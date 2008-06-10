@@ -121,8 +121,10 @@ static int read_mem(Context * ctx, unsigned long address, void * buf, size_t siz
 #define JMPD08      0xeb
 #define JMPD32      0xe9
 #define PUSH_EBP    0x55
-#define MOV_ESP0    0x89
-#define MOV_ESP1    0xe5
+#define MOV_ESP00   0x89
+#define MOV_ESP01   0xe5
+#define MOV_ESP10   0x8b
+#define MOV_ESP11   0xec
 #define ENTER       0xc8
 #define RET         0xc3
 #define RETADD      0xc2
@@ -196,12 +198,14 @@ static int trace_stack(Context * ctx, STACK_TRACE_CALLBAK callback) {
      */
     if (read_mem(ctx, addr - 1, code, sizeof(code)) < 0) return -1;
 
-    if (code[1] == PUSH_EBP && code[2] == MOV_ESP0 && code[3] == MOV_ESP1 ||
+    if (code[1] == PUSH_EBP &&
+        (code[2] == MOV_ESP00 && code[3] == MOV_ESP01 || code[2] == MOV_ESP10 && code[3] == MOV_ESP11) ||
         code[1] == ENTER || code[1] == RET || code[1] == RETADD) {
         fp_prev = fp;
         fp = get_regs_SP(ctx->regs) - 4;
     }
-    else if (code[0] == PUSH_EBP && code[1] == MOV_ESP0 && code[2] == MOV_ESP1) {
+    else if (code[0] == PUSH_EBP &&
+        (code[1] == MOV_ESP00 && code[2] == MOV_ESP01 || code[1] == MOV_ESP10 && code[2] == MOV_ESP11)) {
         fp_prev = fp;
         fp = get_regs_SP(ctx->regs);
     }
@@ -273,6 +277,13 @@ static int id2frame(char * id, Context ** ctx, int * idx) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
+    if (!(*ctx)->intercepted) {
+        errno = ERR_IS_RUNNING;
+        return -1;
+    }
+    if ((*ctx)->stack_trace == NULL) {
+        create_stack_trace(*ctx);
+    }
     s = (*ctx)->stack_trace;
     if (s == NULL) {
         errno = ERR_INV_CONTEXT;
@@ -283,7 +294,7 @@ static int id2frame(char * id, Context ** ctx, int * idx) {
     return 0;
 }
 
-static void write_context(OutputStream * out, char * id, Context * ctx, int level, StackFrame * frame) {
+static void write_context(OutputStream * out, char * id, Context * ctx, int level, StackFrame * frame, unsigned long ip) {
     out->write(out, '{');
 
     json_write_string(out, "ID");
@@ -314,6 +325,13 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int leve
         json_write_string(out, "RP");
         out->write(out, ':');
         json_write_ulong(out, frame->pc);
+    }
+
+    if (ip) {
+        out->write(out, ',');
+        json_write_string(out, "IP");
+        out->write(out, ':');
+        json_write_ulong(out, ip);
     }
 
     if (frame->arg_cnt) {
@@ -366,7 +384,14 @@ static void command_get_context(char * token, Channel * c) {
         }
         else {
             int level = s->top_first ? s->frame_cnt - idx - 1 : idx;
-            write_context(&c->out, ids[i], ctx, level, s->frames + idx);
+            unsigned long ip = 0;
+            if (level == s->frame_cnt - 1) {
+                ip = get_regs_PC(ctx->regs);
+            }
+            else {
+                ip = s->frames[s->top_first ? idx - 1 : idx + 1].pc;
+            }
+            write_context(&c->out, ids[i], ctx, level, s->frames + idx, ip);
         }
     }
     c->out.write(&c->out, ']');
