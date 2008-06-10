@@ -505,7 +505,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
     LINK * qp;
     char * p = NULL;
     Value v;
-    int context_sensitive = 0;
+    int context_sensitive_address = 0;
 
     assert(!bp->planted);
     assert(bp->enabled);
@@ -523,9 +523,9 @@ static void plant_breakpoint(BreakpointInfo * bp) {
                 trace(LOG_ALWAYS, "Error: %s", bp->err_msg);
                 return;
             }
-            context_sensitive = 1;
+            context_sensitive_address = 1;
         }
-        if (!context_sensitive && v.type != VALUE_INT && v.type != VALUE_UNS) {
+        if (!context_sensitive_address && v.type != VALUE_INT && v.type != VALUE_UNS) {
             errno = ERR_INV_EXPRESSION;
             address_expression_error(bp, "Must be integer number");
             trace(LOG_ALWAYS, "Error: %s", bp->err_msg);
@@ -534,7 +534,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
     }
 #if SERVICE_LineNumbers
     else if (bp->file != NULL) {
-        context_sensitive = 1;
+        context_sensitive_address = 1;
     }
 #endif
     else {
@@ -565,7 +565,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
                 }
             }
         }
-        if (context_sensitive) {
+        if (context_sensitive_address) {
             if (bp->address != NULL) {
                 expression_context = ctx;
                 if (evaluate_expression(&bp_address_ctx, bp->address, &v) < 0) {
@@ -603,7 +603,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
             }
         }
         else {
-            if (ctx->parent != NULL && ctx->mem == ctx->parent->mem) continue;
+            if (bp->condition == NULL && ctx->parent != NULL && ctx->mem == ctx->parent->mem) continue;
             plant_breakpoint_in_context(bp, ctx, v.value);
         }
     }
