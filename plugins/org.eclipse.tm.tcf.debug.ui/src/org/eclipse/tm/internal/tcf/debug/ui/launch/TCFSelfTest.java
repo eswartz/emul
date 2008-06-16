@@ -717,6 +717,7 @@ class TCFSelfTest {
             }
             if (get_state_cmds.isEmpty()) {
                 // No more pending commands
+                if (active_tests.get(this) == null) return;
                 doneStartingTestProcess();
             }
         }

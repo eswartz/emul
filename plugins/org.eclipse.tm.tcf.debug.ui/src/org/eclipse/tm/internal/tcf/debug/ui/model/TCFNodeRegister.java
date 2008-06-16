@@ -200,13 +200,13 @@ public class TCFNodeRegister extends TCFNode {
      */
     void onSuspended() {
         value.reset();
-        makeModelDelta(IModelDelta.STATE);
+        addModelDelta(IModelDelta.STATE);
     }
     
     void onRegistersChanged() {
         context.reset();
         value.reset();
-        makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
     @Override

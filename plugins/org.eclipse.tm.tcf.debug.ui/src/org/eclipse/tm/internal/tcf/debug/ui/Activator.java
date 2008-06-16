@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFAnnotationManager;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModelManager;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -26,10 +27,8 @@ import org.osgi.framework.BundleListener;
  */
 public class Activator extends AbstractUIPlugin {
 
-    // The plug-in ID
     public static final String PLUGIN_ID = "org.eclipse.tm.tcf.debug.ui";
 
-    // The shared instance
     private static Activator plugin;
     private static TCFModelManager model_manager;
     private static TCFAnnotationManager annotation_manager;
@@ -38,14 +37,18 @@ public class Activator extends AbstractUIPlugin {
         public void bundleChanged(BundleEvent event) {
             if (plugin != null && event.getBundle() == plugin.getBundle() &&
                     plugin.getBundle().getState() != Bundle.ACTIVE) {
-                if (model_manager != null) {
-                    model_manager.dispose();
-                    model_manager = null;
-                }
-                if (annotation_manager != null) {
-                    annotation_manager.dispose();
-                    annotation_manager = null;
-                }
+                Protocol.invokeAndWait(new Runnable() {
+                    public void run() {
+                        if (model_manager != null) {
+                            model_manager.dispose();
+                            model_manager = null;
+                        }
+                        if (annotation_manager != null) {
+                            annotation_manager.dispose();
+                            annotation_manager = null;
+                        }
+                    }
+                });
             }
         }
     };
@@ -64,6 +67,13 @@ public class Activator extends AbstractUIPlugin {
     public void start(BundleContext context) throws Exception {
         super.start(context);
         context.addBundleListener(bundle_listener);
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                if (plugin == null) return;
+                model_manager = new TCFModelManager();
+                annotation_manager = new TCFAnnotationManager();
+            }
+        });
     }
 
     /*
@@ -90,9 +100,6 @@ public class Activator extends AbstractUIPlugin {
      * @return the shared TCFModelManager instance
      */
     public static TCFModelManager getModelManager() {
-        if (plugin != null && model_manager == null && plugin.getBundle().getState() == Bundle.ACTIVE) {
-            model_manager = new TCFModelManager();
-        }
         return model_manager;
     }
 
@@ -102,9 +109,6 @@ public class Activator extends AbstractUIPlugin {
      * @return the shared TCFAnnotationManager instance
      */
     public static TCFAnnotationManager getAnnotationManager() {
-        if (plugin != null && annotation_manager == null && plugin.getBundle().getState() == Bundle.ACTIVE) {
-            annotation_manager = new TCFAnnotationManager();
-        }
         return annotation_manager;
     }
 

@@ -25,11 +25,9 @@ import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFBreakpointListener;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpoint;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsStatus;
@@ -99,7 +97,7 @@ public class TCFAnnotationManager {
             launch.getBreakpointsStatus().addListener(new ITCFBreakpointListener() {
 
                 public void breakpointStatusChanged(String id) {
-                    display.asyncExec(new Runnable() {
+                    displayExec(new Runnable() {
                         public void run() {
                             if (active_launch != launch) return;
                             refreshBreakpointView();
@@ -108,7 +106,7 @@ public class TCFAnnotationManager {
                 }
 
                 public void breakpointRemoved(String id) {
-                    display.asyncExec(new Runnable() {
+                    displayExec(new Runnable() {
                         public void run() {
                             if (active_launch != launch) return;
                             refreshBreakpointView();
@@ -120,19 +118,21 @@ public class TCFAnnotationManager {
 
         public void onDisconnected(final TCFLaunch launch) {
             assert Protocol.isDispatchThread();
-            display.asyncExec(new Runnable() {
-                public void run() {
-                    for (WorkbenchWindowInfo info : windows.values()) {
-                        for (Iterator<TCFAnnotation> i = info.annotations.iterator(); i.hasNext();) {
-                            TCFAnnotation a = i.next();
-                            if (a.model.getLaunch() == launch) {
-                                i.remove();
-                                a.dispose();
+            synchronized (Device.class) {
+                displayExec(new Runnable() {
+                    public void run() {
+                        for (WorkbenchWindowInfo info : windows.values()) {
+                            for (Iterator<TCFAnnotation> i = info.annotations.iterator(); i.hasNext();) {
+                                TCFAnnotation a = i.next();
+                                if (a.model.getLaunch() == launch) {
+                                    i.remove();
+                                    a.dispose();
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            }
             updateActiveLaunch();
         }
     };
@@ -177,47 +177,50 @@ public class TCFAnnotationManager {
     private boolean disposed;
     
     public TCFAnnotationManager() {
-        assert Thread.currentThread() == display.getThread();
-        Protocol.invokeLater(new Runnable() {
+        assert Protocol.isDispatchThread();
+        TCFLaunch.addListener(launch_listener);
+        displayExec(new Runnable() {
             public void run() {
-                TCFLaunch.addListener(launch_listener);
-            }
-        });
-        for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
-            window_listener.windowOpened(window);
-        }
-        PlatformUI.getWorkbench().addWindowListener(window_listener);
-        IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-        if (w != null) window_listener.windowActivated(w);
-        display.addListener(SWT.Dispose, new Listener() {
-            public void handleEvent(Event event) {
-                dispose();
+                for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
+                    window_listener.windowOpened(window);
+                }
+                PlatformUI.getWorkbench().addWindowListener(window_listener);
+                IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+                if (w != null) window_listener.windowActivated(w);
             }
         });
     }
     
     public void dispose() {
         if (disposed) return;
-        assert Thread.currentThread() == display.getThread();
+        assert Protocol.isDispatchThread();
         disposed = true;
-        Protocol.invokeLater(new Runnable() {
+        TCFLaunch.removeListener(launch_listener);
+        displayExec(new Runnable() {
             public void run() {
-                TCFLaunch.removeListener(launch_listener);
+                PlatformUI.getWorkbench().removeWindowListener(window_listener);
+                for (IWorkbenchWindow window : windows.keySet()) {
+                    window.getSelectionService().removeSelectionListener(
+                            IDebugUIConstants.ID_DEBUG_VIEW, selection_listener);
+                    windows.get(window).dispose();
+                }
+                windows.clear();
             }
         });
-        PlatformUI.getWorkbench().removeWindowListener(window_listener);
-        for (IWorkbenchWindow window : windows.keySet()) {
-            window.getSelectionService().removeSelectionListener(
-                    IDebugUIConstants.ID_DEBUG_VIEW, selection_listener);
-            windows.get(window).dispose();
+    }
+    
+    private void displayExec(Runnable r) {
+        synchronized (Device.class) {
+            if (!display.isDisposed()) {
+                display.asyncExec(r);
+            }
         }
-        windows.clear();
     }
     
     private void updateActiveLaunch() {
         assert !disposed;
         final int cnt = ++update_active_launch_cnt;
-        display.asyncExec(new Runnable() {
+        displayExec(new Runnable() {
             public void run() {
                 if (cnt != update_active_launch_cnt) return;
                 TCFLaunch launch = null;
@@ -247,7 +250,7 @@ public class TCFAnnotationManager {
     private void refreshBreakpointView() {
         assert !disposed;
         final int cnt = ++refresh_breakpoint_view_cnt; 
-        display.asyncExec(new Runnable() {
+        displayExec(new Runnable() {
             public void run() {
                 if (cnt != refresh_breakpoint_view_cnt) return;
                 for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
@@ -327,7 +330,21 @@ public class TCFAnnotationManager {
         }
     }
     
-    void onContextResumed(final TCFModel model, String id) {
+    public Annotation findAnnotation(TCFModel model, String id) {
+        if (disposed) return null;
+        assert Thread.currentThread() == display.getThread();
+        for (WorkbenchWindowInfo info : windows.values()) {
+            for (Iterator<TCFAnnotation> i = info.annotations.iterator(); i.hasNext();) {
+                TCFAnnotation a = i.next();
+                if (a.model == model && a.exe_id.equals(id)) {
+                    return a;
+                }
+            }
+        }
+        return null;
+    }
+    
+    void onContextResumed(TCFModel model, String id) {
         if (disposed) return;
         assert Thread.currentThread() == display.getThread();
         for (WorkbenchWindowInfo info : windows.values()) {
@@ -350,7 +367,7 @@ public class TCFAnnotationManager {
                 public void run() {
                     IRunControl.RunControlContext x = ((TCFNode)adaptable).getRunContext();
                     if (x != null && id.equals(x.getID())) {
-                        display.asyncExec(new Runnable() {
+                        displayExec(new Runnable() {
                             public void run() {
                                 IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
                                 if (w != null) {
@@ -365,7 +382,7 @@ public class TCFAnnotationManager {
         }
     }
 
-    void onContextRemoved(final TCFModel model, String id) {
+    void onContextRemoved(TCFModel model, String id) {
         if (disposed) return;
         assert Thread.currentThread() == display.getThread();
         for (WorkbenchWindowInfo info : windows.values()) {

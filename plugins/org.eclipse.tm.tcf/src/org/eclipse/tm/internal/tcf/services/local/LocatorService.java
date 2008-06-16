@@ -27,6 +27,7 @@ import org.eclipse.tm.internal.tcf.core.RemotePeer;
 import org.eclipse.tm.tcf.Activator;
 import org.eclipse.tm.tcf.core.AbstractChannel;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IEventQueue;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
@@ -51,14 +52,17 @@ public class LocatorService implements ILocator {
     
     private Thread output_thread = new Thread() {
         public void run() {
-            for (;;) {
-                Protocol.invokeAndWait(new Runnable() {
-                    public void run() {
-                        sendPeerInfoRequest();
-                    }
-                });
+            while (true) {
                 try {
+                    Protocol.invokeAndWait(new Runnable() {
+                        public void run() {
+                            sendPeerInfoRequest();
+                        }
+                    });
                     sleep(5 * 1000);
+                }
+                catch (IllegalStateException x) {
+                    break;
                 }
                 catch (InterruptedException x) {
                     break;

@@ -29,6 +29,7 @@ class EventQueue implements IEventQueue, Runnable {
     private final LinkedList<Runnable> queue = new LinkedList<Runnable>();
     private final Thread thread;
     private boolean waiting;
+    private boolean shutdown;
     private int job_cnt;
 
     EventQueue() {
@@ -64,6 +65,22 @@ class EventQueue implements IEventQueue, Runnable {
     void start() {
         thread.start();
     }
+    
+    void shutdown() {
+        try {
+            synchronized (this) {
+                shutdown = true;
+                if (waiting) {
+                    waiting = false;
+                    notifyAll();
+                }
+            }
+            thread.join();
+        }
+        catch (Exception e) {
+            Activator.log("Failed to shutdown TCF event dispatch thread", e);
+        }
+    }
 
     private void error(Throwable x) {
         if (debug) x.printStackTrace();
@@ -76,6 +93,7 @@ class EventQueue implements IEventQueue, Runnable {
                 Runnable r = null;
                 synchronized (this) {
                     while (queue.isEmpty()) {
+                        if (shutdown) return;
                         waiting = true;
                         wait();
                     }
@@ -91,6 +109,7 @@ class EventQueue implements IEventQueue, Runnable {
 
     public synchronized void invokeLater(final Runnable r) {
         assert r != null;
+        if (shutdown) throw new IllegalStateException("TCF event dispatch is shutdown");
         queue.add(r);
         if (waiting) {
             waiting = false;
@@ -101,7 +120,7 @@ class EventQueue implements IEventQueue, Runnable {
     public boolean isDispatchThread() {
         return Thread.currentThread() == thread;
     }
-
+    
     public synchronized int getCongestion() {
         int l0 = job_cnt / 10 - 100;
         int l1 = queue.size() / 10 - 100;

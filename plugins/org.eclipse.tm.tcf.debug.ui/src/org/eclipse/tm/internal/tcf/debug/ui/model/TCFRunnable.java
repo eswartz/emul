@@ -20,8 +20,6 @@ public abstract class TCFRunnable implements Runnable {
     private final IRequest monitor;
     private final Display display;
     
-    private boolean canceled;
-    
     public TCFRunnable() {
         monitor = null;
         display = null;
@@ -33,17 +31,6 @@ public abstract class TCFRunnable implements Runnable {
         Protocol.invokeLater(this);
     }
 
-    public void cancel() {
-        canceled = true;
-        if (display == null) return;
-        display.asyncExec(new Runnable() {
-            public void run() {
-                monitor.cancel();
-                monitor.done();
-            }
-        });
-    }
-
     public void done() {
         if (display == null) return;
         display.asyncExec(new Runnable() {
@@ -51,9 +38,5 @@ public abstract class TCFRunnable implements Runnable {
                 monitor.done();
             }
         });
-    }
-    
-    public boolean isCanceled() {
-        return canceled;
     }
 }

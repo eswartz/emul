@@ -25,11 +25,14 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
             result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_TCF), 0);
             String status = "";
             if (launch.isConnecting()) status = "Connecting";
-            else if (launch.isDisconnected()) status = "Disconnected";
+            else if (launch.isExited()) status = "Exited";
             else if (launch.isTerminated()) status = "Terminated";
+            else if (launch.isDisconnected()) status = "Disconnected";
             Throwable error = launch.getError();
             if (error != null) {
-                status += " - " + error;
+                String msg = error.getLocalizedMessage();
+                if (msg == null || msg.length() == 0) msg = error.getClass().getName();
+                status += " - " + msg;
                 result.setForeground(new RGB(255, 0, 0), 0);
             }
             if (status.length() > 0) status = " (" + status + ")";

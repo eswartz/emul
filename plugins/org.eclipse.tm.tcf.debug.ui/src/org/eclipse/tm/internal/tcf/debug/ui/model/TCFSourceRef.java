@@ -17,8 +17,8 @@ import org.eclipse.tm.tcf.services.ILineNumbers;
 /**
  * Objects of this class represent a mapping between an address and source code area. 
  */
-class TCFSourceRef {
-    BigInteger address;
-    ILineNumbers.CodeArea area;
-    Throwable error;
+public class TCFSourceRef {
+    public BigInteger address;
+    public ILineNumbers.CodeArea area;
+    public Throwable error;
 }

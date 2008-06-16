@@ -39,21 +39,24 @@ public class TCFNodeStackFrame extends TCFNode {
     private final TCFDataCache<IStackTrace.StackTraceContext> stack_trace_context;
     private final TCFDataCache<TCFSourceRef> line_info;
     
-    private TCFNodeStackFrame(final TCFNodeExecContext parent, final String id, final int frame_no, TCFChildrenRegisters regs) {
+    TCFNodeStackFrame(final TCFNodeExecContext parent, final String id) {
         super(parent, id);
-        this.frame_no = frame_no;
-        if (regs == null) regs = new TCFChildrenRegisters(this);
-        this.children_regs = regs;
+        children_regs = new TCFChildrenRegisters(this);
         IChannel channel = model.getLaunch().getChannel();
         stack_trace_context = new TCFDataCache<IStackTrace.StackTraceContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
-                if (frame_no == 0) {
+                if (!isSuspended()) {
                     set(null, null, null);
                     return true;
                 }
                 IStackTrace st = model.getLaunch().getService(IStackTrace.class);
+                if (st == null) {
+                    assert frame_no == 0;
+                    set(null, null, null);
+                    return true;
+                }
                 command = st.getContext(new String[]{ id }, new IStackTrace.DoneGetContext() {
                     public void doneGetContext(IToken token, Exception error, IStackTrace.StackTraceContext[] context) {
                         set(token, error, context == null || context.length == 0 ? null : context[0]);
@@ -66,18 +69,11 @@ public class TCFNodeStackFrame extends TCFNode {
         line_info = new TCFDataCache<TCFSourceRef>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                BigInteger n = null;
-                if (frame_no == 0) {
-                    if (!parent.validateNode(this)) return false;
+                if (!stack_trace_context.validate()) {
+                    stack_trace_context.wait(this);
+                    return false;
                 }
-                else {
-                    if (!stack_trace_context.validate()) {
-                        stack_trace_context.wait(this);
-                        return false;
-                    }
-                }
-                String s = getAddress();
-                if (s != null) n = new BigInteger(s);
+                BigInteger n = getAddress();
                 if (n == null) {
                     set(null, null, null);
                     return true;
@@ -117,37 +113,28 @@ public class TCFNodeStackFrame extends TCFNode {
         };
     }
 
-    TCFNodeStackFrame(TCFNodeExecContext parent, String id, TCFChildrenRegisters children_regs) {
-        this(parent, id, 0, children_regs);
-    }
-
-    TCFNodeStackFrame(TCFNodeExecContext parent, String id, int frame_no) {
-        this(parent, id, frame_no, null);
-    }
-
-    int getFrameNo() {
+    public int getFrameNo() {
         assert Protocol.isDispatchThread();
         return frame_no;
     }
     
     void setFrameNo(int frame_no) {
-        assert this.frame_no != 0 && frame_no != 0;
         this.frame_no = frame_no;
     }
     
-    TCFDataCache<TCFSourceRef> getLineInfo() {
+    public TCFDataCache<TCFSourceRef> getLineInfo() {
         return line_info;
     }
 
     @Override
     void dispose() {
-        if (frame_no != 0) children_regs.dispose();
+        children_regs.dispose();
         super.dispose();
     }
 
     @Override
     void dispose(String id) {
-        if (frame_no != 0) children_regs.dispose(id);
+        children_regs.dispose(id);
     }
 
     @Override
@@ -171,14 +158,27 @@ public class TCFNodeStackFrame extends TCFNode {
     }
 
     @Override
-    public String getAddress() {
+    public BigInteger getAddress() {
         assert Protocol.isDispatchThread();
-        if (frame_no == 0) return parent.getAddress();
         if (!stack_trace_context.isValid()) return null;
         IStackTrace.StackTraceContext ctx = stack_trace_context.getData();
         if (ctx != null) {
-            Number addr = ctx.getReturnAddress();
-            if (addr != null) return addr.toString();
+            Number n = ctx.getInstructionAddress();
+            if (n instanceof BigInteger) return (BigInteger)n;
+            if (n != null) return new BigInteger(n.toString());
+        }
+        if (frame_no == 0) return parent.getAddress();
+        return null;
+    }
+    
+    public BigInteger getReturnAddress() {
+        assert Protocol.isDispatchThread();
+        if (!stack_trace_context.isValid()) return null;
+        IStackTrace.StackTraceContext ctx = stack_trace_context.getData();
+        if (ctx != null) {
+            Number n = ctx.getReturnAddress();
+            if (n instanceof BigInteger) return (BigInteger)n;
+            if (n != null) return new BigInteger(n.toString());
         }
         return null;
     }
@@ -186,6 +186,10 @@ public class TCFNodeStackFrame extends TCFNode {
     @Override
     protected void getData(IChildrenCountUpdate result) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
+            if (frame_no == 0) {
+                parent.getData(result);
+                return;
+            }
             result.setChildCount(children_regs.size());
         }
         else {
@@ -197,6 +201,10 @@ public class TCFNodeStackFrame extends TCFNode {
     protected void getData(IChildrenUpdate result) {
         TCFNode[] arr = null;
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
+            if (frame_no == 0) {
+                parent.getData(result);
+                return;
+            }
             arr = children_regs.toArray();
         }
         else {
@@ -219,6 +227,10 @@ public class TCFNodeStackFrame extends TCFNode {
     @Override
     protected void getData(IHasChildrenUpdate result) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
+            if (frame_no == 0) {
+                parent.getData(result);
+                return;
+            }
             result.setHasChilren(children_regs.size() > 0);
         }
         else {
@@ -231,7 +243,7 @@ public class TCFNodeStackFrame extends TCFNode {
         result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
         Throwable error = stack_trace_context.getError();
         if (error == null) error = line_info.getError();
-        if (error != null) {
+        if (error != null && isSuspended()) {
             result.setForeground(new RGB(255, 0, 0), 0);
             result.setLabel(error.getClass().getName() + ": " + error.getMessage(), 0);
         }
@@ -265,19 +277,19 @@ public class TCFNodeStackFrame extends TCFNode {
 
     void onSourceMappingChange() {
         line_info.reset();
-        makeModelDelta(IModelDelta.STATE);
+        addModelDelta(IModelDelta.STATE);
     }
 
     void onSuspended() {
         stack_trace_context.reset();
         line_info.reset();
         children_regs.onSuspended();
-        makeModelDelta(IModelDelta.STATE);
+        addModelDelta(IModelDelta.STATE);
     }
     
     void onRegistersChanged() {
         children_regs.onRegistersChanged();
-        makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
     @Override
@@ -291,12 +303,12 @@ public class TCFNodeStackFrame extends TCFNode {
     public boolean validateNode(Runnable done) {
         if (frame_no == 0 && !parent.validateNode(done)) return false;
         stack_trace_context.validate();
-        children_regs.validate();
+        if (frame_no != 0) children_regs.validate();
         if (!stack_trace_context.isValid()) {
             stack_trace_context.wait(done);
             return false;
         }
-        if (!children_regs.isValid()) {
+        if (frame_no != 0 && !children_regs.isValid()) {
             children_regs.wait(done);
             return false;
         }

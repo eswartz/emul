@@ -20,6 +20,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleEvent;
+import org.osgi.framework.BundleListener;
 
 
 /**
@@ -27,11 +29,20 @@ import org.osgi.framework.BundleContext;
  */
 public class Activator extends Plugin {
 
-    // The plug-in ID
     public static final String PLUGIN_ID = "org.eclipse.tm.tcf";
 
-    // The shared instance
     private static Activator plugin;
+    private static final EventQueue queue = new EventQueue();
+    private static final BundleListener bundle_listener = new BundleListener() {
+        private boolean started = false;
+        public void bundleChanged(BundleEvent event) {
+            if (plugin != null && !started && event.getBundle() == plugin.getBundle() &&
+                    plugin.getBundle().getState() == Bundle.ACTIVE) {
+                queue.start();
+                started = true;
+            }
+        }
+    };
 
     public Activator() {
         plugin = this;
@@ -40,14 +51,19 @@ public class Activator extends Plugin {
     @Override
     public void start(BundleContext context) throws Exception {
         super.start(context);
-        EventQueue e = new EventQueue();
-        Protocol.setEventQueue(e);
-        runTCFStartup();
-        e.start();
+        Protocol.setEventQueue(queue);
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                runTCFStartup();
+            }
+        });
+        context.addBundleListener(bundle_listener);
     }
 
     @Override
     public void stop(BundleContext context) throws Exception {
+        context.removeBundleListener(bundle_listener);
+        queue.shutdown();
         plugin = null;
         super.stop(context);
     }

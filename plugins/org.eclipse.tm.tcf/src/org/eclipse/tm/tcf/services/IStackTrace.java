@@ -30,6 +30,7 @@ public interface IStackTrace extends IService {
         PROP_NAME = "Name",
         PROP_FRAME_ADDRESS = "FP",
         PROP_RETURN_ADDRESS = "RP",
+        PROP_INSTRUCTION_ADDRESS = "IP", 
         PROP_ARGUMENTS_COUNT = "ArgsCnt",
         PROP_ARGUMENTS_ADDRESS = "ArgsAddr";
 
@@ -119,6 +120,14 @@ public interface IStackTrace extends IService {
          * @return return address or null if not a stack frame.
          */
         Number getReturnAddress();
+        
+        /**
+         * Get address of the next instruction to be executed in this stack frame.
+         * For top frame it is same as PC register value.
+         * For other frames it is same as return address of the next frame.
+         * @return instruction address or null if not a stack frame.
+         */
+        Number getInstructionAddress();
         
         /**
          * Get number of function arguments for this frame.

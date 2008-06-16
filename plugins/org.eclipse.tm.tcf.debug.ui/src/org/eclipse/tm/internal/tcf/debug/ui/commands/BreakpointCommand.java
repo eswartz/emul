@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,11 +55,11 @@ public class BreakpointCommand implements IToggleBreakpointsTargetExtension {
             Protocol.invokeAndWait(new Runnable() {
                 public void run() {
                     try {
-                        String addr = node.getAddress();
+                        BigInteger addr = node.getAddress();
                         if (addr == null) return;
                         Map<String,Object> m = new HashMap<String,Object>();
                         m.put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
-                        m.put(IBreakpoints.PROP_LOCATION, addr);
+                        m.put(IBreakpoints.PROP_LOCATION, addr.toString());
                         new TCFBreakpoint(ResourcesPlugin.getWorkspace().getRoot(), m);
                     }
                     catch (CoreException x) {

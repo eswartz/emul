@@ -75,6 +75,10 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         }
     }
     
+    /**
+     * Set given data to the cache, mark cache as valid, cancel any pending data retrieval.
+     * @param data - up-to-date data to store in the cache, null means empty collection of nodes.
+     */
     public void reset(Map<String,TCFNode> data) {
         if (data != null) {
             super.reset(data);
@@ -85,20 +89,38 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         }
     }
     
+    /**
+     * Add a node to collection of children.
+     * @param n - a node.
+     */
     void add(TCFNode n) {
         node_pool.put(n.id, n);
         if (isValid()) getData().put(n.id, n);
     }
     
+    /** Return collection of all nodes, including current children as well as
+     * currently unused nodes from the pool.
+     * To get only current children use getData() method.
+     * @return Collection of nodes.
+     */
     Collection<TCFNode> getNodes() {
         return node_pool.values();
     }
     
+    /**
+     * Return current number of children.
+     * The cache must be valid for the method to work.
+     * @return number of children.
+     */
     int size() {
         assert isValid();
         return getData().size();
     }
     
+    /**
+     * Return current children nodes as an array.
+     * @return array of nodes.
+     */
     TCFNode[] toArray() {
         assert isValid();
         Map<String,TCFNode> data = getData();

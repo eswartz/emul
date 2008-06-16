@@ -126,10 +126,10 @@ public class TCFChildrenExecContext extends TCFChildren {
         TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);
         if (n == null) {
             n = new TCFNodeExecContext(node, id);
-            node.makeModelDelta(IModelDelta.CONTENT);
+            node.addModelDelta(IModelDelta.CONTENT);
         }
         else {
-            n.makeModelDelta(IModelDelta.STATE);
+            n.addModelDelta(IModelDelta.STATE);
         }
         add(n);
         run_children.add(n);
@@ -142,10 +142,10 @@ public class TCFChildrenExecContext extends TCFChildren {
         TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);
         if (n == null) {
             n = new TCFNodeExecContext(node, id);
-            node.makeModelDelta(IModelDelta.CONTENT);
+            node.addModelDelta(IModelDelta.CONTENT);
         }
         else {
-            n.makeModelDelta(IModelDelta.STATE);
+            n.addModelDelta(IModelDelta.STATE);
         }
         add(n);
         mem_children.add(n);

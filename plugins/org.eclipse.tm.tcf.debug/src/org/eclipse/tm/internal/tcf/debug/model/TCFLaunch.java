@@ -62,6 +62,7 @@ public class TCFLaunch extends Launch {
     private boolean connecting;
     private boolean disconnected;
     private boolean shutdown;
+    private boolean last_context_exited;
     private ProcessContext process;
 
     public TCFLaunch(ILaunchConfiguration launchConfiguration, String mode) {
@@ -238,6 +239,11 @@ public class TCFLaunch extends Launch {
     public boolean isConnecting() {
         return connecting;
     }
+    
+    public void onLastContextRemoved() {
+        last_context_exited = true;
+        channel.close();
+    }
 
     public IPeer getPeer() {
         assert Protocol.isDispatchThread();
@@ -308,6 +314,10 @@ public class TCFLaunch extends Launch {
             }
         });
         return res[0];
+    }
+    
+    public boolean isExited() {
+        return last_context_exited;
     }
     
     public void disconnect() throws DebugException {

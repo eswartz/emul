@@ -12,12 +12,9 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.util.Arrays;
 
-import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
 
@@ -74,19 +71,10 @@ public class TCFNodeLaunch extends TCFNode {
     void onContextAdded(IMemory.MemoryContext context) {
         children.onContextAdded(context);
     }
-
-    @Override
-    ModelDelta makeModelDelta(TCFModelProxy p, int flags) {
-        ModelDelta delta = p.getDelta(this);
-        if (delta == null) {
-            delta = new ModelDelta(DebugPlugin.getDefault().getLaunchManager(), IModelDelta.NO_CHANGE);
-            delta = delta.addNode(model.getLaunch(), -1, flags, -1);
-            p.addDelta(this, delta);
-        }
-        else {
-            delta.setFlags(delta.getFlags() | flags);
-        }
-        return delta;
+    
+    int getContextCount() {
+        assert children.isValid();
+        return children.size();
     }
 
     @Override

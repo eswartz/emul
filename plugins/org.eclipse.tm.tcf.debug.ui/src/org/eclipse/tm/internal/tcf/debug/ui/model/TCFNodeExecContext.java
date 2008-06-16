@@ -56,8 +56,8 @@ public class TCFNodeExecContext extends TCFNode {
     TCFNodeExecContext(TCFNode parent, final String id) {
         super(parent, id);
         children_exec = new TCFChildrenExecContext(this);
+        children_stack = new TCFChildrenStackTrace(this);
         children_regs = new TCFChildrenRegisters(this);
-        children_stack = new TCFChildrenStackTrace(this, children_regs);
         line_info_cache = new LinkedHashMap<BigInteger,TCFSourceRef>() {
             @SuppressWarnings("unchecked")
             protected boolean removeEldestEntry(Map.Entry eldest) {
@@ -190,7 +190,7 @@ public class TCFNodeExecContext extends TCFNode {
     }
 
     @Override
-    public String getAddress() {
+    public BigInteger getAddress() {
         assert Protocol.isDispatchThread();
         if (!run_context.isValid()) return null;
         IRunControl.RunControlContext ctx = run_context.getData();
@@ -198,7 +198,14 @@ public class TCFNodeExecContext extends TCFNode {
         if (!state.isValid()) return null;
         ContextState s = state.getData();
         if (s == null) return null;
-        return s.suspended_pc;
+        if (s.suspended_pc == null) return null;
+        return new BigInteger(s.suspended_pc);
+    }
+    
+    public TCFNodeStackFrame getTopFrame() {
+        assert Protocol.isDispatchThread();
+        if (!children_stack.isValid()) return null;
+        return children_stack.getTopFrame();
     }
 
     @Override
@@ -300,7 +307,7 @@ public class TCFNodeExecContext extends TCFNode {
         run_context.reset(context);
         resumed_cnt++;
         children_stack.onSourceMappingChange();
-        makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
     void onContextAdded(IMemory.MemoryContext context) {
@@ -311,14 +318,14 @@ public class TCFNodeExecContext extends TCFNode {
         assert !disposed;
         mem_context.reset(context);
         resumed_cnt++;
-        makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
     void onContextRemoved() {
         assert !disposed;
         resumed_cnt++;
         dispose();
-        parent.makeModelDelta(IModelDelta.CONTENT);
+        parent.addModelDelta(IModelDelta.CONTENT);
     }
 
     void onContainerSuspended() {
@@ -330,7 +337,8 @@ public class TCFNodeExecContext extends TCFNode {
         }
         state.reset();
         children_stack.onSuspended();
-        makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        children_regs.onSuspended();
+        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
     void onContainerResumed() {
@@ -341,7 +349,7 @@ public class TCFNodeExecContext extends TCFNode {
             if (!ctx.hasState()) return;
         }
         state.reset();
-        makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
     void onContextSuspended(String pc, String reason, Map<String,Object> params) {
@@ -352,14 +360,15 @@ public class TCFNodeExecContext extends TCFNode {
         s.suspended_reason = reason;
         state.reset(s);
         children_stack.onSuspended();
+        children_regs.onSuspended();
         resumed_cnt++;
-        makeModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
     void onContextResumed() {
         assert !disposed;
         state.reset(new ContextState());
-        makeModelDelta(IModelDelta.STATE);
+        addModelDelta(IModelDelta.STATE);
         final int cnt = ++resumed_cnt;
         model.invokeLater(250, new Runnable() {
             public void run() {
@@ -367,7 +376,7 @@ public class TCFNodeExecContext extends TCFNode {
                 if (disposed) return;
                 children_stack.onResumed();
                 if (!validateNode(this)) return;
-                makeModelDelta(IModelDelta.CONTENT);
+                addModelDelta(IModelDelta.CONTENT);
                 if (parent instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)parent).onChildResumedOrSuspended();
                 }
@@ -378,7 +387,7 @@ public class TCFNodeExecContext extends TCFNode {
     
     void onChildResumedOrSuspended() {
         IRunControl.RunControlContext ctx = run_context.getData();
-        if (ctx != null && ctx.isContainer()) makeModelDelta(IModelDelta.STATE);
+        if (ctx != null && ctx.isContainer()) addModelDelta(IModelDelta.STATE);
         if (parent instanceof TCFNodeExecContext) ((TCFNodeExecContext)parent).onChildResumedOrSuspended();
     }
 
@@ -391,7 +400,8 @@ public class TCFNodeExecContext extends TCFNode {
 
     void onRegistersChanged() {
         children_stack.onRegistersChanged();
-        makeModelDelta(IModelDelta.CONTENT);
+        children_regs.onRegistersChanged();
+        addModelDelta(IModelDelta.CONTENT);
     }
 
     @Override
@@ -427,8 +437,8 @@ public class TCFNodeExecContext extends TCFNode {
             children_exec.wait(done);
             return false;
         }
-        children_regs.validate();
         children_stack.validate();
+        children_regs.validate();
 
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && !ctx.hasState()) {
@@ -441,14 +451,15 @@ public class TCFNodeExecContext extends TCFNode {
             }
         }
         
-        if (!children_regs.isValid()) {
-            children_regs.wait(done);
-            return false;
-        }
         if (!children_stack.isValid()) {
             children_stack.wait(done);
             return false;
         }
+        if (!children_regs.isValid()) {
+            children_regs.wait(done);
+            return false;
+        }
+        
         return true;
     }
     

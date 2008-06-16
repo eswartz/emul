@@ -459,7 +459,7 @@ public abstract class AbstractChannel implements IChannel {
                 }
                 else {
                     IChannel.IEventListener[] next = new IChannel.IEventListener[list.length - 1];
-                    System.arraycopy(list, 0, next, 0, i - 1);
+                    System.arraycopy(list, 0, next, 0, i);
                     System.arraycopy(list, i + 1, next, i, next.length - i);
                     event_listeners.put(service.getName(), next);
                 }

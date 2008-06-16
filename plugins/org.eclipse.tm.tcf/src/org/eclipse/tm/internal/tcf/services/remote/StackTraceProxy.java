@@ -63,6 +63,10 @@ public class StackTraceProxy implements IStackTrace {
             return (Number)props.get(PROP_RETURN_ADDRESS);
         }
 
+        public Number getInstructionAddress() {
+            return (Number)props.get(PROP_INSTRUCTION_ADDRESS);
+        }
+
         public Map<String, Object> getProperties() {
             return props;
         }

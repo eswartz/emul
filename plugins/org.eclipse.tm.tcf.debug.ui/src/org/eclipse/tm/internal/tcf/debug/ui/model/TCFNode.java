@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.math.BigInteger;
 import java.util.Collection;
 
 import org.eclipse.core.runtime.PlatformObject;
@@ -25,7 +26,6 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
 import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -62,6 +62,8 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      */
     protected TCFNode(TCFNode parent, String id) {
         assert Protocol.isDispatchThread();
+        assert parent != null;
+        assert id != null;
         this.parent = parent;
         this.id = id;
         model = parent.model;
@@ -76,7 +78,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         assert !disposed;
         if (parent != null) parent.dispose(id);
         invalidateNode();
-        model.removeNode(id);
+        if (id != null) model.removeNode(id);
         disposed = true;
     }
     
@@ -137,7 +139,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * For executable contexts and stack frames address is current PC.
      * @return
      */
-    public String getAddress() {
+    public BigInteger getAddress() {
         return null;
     }
     
@@ -152,16 +154,17 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final IChildrenCountUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (result.isCanceled()) return;
-                IChannel channel = model.getLaunch().getChannel();
-                if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                    if (!validateNode(this)) return;
-                    getData(result);
+                if (!result.isCanceled()) {
+                    IChannel channel = model.getLaunch().getChannel();
+                    if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
+                        if (!validateNode(this)) return;
+                        getData(result);
+                    }
+                    else {
+                        result.setChildCount(0);
+                    }
+                    result.setStatus(Status.OK_STATUS);
                 }
-                else {
-                    result.setChildCount(0);
-                }
-                result.setStatus(Status.OK_STATUS);
                 done();
             }
         };
@@ -174,13 +177,14 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final IChildrenUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (result.isCanceled()) return;
-                IChannel channel = model.getLaunch().getChannel();
-                if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                    if (!validateNode(this)) return;
-                    getData(result);
+                if (!result.isCanceled()) {
+                    IChannel channel = model.getLaunch().getChannel();
+                    if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
+                        if (!validateNode(this)) return;
+                        getData(result);
+                    }
+                    result.setStatus(Status.OK_STATUS);
                 }
-                result.setStatus(Status.OK_STATUS);
                 done();
             }
         };
@@ -193,16 +197,17 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final IHasChildrenUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (result.isCanceled()) return;
-                IChannel channel = model.getLaunch().getChannel();
-                if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                    if (!validateNode(this)) return;
-                    getData(result);
+                if (!result.isCanceled()) {
+                    IChannel channel = model.getLaunch().getChannel();
+                    if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
+                        if (!validateNode(this)) return;
+                        getData(result);
+                    }
+                    else {
+                        result.setHasChilren(false);
+                    }
+                    result.setStatus(Status.OK_STATUS);
                 }
-                else {
-                    result.setHasChilren(false);
-                }
-                result.setStatus(Status.OK_STATUS);
                 done();
             }
         };
@@ -215,16 +220,17 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     final void update(final ILabelUpdate result) {
         new TCFRunnable(model.getDisplay(), result) {
             public void run() {
-                if (result.isCanceled()) return;
-                IChannel channel = model.getLaunch().getChannel();
-                if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                    if (!validateNode(this)) return;
-                    getData(result);
+                if (!result.isCanceled()) {
+                    IChannel channel = model.getLaunch().getChannel();
+                    if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
+                        if (!validateNode(this)) return;
+                        getData(result);
+                    }
+                    else {
+                        result.setLabel("...", 0);
+                    }
+                    result.setStatus(Status.OK_STATUS);
                 }
-                else {
-                    result.setLabel("...", 0);
-                }
-                result.setStatus(Status.OK_STATUS);
                 done();
             }
         };
@@ -278,10 +284,10 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * Create and post ModelDelta for changes in this node.
      * @param flags - description of what has changed: IModelDelta.ADDED, IModelDelta.REMOVED, etc.
      */
-    final void makeModelDelta(int flags) {
+    final void addModelDelta(int flags) {
         for (TCFModelProxy p : model.getModelProxyList()) {
             int f = flags & getRelevantModelDeltaFlags(p.getPresentationContext());
-            if (f != 0) makeModelDelta(p, f);
+            if (f != 0) p.addDelta(this, f);
         }
     }
     
@@ -293,25 +299,6 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      */
     int getRelevantModelDeltaFlags(IPresentationContext p) {
         return IModelDelta.CONTENT | IModelDelta.STATE;
-    }
-
-    /**
-     * Create and post ModelDelta for changes in this node, relevant for given presentation context.
-     * @param p - target presentation context.
-     * @param flags - description of what has changed: IModelDelta.ADDED, IModelDelta.REMOVED, etc.
-     * @return - ModelDelta that describes node changes.
-     */
-    ModelDelta makeModelDelta(TCFModelProxy p, int flags) {
-        ModelDelta delta = p.getDelta(this);
-        if (delta == null) {
-            ModelDelta parent_delta = parent.makeModelDelta(p, IModelDelta.NO_CHANGE);
-            delta = parent_delta.addNode(this, flags);
-            p.addDelta(this, delta);
-        }
-        else {
-            delta.setFlags(delta.getFlags() | flags);
-        }
-        return delta;
     }
 
     /*--------------------------------------------------------------------------------------*/
