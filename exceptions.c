@@ -76,6 +76,8 @@ void str_exception(int error, char * msg) {
         exit(error);
     }
     strncpy(chain->msg, msg, sizeof(chain->msg));
+    chain->msg[sizeof(chain->msg)-1] = 0;
     longjmp(chain->env, error);
 }
+
 

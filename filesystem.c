@@ -934,7 +934,7 @@ static void command_copy(char * token, Channel * c) {
         int rd = read(fi, buf, sizeof(buf));
         if (rd == 0) break;
         if (rd < 0) {
-            err == errno;
+            err = errno;
             break;
         }
         wr = write(fo, buf, rd);
@@ -1091,4 +1091,5 @@ void ini_file_system_service(Protocol * proto) {
 }
 
 #endif
+
 

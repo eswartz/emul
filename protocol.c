@@ -296,6 +296,12 @@ void handle_protocol_message(Protocol * p, Channel * c) {
             n = n * 10 + (ch - '0');
             ch = c->inp.read(&c->inp);
         }
+        if (ch == 0) {
+            ch = c->inp.read(&c->inp);
+        }
+        else {
+            trace(LOG_ALWAYS, "Received F with no zero termination.");
+        }
         if (ch != MARKER_EOM) exception(ERR_PROTOCOL);
         c->congestion_level = s ? -n : n;
     }

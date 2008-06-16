@@ -134,6 +134,7 @@ static void command_get_symbol(char * token, Channel * c) {
     Context * ctx;
     Symbol sym;
     int error = 0;
+    memset(&sym, 0, sizeof(sym));
 
     json_read_string(&c->inp, id, sizeof(id));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -194,5 +195,6 @@ void ini_diagnostics_service(Protocol * proto) {
     add_command_handler(proto, DIAGNOSTICS, "cancelTest", command_cancel_test);
     add_command_handler(proto, DIAGNOSTICS, "getSymbol", command_get_symbol);
 }
+
 
 
