@@ -697,7 +697,8 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         RegisterChildrenCache cache = null;
         if (dmc instanceof CompositeDMContext) {
             for (IDMContext ctx : dmc.getParents()) {
-                if (ctx instanceof TCFDSFExecutionDMC || ctx instanceof TCFDSFStack.TCFFrameDMC) {
+                if (ctx instanceof TCFDSFExecutionDMC || ctx instanceof TCFDSFStack.TCFFrameDMC || 
+                        ctx instanceof RegisterGroupDMC || ctx instanceof RegisterDMC) {
                     dmc = ctx;
                     break;
                 }

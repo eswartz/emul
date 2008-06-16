@@ -140,7 +140,7 @@ public class TCFNodeRegister extends TCFNode {
             byte[] temp = new byte[data.length + 1];
             temp[0] = 0; // Extra byte to avoid sign extension by BigInteger
             if (ctx.isBigEndian()) {
-                System.arraycopy(value, 0, temp, 1, data.length);
+                System.arraycopy(data, 0, temp, 1, data.length);
             }
             else {
                 for (int i = 0; i < data.length; i++) {

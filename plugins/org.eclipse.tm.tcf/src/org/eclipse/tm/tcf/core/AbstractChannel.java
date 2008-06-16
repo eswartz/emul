@@ -763,7 +763,10 @@ public abstract class AbstractChannel implements IChannel {
                 out_queue.add(0, msg);
                 out_queue.notify();
             }
-            msg.data = Integer.toString(local_congestion_level).getBytes("ASCII");
+            StringBuilder buffer = new StringBuilder();
+            buffer.append(local_congestion_level);
+            buffer.append((char)0); // 0 terminate
+            msg.data = buffer.toString().getBytes("ASCII");
             msg.trace = trace_listeners;
             local_congestion_level = level;
         }
