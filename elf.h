@@ -16,10 +16,10 @@
 #define D_elf
 
 #include "mdep.h"
-/*#include <sys/types.h> */
 #if !defined(WIN32)
 #  include <elf.h>
 #endif
+#include "context.h"
 
 typedef unsigned char U1_T;
 typedef signed char I1_T;
@@ -77,6 +77,14 @@ struct ELF_Section {
 extern ELF_File * elf_open(char * file_name);
 
 /*
+ * Open context main module ELF file for reading.
+ * Same file can be opened mutiple times, each call to elf_open() increases reference counter.
+ * File must be closed after usage by calling elf_close().
+ * Returns the file descriptior on success. If error, returns NULL and sets errno.
+ */
+extern ELF_File * elf_open_main(Context * ctx);
+
+/*
  * Read section data from ELF file.
  * '*rd_len' is set to number of bytes transfered into the buffer.
  * Returns zero on success. If error, returns -1 and sets errno.
@@ -94,7 +102,7 @@ extern int elf_load(ELF_Section * section, U1_T ** address);
 /*
  * Close ELF file.
  * Each call of elf_close() decrements reference counter.
- * The file be kept in cache for some time even after all references are closed.
+ * The file will be kept in cache for some time even after all references are closed.
  */
 extern void elf_close(ELF_File * file);
 

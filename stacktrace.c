@@ -31,6 +31,7 @@
 #include "exceptions.h"
 #include "stacktrace.h"
 #include "breakpoints.h"
+#include "symbols.h"
 
 static const char * STACKTRACE = "StackTrace";
 
@@ -120,6 +121,8 @@ static int read_mem(Context * ctx, unsigned long address, void * buf, size_t siz
 
 #define JMPD08      0xeb
 #define JMPD32      0xe9
+#define GRP5        0xff
+#define JMPN        0x25
 #define PUSH_EBP    0x55
 #define MOV_ESP00   0x89
 #define MOV_ESP01   0xe5
@@ -155,21 +158,28 @@ static unsigned long trace_jump(Context * ctx, unsigned long addr) {
     int cnt = 0;
     /* while instruction is a JMP, get destination adrs */
     while (cnt < 100) {
-        unsigned char instr;            /* instruction opcode at <addr> */
+        unsigned char instr;    /* instruction opcode at <addr> */
         unsigned long dest;     /* Jump destination address */
-        if (read_mem(ctx, addr, &instr, 1) < 0) return addr;
+        if (read_mem(ctx, addr, &instr, 1) < 0) break;
 
         /* If instruction is a JMP, get destination adrs */
         if (instr == JMPD08) {
             signed char disp08;
-            if (read_mem(ctx, addr + 1, &disp08, 1) < 0) return addr;
+            if (read_mem(ctx, addr + 1, &disp08, 1) < 0) break;
             dest = addr + 2 + disp08;
         }
         else if (instr == JMPD32) {
             int disp32;
             assert(sizeof(disp32) == 4);
-            if (read_mem(ctx, addr + 1, &disp32, 4) < 0) return addr;
+            if (read_mem(ctx, addr + 1, &disp32, 4) < 0) break;
             dest = addr + 5 + disp32;
+        }
+        else if (instr == GRP5) {
+            unsigned long ptr;
+            if (read_mem(ctx, addr + 1, &instr, 1) < 0) break;
+            if (instr != JMPN) break;
+            if (read_mem(ctx, addr + 2, &ptr, 4) < 0) break;
+            if (read_mem(ctx, ptr, &dest, 4)) break;
         }
         else {
             break;
@@ -187,6 +197,7 @@ static int trace_stack(Context * ctx, STACK_TRACE_CALLBAK callback) {
     unsigned long fp_prev = 0;
 
     unsigned long addr = trace_jump(ctx, pc);
+    unsigned long plt = is_plt_section(ctx, addr);
     unsigned char code[4];
     unsigned cnt = 0;
 
@@ -195,25 +206,52 @@ static int trace_stack(Context * ctx, STACK_TRACE_CALLBAK callback) {
      *  1) we are at a PUSH %EBP MOV %ESP %EBP or RET or ENTER instruction,
      *  2) we are the first instruction of a subroutine (this may NOT be
      *     a PUSH %EBP MOV %ESP %EBP instruction with some compilers)
+     *  3) we are inside PLT entry
      */
-    if (read_mem(ctx, addr - 1, code, sizeof(code)) < 0) return -1;
 
-    if (code[1] == PUSH_EBP &&
-        (code[2] == MOV_ESP00 && code[3] == MOV_ESP01 || code[2] == MOV_ESP10 && code[3] == MOV_ESP11) ||
-        code[1] == ENTER || code[1] == RET || code[1] == RETADD) {
+    if (plt) {
         fp_prev = fp;
-        fp = get_regs_SP(ctx->regs) - 4;
+        if (addr - plt == 0) {
+            fp = get_regs_SP(ctx->regs);
+        }
+        else if (addr - plt < 16) {
+            fp = get_regs_SP(ctx->regs) + 4;
+        }
+        else if ((addr - plt) % 16 < 8) {
+            fp = get_regs_SP(ctx->regs) - 4;
+        }
+        else {
+            fp = get_regs_SP(ctx->regs);
+        }
     }
-    else if (code[0] == PUSH_EBP &&
-        (code[1] == MOV_ESP00 && code[2] == MOV_ESP01 || code[1] == MOV_ESP10 && code[2] == MOV_ESP11)) {
-        fp_prev = fp;
-        fp = get_regs_SP(ctx->regs);
+    else {
+        if (read_mem(ctx, addr - 1, code, sizeof(code)) < 0) return -1;
+
+        if (code[1] == PUSH_EBP &&
+            (code[2] == MOV_ESP00 && code[3] == MOV_ESP01 || code[2] == MOV_ESP10 && code[3] == MOV_ESP11) ||
+            code[1] == ENTER || code[1] == RET || code[1] == RETADD) {
+            fp_prev = fp;
+            fp = get_regs_SP(ctx->regs) - 4;
+        }
+        else if (code[0] == PUSH_EBP &&
+            (code[1] == MOV_ESP00 && code[2] == MOV_ESP01 || code[1] == MOV_ESP10 && code[2] == MOV_ESP11)) {
+            fp_prev = fp;
+            fp = get_regs_SP(ctx->regs);
+        }
     }
 
     assert(stack_trace == NULL || stack_trace->frame_cnt == 0);
-    while (fp != 0 && cnt < MAX_FRAMES) {
+    while (cnt < MAX_FRAMES) {
         unsigned long frame[2];
         unsigned long fp_next;
+        if (fp == 0) {
+            callback(NULL, 0, 0, 0, ctx->pid, 0);
+            if (stack_trace != NULL) {
+                stack_trace->frames[stack_trace->frame_cnt - 1].fp = fp;
+                stack_trace->top_first = 1;
+            }
+            break;
+        }
         if (read_mem(ctx, fp, frame, sizeof(frame)) < 0) return -1;
         callback((void *)frame[1], 0, 0, 0, ctx->pid, 0);
         if (stack_trace != NULL) {

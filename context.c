@@ -265,9 +265,20 @@ struct DebugEvent {
 typedef struct DebugThreadArgs DebugThreadArgs;
 typedef struct DebugEvent DebugEvent;
 
-char * event_name(int event) {
-    static char buf[32];
-    snprintf(buf, sizeof(buf), "0x%08x", event);
+char * context_suspend_reason(Context * ctx) {
+    DWORD code = ctx->suspend_reason.ExceptionRecord.ExceptionCode;
+    static char buf[64];
+
+    switch (code) {
+    case 0:
+        return "Suspended";
+    case EXCEPTION_SINGLE_STEP: 
+        return "Step";
+    case EXCEPTION_BREAKPOINT:
+        if (ctx->debug_started) return "Suspended";
+        return "Breakpoint";
+    }
+    snprintf(buf, sizeof(buf), "Exception 0x%08x", code);
     return buf;
 }
 
@@ -331,7 +342,6 @@ static void event_win32_context_stopped(void * arg) {
     }
 
     ctx->signal = SIGTRAP;
-    ctx->event = event_code;
     ctx->stopped = 1;
     ctx->stopped_by_bp = 0;
     switch (event_code) {
@@ -358,6 +368,7 @@ static void event_win32_context_started(Context * ctx) {
     trace(LOG_CONTEXT, "context: started: ctx %#x, pid %d", ctx, ctx->pid);
     assert(ctx->stopped);
     ctx->stopped = 0;
+    ctx->debug_started = 0;
     event_context_started(ctx);
 }
 
@@ -448,6 +459,7 @@ static void debug_event_handler(void * x) {
         ctx = create_context(debug_event->dwThreadId);
         ctx->mem = debug_event->dwProcessId;
         ctx->handle = debug_event->u.CreateProcessInfo.hThread;
+        ctx->debug_started = 1;
         ctx->parent = prs;
         prs->ref_count++;
         list_add_first(&ctx->cldl, &prs->children);
@@ -830,12 +842,10 @@ static SEM_ID events_signal;
 static pthread_t events_thread;
 static WIND_TCB * main_thread;
 
-char * event_name(int event) {
-    switch (event) {
-    case 0: return "none";
-    case TRACE_EVENT_STEP: return "Single Step"; 
-    }
-    return NULL;
+char * context_suspend_reason(Context * ctx) {
+    if (ctx->stopped_by_bp) return "Breakpoint";
+    if (ctx->event == TRACE_EVENT_STEP) return "Step";
+    return "Suspended";
 }
 
 static struct event_info * event_info_alloc(int event) {
@@ -1293,7 +1303,7 @@ static pthread_mutex_t waitpid_lock;
 static pthread_cond_t waitpid_cond;
 static int attach_poll_rate;
 
-char * event_name(int event) {
+static char * event_name(int event) {
     switch (event) {
     case 0: return "none";
     case PTRACE_EVENT_FORK: return "fork";  
@@ -1306,6 +1316,28 @@ char * event_name(int event) {
         trace(LOG_ALWAYS, "event_name() called with unexpected event code %d", event);
         return "unknown";
     }
+}
+
+char * context_suspend_reason(Context * ctx) {
+    static char reason[128];
+
+    if (ctx->stopped_by_bp) return "Breakpoint";
+    if (ctx->end_of_step) return "Step";
+    
+    if (ctx->ptrace_event != 0) {
+        assert(ctx->signal == SIGTRAP);
+        snprintf(reason, sizeof(reason), "Event: %s", event_name(ctx->ptrace_event));
+    }
+    else if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) {
+        strcpy(reason, "Suspended");
+    }
+    else if (signal_name(ctx->signal)) {
+        snprintf(reason, sizeof(reason), "Signal %d %s", ctx->signal, signal_name(ctx->signal));
+    }
+    else {
+        snprintf(reason, sizeof(reason), "Signal %d", ctx->signal);
+    }
+    return reason;
 }
 
 int context_attach_self(void) {
@@ -1621,14 +1653,14 @@ process_event:
     }
     assert(!ctx->exited);
     assert(!ctx->stopped || eap->event == 0 || eap->event == PTRACE_EVENT_EXIT);
-    if (ctx->trace_flags != PTRACE_FLAGS) {
+    if (ctx->ptrace_flags != PTRACE_FLAGS) {
         if (ptrace(PTRACE_SETOPTIONS, ctx->pid, 0, PTRACE_FLAGS) < 0) {
             int err = errno;
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_SETOPTIONS) failed: pid %d, error %d %s",
                 ctx->pid, err, errno_to_str(err));
         }
         else {
-            ctx->trace_flags = PTRACE_FLAGS;
+            ctx->ptrace_flags = PTRACE_FLAGS;
         }
     }
 
@@ -1720,12 +1752,15 @@ process_event:
         }
         else {
             ctx->signal = eap->signal;
-            ctx->event = eap->event;
-            ctx->pending_step = 0;
+            ctx->ptrace_event = eap->event;
             ctx->stopped = 1;
             ctx->stopped_by_bp =
-                ctx->signal == SIGTRAP && ctx->event == 0 && ctx->regs_error == 0 &&
+                ctx->signal == SIGTRAP && ctx->ptrace_event == 0 && ctx->regs_error == 0 &&
                 is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE);
+            ctx->end_of_step =
+                ctx->signal == SIGTRAP && ctx->ptrace_event == 0 &&
+                !ctx->stopped_by_bp && ctx->pending_step;
+            ctx->pending_step = 0;
             if (ctx->stopped_by_bp) {
                 set_regs_PC(ctx->regs, get_regs_PC(ctx->regs) - BREAK_SIZE);
                 ctx->regs_dirty = 1;

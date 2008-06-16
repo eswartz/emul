@@ -49,31 +49,35 @@ struct Context {
     void *              pending_clone;      /* waiting for clone or fork to bind this to parent */
     unsigned long       pending_signals;    /* bitset of signals that were received, but not handled yet */
     int                 signal;             /* signal that stopped this context */
-    int                 event;              /* tracing event code when signal is SIGTRAP */
     REG_SET             regs;               /* copy of context registers, updated when context stops */
     int                 regs_error;         /* if not 0, 'regs' is invalid */
     int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
     void *              stack_trace;
-    int                 trace_flags;
+
 #if defined(_WRS_KERNEL)
     VXDBG_BP_INFO       bp_info;            /* breakpoint information */
     pid_t               bp_pid;             /* process or thread that hit breakpoint */
-#endif
-#if defined(WIN32)
+    int                 event;
+#elif defined(WIN32)
     HANDLE              handle;
     HANDLE              file_handle;
     LPVOID              base_address;
+    int                 debug_started;
+    int                 sym_handler_loaded;
     EXCEPTION_DEBUG_INFO pending_event;
     EXCEPTION_DEBUG_INFO suspend_reason;
-    int                 sym_handler_loaded;
+#else
+    int                 ptrace_flags;
+    int                 ptrace_event;
+    int                 end_of_step;
 #endif
 };
 
 extern void ini_contexts(void);
 
-extern char * event_name(int event);
 extern char * signal_name(int signal);
 extern char * context_state_name(Context * ctx);
+extern char * context_suspend_reason(Context * ctx);
 
 /*
  * Convert PID to TCF Context ID

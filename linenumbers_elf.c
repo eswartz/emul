@@ -192,16 +192,7 @@ static void free_line_numbers_cache(ELF_File * file) {
 }
 
 static LineNumbersCache * get_line_numbers_cache(Context * ctx) {
-    ELF_File * file;
-    char fnm[FILE_PATH_SIZE];
-
-#if defined(_WRS_KERNEL)
-    exception(EINVAL);
-#else
-    snprintf(fnm, sizeof(fnm), "/proc/%d/exe", ctx->mem);
-#endif
-
-    file = elf_open(fnm);
+    ELF_File * file = elf_open_main(ctx);
     if (file == NULL) exception(errno);
     if (file->line_numbers_cache == NULL) {
         Trap trap;

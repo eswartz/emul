@@ -114,6 +114,10 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
 #endif
 }
 
+unsigned long is_plt_section(Context * ctx, unsigned long addr) {
+    return 0;
+}
+
 static void event_context_exited(Context * ctx, void * client_data) {
     assert(ctx->handle != NULL);
     if (ctx->sym_handler_loaded) {

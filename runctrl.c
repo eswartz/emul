@@ -145,7 +145,6 @@ static void write_context(OutputStream * out, Context * ctx, int is_thread) {
 }
 
 static void write_context_state(OutputStream * out, Context * ctx) {
-    char reason[128];
 
     assert(!ctx->exited);
 
@@ -161,31 +160,11 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     out->write(out, 0);
 
     /* String: Reason */
-    if (ctx->stopped_by_bp) {
-        strcpy(reason, "Breakpoint");
-    }
-    else if (ctx->event != 0) {
-        assert(ctx->signal == SIGTRAP);
-        snprintf(reason, sizeof(reason), "Event: %s", event_name(ctx->event));
-    }
-    else if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) {
-        strcpy(reason, "Suspended");
-    }
-    else if (signal_name(ctx->signal)) {
-        snprintf(reason, sizeof(reason), "Signal %d %s", ctx->signal, signal_name(ctx->signal));
-    }
-    else {
-        snprintf(reason, sizeof(reason), "Signal %d", ctx->signal);
-    }
-    json_write_string(out, reason);
+    json_write_string(out, context_suspend_reason(ctx));
     out->write(out, 0);
 
     /* Object: Aditional info */
     out->write(out, '{');
-    json_write_string(out, "Event");
-    out->write(out, ':');
-    json_write_long(out, ctx->event);
-    out->write(out, ',');
     json_write_string(out, "Signal");
     out->write(out, ':');
     json_write_long(out, ctx->signal);

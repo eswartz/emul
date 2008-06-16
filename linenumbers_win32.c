@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <imagehlp.h>
 #include "linenumbers.h"
+#include "breakpoints.h"
 #include "context.h"
 #include "exceptions.h"
 #include "symbols.h"
@@ -94,6 +95,18 @@ int line_to_address(Context * ctx, char * file, int line, int column, line_to_ad
     return 0;
 }
 
+static int read_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
+    int err = 0;
+    if (context_read_mem(ctx, address, buf, size) < 0) err = errno;
+    check_breakpoints_on_memory_read(ctx, address, buf, size);
+    return err;
+}
+
+#define JMPD08      0xeb
+#define JMPD32      0xe9
+#define GRP5        0xff
+#define JMPN        0x25
+
 static void command_map_to_source(char * token, Channel * c) {
     int err = 0;
     int not_found = 0;
@@ -127,6 +140,49 @@ static void command_map_to_source(char * token, Channel * c) {
         DWORD w = GetLastError();
         if (w == ERROR_MOD_NOT_FOUND) {
             not_found = 1;
+        }
+        else if (w == ERROR_INVALID_ADDRESS) {
+            /* Check if the address points to a jump instruction (e.g. inside a jump table)
+             * and try to get line info for jump destination address.
+             */
+            unsigned char instr;    /* instruction opcode at <addr0> */
+            unsigned long dest = 0; /* Jump destination address */
+            if (read_mem(ctx, addr0, &instr, 1) == 0) {
+                /* If instruction is a JMP, get destination adrs */
+                if (instr == JMPD08) {
+                    signed char disp08;
+                    if (read_mem(ctx, addr0 + 1, &disp08, 1) == 0) {
+                        dest = addr0 + 2 + disp08;
+                    }
+                }
+                else if (instr == JMPD32) {
+                    int disp32;
+                    assert(sizeof(disp32) == 4);
+                    if (read_mem(ctx, addr0 + 1, &disp32, 4) == 0) {
+                        dest = addr0 + 5 + disp32;
+                    }
+                }
+                else if (instr == GRP5) {
+                    if (read_mem(ctx, addr0 + 1, &instr, 1) == 0 && instr == JMPN) {
+                        unsigned long ptr;
+                        if (read_mem(ctx, addr0 + 2, &ptr, 4) == 0) {
+                            read_mem(ctx, ptr, &dest, 4);
+                        }
+                    }
+                }
+            }
+            if (dest != 0) {
+                addr0 = dest;
+                addr1 = dest + 1;
+                if (SymGetLineFromAddr(ctx->handle, dest, &offset, &line)) {
+                    addr0 = dest;
+                    addr1 = dest + 1;
+                }
+            }
+            else {
+                set_win32_errno(w);
+                err = errno;
+            }
         }
         else {
             set_win32_errno(w);

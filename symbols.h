@@ -43,6 +43,12 @@ extern int set_symbol_context(Context * ctx);
 extern int find_symbol(Context * ctx, char * name, Symbol * sym);
 
 /*
+ * Check if given address is inside a PLT section and return address of the section.
+ * Othewise return 0;
+ */
+extern unsigned long is_plt_section(Context * ctx, unsigned long addr);
+
+/*
  * Initialize symbol service.
  */
 extern void ini_symbols_service(void);

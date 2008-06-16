@@ -22,8 +22,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <stdio.h>
 #include "elf.h"
 #include "myalloc.h"
+#include "exceptions.h"
 
 #if defined(_WRS_KERNEL)
 #elif defined(WIN32)
@@ -182,6 +184,16 @@ ELF_File * elf_open(char * file_name) {
     file->ref_cnt = 1;
     file->next = files;
     return files = file;
+}
+
+ELF_File * elf_open_main(Context * ctx) {
+#if defined(_WRS_KERNEL)
+    exception(EINVAL);
+#else
+    char fnm[FILE_PATH_SIZE];
+    snprintf(fnm, sizeof(fnm), "/proc/%d/exe", ctx->mem);
+    return elf_open(fnm);
+#endif
 }
 
 int elf_load(ELF_Section * section, U1_T ** address) {

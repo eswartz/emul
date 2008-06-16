@@ -69,7 +69,7 @@ static void free_sym_cache(ELF_File * file) {
     }
 }
 
-static int load_tables(ELF_File * file) {
+static int load_symbol_tables(ELF_File * file) {
     int error = 0;
     unsigned idx;
 
@@ -158,17 +158,13 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
 
 #else
 
-    char fnm[FILE_PATH_SIZE];
     int found = 0;
-    ELF_File * file;
-
-    memset(sym, 0, sizeof(Symbol));
-    snprintf(fnm, sizeof(fnm), "/proc/%d/exe", ctx->mem);
-    file = elf_open(fnm);
+    ELF_File * file = elf_open_main(ctx);
     if (file == NULL) error = errno;
+    memset(sym, 0, sizeof(Symbol));
 
     if (error == 0 && file->sym_cache == NULL) {
-        if (load_tables(file) < 0) error = errno;
+        if (load_symbol_tables(file) < 0) error = errno;
     }
 
     if (error == 0) {
@@ -200,6 +196,7 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
             tbl = tbl->next;
         }
     }
+    if (file != NULL) elf_close(file);
 
     if (error == 0 && !found) error = ERR_SYM_NOT_FOUND;
 
@@ -210,6 +207,30 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
         return -1;
     }
     return 0;
+}
+
+unsigned long is_plt_section(Context * ctx, unsigned long addr) {
+#if defined(_WRS_KERNEL)
+    return 0;
+#else
+    unsigned long res = 0;
+    ELF_File * file = elf_open_main(ctx);
+    if (file != NULL) {
+        unsigned idx;
+        for (idx = 0; idx < file->section_cnt; idx++) {
+            ELF_Section * sec = file->sections[idx];
+            if (sec == NULL) continue;
+            if (sec->name == NULL) continue;
+            if (strcmp(sec->name, ".plt") != 0) continue;
+            if (addr >= sec->addr && addr < sec->addr + sec->size) {
+                res = sec->addr;
+                break;
+            }
+        }
+        elf_close(file);
+    }
+    return res;
+#endif
 }
 
 void ini_symbols_service(void) {

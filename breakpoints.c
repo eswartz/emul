@@ -20,7 +20,6 @@
 #include "config.h"
 #if SERVICE_Breakpoints
 
-/* TODO: breakpoint status reports */
 /* TODO: replant breakpoints when shared lib is loaded or unloaded */
 
 #include <stdlib.h>
