@@ -298,20 +298,29 @@ class TCFSelfTest {
         private void startProcess() {
             if (cancel || cnt == 4) {
                 if (!map.isEmpty()) {
-                    Protocol.sync(new Runnable() {
+                    new Thread() {
                         public void run() {
-                            sync_cnt++;
-                            if (map.isEmpty()) {
-                                exit(null);
+                            try {
+                                sleep(100);
                             }
-                            else if (sync_cnt < 1000) {
-                                Protocol.sync(this);
+                            catch (InterruptedException e) {
                             }
-                            else {
-                                exit(new Error("Missing 'contextRemoved' event for " + map.keySet()));
-                            }
+                            Protocol.invokeLater(new Runnable() {
+                                public void run() {
+                                    sync_cnt++;
+                                    if (map.isEmpty()) {
+                                        exit(null);
+                                    }
+                                    else if (sync_cnt < 300) {
+                                        startProcess();
+                                    }
+                                    else {
+                                        exit(new Error("Missing 'contextRemoved' event for " + map.keySet()));
+                                    }
+                                }
+                            });
                         }
-                    });
+                    }.start();
                 }
                 else {
                     exit(null);
