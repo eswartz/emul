@@ -32,14 +32,14 @@ enum {
 
 typedef struct AsyncReqInfo AsyncReqInfo;
 struct AsyncReqInfo {
-    void (*done)(void *req);
-    void *client_data;
+    void (*done)(void * req);
+    void * client_data;
     int type;
     union {
         struct {
             /* In */
             int fd;
-            void *bufp;
+            void * bufp;
             size_t bufsz;
 
             /* Out */
@@ -48,10 +48,10 @@ struct AsyncReqInfo {
         struct {
             /* In */
             int sock;
-            void *bufp;
+            void * bufp;
             size_t bufsz;
             int flags;
-            struct sockaddr *addr;
+            struct sockaddr * addr;
 #if defined(_WRS_KERNEL)
             int addrlen;
 #else       
@@ -64,7 +64,7 @@ struct AsyncReqInfo {
         struct {
             /* In */
             int sock;
-            struct sockaddr *addr;
+            struct sockaddr * addr;
 #if defined(_WRS_KERNEL)
             int addrlen;
 #else       
@@ -77,7 +77,7 @@ struct AsyncReqInfo {
         struct {
             /* In */
             int sock;
-            struct sockaddr *addr;
+            struct sockaddr * addr;
             socklen_t addrlen;
 
             /* Out */
@@ -100,7 +100,7 @@ struct AsyncReqInfo {
     LINK reqlink;                       /* List of pending requests */
 };
 
-void async_req_post(AsyncReqInfo *req);
+void async_req_post(AsyncReqInfo * req);
 
 void ini_asyncreq(void);
 

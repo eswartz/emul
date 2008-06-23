@@ -95,7 +95,7 @@ struct BreakInstruction {
     LINK link_adr;
     Context * ctx;
     int ctx_cnt;
-    unsigned long address;
+    ContextAddress address;
 #if defined(_WRS_KERNEL)
     VXDBG_CTX vxdbg_ctx;
     VXDBG_BP_ID vxdbg_id;
@@ -212,7 +212,7 @@ static void remove_instruction(BreakInstruction * bi) {
     bi->planted = 0;
 }
 
-static BreakInstruction * add_instruction(Context * ctx, unsigned long address) {
+static BreakInstruction * add_instruction(Context * ctx, ContextAddress address) {
     int hash = addr2instr_hash(address);
     BreakInstruction * bi = (BreakInstruction *)loc_alloc_zero(sizeof(BreakInstruction));
     list_add_last(&bi->link_all, &instructions);
@@ -273,7 +273,7 @@ static void delete_unused_instructions(void) {
     }
 }
 
-static BreakInstruction * find_instruction(Context * ctx, unsigned long address) {
+static BreakInstruction * find_instruction(Context * ctx, ContextAddress address) {
     int hash = addr2instr_hash(address);
     LINK * l = addr2instr[hash].next;
     assert(!ctx->exited);
@@ -293,7 +293,7 @@ static BreakInstruction * find_instruction(Context * ctx, unsigned long address)
     return NULL;
 }
 
-void check_breakpoints_on_memory_read(Context * ctx, unsigned long address, void * p, size_t size) {
+void check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, void * p, size_t size) {
 #if !defined(_WRS_KERNEL)
     int i;
     char * buf = (char *)p;
@@ -314,7 +314,7 @@ void check_breakpoints_on_memory_read(Context * ctx, unsigned long address, void
 #endif
 }
 
-void check_breakpoints_on_memory_write(Context * ctx, unsigned long address, void * p, size_t size) {
+void check_breakpoints_on_memory_write(Context * ctx, ContextAddress address, void * p, size_t size) {
 #if !defined(_WRS_KERNEL)
     int i;
     char * buf = (char *)p;
@@ -464,7 +464,7 @@ static void address_expression_error(BreakpointInfo * bp, char * msg) {
     snprintf(bp->err_msg, size, "Invalid breakpoint address '%s': %s", bp->address, msg);
 }
 
-static void plant_breakpoint_in_context(BreakpointInfo * bp, Context * ctx, unsigned long address) {
+static void plant_breakpoint_in_context(BreakpointInfo * bp, Context * ctx, ContextAddress address) {
     BreakInstruction * bi = NULL;
     bi = find_instruction(ctx, address);
     if (bi == NULL) {
@@ -495,7 +495,7 @@ typedef struct PlantBreakpointArgs {
     Context * ctx;
 } PlantBreakpointArgs;
 
-static void plant_breakpoint_address_iterator(void * x, unsigned long address) {
+static void plant_breakpoint_address_iterator(void * x, ContextAddress address) {
     PlantBreakpointArgs * args = (PlantBreakpointArgs *)x;
     plant_breakpoint_in_context(args->bp, args->ctx, address);
 }
@@ -519,7 +519,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         if (evaluate_expression(&bp_address_ctx, bp->address, &v) < 0) {
             if (errno != ERR_INV_CONTEXT) {
                 address_expression_error(bp, NULL);
-                trace(LOG_ALWAYS, "Error: %s", bp->err_msg);
+                trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
                 return;
             }
             context_sensitive_address = 1;
@@ -527,7 +527,6 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         if (!context_sensitive_address && v.type != VALUE_INT && v.type != VALUE_UNS) {
             errno = ERR_INV_EXPRESSION;
             address_expression_error(bp, "Must be integer number");
-            trace(LOG_ALWAYS, "Error: %s", bp->err_msg);
             return;
         }
     }
@@ -538,7 +537,6 @@ static void plant_breakpoint(BreakpointInfo * bp) {
 #endif
     else {
         bp->error = ERR_INV_EXPRESSION;
-        trace(LOG_ALWAYS, "No breakpoint address");
         return;
     }
 
@@ -569,7 +567,9 @@ static void plant_breakpoint(BreakpointInfo * bp) {
                 expression_context = ctx;
                 if (evaluate_expression(&bp_address_ctx, bp->address, &v) < 0) {
                     address_expression_error(bp, NULL);
-                    trace(LOG_ALWAYS, "BP Error: %s", bp->err_msg);
+                    if (bp->error != ERR_SYM_NOT_FOUND) {
+                        trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
+                    }
                     continue;
                 }
                 if (v.type != VALUE_INT && v.type != VALUE_UNS) {
@@ -592,7 +592,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
                         bp->error = errno;
                         assert(bp->err_msg == NULL);
                         bp->err_msg = loc_strdup(errno_to_str(bp->error));
-                        trace(LOG_ALWAYS, "BP Error: %s", bp->err_msg);
+                        trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
                     }
                 }
             }
@@ -1320,7 +1320,7 @@ static void command_get_capabilities(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
-int is_breakpoint_address(Context * ctx, unsigned long address) {
+int is_breakpoint_address(Context * ctx, ContextAddress address) {
     BreakInstruction * bi = find_instruction(ctx, address);
     return bi != NULL && !bi->skip && !bi->error;
 }
@@ -1469,10 +1469,7 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     int i;
     static ContextEventListener listener = {
         event_context_created_or_exited,
-        event_context_created_or_exited,
-        NULL,
-        NULL,
-        NULL
+        event_context_created_or_exited
     };
     add_context_event_listener(&listener, bcg);
     list_init(&breakpoints);

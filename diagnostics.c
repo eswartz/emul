@@ -60,56 +60,50 @@ static void command_get_test_list(char * token, Channel * c) {
     c->out.write(&c->out, MARKER_EOM);
 }
 
-static void run_test_done(void * arg) {
-    RunTestDoneArgs * p = arg;
-    Channel * c = p->c;
+static void run_test_done(int error, Context * ctx, void * arg) {
+    RunTestDoneArgs * data = arg;
+    Channel * c = data->c;
 
     if (!is_stream_closed(c)) {
         write_stringz(&c->out, "R");
-        write_stringz(&c->out, p->token);
-        write_errno(&c->out, 0);
-        json_write_string(&c->out, ctx2id(p->ctx));
+        write_stringz(&c->out, data->token);
+        write_errno(&c->out, error);
+        json_write_string(&c->out, ctx ? ctx2id(ctx) : NULL);
         c->out.write(&c->out, 0);
         c->out.write(&c->out, MARKER_EOM);
+        c->out.flush(&c->out);
     }
-    context_unlock(p->ctx);
-    c->out.flush(&c->out);
     stream_unlock(c);
-    loc_free(p);
+    loc_free(data);
 }
 
 static void command_run_test(char * token, Channel * c) {
     int err = 0;
     char id[256];
-    Context * ctx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (strcmp(id, "RCBP1") == 0) {
-        if (run_test_process(&ctx) < 0) err = errno;
+        RunTestDoneArgs * data = loc_alloc_zero(sizeof(RunTestDoneArgs));
+        data->c = c;
+        strcpy(data->token, token);
+        stream_lock(c);
+        if (run_test_process(run_test_done, data) == 0) return;
+        err = errno;
+        stream_unlock(c);
+        loc_free(data);
     }
     else {
         err = EINVAL;
     }
-    if (!err && ctx) {
-        RunTestDoneArgs * p = loc_alloc_zero(sizeof *p);
-        p->c = c;
-        p->ctx = ctx;
-        strcpy(p->token, token);
-        stream_lock(c);
-        context_lock(ctx);
-        post_safe_event(run_test_done, p);
-    }
-    else {
-        write_stringz(&c->out, "R");
-        write_stringz(&c->out, token);
-        write_errno(&c->out, err);
-        json_write_string(&c->out, err ? NULL : ctx2id(ctx));
-        c->out.write(&c->out, 0);
-        c->out.write(&c->out, MARKER_EOM);
-    }
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    json_write_string(&c->out, NULL);
+    c->out.write(&c->out, 0);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
 static void command_cancel_test(char * token, Channel * c) {

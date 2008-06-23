@@ -19,6 +19,6 @@
 #include "context.h"
 
 extern void test_proc(void);
-extern int run_test_process(Context ** ctx);
+extern int run_test_process(ContextAttachCallBack * done, void * data);
 
 #endif

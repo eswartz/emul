@@ -34,12 +34,31 @@
 #  define USE_LIBELF
 #endif
 
+typedef struct MemoryRegion MemoryRegion;
+
+struct MemoryRegion {
+    ContextAddress addr;
+    unsigned long size;
+    char * file_name;
+    ELF_File * file;
+};
+
+typedef struct MemoryMap MemoryMap;
+
+struct MemoryMap {
+    int error;
+    int region_cnt;
+    int region_max;
+    MemoryRegion * regions;
+};
+
 #define MAX_CACHED_FILES 8
 
 static ELF_File * files = NULL;
 static ELFCloseListener * listeners = NULL;
 static U4_T listeners_cnt = 0;
 static U4_T listeners_max = 0;
+static int context_listener_added = 0;
 
 static void elf_dispose(ELF_File * file) {
     U4_T n;
@@ -57,22 +76,24 @@ static void elf_dispose(ELF_File * file) {
         }
         loc_free(file->sections);
     }
-    free(file->name);
+    loc_free(file->name);
     loc_free(file);
 }
 
-ELF_File * elf_open(char * file_name) {
+/*
+ * Open ELF file for reading.
+ * Same file can be opened mutiple times, each call to elf_open() increases reference counter.
+ * File must be closed after usage by calling elf_close().
+ * Returns the file descriptior on success. If error, returns NULL and sets errno.
+ */
+static ELF_File * elf_open(char * file_name) {
     int cnt = 0;
     int error = 0;
     struct_stat st;
     ELF_File * prev = NULL;
     ELF_File * file = files;
 
-    file_name = canonicalize_file_name(file_name);
-    if (file_name == NULL) return NULL;
     if (stat(file_name, &st) < 0) {
-        error = errno;
-        free(file_name);
         errno = error;
         return NULL;
     }
@@ -87,7 +108,6 @@ ELF_File * elf_open(char * file_name) {
                 files = file;
             }
             file->ref_cnt++;
-            free(file_name);
             return file;
         }
         if (cnt >= MAX_CACHED_FILES && file->ref_cnt == 0) {
@@ -103,7 +123,7 @@ ELF_File * elf_open(char * file_name) {
     }
 
     file = (ELF_File *)loc_alloc_zero(sizeof(ELF_File));
-    file->name = file_name;
+    file->name = loc_strdup(file_name);
     file->dev = st.st_dev;
     file->ino = st.st_ino;
     file->mtime = st.st_mtime;
@@ -186,13 +206,179 @@ ELF_File * elf_open(char * file_name) {
     return files = file;
 }
 
-ELF_File * elf_open_main(Context * ctx) {
+/*
+ * Close ELF file.
+ * Each call of elf_close() decrements reference counter.
+ * The file will be kept in a cache for some time even after all references are closed.
+ */
+static void elf_close(ELF_File * file) {
+    assert(file != NULL);
+    assert(file->ref_cnt > 0);
+    file->ref_cnt--;
+}
+
+static void dispose_memory_map(MemoryMap * map) {
+    int i;
+
+    for (i = 0; i < map->region_cnt; i++) {
+        MemoryRegion * r = map->regions + i;
+        assert(r->file == NULL);
+        loc_free(r->file_name);
+    }
+    loc_free(map->regions);
+    loc_free(map);
+}
+
+#if !defined(_WRS_KERNEL)
+static void event_context_changed_or_exited(Context * ctx, void * client_data) {
+    if (ctx->memory_map == NULL) return;
+    dispose_memory_map((MemoryMap *)ctx->memory_map);
+    ctx->memory_map = NULL;
+}
+
+static MemoryMap * get_memory_map(Context * ctx) {
+    char maps_file_name[FILE_PATH_SIZE];
+    MemoryMap * map;
+    FILE * file;
+
+    assert(ctx->pid == ctx->mem);
+    if (ctx->memory_map != NULL) return (MemoryMap *)ctx->memory_map;
+    if (!context_listener_added) {
+        static ContextEventListener listener = {
+            NULL,
+            event_context_changed_or_exited,
+            NULL,
+            NULL,
+            event_context_changed_or_exited
+        };
+        add_context_event_listener(&listener, NULL);
+        context_listener_added = 1;
+    }
+
+    map = loc_alloc_zero(sizeof(MemoryMap));
+    snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", ctx->pid);
+    if ((file = fopen(maps_file_name, "r")) == NULL) {
+        map->error = errno;
+    }
+    else {
+        for (;;) {
+            unsigned long addr0 = 0;
+            unsigned long addr1 = 0;
+            unsigned long offset = 0;
+            unsigned long inode = 0;
+            char permissions[16];
+            char device[16];
+            char file_name[FILE_PATH_SIZE];
+            MemoryRegion * r = NULL;
+
+            int cnt = fscanf(file, "%lx-%lx %s %lx %s %lx",
+                &addr0, &addr1, permissions, &offset, device, &inode);
+
+            file_name[0] = 0;
+            if (cnt > 0 && cnt != EOF) {
+                cnt += fscanf(file, " %[^\n]\n", file_name);
+            }
+            if (cnt == 0 || cnt == EOF) break;
+            
+            if (map->region_cnt >= map->region_max) {
+                map->region_max += 8;
+                map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+            }
+            r = map->regions + map->region_cnt++;
+            memset(r, 0, sizeof(MemoryRegion));
+            r->addr = addr0;
+            r->size = addr1 - addr0;
+            if (inode != 0 && file_name[0]) r->file_name = loc_strdup(file_name);
+        }
+
+        fclose(file);
+    }
+    ctx->memory_map = map;
+    return map;
+}
+#endif
+
+ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress addr1) {
 #if defined(_WRS_KERNEL)
     exception(EINVAL);
 #else
-    char fnm[FILE_PATH_SIZE];
-    snprintf(fnm, sizeof(fnm), "/proc/%d/exe", ctx->mem);
-    return elf_open(fnm);
+    int i;
+    MemoryMap * map = NULL;
+
+    if (ctx->pid != ctx->mem) ctx = ctx->parent;
+    assert(ctx->pid == ctx->mem);
+    ctx->elf_list_addr0 = addr0;
+    ctx->elf_list_addr1 = addr1;
+    map = get_memory_map(ctx);
+    if (map == NULL) return NULL;
+    for (i = 0; i < map->region_cnt; i++) {
+        MemoryRegion * r = map->regions + i;
+        if (r->addr <= addr1 && r->addr + r->size >= addr0) {
+            assert(r->file == NULL);
+            if (r->file_name != NULL) {
+                r->file = elf_open(r->file_name);
+                if (r->file != NULL) {
+                    assert(!r->file->listed);
+                    r->file->listed = 1;
+                    ctx->elf_list_pos = i + 1;
+                    return r->file;
+                }
+            }
+        }
+    }
+    errno = 0;
+    return NULL;
+#endif
+}
+
+ELF_File * elf_list_next(Context * ctx) {
+#if defined(_WRS_KERNEL)
+    exception(EINVAL);
+#else
+    int i;
+    MemoryMap * map = NULL;
+
+    if (ctx->pid != ctx->mem) ctx = ctx->parent;
+    assert(ctx->pid == ctx->mem);
+    map = (MemoryMap *)ctx->memory_map;
+    for (i = ctx->elf_list_pos; i < map->region_cnt; i++) {
+        MemoryRegion * r = map->regions + i;
+        if (r->addr <= ctx->elf_list_addr1 && r->addr + r->size >= ctx->elf_list_addr0) {
+            assert(r->file == NULL);
+            if (r->file_name != NULL) {
+                r->file = elf_open(r->file_name);
+                if (r->file != NULL && !r->file->listed) {
+                    r->file->listed = 1;
+                    ctx->elf_list_pos = i + 1;
+                    return r->file;
+                }
+            }
+        }
+    }
+    errno = 0;
+    return NULL;
+#endif
+}
+
+void elf_list_done(Context * ctx) {
+#if defined(_WRS_KERNEL)
+    exception(EINVAL);
+#else
+    int i;
+    MemoryMap * map = NULL;
+
+    if (ctx->pid != ctx->mem) ctx = ctx->parent;
+    assert(ctx->pid == ctx->mem);
+    map = (MemoryMap *)ctx->memory_map;
+    if (map == NULL) return;
+    for (i = 0; i < map->region_cnt; i++) {
+        MemoryRegion * r = map->regions + i;
+        if (r->file != NULL) {
+            r->file->listed = 0;
+            elf_close(r->file);
+            r->file = NULL;
+        }
+    }
 #endif
 }
 
@@ -230,12 +416,6 @@ int elf_read(ELF_Section * section, U8_T offset, U1_T * buf, U4_T size, U4_T * r
     errno = EINVAL;
     return -1;
 #endif
-}
-
-void elf_close(ELF_File * file) {
-    assert(file != NULL);
-    assert(file->ref_cnt > 0);
-    file->ref_cnt--;
 }
 
 void elf_add_close_listener(ELFCloseListener listener) {

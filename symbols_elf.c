@@ -143,7 +143,7 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
     }
     else {
         sym->abs = 1;
-        sym->value = (unsigned long)ptr;
+        sym->value = (ContextAddress)ptr;
         
         if (SYM_IS_UNDF(type)) sym->storage = "UNDEF";
         else if (SYM_IS_COMMON(type)) sym->storage = "COMMON";
@@ -159,44 +159,49 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
 #else
 
     int found = 0;
-    ELF_File * file = elf_open_main(ctx);
+    ELF_File * file = elf_list_first(ctx, 0, ~(ContextAddress)0);
     if (file == NULL) error = errno;
     memset(sym, 0, sizeof(Symbol));
 
-    if (error == 0 && file->sym_cache == NULL) {
-        if (load_symbol_tables(file) < 0) error = errno;
-    }
-
-    if (error == 0) {
-        int h = calc_hash(name);
-        SymbolTable * tbl = (SymbolTable *)file->sym_cache;
-        while (tbl != NULL && !found) {
-            int n = tbl->hash[h];
-            while (n && !found) {
-                Elf32_Sym * s = (Elf32_Sym *)tbl->syms + n;
-                if (strcmp(name, tbl->str + s->st_name) == 0) {
-                    found = 1;
-                    sym->abs = 1;
-                    sym->value = s->st_value;
-                    switch (ELF32_ST_BIND(s->st_info)) {
-                    case STB_LOCAL: sym->storage = "LOCAL"; break;
-                    case STB_GLOBAL: sym->storage = "GLOBAL"; break;
-                    case STB_WEAK: sym->storage = "WEAK"; break;
-                    }
-                    if (s->st_shndx > 0 && s->st_shndx < file->section_cnt) {
-                        static char sec_name[128];
-                        ELF_Section * sec = file->sections[s->st_shndx];
-                        if (sec != NULL && sec->name != NULL) {
-                            sym->section = strncpy(sec_name, sec->name, sizeof(sec_name));
+    while (file != NULL) {
+        if (file->sym_cache == NULL) {
+            if (load_symbol_tables(file) < 0) error = errno;
+        }
+        if (error == 0) {
+            int h = calc_hash(name);
+            SymbolTable * tbl = (SymbolTable *)file->sym_cache;
+            while (tbl != NULL && !found) {
+                int n = tbl->hash[h];
+                while (n && !found) {
+                    Elf32_Sym * s = (Elf32_Sym *)tbl->syms + n;
+                    if (strcmp(name, tbl->str + s->st_name) == 0) {
+                        found = 1;
+                        sym->abs = 1;
+                        sym->value = s->st_value;
+                        switch (ELF32_ST_BIND(s->st_info)) {
+                        case STB_LOCAL: sym->storage = "LOCAL"; break;
+                        case STB_GLOBAL: sym->storage = "GLOBAL"; break;
+                        case STB_WEAK: sym->storage = "WEAK"; break;
+                        }
+                        if (s->st_shndx > 0 && s->st_shndx < file->section_cnt) {
+                            static char sec_name[128];
+                            ELF_Section * sec = file->sections[s->st_shndx];
+                            if (sec != NULL && sec->name != NULL) {
+                                sym->section = strncpy(sec_name, sec->name, sizeof(sec_name));
+                            }
                         }
                     }
+                    n = tbl->hash_next[n];
                 }
-                n = tbl->hash_next[n];
+                tbl = tbl->next;
             }
-            tbl = tbl->next;
         }
+        if (error != 0) break;
+        if (found) break;
+        file = elf_list_next(ctx);
+        if (file == NULL) error = errno;
     }
-    if (file != NULL) elf_close(file);
+    elf_list_done(ctx);
 
     if (error == 0 && !found) error = ERR_SYM_NOT_FOUND;
 
@@ -209,13 +214,13 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
     return 0;
 }
 
-unsigned long is_plt_section(Context * ctx, unsigned long addr) {
+ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
 #if defined(_WRS_KERNEL)
     return 0;
 #else
-    unsigned long res = 0;
-    ELF_File * file = elf_open_main(ctx);
-    if (file != NULL) {
+    ContextAddress res = 0;
+    ELF_File * file = elf_list_first(ctx, addr, addr);
+    while (file != NULL) {
         unsigned idx;
         for (idx = 0; idx < file->section_cnt; idx++) {
             ELF_Section * sec = file->sections[idx];
@@ -227,8 +232,10 @@ unsigned long is_plt_section(Context * ctx, unsigned long addr) {
                 break;
             }
         }
-        elf_close(file);
+        if (res != 0) break;
+        file = elf_list_next(ctx);
     }
+    elf_list_done(ctx);
     return res;
 #endif
 }

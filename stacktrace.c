@@ -36,11 +36,11 @@
 static const char * STACKTRACE = "StackTrace";
 
 struct StackFrame {
-    unsigned long fp;   /* frame address */
-    unsigned long pc;   /* return address */
-    unsigned long fn;   /* address of function */
+    ContextAddress fp;  /* frame address */
+    ContextAddress pc;  /* return address */
+    ContextAddress fn;  /* address of function */
     int arg_cnt;        /* number of function arguments */
-    unsigned long args; /* address of function arguments */
+    ContextAddress args;/* address of function arguments */
 };
 
 struct StackTrace {
@@ -87,10 +87,10 @@ static void stack_trace_callback(
     }
     f = stack_trace->frames + stack_trace->frame_cnt++;
     memset(f, 0, sizeof(StackFrame));
-    f->pc = (unsigned long)callAdrs;
-    f->fn = (unsigned long)funcAdrs;
+    f->pc = (ContextAddress)callAdrs;
+    f->fn = (ContextAddress)funcAdrs;
     f->arg_cnt = nargs;
-    f->args = (unsigned long)args;
+    f->args = (ContextAddress)args;
 }
 
 #if defined(_WRS_KERNEL)
@@ -103,7 +103,7 @@ static void trace_stack(Context * ctx, STACK_TRACE_CALLBAK callback) {
 
 #else
 
-static int read_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
+static int read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
     if (ctx == &dump_stack_ctx) {
         /* Tracing current thread stack */
         memmove(buf, (void *)address, size);
@@ -154,12 +154,12 @@ static int read_mem(Context * ctx, unsigned long address, void * buf, size_t siz
  *
  * RETURNS: The address that a chain of branches points to.
  */
-static unsigned long trace_jump(Context * ctx, unsigned long addr) {
+static ContextAddress trace_jump(Context * ctx, ContextAddress addr) {
     int cnt = 0;
     /* while instruction is a JMP, get destination adrs */
     while (cnt < 100) {
         unsigned char instr;    /* instruction opcode at <addr> */
-        unsigned long dest;     /* Jump destination address */
+        ContextAddress dest;    /* Jump destination address */
         if (read_mem(ctx, addr, &instr, 1) < 0) break;
 
         /* If instruction is a JMP, get destination adrs */
@@ -175,7 +175,7 @@ static unsigned long trace_jump(Context * ctx, unsigned long addr) {
             dest = addr + 5 + disp32;
         }
         else if (instr == GRP5) {
-            unsigned long ptr;
+            ContextAddress ptr;
             if (read_mem(ctx, addr + 1, &instr, 1) < 0) break;
             if (instr != JMPN) break;
             if (read_mem(ctx, addr + 2, &ptr, 4) < 0) break;
@@ -192,12 +192,12 @@ static unsigned long trace_jump(Context * ctx, unsigned long addr) {
 }
 
 static int trace_stack(Context * ctx, STACK_TRACE_CALLBAK callback) {
-    unsigned long pc = get_regs_PC(ctx->regs);
-    unsigned long fp = get_regs_BP(ctx->regs);
-    unsigned long fp_prev = 0;
+    ContextAddress pc = get_regs_PC(ctx->regs);
+    ContextAddress fp = get_regs_BP(ctx->regs);
+    ContextAddress fp_prev = 0;
 
-    unsigned long addr = trace_jump(ctx, pc);
-    unsigned long plt = is_plt_section(ctx, addr);
+    ContextAddress addr = trace_jump(ctx, pc);
+    ContextAddress plt = is_plt_section(ctx, addr);
     unsigned char code[4];
     unsigned cnt = 0;
 
@@ -242,8 +242,8 @@ static int trace_stack(Context * ctx, STACK_TRACE_CALLBAK callback) {
 
     assert(stack_trace == NULL || stack_trace->frame_cnt == 0);
     while (cnt < MAX_FRAMES) {
-        unsigned long frame[2];
-        unsigned long fp_next;
+        ContextAddress frame[2];
+        ContextAddress fp_next;
         if (fp == 0) {
             callback(NULL, 0, 0, 0, ctx->pid, 0);
             if (stack_trace != NULL) {
@@ -332,7 +332,7 @@ static int id2frame(char * id, Context ** ctx, int * idx) {
     return 0;
 }
 
-static void write_context(OutputStream * out, char * id, Context * ctx, int level, StackFrame * frame, unsigned long ip) {
+static void write_context(OutputStream * out, char * id, Context * ctx, int level, StackFrame * frame, ContextAddress ip) {
     out->write(out, '{');
 
     json_write_string(out, "ID");
@@ -422,7 +422,7 @@ static void command_get_context(char * token, Channel * c) {
         }
         else {
             int level = s->top_first ? s->frame_cnt - idx - 1 : idx;
-            unsigned long ip = 0;
+            ContextAddress ip = 0;
             if (level == s->frame_cnt - 1) {
                 ip = get_regs_PC(ctx->regs);
             }
@@ -535,8 +535,7 @@ void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup * bcg) {
         delete_stack_trace,
         delete_stack_trace,
         delete_stack_trace,
-        delete_stack_trace,
-        NULL
+        delete_stack_trace
     };
     add_context_event_listener(&listener, bcg);
     add_command_handler(proto, STACKTRACE, "getContext", command_get_context);

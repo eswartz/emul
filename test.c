@@ -75,11 +75,8 @@ void test_proc(void) {
     }
 }
 
-int run_test_process(Context ** res) {
+int run_test_process(ContextAttachCallBack * done, void * data) {
 #if defined(WIN32)
-    Context * ctx = NULL;
-    int r = 0;
-    int error = 0;
     int cp_cnt = 0;
     char fnm[FILE_PATH_SIZE];
     char cmd[FILE_PATH_SIZE];
@@ -89,12 +86,12 @@ int run_test_process(Context ** res) {
     memset(&prs, 0, sizeof(prs));
     memset(fnm, 0, sizeof(fnm));
     if (GetModuleFileName(NULL, fnm, sizeof(fnm)) == 0) {
-        errno = EINVAL;
+        set_win32_errno(GetLastError());
         return -1;
     }
     si.cb = sizeof(si);
     strcpy(cmd, "agent.exe -t");
-    while (error == 0 && CreateProcess(fnm, cmd, NULL, NULL,
+    while (CreateProcess(fnm, cmd, NULL, NULL,
             FALSE, CREATE_SUSPENDED | CREATE_DEFAULT_ERROR_MODE,
             NULL, NULL, &si, &prs) == 0) {
         DWORD win32_err = GetLastError();
@@ -108,40 +105,28 @@ int run_test_process(Context ** res) {
     }
     CloseHandle(prs.hThread);
     CloseHandle(prs.hProcess);
-    r = context_attach(prs.dwProcessId, &ctx, 0);
-    if (res != NULL) *res = ctx;
-    return r;
+    return context_attach(prs.dwProcessId, done, data, 0);
 #elif defined(_WRS_KERNEL)
     int tid = taskCreate("tTcf", 100, 0, 0x4000, (FUNCPTR)test_proc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-    Context * ctx = NULL;
-    int r = 0;
     if (tid == 0) return -1;
     taskStop(tid);
     taskActivate(tid);
     assert(taskIsStopped(tid));
-    r = context_attach(tid, &ctx, 0);
-    if (res != NULL) *res = ctx;
-    return r;
+    return context_attach(tid, done, data, 0);
 #else
     /* Create child process to debug */
-    Context * ctx = NULL;
     int pid = fork();
     if (pid < 0) return -1;
     if (pid == 0) {
+        int fd;
         if (context_attach_self() < 0) exit(1);
-        if (tkill(getpid(), SIGSTOP) < 0) {
-            int err = errno;
-            trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: pid %d, error %d %s",
-                  getpid(), err, errno_to_str(err));
-            errno = err;
-            return -1;
-        }
+        fd = sysconf(_SC_OPEN_MAX);
+        while (fd-- > 2) close(fd);
+        if (tkill(getpid(), SIGSTOP) < 0) exit(1);
         test_proc();
         exit(0);
     }
-    if (context_attach(pid, &ctx, 1) < 0) return -1;
-    if (res != NULL) *res = ctx;
-    return 0;
+    return context_attach(pid, done, data, 1);
 #endif
 }
 

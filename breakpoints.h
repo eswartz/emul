@@ -22,13 +22,11 @@
 #include "context.h"
 #include "protocol.h"
 
-typedef unsigned long address_t;
-
 typedef struct SkipBreakpointInfo SkipBreakpointInfo;
 
 struct SkipBreakpointInfo {
     Context * ctx;
-    address_t address;
+    ContextAddress address;
     int pending_intercept;
     void (*done)(SkipBreakpointInfo *);
     Channel * c;
@@ -36,23 +34,25 @@ struct SkipBreakpointInfo {
     int error;
 };
 
+#if SERVICE_Breakpoints
+
 extern int evaluate_breakpoint_condition(Context * ctx);
 
 extern SkipBreakpointInfo * skip_breakpoint(Context * ctx);
 
-#if SERVICE_Breakpoints
-
 /* Return 1 if break instruction is planted at given address in the context memory */
-extern int is_breakpoint_address(Context * ctx, unsigned long address);
+extern int is_breakpoint_address(Context * ctx, ContextAddress address);
 
 /* Check if memory data buffer contans planted break instructions and remove them */
-extern void check_breakpoints_on_memory_read(Context * ctx, unsigned long address, void * buf, size_t size);
+extern void check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, void * buf, size_t size);
 
 /* Check if data is about to be written over planted break instructions and adjust the data and breakpoint backing storage */
-extern void check_breakpoints_on_memory_write(Context * ctx, unsigned long address, void * buf, size_t size);
+extern void check_breakpoints_on_memory_write(Context * ctx, ContextAddress address, void * buf, size_t size);
 
 #else
 
+#define evaluate_breakpoint_condition(ctx) 0
+#define skip_breakpoint(ctx) 0
 #define is_breakpoint_address(ctx, address) 0
 #define check_breakpoints_on_memory_read(ctx, address, buf, size)
 #define check_breakpoints_on_memory_write(ctx, address, buf, size)

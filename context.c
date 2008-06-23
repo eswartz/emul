@@ -93,16 +93,25 @@ Context * context_find_from_pid(pid_t pid) {
     return NULL;
 }
 
-static Context * create_context(pid_t pid) {
-    LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(pid)];
-    Context * ctx = (Context *)loc_alloc_zero(sizeof(Context));
+static void link_context(Context * ctx) {
+    LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(ctx->pid)];
 
-    assert(context_find_from_pid(pid) == NULL);
-    ctx->pid = pid;
-    ctx->ref_count = 1;
-    list_init(&ctx->children);
+    assert(context_find_from_pid(ctx->pid) == NULL);
+    list_remove(&ctx->ctxl);
+    list_remove(&ctx->pidl);
     list_add_first(&ctx->ctxl, &context_root);
     list_add_first(&ctx->pidl, qhp);
+    ctx->ref_count++;
+}
+
+static Context * create_context(pid_t pid) {
+    Context * ctx = (Context *)loc_alloc_zero(sizeof(Context));
+
+    ctx->pid = pid;
+    list_init(&ctx->children);
+    list_init(&ctx->ctxl);
+    list_init(&ctx->pidl);
+    list_init(&ctx->cldl);
     return ctx;
 }
 
@@ -179,12 +188,12 @@ void context_lock(Context * ctx) {
 }
 
 void context_unlock(Context * ctx) {
+    assert(ctx->ref_count > 0);
     if (--(ctx->ref_count) == 0) {
         assert(list_is_empty(&ctx->children));
         assert(ctx->parent == NULL);
         list_remove(&ctx->ctxl);
         list_remove(&ctx->pidl);
-        if (ctx->pending_clone) loc_free(ctx->pending_clone);
         loc_free(ctx);
     }
 }
@@ -198,6 +207,7 @@ char * context_state_name(Context * ctx) {
 
 static void event_context_created(Context * ctx) {
     ContextEventListener * listener = event_listeners;
+    assert(ctx->ref_count > 0);
     while (listener != NULL) {
         if (listener->context_created != NULL) {
             listener->context_created(ctx, listener->client_data);
@@ -208,6 +218,7 @@ static void event_context_created(Context * ctx) {
 
 static void event_context_changed(Context * ctx) {
     ContextEventListener * listener = event_listeners;
+    assert(ctx->ref_count > 0);
     while (listener != NULL) {
         if (listener->context_changed != NULL) {
             listener->context_changed(ctx, listener->client_data);
@@ -218,6 +229,15 @@ static void event_context_changed(Context * ctx) {
 
 static void event_context_stopped(Context * ctx) {
     ContextEventListener * listener = event_listeners;
+    assert(ctx->ref_count > 0);
+    if (ctx->stopped_by_bp) {
+        if (evaluate_breakpoint_condition(ctx)) {
+            ctx->pending_intercept = 1;
+        }
+        else {
+            skip_breakpoint(ctx);
+        }
+    }
     while (listener != NULL) {
         if (listener->context_stopped != NULL) {
             listener->context_stopped(ctx, listener->client_data);
@@ -228,6 +248,7 @@ static void event_context_stopped(Context * ctx) {
 
 static void event_context_started(Context * ctx) {
     ContextEventListener * listener = event_listeners;
+    assert(ctx->ref_count > 0);
     while (listener != NULL) {
         if (listener->context_started != NULL) {
             listener->context_started(ctx, listener->client_data);
@@ -248,22 +269,22 @@ static void event_context_exited(Context * ctx) {
 
 #if defined(WIN32)
 
-struct DebugThreadArgs {
+typedef struct DebugThreadArgs {
     int error;
-    Context * ctx;
+    DWORD context_id;
     DWORD debug_thread_id;
     HANDLE debug_thread;
     HANDLE debug_thread_semaphore;
-};
+    ContextAttachCallBack * attach_callback;
+    void * attach_data;
+} DebugThreadArgs;
 
-struct DebugEvent {
+typedef struct DebugEvent {
+    DebugThreadArgs * debug_thread_args;
     HANDLE event_semaphore;
     DEBUG_EVENT event;
     DWORD continue_status;
-};
-
-typedef struct DebugThreadArgs DebugThreadArgs;
-typedef struct DebugEvent DebugEvent;
+} DebugEvent;
 
 char * context_suspend_reason(Context * ctx) {
     DWORD code = ctx->suspend_reason.ExceptionRecord.ExceptionCode;
@@ -356,6 +377,9 @@ static void event_win32_context_stopped(void * arg) {
             ctx->regs_dirty = 1;
             ctx->stopped_by_bp = 1;
         }
+        else {
+            ctx->pending_intercept = 1;
+        }
         break;
     default:
         ctx->pending_intercept = 1;
@@ -442,20 +466,21 @@ static void debug_event_handler(void * x) {
     Context * prs = context_find_from_pid(debug_event->dwProcessId);
     Context * ctx = context_find_from_pid(debug_event->dwThreadId);
 
-    assert(prs != NULL);
     switch (debug_event->dwDebugEventCode) {
     case CREATE_PROCESS_DEBUG_EVENT:
+        assert(prs == NULL);
         assert(ctx == NULL);
-        assert(prs->handle == NULL);
-        if (prs->handle != NULL) {
-            CloseHandle(debug_event->u.CreateProcessInfo.hThread);
-            break;
-        }
+        prs = create_context(debug_event->dwProcessId);
+        prs->mem = debug_event->dwProcessId;
         prs->handle = debug_event->u.CreateProcessInfo.hProcess;
         prs->file_handle = debug_event->u.CreateProcessInfo.hFile;
         prs->base_address = debug_event->u.CreateProcessInfo.lpBaseOfImage;
         assert(prs->handle != NULL);
+        link_context(prs);
         event_context_created(prs);
+        args->debug_thread_args->attach_callback(0, prs, args->debug_thread_args->attach_data);
+        args->debug_thread_args->attach_callback = NULL;
+        args->debug_thread_args->attach_data = NULL;
         ctx = create_context(debug_event->dwThreadId);
         ctx->mem = debug_event->dwProcessId;
         ctx->handle = debug_event->u.CreateProcessInfo.hThread;
@@ -463,10 +488,12 @@ static void debug_event_handler(void * x) {
         ctx->parent = prs;
         prs->ref_count++;
         list_add_first(&ctx->cldl, &prs->children);
+        link_context(ctx);
         event_context_created(ctx);
         ctx->pending_intercept = 1;
         break;
     case CREATE_THREAD_DEBUG_EVENT:
+        assert(prs != NULL);
         assert(ctx == NULL);
         ctx = create_context(debug_event->dwThreadId);
         ctx->mem = debug_event->dwProcessId;
@@ -474,10 +501,12 @@ static void debug_event_handler(void * x) {
         ctx->parent = prs;
         prs->ref_count++;
         list_add_first(&ctx->cldl, &prs->children);
+        link_context(ctx);
         event_context_created(ctx);
         event_win32_context_stopped(ctx);
         break;
     case EXCEPTION_DEBUG_EVENT:
+        assert(prs != NULL);
         if (ctx == NULL) break;
         assert(ctx->pending_event.ExceptionRecord.ExceptionCode == 0);
         switch (args->event.u.Exception.ExceptionRecord.ExceptionCode) {
@@ -493,15 +522,40 @@ static void debug_event_handler(void * x) {
         if (!ctx->stopped) event_win32_context_stopped(ctx);
         break;
     case EXIT_THREAD_DEBUG_EVENT:
+        assert(prs != NULL);
         if (ctx == NULL) break;
         event_win32_context_exited(ctx);
         ctx = NULL;
         break;
     case EXIT_PROCESS_DEBUG_EVENT:
+        assert(prs != NULL);
         assert(ctx != NULL);
         event_win32_context_exited(ctx);
         event_win32_context_exited(prs);
         prs = ctx = NULL;
+        break;
+    case LOAD_DLL_DEBUG_EVENT:
+        assert(prs != NULL);
+        prs->module_loaded = 1;
+        prs->module_handle = args->event.u.LoadDll.hFile;
+        prs->module_address = args->event.u.LoadDll.lpBaseOfDll;
+        event_context_changed(prs);
+        if (args->event.u.LoadDll.hFile != NULL && !CloseHandle(args->event.u.LoadDll.hFile)) {
+            set_win32_errno(GetLastError());
+            trace(LOG_ALWAYS, "debug_event_handler.CloseHandle() error: %d: %s",
+                errno, errno_to_str(errno));
+        }
+        prs->module_handle = NULL;
+        prs->module_address = NULL;
+        prs->module_loaded = 0;
+        break;
+    case UNLOAD_DLL_DEBUG_EVENT:
+        assert(prs != NULL);
+        prs->module_unloaded = 1;
+        prs->module_address = args->event.u.UnloadDll.lpBaseOfDll;
+        event_context_changed(prs);
+        prs->module_address = NULL;
+        prs->module_unloaded = 0;
         break;
     case RIP_EVENT:
         trace(LOG_ALWAYS, "System debugging error: debuggee pid %d, error type %d, error code %d",
@@ -513,20 +567,19 @@ static void debug_event_handler(void * x) {
 }
 
 static void debugger_exit_handler(void * x) {
-    DebugThreadArgs * dbg = (DebugThreadArgs *)x;
-    Context * prs = dbg->ctx;
+    DebugThreadArgs * args = (DebugThreadArgs *)x;
+    Context * prs = context_find_from_pid(args->context_id);
 
     trace(LOG_WAITPID, "debugger thread %d exited, debuggee pid %d",
-        dbg->debug_thread_id, prs->pid);
+        args->debug_thread_id, args->context_id);
 
-    WaitForSingleObject(dbg->debug_thread, INFINITE);
-    CloseHandle(dbg->debug_thread);
-    CloseHandle(dbg->debug_thread_semaphore);
+    WaitForSingleObject(args->debug_thread, INFINITE);
+    CloseHandle(args->debug_thread);
+    CloseHandle(args->debug_thread_semaphore);
 
-    if (!prs->exited) event_win32_context_exited(prs);
+    if (prs != NULL && !prs->exited) event_win32_context_exited(prs);
 
-    context_unlock(prs);
-    loc_free(dbg);
+    loc_free(args);
 }
 
 static DWORD WINAPI debugger_thread_func(LPVOID x) {
@@ -544,7 +597,7 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
         return 0;
     }
 
-    if (DebugActiveProcess(args->ctx->pid) == 0) {
+    if (DebugActiveProcess(args->context_id) == 0) {
         args->error = GetLastError();
         trace(LOG_ALWAYS, "Can't attach to a process: error %d", args->error);
         ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
@@ -554,13 +607,22 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
 
     trace(LOG_WAITPID, "debugger thread %d started", GetCurrentThreadId());
 
+    memset(&event_buffer, 0, sizeof(event_buffer));
     memset(&create_process, 0, sizeof(create_process));
     memset(&fantom_process, 0, sizeof(fantom_process));
+
+    event_buffer.debug_thread_args = args;
+    event_buffer.event_semaphore = event_semaphore;
+    create_process.debug_thread_args = args;
+    create_process.event_semaphore = event_semaphore;
+    fantom_process.debug_thread_args = args;
+    fantom_process.event_semaphore = event_semaphore;
+
     while (1) {
         DebugEvent * buf = NULL;
         DEBUG_EVENT * debug_event = &event_buffer.event;
 
-        memset(&event_buffer, 0, sizeof(event_buffer));
+        memset(debug_event, 0, sizeof(DEBUG_EVENT));
         if (WaitForDebugEvent(debug_event, INFINITE) == 0) {
             trace(LOG_ALWAYS, "WaitForDebugEvent() error %d", GetLastError());
             break;
@@ -576,7 +638,7 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 win32_debug_event_name(debug_event->dwDebugEventCode),
                 debug_event->dwProcessId, debug_event->dwThreadId);
         }
-        assert(args->ctx->pid == debug_event->dwProcessId);
+        assert(args->context_id == debug_event->dwProcessId);
         event_buffer.continue_status = DBG_CONTINUE;
 
         switch (debug_event->dwDebugEventCode) {
@@ -595,11 +657,6 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 SuspendThread(fantom_process.event.u.CreateProcessInfo.hThread);
             }
             break;
-        case LOAD_DLL_DEBUG_EVENT:
-            CloseHandle(debug_event->u.LoadDll.hFile);
-            break;
-        case UNLOAD_DLL_DEBUG_EVENT:
-            break;
         default:
             if (fantom_process.event.dwThreadId == debug_event->dwThreadId) {
                 if (debug_event->dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT) {
@@ -607,6 +664,9 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 }
                 else if (debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
                     event_buffer.continue_status = DBG_EXCEPTION_NOT_HANDLED;
+                }
+                else if (debug_event->dwDebugEventCode == LOAD_DLL_DEBUG_EVENT) {
+                    if (debug_event->u.LoadDll.hFile != NULL) CloseHandle(debug_event->u.LoadDll.hFile);
                 }
                 break;
             }
@@ -623,14 +683,12 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 }
             }
             if (state == 1) {
-                create_process.event_semaphore = event_semaphore;
                 post_event(debug_event_handler, &create_process);
                 ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
                 WaitForSingleObject(event_semaphore, INFINITE);
                 state++;
             }
             if (state == 2) {
-                event_buffer.event_semaphore = event_semaphore;
                 post_event(debug_event_handler, &event_buffer);
                 WaitForSingleObject(event_semaphore, INFINITE);
             }
@@ -654,44 +712,43 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
     return 0;
 }
 
-int context_attach(pid_t pid, Context ** res, int selfattach) {
-    DebugThreadArgs * dbg = (DebugThreadArgs *)loc_alloc_zero(sizeof(DebugThreadArgs));
+int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
+    DebugThreadArgs * args = (DebugThreadArgs *)loc_alloc_zero(sizeof(DebugThreadArgs));
 
+    assert(done != NULL);
     assert(!selfattach);
-    dbg->ctx = create_context(pid);
-    dbg->ctx->mem = pid;
-    assert(dbg->ctx->ref_count == 1);
-    if (res != NULL) *res = dbg->ctx;
-    context_lock(dbg->ctx);
+    args->context_id = pid;
+    args->attach_callback = done;
+    args->attach_data = data;
 
-    dbg->debug_thread_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
-    if (dbg->debug_thread_semaphore == NULL) {
+    args->debug_thread_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
+    if (args->debug_thread_semaphore == NULL) {
         DWORD err = GetLastError();
         trace(LOG_ALWAYS, "Can't create semaphore: error %d", err);
-        loc_free(dbg);
+        loc_free(args);
         set_win32_errno(err);
         return -1;
     }
     
-    dbg->debug_thread = CreateThread(NULL, 0, debugger_thread_func, dbg, 0, &dbg->debug_thread_id);
-    if (dbg->debug_thread == NULL) {
+    args->debug_thread = CreateThread(NULL, 0, debugger_thread_func, args, 0, &args->debug_thread_id);
+    if (args->debug_thread == NULL) {
         DWORD err = GetLastError();
         trace(LOG_ALWAYS, "Can't create thread: error %d", err);
-        CloseHandle(dbg->debug_thread_semaphore);
-        loc_free(dbg);
+        CloseHandle(args->debug_thread_semaphore);
+        loc_free(args);
         set_win32_errno(err);
         return -1;
     }
 
 
-    WaitForSingleObject(dbg->debug_thread_semaphore, INFINITE);
+    WaitForSingleObject(args->debug_thread_semaphore, INFINITE);
 
-    if (dbg->error) {
-        WaitForSingleObject(dbg->debug_thread, INFINITE);
-        CloseHandle(dbg->debug_thread);
-        CloseHandle(dbg->debug_thread_semaphore);
-        loc_free(dbg);
-        set_win32_errno(dbg->error);
+    if (args->error) {
+        WaitForSingleObject(args->debug_thread, INFINITE);
+        CloseHandle(args->debug_thread);
+        CloseHandle(args->debug_thread_semaphore);
+        loc_free(args);
+        set_win32_errno(args->error);
         return -1;
     }
 
@@ -763,7 +820,7 @@ int context_single_step(Context * ctx) {
     return win32_resume(ctx);
 }
 
-int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
+int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
     SIZE_T bcnt = 0;
     trace(LOG_CONTEXT, "context: read memory ctx %#x, pid %d, address 0x%08x, size %d", ctx, ctx->pid, address, size);
     assert(is_dispatch_thread());
@@ -778,7 +835,7 @@ int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t si
     return 0;
 }
 
-int context_write_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
+int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
     SIZE_T bcnt = 0;
     trace(LOG_CONTEXT, "context: write memory ctx %#x, pid %d, address 0x%08x, size %d", ctx, ctx->pid, address, size);
     assert(is_dispatch_thread());
@@ -876,23 +933,42 @@ static void event_info_post(struct event_info * info) {
     SPIN_LOCK_ISR_GIVE(&events_lock);
 }
 
-int context_attach(pid_t pid, Context ** res, int selfattach) {
-    struct event_info * info;
-    Context * ctx = create_context(pid);
+typedef struct AttachDoneArgs {
+    pid_t pid;
+    ContextAttachCallBack * done;
+    void * data;
+} AttachDoneArgs;
 
-    assert(!selfattach);
+static void event_attach_done(void * x) {
+    AttachDoneArgs * args = (AttachDoneArgs *)x;
+    Context * ctx = create_context(args->pid);
+
     ctx->mem = taskIdSelf();
-    assert(ctx->ref_count == 1);
+    link_context(ctx);
     event_context_created(ctx);
-    if (taskIsStopped(pid)) {
+    args->done(0, ctx, args->data);
+    if (taskIsStopped(args->pid)) {
+        struct event_info * info;
         ctx->pending_intercept = 1;
         info = event_info_alloc(EVENT_HOOK_STOP);
         if (info != NULL) {
-            info->stopped_ctx.ctxId = pid;
+            info->stopped_ctx.ctxId = args->pid;
             event_info_post(info);
         }
     }
-    if (res != NULL) *res = ctx;
+    loc_free(x);
+}
+
+int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
+    AttachDoneArgs * args = (AttachDoneArgs *)loc_alloc(sizeof(AttachDoneArgs));
+
+    assert(done != NULL);
+    assert(!selfattach);
+    args->pid = pid;
+    args->done = done;
+    args->data = data;
+    post_event(event_attach_done, args);
+
     return 0;
 }
 
@@ -916,12 +992,17 @@ int context_stop(Context * ctx) {
         trace(LOG_CONTEXT, "context: temporary stop ctx %#x, id %#x", ctx, ctx->pid);
     }
     
+    taskLock();
+    if (taskIsStopped(ctx->pid)) {
+        taskUnlock();
+        return 0;
+    }
     vxdbg_ctx.ctxId = ctx->pid;
     vxdbg_ctx.ctxType = VXDBG_CTX_TASK;
-    taskLock();
     if (vxdbgStop(vxdbg_clnt_id, &vxdbg_ctx) != OK) {
         int error = errno;
         taskUnlock();
+        if (error == S_vxdbgLib_INVALID_CTX) return 0;
         trace(LOG_ALWAYS, "context: can't stop ctx %#x, id %#x: %s",
                 ctx, ctx->pid, errno_to_str(error));
         return -1;
@@ -1042,7 +1123,7 @@ int context_single_step(Context * ctx) {
     return 0;
 }
 
-int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
+int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
 #ifdef _WRS_PERSISTENT_SW_BP
     vxdbgMemRead((void *)address, buf, size);
 #else    
@@ -1051,7 +1132,7 @@ int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t si
     return 0;
 }
 
-int context_write_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
+int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
 #ifdef _WRS_PERSISTENT_SW_BP
     vxdbgMemWrite((void *)address, buf, size);
 #else
@@ -1100,6 +1181,7 @@ static void event_handler(void * arg) {
         current_ctx->event = TRACE_EVENT_STEP;
         current_ctx->pending_step = 0;
         current_ctx->stopped = 1;
+        current_ctx->stopped_by_bp = 0;
         assert(taskIsStopped(current_ctx->pid));
         event_context_stopped(current_ctx);
         break;
@@ -1115,6 +1197,7 @@ static void event_handler(void * arg) {
         stopped_ctx->event = 0;
         stopped_ctx->pending_step = 0;
         stopped_ctx->stopped = 1;
+        stopped_ctx->stopped_by_bp = 0;
         assert(taskIsStopped(stopped_ctx->pid));
         event_context_stopped(stopped_ctx);
         break;
@@ -1122,11 +1205,11 @@ static void event_handler(void * arg) {
         if (current_ctx == NULL) break;
         assert(stopped_ctx == NULL);
         stopped_ctx = create_context((pid_t)info->stopped_ctx.ctxId);
-        assert(stopped_ctx->ref_count == 1);
         stopped_ctx->mem = current_ctx->mem;
         stopped_ctx->parent = current_ctx->parent != NULL ? current_ctx->parent : current_ctx;
         stopped_ctx->parent->ref_count++;
         list_add_first(&stopped_ctx->cldl, &stopped_ctx->parent->children);
+        link_context(stopped_ctx);
         event_context_created(stopped_ctx);
         break;
     case EVENT_HOOK_TASK_DEL:
@@ -1252,6 +1335,7 @@ static void init(void) {
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
+#include <asm/unistd.h>
 #include <sched.h>
 
 #define PTRACE_SETOPTIONS       0x4200
@@ -1279,6 +1363,7 @@ static void init(void) {
 #define WORD_SIZE   4
 
 #define PTRACE_FLAGS ( \
+    PTRACE_O_TRACESYSGOOD | \
     PTRACE_O_TRACEFORK | \
     PTRACE_O_TRACEVFORK | \
     PTRACE_O_TRACECLONE | \
@@ -1295,6 +1380,7 @@ struct pid_stop_info {
     pid_t       pid;
     int         signal;
     int         event;
+    int         syscall;
 };
 
 static pthread_t wpid_thread;
@@ -1302,6 +1388,7 @@ static pid_t my_pid = 0;
 static pthread_mutex_t waitpid_lock;
 static pthread_cond_t waitpid_cond;
 static int attach_poll_rate;
+static LINK pending_list;
 
 static char * event_name(int event) {
     switch (event) {
@@ -1323,6 +1410,8 @@ char * context_suspend_reason(Context * ctx) {
 
     if (ctx->stopped_by_bp) return "Breakpoint";
     if (ctx->end_of_step) return "Step";
+    if (ctx->syscall_enter) return "System Call";
+    if (ctx->syscall_exit) return "System Return";
     
     if (ctx->ptrace_event != 0) {
         assert(ctx->signal == SIGTRAP);
@@ -1353,8 +1442,10 @@ int context_attach_self(void) {
     return 0;
 }
 
-int context_attach(pid_t pid, Context ** res, int selfattach) {
+int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
     Context * ctx = NULL;
+
+    assert(done != NULL);
     check_error(pthread_mutex_lock(&waitpid_lock));
     if (!selfattach && ptrace(PTRACE_ATTACH, pid, 0, 0) < 0) {
         int err = errno;
@@ -1365,16 +1456,16 @@ int context_attach(pid_t pid, Context ** res, int selfattach) {
         return -1;
     }
     ctx = create_context(pid);
-    ctx->pending_intercept = 1;
-    ctx->pending_attach = 1;
-    /* TODO: context_attach works only for main task in a process */
+    list_add_first(&ctx->ctxl, &pending_list);
     ctx->mem = pid;
-    assert(ctx->ref_count == 1);
+    ctx->attach_callback = done;
+    ctx->attach_data = data;
+    ctx->pending_intercept = 1;
+    /* TODO: context_attach works only for main task in a process */
     attach_poll_rate = 1;
     trace(LOG_WAITPID, "waitpid: poll rate reset");
     check_error(pthread_cond_signal(&waitpid_cond));
     check_error(pthread_mutex_unlock(&waitpid_lock));
-    if (res != NULL) *res = ctx;
     return 0;
 }
 
@@ -1438,7 +1529,7 @@ int context_continue(Context * ctx) {
         }
         ctx->regs_dirty = 0;
     }
-    if (ptrace(PTRACE_CONT, ctx->pid, 0, signal) < 0) {
+    if (ptrace(PTRACE_SYSCALL, ctx->pid, 0, signal) < 0) {
         int err = errno;
 #if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
@@ -1447,7 +1538,7 @@ int context_continue(Context * ctx) {
             return 0;
         }
 #endif
-        trace(LOG_ALWAYS, "error: ptrace(PTRACE_CONT, ...) failed: ctx %#x, pid %d, error %d %s",
+        trace(LOG_ALWAYS, "error: ptrace(PTRACE_SYSCALL, ...) failed: ctx %#x, pid %d, error %d %s",
             ctx, ctx->pid, err, errno_to_str(err));
         errno = err;
         return -1;
@@ -1505,8 +1596,8 @@ int context_single_step(Context * ctx) {
     return 0;
 }
 
-int context_write_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
-    unsigned long word_addr;
+int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
+    ContextAddress word_addr;
     assert(is_dispatch_thread());
     assert(!ctx->exited);
     assert(ctx->stopped);
@@ -1542,8 +1633,8 @@ int context_write_mem(Context * ctx, unsigned long address, void * buf, size_t s
     return 0;
 }
 
-int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t size) {
-    unsigned long word_addr;
+int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
+    ContextAddress word_addr;
     assert(is_dispatch_thread());
     assert(!ctx->exited);
     assert(ctx->stopped);
@@ -1570,8 +1661,8 @@ int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t si
     return 0;
 }
 
-static void event_pid_exited(void *arg) {
-    struct pid_exit_info *eap = arg;
+static void event_pid_exited(void * arg) {
+    struct pid_exit_info * eap = arg;
     Context * ctx;
 
     ctx = context_find_from_pid(eap->pid);
@@ -1608,7 +1699,7 @@ static void event_pid_exited(void *arg) {
             }
         }
         /* Note: ctx->exiting should be 1 here. However, PTRACE_EVENT_EXIT can be lost by PTRACE because of racing
-         * between PTRACE_CONT and SIGTRAP/PTRACE_EVENT_EXIT. So, ctx->exiting can be 0.
+         * between PTRACE_SYSCALL and SIGTRAP/PTRACE_EVENT_EXIT. So, ctx->exiting can be 0.
          */
         ctx->exiting = 0;
         ctx->exited = 1;
@@ -1621,6 +1712,22 @@ static void event_pid_exited(void *arg) {
         context_unlock(ctx);
     }
     loc_free(eap);
+}
+
+#ifdef __i386__
+#   define get_syscall_id(ctx) (ctx->regs.orig_eax)
+#else
+#   error "get_syscall_id() is not implemented for CPU other then X86"
+#endif
+
+static Context * find_pending(pid_t pid) {
+    LINK * qp = pending_list.next;
+    while (qp != &pending_list) {
+        Context * c = ctxl2ctxp(qp);
+        if (c->pid == pid) return c;
+        qp = qp->next;
+    }
+    return NULL;
 }
 
 static void event_pid_stopped(void * arg) {
@@ -1636,6 +1743,8 @@ process_event:
         eap->pid, eap->signal, event_name(eap->event));
 
     ctx = context_find_from_pid(eap->pid);
+    if (ctx == NULL) ctx = find_pending(eap->pid);
+
     if (ctx == NULL) {
         /* Clone & fork notifications can arrive after child
          * notification because the clone/fork notification comes from
@@ -1643,6 +1752,7 @@ process_event:
          * and Linux does not seem to order between them. */
         trace(LOG_EVENTS, "event: pid %d is not traced - expecting OOO clone, fork or vfork event for pid", eap->pid);
         ctx = create_context(eap->pid);
+        list_add_first(&ctx->ctxl, &pending_list);
         ctx->pending_clone = eap;
         return;
     }
@@ -1668,14 +1778,14 @@ process_event:
     case PTRACE_EVENT_FORK:
     case PTRACE_EVENT_VFORK:
     case PTRACE_EVENT_CLONE:
-        assert(!ctx->pending_attach);
+        assert(!ctx->attach_callback);
         if (ptrace(PTRACE_GETEVENTMSG, eap->pid, 0, &msg) < 0) {
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETEVENTMSG) failed; pid %d, error %d %s",
                 eap->pid, errno, errno_to_str(errno));
             break;
         }
         assert(msg != 0);
-        ctx2 = context_find_from_pid(msg);
+        ctx2 = find_pending(msg);
         if (ctx2) {
             assert(ctx2->pending_clone);
             pending_eap = ctx2->pending_clone;
@@ -1684,6 +1794,7 @@ process_event:
         else {
             ctx2 = create_context(msg);
         }
+        link_context(ctx2);
         assert(ctx2->parent == NULL);
         trace(LOG_EVENTS, "event: new context 0x%x, pid %d", ctx2, ctx2->pid);
         if (eap->event == PTRACE_EVENT_CLONE) {
@@ -1700,13 +1811,14 @@ process_event:
         break;
 
     case PTRACE_EVENT_EXEC:
-        if (!ctx->pending_attach) {
+        if (!ctx->attach_callback) {
             event_context_changed(ctx);
         }
         break;
     }
 
     if (eap->signal != SIGSTOP && eap->signal != SIGTRAP) {
+        assert(eap->signal < 32);
         ctx->pending_signals |= 1 << eap->signal;
     }
 
@@ -1714,12 +1826,15 @@ process_event:
         ctx->exiting = 1;
         ctx->regs_dirty = 0;
     }
-    if (ctx->pending_attach) {
-        ctx->pending_attach = 0;
+    if (ctx->attach_callback) {
+        link_context(ctx);
         event_context_created(ctx);
+        ctx->attach_callback(0, ctx, ctx->attach_data);
+        ctx->attach_callback = NULL;
+        ctx->attach_data = NULL;
     }
     if (!ctx->stopped || !ctx->intercepted) {
-        unsigned long pc0 = get_regs_PC(ctx->regs);
+        ContextAddress pc0 = ctx->regs_error ? 0 : get_regs_PC(ctx->regs);
         assert(!ctx->regs_dirty);
         assert(!ctx->intercepted);
         ctx->regs_error = 0;
@@ -1743,10 +1858,39 @@ process_event:
                 ctx->pid, errno, errno_to_str(errno));
         }
 
-        trace(LOG_EVENTS, "event: pid %d stopped at PC = %d (0x%08x)",
-            ctx->pid, get_regs_PC(ctx->regs), get_regs_PC(ctx->regs));
+        if (eap->syscall && !ctx->regs_error) {
+            if (!ctx->syscall_enter) {
+                ctx->syscall_id = get_syscall_id(ctx);
+                ctx->syscall_enter = 1;
+                ctx->syscall_exit = 0;
+                trace(LOG_EVENTS, "event: pid %d enter sys call %d, PC = %d (0x%08x)",
+                    ctx->pid, ctx->syscall_id, get_regs_PC(ctx->regs), get_regs_PC(ctx->regs));
+            }
+            else {
+                assert(pc0 == get_regs_PC(ctx->regs));
+                ctx->syscall_enter = 0;
+                ctx->syscall_exit = 1;
+                trace(LOG_EVENTS, "event: pid %d exit sys call %d, PC = %d (0x%08x)",
+                    ctx->pid, ctx->syscall_id, get_regs_PC(ctx->regs), get_regs_PC(ctx->regs));
+                switch (ctx->syscall_id) {
+                case __NR_mmap:
+                case __NR_munmap:
+                case __NR_mmap2:
+                case __NR_mremap:
+                case __NR_remap_file_pages:
+                    event_context_changed(ctx);
+                    break;
+                }
+            }
+        }
+        else {
+            ctx->syscall_enter = 0;
+            ctx->syscall_exit = 0;
+            trace(LOG_EVENTS, "event: pid %d stopped at PC = %d (0x%08x)",
+                ctx->pid, get_regs_PC(ctx->regs), get_regs_PC(ctx->regs));
+        }
 
-        if (eap->signal == SIGSTOP && ctx->pending_step && ctx->regs_error == 0 && pc0 == get_regs_PC(ctx->regs)) {
+        if (eap->signal == SIGSTOP && ctx->pending_step && !ctx->regs_error && pc0 == get_regs_PC(ctx->regs)) {
             trace(LOG_EVENTS, "event: pid %d, single step failed because of pending SIGSTOP, retrying");
             ptrace(PTRACE_SINGLESTEP, ctx->pid, 0, 0);
         }
@@ -1754,12 +1898,13 @@ process_event:
             ctx->signal = eap->signal;
             ctx->ptrace_event = eap->event;
             ctx->stopped = 1;
-            ctx->stopped_by_bp =
-                ctx->signal == SIGTRAP && ctx->ptrace_event == 0 && ctx->regs_error == 0 &&
-                is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE);
-            ctx->end_of_step =
-                ctx->signal == SIGTRAP && ctx->ptrace_event == 0 &&
-                !ctx->stopped_by_bp && ctx->pending_step;
+            ctx->stopped_by_bp = 0;
+            ctx->end_of_step = 0;
+            if (ctx->signal == SIGTRAP && ctx->ptrace_event == 0 && !eap->syscall) {
+                ctx->stopped_by_bp = !ctx->regs_error &&
+                    is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE);
+                ctx->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;
+            }
             ctx->pending_step = 0;
             if (ctx->stopped_by_bp) {
                 set_regs_PC(ctx->regs, get_regs_PC(ctx->regs) - BREAK_SIZE);
@@ -1819,7 +1964,8 @@ static void * wpid_handler(void * x) {
 
             eap = loc_alloc(sizeof *eap);
             eap->pid = pid;
-            eap->signal = WSTOPSIG(status);
+            eap->signal = WSTOPSIG(status) & 0x7f;
+            eap->syscall = (WSTOPSIG(status) & 0x80) != 0;
             eap->event = status >> 16;
             post_event(event_pid_stopped, eap);
         }
@@ -1830,6 +1976,7 @@ static void * wpid_handler(void * x) {
 }
 
 static void init(void) {
+    list_init(&pending_list);
     check_error(pthread_mutex_init(&waitpid_lock, NULL));
     check_error(pthread_cond_init(&waitpid_cond, NULL));
     my_pid = getpid();

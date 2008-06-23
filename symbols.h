@@ -21,20 +21,11 @@
 typedef struct Symbol Symbol;
 
 struct Symbol {
-    unsigned long value;
+    ContextAddress value;
     char * section;
     char * storage;
     int abs;
 };
-
-#ifdef WIN32
-/*
- * Initialize dbghelp.dll symbol handler for a given context.
- * Call this function right before calling any functions from dnghelp.dll.
- * On error, returns -1 and sets errno.
- */
-extern int set_symbol_context(Context * ctx);
-#endif
 
 /*
  * Find symbol information for given symbol name in given context.
@@ -46,7 +37,7 @@ extern int find_symbol(Context * ctx, char * name, Symbol * sym);
  * Check if given address is inside a PLT section and return address of the section.
  * Othewise return 0;
  */
-extern unsigned long is_plt_section(Context * ctx, unsigned long addr);
+extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
 
 /*
  * Initialize symbol service.

@@ -26,7 +26,11 @@ extern LINK context_root;
 #define pidl2ctxp(A)    ((Context *)((char *)(A) - (int)&((Context *)0)->pidl))
 #define cldl2ctxp(A)    ((Context *)((char *)(A) - (int)&((Context *)0)->cldl))
 
+typedef unsigned long ContextAddress; /* Type to represent byted address inside context memory */
+
 typedef struct Context Context;
+
+typedef void ContextAttachCallBack(int, Context *, void *);
 
 struct Context {
     LINK                ctxl;
@@ -45,8 +49,6 @@ struct Context {
     int                 pending_step;       /* context is executing single instruction step */
     int                 pending_intercept;  /* host is waiting for this context to be suspended */
     int                 pending_safe_event; /* safe events are waiting for this context to be stopped */
-    int                 pending_attach;     /* waiting for this context to be attached */
-    void *              pending_clone;      /* waiting for clone or fork to bind this to parent */
     unsigned long       pending_signals;    /* bitset of signals that were received, but not handled yet */
     int                 signal;             /* signal that stopped this context */
     REG_SET             regs;               /* copy of context registers, updated when context stops */
@@ -54,6 +56,7 @@ struct Context {
     int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
     void *              stack_trace;
 
+/* OS dependant context attributes */
 #if defined(_WRS_KERNEL)
     VXDBG_BP_INFO       bp_info;            /* breakpoint information */
     pid_t               bp_pid;             /* process or thread that hit breakpoint */
@@ -62,14 +65,27 @@ struct Context {
     HANDLE              handle;
     HANDLE              file_handle;
     LPVOID              base_address;
+    int                 module_loaded;
+    int                 module_unloaded;
+    HANDLE              module_handle;
+    LPVOID              module_address;
     int                 debug_started;
-    int                 sym_handler_loaded;
     EXCEPTION_DEBUG_INFO pending_event;
     EXCEPTION_DEBUG_INFO suspend_reason;
-#else
+#else /* Linux/Unix */
+    ContextAttachCallBack * attach_callback;
+    void *              attach_data;
+    void *              pending_clone;      /* waiting for clone or fork to bind this to parent */
     int                 ptrace_flags;
     int                 ptrace_event;
+    int                 syscall_enter;
+    int                 syscall_exit;
+    int                 syscall_id;
     int                 end_of_step;
+    int                 elf_list_pos;
+    ContextAddress      elf_list_addr0;
+    ContextAddress      elf_list_addr1;
+    void *              memory_map;
 #endif
 };
 
@@ -116,13 +132,16 @@ extern Context * context_find_from_pid(pid_t pid);
 
 /*
  * Trigger self attachment e.g. of forked child
+ * Only available on Linux/Unix.
  */
 extern int context_attach_self(void);
 
 /*
  * Start tracing of a process.
+ * Client provides a call-back function that will be called when context is attached.
+ * The callback function args are error code, the context and client data.
  */
-extern int context_attach(pid_t pid, Context ** ctx, int selfattach);
+extern int context_attach(pid_t pid, ContextAttachCallBack * done, void * client_data, int selfattach);
 
 /*
  * Increment reference counter of Context object.
@@ -140,12 +159,12 @@ extern int context_has_state(Context * ctx);
 extern int context_stop(Context * ctx);
 extern int context_continue(Context * ctx);
 extern int context_single_step(Context * ctx);
-extern int context_write_mem(Context * ctx, unsigned long address, void * buf, size_t size);
-extern int context_read_mem(Context * ctx, unsigned long address, void * buf, size_t size);
+extern int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size);
+extern int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size);
 
 typedef struct ContextEventListener {
     void (*context_created)(Context * ctx, void * client_data);
-    void (*context_exited)(Context * ctx, void * client_data);
+    void (*context_exited )(Context * ctx, void * client_data);
     void (*context_stopped)(Context * ctx, void * client_data);
     void (*context_started)(Context * ctx, void * client_data);
     void (*context_changed)(Context * ctx, void * client_data);

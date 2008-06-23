@@ -21,9 +21,9 @@
 #include "protocol.h"
 #include "context.h"
 
-typedef void (*line_to_address_callback)(void *, unsigned long);
+typedef void LineToAddressCallBack(void *, ContextAddress);
 
-extern int line_to_address(Context * ctx, char * file, int line, int column, line_to_address_callback, void * args);
+extern int line_to_address(Context * ctx, char * file, int line, int column, LineToAddressCallBack *, void * args);
 
 /*
  * Initialize Line Numbers service.

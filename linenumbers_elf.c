@@ -35,7 +35,7 @@
 
 static const char * LINENUMBERS = "LineNumbers";
 
-typedef unsigned long ADDR_T;
+typedef struct FileInfo FileInfo;
 
 struct FileInfo {
     char * name;
@@ -44,13 +44,13 @@ struct FileInfo {
     U4_T size;
 };
 
-typedef struct FileInfo FileInfo;
+typedef struct LineNumbersState LineNumbersState;
 
 struct LineNumbersState {
     unsigned file;
     unsigned line;
     unsigned column;
-    ADDR_T address;
+    ContextAddress address;
     U1_T isa;
     U1_T is_stmt;
     U1_T basic_block;
@@ -59,11 +59,11 @@ struct LineNumbersState {
     U1_T end_sequence;
 };
 
-typedef struct LineNumbersState LineNumbersState;
+typedef struct CompUnit CompUnit;
 
 struct CompUnit {
-    ADDR_T low_pc;
-    ADDR_T high_pc;
+    ContextAddress low_pc;
+    ContextAddress high_pc;
     U8_T debug_ranges_offs;
     U8_T debug_info_offs;
     U8_T line_info_offs;
@@ -83,7 +83,7 @@ struct CompUnit {
     LineNumbersState * states;
 };
 
-typedef struct CompUnit CompUnit;
+typedef struct LineNumbersCache LineNumbersCache;
 
 struct LineNumbersCache {
     ELF_File * file;
@@ -92,9 +92,8 @@ struct LineNumbersCache {
     U4_T units_cnt;
     ELF_Section * debug_ranges;
     ELF_Section * debug_line;
+    LineNumbersCache * next;
 };
-
-typedef struct LineNumbersCache LineNumbersCache;
 
 static LineNumbersCache * read_cache;
 
@@ -119,11 +118,11 @@ static void read_tag_com_unit(U2_T attr, U2_T form) {
         break;
     case AT_low_pc:
         dio_ChkAddr(form);
-        unit->low_pc = (ADDR_T)dio_gFormRef;
+        unit->low_pc = (ContextAddress)dio_gFormRef;
         break;
     case AT_high_pc:
         dio_ChkAddr(form);
-        unit->high_pc = (ADDR_T)dio_gFormRef;
+        unit->high_pc = (ContextAddress)dio_gFormRef;
         break;
     case AT_ranges:
         dio_ChkData(form);
@@ -191,9 +190,7 @@ static void free_line_numbers_cache(ELF_File * file) {
     }
 }
 
-static LineNumbersCache * get_line_numbers_cache(Context * ctx) {
-    ELF_File * file = elf_open_main(ctx);
-    if (file == NULL) exception(errno);
+static LineNumbersCache * get_line_numbers_cache(ELF_File * file) {
     if (file->line_numbers_cache == NULL) {
         Trap trap;
         if (set_trap(&trap)) {
@@ -356,7 +353,7 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
                     state.is_stmt = is_stmt_default;
                     break;
                 case DW_LNE_set_address:
-                    state.address = (ADDR_T)dio_ReadAddress();
+                    state.address = (ContextAddress)dio_ReadAddress();
                     break;
                 default:
                     dio_Skip(op_size - 1);
@@ -373,7 +370,7 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
                     state.epilogue_begin = 0;
                     break;
                 case DW_LNS_advance_pc:
-                    state.address += (ADDR_T)(dio_ReadU8LEB128() * min_instruction_length);
+                    state.address += (ContextAddress)(dio_ReadU8LEB128() * min_instruction_length);
                     break;
                 case DW_LNS_advance_line:
                     state.line += dio_ReadSLEB128();
@@ -421,10 +418,10 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
     }
 }
 
-static CompUnit * find_unit(LineNumbersCache * cache, ADDR_T addr0, ADDR_T addr1, ADDR_T * addr_next) {
+static CompUnit * find_unit(LineNumbersCache * cache, ContextAddress addr0, ContextAddress addr1, ContextAddress * addr_next) {
     U4_T i;
     CompUnit * unit = NULL;
-    ADDR_T low_pc = 0;
+    ContextAddress low_pc = 0;
     /* TODO: faster unit search */
     for (i = 0; i < cache->units_cnt; i++) {
         CompUnit * u = cache->units + i;
@@ -447,8 +444,8 @@ static CompUnit * find_unit(LineNumbersCache * cache, ADDR_T addr0, ADDR_T addr1
                         if (addr0 < y && addr1 > x) {
                             if (unit == NULL || low_pc > x) {
                                 unit = u;
-                                low_pc = (ADDR_T)x;
-                                *addr_next = (ADDR_T)y;
+                                low_pc = (ContextAddress)x;
+                                *addr_next = (ContextAddress)y;
                             }
                         }
                     }
@@ -469,9 +466,9 @@ static CompUnit * find_unit(LineNumbersCache * cache, ADDR_T addr0, ADDR_T addr1
     return unit;
 }
 
-static void load_line_numbers_in_range(LineNumbersCache * cache, ADDR_T addr0, ADDR_T addr1) {
+static void load_line_numbers_in_range(LineNumbersCache * cache, ContextAddress addr0, ContextAddress addr1) {
     while (addr0 < addr1) {
-        ADDR_T next = 0;
+        ContextAddress next = 0;
         CompUnit * unit = find_unit(cache, addr0, addr1, &next);
         if (unit == NULL) break;
         load_line_numbers(cache, unit);
@@ -494,30 +491,122 @@ static int cmp_file(char * file, char * dir, char * name) {
     return 0;
 }
 
-int line_to_address(Context * ctx, char * file, int line, int column, line_to_address_callback callback, void * user_args) {
+static void write_line_info(OutputStream * out, CompUnit * unit,
+                            ContextAddress addr0, ContextAddress addr1,
+                            int * cnt, FileInfo ** file_info) {
+    U4_T i;
+    FileInfo * state_file = NULL;
+    for (i = 0; i < unit->states_cnt - 1; i++) {
+        LineNumbersState * state = unit->states + i;
+        LineNumbersState * next = unit->states + i + 1;
+        if (state->end_sequence) continue;
+        if (next->address > addr0 && state->address < addr1) {
+            if (*cnt > 0) write_stream(out, ',');
+            write_stream(out, '{');
+            json_write_string(out, "SLine");
+            write_stream(out, ':');
+            json_write_ulong(out, state->line);
+            if (state->column > 0) {
+                write_stream(out, ',');
+                json_write_string(out, "SCol");
+                write_stream(out, ':');
+                json_write_ulong(out, state->column);
+            }
+            write_stream(out, ',');
+            json_write_string(out, "ELine");
+            write_stream(out, ':');
+            json_write_ulong(out, next->line);
+            if (next->column > 0) {
+                write_stream(out, ',');
+                json_write_string(out, "ECol");
+                write_stream(out, ':');
+                json_write_ulong(out, next->column);
+            }
+            state_file = NULL;
+            if (state->file >= 1 && state->file <= unit->files_cnt) {
+                state_file = unit->files + (state->file - 1);
+            }
+            if (*file_info != state_file) {
+                *file_info = state_file;
+                write_stream(out, ',');
+                json_write_string(out, "File");
+                write_stream(out, ':');
+                json_write_string(out, *file_info == NULL ? NULL : (*file_info)->name);
+                write_stream(out, ',');
+                json_write_string(out, "Dir");
+                write_stream(out, ':');
+                json_write_string(out, *file_info == NULL ? NULL : (*file_info)->dir);
+            }
+            write_stream(out, ',');
+            json_write_string(out, "SAddr");
+            write_stream(out, ':');
+            json_write_ulong(out, state->address);
+            write_stream(out, ',');
+            json_write_string(out, "EAddr");
+            write_stream(out, ':');
+            json_write_ulong(out, next->address);
+            if (state->isa != 0) {
+                write_stream(out, ',');
+                json_write_string(out, "ISA");
+                write_stream(out, ':');
+                json_write_ulong(out, state->isa);
+            }
+            if (state->is_stmt) {
+                write_stream(out, ',');
+                json_write_string(out, "IsStmt");
+                write_stream(out, ':');
+                json_write_boolean(out, state->is_stmt);
+            }
+            if (state->basic_block) {
+                write_stream(out, ',');
+                json_write_string(out, "BasicBlock");
+                write_stream(out, ':');
+                json_write_boolean(out, state->basic_block);
+            }
+            if (state->prologue_end) {
+                write_stream(out, ',');
+                json_write_string(out, "PrologueEnd");
+                write_stream(out, ':');
+                json_write_boolean(out, state->prologue_end);
+            }
+            if (state->epilogue_begin) {
+                write_stream(out, ',');
+                json_write_string(out, "EpilogueBegin");
+                write_stream(out, ':');
+                json_write_boolean(out, state->epilogue_begin);
+            }
+            write_stream(out, '}');
+            (*cnt)++;
+        }
+    }
+}
+
+int line_to_address(Context * ctx, char * file_name, int line, int column, LineToAddressCallBack * callback, void * user_args) {
     int err = 0;
-    Trap trap;
-    LineNumbersCache * cache = NULL;
+    ELF_File * file = NULL;
 
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
-    if (err == 0) {
+    file = elf_list_first(ctx, 0, ~(ContextAddress)0);
+    if (file == NULL) err = errno;
+    while (file != NULL) {
+        Trap trap;
         if (set_trap(&trap)) {
             int i;
-            cache = get_line_numbers_cache(ctx);
+            LineNumbersCache * cache = get_line_numbers_cache(file);
             for (i = 0; i < cache->units_cnt; i++) {
                 CompUnit * unit = cache->units + i;
                 int equ = 0;
                 if (unit->dir != NULL && unit->name != NULL) {
-                    equ = cmp_file(file, unit->dir, unit->name);
+                    equ = cmp_file(file_name, unit->dir, unit->name);
                 }
                 if (!equ) {
                     int j;
                     for (j = 0; j < unit->files_cnt; j++) {
                         FileInfo * f = unit->files + j;
                         if (f->dir != NULL && f->name != NULL) {
-                            equ = cmp_file(file, f->dir, f->name);
+                            equ = cmp_file(file_name, f->dir, f->name);
                             if (equ) break;
                         }
                     }
@@ -538,7 +627,7 @@ int line_to_address(Context * ctx, char * file, int line, int column, line_to_ad
                             state_dir = f->dir;
                             state_name = f->name;
                         }
-                        if (!cmp_file(file, state_dir, state_name)) continue;
+                        if (!cmp_file(file_name, state_dir, state_name)) continue;
                         callback(user_args, state->address);
                     }
                 }
@@ -547,10 +636,12 @@ int line_to_address(Context * ctx, char * file, int line, int column, line_to_ad
         }
         else {
             err = trap.error;
+            break;
         }
+        file = elf_list_next(ctx);
+        if (file == NULL) err = errno;
     }
-
-    if (cache != NULL) elf_close(cache->file);
+    elf_list_done(ctx);
 
     if (err != 0) {
         errno = err;
@@ -563,11 +654,11 @@ static void command_map_to_source(char * token, Channel * c) {
     int err = 0;
     char * err_msg = NULL;
     char id[256];
-    ADDR_T addr0;
-    ADDR_T addr1;
+    ContextAddress addr0;
+    ContextAddress addr1;
     Context * ctx = NULL;
-    LineNumbersCache * cache = NULL;
-    Trap trap;
+    LineNumbersCache * cache_first = NULL;
+    LineNumbersCache * cache_last = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -582,15 +673,32 @@ static void command_map_to_source(char * token, Channel * c) {
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
     if (err == 0) {
-        if (set_trap(&trap)) {
-            cache = get_line_numbers_cache(ctx);
-            load_line_numbers_in_range(cache, addr0, addr1);
-            clear_trap(&trap);
+        ELF_File * file = elf_list_first(ctx, addr0, addr1);
+        if (file == NULL) err = errno;
+        while (file != NULL) {
+            Trap trap;
+            if (set_trap(&trap)) {
+                LineNumbersCache * cache = get_line_numbers_cache(file);
+                load_line_numbers_in_range(cache, addr0, addr1);
+                clear_trap(&trap);
+                if (cache_last == NULL) {
+                    cache_first = cache;
+                }
+                else {
+                    cache_last->next = cache;
+                }
+                cache_last = cache;
+                cache->file->ref_cnt++;
+            }
+            else {
+                err = trap.error;
+                err_msg = trap.msg;
+                break;
+            }
+            file = elf_list_next(ctx);
+            if (file == NULL) err = errno;
         }
-        else {
-            err = trap.error;
-            err_msg = trap.msg;
-        }
+        elf_list_done(ctx);
     }
 
     write_stringz(&c->out, "R");
@@ -601,106 +709,33 @@ static void command_map_to_source(char * token, Channel * c) {
     }
     else {
         int cnt = 0;
-        FileInfo * file = NULL;
-        c->out.write(&c->out, '[');
-        while (addr0 < addr1) {
-            U4_T i;
-            ADDR_T next = 0;
-            FileInfo * state_file = NULL;
-            CompUnit * unit = find_unit(cache, addr0, addr1, &next);
-            if (unit == NULL) break;
-
-            for (i = 0; i < unit->states_cnt - 1; i++) {
-                LineNumbersState * state = unit->states + i;
-                LineNumbersState * next = unit->states + i + 1;
-                if (state->end_sequence) continue;
-                if (next->address > addr0 && state->address < addr1) {
-                    if (cnt > 0) c->out.write(&c->out, ',');
-                    c->out.write(&c->out, '{');
-                    json_write_string(&c->out, "SLine");
-                    c->out.write(&c->out, ':');
-                    json_write_ulong(&c->out, state->line);
-                    if (state->column > 0) {
-                        c->out.write(&c->out, ',');
-                        json_write_string(&c->out, "SCol");
-                        c->out.write(&c->out, ':');
-                        json_write_ulong(&c->out, state->column);
-                    }
-                    c->out.write(&c->out, ',');
-                    json_write_string(&c->out, "ELine");
-                    c->out.write(&c->out, ':');
-                    json_write_ulong(&c->out, next->line);
-                    if (next->column > 0) {
-                        c->out.write(&c->out, ',');
-                        json_write_string(&c->out, "ECol");
-                        c->out.write(&c->out, ':');
-                        json_write_ulong(&c->out, next->column);
-                    }
-                    state_file = NULL;
-                    if (state->file >= 1 && state->file <= unit->files_cnt) {
-                        state_file = unit->files + (state->file - 1);
-                    }
-                    if (file != state_file) {
-                        file = state_file;
-                        c->out.write(&c->out, ',');
-                        json_write_string(&c->out, "File");
-                        c->out.write(&c->out, ':');
-                        json_write_string(&c->out, file == NULL ? NULL : file->name);
-                        c->out.write(&c->out, ',');
-                        json_write_string(&c->out, "Dir");
-                        c->out.write(&c->out, ':');
-                        json_write_string(&c->out, file == NULL ? NULL : file->dir);
-                    }
-                    c->out.write(&c->out, ',');
-                    json_write_string(&c->out, "SAddr");
-                    c->out.write(&c->out, ':');
-                    json_write_ulong(&c->out, state->address);
-                    c->out.write(&c->out, ',');
-                    json_write_string(&c->out, "EAddr");
-                    c->out.write(&c->out, ':');
-                    json_write_ulong(&c->out, next->address);
-                    if (state->isa != 0) {
-                        c->out.write(&c->out, ',');
-                        json_write_string(&c->out, "ISA");
-                        c->out.write(&c->out, ':');
-                        json_write_ulong(&c->out, state->isa);
-                    }
-                    if (state->is_stmt) {
-                        c->out.write(&c->out, ',');
-                        json_write_string(&c->out, "IsStmt");
-                        c->out.write(&c->out, ':');
-                        json_write_boolean(&c->out, state->is_stmt);
-                    }
-                    if (state->basic_block) {
-                        c->out.write(&c->out, ',');
-                        json_write_string(&c->out, "BasicBlock");
-                        c->out.write(&c->out, ':');
-                        json_write_boolean(&c->out, state->basic_block);
-                    }
-                    if (state->prologue_end) {
-                        c->out.write(&c->out, ',');
-                        json_write_string(&c->out, "PrologueEnd");
-                        c->out.write(&c->out, ':');
-                        json_write_boolean(&c->out, state->prologue_end);
-                    }
-                    if (state->epilogue_begin) {
-                        c->out.write(&c->out, ',');
-                        json_write_string(&c->out, "EpilogueBegin");
-                        c->out.write(&c->out, ':');
-                        json_write_boolean(&c->out, state->epilogue_begin);
-                    }
-                    c->out.write(&c->out, '}');
-                    cnt++;
+        FileInfo * file_info = NULL;
+        LineNumbersCache * cache = cache_first;
+        write_stream(&c->out, '[');
+        while (cache != NULL) {
+            Trap trap;
+            if (set_trap(&trap)) {
+                while (err == 0 && addr0 < addr1) {
+                    ContextAddress next = 0;
+                    CompUnit * unit = find_unit(cache, addr0, addr1, &next);
+                    if (unit == NULL) break;
+                    write_line_info(&c->out, unit, addr0, addr1, &cnt, &file_info);
+                    addr0 = next;
                 }
+                clear_trap(&trap);
             }
-
-            addr0 = next;
+            else {
+                err = trap.error;
+                err_msg = trap.msg;
+            }
+            cache->file->ref_cnt--;
+            if (cache == cache_last) break;
+            cache = cache->next;
         }
-        c->out.write(&c->out, ']');
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, ']');
+        write_stream(&c->out, 0);
     }
-    c->out.write(&c->out, MARKER_EOM);
-    if (cache != NULL) elf_close(cache->file);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 void ini_line_numbers_service(Protocol * proto) {

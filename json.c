@@ -283,7 +283,7 @@ int64 json_read_int64(InputStream * inp) {
     return res;
 }
 
-int json_read_struct(InputStream * inp, struct_call_back call_back, void * arg) {
+int json_read_struct(InputStream * inp, JsonStructCallBack * call_back, void * arg) {
     int ch = read_stream(inp);
     if (ch == 'n') {
         if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);

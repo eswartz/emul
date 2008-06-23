@@ -262,7 +262,6 @@ static void command_get_children(char * token, Channel * c) {
         int cnt = 0;
         for (qp = context_root.next; qp != &context_root; qp = qp->next) {
             Context * ctx = ctxl2ctxp(qp);
-            if (ctx->pending_attach || ctx->pending_clone) continue;
             if (ctx->exited) continue;
             if (ctx->parent != NULL) continue;
             if (cnt > 0) c->out.write(&c->out, ',');
@@ -636,7 +635,6 @@ static void continue_temporary_stopped(void * arg) {
 
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
         Context * ctx = ctxl2ctxp(qp);
-        if (ctx->pending_attach || ctx->pending_clone) continue;
         if (ctx->exited) continue;
         if (!ctx->stopped) continue;
         if (ctx->intercepted) continue;
@@ -652,28 +650,26 @@ static void run_safe_events(void * arg) {
     assert(are_channels_suspended(suspend_group));
 
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
+        int error = 0;
         Context * ctx = ctxl2ctxp(qp);
         if (ctx->exited || ctx->exiting) continue;
-        if (!ctx->pending_attach && !ctx->pending_clone) {
-            int error = 0;
-            if (ctx->stopped) continue;
-            if (!context_has_state(ctx)) continue;
-            if (ctx->pending_step && ctx->pending_safe_event < STOP_ALL_MAX_CNT / 2) continue;
-            if (context_stop(ctx) < 0) {
-                error = errno;
+        if (ctx->stopped) continue;
+        if (!context_has_state(ctx)) continue;
+        if (ctx->pending_step && ctx->pending_safe_event < STOP_ALL_MAX_CNT / 2) continue;
+        if (context_stop(ctx) < 0) {
+            error = errno;
 #ifdef _WRS_KERNEL
-                if (error == S_vxdbgLib_INVALID_CTX) {
-                    /* Most often this means that context has exited,
-                     * but exit event is not delivered yet.
-                     * Not an error. */
-                    error = 0;
-                }
+            if (error == S_vxdbgLib_INVALID_CTX) {
+                /* Most often this means that context has exited,
+                 * but exit event is not delivered yet.
+                 * Not an error. */
+                error = 0;
+            }
 #endif                
-            }
-            if (error) {
-                trace(LOG_ALWAYS, "error: can't temporary stop pid %d; error %d: %s",
-                    ctx->pid, error, errno_to_str(error));
-            }
+        }
+        if (error) {
+            trace(LOG_ALWAYS, "error: can't temporary stop pid %d; error %d: %s",
+                ctx->pid, error, errno_to_str(error));
         }
         if (!ctx->pending_safe_event) {
             ctx->pending_safe_event = 1;
@@ -760,15 +756,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     assert(!ctx->intercepted);
     assert(!ctx->exited);
     if (ctx->pending_safe_event) check_safe_events(ctx);
-    if (ctx->stopped_by_bp) {
-        if (evaluate_breakpoint_condition(ctx)) {
-            ctx->pending_intercept = 1;
-        }
-        else {
-            skip_breakpoint(ctx);
-        }
-    }
-    else if (ctx->signal != SIGSTOP && ctx->signal != SIGTRAP) {
+    if (ctx->signal != SIGSTOP && ctx->signal != SIGTRAP) {
         send_event_context_exception(&bcg->out, ctx);
         ctx->pending_intercept = 1;
     }
@@ -788,7 +776,6 @@ static void event_context_started(Context * ctx, void * client_data) {
     if (ctx->intercepted) {
         send_event_context_resumed(&bcg->out, ctx);
     }
-    ctx->stopped_by_bp = 0;
     if (safe_event_list) {
         if (!ctx->pending_step) {
             context_stop(ctx);

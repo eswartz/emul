@@ -28,26 +28,11 @@
 #include "symbols.h"
 #include "trace.h"
 
+#define SYM_SEARCH_PATH "http://msdl.microsoft.com/download/symbols"
+
 #ifndef MAX_SYM_NAME
 #  define MAX_SYM_NAME 2000
 #endif
-
-int set_symbol_context(Context * ctx) {
-    if (ctx->parent != NULL) ctx = ctx->parent;
-    assert(ctx->pid == ctx->mem);
-    if (!ctx->sym_handler_loaded) {
-        if (!SymInitialize(ctx->handle, NULL, FALSE)) {
-            set_win32_errno(GetLastError());
-            return -1;
-        }
-        if (!SymLoadModule(ctx->handle, ctx->file_handle, NULL, NULL, (DWORD)ctx->base_address, 0)) {
-            set_win32_errno(GetLastError());
-            return -1;
-        }
-        ctx->sym_handler_loaded = 1;
-    }
-    return 0;
-}
 
 int find_symbol(Context * ctx, char * name, Symbol * sym) {
 
@@ -67,16 +52,16 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
     sym->storage = "GLOBAL";
     sym->abs = 1;
     if (strcmp(name, "tcf_test_func0") == 0) {
-        sym->value = (unsigned long)tcf_test_func0;
+        sym->value = (ContextAddress)tcf_test_func0;
     }
     else if (strcmp(name, "tcf_test_func1") == 0) {
-        sym->value = (unsigned long)tcf_test_func1;
+        sym->value = (ContextAddress)tcf_test_func1;
     }
     else if (strcmp(name, "tcf_test_func2") == 0) {
-        sym->value = (unsigned long)tcf_test_func2;
+        sym->value = (ContextAddress)tcf_test_func2;
     }
     else if (strcmp(name, "tcf_test_array") == 0) {
-        sym->value = (unsigned long)&tcf_test_array;
+        sym->value = (ContextAddress)&tcf_test_array;
     }
     else {
         error = EINVAL;
@@ -93,7 +78,6 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
     PIMAGEHLP_SYMBOL symbol = (PIMAGEHLP_SYMBOL)sym_buf;
 
     if (ctx->parent != NULL) ctx = ctx->parent;
-    if (set_symbol_context(ctx) != 0) return -1;
 
     memset(sym, 0, sizeof(Symbol));
     symbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
@@ -104,7 +88,7 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
         return -1;
     }
 
-    sym->value = (unsigned long)symbol->Address;
+    sym->value = (ContextAddress)symbol->Address;
     sym->abs = 1;
 
     sym->storage = "GLOBAL";
@@ -114,37 +98,70 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
 #endif
 }
 
-unsigned long is_plt_section(Context * ctx, unsigned long addr) {
+ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     return 0;
 }
 
+static void event_context_created(Context * ctx, void * client_data) {
+    if (ctx->parent != NULL) return;
+    assert(ctx->pid == ctx->mem);
+    if (!SymInitialize(ctx->handle, SYM_SEARCH_PATH, FALSE)) {
+        set_win32_errno(GetLastError());
+        trace(LOG_ALWAYS, "SymInitialize() error: %d: %s",
+            errno, errno_to_str(errno));
+    }
+    if (!SymLoadModule(ctx->handle, ctx->file_handle, NULL, NULL, (DWORD)ctx->base_address, 0)) {
+        set_win32_errno(GetLastError());
+        trace(LOG_ALWAYS, "SymLoadModule() error: %d: %s",
+            errno, errno_to_str(errno));
+    }
+}
+
 static void event_context_exited(Context * ctx, void * client_data) {
+    if (ctx->parent != NULL) return;
     assert(ctx->handle != NULL);
-    if (ctx->sym_handler_loaded) {
-        if (!SymUnloadModule(ctx->handle, (DWORD)ctx->base_address)) {
+    if (!SymUnloadModule(ctx->handle, (DWORD)ctx->base_address)) {
+        set_win32_errno(GetLastError());
+        trace(LOG_ALWAYS, "SymUnloadModule() error: %d: %s",
+            errno, errno_to_str(errno));
+    }
+    if (!SymCleanup(ctx->handle)) {
+        set_win32_errno(GetLastError());
+        trace(LOG_ALWAYS, "SymCleanup() error: %d: %s",
+            errno, errno_to_str(errno));
+    }
+}
+
+static void event_context_changed(Context * ctx, void * client_data) {
+    if (ctx->module_loaded) {
+        assert(ctx->pid == ctx->mem);
+        if (!SymLoadModule(ctx->handle, ctx->module_handle, NULL, NULL, (DWORD)ctx->module_address, 0)) {
+            set_win32_errno(GetLastError());
+            trace(LOG_ALWAYS, "SymLoadModule() error: %d: %s",
+                errno, errno_to_str(errno));
+        }
+    }
+    else if (ctx->module_unloaded) {
+        assert(ctx->pid == ctx->mem);
+        assert(ctx->handle != NULL);
+        if (!SymUnloadModule(ctx->handle, (DWORD)ctx->module_address)) {
             set_win32_errno(GetLastError());
             trace(LOG_ALWAYS, "SymUnloadModule() error: %d: %s",
                 errno, errno_to_str(errno));
         }
-        if (!SymCleanup(ctx->handle)) {
-            set_win32_errno(GetLastError());
-            trace(LOG_ALWAYS, "SymCleanup() error: %d: %s",
-                errno, errno_to_str(errno));
-        }
-        ctx->sym_handler_loaded = 0;
     }
 }
 
 void ini_symbols_service(void) {
     static ContextEventListener listener = {
-        NULL,
+        event_context_created,
         event_context_exited,
         NULL,
         NULL,
-        NULL
+        event_context_changed
     };
     add_context_event_listener(&listener, NULL);
-    SymSetOptions(SYMOPT_UNDNAME | SYMOPT_LOAD_LINES);
+    SymSetOptions(SYMOPT_UNDNAME | SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS);
 }
 
 

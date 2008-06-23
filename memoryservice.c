@@ -46,7 +46,7 @@ static const char * MEMORY = "Memory";
 struct MemoryCommandArgs {
     Channel * c;
     char token[256];
-    unsigned long addr;
+    ContextAddress addr;
     unsigned long size;
     int word_size;
     int mode;
@@ -87,7 +87,7 @@ static void write_context(OutputStream * out, Context * ctx) {
     out->write(out, '}');
 }
 
-static void write_ranges(OutputStream * out, unsigned long addr, int size, int offs, int status, char * msg) {
+static void write_ranges(OutputStream * out, ContextAddress addr, int size, int offs, int status, char * msg) {
     out->write(out, '[');
     if (offs > 0) {
         out->write(out, '{');
@@ -182,7 +182,6 @@ static void command_get_children(char * token, Channel * c) {
         int cnt = 0;
         for (qp = context_root.next; qp != &context_root; qp = qp->next) {
             Context * ctx = ctxl2ctxp(qp);
-            if (ctx->pending_attach || ctx->pending_clone) continue;
             if (ctx->exited) continue;
             if (ctx->parent != NULL) continue;
             if (cnt > 0) c->out.write(&c->out, ',');
@@ -247,7 +246,7 @@ static struct MemoryCommandArgs * read_command_args(char * token, Channel * c, i
     }
 }
 
-static void send_event_memory_changed(OutputStream * out, Context * ctx, unsigned long addr, unsigned long size) {
+static void send_event_memory_changed(OutputStream * out, Context * ctx, ContextAddress addr, unsigned long size) {
     write_stringz(out, "E");
     write_stringz(out, MEMORY);
     write_stringz(out, "memoryChanged");
@@ -282,8 +281,8 @@ static void safe_memory_set(void * parm) {
     InputStream * inp = &c->inp;
     OutputStream * out = &c->out;
     char * token = args->token;
-    unsigned long addr0 = args->addr;
-    unsigned long addr = args->addr;
+    ContextAddress addr0 = args->addr;
+    ContextAddress addr = args->addr;
     unsigned long size = 0;
     int word_size = args->word_size;
     int mode = args->mode;
@@ -344,8 +343,8 @@ static void safe_memory_get(void * parm) {
     Channel * c = args->c;
     OutputStream * out = &args->c->out;
     char * token = args->token;
-    unsigned long addr0 = args->addr;
-    unsigned long addr = args->addr;
+    ContextAddress addr0 = args->addr;
+    ContextAddress addr = args->addr;
     unsigned long size = args->size;
     int word_size = args->word_size;
     int mode = args->mode;
@@ -403,8 +402,8 @@ static void safe_memory_fill(void * parm) {
     InputStream * inp = &c->inp;
     OutputStream * out = &c->out;
     char * token = args->token;
-    unsigned long addr0 = args->addr;
-    unsigned long addr = args->addr;
+    ContextAddress addr0 = args->addr;
+    ContextAddress addr = args->addr;
     unsigned long size = args->size;
     int word_size = args->word_size;
     int mode = args->mode;

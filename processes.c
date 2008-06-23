@@ -55,7 +55,6 @@ typedef struct AttachDoneArgs AttachDoneArgs;
 
 struct AttachDoneArgs {
     Channel * c;
-    Context * ctx;
     char token[256];
 };
 
@@ -252,27 +251,25 @@ static void command_get_children(char * token, Channel * c) {
     c->out.write(&c->out, MARKER_EOM);
 }
 
-static void attach_done(void * arg) {
-    AttachDoneArgs * p = arg;
-    Channel * c = p->c;
+static void attach_done(int error, Context * ctx, void * arg) {
+    AttachDoneArgs * data = arg;
+    Channel * c = data->c;
 
     if (!is_stream_closed(c)) {
         write_stringz(&c->out, "R");
-        write_stringz(&c->out, p->token);
-        write_errno(&c->out, 0);
+        write_stringz(&c->out, data->token);
+        write_errno(&c->out, error);
         c->out.write(&c->out, MARKER_EOM);
+        c->out.flush(&c->out);
     }
-    context_unlock(p->ctx);
-    c->out.flush(&c->out);
     stream_unlock(c);
-    loc_free(p);
+    loc_free(data);
 }
 
 static void command_attach(char * token, Channel * c) {
     int err = 0;
     char id[256];
     pid_t pid, parent;
-    Context * ctx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -287,23 +284,19 @@ static void command_attach(char * token, Channel * c) {
         err = ERR_ALREADY_ATTACHED;
     }
     else {
-        if (context_attach(pid, &ctx, 0) < 0) err = errno;
-    }
-    if (!err && ctx) {
-        AttachDoneArgs * p = loc_alloc_zero(sizeof *p);
-        p->c = c;
-        p->ctx = ctx;
-        strcpy(p->token, token);
+        AttachDoneArgs * data = loc_alloc_zero(sizeof *data);
+        data->c = c;
+        strcpy(data->token, token);
         stream_lock(c);
-        context_lock(ctx);
-        post_safe_event(attach_done, p);
+        if (context_attach(pid, attach_done, data, 0) == 0) return;
+        err = errno;
+        stream_unlock(c);
+        loc_free(data);
     }
-    else {
-        write_stringz(&c->out, "R");
-        write_stringz(&c->out, token);
-        write_errno(&c->out, err);
-        c->out.write(&c->out, MARKER_EOM);
-    }
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    c->out.write(&c->out, MARKER_EOM);
 }
 
 static void command_detach(char * token, Channel * c) {
@@ -401,26 +394,25 @@ static void command_get_environment(char * token, Channel * c) {
     c->out.write(&c->out, MARKER_EOM);
 }
 
-static void start_done(void * arg) {
-    AttachDoneArgs * p = arg;
-    Channel * c = p->c;
+static void start_done(int error, Context * ctx, void * arg) {
+    AttachDoneArgs * data = arg;
+    Channel * c = data->c;
 
     if (!is_stream_closed(c)) {
         write_stringz(&c->out, "R");
-        write_stringz(&c->out, p->token);
-        write_errno(&c->out, 0);
-        write_context(&c->out, p->ctx->pid);
+        write_stringz(&c->out, data->token);
+        write_errno(&c->out, error);
+        if (ctx == NULL) write_string(&c->out, "null");
+        else write_context(&c->out, ctx->pid);
         c->out.write(&c->out, 0);
         c->out.write(&c->out, MARKER_EOM);
+        c->out.flush(&c->out);
     }
-    context_unlock(p->ctx);
-    c->out.flush(&c->out);
     stream_unlock(c);
-    loc_free(p);
+    loc_free(data);
 }
 
 static void command_start(char * token, Channel * c) {
-    Context * ctx = NULL;
     int pid = 0;
     int err = 0;
     char dir[FILE_PATH_SIZE];
@@ -431,6 +423,7 @@ static void command_start(char * token, Channel * c) {
     int envp_len = 0;
     int attach = 0;
     int selfattach = 0;
+    int pending = 0;
     Trap trap;
 
     if (set_trap(&trap)) {
@@ -538,20 +531,19 @@ static void command_start(char * token, Channel * c) {
             selfattach = 1;
 #endif            
         }
-        if (attach) {
-            if (err == 0 && context_attach(pid, &ctx, selfattach) < 0) err = errno;
-            if (ctx != NULL && !ctx->stopped) ctx->pending_intercept = 1;
-        }
-        if (!err && ctx) {
-            AttachDoneArgs * p = loc_alloc_zero(sizeof *p);
-            p->c = c;
-            p->ctx = ctx;
-            strcpy(p->token, token);
+        if (attach && err == 0) {
+            AttachDoneArgs * data = loc_alloc_zero(sizeof *data);
+            data->c = c;
+            strcpy(data->token, token);
             stream_lock(c);
-            context_lock(ctx);
-            post_safe_event(start_done, p);
+            pending = context_attach(pid, start_done, data, selfattach) == 0;
+            if (!pending) {
+                err = errno;
+                stream_unlock(c);
+                loc_free(data);
+            }
         }
-        else {
+        if (!pending) {
             write_stringz(&c->out, "R");
             write_stringz(&c->out, token);
             write_errno(&c->out, err);
