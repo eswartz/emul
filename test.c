@@ -75,13 +75,33 @@ void test_proc(void) {
     }
 }
 
+#if defined(WIN32)
+typedef struct ContextAttachArgs {
+    ContextAttachCallBack * done;
+    void * data;
+    HANDLE thread;
+    HANDLE process;
+} ContextAttachArgs;
+
+static void done_context_attach(int error, Context * ctx, void * data) {
+    ContextAttachArgs * args = (ContextAttachArgs *)data;
+    args->done(error, ctx, args->data);
+    assert(error || args->process != ctx->handle);
+    CloseHandle(args->thread);
+    CloseHandle(args->process);
+    loc_free(args);
+}
+#endif
+
 int run_test_process(ContextAttachCallBack * done, void * data) {
 #if defined(WIN32)
-    int cp_cnt = 0;
     char fnm[FILE_PATH_SIZE];
     char cmd[FILE_PATH_SIZE];
+    int res = 0;
     STARTUPINFO si;
     PROCESS_INFORMATION prs;
+    ContextAttachArgs * args;
+
     memset(&si, 0, sizeof(si));
     memset(&prs, 0, sizeof(prs));
     memset(fnm, 0, sizeof(fnm));
@@ -91,21 +111,20 @@ int run_test_process(ContextAttachCallBack * done, void * data) {
     }
     si.cb = sizeof(si);
     strcpy(cmd, "agent.exe -t");
-    while (CreateProcess(fnm, cmd, NULL, NULL,
-            FALSE, CREATE_SUSPENDED | CREATE_DEFAULT_ERROR_MODE,
+    if (CreateProcess(fnm, cmd, NULL, NULL,
+            FALSE, CREATE_SUSPENDED | CREATE_DEFAULT_ERROR_MODE | CREATE_NO_WINDOW,
             NULL, NULL, &si, &prs) == 0) {
-        DWORD win32_err = GetLastError();
-        if (cp_cnt < 10 && win32_err == ERROR_INVALID_HANDLE) {
-            cp_cnt++;
-            Sleep(100);
-            continue;
-        }
-        set_win32_errno(win32_err);
+        set_win32_errno(GetLastError());
         return -1;
     }
-    CloseHandle(prs.hThread);
-    CloseHandle(prs.hProcess);
-    return context_attach(prs.dwProcessId, done, data, 0);
+    args = (ContextAttachArgs *)loc_alloc(sizeof(ContextAttachArgs));
+    args->done = done;
+    args->data = data;
+    args->thread = prs.hThread;
+    args->process = prs.hProcess;
+    res = context_attach(prs.dwProcessId, done_context_attach, args, 0);
+    if (res != 0) loc_free(args);
+    return res;
 #elif defined(_WRS_KERNEL)
     int tid = taskCreate("tTcf", 100, 0, 0x4000, (FUNCPTR)test_proc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     if (tid == 0) return -1;

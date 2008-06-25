@@ -58,15 +58,9 @@ static const int
     ATTR_ACMODTIME          = 0x00000008;
 
 static const int
-    STATUS_OK = 0,
-    STATUS_EOF = 1,
-    STATUS_NO_SUCH_FILE = 2,
-    STATUS_PERMISSION_DENIED = 3,
-    STATUS_FAILURE = 4,
-    STATUS_BAD_MESSAGE = 5,
-    STATUS_NO_CONNECTION = 6,
-    STATUS_CONNECTION_LOST = 7,
-    STATUS_OP_UNSUPPORTED = 8;
+    FSERR_EOF               = 0x10001,
+    FSERR_NO_SUCH_FILE      = 0x10002,
+    FSERR_PERMISSION_DENIED = 0x10003;
 
 typedef struct OpenFileInfo OpenFileInfo;
 
@@ -182,27 +176,19 @@ static void write_fs_errno(OutputStream * out, int err) {
     char * msg = NULL;
     int status = 0;
     switch (err) {
-    case 0:
-        status = STATUS_OK;
-        break;
     case ERR_EOF:
-        status = STATUS_EOF;
+        write_service_error(out, err, FILE_SYSTEM, FSERR_EOF);
         break;
     case ENOENT:
-        status = STATUS_NO_SUCH_FILE;
+        write_service_error(out, err, FILE_SYSTEM, FSERR_NO_SUCH_FILE);
         break;
     case EACCES:
-        status = STATUS_PERMISSION_DENIED;
+        write_service_error(out, err, FILE_SYSTEM, FSERR_PERMISSION_DENIED);
         break;
     default:
-        status = STATUS_FAILURE;
+        write_errno(out, err);
         break;
     }
-    json_write_long(out, status);
-    out->write(out, 0);
-    if (err != 0) msg = errno_to_str(err);
-    json_write_string(out, msg);
-    out->write(out, 0);
 }
 
 static void write_file_handle(OutputStream * out, OpenFileInfo * h) {

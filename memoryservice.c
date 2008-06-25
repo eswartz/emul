@@ -87,7 +87,7 @@ static void write_context(OutputStream * out, Context * ctx) {
     out->write(out, '}');
 }
 
-static void write_ranges(OutputStream * out, ContextAddress addr, int size, int offs, int status, char * msg) {
+static void write_ranges(OutputStream * out, ContextAddress addr, int size, int offs, int status, int err) {
     out->write(out, '[');
     if (offs > 0) {
         out->write(out, '{');
@@ -129,7 +129,7 @@ static void write_ranges(OutputStream * out, ContextAddress addr, int size, int 
 
         json_write_string(out, "msg");
         out->write(out, ':');
-        json_write_string(out, msg);
+        write_errno(out, err);
 
         out->write(out, '}');
     }
@@ -156,11 +156,11 @@ static void command_get_context(char * token, Channel * c) {
     write_errno(&c->out, err);
     if (err == 0) {
         write_context(&c->out, ctx);
+        c->out.write(&c->out, 0);
     }
     else {
         write_stringz(&c->out, "null");
     }
-    c->out.write(&c->out, 0);
     c->out.write(&c->out, MARKER_EOM);
 }
 
@@ -324,7 +324,7 @@ static void safe_memory_set(void * parm) {
     else {
         char msg[0x400];
         strncpy(msg, errno_to_str(err), sizeof(msg));
-        write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, msg);
+        write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
     }
     out->write(out, MARKER_EOM);
     out->flush(out);
@@ -382,7 +382,7 @@ static void safe_memory_get(void * parm) {
     else {
         char msg[0x400];
         strncpy(msg, errno_to_str(err), sizeof(msg));
-        write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_READ, msg);
+        write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_READ, err);
     }
     out->write(out, MARKER_EOM);
     out->flush(out);
@@ -473,7 +473,7 @@ static void safe_memory_fill(void * parm) {
     else {
         char msg[0x400];
         strncpy(msg, errno_to_str(err), sizeof(msg));
-        write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, msg);
+        write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
     }
     out->write(out, MARKER_EOM);
     out->flush(out);

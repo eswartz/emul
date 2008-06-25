@@ -21,7 +21,7 @@
 #include "events.h"
 #include "trace.h"
 
-#define ERR_SYSTEM              0x2000
+#define ERR_SYSTEM  STD_ERR_BASE
 
 #ifdef WIN32
 
@@ -42,11 +42,11 @@ static char * system_strerror(void) {
         0,
         NULL))
     {
-        snprintf(msg, sizeof(msg), "WIN32 error code 0x%08x", errno_win32);
+        snprintf(msg, sizeof(msg), "System Error Code %d", errno_win32);
     }
     else {
         int l;
-        snprintf(msg, sizeof(msg), "0x%08x: %s", errno_win32, msg_buf, sizeof(msg));
+        snprintf(msg, sizeof(msg), "System Error %d: %s", errno_win32, msg_buf, sizeof(msg));
         LocalFree(msg_buf);
         l = strlen(msg);
         while (l > 0 && (msg[l - 1] == '\n' || msg[l - 1] == '\r')) l--;
@@ -55,7 +55,7 @@ static char * system_strerror(void) {
     return msg;
 }
 
-void set_win32_errno(DWORD win32_error_code) {
+int set_win32_errno(DWORD win32_error_code) {
     assert(is_dispatch_thread());
     /* For WIN32 errors we always set errno to ERR_SYSTEM and
      * store actual error code in errno_win32, which is used later
@@ -63,6 +63,7 @@ void set_win32_errno(DWORD win32_error_code) {
      */
     errno = ERR_SYSTEM;
     errno_win32 = win32_error_code;
+    return errno;
 }
 
 #else
@@ -107,7 +108,7 @@ char * errno_to_str(int err) {
         return "Invalid number";
     case ERR_IS_RUNNING:
         return "Execution context is running";
-    case ERR_DWARF:
+    case ERR_INV_DWARF:
         return "Error reading DWARF data";
     case ERR_UNSUPPORTED:
         return "Unsupported command";
@@ -116,7 +117,7 @@ char * errno_to_str(int err) {
     case ERR_COMMAND_CANCELLED:
         return "Command cancelled";
     case ERR_UNKNOWN_PEER:
-        return "Unknown peer id";
+        return "Unknown peer ID";
     case ERR_INV_DATA_SIZE:
         return "Invalid data size";
     case ERR_SYSTEM:

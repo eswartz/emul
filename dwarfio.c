@@ -338,7 +338,7 @@ static U1_T * dio_LoadStringTable(U4_T * StringTableSize) {
         for (ID = 1; ID < File->section_cnt; ID++) {
             if (strcmp(File->sections[ID]->name, ".debug_str") == 0) {
                 if (Section != NULL) {
-                    str_exception(ERR_DWARF, "more then one .debug_str section in a file");
+                    str_exception(ERR_INV_DWARF, "more then one .debug_str section in a file");
                 }
                 Section = File->sections[ID];
                 assert(Section->file == File);
@@ -346,12 +346,12 @@ static U1_T * dio_LoadStringTable(U4_T * StringTableSize) {
         }
 
         if (Section == NULL) {
-            str_exception(ERR_DWARF, "section .debug_str not found");
+            str_exception(ERR_INV_DWARF, "section .debug_str not found");
         }
 
         Cache->mStringTableSize = (size_t)Section->size;
         if (elf_load(Section, &Cache->mStringTable) < 0) {
-            str_exception(ERR_DWARF, "invalid .debug_str section");
+            str_exception(ERR_INV_DWARF, "invalid .debug_str section");
         }
     }
 
@@ -390,7 +390,7 @@ static void dio_ReadFormRef(void) {
 
 static void dio_ReadFormRelRef(U8_T Offset) {
     if (dio_gUnitSize > 0 && Offset >= dio_gUnitSize) {
-        str_exception(ERR_DWARF, "invalid REF attribute value");
+        str_exception(ERR_INV_DWARF, "invalid REF attribute value");
     }
     dio_gFormRef = dio_gUnitPos + Offset;
 }
@@ -419,7 +419,7 @@ static void dio_ReadFormStringRef(void) {
     for (;;) {
         U1_T Char;
         if (Offset >= StringTableSize) {
-            str_exception(ERR_DWARF, "invalid FORM_STRP attribute");
+            str_exception(ERR_INV_DWARF, "invalid FORM_STRP attribute");
         }
         dio_CheckBlockBufCapacity(dio_gFormBlockSize + 1);
         Char = StringTable[Offset++];
@@ -451,7 +451,7 @@ static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
     case FORM_REF4      : dio_ReadFormRelRef(dio_ReadU4()); break;
     case FORM_REF8      : dio_ReadFormRelRef(dio_ReadU8()); break;
     case FORM_REF_UDATA : dio_ReadFormRelRef(dio_ReadULEB128()); break;
-    default: str_exception(ERR_DWARF, "invalid FORM");
+    default: str_exception(ERR_INV_DWARF, "invalid FORM");
     }
 }
 
@@ -466,7 +466,7 @@ static void dio_ReadEntry(DIO_EntryCallBack CallBack) {
         U4_T AbbrCode = dio_ReadULEB128();
         if (AbbrCode == 0) return;
         if (AbbrCode >= sAbbrevTableSize || sAbbrevTable[AbbrCode] == NULL) {
-            str_exception(ERR_DWARF, "invalid abbreviation table");
+            str_exception(ERR_INV_DWARF, "invalid abbreviation table");
         }
         Abbr =  sAbbrevTable[AbbrCode];
         Tag = Abbr->mTag;
@@ -513,7 +513,7 @@ static void dio_ReadEntry(DIO_EntryCallBack CallBack) {
                 assert(dio_gUnitPos + dio_gUnitSize >= dio_GetPos());
             }
             else if (Attr == 0 && Form == 0) {
-                if (dio_gUnitSize == 0) str_exception(ERR_DWARF, "missing compilation unit sibling attribute");
+                if (dio_gUnitSize == 0) str_exception(ERR_INV_DWARF, "missing compilation unit sibling attribute");
             }
         }
         CallBack(Tag, Attr, Form);
@@ -530,7 +530,7 @@ void dio_ReadUnit(DIO_EntryCallBack CallBack) {
         dio_gUnitSize = dio_ReadU4();
         if (dio_gUnitSize == 0xffffffffu) {
             dio_g64bit = 1;
-            str_exception(ERR_DWARF, "64-bit DWARF is not supported yet");
+            str_exception(ERR_INV_DWARF, "64-bit DWARF is not supported yet");
         }
         else {
             dio_gUnitSize += 4;
@@ -583,7 +583,7 @@ void dio_LoadAbbrevTable(ELF_File * File) {
     for (ID = 1; ID < File->section_cnt; ID++) {
         if (strcmp(File->sections[ID]->name, ".debug_abbrev") == 0) {
             if (Section != NULL) {
-                str_exception(ERR_DWARF, "more then one .debug_abbrev section in a file");
+                str_exception(ERR_INV_DWARF, "more then one .debug_abbrev section in a file");
             }
             Section = File->sections[ID];
         }
@@ -614,7 +614,7 @@ void dio_LoadAbbrevTable(ELF_File * File) {
             TableOffset = dio_GetPos();
             continue;
         }
-        if (ID >= 0x1000000) str_exception(ERR_DWARF, "invalid abbreviation table");
+        if (ID >= 0x1000000) str_exception(ERR_INV_DWARF, "invalid abbreviation table");
         if (ID >= AbbrevTableSize) {
             U4_T Size = AbbrevTableSize;
             AbbrevTableSize = ID + 1024u;
@@ -626,7 +626,7 @@ void dio_LoadAbbrevTable(ELF_File * File) {
         for (;;) {
             U4_T Attr = dio_ReadULEB128();
             U4_T Form = dio_ReadULEB128();
-            if (Attr >= 0x10000 || Form >= 0x10000) str_exception(ERR_DWARF, "invalid abbreviation table");
+            if (Attr >= 0x10000 || Form >= 0x10000) str_exception(ERR_INV_DWARF, "invalid abbreviation table");
             if (Attr == 0 && Form == 0) {
                 DIO_Abbreviation * Abbr = AbbrevTable[ID];
                 assert(Abbr == NULL);
@@ -665,7 +665,7 @@ static void dio_FindAbbrevTable(U4_T Offset, DIO_Abbreviation *** AbbrevTable, U
             AbbrevSet = AbbrevSet->mNext;
         }
     }
-    str_exception(ERR_DWARF, "invalid abbreviation table offset");
+    str_exception(ERR_INV_DWARF, "invalid abbreviation table offset");
     *AbbrevTable = NULL;
     *AbbrevTableSize = 0;
 }
@@ -675,7 +675,7 @@ void dio_ChkFlag(U2_T Form) {
     case FORM_FLAG      :
         return;
     }
-    str_exception(ERR_DWARF, "FORM_FLAG expected");
+    str_exception(ERR_INV_DWARF, "FORM_FLAG expected");
 }
 
 void dio_ChkRef(U2_T Form) {
@@ -689,7 +689,7 @@ void dio_ChkRef(U2_T Form) {
     case FORM_REF_UDATA :
         return;
     }
-    str_exception(ERR_DWARF, "FORM_REF* expected");
+    str_exception(ERR_INV_DWARF, "FORM_REF* expected");
 }
 
 void dio_ChkAddr(U2_T Form) {
@@ -697,7 +697,7 @@ void dio_ChkAddr(U2_T Form) {
     case FORM_ADDR      :
         return;
     }
-    str_exception(ERR_DWARF, "FORM_ADDR expected");
+    str_exception(ERR_INV_DWARF, "FORM_ADDR expected");
 }
 
 void dio_ChkData(U2_T Form) {
@@ -710,7 +710,7 @@ void dio_ChkData(U2_T Form) {
     case FORM_UDATA     :
         return;
     }
-    str_exception(ERR_DWARF, "FORM_DATA* expected");
+    str_exception(ERR_INV_DWARF, "FORM_DATA* expected");
 }
 
 void dio_ChkBlock(U2_T Form, U1_T ** Buf, U4_T * Size) {
@@ -732,14 +732,14 @@ void dio_ChkBlock(U2_T Form, U1_T ** Buf, U4_T * Size) {
         *Buf = (U1_T *)&dio_gFormData;
         break;
     default:
-        str_exception(ERR_DWARF, "FORM_BLOCK expected");
+        str_exception(ERR_INV_DWARF, "FORM_BLOCK expected");
     }
 }
 
 void dio_ChkString(U2_T Form) {
     if (Form == FORM_STRING) return;
     if (Form == FORM_STRP) return;
-    str_exception(ERR_DWARF, "FORM_STRING expected");
+    str_exception(ERR_INV_DWARF, "FORM_STRING expected");
 }
 
 #endif

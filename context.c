@@ -284,6 +284,7 @@ typedef struct DebugEvent {
     HANDLE event_semaphore;
     DEBUG_EVENT event;
     DWORD continue_status;
+    struct DebugEvent * next;
 } DebugEvent;
 
 char * context_suspend_reason(Context * ctx) {
@@ -325,6 +326,14 @@ static char * win32_debug_event_name(int event) {
     return "Unknown";
 }
 
+static int log_error(char * fn, int ok) {
+    int err;
+    if (ok) return 0;
+    err = set_win32_errno(GetLastError());
+    trace(LOG_ALWAYS, "context: %s: %s", fn, errno_to_str(errno));
+    return err;
+}
+
 static void event_win32_context_stopped(void * arg) {
     Context * ctx = (Context *)arg;
     DWORD event_code = ctx->pending_event.ExceptionRecord.ExceptionCode;
@@ -343,7 +352,7 @@ static void event_win32_context_stopped(void * arg) {
     if (SuspendThread(ctx->handle) == (DWORD)-1) {
         DWORD err = GetLastError();
         if (err == ERROR_ACCESS_DENIED && event_code == 0) return; /* Already exited */
-        trace(LOG_ALWAYS, "Can't suspend thread: tid %d, error %d", ctx->pid, err);
+        log_error("SuspendThread", 0);
         return;
     }
 
@@ -351,11 +360,7 @@ static void event_win32_context_stopped(void * arg) {
     memset(&ctx->regs, 0, sizeof(ctx->regs));
     ctx->regs.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
     if (GetThreadContext(ctx->handle, &ctx->regs) == 0) {
-        DWORD err = GetLastError();
-        trace(LOG_ALWAYS, "Can't read thread registers: ctx %#x, pid %d, error %d",
-            ctx, ctx->pid, err);
-        set_win32_errno(err);
-        ctx->regs_error = errno;
+        ctx->regs_error = log_error("GetThreadContext", 0);
     }
     else {
         trace(LOG_CONTEXT, "context: get regs OK: ctx %#x, pid %d, PC %#x",
@@ -410,11 +415,13 @@ static void event_win32_context_exited(Context * ctx) {
     ctx->exited = 1;
     event_context_exited(ctx);
     if (ctx->handle != NULL) {
-        CloseHandle(ctx->handle);
+        if (ctx->parent == NULL) {
+            log_error("CloseHandle", CloseHandle(ctx->handle));
+        }
         ctx->handle = NULL;
     }
     if (ctx->file_handle != NULL) {
-        CloseHandle(ctx->file_handle);
+        log_error("CloseHandle", CloseHandle(ctx->file_handle));
         ctx->file_handle = NULL;
     }
     if (ctx->parent != NULL) {
@@ -427,10 +434,7 @@ static void event_win32_context_exited(Context * ctx) {
 
 static int win32_resume(Context * ctx) {
     if (ctx->regs_dirty && SetThreadContext(ctx->handle, &ctx->regs) == 0) {
-        int err = GetLastError();
-        trace(LOG_ALWAYS, "Can't write thread registers: ctx %#x, pid %d, error %d",
-            ctx, ctx->pid, err);
-        set_win32_errno(err);
+        errno = log_error("SetThreadContext", 0);
         return -1;
     }
     ctx->regs_dirty = 0;
@@ -440,18 +444,17 @@ static int win32_resume(Context * ctx) {
         return 0;
     }
     if (ctx->parent->pending_signals & (1 << SIGKILL)) {
-        if (!TerminateProcess(ctx->parent->handle, 1)) {
-            set_win32_errno(GetLastError());
+        if (!ctx->parent->exiting && !TerminateProcess(ctx->parent->handle, 1)) {
+            errno = log_error("TerminateProcess", 0);
             return -1;
         }
         ctx->parent->pending_signals &= ~(1 << SIGKILL);
+        ctx->parent->exiting = 1;
     }
     while (1) {
         DWORD cnt = ResumeThread(ctx->handle);
         if (cnt == (DWORD)-1) {
-            DWORD err = GetLastError();
-            trace(LOG_ALWAYS, "Can't resume thread: error %d", err);
-            set_win32_errno(err);
+            errno = log_error("ResumeThread", 0);
             return -1;
         }
         if (cnt <= 1) break;
@@ -462,108 +465,112 @@ static int win32_resume(Context * ctx) {
 
 static void debug_event_handler(void * x) {
     DebugEvent * args = (DebugEvent *)x;
-    DEBUG_EVENT * debug_event = &args->event;
-    Context * prs = context_find_from_pid(debug_event->dwProcessId);
-    Context * ctx = context_find_from_pid(debug_event->dwThreadId);
+    HANDLE event_semaphore = args->event_semaphore;
 
-    switch (debug_event->dwDebugEventCode) {
-    case CREATE_PROCESS_DEBUG_EVENT:
-        assert(prs == NULL);
-        assert(ctx == NULL);
-        prs = create_context(debug_event->dwProcessId);
-        prs->mem = debug_event->dwProcessId;
-        prs->handle = debug_event->u.CreateProcessInfo.hProcess;
-        prs->file_handle = debug_event->u.CreateProcessInfo.hFile;
-        prs->base_address = debug_event->u.CreateProcessInfo.lpBaseOfImage;
-        assert(prs->handle != NULL);
-        link_context(prs);
-        event_context_created(prs);
-        args->debug_thread_args->attach_callback(0, prs, args->debug_thread_args->attach_data);
-        args->debug_thread_args->attach_callback = NULL;
-        args->debug_thread_args->attach_data = NULL;
-        ctx = create_context(debug_event->dwThreadId);
-        ctx->mem = debug_event->dwProcessId;
-        ctx->handle = debug_event->u.CreateProcessInfo.hThread;
-        ctx->debug_started = 1;
-        ctx->parent = prs;
-        prs->ref_count++;
-        list_add_first(&ctx->cldl, &prs->children);
-        link_context(ctx);
-        event_context_created(ctx);
-        ctx->pending_intercept = 1;
-        break;
-    case CREATE_THREAD_DEBUG_EVENT:
-        assert(prs != NULL);
-        assert(ctx == NULL);
-        ctx = create_context(debug_event->dwThreadId);
-        ctx->mem = debug_event->dwProcessId;
-        ctx->handle = debug_event->u.CreateThread.hThread;
-        ctx->parent = prs;
-        prs->ref_count++;
-        list_add_first(&ctx->cldl, &prs->children);
-        link_context(ctx);
-        event_context_created(ctx);
-        event_win32_context_stopped(ctx);
-        break;
-    case EXCEPTION_DEBUG_EVENT:
-        assert(prs != NULL);
-        if (ctx == NULL) break;
-        assert(ctx->pending_event.ExceptionRecord.ExceptionCode == 0);
-        switch (args->event.u.Exception.ExceptionRecord.ExceptionCode) {
-        case EXCEPTION_SINGLE_STEP:
-        case EXCEPTION_BREAKPOINT:
-            args->continue_status = DBG_CONTINUE;
+    while (args != NULL) {
+        
+        DEBUG_EVENT * debug_event = &args->event;
+        Context * prs = context_find_from_pid(debug_event->dwProcessId);
+        Context * ctx = context_find_from_pid(debug_event->dwThreadId);
+
+        switch (debug_event->dwDebugEventCode) {
+        case CREATE_PROCESS_DEBUG_EVENT:
+            assert(prs == NULL);
+            assert(ctx == NULL);
+            prs = create_context(debug_event->dwProcessId);
+            prs->mem = debug_event->dwProcessId;
+            prs->handle = debug_event->u.CreateProcessInfo.hProcess;
+            prs->file_handle = debug_event->u.CreateProcessInfo.hFile;
+            prs->base_address = debug_event->u.CreateProcessInfo.lpBaseOfImage;
+            assert(prs->handle != NULL);
+            link_context(prs);
+            event_context_created(prs);
+            args->debug_thread_args->attach_callback(0, prs, args->debug_thread_args->attach_data);
+            args->debug_thread_args->attach_callback = NULL;
+            args->debug_thread_args->attach_data = NULL;
+            ctx = create_context(debug_event->dwThreadId);
+            ctx->mem = debug_event->dwProcessId;
+            ctx->handle = debug_event->u.CreateProcessInfo.hThread;
+            ctx->debug_started = 1;
+            ctx->parent = prs;
+            prs->ref_count++;
+            list_add_first(&ctx->cldl, &prs->children);
+            link_context(ctx);
+            event_context_created(ctx);
             break;
-        default:
-            args->continue_status = DBG_EXCEPTION_NOT_HANDLED;
+        case CREATE_THREAD_DEBUG_EVENT:
+            assert(prs != NULL);
+            assert(ctx == NULL);
+            ctx = create_context(debug_event->dwThreadId);
+            ctx->mem = debug_event->dwProcessId;
+            ctx->handle = debug_event->u.CreateThread.hThread;
+            ctx->parent = prs;
+            prs->ref_count++;
+            list_add_first(&ctx->cldl, &prs->children);
+            link_context(ctx);
+            event_context_created(ctx);
+            event_win32_context_stopped(ctx);
+            break;
+        case EXCEPTION_DEBUG_EVENT:
+            assert(prs != NULL);
+            if (ctx == NULL) break;
+            assert(ctx->pending_event.ExceptionRecord.ExceptionCode == 0);
+            switch (args->event.u.Exception.ExceptionRecord.ExceptionCode) {
+            case EXCEPTION_SINGLE_STEP:
+            case EXCEPTION_BREAKPOINT:
+                args->continue_status = DBG_CONTINUE;
+                break;
+            default:
+                args->continue_status = DBG_EXCEPTION_NOT_HANDLED;
+                break;
+            }
+            memcpy(&ctx->pending_event, &args->event.u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
+            if (!ctx->stopped) event_win32_context_stopped(ctx);
+            break;
+        case EXIT_THREAD_DEBUG_EVENT:
+            assert(prs != NULL);
+            if (ctx == NULL) break;
+            event_win32_context_exited(ctx);
+            ctx = NULL;
+            break;
+        case EXIT_PROCESS_DEBUG_EVENT:
+            assert(prs != NULL);
+            assert(ctx != NULL);
+            event_win32_context_exited(ctx);
+            event_win32_context_exited(prs);
+            prs = ctx = NULL;
+            break;
+        case LOAD_DLL_DEBUG_EVENT:
+            assert(prs != NULL);
+            prs->module_loaded = 1;
+            prs->module_handle = args->event.u.LoadDll.hFile;
+            prs->module_address = args->event.u.LoadDll.lpBaseOfDll;
+            event_context_changed(prs);
+            if (prs->module_handle != NULL) {
+                log_error("CloseHandle", CloseHandle(prs->module_handle));
+            }
+            prs->module_handle = NULL;
+            prs->module_address = NULL;
+            prs->module_loaded = 0;
+            break;
+        case UNLOAD_DLL_DEBUG_EVENT:
+            assert(prs != NULL);
+            prs->module_unloaded = 1;
+            prs->module_address = args->event.u.UnloadDll.lpBaseOfDll;
+            event_context_changed(prs);
+            prs->module_address = NULL;
+            prs->module_unloaded = 0;
+            break;
+        case RIP_EVENT:
+            trace(LOG_ALWAYS, "System debugging error: debuggee pid %d, error type %d, error code %d",
+                debug_event->dwProcessId, debug_event->u.RipInfo.dwType, debug_event->u.RipInfo.dwError);
             break;
         }
-        memcpy(&ctx->pending_event, &args->event.u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
-        if (!ctx->stopped) event_win32_context_stopped(ctx);
-        break;
-    case EXIT_THREAD_DEBUG_EVENT:
-        assert(prs != NULL);
-        if (ctx == NULL) break;
-        event_win32_context_exited(ctx);
-        ctx = NULL;
-        break;
-    case EXIT_PROCESS_DEBUG_EVENT:
-        assert(prs != NULL);
-        assert(ctx != NULL);
-        event_win32_context_exited(ctx);
-        event_win32_context_exited(prs);
-        prs = ctx = NULL;
-        break;
-    case LOAD_DLL_DEBUG_EVENT:
-        assert(prs != NULL);
-        prs->module_loaded = 1;
-        prs->module_handle = args->event.u.LoadDll.hFile;
-        prs->module_address = args->event.u.LoadDll.lpBaseOfDll;
-        event_context_changed(prs);
-        if (args->event.u.LoadDll.hFile != NULL && !CloseHandle(args->event.u.LoadDll.hFile)) {
-            set_win32_errno(GetLastError());
-            trace(LOG_ALWAYS, "debug_event_handler.CloseHandle() error: %d: %s",
-                errno, errno_to_str(errno));
-        }
-        prs->module_handle = NULL;
-        prs->module_address = NULL;
-        prs->module_loaded = 0;
-        break;
-    case UNLOAD_DLL_DEBUG_EVENT:
-        assert(prs != NULL);
-        prs->module_unloaded = 1;
-        prs->module_address = args->event.u.UnloadDll.lpBaseOfDll;
-        event_context_changed(prs);
-        prs->module_address = NULL;
-        prs->module_unloaded = 0;
-        break;
-    case RIP_EVENT:
-        trace(LOG_ALWAYS, "System debugging error: debuggee pid %d, error type %d, error code %d",
-            debug_event->dwProcessId, debug_event->u.RipInfo.dwType, debug_event->u.RipInfo.dwError);
-        break;
+        assert(ctx == NULL || ctx->parent == prs);
+        args = args->next;
     }
-    assert(ctx == NULL || ctx->parent == prs);
-    ReleaseSemaphore(args->event_semaphore, 1, 0);
+
+    log_error("ReleaseSemaphore", ReleaseSemaphore(event_semaphore, 1, 0));
 }
 
 static void debugger_exit_handler(void * x) {
@@ -573,9 +580,9 @@ static void debugger_exit_handler(void * x) {
     trace(LOG_WAITPID, "debugger thread %d exited, debuggee pid %d",
         args->debug_thread_id, args->context_id);
 
-    WaitForSingleObject(args->debug_thread, INFINITE);
-    CloseHandle(args->debug_thread);
-    CloseHandle(args->debug_thread_semaphore);
+    log_error("WaitForSingleObject", WaitForSingleObject(args->debug_thread, INFINITE) != WAIT_FAILED);
+    log_error("CloseHandle", CloseHandle(args->debug_thread));
+    log_error("CloseHandle", CloseHandle(args->debug_thread_semaphore));
 
     if (prs != NULL && !prs->exited) event_win32_context_exited(prs);
 
@@ -653,8 +660,8 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 /* 2. if second CREATE_PROCESS_DEBUG_EVENT is handled immediately, debugee crashes. */
                 memcpy(&fantom_process, &event_buffer, sizeof(event_buffer));
                 CloseHandle(fantom_process.event.u.CreateProcessInfo.hFile);
-                ResumeThread(create_process.event.u.CreateProcessInfo.hThread);
                 SuspendThread(fantom_process.event.u.CreateProcessInfo.hThread);
+                ResumeThread(create_process.event.u.CreateProcessInfo.hThread);
             }
             break;
         default:
@@ -681,12 +688,34 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 if (debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
                     event_buffer.continue_status = DBG_EXCEPTION_NOT_HANDLED;
                 }
+                break;
             }
-            if (state == 1) {
+            if (state < 2) {
+                /* Delay posting event to foreground thread until debuggee is fully initialized */
+                DebugEvent * e = (DebugEvent *)loc_alloc(sizeof(DebugEvent));
+                memcpy(e, &event_buffer, sizeof(DebugEvent));
+                e->next = create_process.next;
+                create_process.next = e;
+            }
+            if (state == 1 && debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
+                DebugEvent * list = NULL;
+                while (create_process.next != NULL) {
+                    DebugEvent * e = create_process.next;
+                    create_process.next = e->next;
+                    e->next = list;
+                    list = e;
+                }
+                create_process.next = list;
                 post_event(debug_event_handler, &create_process);
                 ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
                 WaitForSingleObject(event_semaphore, INFINITE);
+                while (create_process.next != NULL) {
+                    DebugEvent * e = create_process.next;
+                    create_process.next = e->next;
+                    loc_free(e);
+                }
                 state++;
+                break;
             }
             if (state == 2) {
                 post_event(debug_event_handler, &event_buffer);
@@ -723,30 +752,28 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
 
     args->debug_thread_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
     if (args->debug_thread_semaphore == NULL) {
-        DWORD err = GetLastError();
-        trace(LOG_ALWAYS, "Can't create semaphore: error %d", err);
+        int err = log_error("CreateSemaphore", 0);
         loc_free(args);
-        set_win32_errno(err);
+        errno = err;
         return -1;
     }
     
     args->debug_thread = CreateThread(NULL, 0, debugger_thread_func, args, 0, &args->debug_thread_id);
     if (args->debug_thread == NULL) {
-        DWORD err = GetLastError();
-        trace(LOG_ALWAYS, "Can't create thread: error %d", err);
-        CloseHandle(args->debug_thread_semaphore);
+        int err = log_error("CreateThread", 0);
+        log_error("CloseHandle", CloseHandle(args->debug_thread_semaphore));
         loc_free(args);
-        set_win32_errno(err);
+        errno = err;
         return -1;
     }
 
 
-    WaitForSingleObject(args->debug_thread_semaphore, INFINITE);
+    log_error("WaitForSingleObject", WaitForSingleObject(args->debug_thread_semaphore, INFINITE) != WAIT_FAILED);
 
     if (args->error) {
-        WaitForSingleObject(args->debug_thread, INFINITE);
-        CloseHandle(args->debug_thread);
-        CloseHandle(args->debug_thread_semaphore);
+        log_error("WaitForSingleObject", WaitForSingleObject(args->debug_thread, INFINITE) != WAIT_FAILED);
+        log_error("CloseHandle", CloseHandle(args->debug_thread));
+        log_error("CloseHandle", CloseHandle(args->debug_thread_semaphore));
         loc_free(args);
         set_win32_errno(args->error);
         return -1;
@@ -768,8 +795,7 @@ int context_stop(Context * ctx) {
     if (SuspendThread(ctx->handle) == (DWORD)-1) {
         DWORD err = GetLastError();
         if (err == ERROR_ACCESS_DENIED) return 0;
-        trace(LOG_ALWAYS, "Can't suspend thread: tid %d, error %d", ctx->pid, err);
-        set_win32_errno(err);
+        errno = log_error("SuspendThread", 0);
         return -1;
     }
     post_event(event_win32_context_stopped, ctx);
@@ -827,9 +853,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     if (ctx->parent != NULL) ctx = ctx->parent;
     assert(ctx->pid == ctx->mem);
     if (ReadProcessMemory(ctx->handle, (LPCVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
-        DWORD err = GetLastError();
-        trace(LOG_ALWAYS, "Can't read process memory: pid %d, addr %#x, error %d", ctx->pid, address, err);
-        set_win32_errno(err);
+        errno = log_error("ReadProcessMemory", 0);
         return -1;
     }
     return 0;
@@ -843,14 +867,12 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     assert(ctx->pid == ctx->mem);
     if (WriteProcessMemory(ctx->handle, (LPVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
         DWORD err = GetLastError();
-        trace(LOG_ALWAYS, "Can't write process memory: pid %d, addr %#x, error %d", ctx->pid, address, err);
-        set_win32_errno(err);
+        if (err == ERROR_ACCESS_DENIED) errno = set_win32_errno(err);
+        else errno = log_error("WriteProcessMemory", 0);
         return -1;
     }
     if (FlushInstructionCache(ctx->handle, (LPCVOID)address, size) == 0) {
-        DWORD err = GetLastError();
-        trace(LOG_ALWAYS, "Can't flush instruction cache: pid %d, error %d", ctx->pid, err);
-        set_win32_errno(err);
+        errno = log_error("FlushInstructionCache", 0);
         return -1;
     }
     return 0;

@@ -48,7 +48,7 @@ int print_trace(int mode, char *fmt, ...) {
         exit(1);
     }
 
-    fprintf(log_file, "TCF %02d%02d.%03d: %s\n",
+    fprintf(log_file, "TCF %02d:%02d.%03d: %s\n",
         timenow.tv_sec / 60 % 60,
         timenow.tv_sec % 60,
         timenow.tv_nsec / 1000000,

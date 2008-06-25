@@ -274,7 +274,7 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
         /* Read header */
         unit_size = dio_ReadU4();
         if (unit_size == 0xffffffffu) {
-            str_exception(ERR_DWARF, "64-bit DWARF is not supported yet");
+            str_exception(ERR_INV_DWARF, "64-bit DWARF is not supported yet");
         }
         else {
             unit_size += 4;
@@ -313,7 +313,7 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
 
         /* Run the program */
         if (header_pos + header_size != dio_GetPos())
-            str_exception(ERR_DWARF, "Invalid line info header");
+            str_exception(ERR_INV_DWARF, "Invalid line info header");
         memset(&state, 0, sizeof(state));
         state.file = 1;
         state.line = 1;
@@ -403,7 +403,7 @@ static void load_line_numbers(LineNumbersCache * cache, CompUnit * unit) {
                     state.isa = (U1_T)dio_ReadULEB128();
                     break;
                 default:
-                    str_exception(ERR_DWARF, "Invalid line info op code");
+                    str_exception(ERR_INV_DWARF, "Invalid line info op code");
                     break;
                 }
             }

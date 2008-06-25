@@ -46,6 +46,7 @@ extern void json_write_boolean(OutputStream * out, int b);
 
 extern void write_errno(OutputStream * out, int err);
 extern void write_err_msg(OutputStream * out, int err, char * msg);
+extern void write_service_error(OutputStream * out, int err, const char * service_name, int service_error);
 
 /*
  * The following API to stream binary data is designed to allow

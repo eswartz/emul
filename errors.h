@@ -18,29 +18,32 @@
 
 #include <errno.h>
 
-#define ERR_ALREADY_STOPPED     0x1000
-#define ERR_ALREADY_EXITED      0x1001
-#define ERR_ALREADY_RUNNING     0x1002
-#define ERR_JSON_SYNTAX         0x1003
-#define ERR_PROTOCOL            0x1004
-#define ERR_INV_CONTEXT         0x1005
-#define ERR_INV_ADDRESS         0x1006
-#define ERR_EOF                 0x1007
-#define ERR_BASE64              0x1008
-#define ERR_INV_EXPRESSION      0x1009
-#define ERR_SYM_NOT_FOUND       0x100a
-#define ERR_ALREADY_ATTACHED    0x100b
-#define ERR_BUFFER_OVERFLOW     0x100c
-#define ERR_INV_FORMAT          0x100d
-#define ERR_INV_NUMBER          0x100e
-#define ERR_IS_RUNNING          0x100f
-#define ERR_DWARF               0x1010
-#define ERR_UNSUPPORTED         0x1011
-#define ERR_CHANNEL_CLOSED      0x1012
-#define ERR_COMMAND_CANCELLED   0x1013
-#define ERR_UNKNOWN_PEER        0x1014
-#define ERR_INV_DATA_SIZE       0x1015
+#define STD_ERR_BASE    0x20000
 
+#define ERR_OTHER               (STD_ERR_BASE + 1)
+#define ERR_JSON_SYNTAX         (STD_ERR_BASE + 2)
+#define ERR_PROTOCOL            (STD_ERR_BASE + 3)
+#define ERR_BUFFER_OVERFLOW     (STD_ERR_BASE + 4)
+#define ERR_CHANNEL_CLOSED      (STD_ERR_BASE + 5)
+#define ERR_COMMAND_CANCELLED   (STD_ERR_BASE + 6)
+#define ERR_UNKNOWN_PEER        (STD_ERR_BASE + 7)
+#define ERR_BASE64              (STD_ERR_BASE + 8)
+#define ERR_EOF                 (STD_ERR_BASE + 9)
+#define ERR_ALREADY_STOPPED     (STD_ERR_BASE + 10)
+#define ERR_ALREADY_EXITED      (STD_ERR_BASE + 11)
+#define ERR_ALREADY_RUNNING     (STD_ERR_BASE + 12)
+#define ERR_ALREADY_ATTACHED    (STD_ERR_BASE + 13)
+#define ERR_IS_RUNNING          (STD_ERR_BASE + 14)
+#define ERR_INV_DATA_SIZE       (STD_ERR_BASE + 15)
+#define ERR_INV_CONTEXT         (STD_ERR_BASE + 16)
+#define ERR_INV_ADDRESS         (STD_ERR_BASE + 17)
+#define ERR_INV_EXPRESSION      (STD_ERR_BASE + 18)
+#define ERR_INV_FORMAT          (STD_ERR_BASE + 19)
+#define ERR_INV_NUMBER          (STD_ERR_BASE + 20)
+#define ERR_INV_DWARF           (STD_ERR_BASE + 21)
+#define ERR_SYM_NOT_FOUND       (STD_ERR_BASE + 22)
+#define ERR_UNSUPPORTED         (STD_ERR_BASE + 23)
+ 
 /*
  * Convert error code to human readable string
  */
@@ -61,7 +64,7 @@ extern void check_error_debug(char * file, int line, int error);
 /*
  * Set errno to WIN32 error code.
  */
-extern void set_win32_errno(DWORD win32_error_code);
+extern int set_win32_errno(DWORD win32_error_code);
 #endif
 
 

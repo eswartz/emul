@@ -141,7 +141,7 @@ static void event_context_changed(Context * ctx, void * client_data) {
                 errno, errno_to_str(errno));
         }
     }
-    else if (ctx->module_unloaded) {
+    if (ctx->module_unloaded) {
         assert(ctx->pid == ctx->mem);
         assert(ctx->handle != NULL);
         if (!SymUnloadModule(ctx->handle, (DWORD)ctx->module_address)) {

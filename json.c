@@ -569,24 +569,83 @@ char * json_skip_object(InputStream * inp) {
     return str;
 }
 
-void write_errno(OutputStream * out, int err) {
-    char * msg = NULL;
+static void write_error_code(OutputStream * out, int err, int code) {
+    struct timespec timenow;
+
+    if (clock_gettime(CLOCK_REALTIME, &timenow) == 0) {
+        json_write_string(out, "Time");
+        write_stream(out, ':');
+        json_write_ulong(out, timenow.tv_sec);
+        write_stream(out, timenow.tv_nsec / 100000000 % 10 + '0');
+        write_stream(out, timenow.tv_nsec / 10000000 % 10 + '0');
+        write_stream(out, timenow.tv_nsec / 1000000 % 10 + '0');
+
+        write_stream(out, ',');
+    }
+
+    json_write_string(out, "Code");
+    write_stream(out, ':');
+    json_write_long(out, code);
+
+    write_stream(out, ',');
+
+    if (err >= STD_ERR_BASE) return;
+
+    json_write_string(out, "AltCode");
+    write_stream(out, ':');
     json_write_long(out, err);
-    write_stream(out, 0);
-    if (err != 0) msg = errno_to_str(err);
-    json_write_string(out, msg);
+
+    write_stream(out, ',');
+
+    json_write_string(out, "AltOrg");
+    write_stream(out, ':');
+#if defined(_MSC_VER)
+    json_write_string(out, "MSC");
+#elif defined(_WRS_KERNEL)
+    json_write_string(out, "VxWorks");
+#elif defined(__CYGWIN__)
+    json_write_string(out, "CygWin");
+#elif defined(__linux)
+    json_write_string(out, "Linux");
+#else
+    json_write_string(out, "POSIX");
+#endif
+
+    write_stream(out, ',');
+}
+
+void write_errno(OutputStream * out, int err) {
+    if (err != 0) {
+        int code = ERR_OTHER - STD_ERR_BASE;
+
+        write_stream(out, '{');
+
+        if (err > STD_ERR_BASE) code = err - STD_ERR_BASE;
+        write_error_code(out, err, code);
+
+        json_write_string(out, "Format");
+        write_stream(out, ':');
+        json_write_string(out, errno_to_str(err));
+
+        write_stream(out, '}');
+    }
     write_stream(out, 0);
 }
 
 void write_err_msg(OutputStream * out, int err, char * msg) {
-    json_write_long(out, err);
-    write_stream(out, 0);
-    if (err == 0) {
-        write_string(out, "null");
-    }
-    else {
-        char * str = errno_to_str(err);
+    if (err != 0) {
+        char * str = NULL;
+        int code = ERR_OTHER - STD_ERR_BASE;
+
+        write_stream(out, '{');
+
+        if (err > STD_ERR_BASE) code = err - STD_ERR_BASE;
+        write_error_code(out, err, code);
+
+        json_write_string(out, "Format");
+        write_stream(out, ':');
         write_stream(out, '"');
+        str = errno_to_str(err);
         while (*str) json_write_char(out, *str++);
         if (msg != NULL) {
             write_stream(out, ':');
@@ -594,7 +653,29 @@ void write_err_msg(OutputStream * out, int err, char * msg) {
             while (*msg) json_write_char(out, *msg++);
         }
         write_stream(out, '"');
+
+        write_stream(out, '}');
     }
     write_stream(out, 0);
 }
 
+void write_service_error(OutputStream * out, int err, const char * service_name, int service_error) {
+    if (err != 0) {
+        write_stream(out, '{');
+
+        write_error_code(out, err, service_error);
+
+        json_write_string(out, "Service");
+        write_stream(out, ':');
+        json_write_string(out, service_name);
+
+        write_stream(out, ',');
+
+        json_write_string(out, "Format");
+        write_stream(out, ':');
+        json_write_string(out, errno_to_str(err));
+
+        write_stream(out, '}');
+    }
+    write_stream(out, 0);
+}
