@@ -138,9 +138,9 @@ public class RegistersProxy implements IRegisters {
                 public void done(Exception error, Object[] args) {
                     byte[] val = null;
                     if (error == null) {
-                        assert args.length == 3;
-                        error = toError(args[0], args[1]);
-                        String str = (String)args[2];
+                        assert args.length == 2;
+                        error = toError(args[0]);
+                        String str = (String)args[1];
                         if (str != null) val = Base64.toByteArray(str.toCharArray());
                     }
                     done.doneGet(token, error, val);
@@ -154,8 +154,8 @@ public class RegistersProxy implements IRegisters {
                 @Override
                 public void done(Exception error, Object[] args) {
                     if (error == null) {
-                        assert args.length == 2;
-                        error = toError(args[0], args[1]);
+                        assert args.length == 1;
+                        error = toError(args[0]);
                     }
                     done.doneSet(token, error);
                 }
@@ -181,9 +181,9 @@ public class RegistersProxy implements IRegisters {
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    arr = toStringArray(args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    arr = toStringArray(args[1]);
                 }
                 done.doneGetChildren(token, error, arr);
             }
@@ -197,11 +197,9 @@ public class RegistersProxy implements IRegisters {
             public void done(Exception error, Object[] args) {
                 Context ctx = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    if (args[2] != null) {
-                        ctx = new Context((Map<String,Object>)args[2]);
-                    }
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    if (args[1] != null) ctx = new Context((Map<String,Object>)args[1]);
                 }
                 done.doneGetContext(token, error, ctx);
             }
@@ -214,9 +212,9 @@ public class RegistersProxy implements IRegisters {
             public void done(Exception error, Object[] args) {
                 byte[] val = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    String str = (String)args[2];
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    String str = (String)args[1];
                     if (str != null) val = Base64.toByteArray(str.toCharArray());
                 }
                 done.doneGet(token, error, val);
@@ -230,8 +228,8 @@ public class RegistersProxy implements IRegisters {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {
-                    assert args.length == 2;
-                    error = toError(args[0], args[1]);
+                    assert args.length == 1;
+                    error = toError(args[0]);
                 }
                 done.doneSet(token, error);
             }

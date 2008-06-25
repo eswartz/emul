@@ -60,8 +60,8 @@ public class ProcessesProxy implements IProcesses {
                 @Override
                 public void done(Exception error, Object[] args) {
                     if (error == null) {
-                        assert args.length == 2;
-                        error = toError(args[0], args[1]);
+                        assert args.length == 1;
+                        error = toError(args[0]);
                     }
                     done.doneCommand(token, error);
                 }
@@ -74,8 +74,8 @@ public class ProcessesProxy implements IProcesses {
                 @Override
                 public void done(Exception error, Object[] args) {
                     if (error == null) {
-                        assert args.length == 2;
-                        error = toError(args[0], args[1]);
+                        assert args.length == 1;
+                        error = toError(args[0]);
                     }
                     done.doneCommand(token, error);
                 }
@@ -88,8 +88,8 @@ public class ProcessesProxy implements IProcesses {
                 @Override
                 public void done(Exception error, Object[] args) {
                     if (error == null) {
-                        assert args.length == 2;
-                        error = toError(args[0], args[1]);
+                        assert args.length == 1;
+                        error = toError(args[0]);
                     }
                     done.doneCommand(token, error);
                 }
@@ -102,8 +102,8 @@ public class ProcessesProxy implements IProcesses {
                 @Override
                 public void done(Exception error, Object[] args) {
                     if (error == null) {
-                        assert args.length == 2;
-                        error = toError(args[0], args[1]);
+                        assert args.length == 1;
+                        error = toError(args[0]);
                     }
                     done.doneCommand(token, error);
                 }
@@ -134,9 +134,9 @@ public class ProcessesProxy implements IProcesses {
             public void done(Exception error, Object[] args) {
                 String[] ids = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    ids = toStringArray(args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    ids = toStringArray(args[1]);
                 }
                 done.doneGetChildren(token, error, ids);
             }
@@ -151,11 +151,9 @@ public class ProcessesProxy implements IProcesses {
             public void done(Exception error, Object[] args) {
                 ProcessContext ctx = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    if (args[2] != null) { 
-                        ctx = new ProcessContext((Map<String, Object>)args[2]);
-                    }
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    if (args[1] != null) ctx = new ProcessContext((Map<String, Object>)args[1]);
                 }
                 done.doneGetContext(token, error, ctx);
             }
@@ -168,9 +166,9 @@ public class ProcessesProxy implements IProcesses {
             public void done(Exception error, Object[] args) {
                 Map<String,String> env = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    env = toEnvMap(args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    env = toEnvMap(args[1]);
                 }
                 done.doneGetEnvironment(token, error, env);
             }
@@ -188,11 +186,9 @@ public class ProcessesProxy implements IProcesses {
             public void done(Exception error, Object[] args) {
                 ProcessContext ctx = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    if (args[2] != null) { 
-                        ctx = new ProcessContext((Map<String, Object>)args[2]);
-                    }
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    if (args[1] != null) ctx = new ProcessContext((Map<String, Object>)args[1]);
                 }
                 done.doneStart(token, error, ctx);
             }

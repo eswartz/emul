@@ -45,9 +45,9 @@ public class DaytimeServiceProxy implements IDaytimeService {
             public void done(Exception error, Object[] args) {
                 String str = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    str = (String)args[2];
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    str = (String)args[1];
                 }
                 done.doneGetTimeOfDay(token, error, str);
             }

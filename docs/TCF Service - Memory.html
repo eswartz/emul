@@ -43,7 +43,7 @@ in addition to error report, describes data validity on per byte basis:</p>
     &rArr; <i>&lt;error address list&gt;</i> , <i>&lt;error address&gt;</i>
   
 <i>&lt;error address&gt;</i>
-    &rArr; { "addr" : <i>&lt;int: range starting address&gt;</i> , "size" : <i>&lt;int: range length in bytes&gt;</i> , "stat" : <i>&lt;int: status code&gt;</i> , "msg" : <i>&lt;error description&gt;</i> }
+    &rArr; { "addr" : <i>&lt;int: range starting address&gt;</i> , "size" : <i>&lt;int: range length in bytes&gt;</i> , "stat" : <i>&lt;int: status code&gt;</i> , "msg" : <i>&lt;object: error description&gt;</i> }
 </font></b></pre>
 
 <p>If there is no entry in error addresses array for a data byte, then status of such

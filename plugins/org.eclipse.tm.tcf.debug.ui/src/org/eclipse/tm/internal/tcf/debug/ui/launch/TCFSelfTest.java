@@ -407,6 +407,12 @@ class TCFSelfTest {
             assert context != null;
             IRunControl.RunControlContext ctx = map.get(context);  
             if (ctx == null) exit(new Error("Invalid 'contextSuspended' event for " + context));
+            if (process_ids.contains(ctx.getParentID())) {
+                ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+                    public void doneCommand(IToken token, Exception error) {
+                    }
+                });
+            }
         }
     }
     

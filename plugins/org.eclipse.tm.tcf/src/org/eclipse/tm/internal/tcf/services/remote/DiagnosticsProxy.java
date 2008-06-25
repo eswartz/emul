@@ -94,9 +94,9 @@ public class DiagnosticsProxy implements IDiagnostics {
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    arr = toStringArray((Collection<String>)args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    arr = toStringArray((Collection<String>)args[1]);
                 }
                 done.doneGetTestList(token, error, arr);
             }
@@ -109,9 +109,9 @@ public class DiagnosticsProxy implements IDiagnostics {
             public void done(Exception error, Object[] args) {
                 String str = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    str = (String)args[2];
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    str = (String)args[1];
                 }
                 done.doneRunTest(token, error, str);
             }
@@ -123,8 +123,8 @@ public class DiagnosticsProxy implements IDiagnostics {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {
-                    assert args.length == 2;
-                    error = toError(args[0], args[1]);
+                    assert args.length == 1;
+                    error = toError(args[0]);
                 }
                 done.doneCancelTest(token, error);
             }
@@ -137,9 +137,9 @@ public class DiagnosticsProxy implements IDiagnostics {
             public void done(Exception error, Object[] args) {
                 ISymbol sym = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    sym = toSymbol(args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    sym = toSymbol(args[1]);
                 }
                 done.doneGetSymbol(token, error, sym);
             }

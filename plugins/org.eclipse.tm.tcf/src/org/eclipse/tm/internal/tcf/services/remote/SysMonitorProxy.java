@@ -139,9 +139,9 @@ public class SysMonitorProxy implements ISysMonitor {
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    arr = toStringArray((Collection<String>)args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    arr = toStringArray((Collection<String>)args[1]);
                 }
                 done.doneGetChildren(token, error, arr);
             }
@@ -155,11 +155,9 @@ public class SysMonitorProxy implements ISysMonitor {
             public void done(Exception error, Object[] args) {
                 SysMonitorContext ctx = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    if (args[2] != null) { 
-                        ctx = new SysMonitorContext((Map<String, Object>)args[2]);
-                    }
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    if (args[1] != null) ctx = new SysMonitorContext((Map<String, Object>)args[1]);
                 }
                 done.doneGetContext(token, error, ctx);
             }
@@ -173,9 +171,9 @@ public class SysMonitorProxy implements ISysMonitor {
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    arr = toStringArray((Collection<String>)args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    arr = toStringArray((Collection<String>)args[1]);
                 }
                 done.doneGetCommandLine(token, error, arr);
             }
@@ -189,9 +187,9 @@ public class SysMonitorProxy implements ISysMonitor {
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    arr = toStringArray((Collection<String>)args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    arr = toStringArray((Collection<String>)args[1]);
                 }
                 done.doneGetEnvironment(token, error, arr);
             }

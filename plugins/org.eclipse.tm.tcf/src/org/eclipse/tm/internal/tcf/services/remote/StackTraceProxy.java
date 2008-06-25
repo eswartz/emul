@@ -82,9 +82,9 @@ public class StackTraceProxy implements IStackTrace {
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    arr = toStringArray(args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    arr = toStringArray(args[1]);
                 }
                 done.doneGetChildren(token, error, arr);
             }
@@ -97,8 +97,8 @@ public class StackTraceProxy implements IStackTrace {
             public void done(Exception error, Object[] args) {
                 StackTraceContext[] arr = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[1], args[2]);
+                    assert args.length == 2;
+                    error = toError(args[1]);
                     arr = toContextArray(args[0]);
                 }
                 done.doneGetContext(token, error, arr);

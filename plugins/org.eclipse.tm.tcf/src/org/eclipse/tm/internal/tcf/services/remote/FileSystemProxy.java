@@ -66,16 +66,18 @@ public class FileSystemProxy implements IFileSystem {
             super(channel, FileSystemProxy.this, command, args);
         }
         
-        public Status toFSError(Object code, Object data) {
-            int error_code = ((Number)code).intValue();
-            if (error_code == 0) return null;
+        @SuppressWarnings("unchecked")
+        public Status toFSError(Object data) {
+            if (data == null) return null;
+            Map<String,Object> map = (Map<String,Object>)data;
+            Number error_code = (Number)map.get(ERROR_CODE);
             String cmd = getCommandString();
-            if (cmd.length() > 32) cmd = cmd.substring(0, 32) + "...";
-            return new Status(error_code,
+            if (cmd.length() > 72) cmd = cmd.substring(0, 72) + "...";
+            return new Status(error_code.intValue(),
                     "TCF command exception:" +
                     "\nCommand: " + cmd +
                     "\nException: " + toErrorString(data) +
-                    "\nError code: " + code);
+                    "\nError code: " + error_code);
         }
     }
     
@@ -95,8 +97,8 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 2;
-                    s = toFSError(args[0], args[1]);
+                    assert args.length == 1;
+                    s = toFSError(args[0]);
                 }
                 done.doneClose(token, s);
             }
@@ -112,8 +114,8 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 2;
-                    s = toFSError(args[0], args[1]);
+                    assert args.length == 1;
+                    s = toFSError(args[0]);
                 }
                 done.doneSetStat(token, s);
             }
@@ -131,8 +133,8 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 2;
-                    s = toFSError(args[0], args[1]);
+                    assert args.length == 1;
+                    s = toFSError(args[0]);
                 }
                 done.doneSetStat(token, s);
             }
@@ -148,11 +150,9 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 3;
-                    s = toFSError(args[0], args[1]);
-                    if (s == null) {
-                        a = toFileAttrs(args[2]);
-                    }
+                    assert args.length == 2;
+                    s = toFSError(args[0]);
+                    if (s == null) a = toFileAttrs(args[1]);
                 }
                 done.doneStat(token, s, a);
             }
@@ -170,11 +170,9 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 3;
-                    s = toFSError(args[0], args[1]);
-                    if (s == null) {
-                        a = toFileAttrs(args[2]);
-                    }
+                    assert args.length == 2;
+                    s = toFSError(args[0]);
+                    if (s == null) a = toFileAttrs(args[1]);
                 }
                 done.doneStat(token, s, a);
             }
@@ -190,11 +188,9 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 3;
-                    s = toFSError(args[0], args[1]);
-                    if (s == null) {
-                        a = toFileAttrs(args[2]);
-                    }
+                    assert args.length == 2;
+                    s = toFSError(args[0]);
+                    if (s == null) a = toFileAttrs(args[1]);
                 }
                 done.doneStat(token, s, a);
             }
@@ -210,8 +206,8 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 2;
-                    s = toFSError(args[0], args[1]);
+                    assert args.length == 1;
+                    s = toFSError(args[0]);
                 }
                 done.doneMkDir(token, s);
             }
@@ -228,11 +224,9 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 3;
-                    s = toFSError(args[0], args[1]);
-                    if (s == null) {
-                        h = toFileHandle(args[2]);
-                    }
+                    assert args.length == 2;
+                    s = toFSError(args[0]);
+                    if (s == null) h = toFileHandle(args[1]);
                 }
                 done.doneOpen(token, s, h);
             }
@@ -248,11 +242,9 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 3;
-                    s = toFSError(args[0], args[1]);
-                    if (s == null) {
-                        h = toFileHandle(args[2]);
-                    }
+                    assert args.length == 2;
+                    s = toFSError(args[0]);
+                    if (s == null) h = toFileHandle(args[1]);
                 }
                 done.doneOpen(token, s, h);
             }
@@ -272,12 +264,12 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 4;
-                    s = toFSError(args[1], args[2]);
+                    assert args.length == 3;
+                    s = toFSError(args[1]);
                     if (s == null) {
                         String str = (String)args[0];
                         if (str != null) b = Base64.toByteArray(str.toCharArray());
-                        eof = ((Boolean)args[3]).booleanValue();
+                        eof = ((Boolean)args[2]).booleanValue();
                     }
                 }
                 done.doneRead(token, s, b, eof);
@@ -297,11 +289,11 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 4;
-                    s = toFSError(args[1], args[2]);
+                    assert args.length == 3;
+                    s = toFSError(args[1]);
                     if (s == null) {
                         b = toDirEntryArray(args[0]);
-                        eof = ((Boolean)args[3]).booleanValue();
+                        eof = ((Boolean)args[2]).booleanValue();
                     }
                 }
                 done.doneReadDir(token, s, b, eof);
@@ -318,11 +310,9 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 3;
-                    s = toFSError(args[1], args[2]);
-                    if (s == null) {
-                        b = toDirEntryArray(args[0]);
-                    }
+                    assert args.length == 2;
+                    s = toFSError(args[1]);
+                    if (s == null) b = toDirEntryArray(args[0]);
                 }
                 done.doneRoots(token, s, b);
             }
@@ -338,11 +328,9 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 3;
-                    s = toFSError(args[0], args[1]);
-                    if (s == null) {
-                        p = (String)args[2];
-                    }
+                    assert args.length == 2;
+                    s = toFSError(args[0]);
+                    if (s == null) p = (String)args[1];
                 }
                 done.doneReadLink(token, s, p);
             }
@@ -358,11 +346,9 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 3;
-                    s = toFSError(args[0], args[1]);
-                    if (s == null) {
-                        p = (String)args[2];
-                    }
+                    assert args.length == 2;
+                    s = toFSError(args[0]);
+                    if (s == null) p = (String)args[1];
                 }
                 done.doneRealPath(token, s, p);
             }
@@ -377,8 +363,8 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 2;
-                    s = toFSError(args[0], args[1]);
+                    assert args.length == 1;
+                    s = toFSError(args[0]);
                 }
                 done.doneRemove(token, s);
             }
@@ -393,8 +379,8 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 2;
-                    s = toFSError(args[0], args[1]);
+                    assert args.length == 1;
+                    s = toFSError(args[0]);
                 }
                 done.doneRename(token, s);
             }
@@ -409,8 +395,8 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 2;
-                    s = toFSError(args[0], args[1]);
+                    assert args.length == 1;
+                    s = toFSError(args[0]);
                 }
                 done.doneRemove(token, s);
             }
@@ -425,8 +411,8 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 2;
-                    s = toFSError(args[0], args[1]);
+                    assert args.length == 1;
+                    s = toFSError(args[0]);
                 }
                 done.doneSymLink(token, s);
             }
@@ -445,8 +431,8 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 2;
-                    s = toFSError(args[0], args[1]);
+                    assert args.length == 1;
+                    s = toFSError(args[0]);
                 }
                 done.doneWrite(token, s);
             }
@@ -464,8 +450,8 @@ public class FileSystemProxy implements IFileSystem {
                     s = new Status(error);
                 }
                 else {
-                    assert args.length == 2;
-                    s = toFSError(args[0], args[1]);
+                    assert args.length == 1;
+                    s = toFSError(args[0]);
                 }
                 done.doneCopy(token, s);
             }

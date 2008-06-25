@@ -226,10 +226,7 @@ public abstract class AbstractChannel implements IChannel {
                                 IOException x = new IOException("Connection reset by peer");
                                 try {
                                     Object[] args = JSON.parseSequence(eos);
-                                    int error_code = ((Number)args[0]).intValue();
-                                    if (error_code != 0) {
-                                        x = new IOException(Command.toErrorString(args[1]));
-                                    }
+                                    if (args[0] != null) x = new IOException(Command.toErrorString(args[0]));
                                 }
                                 catch (IOException e) {
                                     x = e;

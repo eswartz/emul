@@ -168,8 +168,8 @@ public class MemoryProxy implements IMemory {
                         e = new MemoryError(error.getMessage());
                     }
                     else {
-                        assert args.length == 3;
-                        e = toMemoryError(addr, args[0], args[1], args[2]);
+                        assert args.length == 2;
+                        e = toMemoryError(addr, args[0], args[1]);
                     }
                     done.doneMemory(token, e);
                 }
@@ -188,10 +188,10 @@ public class MemoryProxy implements IMemory {
                             e = new MemoryError(error.getMessage());
                         }
                         else {
-                            assert args.length == 4;
+                            assert args.length == 3;
                             String str = (String)args[0];
                             if (str != null) Base64.toByteArray(buf, offs, size, str.toCharArray());
-                            e = toMemoryError(addr, args[1], args[2], args[3]);
+                            e = toMemoryError(addr, args[1], args[2]);
                         }
                         done.doneMemory(token, e);
                     }
@@ -209,8 +209,8 @@ public class MemoryProxy implements IMemory {
                             e = new MemoryError(error.getMessage());
                         }
                         else {
-                            assert args.length == 3;
-                            e = toMemoryError(addr, args[0], args[1], args[2]);
+                            assert args.length == 2;
+                            e = toMemoryError(addr, args[0], args[1]);
                         }
                         done.doneMemory(token, e);
                     }
@@ -274,11 +274,9 @@ public class MemoryProxy implements IMemory {
             public void done(Exception error, Object[] args) {
                 MemContext ctx = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    if (args[2] != null) {
-                        ctx = new MemContext((Map<String,Object>)args[2]);
-                    }
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    if (args[1] != null) ctx = new MemContext((Map<String,Object>)args[1]);
                 }
                 done.doneGetContext(token, error, ctx);
             }
@@ -291,9 +289,9 @@ public class MemoryProxy implements IMemory {
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    arr = toStringArray(args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    arr = toStringArray(args[1]);
                 }
                 done.doneGetChildren(token, error, arr);
             }
@@ -310,9 +308,11 @@ public class MemoryProxy implements IMemory {
             super(channel, MemoryProxy.this, cmd, args);
         }
 
-        MemoryError toMemoryError(Number addr, Object code, Object data, Object ranges) {
-            int error_code = ((Number)code).intValue();
-            if (error_code == 0) return null;
+        @SuppressWarnings("unchecked")
+        MemoryError toMemoryError(Number addr, Object data, Object ranges) {
+            if (data == null) return null;
+            Map<String,Object> map = (Map<String,Object>)data;
+            Integer code = (Integer)map.get(ERROR_CODE);
             String cmd = getCommandString();
             if (cmd.length() > 72) cmd = cmd.substring(0, 72) + "...";
             return new MemoryErrorReport(

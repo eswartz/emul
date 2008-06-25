@@ -160,51 +160,22 @@ Tools and targets can define additional attributes. Predefined attributes are:</
 <p>The service uses standard format for error reports,
 see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
 
-<p>Currently, the following values are defined for error code (other values may be
+<p>Currently, the following values are defined for service specific error codes (other values may be
 defined by future versions of this protocol):</p>
 
 <dl>
-    <dt><code>STATUS_OK = 0</code>
-    <dd>Indicates successful completion of the operation.
-
-    <dt><code>STATUS_EOF = 1</code>
+    <dt><code>EOF = 0x10001</code>
     <dd>Indicates end-of-file condition; for 'read' it means that no
     more data is available in the file, and for 'readdir' it
     indicates that no more files are contained in the directory.
 
-    <dt><code>STATUS_NO_SUCH_FILE = 2</code>
+    <dt><code>NO_SUCH_FILE = 0x10002</code>
     <dd>This code is returned when a reference is made to a file which
     should exist but doesn't.
 
-    <dt><code>STATUS_PERMISSION_DENIED = 3</code>
+    <dt><code>PERMISSION_DENIED = 0x10003</code>
     <dd>is returned when the authenticated user does not have sufficient
     permissions to perform the operation.
-
-    <dt><code>STATUS_FAILURE = 4</code>
-    <dd>is a generic catch-all error message; it should be returned if an
-    error occurs for which there is no more specific error code.
-
-    <dt><code>STATUS_BAD_MESSAGE = 5</code>
-    <dd>may be returned if a badly formatted packet or protocol
-    incompatibility is detected.
-
-    <dt><code>STATUS_NO_CONNECTION = 6</code>
-    <dd>is a pseudo-error which indicates that the client has no
-    connection to the server (it can only be generated locally by the
-    client, and MUST NOT be returned by servers).
-
-    <dt><code>STATUS_CONNECTION_LOST = 7</code>
-    <dd>is a pseudo-error which indicates that the connection to the
-    server has been lost (it can only be generated locally by the
-    client, and MUST NOT be returned by servers).
-
-    <dt><code>STATUS_OP_UNSUPPORTED = 8</code>
-    <dd>indicates that an attempt was made to perform an operation which
-    is not supported for the server (it may be generated locally by
-    the client if e.g.  the version number exchange indicates that a
-    required feature is not supported by the server, or it may be
-    returned by the server if the server does not implement an
-    operation).
 </dl>
 
 <h2><a name='Cmds'>Commands</a></h2>

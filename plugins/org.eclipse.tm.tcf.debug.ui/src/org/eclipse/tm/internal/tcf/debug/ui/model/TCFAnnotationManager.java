@@ -181,8 +181,13 @@ public class TCFAnnotationManager {
         TCFLaunch.addListener(launch_listener);
         displayExec(new Runnable() {
             public void run() {
-                for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
-                    window_listener.windowOpened(window);
+                try {
+                    for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
+                        window_listener.windowOpened(window);
+                    }
+                }
+                catch (NullPointerException x) {
+                    // TODO: bug in Eclipse: NullPointerException is thrown by getWorkbenchWindows()
                 }
                 PlatformUI.getWorkbench().addWindowListener(window_listener);
                 IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();

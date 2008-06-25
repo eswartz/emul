@@ -357,7 +357,8 @@ public class JSON {
     private static Object[] readSequence() throws IOException {
         List<Object> l = new ArrayList<Object>();
         while (cur_ch >= 0) {
-            l.add(readNestedObject());
+            if (cur_ch == 0) l.add(null);
+            else l.add(readNestedObject());
             if (cur_ch != 0) error("missing \\0 terminator");
             read();
         }
@@ -539,6 +540,7 @@ public class JSON {
 
     public static Object parseOne(String s) throws IOException {
         assert Protocol.isDispatchThread();
+        if (s.length() == 0) return null;
         reader = new StringReader(s);
         err_buf_pos = 0;
         err_buf_cnt = 0;
@@ -550,6 +552,7 @@ public class JSON {
 
     public static Object parseOne(byte[] b) throws IOException {
         assert Protocol.isDispatchThread();
+        if (b.length == 0) return null;
         reader = new InputStreamReader(new ByteArrayInputStream(b), "UTF8");
         err_buf_pos = 0;
         err_buf_cnt = 0;

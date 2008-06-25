@@ -134,8 +134,8 @@ public class LocatorProxy implements ILocator {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {
-                    assert args.length == 2;
-                    error = toError(args[0], args[1]);
+                    assert args.length == 1;
+                    error = toError(args[0]);
                 }
                 done.doneRedirect(token, error);
             }

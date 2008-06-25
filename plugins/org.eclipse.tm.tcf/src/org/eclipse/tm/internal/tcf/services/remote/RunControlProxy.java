@@ -96,12 +96,12 @@ public class RunControlProxy implements IRunControl {
                     String reason = null;
                     Map<String,Object> map = null;
                     if (error == null) {
-                        assert args.length == 6;
-                        error = toError(args[0], args[1]);
-                        susp = ((Boolean)args[2]).booleanValue();
-                        if (args[3] != null) pc =  ((Number)args[3]).toString();
-                        reason = (String)args[4];
-                        map = (Map<String,Object>)args[5];
+                        assert args.length == 5;
+                        error = toError(args[0]);
+                        susp = ((Boolean)args[1]).booleanValue();
+                        if (args[2] != null) pc =  ((Number)args[2]).toString();
+                        reason = (String)args[3];
+                        map = (Map<String,Object>)args[4];
                     }
                     done.doneGetState(token, error, susp, pc, reason, map);
                 }
@@ -125,8 +125,8 @@ public class RunControlProxy implements IRunControl {
                 @Override
                 public void done(Exception error, Object[] args) {
                     if (error == null) {
-                        assert args.length == 2;
-                        error = toError(args[0], args[1]);
+                        assert args.length == 1;
+                        error = toError(args[0]);
                     }
                     done.doneCommand(token, error);
                 }
@@ -217,11 +217,9 @@ public class RunControlProxy implements IRunControl {
             public void done(Exception error, Object[] args) {
                 RunControlContext ctx = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    if (args[2] != null) { 
-                        ctx = new RunContext((Map<String, Object>)args[2]);
-                    }
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    if (args[1] != null) ctx = new RunContext((Map<String, Object>)args[1]);
                 }
                 done.doneGetContext(token, error, ctx);
             }
@@ -234,9 +232,9 @@ public class RunControlProxy implements IRunControl {
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    arr = toStringArray(args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    arr = toStringArray(args[1]);
                 }
                 done.doneGetChildren(token, error, arr);
             }

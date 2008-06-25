@@ -29,9 +29,9 @@ public class LineNumbersProxy implements ILineNumbers {
             public void done(Exception error, Object[] args) {
                 CodeArea[] arr = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    arr = toTextAreaArray(args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    arr = toTextAreaArray(args[1]);
                 }
                 done.doneMapToSource(token, error, arr);
             }

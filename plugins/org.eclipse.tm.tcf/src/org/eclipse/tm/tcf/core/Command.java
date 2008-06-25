@@ -12,11 +12,14 @@ package org.eclipse.tm.tcf.core;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 
 import org.eclipse.tm.internal.tcf.core.Token;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
@@ -26,8 +29,11 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 /**
  * This is utility class that helps to implement sending a command and receiving
  * command result over TCF communication channel. The class uses JSON to encode
- * command arguments and to decode result data. Clients are expected to subclass
- * <code>Command</code> and override <code>done</code> method.
+ * command arguments and to decode result data.
+ * 
+ * The class also provides support for TCF standard error report encoding.
+ * 
+ * Clients are expected to subclass <code>Command</code> and override <code>done</code> method.
  * 
  * Note: most clients don't need to handle protocol commands directly and
  * can use service APIs instead. Service API does all command encoding/decoding
@@ -41,16 +47,16 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  *          public void done(Exception error, Object[] args) {
  *              Context ctx = null;
  *              if (error == null) {
- *                  assert args.length == 3;
- *                  error = JSON.toError(args[0], args[1]);
- *                  if (args[2] != null) ctx = new Context(args[2]);
+ *                  assert args.length == 2;
+ *                  error = toError(args[0]);
+ *                  if (args[1] != null) ctx = new Context(args[1]);
  *              }
  *              done.doneGetContext(token, error, ctx);
  *          }
  *      }.token;
  *  }
  */
-public abstract class Command implements IChannel.ICommandListener {
+public abstract class Command implements IErrorReport, IChannel.ICommandListener {
     
     private final IService service;
     private final String command;
@@ -59,6 +65,8 @@ public abstract class Command implements IChannel.ICommandListener {
     public final IToken token;
     
     private boolean done;
+    
+    private static final SimpleDateFormat timestamp_format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     
     public Command(IChannel channel, IService service, String command, Object[] args) {
         this.service = service;
@@ -131,28 +139,104 @@ public abstract class Command implements IChannel.ICommandListener {
         return buf.toString();
     }
     
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked" })
     public static String toErrorString(Object data) {
-        if (data instanceof String) {
-            return (String)data;
+        if (data == null) return null;
+        Map<String,Object> map = (Map<String,Object>)data;
+        String fmt = (String)map.get(ERROR_FORMAT);
+        if (fmt != null) {
+            Collection<Object> c = (Collection<Object>)map.get(ERROR_PARAMS);
+            if (c != null) return new MessageFormat(fmt).format(c.toArray());
+            return fmt;
         }
-        else if (data != null) {
-            Map<String,Object> map = (Map<String,Object>)data;
-            Collection<Object> c = (Collection<Object>)map.get("params");
-            return new MessageFormat((String)map.get("format")).format(c.toArray());
+        Number code = (Number)map.get(ERROR_CODE);
+        if (code != null) {
+            if (code.intValue() == TCF_ERROR_OTHER) {
+                String alt_org = (String)map.get(ERROR_ALT_ORG);
+                Number alt_code = (Number)map.get(ERROR_ALT_CODE);
+                if (alt_org != null && alt_code != null) {
+                    return alt_org + " Error " + alt_code;
+                }
+            }
+            return "TCF Error " + code;
         }
-        return null;
+        return "Invalid error report format";
     }
     
-    public Exception toError(Object code, Object data) {
-        int error_code = ((Number)code).intValue();
-        if (error_code == 0) return null;
+    private void appendErrorProps(StringBuffer bf, Map<String,Object> map) {
+        Number time = (Number)map.get(ERROR_TIME);
+        Number code = (Number)map.get(ERROR_CODE);
+        String service = (String)map.get(ERROR_SERVICE);
+        Number severity = (Number)map.get(ERROR_SEVERITY);
+        Number alt_code = (Number)map.get(ERROR_ALT_CODE);
+        String alt_org = (String)map.get(ERROR_ALT_ORG);
+        if (time != null) {
+            bf.append('\n');
+            bf.append("Time: ");
+            bf.append(timestamp_format.format(new Date(time.longValue())));
+        }
+        if (severity != null) {
+            bf.append('\n');
+            bf.append("Severity: ");
+            bf.append(toErrorString(map));
+            switch (severity.intValue()) {
+            case SEVERITY_ERROR: bf.append("Error");
+            case SEVERITY_FATAL: bf.append("Fatal");
+            case SEVERITY_WARNING: bf.append("Warning");
+            default: bf.append("Unknown");
+            }
+        }
+        bf.append('\n');
+        bf.append("Error text: ");
+        bf.append(toErrorString(map));
+        bf.append('\n');
+        bf.append("Error code: ");
+        bf.append(code);
+        if (service != null) {
+            bf.append('\n');
+            bf.append("Service: ");
+            bf.append(service);
+        }
+        if (alt_code != null) {
+            bf.append('\n');
+            bf.append("Alt code: ");
+            bf.append(alt_code);
+            if (alt_org != null) {
+                bf.append('\n');
+                bf.append("Alt org: ");
+                bf.append(alt_org);
+            }
+        }
+    }
+    
+    @SuppressWarnings("unchecked")
+    public Exception toError(Object data) {
+        if (data == null) return null;
+        Map<String,Object> map = (Map<String,Object>)data;
         String cmd = getCommandString();
         if (cmd.length() > 72) cmd = cmd.substring(0, 72) + "...";
-        return new Exception(
-                "TCF command exception:" +
-                "\nCommand: " + cmd +
-                "\nException: " + toErrorString(data) +
-                "\nError code: " + code);
+        StringBuffer bf = new StringBuffer();
+        bf.append("TCF command error:");
+        bf.append('\n');
+        bf.append("Command: ");
+        bf.append(cmd);
+        appendErrorProps(bf, map);
+        Exception x = new Exception(bf.toString());
+        Object caused_by = map.get(ERROR_CAUSE_BY);
+        if (caused_by != null) x.initCause(toNestedError(caused_by));
+        return x;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private Exception toNestedError(Object data) {
+        if (data == null) return null;
+        Map<String,Object> map = (Map<String,Object>)data;
+        StringBuffer bf = new StringBuffer();
+        bf.append("TCF error:");
+        appendErrorProps(bf, map);
+        Exception x = new Exception(bf.toString());
+        Object caused_by = map.get(ERROR_CAUSE_BY);
+        if (caused_by != null) x.initCause(toNestedError(caused_by));
+        return x;
     }
 }

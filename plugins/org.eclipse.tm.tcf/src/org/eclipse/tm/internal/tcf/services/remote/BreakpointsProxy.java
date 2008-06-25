@@ -37,8 +37,8 @@ public class BreakpointsProxy implements IBreakpoints {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {
-                    assert args.length == 2;
-                    error = toError(args[0], args[1]);
+                    assert args.length == 1;
+                    error = toError(args[0]);
                 }
                 done.doneCommand(token, error);
             }
@@ -50,8 +50,8 @@ public class BreakpointsProxy implements IBreakpoints {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {
-                    assert args.length == 2;
-                    error = toError(args[0], args[1]);
+                    assert args.length == 1;
+                    error = toError(args[0]);
                 }
                 done.doneCommand(token, error);
             }
@@ -63,8 +63,8 @@ public class BreakpointsProxy implements IBreakpoints {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {
-                    assert args.length == 2;
-                    error = toError(args[0], args[1]);
+                    assert args.length == 1;
+                    error = toError(args[0]);
                 }
                 done.doneCommand(token, error);
             }
@@ -76,8 +76,8 @@ public class BreakpointsProxy implements IBreakpoints {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {
-                    assert args.length == 2;
-                    error = toError(args[0], args[1]);
+                    assert args.length == 1;
+                    error = toError(args[0]);
                 }
                 done.doneCommand(token, error);
             }
@@ -89,8 +89,8 @@ public class BreakpointsProxy implements IBreakpoints {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {
-                    assert args.length == 2;
-                    error = toError(args[0], args[1]);
+                    assert args.length == 1;
+                    error = toError(args[0]);
                 }
                 done.doneCommand(token, error);
             }
@@ -102,8 +102,8 @@ public class BreakpointsProxy implements IBreakpoints {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {
-                    assert args.length == 2;
-                    error = toError(args[0], args[1]);
+                    assert args.length == 1;
+                    error = toError(args[0]);
                 }
                 done.doneCommand(token, error);
             }
@@ -116,9 +116,9 @@ public class BreakpointsProxy implements IBreakpoints {
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    arr = toStringArray(args[2]);
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    arr = toStringArray(args[1]);
                 }
                 done.doneGetIDs(token, error, arr);
             }
@@ -132,9 +132,9 @@ public class BreakpointsProxy implements IBreakpoints {
             public void done(Exception error, Object[] args) {
                 Map<String,Object> map = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    map = (Map<String,Object>)args[2];
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    map = (Map<String,Object>)args[1];
                 }
                 done.doneGetProperties(token, error, map);
             }
@@ -148,9 +148,9 @@ public class BreakpointsProxy implements IBreakpoints {
             public void done(Exception error, Object[] args) {
                 Map<String,Object> map = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    map = (Map<String,Object>)args[2];
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    map = (Map<String,Object>)args[1];
                 }
                 done.doneGetStatus(token, error, map);
             }
@@ -164,9 +164,9 @@ public class BreakpointsProxy implements IBreakpoints {
             public void done(Exception error, Object[] args) {
                 Map<String,Object> map = null;
                 if (error == null) {
-                    assert args.length == 3;
-                    error = toError(args[0], args[1]);
-                    map = (Map<String,Object>)args[2];
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    map = (Map<String,Object>)args[1];
                 }
                 done.doneGetCapabilities(token, error, map);
             }
