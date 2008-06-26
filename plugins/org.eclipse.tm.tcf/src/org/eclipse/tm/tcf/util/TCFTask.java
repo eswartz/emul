@@ -19,7 +19,19 @@ import java.util.concurrent.TimeoutException;
 
 import org.eclipse.tm.tcf.protocol.Protocol;
 
-
+/**
+ * A <tt>TCFTask</tt> is an utility class that represents the result of an asynchronous
+ * communication over TCF framework.  Methods are provided to check if the communication is
+ * complete, to wait for its completion, and to retrieve the result of
+ * the communication.
+ * 
+ * TCFTask is useful when communication is requested by a thread other then TCF dispatch thread.
+ * If client has a global state, for example, cached remote data, multithreading should be avoided,
+ * because it is extremely difficult to ensure absence of racing conditions or deadlocks in such environment.
+ * Such clients should consider message driven design, see TCFDataCache and its usage as an example.    
+ * 
+ * If a client is extending TCFTask it should implement run() method to perform actual communications. 
+ */
 public abstract class TCFTask<V> implements Runnable, Future<V> {
     
     private V result;

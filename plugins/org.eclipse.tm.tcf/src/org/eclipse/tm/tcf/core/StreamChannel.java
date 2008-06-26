@@ -14,7 +14,17 @@ import java.io.IOException;
 
 import org.eclipse.tm.tcf.protocol.IPeer;
 
-
+/**
+ * Abstract implementation of IChannel interface for stream oriented transport protocols.
+ *
+ * StreamChannel implements communication link connecting two end points (peers).
+ * The channel asynchronously transmits messages: commands, results and events.
+ * 
+ * StreamChannel uses escape sequences to represent End-Of-Message and End-Of-Stream markers.
+ * 
+ * Clients can subclass StreamChannel to support particular stream oriented transport (wire) protocol.
+ * Also, see ChannelTCP for a concrete IChannel implementation that works on top of TCP sockets as a transport.
+ */
 public abstract class StreamChannel extends AbstractChannel {
 
     public static final int ESC = 3;

@@ -21,7 +21,9 @@ import java.net.SocketException;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
-
+/**
+ * ChannelTCP is a IChannel implementation that works on top of TCP sockets as a transport.
+ */
 public class ChannelTCP extends StreamChannel {
 
     private Socket socket;

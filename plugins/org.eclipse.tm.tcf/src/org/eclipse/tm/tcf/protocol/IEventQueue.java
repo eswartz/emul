@@ -11,7 +11,9 @@
 package org.eclipse.tm.tcf.protocol;
 
 /**
- * Clients of the framework should implement this interface and call Protocol.setEventQueue.
+ * Clients of stand-alone version the framework should implement this interface and call Protocol.setEventQueue.
+ * Eclipse based clients don't need to implement IEventQueue since the implementation is provide by TCF bundle activator.
+ * 
  * Implementation should encapsulate a queue and asynchronous event dispatch machinery, which
  * extracts events from the queue and dispatches them by calling event's run() method.
  * The implementation is used by framework to queue and dispatch all events.

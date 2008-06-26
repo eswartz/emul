@@ -18,6 +18,9 @@ import java.util.Collection;
  * A single channel may be used to communicate with multiple services.
  * Multiple channels may be used to connect the same peers, however no command or event
  * ordering is guaranteed across channels.
+ * 
+ * @noimplement This interface is not intended to be implemented by clients.
+ * Clients can extend abstract implementations of IChannel: AbstractChannel or StreamChannel.
  */
 
 public interface IChannel {

@@ -23,8 +23,11 @@ import org.eclipse.tm.tcf.services.ILocator;
  * 1. the framework event queue and dispatch thread;
  * 2. local instance of Locator service, which maintains a list of available targets;
  * 3. list of open communication channels.
+ * 
+ * @noextend This class is not intended to be subclassed by clients.
+ * @noinstantiate This class is not intended to be instantiated by clients.
  */
-public class Protocol {
+public final class Protocol {
 
     private static IEventQueue event_queue;
     

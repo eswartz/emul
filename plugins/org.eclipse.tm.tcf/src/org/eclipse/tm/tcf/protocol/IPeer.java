@@ -18,6 +18,9 @@ import java.util.Map;
  * target depending on services it implements.
  * List of currently known peers can be retrieved by
  * calling ILocator.getPeers()
+ * 
+ * @noimplement This interface is not intended to be implemented by clients.
+ * Client can extends the abstract IPeer implementation: AbstractPeer.
  */
 public interface IPeer {
 

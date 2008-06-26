@@ -35,7 +35,15 @@ import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILocator;
 
-
+/**
+ * Abstract implementation of IChannel interface.
+ *  
+ * AbstractChannel implements communication link connecting two end points (peers).
+ * The channel asynchronously transmits messages: commands, results and events.
+ * 
+ * Clients can subclass AbstractChannel to support particular transport (wire) protocol.
+ * Also, see StreamChannel for stream oriented transport protocols.
+ */
 public abstract class AbstractChannel implements IChannel {
 
     public interface TraceListener {

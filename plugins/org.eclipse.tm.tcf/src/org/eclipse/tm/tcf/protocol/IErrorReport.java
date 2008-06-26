@@ -12,6 +12,8 @@ package org.eclipse.tm.tcf.protocol;
 
 /**
  * This interface defines TCF standard format of error reports. 
+ * 
+ * @noextend This interface is not intended to be extended by clients.
  */
 public interface IErrorReport {
 

@@ -40,8 +40,11 @@ import org.eclipse.tm.internal.tcf.core.ReadOnlyMap;
  * 
  * Clients can enable writing support for objects of a other classes by
  * registering ObjectWriter interface implementation.
+ * 
+ * @noextend This class is not intended to be subclassed by clients.
+ * @noinstantiate This class is not intended to be instantiated by clients.
  */
-public class JSON {
+public final class JSON {
     
     /**
      * Clients implement ObjectWriter interface when they want to enable marshaling of

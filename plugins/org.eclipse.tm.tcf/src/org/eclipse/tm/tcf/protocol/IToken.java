@@ -13,6 +13,9 @@ package org.eclipse.tm.tcf.protocol;
 /**
  * IToken is created by the framework for each command sent to a remote peer.
  * It is used to match results to commands and to cancel pending commands.
+ * 
+ * @noextend This interface is not intended to be extended by clients.
+ * @noimplement This interface is not intended to be implemented by clients.
  */
 public interface IToken {
 
