@@ -106,29 +106,29 @@ using a slash ('/') as the separator, and that will work as expected.</p>
 <p>File open mode is bitwise OR of mode flags:</p>
 
 <dl>
-    <dt><code>O_READ = 0x00000001</code>
+    <dt><code>TCF_O_READ = 0x00000001</code>
     <dd>Open the file for reading.
 
-    <dt><code>O_WRITE = 0x00000002</code>
-    <dd>Open the file for writing. If both this and O_READ are
+    <dt><code>TCF_O_WRITE = 0x00000002</code>
+    <dd>Open the file for writing. If both this and TCF_O_READ are
     specified, the file is opened for both reading and writing.
 
-    <dt><code>O_APPEND = 0x00000004</code>
+    <dt><code>TCF_O_APPEND = 0x00000004</code>
     <dd>Force all writes to append data at the end of the file.
 
-    <dt><code>O_CREAT = 0x00000008</code>
+    <dt><code>TCF_O_CREAT = 0x00000008</code>
     <dd>If this flag is specified, then a new file will be created if one
-    does not already exist (if O_TRUNC is specified, the new file will
+    does not already exist (if TCF_O_TRUNC is specified, the new file will
     be truncated to zero length if it previously exists).
 
-    <dt><code>O_TRUNC = 0x00000010</code>
+    <dt><code>TCF_O_TRUNC = 0x00000010</code>
     <dd>Forces an existing file with the same name to be truncated to zero
-    length when creating a file by specifying O_CREAT.
-    O_CREAT MUST also be specified if this flag is used.
+    length when creating a file by specifying TCF_O_CREAT.
+    TCF_O_CREAT MUST also be specified if this flag is used.
     
-    <dt><code>O_EXCL = 0x00000020</code>
+    <dt><code>TCF_O_EXCL = 0x00000020</code>
     <dd>Causes the request to fail if the named file already exists.
-    O_CREAT MUST also be specified if this flag is used.
+    TCF_O_CREAT MUST also be specified if this flag is used.
 </dl>
 
 <h2><a name='FileAttributes'>File Attributes</a></h2>
@@ -164,16 +164,16 @@ see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
 defined by future versions of this protocol):</p>
 
 <dl>
-    <dt><code>EOF = 0x10001</code>
+    <dt><code>STATUS_EOF = 0x10001</code>
     <dd>Indicates end-of-file condition; for 'read' it means that no
     more data is available in the file, and for 'readdir' it
     indicates that no more files are contained in the directory.
 
-    <dt><code>NO_SUCH_FILE = 0x10002</code>
+    <dt><code>STATUS_NO_SUCH_FILE = 0x10002</code>
     <dd>This code is returned when a reference is made to a file which
     should exist but doesn't.
 
-    <dt><code>PERMISSION_DENIED = 0x10003</code>
+    <dt><code>STATUS_PERMISSION_DENIED = 0x10003</code>
     <dd>is returned when the authenticated user does not have sufficient
     permissions to perform the operation.
 </dl>
@@ -186,7 +186,7 @@ defined by future versions of this protocol):</p>
 C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; open &bull; <i>&lt;string: file name&gt;</i> &bull; <i>&lt;int: mode&gt;</i> &bull; <i>&lt;file attributes&gt;</i> &bull;
 </font></b></pre>
 
-<p>The command opens or creates a file on a remote system. If mode contains O_CREAT then new file is created, otherwise exsting
+<p>The command opens or creates a file on a remote system. If mode contains TCF_O_CREAT then new file is created, otherwise exsting
 file is opened. If the file is created, file attributes is looked up for UID, GID and permissions. If no attribute value is found in
 the command parameters, a default value is used.</p>
 
@@ -595,38 +595,38 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
         <font color=#3F5FBF>/**
          * Open the file for reading.
          */</font>
-        O_READ                  = 0x00000001,
+        TCF_O_READ              = 0x00000001,
 
         <font color=#3F5FBF>/**
-         * Open the file for writing. If both this and O_READ are
+         * Open the file for writing. If both this and TCF_O_READ are
          * specified, the file is opened for both reading and writing.
          */</font>
-        O_WRITE                 = 0x00000002,
+        TCF_O_WRITE             = 0x00000002,
 
         <font color=#3F5FBF>/**
          * Force all writes to append data at the end of the file.
          */</font>
-        O_APPEND                = 0x00000004, 
+        TCF_O_APPEND            = 0x00000004, 
 
         <font color=#3F5FBF>/**
          * If this flag is specified, then a new file will be created if one
-         * does not already exist (if O_TRUNC is specified, the new file will
+         * does not already exist (if TCF_O_TRUNC is specified, the new file will
          * be truncated to zero length if it previously exists).
          */</font>
-        O_CREAT                 = 0x00000008,
+        TCF_O_CREAT             = 0x00000008,
 
         <font color=#3F5FBF>/**
          * Forces an existing file with the same name to be truncated to zero
-         * length when creating a file by specifying O_CREAT.
-         * O_CREAT MUST also be specified if this flag is used.
+         * length when creating a file by specifying TCF_O_CREAT.
+         * TCF_O_CREAT MUST also be specified if this flag is used.
          */</font>
-        O_TRUNC                 = 0x00000010,
+        TCF_O_TRUNC             = 0x00000010,
 
         <font color=#3F5FBF>/**
          * Causes the request to fail if the named file already exists.
-         * O_CREAT MUST also be specified if this flag is used.
+         * TCF_O_CREAT MUST also be specified if this flag is used.
          */</font>
-        O_EXCL                  = 0x00000020;
+        TCF_O_EXCL              = 0x00000020;
 
     <font color=#3F5FBF>/**
      * Flags to be used together with FileAttrs.
@@ -773,77 +773,44 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
     }
     
     <font color=#3F5FBF>/**
-     * Status codes.
+     * Service specific error codes.
      */</font>
     <font color=#7F0055>static final int</font>
     
-        <font color=#3F5FBF>/**
-         * Indicates successful completion of the operation.
-         */</font>
-        STATUS_OK = 0,
-
         <font color=#3F5FBF>/**
          * Indicates end-of-file condition; for read() it means that no
          * more data is available in the file, and for readdir() it
          * indicates that no more files are contained in the directory.
          */</font>
-        STATUS_EOF = 1,
+        STATUS_EOF = 0x10001,
 
         <font color=#3F5FBF>/**
          * This code is returned when a reference is made to a file which
          * should exist but doesn't.
          */</font>
-        STATUS_NO_SUCH_FILE = 2,
+        STATUS_NO_SUCH_FILE = 0x10002,
 
         <font color=#3F5FBF>/**
          * is returned when the authenticated user does not have sufficient
          * permissions to perform the operation.
          */</font>
-        STATUS_PERMISSION_DENIED = 3,
+        STATUS_PERMISSION_DENIED = 0x10003;
 
-        <font color=#3F5FBF>/**
-         * is a generic catch-all error message; it should be returned if an
-         * error occurs for which there is no more specific error code.
-         * 
-         */</font>
-        STATUS_FAILURE = 4,
-
-        <font color=#3F5FBF>/**
-         * may be returned if a badly formatted packet or protocol
-         * incompatibility is detected.
-         */</font>
-        STATUS_BAD_MESSAGE = 5,
-
-        <font color=#3F5FBF>/**
-         * is a pseudo-error which indicates that the client has no
-         * connection to the server (it can only be generated locally by the
-         * client, and MUST NOT be returned by servers).
-         */</font>
-        STATUS_NO_CONNECTION = 6,
-
-        <font color=#3F5FBF>/**
-         * is a pseudo-error which indicates that the connection to the
-         * server has been lost (it can only be generated locally by the
-         * client, and MUST NOT be returned by servers).
-         */</font>
-        STATUS_CONNECTION_LOST = 7,
-
-        <font color=#3F5FBF>/**
-         * indicates that an attempt was made to perform an operation which
-         * is not supported for the server (it may be generated locally by
-         * the client if e.g.  the version number exchange indicates that a
-         * required feature is not supported by the server, or it may be
-         * returned by the server if the server does not implement an
-         * operation).
-         */</font>
-        STATUS_OP_UNSUPPORTED = 8;
     
+    <font color=#3F5FBF>/**
+     * The class to represent File System error reports. 
+     */</font>
     <font color=#7F0055>abstract static class</font> FileSystemException extends IOException {
         
         <font color=#7F0055>protected</font> FileSystemException(String message);
         
         <font color=#7F0055>protected</font> FileSystemException(Exception x)
         
+        <font color=#3F5FBF>/**
+         * Get error code. The code can be standard TCF error code or
+         * one of service specific codes, see STATUS_*. 
+         * @return error code.
+         */</font>
         <font color=#7F0055>public abstract int</font> getStatus();
     }
 
@@ -851,7 +818,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * Open or create a file on a remote system.
      * 
      * @param file_name specifies the file name.  See 'File Names' for more information.
-     * @param flags is a bit mask of O_* flags.
+     * @param flags is a bit mask of TCF_O_* flags.
      * @param attrs specifies the initial attributes for the file.
      *  Default values will be used for those attributes that are not specified.
      * @param done is call back object.

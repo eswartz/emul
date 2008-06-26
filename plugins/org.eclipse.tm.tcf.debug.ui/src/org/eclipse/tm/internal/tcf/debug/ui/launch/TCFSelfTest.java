@@ -1364,7 +1364,7 @@ class TCFSelfTest {
             }
             else {
                 file_name = tmp_path + "/tcf-test-" + (file_count++) + ".tmp";
-                files.open(file_name, IFileSystem.O_CREAT | IFileSystem.O_TRUNC | IFileSystem.O_WRITE, null, this);
+                files.open(file_name, IFileSystem.TCF_O_CREAT | IFileSystem.TCF_O_TRUNC | IFileSystem.TCF_O_WRITE, null, this);
             }
         }
 
@@ -1437,7 +1437,7 @@ class TCFSelfTest {
                                 Protocol.invokeLater(new Runnable() {
                                     public void run() {
                                         state = STATE_INP;
-                                        files.open(file_name, IFileSystem.O_READ, null, TestFileSystem.this);
+                                        files.open(file_name, IFileSystem.TCF_O_READ, null, TestFileSystem.this);
                                     }
                                 });
                             }
@@ -1505,11 +1505,11 @@ class TCFSelfTest {
                 }
                 else if (state == STATE_WRITE) {
                     state = STATE_READ;
-                    files.open(file_name, IFileSystem.O_READ, null, this);
+                    files.open(file_name, IFileSystem.TCF_O_READ, null, this);
                 }
                 else if (state == STATE_READ) {
                     state = STATE_OUT;
-                    files.open(file_name, IFileSystem.O_WRITE, null, this);
+                    files.open(file_name, IFileSystem.TCF_O_WRITE, null, this);
                 }
                 else {
                     assert false;

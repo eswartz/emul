@@ -91,38 +91,38 @@ public interface IFileSystem extends IService {
         /**
          * Open the file for reading.
          */
-        O_READ                  = 0x00000001,
+        TCF_O_READ              = 0x00000001,
 
         /**
-         * Open the file for writing. If both this and O_READ are
+         * Open the file for writing. If both this and TCF_O_READ are
          * specified, the file is opened for both reading and writing.
          */
-        O_WRITE                 = 0x00000002,
+        TCF_O_WRITE             = 0x00000002,
 
         /**
          * Force all writes to append data at the end of the file.
          */
-        O_APPEND                = 0x00000004, 
+        TCF_O_APPEND            = 0x00000004, 
 
         /**
          * If this flag is specified, then a new file will be created if one
-         * does not already exist (if O_TRUNC is specified, the new file will
+         * does not already exist (if TCF_O_TRUNC is specified, the new file will
          * be truncated to zero length if it previously exists).
          */
-        O_CREAT                 = 0x00000008,
+        TCF_O_CREAT             = 0x00000008,
 
         /**
          * Forces an existing file with the same name to be truncated to zero
-         * length when creating a file by specifying O_CREAT.
-         * O_CREAT MUST also be specified if this flag is used.
+         * length when creating a file by specifying TCF_O_CREAT.
+         * TCF_O_CREAT MUST also be specified if this flag is used.
          */
-        O_TRUNC                 = 0x00000010,
+        TCF_O_TRUNC             = 0x00000010,
 
         /**
          * Causes the request to fail if the named file already exists.
-         * O_CREAT MUST also be specified if this flag is used.
+         * TCF_O_CREAT MUST also be specified if this flag is used.
          */
-        O_EXCL                  = 0x00000020;
+        TCF_O_EXCL              = 0x00000020;
 
     /**
      * Flags to be used together with FileAttrs.
@@ -288,71 +288,32 @@ public interface IFileSystem extends IService {
     }
     
     /**
-     * Status codes.
+     * Service specific error codes.
      */
     static final int
     
-        /**
-         * Indicates successful completion of the operation.
-         */
-        STATUS_OK = 0,
-
         /**
          * Indicates end-of-file condition; for read() it means that no
          * more data is available in the file, and for readdir() it
          * indicates that no more files are contained in the directory.
          */
-        STATUS_EOF = 1,
+        STATUS_EOF = 0x10001,
 
         /**
          * This code is returned when a reference is made to a file which
          * should exist but doesn't.
          */
-        STATUS_NO_SUCH_FILE = 2,
+        STATUS_NO_SUCH_FILE = 0x10002,
 
         /**
          * is returned when the authenticated user does not have sufficient
          * permissions to perform the operation.
          */
-        STATUS_PERMISSION_DENIED = 3,
-
-        /**
-         * is a generic catch-all error message; it should be returned if an
-         * error occurs for which there is no more specific error code.
-         * 
-         */
-        STATUS_FAILURE = 4,
-
-        /**
-         * may be returned if a badly formatted packet or protocol
-         * incompatibility is detected.
-         */
-        STATUS_BAD_MESSAGE = 5,
-
-        /**
-         * is a pseudo-error which indicates that the client has no
-         * connection to the server (it can only be generated locally by the
-         * client, and MUST NOT be returned by servers).
-         */
-        STATUS_NO_CONNECTION = 6,
-
-        /**
-         * is a pseudo-error which indicates that the connection to the
-         * server has been lost (it can only be generated locally by the
-         * client, and MUST NOT be returned by servers).
-         */
-        STATUS_CONNECTION_LOST = 7,
-
-        /**
-         * indicates that an attempt was made to perform an operation which
-         * is not supported for the server (it may be generated locally by
-         * the client if e.g.  the version number exchange indicates that a
-         * required feature is not supported by the server, or it may be
-         * returned by the server if the server does not implement an
-         * operation).
-         */
-        STATUS_OP_UNSUPPORTED = 8;
+        STATUS_PERMISSION_DENIED = 0x10003;
     
+    /**
+     * The class to represent File System error reports. 
+     */
     @SuppressWarnings("serial")
     abstract static class FileSystemException extends IOException {
         
@@ -365,6 +326,11 @@ public interface IFileSystem extends IService {
             initCause(x);
         }
         
+        /**
+         * Get error code. The code can be standard TCF error code or
+         * one of service specific codes, see STATUS_*. 
+         * @return error code.
+         */
         public abstract int getStatus();
     }
 
@@ -372,7 +338,7 @@ public interface IFileSystem extends IService {
      * Open or create a file on a remote system.
      * 
      * @param file_name specifies the file name.  See 'File Names' for more information.
-     * @param flags is a bit mask of O_* flags.
+     * @param flags is a bit mask of TCF_O_* flags.
      * @param attrs specifies the initial attributes for the file.
      *  Default values will be used for those attributes that are not specified.
      * @param done is call back object.

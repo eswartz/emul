@@ -17,6 +17,7 @@ import java.util.Map;
 import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IFileSystem;
 
@@ -52,7 +53,7 @@ public class FileSystemProxy implements IFileSystem {
         
         Status(Exception x) {
             super(x);
-            this.status = STATUS_FAILURE; 
+            this.status = IErrorReport.TCF_ERROR_OTHER; 
         }
         
         public int getStatus() {
