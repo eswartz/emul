@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-O -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -I. -I../../agent -I-
+CFLAGS=-O -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -Wmissing-prototypes -I. -I../../agent -I-
 
 CFILES=$(basename $(wildcard *.c)) $(basename $(notdir $(wildcard ../../agent/*.c)))
 OFILES=$(filter-out main%.o, $(addsuffix .o, $(CFILES)))
