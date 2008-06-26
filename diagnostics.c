@@ -114,11 +114,15 @@ static void command_cancel_test(char * token, Channel * c) {
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
+#if SERVICE_RunControl
     if (terminate_debug_context(c->bcg, id2ctx(id)) != 0) err = errno;
-
+#else
+    err = ERR_UNSUPPORTED;
+#endif
+    
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
-    write_errno(&c->out, 0);
+    write_errno(&c->out, err);
     c->out.write(&c->out, MARKER_EOM);
 }
 
@@ -146,7 +150,7 @@ static void command_get_symbol(char * token, Channel * c) {
     }
 #else
     ctx = NULL;
-    error = EINVAL;
+    error = ERR_UNSUPPORTED;
 #endif
 
     write_stringz(&c->out, "R");
