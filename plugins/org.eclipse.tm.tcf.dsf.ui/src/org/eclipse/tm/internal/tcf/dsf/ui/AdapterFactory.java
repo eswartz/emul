@@ -14,12 +14,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.cdt.debug.core.model.ISteppingModeTarget;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.dd.dsf.concurrent.Immutable;
 import org.eclipse.dd.dsf.debug.ui.actions.DsfResumeCommand;
 import org.eclipse.dd.dsf.debug.ui.actions.DsfStepIntoCommand;
 import org.eclipse.dd.dsf.debug.ui.actions.DsfStepOverCommand;
 import org.eclipse.dd.dsf.debug.ui.actions.DsfStepReturnCommand;
+import org.eclipse.dd.dsf.debug.ui.actions.DsfSteppingModeTarget;
 import org.eclipse.dd.dsf.debug.ui.actions.DsfSuspendCommand;
 import org.eclipse.dd.dsf.debug.ui.sourcelookup.DsfSourceDisplayAdapter;
 import org.eclipse.dd.dsf.service.DsfSession;
@@ -61,6 +63,7 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
         final DsfStepReturnCommand step_return_command;
         final DsfSuspendCommand suspend_command;
         final DsfResumeCommand resume_command;
+        final DsfSteppingModeTarget steppin_mode_target;
         final TcfTerminateCommand terminate_command;
         final IDebugModelProvider debug_model_provider;
         final TCFDSFLaunch lunch;
@@ -81,14 +84,16 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
             }
             session.registerModelAdapter(ISourceDisplay.class, source_display_adapter);
 
-            step_into_command = new DsfStepIntoCommand(session);
-            step_over_command = new DsfStepOverCommand(session);
+            steppin_mode_target = new DsfSteppingModeTarget();
+            step_into_command = new DsfStepIntoCommand(session, steppin_mode_target);
+            step_over_command = new DsfStepOverCommand(session, steppin_mode_target);
             step_return_command = new DsfStepReturnCommand(session);
             suspend_command = new DsfSuspendCommand(session);
             resume_command = new DsfResumeCommand(session);
             terminate_command = new TcfTerminateCommand(session);
             //breakpoint_command = new BreakpointCommand();
             //memory_retrieval = new DsfMemoryBlockRetrieval(ITCFConstants.ID_TCF_DEBUG_MODEL, );
+            session.registerModelAdapter(ISteppingModeTarget.class, steppin_mode_target);
             session.registerModelAdapter(IStepIntoHandler.class, step_into_command);
             session.registerModelAdapter(IStepOverHandler.class, step_over_command);
             session.registerModelAdapter(IStepReturnHandler.class, step_return_command);

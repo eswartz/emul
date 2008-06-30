@@ -1,12 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ * Martin Oberhuber (Wind River) - [238564] Adopt TM 3.0 APIs
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.files;
 
@@ -31,11 +32,13 @@ import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.services.clientserver.FileTypeMatcher;
 import org.eclipse.rse.services.clientserver.IMatcher;
 import org.eclipse.rse.services.clientserver.NamePatternMatcher;
-import org.eclipse.rse.services.clientserver.messages.IndicatorException;
+import org.eclipse.rse.services.clientserver.messages.SimpleSystemMessage;
 import org.eclipse.rse.services.clientserver.messages.SystemMessage;
 import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
+import org.eclipse.rse.services.clientserver.messages.SystemOperationFailedException;
 import org.eclipse.rse.services.files.AbstractFileService;
 import org.eclipse.rse.services.files.IHostFile;
+import org.eclipse.tm.internal.tcf.rse.Activator;
 import org.eclipse.tm.internal.tcf.rse.ITCFSubSystem;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorService;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorServiceManager;
@@ -54,18 +57,18 @@ import org.eclipse.tm.tcf.util.TCFFileOutputStream;
 public class TCFFileService extends AbstractFileService {
 
     private final TCFConnectorService connector;
-    
+
     private UserInfo user_info;
-    
+
     private static final class UserInfo {
         final int r_uid;
         final int e_uid;
         final int r_gid;
         final int e_gid;
         final String home;
-        
+
         final Throwable error;
-        
+
         UserInfo(int r_uid, int e_uid, int r_gid, int e_gid, String home) {
             this.r_uid = r_uid;
             this.e_uid = e_uid;
@@ -74,7 +77,7 @@ public class TCFFileService extends AbstractFileService {
             this.home = home;
             error = null;
         }
-        
+
         UserInfo(Throwable error) {
             this.error = error;
             r_uid = -1;
@@ -84,7 +87,7 @@ public class TCFFileService extends AbstractFileService {
             home = null;
         }
     }
-    
+
     public TCFFileService(IHost host) {
         connector = (TCFConnectorService)TCFConnectorServiceManager
             .getInstance().getConnectorService(host, ITCFSubSystem.class);
@@ -95,36 +98,15 @@ public class TCFFileService extends AbstractFileService {
             "for the Files subsystem. It requires a TCF agent to be running on the remote machine.";
     }
 
-    public SystemMessage getMessage(String id) {
-        try {
-            return new SystemMessage("TCF", "C", "0001",
-                    SystemMessage.ERROR, id, "");
-        }
-        catch (IndicatorException e) {
-            throw new Error(e);
-        }
-    }
-
     public SystemMessage getMessage(Throwable x) {
-        try {
-            return new SystemMessage("TCF", "C", "0002",
-                    SystemMessage.ERROR, x.getClass().getName(), x.getMessage());
-        }
-        catch (IndicatorException e) {
-            throw new Error(e);
-        }
+        return new SimpleSystemMessage(Activator.PLUGIN_ID,
+                SystemMessage.ERROR, x.getMessage(), x);
     }
 
     public String getName() {
         return "TCF File Service";
     }
 
-    public void initService(IProgressMonitor monitor) {
-    }
-
-    public void uninitService(IProgressMonitor monitor) {
-    }
-    
     private String toRemotePath(String parent, String name) throws SystemMessageException {
         assert !Protocol.isDispatchThread();
         String s  = null;
@@ -143,13 +125,13 @@ public class TCFFileService extends AbstractFileService {
         while (s.endsWith("/.")) s = s.substring(0, s.length() - 2);
         return s;
     }
-    
-    public boolean copy(String srcParent,
+
+    public void copy(String srcParent,
             String srcName, String tgtParent, String tgtName, IProgressMonitor monitor)
             throws SystemMessageException {
         final String src = toRemotePath(srcParent, srcName);
         final String tgt = toRemotePath(tgtParent, tgtName);
-        return new TCFRSETask<Boolean>() {
+        new TCFRSETask<Boolean>() {
             public void run() {
                 IFileSystem fs = connector.getFileSystemService();
                 fs.copy(src, tgt, false, false, new IFileSystem.DoneCopy() {
@@ -162,12 +144,11 @@ public class TCFFileService extends AbstractFileService {
         }.getS(monitor, "Copy: " + srcName);
     }
 
-    public boolean copyBatch(String[] srcParents,
+    public void copyBatch(String[] srcParents,
             String[] srcNames, String tgtParent, IProgressMonitor monitor) throws SystemMessageException {
         for (int i = 0; i < srcParents.length; i++) {
-            if (!copy(srcParents[i], srcNames[i], tgtParent, srcNames[i], monitor)) return false;
+            copy(srcParents[i], srcNames[i], tgtParent, srcNames[i], monitor);
         }
-        return true;
     }
 
     public IHostFile createFile(String parent,
@@ -206,10 +187,10 @@ public class TCFFileService extends AbstractFileService {
         }.getS(monitor, "Create folder");
     }
 
-    public boolean delete(String parent,
+    public void delete(String parent,
             String name, IProgressMonitor monitor) throws SystemMessageException {
         final String path = toRemotePath(parent, name);
-        return new TCFRSETask<Boolean>() {
+        new TCFRSETask<Boolean>() {
             public void run() {
                 final IFileSystem fs = connector.getFileSystemService();
                 fs.stat(path, new IFileSystem.DoneStat() {
@@ -240,15 +221,15 @@ public class TCFFileService extends AbstractFileService {
         }.getS(monitor, "Delete");
     }
 
-    public boolean deleteBatch(String[] remoteParents, String[] fileNames, IProgressMonitor monitor)
+    public void deleteBatch(String[] remoteParents, String[] fileNames,
+            IProgressMonitor monitor)
             throws SystemMessageException {
         for (int i = 0; i < remoteParents.length; i++) {
             delete(remoteParents[i], fileNames[i], monitor);
         }
-        return true;
     }
 
-    public boolean download(final String parent,
+    public void download(final String parent,
             final String name, final File file, final boolean is_binary,
             final String host_encoding, IProgressMonitor monitor) throws SystemMessageException {
         monitor.beginTask("Download", 1);
@@ -257,11 +238,10 @@ public class TCFFileService extends AbstractFileService {
             InputStream inp = getInputStream(parent, name, is_binary, new NullProgressMonitor());
             OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
             copyStream(inp, out, is_binary, "UTF8", host_encoding);
-            return true;
         }
-        catch (Throwable x) {
+        catch (Exception x) {
             if (x instanceof SystemMessageException) throw (SystemMessageException)x;
-            throw new SystemMessageException(getMessage(x));
+            throw new SystemOperationFailedException(Activator.PLUGIN_ID, x);
         }
         finally {
             monitor.done();
@@ -299,7 +279,7 @@ public class TCFFileService extends AbstractFileService {
     protected IHostFile[] internalFetch(final String parent, final String filter, final int fileType, final IProgressMonitor monitor)
             throws SystemMessageException {
         final String path = toRemotePath(parent, null);
-        final boolean wantFiles = (fileType==FILE_TYPE_FILES_AND_FOLDERS || (fileType&FILE_TYPE_FILES)!=0); 
+        final boolean wantFiles = (fileType==FILE_TYPE_FILES_AND_FOLDERS || (fileType&FILE_TYPE_FILES)!=0);
         final boolean wantFolders = (fileType==FILE_TYPE_FILES_AND_FOLDERS || (fileType%FILE_TYPE_FOLDERS)!=0);
         return new TCFRSETask<IHostFile[]>() {
             private IMatcher matcher = null;
@@ -376,7 +356,8 @@ public class TCFFileService extends AbstractFileService {
         final IFileHandle handle = new TCFRSETask<IFileHandle>() {
             public void run() {
                 IFileSystem fs = connector.getFileSystemService();
-                fs.open(path, IFileSystem.O_READ, null, new IFileSystem.DoneOpen() {
+                fs.open(path, IFileSystem.TCF_O_READ, null,
+                        new IFileSystem.DoneOpen() {
                     public void doneOpen(IToken token, FileSystemException error, IFileHandle handle) {
                         if (error != null) error(error);
                         else done(handle);
@@ -393,7 +374,8 @@ public class TCFFileService extends AbstractFileService {
         final IFileHandle handle = new TCFRSETask<IFileHandle>() {
             public void run() {
                 IFileSystem fs = connector.getFileSystemService();
-                int flags = IFileSystem.O_WRITE | IFileSystem.O_CREAT | IFileSystem.O_TRUNC;
+                int flags = IFileSystem.TCF_O_WRITE | IFileSystem.TCF_O_CREAT
+                        | IFileSystem.TCF_O_TRUNC;
                 fs.open(path, flags, null, new IFileSystem.DoneOpen() {
                     public void doneOpen(IToken token, FileSystemException error, IFileHandle handle) {
                         if (error != null) error(error);
@@ -441,12 +423,12 @@ public class TCFFileService extends AbstractFileService {
         return true;
     }
 
-    public boolean move(final String srcParent,
+    public void move(final String srcParent,
             final String srcName, final String tgtParent, final String tgtName, IProgressMonitor monitor)
             throws SystemMessageException {
         final String src_path = toRemotePath(srcParent, srcName);
         final String tgt_path = toRemotePath(tgtParent, tgtName);
-        return new TCFRSETask<Boolean>() {
+        new TCFRSETask<Boolean>() {
             public void run() {
                 IFileSystem fs = connector.getFileSystemService();
                 fs.rename(src_path, tgt_path, new IFileSystem.DoneRename() {
@@ -459,23 +441,22 @@ public class TCFFileService extends AbstractFileService {
         }.getS(monitor, "Move");
     }
 
-    public boolean rename(String remoteParent,
+    public void rename(String remoteParent,
             String oldName, String newName, IProgressMonitor monitor) throws SystemMessageException {
-        return move(remoteParent, oldName, remoteParent, newName, monitor);
+        move(remoteParent, oldName, remoteParent, newName, monitor);
     }
 
-    public boolean rename(String remoteParent,
+    public void rename(String remoteParent,
             String oldName, String newName, IHostFile oldFile, IProgressMonitor monitor)
             throws SystemMessageException {
-        boolean b = move(remoteParent, oldName, remoteParent, newName, monitor);
-        if (b) oldFile.renameTo(toRemotePath(remoteParent, newName));
-        return b;
+        move(remoteParent, oldName, remoteParent, newName, monitor);
+        oldFile.renameTo(toRemotePath(remoteParent, newName));
     }
 
-    public boolean setLastModified(final String parent,
+    public void setLastModified(final String parent,
             final String name, final long timestamp, IProgressMonitor monitor) throws SystemMessageException {
         final String path = toRemotePath(parent, name);
-        return new TCFRSETask<Boolean>() {
+        new TCFRSETask<Boolean>() {
             public void run() {
                 IFileSystem fs = connector.getFileSystemService();
                 FileAttrs attrs = new FileAttrs(IFileSystem.ATTR_ACMODTIME,
@@ -490,10 +471,10 @@ public class TCFFileService extends AbstractFileService {
         }.getS(monitor, "Set modification time");
     }
 
-    public boolean setReadOnly(final String parent,
+    public void setReadOnly(final String parent,
             final String name, final boolean readOnly, IProgressMonitor monitor) throws SystemMessageException {
         final String path = toRemotePath(parent, name);
-        return new TCFRSETask<Boolean>() {
+        new TCFRSETask<Boolean>() {
             public void run() {
                 final IFileSystem fs = connector.getFileSystemService();
                 fs.stat(path, new IFileSystem.DoneStat() {
@@ -527,14 +508,13 @@ public class TCFFileService extends AbstractFileService {
         }.getS(monitor, "Set permissions");
     }
 
-    public boolean upload(InputStream inp,
+    public void upload(InputStream inp,
             String parent, String name, boolean isBinary,
             String hostEncoding, IProgressMonitor monitor) throws SystemMessageException {
         monitor.beginTask("Upload", 1);
         try {
             OutputStream out = getOutputStream(parent, name, isBinary, new NullProgressMonitor());
             copyStream(inp, out, isBinary, hostEncoding, "UTF8");
-            return true;
         }
         catch (Throwable x) {
             if (x instanceof SystemMessageException) throw (SystemMessageException)x;
@@ -545,7 +525,7 @@ public class TCFFileService extends AbstractFileService {
         }
     }
 
-    public boolean upload(File localFile,
+    public void upload(File localFile,
             String parent, String name, boolean isBinary,
             String srcEncoding, String hostEncoding, IProgressMonitor monitor)
             throws SystemMessageException {
@@ -554,7 +534,6 @@ public class TCFFileService extends AbstractFileService {
             OutputStream out = getOutputStream(parent, name, isBinary, new NullProgressMonitor());
             InputStream inp = new BufferedInputStream(new FileInputStream(localFile));
             copyStream(inp, out, isBinary, hostEncoding, "UTF8");
-            return true;
         }
         catch (Throwable x) {
             if (x instanceof SystemMessageException) throw (SystemMessageException)x;
@@ -564,8 +543,8 @@ public class TCFFileService extends AbstractFileService {
             monitor.done();
         }
     }
-    
-    private void copyStream(InputStream inp, OutputStream out, 
+
+    private void copyStream(InputStream inp, OutputStream out,
             boolean is_binary, String inp_encoding, String out_encoding) throws IOException {
         try {
             if (!is_binary) {
@@ -597,7 +576,7 @@ public class TCFFileService extends AbstractFileService {
             inp.close();
         }
     }
-    
+
     private synchronized UserInfo getUserInfo() {
         if (user_info == null || user_info.error != null) {
             user_info = new TCFRSETask<UserInfo>() {
@@ -615,7 +594,7 @@ public class TCFFileService extends AbstractFileService {
         }
         return user_info;
     }
-    
+
     public boolean canRead(FileAttrs attrs) {
         if ((attrs.flags & IFileSystem.ATTR_PERMISSIONS) == 0) return false;
         if ((attrs.flags & IFileSystem.ATTR_UIDGID) == 0) return false;
@@ -629,7 +608,7 @@ public class TCFFileService extends AbstractFileService {
         }
         return (attrs.permissions & IFileSystem.S_IROTH) != 0;
     }
-    
+
     public boolean canWrite(FileAttrs attrs) {
         if ((attrs.flags & IFileSystem.ATTR_PERMISSIONS) == 0) return false;
         if ((attrs.flags & IFileSystem.ATTR_UIDGID) == 0) return false;
@@ -643,5 +622,5 @@ public class TCFFileService extends AbstractFileService {
         }
         return (attrs.permissions & IFileSystem.S_IWOTH) != 0;
     }
-    
+
 }

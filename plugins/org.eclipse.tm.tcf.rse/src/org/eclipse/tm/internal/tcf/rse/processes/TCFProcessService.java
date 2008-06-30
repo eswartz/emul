@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ * Martin Oberhuber (Wind River) - [238564] Adopt TM 3.0 APIs
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.processes;
 
@@ -23,8 +24,6 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.rse.core.model.IHost;
-import org.eclipse.rse.services.clientserver.messages.IndicatorException;
-import org.eclipse.rse.services.clientserver.messages.SystemMessage;
 import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 import org.eclipse.rse.services.clientserver.processes.HostProcessFilterImpl;
 import org.eclipse.rse.services.clientserver.processes.IHostProcess;
@@ -58,24 +57,8 @@ public class TCFProcessService extends AbstractProcessService implements
             " It requires a TCF agent to be running on the remote machine.";
     }
 
-    public SystemMessage getMessage(String messageID) {
-        try {
-            return new SystemMessage("TCF", "C", "0001",
-                    SystemMessage.ERROR, messageID, null);
-        }
-        catch (IndicatorException e) {
-            throw new Error(e);
-        }
-    }
-
     public String getName() {
         return "TCF Process Service";
-    }
-
-    public void initService(IProgressMonitor monitor) {
-    }
-
-    public void uninitService(IProgressMonitor monitor) {
     }
 
     public IHostProcess getParentProcess(long PID, IProgressMonitor monitor)
