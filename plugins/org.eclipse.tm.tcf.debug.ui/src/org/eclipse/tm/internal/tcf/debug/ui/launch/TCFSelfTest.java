@@ -297,7 +297,7 @@ class TCFSelfTest {
         
         private void startProcess() {
             if (cancel || cnt == 4) {
-                if (!map.isEmpty()) {
+                if (!process_ids.isEmpty()) {
                     new Thread() {
                         public void run() {
                             try {
@@ -308,14 +308,14 @@ class TCFSelfTest {
                             Protocol.invokeLater(new Runnable() {
                                 public void run() {
                                     sync_cnt++;
-                                    if (map.isEmpty()) {
+                                    if (process_ids.isEmpty()) {
                                         exit(null);
                                     }
                                     else if (sync_cnt < 300) {
                                         startProcess();
                                     }
                                     else {
-                                        exit(new Error("Missing 'contextRemoved' event for " + map.keySet()));
+                                        exit(new Error("Missing 'contextRemoved' event for " + process_ids));
                                     }
                                 }
                             });
@@ -369,8 +369,7 @@ class TCFSelfTest {
                 String[] suspended_ids) {
             for (String context : suspended_ids) {
                 assert context != null;
-                IRunControl.RunControlContext ctx = map.get(context);  
-                if (ctx == null) exit(new Error("Invalid 'contextSuspended' event for " + context));
+                contextSuspended(context, null, null, null);
             }
         }
 
@@ -383,19 +382,23 @@ class TCFSelfTest {
 
         public void contextChanged(RunControlContext[] contexts) {
             for (RunControlContext ctx : contexts) {
-                if (map.get(ctx.getID()) == null) exit(new Error("Invalid 'contextChanged' event"));
+                if (map.get(ctx.getID()) == null) return;
                 map.put(ctx.getID(), ctx);
             }
         }
 
         public void contextException(String context, String msg) {
-            exit(new Error("Unexpected 'contextException' event for " + context + ": " + msg));
+            IRunControl.RunControlContext ctx = map.get(context);  
+            if (ctx == null) return;
+            if (process_ids.contains(ctx.getParentID())) {
+                exit(new Error("Unexpected 'contextException' event for " + context + ": " + msg));
+            }
         }
 
         public void contextRemoved(String[] context_ids) {
             for (String id : context_ids) {
-                if (map.get(id) == null) exit(new Error("Invalid 'contextRemoved' event"));
                 map.remove(id);
+                process_ids.remove(id);
             }
         }
 
@@ -406,7 +409,7 @@ class TCFSelfTest {
                 Map<String, Object> params) {
             assert context != null;
             IRunControl.RunControlContext ctx = map.get(context);  
-            if (ctx == null) exit(new Error("Invalid 'contextSuspended' event for " + context));
+            if (ctx == null) return;
             if (process_ids.contains(ctx.getParentID())) {
                 ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
