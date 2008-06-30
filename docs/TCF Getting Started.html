@@ -29,19 +29,19 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
 
 <ul>
    <li>Install JDK 1.5.0 or later, recommended 1.6.0
-   <li>Install <b>Eclipse Classic SDK 3.4</b>, last tested with 3.4M6a, recommended 3.4M6a<br>
+   <li>Install <b>Eclipse Classic SDK 3.4</b>, last tested with 3.4.0, recommended 3.4.0<br>
        <a href='http://download.eclipse.org/eclipse/downloads/'>http://download.eclipse.org/eclipse/downloads/</a>
-   <li>Install <b>TM RSE SDK 2.0</b> or later, last tested with 3.0M3, recommended 2.0.3<br>
+   <li>Install <b>TM RSE SDK 3.0</b> or later, last tested with 3.0.0, recommended 3.0.0<br>
        <a href='http://download.eclipse.org/dsdp/tm/downloads/'>http://download.eclipse.org/dsdp/tm/downloads/</a>
    <li><b>Optional</b> dependencies for TCF/DSF/CDT integration: these are not required by
        TCF itself, and not needed for RSE integration or for TCF based debugger demo,
        use these for future development:
        <ul>
-       <li>CDT (Eclipse C/C++ Development Tools SDK) 5.0 or later, last tested with 5.0M6, recommended 5.0M6<br>
-       <a href='http://wiki.eclipse.org/CDT/User/DownloadCDT5.0'>http://wiki.eclipse.org/CDT/User/DownloadCDT5.0</a>
-       <li>DD (Device Debug) SDK 1.0.0M6<br>
+       <li>CDT (Eclipse C/C++ Development Tools SDK) 5.0 or later, last tested with 5.0.0, recommended 5.0.0<br>
+       <a href='http://www.eclipse.org/cdt/downloads.php'>http://www.eclipse.org/cdt/downloads.php</a>
+       <li>DD (Device Debug) SDK 1.0.0<br>
        <a href='http://download.eclipse.org/dsdp/dd/downloads/'>http://download.eclipse.org/dsdp/dd/downloads/</a>
-   </ul></li>
+       </ul>
    <li>Checkout TCF code from Eclipse SVN repository:
        <pre>svn co svn://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf</pre>
    <li>Run Eclipse:
@@ -49,13 +49,15 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
    <li>Open "Java" perspective.
    <li>In "Package Explorer" view: do right click and then select "Import...".
    <li>Select "General/Existing Projects into Workspace" and click "Next".
-   <li>Select root directory: &lt;TCF Root&gt;\plugins, and click "Next".<ul>
+   <li>Select root directory: &lt;TCF Root&gt;\plugins, and click "Next".
+       <ul>
        <li>If DD-DSF and/or CDT are not installed, don't import the following two plugins
-       into your workspace:<ul>
+       into your workspace:
+               <ul>
            <li>org.eclipse.tm.tcf.dsf
            <li>org.eclipse.tm.tcf.dsf.ui
-       </ul></li>
-   </ul></li>
+           </ul>
+       </ul>
    <!--
    <li><b>Optional</b> for browsing dependencies:<ul>
        <li>In Package Explorer: do right click and select "Import...".
