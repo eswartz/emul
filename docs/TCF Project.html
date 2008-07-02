@@ -58,33 +58,27 @@ as starting point of this work.
 <H2><A name=Agent></A>Reference implementation of a target agent</H2>
 
 <P>Current reference implementation of TCF target agents is fully functional, 
-can run on Windows, Linux and VxWorks, and provides the following services: 
+can run on Windows, Linux and VxWorks.  On Linux it is implemented 
+using PTRACE, on VxWorks is uses vxdbgLib, on Windows it uses Debug API and dbghelp.dll. 
+The agent provides the following services: 
 <UL>
     <LI>Run Control - provides threads and processes run control functionality 
-    sufficient for debugging of user space programs. On Linux it is implemented 
-    using PTRACE, on VxWorks is uses vxdbgLib, on Windows it is not currently supported. 
-
-    <LI>Breakpoints - provides basic breakpoints support. On Linux it is 
-    implemented using PTRACE, on VxWorks is uses vxdbgLib,
-    on Windows it is not currently supported. 
+    sufficient for debugging of user space programs.
+    <LI>Breakpoints - provides basic breakpoints support.
 
     <LI>Registers - allows inspection and modification of CPU registers.
-    Implemented for Linux and VxWorks, on Windows it is not currently supported.
 
     <LI>Stack Trace - execution thread stack back-tracing.
-    Implemented for Linux and VxWorks, on Windows it is not currently supported.
 
     <LI>Memory - program memory access.
-    Implemented for Linux and VxWorks, on Windows it is not currently supported.
 
     <LI>Processes - provides access to the target OS's process 
     information, allows starting new and terminating existing processes,
     and allows attaching and detaching processes for debugging.
-    Implemented for Linux and VxWorks, on Windows it is not currently supported.
 
     <LI>Line Numbers - provides mapping between locations in the source files
     and corresponding machine instruction addresses in the executable object.
-    Implemented for Linux only.
+    Implemented for Linux and Windows, not supported on VxWorks.
 
     <LI>Sys Monitor - provides list of processes, process attributes and 
     CPU/memory utilization data. On Linux it is implemented using /proc file 
@@ -108,9 +102,7 @@ for more details about the agent code.
 <P>The prototype code connects Eclipse Debug Framework and Target Communication 
 Framework. It allows to launch Eclipse debug session by connecting to a target 
 running TCF agent, and then perform basic debugging tasks, like resuming, 
-suspending, single-stepping, setting/removing breakpoints, etc. Since current 
-reference implementation of target agent does not support line number 
-information access, source level debugging is not supported. 
+suspending, single-stepping, setting/removing breakpoints, etc.
 <P>The prototype launch configuration autodetects TCF targets on a local network 
 and allows a user to connect to a target by simply selecting it from a list 
 without a need for any further configuration or setup. TCF launch configuration 
