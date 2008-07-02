@@ -49,12 +49,9 @@ public class TerminateCommand implements ITerminateHandler {
                         IRunControl.RunControlContext ctx = node.getRunContext();
                         if (ctx != null && ctx.canTerminate()) {
                             res = true;
-                            node = null;
+                            break;
                         }
-                        else {
-                            node = node.getParent();
-                            if (node == null && model.getLaunch().canTerminate()) res = true;
-                        }
+                        node = node.getParent();
                     }
                 }
                 monitor.setEnabled(res);
@@ -78,40 +75,25 @@ public class TerminateCommand implements ITerminateHandler {
                         IRunControl.RunControlContext ctx = node.getRunContext();
                         if (ctx != null && ctx.canTerminate()) {
                             set.add(ctx);
-                            node = null;
+                            break;
                         }
-                        else {
-                            node = node.getParent();
-                            if (node == null) set.add(null);
-                        }
+                        node = node.getParent();
                     }
                 }
                 final Set<IToken> cmds = new HashSet<IToken>();
                 for (Iterator<IRunControl.RunControlContext> i = set.iterator(); i.hasNext();) {
                     IRunControl.RunControlContext ctx = i.next();
-                    if (ctx == null) {
-                        cmds.add(null);
-                        model.getLaunch().terminate(new Runnable() {
-                            public void run() {
-                                assert cmds.contains(null);
-                                cmds.remove(null);
-                                if (cmds.isEmpty()) done();
+                    cmds.add(ctx.terminate(new IRunControl.DoneCommand() {
+                        public void doneCommand(IToken token, Exception error) {
+                            assert cmds.contains(token);
+                            cmds.remove(token);
+                            if (error != null) {
+                                monitor.setStatus(new Status(IStatus.ERROR,
+                                        Activator.PLUGIN_ID, IStatus.OK, "Cannot resume", error));
                             }
-                        });
-                    }
-                    else {
-                        cmds.add(ctx.terminate(new IRunControl.DoneCommand() {
-                            public void doneCommand(IToken token, Exception error) {
-                                assert cmds.contains(token);
-                                cmds.remove(token);
-                                if (error != null) {
-                                    monitor.setStatus(new Status(IStatus.ERROR,
-                                            Activator.PLUGIN_ID, IStatus.OK, "Cannot resume", error));
-                                }
-                                if (cmds.isEmpty()) done();
-                            }
-                        }));
-                    }
+                            if (cmds.isEmpty()) done();
+                        }
+                    }));
                 }
             }
         };

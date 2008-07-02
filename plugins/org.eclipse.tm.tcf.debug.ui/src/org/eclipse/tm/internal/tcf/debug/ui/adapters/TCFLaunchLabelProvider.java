@@ -26,7 +26,6 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
             String status = "";
             if (launch.isConnecting()) status = "Connecting";
             else if (launch.isExited()) status = "Exited";
-            else if (launch.isTerminated()) status = "Terminated";
             else if (launch.isDisconnected()) status = "Disconnected";
             Throwable error = launch.getError();
             if (error != null) {

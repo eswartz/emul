@@ -43,20 +43,10 @@ public class TCFLaunch extends Launch {
 
     }
 
-    public interface TerminateListener {
-
-        public boolean canTerminate();
-
-        public boolean isTerminated();
-
-        public void terminate(Runnable done);
-    }
-
     private static final Collection<Listener> listeners = new ArrayList<Listener>();
 
     private IChannel channel;
     private Throwable error;
-    private TerminateListener terminate_listener;
     private TCFBreakpointsStatus breakpoints_status;
     private String mode;
     private boolean connecting;
@@ -108,8 +98,8 @@ public class TCFLaunch extends Launch {
         for (Iterator<Listener> i = listeners.iterator(); i.hasNext();) {
             i.next().onDisconnected(this);
         }
-        if (error != null) setError(error);
-        else fireChanged();
+        if (error != null) this.error = error;
+        fireChanged();
         runShutdownSequence(new Runnable() {
             public void run() {
                 shutdown = true;
@@ -210,6 +200,9 @@ public class TCFLaunch extends Launch {
         if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
             channel.terminate(x);
         }
+        else if (!connecting) {
+            disconnected = true;
+        }
         fireChanged();
     }
     
@@ -255,86 +248,42 @@ public class TCFLaunch extends Launch {
         return channel.getRemoteService(cls);
     }
 
-    public boolean canTerminate() {
-        final boolean res[] = new boolean[1];
-        Protocol.invokeAndWait(new Runnable() {
-            public void run() {
-                if (terminate_listener == null) res[0] = false;
-                else res[0] = terminate_listener.canTerminate();
-            }
-        });
-        return res[0];
-    }
-
-    public boolean isTerminated() {
-        final boolean res[] = new boolean[1];
-        Protocol.invokeAndWait(new Runnable() {
-            public void run() {
-                if (channel == null || channel.getState() == IChannel.STATE_CLOSED) res[0] = true;
-                else if (terminate_listener == null) res[0] = false;
-                else res[0] = terminate_listener.isTerminated();
-            }
-        });
-        return res[0];
-    }
-
-    public void terminate() {
-        Protocol.invokeAndWait(new Runnable() {
-            public void run() {
-                if (terminate_listener == null) return;
-                terminate_listener.terminate(new Runnable() {
-                    public void run() {
-                        fireTerminate();
-                    }
-                });
-            }
-        });
-    }
-
-    public void terminate(Runnable done) {
-        if (terminate_listener == null) done.run();
-        else terminate_listener.terminate(done);
-    }
-
     public boolean canDisconnect() {
-        final boolean res[] = new boolean[1];
-        Protocol.invokeAndWait(new Runnable() {
-            public void run() {
-                res[0] = channel != null && channel.getState() != IChannel.STATE_CLOSED;
-            }
-        });
-        return res[0];
+        return !disconnected;
     }
 
     public boolean isDisconnected() {
-        final boolean res[] = new boolean[1];
-        Protocol.invokeAndWait(new Runnable() {
-            public void run() {
-                res[0] = channel == null || channel.getState() == IChannel.STATE_CLOSED;
-            }
-        });
-        return res[0];
-    }
-    
-    public boolean isExited() {
-        return last_context_exited;
+        return disconnected;
     }
     
     public void disconnect() throws DebugException {
-        Protocol.invokeAndWait(new Runnable() {
+        Protocol.invokeLater(new Runnable() {
             public void run() {
                 if (channel != null && channel.getState() != IChannel.STATE_CLOSED) {
                     channel.close();
                 }
-                fireTerminate();
             }
         });
     }
     
-    public void launchTCF(String mode, IPeer peer, TerminateListener terminate_listener) throws DebugException {
+    public boolean canTerminate() {
+        return false;
+    }
+
+    public boolean isTerminated() {
+        return disconnected;
+    }
+
+    public void terminate() throws DebugException {
+    }
+
+    public boolean isExited() {
+        return last_context_exited;
+    }
+    
+    public void launchTCF(String mode, IPeer peer) throws DebugException {
         assert Protocol.isDispatchThread();
         this.mode = mode;
-        this.terminate_listener = terminate_listener;
         connecting = true;
         channel = peer.openChannel();
         channel.addChannelListener(new IChannel.IChannelListener() {

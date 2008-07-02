@@ -14,7 +14,6 @@ import java.io.IOException;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
@@ -37,24 +36,21 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
     }
 
     public void launch(final ILaunchConfiguration configuration, final String mode,
-            final ILaunch launch, IProgressMonitor monitor) throws CoreException {
-        if (monitor == null) monitor = new NullProgressMonitor();
-        monitor.beginTask("Launching debugger session", 1); //$NON-NLS-1$
-        Protocol.invokeAndWait(new Runnable() {
+            final ILaunch launch, final IProgressMonitor monitor) throws CoreException {
+        if (monitor != null) monitor.beginTask("Launching TCF debugger session", 1); //$NON-NLS-1$
+        Protocol.invokeLater(new Runnable() {
             public void run() {
                 try {
                     String id = configuration.getAttribute(TCFLaunchDelegate.ATTR_PEER_ID, "");
                     IPeer peer = Protocol.getLocator().getPeers().get(id);
                     if (peer == null) throw new IOException("Cannot locate peer " + id);
-                    TCFLaunch.TerminateListener term = null;
-                    if (peer instanceof TCFLaunch.TerminateListener) term = (TCFLaunch.TerminateListener)peer;
-                    ((TCFLaunch)launch).launchTCF(mode, peer, term);
+                    ((TCFLaunch)launch).launchTCF(mode, peer);
                 }
                 catch (Throwable e) {
                     ((TCFLaunch)launch).setError(e);
                 }
+                if (monitor != null) monitor.done();
             }
         });
-        monitor.done();
     }
 }
