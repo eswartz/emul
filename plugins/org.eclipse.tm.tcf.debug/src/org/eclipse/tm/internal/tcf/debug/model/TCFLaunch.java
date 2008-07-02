@@ -143,6 +143,10 @@ public class TCFLaunch extends Launch {
     protected void runLaunchSequence(final Runnable done) {
         try {
             ILaunchConfiguration cfg = getLaunchConfiguration();
+            if (cfg == null) {
+                Protocol.invokeLater(done);
+                return;
+            }
             final String file = cfg.getAttribute(TCFLaunchDelegate.ATTR_PROGRAM_FILE, "");
             if (file.length() == 0) {
                 Protocol.invokeLater(done);

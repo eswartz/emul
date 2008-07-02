@@ -41,13 +41,11 @@ import org.osgi.framework.BundleContext;
 
 public class TCFDSFStack extends AbstractDsfService implements IStack {
     
-    private static final String TOP_FRAME = "TopFrame:";
-
-    class TCFFrameDMC extends AbstractDMContext implements IFrameDMContext, Comparable<TCFFrameDMC> {
+    public class TCFFrameDMC extends AbstractDMContext implements IFrameDMContext, Comparable<TCFFrameDMC> {
         
-        final String id;
-        final TCFDSFExecutionDMC exe_dmc;
-        final TCFDataCache<TCFFrameData> frame_data;
+        public final String id;
+        public final TCFDSFExecutionDMC exe_dmc;
+        public final TCFDataCache<TCFFrameData> frame_data;
         
         int level;
         TCFFrameData prev_data;
@@ -65,18 +63,12 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
                         reset(null);
                         return true;
                     }
-                    if (level == 0) {
-                        assert id.startsWith(TOP_FRAME);
-                        // Top frame is special case: most of its data is stored in CPU registers.
-                        // Other frames are stored in memory - in thread stack area.
-                        return getTopFrame();
-                    }
                     command = tcf_stk_service.getContext(new String[]{ id }, new IStackTrace.DoneGetContext() {
                         public void doneGetContext(IToken token, Exception err, IStackTrace.StackTraceContext[] context) {
                             if (command != token) return;
                             TCFFrameData data = null;
                             TCFAddress a = null;
-                            Number n = context[0].getReturnAddress();
+                            Number n = context[0].getInstructionAddress();
                             if (n != null) a = new TCFAddress(n);
                             // Optimization: skip source position lookup if same address
                             if (prev_data != null && prev_data.address != null && prev_data.address.equals(a)) {
@@ -95,22 +87,6 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
                         }
                     });
                     return false;
-                }
-                
-                private boolean getTopFrame() {
-                    assert level == 0;
-                    TCFDataCache<TCFDSFRunControlState> cache = exe_dmc.run_control_state_cache;
-                    if (!cache.validate()) {
-                        cache.wait(this);
-                        return false;
-                    }
-                    TCFFrameData data = new TCFFrameData();
-                    TCFDSFRunControlState state = cache.getData();
-                    if (state != null) data.address = state.getPC();
-                    data.level = level;
-                    if (!getSourcePos(data)) return false;
-                    reset(prev_data = data);
-                    return true;
                 }
                 
                 private boolean getSourcePos(final TCFFrameData data) {
@@ -162,14 +138,14 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
         }    
     }
     
-    private static class TCFFrameData implements IFrameDMData {
+    public static class TCFFrameData implements IFrameDMData {
         
-        IStackTrace.StackTraceContext context;
-        IAddress address;
-        int level;
-        String function;
-        Throwable src_pos_error;
-        ILineNumbers.CodeArea code_area;
+        public IStackTrace.StackTraceContext context;
+        public IAddress address;
+        public int level;
+        public String function;
+        public Throwable src_pos_error;
+        public ILineNumbers.CodeArea code_area;
 
         public IAddress getAddress() {
             return address;
@@ -189,12 +165,12 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
         }
 
         public int getLine() {
-            if (code_area == null) return 0;
+            if (code_area == null) return -1;
             return code_area.start_line;
         }
 
         public int getColumn() {
-            if (code_area == null) return 0;
+            if (code_area == null) return -1;
             return code_area.start_column;
         }
     }
@@ -203,6 +179,8 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
         
         private final TCFDSFExecutionDMC dmc;
         private final Map<String,TCFFrameDMC> frame_pool;
+        
+        private String top_frame_id;
         
         FramesCache(IChannel channel, TCFDSFExecutionDMC dmc) {
             super(channel);
@@ -214,7 +192,10 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
         public boolean startDataRetrieval() {
             assert command == null;
             if (tcf_stk_service == null) {
-                reset(null);
+                HashMap<String,TCFFrameDMC> data = new HashMap<String,TCFFrameDMC>();
+                top_frame_id = "TopFrame:" + dmc.getTcfContextId();
+                data.put(top_frame_id, createFrameDMC(top_frame_id, 0));
+                set(null, null, data);
                 return true;
             }
             assert !dmc.isDisposed();
@@ -225,21 +206,21 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
                     if (contexts != null) {
                         for (int i = 0; i < contexts.length; i++) {
                             String id = contexts[i];
-                            TCFFrameDMC n = frame_pool.get(id);
-                            if (n == null) frame_pool.put(id, n = new TCFFrameDMC(dmc, id));
-                            n.level = contexts.length - i;
-                            data.put(id, n);
+                            data.put(id, createFrameDMC(id, contexts.length - i - 1));
                         }
                     }
-                    String id = TOP_FRAME + dmc.getTcfContextId();
-                    TCFFrameDMC n = frame_pool.get(id);
-                    if (n == null) frame_pool.put(id, n = new TCFFrameDMC(dmc, id));
-                    n.level = 0;
-                    data.put(id, n);
                     set(token, err, data);
                 }
             });
             return false;
+        }
+        
+        TCFFrameDMC createFrameDMC(String id, int level) {
+            TCFFrameDMC n = frame_pool.get(id);
+            if (n == null) frame_pool.put(id, n = new TCFFrameDMC(dmc, id));
+            n.level = level;
+            if (n.level == 0) top_frame_id = id;
+            return n;
         }
 
         void invalidateFrames() {
@@ -467,11 +448,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
                 return;
             }
             FramesCache cache = (FramesCache)cache0;
-            String id = TOP_FRAME + exe.getTcfContextId();
-            TCFFrameDMC n = cache.frame_pool.get(id);
-            if (n == null) cache.frame_pool.put(id, n = new TCFFrameDMC(exe, id));
-            n.level = 0;
-            rm.setData(n);
+            rm.setData(cache.createFrameDMC(cache.top_frame_id, 0));
             rm.done();
         }
         else {

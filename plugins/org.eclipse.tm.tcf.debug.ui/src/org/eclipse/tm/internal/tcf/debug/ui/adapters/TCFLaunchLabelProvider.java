@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.adapters;
 
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.swt.graphics.RGB;
@@ -35,8 +36,10 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
                 result.setForeground(new RGB(255, 0, 0), 0);
             }
             if (status.length() > 0) status = " (" + status + ")";
-            String label = launch.getLaunchConfiguration().getName() + status;
-            result.setLabel(label, 0);
+            String name = "?";
+            ILaunchConfiguration cfg = launch.getLaunchConfiguration();
+            if (cfg != null) name = cfg.getName();
+            result.setLabel(name + status, 0);
             result.done();
         }
     }

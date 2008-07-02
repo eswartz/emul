@@ -68,6 +68,7 @@ public abstract class TCFDataCache<V> implements Runnable {
      * Note: It is prohibited to call this method when cache is not valid. 
      */
     public V getData() {
+        assert Protocol.isDispatchThread();
         assert valid;
         return data;
     }
@@ -88,6 +89,7 @@ public abstract class TCFDataCache<V> implements Runnable {
      * @param req
      */
     public void wait(Runnable cb) {
+        assert Protocol.isDispatchThread();
         assert !valid;
         if (cb != null) waiting_list.add(cb);
     }

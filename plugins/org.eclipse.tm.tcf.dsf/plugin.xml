@@ -4,12 +4,20 @@
    <extension
          point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType
-            sourceLocatorId="org.eclipse.tm.tcf.debug.SourceLocator"
+            sourceLocatorId="org.eclipse.tm.tcf.dsf.SourceLocator"
             name="DSF over TCF"
             sourcePathComputerId="org.eclipse.tm.tcf.debug.SourcePathComputer"
             delegate="org.eclipse.tm.internal.tcf.dsf.launch.TCFDSFLaunchDelegate"
             modes="debug"
             id="org.eclipse.tm.tcf.dsf.LaunchConfigurationType">
       </launchConfigurationType>
+   </extension>
+   <extension
+         point="org.eclipse.debug.core.sourceLocators">
+      <sourceLocator
+            name="TCF/DSF Source Lookup Director"
+            class="org.eclipse.tm.internal.tcf.dsf.launch.TCFDSFSourceLookupDirector"
+            id="org.eclipse.tm.tcf.dsf.SourceLocator">
+      </sourceLocator>
    </extension>
 </plugin>
