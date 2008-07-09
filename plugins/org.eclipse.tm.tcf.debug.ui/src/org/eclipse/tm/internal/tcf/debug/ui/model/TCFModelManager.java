@@ -38,6 +38,16 @@ public class TCFModelManager {
             TCFModel model = models.get(launch);
             if (model != null) model.onDisconnected();
         }
+
+        public void onContextActionsDone(TCFLaunch launch) {
+            TCFModel model = models.get(launch);
+            if (model != null) model.onContextActionsDone();
+        }
+
+        public void onContextActionsStart(TCFLaunch launch) {
+            TCFModel model = models.get(launch);
+            if (model != null) model.onContextActionsStart();
+        }
     };
 
     private final ILaunchesListener debug_launch_listener = new ILaunchesListener() {

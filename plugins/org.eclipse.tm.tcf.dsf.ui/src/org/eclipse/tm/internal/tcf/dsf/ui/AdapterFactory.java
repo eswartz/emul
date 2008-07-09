@@ -91,6 +91,7 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
             suspend_command = new DsfSuspendCommand(session);
             resume_command = new DsfResumeCommand(session);
             terminate_command = new TcfTerminateCommand(session);
+
             //breakpoint_command = new BreakpointCommand();
             //memory_retrieval = new DsfMemoryBlockRetrieval(ITCFConstants.ID_TCF_DEBUG_MODEL, );
             session.registerModelAdapter(ISteppingModeTarget.class, steppin_mode_target);

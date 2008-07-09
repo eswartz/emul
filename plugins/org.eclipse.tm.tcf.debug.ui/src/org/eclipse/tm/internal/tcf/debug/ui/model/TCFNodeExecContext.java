@@ -22,6 +22,8 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.graphics.RGB;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
+import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -40,16 +42,9 @@ public class TCFNodeExecContext extends TCFNode {
 
     private final TCFDataCache<IMemory.MemoryContext> mem_context;
     private final TCFDataCache<IRunControl.RunControlContext> run_context;
-    private final TCFDataCache<ContextState> state;
+    private final TCFDataCache<TCFContextState> state;
 
     private final Map<BigInteger,TCFSourceRef> line_info_cache;
-
-    private static class ContextState {
-        boolean suspended;
-        String suspended_pc;
-        String suspended_reason;
-        boolean terminated;
-    }
 
     private int resumed_cnt;
 
@@ -99,7 +94,7 @@ public class TCFNodeExecContext extends TCFNode {
                 return false;
             }
         };
-        state = new TCFDataCache<ContextState>(channel) {
+        state = new TCFDataCache<TCFContextState>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
@@ -114,10 +109,11 @@ public class TCFNodeExecContext extends TCFNode {
                 }
                 command = ctx.getState(new IRunControl.DoneGetState() {
                     public void doneGetState(IToken token, Exception error, boolean suspended, String pc, String reason, Map<String,Object> params) {
-                        ContextState s = new ContextState();
-                        s.suspended = suspended;
-                        s.suspended_pc = pc;
-                        s.suspended_reason = reason;
+                        TCFContextState s = new TCFContextState();
+                        s.is_suspended = suspended;
+                        s.suspend_pc = pc;
+                        s.suspend_reason = reason;
+                        s.suspend_params = params;
                         set(token, error, s);
                     }
                 });
@@ -174,8 +170,8 @@ public class TCFNodeExecContext extends TCFNode {
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx == null || !ctx.hasState()) return false;
         if (!state.isValid()) return false;
-        ContextState s = state.getData();
-        return s != null && !s.suspended;
+        TCFContextState s = state.getData();
+        return s != null && !s.is_suspended;
     }
 
     @Override
@@ -185,8 +181,8 @@ public class TCFNodeExecContext extends TCFNode {
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx == null || !ctx.hasState()) return false;
         if (!state.isValid()) return false;
-        ContextState s = state.getData();
-        return s != null && s.suspended;
+        TCFContextState s = state.getData();
+        return s != null && s.is_suspended;
     }
 
     @Override
@@ -196,16 +192,24 @@ public class TCFNodeExecContext extends TCFNode {
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx == null || !ctx.hasState()) return null;
         if (!state.isValid()) return null;
-        ContextState s = state.getData();
+        TCFContextState s = state.getData();
         if (s == null) return null;
-        if (s.suspended_pc == null) return null;
-        return new BigInteger(s.suspended_pc);
+        if (s.suspend_pc == null) return null;
+        return new BigInteger(s.suspend_pc);
     }
     
     public TCFNodeStackFrame getTopFrame() {
         assert Protocol.isDispatchThread();
         if (!children_stack.isValid()) return null;
         return children_stack.getTopFrame();
+    }
+    
+    public TCFDataCache<TCFContextState> getState() {
+        return state;
+    }
+    
+    public TCFChildrenStackTrace getStackTrace() {
+        return children_stack;
     }
 
     @Override
@@ -283,7 +287,7 @@ public class TCFNodeExecContext extends TCFNode {
                     label += " (Running)";
                 }
                 else if (isSuspended()) {
-                    String r = state.getData().suspended_reason;
+                    String r = state.getData().suspend_reason;
                     if (r != null) {
                         label += " (" + r + ")";
                     }
@@ -354,10 +358,11 @@ public class TCFNodeExecContext extends TCFNode {
 
     void onContextSuspended(String pc, String reason, Map<String,Object> params) {
         assert !disposed;
-        ContextState s = new ContextState();
-        s.suspended = true;
-        s.suspended_pc = pc;
-        s.suspended_reason = reason;
+        TCFContextState s = new TCFContextState();
+        s.is_suspended = true;
+        s.suspend_pc = pc;
+        s.suspend_reason = reason;
+        s.suspend_params = params;
         state.reset(s);
         children_stack.onSuspended();
         children_regs.onSuspended();
@@ -367,10 +372,10 @@ public class TCFNodeExecContext extends TCFNode {
 
     void onContextResumed() {
         assert !disposed;
-        state.reset(new ContextState());
+        state.reset(new TCFContextState());
         addModelDelta(IModelDelta.STATE);
         final int cnt = ++resumed_cnt;
-        model.invokeLater(250, new Runnable() {
+        Protocol.invokeLater(250, new Runnable() {
             public void run() {
                 if (cnt != resumed_cnt) return;
                 if (disposed) return;
@@ -504,9 +509,9 @@ public class TCFNodeExecContext extends TCFNode {
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && ctx.hasState()) {
             // Thread
-            ContextState s = state.getData();
-            if (s != null && s.terminated) return ImageCache.IMG_THREAD_TERMINATED;
-            if (s != null && s.suspended) return ImageCache.IMG_THREAD_SUSPENDED;
+            TCFContextState s = state.getData();
+            if (s != null && s.is_terminated) return ImageCache.IMG_THREAD_TERMINATED;
+            if (s != null && s.is_suspended) return ImageCache.IMG_THREAD_SUSPENDED;
             return ImageCache.IMG_THREAD_RUNNNIG;
         }
         else if (ctx != null) {

@@ -33,7 +33,7 @@ class TCFDSFLaunchSequence extends Sequence {
                 new Step() {
                     @Override
                     public void execute(RequestMonitor monitor) {
-                        new TCFDSFRunControl(launch.getLaunchConfiguration(), session, channel, monitor);
+                        new TCFDSFRunControl(launch.getLaunchConfiguration(), launch, session, channel, monitor);
                     }
                 },
                 new Step() {

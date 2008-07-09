@@ -46,7 +46,7 @@ implements IDebugEventSetListener, ILaunchesListener2 {
         addChildNodes(launch_node, new IVMNode[] { threads_node });
         
         IVMNode stack_frames_node = new StackFramesVMNode(this, getSession());
-        addChildNodes(threads_node, new IVMNode[] { threads_node, stack_frames_node });
+        addChildNodes(threads_node, new IVMNode[] { stack_frames_node, threads_node });
 
         DebugPlugin.getDefault().addDebugEventListener(this);
         DebugPlugin.getDefault().getLaunchManager().addLaunchListener(this);

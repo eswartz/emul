@@ -21,6 +21,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.graphics.RGB;
+import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -145,6 +146,10 @@ public class TCFNodeStackFrame extends TCFNode {
     @Override
     public IMemory.MemoryContext getMemoryContext() {
         return parent.getMemoryContext();
+    }
+    
+    public TCFDataCache<IStackTrace.StackTraceContext> getStackTraceContext() {
+        return stack_trace_context;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006 Ericsson and others.
+ * Copyright (c) 2006, 2008 Ericsson and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,11 +12,17 @@
 
 package org.eclipse.tm.internal.tcf.dsf.ui.viewmodel;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.dd.dsf.concurrent.DataRequestMonitor;
 import org.eclipse.dd.dsf.concurrent.DsfRunnable;
+import org.eclipse.dd.dsf.concurrent.IDsfStatusConstants;
 import org.eclipse.dd.dsf.concurrent.RequestMonitor;
+import org.eclipse.dd.dsf.datamodel.IDMContext;
 import org.eclipse.dd.dsf.datamodel.IDMEvent;
 import org.eclipse.dd.dsf.debug.service.IRunControl;
 import org.eclipse.dd.dsf.debug.service.IRunControl.IContainerDMContext;
@@ -32,12 +38,16 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProv
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerUpdate;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
+import org.eclipse.tm.internal.tcf.dsf.ui.Activator;
 import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFExecutionDMC;
 import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFRunControl;
-import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFRunControlState;
+import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFStack;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
@@ -58,12 +68,19 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
 
     @Override
     protected void updateElementsInSessionThread(final IChildrenUpdate update) {
-        if (!checkService(IRunControl.class, null, update)) return;
+        TCFDSFRunControl service = getServicesTracker().getService(TCFDSFRunControl.class);
+        if (service == null) {
+            update.setStatus(new Status(IStatus.ERROR,
+                    Activator.PLUGIN_ID, IDsfStatusConstants.INVALID_STATE, 
+                    "Run Control service not available.", null)); //$NON-NLS-1$
+            handleFailedUpdate(update);
+            return;
+        }
 
         final TCFDSFExecutionDMC dmc = findDmcInPath(update.getViewerInput(),
                 update.getElementPath(), TCFDSFExecutionDMC.class);
-        
-        getServicesTracker().getService(TCFDSFRunControl.class).getAllContexts(dmc,
+
+        service.getAllContexts(dmc,
                 new DataRequestMonitor<IExecutionDMContext[]>(getSession().getExecutor(), null) {
                     @Override
                     public void handleCompleted() {
@@ -89,15 +106,27 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
         }
         catch (RejectedExecutionException e) {
             for (ILabelUpdate update : updates) {
+                update.setStatus(new Status(IStatus.ERROR,
+                        Activator.PLUGIN_ID, IDsfStatusConstants.INTERNAL_ERROR, 
+                        "Cannot execute update request.", e)); //$NON-NLS-1$
                 handleFailedUpdate(update);
             }
         }
     }
         
     private void updateLabelInSessionThread(final ILabelUpdate[] updates) {
+        TCFDSFRunControl service = getServicesTracker().getService(TCFDSFRunControl.class);
+        if (service == null) {
+            for (final ILabelUpdate update : updates) {
+                update.setStatus(new Status(IStatus.ERROR,
+                        Activator.PLUGIN_ID, IDsfStatusConstants.INVALID_STATE, 
+                        "Run Control service not available.", null)); //$NON-NLS-1$
+                handleFailedUpdate(update);
+            }
+            return;
+        }
         TCFDataCache<?> pending = null;
         for (final ILabelUpdate update : updates) {
-            if (!checkService(TCFDSFRunControl.class, null, update)) continue;
             TCFDSFExecutionDMC dmc = (TCFDSFExecutionDMC)findDmcInPath(update.getViewerInput(),
                     update.getElementPath(), IContainerDMContext.class);
             if (!dmc.run_control_context_cache.validate()) pending = dmc.run_control_context_cache;
@@ -113,7 +142,6 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
         }
         
         for (final ILabelUpdate update : updates) {
-            if (!checkService(TCFDSFRunControl.class, null, update)) continue;
             TCFDSFExecutionDMC dmc = (TCFDSFExecutionDMC)findDmcInPath(update.getViewerInput(),
                     update.getElementPath(), IContainerDMContext.class);
 
@@ -126,7 +154,7 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
                 image = IDebugUIConstants.IMG_OBJS_DEBUG_TARGET;
             }
             else {
-                TCFDSFRunControlState state = dmc.run_control_state_cache.getData();
+                TCFContextState state = dmc.run_control_state_cache.getData();
                 if (state != null && state.is_suspended) {
                     image = IDebugUIConstants.IMG_OBJS_THREAD_SUSPENDED;
                 }
@@ -150,15 +178,63 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
         } 
         return IModelDelta.NO_CHANGE;
     }
+    
+    private List<TCFDSFExecutionDMC> getPath(TCFDSFExecutionDMC dmc) {
+        List<TCFDSFExecutionDMC> list = new ArrayList<TCFDSFExecutionDMC>();
+        while (dmc != null) {
+            list.add(dmc);
+            IDMContext[] up = dmc.getParents();
+            dmc = null;
+            for (IDMContext c: up) {
+                if (c instanceof TCFDSFExecutionDMC) {
+                    dmc = (TCFDSFExecutionDMC)c;
+                    if (dmc.getTcfContextId() == null) dmc = null;
+                    break;
+                }
+            }
+        }
+        return list;
+    }
 
-    public void buildDelta(Object e, VMDelta parentDelta, int nodeOffset, RequestMonitor requestMonitor) {
+    public void buildDelta(final Object e, final VMDelta parentDelta, int nodeOffset, final RequestMonitor rm) {
         if (e instanceof IRunControl.IResumedDMEvent || e instanceof IRunControl.ISuspendedDMEvent) {
-            parentDelta.addNode(new DMVMContext(((IDMEvent<?>)e).getDMContext()), IModelDelta.STATE);
+            Protocol.invokeLater(new Runnable() {
+                public void run() {
+                    TCFDSFStack.TCFFrameDMC frame = null;
+                    TCFDSFExecutionDMC dmc = (TCFDSFExecutionDMC)((IDMEvent<?>)e).getDMContext();
+                    /*
+                    if (e instanceof IRunControl.ISuspendedDMEvent) {
+                        TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+                        if (service != null) {
+                            TCFDataCache<?> cache = service.getFramesCache(dmc, null);
+                            if (!cache.validate()) {
+                                cache.wait(this);
+                                return;
+                            }
+                            if (cache.getError() == null) {
+                                frame = service.getTopFrame(dmc);
+                            }
+                        }
+                    }
+                    */
+                    ModelDelta delta = parentDelta;
+                    List<TCFDSFExecutionDMC> list = getPath(dmc);
+                    for (int i = list.size() - 1; i >= 0; i--) {
+                        delta = delta.addNode(createVMContext(list.get(i)),
+                                i == 0 ? IModelDelta.CONTENT | IModelDelta.STATE : 0);
+                    }
+                    if (frame != null) {
+                        delta = delta.addNode(createVMContext(frame),
+                                IModelDelta.EXPAND | IModelDelta.SELECT);
+                    }
+                    rm.done();
+                }
+            });
+            return;
         }
         else if (e instanceof IStartedDMEvent || e instanceof IExitedDMEvent) {
             parentDelta.setFlags(parentDelta.getFlags() | IModelDelta.CONTENT);
-            //parentDelta.addNode(createVMContext(((IDMEvent<?>)e).getDMContext()), IModelDelta.CONTENT);
         }            
-        requestMonitor.done();
+        rm.done();
     }
 }

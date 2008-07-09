@@ -20,6 +20,7 @@ import org.eclipse.dd.dsf.debug.service.IMemory.IMemoryDMContext;
 import org.eclipse.dd.dsf.debug.service.IRunControl.IContainerDMContext;
 import org.eclipse.dd.dsf.debug.service.IRunControl.IExecutionDMContext;
 import org.eclipse.dd.dsf.service.IDsfService;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IMemory;
@@ -33,7 +34,7 @@ public abstract class TCFDSFExecutionDMC extends AbstractDMContext
     public final TCFDataCache<IMemory.MemoryContext> memory_context_cache;
     public final TCFDataCache<RunControlContext> run_control_context_cache; 
     public final TCFDataCache<Map<String,TCFDSFExecutionDMC>> run_control_children_cache; 
-    public final TCFDataCache<TCFDSFRunControlState> run_control_state_cache; 
+    public final TCFDataCache<TCFContextState> run_control_state_cache; 
     
     TCFDataCache<?> stack_frames_cache;
     TCFDataCache<?> registers_cache;
@@ -104,11 +105,14 @@ public abstract class TCFDSFExecutionDMC extends AbstractDMContext
                 return false;
             }
         };
-        run_control_state_cache = new TCFDataCache<TCFDSFRunControlState>(channel) {
+        run_control_state_cache = new TCFDataCache<TCFContextState>(channel) {
             @Override
             public boolean startDataRetrieval() {
                 assert command == null;
-                assert run_control_context_cache.isValid();
+                if (!run_control_context_cache.validate()) {
+                    run_control_state_cache.wait(this);
+                    return false;
+                }
                 RunControlContext c = run_control_context_cache.getData();
                 if (c == null || !c.hasState()) {
                     reset(null);
@@ -117,8 +121,7 @@ public abstract class TCFDSFExecutionDMC extends AbstractDMContext
                 command = c.getState(new IRunControl.DoneGetState() {
                     public void doneGetState(IToken token, Exception err, boolean suspend, String pc, String reason, Map<String,Object> params) {
                         if (command != token) return;
-                        TCFDSFRunControlState data = new TCFDSFRunControlState();
-                        data.is_running = !suspend;
+                        TCFContextState data = new TCFContextState();
                         data.is_suspended = suspend;
                         if (suspend) {
                             data.suspend_pc = pc;

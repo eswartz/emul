@@ -12,8 +12,8 @@ package org.eclipse.tm.internal.tcf.dsf.launch;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupParticipant;
+import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFStack.TCFFrameDMC;
-import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFStack.TCFFrameData;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
 /**
@@ -26,17 +26,31 @@ public class TCFDSFSourceLookupParticipant extends TCFSourceLookupParticipant {
     public String getSourceName(final Object object) throws CoreException {
         if (object instanceof TCFFrameDMC) {
             final Object[] res = new Object[1];
-            Protocol.invokeAndWait(new Runnable() {
-                public void run() {
-                    TCFFrameDMC dmc = (TCFFrameDMC)object;
-                    if (!dmc.frame_data.validate()) {
-                        dmc.frame_data.wait(this);
-                        return;
+            synchronized (res) {
+                Protocol.invokeLater(new Runnable() {
+                    public void run() {
+                        TCFFrameDMC dmc = (TCFFrameDMC)object;
+                        if (!dmc.context_cache.validate()) {
+                            dmc.context_cache.wait(this);
+                            return;
+                        }
+                        if (!dmc.source_cache.validate()) {
+                            dmc.source_cache.wait(this);
+                            return;
+                        }
+                        synchronized (res) {
+                            TCFSourceRef ref = dmc.source_cache.getData();
+                            if (ref != null) res[0] = ref.area;
+                            res.notify();
+                        }
                     }
-                    TCFFrameData data = dmc.frame_data.getData();
-                    res[0] = data.code_area;
+                });
+                try {
+                    res.wait();
                 }
-            });
+                catch (InterruptedException e) {
+                }
+            }
             return super.getSourceName(res[0]);
         }
         return super.getSourceName(object);

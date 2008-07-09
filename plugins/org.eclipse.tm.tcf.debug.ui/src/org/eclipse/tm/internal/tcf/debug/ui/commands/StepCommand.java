@@ -14,9 +14,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.core.runtime.Status;
+import org.eclipse.debug.core.commands.IDebugCommandHandler;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
 import org.eclipse.debug.core.commands.IEnabledStateRequest;
-import org.eclipse.debug.core.commands.IStepOverHandler;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
@@ -25,7 +25,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFRunnable;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IRunControl;
 
-abstract class StepCommand implements IStepOverHandler {
+abstract class StepCommand implements IDebugCommandHandler {
 
     protected final TCFModel model;
 

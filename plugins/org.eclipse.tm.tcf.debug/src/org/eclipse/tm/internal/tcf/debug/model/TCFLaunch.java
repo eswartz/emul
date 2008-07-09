@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +24,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.Launch;
 import org.eclipse.tm.internal.tcf.debug.Activator;
+import org.eclipse.tm.internal.tcf.debug.actions.TCFAction;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -41,6 +43,9 @@ public class TCFLaunch extends Launch {
 
         public void onDisconnected(TCFLaunch launch);
 
+        public void onContextActionsStart(TCFLaunch launch);
+        
+        public void onContextActionsDone(TCFLaunch launch);
     }
 
     private static final Collection<Listener> listeners = new ArrayList<Listener>();
@@ -55,6 +60,10 @@ public class TCFLaunch extends Launch {
     private boolean last_context_exited;
     private ProcessContext process;
 
+    private int context_action_cnt;
+    private final HashMap<String,LinkedList<Runnable>> context_action_queue =
+        new HashMap<String,LinkedList<Runnable>>();
+    
     public TCFLaunch(ILaunchConfiguration launchConfiguration, String mode) {
         super(launchConfiguration, mode, null);
     }
@@ -261,13 +270,18 @@ public class TCFLaunch extends Launch {
     }
     
     public void disconnect() throws DebugException {
-        Protocol.invokeLater(new Runnable() {
-            public void run() {
-                if (channel != null && channel.getState() != IChannel.STATE_CLOSED) {
-                    channel.close();
+        try {
+            Protocol.invokeLater(new Runnable() {
+                public void run() {
+                    if (channel != null && channel.getState() != IChannel.STATE_CLOSED) {
+                        channel.close();
+                    }
                 }
-            }
-        });
+            });
+        }
+        catch (IllegalStateException x) {
+            disconnected = true;
+        }
     }
     
     public boolean canTerminate() {
@@ -306,5 +320,50 @@ public class TCFLaunch extends Launch {
 
         });
         assert channel.getState() == IChannel.STATE_OPENNING; 
+    }
+    
+    public void addContextAction(TCFAction action, String context_id) {
+        assert Protocol.isDispatchThread();
+        LinkedList<Runnable> list = context_action_queue.get(context_id);
+        if (list == null) {
+            list = new LinkedList<Runnable>();
+            context_action_queue.put(context_id, list);
+        }
+        list.add(action);
+        context_action_cnt++;
+        if (context_action_cnt == 1) {
+            for (Listener l : listeners) l.onContextActionsStart(this);
+        }
+        if (list.getFirst() == action) Protocol.invokeLater(action);
+    }
+    
+    public void removeContextAction(TCFAction action, String context_id) {
+        assert Protocol.isDispatchThread();
+        LinkedList<Runnable> list = context_action_queue.get(context_id);
+        if (list == null) return;
+        assert list.getFirst() == action;
+        list.removeFirst();
+        context_action_cnt--;
+        if (!list.isEmpty()) {
+            assert context_action_cnt > 0;
+            Protocol.invokeLater(list.getFirst());
+        }
+        else if (context_action_cnt == 0) {
+            for (Listener l : listeners) l.onContextActionsDone(this);
+        }
+    }
+    
+    public void removeContextActions(String context_id) {
+        assert Protocol.isDispatchThread();
+        LinkedList<Runnable> list = context_action_queue.remove(context_id);
+        if (list == null) return;
+        context_action_cnt -= list.size();
+        if (context_action_cnt == 0) {
+            for (Listener l : listeners) l.onContextActionsDone(this);
+        }
+    }
+    
+    public boolean hasPendingContextActions() {
+        return context_action_cnt > 0;
     }
 }

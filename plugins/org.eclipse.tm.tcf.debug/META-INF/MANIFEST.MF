@@ -13,4 +13,5 @@ Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Eclipse-LazyStart: true
 Export-Package: org.eclipse.tm.internal.tcf.debug.launch,
+ org.eclipse.tm.internal.tcf.debug.actions,
  org.eclipse.tm.internal.tcf.debug.model

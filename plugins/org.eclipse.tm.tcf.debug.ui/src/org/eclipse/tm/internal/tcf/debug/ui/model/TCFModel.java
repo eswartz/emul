@@ -12,9 +12,7 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.TreeSet;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -54,6 +52,7 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
+import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.DisconnectCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.ResumeCommand;
@@ -77,7 +76,11 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-
+/**
+ * TCFModel represents remote target state as it is known to host.
+ * The main job of the model is caching remote data,
+ * keeping the cache in a coherent state, and feeding UI with up-to-date data.
+ */
 public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         IModelProxyFactory, IColumnPresentationFactory, ISourceDisplay {
 
@@ -88,7 +91,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Map<String,TCFNode> id2node = new HashMap<String,TCFNode>();
     @SuppressWarnings("unchecked")
     private final Map<Class,Object> commands = new HashMap<Class,Object>();
-    private final TreeSet<FutureTask> future_task_queue = new TreeSet<FutureTask>();
 
     private static final Map<ILaunchConfiguration,IEditorInput> editor_not_found = 
         new HashMap<ILaunchConfiguration,IEditorInput>();
@@ -96,101 +98,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private TCFNodeLaunch launch_node;
     private boolean disposed;
 
-    private int future_task_cnt;
-    
     private static int debug_view_selection_cnt;
     private static int display_source_cnt;
-    
-    private int context_action_cnt;
-    private final HashMap<String,LinkedList<Runnable>> context_action_queue =
-        new HashMap<String,LinkedList<Runnable>>();
-    
-    public static abstract class ContextAction implements Runnable {
-        
-        protected final TCFModel model;
-        protected final String context_id;
-        
-        public ContextAction(TCFModel model, String context_id) {
-            assert Protocol.isDispatchThread();
-            assert context_id != null;
-            this.model = model;
-            this.context_id = context_id;
-            LinkedList<Runnable> l = model.context_action_queue.get(context_id);
-            if (l == null) {
-                l = new LinkedList<Runnable>();
-                model.context_action_queue.put(context_id, l);
-            }
-            l.add(this);
-            if (l.getFirst() == this) Protocol.invokeLater(this);
-            model.context_action_cnt++;
-        }
-        
-        protected void done() {
-            assert Protocol.isDispatchThread();
-            model.context_action_cnt--;
-            LinkedList<Runnable> l = model.context_action_queue.get(context_id);
-            if (l == null) return; // context exited
-            assert l.getFirst() == this;
-            l.removeFirst();
-            if (!l.isEmpty()) {
-                assert model.context_action_cnt > 0;
-                Protocol.invokeLater(l.getFirst());
-            }
-            else if (model.context_action_cnt == 0) {
-                model.fireModelChanged();
-            }
-        }
-    }
-
-    private static class FutureTask implements Comparable<FutureTask>{
-        final int id;
-        final long time;
-        final Runnable run;
-
-        FutureTask(int id, long time, Runnable run) {
-            this.id = id;
-            this.time = time;
-            this.run = run;
-        }
-
-        public int compareTo(FutureTask x) {
-            if (x == this) return 0;
-            if (time < x.time) return -1;
-            if (time > x.time) return +1;
-            if (id < x.id) return -1;
-            if (id > x.id) return +1;
-            assert false;
-            return 0;
-        }
-    }
-
-    private final Thread future_task_dispatcher = new Thread() {
-        public void run() {
-            try {
-                synchronized (future_task_queue) {
-                    while (!disposed) {
-                        if (future_task_queue.isEmpty()) {
-                            future_task_queue.wait();
-                        }
-                        else {
-                            long time = System.currentTimeMillis();
-                            FutureTask t = future_task_queue.first();
-                            if (t.time > time) {
-                                future_task_queue.wait(t.time - time);
-                            }
-                            else {
-                                future_task_queue.remove(t);
-                                Protocol.invokeLater(t.run);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Throwable x) {
-                x.printStackTrace();
-            }
-        }
-    };
 
     private final IMemory.MemoryListener mem_listener = new IMemory.MemoryListener() {
 
@@ -357,8 +266,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         commands.put(IStepIntoHandler.class, new StepIntoCommand(this));
         commands.put(IStepOverHandler.class, new StepOverCommand(this));
         commands.put(IStepReturnHandler.class, new StepReturnCommand(this));
-        future_task_dispatcher.setName("TCF Future Task Dispatcher");
-        future_task_dispatcher.start();
     }
 
     @SuppressWarnings("unchecked")
@@ -390,6 +297,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
         assert id2node.size() == 0;
     }
+    
+    void onContextActionsStart() {
+    }
+
+    void onContextActionsDone() {
+        fireModelChanged();
+    }
 
     void onProxyInstalled(final TCFModelProxy p) {
         Protocol.invokeAndWait(new Runnable() {
@@ -410,7 +324,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private void onContextRemoved(final String[] context_ids) {
         boolean close_channel = false;
         for (String id : context_ids) {
-            context_action_queue.remove(id);
+            launch.removeContextActions(id);
             TCFNode node = getNode(id);
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onContextRemoved();
@@ -451,16 +365,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     void dispose() {
-        synchronized (future_task_queue) {
-            disposed = true;
-            future_task_queue.notify();
-        }
-        try {
-            future_task_dispatcher.join();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     void addNode(String id, TCFNode node) {
@@ -479,7 +383,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     
     void fireModelChanged() {
         assert Protocol.isDispatchThread();
-        if (context_action_cnt > 0) return;
+        if (launch.hasPendingContextActions()) return;
         for (TCFModelProxy p : model_proxies.values()) p.fireModelChanged();
     }
 
@@ -502,13 +406,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return id2node.get(id);
     }
 
-    public void invokeLater(long delay, Runnable run) {
-        synchronized (future_task_queue) {
-            future_task_queue.add(new FutureTask(future_task_cnt++, System.currentTimeMillis() + delay, run));
-            future_task_queue.notify();
-        }
-    }
-    
     public void update(IChildrenCountUpdate[] updates) {
         for (int i = 0; i < updates.length; i++) {
             Object o = updates[i].getElement();
@@ -599,7 +496,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 final IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_DEBUG_VIEW);
                 if (view == null) return;
                 if (!((AbstractDebugView)view).isAvailable()) return;
-                invokeLater(300, new Runnable() {
+                Protocol.invokeLater(300, new Runnable() {
                     public void run() {
                         TCFNode node = getNode(node_id);
                         if (node == null) return;

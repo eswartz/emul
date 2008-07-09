@@ -11,6 +11,7 @@
 package org.eclipse.tm.tcf.protocol;
 
 import java.util.ArrayList;
+import java.util.TreeSet;
 
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
 import org.eclipse.tm.internal.tcf.core.Transport;
@@ -24,21 +25,82 @@ import org.eclipse.tm.tcf.services.ILocator;
  * 2. local instance of Locator service, which maintains a list of available targets;
  * 3. list of open communication channels.
  * 
+ * It also provides utility methods for posting asynchronous events,
+ * including delayed events (timers).
+ * 
+ * Before TCF can be used, it should be given an object implementing IEventQueue interface:
+ * @see #setEventQueue
+ * 
  * @noextend This class is not intended to be subclassed by clients.
  * @noinstantiate This class is not intended to be instantiated by clients.
  */
 public final class Protocol {
 
     private static IEventQueue event_queue;
+    private static final TreeSet<Timer> timer_queue = new TreeSet<Timer>();
+    private static int timer_cnt;
     
+    private static class Timer implements Comparable<Timer>{
+        final int id;
+        final long time;
+        final Runnable run;
+
+        Timer(long time, Runnable run) {
+            this.id = timer_cnt++;
+            this.time = time;
+            this.run = run;
+        }
+
+        public int compareTo(Timer x) {
+            if (x == this) return 0;
+            if (time < x.time) return -1;
+            if (time > x.time) return +1;
+            if (id < x.id) return -1;
+            if (id > x.id) return +1;
+            assert false;
+            return 0;
+        }
+    }
+
+    private static final Thread timer_dispatcher = new Thread() {
+        public void run() {
+            try {
+                synchronized (timer_queue) {
+                    while (true) {
+                        if (timer_queue.isEmpty()) {
+                            timer_queue.wait();
+                        }
+                        else {
+                            long time = System.currentTimeMillis();
+                            Timer t = timer_queue.first();
+                            if (t.time > time) {
+                                timer_queue.wait(t.time - time);
+                            }
+                            else {
+                                timer_queue.remove(t);
+                                invokeLater(t.run);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (IllegalStateException x) {
+                // Dispatch is shut down, exit this thread
+            }
+            catch (Throwable x) {
+                x.printStackTrace();
+            }
+        }
+    };
+
     private static final ArrayList<CongestionMonitor> congestion_monitors = new ArrayList<CongestionMonitor>();
 
     /**
-     * Before TCF can be used it should be given an object implementing IEventQueue interface.
+     * Before TCF can be used, it should be given an object implementing IEventQueue interface.
      * The implementation maintains a queue of objects implementing Runnable interface and
      * executes <code>run</code> methods of that objects in a sequence by a single thread.
      * The thread in referred as TCF event dispatch thread. Objects in the queue are called TCF events.
-     * Executing <code>run</code> method of an event is also called dispatching of event.
+     * Executing <code>run</code> method of an event is also called dispatching of the event.
      * 
      * Only few methods in TCF APIs are thread safe - can be invoked from any thread.
      * If a method description does not say "can be invoked from any thread" explicitly -  
@@ -57,6 +119,9 @@ public final class Protocol {
                 new LocalPeer();
             }
         });
+        timer_dispatcher.setName("TCF Timer Dispatcher");
+        timer_dispatcher.setDaemon(true);
+        timer_dispatcher.start();
     }
 
     /**
@@ -78,7 +143,7 @@ public final class Protocol {
     }
 
     /**
-     * Causes <code>runnable</code> to have its <code>run</code>
+     * Causes <code>runnable</code> event to have its <code>run</code>
      * method called in the dispatch thread of the framework.
      * Events are dispatched in same order as queued.
      * If invokeLater is called from the dispatching thread
@@ -94,6 +159,31 @@ public final class Protocol {
         event_queue.invokeLater(runnable);
     }
 
+    /**
+     * Causes <code>runnable</code> event to have its <code>run</code>
+     * method called in the dispatch thread of the framework.
+     * The event is dispatched after given delay.
+     *
+     * This method can be invoked from any thread.
+     *
+     * @param delay     milliseconds to delay event dispatch.
+     *                  If delay <= 0 the event is posted into the
+     *                  "ready" queue without delay.
+     * @param runnable  the <code>Runnable</code> whose <code>run</code>
+     *                  method should be executed asynchronously.
+     */
+    public static void invokeLater(long delay, Runnable runnable) {
+        if (delay <= 0) {
+            event_queue.invokeLater(runnable);
+        }
+        else {
+            synchronized (timer_queue) {
+                timer_queue.add(new Timer(System.currentTimeMillis() + delay, runnable));
+                timer_queue.notify();
+            }
+        }
+    }
+    
     /**
      * Causes <code>runnable</code> to have its <code>run</code>
      * method called in the dispatch thread of the framework.
@@ -186,14 +276,14 @@ public final class Protocol {
     }
     
     /**
-     * Call back after TCF messages sent by this host up to this moment are delivered
+     * Call back after all TCF messages sent by this host up to this moment are delivered
      * to their intended target. This method is intended for synchronization of messages
      * across multiple channels.
      * 
      * Note: Cross channel synchronization can reduce performance and throughput.
      * Most clients don't need cross channel synchronization and should not call this method. 
      *  
-     * @param done will be executed by dispatch thread after communication 
+     * @param done will be executed by dispatch thread after pending communication 
      * messages are delivered to corresponding targets.
      */
     public static void sync(Runnable done) {

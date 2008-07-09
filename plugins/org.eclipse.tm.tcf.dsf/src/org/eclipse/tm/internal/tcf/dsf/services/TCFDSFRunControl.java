@@ -31,12 +31,19 @@ import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IMemoryBlockRetrieval;
 import org.eclipse.debug.core.model.IMemoryBlockRetrievalExtension;
+import org.eclipse.tm.internal.tcf.debug.actions.TCFActionStepInto;
+import org.eclipse.tm.internal.tcf.debug.actions.TCFActionStepOut;
+import org.eclipse.tm.internal.tcf.debug.actions.TCFActionStepOver;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
+import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
+import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.dsf.Activator;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
+import org.eclipse.tm.tcf.services.IStackTrace.StackTraceContext;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.osgi.framework.BundleContext;
 
@@ -344,7 +351,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         void onContextSuspended(String pc, String reason, Map<String,Object> params) {
             assert !disposed;
             assert !run_control_context_cache.isValid() || run_control_context_cache.getData().hasState();
-            TCFDSFRunControlState st = new TCFDSFRunControlState();
+            TCFContextState st = new TCFContextState();
             st.is_suspended = true;
             st.suspend_pc = pc;
             st.suspend_reason = reason;
@@ -356,8 +363,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         void onContextResumed() {
             assert !disposed;
             assert !run_control_context_cache.isValid() || run_control_context_cache.getData().hasState();
-            TCFDSFRunControlState st = new TCFDSFRunControlState();
-            st.is_running = true;
+            TCFContextState st = new TCFContextState();
             run_control_state_cache.reset(st);
             getSession().dispatchEvent(new ResumedEvent(this), getProperties());
         }
@@ -400,14 +406,17 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
     }
 
     private final ILaunchConfiguration config;
+    private final TCFLaunch launch;
     private final IChannel channel;
     private final org.eclipse.tm.tcf.services.IRunControl tcf_run_service;
     private final Map<String,ExecutionDMC> cache = new HashMap<String,ExecutionDMC>();
     private final ExecutionDMC root_dmc;
 
-    public TCFDSFRunControl(ILaunchConfiguration config, DsfSession session, IChannel channel, final RequestMonitor monitor) {
+    public TCFDSFRunControl(ILaunchConfiguration config, TCFLaunch launch,
+            DsfSession session, IChannel channel, final RequestMonitor monitor) {
         super(session);
         this.config = config;
+        this.launch = launch;
         this.channel = channel;
         tcf_run_service = channel.getRemoteService(org.eclipse.tm.tcf.services.IRunControl.class);
         if (tcf_run_service != null) tcf_run_service.addListener(run_listener);
@@ -537,7 +546,28 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             }
             else {
                 RunControlContext c = ctx.run_control_context_cache.getData();
-                rm.setData(c != null && c.canResume(toTCFStepType(step_type)));
+                int md = toTCFStepType(step_type);
+                boolean b = c != null && c.canResume(md);
+                if (!b && c != null) {
+                    // Check if can emulate desired step type
+                    // TODO: check breakpoints service - it is needed to emulate step commands
+                    switch (md) {
+                    case org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OVER_LINE:
+                        b = c.canResume(org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OVER) ||
+                            c.canResume(org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO);
+                        break;
+                    case org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OVER:
+                        b = c.canResume(org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO);
+                        break;
+                    case org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO_LINE:
+                        b = c.canResume(org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO);
+                        break;
+                    case org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OUT:
+                        b = c.canResume(org.eclipse.tm.tcf.services.IRunControl.RM_RESUME);
+                        break;
+                    }
+                }
+                rm.setData(b);
                 rm.done();
             }
         }
@@ -674,35 +704,260 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         }
         return -1;
     }
+    
+    private class StepIntoAction extends TCFActionStepInto {
+        
+        private final ExecutionDMC ctx;
+        private final RequestMonitor monitor;
+        
+        private TCFDSFStack.TCFFrameDMC frame;
+        
+        StepIntoAction(TCFLaunch launch, ExecutionDMC ctx, RequestMonitor monitor, boolean src_step) {
+            super(launch, ctx.run_control_context_cache.getData(), src_step);
+            this.ctx = ctx;
+            this.monitor = monitor;
+            ctx.is_stepping++;
+        }
 
-    public void step(IExecutionDMContext context, StepType step_type, final RequestMonitor rm) {
+        @Override
+        protected TCFDataCache<TCFContextState> getContextState() {
+            return ctx.run_control_state_cache;
+        }
+
+        @Override
+        protected TCFDataCache<TCFSourceRef> getLineInfo() {
+            if (frame == null) {
+                TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+                if (service == null) return null;
+                frame = service.getTopFrame(ctx);
+                if (frame == null) return null;
+            }
+            return frame.source_cache;
+        }
+
+        @Override
+        protected TCFDataCache<StackTraceContext> getStackFrame() {
+            if (frame == null) {
+                TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+                if (service == null) return null;
+                frame = service.getTopFrame(ctx);
+                if (frame == null) return null;
+            }
+            return frame.context_cache;
+        }
+
+        @Override
+        protected int getStackFrameIndex() {
+            if (frame == null) {
+                TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+                if (service == null) return 0;
+                frame = service.getTopFrame(ctx);
+                if (frame == null) return 0;
+            }
+            return frame.getLevel();
+        }
+
+        @Override
+        protected TCFDataCache<?> getStackTrace() {
+            TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+            if (service == null) return null;
+            return service.getFramesCache(ctx, null);
+        }
+        
+        @Override
+        protected void exit(Throwable error) {
+            if (exited) return;
+            super.exit(error);
+            ctx.is_stepping--;
+            if (error != null) {
+                monitor.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                        REQUEST_FAILED, "Command error", error)); //$NON-NLS-1$
+            }
+            monitor.done();
+        }
+    }
+
+    private class StepOverAction extends TCFActionStepOver {
+        
+        private final ExecutionDMC ctx;
+        private final RequestMonitor monitor;
+        
+        private TCFDSFStack.TCFFrameDMC frame;
+        
+        StepOverAction(TCFLaunch launch, ExecutionDMC ctx, RequestMonitor monitor, boolean src_step) {
+            super(launch, ctx.run_control_context_cache.getData(), src_step);
+            this.ctx = ctx;
+            this.monitor = monitor;
+            ctx.is_stepping++;
+        }
+
+        @Override
+        protected TCFDataCache<TCFContextState> getContextState() {
+            return ctx.run_control_state_cache;
+        }
+
+        @Override
+        protected TCFDataCache<TCFSourceRef> getLineInfo() {
+            if (frame == null) {
+                TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+                if (service == null) return null;
+                frame = service.getTopFrame(ctx);
+                if (frame == null) return null;
+            }
+            return frame.source_cache;
+        }
+
+        @Override
+        protected TCFDataCache<StackTraceContext> getStackFrame() {
+            if (frame == null) {
+                TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+                if (service == null) return null;
+                frame = service.getTopFrame(ctx);
+                if (frame == null) return null;
+            }
+            return frame.context_cache;
+        }
+
+        @Override
+        protected int getStackFrameIndex() {
+            if (frame == null) {
+                TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+                if (service == null) return 0;
+                frame = service.getTopFrame(ctx);
+                if (frame == null) return 0;
+            }
+            return frame.getLevel();
+        }
+
+        @Override
+        protected TCFDataCache<?> getStackTrace() {
+            TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+            if (service == null) return null;
+            return service.getFramesCache(ctx, null);
+        }
+        
+        @Override
+        protected void exit(Throwable error) {
+            if (exited) return;
+            super.exit(error);
+            ctx.is_stepping--;
+            if (error != null) {
+                monitor.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                        REQUEST_FAILED, "Command error", error)); //$NON-NLS-1$
+            }
+            monitor.done();
+        }
+    }
+
+    private class StepOutAction extends TCFActionStepOut {
+        
+        private final ExecutionDMC ctx;
+        private final RequestMonitor monitor;
+        
+        private TCFDSFStack.TCFFrameDMC frame;
+        
+        StepOutAction(TCFLaunch launch, ExecutionDMC ctx, RequestMonitor monitor) {
+            super(launch, ctx.run_control_context_cache.getData());
+            this.ctx = ctx;
+            this.monitor = monitor;
+            ctx.is_stepping++;
+        }
+
+        @Override
+        protected TCFDataCache<TCFContextState> getContextState() {
+            return ctx.run_control_state_cache;
+        }
+
+        @Override
+        protected TCFDataCache<StackTraceContext> getStackFrame() {
+            if (frame == null) {
+                TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+                if (service == null) return null;
+                frame = service.getTopFrame(ctx);
+                if (frame == null) return null;
+            }
+            return frame.context_cache;
+        }
+
+        @Override
+        protected int getStackFrameIndex() {
+            if (frame == null) {
+                TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+                if (service == null) return 0;
+                frame = service.getTopFrame(ctx);
+                if (frame == null) return 0;
+            }
+            return frame.getLevel();
+        }
+
+        @Override
+        protected TCFDataCache<?> getStackTrace() {
+            TCFDSFStack service = getServicesTracker().getService(TCFDSFStack.class);
+            if (service == null) return null;
+            return service.getFramesCache(ctx, null);
+        }
+        
+        @Override
+        protected void exit(Throwable error) {
+            if (exited) return;
+            super.exit(error);
+            ctx.is_stepping--;
+            if (error != null) {
+                monitor.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                        REQUEST_FAILED, "Command error", error)); //$NON-NLS-1$
+            }
+            monitor.done();
+        }
+    }
+
+    public void step(final IExecutionDMContext context, final StepType step_type, final RequestMonitor rm) {
         if (context instanceof ExecutionDMC) {
             final ExecutionDMC ctx = (ExecutionDMC)context;
-            if (ctx.run_control_context_cache.isValid()) {
-                RunControlContext c = ctx.run_control_context_cache.getData();
-                if (c != null) {
-                    int md = toTCFStepType(step_type);
-                    if (md < 0) {
-                        rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                                NOT_SUPPORTED, "Invalid step type", null)); //$NON-NLS-1$
-                        rm.done();
+            if (!ctx.run_control_context_cache.validate()) {
+                ctx.run_control_context_cache.wait(new Runnable() {
+                    public void run() {
+                        step(context, step_type, rm);
                     }
-                    else {
-                        c.resume(md, 1, new org.eclipse.tm.tcf.services.IRunControl.DoneCommand() {
-                            public void doneCommand(IToken token, Exception error) {
-                                if (rm.isCanceled()) return;
-                                if (error != null) {
-                                    rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
-                                            REQUEST_FAILED, "Command error", error)); //$NON-NLS-1$
-                                }
-                                ctx.is_stepping--;
-                                rm.done();
-                            }
-                        });
-                        ctx.is_stepping++;
-                    }
-                    return;
+                });
+                return;
+            }
+            if (ctx.run_control_context_cache.getError() != null) {
+                rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                        REQUEST_FAILED, "Data error", ctx.run_control_context_cache.getError())); //$NON-NLS-1$
+                rm.done();
+                return;
+            }
+            RunControlContext c = ctx.run_control_context_cache.getData();
+            if (c != null) {
+                int md = toTCFStepType(step_type);
+                if (md < 0) {
+                    rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                            NOT_SUPPORTED, "Invalid step type", null)); //$NON-NLS-1$
+                    rm.done();
                 }
+                else {
+                    switch (md) {
+                    case org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO:
+                        new StepIntoAction(launch, ctx, rm, false);
+                        return;
+                    case org.eclipse.tm.tcf.services.IRunControl.RM_STEP_INTO_LINE:
+                        new StepIntoAction(launch, ctx, rm, true);
+                        return;
+                    case org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OVER:
+                        new StepOverAction(launch, ctx, rm, false);
+                        return;
+                    case org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OVER_LINE:
+                        new StepOverAction(launch, ctx, rm, true);
+                        return;
+                    case org.eclipse.tm.tcf.services.IRunControl.RM_STEP_OUT:
+                        new StepOutAction(launch, ctx, rm);
+                        return;
+                    }
+                    rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
+                            NOT_SUPPORTED, "Invalid step type", null)); //$NON-NLS-1$
+                    rm.done();
+                }
+                return;
             }
             rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                     INVALID_HANDLE, "Invalid context", null)); //$NON-NLS-1$
@@ -806,7 +1061,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
                 RunControlContext c = ctx.run_control_context_cache.getData();
                 if (c != null && c.hasState()) {
                     if (ctx.is_resuming == 0 && ctx.is_stepping == 0 && ctx.run_control_state_cache.isValid()) {
-                        TCFDSFRunControlState st = ctx.run_control_state_cache.getData();
+                        TCFContextState st = ctx.run_control_state_cache.getData();
                         if (st != null) r = st.is_suspended;
                     }
                 }
@@ -820,7 +1075,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             ExecutionDMC ctx = (ExecutionDMC)dmc;
             StateChangeReason r = StateChangeReason.UNKNOWN;
             if (ctx.run_control_state_cache.isValid()) {
-                TCFDSFRunControlState st = ctx.run_control_state_cache.getData();
+                TCFContextState st = ctx.run_control_state_cache.getData();
                 if (st != null && st.suspend_reason != null) {
                     r = toStateChangeReason(st.suspend_reason); 
                 }

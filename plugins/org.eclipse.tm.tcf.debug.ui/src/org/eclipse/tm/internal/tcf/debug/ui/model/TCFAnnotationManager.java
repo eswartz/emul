@@ -135,6 +135,12 @@ public class TCFAnnotationManager {
             }
             updateActiveLaunch();
         }
+
+        public void onContextActionsDone(TCFLaunch launch) {
+        }
+
+        public void onContextActionsStart(TCFLaunch launch) {
+        }
     };
     
     private final ISelectionListener selection_listener = new ISelectionListener() {
