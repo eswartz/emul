@@ -135,11 +135,15 @@ static void write_context(OutputStream * out, Context * ctx, int is_thread) {
         json_write_boolean(out, 1);
     }
 
-    out->write(out, ',');
-    json_write_string(out, "CanTerminate");
-    out->write(out, ':');
-    json_write_boolean(out, 1);
-    
+#ifdef WIN32
+    if (!is_thread)
+#endif
+    {
+        out->write(out, ',');
+        json_write_string(out, "CanTerminate");
+        out->write(out, ':');
+        json_write_boolean(out, 1);
+    }    
 
     out->write(out, '}');
 }
