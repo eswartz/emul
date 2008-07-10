@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.tm.tcf.protocol.ILogger;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -32,6 +33,7 @@ public class Activator extends Plugin {
     public static final String PLUGIN_ID = "org.eclipse.tm.tcf";
 
     private static Activator plugin;
+    private static boolean debug;
     private static final EventQueue queue = new EventQueue();
     private static final BundleListener bundle_listener = new BundleListener() {
         private boolean started = false;
@@ -51,6 +53,20 @@ public class Activator extends Plugin {
     @Override
     public void start(BundleContext context) throws Exception {
         super.start(context);
+        debug = Platform.inDebugMode();
+        Protocol.setLogger(new ILogger() {
+
+            public void log(String msg, Throwable x) {
+                if (debug) {
+                    System.err.println(msg);
+                    x.printStackTrace();
+                }
+                if (plugin != null && getLog() != null) {
+                    getLog().log(new Status(IStatus.ERROR, 
+                            getBundle().getSymbolicName(), IStatus.OK, msg, x));
+                }
+            }
+        });
         Protocol.setEventQueue(queue);
         Protocol.invokeLater(new Runnable() {
             public void run() {
@@ -87,36 +103,12 @@ public class Activator extends Plugin {
                     }
                 }
                 catch (Throwable x) {
-                    log("TCF startup error", x);
+                    Protocol.log("TCF startup error", x);
                 }
             }
         }
         catch (Exception x) {
-            log("TCF startup error", x);
+            Protocol.log("TCF startup error", x);
         }
     }
-
-    /**
-     * Returns the shared instance
-     * 
-     * @return the shared instance
-     */
-    public static Activator getDefault() {
-        return plugin;
-    }
-
-    /**
-     * Send error message into Eclipse log.
-     * @param msg - error message test
-     * @param err - exception
-     */
-    public static void log(String msg, Throwable err) {
-        if (plugin == null || plugin.getLog() == null) {
-            err.printStackTrace();
-        }
-        else {
-            plugin.getLog().log(new Status(IStatus.ERROR,
-                    plugin.getBundle().getSymbolicName(), IStatus.OK, msg, err));
-        }
-    }  
 }

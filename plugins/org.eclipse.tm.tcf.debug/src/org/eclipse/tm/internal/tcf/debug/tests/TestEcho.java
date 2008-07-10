@@ -1,0 +1,69 @@
+/*******************************************************************************
+ * Copyright (c) 2008 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Eclipse Public License v1.0 
+ * which accompanies this distribution, and is available at 
+ * http://www.eclipse.org/legal/epl-v10.html 
+ *  
+ * Contributors:
+ *     Wind River Systems - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.tm.internal.tcf.debug.tests;
+
+import java.util.LinkedList;
+
+import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.services.IDiagnostics;
+
+class TestEcho implements ITCFTest, IDiagnostics.DoneEcho {
+
+    private final TCFTestSuite test_suite;
+    private final IDiagnostics diag;
+    private final LinkedList<String> msgs = new LinkedList<String>();
+    private int count = 0;
+
+    TestEcho(TCFTestSuite test_suite, IChannel channel) {
+        this.test_suite = test_suite;
+        diag = channel.getRemoteService(IDiagnostics.class);
+    }
+    
+    public void start() {
+        if (diag == null) {
+            test_suite.done(this, null);
+        }
+        else {
+            for (int i = 0; i < 32; i++) sendMessage();
+        }
+    }
+    
+    private void sendMessage() {
+        StringBuffer buf = new StringBuffer();
+        buf.append(Integer.toHexString(count));
+        for (int i = 0; i < 64; i++) {
+            buf.append('-');
+            buf.append((char)(0x400 * i + count));
+        }
+        String s =  buf.toString();
+        msgs.add(s);
+        diag.echo(s, this);
+        count++;
+    }
+    
+    public void doneEcho(IToken token, Throwable error, String b) {
+        String s = msgs.removeFirst();
+        if (!test_suite.isActive(this)) return;
+        if (error != null) {
+            test_suite.done(this, error);
+        }
+        else if (!s.equals(b)) {
+            test_suite.done(this, new Exception("Echo test failed: " + s + " != " + b));
+        }
+        else if (count < 0x400) {
+            sendMessage();
+        }
+        else if (msgs.isEmpty()){
+            test_suite.done(this, null);
+        }
+    }
+}

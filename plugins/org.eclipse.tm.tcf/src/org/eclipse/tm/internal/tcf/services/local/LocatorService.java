@@ -86,7 +86,7 @@ public class LocatorService implements ILocator {
                     });
                 }
                 catch (Exception x) {
-                    Activator.log("Cannot read from datagram socket", x);
+                    Protocol.log("Cannot read from datagram socket", x);
                     break;
                 }
             }
@@ -104,7 +104,7 @@ public class LocatorService implements ILocator {
             output_thread.start();
         }
         catch (Exception x) {
-            Activator.log("Cannot create datagram socket", x);
+            Protocol.log("Cannot create datagram socket", x);
         }
     }
 
@@ -243,7 +243,7 @@ public class LocatorService implements ILocator {
             }
         }
         catch (Exception x) {
-            Activator.log("Cannot send datagram packet", x);
+            Protocol.log("Cannot send datagram packet", x);
         }
     }
     
@@ -266,7 +266,7 @@ public class LocatorService implements ILocator {
             }
         }
         catch (Throwable x) {
-            Activator.log("Invalid datagram packet received", x);
+            Protocol.log("Invalid datagram packet received", x);
         }
     }
     

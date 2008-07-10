@@ -18,7 +18,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.tm.tcf.Activator;
 import org.eclipse.tm.tcf.core.AbstractChannel;
 import org.eclipse.tm.tcf.core.AbstractPeer;
 import org.eclipse.tm.tcf.core.ChannelTCP;
@@ -62,7 +61,7 @@ public class Transport {
                 l.onChannelOpen(channel);
             }
             catch (Throwable x) {
-                Activator.log("Exception in channel listener", x);
+                Protocol.log("Exception in channel listener", x);
             }
         }
     }

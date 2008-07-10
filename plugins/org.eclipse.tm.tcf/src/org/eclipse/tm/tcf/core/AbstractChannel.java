@@ -26,7 +26,6 @@ import org.eclipse.tm.internal.tcf.services.local.DiagnosticsService;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
 import org.eclipse.tm.internal.tcf.services.remote.GenericProxy;
 import org.eclipse.tm.internal.tcf.services.remote.LocatorProxy;
-import org.eclipse.tm.tcf.Activator;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IService;
@@ -282,7 +281,7 @@ public abstract class AbstractChannel implements IChannel {
                                                     m.service, m.name, m.data);
                                         }
                                         catch (Throwable x) {
-                                            Activator.log("Exception in channel listener", x);
+                                            Protocol.log("Exception in channel listener", x);
                                         }
                                     }
                                 }
@@ -408,7 +407,7 @@ public abstract class AbstractChannel implements IChannel {
                     listeners_array[i].onChannelOpened();
                 }
                 catch (Throwable x) {
-                    Activator.log("Exception in channel listener", x);
+                    Protocol.log("Exception in channel listener", x);
                 }
             }
             notifying_channel_opened = false;
@@ -515,7 +514,7 @@ public abstract class AbstractChannel implements IChannel {
         assert Protocol.isDispatchThread();
         sendEndOfStream();
         if (state == STATE_CLOSED) return;
-        if (error != null) Activator.log("TCF channel terminated", error);
+        if (error != null) Protocol.log("TCF channel terminated", error);
         state = STATE_CLOSED;
         Transport.channelClosed(this, error);
         Protocol.invokeLater(new Runnable() {
@@ -544,7 +543,7 @@ public abstract class AbstractChannel implements IChannel {
                             l.onChannelClosed(error);
                         }
                         catch (Throwable x) {
-                            Activator.log("Exception in channel listener", x);
+                            Protocol.log("Exception in channel listener", x);
                         }
                     }
                 }
@@ -682,7 +681,7 @@ public abstract class AbstractChannel implements IChannel {
                             msg.service, msg.name, msg.data);
                 }
                 catch (Throwable x) {
-                    x.printStackTrace();
+                    Protocol.log("Exception in trace listener", x);
                 }
             }
         }

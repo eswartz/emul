@@ -12,11 +12,11 @@ package org.eclipse.tm.tcf;
 
 import java.util.LinkedList;
 
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.tm.tcf.protocol.IEventQueue;
+import org.eclipse.tm.tcf.protocol.Protocol;
 
 
 /**
@@ -25,7 +25,6 @@ import org.eclipse.tm.tcf.protocol.IEventQueue;
  */
 class EventQueue implements IEventQueue, Runnable {
 
-    private final boolean debug = Platform.inDebugMode();
     private final LinkedList<Runnable> queue = new LinkedList<Runnable>();
     private final Thread thread;
     private boolean waiting;
@@ -78,13 +77,12 @@ class EventQueue implements IEventQueue, Runnable {
             thread.join();
         }
         catch (Exception e) {
-            Activator.log("Failed to shutdown TCF event dispatch thread", e);
+            Protocol.log("Failed to shutdown TCF event dispatch thread", e);
         }
     }
 
     private void error(Throwable x) {
-        if (debug) x.printStackTrace();
-        Activator.log("Unhandled excetion in TCF event dispatch", x);
+        Protocol.log("Unhandled excetion in TCF event dispatch", x);
     }
 
     public void run() {

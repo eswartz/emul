@@ -37,6 +37,7 @@ import org.eclipse.tm.tcf.services.ILocator;
 public final class Protocol {
 
     private static IEventQueue event_queue;
+    private static ILogger logger;
     private static final TreeSet<Timer> timer_queue = new TreeSet<Timer>();
     private static int timer_cnt;
     
@@ -88,7 +89,7 @@ public final class Protocol {
                 // Dispatch is shut down, exit this thread
             }
             catch (Throwable x) {
-                x.printStackTrace();
+                log("Exception in TCF dispatch loop", x);
             }
         }
     };
@@ -222,6 +223,32 @@ public final class Protocol {
                     throw new Error(x);
                 }
             }
+        }
+    }
+    
+    /**
+     * Set framework logger.
+     * By default Eclipse logger is used, or System.err if TCF is used stand-alone.
+     * 
+     * @param logger - an object implementing ILogger interface.
+     */
+    public static synchronized void setLogger(ILogger logger) {
+        Protocol.logger = logger;
+    }
+    
+    /**
+     * Logs the given message.
+     * @see #setLogger
+     * @param msg - log entry text
+     * @param x - a Java exception associated with the log entry or null.
+     */
+    public static synchronized void log(String msg, Throwable x) {
+        if (logger == null) {
+            System.err.println(msg);
+            x.printStackTrace();
+        }
+        else {
+            logger.log(msg, x);
         }
     }
 

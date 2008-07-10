@@ -163,7 +163,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
         TCFFrameData(TCFFrameDMC dmc) {
             context = dmc.context_cache.getData();
             TCFSourceRef ref = dmc.source_cache.getData();
-            address = new TCFAddress(ref.address);
+            address = ref.address != null ? new TCFAddress(ref.address) : null;
             level = dmc.getLevel();
             function = null;
             code_area = ref.area;

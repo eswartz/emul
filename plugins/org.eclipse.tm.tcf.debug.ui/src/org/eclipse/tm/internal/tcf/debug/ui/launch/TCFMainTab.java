@@ -47,6 +47,7 @@ import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFUserDefPeer;
+import org.eclipse.tm.internal.tcf.debug.tests.TCFTestSuite;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -717,7 +718,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         CLabel label = new CLabel(shell, SWT.NONE);
         label.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
         label.setText("Running Diagnostics...");
-        final TCFSelfTest[] test = new TCFSelfTest[1];
+        final TCFTestSuite[] test = new TCFTestSuite[1];
         Button button_cancel = new Button(shell, SWT.PUSH);
         button_cancel.setText("&Cancel");
         button_cancel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -744,9 +745,9 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         runDiagnostics(item, loop, test, shell, label, bar);
     }
     
-    private void runDiagnostics(final TreeItem item, final boolean loop, final TCFSelfTest[] test,
+    private void runDiagnostics(final TreeItem item, final boolean loop, final TCFTestSuite[] test,
             final Shell shell, final CLabel label, final ProgressBar bar) {
-        final TCFSelfTest.TestListener done = new TCFSelfTest.TestListener() {
+        final TCFTestSuite.TestListener done = new TCFTestSuite.TestListener() {
             private String last_text = "";
             private int last_count = 0;
             private int last_total = 0;
@@ -792,7 +793,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    test[0] = new TCFSelfTest(info.peer, done);
+                    test[0] = new TCFTestSuite(info.peer, done);
                 }
                 catch (Throwable x) {
                     ArrayList<Throwable> errors = new ArrayList<Throwable>();
