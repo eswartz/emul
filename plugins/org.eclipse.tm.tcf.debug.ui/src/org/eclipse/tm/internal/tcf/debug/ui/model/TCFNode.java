@@ -298,7 +298,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @return bit set of model delta flags
      */
     int getRelevantModelDeltaFlags(IPresentationContext p) {
-        return IModelDelta.CONTENT | IModelDelta.STATE;
+        return IModelDelta.CONTENT | IModelDelta.STATE | IModelDelta.ADDED | IModelDelta.REMOVED;
     }
 
     /*--------------------------------------------------------------------------------------*/

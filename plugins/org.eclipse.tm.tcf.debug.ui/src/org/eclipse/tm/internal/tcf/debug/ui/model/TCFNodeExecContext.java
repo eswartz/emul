@@ -36,6 +36,8 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 @SuppressWarnings("serial")
 public class TCFNodeExecContext extends TCFNode {
 
+    private final int seq_no;
+    
     private final TCFChildrenExecContext children_exec;
     private final TCFChildrenStackTrace children_stack;
     private final TCFChildrenRegisters children_regs;
@@ -47,9 +49,12 @@ public class TCFNodeExecContext extends TCFNode {
     private final Map<BigInteger,TCFSourceRef> line_info_cache;
 
     private int resumed_cnt;
+    
+    private static int seq_cnt;
 
     TCFNodeExecContext(TCFNode parent, final String id) {
         super(parent, id);
+        seq_no = seq_cnt++;
         children_exec = new TCFChildrenExecContext(this);
         children_stack = new TCFChildrenStackTrace(this);
         children_regs = new TCFChildrenRegisters(this);
@@ -329,7 +334,7 @@ public class TCFNodeExecContext extends TCFNode {
         assert !disposed;
         resumed_cnt++;
         dispose();
-        parent.addModelDelta(IModelDelta.CONTENT);
+        addModelDelta(IModelDelta.REMOVED);
     }
 
     void onContainerSuspended() {
@@ -521,5 +526,15 @@ public class TCFNodeExecContext extends TCFNode {
             return ImageCache.IMG_PROCESS_RUNNING;
         }
         return super.getImageName();
+    }
+    
+    @Override
+    public int compareTo(TCFNode n) {
+        if (n instanceof TCFNodeExecContext) {
+            TCFNodeExecContext f = (TCFNodeExecContext)n;
+            if (seq_no < f.seq_no) return -1;
+            if (seq_no > f.seq_no) return +1;
+        }
+        return id.compareTo(n.id);
     }
 }

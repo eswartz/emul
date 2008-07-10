@@ -47,8 +47,6 @@ import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
@@ -496,7 +494,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 final IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_DEBUG_VIEW);
                 if (view == null) return;
                 if (!((AbstractDebugView)view).isAvailable()) return;
-                Protocol.invokeLater(300, new Runnable() {
+                Protocol.invokeLater(100, new Runnable() {
                     public void run() {
                         TCFNode node = getNode(node_id);
                         if (node == null) return;
@@ -511,19 +509,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         }
                         final TreeModelViewer viewer = (TreeModelViewer)view.getViewer();
                         for (TCFModelProxy proxy : model_proxies.values()) {
-                            if (proxy.getProxyViewer() == viewer && !proxy.validateViewer(this)) return;
-                        }
-                        final TCFNode element = node;
-                        display.asyncExec(new Runnable() {
-                            public void run() {
-                                if (cnt != debug_view_selection_cnt) return;
-                                if (element.parent != null && !viewer.getExpandedState(element.parent)) {
-                                    viewer.setExpandedState(element.parent, true);
-                                }
-                                ISelection selection = new StructuredSelection(element);
-                                viewer.setSelection(selection);
+                            if (proxy.getProxyViewer() == viewer) {
+                                proxy.fireModelChanged();
+                                proxy.addDelta(node, IModelDelta.SELECT | IModelDelta.REVEAL);
+                                proxy.fireModelChanged();
                             }
-                        });
+                        }
                     }
                 });
             }

@@ -186,7 +186,7 @@ public class TCFNodeRegister extends TCFNode {
 
     int getRelevantModelDeltaFlags(IPresentationContext p) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId())) {
-            return IModelDelta.CONTENT | IModelDelta.STATE;
+            return super.getRelevantModelDeltaFlags(p);
         }
         return 0;
     }
