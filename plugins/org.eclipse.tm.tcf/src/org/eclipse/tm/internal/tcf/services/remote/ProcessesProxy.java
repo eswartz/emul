@@ -197,7 +197,7 @@ public class ProcessesProxy implements IProcesses {
 
     @SuppressWarnings("unchecked")
     private static String[] toStringArray(Object o) {
-        if (o == null) return new String[0];
+        if (o == null) return null;
         Collection<String> c = (Collection<String>)o;
         return (String[])c.toArray(new String[c.size()]);
     }

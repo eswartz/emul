@@ -76,6 +76,14 @@ public class TCFTestSuite {
         });
         pending_tests.add(new Runnable() {
             public void run() {
+                listener.progress("Running Expressions Test...", ++count_done, count_total);
+                for (IChannel channel : channels) {
+                    active_tests.put(new TestExpressions(TCFTestSuite.this, channel), channel);
+                }
+            }
+        });
+        pending_tests.add(new Runnable() {
+            public void run() {
                 int i = 0;
                 listener.progress("Running Run Control Test...", ++count_done, count_total);
                 for (IChannel channel : channels) {
@@ -217,7 +225,8 @@ public class TCFTestSuite {
             }
             listener.progress(null, ++count_done, count_total);
             pending_tests.removeFirst().run();
-            for (ITCFTest test : active_tests.keySet()) test.start();
+            ITCFTest[] lst = active_tests.keySet().toArray(new ITCFTest[active_tests.size()]);
+            for (ITCFTest test : lst) test.start();
         }
     }
 }

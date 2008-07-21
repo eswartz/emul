@@ -89,14 +89,13 @@ public class DiagnosticsProxy implements IDiagnostics {
 
     public IToken getTestList(final DoneGetTestList done) {
         return new Command(channel, this, "getTestList", null) {
-            @SuppressWarnings("unchecked")
             @Override
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
                     assert args.length == 2;
                     error = toError(args[0]);
-                    arr = toStringArray((Collection<String>)args[1]);
+                    arr = toStringArray(args[1]);
                 }
                 done.doneGetTestList(token, error, arr);
             }
@@ -146,8 +145,10 @@ public class DiagnosticsProxy implements IDiagnostics {
         }.token;
     }
 
-    private String[] toStringArray(Collection<String> c) {
-        if (c == null) return new String[0];
+    @SuppressWarnings("unchecked")
+    private String[] toStringArray(Object o) {
+        if (o == null) return null;
+        Collection<String> c = (Collection<String>)o;
         return (String[])c.toArray(new String[c.size()]);
     }
     

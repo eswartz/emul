@@ -60,6 +60,7 @@ public interface IRegisters extends IService {
     interface DoneGetContext {
         /**
          * Called when context data retrieval is done.
+         * @param token - command handle
          * @param error – error description if operation failed, null if succeeded.
          * @param context – context data.
          */
@@ -89,6 +90,7 @@ public interface IRegisters extends IService {
     interface DoneGetChildren {
         /**
          * Called when context list retrieval is done.
+         * @param token - command handle
          * @param error – error description if operation failed, null if succeeded.
          * @param context_ids – array of available context IDs.
          */
@@ -298,6 +300,12 @@ public interface IRegisters extends IService {
      * 'get' command call back interface.
      */
     interface DoneGet {
+        /**
+         * Called when value retrieval is done.
+         * @param token - command handle
+         * @param error – error description if operation failed, null if succeeded.
+         * @param value – context value as array of bytes.
+         */
         void doneGet(IToken token, Exception error, byte[] value);
     }
     
@@ -305,6 +313,11 @@ public interface IRegisters extends IService {
      * 'set' command call back interface.
      */
     interface DoneSet {
+        /**
+         * Called when value setting is done.
+         * @param token - command handle
+         * @param error – error description if operation failed, null if succeeded.
+         */
         void doneSet(IToken token, Exception error);
     }
 
@@ -341,7 +354,9 @@ public interface IRegisters extends IService {
          * corresponding cached registers data.
          * Not every change is notified - it is not possible,
          * only those, which are not caused by normal execution of the debuggee.
+         * At least, changes caused by "set" command should be notified.
+         * @param id - register context ID.
          */
-        void registerChanged(String context_id);
+        void registerChanged(String id);
     }
 }

@@ -34,8 +34,8 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
     private int cnt;
     private int wait_cnt;
     
-    TestAttachTerminate(TCFTestSuite selfTest, IChannel channel) {
-        test_suite = selfTest;
+    TestAttachTerminate(TCFTestSuite test_suite, IChannel channel) {
+        this.test_suite = test_suite;
         diag = channel.getRemoteService(IDiagnostics.class);
         rc = channel.getRemoteService(IRunControl.class);
     }

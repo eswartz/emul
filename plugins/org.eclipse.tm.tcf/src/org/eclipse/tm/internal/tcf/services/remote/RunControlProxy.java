@@ -253,8 +253,8 @@ public class RunControlProxy implements IRunControl {
 
     @SuppressWarnings("unchecked")
     private String[] toStringArray(Object o) {
+        if (o == null) return null;
         Collection<String> c = (Collection<String>)o;
-        if (c == null) return new String[0];
         return (String[])c.toArray(new String[c.size()]);
     }
 }

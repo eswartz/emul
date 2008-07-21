@@ -269,15 +269,15 @@ public class RegistersProxy implements IRegisters {
 
     @SuppressWarnings("unchecked")
     private String[] toStringArray(Object o) {
+        if (o == null) return null;
         Collection<String> c = (Collection<String>)o;
-        if (c == null) return new String[0];
         return (String[])c.toArray(new String[c.size()]);
     }
     
     @SuppressWarnings("unchecked")
     private int[] toIntArray(Object o) {
+        if (o == null) return null;
         Collection<Number> c = (Collection<Number>)o;
-        if (c == null) return null;
         int i = 0;
         int[] arr = new int[c.size()];
         for (Number n : c) arr[i++] = n.intValue();

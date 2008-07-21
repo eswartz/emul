@@ -134,14 +134,13 @@ public class SysMonitorProxy implements ISysMonitor {
 
     public IToken getChildren(String parent_context_id, final DoneGetChildren done) {
         return new Command(channel, this, "getChildren", new Object[]{ parent_context_id }) {
-            @SuppressWarnings("unchecked")
             @Override
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
                     assert args.length == 2;
                     error = toError(args[0]);
-                    arr = toStringArray((Collection<String>)args[1]);
+                    arr = toStringArray(args[1]);
                 }
                 done.doneGetChildren(token, error, arr);
             }
@@ -166,14 +165,13 @@ public class SysMonitorProxy implements ISysMonitor {
 
     public IToken getCommandLine(String id, final DoneGetCommandLine done) {
         return new Command(channel, this, "getCommandLine", new Object[]{ id }) {
-            @SuppressWarnings("unchecked")
             @Override
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
                     assert args.length == 2;
                     error = toError(args[0]);
-                    arr = toStringArray((Collection<String>)args[1]);
+                    arr = toStringArray(args[1]);
                 }
                 done.doneGetCommandLine(token, error, arr);
             }
@@ -182,22 +180,23 @@ public class SysMonitorProxy implements ISysMonitor {
 
     public IToken getEnvironment(String id, final DoneGetEnvironment done) {
         return new Command(channel, this, "getEnvironment", new Object[]{ id }) {
-            @SuppressWarnings("unchecked")
             @Override
             public void done(Exception error, Object[] args) {
                 String[] arr = null;
                 if (error == null) {
                     assert args.length == 2;
                     error = toError(args[0]);
-                    arr = toStringArray((Collection<String>)args[1]);
+                    arr = toStringArray(args[1]);
                 }
                 done.doneGetEnvironment(token, error, arr);
             }
         }.token;
     }
 
-    private static String[] toStringArray(Collection<String> c) {
-        if (c == null) return new String[0];
+    @SuppressWarnings("unchecked")
+    private static String[] toStringArray(Object o) {
+        if (o == null) return null;
+        Collection<String> c = (Collection<String>)o;
         return (String[])c.toArray(new String[c.size()]);
     }
 }

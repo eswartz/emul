@@ -112,7 +112,7 @@ public interface IMemory extends IService {
         
         /**
          * Retrieves process ID, if applicable.
-         * @return process system ID.
+         * @return process ID.
          */
         int getProcessID();
         

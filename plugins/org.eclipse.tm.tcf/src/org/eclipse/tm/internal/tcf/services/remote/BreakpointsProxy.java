@@ -179,15 +179,15 @@ public class BreakpointsProxy implements IBreakpoints {
 
     @SuppressWarnings("unchecked")
     private String[] toStringArray(Object o) {
+        if (o == null) return null;
         Collection<String> c = (Collection<String>)o;
-        if (c == null) return new String[0];
         return (String[])c.toArray(new String[c.size()]);
     }
 
     @SuppressWarnings("unchecked")
     private Map<String,Object>[] toBreakpointArray(Object o) {
+        if (o == null) return null;
         Collection<Map<String,Object>> c = (Collection<Map<String,Object>>)o;
-        if (c == null) return new Map[0];
         return (Map<String,Object>[])c.toArray(new Map[c.size()]);
     }
 
@@ -228,7 +228,7 @@ public class BreakpointsProxy implements IBreakpoints {
     }
 
     public void removeListener(BreakpointsListener listener) {
-        IChannel.IEventListener l = listeners.get(listener);
+        IChannel.IEventListener l = listeners.remove(listener);
         if (l != null) channel.removeEventListener(this, l);
     }
 }
