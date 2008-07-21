@@ -89,49 +89,49 @@ static char * get_executable(pid_t pid) {
 static void write_context(OutputStream * out, Context * ctx, int is_thread) {
     assert(!ctx->exited);
 
-    out->write(out, '{');
+    write_stream(out, '{');
 
     json_write_string(out, "ID");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, is_thread ? thread_id(ctx) : container_id(ctx));
 
     if (is_thread) {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "ParentID");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_string(out, container_id(ctx));
     }
 
 #if !defined(_WRS_KERNEL)
-    out->write(out, ',');
+    write_stream(out, ',');
     json_write_string(out, "ProcessID");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, pid2id(ctx->mem, 0));
 #endif
     
 #if !defined(WIN32) && !defined(_WRS_KERNEL)
     if (!ctx->exiting && !is_thread) {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "File");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_string(out, get_executable(ctx->pid));
     }
 #endif
 
     if (is_thread) {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "CanSuspend");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_boolean(out, 1);
 
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "CanResume");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_long(out, (1 << RM_RESUME) | (1 << RM_STEP_INTO));
 
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "HasState");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_boolean(out, 1);
     }
 
@@ -139,13 +139,13 @@ static void write_context(OutputStream * out, Context * ctx, int is_thread) {
     if (!is_thread)
 #endif
     {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "CanTerminate");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_boolean(out, 1);
     }    
 
-    out->write(out, '}');
+    write_stream(out, '}');
 }
 
 static void write_context_state(OutputStream * out, Context * ctx) {
@@ -161,25 +161,25 @@ static void write_context_state(OutputStream * out, Context * ctx) {
 
     /* Number: PC */
     json_write_ulong(out, get_regs_PC(ctx->regs));
-    out->write(out, 0);
+    write_stream(out, 0);
 
     /* String: Reason */
     json_write_string(out, context_suspend_reason(ctx));
-    out->write(out, 0);
+    write_stream(out, 0);
 
     /* Object: Aditional info */
-    out->write(out, '{');
+    write_stream(out, '{');
     json_write_string(out, "Signal");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_long(out, ctx->signal);
     if (signal_name(ctx->signal)) {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "SignalName");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_string(out, signal_name(ctx->signal));
     }
-    out->write(out, '}');
-    out->write(out, 0);
+    write_stream(out, '}');
+    write_stream(out, 0);
 }
 
 static void event_get_context(void * arg) {
@@ -198,14 +198,14 @@ static void event_get_context(void * arg) {
     
         if (err == 0) {
             write_context(&c->out, ctx, s->parent != 0);
-            c->out.write(&c->out, 0);
+            write_stream(&c->out, 0);
         }
         else {
             write_stringz(&c->out, "null");
         }
 
-        c->out.write(&c->out, MARKER_EOM);
-        c->out.flush(&c->out);
+        write_stream(&c->out, MARKER_EOM);
+        flush_stream(&c->out);
     }
     stream_unlock(c);
     context_unlock(ctx);
@@ -218,8 +218,8 @@ static void command_get_context(char * token, Channel * c) {
     Context * ctx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     ctx = id2ctx(id);
     
@@ -231,7 +231,7 @@ static void command_get_context(char * token, Channel * c) {
         write_stringz(&c->out, token);
         write_errno(&c->out, err);
         write_stringz(&c->out, "null");
-        c->out.write(&c->out, MARKER_EOM);
+        write_stream(&c->out, MARKER_EOM);
     }
     else {
         /* Need to stop everything to access context properties.
@@ -252,15 +252,15 @@ static void command_get_children(char * token, Channel * c) {
     char id[256];
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
 
     write_errno(&c->out, 0);
 
-    c->out.write(&c->out, '[');
+    write_stream(&c->out, '[');
     if (id[0] == 0) {
         LINK * qp;
         int cnt = 0;
@@ -268,7 +268,7 @@ static void command_get_children(char * token, Channel * c) {
             Context * ctx = ctxl2ctxp(qp);
             if (ctx->exited) continue;
             if (ctx->parent != NULL) continue;
-            if (cnt > 0) c->out.write(&c->out, ',');
+            if (cnt > 0) write_stream(&c->out, ',');
             json_write_string(&c->out, container_id(ctx));
             cnt++;
         }
@@ -281,7 +281,7 @@ static void command_get_children(char * token, Channel * c) {
         Context * parent = id2ctx(id);
         if (parent != NULL && parent->parent == NULL && ppd == 0) {
             if (!parent->exited && context_has_state(parent)) {
-                if (cnt > 0) c->out.write(&c->out, ',');
+                if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, thread_id(parent));
                 cnt++;
             }
@@ -289,16 +289,16 @@ static void command_get_children(char * token, Channel * c) {
                 Context * ctx = cldl2ctxp(qp);
                 assert(!ctx->exited);
                 assert(ctx->parent == parent);
-                if (cnt > 0) c->out.write(&c->out, ',');
+                if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out,thread_id(ctx));
                 cnt++;
             }
         }
     }
-    c->out.write(&c->out, ']');
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, ']');
+    write_stream(&c->out, 0);
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_state(char * token, Channel * c) {
@@ -307,8 +307,8 @@ static void command_get_state(char * token, Channel * c) {
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     ctx = id2ctx(id);
 
     write_stringz(&c->out, "R");
@@ -319,7 +319,7 @@ static void command_get_state(char * token, Channel * c) {
     write_errno(&c->out, err);
 
     json_write_boolean(&c->out, ctx != NULL && ctx->intercepted);
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, 0);
 
     if (err) {
         write_stringz(&c->out, "0");
@@ -330,14 +330,14 @@ static void command_get_state(char * token, Channel * c) {
         write_context_state(&c->out, ctx);
     }
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void send_simple_result(Channel * c, char * token, int err) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void send_event_context_resumed(OutputStream * out, Context * ctx);
@@ -346,7 +346,7 @@ static void done_skip_breakpoint(SkipBreakpointInfo * s) {
     Channel * c = s->c;
     if (!is_stream_closed(c)) {
         send_simple_result(c, s->token, s->error);
-        c->out.flush(&c->out);
+        flush_stream(&c->out);
     }
 }
 
@@ -358,12 +358,12 @@ static void command_resume(char * token, Channel * c) {
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     mode = json_read_long(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     count = json_read_long(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     ctx = id2ctx(id);
     assert(safe_event_list == NULL);
 
@@ -420,8 +420,8 @@ static void command_suspend(char * token, Channel * c) {
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     ctx = id2ctx(id);
 
     if (ctx == NULL) {
@@ -495,8 +495,8 @@ static void command_terminate(char * token, Channel * c) {
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (terminate_debug_context(c->bcg, id2ctx(id)) != 0) err = errno;
 
@@ -509,18 +509,18 @@ static void send_event_context_added(OutputStream * out, Context * ctx) {
     write_stringz(out, "contextAdded");
 
     /* <array of context data> */
-    out->write(out, '[');
+    write_stream(out, '[');
     if (ctx->parent == NULL) {
         write_context(out, ctx, 0);
     }
     if (context_has_state(ctx)) {
-        if (ctx->parent == NULL) out->write(out, ',');
+        if (ctx->parent == NULL) write_stream(out, ',');
         write_context(out, ctx, 1);
     }
-    out->write(out, ']');
-    out->write(out, 0);
+    write_stream(out, ']');
+    write_stream(out, 0);
 
-    out->write(out, MARKER_EOM);
+    write_stream(out, MARKER_EOM);
 }
 
 static void send_event_context_changed(OutputStream * out, Context * ctx) {
@@ -529,18 +529,18 @@ static void send_event_context_changed(OutputStream * out, Context * ctx) {
     write_stringz(out, "contextChanged");
 
     /* <array of context data> */
-    out->write(out, '[');
+    write_stream(out, '[');
     if (ctx->parent == NULL) {
         write_context(out, ctx, 0);
     }
     if (context_has_state(ctx)) {
-        if (ctx->parent == NULL) out->write(out, ',');
+        if (ctx->parent == NULL) write_stream(out, ',');
         write_context(out, ctx, 1);
     }
-    out->write(out, ']');
-    out->write(out, 0);
+    write_stream(out, ']');
+    write_stream(out, 0);
 
-    out->write(out, MARKER_EOM);
+    write_stream(out, MARKER_EOM);
 }
 
 static void send_event_context_removed(OutputStream * out, Context * ctx) {
@@ -549,16 +549,16 @@ static void send_event_context_removed(OutputStream * out, Context * ctx) {
     write_stringz(out, "contextRemoved");
 
     /* <array of context IDs> */
-    out->write(out, '[');
+    write_stream(out, '[');
     if (context_has_state(ctx)) json_write_string(out, thread_id(ctx));
     if (ctx->parent == NULL && list_is_empty(&ctx->children)) {
-        if (context_has_state(ctx)) out->write(out, ',');
+        if (context_has_state(ctx)) write_stream(out, ',');
         json_write_string(out, container_id(ctx));
     }
-    out->write(out, ']');
-    out->write(out, 0);
+    write_stream(out, ']');
+    write_stream(out, 0);
 
-    out->write(out, MARKER_EOM);
+    write_stream(out, MARKER_EOM);
 }
 
 static void send_event_context_suspended(OutputStream * out, Context * ctx) {
@@ -574,10 +574,10 @@ static void send_event_context_suspended(OutputStream * out, Context * ctx) {
 
     /* String: Context ID */
     json_write_string(out, thread_id(ctx));
-    out->write(out, 0);
+    write_stream(out, 0);
 
     write_context_state(out, ctx);
-    out->write(out, MARKER_EOM);
+    write_stream(out, MARKER_EOM);
 }
 
 static void send_event_context_resumed(OutputStream * out, Context * ctx) {
@@ -591,9 +591,9 @@ static void send_event_context_resumed(OutputStream * out, Context * ctx) {
 
     /* String: Context ID */
     json_write_string(out, thread_id(ctx));
-    out->write(out, 0);
+    write_stream(out, 0);
 
-    out->write(out, MARKER_EOM);
+    write_stream(out, MARKER_EOM);
 }
 
 static void send_event_context_exception(OutputStream * out, Context * ctx) {
@@ -605,14 +605,14 @@ static void send_event_context_exception(OutputStream * out, Context * ctx) {
 
     /* String: Context ID */
     json_write_string(out, thread_id(ctx));
-    out->write(out, 0);
+    write_stream(out, 0);
 
     /* String: Human readable description of the exception */
     snprintf(buf, sizeof(buf), "Signal %d", ctx->signal);
     json_write_string(out, buf);
-    out->write(out, 0);
+    write_stream(out, 0);
 
-    out->write(out, MARKER_EOM);
+    write_stream(out, MARKER_EOM);
 }
 
 int is_all_stopped(void) {
@@ -743,14 +743,14 @@ static void event_context_created(Context * ctx, void * client_data) {
     assert(!ctx->intercepted);
     assert(!ctx->stopped);
     send_event_context_added(&bcg->out, ctx);
-    bcg->out.flush(&bcg->out);
+    flush_stream(&bcg->out);
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
     TCFBroadcastGroup * bcg = client_data;
 
     send_event_context_changed(&bcg->out, ctx);
-    bcg->out.flush(&bcg->out);
+    flush_stream(&bcg->out);
 }
 
 static void event_context_stopped(Context * ctx, void * client_data) {
@@ -766,7 +766,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     }
     if (ctx->pending_intercept) {
         send_event_context_suspended(&bcg->out, ctx);
-        bcg->out.flush(&bcg->out);
+        flush_stream(&bcg->out);
     }
     if (!ctx->intercepted && safe_event_list == NULL) {
         context_continue(ctx);
@@ -798,7 +798,7 @@ static void event_context_exited(Context * ctx, void * client_data) {
     assert(!ctx->intercepted);
     if (ctx->pending_safe_event) check_safe_events(ctx);
     send_event_context_removed(&bcg->out, ctx);
-    bcg->out.flush(&bcg->out);
+    flush_stream(&bcg->out);
 }
 
 void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {

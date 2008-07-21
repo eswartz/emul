@@ -63,7 +63,7 @@ static void check_w32_error(const char * fn, int ok) {
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
         error,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language */
         (LPTSTR) &msg_buf,
         0,
         NULL))

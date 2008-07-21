@@ -40,6 +40,7 @@
 #include "json.h"
 #include "link.h"
 #include "linenumbers.h"
+#include "stacktrace.h"
 
 #if defined(_WRS_KERNEL)
 #  include <private/vxdbgLibP.h>
@@ -437,7 +438,9 @@ static int address_expression_identifier(char * name, Value * v) {
 #if SERVICE_Symbols
     {
         Symbol sym;
-        if (find_symbol(expression_context, name, &sym) < 0) {
+        int frame = STACK_NO_FRAME;
+        if (context_has_state(expression_context)) frame = STACK_TOP_FRAME;
+        if (find_symbol(expression_context, frame, name, &sym) < 0) {
             if (errno != ERR_SYM_NOT_FOUND) return -1;
         }
         else {
@@ -658,7 +661,7 @@ static void event_replant_breakpoints(void * arg) {
         }
     }
     delete_unused_instructions();
-    if (event_cnt > 0) bcg->out.flush(&bcg->out);
+    if (event_cnt > 0) flush_stream(&bcg->out);
 }
 
 static void replant_breakpoints(TCFBroadcastGroup * bcg) {
@@ -777,16 +780,16 @@ static BreakpointRef * find_breakpoint_ref(BreakpointInfo * bp, InputStream * in
 
 static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
     memset(bp, 0, sizeof(BreakpointInfo));
-    if (inp->read(inp) != '{') exception(ERR_JSON_SYNTAX);
-    if (inp->peek(inp) == '}') {
-        inp->read(inp);
+    if (read_stream(inp) != '{') exception(ERR_JSON_SYNTAX);
+    if (peek_stream(inp) == '}') {
+        read_stream(inp);
     }
     else {
         while (1) {
             int ch;
             char name[256];
             json_read_string(inp, name, sizeof(name));
-            if (inp->read(inp) != ':') exception(ERR_JSON_SYNTAX);
+            if (read_stream(inp) != ':') exception(ERR_JSON_SYNTAX);
             if (strcmp(name, "ID") == 0) {
                 json_read_string(inp, bp->id, sizeof(bp->id));
             }
@@ -820,7 +823,7 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
                 u->next = bp->unsupported;
                 bp->unsupported = u;
             }
-            ch = inp->read(inp);
+            ch = read_stream(inp);
             if (ch == ',') continue;
             if (ch == '}') break;
             exception(ERR_JSON_SYNTAX);
@@ -1333,6 +1336,7 @@ int evaluate_breakpoint_condition(Context * ctx) {
     int i;
     BreakInstruction * bi = find_instruction(ctx, get_regs_PC(ctx->regs));
     if (bi == NULL) return 0;
+    assert(ctx->stopped);
     expression_context = ctx;
     for (i = 0; i < bi->ref_cnt; i++) {
         BreakpointInfo * bp = bi->refs[i];

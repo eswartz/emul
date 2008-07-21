@@ -51,7 +51,7 @@ static void proxy_connecting(Channel * c) {
     trace(LOG_PROXY, "proxy connecting");
     if (proxy[proxy->other].state == ProxyStateConnected) {
         send_hello_message(proxy->proto, c);
-        c->out.flush(&c->out);
+        flush_stream(&c->out);
     }
 }
 
@@ -71,7 +71,7 @@ static void proxy_connected(Channel * c) {
     if (proxy[proxy->other].state == ProxyStateConnecting ||
         proxy[proxy->other].state == ProxyStateConnected) {
         send_hello_message(proxy[proxy->other].proto, proxy[proxy->other].c);
-        c->out.flush(&proxy[proxy->other].c->out);
+        flush_stream(&proxy[proxy->other].c->out);
     }
 }
 
@@ -160,7 +160,7 @@ static void proxy_default_message_handler(Channel * c, char **argv, int argc) {
 
     /* Copy body of message */
     do {
-        i = c->inp.read(&c->inp);
+        i = read_stream(&c->inp);
         if (log_mode & LOG_TCFLOG) {
             if (i > ' ' && i < 127) {
                 /* Printable ASCII  */
@@ -184,9 +184,10 @@ static void proxy_default_message_handler(Channel * c, char **argv, int argc) {
                 logstr(&p, "<?>");
             }
         }
-        otherc->out.write(&otherc->out, i);
-    } while (i != MARKER_EOM && i != MARKER_EOS);
-    otherc->out.flush(&otherc->out);
+        write_stream(&otherc->out, i);
+    }
+    while (i != MARKER_EOM && i != MARKER_EOS);
+    flush_stream(&otherc->out);
     if (log_mode & LOG_TCFLOG) {
         *p = '\0';
         trace(LOG_TCFLOG, "%d: %s", proxy->instance, logbuf);

@@ -209,7 +209,7 @@ static void write_file_handle(OutputStream * out, OpenFileInfo * h) {
         *(--p) = 'F';
         json_write_string(out, p);
     }
-    out->write(out, 0);
+    write_stream(out, 0);
 }
 
 static void fill_attrs(FileAttrs * attrs, struct_stat * buf) {
@@ -262,43 +262,43 @@ static void write_file_attrs(OutputStream * out, FileAttrs * attrs) {
         return;
     }
 
-    out->write(out, '{');
+    write_stream(out, '{');
     if (attrs->flags & ATTR_SIZE) {
         json_write_string(out, "Size");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_int64(out, attrs->size);
         cnt++;
     }
     if (attrs->flags & ATTR_UIDGID) {
-        if (cnt) out->write(out, ',');
+        if (cnt) write_stream(out, ',');
         json_write_string(out, "UID");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_long(out, attrs->uid);
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "GID");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_long(out, attrs->gid);
         cnt++;
     }
     if (attrs->flags & ATTR_SIZE) {
-        if (cnt) out->write(out, ',');
+        if (cnt) write_stream(out, ',');
         json_write_string(out, "Permissions");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_long(out, attrs->permissions);
         cnt++;
     }
     if (attrs->flags & ATTR_ACMODTIME) {
-        if (cnt) out->write(out, ',');
+        if (cnt) write_stream(out, ',');
         json_write_string(out, "ATime");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_int64(out, attrs->atime);
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "MTime");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_int64(out, attrs->mtime);
         cnt++;
     }
-    out->write(out, '}');
+    write_stream(out, '}');
 }
 
 static int to_local_open_flags(int flags) {
@@ -343,13 +343,13 @@ static void command_open(char * token, Channel * c) {
     OpenFileInfo * handle = NULL;
 
     read_path(&c->inp, path, sizeof(path));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     flags = json_read_ulong(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     memset(&attrs, 0, sizeof(FileAttrs));
     json_read_struct(&c->inp, read_file_attrs, &attrs);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if ((attrs.flags & ATTR_PERMISSIONS) == 0) {
         attrs.permissions = 0775;
@@ -367,7 +367,7 @@ static void command_open(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
     write_file_handle(&c->out, handle);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_close(char * token, Channel * c) {
@@ -376,8 +376,8 @@ static void command_close(char * token, Channel * c) {
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     h = find_open_file_info(id);
     if (h == NULL) {
@@ -403,7 +403,7 @@ static void command_close(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_read(char * token, Channel * c) {
@@ -416,12 +416,12 @@ static void command_read(char * token, Channel * c) {
     unsigned long cnt = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     offset = json_read_int64(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     len = json_read_ulong(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -458,14 +458,14 @@ static void command_read(char * token, Channel * c) {
             }
         }
         json_write_binary_end(&state);
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, 0);
     }
 
     assert(err || eof || cnt == len);
     write_fs_errno(&c->out, err);
     json_write_boolean(&c->out, eof);
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_write(char * token, Channel * c) {
@@ -477,9 +477,9 @@ static void command_write(char * token, Channel * c) {
     JsonReadBinaryState state;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     offset = json_read_int64(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
 
     json_read_binary_start(&state, &c->inp);
 
@@ -500,13 +500,13 @@ static void command_write(char * token, Channel * c) {
         len += rd;
     }
     json_read_binary_end(&state);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void write_stat_result(char * token, Channel * c, int err, struct_stat * buf) {
@@ -519,8 +519,8 @@ static void write_stat_result(char * token, Channel * c, int err, struct_stat * 
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
     write_file_attrs(&c->out, &attrs);
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_stat(char * token, Channel * c) {
@@ -529,8 +529,8 @@ static void command_stat(char * token, Channel * c) {
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     memset(&buf, 0, sizeof(buf));
     if (stat(path, &buf) < 0) err = errno;
@@ -544,8 +544,8 @@ static void command_lstat(char * token, Channel * c) {
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     memset(&buf, 0, sizeof(buf));
     if (lstat(path, &buf) < 0) err = errno;
@@ -560,8 +560,8 @@ static void command_fstat(char * token, Channel * c) {
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     h = find_open_file_info(id);
     memset(&buf, 0, sizeof(buf));
@@ -576,11 +576,11 @@ static void command_setstat(char * token, Channel * c) {
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     memset(&attrs, 0, sizeof(FileAttrs));
     json_read_struct(&c->inp, read_file_attrs, &attrs);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (attrs.flags & ATTR_SIZE) {
         if (truncate(path, attrs.size) < 0) err = errno;
@@ -603,7 +603,7 @@ static void command_setstat(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_fsetstat(char * token, Channel * c) {
@@ -613,11 +613,11 @@ static void command_fsetstat(char * token, Channel * c) {
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     memset(&attrs, 0, sizeof(FileAttrs));
     json_read_struct(&c->inp, read_file_attrs, &attrs);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     h = find_open_file_info(id);
     if (h == NULL) {
@@ -650,7 +650,7 @@ static void command_fsetstat(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_opendir(char * token, Channel * c) {
@@ -660,8 +660,8 @@ static void command_opendir(char * token, Channel * c) {
     OpenFileInfo * handle = NULL;
 
     read_path(&c->inp, path, sizeof(path));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     dir = opendir(path); 
     if (dir == NULL){
@@ -675,7 +675,7 @@ static void command_opendir(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
     write_file_handle(&c->out, handle);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_readdir(char * token, Channel * c) {
@@ -685,8 +685,8 @@ static void command_readdir(char * token, Channel * c) {
     int eof = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -698,7 +698,7 @@ static void command_readdir(char * token, Channel * c) {
     }
     else {
         int cnt = 0;
-        c->out.write(&c->out, '[');
+        write_stream(&c->out, '[');
         while (cnt < 64) {
             struct dirent * e;
             char path[FILE_PATH_SIZE];
@@ -713,31 +713,31 @@ static void command_readdir(char * token, Channel * c) {
             }
             if (strcmp(e->d_name, ".") == 0) continue;
             if (strcmp(e->d_name, "..") == 0) continue;
-            if (cnt > 0) c->out.write(&c->out, ',');
-            c->out.write(&c->out, '{');
+            if (cnt > 0) write_stream(&c->out, ',');
+            write_stream(&c->out, '{');
             json_write_string(&c->out, "FileName");
-            c->out.write(&c->out, ':');
+            write_stream(&c->out, ':');
             json_write_string(&c->out, e->d_name);
             memset(&st, 0, sizeof(st));
             snprintf(path, sizeof(path), "%s/%s", h->path, e->d_name);
             if (stat(path, &st) == 0) {
                 fill_attrs(&attrs, &st);
-                c->out.write(&c->out, ',');
+                write_stream(&c->out, ',');
                 json_write_string(&c->out, "Attrs");
-                c->out.write(&c->out, ':');
+                write_stream(&c->out, ':');
                 write_file_attrs(&c->out, &attrs);
             }
-            c->out.write(&c->out, '}');
+            write_stream(&c->out, '}');
             cnt++;
         }
-        c->out.write(&c->out, ']');
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, ']');
+        write_stream(&c->out, 0);
     }
 
     write_fs_errno(&c->out, err);
     json_write_boolean(&c->out, eof);
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_remove(char * token, Channel * c) {
@@ -746,15 +746,15 @@ static void command_remove(char * token, Channel * c) {
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (remove(path) < 0) err = errno;
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_rmdir(char * token, Channel * c) {
@@ -763,15 +763,15 @@ static void command_rmdir(char * token, Channel * c) {
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (rmdir(path) < 0) err = errno;
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_mkdir(char * token, Channel * c) {
@@ -781,11 +781,11 @@ static void command_mkdir(char * token, Channel * c) {
     int mode = 0777;
 
     read_path(&c->inp, path, sizeof(path));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     memset(&attrs, 0, sizeof(FileAttrs));
     json_read_struct(&c->inp, read_file_attrs, &attrs);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (attrs.flags & ATTR_PERMISSIONS) {
         mode = attrs.permissions;
@@ -799,7 +799,7 @@ static void command_mkdir(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_realpath(char * token, Channel * c) {
@@ -808,8 +808,8 @@ static void command_realpath(char * token, Channel * c) {
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     real = canonicalize_file_name(path);
     if (real == NULL) err = errno;
@@ -818,8 +818,8 @@ static void command_realpath(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
     json_write_string(&c->out, real);
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
     if (real != NULL) free(real);
 }
 
@@ -829,17 +829,17 @@ static void command_rename(char * token, Channel * c) {
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     read_path(&c->inp, newp, sizeof(newp));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (rename(path, newp) < 0) err = errno;
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_readlink(char * token, Channel * c) {
@@ -848,8 +848,8 @@ static void command_readlink(char * token, Channel * c) {
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     link[0] = 0;
 #if defined(WIN32) || defined(_WRS_KERNEL)
@@ -862,8 +862,8 @@ static void command_readlink(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
     json_write_string(&c->out, link);
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_symlink(char * token, Channel * c) {
@@ -872,10 +872,10 @@ static void command_symlink(char * token, Channel * c) {
     int err = 0;
 
     read_path(&c->inp, link, sizeof(link));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     read_path(&c->inp, target, sizeof(target));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
 #if defined(WIN32) || defined(_WRS_KERNEL)
     err = ENOSYS;
@@ -886,7 +886,7 @@ static void command_symlink(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_copy(char * token, Channel * c) {
@@ -901,14 +901,14 @@ static void command_copy(char * token, Channel * c) {
     int64 pos = 0;
 
     read_path(&c->inp, src, sizeof(src));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     read_path(&c->inp, dst, sizeof(dst));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     copy_uidgid = json_read_boolean(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     copy_perms = json_read_boolean(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (stat(src, &st) < 0) err = errno;
     if (err == 0 && (fi = open(src, O_RDONLY | O_BINARY, 0)) < 0) err = errno;
@@ -952,25 +952,25 @@ static void command_copy(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_fs_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_user(char * token, Channel * c) {
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     json_write_long(&c->out, getuid());
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, 0);
     json_write_long(&c->out, geteuid());
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, 0);
     json_write_long(&c->out, getgid());
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, 0);
     json_write_long(&c->out, getegid());
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, 0);
     json_write_string(&c->out, get_user_home());
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, 0);
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_roots(char * token, Channel * c) {
@@ -979,10 +979,10 @@ static void command_roots(char * token, Channel * c) {
     int cnt = 0;
     int disk = 0;
 
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
-    c->out.write(&c->out, '[');
+    write_stream(&c->out, '[');
 
 #ifdef WIN32
     for (disk = 'A'; disk <= 'Z'; disk++) {
@@ -991,57 +991,57 @@ static void command_roots(char * token, Channel * c) {
         memset(&st, 0, sizeof(st));
         if (stat(path, &st) == 0) {
             FileAttrs attrs;
-            if (cnt > 0) c->out.write(&c->out, ',');
-            c->out.write(&c->out, '{');
+            if (cnt > 0) write_stream(&c->out, ',');
+            write_stream(&c->out, '{');
             json_write_string(&c->out, "FileName");
-            c->out.write(&c->out, ':');
+            write_stream(&c->out, ':');
             json_write_string(&c->out, path);
             fill_attrs(&attrs, &st);
-            c->out.write(&c->out, ',');
+            write_stream(&c->out, ',');
             json_write_string(&c->out, "Attrs");
-            c->out.write(&c->out, ':');
+            write_stream(&c->out, ':');
             write_file_attrs(&c->out, &attrs);
-            c->out.write(&c->out, '}');
+            write_stream(&c->out, '}');
             cnt++;
         }
     }
 #elif defined(_WRS_KERNEL)
-    c->out.write(&c->out, '{');
+    write_stream(&c->out, '{');
     json_write_string(&c->out, "FileName");
-    c->out.write(&c->out, ':');
+    write_stream(&c->out, ':');
     json_write_string(&c->out, FS_ROOT);
     memset(&st, 0, sizeof(st));
     if (stat("/", &st) == 0) {
         FileAttrs attrs;
         fill_attrs(&attrs, &st);
-        c->out.write(&c->out, ',');
+        write_stream(&c->out, ',');
         json_write_string(&c->out, "Attrs");
-        c->out.write(&c->out, ':');
+        write_stream(&c->out, ':');
         write_file_attrs(&c->out, &attrs);
     }
-    c->out.write(&c->out, '}');
+    write_stream(&c->out, '}');
 #else
-    c->out.write(&c->out, '{');
+    write_stream(&c->out, '{');
     json_write_string(&c->out, "FileName");
-    c->out.write(&c->out, ':');
+    write_stream(&c->out, ':');
     json_write_string(&c->out, "/");
     memset(&st, 0, sizeof(st));
     if (stat("/", &st) == 0) {
         FileAttrs attrs;
         fill_attrs(&attrs, &st);
-        c->out.write(&c->out, ',');
+        write_stream(&c->out, ',');
         json_write_string(&c->out, "Attrs");
-        c->out.write(&c->out, ':');
+        write_stream(&c->out, ':');
         write_file_attrs(&c->out, &attrs);
     }
-    c->out.write(&c->out, '}');
+    write_stream(&c->out, '}');
 #endif
 
-    c->out.write(&c->out, ']');
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, ']');
+    write_stream(&c->out, 0);
     write_fs_errno(&c->out, err);
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 void ini_file_system_service(Protocol * proto) {

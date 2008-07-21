@@ -127,7 +127,7 @@ static int load_symbol_tables(ELF_File * file) {
     return 0;
 }
 
-int find_symbol(Context * ctx, char * name, Symbol * sym) {
+int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     int error = 0;
 
 #if defined(_WRS_KERNEL)
@@ -142,7 +142,7 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
         assert(error != 0);
     }
     else {
-        sym->abs = 1;
+        sym->base = SYM_BASE_ABS;
         sym->value = (ContextAddress)ptr;
         
         if (SYM_IS_UNDF(type)) sym->storage = "UNDEF";
@@ -176,7 +176,7 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
                     Elf32_Sym * s = (Elf32_Sym *)tbl->syms + n;
                     if (strcmp(name, tbl->str + s->st_name) == 0) {
                         found = 1;
-                        sym->abs = 1;
+                        sym->base = SYM_BASE_ABS;
                         sym->value = s->st_value;
                         switch (ELF32_ST_BIND(s->st_info)) {
                         case STB_LOCAL: sym->storage = "LOCAL"; break;
@@ -211,6 +211,11 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
         errno = error;
         return -1;
     }
+    return 0;
+}
+
+int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_back, void * args) {
+    /* TODO: ELF: enumerate symbols */
     return 0;
 }
 

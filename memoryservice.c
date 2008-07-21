@@ -56,16 +56,16 @@ struct MemoryCommandArgs {
 static void write_context(OutputStream * out, Context * ctx) {
     assert(!ctx->exited);
 
-    out->write(out, '{');
+    write_stream(out, '{');
 
     json_write_string(out, "ID");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, container_id(ctx));
 
 #if !defined(_WRS_KERNEL)
-    out->write(out, ',');
+    write_stream(out, ',');
     json_write_string(out, "ProcessID");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, pid2id(ctx->mem, 0));
 #endif
 
@@ -73,68 +73,68 @@ static void write_context(OutputStream * out, Context * ctx) {
     {
         short n = 0x0201;
         char * p = (char *)&n;
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, "BigEndian");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_boolean(out, *p == 0x02);
     }
 
-    out->write(out, ',');
+    write_stream(out, ',');
     json_write_string(out, "AddressSize");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_ulong(out, sizeof(char *));
     
-    out->write(out, '}');
+    write_stream(out, '}');
 }
 
 static void write_ranges(OutputStream * out, ContextAddress addr, int size, int offs, int status, int err) {
-    out->write(out, '[');
+    write_stream(out, '[');
     if (offs > 0) {
-        out->write(out, '{');
+        write_stream(out, '{');
 
         json_write_string(out, "addr");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_ulong(out, addr);
-        out->write(out, ',');
+        write_stream(out, ',');
 
         json_write_string(out, "size");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_ulong(out, offs);
-        out->write(out, ',');
+        write_stream(out, ',');
 
         json_write_string(out, "stat");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_ulong(out, 0);
 
-        out->write(out, '}');
-        out->write(out, ',');
+        write_stream(out, '}');
+        write_stream(out, ',');
     }
     if (offs < size) {
-        out->write(out, '{');
+        write_stream(out, '{');
 
         json_write_string(out, "addr");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_ulong(out, addr + offs);
-        out->write(out, ',');
+        write_stream(out, ',');
 
         json_write_string(out, "size");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_ulong(out, size - offs);
-        out->write(out, ',');
+        write_stream(out, ',');
 
         json_write_string(out, "stat");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_ulong(out, status);
-        out->write(out, ',');
+        write_stream(out, ',');
 
         json_write_string(out, "msg");
-        out->write(out, ':');
+        write_stream(out, ':');
         write_errno(out, err);
 
-        out->write(out, '}');
+        write_stream(out, '}');
     }
-    out->write(out, ']');
-    out->write(out, 0);
+    write_stream(out, ']');
+    write_stream(out, 0);
 }
 
 static void command_get_context(char * token, Channel * c) {
@@ -143,8 +143,8 @@ static void command_get_context(char * token, Channel * c) {
     Context * ctx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     ctx = id2ctx(id);
     
@@ -156,27 +156,27 @@ static void command_get_context(char * token, Channel * c) {
     write_errno(&c->out, err);
     if (err == 0) {
         write_context(&c->out, ctx);
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, 0);
     }
     else {
         write_stringz(&c->out, "null");
     }
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_children(char * token, Channel * c) {
     char id[256];
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
 
     write_errno(&c->out, 0);
 
-    c->out.write(&c->out, '[');
+    write_stream(&c->out, '[');
     if (id[0] == 0) {
         LINK * qp;
         int cnt = 0;
@@ -184,15 +184,15 @@ static void command_get_children(char * token, Channel * c) {
             Context * ctx = ctxl2ctxp(qp);
             if (ctx->exited) continue;
             if (ctx->parent != NULL) continue;
-            if (cnt > 0) c->out.write(&c->out, ',');
+            if (cnt > 0) write_stream(&c->out, ',');
             json_write_string(&c->out, container_id(ctx));
             cnt++;
         }
     }
-    c->out.write(&c->out, ']');
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, ']');
+    write_stream(&c->out, 0);
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static struct MemoryCommandArgs * read_command_args(char * token, Channel * c, int cmd) {
@@ -202,16 +202,16 @@ static struct MemoryCommandArgs * read_command_args(char * token, Channel * c, i
     memset(&buf, 0, sizeof(buf));
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     buf.addr = json_read_ulong(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     buf.word_size = (int)json_read_long(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     buf.size = (int)json_read_long(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     buf.mode = (int)json_read_long(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (cmd == CMD_GET && c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (cmd == CMD_GET && read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     buf.ctx = id2ctx(id);
     if (buf.ctx == NULL) err = ERR_INV_CONTEXT;
@@ -220,10 +220,10 @@ static struct MemoryCommandArgs * read_command_args(char * token, Channel * c, i
     if (err != 0) {
         if (cmd != CMD_GET) {
             int ch;
-            while ((ch = c->inp.read(&c->inp)) != 0) {
+            while ((ch = read_stream(&c->inp)) != 0) {
                 if (ch == MARKER_EOM) exception(ERR_JSON_SYNTAX);
             }
-            if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+            if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
         }
 
         write_stringz(&c->out, "R");
@@ -231,7 +231,7 @@ static struct MemoryCommandArgs * read_command_args(char * token, Channel * c, i
         if (cmd == CMD_GET) write_stringz(&c->out, "null");
         write_errno(&c->out, err);
         write_stringz(&c->out, "null");
-        c->out.write(&c->out, MARKER_EOM);
+        write_stream(&c->out, MARKER_EOM);
         return NULL;
     }
     else {
@@ -252,27 +252,27 @@ static void send_event_memory_changed(OutputStream * out, Context * ctx, Context
     write_stringz(out, "memoryChanged");
 
     json_write_string(out, container_id(ctx));
-    out->write(out, 0);
+    write_stream(out, 0);
 
     /* <array of addres ranges> */
-    out->write(out, '[');
-    out->write(out, '{');
+    write_stream(out, '[');
+    write_stream(out, '{');
 
     json_write_string(out, "addr");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_ulong(out, addr);
     
-    out->write(out, ',');
+    write_stream(out, ',');
 
     json_write_string(out, "size");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_ulong(out, size);
     
-    out->write(out, '}');
-    out->write(out, ']');
-    out->write(out, 0);
+    write_stream(out, '}');
+    write_stream(out, ']');
+    write_stream(out, 0);
 
-    out->write(out, MARKER_EOM);
+    write_stream(out, MARKER_EOM);
 }
 
 static void safe_memory_set(void * parm) {
@@ -310,8 +310,8 @@ static void safe_memory_set(void * parm) {
         size += rd;
     }
     json_read_binary_end(&state);
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     send_event_memory_changed(&c->bcg->out, ctx, addr0, size);
 
@@ -326,8 +326,8 @@ static void safe_memory_set(void * parm) {
         strncpy(msg, errno_to_str(err), sizeof(msg));
         write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
     }
-    out->write(out, MARKER_EOM);
-    out->flush(out);
+    write_stream(out, MARKER_EOM);
+    flush_stream(out);
     stream_unlock(c);
     context_unlock(ctx);
     loc_free(args);
@@ -373,7 +373,7 @@ static void safe_memory_get(void * parm) {
         }
     }
     json_write_binary_end(&state);
-    out->write(out, 0);
+    write_stream(out, 0);
 
     write_errno(out, err);
     if (err == 0) {
@@ -384,8 +384,8 @@ static void safe_memory_get(void * parm) {
         strncpy(msg, errno_to_str(err), sizeof(msg));
         write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_READ, err);
     }
-    out->write(out, MARKER_EOM);
-    out->flush(out);
+    write_stream(out, MARKER_EOM);
+    flush_stream(out);
     stream_unlock(c);
     context_unlock(ctx);
     loc_free(args);
@@ -414,9 +414,9 @@ static void safe_memory_fill(void * parm) {
 
     if (ctx->exiting || ctx->exited) err = ERR_ALREADY_EXITED;
 
-    if (inp->read(inp) != '[') exception(ERR_JSON_SYNTAX);
-    if (inp->peek(inp) == ']') {
-        inp->read(inp);
+    if (read_stream(inp) != '[') exception(ERR_JSON_SYNTAX);
+    if (peek_stream(inp) == ']') {
+        read_stream(inp);
     }
     else {
         while (1) {
@@ -428,14 +428,14 @@ static void safe_memory_fill(void * parm) {
             else {
                 json_read_ulong(inp);
             }
-            ch = inp->read(inp);
+            ch = read_stream(inp);
             if (ch == ',') continue;
             if (ch == ']') break;
             exception(ERR_JSON_SYNTAX);
         }
     }
-    if (inp->read(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (inp->read(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     while (err == 0 && buf_pos < (int)size && buf_pos <= sizeof(buf) / 2) {
         if (buf_pos == 0) {
@@ -475,8 +475,8 @@ static void safe_memory_fill(void * parm) {
         strncpy(msg, errno_to_str(err), sizeof(msg));
         write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
     }
-    out->write(out, MARKER_EOM);
-    out->flush(out);
+    write_stream(out, MARKER_EOM);
+    flush_stream(out);
     stream_unlock(c);
     context_unlock(ctx);
     loc_free(args);
@@ -493,12 +493,12 @@ static void send_event_context_added(OutputStream * out, Context * ctx) {
     write_stringz(out, "contextAdded");
 
     /* <array of context data> */
-    out->write(out, '[');
+    write_stream(out, '[');
     write_context(out, ctx);
-    out->write(out, ']');
-    out->write(out, 0);
+    write_stream(out, ']');
+    write_stream(out, 0);
 
-    out->write(out, MARKER_EOM);
+    write_stream(out, MARKER_EOM);
 }
 
 static void send_event_context_changed(OutputStream * out, Context * ctx) {
@@ -507,12 +507,12 @@ static void send_event_context_changed(OutputStream * out, Context * ctx) {
     write_stringz(out, "contextChanged");
 
     /* <array of context data> */
-    out->write(out, '[');
+    write_stream(out, '[');
     write_context(out, ctx);
-    out->write(out, ']');
-    out->write(out, 0);
+    write_stream(out, ']');
+    write_stream(out, 0);
 
-    out->write(out, MARKER_EOM);
+    write_stream(out, MARKER_EOM);
 }
 
 static void send_event_context_removed(OutputStream * out, Context * ctx) {
@@ -521,12 +521,12 @@ static void send_event_context_removed(OutputStream * out, Context * ctx) {
     write_stringz(out, "contextRemoved");
 
     /* <array of context IDs> */
-    out->write(out, '[');
+    write_stream(out, '[');
     json_write_string(out, container_id(ctx));
-    out->write(out, ']');
-    out->write(out, 0);
+    write_stream(out, ']');
+    write_stream(out, 0);
 
-    out->write(out, MARKER_EOM);
+    write_stream(out, MARKER_EOM);
 }
 
 static void event_context_created(Context * ctx, void * client_data) {
@@ -534,7 +534,7 @@ static void event_context_created(Context * ctx, void * client_data) {
 
     if (ctx->parent != NULL) return;
     send_event_context_added(&bcg->out, ctx);
-    bcg->out.flush(&bcg->out);
+    flush_stream(&bcg->out);
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
@@ -542,7 +542,7 @@ static void event_context_changed(Context * ctx, void * client_data) {
 
     if (ctx->parent != NULL) return;
     send_event_context_changed(&bcg->out, ctx);
-    bcg->out.flush(&bcg->out);
+    flush_stream(&bcg->out);
 }
 
 static void event_context_exited(Context * ctx, void * client_data) {
@@ -550,7 +550,7 @@ static void event_context_exited(Context * ctx, void * client_data) {
 
     if (ctx->parent != NULL) return;
     send_event_context_removed(&bcg->out, ctx);
-    bcg->out.flush(&bcg->out);
+    flush_stream(&bcg->out);
 }
 
 void ini_memory_service(Protocol * proto, TCFBroadcastGroup * bcg) {

@@ -43,7 +43,7 @@ static void channel_connecting(Channel * c) {
 
     send_hello_message(c->client_data, c);
     discovery_channel_add(c);
-    c->out.flush(&c->out);
+    flush_stream(&c->out);
 }
 
 static void channel_connected(Channel * c) {
@@ -80,7 +80,7 @@ static void display_tcf_reply(Channel * c, void * client_data, int error) {
         return;
     }
     for (;;) {
-        i = c->inp.read(&c->inp);
+        i = read_stream(&c->inp);
         if (i == MARKER_EOM) break;
         if (i == 0) i = ' ';
         putchar(i);
@@ -113,8 +113,8 @@ static int cmd_tcf(char *s) {
     for (i = 2; i < ind; i++) {
         write_stringz(&c->out, args[i]);
     }
-    c->out.write(&c->out, MARKER_EOM);
-    c->out.flush(&c->out);
+    write_stream(&c->out, MARKER_EOM);
+    flush_stream(&c->out);
     return 1;
 }
 

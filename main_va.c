@@ -46,7 +46,7 @@ static void channel_server_connecting(Channel * c) {
 
     send_hello_message(c->client_data, c);
     discovery_channel_add(c);
-    c->out.flush(&c->out);
+    flush_stream(&c->out);
 }
 
 static void channel_server_connected(Channel * c) {
@@ -79,7 +79,7 @@ static void initiate_redirect(Channel * c1, const char * token, const char * id)
         write_stringz(&c1->out, "R");
         write_stringz(&c1->out, token);
         write_errno(&c1->out, ERR_UNKNOWN_PEER);
-        c1->out.write(&c1->out, MARKER_EOM);
+        write_stream(&c1->out, MARKER_EOM);
         return;
     }
     c2 = channel_connect(ps);
@@ -87,7 +87,7 @@ static void initiate_redirect(Channel * c1, const char * token, const char * id)
         write_stringz(&c1->out, "R");
         write_stringz(&c1->out, token);
         write_errno(&c1->out, ERR_UNKNOWN_PEER);
-        c1->out.write(&c1->out, MARKER_EOM);
+        write_stream(&c1->out, MARKER_EOM);
         return;
     }
     protocol_channel_closed(c1->client_data, c1);
@@ -100,7 +100,7 @@ static void initiate_redirect(Channel * c1, const char * token, const char * id)
     write_stringz(&c1->out, "R");
     write_stringz(&c1->out, token);
     write_errno(&c1->out, 0);
-    c1->out.write(&c1->out, MARKER_EOM);
+    write_stream(&c1->out, MARKER_EOM);
 }
 
 static void channel_new_connection(ChannelServer * serv, Channel * c) {
@@ -136,7 +136,6 @@ int main(int argc, char ** argv) {
     ini_trace();
     ini_asyncreq();
     ini_events_queue();
-    ini_expression_library();
 
 #if defined(_WRS_KERNEL)
     

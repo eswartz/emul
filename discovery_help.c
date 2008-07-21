@@ -41,7 +41,7 @@ static void channel_server_connecting(Channel *c) {
 
     send_hello_message(c->client_data, c);
     discovery_channel_add(c);
-    c->out.flush(&c->out);
+    flush_stream(&c->out);
 }
 
 static void channel_server_connected(Channel *c) {

@@ -30,7 +30,11 @@ extern void tcf_test_func1(void);
 extern void tcf_test_func0(void);
 
 void tcf_test_func2(void) {
+    int func2_local1 = 1;
+    int func2_local2 = 2;
     usleep(1000);
+    func2_local1++;
+    func2_local2 = func2_local1;
 }
 
 void tcf_test_func1(void) {

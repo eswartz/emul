@@ -661,12 +661,12 @@ static void command_map_to_source(char * token, Channel * c) {
     LineNumbersCache * cache_last = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     addr0 = json_read_ulong(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     addr1 = json_read_ulong(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     ctx = id2ctx(id);
     if (ctx == NULL) err = ERR_INV_CONTEXT;

@@ -10,11 +10,13 @@
  *******************************************************************************/
 
 /*
- * Expression evaluation library.
+ * Expression evaluation service.
  */
 
 #ifndef D_expression
 #define D_expression
+
+#include "protocol.h"
 
 #define VALUE_INT 1
 #define VALUE_UNS 2
@@ -41,7 +43,7 @@ extern char * get_expression_error_msg(void);
 
 extern void string_value(Value * v, char * str);
 
-extern void ini_expression_library(void);
+extern void ini_expressions_service(Protocol * proto);
 
 #endif
 

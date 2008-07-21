@@ -47,7 +47,7 @@ static void channel_server_connecting(Channel * c) {
 
     send_hello_message(c->client_data, c);
     discovery_channel_add(c);
-    c->out.flush(&c->out);
+    flush_stream(&c->out);
 }
 
 static void channel_server_connected(Channel * c) {
@@ -172,7 +172,6 @@ int main(int argc, char ** argv) {
 #endif
 
     ini_events_queue();
-    ini_expression_library();
 
     bcg = broadcast_group_alloc();
     spg = suspend_group_alloc();

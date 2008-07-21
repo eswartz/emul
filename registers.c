@@ -99,51 +99,51 @@ static short endianess_test = 0x0201;
 static void write_context(OutputStream * out, char * id, Context * ctx, REG_INDEX * idx) {
     assert(!ctx->exited);
 
-    out->write(out, '{');
+    write_stream(out, '{');
 
     json_write_string(out, "ID");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, id);
 
-    out->write(out, ',');
+    write_stream(out, ',');
     json_write_string(out, "ParentID");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, thread_id(ctx));
 
-    out->write(out, ',');
+    write_stream(out, ',');
     json_write_string(out, "Name");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, idx->regName);
 
-    out->write(out, ',');
+    write_stream(out, ',');
     json_write_string(out, "Size");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_long(out, REG_WIDTH(*idx));
 
-    out->write(out, ',');
+    write_stream(out, ',');
     json_write_string(out, "Readable");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_boolean(out, 1);
 
-    out->write(out, ',');
+    write_stream(out, ',');
     json_write_string(out, "Writeable");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_boolean(out, 1);
 
 #if !defined(_WRS_KERNEL)
-    out->write(out, ',');
+    write_stream(out, ',');
     json_write_string(out, "ProcessID");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, pid2id(ctx->mem, 0));
 #endif
 
-    out->write(out, ',');
+    write_stream(out, ',');
     json_write_string(out, "BigEndian");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_boolean(out, BIG_ENDIAN_DATA);
 
-    out->write(out, '}');
-    out->write(out, 0);
+    write_stream(out, '}');
+    write_stream(out, 0);
 }
 
 static int id2register(char * id, Context ** ctx, REG_INDEX ** idx) {
@@ -192,8 +192,8 @@ static void command_get_context(char * token, Channel * c) {
     REG_INDEX * idx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (id2register(id, &ctx, &idx) < 0) err = errno;
     
@@ -206,7 +206,7 @@ static void command_get_context(char * token, Channel * c) {
     else {
         write_stringz(&c->out, "null");
     }
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_children(char * token, Channel * c) {
@@ -214,8 +214,8 @@ static void command_get_children(char * token, Channel * c) {
     pid_t pid, parent;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     pid = id2pid(id, &parent);
 
@@ -224,7 +224,7 @@ static void command_get_children(char * token, Channel * c) {
 
     write_errno(&c->out, 0);
 
-    c->out.write(&c->out, '[');
+    write_stream(&c->out, '[');
     if (pid != 0 && parent != 0) {
         Context * ctx = context_find_from_pid(pid);
         if (ctx != NULL) {
@@ -233,17 +233,17 @@ static void command_get_children(char * token, Channel * c) {
             strcpy(t_id, thread_id(ctx));
             while (idx->regName != NULL) {
                 char r_id[128];
-                if (idx != regs_index) c->out.write(&c->out, ',');
+                if (idx != regs_index) write_stream(&c->out, ',');
                 snprintf(r_id, sizeof(r_id), "R%s.%s", idx->regName, t_id);
                 json_write_string(&c->out, r_id);
                 idx ++;
             }
         }
     }
-    c->out.write(&c->out, ']');
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, ']');
+    write_stream(&c->out, 0);
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void send_event_register_changed(Channel * c, char * id) {
@@ -252,9 +252,9 @@ static void send_event_register_changed(Channel * c, char * id) {
     write_stringz(&c->out, "registerChanged");
 
     json_write_string(&c->out, id);
-    c->out.write(&c->out, 0);
+    write_stream(&c->out, 0);
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get(char * token, Channel * c) {
@@ -264,8 +264,8 @@ static void command_get(char * token, Channel * c) {
     REG_INDEX * idx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (id2register(id, &ctx, &idx) < 0) err = errno;
     else if (!ctx->intercepted) err = ERR_IS_RUNNING;
@@ -281,12 +281,12 @@ static void command_get(char * token, Channel * c) {
         json_write_binary_start(&state, &c->out);
         json_write_binary_data(&state, data, size);
         json_write_binary_end(&state);
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, 0);
     }
     else {
         write_stringz(&c->out, "null");
     }
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_set(char * token, Channel * c) {
@@ -299,7 +299,7 @@ static void command_set(char * token, Channel * c) {
     REG_INDEX * idx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     json_read_binary_start(&state, &c->inp);
     for (;;) {
         int rd = json_read_binary_data(&state, val + val_len, sizeof(val) - val_len);
@@ -307,8 +307,8 @@ static void command_set(char * token, Channel * c) {
         val_len += rd;
     }
     json_read_binary_end(&state);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (id2register(id, &ctx, &idx) < 0) err = errno;
     else if (!ctx->intercepted) err = ERR_IS_RUNNING;
@@ -329,7 +329,7 @@ static void command_set(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 struct Location {
@@ -347,28 +347,28 @@ static int buf_len = 0;
 
 static int read_location_list(InputStream * inp) {
     int err = 0;
-    int ch = inp->read(inp);
+    int ch = read_stream(inp);
 
     buf_pos = 0;
     if (ch == 'n') {
-        if (inp->read(inp) != 'u') exception(ERR_JSON_SYNTAX);
-        if (inp->read(inp) != 'l') exception(ERR_JSON_SYNTAX);
-        if (inp->read(inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);
+        if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
     }
     else if (ch != '[') {
         exception(ERR_PROTOCOL);
     }
     else {
-        if (inp->peek(inp) == ']') {
-            inp->read(inp);
+        if (peek_stream(inp) == ']') {
+            read_stream(inp);
         }
         else {
             while (1) {
-                int ch = inp->read(inp);
+                int ch = read_stream(inp);
                 if (ch == 'n') {
-                    if (inp->read(inp) != 'u') exception(ERR_JSON_SYNTAX);
-                    if (inp->read(inp) != 'l') exception(ERR_JSON_SYNTAX);
-                    if (inp->read(inp) != 'l') exception(ERR_JSON_SYNTAX);
+                    if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);
+                    if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
+                    if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
                 }
                 else {
                     Location * loc = NULL;
@@ -379,15 +379,15 @@ static int read_location_list(InputStream * inp) {
                     }
                     loc = buf + buf_pos++;
                     json_read_string(inp, loc->id, sizeof(loc->id));
-                    if (inp->read(inp) != ',') exception(ERR_JSON_SYNTAX);
+                    if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
                     loc->offs = (unsigned)json_read_ulong(inp);
-                    if (inp->read(inp) != ',') exception(ERR_JSON_SYNTAX);
+                    if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
                     loc->size = (unsigned)json_read_ulong(inp);
-                    if (inp->read(inp) != ']') exception(ERR_JSON_SYNTAX);
+                    if (read_stream(inp) != ']') exception(ERR_JSON_SYNTAX);
                     if (id2register(loc->id, &loc->ctx, &loc->idx) < 0) err = errno;
                     else if (!loc->ctx->intercepted) err = ERR_IS_RUNNING;
                 }
-                ch = inp->read(inp);
+                ch = read_stream(inp);
                 if (ch == ',') continue;
                 if (ch == ']') break;
                 exception(ERR_JSON_SYNTAX);
@@ -399,8 +399,8 @@ static int read_location_list(InputStream * inp) {
 
 static void command_getm(char * token, Channel * c) {
     int err = read_location_list(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -415,12 +415,12 @@ static void command_getm(char * token, Channel * c) {
             json_write_binary_data(&state, data, l->size);
         }
         json_write_binary_end(&state);
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, 0);
     }
     else {
         write_stringz(&c->out, "null");
     }
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_setm(char * token, Channel * c) {
@@ -428,7 +428,7 @@ static void command_setm(char * token, Channel * c) {
     char tmp[256];
     JsonReadBinaryState state;
     int err = read_location_list(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     json_read_binary_start(&state, &c->inp);
     for (i = 0; i < buf_pos; i++) {
         unsigned rd_done = 0;
@@ -442,13 +442,13 @@ static void command_setm(char * token, Channel * c) {
         if (!err) send_event_register_changed(c, l->id);
     }
     json_read_binary_end(&state);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 void ini_registers_service(Protocol * proto) {

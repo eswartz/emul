@@ -44,6 +44,7 @@ struct InputStream {
 #define peek_stream(inp) (((inp)->cur < (inp)->end) ? *(inp)->cur : (inp)->peek((inp)))
 
 #define write_stream(out, b) (out)->write((out), (b))
+#define flush_stream(out) (out)->flush((out))
 
 extern int (read_stream)(InputStream * inp);
 extern int (peek_stream)(InputStream * inp);

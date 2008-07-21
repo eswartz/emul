@@ -51,17 +51,17 @@ static void generate_publish_peer_command(Channel * c, PeerServer * ps);
 static void generate_peer_info(PeerServer * ps, OutputStream * out) {
     int i;
 
-    out->write(out, '{');
+    write_stream(out, '{');
     json_write_string(out, "ID");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, ps->id);
     for (i = 0; i < ps->ind; i++) {
-        out->write(out, ',');
+        write_stream(out, ',');
         json_write_string(out, ps->list[i].name);
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_string(out, ps->list[i].value);
     }
-    out->write(out, '}');
+    write_stream(out, '}');
 }
 
 static void remote_peer_change(PeerServer * ps, int changeType, OutputStream * out) {
@@ -82,9 +82,9 @@ static void remote_peer_change(PeerServer * ps, int changeType, OutputStream * o
         write_stringz(out, "peerRemoved");
         json_write_string(out, ps->id);
     }
-    out->write(out, 0);
-    out->write(out, MARKER_EOM);
-    out->flush(out);
+    write_stream(out, 0);
+    write_stream(out, MARKER_EOM);
+    flush_stream(out);
 }
 
 static int generate_peer_added_event(PeerServer * ps, void * x) {
@@ -116,13 +116,13 @@ static void publish_peer_reply(Channel * c, void * client_data, int error) {
         return;
     }
     error = json_read_long(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     json_read_string(&c->inp, msg, sizeof msg);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     refresh_time = json_read_ulong(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     trace(LOG_DISCOVERY, "  refresh_time %d", refresh_time);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     if (publish_peer_refresh_active == 0) {
         publish_peer_refresh_active = 1;
         post_event_with_delay(republish_all_peers, NULL, refresh_time*1000*1000);
@@ -137,9 +137,9 @@ static void generate_publish_peer_command(Channel * c, PeerServer * ps) {
     trace(LOG_DISCOVERY, "discovery: publish peer command, id %s", ps->id);
     protocol_send_command(c->client_data, c, LOCATOR, "publishPeer", publish_peer_reply, NULL);
     generate_peer_info(ps, &c->out);
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
-    c->out.flush(&c->out);
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
+    flush_stream(&c->out);
 }
 
 /*
@@ -182,7 +182,7 @@ static void channel_client_connecting(Channel * c) {
 
     send_hello_message(c->client_data, c);
     discovery_channel_add(c);
-    c->out.flush(&c->out);
+    flush_stream(&c->out);
 }
 
 static void channel_client_connected(Channel * c) {

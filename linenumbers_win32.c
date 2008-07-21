@@ -87,12 +87,12 @@ static void command_map_to_source(char * token, Channel * c) {
     IMAGEHLP_LINE next;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     addr0 = json_read_ulong(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     addr1 = json_read_ulong(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     ctx = id2ctx(id);
     if (ctx == NULL) err = ERR_INV_CONTEXT;
@@ -170,39 +170,39 @@ static void command_map_to_source(char * token, Channel * c) {
     }
     else {
         int cnt = 0;
-        c->out.write(&c->out, '[');
+        write_stream(&c->out, '[');
         while (addr0 < addr1) {
-            if (cnt > 0) c->out.write(&c->out, ',');
-            c->out.write(&c->out, '{');
+            if (cnt > 0) write_stream(&c->out, ',');
+            write_stream(&c->out, '{');
             json_write_string(&c->out, "SLine");
-            c->out.write(&c->out, ':');
+            write_stream(&c->out, ':');
             json_write_ulong(&c->out, line.LineNumber);
-            c->out.write(&c->out, ',');
+            write_stream(&c->out, ',');
             json_write_string(&c->out, "ELine");
-            c->out.write(&c->out, ':');
+            write_stream(&c->out, ':');
             json_write_ulong(&c->out, next.LineNumber);
-            c->out.write(&c->out, ',');
+            write_stream(&c->out, ',');
             json_write_string(&c->out, "File");
-            c->out.write(&c->out, ':');
+            write_stream(&c->out, ':');
             json_write_string(&c->out, line.FileName);
-            c->out.write(&c->out, ',');
+            write_stream(&c->out, ',');
             json_write_string(&c->out, "SAddr");
-            c->out.write(&c->out, ':');
+            write_stream(&c->out, ':');
             json_write_ulong(&c->out, line.Address);
-            c->out.write(&c->out, ',');
+            write_stream(&c->out, ',');
             json_write_string(&c->out, "EAddr");
-            c->out.write(&c->out, ':');
+            write_stream(&c->out, ':');
             json_write_ulong(&c->out, next.Address);
-            c->out.write(&c->out, '}');
+            write_stream(&c->out, '}');
             cnt++;
             if (next.Address >= addr1) break;
             memcpy(&line, &next, sizeof(line));
             if (!SymGetLineNext(ctx->handle, &next)) break;
         }
-        c->out.write(&c->out, ']');
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, ']');
+        write_stream(&c->out, 0);
     }
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 void ini_line_numbers_service(Protocol * proto) {

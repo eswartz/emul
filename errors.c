@@ -37,7 +37,7 @@ static char * system_strerror(void) {
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
         errno_win32,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language */
         (LPTSTR) &msg_buf,
         0,
         NULL))

@@ -43,6 +43,7 @@
 #define SERVICE_Processes       TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_FileSystem      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_SysMonitor      TARGET_UNIX
+#define SERVICE_Expressions     TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 
 #define ENABLE_Trace        1
 #define ENABLE_Discovery    1
@@ -64,6 +65,7 @@
 #include "filesystem.h"
 #include "sysmon.h"
 #include "diagnostics.h"
+#include "expressions.h"
 #include "proxy.h"
 
 static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
@@ -96,6 +98,9 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
 #endif
 #if SERVICE_SysMonitor
     ini_sys_mon_service(proto);
+#endif
+#if SERVICE_Expressions
+    ini_expressions_service(proto);
 #endif
     ini_diagnostics_service(proto);
 }

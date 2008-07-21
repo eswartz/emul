@@ -25,6 +25,7 @@
 #include "exceptions.h"
 #include "runctrl.h"
 #include "symbols.h"
+#include "stacktrace.h"
 #include "test.h"
 #include "myalloc.h"
 
@@ -42,22 +43,22 @@ static void command_echo(char * token, Channel * c) {
     char str[0x1000];
     int len = json_read_string(&c->inp, str, sizeof(str));
     if (len >= sizeof(str)) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     json_write_string_len(&c->out, str, len);
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_test_list(char * token, Channel * c) {
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
     write_stringz(&c->out, "[\"RCBP1\"]");
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void run_test_done(int error, Context * ctx, void * arg) {
@@ -69,9 +70,9 @@ static void run_test_done(int error, Context * ctx, void * arg) {
         write_stringz(&c->out, data->token);
         write_errno(&c->out, error);
         json_write_string(&c->out, ctx ? ctx2id(ctx) : NULL);
-        c->out.write(&c->out, 0);
-        c->out.write(&c->out, MARKER_EOM);
-        c->out.flush(&c->out);
+        write_stream(&c->out, 0);
+        write_stream(&c->out, MARKER_EOM);
+        flush_stream(&c->out);
     }
     stream_unlock(c);
     loc_free(data);
@@ -82,8 +83,8 @@ static void command_run_test(char * token, Channel * c) {
     char id[256];
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (strcmp(id, "RCBP1") == 0) {
         RunTestDoneArgs * data = loc_alloc_zero(sizeof(RunTestDoneArgs));
@@ -102,8 +103,8 @@ static void command_run_test(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
     json_write_string(&c->out, NULL);
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_cancel_test(char * token, Channel * c) {
@@ -111,8 +112,8 @@ static void command_cancel_test(char * token, Channel * c) {
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
 #if SERVICE_RunControl
     if (terminate_debug_context(c->bcg, id2ctx(id)) != 0) err = errno;
@@ -123,7 +124,7 @@ static void command_cancel_test(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_symbol(char * token, Channel * c) {
@@ -135,17 +136,17 @@ static void command_get_symbol(char * token, Channel * c) {
     memset(&sym, 0, sizeof(sym));
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     json_read_string(&c->inp, name, sizeof(name));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     
 #if SERVICE_Symbols
     ctx = id2ctx(id);
     if (ctx == NULL || ctx->exited) {
         error = ERR_INV_CONTEXT;
     }
-    else if (find_symbol(ctx, name, &sym) < 0) {
+    else if (find_symbol(ctx, STACK_NO_FRAME, name, &sym) < 0) {
         error = errno;
     }
 #else
@@ -160,30 +161,30 @@ static void command_get_symbol(char * token, Channel * c) {
         write_stringz(&c->out, "null");
     }
     else {
-        c->out.write(&c->out, '{');
+        write_stream(&c->out, '{');
         json_write_string(&c->out, "Abs");
-        c->out.write(&c->out, ':');
-        json_write_boolean(&c->out, sym.abs);
-        c->out.write(&c->out, ',');
+        write_stream(&c->out, ':');
+        json_write_boolean(&c->out, sym.base == SYM_BASE_ABS);
+        write_stream(&c->out, ',');
         json_write_string(&c->out, "Value");
-        c->out.write(&c->out, ':');
+        write_stream(&c->out, ':');
         json_write_ulong(&c->out, sym.value);
         if (sym.section != NULL) {
-            c->out.write(&c->out, ',');
+            write_stream(&c->out, ',');
             json_write_string(&c->out, "Section");
-            c->out.write(&c->out, ':');
+            write_stream(&c->out, ':');
             json_write_string(&c->out, sym.section);
         }
         if (sym.storage != NULL) {
-            c->out.write(&c->out, ',');
+            write_stream(&c->out, ',');
             json_write_string(&c->out, "Storage");
-            c->out.write(&c->out, ':');
+            write_stream(&c->out, ':');
             json_write_string(&c->out, sym.storage);
         }
-        c->out.write(&c->out, '}');
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, '}');
+        write_stream(&c->out, 0);
     }
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 void ini_diagnostics_service(Protocol * proto) {

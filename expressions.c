@@ -10,10 +10,11 @@
  *******************************************************************************/
 
 /*
- * Expression evaluation library.
+ * Expression evaluation service.
  */
 
 #include "mdep.h"
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -824,7 +825,280 @@ char * get_expression_error_msg(void) {
     return text_error;
 }
 
-void ini_expression_library(void) {
+#if SERVICE_Expressions
+
+#include "json.h"
+#include "context.h"
+#include "stacktrace.h"
+#include "breakpoints.h"
+#include "symbols.h"
+
+typedef struct Expression Expression;
+
+struct Expression {
+    LINK link_all;
+    LINK link_id;
+    char * script;
+};
+
+#define link_all2exp(A)  ((Expression *)((char *)(A) - (int)&((Expression *)0)->link_all))
+#define link_id2exp(A)   ((Expression *)((char *)(A) - (int)&((Expression *)0)->link_id))
+
+#define ID2EXP_HASH_SIZE 1023
+
+static LINK expressions;
+static LINK id2exp[ID2EXP_HASH_SIZE];
+
+#define MAX_SYM_NAME 1024
+#define BUF_SIZE 256
+
+static const char * EXPRESSIONS = "Expressions";
+
+static int expression_context_id(char * id, char * parent, Context ** ctx, int * frame, char * name) {
+    int err = 0;
+
+    if (id[0] == 'S') {
+        char * s = id + 1;
+        int i = 0;
+        while (*s && i < MAX_SYM_NAME - 1) {
+            char ch = *s++;
+            if (ch == '.') {
+                if (*s == '.') {
+                    name[i++] = '.';
+                    continue;
+                }
+                break;
+            }
+            name[i++] = ch;
+        }
+        name[i] = 0;
+        if (parent != NULL) strcpy(parent, s);
+        if ((*ctx = id2ctx(s)) != NULL) {
+            *frame = STACK_TOP_FRAME;
+        }
+        else if (is_stack_frame_id(s, ctx, frame)) {
+            /* OK */
+        }
+        else {
+            err = ERR_INV_CONTEXT;
+        }
+    }
+    else {
+        err = ERR_INV_CONTEXT;
+    }
+    if (err) {
+        errno = err;
+        return -1;
+    }
+    return 0;
+}
+
+static void command_get_context(char * token, Channel * c) {
+    int err = 0;
+    char id[256];
+    char parent[256];
+    char name[MAX_SYM_NAME];
+    Context * ctx = NULL;
+    int frame = STACK_NO_FRAME;
+    Symbol sym;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    if (expression_context_id(id, parent, &ctx, &frame, name) < 0) err = errno;
+    if (!err && find_symbol(ctx, frame, name, &sym) < 0) err = errno;
+    
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+
+    if (err) {
+        write_stringz(&c->out, "null");
+    }
+    else {
+        write_stream(&c->out, '{');
+        json_write_string(&c->out, "ID");
+        write_stream(&c->out, ':');
+        json_write_string(&c->out, id);
+
+        write_stream(&c->out, ',');
+
+        json_write_string(&c->out, "ParentID");
+        write_stream(&c->out, ':');
+        json_write_string(&c->out, parent);
+
+        write_stream(&c->out, ',');
+
+        json_write_string(&c->out, "Name");
+        write_stream(&c->out, ':');
+        json_write_string(&c->out, name);
+
+        write_stream(&c->out, '}');
+        write_stream(&c->out, 0);
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+}
+
+typedef struct GetChildrenContext {
+    Channel * channel;
+    char id[256];
+    int cnt;
+} GetChildrenContext;
+
+static void get_children_callback(void * x, char * name, Symbol * symbol) {
+    GetChildrenContext * args = (GetChildrenContext *)x;
+    Channel * c = args->channel;
+    char * s;
+
+    if (args->cnt == 0) {
+        write_errno(&c->out, 0);
+        write_stream(&c->out, '[');
+    }
+    else {
+        write_stream(&c->out, ',');
+    }
+    write_stream(&c->out, '"');
+    write_stream(&c->out, 'S');
+    s = name;
+    while (*s) {
+        if (*s == '.') write_stream(&c->out, '.');
+        json_write_char(&c->out, *s++);
+    }
+    write_stream(&c->out, '.');
+    s = args->id;
+    while (*s) json_write_char(&c->out, *s++);
+    write_stream(&c->out, '"');
+    args->cnt++;
+}
+
+static void command_get_children(char * token, Channel * c) {
+    char id[256];
+    Context * ctx;
+    int frame = STACK_NO_FRAME;
+    GetChildrenContext args;
+    int err = 0;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+
+
+    args.cnt = 0;
+    args.channel = c;
+    strncpy(args.id, id, sizeof(args.id));
+
+    if ((ctx = id2ctx(id)) != NULL) {
+        if (context_has_state(ctx)) {
+            char * frame_id = get_stack_frame_id(ctx, STACK_TOP_FRAME);
+            if (frame_id == NULL) {
+                err = errno;
+            }
+            else {
+                frame = STACK_TOP_FRAME;
+                strncpy(args.id, frame_id, sizeof(args.id));
+            }
+        }
+    }
+    else if (is_stack_frame_id(id, &ctx, &frame)) {
+        /* OK */
+    }
+    else {
+        ctx = NULL;
+    }
+
+    if (ctx != NULL && err == 0 && enumerate_symbols(
+            ctx, frame, get_children_callback, &args) < 0) err = errno;
+
+    if (args.cnt == 0) {
+        write_errno(&c->out, err);
+        write_stream(&c->out, '[');
+    }
+    write_stream(&c->out, ']');
+    write_stream(&c->out, 0);
+
+    write_stream(&c->out, MARKER_EOM);
+}
+    
+static void command_create(char * token, Channel * c) {
+}
+
+static void command_evaluate(char * token, Channel * c) {
+    int err = 0;
+    char id[256];
+    char parent[256];
+    char name[MAX_SYM_NAME];
+    Context * ctx = NULL;
+    int frame = STACK_NO_FRAME;
+    Symbol sym;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    if (expression_context_id(id, parent, &ctx, &frame, name) < 0) err = errno;
+    if (!err && find_symbol(ctx, frame, name, &sym) < 0) err = errno;
+    
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    if (err) {
+        write_stringz(&c->out, "null");
+    }
+    else {
+        ContextAddress addr0 = sym.value;
+        ContextAddress addr;
+        unsigned long size = sym.size;
+        JsonWriteBinaryState state;
+        char buf[BUF_SIZE];
+
+        if (sym.base == SYM_BASE_FP) {
+            ContextAddress fp = 0;
+            if (get_frame_info(ctx, frame, NULL, NULL, &fp) < 0) err = errno;
+            addr0 = fp + sym.value;
+        }
+        json_write_binary_start(&state, &c->out);
+        addr = addr0;
+        while (err == 0 && addr < addr0 + size) {
+            int rd = addr0 + size - addr;
+            if (rd > BUF_SIZE) rd = BUF_SIZE;
+            if (context_read_mem(ctx, addr, buf, rd) < 0) {
+                err = errno;
+            }
+            else {
+                check_breakpoints_on_memory_read(ctx, addr, buf, rd);
+                json_write_binary_data(&state, buf, rd);
+                addr += rd;
+            }
+        }
+        json_write_binary_end(&state);
+        write_stream(&c->out, 0);
+    }
+    write_errno(&c->out, err);
+    if (err) {
+        write_stringz(&c->out, "null");
+    }
+    else {
+        write_stream(&c->out, '{');
+        write_stream(&c->out, '}');
+        write_stream(&c->out, 0);
+    }
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_assign(char * token, Channel * c) {
+}
+
+static void command_dispose(char * token, Channel * c) {
+}
+
+static void on_channel_close(Channel * c) {
+}
+
+void ini_expressions_service(Protocol * proto) {
 #ifndef  NDEBUG
     Value v;
     ExpressionContext ctx = { NULL, NULL };
@@ -850,5 +1124,13 @@ void ini_expression_library(void) {
     assert(evaluate_expression(&ctx, "\042ABC\042 + \042DEF\042 == \042ABCDEF\042", &v) == 0);
     assert(v.type == VALUE_INT && v.value == 1 && v.str == NULL);
 #endif
+    add_channel_close_listener(on_channel_close);
+    add_command_handler(proto, EXPRESSIONS, "getContext", command_get_context);
+    add_command_handler(proto, EXPRESSIONS, "getChildren", command_get_children);
+    add_command_handler(proto, EXPRESSIONS, "create", command_create);
+    add_command_handler(proto, EXPRESSIONS, "evaluate", command_evaluate);
+    add_command_handler(proto, EXPRESSIONS, "assign", command_assign);
+    add_command_handler(proto, EXPRESSIONS, "dispose", command_dispose);
 }
 
+#endif

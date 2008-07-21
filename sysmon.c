@@ -74,20 +74,20 @@ static void first_ch(int fd) {
 static void write_string_array(OutputStream * out, int f) {
     int cnt = 0;
     first_ch(f);
-    out->write(out, '[');
+    write_stream(out, '[');
     while (buf_ch != BUF_EOF && buf_ch != 0) {
-        if (cnt > 0) out->write(out, ',');
-        out->write(out, '"');
+        if (cnt > 0) write_stream(out, ',');
+        write_stream(out, '"');
         do {
             json_write_char(out, buf_ch);
             next_ch();
         }
         while (buf_ch != BUF_EOF && buf_ch != 0);
         next_ch();
-        out->write(out, '"');
+        write_stream(out, '"');
         cnt++;
     }
-    out->write(out, ']');
+    write_stream(out, ']');
 }
 
 static void write_context(OutputStream * out, char * id, char * parent_id, char * dir) {
@@ -95,23 +95,23 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
     int sz;
     int f;
 
-    out->write(out, '{');
+    write_stream(out, '{');
 
     if (chdir(dir) >= 0) {
         if ((sz = readlink("cwd", fnm, FILE_PATH_SIZE)) > 0) {
             fnm[sz] = 0;
             json_write_string(out, "CWD");
-            out->write(out, ':');
+            write_stream(out, ':');
             json_write_string(out, fnm);
-            out->write(out, ',');
+            write_stream(out, ',');
         }
 
         if ((sz = readlink("root", fnm, FILE_PATH_SIZE)) > 0) {
             fnm[sz] = 0;
             json_write_string(out, "Root");
-            out->write(out, ':');
+            write_stream(out, ':');
             json_write_string(out, fnm);
-            out->write(out, ',');
+            write_stream(out, ',');
         }
 
         f = open("stat", O_RDONLY);
@@ -122,29 +122,29 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
                 struct group * grp;
 
                 json_write_string(out, "UID");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_long(out, st.st_uid);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "UGID");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_long(out, st.st_gid);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 pwd = getpwuid(st.st_uid);
                 if (pwd != NULL) {
                     json_write_string(out, "UserName");
-                    out->write(out, ':');
+                    write_stream(out, ':');
                     json_write_string(out, pwd->pw_name);
-                    out->write(out, ',');
+                    write_stream(out, ',');
                 }
 
                 grp = getgrgid(st.st_gid);
                 if (grp != NULL) {
                     json_write_string(out, "GroupName");
-                    out->write(out, ':');
+                    write_stream(out, ':');
                     json_write_string(out, grp->gr_name);
-                    out->write(out, ',');
+                    write_stream(out, ',');
                 }
             }
 
@@ -238,219 +238,219 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
                     &wchan, &nswap, &cnswap, &exit_signal, &processor, &rt_priority, &policy);
 
                 json_write_string(out, "PID");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_long(out, pid);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "File");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_string(out, comm);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "State");
-                out->write(out, ':');
-                out->write(out, '"');
+                write_stream(out, ':');
+                write_stream(out, '"');
                 json_write_char(out, state);
-                out->write(out, '"');
-                out->write(out, ',');
+                write_stream(out, '"');
+                write_stream(out, ',');
 
                 if (ppid > 0) {
                     json_write_string(out, "PPID");
-                    out->write(out, ':');
+                    write_stream(out, ':');
                     json_write_long(out, ppid);
-                    out->write(out, ',');
+                    write_stream(out, ',');
                 }
 
                 json_write_string(out, "PGRP");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_long(out, pgrp);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "Session");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_long(out, session);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 if (tty_nr > 0) {
                     json_write_string(out, "TTY");
-                    out->write(out, ':');
+                    write_stream(out, ':');
                     json_write_long(out, tty_nr);
-                    out->write(out, ',');
+                    write_stream(out, ',');
                 }
 
                 if (tpgid > 0) {
                     json_write_string(out, "TGID");
-                    out->write(out, ':');
+                    write_stream(out, ':');
                     json_write_long(out, tpgid);
-                    out->write(out, ',');
+                    write_stream(out, ',');
                 }
 
                 json_write_string(out, "Flags");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, flags);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "MinFlt");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, minflt);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "CMinFlt");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, cminflt);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "MajFlt");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, majflt);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "CMajFlt");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, cmajflt);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "UTime");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_int64(out, (int64)utime * 1000 / HZ);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "STime");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_int64(out, (int64)stime * 1000 / HZ);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "CUTime");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_int64(out, (int64)cutime * 1000 / HZ);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "CSTime");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_int64(out, (int64)cstime * 1000 / HZ);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "Priority");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_long(out, (long)priority - 15);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 if (nice != 0) {
                     json_write_string(out, "Nice");
-                    out->write(out, ':');
+                    write_stream(out, ':');
                     json_write_long(out, nice);
-                    out->write(out, ',');
+                    write_stream(out, ',');
                 }
 
                 if (itrealvalue != 0) {
                     json_write_string(out, "ITRealValue");
-                    out->write(out, ':');
+                    write_stream(out, ':');
                     json_write_int64(out, (int64)itrealvalue * 1000 / HZ);
-                    out->write(out, ',');
+                    write_stream(out, ',');
                 }
 
                 json_write_string(out, "StartTime");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_int64(out, (int64)starttime * 1000 / HZ);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "VSize");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, vsize);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "PSize");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, getpagesize());
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "RSS");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_long(out, rss);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "RLimit");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, rlim);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 if (startcode != 0) {
                     json_write_string(out, "CodeStart");
-                    out->write(out, ':');
+                    write_stream(out, ':');
                     json_write_ulong(out, startcode);
-                    out->write(out, ',');
+                    write_stream(out, ',');
                 }
 
                 if (endcode != 0) {
                     json_write_string(out, "CodeEnd");
-                    out->write(out, ':');
+                    write_stream(out, ':');
                     json_write_ulong(out, endcode);
-                    out->write(out, ',');
+                    write_stream(out, ',');
                 }
 
                 if (startstack != 0) {
                     json_write_string(out, "StackStart");
-                    out->write(out, ':');
+                    write_stream(out, ':');
                     json_write_ulong(out, startstack);
-                    out->write(out, ',');
+                    write_stream(out, ',');
                 }
 
                 json_write_string(out, "Signals");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, signal);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "SigBlock");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, blocked);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "SigIgnore");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, sigignore);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "SigCatch");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, sigcatch);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 if (wchan != 0) {
                     json_write_string(out, "WChan");
-                    out->write(out, ':');
+                    write_stream(out, ':');
                     json_write_ulong(out, wchan);
-                    out->write(out, ',');
+                    write_stream(out, ',');
                 }
 
                 json_write_string(out, "NSwap");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, nswap);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "CNSwap");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, cnswap);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "ExitSignal");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_long(out, exit_signal);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "Processor");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_long(out, processor);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "RTPriority");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, rt_priority);
-                out->write(out, ',');
+                write_stream(out, ',');
 
                 json_write_string(out, "Policy");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_ulong(out, policy);
-                out->write(out, ',');
+                write_stream(out, ',');
             }
             close(f);
         }
@@ -458,16 +458,16 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
 
     if (parent_id != NULL && parent_id[0] != 0) {
         json_write_string(out, "ParentID");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_string(out, parent_id);
-        out->write(out, ',');
+        write_stream(out, ',');
     }
 
     json_write_string(out, "ID");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, id);
 
-    out->write(out, '}');
+    write_stream(out, '}');
 }
 
 static void command_get_context(char * token, Channel * c) {
@@ -478,8 +478,8 @@ static void command_get_context(char * token, Channel * c) {
     char dir[FILE_PATH_SIZE];
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -502,13 +502,13 @@ static void command_get_context(char * token, Channel * c) {
     if (err == 0 && pid != 0) {
         char bf[256];
         write_context(&c->out, id, parent == 0 ? NULL : strcpy(bf, pid2id(parent, 0)), dir);
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, 0);
     }
     else {
         write_stringz(&c->out, "null");
     }
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_children(char * token, Channel * c) {
@@ -519,8 +519,8 @@ static void command_get_children(char * token, Channel * c) {
     pid_t parent = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -542,23 +542,23 @@ static void command_get_children(char * token, Channel * c) {
         else {
             int cnt = 0;
             write_errno(&c->out, 0);
-            c->out.write(&c->out, '[');
+            write_stream(&c->out, '[');
             for (;;) {
                 struct dirent * ent = readdir(proc);
                 if (ent == NULL) break;
                 if (ent->d_name[0] >= '1' && ent->d_name[0] <= '9') {
-                    if (cnt > 0) c->out.write(&c->out, ',');
+                    if (cnt > 0) write_stream(&c->out, ',');
                     json_write_string(&c->out, pid2id(atol(ent->d_name), pid));
                     cnt++;
                 }
             }
-            c->out.write(&c->out, ']');
-            c->out.write(&c->out, 0);
+            write_stream(&c->out, ']');
+            write_stream(&c->out, 0);
             closedir(proc);
         }
     }
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_command_line(char * token, Channel * c) {
@@ -570,8 +570,8 @@ static void command_get_command_line(char * token, Channel * c) {
     int f;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -595,13 +595,13 @@ static void command_get_command_line(char * token, Channel * c) {
     if (err == 0) {
         write_string_array(&c->out, f);
         close(f);
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, 0);
     }
     else {
         write_stringz(&c->out, "null");
     }
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_environment(char * token, Channel * c) {
@@ -613,8 +613,8 @@ static void command_get_environment(char * token, Channel * c) {
     int f;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -638,13 +638,13 @@ static void command_get_environment(char * token, Channel * c) {
     if (err == 0) {
         write_string_array(&c->out, f);
         close(f);
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, 0);
     }
     else {
         write_stringz(&c->out, "null");
     }
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 extern void ini_sys_mon_service(Protocol * proto) {

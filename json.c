@@ -234,7 +234,7 @@ long json_read_long(InputStream * inp) {
     if (ch < '0' || ch > '9') exception(ERR_JSON_SYNTAX);
     res = ch - '0';
     while (1) {
-        ch = inp->peek(inp);
+        ch = peek_stream(inp);
         if (ch < '0' || ch > '9') break;
         read_stream(inp);
         res = res * 10 + (ch - '0');
@@ -254,7 +254,7 @@ unsigned long json_read_ulong(InputStream * inp) {
     if (ch < '0' || ch > '9') exception(ERR_JSON_SYNTAX);
     res = ch - '0';
     while (1) {
-        ch = inp->peek(inp);
+        ch = peek_stream(inp);
         if (ch < '0' || ch > '9') break;
         read_stream(inp);
         res = res * 10 + (ch - '0');
@@ -274,7 +274,7 @@ int64 json_read_int64(InputStream * inp) {
     if (ch < '0' || ch > '9') exception(ERR_JSON_SYNTAX);
     res = ch - '0';
     while (1) {
-        ch = inp->peek(inp);
+        ch = peek_stream(inp);
         if (ch < '0' || ch > '9') break;
         read_stream(inp);
         res = res * 10 + (ch - '0');
@@ -361,7 +361,7 @@ char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
 
         buf_pos = 0;
 
-        if (inp->peek(inp) == ']') {
+        if (peek_stream(inp) == ']') {
             read_stream(inp);
         }
         else {
@@ -517,14 +517,14 @@ static void skip_object(InputStream * inp) {
     }
     if (ch == '-' || ch >= '0' && ch <= '9') {
         while (1) {
-            ch = inp->peek(inp);
+            ch = peek_stream(inp);
             if (ch < '0' || ch > '9') break;
             skip_char(inp);
         }
         return;
     }
     if (ch == '[') {
-        if (inp->peek(inp) == ']') {
+        if (peek_stream(inp) == ']') {
             skip_char(inp);
         }
         else {
@@ -540,7 +540,7 @@ static void skip_object(InputStream * inp) {
         return;
     }
     if (ch == '{') {
-        if (inp->peek(inp) == '}') {
+        if (peek_stream(inp) == '}') {
             skip_char(inp);
         }
         else {

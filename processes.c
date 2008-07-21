@@ -61,7 +61,7 @@ struct AttachDoneArgs {
 static void write_context(OutputStream * out, int pid) {
     Context * ctx = NULL;
 
-    out->write(out, '{');
+    write_stream(out, '{');
 
 #if defined(WIN32)
 #elif defined(_WRS_KERNEL)
@@ -74,16 +74,16 @@ static void write_context(OutputStream * out, int pid) {
             char fnm[FILE_PATH_SIZE + 1];
 
             json_write_string(out, "CanTerminate");
-            out->write(out, ':');
+            write_stream(out, ':');
             json_write_boolean(out, 1);
-            out->write(out, ',');
+            write_stream(out, ',');
 
             if ((sz = readlink("exe", fnm, FILE_PATH_SIZE)) > 0) {
                 fnm[sz] = 0;
                 json_write_string(out, "Name");
-                out->write(out, ':');
+                write_stream(out, ':');
                 json_write_string(out, fnm);
-                out->write(out, ',');
+                write_stream(out, ',');
             }
         }
     }
@@ -92,16 +92,16 @@ static void write_context(OutputStream * out, int pid) {
     ctx = context_find_from_pid(pid);
     if (ctx != NULL) {
         json_write_string(out, "Attached");
-        out->write(out, ':');
+        write_stream(out, ':');
         json_write_boolean(out, 1);
-        out->write(out, ',');
+        write_stream(out, ',');
     }
 
     json_write_string(out, "ID");
-    out->write(out, ':');
+    write_stream(out, ':');
     json_write_string(out, pid2id(pid, 0));
 
-    out->write(out, '}');
+    write_stream(out, '}');
 }
 
 static void command_get_context(char * token, Channel * c) {
@@ -110,8 +110,8 @@ static void command_get_context(char * token, Channel * c) {
     pid_t pid, parent;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     pid = id2pid(id, &parent);
     write_stringz(&c->out, "R");
@@ -135,13 +135,13 @@ static void command_get_context(char * token, Channel * c) {
     
     if (err == 0 && pid != 0 && parent == 0) {
         write_context(&c->out, pid);
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, 0);
     }
     else {
         write_stringz(&c->out, "null");
     }
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_children(char * token, Channel * c) {
@@ -149,10 +149,10 @@ static void command_get_children(char * token, Channel * c) {
     int attached_only;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     attached_only = json_read_boolean(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -182,17 +182,17 @@ static void command_get_children(char * token, Channel * c) {
     else {
         int cnt = 0;
         write_errno(&c->out, 0);
-        c->out.write(&c->out, '[');
+        write_stream(&c->out, '[');
         do {
             if (!attached_only || context_find_from_pid(pe32.th32ProcessID) != NULL) {
-                if (cnt > 0) c->out.write(&c->out, ',');
+                if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, pid2id(pe32.th32ProcessID, 0));
                 cnt++;
             }
         }
         while (Process32Next(snapshot, &pe32));
-        c->out.write(&c->out, ']');
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, ']');
+        write_stream(&c->out, 0);
     }
     if (snapshot != INVALID_HANDLE_VALUE) CloseHandle(snapshot);
 #elif defined(_WRS_KERNEL)
@@ -209,16 +209,16 @@ static void command_get_children(char * token, Channel * c) {
             ids = (int *)loc_alloc(ids_max * sizeof(int));
         }
         write_errno(&c->out, 0);
-        c->out.write(&c->out, '[');
+        write_stream(&c->out, '[');
         for (i = 0; i < ids_cnt; i++) {
             if (!attached_only || context_find_from_pid(ids[i]) != NULL) {
-                if (cnt > 0) c->out.write(&c->out, ',');
+                if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, pid2id(ids[i], 0));
                 cnt++;
             }
         }
-        c->out.write(&c->out, ']');
-        c->out.write(&c->out, 0);
+        write_stream(&c->out, ']');
+        write_stream(&c->out, 0);
 #else
         DIR * proc = opendir("/proc");
         if (proc == NULL) {
@@ -228,27 +228,27 @@ static void command_get_children(char * token, Channel * c) {
         else {
             int cnt = 0;
             write_errno(&c->out, 0);
-            c->out.write(&c->out, '[');
+            write_stream(&c->out, '[');
             for (;;) {
                 struct dirent * ent = readdir(proc);
                 if (ent == NULL) break;
                 if (ent->d_name[0] >= '1' && ent->d_name[0] <= '9') {
                     pid_t pid = atol(ent->d_name);
                     if (!attached_only || context_find_from_pid(pid) != NULL) {
-                        if (cnt > 0) c->out.write(&c->out, ',');
+                        if (cnt > 0) write_stream(&c->out, ',');
                         json_write_string(&c->out, pid2id(pid, 0));
                         cnt++;
                     }
                 }
             }
-            c->out.write(&c->out, ']');
-            c->out.write(&c->out, 0);
+            write_stream(&c->out, ']');
+            write_stream(&c->out, 0);
             closedir(proc);
         }
 #endif
     }
 
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void attach_done(int error, Context * ctx, void * arg) {
@@ -259,8 +259,8 @@ static void attach_done(int error, Context * ctx, void * arg) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, data->token);
         write_errno(&c->out, error);
-        c->out.write(&c->out, MARKER_EOM);
-        c->out.flush(&c->out);
+        write_stream(&c->out, MARKER_EOM);
+        flush_stream(&c->out);
     }
     stream_unlock(c);
     loc_free(data);
@@ -272,8 +272,8 @@ static void command_attach(char * token, Channel * c) {
     pid_t pid, parent;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     pid = id2pid(id, &parent);
 
@@ -296,7 +296,7 @@ static void command_attach(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_detach(char * token, Channel * c) {
@@ -310,8 +310,8 @@ static void command_terminate(char * token, Channel * c) {
     pid_t pid, parent;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     pid = id2pid(id, &parent);
     write_stringz(&c->out, "R");
@@ -338,7 +338,7 @@ static void command_terminate(char * token, Channel * c) {
     }
 
     write_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_signal(char * token, Channel * c) {
@@ -348,10 +348,10 @@ static void command_signal(char * token, Channel * c) {
     pid_t pid, parent;
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     signal = (int)json_read_long(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     pid = id2pid(id, &parent);
     write_stringz(&c->out, "R");
@@ -371,27 +371,27 @@ static void command_signal(char * token, Channel * c) {
     }
 
     write_errno(&c->out, err);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_environment(char * token, Channel * c) {
     char ** p = environ;
 
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-    c->out.write(&c->out, '[');
+    write_stream(&c->out, '[');
     if (p != NULL) {
         while (*p != NULL) {
-            if (p != environ) c->out.write(&c->out, ',');
+            if (p != environ) write_stream(&c->out, ',');
             json_write_string(&c->out, *p++);
         }
     }
-    c->out.write(&c->out, ']');
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, ']');
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void start_done(int error, Context * ctx, void * arg) {
@@ -404,9 +404,9 @@ static void start_done(int error, Context * ctx, void * arg) {
         write_errno(&c->out, error);
         if (ctx == NULL) write_string(&c->out, "null");
         else write_context(&c->out, ctx->pid);
-        c->out.write(&c->out, 0);
-        c->out.write(&c->out, MARKER_EOM);
-        c->out.flush(&c->out);
+        write_stream(&c->out, 0);
+        write_stream(&c->out, MARKER_EOM);
+        flush_stream(&c->out);
     }
     stream_unlock(c);
     loc_free(data);
@@ -428,16 +428,16 @@ static void command_start(char * token, Channel * c) {
 
     if (set_trap(&trap)) {
         json_read_string(&c->inp, dir, sizeof(dir));
-        if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         json_read_string(&c->inp, exe, sizeof(exe));
-        if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         args = json_read_alloc_string_array(&c->inp, &args_len);
-        if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         envp = json_read_alloc_string_array(&c->inp, &envp_len);
-        if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         attach = json_read_boolean(&c->inp);
-        if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
         if (dir[0] != 0 && chdir(dir) < 0) err = errno;
         if (err == 0) {
@@ -552,9 +552,9 @@ static void command_start(char * token, Channel * c) {
             }
             else {
                 write_context(&c->out, pid);
-                c->out.write(&c->out, 0);
+                write_stream(&c->out, 0);
             }
-            c->out.write(&c->out, MARKER_EOM);
+            write_stream(&c->out, MARKER_EOM);
         }
         clear_trap(&trap);
     }

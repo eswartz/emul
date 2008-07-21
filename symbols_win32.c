@@ -26,6 +26,7 @@
 #include "elf.h"
 #include "myalloc.h"
 #include "symbols.h"
+#include "stacktrace.h"
 #include "trace.h"
 
 #define SYM_SEARCH_PATH "http://msdl.microsoft.com/download/symbols"
@@ -34,11 +35,46 @@
 #  define MAX_SYM_NAME 2000
 #endif
 
-int find_symbol(Context * ctx, char * name, Symbol * sym) {
+static int get_stack_frame(Context * ctx, int frame, IMAGEHLP_STACK_FRAME * stack_frame) {
+    memset(stack_frame, 0, sizeof(IMAGEHLP_STACK_FRAME));
+    if (frame != STACK_NO_FRAME && ctx->parent != NULL) {
+        ContextAddress ip = 0;
+        if (get_frame_info(ctx, frame, &ip, NULL, NULL) < 0) return -1;
+        stack_frame->InstructionOffset = ip;
+    }
+    return 0;
+}
+
+static void syminfo2symbol(SYMBOL_INFO * info, Symbol * symbol) {
+    memset(symbol, 0, sizeof(Symbol));
+
+    symbol->value = (ContextAddress)info->Address;
+
+    if (info->Flags & SYMFLAG_FRAMEREL) {
+        symbol->base = SYM_BASE_FP;
+    }
+    else if (info->Flags & SYMFLAG_REGREL) {
+        symbol->base = SYM_BASE_FP;
+    }
+    else {
+        symbol->base = SYM_BASE_ABS;
+    }
+
+    if (info->Flags & SYMFLAG_LOCAL) {
+        symbol->storage = "LOCAL";
+    }
+    else {
+        symbol->storage = "GLOBAL";
+    }
+
+    symbol->size = info->Size;
+}
+
+int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
 
 #if defined(__CYGWIN__)
 
-    /* TODO SymGetSymFromName() is not working in CYGWIN */
+    /* TODO SymFromName() is not working in CYGWIN */
 
     extern void tcf_test_func0(void);
     extern void tcf_test_func1(void);
@@ -50,7 +86,7 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
     memset(sym, 0, sizeof(Symbol));
     sym->section = ".text";
     sym->storage = "GLOBAL";
-    sym->abs = 1;
+    sym->base = SYM_BASE_ABS;
     if (strcmp(name, "tcf_test_func0") == 0) {
         sym->value = (ContextAddress)tcf_test_func0;
     }
@@ -74,29 +110,108 @@ int find_symbol(Context * ctx, char * name, Symbol * sym) {
 
 #else
 
-    ULONG64 sym_buf[(sizeof(IMAGEHLP_SYMBOL) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
-    PIMAGEHLP_SYMBOL symbol = (PIMAGEHLP_SYMBOL)sym_buf;
+    ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
+    SYMBOL_INFO * symbol = (SYMBOL_INFO *)buffer;
+    IMAGEHLP_STACK_FRAME stack_frame;
+    HANDLE process = ctx->parent == NULL ? ctx->handle : ctx->parent->handle;
 
-    if (ctx->parent != NULL) ctx = ctx->parent;
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+    symbol->MaxNameLen = MAX_SYM_NAME;
 
-    memset(sym, 0, sizeof(Symbol));
-    symbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
-    symbol->MaxNameLength = MAX_SYM_NAME;
+    if (get_stack_frame(ctx, frame, &stack_frame) < 0) {
+        return -1;
+    }
 
-    if (!SymGetSymFromName(ctx->handle, name, symbol)) {
+    if (!SymSetContext(process, &stack_frame, NULL)) {
+        DWORD err = GetLastError();
+        if (err != ERROR_SUCCESS) {
+            if (err == ERROR_MOD_NOT_FOUND && frame != STACK_NO_FRAME) {
+                /* No local symbols data, search global scope */
+                if (get_stack_frame(ctx, STACK_NO_FRAME, &stack_frame) < 0) {
+                    return -1;
+                }
+                if (!SymSetContext(process, &stack_frame, NULL)) {
+                    DWORD err = GetLastError();
+                    if (err != ERROR_SUCCESS) {
+                        set_win32_errno(err);
+                        return -1;
+                    }
+                }
+            }
+            else {
+                set_win32_errno(err);
+                return -1;
+            }
+        }
+    }
+
+    if (!SymFromName(process, name, symbol)) {
         set_win32_errno(GetLastError());
         return -1;
     }
 
-    sym->value = (ContextAddress)symbol->Address;
-    sym->abs = 1;
+    syminfo2symbol(symbol, sym);
+    return 0;
 
-    sym->storage = "GLOBAL";
+#endif
+}
+
+typedef struct EnumerateSymbolsContext {
+    EnumerateSymbolsCallBack * call_back;
+    void * args;
+} EnumerateSymbolsContext;
+
+static BOOL CALLBACK enumerate_symbols_proc(SYMBOL_INFO * info, ULONG symbol_size, VOID * user_context) {
+    EnumerateSymbolsContext * enum_context = (EnumerateSymbolsContext *)user_context;
+    Symbol symbol;
+    syminfo2symbol(info, &symbol);
+    enum_context->call_back(enum_context->args, info->Name, &symbol);
+    return TRUE;
+}
+
+int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_back, void * args) {
+#if defined(__CYGWIN__)
+
+    /* TODO SymEnumSymbols() is not working in CYGWIN */
+
+    return 0;
+
+#else
+
+    ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
+    SYMBOL_INFO * symbol = (SYMBOL_INFO *)buffer;
+    IMAGEHLP_STACK_FRAME stack_frame;
+    EnumerateSymbolsContext enum_context;
+    HANDLE process = ctx->parent == NULL ? ctx->handle : ctx->parent->handle;
+
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+    symbol->MaxNameLen = MAX_SYM_NAME;
+
+    if (get_stack_frame(ctx, frame, &stack_frame) < 0) {
+        return -1;
+    }
+
+    if (!SymSetContext(process, &stack_frame, NULL)) {
+        DWORD err = GetLastError();
+        if (err != ERROR_SUCCESS) {
+            set_win32_errno(err);
+            return -1;
+        }
+    }
+
+    enum_context.call_back = call_back;
+    enum_context.args = args;
+
+    if (!SymEnumSymbols(process, 0, NULL, enumerate_symbols_proc, &enum_context)) {
+        set_win32_errno(GetLastError());
+        return -1;
+    }
 
     return 0;
 
 #endif
 }
+
 
 ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     return 0;

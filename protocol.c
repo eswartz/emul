@@ -87,7 +87,7 @@ struct Protocol {
 static void read_stringz(InputStream * inp, char * str, size_t size) {
     unsigned len = 0;
     for (;;) {
-        int ch = inp->read(inp);
+        int ch = read_stream(inp);
         if (ch <= 0) break;
         if (len < size - 1) str[len] = ch;
         len++;
@@ -274,7 +274,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
             else {
                 /* Eat the body of the event */
                 int ch;
-                while ((ch = c->inp.read(&c->inp)) != MARKER_EOM);
+                while ((ch = read_stream(&c->inp)) != MARKER_EOM);
             }
             clear_trap(&trap);
         }
@@ -287,17 +287,17 @@ void handle_protocol_message(Protocol * p, Channel * c) {
     else if (type[0] == 'F') {
         int n = 0;
         int s = 0;
-        int ch = c->inp.read(&c->inp);
+        int ch = read_stream(&c->inp);
         if (ch == '-') {
             s = 1;
-            ch = c->inp.read(&c->inp);
+            ch = read_stream(&c->inp);
         }
         while (ch >= '0' && ch <= '9') {
             n = n * 10 + (ch - '0');
-            ch = c->inp.read(&c->inp);
+            ch = read_stream(&c->inp);
         }
         if (ch == 0) {
-            ch = c->inp.read(&c->inp);
+            ch = read_stream(&c->inp);
         }
         else {
             trace(LOG_ALWAYS, "Received F with no zero termination.");
@@ -373,34 +373,34 @@ void send_hello_message(Protocol * p, Channel * c) {
     write_stringz(&c->out, "E");
     write_stringz(&c->out, LOCATOR);
     write_stringz(&c->out, "Hello");
-    c->out.write(&c->out, '[');
+    write_stream(&c->out, '[');
     while (s) {
         if (s->owner == p) {
-            if (cnt != 0) c->out.write(&c->out, ',');
+            if (cnt != 0) write_stream(&c->out, ',');
             json_write_string(&c->out, s->name);
             cnt++;
         }
         s = s->next;
     }
-    c->out.write(&c->out, ']');
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, ']');
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_sync(char * token, Channel * c) {
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_redirect(char * token, Channel * c) {
     char id[256];
 
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     if (c->redirecting != NULL) {
         c->redirecting(c, token, id);
         return;
@@ -408,16 +408,16 @@ static void command_redirect(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, ERR_UNSUPPORTED);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static PeerServer * read_peer_properties(InputStream * inp) {
     PeerServer * ps;
 
-    if (inp->read(inp) != '{') exception(ERR_JSON_SYNTAX);
+    if (read_stream(inp) != '{') exception(ERR_JSON_SYNTAX);
     ps = peer_server_alloc();
-    if (inp->peek(inp) == '}') {
-        inp->read(inp);
+    if (peek_stream(inp) == '}') {
+        read_stream(inp);
         return ps;
     }
     while (1) {
@@ -426,13 +426,13 @@ static PeerServer * read_peer_properties(InputStream * inp) {
         char *value;
 
         name = json_read_alloc_string(inp);
-        if (inp->read(inp) != ':') {
+        if (read_stream(inp) != ':') {
             loc_free(name);
             exception(ERR_JSON_SYNTAX);
         }
         value = json_read_alloc_string(inp);
         peer_server_addprop(ps, name, value);
-        ch = inp->read(inp);
+        ch = read_stream(inp);
         if (ch == ',') continue;
         if (ch == '}') break;
         peer_server_free(ps);
@@ -443,16 +443,16 @@ static PeerServer * read_peer_properties(InputStream * inp) {
 
 static void command_publish_peer(char * token, Channel * c) {
     PeerServer * ps = read_peer_properties(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     ps->flags |= PS_FLAG_DISCOVERABLE;
     peer_server_add(ps, STALE_TIME_DELTA);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
     json_write_ulong(&c->out, REFRESH_TIME);
-    c->out.write(&c->out, 0);
-    c->out.write(&c->out, MARKER_EOM);
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void event_locator_hello(Channel * c) {
@@ -460,9 +460,9 @@ static void event_locator_hello(Channel * c) {
     int cnt;
     char **list;
 
-    if (c->inp.read(&c->inp) != '[') exception(ERR_PROTOCOL);
-    if (c->inp.peek(&c->inp) == ']') {
-        c->inp.read(&c->inp);
+    if (read_stream(&c->inp) != '[') exception(ERR_PROTOCOL);
+    if (peek_stream(&c->inp) == ']') {
+        read_stream(&c->inp);
         cnt = 0;
         list = NULL;
     }
@@ -479,7 +479,7 @@ static void event_locator_hello(Channel * c) {
                 list = loc_realloc(list, max * sizeof *list);
             }
             list[cnt++] = loc_strdup(service);
-            ch = c->inp.read(&c->inp);
+            ch = read_stream(&c->inp);
             if (ch == ',') continue;
             if (ch == ']') break;
             while (cnt > 0) loc_free(list[--cnt]);
@@ -487,7 +487,7 @@ static void event_locator_hello(Channel * c) {
             exception(ERR_JSON_SYNTAX);
         }
     }
-    if (c->inp.read(&c->inp) != 0 || c->inp.read(&c->inp) != MARKER_EOM) {
+    if (read_stream(&c->inp) != 0 || read_stream(&c->inp) != MARKER_EOM) {
         while (cnt > 0) loc_free(list[--cnt]);
         loc_free(list);
         exception(ERR_JSON_SYNTAX);
@@ -502,8 +502,8 @@ static void event_locator_hello(Channel * c) {
 
 void event_locator_peer_added(Channel * c) {
     PeerServer * ps = read_peer_properties(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     if (ps->id == NULL) exception(ERR_JSON_SYNTAX);
     trace(LOG_DISCOVERY, "event_locator_peer_added: %s ...", ps->id);
     ps->flags |= PS_FLAG_DISCOVERABLE;
@@ -512,8 +512,8 @@ void event_locator_peer_added(Channel * c) {
 
 void event_locator_peer_changed(Channel * c) {
     PeerServer * ps = read_peer_properties(&c->inp);
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     if (ps->id == NULL) exception(ERR_JSON_SYNTAX);
     trace(LOG_DISCOVERY, "event_locator_peer_changed: %s ...", ps->id);
     ps->flags |= PS_FLAG_DISCOVERABLE;
@@ -523,8 +523,8 @@ void event_locator_peer_changed(Channel * c) {
 void event_locator_peer_removed(Channel * c) {
     char id[256];
     json_read_string(&c->inp, id, sizeof(id));
-    if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     trace(LOG_DISCOVERY, "event_locator_peer_removed: %s ...", id);
     peer_server_remove(id);
 }
