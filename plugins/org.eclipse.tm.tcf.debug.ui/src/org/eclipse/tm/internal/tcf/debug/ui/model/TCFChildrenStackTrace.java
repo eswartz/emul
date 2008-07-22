@@ -46,6 +46,7 @@ public class TCFChildrenStackTrace extends TCFChildren {
     }
     
     TCFNodeStackFrame getTopFrame() {
+        assert isValid();
         return (TCFNodeStackFrame)node.model.getNode(top_frame_id);
     }
 
@@ -82,7 +83,6 @@ public class TCFChildrenStackTrace extends TCFChildren {
                         cnt--;
                         TCFNodeStackFrame n = (TCFNodeStackFrame)node.model.getNode(id);
                         if (n == null) n = new TCFNodeStackFrame(node, id);
-                        assert n.id.equals(id);
                         assert n.parent == node;
                         n.setFrameNo(cnt);
                         data.put(id, n);

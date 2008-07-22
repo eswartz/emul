@@ -14,46 +14,28 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IColumnPresentati
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.jface.resource.ImageDescriptor;
 
-public class TCFColumnPresentationRegister implements IColumnPresentation {
-    
-    public static final String PRESENTATION_ID = "Registers";
+public class TCFColumnPresentationVariable implements IColumnPresentation {
+
+    public static final String PRESENTATION_ID = "Variables";
     
     private static String[] cols_all = {
-        TCFNodeRegister.COL_NAME,
-        TCFNodeRegister.COL_HEX_VALUE,
-        TCFNodeRegister.COL_DEC_VALUE,
-        TCFNodeRegister.COL_DESCRIPTION,
-        TCFNodeRegister.COL_READBLE,
-        TCFNodeRegister.COL_READ_ONCE,
-        TCFNodeRegister.COL_WRITEABLE,
-        TCFNodeRegister.COL_WRITE_ONCE,
-        TCFNodeRegister.COL_SIDE_EFFECTS,
-        TCFNodeRegister.COL_VOLATILE,
-        TCFNodeRegister.COL_FLOAT,
-        TCFNodeRegister.COL_MNEMONIC
+        TCFNodeLocalVariable.COL_TYPE,
+        TCFNodeLocalVariable.COL_NAME,
+        TCFNodeLocalVariable.COL_DEC_VALUE,
+        TCFNodeLocalVariable.COL_HEX_VALUE,
     };
     
     private static String[] headers  = {
+        "Type",
         "Name",
-        "Hex",
         "Decimal",
-        "Description",
-        "Readable",
-        "Read Once",
-        "Writable",
-        "Write Once",
-        "Side Effects",
-        "Volatile",
-        "Float",
-        "Mnemonic"
+        "Hex",
     };
 
     private static String[] cols_ini = {
         TCFNodeRegister.COL_NAME,
-        TCFNodeRegister.COL_HEX_VALUE,
         TCFNodeRegister.COL_DEC_VALUE,
-        TCFNodeRegister.COL_DESCRIPTION,
-        TCFNodeRegister.COL_MNEMONIC
+        TCFNodeRegister.COL_HEX_VALUE,
     };
     
     public void dispose() {

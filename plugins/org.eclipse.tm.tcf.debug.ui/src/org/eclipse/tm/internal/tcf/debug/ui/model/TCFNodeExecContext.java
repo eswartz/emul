@@ -40,7 +40,6 @@ public class TCFNodeExecContext extends TCFNode {
     
     private final TCFChildrenExecContext children_exec;
     private final TCFChildrenStackTrace children_stack;
-    private final TCFChildrenRegisters children_regs;
 
     private final TCFDataCache<IMemory.MemoryContext> mem_context;
     private final TCFDataCache<IRunControl.RunControlContext> run_context;
@@ -57,7 +56,6 @@ public class TCFNodeExecContext extends TCFNode {
         seq_no = seq_cnt++;
         children_exec = new TCFChildrenExecContext(this);
         children_stack = new TCFChildrenStackTrace(this);
-        children_regs = new TCFChildrenRegisters(this);
         line_info_cache = new LinkedHashMap<BigInteger,TCFSourceRef>() {
             @SuppressWarnings("unchecked")
             protected boolean removeEldestEntry(Map.Entry eldest) {
@@ -131,7 +129,6 @@ public class TCFNodeExecContext extends TCFNode {
     void dispose() {
         children_exec.dispose();
         children_stack.dispose();
-        children_regs.dispose();
         super.dispose();
     }
 
@@ -139,7 +136,6 @@ public class TCFNodeExecContext extends TCFNode {
     void dispose(String id) {
         children_exec.dispose(id);
         children_stack.dispose(id);
-        children_regs.dispose(id);
     }
 
     void setRunContext(IRunControl.RunControlContext ctx) {
@@ -221,8 +217,11 @@ public class TCFNodeExecContext extends TCFNode {
     protected void getData(IChildrenCountUpdate result) {
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && ctx.hasState()) {
-            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
-                result.setChildCount(children_regs.size());
+            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId()) ||
+                    IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+                TCFNodeStackFrame frame = children_stack.getTopFrame();
+                if (frame == null) result.setChildCount(0);
+                else frame.getData(result);
             }
             else {
                 result.setChildCount(children_stack.size());
@@ -238,8 +237,16 @@ public class TCFNodeExecContext extends TCFNode {
         TCFNode[] arr = null;
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && ctx.hasState()) {
-            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
-                arr = children_regs.toArray();
+            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId()) ||
+                    IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+                TCFNodeStackFrame frame = children_stack.getTopFrame();
+                if (frame == null) {
+                    arr = new TCFNode[0];
+                }
+                else {
+                    frame.getData(result);
+                    return;
+                }
             }
             else {
                 arr = children_stack.toArray();
@@ -264,8 +271,11 @@ public class TCFNodeExecContext extends TCFNode {
     protected void getData(IHasChildrenUpdate result) {
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && ctx.hasState()) {
-            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
-                result.setHasChilren(children_regs.size() > 0);
+            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId()) ||
+                    IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+                TCFNodeStackFrame frame = children_stack.getTopFrame();
+                if (frame == null) result.setHasChilren(false);
+                else frame.getData(result);
             }
             else {
                 result.setHasChilren(children_stack.size() > 0);
@@ -346,7 +356,6 @@ public class TCFNodeExecContext extends TCFNode {
         }
         state.reset();
         children_stack.onSuspended();
-        children_regs.onSuspended();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
@@ -370,7 +379,6 @@ public class TCFNodeExecContext extends TCFNode {
         s.suspend_params = params;
         state.reset(s);
         children_stack.onSuspended();
-        children_regs.onSuspended();
         resumed_cnt++;
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
@@ -410,7 +418,6 @@ public class TCFNodeExecContext extends TCFNode {
 
     void onRegistersChanged() {
         children_stack.onRegistersChanged();
-        children_regs.onRegistersChanged();
         addModelDelta(IModelDelta.CONTENT);
     }
 
@@ -421,7 +428,6 @@ public class TCFNodeExecContext extends TCFNode {
         state.reset();
         children_exec.reset();
         children_stack.reset();
-        children_regs.reset();
     }
     
     @Override
@@ -448,7 +454,6 @@ public class TCFNodeExecContext extends TCFNode {
             return false;
         }
         children_stack.validate();
-        children_regs.validate();
 
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && !ctx.hasState()) {
@@ -465,10 +470,9 @@ public class TCFNodeExecContext extends TCFNode {
             children_stack.wait(done);
             return false;
         }
-        if (!children_regs.isValid()) {
-            children_regs.wait(done);
-            return false;
-        }
+        
+        TCFNodeStackFrame frame = children_stack.getTopFrame();
+        if (frame != null && !frame.validateNode(done)) return false;
         
         return true;
     }

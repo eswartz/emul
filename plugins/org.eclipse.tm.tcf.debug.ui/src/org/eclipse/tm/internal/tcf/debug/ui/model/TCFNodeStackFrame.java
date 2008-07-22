@@ -37,12 +37,14 @@ public class TCFNodeStackFrame extends TCFNode {
 
     private int frame_no;
     private final TCFChildrenRegisters children_regs;
+    private final TCFChildrenLocalVariables children_vars;
     private final TCFDataCache<IStackTrace.StackTraceContext> stack_trace_context;
     private final TCFDataCache<TCFSourceRef> line_info;
     
     TCFNodeStackFrame(final TCFNodeExecContext parent, final String id) {
         super(parent, id);
         children_regs = new TCFChildrenRegisters(this);
+        children_vars = new TCFChildrenLocalVariables(this);
         IChannel channel = model.getLaunch().getChannel();
         stack_trace_context = new TCFDataCache<IStackTrace.StackTraceContext>(channel) {
             @Override
@@ -130,12 +132,14 @@ public class TCFNodeStackFrame extends TCFNode {
     @Override
     void dispose() {
         children_regs.dispose();
+        children_vars.dispose();
         super.dispose();
     }
 
     @Override
     void dispose(String id) {
         children_regs.dispose(id);
+        children_vars.dispose(id);
     }
 
     @Override
@@ -191,11 +195,10 @@ public class TCFNodeStackFrame extends TCFNode {
     @Override
     protected void getData(IChildrenCountUpdate result) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
-            if (frame_no == 0) {
-                parent.getData(result);
-                return;
-            }
             result.setChildCount(children_regs.size());
+        }
+        else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+            result.setChildCount(children_vars.size());
         }
         else {
             result.setChildCount(0);
@@ -206,11 +209,10 @@ public class TCFNodeStackFrame extends TCFNode {
     protected void getData(IChildrenUpdate result) {
         TCFNode[] arr = null;
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
-            if (frame_no == 0) {
-                parent.getData(result);
-                return;
-            }
             arr = children_regs.toArray();
+        }
+        else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+            arr = children_vars.toArray();
         }
         else {
             arr = null;
@@ -232,11 +234,10 @@ public class TCFNodeStackFrame extends TCFNode {
     @Override
     protected void getData(IHasChildrenUpdate result) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
-            if (frame_no == 0) {
-                parent.getData(result);
-                return;
-            }
             result.setHasChilren(children_regs.size() > 0);
+        }
+        else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+            result.setHasChilren(children_vars.size() > 0);
         }
         else {
             result.setHasChilren(false);
@@ -289,7 +290,8 @@ public class TCFNodeStackFrame extends TCFNode {
         stack_trace_context.reset();
         line_info.reset();
         children_regs.onSuspended();
-        addModelDelta(IModelDelta.STATE);
+        children_vars.onSuspended();
+        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
     
     void onRegistersChanged() {
@@ -302,19 +304,24 @@ public class TCFNodeStackFrame extends TCFNode {
         stack_trace_context.reset();
         line_info.reset();
         children_regs.reset();
+        children_vars.reset();
     }
 
     @Override
     public boolean validateNode(Runnable done) {
-        if (frame_no == 0 && !parent.validateNode(done)) return false;
         stack_trace_context.validate();
-        if (frame_no != 0) children_regs.validate();
+        children_regs.validate();
+        children_vars.validate();
         if (!stack_trace_context.isValid()) {
             stack_trace_context.wait(done);
             return false;
         }
-        if (frame_no != 0 && !children_regs.isValid()) {
+        if (!children_regs.isValid()) {
             children_regs.wait(done);
+            return false;
+        }
+        if (!children_vars.isValid()) {
+            children_vars.wait(done);
             return false;
         }
         if (!line_info.validate()) {

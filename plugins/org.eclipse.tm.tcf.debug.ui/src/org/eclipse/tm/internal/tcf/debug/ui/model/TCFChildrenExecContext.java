@@ -77,6 +77,7 @@ public class TCFChildrenExecContext extends TCFChildren {
                             for (String id : contexts) {
                                 TCFNode n = node.model.getNode(id);
                                 if (n == null) n = new TCFNodeExecContext(node, id);
+                                assert n.parent == node;
                                 data.put(id, n);
                             }
                         }

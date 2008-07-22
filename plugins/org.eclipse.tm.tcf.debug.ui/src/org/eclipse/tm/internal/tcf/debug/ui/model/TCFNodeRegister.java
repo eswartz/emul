@@ -184,6 +184,7 @@ public class TCFNodeRegister extends TCFNode {
         return "";
     }
 
+    @Override
     int getRelevantModelDeltaFlags(IPresentationContext p) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId())) {
             return super.getRelevantModelDeltaFlags(p);
@@ -195,9 +196,6 @@ public class TCFNodeRegister extends TCFNode {
         onSuspended();
     }
 
-    /**
-     * Invalidate register value only, keep cached register attributes.
-     */
     void onSuspended() {
         value.reset();
         addModelDelta(IModelDelta.STATE);

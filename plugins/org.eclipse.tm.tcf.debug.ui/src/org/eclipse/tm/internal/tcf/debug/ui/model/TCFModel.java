@@ -474,12 +474,16 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         String id = getColumnPresentationId(context, element);
         if (id == null) return null;
         if (id.equals(TCFColumnPresentationRegister.PRESENTATION_ID)) return new TCFColumnPresentationRegister();
+        if (id.equals(TCFColumnPresentationVariable.PRESENTATION_ID)) return new TCFColumnPresentationVariable();
         return null;
     }
 
     public String getColumnPresentationId(IPresentationContext context, Object element) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(context.getId())) {
             return TCFColumnPresentationRegister.PRESENTATION_ID; 
+        }
+        if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(context.getId())) {
+            return TCFColumnPresentationVariable.PRESENTATION_ID; 
         }
         return null;
     }

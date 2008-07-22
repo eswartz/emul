@@ -38,6 +38,8 @@ public class ImageCache {
         
         IMG_REGISTER = "icons/full/obj16/genericregister_obj.gif",
         
+        IMG_VARIABLE = "icons/full/obj16/genericvariable_obj.gif",
+        
         IMG_STACK_FRAME_SUSPENDED = "icons/full/obj16/stckframe_obj.gif",
         IMG_STACK_FRAME_RUNNING = "icons/full/obj16/stckframe_running_obj.gif",
         
