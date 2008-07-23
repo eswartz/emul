@@ -574,8 +574,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                                     line = src_ref.area.start_line;
                                 }
                             }
-                            displaySource(cnt, editor_id, editor_input, page, stack_frame.getRunContext().getID(),
-                                    stack_frame.getFrameNo() == 0, line);
+                            displaySource(cnt, editor_id, editor_input, page,
+                                    stack_frame.parent.id, stack_frame.getFrameNo() == 0, line);
                         }
                     }
                 }

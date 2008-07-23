@@ -21,6 +21,7 @@ import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFRunnable;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IRunControl;
@@ -49,13 +50,16 @@ abstract class StepCommand implements IDebugCommandHandler {
                     else node = model.getRootNode();
                     while (node != null && !node.isDisposed()) {
                         if (!node.validateNode(this)) return;
-                        IRunControl.RunControlContext ctx = node.getRunContext();
+                        IRunControl.RunControlContext ctx = null;
+                        if (node instanceof TCFNodeExecContext) {
+                            ctx = ((TCFNodeExecContext)node).getRunContext();
+                        }
                         if (!canExecute(ctx)) {
                             node = node.getParent();
                         }
                         else {
-                            if (node.isSuspended()) res = true;
-                            node = null;
+                            if (((TCFNodeExecContext)node).isSuspended()) res = true;
+                            break;
                         }
                     }
                 }
@@ -77,13 +81,16 @@ abstract class StepCommand implements IDebugCommandHandler {
                     else node = model.getRootNode();
                     while (node != null && !node.isDisposed()) {
                         if (!node.validateNode(this)) return;
-                        IRunControl.RunControlContext ctx = node.getRunContext();
+                        IRunControl.RunControlContext ctx = null;
+                        if (node instanceof TCFNodeExecContext) {
+                            ctx = ((TCFNodeExecContext)node).getRunContext();
+                        }
                         if (!canExecute(ctx)) {
                             node = node.getParent();
                         }
                         else {
                             set.add(ctx);
-                            node = null;
+                            break;
                         }
                     }
                 }

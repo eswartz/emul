@@ -10,11 +10,10 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
-import java.util.Arrays;
-
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
 
@@ -40,6 +39,18 @@ public class TCFNodeLaunch extends TCFNode {
     }
 
     @Override
+    public int getNodeIndex(IPresentationContext p, TCFNode n) {
+        if (!children.isValid()) return -1;
+        return children.getIndexOf(n);
+    }
+    
+    @Override
+    public int getChildrenCount(IPresentationContext p) {
+        if (!children.isValid()) return -1;
+        return children.size();
+    }
+
+    @Override
     protected void getData(IChildrenCountUpdate result) {
         result.setChildCount(children.size());
     }
@@ -47,7 +58,6 @@ public class TCFNodeLaunch extends TCFNode {
     @Override
     protected void getData(IChildrenUpdate result) {
         TCFNode[] arr = children.toArray();
-        Arrays.sort(arr);
         int offset = 0;
         int r_offset = result.getOffset(); 
         int r_length = result.getLength(); 

@@ -11,7 +11,6 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -20,6 +19,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
@@ -150,21 +150,18 @@ public class TCFNodeExecContext extends TCFNode {
         return line_info_cache;
     }
 
-    @Override
     public IRunControl.RunControlContext getRunContext() {
         assert Protocol.isDispatchThread();
         if (!run_context.isValid()) return null;
         return run_context.getData();
     }
 
-    @Override
     public IMemory.MemoryContext getMemoryContext() {
         assert Protocol.isDispatchThread();
         if (!mem_context.isValid()) return null;
         return mem_context.getData();
     }
 
-    @Override
     public boolean isRunning() {
         assert Protocol.isDispatchThread();
         if (!run_context.isValid()) return false;
@@ -175,7 +172,6 @@ public class TCFNodeExecContext extends TCFNode {
         return s != null && !s.is_suspended;
     }
 
-    @Override
     public boolean isSuspended() {
         assert Protocol.isDispatchThread();
         if (!run_context.isValid()) return false;
@@ -211,6 +207,42 @@ public class TCFNodeExecContext extends TCFNode {
     
     public TCFChildrenStackTrace getStackTrace() {
         return children_stack;
+    }
+
+    @Override
+    public int getNodeIndex(IPresentationContext p, TCFNode n) {
+        if (!run_context.isValid()) return -1;
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx != null && ctx.hasState()) {
+            if (!children_stack.isValid()) return -1;
+            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId()) ||
+                    IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
+                TCFNodeStackFrame frame = children_stack.getTopFrame();
+                if (frame == null) return -1;
+                return frame.getNodeIndex(p, n);
+            }
+            return children_stack.getIndexOf(n);
+        }
+        if (!children_exec.isValid()) return -1;
+        return children_exec.getIndexOf(n);
+    }
+    
+    @Override
+    public int getChildrenCount(IPresentationContext p) {
+        if (!run_context.isValid()) return -1;
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx != null && ctx.hasState()) {
+            if (!children_stack.isValid()) return -1;
+            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId()) ||
+                    IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
+                TCFNodeStackFrame frame = children_stack.getTopFrame();
+                if (frame == null) return -1;
+                return frame.getChildrenCount(p);
+            }
+            return children_stack.size();
+        }
+        if (!children_exec.isValid()) return -1;
+        return children_exec.size();
     }
 
     @Override
@@ -255,7 +287,6 @@ public class TCFNodeExecContext extends TCFNode {
         else {
             arr = children_exec.toArray();
         }
-        Arrays.sort(arr);
         int offset = 0;
         int r_offset = result.getOffset(); 
         int r_length = result.getLength(); 

@@ -22,6 +22,7 @@ import org.eclipse.debug.core.commands.ITerminateHandler;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFRunnable;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRunControl;
@@ -46,7 +47,10 @@ public class TerminateCommand implements ITerminateHandler {
                     else node = model.getRootNode();
                     while (node != null && !node.isDisposed()) {
                         if (!node.validateNode(this)) return;
-                        IRunControl.RunControlContext ctx = node.getRunContext();
+                        IRunControl.RunControlContext ctx = null;
+                        if (node instanceof TCFNodeExecContext) {
+                            ctx = ((TCFNodeExecContext)node).getRunContext();
+                        }
                         if (ctx != null && ctx.canTerminate()) {
                             res = true;
                             break;
@@ -72,7 +76,10 @@ public class TerminateCommand implements ITerminateHandler {
                     else node = model.getRootNode();
                     while (node != null && !node.isDisposed()) {
                         if (!node.validateNode(this)) return;
-                        IRunControl.RunControlContext ctx = node.getRunContext();
+                        IRunControl.RunControlContext ctx = null;
+                        if (node instanceof TCFNodeExecContext) {
+                            ctx = ((TCFNodeExecContext)node).getRunContext();
+                        }
                         if (ctx != null && ctx.canTerminate()) {
                             set.add(ctx);
                             break;

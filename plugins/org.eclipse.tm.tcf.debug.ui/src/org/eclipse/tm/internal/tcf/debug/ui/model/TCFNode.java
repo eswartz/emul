@@ -13,6 +13,7 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.math.BigInteger;
 import java.util.Collection;
 
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.ILaunch;
@@ -30,8 +31,6 @@ import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.tcf.services.IMemory;
-import org.eclipse.tm.tcf.services.IRunControl;
 
 
 /**
@@ -100,6 +99,15 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         return disposed;
     }
 
+    /**
+     * Returns an object which is an instance of the given class
+     * associated with this object. Returns <code>null</code> if
+     * no such object can be found.
+     *
+     * @param adapter the class to adapt to
+     * @return the adapted object or <code>null</code>
+     * @see IAdaptable#getAdapter(Class)
+     */
     @SuppressWarnings("unchecked")
     public Object getAdapter(Class adapter) {
         if (adapter == ILaunch.class) return model.getLaunch();
@@ -113,25 +121,31 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         return super.getAdapter(adapter);
     }
 
+    /**
+     * Get parent node.
+     * @return parent node or null if the node is a root
+     */
     public final TCFNode getParent() {
         assert Protocol.isDispatchThread();
         return parent;
     }
-
-    public IRunControl.RunControlContext getRunContext() {
-        return null;
+    
+    /**
+     * Get index of a node in this node children list
+     * @param p - presentation context
+     * @return node index or -1 if unknown
+     */
+    public int getNodeIndex(IPresentationContext p, TCFNode n) {
+        return -1;
     }
-
-    public IMemory.MemoryContext getMemoryContext() {
-        return null;
-    }
-
-    public boolean isRunning() {
-        return false;
-    }
-
-    public boolean isSuspended() {
-        return false;
+    
+    /**
+     * Get children count of the node.
+     * @param p - presentation context
+     * @return children count or -1 if unknown
+     */
+    public int getChildrenCount(IPresentationContext p) {
+        return -1;
     }
 
     /**
@@ -143,10 +157,6 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         return null;
     }
     
-    boolean isNodeContentVisibleInContext(IPresentationContext p) {
-        return true;
-    }
-
     /**
      * Retrieve children count for a presentation context.
      * @param result - children count update request.

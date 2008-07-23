@@ -11,7 +11,6 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Map;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
@@ -19,6 +18,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
@@ -28,7 +28,6 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
-import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace;
 import org.eclipse.tm.tcf.services.ILineNumbers.CodeArea;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -50,7 +49,7 @@ public class TCFNodeStackFrame extends TCFNode {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
-                if (!isSuspended()) {
+                if (!parent.isSuspended()) {
                     set(null, null, null);
                     return true;
                 }
@@ -141,29 +140,9 @@ public class TCFNodeStackFrame extends TCFNode {
         children_regs.dispose(id);
         children_vars.dispose(id);
     }
-
-    @Override
-    public IRunControl.RunControlContext getRunContext() {
-        return parent.getRunContext();
-    }
-
-    @Override
-    public IMemory.MemoryContext getMemoryContext() {
-        return parent.getMemoryContext();
-    }
     
     public TCFDataCache<IStackTrace.StackTraceContext> getStackTraceContext() {
         return stack_trace_context;
-    }
-
-    @Override
-    public boolean isRunning() {
-        return parent.isRunning();
-    }
-
-    @Override
-    public boolean isSuspended() {
-        return parent.isSuspended();
     }
 
     @Override
@@ -193,6 +172,36 @@ public class TCFNodeStackFrame extends TCFNode {
     }
     
     @Override
+    public int getNodeIndex(IPresentationContext p, TCFNode n) {
+        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId())) {
+            if (!children_regs.isValid()) return -1;
+            return children_regs.getIndexOf(n);
+        }
+        else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
+            if (!children_vars.isValid()) return -1;
+            return children_vars.getIndexOf(n);
+        }
+        else {
+            return 0;
+        }
+    }
+    
+    @Override
+    public int getChildrenCount(IPresentationContext p) {
+        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId())) {
+            if (!children_regs.isValid()) return -1;
+            return children_regs.size();
+        }
+        else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
+            if (!children_vars.isValid()) return -1;
+            return children_vars.size();
+        }
+        else {
+            return 0;
+        }
+    }
+
+    @Override
     protected void getData(IChildrenCountUpdate result) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
             result.setChildCount(children_regs.size());
@@ -215,19 +224,16 @@ public class TCFNodeStackFrame extends TCFNode {
             arr = children_vars.toArray();
         }
         else {
-            arr = null;
+            arr = new TCFNode[0];
         }
-        if (arr != null) {
-            Arrays.sort(arr);
-            int offset = 0;
-            int r_offset = result.getOffset(); 
-            int r_length = result.getLength(); 
-            for (TCFNode n : arr) {
-                if (offset >= r_offset && offset < r_offset + r_length) {
-                    result.setChild(n, offset);
-                }
-                offset++;
+        int offset = 0;
+        int r_offset = result.getOffset(); 
+        int r_length = result.getLength(); 
+        for (TCFNode n : arr) {
+            if (offset >= r_offset && offset < r_offset + r_length) {
+                result.setChild(n, offset);
             }
+            offset++;
         }
     }
 
@@ -249,7 +255,7 @@ public class TCFNodeStackFrame extends TCFNode {
         result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
         Throwable error = stack_trace_context.getError();
         if (error == null) error = line_info.getError();
-        if (error != null && isSuspended()) {
+        if (error != null && ((TCFNodeExecContext)parent).isSuspended()) {
             result.setForeground(new RGB(255, 0, 0), 0);
             result.setLabel(error.getClass().getName() + ": " + error.getMessage(), 0);
         }
@@ -273,7 +279,7 @@ public class TCFNodeStackFrame extends TCFNode {
         if (n instanceof BigInteger) i = (BigInteger)n;
         else i = new BigInteger(n.toString());
         String s = i.toString(16);
-        IMemory.MemoryContext m = getMemoryContext();
+        IMemory.MemoryContext m = ((TCFNodeExecContext)parent).getMemoryContext();
         int sz = (m != null ? m.getAddressSize() : 4) * 2;
         int l = sz - s.length();
         if (l < 0) l = 0;
@@ -333,7 +339,7 @@ public class TCFNodeStackFrame extends TCFNode {
 
     @Override
     protected String getImageName() {
-        if (isRunning()) return ImageCache.IMG_STACK_FRAME_RUNNING;
+        if (((TCFNodeExecContext)parent).isRunning()) return ImageCache.IMG_STACK_FRAME_RUNNING;
         return ImageCache.IMG_STACK_FRAME_SUSPENDED;
     }
 

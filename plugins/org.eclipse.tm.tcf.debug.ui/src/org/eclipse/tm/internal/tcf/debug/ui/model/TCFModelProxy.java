@@ -17,6 +17,7 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.internal.ui.viewers.provisional.AbstractModelProxy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxy;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -65,15 +66,18 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy {
         boolean content_only = (flags & ~CONTENT_FLAGS) == 0;
         ModelDelta delta = map.get(node);
         if (delta == null) {
+            IPresentationContext p = getPresentationContext();
             if (node.parent == null) {
                 if (content_only && (root.getFlags() & IModelDelta.CONTENT) != 0) return null;
-                delta = root.addNode(model.getLaunch(), flags);
+                delta = root.addNode(model.getLaunch(), -1, flags, node.getChildrenCount(p));
             }
             else {
                 ModelDelta parent = makeDelta(root, map, node.parent, 0);
                 if (parent == null) return null;
                 if (content_only && (parent.getFlags() & IModelDelta.CONTENT) != 0) return null;
-                delta = parent.addNode(node, flags);
+                delta = parent.addNode(
+                        node, node.parent.getNodeIndex(p, node),
+                        flags, node.getChildrenCount(p));
             }
             map.put(node, delta);
         }

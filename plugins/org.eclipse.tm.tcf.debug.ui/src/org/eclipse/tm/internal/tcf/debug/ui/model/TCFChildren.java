@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -118,12 +119,27 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     }
     
     /**
+     * Return index of given child node.
+     * @param n - a child node
+     * @return - node index or -1 if node is not found in children list
+     */
+    int getIndexOf(TCFNode n) {
+        TCFNode[] arr = toArray();
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] == n) return i;
+        }
+        return -1;
+    }
+    
+    /**
      * Return current children nodes as an array.
      * @return array of nodes.
      */
     TCFNode[] toArray() {
         assert isValid();
         Map<String,TCFNode> data = getData();
-        return data.values().toArray(new TCFNode[data.size()]);
+        TCFNode[] arr = data.values().toArray(new TCFNode[data.size()]);
+        Arrays.sort(arr);
+        return arr;
     }
 }
