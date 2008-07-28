@@ -1,10 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2006, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Eclipse Distribution License v1.0 which accompany this distribution.
+ * The Eclipse Public License is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * and the Eclipse Distribution License is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -198,7 +201,7 @@ U2_T dio_ReadU2(void) {
     U1_T x1 = dio_ReadU1();
     return sBigEndian ? (x0 << 8) | x1 : x0 | (x1 << 8);
 }
-                
+
 U4_T dio_ReadU4(void) {
     U2_T x0 = dio_ReadU2();
     U2_T x1 = dio_ReadU2();
@@ -291,7 +294,7 @@ U8_T dio_ReadAddress(void) {
 
 static void dio_CheckBlockBufCapacity(U4_T Size) {
     static U4_T BufSize = 0;
-    if (BufSize < Size) { 
+    if (BufSize < Size) {
         BufSize = BufSize == 0 ? 0x100 : BufSize * 2;
         dio_gFormBlockBuf = (U1_T *)loc_realloc(dio_gFormBlockBuf, BufSize);
     }
@@ -555,7 +558,7 @@ void dio_ReadUnit(DIO_EntryCallBack CallBack) {
 
 static int dio_IsAbbrevSectionLoaded(ELF_File * File) {
     DIO_Cache * Cache = dio_GetCache(File);
-    
+
     if (Cache->mAbbrevTable != NULL) {
         U4_T Hash = dio_AbbrevTableHash(File, 0);
         DIO_AbbrevSet * AbbrevSet = Cache->mAbbrevTable[Hash];
