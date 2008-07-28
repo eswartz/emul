@@ -1,10 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Eclipse Distribution License v1.0 which accompany this distribution.
+ * The Eclipse Public License is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * and the Eclipse Distribution License is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -25,21 +28,21 @@ static void command_get_time_of_day(char * token, Channel * c) {
     char str[0x100];
     char res[0x100];
     time_t t;
-    
+
     // Read command argumnet: string TZ - time zone name
     json_read_string(&c->inp, str, sizeof(str));
     // Each JSON encoded argument should end with zero byte
     if (c->inp.read(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     // Done reading arguments.
-    // The command message should end with MARKER_EOM (End Of Message) 
+    // The command message should end with MARKER_EOM (End Of Message)
     if (c->inp.read(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    
+
     // Execute the command: retrieve current time as a string.
     // Note: we ignore command argument for simplicity,
     // a real command handler should do something better then that.
     time(&t);
     strcpy(res, ctime(&t));
-    
+
     // Start reply message with zero terminated string "R"
     write_stringz(&c->out, "R");
     // Send back the command token
