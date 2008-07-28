@@ -8,7 +8,12 @@ UNAME=$(shell uname -o)
 ifeq ($(UNAME),Cygwin)
 LIBS=-lws2_32 -liphlpapi -limagehlp
 else
+ifeq ($(UNAME),Msys)
+CFLAGS:=-mwin32 $(CFLAGS)
+LIBS=-lws2_32 -liphlpapi -limagehlp
+else
 LIBS=-lpthread -lrt -lelf
+endif
 endif
 
 all:	$(EXES)
