@@ -144,12 +144,6 @@ static LINK inp2br[INP2BR_HASH_SIZE];
 
 static int replanting = 0;
 
-static Context * expression_context = NULL;
-static int address_expression_identifier(char * name, Value * v);
-static int condition_expression_identifier(char * name, Value * v);
-static ExpressionContext bp_address_ctx = { address_expression_identifier, NULL };
-static ExpressionContext bp_condition_ctx = { condition_expression_identifier, NULL };
-
 static unsigned id2bp_hash(char * id) {
     unsigned hash = 0;
     while (*id) hash = (hash >> 16) + hash + (unsigned char)*id++;
@@ -422,41 +416,6 @@ static void send_event_breakpoint_status(OutputStream * out, BreakpointInfo * bp
     write_stream(out, MARKER_EOM);
 }
 
-static int address_expression_identifier(char * name, Value * v) {
-    if (v == NULL) return 0;
-    memset(v, 0, sizeof(Value));
-    if (expression_context == NULL) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    if (strcmp(name, "$thread") == 0) {
-        if (context_has_state(expression_context)) {
-            string_value(v, thread_id(expression_context));
-        }
-        else {
-            string_value(v, container_id(expression_context));
-        }
-        return 0;
-    }
-#if SERVICE_Symbols
-    {
-        Symbol sym;
-        int frame = STACK_NO_FRAME;
-        if (context_has_state(expression_context)) frame = STACK_TOP_FRAME;
-        if (find_symbol(expression_context, frame, name, &sym) < 0) {
-            if (errno != ERR_SYM_NOT_FOUND) return -1;
-        }
-        else {
-            v->type = VALUE_UNS;
-            v->value = sym.value;
-            return 0;
-        }
-    }
-#endif
-    errno = ERR_SYM_NOT_FOUND;
-    return -1;
-}
-
 static void address_expression_error(BreakpointInfo * bp, char * msg) {
     /* TODO: per-context address expression error report */
     int size;
@@ -521,8 +480,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
     }
 
     if (bp->address != NULL) {
-        expression_context = NULL;
-        if (evaluate_expression(&bp_address_ctx, bp->address, &v) < 0) {
+        if (evaluate_expression(NULL, STACK_NO_FRAME, bp->address, &v) < 0) {
             if (errno != ERR_INV_CONTEXT) {
                 address_expression_error(bp, NULL);
                 trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
@@ -555,23 +513,15 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         if (bp->condition != NULL) {
             /* Optimize away the breakpoint if condition is always false for given context */
             Value c;
-            expression_context = ctx;
-            if (evaluate_expression(&bp_address_ctx, bp->condition, &c) == 0) {
-                switch (c.type) {
-                case VALUE_INT:
-                case VALUE_UNS:
-                    if (c.value == 0) continue;
-                    break;
-                case VALUE_STR:
-                    if (c.str == NULL) continue;
-                    break;
-                }
+            int frame = context_has_state(ctx) ? STACK_TOP_FRAME : STACK_NO_FRAME;
+            if (evaluate_expression(ctx, frame, bp->condition, &c) == 0) {
+                if (!value_to_boolean(&c)) continue;
             }
         }
         if (context_sensitive_address) {
             if (bp->address != NULL) {
-                expression_context = ctx;
-                if (evaluate_expression(&bp_address_ctx, bp->address, &v) < 0) {
+                int frame = context_has_state(ctx) ? STACK_TOP_FRAME : STACK_NO_FRAME;
+                if (evaluate_expression(ctx, frame, bp->address, &v) < 0) {
                     address_expression_error(bp, NULL);
                     if (bp->error != ERR_SYM_NOT_FOUND) {
                         trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
@@ -1331,16 +1281,11 @@ int is_breakpoint_address(Context * ctx, ContextAddress address) {
     return bi != NULL && !bi->skip && !bi->error;
 }
 
-static int condition_expression_identifier(char * name, Value * v) {
-    return address_expression_identifier(name, v);
-}
-
 int evaluate_breakpoint_condition(Context * ctx) {
     int i;
     BreakInstruction * bi = find_instruction(ctx, get_regs_PC(ctx->regs));
     if (bi == NULL) return 0;
     assert(ctx->stopped);
-    expression_context = ctx;
     for (i = 0; i < bi->ref_cnt; i++) {
         BreakpointInfo * bp = bi->refs[i];
         assert(bp->planted);
@@ -1350,19 +1295,11 @@ int evaluate_breakpoint_condition(Context * ctx) {
         if (!bp->enabled) continue;
         if (bp->condition != NULL) {
             Value v;
-            if (evaluate_expression(&bp_condition_ctx, bp->condition, &v) < 0) {
+            if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, &v) < 0) {
                 trace(LOG_ALWAYS, "%s: %s", get_expression_error_msg(), bp->condition);
                 return 1;
             }
-            switch (v.type) {
-            case VALUE_INT:
-            case VALUE_UNS:
-                if (v.value == 0) continue;
-                break;
-            case VALUE_STR:
-                if (v.str == NULL) continue;
-                break;
-            }
+            if (!value_to_boolean(&v)) continue;
         }
         if (bp->ignore_count > 0) {
             bp->hit_count++;

@@ -578,7 +578,7 @@ static void write_error_code(OutputStream * out, int err, int code) {
     if (clock_gettime(CLOCK_REALTIME, &timenow) == 0) {
         json_write_string(out, "Time");
         write_stream(out, ':');
-        json_write_ulong(out, timenow.tv_sec);
+        json_write_ulong(out, (unsigned long)timenow.tv_sec);
         write_stream(out, timenow.tv_nsec / 100000000 % 10 + '0');
         write_stream(out, timenow.tv_nsec / 10000000 % 10 + '0');
         write_stream(out, timenow.tv_nsec / 1000000 % 10 + '0');

@@ -24,7 +24,12 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <imagehlp.h>
+#if defined(__CYGWIN__)
+#  include <imagehlp.h>
+#else
+#  define _NO_CVCONST_H
+#  include <dbghelp.h>
+#endif
 #include "errors.h"
 #include "elf.h"
 #include "myalloc.h"
@@ -37,6 +42,8 @@
 #ifndef MAX_SYM_NAME
 #  define MAX_SYM_NAME 2000
 #endif
+
+#if !defined(__CYGWIN__)
 
 static int get_stack_frame(Context * ctx, int frame, IMAGEHLP_STACK_FRAME * stack_frame) {
     memset(stack_frame, 0, sizeof(IMAGEHLP_STACK_FRAME));
@@ -63,6 +70,52 @@ static void syminfo2symbol(SYMBOL_INFO * info, Symbol * symbol) {
         symbol->base = SYM_BASE_ABS;
     }
 
+    if (info->Flags & SYMFLAG_FUNCTION) {
+        symbol->type = SYM_TYPE_FUNCTION;
+    }
+
+    switch (info->Tag) {
+    case SymTagNull:
+    case SymTagExe:
+    case SymTagCompiland:
+    case SymTagCompilandDetails:
+    case SymTagCompilandEnv:
+        break;
+    case SymTagFunction:
+        symbol->type = SYM_TYPE_FUNCTION;
+        break;
+    case SymTagBlock:
+    case SymTagData:
+    case SymTagAnnotation:
+    case SymTagLabel:
+    case SymTagPublicSymbol:
+    case SymTagUDT:
+        break;
+    case SymTagEnum:
+        symbol->type = SYM_TYPE_ENUMERATION;
+        break;
+    case SymTagFunctionType:
+    case SymTagPointerType:
+    case SymTagArrayType:
+    case SymTagBaseType:
+    case SymTagTypedef:
+    case SymTagBaseClass:
+    case SymTagFriend:
+    case SymTagFunctionArgType:
+    case SymTagFuncDebugStart:
+    case SymTagFuncDebugEnd:
+    case SymTagUsingNamespace:
+    case SymTagVTableShape:
+    case SymTagVTable:
+    case SymTagCustom:
+    case SymTagThunk:
+    case SymTagCustomType:
+    case SymTagManagedType:
+    case SymTagDimension:
+    case SymTagMax:
+        break;
+    }
+
     if (info->Flags & SYMFLAG_LOCAL) {
         symbol->storage = "LOCAL";
     }
@@ -72,6 +125,8 @@ static void syminfo2symbol(SYMBOL_INFO * info, Symbol * symbol) {
 
     symbol->size = info->Size;
 }
+
+#endif
 
 int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
 
@@ -92,15 +147,19 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     sym->base = SYM_BASE_ABS;
     if (strcmp(name, "tcf_test_func0") == 0) {
         sym->value = (ContextAddress)tcf_test_func0;
+        sym->type = SYM_TYPE_FUNCTION;
     }
     else if (strcmp(name, "tcf_test_func1") == 0) {
         sym->value = (ContextAddress)tcf_test_func1;
+        sym->type = SYM_TYPE_FUNCTION;
     }
     else if (strcmp(name, "tcf_test_func2") == 0) {
         sym->value = (ContextAddress)tcf_test_func2;
+        sym->type = SYM_TYPE_FUNCTION;
     }
     else if (strcmp(name, "tcf_test_array") == 0) {
         sym->value = (ContextAddress)&tcf_test_array;
+        sym->type = SYM_TYPE_ARRAY;
     }
     else {
         error = EINVAL;
@@ -159,6 +218,8 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
 #endif
 }
 
+#if !defined(__CYGWIN__)
+
 typedef struct EnumerateSymbolsContext {
     EnumerateSymbolsCallBack * call_back;
     void * args;
@@ -171,6 +232,8 @@ static BOOL CALLBACK enumerate_symbols_proc(SYMBOL_INFO * info, ULONG symbol_siz
     enum_context->call_back(enum_context->args, info->Name, &symbol);
     return TRUE;
 }
+
+#endif
 
 int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_back, void * args) {
 #if defined(__CYGWIN__)

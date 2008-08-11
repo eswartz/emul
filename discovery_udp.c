@@ -232,7 +232,7 @@ static void udp_refresh_info(void * arg) {
         implcit_refresh, refresh_timer_active, timenow, last_refresh_time);
     if (implcit_refresh) {
         assert(refresh_timer_active);
-        if ((delta = timenow - last_refresh_time) < REFRESH_TIME) {
+        if ((delta = (int)(timenow - last_refresh_time)) < REFRESH_TIME) {
             /* Recent explicit refresh - wait a little longer */
             assert(delta > 0);
             trace(LOG_DISCOVERY, "post udp_refresh_info");

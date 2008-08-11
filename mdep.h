@@ -106,7 +106,7 @@ struct timespec {
 
 #define ETIMEDOUT 100
 
-#define vsnprintf _vsnprintf
+//#define vsnprintf _vsnprintf
 
 #define CLOCK_REALTIME 1
 typedef int clockid_t;

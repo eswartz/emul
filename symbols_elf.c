@@ -157,6 +157,8 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
         else if (SYM_IS_DATA(type)) sym->section = ".data";
         else if (SYM_IS_BSS(type)) sym->section = ".bss";
         assert(!SYM_IS_ABS(type) || sym->section == NULL);
+
+        if (SYM_IS_TEXT(type)) sym->type = SYM_TYPE_FUNCTION;
     }
 
 #else
@@ -185,6 +187,9 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
                         case STB_LOCAL: sym->storage = "LOCAL"; break;
                         case STB_GLOBAL: sym->storage = "GLOBAL"; break;
                         case STB_WEAK: sym->storage = "WEAK"; break;
+                        }
+                        switch (ELF32_ST_TYPE(s->st_info)) {
+                        case STT_FUNC: sym->type = SYM_TYPE_FUNCTION; break;
                         }
                         if (s->st_shndx > 0 && s->st_shndx < file->section_cnt) {
                             static char sec_name[128];

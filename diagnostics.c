@@ -133,10 +133,6 @@ static void command_cancel_test(char * token, Channel * c) {
 static void command_get_symbol(char * token, Channel * c) {
     char id[256];
     char name[0x1000];
-    Context * ctx;
-    Symbol sym;
-    int error = 0;
-    memset(&sym, 0, sizeof(sym));
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -145,48 +141,56 @@ static void command_get_symbol(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     
 #if SERVICE_Symbols
-    ctx = id2ctx(id);
-    if (ctx == NULL || ctx->exited) {
-        error = ERR_INV_CONTEXT;
-    }
-    else if (find_symbol(ctx, STACK_NO_FRAME, name, &sym) < 0) {
-        error = errno;
+    {
+        Context * ctx;
+        int error = 0;
+        Symbol sym;
+        
+        memset(&sym, 0, sizeof(sym));
+        ctx = id2ctx(id);
+        if (ctx == NULL || ctx->exited) {
+            error = ERR_INV_CONTEXT;
+        }
+        else if (find_symbol(ctx, STACK_NO_FRAME, name, &sym) < 0) {
+            error = errno;
+        }
+        write_stringz(&c->out, "R");
+        write_stringz(&c->out, token);
+        write_errno(&c->out, error);
+        if (error != 0) {
+            write_stringz(&c->out, "null");
+        }
+        else {
+            write_stream(&c->out, '{');
+            json_write_string(&c->out, "Abs");
+            write_stream(&c->out, ':');
+            json_write_boolean(&c->out, sym.base == SYM_BASE_ABS);
+            write_stream(&c->out, ',');
+            json_write_string(&c->out, "Value");
+            write_stream(&c->out, ':');
+            json_write_ulong(&c->out, sym.value);
+            if (sym.section != NULL) {
+                write_stream(&c->out, ',');
+                json_write_string(&c->out, "Section");
+                write_stream(&c->out, ':');
+                json_write_string(&c->out, sym.section);
+            }
+            if (sym.storage != NULL) {
+                write_stream(&c->out, ',');
+                json_write_string(&c->out, "Storage");
+                write_stream(&c->out, ':');
+                json_write_string(&c->out, sym.storage);
+            }
+            write_stream(&c->out, '}');
+            write_stream(&c->out, 0);
+        }
     }
 #else
-    ctx = NULL;
-    error = ERR_UNSUPPORTED;
-#endif
-
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
-    write_errno(&c->out, error);
-    if (error != 0) {
-        write_stringz(&c->out, "null");
-    }
-    else {
-        write_stream(&c->out, '{');
-        json_write_string(&c->out, "Abs");
-        write_stream(&c->out, ':');
-        json_write_boolean(&c->out, sym.base == SYM_BASE_ABS);
-        write_stream(&c->out, ',');
-        json_write_string(&c->out, "Value");
-        write_stream(&c->out, ':');
-        json_write_ulong(&c->out, sym.value);
-        if (sym.section != NULL) {
-            write_stream(&c->out, ',');
-            json_write_string(&c->out, "Section");
-            write_stream(&c->out, ':');
-            json_write_string(&c->out, sym.section);
-        }
-        if (sym.storage != NULL) {
-            write_stream(&c->out, ',');
-            json_write_string(&c->out, "Storage");
-            write_stream(&c->out, ':');
-            json_write_string(&c->out, sym.storage);
-        }
-        write_stream(&c->out, '}');
-        write_stream(&c->out, 0);
-    }
+    write_errno(&c->out, ERR_UNSUPPORTED);
+    write_stringz(&c->out, "null");
+#endif
     write_stream(&c->out, MARKER_EOM);
 }
 

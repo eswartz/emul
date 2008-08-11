@@ -20,33 +20,36 @@
 #define D_expression
 
 #include "protocol.h"
+#include "context.h"
 
 #define VALUE_INT 1
 #define VALUE_UNS 2
 #define VALUE_STR 3
+#define VALUE_VAR 4
 
 struct Value {
     int type;
     int value;
     char * str;
+    ContextAddress addr;
+    unsigned long size;
 };
 
 typedef struct Value Value;
 
-struct ExpressionContext {
-    int (*identifier)(char *, Value *);
-    int (*type_cast)(char *, Value *);
-};
+extern int evaluate_expression(Context * ctx, int frame, char * s, Value * v);
 
-typedef struct ExpressionContext ExpressionContext;
-
-extern int evaluate_expression(ExpressionContext * ctx, char * s, Value * v);
+extern int value_to_boolean(Value * v);
 
 extern char * get_expression_error_msg(void);
 
 extern void string_value(Value * v, char * str);
 
+#if SERVICE_Expressions
+
 extern void ini_expressions_service(Protocol * proto);
+
+#endif
 
 #endif
 

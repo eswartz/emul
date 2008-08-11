@@ -176,7 +176,7 @@ int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const
     if (abstime->tv_sec == timenow.tv_sec) {
         if (abstime->tv_nsec <= timenow.tv_nsec) return ETIMEDOUT;
     }
-    timeout = (abstime->tv_sec - timenow.tv_sec) * 1000 + (abstime->tv_nsec - timenow.tv_nsec) / 1000000 + 5;
+    timeout = (DWORD)((abstime->tv_sec - timenow.tv_sec) * 1000 + (abstime->tv_nsec - timenow.tv_nsec) / 1000000 + 5);
 
     EnterCriticalSection(&p->waiters_count_lock);
     p->waiters_count++;

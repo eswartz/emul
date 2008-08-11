@@ -128,7 +128,7 @@ static void publish_peer_reply(Channel * c, void * client_data, int error) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     if (publish_peer_refresh_active == 0) {
         publish_peer_refresh_active = 1;
-        post_event_with_delay(republish_all_peers, NULL, refresh_time*1000*1000);
+        post_event_with_delay(republish_all_peers, NULL, (unsigned long)refresh_time*1000*1000);
     }
 }
 

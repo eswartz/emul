@@ -29,10 +29,22 @@ struct Symbol {
     char * storage;
     unsigned long size;
     int base;
+    int type;
 };
 
-#define SYM_BASE_ABS 1
-#define SYM_BASE_FP  2
+#define SYM_BASE_ABS            1
+#define SYM_BASE_FP             2
+
+#define SYM_TYPE_UNKNOWN        0
+#define SYM_TYPE_CARDINAL       1
+#define SYM_TYPE_INTEGER        2
+#define SYM_TYPE_REAL           3
+#define SYM_TYPE_POINTER        4
+#define SYM_TYPE_ARRAY          5
+#define SYM_TYPE_COMPOSITE      6
+#define SYM_TYPE_ENUMERATION    7
+#define SYM_TYPE_FUNCTION       8
+
 
 typedef void EnumerateSymbolsCallBack(void *, char * name, Symbol *);
 
@@ -53,8 +65,8 @@ extern int find_symbol(Context * ctx, int frame, char * name, Symbol * sym);
 extern int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack *, void * args);
 
 /*
- * Check if given address is inside a PLT section and return address of the section.
- * Othewise return 0;
+ * Check if given address is inside a PLT section, then return address of the section.
+ * If not PLT address return 0;
  */
 extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
 

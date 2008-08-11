@@ -24,6 +24,9 @@
 #include <string.h>
 #include "myalloc.h"
 #include "exceptions.h"
+#include "stacktrace.h"
+#include "symbols.h"
+#include "breakpoints.h"
 #include "expressions.h"
 
 #define STR_POOL_SIZE 1024
@@ -59,7 +62,6 @@ typedef struct StringValue StringValue;
 #define SY_A_DIV 277
 #define SY_A_MOD 278
 
-static ExpressionContext * expr_ctx = NULL;
 static char * text = NULL;
 static int text_pos = 0;
 static int text_ch = 0;
@@ -70,6 +72,9 @@ static char text_error[256];
 static char str_pool[STR_POOL_SIZE];
 static int str_pool_cnt = 0;
 static StringValue * str_alloc_list = NULL;
+
+static Context * expression_context = NULL;
+static int expression_frame = STACK_NO_FRAME;
 
 static char * alloc_str(int len) {
     if (str_pool_cnt + len < STR_POOL_SIZE) {
@@ -371,6 +376,8 @@ static void next_sy(void) {
                 text_val.type = VALUE_STR;
                 text_val.value = 0;
                 text_val.str = alloc_str(len);
+                text_val.addr = 0;
+                text_val.size = len + 1;
                 text_pos = pos - 1;
                 next_ch();
                 while (text_ch != '"') {
@@ -388,6 +395,8 @@ static void next_sy(void) {
                 text_val.type = VALUE_UNS;
                 text_val.str = NULL;
                 text_val.value = 0;
+                text_val.addr = 0;
+                text_val.size = sizeof(int);
                 while (text_ch >= '0' && text_ch <= '9' ||
                         text_ch >= 'A' && text_ch <= 'F' ||
                         text_ch >= 'a' && text_ch <= 'f') {
@@ -398,6 +407,8 @@ static void next_sy(void) {
                 text_val.type = VALUE_INT;
                 text_val.str = NULL;
                 text_val.value = 0;
+                text_val.addr = 0;
+                text_val.size = sizeof(int);
                 while (text_ch >= '0' && text_ch <= '7') {
                     text_val.value = (text_val.value << 3) | next_oct();
                 }
@@ -409,6 +420,8 @@ static void next_sy(void) {
                 text_val.type = VALUE_INT;
                 text_val.str = NULL;
                 text_val.value = ch - '0';
+                text_val.addr = 0;
+                text_val.size = sizeof(int);
                 while (text_ch >= '0' && text_ch <= '9') {
                     text_val.value = (text_val.value * 10) + next_dec();
                 }
@@ -426,6 +439,8 @@ static void next_sy(void) {
                 text_val.type = VALUE_STR;
                 text_val.value = 0;
                 text_val.str = alloc_str(len);
+                text_val.addr = 0;
+                text_val.size = len + 1;
                 text_pos = pos - 1;
                 next_ch();
                 while (is_name_character(text_ch)) {
@@ -443,8 +458,78 @@ static void next_sy(void) {
     }
 }
 
+static int identifier(char * name, Value * v) {
+    if (v == NULL) return 0;
+    memset(v, 0, sizeof(Value));
+    if (expression_context == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    if (strcmp(name, "$thread") == 0) {
+        if (context_has_state(expression_context)) {
+            string_value(v, thread_id(expression_context));
+        }
+        else {
+            string_value(v, container_id(expression_context));
+        }
+        return 0;
+    }
+#if SERVICE_Symbols
+    {
+        Symbol sym;
+        if (find_symbol(expression_context, expression_frame, name, &sym) < 0) {
+            if (errno != ERR_SYM_NOT_FOUND) return -1;
+        }
+        else if (sym.type == SYM_TYPE_FUNCTION) {
+            v->type = VALUE_INT;
+            v->value = sym.value;
+            v->addr = 0;
+            v->size = sizeof(int);
+            return 0;
+        }
+        else {
+            v->type = VALUE_VAR;
+            v->addr = sym.value;
+            v->size = sym.size;
+            if (sym.base == SYM_BASE_FP) {
+                ContextAddress fp = 0;
+                if (get_frame_info(expression_context, expression_frame, NULL, NULL, &fp) < 0) return -1;
+                v->addr = fp + sym.value;
+            }
+            return 0;
+        }
+    }
+#endif
+    errno = ERR_SYM_NOT_FOUND;
+    return -1;
+}
+
+static void load_value(Value * v) {
+    int i = 1;
+    char * addr;
+
+    if (v->type != VALUE_VAR) return;
+    if (v->size > sizeof(int)) {
+        error(ERR_UNSUPPORTED, "Can't read variable value: too large");
+    }
+    addr = (char *)&v->addr;
+    if (*(char *)&i != 1) addr += sizeof(int) - v->size;
+    v->value = 0;
+    if (context_read_mem(expression_context, v->addr, &v->value, v->size) < 0) {
+        char msg[256];
+        int err = errno;
+        snprintf(msg, sizeof(msg), "Can't read variable value: %d %s", err, errno_to_str(err));
+        error(err, msg);
+    }
+    check_breakpoints_on_memory_read(expression_context, v->addr, &v->value, v->size);
+    v->type = VALUE_INT;
+    v->size = sizeof(int);
+    v->addr = 0;
+}
+
 static int to_boolean(Value * v) {
     if (v == NULL) return 0;
+    load_value(v);
     switch (v->type) {
     case VALUE_INT: return v->value != 0;
     case VALUE_UNS: return v->value != 0;
@@ -456,6 +541,7 @@ static int to_boolean(Value * v) {
 
 static int to_int(Value * v) {
     if (v == NULL) return 0;
+    load_value(v);
     switch (v->type) {
     case VALUE_INT: return v->value;
     case VALUE_UNS: return v->value;
@@ -467,6 +553,7 @@ static int to_int(Value * v) {
 
 static unsigned to_uns(Value * v) {
     if (v == NULL) return 0;
+    load_value(v);
     switch (v->type) {
     case VALUE_INT: return (unsigned)v->value;
     case VALUE_UNS: return (unsigned)v->value;
@@ -491,7 +578,7 @@ static void primary_expression(Value * v) {
     }
     else if (text_sy == SY_ID) {
         errno = 0;
-        if (expr_ctx->identifier == NULL || expr_ctx->identifier(text_val.str, v)) {
+        if (identifier(text_val.str, v) < 0) {
             char msg[256];
             int err = ERR_INV_EXPRESSION;
             if (errno != 0) {
@@ -534,6 +621,8 @@ static void multiplicative_expression(Value * v) {
         next_sy();
         cast_expression(v ? &x : NULL);
         if (v) {
+            load_value(v);
+            load_value(&x);
             if (v->type == VALUE_STR || x.type == VALUE_STR) {
                 error(ERR_INV_EXPRESSION, "Operation is not applicable to string");
             }
@@ -568,6 +657,8 @@ static void additive_expression(Value * v) {
         next_sy();
         multiplicative_expression(v ? &x : NULL);
         if (v) {
+            load_value(v);
+            load_value(&x);
             if (v->type == VALUE_STR && x.type == VALUE_STR) {
                 char * s;
                 if (sy != '+') error(ERR_INV_EXPRESSION, "Operation is not applicable to string");
@@ -610,6 +701,8 @@ static void shift_expression(Value * v) {
         next_sy();
         additive_expression(v ? &x : NULL);
         if (v) {
+            load_value(v);
+            load_value(&x);
             if (v->type == VALUE_STR || x.type == VALUE_STR) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
@@ -653,6 +746,8 @@ static void relational_expression(Value * v) {
         next_sy();
         shift_expression(v ? &x : NULL);
         if (v) {
+            load_value(v);
+            load_value(&x);
             if (v->type == VALUE_STR && x.type == VALUE_STR) {
                 int n = 0;
                 if (v->str == NULL && x.str == NULL) n = 0;
@@ -696,6 +791,8 @@ static void equality_expression(Value * v) {
         next_sy();
         relational_expression(v ? &x : NULL);
         if (v) {
+            load_value(v);
+            load_value(&x);
             if (v->type == VALUE_STR && x.type == VALUE_STR) {
                 if (v->str == NULL && x.str == NULL) v->value = 1;
                 else if (v->str == NULL || x.str == NULL) v->value = 0;
@@ -795,11 +892,13 @@ static void expression(Value * v) {
     conditional_expression(v);
 }
 
-int evaluate_expression(ExpressionContext * ctx, char * s, Value * v) {
+int evaluate_expression(Context * ctx, int frame, char * s, Value * v) {
     int r = 0;
     Trap trap;
+
+    expression_context = ctx;
+    expression_frame = frame;
     if (set_trap(&trap)) {
-        expr_ctx = ctx;
         text_error[0] = 0;
         text_val.str = NULL;
         str_pool_cnt = 0;
@@ -823,6 +922,10 @@ int evaluate_expression(ExpressionContext * ctx, char * s, Value * v) {
     return r;
 }
 
+int value_to_boolean(Value * v) {
+    return to_boolean(v);
+}
+
 char * get_expression_error_msg(void) {
     if (text_error[0] == 0) return NULL;
     return text_error;
@@ -841,6 +944,10 @@ typedef struct Expression Expression;
 struct Expression {
     LINK link_all;
     LINK link_id;
+    char id[256];
+    char parent[256];
+    char language[256];
+    Channel * channel;
     char * script;
 };
 
@@ -856,9 +963,26 @@ static LINK id2exp[ID2EXP_HASH_SIZE];
 #define BUF_SIZE 256
 
 static const char * EXPRESSIONS = "Expressions";
+static unsigned expr_id_cnt = 0;
 
-static int expression_context_id(char * id, char * parent, Context ** ctx, int * frame, char * name) {
+#define expression_hash(id) ((unsigned)atoi(id + 4) % ID2EXP_HASH_SIZE)
+
+static Expression * find_expression(char * id) {
+    if (id[0] == 'E' && id[1] == 'X' && id[2] == 'P' && id[3] == 'R') {
+        unsigned hash = expression_hash(id);
+        LINK * l = id2exp[hash].next;
+        while (l != &id2exp[hash]) {
+            Expression * e = link_id2exp(l);
+            l = l->next;
+            if (strcmp(e->id, id) == 0) return e;
+        }
+    }
+    return NULL;
+}
+    
+static int expression_context_id(char * id, char * parent, Context ** ctx, int * frame, char * name, Expression ** expr) {
     int err = 0;
+    Expression * e = NULL;
 
     if (id[0] == 'S') {
         char * s = id + 1;
@@ -875,25 +999,64 @@ static int expression_context_id(char * id, char * parent, Context ** ctx, int *
             name[i++] = ch;
         }
         name[i] = 0;
-        if (parent != NULL) strcpy(parent, s);
-        if ((*ctx = id2ctx(s)) != NULL) {
+        strcpy(parent, s);
+        *expr = NULL;
+    }
+    else if ((e = find_expression(id)) != NULL) {
+        name[0] = 0;
+        strcpy(parent, e->parent);
+        *expr = e;
+    }
+    else {
+        err = ERR_INV_CONTEXT;
+    }
+    if (!err) {
+        if ((*ctx = id2ctx(parent)) != NULL) {
             *frame = STACK_TOP_FRAME;
         }
-        else if (is_stack_frame_id(s, ctx, frame)) {
+        else if (is_stack_frame_id(parent, ctx, frame)) {
             /* OK */
         }
         else {
             err = ERR_INV_CONTEXT;
         }
     }
-    else {
-        err = ERR_INV_CONTEXT;
-    }
     if (err) {
         errno = err;
         return -1;
     }
     return 0;
+}
+
+static void write_context(OutputStream * out, char * id, char * parent, char * name, Expression * expr) {
+    write_stream(out, '{');
+    json_write_string(out, "ID");
+    write_stream(out, ':');
+    json_write_string(out, id);
+
+    write_stream(out, ',');
+
+    json_write_string(out, "ParentID");
+    write_stream(out, ':');
+    json_write_string(out, parent);
+
+    if (name) {
+        write_stream(out, ',');
+
+        json_write_string(out, "Name");
+        write_stream(out, ':');
+        json_write_string(out, name);
+    }
+
+    if (expr) {
+        write_stream(out, ',');
+
+        json_write_string(out, "Expression");
+        write_stream(out, ':');
+        json_write_string(out, expr->script);
+    }
+
+    write_stream(out, '}');
 }
 
 static void command_get_context(char * token, Channel * c) {
@@ -903,14 +1066,22 @@ static void command_get_context(char * token, Channel * c) {
     char name[MAX_SYM_NAME];
     Context * ctx = NULL;
     int frame = STACK_NO_FRAME;
-    Symbol sym;
+    Expression * expr = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    if (expression_context_id(id, parent, &ctx, &frame, name) < 0) err = errno;
-    if (!err && find_symbol(ctx, frame, name, &sym) < 0) err = errno;
+    if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
+
+    if (!err && expr == NULL) {
+#if SERVICE_Symbols
+        Symbol sym;
+        if (find_symbol(ctx, frame, name, &sym) < 0) err = errno;
+#else
+        err = ERR_INV_CONTEXT;
+#endif
+    }
     
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -920,29 +1091,14 @@ static void command_get_context(char * token, Channel * c) {
         write_stringz(&c->out, "null");
     }
     else {
-        write_stream(&c->out, '{');
-        json_write_string(&c->out, "ID");
-        write_stream(&c->out, ':');
-        json_write_string(&c->out, id);
-
-        write_stream(&c->out, ',');
-
-        json_write_string(&c->out, "ParentID");
-        write_stream(&c->out, ':');
-        json_write_string(&c->out, parent);
-
-        write_stream(&c->out, ',');
-
-        json_write_string(&c->out, "Name");
-        write_stream(&c->out, ':');
-        json_write_string(&c->out, name);
-
-        write_stream(&c->out, '}');
+        write_context(&c->out, id, parent, name, expr);
         write_stream(&c->out, 0);
     }
 
     write_stream(&c->out, MARKER_EOM);
 }
+
+#if SERVICE_Symbols
 
 typedef struct GetChildrenContext {
     Channel * channel;
@@ -976,12 +1132,10 @@ static void get_children_callback(void * x, char * name, Symbol * symbol) {
     args->cnt++;
 }
 
+#endif
+
 static void command_get_children(char * token, Channel * c) {
     char id[256];
-    Context * ctx;
-    int frame = STACK_NO_FRAME;
-    GetChildrenContext args;
-    int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -990,44 +1144,93 @@ static void command_get_children(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
 
+    /* TODO: Expressions.getChildren - structures */
+#if SERVICE_Symbols
+    {
+        Context * ctx;
+        int frame = STACK_NO_FRAME;
+        GetChildrenContext args;
+        int err = 0;
 
-    args.cnt = 0;
-    args.channel = c;
-    strncpy(args.id, id, sizeof(args.id));
+        args.cnt = 0;
+        args.channel = c;
+        strncpy(args.id, id, sizeof(args.id));
 
-    if ((ctx = id2ctx(id)) != NULL) {
-        if (context_has_state(ctx)) {
-            char * frame_id = get_stack_frame_id(ctx, STACK_TOP_FRAME);
-            if (frame_id == NULL) {
-                err = errno;
-            }
-            else {
-                frame = STACK_TOP_FRAME;
-                strncpy(args.id, frame_id, sizeof(args.id));
+        if ((ctx = id2ctx(id)) != NULL) {
+            if (context_has_state(ctx)) {
+                char * frame_id = get_stack_frame_id(ctx, STACK_TOP_FRAME);
+                if (frame_id == NULL) {
+                    err = errno;
+                }
+                else {
+                    frame = STACK_TOP_FRAME;
+                    strncpy(args.id, frame_id, sizeof(args.id));
+                }
             }
         }
-    }
-    else if (is_stack_frame_id(id, &ctx, &frame)) {
-        /* OK */
-    }
-    else {
-        ctx = NULL;
-    }
+        else if (is_stack_frame_id(id, &ctx, &frame)) {
+            /* OK */
+        }
+        else {
+            ctx = NULL;
+        }
 
-    if (ctx != NULL && err == 0 && enumerate_symbols(
-            ctx, frame, get_children_callback, &args) < 0) err = errno;
+        if (ctx != NULL && err == 0 && enumerate_symbols(
+                ctx, frame, get_children_callback, &args) < 0) err = errno;
 
-    if (args.cnt == 0) {
-        write_errno(&c->out, err);
-        write_stream(&c->out, '[');
+        if (args.cnt == 0) {
+            write_errno(&c->out, err);
+            write_stream(&c->out, '[');
+        }
     }
+#else
+    write_errno(&c->out, ERR_UNSUPPORTED);
+    write_stream(&c->out, '[');
+#endif
     write_stream(&c->out, ']');
     write_stream(&c->out, 0);
 
     write_stream(&c->out, MARKER_EOM);
 }
-    
+
 static void command_create(char * token, Channel * c) {
+    char parent[256];
+    char language[256];
+    char * script;
+    int err = 0;
+    Expression * e;
+
+    json_read_string(&c->inp, parent, sizeof(parent));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, language, sizeof(language));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    script = json_read_alloc_string(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    e = (Expression *)loc_alloc_zero(sizeof(Expression));
+    do snprintf(e->id, sizeof(e->id), "EXPR%d", expr_id_cnt++);
+    while (find_expression(e->id) != NULL);
+    strncpy(e->parent, parent, sizeof(e->parent));
+    strncpy(e->language, language, sizeof(e->language));
+    e->channel = c;
+    e->script = script;
+    list_add_last(&e->link_all, &expressions);
+    list_add_last(&e->link_id, id2exp + expression_hash(e->id));
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+
+    if (err) {
+        write_stringz(&c->out, "null");
+    }
+    else {
+        write_context(&c->out, e->id, parent, NULL, e);
+        write_stream(&c->out, 0);
+    }
+
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_evaluate(char * token, Channel * c) {
@@ -1035,34 +1238,30 @@ static void command_evaluate(char * token, Channel * c) {
     char id[256];
     char parent[256];
     char name[MAX_SYM_NAME];
-    Context * ctx = NULL;
-    int frame = STACK_NO_FRAME;
-    Symbol sym;
+    Context * ctx;
+    int frame;
+    Expression * expr = NULL;
+    Value value;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    if (expression_context_id(id, parent, &ctx, &frame, name) < 0) err = errno;
-    if (!err && find_symbol(ctx, frame, name, &sym) < 0) err = errno;
+    if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
+    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, &value) < 0) err = errno;
     
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     if (err) {
         write_stringz(&c->out, "null");
     }
-    else {
-        ContextAddress addr0 = sym.value;
+    else if (value.type == VALUE_VAR) {
         ContextAddress addr;
-        unsigned long size = sym.size;
+        ContextAddress addr0 = value.addr;
+        unsigned long size = value.size;
         JsonWriteBinaryState state;
         char buf[BUF_SIZE];
 
-        if (sym.base == SYM_BASE_FP) {
-            ContextAddress fp = 0;
-            if (get_frame_info(ctx, frame, NULL, NULL, &fp) < 0) err = errno;
-            addr0 = fp + sym.value;
-        }
         json_write_binary_start(&state, &c->out);
         addr = addr0;
         while (err == 0 && addr < addr0 + size) {
@@ -1080,6 +1279,27 @@ static void command_evaluate(char * token, Channel * c) {
         json_write_binary_end(&state);
         write_stream(&c->out, 0);
     }
+    else {
+        void * buf = NULL;
+        size_t size = 0;
+        JsonWriteBinaryState state;
+
+        switch (value.type) {
+        case VALUE_INT:
+        case VALUE_UNS:
+            buf = &value.value;
+            size = sizeof(value.value);
+            break;
+        case VALUE_STR:
+            buf = value.str;
+            size = value.size;
+            break;
+        }
+        json_write_binary_start(&state, &c->out);
+        json_write_binary_data(&state, buf, size);
+        json_write_binary_end(&state);
+        write_stream(&c->out, 0);
+    }
     write_errno(&c->out, err);
     if (err) {
         write_stringz(&c->out, "null");
@@ -1093,40 +1313,128 @@ static void command_evaluate(char * token, Channel * c) {
 }
 
 static void command_assign(char * token, Channel * c) {
+    char id[256];
+    int err = 0;
+    char parent[256];
+    char name[MAX_SYM_NAME];
+    Context * ctx;
+    int frame;
+    Expression * expr = NULL;
+    Value value;
+    JsonReadBinaryState state;
+    char buf[BUF_SIZE];
+    unsigned long size = 0;
+    ContextAddress addr;
+    ContextAddress addr0;
+    unsigned long size0;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+
+    if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
+    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, &value) < 0) err = errno;
+
+    addr0 = value.addr;
+    size0 = value.size;
+    addr = addr0;
+
+    json_read_binary_start(&state, &c->inp);
+    for (;;) {
+        int rd = json_read_binary_data(&state, buf, sizeof(buf));
+        if (rd == 0) break;
+        if (err == 0) {
+            if (value.type == VALUE_VAR) {
+                check_breakpoints_on_memory_write(ctx, addr, buf, rd);
+                if (context_write_mem(ctx, addr, buf, rd) < 0) {
+                    err = errno;
+                }
+                else {
+                    addr += rd;
+                }
+            }
+            else {
+                err = ERR_UNSUPPORTED;
+            }
+        }
+        size += rd;
+    }
+    json_read_binary_end(&state);
+
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    write_errno(&c->out, err);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_dispose(char * token, Channel * c) {
+    char id[256];
+    int err = 0;
+    Expression * e;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    e = find_expression(id);
+    if (e != NULL) {
+        list_remove(&e->link_all);
+        list_remove(&e->link_id);
+        loc_free(e->script);
+        loc_free(e);
+    }
+    else {
+        err = ERR_INV_CONTEXT;
+    }
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void on_channel_close(Channel * c) {
+    LINK * l = expressions.next;
+    while (l != &expressions) {
+        Expression * e = link_all2exp(l);
+        l = l->next;
+        if (e->channel == c) {
+            list_remove(&e->link_all);
+            list_remove(&e->link_id);
+            loc_free(e->script);
+            loc_free(e);
+        }
+    }
 }
 
 void ini_expressions_service(Protocol * proto) {
+    unsigned i;
 #ifndef  NDEBUG
     Value v;
-    ExpressionContext ctx = { NULL, NULL };
-    assert(evaluate_expression(&ctx, "0", &v) == 0);
+    assert(evaluate_expression(NULL, STACK_NO_FRAME, "0", &v) == 0);
     assert(v.type == VALUE_INT && v.value == 0 && v.str == NULL);
-    assert(evaluate_expression(&ctx, "0.", &v) != 0);
-    assert(evaluate_expression(&ctx, "2 * 2", &v) == 0);
+    assert(evaluate_expression(NULL, STACK_NO_FRAME, "0.", &v) != 0);
+    assert(evaluate_expression(NULL, STACK_NO_FRAME, "2 * 2", &v) == 0);
     assert(v.type == VALUE_INT && v.value == 4 && v.str == NULL);
-    assert(evaluate_expression(&ctx, "1 ? 2 : 3", &v) == 0);
+    assert(evaluate_expression(NULL, STACK_NO_FRAME, "1 ? 2 : 3", &v) == 0);
     assert(v.type == VALUE_INT && v.value == 2 && v.str == NULL);
-    assert(evaluate_expression(&ctx, "0 ? 2 : 3", &v) == 0);
+    assert(evaluate_expression(NULL, STACK_NO_FRAME, "0 ? 2 : 3", &v) == 0);
     assert(v.type == VALUE_INT && v.value == 3 && v.str == NULL);
-    assert(evaluate_expression(&ctx, "(1?2:3) == 2 && (0?2:3) == 3", &v) == 0);
+    assert(evaluate_expression(NULL, STACK_NO_FRAME, "(1?2:3) == 2 && (0?2:3) == 3", &v) == 0);
     assert(v.type == VALUE_INT && v.value == 1 && v.str == NULL);
-    assert(evaluate_expression(&ctx, "(1?2:3) != 2 || (0?2:3) != 3", &v) == 0);
+    assert(evaluate_expression(NULL, STACK_NO_FRAME, "(1?2:3) != 2 || (0?2:3) != 3", &v) == 0);
     assert(v.type == VALUE_INT && v.value == 0 && v.str == NULL);
-    assert(evaluate_expression(&ctx, "5>2 && 4<6", &v) == 0);
+    assert(evaluate_expression(NULL, STACK_NO_FRAME, "5>2 && 4<6", &v) == 0);
     assert(v.type == VALUE_INT && v.value == 1 && v.str == NULL);
-    assert(evaluate_expression(&ctx, "5<=2 || 4>=6", &v) == 0);
+    assert(evaluate_expression(NULL, STACK_NO_FRAME, "5<=2 || 4>=6", &v) == 0);
     assert(v.type == VALUE_INT && v.value == 0 && v.str == NULL);
-    assert(evaluate_expression(&ctx, "((5*2+7-1)/2)>>1==4 && 1<<3==8 && 5%2==1", &v) == 0);
+    assert(evaluate_expression(NULL, STACK_NO_FRAME, "((5*2+7-1)/2)>>1==4 && 1<<3==8 && 5%2==1", &v) == 0);
     assert(v.type == VALUE_INT && v.value == 1 && v.str == NULL);
-    assert(evaluate_expression(&ctx, "\042ABC\042 + \042DEF\042 == \042ABCDEF\042", &v) == 0);
+    assert(evaluate_expression(NULL, STACK_NO_FRAME, "\042ABC\042 + \042DEF\042 == \042ABCDEF\042", &v) == 0);
     assert(v.type == VALUE_INT && v.value == 1 && v.str == NULL);
 #endif
+    list_init(&expressions);
+    for (i = 0; i < ID2EXP_HASH_SIZE; i++) list_init(id2exp + i);
     add_channel_close_listener(on_channel_close);
     add_command_handler(proto, EXPRESSIONS, "getContext", command_get_context);
     add_command_handler(proto, EXPRESSIONS, "getChildren", command_get_children);
