@@ -1,48 +1,36 @@
-/*******************************************************************************
- * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
- * Contributors:
- *     Wind River Systems - initial API and implementation
- *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.math.BigInteger;
 
+import org.eclipse.debug.core.model.IExpression;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.graphics.RGB;
+import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
-public class TCFNodeLocalVariable extends TCFNode {
+public class TCFNodeExpression extends TCFNode {
 
-    private final TCFDataCache<IExpressions.Expression> context;
+    private final Exception error;
+    private final IExpression local_expression;
+    private final IExpressions.Expression remote_expression;
     private final TCFDataCache<IExpressions.Value> value;
+    
+    private static int expr_cnt;
 
-    TCFNodeLocalVariable(TCFNode parent, final String id) {
-        super(parent, id);
+    TCFNodeExpression(TCFNode parent, Exception error,
+            IExpression local_expression, IExpressions.Expression remote_expression) {
+        super(parent, remote_expression == null ? "Expr" + expr_cnt++ : remote_expression.getID());
+        this.error = error;
+        this.local_expression = local_expression;
+        this.remote_expression = remote_expression;
         IChannel channel = model.getLaunch().getChannel();
-        context = new TCFDataCache<IExpressions.Expression>(channel) {
-            @Override
-            protected boolean startDataRetrieval() {
-                IExpressions exps = model.getLaunch().getService(IExpressions.class);
-                command = exps.getContext(id, new IExpressions.DoneGetContext() {
-                    public void doneGetContext(IToken token, Exception error, IExpressions.Expression context) {
-                        set(token, error, context);
-                    }
-                });
-                return false;
-            }
-        };
         value = new TCFDataCache<IExpressions.Value>(channel) {
             @Override
             protected boolean startDataRetrieval() {
@@ -56,25 +44,40 @@ public class TCFNodeLocalVariable extends TCFNode {
             }
         };
     }
-
+    
+    @Override
+    void dispose() {
+        super.dispose();
+        final IChannel channel = model.getLaunch().getChannel();
+        if (channel.getState() != IChannel.STATE_OPEN) return;
+        IExpressions exps = channel.getRemoteService(IExpressions.class);
+        if (exps != null) {
+            exps.dispose(id, new IExpressions.DoneDispose() {
+                public void doneDispose(IToken token, Exception error) {
+                    if (error == null) return;
+                    if (channel.getState() != IChannel.STATE_OPEN) return;
+                    Activator.log("Error disposing remote expression evaluator", error);
+                }
+            });
+        }
+    }
+    
     void onSuspended() {
         value.reset();
         addModelDelta(IModelDelta.STATE);
     }
-
+    
+    IExpression getExpression() {
+        return local_expression;
+    }
+    
     private void setLabel(ILabelUpdate result, int col, int radix) {
-        IExpressions.Expression ctx = context.getData();
         Throwable error = value.getError();
         IExpressions.Value val = value.getData();
         byte[] data = val.getValue();
         if (error != null) {
-            if (col >= 0) {
-                result.setForeground(new RGB(255, 0, 0), col);
-                result.setLabel(error.getMessage(), col);
-            }
-            else {
-                result.setLabel(ctx.getName() + ": " + error.getMessage(), 0);
-            }
+            result.setForeground(new RGB(255, 0, 0), col);
+            result.setLabel(local_expression.getExpressionText() + ": " + error.getMessage(), col);
         }
         else if (data != null) {
             byte[] temp = new byte[data.length + 1];
@@ -103,7 +106,7 @@ public class TCFNodeLocalVariable extends TCFNode {
                 result.setLabel(s, col);
             }
             else {
-                result.setLabel(ctx.getName() + " = " + s, 0);
+                result.setLabel(remote_expression.getName() + " = " + s, 0);
             }
         }
     }
@@ -111,13 +114,11 @@ public class TCFNodeLocalVariable extends TCFNode {
     @Override
     protected void getData(ILabelUpdate result) {
         result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
-        IExpressions.Expression ctx = context.getData();
-        Throwable error = context.getError();
         if (error != null) {
             result.setForeground(new RGB(255, 0, 0), 0);
-            result.setLabel(id + ": " + error.getClass().getName() + ": " + error.getMessage(), 0);
+            result.setLabel(local_expression.getExpressionText() + ": " + error.getMessage(), 0);
         }
-        else if (ctx != null) {
+        else {
             String[] cols = result.getColumnIds();
             if (cols == null) {
                 setLabel(result, -1, 16);
@@ -125,26 +126,23 @@ public class TCFNodeLocalVariable extends TCFNode {
             else {
                 for (int i = 0; i < cols.length; i++) {
                     String c = cols[i];
-                    if (c.equals(TCFColumnPresentationVariable.COL_NAME)) {
-                        result.setLabel(ctx.getName(), i);
+                    if (c.equals(TCFColumnPresentationExpression.COL_NAME)) {
+                        result.setLabel(remote_expression.getExpression(), i);
                     }
-                    else if (c.equals(TCFColumnPresentationVariable.COL_HEX_VALUE)) {
+                    else if (c.equals(TCFColumnPresentationExpression.COL_HEX_VALUE)) {
                         setLabel(result, i, 16);
                     }
-                    else if (c.equals(TCFColumnPresentationVariable.COL_DEC_VALUE)) {
+                    else if (c.equals(TCFColumnPresentationExpression.COL_DEC_VALUE)) {
                         setLabel(result, i, 10);
                     }
                 }
             }
         }
-        else {
-            result.setLabel(id, 0);
-        }
     }
 
     @Override
     int getRelevantModelDeltaFlags(IPresentationContext p) {
-        if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
+        if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(p.getId())) {
             return super.getRelevantModelDeltaFlags(p);
         }
         return 0;
@@ -152,24 +150,15 @@ public class TCFNodeLocalVariable extends TCFNode {
 
     @Override
     public void invalidateNode() {
-        context.reset();
         value.reset();
     }
 
     @Override
     public boolean validateNode(Runnable done) {
-        TCFDataCache<?> pending = null;
-        if (!context.validate()) pending = context;
-        if (!value.validate()) pending = value;
-        if (pending != null) {
-            pending.wait(done);
+        if (!value.validate()) {
+            value.wait(done);
             return false;
         }
         return true;
-    }
-
-    @Override
-    protected String getImageName() {
-        return ImageCache.IMG_VARIABLE;
     }
 }

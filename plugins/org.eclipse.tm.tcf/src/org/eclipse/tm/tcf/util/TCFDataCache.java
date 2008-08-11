@@ -130,7 +130,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         this.error = error;
         this.data = data;
         valid = true;
-        run();
+        Protocol.invokeLater(this);
     }
 
     /**
@@ -145,7 +145,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         this.data = data;
         error = null;
         valid = true;
-        run();
+        Protocol.invokeLater(this);
     }
     
     /**
@@ -155,7 +155,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         error = null;
         valid = false;
         data = null;
-        run();
+        Protocol.invokeLater(this);
     }
     
     /**
@@ -169,7 +169,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         error = null;
         valid = false;
         data = null;
-        run();
+        Protocol.invokeLater(this);
     }
     
     /**

@@ -215,8 +215,7 @@ public class TCFNodeExecContext extends TCFNode {
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && ctx.hasState()) {
             if (!children_stack.isValid()) return -1;
-            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId()) ||
-                    IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
+            if (!IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getId())) {
                 TCFNodeStackFrame frame = children_stack.getTopFrame();
                 if (frame == null) return -1;
                 return frame.getNodeIndex(p, n);
@@ -233,8 +232,7 @@ public class TCFNodeExecContext extends TCFNode {
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && ctx.hasState()) {
             if (!children_stack.isValid()) return -1;
-            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId()) ||
-                    IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
+            if (!IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getId())) {
                 TCFNodeStackFrame frame = children_stack.getTopFrame();
                 if (frame == null) return -1;
                 return frame.getChildrenCount(p);
@@ -249,8 +247,7 @@ public class TCFNodeExecContext extends TCFNode {
     protected void getData(IChildrenCountUpdate result) {
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && ctx.hasState()) {
-            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId()) ||
-                    IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
                 TCFNodeStackFrame frame = children_stack.getTopFrame();
                 if (frame == null) result.setChildCount(0);
                 else frame.getData(result);
@@ -269,8 +266,7 @@ public class TCFNodeExecContext extends TCFNode {
         TCFNode[] arr = null;
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && ctx.hasState()) {
-            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId()) ||
-                    IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
                 TCFNodeStackFrame frame = children_stack.getTopFrame();
                 if (frame == null) {
                     arr = new TCFNode[0];
@@ -302,8 +298,7 @@ public class TCFNodeExecContext extends TCFNode {
     protected void getData(IHasChildrenUpdate result) {
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && ctx.hasState()) {
-            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId()) ||
-                    IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
                 TCFNodeStackFrame frame = children_stack.getTopFrame();
                 if (frame == null) result.setHasChilren(false);
                 else frame.getData(result);

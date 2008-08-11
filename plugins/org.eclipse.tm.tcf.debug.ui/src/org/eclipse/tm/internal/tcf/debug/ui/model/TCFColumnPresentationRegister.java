@@ -18,19 +18,36 @@ public class TCFColumnPresentationRegister implements IColumnPresentation {
     
     public static final String PRESENTATION_ID = "Registers";
     
+    /**
+     * Presentation column IDs.
+     */
+    public static final String
+        COL_NAME = "Name",
+        COL_HEX_VALUE = "HexValue",
+        COL_DEC_VALUE = "DecValue",
+        COL_DESCRIPTION = "Description",
+        COL_READBLE = "Readable",
+        COL_READ_ONCE = "ReadOnce",
+        COL_WRITEABLE = "Writeable",
+        COL_WRITE_ONCE = "WriteOnce",
+        COL_SIDE_EFFECTS = "SideEffects",
+        COL_VOLATILE = "Volatile",
+        COL_FLOAT = "Float",
+        COL_MNEMONIC = "Menimonic";
+
     private static String[] cols_all = {
-        TCFNodeRegister.COL_NAME,
-        TCFNodeRegister.COL_HEX_VALUE,
-        TCFNodeRegister.COL_DEC_VALUE,
-        TCFNodeRegister.COL_DESCRIPTION,
-        TCFNodeRegister.COL_READBLE,
-        TCFNodeRegister.COL_READ_ONCE,
-        TCFNodeRegister.COL_WRITEABLE,
-        TCFNodeRegister.COL_WRITE_ONCE,
-        TCFNodeRegister.COL_SIDE_EFFECTS,
-        TCFNodeRegister.COL_VOLATILE,
-        TCFNodeRegister.COL_FLOAT,
-        TCFNodeRegister.COL_MNEMONIC
+        COL_NAME,
+        COL_HEX_VALUE,
+        COL_DEC_VALUE,
+        COL_DESCRIPTION,
+        COL_READBLE,
+        COL_READ_ONCE,
+        COL_WRITEABLE,
+        COL_WRITE_ONCE,
+        COL_SIDE_EFFECTS,
+        COL_VOLATILE,
+        COL_FLOAT,
+        COL_MNEMONIC
     };
     
     private static String[] headers  = {
@@ -49,11 +66,11 @@ public class TCFColumnPresentationRegister implements IColumnPresentation {
     };
 
     private static String[] cols_ini = {
-        TCFNodeRegister.COL_NAME,
-        TCFNodeRegister.COL_HEX_VALUE,
-        TCFNodeRegister.COL_DEC_VALUE,
-        TCFNodeRegister.COL_DESCRIPTION,
-        TCFNodeRegister.COL_MNEMONIC
+        COL_NAME,
+        COL_HEX_VALUE,
+        COL_DEC_VALUE,
+        COL_DESCRIPTION,
+        COL_MNEMONIC
     };
     
     public void dispose() {

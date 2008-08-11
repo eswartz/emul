@@ -203,8 +203,8 @@ public interface IExpressions extends IService {
      * 2. expression with type of an enumeration - enumerators;
      * 3. expression with type of an array - array elements;
      * 4. stack frame - function arguments and local variables;
-     * 4. thread - top stack frame function arguments and local variables;
-     * 5. process - global variables;
+     * 5. thread - top stack frame function arguments and local variables;
+     * 6. process - global variables;
      * 
      * Children list does *not* include IDs of expressions that were created by clients
      * using "create" command.
@@ -237,7 +237,7 @@ public interface IExpressions extends IService {
      * @param done - call back interface called when operation is completed.
      * @return - pending command handle.
      */
-    IToken create(String parent_id, String expression, DoneCreate done);
+    IToken create(String parent_id, String language, String expression, DoneCreate done);
 
     /**
      * Client call back interface for create().

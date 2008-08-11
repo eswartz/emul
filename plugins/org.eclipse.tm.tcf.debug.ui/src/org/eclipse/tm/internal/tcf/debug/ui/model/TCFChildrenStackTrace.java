@@ -77,7 +77,7 @@ public class TCFChildrenStackTrace extends TCFChildren {
         assert command == null;
         command = st.getChildren(node.id, new IStackTrace.DoneGetChildren() {
             public void doneGetChildren(IToken token, Exception error, String[] contexts) {
-                if (command == token && error == null) {
+                if (command == token && error == null && contexts != null) {
                     int cnt = contexts.length;
                     for (String id : contexts) {
                         cnt--;

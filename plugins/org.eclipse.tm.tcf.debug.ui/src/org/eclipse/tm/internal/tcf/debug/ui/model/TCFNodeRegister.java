@@ -28,24 +28,6 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 //TODO: hierarchical registers
 public class TCFNodeRegister extends TCFNode {
 
-    /**
-     * Presentation column IDs.
-     */
-    public static final String
-        COL_NAME = "Name",
-        COL_HEX_VALUE = "HexValue",
-        COL_DEC_VALUE = "DecValue",
-        COL_DESCRIPTION = "Description",
-        COL_READBLE = "Readable",
-        COL_READ_ONCE = "ReadOnce",
-        COL_WRITEABLE = "Writeable",
-        COL_WRITE_ONCE = "WriteOnce",
-        COL_SIDE_EFFECTS = "SideEffects",
-        COL_VOLATILE = "Volatile",
-        COL_FLOAT = "Float",
-        COL_MNEMONIC = "Menimonic";
-
-
     private final TCFDataCache<IRegisters.RegistersContext> context;
     private final TCFDataCache<byte[]> value;
 
@@ -103,18 +85,42 @@ public class TCFNodeRegister extends TCFNode {
             else {
                 for (int i = 0; i < cols.length; i++) {
                     String c = cols[i];
-                    if (c.equals(COL_NAME)) result.setLabel(ctx.getName(), i);
-                    else if (c.equals(COL_HEX_VALUE)) setLabel(result, i, 16);
-                    else if (c.equals(COL_DEC_VALUE)) setLabel(result, i, 10);
-                    else if (c.equals(COL_DESCRIPTION)) result.setLabel(ctx.getDescription(), i);
-                    else if (c.equals(COL_READBLE)) result.setLabel(bool(ctx.isReadable()), i);
-                    else if (c.equals(COL_READ_ONCE)) result.setLabel(bool(ctx.isReadOnce()), i);
-                    else if (c.equals(COL_WRITEABLE)) result.setLabel(bool(ctx.isWriteable()), i);
-                    else if (c.equals(COL_WRITE_ONCE)) result.setLabel(bool(ctx.isWriteOnce()), i);
-                    else if (c.equals(COL_SIDE_EFFECTS)) result.setLabel(bool(ctx.hasSideEffects()), i);
-                    else if (c.equals(COL_VOLATILE)) result.setLabel(bool(ctx.isVolatile()), i);
-                    else if (c.equals(COL_FLOAT)) result.setLabel(bool(ctx.isFloat()), i);
-                    else if (c.equals(COL_MNEMONIC)) result.setLabel(getMnemonic(ctx), i);
+                    if (c.equals(TCFColumnPresentationRegister.COL_NAME)) {
+                        result.setLabel(ctx.getName(), i);
+                    }
+                    else if (c.equals(TCFColumnPresentationRegister.COL_HEX_VALUE)) {
+                        setLabel(result, i, 16);
+                    }
+                    else if (c.equals(TCFColumnPresentationRegister.COL_DEC_VALUE)) {
+                        setLabel(result, i, 10);
+                    }
+                    else if (c.equals(TCFColumnPresentationRegister.COL_DESCRIPTION)) {
+                        result.setLabel(ctx.getDescription(), i);
+                    }
+                    else if (c.equals(TCFColumnPresentationRegister.COL_READBLE)) {
+                        result.setLabel(bool(ctx.isReadable()), i);
+                    }
+                    else if (c.equals(TCFColumnPresentationRegister.COL_READ_ONCE)) {
+                        result.setLabel(bool(ctx.isReadOnce()), i);
+                    }
+                    else if (c.equals(TCFColumnPresentationRegister.COL_WRITEABLE)) {
+                        result.setLabel(bool(ctx.isWriteable()), i);
+                    }
+                    else if (c.equals(TCFColumnPresentationRegister.COL_WRITE_ONCE)) {
+                        result.setLabel(bool(ctx.isWriteOnce()), i);
+                    }
+                    else if (c.equals(TCFColumnPresentationRegister.COL_SIDE_EFFECTS)) {
+                        result.setLabel(bool(ctx.hasSideEffects()), i);
+                    }
+                    else if (c.equals(TCFColumnPresentationRegister.COL_VOLATILE)) {
+                        result.setLabel(bool(ctx.isVolatile()), i);
+                    }
+                    else if (c.equals(TCFColumnPresentationRegister.COL_FLOAT)) {
+                        result.setLabel(bool(ctx.isFloat()), i);
+                    }
+                    else if (c.equals(TCFColumnPresentationRegister.COL_MNEMONIC)) {
+                        result.setLabel(getMnemonic(ctx), i);
+                    }
                 }
             }
         }

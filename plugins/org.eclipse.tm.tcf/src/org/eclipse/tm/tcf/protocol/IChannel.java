@@ -237,6 +237,8 @@ public interface IChannel {
     Collection<String> getRemoteServices();
 
     /**
+     * Get a proxy for remote service.
+     * @param service_name - remote service name
      * @return an object (proxy) representing a service from remote peer.
      * Return null if the service is not available.
      * Return an instance of GenericProxy if 'service_name' is not a standard TCF service.
@@ -244,6 +246,8 @@ public interface IChannel {
     IService getRemoteService(String service_name);
 
     /**
+     * Get a proxy for remote service.
+     * @param service_interface - service interface class
      * @return an object (proxy) representing a service from remote peer,
      * which implements given interface.
      * Return null if implementation of the interface is not available.
@@ -253,10 +257,13 @@ public interface IChannel {
     /**
      * Install a service proxy object on this channel.
      * This method can be called only from channel open call-back.
-     * It allows a client to extends TCF by adding proxy objects for non-standard services.
+     * It allows a client to extend TCF by adding proxy objects for non-standard services.
      * Client, wishing to become service proxy provider, should register itself
      * using either Protocol.addChannelOpenListener() or IChannel.addChannelListener().
-     * It is not allowed to register more then one proxy for a given service interface.   
+     * It is not allowed to install more then one proxy for a given service interface on
+     * a particular channel.
+     * @param service_interface - service interface class
+     * @param service_proxy - service proxy object    
      */
     <V extends IService> void setServiceProxy(Class<V> service_interface, IService service_proxy);
     

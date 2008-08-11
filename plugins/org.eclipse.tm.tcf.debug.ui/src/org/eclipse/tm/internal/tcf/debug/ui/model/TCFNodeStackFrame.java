@@ -37,6 +37,7 @@ public class TCFNodeStackFrame extends TCFNode {
     private int frame_no;
     private final TCFChildrenRegisters children_regs;
     private final TCFChildrenLocalVariables children_vars;
+    private final TCFChildrenExpressions children_exps;
     private final TCFDataCache<IStackTrace.StackTraceContext> stack_trace_context;
     private final TCFDataCache<TCFSourceRef> line_info;
     
@@ -44,6 +45,7 @@ public class TCFNodeStackFrame extends TCFNode {
         super(parent, id);
         children_regs = new TCFChildrenRegisters(this);
         children_vars = new TCFChildrenLocalVariables(this);
+        children_exps = new TCFChildrenExpressions(this);
         IChannel channel = model.getLaunch().getChannel();
         stack_trace_context = new TCFDataCache<IStackTrace.StackTraceContext>(channel) {
             @Override
@@ -132,6 +134,7 @@ public class TCFNodeStackFrame extends TCFNode {
     void dispose() {
         children_regs.dispose();
         children_vars.dispose();
+        children_exps.dispose();
         super.dispose();
     }
 
@@ -139,6 +142,7 @@ public class TCFNodeStackFrame extends TCFNode {
     void dispose(String id) {
         children_regs.dispose(id);
         children_vars.dispose(id);
+        children_exps.dispose(id);
     }
     
     public TCFDataCache<IStackTrace.StackTraceContext> getStackTraceContext() {
@@ -177,13 +181,15 @@ public class TCFNodeStackFrame extends TCFNode {
             if (!children_regs.isValid()) return -1;
             return children_regs.getIndexOf(n);
         }
-        else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
+        if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
             if (!children_vars.isValid()) return -1;
             return children_vars.getIndexOf(n);
         }
-        else {
-            return 0;
+        if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(p.getId())) {
+            if (!children_exps.isValid()) return -1;
+            return children_exps.getIndexOf(n);
         }
+        return 0;
     }
     
     @Override
@@ -192,13 +198,15 @@ public class TCFNodeStackFrame extends TCFNode {
             if (!children_regs.isValid()) return -1;
             return children_regs.size();
         }
-        else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
+        if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
             if (!children_vars.isValid()) return -1;
             return children_vars.size();
         }
-        else {
-            return 0;
+        if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(p.getId())) {
+            if (!children_exps.isValid()) return -1;
+            return children_exps.size();
         }
+        return 0;
     }
 
     @Override
@@ -208,6 +216,9 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
             result.setChildCount(children_vars.size());
+        }
+        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
+            result.setChildCount(children_exps.size());
         }
         else {
             result.setChildCount(0);
@@ -222,6 +233,9 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
             arr = children_vars.toArray();
+        }
+        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
+            arr = children_exps.toArray();
         }
         else {
             arr = new TCFNode[0];
@@ -244,6 +258,9 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
             result.setHasChilren(children_vars.size() > 0);
+        }
+        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
+            result.setHasChilren(children_exps.size() > 0);
         }
         else {
             result.setHasChilren(false);
@@ -297,6 +314,7 @@ public class TCFNodeStackFrame extends TCFNode {
         line_info.reset();
         children_regs.onSuspended();
         children_vars.onSuspended();
+        children_exps.onSuspended();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
     
@@ -311,6 +329,7 @@ public class TCFNodeStackFrame extends TCFNode {
         line_info.reset();
         children_regs.reset();
         children_vars.reset();
+        children_exps.reset();
     }
 
     @Override
@@ -318,6 +337,7 @@ public class TCFNodeStackFrame extends TCFNode {
         stack_trace_context.validate();
         children_regs.validate();
         children_vars.validate();
+        children_exps.validate();
         if (!stack_trace_context.isValid()) {
             stack_trace_context.wait(done);
             return false;
@@ -328,6 +348,10 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         if (!children_vars.isValid()) {
             children_vars.wait(done);
+            return false;
+        }
+        if (!children_exps.isValid()) {
+            children_exps.wait(done);
             return false;
         }
         if (!line_info.validate()) {

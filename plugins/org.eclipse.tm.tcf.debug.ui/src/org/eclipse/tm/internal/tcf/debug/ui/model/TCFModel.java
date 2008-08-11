@@ -303,18 +303,19 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         fireModelChanged();
     }
 
-    void onProxyInstalled(final TCFModelProxy p) {
-        Protocol.invokeAndWait(new Runnable() {
+    void onProxyInstalled(final IPresentationContext p, final TCFModelProxy mp) {
+        Protocol.invokeLater(new Runnable() {
             public void run() {
-                model_proxies.put(p.getPresentationContext(), p);
+                model_proxies.put(p, mp);
             }
         });
     }
 
-    void onProxyDisposed(final TCFModelProxy p) {
+    void onProxyDisposed(final IPresentationContext p) {
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
-                model_proxies.remove(p.getPresentationContext());
+                assert model_proxies.containsKey(p);
+                model_proxies.remove(p);
             }
         });
     }
@@ -475,6 +476,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (id == null) return null;
         if (id.equals(TCFColumnPresentationRegister.PRESENTATION_ID)) return new TCFColumnPresentationRegister();
         if (id.equals(TCFColumnPresentationVariable.PRESENTATION_ID)) return new TCFColumnPresentationVariable();
+        if (id.equals(TCFColumnPresentationExpression.PRESENTATION_ID)) return new TCFColumnPresentationExpression();
         return null;
     }
 
@@ -484,6 +486,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
         if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(context.getId())) {
             return TCFColumnPresentationVariable.PRESENTATION_ID; 
+        }
+        if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(context.getId())) {
+            return TCFColumnPresentationExpression.PRESENTATION_ID; 
         }
         return null;
     }

@@ -147,8 +147,8 @@ public class ExpressionsProxy implements IExpressions {
         }.token;
     }
 
-    public IToken create(String parent_id, String expression, final DoneCreate done) {
-        return new Command(channel, this, "create", new Object[]{ parent_id, expression }) {
+    public IToken create(String parent_id, String language, String expression, final DoneCreate done) {
+        return new Command(channel, this, "create", new Object[]{ parent_id, language, expression }) {
             @SuppressWarnings("unchecked")
             @Override
             public void done(Exception error, Object[] args) {

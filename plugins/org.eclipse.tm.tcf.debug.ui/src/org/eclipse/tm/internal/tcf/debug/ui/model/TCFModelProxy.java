@@ -36,13 +36,15 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy {
         this.model = model;
     }
 
-    public void installed(Viewer viewer) {
+    public synchronized void installed(Viewer viewer) {
         super.installed(viewer);
-        model.onProxyInstalled(this);
+        IPresentationContext p = getPresentationContext();
+        if (p != null) model.onProxyInstalled(p, this);
     }
 
-    public void dispose() {
-        model.onProxyDisposed(this);
+    public synchronized void dispose() {
+        IPresentationContext p = getPresentationContext();
+        if (p != null) model.onProxyDisposed(p);
         super.dispose();
     }
     

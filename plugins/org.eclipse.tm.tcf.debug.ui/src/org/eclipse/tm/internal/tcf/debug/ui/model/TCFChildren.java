@@ -27,6 +27,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     
     private final int pool_margin;
     private final Map<String,TCFNode> node_pool = new LinkedHashMap<String,TCFNode>(32, 0.75f, true);
+    private boolean disposed;
 
     TCFChildren(IChannel channel) {
         super(channel);
@@ -39,21 +40,30 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     }
     
     void dispose() {
-        if (node_pool.isEmpty()) return;
-        TCFNode a[] = node_pool.values().toArray(new TCFNode[node_pool.size()]);
-        for (int i = 0; i < a.length; i++) a[i].dispose();
-        assert node_pool.isEmpty();
+        assert !disposed;
+        if (!node_pool.isEmpty()) {
+            TCFNode a[] = node_pool.values().toArray(new TCFNode[node_pool.size()]);
+            for (int i = 0; i < a.length; i++) a[i].dispose();
+            assert node_pool.isEmpty();
+        }
+        disposed = true;
+        super.reset(null);
     }
     
     void dispose(String id) {
         node_pool.remove(id);
         if (isValid()) {
-            Map<String,TCFNode> map = getData();
-            if (map != null) map.remove(id);
+            Map<String,TCFNode> data = getData();
+            if (data != null) data.remove(id);
         }
     }
     
-    private void flush(Map<String,TCFNode> data) {
+    boolean isDisposed() {
+        return disposed;
+    }
+    
+    private void addToPool(Map<String,TCFNode> data) {
+        assert !disposed;
         node_pool.putAll(data);
         if (node_pool.size() > data.size() + pool_margin) {
             String[] arr = node_pool.keySet().toArray(new String[node_pool.size()]);
@@ -66,10 +76,23 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         }
     }
     
+    /**
+     * End cache pending state.
+     * @param token - pending command handle.
+     * @param error - data retrieval error or null
+     * @param data - up-to-date map of children nodes
+     */
+    @Override
     public void set(IToken token, Throwable error, Map<String,TCFNode> data) {
-        if (data != null) {
+        if (disposed) {
+            // A command can return data after the cache element has been disposed.
+            // Just ignore the data in such case.
+            super.set(token, null, null);
+            assert node_pool.isEmpty();
+        }
+        else if (data != null) {
             super.set(token, error, data);
-            flush(data);
+            addToPool(data);
         }
         else {
             super.set(token, error, new HashMap<String,TCFNode>());
@@ -80,10 +103,12 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
      * Set given data to the cache, mark cache as valid, cancel any pending data retrieval.
      * @param data - up-to-date data to store in the cache, null means empty collection of nodes.
      */
+    @Override
     public void reset(Map<String,TCFNode> data) {
+        assert !disposed;
         if (data != null) {
             super.reset(data);
-            flush(data);
+            addToPool(data);
         }
         else {
             super.reset(new HashMap<String,TCFNode>());
@@ -95,8 +120,13 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
      * @param n - a node.
      */
     void add(TCFNode n) {
+        assert !disposed;
+        assert node_pool.get(n.id) == null;
         node_pool.put(n.id, n);
-        if (isValid()) getData().put(n.id, n);
+        if (isValid()) {
+            Map<String,TCFNode> data = getData();
+            if (data != null) data.put(n.id, n);
+        }
     }
     
     /** Return collection of all nodes, including current children as well as
@@ -115,7 +145,8 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
      */
     int size() {
         assert isValid();
-        return getData().size();
+        Map<String,TCFNode> data = getData();
+        return data == null ? 0 : data.size();
     }
     
     /**
@@ -138,6 +169,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     TCFNode[] toArray() {
         assert isValid();
         Map<String,TCFNode> data = getData();
+        if (data == null) return new TCFNode[0];
         TCFNode[] arr = data.values().toArray(new TCFNode[data.size()]);
         Arrays.sort(arr);
         return arr;
