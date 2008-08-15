@@ -521,15 +521,15 @@ static void command_start(char * token, Channel * c) {
             if (pid == 0) {
                 int fd;
 
-                if (attach && context_attach_self() < 0) exit(1);
+                if (attach && context_attach_self() < 0) exit(errno);
                 fd = sysconf(_SC_OPEN_MAX);
-                if (fd < 0) exit(2);
+                if (fd < 0) exit(errno);
                 while (fd-- > 0) close(fd);
-                if (open("/dev/null", O_RDONLY) != 0) exit(3);
-                if (open("/dev/null", O_WRONLY) != 1) exit(4);
+                if (open("/dev/null", O_RDONLY) != 0) exit(errno);
+                if (open("/dev/null", O_WRONLY) != 1) exit(errno);
                 if (dup(1) != 2) exit(5);
                 execve(exe, args, envp);
-                exit(6);
+                exit(errno);
             }
             selfattach = 1;
 #endif            

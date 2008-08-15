@@ -1686,15 +1686,41 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     return 0;
 }
 
+static Context * find_pending(pid_t pid) {
+    LINK * qp = pending_list.next;
+    while (qp != &pending_list) {
+        Context * c = ctxl2ctxp(qp);
+        if (c->pid == pid) return c;
+        qp = qp->next;
+    }
+    return NULL;
+}
+
 static void event_pid_exited(void * arg) {
     struct pid_exit_info * eap = arg;
     Context * ctx;
 
     ctx = context_find_from_pid(eap->pid);
     if (ctx == NULL) {
-        trace(LOG_EVENTS, "event: ctx not found, pid %d, exit status %d", eap->pid, eap->value);
+        ctx = find_pending(eap->pid);
+        if (ctx == NULL) {
+            trace(LOG_EVENTS, "event: ctx not found, pid %d, exit status %d", eap->pid, eap->value);
+        }
+        else {
+            assert(ctx->ref_count == 0);
+            if (ctx->attach_callback != NULL) {
+                ctx->attach_callback(eap->value, ctx, ctx->attach_data);
+                ctx->attach_callback = NULL;
+                ctx->attach_data = NULL;
+            }
+            assert(list_is_empty(&ctx->children));
+            assert(ctx->parent == NULL);
+            list_remove(&ctx->ctxl);
+            loc_free(ctx);
+        }
     }
     else {
+        assert(ctx->attach_callback == NULL);
         if (ctx->stopped || ctx->intercepted || ctx->exited) {
             trace(LOG_EVENTS, "event: ctx %#x, pid %d, exit status %d unexpected, stopped %d, intercepted %d, exited %d",
                 ctx, eap->pid, eap->value, ctx->stopped, ctx->intercepted, ctx->exited);
@@ -1744,16 +1770,6 @@ static void event_pid_exited(void * arg) {
 #else
 #   error "get_syscall_id() is not implemented for CPU other then X86"
 #endif
-
-static Context * find_pending(pid_t pid) {
-    LINK * qp = pending_list.next;
-    while (qp != &pending_list) {
-        Context * c = ctxl2ctxp(qp);
-        if (c->pid == pid) return c;
-        qp = qp->next;
-    }
-    return NULL;
-}
 
 static void event_pid_stopped(void * arg) {
     unsigned long msg = 0;
