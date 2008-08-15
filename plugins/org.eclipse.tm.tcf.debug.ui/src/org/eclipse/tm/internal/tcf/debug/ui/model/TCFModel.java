@@ -47,8 +47,11 @@ import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
@@ -289,10 +292,27 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     void onDisconnected() {
         assert Protocol.isDispatchThread();
         if (launch_node != null) {
-            launchChanged();
             launch_node.dispose();
             launch_node = null;
         }
+        final Throwable error = launch.getError();
+        if (error != null) launch.setError(null);
+        display.asyncExec(new Runnable() {
+            public void run() {
+                IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+                if (window == null) return;
+                IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_DEBUG_VIEW);
+                if (view != null) ((StructuredViewer)view.getViewer()).refresh(launch);
+                if (error != null) {
+                    String msg = error.getLocalizedMessage();
+                    if (msg == null || msg.length() == 0) msg = error.getClass().getName();
+                    MessageBox mb = new MessageBox(window.getShell(), SWT.ICON_ERROR | SWT.OK);
+                    mb.setText("TCF Connection Error");
+                    mb.setMessage("Communication channel is closed.\n" + msg);
+                    mb.open();
+                }
+            }
+        });
         assert id2node.size() == 0;
     }
     

@@ -32,6 +32,7 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
             if (error != null) {
                 String msg = error.getLocalizedMessage();
                 if (msg == null || msg.length() == 0) msg = error.getClass().getName();
+                else msg = msg.replace('\n', '|');
                 status += " - " + msg;
                 result.setForeground(new RGB(255, 0, 0), 0);
             }

@@ -107,7 +107,6 @@ public class TCFLaunch extends Launch {
         for (Iterator<Listener> i = listeners.iterator(); i.hasNext();) {
             i.next().onDisconnected(this);
         }
-        if (error != null) this.error = error;
         fireChanged();
         runShutdownSequence(new Runnable() {
             public void run() {
@@ -208,13 +207,14 @@ public class TCFLaunch extends Launch {
     }
     
     public void setError(Throwable x) {
-        if (error != null) return;
         error = x;
-        if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
-            channel.terminate(x);
-        }
-        else if (!connecting) {
-            disconnected = true;
+        if (x != null) {
+            if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
+                channel.terminate(x);
+            }
+            else if (!connecting) {
+                disconnected = true;
+            }
         }
         fireChanged();
     }
