@@ -206,7 +206,7 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
                     private void error(final Throwable x) {
                         Protocol.invokeLater(new Runnable() {
                             public void run() {
-                                error(x);
+                                exit(x);
                             }
                         });
                     }

@@ -78,6 +78,7 @@ public abstract class TCFDataCache<V> implements Runnable {
      * It is responsibility of clients to check if the state change was one they are waiting for.
      */
     public void run() {
+        assert Protocol.isDispatchThread();
         if (waiting_list.isEmpty()) return;
         Runnable[] arr = waiting_list.toArray(new Runnable[waiting_list.size()]);
         waiting_list.clear();
@@ -138,6 +139,7 @@ public abstract class TCFDataCache<V> implements Runnable {
      * @param data - up-to-date data object
      */
     public void reset(V data) {
+        assert Protocol.isDispatchThread();
         if (command != null) {
             command.cancel();
             command = null;
@@ -152,6 +154,7 @@ public abstract class TCFDataCache<V> implements Runnable {
      * Invalidate the cache. If retrieval is in progress - let it continue.
      */
     public void reset() {
+        assert Protocol.isDispatchThread();
         error = null;
         valid = false;
         data = null;
@@ -162,6 +165,7 @@ public abstract class TCFDataCache<V> implements Runnable {
      * Force cache to invalid state, cancel pending data retrieval if any.
      */
     public void cancel() {
+        assert Protocol.isDispatchThread();
         if (command != null) {
             command.cancel();
             command = null;

@@ -22,7 +22,8 @@ import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace;
 
-class TestExpressions implements ITCFTest, IRunControl.RunControlListener, IExpressions.ExpressionsListener {
+class TestExpressions implements ITCFTest,
+    IRunControl.RunControlListener, IExpressions.ExpressionsListener, IBreakpoints.BreakpointsListener {
     
     private final TCFTestSuite test_suite;
     private final IDiagnostics diag;
@@ -62,6 +63,7 @@ class TestExpressions implements ITCFTest, IRunControl.RunControlListener, IExpr
         else {
             expr.addListener(this);
             rc.addListener(this);
+            bp.addListener(this);
             diag.getTestList(new IDiagnostics.DoneGetTestList() {
                 public void doneGetTestList(IToken token, Throwable error, String[] list) {
                     assert test_suite.isActive(TestExpressions.this);
@@ -279,6 +281,7 @@ class TestExpressions implements ITCFTest, IRunControl.RunControlListener, IExpr
     private void exit(Throwable x) {
         if (!test_suite.isActive(this)) return;
         expr.removeListener(this);
+        bp.removeListener(this);
         rc.removeListener(this);
         test_suite.done(this, x);
     }
@@ -324,5 +327,20 @@ class TestExpressions implements ITCFTest, IRunControl.RunControlListener, IExpr
     //--------------------------- Expressions listener ---------------------------//
 
     public void valueChanged(String id) {
+    }
+
+    //--------------------------- Breakpoints listener ---------------------------//
+
+    public void breakpointStatusChanged(String id, Map<String, Object> status) {
+        if (id.equals(bp_id)) {
+            String s = (String)status.get(IBreakpoints.STATUS_ERROR);
+            if (s != null) exit(new Exception(s));
+        }
+    }
+
+    public void contextAdded(Map<String, Object>[] bps) {
+    }
+
+    public void contextChanged(Map<String, Object>[] bps) {
     }
 }

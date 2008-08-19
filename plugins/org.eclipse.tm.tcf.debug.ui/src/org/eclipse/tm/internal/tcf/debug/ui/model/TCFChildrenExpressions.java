@@ -4,10 +4,13 @@ import java.util.HashMap;
 
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IExpressionManager;
+import org.eclipse.debug.core.IExpressionsListener;
 import org.eclipse.debug.core.model.IExpression;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IExpressions;
 
 public class TCFChildrenExpressions extends TCFChildren {
@@ -15,14 +18,38 @@ public class TCFChildrenExpressions extends TCFChildren {
     private final TCFNodeStackFrame node;
     private final HashMap<IExpression,TCFNodeExpression> map =
         new HashMap<IExpression,TCFNodeExpression>();
+    
+    private final IExpressionsListener listener = new IExpressionsListener() {
+        
+        public void expressionsAdded(IExpression[] expressions) {
+            expressionsRemoved(expressions);
+        }
+
+        public void expressionsChanged(IExpression[] expressions) {
+            expressionsRemoved(expressions);
+        }
+
+        public void expressionsRemoved(IExpression[] expressions) {
+            Protocol.invokeLater(new Runnable() {
+                public void run() {
+                    reset();
+                    node.parent.addModelDelta(IModelDelta.CONTENT);
+                }
+            });
+        }
+    };
 
     TCFChildrenExpressions(TCFNodeStackFrame node) {
         super(node.model.getLaunch().getChannel(), 32);
         this.node = node;
+        IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
+        m.addExpressionListener(listener);
     }
 
     @Override
     void dispose(String id) {
+        IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
+        m.removeExpressionListener(listener);
         TCFNode n = node.model.getNode(id);
         super.dispose(id);
         if (n instanceof TCFNodeExpression) {
