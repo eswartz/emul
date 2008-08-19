@@ -168,7 +168,7 @@ static void command_get_symbol(char * token, Channel * c) {
             write_stream(&c->out, ',');
             json_write_string(&c->out, "Value");
             write_stream(&c->out, ':');
-            json_write_ulong(&c->out, sym.value);
+            json_write_ulong(&c->out, sym.address);
             if (sym.section != NULL) {
                 write_stream(&c->out, ',');
                 json_write_string(&c->out, "Section");

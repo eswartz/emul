@@ -468,8 +468,8 @@ static void plant_breakpoint_address_iterator(void * x, ContextAddress address) 
 static void plant_breakpoint(BreakpointInfo * bp) {
     LINK * qp;
     char * p = NULL;
-    Value v;
     int context_sensitive_address = 0;
+    ContextAddress bp_addr = 0;
 
     assert(!bp->planted);
     assert(bp->enabled);
@@ -480,7 +480,8 @@ static void plant_breakpoint(BreakpointInfo * bp) {
     }
 
     if (bp->address != NULL) {
-        if (evaluate_expression(NULL, STACK_NO_FRAME, bp->address, &v) < 0) {
+        Value v;
+        if (evaluate_expression(NULL, STACK_NO_FRAME, bp->address, 1, &v) < 0) {
             if (errno != ERR_INV_CONTEXT) {
                 address_expression_error(bp, NULL);
                 trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
@@ -488,10 +489,13 @@ static void plant_breakpoint(BreakpointInfo * bp) {
             }
             context_sensitive_address = 1;
         }
-        if (!context_sensitive_address && v.type != VALUE_INT && v.type != VALUE_UNS) {
-            errno = ERR_INV_EXPRESSION;
-            address_expression_error(bp, "Must be integer number");
-            return;
+        if (!context_sensitive_address) {
+            if (v.type_class != TYPE_CLASS_INTEGER && v.type_class != TYPE_CLASS_CARDINAL) {
+                errno = ERR_INV_EXPRESSION;
+                address_expression_error(bp, "Must be integer number");
+                return;
+            }
+            bp_addr = value_to_address(&v);
         }
     }
 #if SERVICE_LineNumbers
@@ -514,26 +518,27 @@ static void plant_breakpoint(BreakpointInfo * bp) {
             /* Optimize away the breakpoint if condition is always false for given context */
             Value c;
             int frame = context_has_state(ctx) ? STACK_TOP_FRAME : STACK_NO_FRAME;
-            if (evaluate_expression(ctx, frame, bp->condition, &c) == 0) {
+            if (evaluate_expression(ctx, frame, bp->condition, 1, &c) == 0) {
                 if (!value_to_boolean(&c)) continue;
             }
         }
         if (context_sensitive_address) {
             if (bp->address != NULL) {
+                Value v;
                 int frame = context_has_state(ctx) ? STACK_TOP_FRAME : STACK_NO_FRAME;
-                if (evaluate_expression(ctx, frame, bp->address, &v) < 0) {
+                if (evaluate_expression(ctx, frame, bp->address, 1, &v) < 0) {
                     address_expression_error(bp, NULL);
                     if (bp->error != ERR_SYM_NOT_FOUND) {
                         trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
                     }
                     continue;
                 }
-                if (v.type != VALUE_INT && v.type != VALUE_UNS) {
+                if (v.type_class != TYPE_CLASS_INTEGER && v.type_class != TYPE_CLASS_CARDINAL) {
                     errno = ERR_INV_EXPRESSION;
                     address_expression_error(bp, "Must be integer number");
                     continue;
                 }
-                plant_breakpoint_in_context(bp, ctx, v.value);
+                plant_breakpoint_in_context(bp, ctx, value_to_address(&v));
             }
 #if SERVICE_LineNumbers
             else if (bp->file != NULL) {
@@ -559,7 +564,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         }
         else {
             if (bp->condition == NULL && ctx->parent != NULL && ctx->mem == ctx->parent->mem) continue;
-            plant_breakpoint_in_context(bp, ctx, v.value);
+            plant_breakpoint_in_context(bp, ctx, bp_addr);
         }
     }
     if (bp->planted) bp->error = 0;
@@ -1295,7 +1300,7 @@ int evaluate_breakpoint_condition(Context * ctx) {
         if (!bp->enabled) continue;
         if (bp->condition != NULL) {
             Value v;
-            if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, &v) < 0) {
+            if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, 1, &v) < 0) {
                 trace(LOG_ALWAYS, "%s: %s", get_expression_error_msg(), bp->condition);
                 return 1;
             }

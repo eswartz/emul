@@ -21,29 +21,48 @@
 
 #include "context.h"
 
+/*
+ * Symbol information can change at any time as result of target background activities.
+ * Clients should not cache symbol information, and should not retain the information
+ * longer then one dispatch cycle.
+ */
+
+typedef uns64 ModuleID;
+typedef uns64 SymbolID;
+
 typedef struct Symbol Symbol;
 
 struct Symbol {
-    ContextAddress value;
+    Context * ctx;
+    ModuleID module_id;
+    SymbolID object_id;
+    SymbolID type_id;
+
+    int sym_class;
+    ContextAddress address;
     char * section;
     char * storage;
     unsigned long size;
     int base;
-    int type;
 };
 
-#define SYM_BASE_ABS            1
-#define SYM_BASE_FP             2
+#define SYM_CLASS_VALUE         1   /* Symbol represents a constant value */
+#define SYM_CLASS_REFERENCE     2   /* Symbol is an address of an object (variable) in memory */
+#define SYM_CLASS_FUNCTION      3   /* Symbol is an address of a function */
+#define SYM_CLASS_TYPE          4   /* Symbol represents a type declaration */
 
-#define SYM_TYPE_UNKNOWN        0
-#define SYM_TYPE_CARDINAL       1
-#define SYM_TYPE_INTEGER        2
-#define SYM_TYPE_REAL           3
-#define SYM_TYPE_POINTER        4
-#define SYM_TYPE_ARRAY          5
-#define SYM_TYPE_COMPOSITE      6
-#define SYM_TYPE_ENUMERATION    7
-#define SYM_TYPE_FUNCTION       8
+#define SYM_BASE_ABS            1   /* Symbol address is an absolute address */
+#define SYM_BASE_FP             2   /* Symbol address is offset relative to frame pointer */
+
+#define TYPE_CLASS_UNKNOWN      0
+#define TYPE_CLASS_CARDINAL     1
+#define TYPE_CLASS_INTEGER      2
+#define TYPE_CLASS_REAL         3
+#define TYPE_CLASS_POINTER      4
+#define TYPE_CLASS_ARRAY        5
+#define TYPE_CLASS_COMPOSITE    6
+#define TYPE_CLASS_ENUMERATION  7
+#define TYPE_CLASS_FUNCTION     8
 
 
 typedef void EnumerateSymbolsCallBack(void *, char * name, Symbol *);
@@ -64,9 +83,47 @@ extern int find_symbol(Context * ctx, int frame, char * name, Symbol * sym);
  */
 extern int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack *, void * args);
 
+
+/*************** Functions for retrieving type information ***************************************/
+/*
+ * Each function retireves one particular attribute of an object or type
+ * On error returns -1 and sets errno.
+ * On success returns 0.
+ */
+
+/* Get type class, see TYPE_CLASS_* */
+extern int get_symbol_class(Context * ctx, ModuleID module_id, SymbolID symbol_id, int * type_class);
+
+/* Get type name, clients should call loc_free to dispose result */
+extern int get_symbol_name(Context * ctx, ModuleID module_id, SymbolID symbol_id, char ** name);
+
+/* Get value size of the type, in bytes */
+extern int get_symbol_size(Context * ctx, ModuleID module_id, SymbolID symbol_id, uns64 * size);
+
+/* Get base type ID */
+extern int get_symbol_base_type(Context * ctx, ModuleID module_id, SymbolID symbol_id, SymbolID * base_type);
+
+/* Get array index type ID */
+extern int get_symbol_index_type(Context * ctx, ModuleID module_id, SymbolID symbol_id, SymbolID * index_type);
+
+/* Get array length (number of elements) */
+extern int get_symbol_length(Context * ctx, ModuleID module_id, SymbolID symbol_id, unsigned long * length);
+
+/* Get children type IDs (for struct, union, class, function and enum) */
+extern int get_symbol_children(Context * ctx, ModuleID module_id, SymbolID symbol_id, SymbolID ** children);
+
+/* Get offset in parent type (for fields) */
+extern int get_symbol_offset(Context * ctx, ModuleID module_id, SymbolID symbol_id, unsigned long * offset);
+
+/* Get value (for constant objects and enums) */
+extern int get_symbol_value(Context * ctx, ModuleID module_id, SymbolID symbol_id, size_t * size, void * value);
+
+/*************************************************************************************************/
+
+
 /*
  * Check if given address is inside a PLT section, then return address of the section.
- * If not PLT address return 0;
+ * If not a PLT address return 0;
  */
 extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
 

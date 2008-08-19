@@ -520,16 +520,39 @@ static void command_start(char * token, Channel * c) {
             if (pid < 0) err = errno;
             if (pid == 0) {
                 int fd;
+                int err = 0;
 
-                if (attach && context_attach_self() < 0) exit(errno);
-                fd = sysconf(_SC_OPEN_MAX);
-                if (fd < 0) exit(errno);
-                while (fd-- > 0) close(fd);
-                if (open("/dev/null", O_RDONLY) != 0) exit(errno);
-                if (open("/dev/null", O_WRONLY) != 1) exit(errno);
-                if (dup(1) != 2) exit(5);
-                execve(exe, args, envp);
-                exit(errno);
+                if (attach && context_attach_self() < 0) err = errno;
+                if (err == 0) {
+                    fd = sysconf(_SC_OPEN_MAX);
+                    if (fd < 0) err = errno;
+                }
+                if (err == 0) {
+                    while (fd > 0) close(--fd);
+                }
+                if (err == 0) {
+                    fd = open("/dev/null", O_RDONLY);
+                    if (fd < 0) err = errno;
+                    if (fd != 0) err = EBADF;
+                }
+                if (err == 0) {
+                    fd = open("/dev/null", O_WRONLY);
+                    if (fd < 0) err = errno;
+                    if (fd != 1) err = EBADF;
+                }
+                if (err == 0) {
+                    fd = dup(1);
+                    if (fd < 0) err = errno;
+                    if (fd != 2) err = EBADF;
+                }
+                if (err == 0) {
+                    execve(exe, args, envp);
+                    err = errno;
+                }
+                if (!attach) err = 1;
+                else if (err < 1) err = EINVAL;
+                else if (err > 0xff) err = EINVAL;
+                exit(err);
             }
             selfattach = 1;
 #endif            

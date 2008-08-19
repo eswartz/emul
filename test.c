@@ -28,9 +28,15 @@
 #include "context.h"
 #include "errors.h"
 
+typedef enum test_enum {
+    enum_val1 = 1,
+    enum_val2 = 2,
+    enum_val3 = 3
+} test_enum;
+
 extern void tcf_test_func2(void);
 extern void tcf_test_func1(void);
-extern void tcf_test_func0(void);
+extern void tcf_test_func0(enum test_enum);
 
 void tcf_test_func2(void) {
     int func2_local1 = 1;
@@ -44,7 +50,7 @@ void tcf_test_func1(void) {
     tcf_test_func2();
 }
 
-void tcf_test_func0(void) {
+void tcf_test_func0(test_enum e) {
     tcf_test_func1();
 }
 
@@ -54,7 +60,7 @@ char * tcf_test_array = array;
 static void * test_sub(void * x) {
     volatile int * test_done = (int *)x;
     while (!*test_done) {
-        tcf_test_func0();
+        tcf_test_func0(enum_val3);
     }
     return NULL;
 }
@@ -63,7 +69,7 @@ void test_proc(void) {
     int i;
     pthread_t thread[4];
     int test_done = 0;
-    tcf_test_func0();
+    tcf_test_func0(enum_val1);
     for (i = 0; i < 4; i++) {
         thread[i] = 0;
     }
@@ -74,7 +80,7 @@ void test_proc(void) {
         }
     }
     for (i = 0; i < 9; i++) {
-        tcf_test_func0();
+        tcf_test_func0(enum_val2);
     }
     test_done = 1;
     for (i = 0; i < 4; i++) {

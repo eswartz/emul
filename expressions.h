@@ -22,24 +22,21 @@
 #include "protocol.h"
 #include "context.h"
 
-#define VALUE_INT 1
-#define VALUE_UNS 2
-#define VALUE_STR 3
-#define VALUE_VAR 4
-
 struct Value {
-    int type;
-    int value;
-    char * str;
-    ContextAddress addr;
+    int type_class;
     unsigned long size;
+    void * value;
+    ContextAddress address;
+    int remote;
 };
 
 typedef struct Value Value;
 
-extern int evaluate_expression(Context * ctx, int frame, char * s, Value * v);
+extern int evaluate_expression(Context * ctx, int frame, char * s, int load, Value * v);
 
 extern int value_to_boolean(Value * v);
+
+extern ContextAddress value_to_address(Value * v);
 
 extern char * get_expression_error_msg(void);
 

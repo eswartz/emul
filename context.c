@@ -1398,7 +1398,8 @@ static void init(void) {
 
 struct pid_exit_info {
     pid_t       pid;
-    int         value;
+    int         status;
+    int         signal;
 };
 
 struct pid_stop_info {
@@ -1435,22 +1436,22 @@ char * context_suspend_reason(Context * ctx) {
 
     if (ctx->stopped_by_bp) return "Breakpoint";
     if (ctx->end_of_step) return "Step";
-    if (ctx->syscall_enter) return "System Call";
-    if (ctx->syscall_exit) return "System Return";
-    
     if (ctx->ptrace_event != 0) {
         assert(ctx->signal == SIGTRAP);
         snprintf(reason, sizeof(reason), "Event: %s", event_name(ctx->ptrace_event));
+        return reason;
     }
-    else if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) {
-        strcpy(reason, "Suspended");
+    if (ctx->syscall_enter) return "System Call";
+    if (ctx->syscall_exit) return "System Return";
+    if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) {
+        return "Suspended";
     }
-    else if (signal_name(ctx->signal)) {
+    if (signal_name(ctx->signal)) {
         snprintf(reason, sizeof(reason), "Signal %d %s", ctx->signal, signal_name(ctx->signal));
+        return reason;
     }
-    else {
-        snprintf(reason, sizeof(reason), "Signal %d", ctx->signal);
-    }
+
+    snprintf(reason, sizeof(reason), "Signal %d", ctx->signal);
     return reason;
 }
 
@@ -1625,7 +1626,6 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     ContextAddress word_addr;
     assert(is_dispatch_thread());
     assert(!ctx->exited);
-    assert(ctx->stopped);
     trace(LOG_CONTEXT, "context: write memory ctx %#x, pid %d, address 0x%08x, size %d", ctx, ctx->pid, address, size);
     for (word_addr = address & ~3ul; word_addr < address + size; word_addr += WORD_SIZE) {
         int i;
@@ -1662,7 +1662,6 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     ContextAddress word_addr;
     assert(is_dispatch_thread());
     assert(!ctx->exited);
-    assert(ctx->stopped);
     trace(LOG_CONTEXT, "context: read memory ctx %#x, pid %d, address 0x%08x, size %d", ctx, ctx->pid, address, size);
     for (word_addr = address & ~3ul; word_addr < address + size; word_addr += WORD_SIZE) {
         int i;
@@ -1697,19 +1696,21 @@ static Context * find_pending(pid_t pid) {
 }
 
 static void event_pid_exited(void * arg) {
-    struct pid_exit_info * eap = arg;
+    struct pid_exit_info * info = arg;
     Context * ctx;
 
-    ctx = context_find_from_pid(eap->pid);
+    ctx = context_find_from_pid(info->pid);
     if (ctx == NULL) {
-        ctx = find_pending(eap->pid);
+        ctx = find_pending(info->pid);
         if (ctx == NULL) {
-            trace(LOG_EVENTS, "event: ctx not found, pid %d, exit status %d", eap->pid, eap->value);
+            trace(LOG_EVENTS, "event: ctx not found, pid %d, exit status %d, term signal %d",
+                info->pid, info->status, info->signal);
         }
         else {
             assert(ctx->ref_count == 0);
             if (ctx->attach_callback != NULL) {
-                ctx->attach_callback(eap->value, ctx, ctx->attach_data);
+                if (info->status == 0) info->status = EINVAL;
+                ctx->attach_callback(info->status, ctx, ctx->attach_data);
                 ctx->attach_callback = NULL;
                 ctx->attach_data = NULL;
             }
@@ -1723,14 +1724,14 @@ static void event_pid_exited(void * arg) {
         assert(ctx->attach_callback == NULL);
         if (ctx->stopped || ctx->intercepted || ctx->exited) {
             trace(LOG_EVENTS, "event: ctx %#x, pid %d, exit status %d unexpected, stopped %d, intercepted %d, exited %d",
-                ctx, eap->pid, eap->value, ctx->stopped, ctx->intercepted, ctx->exited);
+                ctx, info->pid, info->status, ctx->stopped, ctx->intercepted, ctx->exited);
             if (ctx->stopped) {
                 ctx->stopped = 0;
                 event_context_started(ctx);
             }
         }
         else {
-            trace(LOG_EVENTS, "event: ctx %#x, pid %d, exit status %d", ctx, eap->pid, eap->value);
+            trace(LOG_EVENTS, "event: ctx %#x, pid %d, exit status %d", ctx, info->pid, info->status);
         }
         if (!list_is_empty(&ctx->children)) {
             /* Linux kernel 2.4 does not notify waitpid() when thread exits if the thread is not main thread.
@@ -1762,7 +1763,7 @@ static void event_pid_exited(void * arg) {
         }
         context_unlock(ctx);
     }
-    loc_free(eap);
+    loc_free(info);
 }
 
 #ifdef __i386__
@@ -1775,35 +1776,47 @@ static void event_pid_stopped(void * arg) {
     unsigned long msg = 0;
     Context * ctx = NULL;
     Context * ctx2 = NULL;
-    struct pid_stop_info * eap = arg;
+    struct pid_stop_info * info = arg;
     struct pid_stop_info * pending_eap;
 
 process_event:
     pending_eap = NULL;
     trace(LOG_EVENTS, "event: pid %d stopped, signal %d, event %s",
-        eap->pid, eap->signal, event_name(eap->event));
+        info->pid, info->signal, event_name(info->event));
 
-    ctx = context_find_from_pid(eap->pid);
-    if (ctx == NULL) ctx = find_pending(eap->pid);
+    ctx = context_find_from_pid(info->pid);
+
+    if (ctx == NULL) {
+        ctx = find_pending(info->pid);
+        if (ctx != NULL) {
+            link_context(ctx);
+            event_context_created(ctx);
+            if (ctx->attach_callback) {
+                ctx->attach_callback(0, ctx, ctx->attach_data);
+                ctx->attach_callback = NULL;
+                ctx->attach_data = NULL;
+            }
+        }
+    }
 
     if (ctx == NULL) {
         /* Clone & fork notifications can arrive after child
          * notification because the clone/fork notification comes from
          * the parent while the stop notification comes from the child
          * and Linux does not seem to order between them. */
-        trace(LOG_EVENTS, "event: pid %d is not traced - expecting OOO clone, fork or vfork event for pid", eap->pid);
-        ctx = create_context(eap->pid);
+        trace(LOG_EVENTS, "event: pid %d is not traced - expecting OOO clone, fork or vfork event for pid", info->pid);
+        ctx = create_context(info->pid);
         list_add_first(&ctx->ctxl, &pending_list);
-        ctx->pending_clone = eap;
+        ctx->pending_clone = info;
         return;
     }
     else if (ctx->pending_clone != NULL) {
-        trace(LOG_ALWAYS, "event: pid %d received stop event before processing of pending_clone event - ignored", eap->pid);
-        loc_free(eap);
+        trace(LOG_ALWAYS, "event: pid %d received stop event before processing of pending_clone event - ignored", info->pid);
+        loc_free(info);
         return;
     }
     assert(!ctx->exited);
-    assert(!ctx->stopped || eap->event == 0 || eap->event == PTRACE_EVENT_EXIT);
+    assert(!ctx->stopped || info->event == 0 || info->event == PTRACE_EVENT_EXIT);
     if (ctx->ptrace_flags != PTRACE_FLAGS) {
         if (ptrace(PTRACE_SETOPTIONS, ctx->pid, 0, PTRACE_FLAGS) < 0) {
             int err = errno;
@@ -1815,14 +1828,14 @@ process_event:
         }
     }
 
-    switch (eap->event) {
+    switch (info->event) {
     case PTRACE_EVENT_FORK:
     case PTRACE_EVENT_VFORK:
     case PTRACE_EVENT_CLONE:
         assert(!ctx->attach_callback);
-        if (ptrace(PTRACE_GETEVENTMSG, eap->pid, 0, &msg) < 0) {
+        if (ptrace(PTRACE_GETEVENTMSG, info->pid, 0, &msg) < 0) {
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETEVENTMSG) failed; pid %d, error %d %s",
-                eap->pid, errno, errno_to_str(errno));
+                info->pid, errno, errno_to_str(errno));
             break;
         }
         assert(msg != 0);
@@ -1838,7 +1851,7 @@ process_event:
         link_context(ctx2);
         assert(ctx2->parent == NULL);
         trace(LOG_EVENTS, "event: new context 0x%x, pid %d", ctx2, ctx2->pid);
-        if (eap->event == PTRACE_EVENT_CLONE) {
+        if (info->event == PTRACE_EVENT_CLONE) {
             ctx2->mem = ctx->mem;
             ctx2->parent = ctx->parent != NULL ? ctx->parent : ctx;
             ctx2->parent->ref_count++;
@@ -1858,28 +1871,21 @@ process_event:
         break;
     }
 
-    if (eap->signal != SIGSTOP && eap->signal != SIGTRAP) {
-        assert(eap->signal < 32);
-        ctx->pending_signals |= 1 << eap->signal;
+    if (info->signal != SIGSTOP && info->signal != SIGTRAP) {
+        assert(info->signal < 32);
+        ctx->pending_signals |= 1 << info->signal;
     }
-
-    if (eap->signal == SIGTRAP && eap->event == PTRACE_EVENT_EXIT) {
+    if (info->signal == SIGTRAP && info->event == PTRACE_EVENT_EXIT) {
         ctx->exiting = 1;
         ctx->regs_dirty = 0;
     }
-    if (ctx->attach_callback) {
-        link_context(ctx);
-        event_context_created(ctx);
-        ctx->attach_callback(0, ctx, ctx->attach_data);
-        ctx->attach_callback = NULL;
-        ctx->attach_data = NULL;
-    }
-    if (!ctx->stopped || !ctx->intercepted) {
+    if (!ctx->stopped) {
         ContextAddress pc0 = ctx->regs_error ? 0 : get_regs_PC(ctx->regs);
         assert(!ctx->regs_dirty);
         assert(!ctx->intercepted);
         ctx->regs_error = 0;
         if (ptrace(PTRACE_GETREGS, ctx->pid, 0, &ctx->regs) < 0) {
+            assert(errno != 0);
 #if USE_ESRCH_WORKAROUND
             if (errno == ESRCH) {
                 /* Racing condition: somebody resumed this context while we are handling stop event.
@@ -1890,7 +1896,7 @@ process_event:
                  *
                  * Workaround: Ignore current event, assume context is running.
                  */
-                loc_free(eap);
+                loc_free(info);
                 return;
             }
 #endif
@@ -1899,7 +1905,7 @@ process_event:
                 ctx->pid, errno, errno_to_str(errno));
         }
 
-        if (eap->syscall && !ctx->regs_error) {
+        if (info->syscall && !ctx->regs_error) {
             if (!ctx->syscall_enter) {
                 ctx->syscall_id = get_syscall_id(ctx);
                 ctx->syscall_enter = 1;
@@ -1925,23 +1931,25 @@ process_event:
             }
         }
         else {
-            ctx->syscall_enter = 0;
-            ctx->syscall_exit = 0;
+            if (!ctx->syscall_enter || ctx->regs_error || pc0 != get_regs_PC(ctx->regs)) {
+                ctx->syscall_enter = 0;
+                ctx->syscall_exit = 0;
+            }
             trace(LOG_EVENTS, "event: pid %d stopped at PC = %d (0x%08x)",
                 ctx->pid, get_regs_PC(ctx->regs), get_regs_PC(ctx->regs));
         }
 
-        if (eap->signal == SIGSTOP && ctx->pending_step && !ctx->regs_error && pc0 == get_regs_PC(ctx->regs)) {
+        if (info->signal == SIGSTOP && ctx->pending_step && !ctx->regs_error && pc0 == get_regs_PC(ctx->regs)) {
             trace(LOG_EVENTS, "event: pid %d, single step failed because of pending SIGSTOP, retrying");
             ptrace(PTRACE_SINGLESTEP, ctx->pid, 0, 0);
         }
         else {
-            ctx->signal = eap->signal;
-            ctx->ptrace_event = eap->event;
+            ctx->signal = info->signal;
+            ctx->ptrace_event = info->event;
             ctx->stopped = 1;
             ctx->stopped_by_bp = 0;
             ctx->end_of_step = 0;
-            if (ctx->signal == SIGTRAP && ctx->ptrace_event == 0 && !eap->syscall) {
+            if (ctx->signal == SIGTRAP && ctx->ptrace_event == 0 && !info->syscall) {
                 ctx->stopped_by_bp = !ctx->regs_error &&
                     is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE);
                 ctx->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;
@@ -1955,9 +1963,9 @@ process_event:
         }
     }
 
-    loc_free(eap);
+    loc_free(info);
     if (pending_eap != NULL) {
-        eap = pending_eap;
+        info = pending_eap;
         goto process_event;
     }
 }
@@ -1993,22 +2001,19 @@ static void * wpid_handler(void * x) {
         }
         trace(LOG_WAITPID, "waitpid: pid %d status %#x", pid, status);
         if (WIFEXITED(status) || WIFSIGNALED(status)) {
-            struct pid_exit_info *eap;
-
-            eap = loc_alloc(sizeof *eap);
-            eap->pid = pid;
-            eap->value = WIFEXITED(status) ? WEXITSTATUS(status) : -WTERMSIG(status);
-            post_event(event_pid_exited, eap);
+            struct pid_exit_info * info = loc_alloc_zero(sizeof(struct pid_exit_info));
+            info->pid = pid;
+            if (WIFEXITED(status)) info->status = WIFEXITED(status);
+            else info->signal = WTERMSIG(status);
+            post_event(event_pid_exited, info);
         }
         else if (WIFSTOPPED(status)) {
-            struct pid_stop_info *eap;
-
-            eap = loc_alloc(sizeof *eap);
-            eap->pid = pid;
-            eap->signal = WSTOPSIG(status) & 0x7f;
-            eap->syscall = (WSTOPSIG(status) & 0x80) != 0;
-            eap->event = status >> 16;
-            post_event(event_pid_stopped, eap);
+            struct pid_stop_info * info = loc_alloc_zero(sizeof(struct pid_stop_info));
+            info->pid = pid;
+            info->signal = WSTOPSIG(status) & 0x7f;
+            info->syscall = (WSTOPSIG(status) & 0x80) != 0;
+            info->event = status >> 16;
+            post_event(event_pid_stopped, info);
         }
         else {
             trace(LOG_ALWAYS, "unexpected status (0x%x) from waitpid (pid %d)", status, pid);
