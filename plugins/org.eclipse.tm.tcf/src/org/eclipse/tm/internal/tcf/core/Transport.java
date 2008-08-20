@@ -74,11 +74,11 @@ public class Transport {
         return channels.toArray(new IChannel[channels.size()]);
     }
     
-    public static void addChanalOpenListener(Protocol.ChannelOpenListener listener) {
+    public static void addChanelOpenListener(Protocol.ChannelOpenListener listener) {
         listeners.add(listener);
     }
 
-    public static void removeChanalOpenListener(Protocol.ChannelOpenListener listener) {
+    public static void removeChanelOpenListener(Protocol.ChannelOpenListener listener) {
         listeners.remove(listener);
     }
 

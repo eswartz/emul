@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.TreeSet;
 
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
+import org.eclipse.tm.internal.tcf.core.ServiceManager;
 import org.eclipse.tm.internal.tcf.core.Transport;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
 import org.eclipse.tm.tcf.services.ILocator;
@@ -283,7 +284,7 @@ public final class Protocol {
      * @param listener
      */
     public static void addChannelOpenListener(ChannelOpenListener listener) {
-        Transport.addChanalOpenListener(listener);
+        Transport.addChanelOpenListener(listener);
     }
 
     /**
@@ -291,7 +292,7 @@ public final class Protocol {
      * @param listener
      */
     public static void removeChannelOpenListener(ChannelOpenListener listener) {
-        Transport.removeChanalOpenListener(listener);
+        Transport.removeChanelOpenListener(listener);
     }
 
     /**
@@ -375,5 +376,21 @@ public final class Protocol {
         }
         if (level > 100) level = 100;
         return level;
+    }
+
+    /**
+     * Register s service provider. 
+     * @param provider - IServiceProvider implementation
+     */
+    public static void addServiceProvider(IServiceProvider provider){
+        ServiceManager.addServiceProvider(provider);
+    }
+    
+    /**
+     * Unregister s service provider. 
+     * @param provider - IServiceProvider implementation
+     */
+    public static void removeServiceProvider(IServiceProvider provider){
+        ServiceManager.removeServiceProvider(provider);
     }
 }

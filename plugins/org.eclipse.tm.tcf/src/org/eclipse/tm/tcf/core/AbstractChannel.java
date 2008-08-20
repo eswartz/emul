@@ -20,9 +20,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.eclipse.tm.internal.tcf.core.ServiceManager;
 import org.eclipse.tm.internal.tcf.core.Token;
 import org.eclipse.tm.internal.tcf.core.Transport;
-import org.eclipse.tm.internal.tcf.services.local.DiagnosticsService;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
 import org.eclipse.tm.internal.tcf.services.remote.GenericProxy;
 import org.eclipse.tm.internal.tcf.services.remote.LocatorProxy;
@@ -149,9 +149,9 @@ public abstract class AbstractChannel implements IChannel {
         assert Protocol.getLocator().getPeers().get(peer.getID()) == peer;
         this.peer = peer;
 
-        addLocalService(Protocol.getLocator());
-        addLocalService(new DiagnosticsService(this));
-
+        ServiceManager.onChannelCreated(this, local_service_by_name);
+        makeServiceByClassMap(local_service_by_name, local_service_by_class);
+        
         inp_thread = new Thread() {
 
             byte[] buf = new byte[1024];
@@ -374,31 +374,22 @@ public abstract class AbstractChannel implements IChannel {
 
     private void onLocatorHello(Collection<String> c) throws IOException {
         if (state != STATE_OPENNING) throw new IOException("Invalid event: Locator.Hello");
+
         remote_service_by_class.clear();
-        String pkg_name = LocatorProxy.class.getPackage().getName();
-        for (String service_name : c) {
-            try {
-                Class<?> cls = Class.forName(pkg_name + "." + service_name + "Proxy");
-                IService service = (IService)cls.getConstructor(IChannel.class).newInstance(this);
-                for (Class<?> fs : cls.getInterfaces()) {
-                    if (fs.equals(IService.class)) continue;
-                    if (!IService.class.isAssignableFrom(fs)) continue;
-                    remote_service_by_class.put(fs, service);
-                }
-                assert service_name.equals(service.getName());
-                remote_service_by_name.put(service_name, service);
-            }
-            catch (Exception x) {
-                IService service = new GenericProxy(this, service_name);
-                remote_service_by_name.put(service_name, service);
-            }
-        }
+        remote_service_by_name.clear();
+        
         state = STATE_OPEN;
         assert redirect_command == null;
         if (redirect_queue.size() > 0) {
+            if (c.contains(ILocator.NAME)) {
+                remote_service_by_name.put(ILocator.NAME, new LocatorProxy(this));
+                makeServiceByClassMap(remote_service_by_name, remote_service_by_class);
+            }
             redirect(redirect_queue.removeFirst());
         }
         else {
+            ServiceManager.onChannelOpened(this, c, remote_service_by_name);
+            makeServiceByClassMap(remote_service_by_name, remote_service_by_class);
             notifying_channel_opened = true;
             Transport.channelOpened(this);
             listeners_array = channel_listeners.toArray(listeners_array);
@@ -411,6 +402,16 @@ public abstract class AbstractChannel implements IChannel {
                 }
             }
             notifying_channel_opened = false;
+        }
+    }
+    
+    private void makeServiceByClassMap(Map<String,IService> by_name, Map<Class<?>,IService> by_class) {
+        for (IService service : by_name.values()) {
+            for (Class<?> fs : service.getClass().getInterfaces()) {
+                if (fs.equals(IService.class)) continue;
+                if (!IService.class.isAssignableFrom(fs)) continue;
+                by_class.put(fs, service);
+            }
         }
     }
 
@@ -569,15 +570,6 @@ public abstract class AbstractChannel implements IChannel {
         return peer;
     }
     
-    private void addLocalService(IService service) {
-        for (Class<?> fs : service.getClass().getInterfaces()) {
-            if (fs.equals(IService.class)) continue;
-            if (!IService.class.isAssignableFrom(fs)) continue;
-            local_service_by_class.put(fs, service);
-        }
-        local_service_by_name.put(service.getName(), service);
-    }
-
     public Collection<String> getLocalServices() {
         assert Protocol.isDispatchThread();
         return local_service_by_name.keySet();
