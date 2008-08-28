@@ -19,12 +19,18 @@
 #ifndef D_cmdline
 #define D_cmdline
 
-#include "channel.h"
-
-extern Channel *chan;
+#if ENABLE_Cmdline
 
 extern void cmdline_suspend(void);
 extern void cmdline_resume(void);
 extern void ini_cmdline_handler(int interactive);
 extern void open_script_file(char * script_name);
+
+#else
+
+#define cmdline_suspend() 0
+#define cmdline_resume() 0
+
+#endif
+
 #endif

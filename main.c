@@ -30,13 +30,13 @@
 #include "trace.h"
 #include "myalloc.h"
 #include "expressions.h"
-#include "cmdline.h"
 #include "context.h"
 #include "channel.h"
 #include "protocol.h"
 #include "discovery.h"
 #include "discovery_help.h"
 #include "test.h"
+#include "cmdline.h"
 
 static char * progname;
 static Protocol * proto;
@@ -197,7 +197,12 @@ int main(int argc, char ** argv) {
 
     discovery_start(create_default_discovery_master);
 
+#if ENABLE_Cmdline
     if (interactive) ini_cmdline_handler(interactive);
+#else
+    if (interactive) fprintf(stderr, "Warning: This version does not support interactive mode.\n");
+#endif
+
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */
     run_event_loop();

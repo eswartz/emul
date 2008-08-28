@@ -28,12 +28,12 @@
 #include "asyncreq.h"
 #include "events.h"
 #include "trace.h"
-#include "cmdline.h"
 #include "channel.h"
 #include "protocol.h"
 #include "proxy.h"
 #include "discovery.h"
 #include "discovery_help.h"
+#include "cmdline.h"
 
 static char * progname;
 
@@ -130,8 +130,12 @@ int main(int argc, char ** argv) {
 #endif
 
     discovery_start(create_default_discovery_master);
+#if ENABLE_Cmdline
     if (script_name != NULL) open_script_file(script_name);
     ini_cmdline_handler(interactive);
+#else
+    if (script_name != NULL) fprintf(stderr, "Warning: This version does not support script file as input.\n");
+#endif
 
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */

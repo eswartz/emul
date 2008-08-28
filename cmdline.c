@@ -17,6 +17,10 @@
  */
 
 #include "mdep.h"
+#include "config.h"
+
+#if ENABLE_Cmdline
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -32,8 +36,7 @@
 #include "channel.h"
 #include "discovery.h"
 
-Channel * chan;
-
+static Channel * chan;
 static FILE * infile;
 static int interactive_flag;
 static int cmdline_suspended;
@@ -91,6 +94,7 @@ static void display_tcf_reply(Channel * c, void * client_data, int error) {
     putchar('\n');
     cmdline_resume();
 }
+
 #define maxargs 20
  
 static int cmd_tcf(char *s) {
@@ -260,12 +264,16 @@ void cmdline_suspend(void) {
 }
 
 void cmdline_resume(void) {
-    check_error(pthread_mutex_lock(&cmdline_mutex));
-    assert(cmdline_suspended);
-    check_error(pthread_cond_signal(&cmdline_signal));
-    cmdline_suspended = 0;
-
-    check_error(pthread_mutex_unlock(&cmdline_mutex));
+    if (interactive_thread == 0) {
+        cmdline_suspended = 0;
+    }
+    else {
+        check_error(pthread_mutex_lock(&cmdline_mutex));
+        assert(cmdline_suspended);
+        check_error(pthread_cond_signal(&cmdline_signal));
+        cmdline_suspended = 0;
+        check_error(pthread_mutex_unlock(&cmdline_mutex));
+    }
 }
 
 static void * interactive_handler(void * x) {
@@ -314,3 +322,5 @@ void ini_cmdline_handler(int interactive) {
     /* Create thread to read cmd line */
     check_error(pthread_create(&interactive_thread, &pthread_create_attr, interactive_handler, 0));
 }
+
+#endif

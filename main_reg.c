@@ -28,7 +28,6 @@
 #include "asyncreq.h"
 #include "events.h"
 #include "trace.h"
-#include "cmdline.h"
 #include "channel.h"
 #include "discovery_help.h"
 #include "protocol.h"

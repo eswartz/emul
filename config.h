@@ -50,6 +50,7 @@
 
 #define ENABLE_Trace        1
 #define ENABLE_Discovery    1
+#define ENABLE_Cmdline      1
 
 #ifdef CONFIG_MAIN
 /*

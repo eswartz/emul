@@ -37,6 +37,7 @@
 #include "events.h"
 #include "exceptions.h"
 #include "breakpoints.h"
+#include "cmdline.h"
 
 #define RM_RESUME           0
 #define RM_STEP_OVER        1
@@ -710,6 +711,7 @@ static void run_safe_events(void * arg) {
     }
 
     channels_resume(suspend_group);
+    cmdline_resume();
     /* Lazily continue execution of temporary stopped contexts */
     post_event(continue_temporary_stopped, (void *)safe_event_generation);
 }
@@ -733,6 +735,7 @@ void post_safe_event(EventCallBack * done, void * arg) {
     if (safe_event_list == NULL) {
         assert(safe_event_pid_count == 0);
         channels_suspend(suspend_group);
+        cmdline_suspend();
         post_event(run_safe_events, (void *)++safe_event_generation);
     }
     assert(are_channels_suspended(suspend_group));
