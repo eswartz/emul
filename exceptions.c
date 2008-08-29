@@ -65,7 +65,8 @@ void exception(int error) {
     assert(is_dispatch_thread());
     assert(error != 0);
     if (chain == NULL) {
-        trace(LOG_ALWAYS, "Unhandled exception %d: %s", error, errno_to_str(error));
+        trace(LOG_ALWAYS, "Unhandled exception %d: %s.",
+            error, errno_to_str(error));
         exit(error);
     }
     longjmp(chain->env, error);
@@ -75,7 +76,8 @@ void str_exception(int error, char * msg) {
     assert(is_dispatch_thread());
     assert(error != 0);
     if (chain == NULL) {
-        trace(LOG_ALWAYS, "Unhandled exception %d: %s", error, errno_to_str(error));
+        trace(LOG_ALWAYS, "Unhandled exception %d: %s:\n  %s",
+            error, errno_to_str(error), msg);
         exit(error);
     }
     strncpy(chain->msg, msg, sizeof(chain->msg));

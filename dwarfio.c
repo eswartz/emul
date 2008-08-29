@@ -21,7 +21,7 @@
 #include "mdep.h"
 #include "config.h"
 
-#if (SERVICE_LineNumbers) && !defined(WIN32)
+#if ((SERVICE_LineNumbers) || (SERVICE_Symbols)) && !defined(WIN32)
 
 #include <assert.h>
 #include <string.h>
@@ -30,8 +30,7 @@
 #include "myalloc.h"
 #include "exceptions.h"
 
-#define INP_BUF_SIZE            0x1000
-#define ABBREV_TABLE_SIZE       1021
+#define ABBREV_TABLE_SIZE       127
 
 struct DIO_Abbreviation {
     U2_T mTag;
@@ -43,11 +42,10 @@ struct DIO_Abbreviation {
 typedef struct DIO_Abbreviation DIO_Abbreviation;
 
 struct DIO_AbbrevSet {
-    struct DIO_AbbrevSet * mNext;
-    ELF_File * mFile;
     U8_T mOffset;
-    DIO_Abbreviation ** mTable;
     U4_T mSize;
+    DIO_Abbreviation ** mTable;
+    struct DIO_AbbrevSet * mNext;
 };
 
 typedef struct DIO_AbbrevSet DIO_AbbrevSet;
@@ -60,59 +58,60 @@ struct DIO_Cache {
 
 typedef struct DIO_Cache DIO_Cache;
 
-U4_T dio_gVersion = 0;
+U2_T dio_gVersion = 0;
 U1_T dio_g64bit = 0;
 U1_T dio_gAddressSize = 4;
 U8_T dio_gUnitPos = 0;
 U4_T dio_gUnitSize = 0;
 U8_T dio_gEntryPos = 0;
 
-U8_T dio_gFormRef;
+U8_T dio_gFormRef = 0;
 U8_T dio_gFormData = 0;
-U1_T dio_gFormDataSize = 0;
-U4_T dio_gFormBlockSize = 0;
-U1_T * dio_gFormBlockBuf = NULL;
+size_t dio_gFormDataSize = 0;
+void * dio_gFormDataAddr = NULL;
 
 static ELF_Section * sSection;
 static U1_T sBigEndian;
 static DIO_Abbreviation ** sAbbrevTable = NULL;
 static U4_T sAbbrevTableSize = 0;
-static U1_T * sInpBuf = NULL;
-static U4_T sBufPos;
-static U4_T sBufLen;
+static U1_T * sData;
 static U8_T sDataPos;
+static U8_T sDataLen;
 
 static void dio_CloseELF(ELF_File * File) {
     U4_T n, m;
-    DIO_Cache * Cache = (DIO_Cache *)File->dwarf_cache;
+    DIO_Cache * Cache = (DIO_Cache *)File->dwarf_io_cache;
 
     if (Cache == NULL) return;
-    for (n = 0; n < ABBREV_TABLE_SIZE; n++) {
-        DIO_AbbrevSet * Set = Cache->mAbbrevTable[n];
-        while (Set != NULL) {
-            DIO_AbbrevSet * Next = Set->mNext;
-            for (m = 0; m < Set->mSize; m++) {
-                loc_free(Set->mTable[m]);
+    if (Cache->mAbbrevTable != NULL) {
+        for (n = 0; n < ABBREV_TABLE_SIZE; n++) {
+            DIO_AbbrevSet * Set = Cache->mAbbrevTable[n];
+            while (Set != NULL) {
+                DIO_AbbrevSet * Next = Set->mNext;
+                for (m = 0; m < Set->mSize; m++) {
+                    loc_free(Set->mTable[m]);
+                }
+                loc_free(Set->mTable);
+                loc_free(Set);
+                Set = Next;
             }
-            loc_free(Set->mTable);
-            loc_free(Set);
-            Set = Next;
         }
+        loc_free(Cache->mAbbrevTable);
     }
-    loc_free(Cache->mAbbrevTable);
-    File->dwarf_cache = NULL;
+    loc_free(Cache);
+    File->dwarf_io_cache = NULL;
 }
 
 static DIO_Cache * dio_GetCache(ELF_File * File) {
     static int Inited = 0;
-    DIO_Cache * Cache = (DIO_Cache *)File->dwarf_cache;
+    DIO_Cache * Cache = (DIO_Cache *)File->dwarf_io_cache;
 
     if (!Inited) {
         elf_add_close_listener(dio_CloseELF);
         Inited = 1;
     }
     if (Cache == NULL) {
-        Cache = (DIO_Cache *)(File->dwarf_cache = loc_alloc_zero(sizeof(DIO_Cache)));
+        Cache = (DIO_Cache *)(File->dwarf_io_cache = loc_alloc_zero(sizeof(DIO_Cache)));
     }
     return Cache;
 }
@@ -120,20 +119,16 @@ static DIO_Cache * dio_GetCache(ELF_File * File) {
 void dio_EnterSection(ELF_Section * Section, U8_T Offset) {
     sSection = Section;
     sDataPos = Offset;
-    sBufPos = 0;
-    sBufLen = 0;
+    sDataLen = Section->size;
     sBigEndian = Section->file->big_endian;
-
-    if (sInpBuf == NULL) {
-        sInpBuf = (U1_T *)loc_alloc(INP_BUF_SIZE);
-    }
+    if (elf_load(Section, &sData)) exception(errno);
 }
 
 void dio_ExitSection() {
     sSection = NULL;
     sDataPos = 0;
-    sBufPos = 0;
-    sBufLen = 0;
+    sDataLen = 0;
+    sData = NULL;
 }
 
 U8_T dio_GetPos() {
@@ -142,59 +137,24 @@ U8_T dio_GetPos() {
 
 void dio_Skip(U8_T Bytes) {
     sDataPos += Bytes;
-    if (sBufPos + Bytes >= sBufLen) {
-        sBufPos = 0;
-        sBufLen = 0;
-    }
-    else {
-        sBufPos += (U4_T)Bytes;
-    }
 }
 
 void dio_Read(U1_T * Buf, U4_T Size) {
-    assert(sSection->size >= sDataPos + Size);
-    if (sBufPos < sBufLen) {
-        U4_T FromBuf = Size < sBufLen - sBufPos ? Size : sBufLen - sBufPos;
-        memcpy(Buf, sInpBuf + sBufPos, FromBuf);
-        sBufPos += FromBuf;
-        Buf += FromBuf;
-        Size -= FromBuf;
-        sDataPos += FromBuf;
-    }
-    if (Size > 0) {
-        U4_T Rd = 0;
-        if (elf_read(sSection, sDataPos, Buf, Size, &Rd) < 0) exception(errno);
-        if (Rd < Size) exception(ERR_EOF);
-        assert(sBufPos >= sBufLen);
-        sDataPos += Size;
-    }
+    if (sDataPos + Size > sDataLen) exception(ERR_EOF);
+    memcpy(Buf, sData + sDataPos, Size);
+    sDataPos += Size;
 }
 
 static U1_T dio_ReadU1F(void) {
-    U1_T c;
-    if (sDataPos >= sSection->size) exception(ERR_EOF);
-    if (sBufPos < sBufLen) {
-        c = sInpBuf[sBufPos++];
-    }
-    else if (sBufPos >= sBufLen) {
-        U4_T Rd = 0;
-        U8_T Size = sSection->size - sDataPos;
-        if (Size > INP_BUF_SIZE) Size = INP_BUF_SIZE;
-        if (elf_read(sSection, sDataPos, sInpBuf, (U4_T)Size, &Rd) < 0) exception(errno);
-        if (Rd == 0) exception(ERR_EOF);
-        sBufLen = Rd;
-        c = sInpBuf[0];
-        sBufPos = 1;
-    }
-    sDataPos++;
-    return c;
+    if (sDataPos >= sDataLen) exception(ERR_EOF);
+    return sData[sDataPos++];
 }
 
 U1_T dio_ReadU1(void) {
-    return sBufPos >= sBufLen ? dio_ReadU1F() : (sDataPos++, sInpBuf[sBufPos++]);
+    return sDataPos < sDataLen ? sData[sDataPos++] : dio_ReadU1F();
 }
 
-#define dio_ReadU1() (sBufPos >= sBufLen ? dio_ReadU1F() : (sDataPos++, sInpBuf[sBufPos++]))
+#define dio_ReadU1() (sDataPos < sDataLen ? sData[sDataPos++] : dio_ReadU1F())
 
 U2_T dio_ReadU2(void) {
     U1_T x0 = dio_ReadU1();
@@ -215,53 +175,53 @@ U8_T dio_ReadU8(void) {
 }
 
 U4_T dio_ReadULEB128(void) {
-    U4_T res = 0;
+    U4_T Res = 0;
     int i = 0;
     for (;; i += 7) {
         U1_T n = dio_ReadU1();
-        res |= (n & 0x7Fu) << i;
+        Res |= (n & 0x7Fu) << i;
         if ((n & 0x80) == 0) break;
     }
-    return res;
+    return Res;
 }
 
 I4_T dio_ReadSLEB128(void) {
-    U4_T res = 0;
+    U4_T Res = 0;
     int i = 0;
     for (;; i += 7) {
         U1_T n = dio_ReadU1();
-        res |= (n & 0x7Fu) << i;
+        Res |= (n & 0x7Fu) << i;
         if ((n & 0x80) == 0) {
-            res |= -(n & 0x40) << i;
+            Res |= -(n & 0x40) << i;
             break;
         }
     }
-    return (I4_T)res;
+    return (I4_T)Res;
 }
 
 U8_T dio_ReadU8LEB128(void) {
-    U8_T res = 0;
+    U8_T Res = 0;
     int i = 0;
     for (;; i += 7) {
         U1_T n = dio_ReadU1();
-        res |= (n & 0x7Fu) << i;
+        Res |= (n & 0x7Fu) << i;
         if ((n & 0x80) == 0) break;
     }
-    return res;
+    return Res;
 }
 
 I8_T dio_ReadS8LEB128(void) {
-    U8_T res = 0;
+    U8_T Res = 0;
     int i = 0;
     for (;; i += 7) {
         U1_T n = dio_ReadU1();
-        res |= (n & 0x7Fu) << i;
+        Res |= (n & 0x7Fu) << i;
         if ((n & 0x80) == 0) {
-            res |= -(n & 0x40) << i;
+            Res |= -(n & 0x40) << i;
             break;
         }
     }
-    return (I8_T)res;
+    return (I8_T)Res;
 }
 
 U8_T dio_ReadUX(int Size) {
@@ -292,26 +252,11 @@ U8_T dio_ReadAddress(void) {
     }
 }
 
-static void dio_CheckBlockBufCapacity(U4_T Size) {
-    static U4_T BufSize = 0;
-    if (BufSize < Size) {
-        BufSize = BufSize == 0 ? 0x100 : BufSize * 2;
-        dio_gFormBlockBuf = (U1_T *)loc_realloc(dio_gFormBlockBuf, BufSize);
-    }
-}
-
 char * dio_ReadString(void) {
-    char * Res = NULL;
+    char * Res = (char *)(sData + sDataPos);
     U4_T Length = 0;
-    for (;;) {
-        U1_T Char = dio_ReadU1();
-        dio_CheckBlockBufCapacity(Length + 1);
-        dio_gFormBlockBuf[Length++] = Char;
-        if (Char == 0) break;
-    }
-    if (Length == 1) return NULL;
-    Res = (char *)loc_alloc(Length);
-    strcpy(Res, (char *)dio_gFormBlockBuf);
+    while (dio_ReadU1() != 0) Length++;
+    if (Length == 0) return NULL;
     return Res;
 }
 
@@ -367,14 +312,10 @@ static void dio_ReadFormAddr(void) {
 }
 
 static void dio_ReadFormBlock(U2_T Attr, U4_T Size) {
-    U1_T * Buf;
-    dio_gFormBlockSize = Size;
-    dio_CheckBlockBufCapacity(Size);
-    Buf = dio_gFormBlockBuf;
-    while (Size > 0) {
-        *Buf++ = dio_ReadU1();
-        Size--;
-    }
+    dio_gFormDataSize = Size;
+    dio_gFormDataAddr = sData + sDataPos;
+    if (sDataPos + Size > sDataLen) exception(ERR_EOF);
+    sDataPos += Size;
 }
 
 static void dio_ReadFormData(U2_T Attr, U1_T Size, U8_T Data) {
@@ -395,7 +336,8 @@ static void dio_ReadFormRelRef(U8_T Offset) {
     if (dio_gUnitSize > 0 && Offset >= dio_gUnitSize) {
         str_exception(ERR_INV_DWARF, "invalid REF attribute value");
     }
-    dio_gFormRef = dio_gUnitPos + Offset;
+    dio_gFormRef = sSection->addr + dio_gUnitPos + Offset;
+    dio_gFormDataAddr = NULL;
 }
 
 static void dio_ReadFormRefAddr(void) {
@@ -405,33 +347,31 @@ static void dio_ReadFormRefAddr(void) {
 }
 
 static void dio_ReadFormString(void) {
-    dio_gFormBlockSize = 0;
-    for (;;) {
-        U1_T Char = dio_ReadU1();
-        dio_CheckBlockBufCapacity(dio_gFormBlockSize + 1);
-        dio_gFormBlockBuf[dio_gFormBlockSize++] = Char;
-        if (Char == 0) break;
-    }
+    dio_gFormDataSize = 1;
+    dio_gFormDataAddr = sData + sDataPos;
+    while (dio_ReadU1()) dio_gFormDataSize++;
 }
 
 static void dio_ReadFormStringRef(void) {
     U8_T Offset = dio_ReadUX(dio_g64bit ? 8 : 4);
     U4_T StringTableSize = 0;
     U1_T * StringTable = dio_LoadStringTable(&StringTableSize);
-    dio_gFormBlockSize = 0;
+    dio_gFormDataSize = 1;
+    dio_gFormDataAddr = StringTable + Offset;
     for (;;) {
-        U1_T Char;
         if (Offset >= StringTableSize) {
             str_exception(ERR_INV_DWARF, "invalid FORM_STRP attribute");
         }
-        dio_CheckBlockBufCapacity(dio_gFormBlockSize + 1);
-        Char = StringTable[Offset++];
-        dio_gFormBlockBuf[dio_gFormBlockSize++] = Char;
-        if (Char == 0) break;
+        if (StringTable[Offset++] == 0) break;
+        dio_gFormDataSize++;
     }
 }
 
 static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
+    dio_gFormDataAddr = sData + sDataPos;
+    dio_gFormDataSize = 0;
+    dio_gFormData = 0;
+    dio_gFormRef = 0;
     switch (Form) {
     case FORM_ADDR      : dio_ReadFormAddr(); break;
     case FORM_REF       : dio_ReadFormRef(); break;
@@ -443,8 +383,8 @@ static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
     case FORM_DATA2     : dio_ReadFormData(Attr, 2, dio_ReadU2()); break;
     case FORM_DATA4     : dio_ReadFormData(Attr, 4, dio_ReadU4()); break;
     case FORM_DATA8     : dio_ReadFormData(Attr, 8, dio_ReadU8()); break;
-    case FORM_SDATA     : dio_ReadFormData(Attr, 8, dio_ReadS8LEB128()); break;
-    case FORM_UDATA     : dio_ReadFormData(Attr, 8, dio_ReadU8LEB128()); break;
+    case FORM_SDATA     : dio_ReadFormData(Attr, 8, dio_ReadS8LEB128()); dio_gFormDataAddr = NULL; break;
+    case FORM_UDATA     : dio_ReadFormData(Attr, 8, dio_ReadU8LEB128()); dio_gFormDataAddr = NULL; break;
     case FORM_FLAG      : dio_ReadFormFlag(); break;
     case FORM_STRING    : dio_ReadFormString(); break;
     case FORM_STRP      : dio_ReadFormStringRef(); break;
@@ -458,7 +398,7 @@ static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
     }
 }
 
-static void dio_ReadEntry(DIO_EntryCallBack CallBack) {
+void dio_ReadEntry(DIO_EntryCallBack CallBack) {
     DIO_Abbreviation * Abbr = NULL;
     U2_T Tag = 0;
     U4_T AttrPos = 0;
@@ -511,7 +451,7 @@ static void dio_ReadEntry(DIO_EntryCallBack CallBack) {
             if (Attr == AT_sibling && dio_gUnitSize == 0) {
                 dio_ChkRef(Form);
                 assert(dio_gVersion == 1);
-                dio_gUnitSize = (U4_T)(dio_gFormRef - dio_gUnitPos);
+                dio_gUnitSize = (U4_T)(dio_gFormRef - sSection->addr - dio_gUnitPos);
                 assert(dio_gUnitPos < dio_GetPos());
                 assert(dio_gUnitPos + dio_gUnitSize >= dio_GetPos());
             }
@@ -554,21 +494,7 @@ void dio_ReadUnit(DIO_EntryCallBack CallBack) {
     }
 }
 
-#define dio_AbbrevTableHash(File, Offset) (((unsigned)(File) + (unsigned)(Offset)) / 16 % ABBREV_TABLE_SIZE)
-
-static int dio_IsAbbrevSectionLoaded(ELF_File * File) {
-    DIO_Cache * Cache = dio_GetCache(File);
-
-    if (Cache->mAbbrevTable != NULL) {
-        U4_T Hash = dio_AbbrevTableHash(File, 0);
-        DIO_AbbrevSet * AbbrevSet = Cache->mAbbrevTable[Hash];
-        while (AbbrevSet != NULL) {
-            if (AbbrevSet->mFile == File) return 1;
-            AbbrevSet = AbbrevSet->mNext;
-        }
-    }
-    return 0;
-}
+#define dio_AbbrevTableHash(Offset) (((unsigned)(Offset)) / 16 % ABBREV_TABLE_SIZE)
 
 void dio_LoadAbbrevTable(ELF_File * File) {
     U4_T ID;
@@ -580,7 +506,8 @@ void dio_LoadAbbrevTable(ELF_File * File) {
     U4_T AbbrevTableSize = 0;
     DIO_Cache * Cache = dio_GetCache(File);
 
-    if (dio_IsAbbrevSectionLoaded(File)) return;
+    if (Cache->mAbbrevTable != NULL) return;
+    Cache->mAbbrevTable = (DIO_AbbrevSet **)loc_alloc_zero(sizeof(DIO_AbbrevSet *) * ABBREV_TABLE_SIZE);
 
     assert(sSection == NULL);
     for (ID = 1; ID < File->section_cnt; ID++) {
@@ -600,15 +527,11 @@ void dio_LoadAbbrevTable(ELF_File * File) {
         U4_T ID = dio_ReadULEB128();
         if (ID == 0) {
             /* End of compilation unit */
-            U4_T Hash = dio_AbbrevTableHash(File, TableOffset);
+            U4_T Hash = dio_AbbrevTableHash(TableOffset);
             DIO_AbbrevSet * AbbrevSet = (DIO_AbbrevSet *)loc_alloc_zero(sizeof(DIO_AbbrevSet));
-            AbbrevSet->mFile = File;
             AbbrevSet->mOffset = TableOffset;
             AbbrevSet->mTable = AbbrevTable;
             AbbrevSet->mSize = AbbrevTableSize;
-            if (Cache->mAbbrevTable == NULL) {
-                Cache->mAbbrevTable = (DIO_AbbrevSet **)loc_alloc_zero(sizeof(DIO_AbbrevSet *) * ABBREV_TABLE_SIZE);
-            }
             AbbrevSet->mNext = Cache->mAbbrevTable[Hash];
             Cache->mAbbrevTable[Hash] = AbbrevSet;
             AbbrevTable = NULL;
@@ -657,10 +580,10 @@ void dio_LoadAbbrevTable(ELF_File * File) {
 static void dio_FindAbbrevTable(U4_T Offset, DIO_Abbreviation *** AbbrevTable, U4_T * AbbrevTableSize) {
     DIO_Cache * Cache = dio_GetCache(sSection->file);
     if (Cache->mAbbrevTable != NULL) {
-        U4_T Hash = dio_AbbrevTableHash(sSection->file, Offset);
+        U4_T Hash = dio_AbbrevTableHash(Offset);
         DIO_AbbrevSet * AbbrevSet = Cache->mAbbrevTable[Hash];
         while (AbbrevSet != NULL) {
-            if (AbbrevSet->mFile == sSection->file && AbbrevSet->mOffset == Offset) {
+            if (AbbrevSet->mOffset == Offset) {
                 *AbbrevTable = AbbrevSet->mTable;
                 *AbbrevTableSize = AbbrevSet->mSize;
                 return;
@@ -692,7 +615,7 @@ void dio_ChkRef(U2_T Form) {
     case FORM_REF_UDATA :
         return;
     }
-    str_exception(ERR_INV_DWARF, "FORM_REF* expected");
+    str_exception(ERR_INV_DWARF, "FORM_REF expected");
 }
 
 void dio_ChkAddr(U2_T Form) {
@@ -713,26 +636,23 @@ void dio_ChkData(U2_T Form) {
     case FORM_UDATA     :
         return;
     }
-    str_exception(ERR_INV_DWARF, "FORM_DATA* expected");
+    str_exception(ERR_INV_DWARF, "FORM_DATA expected");
 }
 
-void dio_ChkBlock(U2_T Form, U1_T ** Buf, U4_T * Size) {
+void dio_ChkBlock(U2_T Form, U1_T ** Buf, size_t * Size) {
     switch (Form) {
     case FORM_BLOCK1    :
     case FORM_BLOCK2    :
     case FORM_BLOCK4    :
     case FORM_BLOCK     :
-        *Size = dio_gFormBlockSize;
-        *Buf = dio_gFormBlockBuf;
-        break;
     case FORM_DATA1     :
     case FORM_DATA2     :
     case FORM_DATA4     :
     case FORM_DATA8     :
-    case FORM_SDATA     :
-    case FORM_UDATA     :
+    case FORM_STRING    :
+    case FORM_STRP      :
         *Size = dio_gFormDataSize;
-        *Buf = (U1_T *)&dio_gFormData;
+        *Buf = dio_gFormDataAddr;
         break;
     default:
         str_exception(ERR_INV_DWARF, "FORM_BLOCK expected");

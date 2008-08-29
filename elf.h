@@ -19,10 +19,82 @@
 #define D_elf
 
 #include "mdep.h"
+#include "context.h"
+
 #if !defined(WIN32)
 #  include <elf.h>
 #endif
-#include "context.h"
+
+#if defined(WIN32)
+
+#define SHT_NULL        0
+#define SHT_PROGBITS    1
+#define SHT_SYMTAB      2
+#define SHT_STRTAB      3
+
+#define STB_LOCAL       0
+#define STB_GLOBAL      1
+#define STB_WEAK        2
+
+#define STT_NOTYPE      0
+#define STT_OBJECT      1
+#define STT_FUNC        2
+#define STT_SECTION     3
+#define STT_FILE        4
+
+typedef unsigned long  Elf32_Addr;
+typedef unsigned short Elf32_Half;
+typedef unsigned long  Elf32_Off;
+typedef signed   long  Elf32_Sword;
+typedef unsigned long  Elf32_Word;
+
+typedef struct Elf32_Sym {
+    Elf32_Word    st_name;
+    Elf32_Addr    st_value;
+    Elf32_Word    st_size;
+    unsigned char st_info;
+    unsigned char st_other;
+    Elf32_Half    st_shndx;
+} Elf32_Sym;
+
+#define ELF32_ST_BIND(i)   ((i)>>4)
+#define ELF32_ST_TYPE(i)   ((i)&0xf)
+
+#endif
+
+#if defined(_WRS_KERNEL) || defined(WIN32)
+
+typedef uns64           Elf64_Addr;
+typedef unsigned short  Elf64_Half;
+typedef unsigned long   Elf64_Word;
+typedef signed long     Elf64_Sword;
+typedef uns64           Elf64_Xword;
+typedef int64           Elf64_Sxword;
+typedef uns64           Elf64_Off;
+typedef unsigned short  Elf64_Section;
+typedef Elf64_Half      Elf64_Versym;
+typedef unsigned short  Elf64_Quarter;
+
+typedef struct {
+    Elf64_Word  st_name;
+    unsigned char st_info;
+    unsigned char st_other;
+    Elf64_Section st_shndx;
+    Elf64_Addr  st_value;
+    Elf64_Xword st_size;
+} Elf64_Sym;
+
+#define ELF64_ST_BIND(info)             ((info) >> 4)
+#define ELF64_ST_TYPE(info)             ((info) & 0xf)
+
+#endif
+
+typedef struct Elf_Sym {
+    union {
+        Elf32_Sym Elf32;
+        Elf64_Sym Elf64;
+    } u;
+} Elf_Sym;
 
 typedef unsigned char U1_T;
 typedef signed char I1_T;
@@ -49,13 +121,13 @@ struct ELF_File {
     int fd;
 
     int big_endian;
+    int elf64;
     U4_T section_cnt;
     ELF_Section ** sections;
 
     void * libelf_cache;
-    void * dwarf_cache;
-    void * sym_cache;
-    void * line_numbers_cache;
+    void * dwarf_io_cache;
+    void * dwarf_dt_cache;
 
     int listed;
 };
@@ -74,6 +146,21 @@ struct ELF_Section {
 };
 
 /*
+ * Open ELF file for reading.
+ * Same file can be opened mutiple times, each call to elf_open() increases reference counter.
+ * File must be closed after usage by calling elf_close().
+ * Returns the file descriptior on success. If error, returns NULL and sets errno.
+ */
+extern ELF_File * elf_open(char * file_name);
+
+/*
+ * Close ELF file.
+ * Each call of elf_close() decrements reference counter.
+ * The file will be kept in a cache for some time even after all references are closed.
+ */
+extern void elf_close(ELF_File * file);
+
+/*
  * Iterate context ELF files that are mapped in context memory in given address range (inclusive).
  * Returns the file descriptior on success. If error, returns NULL and sets errno.
  */
@@ -85,13 +172,6 @@ extern ELF_File * elf_list_next(Context * ctx);
  * Clients should always call elf_list_done() after calling elf_list_first().
  */
 extern void elf_list_done(Context * ctx);
-
-/*
- * Read section data from ELF file.
- * '*rd_len' is set to number of bytes transfered into the buffer.
- * Returns zero on success. If error, returns -1 and sets errno.
- */
-extern int elf_read(ELF_Section * section, U8_T offset, U1_T * buf, U4_T size, U4_T * rd_len);
 
 /*
  * Load section data into memory.

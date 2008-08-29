@@ -455,17 +455,17 @@
 #define FMT_UT_X_X                  0x7
 #define FMT_ET                      0x8
 
-#define DW_ATE_address              0x01
-#define DW_ATE_boolean              0x02
-#define DW_ATE_complex_float        0x03
-#define DW_ATE_float                0x04
-#define DW_ATE_signed               0x05
-#define DW_ATE_signed_char          0x06
-#define DW_ATE_unsigned             0x07
-#define DW_ATE_unsigned_char        0x08
-#define DW_ATE_imaginary_float      0x09  /* v3 */
-#define DW_ATE_lo_user              0x80
-#define DW_ATE_hi_user              0xff
+#define ATE_address                 0x01
+#define ATE_boolean                 0x02
+#define ATE_complex_float           0x03
+#define ATE_float                   0x04
+#define ATE_signed                  0x05
+#define ATE_signed_char             0x06
+#define ATE_unsigned                0x07
+#define ATE_unsigned_char           0x08
+#define ATE_imaginary_float         0x09  /* v3 */
+#define ATE_lo_user                 0x80
+#define ATE_hi_user                 0xff
 
 #define DW_LNS_copy                 1
 #define DW_LNS_advance_pc           2

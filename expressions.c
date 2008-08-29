@@ -501,14 +501,31 @@ static void identifier(char * name, Value * v) {
                 return;
             case SYM_CLASS_REFERENCE:
                 v->size = sym.size;
-                v->address = sym.address;
                 v->remote = 1;
-                if (sym.base == SYM_BASE_FP) {
-                    ContextAddress fp = 0;
-                    if (get_frame_info(expression_context, expression_frame, NULL, NULL, &fp) < 0) {
-                        error(errno, "Cannot retrieve stack frame info");
+                switch (sym.base) {
+                case SYM_BASE_FP:
+                    {
+                        ContextAddress fp = 0;
+                        if (get_frame_info(expression_context, expression_frame, NULL, NULL, &fp) < 0) {
+                            error(errno, "Cannot retrieve stack frame info");
+                        }
+                        v->address = fp + sym.address;
                     }
-                    v->address = fp + sym.address;
+                    break;
+                case SYM_BASE_ABS:
+                    v->address = sym.address;
+                    break;
+                default:
+                    error(ERR_UNSUPPORTED, "Cannot get symbol address");
+                    break;
+                }
+                if (v->type_class == TYPE_CLASS_ARRAY) {
+                    v->size = sizeof(ContextAddress);
+                    v->value = alloc_str(v->size);
+                    memcpy(v->value, &v->address, v->size);
+                    v->remote = 0;
+                    v->address = 0;
+                    v->type_class = TYPE_CLASS_POINTER;
                 }
                 return;
             case SYM_CLASS_FUNCTION:
@@ -1307,6 +1324,7 @@ static void command_create(char * token, Channel * c) {
 
 static void command_evaluate(char * token, Channel * c) {
     int err = 0;
+    char * err_msg = NULL;
     char id[256];
     char parent[256];
     char name[MAX_SYM_NAME];
@@ -1320,7 +1338,10 @@ static void command_evaluate(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
-    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 1, &value) < 0) err = errno;
+    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 1, &value) < 0) {
+        err = errno;
+        err_msg = get_expression_error_msg();
+    }
     
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -1335,7 +1356,7 @@ static void command_evaluate(char * token, Channel * c) {
         json_write_binary_end(&state);
         write_stream(&c->out, 0);
     }
-    write_errno(&c->out, err);
+    write_err_msg(&c->out, err, err_msg);
     if (err) {
         write_stringz(&c->out, "null");
     }
@@ -1350,6 +1371,7 @@ static void command_evaluate(char * token, Channel * c) {
 static void command_assign(char * token, Channel * c) {
     char id[256];
     int err = 0;
+    char * err_msg = NULL;
     char parent[256];
     char name[MAX_SYM_NAME];
     Context * ctx;
@@ -1367,7 +1389,10 @@ static void command_assign(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
 
     if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
-    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 0, &value) < 0) err = errno;
+    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 0, &value) < 0) {
+        err = errno;
+        err_msg = get_expression_error_msg();
+    }
 
     addr0 = value.address;
     size0 = value.size;
@@ -1398,7 +1423,7 @@ static void command_assign(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    write_errno(&c->out, err);
+    write_err_msg(&c->out, err, err_msg);
     write_stream(&c->out, MARKER_EOM);
 }
 

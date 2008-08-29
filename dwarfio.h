@@ -22,25 +22,24 @@
 
 #include "elf.h"
 
-extern U4_T dio_gVersion;
+extern U2_T dio_gVersion;
 extern U1_T dio_g64bit;
 extern U1_T dio_gAddressSize;
-extern U8_T dio_gUnitPos;
+extern U8_T dio_gUnitPos;   /* Offset in the section */
 extern U4_T dio_gUnitSize;
 extern U8_T dio_gEntryPos;
 
-extern U8_T dio_gFormRef;
+extern U8_T dio_gFormRef;   /* Absolute address */
 extern U8_T dio_gFormData;
-extern U1_T dio_gFormDataSize;
-extern U1_T * dio_gFormBlockBuf;
-extern U4_T dio_gFormBlockSize;
+extern size_t dio_gFormDataSize;
+extern void * dio_gFormDataAddr;
 
 extern void dio_EnterSection(ELF_Section * Section, U8_T Offset);
 extern void dio_ExitSection(void);
 
 extern void dio_Skip(U8_T Bytes);
 extern void dio_Read(U1_T * Buf, U4_T Size);
-extern U8_T dio_GetPos(void);
+extern U8_T dio_GetPos(void); /* Offset in the section */
 
 extern U1_T dio_ReadU1(void);
 extern U2_T dio_ReadU2(void);
@@ -67,6 +66,7 @@ typedef void (*DIO_EntryCallBack)(U2_T /* Tag */, U2_T /* Attr */, U2_T /* Form 
  * This sequence is repeated for each entry in the debug info unit.
  */
 extern void dio_ReadUnit(DIO_EntryCallBack CallBack);
+extern void dio_ReadEntry(DIO_EntryCallBack CallBack);
 
 extern void dio_LoadAbbrevTable(ELF_File * File);
 
@@ -74,7 +74,7 @@ extern void dio_ChkFlag(U2_T Form);
 extern void dio_ChkRef(U2_T Form);
 extern void dio_ChkAddr(U2_T Form);
 extern void dio_ChkData(U2_T Form);
-extern void dio_ChkBlock(U2_T Form, U1_T ** Buf, U4_T * Size);
+extern void dio_ChkBlock(U2_T Form, U1_T ** Buf, size_t * Size);
 extern void dio_ChkString(U2_T Form);
 
 #endif

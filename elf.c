@@ -29,6 +29,8 @@
 #include "elf.h"
 #include "myalloc.h"
 #include "exceptions.h"
+#include "events.h"
+#include "trace.h"
 
 #if defined(_WRS_KERNEL)
 #elif defined(WIN32)
@@ -55,16 +57,18 @@ struct MemoryMap {
     MemoryRegion * regions;
 };
 
-#define MAX_CACHED_FILES 8
+#define MAX_CACHED_FILES 16
 
 static ELF_File * files = NULL;
 static ELFCloseListener * listeners = NULL;
 static U4_T listeners_cnt = 0;
 static U4_T listeners_max = 0;
 static int context_listener_added = 0;
+static int elf_cleanup_posted = 0;
 
 static void elf_dispose(ELF_File * file) {
     U4_T n;
+    trace(LOG_ELF, "Dispose ELF file cache %s", file->name);
     assert(file->ref_cnt == 0);
     for (n = 0; n < listeners_cnt; n++) {
         listeners[n](file);
@@ -83,23 +87,43 @@ static void elf_dispose(ELF_File * file) {
     loc_free(file);
 }
 
-/*
- * Open ELF file for reading.
- * Same file can be opened mutiple times, each call to elf_open() increases reference counter.
- * File must be closed after usage by calling elf_close().
- * Returns the file descriptior on success. If error, returns NULL and sets errno.
- */
-static ELF_File * elf_open(char * file_name) {
+static void elf_cleanup_event(void * arg) {
     int cnt = 0;
+    ELF_File * prev = NULL;
+    ELF_File * file = files;
+
+    assert(elf_cleanup_posted);
+    elf_cleanup_posted = 0;
+    while (file != NULL) {
+        if (cnt >= MAX_CACHED_FILES && file->ref_cnt == 0) {
+            prev->next = file->next;
+            elf_dispose(file);
+            file = prev->next;
+        }
+        else {
+            prev = file;
+            file = file->next;
+            cnt++;
+        }
+    }
+}
+
+ELF_File * elf_open(char * file_name) {
     int error = 0;
     struct_stat st;
     ELF_File * prev = NULL;
     ELF_File * file = files;
 
+    if (!elf_cleanup_posted) {
+        post_event_with_delay(elf_cleanup_event, NULL, 1000000);
+        elf_cleanup_posted = 1;
+    }
+
     if (stat(file_name, &st) < 0) {
         errno = error;
         return NULL;
     }
+
     while (file != NULL) {
         if (strcmp(file->name, file_name) == 0 &&
                 file->dev == st.st_dev &&
@@ -113,17 +137,11 @@ static ELF_File * elf_open(char * file_name) {
             file->ref_cnt++;
             return file;
         }
-        if (cnt >= MAX_CACHED_FILES && file->ref_cnt == 0) {
-            prev->next = file->next;
-            elf_dispose(file);
-            file = prev->next;
-        }
-        else {
-            prev = file;
-            file = file->next;
-            cnt++;
-        }
+        prev = file;
+        file = file->next;
     }
+
+    trace(LOG_ELF, "Create ELF file cache %s", file_name);
 
     file = (ELF_File *)loc_alloc_zero(sizeof(ELF_File));
     file->name = loc_strdup(file_name);
@@ -209,12 +227,7 @@ static ELF_File * elf_open(char * file_name) {
     return files = file;
 }
 
-/*
- * Close ELF file.
- * Each call of elf_close() decrements reference counter.
- * The file will be kept in a cache for some time even after all references are closed.
- */
-static void elf_close(ELF_File * file) {
+void elf_close(ELF_File * file) {
     assert(file != NULL);
     assert(file->ref_cnt > 0);
     file->ref_cnt--;
@@ -302,9 +315,7 @@ static MemoryMap * get_memory_map(Context * ctx) {
 #endif
 
 ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress addr1) {
-#if defined(_WRS_KERNEL)
-    exception(EINVAL);
-#else
+#if !defined(_WRS_KERNEL)
     int i;
     MemoryMap * map = NULL;
 
@@ -329,15 +340,13 @@ ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress ad
             }
         }
     }
+#endif
     errno = 0;
     return NULL;
-#endif
 }
 
 ELF_File * elf_list_next(Context * ctx) {
-#if defined(_WRS_KERNEL)
-    exception(EINVAL);
-#else
+#if !defined(_WRS_KERNEL)
     int i;
     MemoryMap * map = NULL;
 
@@ -358,15 +367,13 @@ ELF_File * elf_list_next(Context * ctx) {
             }
         }
     }
+#endif
     errno = 0;
     return NULL;
-#endif
 }
 
 void elf_list_done(Context * ctx) {
-#if defined(_WRS_KERNEL)
-    exception(EINVAL);
-#else
+#if !defined(_WRS_KERNEL)
     int i;
     MemoryMap * map = NULL;
 
@@ -396,26 +403,6 @@ int elf_load(ELF_Section * section, U1_T ** address) {
     return 0;
 #else
     *address = NULL;
-    errno = EINVAL;
-    return -1;
-#endif
-}
-
-int elf_read(ELF_Section * section, U8_T offset, U1_T * buf, U4_T size, U4_T * rd_len) {
-#ifdef USE_LIBELF
-    U4_T rd = size;
-    Elf * elf = (Elf *)section->file->libelf_cache;
-    Elf_Scn * scn = elf_getscn(elf, section->index);
-    Elf_Data * data = elf_getdata(scn, NULL);
-    if (data == NULL) return -1;
-    assert(data->d_buf != NULL && data->d_size == section->size);
-    assert(offset < section->size);
-    if (offset + rd > section->size) rd = (U4_T)(section->size - offset);
-    memcpy(buf, data->d_buf + offset, rd);
-    *rd_len = rd;
-    return 0;
-#else
-    *rd_len = 0;
     errno = EINVAL;
     return -1;
 #endif

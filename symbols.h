@@ -42,7 +42,7 @@ struct Symbol {
     ContextAddress address;
     char * section;
     char * storage;
-    unsigned long size;
+    size_t size;
     int base;
 };
 

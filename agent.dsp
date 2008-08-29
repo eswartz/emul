@@ -53,7 +53,7 @@ LINK32=link.exe
 # Begin Special Build Tool
 SOURCE=$(InputPath)
 PostBuild_Cmds=copy "C:\Program Files\Debugging Tools for Windows\dbghelp.dll"\
- Release
+  Release
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "agent - Win32 Debug"
@@ -83,7 +83,7 @@ LINK32=link.exe
 # Begin Special Build Tool
 SOURCE=$(InputPath)
 PostBuild_Cmds=copy "C:\Program Files\Debugging Tools for Windows\dbghelp.dll"\
- Debug
+  Debug
 # End Special Build Tool
 
 !ENDIF 
@@ -187,6 +187,14 @@ SOURCE=.\discovery_udp.h
 # Begin Source File
 
 SOURCE=.\dwarf.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\dwarfcache.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\dwarfcache.h
 # End Source File
 # Begin Source File
 

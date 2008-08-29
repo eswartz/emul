@@ -35,6 +35,7 @@
 #define LOG_ASYNCREQ    0x100
 #define LOG_PROXY       0x200
 #define LOG_TCFLOG      0x400
+#define LOG_ELF         0x800
 
 extern int log_mode;
 

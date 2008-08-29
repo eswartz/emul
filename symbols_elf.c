@@ -23,169 +23,100 @@
 #if defined(_WRS_KERNEL)
 #  include <symLib.h>
 #  include <sysSymTbl.h>
-#else
-#  include <elf.h>
-#  include <libelf.h>
-#  include <fcntl.h>
 #endif
+
 #include <errno.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "errors.h"
 #include "elf.h"
+#include "dwarf.h"
 #include "myalloc.h"
 #include "events.h"
+#include "exceptions.h"
+#include "dwarfcache.h"
+#include "stacktrace.h"
 #include "symbols.h"
 
-#define SYM_HASH_SIZE 1023
-#define SYM_CACHE_MAGIC 0x84625490
-
-typedef struct SymbolCache SymbolCache;
-typedef struct SymbolTable SymbolTable;
-
-struct SymbolCache {
-    int magic;
-    SymbolTable ** tables;
-    int tables_cnt;
-    int tables_len;
-};
-
-struct SymbolTable {
-    int index;
-    char * str;
-    int str_size;
-    int sym_cnt;
-    void * syms;    /* pointer to ELF section data: Elf32_Sym* or Elf64_Sym* */
-    int hash[SYM_HASH_SIZE];
-    int * hash_next;
-};
-
-static ELF_File ** files = NULL;
-static int files_cnt = 0;
-static int files_len = 0;
-
-static void unlock_files(void * arg) {
-    int i;
-    for (i = 0; i < files_cnt; i++) files[i]->ref_cnt--;
-    files_cnt = 0;
-}
-
-static void lock_file(ELF_File * file) {
-    if (files == NULL) {
-        files_cnt = 0;
-        files_len = 256;
-        files = loc_alloc(sizeof(ELF_File *) * files_len);
-    }
-    else if (files_cnt >= files_len) {
-        files_len *= 2;
-        files = loc_realloc(files, sizeof(ELF_File *) * files_len);
-    }
-    if (files_cnt == 0) post_event(unlock_files, NULL);
-    files[files_cnt++] = file;
-    file->ref_cnt++;
-}
-
-static int calc_hash(char * s) {
-    unsigned h = 0;
-    while (*s) {
-        unsigned g;
-        h = (h << 4) + *s++;
-        if (g = h & 0xf0000000) h ^= g >> 24;
-        h &= ~g;
-    }
-    return h % SYM_HASH_SIZE;
-}
-
-static void free_sym_cache(ELF_File * file) {
-    SymbolCache * cache = (SymbolCache *)file->sym_cache;
-    if (cache != NULL) {
-        int i = 0;
-        assert(cache->magic == SYM_CACHE_MAGIC);
-        cache->magic = 0;
-        while (i < cache->tables_cnt) {
-            SymbolTable * tbl = cache->tables[i++];
-            loc_free(tbl->hash_next);
-            loc_free(tbl);
+static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, char * name, Symbol * sym) {
+    int found = 0;
+    ObjectInfo * obj = list;
+    while (obj != NULL) {
+        if (obj->mName != NULL && strcmp(obj->mName, name) == 0) {
+            memset(sym, 0, sizeof(Symbol));
+            sym->module_id = (ModuleID)(unsigned)obj->mCompUnit->mFile;
+            sym->object_id = (SymbolID)(unsigned)obj;
+            sym->type_id = (SymbolID)(unsigned)obj->mType;
+            switch (obj->mTag) {
+            case TAG_global_subroutine:
+            case TAG_subroutine:
+            case TAG_subprogram:
+                sym->sym_class = SYM_CLASS_FUNCTION;
+                break;
+            case TAG_array_type:
+            case TAG_class_type:
+            case TAG_enumeration_type:
+            case TAG_pointer_type:
+            case TAG_reference_type:
+            case TAG_string_type:
+            case TAG_structure_type:
+            case TAG_subroutine_type:
+            case TAG_union_type:
+            case TAG_ptr_to_member_type:
+            case TAG_set_type:
+            case TAG_subrange_type:
+            case TAG_base_type:
+            case TAG_file_type:
+            case TAG_packed_type:
+            case TAG_thrown_type:
+            case TAG_volatile_type:
+            case TAG_restrict_type:
+            case TAG_interface_type:
+            case TAG_unspecified_type:
+            case TAG_mutable_type:
+            case TAG_shared_type:
+            case TAG_typedef:
+                sym->sym_class = SYM_CLASS_TYPE;
+                break;
+            case TAG_formal_parameter:
+            case TAG_global_variable:
+            case TAG_local_variable:
+            case TAG_variable:
+                sym->sym_class = SYM_CLASS_REFERENCE;
+                break;
+            case TAG_constant:
+            case TAG_enumerator:
+                sym->sym_class = SYM_CLASS_VALUE;
+                break;
+            }
+            sym->base = obj->mLocBase;
+            sym->address = obj->mLocOffset;
+            sym->size = (size_t)obj->mSize;
+            found = 1;
         }
-        loc_free(cache);
-        file->sym_cache = NULL;
-    }
-}
-
-static int load_symbol_tables(ELF_File * file) {
-    int error = 0;
-    unsigned idx;
-    SymbolCache * cache;
-
-    assert(file->sym_cache == NULL);
-    cache = (SymbolCache *)(file->sym_cache = loc_alloc_zero(sizeof(SymbolCache)));
-    cache->magic = SYM_CACHE_MAGIC;
-
-    for (idx = 0; idx < file->section_cnt; idx++) {
-        ELF_Section * sym_sec = file->sections[idx];
-        if (sym_sec == NULL) continue;
-        if (sym_sec->type == SHT_SYMTAB && sym_sec->size > 0) {
-            int i;
-            ELF_Section * str_sec;
-            U1_T * str_data = NULL;
-            U1_T * sym_data = NULL;
-            SymbolTable * tbl = (SymbolTable *)loc_alloc_zero(sizeof(SymbolTable));
-            if (cache->tables == NULL) {
-                cache->tables_len = 8;
-                cache->tables = loc_alloc(sizeof(SymbolTable *) * cache->tables_len);
+        switch (obj->mTag) {
+        case TAG_enumeration_type:
+            found = find_in_object_tree(obj->mChildren, ip, name, sym);
+            break;
+        case TAG_global_subroutine:
+        case TAG_subroutine:
+        case TAG_subprogram:
+        case TAG_lexical_block:
+            if (ip == 0 || obj->mLocBase != SYM_BASE_ABS || obj->mSize == 0) break;
+            if (obj->mLocOffset <= ip && obj->mLocOffset + obj->mSize > ip) {
+                if (find_in_object_tree(obj->mChildren, ip, name, sym)) return 1;
             }
-            else if (cache->tables_cnt >= cache->tables_len) {
-                cache->tables_len *= 8;
-                cache->tables = loc_realloc(cache->tables, sizeof(SymbolTable *) * cache->tables_len);
-            }
-            tbl->index = cache->tables_cnt;
-            cache->tables[cache->tables_cnt++] = tbl;
-            if (sym_sec->link >= file->section_cnt || (str_sec = file->sections[sym_sec->link]) == NULL) {
-                error = EINVAL;
-                break;
-            }
-            if (elf_load(sym_sec, &sym_data) < 0) {
-                error = errno;
-                assert(error != 0);
-                break;
-            }
-            if (elf_load(str_sec, &str_data) < 0) {
-                error = errno;
-                assert(error != 0);
-                break;
-            }
-            tbl->str = (char *)str_data;
-            tbl->str_size = str_sec->size;
-            tbl->syms = sym_data;
-            tbl->sym_cnt = sym_sec->size / sizeof(Elf32_Sym);
-            tbl->hash_next = (int *)loc_alloc(tbl->sym_cnt * sizeof(int));
-            for (i = 0; i < tbl->sym_cnt; i++) {
-                Elf32_Sym * s = (Elf32_Sym *)tbl->syms + i;
-                assert(s->st_name < tbl->str_size);
-                if (s->st_name == 0) {
-                    tbl->hash_next[i] = 0;
-                }
-                else {
-                    int h = calc_hash(tbl->str + s->st_name);
-                    tbl->hash_next[i] = tbl->hash[h];
-                    tbl->hash[h] = i;
-                }
-            }
+            break;
         }
+        obj = obj->mSibling;
     }
-
-    if (error != 0) {
-        free_sym_cache(file);
-        errno = error;
-        return -1;
-    }
-
-    return 0;
+    return found;
 }
 
 int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     int error = 0;
+    int found = 0;
 
 #if defined(_WRS_KERNEL)
     
@@ -195,8 +126,8 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     memset(sym, 0, sizeof(Symbol));
     if (symFindByName(sysSymTbl, name, &ptr, &type) != OK) {
         error = errno;
-        if (error == S_symLib_SYMBOL_NOT_FOUND) error = ERR_SYM_NOT_FOUND;
         assert(error != 0);
+        if (error == S_symLib_SYMBOL_NOT_FOUND) error = 0;
     }
     else {
         sym->base = SYM_BASE_ABS;
@@ -218,68 +149,86 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
         else {
             sym->sym_class = SYM_CLASS_REFERENCE;
         }
+        found = 1;
     }
+    
+#endif
 
-#else
-
-    int found = 0;
-    ELF_File * file = elf_list_first(ctx, 0, ~(ContextAddress)0);
-    if (file == NULL) error = errno;
-    memset(sym, 0, sizeof(Symbol));
-
-    while (file != NULL) {
-        if (file->sym_cache == NULL) {
-            if (load_symbol_tables(file) < 0) error = errno;
-        }
-        if (error == 0) {
-            int m = 0;
-            int h = calc_hash(name);
-            SymbolCache * cache = (SymbolCache *)file->sym_cache;
-            while (m < cache->tables_cnt && !found) {
-                SymbolTable * tbl = cache->tables[m++];
-                int n = tbl->hash[h];
-                while (n && !found) {
-                    Elf32_Sym * s = (Elf32_Sym *)tbl->syms + n;
-                    if (strcmp(name, tbl->str + s->st_name) == 0) {
-                        found = 1;
-                        sym->base = SYM_BASE_ABS;
-                        switch (ELF32_ST_BIND(s->st_info)) {
-                        case STB_LOCAL: sym->storage = "LOCAL"; break;
-                        case STB_GLOBAL: sym->storage = "GLOBAL"; break;
-                        case STB_WEAK: sym->storage = "WEAK"; break;
-                        }
-                        switch (ELF32_ST_TYPE(s->st_info)) {
-                        case STT_FUNC:
-                            sym->address = (ContextAddress)s->st_value;
-                            sym->sym_class = SYM_CLASS_FUNCTION;
-                            break;
-                        case STT_OBJECT:
-                            sym->address = (ContextAddress)s->st_value;
-                            sym->size = s->st_size;
-                            sym->sym_class = SYM_CLASS_REFERENCE;
-                            break;
-                        }
-                        if (s->st_shndx > 0 && s->st_shndx < file->section_cnt) {
-                            ELF_Section * sec = file->sections[s->st_shndx];
-                            if (sec != NULL) sym->section = sec->name;
-                        }
-                        lock_file(file);
-                        sym->module_id = (ModuleID)(unsigned)file;
-                    }
-                    n = tbl->hash_next[n];
-                }
-            }
-        }
-        if (error != 0) break;
-        if (found) break;
-        file = elf_list_next(ctx);
+    if (!found) {
+        ContextAddress ip = 0;
+        ELF_File * file = elf_list_first(ctx, 0, ~(ContextAddress)0);
         if (file == NULL) error = errno;
+        memset(sym, 0, sizeof(Symbol));
+    
+        if (error == 0 && frame != STACK_NO_FRAME) {
+            if (get_frame_info(ctx, frame, &ip, NULL, NULL) < 0) error = errno;
+        }
+    
+        while (error == 0 && file != NULL) {
+            Trap trap;
+            if (set_trap(&trap)) {
+                unsigned m = 0;
+                unsigned h = calc_symbol_name_hash(name);
+                DWARFCache * cache = get_dwarf_cache(file);
+                if (ip != 0) {
+                    unsigned i;
+                    for (i = 0; i < cache->mCompUnitsCnt; i++) {
+                        CompUnit * unit = cache->mCompUnits[i];
+                        if (unit->mLowPC <= ip && unit->mHighPC > ip) {
+                            found = find_in_object_tree(unit->mChildren, ip, name, sym);
+                            if (found) break;
+                        }
+                    }
+                }
+                if (!found) {
+                    while (m < cache->sym_sections_cnt && !found) {
+                        SymbolSection * tbl = cache->sym_sections[m++];
+                        int n = tbl->mSymbolHash[h];
+                        while (n && !found) {
+                            Elf32_Sym * s = (Elf32_Sym *)tbl->mSymPool + n;
+                            if (strcmp(name, tbl->mStrPool + s->st_name) == 0) {
+                                found = 1;
+                                sym->base = SYM_BASE_ABS;
+                                switch (ELF32_ST_BIND(s->st_info)) {
+                                case STB_LOCAL: sym->storage = "LOCAL"; break;
+                                case STB_GLOBAL: sym->storage = "GLOBAL"; break;
+                                case STB_WEAK: sym->storage = "WEAK"; break;
+                                }
+                                switch (ELF32_ST_TYPE(s->st_info)) {
+                                case STT_FUNC:
+                                    sym->address = (ContextAddress)s->st_value;
+                                    sym->sym_class = SYM_CLASS_FUNCTION;
+                                    break;
+                                case STT_OBJECT:
+                                    sym->address = (ContextAddress)s->st_value;
+                                    sym->size = s->st_size;
+                                    sym->sym_class = SYM_CLASS_REFERENCE;
+                                    break;
+                                }
+                                if (s->st_shndx > 0 && s->st_shndx < file->section_cnt) {
+                                    ELF_Section * sec = file->sections[s->st_shndx];
+                                    if (sec != NULL) sym->section = sec->name;
+                                }
+                                sym->module_id = (ModuleID)(unsigned)file;
+                            }
+                            n = tbl->mHashNext[n];
+                        }
+                    }
+                }
+                clear_trap(&trap);
+            }
+            else {
+                error = trap.error;
+                break;
+            }
+            if (found) break;
+            file = elf_list_next(ctx);
+            if (file == NULL) error = errno;
+        }
+        elf_list_done(ctx);
     }
-    elf_list_done(ctx);
 
     if (error == 0 && !found) error = ERR_SYM_NOT_FOUND;
-
-#endif
 
     if (error) {
         errno = error;
@@ -294,6 +243,73 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
 }
 
 int get_symbol_class(Context * ctx, ModuleID module_id, SymbolID symbol_id, int * type_class) {
+    ELF_File * file = (ELF_File *)(unsigned)module_id;
+    if (file != NULL) {
+        DWARFCache * cache = (DWARFCache *)file->dwarf_dt_cache;
+        ObjectInfo * obj = (ObjectInfo *)(unsigned)symbol_id;
+        assert(cache->magic == SYM_CACHE_MAGIC);
+        while (obj != NULL) {
+            switch (obj->mTag) {
+            case TAG_global_subroutine:
+            case TAG_subroutine:
+            case TAG_subprogram:
+            case TAG_subroutine_type:
+                *type_class = TYPE_CLASS_FUNCTION;
+                return 0;
+            case TAG_array_type:
+            case TAG_string_type:
+                *type_class = TYPE_CLASS_ARRAY;
+                return 0;
+            case TAG_enumeration_type:
+            case TAG_enumerator:
+                *type_class = TYPE_CLASS_ENUMERATION;
+                return 0;
+            case TAG_pointer_type:
+            case TAG_reference_type:
+                *type_class = TYPE_CLASS_POINTER;
+                return 0;
+            case TAG_class_type:
+            case TAG_structure_type:
+            case TAG_union_type:
+            case TAG_interface_type:
+                *type_class = TYPE_CLASS_COMPOSITE;
+                return 0;
+            case TAG_base_type:
+                switch (obj->mEncoding) {
+                case ATE_address:
+                    *type_class = TYPE_CLASS_POINTER;
+                    return 0;
+                case ATE_boolean:
+                    *type_class = TYPE_CLASS_INTEGER;
+                    return 0;
+                case ATE_float:
+                    *type_class = TYPE_CLASS_REAL;
+                    return 0;
+                case ATE_signed:
+                case ATE_signed_char:
+                    *type_class = TYPE_CLASS_INTEGER;
+                    return 0;
+                case ATE_unsigned:
+                case ATE_unsigned_char:
+                    *type_class = TYPE_CLASS_CARDINAL;
+                    return 0;
+                }
+                return 0;
+            case TAG_subrange_type:
+            case TAG_packed_type:
+            case TAG_volatile_type:
+            case TAG_restrict_type:
+            case TAG_typedef:
+            case TAG_formal_parameter:
+            case TAG_global_variable:
+            case TAG_local_variable:
+            case TAG_variable:
+            case TAG_constant:
+                obj = obj->mType;
+                break;
+            }
+        }
+    }
     *type_class = TYPE_CLASS_UNKNOWN;
     return 0;
 }
@@ -334,14 +350,26 @@ int get_symbol_offset(Context * ctx, ModuleID module_id, SymbolID symbol_id, uns
 }
 
 int get_symbol_value(Context * ctx, ModuleID module_id, SymbolID symbol_id, size_t * size, void * value) {
+    ELF_File * file = (ELF_File *)(unsigned)module_id;
+    if (file != NULL) {
+        DWARFCache * cache = (DWARFCache *)file->dwarf_dt_cache;
+        ObjectInfo * obj = (ObjectInfo *)(unsigned)symbol_id;
+        assert(cache->magic == SYM_CACHE_MAGIC);
+        if (obj != NULL && obj->mConstValueAddr != NULL) {
+            if (*size < obj->mConstValueSize) {
+                errno = ERR_BUFFER_OVERFLOW;
+                return -1;
+            }
+            memcpy(value, obj->mConstValueAddr, obj->mConstValueSize);
+            *size = obj->mConstValueSize;
+            return 0;
+        }
+    }
     errno = ERR_UNSUPPORTED;
     return -1;
 }
 
 ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
-#if defined(_WRS_KERNEL)
-    return 0;
-#else
     ContextAddress res = 0;
     ELF_File * file = elf_list_first(ctx, addr, addr);
     while (file != NULL) {
@@ -352,7 +380,7 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
             if (sec->name == NULL) continue;
             if (strcmp(sec->name, ".plt") != 0) continue;
             if (addr >= sec->addr && addr < sec->addr + sec->size) {
-                res = sec->addr;
+                res = (ContextAddress)sec->addr;
                 break;
             }
         }
@@ -361,11 +389,9 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     }
     elf_list_done(ctx);
     return res;
-#endif
 }
 
 void ini_symbols_service(void) {
-    elf_add_close_listener(free_sym_cache);
 }
 
 #endif
