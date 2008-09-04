@@ -21,7 +21,7 @@
 #include "mdep.h"
 #include "config.h"
 
-#if (SERVICE_LineNumbers) && !defined(WIN32)
+#if (SERVICE_LineNumbers) && (ENABLE_ELF)
 
 #include <errno.h>
 #include <assert.h>
@@ -36,6 +36,7 @@
 #include "dwarfio.h"
 #include "dwarf.h"
 #include "dwarfcache.h"
+#include "trace.h"
 
 static const char * LINENUMBERS = "LineNumbers";
 
@@ -115,6 +116,7 @@ static void write_line_info(OutputStream * out, CompUnit * unit,
                             int * cnt, FileInfo ** file_info) {
     U4_T i;
     FileInfo * state_file = NULL;
+    if (unit->mStatesCnt < 2) return;
     for (i = 0; i < unit->mStatesCnt - 1; i++) {
         LineNumbersState * state = unit->mStates + i;
         LineNumbersState * next = unit->mStates + i + 1;
@@ -231,23 +233,25 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineT
                     }
                 }
                 if (equ) {
-                    U4_T j;
                     load_line_numbers(cache, unit);
-                    for (j = 0; j < unit->mStatesCnt - 1; j++) {
-                        LineNumbersState * state = unit->mStates + j;
-                        LineNumbersState * next = unit->mStates + j + 1;
-                        char * state_dir = unit->mDir;
-                        char * state_name = unit->mName;
-                        if (state->mEndSequence) continue;
-                        if ((unsigned)line < state->mLine) continue;
-                        if ((unsigned)line >= next->mLine) continue;
-                        if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
-                            FileInfo * f = unit->mFiles + (state->mFile - 1);
-                            state_dir = f->mDir;
-                            state_name = f->mName;
+                    if (unit->mStatesCnt >= 2) {
+                        U4_T j;
+                        for (j = 0; j < unit->mStatesCnt - 1; j++) {
+                            LineNumbersState * state = unit->mStates + j;
+                            LineNumbersState * next = unit->mStates + j + 1;
+                            char * state_dir = unit->mDir;
+                            char * state_name = unit->mName;
+                            if (state->mEndSequence) continue;
+                            if ((unsigned)line < state->mLine) continue;
+                            if ((unsigned)line >= next->mLine) continue;
+                            if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
+                                FileInfo * f = unit->mFiles + (state->mFile - 1);
+                                state_dir = f->mDir;
+                                state_name = f->mName;
+                            }
+                            if (!cmp_file(file_name, state_dir, state_name)) continue;
+                            callback(user_args, state->mAddress);
                         }
-                        if (!cmp_file(file_name, state_dir, state_name)) continue;
-                        callback(user_args, state->mAddress);
                     }
                 }
             }
@@ -307,7 +311,6 @@ static void command_map_to_source(char * token, Channel * c) {
                     cache_last->mLineInfoNext = cache;
                 }
                 cache_last = cache;
-                cache->mFile->ref_cnt++;
             }
             else {
                 err = trap.error;
@@ -347,12 +350,12 @@ static void command_map_to_source(char * token, Channel * c) {
                 err = trap.error;
                 err_msg = trap.msg;
             }
-            cache->mFile->ref_cnt--;
             if (cache == cache_last) break;
             cache = cache->mLineInfoNext;
         }
         write_stream(&c->out, ']');
         write_stream(&c->out, 0);
+        if (err != 0) trace(LOG_ALWAYS, "Line numbers info error %d: %d", err, errno_to_str(err));
     }
     write_stream(&c->out, MARKER_EOM);
 }

@@ -24,7 +24,7 @@
 
 struct Value {
     int type_class;
-    unsigned long size;
+    size_t size;
     void * value;
     ContextAddress address;
     int remote;

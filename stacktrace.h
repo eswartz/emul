@@ -53,6 +53,11 @@ extern char * get_stack_frame_id(Context * ctx, int frame);
 extern int get_frame_info(Context * ctx, int frame, ContextAddress * ip, ContextAddress * rp, ContextAddress * fp);
 
 /*
+ * Return 1 if 'frame' is the top frame of the context.
+ */
+extern int is_top_frame(Context * ctx, int frame);
+
+/*
  * Initialize stack trace service.
  */
 extern void ini_stack_trace_service(Protocol *, TCFBroadcastGroup *);

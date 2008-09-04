@@ -21,7 +21,7 @@
 #include "mdep.h"
 #include "config.h"
 
-#if ((SERVICE_LineNumbers) || (SERVICE_Symbols)) && !defined(WIN32)
+#if ENABLE_ELF
 
 #include <assert.h>
 #include <stdio.h>
@@ -30,7 +30,6 @@
 #include "dwarfcache.h"
 #include "exceptions.h"
 #include "myalloc.h"
-#include "symbols.h"
 
 static DWARFCache * sCache;
 static ELF_Section * sDebugSection;
@@ -43,15 +42,6 @@ static CompUnit * sCompUnit;
 static unsigned sCompUnitsMax;
 static ObjectInfo * sParentObject;
 static ObjectInfo * sPrevSibling;
-
-typedef struct ExprValue {
-    int mBase;
-    U8_T mOffset;
-} ExprValue;
-
-static ExprValue * sExprStack = NULL;
-static unsigned sExprStackLen = 0;
-static unsigned sExprStackMax = 0;
 
 static int sCloseListenerOK = 0;
 
@@ -87,7 +77,7 @@ static char * get_elf_symbol_name(unsigned n) {
     return NULL;
 }
 
-static U8_T get_symbol_address(Elf_Sym * x) {
+static U8_T get_elf_symbol_address(Elf_Sym * x) {
     if (sCache->mFile->elf64) {
         Elf64_Sym * s = (Elf64_Sym *)x;
         switch (ELF64_ST_TYPE(s->st_info)) {
@@ -107,31 +97,50 @@ static U8_T get_symbol_address(Elf_Sym * x) {
     return 0;
 }
 
-static Elf_Sym * find_symbol_entry(U8_T Addr) {
-    if (Addr != 0) {
-        unsigned i = 0;
-        unsigned j = sSymbolTableLen - 1;
-        while (i <= j) {
-            unsigned k = (i + j) / 2;
-            U8_T AddrK = get_symbol_address(sSymbolHash[k]);
-            if (AddrK < Addr) {
-                i = k + 1;
-            }
-            else if (AddrK > Addr) {
-                j = k - 1;
-            }
-            else {
-                while (k > i && get_symbol_address(sSymbolHash[k - 1]) == Addr) k--;
-                return sSymbolHash[k];
-            }
-        }
+static U8_T get_object_value_size(ObjectInfo * Info) {
+    if (Info->mSize != 0) return Info->mSize;
+    switch (Info->mTag) {
+    case TAG_pointer_type:
+    case TAG_reference_type:
+        return Info->mCompUnit->mAddressSize;
+    case TAG_subrange_type:
+    case TAG_volatile_type:
+    case TAG_const_type:
+    case TAG_typedef:
+    case TAG_formal_parameter:
+    case TAG_global_variable:
+    case TAG_local_variable:
+    case TAG_variable:
+    case TAG_constant:
+    case TAG_enumerator:
+        if (Info->mType != NULL) return get_object_value_size(Info->mType);
+        break;
     }
-    return NULL;
+    return 0;
+}
+
+static CompUnit * find_comp_unit(U8_T ID) {
+    unsigned i;
+    CompUnit * Unit;
+
+    for (i = 0; i < sCache->mCompUnitsCnt; i++) {
+        Unit = sCache->mCompUnits[i];
+        if (Unit->mID == ID) return Unit;
+    }
+    if (sCache->mCompUnitsCnt >= sCompUnitsMax) {
+        sCompUnitsMax = sCompUnitsMax == 0 ? 16 : sCompUnitsMax * 2;
+        sCache->mCompUnits = loc_realloc(sCache->mCompUnits, sizeof(CompUnit *) * sCompUnitsMax);
+    }
+    Unit = loc_alloc_zero(sizeof(CompUnit));
+    Unit->mID = ID;
+    sCache->mCompUnits[sCache->mCompUnitsCnt++] = Unit;
+    return Unit;
 }
 
 static ObjectInfo * find_object_info(U8_T ID) {
     U4_T Hash = (U4_T)ID % TYPE_HASH_SIZE;
     ObjectInfo * Info = sObjectHash[Hash];
+
     while (Info != NULL) {
         if (Info->mID == ID) return Info;
         Info = Info->mHashNext;
@@ -144,6 +153,37 @@ static ObjectInfo * find_object_info(U8_T ID) {
     sObjectListTail = Info;
     Info->mID = ID;
     return Info;
+}
+
+static void find_symbol_entry(ObjectInfo * Info) {
+    U8_T Addr = Info->mLowPC;
+    if (Addr != 0) {
+        unsigned i = 0;
+        unsigned j = sSymbolTableLen - 1;
+        while (i <= j) {
+            unsigned k = (i + j) / 2;
+            U8_T AddrK = get_elf_symbol_address(sSymbolHash[k]);
+            if (AddrK < Addr) {
+                i = k + 1;
+            }
+            else if (AddrK > Addr) {
+                j = k - 1;
+            }
+            else {
+                unsigned n;
+                while (k > i && get_elf_symbol_address(sSymbolHash[k - 1]) == Addr) k--;
+                Info->mSymbol = k;
+                for (n = 0; n < sCache->sym_sections_cnt; n++) {
+                    SymbolSection * tbl = sCache->sym_sections[n];
+                    if (sSymbolHash[k] < tbl->mSymPool) continue;
+                    if (sSymbolHash[k] >= tbl->mSymPool + tbl->mSymPoolSize) continue;
+                    Info->mSymbolSection = tbl;
+                    break;
+                }
+                break;
+            }
+        }
+    }
 }
 
 static void entry_callback(U2_T Tag, U2_T Attr, U2_T Form);
@@ -215,127 +255,17 @@ static void read_mod_user_def_type(U2_T Form, ObjectInfo ** Type) {
     }
 }
 
-static I8_T read_SLEB128(U1_T * Buf, U4_T * Pos) {
-    U8_T Res = 0;
-    int i = 0;
-    for (;; i += 7) {
-        U1_T n = Buf[(*Pos)++];
-        Res |= (n & 0x7Fu) << i;
-        if ((n & 0x80) == 0) {
-            Res |= -(n & 0x40) << i;
-            break;
-        }
-    }
-    return (I8_T)Res;
-}
-
-static U8_T read_Address(U1_T * Buf, U4_T * Pos) {
-    U8_T Res = dio_ReadAddrBuf(Buf + *Pos);
-    *Pos += dio_gAddressSize;
-    return Res;
-}
-
-static int read_location(U1_T * Buf, U4_T Size, U2_T * Base, U8_T * Offset) {
-    U4_T Pos = 0;
-    sExprStackLen = 0;
-    while (Pos < Size) {
-        if (sExprStackLen >= sExprStackMax) {
-            sExprStackMax = sExprStackMax == 0 ? 8 : sExprStackMax * 2;
-            sExprStack = loc_realloc(sExprStack, sizeof(ExprValue) * sExprStackMax);
-        }
-        switch (Buf[Pos++]) {
-        case OP_lit0:
-        case OP_lit1:
-        case OP_lit2:
-        case OP_lit3:
-        case OP_lit4:
-        case OP_lit5:
-        case OP_lit6:
-        case OP_lit7:
-        case OP_lit8:
-        case OP_lit9:
-        case OP_lit10:
-        case OP_lit11:
-        case OP_lit12:
-        case OP_lit13:
-        case OP_lit14:
-        case OP_lit15:
-        case OP_lit16:
-        case OP_lit17:
-        case OP_lit18:
-        case OP_lit19:
-        case OP_lit20:
-        case OP_lit21:
-        case OP_lit22:
-        case OP_lit23:
-        case OP_lit24:
-        case OP_lit25:
-        case OP_lit26:
-        case OP_lit27:
-        case OP_lit28:
-        case OP_lit29:
-        case OP_lit30:
-        case OP_lit31:
-            sExprStack[sExprStackLen].mBase = SYM_BASE_ABS;
-            sExprStack[sExprStackLen].mOffset = Buf[Pos - 1] - OP_lit0;
-            sExprStackLen++;
-            break;
-        case OP_addr:
-            sExprStack[sExprStackLen].mBase = SYM_BASE_ABS;
-            sExprStack[sExprStackLen].mOffset = read_Address(Buf, &Pos);
-            sExprStackLen++;
-            break;
-        case OP_fbreg:
-            sExprStack[sExprStackLen].mBase = SYM_BASE_FP;
-            sExprStack[sExprStackLen].mOffset = read_SLEB128(Buf, &Pos);
-            sExprStackLen++;
-            break;
-        default:
-            return 0;
-        }
-    }
-    assert(sExprStackLen == 1);
-    *Base = sExprStack->mBase;
-    *Offset = sExprStack->mOffset;
-    return 1;
-}
-
-static U8_T get_object_value_size(ObjectInfo * Info) {
-    if (Info->mSize != 0) return Info->mSize;
-    switch (Info->mTag) {
-    case TAG_pointer_type:
-    case TAG_reference_type:
-        return Info->mCompUnit->mAddressSize;
-    case TAG_subrange_type:
-    case TAG_volatile_type:
-    case TAG_const_type:
-    case TAG_typedef:
-    case TAG_formal_parameter:
-    case TAG_global_variable:
-    case TAG_local_variable:
-    case TAG_variable:
-    case TAG_constant:
-    case TAG_enumerator:
-        if (Info->mType != NULL) return get_object_value_size(Info->mType);
-        break;
-    }
-    return 0;
-}
-
 static void read_tag_com_unit(U2_T Attr, U2_T Form) {
     static CompUnit * Unit;
     switch (Attr) {
     case 0:
         if (Form) {
-            if (sCache->mCompUnitsCnt >= sCompUnitsMax) {
-                sCompUnitsMax = sCompUnitsMax == 0 ? 16 : sCompUnitsMax * 2;
-                sCache->mCompUnits = loc_realloc(sCache->mCompUnits, sizeof(CompUnit *) * sCompUnitsMax);
-            }
-            Unit = sCache->mCompUnits[sCache->mCompUnitsCnt++] = loc_alloc_zero(sizeof(CompUnit));
+            Unit = find_comp_unit(sDebugSection->addr + dio_gEntryPos);
             Unit->mFile = sCache->mFile;
             Unit->mDebugRangesOffs = ~(U8_T)0;
             Unit->mVersion = dio_gVersion;
             Unit->mAddressSize = dio_gAddressSize;
+            Unit->mSection = sDebugSection;
         }
         else {
             assert(sParentObject == NULL);
@@ -367,15 +297,15 @@ static void read_tag_com_unit(U2_T Attr, U2_T Form) {
         dio_ChkData(Form);
         Unit->mLineInfoOffs = dio_gFormData;
         break;
+    case AT_base_types:
+        Unit->mBaseTypes = find_comp_unit(dio_gFormRef);
+        break;
     }
 }
 
 static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
     static ObjectInfo * Info;
     static U8_T Sibling;
-    static U8_T HighPC;
-    static size_t LocationSize;
-    static U1_T * LocationBuf;
 
     switch (Attr) {
     case 0:
@@ -383,19 +313,11 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
             Info = find_object_info(sDebugSection->addr + dio_gEntryPos);
             Info->mTag = Tag;
             Info->mCompUnit = sCompUnit;
+            Info->mParent = sParentObject;
             Sibling = 0;
-            HighPC = 0;
-            LocationSize = 0;
-            LocationBuf = NULL;
         }
         else {
-            if (LocationSize > 0) {
-                read_location(LocationBuf, LocationSize, &Info->mLocBase, &Info->mLocOffset);
-            }
-            if (Info->mLocBase == SYM_BASE_ABS) {
-                Info->mSymbol = find_symbol_entry(Info->mLocOffset);
-                if (HighPC != 0) Info->mSize = HighPC - Info->mLocOffset;
-            }
+            find_symbol_entry(Info);
             if (Tag == TAG_enumerator && Info->mType == NULL) Info->mType = sParentObject;
             if (sPrevSibling != NULL) sPrevSibling->mSibling = Info;
             else if (sParentObject != NULL) sParentObject->mChildren = Info;
@@ -478,15 +400,19 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
         break;
     case AT_low_pc:
         dio_ChkAddr(Form);
-        Info->mLocBase = SYM_BASE_ABS;
-        Info->mLocOffset = dio_gFormRef;
+        Info->mLowPC = dio_gFormRef;
         break;
     case AT_high_pc:
         dio_ChkAddr(Form);
-        HighPC = dio_gFormRef;
+        Info->mHighPC = dio_gFormRef;
         break;
     case AT_location:
-        dio_ChkBlock(Form, &LocationBuf, &LocationSize);
+        dio_ChkBlock(Form, &Info->mLocation.mAddr, &Info->mLocation.mSize);
+        Info->mLocation.mList = Form == FORM_DATA4 || Form == FORM_DATA8;
+        break;
+    case AT_frame_base:
+        dio_ChkBlock(Form, &Info->mFrameBase.mAddr, &Info->mFrameBase.mSize);
+        Info->mFrameBase.mList = Form == FORM_DATA4 || Form == FORM_DATA8;
         break;
     case AT_const_value:
         if (Form == FORM_SDATA || Form == FORM_UDATA) {
@@ -524,8 +450,8 @@ static void entry_callback(U2_T Tag, U2_T Attr, U2_T Form) {
 }
 
 static int symbol_sort_func(const void * X, const void * Y) {
-    U8_T AddrX = get_symbol_address(*(Elf_Sym **)X);
-    U8_T AddrY = get_symbol_address(*(Elf_Sym **)Y);
+    U8_T AddrX = get_elf_symbol_address(*(Elf_Sym **)X);
+    U8_T AddrY = get_elf_symbol_address(*(Elf_Sym **)Y);
     if (AddrX < AddrY) return -1;
     if (AddrX > AddrY) return +1;
     return 0;
@@ -575,12 +501,12 @@ static void load_symbol_tables(void) {
                 U8_T Name = 0;
                 if (File->elf64) {
                     Elf64_Sym * s = (Elf64_Sym *)tbl->mSymPool + i;
-                    if (get_symbol_address((Elf_Sym *)s) != 0) cnt++;
+                    if (get_elf_symbol_address((Elf_Sym *)s) != 0) cnt++;
                     Name = s->st_name;
                 }
                 else {
                     Elf32_Sym * s = (Elf32_Sym *)tbl->mSymPool + i;
-                    if (get_symbol_address((Elf_Sym *)s) != 0) cnt++;
+                    if (get_elf_symbol_address((Elf_Sym *)s) != 0) cnt++;
                     Name = s->st_name;
                 }
                 assert(Name < tbl->mStrPoolSize);
@@ -604,11 +530,11 @@ static void load_symbol_tables(void) {
         for (i = 0; i < tbl->sym_cnt; i++) {
             if (File->elf64) {
                 Elf_Sym * s = (Elf_Sym *)((Elf64_Sym *)tbl->mSymPool + i);
-                if (get_symbol_address(s) != 0) sCache->mSymbolHash[cnt++] = s;
+                if (get_elf_symbol_address(s) != 0) sCache->mSymbolHash[cnt++] = s;
             }
             else {
                 Elf_Sym * s = (Elf_Sym *)((Elf32_Sym *)tbl->mSymPool + i);
-                if (get_symbol_address(s) != 0) sCache->mSymbolHash[cnt++] = s;
+                if (get_elf_symbol_address(s) != 0) sCache->mSymbolHash[cnt++] = s;
             }
         }
     }
@@ -655,6 +581,9 @@ static void load_debug_sections(void) {
         else if (strcmp(sec->name, ".debug_line") == 0) {
             sCache->mDebugLine = sec;
         }
+        else if (strcmp(sec->name, ".debug_loc") == 0) {
+            sCache->mDebugLoc = sec;
+        }
     }
     Info = sObjectList;
     while (Info != NULL) {
@@ -663,7 +592,7 @@ static void load_debug_sections(void) {
             assert(Info->mConstValueSize == sizeof(Info->mConstValue));
             if (Info->mSize > 0 && Info->mSize <= Info->mConstValueSize) {
                 Info->mConstValueAddr = (U1_T *)&Info->mConstValue;
-                Info->mConstValueSize = Info->mSize;
+                Info->mConstValueSize = (size_t)Info->mSize;
                 if (File->big_endian) Info->mConstValueAddr += sizeof(Info->mConstValue) - Info->mSize;
             }
         }
@@ -712,7 +641,11 @@ static void free_dwarf_cache(ELF_File * File) {
             loc_free(tbl->mHashNext);
             loc_free(tbl);
         }
-        /* TODO: free object and type records */
+        while (Cache->mObjectList != NULL) {
+            ObjectInfo * Info = Cache->mObjectList;
+            Cache->mObjectList = Info->mListNext;
+            loc_free(Info);
+        }
         loc_free(Cache->mObjectHash);
         loc_free(Cache->mSymbolHash);
         loc_free(Cache);
@@ -774,8 +707,11 @@ static void add_state(CompUnit * Unit, LineNumbersState * state) {
 void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
     Trap trap;
     if (Unit->mFiles != NULL && Unit->mDirs != NULL) return;
+    dio_EnterSection(Cache->mDebugLine, Unit->mLineInfoOffs);
+    dio_gVersion = Unit->mVersion;
+    dio_g64bit = Unit->mFile->elf64;
+    dio_gAddressSize = Unit->mAddressSize;
     dio_gUnitPos = Unit->mLineInfoOffs;
-    dio_EnterSection(Cache->mDebugLine, dio_gUnitPos);
     if (set_trap(&trap)) {
         U8_T header_pos = 0;
         U1_T opcode_base = 0;
@@ -1027,7 +963,6 @@ static void dump_object_info(int Level, ObjectInfo * Info) {
     Pad[i] = 0;
     printf("%s%016llx %s\n", Pad, Info->mID, tag2str(Info));
     if (Info->mName != NULL) printf("%s  Name: %s\n", Pad, Info->mName);
-    if (Info->mLocBase != 0) printf("%s  Location: %d 0x%016llx\n", Pad, Info->mLocBase, Info->mLocOffset);
     if (Info->mDeclFile >= 1 && Info->mDeclFile <= Info->mCompUnit->mFilesCnt) {
         FileInfo * File = Info->mCompUnit->mFiles + (Info->mDeclFile - 1);
         printf("%s  Declaration: %s:%s:%d\n", Pad, File->mDir, File->mName, Info->mDeclLine);

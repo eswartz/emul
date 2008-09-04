@@ -18,7 +18,7 @@
 #include "mdep.h"
 #include "config.h"
 
-#if ((SERVICE_LineNumbers) || (SERVICE_Symbols)) && !defined(WIN32)
+#if ENABLE_ELF
 
 #include <assert.h>
 #include <string.h>
@@ -51,7 +51,6 @@ struct MemoryRegion {
 typedef struct MemoryMap MemoryMap;
 
 struct MemoryMap {
-    int error;
     int region_cnt;
     int region_max;
     MemoryRegion * regions;
@@ -254,7 +253,7 @@ static void event_context_changed_or_exited(Context * ctx, void * client_data) {
 
 static MemoryMap * get_memory_map(Context * ctx) {
     char maps_file_name[FILE_PATH_SIZE];
-    MemoryMap * map;
+    MemoryMap * map = NULL;
     FILE * file;
 
     assert(ctx->pid == ctx->mem);
@@ -271,44 +270,46 @@ static MemoryMap * get_memory_map(Context * ctx) {
         context_listener_added = 1;
     }
 
-    map = loc_alloc_zero(sizeof(MemoryMap));
     snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", ctx->pid);
-    if ((file = fopen(maps_file_name, "r")) == NULL) {
-        map->error = errno;
-    }
-    else {
-        for (;;) {
-            unsigned long addr0 = 0;
-            unsigned long addr1 = 0;
-            unsigned long offset = 0;
-            unsigned long inode = 0;
-            char permissions[16];
-            char device[16];
-            char file_name[FILE_PATH_SIZE];
-            MemoryRegion * r = NULL;
+    if ((file = fopen(maps_file_name, "r")) == NULL) return NULL;
+    map = loc_alloc_zero(sizeof(MemoryMap));
+    for (;;) {
+        unsigned long addr0 = 0;
+        unsigned long addr1 = 0;
+        unsigned long offset = 0;
+        unsigned long inode = 0;
+        char permissions[16];
+        char device[16];
+        char file_name[FILE_PATH_SIZE];
+        MemoryRegion * r = NULL;
+        unsigned i = 0;
 
-            int cnt = fscanf(file, "%lx-%lx %s %lx %s %lx",
-                &addr0, &addr1, permissions, &offset, device, &inode);
+        int cnt = fscanf(file, "%lx-%lx %s %lx %s %lx",
+            &addr0, &addr1, permissions, &offset, device, &inode);
+        if (cnt == 0 || cnt == EOF) break;
 
-            file_name[0] = 0;
-            if (cnt > 0 && cnt != EOF) {
-                cnt += fscanf(file, " %[^\n]\n", file_name);
+        while (1) {
+            int ch = fgetc(file);
+            if (ch == '\n' || ch == EOF) break;
+            if (i < FILE_PATH_SIZE - 1 && (ch != ' ' || i > 0)) {
+                file_name[i++] = ch;
             }
-            if (cnt == 0 || cnt == EOF) break;
-            
-            if (map->region_cnt >= map->region_max) {
-                map->region_max += 8;
-                map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
-            }
-            r = map->regions + map->region_cnt++;
-            memset(r, 0, sizeof(MemoryRegion));
-            r->addr = addr0;
-            r->size = addr1 - addr0;
-            if (inode != 0 && file_name[0]) r->file_name = loc_strdup(file_name);
         }
-
-        fclose(file);
+        file_name[i++] = 0;
+        
+        if (map->region_cnt >= map->region_max) {
+            map->region_max += 8;
+            map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+        }
+        r = map->regions + map->region_cnt++;
+        memset(r, 0, sizeof(MemoryRegion));
+        r->addr = addr0;
+        r->size = addr1 - addr0;
+        if (inode != 0 && file_name[0]) {
+            r->file_name = loc_strdup(file_name);
+        }
     }
+    fclose(file);
     ctx->memory_map = map;
     return map;
 }

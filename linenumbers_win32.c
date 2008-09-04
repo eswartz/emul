@@ -26,9 +26,9 @@
 #include <errno.h>
 #include <assert.h>
 #include <stdio.h>
-#include <imagehlp.h>
 #include "linenumbers.h"
 #include "breakpoints.h"
+#include "windbgcache.h"
 #include "context.h"
 #include "exceptions.h"
 #include "symbols.h"

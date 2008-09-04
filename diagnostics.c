@@ -161,25 +161,16 @@ static void command_get_symbol(char * token, Channel * c) {
             write_stringz(&c->out, "null");
         }
         else {
+            ContextAddress addr = 0;
             write_stream(&c->out, '{');
-            json_write_string(&c->out, "Abs");
-            write_stream(&c->out, ':');
-            json_write_boolean(&c->out, sym.base == SYM_BASE_ABS);
-            write_stream(&c->out, ',');
-            json_write_string(&c->out, "Value");
-            write_stream(&c->out, ':');
-            json_write_ulong(&c->out, sym.address);
-            if (sym.section != NULL) {
-                write_stream(&c->out, ',');
-                json_write_string(&c->out, "Section");
+            if (get_symbol_address(&sym, STACK_NO_FRAME, &addr) >= 0) {
+                json_write_string(&c->out, "Abs");
                 write_stream(&c->out, ':');
-                json_write_string(&c->out, sym.section);
-            }
-            if (sym.storage != NULL) {
+                json_write_boolean(&c->out, 1);
                 write_stream(&c->out, ',');
-                json_write_string(&c->out, "Storage");
+                json_write_string(&c->out, "Value");
                 write_stream(&c->out, ':');
-                json_write_string(&c->out, sym.storage);
+                json_write_ulong(&c->out, addr);
             }
             write_stream(&c->out, '}');
             write_stream(&c->out, 0);

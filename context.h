@@ -20,6 +20,7 @@
 #define D_context
 
 #include "mdep.h"
+#include "config.h"
 #include <sys/types.h>
 #include "link.h"
 
@@ -67,11 +68,11 @@ struct Context {
 #elif defined(WIN32)
     HANDLE              handle;
     HANDLE              file_handle;
-    LPVOID              base_address;
+    DWORD64             base_address;
     int                 module_loaded;
     int                 module_unloaded;
     HANDLE              module_handle;
-    LPVOID              module_address;
+    DWORD64             module_address;
     int                 debug_started;
     EXCEPTION_DEBUG_INFO pending_event;
     EXCEPTION_DEBUG_INFO suspend_reason;
@@ -85,6 +86,8 @@ struct Context {
     int                 syscall_exit;
     int                 syscall_id;
     int                 end_of_step;
+#endif
+#if ENABLE_ELF
     int                 elf_list_pos;
     ContextAddress      elf_list_addr0;
     ContextAddress      elf_list_addr1;

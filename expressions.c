@@ -486,12 +486,12 @@ static void identifier(char * name, Value * v) {
         else {
             char buf[256];
             size_t size = sizeof(buf);
-            if (get_symbol_class(sym.ctx, sym.module_id, sym.type_id, &v->type_class) < 0) {
+            if (get_symbol_type_class(&sym, &v->type_class) < 0) {
                 error(errno, "Cannot retrieve symbol type class");
             }
             switch (sym.sym_class) {
             case SYM_CLASS_VALUE:
-                if (get_symbol_value(sym.ctx, sym.module_id, sym.object_id, &size, buf) < 0) {
+                if (get_symbol_value(&sym, &size, buf) < 0) {
                     error(errno, "Cannot retrieve symbol value");
                 }
                 v->size = size;
@@ -500,24 +500,12 @@ static void identifier(char * name, Value * v) {
                 memcpy(v->value, buf, size);
                 return;
             case SYM_CLASS_REFERENCE:
-                v->size = sym.size;
                 v->remote = 1;
-                switch (sym.base) {
-                case SYM_BASE_FP:
-                    {
-                        ContextAddress fp = 0;
-                        if (get_frame_info(expression_context, expression_frame, NULL, NULL, &fp) < 0) {
-                            error(errno, "Cannot retrieve stack frame info");
-                        }
-                        v->address = fp + sym.address;
-                    }
-                    break;
-                case SYM_BASE_ABS:
-                    v->address = sym.address;
-                    break;
-                default:
-                    error(ERR_UNSUPPORTED, "Cannot get symbol address");
-                    break;
+                if (get_symbol_size(&sym, &v->size) < 0) {
+                    error(errno, "Cannot retrieve symbol size");
+                }
+                if (get_symbol_address(&sym, expression_frame, &v->address) < 0) {
+                    error(errno, "Cannot retrieve symbol address");
                 }
                 if (v->type_class == TYPE_CLASS_ARRAY) {
                     v->size = sizeof(ContextAddress);
@@ -533,7 +521,9 @@ static void identifier(char * name, Value * v) {
                 v->size = sizeof(ContextAddress);
                 v->value = alloc_str(v->size);
                 v->remote = 0;
-                *(ContextAddress *)v->value = sym.address;
+                if (get_symbol_address(&sym, expression_frame, (ContextAddress *)v->value) < 0) {
+                    error(errno, "Cannot retrieve symbol address");
+                }
                 return;
             case SYM_CLASS_TYPE:
                 error(ERR_INV_EXPRESSION, "Symbol is a type and has no value");

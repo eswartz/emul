@@ -419,14 +419,15 @@ static void send_event_breakpoint_status(OutputStream * out, BreakpointInfo * bp
 static void address_expression_error(BreakpointInfo * bp, char * msg) {
     /* TODO: per-context address expression error report */
     int size;
+    char * err_txt;
     assert(errno != 0);
     if (bp->error) return;
     bp->error = errno;
-    if (msg == NULL) msg = get_expression_error_msg();
+    err_txt = errno_to_str(errno);
+    size = strlen(msg) + strlen(bp->address) + strlen(err_txt) + 128;
     assert(bp->err_msg == NULL);
-    size = strlen(msg) + strlen(bp->address) + 64;
     bp->err_msg = loc_alloc(size);
-    snprintf(bp->err_msg, size, "Invalid breakpoint address '%s': %s", bp->address, msg);
+    snprintf(bp->err_msg, size, "Invalid breakpoint address '%s': %s: %s", bp->address, msg, err_txt);
 }
 
 static void plant_breakpoint_in_context(BreakpointInfo * bp, Context * ctx, ContextAddress address) {
@@ -483,7 +484,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         Value v;
         if (evaluate_expression(NULL, STACK_NO_FRAME, bp->address, 1, &v) < 0) {
             if (errno != ERR_INV_CONTEXT) {
-                address_expression_error(bp, NULL);
+                address_expression_error(bp, get_expression_error_msg());
                 trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
                 return;
             }
@@ -525,9 +526,8 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         if (context_sensitive_address) {
             if (bp->address != NULL) {
                 Value v;
-                int frame = context_has_state(ctx) ? STACK_TOP_FRAME : STACK_NO_FRAME;
-                if (evaluate_expression(ctx, frame, bp->address, 1, &v) < 0) {
-                    address_expression_error(bp, NULL);
+                if (evaluate_expression(ctx, STACK_NO_FRAME, bp->address, 1, &v) < 0) {
+                    address_expression_error(bp, get_expression_error_msg());
                     if (bp->error != ERR_SYM_NOT_FOUND) {
                         trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
                     }

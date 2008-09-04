@@ -24,17 +24,12 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#if defined(__CYGWIN__)
-#  include <imagehlp.h>
-#else
-#  define _NO_CVCONST_H
-#  include <dbghelp.h>
-#endif
 #include "errors.h"
 #include "elf.h"
 #include "myalloc.h"
 #include "symbols.h"
 #include "stacktrace.h"
+#include "windbgcache.h"
 #include "trace.h"
 
 #define SYM_SEARCH_PATH "http://msdl.microsoft.com/download/symbols"
@@ -43,111 +38,8 @@
 #  define MAX_SYM_NAME 2000
 #endif
 
-#if defined(__CYGWIN__)
-typedef enum _IMAGEHLP_SYMBOL_TYPE_INFO {
-    TI_GET_SYMTAG,
-    TI_GET_SYMNAME,
-    TI_GET_LENGTH,
-    TI_GET_TYPE,
-    TI_GET_TYPEID,
-    TI_GET_BASETYPE,
-    TI_GET_ARRAYINDEXTYPEID,
-    TI_FINDCHILDREN,
-    TI_GET_DATAKIND,
-    TI_GET_ADDRESSOFFSET,
-    TI_GET_OFFSET,
-    TI_GET_VALUE,
-    TI_GET_COUNT,
-    TI_GET_CHILDRENCOUNT,
-    TI_GET_BITPOSITION,
-    TI_GET_VIRTUALBASECLASS,
-    TI_GET_VIRTUALTABLESHAPEID,
-    TI_GET_VIRTUALBASEPOINTEROFFSET,
-    TI_GET_CLASSPARENTID,
-    TI_GET_NESTED,
-    TI_GET_SYMINDEX,
-    TI_GET_LEXICALPARENT,
-    TI_GET_ADDRESS,
-    TI_GET_THISADJUST,
-    TI_GET_UDTKIND,
-    TI_IS_EQUIV_TO,
-    TI_GET_CALLING_CONVENTION,
-    TI_IS_CLOSE_EQUIV_TO,
-    TI_GTIEX_REQS_VALID,
-    TI_GET_VIRTUALBASEOFFSET,
-    TI_GET_VIRTUALBASEDISPINDEX,
-    TI_GET_IS_REFERENCE,
-    IMAGEHLP_SYMBOL_TYPE_INFO_MAX,
-} IMAGEHLP_SYMBOL_TYPE_INFO;
-
-typedef struct _TI_FINDCHILDREN_PARAMS {
-    ULONG Count;
-    ULONG Start;
-    ULONG ChildId[1];
-} TI_FINDCHILDREN_PARAMS;
-
-enum SymTagEnum {
-    SymTagNull,
-    SymTagExe,
-    SymTagCompiland,
-    SymTagCompilandDetails,
-    SymTagCompilandEnv,
-    SymTagFunction,
-    SymTagBlock,
-    SymTagData,
-    SymTagAnnotation,
-    SymTagLabel,
-    SymTagPublicSymbol,
-    SymTagUDT,
-    SymTagEnum,
-    SymTagFunctionType,
-    SymTagPointerType,
-    SymTagArrayType,
-    SymTagBaseType,
-    SymTagTypedef,
-    SymTagBaseClass,
-    SymTagFriend,
-    SymTagFunctionArgType,
-    SymTagFuncDebugStart,
-    SymTagFuncDebugEnd,
-    SymTagUsingNamespace,
-    SymTagVTableShape,
-    SymTagVTable,
-    SymTagCustom,
-    SymTagThunk,
-    SymTagCustomType,
-    SymTagManagedType,
-    SymTagDimension,
-    SymTagMax
-};
-
-#endif
-
-enum BasicType { 
-   btNoType   = 0,
-   btVoid     = 1,
-   btChar     = 2,
-   btWChar    = 3,
-   btInt      = 6,
-   btUInt     = 7,
-   btFloat    = 8,
-   btBCD      = 9,
-   btBool     = 10,
-   btLong     = 13,
-   btULong    = 14,
-   btCurrency = 25,
-   btDate     = 26,
-   btVariant  = 27,
-   btComplex  = 28,
-   btBit      = 29,
-   btBSTR     = 30,
-   btHresult  = 31
-};
-
 static char * tmp_buf = NULL;
 static int tmp_buf_size = 0;
-
-#if !defined(__CYGWIN__)
 
 static int get_stack_frame(Context * ctx, int frame, IMAGEHLP_STACK_FRAME * stack_frame) {
     memset(stack_frame, 0, sizeof(IMAGEHLP_STACK_FRAME));
@@ -164,26 +56,7 @@ static int syminfo2symbol(Context * ctx, SYMBOL_INFO * info, Symbol * symbol) {
 
     symbol->ctx = ctx;
     symbol->module_id = info->ModBase;
-    symbol->object_id = info->Index;
-    symbol->type_id = info->TypeIndex;
-    symbol->address = (ContextAddress)info->Address;
-
-    if (info->Flags & SYMFLAG_FRAMEREL) {
-        symbol->base = SYM_BASE_FP;
-    }
-    else if (info->Flags & SYMFLAG_REGREL) {
-        symbol->base = SYM_BASE_FP;
-    }
-    else {
-        symbol->base = SYM_BASE_ABS;
-    }
-
-    if (info->Flags & SYMFLAG_LOCAL) {
-        symbol->storage = "LOCAL";
-    }
-    else {
-        symbol->storage = "GLOBAL";
-    }
+    symbol->symbol_id = info->Index;
 
     if (info->Flags & SYMFLAG_CONSTANT) {
         symbol->sym_class = SYM_CLASS_VALUE;
@@ -201,55 +74,41 @@ static int syminfo2symbol(Context * ctx, SYMBOL_INFO * info, Symbol * symbol) {
         symbol->sym_class = SYM_CLASS_REFERENCE;
     }
 
-
-    symbol->size = info->Size;
-
     return 0;
 }
 
-#endif
-
-static int get_symbol_info(Context * ctx, ModuleID module_id, SymbolID symbol_id, int info_tag, void * info) {
-#if !defined(__CYGWIN__)
-    HANDLE process = ctx->parent == NULL ? ctx->handle : ctx->parent->handle;
-    if (!SymGetTypeInfo(process, (DWORD64)module_id, (ULONG)symbol_id, info_tag, info)) {
+static int get_symbol_info(const Symbol * sym, int info_tag, void * info) {
+    HANDLE process = sym->ctx->parent == NULL ? sym->ctx->handle : sym->ctx->parent->handle;
+    if (!SymGetTypeInfo(process, (DWORD64)sym->module_id, (ULONG)sym->symbol_id, info_tag, info)) {
         set_win32_errno(GetLastError());
         return -1;
     }
     return 0;
-#else
-    errno = ERR_UNSUPPORTED;
-    return -1;
-#endif
 }
 
-int get_symbol_class(Context * ctx, ModuleID module_id, SymbolID symbol_id, int * type_class) {
-    DWORD dword = 0;
-    int res = TYPE_CLASS_UNKNOWN;
-
+static int get_type_tag(Symbol * type, DWORD * tag) {
+    DWORD dword;
     while (1) {
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_SYMTAG, &dword) < 0) return -1;
-        if (dword != SymTagTypedef) break;
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_TYPE, &dword) < 0) return -1;
-        symbol_id = dword;
+        if (get_symbol_info(type, TI_GET_SYMTAG, &dword) < 0) return -1;
+        if (dword != SymTagTypedef && dword != SymTagFunction && dword != SymTagData) break;
+        if (get_symbol_info(type, TI_GET_TYPE, &dword) < 0) return -1;
+        type->symbol_id = dword;
     }
+    *tag = dword;
+    return 0;
+}
 
-    switch (dword) {
-    case SymTagNull:
-    case SymTagExe:
-    case SymTagCompiland:
-    case SymTagCompilandDetails:
-    case SymTagCompilandEnv:
-        break;
+int get_symbol_type_class(const Symbol * sym, int * type_class) {
+    int res = TYPE_CLASS_UNKNOWN;
+    Symbol type = *sym;
+    DWORD tag = 0;
+    DWORD base = 0;
+
+    if (get_type_tag(&type, &tag)) return -1;
+
+    switch (tag) {
     case SymTagFunction:
         res = TYPE_CLASS_FUNCTION;
-        break;
-    case SymTagBlock:
-    case SymTagData:
-    case SymTagAnnotation:
-    case SymTagLabel:
-    case SymTagPublicSymbol:
-    case SymTagUDT:
         break;
     case SymTagEnum:
         res = TYPE_CLASS_ENUMERATION;
@@ -264,8 +123,8 @@ int get_symbol_class(Context * ctx, ModuleID module_id, SymbolID symbol_id, int 
         res = TYPE_CLASS_ARRAY;
         break;
     case SymTagBaseType:
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_BASETYPE, &dword) < 0) return -1;
-        switch (dword) {
+        if (get_symbol_info(&type, TI_GET_BASETYPE, &base) < 0) return -1;
+        switch (base) {
         case btNoType:
             break;
         case btVoid:
@@ -294,33 +153,17 @@ int get_symbol_class(Context * ctx, ModuleID module_id, SymbolID symbol_id, int 
             break;
         }
         break;
-    case SymTagTypedef:
-    case SymTagBaseClass:
-    case SymTagFriend:
-    case SymTagFunctionArgType:
-    case SymTagFuncDebugStart:
-    case SymTagFuncDebugEnd:
-    case SymTagUsingNamespace:
-    case SymTagVTableShape:
-    case SymTagVTable:
-    case SymTagCustom:
-    case SymTagThunk:
-    case SymTagCustomType:
-    case SymTagManagedType:
-    case SymTagDimension:
-    case SymTagMax:
-        break;
     }
 
     *type_class = res;
     return 0;
 }
 
-int get_symbol_name(Context * ctx, ModuleID module_id, SymbolID symbol_id, char ** name) {
+int get_symbol_name(const Symbol * sym, char ** name) {
     WCHAR * ptr = NULL;
     char * res = NULL;
 
-    if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_SYMNAME, &ptr) < 0) return -1;
+    if (get_symbol_info(sym, TI_GET_SYMNAME, &ptr) < 0) return -1;
     if (ptr != NULL) {
         int len = 0;
         int err = 0;
@@ -348,91 +191,66 @@ int get_symbol_name(Context * ctx, ModuleID module_id, SymbolID symbol_id, char 
     return 0;
 }
 
-int get_symbol_size(Context * ctx, ModuleID module_id, SymbolID symbol_id, uns64 * size) {
-    DWORD dword = 0;
+int get_symbol_size(const Symbol * sym, size_t * size) {
     uns64 res = 0;
+    Symbol type = *sym;
+    DWORD tag = 0;
 
-    while (1) {
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_SYMTAG, &dword) < 0) return -1;
-        if (dword != SymTagTypedef) break;
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_TYPE, &dword) < 0) return -1;
-        symbol_id = dword;
-    }
+    if (get_type_tag(&type, &tag)) return -1;
+    if (get_symbol_info(&type, TI_GET_LENGTH, &res) < 0) return -1;
 
-    if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_LENGTH, &res) < 0) return -1;
-
-    *size = res;
+    *size = (size_t)res;
     return 0;
 }
 
-int get_symbol_base_type(Context * ctx, ModuleID module_id, SymbolID symbol_id, SymbolID * base_type) {
-    DWORD dword = 0;
+int get_symbol_base_type(const Symbol * sym, SymbolID * base_type) {
     DWORD res = 0;
+    Symbol type = *sym;
+    DWORD tag = 0;
 
-    while (1) {
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_SYMTAG, &dword) < 0) return -1;
-        if (dword != SymTagTypedef) break;
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_TYPE, &dword) < 0) return -1;
-        symbol_id = dword;
-    }
-
-    if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_TYPE, &res) < 0) return -1;
+    if (get_type_tag(&type, &tag)) return -1;
+    if (get_symbol_info(&type, TI_GET_TYPE, &res) < 0) return -1;
 
     *base_type = res;
     return 0;
 }
 
-int get_symbol_index_type(Context * ctx, ModuleID module_id, SymbolID symbol_id, SymbolID * index_type) {
-    DWORD dword = 0;
+int get_symbol_index_type(const Symbol * sym, SymbolID * index_type) {
     DWORD res = 0;
+    Symbol type = *sym;
+    DWORD tag = 0;
 
-    while (1) {
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_SYMTAG, &dword) < 0) return -1;
-        if (dword != SymTagTypedef) break;
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_TYPE, &dword) < 0) return -1;
-        symbol_id = dword;
-    }
-
-    if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_ARRAYINDEXTYPEID, &res) < 0) return -1;
+    if (get_type_tag(&type, &tag)) return -1;
+    if (get_symbol_info(&type, TI_GET_ARRAYINDEXTYPEID, &res) < 0) return -1;
 
     *index_type = res;
     return 0;
 }
 
-int get_symbol_length(Context * ctx, ModuleID module_id, SymbolID symbol_id, unsigned long * length) {
-    DWORD dword = 0;
+int get_symbol_length(const Symbol * sym, unsigned long * length) {
     DWORD res = 0;
+    Symbol type = *sym;
+    DWORD tag = 0;
 
-    while (1) {
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_SYMTAG, &dword) < 0) return -1;
-        if (dword != SymTagTypedef) break;
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_TYPE, &dword) < 0) return -1;
-        symbol_id = dword;
-    }
-
-    if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_COUNT, &res) < 0) return -1;
+    if (get_type_tag(&type, &tag)) return -1;
+    if (get_symbol_info(&type, TI_GET_COUNT, &res) < 0) return -1;
 
     *length = res;
     return 0;
 }
 
-int get_symbol_children(Context * ctx, ModuleID module_id, SymbolID symbol_id, SymbolID ** children) {
+int get_symbol_children(const Symbol * sym, SymbolID ** children) {
 
     static const DWORD FINDCHILDREN_BUF_SIZE = 64;
     static TI_FINDCHILDREN_PARAMS * params = NULL;
 
-    DWORD dword = 0;
     DWORD cnt = 0;
     SymbolID * res = NULL;
+    Symbol type = *sym;
+    DWORD tag = 0;
 
-    while (1) {
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_SYMTAG, &dword) < 0) return -1;
-        if (dword != SymTagTypedef) break;
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_TYPE, &dword) < 0) return -1;
-        symbol_id = dword;
-    }
-
-    if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_CHILDRENCOUNT, &cnt) < 0) return -1;
+    if (get_type_tag(&type, &tag)) return -1;
+    if (get_symbol_info(&type, TI_GET_CHILDRENCOUNT, &cnt) < 0) return -1;
     if (params == NULL) params = loc_alloc(sizeof(TI_FINDCHILDREN_PARAMS) + (FINDCHILDREN_BUF_SIZE - 1) * sizeof(ULONG));
 
     params->Start = 0;
@@ -440,7 +258,7 @@ int get_symbol_children(Context * ctx, ModuleID module_id, SymbolID symbol_id, S
     while (params->Start < cnt) {
         DWORD i = cnt - (DWORD)params->Start;
         params->Count = i > FINDCHILDREN_BUF_SIZE ? FINDCHILDREN_BUF_SIZE : i;
-        if (get_symbol_info(ctx, module_id, symbol_id, TI_FINDCHILDREN, params) < 0) return -1;
+        if (get_symbol_info(&type, TI_FINDCHILDREN, params) < 0) return -1;
         for (i = 0; params->Start < cnt; i++) res[params->Start++] = params->ChildId[i];
     }
 
@@ -448,22 +266,22 @@ int get_symbol_children(Context * ctx, ModuleID module_id, SymbolID symbol_id, S
     return 0;
 }
 
-int get_symbol_offset(Context * ctx, ModuleID module_id, SymbolID symbol_id, unsigned long * offset) {
+int get_symbol_offset(const Symbol * sym, unsigned long * offset) {
     DWORD dword = 0;
 
-    if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_OFFSET, &dword) < 0) return -1;
+    if (get_symbol_info(sym, TI_GET_OFFSET, &dword) < 0) return -1;
     *offset = dword;
     return 0;
 }
 
-int get_symbol_value(Context * ctx, ModuleID module_id, SymbolID symbol_id, size_t * size, void * value) {
+int get_symbol_value(const Symbol * sym, size_t * size, void * value) {
     VARIANT data;
     VARTYPE vt;
     void * data_addr = &data.bVal;
     size_t data_size = 0;
 
     assert(data_addr == &data.lVal);
-    if (get_symbol_info(ctx, module_id, symbol_id, TI_GET_VALUE, &data) < 0) return -1;
+    if (get_symbol_info(sym, TI_GET_VALUE, &data) < 0) return -1;
 
     vt = data.vt;
     if (vt & VT_BYREF) {
@@ -507,50 +325,30 @@ int get_symbol_value(Context * ctx, ModuleID module_id, SymbolID symbol_id, size
     return 0;
 }
 
-int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
+int get_symbol_address(const Symbol * sym, int frame, ContextAddress * addr) {
+    ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
+    SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
+    HANDLE process = sym->ctx->parent == NULL ? sym->ctx->handle : sym->ctx->parent->handle;
 
-#if defined(__CYGWIN__)
-
-    /* TODO SymFromName() is not working in CYGWIN */
-
-    extern void tcf_test_func0();
-    extern void tcf_test_func1();
-    extern void tcf_test_func2();
-    extern char * tcf_test_array;
-
-    int error = 0;
-
-    memset(sym, 0, sizeof(Symbol));
-    sym->section = ".text";
-    sym->storage = "GLOBAL";
-    sym->base = SYM_BASE_ABS;
-    if (strcmp(name, "tcf_test_func0") == 0) {
-        sym->address = (ContextAddress)tcf_test_func0;
-        sym->sym_class = SYM_CLASS_FUNCTION;
-    }
-    else if (strcmp(name, "tcf_test_func1") == 0) {
-        sym->address = (ContextAddress)tcf_test_func1;
-        sym->sym_class = SYM_CLASS_FUNCTION;
-    }
-    else if (strcmp(name, "tcf_test_func2") == 0) {
-        sym->address = (ContextAddress)tcf_test_func2;
-        sym->sym_class = SYM_CLASS_FUNCTION;
-    }
-    else if (strcmp(name, "tcf_test_array") == 0) {
-        sym->address = (ContextAddress)&tcf_test_array;
-        sym->sym_class = SYM_CLASS_REFERENCE;
-    }
-    else {
-        error = EINVAL;
-    }
-    if (error) {
-        errno = error;
+    info->SizeOfStruct = sizeof(SYMBOL_INFO);
+    info->MaxNameLen = MAX_SYM_NAME;
+    if (!SymFromIndex(process, (ULONG64)sym->module_id, (DWORD)sym->symbol_id, info)) {
+        set_win32_errno(GetLastError());
         return -1;
     }
+
+    *addr = (ContextAddress)info->Address;
+
+    if ((info->Flags & SYMFLAG_FRAMEREL) || (info->Flags & SYMFLAG_REGREL)) {
+        ContextAddress fp = 0;
+        if (get_frame_info(sym->ctx, frame, NULL, NULL, &fp) < 0) return -1;
+        *addr += fp;
+    }
+
     return 0;
+}
 
-#else
-
+int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
     SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
     IMAGEHLP_STACK_FRAME stack_frame;
@@ -592,11 +390,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     }
     syminfo2symbol(ctx, info, sym);
     return 0;
-
-#endif
 }
-
-#if !defined(__CYGWIN__)
 
 typedef struct EnumerateSymbolsContext {
     Context * ctx;
@@ -612,17 +406,7 @@ static BOOL CALLBACK enumerate_symbols_proc(SYMBOL_INFO * info, ULONG symbol_siz
     return TRUE;
 }
 
-#endif
-
 int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_back, void * args) {
-#if defined(__CYGWIN__)
-
-    /* TODO SymEnumSymbols() is not working in CYGWIN */
-
-    return 0;
-
-#else
-
     ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
     SYMBOL_INFO * symbol = (SYMBOL_INFO *)buffer;
     IMAGEHLP_STACK_FRAME stack_frame;
@@ -654,8 +438,6 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
     }
 
     return 0;
-
-#endif
 }
 
 
@@ -671,7 +453,7 @@ static void event_context_created(Context * ctx, void * client_data) {
         trace(LOG_ALWAYS, "SymInitialize() error: %d: %s",
             errno, errno_to_str(errno));
     }
-    if (!SymLoadModule(ctx->handle, ctx->file_handle, NULL, NULL, (DWORD)ctx->base_address, 0)) {
+    if (!SymLoadModule64(ctx->handle, ctx->file_handle, NULL, NULL, ctx->base_address, 0)) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymLoadModule() error: %d: %s",
             errno, errno_to_str(errno));
@@ -681,7 +463,7 @@ static void event_context_created(Context * ctx, void * client_data) {
 static void event_context_exited(Context * ctx, void * client_data) {
     if (ctx->parent != NULL) return;
     assert(ctx->handle != NULL);
-    if (!SymUnloadModule(ctx->handle, (DWORD)ctx->base_address)) {
+    if (!SymUnloadModule64(ctx->handle, ctx->base_address)) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymUnloadModule() error: %d: %s",
             errno, errno_to_str(errno));
@@ -696,7 +478,7 @@ static void event_context_exited(Context * ctx, void * client_data) {
 static void event_context_changed(Context * ctx, void * client_data) {
     if (ctx->module_loaded) {
         assert(ctx->pid == ctx->mem);
-        if (!SymLoadModule(ctx->handle, ctx->module_handle, NULL, NULL, (DWORD)ctx->module_address, 0)) {
+        if (!SymLoadModule64(ctx->handle, ctx->module_handle, NULL, NULL, ctx->module_address, 0)) {
             set_win32_errno(GetLastError());
             trace(LOG_ALWAYS, "SymLoadModule() error: %d: %s",
                 errno, errno_to_str(errno));
@@ -705,7 +487,7 @@ static void event_context_changed(Context * ctx, void * client_data) {
     if (ctx->module_unloaded) {
         assert(ctx->pid == ctx->mem);
         assert(ctx->handle != NULL);
-        if (!SymUnloadModule(ctx->handle, (DWORD)ctx->module_address)) {
+        if (!SymUnloadModule64(ctx->handle, ctx->module_address)) {
             set_win32_errno(GetLastError());
             trace(LOG_ALWAYS, "SymUnloadModule() error: %d: %s",
                 errno, errno_to_str(errno));

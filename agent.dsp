@@ -50,11 +50,6 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib WS2_32.lib Iphlpapi.lib dbghelp.lib /nologo /subsystem:console /machine:I386
-# Begin Special Build Tool
-SOURCE=$(InputPath)
-PostBuild_Cmds=copy "C:\Program Files\Debugging Tools for Windows\dbghelp.dll"\
-  Release
-# End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "agent - Win32 Debug"
 
@@ -80,11 +75,6 @@ LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib WS2_32.lib Iphlpapi.lib dbghelp.lib /nologo /subsystem:console /debug /machine:I386
 # SUBTRACT LINK32 /pdb:none
-# Begin Special Build Tool
-SOURCE=$(InputPath)
-PostBuild_Cmds=copy "C:\Program Files\Debugging Tools for Windows\dbghelp.dll"\
-  Debug
-# End Special Build Tool
 
 !ENDIF 
 
@@ -195,6 +185,14 @@ SOURCE=.\dwarfcache.c
 # Begin Source File
 
 SOURCE=.\dwarfcache.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\dwarfexpr.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\dwarfexpr.h
 # End Source File
 # Begin Source File
 
@@ -427,6 +425,14 @@ SOURCE=.\trace.c
 # Begin Source File
 
 SOURCE=.\trace.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\windbgcache.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\windbgcache.h
 # End Source File
 # End Target
 # End Project

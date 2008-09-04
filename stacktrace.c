@@ -592,7 +592,10 @@ int get_frame_info(Context * ctx, int frame, ContextAddress * ip, ContextAddress
     StackFrame * f;
     StackTrace * s;
 
-    assert(context_has_state(ctx));
+    if (ctx == NULL || !context_has_state(ctx)) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
     if (!ctx->stopped) {
         errno = ERR_IS_RUNNING;
         return -1;
@@ -623,6 +626,17 @@ int get_frame_info(Context * ctx, int frame, ContextAddress * ip, ContextAddress
     if (rp) *rp = f->rp;
     if (fp) *fp = f->fp;
     return 0;
+}
+
+int is_top_frame(Context * ctx, int frame) {
+    StackTrace * s;
+
+    if (ctx == NULL || !context_has_state(ctx)) return 0;
+    if (!ctx->stopped) return 0;
+    if (frame == STACK_TOP_FRAME) return 1;
+    s = create_stack_trace(ctx);
+    if (s->error != 0) return 0;
+    return frame == s->frame_cnt - 1;
 }
 
 void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup * bcg) {

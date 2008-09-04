@@ -35,9 +35,10 @@ extern size_t dio_gFormDataSize;
 extern void * dio_gFormDataAddr;
 
 extern void dio_EnterSection(ELF_Section * Section, U8_T Offset);
+extern void dio_EnterSectionData(ELF_File * File, U1_T * Data, U8_T Offset, U8_T Size);
 extern void dio_ExitSection(void);
 
-extern void dio_Skip(U8_T Bytes);
+extern void dio_Skip(I8_T Bytes);
 extern void dio_Read(U1_T * Buf, U4_T Size);
 extern U8_T dio_GetPos(void); /* Offset in the section */
 
@@ -55,8 +56,6 @@ extern U8_T dio_ReadUX(int Size);
 extern U8_T dio_ReadAddress(void);
 
 extern char * dio_ReadString(void);
-
-extern U8_T dio_ReadAddrBuf(U1_T * Buf);
 
 typedef void (*DIO_EntryCallBack)(U2_T /* Tag */, U2_T /* Attr */, U2_T /* Form */);
 /*

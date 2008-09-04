@@ -484,7 +484,7 @@ static void debug_event_handler(void * x) {
             prs->mem = debug_event->dwProcessId;
             prs->handle = debug_event->u.CreateProcessInfo.hProcess;
             prs->file_handle = debug_event->u.CreateProcessInfo.hFile;
-            prs->base_address = debug_event->u.CreateProcessInfo.lpBaseOfImage;
+            prs->base_address = (unsigned)debug_event->u.CreateProcessInfo.lpBaseOfImage;
             assert(prs->handle != NULL);
             link_context(prs);
             event_context_created(prs);
@@ -547,21 +547,21 @@ static void debug_event_handler(void * x) {
             assert(prs != NULL);
             prs->module_loaded = 1;
             prs->module_handle = args->event.u.LoadDll.hFile;
-            prs->module_address = args->event.u.LoadDll.lpBaseOfDll;
+            prs->module_address = (unsigned)args->event.u.LoadDll.lpBaseOfDll;
             event_context_changed(prs);
             if (prs->module_handle != NULL) {
                 log_error("CloseHandle", CloseHandle(prs->module_handle));
             }
             prs->module_handle = NULL;
-            prs->module_address = NULL;
+            prs->module_address = 0;
             prs->module_loaded = 0;
             break;
         case UNLOAD_DLL_DEBUG_EVENT:
             assert(prs != NULL);
             prs->module_unloaded = 1;
-            prs->module_address = args->event.u.UnloadDll.lpBaseOfDll;
+            prs->module_address = (unsigned)args->event.u.UnloadDll.lpBaseOfDll;
             event_context_changed(prs);
-            prs->module_address = NULL;
+            prs->module_address = 0;
             prs->module_unloaded = 0;
             break;
         case RIP_EVENT:

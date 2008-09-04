@@ -42,7 +42,7 @@
 #define SERVICE_Registers       TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_StackTrace      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_Symbols         TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
-#define SERVICE_LineNumbers     TARGET_UNIX || (TARGET_WINDOWS && !defined(__CYGWIN__))
+#define SERVICE_LineNumbers     TARGET_UNIX || TARGET_WINDOWS
 #define SERVICE_Processes       TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_FileSystem      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_SysMonitor      TARGET_UNIX
@@ -51,6 +51,8 @@
 #define ENABLE_Trace        1
 #define ENABLE_Discovery    1
 #define ENABLE_Cmdline      1
+
+#define ENABLE_ELF          (((SERVICE_LineNumbers) || (SERVICE_Symbols)) && !TARGET_WINDOWS)
 
 #ifdef CONFIG_MAIN
 /*

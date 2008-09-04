@@ -26,6 +26,7 @@
 #include "elf.h"
 
 typedef struct FileInfo FileInfo;
+typedef struct LocationInfo LocationInfo;
 typedef struct ObjectInfo ObjectInfo;
 typedef struct LineNumbersState LineNumbersState;
 typedef struct CompUnit CompUnit;
@@ -40,20 +41,42 @@ struct FileInfo {
     U4_T mSize;
 };
 
+#define SYM_HASH_SIZE 1023
+
+struct SymbolSection {
+    char * mStrPool;
+    size_t mStrPoolSize;
+    unsigned sym_cnt;
+    Elf_Sym * mSymPool;    /* pointer to ELF section data: array of Elf32_Sym or Elf64_Sym */
+    size_t mSymPoolSize;
+    unsigned mSymbolHash[SYM_HASH_SIZE];
+    unsigned * mHashNext;
+};
+
+struct LocationInfo {
+    U1_T * mAddr;
+    size_t mSize;
+    U1_T mList;
+};
+
 struct ObjectInfo {
     ObjectInfo * mHashNext;
     ObjectInfo * mListNext;
     ObjectInfo * mSibling;
     ObjectInfo * mChildren;
+    ObjectInfo * mParent;
 
     U2_T mTag;
     U8_T mID;
-    U2_T mLocBase;
-    U8_T mLocOffset;
+    U8_T mLowPC;
+    U8_T mHighPC;
     U8_T mConstValue;
     U1_T * mConstValueAddr;
     size_t mConstValueSize;
-    Elf_Sym * mSymbol;
+    LocationInfo mLocation;
+    LocationInfo mFrameBase;
+    SymbolSection * mSymbolSection;
+    U4_T mSymbol;
     U1_T mDeclaration;
     U1_T mPrototyped;
     U1_T mExternal;
@@ -84,7 +107,9 @@ struct LineNumbersState {
 
 struct CompUnit {
     ELF_File * mFile;
+    ELF_Section * mSection;
 
+    U8_T mID;
     ContextAddress mLowPC;
     ContextAddress mHighPC;
 
@@ -107,19 +132,8 @@ struct CompUnit {
     U4_T mStatesMax;
     LineNumbersState * mStates;
 
+    CompUnit * mBaseTypes;
     ObjectInfo * mChildren;
-};
-
-#define SYM_HASH_SIZE 1023
-
-struct SymbolSection {
-    char * mStrPool;
-    size_t mStrPoolSize;
-    unsigned sym_cnt;
-    Elf_Sym * mSymPool;    /* pointer to ELF section data: array of Elf32_Sym or Elf64_Sym */
-    size_t mSymPoolSize;
-    unsigned mSymbolHash[SYM_HASH_SIZE];
-    unsigned * mHashNext;
 };
 
 #define SYM_CACHE_MAGIC         0x84625490
@@ -133,6 +147,7 @@ struct DWARFCache {
     ELF_Section * mDebugRanges;
     ELF_Section * mDebugARanges;
     ELF_Section * mDebugLine;
+    ELF_Section * mDebugLoc;
     SymbolSection ** sym_sections;
     unsigned sym_sections_cnt;
     unsigned sym_sections_len;

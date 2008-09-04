@@ -21,7 +21,7 @@
 #include "mdep.h"
 #include "config.h"
 
-#if ((SERVICE_LineNumbers) || (SERVICE_Symbols)) && !defined(WIN32)
+#if ENABLE_ELF
 
 #include <assert.h>
 #include <string.h>
@@ -122,6 +122,26 @@ void dio_EnterSection(ELF_Section * Section, U8_T Offset) {
     sDataLen = Section->size;
     sBigEndian = Section->file->big_endian;
     if (elf_load(Section, &sData)) exception(errno);
+    dio_gVersion = 0;
+    dio_g64bit = 0;
+    dio_gAddressSize = 4;
+    dio_gUnitPos = 0;
+    dio_gUnitSize = 0;
+    dio_gEntryPos = 0;
+}
+
+void dio_EnterSectionData(ELF_File * File, U1_T * Data, U8_T Offset, U8_T Size) {
+    sSection = NULL;
+    sData = Data;
+    sDataPos = Offset;
+    sDataLen = Size;
+    sBigEndian = File->big_endian;
+    dio_gVersion = 0;
+    dio_g64bit = 0;
+    dio_gAddressSize = 4;
+    dio_gUnitPos = 0;
+    dio_gUnitSize = 0;
+    dio_gEntryPos = 0;
 }
 
 void dio_ExitSection() {
@@ -135,7 +155,8 @@ U8_T dio_GetPos() {
     return sDataPos;
 }
 
-void dio_Skip(U8_T Bytes) {
+void dio_Skip(I8_T Bytes) {
+    if (sDataPos + Bytes > sDataLen) exception(ERR_EOF);
     sDataPos += Bytes;
 }
 
@@ -260,21 +281,6 @@ char * dio_ReadString(void) {
     return Res;
 }
 
-U8_T dio_ReadAddrBuf(U1_T * Buf) {
-    int i;
-    U8_T Addr = 0;
-    for (i = 0; i < dio_gAddressSize; i++) {
-        U8_T Byte = (U8_T)Buf[i];
-        if (sBigEndian) {
-            Addr |= Byte << ((dio_gAddressSize - i - 1) * 8);
-        }
-        else {
-            Addr |= Byte << (i * 8);
-        }
-    }
-    return Addr;
-}
-
 static U1_T * dio_LoadStringTable(U4_T * StringTableSize) {
     ELF_File * File = sSection->file;
     DIO_Cache * Cache = dio_GetCache(File);
@@ -311,21 +317,17 @@ static void dio_ReadFormAddr(void) {
     dio_gFormRef = dio_ReadAddress();
 }
 
-static void dio_ReadFormBlock(U2_T Attr, U4_T Size) {
-    dio_gFormDataSize = Size;
+static void dio_ReadFormBlock(U4_T Size) {
     dio_gFormDataAddr = sData + sDataPos;
+    dio_gFormDataSize = Size;
     if (sDataPos + Size > sDataLen) exception(ERR_EOF);
     sDataPos += Size;
 }
 
-static void dio_ReadFormData(U2_T Attr, U1_T Size, U8_T Data) {
+static void dio_ReadFormData(U1_T Size, U8_T Data) {
+    dio_gFormDataAddr = sData + sDataPos - Size;
     dio_gFormData = Data;
     dio_gFormDataSize = Size;
-}
-
-static void dio_ReadFormFlag(void) {
-    dio_gFormData = dio_ReadU1();
-    dio_gFormDataSize = 1;
 }
 
 static void dio_ReadFormRef(void) {
@@ -337,7 +339,6 @@ static void dio_ReadFormRelRef(U8_T Offset) {
         str_exception(ERR_INV_DWARF, "invalid REF attribute value");
     }
     dio_gFormRef = sSection->addr + dio_gUnitPos + Offset;
-    dio_gFormDataAddr = NULL;
 }
 
 static void dio_ReadFormRefAddr(void) {
@@ -347,8 +348,8 @@ static void dio_ReadFormRefAddr(void) {
 }
 
 static void dio_ReadFormString(void) {
-    dio_gFormDataSize = 1;
     dio_gFormDataAddr = sData + sDataPos;
+    dio_gFormDataSize = 1;
     while (dio_ReadU1()) dio_gFormDataSize++;
 }
 
@@ -356,8 +357,8 @@ static void dio_ReadFormStringRef(void) {
     U8_T Offset = dio_ReadUX(dio_g64bit ? 8 : 4);
     U4_T StringTableSize = 0;
     U1_T * StringTable = dio_LoadStringTable(&StringTableSize);
-    dio_gFormDataSize = 1;
     dio_gFormDataAddr = StringTable + Offset;
+    dio_gFormDataSize = 1;
     for (;;) {
         if (Offset >= StringTableSize) {
             str_exception(ERR_INV_DWARF, "invalid FORM_STRP attribute");
@@ -368,24 +369,24 @@ static void dio_ReadFormStringRef(void) {
 }
 
 static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
-    dio_gFormDataAddr = sData + sDataPos;
+    dio_gFormDataAddr = NULL;
     dio_gFormDataSize = 0;
     dio_gFormData = 0;
     dio_gFormRef = 0;
     switch (Form) {
     case FORM_ADDR      : dio_ReadFormAddr(); break;
     case FORM_REF       : dio_ReadFormRef(); break;
-    case FORM_BLOCK1    : dio_ReadFormBlock(Attr, dio_ReadU1()); break;
-    case FORM_BLOCK2    : dio_ReadFormBlock(Attr, dio_ReadU2()); break;
-    case FORM_BLOCK4    : dio_ReadFormBlock(Attr, dio_ReadU4()); break;
-    case FORM_BLOCK     : dio_ReadFormBlock(Attr, dio_ReadULEB128()); break;
-    case FORM_DATA1     : dio_ReadFormData(Attr, 1, dio_ReadU1()); break;
-    case FORM_DATA2     : dio_ReadFormData(Attr, 2, dio_ReadU2()); break;
-    case FORM_DATA4     : dio_ReadFormData(Attr, 4, dio_ReadU4()); break;
-    case FORM_DATA8     : dio_ReadFormData(Attr, 8, dio_ReadU8()); break;
-    case FORM_SDATA     : dio_ReadFormData(Attr, 8, dio_ReadS8LEB128()); dio_gFormDataAddr = NULL; break;
-    case FORM_UDATA     : dio_ReadFormData(Attr, 8, dio_ReadU8LEB128()); dio_gFormDataAddr = NULL; break;
-    case FORM_FLAG      : dio_ReadFormFlag(); break;
+    case FORM_BLOCK1    : dio_ReadFormBlock(dio_ReadU1()); break;
+    case FORM_BLOCK2    : dio_ReadFormBlock(dio_ReadU2()); break;
+    case FORM_BLOCK4    : dio_ReadFormBlock(dio_ReadU4()); break;
+    case FORM_BLOCK     : dio_ReadFormBlock(dio_ReadULEB128()); break;
+    case FORM_DATA1     : dio_ReadFormData(1, dio_ReadU1()); break;
+    case FORM_DATA2     : dio_ReadFormData(2, dio_ReadU2()); break;
+    case FORM_DATA4     : dio_ReadFormData(4, dio_ReadU4()); break;
+    case FORM_DATA8     : dio_ReadFormData(8, dio_ReadU8()); break;
+    case FORM_SDATA     : dio_ReadFormData(8, dio_ReadS8LEB128()); dio_gFormDataAddr = NULL; break;
+    case FORM_UDATA     : dio_ReadFormData(8, dio_ReadU8LEB128()); dio_gFormDataAddr = NULL; break;
+    case FORM_FLAG      : dio_ReadFormData(1, dio_ReadU1()); break;
     case FORM_STRING    : dio_ReadFormString(); break;
     case FORM_STRP      : dio_ReadFormStringRef(); break;
     case FORM_REF_ADDR  : dio_ReadFormRefAddr(); break;
