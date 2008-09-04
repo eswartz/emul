@@ -11,6 +11,7 @@
 package org.eclipse.tm.tcf.util;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -52,8 +53,9 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
     }
     
     public synchronized void done(V result) {
-        if (canceled) return;
         assert Protocol.isDispatchThread();
+        assert result != null;
+        if (canceled) return;
         assert this.error == null;
         assert this.result == null;
         this.result = result;
@@ -62,16 +64,16 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
     
     public synchronized void error(Throwable error) {
         assert Protocol.isDispatchThread();
+        assert error != null;
         if (canceled) return;
         assert this.error == null;
         assert this.result == null;
         this.error = error;
-        //System.err.print("TCFTask exception: ");
-        //error.printStackTrace();
         notifyAll();
     }
 
     public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+        assert Protocol.isDispatchThread();
         if (isDone()) return false;
         canceled = true;
         error = new CancellationException();
@@ -79,37 +81,50 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         return true;
     }
 
-    public V get() throws InterruptedException, ExecutionException {
+    public synchronized V get() throws InterruptedException, ExecutionException {
         assert !Protocol.isDispatchThread();
-        synchronized (this) {
-            if (!isDone()) wait();
-            if (error instanceof ExecutionException) throw (ExecutionException)error;
-            if (error instanceof InterruptedException) throw (InterruptedException)error;
-            if (error != null) throw new ExecutionException(error);
-            return result;
-        }
+        while (!isDone()) wait();
+        assert error != null || result != null;
+        if (error instanceof ExecutionException) throw (ExecutionException)error;
+        if (error instanceof InterruptedException) throw (InterruptedException)error;
+        if (error != null) throw new ExecutionException(error);
+        return result;
     }
     
-    public V getE() {
-        try {
-            return get();
+    public synchronized V getE() {
+        assert !Protocol.isDispatchThread();
+        while (!isDone()) {
+            try {
+                wait();
+            }
+            catch (InterruptedException x) {
+                throw new Error(x);
+            }
         }
-        catch (Throwable e) {
-            if (e instanceof Error) throw (Error)e;
-            throw new Error(e);
-        }
+        assert error != null || result != null;
+        if (error instanceof Error) throw (Error)error;
+        if (error != null) throw new Error(error);
+        return result;
     }
 
-    public V getIO() throws IOException {
-        try {
-            return get();
+    public synchronized V getIO() throws IOException {
+        assert !Protocol.isDispatchThread();
+        while (!isDone()) {
+            try {
+                wait();
+            }
+            catch (InterruptedException x) {
+                throw new InterruptedIOException();
+            }
         }
-        catch (Throwable e) {
-            if (e instanceof IOException) throw (IOException)e;
+        assert error != null || result != null;
+        if (error instanceof IOException) throw (IOException)error;
+        if (error != null) {
             IOException y = new IOException();
-            y.initCause(e);
+            y.initCause(error);
             throw y;
         }
+        return result;
     }
 
     public synchronized V get(long timeout, TimeUnit unit)
@@ -125,6 +140,6 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
     }
 
     public synchronized boolean isDone() {
-        return canceled || error != null || result != null;
+        return error != null || result != null;
     }
 }

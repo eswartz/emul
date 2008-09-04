@@ -31,7 +31,7 @@ public class DiagnosticsService implements IDiagnostics {
                 }
                 else if (name.equals("getTestList")) {
                     channel.sendResult(token, JSON.toJSONSequence(new Object[]{
-                            new Integer(0), null, new String[0]}));
+                            null, new String[0]}));
                 }
                 else {
                     channel.terminate(new Exception("Illegal command: " + name));

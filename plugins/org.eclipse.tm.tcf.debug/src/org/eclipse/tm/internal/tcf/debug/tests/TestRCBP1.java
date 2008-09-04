@@ -190,10 +190,7 @@ class TestRCBP1 implements ITCFTest,
         }
         if (!test_suite.isActive(this)) return;
         assert this.context_id != null;
-        if (!symbol.isGlobal()) {
-            exit(new Exception("Symbols 'tcf_test_*' must be global"));
-        }
-        else if (!symbol.isAbs()) {
+        if (!symbol.isAbs()) {
             exit(new Exception("Symbols 'tcf_test_*' must be absolute"));
         }
         else if (symbol.getValue().longValue() == 0) {

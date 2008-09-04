@@ -718,7 +718,9 @@ public abstract class AbstractChannel implements IChannel {
                 }
                 break;
             case 'F':
-                remote_congestion_level = Integer.parseInt(new String(msg.data, "ASCII"));
+                int len = msg.data.length;
+                if (len > 0 && msg.data[len - 1] == 0) len--;
+                remote_congestion_level = Integer.parseInt(new String(msg.data, 0, len, "ASCII"));
                 break;
             default:
                 assert false;

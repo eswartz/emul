@@ -24,10 +24,8 @@ import java.util.Map;
 
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
 import org.eclipse.tm.internal.tcf.core.RemotePeer;
-import org.eclipse.tm.tcf.Activator;
 import org.eclipse.tm.tcf.core.AbstractChannel;
 import org.eclipse.tm.tcf.protocol.IChannel;
-import org.eclipse.tm.tcf.protocol.IEventQueue;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
@@ -143,16 +141,10 @@ public class LocatorService implements ILocator {
             if (name.equals("redirect")) {
                 // String peer_id = (String)JSON.parseSequence(data)[0];
                 // TODO: perform local ILocator.redirect
-                channel.sendResult(token, JSON.toJSONSequence(new Object[]{
-                        new Integer(0), null }));
+                channel.sendResult(token, JSON.toJSONSequence(new Object[]{ null }));
             }
             else if (name.equals("sync")) {
                 channel.sendResult(token, null);
-            }
-            else if (name.equals("publishPeer")) {
-                // TODO: handle "publishPeer" command from discovery master
-                channel.sendResult(token, JSON.toJSONSequence(new Object[]{
-                        new Integer(0), null, new Integer(0) }));
             }
             else {
                 channel.terminate(new Exception("Illegal command: " + name));
