@@ -293,7 +293,8 @@ static int evaluate_location(const LocationInfo * Loc) {
             errno = ERR_INV_DWARF;
             return -1;
         }
-        if (elf_load(Cache->mDebugLoc, &Addr) < 0) return -1;
+        if (elf_load(Cache->mDebugLoc) < 0) return -1;
+        Addr = Cache->mDebugLoc->data;
         Base = sLocObject->mCompUnit->mLowPC;
         enter_section(sLocObject->mCompUnit, Addr, Offset, Cache->mDebugLoc->size);
         while (1) {

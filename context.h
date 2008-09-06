@@ -88,9 +88,6 @@ struct Context {
     int                 end_of_step;
 #endif
 #if ENABLE_ELF
-    int                 elf_list_pos;
-    ContextAddress      elf_list_addr0;
-    ContextAddress      elf_list_addr1;
     void *              memory_map;
 #endif
 };

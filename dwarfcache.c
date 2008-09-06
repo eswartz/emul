@@ -485,12 +485,10 @@ static void load_symbol_tables(void) {
             if (sym_sec->link >= File->section_cnt || (str_sec = File->sections[sym_sec->link]) == NULL) {
                 exception(EINVAL);
             }
-            if (elf_load(sym_sec, &sym_data) < 0) {
-                exception(errno);
-            }
-            if (elf_load(str_sec, &str_data) < 0) {
-                exception(errno);
-            }
+            if (elf_load(sym_sec) < 0) exception(errno);
+            if (elf_load(str_sec) < 0) exception(errno);
+            sym_data = sym_sec->data;
+            str_data = str_sec->data;
             tbl->mStrPool = (char *)str_data;
             tbl->mStrPoolSize = (size_t)str_sec->size;
             tbl->mSymPool = (Elf_Sym *)sym_data;

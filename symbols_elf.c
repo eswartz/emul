@@ -118,6 +118,71 @@ static int find_in_object_tree(Context * ctx, ObjectInfo * list, ContextAddress 
     return found;
 }
 
+static int find_in_dwarf(DWARFCache * cache, Context * ctx, char * name, ContextAddress ip, Symbol * sym) {
+    unsigned i;
+    for (i = 0; i < cache->mCompUnitsCnt; i++) {
+        CompUnit * unit = cache->mCompUnits[i];
+        if (unit->mLowPC <= ip && unit->mHighPC > ip) {
+            if (find_in_object_tree(ctx, unit->mChildren, ip, name, sym)) return 1;
+            if (unit->mBaseTypes != NULL) {
+                if (find_in_object_tree(ctx, unit->mBaseTypes->mChildren, ip, name, sym)) return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static int find_in_sym_table(DWARFCache * cache, Context * ctx, char * name, Symbol * sym) {
+    unsigned m = 0;
+    unsigned h = calc_symbol_name_hash(name);
+    while (m < cache->sym_sections_cnt) {
+        SymbolSection * tbl = cache->sym_sections[m];
+        unsigned n = tbl->mSymbolHash[h];
+        while (n) {
+            if (cache->mFile->elf64) {
+                Elf64_Sym * s = (Elf64_Sym *)tbl->mSymPool + n;
+                if (strcmp(name, tbl->mStrPool + s->st_name) == 0) {
+                    memset(sym, 0, sizeof(Symbol));
+                    sym->ctx = ctx;
+                    switch (ELF64_ST_TYPE(s->st_info)) {
+                    case STT_FUNC:
+                        sym->sym_class = SYM_CLASS_FUNCTION;
+                        break;
+                    case STT_OBJECT:
+                        sym->sym_class = SYM_CLASS_REFERENCE;
+                        break;
+                    }
+                    assert(m <= 0xff);
+                    sym->module_id = (ModuleID)(unsigned)cache->mFile;
+                    sym->symbol_id = (SymbolID)(((U8_T)m << 32) | (U8_T)n | SYM_FLAG);
+                    return 1;
+                }
+            }
+            else {
+                Elf32_Sym * s = (Elf32_Sym *)tbl->mSymPool + n;
+                if (strcmp(name, tbl->mStrPool + s->st_name) == 0) {
+                    memset(sym, 0, sizeof(Symbol));
+                    sym->ctx = ctx;
+                    switch (ELF32_ST_TYPE(s->st_info)) {
+                    case STT_FUNC:
+                        sym->sym_class = SYM_CLASS_FUNCTION;
+                        break;
+                    case STT_OBJECT:
+                        sym->sym_class = SYM_CLASS_REFERENCE;
+                        break;
+                    }
+                    sym->module_id = (ModuleID)(unsigned)cache->mFile;
+                    sym->symbol_id = (SymbolID)(((U8_T)m << 32) | (U8_T)n | SYM_FLAG);
+                    return 1;
+                }
+            }
+            n = tbl->mHashNext[n];
+        }
+        m++;
+    }
+    return 0;
+}
+
 int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     int error = 0;
     int found = 0;
@@ -150,95 +215,32 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
 
     if (error == 0 && !found) {
         ContextAddress ip = 0;
-        ELF_File * file = NULL;
         
         if (frame != STACK_NO_FRAME) {
             if (get_frame_info(ctx, frame, &ip, NULL, NULL) < 0) error = errno;
         }
     
         if (error == 0) {
-            file = elf_list_first(ctx, ip, ip == 0 ? ~(ContextAddress)0 : ip + 1);
-            if (file == NULL) error = errno;
-        }
-    
-        while (error == 0 && file != NULL) {
-            Trap trap;
-            if (set_trap(&trap)) {
-                DWARFCache * cache = get_dwarf_cache(file);
-                if (ip != 0) {
-                    unsigned i;
-                    for (i = 0; i < cache->mCompUnitsCnt; i++) {
-                        CompUnit * unit = cache->mCompUnits[i];
-                        if (unit->mLowPC <= ip && unit->mHighPC > ip) {
-                            found = find_in_object_tree(ctx, unit->mChildren, ip, name, sym);
-                            if (found) break;
-                            if (unit->mBaseTypes != NULL) {
-                                found = find_in_object_tree(ctx, unit->mBaseTypes->mChildren, ip, name, sym);
-                                if (found) break;
-                            }
-                        }
-                    }
+            ELF_File * file = elf_list_first(ctx, ip, ip == 0 ? ~(ContextAddress)0 : ip + 1);
+            if (file == NULL) error = errno;    
+            while (error == 0 && file != NULL) {
+                Trap trap;
+                if (set_trap(&trap)) {
+                    DWARFCache * cache = get_dwarf_cache(file);
+                    if (ip != 0) found = find_in_dwarf(cache, ctx, name, ip, sym);
+                    if (!found) found = find_in_sym_table(cache, ctx, name, sym);
+                    clear_trap(&trap);
                 }
-                if (!found) {
-                    unsigned m = 0;
-                    unsigned h = calc_symbol_name_hash(name);
-                    while (m < cache->sym_sections_cnt && !found) {
-                        SymbolSection * tbl = cache->sym_sections[m];
-                        unsigned n = tbl->mSymbolHash[h];
-                        while (n && !found) {
-                            if (file->elf64) {
-                                Elf64_Sym * s = (Elf64_Sym *)tbl->mSymPool + n;
-                                if (strcmp(name, tbl->mStrPool + s->st_name) == 0) {
-                                    found = 1;
-                                    memset(sym, 0, sizeof(Symbol));
-                                    sym->ctx = ctx;
-                                    switch (ELF64_ST_TYPE(s->st_info)) {
-                                    case STT_FUNC:
-                                        sym->sym_class = SYM_CLASS_FUNCTION;
-                                        break;
-                                    case STT_OBJECT:
-                                        sym->sym_class = SYM_CLASS_REFERENCE;
-                                        break;
-                                    }
-                                    assert(m <= 0xff);
-                                    sym->module_id = (ModuleID)(unsigned)file;
-                                    sym->symbol_id = (SymbolID)(((U8_T)m << 32) | (U8_T)n | SYM_FLAG);
-                                }
-                            }
-                            else {
-                                Elf32_Sym * s = (Elf32_Sym *)tbl->mSymPool + n;
-                                if (strcmp(name, tbl->mStrPool + s->st_name) == 0) {
-                                    found = 1;
-                                    memset(sym, 0, sizeof(Symbol));
-                                    sym->ctx = ctx;
-                                    switch (ELF32_ST_TYPE(s->st_info)) {
-                                    case STT_FUNC:
-                                        sym->sym_class = SYM_CLASS_FUNCTION;
-                                        break;
-                                    case STT_OBJECT:
-                                        sym->sym_class = SYM_CLASS_REFERENCE;
-                                        break;
-                                    }
-                                    sym->module_id = (ModuleID)(unsigned)file;
-                                    sym->symbol_id = (SymbolID)(((U8_T)m << 32) | (U8_T)n | SYM_FLAG);
-                                }
-                            }
-                            n = tbl->mHashNext[n];
-                        }
-                        m++;
-                    }
+                else {
+                    error = trap.error;
+                    break;
                 }
-                clear_trap(&trap);
+                if (found) break;
+                file = elf_list_next(ctx);
+                if (file == NULL) error = errno;
             }
-            else {
-                error = trap.error;
-                break;
-            }
-            if (found) break;
-            file = elf_list_next(ctx);
-            if (file == NULL) error = errno;
+            elf_list_done(ctx);
         }
-        elf_list_done(ctx);
     }
 
     if (error == 0 && !found) error = ERR_SYM_NOT_FOUND;
@@ -279,41 +281,38 @@ static void enumerate_local_vars(Context * ctx, ObjectInfo * obj, ContextAddress
 int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_back, void * args) {
     int error = 0;
     ContextAddress ip = 0;
-    ELF_File * file = NULL;
     
     if (frame != STACK_NO_FRAME) {
         if (get_frame_info(ctx, frame, &ip, NULL, NULL) < 0) error = errno;
     }
 
     if (error == 0) {
-        file = elf_list_first(ctx, ip, ip == 0 ? ~(ContextAddress)0 : ip + 1);
+        ELF_File * file = elf_list_first(ctx, ip, ip == 0 ? ~(ContextAddress)0 : ip + 1);
         if (file == NULL) error = errno;
-    }
-    
-
-    while (error == 0 && file != NULL) {
-        Trap trap;
-        if (set_trap(&trap)) {
-            DWARFCache * cache = get_dwarf_cache(file);
-            if (ip != 0) {
-                unsigned i;
-                for (i = 0; i < cache->mCompUnitsCnt; i++) {
-                    CompUnit * unit = cache->mCompUnits[i];
-                    if (unit->mLowPC <= ip && unit->mHighPC > ip) {
-                        enumerate_local_vars(ctx, unit->mChildren, ip, 0, call_back, args);
+        while (error == 0 && file != NULL) {
+            Trap trap;
+            if (set_trap(&trap)) {
+                DWARFCache * cache = get_dwarf_cache(file);
+                if (ip != 0) {
+                    unsigned i;
+                    for (i = 0; i < cache->mCompUnitsCnt; i++) {
+                        CompUnit * unit = cache->mCompUnits[i];
+                        if (unit->mLowPC <= ip && unit->mHighPC > ip) {
+                            enumerate_local_vars(ctx, unit->mChildren, ip, 0, call_back, args);
+                        }
                     }
                 }
+                clear_trap(&trap);
             }
-            clear_trap(&trap);
+            else {
+                error = trap.error;
+                break;
+            }
+            file = elf_list_next(ctx);
+            if (file == NULL) error = errno;
         }
-        else {
-            error = trap.error;
-            break;
-        }
-        file = elf_list_next(ctx);
-        if (file == NULL) error = errno;
+        elf_list_done(ctx);
     }
-    elf_list_done(ctx);
 
     if (error) {
         errno = error;

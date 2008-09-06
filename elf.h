@@ -120,29 +120,35 @@ struct ELF_File {
     time_t mtime;
     int fd;
 
-    int big_endian;
+    int big_endian; /* 0 - least significant first, 1 - most significat first */
     int elf64;
-    U4_T section_cnt;
+    unsigned section_cnt;
     ELF_Section ** sections;
+    char * str_pool;
 
-    void * libelf_cache;
     void * dwarf_io_cache;
     void * dwarf_dt_cache;
 
+    int age;
     int listed;
 };
 
 struct ELF_Section {
     ELF_File * file;
     U4_T index;
+    unsigned name_offset;
     char * name;
+    void * data;
     U4_T type;
     U4_T flags;
     U8_T offset;
     U8_T size;
     U8_T addr;
     U4_T link;
-    U4_T info;     
+    U4_T info;    
+    
+    void * mmap_addr;
+    size_t mmap_size;
 };
 
 /*
@@ -175,11 +181,11 @@ extern void elf_list_done(Context * ctx);
 
 /*
  * Load section data into memory.
- * '*address' is set to section data address in memory.
+ * section->data is set to section data address in memory.
  * Data will stay in memory at least until file is closed.
  * Returns zero on success. If error, returns -1 and sets errno.
  */
-extern int elf_load(ELF_Section * section, U1_T ** address);
+extern int elf_load(ELF_Section * section);
 
 /*
  * Register ELF file close callback.

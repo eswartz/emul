@@ -117,11 +117,12 @@ static DIO_Cache * dio_GetCache(ELF_File * File) {
 }
 
 void dio_EnterSection(ELF_Section * Section, U8_T Offset) {
+    if (elf_load(Section)) exception(errno);
     sSection = Section;
+    sData = Section->data;
     sDataPos = Offset;
     sDataLen = Section->size;
     sBigEndian = Section->file->big_endian;
-    if (elf_load(Section, &sData)) exception(errno);
     dio_gVersion = 0;
     dio_g64bit = 0;
     dio_gAddressSize = 4;
@@ -304,9 +305,10 @@ static U1_T * dio_LoadStringTable(U4_T * StringTableSize) {
         }
 
         Cache->mStringTableSize = (size_t)Section->size;
-        if (elf_load(Section, &Cache->mStringTable) < 0) {
+        if (elf_load(Section) < 0) {
             str_exception(ERR_INV_DWARF, "invalid .debug_str section");
         }
+        Cache->mStringTable = Section->data;
     }
 
     *StringTableSize = Cache->mStringTableSize;

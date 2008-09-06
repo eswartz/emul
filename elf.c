@@ -35,8 +35,8 @@
 #if defined(_WRS_KERNEL)
 #elif defined(WIN32)
 #else
-#  include <libelf.h>
-#  define USE_LIBELF
+#  include <sys/mman.h>
+#  define USE_MMAP
 #endif
 
 typedef struct MemoryRegion MemoryRegion;
@@ -56,7 +56,8 @@ struct MemoryMap {
     MemoryRegion * regions;
 };
 
-#define MAX_CACHED_FILES 16
+#define MAX_CACHED_FILES 32
+#define MAX_FILE_AGE 30
 
 static ELF_File * files = NULL;
 static ELFCloseListener * listeners = NULL;
@@ -65,6 +66,12 @@ static U4_T listeners_max = 0;
 static int context_listener_added = 0;
 static int elf_cleanup_posted = 0;
 
+static Context *      elf_list_ctx;
+static int            elf_list_pos;
+static ContextAddress elf_list_addr0;
+static ContextAddress elf_list_addr1;
+
+
 static void elf_dispose(ELF_File * file) {
     U4_T n;
     trace(LOG_ELF, "Dispose ELF file cache %s", file->name);
@@ -72,16 +79,19 @@ static void elf_dispose(ELF_File * file) {
     for (n = 0; n < listeners_cnt; n++) {
         listeners[n](file);
     }
-#ifdef USE_LIBELF
-    if (file->libelf_cache != NULL) elf_end(file->libelf_cache);
-#endif
     if (file->fd >= 0) close(file->fd);
     if (file->sections != NULL) {
         for (n = 0; n < file->section_cnt; n++) {
+            ELF_Section * s = file->sections[n];
+            if (s == NULL) continue;
+#ifdef USE_MMAP
+            if (s->mmap_addr != NULL) munmap(s->mmap_addr, s->mmap_size);
+#endif
             loc_free(file->sections[n]);
         }
         loc_free(file->sections);
     }
+    loc_free(file->str_pool);
     loc_free(file->name);
     loc_free(file);
 }
@@ -94,16 +104,23 @@ static void elf_cleanup_event(void * arg) {
     assert(elf_cleanup_posted);
     elf_cleanup_posted = 0;
     while (file != NULL) {
-        if (cnt >= MAX_CACHED_FILES && file->ref_cnt == 0) {
-            prev->next = file->next;
+        file->age++;
+        if (file->ref_cnt == 0 && (file->age > MAX_FILE_AGE || cnt >= MAX_CACHED_FILES)) {
+            ELF_File * next = file->next;
             elf_dispose(file);
-            file = prev->next;
+            file = next;
+            if (prev != NULL) prev->next = file;
+            else files = file;
         }
         else {
             prev = file;
             file = file->next;
             cnt++;
         }
+    }
+    if (cnt > 0) {
+        post_event_with_delay(elf_cleanup_event, NULL, 1000000);
+        elf_cleanup_posted = 1;
     }
 }
 
@@ -134,6 +151,7 @@ ELF_File * elf_open(char * file_name) {
                 files = file;
             }
             file->ref_cnt++;
+            file->age = 0;
             return file;
         }
         prev = file;
@@ -147,76 +165,95 @@ ELF_File * elf_open(char * file_name) {
     file->dev = st.st_dev;
     file->ino = st.st_ino;
     file->mtime = st.st_mtime;
-#ifdef _WRS_KERNEL
-    if ((file->fd = open(file->name, O_RDONLY, 0)) < 0) {
-#else        
-    if ((file->fd = open(file->name, O_RDONLY)) < 0) {
-#endif
-        error = errno;
-    }
+    if ((file->fd = open(file->name, O_RDONLY, 0)) < 0) error = errno;
 
-#ifdef USE_LIBELF
     if (error == 0) {
-        Elf * elf;
-        Elf32_Ehdr * ehdr;
-        /* Obtain the ELF descriptor */
-        (void)elf_version(EV_CURRENT);
-        if ((elf = elf_begin(file->fd, ELF_C_READ, NULL)) == NULL) {
-            error = errno;
+        Elf32_Ehdr hdr;
+        int swap = 0;
+        memset(&hdr, 0, sizeof(hdr));
+        if (read(file->fd, (char *)&hdr, sizeof(hdr)) < 0) error = errno;
+        if (error == 0 && strncmp((char *)hdr.e_ident, ELFMAG, SELFMAG) != 0) error = ERR_INV_FORMAT;
+        if (error == 0) {
+            if (hdr.e_ident[EI_DATA] == ELFDATA2LSB) {
+                file->big_endian = 0;
+            }
+            else if (hdr.e_ident[EI_DATA] == ELFDATA2MSB) {
+                file->big_endian = 1;
+            }
+            else {
+                error = ERR_INV_FORMAT;
+            }
+            swap = (*(unsigned *)hdr.e_ident & 0xff == ELFMAG0) != file->big_endian;
+        }
+        if (error != 0) {
+            /* Nothing */
+        }
+        else if (hdr.e_ident[EI_CLASS] == ELFCLASS32) {
+            if (error == 0 && swap) {
+                /* TODO swap ELF file header bytes */
+                assert(0);
+            }
+            if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN) error = ERR_INV_FORMAT;
+            if (error == 0 && hdr.e_version != EV_CURRENT) error = ERR_INV_FORMAT;
+            if (error == 0 && hdr.e_shoff == 0) error = ERR_INV_FORMAT;
+            if (error == 0 && lseek(file->fd, hdr.e_shoff, SEEK_SET) == (off_t)-1) error = errno;
+            if (error == 0) {
+                unsigned cnt = 0;
+                file->sections = loc_alloc_zero(sizeof(ELF_Section *) * hdr.e_shnum);
+                file->section_cnt = hdr.e_shnum;
+                while (error == 0 && cnt < hdr.e_shnum) {
+                    Elf32_Shdr shdr;
+                    memset(&shdr, 0, sizeof(shdr));
+                    if (error == 0 && read(file->fd, (char *)&shdr, hdr.e_shentsize) < 0) error = errno;
+                    if (cnt == 0) {
+                        file->sections[cnt++] = NULL;
+                    }
+                    else if (error == 0) {
+                        ELF_Section * sec = loc_alloc_zero(sizeof(ELF_Section));
+                        if (swap) {
+                            /* TODO swap ELF section header bytes */
+                            assert(0);
+                        }
+                        sec->file = file;
+                        sec->index = cnt;
+                        sec->name_offset = shdr.sh_name;
+                        sec->type = shdr.sh_type;
+                        sec->offset = shdr.sh_offset;
+                        sec->size = shdr.sh_size;
+                        sec->flags = shdr.sh_flags;
+                        sec->addr = shdr.sh_addr;
+                        sec->link = shdr.sh_link;
+                        sec->info = shdr.sh_info;
+                        file->sections[cnt++] = sec;
+                    }
+                }
+            }
+        }
+        else if (hdr.e_ident[EI_CLASS] == ELFCLASS64) {
+            /* TODO ELF64 */
+            error = ERR_INV_FORMAT;
         }
         else {
-            file->libelf_cache = elf;
-            if ((ehdr = elf32_getehdr(elf)) == NULL) {
-                error = errno;
-            }
+            error = ERR_INV_FORMAT;
         }
         if (error == 0) {
-            size_t snum = 0;
-            size_t shstrndx = 0;
-            if (elf_getshnum(elf, &snum) < 0) error = errno;
-            if (error == 0) {
-                file->sections = (ELF_Section **)loc_alloc_zero(sizeof(ELF_Section *) * snum);
-                file->section_cnt = snum;
-                if (elf_getshstrndx(elf, &shstrndx) < 0) error = errno;
-            }
-            if (error == 0) {
-                /* Iterate sections */
-                Elf_Scn * scn = NULL;
-                while ((scn = elf_nextscn(elf, scn)) != NULL) {
-                    Elf32_Shdr * shdr = NULL;
-                    char * name = NULL;
-                    ELF_Section * sec = NULL;
-                    if ((shdr = elf32_getshdr(scn)) == NULL) {
-                        error = errno;
-                        break;
+            ELF_Section * str = file->sections[hdr.e_shstrndx];
+            if (str != NULL) {
+                file->str_pool = loc_alloc(str->size);
+                if (lseek(file->fd, str->offset, SEEK_SET) == (off_t)-1) error = errno;
+                if (error == 0 && read(file->fd, file->str_pool, str->size) < 0) error = errno;
+                if (error == 0) {
+                    unsigned i;
+                    for (i = 1; i < file->section_cnt; i++) {
+                        ELF_Section * sec = file->sections[i];
+                        sec->name = file->str_pool + sec->name_offset;
                     }
-                    if ((name = elf_strptr(elf, shstrndx, shdr->sh_name)) == NULL) {
-                        error = errno;
-                        break;
-                    }
-                    sec = (ELF_Section *)loc_alloc(sizeof(ELF_Section));
-                    sec->file = file;
-                    sec->index = elf_ndxscn(scn);
-                    sec->name = name;
-                    sec->type = shdr->sh_type;
-                    sec->offset = shdr->sh_offset;
-                    sec->size = shdr->sh_size;
-                    sec->flags = shdr->sh_flags;
-                    sec->addr = shdr->sh_addr;
-                    sec->link = shdr->sh_link;
-                    sec->info = shdr->sh_info;
-                    assert(sec->index < snum);
-                    file->sections[sec->index] = sec;
                 }
             }
         }
     }
-#else
-    if (error == 0) {
-        error = EINVAL;
-    }
-#endif
     if (error != 0) {
+        trace(LOG_ELF, "Error openning ELF file: %d %s", error, errno_to_str(error));
         elf_dispose(file);
         errno = error;
         return NULL;
@@ -224,6 +261,30 @@ ELF_File * elf_open(char * file_name) {
     file->ref_cnt = 1;
     file->next = files;
     return files = file;
+}
+
+int elf_load(ELF_Section * s) {
+    if (s->data != NULL) return 0;
+    if (s->size == 0) return 0;
+#ifdef USE_MMAP
+    {
+        long page = sysconf(_SC_PAGE_SIZE);
+        off_t offs = (off_t)s->offset;
+        offs -= offs % page;
+        s->mmap_size = (size_t)(s->offset - offs) + s->size;
+        s->mmap_addr = mmap(0, s->mmap_size, PROT_READ, MAP_PRIVATE, s->file->fd, offs);
+        if (s->mmap_addr == MAP_FAILED) {
+            s->mmap_addr = NULL;
+            return -1;
+        }
+        s->data = (char *)s->mmap_addr + (size_t)(s->offset - offs);
+    }
+    trace(LOG_ELF, "Section %s in ELF file %s is mapped to 0x%08x", s->name, s->file->name, s->data);
+    return 0;
+#else
+    errno = ERR_UNSUPPORTED;
+    return -1;
+#endif
 }
 
 void elf_close(ELF_File * file) {
@@ -244,7 +305,15 @@ static void dispose_memory_map(MemoryMap * map) {
     loc_free(map);
 }
 
-#if !defined(_WRS_KERNEL)
+#if defined(_WRS_KERNEL)
+
+static MemoryMap * get_memory_map(Context * ctx) {
+    errno = 0;
+    return NULL;
+}
+
+#else
+
 static void event_context_changed_or_exited(Context * ctx, void * client_data) {
     if (ctx->memory_map == NULL) return;
     dispose_memory_map((MemoryMap *)ctx->memory_map);
@@ -256,8 +325,10 @@ static MemoryMap * get_memory_map(Context * ctx) {
     MemoryMap * map = NULL;
     FILE * file;
 
+    if (ctx->pid != ctx->mem) ctx = ctx->parent;
     assert(ctx->pid == ctx->mem);
     if (ctx->memory_map != NULL) return (MemoryMap *)ctx->memory_map;
+
     if (!context_listener_added) {
         static ContextEventListener listener = {
             NULL,
@@ -313,17 +384,16 @@ static MemoryMap * get_memory_map(Context * ctx) {
     ctx->memory_map = map;
     return map;
 }
+
 #endif
 
 ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress addr1) {
-#if !defined(_WRS_KERNEL)
     int i;
     MemoryMap * map = NULL;
 
-    if (ctx->pid != ctx->mem) ctx = ctx->parent;
-    assert(ctx->pid == ctx->mem);
-    ctx->elf_list_addr0 = addr0;
-    ctx->elf_list_addr1 = addr1;
+    elf_list_ctx = ctx;
+    elf_list_addr0 = addr0;
+    elf_list_addr1 = addr1;
     map = get_memory_map(ctx);
     if (map == NULL) return NULL;
     for (i = 0; i < map->region_cnt; i++) {
@@ -335,52 +405,48 @@ ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress ad
                 if (r->file != NULL) {
                     assert(!r->file->listed);
                     r->file->listed = 1;
-                    ctx->elf_list_pos = i + 1;
+                    elf_list_pos = i + 1;
                     return r->file;
                 }
             }
         }
     }
-#endif
     errno = 0;
     return NULL;
 }
 
 ELF_File * elf_list_next(Context * ctx) {
-#if !defined(_WRS_KERNEL)
     int i;
     MemoryMap * map = NULL;
 
-    if (ctx->pid != ctx->mem) ctx = ctx->parent;
-    assert(ctx->pid == ctx->mem);
-    map = (MemoryMap *)ctx->memory_map;
-    for (i = ctx->elf_list_pos; i < map->region_cnt; i++) {
+    assert(ctx == elf_list_ctx);
+    map = get_memory_map(ctx);
+    if (map == NULL) return NULL;
+    for (i = elf_list_pos; i < map->region_cnt; i++) {
         MemoryRegion * r = map->regions + i;
-        if (r->addr <= ctx->elf_list_addr1 && r->addr + r->size >= ctx->elf_list_addr0) {
+        if (r->addr <= elf_list_addr1 && r->addr + r->size >= elf_list_addr0) {
             assert(r->file == NULL);
             if (r->file_name != NULL) {
                 r->file = elf_open(r->file_name);
                 if (r->file != NULL && !r->file->listed) {
                     r->file->listed = 1;
-                    ctx->elf_list_pos = i + 1;
+                    elf_list_pos = i + 1;
                     return r->file;
                 }
             }
         }
     }
-#endif
     errno = 0;
     return NULL;
 }
 
 void elf_list_done(Context * ctx) {
-#if !defined(_WRS_KERNEL)
     int i;
     MemoryMap * map = NULL;
 
-    if (ctx->pid != ctx->mem) ctx = ctx->parent;
-    assert(ctx->pid == ctx->mem);
-    map = (MemoryMap *)ctx->memory_map;
+    assert(ctx == elf_list_ctx);
+    elf_list_ctx = NULL;
+    map = get_memory_map(ctx);
     if (map == NULL) return;
     for (i = 0; i < map->region_cnt; i++) {
         MemoryRegion * r = map->regions + i;
@@ -390,23 +456,6 @@ void elf_list_done(Context * ctx) {
             r->file = NULL;
         }
     }
-#endif
-}
-
-int elf_load(ELF_Section * section, U1_T ** address) {
-#ifdef USE_LIBELF
-    Elf * elf = (Elf *)section->file->libelf_cache;
-    Elf_Scn * scn = elf_getscn(elf, section->index);
-    Elf_Data * data = elf_getdata(scn, NULL);
-    if (data == NULL) return -1;
-    assert(data->d_buf != NULL && data->d_size == section->size);
-    *address = data->d_buf;
-    return 0;
-#else
-    *address = NULL;
-    errno = EINVAL;
-    return -1;
-#endif
 }
 
 void elf_add_close_listener(ELFCloseListener listener) {

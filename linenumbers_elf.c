@@ -204,67 +204,68 @@ static void write_line_info(OutputStream * out, CompUnit * unit,
 
 int line_to_address(Context * ctx, char * file_name, int line, int column, LineToAddressCallBack * callback, void * user_args) {
     int err = 0;
-    ELF_File * file = NULL;
 
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
-    file = elf_list_first(ctx, 0, ~(ContextAddress)0);
-    if (file == NULL) err = errno;
-    while (file != NULL) {
-        Trap trap;
-        if (set_trap(&trap)) {
-            U4_T i;
-            DWARFCache * cache = get_dwarf_cache(file);
-            for (i = 0; i < cache->mCompUnitsCnt; i++) {
-                CompUnit * unit = cache->mCompUnits[i];
-                int equ = 0;
-                if (unit->mDir != NULL && unit->mName != NULL) {
-                    equ = cmp_file(file_name, unit->mDir, unit->mName);
-                }
-                if (!equ) {
-                    U4_T j;
-                    for (j = 0; j < unit->mFilesCnt; j++) {
-                        FileInfo * f = unit->mFiles + j;
-                        if (f->mDir != NULL && f->mName != NULL) {
-                            equ = cmp_file(file_name, f->mDir, f->mName);
-                            if (equ) break;
-                        }
-                    }
-                }
-                if (equ) {
-                    load_line_numbers(cache, unit);
-                    if (unit->mStatesCnt >= 2) {
-                        U4_T j;
-                        for (j = 0; j < unit->mStatesCnt - 1; j++) {
-                            LineNumbersState * state = unit->mStates + j;
-                            LineNumbersState * next = unit->mStates + j + 1;
-                            char * state_dir = unit->mDir;
-                            char * state_name = unit->mName;
-                            if (state->mEndSequence) continue;
-                            if ((unsigned)line < state->mLine) continue;
-                            if ((unsigned)line >= next->mLine) continue;
-                            if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
-                                FileInfo * f = unit->mFiles + (state->mFile - 1);
-                                state_dir = f->mDir;
-                                state_name = f->mName;
-                            }
-                            if (!cmp_file(file_name, state_dir, state_name)) continue;
-                            callback(user_args, state->mAddress);
-                        }
-                    }
-                }
-            }
-            clear_trap(&trap);
-        }
-        else {
-            err = trap.error;
-            break;
-        }
-        file = elf_list_next(ctx);
+    if (err == 0) {
+        ELF_File * file = elf_list_first(ctx, 0, ~(ContextAddress)0);
         if (file == NULL) err = errno;
+        while (file != NULL) {
+            Trap trap;
+            if (set_trap(&trap)) {
+                U4_T i;
+                DWARFCache * cache = get_dwarf_cache(file);
+                for (i = 0; i < cache->mCompUnitsCnt; i++) {
+                    CompUnit * unit = cache->mCompUnits[i];
+                    int equ = 0;
+                    if (unit->mDir != NULL && unit->mName != NULL) {
+                        equ = cmp_file(file_name, unit->mDir, unit->mName);
+                    }
+                    if (!equ) {
+                        U4_T j;
+                        for (j = 0; j < unit->mFilesCnt; j++) {
+                            FileInfo * f = unit->mFiles + j;
+                            if (f->mDir != NULL && f->mName != NULL) {
+                                equ = cmp_file(file_name, f->mDir, f->mName);
+                                if (equ) break;
+                            }
+                        }
+                    }
+                    if (equ) {
+                        load_line_numbers(cache, unit);
+                        if (unit->mStatesCnt >= 2) {
+                            U4_T j;
+                            for (j = 0; j < unit->mStatesCnt - 1; j++) {
+                                LineNumbersState * state = unit->mStates + j;
+                                LineNumbersState * next = unit->mStates + j + 1;
+                                char * state_dir = unit->mDir;
+                                char * state_name = unit->mName;
+                                if (state->mEndSequence) continue;
+                                if ((unsigned)line < state->mLine) continue;
+                                if ((unsigned)line >= next->mLine) continue;
+                                if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
+                                    FileInfo * f = unit->mFiles + (state->mFile - 1);
+                                    state_dir = f->mDir;
+                                    state_name = f->mName;
+                                }
+                                if (!cmp_file(file_name, state_dir, state_name)) continue;
+                                callback(user_args, state->mAddress);
+                            }
+                        }
+                    }
+                }
+                clear_trap(&trap);
+            }
+            else {
+                err = trap.error;
+                break;
+            }
+            file = elf_list_next(ctx);
+            if (file == NULL) err = errno;
+        }
+        elf_list_done(ctx);
     }
-    elf_list_done(ctx);
 
     if (err != 0) {
         errno = err;

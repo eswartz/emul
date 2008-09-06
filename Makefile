@@ -10,9 +10,9 @@ LIBS=-lws2_32 -liphlpapi
 else
 ifeq ($(UNAME),Msys)
 CFLAGS:=-mwin32 $(CFLAGS)
-LIBS=-lws2_32 -liphlpapi -limagehlp
+LIBS=-lws2_32 -liphlpapi
 else
-LIBS=-lpthread -lrt -lelf
+LIBS=-lpthread -lrt
 endif
 endif
 
