@@ -125,18 +125,9 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
 <p><b>Linux</b> is the recommended evaluation platform, since most TCF services
 are implemented. To build the agent:
 <ul>
-   <li>Make sure <code>elfutils-libelf-devel</code> is installed.
-       On Fedora, it can be installed by command:
-       <pre>yum install elfutils-libelf-devel</pre>
-       It also can be built and installed from source code, e.g.
-       <a href="http://www.mr511.de/software/libelf-0.8.9.tar.gz">http://www.mr511.de/software/libelf-0.8.9.tar.gz</a>:
-       <pre>
-       ./configure
-       make
-       make install
-       setenv LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH</pre>
    <li>Run <code>make</code> command in <code>&lt;TCF Root&gt;/agent</code> directory.
-   <li>Start agent with <code>./agent</code> command.
+   <li>Start agent with <code>./agent -L- -l0</code> command.
+       Use other -l option values to increase agent log details level.
 </ul>
 
 <p>On <b>Windows</b>, SysMonitor service is not implemented, so RSE Processes demos will not work.
@@ -212,8 +203,7 @@ It also extends Processes subsystem to include CPU utilization data and some oth
 <h2><a name='Debugger'>Using TCF With Eclipse Debugger</a></h2>
 
 <p>Plugins <b>org.eclipse.tm.tcf.debug</b> and <b>org.eclipse.tm.tcf.debug.ui</b> allow to start a debug session
-by connecting to a machine runnning TCF agent. This is not a complete debugger implementation, it is intended for 
-demo and reference purposes.
+by connecting to a machine runnning TCF agent.
 
 <p>To start a debug session over TCF:</p>
 <ul>
@@ -229,9 +219,8 @@ demo and reference purposes.
    <li>Press "Debug" to start the debugger.
 </ul>
 
-<p>In TCF debug session only "Debug", "Breakpoints" and "Registers" views are populated. Source level debugging
-in not supported at this time. Breakpoints can be planted at an absolute addresses only, using menu command "Run/Toggle Breakpoint".
-"Registers" view can be brought in by "Window > Show View > Registers". Registers can be shown only for top stack frame.
+<p>In TCF debug session "Debug", "Breakpoints", "Registers", "Variables" and "Expressions" views are populated.
+Source level debugging is fully supported if the source code can be found in a CDT project in current workspace.
 </p>
 
 </body>
