@@ -95,8 +95,11 @@ public class Vdp implements ConsoleMmioReader, ConsoleMmioWriter {
     
     		    //System.out.println("vdp @" + Integer.toHexString(vdpaddr) + " = " + Integer.toHexString(val&0xff));
     
+        		byte oldVal = getMemory().readByte(vdpaddr);
         		getMemory().writeByte(vdpaddr, val);
-        		client.getVideoHandler().writeVdpMemory(vdpaddr, val);
+        		if (oldVal != val) {
+        			client.getVideoHandler().writeVdpMemory(vdpaddr, val);
+        		}
     
         		vdpaddr = (short) (vdpaddr + 1 & 0x3fff);
         		vdpreadahead = val;
@@ -125,7 +128,8 @@ public class Vdp implements ConsoleMmioReader, ConsoleMmioWriter {
         byte val = (byte) (addr & 0xff);
         byte old = vdpregs[reg];
         vdpregs[reg] = val;
-        client.getVideoHandler().writeVdpReg(reg, val, old);
+        if (old != val)
+        	client.getVideoHandler().writeVdpReg(reg, val);
     }
 
     public void setClient(Client client) {

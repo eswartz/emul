@@ -210,18 +210,20 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		}
 
 		/* 2) Where WERE they? */
-		for (i = 0; i < 768; i++) {
-			if ((sprbitmap[i] & (vdpChanges.sprite | newdelbitmap)) != 0) /*
-																		 * old
-																		 * bitmap
-																		 */
-			{
-				// logger(_L|L_3,
-				// _("redrawing char %d due to deleted sprite\n"), i);
-				vdpChanges.screen[i] = VdpChanges.SC_SPRITE_DELETED;
+		if ((vdpChanges.sprite | newdelbitmap) != 0) {
+			for (i = 0; i < 768; i++) {
+				if ((sprbitmap[i] & (vdpChanges.sprite | newdelbitmap)) != 0) /*
+																			 * old
+																			 * bitmap
+																			 */
+				{
+					// logger(_L|L_3,
+					// _("redrawing char %d due to deleted sprite\n"), i);
+					vdpChanges.screen[i] = VdpChanges.SC_SPRITE_DELETED;
+				}
 			}
 		}
-
+		
 		/* Now, create new sprite bitmap. */
 		Arrays.fill(sprbitmap, 0, sprbitmap.length, 0);
 		Arrays.fill(sprlines, 0, sprlines.length, five_sprites_on_a_line ? 0
@@ -306,9 +308,11 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		}
 
 		/* Where chars change, force sprite update */
-		for (i = 0; i < 768; i++)
-			if (vdpChanges.screen[i] != 0)
+		for (i = 0; i < 768; i++) {
+			if (vdpChanges.screen[i] != 0) {
 				vdpChanges.sprite |= sprbitmap[i];
+			}
+		}
 
 		/*
 		 * Now, set all the sprites below/above a changed one
@@ -549,6 +553,8 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		shift = ((color & 0x80) != 0 ? -32 : 0);
 		int block = vdpCanvas.getBitmapOffset(x + shift, y);
 		for (yy = 0; yy < 8; yy++) {
+			if (y >= vdpCanvas.getHeight())
+				continue;
 			if ((sprlines[y & 255] & (1 << num)) != 0) {
 				byte patt = pattern.memory[pattern.offset + yy];
 				mask = 0x80;
@@ -575,6 +581,8 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		shift = ((color & 0x80) != 0 ? -32 : 0);
 		int block = vdpCanvas.getBitmapOffset(x + shift, y);
 		for (yy = 0; yy < 16; yy++) {
+			if (y >= vdpCanvas.getHeight())
+				continue;
 			if ((sprlines[y & 255] & (1 << num)) != 0) {
 				byte patt = pattern.memory[pattern.offset + yy / 2];
 				mask = 0x80;

@@ -158,7 +158,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     }
 
     /** Send VDP register update */
-    public void writeVdpReg(byte reg, byte val, byte old) {
+    public void writeVdpReg(byte reg, byte val) {
         try {
             //flushVdp();
             byte[] values = { DEMO_TYPE_VIDEO, 0x02, 0x00, val,

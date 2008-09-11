@@ -15,13 +15,13 @@ package v9t9.emulator.handlers;
 public interface VdpHandler {
     /** Write a VDP register. 
     */
-    public abstract void writeVdpReg(byte reg, byte val, byte old);
+    public abstract void writeVdpReg(byte reg, byte val);
     
     /** Read VDP status.
      */
     public abstract byte readVdpStatus();
 
-    /** Write byte to VDP memory.
+    /** Write byte to VDP memory.  Issued only when a change is detected.
      */
     public abstract void writeVdpMemory(short vdpaddr, byte val);
 }

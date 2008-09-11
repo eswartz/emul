@@ -11,8 +11,10 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
+import org.eclipse.swt.graphics.Pattern;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.graphics.Region;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -57,7 +59,7 @@ public class SwtVideoRender implements VideoRenderer {
 			public void paintControl(PaintEvent e) {
 				updateRect = updateRect.union(new Rectangle(e.x, e.y, e.width, e.height));
 				if (e.count == 0) {
-					repaint(e.gc);
+					repaint(e.gc, updateRect);
 					updateRect = new Rectangle(0, 0, 0, 0);
 				}
 			}
@@ -125,6 +127,8 @@ public class SwtVideoRender implements VideoRenderer {
 	}
 
 	public void updateList(RedrawBlock[] blocks, int count) {
+		final Region region = new Region(shell.getDisplay());
+		int nblocks = 0;
 		for (int idx = 0; idx < count; idx++) {
 			final RedrawBlock block = blocks[idx];
 			
@@ -145,29 +149,27 @@ public class SwtVideoRender implements VideoRenderer {
 				}
 
 			}
-			/*
-			// queue redraw
-			Display.getDefault().syncExec(new Runnable() {
-
-				public void run() {
-					canvas.redraw(block.r, block.c, block.w, block.h, true);
-				}
-				
-			});
-			*/
+			region.add(new Rectangle(block.c, block.r, block.w, block.h));
+			nblocks++;
 		}
+		
 		// queue redraw
-		Display.getDefault().syncExec(new Runnable() {
+		final Rectangle redrawRect = region.getBounds();
+		region.dispose();
+		
+		//if (nblocks > 0) 
+		//	System.out.println("Redrew " + nblocks + " blocks to " + redrawRect);
+		
+		Display.getDefault().asyncExec(new Runnable() {
 
 			public void run() {
-				canvas.redraw();
+				canvas.redraw(redrawRect.x, redrawRect.y, redrawRect.width, redrawRect.height, true);
 			}
 			
 		});
-
 	}
 
-	protected void repaint(GC gc) {
+	protected void repaint(GC gc, Rectangle updateRect) {
 		if (!isBlank && imageData != null) {
 			if (image != null && !image.isDisposed()) {
 				image.dispose();
@@ -177,8 +179,6 @@ public class SwtVideoRender implements VideoRenderer {
 			// TODO: zoom
 			int zoom = 1;
 			Rectangle destRect = updateRect;
-			destRect = new Rectangle(0, 0, 256, 192);
-		
 			
 			destRect = destRect.intersection(new Rectangle(0, 0, imageData.width * zoom, imageData.height * zoom));
 			Rectangle imageRect = new Rectangle(destRect.x / zoom, destRect.y / zoom, 
@@ -189,6 +189,7 @@ public class SwtVideoRender implements VideoRenderer {
 			gc.setBackground(bg);
 			gc.fillRectangle(updateRect);
 		}
+		
 	}
 
 

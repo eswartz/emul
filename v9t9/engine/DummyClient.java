@@ -13,7 +13,7 @@ public class DummyClient implements Client {
     public DummyClient() {
         video = new v9t9.emulator.handlers.VdpHandler() {
 
-            public void writeVdpReg(byte reg, byte val, byte old) {
+            public void writeVdpReg(byte reg, byte val) {
             }
 
             public byte readVdpStatus() {

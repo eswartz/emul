@@ -186,14 +186,14 @@ public class HybridDemoClient implements Client, VdpHandler, SoundHandler, CruHa
    }
 
     /** Send VDP register update */
-    public void writeVdpReg(byte reg, byte val, byte old) {
+    public void writeVdpReg(byte reg, byte val) {
         try {
             //flushVdp();
             byte[] values = { DEMO_TYPE_VIDEO, 0x02, 0x00, val,
                     (byte) (0x80 | reg) };
             connection.write(values);
             
-            builtinVideo.writeVdpReg(reg, val, old);
+            builtinVideo.writeVdpReg(reg, val);
             //in.read(values, 0, 1);
         } catch (IOException e) {
             e.printStackTrace();

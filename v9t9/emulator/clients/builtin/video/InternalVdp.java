@@ -85,7 +85,7 @@ public class InternalVdp implements VdpHandler {
     /* (non-Javadoc)
      * @see v9t9.handlers.VdpHandler#writeVdpReg(byte, byte, byte)
      */
-    public void writeVdpReg(byte reg, byte val, byte old) {
+    public void writeVdpReg(byte reg, byte val) {
     {
     	int         redraw = 0;
 
@@ -244,6 +244,7 @@ public class InternalVdp implements VdpHandler {
 		if ((vdpregs[1] & R1_NOBLANK) == 0) {
 			vdpModeRedrawHandler = new BlankModeRedrawHandler(
 					vdpregs, vdpMemory, vdpChanges, vdpCanvas);
+			spriteRedrawHandler = null;
 			return;
 		}
 
@@ -299,6 +300,8 @@ public class InternalVdp implements VdpHandler {
     	if (spriteRedrawHandler != null) {
     		vdpchanged |= spriteRedrawHandler.touch(vdpaddr);
     	}
+    	
+    	//update();
     }
 
     final static int SPRBIT(int x) { return (1<<(x)); }
@@ -396,7 +399,7 @@ public class InternalVdp implements VdpHandler {
 
 		vdp_dirty_all();
 		for (i = 0; i < 8; i++) {
-			writeVdpReg((byte) i, vdpregs[i], vdpregs[i]);
+			writeVdpReg((byte) i, vdpregs[i]);
 		}
 		update();
 	}
@@ -435,6 +438,7 @@ public class InternalVdp implements VdpHandler {
 			vdpChanges.sprite = 0;
 		}
 		
+		vdpchanged = false;
 		
 	}
 
