@@ -1,8 +1,20 @@
 package tests.dynamic_classgen_with_bcel;
 
-import org.apache.bcel.classfile.*;
-import org.apache.bcel.generic.*;
 import org.apache.bcel.Constants;
+import org.apache.bcel.classfile.Method;
+import org.apache.bcel.classfile.Utility;
+import org.apache.bcel.generic.CHECKCAST;
+import org.apache.bcel.generic.ClassGen;
+import org.apache.bcel.generic.ConstantPoolGen;
+import org.apache.bcel.generic.FieldGen;
+import org.apache.bcel.generic.GETFIELD;
+import org.apache.bcel.generic.InstructionConstants;
+import org.apache.bcel.generic.InstructionFactory;
+import org.apache.bcel.generic.InstructionList;
+import org.apache.bcel.generic.MethodGen;
+import org.apache.bcel.generic.ObjectType;
+import org.apache.bcel.generic.PUTFIELD;
+import org.apache.bcel.generic.Type;
 
 public class BCELCalls extends TimeCalls
 {
@@ -25,7 +37,8 @@ public class BCELCalls extends TimeCalls
      * @return instance of class implementing the object interface
      */
      
-    protected byte[] createAccess(Class tclas,
+    @Override
+	protected byte[] createAccess(Class tclas,
         java.lang.reflect.Method gmeth, java.lang.reflect.Method smeth,
         String cname) {
         

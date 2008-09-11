@@ -1,0 +1,4 @@
+Does your JAVA_HOME point to Java 1.5.0 or higher ?
+
+Does your path contain ant v1.6.1 or higher?
+

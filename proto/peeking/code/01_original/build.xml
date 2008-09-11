@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<project name="statusbar" default="all" basedir=".">
+  <target name="all" depends="clean,compile,run"/>
+
+  <target name="clean">
+    <delete dir="build"/>
+  </target>
+
+  <target name="compile">
+    <mkdir dir="classes"/>
+    <javac srcdir="src" destdir="classes" source="1.5"/>
+  </target>
+
+  <target name="run">
+    <java fork="yes" classname="boxpeeking.yourcode.ui.Main">
+      <classpath>
+        <pathelement location="classes"/>
+      </classpath>
+    </java>
+  </target>
+</project>

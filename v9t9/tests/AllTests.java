@@ -14,20 +14,24 @@ import junit.framework.TestSuite;
  */
 public class AllTests {
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AllTests.suite());
-    }
+	public static void main(String[] args) {
+		junit.textui.TestRunner.run(AllTests.suite());
+	}
 
-    public static Test suite() {
-        TestSuite suite = new TestSuite("Test for v9t9");
-        //$JUnit-BEGIN$
-        suite.addTestSuite(DiskMemoryEntryTest.class);
-        suite.addTestSuite(InstructionTest.class);
-        suite.addTestSuite(SettingTest.class);
-        suite.addTestSuite(MemoryTest.class);
-        suite.addTestSuite(StatusTest.class);
-        suite.addTestSuite(MemoryEntryTest.class);
-        //$JUnit-END$
-        return suite;
-    }
+	public static Test suite() {
+		TestSuite suite = new TestSuite("Test for v9t9");
+		//$JUnit-BEGIN$
+		suite.addTestSuite(StatusTest.class);
+		suite.addTestSuite(InstructionTest.class);
+		suite.addTestSuite(TestTopDown1.class);
+		suite.addTestSuite(TestBlocks.class);
+		suite.addTestSuite(MemoryTest.class);
+		suite.addTestSuite(MemoryEntryTest.class);
+		suite.addTestSuite(SettingTest.class);
+		suite.addTestSuite(DiskMemoryEntryTest.class);
+		suite.addTestSuite(MachineOperandParserTest.class);
+		suite.addTestSuite(TestMemoryRanges.class);
+		//$JUnit-END$
+		return suite;
+	}
 }

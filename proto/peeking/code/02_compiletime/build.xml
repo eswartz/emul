@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+
+<project name="statusbar" default="all" basedir=".">
+  <path id="class.path">
+    <pathelement location="../../lib/bcel.jar"/>
+    <pathelement location="build/classes"/>
+  </path>
+
+  <target name="all" depends="clean,compile,instrument,run"/>
+
+  <target name="clean">
+    <delete dir="build"/>
+  </target>
+
+  <target name="compile">
+    <mkdir dir="build"/>
+    <mkdir dir="build/classes"/>
+
+    <javac srcdir="src" destdir="build/classes" source="1.5">
+      <classpath refid="class.path"/>
+    </javac>
+  </target>
+
+  <target name="instrument">
+    <taskdef name="instrument"
+             classname="boxpeeking.instrument.ant.InstrumentTask"
+             classpathref="class.path"
+    />
+
+    <instrument class="boxpeeking.status.instrument.StatusInstrumentor">
+      <fileset dir=".">
+        <include name="**/yourcode/*.class"/>
+      </fileset>
+    </instrument>
+  </target>
+
+  <target name="run">
+    <java fork="yes" classname="boxpeeking.yourcode.ui.Main">
+      <classpath refid="class.path"/>
+    </java>
+  </target>
+</project>

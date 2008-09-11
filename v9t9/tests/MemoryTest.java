@@ -8,10 +8,10 @@ package v9t9.tests;
 
 import java.util.Random;
 
-import v9t9.Machine;
-import v9t9.Memory;
-
 import junit.framework.TestCase;
+import v9t9.emulator.hardware.TI994A;
+import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.StandardConsoleMemoryModel;
 
 /**
  * @author ejs
@@ -22,9 +22,9 @@ public class MemoryTest extends TestCase {
         junit.textui.TestRunner.run(MemoryTest.class);
     }
 
-    private Machine machine;
-    private Memory memory;
-    
+    private TI994A machine;
+    private MemoryDomain CPU;
+
     /**
      * Constructor for MemoryTest.
      * 
@@ -39,100 +39,106 @@ public class MemoryTest extends TestCase {
      * 
      * @see junit.framework.TestCase#setUp()
      */
-    protected void setUp() throws Exception {
+    @Override
+	protected void setUp() throws Exception {
         super.setUp();
-        machine = new Machine();
-        memory = machine.getMemory();
+        machine = new TI994A();
+        CPU = machine.CPU;
     }
 
     public void testReads() {
 
         int i;
         for (i = 0; i < 65536; i++) {
-            memory.CPU.flatReadByte(i);
+            CPU.flatReadByte(i);
         }
         for (i = 0x8400; i < 0xa000; i++) {
-            memory.CPU.readByte(i);
+            CPU.readByte(i);
         }
         for (i = 0x8400; i < 0xa000; i++) {
-            memory.CPU.writeByte(i, (byte) 0);
+            CPU.writeByte(i, (byte) 0);
         }
 
-        machine.getSettings().setBool(Memory.sExpRam, true);
-        machine.getSettings().setBool(Memory.sEnhRam, true);
+        machine.getSettings().setBool(StandardConsoleMemoryModel.sExpRam, true);
+        machine.getSettings().setBool(StandardConsoleMemoryModel.sEnhRam, true);
 
         int firstRAM = 0;
         Random rand = new Random();
         rand.setSeed(0);
         for (i = 0; i < 65536; i++) {
-            if (memory.CPU.hasRamAccess(i)) {
-                if (firstRAM == 0)
-                    firstRAM = i;
+            if (CPU.hasRamAccess(i)) {
+                if (firstRAM == 0) {
+					firstRAM = i;
+				}
                 byte byt = (byte) rand.nextInt();
                 //System.out.println("setting " + i + " to " + byt);
-                memory.CPU.writeByte(i, byt);
+                CPU.writeByte(i, byt);
 
             }
         }
         rand.setSeed(0);
         for (i = 0; i < 65536; i++) {
-            if (memory.CPU.hasRamAccess(i)) {
+            if (CPU.hasRamAccess(i)) {
                 byte byt = (byte) rand.nextInt();
-                byte red = memory.CPU.readByte(i);
+                byte red = CPU.readByte(i);
 
-                if (byt != red)
-                    fail("memory reread failed at " + Integer.toHexString(i)
+                if (byt != red) {
+					fail("memory reread failed at " + Integer.toHexString(i)
                             + " byt=" + byt + ", red=" + red);
+				}
             }
         }
 
         /* verify byte ordering */
-        memory.CPU.writeWord(firstRAM, (short) 0x1234);
-        assertEquals(memory.CPU.readByte(firstRAM), 0x12);
-        assertEquals(memory.CPU.readByte(firstRAM + 1), 0x34);
-        assertEquals(memory.CPU.readWord(firstRAM), 0x1234);
+        CPU.writeWord(firstRAM, (short) 0x1234);
+        assertEquals(CPU.readByte(firstRAM), 0x12);
+        assertEquals(CPU.readByte(firstRAM + 1), 0x34);
+        assertEquals(CPU.readWord(firstRAM), 0x1234);
         /* and off address munging */
-        assertEquals(memory.CPU.readWord(firstRAM + 1), 0x1234);
+        assertEquals(CPU.readWord(firstRAM + 1), 0x1234);
 
         /* turn off expansion RAM, shouldn't get anything from it... */
-        machine.getSettings().setBool(Memory.sExpRam, false);
+        machine.getSettings().setBool(StandardConsoleMemoryModel.sExpRam, false);
         for (i = 0x2000; i < 0x4000; i++) {
-            byte red = memory.CPU.readByte(i);
-            if (red != 0)
-                fail("memory read failed at " + Integer.toHexString(i));
+            byte red = CPU.readByte(i);
+            if (red != 0) {
+				fail("memory read failed at " + Integer.toHexString(i));
+			}
         }
         for (i = 0xA000; i < 0x10000; i++) {
-            byte red = memory.CPU.readByte(i);
-            if (red != 0)
-                fail("memory read failed at " + Integer.toHexString(i));
+            byte red = CPU.readByte(i);
+            if (red != 0) {
+				fail("memory read failed at " + Integer.toHexString(i));
+			}
         }
 
         /* without enhanced ram, 0x8000 mirrors 0x8100 through 0x8300 */
-        machine.getSettings().setBool(Memory.sEnhRam, false);
+        machine.getSettings().setBool(StandardConsoleMemoryModel.sEnhRam, false);
         rand.setSeed(0);
         for (i = 0x8000; i < 0x8400; i++) {
             byte byt = (byte) rand.nextInt();
             //System.out.println("setting " + i + " to " + byt);
-            memory.CPU.writeByte(i, byt);
+            CPU.writeByte(i, byt);
         }
 
         for (i = 0x8000; i < 0x8100; i++) {
-            byte byt0 = memory.CPU.readByte(i);
-            byte byt1 = memory.CPU.readByte(i + 0x100);
-            byte byt2 = memory.CPU.readByte(i + 0x200);
-            byte byt3 = memory.CPU.readByte(i + 0x300);
-            if (byt0 != byt1 || byt1 != byt2 || byt2 != byt3)
-                fail("memory reread failed at " + Integer.toHexString(i));
+            byte byt0 = CPU.readByte(i);
+            byte byt1 = CPU.readByte(i + 0x100);
+            byte byt2 = CPU.readByte(i + 0x200);
+            byte byt3 = CPU.readByte(i + 0x300);
+            if (byt0 != byt1 || byt1 != byt2 || byt2 != byt3) {
+				fail("memory reread failed at " + Integer.toHexString(i));
+			}
         }
 
         for (i = 0; i < 65536; i++) {
-            memory.GRAPHICS.readByte(i);
+            machine.getMemoryModel().GRAPHICS.readByte(i);
         }
         for (i = 0; i < 65536; i++) {
-            memory.VIDEO.readByte(i);
+            machine.getMemoryModel().VIDEO.readByte(i);
         }
         for (i = 0; i < 65536; i++) {
-            memory.SPEECH.readByte(i);
+            machine.getMemoryModel().SPEECH.readByte(i);
         }
     }
 }

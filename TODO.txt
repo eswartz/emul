@@ -1,0 +1,68 @@
+
+//-- oops, our optimizations sometimes cross basic blocks -- ensure this doesn't
+//happen (ABS *R10+ as seen when compiling every possible word, in an attempt
+//to make TI LOGO work better)
+
+//-- figure out how to avoid deadlock in TI LOGO
+//-- >> it's the lack of a catcher in compiled code.  whussup?
+
+-- why is Parsec locking up?  Just speech?  No, it seems RTWP is screwing
+up somewhere.  There seems to be a BLWP, RTWP, and other RTWP from >83C0 for some unkown reason
+
+73AC: B *R7 ==> op1=73BC(@73BC)  || st=C002 wp=833C
+*73BC: BLWP @>7020 ==> op1=7020(@7020)  || st=C002 wp=831C
+7028: LIMI >0 ==> op1=0(@0)  || st=C000 wp=831C
+*702C: LI R0,>1B00 ==> op2=1B00(@0000) || op1=1B00(@831C) st=C000 wp=831C
+*731E: LIMI >0 ==> op1=0000(@831E)  || st=C000 wp=831C
+*7332: LIMI >2 ==> op1=0002(@8800)  || *** Aborted
+0900: LIMI >0 ==> op1=0(@0)  || st=2000 wp=83C0
+0904: LWPI >83E0 ==> op1=83E0(@0)  || st=2000 wp=83E0
+*0A8A: LWPI >83C0 ==> op1=83C0(@8802)  || st=3800 wp=83C0
+*0A8E: INCT R11,2 ==> op1=0002(@83D6) op2=0002(@837B) || op1=0004(@83D6) st=C000 wp=83C0
+*0A90: JNE $+>18 ==> op1=0AA8(@0AA8)  || st=C000 wp=83C0
+*0AA8: LWPI >83E0 ==> op1=83E0(@0AA8)  || st=C000 wp=83E0
+*0AAC: AB R14,@>8379 ==> op1=0001(@83FC) op2=FF8C(@8379) || op2=FF8D(@8379) st=8000 wp=83E0
+*0AB0: MOV @>83C4,R12 ==> op1=7E84(@83C4)  || op2=7E84(@83F8) st=C000 wp=83E0
+*0AB4: JEQ $+>4 ==> op1=0AB8(@0AB8)  || st=C000 wp=83E0
+*0AB6: BL *R12 ==> op1=7E84(@7E84)  || st=C000 wp=83E0
+7E84: LI R10,>8C02 ==> op2=8C02(@0) || op1=8C02(@83F4) st=8000 wp=83E0
+*7E88: MOVB @>837A,R12 ==> op1=0002(@837A)  || op2=0002(@83F8) st=C400 wp=83E0
+*7F14: MOV @>8398,R8 ==> op1=A002(@8398)  || op2=A002(@83F0) st=9000 wp=83E0
+*7F78: BL @>83E0 ==> op1=83E0(@83E0)  || st=9000 wp=83E0
+83E0: MOVB @>9000,R10 ==> op1=0(@9000)  || op2=0(@83F4) st=3000 wp=83E0
+83E4: JMP $+>2 ==> op1=83E6(@83E6) op2=0(@0) || st=3000 wp=83E0
+83E6: JMP $+>2 ==> op1=83E8(@83E8) op2=0(@0) || st=3000 wp=83E0
+83E8: JMP $+>2 ==> op1=83EA(@83EA) op2=0(@0) || st=3000 wp=83E0
+83EA: B *R11 ==> op1=7F7C(@7F7C)  || st=3000 wp=83E0
+*7F7C: SLA R10,2 ==> op1=00EC(@83F4) op2=0002(@0000) || op1=03B0(@83F4) st=C000
+*7FA4: BL @>64E8 ==> op1=64E8(@64E8)  || st=8000 wp=83E0
+64E8: LIMI >0 ==> op1=0(@0)  || st=8000 wp=83E0
+*64EC: MOVB R10,@>9C02 ==> op1=FF93(@83F4)  || op2=FF93(@9C02) st=8000 wp=83E0
+*64F0: SWPB R10 ==> op1=93B0(@83F4)  || op1=B093(@83F4) st=8000 wp=83E0
+*64F2: MOVB R10,@>9C02 ==> op1=FFB0(@83F4)  || op2=FFB0(@9C02) st=8400 wp=83E0
+*64F6: B *R11 ==> op1=7FA8(@7FA8)  || st=8400 wp=83E0
+7FA8: MOV R8,@>8398 ==> op1=A002(@83F0)  || op2=A002(@8398) st=8400 wp=83E0
+*7FAC: LWPI >83C0 ==> op1=83C0(@0000)  || st=8400 wp=83C0
+*7FB0: RTWP ==>  || st=2002 wp=831C
+7336: B *R11 ==> op1=7064(@7064)  || st=2002 wp=831C
+*7134: BL @>7338 ==> op1=7338(@7338)  || st=8002 wp=831C
+7338: LIMI >0 ==> op1=0(@0)  || st=8000 wp=831C
+*733C: ORI R0,>4000 ==> op1=0F59(@831C) op2=4000(@0000) || op1=4F59(@831C) st=8000 wp=831C
+*7340: MOVB @>831D,@>8C02 ==> op1=0059(@831D)  || op2=0059(@8C02) st=8000 wp=831C
+*7346: MOVB R0,@>8C02 ==> op1=004F(@831C)  || op2=004F(@8C02) st=C400 wp=831C
+*734A: MOV R0,R0 ==> op1=4F59(@831C)  || op2=4F59(@831C) st=C400 wp=831C
+*734C: MOVB R1,@>8C00 ==> op1=FFFF(@831E)  || op2=FFFF(@8C00) st=8000 wp=831C
+*7350: LIMI >2 ==> op1=0002(@831E)  || st=8002 wp=831C
+*7354: B *R11 ==> op1=7138(@7138)  || st=8002 wp=831C
+7138: SZC @>606A,R0 ==> op1=4000(@606A) op2=4F59(@831C) || op2=F59(@831C) st=C002 wp=831C
+*7144: MOVB @>6007,@>839F ==> op1=0001(@7134)  || op2=0001(@839F) st=C002 wp=831C
+*714A: MOVB @>838E,R0 ==> op1=0000(@838E)  || op2=0000(@831C) st=2002 wp=831C
+*714E: JEQ $+>2C ==> op1=717A(@717A)  || st=2002 wp=831C
+*717A: LIMI >2 ==> op1=0002(@717A)  || st=2002 wp=831C
+*717E: RTWP ==>  || st=200C wp=DCBC
+EFBC: DATA >0 ==> op1=0(@0)  || st=200C wp=DCBC
+EFBE: DATA >0 ==> op1=0(@0)  || st=200C wp=DCBC
+EFC0: DATA >0 ==> op1=0(@0)  || st=200C wp=DCBC
+EFC2: DATA >0 ==> op1=0(@0)  || st=200C wp=DCBC
+
+

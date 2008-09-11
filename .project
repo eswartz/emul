@@ -10,15 +10,26 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.pde.ManifestBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.pde.SchemaBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.eclipse.pde.PluginNature</nature>
 	</natures>
 	<linkedResources>
 		<link>
 			<name>old_v9t9</name>
 			<type>2</type>
-			<location>V9t9_C_Root/source</location>
+			<locationURI>V9t9_C_Root/source</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

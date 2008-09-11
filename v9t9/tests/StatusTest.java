@@ -6,8 +6,8 @@
  */
 package v9t9.tests;
 
-import v9t9.cpu.Status;
 import junit.framework.TestCase;
+import v9t9.engine.cpu.Status;
 
 /**
  * @author ejs

@@ -1,0 +1,187 @@
+/*
+ * (c) Ed Swartz, 2005
+ * 
+ * Created on Dec 17, 2004
+ *
+ */
+package v9t9.emulator.runtime;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
+
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.settings.ISettingListener;
+import v9t9.engine.settings.Setting;
+
+
+/**
+ * Handle executing instructions, either in interpret mode or compile mode.
+ * 
+ * @author ejs
+ */
+public class Executor {
+
+    public Cpu cpu;
+
+    public Map<MemoryEntry, HighLevelCodeInfo> highLevelCodeInfoMap;
+    public Interpreter interp;
+    ICompilerStrategy compilerStrategy;
+    
+
+
+    public long nInstructions;
+    public long nCompiledInstructions;
+    public long nSwitches;
+    public long nCompiles;
+
+    private PrintWriter dump, dumpfull;
+
+
+    static public final String sCompile = "Compile";
+    static public final Setting settingCompile = new Setting(sCompile, new Boolean(false));
+    static public final String sDumpInstructions = "DumpInstructions";
+    static public final Setting settingDumpInstructions = new Setting(sDumpInstructions, new Boolean(false));
+    static public final String sDumpFullInstructions = "DumpFullInstructions";
+    static public final Setting settingDumpFullInstructions = new Setting(sDumpFullInstructions, new Boolean(false));
+    
+    public Executor(Cpu cpu) {
+        this.cpu = cpu;
+        this.interp = new Interpreter(cpu.getMachine());
+        this.compilerStrategy = new CodeBlockCompilerStrategy(this);
+        this.highLevelCodeInfoMap = new HashMap<MemoryEntry, HighLevelCodeInfo>();
+        
+        cpu.getMachine().getSettings().register(settingDumpInstructions);
+        cpu.getMachine().getSettings().register(settingDumpFullInstructions);
+        settingDumpInstructions.addListener(new ISettingListener() {
+
+            public void changed(Setting setting, Object oldValue) {
+                if (setting.getBoolean() && dump == null) {
+                    File file = new File("/tmp/instrs.txt");
+                    try {
+                        dump = new PrintWriter(new FileOutputStream(file));
+                    } catch (FileNotFoundException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }});
+        settingDumpFullInstructions.addListener(new ISettingListener() {
+
+            public void changed(Setting setting, Object oldValue) {
+                if (setting.getBoolean() && dumpfull == null) {
+                    File file = new File("/tmp/instrs_full.txt");
+                    try {
+                        dumpfull = new PrintWriter(new FileOutputStream(file));
+                    } catch (FileNotFoundException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }});
+    }
+
+    public void interpretOneInstruction() {
+        interp.execute(cpu, cpu.console.readWord(cpu.getPC()));
+        nInstructions++;
+    }
+
+    /** 
+     * Run an unbounded amount of code.  Some external factor
+     * tells the execution unit when to stop.  The interpret/compile
+     * setting is sticky until execution is interrupted.
+     * @throws AbortedException when interrupt or other machine event stops execution
+     */
+    public void execute() throws AbortedException {
+    	boolean compiling = settingCompile.getBoolean();
+		try {
+			compiling = executeSomeCode(compiling);
+		} catch (TerminatedException e) {
+			throw e;
+		} catch (AbortedException e) {
+            if (getDumpfull() != null) {
+				getDumpfull().println("*** Aborted");
+			}
+            if (getDump() != null) {
+				getDump().println("*** Aborted");
+			}
+            cpu.handleInterrupts();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+    }
+
+	private boolean executeSomeCode(boolean compiling) throws AbortedException {
+		boolean interpreting = !compiling;
+		
+		if (!interpreting) {
+			
+		    /* try to make or run native code, which may fail */
+			short pc = cpu.getPC();
+			if ((pc >= 0x6000 && pc < 0x8000) 
+					&& Compiler.settingDumpModuleRomInstructions.getBoolean()) {
+		    	settingDumpInstructions.setBoolean(true);
+		        settingDumpFullInstructions.setBoolean(true);
+		    }
+
+			ICompiledCode code = compilerStrategy.getCompiledCode(cpu.getPC() & 0xffff, cpu.getWP());
+		    if (code == null || !code.run()) {
+		    	// Returns false if an instruction couldn't be executed
+		    	// because it did not look like real code (or was not expected to be directly invoked).
+		    	// Returns true if fell out of the code block.
+		    	//System.out.println("Switch  branching to >" + Utils.toHex4(cpu.getPC()));
+		    	interpreting = true;
+		    	nSwitches++;
+			}
+		    //System.out.println("out at " + v9t9.Globals.toHex4(cpu.getPC()));
+		}
+		if (interpreting) {
+			cpu.abortIfInterrupted();
+		    interpretOneInstruction();
+		    compiling = settingCompile.getBoolean();
+		}
+		return compiling;
+	}
+    
+    public PrintWriter getDump() {
+        return dump;
+    }
+
+    public PrintWriter getDumpfull() {
+        return dumpfull;
+    }
+ 
+    /** Currently, only gather high-level info for one memory entry at a time */
+    public HighLevelCodeInfo getHighLevelCode(MemoryEntry entry) {
+    	HighLevelCodeInfo highLevel = highLevelCodeInfoMap.get(entry);
+    	if (highLevel == null) {
+    		System.out.println("Initializing high level info for " + entry);
+    		highLevel = new HighLevelCodeInfo(cpu.console);
+    		highLevel.disassemble(entry.addr, entry.size);
+    		highLevelCodeInfoMap.put(entry, highLevel);
+    	}
+    	return highLevel;
+    }
+
+	public void dumpStats() {
+        int compileAvg = 0;
+        if (nInstructions == 0) {
+        	return;
+        }
+        
+        double compiled = (double)nCompiledInstructions / (double)nInstructions;
+        compileAvg = ((int) (compiled * 10000));
+        
+        System.out.println("# instructions / second: " + nInstructions 
+        		+ " (" + compileAvg / 100 + "." + compileAvg % 100 + "% compiled, " 
+        		+ nSwitches + " context switches, " + nCompiles + " compiles)");
+        nInstructions = 0;
+        nCompiledInstructions = 0;
+        nSwitches = 0;
+        nCompiles = 0;
+	}
+
+}

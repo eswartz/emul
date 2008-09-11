@@ -6,18 +6,18 @@
  */
 package v9t9.tests;
 
-import v9t9.DiskMemoryEntry;
-import v9t9.Machine;
-import v9t9.Memory;
 import junit.framework.TestCase;
+import v9t9.emulator.hardware.TI994A;
+import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.memory.MemoryDomain;
 
 /**
  * @author ejs
  */
 public class DiskMemoryEntryTest extends TestCase {
-    private Machine machine;
-    private Memory memory;
-
+    private TI994A machine;
+    private MemoryDomain CPU;
+    
     String basedir = "/usr/local/src/v9t9-data/roms/";
 
     public static void main(String[] args) {
@@ -26,40 +26,35 @@ public class DiskMemoryEntryTest extends TestCase {
 	 /* (non-Javadoc)
 	 * @see junit.framework.TestCase#setUp()
 	 */
+	@Override
 	protected void setUp() throws Exception {
 	    // TODO Auto-generated method stub
 	    super.setUp();
-	    machine = new Machine();
-	    memory = machine.getMemory();
-	    memory.CPU.zero();
+	    machine = new TI994A();
+        CPU = machine.CPU;
+	    CPU.zero();
 	}
  
 
     public void testNewFromFile() {
-        DiskMemoryEntry ent = DiskMemoryEntry.newFromFile(0x000, 0x2000, "rom", memory.CPU,
-                basedir+"994arom.bin", 0, false, false);
+        DiskMemoryEntry ent = DiskMemoryEntry.newWordMemoryFromFile(0x000, 0x2000, "rom", CPU,
+                basedir+"994arom.bin", 0, false);
         assertTrue(ent != null);
         assertEquals(ent.size, 8192);
         assertEquals(ent.fileoffs, 0);
         assertEquals(ent.filesize, 8192);
         assertEquals(ent.bLoaded, false);
-        assertEquals(ent.bRam, false);
         assertEquals(ent.bStorable, false);
         
         ent.map();
         
         assertEquals(ent.bLoaded, true);
-        assertEquals(Integer.toHexString(memory.CPU.readWord(0)), Integer.toHexString((short)0x83e0));
+        assertEquals(Integer.toHexString(CPU.readWord(0)), Integer.toHexString((short)0x83e0));
         
         ent.unmap();
         assertEquals(ent.bLoaded, false);
-        assertEquals(memory.CPU.readWord(0), (short)0);
+        assertEquals(CPU.readWord(0), (short)0);
     }
 
-    public void testUpdateMemoryArea() {
-    }
-
-    public void testDiskMemoryEntry() {
-    }
 
 }

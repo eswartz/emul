@@ -6,9 +6,9 @@
  */
 package v9t9.tests;
 
-import v9t9.SettingsCollection;
-import v9t9.Setting;
 import junit.framework.TestCase;
+import v9t9.engine.settings.Setting;
+import v9t9.engine.settings.SettingsCollection;
 
 /**
  * @author ejs
@@ -24,11 +24,12 @@ public class SettingTest extends TestCase {
     /*
      * @see TestCase#setUp()
      */
-    protected void setUp() throws Exception {
+    @Override
+	protected void setUp() throws Exception {
         super.setUp();
         settings = new SettingsCollection();
-        settings.register("var1", new Setting(new Integer(0)));
-        settings.register("var2", new Setting(new String()));
+        settings.register(new Setting("var1", new Integer(0)));
+        settings.register(new Setting("var2", new String()));
     }
 
     public void testOne() {
