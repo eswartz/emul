@@ -167,7 +167,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 			} else
 			/* Check for pattern changes */
 			if (i < newdelptr) { /* definitely not deleted */
-				if (vdpChanges.sprpat[sp.ch & 0xff] != 0) {
+				if (vdpChanges.sprpat[sp.ch] != 0) {
 					// logger(_L | L_1, _("Sprite %d changed pattern\n"), i);
 					vdpChanges.sprite |= SPRBIT(i);
 				}
@@ -210,9 +210,10 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		}
 
 		/* 2) Where WERE they? */
-		if ((vdpChanges.sprite | newdelbitmap) != 0) {
+		int changeBitmap = vdpChanges.sprite | newdelbitmap;
+		if (changeBitmap != 0) {
 			for (i = 0; i < 768; i++) {
-				if ((sprbitmap[i] & (vdpChanges.sprite | newdelbitmap)) != 0) /*
+				if ((sprbitmap[i] & changeBitmap) != 0) /*
 																			 * old
 																			 * bitmap
 																			 */
@@ -232,10 +233,9 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 
 		five_sprites = -1;
 
-		byte val = vdpregs[1];
-		int sprwidth = (val & (InternalVdp.R1_SPRMAG + InternalVdp.R1_SPR4)) == (InternalVdp.R1_SPRMAG | InternalVdp.R1_SPR4) ? 32
-				: (val & (InternalVdp.R1_SPRMAG + InternalVdp.R1_SPR4)) != 0 ? 16
-						: 8;
+		int val = vdpregs[1] & (InternalVdp.R1_SPRMAG + InternalVdp.R1_SPR4);
+		int sprwidth = val == (InternalVdp.R1_SPRMAG | InternalVdp.R1_SPR4) ? 32
+				: val != 0 ? 16 : 8;
 
 		for (i = 0; i < 32; i++) {
 			Sprite sp = newsprites[i];
@@ -270,7 +270,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 
 			while (dy > 0) {
 
-				px = sp.getX();
+				px = sp.getX() & 0xff;
 				bx = (px >> 3);
 				dx = (px & 7) + sprwidth;
 
@@ -354,25 +354,22 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 			}
 		}
 
-		/* Don'tdraw deleted sprites */
+		/* Don't draw deleted sprites */
 		vdpChanges.sprite &= ~newdelbitmap;
 
 		/* Now, figure which sprites should be drawn */
 		toredraw = 0;
-		for (i = 0; i < 32; i++) {
-			Sprite sp = newsprites[i];
-			if (((vdpChanges.sprite | nearchanges) & SPRBIT(i)) != 0) {
-				/* CHECK BLANK SPRITE PATTERNS */
-
-				if (i < newdelptr && (sp.color & 15) != 0) {
+		changeBitmap = (vdpChanges.sprite | nearchanges);
+		if (changeBitmap != 0) {
+			for (i = 0; i < newdelptr; i++) {
+				Sprite sp = newsprites[i];
+				if ((sp.color & 15) != 0 && (changeBitmap & SPRBIT(i)) != 0) {
+					/* CHECK BLANK SPRITE PATTERNS */
 					toredraw |= SPRBIT(i);
-					// logger(_L | L_3,
-					// _("going to redraw sprite %d at %d,%d\n"), i, GETX(sp),
-					// GETY(sp));
 				}
 			}
 		}
-
+		
 		/*
 		 * Mark all the screen positions that need to be updated
 		 * 
@@ -384,14 +381,20 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 
 		// logger(_L | L_1, _("Toredraw: %08X  spritechanges: %08X\n"),
 		// toredraw, vdpChanges.sprite);
-		for (i = 0; i < 768; i++) {
-			if ((sprbitmap[i] & (vdpChanges.sprite | newdelbitmap)) != 0) {
-				// logger(_L|L_3,
-				// _("redrawing char %d due to moved/deleted sprite\n"), i);
-				vdpChanges.screen[i] = VdpChanges.SC_SPRITE_COVERING;
+		changeBitmap = vdpChanges.sprite | newdelbitmap;
+		//System.out.print("sprite changes: ");
+		if (changeBitmap != 0) {
+			for (i = 0; i < 768; i++) {
+				if ((sprbitmap[i] & changeBitmap) != 0) {
+					// logger(_L|L_3,
+					// _("redrawing char %d due to moved/deleted sprite\n"), i);
+					//System.out.print(i+",");
+					vdpChanges.screen[i] = VdpChanges.SC_SPRITE_COVERING;
+				}
 			}
 		}
-
+		//System.out.println();
+		
 		/*
 		 * if (log_level(LOG_VIDEO) > 3) { //logger(_L,
 		 * _("screenchanges:\n\t")); for (i = 0; i < 768; i++) { logger(_L,
@@ -449,9 +452,10 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 			y = sprite.getY();
 			int sprpat = SPRPAT_PTR(sprite.ch & 0xff);
 			byte color = (byte) (sprite.color & 0xf);
+			int shift = ((sprite.color & 0x80) != 0 ? -32 : 0);
 
-			drawUnmagnifiedSpriteChar(number, x, y, vdpMemory
-					.getByteReadMemoryAccess(sprpat), color);
+			drawUnmagnifiedSpriteChar(number, x, y, shift, 
+					vdpMemory.getByteReadMemoryAccess(sprpat), color);
 		}
 
 	};
@@ -465,13 +469,15 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 			y = sprite.getY();
 			int sprpat = SPRPAT_PTR(sprite.ch & 0xff);
 			byte color = (byte) (sprite.color & 0xf);
-			drawUnmagnifiedSpriteChar(number, x, y, vdpMemory
+			int shift = ((sprite.color & 0x80) != 0 ? -32 : 0);
+			
+			drawUnmagnifiedSpriteChar(number, x, y, shift, vdpMemory
 					.getByteReadMemoryAccess(sprpat), color);
-			drawUnmagnifiedSpriteChar(number, x, y + 8, vdpMemory
+			drawUnmagnifiedSpriteChar(number, x, y + 8, shift, vdpMemory
 					.getByteReadMemoryAccess(sprpat + 8), color);
-			drawUnmagnifiedSpriteChar(number, x + 8, y, vdpMemory
+			drawUnmagnifiedSpriteChar(number, x + 8, y, shift, vdpMemory
 					.getByteReadMemoryAccess(sprpat + 16), color);
-			drawUnmagnifiedSpriteChar(number, x + 8, y + 8, vdpMemory
+			drawUnmagnifiedSpriteChar(number, x + 8, y + 8, shift, vdpMemory
 					.getByteReadMemoryAccess(sprpat + 24), color);
 		}
 
@@ -486,7 +492,9 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 			y = sprite.getY();
 			int sprpat = SPRPAT_PTR(sprite.ch & 0xff);
 			byte color = (byte) (sprite.color & 0xf);
-			drawMagnifiedSpriteChar(number, x, y, vdpMemory
+			int shift = ((sprite.color & 0x80) != 0 ? -32 : 0);
+
+			drawMagnifiedSpriteChar(number, x, y, shift, vdpMemory
 					.getByteReadMemoryAccess(sprpat), color);
 		}
 
@@ -501,13 +509,14 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 			y = sprite.getY();
 			int sprpat = SPRPAT_PTR(sprite.ch & 0xff);
 			byte color = (byte) (sprite.color & 0xf);
-			drawMagnifiedSpriteChar(number, x, y, vdpMemory
+			int shift = ((sprite.color & 0x80) != 0 ? -32 : 0);
+			drawMagnifiedSpriteChar(number, x, y, shift, vdpMemory
 					.getByteReadMemoryAccess(sprpat), color);
-			drawMagnifiedSpriteChar(number, x, y + 16, vdpMemory
+			drawMagnifiedSpriteChar(number, x, y + 16, shift, vdpMemory
 					.getByteReadMemoryAccess(sprpat + 8), color);
-			drawMagnifiedSpriteChar(number, x + 16, y, vdpMemory
+			drawMagnifiedSpriteChar(number, x + 16, y, shift, vdpMemory
 					.getByteReadMemoryAccess(sprpat + 16), color);
-			drawMagnifiedSpriteChar(number, x + 16, y + 16, vdpMemory
+			drawMagnifiedSpriteChar(number, x + 16, y + 16, shift, vdpMemory
 					.getByteReadMemoryAccess(sprpat + 24), color);
 		}
 
@@ -544,27 +553,29 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		}
 	}
 
-	protected void drawUnmagnifiedSpriteChar(int num, int x, int y,
+	protected void drawUnmagnifiedSpriteChar(int num, int x, int y, int shift,
 			ByteMemoryAccess pattern, byte color) {
 		int mask;
 		int xx, yy;
-		int shift;
-
-		shift = ((color & 0x80) != 0 ? -32 : 0);
-		int block = vdpCanvas.getBitmapOffset(x + shift, y);
+		
+		int pixelStride = vdpCanvas.getPixelStride();
 		for (yy = 0; yy < 8; yy++) {
 			if (y >= vdpCanvas.getHeight())
 				continue;
+			int block = vdpCanvas.getBitmapOffset(x + shift, y);
 			if ((sprlines[y & 255] & (1 << num)) != 0) {
 				byte patt = pattern.memory[pattern.offset + yy];
-				mask = 0x80;
-				for (xx = 0; xx < 8; xx++) {
-					if ((patt & mask) != 0) {
-						if (x + xx < 256) {
-							vdpCanvas.setColorAtOffset(block + xx, color);
+				if (patt != 0) {
+					mask = 0x80;
+					for (xx = 0; xx < 8; xx++) {
+						if ((patt & mask) != 0) {
+							if (x + xx < 256) {
+								vdpCanvas.setColorAtOffset(block, color);
+							}
 						}
+						mask >>= 1;
+						block += pixelStride;
 					}
-					mask >>= 1;
 				}
 			}
 			y = (y + 1) & 0xff;
@@ -572,32 +583,33 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		}
 	}
 
-	protected void drawMagnifiedSpriteChar(int num, int x, int y,
+	protected void drawMagnifiedSpriteChar(int num, int x, int y, int shift,
 			ByteMemoryAccess pattern, byte color) {
 		int mask;
 		int xx, yy;
-		int shift;
-
-		shift = ((color & 0x80) != 0 ? -32 : 0);
-		int block = vdpCanvas.getBitmapOffset(x + shift, y);
+		
+		int pixelStride = vdpCanvas.getPixelStride();
 		for (yy = 0; yy < 16; yy++) {
 			if (y >= vdpCanvas.getHeight())
 				continue;
+			int block = vdpCanvas.getBitmapOffset(x + shift, y);
 			if ((sprlines[y & 255] & (1 << num)) != 0) {
 				byte patt = pattern.memory[pattern.offset + yy / 2];
-				mask = 0x80;
-				for (xx = 0; xx < 16; xx++) {
-					if ((patt & mask) != 0) {
-						if (x + xx < 256) {
-							vdpCanvas.setColorAtOffset(block + xx, color);
+				if (patt != 0) {
+					mask = 0x80;
+					for (xx = 0; xx < 16; xx++) {
+						if ((patt & mask) != 0) {
+							if (x + xx < 256) {
+								vdpCanvas.setColorAtOffset(block, color);
+							}
 						}
+						block += pixelStride;
+						if ((xx & 1) != 0)
+							mask >>= 1;
 					}
-					if ((xx & 1) != 0)
-						mask >>= 1;
 				}
 			}
 			y = (y + 1) & 0xff;
-			block = vdpCanvas.getBitmapOffset(x + shift, y);
 		}
 	}
 

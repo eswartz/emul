@@ -88,9 +88,8 @@ public class HybridDemoClient implements Client, VdpHandler, SoundHandler, CruHa
         this.machine = machine;
         video = this;
         
-        VdpCanvas vdpCanvas = new VdpCanvas();
-        SwtVideoRender swtRenderer = new SwtVideoRender(display, vdpCanvas);
-        builtinVideo = new InternalVdp(swtRenderer, videoMemory, vdpCanvas);
+        SwtVideoRender swtRenderer = new SwtVideoRender(display);
+        builtinVideo = new InternalVdp(swtRenderer, videoMemory, swtRenderer.getCanvas());
         
         swtRenderer.getShell().addShellListener(new ShellAdapter() {
 			@Override

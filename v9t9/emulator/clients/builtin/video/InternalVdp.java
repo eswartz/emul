@@ -190,6 +190,7 @@ public class InternalVdp implements VdpHandler {
 			// if screen is blank, force something to change
 			if ((vdpregs[1] & R1_NOBLANK) == 0)
 				redraw |= REDRAW_BLANK;
+			vdp_dirty_all();
 			vdpCanvas.clear();
 			update();
     	}

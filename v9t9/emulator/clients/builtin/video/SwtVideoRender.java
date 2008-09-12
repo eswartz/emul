@@ -10,8 +10,6 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.PaletteData;
-import org.eclipse.swt.graphics.Pattern;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.graphics.Region;
@@ -24,6 +22,7 @@ import org.eclipse.swt.widgets.Shell;
 
 
 /**
+ * Render video into an SWT window
  * @author ejs
  *
  */
@@ -31,25 +30,27 @@ public class SwtVideoRender implements VideoRenderer {
 
 	private Shell shell;
 	private Canvas canvas;
-	private final VdpCanvas vdpCanvas;
+	private final ImageDataCanvas vdpCanvas;
 	private Color bg, fg;
 
-	private ImageData imageData; 
+	private int zoom = 2;
 	private Image image;
 	private Rectangle updateRect;
 	private boolean isBlank;
 	
-	public SwtVideoRender(Display display, VdpCanvas vdpCanvas) {
-		this.vdpCanvas = vdpCanvas;
+	public SwtVideoRender(Display display) {
 		shell = new Shell(display);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = layout.marginWidth = 0;
 		shell.setLayout(layout);
+		shell.setBounds(800,800,0,0);
 		
 		this.canvas = new Canvas(shell, SWT.NONE);
 		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		this.canvas.setLayoutData(gridData);
 		this.canvas.setLayout(new FillLayout());
+
+		this.vdpCanvas = new ImageDataCanvas();
 		
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
@@ -72,21 +73,13 @@ public class SwtVideoRender implements VideoRenderer {
 	 * @see v9t9.emulator.clients.builtin.VideoRenderer#resize(int, int)
 	 */
 	public void resize(int width, int height) {
-		if (imageData != null) {
-			if (imageData.width == width && imageData.height == height) {
-				return;
-			}
-		}
-		
-		PaletteData palette = new PaletteData(0xFF0000, 0xFF00, 0xFF);
-		imageData = new ImageData(width, height, 24, palette);
-		
 		Display.getDefault().asyncExec(new Runnable() {
 
 			public void run() {
-				canvas.setSize(new Point(imageData.width, imageData.height));
+				Point size = new Point(vdpCanvas.getWidth() * zoom, vdpCanvas.getHeight() * zoom);
+				canvas.setSize(size);
 				
-				Rectangle trim = shell.computeTrim(0, 0, imageData.width, imageData.height);
+				Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
 				shell.setSize(trim.width, trim.height);
 			}
 			
@@ -131,24 +124,6 @@ public class SwtVideoRender implements VideoRenderer {
 		int nblocks = 0;
 		for (int idx = 0; idx < count; idx++) {
 			final RedrawBlock block = blocks[idx];
-			
-			// blit to ImageData
-			if (imageData.depth == 24) {
-				int offs = block.r * imageData.bytesPerLine + block.c * 3;
-				for (int ro = 0; ro < block.h; ro++) {
-					int r = block.r + ro;
-					vdpCanvas.readBitmapRGB24(r, block.c, imageData.data, offs, block.w);
-					offs += imageData.bytesPerLine;
-				}
-			} else {
-				int offs = block.r * imageData.bytesPerLine + block.c * 4;
-				for (int ro = 0; ro < block.h; ro++) {
-					int r = block.r + ro;
-					vdpCanvas.readBitmapARGB32(r, block.c, imageData.data, offs, block.w);
-					offs += imageData.bytesPerLine;
-				}
-
-			}
 			region.add(new Rectangle(block.c, block.r, block.w, block.h));
 			nblocks++;
 		}
@@ -163,13 +138,15 @@ public class SwtVideoRender implements VideoRenderer {
 		Display.getDefault().asyncExec(new Runnable() {
 
 			public void run() {
-				canvas.redraw(redrawRect.x, redrawRect.y, redrawRect.width, redrawRect.height, true);
+				canvas.redraw(redrawRect.x * zoom, redrawRect.y * zoom, 
+						redrawRect.width * zoom, redrawRect.height * zoom, true);
 			}
 			
 		});
 	}
 
 	protected void repaint(GC gc, Rectangle updateRect) {
+		ImageData imageData = vdpCanvas.getImageData();
 		if (!isBlank && imageData != null) {
 			if (image != null && !image.isDisposed()) {
 				image.dispose();
@@ -177,12 +154,14 @@ public class SwtVideoRender implements VideoRenderer {
 			image = new Image(shell.getDisplay(), imageData);
 			
 			// TODO: zoom
-			int zoom = 1;
 			Rectangle destRect = updateRect;
 			
-			destRect = destRect.intersection(new Rectangle(0, 0, imageData.width * zoom, imageData.height * zoom));
+			destRect = destRect.intersection(new Rectangle(0, 0, 
+					vdpCanvas.getWidth() * zoom, vdpCanvas.getHeight() * zoom));
 			Rectangle imageRect = new Rectangle(destRect.x / zoom, destRect.y / zoom, 
 					destRect.width / zoom, destRect.height / zoom);
+			imageRect = vdpCanvas.mapVisible(imageRect);
+			
 			gc.drawImage(image, imageRect.x, imageRect.y, imageRect.width, imageRect.height, 
 					destRect.x, destRect.y, destRect.width, destRect.height);
 		} else if (bg != null) {
@@ -190,6 +169,10 @@ public class SwtVideoRender implements VideoRenderer {
 			gc.fillRectangle(updateRect);
 		}
 		
+	}
+
+	public VdpCanvas getCanvas() {
+		return vdpCanvas;
 	}
 
 

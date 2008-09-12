@@ -98,10 +98,13 @@ public class TI994A extends Machine {
         		"Jungle_Hunt", memoryModel.CPU,
         		"/usr/local/src/v9t9-data/modules/junglec.bin", 0x0, 
         		"/usr/local/src/v9t9-data/modules/jungled.bin", 0x0));
+       // memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Carwars", memoryModel.GRAPHICS,
+        //        "/usr/local/src/v9t9-data/modules/carwarsg.bin", 0x0, false));
         memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Parsec", memoryModel.GRAPHICS,
                 "/usr/local/src/v9t9-data/modules/parsecg.bin", 0x0, false));
         memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Parsec", memoryModel.CPU,
                 "/usr/local/src/v9t9-data/modules/parsecc.bin", 0x0, false));
+
 
 
     }
