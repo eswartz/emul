@@ -14,7 +14,7 @@ import org.eclipse.swt.widgets.Display;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.InternalVdp;
-import v9t9.emulator.clients.builtin.video.SwtVideoRender;
+import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.demo.Connection;
 import v9t9.emulator.clients.demo.FifoConnection;
@@ -88,7 +88,7 @@ public class HybridDemoClient implements Client, VdpHandler, SoundHandler, CruHa
         this.machine = machine;
         video = this;
         
-        SwtVideoRender swtRenderer = new SwtVideoRender(display);
+        SwtVideoRenderer swtRenderer = new SwtVideoRenderer(display);
         builtinVideo = new InternalVdp(swtRenderer, videoMemory, swtRenderer.getCanvas());
         
         swtRenderer.getShell().addShellListener(new ShellAdapter() {

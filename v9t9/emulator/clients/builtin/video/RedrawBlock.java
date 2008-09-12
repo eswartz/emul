@@ -6,13 +6,13 @@ package v9t9.emulator.clients.builtin.video;
  * @author ejs
  *
  */
-class RedrawBlock {
+public class RedrawBlock {
 	/** pixel offset, 0=top */
-	int r;
+	public int r;
 	/** pixel offset, 0=left */
-	int c;
+	public int c;
 	/** width of block */
-	int w;
+	public int w;
 	/** height of block */
-	int h;
+	public int h;
 }

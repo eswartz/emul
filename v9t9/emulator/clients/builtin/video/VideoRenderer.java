@@ -16,6 +16,12 @@ public interface VideoRenderer {
     /** Update screen (or offscreen page) from blocks in list */
     void updateList(RedrawBlock[] blocks, int count);
     
+    /** Force redraw of entire screen */
+    void redraw();
+    
+    /** Synchronize so that screen updates are visible */
+    void sync();
+    
     /** Resize the screen to this size in pixels
         (usually 256x192 or 240x192 for text mode) */
     void resize(int width, int height);

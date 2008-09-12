@@ -76,10 +76,11 @@ public class ImageDataCanvas extends VdpCanvas {
 		byte[] bgRGB = getColorRGB(bg);
 		for (int i = 0; i < 8; i++) {
 			byte[] rgb = (mem & 0x80) != 0 ? fgRGB : bgRGB;
-			imageData.data[offs++] = rgb[0];
-			imageData.data[offs++] = rgb[1];
-			imageData.data[offs++] = rgb[2];
+			imageData.data[offs] = rgb[0];
+			imageData.data[offs + 1] = rgb[1];
+			imageData.data[offs + 2] = rgb[2];
 			mem <<= 1;
+			offs += 3;
 		}
 	}
 

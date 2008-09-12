@@ -19,6 +19,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.w3c.dom.css.Rect;
 
 
 /**
@@ -26,7 +27,7 @@ import org.eclipse.swt.widgets.Shell;
  * @author ejs
  *
  */
-public class SwtVideoRender implements VideoRenderer {
+public class SwtVideoRenderer implements VideoRenderer {
 
 	private Shell shell;
 	private Canvas canvas;
@@ -38,7 +39,7 @@ public class SwtVideoRender implements VideoRenderer {
 	private Rectangle updateRect;
 	private boolean isBlank;
 	
-	public SwtVideoRender(Display display) {
+	public SwtVideoRenderer(Display display) {
 		shell = new Shell(display);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = layout.marginWidth = 0;
@@ -69,6 +70,25 @@ public class SwtVideoRender implements VideoRenderer {
 		shell.open();
 	}
 
+	/** Force a redraw and repaint of the entire canvas */
+	public void redraw() {
+		Display.getDefault().asyncExec(new Runnable() {
+
+			public void run() {
+				canvas.redraw();
+			}
+		});
+	}
+	
+	public void sync() {
+		Display.getDefault().asyncExec(new Runnable() {
+
+			public void run() {
+				canvas.update();
+			}
+		});
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.VideoRenderer#resize(int, int)
 	 */
@@ -120,29 +140,38 @@ public class SwtVideoRender implements VideoRenderer {
 	}
 
 	public void updateList(RedrawBlock[] blocks, int count) {
-		final Region region = new Region(shell.getDisplay());
+		//final Region region = new Region(shell.getDisplay());
+		Rectangle redrawRect_ = null;
 		int nblocks = 0;
 		for (int idx = 0; idx < count; idx++) {
 			final RedrawBlock block = blocks[idx];
-			region.add(new Rectangle(block.c, block.r, block.w, block.h));
+			//region.add(new Rectangle(block.c, block.r, block.w, block.h));
+			Rectangle blockRect = new Rectangle(block.c, block.r, block.w, block.h);
+			if (redrawRect_ == null)
+				redrawRect_ = blockRect;
+			else
+				redrawRect_ = redrawRect_.union(blockRect);
 			nblocks++;
 		}
 		
 		// queue redraw
-		final Rectangle redrawRect = region.getBounds();
-		region.dispose();
-		
-		//if (nblocks > 0) 
-		//	System.out.println("Redrew " + nblocks + " blocks to " + redrawRect);
-		
-		Display.getDefault().asyncExec(new Runnable() {
-
-			public void run() {
-				canvas.redraw(redrawRect.x * zoom, redrawRect.y * zoom, 
-						redrawRect.width * zoom, redrawRect.height * zoom, true);
-			}
+		if (redrawRect_ != null) {
+			//final Rectangle redrawRect = region.getBounds();
+			final Rectangle redrawRect = redrawRect_;
+			//region.dispose();
 			
-		});
+			//if (nblocks > 0) 
+			//	System.out.println("Redrew " + nblocks + " blocks to " + redrawRect);
+			
+			Display.getDefault().asyncExec(new Runnable() {
+	
+				public void run() {
+					canvas.redraw(redrawRect.x * zoom, redrawRect.y * zoom, 
+							redrawRect.width * zoom, redrawRect.height * zoom, true);
+				}
+				
+			});
+		}
 	}
 
 	protected void repaint(GC gc, Rectangle updateRect) {
@@ -153,7 +182,6 @@ public class SwtVideoRender implements VideoRenderer {
 			}
 			image = new Image(shell.getDisplay(), imageData);
 			
-			// TODO: zoom
 			Rectangle destRect = updateRect;
 			
 			destRect = destRect.intersection(new Rectangle(0, 0, 
@@ -173,6 +201,11 @@ public class SwtVideoRender implements VideoRenderer {
 
 	public VdpCanvas getCanvas() {
 		return vdpCanvas;
+	}
+
+	public void setZoom(int zoom) {
+		this.zoom = zoom;
+		resize(vdpCanvas.getWidth(), vdpCanvas.getHeight());
 	}
 
 
