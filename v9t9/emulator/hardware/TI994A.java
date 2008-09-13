@@ -10,6 +10,7 @@ import org.eclipse.swt.widgets.Display;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.HybridDemoClient;
+import v9t9.emulator.clients.builtin.PureJavaClient;
 import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Compiler;
 import v9t9.emulator.runtime.Executor;
@@ -106,11 +107,12 @@ public class TI994A extends Machine {
         memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Parsec", memoryModel.CPU,
                 "/usr/local/src/v9t9-data/modules/parsecc.bin", 0x0, false));
 
+        /*
         memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Tomb", memoryModel.GRAPHICS,
                 "/usr/local/src/v9t9-data/modules/trsureg.bin", 0x0, false));
         memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Tomb", memoryModel.CPU,
                 "/usr/local/src/v9t9-data/modules/trsurec.bin", 0x0, false));
-
+*/
 
 
     }
@@ -140,8 +142,14 @@ public class TI994A extends Machine {
     	final Display display = new Display();
     	
         final TI994A machine = new TI994A();
+        
         //machine.setClient(new DemoClient(machine));
-        HybridDemoClient client = new HybridDemoClient(machine, machine.getVdpMmio().getMemory(), display);
+        Client client;
+        
+        if (args.length >= 1 && args[0].equals("--pure"))
+        	client = new PureJavaClient(machine, machine.getVdpMmio().getMemory(), display);
+        else
+        	client = new HybridDemoClient(machine, machine.getVdpMmio().getMemory(), display);
 		machine.setClient(client);
 
         machine.getCpu().contextSwitch(0);

@@ -6,8 +6,6 @@ import org.eclipse.swt.graphics.Rectangle;
 public abstract class ImageDataCanvas extends VdpCanvas {
 
 	protected ImageData imageData;
-	protected int width;
-	protected int height;
 
 	public ImageDataCanvas() {
 		super();
@@ -25,12 +23,8 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 
 
 	@Override
-	public void setSize(int width, int height) {
-		if (this.width != width || this.height != height) {
-			this.width = width;
-			this.height = height;
-			imageData = createImageData();
-		}
+	public void doChangeSize() {
+		imageData = createImageData();
 	}
 
 	abstract protected ImageData createImageData();

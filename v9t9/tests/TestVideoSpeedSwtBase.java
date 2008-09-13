@@ -18,8 +18,6 @@ public abstract class TestVideoSpeedSwtBase extends TestVideoSpeedBase {
 	protected void setUp() throws Exception {
 		display = new Display();
 		videoRenderer = createVideoRenderer();
-		videoRenderer.setBlank(false);
-		videoRenderer.resize(256, 192);
 		canvas = videoRenderer.getCanvas();
 	}
 

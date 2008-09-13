@@ -7,6 +7,7 @@
 package v9t9.engine;
 
 import v9t9.emulator.handlers.CruHandler;
+import v9t9.emulator.handlers.KeyboardHandler;
 import v9t9.emulator.handlers.SoundHandler;
 import v9t9.emulator.handlers.VdpHandler;
 
@@ -27,7 +28,7 @@ public interface Client {
     
     CruHandler getCruHandler();
     void setCruHandler(CruHandler handler);
-    
+
     /**
      * Handle one timer tick (nominally 1/60 second).  
      *

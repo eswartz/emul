@@ -45,7 +45,8 @@ public abstract class TestVideoSpriteSpeedBase extends TestCase {
 	abstract protected void handleEvents();
 
 	protected void updateAndWait(RedrawBlock[] blocks, int count) {
-		videoRenderer.updateList(blocks, count);
+		canvas.markDirty(blocks, count);
+		videoRenderer.redraw();
 		videoRenderer.sync();
 		handleEvents();
 	}

@@ -21,8 +21,6 @@ public abstract class TestVideoSpeedQtBase extends TestVideoSpeedBase {
 			inited = true;
 		}
 		videoRenderer = createVideoRenderer();
-		videoRenderer.setBlank(false);
-		videoRenderer.resize(256, 192);
 		canvas = videoRenderer.getCanvas();
 	}
 

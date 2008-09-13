@@ -3,6 +3,10 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
+import java.util.Arrays;
+
+import org.eclipse.swt.graphics.Rectangle;
+
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
@@ -11,17 +15,49 @@ import v9t9.engine.memory.ByteMemoryAccess;
  *
  */
 public abstract class VdpCanvas {
+	public interface ICanvasListener {
+		void canvasDirtied(VdpCanvas canvas);
+	}
 	protected static final int X_PADDING = 32;
 
-
+	// record dirty state in terms of 8x8 or 8x6 blocks
+	protected boolean[] dirtyBlocks;
+	protected int dirtyStride;
+	protected int dx1, dy1, dx2, dy2;
+	
     protected int clearColor;
 
+	private int blockWidth;
+
+	protected int width;
+
+	protected int height;
+
 	public VdpCanvas() {
+		setBlockWidth(8);
     	setSize(256, 192);
     }
 
+	public void setBlockWidth(int width) {
+		blockWidth = width;
+		updateDirtyBuffer();
+	}
 
-	public abstract void setSize(int x, int y);
+	private void updateDirtyBuffer() {
+		dirtyStride = getWidth() / blockWidth;
+		dirtyBlocks = new boolean[getHeight() / 8 * dirtyStride];
+		markDirty();
+	}
+
+	public final void setSize(int x, int y) {
+		if (x != width || y != height) {
+			this.width = x;
+			this.height = y;
+			updateDirtyBuffer();
+			doChangeSize();
+		}
+	}
+	public abstract void doChangeSize();
 
 	/**
 	 * Set the real color that the "clear" color has
@@ -50,6 +86,11 @@ public abstract class VdpCanvas {
 			{ (byte) 0xc0, 0x40, (byte) 0xc0 },
 			{ (byte) 0xd0, (byte) 0xd0, (byte) 0xd0 },
 			{ (byte) 0xff, (byte) 0xff, (byte) 0xff }, { 0x00, 0x00, 0x00 } };
+
+
+	private boolean isBlank;
+
+	private ICanvasListener listener;
 
 	/** Get the RGB triple for the palette entry. */
 	public byte[] getColorRGB(int idx) {
@@ -198,4 +239,54 @@ public abstract class VdpCanvas {
 	
 	abstract protected void drawEightSpritePixels(int offs, byte mem, byte fg); 
 	abstract protected void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg);
+	
+	public boolean isBlank() {
+		return isBlank;
+	}
+
+
+	public void setBlank(boolean b) {
+		isBlank = b;
+	}
+
+
+	public void markDirty(RedrawBlock[] blocks, int count) {
+		for (int i = 0; i < count; i++) {
+			RedrawBlock block = blocks[i];
+			int y = (block.r / 8);
+			int x = block.c / blockWidth;
+			int idx = y * dirtyStride + x;
+			dirtyBlocks[idx] = true;
+			if (x < dx1) dx1 = x;
+			if (y < dy1) dy1 = y;
+			if (x >= dx2) dx2 = x + 1;
+			if (y >= dy2) dy2 = y + 1;
+		}
+		if (count > 0 && listener != null)
+			listener.canvasDirtied(this);
+	}
+	
+	public void markDirty() {
+		Arrays.fill(dirtyBlocks, 0, dirtyBlocks.length, true);
+		dx1 = dy1 = 0;
+		dx2 = getWidth();
+		dy2 = getHeight();
+		if (listener != null)
+			listener.canvasDirtied(this);
+	}
+	
+	public void clearDirty() {
+		Arrays.fill(dirtyBlocks, 0, dirtyBlocks.length, false);
+		dx1 = dx2 = dy1 = dy2 = 0;
+	}
+
+	public Rectangle getDirtyRect() {
+		if (dx1 == dx2 || dy1 == dy2)
+			return null;
+		return new Rectangle(dx1 * blockWidth, dy1 * 8, (dx2 - dx1) * blockWidth, (dy2 - dy1) * 8);
+	}
+	
+	public void setListener(ICanvasListener listener) {
+		this.listener = listener;
+	}
 }

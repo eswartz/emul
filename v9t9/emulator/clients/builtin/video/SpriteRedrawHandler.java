@@ -16,7 +16,7 @@ import v9t9.tests.VdpSpriteCanvas;
  */
 public class SpriteRedrawHandler extends BaseRedrawHandler {
 
-	private static boolean five_sprites_on_a_line = true;
+	static boolean five_sprites_on_a_line = true;
 	protected VdpTouchHandler modify_sprite_default = new VdpTouchHandler() {
 
 		public void modify(int offs) {
@@ -146,7 +146,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 					sprite.setBitmapDirty(true);
 				}
 				*/
-				sprite.setDeleted(false);
+				sprite.setDeleted(color == 0);
 				sprite.move(x, y);
 				sprite.setColor(color);
 				sprite.setShift(shift);

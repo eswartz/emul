@@ -25,9 +25,7 @@ public class MemoryCanvas extends VdpCanvas {
     }
 
 
-	public void setSize(int x, int y) {
-		this.width = x;
-		this.height = y;
+	public void doChangeSize() {
 	}
 
 	public int getWidth() {

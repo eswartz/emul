@@ -194,6 +194,10 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         }
         vdpPacket[vdpPacketSize++] = val;
     }
+    
+    public void update() {
+    	
+    }
 
     /*
      * (non-Javadoc)

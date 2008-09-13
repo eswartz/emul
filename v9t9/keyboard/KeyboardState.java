@@ -21,8 +21,8 @@ public class KeyboardState {
     private static final byte FCTN_C = 0;
     private static final byte CTRL_R = 1;
     private static final byte CTRL_C = 0;
-    private static final byte JOY1_C = 6;
-    private static final byte JOY1_R = 7;
+    static final byte JOY1_C = 6;
+    static final byte JOY1_R = 7;
 
     /** 
      * CRU keyboard line map, organized by columns.  Rows are in bit 1 << row
@@ -75,7 +75,7 @@ public class KeyboardState {
     }
     
     public void resetKeyboard() {
-        Arrays.fill(crukeyboardmap, 0, 8, (byte)0);
+        Arrays.fill(getCrukeyboardmap(), 0, 8, (byte)0);
     }
     
     public void setKey(boolean onoff, byte shift, byte key) {
@@ -186,15 +186,15 @@ public class KeyboardState {
     }
 
     private boolean TESTKBDCRU(byte r, byte c) {
-        return (crukeyboardmap[c] & (0x80 >> r)) != 0;
+        return (getCrukeyboardmap()[c] & (0x80 >> r)) != 0;
     }
 
     private void RESETKBDCRU(byte r, byte c) {
-        crukeyboardmap[c] &= ~(0x80 >> r);
+        getCrukeyboardmap()[c] &= ~(0x80 >> r);
     }
 
     private void SETKBDCRU(byte r, byte c) {
-        crukeyboardmap[c] |= (0x80 >> r);
+        getCrukeyboardmap()[c] |= (0x80 >> r);
     }
 
     public boolean isSet(byte shift, byte key) {
@@ -224,4 +224,12 @@ public class KeyboardState {
     public byte getRealShift() {
         return realshift;
     }
+
+	public void setCrukeyboardmap(byte crukeyboardmap[]) {
+		this.crukeyboardmap = crukeyboardmap;
+	}
+
+	public byte[] getCrukeyboardmap() {
+		return crukeyboardmap;
+	}
 }

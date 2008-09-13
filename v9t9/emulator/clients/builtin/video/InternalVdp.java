@@ -32,10 +32,7 @@ import v9t9.engine.memory.MemoryDomain;
  */
 public class InternalVdp implements VdpHandler {
 
-	private VideoRenderer renderer;
-
-	public InternalVdp(VideoRenderer renderer, MemoryDomain videoMemory, VdpCanvas vdpCanvas) {
-		this.renderer = renderer;
+	public InternalVdp(MemoryDomain videoMemory, VdpCanvas vdpCanvas) {
 		this.vdpMemory = videoMemory;
 		this.vdpCanvas = vdpCanvas;
 	}
@@ -54,7 +51,7 @@ public class InternalVdp implements VdpHandler {
 	private final static int MODE_GRAPHICS = 0;
 	private final static int MODE_TEXT = 2;
 	private final static int MODE_MULTI = 3;
-	private final static int REDRAW_NOW = 1		;	/* same-mode change */
+	//private final static int REDRAW_NOW = 1		;	/* same-mode change */
 	private final static int REDRAW_SPRITES = 2	;	/* sprites change */
 	private final static int REDRAW_MODE = 4		;	/* mode change */
 	private final static int REDRAW_BLANK = 8		;	/* make blank */
@@ -73,7 +70,6 @@ public class InternalVdp implements VdpHandler {
      * @see v9t9.handlers.VdpHandler#writeVdpReg(byte, byte, byte)
      */
     public void writeVdpReg(byte reg, byte val) {
-    {
     	int         redraw = 0;
 
     	switch (reg) {
@@ -98,14 +94,12 @@ public class InternalVdp implements VdpHandler {
     		}
 
     		/* if interrupts enabled, and interrupt was pending, trigger it */
-    		/*
-    		if ((val & R1_INT) != 0 
-    		&& 	(vdpregs[1] & R1_INT) == 0 
-    		&&	(vdpstatus & VDP_INTERRUPT) != 0) 
+    		if ((val & VdpConstants.R1_INT) != 0 
+    		&& 	(vdpregs[1] & VdpConstants.R1_INT) == 0 
+    		&&	(vdpStatus & VdpConstants.VDP_INTERRUPT) != 0) 
     		{
-    			trigger9901int(M_INT_VDP);
+    			//trigger9901int( M_INT_VDP);	// TODO
     		}
-    		*/
 
     		vdpregs[1] = val;
     		break;
@@ -164,7 +158,7 @@ public class InternalVdp implements VdpHandler {
     	if ((redraw & REDRAW_MODE) != 0) {
     		vdp_update_mode();
     		vdp_update_params();
-    		renderer.resize(vdpCanvas.getWidth(), vdpCanvas.getHeight());
+    		//renderer.resize(vdpCanvas.getWidth(), vdpCanvas.getHeight());
     		vdp_dirty_all();
     	}
 
@@ -172,7 +166,7 @@ public class InternalVdp implements VdpHandler {
     		vdp_dirty_sprites();
 
     	if ((redraw & REDRAW_PALETTE) != 0) {
-    		renderer.setForegroundAndBackground(vdpbg, vdpfg);
+    		//renderer.setForegroundAndBackground(vdpbg, vdpfg);
     		vdpCanvas.setClearColor(vdpbg);
 			// if screen is blank, force something to change
 			if ((vdpregs[1] & VdpConstants.R1_NOBLANK) == 0)
@@ -184,15 +178,14 @@ public class InternalVdp implements VdpHandler {
 
     	if ((redraw & REDRAW_BLANK) != 0) {
     		if ((vdpregs[1] & VdpConstants.R1_NOBLANK) == 0) {
-    			renderer.setBlank(true);
+    			vdpCanvas.setBlank(true);
     			update();
     		} else {
     			vdp_update_params();
-    			renderer.setBlank(false);
+    			vdpCanvas.setBlank(false);
     			update();
     		}
     	}
-    }
     }
 
 
@@ -407,7 +400,6 @@ public class InternalVdp implements VdpHandler {
 			if (spriteRedrawHandler != null) {
 				vdpStatus = spriteRedrawHandler.updateSpriteCoverage(vdpStatus);
 			}
-			//updateSprites();
 			
 			int count = vdpModeRedrawHandler.updateCanvas(blocks);
 			
@@ -415,9 +407,8 @@ public class InternalVdp implements VdpHandler {
 				spriteRedrawHandler.updateCanvas();
 			}
 
-			//redrawSprites();
-			
-			renderer.updateList(blocks, count);
+			//renderer.updateList(blocks, count);
+			vdpCanvas.markDirty(blocks, count);
 			
 			Arrays.fill(vdpChanges.screen, 0, vdpChanges.screen.length, (byte) 0);
 			Arrays.fill(vdpChanges.patt, 0, vdpChanges.patt.length, (byte) 0);

@@ -17,6 +17,7 @@ import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.InternalVdp;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.demo.Connection;
 import v9t9.emulator.clients.demo.FifoConnection;
 import v9t9.emulator.handlers.CruHandler;
@@ -30,9 +31,8 @@ import v9t9.engine.memory.MemoryDomain;
  * and also mirrors VDP to the builtin handler.
  * @author ejs
  */
-public class HybridDemoClient implements Client, VdpHandler, SoundHandler, CruHandler {
-    VdpHandler video;
-    InternalVdp builtinVideo;
+public class HybridDemoClient implements Client, SoundHandler, CruHandler {
+	VdpHandler video;
     SoundHandler sound;
     CruHandler cru;
     
@@ -81,19 +81,19 @@ public class HybridDemoClient implements Client, VdpHandler, SoundHandler, CruHa
     private Machine machine;
 
     Connection connection;
+	private VideoRenderer videoRenderer;
 
     /** Construct the client as a demo running in a different V9t9 
      * @param display */
     public HybridDemoClient(final Machine machine, MemoryDomain videoMemory, Display display) {
     	
         this.machine = machine;
-        video = this;
         
         ImageDataCanvas canvas = new ImageDataCanvas24Bit();
-		SwtVideoRenderer swtRenderer = new SwtVideoRenderer(display, canvas);
-        builtinVideo = new InternalVdp(swtRenderer, videoMemory, canvas);
+		videoRenderer = new SwtVideoRenderer(display, canvas);
+        video = new InternalVdp(videoMemory, canvas);
         
-        swtRenderer.getShell().addShellListener(new ShellAdapter() {
+        ((SwtVideoRenderer)videoRenderer).getShell().addShellListener(new ShellAdapter() {
 			@Override
 			public void shellClosed(ShellEvent e) {
 		        if (machine.isRunning()) {
@@ -194,7 +194,7 @@ public class HybridDemoClient implements Client, VdpHandler, SoundHandler, CruHa
                     (byte) (0x80 | reg) };
             connection.write(values);
             
-            builtinVideo.writeVdpReg(reg, val);
+            video.writeVdpReg(reg, val);
             //in.read(values, 0, 1);
         } catch (IOException e) {
             e.printStackTrace();
@@ -209,7 +209,7 @@ public class HybridDemoClient implements Client, VdpHandler, SoundHandler, CruHa
      */
     public byte readVdpStatus() {
         //flushVdp();
-    	return builtinVideo.readVdpStatus();
+    	return video.readVdpStatus();
     }
 
     /*
@@ -224,9 +224,9 @@ public class HybridDemoClient implements Client, VdpHandler, SoundHandler, CruHa
             vdpPacketStart = vdpaddr & 0x3fff;
         }
         vdpPacket[vdpPacketSize++] = val;
-        builtinVideo.writeVdpMemory(vdpaddr, val);
+        video.writeVdpMemory(vdpaddr, val);
     }
-
+    
     /*
      * (non-Javadoc)
      * 
@@ -285,7 +285,8 @@ public class HybridDemoClient implements Client, VdpHandler, SoundHandler, CruHa
             byte[] values = { DEMO_TYPE_TICK };
             connection.write(values);
             //in.read(values, 0, 1);
-            builtinVideo.update();
+            video.update();
+            videoRenderer.redraw();
      
         } catch (IOException e) {
             e.printStackTrace();

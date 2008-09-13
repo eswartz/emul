@@ -6,7 +6,7 @@
  */
 package v9t9.emulator.handlers;
 
-import v9t9.emulator.hardware.KeyboardState;
+import v9t9.keyboard.KeyboardState;
 
 /**
  * This handler manages translating keyboard input from the outside

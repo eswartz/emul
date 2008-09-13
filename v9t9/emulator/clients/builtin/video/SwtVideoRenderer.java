@@ -19,13 +19,15 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
+
 
 /**
  * Render video into an SWT window
  * @author ejs
  *
  */
-public class SwtVideoRenderer implements VideoRenderer {
+public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	private Shell shell;
 	private Canvas canvas;
@@ -50,7 +52,7 @@ public class SwtVideoRenderer implements VideoRenderer {
 		this.canvas.setLayout(new FillLayout());
 
 		this.vdpCanvas = canvas;
-		
+		//this.vdpCanvas.setListener(this);
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
 		// the canvas collects update regions in a big rect
@@ -73,7 +75,34 @@ public class SwtVideoRenderer implements VideoRenderer {
 		Display.getDefault().asyncExec(new Runnable() {
 
 			public void run() {
-				canvas.redraw();
+				// update size if needed
+				Point curSize = canvas.getSize();
+				if (curSize.x != vdpCanvas.getWidth() * zoom
+						|| curSize.y != vdpCanvas.getHeight() * zoom) {
+					Point size = new Point(vdpCanvas.getWidth() * zoom, vdpCanvas.getHeight() * zoom);
+					canvas.setSize(size);
+					
+					Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
+					shell.setSize(trim.width, trim.height);
+				}
+				
+				isBlank = vdpCanvas.isBlank();
+				
+				Rectangle redrawRect_ = vdpCanvas.getDirtyRect();
+				if (redrawRect_ != null) {
+					final Rectangle redrawRect = redrawRect_;
+					
+					Display.getDefault().asyncExec(new Runnable() {
+			
+						public void run() {
+							canvas.redraw(redrawRect.x * zoom, redrawRect.y * zoom, 
+									redrawRect.width * zoom, redrawRect.height * zoom, true);
+							vdpCanvas.clearDirty();
+						}
+						
+					});
+					
+				}
 			}
 		});
 	}
@@ -91,17 +120,6 @@ public class SwtVideoRenderer implements VideoRenderer {
 	 * @see v9t9.emulator.clients.builtin.VideoRenderer#resize(int, int)
 	 */
 	public void resize(int width, int height) {
-		Display.getDefault().asyncExec(new Runnable() {
-
-			public void run() {
-				Point size = new Point(vdpCanvas.getWidth() * zoom, vdpCanvas.getHeight() * zoom);
-				canvas.setSize(size);
-				
-				Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
-				shell.setSize(trim.width, trim.height);
-			}
-			
-		});
 	}
 
 	/* (non-Javadoc)
@@ -137,6 +155,7 @@ public class SwtVideoRenderer implements VideoRenderer {
 		return shell;
 	}
 
+	/*
 	public void updateList(RedrawBlock[] blocks, int count) {
 		//final Region region = new Region(shell.getDisplay());
 		Rectangle redrawRect_ = null;
@@ -170,7 +189,7 @@ public class SwtVideoRenderer implements VideoRenderer {
 				
 			});
 		}
-	}
+	}*/
 
 	protected void repaint(GC gc, Rectangle updateRect) {
 		ImageData imageData = vdpCanvas.getImageData();
@@ -203,7 +222,11 @@ public class SwtVideoRenderer implements VideoRenderer {
 
 	public void setZoom(int zoom) {
 		this.zoom = zoom;
-		resize(vdpCanvas.getWidth(), vdpCanvas.getHeight());
+		redraw();
+	}
+
+	public void canvasDirtied(VdpCanvas canvas) {
+		redraw();
 	}
 
 

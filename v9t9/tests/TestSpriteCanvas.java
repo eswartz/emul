@@ -46,8 +46,6 @@ public class TestSpriteCanvas extends TestCase {
 		handleEvents();
 		
 		videoRenderer = createVideoRenderer();
-		videoRenderer.setBlank(false);
-		videoRenderer.resize(256, 192);
 		canvas = videoRenderer.getCanvas();
 		videoRenderer.setZoom(2);
 		
@@ -92,7 +90,7 @@ public class TestSpriteCanvas extends TestCase {
 	}
 
 	protected void updateAndWait(RedrawBlock[] blocks, int count) {
-		videoRenderer.updateList(blocks, count);
+		canvas.markDirty(blocks, count);
 		videoRenderer.sync();
 		handleEvents();
 	}

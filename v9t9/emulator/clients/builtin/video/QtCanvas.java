@@ -15,25 +15,18 @@ import com.trolltech.qt.gui.QImage.Format;
 public class QtCanvas extends VdpCanvas {
 
 	private QImage image;
-	private int width;
-	private int height;
 	public QtCanvas() {
 		image = null;
-		setSize(256, 192);
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#setSize(int, int)
 	 */
 	@Override
-	public void setSize(int x, int y) {
-		if (image == null || width != x || height != y) {
-			if (image != null)
-				image.dispose();
-			image = new QImage(new QSize(x + X_PADDING, y), Format.Format_RGB32);
-			width = x;
-			height = y;
-		}
+	public void doChangeSize() {
+		if (image != null)
+			image.dispose();
+		image = new QImage(new QSize(width + X_PADDING, height), Format.Format_RGB32);
 	}
 
 	/* (non-Javadoc)

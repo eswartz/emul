@@ -14,9 +14,10 @@ package v9t9.emulator.clients.builtin.video;
  */
 public interface VideoRenderer {
     /** Update screen (or offscreen page) from blocks in list */
-    void updateList(RedrawBlock[] blocks, int count);
+    //void updateList(RedrawBlock[] blocks, int count);
     
-    /** Force redraw of entire screen */
+    /** Force redraw of screen from changes above, incorporating any
+     * resolution changes, blank/unblank state, etc. */
     void redraw();
     
     /** Synchronize so that screen updates are visible */
@@ -25,13 +26,6 @@ public interface VideoRenderer {
     /** Resize the screen to this size in pixels
         (usually 256x192 or 240x192 for text mode) */
     void resize(int width, int height);
-
-    /** Update color 0 and color 16 (as appearing in the main
-        bitmap) to these TI colors (which may be 0, interpret as black) */
-    void setForegroundAndBackground(int bg, int fg);
-
-    /** Blank or unblank the screen (using the current background color) */
-    void setBlank(boolean blank);
 
 	void setZoom(int zoom);
 

@@ -22,6 +22,9 @@ public class DummyClient implements Client {
 
             public void writeVdpMemory(short vdpaddr, byte val) {
             }
+            
+            public void update() {
+            }
         };
         sound = new v9t9.emulator.handlers.SoundHandler() {
             public void writeSound(byte val) {

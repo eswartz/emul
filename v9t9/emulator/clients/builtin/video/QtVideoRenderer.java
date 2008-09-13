@@ -144,7 +144,7 @@ public class QtVideoRenderer implements VideoRenderer {
 
 	public void setZoom(int zoom) {
 		this.zoom = zoom;
-		resize(vdpCanvas.getWidth(), vdpCanvas.getHeight());
+		redraw();
 	}
 
 
