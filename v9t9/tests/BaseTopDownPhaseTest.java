@@ -7,26 +7,17 @@
 package v9t9.tests;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 
 import v9t9.emulator.runtime.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StandardConsoleMemoryModel;
 import v9t9.tools.decomp.ICodeProvider;
 import v9t9.tools.decomp.IDecompileInfo;
 import v9t9.tools.decomp.LLInstruction;
-import v9t9.tools.decomp.Label;
-import v9t9.tools.decomp.MemoryRange;
 import v9t9.tools.decomp.MemoryRanges;
 import v9t9.tools.decomp.Routine;
 

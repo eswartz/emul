@@ -90,9 +90,10 @@ public class TI994A extends Machine {
 //    		  "/usr/local/src/v9t9-data/modules/logog.bin", 0x0, false));
 //      memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Logo", memoryModel.CPU,
 //    		  "/usr/local/src/v9t9-data/modules/logoc.bin", 0x0, false));
-
         memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Diags", memoryModel.GRAPHICS,
-             "/usr/local/src/v9t9-data/modules/diagsg.bin", 0x0, false));
+                "/usr/local/src/v9t9-data/modules/diagsg.bin", 0x0, false));
+
+
         memory.addAndMap(BankedMemoryEntry.newBankedWordMemoryFromFile(
         		memory,
         		"Jungle_Hunt", memoryModel.CPU,
@@ -105,17 +106,25 @@ public class TI994A extends Machine {
         memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Parsec", memoryModel.CPU,
                 "/usr/local/src/v9t9-data/modules/parsecc.bin", 0x0, false));
 
+        memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Tomb", memoryModel.GRAPHICS,
+                "/usr/local/src/v9t9-data/modules/trsureg.bin", 0x0, false));
+        memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Tomb", memoryModel.CPU,
+                "/usr/local/src/v9t9-data/modules/trsurec.bin", 0x0, false));
+
 
 
     }
 
     @Override
 	protected void setupDefaults() {
-    	Executor.settingCompile.setBoolean(true);
-        Compiler.settingOptimize.setBoolean(true);
-        Compiler.settingOptimizeRegAccess.setBoolean(true);
-        Compiler.settingOptimizeStatus.setBoolean(true);
-        Compiler.settingCompileOptimizeCallsWithData.setBoolean(true);
+    	if (false) {
+	    	Executor.settingCompile.setBoolean(true);
+	        Compiler.settingOptimize.setBoolean(true);
+	        Compiler.settingOptimizeRegAccess.setBoolean(true);
+	        Compiler.settingOptimizeStatus.setBoolean(true);
+	        Compiler.settingCompileOptimizeCallsWithData.setBoolean(true);
+	        Compiler.settingCompileFunctions.setBoolean(true);
+    	}
         
         if (false) {
         	Executor.settingDumpInstructions.setBoolean(true);
@@ -123,7 +132,6 @@ public class TI994A extends Machine {
         	Compiler.settingDebugInstructions.setBoolean(true);
         }
         
-        Compiler.settingCompileFunctions.setBoolean(true);
         
     	StandardConsoleMemoryModel.settingExpRam.setBoolean(true);
     }

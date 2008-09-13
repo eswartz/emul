@@ -7,7 +7,6 @@
 package v9t9.tests;
 
 import junit.framework.TestCase;
-import v9t9.tools.decomp.Decompiler;
 import v9t9.tools.decomp.MemoryRange;
 import v9t9.tools.decomp.MemoryRanges;
 

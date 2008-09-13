@@ -13,9 +13,10 @@ import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
+import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.InternalVdp;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.demo.Connection;
 import v9t9.emulator.clients.demo.FifoConnection;
 import v9t9.emulator.handlers.CruHandler;
@@ -88,8 +89,9 @@ public class HybridDemoClient implements Client, VdpHandler, SoundHandler, CruHa
         this.machine = machine;
         video = this;
         
-        SwtVideoRenderer swtRenderer = new SwtVideoRenderer(display);
-        builtinVideo = new InternalVdp(swtRenderer, videoMemory, swtRenderer.getCanvas());
+        ImageDataCanvas canvas = new ImageDataCanvas24Bit();
+		SwtVideoRenderer swtRenderer = new SwtVideoRenderer(display, canvas);
+        builtinVideo = new InternalVdp(swtRenderer, videoMemory, canvas);
         
         swtRenderer.getShell().addShellListener(new ShellAdapter() {
 			@Override

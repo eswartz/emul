@@ -17,7 +17,7 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 			VdpChanges vdpChanges, VdpCanvas vdpCanvas) {
 		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas);
 		
-		int         ramsize = (vdpregs[1] & InternalVdp.R1_RAMSIZE) != 0 ? 0x3fff : 0xfff;
+		int         ramsize = (vdpregs[1] & VdpConstants.R1_RAMSIZE) != 0 ? 0x3fff : 0xfff;
 
 		vdpModeInfo.screen.base = (vdpregs[2] * 0x400) & ramsize;
 		vdpModeInfo.screen.size = 768;

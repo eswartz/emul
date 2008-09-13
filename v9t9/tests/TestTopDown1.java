@@ -10,7 +10,6 @@ import java.util.Set;
 
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.Operand;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.WordMemoryArea;

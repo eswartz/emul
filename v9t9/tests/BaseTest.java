@@ -6,13 +6,9 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import junit.framework.TestCase;
-import v9t9.engine.cpu.Instruction;
-import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.decomp.Block;
-import v9t9.tools.decomp.ICodeProvider;
-import v9t9.tools.decomp.IDecompileInfo;
 import v9t9.tools.decomp.LLInstruction;
 import v9t9.tools.decomp.Routine;
 

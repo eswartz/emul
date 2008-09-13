@@ -32,4 +32,8 @@ public interface VideoRenderer {
 
     /** Blank or unblank the screen (using the current background color) */
     void setBlank(boolean blank);
+
+	void setZoom(int zoom);
+
+	VdpCanvas getCanvas();
 }

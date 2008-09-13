@@ -50,13 +50,15 @@ public class MemoryEntry {
         if (size <= 0 || addr < 0 || addr + size > MemoryDomain.PHYSMEMORYSIZE) {
 			throw new AssertionError("illegal address range");
 		}
-        if ((addr & MemoryArea.AREASIZE-1) != 0 ||
-                (size & MemoryArea.AREASIZE-1) != 0) {
-			throw new AssertionError("illegal address or size: must live on " + MemoryArea.AREASIZE + " byte boundary");
+        if ((addr & MemoryArea.AREASIZE-1) != 0) {
+			throw new AssertionError("illegal address: must live on " + MemoryArea.AREASIZE + " byte boundary");
 		}
         if (domain == null || area == null) {
 			throw new NullPointerException();
 		}
+        if ((size & MemoryArea.AREASIZE-1) != 0) {
+        	size += MemoryArea.AREASIZE - (size & MemoryArea.AREASIZE-1);
+        }
         
         this.addr = addr;
         this.size = size;

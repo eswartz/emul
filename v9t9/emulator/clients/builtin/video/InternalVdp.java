@@ -50,29 +50,16 @@ public class InternalVdp implements VdpHandler {
 	boolean draw_sprites;
 	boolean five_sprites_on_a_line;
 	int videoupdatespeed;
-	final static int VDP_INTERRUPT = 0x80;
-	final static int VDP_COINC = 0x40;
-	final static int VDP_FIVE_SPRITES = 0x20;
-	final static int VDP_FIFTH_SPRITE = 0x1f;
-	final static int R0_BITMAP = 2;
-	final static int R0_EXTERNAL = 1;
-	final static int R1_RAMSIZE = 128;
-	final static int R1_NOBLANK = 64;
-	final static int R1_INT = 32;
-	final static int R1_TEXT = 16;
-	final static int R1_MULTI = 8;
-	final static int R1_SPR4 = 2;
-	final static int R1_SPRMAG = 1;
-	final static int MODE_BITMAP = 1;
-	final static int MODE_GRAPHICS = 0;
-	final static int MODE_TEXT = 2;
-	final static int MODE_MULTI = 3;
-	boolean vdpchanged;
-	final static int REDRAW_NOW = 1		;	/* same-mode change */
-    final static int REDRAW_SPRITES = 2	;	/* sprites change */
-    final static int REDRAW_MODE = 4		;	/* mode change */
-    final static int REDRAW_BLANK = 8		;	/* make blank */
-    final static int REDRAW_PALETTE = 16;
+	private final static int MODE_BITMAP = 1;
+	private final static int MODE_GRAPHICS = 0;
+	private final static int MODE_TEXT = 2;
+	private final static int MODE_MULTI = 3;
+	private final static int REDRAW_NOW = 1		;	/* same-mode change */
+	private final static int REDRAW_SPRITES = 2	;	/* sprites change */
+	private final static int REDRAW_MODE = 4		;	/* mode change */
+	private final static int REDRAW_BLANK = 8		;	/* make blank */
+	private final static int REDRAW_PALETTE = 16;
+    boolean vdpchanged;
 
 	private VdpCanvas vdpCanvas;
 	private VdpModeRedrawHandler vdpModeRedrawHandler;
@@ -91,22 +78,22 @@ public class InternalVdp implements VdpHandler {
 
     	switch (reg) {
     	case 0:					/* bitmap/video-in */
-    		if (CHANGED(0, val, R0_BITMAP+R0_EXTERNAL)) {
+    		if (CHANGED(0, val, VdpConstants.R0_BITMAP+VdpConstants.R0_EXTERNAL)) {
     			redraw |= REDRAW_MODE;
     		}
     		vdpregs[0] = val;
     		break;
 
     	case 1:					/* various modes, sprite stuff */
-    		if (CHANGED(1, val, R1_NOBLANK)) {
+    		if (CHANGED(1, val, VdpConstants.R1_NOBLANK)) {
     			redraw |= REDRAW_BLANK | REDRAW_MODE;
     		}
 
-    		if (CHANGED(1, val, R1_SPRMAG + R1_SPR4)) {
+    		if (CHANGED(1, val, VdpConstants.R1_SPRMAG + VdpConstants.R1_SPR4)) {
     			redraw |= REDRAW_SPRITES;
     		}
 
-    		if (CHANGED(1, val, R1_TEXT | R1_MULTI)) {
+    		if (CHANGED(1, val, VdpConstants.R1_TEXT | VdpConstants.R1_MULTI)) {
     			redraw |= REDRAW_MODE;
     		}
 
@@ -188,7 +175,7 @@ public class InternalVdp implements VdpHandler {
     		renderer.setForegroundAndBackground(vdpbg, vdpfg);
     		vdpCanvas.setClearColor(vdpbg);
 			// if screen is blank, force something to change
-			if ((vdpregs[1] & R1_NOBLANK) == 0)
+			if ((vdpregs[1] & VdpConstants.R1_NOBLANK) == 0)
 				redraw |= REDRAW_BLANK;
 			vdp_dirty_all();
 			vdpCanvas.clear();
@@ -196,7 +183,7 @@ public class InternalVdp implements VdpHandler {
     	}
 
     	if ((redraw & REDRAW_BLANK) != 0) {
-    		if ((vdpregs[1] & R1_NOBLANK) == 0) {
+    		if ((vdpregs[1] & VdpConstants.R1_NOBLANK) == 0) {
     			renderer.setBlank(true);
     			update();
     		} else {
@@ -210,11 +197,11 @@ public class InternalVdp implements VdpHandler {
 
 
     private void vdp_update_mode() {
-    	if ((vdpregs[0] & R0_BITMAP) != 0)
+    	if ((vdpregs[0] & VdpConstants.R0_BITMAP) != 0)
     		vdpmode = MODE_BITMAP;
-    	else if ((vdpregs[1] & R1_TEXT) != 0)
+    	else if ((vdpregs[1] & VdpConstants.R1_TEXT) != 0)
     		vdpmode = MODE_TEXT;
-    	else if ((vdpregs[1] & R1_MULTI) != 0)
+    	else if ((vdpregs[1] & VdpConstants.R1_MULTI) != 0)
     		vdpmode = MODE_MULTI;
     	else
     		vdpmode = MODE_GRAPHICS;
@@ -242,7 +229,7 @@ public class InternalVdp implements VdpHandler {
 	private void vdp_update_params() {
 		/* Is the screen really blank?  
 		   If so, respond to nothing but calls to vdp_dirty_screen */
-		if ((vdpregs[1] & R1_NOBLANK) == 0) {
+		if ((vdpregs[1] & VdpConstants.R1_NOBLANK) == 0) {
 			vdpModeRedrawHandler = new BlankModeRedrawHandler(
 					vdpregs, vdpMemory, vdpChanges, vdpCanvas);
 			spriteRedrawHandler = null;
@@ -306,7 +293,7 @@ public class InternalVdp implements VdpHandler {
     }
 
     final static int SPRBIT(int x) { return (1<<(x)); }
-    final boolean VDP_IS_AL_VIDEO() { return ((vdpregs[0] & R0_EXTERNAL)!=0); }
+    final boolean VDP_IS_AL_VIDEO() { return ((vdpregs[0] & VdpConstants.R0_EXTERNAL)!=0); }
 
     void
 	vdp_redraw_screen(int x, int y, int sx, int sy)
@@ -317,7 +304,7 @@ public class InternalVdp implements VdpHandler {
 		//printf("vdp_dirty: %d,%d,%d,%d\n", x,y,sx,sy);
 		if (sx < 0 || sy < 0) return;
 
-		if ((vdpregs[1] & R1_TEXT) != 0) {
+		if ((vdpregs[1] & VdpConstants.R1_TEXT) != 0) {
 			// left blank column?
 			if (x < 8) {
 				vdpCanvas.clear();

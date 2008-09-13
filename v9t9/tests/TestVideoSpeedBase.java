@@ -6,11 +6,10 @@ package v9t9.tests;
 import junit.framework.TestCase;
 
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.widgets.Display;
 
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
-import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 
@@ -18,29 +17,15 @@ import v9t9.engine.memory.ByteMemoryAccess;
  * @author ejs
  *
  */
-public class TestVideoSpeed extends TestCase {
+public abstract class TestVideoSpeedBase extends TestCase {
 
-	private SwtVideoRenderer videoRenderer;
-	private Display display;
-	private VdpCanvas canvas;
-
+	protected VdpCanvas canvas;
 	interface ITimeable {
 		void run() throws Exception;
 	}
-	
-	@Override
-	protected void setUp() throws Exception {
-		display = new Display();
-		videoRenderer = new SwtVideoRenderer(display);
-		videoRenderer.setBlank(false);
-		videoRenderer.resize(256, 192);
-		canvas = videoRenderer.getCanvas();
-	}
-	
-	@Override
-	protected void tearDown() throws Exception {
-		display.dispose();
-	}
+	protected VideoRenderer videoRenderer;
+
+	abstract protected VideoRenderer createVideoRenderer();
 	
 	protected void time(String label, int iterations, ITimeable timeable) throws Exception {
 		timeable.run();
@@ -57,13 +42,15 @@ public class TestVideoSpeed extends TestCase {
 	protected void updateAllAndWait() {
 		videoRenderer.redraw();
 		videoRenderer.sync();
-		while (display.readAndDispatch()) /**/ ;
+		handleEvents();
 	}
+
+	abstract protected void handleEvents();
 
 	protected void updateAndWait(RedrawBlock[] blocks, int count) {
 		videoRenderer.updateList(blocks, count);
 		videoRenderer.sync();
-		while (display.readAndDispatch()) /**/ ;
+		handleEvents();
 	}
 	
 	final int COUNT = 768;
@@ -102,16 +89,18 @@ public class TestVideoSpeed extends TestCase {
 	final static ByteMemoryAccess fuzzyPattern = new ByteMemoryAccess(fuzzy, 0);
 	
 	public void testNoDraw() throws Exception {
-		final RedrawBlock[] blocks = new RedrawBlock[] {  };
+		final RedrawBlock block = new RedrawBlock();
+		final RedrawBlock[] blocks = new RedrawBlock[] { block };
+		block.w = 1;
+		block.h = 1;
 		final int[] colors = { 0, 0 };
-
 		for (int zoom = 1; zoom <= 2; zoom++) {
 			final Point pt  = new Point(0, 0);
 			videoRenderer.setZoom(zoom);
 			time("nothing drawn zoom " + zoom, COUNT, new ITimeable() {
 	
 				public void run() throws Exception {
-					updateAndWait(blocks, 0);
+					updateAndWait(blocks, 1);
 					pt.x += 8;
 					if (pt.x >= 256) {
 						colors[0] += 41;
@@ -292,4 +281,5 @@ public class TestVideoSpeed extends TestCase {
 			});
 		}
 	}
+	
 }

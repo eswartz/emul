@@ -12,14 +12,12 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.graphics.Region;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.w3c.dom.css.Rect;
 
 
 /**
@@ -39,7 +37,7 @@ public class SwtVideoRenderer implements VideoRenderer {
 	private Rectangle updateRect;
 	private boolean isBlank;
 	
-	public SwtVideoRenderer(Display display) {
+	public SwtVideoRenderer(Display display, ImageDataCanvas canvas) {
 		shell = new Shell(display);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = layout.marginWidth = 0;
@@ -51,7 +49,7 @@ public class SwtVideoRenderer implements VideoRenderer {
 		this.canvas.setLayoutData(gridData);
 		this.canvas.setLayout(new FillLayout());
 
-		this.vdpCanvas = new ImageDataCanvas();
+		this.vdpCanvas = canvas;
 		
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
