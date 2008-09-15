@@ -44,6 +44,8 @@ struct FileInfo {
 #define SYM_HASH_SIZE 1023
 
 struct SymbolSection {
+    ELF_File * mFile;
+    unsigned mIndex;
     char * mStrPool;
     size_t mStrPoolSize;
     unsigned sym_cnt;
@@ -84,6 +86,8 @@ struct ObjectInfo {
     U1_T mOrdering;
     U2_T mEncoding;
     U8_T mSize;
+    U4_T mLowBound;
+    U4_T mLength;
     ObjectInfo * mType;
     ObjectInfo * mSpecification;
     CompUnit * mCompUnit;
@@ -137,7 +141,6 @@ struct CompUnit {
 };
 
 #define SYM_CACHE_MAGIC         0x84625490
-#define TYPE_HASH_SIZE          (0x10000-1)
 
 struct DWARFCache {
     int magic;
@@ -161,9 +164,6 @@ struct DWARFCache {
 extern DWARFCache * get_dwarf_cache(ELF_File * file);
 extern unsigned calc_symbol_name_hash(char * s);
 extern void load_line_numbers(DWARFCache * cache, CompUnit * unit);
-
-#ifndef NDEBUG
-extern void dump_dwarf_data(char * file_name);
-#endif
+extern ObjectInfo * find_object(DWARFCache * cache, U8_T ID);
 
 #endif

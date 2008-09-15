@@ -26,6 +26,9 @@
 
 #define ERR_SYSTEM  STD_ERR_BASE
 
+static char * exception_msg;
+static int exception_no;
+
 #ifdef WIN32
 
 static DWORD errno_win32 = 0;
@@ -78,6 +81,7 @@ static char * system_strerror(void) {
 #endif
 
 char * errno_to_str(int err) {
+    static char buf[256];
     switch (err) {
     case ERR_ALREADY_STOPPED:
         return "Already stopped";
@@ -125,9 +129,28 @@ char * errno_to_str(int err) {
         return "Invalid data size";
     case ERR_SYSTEM:
         return system_strerror();
+    case ERR_EXCEPTION:
+        snprintf(buf, sizeof(buf), "%s: %s", exception_msg, errno_to_str(exception_no));
+        return buf;
     default:
         return strerror(err);
     }
+}
+
+void set_exception_errno(int no, char * msg) {
+    if (msg == NULL) {
+        errno = no;
+    }
+    else {
+        errno = ERR_EXCEPTION;
+        exception_no = no;
+        exception_msg = msg;
+    }
+}
+
+int get_exception_errno(void) {
+    if (errno == ERR_EXCEPTION) return exception_no;
+    return errno;
 }
 
 #ifdef NDEBUG

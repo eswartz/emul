@@ -21,8 +21,10 @@
 
 #include "protocol.h"
 #include "context.h"
+#include "symbols.h"
 
 struct Value {
+    Symbol type;
     int type_class;
     size_t size;
     void * value;
@@ -37,8 +39,6 @@ extern int evaluate_expression(Context * ctx, int frame, char * s, int load, Val
 extern int value_to_boolean(Value * v);
 
 extern ContextAddress value_to_address(Value * v);
-
-extern char * get_expression_error_msg(void);
 
 extern void string_value(Value * v, char * str);
 

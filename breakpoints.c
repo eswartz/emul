@@ -484,7 +484,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         Value v;
         if (evaluate_expression(NULL, STACK_NO_FRAME, bp->address, 1, &v) < 0) {
             if (errno != ERR_INV_CONTEXT) {
-                address_expression_error(bp, get_expression_error_msg());
+                address_expression_error(bp, "Invalid BP address");
                 trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
                 return;
             }
@@ -527,7 +527,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
             if (bp->address != NULL) {
                 Value v;
                 if (evaluate_expression(ctx, STACK_NO_FRAME, bp->address, 1, &v) < 0) {
-                    address_expression_error(bp, get_expression_error_msg());
+                    address_expression_error(bp, "Invalid BP address");
                     if (bp->error != ERR_SYM_NOT_FOUND) {
                         trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
                     }
@@ -1301,7 +1301,7 @@ int evaluate_breakpoint_condition(Context * ctx) {
         if (bp->condition != NULL) {
             Value v;
             if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, 1, &v) < 0) {
-                trace(LOG_ALWAYS, "%s: %s", get_expression_error_msg(), bp->condition);
+                trace(LOG_ALWAYS, "%s: %s", errno_to_str(errno), bp->condition);
                 return 1;
             }
             if (!value_to_boolean(&v)) continue;

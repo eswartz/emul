@@ -104,11 +104,6 @@ extern char * context_suspend_reason(Context * ctx);
 extern char * pid2id(pid_t pid, pid_t parent);
 
 /*
- * Convert Context to TCF Context ID
- */
-extern char * ctx2id(Context * ctx);
-
-/*
  * Get context thread ID
  */
 extern char * thread_id(Context * ctx);

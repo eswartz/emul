@@ -46,11 +46,15 @@
 #define ERR_INV_DWARF           (STD_ERR_BASE + 21)
 #define ERR_SYM_NOT_FOUND       (STD_ERR_BASE + 22)
 #define ERR_UNSUPPORTED         (STD_ERR_BASE + 23)
- 
+#define ERR_EXCEPTION           (STD_ERR_BASE + 24)
+
 /*
  * Convert error code to human readable string
  */
 extern char * errno_to_str(int error);
+
+extern void set_exception_errno(int no, char * msg);
+extern int get_exception_errno(void);
 
 /*
  * check_error(): Check error code.

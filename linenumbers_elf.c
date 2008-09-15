@@ -276,7 +276,6 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineT
 
 static void command_map_to_source(char * token, Channel * c) {
     int err = 0;
-    char * err_msg = NULL;
     char id[256];
     ContextAddress addr0;
     ContextAddress addr1;
@@ -315,7 +314,6 @@ static void command_map_to_source(char * token, Channel * c) {
             }
             else {
                 err = trap.error;
-                err_msg = trap.msg;
                 break;
             }
             file = elf_list_next(ctx);
@@ -326,7 +324,7 @@ static void command_map_to_source(char * token, Channel * c) {
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
-    write_err_msg(&c->out, err, err_msg);
+    write_errno(&c->out, err);
     if (err != 0) {
         write_stringz(&c->out, "null");
     }
@@ -349,7 +347,6 @@ static void command_map_to_source(char * token, Channel * c) {
             }
             else {
                 err = trap.error;
-                err_msg = trap.msg;
             }
             if (cache == cache_last) break;
             cache = cache->mLineInfoNext;

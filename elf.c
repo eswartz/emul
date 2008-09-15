@@ -183,7 +183,7 @@ ELF_File * elf_open(char * file_name) {
             else {
                 error = ERR_INV_FORMAT;
             }
-            swap = (*(unsigned *)hdr.e_ident & 0xff == ELFMAG0) != file->big_endian;
+            swap = ((*(unsigned *)hdr.e_ident & 0xff) != ELFMAG0) != file->big_endian;
         }
         if (error != 0) {
             /* Nothing */
@@ -239,9 +239,9 @@ ELF_File * elf_open(char * file_name) {
         if (error == 0) {
             ELF_Section * str = file->sections[hdr.e_shstrndx];
             if (str != NULL) {
-                file->str_pool = loc_alloc(str->size);
+                file->str_pool = loc_alloc((size_t)str->size);
                 if (lseek(file->fd, str->offset, SEEK_SET) == (off_t)-1) error = errno;
-                if (error == 0 && read(file->fd, file->str_pool, str->size) < 0) error = errno;
+                if (error == 0 && read(file->fd, file->str_pool, (size_t)str->size) < 0) error = errno;
                 if (error == 0) {
                     unsigned i;
                     for (i = 1; i < file->section_cnt; i++) {

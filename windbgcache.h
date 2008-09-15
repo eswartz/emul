@@ -184,6 +184,19 @@ enum BasicType {
    btHresult  = 31
 };
 
+enum DataKind { 
+   DataIsUnknown,
+   DataIsLocal,
+   DataIsStaticLocal,
+   DataIsParam,
+   DataIsObjectPtr,
+   DataIsFileStatic,
+   DataIsGlobal,
+   DataIsMember,
+   DataIsStaticMember,
+   DataIsConstant
+};
+
 #define SymInitialize LocSymInitialize
 #define SymSetOptions LocSymSetOptions
 #define SymGetLineFromName LocSymGetLineFromName

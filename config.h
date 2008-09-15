@@ -91,7 +91,7 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
     ini_stack_trace_service(proto, bcg);
 #endif
 #if SERVICE_Symbols
-    ini_symbols_service();
+    ini_symbols_service(proto);
 #endif
 #if SERVICE_LineNumbers
     ini_line_numbers_service(proto);

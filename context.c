@@ -141,15 +141,6 @@ char * pid2id(pid_t pid, pid_t parent) {
     return p;
 }
 
-char * ctx2id(Context * ctx) {
-    /* For now this functions should only be used for processes, but
-     * once linux have a context for the process and a separate
-     * context for the initial thread, then this function can be used
-     * to get the context-id for any context. */
-    assert(ctx->parent == NULL);
-    return pid2id(ctx->pid, 0);
-}
-
 char * thread_id(Context * ctx) {
     assert(context_has_state(ctx));
     if (ctx->parent == NULL) return pid2id(ctx->pid, ctx->pid);

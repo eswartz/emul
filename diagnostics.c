@@ -72,7 +72,7 @@ static void run_test_done(int error, Context * ctx, void * arg) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, data->token);
         write_errno(&c->out, error);
-        json_write_string(&c->out, ctx ? ctx2id(ctx) : NULL);
+        json_write_string(&c->out, ctx ? container_id(ctx) : NULL);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
         flush_stream(&c->out);

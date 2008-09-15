@@ -69,6 +69,7 @@ void exception(int error) {
             error, errno_to_str(error));
         exit(error);
     }
+    set_exception_errno(error, NULL);
     longjmp(chain->env, error);
 }
 
@@ -82,6 +83,7 @@ void str_exception(int error, char * msg) {
     }
     strncpy(chain->msg, msg, sizeof(chain->msg));
     chain->msg[sizeof(chain->msg)-1] = 0;
+    set_exception_errno(error, msg);
     longjmp(chain->env, error);
 }
 

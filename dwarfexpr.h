@@ -21,7 +21,7 @@
 #include "context.h"
 #include "dwarfcache.h"
 
-extern U8_T dwarf_expression_addr(Context * ctx, int frame, ObjectInfo * obj);
+extern int dwarf_expression_addr(Context * ctx, int frame, U8_T base, ObjectInfo * obj, U8_T * address);
 extern int dwarf_expression_read(Context * ctx, int frame, ObjectInfo * obj, U1_T * buf, size_t size);
 extern int dwarf_expression_write(Context * ctx, int frame, ObjectInfo * obj, U1_T * buf, size_t size);
 

@@ -31,9 +31,10 @@
 #include "exceptions.h"
 #include "myalloc.h"
 
+#define OBJ_HASH_SIZE          (0x10000-1)
+
 static DWARFCache * sCache;
 static ELF_Section * sDebugSection;
-static ObjectInfo ** sObjectHash;
 static ObjectInfo * sObjectList;
 static ObjectInfo * sObjectListTail;
 static Elf_Sym ** sSymbolHash;
@@ -138,20 +139,17 @@ static CompUnit * find_comp_unit(U8_T ID) {
 }
 
 static ObjectInfo * find_object_info(U8_T ID) {
-    U4_T Hash = (U4_T)ID % TYPE_HASH_SIZE;
-    ObjectInfo * Info = sObjectHash[Hash];
-
-    while (Info != NULL) {
-        if (Info->mID == ID) return Info;
-        Info = Info->mHashNext;
+    ObjectInfo * Info = find_object(sCache, ID);
+    if (Info == NULL) {
+        U4_T Hash = (U4_T)ID % OBJ_HASH_SIZE;
+        Info = (ObjectInfo *)loc_alloc_zero(sizeof(ObjectInfo));
+        Info->mHashNext = sCache->mObjectHash[Hash];
+        sCache->mObjectHash[Hash] = Info;
+        if (sObjectList == NULL) sObjectList = Info;
+        else sObjectListTail->mListNext = Info;
+        sObjectListTail = Info;
+        Info->mID = ID;
     }
-    Info = (ObjectInfo *)loc_alloc_zero(sizeof(ObjectInfo));
-    Info->mHashNext = sObjectHash[Hash];
-    sObjectHash[Hash] = Info;
-    if (sObjectList == NULL) sObjectList = Info;
-    else sObjectListTail->mListNext = Info;
-    sObjectListTail = Info;
-    Info->mID = ID;
     return Info;
 }
 
@@ -305,6 +303,9 @@ static void read_tag_com_unit(U2_T Attr, U2_T Form) {
 
 static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
     static ObjectInfo * Info;
+    static U4_T UpperBound;
+    static int LengthOK;
+    static int UpperBoundOK;
     static U8_T Sibling;
 
     switch (Attr) {
@@ -314,10 +315,15 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
             Info->mTag = Tag;
             Info->mCompUnit = sCompUnit;
             Info->mParent = sParentObject;
+            /* TODO: Default AT_lower_bound value is language dependand */
+            UpperBound = 0;
+            LengthOK = 0;
+            UpperBoundOK = 0;
             Sibling = 0;
         }
         else {
             find_symbol_entry(Info);
+            if (!LengthOK && UpperBoundOK) Info->mLength = UpperBound - Info->mLowBound + 1;
             if (Tag == TAG_enumerator && Info->mType == NULL) Info->mType = sParentObject;
             if (sPrevSibling != NULL) sPrevSibling->mSibling = Info;
             else if (sParentObject != NULL) sParentObject->mChildren = Info;
@@ -332,6 +338,13 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
                 while (dio_GetPos() < SiblingPos) dio_ReadEntry(entry_callback);
                 sParentObject = Parent;
                 sPrevSibling = PrevSibling;
+            }
+            if (Tag == TAG_enumeration_type && Info->mLength == 0 && Info->mChildren != NULL) {
+                ObjectInfo * Obj = Info->mChildren;
+                while (Obj != NULL) {
+                    Info->mLength++;
+                    Obj = Obj->mSibling;
+                }
             }
         }
         break;
@@ -407,6 +420,7 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
         Info->mHighPC = dio_gFormRef;
         break;
     case AT_location:
+    case AT_data_member_location:
         dio_ChkBlock(Form, &Info->mLocation.mAddr, &Info->mLocation.mSize);
         Info->mLocation.mList = Form == FORM_DATA4 || Form == FORM_DATA8;
         break;
@@ -426,6 +440,20 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
     case AT_name:
         dio_ChkString(Form);
         Info->mName = dio_gFormDataAddr;
+        break;
+    case AT_lower_bound:
+        dio_ChkData(Form);
+        Info->mLowBound = (U4_T)dio_gFormData;
+        break;
+    case AT_upper_bound:
+        dio_ChkData(Form);
+        UpperBound = (U4_T)dio_gFormData;
+        UpperBoundOK = 1;
+        break;
+    case AT_count:
+        dio_ChkData(Form);
+        Info->mLength = (U4_T)dio_gFormData;
+        LengthOK = 1;
         break;
     case AT_decl_file:
         dio_ChkData(Form);
@@ -481,7 +509,8 @@ static void load_symbol_tables(void) {
                 sCache->sym_sections_len *= 8;
                 sCache->sym_sections = loc_realloc(sCache->sym_sections, sizeof(SymbolSection *) * sCache->sym_sections_len);
             }
-            sCache->sym_sections[sCache->sym_sections_cnt++] = tbl;
+            tbl->mIndex = sCache->sym_sections_cnt++;
+            sCache->sym_sections[tbl->mIndex] = tbl;
             if (sym_sec->link >= File->section_cnt || (str_sec = File->sections[sym_sec->link]) == NULL) {
                 exception(EINVAL);
             }
@@ -489,6 +518,7 @@ static void load_symbol_tables(void) {
             if (elf_load(str_sec) < 0) exception(errno);
             sym_data = sym_sec->data;
             str_data = str_sec->data;
+            tbl->mFile = File;
             tbl->mStrPool = (char *)str_data;
             tbl->mStrPoolSize = (size_t)str_sec->size;
             tbl->mSymPool = (Elf_Sym *)sym_data;
@@ -545,7 +575,6 @@ static void load_debug_sections(void) {
     ELF_File * File = sCache->mFile;
     ObjectInfo * Info;
 
-    sObjectHash = sCache->mObjectHash;
     sSymbolHash = sCache->mSymbolHash;
     sSymbolTableLen = sCache->mSymbolTableLen;
     sObjectList = NULL;
@@ -596,8 +625,11 @@ static void load_debug_sections(void) {
         }
         Info = Info->mListNext;
     }
+    if (sObjectList == NULL) {
+        loc_free(sCache->mObjectHash);
+        sCache->mObjectHash = NULL;
+    }
     sCache->mObjectList = sObjectList;
-    sObjectHash = NULL;
     sSymbolHash = NULL;
     sSymbolTableLen = 0;
     sObjectList = NULL;
@@ -659,7 +691,7 @@ DWARFCache * get_dwarf_cache(ELF_File * File) {
             sCache = (DWARFCache *)(File->dwarf_dt_cache = loc_alloc_zero(sizeof(DWARFCache)));
             sCache->magic = SYM_CACHE_MAGIC;
             sCache->mFile = File;
-            sCache->mObjectHash = loc_alloc_zero(sizeof(ObjectInfo *) * TYPE_HASH_SIZE);
+            sCache->mObjectHash = loc_alloc_zero(sizeof(ObjectInfo *) * OBJ_HASH_SIZE);
             load_symbol_tables();
             load_debug_sections();
             sCache = NULL;
@@ -870,125 +902,15 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
     }
 }
 
+ObjectInfo * find_object(DWARFCache * Cache, U8_T ID) {
+    U4_T Hash = (U4_T)ID % OBJ_HASH_SIZE;
+    ObjectInfo * Info = Cache->mObjectHash[Hash];
 
-#ifndef  NDEBUG
-
-static char * tag2str(ObjectInfo * Info) {
-    static char str[64];
-    switch (Info->mTag) {
-    case TAG_padding                : return "padding";
-    case TAG_array_type             : return "array type";
-    case TAG_class_type             : return "class type";
-    case TAG_entry_point            : return "entry point";
-    case TAG_enumeration_type       : return "enumeration type";
-    case TAG_formal_parameter       : return "formal parameter";
-    case TAG_global_subroutine      : return "global subroutine";
-    case TAG_global_variable        : return "global variable";
-    case TAG_imported_declaration   : return "imported declaration";
-    case TAG_label                  : return "label";
-    case TAG_lexical_block          : return "lexical block";
-    case TAG_local_variable         : return "local variable";
-    case TAG_member                 : return "member";
-    case TAG_pointer_type           : return "pointer type";
-    case TAG_reference_type         : return "reference type";
-    case TAG_compile_unit           : 
-        if (Info->mCompUnit->mVersion < 2) return "compile unit";
-        return "source file";
-    case TAG_string_type            : return "string type";
-    case TAG_structure_type         : return "structure type";
-    case TAG_subroutine             : return "subroutine";
-    case TAG_subroutine_type        : return "subroutine type";
-    case TAG_typedef                : return "typedef";
-    case TAG_union_type             : return "union type";
-    case TAG_unspecified_parameters : return "unspecified parameters";
-    case TAG_variant                : return "variant";
-    case TAG_common_block           : return "common block";
-    case TAG_common_inclusion       : return "common inclusion";
-    case TAG_inheritance            : return "inheritance";
-    case TAG_inlined_subroutine     : return "inlined subroutine";
-    case TAG_module                 : return "module";
-    case TAG_ptr_to_member_type     : return "ptr to member type";
-    case TAG_set_type               : return "set type";
-    case TAG_subrange_type          : return "subrange type";
-    case TAG_with_stmt              : return "with stmt";
-    case TAG_access_declaration     : return "access declaration";
-    case TAG_base_type              : return "base type";
-    case TAG_catch_block            : return "catch block";
-    case TAG_const_type             : return "const type";
-    case TAG_constant               : return "constant";
-    case TAG_enumerator             : return "enumerator";
-    case TAG_file_type              : return "file type";
-    case TAG_friend                 : return "friend";
-    case TAG_namelist               : return "namelist";
-    case TAG_namelist_item          : return "namelist item";
-    case TAG_packed_type            : return "packed type";
-    case TAG_subprogram             : return "subprogram";
-    case TAG_template_type_param    : return "template type param";
-    case TAG_template_value_param   : return "template value param";
-    case TAG_thrown_type            : return "thrown type";
-    case TAG_try_block              : return "try block";
-    case TAG_variant_part           : return "variant part";
-    case TAG_variable               : return "variable";
-    case TAG_volatile_type          : return "volatile type";
-    case TAG_dwarf_procedure        : return "dwarf procedure";
-    case TAG_restrict_type          : return "restrict type";
-    case TAG_interface_type         : return "interface type";
-    case TAG_namespace              : return "namespace";
-    case TAG_imported_module        : return "imported module";
-    case TAG_unspecified_type       : return "unspecified type";
-    case TAG_partial_unit           : return "partial unit";
-    case TAG_imported_unit          : return "imported unit";
-    case TAG_mutable_type           : return "mutable type";
-    case TAG_condition              : return "condition";
-    case TAG_shared_type            : return "shared type";
-    case TAG_wrs_thrown_object      : return "wrs thrown object";
-    case TAG_wrs_throw_breakpoint   : return "wrs throw breakpoint";
-    case TAG_wrs_catch_breakpoint   : return "wrs catch breakpoint";
-    }
-    if (Info->mTag >= TAG_lo_user)
-        sprintf(str, "user tag 0x%04X", Info->mTag);
-    else
-        sprintf(str, "undefined tag 0x%04X", Info->mTag);
-    return str;
-}
-
-static void dump_object_list(int Level, ObjectInfo * Info);
-
-static void dump_object_info(int Level, ObjectInfo * Info) {
-    char Pad[128];
-    int i = 0;
-    while (i < sizeof(Pad) - 1 && i < Level * 2) Pad[i++] = ' ';
-    Pad[i] = 0;
-    printf("%s%016llx %s\n", Pad, Info->mID, tag2str(Info));
-    if (Info->mName != NULL) printf("%s  Name: %s\n", Pad, Info->mName);
-    if (Info->mDeclFile >= 1 && Info->mDeclFile <= Info->mCompUnit->mFilesCnt) {
-        FileInfo * File = Info->mCompUnit->mFiles + (Info->mDeclFile - 1);
-        printf("%s  Declaration: %s:%s:%d\n", Pad, File->mDir, File->mName, Info->mDeclLine);
-    }
-    dump_object_list(Level + 1, Info->mChildren);
-}
-
-static void dump_object_list(int Level, ObjectInfo * Info) {
     while (Info != NULL) {
-        dump_object_info(Level, Info);
-        Info = Info->mSibling;
+        if (Info->mID == ID) return Info;
+        Info = Info->mHashNext;
     }
+    return NULL;
 }
-
-void dump_dwarf_data(char * file_name) {
-    unsigned i;
-    DWARFCache * Cache;
-    ELF_File * File = elf_open(file_name);
-    if (File == NULL) exception(errno);
-    Cache = get_dwarf_cache(File);
-    for (i = 0; i < Cache->mCompUnitsCnt; i++) {
-        CompUnit * Unit = Cache->mCompUnits[i];
-        printf("Unit 0x%08x..0x%08x\n", Unit->mLowPC, Unit->mHighPC);
-        dump_object_list(1, Unit->mChildren);
-    }
-    elf_close(File);
-}
-
-#endif
 
 #endif

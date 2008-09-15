@@ -573,6 +573,8 @@ char * json_skip_object(InputStream * inp) {
 }
 
 static void write_error_code(OutputStream * out, int err, int code) {
+    /* code - TCF error code */
+    /* err - TCF alt code - OS specific error code */
     struct timespec timenow;
 
     if (clock_gettime(CLOCK_REALTIME, &timenow) == 0) {
@@ -620,42 +622,16 @@ static void write_error_code(OutputStream * out, int err, int code) {
 void write_errno(OutputStream * out, int err) {
     if (err != 0) {
         int code = ERR_OTHER - STD_ERR_BASE;
+        char * msg = errno_to_str(err);
 
         write_stream(out, '{');
-
+        if (err == ERR_EXCEPTION) err = get_exception_errno();
         if (err > STD_ERR_BASE) code = err - STD_ERR_BASE;
         write_error_code(out, err, code);
 
         json_write_string(out, "Format");
         write_stream(out, ':');
-        json_write_string(out, errno_to_str(err));
-
-        write_stream(out, '}');
-    }
-    write_stream(out, 0);
-}
-
-void write_err_msg(OutputStream * out, int err, char * msg) {
-    if (err != 0) {
-        char * str = NULL;
-        int code = ERR_OTHER - STD_ERR_BASE;
-
-        write_stream(out, '{');
-
-        if (err > STD_ERR_BASE) code = err - STD_ERR_BASE;
-        write_error_code(out, err, code);
-
-        json_write_string(out, "Format");
-        write_stream(out, ':');
-        write_stream(out, '"');
-        str = errno_to_str(err);
-        while (*str) json_write_char(out, *str++);
-        if (msg != NULL) {
-            write_stream(out, ':');
-            write_stream(out, ' ');
-            while (*msg) json_write_char(out, *msg++);
-        }
-        write_stream(out, '"');
+        json_write_string(out, msg);
 
         write_stream(out, '}');
     }

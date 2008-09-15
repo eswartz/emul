@@ -20,6 +20,7 @@
 #define D_symbols
 
 #include "context.h"
+#include "protocol.h"
 
 /*
  * Symbol information can change at any time as result of target background activities.
@@ -27,18 +28,13 @@
  * longer then one dispatch cycle.
  */
 
-typedef uns64 ModuleID;
-typedef uns64 SymbolID;
-
-typedef struct Symbol Symbol;
-
-struct Symbol {
+typedef struct Symbol {
     Context * ctx;
-    ModuleID module_id;
-    SymbolID symbol_id;
     int sym_class;
-};
+    char location[24];
+} Symbol;
 
+#define SYM_CLASS_UNKNOWN       0
 #define SYM_CLASS_VALUE         1   /* Symbol represents a constant value */
 #define SYM_CLASS_REFERENCE     2   /* Symbol is an address of an object (variable) in memory */
 #define SYM_CLASS_FUNCTION      3   /* Symbol is an address of a function */
@@ -73,6 +69,18 @@ extern int find_symbol(Context * ctx, int frame, char * name, Symbol * sym);
  */
 extern int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack *, void * args);
 
+/*
+ * Get (relatively) permanent symbol ID that can be used across dispatch cycles.
+ */
+extern char * symbol2id(const Symbol * sym);
+
+/*
+ * Find symbol by symbol ID.
+ * On error, returns -1 and sets errno.
+ * On success returns 0.
+ */
+extern int id2symbol(char * id, Symbol * sym);
+
 
 /*************** Functions for retrieving symbol properties ***************************************/
 /*
@@ -80,6 +88,9 @@ extern int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack 
  * On error returns -1 and sets errno.
  * On success returns 0.
  */
+
+/* Get symbol type */
+extern int get_symbol_type(const Symbol * sym, Symbol * type);
 
 /* Get type class, see TYPE_CLASS_* */
 extern int get_symbol_type_class(const Symbol * sym, int * type_class);
@@ -91,22 +102,22 @@ extern int get_symbol_name(const Symbol * sym, char ** name);
 extern int get_symbol_size(const Symbol * sym, size_t * size);
 
 /* Get base type ID */
-extern int get_symbol_base_type(const Symbol * sym, SymbolID * base_type);
+extern int get_symbol_base_type(const Symbol * sym, Symbol * base_type);
 
 /* Get array index type ID */
-extern int get_symbol_index_type(const Symbol * sym, SymbolID * index_type);
+extern int get_symbol_index_type(const Symbol * sym, Symbol * index_type);
 
 /* Get array length (number of elements) */
 extern int get_symbol_length(const Symbol * sym, unsigned long * length);
 
-/* Get children type IDs (struct, union, class, function and enum) */
-extern int get_symbol_children(const Symbol * sym, SymbolID ** children);
+/* Get children type IDs (struct, union, class, function and enum), clients should call loc_free to dispose resul */
+extern int get_symbol_children(const Symbol * sym, Symbol ** children, int * count);
 
 /* Get offset in parent type (fields) */
 extern int get_symbol_offset(const Symbol * sym, unsigned long * offset);
 
-/* Get value (constant objects and enums) */
-extern int get_symbol_value(const Symbol * sym, size_t * size, void * value);
+/* Get value (constant objects and enums), clients should call loc_free to dispose result */
+extern int get_symbol_value(const Symbol * sym, void ** value, size_t * size);
 
 /* Get address (variables) */
 extern int get_symbol_address(const Symbol * sym, int frame, ContextAddress * address);
@@ -123,6 +134,6 @@ extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
 /*
  * Initialize symbol service.
  */
-extern void ini_symbols_service(void);
+extern void ini_symbols_service(Protocol * proto);
 
 #endif

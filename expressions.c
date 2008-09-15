@@ -68,7 +68,6 @@ static int text_len = 0;
 static int text_ch = 0;
 static int text_sy = 0;
 static Value text_val;
-static char text_error[256];
 
 static char str_pool[STR_POOL_SIZE];
 static int str_pool_cnt = 0;
@@ -102,9 +101,9 @@ void string_value(Value * v, char * str) {
 }
 
 static void error(int no, char * msg) {
-    snprintf(text_error, sizeof(text_error),
-        "Expression evaluation error: %s, text pos %d", msg, text_pos);
-    exception(no);
+    char buf[256];
+    snprintf(buf, sizeof(buf), "%s, text pos %d", msg, text_pos);
+    str_exception(no, buf);
 }
 
 static void next_ch(void) {
@@ -466,7 +465,7 @@ static void identifier(char * name, Value * v) {
     if (v == NULL) return;
     memset(v, 0, sizeof(Value));
     if (expression_context == NULL) {
-        error(ERR_INV_CONTEXT, "Unknown execution context");
+        exception(ERR_INV_CONTEXT);
     }
     if (strcmp(name, "$thread") == 0) {
         if (context_has_state(expression_context)) {
@@ -481,23 +480,29 @@ static void identifier(char * name, Value * v) {
     {
         Symbol sym;
         if (find_symbol(expression_context, expression_frame, name, &sym) < 0) {
-            error(errno, "Symbol not found");
+            error(errno, "Invalid identifier");
         }
         else {
-            char buf[256];
-            size_t size = sizeof(buf);
+            if (get_symbol_type(&sym, &v->type) < 0) {
+                error(errno, "Cannot retrieve symbol type");
+            }
             if (get_symbol_type_class(&sym, &v->type_class) < 0) {
                 error(errno, "Cannot retrieve symbol type class");
             }
             switch (sym.sym_class) {
             case SYM_CLASS_VALUE:
-                if (get_symbol_value(&sym, &size, buf) < 0) {
-                    error(errno, "Cannot retrieve symbol value");
+                {
+                    size_t size = 0;
+                    void * value = NULL;
+                    if (get_symbol_value(&sym, &value, &size) < 0) {
+                        error(errno, "Cannot retrieve symbol value");
+                    }
+                    v->size = size;
+                    v->value = alloc_str(v->size);
+                    v->remote = 0;
+                    memcpy(v->value, value, size);
+                    loc_free(value);
                 }
-                v->size = size;
-                v->value = alloc_str(v->size);
-                v->remote = 0;
-                memcpy(v->value, buf, size);
                 return;
             case SYM_CLASS_REFERENCE:
                 v->remote = 1;
@@ -506,14 +511,6 @@ static void identifier(char * name, Value * v) {
                 }
                 if (get_symbol_address(&sym, expression_frame, &v->address) < 0) {
                     error(errno, "Cannot retrieve symbol address");
-                }
-                if (v->type_class == TYPE_CLASS_ARRAY) {
-                    v->size = sizeof(ContextAddress);
-                    v->value = alloc_str(v->size);
-                    memcpy(v->value, &v->address, v->size);
-                    v->remote = 0;
-                    v->address = 0;
-                    v->type_class = TYPE_CLASS_POINTER;
                 }
                 return;
             case SYM_CLASS_FUNCTION:
@@ -541,44 +538,74 @@ static void load_value(Value * v) {
     void * value;
 
     if (!v->remote) return;
+    /*
+    if (v->type_class == TYPE_CLASS_ARRAY) {
+        v->size = sizeof(ContextAddress);
+        v->value = alloc_str(v->size);
+        memcpy(v->value, &v->address, v->size);
+        v->remote = 0;
+        v->address = 0;
+        v->type_class = TYPE_CLASS_POINTER;
+    }
+    */
     value = alloc_str(v->size);
     if (context_read_mem(expression_context, v->address, value, v->size) < 0) {
-        char msg[256];
-        int err = errno;
-        snprintf(msg, sizeof(msg), "Can't read variable value: %d %s", err, errno_to_str(err));
-        error(err, msg);
+        error(errno, "Can't read variable value");
     }
     check_breakpoints_on_memory_read(expression_context, v->address, value, v->size);
     v->value = value;
     v->remote = 0;
 }
 
-static int to_boolean(Value * v) {
-    if (v == NULL) return 0;
-
-    load_value(v);
-
-    switch (v->size)  {
-    case 1: return *(char *)v->value != 0;
-    case 2: return *(short *)v->value != 0;
-    case 4: return *(long *)v->value != 0;
-    case 8: return *(int64 *)v->value != 0;
+static int is_number(Value * v) {
+    switch (v->type_class) {
+    case TYPE_CLASS_INTEGER:
+    case TYPE_CLASS_CARDINAL:
+    case TYPE_CLASS_REAL:
+    case TYPE_CLASS_ENUMERATION:
+        return 1;
     }
+    return 0;
+}
 
-    error(ERR_INV_EXPRESSION, "Operation is not applicable for the value type");
+static int is_whole_number(Value * v) {
+    switch (v->type_class) {
+    case TYPE_CLASS_INTEGER:
+    case TYPE_CLASS_CARDINAL:
+    case TYPE_CLASS_ENUMERATION:
+        return 1;
+    }
     return 0;
 }
 
 static int64 to_int(Value * v) {
     if (v == NULL) return 0;
 
-    load_value(v);
+    if (is_number(v)) {
+        load_value(v);
 
-    switch (v->size)  {
-    case 1: return *(signed char *)v->value;
-    case 2: return *(short *)v->value;
-    case 4: return *(long *)v->value;
-    case 8: return *(int64 *)v->value;
+        if (v->type_class == TYPE_CLASS_REAL) {
+            switch (v->size)  {
+            case 4: return (int64)*(float *)v->value;
+            case 8: return (int64)*(double *)v->value;
+            }
+        }
+        else if (v->type_class == TYPE_CLASS_CARDINAL) {
+            switch (v->size)  {
+            case 1: return (int64)*(unsigned char *)v->value;
+            case 2: return (int64)*(unsigned short *)v->value;
+            case 4: return (int64)*(unsigned long *)v->value;
+            case 8: return (int64)*(uns64 *)v->value;
+            }
+        }
+        else {
+            switch (v->size)  {
+            case 1: return *(signed char *)v->value;
+            case 2: return *(short *)v->value;
+            case 4: return *(long *)v->value;
+            case 8: return *(int64 *)v->value;
+            }
+        }
     }
 
     error(ERR_INV_EXPRESSION, "Operation is not applicable for the value type");
@@ -588,17 +615,74 @@ static int64 to_int(Value * v) {
 static uns64 to_uns(Value * v) {
     if (v == NULL) return 0;
 
-    load_value(v);
+    if (is_number(v)) {
+        load_value(v);
     
-    switch (v->size)  {
-    case 1: return *(unsigned char *)v->value;
-    case 2: return *(unsigned short *)v->value;
-    case 4: return *(unsigned long *)v->value;
-    case 8: return *(uns64 *)v->value;
+        if (v->type_class == TYPE_CLASS_REAL) {
+            switch (v->size)  {
+            case 4: return (uns64)*(float *)v->value;
+            case 8: return (uns64)*(double *)v->value;
+            }
+        }
+        else if (v->type_class == TYPE_CLASS_CARDINAL) {
+            switch (v->size)  {
+            case 1: return *(unsigned char *)v->value;
+            case 2: return *(unsigned short *)v->value;
+            case 4: return *(unsigned long *)v->value;
+            case 8: return *(uns64 *)v->value;
+            }
+        }
+        else {
+            switch (v->size)  {
+            case 1: return (uns64)*(signed char *)v->value;
+            case 2: return (uns64)*(short *)v->value;
+            case 4: return (uns64)*(long *)v->value;
+            case 8: return (uns64)*(int64 *)v->value;
+            }
+        }
     }
 
     error(ERR_INV_EXPRESSION, "Operation is not applicable for the value type");
     return 0;
+}
+
+static double to_double(Value * v) {
+    if (v == NULL) return 0;
+
+    if (is_number(v)) {
+        load_value(v);
+    
+        if (v->type_class == TYPE_CLASS_REAL) {
+            switch (v->size)  {
+            case 4: return *(float *)v->value;
+            case 8: return *(double *)v->value;
+            }
+        }
+        else if (v->type_class == TYPE_CLASS_CARDINAL) {
+            switch (v->size)  {
+            case 1: return (double)*(unsigned char *)v->value;
+            case 2: return (double)*(unsigned short *)v->value;
+            case 4: return (double)*(unsigned long *)v->value;
+            case 8: return (double)*(uns64 *)v->value;
+            }
+        }
+        else {
+            switch (v->size)  {
+            case 1: return (double)*(signed char *)v->value;
+            case 2: return (double)*(short *)v->value;
+            case 4: return (double)*(long *)v->value;
+            case 8: return (double)*(int64 *)v->value;
+            }
+        }
+    }
+
+    error(ERR_INV_EXPRESSION, "Operation is not applicable for the value type");
+    return 0;
+}
+
+static int to_boolean(Value * v) {
+    if (v == NULL) return 0;
+    return to_int(v) != 0;
 }
 
 static void expression(Value * v);
@@ -623,14 +707,245 @@ static void primary_expression(Value * v) {
     }
 }
 
+static void op_deref(Value * v) {
+    if (v->type_class != TYPE_CLASS_ARRAY && v->type_class != TYPE_CLASS_POINTER) {
+        error(ERR_INV_EXPRESSION, "Array or pointer type expected");
+    }
+    if (v->type_class == TYPE_CLASS_POINTER) {
+        load_value(v);
+        switch (v->size)  {
+        case 2: v->address = (ContextAddress)*(unsigned short *)v->value; break;
+        case 4: v->address = (ContextAddress)*(unsigned long *)v->value; break;
+        case 8: v->address = (ContextAddress)*(uns64 *)v->value; break;
+        default: error(ERR_INV_EXPRESSION, "Invalid value size");
+        }
+    }
+    if (get_symbol_base_type(&v->type, &v->type) < 0) {
+        error(errno, "Cannot retrieve symbol type");
+    }
+    if (get_symbol_type_class(&v->type, &v->type_class) < 0) {
+        error(errno, "Cannot retrieve symbol type class");
+    }
+    if (get_symbol_size(&v->type, &v->size) < 0) {
+        error(errno, "Cannot retrieve symbol size");
+    }
+    v->value = NULL;
+    v->remote = 1;
+}
+
+static void op_field(Value * v) {
+    char * name = text_val.value;
+    if (text_sy != SY_ID) {
+        error(ERR_INV_EXPRESSION, "Field name expected");
+    }
+    next_sy();
+    if (v->type_class != TYPE_CLASS_COMPOSITE) {
+        error(ERR_INV_EXPRESSION, "Composite type expected");
+    }
+#if SERVICE_Symbols
+    {
+        Symbol sym;
+        size_t size = 0;
+        unsigned long offs = 0;
+        Symbol * children = NULL;
+        int count = 0;
+        int i;
+
+        if (get_symbol_children(&v->type, &children, &count) < 0) {
+            error(errno, "Cannot retrieve field list");
+        }
+        for (i = 0; i < count; i++) {
+            char * s = NULL;
+            if (get_symbol_name(children + i, &s) < 0) {
+                error(errno, "Cannot retrieve field name");
+            }
+            if (s == NULL) continue;
+            if (strcmp(s, name) == 0) {
+                loc_free(s);
+                sym = children[i];
+                break;
+            }
+            loc_free(s);
+        }
+        loc_free(children);
+        if (i == count) {
+            error(ERR_SYM_NOT_FOUND, "Symbol not found");
+        }
+        if (sym.sym_class != SYM_CLASS_REFERENCE) {
+            error(ERR_UNSUPPORTED, "Invalid symbol class");
+        }
+        if (get_symbol_size(&sym, &size) < 0) {
+            error(errno, "Cannot retrieve field size");
+        }
+        if (get_symbol_offset(&sym, &offs) < 0) {
+            error(errno, "Cannot retrieve field offset");
+        }
+        if (offs + size > v->size) {
+            error(errno, "Invalid field offset and/or size");
+        }
+        if (v->remote) {
+            v->address += offs;
+        }
+        else {
+            v->value = (char *)v->value + offs;
+        }
+        v->size = size;
+        if (get_symbol_type(&sym, &v->type) < 0) {
+            error(errno, "Cannot retrieve symbol type");
+        }
+        if (get_symbol_type_class(&sym, &v->type_class) < 0) {
+            error(errno, "Cannot retrieve symbol type class");
+        }
+    }
+#else
+    error(ERR_UNSUPPORTED, "Symbols service not available");
+#endif
+}
+
+static void op_index(Value * v) {
+#if SERVICE_Symbols
+    Value i;
+    unsigned offs = 0;
+    size_t size = 0;
+    Symbol type;
+
+    if (v->type_class != TYPE_CLASS_ARRAY && v->type_class != TYPE_CLASS_POINTER) {
+        error(ERR_INV_EXPRESSION, "Array or pointer expected");
+    }
+    if (v->type_class == TYPE_CLASS_POINTER) {
+        load_value(v);
+        switch (v->size)  {
+        case 2: v->address = (ContextAddress)*(unsigned short *)v->value; break;
+        case 4: v->address = (ContextAddress)*(unsigned long *)v->value; break;
+        case 8: v->address = (ContextAddress)*(uns64 *)v->value; break;
+        default: error(ERR_INV_EXPRESSION, "Invalid value size");
+        }
+    }
+    if (get_symbol_base_type(&v->type, &type) < 0) {
+        error(errno, "Cannot get array element type");
+    }
+    if (get_symbol_size(&type, &size) < 0) {
+        error(errno, "Cannot get array element type");
+    }
+    expression(&i);
+    /* TODO: array lowest bound */
+    offs = (unsigned)to_uns(&i) * size;
+    if (v->type_class == TYPE_CLASS_ARRAY && offs + size > v->size) {
+        error(ERR_INV_EXPRESSION, "Invalid index");
+    }
+    if (v->remote) {
+        v->address += offs;
+    }
+    else {
+        v->value = (char *)v->value + offs;
+    }
+    v->size = size;
+    v->type = type;
+    if (get_symbol_type_class(&type, &v->type_class) < 0) {
+        error(errno, "Cannot retrieve symbol type class");
+    }
+#else
+    error(ERR_UNSUPPORTED, "Symbols service not available");
+#endif
+}
+
 static void postfix_expression(Value * v) {
-    /* TODO: postfix_expression() */
     primary_expression(v);
+    while (1) {
+        if (text_sy == '.') {
+            next_sy();
+            op_field(v);
+        }
+        else if (text_sy == '[') {
+            next_sy();
+            op_index(v);
+            if (text_sy != ']') {
+                error(ERR_INV_EXPRESSION, "']' expected");
+            }
+            next_sy();
+        }
+        else if (text_sy == SY_REF) {
+            next_sy();
+            op_deref(v);
+            op_field(v);
+        }
+        else {
+            break;
+        }
+    }
 }
 
 static void unary_expression(Value * v) {
-    /* TODO: unary_expression() */
-    postfix_expression(v);
+    switch (text_sy) {
+    case '*':
+        next_sy();
+        unary_expression(v);
+        op_deref(v);
+        break;
+    case '&':
+        next_sy();
+        unary_expression(v);
+        error(ERR_INV_EXPRESSION, "TODO");
+        break;
+    case '+':
+        next_sy();
+                unary_expression(v);
+        if (!is_number(v)) {
+            error(ERR_INV_EXPRESSION, "Numeric types expected");
+        }
+        break;
+    case '-':
+        next_sy();
+        unary_expression(v);
+        if (!is_number(v)) {
+            error(ERR_INV_EXPRESSION, "Numeric types expected");
+        }
+        else if (v->type_class == TYPE_CLASS_REAL) {
+            double * value = alloc_str(sizeof(double));
+            *value = -to_double(v);
+            v->type_class = TYPE_CLASS_REAL;
+            v->size = sizeof(double);
+            v->value = value;
+        }
+        else if (v->type_class != TYPE_CLASS_CARDINAL) {
+            int64 * value = alloc_str(sizeof(int64));
+            *value = -to_int(v);
+            v->type_class = TYPE_CLASS_INTEGER;
+            v->size = sizeof(int64);
+            v->value = value;
+        }
+        break;
+    case '!':
+        next_sy();
+        unary_expression(v);
+        if (!is_whole_number(v)) {
+            error(ERR_INV_EXPRESSION, "Integral types expected");
+        }
+        else {
+            int * value = alloc_str(sizeof(int));
+            *value = !to_int(v);
+            v->type_class = TYPE_CLASS_INTEGER;
+            v->size = sizeof(int);
+            v->value = value;
+        }
+        break;
+    case '~':
+        next_sy();
+                unary_expression(v);
+        if (!is_whole_number(v)) {
+            error(ERR_INV_EXPRESSION, "Integral types expected");
+        }
+        else {
+            int64 * value = alloc_str(sizeof(int64));
+            *value = ~to_int(v);
+            v->size = sizeof(int64);
+            v->value = value;
+        }
+        break;
+    default:
+        postfix_expression(v);
+        break;
+    }
 }
 
 static void cast_expression(Value * v) {
@@ -646,32 +961,45 @@ static void multiplicative_expression(Value * v) {
         next_sy();
         cast_expression(v ? &x : NULL);
         if (v) {
-            uns64 * value = alloc_str(sizeof(uns64));
-            *value = 0;
-            if (v->type_class == TYPE_CLASS_ARRAY || x.type_class == TYPE_CLASS_ARRAY) {
-                error(ERR_INV_EXPRESSION, "Operation is not applicable to string");
+            if (!is_number(v) || !is_number(&x)) {
+                error(ERR_INV_EXPRESSION, "Numeric types expected");
             }
             if (sy != '*' && to_int(&x) == 0) {
                 error(ERR_INV_EXPRESSION, "Dividing by zero");
             }
-            if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
+            if (v->type_class == TYPE_CLASS_REAL || x.type_class == TYPE_CLASS_REAL) {
+                double * value = alloc_str(sizeof(double));
+                switch (sy) {
+                case '*': *value = to_double(v) * to_double(&x); break;
+                case '/': *value = to_double(v) / to_double(&x); break;
+                default: error(ERR_INV_EXPRESSION, "Invalid type");
+                }
+                v->type_class = TYPE_CLASS_REAL;
+                v->size = sizeof(double);
+                v->value = value;
+            }
+            else if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
+                uns64 * value = alloc_str(sizeof(uns64));
                 switch (sy) {
                 case '*': *value = to_uns(v) * to_uns(&x); break;
                 case '/': *value = to_uns(v) / to_uns(&x); break;
                 case '%': *value = to_uns(v) % to_uns(&x); break;
                 }
                 v->type_class = TYPE_CLASS_CARDINAL;
+                v->size = sizeof(uns64);
+                v->value = value;
             }
             else {
+                int64 * value = alloc_str(sizeof(int64));
                 switch (sy) {
                 case '*': *value = to_int(v) * to_int(&x); break;
                 case '/': *value = to_int(v) / to_int(&x); break;
                 case '%': *value = to_int(v) % to_int(&x); break;
                 }
                 v->type_class = TYPE_CLASS_INTEGER;
+                v->size = sizeof(int64);
+                v->value = value;
             }
-            v->size = sizeof(uns64);
-            v->value = value;
             v->remote = 0;
         }
     }
@@ -685,9 +1013,8 @@ static void additive_expression(Value * v) {
         next_sy();
         multiplicative_expression(v ? &x : NULL);
         if (v) {
-            if (v->type_class == TYPE_CLASS_ARRAY && x.type_class == TYPE_CLASS_ARRAY) {
+            if (sy == '+' && v->type_class == TYPE_CLASS_ARRAY && x.type_class == TYPE_CLASS_ARRAY) {
                 char * value;
-                if (sy != '+') error(ERR_INV_EXPRESSION, "Operation is not applicable to string");
                 load_value(v);
                 load_value(&x);
                 v->size = strlen((char *)v->value) + strlen((char *)x.value) + 1;
@@ -696,8 +1023,18 @@ static void additive_expression(Value * v) {
                 strcat(value, x.value);
                 v->value = value;
             }
-            else if (v->type_class == TYPE_CLASS_ARRAY || x.type_class == TYPE_CLASS_ARRAY) {
-                error(ERR_INV_EXPRESSION, "Operation is not applicable to string");
+            else if (!is_number(v) || !is_number(&x)) {
+                error(ERR_INV_EXPRESSION, "Numeric types expected");
+            }
+            else if (v->type_class == TYPE_CLASS_REAL || x.type_class == TYPE_CLASS_REAL) {
+                double * value = alloc_str(sizeof(double));
+                switch (sy) {
+                case '+': *value = to_double(v) + to_double(&x); break;
+                case '-': *value = to_double(v) - to_double(&x); break;
+                }
+                v->type_class = TYPE_CLASS_REAL;
+                v->size = sizeof(double);
+                v->value = value;
             }
             else if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
                 uns64 * value = alloc_str(sizeof(uns64));
@@ -733,10 +1070,10 @@ static void shift_expression(Value * v) {
         additive_expression(v ? &x : NULL);
         if (v) {
             uns64 * value = alloc_str(sizeof(uns64));
-            if (v->type_class == TYPE_CLASS_ARRAY || x.type_class == TYPE_CLASS_ARRAY) {
+            if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
-            if (x.type_class == TYPE_CLASS_INTEGER && to_int(&x) < 0) {
+            if (x.type_class != TYPE_CLASS_CARDINAL && to_int(&x) < 0) {
                 if (v->type_class == TYPE_CLASS_CARDINAL) {
                     switch (sy) {
                     case SY_SHL: *value = to_uns(v) >> -to_int(&x); break;
@@ -794,6 +1131,14 @@ static void relational_expression(Value * v) {
                 case SY_GEQ: *value = n >= 0; break;
                 }
             }
+            else if (v->type_class == TYPE_CLASS_REAL || x.type_class == TYPE_CLASS_REAL) {
+                switch (sy) {
+                case '<': *value = to_double(v) < to_double(&x); break;
+                case '>': *value = to_double(v) > to_double(&x); break;
+                case SY_LEQ: *value = to_double(v) <= to_double(&x); break;
+                case SY_GEQ: *value = to_double(v) >= to_double(&x); break;
+                }
+            }
             else if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
                 switch (sy) {
                 case '<': *value = to_uns(v) < to_uns(&x); break;
@@ -832,6 +1177,9 @@ static void equality_expression(Value * v) {
                 load_value(&x);
                 *value = strcmp((char *)v->value, (char *)x.value) == 0;
             }
+            else if (v->type_class == TYPE_CLASS_REAL || x.type_class == TYPE_CLASS_REAL) {
+                *value = to_double(v) == to_double(&x); break;
+            }
             else {
                 *value = to_int(v) == to_int(&x);
             }
@@ -852,6 +1200,9 @@ static void and_expression(Value * v) {
         equality_expression(v ? &x : NULL);
         if (v) {
             int64 * value = alloc_str(sizeof(int64));
+            if (!is_whole_number(v) || !is_whole_number(&x)) {
+                error(ERR_INV_EXPRESSION, "Integral types expected");
+            }
             *value = to_int(v) & to_int(&x);
             if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
                 v->type_class = TYPE_CLASS_CARDINAL;
@@ -874,6 +1225,9 @@ static void exclusive_or_expression(Value * v) {
         and_expression(v ? &x : NULL);
         if (v) {
             int64 * value = alloc_str(sizeof(int64));
+            if (!is_whole_number(v) || !is_whole_number(&x)) {
+                error(ERR_INV_EXPRESSION, "Integral types expected");
+            }
             *value = to_int(v) ^ to_int(&x);
             if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
                 v->type_class = TYPE_CLASS_CARDINAL;
@@ -896,6 +1250,9 @@ static void inclusive_or_expression(Value * v) {
         exclusive_or_expression(v ? &x : NULL);
         if (v) {
             int64 * value = alloc_str(sizeof(int64));
+            if (!is_whole_number(v) || !is_whole_number(&x)) {
+                error(ERR_INV_EXPRESSION, "Integral types expected");
+            }
             *value = to_int(v) | to_int(&x);
             if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
                 v->type_class = TYPE_CLASS_CARDINAL;
@@ -953,13 +1310,11 @@ static void expression(Value * v) {
 }
 
 int evaluate_expression(Context * ctx, int frame, char * s, int load, Value * v) {
-    int r = 0;
     Trap trap;
 
     expression_context = ctx;
     expression_frame = frame;
     if (set_trap(&trap)) {
-        text_error[0] = 0;
         str_pool_cnt = 0;
         while (str_alloc_list != NULL) {
             StringValue * str = str_alloc_list;
@@ -975,12 +1330,9 @@ int evaluate_expression(Context * ctx, int frame, char * s, int load, Value * v)
         if (text_sy != 0) error(ERR_INV_EXPRESSION, "Illegal characters at the end of expression");
         if (load) load_value(v);
         clear_trap(&trap);
+        return 0;
     }
-    else {
-        errno = trap.error;
-        r = -1;
-    }
-    return r;
+    return -1;
 }
 
 int value_to_boolean(Value * v) {
@@ -1003,11 +1355,6 @@ ContextAddress value_to_address(Value * v) {
         clear_trap(&trap);
     }
     return r;
-}
-
-char * get_expression_error_msg(void) {
-    if (text_error[0] == 0) return NULL;
-    return text_error;
 }
 
 #if SERVICE_Expressions
@@ -1119,20 +1466,12 @@ static void write_context(OutputStream * out, char * id, char * parent, char * n
     write_stream(out, ':');
     json_write_string(out, parent);
 
-    if (name) {
-        write_stream(out, ',');
-
-        json_write_string(out, "Name");
-        write_stream(out, ':');
-        json_write_string(out, name);
-    }
-
-    if (expr) {
+    if (expr || name) {
         write_stream(out, ',');
 
         json_write_string(out, "Expression");
         write_stream(out, ':');
-        json_write_string(out, expr->script);
+        json_write_string(out, expr ? expr->script : name);
     }
 
     write_stream(out, '}');
@@ -1314,7 +1653,6 @@ static void command_create(char * token, Channel * c) {
 
 static void command_evaluate(char * token, Channel * c) {
     int err = 0;
-    char * err_msg = NULL;
     char id[256];
     char parent[256];
     char name[MAX_SYM_NAME];
@@ -1328,10 +1666,7 @@ static void command_evaluate(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
-    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 1, &value) < 0) {
-        err = errno;
-        err_msg = get_expression_error_msg();
-    }
+    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 1, &value) < 0) err = errno;
     
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -1341,17 +1676,35 @@ static void command_evaluate(char * token, Channel * c) {
     else {
         JsonWriteBinaryState state;
 
+        assert(!value.remote);
         json_write_binary_start(&state, &c->out);
         json_write_binary_data(&state, value.value, value.size);
         json_write_binary_end(&state);
         write_stream(&c->out, 0);
     }
-    write_err_msg(&c->out, err, err_msg);
+    write_errno(&c->out, err);
     if (err) {
         write_stringz(&c->out, "null");
     }
     else {
+        int cnt = 0;
         write_stream(&c->out, '{');
+
+        if (value.type_class != TYPE_CLASS_UNKNOWN) {
+            json_write_string(&c->out, "Class");
+            write_stream(&c->out, ':');
+            json_write_long(&c->out, value.type_class);
+            cnt++;
+        }
+
+        if (value.type.ctx != NULL) {
+            if (cnt > 0) write_stream(&c->out, ',');
+            json_write_string(&c->out, "Type");
+            write_stream(&c->out, ':');
+            json_write_string(&c->out, symbol2id(&value.type));
+            cnt++;
+        }
+
         write_stream(&c->out, '}');
         write_stream(&c->out, 0);
     }
@@ -1361,7 +1714,6 @@ static void command_evaluate(char * token, Channel * c) {
 static void command_assign(char * token, Channel * c) {
     char id[256];
     int err = 0;
-    char * err_msg = NULL;
     char parent[256];
     char name[MAX_SYM_NAME];
     Context * ctx;
@@ -1379,10 +1731,7 @@ static void command_assign(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
 
     if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
-    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 0, &value) < 0) {
-        err = errno;
-        err_msg = get_expression_error_msg();
-    }
+    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 0, &value) < 0) err = errno;
 
     addr0 = value.address;
     size0 = value.size;
@@ -1413,7 +1762,7 @@ static void command_assign(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    write_err_msg(&c->out, err, err_msg);
+    write_errno(&c->out, errno);
     write_stream(&c->out, MARKER_EOM);
 }
 
