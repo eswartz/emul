@@ -64,7 +64,10 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     
     private void addToPool(Map<String,TCFNode> data) {
         assert !disposed;
-        node_pool.putAll(data);
+        for (TCFNode n : data.values()) {
+            assert data.get(n.id) == n;
+            node_pool.put(n.id, n);
+        }
         if (node_pool.size() > data.size() + pool_margin) {
             String[] arr = node_pool.keySet().toArray(new String[node_pool.size()]);
             for (String id : arr) {

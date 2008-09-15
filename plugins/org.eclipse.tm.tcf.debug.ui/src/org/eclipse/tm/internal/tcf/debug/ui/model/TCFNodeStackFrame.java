@@ -334,31 +334,15 @@ public class TCFNodeStackFrame extends TCFNode {
 
     @Override
     public boolean validateNode(Runnable done) {
-        stack_trace_context.validate();
-        children_regs.validate();
-        children_vars.validate();
-        children_exps.validate();
-        if (!stack_trace_context.isValid()) {
-            stack_trace_context.wait(done);
-            return false;
-        }
-        if (!children_regs.isValid()) {
-            children_regs.wait(done);
-            return false;
-        }
-        if (!children_vars.isValid()) {
-            children_vars.wait(done);
-            return false;
-        }
-        if (!children_exps.isValid()) {
-            children_exps.wait(done);
-            return false;
-        }
-        if (!line_info.validate()) {
-            line_info.wait(done);
-            return false;
-        }
-        return true;
+        TCFDataCache<?> pending = null;
+        if (!stack_trace_context.validate()) pending = stack_trace_context;
+        if (!children_regs.validate()) pending = children_regs;
+        if (!children_vars.validate()) pending = children_vars;
+        if (!children_exps.validate()) pending = children_exps;
+        if (!line_info.validate()) pending = line_info;
+        if (pending == null) return true;
+        pending.wait(done);
+        return false;
     }
 
     @Override

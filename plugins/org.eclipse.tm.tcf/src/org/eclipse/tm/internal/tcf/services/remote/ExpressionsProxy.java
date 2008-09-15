@@ -21,6 +21,7 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IExpressions;
+import org.eclipse.tm.tcf.services.ISymbols.TypeClass;;
 
 public class ExpressionsProxy implements IExpressions {
 
@@ -58,10 +59,6 @@ public class ExpressionsProxy implements IExpressions {
 
         public String getLanguage() {
             return (String)props.get(PROP_LANGUAGE);
-        }
-
-        public String getName() {
-            return (String)props.get(PROP_NAME);
         }
 
         public String getParentID() {
@@ -106,21 +103,21 @@ public class ExpressionsProxy implements IExpressions {
             return value;
         }
 
-        public ValueClass getValueClass() {
+        public TypeClass getTypeClass() {
             Number n = (Number)props.get(PROP_SIZE);
             if (n != null) {
                 switch (n.intValue()) {
-                case 1: return ValueClass.cardinal;
-                case 2: return ValueClass.integer;
-                case 3: return ValueClass.real;
-                case 4: return ValueClass.pointer;
-                case 5: return ValueClass.array;
-                case 6: return ValueClass.composite;
-                case 7: return ValueClass.enumeration;
-                case 8: return ValueClass.function;
+                case 1: return TypeClass.cardinal;
+                case 2: return TypeClass.integer;
+                case 3: return TypeClass.real;
+                case 4: return TypeClass.pointer;
+                case 5: return TypeClass.array;
+                case 6: return TypeClass.composite;
+                case 7: return TypeClass.enumeration;
+                case 8: return TypeClass.function;
                 }
             }
-            return ValueClass.unknown;
+            return TypeClass.unknown;
         }
 
         public boolean isBigEndian() {

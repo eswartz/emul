@@ -26,7 +26,7 @@ public class TCFChildrenLocalVariables extends TCFChildren {
     }
 
     void onSuspended() {
-        for (TCFNode n : getNodes()) ((TCFNodeLocalVariable)n).onSuspended();
+        for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onSuspended();
         reset();
     }
 
@@ -45,9 +45,10 @@ public class TCFChildrenLocalVariables extends TCFChildren {
                     data = new HashMap<String,TCFNode>();
                     for (String id : contexts) {
                         TCFNode n = node.model.getNode(id);
-                        if (n == null) n = new TCFNodeLocalVariable(node, id);
+                        if (n == null) n = new TCFNodeExpression(node, null, null, id, -1);
+                        assert n.id.equals(id);
                         assert n.parent == node;
-                        data.put(id, n);
+                        data.put(n.id, n);
                     }
                 }
                 set(token, error, data);

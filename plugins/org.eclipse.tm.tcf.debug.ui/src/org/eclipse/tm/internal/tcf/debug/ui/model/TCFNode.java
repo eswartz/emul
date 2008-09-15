@@ -63,6 +63,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         assert Protocol.isDispatchThread();
         assert parent != null;
         assert id != null;
+        assert !parent.disposed;
         this.parent = parent;
         this.id = id;
         model = parent.model;
@@ -77,7 +78,10 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         assert !disposed;
         if (parent != null) parent.dispose(id);
         invalidateNode();
-        if (id != null) model.removeNode(id);
+        if (id != null) {
+            assert model.getNode(id) == this;
+            model.removeNode(id);
+        }
         disposed = true;
     }
     

@@ -12,21 +12,21 @@ public class TCFColumnPresentationExpression implements IColumnPresentation {
      * Presentation column IDs.
      */
     public static final String
-        COL_TYPE = "Type",
         COL_NAME = "Name",
+        COL_TYPE = "Type",
         COL_HEX_VALUE = "HexValue",
         COL_DEC_VALUE = "DecValue";
 
     private static String[] cols_all = {
-        COL_TYPE,
         COL_NAME,
+        COL_TYPE,
         COL_DEC_VALUE,
         COL_HEX_VALUE,
     };
     
     private static String[] headers  = {
-        "Type",
         "Name",
+        "Type",
         "Decimal",
         "Hex",
     };

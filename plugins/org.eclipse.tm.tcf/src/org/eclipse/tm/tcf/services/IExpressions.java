@@ -45,14 +45,7 @@ public interface IExpressions extends IService {
          * @return parent context ID.
          */
         String getParentID();
-        
-        /**
-         * Get context name.
-         * Variable, field and enumerator get their names from source code. 
-         * @return context name or null if unknown.
-         */
-        String getName();
-        
+                
         /**
          * Get expression script language ID.
          * @return language ID.
@@ -106,7 +99,6 @@ public interface IExpressions extends IService {
     static final String
         PROP_ID = "ID",
         PROP_PARENT_ID = "ParentID",
-        PROP_NAME = "Name",
         PROP_LANGUAGE = "Language",
         PROP_EXPRESSION = "Expression",
         PROP_BITS = "Bits",
@@ -121,11 +113,11 @@ public interface IExpressions extends IService {
     interface Value {
         
         /**
-         * get value class.
-         * @see ValueClass
+         * Get value type class.
+         * @see ISymbols.TypeClass
          * @return
          */
-        ValueClass getValueClass();
+        ISymbols.TypeClass getTypeClass();
         
         /**
          * Get expression type ID. Symbols service can be used to get type properties.
@@ -135,7 +127,7 @@ public interface IExpressions extends IService {
 
         /**
          * Check endianess of the values.
-         * Big endian means decreasing numeric significance with increasing bit number. 
+         * Big endian means decreasing numeric significance with increasing byte number. 
          * @return true if big endian.
          */
         boolean isBigEndian();
@@ -153,18 +145,6 @@ public interface IExpressions extends IService {
         Map<String,Object> getProperties();
     }
 
-    enum ValueClass {
-        unknown,                // unknown class
-        cardinal,               // unsigned integer
-        integer,                // signed integer
-        real,                   // float, double
-        pointer,                // pointer to anything.
-        array,                  // array of anything.
-        composite,              // struct, union, or class.
-        enumeration,            // enumeration.
-        function                // function.
-    }
-
     /**
      * Expression value property names.
      */
@@ -175,7 +155,7 @@ public interface IExpressions extends IService {
 
     /**
      * Retrieve expression context info for given context ID.
-     * @see ExpressionContext
+     * @see Expression
      *   
      * @param id – context ID. 
      * @param done - call back interface called when operation is completed.
@@ -288,6 +268,7 @@ public interface IExpressions extends IService {
          * Called when context dispose command is done.
          * @param token - command handle
          * @param error – error description if operation failed, null if succeeded.
+         * @param value - expression evaluation result
          */
         void doneEvaluate(IToken token, Exception error, Value value);
     }
