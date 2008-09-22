@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -37,9 +37,9 @@ static char * system_strerror(void) {
     static char msg[256];
     LPVOID msg_buf;
     assert(is_dispatch_thread());
-    if (!FormatMessage( 
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-        FORMAT_MESSAGE_FROM_SYSTEM | 
+    if (!FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
         errno_win32,
@@ -127,6 +127,8 @@ char * errno_to_str(int err) {
         return "Unknown peer ID";
     case ERR_INV_DATA_SIZE:
         return "Invalid data size";
+    case ERR_INV_DATA_TYPE:
+        return "Invalid data type";
     case ERR_SYSTEM:
         return system_strerror();
     case ERR_EXCEPTION:

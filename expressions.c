@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -153,7 +153,7 @@ static int next_char_val(void) {
         case '\'': n = '\''; break;
         case '"' : n = '"'; break;
         case 'x' :
-            next_ch(); 
+            next_ch();
             n = next_hex() << 8;
             n |= next_hex() << 4;
             n |= next_hex();
@@ -617,7 +617,7 @@ static uns64 to_uns(Value * v) {
 
     if (is_number(v)) {
         load_value(v);
-    
+
         if (v->type_class == TYPE_CLASS_REAL) {
             switch (v->size)  {
             case 4: return (uns64)*(float *)v->value;
@@ -651,7 +651,7 @@ static double to_double(Value * v) {
 
     if (is_number(v)) {
         load_value(v);
-    
+
         if (v->type_class == TYPE_CLASS_REAL) {
             switch (v->size)  {
             case 4: return *(float *)v->value;
@@ -708,6 +708,7 @@ static void primary_expression(Value * v) {
 }
 
 static void op_deref(Value * v) {
+#if SERVICE_Symbols
     if (v->type_class != TYPE_CLASS_ARRAY && v->type_class != TYPE_CLASS_POINTER) {
         error(ERR_INV_EXPRESSION, "Array or pointer type expected");
     }
@@ -731,6 +732,9 @@ static void op_deref(Value * v) {
     }
     v->value = NULL;
     v->remote = 1;
+#else
+    error(ERR_UNSUPPORTED, "Symbols service not available");
+#endif
 }
 
 static void op_field(Value * v) {
@@ -1405,7 +1409,7 @@ static Expression * find_expression(char * id) {
     }
     return NULL;
 }
-    
+
 static int expression_context_id(char * id, char * parent, Context ** ctx, int * frame, char * name, Expression ** expr) {
     int err = 0;
     Expression * e = NULL;
@@ -1500,7 +1504,7 @@ static void command_get_context(char * token, Channel * c) {
         err = ERR_INV_CONTEXT;
 #endif
     }
-    
+
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
@@ -1667,7 +1671,7 @@ static void command_evaluate(char * token, Channel * c) {
 
     if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
     if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 1, &value) < 0) err = errno;
-    
+
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     if (err) {

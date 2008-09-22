@@ -345,9 +345,9 @@ char * symbol2id(const Symbol * sym) {
     if (file == NULL) return "SYM";
     if (loc->obj != NULL) obj_index = loc->obj->mID;
     if (loc->tbl != NULL) tbl_index = loc->tbl->mIndex + 1;
-    snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%llX.%llX.%X.%X.%X.%s",
+    snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%X.%llX.%X.%X.%X.%s",
         sym->sym_class, (unsigned long)file->dev, (unsigned long)file->ino,
-        (unsigned long long)file->mtime, obj_index, tbl_index,
+        (unsigned)file->mtime & 0xffff, obj_index, tbl_index,
         loc->index, loc->dimension, container_id(sym->ctx));
     return id;
 }
@@ -381,7 +381,7 @@ static unsigned long long read_hex_ll(char ** s) {
 int id2symbol(char * id, Symbol * sym) {
     dev_t dev = 0;
     ino_t ino = 0;
-    time_t mtime = 0;
+    unsigned mtime = 0;
     unsigned long long obj_index = 0;
     unsigned tbl_index = 0;
     SymLocation * loc = (SymLocation *)sym->location;
@@ -402,7 +402,7 @@ int id2symbol(char * id, Symbol * sym) {
     if (*p == '.') p++;
     ino = read_hex(&p);
     if (*p == '.') p++;
-    mtime = read_hex_ll(&p);
+    mtime = read_hex(&p);
     if (*p == '.') p++;
     obj_index = read_hex_ll(&p);
     if (*p == '.') p++;
@@ -419,7 +419,7 @@ int id2symbol(char * id, Symbol * sym) {
     }
     file = elf_list_first(sym->ctx, 0, ~(ContextAddress)0);
     if (file == NULL) return -1;
-    while (file->dev != dev || file->ino != ino || file->mtime != mtime) {
+    while (file->dev != dev || file->ino != ino || ((unsigned)file->mtime & 0xffff) != mtime) {
         file = elf_list_next(sym->ctx);
         if (file == NULL) break;
     }

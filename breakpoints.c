@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -105,7 +105,7 @@ struct BreakInstruction {
     VXDBG_BP_ID vxdbg_id;
 #else
     char saved_code[BREAK_SIZE];
-#endif    
+#endif
     int error;
     int skip;
     BreakpointInfo ** refs;
@@ -416,7 +416,7 @@ static void send_event_breakpoint_status(OutputStream * out, BreakpointInfo * bp
     write_stream(out, MARKER_EOM);
 }
 
-static void address_expression_error(BreakpointInfo * bp, char * msg) {
+static void address_expression_error(BreakpointInfo * bp) {
     /* TODO: per-context address expression error report */
     int size;
     char * err_txt;
@@ -424,10 +424,10 @@ static void address_expression_error(BreakpointInfo * bp, char * msg) {
     if (bp->error) return;
     bp->error = errno;
     err_txt = errno_to_str(errno);
-    size = strlen(msg) + strlen(bp->address) + strlen(err_txt) + 128;
+    size = strlen(bp->address) + strlen(err_txt) + 128;
     assert(bp->err_msg == NULL);
     bp->err_msg = loc_alloc(size);
-    snprintf(bp->err_msg, size, "Invalid breakpoint address '%s': %s: %s", bp->address, msg, err_txt);
+    snprintf(bp->err_msg, size, "Invalid address '%s': %s", bp->address, err_txt);
 }
 
 static void plant_breakpoint_in_context(BreakpointInfo * bp, Context * ctx, ContextAddress address) {
@@ -484,7 +484,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         Value v;
         if (evaluate_expression(NULL, STACK_NO_FRAME, bp->address, 1, &v) < 0) {
             if (errno != ERR_INV_CONTEXT) {
-                address_expression_error(bp, "Invalid BP address");
+                address_expression_error(bp);
                 trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
                 return;
             }
@@ -492,8 +492,8 @@ static void plant_breakpoint(BreakpointInfo * bp) {
         }
         if (!context_sensitive_address) {
             if (v.type_class != TYPE_CLASS_INTEGER && v.type_class != TYPE_CLASS_CARDINAL) {
-                errno = ERR_INV_EXPRESSION;
-                address_expression_error(bp, "Must be integer number");
+                errno = ERR_INV_DATA_TYPE;
+                address_expression_error(bp);
                 return;
             }
             bp_addr = value_to_address(&v);
@@ -527,15 +527,15 @@ static void plant_breakpoint(BreakpointInfo * bp) {
             if (bp->address != NULL) {
                 Value v;
                 if (evaluate_expression(ctx, STACK_NO_FRAME, bp->address, 1, &v) < 0) {
-                    address_expression_error(bp, "Invalid BP address");
+                    address_expression_error(bp);
                     if (bp->error != ERR_SYM_NOT_FOUND) {
                         trace(LOG_ALWAYS, "Breakpoints: %s", bp->err_msg);
                     }
                     continue;
                 }
                 if (v.type_class != TYPE_CLASS_INTEGER && v.type_class != TYPE_CLASS_CARDINAL) {
-                    errno = ERR_INV_EXPRESSION;
-                    address_expression_error(bp, "Must be integer number");
+                    errno = ERR_INV_DATA_TYPE;
+                    address_expression_error(bp);
                     continue;
                 }
                 plant_breakpoint_in_context(bp, ctx, value_to_address(&v));
@@ -979,7 +979,7 @@ static void command_ini_bps(char * token, Channel * c) {
     }
 
     delete_breakpoint_refs(c);
-    
+
     ch = read_stream(&c->inp);
     if (ch == 'n') {
         if (read_stream(&c->inp) != 'u') exception(ERR_JSON_SYNTAX);
@@ -1226,7 +1226,7 @@ static void command_bp_remove(char * token, Channel * c) {
     }
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    
+
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -1341,7 +1341,7 @@ static void safe_skip_breakpoint(void * arg) {
     assert(!sb->ctx->intercepted);
     assert(!sb->ctx->regs_error);
     assert(sb->address == get_regs_PC(sb->ctx->regs));
-    
+
     if (sb->error == 0) {
         BreakInstruction * bi = find_instruction(sb->ctx, sb->address);
         if (bi != NULL && !bi->skip) {
