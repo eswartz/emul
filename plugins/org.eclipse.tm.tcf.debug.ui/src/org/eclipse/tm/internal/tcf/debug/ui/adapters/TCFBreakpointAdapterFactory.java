@@ -24,7 +24,6 @@ public class TCFBreakpointAdapterFactory implements IAdapterFactory {
         if (obj instanceof TCFNode) {
             return new BreakpointCommand();
         }
-        System.out.println(obj.getClass().getName() + " -> " + adapterType);
         return null;
     }
 

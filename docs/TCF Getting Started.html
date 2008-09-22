@@ -122,11 +122,14 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
 
 <h2><a name='Agent'>Building TCF Agent</a></h2>
 
+<p><b>CDT</b> can be used to build TCF agent.
+CDT .project file is located in <code>&lt;TCF Root&gt;/agent</code> directory.
+
 <p><b>Linux</b> is the recommended evaluation platform, since most TCF services
 are implemented. To build the agent:
 <ul>
    <li>Run <code>make</code> command in <code>&lt;TCF Root&gt;/agent</code> directory.
-   <li>Start agent with <code>./agent -L- -l0</code> command.
+   <li>Start agent: <pre>GNU/Linux/i686/Debug/agent -L- -l0</pre>
        Use other -l option values to increase agent log details level.
 </ul>
 
@@ -135,10 +138,11 @@ For building the agent, there are two possibilities:<ul>
 <li>Building with gcc (freely available from <a href="http://wascana.sourceforge.net/">Wascana</a>,
 <a href="http://www.cygwin.com">Cygwin</a> or the
 <a href="http://www.mingw.org/">MinGW32 project</a>): run
-<pre>make -fMakefile_cygwin.mak</pre>
-in the agent directory (the Makefile works with mingw, too).</li>
+<pre>make</pre> or <pre>make SYSOP=Msys</pre>
+in the agent directory.</li>
 
-<li>Building with Microsoft Visual C++: Open workspace file <code>&lt;TCF Root&gt;/agent/agent.dsw</code>
+<li>Building with Microsoft Visual C++:
+open workspace file <code>&lt;TCF Root&gt;/agent/agent.sln</code>
 and then build and run the agent using Development Studio commands. If getting an error about
 <tt>IPHlpApi.h</tt> missing, you'll need to install the latest
 <a href="http://www.microsoft.com/downloads/details.aspx?FamilyId=0BAF2B35-C656-4969-ACE8-E4C0C0716ADB&displaylang=en">MS Platform SDK</a>.
