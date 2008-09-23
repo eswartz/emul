@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -200,7 +200,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         read_stringz(&c->inp, token, sizeof(token));
         read_stringz(&c->inp, service, sizeof(service));
         read_stringz(&c->inp, name, sizeof(name));
-        trace(LOG_PROTOCOL, "Command: C %s %s %s ...", token, service, name);
+        trace(LOG_PROTOCOL, "Peer %s: Command: C %s %s %s ...", c->peer_name, token, service, name);
         mh = find_message_handler(p, service, name);
         if (mh == NULL) {
             if (p->default_handler != NULL) {
@@ -230,7 +230,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         unsigned long tokenid;
         ReplyHandlerInfo *rh;
         read_stringz(&c->inp, token, sizeof(token));
-        trace(LOG_PROTOCOL, "Reply: R %s ...", token);
+        trace(LOG_PROTOCOL, "Peer %s: Reply: R %s ...", c->peer_name, token);
         errno = 0;
         tokenid = strtoul(token, &endptr, 10);
         if (errno != 0 || *endptr != '\0' ||
@@ -261,7 +261,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         EventHandlerInfo * eh;
         read_stringz(&c->inp, service, sizeof(service));
         read_stringz(&c->inp, name, sizeof(name));
-        trace(LOG_PROTOCOL, "Event: E %s %s ...", service, name);
+        trace(LOG_PROTOCOL, "Peer %s: Event: E %s %s ...", c->peer_name, service, name);
         eh = find_event_handler(c, service, name);
         if (eh == NULL && p->default_handler != NULL) {
             args[0] = type;

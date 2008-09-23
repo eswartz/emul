@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -50,6 +50,7 @@ struct ChannelTCP {
     Channel chan;           /* Public channel information - must be first */
     int magic;              /* Magic number */
     int socket;             /* Socket file descriptor */
+    struct sockaddr addr;   /* Socket remote address */
     int lock_cnt;           /* Stream lock count, when > 0 channel cannot be deleted */
     int read_pending;       /* Read request is pending */
 
@@ -70,6 +71,7 @@ typedef struct ServerTCP ServerTCP;
 struct ServerTCP {
     ChannelServer serv;
     int sock;
+    struct sockaddr addr;
     PeerServer * ps;
     LINK servlink;
     AsyncReqInfo accreq;
@@ -100,6 +102,7 @@ static void delete_channel(ChannelTCP * c) {
     channel_clear_broadcast_group(&c->chan);
     channel_clear_suspend_group(&c->chan);
     c->magic = 0;
+    loc_free(c->chan.peer_name);
     loc_free(c);
 }
 
@@ -251,7 +254,7 @@ static void handle_channel_msg(void * x) {
     hasmsg = ibuf_start_message(&c->ibuf);
     if (hasmsg <= 0) {
         if (hasmsg < 0) {
-            trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel 0x%08x", c);
+            trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel 0x%08x %s", c, c->chan.peer_name);
             channel_close(&c->chan);
         }
         return;
@@ -442,11 +445,32 @@ static void refresh_all_peer_server(void *x) {
     post_event_with_delay(refresh_all_peer_server, NULL, REFRESH_TIME*1000*1000);
 }
 
+static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr) {
+    /* Create a human readable channel name that uniquely identifies remote peer */
+    char name[128];
+#ifdef _MSC_VER
+    /* inet_ntop() is not available before Windows Vista */
+    assert(addr->sa_family == AF_INET);
+    c->addr = *addr;
+    snprintf(name, sizeof(name), "TCP:%s:%d",
+        inet_ntoa(((struct sockaddr_in *)&c->addr)->sin_addr),
+        ntohs(((struct sockaddr_in *)&c->addr)->sin_port));
+#else
+    char nbuf[128];
+    c->addr = *addr;
+    snprintf(name, sizeof(name), "TCP:%s:%d",
+        inet_ntop(addr->sa_family, &((struct sockaddr_in *)&c->addr)->sin_addr, nbuf, sizeof(nbuf)),
+        ntohs(((struct sockaddr_in *)&c->addr)->sin_port));
+#endif
+    c->chan.peer_name = loc_strdup(name);
+}
+
 static void tcp_server_accept_done(void * x) {
     AsyncReqInfo * req = x;
     ServerTCP * si = req->client_data;
     ChannelTCP * c;
     int sock;
+    struct sockaddr peer_addr;
 
     if (si->sock < 0) {
         /* Server closed. */
@@ -459,8 +483,11 @@ static void tcp_server_accept_done(void * x) {
         return;
     }
     sock = req->u.acc.rval;
+    peer_addr = si->addr;
     async_req_post(req);
     c = create_channel(sock);
+    if (c == NULL) return;
+    set_peer_addr(c, &peer_addr);
     si->serv.new_conn(&si->serv, &c->chan);
 }
 
@@ -468,9 +495,7 @@ static void server_close(ChannelServer * serv) {
     ServerTCP * s = server2tcp(serv);
 
     assert(is_dispatch_thread());
-    if (s->sock < 0) {
-        return;
-    }
+    if (s->sock < 0) return;
     list_remove(&s->servlink);
     peer_server_free(s->ps);
     closesocket(s->sock);
@@ -512,7 +537,9 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
         }
         if (res->ai_addr->sa_family == AF_INET) {
             struct sockaddr_in addr;
-            memcpy(&addr, res->ai_addr, sizeof(addr));
+            assert(sizeof(addr) >= res->ai_addrlen);
+            memset(&addr, 0, sizeof(addr));
+            memcpy(&addr, res->ai_addr, res->ai_addrlen);
             if (addr.sin_port == 0) {
                 addr.sin_port = htons(DISCOVERY_TCF_PORT);
                 if (!bind(sock, (struct sockaddr *)&addr, sizeof(addr))) def_port = 1;
@@ -542,7 +569,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
         trace(LOG_ALWAYS, "socket %s error: %s", reason, errno_to_str(error));
         return NULL;
     }
-    si = loc_alloc(sizeof *si);
+    si = loc_alloc_zero(sizeof *si);
     si->serv.close = server_close;
     si->sock = sock;
     si->ps = ps;
@@ -557,8 +584,8 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     si->accreq.client_data = si;
     si->accreq.type = AsyncReqAccept;
     si->accreq.u.acc.sock = sock;
-    si->accreq.u.acc.addr = NULL;
-    si->accreq.u.acc.addrlen = 0;
+    si->accreq.u.acc.addr = &si->addr;
+    si->accreq.u.acc.addrlen = sizeof(si->addr);
     async_req_post(&si->accreq);
     return &si->serv;
 }
@@ -574,7 +601,8 @@ Channel * channel_tcp_connect(PeerServer * ps) {
     struct addrinfo hints;
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;
- 
+    struct sockaddr peer_addr;
+
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
@@ -586,6 +614,7 @@ Channel * channel_tcp_connect(PeerServer * ps) {
     }
     sock = -1;
     reason = NULL;
+    memset(&peer_addr, 0, sizeof(peer_addr));
     for (res = reslist; res != NULL; res = res->ai_next) {
         sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (sock < 0) {
@@ -600,6 +629,8 @@ Channel * channel_tcp_connect(PeerServer * ps) {
             sock = -1;
             continue;
         }
+        assert(sizeof(peer_addr) >= res->ai_addrlen);
+        memcpy(&peer_addr, res->ai_addr, res->ai_addrlen);
         break;
     }
     loc_freeaddrinfo(reslist);
@@ -609,8 +640,7 @@ Channel * channel_tcp_connect(PeerServer * ps) {
     }
 
     c = create_channel(sock);
-    if (c == NULL) {
-        return NULL;
-    }
+    if (c == NULL) return NULL;
+    set_peer_addr(c, &peer_addr);
     return &c->chan;
 }

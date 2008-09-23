@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -43,8 +43,9 @@ struct Channel {
     TCFSuspendGroup * spg;              /* Suspend group */
     TCFBroadcastGroup * bcg;            /* Broadcast group */
     void * client_data;                 /* Client data */
-    int peer_service_cnt;               /* Number of peer service names */
-    char ** peer_service_list;          /* List of peer service names */
+    char * peer_name;                   /* A human readable remote peer name */
+    int peer_service_cnt;               /* Number of remote peer service names */
+    char ** peer_service_list;          /* List of remote peer service names */
     LINK bclink;                        /* Broadcast list */
     LINK susplink;                      /* Suspend list */
     int congestion_level;               /* Congestion level */
