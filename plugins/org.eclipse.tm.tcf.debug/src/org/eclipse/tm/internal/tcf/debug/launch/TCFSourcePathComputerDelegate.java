@@ -36,7 +36,7 @@ public class TCFSourcePathComputerDelegate implements ISourcePathComputerDelegat
             ILaunchConfiguration configuration, IProgressMonitor monitor)
             throws CoreException {
         ISourceContainer sourceContainer = null;
-        String path = configuration.getAttribute(TCFLaunchDelegate.ATTR_PROGRAM_FILE, (String)null);
+        String path = configuration.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, (String)null);
         if (path != null) {
             IResource resource = ResourcesPlugin.getWorkspace().getRoot().findMember(new Path(path));
             if (resource != null) {

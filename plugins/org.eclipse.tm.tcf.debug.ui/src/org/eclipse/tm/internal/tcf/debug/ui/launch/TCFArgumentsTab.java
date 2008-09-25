@@ -26,7 +26,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
@@ -36,8 +36,6 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
 
     private Text text_arguments;
     private Button button_variables;
-    private Text text_working_dir;
-    private Button button_default_dir;
 
     public void createControl(Composite parent) {
         Font font = parent.getFont();
@@ -51,30 +49,34 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
         setControl(comp);
 
         createArgumentsGroup(comp);
-        createWorkingDirGroup(comp);
     }
 
-    private void createArgumentsGroup(Composite comp) {
-        Font font = comp.getFont();
-
-        Group group = new Group(comp, SWT.NONE);
-        group.setFont(font);
-        group.setLayout(new GridLayout());
-        group.setLayoutData(new GridData(GridData.FILL_BOTH));
-        group.setText("Program Arguments");
-        
-        text_arguments = new Text(group, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
+    private void createArgumentsGroup(Composite parent) {
+        Composite comp = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        layout.marginHeight = 0;
+        layout.marginWidth = 0;
+        comp.setLayout(layout);
         GridData gd = new GridData(GridData.FILL_BOTH);
+        comp.setLayoutData(gd);
+
+        Label label = new Label(comp, SWT.NONE);
+        label.setText("Program Arguments:");
+        gd = new GridData();
+        gd.horizontalSpan = 2;
+        label.setLayoutData(gd);
+        
+        text_arguments = new Text(comp, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
+        gd = new GridData(GridData.FILL_BOTH);
         gd.heightHint = 40;
         gd.widthHint = 100;
         text_arguments.setLayoutData(gd);
-        text_arguments.setFont(font);
         text_arguments.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent evt) {
                 updateLaunchConfigurationDialog();
             }
         });
-        button_variables= createPushButton(group, "Variables", null);
+        button_variables= createPushButton(comp, "Variables", null);
         gd = new GridData(GridData.HORIZONTAL_ALIGN_END);
         button_variables.setLayoutData(gd);
         button_variables.addSelectionListener(new SelectionAdapter() {
@@ -82,27 +84,6 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
                 handleVariablesButtonSelected(text_arguments);
             }
         });
-    }
-    
-    private void createWorkingDirGroup(Composite comp) {
-        Font font = comp.getFont();
-        
-        Group group = new Group(comp, SWT.NONE);
-        GridLayout workingDirLayout = new GridLayout();
-        workingDirLayout.makeColumnsEqualWidth = false;
-        group.setLayout(workingDirLayout);
-        group.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-        group.setFont(font);
-        group.setText("Working directory");
-
-        text_working_dir = new Text(group, SWT.SINGLE | SWT.BORDER);
-        text_working_dir.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-        text_working_dir.setFont(font);
-
-        button_default_dir = new Button(group, SWT.CHECK);
-        button_default_dir.setText("Use default");
-        button_default_dir.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
-        button_default_dir.setFont(font);
     }
     
     /**
@@ -137,7 +118,6 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
     public void initializeFrom(ILaunchConfiguration configuration) {
         try {
             text_arguments.setText(configuration.getAttribute(TCFLaunchDelegate.ATTR_PROGRAM_ARGUMENTS, "")); //$NON-NLS-1$
-            text_working_dir.setText(configuration.getAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, "")); //$NON-NLS-1$
         }
         catch (CoreException e) {
             setErrorMessage("Cannot read launch configuration: " + e);
@@ -148,9 +128,6 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
         configuration.setAttribute(
                 TCFLaunchDelegate.ATTR_PROGRAM_ARGUMENTS,
                 getAttributeValueFrom(text_arguments));
-        configuration.setAttribute(
-                TCFLaunchDelegate.ATTR_WORKING_DIRECTORY,
-                getAttributeValueFrom(text_working_dir));
     }
 
     protected String getAttributeValueFrom(Text text) {

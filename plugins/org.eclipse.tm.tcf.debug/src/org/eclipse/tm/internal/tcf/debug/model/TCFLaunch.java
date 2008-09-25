@@ -10,14 +10,22 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.model;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -31,7 +39,10 @@ import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.IFileSystem;
 import org.eclipse.tm.tcf.services.IProcesses;
+import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
+import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
 import org.eclipse.tm.tcf.services.IProcesses.ProcessContext;
 
 
@@ -155,8 +166,10 @@ public class TCFLaunch extends Launch {
                 Protocol.invokeLater(done);
                 return;
             }
-            final String file = cfg.getAttribute(TCFLaunchDelegate.ATTR_PROGRAM_FILE, "");
-            if (file.length() == 0) {
+            final String project = cfg.getAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, "");
+            final String local_file = cfg.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, "");
+            final String remote_file = cfg.getAttribute(TCFLaunchDelegate.ATTR_REMOTE_PROGRAM_FILE, "");
+            if (local_file.length() == 0 && remote_file.length() == 0) {
                 Protocol.invokeLater(done);
                 return;
             }
@@ -166,34 +179,136 @@ public class TCFLaunch extends Launch {
             final boolean append = cfg.getAttribute(ILaunchManager.ATTR_APPEND_ENVIRONMENT_VARIABLES, true);
             final boolean attach = mode.equals(ILaunchManager.DEBUG_MODE);
             final IProcesses ps = channel.getRemoteService(IProcesses.class);
-            if (ps == null) throw new Exception("Target does not provide Processes service");
-            IProcesses.DoneGetEnvironment done_env = new IProcesses.DoneGetEnvironment() {
-                public void doneGetEnvironment(IToken token, Exception error, Map<String,String> def) {
-                    if (error != null) {
-                        channel.terminate(error);
-                        return;
-                    }
-                    Map<String,String> vars = new HashMap<String,String>();
-                    if (append) vars.putAll(def);
-                    if (env != null) vars.putAll(env);
-                    ps.start(dir, file, toArgsArray(file, args), vars, attach, new IProcesses.DoneStart() {
-                        public void doneStart(IToken token, Exception error, ProcessContext process) {
+            Runnable r = new Runnable() {
+                public void run() {
+                    if (ps == null) channel.terminate(new Exception("Target does not provide Processes service"));
+                    IProcesses.DoneGetEnvironment done_env = new IProcesses.DoneGetEnvironment() {
+                        public void doneGetEnvironment(IToken token, Exception error, Map<String,String> def) {
                             if (error != null) {
                                 channel.terminate(error);
                                 return;
                             }
-                            TCFLaunch.this.process = process;
-                            Protocol.invokeLater(done);
+                            Map<String,String> vars = new HashMap<String,String>();
+                            if (append) vars.putAll(def);
+                            if (env != null) vars.putAll(env);
+                            String file = remote_file;
+                            if (file == null) file = getProgramPath(project, local_file);
+                            if (file == null) {
+                                channel.terminate(new Exception("Program does not exist"));
+                                return;
+                            }
+                            ps.start(dir, file, toArgsArray(file, args), vars, attach, new IProcesses.DoneStart() {
+                                public void doneStart(IToken token, Exception error, ProcessContext process) {
+                                    if (error != null) {
+                                        channel.terminate(error);
+                                        return;
+                                    }
+                                    TCFLaunch.this.process = process;
+                                    Protocol.invokeLater(done);
+                                }
+                            });
                         }
-                    });
+                    };
+                    if (append) ps.getEnvironment(done_env);
+                    else done_env.doneGetEnvironment(null, null, null);
                 }
             };
-            if (append) ps.getEnvironment(done_env);
-            else done_env.doneGetEnvironment(null, null, null);
+            if (local_file.length() == 0 || remote_file.length() == 0) r.run();
+            else copyToRemoteTarget(getProgramPath(project, local_file), remote_file, r);
         }
         catch (Exception x) {
             channel.terminate(x);
         }
+    }
+    
+    private void copyToRemoteTarget(String local_file, String remote_file, final Runnable done) {
+        if (local_file == null) {
+            channel.terminate(new Exception("Program does not exist"));
+            return;
+        }
+        final IFileSystem fs = channel.getRemoteService(IFileSystem.class);
+        if (fs == null) {
+            channel.terminate(new Exception(
+                    "Cannot download program file: target does not provide File System service"));
+            return;
+        }
+        try {
+            final InputStream inp = new FileInputStream(local_file);
+            int flags = IFileSystem.TCF_O_WRITE | IFileSystem.TCF_O_CREAT | IFileSystem.TCF_O_TRUNC;
+            fs.open(remote_file, flags, null, new IFileSystem.DoneOpen() {
+                
+                IFileHandle handle;
+                long offset = 0;
+                final Set<IToken> cmds = new HashSet<IToken>();
+                final byte[] buf = new byte[0x1000];
+    
+                public void doneOpen(IToken token, FileSystemException error, IFileHandle handle) {
+                    this.handle = handle;
+                    if (error != null) {
+                        TCFLaunch.this.error = new Exception("Cannot download program file", error);
+                        fireChanged();
+                        done.run();
+                    }
+                    else {
+                        write_next();
+                    }
+                }
+                
+                private void write_next() {
+                    try {
+                        while (cmds.size() < 8) {
+                            int rd = inp.read(buf);
+                            if (rd < 0) {
+                                close();
+                                break;
+                            }
+                            cmds.add(fs.write(handle, offset, buf, 0, rd, new IFileSystem.DoneWrite() {
+        
+                                public void doneWrite(IToken token, FileSystemException error) {
+                                    cmds.remove(token);
+                                    if (error != null) channel.terminate(error);
+                                    else write_next();
+                                }
+                            }));
+                            offset += rd;
+                        }
+                    }
+                    catch (Throwable x) {
+                        channel.terminate(x);
+                    }
+                }
+                
+                private void close() {
+                    if (cmds.size() > 0) return;
+                    try {
+                        inp.close();
+                        fs.close(handle, new IFileSystem.DoneClose() {
+    
+                            public void doneClose(IToken token, FileSystemException error) {
+                                if (error != null) channel.terminate(error);
+                                else done.run();
+                            }
+                        });
+                    }
+                    catch (Throwable x) {
+                        channel.terminate(x);
+                    }
+                }
+            });
+        }
+        catch (Throwable x) {
+            channel.terminate(x);
+        }
+    }
+    
+    private String getProgramPath(String project_name, String local_file) {
+        IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(project_name);
+        IPath program_path = new Path(local_file);
+        if (!program_path.isAbsolute()) {
+            if (project == null || !project.getFile(local_file).exists()) return null;
+            program_path = project.getFile(local_file).getLocation();
+        }
+        return program_path.toOSString();
     }
     
     protected void runShutdownSequence(final Runnable done) {

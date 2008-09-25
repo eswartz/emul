@@ -17,7 +17,7 @@ import org.eclipse.debug.ui.ILaunchConfigurationDialog;
 import org.eclipse.debug.ui.ILaunchConfigurationTab;
 import org.eclipse.debug.ui.sourcelookup.SourceLookupTab;
 import org.eclipse.tm.internal.tcf.debug.ui.launch.TCFArgumentsTab;
-import org.eclipse.tm.internal.tcf.debug.ui.launch.TCFMainTab;
+import org.eclipse.tm.internal.tcf.debug.ui.launch.TCFTargetTab;
 
 
 /**
@@ -27,7 +27,7 @@ public class LaunchDialogTabGroup extends AbstractLaunchConfigurationTabGroup {
 
     public void createTabs(ILaunchConfigurationDialog dialog, String mode) {
         setTabs(new ILaunchConfigurationTab[] {
-                new TCFMainTab(),
+                new TCFTargetTab(),
                 new TCFArgumentsTab(),
                 new EnvironmentTab(),
                 new SourceLookupTab(),

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
@@ -10,821 +10,482 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.launch;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.io.File;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtension;
+import org.eclipse.core.runtime.IExtensionPoint;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.ProgressBar;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeColumn;
-import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
-import org.eclipse.tm.internal.tcf.debug.launch.TCFUserDefPeer;
-import org.eclipse.tm.internal.tcf.debug.tests.TCFTestSuite;
+import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
-import org.eclipse.tm.tcf.protocol.IChannel;
-import org.eclipse.tm.tcf.protocol.IPeer;
-import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.tcf.protocol.IChannel.IChannelListener;
-import org.eclipse.tm.tcf.services.ILocator;
+import org.eclipse.ui.dialogs.ElementListSelectionDialog;
+import org.osgi.framework.Bundle;
 
-
-/**
- * Launch configuration dialog tab to specify the Target Communication Framework
- * configuration.
- */
 public class TCFMainTab extends AbstractLaunchConfigurationTab {
-    
-    private Text peer_id_text;
-    private Text program_text;
-    private Tree peer_tree;
-    private Runnable update_peer_buttons;
-    private final PeerInfo peer_info = new PeerInfo();
-    private Display display;
 
-    private final Map<LocatorListener,ILocator> listeners = new HashMap<LocatorListener,ILocator>();
-    
-    private static class PeerInfo {
-        PeerInfo parent;
-        int index;
-        String id;
-        Map<String,String> attrs;
-        PeerInfo[] children;
-        boolean children_pending;
-        Throwable children_error;
-        IPeer peer;
-    }
-    
-    private class LocatorListener implements ILocator.LocatorListener {
-        
-        private final PeerInfo parent;
-        
-        LocatorListener(PeerInfo parent) {
-            this.parent = parent;
-        }
+    private Text project_text;
+    private Text local_program_text;
+    private Text remote_program_text;
+    private Text working_dir_text;
+    private Button default_dir_button;
+    private Button terminal_button;
 
-        public void peerAdded(final IPeer peer) {
-            if (display == null) return;
-            final String id = peer.getID();
-            final HashMap<String,String> attrs = new HashMap<String,String>(peer.getAttributes());
-            display.asyncExec(new Runnable() {
-                public void run() {
-                    if (parent.children_error != null) return;
-                    PeerInfo[] arr = parent.children;
-                    PeerInfo[] buf = new PeerInfo[arr.length + 1];
-                    System.arraycopy(arr, 0, buf, 0, arr.length);
-                    PeerInfo info = new PeerInfo();
-                    info.parent = parent;
-                    info.index = arr.length;
-                    info.id = id;
-                    info.attrs = attrs;
-                    info.peer = peer;
-                    buf[arr.length] = info;
-                    parent.children = buf;
-                    updateItems(parent);
-                }
-            });
-        }
-
-        public void peerChanged(final IPeer peer) {
-            if (display == null) return;
-            final String id = peer.getID();
-            final HashMap<String,String> attrs = new HashMap<String,String>(peer.getAttributes());
-            display.asyncExec(new Runnable() {
-                public void run() {
-                    if (parent.children_error != null) return;
-                    PeerInfo[] arr = parent.children;
-                    for (int i = 0; i < arr.length; i++) {
-                        if (arr[i].id.equals(id)) {
-                            arr[i].attrs = attrs;
-                            arr[i].peer = peer;
-                            loadChildren(arr[i]);
-                            updateItems(parent);
-                        }
-                    }
-                }
-            });
-        }
-
-        public void peerRemoved(final String id) {
-            if (display == null) return;
-            display.asyncExec(new Runnable() {
-                public void run() {
-                    if (parent.children_error != null) return;
-                    PeerInfo[] arr = parent.children;
-                    PeerInfo[] buf = new PeerInfo[arr.length - 1];
-                    int j = 0;
-                    for (int i = 0; i < arr.length; i++) {
-                        if (!arr[i].id.equals(id)) {
-                            buf[j++] = arr[i];
-                        }
-                    }
-                    parent.children = buf;
-                    updateItems(parent);
-                }
-            });
-        }
-
-        public void peerHeartBeat(final String id) {
-            if (display == null) return;
-            display.asyncExec(new Runnable() {
-                public void run() {
-                    if (parent.children_error != null) return;
-                    PeerInfo[] arr = parent.children;
-                    for (int i = 0; i < arr.length; i++) {
-                        if (arr[i].id.equals(id)) {
-                            if (arr[i].children_error != null) {
-                                loadChildren(arr[i]);
-                            }
-                            break;
-                        }
-                    }
-                }
-            });
-        }
-    }
-    
     public void createControl(Composite parent) {
-        display = parent.getDisplay();
-        assert display != null;
-
-        Font font = parent.getFont();
         Composite comp = new Composite(parent, SWT.NONE);
-        GridLayout layout = new GridLayout(1, true);
-        comp.setLayout(layout);
-        comp.setFont(font);
-
-        GridData gd = new GridData(GridData.FILL_BOTH);
-        comp.setLayoutData(gd);
         setControl(comp);
 
-        createTargetGroup(comp);
-        createProgramGroup(comp);
+        GridLayout topLayout = new GridLayout();
+        comp.setLayout(topLayout);
+
+        createVerticalSpacer(comp, 1);
+        createProjectGroup(comp);
+        createApplicationGroup(comp);
+        createWorkingDirGroup(comp);
+        createVerticalSpacer(comp, 1);
+        createTerminalOption(comp, 1);
     }
 
-    private void createTargetGroup(Composite parent) {
-        Font font = parent.getFont();
-        
+    private void createProjectGroup(Composite parent) {
         Group group = new Group(parent, SWT.NONE);
-        GridLayout top_layout = new GridLayout();
-        top_layout.verticalSpacing = 0;
-        top_layout.numColumns = 2;
-        group.setLayout(top_layout);
-        group.setLayoutData(new GridData(GridData.FILL_BOTH));
-        group.setFont(font);
-        group.setText("Target");
-        
-        createVerticalSpacer(group, top_layout.numColumns);
-        
-        Label host_label = new Label(group, SWT.NONE);
-        host_label.setText("Target ID:");
-        host_label.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
-        host_label.setFont(font);
-        
-        peer_id_text = new Text(group, SWT.SINGLE | SWT.BORDER);
-        peer_id_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-        peer_id_text.setFont(font);
-        peer_id_text.setEditable(false);
-        peer_id_text.addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent e) {
+        GridLayout layout = new GridLayout();
+        layout.numColumns = 2;
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+        group.setText("Project");
+
+        Label label = new Label(group, SWT.NONE);
+        label.setText("Project Name:");
+        GridData gd = new GridData();
+        gd.horizontalSpan = 2;
+        label.setLayoutData(gd);
+
+        project_text = new Text(group, SWT.SINGLE | SWT.BORDER);
+        gd = new GridData(GridData.FILL_HORIZONTAL);
+        project_text.setLayoutData(gd);
+        project_text.addModifyListener(new ModifyListener() {
+
+            public void modifyText(ModifyEvent evt) {
                 updateLaunchConfigurationDialog();
             }
         });
 
-        createVerticalSpacer(group, top_layout.numColumns);
+        Button project_button = createPushButton(group, "Browse...", null);
+        project_button.addSelectionListener(new SelectionAdapter() {
 
-        Label peer_label = new Label(group, SWT.NONE);
-        peer_label.setText("&Available targets:");
-        peer_label.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
-        peer_label.setFont(font);
-                
-        loadChildren(peer_info);
-        createPeerListArea(group);
+            @Override
+            public void widgetSelected(SelectionEvent evt) {
+                handleProjectButtonSelected();
+                updateLaunchConfigurationDialog();
+            }
+        });
     }
     
-    private void createPeerListArea(Composite parent) {
-        Font font = parent.getFont();
-        Composite composite = new Composite(parent, SWT.NONE);
-        GridLayout layout = new GridLayout(2, false);
-        composite.setFont(font);
-        composite.setLayout(layout);
-        composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
+    private void createApplicationGroup(Composite parent) {
+        Group group = new Group(parent, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+        group.setText("Application");
         
-        peer_tree = new Tree(composite, SWT.VIRTUAL | SWT.BORDER | SWT.SINGLE);
-        GridData gd = new GridData(GridData.FILL_BOTH);
-        gd.minimumHeight = 150;
-        gd.minimumWidth = 470;
-        peer_tree.setLayoutData(gd);
+        createLocalExeFileGroup(group);
+        createRemoteExeFileGroup(group);
+    }
+
+    private void createLocalExeFileGroup(Composite parent) {
+        Composite comp = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        layout.numColumns = 3;
+        layout.marginHeight = 0;
+        layout.marginWidth = 0;
+        comp.setLayout(layout);
+        GridData gd = new GridData(GridData.FILL_HORIZONTAL);
+        comp.setLayoutData(gd);
         
-        for (int i = 0; i < 5; i++) {
-            TreeColumn column = new TreeColumn(peer_tree, SWT.LEAD, i);
-            column.setMoveable(true);
-            switch (i) {
-            case 0:
-                column.setText("Name");
-                column.setWidth(160);
-                break;
-            case 1:
-                column.setText("OS");
-                column.setWidth(100);
-                break;
-            case 2:
-                column.setText("Transport");
-                column.setWidth(60);
-                break;
-            case 3:
-                column.setText("Host");
-                column.setWidth(100);
-                break;
-            case 4:
-                column.setText("Port");
-                column.setWidth(40);
-                break;
+        Label program_label = new Label(comp, SWT.NONE);
+        program_label.setText("Local File Path:");
+        gd = new GridData();
+        gd.horizontalSpan = 3;
+        program_label.setLayoutData(gd);
+        
+        local_program_text = new Text(comp, SWT.SINGLE | SWT.BORDER);
+        local_program_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+        local_program_text.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent evt) {
+                updateLaunchConfigurationDialog();
+            }
+        });
+
+        Button search_button = createPushButton(comp, "Search...", null);
+        search_button.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent evt) {
+                handleSearchButtonSelected();
+                updateLaunchConfigurationDialog();
+            }
+        });
+
+        Button browse_button = createPushButton(comp, "Browse...", null);
+        browse_button.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent evt) {
+                handleBinaryBrowseButtonSelected();
+                updateLaunchConfigurationDialog();
+            }
+        });
+    }
+
+    private void createRemoteExeFileGroup(Composite parent) {
+        Composite comp = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        layout.marginHeight = 0;
+        layout.marginWidth = 0;
+        comp.setLayout(layout);
+        GridData gd = new GridData(GridData.FILL_HORIZONTAL);
+        comp.setLayoutData(gd);
+        
+        Label program_label = new Label(comp, SWT.NONE);
+        program_label.setText("Remote File Path:");
+        gd = new GridData();
+        gd.horizontalSpan = 3;
+        program_label.setLayoutData(gd);
+        
+        remote_program_text = new Text(comp, SWT.SINGLE | SWT.BORDER);
+        remote_program_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+        remote_program_text.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent evt) {
+                updateLaunchConfigurationDialog();
+            }
+        });
+    }
+
+    private void createWorkingDirGroup(Composite comp) {
+        Group group = new Group(comp, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+        group.setText("Working directory");
+
+        working_dir_text = new Text(group, SWT.SINGLE | SWT.BORDER);
+        working_dir_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+        default_dir_button = new Button(group, SWT.CHECK);
+        default_dir_button.setText("Use default");
+        default_dir_button.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
+    }
+    
+    private ITCFLaunchContext getLaunchContext(IProject project) {
+        try {
+            IExtensionPoint point = Platform.getExtensionRegistry().getExtensionPoint(Activator.PLUGIN_ID, "launch_context");
+            IExtension[] extensions = point.getExtensions();
+            for (int i = 0; i < extensions.length; i++) {
+                try {
+                    Bundle bundle = Platform.getBundle(extensions[i].getNamespaceIdentifier());
+                    bundle.start();
+                    IConfigurationElement[] e = extensions[i].getConfigurationElements();
+                    for (int j = 0; j < e.length; j++) {
+                        String nm = e[j].getName();
+                        if (nm.equals("class")) { //$NON-NLS-1$
+                            Class<?> c = bundle.loadClass(e[j].getAttribute("name")); //$NON-NLS-1$
+                            ITCFLaunchContext launch_context = (ITCFLaunchContext)c.newInstance();
+                            if (project != null) {
+                                if (launch_context.isSupportedProject(project)) return launch_context;
+                            }
+                            else {
+                                if (launch_context.isActive()) return launch_context;
+                            }
+                        }
+                    }
+                }
+                catch (Throwable x) {
+                    Activator.log("Cannot access launch context extension points", x);
+                }
             }
         }
-                
-        peer_tree.setHeaderVisible(true);
-        peer_tree.setFont(font);
-        peer_tree.addListener(SWT.SetData, new Listener() {
-            public void handleEvent(Event event) {
-                TreeItem item = (TreeItem)event.item;
-                PeerInfo info = findPeerInfo(item);
-                if (info == null) {
-                    PeerInfo parent = findPeerInfo(item.getParentItem());
-                    if (parent == null) {
-                        item.setText("Invalid");
-                    }
-                    else {
-                        if (parent.children == null || parent.children_error != null) {
-                            loadChildren(parent);
-                        }
-                        updateItems(parent);
-                    }
-                }
-                else {
-                    fillItem(item, info);
-                }
-            }
-        });
-        peer_tree.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetDefaultSelected(SelectionEvent e) {
-                TreeItem[] selections = peer_tree.getSelection();
-                if (selections.length == 0) return;
-                assert selections.length == 1;
-                final PeerInfo info = findPeerInfo(selections[0]);
-                if (info == null) return;
-                new PeerPropsDialog(getShell(), getImage(), info.attrs,
-                        info.peer instanceof TCFUserDefPeer).open();
-                if (!(info.peer instanceof TCFUserDefPeer)) return;
-                Protocol.invokeLater(new Runnable() {
-                    public void run() {
-                        ((TCFUserDefPeer)info.peer).updateAttributes(info.attrs);
-                        TCFUserDefPeer.savePeers();
-                    }
-                });
-            }
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                update_peer_buttons.run();
-                TreeItem[] selections = peer_tree.getSelection();
-                if (selections.length > 0) {
-                    assert selections.length == 1;
-                    PeerInfo info = findPeerInfo(selections[0]);
-                    if (info != null) peer_id_text.setText(getPath(info));
-                }
-            }
-        });
-        
-        createPeerButtons(composite);
-    }
-    
-    private void createPeerButtons(Composite parent) {
-        Font font = parent.getFont();
-        Composite composite = new Composite(parent, SWT.NONE);
-        GridLayout layout = new GridLayout();
-        composite.setFont(font);
-        composite.setLayout(layout);
-        composite.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.VERTICAL_ALIGN_FILL));
-        
-        final Button button_new = new Button(composite, SWT.PUSH);
-        button_new.setText("N&ew...");
-        button_new.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
-        button_new.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                final Map<String,String> attrs = new HashMap<String,String>();
-                if (new PeerPropsDialog(getShell(), getImage(), attrs, true).open() != Window.OK) return;
-                Protocol.invokeLater(new Runnable() {
-                    public void run() {
-                        new TCFUserDefPeer(attrs);
-                        TCFUserDefPeer.savePeers();
-                    }
-                });
-            }
-        });
-
-        final Button button_edit = new Button(composite, SWT.PUSH);
-        button_edit.setText("E&dit...");
-        button_edit.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
-        button_edit.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                TreeItem[] selection = peer_tree.getSelection();
-                if (selection.length == 0) return;
-                final PeerInfo info = findPeerInfo(selection[0]);
-                if (info == null) return;
-                if (new PeerPropsDialog(getShell(), getImage(), info.attrs,
-                        info.peer instanceof TCFUserDefPeer).open() != Window.OK) return;
-                if (!(info.peer instanceof TCFUserDefPeer)) return;
-                Protocol.invokeLater(new Runnable() {
-                    public void run() {
-                        ((TCFUserDefPeer)info.peer).updateAttributes(info.attrs);
-                        TCFUserDefPeer.savePeers();
-                    }
-                });
-            }
-        });
-
-        final Button button_remove = new Button(composite, SWT.PUSH);
-        button_remove.setText("&Remove");
-        button_remove.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
-        button_remove.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                TreeItem[] selection = peer_tree.getSelection();
-                if (selection.length == 0) return;
-                final PeerInfo info = findPeerInfo(selection[0]);
-                if (info == null) return;
-                if (!(info.peer instanceof TCFUserDefPeer)) return;
-                Protocol.invokeLater(new Runnable() {
-                    public void run() {
-                        ((TCFUserDefPeer)info.peer).dispose();
-                        TCFUserDefPeer.savePeers();
-                    }
-                });
-            }
-        });
-        
-        createVerticalSpacer(composite, 20);
-
-        final Button button_test = new Button(composite, SWT.PUSH);
-        button_test.setText("Run &Tests");
-        button_test.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
-        button_test.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                TreeItem[] selection = peer_tree.getSelection();
-                if (selection.length > 0) {
-                    assert selection.length == 1;
-                    runDiagnostics(selection[0], false);
-                }
-            }
-        });
-
-        final Button button_loop = new Button(composite, SWT.PUSH);
-        button_loop.setText("Tests &Loop");
-        button_loop.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
-        button_loop.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                TreeItem[] selection = peer_tree.getSelection();
-                if (selection.length > 0) {
-                    assert selection.length == 1;
-                    runDiagnostics(selection[0], true);
-                }
-            }
-        });
-        
-        update_peer_buttons = new Runnable() {
-
-            public void run() {
-                PeerInfo info = null;
-                TreeItem[] selection = peer_tree.getSelection();
-                if (selection.length > 0) info = findPeerInfo(selection[0]);
-                button_edit.setEnabled(info != null);
-                button_remove.setEnabled(info != null && info.peer instanceof TCFUserDefPeer);
-                button_test.setEnabled(info != null);
-                button_loop.setEnabled(info != null);
-            }
-        };
-        update_peer_buttons.run();
+        catch (Exception x) {
+            Activator.log("Cannot access launch context extension points", x);
+        }
+        return null;
     }
 
-    private void createProgramGroup(Composite parent) {
-        display = parent.getDisplay();
+    private void createTerminalOption(Composite parent, int colSpan) {
+        Composite terminal_comp = new Composite(parent, SWT.NONE);
+        GridLayout terminal_layout = new GridLayout();
+        terminal_layout.numColumns = 1;
+        terminal_layout.marginHeight = 0;
+        terminal_layout.marginWidth = 0;
+        terminal_comp.setLayout(terminal_layout);
+        GridData gd = new GridData(GridData.FILL_HORIZONTAL);
+        gd.horizontalSpan = colSpan;
+        terminal_comp.setLayoutData(gd);
 
-        Font font = parent.getFont();
-        
-        Group group = new Group(parent, SWT.NONE);
-        GridLayout top_layout = new GridLayout();
-        group.setLayout(top_layout);
-        group.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-        group.setFont(font);
-        group.setText("Program");
-        
-        program_text = new Text(group, SWT.SINGLE | SWT.BORDER);
-        program_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-        program_text.setFont(font);
-        program_text.addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent e) {
+        terminal_button = createCheckButton(terminal_comp, "Use Terminal");
+        terminal_button.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent evt) {
                 updateLaunchConfigurationDialog();
             }
         });
+        terminal_button.setEnabled(true);
     }
-    
-    @Override
-    public void dispose() {
-        Protocol.invokeAndWait(new Runnable() {
-            public void run() {
-                for (Iterator<LocatorListener> i = listeners.keySet().iterator(); i.hasNext();) {
-                    LocatorListener listener = i.next();
-                    listeners.get(listener).removeListener(listener);
+
+    public void initializeFrom(ILaunchConfiguration config) {
+        updateProjectFromConfig(config);
+        updateLocalProgramFromConfig(config);
+        updateRemoteProgramFromConfig(config);
+        updateTerminalFromConfig(config);
+        updateWorkingDirFromConfig(config);
+    }
+
+    private void updateTerminalFromConfig(ILaunchConfiguration config) {
+        boolean use_terminal = true;
+        try {
+            use_terminal = config.getAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true);
+        }
+        catch (CoreException e) {
+            Activator.log(e);
+        }
+        terminal_button.setSelection(use_terminal);
+    }
+
+    private void updateProjectFromConfig(ILaunchConfiguration config) {
+        String project_name = "";
+        try {
+            project_name = config.getAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, "");
+        }
+        catch (CoreException ce) {
+            Activator.log(ce);
+        }
+        project_text.setText(project_name);
+    }
+
+    private void updateLocalProgramFromConfig(ILaunchConfiguration config) {
+        String program_name = "";
+        try {
+            program_name = config.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, "");
+        }
+        catch (CoreException ce) {
+            Activator.log(ce);
+        }
+        local_program_text.setText(program_name);
+    }
+
+    private void updateRemoteProgramFromConfig(ILaunchConfiguration config) {
+        String program_name = "";
+        try {
+            program_name = config.getAttribute(TCFLaunchDelegate.ATTR_REMOTE_PROGRAM_FILE, "");
+        }
+        catch (CoreException ce) {
+            Activator.log(ce);
+        }
+        remote_program_text.setText(program_name);
+    }
+
+    private void updateWorkingDirFromConfig(ILaunchConfiguration config) {
+        String name = "";
+        try {
+            name = config.getAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, ""); //$NON-NLS-1$
+        }
+        catch (CoreException ce) {
+            Activator.log(ce);
+        }
+        working_dir_text.setText(name);
+    }
+
+    private IProject getProject() {
+        String name = project_text.getText().trim();
+        if (name.length() == 0) return null;
+        return ResourcesPlugin.getWorkspace().getRoot().getProject(name);
+    }
+
+    public void performApply(ILaunchConfigurationWorkingCopy config) {
+        config.setAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, project_text.getText());
+        config.setAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, local_program_text.getText());
+        config.setAttribute(TCFLaunchDelegate.ATTR_REMOTE_PROGRAM_FILE, remote_program_text.getText());
+        config.setAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, working_dir_text.getText());
+        config.setAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, terminal_button.getSelection());
+    }
+
+    /**
+     * Show a dialog that lists all executable files in currently selected project.
+     */
+    private void handleSearchButtonSelected() {
+        IProject project = getProject();
+        if (project == null) {
+            MessageDialog.openInformation(getShell(),
+                    "Project required",
+            "Enter project before searching for program");
+            return;
+        }
+        ITCFLaunchContext launch_context = getLaunchContext(project);
+        if (launch_context == null) return;
+        String path = launch_context.chooseBinary(getShell(), project);
+        if (path != null) local_program_text.setText(path);
+    }
+
+    /**
+     * Show a dialog that lets the user select a project. This in turn provides context for the main
+     * type, allowing the user to key a main type name, or constraining the search for main types to
+     * the specified project.
+     */
+    private void handleBinaryBrowseButtonSelected() {
+        FileDialog file_dialog = new FileDialog(getShell(), SWT.NONE);
+        file_dialog.setFileName(local_program_text.getText());
+        String path = file_dialog.open();
+        if (path != null) local_program_text.setText(path);
+    }
+
+    /**
+     * Show a dialog that lets the user select a project. This in turn provides context for the main
+     * type, allowing the user to key a main type name, or constraining the search for main types to
+     * the specified project.
+     */
+    private void handleProjectButtonSelected() {
+        try {
+            IProject project = chooseProject();
+            if (project == null) return;
+            project_text.setText(project.getName());
+        }
+        catch (Exception e) {
+            Activator.log("Cannot get project description", e);
+        }
+    }
+
+    /**
+     * Show project list dialog and return the first selected project, or null.
+     */
+    private IProject chooseProject() {
+        try {
+            IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+            ILabelProvider label_provider = new LabelProvider() {
+                
+                @Override
+                public String getText(Object element) {
+                    if (element == null) return "";
+                    return ((IProject)element).getName();
                 }
-                listeners.clear();
-                display = null;
+            };
+            ElementListSelectionDialog dialog = new ElementListSelectionDialog(getShell(), label_provider);
+            dialog.setTitle("Project Selection");
+            dialog.setMessage("Choose project to constrain search for program");
+            dialog.setElements(projects);
+
+            IProject cProject = getProject();
+            if (cProject != null) dialog.setInitialSelections(new Object[]{cProject});
+            if (dialog.open() == Window.OK) return (IProject)dialog.getFirstResult();
+        }
+        catch (Exception e) {
+            Activator.log("Cannot show project list dialog", e);
+        }
+        return null;
+    }
+
+    @Override
+    public boolean isValid(ILaunchConfiguration config) {
+        setErrorMessage(null);
+        setMessage(null);
+
+        String project_name = project_text.getText().trim();
+        if (project_name.length() != 0) {
+            IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(project_name);
+            if (!project.exists()) {
+                setErrorMessage("Project does not exist");
+                return false;
             }
-        });
-        super.dispose();
+            if (!project.isOpen()) {
+                setErrorMessage("Project must be opened");
+                return false;
+            }
+        }
+        String local_name = local_program_text.getText().trim();
+        if (local_name.equals(".") || local_name.equals("..")) { //$NON-NLS-1$ //$NON-NLS-2$
+            setErrorMessage("Invalid local program name");
+            return false;
+        }
+        String remote_name = remote_program_text.getText().trim();
+        if (remote_name.equals(".") || remote_name.equals("..")) { //$NON-NLS-1$ //$NON-NLS-2$
+            setErrorMessage("Invalid remote program name");
+            return false;
+        }
+        if (local_name.length() > 0) {
+            IProject project = getProject();
+            IPath program_path = new Path(local_name);
+            if (!program_path.isAbsolute()) {
+                if (project == null || !project.getFile(local_name).exists()) {
+                    setErrorMessage("Program does not exist");
+                    return false;
+                }
+                program_path = project.getFile(local_name).getLocation();
+            }
+            else {
+                File file = program_path.toFile();
+                if (!file.exists()) {
+                    setErrorMessage("Program file does not exist");
+                    return false;
+                }
+                if (file.isDirectory()) {
+                    setErrorMessage("Program path is directory name");
+                    return false;
+                }
+            }
+            if (project != null) {
+                try {
+                    ITCFLaunchContext launch_context = getLaunchContext(project);
+                    if (launch_context != null && !launch_context.isBinary(project, program_path)) {
+                        setErrorMessage("Program is not a recongnized executable");
+                        return false;
+                    }
+                }
+                catch (CoreException e) {
+                    Activator.log(e);
+                    setErrorMessage(e.getLocalizedMessage());
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public void setDefaults(ILaunchConfigurationWorkingCopy config) {
+        config.setAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, "");
+        config.setAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true);
+        ITCFLaunchContext launch_context = getLaunchContext(null);
+        if (launch_context != null) launch_context.setDefaults(getLaunchConfigurationDialog(), config);
     }
 
     public String getName() {
         return "Main";
     }
-    
+
     @Override
     public Image getImage() {
         return ImageCache.getImage(ImageCache.IMG_TCF);
-    }
-
-    public void initializeFrom(ILaunchConfiguration configuration) {
-        try {
-            String id = configuration.getAttribute(
-                    TCFLaunchDelegate.ATTR_PEER_ID, (String)null);
-            if (id != null) {
-                peer_id_text.setText(id);
-                TreeItem item = findItem(findPeerInfo(id));
-                if (item != null) {
-                    peer_tree.setSelection(item);
-                    update_peer_buttons.run();
-                }
-            }
-            program_text.setText(configuration.getAttribute(
-                    TCFLaunchDelegate.ATTR_PROGRAM_FILE, "")); //$NON-NLS-1$
-        }
-        catch (CoreException e) {
-            setErrorMessage(e.getMessage());
-        }
-    }
-
-    public boolean isValid(ILaunchConfiguration launchConfig) {
-        String id = peer_id_text.getText().trim();
-        if (id.length() == 0) {
-            setErrorMessage("Specify a target ID");
-            return false;
-        }
-        setErrorMessage(null);
-        return super.isValid(launchConfig);
-    }
-
-    public void performApply(ILaunchConfigurationWorkingCopy configuration) {
-        String id = peer_id_text.getText().trim();
-        if (id.length() == 0) id = null;
-        configuration.setAttribute(TCFLaunchDelegate.ATTR_PEER_ID, id);
-        String nm = program_text.getText().trim();
-        if (nm.length() == 0) nm = null;
-        configuration.setAttribute(TCFLaunchDelegate.ATTR_PROGRAM_FILE, nm);
-    }
-
-    public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-        configuration.setAttribute(TCFLaunchDelegate.ATTR_PEER_ID, "TCFLocal");
-        configuration.setAttribute(TCFLaunchDelegate.ATTR_PROGRAM_FILE, (String)null);
-    }
-    
-    private LocatorListener createLocatorListener(PeerInfo peer, ILocator locator) {
-        assert Protocol.isDispatchThread();
-        Map<String,IPeer> map = locator.getPeers();
-        PeerInfo[] buf = new PeerInfo[map.size()];
-        int n = 0;
-        for (IPeer p : map.values()) {
-            PeerInfo info = new PeerInfo();
-            info.parent = peer;
-            info.index = n;
-            info.id = p.getID();
-            info.attrs = new HashMap<String,String>(p.getAttributes());
-            info.peer = p;
-            buf[n++] = info;
-        }
-        LocatorListener listener = new LocatorListener(peer);
-        listeners.put(listener, locator);
-        locator.addListener(listener);
-        setChildren(peer, null, buf);
-        return listener;
-    }
-    
-    private boolean canHaveChildren(PeerInfo parent) {
-        return parent == peer_info || parent.attrs.get(IPeer.ATTR_PROXY) != null;
-    }
-    
-    private void loadChildren(final PeerInfo parent) {
-        assert Thread.currentThread() == display.getThread();
-        if (parent.children_pending) return;
-        if (!canHaveChildren(parent)) {
-            if (parent.children == null) updateItems(parent);
-            return;
-        }
-        parent.children_pending = true;
-        Protocol.invokeAndWait(new Runnable() {
-            public void run() {
-                if (parent == peer_info) {
-                    createLocatorListener(peer_info, Protocol.getLocator());
-                }
-                else {
-                    final IChannel channel = parent.peer.openChannel();
-                    final LocatorListener[] listener = new LocatorListener[1];
-                    channel.addChannelListener(new IChannelListener() {
-                        public void congestionLevel(int level) {
-                        }
-                        public void onChannelClosed(Throwable error) {
-                            setChildren(parent, error, new PeerInfo[0]);
-                            if (listener[0] != null) listeners.remove(listener[0]);
-                        }
-                        public void onChannelOpened() {
-                            ILocator locator = channel.getRemoteService(ILocator.class);
-                            if (locator == null) {
-                                channel.close();
-                            }
-                            else {
-                                listener[0] = createLocatorListener(parent, locator);
-                            }
-                        }
-                    });
-                }
-            }
-        });
-    }
-    
-    private void setChildren(final PeerInfo parent, final Throwable error, final PeerInfo[] children) {
-        assert Protocol.isDispatchThread();
-        display.asyncExec(new Runnable() {
-            public void run() {
-                parent.children_pending = false;
-                parent.children = children;
-                parent.children_error = error;
-                updateItems(parent);
-            }
-        });
-    }
-    
-    private void updateItems(PeerInfo parent) {
-        assert Thread.currentThread() == display.getThread();
-        if (!canHaveChildren(parent)) {
-            parent.children = new PeerInfo[0];
-            parent.children_error = null;
-        }
-        PeerInfo[] arr = parent.children;
-        TreeItem[] items = null;
-        if (arr == null || parent.children_error != null) {
-            if (parent == peer_info) {
-                peer_tree.setItemCount(1);
-                items = peer_tree.getItems();
-            }
-            else {
-                TreeItem item = findItem(parent);
-                if (item == null) return;
-                item.setItemCount(1);
-                items = item.getItems();
-            }
-            if (parent.children_pending) {
-                items[0].setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
-                items[0].setText("Loading...");
-            }
-            else if (parent.children_error != null) {
-                String msg = parent.children_error.getMessage().replace('\n', ' ');
-                items[0].setForeground(display.getSystemColor(SWT.COLOR_RED));
-                items[0].setText(msg);
-            }
-            else {
-                items[0].setForeground(display.getSystemColor(SWT.COLOR_RED));
-                items[0].setText("Invalid children list");
-            }
-            int n = peer_tree.getColumnCount();
-            for (int i = 1; i < n; i++) items[0].setText(i, "");
-            items[0].setItemCount(0);
-        }
-        else {
-            if (parent == peer_info) {
-                peer_tree.setItemCount(arr.length);
-                items = peer_tree.getItems();
-            }
-            else {
-                TreeItem item = findItem(parent);
-                if (item == null) return;
-                item.setItemCount(arr.length);
-                items = item.getItems();
-            }
-            assert items.length == arr.length;
-            for (int i = 0; i < items.length; i++) fillItem(items[i], arr[i]);
-            String id = peer_id_text.getText();
-            TreeItem item = findItem(findPeerInfo(id));
-            if (item != null) {
-                peer_tree.setSelection(item);
-                update_peer_buttons.run();
-            }
-        }
-    }
-
-    private PeerInfo findPeerInfo(TreeItem item) {
-        assert Thread.currentThread() == display.getThread();
-        if (item == null) return peer_info;
-        TreeItem parent = item.getParentItem();
-        PeerInfo info = findPeerInfo(parent);
-        if (info == null) return null;
-        if (info.children == null) return null;
-        if (info.children_error != null) return null;
-        int i = parent == null ? peer_tree.indexOf(item) : parent.indexOf(item);
-        if (i < 0 || i >= info.children.length) return null;
-        assert info.children[i].index == i;
-        return info.children[i];
-    }
-    
-    private PeerInfo findPeerInfo(String path) {
-        int i = path.lastIndexOf('/');
-        String id = null;
-        PeerInfo[] arr = null;
-        if (i < 0) {
-            arr = peer_info.children;
-            id = path;
-        }
-        else {
-            PeerInfo p = findPeerInfo(path.substring(0, i));
-            if (p == null) return null;
-            arr = p.children;
-            id = path.substring(i + 1);
-        }
-        if (arr == null) return null;
-        for (int n = 0; n < arr.length; n++) {
-            if (arr[n].id.equals(id)) return arr[n];
-        }
-        return null;
-    }
-    
-    private TreeItem findItem(PeerInfo info) {
-        if (info == null) return null;
-        assert info.parent != null;
-        if (info.parent == peer_info) {
-            return peer_tree.getItem(info.index);
-        }
-        TreeItem i = findItem(info.parent);
-        if (i == null) return null;
-        peer_tree.showItem(i);
-        return i.getItem(info.index);
-    }
-    
-    private void runDiagnostics(TreeItem item, boolean loop) {
-        final Shell shell = new Shell(getShell(), SWT.TITLE | SWT.PRIMARY_MODAL);
-        GridLayout layout = new GridLayout();
-        layout.verticalSpacing = 0;
-        layout.numColumns = 2;
-        shell.setLayout(layout);
-        shell.setText("Running Diagnostics...");
-        CLabel label = new CLabel(shell, SWT.NONE);
-        label.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
-        label.setText("Running Diagnostics...");
-        final TCFTestSuite[] test = new TCFTestSuite[1];
-        Button button_cancel = new Button(shell, SWT.PUSH);
-        button_cancel.setText("&Cancel");
-        button_cancel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        button_cancel.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                Protocol.invokeLater(new Runnable() {
-                    public void run() {
-                        if (test[0] != null) test[0].cancel();
-                    }
-                });
-            }
-        });
-        createVerticalSpacer(shell, 0);
-        ProgressBar bar = new ProgressBar(shell, SWT.HORIZONTAL);
-        bar.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false, 2, 1));
-        shell.setDefaultButton(button_cancel);
-        shell.pack();
-        shell.setSize(483, shell.getSize().y);
-        Rectangle rc0 = getShell().getBounds();
-        Rectangle rc1 = shell.getBounds();
-        shell.setLocation(rc0.x + (rc0.width - rc1.width) / 2, rc0.y + (rc0.height - rc1.height) / 2);
-        shell.setVisible(true);
-        runDiagnostics(item, loop, test, shell, label, bar);
-    }
-    
-    private void runDiagnostics(final TreeItem item, final boolean loop, final TCFTestSuite[] test,
-            final Shell shell, final CLabel label, final ProgressBar bar) {
-        final TCFTestSuite.TestListener done = new TCFTestSuite.TestListener() {
-            private String last_text = "";
-            private int last_count = 0;
-            private int last_total = 0;
-            public void progress(final String label_text, final int count_done, final int count_total) {
-                assert test[0] != null;
-                if ((label_text == null || last_text.equals(label_text)) &&
-                        last_total == count_total &&
-                        (count_done - last_count) / (float)count_total < 0.02f) return;
-                if (label_text != null) last_text = label_text;
-                last_total = count_total;
-                last_count = count_done;
-                display.asyncExec(new Runnable() {
-                    public void run() {
-                        label.setText(last_text);
-                        bar.setMinimum(0);
-                        bar.setMaximum(last_total);
-                        bar.setSelection(last_count);
-                    }
-                });
-            }
-            public void done(final Collection<Throwable> errors) {
-                assert test[0] != null;
-                final boolean b = test[0].isCanceled();
-                test[0] = null;
-                display.asyncExec(new Runnable() {
-                    public void run() {
-                        if (errors.size() > 0) {
-                            shell.dispose();
-                            new TestErrorsDialog(getControl().getShell(),
-                                    ImageCache.getImage(ImageCache.IMG_TCF), errors).open();
-                        }
-                        else if (loop && !b && display != null) {
-                            runDiagnostics(item, true, test, shell, label, bar);
-                        }
-                        else {
-                            shell.dispose();
-                        }
-                    }
-                });
-            }
-        };
-        final PeerInfo info = findPeerInfo(item);
-        Protocol.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    test[0] = new TCFTestSuite(info.peer, done);
-                }
-                catch (Throwable x) {
-                    ArrayList<Throwable> errors = new ArrayList<Throwable>();
-                    errors.add(x);
-                    done.done(errors);
-                }
-            }
-        });
-    }
-    
-    private void fillItem(TreeItem item, PeerInfo info) {
-        String text[] = new String[5];
-        text[0] = info.attrs.get(IPeer.ATTR_NAME);
-        text[1] = info.attrs.get(IPeer.ATTR_OS_NAME);
-        text[2] = info.attrs.get(IPeer.ATTR_TRANSPORT_NAME);
-        text[3] = info.attrs.get(IPeer.ATTR_IP_HOST);
-        text[4] = info.attrs.get(IPeer.ATTR_IP_PORT);
-        item.setText(text);
-        item.setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
-        item.setImage(ImageCache.getImage(getImageName(info)));
-        if (!canHaveChildren(info)) item.setItemCount(0);
-        else if (info.children == null || info.children_error != null) item.setItemCount(1);
-        else item.setItemCount(info.children.length);
-    }
-    
-    private String getPath(PeerInfo info) {
-        if (info.parent == peer_info) return info.id;
-        return getPath(info.parent) + "/" + info.id;
-    }
-    
-    private String getImageName(PeerInfo info) {
-        return ImageCache.IMG_TCF;
     }
 }

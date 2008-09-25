@@ -2,6 +2,8 @@
 <?eclipse version="3.2"?>
 <plugin>
 
+   <extension-point id="launch_context" name="TCF Launch Context" schema="schema/launch_context.exsd"/>
+
    <extension point="org.eclipse.tm.tcf.startup"/>
 
    <extension

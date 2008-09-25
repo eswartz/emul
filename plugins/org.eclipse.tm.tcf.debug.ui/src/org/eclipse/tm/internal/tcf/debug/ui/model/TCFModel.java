@@ -295,24 +295,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             launch_node.dispose();
             launch_node = null;
         }
-        final Throwable error = launch.getError();
-        if (error != null) launch.setError(null);
-        display.asyncExec(new Runnable() {
-            public void run() {
-                IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-                if (window == null) return;
-                IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_DEBUG_VIEW);
-                if (view != null) ((StructuredViewer)view.getViewer()).refresh(launch);
-                if (error != null) {
-                    String msg = error.getLocalizedMessage();
-                    if (msg == null || msg.length() == 0) msg = error.getClass().getName();
-                    MessageBox mb = new MessageBox(window.getShell(), SWT.ICON_ERROR | SWT.OK);
-                    mb.setText("TCF Connection Error");
-                    mb.setMessage("Communication channel is closed.\n" + msg);
-                    mb.open();
-                }
-            }
-        });
+        refreshLaunchView();
         assert id2node.size() == 0;
     }
     
@@ -380,6 +363,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (launch_node != null) {
             launch_node.addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
             fireModelChanged();
+        }
+        else {
+            refreshLaunchView();
         }
     }
 
@@ -630,6 +616,37 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 }
                 Activator.getAnnotationManager().addStackFrameAnnotation(TCFModel.this,
                         exe_id, top_frame, page, text_editor, region);
+            }
+        });
+    }
+    
+    private void refreshLaunchView() {
+        final Throwable error = launch.getError();
+        if (error != null) launch.setError(null);
+        display.asyncExec(new Runnable() {
+            public void run() {
+                IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+                if (window == null) return;
+                IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_DEBUG_VIEW);
+                if (view != null) ((StructuredViewer)view.getViewer()).refresh(launch);
+                if (error != null) {
+                    StringBuffer buf = new StringBuffer();
+                    Throwable err = error;
+                    while (err != null) {
+                        String msg = err.getLocalizedMessage();
+                        if (msg == null || msg.length() == 0) msg = err.getClass().getName();
+                        buf.append(msg);
+                        err = err.getCause();
+                        if (err != null) {
+                            buf.append('\n');
+                            buf.append("Caused by:\n");
+                        }
+                    }
+                    MessageBox mb = new MessageBox(window.getShell(), SWT.ICON_ERROR | SWT.OK);
+                    mb.setText("TCF Launch Error");
+                    mb.setMessage(buf.toString());
+                    mb.open();
+                }
             }
         });
     }

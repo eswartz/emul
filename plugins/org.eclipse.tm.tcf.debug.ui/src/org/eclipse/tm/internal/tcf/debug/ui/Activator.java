@@ -126,4 +126,18 @@ public class Activator extends AbstractUIPlugin {
                     plugin.getBundle().getSymbolicName(), IStatus.OK, msg, err));
         }
     }  
+
+    /**
+     * Send error message into Eclipse log.
+     * @param err - exception
+     */
+    public static void log(Throwable err) {
+        if (plugin == null || plugin.getLog() == null) {
+            err.printStackTrace();
+        }
+        else {
+            plugin.getLog().log(new Status(IStatus.ERROR,
+                    plugin.getBundle().getSymbolicName(), IStatus.OK, "Unhandled exception in TCF UI", err));
+        }
+    }  
 }

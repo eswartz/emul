@@ -27,9 +27,13 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
 
     public static final String
         ATTR_PEER_ID = ITCFConstants.ID_TCF_DEBUG_MODEL + ".PeerID",
-        ATTR_PROGRAM_FILE = ITCFConstants.ID_TCF_DEBUG_MODEL + ".ProgramFile",
+        ATTR_PROJECT_NAME = ITCFConstants.ID_TCF_DEBUG_MODEL + ".ProjectName",
+        ATTR_LOCAL_PROGRAM_FILE = ITCFConstants.ID_TCF_DEBUG_MODEL + ".LocalProgramFile",
+        ATTR_REMOTE_PROGRAM_FILE = ITCFConstants.ID_TCF_DEBUG_MODEL + ".ProgramFile",
+        ATTR_COPY_TO_REMOTE_FILE = ITCFConstants.ID_TCF_DEBUG_MODEL + ".CopyToRemote",
         ATTR_PROGRAM_ARGUMENTS = ITCFConstants.ID_TCF_DEBUG_MODEL + ".ProgramArguments",
-        ATTR_WORKING_DIRECTORY = ITCFConstants.ID_TCF_DEBUG_MODEL + ".WorkingDirectory";
+        ATTR_WORKING_DIRECTORY = ITCFConstants.ID_TCF_DEBUG_MODEL + ".WorkingDirectory",
+        ATTR_USE_TERMINAL = ITCFConstants.ID_TCF_DEBUG_MODEL + ".UseTerminal";
 
     public ILaunch getLaunch(ILaunchConfiguration configuration, String mode) throws CoreException {
         return new TCFLaunch(configuration, mode);
@@ -41,7 +45,7 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    String id = configuration.getAttribute(TCFLaunchDelegate.ATTR_PEER_ID, "");
+                    String id = configuration.getAttribute(ATTR_PEER_ID, "");
                     IPeer peer = Protocol.getLocator().getPeers().get(id);
                     if (peer == null) throw new IOException("Cannot locate peer " + id);
                     ((TCFLaunch)launch).launchTCF(mode, peer);
