@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.tm.tcf.debug.LaunchConfigurationType">
+<booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
+<stringAttribute key="org.eclipse.debug.ui.ATTR_CONSOLE_ENCODING" value="UTF-8"/>
+<stringAttribute key="org.eclipse.tm.tcf.debug.LocalProgramFile" value="Linux/i686/Debug/agent"/>
+<stringAttribute key="org.eclipse.tm.tcf.debug.PeerID" value="TCP:147.11.46.31:1534"/>
+<stringAttribute key="org.eclipse.tm.tcf.debug.ProgramArguments" value="-t"/>
+<stringAttribute key="org.eclipse.tm.tcf.debug.ProgramFile" value="/tmp/agent"/>
+<stringAttribute key="org.eclipse.tm.tcf.debug.ProjectName" value="org.eclipse.tm.tcf.agent"/>
+<booleanAttribute key="org.eclipse.tm.tcf.debug.UseTerminal" value="true"/>
+<stringAttribute key="org.eclipse.tm.tcf.debug.WorkingDirectory" value="/tmp"/>
+</launchConfiguration>
