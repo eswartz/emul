@@ -40,24 +40,47 @@ public class FileSystemProxy implements IFileSystem {
         }
     }
     
-    private static final class Status extends FileSystemException {
+    private static final class Status extends FileSystemException implements IErrorReport {
         
         private static final long serialVersionUID = -1636567076145085980L;
         
         private final int status;
+        private final Map<String,Object> attrs;
         
-        Status(int status, String message) {
+        Status(int status, String message, Map<String,Object> attrs) {
             super(message);
-            this.status = status; 
+            this.status = status;
+            this.attrs = attrs;
         }
         
         Status(Exception x) {
             super(x);
-            this.status = IErrorReport.TCF_ERROR_OTHER; 
+            this.status = IErrorReport.TCF_ERROR_OTHER;
+            this.attrs = new HashMap<String,Object>();
         }
         
         public int getStatus() {
             return status;
+        }
+
+        public int getErrorCode() {
+            Number n = (Number)attrs.get(ERROR_CODE);
+            if (n == null) return 0;
+            return n.intValue();
+        }
+
+        public int getAltCode() {
+            Number n = (Number)attrs.get(ERROR_ALT_CODE);
+            if (n == null) return 0;
+            return n.intValue();
+        }
+
+        public String getAltOrg() {
+            return (String)attrs.get(ERROR_ALT_ORG);
+        }
+
+        public Map<String, Object> getAttributes() {
+            return attrs;
         }
     }
     
@@ -71,14 +94,17 @@ public class FileSystemProxy implements IFileSystem {
         public Status toFSError(Object data) {
             if (data == null) return null;
             Map<String,Object> map = (Map<String,Object>)data;
-            Number error_code = (Number)map.get(ERROR_CODE);
+            Number error_code = (Number)map.get(IErrorReport.ERROR_CODE);
             String cmd = getCommandString();
             if (cmd.length() > 72) cmd = cmd.substring(0, 72) + "...";
-            return new Status(error_code.intValue(),
+            Status s = new Status(error_code.intValue(),
                     "TCF command exception:" +
                     "\nCommand: " + cmd +
                     "\nException: " + toErrorString(data) +
-                    "\nError code: " + error_code);
+                    "\nError code: " + error_code, map);
+            Object caused_by = map.get(IErrorReport.ERROR_CAUSE_BY);
+            if (caused_by != null) s.initCause(toError(caused_by, false));
+            return s;
         }
     }
     

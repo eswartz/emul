@@ -56,6 +56,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
     private Text working_dir_text;
     private Button default_dir_button;
     private Button terminal_button;
+    private Exception init_error;
 
     public void createControl(Composite parent) {
         Composite comp = new Composite(parent, SWT.NONE);
@@ -198,6 +199,17 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         default_dir_button = new Button(group, SWT.CHECK);
         default_dir_button.setText("Use default");
         default_dir_button.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
+        default_dir_button.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent evt) {
+                updateLaunchConfigurationDialog();
+            }
+        });
+    }
+    
+    protected void updateLaunchConfigurationDialog() {
+        super.updateLaunchConfigurationDialog();
+        working_dir_text.setEnabled(!default_dir_button.getSelection());
     }
     
     private ITCFLaunchContext getLaunchContext(IProject project) {
@@ -257,66 +269,20 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
     }
 
     public void initializeFrom(ILaunchConfiguration config) {
-        updateProjectFromConfig(config);
-        updateLocalProgramFromConfig(config);
-        updateRemoteProgramFromConfig(config);
-        updateTerminalFromConfig(config);
-        updateWorkingDirFromConfig(config);
-    }
-
-    private void updateTerminalFromConfig(ILaunchConfiguration config) {
-        boolean use_terminal = true;
         try {
-            use_terminal = config.getAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true);
+            project_text.setText(config.getAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, ""));
+            local_program_text.setText(config.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, ""));
+            remote_program_text.setText(config.getAttribute(TCFLaunchDelegate.ATTR_REMOTE_PROGRAM_FILE, ""));
+            working_dir_text.setText(config.getAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, ""));
+            default_dir_button.setSelection(!config.hasAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY));
+            terminal_button.setSelection(config.getAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true));
         }
-        catch (CoreException e) {
+        catch (Exception e) {
+            init_error = e;
+            setErrorMessage("Cannot read launch configuration: " + init_error);
             Activator.log(e);
         }
-        terminal_button.setSelection(use_terminal);
-    }
-
-    private void updateProjectFromConfig(ILaunchConfiguration config) {
-        String project_name = "";
-        try {
-            project_name = config.getAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, "");
-        }
-        catch (CoreException ce) {
-            Activator.log(ce);
-        }
-        project_text.setText(project_name);
-    }
-
-    private void updateLocalProgramFromConfig(ILaunchConfiguration config) {
-        String program_name = "";
-        try {
-            program_name = config.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, "");
-        }
-        catch (CoreException ce) {
-            Activator.log(ce);
-        }
-        local_program_text.setText(program_name);
-    }
-
-    private void updateRemoteProgramFromConfig(ILaunchConfiguration config) {
-        String program_name = "";
-        try {
-            program_name = config.getAttribute(TCFLaunchDelegate.ATTR_REMOTE_PROGRAM_FILE, "");
-        }
-        catch (CoreException ce) {
-            Activator.log(ce);
-        }
-        remote_program_text.setText(program_name);
-    }
-
-    private void updateWorkingDirFromConfig(ILaunchConfiguration config) {
-        String name = "";
-        try {
-            name = config.getAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, ""); //$NON-NLS-1$
-        }
-        catch (CoreException ce) {
-            Activator.log(ce);
-        }
-        working_dir_text.setText(name);
+        updateLaunchConfigurationDialog();
     }
 
     private IProject getProject() {
@@ -329,7 +295,12 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         config.setAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, project_text.getText());
         config.setAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, local_program_text.getText());
         config.setAttribute(TCFLaunchDelegate.ATTR_REMOTE_PROGRAM_FILE, remote_program_text.getText());
-        config.setAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, working_dir_text.getText());
+        if (default_dir_button.getSelection()) {
+            config.removeAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY);
+        }
+        else {
+            config.setAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, working_dir_text.getText());
+        }
         config.setAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, terminal_button.getSelection());
     }
 
@@ -341,7 +312,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         if (project == null) {
             MessageDialog.openInformation(getShell(),
                     "Project required",
-            "Enter project before searching for program");
+                    "Enter project before searching for program");
             return;
         }
         ITCFLaunchContext launch_context = getLaunchContext(project);
@@ -412,6 +383,11 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         setErrorMessage(null);
         setMessage(null);
 
+        if (init_error != null) {
+            setErrorMessage("Cannot read launch configuration: " + init_error);
+            return false;
+        }
+        
         String project_name = project_text.getText().trim();
         if (project_name.length() != 0) {
             IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(project_name);
@@ -476,6 +452,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
     public void setDefaults(ILaunchConfigurationWorkingCopy config) {
         config.setAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, "");
         config.setAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true);
+        config.setAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, (String)null);
         ITCFLaunchContext launch_context = getLaunchContext(null);
         if (launch_context != null) launch_context.setDefaults(getLaunchConfigurationDialog(), config);
     }

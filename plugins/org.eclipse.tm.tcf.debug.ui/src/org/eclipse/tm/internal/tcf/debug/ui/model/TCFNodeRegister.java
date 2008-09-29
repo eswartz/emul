@@ -67,6 +67,13 @@ public class TCFNodeRegister extends TCFNode {
             }
         };
     }
+    
+    @Override
+    public void dispose() {
+        context.reset(null);
+        value.reset(null);
+        super.dispose();
+    }
 
     @Override
     protected void getData(ILabelUpdate result) {
@@ -211,12 +218,6 @@ public class TCFNodeRegister extends TCFNode {
         context.reset();
         value.reset();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-    }
-
-    @Override
-    public void invalidateNode() {
-        context.reset();
-        value.reset();
     }
 
     @Override

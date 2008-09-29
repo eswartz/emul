@@ -212,6 +212,9 @@ public class TCFNodeExpression extends TCFNode {
     
     @Override
     void dispose() {
+        value.reset(null);
+        type.reset(null);
+        children.reset(null);
         children.dispose();
         super.dispose();
         if (!expression.isValid() || expression.getData() == null) return;
@@ -445,13 +448,6 @@ public class TCFNodeExpression extends TCFNode {
         return 0;
     }
     
-    @Override
-    public void invalidateNode() {
-        value.reset();
-        type.reset();
-        children.reset();
-    }
-
     @Override
     public boolean validateNode(Runnable done) {
         TCFDataCache<?> pending = null;

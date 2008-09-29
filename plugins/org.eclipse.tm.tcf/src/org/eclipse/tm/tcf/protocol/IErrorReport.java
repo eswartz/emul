@@ -10,8 +10,20 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.protocol;
 
+import java.util.Map;
+
 /**
- * This interface defines TCF standard format of error reports. 
+ * This interface defines TCF standard format of error reports.
+ * 
+ * Exception objects can implement this interface to make error report details
+ * available for clients.
+ * 
+ * Usage example:
+ * 
+ * Exception x = ...
+ * if (x instanceof IErrorReport) {
+ *      int error_code = ((IErrorReport)x).getErrorCode();
+ * ...
  * 
  * @noextend This interface is not intended to be extended by clients.
  */
@@ -75,4 +87,12 @@ public interface IErrorReport {
         TCF_ERROR_SYM_NOT_FOUND       = 22,
         TCF_ERROR_UNSUPPORTED         = 23,
         TCF_ERROR_INV_DATA_TYPE       = 24;
+    
+    public int getErrorCode();
+    
+    public int getAltCode();
+    
+    public String getAltOrg();
+    
+    public Map<String,Object> getAttributes();
 }

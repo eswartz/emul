@@ -28,6 +28,7 @@ public abstract class TCFDataCache<V> implements Runnable {
 
     private Throwable error;
     private boolean valid;
+    private boolean posted;
     private V data;
     
     protected final IChannel channel;
@@ -38,6 +39,13 @@ public abstract class TCFDataCache<V> implements Runnable {
     public TCFDataCache(IChannel channel) {
         assert channel != null;
         this.channel = channel;
+    }
+    
+    private void post() {
+        if (posted) return;
+        if (waiting_list.isEmpty()) return;
+        Protocol.invokeLater(this);
+        posted = true;
     }
     
     /**
@@ -79,10 +87,13 @@ public abstract class TCFDataCache<V> implements Runnable {
      */
     public void run() {
         assert Protocol.isDispatchThread();
-        if (waiting_list.isEmpty()) return;
+        posted = false;
         Runnable[] arr = waiting_list.toArray(new Runnable[waiting_list.size()]);
         waiting_list.clear();
-        for (Runnable r : arr) r.run();
+        for (Runnable r : arr) {
+            if (r instanceof TCFDataCache<?> && ((TCFDataCache<?>)r).posted) continue;
+            r.run();
+        }
     }
     
     /**
@@ -113,7 +124,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         }
         assert valid;
         assert command == null;
-        run();
+        post();
         return true;
     }
     
@@ -131,7 +142,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         this.error = error;
         this.data = data;
         valid = true;
-        Protocol.invokeLater(this);
+        post();
     }
 
     /**
@@ -147,7 +158,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         this.data = data;
         error = null;
         valid = true;
-        Protocol.invokeLater(this);
+        post();
     }
     
     /**
@@ -158,7 +169,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         error = null;
         valid = false;
         data = null;
-        Protocol.invokeLater(this);
+        post();
     }
     
     /**
@@ -173,7 +184,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         error = null;
         valid = false;
         data = null;
-        Protocol.invokeLater(this);
+        post();
     }
     
     /**

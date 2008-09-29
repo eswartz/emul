@@ -88,11 +88,6 @@ public class TCFNodeLaunch extends TCFNode {
     }
 
     @Override
-    public void invalidateNode() {
-        children.reset();
-    }
-
-    @Override
     public boolean validateNode(Runnable done) {
         if (!children.validate()) {
             children.wait(done);

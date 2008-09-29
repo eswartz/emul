@@ -112,7 +112,6 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
 
     public void setDefaults(ILaunchConfigurationWorkingCopy config) {
         config.setAttribute(TCFLaunchDelegate.ATTR_PROGRAM_ARGUMENTS, (String)null);
-        config.setAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, (String)null);
     }
 
     public void initializeFrom(ILaunchConfiguration configuration) {

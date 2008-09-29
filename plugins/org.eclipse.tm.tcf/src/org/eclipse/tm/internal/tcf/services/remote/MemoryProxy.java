@@ -22,6 +22,7 @@ import org.eclipse.tm.internal.tcf.core.ReadOnlyMap;
 import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IMemory;
@@ -46,14 +47,16 @@ public class MemoryProxy implements IMemory {
         }
     }
     
-    private class MemoryErrorReport extends MemoryError implements ErrorOffset {
+    private class MemoryErrorReport extends MemoryError implements ErrorOffset, IErrorReport {
         
         private static final long serialVersionUID = 796525409870265390L;
+        private final Map<String,Object> attrs;
         private final Range[] ranges;
         
         @SuppressWarnings("unchecked")
-        MemoryErrorReport(String msg, Number addr, Object ranges) {
+        MemoryErrorReport(String msg, Map<String,Object> attrs, Number addr, Object ranges) {
             super(msg);
+            this.attrs = attrs;
             Collection<Map<String,Object>> c = (Collection<Map<String,Object>>)ranges;
             this.ranges = c == null ? null : new Range[c.size()];
             if (c != null) {
@@ -75,6 +78,26 @@ public class MemoryProxy implements IMemory {
                 }
                 Arrays.sort(this.ranges);
             }
+        }
+
+        public int getErrorCode() {
+            Number n = (Number)attrs.get(ERROR_CODE);
+            if (n == null) return 0;
+            return n.intValue();
+        }
+
+        public int getAltCode() {
+            Number n = (Number)attrs.get(ERROR_ALT_CODE);
+            if (n == null) return 0;
+            return n.intValue();
+        }
+
+        public String getAltOrg() {
+            return (String)attrs.get(ERROR_ALT_ORG);
+        }
+
+        public Map<String, Object> getAttributes() {
+            return attrs;
         }
 
         public String getMessage(int offset) {
@@ -312,14 +335,18 @@ public class MemoryProxy implements IMemory {
         MemoryError toMemoryError(Number addr, Object data, Object ranges) {
             if (data == null) return null;
             Map<String,Object> map = (Map<String,Object>)data;
-            Integer code = (Integer)map.get(ERROR_CODE);
+            Integer code = (Integer)map.get(IErrorReport.ERROR_CODE);
             String cmd = getCommandString();
             if (cmd.length() > 72) cmd = cmd.substring(0, 72) + "...";
-            return new MemoryErrorReport(
+            MemoryError e = new MemoryErrorReport(
                     "TCF command exception:" +
                     "\nCommand: " + cmd +
                     "\nException: " + toErrorString(data) +
-                    "\nError code: " + code, addr, ranges);
+                    "\nError code: " + code,
+                    map, addr, ranges);
+            Object caused_by = map.get(IErrorReport.ERROR_CAUSE_BY);
+            if (caused_by != null) e.initCause(toError(caused_by, false));
+            return e;
         }
     }
 

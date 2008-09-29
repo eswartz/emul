@@ -13,8 +13,10 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IStackTrace;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
 public class TCFChildrenStackTrace extends TCFChildren {
@@ -61,8 +63,15 @@ public class TCFChildrenStackTrace extends TCFChildren {
     @Override
     protected boolean startDataRetrieval() {
         final HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
-        if (!node.isSuspended()) {
-            set(null, null, data);
+        TCFDataCache<TCFContextState> state = node.getState();
+        if (!state.validate()) {
+            state.wait(this);
+            return false;
+        }
+        Throwable state_error = state.getError();
+        TCFContextState state_data = state.getData();
+        if (state_error != null || state_data == null || !state_data.is_suspended) {
+            set(null, state_error, data);
             return true;
         }
         IStackTrace st = node.model.getLaunch().getService(IStackTrace.class);

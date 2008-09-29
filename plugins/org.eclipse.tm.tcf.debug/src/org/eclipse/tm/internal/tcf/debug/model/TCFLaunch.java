@@ -214,14 +214,14 @@ public class TCFLaunch extends Launch {
                 }
             };
             if (local_file.length() == 0 || remote_file.length() == 0) r.run();
-            else copyToRemoteTarget(getProgramPath(project, local_file), remote_file, r);
+            else copyFileToRemoteTarget(getProgramPath(project, local_file), remote_file, r);
         }
         catch (Exception x) {
             channel.terminate(x);
         }
     }
     
-    private void copyToRemoteTarget(String local_file, String remote_file, final Runnable done) {
+    private void copyFileToRemoteTarget(String local_file, String remote_file, final Runnable done) {
         if (local_file == null) {
             channel.terminate(new Exception("Program does not exist"));
             return;

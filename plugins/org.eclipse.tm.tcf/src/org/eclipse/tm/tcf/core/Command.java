@@ -56,7 +56,7 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  *      }.token;
  *  }
  */
-public abstract class Command implements IErrorReport, IChannel.ICommandListener {
+public abstract class Command implements IChannel.ICommandListener {
     
     private final IService service;
     private final String command;
@@ -67,6 +67,39 @@ public abstract class Command implements IErrorReport, IChannel.ICommandListener
     private boolean done;
     
     private static final SimpleDateFormat timestamp_format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    
+    private class ErrorReport extends Exception implements IErrorReport {
+        
+        private static final long serialVersionUID = 3687543884858739977L;
+        private final Map<String,Object> attrs;
+        
+        ErrorReport(String msg, Map<String,Object> attrs) {
+            super(msg);
+            this.attrs = attrs;
+            Object caused_by = attrs.get(IErrorReport.ERROR_CAUSE_BY);
+            if (caused_by != null) initCause(toError(caused_by, false));
+        }
+
+        public int getErrorCode() {
+            Number n = (Number)attrs.get(ERROR_CODE);
+            if (n == null) return 0;
+            return n.intValue();
+        }
+
+        public int getAltCode() {
+            Number n = (Number)attrs.get(ERROR_ALT_CODE);
+            if (n == null) return 0;
+            return n.intValue();
+        }
+
+        public String getAltOrg() {
+            return (String)attrs.get(ERROR_ALT_ORG);
+        }
+
+        public Map<String, Object> getAttributes() {
+            return attrs;
+        }
+    }
     
     public Command(IChannel channel, IService service, String command, Object[] args) {
         this.service = service;
@@ -143,17 +176,17 @@ public abstract class Command implements IErrorReport, IChannel.ICommandListener
     public static String toErrorString(Object data) {
         if (data == null) return null;
         Map<String,Object> map = (Map<String,Object>)data;
-        String fmt = (String)map.get(ERROR_FORMAT);
+        String fmt = (String)map.get(IErrorReport.ERROR_FORMAT);
         if (fmt != null) {
-            Collection<Object> c = (Collection<Object>)map.get(ERROR_PARAMS);
+            Collection<Object> c = (Collection<Object>)map.get(IErrorReport.ERROR_PARAMS);
             if (c != null) return new MessageFormat(fmt).format(c.toArray());
             return fmt;
         }
-        Number code = (Number)map.get(ERROR_CODE);
+        Number code = (Number)map.get(IErrorReport.ERROR_CODE);
         if (code != null) {
-            if (code.intValue() == TCF_ERROR_OTHER) {
-                String alt_org = (String)map.get(ERROR_ALT_ORG);
-                Number alt_code = (Number)map.get(ERROR_ALT_CODE);
+            if (code.intValue() == IErrorReport.TCF_ERROR_OTHER) {
+                String alt_org = (String)map.get(IErrorReport.ERROR_ALT_ORG);
+                Number alt_code = (Number)map.get(IErrorReport.ERROR_ALT_CODE);
                 if (alt_org != null && alt_code != null) {
                     return alt_org + " Error " + alt_code;
                 }
@@ -163,13 +196,13 @@ public abstract class Command implements IErrorReport, IChannel.ICommandListener
         return "Invalid error report format";
     }
     
-    private void appendErrorProps(StringBuffer bf, Map<String,Object> map) {
-        Number time = (Number)map.get(ERROR_TIME);
-        Number code = (Number)map.get(ERROR_CODE);
-        String service = (String)map.get(ERROR_SERVICE);
-        Number severity = (Number)map.get(ERROR_SEVERITY);
-        Number alt_code = (Number)map.get(ERROR_ALT_CODE);
-        String alt_org = (String)map.get(ERROR_ALT_ORG);
+    private static void appendErrorProps(StringBuffer bf, Map<String,Object> map) {
+        Number time = (Number)map.get(IErrorReport.ERROR_TIME);
+        Number code = (Number)map.get(IErrorReport.ERROR_CODE);
+        String service = (String)map.get(IErrorReport.ERROR_SERVICE);
+        Number severity = (Number)map.get(IErrorReport.ERROR_SEVERITY);
+        Number alt_code = (Number)map.get(IErrorReport.ERROR_ALT_CODE);
+        String alt_org = (String)map.get(IErrorReport.ERROR_ALT_ORG);
         if (time != null) {
             bf.append('\n');
             bf.append("Time: ");
@@ -180,9 +213,9 @@ public abstract class Command implements IErrorReport, IChannel.ICommandListener
             bf.append("Severity: ");
             bf.append(toErrorString(map));
             switch (severity.intValue()) {
-            case SEVERITY_ERROR: bf.append("Error");
-            case SEVERITY_FATAL: bf.append("Fatal");
-            case SEVERITY_WARNING: bf.append("Warning");
+            case IErrorReport.SEVERITY_ERROR: bf.append("Error");
+            case IErrorReport.SEVERITY_FATAL: bf.append("Fatal");
+            case IErrorReport.SEVERITY_WARNING: bf.append("Warning");
             default: bf.append("Unknown");
             }
         }
@@ -209,34 +242,24 @@ public abstract class Command implements IErrorReport, IChannel.ICommandListener
         }
     }
     
-    @SuppressWarnings("unchecked")
     public Exception toError(Object data) {
-        if (data == null) return null;
-        Map<String,Object> map = (Map<String,Object>)data;
-        String cmd = getCommandString();
-        if (cmd.length() > 72) cmd = cmd.substring(0, 72) + "...";
-        StringBuffer bf = new StringBuffer();
-        bf.append("TCF command error:");
-        bf.append('\n');
-        bf.append("Command: ");
-        bf.append(cmd);
-        appendErrorProps(bf, map);
-        Exception x = new Exception(bf.toString());
-        Object caused_by = map.get(ERROR_CAUSE_BY);
-        if (caused_by != null) x.initCause(toNestedError(caused_by));
-        return x;
+        return toError(data, true);
     }
     
     @SuppressWarnings("unchecked")
-    private Exception toNestedError(Object data) {
+    public Exception toError(Object data, boolean include_command_text) {
         if (data == null) return null;
         Map<String,Object> map = (Map<String,Object>)data;
         StringBuffer bf = new StringBuffer();
-        bf.append("TCF error:");
+        bf.append("TCF error report:");
+        bf.append('\n');
+        if (include_command_text) {
+            String cmd = getCommandString();
+            if (cmd.length() > 72) cmd = cmd.substring(0, 72) + "...";
+            bf.append("Command: ");
+            bf.append(cmd);
+        }
         appendErrorProps(bf, map);
-        Exception x = new Exception(bf.toString());
-        Object caused_by = map.get(ERROR_CAUSE_BY);
-        if (caused_by != null) x.initCause(toNestedError(caused_by));
-        return x;
+        return new ErrorReport(bf.toString(), map);
     }
 }

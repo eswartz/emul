@@ -127,6 +127,9 @@ public class TCFNodeExecContext extends TCFNode {
 
     @Override
     void dispose() {
+        run_context.reset(null);
+        mem_context.reset(null);
+        state.reset(null);
         children_exec.dispose();
         children_stack.dispose();
         super.dispose();
@@ -448,52 +451,29 @@ public class TCFNodeExecContext extends TCFNode {
     }
 
     @Override
-    public void invalidateNode() {
-        run_context.reset();
-        mem_context.reset();
-        state.reset();
-        children_exec.reset();
-        children_stack.reset();
-    }
-    
-    @Override
     public boolean validateNode(Runnable done) {
         assert !disposed;
-        mem_context.validate();
-        run_context.validate();
-        if (!mem_context.isValid()) {
-            mem_context.wait(done);
+        TCFDataCache<?> pending = null;
+        
+        if (!mem_context.validate()) pending = mem_context;
+        if (!run_context.validate()) pending = run_context;
+        if (pending != null) {
+            pending.wait(done);
             return false;
         }
-        if (!run_context.isValid()) {
-            run_context.wait(done);
-            return false;
-        }
-        state.validate();
-        children_exec.validate();
-        if (!state.isValid()) {
-            state.wait(done);
-            return false;
-        }
-        if (!children_exec.isValid()) {
-            children_exec.wait(done);
-            return false;
-        }
-        children_stack.validate();
 
+        if (!state.validate()) pending = state;
+        if (!children_exec.validate()) pending = children_exec;
+        if (!children_stack.validate()) pending = children_stack;
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && !ctx.hasState()) {
             // Container need to validate children for
             // hasSuspendedChildren() method to return valid value.
             TCFDataCache<?> dt = validateChildrenState();
-            if (dt != null) {
-                dt.wait(done);
-                return false;
-            }
+            if (dt != null) pending = dt;
         }
-        
-        if (!children_stack.isValid()) {
-            children_stack.wait(done);
+        if (pending != null) {
+            pending.wait(done);
             return false;
         }
         

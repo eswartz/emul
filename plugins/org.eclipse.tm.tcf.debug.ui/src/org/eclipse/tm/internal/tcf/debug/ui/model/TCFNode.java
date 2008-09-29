@@ -77,7 +77,6 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     void dispose() {
         assert !disposed;
         if (parent != null) parent.dispose(id);
-        invalidateNode();
         if (id != null) {
             assert model.getNode(id) == this;
             model.removeNode(id);
@@ -317,12 +316,6 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
 
     /*--------------------------------------------------------------------------------------*/
     /* Node data retrieval state machine                                                    */
-    
-    /**
-     * Invalidate the node - flush all cached data.
-     * Subclasses should override this method to flush any additional data.
-     */
-    public abstract void invalidateNode();
     
     /**
      * Validate node - retrieve and put into a cache missing data from remote peer.

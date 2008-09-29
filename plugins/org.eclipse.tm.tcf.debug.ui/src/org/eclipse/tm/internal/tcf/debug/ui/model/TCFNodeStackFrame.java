@@ -132,6 +132,8 @@ public class TCFNodeStackFrame extends TCFNode {
 
     @Override
     void dispose() {
+        stack_trace_context.reset(null);
+        line_info.reset(null);
         children_regs.dispose();
         children_vars.dispose();
         children_exps.dispose();
@@ -270,23 +272,30 @@ public class TCFNodeStackFrame extends TCFNode {
     @Override
     protected void getData(ILabelUpdate result) {
         result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
-        Throwable error = stack_trace_context.getError();
-        if (error == null) error = line_info.getError();
-        if (error != null && ((TCFNodeExecContext)parent).isSuspended()) {
-            result.setForeground(new RGB(255, 0, 0), 0);
-            result.setLabel(error.getClass().getName() + ": " + error.getMessage(), 0);
+        TCFChildrenStackTrace st = ((TCFNodeExecContext)parent).getStackTrace();
+        if (st.getData().get(id) == null) {
+            result.setLabel("", 0);
         }
         else {
-            TCFSourceRef l = line_info.getData();
-            if (l == null) {
-                result.setLabel("...", 0);
+            Throwable error = stack_trace_context.getError();
+            if (error == null) error = line_info.getError();
+            if (error != null && ((TCFNodeExecContext)parent).isSuspended()) {
+                System.out.println(error.toString());            
+                result.setForeground(new RGB(255, 0, 0), 0);
+                result.setLabel(error.getClass().getName() + ": " + error.getMessage(), 0);
             }
             else {
-                String label = makeHexAddrString(l.address);
-                if (l.area != null && l.area.file != null) {
-                    label += ": " + l.area.file + ", line " + l.area.start_line;
+                TCFSourceRef l = line_info.getData();
+                if (l == null) {
+                    result.setLabel("...", 0);
                 }
-                result.setLabel(label, 0);
+                else {
+                    String label = makeHexAddrString(l.address);
+                    if (l.area != null && l.area.file != null) {
+                        label += ": " + l.area.file + ", line " + l.area.start_line;
+                    }
+                    result.setLabel(label, 0);
+                }
             }
         }
     }
@@ -324,17 +333,10 @@ public class TCFNodeStackFrame extends TCFNode {
     }
 
     @Override
-    public void invalidateNode() {
-        stack_trace_context.reset();
-        line_info.reset();
-        children_regs.reset();
-        children_vars.reset();
-        children_exps.reset();
-    }
-
-    @Override
     public boolean validateNode(Runnable done) {
         TCFDataCache<?> pending = null;
+        TCFChildrenStackTrace stack_trace = ((TCFNodeExecContext)parent).getStackTrace();
+        if (!stack_trace.validate()) pending = stack_trace;
         if (!stack_trace_context.validate()) pending = stack_trace_context;
         if (!children_regs.validate()) pending = children_regs;
         if (!children_vars.validate()) pending = children_vars;
