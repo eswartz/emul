@@ -31,8 +31,8 @@ public class ChannelTCP extends StreamChannel {
     private OutputStream out;
     private boolean closed;
 
-    public ChannelTCP(IPeer peer, final String host, final int port) {
-        super(peer);
+    public ChannelTCP(IPeer remote_peer, final String host, final int port) {
+        super(remote_peer);
         Thread thread = new Thread() {
             public void run() {
                 try {
@@ -89,6 +89,15 @@ public class ChannelTCP extends StreamChannel {
         };
         thread.setName("TCF Socket Connect");
         thread.start();
+    }
+    
+    public ChannelTCP(IPeer local_peer, IPeer remote_peer, Socket socket) throws IOException {
+        super(local_peer, remote_peer);
+        this.socket = socket;
+        socket.setTcpNoDelay(true);
+        inp = new BufferedInputStream(socket.getInputStream());
+        out = new BufferedOutputStream(socket.getOutputStream());
+        start();
     }
 
     @Override

@@ -128,7 +128,8 @@ public abstract class AbstractChannel implements IChannel {
     private boolean shutdown;
     private int state = STATE_OPENNING;
     private IToken redirect_command;
-    private IPeer peer;
+    private final IPeer local_peer;
+    private IPeer remote_peer;
 
     private static final int pending_command_limit = 32;
     private int local_congestion_level = -100;
@@ -143,11 +144,17 @@ public abstract class AbstractChannel implements IChannel {
     public static final int
         EOS = -1, // End Of Stream
         EOM = -2; // End Of Message
+    
+    protected AbstractChannel(IPeer remote_peer) {
+        this(LocatorService.getLocalPeer(), remote_peer);
+    }
 
-    protected AbstractChannel(IPeer peer) {
+    protected AbstractChannel(IPeer local_peer, IPeer remote_peer) {
         assert Protocol.isDispatchThread();
-        assert Protocol.getLocator().getPeers().get(peer.getID()) == peer;
-        this.peer = peer;
+        assert Protocol.getLocator().getPeers().get(local_peer.getID()) == local_peer;
+        assert Protocol.getLocator().getPeers().get(remote_peer.getID()) == remote_peer;
+        this.remote_peer = remote_peer;
+        this.local_peer = local_peer;
 
         ServiceManager.onChannelCreated(this, local_service_by_name);
         makeServiceByClassMap(local_service_by_name, local_service_by_class);
@@ -313,6 +320,7 @@ public abstract class AbstractChannel implements IChannel {
                         else yield();
                     }
                     write(EOS);
+                    write(EOM);
                     flush();
                 }
                 catch (final Throwable x) {
@@ -354,7 +362,7 @@ public abstract class AbstractChannel implements IChannel {
             try {
                 ILocator l = (ILocator)remote_service_by_class.get(ILocator.class);
                 if (l == null) throw new IOException("Peer " + peer.getID() + " has no locator service");
-                this.peer = peer;
+                this.remote_peer = peer;
                 redirect_command = l.redirect(peer.getID(), new ILocator.DoneRedirect() {
                     public void doneRedirect(IToken token, Exception x) {
                         assert redirect_command == token;
@@ -562,12 +570,12 @@ public abstract class AbstractChannel implements IChannel {
 
     public IPeer getLocalPeer() {
         assert Protocol.isDispatchThread();
-        return LocatorService.getLocalPeer();
+        return local_peer;
     }
 
     public IPeer getRemotePeer() {
         assert Protocol.isDispatchThread();
-        return peer;
+        return remote_peer;
     }
     
     public Collection<String> getLocalServices() {

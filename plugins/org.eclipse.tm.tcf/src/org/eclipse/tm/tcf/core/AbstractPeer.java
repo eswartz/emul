@@ -31,7 +31,7 @@ public abstract class AbstractPeer implements IPeer {
     private final Map<String, String> ro_attrs;
     private final Map<String, String> rw_attrs;
     
-    public AbstractPeer(Map<String, String> attrs) {
+    public AbstractPeer(Map<String,String> attrs) {
         assert Protocol.isDispatchThread();
         if (attrs != null) {
             rw_attrs = new HashMap<String, String>(attrs);
@@ -78,7 +78,7 @@ public abstract class AbstractPeer implements IPeer {
         LocatorService.removePeer(this);
     }
 
-    public Map<String, String> getAttributes() {
+    public Map<String,String> getAttributes() {
         assert Protocol.isDispatchThread();
         return ro_attrs;
     }

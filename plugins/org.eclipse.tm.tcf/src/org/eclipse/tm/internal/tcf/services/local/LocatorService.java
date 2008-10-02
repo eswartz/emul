@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.services.local;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -70,7 +72,7 @@ public class LocatorService implements ILocator {
     };
     
     private Thread input_thread = new Thread() {
-        // TODO: implement discovery in slave mode (not needed for Windows)
+        // TODO: implement discovery in slave mode
         public void run() {
             for (;;) {
                 try {
@@ -94,7 +96,12 @@ public class LocatorService implements ILocator {
     public LocatorService() {
         locator = this;
         try {
-            socket = new DatagramSocket();
+            try {
+                socket = new DatagramSocket(1534);
+            }
+            catch (BindException x) {
+                socket = new DatagramSocket();
+            }
             socket.setBroadcast(true);
             input_thread.setName("TCF Locator Receiver");
             output_thread.setName("TCF Locator Transmitter");
@@ -264,7 +271,7 @@ public class LocatorService implements ILocator {
     
     private void handlePeerInfoPacket(DatagramPacket p) throws Exception {
         Map<String,String> map = new HashMap<String,String>();
-        String s = new String(p.getData(), 8, p.getLength() - 8, "UTF8");
+        String s = new String(p.getData(), 8, p.getLength() - 8, "UTF-8");
         int len = s.length();
         int i = 0;
         while (i < len) {
@@ -286,15 +293,41 @@ public class LocatorService implements ILocator {
         if (peer instanceof RemotePeer) {
             ((RemotePeer)peer).updateAttributes(map);
         }
-        else {
+        else if (peer == null) {
             new RemotePeer(map);
         }
     }
 
-    private void handleReqInfoPacket(DatagramPacket p) {
-        byte[] buf = p.getData();
-        int len = p.getLength();
-        // TODO: handleReqInfoPacket()
+    private void handleReqInfoPacket(DatagramPacket packet) throws IOException {
+        byte[] buf = new byte[0x1000];
+        for (IPeer peer : Protocol.getLocator().getPeers().values()) {
+            Map<String,String> attrs = peer.getAttributes();
+            if (attrs.get(IPeer.ATTR_IP_HOST) == null) continue;
+            if (attrs.get(IPeer.ATTR_IP_PORT) == null) continue;
+            if (attrs.get(IPeer.ATTR_IP_HOST).startsWith("127.")) {
+                if (!packet.getAddress().getHostAddress().startsWith("127.")) continue;
+            }
+            
+            int pos = 0;
+            buf[pos++] = 'T';
+            buf[pos++] = 'C';
+            buf[pos++] = 'F';
+            buf[pos++] = '1';
+            buf[pos++] = CONF_PEER_INFO;
+            buf[pos++] = 0;
+            buf[pos++] = 0;
+            buf[pos++] = 0;
+            
+            for (String key : attrs.keySet()) {
+                String s = key + "=" + attrs.get(key);
+                byte[] bt = s.getBytes("UTF-8");
+                if (pos + bt.length + 1 > buf.length) break; 
+                System.arraycopy(bt, 0, buf, pos, bt.length);
+                pos += bt.length;
+                buf[pos++] = 0;
+            }
+            socket.send(new DatagramPacket(buf, pos, packet.getAddress(), packet.getPort()));
+        }
     }
 
     /*----------------------------------------------------------------------------------*/

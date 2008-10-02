@@ -29,8 +29,12 @@ public abstract class StreamChannel extends AbstractChannel {
 
     public static final int ESC = 3;
 
-    public StreamChannel(IPeer peer) {
-        super(peer);
+    public StreamChannel(IPeer remote_peer) {
+        super(remote_peer);
+    }
+
+    public StreamChannel(IPeer local_peer, IPeer remote_peer) {
+        super(local_peer, remote_peer);
     }
 
     protected abstract int get() throws IOException;
