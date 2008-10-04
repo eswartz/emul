@@ -227,13 +227,14 @@ static void event_cmd_line(void * arg) {
     int delayed;
     struct {
         char * cmd;
+        char * help;
         int (*hnd)(char *);
     } cmds[] = {
-        { "exit",               cmd_exit },
-        { "tcf",                cmd_tcf },
-        { "peers",              cmd_peers },
-        { "peerinfo",           cmd_peerinfo },
-        { "connect",            cmd_connect },
+        { "exit",      "quit the program",          cmd_exit },
+        { "tcf",       "send TCF command",          cmd_tcf },
+        { "peers",     "show list of known peers",  cmd_peers },
+        { "peerinfo",  "show info about a peer",    cmd_peerinfo },
+        { "connect",   "connect a peer",            cmd_connect },
         { 0 }
     }, *cp;
 
@@ -252,7 +253,11 @@ static void event_cmd_line(void * arg) {
         }
     }
     if (cp->cmd == 0) {
-        fprintf(stderr, "unknown command: %s\n", s);
+        fprintf(stderr, "Unknown command: %s\n", s);
+        fprintf(stderr, "Available commands:\n");
+        for (cp = cmds; cp->cmd != 0; cp++) {
+            fprintf(stderr, "  %-10s - %s\n", cp->cmd, cp->help);
+        }
         delayed = 0;
     }
     loc_free(arg);
