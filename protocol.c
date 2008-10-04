@@ -580,7 +580,9 @@ void protocol_channel_closed(Protocol * p, Channel * c) {
                     loc_free(rh);
                 }
             }
-            rhp = &rh->next;
+            else {
+                rhp = &rh->next;
+            }
         }
     }
     cnt = c->peer_service_cnt;
