@@ -619,8 +619,11 @@ static void write_error_code(OutputStream * out, int err, int code) {
     write_stream(out, ',');
 }
 
-void write_errno(OutputStream * out, int err) {
-    if (err != 0) {
+void write_error_object(OutputStream * out, int err) {
+    if (err == 0) {
+        write_string(out, "null");
+    }
+    else {
         int code = ERR_OTHER - STD_ERR_BASE;
         char * msg = errno_to_str(err);
 
@@ -635,6 +638,10 @@ void write_errno(OutputStream * out, int err) {
 
         write_stream(out, '}');
     }
+}
+
+void write_errno(OutputStream * out, int err) {
+    if (err != 0) write_error_object(out, err);
     write_stream(out, 0);
 }
 

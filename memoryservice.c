@@ -58,6 +58,7 @@ struct MemoryCommandArgs {
 
 static void write_context(OutputStream * out, Context * ctx) {
     assert(!ctx->exited);
+    assert(ctx->parent == NULL);
 
     write_stream(out, '{');
 
@@ -132,7 +133,7 @@ static void write_ranges(OutputStream * out, ContextAddress addr, int size, int 
 
         json_write_string(out, "msg");
         write_stream(out, ':');
-        write_errno(out, err);
+        write_error_object(out, err);
 
         write_stream(out, '}');
     }
@@ -157,13 +158,13 @@ static void command_get_context(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
-    if (err == 0) {
+    if (err == 0 && ctx->parent == NULL) {
         write_context(&c->out, ctx);
-        write_stream(&c->out, 0);
     }
     else {
-        write_stringz(&c->out, "null");
+        write_string(&c->out, "null");
     }
+    write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
 }
 
@@ -218,6 +219,7 @@ static struct MemoryCommandArgs * read_command_args(char * token, Channel * c, i
 
     buf.ctx = id2ctx(id);
     if (buf.ctx == NULL) err = ERR_INV_CONTEXT;
+    else if (buf.ctx->parent != NULL) err = ERR_INV_CONTEXT;
     else if (buf.ctx->exited) err = ERR_ALREADY_EXITED;
 
     if (err != 0) {
@@ -250,6 +252,8 @@ static struct MemoryCommandArgs * read_command_args(char * token, Channel * c, i
 }
 
 static void send_event_memory_changed(OutputStream * out, Context * ctx, ContextAddress addr, unsigned long size) {
+    assert(ctx->parent == NULL);
+
     write_stringz(out, "E");
     write_stringz(out, MEMORY);
     write_stringz(out, "memoryChanged");
