@@ -413,6 +413,37 @@ char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
     }
 }
 
+/*
+* json_read_array - generic read array function
+*
+* This function will call the call_back with inp and arg as 
+*       arguments for each element of the list.
+* Return 0 if null, 1 otherwise
+*/
+int json_read_array(InputStream * inp, JsonArrayCallBack * call_back, void * arg) {
+    int ch = read_stream(inp);
+    if (ch == 'n') {
+        if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);
+        if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
+        return 0;
+    }
+    if (ch != '[') {
+        exception(ERR_PROTOCOL);
+        return 1;
+    }
+    if (ch != ']'){
+        while (1) {
+            call_back(inp, arg);
+            ch = read_stream(inp);
+            if (ch == ',') continue;
+            if (ch == ']') break;
+            exception(ERR_JSON_SYNTAX);
+        }
+    }
+    return 1;
+}
+
 void json_read_binary_start(JsonReadBinaryState * state, InputStream * inp) {
     state->inp = inp;
     state->rem = 0;

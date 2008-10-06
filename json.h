@@ -34,6 +34,9 @@ extern int64 json_read_int64(InputStream * inp);
 extern char * json_read_alloc_string(InputStream * inp);
 extern char ** json_read_alloc_string_array(InputStream * inp, int * len);
 
+typedef void JsonArrayCallBack(InputStream *, void *);
+extern int json_read_array(InputStream * inp, JsonArrayCallBack * call_back, void * arg);
+
 typedef void JsonStructCallBack(InputStream *, char *, void *);
 extern int json_read_struct(InputStream * inp, JsonStructCallBack * call_back, void * arg);
 
