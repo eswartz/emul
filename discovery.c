@@ -109,18 +109,28 @@ static void republish_all_peers(void *x) {
     }
 }
 
+static void publish_peer_error(InputStream * inp, char * name, void * x) {
+    int * error = (int *)x;
+    if (strcmp(name, "Code") == 0) {
+        *error = json_read_long(inp);
+    }
+    else {
+        loc_free(json_skip_object(inp));
+    }
+}
+
 static void publish_peer_reply(Channel * c, void * client_data, int error) {
     time_t refresh_time;
-    char msg[256];
 
     trace(LOG_DISCOVERY, "discovery: publish peer reply");
     if (error) {
         trace(LOG_DISCOVERY, "  error %d", error);
         return;
     }
-    error = json_read_long(&c->inp);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(&c->inp, msg, sizeof msg);
+    if (peek_stream(&c->inp) != 0) {
+        json_read_struct(&c->inp, publish_peer_error, &error);
+        if (error) trace(LOG_DISCOVERY, "  error %d", error);
+    }
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     refresh_time = json_read_ulong(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
