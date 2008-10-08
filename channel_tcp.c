@@ -535,6 +535,15 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
             reason = "create";
             continue;
         }
+#ifdef __linux
+        if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&i, sizeof(i)) < 0) {
+            error = errno;
+            reason = "setsockopt";
+            closesocket(sock);
+            sock = -1;
+            continue;
+        }
+#endif
         if (res->ai_addr->sa_family == AF_INET) {
             struct sockaddr_in addr;
             assert(sizeof(addr) >= res->ai_addrlen);
