@@ -36,6 +36,7 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 public abstract class TCFTask<V> implements Runnable, Future<V> {
     
     private V result;
+    private boolean done;
     private Throwable error;
     private boolean canceled;
     
@@ -46,7 +47,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
                     TCFTask.this.run();
                 }
                 catch (Throwable x) {
-                    if (result == null && error == null) error(x);
+                    if (!done && error == null) error(x);
                 }
             }
         });
@@ -54,11 +55,12 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
     
     public synchronized void done(V result) {
         assert Protocol.isDispatchThread();
-        assert result != null;
         if (canceled) return;
+        assert !done;
         assert this.error == null;
         assert this.result == null;
         this.result = result;
+        done = true;
         notifyAll();
     }
     
@@ -68,6 +70,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         if (canceled) return;
         assert this.error == null;
         assert this.result == null;
+        assert !done;
         this.error = error;
         notifyAll();
     }
@@ -84,7 +87,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
     public synchronized V get() throws InterruptedException, ExecutionException {
         assert !Protocol.isDispatchThread();
         while (!isDone()) wait();
-        assert error != null || result != null;
+        assert error != null || done;
         if (error instanceof ExecutionException) throw (ExecutionException)error;
         if (error instanceof InterruptedException) throw (InterruptedException)error;
         if (error != null) throw new ExecutionException(error);
@@ -101,7 +104,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
                 throw new Error(x);
             }
         }
-        assert error != null || result != null;
+        assert error != null || done;
         if (error instanceof Error) throw (Error)error;
         if (error != null) throw new Error(error);
         return result;
@@ -117,7 +120,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
                 throw new InterruptedIOException();
             }
         }
-        assert error != null || result != null;
+        assert error != null || done;
         if (error instanceof IOException) throw (IOException)error;
         if (error != null) {
             IOException y = new IOException();
@@ -140,6 +143,14 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
     }
 
     public synchronized boolean isDone() {
-        return error != null || result != null;
+        return error != null || done;
+    }
+    
+    protected Throwable getError() {
+        return error;
+    }
+    
+    protected V getResult() {
+        return result;
     }
 }
