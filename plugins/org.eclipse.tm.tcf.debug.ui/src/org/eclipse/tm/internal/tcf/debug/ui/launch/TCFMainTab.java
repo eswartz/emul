@@ -414,11 +414,26 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             IProject project = getProject();
             IPath program_path = new Path(local_name);
             if (!program_path.isAbsolute()) {
-                if (project == null || !project.getFile(local_name).exists()) {
+                if (project == null) {
+                    File ws = ResourcesPlugin.getWorkspace().getRoot().getLocation().toFile();
+                    File file = new File(ws, local_name);
+                    if (!file.exists()) {
+                        setErrorMessage("File not found: " + file);
+                        return false;
+                    }
+                    if (file.isDirectory()) {
+                        setErrorMessage("Program path is directory name: " + file);
+                        return false;
+                    }
+                    program_path = new Path(file.getAbsolutePath());
+                }
+                else if (!project.getFile(local_name).exists()) {
                     setErrorMessage("Program does not exist");
                     return false;
                 }
-                program_path = project.getFile(local_name).getLocation();
+                else {
+                    program_path = project.getFile(local_name).getLocation();
+                }
             }
             else {
                 File file = program_path.toFile();

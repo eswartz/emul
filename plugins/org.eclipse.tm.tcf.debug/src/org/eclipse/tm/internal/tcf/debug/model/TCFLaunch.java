@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.model;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -192,8 +193,8 @@ public class TCFLaunch extends Launch {
                             if (append) vars.putAll(def);
                             if (env != null) vars.putAll(env);
                             String file = remote_file;
-                            if (file == null) file = getProgramPath(project, local_file);
-                            if (file == null) {
+                            if (file == null || file.length() == 0) file = getProgramPath(project, local_file);
+                            if (file == null || file.length() == 0) {
                                 channel.terminate(new Exception("Program does not exist"));
                                 return;
                             }
@@ -302,6 +303,14 @@ public class TCFLaunch extends Launch {
     }
     
     private String getProgramPath(String project_name, String local_file) {
+        if (project_name == null || project_name.length() == 0) {
+            File f = new File(local_file);
+            if (!f.isAbsolute()) {
+                File ws = ResourcesPlugin.getWorkspace().getRoot().getLocation().toFile();
+                f = new File(ws, local_file);
+            }
+            return f.getAbsolutePath();
+        }
         IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(project_name);
         IPath program_path = new Path(local_file);
         if (!program_path.isAbsolute()) {
