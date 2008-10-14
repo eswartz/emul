@@ -11,9 +11,6 @@
 package org.eclipse.tm.tcf.core;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -138,9 +135,6 @@ public abstract class AbstractChannel implements IChannel {
     private int local_congestion_cnt;
     private Collection<TraceListener> trace_listeners;
     
-    private static final MemoryMXBean mem_mbean = ManagementFactory.getMemoryMXBean();
-    private static final long mem_limit = 32000000;
-
     public static final int
         EOS = -1, // End Of Stream
         EOM = -2; // End Of Message
@@ -749,13 +743,6 @@ public abstract class AbstractChannel implements IChannel {
         assert Protocol.isDispatchThread();
         int level = Protocol.getCongestionLevel();
         int n = inp_tokens.size() * 100 / pending_command_limit - 100;
-        if (n > level) level = n;
-        MemoryUsage mem_usage = mem_mbean.getHeapMemoryUsage();
-        long mem_free = mem_usage.getMax() - mem_usage.getUsed();
-        n = (int)((mem_limit - mem_free) * 100 / mem_limit);
-        if (n > 0) mem_mbean.gc();
-        if (n > level) level = n;
-        n = Protocol.getCongestionLevel();
         if (n > level) level = n;
         if (level > 100) level = 100;
         if (level == local_congestion_level) return;

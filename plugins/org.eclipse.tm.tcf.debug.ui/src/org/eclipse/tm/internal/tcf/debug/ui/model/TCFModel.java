@@ -23,6 +23,8 @@ import org.eclipse.debug.core.commands.IStepOverHandler;
 import org.eclipse.debug.core.commands.IStepReturnHandler;
 import org.eclipse.debug.core.commands.ISuspendHandler;
 import org.eclipse.debug.core.commands.ITerminateHandler;
+import org.eclipse.debug.core.model.IMemoryBlockRetrieval;
+import org.eclipse.debug.core.model.IMemoryBlockRetrievalExtension;
 import org.eclipse.debug.core.model.ISourceLocator;
 import org.eclipse.debug.core.sourcelookup.ISourceLookupDirector;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
@@ -68,6 +70,7 @@ import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
+import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
@@ -92,6 +95,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Map<String,TCFNode> id2node = new HashMap<String,TCFNode>();
     @SuppressWarnings("unchecked")
     private final Map<Class,Object> commands = new HashMap<Class,Object>();
+    private final Map<String,IMemoryBlockRetrievalExtension> mem_retrieval =
+        new HashMap<String,IMemoryBlockRetrievalExtension>();
 
     private static final Map<ILaunchConfiguration,IEditorInput> editor_not_found = 
         new HashMap<ILaunchConfiguration,IEditorInput>();
@@ -270,10 +275,34 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     @SuppressWarnings("unchecked")
-    public Object getCommand(Class c) {
-        Object o = commands.get(c);
-        assert o == null || c.isInstance(o);
-        return o;
+    public Object getAdapter(final Class adapter, final TCFNode node) {
+        return new TCFTask<Object>() {
+            public void run() {
+                Object o = null;
+                if (adapter == IMemoryBlockRetrieval.class || adapter == IMemoryBlockRetrievalExtension.class) {
+                    TCFNode n = node;
+                    while (n != null && !n.isDisposed()) {
+                        if (n instanceof TCFNodeExecContext) {
+                            TCFNodeExecContext e = (TCFNodeExecContext)n;
+                            if (!e.validateNode(this)) return;
+                            if (e.getMemoryContext() != null) {
+                                o = mem_retrieval.get(e.id);
+                                if (o == null) {
+                                    TCFMemoryBlockRetrieval m = new TCFMemoryBlockRetrieval(e);
+                                    mem_retrieval.put(e.id, m);
+                                    o = m;
+                                }
+                                break;
+                            }
+                        }
+                        n = n.parent;
+                    }
+                }
+                if (o == null) o = commands.get(adapter);
+                assert o == null || adapter.isInstance(o);
+                done(o);
+            }
+        }.getE();
     }
 
     void onConnected() {
@@ -384,6 +413,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         assert id != null;
         assert Protocol.isDispatchThread();
         id2node.remove(id);
+        mem_retrieval.remove(id);
     }
     
     void fireModelChanged() {

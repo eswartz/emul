@@ -44,7 +44,6 @@ public class TerminateCommand implements ITerminateHandler {
                 for (int i = 0; i < elements.length; i++) {
                     TCFNode node = null;
                     if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
-                    else node = model.getRootNode();
                     while (node != null && !node.isDisposed()) {
                         if (!node.validateNode(this)) return;
                         IRunControl.RunControlContext ctx = null;
@@ -73,7 +72,6 @@ public class TerminateCommand implements ITerminateHandler {
                 for (int i = 0; i < elements.length; i++) {
                     TCFNode node = null;
                     if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
-                    else node = model.getRootNode();
                     while (node != null && !node.isDisposed()) {
                         if (!node.validateNode(this)) return;
                         IRunControl.RunControlContext ctx = null;

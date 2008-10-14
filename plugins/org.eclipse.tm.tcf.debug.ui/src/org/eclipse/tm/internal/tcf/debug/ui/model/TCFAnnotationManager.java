@@ -377,7 +377,7 @@ public class TCFAnnotationManager {
             Protocol.invokeLater(new Runnable() {
                 public void run() {
                     IRunControl.RunControlContext x = null;
-                    TCFNode n = (TCFNode)adaptable.getAdapter(TCFNode.class);
+                    TCFNode n = (TCFNode)adaptable;
                     while (x == null && n != null) {
                         if (n instanceof TCFNodeExecContext) {
                             x = ((TCFNodeExecContext)n).getRunContext(); 

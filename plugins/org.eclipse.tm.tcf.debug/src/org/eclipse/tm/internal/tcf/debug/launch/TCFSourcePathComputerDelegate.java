@@ -41,11 +41,13 @@ public class TCFSourcePathComputerDelegate implements ISourcePathComputerDelegat
             IResource resource = ResourcesPlugin.getWorkspace().getRoot().findMember(new Path(path));
             if (resource != null) {
                 IContainer container = resource.getParent();
-                if (container.getType() == IResource.PROJECT) {
-                    sourceContainer = new ProjectSourceContainer((IProject)container, false);
-                }
-                else if (container.getType() == IResource.FOLDER) {
-                    sourceContainer = new FolderSourceContainer(container, false);
+                if (container != null) {
+                    if (container.getType() == IResource.PROJECT) {
+                        sourceContainer = new ProjectSourceContainer((IProject)container, false);
+                    }
+                    else if (container.getType() == IResource.FOLDER) {
+                        sourceContainer = new FolderSourceContainer(container, false);
+                    }
                 }
             }
         }

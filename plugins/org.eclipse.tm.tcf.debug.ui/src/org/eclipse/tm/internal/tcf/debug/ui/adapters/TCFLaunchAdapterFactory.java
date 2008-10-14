@@ -11,53 +11,41 @@
 package org.eclipse.tm.internal.tcf.debug.ui.adapters;
 
 import org.eclipse.core.runtime.IAdapterFactory;
-import org.eclipse.debug.core.commands.ITerminateHandler;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementContentProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
-import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.util.TCFTask;
 
 
 public class TCFLaunchAdapterFactory implements IAdapterFactory {
 
     @SuppressWarnings("unchecked")
-    private final Class[] adapter_list = {
-        IElementContentProvider.class,
+    private static final Class[] adapter_list = {
         IElementLabelProvider.class,
+        IElementContentProvider.class,
         IModelProxyFactory.class,
-        ITerminateHandler.class,
     };
 
-    private final IElementLabelProvider launch_label_provider = new TCFLaunchLabelProvider();
+    private static final IElementLabelProvider launch_label_provider = new TCFLaunchLabelProvider();
 
     @SuppressWarnings("unchecked")
     public Object getAdapter(final Object from, final Class to) {
         if (from instanceof TCFLaunch) {
-            if (to.equals(IElementLabelProvider.class)) {
-                return launch_label_provider;
-            }
-            final Object[] res = new Object[1];
-            Protocol.invokeAndWait(new Runnable() {
+            if (to == IElementLabelProvider.class) return launch_label_provider;
+            return new TCFTask<Object>() {
                 public void run() {
                     TCFLaunch launch = (TCFLaunch)from;
                     TCFModel model = Activator.getModelManager().getModel(launch);
-                    if (model != null) {
-                        if (to.isInstance(model)) {
-                            res[0] = model;
-                            return;
-                        }
-                        Object cmd = model.getCommand(to);
-                        if (cmd != null) {
-                            res[0] = cmd;
-                            return;
-                        }
+                    if (model != null && to.isInstance(model)) {
+                        done(model);
+                        return;
                     }
+                    done(null);
                 }
-            });
-            if (res[0] != null) return res[0];
+            }.getE();
         }
         return null;
     }

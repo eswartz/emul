@@ -19,15 +19,10 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IColumnPresentationFactory;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementContentProvider;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
-import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -101,6 +96,14 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     public final boolean isDisposed() {
         return disposed;
     }
+    
+    /**
+     * Get TCFModel that owns this node.
+     * @return TCFModel object
+     */
+    public TCFModel getModel() {
+        return model;
+    }
 
     /**
      * Returns an object which is an instance of the given class
@@ -111,15 +114,12 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @return the adapted object or <code>null</code>
      * @see IAdaptable#getAdapter(Class)
      */
+    @Override
     @SuppressWarnings("unchecked")
-    public Object getAdapter(Class adapter) {
+    public Object getAdapter(final Class adapter) {
+        if (adapter.isInstance(model)) return model;
         if (adapter == ILaunch.class) return model.getLaunch();
-        if (adapter == IModelProxyFactory.class) return model;
-        if (adapter == IElementLabelProvider.class) return model;
-        if (adapter == IElementContentProvider.class) return model;
-        if (adapter == IColumnPresentationFactory.class) return model;
-        if (adapter == ISourceDisplay.class) return model;
-        Object o = model.getCommand(adapter);
+        Object o = model.getAdapter(adapter, TCFNode.this);
         if (o != null) return o;
         return super.getAdapter(adapter);
     }

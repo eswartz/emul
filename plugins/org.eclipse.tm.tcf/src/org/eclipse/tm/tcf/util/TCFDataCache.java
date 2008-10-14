@@ -98,7 +98,10 @@ public abstract class TCFDataCache<V> implements Runnable {
     
     /**
      * Add a client call-back to cache wait list.
-     * @param req
+     * Client call-backs are activated when cache state changes.
+     * Call-backs are removed from waiting list after that.
+     * It is responsibility of clients to check if the state change was one they are waiting for.
+     * @param cb - a call-back object
      */
     public void wait(Runnable cb) {
         assert Protocol.isDispatchThread();

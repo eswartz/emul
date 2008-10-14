@@ -90,6 +90,7 @@ public class ServerTCP extends ServerSocket {
             }
         };
         thread.setName(name);
+        thread.setDaemon(true);
         thread.start();
     }
     
