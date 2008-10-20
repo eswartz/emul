@@ -697,6 +697,7 @@ static void run_safe_events(void * arg) {
     if ((int)arg != safe_event_generation) return;
 
     while (safe_event_list) {
+        Trap trap;
         SafeEvent * i = safe_event_list;
         if (safe_event_pid_count > 0) {
             post_event_with_delay(run_safe_events, (void *)++safe_event_generation, STOP_ALL_TIMEOUT);
@@ -704,8 +705,14 @@ static void run_safe_events(void * arg) {
         }
         assert(is_all_stopped());
         safe_event_list = i->next;
-        /* TODO: neeed to handle exceptions in "safe events" */
-        i->done(i->arg);
+        if (set_trap(&trap)) {
+            i->done(i->arg);
+            clear_trap(&trap);
+        }
+        else {
+            trace(LOG_ALWAYS, "Unhandled exception in \"safe\" event dispatch: %d %s",
+                  trap.error, errno_to_str(trap.error));
+        }
         loc_free(i);
         if ((int)arg != safe_event_generation) return;
     }
