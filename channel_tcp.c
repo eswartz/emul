@@ -38,8 +38,6 @@
 #define ESC 3
 #define BUF_SIZE 0x1000
 #define CHANNEL_MAGIC 0x87208956
-#define REFRESH_TIME 15
-#define STALE_TIME_DELTA (REFRESH_TIME * 2)
 #define MAX_IFC 10
 
 #define is_suspended(CH) ((CH)->chan.spg && (CH)->chan.spg->suspended)
@@ -426,7 +424,7 @@ static void refresh_peer_server(int sock, PeerServer * ps) {
         peer_server_addprop(ps2, loc_strdup("ID"), loc_strdup(str_id));
         peer_server_addprop(ps2, loc_strdup("Host"), str_host);
         peer_server_addprop(ps2, loc_strdup("Port"), loc_strdup(str_port));
-        peer_server_add(ps2, STALE_TIME_DELTA);
+        peer_server_add(ps2, PEER_DATA_RETENTION_PERIOD);
     }
 }
 
@@ -442,7 +440,7 @@ static void refresh_all_peer_server(void *x) {
         refresh_peer_server(si->sock, si->ps);
         l = l->next;
     }
-    post_event_with_delay(refresh_all_peer_server, NULL, REFRESH_TIME*1000*1000);
+    post_event_with_delay(refresh_all_peer_server, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
 }
 
 static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr) {
@@ -551,7 +549,13 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
             memcpy(&addr, res->ai_addr, res->ai_addrlen);
             if (addr.sin_port == 0) {
                 addr.sin_port = htons(DISCOVERY_TCF_PORT);
-                if (!bind(sock, (struct sockaddr *)&addr, sizeof(addr))) def_port = 1;
+                if (!bind(sock, (struct sockaddr *)&addr, sizeof(addr))) {
+                    def_port = 1;
+                }
+                else {
+                    trace(LOG_ALWAYS, "Cannot bind to default TCP port %d: %s",
+                        DISCOVERY_TCF_PORT, errno_to_str(errno));
+                }
             }
         }
         if (!def_port && bind(sock, res->ai_addr, res->ai_addrlen)) {
@@ -575,7 +579,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     }
     loc_freeaddrinfo(reslist);
     if (sock < 0) {
-        trace(LOG_ALWAYS, "socket %s error: %s", reason, errno_to_str(error));
+        trace(LOG_ALWAYS, "Socket %s error: %s", reason, errno_to_str(error));
         return NULL;
     }
     si = loc_alloc_zero(sizeof *si);
@@ -584,7 +588,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     si->ps = ps;
     if (server_list.next == NULL) list_init(&server_list);
     if (list_is_empty(&server_list)) {
-        post_event_with_delay(refresh_all_peer_server, NULL, REFRESH_TIME * 1000 * 1000);
+        post_event_with_delay(refresh_all_peer_server, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
     }
     list_add_last(&si->servlink, &server_list);
     refresh_peer_server(sock, ps);

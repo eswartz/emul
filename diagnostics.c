@@ -56,14 +56,19 @@ static void command_echo(char * token, Channel * c) {
 }
 
 static void command_get_test_list(char * token, Channel * c) {
+    char * arr = "[]";
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-    write_stringz(&c->out, "[\"RCBP1\"]");
+#if SERVICE_RunControl
+    if (context_root.next != NULL) arr = "[\"RCBP1\"]";
+#endif
+    write_stringz(&c->out, arr);
     write_stream(&c->out, MARKER_EOM);
 }
 
+#if SERVICE_RunControl
 static void run_test_done(int error, Context * ctx, void * arg) {
     RunTestDoneArgs * data = arg;
     Channel * c = data->c;
@@ -80,6 +85,7 @@ static void run_test_done(int error, Context * ctx, void * arg) {
     stream_unlock(c);
     loc_free(data);
 }
+#endif
 
 static void command_run_test(char * token, Channel * c) {
     int err = 0;
@@ -90,6 +96,7 @@ static void command_run_test(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (strcmp(id, "RCBP1") == 0) {
+#if SERVICE_RunControl
         RunTestDoneArgs * data = loc_alloc_zero(sizeof(RunTestDoneArgs));
         data->c = c;
         strcpy(data->token, token);
@@ -98,6 +105,9 @@ static void command_run_test(char * token, Channel * c) {
         err = errno;
         stream_unlock(c);
         loc_free(data);
+#else
+        err = EINVAL;
+#endif
     }
     else {
         err = EINVAL;

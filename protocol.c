@@ -33,9 +33,6 @@
 #include "json.h"
 #include "myalloc.h"
 
-#define REFRESH_TIME            10
-#define STALE_TIME_DELTA        (REFRESH_TIME*3)
-
 static const char * LOCATOR = "Locator";
 
 struct ServiceInfo {
@@ -80,6 +77,7 @@ static MessageHandlerInfo * message_handlers[MESSAGE_HASH_SIZE];
 static EventHandlerInfo * event_handlers[EVENT_HASH_SIZE];
 static ReplyHandlerInfo * reply_handlers[REPLY_HASH_SIZE];
 static ServiceInfo * services;
+static int ini_done = 0;
 
 struct Protocol {
     int lock_cnt;           /* Lock count, cannot delete when > 0 */
@@ -180,6 +178,8 @@ static ReplyHandlerInfo * find_reply_handler(Channel * c, unsigned long tokenid,
     return NULL;
 }
 
+static void event_locator_hello(Channel * c);
+
 void handle_protocol_message(Protocol * p, Channel * c) {
     char type[8];
     char token[256];
@@ -200,7 +200,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         read_stringz(&c->inp, token, sizeof(token));
         read_stringz(&c->inp, service, sizeof(service));
         read_stringz(&c->inp, name, sizeof(name));
-        trace(LOG_PROTOCOL, "Peer %s: Command: C %s %s %s ...", c->peer_name, token, service, name);
+//        trace(LOG_PROTOCOL, "Peer %s: Command: C %s %s %s ...", c->peer_name, token, service, name);
         mh = find_message_handler(p, service, name);
         if (mh == NULL) {
             if (p->default_handler != NULL) {
@@ -273,6 +273,9 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         if (set_trap(&trap)) {
             if (eh != NULL) {
                 eh->handler(c);
+            }
+            else if (strcmp(service, LOCATOR) == 0 && strcmp(name, "Hello") == 0) {
+                event_locator_hello(c);
             }
             else {
                 /* Eat the body of the event */
@@ -390,74 +393,6 @@ void send_hello_message(Protocol * p, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
-static void command_sync(char * token, Channel * c) {
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, 0);
-    write_stream(&c->out, MARKER_EOM);
-}
-
-static void command_redirect(char * token, Channel * c) {
-    char id[256];
-
-    json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    if (c->redirecting != NULL) {
-        c->redirecting(c, token, id);
-        return;
-    }
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, ERR_UNSUPPORTED);
-    write_stream(&c->out, MARKER_EOM);
-}
-
-static PeerServer * read_peer_properties(InputStream * inp) {
-    PeerServer * ps;
-
-    if (read_stream(inp) != '{') exception(ERR_JSON_SYNTAX);
-    ps = peer_server_alloc();
-    if (peek_stream(inp) == '}') {
-        read_stream(inp);
-        return ps;
-    }
-    while (1) {
-        int ch;
-        char *name;
-        char *value;
-
-        name = json_read_alloc_string(inp);
-        if (read_stream(inp) != ':') {
-            loc_free(name);
-            exception(ERR_JSON_SYNTAX);
-        }
-        value = json_read_alloc_string(inp);
-        peer_server_addprop(ps, name, value);
-        ch = read_stream(inp);
-        if (ch == ',') continue;
-        if (ch == '}') break;
-        peer_server_free(ps);
-        exception(ERR_JSON_SYNTAX);
-    }
-    return ps;
-}
-
-static void command_publish_peer(char * token, Channel * c) {
-    PeerServer * ps = read_peer_properties(&c->inp);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    ps->flags |= PS_FLAG_DISCOVERABLE;
-    peer_server_add(ps, STALE_TIME_DELTA);
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, 0);
-    json_write_ulong(&c->out, REFRESH_TIME);
-    write_stream(&c->out, 0);
-    write_stream(&c->out, MARKER_EOM);
-}
-
 static void event_locator_hello(Channel * c) {
     int max;
     int cnt;
@@ -503,44 +438,11 @@ static void event_locator_hello(Channel * c) {
     c->connected(c);
 }
 
-void event_locator_peer_added(Channel * c) {
-    PeerServer * ps = read_peer_properties(&c->inp);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    if (ps->id == NULL) exception(ERR_JSON_SYNTAX);
-    trace(LOG_DISCOVERY, "event_locator_peer_added: %s ...", ps->id);
-    ps->flags |= PS_FLAG_DISCOVERABLE;
-    peer_server_add(ps, 0);
-}
-
-void event_locator_peer_changed(Channel * c) {
-    PeerServer * ps = read_peer_properties(&c->inp);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    if (ps->id == NULL) exception(ERR_JSON_SYNTAX);
-    trace(LOG_DISCOVERY, "event_locator_peer_changed: %s ...", ps->id);
-    ps->flags |= PS_FLAG_DISCOVERABLE;
-    peer_server_add(ps, 0);
-}
-
-void event_locator_peer_removed(Channel * c) {
-    char id[256];
-    json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    trace(LOG_DISCOVERY, "event_locator_peer_removed: %s ...", id);
-    peer_server_remove(id);
-}
-
 int protocol_cancel_command(Protocol * p, ReplyHandlerInfo * rh) {
     return 0;
 }
 
-void protocol_channel_opened(Protocol * p, Channel * c) {
-    add_event_handler(c, LOCATOR, "Hello", event_locator_hello);
-}
-
-void protocol_channel_closed(Protocol * p, Channel * c) {
+static void channel_closed(Channel * c) {
     int i;
     int cnt;
     char ** list;
@@ -598,6 +500,10 @@ Protocol * protocol_alloc(void) {
     Protocol * p = loc_alloc_zero(sizeof *p);
 
     assert(is_dispatch_thread());
+    if (!ini_done) {
+        add_channel_close_listener(channel_closed);
+        ini_done = 1;
+    }
     p->lock_cnt = 1;
     p->tokenid = 1;
     return p;
@@ -630,10 +536,4 @@ void protocol_release(Protocol * p) {
         }
     }
     free_services(p);
-}
-
-void ini_locator_service(Protocol * p) {
-    add_command_handler(p, LOCATOR, "sync", command_sync);
-    add_command_handler(p, LOCATOR, "redirect", command_redirect);
-    add_command_handler(p, LOCATOR, "publishPeer", command_publish_peer);
 }

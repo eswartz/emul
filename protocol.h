@@ -25,6 +25,12 @@
 
 #include "channel.h"
 
+/* Time in second to keep remote peer data */
+#define PEER_DATA_RETENTION_PERIOD 60
+
+/* Peer data polling period in second */
+#define PEER_DATA_REFRESH_PERIOD (PEER_DATA_RETENTION_PERIOD / 4)
+
 typedef struct Protocol Protocol;
 typedef struct ReplyHandlerInfo ReplyHandlerInfo;
 
@@ -51,10 +57,6 @@ extern void handle_protocol_message(Protocol *, Channel *);
  */
 extern void send_hello_message(Protocol *, Channel *);
 
-extern void event_locator_peer_added(Channel * c);
-extern void event_locator_peer_changed(Channel * c);
-extern void event_locator_peer_removed(Channel * c);
-
 /*
  * Lookup or allocate service handle for protocol or channel
  */
@@ -75,6 +77,11 @@ extern void add_command_handler(Protocol *, const char * service, const char * n
  */
 extern void add_event_handler(Channel *, const char * service, const char * name, ProtocolEventHandler handler);
 
+/*
+ * Set protocol default message handler.
+ * The handler will be called for incoming messages that don't have a specific handler
+ * assigned by add_command_handler() or add_event_handler()
+ */
 extern void set_default_message_handler(Protocol *, ProtocolMessageHandler handler);
 
 /*
@@ -94,16 +101,6 @@ extern ReplyHandlerInfo * protocol_send_command(Protocol * p, Channel * c,
 extern int protocol_cancel_command(Protocol * p, ReplyHandlerInfo * rh);
 
 /*
- * Indicates that specified channel is opened.
- */
-extern void protocol_channel_opened(Protocol * p, Channel * c);
-
-/*
- * Indicates that specified channel is closed.
- */
-extern void protocol_channel_closed(Protocol * p, Channel * c);
-
-/*
  * Create protocol instance
  */
 extern Protocol * protocol_alloc(void);
@@ -118,10 +115,5 @@ extern void protocol_reference(Protocol *);
  * reference is released
  */
 extern void protocol_release(Protocol *);
-
-/*
- * Add locator service handlers
- */
-extern void ini_locator_service(Protocol *p);
 
 #endif

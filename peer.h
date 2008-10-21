@@ -33,8 +33,8 @@ struct PeerServer {
         char * value;
     } * list;
     unsigned int flags;
-    time_t create_time;
-    time_t stale_time;
+    time_t creation_time;
+    time_t expiration_time;
     PeerServer * next;
 };
 
@@ -42,6 +42,14 @@ enum {
     PS_FLAG_LOCAL = 1,
     PS_FLAG_PRIVATE = PS_FLAG_LOCAL * 2,
     PS_FLAG_DISCOVERABLE = PS_FLAG_PRIVATE * 2
+};
+
+/* Peer chane event types */
+enum {
+    PS_EVENT_ADDED,
+    PS_EVENT_CHANGED,
+    PS_EVENT_HEART_BEAT,
+    PS_EVENT_REMOVED
 };
 
 /* Allocate peer server object */

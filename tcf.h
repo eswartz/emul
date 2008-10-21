@@ -19,5 +19,7 @@
 
 #define UDP_REQ_INFO 1
 #define UDP_ACK_INFO 2
+#define UDP_REQ_SLAVES 3
+#define UDP_ACK_SLAVES 4
 
 #endif

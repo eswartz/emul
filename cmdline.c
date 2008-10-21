@@ -34,7 +34,6 @@
 #include "protocol.h"
 #include "trace.h"
 #include "channel.h"
-#include "discovery.h"
 
 static Channel * chan;
 static FILE * infile;
@@ -48,7 +47,6 @@ static void channel_connecting(Channel * c) {
     trace(LOG_ALWAYS, "channel_connecting");
 
     send_hello_message(c->client_data, c);
-    discovery_channel_add(c);
     flush_stream(&c->out);
 }
 
@@ -67,8 +65,6 @@ static void channel_receive(Channel * c) {
 
 static void channel_disconnected(Channel * c) {
     trace(LOG_ALWAYS, "channel_disconnected");
-    discovery_channel_remove(c);
-    protocol_channel_closed(c->client_data, c);
     if (chan == c) chan = NULL;
 }
 
@@ -203,7 +199,6 @@ static int cmd_connect(char * s) {
         return 0;
     }
     proto = protocol_alloc();
-    ini_locator_service(proto);
     c = channel_connect(ps);
     peer_server_free(ps);
     if (c == NULL) {
@@ -215,7 +210,6 @@ static int cmd_connect(char * s) {
     c->receive = channel_receive;
     c->disconnected = channel_disconnected;
     c->client_data = proto;
-    protocol_channel_opened(proto, c);
     channel_start(c);
     chan = c;
     return 0;

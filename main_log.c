@@ -1,23 +1,27 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
 /*
- * Agent main module.
+ * TCF Logger main module.
+ *
+ * TCF Logger is a simple TCF agent that des not provide any services itself,
+ * instead it forward all TCF traffic to another agent.
+ * Logger prints all messages it forwards.
+ * It can be used as diagnostic and debugging tool.
  */
 
 #include "mdep.h"
-#define CONFIG_MAIN
 #include "config.h"
 
 #include <stdio.h>
@@ -35,7 +39,7 @@
 #include "errors.h"
 
 static char * progname;
-static char * dest_url = DEFAULT_DISCOVERY_URL;
+static char * dest_url = "TCF::1534";
 
 static void channel_server_connecting(Channel * c1) {
     PeerServer * ps;
@@ -69,7 +73,7 @@ static void channel_new_connection(ChannelServer * serv, Channel * c) {
 
 #if defined(_WRS_KERNEL)
 int tcf_log(void) {
-#else   
+#else
 int main(int argc, char ** argv) {
 #endif
     int c;
@@ -91,12 +95,12 @@ int main(int argc, char ** argv) {
     log_mode = LOG_TCFLOG;
 
 #if defined(_WRS_KERNEL)
-    
+
     progname = "tcf";
     open_log_file("-");
-    
+
 #else
-    
+
     progname = argv[0];
 
     /* Parse arguments */
@@ -165,7 +169,7 @@ int main(int argc, char ** argv) {
     }
     serv->new_conn = channel_new_connection;
 
-    discovery_start(NULL); /* Client only */
+    discovery_start();
 
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */

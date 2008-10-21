@@ -17,6 +17,10 @@
  */
 
 #include "mdep.h"
+#include "config.h"
+
+#if SERVICE_RunControl
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -172,5 +176,4 @@ int run_test_process(ContextAttachCallBack * done, void * data) {
 #endif
 }
 
-
-
+#endif

@@ -36,6 +36,7 @@
 #  define TARGET_UNIX       1
 #endif
 
+#define SERVICE_Locator         TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_RunControl      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_Breakpoints     TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
 #define SERVICE_Memory          TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
@@ -60,6 +61,7 @@
  * which is executed during agent startup.
  */
 
+#include "discovery.h"
 #include "runctrl.h"
 #include "breakpoints.h"
 #include "memoryservice.h"
@@ -75,6 +77,9 @@
 #include "proxy.h"
 
 static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
+#if SERVICE_Locator
+    ini_locator_service(proto, bcg);
+#endif
 #if SERVICE_RunControl
     ini_run_ctrl_service(proto, bcg, spg);
 #endif

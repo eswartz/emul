@@ -20,8 +20,8 @@
 #define D_discovery_udp
 
 /*
- * Start discovery server
+ * Start UDP discovery server
  */
-extern int discovery_udp_server(const char * port);
+extern int discovery_start_udp(void);
 
 #endif

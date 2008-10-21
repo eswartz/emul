@@ -31,6 +31,7 @@ pthread_attr_t pthread_create_attr;
 
 #include <process.h>
 #include <fcntl.h>
+#include <MSWSock.h>
 
 /*********************************************************************
     Support of pthreads on Windows is implemented according to
@@ -336,15 +337,28 @@ int pthread_attr_init(pthread_attr_t * attr) {
     return 0;
 }
 
+#ifndef SIO_UDP_CONNRESET
+#define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR,12)
+#endif
+#ifndef SIO_UDP_NETRESET
+#define SIO_UDP_NETRESET _WSAIOW(IOC_VENDOR,15)
+#endif
 #undef socket
 int wsa_socket(int af, int type, int protocol) {
     int res = 0;
+
     SetLastError(0);
     WSASetLastError(0);
     res = socket(af, type, protocol);
     if (res < 0) {
         set_win32_errno(WSAGetLastError());
         return -1;
+    }
+    if (type == SOCK_DGRAM && protocol == IPPROTO_UDP) {
+        DWORD dw = 0;
+        BOOL b = FALSE;
+        WSAIoctl(res, SIO_UDP_CONNRESET, &b, sizeof(b), NULL, 0, &dw, NULL, NULL);
+        WSAIoctl(res, SIO_UDP_NETRESET, &b, sizeof(b), NULL, 0, &dw, NULL, NULL);
     }
     return res;
 }

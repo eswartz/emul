@@ -27,7 +27,6 @@
 #include "errors.h"
 #include "exceptions.h"
 #include "myalloc.h"
-#include "discovery.h"
 
 enum {
     ProxyStateInitial,
@@ -91,7 +90,6 @@ static void proxy_disconnected(Channel * c) {
     assert(proxy->state == ProxyStateConnecting || proxy->state == ProxyStateConnected);
     proxy->state = ProxyStateDisconnected;
     trace(LOG_PROXY, "proxy disconnected");
-    protocol_channel_closed(proxy->proto, c);
     if (proxy[proxy->other].state == ProxyStateDisconnected) {
         if (proxy->other == -1) proxy--;
         loc_free(proxy);
@@ -212,7 +210,6 @@ void proxy_create(Channel * c1, Channel * c2) {
     proxy[1].state = ProxyStateInitial;
     proxy[1].instance = instance++;
 
-    discovery_channel_remove(c1);
     c1->connecting = proxy_connecting;
     c1->connected = proxy_connected;
     c1->receive = proxy_receive;

@@ -1,23 +1,27 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
 /*
- * Agent main module.
+ * TCF Value Add main module.
+ *
+ * This implementation of Value Add provides only few services,
+ * but it supports Locator.redirect command, which can forward TCF traffic to other TCF agents.
+ *
+ * The code is intended to be an example of service proxing implementation.
  */
 
 #include "mdep.h"
-#define CONFIG_MAIN
 #include "config.h"
 
 #include <stdio.h>
@@ -33,8 +37,6 @@
 #include "channel.h"
 #include "protocol.h"
 #include "discovery.h"
-#include "discovery_help.h"
-#include "expressions.h"
 #include "errors.h"
 
 static char * progname;
@@ -48,7 +50,6 @@ static void channel_server_connecting(Channel * c) {
     trace(LOG_PROTOCOL, "channel server connecting");
 
     send_hello_message(c->client_data, c);
-    discovery_channel_add(c);
     flush_stream(&c->out);
 }
 
@@ -67,8 +68,6 @@ static void channel_server_receive(Channel * c) {
 
 static void channel_server_disconnected(Channel * c) {
     trace(LOG_PROTOCOL, "channel server disconnected");
-    discovery_channel_remove(c);
-    protocol_channel_closed(c->client_data, c);
 }
 
 static void initiate_redirect(Channel * c1, const char * token, const char * id) {
@@ -93,7 +92,7 @@ static void initiate_redirect(Channel * c1, const char * token, const char * id)
         write_stream(&c1->out, MARKER_EOM);
         return;
     }
-    protocol_channel_closed(c1->client_data, c1);
+    notify_channel_closed(c1);
     protocol_release(c1->client_data);
     proxy_create(c1, c2);
     spg = suspend_group_alloc();
@@ -117,12 +116,11 @@ static void channel_new_connection(ChannelServer * serv, Channel * c) {
     channel_set_broadcast_group(c, bcg);
     c->redirecting = initiate_redirect;
     channel_start(c);
-    protocol_channel_opened(proto, c);
 }
 
 #if defined(_WRS_KERNEL)
 int tcf_va(void) {
-#else   
+#else
 int main(int argc, char ** argv) {
 #endif
     int c;
@@ -141,13 +139,13 @@ int main(int argc, char ** argv) {
     ini_events_queue();
 
 #if defined(_WRS_KERNEL)
-    
+
     progname = "tcf";
     open_log_file("-");
     log_mode = 0;
-    
+
 #else
-    
+
     progname = argv[0];
 
     /* Parse arguments */
@@ -195,16 +193,15 @@ int main(int argc, char ** argv) {
             }
         }
     }
-    
+
     open_log_file(log_name);
-    
+
 #endif
 
     bcg = broadcast_group_alloc();
     spg = suspend_group_alloc();
     proto = protocol_alloc();
-    ini_locator_service(proto);
-    ini_diagnostics_service(proto);
+    ini_locator_service(proto, bcg);
 
     ps = channel_peer_from_url(url);
     if (ps == NULL) {
@@ -220,7 +217,7 @@ int main(int argc, char ** argv) {
     }
     serv->new_conn = channel_new_connection;
 
-    discovery_start(create_default_discovery_master);
+    discovery_start();
 
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */

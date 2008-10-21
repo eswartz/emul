@@ -28,25 +28,23 @@
 
 #define STALE_CHECK_TIME 20
 
-typedef struct PeerServerList {
-    PeerServer * root;
-    int ind;
-    int max;
-    struct {
-        peer_server_listener fnp;
-        void * arg;
-    } * list;
-} PeerServerList;
+typedef struct PeersListener {
+    peer_server_listener fnp;
+    void * arg;
+} PeersListener;
 
-static PeerServerList peer_server_list;
+static PeerServer * peers;
+static PeersListener * listeners;
+static int listeners_cnt;
+static int listeners_max;
 static int stale_timer_active = 0;
 
-static void notify_listeners(PeerServerList * pi, PeerServer * ps, int changeType) {
+static void notify_listeners(PeerServer * ps, int type) {
     int i;
 
-    trace(LOG_DISCOVERY, "peer server change, id=%s, type=%d", ps->id, changeType);
-    for (i = 0; i < pi->ind; i++) {
-        pi->list[i].fnp(ps, changeType, pi->list[i].arg);
+    trace(LOG_DISCOVERY, "Peer server change, id=%s, type=%d", ps->id, type);
+    for (i = 0; i < listeners_cnt; i++) {
+        listeners[i].fnp(ps, type, listeners[i].arg);
     }
 }
 
@@ -75,29 +73,29 @@ static int is_same(PeerServer * a, PeerServer * b) {
 }
 
 static void clear_stale_peers(void * x) {
-    PeerServerList * pi = &peer_server_list;
-    PeerServer ** sp = &pi->root;
+    PeerServer ** sp = &peers;
     PeerServer * s;
     time_t timenow = time(NULL);
     int keep_timer = 0;
 
     assert(is_dispatch_thread());
     while ((s = *sp) != NULL) {
-        if (s->create_time != s->stale_time && s->stale_time <= timenow) {
+        if (s->flags & PS_FLAG_LOCAL) {
+            sp = &s->next;
+        }
+        else if (s->expiration_time <= timenow) {
             /* Delete stale entry */
             *sp = s->next;
-            notify_listeners(pi, s, -1);
+            notify_listeners(s, PS_EVENT_REMOVED);
             peer_server_free(s);
         }
         else {
-            if (s->create_time != s->stale_time) {
-                keep_timer = 1;
-            }
+            keep_timer = 1;
             sp = &s->next;
         }
     }
     if (keep_timer) {
-        post_event_with_delay(clear_stale_peers, NULL, STALE_CHECK_TIME*1000*1000);
+        post_event_with_delay(clear_stale_peers, NULL, STALE_CHECK_TIME * 1000000);
     }
     else {
         stale_timer_active = 0;
@@ -107,7 +105,7 @@ static void clear_stale_peers(void * x) {
 PeerServer * peer_server_alloc(void) {
     PeerServer * s = loc_alloc_zero(sizeof *s);
 
-    s->max = 1;
+    s->max = 4;
     s->list = loc_alloc(s->max * sizeof *s->list);
     return s;
 }
@@ -160,39 +158,35 @@ void peer_server_free(PeerServer * s) {
 }
 
 PeerServer * peer_server_add(PeerServer * n, unsigned int stale_delta) {
-    PeerServerList * pi = &peer_server_list;
-    PeerServer ** sp = &pi->root;
+    PeerServer ** sp = &peers;
     PeerServer * s;
-    int type = 1;
+    int type = PS_EVENT_ADDED;
 
     assert(is_dispatch_thread());
     while ((s = *sp) != NULL) {
         if (strcmp(s->id, n->id) == 0) {
-            if (s->flags & PS_FLAG_LOCAL && !(n->flags & PS_FLAG_LOCAL)) {
+            if ((s->flags & PS_FLAG_LOCAL) && !(n->flags & PS_FLAG_LOCAL) || is_same(s, n)) {
                 /* Never replace local entries with discovered ones */
+                s->creation_time = time(NULL);
+                s->expiration_time = s->creation_time + stale_delta;
+                if (!(s->flags & PS_FLAG_LOCAL)) s->flags = n->flags;
                 peer_server_free(n);
-                return s;
-            }
-            if (is_same(s, n)) {
-                s->create_time = time(NULL);
-                s->stale_time = s->create_time + stale_delta;
-                s->flags = n->flags;
-                peer_server_free(n);
+                notify_listeners(s, PS_EVENT_HEART_BEAT);
                 return s;
             }
             *sp = s->next;
             peer_server_free(s);
-            type = 0;
+            type = PS_EVENT_CHANGED;
             break;
         }
         sp = &s->next;
     }
-    n->create_time = time(NULL);
-    n->stale_time = n->create_time + stale_delta;
-    n->next = pi->root;
-    pi->root = n;
-    notify_listeners(pi, n, type);
-    if (!stale_timer_active && stale_delta != 0) {
+    n->creation_time = time(NULL);
+    n->expiration_time = n->creation_time + stale_delta;
+    n->next = peers;
+    peers = n;
+    notify_listeners(n, type);
+    if (!stale_timer_active) {
         stale_timer_active = 1;
         post_event_with_delay(clear_stale_peers, NULL, STALE_CHECK_TIME*1000*1000);
     }
@@ -201,26 +195,24 @@ PeerServer * peer_server_add(PeerServer * n, unsigned int stale_delta) {
 
 /* Find peer server based on ID */
 PeerServer * peer_server_find(const char * id) {
-    PeerServerList * pi = &peer_server_list;
     PeerServer * s;
 
     assert(is_dispatch_thread());
-    for (s = pi->root; s != NULL; s = s->next) {
+    for (s = peers; s != NULL; s = s->next) {
         if (strcmp(s->id, id) == 0) return s;
     }
     return NULL;
 }
 
 void peer_server_remove(const char *id) {
-    PeerServerList *pi = &peer_server_list;
-    PeerServer ** sp = &pi->root;
+    PeerServer ** sp = &peers;
     PeerServer * s;
 
     assert(is_dispatch_thread());
     while ((s = *sp) != NULL) {
         if (strcmp(s->id, id) == 0) {
             *sp = s->next;
-            notify_listeners(pi, s, -1);
+            notify_listeners(s, PS_EVENT_REMOVED);
             peer_server_free(s);
             break;
         }
@@ -229,8 +221,7 @@ void peer_server_remove(const char *id) {
 }
 
 int peer_server_iter(peer_server_iter_fnp fnp, void * arg) {
-    PeerServerList * pi = &peer_server_list;
-    PeerServer * s = pi->root;
+    PeerServer * s = peers;
     int rval;
 
     assert(is_dispatch_thread());
@@ -246,24 +237,15 @@ int peer_server_iter(peer_server_iter_fnp fnp, void * arg) {
 }
 
 void peer_server_add_listener(peer_server_listener fnp, void * arg) {
-    PeerServerList * pi = &peer_server_list;
-    int i;
-
-    for (i = 0; i < pi->ind; i++) {
-        if (pi->list[i].fnp == fnp && pi->list[i].arg == arg) {
-            /* Already in the list */
-            return;
-        }
+    if (listeners_max == 0) {
+        listeners_max = 4;
+        listeners = loc_alloc(listeners_max * sizeof(PeersListener));
     }
-    if (pi->max == 0) {
-        pi->max = 1;
-        pi->list = loc_alloc(pi->max * sizeof *pi->list);
+    else if (listeners_cnt == listeners_max) {
+        listeners_max *= 2;
+        listeners = loc_realloc(listeners, listeners_max * sizeof(PeersListener));
     }
-    else if (pi->ind == pi->max) {
-        pi->max *= 2;
-        pi->list = loc_realloc(pi->list, pi->max * sizeof *pi->list);
-    }
-    pi->list[pi->ind].fnp = fnp;
-    pi->list[pi->ind].arg = arg;
-    pi->ind++;
+    listeners[listeners_cnt].fnp = fnp;
+    listeners[listeners_cnt].arg = arg;
+    listeners_cnt++;
 }

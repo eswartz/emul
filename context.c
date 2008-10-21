@@ -86,12 +86,14 @@ char * signal_name(int signal) {
 
 Context * context_find_from_pid(pid_t pid) {
     LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(pid)];
-    LINK * qp;
+    LINK * qp = qhp->next;
 
     assert(is_dispatch_thread());
-    for (qp = qhp->next; qp != qhp; qp = qp->next) {
+    if (qp == NULL) return NULL;
+    while (qp != qhp) {
         Context * ctx = pidl2ctxp(qp);
         if (ctx->pid == pid && !ctx->exited) return ctx;
+        qp = qp->next;
     }
     return NULL;
 }

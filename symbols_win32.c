@@ -32,7 +32,11 @@
 #include "windbgcache.h"
 #include "trace.h"
 
-#define SYM_SEARCH_PATH "http://msdl.microsoft.com/download/symbols"
+#define SYM_SEARCH_PATH ""
+/* Path could contain "http://msdl.microsoft.com/download/symbols",
+   but access to Microsoft debug info server is too slow,
+   and dbghelp.dll caching is inadequate
+*/
 
 #ifndef MAX_SYM_NAME
 #  define MAX_SYM_NAME 2000

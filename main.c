@@ -29,12 +29,6 @@
 #include "events.h"
 #include "trace.h"
 #include "myalloc.h"
-#include "expressions.h"
-#include "context.h"
-#include "channel.h"
-#include "protocol.h"
-#include "discovery.h"
-#include "discovery_help.h"
 #include "test.h"
 #include "cmdline.h"
 
@@ -49,7 +43,6 @@ static void channel_server_connecting(Channel * c) {
     trace(LOG_PROTOCOL, "channel server connecting");
 
     send_hello_message(c->client_data, c);
-    discovery_channel_add(c);
     flush_stream(&c->out);
 }
 
@@ -68,8 +61,6 @@ static void channel_server_receive(Channel * c) {
 
 static void channel_server_disconnected(Channel * c) {
     trace(LOG_PROTOCOL, "channel server disconnected");
-    discovery_channel_remove(c);
-    protocol_channel_closed(c->client_data, c);
 }
 
 static void channel_new_connection(ChannelServer * serv, Channel * c) {
@@ -82,7 +73,6 @@ static void channel_new_connection(ChannelServer * serv, Channel * c) {
     channel_set_suspend_group(c, spg);
     channel_set_broadcast_group(c, bcg);
     channel_start(c);
-    protocol_channel_opened(proto, c);
 }
 
 #if defined(_WRS_KERNEL)
@@ -129,7 +119,9 @@ int main(int argc, char ** argv) {
                 break;
 
             case 't':
+#if SERVICE_RunControl
                 test_proc();
+#endif
                 exit(0);
                 break;
 
@@ -179,7 +171,6 @@ int main(int argc, char ** argv) {
     bcg = broadcast_group_alloc();
     spg = suspend_group_alloc();
     proto = protocol_alloc();
-    ini_locator_service(proto);
     ini_services(proto, bcg, spg);
     ini_contexts();
 
@@ -195,7 +186,7 @@ int main(int argc, char ** argv) {
     }
     serv->new_conn = channel_new_connection;
 
-    discovery_start(create_default_discovery_master);
+    discovery_start();
 
 #if ENABLE_Cmdline
     if (interactive) ini_cmdline_handler(interactive);
