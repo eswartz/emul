@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.core.Command;
@@ -31,6 +30,8 @@ public class LocatorProxy implements ILocator {
     private final IChannel channel;
     private final Map<String,IPeer> peers = new HashMap<String,IPeer>();
     private final Collection<LocatorListener> listeners = new ArrayList<LocatorListener>();
+    
+    private boolean get_peers_done = false;
     
     private class Peer implements IPeer {
         
@@ -83,8 +84,13 @@ public class LocatorProxy implements ILocator {
                     assert args.length == 1;
                     IPeer peer = new Peer((Map<String,String>)args[0]);
                     peers.put(peer.getID(), peer);
-                    for (Iterator<LocatorListener> i = listeners.iterator(); i.hasNext();) {
-                        i.next().peerAdded(peer);
+                    for (LocatorListener l : listeners) {
+                        try {
+                            l.peerAdded(peer);
+                        }
+                        catch (Throwable x) {
+                            Protocol.log("Unhandled exception in Locator listener", x);
+                        }
                     }
                 }
                 else if (name.equals("peerChanged")) {
@@ -92,18 +98,42 @@ public class LocatorProxy implements ILocator {
                     Map<String,String> m = (Map<String,String>)args[0];
                     if (m == null) throw new Error("Locator service: invalid peerChanged event - no peer ID");
                     IPeer peer = peers.get(m.get(IPeer.ATTR_ID));
-                    if (peer == null) throw new Error("Invalid peerChanged event: unknown peer ID");
-                    for (Iterator<LocatorListener> i = listeners.iterator(); i.hasNext();) {
-                        i.next().peerChanged(peer);
+                    if (peer == null) return;
+                    for (LocatorListener l : listeners) {
+                        try {
+                            l.peerChanged(peer);
+                        }
+                        catch (Throwable x) {
+                            Protocol.log("Unhandled exception in Locator listener", x);
+                        }
                     }
                 }
                 else if (name.equals("peerRemoved")) {
                     assert args.length == 1;
                     String id = (String)args[0];
                     IPeer peer = peers.get(id);
-                    if (peer == null) throw new Error("Locator service: invalid peerRemoved event - unknown peer ID");
-                    for (Iterator<LocatorListener> i = listeners.iterator(); i.hasNext();) {
-                        i.next().peerRemoved(id);
+                    if (peer == null) return;
+                    for (LocatorListener l : listeners) {
+                        try {
+                            l.peerRemoved(id);
+                        }
+                        catch (Throwable x) {
+                            Protocol.log("Unhandled exception in Locator listener", x);
+                        }
+                    }
+                }
+                else if (name.equals("peerHeartBeat")) {
+                    assert args.length == 1;
+                    String id = (String)args[0];
+                    IPeer peer = peers.get(id);
+                    if (peer == null) return;
+                    for (LocatorListener l : listeners) {
+                        try {
+                            l.peerHeartBeat(id);
+                        }
+                        catch (Throwable x) {
+                            Protocol.log("Unhandled exception in Locator listener", x);
+                        }
                     }
                 }
                 else {
@@ -154,6 +184,41 @@ public class LocatorProxy implements ILocator {
 
     public void addListener(LocatorListener listener) {
         listeners.add(listener);
+        if (!get_peers_done) {
+            new Command(channel, this, "getPeers", null) {
+                @SuppressWarnings("unchecked")
+                @Override
+                public void done(Exception error, Object[] args) {
+                    if (error == null) {
+                        assert args.length == 2;
+                        error = toError(args[0]);
+                    }
+                    if (error != null) {
+                        Protocol.log("Locator error", error);
+                        return;
+                    }
+                    Collection<?> c = (Collection<?>)args[1];
+                    if (c != null) {
+                        for (Object o : c) {
+                            Map<String,String> m = (Map<String,String>)o;
+                            String id = m.get(IPeer.ATTR_ID);
+                            if (peers.get(id) != null) continue;
+                            IPeer peer = new Peer(m);
+                            peers.put(id, peer);
+                            for (LocatorListener l : listeners) {
+                                try {
+                                    l.peerAdded(peer);
+                                }
+                                catch (Throwable x) {
+                                    Protocol.log("Unhandled exception in Locator listener", x);
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            get_peers_done = true;
+        }
     }
 
     public void removeListener(LocatorListener listener) {

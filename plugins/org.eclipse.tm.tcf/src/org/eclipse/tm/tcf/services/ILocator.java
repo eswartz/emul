@@ -33,11 +33,18 @@ public interface ILocator extends IService {
     static final String NAME = "Locator";
 
     /**
+     * Peer data retention period in milliseconds.
+     */
+    static final long DATA_RETENTION_PERIOD = 60 * 1000; 
+
+    /**
      * Auto-configuration command and response codes.
      */
     static final int
         CONF_REQ_INFO = 1,
-        CONF_PEER_INFO = 2;
+        CONF_PEER_INFO = 2,
+        CONF_REQ_SLAVES = 3,
+        CONF_SLAVES_INFO = 4;
 
     /**
      * @return Locator service name: "Locator"

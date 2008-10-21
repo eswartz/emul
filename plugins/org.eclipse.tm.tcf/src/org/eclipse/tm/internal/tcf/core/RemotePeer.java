@@ -16,7 +16,20 @@ import org.eclipse.tm.tcf.core.AbstractPeer;
 
 public class RemotePeer extends AbstractPeer {
     
+    private long last_update_time;
+    
     public RemotePeer(Map<String,String> attrs) {
         super(attrs);
+        last_update_time = System.currentTimeMillis();
+    }
+    
+    @Override
+    public void updateAttributes(Map<String,String> attrs) {
+        super.updateAttributes(attrs);
+        last_update_time = System.currentTimeMillis();
+    }
+    
+    public long getLastUpdateTime() {
+        return last_update_time;
     }
 }

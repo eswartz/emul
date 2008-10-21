@@ -544,6 +544,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                         public void congestionLevel(int level) {
                         }
                         public void onChannelClosed(Throwable error) {
+                            if (display == null) return;
                             setChildren(parent, error, new PeerInfo[0]);
                             if (listener[0] != null) listeners.remove(listener[0]);
                         }

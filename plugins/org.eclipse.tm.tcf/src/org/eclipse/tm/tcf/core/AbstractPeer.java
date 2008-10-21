@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.core;
 
-import java.util.Collection;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -20,7 +20,9 @@ import org.eclipse.tm.internal.tcf.core.Transport;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.ILocator;
 import org.eclipse.tm.tcf.services.ILocator.LocatorListener;
 
 /**
@@ -30,6 +32,8 @@ public abstract class AbstractPeer implements IPeer {
 
     private final Map<String, String> ro_attrs;
     private final Map<String, String> rw_attrs;
+    
+    private long last_heart_beat_time;
     
     public AbstractPeer(Map<String,String> attrs) {
         assert Protocol.isDispatchThread();
@@ -61,14 +65,80 @@ public abstract class AbstractPeer implements IPeer {
                 break;
             }
         }
-        Collection<LocatorListener> listeners = LocatorService.getListeners();
+        long time = System.currentTimeMillis();
         if (!equ) {
             rw_attrs.clear();
             rw_attrs.putAll(attrs);
-            for (LocatorListener l : listeners) l.peerChanged(this);
+            for (LocatorListener l : LocatorService.getListeners()) {
+                try {
+                    l.peerChanged(this);
+                }
+                catch (Throwable x) {
+                    Protocol.log("Unhandled exception in Locator listener", x);
+                }
+            }
+            try {
+                Object[] args = { rw_attrs };
+                Protocol.sendEvent(ILocator.NAME, "peerChanged", JSON.toJSONSequence(args));
+            }
+            catch (IOException x) {
+                Protocol.log("Locator: failed to send 'peerChanged' event", x);
+            }
         }
-        else {
-            for (LocatorListener l : listeners) l.peerHeartBeat(attrs.get(ATTR_ID));
+        else if (last_heart_beat_time + ILocator.DATA_RETENTION_PERIOD / 4 < time) {
+            for (LocatorListener l : LocatorService.getListeners()) {
+                try {
+                    l.peerHeartBeat(attrs.get(ATTR_ID));
+                }
+                catch (Throwable x) {
+                    Protocol.log("Unhandled exception in Locator listener", x);
+                }
+            }
+            try {
+                Object[] args = { rw_attrs.get(ATTR_ID) };
+                Protocol.sendEvent(ILocator.NAME, "peerHeartBeat", JSON.toJSONSequence(args));
+            }
+            catch (IOException x) {
+                Protocol.log("Locator: failed to send 'peerHeartBeat' event", x);
+            }
+        }
+        last_heart_beat_time = time;
+    }
+    
+    public void sendPeerAddedEvent() {
+        for (LocatorListener l : LocatorService.getListeners()) {
+            try {
+                l.peerAdded(this);
+            }
+            catch (Throwable x) {
+                Protocol.log("Unhandled exception in Locator listener", x);
+            }
+        }
+        try {
+            Object[] args = { rw_attrs };
+            Protocol.sendEvent(ILocator.NAME, "peerAdded", JSON.toJSONSequence(args));
+        }
+        catch (IOException x) {
+            Protocol.log("Locator: failed to send 'peerAdded' event", x);
+        }
+        last_heart_beat_time = System.currentTimeMillis();
+    }
+
+    public void sendPeerRemovedEvent() {
+        for (LocatorListener l : LocatorService.getListeners()) {
+            try {
+                l.peerRemoved(rw_attrs.get(ATTR_ID));
+            }
+            catch (Throwable x) {
+                Protocol.log("Unhandled exception in Locator listener", x);
+            }
+        }
+        try {
+            Object[] args = { rw_attrs.get(ATTR_ID) };
+            Protocol.sendEvent(ILocator.NAME, "peerRemoved", JSON.toJSONSequence(args));
+        }
+        catch (IOException x) {
+            Protocol.log("Locator: failed to send 'peerRemoved' event", x);
         }
     }
 
