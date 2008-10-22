@@ -200,7 +200,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         read_stringz(&c->inp, token, sizeof(token));
         read_stringz(&c->inp, service, sizeof(service));
         read_stringz(&c->inp, name, sizeof(name));
-//        trace(LOG_PROTOCOL, "Peer %s: Command: C %s %s %s ...", c->peer_name, token, service, name);
+        trace(LOG_PROTOCOL, "Peer %s: Command: C %s %s %s ...", c->peer_name, token, service, name);
         mh = find_message_handler(p, service, name);
         if (mh == NULL) {
             if (p->default_handler != NULL) {
@@ -262,6 +262,10 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         read_stringz(&c->inp, service, sizeof(service));
         read_stringz(&c->inp, name, sizeof(name));
         trace(LOG_PROTOCOL, "Peer %s: Event: E %s %s ...", c->peer_name, service, name);
+        if (strcmp(service, LOCATOR) == 0 && strcmp(name, "Hello") == 0) {
+            event_locator_hello(c);
+            return;
+        }
         eh = find_event_handler(c, service, name);
         if (eh == NULL && p->default_handler != NULL) {
             args[0] = type;
@@ -273,9 +277,6 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         if (set_trap(&trap)) {
             if (eh != NULL) {
                 eh->handler(c);
-            }
-            else if (strcmp(service, LOCATOR) == 0 && strcmp(name, "Hello") == 0) {
-                event_locator_hello(c);
             }
             else {
                 /* Eat the body of the event */
