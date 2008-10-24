@@ -30,26 +30,34 @@ import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
  */
 public final class TCFFileOutputStream extends OutputStream {
     
-    private static final int BUF_SIZE = 0x1000;
     private static final int MAX_WRITE_BACK = 8;
 
     private final IFileHandle handle;
+    private final IFileSystem fs;
+    private final int buf_size;
     private final Set<IToken> write_commands = new HashSet<IToken>();
     private final int[] dirty = new int[1];
-    private final byte[] buf = new byte[BUF_SIZE];
+    private final byte[] buf;
     private int buf_pos = 0;
     private long offset = 0;
     private IOException flush_error;
     private boolean closed;
 
     public TCFFileOutputStream(IFileHandle handle) {
+        this(handle, 0x1000);
+    }
+    
+    public TCFFileOutputStream(IFileHandle handle, int buf_size) {
         this.handle = handle;
+        this.fs = handle.getService();
+        this.buf_size = buf_size;
+        buf = new byte[buf_size];
     }
 
     @Override
     public synchronized void write(int b) throws IOException {
         if (closed) throw new IOException("Stream is closed");
-        if (buf_pos == BUF_SIZE) flush();
+        if (buf_pos == buf_size) flush();
         buf[buf_pos++] = (byte)b;
     }
 
@@ -61,12 +69,12 @@ public final class TCFFileOutputStream extends OutputStream {
                    off + len > b.length || off + len < 0)
             throw new IndexOutOfBoundsException();
         while (len > 0) {
-            if (buf_pos == BUF_SIZE) flush();
-            if (buf_pos == 0 && len > BUF_SIZE) {
+            if (buf_pos == buf_size) flush();
+            if (buf_pos == 0 && len > buf_size) {
                 flush(b, off, len);
                 return;
             }
-            int n = BUF_SIZE - buf_pos;
+            int n = buf_size - buf_pos;
             if (len < n) n = len;
             System.arraycopy(b, off, buf, buf_pos, n);
             off += n;
@@ -96,7 +104,6 @@ public final class TCFFileOutputStream extends OutputStream {
         }
         new TCFTask<Object>() {
             public void run() {
-                IFileSystem fs = handle.getService();
                 write_commands.add(fs.write(handle, offset, buf, off, len, new IFileSystem.DoneWrite() {
                     public void doneWrite(IToken token, FileSystemException error) {
                         assert write_commands.contains(token);
@@ -138,7 +145,6 @@ public final class TCFFileOutputStream extends OutputStream {
         }
         new TCFTask<Object>() {
             public void run() {
-                IFileSystem fs = handle.getService();
                 fs.close(handle, new IFileSystem.DoneClose() {
                     public void doneClose(IToken token, FileSystemException error) {
                         if (error != null) error(error);

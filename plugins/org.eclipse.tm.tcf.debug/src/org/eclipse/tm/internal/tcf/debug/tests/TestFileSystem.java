@@ -143,21 +143,51 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
                 Thread thread = new Thread() {
                     public void run() {
                         try {
-                            InputStream inp = new TCFFileInputStream(handle);
-                            int i = 0;
+                            int pos = 0;
+                            int len = data.length * 16;
+                            byte[] buf = new byte[333];
+                            int buf_pos = 0;
+                            int buf_len = 0;
+                            Random rnd = new Random();
+                            boolean mark = true;
+                            boolean reset = true;
+                            int mark_pos = rnd.nextInt(len - 1);
+                            int reset_pos = mark_pos + rnd.nextInt(len - mark_pos);
+                            assert reset_pos >= mark_pos;
+                            InputStream inp = new TCFFileInputStream(handle, 133);
                             for (;;) {
-                                int ch = inp.read();
-                                if (ch < 0) break;
-                                int dt = data[i % data.length] & 0xff;
+                                if (mark && pos == mark_pos) {
+                                    inp.mark(len);
+                                    mark = false;
+                                }
+                                if (reset && pos == reset_pos) {
+                                    inp.reset();
+                                    reset = false;
+                                    pos = mark_pos;
+                                    buf_pos = buf_len = 0;
+                                }
+                                int ch = 0;
+                                if (buf_pos >= buf_len && (pos >= mark_pos || pos + buf.length <= mark_pos)) {
+                                    buf_len = inp.read(buf, buf_pos = 0, buf.length);
+                                    if (buf_len < 0) break;
+                                }
+                                if (buf_pos < buf_len) {
+                                    ch = buf[buf_pos++] & 0xff;
+                                }
+                                else {
+                                    ch = inp.read();
+                                    if (ch < 0) break;
+                                }
+                                int dt = data[pos % data.length] & 0xff;
                                 if (ch != dt) {
-                                    error(new Exception("Invalid TCFFileInputStream.read responce: wrong data at offset " + i +
+                                    error(new Exception("Invalid TCFFileInputStream.read responce: wrong data at offset " + pos +
                                             ", expected " + dt + ", actual " + ch));
                                 }
-                                i++;
+                                pos++;
                             }
-                            if (i != data.length * 16) {
+                            if (pos != data.length * 16) {
                                 error(new Exception("Invalid TCFFileInputStream.read responce: wrong file length: " +
-                                        "expected " + data.length + ", actual " + i));
+                                        "expected " + data.length + ", actual " + pos));
                             }
                             inp.close();
                             Protocol.invokeLater(new Runnable() {
@@ -187,9 +217,19 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
                 Thread thread = new Thread() {
                     public void run() {
                         try {
-                            OutputStream out = new TCFFileOutputStream(handle);
-                            for (int i = 0; i < data.length * 16; i++) {
-                                out.write(data[i % data.length] & 0xff);
+                            int pos = 0;
+                            int len = data.length * 16;
+                            Random rnd = new Random();
+                            OutputStream out = new TCFFileOutputStream(handle, 121);
+                            while (pos < len) {
+                                int m = pos % data.length;
+                                int n = rnd.nextInt(1021);
+                                if (n > data.length - m) n = data.length - m;
+                                out.write(data, m, n);
+                                pos += n;
+                                if (pos == len) break;
+                                out.write(data[pos % data.length] & 0xff);
+                                pos++;
                             }
                             out.close();
                             Protocol.invokeLater(new Runnable() {
