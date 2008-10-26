@@ -9,6 +9,7 @@ package v9t9.tools.decomp;
 import java.util.Iterator;
 
 import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.llinst.Block;
@@ -51,15 +52,15 @@ public class FullSweepPhase extends Phase {
 				continue;
 			}
 
-            for (LLInstruction inst = range.getCode(); inst != null; inst = inst.getNext()) {
+            for (LLInstruction inst = (LLInstruction) range.getCode(); inst != null; inst = inst.getNext()) {
                 Label label;
 
-                if (inst.inst == Instruction.Ibl || inst.inst == Instruction.Ib || inst.inst == Instruction.Iblwp
-                    || inst.inst == Instruction.Ijmp || inst.jump == Instruction.INST_JUMP_COND) 
+                if (inst.inst == InstructionTable.Ibl || inst.inst == InstructionTable.Ib || inst.inst == InstructionTable.Iblwp
+                    || inst.inst == InstructionTable.Ijmp || inst.jump == Instruction.INST_JUMP_COND) 
                 {
                     label = null;
                     if (operandIsLabel(inst, (MachineOperand) inst.op1)) {
-                        if (inst.inst == Instruction.Iblwp) {
+                        if (inst.inst == InstructionTable.Iblwp) {
                             // need to read vector
                             if (((MachineOperand)inst.op1).type == MachineOperand.OP_ADDR) {
                                 int vecaddr = operandEffectiveAddress(inst, (MachineOperand) inst.op1);
@@ -88,7 +89,7 @@ public class FullSweepPhase extends Phase {
                             // normal label
                             int addr = operandEffectiveAddress(inst, (MachineOperand) inst.op1);
 
-                            if (inst.inst == Instruction.Ibl) {
+                            if (inst.inst == InstructionTable.Ibl) {
                                 Routine routine = addRoutine(addr, null, new LinkedRoutine());
                                 label = routine.getMainLabel();
                             } else {
@@ -307,7 +308,7 @@ public class FullSweepPhase extends Phase {
 
         for (LLInstruction inst = block.getFirst(); inst != null; inst = inst.getNext()) {
             // TODO: watch for self-modifying memory!
-            if (inst.inst == Instruction.Ilwpi) {
+            if (inst.inst == InstructionTable.Ilwpi) {
 				wp = ((MachineOperand)inst.op1).immed;
 			}
             

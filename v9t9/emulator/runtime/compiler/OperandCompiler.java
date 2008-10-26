@@ -4,7 +4,7 @@
  * Created on Feb 21, 2006
  *
  */
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.compiler;
 
 import org.apache.bcel.Constants;
 import org.apache.bcel.generic.ALOAD;
@@ -26,6 +26,7 @@ import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.Type;
 
 import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 
@@ -48,8 +49,8 @@ public class OperandCompiler {
         case MachineOperand.OP_REG:    // Rx
             op.cycles += 0 * 4;
             // (short) ((val<<1) + wp);
-            if (!(ins.inst == Instruction.Impy /*&& ins.op2 == this*/)
-                    && !(ins.inst == Instruction.Idiv /*&& ins.op2 == this*/)
+            if (!(ins.inst == InstructionTable.Impy /*&& ins.op2 == this*/)
+                    && !(ins.inst == InstructionTable.Idiv /*&& ins.op2 == this*/)
                     && Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()
                     && !Compiler.settingDebugInstructions.getBoolean()) {

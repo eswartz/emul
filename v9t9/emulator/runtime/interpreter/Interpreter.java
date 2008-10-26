@@ -4,7 +4,7 @@
  * Created on Dec 17, 2004
  *
  */
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.interpreter;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
@@ -12,9 +12,11 @@ import java.util.Map;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.TI994A;
+import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.Client;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionAction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Status;
@@ -58,10 +60,10 @@ public class Interpreter {
         this.client = machine.getClient();
         
         if ((ins = instructions.get(pc)) != null) {
-            ins = ins.update(op, (short)pc, cpu.console);
+            ins = ins.update(op, (short)pc, cpu.getConsole());
         } else 
         {
-            ins = new Instruction(op, pc, cpu.console);
+            ins = new Instruction(InstructionTable.decodeInstruction(op, pc, cpu.getConsole()));
         }
         instructions.put(pc, ins);
 
@@ -192,7 +194,7 @@ public class Interpreter {
         if (mop2.type != MachineOperand.OP_NONE) {
 			iblock.val2 = mop2.getValue(memory, iblock.ea2);
 		}
-        if (iblock.inst.inst == Instruction.Idiv) {
+        if (iblock.inst.inst == InstructionTable.Idiv) {
             iblock.val3 = memory.readWord(iblock.ea2 + 2);
         }
     }
@@ -211,11 +213,13 @@ public class Interpreter {
 			}
         }
         if (mop2.dest != Operand.OP_DEST_FALSE) {
+        	if (ins.inst == InstructionTable.Icb)
+        		mop2.dest = 1;
             if (mop2.byteop) {
 				memory.writeByte(iblock.ea2, (byte) iblock.val2);
 			} else {
                 memory.writeWord(iblock.ea2, iblock.val2);
-                if (ins.inst == Instruction.Impy || ins.inst == Instruction.Idiv) {
+                if (ins.inst == InstructionTable.Impy || ins.inst == InstructionTable.Idiv) {
                     memory.writeWord(iblock.ea2 + 2, iblock.val3);
                 }
             }
@@ -331,67 +335,67 @@ public class Interpreter {
         InstructionAction act = null;
 
         switch (ins.inst) {
-        case Instruction.Idata:
+        case InstructionTable.Idata:
             break;
-        case Instruction.Ili:
+        case InstructionTable.Ili:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = block.val2;
                 }
             };
             break;
-        case Instruction.Iai:
+        case InstructionTable.Iai:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 += block.val2;
                 }
             };
             break;
-        case Instruction.Iandi:
+        case InstructionTable.Iandi:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 &= block.val2;
                 }
             };
             break;
-        case Instruction.Iori:
+        case InstructionTable.Iori:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 |= block.val2;
                 }
             };
             break;
-        case Instruction.Ici:
+        case InstructionTable.Ici:
             break;
-        case Instruction.Istwp:
+        case InstructionTable.Istwp:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = block.wp;
                 }
             };
             break;
-        case Instruction.Istst:
+        case InstructionTable.Istst:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = block.status.flatten();
                 }
             };
             break;
-        case Instruction.Ilwpi:
+        case InstructionTable.Ilwpi:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.wp = block.val1;
                 }
             };
             break;
-        case Instruction.Ilimi:
+        case InstructionTable.Ilimi:
             // all done in status (Status#setIntMask() performed as post-instruction
         	// action due to ST_INT effect)
             break;
-        case Instruction.Iidle:
+        case InstructionTable.Iidle:
             //cpu.idle(); // TODO
             break;
-        case Instruction.Irset:
+        case InstructionTable.Irset:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = 0;
@@ -399,7 +403,7 @@ public class Interpreter {
             };
             //cpu.rset(); // TODO
             break;
-        case Instruction.Irtwp:
+        case InstructionTable.Irtwp:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.status.expand(memory.readWord(block.wp + 15 * 2));
@@ -409,16 +413,16 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Ickon:
+        case InstructionTable.Ickon:
             // TODO
             break;
-        case Instruction.Ickof:
+        case InstructionTable.Ickof:
             // TODO
             break;
-        case Instruction.Ilrex:
+        case InstructionTable.Ilrex:
             // TODO
             break;
-        case Instruction.Iblwp:
+        case InstructionTable.Iblwp:
             act = new InstructionAction() {
                 public void act(Block block) {
                     /*
@@ -434,14 +438,14 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Ib:
+        case InstructionTable.Ib:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.pc = block.val1;
                 }
             };
             break;
-        case Instruction.Ix:
+        case InstructionTable.Ix:
             act = new InstructionAction() {
                 public void act(Block block) {
                     short newPc = block.pc;
@@ -450,56 +454,56 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Iclr:
+        case InstructionTable.Iclr:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = 0;
                 }
             };
             break;
-        case Instruction.Ineg:
+        case InstructionTable.Ineg:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) -block.val1;
                 }
             };
             break;
-        case Instruction.Iinv:
+        case InstructionTable.Iinv:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) ~block.val1;
                 }
             };
             break;
-        case Instruction.Iinc:
+        case InstructionTable.Iinc:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1++;
                 }
             };
             break;
-        case Instruction.Iinct:
+        case InstructionTable.Iinct:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 += 2;
                 }
             };
             break;
-        case Instruction.Idec:
+        case InstructionTable.Idec:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1--;
                 }
             };
             break;
-        case Instruction.Idect:
+        case InstructionTable.Idect:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 -= 2;
                 }
             };
             break;
-        case Instruction.Ibl:
+        case InstructionTable.Ibl:
             act = new InstructionAction() {
                 public void act(Block block) {
                     memory.writeWord(block.wp + 11 * 2, block.pc);
@@ -507,21 +511,21 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Iswpb:
+        case InstructionTable.Iswpb:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) (block.val1 >> 8 & 0xff | block.val1 << 8 & 0xff00);
                 }
             };
             break;
-        case Instruction.Iseto:
+        case InstructionTable.Iseto:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = -1;
                 }
             };
             break;
-        case Instruction.Iabs:
+        case InstructionTable.Iabs:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if ((block.val1 & 0x8000) != 0) {
@@ -530,14 +534,14 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Isra:
+        case InstructionTable.Isra:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) (block.val1 >> block.val2);
                 }
             };
             break;
-        case Instruction.Isrl:
+        case InstructionTable.Isrl:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) ((block.val1 & 0xffff) >> block.val2);
@@ -545,7 +549,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Isla:
+        case InstructionTable.Isla:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) (block.val1 << block.val2);
@@ -553,7 +557,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Isrc:
+        case InstructionTable.Isrc:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) ((block.val1 & 0xffff) >> block.val2 | (block.val1 & 0xffff) << 16 - block.val2);
@@ -561,14 +565,14 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Ijmp:
+        case InstructionTable.Ijmp:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.pc = block.val1;
                 }
             };
             break;
-        case Instruction.Ijlt:
+        case InstructionTable.Ijlt:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if (block.status.isLT()) {
@@ -577,7 +581,7 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Ijle:
+        case InstructionTable.Ijle:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if (block.status.isLE()) {
@@ -587,7 +591,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Ijeq:
+        case InstructionTable.Ijeq:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if (block.status.isEQ()) {
@@ -596,7 +600,7 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Ijhe:
+        case InstructionTable.Ijhe:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if (block.status.isHE()) {
@@ -605,7 +609,7 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Ijgt:
+        case InstructionTable.Ijgt:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if (block.status.isGT()) {
@@ -614,7 +618,7 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Ijne:
+        case InstructionTable.Ijne:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if (block.status.isNE()) {
@@ -623,7 +627,7 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Ijnc:
+        case InstructionTable.Ijnc:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if (!block.status.isC()) {
@@ -632,7 +636,7 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Ijoc:
+        case InstructionTable.Ijoc:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if (block.status.isC()) {
@@ -641,7 +645,7 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Ijno:
+        case InstructionTable.Ijno:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if (!block.status.isO()) {
@@ -650,7 +654,7 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Ijl:
+        case InstructionTable.Ijl:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if (block.status.isL()) {
@@ -659,7 +663,7 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Ijh:
+        case InstructionTable.Ijh:
             act = new InstructionAction() {
                 public void act(Block block) {
                     if (block.status.isH()) {
@@ -669,7 +673,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Ijop:
+        case InstructionTable.Ijop:
             act = new InstructionAction() {
                 public void act(Block block) {
                     // jump on ODD parity
@@ -680,7 +684,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Isbo:
+        case InstructionTable.Isbo:
             act = new InstructionAction() {
                 public void act(Block block) {
                     client.getCruHandler().writeBits(block.val1, 1, 1);
@@ -688,7 +692,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Isbz:
+        case InstructionTable.Isbz:
             act = new InstructionAction() {
                 public void act(Block block) {
                     client.getCruHandler().writeBits(block.val1, 0, 1);
@@ -696,7 +700,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Itb:
+        case InstructionTable.Itb:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) client.getCruHandler().readBits(block.val1, 1);
@@ -705,7 +709,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Icoc:
+        case InstructionTable.Icoc:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val2 = (short) (block.val1 & block.val2);
@@ -713,7 +717,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Iczc:
+        case InstructionTable.Iczc:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val2 = (short) (block.val1 & ~block.val2);
@@ -721,7 +725,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Ixor:
+        case InstructionTable.Ixor:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val2 ^= block.val1;
@@ -729,7 +733,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Ixop:
+        case InstructionTable.Ixop:
             act = new InstructionAction() {
                 public void act(Block block) {
                     /*
@@ -745,7 +749,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Impy:
+        case InstructionTable.Impy:
             act = new InstructionAction() {
                 public void act(Block block) {
                     int val = (block.val1 & 0xffff)
@@ -758,7 +762,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Idiv:
+        case InstructionTable.Idiv:
             act = new InstructionAction() {
                 public void act(Block block) {
                     // manually read second reg
@@ -777,7 +781,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Ildcr:
+        case InstructionTable.Ildcr:
             act = new InstructionAction() {
                 public void act(Block block) {
                     client.getCruHandler().writeBits(
@@ -787,7 +791,7 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Istcr:
+        case InstructionTable.Istcr:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) client.getCruHandler().readBits(
@@ -795,8 +799,8 @@ public class Interpreter {
                 }
             };
             break;
-        case Instruction.Iszc:
-        case Instruction.Iszcb:
+        case InstructionTable.Iszc:
+        case InstructionTable.Iszcb:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val2 &= ~block.val1;
@@ -804,8 +808,8 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Is:
-        case Instruction.Isb:
+        case InstructionTable.Is:
+        case InstructionTable.Isb:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val2 -= block.val1;
@@ -813,12 +817,12 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Ic:
-        case Instruction.Icb:
+        case InstructionTable.Ic:
+        case InstructionTable.Icb:
             break;
 
-        case Instruction.Ia:
-        case Instruction.Iab:
+        case InstructionTable.Ia:
+        case InstructionTable.Iab:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val2 += block.val1;
@@ -826,8 +830,8 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Imov:
-        case Instruction.Imovb:
+        case InstructionTable.Imov:
+        case InstructionTable.Imovb:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val2 = block.val1;
@@ -835,8 +839,8 @@ public class Interpreter {
             };
             break;
 
-        case Instruction.Isoc:
-        case Instruction.Isocb:
+        case InstructionTable.Isoc:
+        case InstructionTable.Isocb:
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val2 |= block.val1;

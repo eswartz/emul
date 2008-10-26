@@ -6,6 +6,8 @@
  */
 package v9t9.engine.memory;
 
+import java.io.IOException;
+
 import v9t9.utils.Utils;
 
 /**
@@ -108,13 +110,18 @@ public class MemoryEntry {
 
     /** Unmap entry from address space */
     public void unmap() {
-        save();
+        try {
+			save();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
         unload();
         domain.setArea(addr, size, new WordMemoryArea());
     }
 
-    /** Save entry, if applicable */
-    public void save() {
+    /** Save entry, if applicable 
+     * @throws IOException */
+    public void save() throws IOException {
         /* nothing */
     }
 

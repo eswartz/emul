@@ -4,7 +4,7 @@
  * Created on Feb 2, 2005
  *
  */
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.compiler;
 
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.InstructionFactory;

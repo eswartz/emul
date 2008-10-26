@@ -3,6 +3,8 @@
  */
 package v9t9.tools.asm;
 
+import v9t9.utils.Utils;
+
 /**
  * @author ejs
  *
@@ -12,6 +14,7 @@ public class Symbol {
 	private final String name;
 	private int addr;
 	private boolean defined;
+	private int index;
 
 	public Symbol(String name) {
 		this.name = name;
@@ -29,7 +32,7 @@ public class Symbol {
 	
 	@Override
 	public String toString() {
-		return name;
+		return name + (isDefined() ? "{>"+Utils.toHex4(addr)+"}" : "");
 	}
 
 	@Override
@@ -71,7 +74,19 @@ public class Symbol {
 	}
 
 	public int getAddr() {
-		return addr;
+		return addr & 0xffff;
+	}
+
+	public void setDefined(boolean b) {
+		this.defined = b;
+	}
+
+	public void setIndex(int i) {
+		this.index = i;
+	}
+	
+	public int getIndex() {
+		return index;
 	}
 	
 	

@@ -6,13 +6,18 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import junit.framework.TestCase;
+import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StandardConsoleMemoryModel;
 import v9t9.engine.memory.WordMemoryArea;
+import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.OperandParser;
+import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.StandardInstructionParserStage;
 import v9t9.tools.llinst.Block;
 import v9t9.tools.llinst.LLInstruction;
@@ -129,17 +134,31 @@ public abstract class BaseTest extends TestCase {
 		return pcSet;
 	}
 
-	StandardInstructionParserStage stage = new StandardInstructionParserStage();
+	StandardInstructionParserStage stdInstStage = new StandardInstructionParserStage();
+	Assembler stdAssembler = new Assembler();
 
-	  protected LLInstruction createLLInstruction(int pc, int wp, String element) throws ParseException {
-	    	Instruction[] asminsts = stage.parse(element);
-	    	if (asminsts ==  null || asminsts.length != 1)
-	    		throw new IllegalArgumentException("Could not uniquely parse " + element);
-	    	asminsts[0].pc = pc;
-	        LLInstruction inst = new LLInstruction(wp, asminsts[0]);
+	protected RawInstruction createInstruction(int pc, String element) throws ParseException {
+	    IInstruction[] asminsts = stdInstStage.parse("foo", element);
+		if (asminsts ==  null || asminsts.length != 1)
+			throw new IllegalArgumentException("Could not uniquely parse " + element);
 
-	        return inst;
+		stdAssembler.setPc((short) pc);
+		RawInstruction rawInst;
+		try {
+			rawInst = (RawInstruction) asminsts[0].resolve(stdAssembler, null, true)[0];
+		} catch (ResolveException e) {
+			throw new IllegalArgumentException(e);
 		}
+		
+		InstructionTable.coerceOperandTypes(rawInst);
+		InstructionTable.calculateInstructionSize(rawInst);
+		
+	    return rawInst;
+	}
+	protected LLInstruction createLLInstruction(int pc, int wp, String element) throws ParseException {
+		RawInstruction inst = createInstruction(pc, element);
+		return new LLInstruction(wp, new Instruction(inst));
+	}
 
 
 }

@@ -9,9 +9,10 @@ package v9t9.tests;
 import java.util.Collection;
 import java.util.Map;
 
-import v9t9.emulator.runtime.HighLevelCodeInfo;
-import v9t9.engine.cpu.Instruction;
+import v9t9.emulator.runtime.compiler.HighLevelCodeInfo;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StandardConsoleMemoryModel;
@@ -57,7 +58,7 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
 	        highLevel.getLLInstructions().put(new Integer(inst.pc), inst);
 	        highLevel.addInstruction(inst);
 	        cpu.flatWriteWord(pc, inst.opcode);
-	        if (inst.inst != Instruction.Idata) {
+	        if (inst.inst != InstructionTable.Idata) {
 				pc += 2;
 			}
 	        if (((MachineOperand) inst.op1).hasImmediate()) {
@@ -98,7 +99,7 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
     	return decompileInfo.getLLInstructions();
     }
 
-	public Instruction getInstruction(int addr) {
+	public RawInstruction getInstruction(int addr) {
 		return decompileInfo.getInstruction(addr);
 	}
 }

@@ -1,13 +1,14 @@
 /**
  * 
  */
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.compiler;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
 import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.decomp.IDecompileInfo;
 import v9t9.tools.decomp.TopDownPhase;
@@ -65,7 +66,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		Instruction ins = instructions.get(pc);
 		if (ins == null) {
 			short op = domain.readWord(pc);
-			ins = new Instruction(op, pc, domain);
+			ins = new Instruction(InstructionTable.decodeInstruction(op, pc, domain));
 			instructions.put(pc, ins);
 		}
 		return ins;
@@ -182,7 +183,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		LLInstruction prev = null;
 		for (int addr = startAddr; addr < startAddr + size; addr += 2) {
 			short op = domain.readWord(addr);
-			LLInstruction inst = new LLInstruction(op, addr, 0, domain);
+			LLInstruction inst = new LLInstruction(0, new Instruction(InstructionTable.decodeInstruction(op, addr, domain)));
 			getLLInstructions().put(new Integer(inst.pc), inst);
 			if (prev != null) {
 				prev.setNext(inst);

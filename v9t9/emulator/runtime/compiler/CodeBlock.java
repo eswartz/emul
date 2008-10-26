@@ -1,9 +1,12 @@
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.compiler;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import v9t9.emulator.runtime.AbortedException;
+import v9t9.emulator.runtime.Executor;
 import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.tools.llinst.LLInstruction;
 
@@ -181,7 +184,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         		// target the PC later
         		int pc = exec.cpu.getPC() & 0xffff;
         		LLInstruction inst = highLevel.getLLInstructions().get(pc);
-        		if (inst != null && inst.inst != Instruction.Idata) {
+        		if (inst != null && inst.inst != InstructionTable.Idata) {
         			if ((inst.flags & LLInstruction.fStartsBlock) == 0) {
         				inst.flags |= LLInstruction.fStartsBlock;
         				/*

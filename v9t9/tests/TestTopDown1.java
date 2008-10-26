@@ -8,7 +8,7 @@ package v9t9.tests;
 
 import java.util.Set;
 
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryArea;
@@ -120,11 +120,11 @@ public class TestTopDown1 extends BaseTopDownTest
         assertTrue((routine.flags & Routine.fUnknownExit) == 0);
         assertTrue(routine.getSpannedBlocks().size() == 2);
         Block block1 = getSingleEntry(routine);
-        assertTrue(block1.getFirst().inst == Instruction.Ili);
-        assertTrue(block1.getLast().inst == Instruction.Iblwp);
+        assertTrue(block1.getFirst().inst == InstructionTable.Ili);
+        assertTrue(block1.getLast().inst == InstructionTable.Iblwp);
         Block block2 = block1.succ.get(0);
-        assertTrue(block2.getFirst().inst == Instruction.Ib);
-        assertTrue(block2.getLast().inst == Instruction.Ib);
+        assertTrue(block2.getFirst().inst == InstructionTable.Ib);
+        assertTrue(block2.getLast().inst == InstructionTable.Ib);
         validateBlocks(routine.getSpannedBlocks());
     }
 
@@ -154,11 +154,11 @@ public class TestTopDown1 extends BaseTopDownTest
         assertTrue(routine.getSpannedBlocks().size() == 2);
         assertTrue((routine.flags & Routine.fUnknownExit) == 0);
         Block block1 = getSingleEntry(routine);
-        assertTrue(block1.getFirst().inst == Instruction.Ili);
-        assertTrue(block1.getLast().inst == Instruction.Ibl);
+        assertTrue(block1.getFirst().inst == InstructionTable.Ili);
+        assertTrue(block1.getLast().inst == InstructionTable.Ibl);
         Block block2 = block1.succ.get(0);
-        assertTrue(block2.getFirst().inst == Instruction.Irtwp);
-        assertTrue(block2.getLast().inst == Instruction.Irtwp);
+        assertTrue(block2.getFirst().inst == InstructionTable.Irtwp);
+        assertTrue(block2.getLast().inst == InstructionTable.Irtwp);
         
         assertTrue(block1.getFirst().getNext().op1 instanceof RoutineOperand);
         Routine routine2 = ((RoutineOperand) block1.getFirst().getNext().op1).routine;  
@@ -194,10 +194,10 @@ public class TestTopDown1 extends BaseTopDownTest
         assertTrue(routine.getSpannedBlocks().size() == 3);
         assertTrue((routine.flags & Routine.fUnknownExit) == 0);
         Block block1 = getSingleEntry(routine);
-        assertTrue(block1.getFirst().inst == Instruction.Ili);
+        assertTrue(block1.getFirst().inst == InstructionTable.Ili);
         assertTrue(block1.getFirst().getNext().op1 instanceof RoutineOperand);
         assertTrue(block1.getFirst().getNext().getNext().op1 instanceof RoutineOperand);
-        assertTrue(block1.getLast().inst == Instruction.Ibl);
+        assertTrue(block1.getLast().inst == InstructionTable.Ibl);
         
         Routine routine2 = ((RoutineOperand) block1.getFirst().getNext().op1).routine;  
         Routine routine2p = ((RoutineOperand) block1.getFirst().getNext().getNext().op1).routine;
@@ -225,11 +225,11 @@ public class TestTopDown1 extends BaseTopDownTest
         assertTrue(routine.getSpannedBlocks().size() == 2);
         assertTrue((routine.flags & Routine.fUnknownExit) == 0);
         Block block1 = getSingleEntry(routine);
-        assertTrue(block1.getFirst().inst == Instruction.Imov);
+        assertTrue(block1.getFirst().inst == InstructionTable.Imov);
         assertTrue(block1.getFirst().getNext().op1 instanceof RoutineOperand);
-        assertTrue(block1.getLast().inst == Instruction.Ibl);
+        assertTrue(block1.getLast().inst == InstructionTable.Ibl);
         Block block2 = block1.succ.get(0);
-        assertTrue(block2.getFirst().inst == Instruction.Imovb);
+        assertTrue(block2.getFirst().inst == InstructionTable.Imovb);
         assertTrue(block2.getLast().isReturn());
         
         validateBlocks(routine.getSpannedBlocks());

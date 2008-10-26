@@ -37,14 +37,26 @@ public class DiskMemoryEntry extends MemoryEntry {
             int addr, int size, String name, 
             MemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) {
-        return newFromFile(new WordMemoryArea(), addr, size, name, domain, filepath, fileoffs, isStored);
+    	WordMemoryArea area = new WordMemoryArea();
+        DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
+        if (isStored) {
+        	area.write = area.memory;
+        }
+        return entry;
     }
 
     static public DiskMemoryEntry newByteMemoryFromFile(
             int addr, int size, String name, 
             MemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) {
-        return newFromFile(new ByteMemoryArea(), addr, size, name, domain, filepath, fileoffs, isStored);
+    	ByteMemoryArea area = new ByteMemoryArea();
+    	
+        DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
+        
+        if (isStored) {
+    		area.write = area.memory;
+    	}
+        return entry;
     }
 
     /** Construct a DiskMemoryEntry based on the file length.
@@ -165,20 +177,20 @@ public class DiskMemoryEntry extends MemoryEntry {
         }
     }
 
+    public void setDirty(boolean dirty) {
+    	bDirty = dirty;
+    }
+    
     /* (non-Javadoc)
      * @see v9t9.MemoryEntry#save()
      */
     @Override
-	public void save() {
+	public void save() throws IOException {
         if (bStorable && bDirty) {
-            try {
-                byte[] data = new byte[filesize];
-                area.copyToBytes(data);
-                DataFiles.writeMemoryImage(filepath, filesize, data);
-	            bDirty = false;
-            } catch (IOException e) {
-                // TODO: error
-            }
+            byte[] data = new byte[filesize];
+            area.copyToBytes(data);
+            DataFiles.writeMemoryImage(filepath, filesize, data);
+            bDirty = false;
         }
         super.save();
     }

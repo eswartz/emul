@@ -8,21 +8,26 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.io.StringReader;
 
 /**
  * A single file to parse.
  * @author ejs
  *
  */
-public class FileEntry {
+public class FileContentEntry {
 	private String name;
 	private LineNumberReader reader;
 
-	public FileEntry(File file) throws IOException {
+	public FileContentEntry(File file) throws IOException {
 		this.name = file.getPath();
 		this.reader = new LineNumberReader(new InputStreamReader(new FileInputStream(file)));
 	}
 
+	public FileContentEntry(String name, String text) throws IOException {
+		this.name = name;
+		this.reader = new LineNumberReader(new StringReader(text));
+	}
 	/**
 	 * Describe the last line read
 	 * @return
@@ -43,5 +48,16 @@ public class FileEntry {
 		} catch (IOException e) {
 			return null;
 		}
+	}
+
+	public String getName() {
+		return name;
+	}
+	public File getFile() {
+		return new File(name);
+	}
+
+	public int getLine() {
+		return reader.getLineNumber();
 	}
 }

@@ -6,7 +6,7 @@
  */
 package v9t9.tools.llinst;
 
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 
 public class ContextSwitchRoutine extends Routine {
@@ -18,7 +18,7 @@ public class ContextSwitchRoutine extends Routine {
 
     @Override
     public boolean isReturn(LLInstruction inst) {
-        return inst.inst == Instruction.Irtwp;
+        return inst.inst == InstructionTable.Irtwp;
     }
 
     @Override

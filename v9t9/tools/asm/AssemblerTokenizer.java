@@ -53,8 +53,10 @@ public class AssemblerTokenizer {
 				break;
 			ch = reader.read();
 		}
-		if (ch == -1)
+		if (ch == -1) {
+			image = "<<eof>>";
 			return EOF;
+		}
 		
 		image = "";
 		number = 0;
@@ -147,6 +149,25 @@ public class AssemblerTokenizer {
 	}
 	public void setPos(int pos) {
 		reader.setPos(pos);
+	}
+	public void match(int type) throws ParseException {
+		if (nextToken() != type)
+			throw new ParseException("Expected " + getTokenTypeString(type) + ": " + currentToken());
+	}
+	public String getTokenTypeString(int type) {
+		switch (type) {
+		case EOF:
+			return "end of file";
+		case NUMBER:
+			return "a number";
+		case ID:
+			return "an identifier";
+		case CHAR:
+			return "a character";
+		case STRING:
+			return "a string";
+		}
+		return "'" + (char)type + "'";
 	}
 
 }

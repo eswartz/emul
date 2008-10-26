@@ -4,7 +4,7 @@
  * Created on Sep 6, 2005
  *
  */
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.compiler;
 
 public class ValidExecutionToken {
 

@@ -22,9 +22,11 @@ public class DataFiles {
      * @param filepath
      * @return
      */
-    public static int getImageSize(String filepath) {
+    public static int getImageSize(String filepath) throws IOException {
         // TODO: real handling of complex filetypes
         File file = new File(filepath);
+        if (!file.exists())
+        	throw new FileNotFoundException(filepath);
         long sz = file.length();
         if ((int)sz != sz) {
 			return 0;

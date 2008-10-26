@@ -7,6 +7,10 @@
 package v9t9.engine.cpu;
 
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.tools.asm.Assembler;
+import v9t9.tools.asm.OutOfRangeException;
+import v9t9.tools.asm.ResolveException;
+import v9t9.tools.asm.Symbol;
 import v9t9.utils.Check;
 
 /**
@@ -54,9 +58,9 @@ public class MachineOperand implements Operand {
     public boolean byteop = false; // for OP_REG...OP_INC, byte access
     public int dest = OP_DEST_FALSE;	// operand changes (OP_DEST_xxx)
     public boolean bIsCodeDest = false; // operand is an address?
-    public int size = 0;	// size of operand (outside instruction) in bytes
 
     public int cycles = 0;	// memory cycles needed to read
+    public Symbol symbol;	// associated symbol
 
     /** 
      * Create an empty operand (to be filled in piecewise)
@@ -106,50 +110,80 @@ public class MachineOperand implements Operand {
      */
     @Override
 	public String toString() {
-        	switch (type) 
-        	{
-        	case OP_REG:
-        		return "R"+val;
-    
-        	case OP_IND:
-        		return "*R"+val;
-    
-        	case OP_ADDR:
-        		if (val == 0) {
-        			return "@>" + Integer.toHexString(immed & 0xffff).toUpperCase();
-        		} else {
-        			return "@>" + Integer.toHexString(immed & 0xffff).toUpperCase() + "(R" + val + ")";
-        		}
-    
-        	case OP_INC:
-        		return "*R" + val + "+";
-    
-        	case OP_IMMED:
-        	    return ">" + Integer.toHexString(immed & 0xffff).toUpperCase();
-    
-        	case OP_CNT:
-        	    return Integer.toString(val);
-    
-        	case OP_OFFS_R12: {
-        		byte offs = (byte) (val & 0xff);
-        	    return ">" + (offs < 0 ? "-" : "") +Integer.toHexString(offs < 0 ? -offs : offs);
-        	}
-    
-        	case OP_REG0_SHIFT_COUNT:
-        	    return ">" + Integer.toHexString(val & 0xffff).toUpperCase();
-        	    
-        	case OP_JUMP:
-        	    return "$+>" + Integer.toHexString(val & 0xffff).toUpperCase();
-    
-        	case OP_NONE:
-        	case OP_STATUS:		// not real operands
-        	case OP_INST:		
-        	default:
-        		return null;
-        	}
+    	String basic = basicString();
+    	if (symbol != null)
+    		basic += "{" + symbol +"}";
+    	return basic;
     }
 
+	private String basicString() {
+		switch (type) 
+    	{
+    	case OP_REG:
+    		return "R"+val;
+
+    	case OP_IND:
+    		return "*R"+val;
+
+    	case OP_ADDR:
+    		if (val == 0) {
+    			return "@>" + Integer.toHexString(immed & 0xffff).toUpperCase();
+    		} else {
+    			return "@>" + Integer.toHexString(immed & 0xffff).toUpperCase() + "(R" + val + ")";
+    		}
+
+    	case OP_INC:
+    		return "*R" + val + "+";
+
+    	case OP_IMMED:
+    	    return ">" + Integer.toHexString(immed & 0xffff).toUpperCase();
+
+    	case OP_CNT:
+    	    return Integer.toString(val);
+
+    	case OP_OFFS_R12: {
+    		byte offs = (byte) (val & 0xff);
+    	    return ">" + (offs < 0 ? "-" : "") +Integer.toHexString(offs < 0 ? -offs : offs);
+    	}
+
+    	case OP_REG0_SHIFT_COUNT:
+    	    return ">" + Integer.toHexString(val & 0xffff).toUpperCase();
+    	    
+    	case OP_JUMP:
+    	    return "$+>" + Integer.toHexString(val & 0xffff).toUpperCase();
+
+    	case OP_NONE:
+    	case OP_STATUS:		// not real operands
+    	case OP_INST:		
+    	default:
+    		return null;
+    	}
+	}
+
     /**
+	 * Advance PC and get cycle count for the size of the operand.
+	 * 
+	 * @param addr
+	 *            is current address
+	 * @return new address
+	 */
+	public short advancePc(short addr) {
+	    switch (type)
+	    {
+	    case MachineOperand.OP_ADDR:    // @>xxxx or @>xxxx(Rx)
+	        this.cycles += 8 + Instruction.getMemoryCycles(addr);
+	        addr += 2;
+	        break;
+	    case MachineOperand.OP_IMMED:   // immediate
+	        this.cycles += Instruction.getMemoryCycles(addr);
+	        addr += 2;
+	        break;
+	    }
+	
+	    return addr;
+	}
+
+	/**
      * Read any extra immediates for an operand from the instruction stream.
      * Fills in Operand.size and Operand.immed, sets Operand.cycles for reads.
      * 
@@ -169,14 +203,12 @@ public class MachineOperand implements Operand {
         		immed = domain.readWord(addr); 
         		this.cycles += 8 + Instruction.getMemoryCycles(addr);
         		addr += 2;
-        		size = 2;
         		break;
         	case MachineOperand.OP_IMMED:	// immediate
         		immed = domain.readWord(addr);
         		//ea = addr;
         		this.cycles += Instruction.getMemoryCycles(addr);
         		addr += 2;
-        		size = 2;
         		break;
         	}
        
@@ -187,31 +219,6 @@ public class MachineOperand implements Operand {
         return type == OP_ADDR || type == OP_IMMED; 
     }
 
-
-    /**
-     * Advance PC and get cycle count for the size of the operand.
-     * 
-     * @param addr
-     *            is current address
-     * @return new address
-     */
-    public short advancePc(short addr) {
-        switch (type)
-        {
-        case MachineOperand.OP_ADDR:    // @>xxxx or @>xxxx(Rx)
-            this.cycles += 8 + Instruction.getMemoryCycles(addr);
-            addr += 2;
-            size = 2;
-            break;
-        case MachineOperand.OP_IMMED:   // immediate
-            this.cycles += Instruction.getMemoryCycles(addr);
-            addr += 2;
-            size = 2;
-            break;
-        }
-       
-        return addr;
-    }
 
     /**
      * @return
@@ -359,7 +366,7 @@ public class MachineOperand implements Operand {
     }
 
 	public void convertToImmedate() {
-		if (type == OP_IMMED)
+		if (type == OP_IMMED || type == OP_ADDR)	// hack
 			return;
 		Check.checkState(type == MachineOperand.OP_REG);
 		type = OP_IMMED;
@@ -404,7 +411,7 @@ public class MachineOperand implements Operand {
 		throw new IllegalArgumentException("Non-compilable operand: " + this);
 	}
 	
-	public Operand resolve(Instruction inst) {
+	public Operand resolve(RawInstruction inst) {
 		return this;
 	}
 
@@ -448,17 +455,61 @@ public class MachineOperand implements Operand {
 			return false;
 		}
 		MachineOperand other = (MachineOperand) obj;
-		if (immed != other.immed) {
+		int rtype = reduceType(type);
+		int rotype = reduceType(other.type);
+		if (rtype != rotype) {
 			return false;
 		}
-		if (type != other.type) {
+		if ((type == OP_ADDR || type == OP_IMMED) && immed != other.immed) {
 			return false;
 		}
-		if (val != other.val) {
+		if (type != OP_IMMED && val != other.val) {
 			return false;
 		}
+
 		return true;
 	}
-	
+
+	private int reduceType(int type) {
+		if (type == OP_STATUS || type == OP_INST)
+			return OP_NONE;
+		return type;
+	}
+
+	public MachineOperand resolve(Assembler assembler, IInstruction inst)
+			throws ResolveException {
+		if (symbol != null) {
+			if (!symbol.isDefined())
+				throw new ResolveException(this, "Undefined symbol " + symbol);
+			
+			short theVal;
+			if (type == OP_JUMP || type == OP_OFFS_R12) {
+				theVal = (short) (symbol.getAddr() - inst.getPc());
+				if (theVal < -256 || theVal >= 256)
+					throw new OutOfRangeException(inst, this, symbol, theVal);
+				val = theVal + immed;
+				immed = 0;
+			} else {
+				theVal = (short) symbol.getAddr();
+				immed += theVal;
+			}
+			symbol = null;
+		}
+		return this;
+	}
+
+	public static MachineOperand createSymbolImmediate(Symbol symbol) {
+		MachineOperand op = new MachineOperand(MachineOperand.OP_IMMED);
+		if (symbol.isDefined()) {
+			op.immed = (short) (op.val = symbol.getAddr());
+		} else {
+			op.symbol = symbol;
+		}
+		return op;
+	}
+
+	public static Operand createEmptyOperand() {
+		return new MachineOperand(OP_NONE);
+	}
 	
 }

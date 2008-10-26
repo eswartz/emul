@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import v9t9.emulator.runtime.HighLevelCodeInfo;
+import v9t9.emulator.runtime.compiler.HighLevelCodeInfo;
 import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
 import v9t9.engine.memory.Memory;

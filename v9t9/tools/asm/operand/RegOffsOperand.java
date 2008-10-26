@@ -4,7 +4,7 @@
 package v9t9.tools.asm.operand;
 
 import v9t9.engine.cpu.AssemblerOperand;
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
@@ -32,7 +32,7 @@ public class RegOffsOperand extends RegisterOperand {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((addr == null) ? 0 : addr.hashCode());
-		result = prime * result + ((reg == null) ? 0 : reg.hashCode());
+		result = prime * result + ((getReg() == null) ? 0 : getReg().hashCode());
 		return result;
 	}
 
@@ -55,25 +55,26 @@ public class RegOffsOperand extends RegisterOperand {
 		} else if (!addr.equals(other.addr)) {
 			return false;
 		}
-		if (reg == null) {
-			if (other.reg != null) {
+		if (getReg() == null) {
+			if (other.getReg() != null) {
 				return false;
 			}
-		} else if (!reg.equals(other.reg)) {
+		} else if (!getReg().equals(other.getReg())) {
 			return false;
 		}
 		return true;
 	}
 	
 	@Override
-	public MachineOperand resolve(Assembler assembler, Instruction inst)
+	public MachineOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		MachineOperand regRes = super.resolve(assembler, inst);
 		MachineOperand addrRes = addr.resolve(assembler, inst);
 		if (addrRes.type != MachineOperand.OP_IMMED)
-			throw new ResolveException(inst, addrRes, "Expected an immediate");
+			throw new ResolveException(addrRes, "Expected an immediate");
 		regRes.type = MachineOperand.OP_ADDR;
 		regRes.immed = addrRes.immed;
+		regRes.symbol = addrRes.symbol;
 		return regRes;
 	}
 	

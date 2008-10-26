@@ -78,7 +78,7 @@ public class NativeFileMemoryEntry extends MemoryEntry {
      * @see v9t9.MemoryEntry#save()
      */
     @Override
-	public void save() {
+	public void save() throws IOException {
         super.save();
     }
     

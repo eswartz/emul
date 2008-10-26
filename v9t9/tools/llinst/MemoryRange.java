@@ -6,6 +6,8 @@
  */
 package v9t9.tools.llinst;
 
+import v9t9.engine.cpu.IInstruction;
+
 
 public class MemoryRange {
     static public final int EMPTY = 0;
@@ -17,7 +19,7 @@ public class MemoryRange {
     /** type (EMPTY, CODE, DATA) */
     int type;
     /** First instruction, if code */
-    private LLInstruction code;
+    private IInstruction code;
     
     public MemoryRange(int baseAddr, int type) {
         this.from = baseAddr;
@@ -25,10 +27,10 @@ public class MemoryRange {
         this.code = null;
     }
 
-    public LLInstruction getCode() {
+    public IInstruction getCode() {
     	return code;
     }
-    public void setCode(LLInstruction code) {
+    public void setCode(IInstruction code) {
     	this.code = code;
     }
     

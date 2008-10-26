@@ -10,14 +10,17 @@ import static v9t9.engine.cpu.InstEncodePattern.NONE;
 import static v9t9.engine.cpu.InstEncodePattern.OFF;
 import static v9t9.engine.cpu.InstEncodePattern.REG;
 import v9t9.engine.cpu.AssemblerOperand;
+import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.InstEncodePattern;
-import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
+import v9t9.engine.cpu.RawInstruction;
+import v9t9.tools.asm.operand.JumpOperand;
+import v9t9.tools.asm.operand.NumberOperand;
 import v9t9.tools.asm.operand.RegisterOperand;
+import v9t9.tools.asm.operand.SymbolOperand;
 import v9t9.tools.llinst.ParseException;
-import v9t9.tools.llinst.UnknownInstructionException;
 
 /**
  * Parse low-level instructions (no symbols or anything).
@@ -38,33 +41,36 @@ public class StandardInstructionParserStage implements IInstructionParserStage {
     /**
      * Create an instruction from a string.
      */
-    public Instruction[] parse(String string) throws ParseException {
+    public IInstruction[] parse(String descr, String string) throws ParseException {
         //this(pc);
     	AssemblerTokenizer tokenizer = new AssemblerTokenizer(string);
-    	int pc = 0;
-    	Instruction inst = new Instruction(pc);
     	
     	int t = tokenizer.nextToken();
     	if (t != AssemblerTokenizer.ID) {
-    		throw new ParseException("Expected an instruction name: " + tokenizer.currentToken());
+    		return null;
     	}
     	
+    	RawInstruction inst = new RawInstruction();
         inst.name = tokenizer.currentToken().toUpperCase();
+        inst.size = 2;
         Operand op1 = null, op2 = null;
         if (inst.name.equals("RT")) {
         	inst.name = "B";
-        	inst.inst = Instruction.Ib;
+        	inst.inst = InstructionTable.Ib;
+        	inst.size = 2;
             op1 = new MachineOperand(MachineOperand.OP_IND);
             ((MachineOperand)op1).val = 11;
         } else if (inst.name.equals("NOP")) {
         	inst.name = "JMP";
-        	inst.inst = Instruction.Ijmp;
+        	inst.inst = InstructionTable.Ijmp;
+        	inst.size = 2;
             op1 = new MachineOperand(MachineOperand.OP_JUMP);
             ((MachineOperand)op1).val = 2;
         } else {
-        	inst.inst = Instruction.lookupInst(inst.name);
-            if (inst.inst < 0)
-            	throw new UnknownInstructionException("Unknown instruction: " + inst.name);
+        	inst.inst = InstructionTable.lookupInst(inst.name);
+            if (inst.inst < 0) {
+            	return null;
+            }
             
             InstEncodePattern pattern = InstructionTable.lookupEncodePattern(inst.inst);
             if (pattern == null)
@@ -93,7 +99,7 @@ public class StandardInstructionParserStage implements IInstructionParserStage {
         inst.op1 = op1 != null ? op1 : new MachineOperand(MachineOperand.OP_NONE);
         inst.op2 = op2 != null ? op2 : new MachineOperand(MachineOperand.OP_NONE);
         
-        return new Instruction[] { inst };
+        return new RawInstruction[] { inst };
     }
 
 	/** 
@@ -101,7 +107,7 @@ public class StandardInstructionParserStage implements IInstructionParserStage {
 	 * operands as needed.
 	 * @param inst
 	 */
-	private Operand coerceType(Instruction inst, Operand op, int optype) {
+	private Operand coerceType(RawInstruction inst, Operand op, int optype) {
 		if (op instanceof MachineOperand)
 			return coerceMachineOperandType(inst, (MachineOperand) op, optype);
 		if (op instanceof AssemblerOperand)
@@ -110,13 +116,15 @@ public class StandardInstructionParserStage implements IInstructionParserStage {
 		return op;
 	}
 	
-	private Operand coerceMachineOperandType(Instruction inst, MachineOperand mop, int op) {
+	private Operand coerceMachineOperandType(RawInstruction inst, MachineOperand mop, int op) {
 		switch (op) {
 		case NONE:
 			break;
 		case IMM:
-			if (mop.type == MachineOperand.OP_REG)
+			if (mop.type == MachineOperand.OP_REG) {
 				mop.type = MachineOperand.OP_IMMED;
+				mop.immed = (short) mop.val;
+			}
 			break;
 		case CNT:
 			if (mop.type == MachineOperand.OP_REG
@@ -149,10 +157,11 @@ public class StandardInstructionParserStage implements IInstructionParserStage {
 		return mop;
 	}
 	
-	private Operand coerceAssemblerOperandType(Instruction inst, AssemblerOperand op, int optype) {
+	private Operand coerceAssemblerOperandType(RawInstruction inst, AssemblerOperand op, int optype) {
 		if (optype == InstEncodePattern.REG
     			|| optype == InstEncodePattern.GEN) {
-    		if (op instanceof NumberOperand)
+    		if (op instanceof NumberOperand
+    				|| op instanceof SymbolOperand)
     			return new RegisterOperand((AssemblerOperand) op);
     	}
 		else if (optype == InstEncodePattern.OFF) {

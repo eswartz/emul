@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.utils.Check;
@@ -65,18 +66,6 @@ public class LLInstruction extends Instruction {
 
 	private short wp;
     
-    /**
-     * Create an instruction from memory
-     * @param op
-     * @param pc
-     * @param domain
-     */
-    public LLInstruction(int op, int pc, int wp, MemoryDomain domain) {
-        super(op, pc, domain);
-        this.setWp((short) wp);
-        setFlags();
-    }
-    
     public LLInstruction(int wp, Instruction inst) {
     	super(inst);
         this.setWp((short) wp);
@@ -86,9 +75,9 @@ public class LLInstruction extends Instruction {
 	private void setFlags() {
         if (jump != 0) {
         	flags |= fEndsBlock;
-            if (inst == Ibl || inst == Iblwp) {
+            if (inst == InstructionTable.Ibl || inst == InstructionTable.Iblwp) {
 				flags |= fIsCall+fIsBranch;
-			} else if (inst == Irtwp) {
+			} else if (inst == InstructionTable.Irtwp) {
 				flags |= fIsReturn+fIsBranch+fNotFallThrough; /* B *R11 detected later */
 			} else if (jump == INST_JUMP_COND) {
 				flags |= fIsCondBranch+fIsBranch;
@@ -99,14 +88,14 @@ public class LLInstruction extends Instruction {
 				flags |= fIsBranch+fNotFallThrough;
 			}
         }
-        if (inst == Imovb || inst == Isocb || inst == Iab || inst == Isb
-        		|| inst == Icb || inst == Iszcb) {
+        if (inst == InstructionTable.Imovb || inst == InstructionTable.Isocb || inst == InstructionTable.Iab || inst == InstructionTable.Isb
+        		|| inst == InstructionTable.Icb || inst == InstructionTable.Iszcb) {
         	flags |= fByteOp;
-        } else if ((inst == Istcr || inst == Ildcr)
+        } else if ((inst == InstructionTable.Istcr || inst == InstructionTable.Ildcr)
         		&& op2 instanceof MachineOperand
         		&& ((MachineOperand) op2).val <= 8) {
         	flags |= fByteOp;
-        } else if (inst == Ilimi) {
+        } else if (inst == InstructionTable.Ilimi) {
         	if (((MachineOperand) op1).immed != 0) {
         		// likely block end
         		flags |= fEndsBlock;
@@ -199,7 +188,7 @@ public class LLInstruction extends Instruction {
 
 	public void convertToData() {
 		flags = 0;
-		inst = Instruction.Idata;
+		inst = InstructionTable.Idata;
 		size = 2;
 		name = "DATA";
 		op1 = new MachineOperand(MachineOperand.OP_IMMED);

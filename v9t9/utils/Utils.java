@@ -26,6 +26,16 @@ public class Utils  {
 		}
     } 
     
+    public static String padByte(String string) {
+    	final byte[] zeroes = { '0', '0' };
+    	int len = 2 - string.length();
+    	if (len > 0) {
+    		return new String(zeroes, 0, len) + string;
+    	} else {
+    		return string;
+    	}
+    } 
+    
     public static String toHex4(int value) {
         return padAddress(Integer.toHexString(value & 0xffff).toUpperCase());
     }
@@ -44,4 +54,16 @@ public class Utils  {
         }
         return Integer.parseInt(string);
     }
+    
+    public static String padString(String string, int size) {
+    	StringBuilder builder = new StringBuilder();
+    	builder.append(string);
+    	while (builder.length() < size)
+    		builder.append(' ');
+    	return builder.toString();
+    }
+
+	public static Object toHex2(int value) {
+		return padByte(Integer.toHexString(value & 0xff).toUpperCase());
+	}
 }

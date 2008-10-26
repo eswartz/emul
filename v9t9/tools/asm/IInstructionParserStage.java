@@ -3,7 +3,7 @@
  */
 package v9t9.tools.asm;
 
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.llinst.ParseException;
 
 /**
@@ -14,10 +14,11 @@ import v9t9.tools.llinst.ParseException;
 public interface IInstructionParserStage {
 
 	/** Try to parse one or more instructions from a string. 
+	 * @param descr TODO
+	 * @param string the text 
 	 * 
-	 * @param string
 	 * @return instructions generated, or <code>null</code> if unhandled
 	 * @throws ParseException if string parsed but errorneous
 	 */
-	Instruction[] parse(String string) throws ParseException;
+	IInstruction[] parse(String descr, String string) throws ParseException;
 }

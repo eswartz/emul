@@ -10,6 +10,9 @@ import gnu.getopt.Getopt;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
+
+import v9t9.engine.memory.DiskMemoryEntry;
 
 public class Assemble {
 
@@ -19,16 +22,60 @@ public class Assemble {
      * @param args
      */
     public static void main(String[] args) throws IOException {
-    	AssemblerOptions options = new AssemblerOptions();
-        Assembler assembler = new Assembler(options);
+        Assembler assembler = new Assembler();
         
-        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:");
+        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
             case '?':
                 help();
                 break;
+            case 'r':
+            	assembler.addMemoryEntry(
+            			DiskMemoryEntry.newWordMemoryFromFile(
+            					0x0, 0x2000, "CPU ROM",
+            					assembler.getConsole(),
+            					getopt.getOptarg(),
+            					0x0,
+            					true));
+            	break;
+            case 'm':
+            	assembler.addMemoryEntry(
+            			DiskMemoryEntry.newWordMemoryFromFile(
+            					0x6000, 0x2000, "Module ROM", 
+            					assembler.getConsole(),
+            					getopt.getOptarg(),
+            					0x0,
+            					true));
+            	break;
+            case 'd':
+            	assembler.addMemoryEntry(
+            			DiskMemoryEntry.newWordMemoryFromFile(
+            					0x4000, 0x2000, "DSR ROM", 
+            					assembler.getConsole(),
+            					getopt.getOptarg(),
+            					0x0,
+            					true));
+            	break;         
+            case 'g':
+            	assembler.addMemoryEntry(
+            			DiskMemoryEntry.newWordMemoryFromFile(
+            					0x0000, 0x6000, "GROM", 
+            					assembler.getConsole(),
+            					getopt.getOptarg(),
+            					0x0,
+            					true));
+            	break;            	
+            case 'l':
+            	String name = getopt.getOptarg();
+            	try {
+            		assembler.setList(new PrintStream(new File(name)));
+            	} catch (IOException e) {
+            		System.err.println("Failed to create list file: " + e.getMessage());
+            		System.exit(1);
+            	}
+            	break;            	
             default:
             	//throw new AssertionError();
     
@@ -36,10 +83,10 @@ public class Assemble {
         }
         
         if (getopt.getOptind() < args.length) {
-        	FileEntry entry;
+        	FileContentEntry entry;
         	String name = args[getopt.getOptind()]; 
         	try {
-        		entry = new FileEntry(new File(name));
+        		entry = new FileContentEntry(new File(name));
         		assembler.pushFileEntry(entry);
         		getopt.setOptind(getopt.getOptind() + 1);
         	} catch (IOException e) {
@@ -50,7 +97,10 @@ public class Assemble {
         	System.err.println(PROGNAME + ": no files specified");
         }
         
-        assembler.assemble();
+        if (!assembler.assemble()) {
+        	System.err.println("Errors during assembly");
+        	System.exit(1);
+        }
     }
 
     private static void help() {

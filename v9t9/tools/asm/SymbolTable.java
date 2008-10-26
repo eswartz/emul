@@ -8,29 +8,50 @@ import java.util.HashMap;
  */
 public class SymbolTable {
 
-	private HashMap<String, Symbol> table;
-
+	private HashMap<String, Symbol> nameTable;
+	//private HashMap<Integer, Symbol> indexTable;
+	//private int symbolNumber;
+	
 	public SymbolTable() {
-		this.table = new HashMap<String, Symbol>();
+		this.nameTable = new HashMap<String, Symbol>();
+		//this.indexTable = new HashMap<Integer, Symbol>();
 	}
 	
 	public Symbol findSymbol(String name) {
-		return table.get(name.toLowerCase());
+		return nameTable.get(name.toLowerCase());
 	}
-	
-	/** Define a new symbol */
-	public Symbol defineSymbol(String name) {
-		String nameKey = name.toLowerCase();
-		if (table.containsKey(nameKey))
-			throw new IllegalArgumentException("Redefining symbol " + name);
-		Symbol symbol = new Symbol(name);
-		table.put(nameKey, symbol);
+
+	//public Symbol findSymbol(int index) {
+	//	return indexTable.get(index);
+	//}
+
+	/** 
+	 * Declare a symbol (ignoring if already declared)
+	 * 
+	 */
+	public Symbol declareSymbol(String name) {
+		Symbol symbol = findSymbol(name);
+		if (symbol != null)
+			return symbol;
+		symbol = new Symbol(name);
+		//symbol.setIndex(++symbolNumber);
+		nameTable.put(name.toLowerCase(), symbol);
+		//indexTable.put(symbol.getIndex(), symbol);
 		return symbol;
 	}
 
+	/**
+	 * Add a symbol, overwriting an existing one
+	 * @param symbol
+	 */
 	public void addSymbol(Symbol symbol) {
-		if (table.containsKey(symbol.getName()))
-			throw new IllegalArgumentException("Redefining symbol " + symbol);
-		table.put(symbol.getName().toLowerCase(), symbol);
+		nameTable.put(symbol.getName().toLowerCase(), symbol);
+		//if (symbol.getIndex() == 0)
+		//	symbol.setIndex(++symbolNumber);
+		//indexTable.put(symbol.getIndex(), symbol);
+	}
+
+	public Symbol[] getSymbols() {
+		return (Symbol[]) nameTable.values().toArray(new Symbol[nameTable.values().size()]);
 	}
 }

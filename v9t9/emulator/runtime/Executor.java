@@ -13,6 +13,12 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
+import v9t9.emulator.runtime.compiler.Compiler;
+import v9t9.emulator.runtime.compiler.HighLevelCodeInfo;
+import v9t9.emulator.runtime.compiler.ICompiledCode;
+import v9t9.emulator.runtime.compiler.ICompilerStrategy;
+import v9t9.emulator.runtime.interpreter.Interpreter;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
@@ -85,7 +91,7 @@ public class Executor {
     }
 
     public void interpretOneInstruction() {
-        interp.execute(cpu, cpu.console.readWord(cpu.getPC()));
+        interp.execute(cpu, cpu.getConsole().readWord(cpu.getPC()));
         nInstructions++;
     }
 
@@ -159,7 +165,7 @@ public class Executor {
     	HighLevelCodeInfo highLevel = highLevelCodeInfoMap.get(entry);
     	if (highLevel == null) {
     		System.out.println("Initializing high level info for " + entry);
-    		highLevel = new HighLevelCodeInfo(cpu.console);
+    		highLevel = new HighLevelCodeInfo(cpu.getConsole());
     		highLevel.disassemble(entry.addr, entry.size);
     		highLevelCodeInfoMap.put(entry, highLevel);
     	}

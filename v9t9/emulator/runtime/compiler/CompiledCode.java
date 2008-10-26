@@ -4,12 +4,13 @@
  * Created on Dec 30, 2004
  *
  */
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.compiler;
 
 import java.io.PrintWriter;
 
 import v9t9.emulator.handlers.CruHandler;
 import v9t9.emulator.hardware.TI994A;
+import v9t9.emulator.runtime.Executor;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Status;
@@ -38,10 +39,10 @@ abstract public class CompiledCode {
         this.exec = exec;
         this.cpu = exec.cpu;
         this.memory = exec.cpu.getMachine().CPU;
-        this.cru = exec.cpu.machine.getClient().getCruHandler();
-        if (exec.cpu.machine instanceof TI994A) {
-        	this.vdp = ((TI994A)exec.cpu.machine).getVdpMmio();
-        	this.gpl = ((TI994A)exec.cpu.machine).getGplMmio();
+        this.cru = exec.cpu.getMachine().getClient().getCruHandler();
+        if (exec.cpu.getMachine() instanceof TI994A) {
+        	this.vdp = ((TI994A)exec.cpu.getMachine()).getVdpMmio();
+        	this.gpl = ((TI994A)exec.cpu.getMachine()).getGplMmio();
         }
     }
 

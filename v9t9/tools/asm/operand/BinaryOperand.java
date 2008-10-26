@@ -4,7 +4,7 @@
 package v9t9.tools.asm.operand;
 
 import v9t9.engine.cpu.AssemblerOperand;
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
@@ -72,30 +72,35 @@ public class BinaryOperand implements AssemblerOperand {
 		return true;
 	}
 	
-	public MachineOperand resolve(Assembler assembler, Instruction inst)
+	public MachineOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		MachineOperand leftRes = left.resolve(assembler, inst);
 		MachineOperand rightRes = right.resolve(assembler, inst);
 		if (leftRes.type == MachineOperand.OP_IMMED) {
 			if (rightRes.type == MachineOperand.OP_IMMED) {
 				leftRes.immed = doOp(inst, leftRes.immed, rightRes.immed);
+				if (rightRes.symbol != null) {
+					if (leftRes.symbol != null)
+						throw new ResolveException(rightRes, "Cannot handle two forward symbols");
+					leftRes.symbol = rightRes.symbol;
+				}
 				return leftRes;
 			} else {
-				throw new ResolveException(inst, rightRes, "Expected immediate");
+				throw new ResolveException(rightRes, "Expected immediate");
 			}
 		}
 		else
-			throw new ResolveException(inst, leftRes, "Expected immediate");
+			throw new ResolveException(leftRes, "Expected immediate");
 		
 	}
 
-	private short doOp(Instruction inst, short l, short r) throws ResolveException {
+	private short doOp(IInstruction inst, short l, short r) throws ResolveException {
 		switch (type) {
 		case '+': return (short) (l + r);
 		case '-': return (short) (l - r);
 		case '*': return (short) (l * r);
 		case '/': if (r != 0) return (short) (l / r); 
-			else throw new ResolveException(inst, this, "Division by zero");
+			else throw new ResolveException(this, "Division by zero");
 		}
 		throw new IllegalStateException("unknown operation: " + (char)type);
 	}

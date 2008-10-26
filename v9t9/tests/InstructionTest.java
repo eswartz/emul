@@ -8,7 +8,9 @@ package v9t9.tests;
 
 import junit.framework.TestCase;
 import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
 
 /**
@@ -41,19 +43,19 @@ public class InstructionTest extends TestCase {
             data[i] = code[i];
         }
         MemoryDomain domain = MemoryDomain.newFromArray(data, true);
-      	Instruction inst;
+      	RawInstruction inst;
       	MachineOperand mop1;
       	MachineOperand mop2;
       	short ea1, ea2;
       	
       	// simple decoding
       	short pc = 0;
-      	inst = new Instruction(domain.readWord(pc), pc, domain);
+      	inst = InstructionTable.decodeInstruction(domain.readWord(pc), pc, domain);
       	mop1 = (MachineOperand) inst.op1;
         mop2 = (MachineOperand) inst.op2;
 
         assertTrue(inst != null);
-        assertEquals(Instruction.Iclr, inst.inst);
+        assertEquals(InstructionTable.Iclr, inst.inst);
         assertEquals("CLR", inst.name);
         assertEquals(false, mop1.byteop);
         assertEquals(MachineOperand.OP_REG, mop1.type);
@@ -64,13 +66,13 @@ public class InstructionTest extends TestCase {
 
         // some pc-relative tests
         pc += inst.size;
-        inst = new Instruction(domain.readWord(pc), pc, domain);
+        inst = InstructionTable.decodeInstruction(domain.readWord(pc), pc, domain);
         mop1 = (MachineOperand) inst.op1;
         mop2 = (MachineOperand) inst.op2;
         ea1 = mop1.getEA(domain, pc, (short)0x83e0);
 
         assertTrue(inst != null);
-        assertEquals(Instruction.Ijmp, inst.inst);
+        assertEquals(InstructionTable.Ijmp, inst.inst);
         assertEquals("JMP", inst.name);
         assertEquals(false, mop1.byteop);
         assertEquals(MachineOperand.OP_JUMP, mop1.type);
@@ -81,13 +83,13 @@ public class InstructionTest extends TestCase {
         assertEquals("JMP $+>0", inst.toString());
 
         pc += inst.size;
-        inst = new Instruction(domain.readWord(pc), pc, domain);
+        inst = InstructionTable.decodeInstruction(domain.readWord(pc), pc, domain);
         mop1 = (MachineOperand) inst.op1;
         mop2 = (MachineOperand) inst.op2;
         ea1 = mop1.getEA(domain, pc, (short)0x83e0);
 
         assertTrue(inst != null);
-        assertEquals(Instruction.Ijnc, inst.inst);
+        assertEquals(InstructionTable.Ijnc, inst.inst);
         assertEquals("JNC", inst.name);
         assertEquals(false, mop1.byteop);
         assertEquals(MachineOperand.OP_JUMP, mop1.type);
@@ -100,7 +102,7 @@ public class InstructionTest extends TestCase {
         pc += inst.size;
 
         domain.writeWord(0x83E0 + 9*2, (short)0x4000);
-        inst = new Instruction(domain.readWord(pc), pc, domain);
+        inst = InstructionTable.decodeInstruction(domain.readWord(pc), pc, domain);
         mop1 = (MachineOperand) inst.op1;
         mop2 = (MachineOperand) inst.op2;
         ea1 = mop1.getEA(domain, pc, (short)0x83e0);
@@ -108,7 +110,7 @@ public class InstructionTest extends TestCase {
 
         // ensure register indirects work.
         assertTrue(inst != null);
-        assertEquals(Instruction.Imov, inst.inst);
+        assertEquals(InstructionTable.Imov, inst.inst);
         assertEquals("MOV", inst.name);
         assertEquals(false, mop1.byteop);
         assertEquals(MachineOperand.OP_ADDR, mop1.type);
@@ -124,7 +126,7 @@ public class InstructionTest extends TestCase {
         assertEquals(6, inst.size);
 
         domain.writeWord(0x83E0 + 9*2, (short)0x4001);
-        inst = new Instruction(domain.readWord(pc), pc, domain);
+        inst = InstructionTable.decodeInstruction(domain.readWord(pc), pc, domain);
         mop1 = (MachineOperand) inst.op1;
         mop2 = (MachineOperand) inst.op2;
         ea1 = mop1.getEA(domain, pc, (short)0x83e0);
@@ -138,14 +140,14 @@ public class InstructionTest extends TestCase {
         // ensure register increment holds and works in correct order.
         pc += inst.size;
         domain.writeWord(0x83E0 + 2*2, (short)0x4000);
-        inst = new Instruction(domain.readWord(pc), pc, domain);
+        inst = InstructionTable.decodeInstruction(domain.readWord(pc), pc, domain);
         mop1 = (MachineOperand) inst.op1;
         mop2 = (MachineOperand) inst.op2;
         ea1 = mop1.getEA(domain, pc, (short)0x83e0);
         ea2 = mop2.getEA(domain, pc, (short)0x83e0);
 
         assertTrue(inst != null);
-        assertEquals(Instruction.Icb, inst.inst);
+        assertEquals(InstructionTable.Icb, inst.inst);
         assertEquals("CB", inst.name);
         assertEquals(true, mop1.byteop);
         assertEquals(MachineOperand.OP_INC, mop1.type);

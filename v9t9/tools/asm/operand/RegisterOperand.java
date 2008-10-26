@@ -4,7 +4,7 @@
 package v9t9.tools.asm.operand;
 
 import v9t9.engine.cpu.AssemblerOperand;
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
@@ -14,7 +14,7 @@ import v9t9.tools.asm.ResolveException;
  * 
  */
 public class RegisterOperand implements AssemblerOperand {
-	protected final AssemblerOperand reg;
+	private final AssemblerOperand reg;
 
 	public RegisterOperand(AssemblerOperand reg) {
 		this.reg = reg;
@@ -22,7 +22,10 @@ public class RegisterOperand implements AssemblerOperand {
 	
 	@Override
 	public String toString() {
-		return "R" + reg.toString();
+		if (getReg() instanceof NumberOperand)
+			return "R" + ((NumberOperand)getReg()).getValue();
+		else
+			return "R(" + getReg().toString() + ")";
 	}
 	
 	/*
@@ -31,14 +34,18 @@ public class RegisterOperand implements AssemblerOperand {
 	 * @see v9t9.engine.cpu.AssemblerOperand#resolve(v9t9.tools.asm.Assembler,
 	 * v9t9.engine.cpu.Instruction)
 	 */
-	public MachineOperand resolve(Assembler assembler, Instruction inst) throws ResolveException {
-		MachineOperand op = reg.resolve(assembler, inst);
+	public MachineOperand resolve(Assembler assembler, IInstruction inst) throws ResolveException {
+		MachineOperand op = getReg().resolve(assembler, inst);
 		if (op.type == MachineOperand.OP_IMMED) {
 			return MachineOperand.createGeneralOperand(
 					MachineOperand.OP_REG, 
 					(short)((MachineOperand)op).immed);
 		}
-		throw new ResolveException(inst, op);
+		throw new ResolveException(op);
+	}
+
+	public AssemblerOperand getReg() {
+		return reg;
 	}
 
 }

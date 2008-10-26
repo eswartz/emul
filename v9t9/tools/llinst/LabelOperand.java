@@ -6,7 +6,11 @@
  */
 package v9t9.tools.llinst;
 
+import v9t9.engine.cpu.IInstruction;
+import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
+import v9t9.tools.asm.Assembler;
+import v9t9.tools.asm.ResolveException;
 import v9t9.utils.Check;
 
 public class LabelOperand implements Operand {
@@ -22,5 +26,9 @@ public class LabelOperand implements Operand {
     public String toString() {
         return label.toString();
     }
+
+    public MachineOperand resolve(Assembler assembler, IInstruction inst) throws ResolveException {
+		throw new ResolveException(this, "Unresolvable operand");
+	}
 
 }

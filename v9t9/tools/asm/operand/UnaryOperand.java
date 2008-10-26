@@ -4,7 +4,7 @@
 package v9t9.tools.asm.operand;
 
 import v9t9.engine.cpu.AssemblerOperand;
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
@@ -63,11 +63,13 @@ public class UnaryOperand implements AssemblerOperand {
 	}
 	
 
-	public MachineOperand resolve(Assembler assembler, Instruction inst)
+	public MachineOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
 		MachineOperand resOp = op.resolve(assembler, inst);
 		if (resOp.type != MachineOperand.OP_IMMED)
-			throw new ResolveException(inst, op, "Expected an immediate");
+			throw new ResolveException(op, "Expected an immediate");
+		if (resOp.symbol != null)
+			throw new ResolveException(op, "Cannot apply operand to forward symbol");
 		if (type == '-') {
 			resOp.immed = (short) -resOp.immed;
 		} else {

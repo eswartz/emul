@@ -162,7 +162,7 @@ public class WordMemoryArea extends MemoryArea {
         int length = Math.min(array.length, memory.length*2);
         for (int i = 0; i < length; i+=2) {
             array[i] = (byte) (memory[i/2] >> 8);
-            array[i+1] = (byte) (memory[i/2+1] & 0xff);
+            array[i+1] = (byte) (memory[i/2] & 0xff);
         }
     }
     

@@ -14,7 +14,6 @@ import v9t9.tools.llinst.LLInstruction;
 public class TestBlocks extends BaseTopDownPhaseTest {
 
 	private LLInstruction inst0,inst1,inst2,inst3,inst4,inst5;
-	StandardInstructionParserStage stage = new StandardInstructionParserStage();
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();

@@ -63,7 +63,7 @@ public class Cpu {
 
     public Memory memory;
 
-    MemoryDomain console;
+    private MemoryDomain console;
 
     /** program counter */
     private short PC;
@@ -210,5 +210,13 @@ public class Cpu {
     public int getRegister(int reg) {
         return console.readWord(WP + reg*2);
     }
+
+	public void setConsole(MemoryDomain console) {
+		this.console = console;
+	}
+
+	public MemoryDomain getConsole() {
+		return console;
+	}
 
 }

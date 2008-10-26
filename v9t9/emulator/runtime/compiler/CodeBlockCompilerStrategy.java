@@ -1,11 +1,12 @@
 /**
  * 
  */
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.compiler;
 
 import java.util.Map;
 import java.util.TreeMap;
 
+import v9t9.emulator.runtime.Executor;
 import v9t9.engine.memory.MemoryEntry;
 
 /**
@@ -57,7 +58,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	 * @return code block or null if not compilable
 	 */
 	private CodeBlock getCodeBlock(int pc, short wp) {
-	    MemoryEntry ent = executor.cpu.memory.map.lookupEntry(executor.cpu.console, pc);
+	    MemoryEntry ent = executor.cpu.memory.map.lookupEntry(executor.cpu.getConsole(), pc);
 	    if (!isCompilable(ent)) {
 			return null;
 		}

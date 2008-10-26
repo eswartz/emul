@@ -6,7 +6,7 @@ package v9t9.tools.asm;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.llinst.ParseException;
 
 /**
@@ -35,9 +35,9 @@ public class InstructionParser {
 		stages.add(stage);
 	}
 
-	public Instruction[] parse(String line) throws ParseException {
+	public IInstruction[] parse(String descr, String line) throws ParseException {
 		for (IInstructionParserStage stage : stages) {
-			Instruction[] insts = stage.parse(line);
+			IInstruction[] insts = stage.parse(descr, line);
 			if (insts != null)
 				return insts;
 		}

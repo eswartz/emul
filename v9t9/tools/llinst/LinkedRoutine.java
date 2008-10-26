@@ -6,7 +6,7 @@
  */
 package v9t9.tools.llinst;
 
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 
 public class LinkedRoutine extends Routine {
@@ -20,7 +20,7 @@ public class LinkedRoutine extends Routine {
     
     @Override
     public boolean isReturn(LLInstruction inst) {
-        return inst.inst == Instruction.Ib
+        return inst.inst == InstructionTable.Ib
         	&& inst.op1 instanceof MachineOperand
             && ((MachineOperand)inst.op1).type == MachineOperand.OP_IND
             && ((MachineOperand)inst.op1).val == returnReg;
@@ -38,7 +38,7 @@ public class LinkedRoutine extends Routine {
     		entryDataBytes = 0;
 	        while (inst != null && !inst.isCall()) {
 	        	if (returnReg == 11) {
-		            if (inst.inst == Instruction.Imov
+		            if (inst.inst == InstructionTable.Imov
 		            		&& inst.op1 instanceof MachineOperand
 		                    && ((MachineOperand)inst.op1).isRegister(11)
 		                    && ((MachineOperand)inst.op2).isRegister()) {

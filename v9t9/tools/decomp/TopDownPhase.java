@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.memory.MemoryDomain;
@@ -60,7 +61,7 @@ public class TopDownPhase extends Phase {
 	public void run() {
 		// add blocks for every branch instruction
 		for (LLInstruction inst : decompileInfo.getLLInstructions().values()) {
-			if (inst.inst == Instruction.Idata) {
+			if (inst.inst == InstructionTable.Idata) {
 				continue;
 			}
 			if ((inst.flags & LLInstruction.fStartsBlock) != 0
@@ -158,7 +159,7 @@ public class TopDownPhase extends Phase {
 			if (inst == block.getFirst()) {
 				 inst.flags |= LLInstruction.fStartsBlock;
 			}
-			if (inst.inst == Instruction.Idata) {
+			if (inst.inst == InstructionTable.Idata) {
 				System.out.println("stopping at data: " + inst);
 				if (block.getLast() == null)
 					block.setLast(block.getFirst());
@@ -314,7 +315,7 @@ public class TopDownPhase extends Phase {
 		if (label == null)
 			return null;
 
-		if (inst.inst == Instruction.Iblwp) {
+		if (inst.inst == InstructionTable.Iblwp) {
 			// context switch
 			routine = getRoutine(addr + 2);
 			if (routine == null) {
@@ -324,7 +325,7 @@ public class TopDownPhase extends Phase {
 					return new RoutineOperand(routine);
 				}
 			}
-		} else if (inst.inst == Instruction.Ibl) {
+		} else if (inst.inst == InstructionTable.Ibl) {
 			routine = getRoutine(addr);
 			if (routine == null) {
 				if (validCodeAddress(addr)) {
@@ -452,7 +453,7 @@ public class TopDownPhase extends Phase {
 				} else {
 					break;
 				}
-				if (inst.inst == Instruction.Iblwp) {
+				if (inst.inst == InstructionTable.Iblwp) {
 					addr += 4;
 				} else {
 					addr += 2;
@@ -634,37 +635,37 @@ public class TopDownPhase extends Phase {
 				// it may overflow (since it's max to begin with).
 				boolean calced = true;
 				switch (inst.inst) {
-				case Instruction.Isrl:
+				case InstructionTable.Isrl:
 					range >>= mop.val;
 					break;
-				case Instruction.Isla:
+				case InstructionTable.Isla:
 					range = (range << mop.val) & 0xffff;
 					break;
-				case Instruction.Isrc:
+				case InstructionTable.Isrc:
 					range = (short) (( (range & 0xffff) >> mop.val) | (range << (16 - mop.val)));
 					break;
-				case Instruction.Iandi:
+				case InstructionTable.Iandi:
 					range &= mop.immed;
 					break;
-				case Instruction.Iai:
+				case InstructionTable.Iai:
 					range += mop.val;
 					break;
-				case Instruction.Ili:
+				case InstructionTable.Ili:
 					range = mop.immed;
 					break;
-				case Instruction.Iori:
+				case InstructionTable.Iori:
 					range |= mop.immed;
 					break;
-				case Instruction.Iinc:
+				case InstructionTable.Iinc:
 					range++;
 					break;
-				case Instruction.Iinct:
+				case InstructionTable.Iinct:
 					range += 2;
 					break;
-				case Instruction.Idec:
+				case InstructionTable.Idec:
 					range--;
 					break;
-				case Instruction.Idect:
+				case InstructionTable.Idect:
 					range -= 2;
 					break;
 				default:
@@ -953,7 +954,7 @@ public class TopDownPhase extends Phase {
 
 	private void noopInstruction(LLInstruction inst) {
 		if (inst != null) {
-			if (inst.inst != Instruction.Idata) {
+			if (inst.inst != InstructionTable.Idata) {
 				System.out.println("NOOP'ing " + inst);
 				if (inst.isCall())
 					routineCalls.remove(inst);

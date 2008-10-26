@@ -6,10 +6,12 @@ package v9t9.tools.asm;
 import v9t9.engine.cpu.AssemblerOperand;
 import v9t9.tools.asm.operand.AddrOperand;
 import v9t9.tools.asm.operand.BinaryOperand;
+import v9t9.tools.asm.operand.NumberOperand;
 import v9t9.tools.asm.operand.PcRelativeOperand;
 import v9t9.tools.asm.operand.RegIncOperand;
 import v9t9.tools.asm.operand.RegIndOperand;
 import v9t9.tools.asm.operand.RegOffsOperand;
+import v9t9.tools.asm.operand.StringOperand;
 import v9t9.tools.asm.operand.SymbolOperand;
 import v9t9.tools.asm.operand.UnaryOperand;
 import v9t9.tools.llinst.ParseException;
@@ -77,8 +79,15 @@ public class AssemblerOperandParserStage implements IOperandParserStage {
 	private AssemblerOperand parseFactor() throws ParseException {
 		int t = tokenizer.nextToken();
 		switch (t) {
-		case '+':
-			return parseFactor();
+		case '+': {
+			AssemblerOperand op = parseFactor();
+			if (op instanceof NumberOperand)
+				return op;
+			if (op instanceof RegIndOperand) {
+				return new RegIncOperand(((RegIndOperand) op).getReg());
+			}
+			throw new ParseException("Suspicious use of + for " + op);
+		}
 		case '-': { 
 			AssemblerOperand op = parseFactor();
 			return new UnaryOperand('-', op);
@@ -88,7 +97,6 @@ public class AssemblerOperandParserStage implements IOperandParserStage {
 		case '@':
 			return parseAddr();
 		case '$':
-			// TODO
 			return new PcRelativeOperand();
 		case '(': {
 			AssemblerOperand op = parseExpr();
@@ -114,6 +122,11 @@ public class AssemblerOperandParserStage implements IOperandParserStage {
 				return makeNumber(((Equate) symbol).getValue());
 			}
 			return new SymbolOperand(symbol);
+		case AssemblerTokenizer.STRING:
+			return new StringOperand(tokenizer.getString());
+			
+		case AssemblerTokenizer.EOF:
+			throw new ParseException("Unexpected end of line");
 		}
 		throw new ParseException("Unknown token: " + tokenizer.currentToken());
 	}

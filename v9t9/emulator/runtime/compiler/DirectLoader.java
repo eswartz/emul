@@ -1,4 +1,4 @@
-package v9t9.emulator.runtime;
+package v9t9.emulator.runtime.compiler;
 
 import java.security.SecureClassLoader;
 

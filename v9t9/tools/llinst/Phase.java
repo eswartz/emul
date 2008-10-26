@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.decomp.IDecompileInfo;
@@ -91,7 +92,7 @@ public abstract class Phase {
 		for (Iterator<MemoryRange> iter = decompileInfo.getMemoryRanges().rangeIterator(); iter
 				.hasNext();) {
 			MemoryRange range = iter.next();
-			for (LLInstruction inst = range.getCode(); inst != null; inst = inst.getNext()) {
+			for (LLInstruction inst = (LLInstruction) range.getCode(); inst != null; inst = inst.getNext()) {
 				dumpInstruction(inst);
 			}
 		}
@@ -324,7 +325,7 @@ public abstract class Phase {
 	//  and is a direct address, a jump target, or
 	//  a nontrivial register indirect (a likely lookup table)
 	public boolean operandIsRelocatable(LLInstruction inst, MachineOperand mop) {
-		if (inst.inst == Instruction.Ilwpi) {
+		if (inst.inst == InstructionTable.Ilwpi) {
 			return true;
 		}
 		if (!(mop instanceof MachineOperand)) {
@@ -349,7 +350,7 @@ public abstract class Phase {
 		if (inst == null) {
 			return false;
 		}
-		if (inst.inst == Instruction.Idata) {
+		if (inst.inst == InstructionTable.Idata) {
 			return false;
 		}
 		return true;

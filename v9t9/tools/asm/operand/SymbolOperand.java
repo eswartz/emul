@@ -4,7 +4,7 @@
 package v9t9.tools.asm.operand;
 
 import v9t9.engine.cpu.AssemblerOperand;
-import v9t9.engine.cpu.Instruction;
+import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
@@ -57,11 +57,13 @@ public class SymbolOperand implements AssemblerOperand {
 		return true;
 	}
 	
-	public MachineOperand resolve(Assembler assembler, Instruction inst) throws ResolveException {
-		if (symbol.isDefined())
-			return MachineOperand.createImmediate(symbol.getAddr());
-		else
-			throw new ResolveException(inst, this, "Unresolved symbol");
+	public MachineOperand resolve(Assembler assembler, IInstruction inst) throws ResolveException {
+		assembler.noteSymbolReference(symbol);
+		return MachineOperand.createSymbolImmediate(symbol);
+	}
+
+	public Symbol getSymbol() {
+		return symbol;
 	}
 	
 }
