@@ -4,7 +4,7 @@
  * Created on Feb 22, 2006
  *
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 import java.util.Collection;
 import java.util.Collections;

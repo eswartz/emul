@@ -8,8 +8,6 @@ package v9t9.engine.cpu;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.utils.Check;
@@ -162,6 +160,13 @@ public class Instruction implements Comparable<Instruction> {
 
     public static final int Isocb = 69; static { registerInstruction(Isocb, "socb"); }
 
+    public static final int Idsr = 70; static { registerInstruction(Idsr, "dsr"); }
+    public static final int Ikysl = 71; static { registerInstruction(Ikysl, "kysl"); }
+    public static final int Iticks = 72; static { registerInstruction(Iticks, "ticks"); }
+    public static final int Iemitchar = 73; static { registerInstruction(Iemitchar, "emitchar"); }
+    public static final int Idbg = 74; static { registerInstruction(Idbg, "dbg"); }
+
+
     // Status setting flags
     public static final int st_NONE = 0; // status not affected
 
@@ -259,6 +264,7 @@ public class Instruction implements Comparable<Instruction> {
 
     public int pc; // PC of opcode
 
+    /** size in bytes */
     public int size; // size of instruction in bytes
 
     //public short wp; // current WP
@@ -416,7 +422,6 @@ public class Instruction implements Comparable<Instruction> {
         // the operand, making this.op?.val and this.op?.ea valid.
     
         if (op < 0x200) {
-            
         } else if (op < 0x2a0) {
             mop1.type = MachineOperand.OP_REG;
             mop1.val = op & 15;
@@ -776,6 +781,7 @@ public class Instruction implements Comparable<Instruction> {
         if (this.name == null) // data
         {
             mop1.type = MachineOperand.OP_IMMED;
+            mop1.val = mop1.immed = (short) op;
             this.name = "DATA";
             this.size = 2;
         } else {
@@ -787,53 +793,6 @@ public class Instruction implements Comparable<Instruction> {
         }
     
     }
-
-    public static final String OP_MATCHER = "([^,]+)"; 
-    public static final Pattern INSTR_PATTERN = Pattern.compile(
-            //     1
-            "\\s*([a-zA-Z0-9]+)"+
-                            // 2
-                "(?:\\s+" + OP_MATCHER + "\\s*" +
-                                  // 3
-                    "(?:,\\s*" + OP_MATCHER +")?" +
-                ")?" +
-            ".*"
-            );
-    
-    /**
-     * Create an instruction from a string.
-     */
-    public Instruction(int pc, String string) {
-        this(pc);
-        Matcher matcher = INSTR_PATTERN.matcher(string);
-        Check.checkArg(matcher.matches());
-        this.name = matcher.group(1).toUpperCase();
-        MachineOperand mop1, mop2;
-        if (this.name.equals("RT")) {
-            this.name = "B";
-            this.inst = Ib;
-            mop1 = new MachineOperand(MachineOperand.OP_IND);
-            mop1.val = 11;
-            mop2 = new MachineOperand(MachineOperand.OP_NONE);
-        } else if (this.name.equals("NOP")) {
-            this.name = "JMP";
-            this.inst = Ijmp;
-            mop1 = new MachineOperand(MachineOperand.OP_IMMED);
-            mop1.val = pc + 2;
-            mop2 = new MachineOperand(MachineOperand.OP_NONE);
-        } else {
-            this.inst = lookupInst(this.name);
-            if (this.inst < 0)
-            	throw new IllegalArgumentException("Unknown instruction: " + name);
-            mop1 = new MachineOperand(matcher.group(2));
-            mop2 = new MachineOperand(matcher.group(3));
-        }
-        this.op1 = mop1;
-        this.op2 = mop2;
-        completeInstruction(pc);
-        //calculateOpcode();
-    }
-    
 
     public Instruction(Instruction inst) {
     	this.name = inst.name;
@@ -854,475 +813,477 @@ public class Instruction implements Comparable<Instruction> {
     	this.action = inst.action;
 	}
 
+ 
 	/**
-     * Finish filling in an instruction
+     * Finish filling in an instruction which is used for
+     * higher-level operations 
      *
      */
-    private void completeInstruction(int Pc) {
-        this.cycles = getMemoryCycles(Pc);
-        this.size = 0;
-        this.stsetBefore = Instruction.st_NONE;
-        this.stsetAfter = Instruction.st_NONE;
-        this.stReads = 0;
-        this.jump = Instruction.INST_JUMP_FALSE;
-        this.reads = 0;
-        this.writes = 0;
-    
-        MachineOperand mop1 = (MachineOperand) op1;
-        MachineOperand mop2 = (MachineOperand) op2;
-        
-        // Initially, this.op?.val is incomplete, and is whatever
-        // raw data from the opcode we can decode;
-        // this.op?.ea is that of the instruction or immediate
-        // if the operand needs it.
-    
-        // after decoding the instruction, we complete
-        // the operand, making this.op?.val and this.op?.ea valid.
-    
-        if (inst == Idata) {
-            Check.checkState(mop1.type == MachineOperand.OP_IMMED);
-            Check.checkState(mop2.type == MachineOperand.OP_NONE);
-            Pc -= 2;
-            this.cycles += getMemoryCycles(Pc, 6, 1);
-        } else if (inst >= Ili && inst <= Ici) {
-            Check.checkState(mop1.type == MachineOperand.OP_REG);
-            mop2.convertToImmedate();
-            mop1.dest = MachineOperand.OP_DEST_TRUE;
-            switch (inst) {
-            case Ili:
-                this.stsetAfter = Instruction.st_LAE_1;
-                mop1.dest = MachineOperand.OP_DEST_KILLED;
-                this.cycles += getMemoryCycles(Pc, 12, 3);
-                break;
-            case Iai:
-                this.stsetBefore = Instruction.st_ADD_LAECO_REV;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Iandi:
-                this.stsetAfter = Instruction.st_LAE_1;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Iori:
-                this.stsetAfter = Instruction.st_LAE_1;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Ici:
-                this.stsetAfter = Instruction.st_CMP;
-                mop1.dest = MachineOperand.OP_DEST_FALSE;
-                this.cycles += getMemoryCycles(Pc, 14, 3);
-                break;
-            }
-    
-        } else if (inst == Istwp) {
-            Check.checkState(mop1.type == MachineOperand.OP_REG);
-            Check.checkState(mop2.type == MachineOperand.OP_NONE);
-            mop1.dest = MachineOperand.OP_DEST_KILLED;
-            this.reads |= INST_RSRC_WP;
-            this.cycles += getMemoryCycles(Pc, 8, 2);
-        } else if (inst == Istst) {
-            Check.checkState(mop1.type == MachineOperand.OP_REG);
-            this.reads |= INST_RSRC_ST;
-            this.stReads = 0xffff;
-            
-            Check.checkState(mop2.type == MachineOperand.OP_NONE);
-            mop2.type = MachineOperand.OP_STATUS;
-            this.cycles += getMemoryCycles(Pc, 8, 2);
-        } else if (inst == Ilwpi) {
-            Check.checkState(mop1.type == MachineOperand.OP_IMMED);
-            Check.checkState(mop2.type == MachineOperand.OP_NONE);
-            this.writes |= INST_RSRC_WP;
-            this.cycles += getMemoryCycles(Pc, 10, 2);
-        } else if (inst == Ilimi) {
-            Check.checkState(mop1.type == MachineOperand.OP_IMMED);
-            Check.checkState(mop2.type == MachineOperand.OP_NONE);
-            this.stsetAfter = Instruction.st_INT;
-            this.cycles += getMemoryCycles(Pc, 16, 2);
-        } else if (inst >= Iidle && inst <= Ilrex) {
-            Check.checkState(mop1.type == MachineOperand.OP_NONE);
-            Check.checkState(mop2.type == MachineOperand.OP_NONE);
-            switch (inst) {
-            case Iidle:
-                this.writes |= INST_RSRC_IO;
-                this.cycles += getMemoryCycles(Pc, 12, 1);
-                break;
-            case Irset:
-                this.stsetAfter = Instruction.st_INT;
-                this.writes |= INST_RSRC_IO;
-                this.cycles += getMemoryCycles(Pc, 12, 1);
-                break;
-            case Irtwp:
-                this.stsetAfter = Instruction.st_ALL;
-                this.writes |= INST_RSRC_WP + INST_RSRC_ST + INST_RSRC_PC;
-                mop1.type = MachineOperand.OP_STATUS;
-                mop1.dest = MachineOperand.OP_DEST_KILLED;
-                //((MachineOperand) this.op1).val = st.flatten();
-                this.jump = Instruction.INST_JUMP_TRUE;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Ickon:
-                this.writes |= INST_RSRC_IO;
-                this.cycles += getMemoryCycles(Pc, 12, 1);
-                break;
-            case Ickof:
-                this.writes |= INST_RSRC_IO;
-                this.cycles += getMemoryCycles(Pc, 12, 1);
-                break;
-            case Ilrex:
-                this.writes |= INST_RSRC_IO;
-                this.cycles += getMemoryCycles(Pc, 12, 1);
-                break;
-            }
-    
-        } else if (inst >= Iblwp && inst <= Iabs) {
-            Check.checkState(mop1.type != MachineOperand.OP_NONE
-                    && mop1.type != MachineOperand.OP_IMMED);
-            Check.checkState(mop2.type == MachineOperand.OP_NONE);
-            mop1.dest = MachineOperand.OP_DEST_TRUE;
-    
-            switch (inst) {
-            case Iblwp:
-                //this.stsetBefore = Instruction.st_ALL;
-                this.stReads = 0xffff;
-                this.reads |= INST_RSRC_ST;
-                this.writes |= INST_RSRC_WP + INST_RSRC_PC + INST_RSRC_CTX;
-                mop1.dest = MachineOperand.OP_DEST_FALSE;
-                mop1.bIsCodeDest = true;
-                this.jump = Instruction.INST_JUMP_TRUE;
-                this.cycles += getMemoryCycles(Pc, 26, 6);
-                break;
-            case Ib:
-                mop1.dest = MachineOperand.OP_DEST_FALSE;
-                mop1.bIsCodeDest = true;
-                this.jump = Instruction.INST_JUMP_TRUE;
-                this.cycles += getMemoryCycles(Pc, 8, 2);
-                break;
-            case Ix:
-                //this.stsetBefore = Instruction.st_ALL;
-                this.stReads = 0xffff;
-                this.reads |= INST_RSRC_ST;
-                mop1.dest = MachineOperand.OP_DEST_FALSE;
-                mop2.type = MachineOperand.OP_INST;
-                this.cycles += getMemoryCycles(Pc, 8, 2);
-                break;
-            case Iclr:
-                mop1.dest = MachineOperand.OP_DEST_KILLED;
-                this.cycles += getMemoryCycles(Pc, 10, 3);
-                break;
-            case Ineg:
-                this.stsetAfter = Instruction.st_LAEO;
-                this.cycles += getMemoryCycles(Pc, 12, 3);
-                break;
-            case Iinv:
-                this.stsetAfter = Instruction.st_LAE_1;
-                this.cycles += getMemoryCycles(Pc, 10, 3);
-                break;
-            case Iinc:
-                this.stsetBefore = Instruction.st_ADD_LAECO_REV;
-                mop2.type = MachineOperand.OP_CNT;
-                mop2.val = 1;
-                this.cycles += getMemoryCycles(Pc, 10, 3);
-                break;
-            case Iinct:
-                this.stsetBefore = Instruction.st_ADD_LAECO_REV;
-                mop2.type = MachineOperand.OP_CNT;
-                mop2.val = 2;
-                this.cycles += getMemoryCycles(Pc, 10, 3);
-                break;
-            case Idec:
-                this.stsetBefore = Instruction.st_ADD_LAECO_REV;
-                mop2.type = MachineOperand.OP_CNT;
-                mop2.val = -1;
-                this.cycles += getMemoryCycles(Pc, 10, 3);
-                break;
-            case Idect:
-                this.stsetBefore = Instruction.st_ADD_LAECO_REV;
-                mop2.type = MachineOperand.OP_CNT;
-                mop2.val = -2;
-                this.cycles += getMemoryCycles(Pc, 10, 3);
-                break;
-            case Ibl:
-                mop1.dest = MachineOperand.OP_DEST_FALSE;
-                mop1.bIsCodeDest = true;
-                this.jump = Instruction.INST_JUMP_TRUE;
-                this.cycles += getMemoryCycles(Pc, 12, 3);
-                break;
-            case Iswpb:
-                this.cycles += getMemoryCycles(Pc, 10, 3);
-                break;
-            case Iseto:
-                mop1.dest = MachineOperand.OP_DEST_KILLED;
-                this.cycles += getMemoryCycles(Pc, 10, 3);
-                break;
-            case Iabs:
-                this.stsetBefore = Instruction.st_LAEO;
-                this.cycles += getMemoryCycles(Pc, 12, 2);
-                break;
-            default:
-                mop1.dest = MachineOperand.OP_DEST_FALSE;
-                break;
-            }
-    
-        } else if (inst >= Isra && inst <= Isrc) {
-            Check.checkState(mop1.type == MachineOperand.OP_REG);
-            Check.checkState(mop2.type == MachineOperand.OP_IMMED);
-            mop1.dest = MachineOperand.OP_DEST_TRUE;
-            mop2.type = MachineOperand.OP_CNT;
-    
-            // shift of zero comes from R0
-            if (mop2.val == 0) {
-                mop2.type = MachineOperand.OP_REG0_SHIFT_COUNT;
-                this.cycles += getMemoryCycles(Pc, 20, 3);
-            } else {
-                this.cycles += getMemoryCycles(Pc, 12, 4);
-            }
-    
-            switch (inst) {
-            case Isra:
-                this.stsetBefore = Instruction.st_SHIFT_RIGHT_C;
-                this.stsetAfter = Instruction.st_LAE_1;
-                break;
-            case Isrl:
-                this.stsetBefore = Instruction.st_SHIFT_RIGHT_C;
-                this.stsetAfter = Instruction.st_LAE_1;
-                break;
-            case Isla:
-                this.stsetBefore = Instruction.st_SHIFT_LEFT_CO;
-                this.stsetAfter = Instruction.st_LAE_1;
-                break;
-            case Isrc:
-                this.stsetBefore = Instruction.st_SHIFT_RIGHT_C;
-                this.stsetAfter = Instruction.st_LAE_1;
-                break;
-            }
-    
-        } else if (false) {
-            // TODO: extended instructions
-        } else if (inst >= Ijmp && inst <= Itb) {
-            if (inst < Isbo) {
-            	Check.checkState(mop2.type == MachineOperand.OP_NONE);
-            	if (mop1.type == MachineOperand.OP_IMMED) {
+    public void completeInstruction(int Pc) {        
+    	this.cycles = getMemoryCycles(Pc);
+	    this.size = 0;
+	    this.stsetBefore = Instruction.st_NONE;
+	    this.stsetAfter = Instruction.st_NONE;
+	    this.stReads = 0;
+	    this.jump = Instruction.INST_JUMP_FALSE;
+	    this.reads = 0;
+	    this.writes = 0;
+	
+	    MachineOperand mop1 = (MachineOperand) op1;
+	    MachineOperand mop2 = (MachineOperand) op2;
+	    
+	    // Initially, this.op?.val is incomplete, and is whatever
+	    // raw data from the opcode we can decode;
+	    // this.op?.ea is that of the instruction or immediate
+	    // if the operand needs it.
+	
+	    // after decoding the instruction, we complete
+	    // the operand, making this.op?.val and this.op?.ea valid.
+	
+	    if (inst == Idata) {
+	        Check.checkState(mop1.type == MachineOperand.OP_IMMED);
+	        Check.checkState(mop2.type == MachineOperand.OP_NONE);
+	        Pc -= 2;
+	        this.cycles += getMemoryCycles(Pc, 6, 1);
+	    } else if (inst >= Ili && inst <= Ici) {
+	        Check.checkState(mop1.type == MachineOperand.OP_REG);
+	        mop2.convertToImmedate();
+	        mop1.dest = MachineOperand.OP_DEST_TRUE;
+	        switch (inst) {
+	        case Ili:
+	            this.stsetAfter = Instruction.st_LAE_1;
+	            mop1.dest = MachineOperand.OP_DEST_KILLED;
+	            this.cycles += getMemoryCycles(Pc, 12, 3);
+	            break;
+	        case Iai:
+	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Iandi:
+	            this.stsetAfter = Instruction.st_LAE_1;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Iori:
+	            this.stsetAfter = Instruction.st_LAE_1;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Ici:
+	            this.stsetAfter = Instruction.st_CMP;
+	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            this.cycles += getMemoryCycles(Pc, 14, 3);
+	            break;
+	        }
+	
+	    } else if (inst == Istwp) {
+	        Check.checkState(mop1.type == MachineOperand.OP_REG);
+	        Check.checkState(mop2.type == MachineOperand.OP_NONE);
+	        mop1.dest = MachineOperand.OP_DEST_KILLED;
+	        this.reads |= INST_RSRC_WP;
+	        this.cycles += getMemoryCycles(Pc, 8, 2);
+	    } else if (inst == Istst) {
+	        Check.checkState(mop1.type == MachineOperand.OP_REG);
+	        this.reads |= INST_RSRC_ST;
+	        this.stReads = 0xffff;
+	        
+	        Check.checkState(mop2.type == MachineOperand.OP_NONE);
+	        mop2.type = MachineOperand.OP_STATUS;
+	        this.cycles += getMemoryCycles(Pc, 8, 2);
+	    } else if (inst == Ilwpi) {
+	        Check.checkState(mop1.type == MachineOperand.OP_IMMED);
+	        Check.checkState(mop2.type == MachineOperand.OP_NONE);
+	        this.writes |= INST_RSRC_WP;
+	        this.cycles += getMemoryCycles(Pc, 10, 2);
+	    } else if (inst == Ilimi) {
+	        Check.checkState(mop1.type == MachineOperand.OP_IMMED);
+	        Check.checkState(mop2.type == MachineOperand.OP_NONE);
+	        this.stsetAfter = Instruction.st_INT;
+	        this.cycles += getMemoryCycles(Pc, 16, 2);
+	    } else if (inst >= Iidle && inst <= Ilrex) {
+	        Check.checkState(mop1.type == MachineOperand.OP_NONE);
+	        Check.checkState(mop2.type == MachineOperand.OP_NONE);
+	        switch (inst) {
+	        case Iidle:
+	            this.writes |= INST_RSRC_IO;
+	            this.cycles += getMemoryCycles(Pc, 12, 1);
+	            break;
+	        case Irset:
+	            this.stsetAfter = Instruction.st_INT;
+	            this.writes |= INST_RSRC_IO;
+	            this.cycles += getMemoryCycles(Pc, 12, 1);
+	            break;
+	        case Irtwp:
+	            this.stsetAfter = Instruction.st_ALL;
+	            this.writes |= INST_RSRC_WP + INST_RSRC_ST + INST_RSRC_PC;
+	            mop1.type = MachineOperand.OP_STATUS;
+	            mop1.dest = MachineOperand.OP_DEST_KILLED;
+	            //((MachineOperand) this.op1).val = st.flatten();
+	            this.jump = Instruction.INST_JUMP_TRUE;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Ickon:
+	            this.writes |= INST_RSRC_IO;
+	            this.cycles += getMemoryCycles(Pc, 12, 1);
+	            break;
+	        case Ickof:
+	            this.writes |= INST_RSRC_IO;
+	            this.cycles += getMemoryCycles(Pc, 12, 1);
+	            break;
+	        case Ilrex:
+	            this.writes |= INST_RSRC_IO;
+	            this.cycles += getMemoryCycles(Pc, 12, 1);
+	            break;
+	        }
+	
+	    } else if (inst >= Iblwp && inst <= Iabs) {
+	        Check.checkState(mop1.type != MachineOperand.OP_NONE
+	                && mop1.type != MachineOperand.OP_IMMED);
+	        Check.checkState(mop2.type == MachineOperand.OP_NONE);
+	        mop1.dest = MachineOperand.OP_DEST_TRUE;
+	
+	        switch (inst) {
+	        case Iblwp:
+	            //this.stsetBefore = Instruction.st_ALL;
+	            this.stReads = 0xffff;
+	            this.reads |= INST_RSRC_ST;
+	            this.writes |= INST_RSRC_WP + INST_RSRC_PC + INST_RSRC_CTX;
+	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            mop1.bIsCodeDest = true;
+	            this.jump = Instruction.INST_JUMP_TRUE;
+	            this.cycles += getMemoryCycles(Pc, 26, 6);
+	            break;
+	        case Ib:
+	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            mop1.bIsCodeDest = true;
+	            this.jump = Instruction.INST_JUMP_TRUE;
+	            this.cycles += getMemoryCycles(Pc, 8, 2);
+	            break;
+	        case Ix:
+	            //this.stsetBefore = Instruction.st_ALL;
+	            this.stReads = 0xffff;
+	            this.reads |= INST_RSRC_ST;
+	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            mop2.type = MachineOperand.OP_INST;
+	            this.cycles += getMemoryCycles(Pc, 8, 2);
+	            break;
+	        case Iclr:
+	            mop1.dest = MachineOperand.OP_DEST_KILLED;
+	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            break;
+	        case Ineg:
+	            this.stsetAfter = Instruction.st_LAEO;
+	            this.cycles += getMemoryCycles(Pc, 12, 3);
+	            break;
+	        case Iinv:
+	            this.stsetAfter = Instruction.st_LAE_1;
+	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            break;
+	        case Iinc:
+	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            mop2.type = MachineOperand.OP_CNT;
+	            mop2.val = 1;
+	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            break;
+	        case Iinct:
+	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            mop2.type = MachineOperand.OP_CNT;
+	            mop2.val = 2;
+	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            break;
+	        case Idec:
+	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            mop2.type = MachineOperand.OP_CNT;
+	            mop2.val = -1;
+	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            break;
+	        case Idect:
+	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
+	            mop2.type = MachineOperand.OP_CNT;
+	            mop2.val = -2;
+	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            break;
+	        case Ibl:
+	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            mop1.bIsCodeDest = true;
+	            this.jump = Instruction.INST_JUMP_TRUE;
+	            this.cycles += getMemoryCycles(Pc, 12, 3);
+	            break;
+	        case Iswpb:
+	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            break;
+	        case Iseto:
+	            mop1.dest = MachineOperand.OP_DEST_KILLED;
+	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            break;
+	        case Iabs:
+	            this.stsetBefore = Instruction.st_LAEO;
+	            this.cycles += getMemoryCycles(Pc, 12, 2);
+	            break;
+	        default:
+	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            break;
+	        }
+	
+	    } else if (inst >= Isra && inst <= Isrc) {
+	        Check.checkState(mop1.type == MachineOperand.OP_REG);
+	        Check.checkState(mop2.type == MachineOperand.OP_IMMED);
+	        mop1.dest = MachineOperand.OP_DEST_TRUE;
+	        mop2.type = MachineOperand.OP_CNT;
+	
+	        // shift of zero comes from R0
+	        if (mop2.val == 0) {
+	            mop2.type = MachineOperand.OP_REG0_SHIFT_COUNT;
+	            this.cycles += getMemoryCycles(Pc, 20, 3);
+	        } else {
+	            this.cycles += getMemoryCycles(Pc, 12, 4);
+	        }
+	
+	        switch (inst) {
+	        case Isra:
+	            this.stsetBefore = Instruction.st_SHIFT_RIGHT_C;
+	            this.stsetAfter = Instruction.st_LAE_1;
+	            break;
+	        case Isrl:
+	            this.stsetBefore = Instruction.st_SHIFT_RIGHT_C;
+	            this.stsetAfter = Instruction.st_LAE_1;
+	            break;
+	        case Isla:
+	            this.stsetBefore = Instruction.st_SHIFT_LEFT_CO;
+	            this.stsetAfter = Instruction.st_LAE_1;
+	            break;
+	        case Isrc:
+	            this.stsetBefore = Instruction.st_SHIFT_RIGHT_C;
+	            this.stsetAfter = Instruction.st_LAE_1;
+	            break;
+	        }
+	
+	    } else if (false) {
+	        // TODO: extended instructions
+	    } else if (inst >= Ijmp && inst <= Itb) {
+	        if (inst < Isbo) {
+	        	Check.checkState(mop2.type == MachineOperand.OP_NONE);
+	        	if (mop1.type == MachineOperand.OP_IMMED) {
 	                mop1.type = MachineOperand.OP_JUMP;
 	                mop1.val = mop1.val - pc;
-            	} else if (mop1.type != MachineOperand.OP_JUMP){
-            		Check.checkState(false);
-            	}
-                mop1.bIsCodeDest = true;
-                //this.stsetBefore = Instruction.st_ALL;
-                this.reads |= INST_RSRC_ST;
-                mop2.type = MachineOperand.OP_STATUS;
-                //((MachineOperand) this.op2).val = st.flatten();
-                this.jump = inst == Ijmp ? Instruction.INST_JUMP_TRUE
-                        : Instruction.INST_JUMP_COND;
-                this.cycles += getMemoryCycles(Pc, 8, 1);
-            } else {
-                mop1.type = MachineOperand.OP_OFFS_R12;
-                this.cycles += getMemoryCycles(Pc, 12, 2);
-            }
-    
-            switch (inst) {
-            case Ijmp:
-                this.reads &= ~INST_RSRC_ST;
-                break;
-            case Ijlt:
-                this.stReads = Status.ST_A + Status.ST_E;
-                break;
-            case Ijle:
-                this.stReads = Status.ST_A + Status.ST_E;
-                break;
-            case Ijeq:
-                this.stReads = Status.ST_E;
-                break;
-            case Ijhe:
-                this.stReads = Status.ST_L + Status.ST_E;
-                break;
-            case Ijgt:
-                this.stReads = Status.ST_L +Status.ST_E;
-                break;
-            case Ijne:
-                this.stReads = Status.ST_E;
-                break;
-            case Ijnc:
-                this.stReads = Status.ST_C;
-                break;
-            case Ijoc:
-                this.stReads = Status.ST_C;
-                break;
-            case Ijno:
-                this.stReads = Status.ST_O;
-                break;
-            case Ijl:
-                this.stReads = Status.ST_L + Status.ST_E;
-                break;
-            case Ijh:
-                this.stReads = Status.ST_L + Status.ST_E;
-                break;
-            case Ijop:
-                this.inst = Instruction.Ijop;
-                this.stReads = Status.ST_P;
-                break;
-            case Isbo:
-                this.writes |= INST_RSRC_IO;
-                break;
-            case Isbz:
-                this.writes |= INST_RSRC_IO;
-                break;
-            case Itb:
-                this.stsetAfter = Instruction.st_CMP;
-                this.reads |= INST_RSRC_IO;
-                break;
-            }
-    
-        } else if (inst < Iszc && inst != Ildcr && inst != Istcr) {
-            Check.checkState(mop1.type != MachineOperand.OP_NONE
-                    && mop1.type != MachineOperand.OP_IMMED);
-            Check.checkState(mop2.type == MachineOperand.OP_REG);
-            mop1.dest = MachineOperand.OP_DEST_FALSE;
-            mop2.dest = MachineOperand.OP_DEST_TRUE;
-    
-            switch (inst) {
-            case Icoc:
-                this.stsetAfter = Instruction.st_CMP;
-                mop2.dest = MachineOperand.OP_DEST_FALSE;
-                this.cycles += getMemoryCycles(Pc, 14, 3);
-                break;
-            case Iczc:
-                this.stsetAfter = Instruction.st_CMP;
-                mop2.dest = MachineOperand.OP_DEST_FALSE;
-                this.cycles += getMemoryCycles(Pc, 14, 3);
-                break;
-            case Ixor:
-                this.stsetAfter = Instruction.st_LAE;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Ixop:
-                this.reads |= INST_RSRC_ST;
-                this.writes |= INST_RSRC_CTX;
-                //this.stsetBefore = Instruction.st_ALL;
-                this.stsetAfter = Instruction.st_XOP;
-                this.stReads = 0xffff;
-                this.cycles += getMemoryCycles(Pc, 36, 8);
-                break;
-            case Impy:
-                //              ((MachineOperand) this.op2).type = MachineOperand.OP_MPY;
-                this.cycles += getMemoryCycles(Pc, 52, 5);
-                break;
-            case Idiv:
-                this.stsetBefore = Instruction.st_DIV_O;
-                //              ((MachineOperand) this.op2).type = MachineOperand.OP_DIV;
-                this.cycles += getMemoryCycles(Pc, 124, 6);
-                break;
-            }
-    
-        } else if (inst == Ildcr || inst == Istcr) {
-            Check.checkState(mop1.type != MachineOperand.OP_NONE
-                    && mop1.type != MachineOperand.OP_IMMED);
-            Check.checkState(mop2.type == MachineOperand.OP_IMMED);
-            mop2.type = MachineOperand.OP_CNT;
-            if (mop2.val == 0) {
+	        	} else if (mop1.type != MachineOperand.OP_JUMP){
+	        		Check.checkState(false);
+	        	}
+	            mop1.bIsCodeDest = true;
+	            //this.stsetBefore = Instruction.st_ALL;
+	            this.reads |= INST_RSRC_ST;
+	            mop2.type = MachineOperand.OP_STATUS;
+	            //((MachineOperand) this.op2).val = st.flatten();
+	            this.jump = inst == Ijmp ? Instruction.INST_JUMP_TRUE
+	                    : Instruction.INST_JUMP_COND;
+	            this.cycles += getMemoryCycles(Pc, 8, 1);
+	        } else {
+	            mop1.type = MachineOperand.OP_OFFS_R12;
+	            this.cycles += getMemoryCycles(Pc, 12, 2);
+	        }
+	
+	        switch (inst) {
+	        case Ijmp:
+	            this.reads &= ~INST_RSRC_ST;
+	            break;
+	        case Ijlt:
+	            this.stReads = Status.ST_A + Status.ST_E;
+	            break;
+	        case Ijle:
+	            this.stReads = Status.ST_A + Status.ST_E;
+	            break;
+	        case Ijeq:
+	            this.stReads = Status.ST_E;
+	            break;
+	        case Ijhe:
+	            this.stReads = Status.ST_L + Status.ST_E;
+	            break;
+	        case Ijgt:
+	            this.stReads = Status.ST_L +Status.ST_E;
+	            break;
+	        case Ijne:
+	            this.stReads = Status.ST_E;
+	            break;
+	        case Ijnc:
+	            this.stReads = Status.ST_C;
+	            break;
+	        case Ijoc:
+	            this.stReads = Status.ST_C;
+	            break;
+	        case Ijno:
+	            this.stReads = Status.ST_O;
+	            break;
+	        case Ijl:
+	            this.stReads = Status.ST_L + Status.ST_E;
+	            break;
+	        case Ijh:
+	            this.stReads = Status.ST_L + Status.ST_E;
+	            break;
+	        case Ijop:
+	            this.inst = Instruction.Ijop;
+	            this.stReads = Status.ST_P;
+	            break;
+	        case Isbo:
+	            this.writes |= INST_RSRC_IO;
+	            break;
+	        case Isbz:
+	            this.writes |= INST_RSRC_IO;
+	            break;
+	        case Itb:
+	            this.stsetAfter = Instruction.st_CMP;
+	            this.reads |= INST_RSRC_IO;
+	            break;
+	        }
+	
+	    } else if (inst < Iszc && inst != Ildcr && inst != Istcr) {
+	        Check.checkState(mop1.type != MachineOperand.OP_NONE
+	                && mop1.type != MachineOperand.OP_IMMED);
+	        Check.checkState(mop2.type == MachineOperand.OP_REG);
+	        mop1.dest = MachineOperand.OP_DEST_FALSE;
+	        mop2.dest = MachineOperand.OP_DEST_TRUE;
+	
+	        switch (inst) {
+	        case Icoc:
+	            this.stsetAfter = Instruction.st_CMP;
+	            mop2.dest = MachineOperand.OP_DEST_FALSE;
+	            this.cycles += getMemoryCycles(Pc, 14, 3);
+	            break;
+	        case Iczc:
+	            this.stsetAfter = Instruction.st_CMP;
+	            mop2.dest = MachineOperand.OP_DEST_FALSE;
+	            this.cycles += getMemoryCycles(Pc, 14, 3);
+	            break;
+	        case Ixor:
+	            this.stsetAfter = Instruction.st_LAE;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Ixop:
+	            this.reads |= INST_RSRC_ST;
+	            this.writes |= INST_RSRC_CTX;
+	            //this.stsetBefore = Instruction.st_ALL;
+	            this.stsetAfter = Instruction.st_XOP;
+	            this.stReads = 0xffff;
+	            this.cycles += getMemoryCycles(Pc, 36, 8);
+	            break;
+	        case Impy:
+	            //              ((MachineOperand) this.op2).type = MachineOperand.OP_MPY;
+	            this.cycles += getMemoryCycles(Pc, 52, 5);
+	            break;
+	        case Idiv:
+	            this.stsetBefore = Instruction.st_DIV_O;
+	            //              ((MachineOperand) this.op2).type = MachineOperand.OP_DIV;
+	            this.cycles += getMemoryCycles(Pc, 124, 6);
+	            break;
+	        }
+	
+	    } else if (inst == Ildcr || inst == Istcr) {
+	        Check.checkState(mop1.type != MachineOperand.OP_NONE
+	                && mop1.type != MachineOperand.OP_IMMED);
+	        Check.checkState(mop2.type == MachineOperand.OP_IMMED);
+	        mop2.type = MachineOperand.OP_CNT;
+	        if (mop2.val == 0) {
 				mop2.val = 16;
 			}
-            mop1.byteop = mop2.val <= 8;
-    
-            if (inst == Ildcr) {
-                this.stsetBefore = mop1.byteop ? Instruction.st_BYTE_LAEP_1
-                        : Instruction.st_LAE_1;
-                mop1.dest = MachineOperand.OP_DEST_FALSE;
-                this.cycles += getMemoryCycles(Pc, 20 + 2 * mop1.val, 3);
-                this.writes |= INST_RSRC_IO;
-            } else {
-                this.stsetAfter = mop1.byteop ? Instruction.st_BYTE_LAEP_1
-                        : Instruction.st_LAE_1;
-                mop1.dest = MachineOperand.OP_DEST_TRUE;
-                this.cycles += getMemoryCycles(Pc, mop1.val < 8 ? 42
-                        : mop1.val == 8 ? 44 : 58, 4);
-                this.reads |= INST_RSRC_IO;
-            }
-    
-        } else {
-            Check.checkState(mop1.type != MachineOperand.OP_NONE
-                    && mop1.type != MachineOperand.OP_IMMED);
-            Check.checkState(mop1.type != MachineOperand.OP_NONE
-                    && mop1.type != MachineOperand.OP_IMMED);
-            mop2.dest = MachineOperand.OP_DEST_TRUE;
-            mop1.byteop = mop2.byteop = (inst - Iszc & 1) != 0;
-    
-            switch (inst) {
-            case Iszc:
-                this.stsetAfter = Instruction.st_LAE;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Iszcb:
-                this.stsetAfter = Instruction.st_BYTE_LAEP;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Is:
-                this.stsetBefore = Instruction.st_SUB_LAECO;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Isb:
-                this.stsetBefore = Instruction.st_SUB_BYTE_LAECOP;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Ic:
-                this.stsetAfter = Instruction.st_CMP;
-                mop2.dest = MachineOperand.OP_DEST_FALSE;
-                this.cycles += getMemoryCycles(Pc, 14, 3);
-                break;
-            case Icb:
-                this.stsetAfter = Instruction.st_BYTE_CMP;
-                mop2.dest = MachineOperand.OP_DEST_FALSE;
-                this.cycles += getMemoryCycles(Pc, 14, 3);
-                break;
-            case Ia:
-                this.stsetBefore = Instruction.st_ADD_LAECO;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Iab:
-                this.stsetBefore = Instruction.st_ADD_BYTE_LAECOP;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Imov:
-                this.stsetAfter = Instruction.st_LAE;
-                mop2.dest = MachineOperand.OP_DEST_KILLED;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Imovb:
-                this.stsetAfter = Instruction.st_BYTE_LAEP;
-                mop2.dest = MachineOperand.OP_DEST_KILLED;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Isoc:
-                this.stsetAfter = Instruction.st_LAE;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            case Isocb:
-                this.stsetAfter = Instruction.st_BYTE_LAEP;
-                this.cycles += getMemoryCycles(Pc, 14, 4);
-                break;
-            }
-        }
-    
-        
-        // synthesize bits from other info
-        if (this.jump != INST_JUMP_FALSE) {
-            this.writes |= INST_RSRC_PC;
-            this.reads |= INST_RSRC_PC;
-        }
-        if (stsetBefore != st_NONE || stsetAfter != st_NONE) {
-            this.writes |= INST_RSRC_ST;
-        }
-        if (mop1.isRegisterReference() || mop2.isRegisterReference()) {
-            this.reads |= INST_RSRC_WP;
-        }
-    
-        // Finish reading operand immediates
-        Pc += 2; // instruction itself
-        Pc = mop1.advancePc((short)Pc);
-        Pc = mop2.advancePc((short)Pc);
-        this.size = (Pc & 0xffff) - (this.pc & 0xffff);
-    }
+	        mop1.byteop = mop2.val <= 8;
+	
+	        if (inst == Ildcr) {
+	            this.stsetBefore = mop1.byteop ? Instruction.st_BYTE_LAEP_1
+	                    : Instruction.st_LAE_1;
+	            mop1.dest = MachineOperand.OP_DEST_FALSE;
+	            this.cycles += getMemoryCycles(Pc, 20 + 2 * mop1.val, 3);
+	            this.writes |= INST_RSRC_IO;
+	        } else {
+	            this.stsetAfter = mop1.byteop ? Instruction.st_BYTE_LAEP_1
+	                    : Instruction.st_LAE_1;
+	            mop1.dest = MachineOperand.OP_DEST_TRUE;
+	            this.cycles += getMemoryCycles(Pc, mop1.val < 8 ? 42
+	                    : mop1.val == 8 ? 44 : 58, 4);
+	            this.reads |= INST_RSRC_IO;
+	        }
+	
+	    } else {
+	        Check.checkState(mop1.type != MachineOperand.OP_NONE
+	                && mop1.type != MachineOperand.OP_IMMED);
+	        Check.checkState(mop1.type != MachineOperand.OP_NONE
+	                && mop1.type != MachineOperand.OP_IMMED);
+	        mop2.dest = MachineOperand.OP_DEST_TRUE;
+	        mop1.byteop = mop2.byteop = (inst - Iszc & 1) != 0;
+	
+	        switch (inst) {
+	        case Iszc:
+	            this.stsetAfter = Instruction.st_LAE;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Iszcb:
+	            this.stsetAfter = Instruction.st_BYTE_LAEP;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Is:
+	            this.stsetBefore = Instruction.st_SUB_LAECO;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Isb:
+	            this.stsetBefore = Instruction.st_SUB_BYTE_LAECOP;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Ic:
+	            this.stsetAfter = Instruction.st_CMP;
+	            mop2.dest = MachineOperand.OP_DEST_FALSE;
+	            this.cycles += getMemoryCycles(Pc, 14, 3);
+	            break;
+	        case Icb:
+	            this.stsetAfter = Instruction.st_BYTE_CMP;
+	            mop2.dest = MachineOperand.OP_DEST_FALSE;
+	            this.cycles += getMemoryCycles(Pc, 14, 3);
+	            break;
+	        case Ia:
+	            this.stsetBefore = Instruction.st_ADD_LAECO;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Iab:
+	            this.stsetBefore = Instruction.st_ADD_BYTE_LAECOP;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Imov:
+	            this.stsetAfter = Instruction.st_LAE;
+	            mop2.dest = MachineOperand.OP_DEST_KILLED;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Imovb:
+	            this.stsetAfter = Instruction.st_BYTE_LAEP;
+	            mop2.dest = MachineOperand.OP_DEST_KILLED;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Isoc:
+	            this.stsetAfter = Instruction.st_LAE;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        case Isocb:
+	            this.stsetAfter = Instruction.st_BYTE_LAEP;
+	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            break;
+	        }
+	    }
+	
+	    
+	    // synthesize bits from other info
+	    if (this.jump != INST_JUMP_FALSE) {
+	        this.writes |= INST_RSRC_PC;
+	        this.reads |= INST_RSRC_PC;
+	    }
+	    if (stsetBefore != st_NONE || stsetAfter != st_NONE) {
+	        this.writes |= INST_RSRC_ST;
+	    }
+	    if (mop1.isRegisterReference() || mop2.isRegisterReference()) {
+	        this.reads |= INST_RSRC_WP;
+	    }
+	
+	    // Finish reading operand immediates
+	    Pc += 2; // instruction itself
+	    Pc = mop1.advancePc((short)Pc);
+	    Pc = mop2.advancePc((short)Pc);
+	    this.size = (Pc & 0xffff) - (this.pc & 0xffff);
+	}
 
-    /** 
+	/** 
      * Update a previously decoded instruction, only rebuilding it
      * if its memory changed (self-modifying code).
      * @param pc2
@@ -1350,5 +1311,61 @@ public class Instruction implements Comparable<Instruction> {
     public int compareTo(Instruction o) {
     	return pc - o.pc;
     }
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + inst;
+		result = prime * result + ((op1 == null) ? 0 : op1.hashCode());
+		result = prime * result + ((op2 == null) ? 0 : op2.hashCode());
+		result = prime * result + pc;
+		result = prime * result + size;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		Instruction other = (Instruction) obj;
+		if (inst != other.inst) {
+			return false;
+		}
+		if (op1 == null) {
+			if (other.op1 != null) {
+				return false;
+			}
+		} else if (!op1.equals(other.op1)) {
+			return false;
+		}
+		if (op2 == null) {
+			if (other.op2 != null) {
+				return false;
+			}
+		} else if (!op2.equals(other.op2)) {
+			return false;
+		}
+		if (pc != other.pc) {
+			return false;
+		}
+		if (size != other.size) {
+			return false;
+		}
+		return true;
+	}
+
+	public boolean isJumpInst() {
+		return inst >= Ijmp && inst <= Ijop;
+	}
+    
+    
 
 }

@@ -13,13 +13,14 @@ import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.WordMemoryArea;
-import v9t9.tools.decomp.Block;
-import v9t9.tools.decomp.ContextSwitchRoutine;
-import v9t9.tools.decomp.LLInstruction;
-import v9t9.tools.decomp.LabelListOperand;
-import v9t9.tools.decomp.LinkedRoutine;
-import v9t9.tools.decomp.Routine;
-import v9t9.tools.decomp.RoutineOperand;
+import v9t9.tools.llinst.Block;
+import v9t9.tools.llinst.ContextSwitchRoutine;
+import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.LabelListOperand;
+import v9t9.tools.llinst.LinkedRoutine;
+import v9t9.tools.llinst.ParseException;
+import v9t9.tools.llinst.Routine;
+import v9t9.tools.llinst.RoutineOperand;
 
 
 public class TestTopDown1 extends BaseTopDownTest
@@ -316,7 +317,7 @@ public class TestTopDown1 extends BaseTopDownTest
            "b *R11", // 104
         });
 
-        highLevel.getLLInstructions().put(0xfe, new LLInstruction(0xfe, 0, "B *R10"));
+        highLevel.getLLInstructions().put(0xfe, createLLInstruction(0xfe, 0, "B *R10"));
 
         phase.run();
         assertEquals(1, routine.getSpannedBlocks().size());
@@ -335,7 +336,7 @@ public class TestTopDown1 extends BaseTopDownTest
            "clr r12", //4ca
         });
 
-        highLevel.getLLInstructions().put(0xfe, new LLInstruction(0xfe, 0, "B *R10"));
+        highLevel.getLLInstructions().put(0xfe, createLLInstruction(0xfe, 0, "B *R10"));
 
         phase.run();
         assertEquals(2, routine.getSpannedBlocks().size());
@@ -374,7 +375,7 @@ public class TestTopDown1 extends BaseTopDownTest
            "data >4444"
         });
 
-        highLevel.getLLInstructions().put(0xfe, new LLInstruction(0xfe, 0, "RT"));
+        highLevel.getLLInstructions().put(0xfe, createLLInstruction(0xfe, 0, "RT"));
 
         phase.run();
         assertEquals(5, routine.getSpannedBlocks().size());
@@ -415,7 +416,7 @@ public class TestTopDown1 extends BaseTopDownTest
            "data >4444"
         });
         
-        highLevel.getLLInstructions().put(0xfe, new LLInstruction(0xfe, 0, "RT"));
+        highLevel.getLLInstructions().put(0xfe, createLLInstruction(0xfe, 0, "RT"));
         
         phase.run();
         assertEquals(4, routine.getSpannedBlocks().size());
@@ -450,7 +451,7 @@ public class TestTopDown1 extends BaseTopDownTest
            "data >4444"
         });
 
-        highLevel.getLLInstructions().put(0xfe, new LLInstruction(0xfe, 0, "RT"));
+        highLevel.getLLInstructions().put(0xfe, createLLInstruction(0xfe, 0, "RT"));
 
         phase.run();
         assertEquals(3, routine.getSpannedBlocks().size());
@@ -480,7 +481,7 @@ public class TestTopDown1 extends BaseTopDownTest
         validateBlocks(routine.getSpannedBlocks());
     }
 
-    public void testCrossRoutineJumps() {
+    public void testCrossRoutineJumps() throws ParseException {
     	Routine routine1 = parseRoutine(0x200, "ENTRY", new LinkedRoutine(),
                 new String[] {
     		"CLR R5", //200
@@ -509,8 +510,9 @@ public class TestTopDown1 extends BaseTopDownTest
         assertTrue(routine2.getEntries().contains(routine1.getMainLabel().getBlock()));
         
     }
-    /** Make sure blocks do not contain the same instruction twice */
-    public void testBlockGeneration() {
+    /** Make sure blocks do not contain the same instruction twice 
+     * @throws ParseException */
+    public void testBlockGeneration() throws ParseException {
         Routine routine = parseRoutine(0x100, "ENTRY", new LinkedRoutine(),
                 new String[] {
     		"LI R1,1", //100
@@ -553,7 +555,7 @@ public class TestTopDown1 extends BaseTopDownTest
         
     }
     
-    public void testJumpTable4() {
+    public void testJumpTable4() throws ParseException {
     	// don't get confusing flowgraph when jumps inside instructions
         Routine routine = parseRoutine(0x100, "ENTRY", new LinkedRoutine(),
                 new String[] {
@@ -565,7 +567,7 @@ public class TestTopDown1 extends BaseTopDownTest
     		"data >102",//stop here
     		"data >ffff",
     	});
-        highLevel.getLLInstructions().put(0x102, new LLInstruction(0x102, 0, "CLR R1"));
+        highLevel.getLLInstructions().put(0x102, createLLInstruction(0x102, 0, "CLR R1"));
         
         phase.run();
         assertEquals(2, routine.getSpannedBlocks().size());
@@ -577,7 +579,7 @@ public class TestTopDown1 extends BaseTopDownTest
         
     }
 
-    public void testDataWords1() {
+    public void testDataWords1() throws ParseException {
     	Routine routine = parseRoutine(0x100, "ENTRY", new LinkedRoutine(),
                 new String[] {
     		"MOV *R11+,R1", //100
@@ -593,7 +595,7 @@ public class TestTopDown1 extends BaseTopDownTest
         assertEquals(1, routine.getSpannedBlocks().size());
         assertEquals(2, routine.getDataWords());
     }
-    public void testDataWords2() {
+    public void testDataWords2() throws ParseException {
     	Routine routine = parseRoutine(0x100, "ENTRY", new LinkedRoutine(),
                 new String[] {
     		"MOV *R11+,R1", //100
@@ -611,7 +613,7 @@ public class TestTopDown1 extends BaseTopDownTest
         assertEquals(2, routine.getDataWords());
     }
     
-    public void testDataWords3() {
+    public void testDataWords3() throws ParseException {
     	Routine routine = parseRoutine(0x100, "ENTRY", new ContextSwitchRoutine(0x83e0),
                 new String[] {
     		"MOV *R14+,R1", //100
@@ -627,7 +629,7 @@ public class TestTopDown1 extends BaseTopDownTest
         assertEquals(1, routine.getSpannedBlocks().size());
         assertEquals(2, routine.getDataWords());
     }
-    public void testDataWords4() {
+    public void testDataWords4() throws ParseException {
     	Routine routine = parseRoutine(0x100, "ENTRY", new ContextSwitchRoutine(0x8300),
                 new String[] {
     		"MOV *R14+,R1", //100
@@ -650,8 +652,9 @@ public class TestTopDown1 extends BaseTopDownTest
      * A routine may consume words which appear to be jumps or something
      * else which will mess up the flowgraph.  Be sure the routine's data word
      * detection forces a re-scan to fix up such things.
+     * @throws ParseException 
      */
-    public void testFixupDataWordConfusion() {
+    public void testFixupDataWordConfusion() throws ParseException {
     	Routine routine1 = parseRoutine(0x100, "CALLER", new LinkedRoutine(),
                 new String[] {
     		"MOV R11,R10",//100
@@ -694,7 +697,7 @@ public class TestTopDown1 extends BaseTopDownTest
     }
     
     
-    public void testBlockBreaks() {
+    public void testBlockBreaks() throws ParseException {
 		Routine routine1 = parseRoutine(0x100, "ENTRY", new LinkedRoutine(),
 	            new String[] {
 			"JMP $+>2", //100

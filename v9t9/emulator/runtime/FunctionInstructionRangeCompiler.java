@@ -11,9 +11,9 @@ import org.apache.bcel.generic.InstructionList;
 import v9t9.emulator.runtime.Compiler.InstInfo;
 import v9t9.emulator.runtime.Compiler.InstructionRangeCompiler;
 import v9t9.engine.cpu.Instruction;
-import v9t9.tools.decomp.Block;
 import v9t9.tools.decomp.IDecompileInfo;
-import v9t9.tools.decomp.LLInstruction;
+import v9t9.tools.llinst.Block;
+import v9t9.tools.llinst.LLInstruction;
 
 /**
  * Compile lists of instructions per discovered functions, assuming only a few

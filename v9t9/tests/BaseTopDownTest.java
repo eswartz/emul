@@ -2,9 +2,10 @@ package v9t9.tests;
 
 import java.util.Collection;
 
-import v9t9.tools.decomp.Block;
-import v9t9.tools.decomp.Routine;
 import v9t9.tools.decomp.TopDownPhase;
+import v9t9.tools.llinst.Block;
+import v9t9.tools.llinst.ParseException;
+import v9t9.tools.llinst.Routine;
 
 public class BaseTopDownTest extends BaseTopDownPhaseTest {
 
@@ -50,12 +51,12 @@ public class BaseTopDownTest extends BaseTopDownPhaseTest {
 	}
 
 	protected Routine parseRoutine(int pc, String name, Routine routine,
-			String[] insts) {
+			String[] insts) throws ParseException {
 				return parseRoutine(pc, 0, name, routine, insts);
 			}
 
 	protected Routine parseRoutine(int pc, int wp, String name,
-			Routine routine, String[] insts) {
+			Routine routine, String[] insts) throws ParseException {
 			    parse(CPU, pc, wp, insts);
 			    return phase.addRoutine(pc, name, routine);
 			}

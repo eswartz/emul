@@ -46,9 +46,11 @@ public class StandardConsoleMemoryModel {
     public Gpl gplMmio;
 
     private Client client;
+
+	private Memory memory;
     
-    public StandardConsoleMemoryModel(Client client, Memory memory) {
-        this.client = client;
+    public StandardConsoleMemoryModel(Memory memory) {
+    	this.memory = memory;
         CPU = new MemoryDomain();
         GRAPHICS = new MemoryDomain();
         VIDEO = new MemoryDomain();
@@ -59,26 +61,6 @@ public class StandardConsoleMemoryModel {
         memory.addDomain(GRAPHICS);
         memory.addDomain(SPEECH);
         
-        vdpMmio = new v9t9.engine.memory.Vdp(VIDEO, this.client);
-        gplMmio = new Gpl(GRAPHICS);
-        soundMmio = new v9t9.engine.memory.Sound(this.client);
-        speechMmio = new Speech(this.client);
-
-        memory.addAndMap(new MemoryEntry("Sound MMIO", CPU, 0x8400, 0x0400,
-                new ConsoleSoundArea(soundMmio)));
-        memory.addAndMap(new MemoryEntry("VDP Read MMIO", CPU, 0x8800, 0x0400,
-                new ConsoleVdpReadArea(vdpMmio)));
-        memory.addAndMap(new MemoryEntry("VDP Write MMIO", CPU, 0x8C00, 0x0400,
-                new ConsoleVdpWriteArea(vdpMmio)));
-        memory.addAndMap(new MemoryEntry("Speech Read MMIO", CPU, 0x9000, 0x0400,
-                new ConsoleSpeechReadArea(speechMmio)));
-        memory.addAndMap(new MemoryEntry("Speech Write MMIO", CPU, 0x9400, 0x0400,
-                new ConsoleSpeechWriteArea(speechMmio)));
-        memory.addAndMap(new MemoryEntry("GROM Read MMIO", CPU, 0x9800, 0x0400,
-                new ConsoleGromReadArea(gplMmio)));
-        memory.addAndMap(new MemoryEntry("GRAM Write MMIO", CPU, 0x9C00, 0x0400,
-                new ConsoleGramWriteArea(gplMmio)));
-        
         memory.addAndMap(new MemoryEntry("Low 8K expansion RAM", CPU, 0x2000,
                 0x2000, new ExpRamArea(0x2000)));
         memory.addAndMap(new MemoryEntry("Console RAM", CPU, 0x8000, 0x0400,
@@ -87,6 +69,45 @@ public class StandardConsoleMemoryModel {
                 0x6000, new ExpRamArea(0x6000)));
      
         memory.addAndMap(new MemoryEntry("VDP RAM", VIDEO, 0x0000, 0x4000, 
+                new VdpRamArea()));
+
+    }
+
+    public void connectClient(Client client) {
+        this.client = client;
+
+        vdpMmio = new v9t9.engine.memory.Vdp(VIDEO, this.client);
+        gplMmio = new Gpl(GRAPHICS);
+        soundMmio = new v9t9.engine.memory.Sound(this.client);
+        speechMmio = new Speech(this.client);
+
+        vdpMmio.setClient(client);
+        soundMmio.setClient(client);
+        speechMmio.setClient(client);
+
+        this.memory.addAndMap(new MemoryEntry("Sound MMIO", CPU, 0x8400, 0x0400,
+                new ConsoleSoundArea(soundMmio)));
+        this.memory.addAndMap(new MemoryEntry("VDP Read MMIO", CPU, 0x8800, 0x0400,
+                new ConsoleVdpReadArea(vdpMmio)));
+        this.memory.addAndMap(new MemoryEntry("VDP Write MMIO", CPU, 0x8C00, 0x0400,
+                new ConsoleVdpWriteArea(vdpMmio)));
+        this.memory.addAndMap(new MemoryEntry("Speech Read MMIO", CPU, 0x9000, 0x0400,
+                new ConsoleSpeechReadArea(speechMmio)));
+        this.memory.addAndMap(new MemoryEntry("Speech Write MMIO", CPU, 0x9400, 0x0400,
+                new ConsoleSpeechWriteArea(speechMmio)));
+        this.memory.addAndMap(new MemoryEntry("GROM Read MMIO", CPU, 0x9800, 0x0400,
+                new ConsoleGromReadArea(gplMmio)));
+        this.memory.addAndMap(new MemoryEntry("GRAM Write MMIO", CPU, 0x9C00, 0x0400,
+                new ConsoleGramWriteArea(gplMmio)));
+        
+        this.memory.addAndMap(new MemoryEntry("Low 8K expansion RAM", CPU, 0x2000,
+                0x2000, new ExpRamArea(0x2000)));
+        this.memory.addAndMap(new MemoryEntry("Console RAM", CPU, 0x8000, 0x0400,
+                new StdConsoleRamArea()));
+        this.memory.addAndMap(new MemoryEntry("High 24K expansion RAM", CPU, 0xA000,
+                0x6000, new ExpRamArea(0x6000)));
+     
+        this.memory.addAndMap(new MemoryEntry("VDP RAM", VIDEO, 0x0000, 0x4000, 
                 new VdpRamArea()));
 
     }
@@ -273,14 +294,6 @@ public class StandardConsoleMemoryModel {
         public ConsoleSpeechWriteArea(Speech mmio) {
             super(mmio);
         }
-    }
-
-    public void setClient(Client client) {
-        this.client = client;
-        vdpMmio.setClient(client);
-        soundMmio.setClient(client);
-        speechMmio.setClient(client);
-        
     }
 
     class VdpRamArea extends ByteMemoryArea {

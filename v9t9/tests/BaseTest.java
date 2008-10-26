@@ -6,11 +6,18 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import junit.framework.TestCase;
+import v9t9.engine.cpu.Instruction;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.tools.decomp.Block;
-import v9t9.tools.decomp.LLInstruction;
-import v9t9.tools.decomp.Routine;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.StandardConsoleMemoryModel;
+import v9t9.engine.memory.WordMemoryArea;
+import v9t9.tools.asm.OperandParser;
+import v9t9.tools.asm.StandardInstructionParserStage;
+import v9t9.tools.llinst.Block;
+import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.ParseException;
+import v9t9.tools.llinst.Routine;
 
 public abstract class BaseTest extends TestCase {
 
@@ -31,6 +38,11 @@ public abstract class BaseTest extends TestCase {
 		memory = new Memory();
         CPU = new MemoryDomain();
         memory.addDomain(CPU);
+        memory.addAndMap(new MemoryEntry("test ROM",
+        		CPU,
+        		0,
+        		8192,
+        		new StandardConsoleMemoryModel.RamArea(8192)));
 	}
 	
 
@@ -116,5 +128,18 @@ public abstract class BaseTest extends TestCase {
 		}
 		return pcSet;
 	}
+
+	StandardInstructionParserStage stage = new StandardInstructionParserStage();
+
+	  protected LLInstruction createLLInstruction(int pc, int wp, String element) throws ParseException {
+	    	Instruction[] asminsts = stage.parse(element);
+	    	if (asminsts ==  null || asminsts.length != 1)
+	    		throw new IllegalArgumentException("Could not uniquely parse " + element);
+	    	asminsts[0].pc = pc;
+	        LLInstruction inst = new LLInstruction(wp, asminsts[0]);
+
+	        return inst;
+		}
+
 
 }

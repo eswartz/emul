@@ -15,6 +15,4 @@ public interface Operand {
     public static final int OP_DEST_FALSE = 0;
     public static final int OP_DEST_TRUE = 1;
     public static final int OP_DEST_KILLED = 2;
-    
-
 }

@@ -12,7 +12,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import v9t9.emulator.runtime.HighLevelCodeInfo;
-import v9t9.engine.DummyClient;
 import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
 import v9t9.engine.memory.Memory;
@@ -34,11 +33,11 @@ public class Decompiler implements ICodeProvider {
     boolean nativeFile = false;
     
     Memory memory = new Memory();
-    StandardConsoleMemoryModel memoryModel = new StandardConsoleMemoryModel(new DummyClient(), memory);
+    StandardConsoleMemoryModel memoryModel = new StandardConsoleMemoryModel(memory);
     MemoryDomain CPU = memoryModel.CPU;
 
     private DecompileOptions options;
-    HighLevelCodeInfo highLevel;
+    HighLevelCodeInfo highLevel = new HighLevelCodeInfo(CPU);
 
     public Decompiler() {
         options = new DecompileOptions();

@@ -4,7 +4,7 @@
  * Created on Feb 23, 2006
  *
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -16,6 +16,7 @@ import java.util.TreeSet;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.tools.decomp.IDecompileInfo;
 import v9t9.utils.Check;
 import v9t9.utils.Utils;
 
@@ -202,7 +203,7 @@ public abstract class Phase {
 		Check.checkState(validCodeAddress(addr));
 		
 		Label label = decompileInfo.findOrCreateLabel(addr);
-		if (name != null && label.name == null) {
+		if (name != null && label.getName() == null) {
 			label.setName(name);
 		}
 		routine.addEntry(label);
@@ -310,7 +311,7 @@ public abstract class Phase {
 
 	public short operandEffectiveAddress(LLInstruction inst, MachineOperand mop) {
 		// PC and WP are not used
-		return mop.getEA(CPU, inst.pc, inst.wp);
+		return mop.getEA(CPU, inst.pc, inst.getWp());
 	}
 
 	public boolean operandIsLabel(LLInstruction inst, MachineOperand mop) {

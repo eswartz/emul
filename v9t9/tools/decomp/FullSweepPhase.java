@@ -11,6 +11,15 @@ import java.util.Iterator;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.tools.llinst.Block;
+import v9t9.tools.llinst.ContextSwitchRoutine;
+import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.Label;
+import v9t9.tools.llinst.LabelOperand;
+import v9t9.tools.llinst.LinkedRoutine;
+import v9t9.tools.llinst.MemoryRange;
+import v9t9.tools.llinst.Phase;
+import v9t9.tools.llinst.Routine;
 import v9t9.utils.Utils;
 
 /**
@@ -223,7 +232,7 @@ public class FullSweepPhase extends Phase {
                         if (label.getBlock() != null) {
 							block.addSucc(label.getBlock());
 						} else {
-							System.out.printf( "??? Ignoring branch to label %s from >%04X\n", label.name, inst.pc);
+							System.out.printf( "??? Ignoring branch to label %s from >%04X\n", label.getName(), inst.pc);
 						}
                     }
                     if (inst.op2 instanceof LabelOperand)
@@ -232,7 +241,7 @@ public class FullSweepPhase extends Phase {
                         if (label.getBlock() != null) {
 							block.addSucc(label.getBlock());
 						} else {
-							System.out.printf( "??? Ignoring branch to label %s from >%04X\n", label.name, inst.pc);
+							System.out.printf( "??? Ignoring branch to label %s from >%04X\n", label.getName(), inst.pc);
 						}
                     }
                 }
@@ -265,7 +274,7 @@ public class FullSweepPhase extends Phase {
     void flowWP() {
         for (Object element : getBlocks()) {
             Block block = (Block) element;
-            block.flags &= ~Block.fVisited;
+            block.setFlags(block.getFlags() & (~Block.fVisited));
         }
 
         boolean changed = false;
@@ -274,7 +283,7 @@ public class FullSweepPhase extends Phase {
             if (routine instanceof ContextSwitchRoutine) {
                 ContextSwitchRoutine ctx = (ContextSwitchRoutine) routine;
                 for (Block block : routine.getEntries()) {
-                	changed |= flowWP(block, ctx.wp);
+                	changed |= flowWP(block, ctx.getWp());
                 }
             }
         }
@@ -285,16 +294,16 @@ public class FullSweepPhase extends Phase {
 			return false;
 		}
         
-        if ((block.flags & Block.fVisited) != 0) {
-            if (wp != block.getFirst().wp) {
+        if ((block.getFlags() & Block.fVisited) != 0) {
+            if (wp != block.getFirst().getWp()) {
                 System.out.println("!!! mismatched WP at " + block.getFirst() + 
-                        " (stored: " + Utils.toHex4(block.getFirst().wp) +", new: " 
+                        " (stored: " + Utils.toHex4(block.getFirst().getWp()) +", new: " 
                         + Utils.toHex4(wp));
             }
             return false;
         }
 
-        block.flags |= Block.fVisited;
+        block.setFlags(block.getFlags() | Block.fVisited);
 
         for (LLInstruction inst = block.getFirst(); inst != null; inst = inst.getNext()) {
             // TODO: watch for self-modifying memory!
@@ -302,7 +311,7 @@ public class FullSweepPhase extends Phase {
 				wp = ((MachineOperand)inst.op1).immed;
 			}
             
-            inst.wp = wp;
+            inst.setWp(wp);
             
             for (Object element : block.succ) {
                 Block succ = (Block) element;

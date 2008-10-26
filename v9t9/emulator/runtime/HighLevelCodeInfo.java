@@ -9,13 +9,13 @@ import java.util.TreeMap;
 
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.tools.decomp.Block;
 import v9t9.tools.decomp.IDecompileInfo;
-import v9t9.tools.decomp.LLInstruction;
-import v9t9.tools.decomp.Label;
-import v9t9.tools.decomp.MemoryRanges;
-import v9t9.tools.decomp.Routine;
 import v9t9.tools.decomp.TopDownPhase;
+import v9t9.tools.llinst.Block;
+import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.Label;
+import v9t9.tools.llinst.MemoryRanges;
+import v9t9.tools.llinst.Routine;
 import v9t9.utils.Check;
 
 /**

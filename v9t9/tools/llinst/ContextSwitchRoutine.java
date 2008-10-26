@@ -4,16 +4,16 @@
  * Created on Feb 22, 2006
  *
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.MachineOperand;
 
 public class ContextSwitchRoutine extends Routine {
-    short wp;
+    private short wp;
     public ContextSwitchRoutine(int wp) {
         super();
-        this.wp = (short) wp;
+        this.setWp((short) wp);
     }
 
     @Override
@@ -61,5 +61,13 @@ public class ContextSwitchRoutine extends Routine {
 		}
         
     }
+
+	public void setWp(short wp) {
+		this.wp = wp;
+	}
+
+	public short getWp() {
+		return wp;
+	}
 
 }

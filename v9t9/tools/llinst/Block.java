@@ -4,7 +4,7 @@
  * Created on Feb 21, 2006
  *
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -29,10 +29,10 @@ public class Block implements Comparable<Block> {
     public List<Block> succ;
     public List<Block> pred;
     
-    static final int fVisited = 1;
+    public static final int fVisited = 1;
     static final int fInsideInstruction = 2;
     
-    int flags;
+    private int flags;
 
     /**
      * Create a block starting at the given inst
@@ -305,6 +305,14 @@ public class Block implements Comparable<Block> {
 				pcSet.add((inst.pc + size) & 0xffff);
 		}
 		return pcSet;
+	}
+
+	public void setFlags(int flags) {
+		this.flags = flags;
+	}
+
+	public int getFlags() {
+		return flags;
 	}
 
 }

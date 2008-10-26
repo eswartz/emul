@@ -6,9 +6,6 @@
  */
 package v9t9.engine.cpu;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.utils.Check;
 
@@ -35,11 +32,11 @@ public class MachineOperand implements Operand {
     public static final int OP_INC = 3; 
 
     // these depend on the actual instruction
-    public static final int OP_IMMED = 4; // immediate >xxxx
+    public static final int OP_IMMED = 4; // immediate >xxxx (for jump, the target addr)
 
     public static final int OP_CNT = 5; // shift count x (4 bits)
 
-    public static final int OP_JUMP = 6; // jump target >xxxx
+    public static final int OP_JUMP = 6; // jump target >xxxx (offset in bytes from PC)
 
     public static final int OP_OFFS_R12 = 7; // offset >xxxx or .xxxx
 
@@ -67,87 +64,6 @@ public class MachineOperand implements Operand {
      */
     public MachineOperand(int type) {
         this.type = type;
-    }
-
-    public final static String OPT_R = "(?:R|r)?";
-    public final static String REG_NUM = "([0-9]|(?:1[0-5]))";
-    public final static String IMMED = "((?:>?)(?:(?:[+|-])?)[0-9A-Fa-f]+)";
-    final static Pattern OPERAND_PATTERN = Pattern.compile(
-            //       1                2        3
-            "(?:(\\*?)" + OPT_R + REG_NUM + "(\\+?))|" +
-            //         4          5             6 
-            "(?:@" + IMMED + "(\\(" + OPT_R + REG_NUM + "\\))?)|" +
-            //         7
-            "(?:" + IMMED + ")"
-            );
-    
-    final static Pattern JUMP_PATTERN = Pattern.compile(
-            //       1       2
-            "\\$([+-])" + IMMED
-            );
-    /** 
-     * Parse a string to construct an operand
-     * @param string
-     */
-    public MachineOperand(String string) {
-        if (string == null || string.length() == 0) {
-            type = OP_NONE;
-            return;
-        }
-        Matcher matcher = OPERAND_PATTERN.matcher(string);
-        if (matcher.matches()) {
-            if (matcher.group(2) != null) {
-                val = Integer.parseInt(matcher.group(2));
-                if (matcher.group(1).length() > 0) {
-                    if (matcher.group(3) != null && matcher.group(3).length() > 0) {
-                        // *R0+
-                        type = OP_INC;
-                    } else {
-                        // *R0
-                        type = OP_IND;
-                    }
-                } else {
-                    // R9
-                    type = OP_REG;
-                    Check.checkArg(matcher.group(3) == null || matcher.group(3).length() == 0);
-                }
-            } else if (matcher.group(4) != null) {
-                immed = parseImmed(matcher.group(4));
-                type = OP_ADDR;
-                if (matcher.group(5) != null && matcher.group(5).length() > 0) {
-                    // @>4(r5)
-                    val = Integer.parseInt(matcher.group(6));
-                    Check.checkArg(val != 0);
-                } else {
-                    // @>5
-                    val = 0;
-                }
-            } else {
-                // immed
-                type = OP_IMMED;
-                val = immed = parseImmed(matcher.group(7));
-            }
-        } else {
-        	matcher = JUMP_PATTERN.matcher(string);
-        	if (matcher.matches()) {
-        		int op = parseImmed(matcher.group(2));
-        		if (matcher.group(1) != null && matcher.group(1).equals("-"))
-        			op = -op;
-        		type = OP_JUMP;
-        		val = op;
-        	} else {
-        		Check.checkArg(false);
-        	}
-        }
-    }
-
-    private short parseImmed(String string) {
-        int radix = 10;
-        if (string.charAt(0) == '>') {
-            radix = 16;
-            string = string.substring(1);
-        }
-        return (short) Integer.parseInt(string, radix);
     }
 
     public boolean isMemory() {
@@ -214,8 +130,10 @@ public class MachineOperand implements Operand {
         	case OP_CNT:
         	    return Integer.toString(val);
     
-        	case OP_OFFS_R12:
-        	    return ">" + ((val & 0x8000) != 0 ? "-" : "") + ((val & 0x8000) != 0 ? -val : val); 
+        	case OP_OFFS_R12: {
+        		byte offs = (byte) (val & 0xff);
+        	    return ">" + (offs < 0 ? "-" : "") +Integer.toHexString(offs < 0 ? -offs : offs);
+        	}
     
         	case OP_REG0_SHIFT_COUNT:
         	    return ">" + Integer.toHexString(val & 0xffff).toUpperCase();
@@ -223,6 +141,7 @@ public class MachineOperand implements Operand {
         	case OP_JUMP:
         	    return "$+>" + Integer.toHexString(val & 0xffff).toUpperCase();
     
+        	case OP_NONE:
         	case OP_STATUS:		// not real operands
         	case OP_INST:		
         	default:
@@ -447,5 +366,99 @@ public class MachineOperand implements Operand {
 		immed = (short) val;
 	}
 
+	/** Generate the bits for the operand, or throw IllegalArgumentException
+	 * for a non-machine operand */
+	public int getBits() {
+		switch (type)
+        {
+        case MachineOperand.OP_NONE:
+        	return 0;
+        case MachineOperand.OP_REG:    	// Rx
+        case MachineOperand.OP_INC:    	// *Rx+
+        case MachineOperand.OP_IND:   	// *Rx
+        case MachineOperand.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
+        case MachineOperand.OP_REG0_SHIFT_COUNT: // shift count from R0
+        	if (val < 0 || val > 15)
+        		throw new IllegalArgumentException("Illegal register number: " + val);
+        	return val | (type << 4);
+        case MachineOperand.OP_IMMED:  // immediate
+            return 0;
+        case MachineOperand.OP_CNT:    // shift count
+        	if (val < 0 || val > 15)
+        		throw new IllegalArgumentException("Illegal shift count: " + val);
+            return val;
+        case MachineOperand.OP_OFFS_R12:   // offset from R12 or jump offset
+        	if (val < -255 || val > 255)
+        		throw new IllegalArgumentException("Illegal offset: " + val);
+        	return val & 0xff;
+        case MachineOperand.OP_JUMP:   // jump target offset from PC
+        	int byt = (val - 2) / 2;
+        	if (byt < -0x80 || byt >= 0x80)
+        		throw new IllegalArgumentException("Illegal jump offset: " + val);
+        	return byt & 0xff;
+        case MachineOperand.OP_STATUS: // status word
+        case MachineOperand.OP_INST:
+        	// not real operand
+        	return 0;
+        }
+		throw new IllegalArgumentException("Non-compilable operand: " + this);
+	}
+	
+	public Operand resolve(Instruction inst) {
+		return this;
+	}
 
+	public static MachineOperand createImmediate(int i) {
+		MachineOperand op = new MachineOperand(MachineOperand.OP_IMMED);
+		op.immed = (short) (op.val = i);
+		return op;
+	}
+
+	public static MachineOperand createGeneralOperand(int type, short val) {
+		MachineOperand op = new MachineOperand(type);
+		op.val = val;
+		return op;
+	}
+	public static MachineOperand createGeneralOperand(int type, short val, short immed) {
+		MachineOperand op = new MachineOperand(type);
+		op.val = val;
+		op.immed = immed;
+		return op;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + immed;
+		result = prime * result + type;
+		result = prime * result + val;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		MachineOperand other = (MachineOperand) obj;
+		if (immed != other.immed) {
+			return false;
+		}
+		if (type != other.type) {
+			return false;
+		}
+		if (val != other.val) {
+			return false;
+		}
+		return true;
+	}
+	
+	
 }

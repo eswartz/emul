@@ -53,14 +53,14 @@ public class InstructionTest extends TestCase {
         mop2 = (MachineOperand) inst.op2;
 
         assertTrue(inst != null);
-        assertEquals(inst.inst, Instruction.Iclr);
-        assertEquals(inst.name, "CLR");
-        assertEquals(mop1.byteop, false);
-        assertEquals(mop1.type, MachineOperand.OP_REG);
-        assertEquals(mop1.val, 3);
-        assertEquals(mop1.toString(), "R3");
-        assertEquals(inst.size, 2);
-        assertEquals(inst.toString(), "CLR R3");
+        assertEquals(Instruction.Iclr, inst.inst);
+        assertEquals("CLR", inst.name);
+        assertEquals(false, mop1.byteop);
+        assertEquals(MachineOperand.OP_REG, mop1.type);
+        assertEquals(3, mop1.val);
+        assertEquals("R3", mop1.toString());
+        assertEquals(2, inst.size);
+        assertEquals("CLR R3", inst.toString());
 
         // some pc-relative tests
         pc += inst.size;
@@ -70,15 +70,15 @@ public class InstructionTest extends TestCase {
         ea1 = mop1.getEA(domain, pc, (short)0x83e0);
 
         assertTrue(inst != null);
-        assertEquals(inst.inst, Instruction.Ijmp);
-        assertEquals(inst.name, "JMP");
-        assertEquals(mop1.byteop, false);
-        assertEquals(mop1.type, MachineOperand.OP_JUMP);
-        assertEquals(mop1.val, 0);
+        assertEquals(Instruction.Ijmp, inst.inst);
+        assertEquals("JMP", inst.name);
+        assertEquals(false, mop1.byteop);
+        assertEquals(MachineOperand.OP_JUMP, mop1.type);
+        assertEquals(0, mop1.val);
         assertEquals(ea1, inst.pc);
-        assertEquals(mop1.toString(), "$+>0");
-        assertEquals(inst.size, 2);
-        assertEquals(inst.toString(), "JMP $+>0");
+        assertEquals("$+>0", mop1.toString());
+        assertEquals(2, inst.size);
+        assertEquals("JMP $+>0", inst.toString());
 
         pc += inst.size;
         inst = new Instruction(domain.readWord(pc), pc, domain);
@@ -87,15 +87,15 @@ public class InstructionTest extends TestCase {
         ea1 = mop1.getEA(domain, pc, (short)0x83e0);
 
         assertTrue(inst != null);
-        assertEquals(inst.inst, Instruction.Ijnc);
-        assertEquals(inst.name, "JNC");
-        assertEquals(mop1.byteop, false);
-        assertEquals(mop1.type, MachineOperand.OP_JUMP);
-        assertEquals(mop1.val, -254);
-        assertEquals(ea1, (short)(inst.pc-254));
-        assertEquals(mop1.toString(), "$+>FF02");
-        assertEquals(inst.size, 2);
-        assertEquals(inst.toString(), "JNC $+>FF02");
+        assertEquals(Instruction.Ijnc, inst.inst);
+        assertEquals("JNC", inst.name);
+        assertEquals(false, mop1.byteop);
+        assertEquals(MachineOperand.OP_JUMP, mop1.type);
+        assertEquals(-254, mop1.val);
+        assertEquals((short)(inst.pc-254), ea1);
+        assertEquals("$+>FF02", mop1.toString());
+        assertEquals(2, inst.size);
+        assertEquals("JNC $+>FF02", inst.toString());
 
         pc += inst.size;
 
@@ -108,20 +108,20 @@ public class InstructionTest extends TestCase {
 
         // ensure register indirects work.
         assertTrue(inst != null);
-        assertEquals(inst.inst, Instruction.Imov);
-        assertEquals(inst.name, "MOV");
-        assertEquals(mop1.byteop, false);
-        assertEquals(mop1.type, MachineOperand.OP_ADDR);
-        assertEquals(mop1.val, 9);
-        assertEquals(mop1.immed, 0x4a);
-        assertEquals(ea1, 0x404a);
-        assertEquals(mop1.toString(), "@>4A(R9)");
-        assertEquals(mop2.type, MachineOperand.OP_ADDR);
-        assertEquals(mop2.val, 9);
-        assertEquals(mop2.immed, 0x7fff);
-        assertEquals(ea2, (short)(0x4000+0x7fff));
-        assertEquals(mop2.toString(), "@>7FFF(R9)");
-        assertEquals(inst.size, 6);
+        assertEquals(Instruction.Imov, inst.inst);
+        assertEquals("MOV", inst.name);
+        assertEquals(false, mop1.byteop);
+        assertEquals(MachineOperand.OP_ADDR, mop1.type);
+        assertEquals(9, mop1.val);
+        assertEquals(0x4a, mop1.immed);
+        assertEquals(0x404a, ea1);
+        assertEquals("@>4A(R9)", mop1.toString());
+        assertEquals(MachineOperand.OP_ADDR, mop2.type);
+        assertEquals(9, mop2.val);
+        assertEquals(0x7fff, mop2.immed);
+        assertEquals((short)(0x4000+0x7fff), ea2);
+        assertEquals("@>7FFF(R9)", mop2.toString());
+        assertEquals(6, inst.size);
 
         domain.writeWord(0x83E0 + 9*2, (short)0x4001);
         inst = new Instruction(domain.readWord(pc), pc, domain);
@@ -132,8 +132,8 @@ public class InstructionTest extends TestCase {
 
         // make sure odd register plus odd offset works
         assertTrue(inst != null);
-        assertEquals(ea1, 0x404b);
-        assertEquals(ea2, (short)(0x4001+0x7fff));
+        assertEquals(0x404b, ea1);
+        assertEquals((short)(0x4001+0x7fff), ea2);
 
         // ensure register increment holds and works in correct order.
         pc += inst.size;
@@ -145,24 +145,24 @@ public class InstructionTest extends TestCase {
         ea2 = mop2.getEA(domain, pc, (short)0x83e0);
 
         assertTrue(inst != null);
-        assertEquals(inst.inst, Instruction.Icb);
-        assertEquals(inst.name, "CB");
-        assertEquals(mop1.byteop, true);
-        assertEquals(mop1.type, MachineOperand.OP_INC);
-        assertEquals(mop1.val, 2);
-        assertEquals(mop1.immed, 0);
-        assertEquals(ea1, 0x4000);
-        assertEquals(mop1.toString(), "*R2+");
+        assertEquals(Instruction.Icb, inst.inst);
+        assertEquals("CB", inst.name);
+        assertEquals(true, mop1.byteop);
+        assertEquals(MachineOperand.OP_INC, mop1.type);
+        assertEquals(2, mop1.val);
+        assertEquals(0, mop1.immed);
+        assertEquals(0x4000, ea1);
+        assertEquals("*R2+", mop1.toString());
 
-        assertEquals(mop2.type, MachineOperand.OP_INC);
-        assertEquals(mop2.byteop, true);
-        assertEquals(mop2.val, 2);
-        assertEquals(mop2.immed, 0);
-        assertEquals(ea2, 0x4001);
-        assertEquals(mop2.toString(), "*R2+");
-        assertEquals(inst.size, 2);
+        assertEquals(MachineOperand.OP_INC, mop2.type);
+        assertEquals(true, mop2.byteop);
+        assertEquals(2, mop2.val);
+        assertEquals(0, mop2.immed);
+        assertEquals(0x4001, ea2);
+        assertEquals("*R2+", mop2.toString());
+        assertEquals(2, inst.size);
 
-        assertEquals(domain.readWord(0x83e0+2*2), 0x4002);
+        assertEquals(0x4002, domain.readWord(0x83e0+2*2));
 
     }
 

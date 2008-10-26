@@ -4,7 +4,7 @@
  * Created on Feb 22, 2006
  *
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 import java.util.Collection;
 import java.util.Set;
@@ -63,7 +63,7 @@ public class LLInstruction extends Instruction {
     /** The block that owns the instruction */
     private Block block;
 
-	short wp;
+	private short wp;
     
     /**
      * Create an instruction from memory
@@ -73,19 +73,13 @@ public class LLInstruction extends Instruction {
      */
     public LLInstruction(int op, int pc, int wp, MemoryDomain domain) {
         super(op, pc, domain);
-        this.wp = (short) wp;
+        this.setWp((short) wp);
         setFlags();
     }
     
-    public LLInstruction(int pc, int wp, String string) {
-        super(pc, string);
-        this.wp = (short) wp;
-        setFlags();
-    }
-
     public LLInstruction(int wp, Instruction inst) {
     	super(inst);
-        this.wp = (short) wp;
+        this.setWp((short) wp);
     	setFlags();
 	}
 
@@ -227,6 +221,14 @@ public class LLInstruction extends Instruction {
 			Check.checkState(false);
 		}
 		return blocks;
+	}
+
+	public void setWp(short wp) {
+		this.wp = wp;
+	}
+
+	public short getWp() {
+		return wp;
 	}
 
 }

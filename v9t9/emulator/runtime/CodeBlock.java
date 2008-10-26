@@ -5,7 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.tools.decomp.LLInstruction;
+import v9t9.tools.llinst.LLInstruction;
 
 /** This represents a compiled block of code. */
 public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListener {

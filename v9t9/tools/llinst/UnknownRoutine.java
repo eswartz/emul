@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 /**
  * @author ejs

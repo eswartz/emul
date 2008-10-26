@@ -8,28 +8,34 @@ package v9t9.tests;
 
 import junit.framework.TestCase;
 import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.Operand;
+import v9t9.tools.asm.AssemblerTokenizer;
+import v9t9.tools.asm.MachineOperandParserStage;
+import v9t9.tools.llinst.ParseException;
 
 public class MachineOperandParserTest extends TestCase {
 
+	MachineOperandParserStage stage = new MachineOperandParserStage();
+	
     public void testRX() throws Exception {
-        assertTrue("r".matches(MachineOperand.OPT_R));
-        assertTrue("R".matches(MachineOperand.OPT_R));
-        assertTrue("".matches(MachineOperand.OPT_R));
+        assertTrue("r".matches(MachineOperandParserStage.OPT_R));
+        assertTrue("R".matches(MachineOperandParserStage.OPT_R));
+        assertTrue("".matches(MachineOperandParserStage.OPT_R));
     }
     
     public void testParseRegs() throws Exception {
         MachineOperand op;
-        op = new MachineOperand("");
+        op = parse("");
         assertTrue(op.type == MachineOperand.OP_NONE && op.val == 0 && op.immed == 0);
-        op = new MachineOperand("4");
+        op = parse("4");
         assertTrue(op.type == MachineOperand.OP_REG && op.val == 4 && op.immed == 0);
-        op = new MachineOperand("R15");
+        op = parse("R15");
         assertTrue(op.type == MachineOperand.OP_REG && op.val == 15 && op.immed == 0);
-        op = new MachineOperand("r15");
+        op = parse("r15");
         assertTrue(op.type == MachineOperand.OP_REG && op.val == 15 && op.immed == 0);
-        op = new MachineOperand("*r11");
+        op = parse("*r11");
         assertTrue(op.type == MachineOperand.OP_IND && op.val == 11 && op.immed == 0);
-        op = new MachineOperand("*10");
+        op = parse("*10");
         assertTrue(op.type == MachineOperand.OP_IND && op.val == 10 && op.immed == 0);
         
     }
@@ -37,36 +43,39 @@ public class MachineOperandParserTest extends TestCase {
     
     public void testParseAddrs() throws Exception {
         MachineOperand op;
-        op = new MachineOperand("@>4");
+        op = parse("@>4");
         assertTrue(op.type == MachineOperand.OP_ADDR && op.val == 0 && op.immed == 4);
-        op = new MachineOperand("@>4944");
+        op = parse("@>4944");
         assertTrue(op.type == MachineOperand.OP_ADDR && op.val == 0 && op.immed == 0x4944);
-        op = new MachineOperand("@>FFFE");
+        op = parse("@>FFFE");
         assertTrue(op.type == MachineOperand.OP_ADDR && op.val == 0 && op.immed == -2);
-        op = new MachineOperand("@>2(R4)");
+        op = parse("@>2(R4)");
         assertTrue(op.type == MachineOperand.OP_ADDR && op.val == 4 && op.immed == 0x2);
-        op = new MachineOperand("@2(R4)");
+        op = parse("@2(R4)");
         assertTrue(op.type == MachineOperand.OP_ADDR && op.val == 4 && op.immed == 0x2);
-        op = new MachineOperand("@>-2(4)");
+        op = parse("@>-2(4)");
         assertTrue(op.type == MachineOperand.OP_ADDR && op.val == 4 && op.immed == -2);
-        op = new MachineOperand("@>FFFE(R14)");
+        op = parse("@>FFFE(R14)");
         assertTrue(op.type == MachineOperand.OP_ADDR && op.val == 14 && op.immed == -2);
         
     }
     
     public void testParseImmed() throws Exception {
         MachineOperand op;
-        op = new MachineOperand(">4");
+        op = parse(">4");
         assertTrue(op.type == MachineOperand.OP_IMMED && op.val == 4 && op.immed == 4);
-        op = new MachineOperand(">5555");
+        op = parse(">5555");
         assertTrue(op.type == MachineOperand.OP_IMMED && op.val == 0x5555 && op.immed == 0x5555);
-        op = new MachineOperand("5555");
-        assertTrue(op.type == MachineOperand.OP_IMMED && op.val == 5555 && op.immed == 5555);
-        op = new MachineOperand(">-44");
+        op = parse("5555");
+        assertTrue(op.type == MachineOperand.OP_REG && op.val == 5555);
+        op = parse(">-44");
         assertTrue(op.type == MachineOperand.OP_IMMED && op.val == -0x44 && op.immed == -0x44);
-        op = new MachineOperand("-44");
+        op = parse("-44");
         assertTrue(op.type == MachineOperand.OP_IMMED && op.val == -44 && op.immed == -44);
         
+    }
+    private MachineOperand parse(String str) throws ParseException {
+    	return (MachineOperand) stage.parse(new AssemblerTokenizer(str));
     }
 
     public void testFail() throws Exception {
@@ -85,9 +94,13 @@ public class MachineOperandParserTest extends TestCase {
         };
         for (String element : baddies) {
             try {
-                new MachineOperand(element);
-                fail(element);
+            	MachineOperand op = parse(element);
+            	if (op != null) {
+            		op.getBits();
+            		fail(element);
+            	}
             } catch (IllegalArgumentException e) {
+            } catch (ParseException e) {
                 
             }
         }

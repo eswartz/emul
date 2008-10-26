@@ -4,7 +4,7 @@
  * Created on Feb 26, 2006
  *
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 import java.util.Iterator;
 import java.util.List;

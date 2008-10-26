@@ -4,7 +4,7 @@
  * Created on Feb 25, 2006
  *
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 public class RoutineOperand extends LabelOperand {
 

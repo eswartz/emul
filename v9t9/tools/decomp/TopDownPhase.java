@@ -27,6 +27,18 @@ import v9t9.tools.decomp.expr.impl.AstAddressExpression;
 import v9t9.tools.decomp.expr.impl.AstBinaryExpression;
 import v9t9.tools.decomp.expr.impl.AstIntegralExpression;
 import v9t9.tools.decomp.expr.impl.AstUnaryExpression;
+import v9t9.tools.llinst.AstRegisterExpression;
+import v9t9.tools.llinst.Block;
+import v9t9.tools.llinst.DataWordListOperand;
+import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.Label;
+import v9t9.tools.llinst.LabelListOperand;
+import v9t9.tools.llinst.LabelOperand;
+import v9t9.tools.llinst.LinkedRoutine;
+import v9t9.tools.llinst.Phase;
+import v9t9.tools.llinst.Routine;
+import v9t9.tools.llinst.RoutineOperand;
+import v9t9.tools.llinst.UnknownRoutine;
 import v9t9.utils.Check;
 
 /**
@@ -117,8 +129,8 @@ public class TopDownPhase extends Phase {
 			
 		} while (changed);
 		
-		//dumpInstructions();
-		//dumpBlocks();
+		dumpInstructions();
+		dumpBlocks();
 	}
 
 	private void flowBlock(Block block /*Routine routine, List<Block> unresolvedBlocks,
@@ -258,8 +270,8 @@ public class TopDownPhase extends Phase {
 				return llo;
 			} else {
 				// branch into workspace (whatever!)
-				if (inst.wp != 0) {
-					int addr = (inst.wp + mop1.val * 2) & 0xfffe;
+				if (inst.getWp() != 0) {
+					int addr = (inst.getWp() + mop1.val * 2) & 0xfffe;
 					mop1.type = MachineOperand.OP_ADDR;
 					mop1.immed = (short) addr;
 					mop1.val = 0;
@@ -728,15 +740,15 @@ public class TopDownPhase extends Phase {
 				return new AstAddressExpression(mop1.immed);
 			} else {
 				return new AstBinaryExpression(IAstBinaryExpression.K_ADD,
-						new AstRegisterExpression(inst.wp, mop1.val),
+						new AstRegisterExpression(inst.getWp(), mop1.val),
 						new AstAddressExpression(mop1.immed));
 			}
 		case MachineOperand.OP_REG:
 		case MachineOperand.OP_REG0_SHIFT_COUNT:
-			return new AstRegisterExpression(inst.wp, mop1.val);
+			return new AstRegisterExpression(inst.getWp(), mop1.val);
 		case MachineOperand.OP_IND:
 			return new AstUnaryExpression(IAstUnaryExpression.K_INDIRECT,
-					new AstRegisterExpression(inst.wp, mop1.val));
+					new AstRegisterExpression(inst.getWp(), mop1.val));
 		case MachineOperand.OP_INC:
 			// TODO: and add!
 			/*
@@ -746,7 +758,7 @@ public class TopDownPhase extends Phase {
 			                        new AstRegisterExpression(inst.wp, mop1.val))
 			 */
 			return new AstUnaryExpression(IAstUnaryExpression.K_INDIRECT,
-					new AstRegisterExpression(inst.wp, mop1.val));
+					new AstRegisterExpression(inst.getWp(), mop1.val));
 
 		default:
 			Check.checkState(false);
@@ -843,7 +855,7 @@ public class TopDownPhase extends Phase {
 			block.addSucc(label.getBlock());
 		} else {
 			System.out.printf("??? Ignoring branch to label %s from >%04X\n",
-							label.name, inst.pc);
+							label.getName(), inst.pc);
 		}
 		
 	}

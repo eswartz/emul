@@ -4,7 +4,7 @@
  * Created on Feb 22, 2006
  *
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 import v9t9.engine.cpu.Operand;
 import v9t9.utils.Check;

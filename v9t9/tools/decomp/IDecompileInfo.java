@@ -10,6 +10,11 @@ import java.util.Collection;
 import java.util.Map;
 
 import v9t9.engine.cpu.Instruction;
+import v9t9.tools.llinst.Block;
+import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.Label;
+import v9t9.tools.llinst.MemoryRanges;
+import v9t9.tools.llinst.Routine;
 
 public interface IDecompileInfo {
     public MemoryRanges getMemoryRanges();

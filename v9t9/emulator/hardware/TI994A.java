@@ -32,7 +32,7 @@ public class TI994A extends Machine {
     @Override
 	protected void createMemory() {
         memory = new Memory();
-        memoryModel = new StandardConsoleMemoryModel(getClient(), memory);
+        memoryModel = new StandardConsoleMemoryModel(memory);
         CPU = memoryModel.CPU;
         getSettings().register(StandardConsoleMemoryModel.settingExpRam);
         getSettings().register(StandardConsoleMemoryModel.settingEnhRam);
@@ -41,7 +41,7 @@ public class TI994A extends Machine {
     @Override
 	public void setClient(Client client) {
         super.setClient(client);
-        memoryModel.setClient(client);
+        memoryModel.connectClient(client);
     }
     
     public v9t9.engine.memory.Sound getSoundMmio() {
@@ -143,13 +143,14 @@ public class TI994A extends Machine {
     	
         final TI994A machine = new TI994A();
         
+        StandardConsoleMemoryModel memoryModel = machine.getMemoryModel();
         //machine.setClient(new DemoClient(machine));
         Client client;
         
         if (args.length >= 1 && args[0].equals("--pure"))
-        	client = new PureJavaClient(machine, machine.getVdpMmio().getMemory(), display);
+        	client = new PureJavaClient(machine, memoryModel.VIDEO, display);
         else
-        	client = new HybridDemoClient(machine, machine.getVdpMmio().getMemory(), display);
+        	client = new HybridDemoClient(machine, memoryModel.VIDEO, display);
 		machine.setClient(client);
 
         machine.getCpu().contextSwitch(0);
@@ -183,6 +184,8 @@ public class TI994A extends Machine {
 	    	
 	    	if (!machine.isRunning())
 	    		break;
+	    	
+	    	Thread.yield();
         }
         
     }

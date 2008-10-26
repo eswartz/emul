@@ -15,11 +15,15 @@ import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StandardConsoleMemoryModel;
+import v9t9.tools.asm.MachineOperandParserStage;
+import v9t9.tools.asm.OperandParser;
+import v9t9.tools.asm.StandardInstructionParserStage;
 import v9t9.tools.decomp.ICodeProvider;
 import v9t9.tools.decomp.IDecompileInfo;
-import v9t9.tools.decomp.LLInstruction;
-import v9t9.tools.decomp.MemoryRanges;
-import v9t9.tools.decomp.Routine;
+import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.MemoryRanges;
+import v9t9.tools.llinst.ParseException;
+import v9t9.tools.llinst.Routine;
 
 public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProvider
 {
@@ -45,11 +49,11 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
         decompileInfo = highLevel.getDecompileInfo();
     }
     
-    protected void parse(MemoryDomain cpu, int pc, int wp, String[] insts) {
+    protected void parse(MemoryDomain cpu, int pc, int wp, String[] insts) throws ParseException {
 	    LLInstruction first = null;
 	    LLInstruction prev = null;
 	    for (String element : insts) {
-	        LLInstruction inst = new LLInstruction(pc, wp, element);
+	    	LLInstruction inst = createLLInstruction(pc, wp, element);
 	        highLevel.getLLInstructions().put(new Integer(inst.pc), inst);
 	        highLevel.addInstruction(inst);
 	        cpu.flatWriteWord(pc, inst.opcode);
@@ -77,7 +81,8 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
 	        first = first.getNext();
 	    }
 	}
-    public MemoryDomain getCPUMemory() {
+    
+ 	public MemoryDomain getCPUMemory() {
         return CPU;
     }
 

@@ -4,7 +4,7 @@
  * Created on Mar 4, 2006
  *
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 import v9t9.tools.decomp.expr.IAstExpression;
 import v9t9.tools.decomp.expr.IAstNode;

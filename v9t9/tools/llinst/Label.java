@@ -4,7 +4,7 @@
  * Created on Feb 21, 2006
  *
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 import v9t9.utils.Check;
 import v9t9.utils.Utils;
@@ -12,7 +12,7 @@ import v9t9.utils.Utils;
 public class Label implements Comparable<Label> {
     private Block block;   // block owning label
     int id;     // unique label
-    String name; // real or unique name
+    private String name; // real or unique name
     boolean named; // actually a real name
     
     public Label(Block block, String name) {
@@ -32,7 +32,7 @@ public class Label implements Comparable<Label> {
     
     @Override
     public String toString() {
-        return name + (!named ? " @>" + Utils.toHex4(block.getFirst().pc) : "");
+        return getName() + (!named ? " @>" + Utils.toHex4(block.getFirst().pc) : "");
     }
 
 	public int compareTo(Label o) {
@@ -67,5 +67,9 @@ public class Label implements Comparable<Label> {
 	
 	public int getAddr() {
 		return block.getFirst().pc;
+	}
+
+	public String getName() {
+		return name;
 	}
 }

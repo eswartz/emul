@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.tools.decomp;
+package v9t9.tools.llinst;
 
 import v9t9.engine.cpu.Operand;
 import v9t9.utils.Utils;
