@@ -16,11 +16,11 @@ import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.InternalVdp;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
-import v9t9.emulator.handlers.CruHandler;
-import v9t9.emulator.handlers.KeyboardHandler;
-import v9t9.emulator.handlers.SoundHandler;
-import v9t9.emulator.handlers.VdpHandler;
 import v9t9.engine.Client;
+import v9t9.engine.CruHandler;
+import v9t9.engine.KeyboardHandler;
+import v9t9.engine.SoundHandler;
+import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.keyboard.KeyboardState;
 
@@ -106,7 +106,7 @@ public class PureJavaClient implements Client {
      * 
      * @see v9t9.Client#getVideo()
      */
-    public v9t9.emulator.handlers.VdpHandler getVideoHandler() {
+    public v9t9.engine.VdpHandler getVideoHandler() {
         return video;
     }
 
@@ -115,7 +115,7 @@ public class PureJavaClient implements Client {
      * 
      * @see v9t9.Client#setVideo(vdp.Handler)
      */
-    public void setVideoHandler(v9t9.emulator.handlers.VdpHandler video) {
+    public void setVideoHandler(v9t9.engine.VdpHandler video) {
         this.video = video;
     }
 

@@ -15,10 +15,10 @@ import java.util.Map;
 
 import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
 import v9t9.emulator.runtime.compiler.Compiler;
-import v9t9.emulator.runtime.compiler.HighLevelCodeInfo;
 import v9t9.emulator.runtime.compiler.ICompiledCode;
 import v9t9.emulator.runtime.compiler.ICompilerStrategy;
 import v9t9.emulator.runtime.interpreter.Interpreter;
+import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;

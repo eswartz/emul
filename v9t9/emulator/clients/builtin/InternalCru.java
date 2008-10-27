@@ -7,10 +7,10 @@
 package v9t9.emulator.clients.builtin;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.handlers.CruHandler;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.CruReader;
 import v9t9.emulator.hardware.CruWriter;
+import v9t9.engine.CruHandler;
 import v9t9.keyboard.KeyboardState;
 import v9t9.utils.Utils;
 

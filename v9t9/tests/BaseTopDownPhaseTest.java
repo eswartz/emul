@@ -9,7 +9,7 @@ package v9t9.tests;
 import java.util.Collection;
 import java.util.Map;
 
-import v9t9.emulator.runtime.compiler.HighLevelCodeInfo;
+import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.RawInstruction;

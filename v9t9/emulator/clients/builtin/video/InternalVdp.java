@@ -8,7 +8,7 @@ package v9t9.emulator.clients.builtin.video;
 
 import java.util.Arrays;
 
-import v9t9.emulator.handlers.VdpHandler;
+import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryDomain;
 
 /**

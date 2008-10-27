@@ -4,7 +4,7 @@
  * Created on Dec 29, 2004
  *
  */
-package v9t9.engine.memory;
+package v9t9.emulator.runtime;
 
 import v9t9.emulator.Machine.ConsoleMmioWriter;
 import v9t9.engine.Client;
@@ -12,26 +12,26 @@ import v9t9.engine.Client;
 /** Sound chip entry
  * @author ejs
  */
-public class Sound implements ConsoleMmioWriter {
-
-    private Client client;
+public class Speech implements ConsoleMmioWriter, v9t9.emulator.Machine.ConsoleMmioReader {
 
     /**
-     * @param machine
+     * @param client
      */
-    public Sound(Client client) {
-        this.client = client;
+    public Speech(Client client) {
     }
 
+    public byte read(int addrMask) {
+        return (byte) 0x00;
+    }
+    
     /**
      * @see v9t9.engine.memory.Memory.ConsoleMmioWriter#write 
      */
     public void write(int addr, byte val) {
-        client.getSoundHandler().writeSound(val);
+        System.out.println("speech write: " + (val&0xff));
     }
 
     public void setClient(Client client) {
-        this.client = client;
     }
     
 }

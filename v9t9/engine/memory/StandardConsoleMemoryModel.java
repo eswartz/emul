@@ -8,6 +8,9 @@ package v9t9.engine.memory;
 
 import v9t9.emulator.Machine.ConsoleMmioReader;
 import v9t9.emulator.Machine.ConsoleMmioWriter;
+import v9t9.emulator.runtime.Sound;
+import v9t9.emulator.runtime.Speech;
+import v9t9.emulator.runtime.Vdp;
 import v9t9.engine.Client;
 import v9t9.engine.settings.Setting;
 
@@ -76,9 +79,9 @@ public class StandardConsoleMemoryModel {
     public void connectClient(Client client) {
         this.client = client;
 
-        vdpMmio = new v9t9.engine.memory.Vdp(VIDEO, this.client);
+        vdpMmio = new v9t9.emulator.runtime.Vdp(VIDEO, this.client);
         gplMmio = new Gpl(GRAPHICS);
-        soundMmio = new v9t9.engine.memory.Sound(this.client);
+        soundMmio = new v9t9.emulator.runtime.Sound(this.client);
         speechMmio = new Speech(this.client);
 
         vdpMmio.setClient(client);
@@ -255,19 +258,19 @@ public class StandardConsoleMemoryModel {
     }
 
     class ConsoleSoundArea extends ConsoleMmioWriteArea {
-        public ConsoleSoundArea(v9t9.engine.memory.Sound mmio) {
+        public ConsoleSoundArea(v9t9.emulator.runtime.Sound mmio) {
             super(mmio);
         }
     }
 
     class ConsoleVdpReadArea extends ConsoleMmioReadArea {
-        public ConsoleVdpReadArea(v9t9.engine.memory.Vdp mmio) {
+        public ConsoleVdpReadArea(v9t9.emulator.runtime.Vdp mmio) {
             super(mmio);
         }
     }
 
     class ConsoleVdpWriteArea extends ConsoleMmioWriteArea {
-        public ConsoleVdpWriteArea(v9t9.engine.memory.Vdp mmio) {
+        public ConsoleVdpWriteArea(v9t9.emulator.runtime.Vdp mmio) {
             super(mmio);
         }
     }

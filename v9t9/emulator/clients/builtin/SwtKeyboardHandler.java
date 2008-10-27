@@ -8,7 +8,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.emulator.handlers.KeyboardHandler;
+import v9t9.engine.KeyboardHandler;
 import v9t9.keyboard.KeyboardState;
 
 /**

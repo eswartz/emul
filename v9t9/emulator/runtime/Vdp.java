@@ -4,11 +4,12 @@
  * Created on Dec 18, 2004
  *
  */
-package v9t9.engine.memory;
+package v9t9.emulator.runtime;
 
 import v9t9.emulator.Machine.ConsoleMmioReader;
 import v9t9.emulator.Machine.ConsoleMmioWriter;
 import v9t9.engine.Client;
+import v9t9.engine.memory.MemoryDomain;
 
 
 /** VDP chip entry

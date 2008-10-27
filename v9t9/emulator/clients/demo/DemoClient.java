@@ -9,10 +9,10 @@ package v9t9.emulator.clients.demo;
 import java.io.IOException;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.handlers.CruHandler;
-import v9t9.emulator.handlers.SoundHandler;
-import v9t9.emulator.handlers.VdpHandler;
 import v9t9.engine.Client;
+import v9t9.engine.CruHandler;
+import v9t9.engine.SoundHandler;
+import v9t9.engine.VdpHandler;
 
 /**
  * @author ejs
@@ -219,7 +219,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
      * 
      * @see v9t9.Client#getVideo()
      */
-    public v9t9.emulator.handlers.VdpHandler getVideoHandler() {
+    public v9t9.engine.VdpHandler getVideoHandler() {
         return video;
     }
 
@@ -228,7 +228,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
      * 
      * @see v9t9.Client#setVideo(vdp.Handler)
      */
-    public void setVideoHandler(v9t9.emulator.handlers.VdpHandler video) {
+    public void setVideoHandler(v9t9.engine.VdpHandler video) {
         this.video = video;
     }
 

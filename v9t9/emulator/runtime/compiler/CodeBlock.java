@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Executor;
+import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.memory.MemoryEntry;

@@ -41,6 +41,7 @@ import org.apache.bcel.generic.Type;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.runtime.Cpu;
+import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
@@ -407,7 +408,7 @@ public class Compiler {
             ilist.append(new ALOAD(info.localStatus));
             ilist.append(InstructionConstants.THIS);
             ilist.append(new GETFIELD(info.vdpIndex));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.memory.Vdp.class
+            ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.Vdp.class
                     .getName(), "getAddr", Type.SHORT, Type.NO_ARGS,
                     Constants.INVOKEVIRTUAL));
             ilist.append(InstructionConstants.THIS);
@@ -834,11 +835,11 @@ public class Compiler {
         int memoryIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
                 "memory", Utility.getSignature(v9t9.engine.memory.MemoryDomain.class.getName()));
         int cruIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
-                "cru", Utility.getSignature(v9t9.emulator.handlers.CruHandler.class.getName()));
+                "cru", Utility.getSignature(v9t9.engine.CruHandler.class.getName()));
         int nInstsIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
                 "nInstructions", Utility.getSignature("int"));
         int vdpIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
-                "vdp", Utility.getSignature(v9t9.engine.memory.Vdp.class.getName()));
+                "vdp", Utility.getSignature(v9t9.emulator.runtime.Vdp.class.getName()));
         int gplIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
                 "gpl", Utility.getSignature(v9t9.engine.memory.Gpl.class.getName()));
 

@@ -4,7 +4,7 @@
  * Created on Aug 27, 2005
  *
  */
-package v9t9.emulator.handlers;
+package v9t9.engine;
 
 import v9t9.keyboard.KeyboardState;
 

@@ -37,9 +37,7 @@ import v9t9.utils.Utils;
 public class Assembler {
 	private int DEBUG = 0;
 	
-	private Memory memory = new Memory();
-    private StandardConsoleMemoryModel memoryModel = new StandardConsoleMemoryModel(memory);
-    private MemoryDomain CPU = memoryModel.CPU;
+    private MemoryDomain CPU = new MemoryDomain();
 	private List<DiskMemoryEntry> memoryEntries = new ArrayList<DiskMemoryEntry>();
 
 	private PrintStream log = System.out;
@@ -63,8 +61,6 @@ public class Assembler {
 			"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
 	
     public Assembler() {
-    	memory = new Memory();
-    	
     	OperandParser operandParser = new OperandParser();
     	operandParser.appendStage(new AssemblerOperandParserStage(this));
     	StandardInstructionParserStage instStage = new StandardInstructionParserStage(operandParser);

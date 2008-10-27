@@ -11,14 +11,13 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import v9t9.emulator.runtime.compiler.HighLevelCodeInfo;
+import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.NativeFileMemoryEntry;
-import v9t9.engine.memory.StandardConsoleMemoryModel;
 import v9t9.utils.Utils;
 
 public class Decompiler implements ICodeProvider {
@@ -33,8 +32,7 @@ public class Decompiler implements ICodeProvider {
     boolean nativeFile = false;
     
     Memory memory = new Memory();
-    StandardConsoleMemoryModel memoryModel = new StandardConsoleMemoryModel(memory);
-    MemoryDomain CPU = memoryModel.CPU;
+    MemoryDomain CPU = new MemoryDomain();
 
     private DecompileOptions options;
     HighLevelCodeInfo highLevel = new HighLevelCodeInfo(CPU);
@@ -63,7 +61,7 @@ public class Decompiler implements ICodeProvider {
     public void addFile(String filename, int baseAddr) throws IOException {
         NativeFile file = NativeFileFactory.createNativeFile(new File(filename));
         MemoryEntry entry = NativeFileMemoryEntry.newWordMemoryFromFile(baseAddr, 0, 
-                filename, memoryModel.CPU, file, 0x0);
+                filename, CPU, file, 0x0);
         memory.addAndMap(entry);
         highLevel.getMemoryRanges().addRange(baseAddr, entry.size, true);
     }

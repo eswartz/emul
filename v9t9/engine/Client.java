@@ -6,10 +6,6 @@
  */
 package v9t9.engine;
 
-import v9t9.emulator.handlers.CruHandler;
-import v9t9.emulator.handlers.KeyboardHandler;
-import v9t9.emulator.handlers.SoundHandler;
-import v9t9.emulator.handlers.VdpHandler;
 
 /** The client the emulated machine interacts with.  This could
  * be the emulator itself, hosting a window, keyboard, etc., 

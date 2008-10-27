@@ -1,17 +1,14 @@
 package v9t9.engine;
 
 
-import v9t9.emulator.handlers.CruHandler;
-import v9t9.emulator.handlers.SoundHandler;
-import v9t9.emulator.handlers.VdpHandler;
 
 public class DummyClient implements Client {
-    v9t9.emulator.handlers.VdpHandler video;
-    v9t9.emulator.handlers.SoundHandler sound;
+    v9t9.engine.VdpHandler video;
+    v9t9.engine.SoundHandler sound;
     private CruHandler cru;
     
     public DummyClient() {
-        video = new v9t9.emulator.handlers.VdpHandler() {
+        video = new v9t9.engine.VdpHandler() {
 
             public void writeVdpReg(byte reg, byte val) {
             }
@@ -26,7 +23,7 @@ public class DummyClient implements Client {
             public void update() {
             }
         };
-        sound = new v9t9.emulator.handlers.SoundHandler() {
+        sound = new v9t9.engine.SoundHandler() {
             public void writeSound(byte val) {
             }
         };

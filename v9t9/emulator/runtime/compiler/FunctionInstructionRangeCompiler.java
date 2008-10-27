@@ -10,6 +10,7 @@ import org.apache.bcel.generic.InstructionList;
 
 import v9t9.emulator.runtime.compiler.Compiler.InstInfo;
 import v9t9.emulator.runtime.compiler.Compiler.InstructionRangeCompiler;
+import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
 import v9t9.tools.decomp.IDecompileInfo;
 import v9t9.tools.llinst.Block;

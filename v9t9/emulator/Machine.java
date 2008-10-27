@@ -9,11 +9,11 @@ package v9t9.emulator;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import v9t9.emulator.handlers.CruHandler;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
+import v9t9.engine.CruHandler;
 import v9t9.engine.DummyClient;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;

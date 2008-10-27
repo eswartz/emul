@@ -44,16 +44,16 @@ public class TI994A extends Machine {
         memoryModel.connectClient(client);
     }
     
-    public v9t9.engine.memory.Sound getSoundMmio() {
+    public v9t9.emulator.runtime.Sound getSoundMmio() {
         return memoryModel.soundMmio;
     }
-    public void setSoundMmio(v9t9.engine.memory.Sound soundMmio) {
+    public void setSoundMmio(v9t9.emulator.runtime.Sound soundMmio) {
         this.memoryModel.soundMmio = soundMmio;
     }
-    public v9t9.engine.memory.Vdp getVdpMmio() {
+    public v9t9.emulator.runtime.Vdp getVdpMmio() {
         return memoryModel.vdpMmio;
     }
-    public void setVdpMmio(v9t9.engine.memory.Vdp vdpMmio) {
+    public void setVdpMmio(v9t9.emulator.runtime.Vdp vdpMmio) {
         this.memoryModel.vdpMmio = vdpMmio;
     }
     public Gpl getGplMmio() {
