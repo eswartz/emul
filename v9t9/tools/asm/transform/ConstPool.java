@@ -26,7 +26,7 @@ import v9t9.tools.asm.operand.hl.SymbolOperand;
  * @author Ed
  *
  */
-public class ConstTable {
+public class ConstPool {
 	private static int count;
 	
 	private Map<Integer, Integer> constWordMap = new HashMap<Integer, Integer>();
@@ -34,7 +34,7 @@ public class ConstTable {
 	private int tableSize;
 	private boolean lastAccessWasByte;
 	
-	public ConstTable() {
+	public ConstPool() {
 	}
 	
 	public void clear() {

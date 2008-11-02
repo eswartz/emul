@@ -15,9 +15,9 @@ import v9t9.tools.asm.operand.ll.LLOperand;
  * @author Ed
  *
  */
-public class ConstOperand extends ImmediateOperand implements AssemblerOperand {
+public class ConstPoolRefOperand extends ImmediateOperand implements AssemblerOperand {
 
-	public ConstOperand(AssemblerOperand op) {
+	public ConstPoolRefOperand(AssemblerOperand op) {
 		super(op);
 	}
 
@@ -32,10 +32,10 @@ public class ConstOperand extends ImmediateOperand implements AssemblerOperand {
 		int value = op.getImmediate();
 		int addr;
 		if (inst.isByteOp()) {
-			addr = assembler.getConstTable().allocateByte(value);
+			addr = assembler.getConstPool().allocateByte(value);
 		} else {
-			addr = assembler.getConstTable().allocateWord(value);
+			addr = assembler.getConstPool().allocateWord(value);
 		}
-		return assembler.getConstTable().createTableOffset(assembler, addr).resolve(assembler, inst);
+		return assembler.getConstPool().createTableOffset(assembler, addr).resolve(assembler, inst);
 	}
 }

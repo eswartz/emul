@@ -13,11 +13,11 @@ import v9t9.tools.asm.Symbol;
  * @author Ed
  *
  */
-public class ConstTableDirective extends Directive {
+public class ConstPoolDirective extends Directive {
 
 	private final Assembler assembler;
 
-	public ConstTableDirective(Assembler assembler) {
+	public ConstPoolDirective(Assembler assembler) {
 		this.assembler = assembler;
 		
 	}
@@ -33,7 +33,7 @@ public class ConstTableDirective extends Directive {
 	public IInstruction[] resolve(Assembler assembler, IInstruction previous,
 			boolean finalPass) throws ResolveException {
 		
-		Symbol symbol = assembler.getConstTable().getTableAddr();
+		Symbol symbol = assembler.getConstPool().getTableAddr();
 		if (symbol == null) {
 			return NO_INSTRUCTIONS;
 		}
@@ -46,6 +46,6 @@ public class ConstTableDirective extends Directive {
 	}
 	
 	public byte[] getBytes() {
-		return assembler.getConstTable().getBytes();
+		return assembler.getConstPool().getBytes();
 	}
 }

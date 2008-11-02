@@ -6,7 +6,7 @@ package v9t9.tools.asm;
 import v9t9.tools.asm.operand.hl.AddrOperand;
 import v9t9.tools.asm.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.operand.hl.BinaryOperand;
-import v9t9.tools.asm.operand.hl.ConstOperand;
+import v9t9.tools.asm.operand.hl.ConstPoolRefOperand;
 import v9t9.tools.asm.operand.hl.NumberOperand;
 import v9t9.tools.asm.operand.hl.PcRelativeOperand;
 import v9t9.tools.asm.operand.hl.RegIncOperand;
@@ -103,7 +103,7 @@ public class AssemblerOperandParserStage implements IOperandParserStage {
 		case '#': {
 			// const table
 			AssemblerOperand op = parseFactor();
-			return new ConstOperand(op);
+			return new ConstPoolRefOperand(op);
 		}
 		case '(': {
 			AssemblerOperand op = parseExpr();

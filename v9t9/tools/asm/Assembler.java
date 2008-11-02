@@ -21,7 +21,7 @@ import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.directive.DescrDirective;
 import v9t9.tools.asm.directive.LabelDirective;
-import v9t9.tools.asm.transform.ConstTable;
+import v9t9.tools.asm.transform.ConstPool;
 import v9t9.tools.asm.transform.JumpFixer;
 import v9t9.tools.asm.transform.Simplifier;
 import v9t9.tools.llinst.MemoryRanges;
@@ -54,7 +54,7 @@ public class Assembler {
 
 	private ArrayList<AssemblerError> errorList;
 
-	private ConstTable constTable = new ConstTable();
+	private ConstPool constPool = new ConstPool();
     
 	private static final Pattern INCL_LINE = Pattern.compile(
 			"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
@@ -130,7 +130,7 @@ public class Assembler {
 	
 	public boolean assemble() {
 		errorList.clear();
-		constTable.clear();
+		constPool.clear();
 		
 		List<IInstruction> asmInsts = parse();
 		if (errorList.size() > 0)
@@ -352,7 +352,7 @@ public class Assembler {
 			return insts;
 
 		// define the const table if used
-		Symbol constTableAddr = constTable.getTableAddr();
+		Symbol constTableAddr = constPool.getTableAddr();
 		if (constTableAddr != null) {
 			constTableAddr.setAddr(getPc());
 		}
@@ -572,8 +572,8 @@ public class Assembler {
 		symbolTable = symbolTable.getParent();
 	}
 
-	public ConstTable getConstTable() {
-		return constTable;
+	public ConstPool getConstPool() {
+		return constPool;
 	}
 	
 }

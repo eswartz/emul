@@ -6,51 +6,51 @@ import v9t9.engine.cpu.IInstruction;
 import v9t9.tests.BaseTest;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ContentEntry;
-import v9t9.tools.asm.transform.ConstTable;
+import v9t9.tools.asm.transform.ConstPool;
 
 public class TestAssemblerConstTable extends BaseTest {
 
 	Assembler assembler = new Assembler();
 	
 	public void testConstTable1() throws Exception {
-		ConstTable table = assembler.getConstTable();
-		table.clear();
+		ConstPool pool = assembler.getConstPool();
+		pool.clear();
 		
-		int op1 = table.allocateByte(0);
-		int op2 = table.allocateByte(0);
+		int op1 = pool.allocateByte(0);
+		int op2 = pool.allocateByte(0);
 		assertEquals(op1, op2);
-		op2 = table.allocateByte(1);
+		op2 = pool.allocateByte(1);
 		assertTrue(op1 != op2);
-		int op3 = table.allocateByte(1);
+		int op3 = pool.allocateByte(1);
 		assertEquals(op2, op3);
-		int op4 = table.allocateByte(0);
+		int op4 = pool.allocateByte(0);
 		assertEquals(op4, op1);
 		// force odd
-		int two = table.allocateByte(0x2);
+		int two = pool.allocateByte(0x2);
 
 		// get a word and make sure it's at an odd offset
-		int op5 = table.allocateWord(0x1234);
+		int op5 = pool.allocateWord(0x1234);
 		assertEquals(0, op5 & 1);
 		assertTrue(op1 != op5);
 		assertTrue(op2 != op5);
 		assertTrue(op3 != op5);
 		assertTrue(op4 != op5);
 		
-		int op6 = table.allocateWord(0x1234);
+		int op6 = pool.allocateWord(0x1234);
 		assertEquals(op5, op6);
 		
 		// make sure the word can be picked for bytes
-		int op7 = table.allocateByte(0x12);
+		int op7 = pool.allocateByte(0x12);
 		assertEquals(op5, op7);
-		int op8 = table.allocateByte(0x34);
+		int op8 = pool.allocateByte(0x34);
 		assertEquals(op8, op7+1);
 		
 		// check that if a byte is allocated, then a word (which forces even)
 		// that then a word access of byte*256 is reused
-		int op9 = table.allocateWord(0x0200);
+		int op9 = pool.allocateWord(0x0200);
 		assertEquals(two, op9);
 		
-		byte[] bytes = table.getBytes();
+		byte[] bytes = pool.getBytes();
 		assertEquals(op8 + 1, bytes.length);
 		assertEquals(0, bytes[0]);
 		assertEquals(1, bytes[1]);
@@ -102,7 +102,7 @@ public class TestAssemblerConstTable extends BaseTest {
 		realinsts = assembler.fixupJumps(realinsts);
 
 		testGeneratedContent(assembler, realinsts, pcOrInst);
-		byte[] constBytes = assembler.getConstTable().getBytes();
+		byte[] constBytes = assembler.getConstPool().getBytes();
 		assertEquals("table size", consts.length, constBytes.length);
 		for (int x = 0; x < constBytes.length; x++)
 			assertEquals("#"+x, consts[x], constBytes[x]);
