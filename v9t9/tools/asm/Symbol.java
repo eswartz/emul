@@ -80,17 +80,22 @@ public class Symbol {
 		this.addr = addr;
 		this.defined = true;
 	}
+
+	/** Is the real address known for this symbol? */
 	public boolean isDefined() {
 		return defined;
 	}
 
+	/** Is the real address known for this symbol? */
+	public void setDefined(boolean b) {
+		this.defined = b;
+	}
+	
+	
 	public int getAddr() {
 		return addr & 0xffff;
 	}
 
-	public void setDefined(boolean b) {
-		this.defined = b;
-	}
 
 	public void setIndex(int i) {
 		this.index = i;
@@ -103,5 +108,6 @@ public class Symbol {
 	public SymbolTable getTable() {
 		return table;
 	}
+
 	
 }

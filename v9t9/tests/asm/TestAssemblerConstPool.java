@@ -8,7 +8,7 @@ import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ContentEntry;
 import v9t9.tools.asm.transform.ConstPool;
 
-public class TestAssemblerConstTable extends BaseTest {
+public class TestAssemblerConstPool extends BaseTest {
 
 	Assembler assembler = new Assembler();
 	

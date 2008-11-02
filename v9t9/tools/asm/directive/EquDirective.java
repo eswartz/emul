@@ -38,8 +38,6 @@ public class EquDirective extends Directive {
 		if (!(lop instanceof LLImmedOperand))
 			throw new ResolveException(op, "Expected number");
 		
-		op = lop;
-		
 		// reset, in case it changed
 		setPc(lop.getImmediate());
 		

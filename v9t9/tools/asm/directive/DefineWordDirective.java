@@ -49,21 +49,22 @@ public class DefineWordDirective extends Directive {
 		for (ListIterator<AssemblerOperand> iterator = ops.listIterator(); iterator.hasNext();) {
 			AssemblerOperand op = iterator.next();
 			LLOperand lop = op.resolve(assembler, this); 
-			if (lop instanceof LLForwardOperand)
-				;
-			else if (!(lop instanceof LLImmedOperand))
-				throw new ResolveException(op, "Expected number");
-			
-			iterator.set(lop);
+			if (!(lop instanceof LLForwardOperand)) {
+				if (!(lop instanceof LLImmedOperand))
+					throw new ResolveException(op, "Expected number");
+				iterator.set(lop);
+			}
 			assembler.setPc(assembler.getPc() + 2);
 		}
 		return new IInstruction[] { this };
 	}
 	
-	public byte[] getBytes() {
+	public byte[] getBytes() throws ResolveException {
 		byte[] bytes = new byte[ops.size() * 2];
 		int idx = 0;
 		for (Operand op : ops) {
+			if (op instanceof LLForwardOperand)
+				throw new ResolveException(op);
 			LLOperand lop = (LLOperand) op;
 			bytes[idx++] = (byte) (lop.getImmediate() >> 8);
 			bytes[idx++] = (byte) (lop.getImmediate() & 0xff);

@@ -43,7 +43,7 @@ public class AllTests {
 		suite.addTestSuite(TestAssemblerJumpRanges.class);
 		suite.addTestSuite(MachineOperandParserTest.class);
 		suite.addTestSuite(InstructionTest.class);
-		suite.addTestSuite(TestAssemblerConstTable.class);
+		suite.addTestSuite(TestAssemblerConstPool.class);
 		//$JUnit-END$
 		return suite;
 	}

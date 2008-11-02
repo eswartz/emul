@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +49,8 @@ public class Assembler {
     private int pc;
 	private InstructionParser instructionParser = new InstructionParser();
 	private SymbolTable symbolTable;
+	private IdentityHashMap<Symbol, LabelDirective> labelTable;
+	
 	private ArrayList<RawInstruction> insts;
 	//private HashMap<IInstruction, String> instDescrMap;
 	/** Map of raw inst to the asm inst */
@@ -94,6 +98,7 @@ public class Assembler {
     	symbolTable = new SymbolTable();
     	registerPredefinedSymbols();
     	
+    	labelTable = new IdentityHashMap<Symbol, LabelDirective>();
     	errorList = new ArrayList<AssemblerError>();
 	}
 
@@ -129,6 +134,7 @@ public class Assembler {
 	}
 	
 	public boolean assemble() {
+		labelTable.clear();
 		errorList.clear();
 		constPool.clear();
 		
@@ -140,14 +146,15 @@ public class Assembler {
 		if (errorList.size() > 0)
 			return false;
 		
-		optimize(insts);
-		if (errorList.size() >0)
-			return false;
+		insts = resolve(asmInsts);
+		//optimize(insts);
+		//if (errorList.size() >0)
+		//	return false;
 		
 		// fix up any jumps
-		fixupJumps(insts);
-		if (errorList.size() >0)
-			return false;
+		//fixupJumps(insts);
+		//if (errorList.size() >0)
+		//	return false;
 		
 		generateObject(insts);
 		if (errorList.size() >0)
@@ -222,6 +229,7 @@ public class Assembler {
 			// label
 			Symbol label = parseLabel(matcher.group(1));
 			LabelDirective labelDir = new LabelDirective(label);
+			labelTable.put(label, labelDir);
 			asmInsts.add(labelDir);
 			//instDescrMap.put(labelDir, descr);
 			line = matcher.group(2);
@@ -254,7 +262,7 @@ public class Assembler {
 	}
 	public void reportError(Exception e) {
 		errorList.add(new AssemblerError(e, null, 0, null));
-		errlog.println(e.toString());
+		errlog.println(e.getMessage());
 	}
 
 	private Symbol parseLabel(String name) throws ParseException {
@@ -266,12 +274,12 @@ public class Assembler {
 		if (name.charAt(0) == '$') {
 			// redefine if defined before
 			label = symbolTable.findSymbol(name);
-			if (label != null && label.isDefined())
+			if (label != null && labelTable.containsKey(label))
 				label = null;
 		} else { 
 			// see if the label was already defined in this scope
 			label = symbolTable.findSymbolLocal(name);
-			if (label != null && label.isDefined()) {
+			if (label != null && labelTable.containsKey(label)) {
 				reportError(new ParseException("Redefining label: " + name));
 			}
 		}
@@ -279,6 +287,7 @@ public class Assembler {
 		// define a label in this scope otherwise
 		if (label == null)
 			label = symbolTable.createSymbol(name);
+		
 		return label;
 	}
 
@@ -408,7 +417,7 @@ public class Assembler {
 	 */
 	public void optimize(List<IInstruction> insts) {
 		new Simplifier(insts).run();
-			insts = resolve(insts);
+		insts = resolve(insts);
 	}
 	
 	/**

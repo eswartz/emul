@@ -1,6 +1,7 @@
 package v9t9.tests.asm;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -16,6 +17,8 @@ import v9t9.tools.asm.AssemblerOperandParserStage;
 import v9t9.tools.asm.AssemblerTokenizer;
 import v9t9.tools.asm.BaseAssemblerInstruction;
 import v9t9.tools.asm.ContentEntry;
+import v9t9.tools.asm.Equate;
+import v9t9.tools.asm.HLInstruction;
 import v9t9.tools.asm.IInstructionParserStage;
 import v9t9.tools.asm.IOperandParserStage;
 import v9t9.tools.asm.LLInstruction;
@@ -25,6 +28,7 @@ import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.StandardInstructionParserStage;
 import v9t9.tools.asm.Symbol;
 import v9t9.tools.asm.directive.DefineByteDirective;
+import v9t9.tools.asm.directive.DefineWordDirective;
 import v9t9.tools.asm.directive.Directive;
 import v9t9.tools.asm.operand.hl.AddrOperand;
 import v9t9.tools.asm.operand.hl.AssemblerOperand;
@@ -607,12 +611,66 @@ public class TestAssembler extends BaseTest {
 					});
 		
 	}
+
+	public void testAssemblerProgDirectives6() throws Exception {
+		Symbol bufmaskSymbol = new Equate(assembler.getSymbolTable(), "bufmask", 0x20);
+		List<AssemblerOperand> ops = new ArrayList<AssemblerOperand>();
+		ops.add(new UnaryOperand('-',
+				new SymbolOperand(bufmaskSymbol)));
+		BaseAssemblerInstruction dbInst = new DefineByteDirective(ops);
+		BaseAssemblerInstruction dwInst = new DefineWordDirective(ops);
+		List<IInstruction> insts = new ArrayList<IInstruction>();
+		insts.add(dbInst);
+		insts.add(dwInst);
+		insts = assembler.resolve(insts);
+		insts = assembler.resolve(insts);
+		IInstruction resolve = insts.get(0);
+		byte[] bytes = ((Directive) resolve).getBytes();
+		assertEquals(1, bytes.length);
+		assertEquals((byte)0xe0, bytes[0]);
+		
+		resolve = insts.get(1);
+		bytes = ((Directive) resolve).getBytes();
+		assertEquals(2, bytes.length);
+		assertEquals((byte)0xff, bytes[0]);
+		assertEquals((byte)0xe0, bytes[1]);
+
+	}
+
+	public void testAssemblerProgDirectives7() throws Exception {
+		String text =
+			" aorg >100\n"+
+			" li r0,0\n"+
+			" ai r1,0\n"+
+			"h00 equ $\n"+
+			""
+			;
+		
+		
+		testFileContent(text,
+				0x100,
+				new String[] { 
+			},
+				new Symbol[] { 
+					createSymbol("h00", 0x102), 
+					},
+					true);
+
+	}
+	
+	
 	
 	private void testFileContent(String text, int pc, String[] stdInsts, Symbol[] symbols) throws Exception {
+		testFileContent(text, pc, stdInsts, symbols, false);
+	}
+	private void testFileContent(String text, int pc, String[] stdInsts, Symbol[] symbols, boolean optimize) throws Exception {
 		assembler.pushContentEntry(new ContentEntry("main.asm", text));
 		List<IInstruction> asminsts = assembler.parse();
 		List<IInstruction> realinsts = assembler.resolve(asminsts);
-
+		if (optimize) {
+			assembler.optimize(realinsts);
+			realinsts = assembler.fixupJumps(realinsts);
+		}
 		testGeneratedContent(assembler, pc, stdInsts, symbols, realinsts);
 	}
 	

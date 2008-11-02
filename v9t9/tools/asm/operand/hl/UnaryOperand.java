@@ -73,7 +73,7 @@ public class UnaryOperand implements AssemblerOperand {
 		if (!(resOp instanceof LLImmedOperand))
 			throw new ResolveException(op, "Expected an immediate");
 		if (type == '-') {
-			((LLImmedOperand)resOp).setValue(-resOp.getImmediate());
+			resOp = new LLImmedOperand(-resOp.getImmediate());
 		} else {
 			throw new IllegalStateException("Unhandled operator: " + (char)type);
 		}
