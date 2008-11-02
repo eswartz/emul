@@ -21,7 +21,7 @@ public class UnknownRoutine extends Routine {
 	 * @see v9t9.tools.decomp.Routine#isReturn(v9t9.tools.decomp.LLInstruction)
 	 */
 	@Override
-	public boolean isReturn(LLInstruction inst) {
+	public boolean isReturn(HighLevelInstruction inst) {
 		return false;
 	}
 

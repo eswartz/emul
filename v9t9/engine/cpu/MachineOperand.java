@@ -8,7 +8,6 @@ package v9t9.engine.cpu;
 
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.Assembler;
-import v9t9.tools.asm.OutOfRangeException;
 import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.Symbol;
 import v9t9.utils.Check;
@@ -61,6 +60,7 @@ public class MachineOperand implements Operand {
 
     public int cycles = 0;	// memory cycles needed to read
     public Symbol symbol;	// associated symbol
+    public boolean symbolResolved; // false initially; true once a defined symbol is converted to val/immed 
 
     /** 
      * Create an empty operand (to be filled in piecewise)
@@ -111,7 +111,7 @@ public class MachineOperand implements Operand {
     @Override
 	public String toString() {
     	String basic = basicString();
-    	if (symbol != null)
+    	if (symbol != null && !symbolResolved)
     		basic += "{" + symbol +"}";
     	return basic;
     }
@@ -415,24 +415,6 @@ public class MachineOperand implements Operand {
 		return this;
 	}
 
-	public static MachineOperand createImmediate(int i) {
-		MachineOperand op = new MachineOperand(MachineOperand.OP_IMMED);
-		op.immed = (short) (op.val = i);
-		return op;
-	}
-
-	public static MachineOperand createGeneralOperand(int type, short val) {
-		MachineOperand op = new MachineOperand(type);
-		op.val = val;
-		return op;
-	}
-	public static MachineOperand createGeneralOperand(int type, short val, short immed) {
-		MachineOperand op = new MachineOperand(type);
-		op.val = val;
-		op.immed = immed;
-		return op;
-	}
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -478,38 +460,67 @@ public class MachineOperand implements Operand {
 
 	public MachineOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
-		if (symbol != null) {
+		if (symbol != null && !symbolResolved) {
 			if (!symbol.isDefined())
 				throw new ResolveException(this, "Undefined symbol " + symbol);
 			
 			short theVal;
 			if (type == OP_JUMP || type == OP_OFFS_R12) {
 				theVal = (short) (symbol.getAddr() - inst.getPc());
+				/*
+				 * check this later
 				if (theVal < -256 || theVal >= 256)
 					throw new OutOfRangeException(inst, this, symbol, theVal);
+					*/
 				val = theVal + immed;
 				immed = 0;
 			} else {
 				theVal = (short) symbol.getAddr();
 				immed += theVal;
 			}
-			symbol = null;
+			symbolResolved = true;
 		}
 		return this;
+	}
+
+	public static MachineOperand createImmediate(int i) {
+		MachineOperand op = new MachineOperand(MachineOperand.OP_IMMED);
+		op.immed = (short) (op.val = i);
+		return op;
+	}
+
+	public static MachineOperand createGeneralOperand(int type, short val) {
+		MachineOperand op = new MachineOperand(type);
+		op.val = val;
+		return op;
+	}
+
+	public static MachineOperand createGeneralOperand(int type, short val, short immed) {
+		MachineOperand op = new MachineOperand(type);
+		op.val = val;
+		op.immed = immed;
+		return op;
 	}
 
 	public static MachineOperand createSymbolImmediate(Symbol symbol) {
 		MachineOperand op = new MachineOperand(MachineOperand.OP_IMMED);
 		if (symbol.isDefined()) {
 			op.immed = (short) (op.val = symbol.getAddr());
-		} else {
-			op.symbol = symbol;
+			op.symbolResolved = true;
 		}
+		op.symbol = symbol;
 		return op;
 	}
 
-	public static Operand createEmptyOperand() {
+	public static MachineOperand createEmptyOperand() {
 		return new MachineOperand(OP_NONE);
 	}
+
+	public static MachineOperand createJumpNextOperand() {
+		MachineOperand op = new MachineOperand(MachineOperand.OP_JUMP);
+		op.val = 2;
+		return op;
+	}
+
 	
 }

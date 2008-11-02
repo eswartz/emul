@@ -6,8 +6,14 @@ package v9t9.tools.asm;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
+import v9t9.tools.asm.operand.ll.LLAddrOperand;
+import v9t9.tools.asm.operand.ll.LLEmptyOperand;
+import v9t9.tools.asm.operand.ll.LLImmedOperand;
+import v9t9.tools.asm.operand.ll.LLJumpOperand;
+import v9t9.tools.asm.operand.ll.LLRegIncOperand;
+import v9t9.tools.asm.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.operand.ll.LLRegisterOperand;
 import v9t9.tools.llinst.ParseException;
 
 /**
@@ -46,12 +52,12 @@ public class MachineOperandParserStage implements IOperandParserStage {
     	return parse(builder.toString());
     }
 	private Operand parse(String string) throws ParseException {
-		int type = 0;
+		//int type = 0;
 		int val = 0;
 		short immed = 0;
 		
         if (string == null || string.length() == 0) {
-            return new MachineOperand(MachineOperand.OP_NONE);
+            return new LLEmptyOperand();
         }
         Matcher matcher = OPERAND_PATTERN.matcher(string);
         if (matcher.matches()) {
@@ -60,35 +66,37 @@ public class MachineOperandParserStage implements IOperandParserStage {
                 if (matcher.group(1).length() > 0) {
                     if (matcher.group(3) != null && matcher.group(3).length() > 0) {
                         // *R0+
-                        type = MachineOperand.OP_INC;
+                    	return new LLRegIncOperand(val);
                     } else {
                         // *R0
-                        type = MachineOperand.OP_IND;
+                    	return new LLRegIndOperand(val, 0);
                     }
                 } else {
                     // R9
-                    type = MachineOperand.OP_REG;
                     if (matcher.group(3) != null && matcher.group(3).length() != 0) {
                     	throw new ParseException("Illegal register operand: " + string);
                     }
+                    return new LLRegisterOperand(val);
                 }
             } else if (matcher.group(4) != null) {
                 immed = parseImmed(matcher.group(4));
-                type = MachineOperand.OP_ADDR;
+                //type = LLOperand.OP_ADDR;
                 if (matcher.group(5) != null && matcher.group(5).length() > 0) {
                     // @>4(r5)
                     val = Integer.parseInt(matcher.group(6));
                     if (val == 0) {
                     	throw new ParseException("Illegal index register (0): " + string);
                     }
+                    return new LLRegIndOperand(val, immed);
                 } else {
                     // @>5
-                    val = 0;
+                    return new LLAddrOperand(null, immed);
                 }
             } else {
                 // immed
-                type = MachineOperand.OP_IMMED;
-                val = immed = parseImmed(matcher.group(7));
+                //type = LLOperand.OP_IMMED;
+                /*val =*/ immed = parseImmed(matcher.group(7));
+                return new LLImmedOperand(immed);
             }
         } else {
         	matcher = JUMP_PATTERN.matcher(string);
@@ -99,18 +107,21 @@ public class MachineOperandParserStage implements IOperandParserStage {
 	        		if (matcher.group(1) != null && matcher.group(1).equals("-"))
 	        			op = -op;
         		}
-        		type = MachineOperand.OP_JUMP;
+        		//type = LLOperand.OP_JUMP;
         		val = op;
+        		return new LLJumpOperand(null, val);
         	} else {
         		return null;
         	}
         }
         
-        MachineOperand operand = new MachineOperand(type);
+        /*
+        LLOperand operand = new LLOperand(type);
         operand.val = val;
         operand.immed = immed;
         
         return operand;
+        */
 	}
 	
     private short parseImmed(String string) {

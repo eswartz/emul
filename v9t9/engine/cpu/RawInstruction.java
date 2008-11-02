@@ -1,11 +1,14 @@
 package v9t9.engine.cpu;
 
-import v9t9.tools.asm.Assembler;
-import v9t9.tools.asm.ResolveException;
-import v9t9.tools.asm.directive.LabelDirective;
-import v9t9.tools.llinst.LabelOperand;
-
-public class RawInstruction implements IInstruction, Comparable<RawInstruction> {
+import static v9t9.engine.cpu.InstructionTable.Iab;
+import static v9t9.engine.cpu.InstructionTable.Icb;
+import static v9t9.engine.cpu.InstructionTable.Imovb;
+import static v9t9.engine.cpu.InstructionTable.Isb;
+import static v9t9.engine.cpu.InstructionTable.Isocb;
+import static v9t9.engine.cpu.InstructionTable.Iszcb;
+import v9t9.tools.asm.BaseInstruction;
+import v9t9.utils.Utils;
+public class RawInstruction extends BaseInstruction implements Comparable<RawInstruction> {
 
 	public String name;
 	public int pc;
@@ -31,8 +34,11 @@ public class RawInstruction implements IInstruction, Comparable<RawInstruction> 
 	}
 
 	public String toString() {
-	    StringBuffer buffer = new StringBuffer();
-	    buffer.append(name);
+	    StringBuilder buffer = new StringBuilder();
+	    if (name != null)
+	    	buffer.append(name);
+	    else
+	    	buffer.append(InstructionTable.getInstName(inst));
 	    String opstring;
 	    opstring = op1.toString();
 	    if (opstring != null) {
@@ -101,8 +107,10 @@ public class RawInstruction implements IInstruction, Comparable<RawInstruction> 
 		return inst >= InstructionTable.Ijmp && inst <= InstructionTable.Ijop;
 	}
 
-	public IInstruction[] resolve(Assembler assembler, IInstruction previous, boolean finalPass)
-		throws ResolveException {
+	
+	//public IInstruction[] resolve(Assembler assembler, IInstruction previous, boolean finalPass)
+		//throws ResolveException {
+		/*
 		int pc = assembler.getPc();
 		
 		// instructions and associated labels are bumped when following uneven data
@@ -133,7 +141,9 @@ public class RawInstruction implements IInstruction, Comparable<RawInstruction> 
 		
 		assembler.setPc((short) (target.pc + target.size));
 		return new RawInstruction[] { target };
-	}
+		*/
+	//	return new RawInstruction[] { this };
+	//}
 	
 	public int compareTo(RawInstruction o) {
 	    	return pc - o.pc;
@@ -142,14 +152,14 @@ public class RawInstruction implements IInstruction, Comparable<RawInstruction> 
 	public int getPc() {
 		return pc;
 	}
-	
-	public byte[] getBytes() {
-		short[] words = InstructionTable.encode(this);
-		byte[] bytes = new byte[words.length * 2];
-		for (int idx = 0; idx < words.length; idx++) {
-			bytes[idx*2] = (byte) (words[idx] >> 8);
-			bytes[idx*2+1] = (byte) (words[idx] & 0xff);
-		}
-		return bytes;
+
+	public String toInfoString() {
+		return ">" + Utils.toHex4(pc) + " " + toString() + " @" + size;
 	}
+	
+	public boolean isByteOp() {
+		return inst == Isocb || inst == Icb || inst == Iab 
+		|| inst == Isb || inst == Iszcb || inst == Imovb;
+	}
+	
 }

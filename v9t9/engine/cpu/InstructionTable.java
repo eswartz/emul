@@ -370,6 +370,7 @@ public class InstructionTable {
 	public static final int Idbg = 74;
 	public static final int Idbgf = 75;
 	public static final int Ibyte = 76;
+	public static final int Idelete = 77;	// noop
 	public static Map<String, Integer> nameToInst = new HashMap<String, Integer>();
 	public static Map<Integer, String> instToName = new HashMap<Integer, String>();
 	static { registerInstruction(InstructionTable.Idata, "data"); }
@@ -525,23 +526,23 @@ public class InstructionTable {
             mop2.type = MachineOperand.OP_IMMED;
             switch ((op & 0x1e0) >> 5) {
             case 0:
-                inst.name = "LI";
+                //inst.name = "LI";
                 inst.inst = InstructionTable.Ili;
                 break;
             case 1:
-                inst.name = "AI";
+                //inst.name = "AI";
                 inst.inst = InstructionTable.Iai;
                 break;
             case 2:
-                inst.name = "ANDI";
+                //inst.name = "ANDI";
                 inst.inst = InstructionTable.Iandi;
                 break;
             case 3:
-                inst.name = "ORI";
+                //inst.name = "ORI";
                 inst.inst = InstructionTable.Iori;
                 break;
             case 4:
-                inst.name = "CI";
+                //inst.name = "CI";
                 inst.inst = InstructionTable.Ici;
                 break;
             }
@@ -551,11 +552,11 @@ public class InstructionTable {
             mop1.val = op & 15;
             switch ((op & 0x1e0) >> 5) {
             case 5:
-                inst.name = "STWP";
+                //inst.name = "STWP";
                 inst.inst = InstructionTable.Istwp;
                 break;
             case 6:
-                inst.name = "STST";
+                //inst.name = "STST";
                 inst.inst = InstructionTable.Istst;
                 break;
             }
@@ -565,11 +566,11 @@ public class InstructionTable {
     
             switch ((op & 0x1e0) >> 5) {
             case 7:
-                inst.name = "LWPI";
+                //inst.name = "LWPI";
                 inst.inst = InstructionTable.Ilwpi;
                 break;
             case 8:
-                inst.name = "LIMI";
+                //inst.name = "LIMI";
                 inst.inst = InstructionTable.Ilimi;
                 break;
             }
@@ -577,27 +578,27 @@ public class InstructionTable {
         } else if (op < 0x400) {
             switch ((op & 0x1e0) >> 5) {
             case 10:
-                inst.name = "IDLE";
+                //inst.name = "IDLE";
                 inst.inst = InstructionTable.Iidle;
                 break;
             case 11:
-                inst.name = "RSET";
+                //inst.name = "RSET";
                 inst.inst = InstructionTable.Irset;
                 break;
             case 12:
-                inst.name = "RTWP";
+                //inst.name = "RTWP";
                 inst.inst = InstructionTable.Irtwp;
                 break;
             case 13:
-                inst.name = "CKON";
+                //inst.name = "CKON";
                 inst.inst = InstructionTable.Ickon;
                 break;
             case 14:
-                inst.name = "CKOF";
+                //inst.name = "CKOF";
                 inst.inst = InstructionTable.Ickof;
                 break;
             case 15:
-                inst.name = "LREX";
+                //inst.name = "LREX";
                 inst.inst = InstructionTable.Ilrex;
                 break;
             }
@@ -608,59 +609,59 @@ public class InstructionTable {
     
             switch ((op & 0x3c0) >> 6) {
             case 0:
-                inst.name = "BLWP";
+                //inst.name = "BLWP";
                 inst.inst = InstructionTable.Iblwp;
                 break;
             case 1:
-                inst.name = "B";
+                //inst.name = "B";
                 inst.inst = InstructionTable.Ib;
                 break;
             case 2:
-                inst.name = "X";
+                //inst.name = "X";
                 inst.inst = InstructionTable.Ix;
                 break;
             case 3:
-                inst.name = "CLR";
+                //inst.name = "CLR";
                 inst.inst = InstructionTable.Iclr;
                 break;
             case 4:
-                inst.name = "NEG";
+                //inst.name = "NEG";
                 inst.inst = InstructionTable.Ineg;
                 break;
             case 5:
-                inst.name = "INV";
+                //inst.name = "INV";
                 inst.inst = InstructionTable.Iinv;
                 break;
             case 6:
-                inst.name = "INC";
+                //inst.name = "INC";
                 inst.inst = InstructionTable.Iinc;
                 break;
             case 7:
-                inst.name = "INCT";
+                //inst.name = "INCT";
                 inst.inst = InstructionTable.Iinct;
                 break;
             case 8:
-                inst.name = "DEC";
+                //inst.name = "DEC";
                 inst.inst = InstructionTable.Idec;
                 break;
             case 9:
-                inst.name = "DECT";
+                //inst.name = "DECT";
                 inst.inst = InstructionTable.Idect;
                 break;
             case 10:
-                inst.name = "BL";
+                //inst.name = "BL";
                 inst.inst = InstructionTable.Ibl;
                 break;
             case 11:
-                inst.name = "SWPB";
+                //inst.name = "SWPB";
                 inst.inst = InstructionTable.Iswpb;
                 break;
             case 12:
-                inst.name = "SETO";
+                //inst.name = "SETO";
                 inst.inst = InstructionTable.Iseto;
                 break;
             case 13:
-                inst.name = "ABS";
+                //inst.name = "ABS";
                 inst.inst = InstructionTable.Iabs;
                 break;
             }
@@ -673,19 +674,19 @@ public class InstructionTable {
     
             switch ((op & 0x700) >> 8) {
             case 0:
-                inst.name = "SRA";
+                //inst.name = "SRA";
                 inst.inst = InstructionTable.Isra;
                 break;
             case 1:
-                inst.name = "SRL";
+                //inst.name = "SRL";
                 inst.inst = InstructionTable.Isrl;
                 break;
             case 2:
-                inst.name = "SLA";
+                //inst.name = "SLA";
                 inst.inst = InstructionTable.Isla;
                 break;
             case 3:
-                inst.name = "SRC";
+                //inst.name = "SRC";
                 inst.inst = InstructionTable.Isrc;
                 break;
             }
@@ -707,67 +708,67 @@ public class InstructionTable {
     
             switch ((op & 0xf00) >> 8) {
             case 0:
-                inst.name = "JMP";
+                //inst.name = "JMP";
                 inst.inst = InstructionTable.Ijmp;
                 break;
             case 1:
-                inst.name = "JLT";
+                //inst.name = "JLT";
                 inst.inst = InstructionTable.Ijlt;
                 break;
             case 2:
-                inst.name = "JLE";
+                //inst.name = "JLE";
                 inst.inst = InstructionTable.Ijle;
                 break;
             case 3:
-                inst.name = "JEQ";
+                //inst.name = "JEQ";
                 inst.inst = InstructionTable.Ijeq;
                 break;
             case 4:
-                inst.name = "JHE";
+                //inst.name = "JHE";
                 inst.inst = InstructionTable.Ijhe;
                 break;
             case 5:
-                inst.name = "JGT";
+                //inst.name = "JGT";
                 inst.inst = InstructionTable.Ijgt;
                 break;
             case 6:
-                inst.name = "JNE";
+                //inst.name = "JNE";
                 inst.inst = InstructionTable.Ijne;
                 break;
             case 7:
-                inst.name = "JNC";
+                //inst.name = "JNC";
                 inst.inst = InstructionTable.Ijnc;
                 break;
             case 8:
-                inst.name = "JOC";
+                //inst.name = "JOC";
                 inst.inst = InstructionTable.Ijoc;
                 break;
             case 9:
-                inst.name = "JNO";
+                //inst.name = "JNO";
                 inst.inst = InstructionTable.Ijno;
                 break;
             case 10:
-                inst.name = "JL";
+                //inst.name = "JL";
                 inst.inst = InstructionTable.Ijl;
                 break;
             case 11:
-                inst.name = "JH";
+                //inst.name = "JH";
                 inst.inst = InstructionTable.Ijh;
                 break;
             case 12:
-                inst.name = "JOP";
+                //inst.name = "JOP";
                 inst.inst = InstructionTable.Ijop;
                 break;
             case 13:
-                inst.name = "SBO";
+                //inst.name = "SBO";
                 inst.inst = InstructionTable.Isbo;
                 break;
             case 14:
-                inst.name = "SBZ";
+                //inst.name = "SBZ";
                 inst.inst = InstructionTable.Isbz;
                 break;
             case 15:
-                inst.name = "TB";
+                //inst.name = "TB";
                 inst.inst = InstructionTable.Itb;
                 break;
             }
@@ -780,27 +781,27 @@ public class InstructionTable {
     
             switch ((op & 0x1c00) >> 10) {
             case 0:
-                inst.name = "COC";
+                //inst.name = "COC";
                 inst.inst = InstructionTable.Icoc;
                 break;
             case 1:
-                inst.name = "CZC";
+                //inst.name = "CZC";
                 inst.inst = InstructionTable.Iczc;
                 break;
             case 2:
-                inst.name = "XOR";
+                //inst.name = "XOR";
                 inst.inst = InstructionTable.Ixor;
                 break;
             case 3:
-                inst.name = "XOP";
+                //inst.name = "XOP";
                 inst.inst = InstructionTable.Ixop;
                 break;
             case 6:
-                inst.name = "MPY";
+                //inst.name = "MPY";
                 inst.inst = InstructionTable.Impy;
                 break;
             case 7:
-                inst.name = "DIV";
+                //inst.name = "DIV";
                 inst.inst = InstructionTable.Idiv;
                 break;
             }
@@ -812,10 +813,10 @@ public class InstructionTable {
             mop2.val = (op & 0x3c0) >> 6;
     
             if (op < 0x3400) {
-                inst.name = "LDCR";
+                //inst.name = "LDCR";
                 inst.inst = InstructionTable.Ildcr;
             } else {
-                inst.name = "STCR";
+                //inst.name = "STCR";
                 inst.inst = InstructionTable.Istcr;
             }
     
@@ -827,61 +828,61 @@ public class InstructionTable {
     
             switch ((op & 0xf000) >> 12) {
             case 4:
-                inst.name = "SZC";
+                //inst.name = "SZC";
                 inst.inst = InstructionTable.Iszc;
                 break;
             case 5:
-                inst.name = "SZCB";
+                //inst.name = "SZCB";
                 inst.inst = InstructionTable.Iszcb;
                 break;
             case 6:
-                inst.name = "S";
+                //inst.name = "S";
                 inst.inst = InstructionTable.Is;
                 break;
             case 7:
-                inst.name = "SB";
+                //inst.name = "SB";
                 inst.inst = InstructionTable.Isb;
                 break;
             case 8:
-                inst.name = "C";
+                //inst.name = "C";
                 inst.inst = InstructionTable.Ic;
                 break;
             case 9:
-                inst.name = "CB";
+                //inst.name = "CB";
                 inst.inst = InstructionTable.Icb;
                 break;
             case 10:
-                inst.name = "A";
+                //inst.name = "A";
                 inst.inst = InstructionTable.Ia;
                 break;
             case 11:
-                inst.name = "AB";
+                //inst.name = "AB";
                 inst.inst = InstructionTable.Iab;
                 break;
             case 12:
-                inst.name = "MOV";
+                //inst.name = "MOV";
                 inst.inst = InstructionTable.Imov;
                 break;
             case 13:
-                inst.name = "MOVB";
+                //inst.name = "MOVB";
                 inst.inst = InstructionTable.Imovb;
                 break;
             case 14:
-                inst.name = "SOC";
+                //inst.name = "SOC";
                 inst.inst = InstructionTable.Isoc;
                 break;
             case 15:
-                inst.name = "SOCB";
+                //inst.name = "SOCB";
                 inst.inst = InstructionTable.Isocb;
                 break;
             }
         }
     
-        if (inst.name == null) // data
+        if (inst.inst == 0) // data
         {
             mop1.type = MachineOperand.OP_IMMED;
             mop1.val = mop1.immed = (short) op;
-            inst.name = "DATA";
+            //inst.name = "DATA";
             inst.size = 2;
         } else {
         	// inst.completeInstruction(pc);
@@ -918,7 +919,7 @@ public class InstructionTable {
     }
 	public static RawInstruction createDataInstruction(short immed) {
 		RawInstruction inst = new RawInstruction();
-		inst.name = "DATA";
+		//inst.name = "DATA";
 		inst.inst = Idata;
 		inst.opcode = immed;
 		inst.op1 = MachineOperand.createImmediate(immed);
@@ -929,12 +930,13 @@ public class InstructionTable {
 	public static RawInstruction createDataInstruction(MachineOperand mop) {
 		RawInstruction inst = createDataInstruction(mop.immed);
 		((MachineOperand)inst.op1).symbol = mop.symbol;
+		((MachineOperand)inst.op1).symbolResolved = mop.symbolResolved;
 		return inst;
 	}
 	
 	public static RawInstruction createByteInstruction(short immed) {
 		RawInstruction inst = new RawInstruction();
-		inst.name = "BYTE";
+		//inst.name = "BYTE";
 		inst.inst = Ibyte;
 		inst.opcode = immed;
 		inst.op1 = MachineOperand.createImmediate(immed);
@@ -945,6 +947,7 @@ public class InstructionTable {
 	public static RawInstruction createByteInstruction(MachineOperand mop) {
 		RawInstruction inst = createByteInstruction(mop.immed);
 		((MachineOperand)inst.op1).symbol = mop.symbol;
+		((MachineOperand)inst.op1).symbolResolved = mop.symbolResolved;
 		return inst;
 	}
 }

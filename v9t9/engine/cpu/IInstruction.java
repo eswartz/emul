@@ -12,10 +12,12 @@ import v9t9.tools.asm.ResolveException;
  */
 public interface IInstruction {
 
-	IInstruction[] resolve(Assembler assembler, IInstruction previous, boolean finalPass) throws ResolveException;
-
 	int getPc();
+
+	String toInfoString();
+
+	boolean isByteOp();
 	
 	/** Get the bytes of a resolved instruction */
-	byte[] getBytes();
+	//byte[] getBytes();
 }

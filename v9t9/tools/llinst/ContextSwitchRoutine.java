@@ -17,7 +17,7 @@ public class ContextSwitchRoutine extends Routine {
     }
 
     @Override
-    public boolean isReturn(LLInstruction inst) {
+    public boolean isReturn(HighLevelInstruction inst) {
         return inst.inst == InstructionTable.Irtwp;
     }
 
@@ -30,7 +30,7 @@ public class ContextSwitchRoutine extends Routine {
     	int entryDataBytes = 0;
     	
     	for (Block block : getEntries()) {
-    		LLInstruction inst = block.getFirst();
+    		HighLevelInstruction inst = block.getFirst();
     		entryDataBytes = 0;
 	        while (inst != null && !inst.isCall()) {
 	        	// look for uses of parameter words; ignore any branching
@@ -38,7 +38,7 @@ public class ContextSwitchRoutine extends Routine {
 	                MachineOperand mop1 = (MachineOperand) inst.op1;
 	                if (mop1.isMemory() && mop1.type == MachineOperand.OP_INC 
 	                        && mop1.val == 14) {
-	                	if ((inst.flags & LLInstruction.fByteOp) != 0) {
+	                	if ((inst.flags & HighLevelInstruction.fByteOp) != 0) {
 	                		entryDataBytes++;
 	                	} else {
 	                		entryDataBytes += 2;

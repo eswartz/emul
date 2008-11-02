@@ -6,20 +6,22 @@ package v9t9.tools.asm.directive;
 import java.util.List;
 
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
+import v9t9.tools.asm.Symbol;
+import v9t9.tools.asm.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.operand.ll.LLImmedOperand;
+import v9t9.tools.asm.operand.ll.LLOperand;
 
 /**
  * @author Ed
  *
  */
-public class EquDirective extends AssemblerDirective {
+public class EquDirective extends Directive {
 
-	private Operand op;
+	private AssemblerOperand op;
 
-	public EquDirective(List<Operand> ops) {
+	public EquDirective(List<AssemblerOperand> ops) {
 		this.op = ops.get(0);
 	}
 	
@@ -32,17 +34,20 @@ public class EquDirective extends AssemblerDirective {
 		// establish initial PC, for "equ $"
 		setPc(assembler.getPc());
 		
-		MachineOperand mop = op.resolve(assembler, this); 
-		if (mop.type != MachineOperand.OP_IMMED)
+		LLOperand lop = op.resolve(assembler, this); 
+		if (!(lop instanceof LLImmedOperand))
 			throw new ResolveException(op, "Expected number");
 		
-		op = mop;
+		op = lop;
 		
 		// reset, in case it changed
-		setPc(mop.immed);
+		setPc(lop.getImmediate());
 		
 		if (previous != null && previous instanceof LabelDirective) {
-			((LabelDirective) previous).setPc(mop.immed);
+			LabelDirective label = (LabelDirective) previous;
+			Symbol symbol = label.getSymbol();
+			label.setPc(lop.getImmediate());
+			symbol.setDefined(true);
 		}
 		return new IInstruction[] { this };
 	}

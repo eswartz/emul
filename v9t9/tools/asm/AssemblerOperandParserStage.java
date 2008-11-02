@@ -3,17 +3,18 @@
  */
 package v9t9.tools.asm;
 
-import v9t9.engine.cpu.AssemblerOperand;
-import v9t9.tools.asm.operand.AddrOperand;
-import v9t9.tools.asm.operand.BinaryOperand;
-import v9t9.tools.asm.operand.NumberOperand;
-import v9t9.tools.asm.operand.PcRelativeOperand;
-import v9t9.tools.asm.operand.RegIncOperand;
-import v9t9.tools.asm.operand.RegIndOperand;
-import v9t9.tools.asm.operand.RegOffsOperand;
-import v9t9.tools.asm.operand.StringOperand;
-import v9t9.tools.asm.operand.SymbolOperand;
-import v9t9.tools.asm.operand.UnaryOperand;
+import v9t9.tools.asm.operand.hl.AddrOperand;
+import v9t9.tools.asm.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.operand.hl.BinaryOperand;
+import v9t9.tools.asm.operand.hl.ConstOperand;
+import v9t9.tools.asm.operand.hl.NumberOperand;
+import v9t9.tools.asm.operand.hl.PcRelativeOperand;
+import v9t9.tools.asm.operand.hl.RegIncOperand;
+import v9t9.tools.asm.operand.hl.RegIndOperand;
+import v9t9.tools.asm.operand.hl.RegOffsOperand;
+import v9t9.tools.asm.operand.hl.StringOperand;
+import v9t9.tools.asm.operand.hl.SymbolOperand;
+import v9t9.tools.asm.operand.hl.UnaryOperand;
 import v9t9.tools.llinst.ParseException;
 
 /**
@@ -97,7 +98,13 @@ public class AssemblerOperandParserStage implements IOperandParserStage {
 		case '@':
 			return parseAddr();
 		case '$':
-			return new PcRelativeOperand();
+			// either expr like "$ + foo" or "$ 2 +"
+			return parseJumpTarget();
+		case '#': {
+			// const table
+			AssemblerOperand op = parseFactor();
+			return new ConstOperand(op);
+		}
 		case '(': {
 			AssemblerOperand op = parseExpr();
 			t = tokenizer.nextToken();
@@ -129,6 +136,29 @@ public class AssemblerOperandParserStage implements IOperandParserStage {
 			throw new ParseException("Unexpected end of line");
 		}
 		throw new ParseException("Unknown token: " + tokenizer.currentToken());
+	}
+
+	private AssemblerOperand parseJumpTarget() throws ParseException {
+		int t = tokenizer.nextToken();
+		if (t == AssemblerTokenizer.NUMBER) {
+			String target = tokenizer.currentToken();
+			Symbol symbol;
+			t = tokenizer.nextToken();
+			String labelName = "$" + target;
+			if (t == '+') {
+				// forward ref: don't use current one
+				symbol = assembler.getSymbolTable().createSymbol(labelName);
+			} else {
+				// back ref: use previous one
+				symbol = assembler.getSymbolTable().findSymbol(labelName);
+				if (symbol == null)
+					throw new ParseException("No previous label " + labelName);
+			}
+			return new SymbolOperand(symbol);
+		} else {
+			tokenizer.pushBack();
+			return new PcRelativeOperand();
+		}
 	}
 
 	private AssemblerOperand parseRegIndInc() throws ParseException {

@@ -15,12 +15,15 @@ public class Symbol {
 	private int addr;
 	private boolean defined;
 	private int index;
+	private final SymbolTable table;
 
-	public Symbol(String name) {
+	public Symbol(SymbolTable table, String name) {
+		this.table = table;
 		this.name = name;
 	}
 
-	public Symbol(String name, int addr) {
+	public Symbol(SymbolTable table, String name, int addr) {
+		this.table = table;
 		this.name = name;
 		this.addr = addr;
 		this.defined = true;
@@ -39,7 +42,8 @@ public class Symbol {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = (prime * result + ((name == null) ? 0 : name.hashCode()))
+			* prime + (table == null ? 0 : table.hashCode());
 		return result;
 	}
 
@@ -60,6 +64,13 @@ public class Symbol {
 				return false;
 			}
 		} else if (!name.equals(other.name)) {
+			return false;
+		}
+		if (table == null) {
+			if (other.table != null) {
+				return false;
+			}
+		} else if (!table.equals(other.table)) {
 			return false;
 		}
 		return true;
@@ -89,5 +100,8 @@ public class Symbol {
 		return index;
 	}
 	
+	public SymbolTable getTable() {
+		return table;
+	}
 	
 }

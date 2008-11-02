@@ -1,0 +1,88 @@
+package v9t9.tests.asm;
+
+import java.util.List;
+
+import v9t9.engine.cpu.IInstruction;
+import v9t9.tests.BaseTest;
+import v9t9.tools.asm.Assembler;
+import v9t9.tools.asm.ContentEntry;
+import v9t9.tools.asm.Symbol;
+
+public class TestAssemblerOptimizer extends BaseTest {
+
+	Assembler assembler = new Assembler();
+	
+
+	public void testAssemblerOptimizerSimplifier() throws Exception {
+		String text =
+			" aorg >100\n"+
+			" li R0, 44\n"+
+			" li R1, 0\n"+
+			" li R2, -1\n"+
+			" ai r4, 1\n"+
+			" ai r5, 2\n"+
+			" ai r6, -1\n"+
+			" ai r7, -2\n"+
+			"";
+		
+		testFileContent(text,
+				0x100,
+				new String[] { "li r0,44",
+				"clr r1",
+				"seto r2",
+				"inc r4",
+				"inct r5",
+				"dec r6",
+				"dect r7",
+				},
+				new Symbol[] {  });
+		
+	}
+	
+	public void testAssemblerOptimizerSimplifier2() throws Exception {
+		String text =
+			" aorg >100\n"+
+			" mov @>2(R1), @>0(R1)\n"+
+			" a @>0(R0), *R5+\n"+
+			" mov @>0(R1), @>0(R1)\n"+
+			"";
+		
+		testFileContent(text,
+				0x100,
+				new String[] { "mov @2(R1), *R1",
+				"a *R0, *R5+",
+				"mov *R1,*R1"},
+				new Symbol[] {  });
+		
+	}
+	
+	public void testAssemblerOptimizerPeepholer() throws Exception {
+		String text =
+			" aorg >100\n"+
+			" inc r1\n"+
+			" ai R0, 0\n"+
+			" inc r2\n"+
+			"";
+		
+		testFileContent(text,
+				0x100,
+				new String[] {
+				"inc r1",
+				"inc r2",
+				},
+				new Symbol[] {  });
+		
+	}
+	
+	private void testFileContent(String text, int pc, String[] stdInsts, Symbol[] symbols) throws Exception {
+		String caller = new Exception().fillInStackTrace().getStackTrace()[1].getMethodName();
+		assembler.pushContentEntry(new ContentEntry(caller + ".asm", text));
+		List<IInstruction> asminsts = assembler.parse();
+		List<IInstruction> realinsts = assembler.resolve(asminsts);
+		assembler.optimize(realinsts);
+
+		testGeneratedContent(assembler, pc, stdInsts, symbols, realinsts);
+	}
+
+	
+}

@@ -21,10 +21,10 @@ public class Block implements Comparable<Block> {
 	private int id;
 	
     /** first instruction in block; only one block holds this fist */
-    private LLInstruction first;
+    private HighLevelInstruction first;
     /** last instruction in block; only one block holds this last,
      * but may be <code>null</code> for unresolved block */
-    private LLInstruction last;
+    private HighLevelInstruction last;
     
     public List<Block> succ;
     public List<Block> pred;
@@ -38,7 +38,7 @@ public class Block implements Comparable<Block> {
      * Create a block starting at the given inst
      * @param inst
      */
-    public Block(LLInstruction inst) {
+    public Block(HighLevelInstruction inst) {
     	Check.checkArg(inst.getBlock() == null);
     	this.id = nextId++;
         succ = new ArrayList<Block>(2);
@@ -48,7 +48,7 @@ public class Block implements Comparable<Block> {
         this.first.setBlock(this);
     }
 
-    public Block(LLInstruction first, LLInstruction last) {
+    public Block(HighLevelInstruction first, HighLevelInstruction last) {
     	this(first);
     	setLast(last);
 	}
@@ -93,8 +93,8 @@ public class Block implements Comparable<Block> {
         return false;
     }
 
-    class BlockInstIterator implements Iterator<LLInstruction> {
-        private LLInstruction inst;
+    class BlockInstIterator implements Iterator<HighLevelInstruction> {
+        private HighLevelInstruction inst;
 
         BlockInstIterator() {
             this.inst = getFirst();
@@ -103,8 +103,8 @@ public class Block implements Comparable<Block> {
             return inst != null && last != null && last.getNext() != inst;
         }
 
-        public LLInstruction next() {
-            LLInstruction next = inst;
+        public HighLevelInstruction next() {
+            HighLevelInstruction next = inst;
             if (inst == last || last == null)
             	inst = null;
             else
@@ -118,12 +118,12 @@ public class Block implements Comparable<Block> {
         
     }
     
-    public Iterator<LLInstruction> iterator() {
+    public Iterator<HighLevelInstruction> iterator() {
         return new BlockInstIterator();
     }
 
     public int size() {
-    	LLInstruction inst = first;
+    	HighLevelInstruction inst = first;
     	int size = 0;
     	while (inst != null) {
     		size++;
@@ -133,19 +133,19 @@ public class Block implements Comparable<Block> {
     }
     
 
-    public LLInstruction get(int index) {
-    	LLInstruction inst = first;
+    public HighLevelInstruction get(int index) {
+    	HighLevelInstruction inst = first;
     	while (index-- > 0) {
     		inst = inst.getNext();
     	}
         return inst; 
     }
     
-	public LLInstruction getFirst() {
+	public HighLevelInstruction getFirst() {
 		return first;
 	}
 
-	public void setLast(LLInstruction last) {
+	public void setLast(HighLevelInstruction last) {
 		
 		if (last != null) {
 			Check.checkArg(last.getBlock() == null || last.getBlock() == this);
@@ -156,7 +156,7 @@ public class Block implements Comparable<Block> {
 			// make all the insts from first to last use this block;
 			// remember if we passed over the old last (i.e. extending a block)
 			// because if we didn't, those insts need to be lost
-			LLInstruction inst = this.first;
+			HighLevelInstruction inst = this.first;
 			while (inst != null) {
 				inst.setBlock(this);
 				if (inst == this.last) {
@@ -188,7 +188,7 @@ public class Block implements Comparable<Block> {
 			}
 		} else {
 			// clear block for from first.next to current last
-			LLInstruction inst = first.getNext();
+			HighLevelInstruction inst = first.getNext();
 			while (inst != null) {
 				inst.setBlock(null);
 				if (inst == this.last) {
@@ -201,14 +201,14 @@ public class Block implements Comparable<Block> {
 		this.last = last;
 	}
 
-	public LLInstruction getLast() {
+	public HighLevelInstruction getLast() {
 		return last;
 	}
 
-	public Block split(LLInstruction first) {
+	public Block split(HighLevelInstruction first) {
 		if (first == this.first)
 			return this;
-		LLInstruction oldLast = this.last;
+		HighLevelInstruction oldLast = this.last;
 		Check.checkArg(oldLast);	// can't split unbounded block
 		first.setBlock(null);
 		setLast(first.getPrev());
@@ -299,8 +299,8 @@ public class Block implements Comparable<Block> {
 
 	public Set<Integer> getSpannedPcs() {
 		Set<Integer> pcSet = new TreeSet<Integer>();
-		for (Iterator<LLInstruction> iter = iterator(); iter.hasNext(); ) {
-			LLInstruction inst = iter.next();
+		for (Iterator<HighLevelInstruction> iter = iterator(); iter.hasNext(); ) {
+			HighLevelInstruction inst = iter.next();
 			for (int size = inst.size - 2; size >= 0; size -= 2)
 				pcSet.add((inst.pc + size) & 0xffff);
 		}

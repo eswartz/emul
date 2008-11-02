@@ -4,6 +4,8 @@
 package v9t9.tools.asm;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import v9t9.tools.llinst.ParseException;
 
@@ -18,6 +20,7 @@ public class AssemblerTokenizer {
 	private int number;
 	private boolean pushedBack;
 	private TokenReader reader;
+	private List<ITokenListener> listeners;
 
 	public static final int EOF = 0;
 	public static final int NUMBER = 1;
@@ -46,6 +49,7 @@ public class AssemblerTokenizer {
 	}
 	
 	private int parseToken() throws IOException, ParseException {
+		int startPos = reader.getPos();
 		int ch = reader.read();
 		
 		while (ch != -1) {
@@ -60,49 +64,54 @@ public class AssemblerTokenizer {
 		
 		image = "";
 		number = 0;
+		int imagePos = reader.getPos();
 		
-		if (ch >= '0' && ch <= '9') {
-			do {
-				image += (char) ch;
-				ch = reader.read();
-			} while (ch != -1 && ch >= '0' && ch <= '9');
-			if (ch != -1) reader.unread();
-			number = Integer.parseInt(image);
-			return NUMBER;
-		} else if (ch == '>') {
-			do {
-				image += (char)ch;
-				ch = reader.read();
-				if (ch >= '0' && ch <= '9')
-					number = (number << 4) | (ch - '0');
-				else if (ch >= 'A' && ch <= 'F')
-					number = (number << 4) | (ch - 'A' + 10);
-				else if (ch >= 'a' && ch <= 'f')
-					number = (number << 4) | (ch - 'a' + 10);
-				else {
-					break;
+		try {
+			if (ch >= '0' && ch <= '9') {
+				do {
+					image += (char) ch;
+					ch = reader.read();
+				} while (ch != -1 && ch >= '0' && ch <= '9');
+				if (ch != -1) reader.unread();
+				number = Integer.parseInt(image);
+				return NUMBER;
+			} else if (ch == '>') {
+				do {
+					image += (char)ch;
+					ch = reader.read();
+					if (ch >= '0' && ch <= '9')
+						number = (number << 4) | (ch - '0');
+					else if (ch >= 'A' && ch <= 'F')
+						number = (number << 4) | (ch - 'A' + 10);
+					else if (ch >= 'a' && ch <= 'f')
+						number = (number << 4) | (ch - 'a' + 10);
+					else {
+						break;
+					}
+				} while (ch != -1);
+				if (ch != -1) reader.unread();
+				return NUMBER;
+			} else if (isLetterChar(ch)) {
+				do {
+					image += (char) ch;
+					ch = reader.read();
+				} while (ch != -1 && isIdentiferChar(ch));
+				if (ch != -1) reader.unread();
+				return ID;
+			} else if (ch == '\'' || ch == '\"') {
+				int end = ch;
+				while ((ch = reader.read()) != -1 && ch != end) {
+					image += (char) ch;
 				}
-			} while (ch != -1);
-			if (ch != -1) reader.unread();
-			return NUMBER;
-		} else if (isLetterChar(ch)) {
-			do {
+				if (ch == -1)
+					throw new ParseException("Unterminated constant: " + (char)ch);
+				return end == '\'' ? CHAR : STRING;
+			} else {
 				image += (char) ch;
-				ch = reader.read();
-			} while (ch != -1 && isIdentiferChar(ch));
-			if (ch != -1) reader.unread();
-			return ID;
-		} else if (ch == '\'' || ch == '\"') {
-			int end = ch;
-			while ((ch = reader.read()) != -1 && ch != end) {
-				image += (char) ch;
+				return ch;
 			}
-			if (ch == -1)
-				throw new ParseException("Unterminated constant: " + (char)ch);
-			return end == '\'' ? CHAR : STRING;
-		} else {
-			image += (char) ch;
-			return ch;
+		} finally {
+			fireListeners(startPos, imagePos, image);
 		}
 	}
 
@@ -170,4 +179,23 @@ public class AssemblerTokenizer {
 		return "'" + (char)type + "'";
 	}
 
+	public void addTokenListener(ITokenListener listener) {
+		if (listeners == null)
+			listeners = new ArrayList<ITokenListener>();
+		if (!listeners.contains(listener))
+			listeners.add(listener);
+	}
+	
+	public void removeTokenListener(ITokenListener listener) {
+		listeners.remove(listener);
+	}
+	
+	protected void fireListeners(int startPos, int imagePos, String image) {
+		if (listeners != null) {
+			ITokenListener[] listenerArray = (ITokenListener[]) listeners.toArray(new ITokenListener[listeners.size()]);
+			for (ITokenListener listener : listenerArray) {
+				listener.tokenRead(startPos, imagePos > startPos, image);
+			}
+		}
+	}
 }

@@ -15,7 +15,7 @@ import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.WordMemoryArea;
 import v9t9.tools.llinst.Block;
 import v9t9.tools.llinst.ContextSwitchRoutine;
-import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.HighLevelInstruction;
 import v9t9.tools.llinst.LabelListOperand;
 import v9t9.tools.llinst.LinkedRoutine;
 import v9t9.tools.llinst.ParseException;
@@ -41,7 +41,7 @@ public class TestTopDown1 extends BaseTopDownTest
         assertNotNull(block);
         assertTrue(block.getPred().length == 0);
         assertTrue(block.getSucc().length == 0);
-        assertTrue((block.getLast().flags & LLInstruction.fIsReturn) == 0);
+        assertTrue((block.getLast().flags & HighLevelInstruction.fIsReturn) == 0);
         validateBlocks(routine.getSpannedBlocks());
     }
 
@@ -102,7 +102,7 @@ public class TestTopDown1 extends BaseTopDownTest
         checkList(block3.getSucc(), new Block[] {} );
 
         assertTrue(block3.getFirst() == block3.getLast());
-        assertTrue((block3.getLast().flags & LLInstruction.fIsReturn + LLInstruction.fIsBranch) != 0);
+        assertTrue((block3.getLast().flags & HighLevelInstruction.fIsReturn + HighLevelInstruction.fIsBranch) != 0);
         validateBlocks(routine.getSpannedBlocks());
 
     }
@@ -317,7 +317,7 @@ public class TestTopDown1 extends BaseTopDownTest
            "b *R11", // 104
         });
 
-        highLevel.getLLInstructions().put(0xfe, createLLInstruction(0xfe, 0, "B *R10"));
+        highLevel.getLLInstructions().put(0xfe, createHLInstruction(0xfe, 0, "B *R10"));
 
         phase.run();
         assertEquals(1, routine.getSpannedBlocks().size());
@@ -336,7 +336,7 @@ public class TestTopDown1 extends BaseTopDownTest
            "clr r12", //4ca
         });
 
-        highLevel.getLLInstructions().put(0xfe, createLLInstruction(0xfe, 0, "B *R10"));
+        highLevel.getLLInstructions().put(0xfe, createHLInstruction(0xfe, 0, "B *R10"));
 
         phase.run();
         assertEquals(2, routine.getSpannedBlocks().size());
@@ -375,7 +375,7 @@ public class TestTopDown1 extends BaseTopDownTest
            "data >4444"
         });
 
-        highLevel.getLLInstructions().put(0xfe, createLLInstruction(0xfe, 0, "RT"));
+        highLevel.getLLInstructions().put(0xfe, createHLInstruction(0xfe, 0, "RT"));
 
         phase.run();
         assertEquals(5, routine.getSpannedBlocks().size());
@@ -416,7 +416,7 @@ public class TestTopDown1 extends BaseTopDownTest
            "data >4444"
         });
         
-        highLevel.getLLInstructions().put(0xfe, createLLInstruction(0xfe, 0, "RT"));
+        highLevel.getLLInstructions().put(0xfe, createHLInstruction(0xfe, 0, "RT"));
         
         phase.run();
         assertEquals(4, routine.getSpannedBlocks().size());
@@ -451,7 +451,7 @@ public class TestTopDown1 extends BaseTopDownTest
            "data >4444"
         });
 
-        highLevel.getLLInstructions().put(0xfe, createLLInstruction(0xfe, 0, "RT"));
+        highLevel.getLLInstructions().put(0xfe, createHLInstruction(0xfe, 0, "RT"));
 
         phase.run();
         assertEquals(3, routine.getSpannedBlocks().size());
@@ -476,8 +476,8 @@ public class TestTopDown1 extends BaseTopDownTest
         assertTrue(block.getPred().length == 0);
         assertTrue(block.getSucc().length == 0);
         assertTrue(block.getFirst() != block.getLast());
-        assertTrue((block.getFirst().flags & LLInstruction.fIsReturn + LLInstruction.fIsBranch) == 0);
-        assertTrue((block.getLast().flags & LLInstruction.fIsReturn) != 0);
+        assertTrue((block.getFirst().flags & HighLevelInstruction.fIsReturn + HighLevelInstruction.fIsBranch) == 0);
+        assertTrue((block.getLast().flags & HighLevelInstruction.fIsReturn) != 0);
         validateBlocks(routine.getSpannedBlocks());
     }
 
@@ -567,7 +567,7 @@ public class TestTopDown1 extends BaseTopDownTest
     		"data >102",//stop here
     		"data >ffff",
     	});
-        highLevel.getLLInstructions().put(0x102, createLLInstruction(0x102, 0, "CLR R1"));
+        highLevel.getLLInstructions().put(0x102, createHLInstruction(0x102, 0, "CLR R1"));
         
         phase.run();
         assertEquals(2, routine.getSpannedBlocks().size());
@@ -738,7 +738,7 @@ public class TestTopDown1 extends BaseTopDownTest
     	phase.disassemble();
     	phase.addStandardROMRoutines();
     	// add label at every instruction just to be sure it doesn't explode
-    	for (LLInstruction inst : phase.decompileInfo.getLLInstructions().values()) {
+    	for (HighLevelInstruction inst : phase.decompileInfo.getLLInstructions().values()) {
     		if (inst.getBlock() == null)
     			phase.addBlock(new Block(inst));
     	}
@@ -762,7 +762,7 @@ public class TestTopDown1 extends BaseTopDownTest
     	phase.decompileInfo.getMemoryRanges().clear();
     	phase.decompileInfo.getMemoryRanges().addRange(0x800, 0x800, true);
     	phase.disassemble();
-    	LLInstruction inst = phase.decompileInfo.getLLInstructions().get(0x800);
+    	HighLevelInstruction inst = phase.decompileInfo.getLLInstructions().get(0x800);
     	while (inst != null) {
     		if (inst.pc >= 0x800 && inst.pc < 0x1000 && inst.getBlock() == null)
     			phase.addBlock(new Block(inst));

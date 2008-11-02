@@ -31,7 +31,7 @@ import v9t9.tools.decomp.expr.impl.AstUnaryExpression;
 import v9t9.tools.llinst.AstRegisterExpression;
 import v9t9.tools.llinst.Block;
 import v9t9.tools.llinst.DataWordListOperand;
-import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.HighLevelInstruction;
 import v9t9.tools.llinst.Label;
 import v9t9.tools.llinst.LabelListOperand;
 import v9t9.tools.llinst.LabelOperand;
@@ -52,7 +52,7 @@ public class TopDownPhase extends Phase {
 
 	private List<Block> unresolvedBlocks;
 	private List<Routine> unresolvedRoutines;
-	private TreeSet<LLInstruction> routineCalls;
+	private TreeSet<HighLevelInstruction> routineCalls;
 
 	public TopDownPhase(MemoryDomain cpu, IDecompileInfo info) {
 		super(cpu, info);
@@ -60,12 +60,12 @@ public class TopDownPhase extends Phase {
 
 	public void run() {
 		// add blocks for every branch instruction
-		for (LLInstruction inst : decompileInfo.getLLInstructions().values()) {
+		for (HighLevelInstruction inst : decompileInfo.getLLInstructions().values()) {
 			if (inst.inst == InstructionTable.Idata) {
 				continue;
 			}
-			if ((inst.flags & LLInstruction.fStartsBlock) != 0
-					|| (inst.getPrev() != null && (inst.getPrev().flags & LLInstruction.fEndsBlock) != 0)) {
+			if ((inst.flags & HighLevelInstruction.fStartsBlock) != 0
+					|| (inst.getPrev() != null && (inst.getPrev().flags & HighLevelInstruction.fEndsBlock) != 0)) {
 				if (inst.getBlock() == null) {
 					addBlock(new Block(inst));
 				} else if (inst.getBlock().getFirst() != inst) {
@@ -79,7 +79,7 @@ public class TopDownPhase extends Phase {
 		
 		unresolvedRoutines = new LinkedList<Routine>(getRoutines());
 		unresolvedBlocks = new LinkedList<Block>(blocks.values());
-		routineCalls = new TreeSet<LLInstruction>();
+		routineCalls = new TreeSet<HighLevelInstruction>();
 		
 		boolean changed;
 		
@@ -120,7 +120,7 @@ public class TopDownPhase extends Phase {
 			}
 	
 			routineCalls.clear();
-			for (Map.Entry<Integer, LLInstruction> entry : decompileInfo.getLLInstructions().entrySet()) {
+			for (Map.Entry<Integer, HighLevelInstruction> entry : decompileInfo.getLLInstructions().entrySet()) {
 				if (entry.getValue().isCall()) {
 					routineCalls.add(entry.getValue());
 				}
@@ -137,7 +137,7 @@ public class TopDownPhase extends Phase {
 	private void flowBlock(Block block /*Routine routine, List<Block> unresolvedBlocks,
 			List<Routine> unresolvedRoutines*/) {
 		
-		LLInstruction inst = block.getFirst();
+		HighLevelInstruction inst = block.getFirst();
 
 
 		if (block.isComplete())
@@ -157,7 +157,7 @@ public class TopDownPhase extends Phase {
 
 		while (inst != null) {
 			if (inst == block.getFirst()) {
-				 inst.flags |= LLInstruction.fStartsBlock;
+				 inst.flags |= HighLevelInstruction.fStartsBlock;
 			}
 			if (inst.inst == InstructionTable.Idata) {
 				System.out.println("stopping at data: " + inst);
@@ -168,7 +168,7 @@ public class TopDownPhase extends Phase {
 
 			block.setLast(inst);
 
-			if ((inst.flags & LLInstruction.fEndsBlock) != 0) {
+			if ((inst.flags & HighLevelInstruction.fEndsBlock) != 0) {
 				// handle block break
 				Block nextBlock = getLabelKey(inst.pc + inst.size);
 				if (nextBlock != null) {
@@ -250,7 +250,7 @@ public class TopDownPhase extends Phase {
 	 * @param inst
 	 * @return either single Label, a single Routine, or a List&lt;LabelOperand&gt;
 	 */
-	private Object getLabels(LLInstruction inst) {
+	private Object getLabels(HighLevelInstruction inst) {
 		if (inst.op1 instanceof LabelOperand) {
 			return inst.op1;
 		}
@@ -298,7 +298,7 @@ public class TopDownPhase extends Phase {
 	 * @param inst
 	 * @return
 	 */
-	private Operand handleLabel(LLInstruction inst, MachineOperand mop) {
+	private Operand handleLabel(HighLevelInstruction inst, MachineOperand mop) {
 		Operand op = handleLabel(inst, operandEffectiveAddress(inst, mop));
 		return op;
 	}
@@ -309,7 +309,7 @@ public class TopDownPhase extends Phase {
 	 * @param addr label address
 	 * @return LabelOperand or RoutineOperand or original operand
 	 */
-	private Operand handleLabel(LLInstruction inst, int addr) {
+	private Operand handleLabel(HighLevelInstruction inst, int addr) {
 		Routine routine = null;
 		Label label = findOrCreateLabel(inst, addr, true);
 		if (label == null)
@@ -321,7 +321,7 @@ public class TopDownPhase extends Phase {
 			if (routine == null) {
 				routine = addPossibleContextSwitch(addr, null);
 				if (routine != null) {
-					inst.flags |= LLInstruction.fIsCall;
+					inst.flags |= HighLevelInstruction.fIsCall;
 					return new RoutineOperand(routine);
 				}
 			}
@@ -329,7 +329,7 @@ public class TopDownPhase extends Phase {
 			routine = getRoutine(addr);
 			if (routine == null) {
 				if (validCodeAddress(addr)) {
-					inst.flags |= LLInstruction.fIsCall;
+					inst.flags |= HighLevelInstruction.fIsCall;
 					routine = addRoutine(addr, null, new LinkedRoutine());
 					unresolvedRoutines.add(routine);
 				} else {
@@ -367,11 +367,11 @@ public class TopDownPhase extends Phase {
 		return null;
 	}
 
-	private Label findOrCreateLabel(LLInstruction caller, int addr, boolean force) {
+	private Label findOrCreateLabel(HighLevelInstruction caller, int addr, boolean force) {
 		Block block = null;
 		Label label = null;
 
-		LLInstruction target = decompileInfo.getLLInstructions().get(addr & 0xfffe);
+		HighLevelInstruction target = decompileInfo.getLLInstructions().get(addr & 0xfffe);
 		if (target == null) {
 			System.out.println("!!! ignoring invalid code reference: "
 					+ caller);
@@ -420,7 +420,7 @@ public class TopDownPhase extends Phase {
 	 * @param mop1 operand indirecting register
 	 * @return list of LabelOperands
 	 */
-	private LabelListOperand handleJumpTable(LLInstruction inst, MachineOperand mop1) {
+	private LabelListOperand handleJumpTable(HighLevelInstruction inst, MachineOperand mop1) {
 		if (mop1.type == MachineOperand.OP_ADDR) {
 			// register plus address:  address is code and register holds word-aligned offset:
 			//
@@ -521,7 +521,7 @@ public class TopDownPhase extends Phase {
 	 * @param mop1
 	 * @return array of Labels or <code>null</code> if we can't determine anything
 	 */
-	Label[] findJumpTable(LLInstruction caller,
+	Label[] findJumpTable(HighLevelInstruction caller,
 			MachineOperand mop1) {
 		if (!mop1.isRegisterReference())
 			return null;
@@ -533,7 +533,7 @@ public class TopDownPhase extends Phase {
 		
 		int maxInsts = 16;
 		
-		LLInstruction inst = caller.getPrev();
+		HighLevelInstruction inst = caller.getPrev();
 
 		while (inst != null && maxInsts-- > 0) {
 			// DON'T stop... any entry point to the code is valid
@@ -603,7 +603,7 @@ public class TopDownPhase extends Phase {
 	 * @param fromOp1
 	 * @return
 	 */
-	private int guessJumpTableSize(LLInstruction inst, MachineOperand fromOp1) {
+	private int guessJumpTableSize(HighLevelInstruction inst, MachineOperand fromOp1) {
 		Block startBlock = inst.getBlock();
 		int range = 0xffff;
 		
@@ -680,7 +680,7 @@ public class TopDownPhase extends Phase {
 		return Math.min(range, 0xffff) & 0xffff;
 	}
 
-	private Label[] scanJumpTable(LLInstruction caller, short addr, int size) {
+	private Label[] scanJumpTable(HighLevelInstruction caller, short addr, int size) {
 		List<Label> entries = new ArrayList<Label>();
 		while (size > 0) {
 			short pc = CPU.readWord(addr);
@@ -730,7 +730,7 @@ public class TopDownPhase extends Phase {
 	 */
 	//
 	
-	/*private*/IAstExpression getExpressionForOperand(LLInstruction inst, MachineOperand mop1) {
+	/*private*/IAstExpression getExpressionForOperand(HighLevelInstruction inst, MachineOperand mop1) {
 		switch (mop1.type) {
 		case MachineOperand.OP_IMMED:
 		case MachineOperand.OP_CNT:
@@ -782,11 +782,11 @@ public class TopDownPhase extends Phase {
 			if (block == null || !block.isComplete()) {
 				continue;
 			}
-			LLInstruction inst = block.getLast();
+			HighLevelInstruction inst = block.getLast();
 			inst = block.getLast();
-			if ((inst.flags & LLInstruction.fEndsBlock) != 0) {
-				if ((inst.flags & LLInstruction.fIsBranch) != 0
-					&& (inst.flags & LLInstruction.fIsCall) == 0) {
+			if ((inst.flags & HighLevelInstruction.fEndsBlock) != 0) {
+				if ((inst.flags & HighLevelInstruction.fIsBranch) != 0
+					&& (inst.flags & HighLevelInstruction.fIsCall) == 0) {
 					// jump?
 					if (inst.op1 instanceof LabelOperand) {
 						addLabelOperandSucc(inst, block, (LabelOperand) inst.op1);
@@ -803,7 +803,7 @@ public class TopDownPhase extends Phase {
 				}
 
 				// fallthrough?
-				if (0 == (inst.flags & LLInstruction.fNotFallThrough)) {
+				if (0 == (inst.flags & HighLevelInstruction.fNotFallThrough)) {
 					if (inst.getNext() != null && inst.getNext().getBlock() != null) {
 						block.addSucc(inst.getNext().getBlock());
 					} else {
@@ -838,7 +838,7 @@ public class TopDownPhase extends Phase {
 						if (label == null) {
 							// safe to delete
 							//System.out.println("### Removing " + succ);
-							LLInstruction last = succ.getLast();
+							HighLevelInstruction last = succ.getLast();
 							removeBlock(succ);
 							block.setLast(last);
 							changed = true;
@@ -850,7 +850,7 @@ public class TopDownPhase extends Phase {
 		return anyChanged;
 	}
 
-	private void addLabelOperandSucc(LLInstruction inst, Block block, LabelOperand op1) {
+	private void addLabelOperandSucc(HighLevelInstruction inst, Block block, LabelOperand op1) {
 		Label label = ((LabelOperand) op1).label;
 		if (label.getBlock() != null && label.getBlock().getFirst() != null) {
 			block.addSucc(label.getBlock());
@@ -909,9 +909,9 @@ public class TopDownPhase extends Phase {
 		}
 		
 		for (Block exit : exits) {
-			LLInstruction inst = exit.getLast();
+			HighLevelInstruction inst = exit.getLast();
 			if (routine.isReturn(inst)) {
-				inst.flags |= LLInstruction.fIsReturn;
+				inst.flags |= HighLevelInstruction.fIsReturn;
 			} else {
 				routine.flags |= Routine.fUnknownExit;
 			}
@@ -919,7 +919,7 @@ public class TopDownPhase extends Phase {
 		
 		if (routine.getDataWords() > 0) {
 			// examine all call sites and fix up
-			for (LLInstruction callSite : new ArrayList<LLInstruction>(routineCalls)) {
+			for (HighLevelInstruction callSite : new ArrayList<HighLevelInstruction>(routineCalls)) {
 				if (callSite.op1 instanceof RoutineOperand
 						&& ((RoutineOperand) callSite.op1).routine == routine) {
 					if (!(callSite.op2 instanceof DataWordListOperand)) {
@@ -927,7 +927,7 @@ public class TopDownPhase extends Phase {
 						int pc = (callSite.pc + callSite.size) & 0xfffe;
 						int last = pc + routine.getDataWords() * 2;
 						int idx = 0;
-						LLInstruction inst = null;
+						HighLevelInstruction inst = null;
 						while (pc < last) {
 							inst = decompileInfo.getLLInstructions().get(pc);
 							
@@ -952,7 +952,7 @@ public class TopDownPhase extends Phase {
 		}
 	}
 
-	private void noopInstruction(LLInstruction inst) {
+	private void noopInstruction(HighLevelInstruction inst) {
 		if (inst != null) {
 			if (inst.inst != InstructionTable.Idata) {
 				System.out.println("NOOP'ing " + inst);

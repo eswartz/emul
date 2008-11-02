@@ -13,7 +13,7 @@ import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.decomp.IDecompileInfo;
 import v9t9.tools.decomp.TopDownPhase;
 import v9t9.tools.llinst.Block;
-import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.HighLevelInstruction;
 import v9t9.tools.llinst.Label;
 import v9t9.tools.llinst.MemoryRanges;
 import v9t9.tools.llinst.Routine;
@@ -34,7 +34,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
     /** instruction list */
     Map<Integer, Instruction> instructions;
     /** LL instruction list */
-    Map<Integer, LLInstruction> llInstructions;
+    Map<Integer, HighLevelInstruction> llInstructions;
     //List<Instruction> instructions;
 	private MemoryRanges memoryRanges;
 	private TreeMap<Block, Label> labelMap;
@@ -51,7 +51,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		this.instructions = new TreeMap<Integer, Instruction>();
 		this.blockMap = new TreeMap<Integer, Block>();
         this.memoryRanges = new MemoryRanges();
-		this.llInstructions = new TreeMap<Integer, LLInstruction>();
+		this.llInstructions = new TreeMap<Integer, HighLevelInstruction>();
 		this.labelMap = new TreeMap<Block, Label>();
 		this.routineMap = new TreeMap<Label, Routine>();
 		
@@ -73,7 +73,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 	}
 
 	/** Test method */
-	public void addInstruction(LLInstruction inst) {
+	public void addInstruction(HighLevelInstruction inst) {
 		instructions.put(inst.pc & 0xfffe, inst);
 	}
 
@@ -172,18 +172,18 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		return labelMap.values();
 	}
 	
-	public Map<Integer, LLInstruction> getLLInstructions() {
+	public Map<Integer, HighLevelInstruction> getLLInstructions() {
 		return llInstructions;
 	}
 
-	public LLInstruction disassemble(int startAddr, int size) {
+	public HighLevelInstruction disassemble(int startAddr, int size) {
 		memoryRanges.addRange(startAddr, size, true);
 		
-		LLInstruction first = null;
-		LLInstruction prev = null;
+		HighLevelInstruction first = null;
+		HighLevelInstruction prev = null;
 		for (int addr = startAddr; addr < startAddr + size; addr += 2) {
 			short op = domain.readWord(addr);
-			LLInstruction inst = new LLInstruction(0, new Instruction(InstructionTable.decodeInstruction(op, addr, domain)));
+			HighLevelInstruction inst = new HighLevelInstruction(0, new Instruction(InstructionTable.decodeInstruction(op, addr, domain)));
 			getLLInstructions().put(new Integer(inst.pc), inst);
 			if (prev != null) {
 				prev.setNext(inst);
@@ -194,7 +194,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		}
 
 		// wire up instructions to their next real instructions
-		for (LLInstruction inst = first; inst != null; inst = inst.getNext()) {
+		for (HighLevelInstruction inst = first; inst != null; inst = inst.getNext()) {
 			if (inst.size > 2) {
 				inst.setNext(getLLInstructions().get(new Integer(inst.pc + inst.size)));
 			}
@@ -228,9 +228,9 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 	public Label getLabel(int addr) {
 		// first, see if a block exists here
 		addr &= 0xfffe;
-		LLInstruction inst = getLLInstructions().get(addr);
+		HighLevelInstruction inst = getLLInstructions().get(addr);
 		if (inst == null) {
-			inst = new LLInstruction(0, getInstruction(addr));
+			inst = new HighLevelInstruction(0, getInstruction(addr));
 			llInstructions.put(addr, inst);
 		}
 		Check.checkState(inst != null);
@@ -245,13 +245,13 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 	public Label findOrCreateLabel(int addr) {
 		// first, see if a block exists here
 		addr &= 0xfffe;
-		LLInstruction inst = getLLInstructions().get(addr);
+		HighLevelInstruction inst = getLLInstructions().get(addr);
 		if (inst == null) {
-			inst = new LLInstruction(0, getInstruction(addr));
+			inst = new HighLevelInstruction(0, getInstruction(addr));
 			llInstructions.put(addr, inst);
 		}
 		Check.checkState(inst != null);
-		inst.flags |= LLInstruction.fStartsBlock;
+		inst.flags |= HighLevelInstruction.fStartsBlock;
 		
 		Block block = inst.getBlock();
 		if (block == null) {
@@ -268,7 +268,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		return label;
 	}
 	
-	public void replaceInstruction(LLInstruction inst) {
+	public void replaceInstruction(HighLevelInstruction inst) {
 		instructions.put(inst.pc, inst);
 	}
 }

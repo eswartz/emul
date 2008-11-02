@@ -66,7 +66,7 @@ public abstract class Routine implements Comparable<Routine> {
     public String toString() {
         return "Routine " + mainLabel;
     }
-    abstract public boolean isReturn(LLInstruction inst);
+    abstract public boolean isReturn(HighLevelInstruction inst);
     
     @Deprecated
     public Block getBlock(Label lab) {

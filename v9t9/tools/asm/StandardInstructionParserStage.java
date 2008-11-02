@@ -9,17 +9,22 @@ import static v9t9.engine.cpu.InstEncodePattern.IMM;
 import static v9t9.engine.cpu.InstEncodePattern.NONE;
 import static v9t9.engine.cpu.InstEncodePattern.OFF;
 import static v9t9.engine.cpu.InstEncodePattern.REG;
-import v9t9.engine.cpu.AssemblerOperand;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.InstEncodePattern;
 import v9t9.engine.cpu.InstructionTable;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.Operand;
-import v9t9.engine.cpu.RawInstruction;
-import v9t9.tools.asm.operand.JumpOperand;
-import v9t9.tools.asm.operand.NumberOperand;
-import v9t9.tools.asm.operand.RegisterOperand;
-import v9t9.tools.asm.operand.SymbolOperand;
+import v9t9.tools.asm.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.operand.hl.JumpOperand;
+import v9t9.tools.asm.operand.hl.NumberOperand;
+import v9t9.tools.asm.operand.hl.RegisterOperand;
+import v9t9.tools.asm.operand.hl.SymbolOperand;
+import v9t9.tools.asm.operand.ll.LLCountOperand;
+import v9t9.tools.asm.operand.ll.LLEmptyOperand;
+import v9t9.tools.asm.operand.ll.LLImmedOperand;
+import v9t9.tools.asm.operand.ll.LLJumpOperand;
+import v9t9.tools.asm.operand.ll.LLOffsetOperand;
+import v9t9.tools.asm.operand.ll.LLOperand;
+import v9t9.tools.asm.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.operand.ll.LLRegisterOperand;
 import v9t9.tools.llinst.ParseException;
 
 /**
@@ -50,41 +55,40 @@ public class StandardInstructionParserStage implements IInstructionParserStage {
     		return null;
     	}
     	
-    	RawInstruction inst = new RawInstruction();
-        inst.name = tokenizer.currentToken().toUpperCase();
-        inst.size = 2;
-        Operand op1 = null, op2 = null;
-        if (inst.name.equals("RT")) {
-        	inst.name = "B";
-        	inst.inst = InstructionTable.Ib;
-        	inst.size = 2;
-            op1 = new MachineOperand(MachineOperand.OP_IND);
-            ((MachineOperand)op1).val = 11;
-        } else if (inst.name.equals("NOP")) {
-        	inst.name = "JMP";
-        	inst.inst = InstructionTable.Ijmp;
-        	inst.size = 2;
-            op1 = new MachineOperand(MachineOperand.OP_JUMP);
-            ((MachineOperand)op1).val = 2;
+    	HLInstruction inst = new HLInstruction();
+    	String name = tokenizer.currentToken().toUpperCase();
+        //inst.name = tokenizer.currentToken().toUpperCase();
+        //inst.size = 2;
+    	AssemblerOperand op1 = null, op2 = null;
+        if (name.equals("RT")) {
+        	//inst.name = "B";
+        	inst.setInst(InstructionTable.Ib);
+        	//inst.size = 2;
+            op1 = new LLRegIndOperand(11);
+        } else if (name.equals("NOP")) {
+        	//inst.name = "JMP";
+        	inst.setInst(InstructionTable.Ijmp);
+        	//inst.size = 2;
+            op1 = new LLJumpOperand(null, 2);
         } else {
-        	inst.inst = InstructionTable.lookupInst(inst.name);
-            if (inst.inst < 0) {
+        	inst.setInst(InstructionTable.lookupInst(name));
+            if (inst.getInst() < 0) {
             	return null;
             }
             
-            InstEncodePattern pattern = InstructionTable.lookupEncodePattern(inst.inst);
+            InstEncodePattern pattern = InstructionTable.lookupEncodePattern(inst.getInst());
             if (pattern == null)
-            	throw new IllegalStateException("Missing instruction pattern: " + inst.name);
+            	throw new IllegalStateException("Missing instruction pattern: " + inst.getInst());
             
             if (pattern.op1 != InstEncodePattern.NONE) {
-            	op1 = operandParser.parse(tokenizer);
+            	op1 = (AssemblerOperand) operandParser.parse(tokenizer);
             	op1 = coerceType(inst, op1, pattern.op1);
             	if (pattern.op2 != InstEncodePattern.NONE) {
             		t = tokenizer.nextToken();
             		if (t != ',') {
             			throw new ParseException("Missing second operand: " + tokenizer.currentToken());
             		}
-            		op2 = operandParser.parse(tokenizer);
+            		op2 =  (AssemblerOperand) operandParser.parse(tokenizer);
             		op2 = coerceType(inst, op2, pattern.op2);
             	}
             }
@@ -96,10 +100,10 @@ public class StandardInstructionParserStage implements IInstructionParserStage {
         	throw new ParseException("Trailing text on line: " + tokenizer.currentToken());
         }
         
-        inst.op1 = op1 != null ? op1 : new MachineOperand(MachineOperand.OP_NONE);
-        inst.op2 = op2 != null ? op2 : new MachineOperand(MachineOperand.OP_NONE);
+        inst.setOp1(op1 != null ? op1 : new LLEmptyOperand());
+        inst.setOp2(op2 != null ? op2 : new LLEmptyOperand());
         
-        return new RawInstruction[] { inst };
+        return new IInstruction[] { inst };
     }
 
 	/** 
@@ -107,57 +111,58 @@ public class StandardInstructionParserStage implements IInstructionParserStage {
 	 * operands as needed.
 	 * @param inst
 	 */
-	private Operand coerceType(RawInstruction inst, Operand op, int optype) {
-		if (op instanceof MachineOperand)
-			return coerceMachineOperandType(inst, (MachineOperand) op, optype);
+	private AssemblerOperand coerceType(AssemblerInstruction inst, AssemblerOperand op, int optype) {
+		if (op instanceof LLOperand)
+			return coerceLLOperandType(inst, (LLOperand) op, optype);
 		if (op instanceof AssemblerOperand)
 			return coerceAssemblerOperandType(inst, (AssemblerOperand) op, optype);
 		
 		return op;
 	}
 	
-	private Operand coerceMachineOperandType(RawInstruction inst, MachineOperand mop, int op) {
+	private LLOperand coerceLLOperandType(AssemblerInstruction inst, LLOperand lop, int op) {
 		switch (op) {
 		case NONE:
 			break;
 		case IMM:
-			if (mop.type == MachineOperand.OP_REG) {
-				mop.type = MachineOperand.OP_IMMED;
-				mop.immed = (short) mop.val;
+			if (lop instanceof LLRegisterOperand) {
+				lop = new LLImmedOperand(((LLRegisterOperand) lop).getRegister());
 			}
 			break;
 		case CNT:
-			if (mop.type == MachineOperand.OP_REG
-					|| mop.type == MachineOperand.OP_IMMED)
-				mop.type = MachineOperand.OP_CNT;
+			if (lop instanceof LLRegisterOperand)
+				lop = new LLCountOperand(((LLRegisterOperand) lop).getRegister());
+			else if (lop instanceof LLImmedOperand)
+				lop = new LLCountOperand(lop.getImmediate());
 			break;
-		case OFF:
-			if (mop.type == MachineOperand.OP_REG || mop.type == MachineOperand.OP_IMMED) {
-				if (inst.isJumpInst()) {
-					// for a parsed inst, we don't know our pc or size,
-					// so this is an absolute address
-					if (mop.type == MachineOperand.OP_REG)
-						mop.immed = (short) mop.val;
-					mop.type = MachineOperand.OP_IMMED;
-					mop.val = mop.immed;
-				} else {
-					mop.type = MachineOperand.OP_OFFS_R12;
-				}
+		case OFF: {
+			int val = 0; 
+			if (lop instanceof LLRegisterOperand) {
+				val = ((LLRegisterOperand) lop).getRegister();
+			} else if (lop instanceof LLImmedOperand) {
+				val = lop.getImmediate();
+			} else {
+				break;
+			}
+			if (inst.isJumpInst()) {
+				// for a parsed inst, we don't know our pc or size,
+				// so this is an absolute address
+				lop = new LLImmedOperand(lop.getOriginal(), val);
+			} else {
+				lop = new LLOffsetOperand(val);
 			}
 			break;
+		}
 		case REG:
-			if (mop.type == MachineOperand.OP_IMMED)
-				mop.type = MachineOperand.OP_REG;
-			break;
 		case GEN:
-			if (mop.type == MachineOperand.OP_IMMED)
-				mop.type = MachineOperand.OP_REG;
+			if (lop instanceof LLImmedOperand)
+				lop = new LLRegisterOperand(lop.getImmediate());
 			break;
 		}
-		return mop;
+		return lop;
 	}
 	
-	private Operand coerceAssemblerOperandType(RawInstruction inst, AssemblerOperand op, int optype) {
+	private AssemblerOperand coerceAssemblerOperandType(AssemblerInstruction inst, AssemblerOperand op, int optype) {
 		if (optype == InstEncodePattern.REG
     			|| optype == InstEncodePattern.GEN) {
     		if (op instanceof NumberOperand

@@ -8,24 +8,25 @@ import java.util.List;
 import java.util.ListIterator;
 
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
-import v9t9.tools.asm.operand.NumberOperand;
-import v9t9.tools.asm.operand.StringOperand;
+import v9t9.tools.asm.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.operand.hl.NumberOperand;
+import v9t9.tools.asm.operand.hl.StringOperand;
+import v9t9.tools.asm.operand.ll.LLImmedOperand;
+import v9t9.tools.asm.operand.ll.LLOperand;
 
 /**
  * @author Ed
  *
  */
-public class DefineByteDirective extends AssemblerDirective {
+public class DefineByteDirective extends Directive {
 
-	private List<Operand> ops;
+	private List<AssemblerOperand> ops;
 
-	public DefineByteDirective(List<Operand> ops) {
-		this.ops = new ArrayList<Operand>();
-		for (Operand op : ops) {
+	public DefineByteDirective(List<AssemblerOperand> ops) {
+		this.ops = new ArrayList<AssemblerOperand>();
+		for (AssemblerOperand op : ops) {
 			if (op instanceof StringOperand) {
 				decodeString(this.ops, ((StringOperand) op).getString());
 			} else {
@@ -34,7 +35,7 @@ public class DefineByteDirective extends AssemblerDirective {
 		}
 	}
 	
-	private void decodeString(List<Operand> ops, String string) {
+	private void decodeString(List<AssemblerOperand> ops, String string) {
 		int idx = 0;
 		while (idx < string.length()) {
 			char ch = string.charAt(idx++);
@@ -58,7 +59,7 @@ public class DefineByteDirective extends AssemblerDirective {
 		StringBuilder builder = new StringBuilder();
 		builder.append("DB ");
 		boolean first = true;
-		for (Operand op : ops) {
+		for (AssemblerOperand op : ops) {
 			if (first)
 				first = false;
 			else
@@ -71,24 +72,23 @@ public class DefineByteDirective extends AssemblerDirective {
 	public IInstruction[] resolve(Assembler assembler, IInstruction previous, boolean finalPass) throws ResolveException {
 		setPc(assembler.getPc());
 
-		for (ListIterator<Operand> iterator = ops.listIterator(); iterator.hasNext();) {
-			Operand op = iterator.next();
-			MachineOperand mop = op.resolve(assembler, this); 
-			if (mop.type != MachineOperand.OP_IMMED)
+		for (ListIterator<AssemblerOperand> iterator = ops.listIterator(); iterator.hasNext();) {
+			AssemblerOperand op = iterator.next();
+			LLOperand lop = op.resolve(assembler, this); 
+			if (!(lop instanceof LLImmedOperand))
 				throw new ResolveException(op, "Expected number");
-			iterator.set(mop);
+			iterator.set(lop);
 			assembler.setPc(assembler.getPc() + 1);
 		}
 		return new IInstruction[] { this };
 	}
 	
-	@Override
 	public byte[] getBytes() {
 		byte[] bytes = new byte[ops.size()];
 		int idx = 0;
-		for (Operand op : ops) {
-			MachineOperand mop = (MachineOperand) op;
-			bytes[idx++] = (byte) (mop.immed & 0xff);
+		for (AssemblerOperand op : ops) {
+			LLOperand lop = (LLOperand) op;
+			bytes[idx++] = (byte) (lop.getImmediate() & 0xff);
 		}
 		return bytes;
 	}

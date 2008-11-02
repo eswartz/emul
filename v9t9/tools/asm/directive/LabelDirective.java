@@ -12,7 +12,7 @@ import v9t9.tools.asm.Symbol;
  * @author Ed
  *
  */
-public class LabelDirective extends AssemblerDirective {
+public class LabelDirective extends Directive {
 
 	private final Symbol symbol;
 

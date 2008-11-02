@@ -9,7 +9,7 @@ import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.HighLevelInstruction;
 
 /** This represents a compiled block of code. */
 public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListener {
@@ -123,7 +123,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         	    
         	    if (Compiler.settingOptimize.getBoolean() 
         	    		&& Compiler.settingOptimizeStatus.getBoolean()) {
-        	    	LLInstructionOptimizer.peephole_status(insts, numinsts);
+        	    	HLInstructionOptimizer.peephole_status(insts, numinsts);
         	    }
         	    
             	bytecode = compiler.compile(uniqueClassName, baseName,
@@ -184,10 +184,10 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
 	        if (abort == null && !ret) {
         		// target the PC later
         		int pc = exec.cpu.getPC() & 0xffff;
-        		LLInstruction inst = highLevel.getLLInstructions().get(pc);
+        		HighLevelInstruction inst = highLevel.getLLInstructions().get(pc);
         		if (inst != null && inst.inst != InstructionTable.Idata) {
-        			if ((inst.flags & LLInstruction.fStartsBlock) == 0) {
-        				inst.flags |= LLInstruction.fStartsBlock;
+        			if ((inst.flags & HighLevelInstruction.fStartsBlock) == 0) {
+        				inst.flags |= HighLevelInstruction.fStartsBlock;
         				/*
         				highLevel.markDirty();
         				if (origpc >= addr && origpc < addr + size && pc >= addr && pc < addr + size) {

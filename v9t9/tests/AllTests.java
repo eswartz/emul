@@ -22,9 +22,7 @@ public class AllTests {
 		TestSuite suite = new TestSuite("Test for v9t9");
 		//$JUnit-BEGIN$
 		suite.addTestSuite(MemoryTest.class);
-		suite.addTestSuite(InstructionTest.class);
 		suite.addTestSuite(TestSpriteCanvas.class);
-		suite.addTestSuite(TestAssembler.class);
 		suite.addTestSuite(SettingTest.class);
 		suite.addTestSuite(TestBlocks.class);
 		suite.addTestSuite(StatusTest.class);
@@ -32,7 +30,6 @@ public class AllTests {
 		suite.addTestSuite(TestTopDown1.class);
 		suite.addTestSuite(MemoryEntryTest.class);
 		suite.addTestSuite(TestMemoryRanges.class);
-		suite.addTestSuite(MachineOperandParserTest.class);
 		//$JUnit-END$
 		return suite;
 	}

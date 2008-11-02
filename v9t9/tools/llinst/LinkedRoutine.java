@@ -19,7 +19,7 @@ public class LinkedRoutine extends Routine {
     }
     
     @Override
-    public boolean isReturn(LLInstruction inst) {
+    public boolean isReturn(HighLevelInstruction inst) {
         return inst.inst == InstructionTable.Ib
         	&& inst.op1 instanceof MachineOperand
             && ((MachineOperand)inst.op1).type == MachineOperand.OP_IND
@@ -34,7 +34,7 @@ public class LinkedRoutine extends Routine {
     	
     	returnReg = 11;
     	for (Block block : getEntries()) {
-    		LLInstruction inst = block.getFirst();
+    		HighLevelInstruction inst = block.getFirst();
     		entryDataBytes = 0;
 	        while (inst != null && !inst.isCall()) {
 	        	if (returnReg == 11) {
@@ -54,7 +54,7 @@ public class LinkedRoutine extends Routine {
 	                MachineOperand mop1 = (MachineOperand) inst.op1;
 	                if (mop1.isMemory() && mop1.type == MachineOperand.OP_INC 
 	                        && mop1.val == returnReg) {
-	                	if ((inst.flags & LLInstruction.fByteOp) != 0) {
+	                	if ((inst.flags & HighLevelInstruction.fByteOp) != 0) {
 	                		entryDataBytes++;
 	                	} else {
 	                		entryDataBytes += 2;

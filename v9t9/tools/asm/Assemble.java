@@ -87,7 +87,7 @@ public class Assemble {
         	String name = args[getopt.getOptind()]; 
         	try {
         		entry = new FileContentEntry(new File(name));
-        		assembler.pushFileEntry(entry);
+        		assembler.pushContentEntry(entry);
         		getopt.setOptind(getopt.getOptind() + 1);
         	} catch (IOException e) {
         		System.err.println(PROGNAME + ": failed to read: " + name);

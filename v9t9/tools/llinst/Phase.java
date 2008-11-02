@@ -59,7 +59,7 @@ public abstract class Phase {
 				.hasNext();) {
 			range = iter.next();
 			if (prev != null && prev.isCode()) {
-				LLInstruction first = decompileInfo.disassemble(prev.from, range.from - prev.from);
+				HighLevelInstruction first = decompileInfo.disassemble(prev.from, range.from - prev.from);
 				prev.setCode(first);
 			}
 			prev = range;
@@ -92,13 +92,13 @@ public abstract class Phase {
 		for (Iterator<MemoryRange> iter = decompileInfo.getMemoryRanges().rangeIterator(); iter
 				.hasNext();) {
 			MemoryRange range = iter.next();
-			for (LLInstruction inst = (LLInstruction) range.getCode(); inst != null; inst = inst.getNext()) {
+			for (HighLevelInstruction inst = (HighLevelInstruction) range.getCode(); inst != null; inst = inst.getNext()) {
 				dumpInstruction(inst);
 			}
 		}
 	}
 
-	public void dumpInstruction(LLInstruction inst) {
+	public void dumpInstruction(HighLevelInstruction inst) {
 		if (inst.getBlock() != null && inst.getBlock().getFirst() == inst) {
 			System.out.println(inst.getBlock().format());
 		}
@@ -112,7 +112,7 @@ public abstract class Phase {
 	}
 
 	protected Block getLabelKey(int addr) {
-		LLInstruction inst = decompileInfo.getLLInstructions().get(addr);
+		HighLevelInstruction inst = decompileInfo.getLLInstructions().get(addr);
 		if (inst == null)
 			return null;
 		if (inst.getBlock() == null)
@@ -310,12 +310,12 @@ public abstract class Phase {
 		return null;
 	}
 
-	public short operandEffectiveAddress(LLInstruction inst, MachineOperand mop) {
+	public short operandEffectiveAddress(HighLevelInstruction inst, MachineOperand mop) {
 		// PC and WP are not used
 		return mop.getEA(CPU, inst.pc, inst.getWp());
 	}
 
-	public boolean operandIsLabel(LLInstruction inst, MachineOperand mop) {
+	public boolean operandIsLabel(HighLevelInstruction inst, MachineOperand mop) {
 		return mop.isLabel()
 				&& decompileInfo.getMemoryRanges().getRangeContaining(operandEffectiveAddress(
 						inst, mop)) != null;
@@ -324,7 +324,7 @@ public abstract class Phase {
 	//  operand is relocatable if it's in our memory
 	//  and is a direct address, a jump target, or
 	//  a nontrivial register indirect (a likely lookup table)
-	public boolean operandIsRelocatable(LLInstruction inst, MachineOperand mop) {
+	public boolean operandIsRelocatable(HighLevelInstruction inst, MachineOperand mop) {
 		if (inst.inst == InstructionTable.Ilwpi) {
 			return true;
 		}
@@ -395,8 +395,8 @@ public abstract class Phase {
 	}
 
 	public void dumpBlock(Block block) {
-		for (Iterator<LLInstruction> iter = block.iterator(); iter.hasNext();) {
-			LLInstruction inst = iter.next();
+		for (Iterator<HighLevelInstruction> iter = block.iterator(); iter.hasNext();) {
+			HighLevelInstruction inst = iter.next();
 			dumpInstruction(inst);
 		}
 		System.out.println();

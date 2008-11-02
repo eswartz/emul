@@ -11,7 +11,7 @@ import java.util.Map;
 
 import v9t9.engine.cpu.Instruction;
 import v9t9.tools.llinst.Block;
-import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.HighLevelInstruction;
 import v9t9.tools.llinst.Label;
 import v9t9.tools.llinst.MemoryRanges;
 import v9t9.tools.llinst.Routine;
@@ -50,15 +50,15 @@ public interface IDecompileInfo {
      * Get map of LL instructions generated in code.
      * @return
      */
-	public Map<Integer, LLInstruction> getLLInstructions();
+	public Map<Integer, HighLevelInstruction> getLLInstructions();
 
 	public Instruction getInstruction(int addr);
 
-	public LLInstruction disassemble(int addr, int size);
+	public HighLevelInstruction disassemble(int addr, int size);
 
 	public Label findOrCreateLabel(int addr);
 
-	public void replaceInstruction(LLInstruction inst);
+	public void replaceInstruction(HighLevelInstruction inst);
 
 	public Label getLabel(int pc);
 

@@ -11,7 +11,7 @@ import v9t9.tools.asm.ResolveException;
  * @author Ed
  *
  */
-public class DescrDirective extends AssemblerDirective {
+public class DescrDirective extends Directive {
 
 	private final String content;
 	private final int line;

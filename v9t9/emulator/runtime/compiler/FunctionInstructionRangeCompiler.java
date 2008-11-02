@@ -14,7 +14,7 @@ import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
 import v9t9.tools.decomp.IDecompileInfo;
 import v9t9.tools.llinst.Block;
-import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.HighLevelInstruction;
 
 /**
  * Compile lists of instructions per discovered functions, assuming only a few
@@ -41,7 +41,7 @@ public class FunctionInstructionRangeCompiler implements
 	    // generate all the code for each block
 	    InstInfo[] chunks = new InstInfo[numinsts];
 	    for (Block block : decompileInfo.getBlocks()) {
-	    	LLInstruction inst = block.getFirst();
+	    	HighLevelInstruction inst = block.getFirst();
 	    	int i = (inst.pc - addr) / 2;
 	    	if (i >= 0 && i < numinsts) {
 		    	chunks[i] = new InstInfo();

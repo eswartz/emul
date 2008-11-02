@@ -2,6 +2,7 @@ package v9t9.tests;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -14,13 +15,14 @@ import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StandardConsoleMemoryModel;
-import v9t9.engine.memory.WordMemoryArea;
 import v9t9.tools.asm.Assembler;
-import v9t9.tools.asm.OperandParser;
+import v9t9.tools.asm.AssemblerInstruction;
+import v9t9.tools.asm.LLInstruction;
 import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.StandardInstructionParserStage;
+import v9t9.tools.asm.Symbol;
 import v9t9.tools.llinst.Block;
-import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.HighLevelInstruction;
 import v9t9.tools.llinst.ParseException;
 import v9t9.tools.llinst.Routine;
 
@@ -54,8 +56,8 @@ public abstract class BaseTest extends TestCase {
 	protected void validateBlock(Block block) {
 		assertNotNull(block);
 		assertTrue(block.isComplete());
-		LLInstruction inst = block.getFirst();
-		LLInstruction prev = block.getFirst().getPrev();
+		HighLevelInstruction inst = block.getFirst();
+		HighLevelInstruction prev = block.getFirst().getPrev();
 		while (inst != null) {
 			if (inst == block.getLast() || block.getLast() == null)
 				break;
@@ -124,7 +126,7 @@ public abstract class BaseTest extends TestCase {
 
 	private Set<Integer> getBlockPcSet(Block block) {
 		Set<Integer> pcSet = new TreeSet<Integer>();
-		LLInstruction inst = block.getFirst();
+		HighLevelInstruction inst = block.getFirst();
 		while (inst != null) {
 			pcSet.add(inst.pc & 0xffff);
 			if (inst == block.getLast())
@@ -134,8 +136,8 @@ public abstract class BaseTest extends TestCase {
 		return pcSet;
 	}
 
-	StandardInstructionParserStage stdInstStage = new StandardInstructionParserStage();
-	Assembler stdAssembler = new Assembler();
+	protected StandardInstructionParserStage stdInstStage = new StandardInstructionParserStage();
+	protected Assembler stdAssembler = new Assembler();
 
 	protected RawInstruction createInstruction(int pc, String element) throws ParseException {
 	    IInstruction[] asminsts = stdInstStage.parse("foo", element);
@@ -145,7 +147,7 @@ public abstract class BaseTest extends TestCase {
 		stdAssembler.setPc((short) pc);
 		RawInstruction rawInst;
 		try {
-			rawInst = (RawInstruction) asminsts[0].resolve(stdAssembler, null, true)[0];
+			rawInst = ((LLInstruction)((AssemblerInstruction) asminsts[0]).resolve(stdAssembler, null, true)[0]).createRawInstruction();
 		} catch (ResolveException e) {
 			throw new IllegalArgumentException(e);
 		}
@@ -155,10 +157,80 @@ public abstract class BaseTest extends TestCase {
 		
 	    return rawInst;
 	}
-	protected LLInstruction createLLInstruction(int pc, int wp, String element) throws ParseException {
+	protected HighLevelInstruction createHLInstruction(int pc, int wp, String element) throws ParseException {
 		RawInstruction inst = createInstruction(pc, element);
-		return new LLInstruction(wp, new Instruction(inst));
+		return new HighLevelInstruction(wp, new Instruction(inst));
 	}
 
+	protected void testGeneratedContent(Assembler assembler,
+			int pc, String[] stdInsts,
+			Symbol[] symbols, List<IInstruction> realinsts)
+			throws ResolveException {
+		testGeneratedSymbols(assembler, symbols);
+		
+		int targPc = pc;
+		int idx = 0;
+		for (String stdInstStr : stdInsts) {
+			RawInstruction stdInst = null;
+			try {
+				stdInst = createInstruction(targPc, stdInstStr);
+			} catch (ParseException e) {
+				assertNull(stdInstStr, e.toString());
+			}
+			IInstruction llInst;
+			do {
+				llInst = realinsts.get(idx++);
+			} while (!(llInst instanceof LLInstruction));
+			IInstruction realInst = ((LLInstruction) llInst).createRawInstruction();
+			if (!stdInst.equals(realInst))
+				assertEquals(stdInst.toInfoString(), realInst.toInfoString());
+			targPc += stdInst.size;
+		}
+	}
+
+	protected void testGeneratedSymbols(Assembler assembler, Symbol[] symbols) {
+		for (Symbol stdSymbol : symbols) {
+			Symbol symbol = assembler.getSymbolTable().findSymbol(stdSymbol.getName()); 
+			assertNotNull(stdSymbol.getName(), symbol);
+			assertTrue("missing " + stdSymbol, symbol.isDefined());
+			if (stdSymbol.getAddr() != symbol.getAddr())
+				assertEquals(stdSymbol.getName(), stdSymbol.getAddr(), symbol.getAddr());
+		}
+	}
+	
+	protected void testGeneratedContent(Assembler assembler, List<IInstruction> realinsts,
+			Object... pcOrInst) throws ResolveException {
+		if (assembler.getErrorList().size() > 0)
+			fail("had errors");
+		
+		for (IInstruction realinst : realinsts)
+			System.out.println(realinst);
+		
+		int targPc = 0;
+		int idx = 0;
+		for (Object obj : pcOrInst) {
+			if (obj instanceof Integer) {
+				targPc = (Integer)obj;
+				continue;
+			} else if (obj instanceof String) {
+				String stdInstStr = (String) obj;
+				RawInstruction stdInst = null;
+				try {
+					stdInst = createInstruction(targPc, stdInstStr);
+				} catch (ParseException e) {
+					assertNull(stdInstStr, e.toString());
+				}
+				IInstruction llInst;
+				do {
+					llInst = realinsts.get(idx++);
+				} while (!(llInst instanceof LLInstruction));
+				IInstruction realInst = ((LLInstruction) llInst).createRawInstruction();
+				if (!stdInst.equals(realInst))
+					assertEquals(stdInst, realInst);
+				targPc += stdInst.size;
+			} else
+				fail("unknown vararg " + obj);
+		}
+	}
 
 }

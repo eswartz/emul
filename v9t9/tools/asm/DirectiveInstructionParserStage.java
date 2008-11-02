@@ -12,10 +12,10 @@ import java.util.Map;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.directive.AorgDirective;
-import v9t9.tools.asm.directive.AssemblerDirective;
 import v9t9.tools.asm.directive.BssDirective;
 import v9t9.tools.asm.directive.DefineByteDirective;
 import v9t9.tools.asm.directive.DefineWordDirective;
+import v9t9.tools.asm.directive.Directive;
 import v9t9.tools.asm.directive.EquDirective;
 import v9t9.tools.asm.directive.EvenDirective;
 import v9t9.tools.llinst.ParseException;
@@ -27,27 +27,28 @@ import v9t9.tools.llinst.ParseException;
  */
 public class DirectiveInstructionParserStage implements IInstructionParserStage {
 
-	static class DI {
+	static class DirectiveInfo {
 		int argNum;
-		Class<? extends AssemblerDirective> klass;
-		public DI(int argNum, Class<? extends AssemblerDirective> klass) {
+		Class<? extends Directive> klass;
+		public DirectiveInfo(int argNum, Class<? extends Directive> klass) {
 			this.argNum = argNum;
 			this.klass = klass;
 		}
 	}
 	
-	private static final Map<String, DI> dirMap = new HashMap<String, DI>();
+	private static final Map<String, DirectiveInfo> dirMap = new HashMap<String, DirectiveInfo>();
 	private final OperandParser operandParser;
 	static {
-		dirMap.put("aorg", new DI(1, AorgDirective.class));
-		dirMap.put("equ", new DI(1, EquDirective.class));
-		dirMap.put("dw", new DI(-1, DefineWordDirective.class));
-		dirMap.put("data", new DI(-1, DefineWordDirective.class));
-		dirMap.put("db", new DI(-1, DefineByteDirective.class));
-		dirMap.put("byte", new DI(-1, DefineByteDirective.class));
-		dirMap.put("text", new DI(-1, DefineByteDirective.class));
-		dirMap.put("bss", new DI(1, BssDirective.class));
-		dirMap.put("even", new DI(0, EvenDirective.class));
+		dirMap.put("aorg", new DirectiveInfo(1, AorgDirective.class));
+		dirMap.put("equ", new DirectiveInfo(1, EquDirective.class));
+		dirMap.put("dw", new DirectiveInfo(-1, DefineWordDirective.class));
+		dirMap.put("data", new DirectiveInfo(-1, DefineWordDirective.class));
+		dirMap.put("db", new DirectiveInfo(-1, DefineByteDirective.class));
+		dirMap.put("byte", new DirectiveInfo(-1, DefineByteDirective.class));
+		dirMap.put("text", new DirectiveInfo(-1, DefineByteDirective.class));
+		dirMap.put("bss", new DirectiveInfo(1, BssDirective.class));
+		dirMap.put("even", new DirectiveInfo(0, EvenDirective.class));
+		//dirMap.put("consttable", new DirectiveInfo(0, ConstTableDirective.class));
 		
 	}
 	public DirectiveInstructionParserStage(OperandParser operandParser) {
@@ -63,7 +64,7 @@ public class DirectiveInstructionParserStage implements IInstructionParserStage 
 		tokenizer.match(AssemblerTokenizer.ID);
 		String dir = tokenizer.currentToken().toLowerCase();
 		
-		DI info = dirMap.get(dir);
+		DirectiveInfo info = dirMap.get(dir);
 		if (info == null)
 			return null;
 		
@@ -91,9 +92,9 @@ public class DirectiveInstructionParserStage implements IInstructionParserStage 
 		}
 		
 		try {
-			Constructor<? extends AssemblerDirective> constructor = info.klass.getConstructor(
+			Constructor<? extends Directive> constructor = info.klass.getConstructor(
 					List.class);
-			AssemblerDirective directive = constructor.newInstance(ops);
+			Directive directive = constructor.newInstance(ops);
 			return new IInstruction[] { directive };
 		} catch (Exception e) {
 			throw (IllegalStateException) new IllegalStateException().initCause(e);

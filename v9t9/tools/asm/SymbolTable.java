@@ -9,16 +9,37 @@ import java.util.HashMap;
 public class SymbolTable {
 
 	private HashMap<String, Symbol> nameTable;
+	private final SymbolTable parent;
 	//private HashMap<Integer, Symbol> indexTable;
 	//private int symbolNumber;
 	
 	public SymbolTable() {
+		this(null);
+	}
+	
+	public SymbolTable(SymbolTable symbolTable) {
 		this.nameTable = new HashMap<String, Symbol>();
-		//this.indexTable = new HashMap<Integer, Symbol>();
+		this.parent = symbolTable;
+	}
+
+	public SymbolTable getParent() {
+		return parent;
+	}
+	
+	public Symbol findSymbolLocal(String name) {
+		Symbol symbol = nameTable.get(name.toLowerCase());
+		return symbol;
 	}
 	
 	public Symbol findSymbol(String name) {
-		return nameTable.get(name.toLowerCase());
+		SymbolTable scope = this;
+		while (scope != null) {
+			Symbol symbol = scope.findSymbolLocal(name);
+			if (symbol != null)
+				return symbol;
+			scope = scope.getParent();
+		}
+		return null;
 	}
 
 	//public Symbol findSymbol(int index) {
@@ -26,17 +47,23 @@ public class SymbolTable {
 	//}
 
 	/** 
-	 * Declare a symbol (ignoring if already declared)
+	 * Find a symbol in the scope or define a symbol in this scope.
 	 * 
 	 */
-	public Symbol declareSymbol(String name) {
+	public Symbol findOrCreateSymbol(String name) {
 		Symbol symbol = findSymbol(name);
 		if (symbol != null)
 			return symbol;
-		symbol = new Symbol(name);
-		//symbol.setIndex(++symbolNumber);
+		return createSymbol(name);
+	}
+	
+	/** 
+	 * Create a symbol in this scope (ignoring if already defined)
+	 * 
+	 */
+	public Symbol createSymbol(String name) {
+		Symbol symbol = new Symbol(this, name);
 		nameTable.put(name.toLowerCase(), symbol);
-		//indexTable.put(symbol.getIndex(), symbol);
 		return symbol;
 	}
 
@@ -54,4 +81,13 @@ public class SymbolTable {
 	public Symbol[] getSymbols() {
 		return (Symbol[]) nameTable.values().toArray(new Symbol[nameTable.values().size()]);
 	}
+
+	public void undefineSymbols() {
+		for (Symbol symbol : nameTable.values()) {
+			symbol.setDefined(false);
+		}
+		if (parent != null)
+			parent.undefineSymbols();
+	}
+
 }

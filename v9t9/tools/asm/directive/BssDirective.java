@@ -6,20 +6,22 @@ package v9t9.tools.asm.directive;
 import java.util.List;
 
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
+import v9t9.tools.asm.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.operand.ll.LLForwardOperand;
+import v9t9.tools.asm.operand.ll.LLImmedOperand;
+import v9t9.tools.asm.operand.ll.LLOperand;
 
 /**
  * @author Ed
  *
  */
-public class BssDirective extends AssemblerDirective {
+public class BssDirective extends Directive {
 
-	private Operand op;
+	private AssemblerOperand op;
 
-	public BssDirective(List<Operand> ops) {
+	public BssDirective(List<AssemblerOperand> ops) {
 		this.op = ops.get(0);
 	}
 	
@@ -29,14 +31,14 @@ public class BssDirective extends AssemblerDirective {
 	}
 
 	public IInstruction[] resolve(Assembler assembler, IInstruction previous, boolean finalPass) throws ResolveException {
-		MachineOperand mop = op.resolve(assembler, this); 
-		if (mop.type != MachineOperand.OP_IMMED)
-			throw new ResolveException(op, "Expected number");
-		if (mop.symbol != null)
+		LLOperand lop = op.resolve(assembler, this); 
+		if (lop instanceof LLForwardOperand)
 			throw new ResolveException(op, "Cannot allocate size for forward-declared symbol");
-		op = mop;
+		if (!(lop instanceof LLImmedOperand))
+			throw new ResolveException(op, "Expected number");
+		op = lop;
 		setPc(assembler.getPc());
-		assembler.setPc((assembler.getPc() + mop.immed));
+		assembler.setPc((assembler.getPc() + lop.getImmediate()));
 		return new IInstruction[] { this };
 	}
 	

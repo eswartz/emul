@@ -3,9 +3,8 @@
  */
 package v9t9.tests;
 
-import v9t9.tools.asm.StandardInstructionParserStage;
 import v9t9.tools.llinst.Block;
-import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.HighLevelInstruction;
 
 /**
  * @author ejs
@@ -13,17 +12,17 @@ import v9t9.tools.llinst.LLInstruction;
  */
 public class TestBlocks extends BaseTopDownPhaseTest {
 
-	private LLInstruction inst0,inst1,inst2,inst3,inst4,inst5;
+	private HighLevelInstruction inst0,inst1,inst2,inst3,inst4,inst5;
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		
-		inst0 = createLLInstruction(0x0, 0x0, "LI R1,1");
-		inst1 = createLLInstruction(0x0, 0x0, "LI R2,1");
-		inst2 = createLLInstruction(0x0, 0x0, "LI R3,1");
-		inst3 = createLLInstruction(0x0, 0x0, "LI R4,1");
-		inst4 = createLLInstruction(0x0, 0x0, "LI R5,1");
-		inst5 = createLLInstruction(0x0, 0x0, "LI R6,1");
+		inst0 = createHLInstruction(0x0, 0x0, "LI R1,1");
+		inst1 = createHLInstruction(0x0, 0x0, "LI R2,1");
+		inst2 = createHLInstruction(0x0, 0x0, "LI R3,1");
+		inst3 = createHLInstruction(0x0, 0x0, "LI R4,1");
+		inst4 = createHLInstruction(0x0, 0x0, "LI R5,1");
+		inst5 = createHLInstruction(0x0, 0x0, "LI R6,1");
 		inst0.setNext(inst1);
 		inst1.setNext(inst2);
 		inst2.setNext(inst3);

@@ -14,7 +14,7 @@ import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.llinst.Block;
 import v9t9.tools.llinst.ContextSwitchRoutine;
-import v9t9.tools.llinst.LLInstruction;
+import v9t9.tools.llinst.HighLevelInstruction;
 import v9t9.tools.llinst.Label;
 import v9t9.tools.llinst.LabelOperand;
 import v9t9.tools.llinst.LinkedRoutine;
@@ -52,7 +52,7 @@ public class FullSweepPhase extends Phase {
 				continue;
 			}
 
-            for (LLInstruction inst = (LLInstruction) range.getCode(); inst != null; inst = inst.getNext()) {
+            for (HighLevelInstruction inst = (HighLevelInstruction) range.getCode(); inst != null; inst = inst.getNext()) {
                 Label label;
 
                 if (inst.inst == InstructionTable.Ibl || inst.inst == InstructionTable.Ib || inst.inst == InstructionTable.Iblwp
@@ -187,8 +187,8 @@ public class FullSweepPhase extends Phase {
         // now assign blocks to all instructions, adding new blocks
         // where no labels reach 
         Block curblock = null;
-        for (Iterator<LLInstruction> iter = decompileInfo.getLLInstructions().values().iterator(); iter.hasNext();) {
-            LLInstruction inst = iter.next();
+        for (Iterator<HighLevelInstruction> iter = decompileInfo.getLLInstructions().values().iterator(); iter.hasNext();) {
+            HighLevelInstruction inst = iter.next();
             if (inst.getBlock() != null) {
                 curblock = inst.getBlock();
             } else if (curblock == null) {
@@ -198,7 +198,7 @@ public class FullSweepPhase extends Phase {
                 inst.setBlock(curblock);
             }
             curblock.setLast(inst);
-            if ((inst.flags & LLInstruction.fIsBranch) != 0) {
+            if ((inst.flags & HighLevelInstruction.fIsBranch) != 0) {
 				curblock = null;
 			}
         }
@@ -222,10 +222,10 @@ public class FullSweepPhase extends Phase {
             if (block == null) {
 				continue;
 			}
-            LLInstruction inst = block.getLast();
+            HighLevelInstruction inst = block.getLast();
             inst = block.getLast();
-            if ((inst.flags & LLInstruction.fIsBranch+LLInstruction.fIsCondBranch) != 0) {
-                if ((inst.flags & LLInstruction.fIsCall) == 0) {
+            if ((inst.flags & HighLevelInstruction.fIsBranch+HighLevelInstruction.fIsCondBranch) != 0) {
+                if ((inst.flags & HighLevelInstruction.fIsCall) == 0) {
                     // jump?
                     if (inst.op1 instanceof LabelOperand)
                     {
@@ -248,8 +248,8 @@ public class FullSweepPhase extends Phase {
                 }
 
                 // fallthrough?
-                if ((inst.flags & LLInstruction.fIsCondBranch) != 0 
-                    || (inst.flags & LLInstruction.fIsCall+LLInstruction.fIsCall) == LLInstruction.fIsCall+LLInstruction.fIsCall)
+                if ((inst.flags & HighLevelInstruction.fIsCondBranch) != 0 
+                    || (inst.flags & HighLevelInstruction.fIsCall+HighLevelInstruction.fIsCall) == HighLevelInstruction.fIsCall+HighLevelInstruction.fIsCall)
                 {
                     if (inst.getNext() != null && inst.getNext().getBlock() != null) {
 						block.addSucc(inst.getNext().getBlock());
@@ -306,7 +306,7 @@ public class FullSweepPhase extends Phase {
 
         block.setFlags(block.getFlags() | Block.fVisited);
 
-        for (LLInstruction inst = block.getFirst(); inst != null; inst = inst.getNext()) {
+        for (HighLevelInstruction inst = block.getFirst(); inst != null; inst = inst.getNext()) {
             // TODO: watch for self-modifying memory!
             if (inst.inst == InstructionTable.Ilwpi) {
 				wp = ((MachineOperand)inst.op1).immed;
