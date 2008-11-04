@@ -17,6 +17,7 @@
  * Current implementation delegates all its job to DBGHELP.DLL.
  */
 
+#include <assert.h>
 #include "mdep.h"
 #include "config.h"
 
@@ -87,6 +88,8 @@ extern BOOL SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line) {
         proc = GetProc("SymGetLineNext");
         if (proc == NULL) return 0;
     }
+    assert(Line != NULL);
+    assert(Line->Address != 0);
     return proc(hProcess, Line);
 }
 

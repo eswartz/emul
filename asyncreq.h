@@ -20,6 +20,7 @@
 #define D_asyncreq
 
 #include "link.h"
+#include "events.h"
 
 enum {
     AsyncReqRead,                       /* File read */
@@ -35,7 +36,7 @@ enum {
 
 typedef struct AsyncReqInfo AsyncReqInfo;
 struct AsyncReqInfo {
-    void (*done)(void * req);
+    EventCallBack * done; /* The callback argument is address of AsyncReqInfo */
     void * client_data;
     int type;
     union {
@@ -100,7 +101,7 @@ struct AsyncReqInfo {
 
     /* Private - the following members should only be used by the
      * asyncreq implementation */
-    LINK reqlink;                       /* List of pending requests */
+    LINK reqlink;               /* List of pending requests */
 };
 
 void async_req_post(AsyncReqInfo * req);

@@ -35,6 +35,7 @@
 #include "myalloc.h"
 #include "channel.h"
 #include "protocol.h"
+#include "proxy.h"
 #include "discovery.h"
 #include "errors.h"
 

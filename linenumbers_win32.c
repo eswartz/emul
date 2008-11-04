@@ -51,8 +51,7 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineToAddr
         img_line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
 
         if (!SymGetLineFromName(ctx->handle, NULL, file, line, &offset, &img_line)) {
-            set_win32_errno(GetLastError());
-            err = errno;
+            err = set_win32_errno(GetLastError());
         }
         if (err == 0) {
             callback(user_args, img_line.Address);
@@ -148,21 +147,21 @@ static void command_map_to_source(char * token, Channel * c) {
                     addr0 = dest;
                     addr1 = dest + 1;
                 }
+                else {
+                    err = set_win32_errno(w);
+                }
             }
             else {
-                set_win32_errno(w);
-                err = errno;
+                err = set_win32_errno(w);
             }
         }
         else {
-            set_win32_errno(w);
-            err = errno;
+            err = set_win32_errno(w);
         }
     }
     memcpy(&next, &line, sizeof(next));
     if (err == 0 && !not_found && !SymGetLineNext(ctx->handle, &next)) {
-        set_win32_errno(GetLastError());
-        err = errno;
+        err = set_win32_errno(GetLastError());
     }
 
     write_stringz(&c->out, "R");

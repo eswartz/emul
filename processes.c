@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <assert.h>
 #include "myalloc.h"
@@ -36,17 +37,33 @@
 #include "trace.h"
 #include "context.h"
 #include "json.h"
+#include "asyncreq.h"
 #include "exceptions.h"
 #include "runctrl.h"
+#include "filesystem.h"
 #include "processes.h"
 
 static const char * PROCESSES = "Processes";
 
 #if defined(WIN32)
 #  include "tlhelp32.h"
+#  ifdef _MSC_VER
+#    include "winternl.h"
+#  else
+#    include "ntdef.h"
+#  endif
+#  ifndef STATUS_INFO_LENGTH_MISMATCH
+#   define STATUS_INFO_LENGTH_MISMATCH      ((NTSTATUS)0xC0000004L)
+#  endif
+#  ifndef SystemHandleInformation
+#    define SystemHandleInformation 16
+#  endif
 #elif defined(_WRS_KERNEL)
 #  include <symLib.h>
 #  include <sysSymTbl.h>
+#  include <ioLib.h>
+#  include <ptyDrv.h>
+#  include <taskHookLib.h>
 #else
 #  include <sys/stat.h>
 #  include <fcntl.h>
@@ -54,12 +71,37 @@ static const char * PROCESSES = "Processes";
 #  include <dirent.h>
 #endif
 
-typedef struct AttachDoneArgs AttachDoneArgs;
+#define PIPE_SIZE 0x1000
 
-struct AttachDoneArgs {
+typedef struct AttachDoneArgs {
     Channel * c;
     char token[256];
-};
+} AttachDoneArgs;
+
+typedef struct ChildProcess {
+    LINK link;
+    int pid;
+    int refs;
+    TCFBroadcastGroup * bcg;
+    int inp;
+    int out;
+    int err;
+    unsigned exit_code;
+} ChildProcess;
+
+typedef struct ProcessOutput {
+    int stream_id;
+    ChildProcess * prs;
+    AsyncReqInfo req;
+    char buf[0x400];
+} ProcessOutput;
+
+#define link2prs(A)  ((ChildProcess *)((char *)(A) - offsetof(ChildProcess, link)))
+
+static LINK prs_list;
+#if defined(_WRS_KERNEL)
+static SEM_ID prs_list_lock = NULL;
+#endif
 
 static void write_context(OutputStream * out, int pid) {
     Context * ctx = NULL;
@@ -91,7 +133,7 @@ static void write_context(OutputStream * out, int pid) {
         }
     }
 #endif
-    
+
     ctx = context_find_from_pid(pid);
     if (ctx != NULL) {
         json_write_string(out, "Attached");
@@ -105,6 +147,45 @@ static void write_context(OutputStream * out, int pid) {
     json_write_string(out, pid2id(pid, 0));
 
     write_stream(out, '}');
+}
+
+static void send_event_process_output(OutputStream * out, ProcessOutput * buf) {
+    ChildProcess * prs = buf->prs;
+    JsonWriteBinaryState state;
+
+    assert(buf->req.u.fio.rval > 0);
+    assert(buf->req.u.fio.bufp == buf->buf);
+
+    write_stringz(out, "E");
+    write_stringz(out, PROCESSES);
+    write_stringz(out, "output");
+
+    json_write_string(out, pid2id(prs->pid, 0));
+    write_stream(out, 0);
+
+    json_write_long(out, buf->stream_id);
+    write_stream(out, 0);
+
+    json_write_binary_start(&state, out);
+    json_write_binary_data(&state, buf->buf, buf->req.u.fio.rval);
+    json_write_binary_end(&state);
+    write_stream(out, 0);
+
+    write_stream(out, MARKER_EOM);
+}
+
+static void send_event_process_exited(OutputStream * out, ChildProcess * prs) {
+    write_stringz(out, "E");
+    write_stringz(out, PROCESSES);
+    write_stringz(out, "exited");
+
+    json_write_string(out, pid2id(prs->pid, 0));
+    write_stream(out, 0);
+
+    json_write_long(out, prs->exit_code);
+    write_stream(out, 0);
+
+    write_stream(out, MARKER_EOM);
 }
 
 static void command_get_context(char * token, Channel * c) {
@@ -135,7 +216,7 @@ static void command_get_context(char * token, Channel * c) {
     }
 
     write_errno(&c->out, err);
-    
+
     if (err == 0 && pid != 0 && parent == 0) {
         write_context(&c->out, pid);
         write_stream(&c->out, 0);
@@ -415,6 +496,386 @@ static void start_done(int error, Context * ctx, void * arg) {
     loc_free(data);
 }
 
+static ChildProcess * find_process(int pid) {
+    LINK * qhp = &prs_list;
+    LINK * qp = qhp->next;
+
+    while (qp != qhp) {
+        ChildProcess * prs = link2prs(qp);
+        if (prs->pid == pid) return prs;
+        qp = qp->next;
+    }
+    return NULL;
+}
+
+static void process_exited(ChildProcess * prs) {
+    assert(prs->refs == 0);
+    /* TODO: process exit code */
+    send_event_process_exited(&prs->bcg->out, prs);
+    flush_stream(&prs->bcg->out);
+#if defined(_WRS_KERNEL)
+    semTake(prs_list_lock, WAIT_FOREVER);
+#endif
+    list_remove(&prs->link);
+    close(prs->inp);
+    close(prs->out);
+    close(prs->err);
+    loc_free(prs);
+#if defined(_WRS_KERNEL)
+    semGive(prs_list_lock);
+#endif
+}
+
+static void read_process_output_done(void * x) {
+    AsyncReqInfo * req = x;
+    ProcessOutput * out = (ProcessOutput *)req->client_data;
+    ChildProcess * prs = out->prs;
+
+    if ((int)req->u.fio.rval > 0) {
+        send_event_process_output(&prs->bcg->out, out);
+        flush_stream(&prs->bcg->out);
+        async_req_post(req);
+    }
+    else {
+        prs->refs--;
+        if (prs->refs == 0) process_exited(prs);
+        loc_free(out);
+    }
+}
+
+static void read_process_output(ChildProcess * prs, int stream_id) {
+    ProcessOutput * out = loc_alloc_zero(sizeof(ProcessOutput));
+    out->prs = prs;
+    out->stream_id = stream_id;
+    out->req.client_data = out;
+    out->req.done = read_process_output_done;
+    out->req.type = AsyncReqRead;
+    out->req.u.fio.bufp = out->buf;
+    out->req.u.fio.bufsz = sizeof(out->buf);
+    out->req.u.fio.fd = stream_id == 0 ? prs->out : prs->err;
+    async_req_post(&out->req);
+    prs->refs++;
+}
+
+#if defined(WIN32)
+
+static int start_process(Channel * c, char ** envp, char * dir, char * exe, char ** args, int attach,
+                int * pid, int * selfattach, ChildProcess ** prs) {
+    typedef struct _SYSTEM_HANDLE_INFORMATION {
+        ULONG Count;
+        struct HANDLE_INFORMATION {
+            USHORT ProcessId;
+            USHORT CreatorBackTraceIndex;
+            UCHAR ObjectTypeNumber;
+            UCHAR Flags;
+            USHORT Handle;
+            PVOID Object;
+            ACCESS_MASK GrantedAccess;
+        } Handles[1];
+    } SYSTEM_HANDLE_INFORMATION;
+    FARPROC QuerySystemInformationProc = GetProcAddress(GetModuleHandle("NTDLL.DLL"), "NtQuerySystemInformation");
+    DWORD size;
+    NTSTATUS status;
+    SYSTEM_HANDLE_INFORMATION * hi = NULL;
+    int fpipes[3][2];
+    HANDLE hpipes[3][2];
+    char * cmd = NULL;
+    int err = 0;
+    int i;
+
+    if (args != NULL) {
+        int i = 0;
+        int cmd_size = 0;
+        int cmd_pos = 0;
+#           define cmd_append(ch) { \
+            if (!cmd) { \
+                cmd_size = 0x1000; \
+                cmd = (char *)loc_alloc(cmd_size); \
+            } \
+            else if (cmd_pos >= cmd_size) { \
+                char * tmp = (char *)loc_alloc(cmd_size * 2); \
+                memcpy(tmp, cmd, cmd_pos); \
+                loc_free(cmd); \
+                cmd = tmp; \
+                cmd_size *= 2; \
+            }; \
+            cmd[cmd_pos++] = (ch); \
+        }
+        while (args[i] != NULL) {
+            char * p = args[i++];
+            if (cmd_pos > 0) cmd_append(' ');
+            cmd_append('"');
+            while (*p) {
+                if (*p == '"') cmd_append('\\');
+                cmd_append(*p);
+                p++;
+            }
+            cmd_append('"');
+        }
+        cmd_append(0);
+#       undef cmd_append
+    }
+
+    size = sizeof(SYSTEM_HANDLE_INFORMATION) * 16;
+    hi = loc_alloc(size);
+    while (1) {
+        status = QuerySystemInformationProc(SystemHandleInformation, hi, size, &size);
+        if (status != STATUS_INFO_LENGTH_MISMATCH) break;
+        hi = loc_realloc(hi, size);
+    }
+    if (status == 0) {
+        ULONG i;
+        DWORD id = GetCurrentProcessId();
+        for (i = 0; i < hi->Count; i++) {
+            if (hi->Handles[i].ProcessId != id) continue;
+            SetHandleInformation((HANDLE)(int)hi->Handles[i].Handle, HANDLE_FLAG_INHERIT, FALSE);
+        }
+    }
+    else {
+        err = set_win32_errno(status);
+        trace(LOG_ALWAYS, "Can't start process '%s': %s", exe, errno_to_str(err));
+    }
+    loc_free(hi);
+
+    memset(hpipes, 0, sizeof(hpipes));
+        for (i = 0; i < 3; i++) fpipes[i][0] = fpipes[i][1] = -1;
+    if (!err) {
+#if defined(__CYGWIN__)
+        for (i = 0; i < 3; i++) {
+                if (pipe(fpipes[i]) < 0) {
+                        err = errno;
+                        break;
+                }
+                hpipes[i][0] = (HANDLE)get_osfhandle(fpipes[i][0]);
+                hpipes[i][1] = (HANDLE)get_osfhandle(fpipes[i][1]);
+        }
+#else
+        for (i = 0; i < 3; i++) {
+                if (!CreatePipe(&hpipes[i][0], &hpipes[i][1], NULL, PIPE_SIZE)) {
+                err = set_win32_errno(GetLastError());
+                break;
+                }
+                fpipes[i][0] = _open_osfhandle((intptr_t)hpipes[i][0], O_TEXT);
+                fpipes[i][1] = _open_osfhandle((intptr_t)hpipes[i][1], O_TEXT);
+        }
+#endif
+    }
+    if (!err) {
+        STARTUPINFO si;
+        PROCESS_INFORMATION prs_info;
+        SetHandleInformation(hpipes[0][0], HANDLE_FLAG_INHERIT, TRUE);
+        SetHandleInformation(hpipes[1][1], HANDLE_FLAG_INHERIT, TRUE);
+        SetHandleInformation(hpipes[2][1], HANDLE_FLAG_INHERIT, TRUE);
+                memset(&si, 0, sizeof(si));
+                memset(&prs_info, 0, sizeof(prs_info));
+                si.cb = sizeof(si);
+                si.dwFlags |= STARTF_USESTDHANDLES;
+                si.hStdInput  = hpipes[0][0];
+                si.hStdOutput = hpipes[1][1];
+                si.hStdError  = hpipes[2][1];
+                if (CreateProcess(exe, cmd, NULL, NULL, TRUE, (attach ? CREATE_SUSPENDED : 0),
+                        (envp ? envp[0] : NULL), (dir[0] ? dir : NULL), &si, &prs_info) == 0)
+                {
+                        err = set_win32_errno(GetLastError());
+                }
+                else {
+                *pid = prs_info.dwProcessId;
+                CloseHandle(prs_info.hThread);
+                CloseHandle(prs_info.hProcess);
+            }
+    }
+    close(fpipes[0][0]);
+    close(fpipes[1][1]);
+    close(fpipes[2][1]);
+    if (!err) {
+        *prs = loc_alloc_zero(sizeof(ChildProcess));
+        (*prs)->inp = fpipes[0][1];
+        (*prs)->out = fpipes[1][0];
+        (*prs)->err = fpipes[2][0];
+        (*prs)->pid = *pid;
+        (*prs)->bcg = c->bcg;
+        list_add_first(&(*prs)->link, &prs_list);
+    }
+    else {
+                close(fpipes[0][1]);
+                close(fpipes[1][0]);
+                close(fpipes[2][0]);
+    }
+    loc_free(cmd);
+    if (!err) return 0;
+    trace(LOG_ALWAYS, "Can't start process '%s': %s", exe, errno_to_str(err));
+    errno = err;
+    return -1;
+}
+
+#elif defined(_WRS_KERNEL)
+
+static void task_create_hook(WIND_TCB * tcb) {
+    ChildProcess * prs;
+
+    semTake(prs_list_lock, WAIT_FOREVER);
+    prs = find_process(taskIdSelf());
+    /* TODO: vxWork: standard IO inheritance */
+    semGive(prs_list_lock);
+}
+
+static void task_delete_hook(WIND_TCB * tcb) {
+    int i;
+    ChildProcess * prs;
+
+    semTake(prs_list_lock, WAIT_FOREVER);
+    prs = find_process((UINT32)tcb);
+    if (prs != NULL) {
+        close(ioTaskStdGet(prs->pid, 1));
+        close(ioTaskStdGet(prs->pid, 2));
+        for (i = 0; i < 2; i++) {
+            char pnm[32];
+            snprintf(pnm, sizeof(pnm), "/pty/tcf-%08x-%d", prs->pid, i);
+            ptyDevRemove(pnm);
+        }
+    }
+    semGive(prs_list_lock);
+}
+
+static int start_process(Channel * c, char ** envp, char * dir, char * exe, char ** args, int attach,
+                int * pid, int * selfattach, ChildProcess ** prs) {
+    int err = 0;
+    char * ptr;
+    SYM_TYPE type;
+
+    if (symFindByName(sysSymTbl, exe, &ptr, &type) != OK) {
+        err = errno;
+        if (err == S_symLib_SYMBOL_NOT_FOUND) err = ERR_SYM_NOT_FOUND;
+        assert(err != 0);
+    }
+    else {
+        int i;
+        int pipes[2][2];
+        /* TODO: arguments, environment */
+        *pid = taskCreate("tTcf", 100, 0, 0x4000, (FUNCPTR)ptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        for (i = 0; i < 2; i++) {
+            char pnm[32];
+            char pnm_m[32];
+            char pnm_s[32];
+            snprintf(pnm, sizeof(pnm), "/pty/tcf-%08x-%d", *pid, i);
+            snprintf(pnm_m, sizeof(pnm_m), "%sM", pnm);
+            snprintf(pnm_s, sizeof(pnm_m), "%sS", pnm);
+            if (ptyDevCreate(pnm, PIPE_SIZE, PIPE_SIZE) == ERROR) {
+                err = errno;
+                break;
+            }
+            pipes[i][0] = open(pnm_m, O_RDWR, 0);
+            pipes[i][1] = open(pnm_s, O_RDWR, 0);
+            if (pipes[i][0] < 0 || pipes[i][1] < 0) {
+                err = errno;
+                break;
+            }
+        }
+        if (err) {
+            taskDelete(*pid);
+            *pid = 0;
+        }
+        else {
+            semTake(prs_list_lock, WAIT_FOREVER);
+            ioTaskStdSet(*pid, 0, pipes[0][1]);
+            ioTaskStdSet(*pid, 1, pipes[0][1]);
+            ioTaskStdSet(*pid, 2, pipes[1][1]);
+            *prs = loc_alloc_zero(sizeof(ChildProcess));
+            (*prs)->inp = pipes[0][0];
+            (*prs)->out = pipes[0][0];
+            (*prs)->err = pipes[1][0];
+            (*prs)->pid = *pid;
+            (*prs)->bcg = c->bcg;
+            list_add_first(&(*prs)->link, &prs_list);
+            if (attach) {
+                taskStop(*pid);
+                taskActivate(*pid);
+                assert(taskIsStopped(*pid));
+            }
+            else {
+                taskActivate(*pid);
+            }
+            semGive(prs_list_lock);
+        }
+    }
+    if (!err) return 0;
+    errno = err;
+    return -1;
+}
+
+#else
+
+static int start_process(Channel * c, char ** envp, char * dir, char * exe, char ** args, int attach,
+                int * pid, int * selfattach, ChildProcess ** prs) {
+        int err = 0;
+    int p_inp[2];
+    int p_out[2];
+    int p_err[2];
+
+    if (pipe(p_inp) < 0 || pipe(p_out) < 0 || pipe(p_err) < 0) err = errno;
+
+    if (err == 0 && (p_inp[0] < 3 || p_out[1] < 3 || p_err[1] < 3)) {
+        int fd0 = p_inp[0];
+        int fd1 = p_out[1];
+        int fd2 = p_err[1];
+        if ((p_inp[0] = dup(p_inp[0])) < 0 ||
+            (p_out[1] = dup(p_out[1])) < 0 ||
+            (p_err[1] = dup(p_err[1])) < 0 ||
+            close(fd0) < 0 ||
+            close(fd1) < 0 ||
+            close(fd2) < 0) err = errno;
+    }
+
+    if (!err) {
+        *pid = fork();
+        if (*pid < 0) err = errno;
+        if (*pid == 0) {
+            int fd = -1;
+            int err = 0;
+
+            if (err == 0) {
+                fd = sysconf(_SC_OPEN_MAX);
+                if (fd < 0) err = errno;
+            }
+            if (!err && dup2(p_inp[0], 0) < 0) err = errno;
+            if (!err && dup2(p_out[1], 1) < 0) err = errno;
+            if (!err && dup2(p_err[1], 2) < 0) err = errno;
+            if (!err) {
+                while (fd > 3) close(--fd);
+            }
+            if (!err && attach && context_attach_self() < 0) err = errno;
+            if (!err) {
+                execve(exe, args, envp);
+                err = errno;
+            }
+            if (!attach) err = 1;
+            else if (err < 1) err = EINVAL;
+            else if (err > 0xff) err = EINVAL;
+            exit(err);
+        }
+    }
+    if (!err) {
+        if (close(p_inp[0]) < 0 || close(p_out[1]) < 0 || close(p_err[1]) < 0) err = errno;
+    }
+    if (!err) {
+        *prs = loc_alloc_zero(sizeof(ChildProcess));
+        (*prs)->inp = p_inp[1];
+        (*prs)->out = p_out[0];
+        (*prs)->err = p_err[0];
+        (*prs)->pid = *pid;
+        (*prs)->bcg = c->bcg;
+        list_add_first(&(*prs)->link, &prs_list);
+    }
+
+    *selfattach = 1;
+
+    if (!err) return 0;
+    errno = err;
+    return -1;
+}
+
+#endif
+
 static void command_start(char * token, Channel * c) {
     int pid = 0;
     int err = 0;
@@ -427,6 +888,7 @@ static void command_start(char * token, Channel * c) {
     int attach = 0;
     int selfattach = 0;
     int pending = 0;
+    ChildProcess * prs = NULL;
     Trap trap;
 
     if (set_trap(&trap)) {
@@ -443,121 +905,12 @@ static void command_start(char * token, Channel * c) {
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
         if (dir[0] != 0 && chdir(dir) < 0) err = errno;
-        if (err == 0) {
-#if defined(WIN32)
-            STARTUPINFO si;
-            PROCESS_INFORMATION prs;
-            char * cmd = NULL;
-            if (args != NULL) {
-                int i = 0;
-                int cmd_size = 0;
-                int cmd_pos = 0;
-#               define cmd_append(ch) { \
-                    if (!cmd) { \
-                        cmd_size = 0x1000; \
-                        cmd = (char *)loc_alloc(cmd_size); \
-                    } \
-                    else if (cmd_pos >= cmd_size) { \
-                        char * tmp = (char *)loc_alloc(cmd_size * 2); \
-                        memcpy(tmp, cmd, cmd_pos); \
-                        loc_free(cmd); \
-                        cmd = tmp; \
-                        cmd_size *= 2; \
-                    }; \
-                    cmd[cmd_pos++] = (ch); \
-                }
-                while (args[i] != NULL) {
-                    char * p = args[i++];
-                    if (cmd_pos > 0) cmd_append(' ');
-                    cmd_append('"');
-                    while (*p) {
-                        if (*p == '"') cmd_append('\\');
-                        cmd_append(*p);
-                        p++;
-                    }
-                    cmd_append('"');
-                }
-                cmd_append(0);
-#               undef cmd_append
-            }
-            memset(&si, 0, sizeof(si));
-            memset(&prs, 0, sizeof(prs));
-            si.cb = sizeof(si);
-            if (CreateProcess(exe, cmd, NULL, NULL, FALSE, (attach ? CREATE_SUSPENDED : 0),
-                (envp ? envp[0] : NULL), (dir[0] ? dir : NULL), &si, &prs) == 0)
-            {
-                trace(LOG_ALWAYS, "Can't start process '%s': error %d", exe, GetLastError());
-                err = EINVAL;
-            }
-            if (!err) {
-                pid = prs.dwProcessId;
-                CloseHandle(prs.hThread);
-                CloseHandle(prs.hProcess);
-            }
-            loc_free(cmd);
-#elif defined(_WRS_KERNEL)
-            char * ptr;
-            SYM_TYPE type;
-            if (symFindByName(sysSymTbl, exe, &ptr, &type) != OK) {
-                err = errno;
-                if (err == S_symLib_SYMBOL_NOT_FOUND) err = ERR_SYM_NOT_FOUND;
-                assert(err != 0);
-            }
-            else {
-                /* TODO: arguments, environment */
-                pid = taskCreate("tTcf", 100, 0, 0x4000, (FUNCPTR)ptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-                if (attach) {
-                    taskStop(pid);
-                    taskActivate(pid);
-                    assert(taskIsStopped(pid));
-                }
-                else {
-                    taskActivate(pid);
-                }
-            }
-#else
-            pid = fork();
-            if (pid < 0) err = errno;
-            if (pid == 0) {
-                int fd;
-                int err = 0;
-
-                if (attach && context_attach_self() < 0) err = errno;
-                if (err == 0) {
-                    fd = sysconf(_SC_OPEN_MAX);
-                    if (fd < 0) err = errno;
-                }
-                if (err == 0) {
-                    while (fd > 0) close(--fd);
-                }
-                if (err == 0) {
-                    fd = open("/dev/null", O_RDONLY);
-                    if (fd < 0) err = errno;
-                    if (fd != 0) err = EBADF;
-                }
-                if (err == 0) {
-                    fd = open("/dev/null", O_WRONLY);
-                    if (fd < 0) err = errno;
-                    if (fd != 1) err = EBADF;
-                }
-                if (err == 0) {
-                    fd = dup(1);
-                    if (fd < 0) err = errno;
-                    if (fd != 2) err = EBADF;
-                }
-                if (err == 0) {
-                    execve(exe, args, envp);
-                    err = errno;
-                }
-                if (!attach) err = 1;
-                else if (err < 1) err = EINVAL;
-                else if (err > 0xff) err = EINVAL;
-                exit(err);
-            }
-            selfattach = 1;
-#endif            
+        if (err == 0 && start_process(c, envp, dir, exe, args, attach, &pid, &selfattach, &prs) < 0) err = errno;
+        if (prs != NULL) {
+            read_process_output(prs, 0);
+            read_process_output(prs, 1);
         }
-        if (attach && err == 0) {
+        if (attach && !err) {
             AttachDoneArgs * data = loc_alloc_zero(sizeof *data);
             data->c = c;
             strcpy(data->token, token);
@@ -592,6 +945,13 @@ static void command_start(char * token, Channel * c) {
 }
 
 void ini_processes_service(Protocol * proto) {
+#if defined(_WRS_KERNEL)
+    prs_list_lock = semMCreate(SEM_Q_PRIORITY);
+    if (prs_list_lock == NULL) check_error(errno);
+    if (taskCreateHookAdd((FUNCPTR)task_create_hook) != OK) check_error(errno);
+    if (taskDeleteHookAdd((FUNCPTR)task_delete_hook) != OK) check_error(errno);
+#endif
+    list_init(&prs_list);
     add_command_handler(proto, PROCESSES, "getContext", command_get_context);
     add_command_handler(proto, PROCESSES, "getChildren", command_get_children);
     add_command_handler(proto, PROCESSES, "attach", command_attach);

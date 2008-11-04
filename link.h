@@ -19,6 +19,8 @@
 #ifndef D_link
 #define D_link
 
+#include <stddef.h>
+
 typedef struct LINK LINK;
 
 struct LINK {

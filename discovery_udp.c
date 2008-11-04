@@ -365,8 +365,6 @@ static void udp_send_req_info(struct sockaddr_in * addr) {
     char buf[PKT_SIZE];
     ip_ifc_info * ifc;
 
-    trace(LOG_DISCOVERY, "Broadcast REQ_INFO");
-
     buf[i++] = 'T';
     buf[i++] = 'C';
     buf[i++] = 'F';
@@ -377,6 +375,7 @@ static void udp_send_req_info(struct sockaddr_in * addr) {
     buf[i++] = 0;
 
     if (addr == NULL) {
+        trace(LOG_DISCOVERY, "Broadcast REQ_INFO");
         /* Broadcast to all masters */
         for (ifc = ifc_list; ifc < &ifc_list[ifc_cnt]; ifc++) {
             struct sockaddr_in dst_addr;
@@ -400,6 +399,7 @@ static void udp_send_req_info(struct sockaddr_in * addr) {
         }
     }
     else {
+        trace(LOG_DISCOVERY, "REQ_INFO to %s:%d", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
         if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof *addr) < 0) {
             trace(LOG_ALWAYS, "Can't send UDP discovery request packet to %s:%d: %s",
                   inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno_to_str(errno));
@@ -461,9 +461,10 @@ static void udp_send_ack_slaves_one(SlaveInfo * slave) {
     }
 }
 
-static void udp_send_ack_slaves_all(struct sockaddr_in * addr) {
+static void udp_send_ack_slaves_all(struct sockaddr_in * addr, int only_linked) {
     char buf[PKT_SIZE];
     ip_ifc_info * ifc;
+    time_t timenow = time(NULL);    
 
     trace(LOG_DISCOVERY, "ACK_SLAVES to %s:%d",
         inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
@@ -485,10 +486,11 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr) {
             while (n < slave_cnt && i + 32 <= PKT_SIZE) {
                 SlaveInfo * s = slave_info + n++;
                 if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) continue;
+                if (only_linked && s->last_req_slaves_time + PEER_DATA_RETENTION_PERIOD < timenow) continue;
                 app_addr(buf, &i, &s->addr);
             }
 
-            if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0) {
+            if (i > 8 && sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0) {
                 trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
                       inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno_to_str(errno));
             }
@@ -597,6 +599,7 @@ static SlaveInfo * add_slave(struct sockaddr_in * addr) {
     s->addr = *addr;
     s->last_packet_time = time(0);
     udp_send_req_info(addr);
+    udp_send_ack_info(addr);
     udp_send_ack_slaves_one(s);
     return s;
 }
@@ -605,6 +608,7 @@ static void udp_receive_req_info(void) {
     trace(LOG_DISCOVERY, "REQ_INFO from %s:%d",
         inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
     udp_send_ack_info(&recvreq_addr);
+    udp_send_ack_slaves_all(&recvreq_addr, 1);
 }
 
 static void udp_receive_ack_info(void) {
@@ -647,7 +651,7 @@ static void udp_receive_ack_info(void) {
 static void udp_receive_req_slaves(void) {
     trace(LOG_DISCOVERY, "REQ_SLAVES from %s:%d",
         inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
-    udp_send_ack_slaves_all(&recvreq_addr);
+    udp_send_ack_slaves_all(&recvreq_addr, 0);
 }
 
 static void udp_receive_ack_slaves(void) {
@@ -666,7 +670,9 @@ static void udp_receive_ack_slaves(void) {
 }
 
 static void udp_server_recv(void * x) {
+    AsyncReqInfo * req = x;
     assert(recvreq_pending != 0);
+    assert(req == &recvreq);
     recvreq_pending = 0;
     if (recvreq.error != 0) {
         if (recvreq_generation != udp_server_generation) {

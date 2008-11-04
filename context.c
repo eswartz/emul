@@ -283,6 +283,8 @@ typedef struct DebugEvent {
     struct DebugEvent * next;
 } DebugEvent;
 
+#define EXCEPTION_DEBUGGER_IO 0x406D1388
+
 char * context_suspend_reason(Context * ctx) {
     DWORD code = ctx->suspend_reason.ExceptionRecord.ExceptionCode;
     static char buf[64];
@@ -295,6 +297,8 @@ char * context_suspend_reason(Context * ctx) {
     case EXCEPTION_BREAKPOINT:
         if (ctx->debug_started) return "Suspended";
         return "Breakpoint";
+    case EXCEPTION_DEBUGGER_IO:
+        return "Debugger IO request";
     }
     snprintf(buf, sizeof(buf), "Exception 0x%08x", code);
     return buf;
@@ -381,6 +385,9 @@ static void event_win32_context_stopped(void * arg) {
         else {
             ctx->pending_intercept = 1;
         }
+        break;
+    case EXCEPTION_DEBUGGER_IO:
+        trace(LOG_ALWAYS, "Debugger IO request 0x%08x", ctx->suspend_reason.ExceptionRecord.ExceptionInformation[0]);
         break;
     default:
         ctx->pending_intercept = 1;
@@ -514,6 +521,7 @@ static void debug_event_handler(void * x) {
             switch (args->event.u.Exception.ExceptionRecord.ExceptionCode) {
             case EXCEPTION_SINGLE_STEP:
             case EXCEPTION_BREAKPOINT:
+            case EXCEPTION_DEBUGGER_IO:
                 args->continue_status = DBG_CONTINUE;
                 break;
             default:
