@@ -338,6 +338,7 @@ public class LocatorService implements ILocator {
         Slave s = new Slave(addr, port);
         s.last_packet_time = time;
         sendPeerRequest(addr, port);
+        for (IPeer peer : peers.values()) sendPeerInfo(peer, addr, port);
         sendSlavesInfo(s);
         slaves.add(s);
         return s;
@@ -489,8 +490,9 @@ public class LocatorService implements ILocator {
         }
     }
     
-    private void sendSlavesInfo(InetAddress addr, int port) {
+    private void sendSlavesInfo(InetAddress addr, int port, boolean only_linked) {
         try {
+            long time = System.currentTimeMillis();
             out_buf[4] = CONF_SLAVES_INFO;
             int i = 8;
             for (SubNet n : subnets) {
@@ -498,6 +500,7 @@ public class LocatorService implements ILocator {
                 for (Slave x : slaves) {
                     if (x.port == port && x.address.equals(addr)) continue;
                     if (!n.contains(x.address)) continue;
+                    if (only_linked && x.last_req_slaves_time + DATA_RETENTION_PERIOD < time) continue;
                     String s = x.port + ":" + x.address.getHostAddress();
                     byte[] bt = s.getBytes("UTF-8");
                     if (i + bt.length >= out_buf.length) {
@@ -625,6 +628,7 @@ public class LocatorService implements ILocator {
         for (IPeer peer : peers.values()) {
             sendPeerInfo(peer, addr, port);
         }
+        sendSlavesInfo(addr, port, true);
     }
 
     private void handleSlavesInfoPacket(DatagramPacket p) {
@@ -654,7 +658,7 @@ public class LocatorService implements ILocator {
     }
     
     private void handleReqSlavesPacket(DatagramPacket p) {
-        sendSlavesInfo(p.getAddress(), p.getPort());
+        sendSlavesInfo(p.getAddress(), p.getPort(), false);
     }
     
     /*----------------------------------------------------------------------------------*/

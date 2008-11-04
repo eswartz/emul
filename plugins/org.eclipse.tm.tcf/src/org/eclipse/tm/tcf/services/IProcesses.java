@@ -184,6 +184,8 @@ public interface IProcesses extends IService {
 
     /**
      * Start a new process on remote machine.
+     * Clients can register ProcessesListener to receive process output.
+     * 
      * @param directory - initial value of working directory for the process.
      * @param file - process image file.
      * @param command_line - command line arguments for the process.
@@ -199,5 +201,40 @@ public interface IProcesses extends IService {
     
     interface DoneStart {
         void doneStart(IToken token, Exception error, ProcessContext process);
+    }
+    
+    /**
+     * Add processes service event listener.
+     * @param listener - event listener implementation.
+     */
+    void addListener(ProcessesListener listener);
+
+    /**
+     * Remove processes service event listener.
+     * @param listener - event listener implementation.
+     */
+    void removeListener(ProcessesListener listener);
+
+    /**
+     * Process event listener is notified when a process exits or
+     * sends a text to stdout/stderr.
+     * Event are reported only for processes that were started by 'start' command. 
+     */
+    interface ProcessesListener {
+        
+        /**
+         * Called every time a process output is received.
+         * @param process_id - process context ID
+         * @param stream_id - 0 stdout, 1 - stderr
+         * @param data - byte array of process output data
+         */
+        void output(String process_id, int stream_id, byte[] data);
+        
+        /**
+         * Called when a process exits.
+         * @param process_id - process context ID
+         * @param exit_code - process exit code
+         */
+        void exited(String process_id, int exit_code);
     }
 }

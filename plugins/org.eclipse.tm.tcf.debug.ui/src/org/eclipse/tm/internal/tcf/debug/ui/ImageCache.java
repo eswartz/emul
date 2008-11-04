@@ -50,7 +50,7 @@ public class ImageCache {
     private static final Map<String,ImageDescriptor> desc_cache = new HashMap<String,ImageDescriptor>();
     private static final Map<ImageDescriptor,Image> image_cache = new HashMap<ImageDescriptor,Image>();
 
-    public static ImageDescriptor getImageDescriptor(String name) {
+    public static synchronized ImageDescriptor getImageDescriptor(String name) {
         if (name == null) return null;
         ImageDescriptor descriptor = desc_cache.get(name);
         if (descriptor == null) {
@@ -74,7 +74,7 @@ public class ImageCache {
         return descriptor;
     }
     
-    public static Image getImage(ImageDescriptor desc) {
+    public static synchronized Image getImage(ImageDescriptor desc) {
         Image image = image_cache.get(desc);
         if (image == null) {
             image = desc.createImage();
@@ -83,7 +83,7 @@ public class ImageCache {
         return image;
     }
     
-    public static Image getImage(String name) {
+    public static synchronized Image getImage(String name) {
         return getImage(getImageDescriptor(name));
     }
 }

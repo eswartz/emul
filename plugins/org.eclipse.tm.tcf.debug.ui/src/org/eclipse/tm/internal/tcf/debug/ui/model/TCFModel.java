@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
@@ -44,6 +46,13 @@ import org.eclipse.debug.ui.AbstractDebugView;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.debug.ui.IDebugView;
 import org.eclipse.debug.ui.ISourcePresentation;
+import org.eclipse.ui.console.ConsolePlugin;
+import org.eclipse.ui.console.IConsole;
+import org.eclipse.ui.console.IConsoleConstants;
+import org.eclipse.ui.console.IConsoleManager;
+import org.eclipse.ui.console.IConsoleView;
+import org.eclipse.ui.console.MessageConsole;
+import org.eclipse.ui.console.MessageConsoleStream;
 import org.eclipse.debug.ui.sourcelookup.CommonSourceNotFoundEditorInput;
 import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
 import org.eclipse.jface.text.BadLocationException;
@@ -54,9 +63,11 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
+import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.DisconnectCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.ResumeCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.StepIntoCommand;
@@ -67,6 +78,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.TerminateCommand;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -88,15 +100,21 @@ import org.eclipse.ui.texteditor.ITextEditor;
 public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         IModelProxyFactory, IColumnPresentationFactory, ISourceDisplay {
 
-    private final Display display;
     private final TCFLaunch launch;
+    
     private final Map<IPresentationContext,TCFModelProxy> model_proxies =
         new HashMap<IPresentationContext,TCFModelProxy>();
+    
     private final Map<String,TCFNode> id2node = new HashMap<String,TCFNode>();
+    
     @SuppressWarnings("unchecked")
     private final Map<Class,Object> commands = new HashMap<Class,Object>();
+    
     private final Map<String,IMemoryBlockRetrievalExtension> mem_retrieval =
         new HashMap<String,IMemoryBlockRetrievalExtension>();
+
+    private final Map<String,Map<Integer,MessageConsoleStream>> consoles =
+        new HashMap<String,Map<Integer,MessageConsoleStream>>();
 
     private static final Map<ILaunchConfiguration,IEditorInput> editor_not_found = 
         new HashMap<ILaunchConfiguration,IEditorInput>();
@@ -106,6 +124,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private static int debug_view_selection_cnt;
     private static int display_source_cnt;
+    private static Display display;
+    private static Color console_colors[];
 
     private final IMemory.MemoryListener mem_listener = new IMemory.MemoryListener() {
 
@@ -261,9 +281,85 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             fireModelChanged();
         }
     };
+    
+    private final IProcesses.ProcessesListener prs_listener = new IProcesses.ProcessesListener() {
 
-    TCFModel(Display display, TCFLaunch launch) {
-        this.display = display;
+        public void exited(String process_id, int exit_code) {
+            Map<Integer,MessageConsoleStream> streams = consoles.get(process_id);
+            if (streams!= null) {
+                for (MessageConsoleStream stream : streams.values()) {
+                    try {
+                        stream.close();
+                    }
+                    catch (IOException x) {
+                        Activator.log("Cannot close console stream", x);
+                    }
+                }
+                onLastContextRemoved();
+            }
+        }
+
+        public void output(String process_id, int stream_id, byte[] data) {
+            try {
+                IProcesses.ProcessContext prs = launch.getProcessContext();
+                if (prs == null || !process_id.equals(prs.getID())) return;
+                Map<Integer,MessageConsoleStream> streams = consoles.get(process_id);
+                if (streams == null) consoles.put(process_id, streams = new HashMap<Integer,MessageConsoleStream>());
+                MessageConsoleStream stream = streams.get(stream_id);
+                if (stream == null) {
+                    MessageConsole console = null;
+                    for (MessageConsoleStream s : streams.values()) console = s.getConsole();
+                    if (console == null) {
+                        final MessageConsole c = console = new MessageConsole("TCF " + process_id,
+                                ImageCache.getImageDescriptor(ImageCache.IMG_TCF));
+                        display.asyncExec(new Runnable() {
+                            public void run() {
+                                try {
+                                    IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
+                                    manager.addConsoles(new IConsole[]{ c });
+                                    IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+                                    if (w == null) return;
+                                    IWorkbenchPage page = w.getActivePage();
+                                    if (page == null) return;
+                                    IConsoleView view = (IConsoleView)page.showView(IConsoleConstants.ID_CONSOLE_VIEW);
+                                    view.display(c);
+                                }
+                                catch (Throwable x) {
+                                    Activator.log("Cannot open console view", x);
+                                }
+                            }
+                        });
+                    }
+                    stream = console.newMessageStream();
+                    stream.setColor(stream_id >= 0 && stream_id < console_colors.length ?
+                            console_colors[stream_id] : console_colors[0]);
+                    streams.put(stream_id, stream);
+                }
+                stream.print(new String(data, 0, data.length, "UTF-8"));
+            }
+            catch (Throwable x) {
+                Activator.log("Cannot write to console", x);
+            }
+        }
+    };
+    
+    public static void setDisplay(Display display) {
+        assert display.getThread() == Thread.currentThread();
+        TCFModel.display = display;
+        console_colors = new Color[4];
+        for (int i = 0; i < console_colors.length; i++) {
+            int id = SWT.COLOR_BLACK;
+            switch (i) {
+            case 1: id = SWT.COLOR_RED; break;
+            case 2: id = SWT.COLOR_BLUE; break;
+            case 3: id = SWT.COLOR_GREEN; break;
+            }
+            console_colors[i] = display.getSystemColor(id);
+        }
+    }
+
+    TCFModel(TCFLaunch launch) {
+        assert display != null;
         this.launch = launch;
         commands.put(ISuspendHandler.class, new SuspendCommand(this));
         commands.put(IResumeHandler.class, new ResumeCommand(this));
@@ -315,6 +411,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (run != null) run.addListener(run_listener);
         IRegisters reg = launch.getService(IRegisters.class);
         if (reg != null) reg.addListener(reg_listener);
+        IProcesses prs = launch.getService(IProcesses.class);
+        if (prs != null) prs.addListener(prs_listener);
         launchChanged();
     }
 
@@ -364,22 +462,31 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
         fireModelChanged();
         if (close_channel) {
-            // Close end debug session if the last context is removed:
-            Protocol.invokeLater(new Runnable() {
-                public void run() {
-                    if (launch_node == null) return;
-                    if (launch_node.isDisposed()) return;
-                    if (!launch_node.validateNode(this)) return;
-                    if (launch_node.getContextCount() != 0) return;
-                    launch.onLastContextRemoved();
-                }
-            });
+            // Close debug session if the last context is removed:
+            onLastContextRemoved();
         }
         display.asyncExec(new Runnable() {
             public void run() {
                 for (String id : context_ids) {
                     Activator.getAnnotationManager().onContextRemoved(TCFModel.this, id);
                 }
+            }
+        });
+    }
+    
+    private void onLastContextRemoved() {
+        Protocol.invokeLater(1000, new Runnable() {
+            public void run() {
+                for (Map<Integer,MessageConsoleStream> streams : consoles.values()) {
+                    for (MessageConsoleStream stream : streams.values()) {
+                        if (!stream.isClosed()) return;
+                    }
+                }
+                if (launch_node == null) return;
+                if (launch_node.isDisposed()) return;
+                if (!launch_node.validateNode(this)) return;
+                if (launch_node.getContextCount() != 0) return;
+                launch.onLastContextRemoved();
             }
         });
     }
@@ -399,6 +506,27 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     void dispose() {
+        final HashSet<MessageConsole> set = new HashSet<MessageConsole>();
+        for (Map<Integer,MessageConsoleStream> streams : consoles.values()) {
+            for (MessageConsoleStream stream : streams.values()) {
+                set.add(stream.getConsole());
+                if (!stream.isClosed()) {
+                    try {
+                        stream.close();
+                    }
+                    catch (IOException x) {
+                        Activator.log("Cannot close console stream", x);
+                    }
+                }
+            }
+        }
+        consoles.clear();
+        display.asyncExec(new Runnable() {
+            public void run() {
+                IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
+                manager.removeConsoles(set.toArray(new MessageConsole[set.size()]));
+            }
+        });
     }
 
     void addNode(String id, TCFNode node) {
@@ -567,6 +695,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     
     /**
      * Reveal source code associated with given model element.
+     * The method is part of ISourceDisplay interface.
+     * The method is normally called from SourceLookupService.
      */
     public void displaySource(Object element, final IWorkbenchPage page, boolean forceSourceLookup) {
         if (element instanceof TCFNodeStackFrame) {

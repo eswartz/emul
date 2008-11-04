@@ -178,11 +178,13 @@ public class TCFLaunch extends Launch {
             final String args = cfg.getAttribute(TCFLaunchDelegate.ATTR_PROGRAM_ARGUMENTS, "");
             final Map<String,String> env = cfg.getAttribute(ILaunchManager.ATTR_ENVIRONMENT_VARIABLES, (Map)null);
             final boolean append = cfg.getAttribute(ILaunchManager.ATTR_APPEND_ENVIRONMENT_VARIABLES, true);
-            final boolean attach = mode.equals(ILaunchManager.DEBUG_MODE);
-            final IProcesses ps = channel.getRemoteService(IProcesses.class);
             Runnable r = new Runnable() {
                 public void run() {
-                    if (ps == null) channel.terminate(new Exception("Target does not provide Processes service"));
+                    final IProcesses ps = channel.getRemoteService(IProcesses.class);
+                    if (ps == null) {
+                        channel.terminate(new Exception("Target does not provide Processes service"));
+                        return;
+                    }
                     IProcesses.DoneGetEnvironment done_env = new IProcesses.DoneGetEnvironment() {
                         public void doneGetEnvironment(IToken token, Exception error, Map<String,String> def) {
                             if (error != null) {
@@ -198,14 +200,15 @@ public class TCFLaunch extends Launch {
                                 channel.terminate(new Exception("Program does not exist"));
                                 return;
                             }
+                            boolean attach = mode.equals(ILaunchManager.DEBUG_MODE);
                             ps.start(dir, file, toArgsArray(file, args), vars, attach, new IProcesses.DoneStart() {
-                                public void doneStart(IToken token, Exception error, ProcessContext process) {
+                                public void doneStart(IToken token, Exception error, final ProcessContext process) {
                                     if (error != null) {
                                         channel.terminate(error);
                                         return;
                                     }
                                     TCFLaunch.this.process = process;
-                                    Protocol.invokeLater(done);
+                                    done.run();
                                 }
                             });
                         }

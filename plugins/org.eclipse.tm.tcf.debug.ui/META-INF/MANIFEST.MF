@@ -9,6 +9,7 @@ Bundle-Localization: plugin
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.ui.ide,
+ org.eclipse.ui.console,
  org.eclipse.ui.workbench.texteditor,
  org.eclipse.text,
  org.eclipse.debug.core,

@@ -24,7 +24,6 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 
 public class TCFModelManager {
 
-    private final Display display;
     private final Map<TCFLaunch,TCFModel> models = new HashMap<TCFLaunch,TCFModel>();
 
     private final TCFLaunch.Listener tcf_launch_listener = new TCFLaunch.Listener() {
@@ -51,15 +50,26 @@ public class TCFModelManager {
     };
 
     private final ILaunchesListener debug_launch_listener = new ILaunchesListener() {
+        
+        boolean init_done;
 
         public void launchesAdded(final ILaunch[] launches) {
+            if (!init_done) {
+                final Display display = Display.getDefault();
+                display.syncExec(new Runnable() {
+                    public void run() {
+                        TCFModel.setDisplay(display);
+                    }
+                });
+                init_done = true;
+            }
             Protocol.invokeAndWait(new Runnable() {
                 public void run() {
                     for (int i = 0; i < launches.length; i++) {
                         if (launches[i] instanceof TCFLaunch) {
                             TCFLaunch launch = (TCFLaunch)launches[i];
                             assert models.get(launch) == null;
-                            TCFModel model = new TCFModel(display, launch);
+                            TCFModel model = new TCFModel(launch);
                             models.put(launch, model);
                             assert launch.getChannel() == null;
                         }
@@ -93,7 +103,6 @@ public class TCFModelManager {
 
     public TCFModelManager() {
         assert Protocol.isDispatchThread();
-        display = Display.getDefault();
         DebugPlugin.getDefault().getLaunchManager().addLaunchListener(debug_launch_listener);
         TCFLaunch.addListener(tcf_launch_listener);
     }

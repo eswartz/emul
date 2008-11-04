@@ -10,19 +10,24 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.services.remote;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IProcesses;
 
 
 public class ProcessesProxy implements IProcesses {
     
     private final IChannel channel;
+    private final Map<ProcessesListener,IChannel.IEventListener> listeners =
+        new HashMap<ProcessesListener,IChannel.IEventListener>();
     
     private class ProcessContext implements IProcesses.ProcessContext {
 
@@ -125,6 +130,41 @@ public class ProcessesProxy implements IProcesses {
 
     public String getName() {
         return NAME;
+    }
+
+    public void addListener(final ProcessesListener listener) {
+        IChannel.IEventListener l = new IChannel.IEventListener() {
+
+            public void event(String name, byte[] data) {
+                try {
+                    Object[] args = JSON.parseSequence(data);
+                    if (name.equals("output")) {
+                        assert args.length == 3;
+                        byte[] buf = null;
+                        String str = (String)args[2];
+                        if (str != null) buf = Base64.toByteArray(str.toCharArray());
+                        listener.output((String)args[0], ((Number)args[1]).intValue(), buf);
+                    }
+                    else if (name.equals("exited")) {
+                        assert args.length == 2;
+                        listener.exited((String)args[0], ((Number)args[1]).intValue());
+                    }
+                    else {
+                        throw new IOException("Processes service: unknown event: " + name);
+                    }
+                }
+                catch (Throwable x) {
+                    channel.terminate(x);
+                }
+            }
+        };
+        channel.addEventListener(this, l);
+        listeners.put(listener, l);
+    }
+
+    public void removeListener(ProcessesListener listener) {
+        IChannel.IEventListener l = listeners.remove(listener);
+        if (l != null) channel.removeEventListener(this, l);
     }
 
     public IToken getChildren(String parent_context_id, boolean attached_only, final DoneGetChildren done) {
