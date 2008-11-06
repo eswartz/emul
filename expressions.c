@@ -853,6 +853,23 @@ static void op_index(Value * v) {
 #endif
 }
 
+static void op_addr(Value * v) {
+    if (!v->remote) error(ERR_INV_EXPRESSION, "Invalid '&': value has no address");
+    v->size = sizeof(ContextAddress);
+    v->value = alloc_str(text_val.size);
+    v->remote = 0;
+    *(ContextAddress *)v->value = v->address;
+    v->address = 0;
+    v->type_class = TYPE_CLASS_POINTER;
+#if SERVICE_Symbols
+    if (get_symbol_pointer(&v->type, &v->type)) {
+        error(errno, "Cannot get pointer type");
+    }
+#else
+    memset(&v->type, 0, sizeof(v->type));
+#endif
+}
+
 static void postfix_expression(Value * v) {
     primary_expression(v);
     while (1) {
@@ -889,7 +906,7 @@ static void unary_expression(Value * v) {
     case '&':
         next_sy();
         unary_expression(v);
-        error(ERR_INV_EXPRESSION, "TODO");
+        op_addr(v);
         break;
     case '+':
         next_sy();

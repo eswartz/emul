@@ -122,6 +122,9 @@ extern int get_symbol_value(const Symbol * sym, void ** value, size_t * size);
 /* Get address (variables) */
 extern int get_symbol_address(const Symbol * sym, int frame, ContextAddress * address);
 
+/* Get a type that represents a pointer to given base type */
+extern int get_symbol_pointer(const Symbol * sym, Symbol * ptr);
+
 /*************************************************************************************************/
 
 

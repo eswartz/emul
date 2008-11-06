@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -47,6 +47,7 @@ typedef struct SymLocation {
     SymbolSection * tbl;
     unsigned index;
     unsigned dimension;
+    unsigned pointer;
 } SymLocation;
 
 static void object2symbol(Context * ctx, ObjectInfo * obj, Symbol * sym) {
@@ -200,7 +201,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     int found = 0;
 
 #if defined(_WRS_KERNEL)
-    
+
     char * ptr;
     SYM_TYPE type;
 
@@ -213,7 +214,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
         memset(sym, 0, sizeof(Symbol));
         sym->ctx = ctx;
         ((SymLocation *)sym->location)->addr = ptr;
-        
+
         if (SYM_IS_TEXT(type)) {
             sym->sym_class = SYM_CLASS_FUNCTION;
         }
@@ -222,19 +223,19 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
         }
         found = 1;
     }
-    
+
 #endif
 
     if (error == 0 && !found) {
         ContextAddress ip = 0;
-        
+
         if (frame != STACK_NO_FRAME) {
             if (get_frame_info(ctx, frame, &ip, NULL, NULL) < 0) error = errno;
         }
-    
+
         if (error == 0) {
             ELF_File * file = elf_list_first(ctx, ip, ip == 0 ? ~(ContextAddress)0 : ip + 1);
-            if (file == NULL) error = errno;    
+            if (file == NULL) error = errno;
             while (error == 0 && file != NULL) {
                 Trap trap;
                 if (set_trap(&trap)) {
@@ -293,7 +294,7 @@ static void enumerate_local_vars(Context * ctx, ObjectInfo * obj, ContextAddress
 int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_back, void * args) {
     int error = 0;
     ContextAddress ip = 0;
-    
+
     if (frame != STACK_NO_FRAME) {
         if (get_frame_info(ctx, frame, &ip, NULL, NULL) < 0) error = errno;
     }
@@ -345,10 +346,10 @@ char * symbol2id(const Symbol * sym) {
     if (file == NULL) return "SYM";
     if (loc->obj != NULL) obj_index = loc->obj->mID;
     if (loc->tbl != NULL) tbl_index = loc->tbl->mIndex + 1;
-    snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%X.%llX.%X.%X.%X.%s",
+    snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%X.%llX.%X.%X.%X.%X.%s",
         sym->sym_class, (unsigned long)file->dev, (unsigned long)file->ino,
         (unsigned)file->mtime & 0xffff, obj_index, tbl_index,
-        loc->index, loc->dimension, container_id(sym->ctx));
+        loc->index, loc->dimension, loc->pointer, container_id(sym->ctx));
     return id;
 }
 
@@ -411,6 +412,8 @@ int id2symbol(char * id, Symbol * sym) {
     loc->index = read_hex(&p);
     if (*p == '.') p++;
     loc->dimension = read_hex(&p);
+    if (*p == '.') p++;
+    loc->pointer = read_hex(&p);
     if (*p == '.') p++;
     sym->ctx = id2ctx(p);
     if (sym->ctx == NULL) {
@@ -541,6 +544,10 @@ static ObjectInfo * get_object_type(ObjectInfo * obj) {
 }
 
 int get_symbol_type(const Symbol * sym, Symbol * type) {
+    if (((SymLocation *)sym->location)->pointer) {
+        *type = *sym;
+        return 0;
+    }
     if (unpack(sym) < 0) return -1;
     obj = get_object_type(obj);
     if (obj != NULL) object2symbol(sym->ctx, obj, type);
@@ -549,6 +556,10 @@ int get_symbol_type(const Symbol * sym, Symbol * type) {
 }
 
 int get_symbol_type_class(const Symbol * sym, int * type_class) {
+    if (((SymLocation *)sym->location)->pointer) {
+        *type_class = TYPE_CLASS_POINTER;
+        return 0;
+    }
     if (unpack(sym) < 0) return -1;
     while (obj != NULL) {
         switch (obj->mTag) {
@@ -621,6 +632,10 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
 }
 
 int get_symbol_name(const Symbol * sym, char ** name) {
+    if (((SymLocation *)sym->location)->pointer) {
+        *name = NULL;
+        return 0;
+    }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL) {
         *name = obj->mName == NULL ? NULL : loc_strdup(obj->mName);
@@ -638,6 +653,10 @@ int get_symbol_name(const Symbol * sym, char ** name) {
 }
 
 int get_symbol_size(const Symbol * sym, size_t * size) {
+    if (((SymLocation *)sym->location)->pointer) {
+        *size = sizeof(void *);
+        return 0;
+    }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL) {
         if (sym->sym_class == SYM_CLASS_REFERENCE && obj->mSize == 0 && obj->mType != NULL) obj = obj->mType;
@@ -692,6 +711,11 @@ int get_symbol_size(const Symbol * sym, size_t * size) {
 }
 
 int get_symbol_base_type(const Symbol * sym, Symbol * base_type) {
+    if (((SymLocation *)sym->location)->pointer) {
+        *base_type = *sym;
+        ((SymLocation *)base_type->location)->pointer--;
+        return 0;
+    }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL) {
         obj = get_object_type(obj);
@@ -720,6 +744,10 @@ int get_symbol_base_type(const Symbol * sym, Symbol * base_type) {
 }
 
 int get_symbol_index_type(const Symbol * sym, Symbol * index_type) {
+    if (((SymLocation *)sym->location)->pointer) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL) {
         obj = get_object_type(obj);
@@ -741,6 +769,10 @@ int get_symbol_index_type(const Symbol * sym, Symbol * index_type) {
 }
 
 int get_symbol_length(const Symbol * sym, unsigned long * length) {
+    if (((SymLocation *)sym->location)->pointer) {
+        *length = 1;
+        return 0;
+    }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL) {
         obj = get_object_type(obj);
@@ -762,6 +794,11 @@ int get_symbol_length(const Symbol * sym, unsigned long * length) {
 }
 
 int get_symbol_children(const Symbol * sym, Symbol ** children, int * count) {
+    if (((SymLocation *)sym->location)->pointer) {
+        *children = NULL;
+        *count = 0;
+        return 0;
+    }
     int n = 0;
     if (unpack(sym) < 0) return -1;
     *children = NULL;
@@ -785,6 +822,10 @@ int get_symbol_children(const Symbol * sym, Symbol ** children, int * count) {
 }
 
 int get_symbol_offset(const Symbol * sym, unsigned long * offset) {
+    if (((SymLocation *)sym->location)->pointer) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL && obj->mTag == TAG_member) {
         U8_T addr = 0;
@@ -797,6 +838,10 @@ int get_symbol_offset(const Symbol * sym, unsigned long * offset) {
 }
 
 int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
+    if (((SymLocation *)sym->location)->pointer) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL && obj->mConstValueAddr != NULL) {
         *size = obj->mConstValueSize;
@@ -809,6 +854,10 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
 }
 
 int get_symbol_address(const Symbol * sym, int frame, ContextAddress * address) {
+    if (((SymLocation *)sym->location)->pointer) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL && obj->mTag != TAG_member) {
         U8_T addr = 0;
@@ -839,5 +888,22 @@ int get_symbol_address(const Symbol * sym, int frame, ContextAddress * address) 
     return -1;
 }
 
+int get_symbol_pointer(const Symbol * sym, Symbol * ptr) {
+    *ptr = *sym;
+    if (!((SymLocation *)ptr->location)->pointer) {
+        if (unpack(ptr) < 0) return -1;
+        obj = get_object_type(obj);
+        if (obj != NULL) {
+                object2symbol(ptr->ctx, obj, ptr);
+        }
+        else {
+                memset(ptr, 0, sizeof(Symbol));
+                ptr->sym_class = SYM_CLASS_TYPE;
+        }
+    }
+    assert(ptr->sym_class == SYM_CLASS_TYPE);
+    ((SymLocation *)ptr->location)->pointer++;
+    return 0;
+}
 #endif
 
