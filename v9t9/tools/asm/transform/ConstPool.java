@@ -6,7 +6,11 @@ package v9t9.tools.asm.transform;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.engine.cpu.InstructionTable;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.tools.asm.Assembler;
+import v9t9.tools.asm.LLInstruction;
+import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.Symbol;
 import v9t9.tools.asm.operand.hl.AddrOperand;
 import v9t9.tools.asm.operand.hl.AssemblerOperand;
@@ -27,32 +31,45 @@ import v9t9.tools.asm.operand.hl.SymbolOperand;
  *
  */
 public class ConstPool {
-	private static int count;
-	
+	private Map<Integer, Integer> instWordMap = new HashMap<Integer, Integer>();
 	private Map<Integer, Integer> constWordMap = new HashMap<Integer, Integer>();
 	private Symbol tableAddr;
 	private int tableSize;
 	private boolean lastAccessWasByte;
+
+	private final Assembler assembler;
 	
-	public ConstPool() {
+	public ConstPool(Assembler assembler) {
+		this.assembler = assembler;
 	}
 	
 	public void clear() {
+		instWordMap.clear();
 		constWordMap.clear();
+		if (tableAddr != null)
+			tableAddr.setDefined(false);
 		tableAddr = null;
 		tableSize = 0;
 		lastAccessWasByte = false;
 	}
 
-	public int allocateByte(int value) {
+	public AssemblerOperand allocateByte(int value) {
 		value &= 0xff;
 		
-		// see if we have an entry in a low or high part of word
+		// see if we have an entry in a low or high part of an instruction
+		for (Map.Entry<Integer, Integer> entry : instWordMap.entrySet()) {
+			if ((entry.getKey() & 0xff00) >> 8 == value)
+				return new AddrOperand(new NumberOperand(entry.getValue()));
+			if ((entry.getKey() & 0x00ff) == value)
+				return new AddrOperand(new NumberOperand(entry.getValue() + 1));
+		}
+		
+		// see if we have an entry in a low or high part of another const pool entry
 		for (Map.Entry<Integer, Integer> entry : constWordMap.entrySet()) {
 			if ((entry.getKey() & 0xff00) >> 8 == value)
-				return entry.getValue();
+				return createTableOffset(entry.getValue());
 			if ((entry.getKey() & 0x00ff) == value)
-				return entry.getValue() + 1;
+				return createTableOffset(entry.getValue() + 1);
 		}
 		
 		// else, register a byte
@@ -66,7 +83,7 @@ public class ConstPool {
 					constWordMap.remove(entry.getKey());
 					constWordMap.put(entry.getKey() | value, tableSize - 1);
 					lastAccessWasByte = true;
-					return tableSize++;
+					return createTableOffset(tableSize++);
 				}
 			}
 		}
@@ -80,18 +97,24 @@ public class ConstPool {
 		tableSize++;
 		lastAccessWasByte = true;
 		
-		return addr;
+		return createTableOffset(addr);
 	}
 	
-	public int allocateWord(int value) {
+	public AssemblerOperand allocateWord(int value) {
 		value &= 0xffff;
+		
+		// see if we have an entry as an opcode word
+		Integer pc = instWordMap.get(value);
+		if (pc != null) {
+			return new AddrOperand(new NumberOperand(pc));
+		}
 		
 		// see if we have an entry as a word
 		Integer offset = constWordMap.get(value);
 		if (offset != null) {
 			if (offset == tableSize - 2)
 				lastAccessWasByte = false;
-			return offset;
+			return createTableOffset(offset);
 		}
 			
 		// else, register a word 
@@ -104,7 +127,7 @@ public class ConstPool {
 		constWordMap.put(value, addr);
 		
 		lastAccessWasByte = false;
-		return addr;
+		return createTableOffset(addr);
 	}
 
 	public Symbol getTableAddr() {
@@ -113,15 +136,33 @@ public class ConstPool {
 
 	/**
 	 * Get @@table+offset
-	 * @param assembler TODO
 	 * @param value
 	 * @return
 	 */
-	public AssemblerOperand createTableOffset(Assembler assembler, int value) {
+	public AssemblerOperand createTableOffset(int value) {
 		if (tableAddr == null)
-			tableAddr = assembler.getSymbolTable().createSymbol("$consttable" + count++);
+			tableAddr = assembler.getSymbolTable().createSymbol("$consttable");
 		
 		return new AddrOperand(new BinaryOperand('+', new SymbolOperand(tableAddr), new NumberOperand(value)));
+	}
+	
+	/**
+	 * Get the offset into @@table (or -1 if not an entry)
+	 * @param operand
+	 * @return offset into table in bytes, or -1
+	 */
+	public int getTableOffset(AssemblerOperand operand) {
+		if (operand instanceof AddrOperand) {
+			if (((AddrOperand) operand).getAddr() instanceof BinaryOperand) {
+				BinaryOperand binop = (BinaryOperand) ((AddrOperand) operand).getAddr();
+				if (binop.getType() == '+'
+					&& binop.getLeft() instanceof SymbolOperand
+					&& ((SymbolOperand) binop.getLeft()).getSymbol().equals(tableAddr)
+					&& binop.getRight() instanceof NumberOperand)
+					return ((NumberOperand) binop.getRight()).getValue();
+			}
+		}
+		return -1;
 	}
 
 	public byte[] getBytes() {
@@ -133,5 +174,35 @@ public class ConstPool {
 			bytes[addr+1] = (byte) (key & 0xff);
 		}
 		return bytes;
+	}
+
+	/** Reset the contributions from other instructions */
+	public void resetInstructions() {
+		
+	}
+
+	/** Add the opcode from the instruction to the const pool */
+	public void injectInstruction(LLInstruction inst) {
+		try {
+			RawInstruction rawInst = inst.createRawInstruction();
+			short[] words = InstructionTable.encode(rawInst);
+			
+			int pc = rawInst.getPc();
+			
+			
+			for (short word : words) {
+				if (assembler.getStandardMemoryModel().CPU.hasRamAccess(pc))
+					return;
+				Integer ipc = instWordMap.get(word & 0xffff);
+				if (ipc == null) {
+					instWordMap.put(word & 0xffff, pc);
+				}
+				pc += 2;
+			}
+		} catch (IllegalArgumentException e) {
+			// some unresolved jump insts
+		} catch (ResolveException e) {
+			// unresolved inst
+		}
 	}
 }

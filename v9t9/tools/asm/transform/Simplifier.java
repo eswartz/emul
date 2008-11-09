@@ -37,6 +37,7 @@ public class Simplifier {
 			changed |= convertInstruction(llInst);
 			
 			if (llInst.getInst() == InstructionTable.Idelete) {
+				System.err.println("Changed " + inst.toInfoString());
 				iterator.remove();
 				changed = true;
 			}

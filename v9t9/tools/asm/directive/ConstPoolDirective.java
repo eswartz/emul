@@ -3,10 +3,14 @@
  */
 package v9t9.tools.asm.directive;
 
+import java.util.List;
+
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.Symbol;
+import v9t9.tools.asm.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.transform.ConstPool;
 
 /**
  * Indicate where the const table should live (automatically added)
@@ -15,10 +19,9 @@ import v9t9.tools.asm.Symbol;
  */
 public class ConstPoolDirective extends Directive {
 
-	private final Assembler assembler;
+	private ConstPool constPool;
 
-	public ConstPoolDirective(Assembler assembler) {
-		this.assembler = assembler;
+	public ConstPoolDirective(List<AssemblerOperand> ops) {
 		
 	}
 	@Override
@@ -33,7 +36,8 @@ public class ConstPoolDirective extends Directive {
 	public IInstruction[] resolve(Assembler assembler, IInstruction previous,
 			boolean finalPass) throws ResolveException {
 		
-		Symbol symbol = assembler.getConstPool().getTableAddr();
+		this.constPool = assembler.getConstPool();
+		Symbol symbol = constPool.getTableAddr();
 		if (symbol == null) {
 			return NO_INSTRUCTIONS;
 		}
@@ -42,10 +46,13 @@ public class ConstPoolDirective extends Directive {
 		assembler.setPc((assembler.getPc() + 1) & 0xfffe);
 		setPc(assembler.getPc());
 
+		symbol.setAddr(assembler.getPc());
+		
 		return new IInstruction[] { this };
 	}
 	
 	public byte[] getBytes() {
-		return assembler.getConstPool().getBytes();
+		return constPool.getBytes();
 	}
+	
 }

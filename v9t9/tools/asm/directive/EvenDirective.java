@@ -32,4 +32,5 @@ public class EvenDirective extends Directive {
 
 		return new IInstruction[] { this };
 	}
+
 }

@@ -538,6 +538,24 @@ public class TestAssembler extends BaseTest {
 					createSymbol("odd", 0x201) });
 		
 	}
+	public void testAssemblerProgDirectives2b() throws Exception {
+		String text =
+			" aorg >100\n"+
+			" mov r1, r2\n"+
+			" db 1\n"+
+			"foo mov r3,r4\n"
+			;
+		
+		testFileContent(text,
+				0x100,
+				new String[] { 
+				"mov r1,r2",
+				"db >1",
+				"mov r3,r4",
+				},
+				new Symbol[] { createSymbol("foo", 0x104) });
+		
+	}
 	@SuppressWarnings("unchecked")
 	public void testAssemblerProgDirectives3() throws Exception {
 		String text =
@@ -668,7 +686,7 @@ public class TestAssembler extends BaseTest {
 		List<IInstruction> asminsts = assembler.parse();
 		List<IInstruction> realinsts = assembler.resolve(asminsts);
 		if (optimize) {
-			assembler.optimize(realinsts);
+			realinsts = assembler.optimize(realinsts);
 			realinsts = assembler.fixupJumps(realinsts);
 		}
 		testGeneratedContent(assembler, pc, stdInsts, symbols, realinsts);

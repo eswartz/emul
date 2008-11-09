@@ -38,5 +38,4 @@ public class AorgDirective extends Directive {
 		setPc(lop.getImmediate());
 		return new IInstruction[] { this };
 	}
-
 }

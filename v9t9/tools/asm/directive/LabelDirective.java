@@ -39,5 +39,5 @@ public class LabelDirective extends Directive {
 	public Symbol getSymbol() {
 		return symbol;
 	}
-	
+
 }

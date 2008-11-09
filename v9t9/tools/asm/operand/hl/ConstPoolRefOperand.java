@@ -30,12 +30,15 @@ public class ConstPoolRefOperand extends ImmediateOperand implements AssemblerOp
 		}
 		
 		int value = op.getImmediate();
-		int addr;
+		AssemblerOperand addr;
 		if (inst.isByteOp()) {
 			addr = assembler.getConstPool().allocateByte(value);
 		} else {
 			addr = assembler.getConstPool().allocateWord(value);
 		}
-		return assembler.getConstPool().createTableOffset(assembler, addr).resolve(assembler, inst);
+		
+		LLOperand resOp = addr.resolve(assembler, inst);
+		resOp.setOriginal(this);
+		return resOp;
 	}
 }

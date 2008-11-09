@@ -37,9 +37,8 @@ public class EquDirective extends Directive {
 		LLOperand lop = op.resolve(assembler, this); 
 		if (!(lop instanceof LLImmedOperand))
 			throw new ResolveException(op, "Expected number");
-		
-		// reset, in case it changed
-		setPc(lop.getImmediate());
+
+		// don't change this directive's Pc, in case we depend on $ and get resolved multiple times
 		
 		if (previous != null && previous instanceof LabelDirective) {
 			LabelDirective label = (LabelDirective) previous;
@@ -49,4 +48,7 @@ public class EquDirective extends Directive {
 		}
 		return new IInstruction[] { this };
 	}
+	
+
+
 }

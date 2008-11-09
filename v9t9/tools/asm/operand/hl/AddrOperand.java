@@ -26,14 +26,14 @@ public class AddrOperand implements AssemblerOperand {
 
 	@Override
 	public String toString() {
-		return "@" + addr;
+		return "@" + getAddr();
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((addr == null) ? 0 : addr.hashCode());
+		result = prime * result + ((getAddr() == null) ? 0 : getAddr().hashCode());
 		return result;
 	}
 
@@ -49,11 +49,11 @@ public class AddrOperand implements AssemblerOperand {
 			return false;
 		}
 		AddrOperand other = (AddrOperand) obj;
-		if (addr == null) {
-			if (other.addr != null) {
+		if (getAddr() == null) {
+			if (other.getAddr() != null) {
 				return false;
 			}
-		} else if (!addr.equals(other.addr)) {
+		} else if (!getAddr().equals(other.getAddr())) {
 			return false;
 		}
 		return true;
@@ -61,7 +61,7 @@ public class AddrOperand implements AssemblerOperand {
 	
 	public LLOperand resolve(Assembler assembler, IInstruction inst)
 			throws ResolveException {
-		LLOperand lop = addr.resolve(assembler, inst);
+		LLOperand lop = getAddr().resolve(assembler, inst);
 		if (lop instanceof LLForwardOperand)
 			return new LLForwardOperand(this, 2);
 		
@@ -72,6 +72,10 @@ public class AddrOperand implements AssemblerOperand {
 		} else
 			throw new ResolveException(lop, "Expected an immediate");
 		return lop;
+	}
+
+	public AssemblerOperand getAddr() {
+		return addr;
 	}
 	
 }

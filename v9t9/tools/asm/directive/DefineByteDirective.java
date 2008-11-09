@@ -97,4 +97,5 @@ public class DefineByteDirective extends Directive {
 		}
 		return bytes;
 	}
+	
 }

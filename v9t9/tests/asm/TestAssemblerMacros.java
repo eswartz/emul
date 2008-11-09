@@ -187,7 +187,7 @@ public class TestAssemblerMacros extends BaseTest {
 		assembler.pushContentEntry(new ContentEntry(caller + ".asm", text));
 		List<IInstruction> asminsts = assembler.parse();
 		List<IInstruction> realinsts = assembler.resolve(asminsts);
-		assembler.optimize(realinsts);
+		realinsts = assembler.optimize(realinsts);
 
 		testGeneratedContent(assembler, pc, stdInsts, symbols, realinsts);
 	}

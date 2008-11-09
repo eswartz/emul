@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,7 +19,9 @@ import java.util.regex.Pattern;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.StandardConsoleMemoryModel;
 import v9t9.tools.asm.directive.DescrDirective;
 import v9t9.tools.asm.directive.LabelDirective;
 import v9t9.tools.asm.transform.ConstPool;
@@ -36,6 +37,9 @@ import v9t9.utils.Utils;
  */
 public class Assembler {
 	private int DEBUG = 0;
+	
+	private Memory memory = new Memory();
+	private StandardConsoleMemoryModel standardMemoryModel = new StandardConsoleMemoryModel(memory);
 	
     private MemoryDomain CPU = new MemoryDomain();
 	private List<DiskMemoryEntry> memoryEntries = new ArrayList<DiskMemoryEntry>();
@@ -58,7 +62,7 @@ public class Assembler {
 
 	private ArrayList<AssemblerError> errorList;
 
-	private ConstPool constPool = new ConstPool();
+	private ConstPool constPool = new ConstPool(this);
     
 	private static final Pattern INCL_LINE = Pattern.compile(
 			"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
@@ -147,9 +151,9 @@ public class Assembler {
 			return false;
 		
 		insts = resolve(asmInsts);
-		//optimize(insts);
-		//if (errorList.size() >0)
-		//	return false;
+		insts = optimize(insts);
+		if (errorList.size() >0)
+			return false;
 		
 		// fix up any jumps
 		//fixupJumps(insts);
@@ -322,6 +326,8 @@ public class Assembler {
 		
 		resolvedToAsmInstMap = new LinkedHashMap<IInstruction, IInstruction>();
 		
+		constPool.clear();
+		
 		// first, flatten instructions
 		boolean anyErrors = false;
 		this.pc = 0;
@@ -344,6 +350,9 @@ public class Assembler {
 					for (IInstruction inst : instArray) {
 						resolvedToAsmInstMap.put(inst, asminst);
 						
+						if (inst instanceof LLInstruction) {
+							constPool.injectInstruction((LLInstruction) inst);
+						}
 						if (DEBUG>0) log.println(Utils.toHex4(inst.getPc()) + "\t\t" + 
 								Utils.padString(inst.toString(), 20) +"\t\t; " + asminst);
 					}
@@ -362,9 +371,10 @@ public class Assembler {
 
 		// define the const table if used
 		Symbol constTableAddr = constPool.getTableAddr();
-		if (constTableAddr != null) {
+		if (constTableAddr != null && !constTableAddr.isDefined()) {
 			constTableAddr.setAddr(getPc());
 		}
+		
 		
 		// now, iterate once more to handle any remaining forward operands
 		IInstruction prevInst = null;
@@ -377,8 +387,9 @@ public class Assembler {
 			try {
 				// restore previous idea of instruction PC
 				setPc(inst.getPc());
-				if (inst instanceof LLInstruction)
-					((LLInstruction) inst).resolve(this, prevInst, true);
+				if (inst instanceof BaseAssemblerInstruction) {
+					((BaseAssemblerInstruction) inst).resolve(this, prevInst, true);
+				}
 			} catch (ResolveException e) {
 				reportError(e, prevDescr, inst.toString(), e.getMessage());
 				anyErrors = true;
@@ -415,9 +426,9 @@ public class Assembler {
 	 * Optimize instructions
 	 * @param insts
 	 */
-	public void optimize(List<IInstruction> insts) {
+	public List<IInstruction> optimize(List<IInstruction> insts) {
 		new Simplifier(insts).run();
-		insts = resolve(insts);
+		return resolve(insts);
 	}
 	
 	/**
@@ -583,6 +594,14 @@ public class Assembler {
 
 	public ConstPool getConstPool() {
 		return constPool;
+	}
+
+	public void setStandardMemoryModel(StandardConsoleMemoryModel standardMemoryModel) {
+		this.standardMemoryModel = standardMemoryModel;
+	}
+
+	public StandardConsoleMemoryModel getStandardMemoryModel() {
+		return standardMemoryModel;
 	}
 	
 }

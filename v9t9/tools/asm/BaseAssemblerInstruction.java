@@ -31,4 +31,5 @@ public abstract class BaseAssemblerInstruction extends BaseInstruction {
 
 	protected static final byte[] NO_BYTES = new byte[0];
 	abstract public byte[] getBytes() throws ResolveException;
+
 }

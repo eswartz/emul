@@ -74,12 +74,34 @@ public class TestAssemblerOptimizer extends BaseTest {
 		
 	}
 	
+	public void testAssemblerOptimizerPeepholer2() throws Exception {
+		String text =
+			" aorg >100\n"+
+			" dw end\n"+		//100
+			" li r0, end\n"+	//102
+			" inc r1\n"+		//106
+			" ai R0, 0\n"+		//108
+			"end: inc r2\n"+	//10C
+			"";
+		
+		testFileContent(text,
+				0x100,
+				new String[] {
+				"dw >108",
+				"li r0,>108",
+				"inc r1",
+				"inc r2",
+				},
+				new Symbol[] { new Symbol(assembler.getSymbolTable(), "end", 0x108) });
+		
+	}
+	
 	private void testFileContent(String text, int pc, String[] stdInsts, Symbol[] symbols) throws Exception {
 		String caller = new Exception().fillInStackTrace().getStackTrace()[1].getMethodName();
 		assembler.pushContentEntry(new ContentEntry(caller + ".asm", text));
 		List<IInstruction> asminsts = assembler.parse();
 		List<IInstruction> realinsts = assembler.resolve(asminsts);
-		assembler.optimize(realinsts);
+		realinsts = assembler.optimize(realinsts);
 
 		testGeneratedContent(assembler, pc, stdInsts, symbols, realinsts);
 	}

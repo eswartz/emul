@@ -8,6 +8,7 @@ import v9t9.engine.cpu.MachineOperand;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.operand.hl.ConstPoolRefOperand;
 
 /**
  * This is an operation that has been reduced from an HLOperand
@@ -17,7 +18,7 @@ import v9t9.tools.asm.operand.hl.AssemblerOperand;
  */
 public abstract class LLOperand implements AssemblerOperand {
 
-	private final AssemblerOperand original;
+	private AssemblerOperand original;
 
 	public LLOperand(AssemblerOperand original) {
 		this.original = original;
@@ -86,6 +87,10 @@ public abstract class LLOperand implements AssemblerOperand {
 		if (original != null)
 			return original.resolve(assembler, inst);
 		return this;
+	}
+
+	public void setOriginal(ConstPoolRefOperand op) {
+		this.original = op;
 	}
 
     

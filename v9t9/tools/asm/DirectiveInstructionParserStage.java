@@ -13,6 +13,7 @@ import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.directive.AorgDirective;
 import v9t9.tools.asm.directive.BssDirective;
+import v9t9.tools.asm.directive.ConstPoolDirective;
 import v9t9.tools.asm.directive.DefineByteDirective;
 import v9t9.tools.asm.directive.DefineWordDirective;
 import v9t9.tools.asm.directive.Directive;
@@ -48,7 +49,7 @@ public class DirectiveInstructionParserStage implements IInstructionParserStage 
 		dirMap.put("text", new DirectiveInfo(-1, DefineByteDirective.class));
 		dirMap.put("bss", new DirectiveInfo(1, BssDirective.class));
 		dirMap.put("even", new DirectiveInfo(0, EvenDirective.class));
-		//dirMap.put("consttable", new DirectiveInfo(0, ConstTableDirective.class));
+		dirMap.put("consttable", new DirectiveInfo(0, ConstPoolDirective.class));
 		
 	}
 	public DirectiveInstructionParserStage(OperandParser operandParser) {

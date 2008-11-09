@@ -160,5 +160,4 @@ public class LLInstruction extends BaseAssemblerInstruction {
 		return inst == Isocb || inst == Icb || inst == Iab 
 		|| inst == Isb || inst == Iszcb || inst == Imovb;
 	}
-
 }

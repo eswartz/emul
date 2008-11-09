@@ -1,5 +1,6 @@
 package v9t9.tests;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -17,10 +18,12 @@ import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StandardConsoleMemoryModel;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.AssemblerInstruction;
+import v9t9.tools.asm.DirectiveInstructionParserStage;
 import v9t9.tools.asm.LLInstruction;
 import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.StandardInstructionParserStage;
 import v9t9.tools.asm.Symbol;
+import v9t9.tools.asm.directive.Directive;
 import v9t9.tools.llinst.Block;
 import v9t9.tools.llinst.HighLevelInstruction;
 import v9t9.tools.llinst.ParseException;
@@ -137,12 +140,14 @@ public abstract class BaseTest extends TestCase {
 	}
 
 	protected StandardInstructionParserStage stdInstStage = new StandardInstructionParserStage();
+	protected DirectiveInstructionParserStage dtveStage = new DirectiveInstructionParserStage(stdInstStage.getOperandParser());
 	protected Assembler stdAssembler = new Assembler();
 
 	protected RawInstruction createInstruction(int pc, String element) throws ParseException {
 	    IInstruction[] asminsts = stdInstStage.parse("foo", element);
-		if (asminsts ==  null || asminsts.length != 1)
-			throw new IllegalArgumentException("Could not uniquely parse " + element);
+		if (asminsts ==  null || asminsts.length != 1) {
+			throw new ParseException("Could not uniquely parse " + element);
+		}
 
 		stdAssembler.setPc((short) pc);
 		RawInstruction rawInst;
@@ -162,30 +167,74 @@ public abstract class BaseTest extends TestCase {
 		return new HighLevelInstruction(wp, new Instruction(inst));
 	}
 
+	static class InstFollowInfo {
+		public List<IInstruction> realinsts;
+		public int idx;
+		
+		public InstFollowInfo(List<IInstruction> realinsts) {
+			this.realinsts = realinsts;
+			this.idx = 0;
+		}
+		public RawInstruction nextRealInst() throws ResolveException {
+			IInstruction llInst;
+			do {
+				llInst = realinsts.get(idx++);
+			} while (!(llInst instanceof LLInstruction));
+			RawInstruction realInst = ((LLInstruction) llInst).createRawInstruction();
+			return realInst;
+		}
+		
+		public Directive nextDirective(Class<? extends Directive> klass) {
+			IInstruction llInst;
+			do {
+				llInst = realinsts.get(idx++);
+			} while (!(llInst instanceof Directive) || !((Directive) llInst).getClass().isAssignableFrom(klass));
+			return (Directive) llInst;
+		}
+	}
+	
 	protected void testGeneratedContent(Assembler assembler,
 			int pc, String[] stdInsts,
 			Symbol[] symbols, List<IInstruction> realinsts)
 			throws ResolveException {
 		testGeneratedSymbols(assembler, symbols);
 		
+		InstFollowInfo info = new InstFollowInfo(realinsts);
 		int targPc = pc;
-		int idx = 0;
 		for (String stdInstStr : stdInsts) {
-			RawInstruction stdInst = null;
-			try {
-				stdInst = createInstruction(targPc, stdInstStr);
-			} catch (ParseException e) {
-				assertNull(stdInstStr, e.toString());
-			}
-			IInstruction llInst;
-			do {
-				llInst = realinsts.get(idx++);
-			} while (!(llInst instanceof LLInstruction));
-			IInstruction realInst = ((LLInstruction) llInst).createRawInstruction();
+			targPc = validateNextInst(stdInstStr, targPc, info);
+
+		}
+	}
+
+	private int validateNextInst(String stdInstStr, int targPc,
+			InstFollowInfo info) throws ResolveException {
+		RawInstruction stdInst = null;
+		try {
+			stdInst = createInstruction(targPc, stdInstStr);
+			IInstruction realInst = info.nextRealInst();
 			if (!stdInst.equals(realInst))
 				assertEquals(stdInst.toInfoString(), realInst.toInfoString());
 			targPc += stdInst.size;
+		} catch (ParseException e) {
+			// try for a directive
+			IInstruction[] dirInsts;
+			try {
+				dirInsts = dtveStage.parse("foo", stdInstStr);
+				if (dirInsts == null || dirInsts.length != 1)
+					assertNull(stdInstStr, e.toString());
+
+				Directive dirInst = (Directive) dirInsts[0];
+				Directive realDirInst = info.nextDirective(dirInst.getClass());
+				assertTrue(dirInst.toInfoString() + " != " + realDirInst.toInfoString(),
+						Arrays.equals(dirInst.getBytes(), realDirInst.getBytes()));
+				
+				targPc += dirInst.getBytes().length;
+			} catch (ParseException e1) {
+				fail(e1.toString());
+			}
 		}
+		return targPc;
 	}
 
 	protected void testGeneratedSymbols(Assembler assembler, Symbol[] symbols) {
@@ -205,29 +254,17 @@ public abstract class BaseTest extends TestCase {
 		
 		for (IInstruction realinst : realinsts)
 			System.out.println(realinst);
-		
+
+		InstFollowInfo info = new InstFollowInfo(realinsts);
 		int targPc = 0;
-		int idx = 0;
 		for (Object obj : pcOrInst) {
 			if (obj instanceof Integer) {
 				targPc = (Integer)obj;
 				continue;
 			} else if (obj instanceof String) {
 				String stdInstStr = (String) obj;
-				RawInstruction stdInst = null;
-				try {
-					stdInst = createInstruction(targPc, stdInstStr);
-				} catch (ParseException e) {
-					assertNull(stdInstStr, e.toString());
-				}
-				IInstruction llInst;
-				do {
-					llInst = realinsts.get(idx++);
-				} while (!(llInst instanceof LLInstruction));
-				IInstruction realInst = ((LLInstruction) llInst).createRawInstruction();
-				if (!stdInst.equals(realInst))
-					assertEquals(stdInst, realInst);
-				targPc += stdInst.size;
+				targPc = validateNextInst(stdInstStr, targPc, info);
+				
 			} else
 				fail("unknown vararg " + obj);
 		}
