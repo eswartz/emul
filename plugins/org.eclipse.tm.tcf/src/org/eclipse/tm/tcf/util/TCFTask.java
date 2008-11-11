@@ -31,7 +31,9 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  * because it is extremely difficult to ensure absence of racing conditions or deadlocks in such environment.
  * Such clients should consider message driven design, see TCFDataCache and its usage as an example.    
  * 
- * If a client is extending TCFTask it should implement run() method to perform actual communications. 
+ * If a client is extending TCFTask it should implement run() method to perform actual communications.
+ * The run() method will be execute by TCF dispatch thread, and client code should then call either done() or
+ * error() to indicate that task computations are complete.  
  */
 public abstract class TCFTask<V> implements Runnable, Future<V> {
     
@@ -53,6 +55,12 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         });
     }
     
+    /**
+     * Set a result of this task and notify all threads waiting for the task to complete.
+     * The method is supposed to be called in response to executing of run() method of this task.
+     * 
+     * @param result - the computed result
+     */
     public synchronized void done(V result) {
         assert Protocol.isDispatchThread();
         if (canceled) return;
@@ -64,6 +72,12 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         notifyAll();
     }
     
+    /**
+     * Set a error and notify all threads waiting for the task to complete.
+     * The method is supposed to be called in response to executing of run() method of this task.
+     * 
+     * @param error - computation error.
+     */
     public synchronized void error(Throwable error) {
         assert Protocol.isDispatchThread();
         assert error != null;
@@ -75,6 +89,23 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         notifyAll();
     }
 
+    /**
+     * Attempts to cancel execution of this task.  This attempt will
+     * fail if the task has already completed, already been canceled,
+     * or could not be canceled for some other reason. If successful,
+     * and this task has not started when <tt>cancel</tt> is called,
+     * this task should never run.  If the task has already started,
+     * then the <tt>mayInterruptIfRunning</tt> parameter determines
+     * whether the thread executing this task should be interrupted in
+     * an attempt to stop the task.
+     *
+     * @param mayInterruptIfRunning <tt>true</tt> if the thread executing this
+     * task should be interrupted; otherwise, in-progress tasks are allowed
+     * to complete
+     * @return <tt>false</tt> if the task could not be canceled,
+     * typically because it has already completed normally;
+     * <tt>true</tt> otherwise
+     */
     public synchronized boolean cancel(boolean mayInterruptIfRunning) {
         assert Protocol.isDispatchThread();
         if (isDone()) return false;
@@ -84,16 +115,35 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         return true;
     }
 
+    /**
+     * Waits if necessary for the computation to complete, and then
+     * retrieves its result.
+     *
+     * @return the computed result
+     * @throws CancellationException if the computation was canceled
+     * @throws ExecutionException if the computation threw an
+     * exception
+     * @throws InterruptedException if the current thread was interrupted
+     * while waiting
+     */
     public synchronized V get() throws InterruptedException, ExecutionException {
         assert !Protocol.isDispatchThread();
         while (!isDone()) wait();
-        assert error != null || done;
-        if (error instanceof ExecutionException) throw (ExecutionException)error;
-        if (error instanceof InterruptedException) throw (InterruptedException)error;
-        if (error != null) throw new ExecutionException(error);
+        if (error != null) {
+            if (error instanceof ExecutionException) throw (ExecutionException)error;
+            if (error instanceof InterruptedException) throw (InterruptedException)error;
+            throw new ExecutionException(error);
+        }
         return result;
     }
     
+    /**
+     * Waits if necessary for the computation to complete, and then
+     * retrieves its result.
+     *
+     * @return the computed result
+     * @throws Error if the computation was canceled or threw an exception
+     */
     public synchronized V getE() {
         assert !Protocol.isDispatchThread();
         while (!isDone()) {
@@ -104,12 +154,20 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
                 throw new Error(x);
             }
         }
-        assert error != null || done;
-        if (error instanceof Error) throw (Error)error;
-        if (error != null) throw new Error(error);
+        if (error != null) {
+            if (error instanceof Error) throw (Error)error;
+            throw new Error(error);
+        }
         return result;
     }
 
+    /**
+     * Waits if necessary for the computation to complete, and then
+     * retrieves its result.
+     *
+     * @return the computed result
+     * @throws IOException if the computation was canceled or threw an exception
+     */
     public synchronized V getIO() throws IOException {
         assert !Protocol.isDispatchThread();
         while (!isDone()) {
@@ -120,9 +178,8 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
                 throw new InterruptedIOException();
             }
         }
-        assert error != null || done;
-        if (error instanceof IOException) throw (IOException)error;
         if (error != null) {
+            if (error instanceof IOException) throw (IOException)error;
             IOException y = new IOException();
             y.initCause(error);
             throw y;
@@ -130,18 +187,54 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         return result;
     }
 
+    /**
+     * Waits if necessary for at most the given time for the computation
+     * to complete, and then retrieves its result, if available.
+     *
+     * @param timeout the maximum time to wait
+     * @param unit the time unit of the timeout argument
+     * @return the computed result
+     * @throws CancellationException if the computation was canceled
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     * while waiting
+     * @throws TimeoutException if the wait timed out
+     */
     public synchronized V get(long timeout, TimeUnit unit)
             throws InterruptedException, ExecutionException, TimeoutException {
-        unit.toNanos(timeout);
-        // TODO: implement TCFTask.get() with timeout
-        assert false;
-        return null;
+        assert !Protocol.isDispatchThread();
+        if (!isDone()) {
+            wait(unit.toMillis(timeout));
+            if (!isDone()) throw new TimeoutException();
+        }
+        if (error != null) {
+            if (error instanceof InterruptedException) throw (InterruptedException)error;
+            if (error instanceof ExecutionException) throw (ExecutionException)error;
+            if (error instanceof TimeoutException) throw (TimeoutException)error;
+            throw new ExecutionException(error);
+        }
+        return result;
     }
 
+    /**
+     * Returns <tt>true</tt> if this task was canceled before it completed
+     * normally.
+     *
+     * @return <tt>true</tt> if task was canceled before it completed
+     */
     public synchronized boolean isCancelled() {
         return canceled;
     }
 
+    /**
+     * Returns <tt>true</tt> if this task completed.  
+     *
+     * Completion may be due to normal termination, an exception, or
+     * cancellation -- in all of these cases, this method will return
+     * <tt>true</tt>.
+     * 
+     * @return <tt>true</tt> if this task completed.
+     */
     public synchronized boolean isDone() {
         return error != null || done;
     }
