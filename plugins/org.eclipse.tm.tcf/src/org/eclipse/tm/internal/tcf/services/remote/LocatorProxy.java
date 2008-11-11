@@ -99,6 +99,7 @@ public class LocatorProxy implements ILocator {
                     if (m == null) throw new Error("Locator service: invalid peerChanged event - no peer ID");
                     IPeer peer = peers.get(m.get(IPeer.ATTR_ID));
                     if (peer == null) return;
+                    peers.put(peer.getID(), peer);
                     for (LocatorListener l : listeners) {
                         try {
                             l.peerChanged(peer);
@@ -111,7 +112,7 @@ public class LocatorProxy implements ILocator {
                 else if (name.equals("peerRemoved")) {
                     assert args.length == 1;
                     String id = (String)args[0];
-                    IPeer peer = peers.get(id);
+                    IPeer peer = peers.remove(id);
                     if (peer == null) return;
                     for (LocatorListener l : listeners) {
                         try {
