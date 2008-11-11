@@ -16,6 +16,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -188,6 +189,30 @@ public final class JSON {
         return n;
     }
     
+    private static Object readFloat(BigInteger val) throws IOException {
+        int scale = 0;
+        int fraction = 0;
+        if (cur_ch == '.') {
+            read();
+            while (cur_ch >= '0' && cur_ch <= '9') {
+                val = val.multiply(BigInteger.valueOf(10));
+                val = val.add(BigInteger.valueOf(cur_ch - '0'));
+                fraction++;
+                read();
+            }
+        }
+        if (cur_ch == 'E' || cur_ch == 'e') {
+            read();
+            boolean neg = cur_ch == '-';
+            if (neg || cur_ch == '+') read();
+            while (cur_ch >= '0' && cur_ch <= '9') {
+                scale = scale * 10 + cur_ch - '0';
+                read();
+            }
+        }
+        return new BigDecimal(val, scale - fraction);
+    }
+    
     private static Object readNestedObject() throws IOException {
         switch (cur_ch) {
         case '"':
@@ -318,13 +343,16 @@ public final class JSON {
             boolean neg = cur_ch == '-';
             if (neg) read();
             if (cur_ch >= '0' && cur_ch <= '9') {
-                // TODO: float number
                 int v = 0;
                 while (v <= 0x7fffffff / 10 - 1) {
                     v = v * 10 + (cur_ch - '0');
                     read();
                     if (cur_ch < '0' || cur_ch > '9') {
-                        return new Integer(neg ? -v : v);
+                        if (neg) v = -v;
+                        if (cur_ch == '.' || cur_ch == 'E' || cur_ch == 'e') {
+                            return readFloat(BigInteger.valueOf(v));
+                        }
+                        return Integer.valueOf(v);
                     }
                 }
                 long vl = v;
@@ -332,7 +360,11 @@ public final class JSON {
                     vl = vl * 10 + (cur_ch - '0');
                     read();
                     if (cur_ch < '0' || cur_ch > '9') {
-                        return new Long(neg ? -vl : vl);
+                        if (neg) vl = -vl;
+                        if (cur_ch == '.' || cur_ch == 'E' || cur_ch == 'e') {
+                            return readFloat(BigInteger.valueOf(vl));
+                        }
+                        return Long.valueOf(vl);
                     }
                 }
                 StringBuffer sb = new StringBuffer();
@@ -342,6 +374,9 @@ public final class JSON {
                     sb.append(cur_ch);
                     read();
                     if (cur_ch < '0' || cur_ch > '9') {
+                        if (cur_ch == '.' || cur_ch == 'E' || cur_ch == 'e') {
+                            return readFloat(new BigInteger(sb.toString()));
+                        }
                         return new BigInteger(sb.toString());
                     }
                 }
