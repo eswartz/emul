@@ -432,14 +432,16 @@ int json_read_array(InputStream * inp, JsonArrayCallBack * call_back, void * arg
         exception(ERR_PROTOCOL);
         return 1;
     }
-    if (ch != ']'){
-        while (1) {
-            call_back(inp, arg);
-            ch = read_stream(inp);
-            if (ch == ',') continue;
-            if (ch == ']') break;
-            exception(ERR_JSON_SYNTAX);
-        }
+    if (peek_stream(inp) == ']'){
+        read_stream(inp);
+        return 1;
+    }
+    while (1) {
+        call_back(inp, arg);
+        ch = read_stream(inp);
+        if (ch == ',') continue;
+        if (ch == ']') break;
+        exception(ERR_JSON_SYNTAX);
     }
     return 1;
 }
