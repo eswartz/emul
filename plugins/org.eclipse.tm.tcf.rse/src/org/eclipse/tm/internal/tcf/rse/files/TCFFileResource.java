@@ -7,21 +7,26 @@
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ * Anna Dushistova (MontaVista) - [247164][tcf] a lot of file/directory properties are not supported    
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.files;
 
 import org.eclipse.rse.core.subsystems.AbstractResource;
+import org.eclipse.rse.services.files.HostFilePermissions;
 import org.eclipse.rse.services.files.IHostFile;
+import org.eclipse.rse.services.files.IHostFilePermissions;
+import org.eclipse.rse.services.files.IHostFilePermissionsContainer;
 import org.eclipse.tm.tcf.services.IFileSystem;
 
 
-public class TCFFileResource extends AbstractResource implements IHostFile {
+public class TCFFileResource extends AbstractResource implements IHostFile, IHostFilePermissionsContainer{
     
     private final TCFFileService service;
     private String parent;
     private String name;
     private final IFileSystem.FileAttrs attrs;
     private final boolean root;
+    private IHostFilePermissions permissions;
     
     public TCFFileResource(TCFFileService service, String parent, String name,
             IFileSystem.FileAttrs attrs, boolean root) {
@@ -45,6 +50,7 @@ public class TCFFileResource extends AbstractResource implements IHostFile {
         this.name = name;
         this.attrs = attrs;
         this.root = root;
+        this.permissions = new HostFilePermissions(attrs.permissions, "" + attrs.uid, "" + attrs.gid);
     }
     
     private String toLocalPath(String path) {
@@ -127,5 +133,14 @@ public class TCFFileResource extends AbstractResource implements IHostFile {
         int i = path.lastIndexOf('/');
         parent = path.substring(0, i);
         name = path.substring(i + 1);
+    }
+
+    public IHostFilePermissions getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(IHostFilePermissions permissions) {
+        this.permissions = permissions;
+        
     }
 }

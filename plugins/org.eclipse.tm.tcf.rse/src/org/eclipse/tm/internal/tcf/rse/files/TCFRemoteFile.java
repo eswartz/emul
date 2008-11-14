@@ -7,6 +7,7 @@
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ * Anna Dushistova (MontaVista) - [247164][tcf] a lot of file/directory properties are not supported     
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.files;
 
@@ -47,12 +48,18 @@ public class TCFRemoteFile extends AbstractRemoteFile {
     }
 
     public String getCanonicalPath() {
-        // TODO Auto-generated method stub
-        return null;
+        return getAbsolutePath();
     }
 
     public String getClassification() {
-        // TODO Auto-generated method stub
-        return "";
+        String result;
+        if (isFile()) {
+                result = "file"; //$NON-NLS-1$
+        } else if (isDirectory()) {
+                result = "directory"; //$NON-NLS-1$
+        } else {
+                result = "unknown"; //default-fallback //$NON-NLS-1$
+        }
+        return result;
     }
 }
