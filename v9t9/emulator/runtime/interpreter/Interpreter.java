@@ -61,8 +61,7 @@ public class Interpreter {
         
         if ((ins = instructions.get(pc)) != null) {
             ins = ins.update(op, (short)pc, cpu.getConsole());
-        } else 
-        {
+        } else {
             ins = new Instruction(InstructionTable.decodeInstruction(op, pc, cpu.getConsole()));
         }
         instructions.put(pc, ins);
@@ -144,6 +143,8 @@ public class Interpreter {
 
         /* save any operands */
         flushOperands(cpu, ins);
+        
+        cpu.addCycles(iblock.cycles);
 
         /* dump values after execution */
         if (dumpfull != null) {
@@ -179,14 +180,20 @@ public class Interpreter {
         iblock.pc = (short) (iblock.inst.pc + iblock.inst.size);
         iblock.wp = cpu.getWP();
         iblock.status = st;
+        iblock.cycles = ins.cycles;
+        
         MachineOperand mop1 = (MachineOperand) iblock.inst.op1;
         MachineOperand mop2 = (MachineOperand) iblock.inst.op2;
 
         if (mop1.type != MachineOperand.OP_NONE) {
+        	mop1.cycles = 0;
 			iblock.ea1 = mop1.getEA(memory, iblock.inst.pc, wp);
+			iblock.cycles += mop1.cycles;
 		}
         if (mop2.type != MachineOperand.OP_NONE) {
+        	mop2.cycles = 0;
 			iblock.ea2 = mop2.getEA(memory, iblock.inst.pc, wp);
+			iblock.cycles += mop2.cycles;
 		}
         if (mop1.type != MachineOperand.OP_NONE) {
 			iblock.val1 = mop1.getValue(memory, iblock.ea1);
@@ -530,6 +537,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if ((block.val1 & 0x8000) != 0) {
 						block.val1 = (short) -block.val1;
+						block.cycles += 2;
 					}
                 }
             };
@@ -569,6 +577,7 @@ public class Interpreter {
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.pc = block.val1;
+                    block.cycles += 2;
                 }
             };
             break;
@@ -577,6 +586,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isLT()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -586,6 +596,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isLE()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -596,6 +607,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isEQ()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -605,6 +617,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isHE()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -614,6 +627,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isGT()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -623,6 +637,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isNE()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -632,6 +647,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (!block.status.isC()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -641,6 +657,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isC()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -650,6 +667,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (!block.status.isO()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -659,6 +677,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isL()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -668,6 +687,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isH()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -679,6 +699,7 @@ public class Interpreter {
                     // jump on ODD parity
                     if (block.status.isP()) {
 						block.pc = block.val1;
+	                    block.cycles += 2;
 					}
                 }
             };
@@ -776,6 +797,8 @@ public class Interpreter {
                         //memory.writeWord(block.op2.ea + 2,
                         //        (short) (val % (block.val1 & 0xffff)));
                         //inst.op2.value = (short) val;
+                    } else {
+                    	block.cycles += (124 + 92) / 2 - 16;
                     }
                 }
             };

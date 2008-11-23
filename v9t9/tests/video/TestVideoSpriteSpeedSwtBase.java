@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.tests;
+package v9t9.tests.video;
 
 import org.eclipse.swt.widgets.Display;
 
@@ -10,7 +10,7 @@ import org.eclipse.swt.widgets.Display;
  * @author ejs
  *
  */
-public abstract class TestVideoSpeedSwtBase extends TestVideoSpeedBase {
+public abstract class TestVideoSpriteSpeedSwtBase extends TestVideoSpriteSpeedBase {
 
 	protected Display display;
 	

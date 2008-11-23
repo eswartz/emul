@@ -147,5 +147,7 @@ public class QtVideoRenderer implements VideoRenderer {
 		redraw();
 	}
 
-
+	public void yield() {
+		
+	}
 }

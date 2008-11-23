@@ -78,6 +78,12 @@ public class KeyboardState {
         Arrays.fill(getCrukeyboardmap(), 0, 8, (byte)0);
     }
     
+    /**
+     * Set a key in the map.
+     * @param onoff true: pressed, false: released
+     * @param shift FCTN, SHIFT, CTRL mask
+     * @param key normalized ASCII key: no lowercase or shifted characters
+     */
     public void setKey(boolean onoff, byte shift, byte key) {
         byte b, r, c;
 
@@ -161,9 +167,12 @@ public class KeyboardState {
                 logger(_L | LOG_ERROR,
                      _("keyboard_setkey:  got a key that should be faked '%c' (%d)\n\n"),
                      key, key);*/
-            r = (byte) (b >> 4);
-            c = (byte) (b & 15);
-            CHANGEKBDCRU(r, c, onoff ? 1 : 0);
+            //System.out.println("b = "+b + "; onoff="+onoff +"; shift="+Utils.toHex4(shift));
+            if (b != -1) {
+	            r = (byte) (b >> 4);
+	            c = (byte) (b & 15);
+	            CHANGEKBDCRU(r, c, onoff ? 1 : 0);
+            }
         } else {
             if ((shift & SHIFT) != 0)
                 realshift = (byte) ((realshift & ~SHIFT) | (onoff ? SHIFT : 0));

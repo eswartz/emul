@@ -6,5 +6,5 @@
 	<classpathentry excluding="proto/|tests/dynamic_classgen_with_bcel/" kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/qt"/>
 	<classpathentry kind="lib" path="gnu-getopt-1.0.11.jar"/>
-	<classpathentry kind="output" path=""/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>

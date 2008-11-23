@@ -33,10 +33,22 @@ public class DiskMemoryEntry extends MemoryEntry {
     /*	is the data dirty? */
     private boolean bDirty;
     
+    /**
+     * Read memory and create a memory entry with CPU byte ordering.
+     * @param addr
+     * @param size
+     * @param name
+     * @param domain
+     * @param filepath
+     * @param fileoffs
+     * @param isStored if true, this is a RAM entry which can be rewritten
+     * @return new entry
+     * @throws IOException if file cannot be read, and is not stored
+     */
     static public DiskMemoryEntry newWordMemoryFromFile(
             int addr, int size, String name, 
             MemoryDomain domain, String filepath, int fileoffs,
-            boolean isStored) {
+            boolean isStored) throws IOException {
     	WordMemoryArea area = new WordMemoryArea();
         DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
         if (isStored) {
@@ -45,10 +57,22 @@ public class DiskMemoryEntry extends MemoryEntry {
         return entry;
     }
 
+    /**
+     * Read memory and create a memory entry with no byte ordering adjustment.
+     * @param addr
+     * @param size
+     * @param name
+     * @param domain
+     * @param filepath
+     * @param fileoffs
+     * @param isStored if true, this is a RAM entry which can be rewritten
+     * @return the entry
+     * @throws IOException if the memory cannot be read and is not stored
+     */
     static public DiskMemoryEntry newByteMemoryFromFile(
             int addr, int size, String name, 
             MemoryDomain domain, String filepath, int fileoffs,
-            boolean isStored) {
+            boolean isStored) throws IOException {
     	ByteMemoryArea area = new ByteMemoryArea();
     	
         DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
@@ -63,11 +87,14 @@ public class DiskMemoryEntry extends MemoryEntry {
      * @param size if not isRam, the maximum acceptable size,
      * else the fixed size for a RAM file.  May be 0 to use
      * file size directly.
+     * @param isStored if true, this is a RAM entry which can be rewritten
+     * @return the entry
+     * @throws IOException if the memory cannot be read and is not stored
      */
     static public DiskMemoryEntry newFromFile(
             MemoryArea area, int addr, int size, String name, 
             MemoryDomain domain, String filepath, int fileoffs,
-            boolean isStored) {
+            boolean isStored) throws IOException {
 
         if (size < -MemoryDomain.PHYSMEMORYSIZE
                 || isStored && size <= 0
@@ -94,11 +121,11 @@ public class DiskMemoryEntry extends MemoryEntry {
 				filesize &= 0x1fff;
 			}
             
-        } catch (Exception e) {		// TODO
+        } catch (IOException e) {		// TODO
             if (isStored) {
 				filesize = size;	/* not created yet */
 			} else {
-				return null;
+				throw e;
 			}
         }
         

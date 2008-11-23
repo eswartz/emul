@@ -15,7 +15,7 @@ import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.StandardConsoleMemoryModel;
+import v9t9.engine.memory.RamArea;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.AssemblerInstruction;
 import v9t9.tools.asm.DirectiveInstructionParserStage;
@@ -52,7 +52,7 @@ public abstract class BaseTest extends TestCase {
         		CPU,
         		0,
         		8192,
-        		new StandardConsoleMemoryModel.RamArea(8192)));
+        		new RamArea(8192)));
 	}
 	
 

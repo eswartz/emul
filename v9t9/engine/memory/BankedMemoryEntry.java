@@ -3,6 +3,8 @@
  */
 package v9t9.engine.memory;
 
+import java.io.IOException;
+
 import v9t9.engine.memory.MemoryArea.AreaWriteByte;
 
 /**
@@ -28,7 +30,7 @@ public class BankedMemoryEntry extends MemoryEntry {
             String name, 
             MemoryDomain domain, 
             String filepath, int fileoffs,
-            String filepath2, int fileoffs2) {
+            String filepath2, int fileoffs2) throws IOException {
     	DiskMemoryEntry bank0 = DiskMemoryEntry.newFromFile(
     			new WordMemoryArea(), 0x6000, 0x2000, name + " (bank 0)", domain, filepath, fileoffs, false);
     	DiskMemoryEntry bank1 = DiskMemoryEntry.newFromFile(

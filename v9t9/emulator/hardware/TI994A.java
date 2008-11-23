@@ -6,15 +6,19 @@
  */
 package v9t9.emulator.hardware;
 
+import java.io.IOException;
+
 import org.eclipse.swt.widgets.Display;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.HybridDemoClient;
 import v9t9.emulator.clients.builtin.PureJavaClient;
 import v9t9.emulator.runtime.AbortedException;
+import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.engine.Client;
+import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.Gpl;
@@ -23,9 +27,15 @@ import v9t9.engine.memory.StandardConsoleMemoryModel;
 
 public class TI994A extends Machine {
 
+	static {
+		DataFiles.addSearchPath("/usr/local/src/v9t9-data/roms");
+		DataFiles.addSearchPath("/usr/local/src/v9t9-data/modules");
+		DataFiles.addSearchPath("l:/src/v9t9-data/roms");
+		DataFiles.addSearchPath("l:/src/v9t9-data/modules");
+	}
     StandardConsoleMemoryModel memoryModel;
     
-    public TI994A() {
+    public TI994A() throws IOException {
         super();
     }
     
@@ -64,54 +74,54 @@ public class TI994A extends Machine {
     }
 
     @Override
-	protected void loadMemory() {
+	protected void loadMemory() throws IOException {
         memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x0, 0x2000, "CPU ROM", memoryModel.CPU,
-                "/usr/local/src/v9t9-data/roms/994arom.bin", 0x0, false));
+                "994arom.bin", 0x0, false));
         memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x0, 0x6000, "CPU GROM", memoryModel.GRAPHICS,
-                "/usr/local/src/v9t9-data/roms/994agrom.bin", 0x0, false));
+                "994agrom.bin", 0x0, false));
  
         memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "ExtBasic", memoryModel.GRAPHICS,
-        		"/usr/local/src/v9t9-data/modules/tiextg.bin", 0x0, false));
+        		"tiextg.bin", 0x0, false));
         memory.addAndMap(BankedMemoryEntry.newBankedWordMemoryFromFile(
         		memory,
         		"ExtBasic", memoryModel.CPU,
-        		"/usr/local/src/v9t9-data/modules/tiextc.bin", 0x0, 
-        		"/usr/local/src/v9t9-data/modules/tiextd.bin", 0x0));
+        		"tiextc.bin", 0x0, 
+        		"tiextd.bin", 0x0));
 
         memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Parsec", memoryModel.GRAPHICS,
-                "/usr/local/src/v9t9-data/modules/parsecg.bin", 0x0, false));
+                "parsecg.bin", 0x0, false));
         memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Parsec", memoryModel.CPU,
-                "/usr/local/src/v9t9-data/modules/parsecc.bin", 0x0, false));
+                "parsecc.bin", 0x0, false));
 
         //memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Mini", memoryModel.GRAPHICS,
-                //"/usr/local/src/v9t9-data/modules/minig.bin", 0x0, false));
+                //"minig.bin", 0x0, false));
         //memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Mini", memoryModel.CPU,
-          //      "/usr/local/src/v9t9-data/modules/minic.bin", 0x0, false));
+          //      "minic.bin", 0x0, false));
 //      memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Logo", memoryModel.GRAPHICS,
-//    		  "/usr/local/src/v9t9-data/modules/logog.bin", 0x0, false));
+//    		  "logog.bin", 0x0, false));
 //      memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Logo", memoryModel.CPU,
-//    		  "/usr/local/src/v9t9-data/modules/logoc.bin", 0x0, false));
+//    		  "logoc.bin", 0x0, false));
         memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Diags", memoryModel.GRAPHICS,
-                "/usr/local/src/v9t9-data/modules/diagsg.bin", 0x0, false));
+                "diagsg.bin", 0x0, false));
 
 
         memory.addAndMap(BankedMemoryEntry.newBankedWordMemoryFromFile(
         		memory,
         		"Jungle_Hunt", memoryModel.CPU,
-        		"/usr/local/src/v9t9-data/modules/junglec.bin", 0x0, 
-        		"/usr/local/src/v9t9-data/modules/jungled.bin", 0x0));
+        		"junglec.bin", 0x0, 
+        		"jungled.bin", 0x0));
        // memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Carwars", memoryModel.GRAPHICS,
-        //        "/usr/local/src/v9t9-data/modules/carwarsg.bin", 0x0, false));
+        //        "carwarsg.bin", 0x0, false));
         memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Parsec", memoryModel.GRAPHICS,
-                "/usr/local/src/v9t9-data/modules/parsecg.bin", 0x0, false));
+                "parsecg.bin", 0x0, false));
         memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Parsec", memoryModel.CPU,
-                "/usr/local/src/v9t9-data/modules/parsecc.bin", 0x0, false));
+                "parsecc.bin", 0x0, false));
 
         /*
         memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Tomb", memoryModel.GRAPHICS,
-                "/usr/local/src/v9t9-data/modules/trsureg.bin", 0x0, false));
+                "trsureg.bin", 0x0, false));
         memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Tomb", memoryModel.CPU,
-                "/usr/local/src/v9t9-data/modules/trsurec.bin", 0x0, false));
+                "trsurec.bin", 0x0, false));
 */
 
 
@@ -119,7 +129,9 @@ public class TI994A extends Machine {
 
     @Override
 	protected void setupDefaults() {
+    	Cpu.settingRealTime.setBoolean(true);
     	if (false) {
+    		Cpu.settingRealTime.setBoolean(false);
 	    	Executor.settingCompile.setBoolean(true);
 	        Compiler.settingOptimize.setBoolean(true);
 	        Compiler.settingOptimizeRegAccess.setBoolean(true);
@@ -138,7 +150,7 @@ public class TI994A extends Machine {
     	StandardConsoleMemoryModel.settingExpRam.setBoolean(true);
     }
     
-    public static void main(String args[]) {
+    public static void main(String args[]) throws IOException {
     	final Display display = new Display();
     	
         final TI994A machine = new TI994A();
@@ -185,6 +197,10 @@ public class TI994A extends Machine {
 	    	if (!machine.isRunning())
 	    		break;
 	    	
+	    	try {
+				Thread.sleep(1);
+			} catch (InterruptedException e) {
+			}
 	    	Thread.yield();
         }
         

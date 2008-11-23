@@ -109,7 +109,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 
     public Status status; // current status
 
-    public short cycles; // execution cycles
+    public short cycles; // execution cycles (not including memory operands)
 
     public int stsetBefore; // method status is set after operands parsed, before execution (st_xxx)
     public int stsetAfter; // method status is set after execution (st_xxx)
@@ -213,7 +213,8 @@ public class Instruction extends RawInstruction implements IInstruction {
  
 	/**
      * Finish filling in an instruction which is used for
-     * higher-level operations 
+     * higher-level operations.  This also establishes basic
+     * cycle counts.
      *
      */
     public void completeInstruction(int Pc) {        

@@ -1,10 +1,10 @@
 /**
  * 
  */
-package v9t9.tests;
+package v9t9.emulator.clients.builtin.video;
 
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.tests.video.SpriteBase;
 
 public class VdpSprite extends SpriteBase {
 	private byte color;

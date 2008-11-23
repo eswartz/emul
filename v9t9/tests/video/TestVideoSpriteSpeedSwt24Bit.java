@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.tests;
+package v9t9.tests.video;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;

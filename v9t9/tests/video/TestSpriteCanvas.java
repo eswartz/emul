@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.tests;
+package v9t9.tests.video;
 
 
 import java.util.Arrays;
@@ -14,6 +14,8 @@ import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VdpSprite;
+import v9t9.emulator.clients.builtin.video.VdpSpriteCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.engine.memory.ByteMemoryAccess;
 

@@ -38,6 +38,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	private Image image;
 	private Rectangle updateRect;
 	private boolean isBlank;
+	private boolean wasBlank;
 	
 	public SwtVideoRenderer(Display display, ImageDataCanvas canvas) {
 		shell = new Shell(display);
@@ -46,7 +47,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		shell.setLayout(layout);
 		shell.setBounds(800,800,0,0);
 		
-		this.canvas = new Canvas(shell, SWT.NONE);
+		this.canvas = new Canvas(shell, SWT.NO_BACKGROUND);
 		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		this.canvas.setLayoutData(gridData);
 		this.canvas.setLayout(new FillLayout());
@@ -86,9 +87,12 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 					shell.setSize(trim.width, trim.height);
 				}
 				
-				isBlank = vdpCanvas.isBlank();
+				final boolean becameBlank = vdpCanvas.isBlank() && !isBlank;
+				isBlank = becameBlank;
 				
 				Rectangle redrawRect_ = vdpCanvas.getDirtyRect();
+				if (becameBlank)
+					redrawRect_ = new Rectangle(0, 0, vdpCanvas.width * zoom, vdpCanvas.height * zoom);
 				if (redrawRect_ != null) {
 					final Rectangle redrawRect = redrawRect_;
 					
@@ -108,7 +112,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 	
 	public void sync() {
-		Display.getDefault().asyncExec(new Runnable() {
+		Display.getDefault().syncExec(new Runnable() {
 
 			public void run() {
 				canvas.update();
@@ -120,35 +124,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	 * @see v9t9.emulator.clients.builtin.VideoRenderer#resize(int, int)
 	 */
 	public void resize(int width, int height) {
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.VideoRenderer#setForegroundAndBackground(int, int)
-	 */
-	public void setForegroundAndBackground(int bg, int fg) {
-		this.bg = allocColor(this.bg, bg);
-		this.fg = allocColor(this.fg, fg);
-	}
-
-	private Color allocColor(Color color, int idx) {
-		if (color != null)
-			color.dispose();
-		byte[] rgb;
-		rgb = vdpCanvas.getColorRGB(idx);
-		return new Color(shell.getDisplay(), rgb[0] & 0xff, rgb[1] & 0xff, rgb[2] & 0xff);
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.VideoRenderer#setBlank(int)
-	 */
-	public void setBlank(boolean blank) {
-		isBlank = blank;
-		Display.getDefault().asyncExec(new Runnable() {
-
-			public void run() {
-				canvas.redraw();
-			}
-		});
 	}
 
 	public Shell getShell() {
@@ -209,9 +184,14 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			
 			gc.drawImage(image, imageRect.x, imageRect.y, imageRect.width, imageRect.height, 
 					destRect.x, destRect.y, destRect.width, destRect.height);
-		} else if (bg != null) {
+			wasBlank = false;
+		} else {
+			if (wasBlank)
+				return;
+			bg = allocColor(bg, 0);
 			gc.setBackground(bg);
 			gc.fillRectangle(updateRect);
+			wasBlank = true;
 		}
 		
 	}
@@ -229,5 +209,11 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		redraw();
 	}
 
-
+	private Color allocColor(Color color, int idx) {
+		if (color != null)
+			color.dispose();
+		byte[] rgb;
+		rgb = vdpCanvas.getColorRGB(idx);
+		return new Color(shell.getDisplay(), rgb[0] & 0xff, rgb[1] & 0xff, rgb[2] & 0xff);
+	}
 }

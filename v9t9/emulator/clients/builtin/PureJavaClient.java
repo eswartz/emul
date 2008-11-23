@@ -25,8 +25,7 @@ import v9t9.engine.memory.MemoryDomain;
 import v9t9.keyboard.KeyboardState;
 
 /**
- * This demo client writes everything to the v9t9 client running a demo,
- * and also mirrors VDP to the builtin handler.
+ * This client does all its own dang work!
  * @author ejs
  */
 public class PureJavaClient implements Client {
@@ -138,6 +137,7 @@ public class PureJavaClient implements Client {
     public void timerInterrupt() {
     	video.update();
     	videoRenderer.redraw();
+    	keyboardHandler.scan(keyboardState);
     	//video.update();
     }
 
@@ -189,6 +189,5 @@ public class PureJavaClient implements Client {
     public void setCruHandler(CruHandler handler) {
         this.cru = handler;
     }
-
 }
 

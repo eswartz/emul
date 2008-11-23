@@ -715,7 +715,7 @@ public class TestTopDown1 extends BaseTopDownTest
 	    assertEquals(5, routine1.getSpannedBlocks().size());
 	}
 
-	public void test994ARom_0() {
+	public void test994ARom_0() throws Exception {
     	MemoryArea area = new WordMemoryArea();
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
     	this.memory.addAndMap(DiskMemoryEntry.newFromFile(area, 0x0, 0x2000, "CPU ROM", CPU, path, 0, false));
@@ -731,7 +731,7 @@ public class TestTopDown1 extends BaseTopDownTest
     	assertTrue(phase.getRoutines().size() > 50);
     }
     
-    public void test994ARom_BlockCrazy() {
+    public void test994ARom_BlockCrazy() throws Exception {
     	MemoryArea area = new WordMemoryArea();
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
     	this.memory.addAndMap(DiskMemoryEntry.newFromFile(area, 0x0, 0x2000, "CPU ROM", CPU, path, 0, false));
@@ -755,7 +755,7 @@ public class TestTopDown1 extends BaseTopDownTest
     	assertTrue(phase.getRoutines().size() > 100);
     }
     
-    public void test994ARom_1() {
+    public void test994ARom_1() throws Exception {
     	MemoryArea area = new WordMemoryArea();
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
     	this.memory.addAndMap(DiskMemoryEntry.newFromFile(area, 0x800, 0x800, "CPU ROM", CPU, path, 0x800, false));

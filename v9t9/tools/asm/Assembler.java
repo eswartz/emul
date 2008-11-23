@@ -19,9 +19,9 @@ import java.util.regex.Pattern;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.StandardConsoleMemoryModel;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.RamArea;
 import v9t9.tools.asm.directive.DescrDirective;
 import v9t9.tools.asm.directive.LabelDirective;
 import v9t9.tools.asm.transform.ConstPool;
@@ -38,10 +38,20 @@ import v9t9.utils.Utils;
 public class Assembler {
 	private int DEBUG = 0;
 	
-	private Memory memory = new Memory();
-	private StandardConsoleMemoryModel standardMemoryModel = new StandardConsoleMemoryModel(memory);
-	
-    private MemoryDomain CPU = new MemoryDomain();
+	/** memory domain for area-sensitive view of the world */
+    private MemoryDomain StdCPU = new MemoryDomain();
+    private MemoryEntry StdCPURAM = new MemoryEntry("Std CPU RAM",
+    		StdCPU, 0x8000, 0x400, new RamArea(0x400));
+    private MemoryEntry StdCPUExpLoRAM = new MemoryEntry("Std CPU Low Exp RAM",
+    		StdCPU, 0x2000, 0x2000, new RamArea(0x2000));
+    private MemoryEntry StdCPUExpHiRAM = new MemoryEntry("Std CPU Hi Exp RAM",
+    		StdCPU, 0xA000, 0x6000, new RamArea(0x6000));
+    
+    /** memory domain for the assembler's view of the world */
+    private MemoryDomain CPUFullRAM = new MemoryDomain();
+    private MemoryEntry CPUFullRAMEntry = new MemoryEntry("Assembler RAM",
+    		CPUFullRAM, 0, 0x10000, new RamArea(0x10000));
+    
 	private List<DiskMemoryEntry> memoryEntries = new ArrayList<DiskMemoryEntry>();
 
 	private PrintStream log = System.out;
@@ -68,6 +78,11 @@ public class Assembler {
 			"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
 	
     public Assembler() {
+    	CPUFullRAMEntry.map();
+    	StdCPURAM.map();
+    	StdCPUExpHiRAM.map();
+    	StdCPUExpLoRAM.map();
+    	
     	OperandParser operandParser = new OperandParser();
     	operandParser.appendStage(new AssemblerOperandParserStage(this));
     	StandardInstructionParserStage instStage = new StandardInstructionParserStage(operandParser);
@@ -480,7 +495,7 @@ public class Assembler {
 							
 						}*/
 						for (int idx = 0; idx <  mem.length; idx++)
-							CPU.writeByte(inst.getPc() + idx, mem[idx]);
+							CPUFullRAM.writeByte(inst.getPc() + idx, mem[idx]);
 					}
 				} catch (ResolveException e) {
 					reportError(e, descr, inst.toString(), e.getMessage());
@@ -560,7 +575,7 @@ public class Assembler {
 	}
 
 	public MemoryDomain getConsole() {
-		return CPU;
+		return StdCPU;
 	}
 
 	public void addMemoryEntry(DiskMemoryEntry entry) {
@@ -596,12 +611,4 @@ public class Assembler {
 		return constPool;
 	}
 
-	public void setStandardMemoryModel(StandardConsoleMemoryModel standardMemoryModel) {
-		this.standardMemoryModel = standardMemoryModel;
-	}
-
-	public StandardConsoleMemoryModel getStandardMemoryModel() {
-		return standardMemoryModel;
-	}
-	
 }

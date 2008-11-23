@@ -6,6 +6,7 @@
  */
 package v9t9.emulator;
 
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -42,19 +43,24 @@ abstract public class Machine {
     
     boolean allowInterrupts;
     final int interruptTick = 1000 / 30;    // TODO: non-reduced rate
+    final int clientTick = 1000 / 100;
     private long now;
     private TimerTask interruptTask;
-
-    public Machine() {
-        timer = new Timer();
+    private TimerTask clientTask;
+	private long totalCycles;
+	
+	public Machine() throws IOException {
         settings = new SettingsCollection();
-        client = new DummyClient();
         createMemory();
-        cpu = new Cpu(this);
+        cpu = new Cpu(this, interruptTick);
         executor = new Executor(cpu);
         
         setupDefaults();
         loadMemory();
+        
+        timer = new Timer();
+        client = new DummyClient();
+        
         allowInterrupts = true;
         interruptTask = new TimerTask() {
 
@@ -64,6 +70,15 @@ abstract public class Machine {
             }
         };
         timer.scheduleAtFixedRate(interruptTask, 0, interruptTick);
+        
+        clientTask = new TimerTask() {
+        	
+        	@Override
+        	public void run() {
+        		getClient().timerInterrupt();
+        	}
+        };
+        timer.scheduleAtFixedRate(clientTask, 0, clientTick);
 
         bRunning = true;
     }
@@ -76,8 +91,9 @@ abstract public class Machine {
 
     /**
      * Load ROMs, etc. into memory 
+     * @throws IOException TODO
      */
-    abstract protected void loadMemory();
+    abstract protected void loadMemory() throws IOException;
 
     /* Memory areas */
 
@@ -138,6 +154,15 @@ abstract public class Machine {
 	}
     
     protected void run() throws Throwable {
+		// delay if going too fast
+		if (Cpu.settingRealTime.getBoolean()) {
+			if (cpu.isThrottled()) {
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+				}
+			}
+		}
     	executor.execute();
     }
 
@@ -146,6 +171,9 @@ abstract public class Machine {
             cpu.holdpin(Cpu.INTPIN_INTREQ);
         }
         now = System.currentTimeMillis();
+        
+        cpu.tick();
+
         if (now >= lastInfo + 1000) {
             upTime += now - lastInfo;
             executor.dumpStats();

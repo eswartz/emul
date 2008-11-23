@@ -77,7 +77,7 @@ public class CruManager {
     }
 
     /**
-     * @param addr
+     * @param addr CRU address line (multiplied by 2)
      * @param value
      * @param bits
      */
@@ -120,7 +120,7 @@ public class CruManager {
     }
 
     /**
-     * @param s
+     * @param address  CRU address line (multiplied by 2)
      * @param value
      * @return
      */

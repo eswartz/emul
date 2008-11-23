@@ -4,7 +4,7 @@
  * Created on Dec 15, 2004
  *
  */
-package v9t9.tests;
+package v9t9.tests.video;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -21,14 +21,7 @@ public class AllTests {
 	public static Test suite() {
 		TestSuite suite = new TestSuite("Test for v9t9");
 		//$JUnit-BEGIN$
-		suite.addTestSuite(MemoryTest.class);
-		suite.addTestSuite(SettingTest.class);
-		suite.addTestSuite(TestBlocks.class);
-		suite.addTestSuite(StatusTest.class);
-		suite.addTestSuite(DiskMemoryEntryTest.class);
-		suite.addTestSuite(TestTopDown1.class);
-		suite.addTestSuite(MemoryEntryTest.class);
-		suite.addTestSuite(TestMemoryRanges.class);
+		suite.addTestSuite(TestSpriteCanvas.class);
 		//$JUnit-END$
 		return suite;
 	}

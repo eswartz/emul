@@ -1,35 +1,33 @@
 /**
  * 
  */
-package v9t9.tests;
+package v9t9.tests.video;
 
+import org.eclipse.swt.widgets.Display;
 
 
 /**
  * @author ejs
  *
  */
-public abstract class TestVideoSpeedQtBase extends TestVideoSpeedBase {
+public abstract class TestVideoSpeedSwtBase extends TestVideoSpeedBase {
 
-	static boolean inited = false;
+	protected Display display;
 	
 	@Override
 	protected void setUp() throws Exception {
-		if (!inited) {
-			QApplication.initialize(new String[] {"foo"});
-			inited = true;
-		}
+		display = new Display();
 		videoRenderer = createVideoRenderer();
 		canvas = videoRenderer.getCanvas();
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
+		display.dispose();
 	}
 	
 	@Override
 	protected void handleEvents() {
-		while (QApplication.hasPendingEvents())
-			QApplication.processEvents();
+		while (display.readAndDispatch()) /**/ ;
 	}
 }

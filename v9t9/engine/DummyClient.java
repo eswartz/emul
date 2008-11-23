@@ -86,4 +86,9 @@ public class DummyClient implements Client {
     public void setCruHandler(CruHandler handler) {
         this.cru = handler;
     }
+    
+    public void yield() {
+    	// TODO Auto-generated method stub
+    	
+    }
 }

@@ -7,8 +7,6 @@ import java.util.Arrays;
 
 import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.tests.VdpSprite;
-import v9t9.tests.VdpSpriteCanvas;
 
 /**
  * @author ejs

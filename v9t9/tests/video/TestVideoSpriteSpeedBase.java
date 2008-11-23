@@ -1,12 +1,14 @@
 /**
  * 
  */
-package v9t9.tests;
+package v9t9.tests.video;
 
 
 import junit.framework.TestCase;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VdpSprite;
+import v9t9.emulator.clients.builtin.video.VdpSpriteCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.engine.memory.ByteMemoryAccess;
 
@@ -46,7 +48,7 @@ public abstract class TestVideoSpriteSpeedBase extends TestCase {
 
 	protected void updateAndWait(RedrawBlock[] blocks, int count) {
 		canvas.markDirty(blocks, count);
-		videoRenderer.redraw();
+		//videoRenderer.redraw();
 		videoRenderer.sync();
 		handleEvents();
 	}
@@ -82,6 +84,8 @@ public abstract class TestVideoSpriteSpeedBase extends TestCase {
 			sprite.setPattern(pattern);
 		}
 		final byte[] screenChanges = new byte[768];
+		
+		// holding area
 		final RedrawBlock[] blocks = new RedrawBlock[768];
 		for (int i = 0; i < 768; i++) {
 			blocks[i] = new RedrawBlock();

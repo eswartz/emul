@@ -18,7 +18,6 @@ import v9t9.tools.asm.AssemblerTokenizer;
 import v9t9.tools.asm.BaseAssemblerInstruction;
 import v9t9.tools.asm.ContentEntry;
 import v9t9.tools.asm.Equate;
-import v9t9.tools.asm.HLInstruction;
 import v9t9.tools.asm.IInstructionParserStage;
 import v9t9.tools.asm.IOperandParserStage;
 import v9t9.tools.asm.LLInstruction;

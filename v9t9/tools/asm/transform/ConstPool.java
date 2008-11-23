@@ -191,7 +191,7 @@ public class ConstPool {
 			
 			
 			for (short word : words) {
-				if (assembler.getStandardMemoryModel().CPU.hasRamAccess(pc))
+				if (assembler.getConsole().hasRamAccess(pc))
 					return;
 				Integer ipc = instWordMap.get(word & 0xffff);
 				if (ipc == null) {

@@ -10,6 +10,8 @@ import v9t9.emulator.Machine;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.settings.ISettingListener;
+import v9t9.engine.settings.Setting;
 
 /**
  * The 9900 engine.
@@ -17,11 +19,52 @@ import v9t9.engine.memory.MemoryDomain;
  * @author ejs
  */
 public class Cpu {
-    public Cpu(Machine machine) {
+	Machine machine;
+	public Memory memory;
+	private MemoryDomain console;
+	/** program counter */
+	private short PC;
+	/** workspace pointer */
+	private short WP;
+	/** current handled interrupt level */
+	private byte intlevel;
+	long lastInterrupt;
+	/* interrupt pins */
+	public static final int INTPIN_RESET = 1;
+	public static final int INTPIN_LOAD = 2;
+	public static final int INTPIN_INTREQ = 4;
+	
+	/*	Variables for controlling a "real time" emulation of the 9900
+	processor.  Each call to execute() sets an estimated cycle count
+	for the instruction and parameters in "instcycles".  We waste
+	time in 1/BASE_EMULATOR_HZ second quanta to maintain the appearance of a
+	3.0 MHz clock. */
+	
+	int         baseclockhz = 3300000;
+	
+	int         instcycles;	// cycles for each instruction
+	
+	int         targetcycles;	// target # cycles to be executed per second
+	long         totaltargetcycles;	// total # target cycles expected
+	int         currentcycles = 0;	// current cycles per 1/BASE_EMULATOR_HZ second
+	long         totalcurrentcycles;	// total # current cycles executed
+	
+
+    public Cpu(Machine machine, int interruptTick) {
         this.machine = machine;
         this.memory = machine.getMemory();
         this.console = machine.CPU;
         this.status = new Status();
+        this.targetcycles = baseclockhz / interruptTick;
+        
+        settingCyclesPerSecond.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				baseclockhz = setting.getInt();
+				targetcycles = baseclockhz;
+			}
+        	
+        });
     }
 
     public short getPC() {
@@ -59,36 +102,22 @@ public class Cpu {
         WP = wp;
     }
 
-    Machine machine;
-
-    public Memory memory;
-
-    private MemoryDomain console;
-
-    /** program counter */
-    private short PC;
-
-    /** workspace pointer */
-    private short WP;
-
-    /** current handled interrupt level */
-    private byte intlevel;
-
-    long lastInterrupt;
-    
-    /* interrupt pins */
-    public static final int INTPIN_RESET = 1;
-
-    public static final int INTPIN_LOAD = 2;
-
-    public static final int INTPIN_INTREQ = 4;
-
     public void holdpin(int mask) {
         intpins |= (byte) mask;
         //abortIfInterrupted();
     }
 
     private byte intpins;
+
+	static public final String sRealTime = "RealTime";
+
+	static public final Setting settingRealTime = new Setting(
+			sRealTime, new Boolean(false));
+
+	static public final String sCyclesPerSecond = "CyclesPerSecond";
+
+	static public final Setting settingCyclesPerSecond = new Setting(
+			sCyclesPerSecond, new Integer(3000000));
 
     //public static Object executionToken;
 
@@ -190,7 +219,7 @@ public class Cpu {
                 intpins &= ~INTPIN_INTREQ;
                 contextSwitch(0x4);
                 intlevel = 0;
-                machine.getClient().timerInterrupt();
+                
                 //instcycles += 22;
                 //execute_current_inst();
                 
@@ -207,7 +236,7 @@ public class Cpu {
         //	stateflag &= ~ST_INTERRUPT;
     }
 
-    public int getRegister(int reg) {
+	public int getRegister(int reg) {
         return console.readWord(WP + reg*2);
     }
 
@@ -219,4 +248,17 @@ public class Cpu {
 		return console;
 	}
 
+	public synchronized void addCycles(int cycles) {
+		this.currentcycles += cycles; 
+	}
+
+	public synchronized void tick() {
+		totaltargetcycles += targetcycles;
+		totalcurrentcycles += currentcycles;
+		currentcycles = 0;
+	}
+
+	public synchronized boolean isThrottled() {
+		return (currentcycles >= targetcycles);
+	}
 }

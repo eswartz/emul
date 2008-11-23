@@ -245,7 +245,7 @@ public class MachineOperand implements Operand {
         		break;
         	case MachineOperand.OP_REG:	// Rx
         		ea = (short) ((val<<1) + wp);
-        	this.cycles += 0 * 4;
+        		this.cycles += 0 * 4;
         		break;
         	case MachineOperand.OP_INC:	// *Rx+
         	case MachineOperand.OP_IND: {	// *Rx
@@ -253,6 +253,7 @@ public class MachineOperand implements Operand {
         		ea = domain.readWord(ad);
     
         		/* update register if necessary */
+        		this.cycles += 4;
         		if (type == MachineOperand.OP_INC) {
         		    this.cycles += byteop ? 2 : 4;
         		    domain.writeWord(ad, (short)(ea + (byteop ? 1 : 2)));
@@ -278,6 +279,7 @@ public class MachineOperand implements Operand {
         		break;
         	case MachineOperand.OP_REG0_SHIFT_COUNT: // shift count from R0
         	    ea = wp;
+        	    this.cycles += 8;
     		    break;
         	
         	case MachineOperand.OP_JUMP:	// jump target

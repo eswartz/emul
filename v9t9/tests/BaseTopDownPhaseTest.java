@@ -15,7 +15,7 @@ import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.StandardConsoleMemoryModel;
+import v9t9.engine.memory.RamArea;
 import v9t9.tools.decomp.ICodeProvider;
 import v9t9.tools.decomp.IDecompileInfo;
 import v9t9.tools.llinst.HighLevelInstruction;
@@ -34,11 +34,11 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
         
         //model = new StandardConsoleMemoryModel(new DummyClient(), memory);
         MemoryEntry romEntry = new MemoryEntry("CPU ROM", CPU, 0, 0x2000,
-                new StandardConsoleMemoryModel.RamArea(0x2000)
+                new RamArea(0x2000)
                 );
 		memory.addAndMap(romEntry);
         memory.addAndMap(new MemoryEntry("CPU RAM", CPU, 0x8000, 0x400,
-                new StandardConsoleMemoryModel.RamArea(0x400)
+                new RamArea(0x400)
                 ));
         highLevel = new HighLevelCodeInfo(CPU);
         highLevel.getMemoryRanges().addRange(0, 0x2000, true);

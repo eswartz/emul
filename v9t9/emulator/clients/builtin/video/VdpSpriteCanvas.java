@@ -1,11 +1,11 @@
 /**
  * 
  */
-package v9t9.tests;
+package v9t9.emulator.clients.builtin.video;
 
 import java.util.Arrays;
 
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.tests.video.SpriteBase;
 
 public class VdpSpriteCanvas {
 	/** map, per screen block, of which sprites are here */

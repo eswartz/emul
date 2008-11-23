@@ -3,12 +3,17 @@
  */
 package v9t9.engine.cpu;
 
+import static v9t9.engine.cpu.InstEncodePattern.CNT;
+import static v9t9.engine.cpu.InstEncodePattern.GEN;
+import static v9t9.engine.cpu.InstEncodePattern.IMM;
+import static v9t9.engine.cpu.InstEncodePattern.NONE;
+import static v9t9.engine.cpu.InstEncodePattern.OFF;
+import static v9t9.engine.cpu.InstEncodePattern.REG;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.engine.memory.MemoryDomain;
-
-import static v9t9.engine.cpu.InstEncodePattern.*;
 
 /**
  * This class takes an Instruction and generates its opcode.
@@ -373,6 +378,7 @@ public class InstructionTable {
 	public static final int Idelete = 77;	// noop
 	public static Map<String, Integer> nameToInst = new HashMap<String, Integer>();
 	public static Map<Integer, String> instToName = new HashMap<Integer, String>();
+	
 	static { registerInstruction(InstructionTable.Idata, "data"); }
 	static { registerInstruction(InstructionTable.Ili, "li"); }
 	static { registerInstruction(InstructionTable.Iai, "ai"); }

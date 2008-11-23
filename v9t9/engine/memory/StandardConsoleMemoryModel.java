@@ -6,8 +6,16 @@
  */
 package v9t9.engine.memory;
 
-import v9t9.emulator.Machine.ConsoleMmioReader;
-import v9t9.emulator.Machine.ConsoleMmioWriter;
+import v9t9.emulator.hardware.memory.ConsoleGramWriteArea;
+import v9t9.emulator.hardware.memory.ConsoleGromReadArea;
+import v9t9.emulator.hardware.memory.ConsoleSoundArea;
+import v9t9.emulator.hardware.memory.ConsoleSpeechReadArea;
+import v9t9.emulator.hardware.memory.ConsoleSpeechWriteArea;
+import v9t9.emulator.hardware.memory.ConsoleVdpReadArea;
+import v9t9.emulator.hardware.memory.ConsoleVdpWriteArea;
+import v9t9.emulator.hardware.memory.ExpRamArea;
+import v9t9.emulator.hardware.memory.StdConsoleRamArea;
+import v9t9.emulator.hardware.memory.VdpRamArea;
 import v9t9.emulator.runtime.Sound;
 import v9t9.emulator.runtime.Speech;
 import v9t9.emulator.runtime.Vdp;
@@ -113,206 +121,6 @@ public class StandardConsoleMemoryModel {
         this.memory.addAndMap(new MemoryEntry("VDP RAM", VIDEO, 0x0000, 0x4000, 
                 new VdpRamArea()));
 
-    }
-    
-    /* Memory areas */
-    class ConsoleMemoryArea extends WordMemoryArea {
-        ConsoleMemoryArea() {
-            bWordAccess = true;
-        }
-    }
-
-    class StdConsoleRamArea extends ConsoleMemoryArea {
-        StdConsoleRamArea() {
-            memory = new short[0x400/2];
-            read = memory;
-            write = memory;
-
-            /*
-             * standard console RAM masks the addresses to 0x100 bytes; this is
-             * conventionally at 0x8300
-             */
-            class AreaHandlers implements AreaReadByte, AreaReadWord, AreaWriteByte, AreaWriteWord {
-                public byte readByte(MemoryArea area, int addr) {
-                    return area.flatReadByte(settingEnhRam.getBoolean() ? addr
-                            & AREASIZE - 1 : (addr & 0xff) + 0x0300);
-                }
-                public short readWord(MemoryArea area, int addr) {
-                    return area.flatReadWord(settingEnhRam.getBoolean() ? addr
-                            & AREASIZE - 1 : (addr & 0xff) + 0x0300);
-                }
-                public void writeByte(MemoryArea area, int addr, byte val) {
-                    area.flatWriteByte(settingEnhRam.getBoolean() ? addr & AREASIZE - 1
-                            : (addr & 0xff) + 0x0300, val);
-                }
-                public void writeWord(MemoryArea area, int addr, short val) {
-                    area.flatWriteWord(settingEnhRam.getBoolean() ? addr & AREASIZE - 1
-                            : (addr & 0xff) + 0x0300, val);
-                }
-                
-            }
-            AreaHandlers handlers = new AreaHandlers();
-            areaReadByte = handlers;
-            areaReadWord = handlers;
-            areaWriteByte = handlers;
-            areaWriteWord = handlers;
-        }
-    }
-
-    class ExpRamArea extends ConsoleMemoryArea {
-        @Override
-		public boolean hasWriteAccess() {
-            return settingExpRam.getBoolean();
-        }
-
-        ExpRamArea(int size) {
-            if (!(size == 0x2000 || size == 0x6000)) {
-				throw new IllegalArgumentException("unexpected expanded RAM size");
-			}
-
-            memory = new short[size/2];
-            read = memory;
-            write = memory;
-
-            /* only allow access if expansion memory is on */
-            class AreaHandlers implements AreaReadByte, AreaReadWord, AreaWriteByte, AreaWriteWord {
-                public byte readByte(MemoryArea area, int addr) {
-                    return settingExpRam.getBoolean() ? area.flatReadByte(addr) : 0;
-                }
-                public short readWord(MemoryArea area, int addr) {
-                    return settingExpRam.getBoolean() ? area.flatReadWord(addr) : 0;
-                }
-                public void writeByte(MemoryArea area, int addr, byte val) {
-                    if (settingExpRam.getBoolean()) {
-						area.flatWriteByte(addr, val);
-					}
-                }
-                public void writeWord(MemoryArea area, int addr, short val) {
-                    if (settingExpRam.getBoolean()) {
-						area.flatWriteWord(addr, val);
-					}
-                }
-            }
-            
-            AreaHandlers handlers = new AreaHandlers();
-            areaReadByte = handlers;
-            areaReadWord = handlers;
-            areaWriteByte = handlers;
-            areaWriteWord = handlers;
-        }
-    }
-
-    class ConsoleMmioReadArea extends ConsoleMemoryArea {
-        public ConsoleMmioReadArea(final ConsoleMmioReader reader) {
-            if (reader == null) {
-				throw new NullPointerException();
-			}
-
-            memory = ZeroWordMemoryArea.zeroes;
-
-            areaReadByte = new AreaReadByte() {
-                public byte readByte(MemoryArea area, int addr) {
-                    //System.out.println("read byte from "
-                    //      + Integer.toHexString(addr));
-                    if (0 == (addr & 1)) {
-						return reader.read(addr & 2);
-					} else {
-						return 0;
-					}
-                }
-            };
-        }
-    }
-
-    class ConsoleMmioWriteArea extends ConsoleMemoryArea {
-        ConsoleMmioWriteArea(final ConsoleMmioWriter writer) {
-            if (writer == null) {
-				throw new NullPointerException();
-			}
-
-            memory = ZeroWordMemoryArea.zeroes;
-
-            areaWriteByte = new AreaWriteByte() {
-                public void writeByte(MemoryArea area, int addr, byte val) {
-                    //System.out.println("wrote addr " + Integer.toHexString(addr)
-                    // + "="
-                    //  + Integer.toHexString(val));
-                    if (0 == (addr & 1)) {
-                        writer.write((addr & 2), val);
-                    }
-                }
-            };
-        };
-    }
-
-    class DummyConsoleMmioHandler implements ConsoleMmioReader,
-            ConsoleMmioWriter {
-
-        public byte read(int addrMask) {
-            return 0;
-        }
-
-        public void write(int addrMask, byte val) {
-
-        }
-    }
-
-    class ConsoleSoundArea extends ConsoleMmioWriteArea {
-        public ConsoleSoundArea(v9t9.emulator.runtime.Sound mmio) {
-            super(mmio);
-        }
-    }
-
-    class ConsoleVdpReadArea extends ConsoleMmioReadArea {
-        public ConsoleVdpReadArea(v9t9.emulator.runtime.Vdp mmio) {
-            super(mmio);
-        }
-    }
-
-    class ConsoleVdpWriteArea extends ConsoleMmioWriteArea {
-        public ConsoleVdpWriteArea(v9t9.emulator.runtime.Vdp mmio) {
-            super(mmio);
-        }
-    }
-
-    class ConsoleGromReadArea extends ConsoleMmioReadArea {
-        public ConsoleGromReadArea(Gpl mmio) {
-            super(mmio);
-        }
-    }
-
-    class ConsoleGramWriteArea extends ConsoleMmioWriteArea {
-        public ConsoleGramWriteArea(Gpl mmio) {
-            super(mmio);
-        }
-    }
-
-    class ConsoleSpeechReadArea extends ConsoleMmioReadArea {
-        public ConsoleSpeechReadArea(Speech mmio) {
-            super(mmio);
-        }
-    }
-
-    class ConsoleSpeechWriteArea extends ConsoleMmioWriteArea {
-        public ConsoleSpeechWriteArea(Speech mmio) {
-            super(mmio);
-        }
-    }
-
-    class VdpRamArea extends ByteMemoryArea {
-        VdpRamArea() {
-            memory = new byte[0x4000];
-            read = memory;
-            write = memory;
-        }
-    }
-
-    public static class RamArea extends WordMemoryArea {
-        public RamArea(int size) {
-            memory = new short[size];
-            read = memory;
-            write = memory;
-        }
     }
  
 

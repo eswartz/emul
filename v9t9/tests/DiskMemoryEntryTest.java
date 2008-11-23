@@ -36,7 +36,7 @@ public class DiskMemoryEntryTest extends TestCase {
 	}
  
 
-    public void testNewFromFile() {
+    public void testNewFromFile() throws Exception {
         DiskMemoryEntry ent = DiskMemoryEntry.newWordMemoryFromFile(0x000, 0x2000, "rom", CPU,
                 basedir+"994arom.bin", 0, false);
         assertTrue(ent != null);

@@ -11,6 +11,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -18,13 +20,29 @@ import java.io.IOException;
  */
 public class DataFiles {
 
+	private static List<String> searchPaths = new ArrayList<String>();
+	
+	public static void addSearchPath(String filepath) {
+		searchPaths.add(filepath);
+	}
+	
+	public static File resolveFile(String filepath) {
+		for (String path : searchPaths) {
+			File file = new File(path, filepath);
+			if (file.exists())
+				return file;
+		}
+		return new File(filepath);
+	}
+	
     /** Get the size of an image file on disk
      * @param filepath
      * @return
+     * @throws IOException
      */
     public static int getImageSize(String filepath) throws IOException {
         // TODO: real handling of complex filetypes
-        File file = new File(filepath);
+        File file = resolveFile(filepath);
         if (!file.exists())
         	throw new FileNotFoundException(filepath);
         long sz = file.length();
@@ -45,7 +63,7 @@ public class DataFiles {
     	throws FileNotFoundException, IOException 
 	{
         // TODO: real work
-        File file = new File(filepath);
+        File file = resolveFile(filepath);
         
         NativeFile nativeFile = NativeFileFactory.createNativeFile(file);
         
@@ -76,7 +94,7 @@ public class DataFiles {
     throws FileNotFoundException, IOException 
 	{
         // TODO: real work
-        File file = new File(filepath);
+        File file = resolveFile(filepath);
         
         /* write the chunk */
         FileOutputStream stream = new FileOutputStream(file);

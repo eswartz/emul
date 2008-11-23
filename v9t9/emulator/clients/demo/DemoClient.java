@@ -351,5 +351,8 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         this.cru = handler;
     }
 
+    public void yield() {
+    	
+    }
 }
 

@@ -53,7 +53,7 @@ public class Executor {
     static public final Setting settingDumpInstructions = new Setting(sDumpInstructions, new Boolean(false));
     static public final String sDumpFullInstructions = "DumpFullInstructions";
     static public final Setting settingDumpFullInstructions = new Setting(sDumpFullInstructions, new Boolean(false));
-    
+
     public Executor(Cpu cpu) {
         this.cpu = cpu;
         this.interp = new Interpreter(cpu.getMachine());
@@ -96,15 +96,42 @@ public class Executor {
     }
 
     /** 
-     * Run an unbounded amount of code.  Some external factor
+     * Run an unbounded amount of code -- usually multiple instructions
+     * if compiling, or one instruction if interpreting.  Some external factor
      * tells the execution unit when to stop.  The interpret/compile
      * setting is sticky until execution is interrupted.
      * @throws AbortedException when interrupt or other machine event stops execution
      */
     public void execute() throws AbortedException {
-    	boolean compiling = settingCompile.getBoolean();
 		try {
-			compiling = executeSomeCode(compiling);
+			boolean interpreting = false;
+			if (settingCompile.getBoolean()) {
+				/* try to make or run native code, which may fail */
+				short pc = cpu.getPC();
+				if ((pc >= 0x6000 && pc < 0x8000) 
+						&& Compiler.settingDumpModuleRomInstructions.getBoolean()) {
+			    	settingDumpInstructions.setBoolean(true);
+			        settingDumpFullInstructions.setBoolean(true);
+			    }
+
+				ICompiledCode code = compilerStrategy.getCompiledCode(cpu.getPC() & 0xffff, cpu.getWP());
+			    if (code == null || !code.run()) {
+			    	// Returns false if an instruction couldn't be executed
+			    	// because it did not look like real code (or was not expected to be directly invoked).
+			    	// Returns true if fell out of the code block.
+			    	//System.out.println("Switch  branching to >" + Utils.toHex4(cpu.getPC()));
+			    	interpreting = true;
+			    	nSwitches++;
+				}
+			} else {
+				interpreting = true;
+			}
+			
+			if (interpreting) {
+				cpu.abortIfInterrupted();
+			    interpretOneInstruction();
+			}
+			
 		} catch (TerminatedException e) {
 			throw e;
 		} catch (AbortedException e) {
@@ -120,38 +147,6 @@ public class Executor {
 		}
     }
 
-	private boolean executeSomeCode(boolean compiling) throws AbortedException {
-		boolean interpreting = !compiling;
-		
-		if (!interpreting) {
-			
-		    /* try to make or run native code, which may fail */
-			short pc = cpu.getPC();
-			if ((pc >= 0x6000 && pc < 0x8000) 
-					&& Compiler.settingDumpModuleRomInstructions.getBoolean()) {
-		    	settingDumpInstructions.setBoolean(true);
-		        settingDumpFullInstructions.setBoolean(true);
-		    }
-
-			ICompiledCode code = compilerStrategy.getCompiledCode(cpu.getPC() & 0xffff, cpu.getWP());
-		    if (code == null || !code.run()) {
-		    	// Returns false if an instruction couldn't be executed
-		    	// because it did not look like real code (or was not expected to be directly invoked).
-		    	// Returns true if fell out of the code block.
-		    	//System.out.println("Switch  branching to >" + Utils.toHex4(cpu.getPC()));
-		    	interpreting = true;
-		    	nSwitches++;
-			}
-		    //System.out.println("out at " + v9t9.Globals.toHex4(cpu.getPC()));
-		}
-		if (interpreting) {
-			cpu.abortIfInterrupted();
-		    interpretOneInstruction();
-		    compiling = settingCompile.getBoolean();
-		}
-		return compiling;
-	}
-    
     public PrintWriter getDump() {
         return dump;
     }
