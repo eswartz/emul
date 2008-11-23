@@ -105,6 +105,8 @@ public class ByteMemoryArea extends MemoryArea {
         area.offset = this.offset;
         area.read = this.read;
         area.write = this.write;
+        
+        area.entry = this.entry;
         return area;
     }
 

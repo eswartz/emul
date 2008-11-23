@@ -21,7 +21,7 @@ import v9t9.emulator.runtime.Speech;
 import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.engine.Client;
 import v9t9.engine.files.DataFiles;
-import v9t9.engine.memory.BankedMemoryEntry;
+import v9t9.engine.memory.DualBankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.Gpl;
 import v9t9.engine.memory.MemoryDomain;
@@ -30,8 +30,10 @@ import v9t9.engine.memory.MemoryModel;
 public class TI994A extends Machine {
 
 	static {
+		DataFiles.addSearchPath("/usr/local/src/V9t9/tools/Forth");
 		DataFiles.addSearchPath("/usr/local/src/v9t9-data/roms");
 		DataFiles.addSearchPath("/usr/local/src/v9t9-data/modules");
+		DataFiles.addSearchPath("l:/src/V9t9/tools/Forth");
 		DataFiles.addSearchPath("l:/src/v9t9-data/roms");
 		DataFiles.addSearchPath("l:/src/v9t9-data/modules");
 	}
@@ -73,6 +75,17 @@ public class TI994A extends Machine {
     	cpuRomEntry.area.writeByteLatency = cpuRomEntry.area.writeWordLatency = 0;
 		memory.addAndMap(cpuRomEntry);
     }
+    protected void loadBankedConsoleRom(String filename1, String filename2) throws IOException {
+    	DualBankedMemoryEntry cpuRomEntry = DualBankedMemoryEntry.newBankedWordMemoryFromFile(
+    			0x0000,
+    			0x2000,
+    			memory,
+    			"CPU ROM", console,
+    			filename1, 0x0, filename2, 0x0);
+    	cpuRomEntry.area.readByteLatency = cpuRomEntry.area.readWordLatency = 0;
+    	cpuRomEntry.area.writeByteLatency = cpuRomEntry.area.writeWordLatency = 0;
+    	memory.addAndMap(cpuRomEntry);
+    }
     protected void loadConsoleGrom(String filename) throws IOException {
     	memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x0, 0x6000, "CPU GROM", 
     			 ((StandardConsoleMemoryModel) memoryModel).GRAPHICS,
@@ -85,8 +98,9 @@ public class TI994A extends Machine {
     			filename, 0x0, false));
     }
     protected void loadBankedModuleRom(String name, String filename1, String filename2) throws IOException {
-    	memory.addAndMap(BankedMemoryEntry.newBankedWordMemoryFromFile(
-    			memory,
+    	memory.addAndMap(DualBankedMemoryEntry.newBankedWordMemoryFromFile(
+    			0x6000,
+    			0x2000, memory,
     			name, console,
     			filename1, 0x0, 
     			filename2, 0x0));
@@ -101,16 +115,21 @@ public class TI994A extends Machine {
     
     @Override
 	protected void loadMemory() throws IOException {
-    	loadConsoleRom("994arom.bin");
-    	loadConsoleGrom("994agrom.bin");
-
-    	loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
-    	loadModuleGrom("ExtBasic", "tiextg.bin");
-
-    	loadModuleGrom("Parsec", "parsecg.bin");
-    	loadModuleRom("Parsec", "parsecc.bin");
-    	
-    	//loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
+    	if (false) {
+	    	loadConsoleRom("994arom.bin");
+	    	loadConsoleGrom("994agrom.bin");
+	
+	    	loadModuleGrom("Parsec", "parsecg.bin");
+	    	loadModuleRom("Parsec", "parsecc.bin");
+	    	loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
+	    	loadModuleGrom("ExtBasic", "tiextg.bin");
+	    	
+	    	loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
+    	} else {
+    		loadBankedConsoleRom("nforthA.rom", "nforthB.rom");
+    		loadConsoleGrom("nforth.grm");
+    		loadModuleRom("FORTH", "nforthc.bin");
+    	}
     }
 
     @Override

@@ -578,6 +578,10 @@ public class Assembler {
 		return StdCPU;
 	}
 
+	public MemoryDomain getWritableConsole() {
+		return CPUFullRAM;
+	}
+	
 	public void addMemoryEntry(DiskMemoryEntry entry) {
 		memoryRanges.addRange(entry.addr, entry.size, true);
 		memoryEntries.add(entry);

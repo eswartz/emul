@@ -4,6 +4,7 @@
 package v9t9.engine.memory;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import v9t9.engine.memory.MemoryArea.AreaWriteByte;
 
@@ -11,12 +12,12 @@ import v9t9.engine.memory.MemoryArea.AreaWriteByte;
  * @author ejs
  *
  */
-public class BankedMemoryEntry extends MemoryEntry {
+public class DualBankedMemoryEntry extends MemoryEntry {
 	
 	private class BankTogglingAreaWriteByte implements AreaWriteByte {
 
-		private BankedMemoryEntry entry;
-		BankTogglingAreaWriteByte(BankedMemoryEntry entry) {
+		private DualBankedMemoryEntry entry;
+		BankTogglingAreaWriteByte(DualBankedMemoryEntry entry) {
 			this.entry = entry;
 		}
 		public void writeByte(MemoryArea area, int address, byte val) {
@@ -25,30 +26,32 @@ public class BankedMemoryEntry extends MemoryEntry {
 		}
 	}
 	
-	static public BankedMemoryEntry newBankedWordMemoryFromFile(
-			Memory memory,
-            String name, 
-            MemoryDomain domain, 
+	static public DualBankedMemoryEntry newBankedWordMemoryFromFile(
+			int addr,
+            int size, 
+            Memory memory, 
+            String name, MemoryDomain domain,
             String filepath, int fileoffs,
             String filepath2, int fileoffs2) throws IOException {
     	DiskMemoryEntry bank0 = DiskMemoryEntry.newFromFile(
-    			new WordMemoryArea(domain.getReadWordLatency(0x6000)), 
-    			0x6000, 0x2000, name + " (bank 0)", domain, filepath, fileoffs, false);
+    			new WordMemoryArea(domain.getReadWordLatency(addr)), 
+    			addr, size, name + " (bank 0)", domain, filepath, fileoffs, false);
     	DiskMemoryEntry bank1 = DiskMemoryEntry.newFromFile(
-    			new WordMemoryArea(domain.getReadWordLatency(0x6000)), 
-    			0x6000, 0x2000, name + " (bank 1)", domain, filepath2, fileoffs2, false);
+    			new WordMemoryArea(domain.getReadWordLatency(addr)), 
+    			addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
     	
-    	return new BankedMemoryEntry(memory, name, domain, bank0, bank1);
+    	return new DualBankedMemoryEntry(memory, name, domain, addr, size, bank0, bank1);
     }
 
 	private MemoryEntry banks[];
 	private MemoryEntry currentBank;
 	private Memory memory;
 
-	public BankedMemoryEntry(Memory memory,
+	public DualBankedMemoryEntry(Memory memory,
 			String name, MemoryDomain domain,
+			int addr, int size,
 			MemoryEntry bank0, MemoryEntry bank1) {
-		super(name, domain, 0x6000, 0x2000, bank0.area);
+		super(name, domain, addr, size, bank0.area);
 		
 		this.memory = memory;
 		

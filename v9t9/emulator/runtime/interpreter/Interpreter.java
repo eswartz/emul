@@ -188,8 +188,8 @@ public class Interpreter {
 		    TI994A ti = (TI994A) cpu.getMachine();
 		    dump.println(Utils.toHex4(ins.pc) 
 		            + " "
-		            + Utils.toHex4(cpu.getWP())
-		            + " "
+		            //+ Utils.toHex4(cpu.getWP())
+		            //+ " "
 		            + Utils.toHex4(cpu.getStatus().flatten())
 		            + " "
 		            + Utils.toHex4(ti.getVdpMmio().getAddr())
@@ -803,8 +803,10 @@ public class Interpreter {
                     block.pc = cpu.getPC();
                     block.wp = cpu.getWP();
                     */
-                    block.wp = memory.readWord(block.val1 * 4 + 0x40);
-                    block.pc = memory.readWord(block.val1 * 4 + 0x42);
+                    block.wp = memory.readWord(block.val2 * 4 + 0x40);
+                    block.pc = memory.readWord(block.val2 * 4 + 0x42);
+                    //block.status.setIntMask(0);
+                    memory.writeWord(block.wp + 11 * 2, block.ea1);
                 }
             };
             break;

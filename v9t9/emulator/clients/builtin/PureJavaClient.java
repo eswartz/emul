@@ -16,6 +16,7 @@ import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.InternalVdp;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
+import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
 import v9t9.engine.KeyboardHandler;
@@ -97,7 +98,11 @@ public class PureJavaClient implements Client {
      * @see v9t9.Client#close()
      */
     public void close() {
-    	machine.stop();
+    	try {
+    		machine.stop();
+    	} catch (TerminatedException e) {
+    		// expected
+    	}
     }
 
     /*

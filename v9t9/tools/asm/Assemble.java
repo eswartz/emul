@@ -35,7 +35,7 @@ public class Assemble {
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
             					0x0, 0x2000, "CPU ROM",
-            					assembler.getConsole(),
+            					assembler.getWritableConsole(),
             					getopt.getOptarg(),
             					0x0,
             					true));
@@ -44,7 +44,7 @@ public class Assemble {
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
             					0x6000, 0x2000, "Module ROM", 
-            					assembler.getConsole(),
+            					assembler.getWritableConsole(),
             					getopt.getOptarg(),
             					0x0,
             					true));
@@ -53,7 +53,7 @@ public class Assemble {
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
             					0x4000, 0x2000, "DSR ROM", 
-            					assembler.getConsole(),
+            					assembler.getWritableConsole(),
             					getopt.getOptarg(),
             					0x0,
             					true));
@@ -62,7 +62,7 @@ public class Assemble {
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
             					0x0000, 0x6000, "GROM", 
-            					assembler.getConsole(),
+            					assembler.getWritableConsole(),
             					getopt.getOptarg(),
             					0x0,
             					true));

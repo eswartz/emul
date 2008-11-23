@@ -280,8 +280,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.stsetAfter = Instruction.st_ALL;
 	            this.writes |= INST_RSRC_WP + INST_RSRC_ST + INST_RSRC_PC;
 	            mop1.type = MachineOperand.OP_STATUS;
-	            mop1.dest = MachineOperand.OP_DEST_KILLED;
-	            //((MachineOperand) this.op1).val = st.flatten();
+	            //mop1.dest = MachineOperand.OP_DEST_KILLED;	// compiler doesn't seem to depend on this
 	            this.jump = Instruction.INST_JUMP_TRUE;
 	            this.cycles += 14;
 	            break;
@@ -521,11 +520,14 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Ixop:
+	        	this.stReads = 0xffff;
 	            this.reads |= INST_RSRC_ST;
-	            this.writes |= INST_RSRC_CTX;
-	            //this.stsetBefore = Instruction.st_ALL;
+	            this.writes |= INST_RSRC_WP + INST_RSRC_PC + INST_RSRC_CTX;
+	            mop2.bIsCodeDest = true;
+	            mop2.type = MachineOperand.OP_CNT;
+	            mop2.dest = MachineOperand.OP_DEST_FALSE;
 	            this.stsetAfter = Instruction.st_XOP;
-	            this.stReads = 0xffff;
+	            this.jump = Instruction.INST_JUMP_TRUE;
 	            this.cycles += 36;
 	            break;
 	        case InstructionTable.Impy:

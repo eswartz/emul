@@ -109,6 +109,8 @@ public class WordMemoryArea extends MemoryArea {
 		area.read = this.read;
 		area.write = this.write;
 		area.bWordAccess = this.bWordAccess;
+		
+		area.entry = this.entry;
 		return area;
 	}
 
