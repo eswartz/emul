@@ -268,10 +268,10 @@ public class Cpu implements MemoryAccessListener {
 		totalcurrentcycles += currentcycles;
 		
 		// if we went over, aim for fewer this time
-		currenttargetcycles = targetcycles - (currentcycles - targetcycles);
+		currenttargetcycles = (int) (totaltargetcycles - totalcurrentcycles);
 		currentcycles = 0;
 		//System.out.print('-');
-		//System.out.println("tick: " + currentcycles);
+		//System.out.println("tick: " + currenttargetcycles);
 	}
 
 	public synchronized boolean isThrottled() {

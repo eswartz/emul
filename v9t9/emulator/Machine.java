@@ -170,9 +170,11 @@ abstract public class Machine {
 		// delay if going too fast
 		if (Cpu.settingRealTime.getBoolean()) {
 			while (cpu.isThrottled()) {
+				// Just sleep.  Another timer thread will reset the throttle.
 				try {
-					Thread.sleep(1);
+					Thread.sleep(10);
 				} catch (InterruptedException e) {
+					break;
 				}
 			}
 		}
