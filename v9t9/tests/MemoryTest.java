@@ -10,8 +10,8 @@ import java.util.Random;
 
 import junit.framework.TestCase;
 import v9t9.emulator.hardware.TI994A;
+import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.StandardConsoleMemoryModel;
 
 /**
  * @author ejs
@@ -43,7 +43,7 @@ public class MemoryTest extends TestCase {
 	protected void setUp() throws Exception {
         super.setUp();
         machine = new TI994A();
-        CPU = machine.CPU;
+        CPU = machine.getConsole();
     }
 
     public void testReads() {
@@ -132,13 +132,13 @@ public class MemoryTest extends TestCase {
         }
 
         for (i = 0; i < 65536; i++) {
-            machine.getMemoryModel().GRAPHICS.readByte(i);
+            machine.getGplMemoryDomain().readByte(i);
         }
         for (i = 0; i < 65536; i++) {
-            machine.getMemoryModel().VIDEO.readByte(i);
+            machine.getVdpMemoryDomain().readByte(i);
         }
         for (i = 0; i < 65536; i++) {
-            machine.getMemoryModel().SPEECH.readByte(i);
+            machine.getSpeechMemoryDomain().readByte(i);
         }
     }
 }

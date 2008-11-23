@@ -20,11 +20,37 @@ public class MemoryDomain {
 
     static final int NUMAREAS = PHYSMEMORYSIZE >> MemoryArea.AREASHIFT;
 
+    /** Listener for noticing memory accesses. */
+    public interface MemoryAccessListener {
+    	/** Indicate that a read/write of a byte/word occurred, taking the given number
+    	 * of CPU cycles.
+    	 * @param read
+    	 * @param word
+    	 * @param cycles total cycles
+    	 */
+    	void access(boolean read, boolean word, int cycles);
+    }
+    
+    public MemoryAccessListener nullMemoryAccessListener = new MemoryAccessListener() {
+
+		public void access(boolean read, boolean word, int cycles) {
+		}
+    	
+    };
+    
+    private MemoryAccessListener accessListener = nullMemoryAccessListener;
+    
     private MemoryArea areahandlers[] = new MemoryArea[NUMAREAS];
     
-    public MemoryDomain() {
-        MemoryArea area = new ZeroWordMemoryArea();
+    private int baseLatency;
+    
+    public MemoryDomain(int latency) {
+    	baseLatency = latency;
+        MemoryArea area = new ZeroWordMemoryArea(latency);
         setArea(0, PHYSMEMORYSIZE, area);        
+    }
+    public MemoryDomain() {
+    	this(1);
     }
     
     /** For testing, create a RAM-accessible memory domain which spans
@@ -120,57 +146,50 @@ public class MemoryDomain {
 
     public final short flatReadWord(int addr) {
         MemoryArea area = getArea(addr);
+        accessListener.access(true, true, area.readWordLatency);
         return area.flatReadWord(addr);
     }
 
     public final short flatReadByte(int addr) {
         MemoryArea area = getArea(addr);
+        accessListener.access(true, false, area.readByteLatency);
         return area.flatReadByte(addr);
     }
 
     public final void flatWriteByte(int addr, byte val) {
         MemoryArea area = getArea(addr);
+        accessListener.access(false, false, area.writeByteLatency);
         area.flatWriteByte(addr, val);
     }
 
     public final void flatWriteWord(int addr, short val) {
         MemoryArea area = getArea(addr);
+        accessListener.access(false, true, area.writeWordLatency);
         area.flatWriteWord(addr, val);
+    }
+
+    public final byte readByte(int addr) {
+        MemoryArea area = getArea(addr);
+        accessListener.access(true, false, area.readByteLatency);
+        return area.readByte(addr);
     }
 
     public final short readWord(int addr) {
         MemoryArea area = getArea(addr);
+        accessListener.access(true, true, area.readWordLatency);
         return area.readWord(addr);
-    }
-
-    public final ByteMemoryAccess getByteReadMemoryAccess(int addr) {
-    	 MemoryArea area = getArea(addr);
-    	 if (area instanceof ByteMemoryArea)
-    		 return ((ByteMemoryArea)area).getReadMemoryAccess(addr);
-    	 else
-    		 return null;
-    }
-    
-    public final byte readByte(int addr) {
-        MemoryArea area = getArea(addr);
-        //if (area == null) {
-        //    System.out.println("null area for "+Globals.toHex4(addr));
-        //    return 0;
-       // }
-        //else
-            return area.readByte(addr);
-    }
-
-    public final void writeWord(int addr, short val) {
-        MemoryArea area = getArea(addr);
-        //if (area != null)
-            area.writeWord(addr, val);
     }
 
     public final void writeByte(int addr, byte val) {
         MemoryArea area = getArea(addr);
-        //if (area != null)
-            area.writeByte(addr, val);
+        accessListener.access(false, false, area.writeByteLatency);
+        area.writeByte(addr, val);
+    }
+
+    public final void writeWord(int addr, short val) {
+        MemoryArea area = getArea(addr);
+        accessListener.access(false, true, area.writeWordLatency);
+        area.writeWord(addr, val);
     }
 
     public final boolean hasRamAccess(int addr) {
@@ -182,6 +201,14 @@ public class MemoryDomain {
         MemoryArea area = getArea(addr);
         return area != null && area.hasReadAccess();
     }
+
+    public final ByteMemoryAccess getByteReadMemoryAccess(int addr) {
+		MemoryArea area = getArea(addr);
+		if (area instanceof ByteMemoryArea)
+			return ((ByteMemoryArea) area).getReadMemoryAccess(addr);
+		else
+			return null;
+	}
 
     /** Iterate all the areas in the domain. */
     public class AreaIterator implements Iterator<MemoryArea> {
@@ -274,7 +301,16 @@ public class MemoryDomain {
      */
     public void zero() {
         for (int i = 0; i < areahandlers.length; i++) {
-            areahandlers[i] = new ZeroWordMemoryArea();
+            areahandlers[i] = new ZeroWordMemoryArea(baseLatency);
         }
     }
+
+	public void setAccessListener(MemoryAccessListener listener) {
+		this.accessListener = listener;
+	}
+	public int getReadWordLatency(int addr) {
+		MemoryArea area = getArea(addr);
+		return area.readWordLatency;
+	}
+
 }

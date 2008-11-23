@@ -13,17 +13,19 @@ import org.eclipse.swt.widgets.Display;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.HybridDemoClient;
 import v9t9.emulator.clients.builtin.PureJavaClient;
+import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
 import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
+import v9t9.emulator.runtime.Speech;
 import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.engine.Client;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.Gpl;
-import v9t9.engine.memory.Memory;
-import v9t9.engine.memory.StandardConsoleMemoryModel;
+import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryModel;
 
 public class TI994A extends Machine {
 
@@ -33,98 +35,82 @@ public class TI994A extends Machine {
 		DataFiles.addSearchPath("l:/src/v9t9-data/roms");
 		DataFiles.addSearchPath("l:/src/v9t9-data/modules");
 	}
-    StandardConsoleMemoryModel memoryModel;
-    
+
     public TI994A() throws IOException {
-        super();
-    }
-    
-    @Override
-	protected void createMemory() {
-        memory = new Memory();
-        memoryModel = new StandardConsoleMemoryModel(memory);
-        CPU = memoryModel.CPU;
+        super(new StandardConsoleMemoryModel());
         getSettings().register(StandardConsoleMemoryModel.settingExpRam);
         getSettings().register(StandardConsoleMemoryModel.settingEnhRam);
     }
-
+    
     @Override
 	public void setClient(Client client) {
         super.setClient(client);
-        memoryModel.connectClient(client);
+        
+        getVdpMmio().setClient(client);
+        getGplMmio().setClient(client);
+        getSoundMmio().setClient(client);
+        getSpeechMmio().setClient(client);
     }
     
     public v9t9.emulator.runtime.Sound getSoundMmio() {
-        return memoryModel.soundMmio;
-    }
-    public void setSoundMmio(v9t9.emulator.runtime.Sound soundMmio) {
-        this.memoryModel.soundMmio = soundMmio;
+        return ((StandardConsoleMemoryModel) memoryModel).soundMmio;
     }
     public v9t9.emulator.runtime.Vdp getVdpMmio() {
-        return memoryModel.vdpMmio;
-    }
-    public void setVdpMmio(v9t9.emulator.runtime.Vdp vdpMmio) {
-        this.memoryModel.vdpMmio = vdpMmio;
+        return ((StandardConsoleMemoryModel) memoryModel).vdpMmio;
     }
     public Gpl getGplMmio() {
-        return memoryModel.gplMmio;
+        return ((StandardConsoleMemoryModel) memoryModel).gplMmio;
     }
-    public void setGplMmio(Gpl gplMmio) {
-        this.memoryModel.gplMmio = gplMmio;
+    public Speech getSpeechMmio() {
+    	return ((StandardConsoleMemoryModel) memoryModel).speechMmio;
+    }
+    
+    protected void loadConsoleRom(String filename) throws IOException {
+    	DiskMemoryEntry cpuRomEntry = DiskMemoryEntry.newWordMemoryFromFile(0x0, 0x2000, "CPU ROM",
+        		console,
+                filename, 0x0, false);
+    	cpuRomEntry.area.readByteLatency = cpuRomEntry.area.readWordLatency = 0;
+    	cpuRomEntry.area.writeByteLatency = cpuRomEntry.area.writeWordLatency = 0;
+		memory.addAndMap(cpuRomEntry);
+    }
+    protected void loadConsoleGrom(String filename) throws IOException {
+    	memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x0, 0x6000, "CPU GROM", 
+    			 ((StandardConsoleMemoryModel) memoryModel).GRAPHICS,
+    			filename, 0x0, false));
     }
 
+    protected void loadModuleRom(String name, String filename) throws IOException {
+    	memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, 
+    			name, console,
+    			filename, 0x0, false));
+    }
+    protected void loadBankedModuleRom(String name, String filename1, String filename2) throws IOException {
+    	memory.addAndMap(BankedMemoryEntry.newBankedWordMemoryFromFile(
+    			memory,
+    			name, console,
+    			filename1, 0x0, 
+    			filename2, 0x0));
+    	
+    }
+    protected void loadModuleGrom(String name, String filename) throws IOException {
+    	memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, name, 
+    			((StandardConsoleMemoryModel) memoryModel).GRAPHICS,
+    			filename, 0x0, false));
+    	
+    }
+    
     @Override
 	protected void loadMemory() throws IOException {
-        memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x0, 0x2000, "CPU ROM", memoryModel.CPU,
-                "994arom.bin", 0x0, false));
-        memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x0, 0x6000, "CPU GROM", memoryModel.GRAPHICS,
-                "994agrom.bin", 0x0, false));
- 
-        memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "ExtBasic", memoryModel.GRAPHICS,
-        		"tiextg.bin", 0x0, false));
-        memory.addAndMap(BankedMemoryEntry.newBankedWordMemoryFromFile(
-        		memory,
-        		"ExtBasic", memoryModel.CPU,
-        		"tiextc.bin", 0x0, 
-        		"tiextd.bin", 0x0));
+    	loadConsoleRom("994arom.bin");
+    	loadConsoleGrom("994agrom.bin");
 
-        memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Parsec", memoryModel.GRAPHICS,
-                "parsecg.bin", 0x0, false));
-        memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Parsec", memoryModel.CPU,
-                "parsecc.bin", 0x0, false));
+    	loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
+    	loadModuleGrom("ExtBasic", "tiextg.bin");
 
-        //memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Mini", memoryModel.GRAPHICS,
-                //"minig.bin", 0x0, false));
-        //memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Mini", memoryModel.CPU,
-          //      "minic.bin", 0x0, false));
-//      memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Logo", memoryModel.GRAPHICS,
-//    		  "logog.bin", 0x0, false));
-//      memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Logo", memoryModel.CPU,
-//    		  "logoc.bin", 0x0, false));
-        memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Diags", memoryModel.GRAPHICS,
-                "diagsg.bin", 0x0, false));
-
-
-        memory.addAndMap(BankedMemoryEntry.newBankedWordMemoryFromFile(
-        		memory,
-        		"Jungle_Hunt", memoryModel.CPU,
-        		"junglec.bin", 0x0, 
-        		"jungled.bin", 0x0));
-       // memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Carwars", memoryModel.GRAPHICS,
-        //        "carwarsg.bin", 0x0, false));
-        memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Parsec", memoryModel.GRAPHICS,
-                "parsecg.bin", 0x0, false));
-        memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, "Parsec", memoryModel.CPU,
-                "parsecc.bin", 0x0, false));
-
-        /*
-        memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Tomb", memoryModel.GRAPHICS,
-                "trsureg.bin", 0x0, false));
-        memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, "Tomb", memoryModel.CPU,
-                "trsurec.bin", 0x0, false));
-*/
-
-
+    	loadModuleGrom("Parsec", "parsecg.bin");
+    	loadModuleRom("Parsec", "parsecc.bin");
+    	
+    	//loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
     }
 
     @Override
@@ -143,7 +129,7 @@ public class TI994A extends Machine {
         if (false) {
         	Executor.settingDumpInstructions.setBoolean(true);
         	Executor.settingDumpFullInstructions.setBoolean(true);
-        	Compiler.settingDebugInstructions.setBoolean(true);
+        	//Compiler.settingDebugInstructions.setBoolean(true);
         }
         
         
@@ -155,14 +141,13 @@ public class TI994A extends Machine {
     	
         final TI994A machine = new TI994A();
         
-        StandardConsoleMemoryModel memoryModel = machine.getMemoryModel();
         //machine.setClient(new DemoClient(machine));
         Client client;
         
         if (args.length >= 1 && args[0].equals("--pure"))
-        	client = new PureJavaClient(machine, memoryModel.VIDEO, display);
+        	client = new PureJavaClient(machine, machine.getVdpMemoryDomain(), display);
         else
-        	client = new HybridDemoClient(machine, memoryModel.VIDEO, display);
+        	client = new HybridDemoClient(machine, machine.getVdpMemoryDomain(), display);
 		machine.setClient(client);
 
         machine.getCpu().contextSwitch(0);
@@ -197,18 +182,28 @@ public class TI994A extends Machine {
 	    	if (!machine.isRunning())
 	    		break;
 	    	
+	    	// don't eat up CPU
 	    	try {
-				Thread.sleep(1);
+				Thread.sleep(10);
 			} catch (InterruptedException e) {
 			}
-	    	Thread.yield();
         }
         
     }
 
-    public StandardConsoleMemoryModel getMemoryModel() {
+    public MemoryModel getMemoryModel() {
         return memoryModel;
     }
+
+	public MemoryDomain getGplMemoryDomain() {
+		return ((StandardConsoleMemoryModel) memoryModel).GRAPHICS;
+	}
+	public MemoryDomain getSpeechMemoryDomain() {
+		return ((StandardConsoleMemoryModel) memoryModel).SPEECH;
+	}
+	public MemoryDomain getVdpMemoryDomain() {
+		return ((StandardConsoleMemoryModel) memoryModel).VIDEO;
+	}
     
 
 }

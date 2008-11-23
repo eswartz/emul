@@ -32,7 +32,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	private Shell shell;
 	private Canvas canvas;
 	private final ImageDataCanvas vdpCanvas;
-	private Color bg, fg;
+	private Color bg;
 
 	private int zoom = 2;
 	private Image image;
@@ -76,6 +76,9 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		Display.getDefault().asyncExec(new Runnable() {
 
 			public void run() {
+				if (canvas.isDisposed())
+					return;
+				
 				// update size if needed
 				Point curSize = canvas.getSize();
 				if (curSize.x != vdpCanvas.getWidth() * zoom
@@ -99,6 +102,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 					Display.getDefault().asyncExec(new Runnable() {
 			
 						public void run() {
+							if (canvas.isDisposed())
+								return;
 							canvas.redraw(redrawRect.x * zoom, redrawRect.y * zoom, 
 									redrawRect.width * zoom, redrawRect.height * zoom, true);
 							vdpCanvas.clearDirty();
@@ -115,6 +120,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		Display.getDefault().syncExec(new Runnable() {
 
 			public void run() {
+				if (canvas.isDisposed())
+					return;
 				canvas.update();
 			}
 		});
@@ -158,6 +165,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			Display.getDefault().asyncExec(new Runnable() {
 	
 				public void run() {
+					if (canvas.isDisposed())
+						return;
 					canvas.redraw(redrawRect.x * zoom, redrawRect.y * zoom, 
 							redrawRect.width * zoom, redrawRect.height * zoom, true);
 				}

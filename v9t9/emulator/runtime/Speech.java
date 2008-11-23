@@ -9,15 +9,15 @@ package v9t9.emulator.runtime;
 import v9t9.emulator.Machine.ConsoleMmioWriter;
 import v9t9.engine.Client;
 
-/** Sound chip entry
+/** 
+ * Speech chip
  * @author ejs
  */
 public class Speech implements ConsoleMmioWriter, v9t9.emulator.Machine.ConsoleMmioReader {
 
-    /**
-     * @param client
-     */
-    public Speech(Client client) {
+    private Client client;
+
+	public Speech() {
     }
 
     public byte read(int addrMask) {
@@ -31,7 +31,8 @@ public class Speech implements ConsoleMmioWriter, v9t9.emulator.Machine.ConsoleM
         System.out.println("speech write: " + (val&0xff));
     }
 
-    public void setClient(Client client) {
-    }
-    
+	public void setClient(Client client) {
+		this.client = client;
+	}
+
 }

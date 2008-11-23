@@ -58,7 +58,7 @@ public class MachineOperand implements Operand {
     public int dest = OP_DEST_FALSE;	// operand changes (OP_DEST_xxx)
     public boolean bIsCodeDest = false; // operand is an address?
 
-    public int cycles = 0;	// memory cycles needed to read
+    public int cycles = 0;	// clock cycles needed to read/write
     public Symbol symbol;	// associated symbol
     public boolean symbolResolved; // false initially; true once a defined symbol is converted to val/immed 
 
@@ -171,11 +171,11 @@ public class MachineOperand implements Operand {
 	    switch (type)
 	    {
 	    case MachineOperand.OP_ADDR:    // @>xxxx or @>xxxx(Rx)
-	        this.cycles += 8 + Instruction.getMemoryCycles(addr);
+	        //this.cycles += 8 + Instruction.getMemoryCycles(addr);
 	        addr += 2;
 	        break;
 	    case MachineOperand.OP_IMMED:   // immediate
-	        this.cycles += Instruction.getMemoryCycles(addr);
+	        //this.cycles += Instruction.getMemoryCycles(addr);
 	        addr += 2;
 	        break;
 	    }
@@ -185,7 +185,7 @@ public class MachineOperand implements Operand {
 
 	/**
      * Read any extra immediates for an operand from the instruction stream.
-     * Fills in Operand.size and Operand.immed, sets Operand.cycles for reads.
+     * Fills in Operand.size and Operand.immed.
      * 
      * @param w
      * @param addr
@@ -197,20 +197,18 @@ public class MachineOperand implements Operand {
      * @return new address
      */
     public short fetchOperandImmediates(MemoryDomain domain, short addr) {
-        	switch (type)
-        	{
-        	case MachineOperand.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
-        		immed = domain.readWord(addr); 
-        		this.cycles += 8 + Instruction.getMemoryCycles(addr);
-        		addr += 2;
-        		break;
-        	case MachineOperand.OP_IMMED:	// immediate
-        		immed = domain.readWord(addr);
-        		//ea = addr;
-        		this.cycles += Instruction.getMemoryCycles(addr);
-        		addr += 2;
-        		break;
-        	}
+    	switch (type) {
+    	case MachineOperand.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
+    		immed = domain.readWord(addr); 
+    		//this.cycles += 8 + Instruction.getMemoryCycles(addr);
+    		addr += 2;
+    		break;
+    	case MachineOperand.OP_IMMED:	// immediate
+    		immed = domain.readWord(addr);
+    		//this.cycles += Instruction.getMemoryCycles(addr);
+    		addr += 2;
+    		break;
+    	}
        
         return addr;
     }
@@ -235,62 +233,66 @@ public class MachineOperand implements Operand {
     }
 
     /**
+     * Get the effective address of the operand and fill in its clock cycles.
+     * (Memory cycles are accounted through the memory handler.)
      * @return
      */
     public short getEA(MemoryDomain domain, int pc, short wp) {
         short ea = 0;
-        	switch (type)
-        	{
-        	case MachineOperand.OP_NONE:
-        		break;
-        	case MachineOperand.OP_REG:	// Rx
-        		ea = (short) ((val<<1) + wp);
-        		this.cycles += 0 * 4;
-        		break;
-        	case MachineOperand.OP_INC:	// *Rx+
-        	case MachineOperand.OP_IND: {	// *Rx
-        		short ad = (short)((val<<1) + wp);
-        		ea = domain.readWord(ad);
-    
-        		/* update register if necessary */
-        		this.cycles += 4;
-        		if (type == MachineOperand.OP_INC) {
-        		    this.cycles += byteop ? 2 : 4;
-        		    domain.writeWord(ad, (short)(ea + (byteop ? 1 : 2)));
-        		}
-        		break;
-        	}
-        	case MachineOperand.OP_ADDR: {	// @>xxxx or @>xxxx(Rx)
-        	    short ad;
-        		ea = immed; 
-        		if (val != 0) {
-        			ad = (short)((val<<1) + wp);
-        			ea += domain.readWord(ad);
-        			this.cycles += Instruction.getMemoryCycles(ad);
-        		}
-        		break;
-        	}
-        	case MachineOperand.OP_IMMED:	// immediate
-        		break;
-        	case MachineOperand.OP_CNT:	// shift count
-        		break;
-        	case MachineOperand.OP_OFFS_R12:	// offset from R12
-        		ea = (short) ((12<<1) + wp);
-        		break;
-        	case MachineOperand.OP_REG0_SHIFT_COUNT: // shift count from R0
-        	    ea = wp;
-        	    this.cycles += 8;
-    		    break;
-        	
-        	case MachineOperand.OP_JUMP:	// jump target
-        		ea = (short)(val + pc);
-        		break;
-        	case MachineOperand.OP_STATUS:	// status word
-        		break;
-        	case MachineOperand.OP_INST:
-        		break;		
-        	}
-        	return ea;
+    	switch (type) {
+    	case MachineOperand.OP_NONE:
+    		break;
+    	case MachineOperand.OP_REG:	// Rx
+    		ea = (short) ((val<<1) + wp);
+    		this.cycles += 0;
+    		break;
+    	case MachineOperand.OP_INC:	// *Rx+
+    	case MachineOperand.OP_IND: {	// *Rx
+    		short ad = (short)((val<<1) + wp);
+    		ea = domain.readWord(ad);
+
+    		/* update register if necessary */
+    		this.cycles += 4;
+    		if (type == MachineOperand.OP_INC) {
+    		    this.cycles += byteop ? 2 : 4;
+    		    domain.writeWord(ad, (short)(ea + (byteop ? 1 : 2)));
+    		}
+    		break;
+    	}
+    	case MachineOperand.OP_ADDR: {	// @>xxxx or @>xxxx(Rx)
+    	    short ad;
+    		ea = immed; 
+    		this.cycles += 8; //Instruction.getMemoryCycles(ad);
+    		if (val != 0) {
+    			ad = (short)((val<<1) + wp);
+    			ea += domain.readWord(ad);
+    		}
+    		break;
+    	}
+    	case MachineOperand.OP_IMMED:	// immediate
+    		this.cycles += 0;
+    		break;
+    	case MachineOperand.OP_CNT:	// shift count
+    		this.cycles += 0;
+    		break;
+    	case MachineOperand.OP_OFFS_R12:	// offset from R12
+    		this.cycles += 0;
+    		ea = (short) ((12<<1) + wp);
+    		break;
+    	case MachineOperand.OP_REG0_SHIFT_COUNT: // shift count from R0
+    	    ea = wp;
+    	    this.cycles += 8;
+		    break;
+    	
+    	case MachineOperand.OP_JUMP:	// jump target
+    		ea = (short)(val + pc);
+    		break;
+    	case MachineOperand.OP_STATUS:	// status word
+    		break;
+    	case MachineOperand.OP_INST:
+    		break;		
+    	}
+    	return ea;
     }
 
     /**
@@ -300,8 +302,7 @@ public class MachineOperand implements Operand {
     public short getValue(MemoryDomain domain, short ea) {
         short value = 0;
 
-        switch (type)
-        {
+        switch (type) {
         case MachineOperand.OP_NONE:
             break;
         case MachineOperand.OP_REG:    // Rx

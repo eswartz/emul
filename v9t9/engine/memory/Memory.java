@@ -16,10 +16,10 @@ public class Memory {
 
     public MemoryMap map;
 
-    public static ZeroWordMemoryArea zeroWordMemoryArea = new ZeroWordMemoryArea();
-
     private List<MemoryListener> listeners;
-    
+
+	private final MemoryModel model;
+
     public void addListener(MemoryListener listener) {
 		listeners.add(listener);
 	}
@@ -48,10 +48,15 @@ public class Memory {
         map.add(domain);
     }
     
-    public Memory() {
-        listeners = new java.util.ArrayList<MemoryListener>();
+    public Memory(MemoryModel model) {
+        this.model = model;
+		listeners = new java.util.ArrayList<MemoryListener>();
         
         map = new MemoryMap();
     }
+
+	public MemoryModel getModel() {
+		return model;
+	}
   }
 

@@ -24,7 +24,7 @@ public interface InstructionAction {
         /** status word (in/out) */
         public Status status;
         /** cycle count */
-        public int cycles;
+        //public int cycles;
     }
     void act(InstructionAction.Block block);
 }

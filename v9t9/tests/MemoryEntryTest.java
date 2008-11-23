@@ -33,7 +33,7 @@ public class MemoryEntryTest extends TestCase {
 	protected void setUp() throws Exception {
         super.setUp();
         machine = new TI994A();
-        CPU = machine.CPU;
+        CPU = machine.getConsole();
    }
 
     /*

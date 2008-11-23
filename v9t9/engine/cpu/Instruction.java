@@ -11,6 +11,12 @@ import v9t9.engine.memory.MemoryDomain;
 import v9t9.utils.Check;
 
 /**
+ * Implementation of a 9900 instruction which handles most details except executing it.
+ * The basic number of cycles to execute an instruction is stored in 'cycles',
+ * telling the basic cost of the instruction when it is executed.  Some instructions
+ * have dynamic costs based on the values of their operands, however, so other 
+ * layers must account for that.  Memory cycle costs are not counted here, but in
+ * the memory handlers.
  * @author ejs
  */
 public class Instruction extends RawInstruction implements IInstruction {
@@ -123,7 +129,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 
     public String toString() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(name);
+        buffer.append(getName());
         String opstring;
         opstring = op1.toString();
         if (opstring != null) {
@@ -150,47 +156,9 @@ public class Instruction extends RawInstruction implements IInstruction {
         byte readByte(int addr);
     }
 
-    /*
-	thierry times for address decodes:
-	"memory access" means if the memory is over the PE box link;
-	this is four cycles each!
-
-   	Address mode	Clock cycles 	Memory access
-   	Rx				0  				0
-   	*Rx 			4 				1
-    *Rx+ (byte)		6				2
-	     (word)		8				2
-    @>xxxx 			8 				1
-    @>xxxx(Rx) 		8 				2
-
-	*/
-    static public int ramBankCycles(int pc) {
-        /* Penalties for accessing memory other than scratch pad or ROMs. */
-
-        final int _mem_cycles[] = { 0, // 0x0000
-                4, // 0x2000
-                4, // 0x4000
-                2, // 0x6000
-                0, // 0x8000
-                4, // 0xa000
-                4, // 0xc000
-                4, // 0xe000
-        };
-        return _mem_cycles[pc >> 13 & 7];
-    }
-
-    static public short getMemoryCycles(int pc, int base, int mem) {
-        return (short) (base + mem * ramBankCycles(pc));
-    }
-
-    static public short getMemoryCycles(int pc) {
-        return getMemoryCycles(pc, 0, 0);
-    }
-
     public Instruction(int pc) {
         this.pc = (short) pc;
     }
-    
  
     public Instruction(RawInstruction inst) {
     	super(inst);
@@ -218,7 +186,6 @@ public class Instruction extends RawInstruction implements IInstruction {
      *
      */
     public void completeInstruction(int Pc) {        
-    	this.cycles = getMemoryCycles(Pc);
 	    this.stsetBefore = Instruction.st_NONE;
 	    this.stsetAfter = Instruction.st_NONE;
 	    this.stReads = 0;
@@ -241,7 +208,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        Check.checkArg(mop1.type == MachineOperand.OP_IMMED);
 	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
 	        Pc -= 2;
-	        this.cycles += getMemoryCycles(Pc, 6, 1);
+	        this.cycles += 6;
 	    } else if (inst >= InstructionTable.Ili && inst <= InstructionTable.Ici) {
 	        Check.checkArg(mop1.type == MachineOperand.OP_REG);
 	        mop2.convertToImmedate();
@@ -250,24 +217,24 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        case InstructionTable.Ili:
 	            this.stsetAfter = Instruction.st_LAE_1;
 	            mop1.dest = MachineOperand.OP_DEST_KILLED;
-	            this.cycles += getMemoryCycles(Pc, 12, 3);
+	            this.cycles += 12;
 	            break;
 	        case InstructionTable.Iai:
 	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Iandi:
 	            this.stsetAfter = Instruction.st_LAE_1;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Iori:
 	            this.stsetAfter = Instruction.st_LAE_1;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Ici:
 	            this.stsetAfter = Instruction.st_CMP;
 	            mop1.dest = MachineOperand.OP_DEST_FALSE;
-	            this.cycles += getMemoryCycles(Pc, 14, 3);
+	            this.cycles += 14;
 	            break;
 	        }
 	
@@ -276,7 +243,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
 	        mop1.dest = MachineOperand.OP_DEST_KILLED;
 	        this.reads |= INST_RSRC_WP;
-	        this.cycles += getMemoryCycles(Pc, 8, 2);
+	        this.cycles += 8;
 	    } else if (inst == InstructionTable.Istst) {
 	        Check.checkArg(mop1.type == MachineOperand.OP_REG);
 	        this.reads |= INST_RSRC_ST;
@@ -285,29 +252,29 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        
 	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
 	        mop2.type = MachineOperand.OP_STATUS;
-	        this.cycles += getMemoryCycles(Pc, 8, 2);
+	        this.cycles += 8;
 	    } else if (inst == InstructionTable.Ilwpi) {
 	        Check.checkArg(mop1.type == MachineOperand.OP_IMMED);
 	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
 	        this.writes |= INST_RSRC_WP;
-	        this.cycles += getMemoryCycles(Pc, 10, 2);
+	        this.cycles += 10;
 	    } else if (inst == InstructionTable.Ilimi) {
 	        Check.checkArg(mop1.type == MachineOperand.OP_IMMED);
 	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
 	        this.stsetAfter = Instruction.st_INT;
-	        this.cycles += getMemoryCycles(Pc, 16, 2);
+	        this.cycles += 16;
 	    } else if (inst >= InstructionTable.Iidle && inst <= InstructionTable.Ilrex) {
 	        Check.checkArg(mop1.type == MachineOperand.OP_NONE);
 	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
 	        switch (inst) {
 	        case InstructionTable.Iidle:
 	            this.writes |= INST_RSRC_IO;
-	            this.cycles += getMemoryCycles(Pc, 12, 1);
+	            this.cycles += 12;
 	            break;
 	        case InstructionTable.Irset:
 	            this.stsetAfter = Instruction.st_INT;
 	            this.writes |= INST_RSRC_IO;
-	            this.cycles += getMemoryCycles(Pc, 12, 1);
+	            this.cycles += 12;
 	            break;
 	        case InstructionTable.Irtwp:
 	            this.stsetAfter = Instruction.st_ALL;
@@ -316,19 +283,19 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            mop1.dest = MachineOperand.OP_DEST_KILLED;
 	            //((MachineOperand) this.op1).val = st.flatten();
 	            this.jump = Instruction.INST_JUMP_TRUE;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Ickon:
 	            this.writes |= INST_RSRC_IO;
-	            this.cycles += getMemoryCycles(Pc, 12, 1);
+	            this.cycles += 12;
 	            break;
 	        case InstructionTable.Ickof:
 	            this.writes |= INST_RSRC_IO;
-	            this.cycles += getMemoryCycles(Pc, 12, 1);
+	            this.cycles += 12;
 	            break;
 	        case InstructionTable.Ilrex:
 	            this.writes |= INST_RSRC_IO;
-	            this.cycles += getMemoryCycles(Pc, 12, 1);
+	            this.cycles += 12;
 	            break;
 	        }
 	
@@ -347,13 +314,13 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            mop1.dest = MachineOperand.OP_DEST_FALSE;
 	            mop1.bIsCodeDest = true;
 	            this.jump = Instruction.INST_JUMP_TRUE;
-	            this.cycles += getMemoryCycles(Pc, 26, 6);
+	            this.cycles += 26;
 	            break;
 	        case InstructionTable.Ib:
 	            mop1.dest = MachineOperand.OP_DEST_FALSE;
 	            mop1.bIsCodeDest = true;
 	            this.jump = Instruction.INST_JUMP_TRUE;
-	            this.cycles += getMemoryCycles(Pc, 8, 2);
+	            this.cycles += 8;
 	            break;
 	        case InstructionTable.Ix:
 	            //this.stsetBefore = Instruction.st_ALL;
@@ -361,60 +328,60 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.reads |= INST_RSRC_ST;
 	            mop1.dest = MachineOperand.OP_DEST_FALSE;
 	            mop2.type = MachineOperand.OP_INST;
-	            this.cycles += getMemoryCycles(Pc, 8, 2);
+	            this.cycles += 8;
 	            break;
 	        case InstructionTable.Iclr:
 	            mop1.dest = MachineOperand.OP_DEST_KILLED;
-	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Ineg:
 	            this.stsetAfter = Instruction.st_LAEO;
-	            this.cycles += getMemoryCycles(Pc, 12, 3);
+	            this.cycles += 12;
 	            break;
 	        case InstructionTable.Iinv:
 	            this.stsetAfter = Instruction.st_LAE_1;
-	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Iinc:
 	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
 	            mop2.type = MachineOperand.OP_CNT;
 	            mop2.val = 1;
-	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Iinct:
 	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
 	            mop2.type = MachineOperand.OP_CNT;
 	            mop2.val = 2;
-	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Idec:
 	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
 	            mop2.type = MachineOperand.OP_CNT;
 	            mop2.val = -1;
-	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Idect:
 	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
 	            mop2.type = MachineOperand.OP_CNT;
 	            mop2.val = -2;
-	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Ibl:
 	            mop1.dest = MachineOperand.OP_DEST_FALSE;
 	            mop1.bIsCodeDest = true;
 	            this.jump = Instruction.INST_JUMP_TRUE;
-	            this.cycles += getMemoryCycles(Pc, 12, 3);
+	            this.cycles += 12;
 	            break;
 	        case InstructionTable.Iswpb:
-	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Iseto:
 	            mop1.dest = MachineOperand.OP_DEST_KILLED;
-	            this.cycles += getMemoryCycles(Pc, 10, 3);
+	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Iabs:
 	            this.stsetBefore = Instruction.st_LAEO;
-	            this.cycles += getMemoryCycles(Pc, 12, 2);
+	            this.cycles += 12;
 	            break;
 	        default:
 	            mop1.dest = MachineOperand.OP_DEST_FALSE;
@@ -430,9 +397,9 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        // shift of zero comes from R0
 	        if (mop2.val == 0) {
 	            mop2.type = MachineOperand.OP_REG0_SHIFT_COUNT;
-	            this.cycles += getMemoryCycles(Pc, 20, 3);
+	            this.cycles += 20;
 	        } else {
-	            this.cycles += getMemoryCycles(Pc, 12, 4);
+	            this.cycles += 12;
 	        }
 	
 	        switch (inst) {
@@ -472,10 +439,10 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            //((MachineOperand) this.op2).val = st.flatten();
 	            this.jump = inst == InstructionTable.Ijmp ? Instruction.INST_JUMP_TRUE
 	                    : Instruction.INST_JUMP_COND;
-	            this.cycles += getMemoryCycles(Pc, 8, 1);
+	            this.cycles += 8;
 	        } else {
 	            mop1.type = MachineOperand.OP_OFFS_R12;
-	            this.cycles += getMemoryCycles(Pc, 12, 2);
+	            this.cycles += 12;
 	        }
 	
 	        switch (inst) {
@@ -542,16 +509,16 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        case InstructionTable.Icoc:
 	            this.stsetAfter = Instruction.st_CMP;
 	            mop2.dest = MachineOperand.OP_DEST_FALSE;
-	            this.cycles += getMemoryCycles(Pc, 14, 3);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Iczc:
 	            this.stsetAfter = Instruction.st_CMP;
 	            mop2.dest = MachineOperand.OP_DEST_FALSE;
-	            this.cycles += getMemoryCycles(Pc, 14, 3);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Ixor:
 	            this.stsetAfter = Instruction.st_LAE;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Ixop:
 	            this.reads |= INST_RSRC_ST;
@@ -559,16 +526,16 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            //this.stsetBefore = Instruction.st_ALL;
 	            this.stsetAfter = Instruction.st_XOP;
 	            this.stReads = 0xffff;
-	            this.cycles += getMemoryCycles(Pc, 36, 8);
+	            this.cycles += 36;
 	            break;
 	        case InstructionTable.Impy:
 	            //              ((MachineOperand) this.op2).type = MachineOperand.OP_MPY;
-	            this.cycles += getMemoryCycles(Pc, 52, 5);
+	            this.cycles += 52;
 	            break;
 	        case InstructionTable.Idiv:
 	            this.stsetBefore = Instruction.st_DIV_O;
 	            //              ((MachineOperand) this.op2).type = MachineOperand.OP_DIV;
-	            this.cycles += getMemoryCycles(Pc, 124, 6);
+	            this.cycles += 124;
 	            break;
 	        }
 	
@@ -586,14 +553,14 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.stsetBefore = mop1.byteop ? Instruction.st_BYTE_LAEP_1
 	                    : Instruction.st_LAE_1;
 	            mop1.dest = MachineOperand.OP_DEST_FALSE;
-	            this.cycles += getMemoryCycles(Pc, 20 + 2 * mop1.val, 3);
+	            this.cycles += (20 + 2 * mop1.val);
 	            this.writes |= INST_RSRC_IO;
 	        } else {
 	            this.stsetAfter = mop1.byteop ? Instruction.st_BYTE_LAEP_1
 	                    : Instruction.st_LAE_1;
 	            mop1.dest = MachineOperand.OP_DEST_TRUE;
-	            this.cycles += getMemoryCycles(Pc, mop1.val < 8 ? 42
-	                    : mop1.val == 8 ? 44 : 58, 4);
+	            this.cycles += (mop1.val < 8 ? 42
+				: mop1.val == 8 ? 44 : 58);
 	            this.reads |= INST_RSRC_IO;
 	        }
 	
@@ -608,55 +575,55 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        switch (inst) {
 	        case InstructionTable.Iszc:
 	            this.stsetAfter = Instruction.st_LAE;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Iszcb:
 	            this.stsetAfter = Instruction.st_BYTE_LAEP;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Is:
 	            this.stsetBefore = Instruction.st_SUB_LAECO;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Isb:
 	            this.stsetBefore = Instruction.st_SUB_BYTE_LAECOP;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Ic:
 	            this.stsetAfter = Instruction.st_CMP;
 	            mop2.dest = MachineOperand.OP_DEST_FALSE;
-	            this.cycles += getMemoryCycles(Pc, 14, 3);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Icb:
 	            this.stsetAfter = Instruction.st_BYTE_CMP;
 	            mop2.dest = MachineOperand.OP_DEST_FALSE;
-	            this.cycles += getMemoryCycles(Pc, 14, 3);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Ia:
 	            this.stsetBefore = Instruction.st_ADD_LAECO;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Iab:
 	            this.stsetBefore = Instruction.st_ADD_BYTE_LAECOP;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Imov:
 	            this.stsetAfter = Instruction.st_LAE;
 	            mop2.dest = MachineOperand.OP_DEST_KILLED;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Imovb:
 	            this.stsetAfter = Instruction.st_BYTE_LAEP;
 	            mop2.dest = MachineOperand.OP_DEST_KILLED;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Isoc:
 	            this.stsetAfter = Instruction.st_LAE;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        case InstructionTable.Isocb:
 	            this.stsetAfter = Instruction.st_BYTE_LAEP;
-	            this.cycles += getMemoryCycles(Pc, 14, 4);
+	            this.cycles += 14;
 	            break;
 	        }
 	    }
@@ -693,11 +660,7 @@ public class Instruction extends RawInstruction implements IInstruction {
      * @param status2
      */
     public Instruction update(short op, short thePc, MemoryDomain domain) {
-        if (this.opcode != op || this.pc != thePc 
-                //|| ((this.reads & INST_RSRC_WP) != 0 && this.wp != theWp) 
-        //        || ((this.reads & INST_RSRC_ST) != 0 && this.status != st)
-                ) 
-        {
+        if (this.opcode != op || this.pc != thePc) {
             // TODO: check for modified immediates, i.e. self modifying code
             // out-of-date instruction
             if (this.pc != thePc) {
@@ -706,7 +669,6 @@ public class Instruction extends RawInstruction implements IInstruction {
             //System.out.println("need to regenerate instruction: >" + v9t9.Utils.toHex4(thePc) + " "+ this);
             return new Instruction(InstructionTable.decodeInstruction(op, thePc, domain));
         }
-        //this.status = (Status)st.clone();
         return this;
     }
 

@@ -1,19 +1,16 @@
 /**
  * 
  */
-package v9t9.emulator.hardware.memory;
+package v9t9.emulator.hardware.memory.mmio;
 
 import v9t9.emulator.Machine.ConsoleMmioReader;
 import v9t9.engine.memory.MemoryArea;
-import v9t9.engine.memory.ZeroWordMemoryArea;
 
-public class ConsoleMmioReadArea extends ConsoleMemoryArea {
+public class ConsoleMmioReadArea extends ConsoleMmioArea {
     public ConsoleMmioReadArea(final ConsoleMmioReader reader) {
         if (reader == null) {
 			throw new NullPointerException();
 		}
-
-        memory = ZeroWordMemoryArea.zeroes;
 
         areaReadByte = new AreaReadByte() {
             public byte readByte(MemoryArea area, int addr) {

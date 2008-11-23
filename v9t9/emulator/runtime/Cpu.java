@@ -10,6 +10,7 @@ import v9t9.emulator.Machine;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryDomain.MemoryAccessListener;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
 
@@ -18,7 +19,7 @@ import v9t9.engine.settings.Setting;
  * 
  * @author ejs
  */
-public class Cpu {
+public class Cpu implements MemoryAccessListener {
 	Machine machine;
 	public Memory memory;
 	private MemoryDomain console;
@@ -40,28 +41,36 @@ public class Cpu {
 	time in 1/BASE_EMULATOR_HZ second quanta to maintain the appearance of a
 	3.0 MHz clock. */
 	
-	int         baseclockhz = 3300000;
+	int         baseclockhz;
 	
 	int         instcycles;	// cycles for each instruction
 	
-	int         targetcycles;	// target # cycles to be executed per second
+	int         targetcycles;	// target # cycles to be executed per tick
+	int         currenttargetcycles;	// target # cycles to be executed for this tick
 	long         totaltargetcycles;	// total # target cycles expected
-	int         currentcycles = 0;	// current cycles per 1/BASE_EMULATOR_HZ second
+	int         currentcycles = 0;	// current cycles per tick
 	long         totalcurrentcycles;	// total # current cycles executed
+	private int interruptTick;	// # ms between CPU syncs
 	
 
     public Cpu(Machine machine, int interruptTick) {
         this.machine = machine;
         this.memory = machine.getMemory();
-        this.console = machine.CPU;
+        this.console = machine.getConsole();
+        this.console.setAccessListener(this);
         this.status = new Status();
-        this.targetcycles = baseclockhz / interruptTick;
+        this.baseclockhz = settingCyclesPerSecond.getInt();
+        this.interruptTick = interruptTick;
+        this.targetcycles = (int)((long) baseclockhz * interruptTick / 1000);
+        this.currenttargetcycles = this.targetcycles;
+        System.out.println("target: " + targetcycles);
         
         settingCyclesPerSecond.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
 				baseclockhz = setting.getInt();
-				targetcycles = baseclockhz;
+				targetcycles = baseclockhz / Cpu.this.interruptTick;
+				currenttargetcycles = targetcycles;
 			}
         	
         });
@@ -117,7 +126,7 @@ public class Cpu {
 	static public final String sCyclesPerSecond = "CyclesPerSecond";
 
 	static public final Setting settingCyclesPerSecond = new Setting(
-			sCyclesPerSecond, new Integer(3000000));
+			sCyclesPerSecond, new Integer(3300000));
 
     //public static Object executionToken;
 
@@ -250,15 +259,34 @@ public class Cpu {
 
 	public synchronized void addCycles(int cycles) {
 		this.currentcycles += cycles; 
+		//if (currentcycles > targetcycles)
+		//	System.out.print('!');
 	}
 
 	public synchronized void tick() {
 		totaltargetcycles += targetcycles;
 		totalcurrentcycles += currentcycles;
+		
+		// if we went over, aim for fewer this time
+		currenttargetcycles = targetcycles - (currentcycles - targetcycles);
 		currentcycles = 0;
+		//System.out.print('-');
+		//System.out.println("tick: " + currentcycles);
 	}
 
 	public synchronized boolean isThrottled() {
-		return (currentcycles >= targetcycles);
+		return (currentcycles >= currenttargetcycles);
+	}
+
+	public void access(boolean read, boolean word, int cycles) {
+		addCycles(cycles);
+	}
+
+	public synchronized int getCurrentCycleCount() {
+		return currentcycles;
+	}
+
+	public synchronized long getTotalCycleCount() {
+		return totalcurrentcycles;
 	}
 }

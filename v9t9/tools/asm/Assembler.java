@@ -21,7 +21,7 @@ import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.RamArea;
+import v9t9.engine.memory.StockRamArea;
 import v9t9.tools.asm.directive.DescrDirective;
 import v9t9.tools.asm.directive.LabelDirective;
 import v9t9.tools.asm.transform.ConstPool;
@@ -41,16 +41,16 @@ public class Assembler {
 	/** memory domain for area-sensitive view of the world */
     private MemoryDomain StdCPU = new MemoryDomain();
     private MemoryEntry StdCPURAM = new MemoryEntry("Std CPU RAM",
-    		StdCPU, 0x8000, 0x400, new RamArea(0x400));
+    		StdCPU, 0x8000, 0x400, new StockRamArea(0x400));
     private MemoryEntry StdCPUExpLoRAM = new MemoryEntry("Std CPU Low Exp RAM",
-    		StdCPU, 0x2000, 0x2000, new RamArea(0x2000));
+    		StdCPU, 0x2000, 0x2000, new StockRamArea(0x2000));
     private MemoryEntry StdCPUExpHiRAM = new MemoryEntry("Std CPU Hi Exp RAM",
-    		StdCPU, 0xA000, 0x6000, new RamArea(0x6000));
+    		StdCPU, 0xA000, 0x6000, new StockRamArea(0x6000));
     
     /** memory domain for the assembler's view of the world */
     private MemoryDomain CPUFullRAM = new MemoryDomain();
     private MemoryEntry CPUFullRAMEntry = new MemoryEntry("Assembler RAM",
-    		CPUFullRAM, 0, 0x10000, new RamArea(0x10000));
+    		CPUFullRAM, 0, 0x10000, new StockRamArea(0x10000));
     
 	private List<DiskMemoryEntry> memoryEntries = new ArrayList<DiskMemoryEntry>();
 

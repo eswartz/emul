@@ -4,29 +4,30 @@
  * Created on Feb 21, 2006
  *
  */
-package v9t9.engine.memory;
+package v9t9.emulator.hardware.memory;
 
-import v9t9.emulator.hardware.memory.ConsoleGramWriteArea;
-import v9t9.emulator.hardware.memory.ConsoleGromReadArea;
-import v9t9.emulator.hardware.memory.ConsoleSoundArea;
-import v9t9.emulator.hardware.memory.ConsoleSpeechReadArea;
-import v9t9.emulator.hardware.memory.ConsoleSpeechWriteArea;
-import v9t9.emulator.hardware.memory.ConsoleVdpReadArea;
-import v9t9.emulator.hardware.memory.ConsoleVdpWriteArea;
-import v9t9.emulator.hardware.memory.ExpRamArea;
-import v9t9.emulator.hardware.memory.StdConsoleRamArea;
-import v9t9.emulator.hardware.memory.VdpRamArea;
+import v9t9.emulator.hardware.memory.mmio.ConsoleGramWriteArea;
+import v9t9.emulator.hardware.memory.mmio.ConsoleGromReadArea;
+import v9t9.emulator.hardware.memory.mmio.ConsoleSoundArea;
+import v9t9.emulator.hardware.memory.mmio.ConsoleSpeechReadArea;
+import v9t9.emulator.hardware.memory.mmio.ConsoleSpeechWriteArea;
+import v9t9.emulator.hardware.memory.mmio.ConsoleVdpReadArea;
+import v9t9.emulator.hardware.memory.mmio.ConsoleVdpWriteArea;
 import v9t9.emulator.runtime.Sound;
 import v9t9.emulator.runtime.Speech;
 import v9t9.emulator.runtime.Vdp;
-import v9t9.engine.Client;
+import v9t9.engine.memory.Gpl;
+import v9t9.engine.memory.Memory;
+import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.settings.Setting;
 
 /**
  * The standard TI-99/4[A] console memory map.
  * @author ejs
  */
-public class StandardConsoleMemoryModel {
+public class StandardConsoleMemoryModel implements MemoryModel {
     /* CPU ROM/RAM */
     public MemoryDomain CPU;
 
@@ -56,16 +57,15 @@ public class StandardConsoleMemoryModel {
     public Speech speechMmio;
     public Gpl gplMmio;
 
-    private Client client;
-
 	private Memory memory;
     
-    public StandardConsoleMemoryModel(Memory memory) {
-    	this.memory = memory;
-        CPU = new MemoryDomain();
-        GRAPHICS = new MemoryDomain();
-        VIDEO = new MemoryDomain();
-        SPEECH = new MemoryDomain();
+    public StandardConsoleMemoryModel() {
+    	this.memory = new Memory(this);
+    	
+        CPU = new MemoryDomain(4);
+        GRAPHICS = new MemoryDomain(0);
+        VIDEO = new MemoryDomain(0);
+        SPEECH = new MemoryDomain(0);
 
         memory.addDomain(CPU);
         memory.addDomain(VIDEO);
@@ -82,20 +82,11 @@ public class StandardConsoleMemoryModel {
         memory.addAndMap(new MemoryEntry("VDP RAM", VIDEO, 0x0000, 0x4000, 
                 new VdpRamArea()));
 
-    }
-
-    public void connectClient(Client client) {
-        this.client = client;
-
-        vdpMmio = new v9t9.emulator.runtime.Vdp(VIDEO, this.client);
+        soundMmio = new Sound();
+        vdpMmio = new Vdp(VIDEO);
         gplMmio = new Gpl(GRAPHICS);
-        soundMmio = new v9t9.emulator.runtime.Sound(this.client);
-        speechMmio = new Speech(this.client);
-
-        vdpMmio.setClient(client);
-        soundMmio.setClient(client);
-        speechMmio.setClient(client);
-
+        speechMmio = new Speech();
+        
         this.memory.addAndMap(new MemoryEntry("Sound MMIO", CPU, 0x8400, 0x0400,
                 new ConsoleSoundArea(soundMmio)));
         this.memory.addAndMap(new MemoryEntry("VDP Read MMIO", CPU, 0x8800, 0x0400,
@@ -123,5 +114,20 @@ public class StandardConsoleMemoryModel {
 
     }
  
+    public MemoryDomain getConsole() {
+    	return CPU;
+    }
+    
+    public int getLatency(int addr) {
+    	if (addr < 0x2000)
+    		return 0;
+    	if (addr >= 0x8000 && addr < 0x8400)
+    		return 0;
+    	// standard latency for external memory is 4 cycles
+    	return 4;
+    }
 
+    public Memory getMemory() {
+    	return memory;
+    }
 }

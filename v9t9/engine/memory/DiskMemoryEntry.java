@@ -49,7 +49,7 @@ public class DiskMemoryEntry extends MemoryEntry {
             int addr, int size, String name, 
             MemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) throws IOException {
-    	WordMemoryArea area = new WordMemoryArea();
+    	WordMemoryArea area = new WordMemoryArea(domain.getReadWordLatency(addr));
         DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
         if (isStored) {
         	area.write = area.memory;

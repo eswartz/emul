@@ -12,7 +12,14 @@ package v9t9.engine.memory;
  * @author ejs
  */
 public class ByteMemoryArea extends MemoryArea {
-    final static short getWord(byte[] memory, int offset, int addr) {
+	public ByteMemoryArea() {
+		this(0);
+	}
+    public ByteMemoryArea(int latency) {
+    	this.readByteLatency = this.readWordLatency = this.writeByteLatency = this.writeWordLatency = (byte) latency;
+	}
+
+	final static short getWord(byte[] memory, int offset, int addr) {
         /*
          * processor ignores word access on odd boundaries, and stores in
          * big-endian format
@@ -83,7 +90,13 @@ public class ByteMemoryArea extends MemoryArea {
     
     @Override
 	public MemoryArea copy() {
+    	
         ByteMemoryArea area = new ByteMemoryArea();
+        area.readByteLatency = this.readByteLatency;
+        area.readWordLatency = this.readWordLatency;
+        area.writeByteLatency = this.writeByteLatency;
+        area.writeWordLatency = this.writeWordLatency;
+
         area.areaReadByte = this.areaReadByte;
         area.areaReadWord = this.areaReadWord;
         area.areaWriteByte = this.areaWriteByte;

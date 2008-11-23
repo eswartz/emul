@@ -57,6 +57,9 @@ public abstract class MemoryArea {
     /** Offset into the given memory entry */
     public int offset;
     
+    /** The cycle count for accessing a byte of memory from this area. */
+    public byte readByteLatency, readWordLatency, writeByteLatency, writeWordLatency;
+    
     abstract int getSize();
     
     /* (non-Javadoc)

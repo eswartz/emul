@@ -32,15 +32,11 @@ public class Vdp implements ConsoleMmioReader, ConsoleMmioWriter {
     /**
      * @param machine
      */
-    public Vdp(MemoryDomain memory, Client client) {
+    public Vdp(MemoryDomain memory) {
         if (memory == null) {
 			throw new IllegalArgumentException();
 		}
-        if (client == null) {
-			throw new IllegalArgumentException();
-		}
         this.memory = memory;
-        this.client = client;
         vdpregs = new byte[16];
     }
 
@@ -99,7 +95,8 @@ public class Vdp implements ConsoleMmioReader, ConsoleMmioWriter {
         		byte oldVal = getMemory().readByte(vdpaddr);
         		getMemory().writeByte(vdpaddr, val);
         		if (oldVal != val) {
-        			client.getVideoHandler().writeVdpMemory(vdpaddr, val);
+        			if (client != null)
+        				client.getVideoHandler().writeVdpMemory(vdpaddr, val);
         		}
     
         		vdpaddr = (short) (vdpaddr + 1 & 0x3fff);
@@ -130,15 +127,16 @@ public class Vdp implements ConsoleMmioReader, ConsoleMmioWriter {
         byte old = vdpregs[reg];
         vdpregs[reg] = val;
         if (old != val)
-        	client.getVideoHandler().writeVdpReg(reg, val);
-    }
-
-    public void setClient(Client client) {
-        this.client = client;
+        	if (client != null)
+        		client.getVideoHandler().writeVdpReg(reg, val);
     }
 
 	public MemoryDomain getMemory() {
 		return memory;
+	}
+
+	public void setClient(Client client) {
+	    this.client = client;
 	}
 
 }

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.hardware.memory;
+package v9t9.emulator.hardware.memory.mmio;
 
 
 public class ConsoleVdpWriteArea extends ConsoleMmioWriteArea {

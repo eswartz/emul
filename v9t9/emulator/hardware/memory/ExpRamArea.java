@@ -4,8 +4,8 @@
 package v9t9.emulator.hardware.memory;
 
 import v9t9.engine.memory.MemoryArea;
-import v9t9.engine.memory.StandardConsoleMemoryModel;
 
+/** 99/4A expansion RAM, accessed over the peripheral bus */
 public class ExpRamArea extends ConsoleMemoryArea {
     @Override
 	public boolean hasWriteAccess() {
@@ -13,6 +13,8 @@ public class ExpRamArea extends ConsoleMemoryArea {
     }
 
     public ExpRamArea(int size) {
+    	super(4);
+    	
         if (!(size == 0x2000 || size == 0x6000)) {
 			throw new IllegalArgumentException("unexpected expanded RAM size");
 		}

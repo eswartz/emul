@@ -18,6 +18,7 @@ import v9t9.engine.CruHandler;
 import v9t9.engine.DummyClient;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.settings.SettingsCollection;
 
 /** Encapsulate all the information about a running emulated machine.
@@ -26,6 +27,7 @@ import v9t9.engine.settings.SettingsCollection;
 abstract public class Machine {
     SettingsCollection settings;
     protected Memory memory;
+    protected MemoryDomain console;
     Cpu cpu;
     Executor executor;
     Client client;
@@ -33,26 +35,26 @@ abstract public class Machine {
     boolean bRunning;
     Timer timer;
  
-    /* CPU RAM */
-    public MemoryDomain CPU = new MemoryDomain();
-    
-
     long lastInterrupt = System.currentTimeMillis();
     long lastInfo = lastInterrupt;
     long upTime = 0;
     
     boolean allowInterrupts;
-    final int interruptTick = 1000 / 30;    // TODO: non-reduced rate
+    final int interruptTick = 1000 / 60;    // TODO: non-reduced rate
     final int clientTick = 1000 / 100;
+    final int cpuTick = 1000 / 100;
     private long now;
     private TimerTask interruptTask;
     private TimerTask clientTask;
-	private long totalCycles;
+    private TimerTask cpuTask;
+	protected MemoryModel memoryModel;
 	
-	public Machine() throws IOException {
+	public Machine(MemoryModel memoryModel) throws IOException {
+		this.memoryModel = memoryModel;
+		this.memory = memoryModel.getMemory();
+		this.console = memoryModel.getConsole();
         settings = new SettingsCollection();
-        createMemory();
-        cpu = new Cpu(this, interruptTick);
+        cpu = new Cpu(this, cpuTick);
         executor = new Executor(cpu);
         
         setupDefaults();
@@ -79,15 +81,26 @@ abstract public class Machine {
         	}
         };
         timer.scheduleAtFixedRate(clientTask, 0, clientTick);
+        
+        cpuTask = new TimerTask() {
+        	
+        	@Override
+        	public void run() {
+        		now = System.currentTimeMillis();
+
+                if (now >= lastInfo + 1000) {
+                    upTime += now - lastInfo;
+                    executor.dumpStats();
+                    lastInfo = now;
+                }
+                
+                cpu.tick();
+        	}
+        };
+        timer.scheduleAtFixedRate(cpuTask, 0, cpuTick);
 
         bRunning = true;
     }
-
-    /**
-     * Create the memory profile for the emulated computer.
-     * Set 'this.memory'
-     */
-    abstract protected void createMemory();
 
     /**
      * Load ROMs, etc. into memory 
@@ -156,7 +169,7 @@ abstract public class Machine {
     protected void run() throws Throwable {
 		// delay if going too fast
 		if (Cpu.settingRealTime.getBoolean()) {
-			if (cpu.isThrottled()) {
+			while (cpu.isThrottled()) {
 				try {
 					Thread.sleep(1);
 				} catch (InterruptedException e) {
@@ -169,15 +182,6 @@ abstract public class Machine {
     protected void handleTimerInterrupt() {
         if (allowInterrupts) { 
             cpu.holdpin(Cpu.INTPIN_INTREQ);
-        }
-        now = System.currentTimeMillis();
-        
-        cpu.tick();
-
-        if (now >= lastInfo + 1000) {
-            upTime += now - lastInfo;
-            executor.dumpStats();
-            lastInfo = now;
         }
     }
 
@@ -199,6 +203,11 @@ abstract public class Machine {
     public void setExecutor(Executor executor) {
         this.executor = executor;
     }
+    
+    /** Get the primary memory */
+    public MemoryDomain getConsole() {
+		return console;
+	}
 }
 
 

@@ -189,7 +189,7 @@ public class HighLevelInstruction extends Instruction {
 		flags = 0;
 		inst = InstructionTable.Idata;
 		size = 2;
-		name = "DATA";
+		setName("DATA");
 		op1 = new MachineOperand(MachineOperand.OP_IMMED);
 		((MachineOperand)op1).immed = opcode;
 		op2 = new MachineOperand(MachineOperand.OP_NONE);

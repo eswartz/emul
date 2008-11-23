@@ -46,6 +46,8 @@ public class Executor {
 
     private PrintWriter dump, dumpfull;
 
+	private long nLastCycleCount;
+
 
     static public final String sCompile = "Compile";
     static public final Setting settingCompile = new Setting(sCompile, new Boolean(false));
@@ -91,7 +93,7 @@ public class Executor {
     }
 
     public void interpretOneInstruction() {
-        interp.execute(cpu, cpu.getConsole().readWord(cpu.getPC()));
+        interp.execute(cpu, null);
         nInstructions++;
     }
 
@@ -176,13 +178,15 @@ public class Executor {
         double compiled = (double)nCompiledInstructions / (double)nInstructions;
         compileAvg = ((int) (compiled * 10000));
         
-        System.out.println("# instructions / second: " + nInstructions 
-        		+ " (" + compileAvg / 100 + "." + compileAvg % 100 + "% compiled, " 
+        System.out.println("# instructions / second: " + nInstructions
+        		+ " (cycles = " + (cpu.getTotalCycleCount() - nLastCycleCount) + "; "
+        		+ compileAvg / 100 + "." + compileAvg % 100 + "% compiled, " 
         		+ nSwitches + " context switches, " + nCompiles + " compiles)");
         nInstructions = 0;
         nCompiledInstructions = 0;
         nSwitches = 0;
         nCompiles = 0;
+        nLastCycleCount = cpu.getTotalCycleCount();
 	}
 
 }

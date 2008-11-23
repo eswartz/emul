@@ -43,27 +43,40 @@ public class Interpreter {
     
     public Interpreter(Machine machine) {
         this.machine = machine;
-        this.memory = machine.CPU;
+        this.memory = machine.getCpu().getConsole();
         instructions = new HashMap<Integer, Instruction>();
         iblock = new InstructionAction.Block();
         iblock.domain = memory;
      }
 
-    public void execute(Cpu cpu, short op) {
+    /**
+     * Execute an instruction
+     * @param cpu
+     * @param op_x if not-null, execute the instruction from an X instruction
+     */
+    public void execute(Cpu cpu, Short op_x) {
         /*
          * decode one instruction and update any autoincrement registers
          * referenced in operands
          */
         Instruction ins;
         int pc = cpu.getPC();
-
         this.client = machine.getClient();
         
-        if ((ins = instructions.get(pc)) != null) {
-            ins = ins.update(op, (short)pc, cpu.getConsole());
-        } else {
+        int origCycleCount = cpu.getCurrentCycleCount();
+       
+        short op = op_x != null ? op_x : cpu.getConsole().readWord(pc);
+
+        if (pc >= 0x6000 && (op & 0xffc0) == 0x680) 
+            	pc += 0;
+
+        // always re-read and re-fetch to ensure we get proper cycle counts
+        // for reading the memory of the instruction
+        //if ((ins = instructions.get(pc)) != null) {
+        //    ins = ins.update(op, (short)pc, cpu.getConsole());
+        //} else {
             ins = new Instruction(InstructionTable.decodeInstruction(op, pc, cpu.getConsole()));
-        }
+        //}
         instructions.put(pc, ins);
 
         MachineOperand mop1 = (MachineOperand) ins.op1;
@@ -74,29 +87,10 @@ public class Interpreter {
         PrintWriter dump = machine.getExecutor().getDump();
         
         if (dumpfull != null) {
-            dumpfull.print(Utils.toHex4(ins.pc) + ": "
-                    + ins.toString() + " ==> ");
+            dumpFullStart(ins, dumpfull);
         }
         if (dump != null) {
-            if (cpu.getMachine() instanceof TI994A) {
-                TI994A ti = (TI994A) cpu.getMachine();
-                dump.println(Utils.toHex4(ins.pc) 
-                        + " "
-                        + Utils.toHex4(cpu.getWP())
-                        + " "
-                        + Utils.toHex4(cpu.getStatus().flatten())
-                        + " "
-                        + Utils.toHex4(ti.getVdpMmio().getAddr())
-                        + " "
-                        + Utils.toHex4(ti.getGplMmio().getAddr()));
-            } else {
-                dump.println(Utils.toHex4(ins.pc) 
-                        + " "
-                        + Utils.toHex4(cpu.getStatus().flatten())
-                );
-                
-            }
-            dump.flush();
+            dumpStart(cpu, ins, dump);
         }
 
         /* generate the functor for the instruction */
@@ -106,24 +100,8 @@ public class Interpreter {
         fetchOperands(cpu, ins, cpu.getWP(), cpu.getStatus());
 
         /* dump values before execution */
-        String str;
-
         if (dumpfull != null) {
-            if (mop1.type != MachineOperand.OP_NONE
-                    && mop1.dest != Operand.OP_DEST_KILLED) {
-                str = mop1.valueString(iblock.ea1, iblock.val1);
-                if (str != null) {
-                    dumpfull.print("op1=" + str + " ");
-                }
-            }
-            if (mop2.type != MachineOperand.OP_NONE
-                    && mop2.dest != Operand.OP_DEST_KILLED) {
-                str = mop2.valueString(iblock.ea2, iblock.val2);
-                if (str != null) {
-					dumpfull.print("op2=" + str);
-				}
-            }
-            dumpfull.print(" || ");
+            dumpFullMid(mop1, mop2, dumpfull);
         }
 
         /* do pre-instruction status word updates */
@@ -144,32 +122,88 @@ public class Interpreter {
         /* save any operands */
         flushOperands(cpu, ins);
         
-        cpu.addCycles(iblock.cycles);
+        cpu.addCycles(ins.cycles + mop1.cycles + mop2.cycles);
 
         /* dump values after execution */
         if (dumpfull != null) {
-            if (mop1.type != MachineOperand.OP_NONE
-                    && mop1.dest != Operand.OP_DEST_FALSE) {
-                str = mop1.valueString(iblock.ea1, iblock.val1);
-                if (str != null) {
-                    dumpfull.print("op1=" + str + " ");
-                }
-            }
-            if (mop2.type != MachineOperand.OP_NONE
-                    && mop2.dest != Operand.OP_DEST_FALSE) {
-                str = mop2.valueString(iblock.ea2, iblock.val2);
-                if (str != null) {
-					dumpfull.print("op2=" + str + " ");
-				}
-            }
-            dumpfull.print("st="
-                    + Integer.toHexString(cpu.getStatus().flatten() & 0xffff)
-                            .toUpperCase() + " wp="
-                    + Integer.toHexString(cpu.getWP() & 0xffff).toUpperCase());
-            dumpfull.println();
-            dumpfull.flush();
+            dumpFullEnd(cpu, origCycleCount, mop1, mop2, dumpfull);
         }
     }
+
+	private void dumpFullEnd(Cpu cpu, int origCycleCount, MachineOperand mop1,
+			MachineOperand mop2, PrintWriter dumpfull) {
+		String str;
+		if (mop1.type != MachineOperand.OP_NONE
+		        && mop1.dest != Operand.OP_DEST_FALSE) {
+		    str = mop1.valueString(iblock.ea1, iblock.val1);
+		    if (str != null) {
+		        dumpfull.print("op1=" + str + " ");
+		    }
+		}
+		if (mop2.type != MachineOperand.OP_NONE
+		        && mop2.dest != Operand.OP_DEST_FALSE) {
+		    str = mop2.valueString(iblock.ea2, iblock.val2);
+		    if (str != null) {
+				dumpfull.print("op2=" + str + " ");
+			}
+		}
+		dumpfull.print("st="
+		        + Integer.toHexString(cpu.getStatus().flatten() & 0xffff)
+		                .toUpperCase() + " wp="
+		        + Integer.toHexString(cpu.getWP() & 0xffff).toUpperCase());
+		
+		int cycles = cpu.getCurrentCycleCount() - origCycleCount;
+		dumpfull.print(" @ " + cycles);
+		dumpfull.println();
+		dumpfull.flush();
+	}
+
+	private void dumpFullMid(MachineOperand mop1, MachineOperand mop2,
+			PrintWriter dumpfull) {
+		String str;
+		if (mop1.type != MachineOperand.OP_NONE
+		        && mop1.dest != Operand.OP_DEST_KILLED) {
+		    str = mop1.valueString(iblock.ea1, iblock.val1);
+		    if (str != null) {
+		        dumpfull.print("op1=" + str + " ");
+		    }
+		}
+		if (mop2.type != MachineOperand.OP_NONE
+		        && mop2.dest != Operand.OP_DEST_KILLED) {
+		    str = mop2.valueString(iblock.ea2, iblock.val2);
+		    if (str != null) {
+				dumpfull.print("op2=" + str);
+			}
+		}
+		dumpfull.print(" || ");
+	}
+
+	private void dumpFullStart(Instruction ins, PrintWriter dumpfull) {
+		dumpfull.print(Utils.toHex4(ins.pc) + ": "
+		        + ins.toString() + " ==> ");
+	}
+
+	private void dumpStart(Cpu cpu, Instruction ins, PrintWriter dump) {
+		if (cpu.getMachine() instanceof TI994A) {
+		    TI994A ti = (TI994A) cpu.getMachine();
+		    dump.println(Utils.toHex4(ins.pc) 
+		            + " "
+		            + Utils.toHex4(cpu.getWP())
+		            + " "
+		            + Utils.toHex4(cpu.getStatus().flatten())
+		            + " "
+		            + Utils.toHex4(ti.getVdpMmio().getAddr())
+		            + " "
+		            + Utils.toHex4(ti.getGplMmio().getAddr()));
+		} else {
+		    dump.println(Utils.toHex4(ins.pc) 
+		            + " "
+		            + Utils.toHex4(cpu.getStatus().flatten())
+		    );
+		    
+		}
+		dump.flush();
+	}
 
     /** Fetch operands for instruction (runtime)
      * @param ins
@@ -180,7 +214,7 @@ public class Interpreter {
         iblock.pc = (short) (iblock.inst.pc + iblock.inst.size);
         iblock.wp = cpu.getWP();
         iblock.status = st;
-        iblock.cycles = ins.cycles;
+        //iblock.cycles = ins.cycles;
         
         MachineOperand mop1 = (MachineOperand) iblock.inst.op1;
         MachineOperand mop2 = (MachineOperand) iblock.inst.op2;
@@ -188,15 +222,16 @@ public class Interpreter {
         if (mop1.type != MachineOperand.OP_NONE) {
         	mop1.cycles = 0;
 			iblock.ea1 = mop1.getEA(memory, iblock.inst.pc, wp);
-			iblock.cycles += mop1.cycles;
+			//iblock.cycles += mop1.cycles;
 		}
         if (mop2.type != MachineOperand.OP_NONE) {
         	mop2.cycles = 0;
 			iblock.ea2 = mop2.getEA(memory, iblock.inst.pc, wp);
-			iblock.cycles += mop2.cycles;
+			//iblock.cycles += mop2.cycles;
 		}
         if (mop1.type != MachineOperand.OP_NONE) {
-			iblock.val1 = mop1.getValue(memory, iblock.ea1);
+        	if (ins.inst != InstructionTable.Ili)
+        		iblock.val1 = mop1.getValue(memory, iblock.ea1);
 		}
         if (mop2.type != MachineOperand.OP_NONE) {
 			iblock.val2 = mop2.getValue(memory, iblock.ea2);
@@ -537,7 +572,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if ((block.val1 & 0x8000) != 0) {
 						block.val1 = (short) -block.val1;
-						block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -546,6 +581,7 @@ public class Interpreter {
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) (block.val1 >> block.val2);
+                    cpu.addCycles(block.val2 * 2);
                 }
             };
             break;
@@ -553,6 +589,7 @@ public class Interpreter {
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) ((block.val1 & 0xffff) >> block.val2);
+                    cpu.addCycles(block.val2 * 2);
                 }
             };
             break;
@@ -561,6 +598,7 @@ public class Interpreter {
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) (block.val1 << block.val2);
+                    cpu.addCycles(block.val2 * 2);
                 }
             };
             break;
@@ -569,6 +607,7 @@ public class Interpreter {
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.val1 = (short) ((block.val1 & 0xffff) >> block.val2 | (block.val1 & 0xffff) << 16 - block.val2);
+                    cpu.addCycles(block.val2 * 2);
                 }
             };
             break;
@@ -577,7 +616,7 @@ public class Interpreter {
             act = new InstructionAction() {
                 public void act(Block block) {
                     block.pc = block.val1;
-                    block.cycles += 2;
+                    cpu.addCycles(2);
                 }
             };
             break;
@@ -586,7 +625,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isLT()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -596,7 +635,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isLE()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -607,7 +646,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isEQ()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -617,7 +656,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isHE()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -627,7 +666,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isGT()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -637,7 +676,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isNE()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -647,7 +686,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (!block.status.isC()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -657,7 +696,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isC()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -667,7 +706,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (!block.status.isO()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -677,7 +716,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isL()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -687,7 +726,7 @@ public class Interpreter {
                 public void act(Block block) {
                     if (block.status.isH()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -699,7 +738,7 @@ public class Interpreter {
                     // jump on ODD parity
                     if (block.status.isP()) {
 						block.pc = block.val1;
-	                    block.cycles += 2;
+						cpu.addCycles(2);
 					}
                 }
             };
@@ -798,7 +837,7 @@ public class Interpreter {
                         //        (short) (val % (block.val1 & 0xffff)));
                         //inst.op2.value = (short) val;
                     } else {
-                    	block.cycles += (124 + 92) / 2 - 16;
+                    	cpu.addCycles((124 + 92) / 2 - 16);
                     }
                 }
             };

@@ -16,6 +16,7 @@ public class ZeroByteMemoryArea extends ByteMemoryArea {
     static byte zeroes[] = new byte[0x10000];
 
 	public ZeroByteMemoryArea() {
+		super(1);
 		memory = zeroes;
 	}
 }

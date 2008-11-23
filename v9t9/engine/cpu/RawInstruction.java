@@ -10,7 +10,7 @@ import v9t9.tools.asm.BaseInstruction;
 import v9t9.utils.Utils;
 public class RawInstruction extends BaseInstruction implements Comparable<RawInstruction> {
 
-	public String name;
+	private String name;
 	public int pc;
 	/** size in bytes */
 	public int size;
@@ -32,13 +32,20 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 		this.op1 = other.op1;
 		this.op2 = other.op2;
 	}
+	
+	public String getName() {
+		if (name == null)
+			name = InstructionTable.getInstName(inst);
+		return name;
+	}
+	
+	public void setName(String name) {
+		this.name = name;
+	}
 
 	public String toString() {
 	    StringBuilder buffer = new StringBuilder();
-	    if (name != null)
-	    	buffer.append(name);
-	    else
-	    	buffer.append(InstructionTable.getInstName(inst));
+	    buffer.append(getName());
 	    String opstring;
 	    opstring = op1.toString();
 	    if (opstring != null) {

@@ -107,7 +107,7 @@ public class Compiler {
         this.cpu = cpu;
         
         this.machine = cpu.getMachine();
-        this.memory = machine.CPU;
+        this.memory = cpu.getConsole();
 
         machine.getSettings().register(settingOptimize);
         machine.getSettings().register(settingOptimizeRegAccess);
@@ -360,7 +360,7 @@ public class Compiler {
 		}
         Integer instInt = new Integer(ins.inst);
         if (!instSet.contains(instInt)) {
-            System.out.println("first use of " + ins.name + " at "
+            System.out.println("first use of " + ins.getName() + " at "
                     + v9t9.utils.Utils.toHex4(ins.pc));
             instSet.add(instInt);
         }
@@ -828,7 +828,7 @@ public class Compiler {
 			ConstantPoolGen pgen, MethodGen mgen) {
 		CompileInfo info = new CompileInfo(pgen, ifact);
         info.ilist = null;
-        info.memory = cpu.getMachine().CPU;
+        info.memory = cpu.getConsole();
 
         int cpuIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
                 "cpu", Utility.getSignature(v9t9.emulator.runtime.Cpu.class.getName()));

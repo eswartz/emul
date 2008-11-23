@@ -15,7 +15,9 @@ import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.RamArea;
+import v9t9.engine.memory.MemoryModel;
+import v9t9.engine.memory.StockMemoryModel;
+import v9t9.engine.memory.StockRamArea;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.AssemblerInstruction;
 import v9t9.tools.asm.DirectiveInstructionParserStage;
@@ -33,6 +35,7 @@ public abstract class BaseTest extends TestCase {
 
 	protected MemoryDomain CPU;
 	protected Memory memory;
+	private MemoryModel memoryModel;
 
 	public BaseTest() {
 		super();
@@ -45,14 +48,14 @@ public abstract class BaseTest extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		memory = new Memory();
-        CPU = new MemoryDomain();
-        memory.addDomain(CPU);
+		memoryModel = new StockMemoryModel();
+		memory = memoryModel.getMemory();
+        CPU = memoryModel.getConsole();
         memory.addAndMap(new MemoryEntry("test ROM",
         		CPU,
         		0,
         		8192,
-        		new RamArea(8192)));
+        		new StockRamArea(8192)));
 	}
 	
 

@@ -8,6 +8,7 @@ package v9t9.engine.memory;
 
 import v9t9.emulator.Machine.ConsoleMmioReader;
 import v9t9.emulator.Machine.ConsoleMmioWriter;
+import v9t9.engine.Client;
 
 /** GPL chip entry
  * @author ejs
@@ -91,4 +92,8 @@ public class Gpl implements ConsoleMmioReader, ConsoleMmioWriter {
     		gromaddr = getNextAddr(gromaddr);
     	}    
     }
+
+	public void setClient(Client client) {
+		
+	}
 }

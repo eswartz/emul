@@ -4,10 +4,12 @@
 package v9t9.emulator.hardware.memory;
 
 import v9t9.engine.memory.MemoryArea;
-import v9t9.engine.memory.StandardConsoleMemoryModel;
 
+/** Builtin console RAM */
 public class StdConsoleRamArea extends ConsoleMemoryArea {
     public StdConsoleRamArea() {
+    	super(0);
+    	
         memory = new short[0x400/2];
         read = memory;
         write = memory;

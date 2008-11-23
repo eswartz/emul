@@ -32,9 +32,11 @@ public class BankedMemoryEntry extends MemoryEntry {
             String filepath, int fileoffs,
             String filepath2, int fileoffs2) throws IOException {
     	DiskMemoryEntry bank0 = DiskMemoryEntry.newFromFile(
-    			new WordMemoryArea(), 0x6000, 0x2000, name + " (bank 0)", domain, filepath, fileoffs, false);
+    			new WordMemoryArea(domain.getReadWordLatency(0x6000)), 
+    			0x6000, 0x2000, name + " (bank 0)", domain, filepath, fileoffs, false);
     	DiskMemoryEntry bank1 = DiskMemoryEntry.newFromFile(
-    			new WordMemoryArea(), 0x6000, 0x2000, name + " (bank 1)", domain, filepath2, fileoffs2, false);
+    			new WordMemoryArea(domain.getReadWordLatency(0x6000)), 
+    			0x6000, 0x2000, name + " (bank 1)", domain, filepath2, fileoffs2, false);
     	
     	return new BankedMemoryEntry(memory, name, domain, bank0, bank1);
     }

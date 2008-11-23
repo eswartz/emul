@@ -19,19 +19,20 @@ public class Sound implements ConsoleMmioWriter {
     /**
      * @param machine
      */
-    public Sound(Client client) {
-        this.client = client;
+    public Sound() {
     }
 
     /**
      * @see v9t9.engine.memory.Memory.ConsoleMmioWriter#write 
      */
     public void write(int addr, byte val) {
-        client.getSoundHandler().writeSound(val);
+    	if (client != null)
+    		client.getSoundHandler().writeSound(val);
     }
 
-    public void setClient(Client client) {
-        this.client = client;
-    }
+	public void setClient(Client client) {
+	    this.client = client;
+	}
+
     
 }

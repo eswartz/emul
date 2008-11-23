@@ -31,7 +31,7 @@ public class DiskMemoryEntryTest extends TestCase {
 	    // TODO Auto-generated method stub
 	    super.setUp();
 	    machine = new TI994A();
-        CPU = machine.CPU;
+        CPU = machine.getConsole();
 	    CPU.zero();
 	}
  

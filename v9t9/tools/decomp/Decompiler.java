@@ -17,7 +17,9 @@ import v9t9.engine.files.NativeFileFactory;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.NativeFileMemoryEntry;
+import v9t9.engine.memory.StockMemoryModel;
 import v9t9.utils.Utils;
 
 public class Decompiler implements ICodeProvider {
@@ -31,8 +33,9 @@ public class Decompiler implements ICodeProvider {
     int verbose = 0;
     boolean nativeFile = false;
     
-    Memory memory = new Memory();
-    MemoryDomain CPU = new MemoryDomain();
+    MemoryModel model = new StockMemoryModel();
+    Memory memory = model.getMemory();
+    MemoryDomain CPU = model.getConsole();
 
     private DecompileOptions options;
     HighLevelCodeInfo highLevel = new HighLevelCodeInfo(CPU);

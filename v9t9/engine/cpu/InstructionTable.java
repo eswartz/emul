@@ -508,7 +508,6 @@ public class InstructionTable {
         inst.opcode = (short) op;
         inst.inst = InstructionTable.Idata;
         inst.size = 0;
-        inst.name = null;
         MachineOperand mop1 = new MachineOperand(MachineOperand.OP_NONE);
         MachineOperand mop2 = new MachineOperand(MachineOperand.OP_NONE);
         inst.op1 = mop1;

@@ -14,8 +14,11 @@ public class ZeroWordMemoryArea extends WordMemoryArea {
 	/* for reads, return zero */
 	/* for writes, ignore */
     public static short zeroes[] = new short[0x10000/2];
-
-	public ZeroWordMemoryArea() {
+    public ZeroWordMemoryArea() {
+		this(0);
+	}
+	public ZeroWordMemoryArea(int latency) {
+		super(latency);
 		memory = zeroes;
 	}
 }

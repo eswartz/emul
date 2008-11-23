@@ -18,7 +18,14 @@ public class WordMemoryArea extends MemoryArea {
      * and extracting part of it (big-endian: low address is high byte).
 	 */
 
-    /**
+	public WordMemoryArea() {
+		this(0);
+	}
+    public WordMemoryArea(int latency) {
+    	this.readByteLatency = this.readWordLatency = this.writeByteLatency = this.writeWordLatency = (byte) latency;
+	}
+
+	/**
      * Extract a word 
      * @param offset byte offset
      * @param addr byte address offset
@@ -87,6 +94,12 @@ public class WordMemoryArea extends MemoryArea {
 	@Override
 	public MemoryArea copy() {
 		WordMemoryArea area = new WordMemoryArea();
+		
+		area.readByteLatency = this.readByteLatency;
+        area.readWordLatency = this.readWordLatency;
+        area.writeByteLatency = this.writeByteLatency;
+        area.writeWordLatency = this.writeWordLatency;
+
 		area.areaReadByte = this.areaReadByte;
 		area.areaReadWord = this.areaReadWord;
 		area.areaWriteByte = this.areaWriteByte;
