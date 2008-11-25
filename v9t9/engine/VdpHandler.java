@@ -6,6 +6,10 @@
  */
 package v9t9.engine;
 
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.hardware.memory.mmio.VdpMmio;
+import v9t9.engine.memory.ByteMemoryAccess;
+
 /** 
  * Render VDP video.  This is not responsible for managing memory,
  * but for updating the visual appearance of the screen in response
@@ -15,16 +19,33 @@ package v9t9.engine;
 public interface VdpHandler {
     /** Write a VDP register. 
     */
-    void writeVdpReg(byte reg, byte val);
+    void writeVdpReg(int reg, byte val);
+    
+    /** Read a VDP register. 
+     */
+    byte readVdpReg(int reg);
     
     /** Read VDP status.
      */
     byte readVdpStatus();
 
-    /** Write byte to VDP memory.  Issued only when a change is detected.
+    /** Touch byte in the absolute VDP memory address
+     * and note the side effects.
+     * @param val the value written -- note, this is not the same as writing the memory,
+     * which should mirror this result (historical reasons -- DemoClient has no memory)
      */
-    void writeVdpMemory(short vdpaddr, byte val);
+    void touchAbsoluteVdpMemory(int vdpaddr, byte val);
 
+    /** Read byte from absolute VDP memory at the given address
+     */
+    byte readAbsoluteVdpMemory(int vdpaddr);
+    
+    ByteMemoryAccess getByteReadMemoryAccess(int vdpaddr); 
+    
     /** Update video periodically */
     void update();
+
+	VdpCanvas getCanvas();
+	
+	VdpMmio getVdpMmio();
 }

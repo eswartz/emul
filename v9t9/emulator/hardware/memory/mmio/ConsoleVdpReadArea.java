@@ -4,8 +4,15 @@
 package v9t9.emulator.hardware.memory.mmio;
 
 
+
 public class ConsoleVdpReadArea extends ConsoleMmioReadArea {
-    public ConsoleVdpReadArea(v9t9.emulator.runtime.Vdp mmio) {
+	
+    public ConsoleVdpReadArea(VdpMmio mmio) {
         super(mmio);
+    }
+    
+    @Override
+    public byte getReadByteLatency() {
+    	return 5;
     }
 }

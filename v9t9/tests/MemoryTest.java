@@ -10,7 +10,8 @@ import java.util.Random;
 
 import junit.framework.TestCase;
 import v9t9.emulator.hardware.TI994A;
-import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
+import v9t9.emulator.hardware.memory.ConsoleRamArea;
+import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.engine.memory.MemoryDomain;
 
 /**
@@ -59,8 +60,8 @@ public class MemoryTest extends TestCase {
             CPU.writeByte(i, (byte) 0);
         }
 
-        machine.getSettings().setBool(StandardConsoleMemoryModel.sExpRam, true);
-        machine.getSettings().setBool(StandardConsoleMemoryModel.sEnhRam, true);
+        machine.getSettings().setBool(ExpRamArea.sExpRam, true);
+        machine.getSettings().setBool(ConsoleRamArea.sEnhRam, true);
 
         int firstRAM = 0;
         Random rand = new Random();
@@ -98,7 +99,7 @@ public class MemoryTest extends TestCase {
         assertEquals(CPU.readWord(firstRAM + 1), 0x1234);
 
         /* turn off expansion RAM, shouldn't get anything from it... */
-        machine.getSettings().setBool(StandardConsoleMemoryModel.sExpRam, false);
+        machine.getSettings().setBool(ExpRamArea.sExpRam, false);
         for (i = 0x2000; i < 0x4000; i++) {
             byte red = CPU.readByte(i);
             if (red != 0) {
@@ -113,7 +114,7 @@ public class MemoryTest extends TestCase {
         }
 
         /* without enhanced ram, 0x8000 mirrors 0x8100 through 0x8300 */
-        machine.getSettings().setBool(StandardConsoleMemoryModel.sEnhRam, false);
+        machine.getSettings().setBool(ConsoleRamArea.sEnhRam, false);
         rand.setSeed(0);
         for (i = 0x8000; i < 0x8400; i++) {
             byte byt = (byte) rand.nextInt();

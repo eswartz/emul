@@ -6,16 +6,16 @@
  */
 package v9t9.emulator;
 
-import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
-import v9t9.engine.DummyClient;
+import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
@@ -48,69 +48,22 @@ abstract public class Machine {
     private TimerTask clientTask;
     private TimerTask cpuTask;
 	protected MemoryModel memoryModel;
+	private VdpHandler vdp;
 	
-	public Machine(MemoryModel memoryModel) throws IOException {
-		this.memoryModel = memoryModel;
-		this.memory = memoryModel.getMemory();
-		this.console = memoryModel.getConsole();
-        settings = new SettingsCollection();
-        cpu = new Cpu(this, cpuTick);
-        executor = new Executor(cpu);
-        
-        setupDefaults();
-        loadMemory();
-        
-        timer = new Timer();
-        client = new DummyClient();
-        
-        allowInterrupts = true;
-        interruptTask = new TimerTask() {
+    public Machine(MachineModel machineModel) {
+    	this.memoryModel = machineModel.getMemoryModel();
+    	this.memory = memoryModel.createMemory();
+    	this.console = memoryModel.getConsole();
+    	this.vdp = machineModel.createVdp(this);
+    	memoryModel.initMemory(this);
+    	
+    	settings = new SettingsCollection();
+    	cpu = new Cpu(this, cpuTick);
+    	executor = new Executor(cpu);
+    	timer = new Timer();
+	}
 
-            @Override
-			public void run() {
-                handleTimerInterrupt();
-            }
-        };
-        timer.scheduleAtFixedRate(interruptTask, 0, interruptTick);
-        
-        clientTask = new TimerTask() {
-        	
-        	@Override
-        	public void run() {
-        		getClient().timerInterrupt();
-        	}
-        };
-        timer.scheduleAtFixedRate(clientTask, 0, clientTick);
-        
-        cpuTask = new TimerTask() {
-        	
-        	@Override
-        	public void run() {
-        		now = System.currentTimeMillis();
-
-                if (now >= lastInfo + 1000) {
-                    upTime += now - lastInfo;
-                    executor.dumpStats();
-                    lastInfo = now;
-                }
-                
-                cpu.tick();
-        	}
-        };
-        timer.scheduleAtFixedRate(cpuTask, 0, cpuTick);
-
-        bRunning = true;
-    }
-
-    /**
-     * Load ROMs, etc. into memory 
-     * @throws IOException TODO
-     */
-    abstract protected void loadMemory() throws IOException;
-
-    /* Memory areas */
-
-    public interface ConsoleMmioReader {
+	public interface ConsoleMmioReader {
         byte read(int addrMask);
     }
 
@@ -120,8 +73,6 @@ abstract public class Machine {
         void write(int addrMask, byte val);
     }
 
-    /** Set default settings */
-    abstract protected void setupDefaults();
 
     public void close() {
         bRunning = false;
@@ -153,6 +104,46 @@ abstract public class Machine {
         return bRunning;
     }
     
+    public void start() {
+    	allowInterrupts = true;
+        interruptTask = new TimerTask() {
+
+            @Override
+			public void run() {
+                handleTimerInterrupt();
+            }
+        };
+        timer.scheduleAtFixedRate(interruptTask, 0, interruptTick);
+        
+        clientTask = new TimerTask() {
+        	
+        	@Override
+        	public void run() {
+        		if (client != null) client.timerInterrupt();
+        	}
+        };
+        timer.scheduleAtFixedRate(clientTask, 0, clientTick);
+        
+        cpuTask = new TimerTask() {
+        	
+        	@Override
+        	public void run() {
+        		now = System.currentTimeMillis();
+
+                if (now >= lastInfo + 1000) {
+                    upTime += now - lastInfo;
+                    //executor.dumpStats();
+                    lastInfo = now;
+                }
+                
+                cpu.tick();
+        	}
+        };
+        timer.scheduleAtFixedRate(cpuTask, 0, cpuTick);
+
+        bRunning = true;
+    }
+    
     /**
      * Forcibly stop the machine and throw TerminatedException
      */
@@ -166,7 +157,7 @@ abstract public class Machine {
         timer.cancel();
 	}
     
-    protected void run() throws Throwable {
+    public void run() throws Throwable {
 		// delay if going too fast
 		if (Cpu.settingRealTime.getBoolean()) {
 			while (cpu.isThrottled() && bRunning) {
@@ -209,6 +200,14 @@ abstract public class Machine {
     /** Get the primary memory */
     public MemoryDomain getConsole() {
 		return console;
+	}
+    
+    public MemoryModel getMemoryModel() {
+        return memoryModel;
+    }
+
+    public VdpHandler getVdp() {
+		return vdp;
 	}
 }
 

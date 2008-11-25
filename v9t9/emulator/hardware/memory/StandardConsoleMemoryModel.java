@@ -6,6 +6,8 @@
  */
 package v9t9.emulator.hardware.memory;
 
+import v9t9.emulator.Machine;
+import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGramWriteArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGromReadArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleSoundArea;
@@ -13,15 +15,13 @@ import v9t9.emulator.hardware.memory.mmio.ConsoleSpeechReadArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleSpeechWriteArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleVdpReadArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleVdpWriteArea;
-import v9t9.emulator.runtime.Sound;
-import v9t9.emulator.runtime.Speech;
-import v9t9.emulator.runtime.Vdp;
-import v9t9.engine.memory.Gpl;
+import v9t9.emulator.hardware.memory.mmio.GplMmio;
+import v9t9.emulator.hardware.memory.mmio.SoundMmio;
+import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryModel;
-import v9t9.engine.settings.Setting;
 
 /**
  * The standard TI-99/4[A] console memory map.
@@ -40,26 +40,17 @@ public class StandardConsoleMemoryModel implements MemoryModel {
     /* Speech ROM */
     public MemoryDomain SPEECH;
 
-    
-    public boolean bHasExpRam; /* is 32k expansion RAM enabled? */
+    public SoundMmio soundMmio;
+    public SpeechMmio speechMmio;
+    public GplMmio gplMmio;
 
-    public boolean bHasEnhRam; /* is enhanced this RAM enabled? */
-
-    static public final String sExpRam = "MemoryExpansion32K";
-    static public final String sEnhRam = "ExtraConsoleRAM";
-    static public final Setting settingExpRam = new Setting(sExpRam, new Boolean(false));
-    static public final Setting settingEnhRam = new Setting(sEnhRam, new Boolean(false));
-
-    public Vdp vdpMmio;
-    
-    public Sound soundMmio;
-    
-    public Speech speechMmio;
-    public Gpl gplMmio;
-
-	private Memory memory;
+	protected Memory memory;
     
     public StandardConsoleMemoryModel() {
+    	initSettings();
+    }
+    
+    public Memory createMemory() {
     	this.memory = new Memory(this);
     	
         CPU = new MemoryDomain(4);
@@ -72,27 +63,43 @@ public class StandardConsoleMemoryModel implements MemoryModel {
         memory.addDomain(GRAPHICS);
         memory.addDomain(SPEECH);
         
-        memory.addAndMap(new MemoryEntry("Low 8K expansion RAM", CPU, 0x2000,
-                0x2000, new ExpRamArea(0x2000)));
-        memory.addAndMap(new MemoryEntry("Console RAM", CPU, 0x8000, 0x0400,
-                new StdConsoleRamArea()));
-        memory.addAndMap(new MemoryEntry("High 24K expansion RAM", CPU, 0xA000,
-                0x6000, new ExpRamArea(0x6000)));
+        return memory;
+        
+    }
+    
+    public void initMemory(Machine machine) {
+        defineConsoleMemory(machine);
      
-        memory.addAndMap(new MemoryEntry("VDP RAM", VIDEO, 0x0000, 0x4000, 
-                new VdpRamArea()));
+        soundMmio = new SoundMmio();
+        gplMmio = new GplMmio(GRAPHICS);
+        speechMmio = new SpeechMmio();
+        
+        if (machine instanceof TI994A)
+        	defineMmioMemory((TI994A) machine);
+    }
 
-        soundMmio = new Sound();
-        vdpMmio = new Vdp(VIDEO);
-        gplMmio = new Gpl(GRAPHICS);
-        speechMmio = new Speech();
+	protected void initSettings() {
+		ConsoleRamArea.settingEnhRam.setBoolean(false);
+	}
+ 
+	protected void defineConsoleMemory(Machine machine) {
+	    memory.addAndMap(new MemoryEntry("Low 8K expansion RAM", CPU, 0x2000,
+	            0x2000, new ExpRamArea(0x2000)));
+	    memory.addAndMap(new MemoryEntry("Console RAM", CPU, 0x8000, 0x0400,
+	            new ConsoleRamArea()));
+	    memory.addAndMap(new MemoryEntry("High 24K expansion RAM", CPU, 0xA000,
+	            0x6000, new ExpRamArea(0x6000)));
+		
+	}
+
+   protected void defineMmioMemory(TI994A machine) {
         
         this.memory.addAndMap(new MemoryEntry("Sound MMIO", CPU, 0x8400, 0x0400,
                 new ConsoleSoundArea(soundMmio)));
         this.memory.addAndMap(new MemoryEntry("VDP Read MMIO", CPU, 0x8800, 0x0400,
-                new ConsoleVdpReadArea(vdpMmio)));
+                new ConsoleVdpReadArea(machine.getVdpMmio())));
         this.memory.addAndMap(new MemoryEntry("VDP Write MMIO", CPU, 0x8C00, 0x0400,
-                new ConsoleVdpWriteArea(vdpMmio)));
+                new ConsoleVdpWriteArea(machine.getVdpMmio())));
         this.memory.addAndMap(new MemoryEntry("Speech Read MMIO", CPU, 0x9000, 0x0400,
                 new ConsoleSpeechReadArea(speechMmio)));
         this.memory.addAndMap(new MemoryEntry("Speech Write MMIO", CPU, 0x9400, 0x0400,
@@ -101,20 +108,10 @@ public class StandardConsoleMemoryModel implements MemoryModel {
                 new ConsoleGromReadArea(gplMmio)));
         this.memory.addAndMap(new MemoryEntry("GRAM Write MMIO", CPU, 0x9C00, 0x0400,
                 new ConsoleGramWriteArea(gplMmio)));
-        
-        this.memory.addAndMap(new MemoryEntry("Low 8K expansion RAM", CPU, 0x2000,
-                0x2000, new ExpRamArea(0x2000)));
-        this.memory.addAndMap(new MemoryEntry("Console RAM", CPU, 0x8000, 0x0400,
-                new StdConsoleRamArea()));
-        this.memory.addAndMap(new MemoryEntry("High 24K expansion RAM", CPU, 0xA000,
-                0x6000, new ExpRamArea(0x6000)));
-     
-        this.memory.addAndMap(new MemoryEntry("VDP RAM", VIDEO, 0x0000, 0x4000, 
-                new VdpRamArea()));
-
-    }
- 
-    public MemoryDomain getConsole() {
+		
+	}
+	   
+	public MemoryDomain getConsole() {
     	return CPU;
     }
     
@@ -125,9 +122,5 @@ public class StandardConsoleMemoryModel implements MemoryModel {
     		return 0;
     	// standard latency for external memory is 4 cycles
     	return 4;
-    }
-
-    public Memory getMemory() {
-    	return memory;
     }
 }

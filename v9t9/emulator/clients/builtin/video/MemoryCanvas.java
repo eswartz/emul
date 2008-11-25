@@ -63,7 +63,7 @@ public class MemoryCanvas extends VdpCanvas {
 		}
 	}
 	
-	protected void drawEightSpritePixels(int offs, byte mem, byte fg) {
+	protected void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask) {
 		for (int i = 0; i < 8; i++) {
 			if ((mem & 0x80) != 0) {
 				bitmap[offs++] = fg;
@@ -72,7 +72,7 @@ public class MemoryCanvas extends VdpCanvas {
 		}
 	}
 
-	protected void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg) {
+	protected void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask) {
 		int rowOffset = getLineStride();
 		for (int i = 0; i < 8; i++) {
 			if ((mem & 0x80) != 0) {

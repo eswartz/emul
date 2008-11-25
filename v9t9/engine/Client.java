@@ -30,4 +30,8 @@ public interface Client {
      *
      */
     void timerInterrupt();
+
+	boolean isAlive();
+
+	void handleEvents();
 }

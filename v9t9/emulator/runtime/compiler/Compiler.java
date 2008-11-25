@@ -40,6 +40,8 @@ import org.apache.bcel.generic.TABLESWITCH;
 import org.apache.bcel.generic.Type;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.hardware.memory.mmio.GplMmio;
+import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
@@ -408,15 +410,15 @@ public class Compiler {
             ilist.append(new ALOAD(info.localStatus));
             ilist.append(InstructionConstants.THIS);
             ilist.append(new GETFIELD(info.vdpIndex));
-            ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.Vdp.class
+            ilist.append(info.ifact.createInvoke(VdpMmio.class
                     .getName(), "getAddr", Type.SHORT, Type.NO_ARGS,
                     Constants.INVOKEVIRTUAL));
             ilist.append(InstructionConstants.THIS);
             ilist.append(new GETFIELD(info.gplIndex));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.memory.Gpl.class
+            ilist.append(info.ifact.createInvoke(GplMmio.class
                     .getName(), "getAddr", Type.SHORT, Type.NO_ARGS,
                     Constants.INVOKEVIRTUAL));
-            ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.compiler.CompiledCode.class
+            ilist.append(info.ifact.createInvoke(CompiledCode.class
                     .getName(), "dump", Type.VOID, new Type[] { Type.SHORT,
                     Type.SHORT,
                     new ObjectType(v9t9.engine.cpu.Status.class.getName()),
@@ -839,9 +841,9 @@ public class Compiler {
         int nInstsIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
                 "nInstructions", Utility.getSignature("int"));
         int vdpIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
-                "vdp", Utility.getSignature(v9t9.emulator.runtime.Vdp.class.getName()));
+                "vdp", Utility.getSignature(v9t9.emulator.hardware.memory.mmio.VdpMmio.class.getName()));
         int gplIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
-                "gpl", Utility.getSignature(v9t9.engine.memory.Gpl.class.getName()));
+                "gpl", Utility.getSignature(v9t9.emulator.hardware.memory.mmio.GplMmio.class.getName()));
 
         info.cpuIndex = cpuIndex;
         info.memoryIndex = memoryIndex;

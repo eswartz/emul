@@ -467,13 +467,6 @@ public class Interpreter {
         case InstructionTable.Iblwp:
             act = new InstructionAction() {
                 public void act(Block block) {
-                    /*
-                    //TODO NB: must flush values now to share code
-                    cpu.setPC((short) block.pc);
-                    cpu.contextSwitch(block.val1);
-                    block.pc = cpu.getPC();
-                    block.wp = cpu.getWP();
-                    */
                     block.wp = memory.readWord(block.val1);
                     block.pc = memory.readWord(block.val1 + 2);
                 }
@@ -796,16 +789,8 @@ public class Interpreter {
         case InstructionTable.Ixop:
             act = new InstructionAction() {
                 public void act(Block block) {
-                    /*
-                    //TODO NB: must flush values now to share code
-                    cpu.setPC(block.pc);
-                    cpu.contextSwitch(block.val1 * 4 + 0x40);
-                    block.pc = cpu.getPC();
-                    block.wp = cpu.getWP();
-                    */
-                    block.wp = memory.readWord(block.val2 * 4 + 0x40);
+                	block.wp = memory.readWord(block.val2 * 4 + 0x40);
                     block.pc = memory.readWord(block.val2 * 4 + 0x42);
-                    //block.status.setIntMask(0);
                     memory.writeWord(block.wp + 11 * 2, block.ea1);
                 }
             };

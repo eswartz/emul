@@ -3,7 +3,7 @@
  */
 package v9t9.engine.memory;
 
-import v9t9.engine.Client;
+import v9t9.emulator.Machine;
 
 /**
  * This defines the model for memory in the emulator.
@@ -22,7 +22,12 @@ public interface MemoryModel {
 	/**
 	 * Get the memory defined by the model.
 	 */
-	Memory getMemory();
+	Memory createMemory();
+	
+	/**
+	 * Initialize the memory for this machine
+	 */
+	void initMemory(Machine machine);
 	
 	/**
 	 * Get the console memory.

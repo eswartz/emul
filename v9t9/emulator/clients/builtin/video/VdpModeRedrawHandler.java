@@ -23,11 +23,13 @@ public interface VdpModeRedrawHandler {
 	 * Given the touched blocks, redraw the bitmap,
 	 * generate the redraw blocks representing the changed bits of the bitmap,
 	 * and return the number of blocks updated.
+	 * @param blocks array of at most 1024 blocks
+	 * @param force TODO
 	 * @param modeInfo
 	 * @param changes
-	 * @param blocks array of at most 1024 blocks
+	 * @param force if true, force redraw of everything
 	 * @return number of blocks changed
 	 */
-	int updateCanvas(RedrawBlock[] blocks);
+	int updateCanvas(RedrawBlock[] blocks, boolean force);
 
 }

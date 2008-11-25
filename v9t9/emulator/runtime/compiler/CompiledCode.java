@@ -9,13 +9,13 @@ package v9t9.emulator.runtime.compiler;
 import java.io.PrintWriter;
 
 import v9t9.emulator.hardware.TI994A;
+import v9t9.emulator.hardware.memory.mmio.GplMmio;
+import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.emulator.runtime.Executor;
-import v9t9.emulator.runtime.Vdp;
 import v9t9.engine.CruHandler;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Status;
-import v9t9.engine.memory.Gpl;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.utils.Utils;
 
@@ -28,8 +28,8 @@ abstract public class CompiledCode {
     protected int nInstructions;
     
     // used for debugging
-    protected Vdp vdp;
-    protected Gpl gpl;
+    protected VdpMmio vdp9918AMmio;
+    protected GplMmio gplMmio;
     
     public CompiledCode() {
         
@@ -41,8 +41,8 @@ abstract public class CompiledCode {
         this.memory = exec.cpu.getConsole();
         this.cru = exec.cpu.getMachine().getClient().getCruHandler();
         if (exec.cpu.getMachine() instanceof TI994A) {
-        	this.vdp = ((TI994A)exec.cpu.getMachine()).getVdpMmio();
-        	this.gpl = ((TI994A)exec.cpu.getMachine()).getGplMmio();
+        	this.vdp9918AMmio = ((TI994A)exec.cpu.getMachine()).getVdpMmio();
+        	this.gplMmio = ((TI994A)exec.cpu.getMachine()).getGplMmio();
         }
     }
 

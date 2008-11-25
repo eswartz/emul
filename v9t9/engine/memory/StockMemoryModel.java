@@ -3,6 +3,7 @@
  */
 package v9t9.engine.memory;
 
+import v9t9.emulator.Machine;
 import v9t9.engine.Client;
 
 /**
@@ -43,8 +44,11 @@ public class StockMemoryModel implements MemoryModel {
 	/* (non-Javadoc)
 	 * @see v9t9.engine.memory.MemoryModel#getMemory()
 	 */
-	public Memory getMemory() {
+	public Memory createMemory() {
 		return memory;
 	}
 
+	public void initMemory(Machine machine) {
+		
+	}
 }

@@ -79,14 +79,16 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 		if (Character.isLowerCase(keyCode))
 			keyCode = Character.toUpperCase(keyCode);
 		
-		if (pressed) {
-			int code = keyCode | (shift << 8);
-			Long timeout = keyTimeMap.get(code);
-			if (timeout != null)
-				keyTimeMap.put(code, System.currentTimeMillis() + 1000 / 15);	// repeating
-			else
-				keyTimeMap.put(code, System.currentTimeMillis() + 1000);	// initial press
-		}
+		synchronized (keyTimeMap) {
+			if (pressed) {
+				int code = keyCode | (shift << 8);
+				Long timeout = keyTimeMap.get(code);
+				if (timeout != null)
+					keyTimeMap.put(code, System.currentTimeMillis() + 1000 / 15);	// repeating
+				else
+					keyTimeMap.put(code, System.currentTimeMillis() + 1000);	// initial press
+			}
+		} 
 		keyboardState.setKey(pressed, shift, (byte) keyCode);
 	}
 	
@@ -103,11 +105,13 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 			resetTime = System.currentTimeMillis() + 1000;
 		}*/
 		long now = System.currentTimeMillis();
-		for (Iterator<Map.Entry<Integer, Long>> iter = keyTimeMap.entrySet().iterator(); iter.hasNext(); ) {
-			Map.Entry<Integer, Long> entry = iter.next();
-			if (entry.getValue() <= now) {
-				keyboardState.setKey(false, (byte)(entry.getKey() >> 8), (byte) (entry.getKey() & 0xff));
-				iter.remove();
+		synchronized (keyTimeMap) {
+			for (Iterator<Map.Entry<Integer, Long>> iter = keyTimeMap.entrySet().iterator(); iter.hasNext(); ) {
+				Map.Entry<Integer, Long> entry = iter.next();
+				if (entry.getValue() <= now) {
+					keyboardState.setKey(false, (byte)(entry.getKey() >> 8), (byte) (entry.getKey() & 0xff));
+					iter.remove();
+				}
 			}
 		}
 	}

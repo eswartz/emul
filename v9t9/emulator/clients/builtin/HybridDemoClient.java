@@ -11,11 +11,9 @@ import java.io.IOException;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
-import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
-import v9t9.emulator.clients.builtin.video.InternalVdp;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.demo.Connection;
@@ -24,7 +22,6 @@ import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
 import v9t9.engine.SoundHandler;
 import v9t9.engine.VdpHandler;
-import v9t9.engine.memory.MemoryDomain;
 
 /**
  * This demo client writes everything to the v9t9 client running a demo,
@@ -83,15 +80,14 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
     Connection connection;
 	private VideoRenderer videoRenderer;
 
-    /** Construct the client as a demo running in a different V9t9 
+    /** Construct the client as a demo running in a different TI994A 
      * @param display */
-    public HybridDemoClient(final Machine machine, MemoryDomain videoMemory, Display display) {
+    public HybridDemoClient(final Machine machine, VdpHandler vdp, Display display) {
     	
         this.machine = machine;
-        
-        ImageDataCanvas canvas = new ImageDataCanvas24Bit();
-		videoRenderer = new SwtVideoRenderer(display, canvas);
-        video = new InternalVdp(videoMemory, canvas);
+       
+		videoRenderer = new SwtVideoRenderer(display, vdp.getCanvas());
+        video = vdp;
         
         ((SwtVideoRenderer)videoRenderer).getShell().addShellListener(new ShellAdapter() {
 			@Override
@@ -118,10 +114,10 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
                     	+ " " + connection.getRemoteWriterString());
         } else {
             try {
-            	System.out.println("running V9t9 and waiting for connection");
+            	System.out.println("running TI994A and waiting for connection");
                 // Invoke v9t9
                 client = Runtime.getRuntime().exec(
-                        new String[] { "/usr/local/src/V9t9/source/v9t9",
+                        new String[] { "/usr/local/src/TI994A/source/v9t9",
                              //   "Log Demo 4", "Log Keyboard 2",
                                 //"ListenDemoPort " + connection.getRemoteString()
                                 "ListenDemoFifo " + connection.getRemoteReaderString() 
@@ -224,7 +220,7 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
             vdpPacketStart = vdpaddr & 0x3fff;
         }
         vdpPacket[vdpPacketSize++] = val;
-        video.writeVdpMemory(vdpaddr, val);
+        video.touchAbsoluteVdpMemory(vdpaddr, val);
     }
     
     /*
@@ -382,5 +378,13 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
         this.cru = handler;
     }
 
+    public void handleEvents() {
+    	Shell shell = ((SwtVideoRenderer)videoRenderer).getShell();
+    	while (shell.getDisplay().readAndDispatch()) ;
+    }
+    
+    public boolean isAlive() {
+    	return !((SwtVideoRenderer)videoRenderer).getShell().isDisposed();
+    }
 }
 

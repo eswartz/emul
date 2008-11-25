@@ -3,16 +3,26 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
-import v9t9.engine.memory.ByteMemoryAccess;
-import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.VdpHandler;
+
 
 /**
+ * The base class for redrawing the screen bitmap in accordance with
+ * memory changes in a particular video mode.  
+ * <p>
+ * This translates modifications to VDP RAM into logical
+ * "touches" to the memory regions designated by the setting of the VDP
+ * registers, allowing for efficient updating of the screen.
+ * <p>
+ * (I.e., instead of reblitting the entire screen every 1/60 second,
+ * we can detect that a particular screen location alone was modified,
+ * or that a pattern was modified, reflecting 8 screen positions.)
  * @author ejs
  *
  */
 public abstract class BaseRedrawHandler {
 
-	protected final MemoryDomain vdpMemory;
+	protected final VdpHandler vdpMemory;
 	protected final VdpModeInfo vdpModeInfo;
 	protected final VdpChanges vdpChanges;
 	protected final VdpCanvas vdpCanvas;
@@ -21,7 +31,7 @@ public abstract class BaseRedrawHandler {
 	protected byte vdpchanged;
 	protected final byte[] vdpregs;
 	
-	public BaseRedrawHandler(byte[] vdpregs, MemoryDomain vdpMemory, 
+	public BaseRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory, 
 			VdpChanges changed, VdpCanvas vdpCanvas) {
 		this.vdpregs = vdpregs;
 		this.vdpMemory = vdpMemory;
@@ -46,20 +56,6 @@ public abstract class BaseRedrawHandler {
 		
 	};
 	
-	
-
-	final static byte[] patternBuffer = new byte[8];
-	protected ByteMemoryAccess readEightBytes(int pattOffs) {
-		ByteMemoryAccess access = vdpMemory.getByteReadMemoryAccess(pattOffs);
-		if (access == null) {
-			for (int i = 0; i < 8; i++) {
-				patternBuffer[i] = (byte) vdpMemory.flatReadByte(pattOffs + i);
-			}
-			access = new ByteMemoryAccess(patternBuffer, 0);
-		} 
-		return access;
-	}
-
 	public boolean touch(int addr) {
     	boolean visible = false;
 
@@ -91,7 +87,7 @@ public abstract class BaseRedrawHandler {
 		
 		int size = vdpModeInfo.screen.size;
 		for (int i = 0; i < size; i++) {
-			int currchar = vdpMemory.flatReadByte(vdpModeInfo.screen.base + i) & 0xff;	/* char # to update */
+			int currchar = vdpMemory.readAbsoluteVdpMemory(vdpModeInfo.screen.base + i) & 0xff;	/* char # to update */
 			if (vdpChanges.patt[currchar] != 0)	/* this pattern changed? */
 				vdpChanges.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
 		}

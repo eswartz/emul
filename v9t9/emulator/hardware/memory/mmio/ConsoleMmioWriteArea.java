@@ -7,8 +7,11 @@ import v9t9.emulator.Machine.ConsoleMmioWriter;
 import v9t9.engine.memory.MemoryArea;
 
 public class ConsoleMmioWriteArea extends ConsoleMmioArea {
-    ConsoleMmioWriteArea(final ConsoleMmioWriter writer) {
-        if (writer == null) {
+    protected final ConsoleMmioWriter writer;
+
+	ConsoleMmioWriteArea(ConsoleMmioWriter writer) {
+        this.writer = writer;
+		if (writer == null) {
 			throw new NullPointerException();
 		}
         
@@ -18,7 +21,7 @@ public class ConsoleMmioWriteArea extends ConsoleMmioArea {
                 // + "="
                 //  + Integer.toHexString(val));
                 if (0 == (addr & 1)) {
-                    writer.write((addr & 2), val);
+                    ConsoleMmioWriteArea.this.writer.write(addr, val);
                 }
             }
         };

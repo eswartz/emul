@@ -65,39 +65,39 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		}
 	}
 
-	protected void drawEightSpritePixels(int offs, byte mem, byte fg) {
+	protected void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask) {
 		byte[] fgRGB = getColorRGB(fg);
 		for (int i = 0; i < 8; i++) {
-			if ((mem & 0x80) != 0) {
+			if ((mem & bitmask & 0x80) != 0) {
 				imageData.data[offs] = fgRGB[0];
 				imageData.data[offs + 1] = fgRGB[1];
 				imageData.data[offs + 2] = fgRGB[2];
 			}
+			bitmask <<= 1;
 			mem <<= 1;
 			offs += 3;
 		}
 	}
 
-	protected void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg) {
+	protected void drawEightMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask) {
 		byte[] fgRGB = getColorRGB(fg);
-		int rowOffset = getLineStride();
+		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
-			if ((mem & 0x80) != 0) {
+			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fgRGB[0];
 				imageData.data[offs + 1] = fgRGB[1];
 				imageData.data[offs + 2] = fgRGB[2];
-				imageData.data[offs + 3] = fgRGB[0];
-				imageData.data[offs + 4] = fgRGB[1];
-				imageData.data[offs + 5] = fgRGB[2];
-				imageData.data[offs + rowOffset] = fgRGB[0];
-				imageData.data[offs + rowOffset + 1] = fgRGB[1];
-				imageData.data[offs + rowOffset + 2] = fgRGB[2];
-				imageData.data[offs + rowOffset + 3] = fgRGB[0];
-				imageData.data[offs + rowOffset + 4] = fgRGB[1];
-				imageData.data[offs + rowOffset + 5] = fgRGB[2];
 			}
-			mem <<= 1;
+			bitmask <<= 1;
 			offs += 3;
+			if ((mem & bitmask & 0x8000) != 0) {
+				imageData.data[offs] = fgRGB[0];
+				imageData.data[offs + 1] = fgRGB[1];
+				imageData.data[offs + 2] = fgRGB[2];
+			}
+			bitmask <<= 1;
+			offs += 3;
+			mem <<= 1;
 		}
 	}
 

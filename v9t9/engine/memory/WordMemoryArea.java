@@ -22,7 +22,10 @@ public class WordMemoryArea extends MemoryArea {
 		this(0);
 	}
     public WordMemoryArea(int latency) {
-    	this.readByteLatency = this.readWordLatency = this.writeByteLatency = this.writeWordLatency = (byte) latency;
+    	this.setReadByteLatency((byte) latency);
+    	this.setReadWordLatency((byte) latency);
+    	this.setWriteByteLatency((byte) latency);
+    	this.setWriteWordLatency((byte) latency);
 	}
 
 	/**
@@ -95,9 +98,9 @@ public class WordMemoryArea extends MemoryArea {
 	public MemoryArea copy() {
 		WordMemoryArea area = new WordMemoryArea();
 		
-		area.readByteLatency = this.readByteLatency;
-        area.readWordLatency = this.readWordLatency;
-        area.writeByteLatency = this.writeByteLatency;
+		area.setReadByteLatency(this.getReadByteLatency());
+        area.setReadWordLatency(this.getReadWordLatency());
+        area.setWriteByteLatency(this.getWriteByteLatency());
         area.writeWordLatency = this.writeWordLatency;
 
 		area.areaReadByte = this.areaReadByte;

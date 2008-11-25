@@ -227,4 +227,29 @@ public class DiskMemoryEntry extends MemoryEntry {
         super.unload();
         bLoaded = false;
     }
+
+	static public BankedMemoryEntry newBankedWordMemoryFromFile(
+			int addr,
+	        int size, 
+	        Memory memory, 
+	        String name, MemoryDomain domain,
+	        String filepath, int fileoffs,
+	        String filepath2, int fileoffs2) throws IOException {
+		DiskMemoryEntry bank0 = newFromFile(
+				new WordMemoryArea(domain.getReadWordLatency(addr)), 
+				addr, size, name + " (bank 0)", domain, filepath, fileoffs, false);
+		DiskMemoryEntry bank1 = newFromFile(
+				new WordMemoryArea(domain.getReadWordLatency(addr)), 
+				addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
+		
+		BankedMemoryEntry bankedMemoryEntry = new BankedMemoryEntry(
+				memory, name, new MemoryEntry[] { bank0, bank1 });
+		
+		bankedMemoryEntry.getBank(0).area.areaWriteWord = null;
+		bankedMemoryEntry.getBank(0).area.areaWriteByte = new BankTogglingAreaWriteByte(bankedMemoryEntry);
+		bankedMemoryEntry.getBank(1).area.areaWriteWord = null;
+		bankedMemoryEntry.getBank(1).area.areaWriteByte = new BankTogglingAreaWriteByte(bankedMemoryEntry);
+
+		return bankedMemoryEntry;
+	}
 }

@@ -58,7 +58,13 @@ public abstract class MemoryArea {
     public int offset;
     
     /** The cycle count for accessing a byte of memory from this area. */
-    public byte readByteLatency, readWordLatency, writeByteLatency, writeWordLatency;
+    protected byte writeWordLatency;
+
+    protected byte writeByteLatency;
+
+    protected byte readWordLatency;
+
+    protected byte readByteLatency;
     
     abstract int getSize();
     
@@ -130,4 +136,35 @@ public abstract class MemoryArea {
 
     abstract void copyToBytes(byte[] array);
     abstract void copyFromBytes(byte[] array);
+
+	public void setReadByteLatency(int readByteLatency) {
+		this.readByteLatency = (byte) readByteLatency;
+	}
+
+	public byte getReadByteLatency() {
+		return readByteLatency;
+	}
+
+	public void setReadWordLatency(int readWordLatency) {
+		this.readWordLatency = (byte) readWordLatency;
+	}
+
+	public byte getReadWordLatency() {
+		return readWordLatency;
+	}
+
+	public void setWriteByteLatency(int writeByteLatency) {
+		this.writeByteLatency = (byte) writeByteLatency;
+	}
+	public void setWriteWordLatency(int writeWordLatency) {
+		this.writeWordLatency = (byte) writeWordLatency;
+	}
+
+	public byte getWriteByteLatency() {
+		return writeByteLatency;
+	}
+
+	public void setLatency(int latency) {
+		readByteLatency = readWordLatency = writeByteLatency = writeWordLatency = (byte) latency;
+	}
 }

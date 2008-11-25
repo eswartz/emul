@@ -83,31 +83,15 @@ public class QtCanvas extends VdpCanvas {
 	}
 	
 	@Override
-	protected void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg) {
+	protected void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask) {
 		// TODO Auto-generated method stub
 		
 	}
 	
 	@Override
-	protected void drawEightSpritePixels(int offs, byte mem, byte fg) {
+	protected void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask) {
 		// TODO Auto-generated method stub
 		
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#getWidth()
-	 */
-	@Override
-	public int getWidth() {
-		return width;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#getHeight()
-	 */
-	@Override
-	public int getHeight() {
-		return height;
 	}
 
 	/* (non-Javadoc)

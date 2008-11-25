@@ -3,6 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
-interface VdpTouchHandler {
+public interface VdpTouchHandler {
 	void modify(int offs);
 }

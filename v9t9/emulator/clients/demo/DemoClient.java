@@ -9,10 +9,13 @@ package v9t9.emulator.clients.demo;
 import java.io.IOException;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
 import v9t9.engine.SoundHandler;
 import v9t9.engine.VdpHandler;
+import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
  * @author ejs
@@ -67,8 +70,9 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     private Machine machine;
 
     Connection connection;
+	private boolean isAlive;
 
-    /** Construct the client as a demo running in a different V9t9 */
+    /** Construct the client as a demo running in a different TI994A */
     public DemoClient(Machine machine) {
         this.machine = machine;
         video = this;
@@ -88,10 +92,10 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
                     	+ " " + connection.getRemoteWriterString());
         } else {
             try {
-            	System.out.println("running V9t9 and waiting for connection");
+            	System.out.println("running TI994A and waiting for connection");
                 // Invoke v9t9
                 client = Runtime.getRuntime().exec(
-                        new String[] { "/usr/local/src/V9t9/source/v9t9",
+                        new String[] { "/usr/local/src/TI994A/source/v9t9",
                              //   "Log Demo 4", "Log Keyboard 2",
                                 //"ListenDemoPort " + connection.getRemoteString()
                                 "ListenDemoFifo " + connection.getRemoteReaderString() 
@@ -127,6 +131,8 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
             System.exit(1);
         }
         
+        isAlive = true;
+        
         vdpPacket = new byte[256];
         vdpPacketStart = 0;
         vdpPacketSize = 0;
@@ -153,12 +159,13 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         } catch (IOException e) {
             e.printStackTrace();
             machine.stop();
+            isAlive = false;
         }
 
     }
 
     /** Send VDP register update */
-    public void writeVdpReg(byte reg, byte val) {
+    public void writeVdpReg(int reg, byte val) {
         try {
             //flushVdp();
             byte[] values = { DEMO_TYPE_VIDEO, 0x02, 0x00, val,
@@ -168,6 +175,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         } catch (IOException e) {
             e.printStackTrace();
             machine.stop();
+            isAlive = false;
         }
     }
 
@@ -186,7 +194,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
      * 
      * @see vdp.Handler#writeVal(short, byte)
      */
-    public void writeVdpMemory(short vdpaddr, byte val) {
+    public void touchAbsoluteVdpMemory(int vdpaddr, byte val) {
         if (vdpPacketSize >= 255
                 || (vdpaddr & 0x3fff) != vdpPacketStart + vdpPacketSize) {
             flushVdp();
@@ -211,6 +219,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         } catch (IOException e) {
             e.printStackTrace();
             machine.stop();
+            isAlive = false;
         }
     }
 
@@ -260,6 +269,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         } catch (IOException e) {
             e.printStackTrace();
             machine.stop();
+            isAlive = false;
         }
     }
 
@@ -278,6 +288,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         } catch (IOException e) {
             e.printStackTrace();
             machine.stop();
+            isAlive = false;
         }
     }
 
@@ -308,6 +319,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         } catch (IOException e) {
             e.printStackTrace();
             machine.stop();
+            isAlive = false;
         }
         
         return  0;
@@ -340,6 +352,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         } catch (IOException e) {
             e.printStackTrace();
             machine.stop();
+            isAlive = false;
         }
     }
     
@@ -353,6 +366,34 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
 
     public void yield() {
     	
+    }
+    
+    public VdpCanvas getCanvas() {
+    	return video.getCanvas();
+    }
+    
+    public void handleEvents() {
+    	
+    }
+    
+    public boolean isAlive() {
+    	return isAlive;
+    }
+    
+    public VdpMmio getVdpMmio() {
+    	return video.getVdpMmio();
+    }
+    
+    public byte readAbsoluteVdpMemory(int vdpaddr) {
+    	return video.readAbsoluteVdpMemory(vdpaddr);
+    }
+    
+    public ByteMemoryAccess getByteReadMemoryAccess(int vdpaddr) {
+    	return video.getByteReadMemoryAccess(vdpaddr);
+    }
+    
+    public byte readVdpReg(int reg) {
+    	return video.readVdpReg(reg);
     }
 }
 

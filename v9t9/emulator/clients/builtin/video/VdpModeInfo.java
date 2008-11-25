@@ -3,13 +3,13 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
-class VdpModeInfo
+public class VdpModeInfo
 {
-	VdpArea 	screen;	 	// screen image table
-	VdpArea 	patt; 				// pattern definition table
-	VdpArea 	color; 				// color definition table
-	VdpArea 	sprite; 			// sprite definition table
-	VdpArea 	sprpat;				// sprite pattern definition table
+	public VdpArea 	screen;	 	// screen image table
+	public VdpArea 	patt; 				// pattern definition table
+	public VdpArea 	color; 				// color definition table
+	public VdpArea 	sprite; 			// sprite definition table
+	public VdpArea 	sprpat;				// sprite pattern definition table
 	public VdpModeInfo() {
 		screen = new VdpArea();
 		patt = new VdpArea();

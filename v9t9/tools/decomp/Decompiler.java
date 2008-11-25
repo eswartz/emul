@@ -34,7 +34,7 @@ public class Decompiler implements ICodeProvider {
     boolean nativeFile = false;
     
     MemoryModel model = new StockMemoryModel();
-    Memory memory = model.getMemory();
+    Memory memory = model.createMemory();
     MemoryDomain CPU = model.getConsole();
 
     private DecompileOptions options;

@@ -4,7 +4,6 @@
 package v9t9.emulator.clients.builtin.video;
 
 import v9t9.engine.memory.ByteMemoryAccess;
-import v9t9.tests.video.SpriteBase;
 
 public class VdpSprite extends SpriteBase {
 	private byte color;
@@ -99,7 +98,7 @@ public class VdpSprite extends SpriteBase {
 	
 	@Override
 	public void draw(VdpCanvas canvas) {
-		if (deleted)
+		if (deleted || color == 0)
 			return;
 		
 		if (numchars == 1) {

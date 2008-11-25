@@ -50,24 +50,30 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 		}
 	}
 	
-	protected void drawEightSpritePixels(int offs, byte mem, byte fg) {
+	protected void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask) {
 		for (int i = 0; i < 8; i++) {
-			if ((mem & 0x80) != 0) {
-				imageData.data[offs + i] = fg;
+			if ((mem & bitmask & 0x80) != 0) {
+				imageData.data[offs] = fg;
 			}
+			offs++;
+			bitmask <<= 1;
 			mem <<= 1;
 		}
 	}
 
-	protected void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg) {
-		int rowOffset = getLineStride();
+	protected void drawEightMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask) {
+		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
-			if ((mem & 0x80) != 0) {
-				imageData.data[offs + i * 2] = fg;
-				imageData.data[offs + i * 2 + 1] = fg;
-				imageData.data[offs + rowOffset + i * 2] = fg;
-				imageData.data[offs + rowOffset + i * 2 + 1] = fg;
+			if ((mem & bitmask & 0x8000) != 0) {
+				imageData.data[offs] = fg;
 			}
+			offs++;
+			bitmask <<= 1;
+			if ((mem & bitmask & 0x8000) != 0) {
+				imageData.data[offs] = fg;
+			}
+			offs++;
+			bitmask <<= 1;
 			mem <<= 1;
 		}
 	}

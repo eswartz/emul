@@ -49,7 +49,7 @@ public abstract class BaseTest extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		memoryModel = new StockMemoryModel();
-		memory = memoryModel.getMemory();
+		memory = memoryModel.createMemory();
         CPU = memoryModel.getConsole();
         memory.addAndMap(new MemoryEntry("test ROM",
         		CPU,

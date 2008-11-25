@@ -21,13 +21,15 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 
-
 /**
  * Render video into an SWT window
  * @author ejs
  *
  */
 public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
+	static {
+		//System.loadLibrary("analogtv");
+	}
 
 	private Shell shell;
 	private Canvas canvas;
@@ -40,7 +42,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	private boolean isBlank;
 	private boolean wasBlank;
 	
-	public SwtVideoRenderer(Display display, ImageDataCanvas canvas) {
+	public SwtVideoRenderer(Display display, VdpCanvas canvas) {
 		shell = new Shell(display);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = layout.marginWidth = 0;
@@ -52,15 +54,18 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		this.canvas.setLayoutData(gridData);
 		this.canvas.setLayout(new FillLayout());
 
-		this.vdpCanvas = canvas;
-		//this.vdpCanvas.setListener(this);
+		this.vdpCanvas = (ImageDataCanvas) canvas;
+		//this.vdpCanvas.setListener(this);		// we use a timer interrupt instead
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
 		// the canvas collects update regions in a big rect
 		this.canvas.addPaintListener(new PaintListener() {
 
 			public void paintControl(PaintEvent e) {
-				updateRect = updateRect.union(new Rectangle(e.x, e.y, e.width, e.height));
+				if (updateRect.isEmpty())
+					updateRect = new Rectangle(e.x, e.y, e.width, e.height);
+				else
+					updateRect = updateRect.union(new Rectangle(e.x, e.y, e.width, e.height));
 				if (e.count == 0) {
 					repaint(e.gc, updateRect);
 					updateRect = new Rectangle(0, 0, 0, 0);
@@ -71,49 +76,40 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		shell.open();
 	}
 
-	/** Force a redraw and repaint of the entire canvas */
 	public void redraw() {
-		Display.getDefault().asyncExec(new Runnable() {
-
-			public void run() {
-				if (canvas.isDisposed())
-					return;
-				
-				// update size if needed
-				Point curSize = canvas.getSize();
-				if (curSize.x != vdpCanvas.getWidth() * zoom
-						|| curSize.y != vdpCanvas.getHeight() * zoom) {
-					Point size = new Point(vdpCanvas.getWidth() * zoom, vdpCanvas.getHeight() * zoom);
-					canvas.setSize(size);
-					
-					Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
-					shell.setSize(trim.width, trim.height);
-				}
-				
-				final boolean becameBlank = vdpCanvas.isBlank() && !isBlank;
-				isBlank = becameBlank;
-				
-				Rectangle redrawRect_ = vdpCanvas.getDirtyRect();
-				if (becameBlank)
-					redrawRect_ = new Rectangle(0, 0, vdpCanvas.width * zoom, vdpCanvas.height * zoom);
-				if (redrawRect_ != null) {
-					final Rectangle redrawRect = redrawRect_;
-					
-					Display.getDefault().asyncExec(new Runnable() {
+		boolean becameBlank = vdpCanvas.isBlank() && !isBlank;
+		isBlank = becameBlank;
+		
+		Rectangle redrawRect_ = vdpCanvas.getDirtyRect();
+		if (becameBlank)
+			redrawRect_ = new Rectangle(0, 0, vdpCanvas.width, vdpCanvas.height);
+		if (redrawRect_ != null) {
+			final Rectangle redrawRect = redrawRect_;
 			
-						public void run() {
-							if (canvas.isDisposed())
-								return;
-							canvas.redraw(redrawRect.x * zoom, redrawRect.y * zoom, 
-									redrawRect.width * zoom, redrawRect.height * zoom, true);
-							vdpCanvas.clearDirty();
-						}
-						
-					});
+			Display.getDefault().asyncExec(new Runnable() {
+	
+				public void run() {
+					if (canvas.isDisposed())
+						return;
 					
+					// update size if needed
+					Point curSize = canvas.getSize();
+					if (curSize.x != vdpCanvas.getWidth() * zoom
+							|| curSize.y != vdpCanvas.getHeight() * zoom) {
+						Point size = new Point(vdpCanvas.getWidth() * zoom, vdpCanvas.getHeight() * zoom);
+						canvas.setSize(size);
+						
+						Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
+						shell.setSize(trim.width, trim.height);
+					}
+					
+					canvas.redraw(redrawRect.x * zoom, redrawRect.y * zoom, 
+							redrawRect.width * zoom, redrawRect.height * zoom, false);
 				}
-			}
-		});
+				
+			});
+			
+		}
 	}
 	
 	public void sync() {
@@ -181,7 +177,21 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			if (image != null && !image.isDisposed()) {
 				image.dispose();
 			}
+			
+			//System.out.println(updateRect);
 			image = new Image(shell.getDisplay(), imageData);
+			/*
+			SWIGTYPE_p_analogtv analogtv = AnalogTVHack.analogtv_allocate(vdpCanvas.getWidth() * zoom, vdpCanvas.getHeight() * zoom,
+					imageData.palette.redMask, imageData.palette.greenMask, imageData.palette.blueMask,
+					0xff << imageData.palette.redShift, 0xff << imageData.palette.greenShift,
+					0xff << imageData.palette.blueShift);
+			
+			AnalogTVHack.analogtv_init_signal(analogtv, 0.1);
+			SWIGTYPE_p_analogtv_reception reception = AnalogTVHack.analogtv_reception_new();
+			AnalogTVHack.analogtv_reception_update(reception);
+			AnalogTVHack.analogtv_add_signal(analogtv, reception);
+			AnalogTVHack.analogtv_draw(analogtv);
+			*/
 			
 			Rectangle destRect = updateRect;
 			
@@ -202,6 +212,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			gc.fillRectangle(updateRect);
 			wasBlank = true;
 		}
+		
+		vdpCanvas.clearDirty();
 		
 	}
 

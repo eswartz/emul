@@ -11,9 +11,6 @@ import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
-import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
-import v9t9.emulator.clients.builtin.video.InternalVdp;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.runtime.TerminatedException;
@@ -22,7 +19,6 @@ import v9t9.engine.CruHandler;
 import v9t9.engine.KeyboardHandler;
 import v9t9.engine.SoundHandler;
 import v9t9.engine.VdpHandler;
-import v9t9.engine.memory.MemoryDomain;
 import v9t9.keyboard.KeyboardState;
 
 /**
@@ -37,14 +33,14 @@ public class PureJavaClient implements Client {
 	private KeyboardState keyboardState;
 	private KeyboardHandler keyboardHandler;
 	private VideoRenderer videoRenderer;
+	private Display display;
 
-    public PureJavaClient(final Machine machine, MemoryDomain videoMemory, Display display) {
-    	
+    public PureJavaClient(final Machine machine, VdpHandler vdp, Display display) {
+    	this.display = display;
         this.machine = machine;
         
-        ImageDataCanvas canvas = new ImageDataCanvas24Bit();
-        videoRenderer = new SwtVideoRenderer(display, canvas);
-        video = new InternalVdp(videoMemory, canvas);
+        videoRenderer = new SwtVideoRenderer(display, vdp.getCanvas());
+        video = vdp;
         
         ((SwtVideoRenderer) videoRenderer).getShell().addShellListener(new ShellAdapter() {
 			@Override
@@ -68,30 +64,6 @@ public class PureJavaClient implements Client {
         
         keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getShell(), keyboardState);
     }
-
-	/** Send VDP register update */
-    public void writeVdpReg(byte reg, byte val) {
-    	video.writeVdpReg(reg, val);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see vdp.Handler#readStatus()
-     */
-    public byte readVdpStatus() {
-    	return video.readVdpStatus();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see vdp.Handler#writeVal(short, byte)
-     */
-    public void writeVdpMemory(short vdpaddr, byte val) {
-        video.writeVdpMemory(vdpaddr, val);
-    }
-
     /*
      * (non-Javadoc)
      * 
@@ -146,24 +118,6 @@ public class PureJavaClient implements Client {
     	//video.update();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see v9t9.Cru#writeBits(int, int, int)
-     */
-    public void writeBits(int addr, int val, int num) {
-    	cru.writeBits(addr, val, num);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see v9t9.Cru#readBits(int, int)
-     */
-    public int readBits(int addr, int num) {
-        return cru.readBits(addr, num);
-    }
-
     /* (non-Javadoc)
      * @see v9t9.Client#getSound()
      */
@@ -178,21 +132,21 @@ public class PureJavaClient implements Client {
     public void setSoundHandler(SoundHandler handler) {
         this.sound = handler;
     }
-    
-    /* (non-Javadoc)
-     * @see sound.Handler#writeSound(byte)
-     */
-    public void writeSound(byte val) {
-    	if (sound != null)
-    		sound.writeSound(val);
-    }
-    
+   
     public CruHandler getCruHandler() {
         return cru;
     }
     
     public void setCruHandler(CruHandler handler) {
         this.cru = handler;
+    }
+    
+    public void handleEvents() {
+    	while (display.readAndDispatch()) ;
+    }
+    
+    public boolean isAlive() {
+    	return !display.isDisposed();
     }
 }
 

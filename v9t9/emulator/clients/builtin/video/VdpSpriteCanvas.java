@@ -5,9 +5,9 @@ package v9t9.emulator.clients.builtin.video;
 
 import java.util.Arrays;
 
-import v9t9.tests.video.SpriteBase;
 
 public class VdpSpriteCanvas {
+	private static final int NUMSPRITES = 32;
 	/** map, per screen block, of which sprites are here */
 	private int[] oldspritebitmap;
 	/** map, per screen block, of which sprites are here */
@@ -20,8 +20,8 @@ public class VdpSpriteCanvas {
 		this.canvas = canvas;
 		this.oldspritebitmap = new int[(canvas.getHeight() / 8) * (canvas.getWidth() / 8)];
 		this.spritebitmap = new int[(canvas.getHeight() / 8) * (canvas.getWidth() / 8)];
-		this.sprites = new VdpSprite[32];
-		for (int n = 0; n < 32; n++) {
+		this.sprites = new VdpSprite[NUMSPRITES];
+		for (int n = 0; n < NUMSPRITES; n++) {
 			sprites[n] = new VdpSprite();
 		}
 		this.rowcount = new int[canvas.getHeight()];
@@ -46,7 +46,7 @@ public class VdpSpriteCanvas {
 
 		// see which sprites we already know are dirty
 		int knowndirty = 0;
-		for (int n = 0; n < 32; n++) {
+		for (int n = 0; n < NUMSPRITES; n++) {
 			if (sprites[n].isBitmapDirty()) {
 				knowndirty |= (1 << n);
 			}
@@ -59,7 +59,7 @@ public class VdpSpriteCanvas {
 			if (screenChanges[i] != 0) {
 				int oldsprites = oldspritebitmap[i] & ~knowndirty;
 				if (oldsprites != 0) {
-					for (int n = 0; n < 32; n++) {
+					for (int n = 0; n < NUMSPRITES; n++) {
 						if ((oldsprites & (1 << n)) != 0) {
 							SpriteBase sprite = sprites[n];
 							sprite.setBitmapDirty(true);
@@ -94,7 +94,7 @@ public class VdpSpriteCanvas {
 				if (spritebitmap[i] != (oldspritebitmap[i] & ~knowndirty)) {
 					int affectedSprites = spritebitmap[i] & ~knowndirty;
 					if (affectedSprites != 0) {
-						for (int n = 0; n < 32; n++) {
+						for (int n = 0; n < NUMSPRITES; n++) {
 							if ((affectedSprites & (1 << n)) != 0) {
 								sprites[n].setBitmapDirty(true);
 								knowndirty |= 1 << n;
