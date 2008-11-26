@@ -16,7 +16,6 @@ public abstract class VdpCanvas {
 	public interface ICanvasListener {
 		void canvasDirtied(VdpCanvas canvas);
 	}
-	protected static final int X_PADDING = 32;
 
 	// record dirty state in terms of 8x8 or 8x6 blocks
 	//private boolean[] dirtyBlocks;
@@ -34,10 +33,49 @@ public abstract class VdpCanvas {
 	/** height in pixels */
 	protected int height;
 
+	protected static final byte[][] stockPalette = {
+		/* 0 */ { 0x00, 0x00, 0x00 }, 
+		/* 1 */ { 0x00, 0x00, 0x00 },
+		/* 2 */ { 0x40, (byte) 0xb0, 0x40 }, 
+		/* 3 */ { 0x60, (byte) 0xc0, 0x60 },
+		/* 4 */ { 0x40, 0x40, (byte) 0xc0 }, 
+		/* 5 */ { 0x60, 0x60, (byte) 0xf0 },
+		/* 6 */ { (byte) 0xc0, 0x40, 0x40 }, 
+		/* 7 */ { 0x40, (byte) 0xf0, (byte) 0xf0 },
+		/* 8 */ { (byte) 0xf0, 0x40, 0x40 }, 
+		/* 9 */ { (byte) 0xff, (byte) 0x80, 0x60 },
+		/* 10 */ { (byte) 0xf0, (byte) 0xc0, 0x40 },
+		/* 11 */ { (byte) 0xff, (byte) 0xe0, 0x60 }, 
+		/* 12 */ { 0x40, (byte) 0x80, 0x40 },
+		/* 13 */ { (byte) 0xc0, 0x40, (byte) 0xc0 },
+		/* 14 */ { (byte) 0xd0, (byte) 0xd0, (byte) 0xd0 },
+		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
+	};
+	
+	protected byte colorPalette[][];
+	protected byte greyPalette[][];
+
 	public VdpCanvas() {
+    	colorPalette = new byte[257][];
+    	for (int i = 0; i < 16; i++)
+    		colorPalette[i] = stockPalette[i]; 
+
+    	greyPalette = new byte[257][];
+    	for (int i = 0; i < 16; i++)
+    		greyPalette[i] = rgbToGrey(stockPalette[i]);
+    	
+    	setGreyscale(false);
+    	
 		setBlockWidth(8);
     	setSize(256, 192);
     }
+
+	private byte[] rgbToGrey(byte[] rgb) {
+		byte[] g = new byte[3];
+		int lum = (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
+		g[0] = g[1] = g[2] = (byte) lum;
+		return g;
+	}
 
 	public void setBlockWidth(int width) {
 		blockWidth = width;
@@ -71,92 +109,39 @@ public abstract class VdpCanvas {
 
 	public abstract void clear();
 
-	protected static byte vdp_palette[][] = {
-		{ 0x00, 0x00, 0x00 }, 
-		{ 0x00, 0x00, 0x00 },
-			{ 0x40, (byte) 0xb0, 0x40 }, 
-			{ 0x60, (byte) 0xc0, 0x60 },
-			{ 0x40, 0x40, (byte) 0xc0 }, 
-			{ 0x60, 0x60, (byte) 0xf0 },
-			{ (byte) 0xc0, 0x40, 0x40 }, 
-			{ 0x40, (byte) 0xf0, (byte) 0xf0 },
-			{ (byte) 0xf0, 0x40, 0x40 }, 
-			{ (byte) 0xff, (byte) 0x80, 0x60 },
-			{ (byte) 0xf0, (byte) 0xc0, 0x40 },
-			{ (byte) 0xff, (byte) 0xe0, 0x60 }, 
-			{ 0x40, (byte) 0x80, 0x40 },
-			{ (byte) 0xc0, 0x40, (byte) 0xc0 },
-			{ (byte) 0xd0, (byte) 0xd0, (byte) 0xd0 },
-			{ (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
-			
-			// color #16 reflects the vdpfg  
-			{ 0x00, 0x00, 0x00 } };
-
-	protected static float yiq[][] = {
-			{ 0.00f, 0.47f, 0.47f },
-			{ 0.00f, 0.47f, 0.47f },
-			{ 0.53f, 0.07f, 0.20f },
-			{ 0.67f, 0.17f, 0.27f },
-			{ 0.40f, 0.40f, 1.00f },
-			{ 0.53f, 0.43f, 0.93f },
-			{ 0.47f, 0.83f, 0.30f },
-			{ 0.73f, 0.00f, 0.70f },
-			{ 0.53f, 0.93f, 0.27f },
-			{ 0.67f, 0.93f, 0.27f },
-			{ 0.73f, 0.57f, 0.07f },
-			{ 0.80f, 0.57f, 0.17f },
-			{ 0.47f, 0.13f, 0.23f },
-			{ 0.53f, 0.73f, 0.67f },
-			{ 0.80f, 0.47f, 0.47f },
-			{ 1.00f, 0.47f, 0.47f }
-	};
-	
-	protected static float yiqrgb[][] = {
-		{ 1f, 	0.9563f,	0.6210f },
-		{ 1f,	-.2721f,	-.6474f },
-		{ 1f,	-1.1070f,	1.7046f }
-	};
-	
-	static {
-		// EJS clearly has no idea what he's doing
-		for (int i = 0; i < 16; i++) {
-			/*
-			float[] mm = { 0, 0, 0 };
-			for (int r = 0; r < 3; r++) {
-				for (int c = 0; c < 3; c++) {
-					mm[r] += yiqrgb[r][c] * yiq[i][c];
-				}
-			}
-			*/
-			/*
-			
-			float y = yiq[i][0];
-			float rmy = yiq[i][1];
-			float bmy = yiq[i][2];
-			mm[0] = y + rmy;
-			mm[1] = (float) (y - 0.51*rmy - 0.186*bmy);
-			mm[2] = y + bmy;
-			*/
-			/*
-			vdp_palette[i][0] = (byte)(255 * mm[0]);
-			vdp_palette[i][1] = (byte)(255 * mm[1]);
-			vdp_palette[i][2] = (byte)(255 * mm[2]);
-			*/
-		}
-	
-	}
-
 	private boolean isBlank;
 
 	private ICanvasListener listener;
 
+	private byte[][] thePalette;
+
+	private boolean clearFromPalette;
+
+	private int xoffs;
+
+	private int yoffs;
+
 	/** Get the RGB triple for the palette entry. */
-	public byte[] getColorRGB(int idx) {
-		if (idx == 0)
+	public byte[] getRGB(int idx) {
+		if (idx == 0 && !clearFromPalette)
 			idx = clearColor;
-		return vdp_palette[idx];
+		return thePalette[idx];
 	}
 	
+	/** Set the RGB triple for the palette entry. */
+	public void setRGB(int idx, byte[] rgb) {
+		if (colorPalette[idx] == null)
+			colorPalette[idx] = new byte[3];
+		colorPalette[idx][0] = rgb[0];
+		colorPalette[idx][1] = rgb[1];
+		colorPalette[idx][2] = rgb[2];
+		
+		greyPalette[idx] = rgbToGrey(rgb);
+	}
+	
+	public byte[] getStockRGB(int i) {
+		return stockPalette[i];
+	}
 	/** Get an implementation-defined offset into the bitmap */ 
 	public abstract int getBitmapOffset(int x, int y);
 
@@ -397,6 +382,31 @@ public abstract class VdpCanvas {
 	
 	public int getHeight() {
 		return height;
+	}
+
+	public void setGreyscale(boolean b) {
+		thePalette = b ? greyPalette : colorPalette;
+	}
+
+	public void setClearFromPalette(boolean b) {
+		clearFromPalette = b;
+	}
+
+	/**
+	 * Set adjustment offset 
+	 * @param i
+	 * @param j
+	 */
+	public void setOffset(int x, int y) {
+		xoffs = x;
+		yoffs = y;
+	}
+	
+	public int getXOffset() { 
+		return xoffs;
+	}
+	public int getYOffset() {
+		return yoffs;
 	}
 
 }

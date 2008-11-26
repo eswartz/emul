@@ -8,7 +8,7 @@ import java.util.Arrays;
 import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
-import v9t9.emulator.clients.builtin.video.VdpConstants;
+import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
 import v9t9.emulator.clients.builtin.video.VdpSpriteCanvas;
 import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
@@ -35,7 +35,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		public void modify(int offs) {
 			int patt;
 
-			if ((vdpregs[1] & VdpConstants.R1_SPR4) != 0) {
+			if ((vdpregs[1] & VdpTMS9918A.R1_SPR4) != 0) {
 				patt = (offs >> 3) & 0xfc;
 				Arrays.fill(vdpChanges.sprpat, patt, patt + 4, (byte) 1);
 			} else {
@@ -51,16 +51,8 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	private VdpSpriteCanvas spriteCanvas;
 
 	public SpriteRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
-			VdpChanges vdpChanges, VdpCanvas vdpCanvas) {
-		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas);
-
-		int ramsize = (vdpregs[1] & VdpConstants.R1_RAMSIZE) != 0 ? 0x3fff
-				: 0xfff;
-
-		vdpModeInfo.sprite.base = (vdpregs[5] * 0x80) & ramsize;
-		vdpModeInfo.sprite.size = 128;
-		vdpModeInfo.sprpat.base = (vdpregs[6] * 0x800) & ramsize;
-		vdpModeInfo.sprpat.size = 2048;
+			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
+		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas, modeInfo);
 
 		vdpTouchBlock.sprite = modify_sprite_default;
 		vdpTouchBlock.sprpat = modify_sprpat_default;
@@ -107,20 +99,20 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		// figure sprite size/mag
 		int size = 8;
 		int numchars = 1;
-		switch (vdpregs[1] & (VdpConstants.R1_SPRMAG + VdpConstants.R1_SPR4)) {
+		switch (vdpregs[1] & (VdpTMS9918A.R1_SPRMAG + VdpTMS9918A.R1_SPR4)) {
 		case 0:
 			size = 8;
 			numchars = 1;
 			break;
-		case VdpConstants.R1_SPRMAG:
+		case VdpTMS9918A.R1_SPRMAG:
 			size = 16;
 			numchars = 1;
 			break;
-		case VdpConstants.R1_SPR4:
+		case VdpTMS9918A.R1_SPR4:
 			size = 16;
 			numchars = 4;
 			break;
-		case VdpConstants.R1_SPR4 + VdpConstants.R1_SPRMAG:
+		case VdpTMS9918A.R1_SPR4 + VdpTMS9918A.R1_SPRMAG:
 			size = 32;
 			numchars = 4;
 			break;
@@ -170,16 +162,20 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 
 		if (fifth_sprite != -1) {
 			vdpStatus = (byte) (vdpStatus
-					& ~(VdpConstants.VDP_FIVE_SPRITES | VdpConstants.VDP_FIFTH_SPRITE) 
-					| (VdpConstants.VDP_FIVE_SPRITES | fifth_sprite));
+					& ~(VdpTMS9918A.VDP_FIVE_SPRITES | VdpTMS9918A.VDP_FIFTH_SPRITE) 
+					| (VdpTMS9918A.VDP_FIVE_SPRITES | fifth_sprite));
 		} else {
-			vdpStatus &= ~(VdpConstants.VDP_FIVE_SPRITES | VdpConstants.VDP_FIFTH_SPRITE);
+			vdpStatus &= ~(VdpTMS9918A.VDP_FIVE_SPRITES | VdpTMS9918A.VDP_FIFTH_SPRITE);
 		}
 
 
 		return vdpStatus;
 	}
 
+	/**
+	 * Draw the sprites
+	 * @param force
+	 */
 	public void updateCanvas(boolean force) {
 		spriteCanvas.drawSprites();
 	}

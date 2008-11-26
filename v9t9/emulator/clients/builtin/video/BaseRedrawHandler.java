@@ -32,13 +32,19 @@ public abstract class BaseRedrawHandler {
 	protected final byte[] vdpregs;
 	
 	public BaseRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory, 
-			VdpChanges changed, VdpCanvas vdpCanvas) {
+			VdpChanges changed, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
 		this.vdpregs = vdpregs;
 		this.vdpMemory = vdpMemory;
 		this.vdpChanges = changed;
 		this.vdpCanvas = vdpCanvas;
-		this.vdpModeInfo = new VdpModeInfo();
+		this.vdpModeInfo = modeInfo;
 		this.vdpTouchBlock = new VdpTouchHandlerBlock();
+		if (true && modeInfo.screen.size != 0) {
+			System.out.println("VDP Tables:\nScreen: " + Integer.toHexString(modeInfo.screen.base) + "\n"+
+					"Pattern: " + Integer.toHexString(modeInfo.patt.base) + "\n" +
+					"Color: " + Integer.toHexString(modeInfo.color.base) + "\n");
+					
+		}
 	}
 	
 	protected VdpTouchHandler modify_screen_default = new VdpTouchHandler() {

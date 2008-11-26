@@ -27,16 +27,15 @@ import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
  *
  */
 public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
-	static {
-		//System.loadLibrary("analogtv");
-	}
-
 	private Shell shell;
 	private Canvas canvas;
 	private final ImageDataCanvas vdpCanvas;
 	private Color bg;
 
+	// global zoom
 	private int zoom = 2;
+	// zoom based on the resolution
+	private int zoomx = 2, zoomy = 2;
 	private Image image;
 	private Rectangle updateRect;
 	private boolean isBlank;
@@ -44,6 +43,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	
 	public SwtVideoRenderer(Display display, VdpCanvas canvas) {
 		shell = new Shell(display);
+		
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = layout.marginWidth = 0;
 		shell.setLayout(layout);
@@ -62,18 +62,36 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		this.canvas.addPaintListener(new PaintListener() {
 
 			public void paintControl(PaintEvent e) {
-				if (updateRect.isEmpty())
-					updateRect = new Rectangle(e.x, e.y, e.width, e.height);
-				else
-					updateRect = updateRect.union(new Rectangle(e.x, e.y, e.width, e.height));
+				if (updateRect.isEmpty()) {
+					updateRect.x = e.x;
+					updateRect.y = e.y;
+					updateRect.width = e.width;
+					updateRect.height = e.height;
+				}
+				else {
+					updateRect.add(new Rectangle(e.x, e.y, e.width, e.height));
+				}
 				if (e.count == 0) {
+					//System.out.println(updateRect);
 					repaint(e.gc, updateRect);
-					updateRect = new Rectangle(0, 0, 0, 0);
+					updateRect.width = updateRect.height = 0;
 				}
 			}
 			
 		});
 		shell.open();
+	}
+
+	protected Rectangle logicalToPhysical(Rectangle logical) {
+		return logicalToPhysical(logical.x, logical.y, logical.width, logical.height);
+	}
+	
+	protected Rectangle logicalToPhysical(int x, int y, int w, int h) {
+		return new Rectangle(x * zoomx, y * zoomy, w * zoomx, h * zoomy);
+	}
+	
+	protected Rectangle physicalToLogical(Rectangle physical) {
+		return new Rectangle(physical.x / zoomx, physical.y / zoomy, physical.width / zoomx, physical.height / zoomy);
 	}
 
 	public void redraw() {
@@ -93,18 +111,24 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 						return;
 					
 					// update size if needed
+					updateZoomFactor();
+					
 					Point curSize = canvas.getSize();
-					if (curSize.x != vdpCanvas.getWidth() * zoom
-							|| curSize.y != vdpCanvas.getHeight() * zoom) {
-						Point size = new Point(vdpCanvas.getWidth() * zoom, vdpCanvas.getHeight() * zoom);
+					
+					Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
+					
+					if (curSize.x != targetRect.width
+							|| curSize.y != targetRect.height) {
+						Point size = new Point(targetRect.width, targetRect.height);
 						canvas.setSize(size);
 						
 						Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
 						shell.setSize(trim.width, trim.height);
 					}
 					
-					canvas.redraw(redrawRect.x * zoom, redrawRect.y * zoom, 
-							redrawRect.width * zoom, redrawRect.height * zoom, false);
+					Rectangle redrawPhys = logicalToPhysical(redrawRect);
+					canvas.redraw(redrawPhys.x, redrawPhys.y, 
+							redrawPhys.width, redrawPhys.height, false);
 				}
 				
 			});
@@ -112,6 +136,19 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		}
 	}
 	
+	protected void updateZoomFactor() {
+		if (vdpCanvas.getWidth() > 256) {
+			zoomx = zoom / 2;
+		} else {
+			zoomx = zoom;
+		}
+		if (vdpCanvas.getHeight() > 212) {
+			zoomy = zoom / 2;
+		} else {
+			zoomy = zoom;
+		}
+	}
+
 	public void sync() {
 		Display.getDefault().syncExec(new Runnable() {
 
@@ -123,12 +160,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		});
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.VideoRenderer#resize(int, int)
-	 */
-	public void resize(int width, int height) {
-	}
-
 	public Shell getShell() {
 		return shell;
 	}
@@ -180,29 +211,19 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			
 			//System.out.println(updateRect);
 			image = new Image(shell.getDisplay(), imageData);
-			/*
-			SWIGTYPE_p_analogtv analogtv = AnalogTVHack.analogtv_allocate(vdpCanvas.getWidth() * zoom, vdpCanvas.getHeight() * zoom,
-					imageData.palette.redMask, imageData.palette.greenMask, imageData.palette.blueMask,
-					0xff << imageData.palette.redShift, 0xff << imageData.palette.greenShift,
-					0xff << imageData.palette.blueShift);
-			
-			AnalogTVHack.analogtv_init_signal(analogtv, 0.1);
-			SWIGTYPE_p_analogtv_reception reception = AnalogTVHack.analogtv_reception_new();
-			AnalogTVHack.analogtv_reception_update(reception);
-			AnalogTVHack.analogtv_add_signal(analogtv, reception);
-			AnalogTVHack.analogtv_draw(analogtv);
-			*/
 			
 			Rectangle destRect = updateRect;
 			
-			destRect = destRect.intersection(new Rectangle(0, 0, 
-					vdpCanvas.getWidth() * zoom, vdpCanvas.getHeight() * zoom));
-			Rectangle imageRect = new Rectangle(destRect.x / zoom, destRect.y / zoom, 
-					destRect.width / zoom, destRect.height / zoom);
+			destRect = destRect.intersection(logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight()));
+			
+			Rectangle imageRect = physicalToLogical(destRect);
 			imageRect = vdpCanvas.mapVisible(imageRect);
 			
-			gc.drawImage(image, imageRect.x, imageRect.y, imageRect.width, imageRect.height, 
-					destRect.x, destRect.y, destRect.width, destRect.height);
+			gc.drawImage(image, 
+					imageRect.x, imageRect.y, 
+					imageRect.width, imageRect.height, 
+					destRect.x, destRect.y, 
+					destRect.width, destRect.height);
 			wasBlank = false;
 		} else {
 			if (wasBlank)
@@ -234,7 +255,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		if (color != null)
 			color.dispose();
 		byte[] rgb;
-		rgb = vdpCanvas.getColorRGB(idx);
+		rgb = vdpCanvas.getRGB(idx);
 		return new Color(shell.getDisplay(), rgb[0] & 0xff, rgb[1] & 0xff, rgb[2] & 0xff);
 	}
 }

@@ -16,6 +16,7 @@ import v9t9.engine.CruHandler;
 import v9t9.engine.SoundHandler;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.engine.memory.MemoryDomain;
 
 /**
  * @author ejs
@@ -394,6 +395,23 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     
     public byte readVdpReg(int reg) {
     	return video.readVdpReg(reg);
+    }
+    
+    public MemoryDomain getVideoMemory() {
+    	return video.getVideoMemory();
+    }
+    
+    public void setVdpMmio(VdpMmio mmio) {
+    	video.setVdpMmio(mmio);
+    }
+    
+    public int getMemorySize() {
+    	return video.getMemorySize();
+    }
+    
+    public void tick() {
+    	video.tick();
+    	
     }
 }
 

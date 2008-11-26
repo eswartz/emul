@@ -16,7 +16,6 @@ public class QtCanvas extends VdpCanvas {
 
 	private QImage image;
 	public QtCanvas() {
-		image = null;
 	}
 	
 	/* (non-Javadoc)
@@ -26,7 +25,7 @@ public class QtCanvas extends VdpCanvas {
 	public void doChangeSize() {
 		if (image != null)
 			image.dispose();
-		image = new QImage(new QSize(width + X_PADDING, height), Format.Format_RGB32);
+		image = new QImage(new QSize(width, height), Format.Format_RGB32);
 	}
 
 	/* (non-Javadoc)
@@ -38,7 +37,7 @@ public class QtCanvas extends VdpCanvas {
 	}
 
 	protected int getPixel(int color) {
-		byte[] rgb = getColorRGB(color);
+		byte[] rgb = getRGB(color);
 		return ((rgb[0] & 0xff) << 24) | ((rgb[1] & 0xff) << 16) | ((rgb[2] & 0xff)); 
 	}
 
@@ -115,7 +114,7 @@ public class QtCanvas extends VdpCanvas {
 	}
 
 	public QRect mapVisible(QRect rect) {
-		return new QRect(rect.x() + X_PADDING, rect.y(), rect.width(), rect.height());
+		return new QRect(rect.x(), rect.y(), rect.width(), rect.height());
 	}
 
 }

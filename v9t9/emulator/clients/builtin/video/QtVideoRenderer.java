@@ -77,7 +77,7 @@ public class QtVideoRenderer implements VideoRenderer {
 	public void setForegroundAndBackground(int bg, int fg) {
 		if (this.bg != null)
 			this.bg.dispose();
-		byte[] rgb = vdpCanvas.getColorRGB(bg);
+		byte[] rgb = vdpCanvas.getRGB(bg);
 		this.bg = new QColor(rgb[0], rgb[1], rgb[2]);
 	}
 
@@ -143,6 +143,10 @@ public class QtVideoRenderer implements VideoRenderer {
 	}
 
 	public void setZoom(int zoom) {
+		setZoom(zoom, zoom);
+	}
+
+	public void setZoom(int zoom, int zoomy) {
 		this.zoom = zoom;
 		redraw();
 	}

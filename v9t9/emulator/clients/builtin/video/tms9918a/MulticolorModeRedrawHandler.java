@@ -7,7 +7,7 @@ import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
-import v9t9.emulator.clients.builtin.video.VdpConstants;
+import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -20,18 +20,9 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 		VdpModeRedrawHandler {
 
 	public MulticolorModeRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
-			VdpChanges vdpChanges, VdpCanvas vdpCanvas) {
-		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas);
-		
-		int         ramsize = (vdpregs[1] & VdpConstants.R1_RAMSIZE) != 0 ? 0x3fff : 0xfff;
+			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
+		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas, modeInfo);
 
-		vdpModeInfo.screen.base = (vdpregs[2] * 0x400) & ramsize;
-		vdpModeInfo.screen.size = 768;
-		vdpModeInfo.color.base = 0;
-		vdpModeInfo.color.size = 0;
-		vdpModeInfo.patt.base = (vdpregs[4] * 0x800) & ramsize;
-		vdpModeInfo.patt.size = 1536;
-		vdpCanvas.setSize(256, 192);
 		vdpTouchBlock.screen = modify_screen_default;
 		vdpTouchBlock.color = null;
 		vdpTouchBlock.patt = modify_patt_default;

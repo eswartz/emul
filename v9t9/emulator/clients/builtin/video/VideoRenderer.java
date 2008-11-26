@@ -23,10 +23,6 @@ public interface VideoRenderer {
     /** Synchronize so that screen updates are visible */
     void sync();
     
-    /** Resize the screen to this size in pixels
-        (usually 256x192 or 240x192 for text mode) */
-    void resize(int width, int height);
-
 	void setZoom(int zoom);
 
 	VdpCanvas getCanvas();

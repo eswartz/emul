@@ -44,7 +44,7 @@ abstract public class Machine {
     final int clientTick = 1000 / 100;
     final int cpuTick = 1000 / 100;
     private long now;
-    private TimerTask interruptTask;
+    private TimerTask vdpInterruptTask;
     private TimerTask clientTask;
     private TimerTask cpuTask;
 	protected MemoryModel memoryModel;
@@ -106,14 +106,17 @@ abstract public class Machine {
     
     public void start() {
     	allowInterrupts = true;
-        interruptTask = new TimerTask() {
+        vdpInterruptTask = new TimerTask() {
 
             @Override
 			public void run() {
-                handleTimerInterrupt();
+            	vdp.tick();
+            	if (allowInterrupts) { 
+            		cpu.holdpin(Cpu.INTPIN_INTREQ);
+            	}
             }
         };
-        timer.scheduleAtFixedRate(interruptTask, 0, interruptTick);
+        timer.scheduleAtFixedRate(vdpInterruptTask, 0, interruptTick);
         
         clientTask = new TimerTask() {
         	
@@ -170,12 +173,6 @@ abstract public class Machine {
 			}
 		}
     	executor.execute();
-    }
-
-    protected void handleTimerInterrupt() {
-        if (allowInterrupts) { 
-            cpu.holdpin(Cpu.INTPIN_INTREQ);
-        }
     }
 
     public Cpu getCpu() {

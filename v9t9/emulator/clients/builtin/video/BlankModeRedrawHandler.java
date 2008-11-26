@@ -14,25 +14,13 @@ public class BlankModeRedrawHandler extends BaseRedrawHandler implements
 		VdpModeRedrawHandler {
 
 	public BlankModeRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
-			VdpChanges vdpChanges, VdpCanvas vdpCanvas) {
-		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas);
-		vdpModeInfo.screen.base = 0;
-		vdpModeInfo.screen.size = 0;
-		vdpModeInfo.color.base = 0;
-		vdpModeInfo.color.size = 0;
-		vdpModeInfo.patt.base = 0;
-		vdpModeInfo.patt.size = 0;
-		vdpModeInfo.sprite.base = 0;
-		vdpModeInfo.sprite.size = 0;
-		vdpModeInfo.sprpat.base = 0;
-		vdpModeInfo.sprpat.size = 0;
-		vdpCanvas.setSize(256, 192);
+			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
+		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas, modeInfo);
+		
 		vdpTouchBlock.patt = null;
 		vdpTouchBlock.sprite = vdpTouchBlock.sprpat = null;
 		vdpTouchBlock.screen = null;
 		vdpTouchBlock.color = null;
-
-
 	}
 
 	/* (non-Javadoc)

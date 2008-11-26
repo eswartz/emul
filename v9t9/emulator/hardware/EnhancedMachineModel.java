@@ -36,8 +36,8 @@ public class EnhancedMachineModel implements MachineModel {
 	public VdpHandler createVdp(Machine machine) {
 		VdpV9938 vdp = new VdpV9938(
 				memoryModel.VIDEO,
-				new Vdp9938Mmio(machine.getMemory(), memoryModel.VIDEO, 0x20000),
 				new ImageDataCanvas24Bit());
+		new Vdp9938Mmio(machine.getMemory(), vdp, 0x20000);
 		return vdp;
 	}
 

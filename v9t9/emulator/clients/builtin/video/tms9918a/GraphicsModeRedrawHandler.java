@@ -9,7 +9,7 @@ import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
-import v9t9.emulator.clients.builtin.video.VdpConstants;
+import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
 import v9t9.engine.VdpHandler;
@@ -32,22 +32,8 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements VdpM
 	};
 
 	public GraphicsModeRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory, 
-			VdpChanges changed, VdpCanvas vdpCanvas) {
-		super(vdpregs, vdpMemory, changed, vdpCanvas);
-		
-		int         ramsize = (vdpregs[1] & VdpConstants.R1_RAMSIZE) != 0 ? 0x3fff : 0xfff;
-
-		vdpModeInfo.screen.base = (vdpregs[2] * 0x400) & ramsize;
-		vdpModeInfo.screen.size = 768;
-		vdpModeInfo.color.base = (vdpregs[3] * 0x40) & ramsize;
-		vdpModeInfo.color.size = 32;
-		vdpModeInfo.patt.base = (vdpregs[4] * 0x800) & ramsize;
-		vdpModeInfo.patt.size = 2048;
-		vdpModeInfo.sprite.base = (vdpregs[5] * 0x80) & ramsize;
-		vdpModeInfo.sprite.size = 128;
-		vdpModeInfo.sprpat.base = (vdpregs[6] * 0x800) & ramsize;
-		vdpModeInfo.sprpat.size = 2048;
-		vdpCanvas.setSize(256, 192);
+			VdpChanges changed, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
+		super(vdpregs, vdpMemory, changed, vdpCanvas, modeInfo);
 		vdpTouchBlock.screen = modify_screen_default;
 		vdpTouchBlock.color = modify_color_graphics;
 		vdpTouchBlock.patt = modify_patt_default;

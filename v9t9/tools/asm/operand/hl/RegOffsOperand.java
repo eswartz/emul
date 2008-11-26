@@ -77,7 +77,7 @@ public class RegOffsOperand extends RegisterOperand {
 			return new LLForwardOperand(this, 2);
 		if (!(addrRes instanceof LLImmedOperand))
 			throw new ResolveException(addrRes, "Expected an immediate");
-		return new LLRegIndOperand(regRes.getRegister(), addrRes.getImmediate());
+		return new LLRegIndOperand(this, regRes.getRegister(), addrRes.getImmediate());
 	}
 	
 }

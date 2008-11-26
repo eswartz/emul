@@ -20,11 +20,11 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 	protected ImageData createImageData() {
 		RGB[] colors = new RGB[16];
 		for (int i = 0; i < 16; i++) {
-			byte[] rgb = getColorRGB(i);
+			byte[] rgb = getRGB(i);
 			colors[i] = new RGB(rgb[0] & 255, rgb[1] & 255, rgb[2] & 255);
 		}
 		PaletteData palette = new PaletteData(colors);
-		return new ImageData(width, height, 8, palette);
+		return new ImageData(width + 16, height + 16, 8, palette);
 	}
 
 	/* (non-Javadoc)
@@ -33,6 +33,26 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 	@Override
 	public void clear() {
 		Arrays.fill(imageData.data, 0, imageData.data.length, (byte) clearColor);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#getBitmapOffset(int, int)
+	 */
+	@Override
+	public int getBitmapOffset(int x, int y) {
+		return imageData.bytesPerLine * (y) + (x);
+	}
+
+	public int getPixelStride() {
+		return 1;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#setColorAtOffset(int, byte)
+	 */
+	@Override
+	public void setColorAtOffset(int offset, byte color) {
+		imageData.data[offset] = color;
 	}
 
 	protected void drawEightPixels(int offs, byte mem, byte fg, byte bg) {
@@ -76,27 +96,6 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			bitmask <<= 1;
 			mem <<= 1;
 		}
-	}
-
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#getBitmapOffset(int, int)
-	 */
-	@Override
-	public int getBitmapOffset(int x, int y) {
-		return imageData.bytesPerLine * y + (x);
-	}
-
-	public int getPixelStride() {
-		return 1;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#setColorAtOffset(int, byte)
-	 */
-	@Override
-	public void setColorAtOffset(int offset, byte color) {
-		imageData.data[offset] = color;
 	}
 
 }

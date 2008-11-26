@@ -51,11 +51,6 @@ public class TI994A extends Machine {
     	return ((StandardConsoleMemoryModel) memoryModel).speechMmio;
     }
     
-    @Override
-    protected void handleTimerInterrupt() {
-    	super.handleTimerInterrupt();
-    }
-    
  	public MemoryDomain getGplMemoryDomain() {
 		return ((StandardConsoleMemoryModel) memoryModel).GRAPHICS;
 	}

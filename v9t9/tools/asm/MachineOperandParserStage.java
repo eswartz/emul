@@ -69,7 +69,7 @@ public class MachineOperandParserStage implements IOperandParserStage {
                     	return new LLRegIncOperand(val);
                     } else {
                         // *R0
-                    	return new LLRegIndOperand(val, 0);
+                    	return new LLRegIndOperand(null, val, 0);
                     }
                 } else {
                     // R9
@@ -87,7 +87,7 @@ public class MachineOperandParserStage implements IOperandParserStage {
                     if (val == 0) {
                     	throw new ParseException("Illegal index register (0): " + string);
                     }
-                    return new LLRegIndOperand(val, immed);
+                    return new LLRegIndOperand(null, val, immed);
                 } else {
                     // @>5
                     return new LLAddrOperand(null, immed);

@@ -9,6 +9,7 @@ package v9t9.engine;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.engine.memory.MemoryDomain;
 
 /** 
  * Render VDP video.  This is not responsible for managing memory,
@@ -48,4 +49,12 @@ public interface VdpHandler {
 	VdpCanvas getCanvas();
 	
 	VdpMmio getVdpMmio();
+	void setVdpMmio(VdpMmio mmio);
+
+	MemoryDomain getVideoMemory();
+	
+	int getMemorySize();
+
+	/** 60Hz timer */
+	void tick();
 }

@@ -15,9 +15,6 @@ import java.util.Arrays;
 public class MemoryCanvas extends VdpCanvas {
     final int UPDATEBLOCK_ROW_STRIDE = (256+64);
 	byte[] bitmap = new byte[UPDATEBLOCK_ROW_STRIDE * 256];
-	private int width;
-	private int height;
-	private int clearColor;
     final int UPDPTR(int y,int x) { return ((y)*UPDATEBLOCK_ROW_STRIDE)+(x)+32; }
 
     public MemoryCanvas() {
@@ -99,9 +96,9 @@ public class MemoryCanvas extends VdpCanvas {
 			int cl = bitmap[offs++];
 			if (cl == 0) 
 				cl = clearColor;
-			rgb24[idx++] = vdp_palette[cl][0];
-			rgb24[idx++] = vdp_palette[cl][1];
-			rgb24[idx++] = vdp_palette[cl][2];
+			rgb24[idx++] = colorPalette[cl][0];
+			rgb24[idx++] = colorPalette[cl][1];
+			rgb24[idx++] = colorPalette[cl][2];
 		}
 	}
 	
@@ -121,9 +118,9 @@ public class MemoryCanvas extends VdpCanvas {
 					alpha = 0;
 			}
 			argb32[idx++] = alpha;
-			argb32[idx++] = vdp_palette[cl][0];
-			argb32[idx++] = vdp_palette[cl][1];
-			argb32[idx++] = vdp_palette[cl][2];
+			argb32[idx++] = colorPalette[cl][0];
+			argb32[idx++] = colorPalette[cl][1];
+			argb32[idx++] = colorPalette[cl][2];
 		}
 	}
 

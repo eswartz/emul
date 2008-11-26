@@ -7,10 +7,8 @@ import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
-import v9t9.emulator.hardware.memory.VdpRamArea;
 import v9t9.emulator.hardware.memory.mmio.Vdp9918AMmio;
 import v9t9.engine.VdpHandler;
-import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryModel;
 
 /**
@@ -38,10 +36,8 @@ public class StandardMachineModel implements MachineModel {
 	public VdpHandler createVdp(Machine machine) {
 		VdpTMS9918A vdp = new VdpTMS9918A(
 				memoryModel.VIDEO,
-				new Vdp9918AMmio(machine.getMemory(), memoryModel.VIDEO,
-						new MemoryEntry("VDP RAM", memoryModel.VIDEO, 0x0000, 0x4000, 
-								new VdpRamArea(0x4000))),
 				new ImageDataCanvas24Bit());
+		new Vdp9918AMmio(machine.getMemory(), vdp, 0x4000);
 		return vdp;
 	}
 	

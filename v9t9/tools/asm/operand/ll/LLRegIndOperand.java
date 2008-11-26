@@ -6,6 +6,7 @@ package v9t9.tools.asm.operand.ll;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.ResolveException;
+import v9t9.tools.asm.operand.hl.RegOffsOperand;
 import v9t9.utils.Utils;
 
 /**
@@ -22,8 +23,8 @@ public class LLRegIndOperand extends LLOperand implements Operand {
 		setRegister(reg);
 		setOffset(0);
 	}
-	public LLRegIndOperand(int reg, int offset) {
-		super(null);
+	public LLRegIndOperand(RegOffsOperand original, int reg, int offset) {
+		super(original);
 		setRegister(reg);
 		setOffset(offset);
 	}

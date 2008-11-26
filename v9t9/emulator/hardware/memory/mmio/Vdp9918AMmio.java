@@ -6,6 +6,8 @@
  */
 package v9t9.emulator.hardware.memory.mmio;
 
+import v9t9.emulator.hardware.memory.VdpRamArea;
+import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -17,23 +19,31 @@ import v9t9.engine.memory.MemoryEntry;
  */
 public class Vdp9918AMmio extends VdpMmio {
 
-	protected final MemoryEntry memoryEntry;
+	protected MemoryEntry memoryEntry;
 	protected final MemoryDomain videoMemory;
 
 	/**
      * @param machine
      */
-    public Vdp9918AMmio(Memory memory, MemoryDomain videoMemory, MemoryEntry memoryEntry) {
-		this.videoMemory = videoMemory;
-		this.memoryEntry = memoryEntry;
+    public Vdp9918AMmio(Memory memory, VdpHandler vdp, int memorySize) {
+    	super(new VdpRamArea(memorySize));
+		this.videoMemory = vdp.getVideoMemory();
+		initMemory(memory, memorySize);
+		vdp.setVdpMmio(this);
+		setVdpHandler(vdp);
+    }
+    
+    protected void initMemory(Memory memory, int memorySize) {
+    	MemoryEntry memoryEntry = new MemoryEntry(
+    			"VDP RAM", videoMemory, 0x0000, 0x4000, 
+				fullRamArea);
+    	this.memoryEntry = memoryEntry;
 		memory.addAndMap(memoryEntry);
-		
     }
 
 	protected int vdpaddr;
 	protected boolean vdpaddrflag;
 	protected byte vdpreadahead;
-	protected byte vdpstatus;
     
     /**
      * @see v9t9.engine.memory.Memory.ConsoleMmioReader#read
@@ -60,12 +70,7 @@ public class Vdp9918AMmio extends VdpMmio {
 	}
 
 	protected byte readStatus() {
-		byte ret;
-		/* >8802, status read */
-		ret = vdpstatus;
-		vdpstatus &= ~0xe0;		// thierry:  reset bits when read
-		
-		// TODO machine.getCpu().reset9901int(v9t9.cpu.Cpu.M_INT_VDP);
+		byte ret = vdpHandler.readVdpStatus();
 		return ret;
 	}
 
