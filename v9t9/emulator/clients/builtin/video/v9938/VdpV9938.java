@@ -5,6 +5,8 @@ package v9t9.emulator.clients.builtin.video.v9938;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
+import v9t9.emulator.clients.builtin.video.tms9918a.GraphicsModeRedrawHandler;
+import v9t9.emulator.clients.builtin.video.tms9918a.SpriteRedrawHandler;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.engine.memory.BankedMemoryEntry;
@@ -19,7 +21,7 @@ import v9t9.engine.memory.MemoryDomain;
  * R1:	M1 @ 4, M2 @ 3 
  * <p>
  * <pre>
- *                   M1  M2  M3  M4  M5
+ *                   M1  M2  M3  M4  M5     Mode #
  * Text 1 mode:      1   0   0   0   0		= 1
  * Text 2 mode:      1   0   0   1   0		= 9
  * Multicolor:       0   1   0   0   0		= 2
@@ -31,6 +33,10 @@ import v9t9.engine.memory.MemoryDomain;
  * Graphics 6 mode:  0   0   1   0   1		= 20
  * Graphics 7 mode:  0   0   1   1   1		= 28
  * </pre>
+ * TODO: sprite updating not working
+ * TODO: sprite 2 mode, + 512-pixel multiplex logic
+ * TODO: page flip blinking
+ * TODO: toying with R2 and the row masking 
  * @author ejs  
  *
  */
@@ -76,16 +82,6 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpCanvas.setRGB(15, rgb3to8(7, 7, 7)); 
 	}
 	
-	@Override
-	public void touchAbsoluteVdpMemory(int vdpaddr, byte val) {
-		if (vdpModeRedrawHandler != null) {
-	    	vdpchanged |= vdpModeRedrawHandler.touch(vdpaddr);
-	    	if (spriteRedrawHandler != null) {
-	    		vdpchanged |= spriteRedrawHandler.touch(vdpaddr);
-	    	}
-		}
-	}
-
 	/** 1: expansion RAM, 0: video RAM */
 	final public static int R45_MXC = 0x40;
 	//final public static int R45_MXD = 0x20;
@@ -307,12 +303,19 @@ public class VdpV9938 extends VdpTMS9918A {
 		return (vdpregs[0] & R0_M4 + R0_M5) != 0;
 	}
 
+	/**
+	 * Yields one of the MODE_xxx enums based on the current vdpregs[]
+	 * @return
+	 */
 	final protected int get9938ModeNumber() {
-		return (vdpregs[1] & R1_M1) / R1_M1
+		int mode = (vdpregs[1] & R1_M1) / R1_M1
 		+ (vdpregs[1] & R1_M2) / R1_M2 * 2
 		+ (vdpregs[0] & R0_M3) / R0_M3 * 4
 		+ (vdpregs[0] & R0_M4) / R0_M4 * 8
 		+ (vdpregs[0] & R0_M5) / R0_M5 * 16;
+		if ((mode & 1) != 0 && mode != MODE_TEXT && mode != MODE_TEXT2)
+			mode &= ~1;
+		return mode;
 	}
 	
 	@Override
@@ -321,6 +324,18 @@ public class VdpV9938 extends VdpTMS9918A {
 		switch (mode) {
 		case MODE_TEXT2:
 			setText2Mode();
+			break;
+		case MODE_GRAPHICS3:
+			setGraphics3Mode();
+			break;
+		case MODE_GRAPHICS4:
+			setGraphics4Mode();
+			break;
+		case MODE_GRAPHICS5:
+			setGraphics5Mode();
+			break;
+		case MODE_GRAPHICS6:
+			setGraphics6Mode();
 			break;
 		default:
 			super.establishVideoMode();
@@ -353,9 +368,88 @@ public class VdpV9938 extends VdpTMS9918A {
 		return vdpModeInfo;
 	}
 
+	protected void setGraphics3Mode() {
+		super.setGraphicsMode();
+		spriteRedrawHandler = createSprite2RedrawHandler(false);
+	}
+
+	private Sprite2RedrawHandler createSprite2RedrawHandler(boolean wide) {
+		return new Sprite2RedrawHandler(
+				vdpregs, this, vdpChanges, vdpCanvas, createSpriteModeInfo(),
+				wide);
+	}
+	
+	protected void setGraphics4Mode() {
+		vdpCanvas.setSize(256, vdpCanvas.getHeight());
+		vdpModeRedrawHandler = new Graphics4ModeRedrawHandler(
+				vdpregs, this, vdpChanges, vdpCanvas, createGraphics45ModeInfo());
+		spriteRedrawHandler = createSprite2RedrawHandler(false);
+		vdpMmio.setMemoryAccessCycles(8);
+		initUpdateBlocks(8);
+	}
+
+	
+	protected VdpModeInfo createGraphics45ModeInfo() {
+		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
+		int ramsize = getModeAddressMask();
+		
+		vdpModeInfo.screen.base = 0;
+		vdpModeInfo.screen.size = 0;
+		vdpModeInfo.color.base = 0;
+		vdpModeInfo.color.size = 0;
+		
+		// paging!
+		vdpModeInfo.patt.base = ((vdpregs[2] & 0x60) << 10) & ramsize;
+		vdpModeInfo.patt.size = 27136;
+		
+		vdpModeInfo.sprite.base = getSpriteTableBase() & ramsize;
+		vdpModeInfo.sprite.size = 128;
+		vdpModeInfo.sprpat.base = (vdpregs[6] * 0x800) & ramsize;
+		vdpModeInfo.sprpat.size = 2048;
+		return vdpModeInfo;
+	}
+	
+	protected void setGraphics5Mode() {
+		vdpCanvas.setSize(512, vdpCanvas.getHeight());
+		vdpModeRedrawHandler = new Graphics5ModeRedrawHandler(
+				vdpregs, this, vdpChanges, vdpCanvas, createGraphics45ModeInfo());
+		spriteRedrawHandler = createSprite2RedrawHandler(true);
+		vdpMmio.setMemoryAccessCycles(8);
+		initUpdateBlocks(8);
+	}
+
+	protected void setGraphics6Mode() {
+		vdpCanvas.setSize(512, vdpCanvas.getHeight());
+		vdpModeRedrawHandler = new Graphics6ModeRedrawHandler(
+				vdpregs, this, vdpChanges, vdpCanvas, createGraphics6ModeInfo());
+		spriteRedrawHandler = createSprite2RedrawHandler(true);
+		vdpMmio.setMemoryAccessCycles(8);
+		initUpdateBlocks(8);
+	}
+
+	protected VdpModeInfo createGraphics6ModeInfo() {
+		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
+		int ramsize = getModeAddressMask();
+		
+		vdpModeInfo.screen.base = 0;
+		vdpModeInfo.screen.size = 0;
+		vdpModeInfo.color.base = 0;
+		vdpModeInfo.color.size = 0;
+		
+		// paging!
+		vdpModeInfo.patt.base = ((vdpregs[2] & 0x20) << 11) & ramsize;
+		vdpModeInfo.patt.size = 54272;
+		
+		vdpModeInfo.sprite.base = getSpriteTableBase() & ramsize;
+		vdpModeInfo.sprite.size = 128;
+		vdpModeInfo.sprpat.base = (vdpregs[6] * 0x800) & ramsize;
+		vdpModeInfo.sprpat.size = 2048;
+		
+		return vdpModeInfo;
+	}
 	@Override
 	protected int getModeAddressMask() {
-		return getMemorySize() - 1;
+		return 0x1ffff;
 	}
 	@Override
 	protected int getSpriteTableBase() {
@@ -371,6 +465,8 @@ public class VdpV9938 extends VdpTMS9918A {
 	public void tick() {
 		super.tick();
 		
+		// the "blink" controls either the r7/r12 selection for text mode
+		// or the swapped page for graphics4-7 modes
 		if (vdpregs[13] != 0) {
 			if (--blinkPeriod <= 0) {
 				blinkOn = !blinkOn;

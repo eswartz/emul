@@ -9,6 +9,8 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
 
+import v9t9.engine.memory.ByteMemoryAccess;
+
 /**
  * Render video content into an ImageData using a palette
  * @author ejs
@@ -24,7 +26,10 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			colors[i] = new RGB(rgb[0] & 255, rgb[1] & 255, rgb[2] & 255);
 		}
 		PaletteData palette = new PaletteData(colors);
-		return new ImageData(width + 16, height + 16, 8, palette);
+		int allocHeight = height;
+		if ((height & 7) != 0)
+			allocHeight += 8;
+		return new ImageData(width, allocHeight, 8, palette);
 	}
 
 	/* (non-Javadoc)
@@ -98,4 +103,61 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 		}
 	}
 
+	@Override
+	public void draw8x8BitmapTwoColorBlock(int offs,
+			ByteMemoryAccess access, int rowstride) {
+		int lineStride = getLineStride();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 4; j++) {
+				byte mem;
+				
+				byte pix;
+
+				mem = access.memory[access.offset + j];
+
+				pix = (byte) ((mem >> 4) & 0xf);
+				imageData.data[offs] = pix;
+				
+				pix = (byte) (mem & 0xf);
+				imageData.data[offs + 1] = pix;
+				
+				offs += 2;
+			}
+			
+			offs += lineStride - 2 * 4;
+			access.offset += rowstride;
+		}
+	}
+	
+	@Override
+	public void draw8x8BitmapFourColorBlock(int offs,
+			ByteMemoryAccess access, int rowstride) {
+		int lineStride = getLineStride();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 2; j++) {
+				byte mem;
+				
+				byte pix;
+
+				mem = access.memory[access.offset + j];
+
+				pix = (byte) ((mem >> 6) & 0x3);
+				imageData.data[offs] = pix;
+				
+				pix = (byte) ((mem >> 4) & 0x3);
+				imageData.data[offs + 1] = pix;
+				
+				pix = (byte) ((mem >> 2) & 0x3);
+				imageData.data[offs + 2] = pix;
+				
+				pix = (byte) (mem & 0x3);
+				imageData.data[offs + 3] = pix;
+				
+				offs += 4;
+			}
+			
+			offs += lineStride - 2 * 4;
+			access.offset += rowstride;
+		}
+	}
 }

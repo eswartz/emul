@@ -61,6 +61,11 @@ public class Vdp9938Mmio extends Vdp9918AMmio {
     }
 
 	@Override
+	protected int getAbsoluteAddress(int vdpaddr) {
+		return vdpaddr + (memoryBank.getCurrentBank() << 14);
+	}
+	
+	@Override
 	protected void autoIncrementAddr() {
 		vdpaddr = vdpaddr+1 & 0x3fff;
 		if (vdpaddr == 0 && v9938.isEnhancedMode()) {

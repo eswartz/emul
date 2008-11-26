@@ -5,6 +5,8 @@ package v9t9.emulator.clients.builtin.video;
 
 import java.util.Arrays;
 
+import v9t9.engine.memory.ByteMemoryAccess;
+
 /**
  * This class holds the low-level bitmap containing the image
  * of the video screen.  This bitmap is used to update the actual
@@ -135,5 +137,63 @@ public class MemoryCanvas extends VdpCanvas {
 
 	public void setColorAtOffset(int offset, byte color) {
 		bitmap[offset] = color;
-	}	
+	}
+	
+	@Override
+	public void draw8x8BitmapTwoColorBlock(int offs, ByteMemoryAccess access,
+			int rowstride) {
+		int lineStride = getLineStride();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 4; j++) {
+				byte mem;
+				
+				byte pix;
+
+				mem = access.memory[access.offset + j];
+
+				pix = (byte) ((mem >> 4) & 0xf);
+				bitmap[offs] = pix;
+				
+				pix = (byte) (mem & 0xf);
+				bitmap[offs + 1] = pix;
+				
+				offs += 2;
+			}
+			
+			offs += lineStride - 2 * 4;
+			access.offset += rowstride;
+		}
+	}
+	
+	@Override
+	public void draw8x8BitmapFourColorBlock(int offs, ByteMemoryAccess access,
+			int rowstride) {
+		int lineStride = getLineStride();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 2; j++) {
+				byte mem;
+				
+				byte pix;
+
+				mem = access.memory[access.offset + j];
+
+				pix = (byte) ((mem >> 6) & 0x3);
+				bitmap[offs] = pix;
+				
+				pix = (byte) ((mem >> 4) & 0x3);
+				bitmap[offs + 1] = pix;
+				
+				pix = (byte) ((mem >> 2) & 0x3);
+				bitmap[offs + 2] = pix;
+				
+				pix = (byte) (mem & 0x3);
+				bitmap[offs + 3] = pix;
+				
+				offs += 4;
+			}
+			
+			offs += lineStride - 2 * 4;
+			access.offset += rowstride;
+		}
+	}
 }

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.video.tms9918a;
+package v9t9.emulator.clients.builtin.video.v9938;
 
 import java.util.Arrays;
 
@@ -12,18 +12,29 @@ import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
 import v9t9.emulator.clients.builtin.video.VdpSpriteCanvas;
 import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
+import v9t9.emulator.clients.builtin.video.tms9918a.SpriteRedrawHandler;
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
+ * Sprite mode 2
+ * <p>
+ * -- Separate color table -- 512 bytes before sprite attribute table
+ * -- Color in sprite is ignored
+ * -- 16 colors per sprite, one per line
+ * -- EC | CC | IC | 0 | color
+ * -- early clock, priority enable, collision detect
  * @author ejs
  * 
  */
-public class SpriteRedrawHandler extends BaseRedrawHandler {
+public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 
-	protected VdpTouchHandler modify_sprite_default = new VdpTouchHandler() {
+	protected VdpTouchHandler modify_sprite2_default = new VdpTouchHandler() {
 
 		public void modify(int offs) {
+			if (offs < 0)
+				 /* color table */;
 			vdpChanges.sprite |= (1<<(offs >> 2));
 			vdpchanged = 1;
 		}
@@ -48,15 +59,17 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	};
 
 	private VdpSpriteCanvas spriteCanvas;
+	private boolean wide;
 
-	public SpriteRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
-			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
+	public Sprite2RedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
+			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo, boolean wide) {
 		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas, modeInfo);
 
 		vdpTouchBlock.sprite = modify_sprite_default;
 		vdpTouchBlock.sprpat = modify_sprpat_default;
 		
 		spriteCanvas = new VdpSpriteCanvas(vdpCanvas);
+		this.wide = wide;
 	}
 
 	@Override

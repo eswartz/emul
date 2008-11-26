@@ -252,17 +252,8 @@ public class VdpTMS9918A implements VdpHandler {
     protected int getModeAddressMask() {
     	return getMemorySize() - 1;
     }
-	protected void setGraphicsMode() {
-		vdpCanvas.setSize(256, vdpCanvas.getHeight());
-		vdpModeRedrawHandler = new GraphicsModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createGraphicsModeInfo());
-		spriteRedrawHandler = new SpriteRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createSpriteModeInfo());
-		vdpMmio.setMemoryAccessCycles(8);
-		initUpdateBlocks(8);
-	}
-
-	protected VdpModeInfo createSpriteModeInfo() {
+    
+    protected VdpModeInfo createSpriteModeInfo() {
 		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
 		int ramsize = getModeAddressMask();
 
@@ -277,6 +268,21 @@ public class VdpTMS9918A implements VdpHandler {
 		return (vdpregs[5] * 0x80);
 	}
 
+	protected void setGraphicsMode() {
+		vdpCanvas.setSize(256, vdpCanvas.getHeight());
+		vdpModeRedrawHandler = new GraphicsModeRedrawHandler(
+				vdpregs, this, vdpChanges, vdpCanvas, createGraphicsModeInfo());
+		spriteRedrawHandler = createSpriteRedrawHandler();
+		vdpMmio.setMemoryAccessCycles(8);
+		initUpdateBlocks(8);
+	}
+
+	private SpriteRedrawHandler createSpriteRedrawHandler() {
+		return new SpriteRedrawHandler(
+				vdpregs, this, vdpChanges, vdpCanvas, createSpriteModeInfo());
+	}
+
+	
 	protected VdpModeInfo createGraphicsModeInfo() {
 		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
 		int ramsize = getModeAddressMask();
@@ -305,8 +311,7 @@ public class VdpTMS9918A implements VdpHandler {
 		vdpCanvas.setSize(256, vdpCanvas.getHeight());
 		vdpModeRedrawHandler = new MulticolorModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, createMultiModeInfo());
-		spriteRedrawHandler = new SpriteRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createSpriteModeInfo());
+		spriteRedrawHandler = createSpriteRedrawHandler();
 		vdpMmio.setMemoryAccessCycles(2);
 		initUpdateBlocks(8);
 	}
@@ -357,8 +362,7 @@ public class VdpTMS9918A implements VdpHandler {
 		vdpCanvas.setSize(256, vdpCanvas.getHeight());
 		vdpModeRedrawHandler = new BitmapModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, createBitmapModeInfo());
-		spriteRedrawHandler = new SpriteRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createSpriteModeInfo());
+		spriteRedrawHandler = createSpriteRedrawHandler();
 		vdpMmio.setMemoryAccessCycles(8);
 		initUpdateBlocks(8);
 	}

@@ -97,12 +97,16 @@ public class Vdp9918AMmio extends VdpMmio {
 
 		videoMemory.flatWriteByte(vdpaddr, val);
 		if (vdpHandler != null) {
-			vdpHandler.touchAbsoluteVdpMemory(vdpaddr, val);
+			vdpHandler.touchAbsoluteVdpMemory(getAbsoluteAddress(vdpaddr), val);
 		}
 
 		autoIncrementAddr();
 		vdpreadahead = val;
 		
+	}
+
+	protected int getAbsoluteAddress(int vdpaddr) {
+		return vdpaddr;
 	}
 
 	protected void autoIncrementAddr() {

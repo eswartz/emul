@@ -409,4 +409,28 @@ public abstract class VdpCanvas {
 		return yoffs;
 	}
 
+	/**
+	 * Draw an 8x8 block of pixels from the given memory, arranged as
+	 * &lt;color;&gt;&lt;color&gt; in nybbles. 
+	 * @param r
+	 * @param c
+	 * @param access
+	 * @param rowstride access stride between rows
+	 */
+	public abstract void draw8x8BitmapTwoColorBlock(
+			int offset,
+			ByteMemoryAccess access,
+			int rowstride);
+
+	/**
+	 * Draw an 8x8 block of pixels from the given memory, arranged as
+	 * &lt;color;&gt;&lt;color&gt;&lt;color;&gt;&lt;color&gt; in two-bit pieces. 
+	 * @param r
+	 * @param c
+	 * @param access
+	 * @param rowstride access stride between rows
+	 */
+	public abstract void draw8x8BitmapFourColorBlock(int offset,
+			ByteMemoryAccess access, int rowstride);
+
 }

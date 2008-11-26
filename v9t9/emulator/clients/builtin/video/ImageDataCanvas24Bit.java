@@ -8,6 +8,8 @@ import java.util.Arrays;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 
+import v9t9.engine.memory.ByteMemoryAccess;
+
 /**
  * Render video content into an ImageData
  * @author ejs
@@ -21,7 +23,10 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	@Override
 	protected ImageData createImageData() {
 		PaletteData palette = new PaletteData(0xFF0000, 0xFF00, 0xFF);
-		return new ImageData(width, height, 24, palette);		// allocate 16 pixels each dir for adjustment
+		int allocHeight = height;
+		if ((height & 7) != 0)
+			allocHeight += 8;
+		return new ImageData(width, allocHeight, 24, palette);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#clear()
@@ -130,4 +135,89 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		}
 	}
 
+	@Override
+	public void draw8x8BitmapTwoColorBlock(int offs,
+			ByteMemoryAccess access, int rowstride) {
+		int lineStride = getLineStride();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 4; j++) {
+				byte mem;
+				
+				byte pix;
+				byte[] rgb;
+
+				mem = access.memory[access.offset + j];
+
+				pix = (byte) ((mem >> 4) & 0xf);
+				rgb = getRGB(pix);
+				imageData.data[offs] = rgb[0];
+				imageData.data[offs + 1] = rgb[1];
+				imageData.data[offs + 2] = rgb[2];
+				
+				offs += 3;
+				
+				pix = (byte) (mem & 0xf);
+				rgb = getRGB(pix);
+				imageData.data[offs] = rgb[0];
+				imageData.data[offs + 1] = rgb[1];
+				imageData.data[offs + 2] = rgb[2];
+				
+				offs += 3;
+			}
+			
+			offs += lineStride - 6 * 4;
+			access.offset += rowstride;
+		}
+	}
+	
+	@Override
+	public void draw8x8BitmapFourColorBlock(int offs,
+			ByteMemoryAccess access, int rowstride) {
+		int lineStride = getLineStride();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 2; j++) {
+				byte mem;
+				
+				byte pix;
+				byte[] rgb;
+
+				mem = access.memory[access.offset + j];
+
+				pix = (byte) ((mem >> 6) & 0x3);
+				rgb = getRGB(pix);
+				imageData.data[offs] = rgb[0];
+				imageData.data[offs + 1] = rgb[1];
+				imageData.data[offs + 2] = rgb[2];
+				
+				offs += 3;
+				
+				pix = (byte) ((mem >> 4) & 0x3);
+				rgb = getRGB(pix);
+				imageData.data[offs] = rgb[0];
+				imageData.data[offs + 1] = rgb[1];
+				imageData.data[offs + 2] = rgb[2];
+				
+				offs += 3;
+				
+				pix = (byte) ((mem >> 2) & 0x3);
+				rgb = getRGB(pix);
+				imageData.data[offs] = rgb[0];
+				imageData.data[offs + 1] = rgb[1];
+				imageData.data[offs + 2] = rgb[2];
+				
+				offs += 3;
+				
+				pix = (byte) (mem & 0x3);
+				rgb = getRGB(pix);
+				imageData.data[offs] = rgb[0];
+				imageData.data[offs + 1] = rgb[1];
+				imageData.data[offs + 2] = rgb[2];
+				
+				offs += 3;
+			}
+			
+			offs += lineStride - 6 * 4;
+			access.offset += rowstride;
+		}
+	}
 }
