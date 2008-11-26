@@ -93,6 +93,11 @@ public abstract class LLOperand implements AssemblerOperand {
 		this.original = op;
 	}
 
+	/** Tell if the operand will never change */
+	public boolean isConstant() {
+		return false;
+	}
+
     
 	/*
 	public static LLOperand createSymbolImmediate(Symbol symbol) {

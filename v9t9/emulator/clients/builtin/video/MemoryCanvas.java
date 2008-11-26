@@ -196,4 +196,22 @@ public class MemoryCanvas extends VdpCanvas {
 			access.offset += rowstride;
 		}
 	}
+	
+	@Override
+	public void draw8x8BitmapRGB332ColorBlock(int offs,
+			ByteMemoryAccess access, int rowstride) {
+		int lineStride = getLineStride();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				byte mem;
+				
+				// XXX: no palette
+				mem = access.memory[access.offset + j];
+				bitmap[offs++] = mem;
+			}
+			
+			offs += lineStride - 8;
+			access.offset += rowstride;
+		}
+	}	
 }

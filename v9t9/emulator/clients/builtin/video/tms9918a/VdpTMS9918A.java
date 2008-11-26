@@ -110,7 +110,7 @@ public class VdpTMS9918A implements VdpHandler {
     /* (non-Javadoc)
      * @see v9t9.handlers.VdpHandler#writeVdpReg(byte, byte, byte)
      */
-    final public void writeVdpReg(int reg, byte val) {
+    final synchronized public void writeVdpReg(int reg, byte val) {
     	if (reg >= vdpregs.length)
     		return;
     	
@@ -120,12 +120,13 @@ public class VdpTMS9918A implements VdpHandler {
     		return;
     	
     	int         redraw = doWriteVdpReg(reg, old, val);
-    	
+
     	/*  This flag must be checked first because
 	 	   it affects the meaning of the following 
 	 	   calls and checks. */
 	 	if ((redraw & REDRAW_MODE) != 0) {
 	 		establishVideoMode();
+	 		setupBackdrop();
 	 		dirtyAll();
 	 	}
 	
@@ -134,7 +135,7 @@ public class VdpTMS9918A implements VdpHandler {
 		}
 
 	 	if ((redraw & REDRAW_PALETTE) != 0) {
-	 		vdpCanvas.setClearColor(vdpbg);
+	 		setupBackdrop();
 	 		dirtyAll();
 	 	}
 	
@@ -152,7 +153,12 @@ public class VdpTMS9918A implements VdpHandler {
 
     }
     
-    protected int doWriteVdpReg(int reg, byte old, byte val) {
+    /** Set the backdrop based on the mode */
+    protected void setupBackdrop() {
+    	vdpCanvas.setClearColor(vdpbg);
+	}
+
+	protected int doWriteVdpReg(int reg, byte old, byte val) {
     	int redraw = 0;
     	
     	switch (reg) {
@@ -231,6 +237,7 @@ public class VdpTMS9918A implements VdpHandler {
 		switch (getModeNumber()) {
 		case MODE_TEXT:
 			setTextMode();
+			dirtyAll();	// for border
 			break;
 		case MODE_MULTI:
 			setMultiMode();
@@ -448,7 +455,7 @@ public class VdpTMS9918A implements VdpHandler {
     /* (non-Javadoc)
      * @see v9t9.handlers.VdpHandler#writeVdpMemory(short, byte)
      */
-    public void touchAbsoluteVdpMemory(int vdpaddr, byte val) {
+    public synchronized void touchAbsoluteVdpMemory(int vdpaddr, byte val) {
 		if (vdpModeRedrawHandler != null) {
 	    	vdpchanged |= vdpModeRedrawHandler.touch(vdpaddr);
 	    	if (spriteRedrawHandler != null) {
@@ -477,7 +484,7 @@ public class VdpTMS9918A implements VdpHandler {
 		vdpChanges.fullRedraw = true;
 	}
 	
-	public void update() {
+	public synchronized void update() {
 		if (!vdpchanged)
 			return;
 		
@@ -514,7 +521,7 @@ public class VdpTMS9918A implements VdpHandler {
 		
 	}
 
-	public VdpCanvas getCanvas() {
+	public synchronized VdpCanvas getCanvas() {
 		return vdpCanvas;
 	}
 

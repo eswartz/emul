@@ -50,6 +50,7 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	protected abstract void init();
 	
 	public void propagateTouches() {
+		// we directly detect screen changes already
 	}
 	
 	public int updateCanvas(RedrawBlock[] blocks, boolean force) {

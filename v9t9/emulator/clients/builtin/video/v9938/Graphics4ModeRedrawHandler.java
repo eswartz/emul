@@ -3,18 +3,11 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
-import java.util.Arrays;
-
-import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
-import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
-import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
-import v9t9.emulator.clients.builtin.video.VdpTouchHandlerBlock;
 import v9t9.engine.VdpHandler;
-import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
  * Redraw graphics 4 mode content (256x192x16)
@@ -35,7 +28,7 @@ public class Graphics4ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 	@Override
 	protected void init() {
 		rowstride = 128;
-		blockshift = 2;		// byte 4 -> block 1
+		blockshift = 2;
 		blockstride = 32;
 		blockcount = (vdpregs[9] & 0x80) != 0 ? 32*27 : 768;
 	}
@@ -44,7 +37,7 @@ public class Graphics4ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		vdpCanvas.draw8x8BitmapTwoColorBlock(
 				vdpCanvas.getBitmapOffset(block.c, block.r),
 				 vdpMemory.getByteReadMemoryAccess(
-						vdpModeInfo.patt.base + rowstride * block.r + (block.c >> blockshift)),
+						vdpModeInfo.patt.base + rowstride * block.r + (block.c >> 1)),
 						rowstride);
 	}
 

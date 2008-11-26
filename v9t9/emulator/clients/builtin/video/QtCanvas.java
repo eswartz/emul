@@ -50,14 +50,6 @@ public class QtCanvas extends VdpCanvas {
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#setColorAtOffset(int, byte)
-	 */
-	@Override
-	public void setColorAtOffset(int offset, byte color) {
-		image.setPixel(offset & 0xffff, offset >> 16, getPixel(color));
-	}
-
-	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#drawEightPixels(int, byte, byte, byte)
 	 */
 	@Override

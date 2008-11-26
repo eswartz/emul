@@ -20,7 +20,7 @@ import v9t9.engine.VdpHandler;
  * @author ejs
  *
  */
-public abstract class BaseRedrawHandler {
+public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 
 	protected final VdpHandler vdpMemory;
 	protected final VdpModeInfo vdpModeInfo;

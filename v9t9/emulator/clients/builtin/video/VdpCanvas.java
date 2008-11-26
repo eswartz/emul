@@ -23,6 +23,7 @@ public abstract class VdpCanvas {
 	private int dx1, dy1, dx2, dy2;
 	
     protected int clearColor;
+    protected int clearColor1;
 
     /** fundamental block width in pixels, which impacts how dirtyBlocks, dirtyStride are interpreted */
 	private int blockWidth;
@@ -55,6 +56,25 @@ public abstract class VdpCanvas {
 	protected byte colorPalette[][];
 	protected byte greyPalette[][];
 
+	protected static byte[] rgb3to8 = new byte[8];
+	protected static byte[] rgb2to8 = new byte[4];
+	static {
+		for (int i = 0; i < 8; i++) {
+			byte val = (byte) i;
+			byte val8 = (byte) (val << 5);
+			if (val > 4)
+				val8 |= 0x1f;
+			rgb3to8[i] = val8;
+		}
+		for (int i = 0; i < 4; i++) {
+			byte val = (byte) i;
+			byte val8 = (byte) (val << 6);
+			if (val > 2)
+				val8 |= 0x3f;
+			rgb2to8[i] = val8;
+		}
+	}
+	
 	public VdpCanvas() {
     	colorPalette = new byte[257][];
     	for (int i = 0; i < 16; i++)
@@ -104,6 +124,17 @@ public abstract class VdpCanvas {
 	 */
 	public void setClearColor(int c) {
 		this.clearColor = c;
+		this.clearColor1 = c;
+		markDirty();
+	}
+	
+	/**
+	 * Set the real color for the "clear" color
+	 * in an even-odd tiling mode
+	 * @param c
+	 */
+	public void setClearColor1(int c) {
+		this.clearColor1 = c;
 		markDirty();
 	}
 
@@ -128,6 +159,13 @@ public abstract class VdpCanvas {
 		return thePalette[idx];
 	}
 	
+	/** Get the RGB triple for the palette entry (odd fields). */
+	public byte[] getRGB1(int idx) {
+		if (idx == 0 && !clearFromPalette)
+			idx = clearColor1;
+		return thePalette[idx];
+	}
+	
 	/** Set the RGB triple for the palette entry. */
 	public void setRGB(int idx, byte[] rgb) {
 		if (colorPalette[idx] == null)
@@ -139,16 +177,17 @@ public abstract class VdpCanvas {
 		greyPalette[idx] = rgbToGrey(rgb);
 	}
 	
+	/** Set the RGB triple for the palette entry, using 3-bit RGB. */
+	public void setRGB333(int idx, int r, int g, int b) {
+		setRGB(idx, new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[b&0x7] });
+	}
+	
 	public byte[] getStockRGB(int i) {
 		return stockPalette[i];
 	}
 	/** Get an implementation-defined offset into the bitmap */ 
 	public abstract int getBitmapOffset(int x, int y);
 
-	/** Set the color at the offset
-	 * @see #getBitmapOffset(int, int) */ 
-	public abstract void setColorAtOffset(int offset, byte color);
-	
 	/** Get the delta for one pixel, in terms of the offset. 
 	 * @see #getBitmapOffset(int, int) 
 	 */ 
@@ -432,5 +471,16 @@ public abstract class VdpCanvas {
 	 */
 	public abstract void draw8x8BitmapFourColorBlock(int offset,
 			ByteMemoryAccess access, int rowstride);
+
+	/**
+	 * Draw an 8x8 block of pixels from the given memory, arranged as
+	 * RGB 3-3-2 pixels. 
+	 * @param r
+	 * @param c
+	 * @param access
+	 * @param rowstride access stride between rows
+	 */
+	public abstract void draw8x8BitmapRGB332ColorBlock(int bitmapOffset,
+			ByteMemoryAccess byteReadMemoryAccess, int rowstride);
 
 }

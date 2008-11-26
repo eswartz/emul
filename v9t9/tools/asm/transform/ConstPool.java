@@ -188,16 +188,18 @@ public class ConstPool {
 			short[] words = InstructionTable.encode(rawInst);
 			
 			int pc = rawInst.getPc();
+			if (assembler.getConsole().hasRamAccess(pc))
+				return;
 			
-			
-			for (short word : words) {
-				if (assembler.getConsole().hasRamAccess(pc))
-					return;
-				Integer ipc = instWordMap.get(word & 0xffff);
-				if (ipc == null) {
-					instWordMap.put(word & 0xffff, pc);
+			for (int i = 0; i < words.length; i++) {
+				short word = words[i];
+				if (i == 0 || (i == 1 && inst.getOp1().isConstant())
+						|| (i == 2 && inst.getOp2().isConstant())) {
+					Integer ipc = instWordMap.get(word & 0xffff);
+					if (ipc == null) {
+						instWordMap.put(word & 0xffff, pc + i * 2);
+					}
 				}
-				pc += 2;
 			}
 		} catch (IllegalArgumentException e) {
 			// some unresolved jump insts

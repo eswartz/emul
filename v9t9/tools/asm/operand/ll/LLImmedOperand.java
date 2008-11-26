@@ -87,4 +87,9 @@ public class LLImmedOperand extends LLOperand {
 	public MachineOperand createMachineOperand() throws ResolveException {
 		return MachineOperand.createImmediate(value);
 	}
+	
+	@Override
+	public boolean isConstant() {
+		return getOriginal() == null;
+	}
 }

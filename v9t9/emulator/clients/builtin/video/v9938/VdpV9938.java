@@ -5,8 +5,6 @@ package v9t9.emulator.clients.builtin.video.v9938;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
-import v9t9.emulator.clients.builtin.video.tms9918a.GraphicsModeRedrawHandler;
-import v9t9.emulator.clients.builtin.video.tms9918a.SpriteRedrawHandler;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.engine.memory.BankedMemoryEntry;
@@ -22,16 +20,16 @@ import v9t9.engine.memory.MemoryDomain;
  * <p>
  * <pre>
  *                   M1  M2  M3  M4  M5     Mode #
- * Text 1 mode:      1   0   0   0   0		= 1
- * Text 2 mode:      1   0   0   1   0		= 9
- * Multicolor:       0   1   0   0   0		= 2
- * Graphics 1 mode:  0   0   0   0   0		= 0
- * Graphics 2 mode:  0   0   1   0   0		= 4
- * Graphics 3 mode:  0   0   0   1   0		= 8
- * Graphics 4 mode:  0   0   1   1   0		= 12
- * Graphics 5 mode:  0   0   0   0   1		= 16
- * Graphics 6 mode:  0   0   1   0   1		= 20
- * Graphics 7 mode:  0   0   1   1   1		= 28
+ * Text 1 mode:      1   0   0   0   0		= 1		>81F0, >8000
+ * Text 2 mode:      1   0   0   1   0		= 9		>81F0, >8004
+ * Multicolor:       0   1   0   0   0		= 2		>81C0, >8000
+ * Graphics 1 mode:  0   0   0   0   0		= 0		>81E0, >8000
+ * Graphics 2 mode:  0   0   1   0   0		= 4		>81E0, >8002
+ * Graphics 3 mode:  0   0   0   1   0		= 8		>81E0, >8004
+ * Graphics 4 mode:  0   0   1   1   0		= 12	>81E0, >8006
+ * Graphics 5 mode:  0   0   0   0   1		= 16	>81E0, >8008
+ * Graphics 6 mode:  0   0   1   0   1		= 20	>81E0, >800A
+ * Graphics 7 mode:  0   0   1   1   1		= 28	>81E0, >800E
  * </pre>
  * TODO: sprite updating not working
  * TODO: sprite 2 mode, + 512-pixel multiplex logic
@@ -64,22 +62,22 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void reset() {
-		vdpCanvas.setRGB(0, rgb3to8(0, 0, 0)); 
-		vdpCanvas.setRGB(1, rgb3to8(0, 0, 0)); 
-		vdpCanvas.setRGB(2, rgb3to8(1, 6, 1)); 
-		vdpCanvas.setRGB(3, rgb3to8(3, 7, 3)); 
-		vdpCanvas.setRGB(4, rgb3to8(1, 1, 7)); 
-		vdpCanvas.setRGB(5, rgb3to8(2, 3, 7)); 
-		vdpCanvas.setRGB(6, rgb3to8(5, 1, 1)); 
-		vdpCanvas.setRGB(7, rgb3to8(2, 6, 7)); 
-		vdpCanvas.setRGB(8, rgb3to8(7, 1, 1)); 
-		vdpCanvas.setRGB(9, rgb3to8(7, 3, 3)); 
-		vdpCanvas.setRGB(10, rgb3to8(6, 6, 1)); 
-		vdpCanvas.setRGB(11, rgb3to8(6, 6, 4)); 
-		vdpCanvas.setRGB(12, rgb3to8(4, 4, 1)); 
-		vdpCanvas.setRGB(13, rgb3to8(6, 2, 5)); 
-		vdpCanvas.setRGB(14, rgb3to8(5, 5, 5)); 
-		vdpCanvas.setRGB(15, rgb3to8(7, 7, 7)); 
+		vdpCanvas.setRGB333(0, 0, 0, 0); 
+		vdpCanvas.setRGB333(1, 0, 0, 0); 
+		vdpCanvas.setRGB333(2, 1, 6, 1); 
+		vdpCanvas.setRGB333(3, 3, 7, 3); 
+		vdpCanvas.setRGB333(4, 1, 1, 7); 
+		vdpCanvas.setRGB333(5, 2, 3, 7); 
+		vdpCanvas.setRGB333(6, 5, 1, 1); 
+		vdpCanvas.setRGB333(7, 2, 6, 7); 
+		vdpCanvas.setRGB333(8, 7, 1, 1); 
+		vdpCanvas.setRGB333(9, 7, 3, 3); 
+		vdpCanvas.setRGB333(10, 6, 6, 1); 
+		vdpCanvas.setRGB333(11, 6, 6, 4); 
+		vdpCanvas.setRGB333(12, 4, 4, 1); 
+		vdpCanvas.setRGB333(13, 6, 2, 5); 
+		vdpCanvas.setRGB333(14, 5, 5, 5); 
+		vdpCanvas.setRGB333(15, 7, 7, 7); 
 	}
 	
 	/** 1: expansion RAM, 0: video RAM */
@@ -110,7 +108,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	//final public static int R8_CB = 0x10;
 	/** 1: video RAM type: 64k, 0: 16k */
 	final public static int R8_VR = 0x08;
-	/** 1: sprites on */
+	/** 1: sprites off */
 	final public static int R8_SPD = 0x02;
 	/** 1: black & white, 0: color */
 	final public static int R8_BW = 0x01;
@@ -263,15 +261,12 @@ public class VdpV9938 extends VdpTMS9918A {
 		}
 	}
 
-	protected byte[] rgb3to8(int r, int g, int b) {
-		return new byte[] { rgb3to8(r), rgb3to8(g), rgb3to8(b) };
-	}
 	public void writeColorData(byte val) {
 		if (!palettelatched) {
 			palettelatch = val;
 			palettelatched = true;
 		} else {
-			vdpCanvas.setRGB(paletteidx & 0xff, rgb3to8(palettelatch >> 4, palettelatch & 0x7, val & 0x7));
+			vdpCanvas.setRGB333(paletteidx & 0xff, palettelatch >> 4, palettelatch & 0x7, val & 0x7);
 			dirtyAll();
 			
 			paletteidx++;
@@ -279,14 +274,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		}
 	}
 
-	private byte rgb3to8(int val) {
-		val &= 0x7;
-		byte val8 = (byte) (val << 5);
-		if (val > 4)
-			val8 |= 0x1f;
-		return val8;
-		//return (byte) (val * 0x22); 
-	}
+	
 
 	/* (non-Javadoc)
      * @see v9t9.handlers.VdpHandler#readVdpStatus()
@@ -324,6 +312,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		switch (mode) {
 		case MODE_TEXT2:
 			setText2Mode();
+			dirtyAll();	// for border
 			break;
 		case MODE_GRAPHICS3:
 			setGraphics3Mode();
@@ -337,12 +326,25 @@ public class VdpV9938 extends VdpTMS9918A {
 		case MODE_GRAPHICS6:
 			setGraphics6Mode();
 			break;
+		case MODE_GRAPHICS7:
+			setGraphics7Mode();
+			break;
 		default:
 			super.establishVideoMode();
 			break;
 		}
 	}
 	
+	@Override
+	protected void setupBackdrop() {
+		if (get9938ModeNumber() == MODE_GRAPHICS5) {
+			// even-odd tiling function
+			vdpCanvas.setClearColor(vdpbg & 0x3);
+			vdpCanvas.setClearColor1((vdpbg >> 2) & 0x3);
+		} else {
+			super.setupBackdrop();
+		}
+	}
 	@Override
 	protected int getMaxRedrawblocks() {
 		return 80 * 27;
@@ -369,7 +371,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 
 	protected void setGraphics3Mode() {
-		super.setGraphicsMode();
+		super.setBitmapMode();
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
 	}
 
@@ -421,13 +423,13 @@ public class VdpV9938 extends VdpTMS9918A {
 	protected void setGraphics6Mode() {
 		vdpCanvas.setSize(512, vdpCanvas.getHeight());
 		vdpModeRedrawHandler = new Graphics6ModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createGraphics6ModeInfo());
+				vdpregs, this, vdpChanges, vdpCanvas, createGraphics67ModeInfo());
 		spriteRedrawHandler = createSprite2RedrawHandler(true);
 		vdpMmio.setMemoryAccessCycles(8);
 		initUpdateBlocks(8);
 	}
 
-	protected VdpModeInfo createGraphics6ModeInfo() {
+	protected VdpModeInfo createGraphics67ModeInfo() {
 		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
 		int ramsize = getModeAddressMask();
 		
@@ -447,6 +449,17 @@ public class VdpV9938 extends VdpTMS9918A {
 		
 		return vdpModeInfo;
 	}
+	
+	protected void setGraphics7Mode() {
+		vdpCanvas.setSize(256, vdpCanvas.getHeight());
+		vdpModeRedrawHandler = new Graphics7ModeRedrawHandler(
+				vdpregs, this, vdpChanges, vdpCanvas, createGraphics67ModeInfo());
+		spriteRedrawHandler = createSprite2RedrawHandler(true);
+		vdpMmio.setMemoryAccessCycles(8);
+		initUpdateBlocks(8);
+	}
+
+	
 	@Override
 	protected int getModeAddressMask() {
 		return 0x1ffff;
@@ -462,7 +475,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	@Override
-	public void tick() {
+	public synchronized void tick() {
 		super.tick();
 		
 		// the "blink" controls either the r7/r12 selection for text mode

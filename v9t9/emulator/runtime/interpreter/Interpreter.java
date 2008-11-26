@@ -818,8 +818,12 @@ public class Interpreter {
                         //short low = memory.readWord(block.op2.ea + 2);
                         int val = (block.val2 & 0xffff) << 16
                                 | low & 0xffff;
-                        block.val2 = (short) (val / (block.val1 & 0xffff));
-                        block.val3 = (short) (val % (block.val1 & 0xffff));
+                        try {
+	                        block.val2 = (short) (val / (block.val1 & 0xffff));
+	                        block.val3 = (short) (val % (block.val1 & 0xffff));
+                        } catch (ArithmeticException e) {
+                        	cpu.addCycles((124 + 92) / 2 - 16);
+                        }
                         //memory.writeWord(block.op2.ea + 2,
                         //        (short) (val % (block.val1 & 0xffff)));
                         //inst.op2.value = (short) val;

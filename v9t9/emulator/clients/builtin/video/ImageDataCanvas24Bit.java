@@ -33,12 +33,12 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	 */
 	@Override
 	public void clear() {
-		byte[] rgb = getRGB(clearColor);
+		byte[] rgb0 = getRGB(clearColor);
 		int bpp = imageData.depth >> 3;
 		for (int i = 0; i < imageData.data.length; i += bpp) {
-			imageData.data[i] = rgb[0];
-			imageData.data[i + 1] = rgb[1];
-			imageData.data[i + 2] = rgb[2];
+			imageData.data[i] = rgb0[0];
+			imageData.data[i + 1] = rgb0[1];
+			imageData.data[i + 2] = rgb0[2];
 		}
 		if (imageData.alphaData != null) {
 			Arrays.fill(imageData.alphaData, 0, imageData.alphaData.length, (byte)-1);
@@ -56,22 +56,6 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	@Override
 	public int getPixelStride() {
 		return imageData.depth >> 3;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#setColorAtOffset(int, byte)
-	 */
-	@Override
-	public void setColorAtOffset(int offset, byte color) {
-		/*
-		byte alpha = -1;
-		if (color == 0 && clearColor == 0)
-			alpha = 0;
-		*/
-		byte[] rgb = getRGB(color);
-		imageData.data[offset] = rgb[0];
-		imageData.data[offset + 1] = rgb[1];
-		imageData.data[offset + 2] = rgb[2];
 	}
 
 	protected void drawEightPixels(int offs, byte mem, byte fg, byte bg) {
@@ -200,7 +184,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 				offs += 3;
 				
 				pix = (byte) ((mem >> 2) & 0x3);
-				rgb = getRGB(pix);
+				rgb = getRGB1(pix);
 				imageData.data[offs] = rgb[0];
 				imageData.data[offs + 1] = rgb[1];
 				imageData.data[offs + 2] = rgb[2];
@@ -208,7 +192,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 				offs += 3;
 				
 				pix = (byte) (mem & 0x3);
-				rgb = getRGB(pix);
+				rgb = getRGB1(pix);
 				imageData.data[offs] = rgb[0];
 				imageData.data[offs + 1] = rgb[1];
 				imageData.data[offs + 2] = rgb[2];
@@ -217,6 +201,28 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			}
 			
 			offs += lineStride - 6 * 4;
+			access.offset += rowstride;
+		}
+	}
+	
+	@Override
+	public void draw8x8BitmapRGB332ColorBlock(int offs,
+			ByteMemoryAccess access, int rowstride) {
+		int lineStride = getLineStride();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				byte mem;
+				
+				mem = access.memory[access.offset + j];
+
+				imageData.data[offs] = rgb3to8[(mem >> 5) & 0x7];
+				imageData.data[offs + 1] = rgb3to8[(mem >> 2) & 0x7];
+				imageData.data[offs + 2] = rgb2to8[mem & 0x3];
+				
+				offs += 3;
+			}
+			
+			offs += lineStride - 3 * 8;
 			access.offset += rowstride;
 		}
 	}

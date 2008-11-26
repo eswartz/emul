@@ -10,17 +10,16 @@ import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.engine.VdpHandler;
 
 /**
- * Redraw graphics 6 mode content (512x192x16)
+ * Redraw graphics 7 mode content (256x192x256)
  * <p>
- * Bitmapped mode where pattern table contains 2 pixels per byte.  Every row
- * is linear in memory and every row is adjacent to the next.  This is gonna be HARD!
+ * Bitmapped mode where pattern table contains one pixel per byte in RGB 3-3-2 format.  
+ * Every row is linear in memory and every row is adjacent to the next.  
  * @author ejs
  *
  */
-public class Graphics6ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHandler {
+public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHandler {
 
-		
-	public Graphics6ModeRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
+	public Graphics7ModeRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
 			VdpChanges changed, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
 		super(vdpregs, vdpMemory, changed, vdpCanvas, modeInfo);
 	}
@@ -28,16 +27,16 @@ public class Graphics6ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 	@Override
 	protected void init() {
 		rowstride = 256;
-		blockshift = 2;
-		blockstride = 64;
-		blockcount = (vdpregs[9] & 0x80) != 0 ? 64*27 : 1536;		
+		blockshift = 3;
+		blockstride = 32;
+		blockcount = (vdpregs[9] & 0x80) != 0 ? 32*27 : 768;		
 	}
 	
 	protected void drawBlock(RedrawBlock block) {
-		vdpCanvas.draw8x8BitmapTwoColorBlock(
+		vdpCanvas.draw8x8BitmapRGB332ColorBlock(
 				vdpCanvas.getBitmapOffset(block.c, block.r),
 				 vdpMemory.getByteReadMemoryAccess(
-						vdpModeInfo.patt.base + rowstride * block.r + (block.c >> 1)),
+						vdpModeInfo.patt.base + rowstride * block.r + block.c),
 						rowstride);
 	}
 
