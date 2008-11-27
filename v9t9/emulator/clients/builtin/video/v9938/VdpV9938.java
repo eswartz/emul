@@ -31,10 +31,8 @@ import v9t9.engine.memory.MemoryDomain;
  * Graphics 6 mode:  0   0   1   0   1		= 20	>81E0, >800A
  * Graphics 7 mode:  0   0   1   1   1		= 28	>81E0, >800E
  * </pre>
- * TODO: sprite updating not working
- * TODO: sprite 2 mode, + 512-pixel multiplex logic
- * TODO: page flip blinking
- * TODO: toying with R2 and the row masking 
+ * TODO: toying with R2 and the row masking
+ * TODO: sprite colors in mode 7 (pg 105)
  * @author ejs  
  *
  */
@@ -380,8 +378,7 @@ public class VdpV9938 extends VdpTMS9918A {
 
 	private Sprite2RedrawHandler createSprite2RedrawHandler(boolean wide) {
 		return new Sprite2RedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createSpriteModeInfo(),
-				wide);
+				vdpregs, this, vdpChanges, vdpCanvas, createSpriteModeInfo());
 	}
 	
 	protected void setGraphics4Mode() {
@@ -463,6 +460,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 
 	
+	/** For the V9938, only the on-board 128K is used for display */
 	@Override
 	protected int getModeAddressMask() {
 		return 0x1ffff;

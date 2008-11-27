@@ -40,6 +40,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	private Rectangle updateRect;
 	private boolean isBlank;
 	private boolean wasBlank;
+	private boolean isDirty;
 	
 	public SwtVideoRenderer(Display display, VdpCanvas canvas) {
 		shell = new Shell(display);
@@ -49,13 +50,13 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		shell.setLayout(layout);
 		shell.setBounds(800,800,0,0);
 		
-		this.canvas = new Canvas(shell, SWT.NO_BACKGROUND);
+		this.canvas = new Canvas(shell, SWT.DOUBLE_BUFFERED);
 		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		this.canvas.setLayoutData(gridData);
 		this.canvas.setLayout(new FillLayout());
 
 		this.vdpCanvas = (ImageDataCanvas) canvas;
-		//this.vdpCanvas.setListener(this);		// we use a timer interrupt instead
+		this.vdpCanvas.setListener(this);		
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
 		// the canvas collects update regions in a big rect
@@ -95,6 +96,9 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 
 	public void redraw() {
+		if (!isDirty)
+			return;
+		
 		boolean becameBlank = vdpCanvas.isBlank() && !isBlank;
 		isBlank = vdpCanvas.isBlank();
 		
@@ -130,6 +134,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 					Rectangle redrawPhys = logicalToPhysical(redrawRect);
 					canvas.redraw(redrawPhys.x, redrawPhys.y, 
 							redrawPhys.width, redrawPhys.height, false);
+					
+					isDirty = false;
 				}
 				
 			});
@@ -245,11 +251,13 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	public void setZoom(int zoom) {
 		this.zoom = zoom;
+		isDirty = true;
 		redraw();
 	}
 
 	public void canvasDirtied(VdpCanvas canvas) {
-		redraw();
+		//redraw();
+		isDirty = true;
 	}
 
 	private Color allocColor(Color color, byte[] rgb) {

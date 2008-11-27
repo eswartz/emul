@@ -51,7 +51,7 @@ public class TestSpriteCanvas extends TestCase {
 		canvas = videoRenderer.getCanvas();
 		videoRenderer.setZoom(2);
 		
-		sprCanvas = new VdpSpriteCanvas(canvas);
+		sprCanvas = new VdpSpriteCanvas(canvas, 4, false);
 		sprites = sprCanvas.getSprites();
 		
 		redrawBlocks = new RedrawBlock[768];

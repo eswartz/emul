@@ -52,8 +52,6 @@ public interface VdpHandler {
 	void setVdpMmio(VdpMmio mmio);
 
 	MemoryDomain getVideoMemory();
-	
-	int getMemorySize();
 
 	/** 60Hz timer */
 	void tick();

@@ -405,10 +405,6 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     	video.setVdpMmio(mmio);
     }
     
-    public int getMemorySize() {
-    	return video.getMemorySize();
-    }
-    
     public void tick() {
     	video.tick();
     	

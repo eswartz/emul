@@ -48,16 +48,21 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 
 	};
 
-	private VdpSpriteCanvas spriteCanvas;
+	protected VdpSpriteCanvas spriteCanvas;
 
 	public SpriteRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
 			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
 		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas, modeInfo);
 
+		init();
+	}
+
+	protected void init() {
 		vdpTouchBlock.sprite = modify_sprite_default;
 		vdpTouchBlock.sprpat = modify_sprpat_default;
 		
-		spriteCanvas = new VdpSpriteCanvas(vdpCanvas);
+		spriteCanvas = new VdpSpriteCanvas(vdpCanvas, 4);
+		
 	}
 
 	@Override
@@ -82,12 +87,23 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	/**
 	 * This function does the mammoth tasks of:
 	 * 
-	 * 0) Change sprites under whom chars changed 1) See if sprite pattern
-	 * change forces a sprite update. 2) See if position change forces a sprite
-	 * update. 3) See if deleted-ptr changes, forcing sprite updates. 4) Update
-	 * vdp_changes.screen where sprites dance. 5) Force updates to sprites under
-	 * changed ones. 6) Weed out blank sprites. 7) Set VDP status flags for
-	 * coincidence and five sprites on a line (hackish)
+	 * <p>
+	 * 0) Change sprites under whom chars changed
+	 * <p>
+	 * 1) See if sprite pattern change forces a sprite update.
+	 * <p>
+	 * 2) See if position change forces a sprite update.
+	 * <p>
+	 * 3) See if deleted-ptr changes, forcing sprite updates.
+	 * <p>
+	 * 4) Update vdp_changes.screen where sprites dance.
+	 * <p>
+	 * 5) Force updates to sprites under changed ones.
+	 * <p>
+	 * 6) Weed out blank sprites.
+	 * <p>
+	 * 7) Set VDP status flags for coincidence and N sprites on a line
+	 * (hackish)
 	 * 
 	 * @return the updated VDP status bits
 	 */
@@ -147,7 +163,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 				sprite.move(x, y);
 				sprite.setColor(color);
 				sprite.setShift(shift);
-				sprite.setPattern(vdpMemory.getByteReadMemoryAccess(sprpatbase + (ch << 3)));
+				sprite.setPattern(vdpMemory.getByteReadMemoryAccess(sprpatbase + ((ch & 0xfc) << 3)));
 				sprite.setSize(size);
 				sprite.setNumchars(numchars);
 				
@@ -158,12 +174,12 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		}
 
 		// TODO: move the VDP status logic
-		int fifth_sprite = spriteCanvas.updateSpriteCoverage(vdpChanges.screen);
+		int nth_sprite = spriteCanvas.updateSpriteCoverage(vdpChanges.screen);
 
-		if (fifth_sprite != -1) {
+		if (nth_sprite != -1) {
 			vdpStatus = (byte) (vdpStatus
 					& ~(VdpTMS9918A.VDP_FIVE_SPRITES | VdpTMS9918A.VDP_FIFTH_SPRITE) 
-					| (VdpTMS9918A.VDP_FIVE_SPRITES | fifth_sprite));
+					| (VdpTMS9918A.VDP_FIVE_SPRITES | nth_sprite));
 		} else {
 			vdpStatus &= ~(VdpTMS9918A.VDP_FIVE_SPRITES | VdpTMS9918A.VDP_FIFTH_SPRITE);
 		}
@@ -177,6 +193,11 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	 * @param force
 	 */
 	public void updateCanvas(boolean force) {
+		if (force) {
+			for (VdpSprite sprite : spriteCanvas.getSprites()) {
+				sprite.setBitmapDirty(true);
+			}
+		}
 		spriteCanvas.drawSprites();
 	}
 

@@ -3,8 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
-import java.util.Arrays;
-
 import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
@@ -12,9 +10,7 @@ import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
-import v9t9.emulator.clients.builtin.video.VdpTouchHandlerBlock;
 import v9t9.engine.VdpHandler;
-import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
  * Redraw graphics 4, 5, 6 mode content

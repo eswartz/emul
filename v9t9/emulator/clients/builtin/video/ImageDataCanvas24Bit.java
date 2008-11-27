@@ -119,6 +119,33 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		}
 	}
 
+	protected void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask) {
+		byte[] fgRGB = getRGB(fg);
+		short mem = (short) (mem_ << 8);
+		for (int i = 0; i < 8; i++) {
+			if ((mem & bitmask & 0x8000) != 0) {
+				imageData.data[offs] = fgRGB[0];
+				imageData.data[offs + 1] = fgRGB[1];
+				imageData.data[offs + 2] = fgRGB[2];
+				imageData.data[offs + 3] = fgRGB[0];
+				imageData.data[offs + 4] = fgRGB[1];
+				imageData.data[offs + 5] = fgRGB[2];
+			}
+			bitmask <<= 1;
+			offs += 6;
+			if ((mem & bitmask & 0x8000) != 0) {
+				imageData.data[offs] = fgRGB[0];
+				imageData.data[offs + 1] = fgRGB[1];
+				imageData.data[offs + 2] = fgRGB[2];
+				imageData.data[offs + 3] = fgRGB[0];
+				imageData.data[offs + 4] = fgRGB[1];
+				imageData.data[offs + 5] = fgRGB[2];
+			}
+			bitmask <<= 1;
+			offs += 6;
+			mem <<= 1;
+		}
+	}
 	@Override
 	public void draw8x8BitmapTwoColorBlock(int offs,
 			ByteMemoryAccess access, int rowstride) {

@@ -94,6 +94,24 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			mem <<= 1;
 		}
 	}
+	protected void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask) {
+		short mem = (short) (mem_ << 8);
+		for (int i = 0; i < 8; i++) {
+			if ((mem & bitmask & 0x8000) != 0) {
+				imageData.data[offs] = fg;
+				imageData.data[offs + 1] = fg;
+			}
+			offs+=2;
+			bitmask <<= 1;
+			if ((mem & bitmask & 0x8000) != 0) {
+				imageData.data[offs] = fg;
+				imageData.data[offs + 1] = fg;
+			}
+			offs+=2;
+			bitmask <<= 1;
+			mem <<= 1;
+		}
+	}
 
 	@Override
 	public void draw8x8BitmapTwoColorBlock(int offs,

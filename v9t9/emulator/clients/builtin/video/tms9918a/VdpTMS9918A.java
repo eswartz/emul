@@ -257,7 +257,7 @@ public class VdpTMS9918A implements VdpHandler {
      * @return
      */
     protected int getModeAddressMask() {
-    	return getMemorySize() - 1;
+    	return vdpMmio.getMemorySize() - 1;
     }
     
     protected VdpModeInfo createSpriteModeInfo() {
@@ -456,12 +456,16 @@ public class VdpTMS9918A implements VdpHandler {
      * @see v9t9.handlers.VdpHandler#writeVdpMemory(short, byte)
      */
     public synchronized void touchAbsoluteVdpMemory(int vdpaddr, byte val) {
-		if (vdpModeRedrawHandler != null) {
-	    	vdpchanged |= vdpModeRedrawHandler.touch(vdpaddr);
-	    	if (spriteRedrawHandler != null) {
-	    		vdpchanged |= spriteRedrawHandler.touch(vdpaddr);
-	    	}
-		}
+    	try {
+			if (vdpModeRedrawHandler != null) {
+		    	vdpchanged |= vdpModeRedrawHandler.touch(vdpaddr);
+		    	if (spriteRedrawHandler != null) {
+		    		vdpchanged |= spriteRedrawHandler.touch(vdpaddr);
+		    	}
+			}
+    	} catch (NullPointerException e) {
+    		// XXX: sprite.touch is null sometimes???
+    	}
     }
     
     public byte readAbsoluteVdpMemory(int vdpaddr) {
@@ -491,13 +495,13 @@ public class VdpTMS9918A implements VdpHandler {
 		if (vdpModeRedrawHandler != null) {
 			vdpModeRedrawHandler.propagateTouches();
 			
-			if (spriteRedrawHandler != null) {
-				vdpStatus = spriteRedrawHandler.updateSpriteCoverage(vdpStatus);
-			}
-			
 			if (vdpChanges.fullRedraw) {
 				vdpModeRedrawHandler.clear();
 				vdpCanvas.markDirty();
+			}
+			
+			if (spriteRedrawHandler != null) {
+				vdpStatus = spriteRedrawHandler.updateSpriteCoverage(vdpStatus);
 			}
 			
 			int count = vdpModeRedrawHandler.updateCanvas(blocks, vdpChanges.fullRedraw);
@@ -525,10 +529,6 @@ public class VdpTMS9918A implements VdpHandler {
 		return vdpCanvas;
 	}
 
-	public int getMemorySize() {
-		return vdpMmio.getMemorySize();
-	}
-	
 	public void tick() {
 		
 	}

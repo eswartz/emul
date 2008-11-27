@@ -15,9 +15,11 @@ public class VdpSpriteCanvas {
 	private VdpSprite[] sprites;
 	private int[] rowcount;
 	private final VdpCanvas canvas;
+	private final int maxPerLine;
 
-	public VdpSpriteCanvas(VdpCanvas canvas) {
+	public VdpSpriteCanvas(VdpCanvas canvas, int maxPerLine) {
 		this.canvas = canvas;
+		this.maxPerLine = maxPerLine;
 		this.oldspritebitmap = new int[(canvas.getHeight() / 8) * (canvas.getWidth() / 8)];
 		this.spritebitmap = new int[(canvas.getHeight() / 8) * (canvas.getWidth() / 8)];
 		this.sprites = new VdpSprite[NUMSPRITES];
@@ -31,15 +33,16 @@ public class VdpSpriteCanvas {
 		return sprites;
 	}
 	
-	/** After externally updating the sprites to correspond to the current
+	/** 
+	 * After externally updating the sprites to correspond to the current
 	 * layout (update position, color, shift, pattern, deleted), call this
 	 * to mark where in the bitmap each sprite's change affects the screen
 	 * (reflecting the previous position/size/etc. and the new position/size/etc).
-	 * @param vdpStatus
-	 * @return fifth sprite, if detected
+	 * @param screenChanges the real screen's block bitmap
+	 * @return maximal sprite, if detected
 	 */
 	public int updateSpriteCoverage(byte[] screenChanges) {
-		int fifth = -1;
+		int maximal = -1;
 		
 		if (screenChanges.length < spritebitmap.length)
 			throw new IllegalArgumentException();
@@ -51,23 +54,36 @@ public class VdpSpriteCanvas {
 				knowndirty |= (1 << n);
 			}
 		}
-
+		
+		int blockStride = this.canvas.getWidth() / 8;
+		int blockMag = blockStride / 32;
+		int blockCount = 32 * this.canvas.getHeight() / 8;
+		int screenOffs = 0;
+		
 		// update any sprites made dirty by pending screen changes;
 		// this may seem redundant if we dirty a block but also moved
 		// the sprite off that block, but this won't dirty more than necessary
-		for (int i = 0; i < oldspritebitmap.length; i++) {
-			if (screenChanges[i] != 0) {
-				int oldsprites = oldspritebitmap[i] & ~knowndirty;
-				if (oldsprites != 0) {
-					for (int n = 0; n < NUMSPRITES; n++) {
-						if ((oldsprites & (1 << n)) != 0) {
-							SpriteBase sprite = sprites[n];
-							sprite.setBitmapDirty(true);
-							knowndirty |= (1 << n);
+		
+		screenOffs = 0;
+		for (int i = 0; i < blockCount; i += 32) {
+			for (int j = 0; j < 32; j++) {
+				boolean screenChanged = screenChanges[screenOffs + j * blockMag] != 0;
+				if (blockMag > 1)
+					screenChanged |= screenChanges[screenOffs + j * blockMag + 1] != 0;
+				if (screenChanged) {
+					int oldsprites = oldspritebitmap[i + j] & ~knowndirty;
+					if (oldsprites != 0) {
+						for (int n = 0; n < NUMSPRITES; n++) {
+							if ((oldsprites & (1 << n)) != 0) {
+								SpriteBase sprite = sprites[n];
+								sprite.setBitmapDirty(true);
+								knowndirty |= (1 << n);
+							}
 						}
 					}
 				}
 			}
+			screenOffs += blockStride;
 		}
 		
 		// now, find where dirty sprites will make changes to the screen
@@ -77,9 +93,9 @@ public class VdpSpriteCanvas {
 		for (int n = 0; n < sprites.length; n++) {
 			VdpSprite sprite = sprites[n];
 			sprite.markSpriteDeltaCoverage(spritebitmap, 1 << n);
-			if (sprite.updateSpriteRowBitmap(rowcount)) {
-				if (fifth == -1) {
-					fifth = n;
+			if (sprite.updateSpriteRowBitmap(rowcount, maxPerLine)) {
+				if (maximal == -1) {
+					maximal = n;
 				}
 			}
 		}
@@ -107,17 +123,24 @@ public class VdpSpriteCanvas {
 		} while (changed);
 		
 		// Now update screen blocks for sprites that will be redrawn,
-		for (int i = 0; i < spritebitmap.length; i++) {
-			if (((spritebitmap[i] | oldspritebitmap[i]) & knowndirty) != 0) {
-				screenChanges[i] = 1;
+		
+		screenOffs = 0;
+		for (int i = 0; i < blockCount; i += 32) {
+			for (int j = 0; j < 32; j++) {
+				if (((spritebitmap[i + j] | oldspritebitmap[i + j]) & knowndirty) != 0) {
+					screenChanges[screenOffs + j * blockMag] = 1;
+					if (blockMag != 1)
+						screenChanges[screenOffs + j * blockMag + 1] = 1;
+				}
 			}
+			screenOffs += blockStride;
 		}
 		
 		int[] tmp = oldspritebitmap;
 		oldspritebitmap = spritebitmap;
 		spritebitmap = tmp;
 		
-		return fifth;
+		return maximal;
 	}
 	
 	/**

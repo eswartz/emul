@@ -31,12 +31,12 @@ public abstract class TestVideoSpriteSpeedBase extends TestCase {
 	protected void time(String label, int iterations, ITimeable timeable) throws Exception {
 		long start = System.currentTimeMillis();
 		int cnt = 0;
-		while (cnt++ < iterations) {
+		while (cnt++ < iterations && System.currentTimeMillis() < start + 1000) {
 			timeable.run(cnt);
 		}
 		long end = System.currentTimeMillis();
 		System.out.println(label + ": " + iterations + " iterations took " + (end-start) + " ms @ "
-					+ (double)iterations * 1000.0 / (end-start)  + " per second");
+					+ (double)cnt * 1000.0 / (end-start)  + " per second");
 	}
 	
 	protected void updateAllAndWait() {
@@ -66,7 +66,7 @@ public abstract class TestVideoSpriteSpeedBase extends TestCase {
 		};
 	final static ByteMemoryAccess diamondPattern = new ByteMemoryAccess(diamondBytes, 0);
 	private void runSpriteTest(String label, int size, int numchars, final int shift, ByteMemoryAccess pattern, int count) throws Exception {
-		final VdpSpriteCanvas sprCanvas = new VdpSpriteCanvas(canvas);
+		final VdpSpriteCanvas sprCanvas = new VdpSpriteCanvas(canvas, 4, false);
 		final double[] xs = new double[32]; 
 		final double[] ys = new double[32];
 		final double[] dxs = new double[32];

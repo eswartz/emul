@@ -138,8 +138,9 @@ public abstract class VdpCanvas {
 		markDirty();
 	}
 
-	/** Clear the canvas to the clear color 
-	 * @param rgb TODO*/
+	/** Clear the canvas to the clear color, if the rgb is not used.  
+	 * @param rgb preferred color
+	 */
 	public abstract void clear(byte[] rgb);
 	protected byte[] clearRGB;
 	public byte[] getClearRGB() { return clearRGB; } 
@@ -301,9 +302,11 @@ public abstract class VdpCanvas {
 	 * and N-sprites-per-line calculations.  The LSB corresponds to the top row.
 	 * @param pattern the sprite's pattern
 	 * @param color the color for "on" bits on the sprite; will not be 0
+	 * @param colorStride TODO
+	 * @param doubleWidth TODO
 	 */
 	public void drawUnmagnifiedSpriteChar(int y, int x, int shift, int rowbitmap, ByteMemoryAccess pattern,
-			byte color) {
+			ByteMemoryAccess color, int colorStride, boolean doubleWidth) {
 		if (x + shift + 8 <= 0)
 			return;
 		
@@ -314,14 +317,18 @@ public abstract class VdpCanvas {
 			bitmask &= 0xff << ((x + shift + 8) - 256);
 		}
 		
+		x = (x + shift) * (doubleWidth ? 2 : 1);
 		for (int yy = 0; yy < 8; yy++) {
 			if (y >= height)
 				continue;
 			if ((rowbitmap & (1 << yy)) != 0) {
 				byte patt = pattern.memory[pattern.offset + yy];
 				if (patt != 0) {
-					int block = getBitmapOffset(x + shift, y);
-					drawEightSpritePixels(block, patt, color, bitmask);
+					int block = getBitmapOffset(x, y);
+					if (doubleWidth)
+						drawEightMagnifiedSpritePixels(block, patt, color.memory[color.offset + yy * colorStride], bitmask);
+					else
+						drawEightSpritePixels(block, patt, color.memory[color.offset + yy * colorStride], bitmask);
 				}
 			}
 			y = (y + 1) & 0xff;
@@ -337,9 +344,11 @@ public abstract class VdpCanvas {
 	 * and N-sprites-per-line calculations.  The LSB corresponds to the top row.
 	 * @param pattern the sprite's pattern
 	 * @param color the color for "on" bits on the sprite; will not be 0
+	 * @param colorStride TODO
+	 * @param doubleWidth TODO
 	 */
 	public void drawMagnifiedSpriteChar(int y, int x, int shift, int rowbitmap, ByteMemoryAccess pattern,
-			byte color) {
+			ByteMemoryAccess color, int colorStride, boolean doubleWidth) {
 		if (x + shift + 16 <= 0)
 			return;
 
@@ -350,14 +359,18 @@ public abstract class VdpCanvas {
 			bitmask &= 0xffff << ((x + shift + 16) - 256);
 		}
 		
+		x = (x + shift) * (doubleWidth ? 2 : 1);
 		for (int yy = 0; yy < 16; yy++) {
 			if (y >= height)
 				continue;
 			if ((rowbitmap & (1 << yy)) != 0) {
 				byte patt = pattern.memory[pattern.offset + yy / 2];
 				if (patt != 0) {
-					int block = getBitmapOffset(x + shift, y);
-					drawEightMagnifiedSpritePixels(block, patt, color, bitmask);
+					int block = getBitmapOffset(x, y);
+					if (doubleWidth)
+						drawEightDoubleMagnifiedSpritePixels(block, patt, color.memory[color.offset + yy * colorStride], bitmask);
+					else
+						drawEightMagnifiedSpritePixels(block, patt, color.memory[color.offset + yy * colorStride], bitmask);
 				}
 			}
 			y = (y + 1) & 0xff;
@@ -365,11 +378,14 @@ public abstract class VdpCanvas {
 	}
 	
 	/** Draw eight pixels of an 8x1 row. 
-	 * @param bitmask TODO*/
+	 * @param bitmask mask of rows visible from top-down */
 	abstract protected void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask); 
 	/** Draw 16 (8 magnified) pixels of an 8x1 row. 
-	 * @param bitmask TODO*/
+	 * @param bitmask mask of rows visible from top-down */
 	abstract protected void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask);
+	/** Draw 32 (8 magnified) pixels of an 8x1 row. 
+	 * @param bitmask mask of rows visible from top-down */
+	abstract protected void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask);
 	
 	public boolean isBlank() {
 		return isBlank;
