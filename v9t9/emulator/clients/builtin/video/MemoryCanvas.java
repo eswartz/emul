@@ -83,6 +83,22 @@ public class MemoryCanvas extends VdpCanvas {
 			mem <<= 1;
 		}
 	}
+	protected void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask) {
+		int rowOffset = getLineStride();
+		for (int i = 0; i < 8; i++) {
+			if ((mem & 0x80) != 0) {
+				bitmap[offs + i * 4] = fg;
+				bitmap[offs + i * 4 + 1] = fg;
+				bitmap[offs + i * 4 + 2] = fg;
+				bitmap[offs + i * 4 + 3] = fg;
+				bitmap[offs + rowOffset + i * 4] = fg;
+				bitmap[offs + rowOffset + i * 4 + 1] = fg;
+				bitmap[offs + rowOffset + i * 4 + 2] = fg;
+				bitmap[offs + rowOffset + i * 4 + 3] = fg;
+			}
+			mem <<= 1;
+		}
+	}
 
 
 	/**
@@ -213,5 +229,23 @@ public class MemoryCanvas extends VdpCanvas {
 			offs += lineStride - 8;
 			access.offset += rowstride;
 		}
-	}	
+	}
+
+	public byte getColorAtOffset(int offset) {
+		return bitmap[offset];
+	}
+	
+	@Override
+	public void blitSpriteBlock(MemoryCanvas spriteCanvas, int x, int y,
+			int blockMag) {
+		throw new IllegalArgumentException();
+	}
+
+	public void clear8x8Block(int offset) {
+		for (int i = 0; i < 8; i++) {
+			Arrays.fill(bitmap, offset, offset + 8, (byte) 0);
+			offset += getLineStride();
+		}
+	}
+
 }

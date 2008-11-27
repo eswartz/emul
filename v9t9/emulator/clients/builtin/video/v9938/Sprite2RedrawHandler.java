@@ -45,7 +45,7 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 		vdpTouchBlock.sprite = modify_sprite2_default;
 		vdpTouchBlock.sprpat = modify_sprpat_default;
 		
-		spriteCanvas = new VdpSpriteCanvas(vdpCanvas, 8);
+		spriteCanvas = new VdpSprite2Canvas(vdpCanvas, 8);
 	}
 
 }

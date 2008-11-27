@@ -174,7 +174,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		}
 
 		// TODO: move the VDP status logic
-		int nth_sprite = spriteCanvas.updateSpriteCoverage(vdpChanges.screen);
+		int nth_sprite = spriteCanvas.updateSpriteCoverage(vdpCanvas, vdpChanges.screen);
 
 		if (nth_sprite != -1) {
 			vdpStatus = (byte) (vdpStatus
@@ -198,7 +198,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 				sprite.setBitmapDirty(true);
 			}
 		}
-		spriteCanvas.drawSprites();
+		spriteCanvas.drawSprites(vdpCanvas);
 	}
 
 	public void redrawCanvas() {

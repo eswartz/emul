@@ -254,4 +254,30 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			access.offset += rowstride;
 		}
 	}
+	
+	@Override
+	public void blitSpriteBlock(MemoryCanvas spriteCanvas, int x, int y,
+			int blockMag) {
+		int sprOffset = spriteCanvas.getBitmapOffset(x, y);
+		int bitmapOffset = getBitmapOffset(x * blockMag, y);
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				byte cl = spriteCanvas.getColorAtOffset(sprOffset + j);
+				if (cl != 0) {
+					byte[] rgb = getRGB(cl);
+					imageData.data[bitmapOffset] = rgb[0];
+					imageData.data[bitmapOffset + 1] = rgb[1];
+					imageData.data[bitmapOffset + 2] = rgb[2];
+					if (blockMag > 1) {
+						imageData.data[bitmapOffset + 3] = rgb[0];
+						imageData.data[bitmapOffset + 4] = rgb[1];
+						imageData.data[bitmapOffset + 5] = rgb[2];
+					}
+				}
+				bitmapOffset += 3 * blockMag;
+			}
+			sprOffset += spriteCanvas.getLineStride();
+			bitmapOffset += getLineStride() - 3 * 8 * blockMag;
+		}
+	}
 }

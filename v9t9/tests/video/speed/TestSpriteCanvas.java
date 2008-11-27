@@ -51,7 +51,7 @@ public class TestSpriteCanvas extends TestCase {
 		canvas = videoRenderer.getCanvas();
 		videoRenderer.setZoom(2);
 		
-		sprCanvas = new VdpSpriteCanvas(canvas, 4, false);
+		sprCanvas = new VdpSpriteCanvas(4);
 		sprites = sprCanvas.getSprites();
 		
 		redrawBlocks = new RedrawBlock[768];
@@ -153,7 +153,7 @@ public class TestSpriteCanvas extends TestCase {
 		sprites[0].move(8, 8);
 		sprCanvas.updateSpriteCoverage(screenChanges);
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { 1 * 32 + 1});
 		
 		// move
@@ -161,7 +161,7 @@ public class TestSpriteCanvas extends TestCase {
 		sprites[0].move(0, 0);
 		sprCanvas.updateSpriteCoverage(screenChanges);
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { 1 * 32 + 1, 0 * 32 + 0 });
 
 		// delete
@@ -170,7 +170,7 @@ public class TestSpriteCanvas extends TestCase {
 		sprites[0].move(80, 80);
 		sprCanvas.updateSpriteCoverage(screenChanges);
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { 0 * 32 + 0 });
 
 		// move
@@ -178,7 +178,7 @@ public class TestSpriteCanvas extends TestCase {
 		sprites[0].move(8, 8);
 		sprCanvas.updateSpriteCoverage(screenChanges);
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { });
 		
 		// undelete
@@ -186,7 +186,7 @@ public class TestSpriteCanvas extends TestCase {
 		sprites[0].setDeleted(false);
 		sprCanvas.updateSpriteCoverage(screenChanges);
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { 1 * 32 + 1 });
 	}
 
@@ -204,7 +204,7 @@ public class TestSpriteCanvas extends TestCase {
 		sprites[0].move(4, 4);
 		sprCanvas.updateSpriteCoverage(screenChanges);
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { 0 * 32 + 0, 0 * 32 + 1, 1 * 32 + 0, 1 * 32 + 1 });
 
 		// move into block; will redraw 3 blocks we exited and the new block
@@ -212,14 +212,14 @@ public class TestSpriteCanvas extends TestCase {
 		sprites[0].move(8, 8);
 		sprCanvas.updateSpriteCoverage(screenChanges);
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { 0 * 32 + 0, 0 * 32 + 1, 1 * 32 + 0, 1 * 32 + 1 });
 
 		// no movement -> no changes
 		clearChanges();
 		sprCanvas.updateSpriteCoverage(screenChanges);
 		assertFalse(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { });
 
 	}
@@ -234,7 +234,7 @@ public class TestSpriteCanvas extends TestCase {
 		clearChanges();
 		sprites[0].move(128, 96);
 		sprCanvas.updateSpriteCoverage(screenChanges);
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { 12 * 32 + 16, 12 * 32 + 17, 13 * 32 + 16, 13 * 32 + 17 });
 
 		// screen changes underneath; full sprite redrawn
@@ -243,7 +243,7 @@ public class TestSpriteCanvas extends TestCase {
 		screenChanges[12 * 32 + 16] = 1;
 		sprCanvas.updateSpriteCoverage(screenChanges);
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { 12 * 32 + 16, 12 * 32 + 17, 13 * 32 + 16, 13 * 32 + 17 });
 
 	}
@@ -264,7 +264,7 @@ public class TestSpriteCanvas extends TestCase {
 		clearChanges();
 		sprites[0].move(128, 96);
 		sprCanvas.updateSpriteCoverage(screenChanges);
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { 
 				12 * 32 + 16, // 0, 1 
 				12 * 32 + 17, // 1
@@ -283,7 +283,7 @@ public class TestSpriteCanvas extends TestCase {
 		assertTrue(sprites[1].isBitmapDirty());
 		assertTrue(sprites[2].isBitmapDirty());
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites();
+		sprCanvas.drawSprites(canvas);
 		assertDirty(new int[] { 
 				12 * 32 + 16, // 0, 1 
 				12 * 32 + 17, // 1

@@ -525,4 +525,19 @@ public abstract class VdpCanvas {
 		return clearColor;
 	}
 
+	public int getBlockCount() {
+		return (width / 8) * (height / 8);
+	}
+
+	/** 
+	 * Compose the block from the sprite canvas onto your canvas. 
+	 * @param spriteCanvas
+	 * @param x the sprite canvas X position
+	 * @param y the sprite canvas Y position
+	 * @param blockMag if 1, x/y map to the receiver, else x is doubled in the receiver
+	 * and the block is magnified 2x horizontally
+	 */
+	abstract public void blitSpriteBlock(MemoryCanvas spriteCanvas, int x, int y,
+			int blockMag);
+
 }

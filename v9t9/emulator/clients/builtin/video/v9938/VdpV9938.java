@@ -33,6 +33,9 @@ import v9t9.engine.memory.MemoryDomain;
  * </pre>
  * TODO: toying with R2 and the row masking
  * TODO: sprite colors in mode 7 (pg 105)
+ * TODO: mono mode should only need 64 bytes... but somehow the color mask is
+ * affecting the pattern mask too?
+ * TODO: mono mode (3) initial sprite blit is half-invisible
  * @author ejs  
  *
  */
