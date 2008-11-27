@@ -11,7 +11,6 @@ import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
-import v9t9.emulator.clients.builtin.video.VdpSpriteCanvas;
 import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -104,10 +103,11 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	 * <p>
 	 * 7) Set VDP status flags for coincidence and N sprites on a line
 	 * (hackish)
+	 * @param forceRedraw 
 	 * 
 	 * @return the updated VDP status bits
 	 */
-	public byte updateSpriteCoverage(byte vdpStatus) {
+	public byte updateSpriteCoverage(byte vdpStatus, boolean forceRedraw) {
 		
 		// Update changes when sprite patterns change
 		VdpSprite[] sprites = spriteCanvas.getSprites();
@@ -148,7 +148,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 			int shift = (color & 0x80) != 0 ? -32 : 0;
 			color &= 0xf;
 			
-			if (y == 0xd0) {
+			if (false && y == 0xd0) {
 				deleted = true;
 			}
 			if (deleted) {
@@ -174,7 +174,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		}
 
 		// TODO: move the VDP status logic
-		int nth_sprite = spriteCanvas.updateSpriteCoverage(vdpCanvas, vdpChanges.screen);
+		int nth_sprite = spriteCanvas.updateSpriteCoverage(vdpCanvas, vdpChanges.screen, forceRedraw);
 
 		if (nth_sprite != -1) {
 			vdpStatus = (byte) (vdpStatus
@@ -193,11 +193,6 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	 * @param force
 	 */
 	public void updateCanvas(boolean force) {
-		if (force) {
-			for (VdpSprite sprite : spriteCanvas.getSprites()) {
-				sprite.setBitmapDirty(true);
-			}
-		}
 		spriteCanvas.drawSprites(vdpCanvas);
 	}
 

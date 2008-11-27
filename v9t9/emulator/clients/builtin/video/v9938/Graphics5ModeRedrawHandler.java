@@ -12,8 +12,9 @@ import v9t9.engine.VdpHandler;
 /**
  * Redraw graphics 5 mode content (512x192x4)
  * <p>
- * Bitmapped mode where pattern table contains 4 pixels per byte.  Every row
- * is linear in memory and every row is adjacent to the next.  This is gonna be HARD!
+ * Bitmapped mode where pattern table contains 4 pixels per byte.  
+ * The backdrop is rendered in even-odd stripes.
+ *
  * @author ejs
  *
  */
@@ -40,6 +41,11 @@ public class Graphics5ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 						vdpModeInfo.patt.base 
 						+ rowstride * block.r + (block.c >> 2) + pageOffset),
 						rowstride);
+	}
+	
+	@Override
+	public void clear() {
+		vdpCanvas.clearToEvenOddClearColors();
 	}
 
 }

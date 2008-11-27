@@ -226,13 +226,13 @@ public class TestV9938 {
 		
 		rgb = canvas.getRGB(8);
 		assertEquals((byte) 0x00, rgb[0]);
-		assertEquals((byte) 0x80, rgb[1]);
-		assertEquals((byte) 0xff, rgb[2]);
+		assertEquals((byte) 0xff, rgb[1]);
+		assertEquals((byte) 0x80, rgb[2]);
 		
 		rgb = v9938.getCanvas().getRGB(9);
 		assertEquals((byte) 0xbf, rgb[0]);
-		assertEquals((byte) 0x40, rgb[1]);
-		assertEquals((byte) 0xff, rgb[2]);
+		assertEquals((byte) 0xff, rgb[1]);
+		assertEquals((byte) 0x40, rgb[2]);
 		
 		///
 		
@@ -262,13 +262,13 @@ public class TestV9938 {
 		
 		rgb = v9938.getCanvas().getRGB(8);
 		assertEquals((byte) 0x00, rgb[0]);
-		assertEquals((byte) 0x80, rgb[1]);
-		assertEquals((byte) 0xff, rgb[2]);
+		assertEquals((byte) 0xff, rgb[1]);
+		assertEquals((byte) 0x80, rgb[2]);
 		
 		rgb = v9938.getCanvas().getRGB(9);
 		assertEquals((byte) 0xbf, rgb[0]);
-		assertEquals((byte) 0x40, rgb[1]);
-		assertEquals((byte) 0xff, rgb[2]);
+		assertEquals((byte) 0xff, rgb[1]);
+		assertEquals((byte) 0x40, rgb[2]);
 		
 	}
 

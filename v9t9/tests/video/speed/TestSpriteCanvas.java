@@ -7,16 +7,12 @@ package v9t9.tests.video.speed;
 import java.util.Arrays;
 
 import junit.framework.TestCase;
-
-import org.eclipse.swt.widgets.Display;
-
-import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
+import v9t9.emulator.clients.builtin.video.MemoryCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
-import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
-import v9t9.emulator.clients.builtin.video.VdpSpriteCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpSpriteCanvas;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 
@@ -26,17 +22,11 @@ import v9t9.engine.memory.ByteMemoryAccess;
  */
 public class TestSpriteCanvas extends TestCase {
 
-	protected VdpCanvas canvas;
+	protected VdpCanvas vdpCanvas;
 	interface ITimeable {
 		void run() throws Exception;
 	}
-	protected VideoRenderer videoRenderer;
 
-	protected VideoRenderer createVideoRenderer() {
-		return new SwtVideoRenderer(display, new ImageDataCanvas24Bit());
-	}
-	
-	protected Display display;
 	private VdpSpriteCanvas sprCanvas;
 	private RedrawBlock[] redrawBlocks;
 	private VdpSprite[] sprites;
@@ -44,14 +34,9 @@ public class TestSpriteCanvas extends TestCase {
 	
 	@Override
 	protected void setUp() throws Exception {
-		display = new Display();
-		handleEvents();
-		
-		videoRenderer = createVideoRenderer();
-		canvas = videoRenderer.getCanvas();
-		videoRenderer.setZoom(2);
-		
-		sprCanvas = new VdpSpriteCanvas(4);
+		vdpCanvas = new MemoryCanvas();
+		vdpCanvas.setSize(256, 192);
+		sprCanvas = new VdpSpriteCanvas(vdpCanvas, 4);
 		sprites = sprCanvas.getSprites();
 		
 		redrawBlocks = new RedrawBlock[768];
@@ -71,30 +56,14 @@ public class TestSpriteCanvas extends TestCase {
 			sprite.setColor(n & 15);
 			sprite.setNumchars(numchars);
 			sprite.setPattern(pattern);
+			sprite.setDeleted(false);
+			sprite.setShift(0);
 		}
 		
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
-		handleEvents();
-		if (!display.isDisposed()) display.dispose();
-	}
-	
-	protected void handleEvents() {
-		while (display.readAndDispatch()) /**/ ;
-	}
-	
-	protected void updateAllAndWait() {
-		videoRenderer.redraw();
-		videoRenderer.sync();
-		handleEvents();
-	}
-
-	protected void updateAndWait(RedrawBlock[] blocks, int count) {
-		canvas.markDirty(blocks, count);
-		videoRenderer.sync();
-		handleEvents();
 	}
 	
 	final static byte[] fuzzy = new byte[] { (byte) 0xaa, 0x55, (byte) 0xaa, 0x55, (byte) 0xaa, 0x55, (byte) 0xaa, 0x55 };
@@ -112,8 +81,12 @@ public class TestSpriteCanvas extends TestCase {
 		setupSprites(0, 0, null);
 		
 		clearChanges();
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		assertDirty(new int[] { });
+	}
+
+	private void updateCoverage() {
+		sprCanvas.updateSpriteCoverage(vdpCanvas, screenChanges, false);
 	}
 
 	private void assertDirty(int[] changes) {
@@ -140,7 +113,7 @@ public class TestSpriteCanvas extends TestCase {
 			sprites[i].setDeleted(true);
 		
 		clearChanges();
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		
 		assertDirty(new int[] { });
 	}
@@ -151,42 +124,42 @@ public class TestSpriteCanvas extends TestCase {
 		
 		clearChanges();
 		sprites[0].move(8, 8);
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites(canvas);
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { 1 * 32 + 1});
 		
 		// move
 		clearChanges();
 		sprites[0].move(0, 0);
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites(canvas);
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { 1 * 32 + 1, 0 * 32 + 0 });
 
 		// delete
 		clearChanges();
 		sprites[0].setDeleted(true);
 		sprites[0].move(80, 80);
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites(canvas);
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { 0 * 32 + 0 });
 
 		// move
 		clearChanges();
 		sprites[0].move(8, 8);
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites(canvas);
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { });
 		
 		// undelete
 		clearChanges();
 		sprites[0].setDeleted(false);
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites(canvas);
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { 1 * 32 + 1 });
 	}
 
@@ -202,24 +175,24 @@ public class TestSpriteCanvas extends TestCase {
 		// straddles 4 blocks
 		clearChanges();
 		sprites[0].move(4, 4);
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites(canvas);
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { 0 * 32 + 0, 0 * 32 + 1, 1 * 32 + 0, 1 * 32 + 1 });
 
 		// move into block; will redraw 3 blocks we exited and the new block
 		clearChanges();
 		sprites[0].move(8, 8);
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites(canvas);
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { 0 * 32 + 0, 0 * 32 + 1, 1 * 32 + 0, 1 * 32 + 1 });
 
 		// no movement -> no changes
 		clearChanges();
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		assertFalse(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites(canvas);
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { });
 
 	}
@@ -233,17 +206,17 @@ public class TestSpriteCanvas extends TestCase {
 		// in one block
 		clearChanges();
 		sprites[0].move(128, 96);
-		sprCanvas.updateSpriteCoverage(screenChanges);
-		sprCanvas.drawSprites(canvas);
+		updateCoverage();
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { 12 * 32 + 16, 12 * 32 + 17, 13 * 32 + 16, 13 * 32 + 17 });
 
 		// screen changes underneath; full sprite redrawn
 		clearChanges();
 		assertFalse(sprites[0].isBitmapDirty());
 		screenChanges[12 * 32 + 16] = 1;
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites(canvas);
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { 12 * 32 + 16, 12 * 32 + 17, 13 * 32 + 16, 13 * 32 + 17 });
 
 	}
@@ -263,8 +236,8 @@ public class TestSpriteCanvas extends TestCase {
 		// first time, all will be redrawn
 		clearChanges();
 		sprites[0].move(128, 96);
-		sprCanvas.updateSpriteCoverage(screenChanges);
-		sprCanvas.drawSprites(canvas);
+		updateCoverage();
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { 
 				12 * 32 + 16, // 0, 1 
 				12 * 32 + 17, // 1
@@ -279,11 +252,11 @@ public class TestSpriteCanvas extends TestCase {
 		// and 0 (due to sharing blocks with 1) should also be redrawn
 		clearChanges();
 		sprites[3].setBitmapDirty(true);
-		sprCanvas.updateSpriteCoverage(screenChanges);
+		updateCoverage();
 		assertTrue(sprites[1].isBitmapDirty());
 		assertTrue(sprites[2].isBitmapDirty());
 		assertTrue(sprites[0].isBitmapDirty());
-		sprCanvas.drawSprites(canvas);
+		sprCanvas.drawSprites(vdpCanvas);
 		assertDirty(new int[] { 
 				12 * 32 + 16, // 0, 1 
 				12 * 32 + 17, // 1

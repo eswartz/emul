@@ -59,11 +59,11 @@ public class VdpSprite extends SpriteBase {
 	}
 
 	/** 
-	 * Update the screen bitmap to represent a bitmask of sprites 
-	 * drawn in each block for the current and previous state of the sprite.
+	 * Update the sprite bitmap to show where this sprite, in
+	 * its current state, will be reflected.
 	 * @param bitmap
 	 */
-	public void markSpriteDeltaCoverage(int[] bitmap, int mask) {
+	public void markSpriteCoverage(int[] bitmap, int mask) {
 		// set the 8x8 blocks touched by the sprite
 		if (!deleted) {
 			int yrows = size + ((y & 7) != 0 ? 1 : 0);

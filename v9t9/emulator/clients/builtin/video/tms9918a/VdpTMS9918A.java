@@ -116,8 +116,6 @@ public class VdpTMS9918A implements VdpHandler {
     	
     	byte old = vdpregs[reg];
     	vdpregs[reg] = val;
-    	if (old == val)
-    		return;
     	
     	int         redraw = doWriteVdpReg(reg, old, val);
 
@@ -161,6 +159,11 @@ public class VdpTMS9918A implements VdpHandler {
 	protected int doWriteVdpReg(int reg, byte old, byte val) {
     	int redraw = 0;
     	
+    	vdpregs[reg] = val;
+    	if (old == val)
+    		return redraw;
+    	
+ 
     	switch (reg) {
     	case 0:					/* bitmap/video-in */
     		if (CHANGED(old, val, VdpTMS9918A.R0_M3+VdpTMS9918A.R0_EXTERNAL)) {
@@ -284,7 +287,7 @@ public class VdpTMS9918A implements VdpHandler {
 		initUpdateBlocks(8);
 	}
 
-	private SpriteRedrawHandler createSpriteRedrawHandler() {
+	protected SpriteRedrawHandler createSpriteRedrawHandler() {
 		return new SpriteRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, createSpriteModeInfo());
 	}
@@ -492,7 +495,10 @@ public class VdpTMS9918A implements VdpHandler {
 		if (!vdpchanged)
 			return;
 		
+	//	System.out.print('_');
 		if (vdpModeRedrawHandler != null) {
+			//long start = System.currentTimeMillis();
+			
 			vdpModeRedrawHandler.propagateTouches();
 			
 			if (vdpChanges.fullRedraw) {
@@ -501,7 +507,7 @@ public class VdpTMS9918A implements VdpHandler {
 			}
 			
 			if (spriteRedrawHandler != null) {
-				vdpStatus = spriteRedrawHandler.updateSpriteCoverage(vdpStatus);
+				vdpStatus = spriteRedrawHandler.updateSpriteCoverage(vdpStatus, vdpChanges.fullRedraw);
 			}
 			
 			int count = vdpModeRedrawHandler.updateCanvas(blocks, vdpChanges.fullRedraw);
@@ -519,10 +525,11 @@ public class VdpTMS9918A implements VdpHandler {
 			vdpChanges.sprite = 0;
 			
 			vdpChanges.fullRedraw = false;
+			
+			//System.out.println("elapsed: " + (System.currentTimeMillis() - start));
 		}
 		
 		vdpchanged = false;
-		
 	}
 
 	public synchronized VdpCanvas getCanvas() {

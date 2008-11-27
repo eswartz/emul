@@ -1,9 +1,13 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.video;
+package v9t9.emulator.clients.builtin.video.tms9918a;
 
 import java.util.Arrays;
+
+import v9t9.emulator.clients.builtin.video.SpriteBase;
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VdpSprite;
 
 
 public class VdpSpriteCanvas {
@@ -13,6 +17,7 @@ public class VdpSpriteCanvas {
 	/** map, per screen block, of which sprites are here */
 	protected int[] spritebitmap;
 	protected VdpSprite[] sprites;
+	/** map of sprites visible on the row */
 	protected int[] rowcount;
 	protected final int maxPerLine;
 	protected int knowndirty;
@@ -40,15 +45,22 @@ public class VdpSpriteCanvas {
 	 * (reflecting the previous position/size/etc. and the new position/size/etc).
 	 * @param screenCanvas the screen's canvas, used for resolution matching
 	 * @param screenChanges the real screen's block bitmap
+	 * @param forceRedraw if true, force full redraw
 	 * @return maximal sprite, if detected
 	 */
-	public int updateSpriteCoverage(VdpCanvas screenCanvas,  byte[] screenChanges) {
+	public int updateSpriteCoverage(VdpCanvas screenCanvas,  byte[] screenChanges, boolean forceRedraw) {
 		int maximal = -1;
 		
 		if (screenChanges.length < spritebitmap.length)
 			throw new IllegalArgumentException();
 
-		// see which sprites we already know are dirty
+		if (forceRedraw) {
+			for (VdpSprite sprite : getSprites()) {
+				sprite.setBitmapDirty(true);
+			}
+		}
+		
+		// see which sprites we already know are dirty, since their attributes just changed
 		knowndirty = 0;
 		for (int n = 0; n < NUMSPRITES; n++) {
 			if (sprites[n].isBitmapDirty()) {
@@ -56,10 +68,16 @@ public class VdpSpriteCanvas {
 			}
 		}
 		
+		// see where the screen changed and forces new sprite redraws
 		updateSpriteBitmapForScreenChanges(screenCanvas, screenChanges);
 		
-		maximal = getSpriteBitmapChanges(maximal);
+		// see where the current sprites mark the screen
+		maximal = getSpriteCoverage();
 		
+		// see where sprite drawings trigger other sprite redraws
+		getCascadingSpriteChanges();
+		
+		// mark changed positions in screen so it will be redrawn before sprites
 		updateScreenBitmapForSpriteChanges(screenCanvas, screenChanges);
 		
 		int[] tmp = oldspritebitmap;
@@ -105,20 +123,18 @@ public class VdpSpriteCanvas {
 	}
 
 	/**
-	 * Find where dirty sprites (or redrawings of those sprites) will make changes 
-	 * to the sprite bitmap
-	 * 
-	 * @param maximal
-	 * @return maximal sprite, if detected
+	 * Get current coverage of sprites
+	 * @return max # sprite on a line, or -1
 	 */
-	protected int getSpriteBitmapChanges(int maximal) {
+	protected int getSpriteCoverage() {
+		int maximal = -1;
 		
 		Arrays.fill(spritebitmap, 0, spritebitmap.length, 0);
 		Arrays.fill(rowcount, 0, rowcount.length, 0);
 		
 		for (int n = 0; n < sprites.length; n++) {
 			VdpSprite sprite = sprites[n];
-			sprite.markSpriteDeltaCoverage(spritebitmap, 1 << n);
+			sprite.markSpriteCoverage(spritebitmap, 1 << n);
 			if (sprite.updateSpriteRowBitmap(rowcount, maxPerLine)) {
 				if (maximal == -1) {
 					maximal = n;
@@ -126,10 +142,18 @@ public class VdpSpriteCanvas {
 			}
 		}
 		
+		return maximal;
+	}
+
+	/**
+	 * Find where dirty sprites (or redrawings of those sprites) will make changes 
+	 * to the sprite bitmap
+	 */
+	protected void getCascadingSpriteChanges() {
+		
 		// Now update otherwise unchanged sprites intersecting changed ones,
 		// because redrawing a sprite will require that other sprites be redrawn.
 		// This could cascade and redraw all the sprites if they each have pixels in common.
-		/*
 		boolean changed;
 		do {
 			changed = false;
@@ -141,7 +165,7 @@ public class VdpSpriteCanvas {
 						for (int n = 0; n < NUMSPRITES; n++) {
 							if ((affectedSprites & (1 << n)) != 0) {
 								sprites[n].setBitmapDirty(true);
-								knowndirty |= 1 << n;	// don't set affectedSprites since we'll miss the chance to mark them dirty
+								knowndirty |= 1 << n;	// don't update knowndirty all at once since we'll miss the chance to mark them dirty
 								changed = true;
 							}
 						}
@@ -149,8 +173,8 @@ public class VdpSpriteCanvas {
 				}
 			}
 		} while (changed);
-		*/
 		
+		/*
 		boolean changed;
 		changed = false;
 		for (int i = 0; i < spritebitmap.length; i++) {
@@ -163,15 +187,7 @@ public class VdpSpriteCanvas {
 				}
 			}
 		}
-		if (changed) {
-			for (int n = 0; n < NUMSPRITES; n++) {
-				if ((knowndirty & (1 << n)) != 0) {
-					sprites[n].setBitmapDirty(true);
-				}
-			}
-		}
-		
-		return maximal;
+		*/
 	}
 
 	/**
@@ -185,18 +201,22 @@ public class VdpSpriteCanvas {
 		int blockMag = blockStride / 32;
 		int blockCount = 32 * screenCanvas.getHeight() / 8;
 		int screenOffs = 0;
+		
+		int touched= 0;
 		for (int i = 0; i < blockCount; i += 32) {
 			for (int j = 0; j < 32; j++) {
 				if (((spritebitmap[i + j] | oldspritebitmap[i + j]) & knowndirty) != 0) {
 					screenChanges[screenOffs + j * blockMag] = 1;
 					if (blockMag != 1)
 						screenChanges[screenOffs + j * blockMag + 1] = 1;
+					touched++;
 				}
 			}
 			screenOffs += blockStride;
 		}
+		//System.out.println(touched + " dirty from sprites");
 	}
-	
+
 	/**
 	 * Draw sprites, after any modified screen blocks have been restored.
 	 * @param canvas the canvas to modify

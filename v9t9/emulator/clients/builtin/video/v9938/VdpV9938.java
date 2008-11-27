@@ -146,6 +146,9 @@ public class VdpV9938 extends VdpTMS9918A {
 		//System.out.println(Utils.toHex2(reg) + " = " + Utils.toHex2(val));
 		int redraw = super.doWriteVdpReg(reg, old, val);
 		
+		if (reg != 17 && reg < 32 && old == val)
+			return redraw;
+		
 		switch (reg) {
 		case 0:
 			if (CHANGED(old, val, R0_M4 + R0_M5)) {
@@ -267,7 +270,8 @@ public class VdpV9938 extends VdpTMS9918A {
 			palettelatch = val;
 			palettelatched = true;
 		} else {
-			vdpCanvas.setRGB333(paletteidx & 0xff, palettelatch >> 4, palettelatch & 0x7, val & 0x7);
+			// first byte: red red/blue, second: green
+			vdpCanvas.setRGB333(paletteidx & 0xff, palettelatch >> 4, val & 0x7, palettelatch & 0x7);
 			dirtyAll();
 			
 			paletteidx++;
@@ -341,10 +345,11 @@ public class VdpV9938 extends VdpTMS9918A {
 		int mode = get9938ModeNumber(); 
 		if (mode == MODE_GRAPHICS5) {
 			// even-odd tiling function
-			vdpCanvas.setClearColor(vdpbg & 0x3);
-			vdpCanvas.setClearColor1((vdpbg >> 2) & 0x3);
+			vdpCanvas.setClearColor((vdpbg >> 2) & 0x3);
+			vdpCanvas.setClearColor1((vdpbg) & 0x3);
 		} else if (mode == MODE_GRAPHICS7) {
-			vdpCanvas.setClearColor((vdpfg << 4) | vdpbg);
+			// an GRB 332 value is here
+			vdpCanvas.setClearColor(vdpregs[7]);
 		} else {
 			super.setupBackdrop();
 		}
@@ -403,7 +408,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpModeInfo.color.base = 0;
 		vdpModeInfo.color.size = 0;
 		
-		// paging!
+		// paging! (A15, A16)
 		vdpModeInfo.patt.base = ((vdpregs[2] & 0x60) << 10) & ramsize;
 		vdpModeInfo.patt.size = 27136;
 		
@@ -441,7 +446,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpModeInfo.color.base = 0;
 		vdpModeInfo.color.size = 0;
 		
-		// paging!
+		// paging!  (A16)
 		vdpModeInfo.patt.base = ((vdpregs[2] & 0x20) << 11) & ramsize;
 		vdpModeInfo.patt.size = 54272;
 		
@@ -457,7 +462,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpCanvas.setSize(256, vdpCanvas.getHeight());
 		vdpModeRedrawHandler = new Graphics7ModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, createGraphics67ModeInfo());
-		spriteRedrawHandler = createSprite2RedrawHandler(true);
+		spriteRedrawHandler = createSprite2RedrawHandler(false);
 		vdpMmio.setMemoryAccessCycles(8);
 		initUpdateBlocks(8);
 	}

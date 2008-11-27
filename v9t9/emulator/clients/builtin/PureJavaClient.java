@@ -112,10 +112,10 @@ public class PureJavaClient implements Client {
      * @see v9t9.Client#timerTick()
      */
     public void timerInterrupt() {
+    	//System.out.print('.');
     	video.update();
     	videoRenderer.redraw();
     	keyboardHandler.scan(keyboardState);
-    	//video.update();
     }
 
     /* (non-Javadoc)

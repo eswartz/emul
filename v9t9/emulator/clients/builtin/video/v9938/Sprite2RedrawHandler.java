@@ -6,8 +6,6 @@ package v9t9.emulator.clients.builtin.video.v9938;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
-import v9t9.emulator.clients.builtin.video.VdpSpriteCanvas;
-import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
 import v9t9.emulator.clients.builtin.video.tms9918a.SpriteRedrawHandler;
 import v9t9.engine.VdpHandler;
 
@@ -24,17 +22,6 @@ import v9t9.engine.VdpHandler;
  */
 public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 
-	protected VdpTouchHandler modify_sprite2_default = new VdpTouchHandler() {
-
-		public void modify(int offs) {
-			if (offs < 0)
-				 /* color table */;
-			vdpChanges.sprite |= (1<<(offs >> 2));
-			vdpchanged = 1;
-		}
-
-	};
-
 	public Sprite2RedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
 			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
 		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas, modeInfo);
@@ -42,10 +29,28 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 
 	@Override
 	protected void init() {
-		vdpTouchBlock.sprite = modify_sprite2_default;
+		vdpTouchBlock.sprite = modify_sprite_default;
 		vdpTouchBlock.sprpat = modify_sprpat_default;
 		
 		spriteCanvas = new VdpSprite2Canvas(vdpCanvas, 8);
+	}
+
+	@Override
+	public boolean touch(int addr) {
+		boolean visible = false;
+
+		// sprite color table
+		int sprcolbase = vdpModeInfo.sprite.base - 0x200;
+		if (sprcolbase <= addr
+				&& addr < vdpModeInfo.sprite.base) {
+			
+			vdpChanges.sprite |= (1<< ((addr - sprcolbase) >> 4));
+			vdpchanged = 1;
+			
+			visible = true;
+		}
+
+		return super.touch(addr) || visible;
 	}
 
 }

@@ -50,7 +50,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		shell.setLayout(layout);
 		shell.setBounds(800,800,0,0);
 		
-		this.canvas = new Canvas(shell, SWT.DOUBLE_BUFFERED);
+		this.canvas = new Canvas(shell, SWT.NO_BACKGROUND);
 		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		this.canvas.setLayoutData(gridData);
 		this.canvas.setLayout(new FillLayout());
@@ -240,7 +240,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			gc.fillRectangle(updateRect);
 			wasBlank = true;
 		}
-		
 		vdpCanvas.clearDirty();
 		
 	}
@@ -257,6 +256,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	public void canvasDirtied(VdpCanvas canvas) {
 		//redraw();
+		//System.out.println("!");
 		isDirty = true;
 	}
 

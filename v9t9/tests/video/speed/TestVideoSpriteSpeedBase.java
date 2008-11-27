@@ -9,8 +9,8 @@ import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.SpriteBase;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
-import v9t9.emulator.clients.builtin.video.VdpSpriteCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpSpriteCanvas;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 
@@ -66,7 +66,7 @@ public abstract class TestVideoSpriteSpeedBase extends TestCase {
 		};
 	final static ByteMemoryAccess diamondPattern = new ByteMemoryAccess(diamondBytes, 0);
 	private void runSpriteTest(String label, int size, int numchars, final int shift, ByteMemoryAccess pattern, int count) throws Exception {
-		final VdpSpriteCanvas sprCanvas = new VdpSpriteCanvas(4);
+		final VdpSpriteCanvas sprCanvas = new VdpSpriteCanvas(canvas, 4);
 		final double[] xs = new double[32]; 
 		final double[] ys = new double[32];
 		final double[] dxs = new double[32];
@@ -107,7 +107,7 @@ public abstract class TestVideoSpriteSpeedBase extends TestCase {
 						sprite.move(((int) xs[n]) & 0xff, ((int) ys[n]) & 0xff);
 					}
 					
-					sprCanvas.updateSpriteCoverage(screenChanges);
+					sprCanvas.updateSpriteCoverage(canvas, screenChanges, false);
 					int count = 0;
 					for (int i = 0; i < 768; i++) {
 						if (screenChanges[i] != 0) {

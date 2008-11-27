@@ -3,14 +3,9 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
-import java.util.Arrays;
-
 import v9t9.emulator.clients.builtin.video.MemoryCanvas;
-import v9t9.emulator.clients.builtin.video.RedrawBlock;
-import v9t9.emulator.clients.builtin.video.SpriteBase;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
-import v9t9.emulator.clients.builtin.video.VdpSprite;
-import v9t9.emulator.clients.builtin.video.VdpSpriteCanvas;
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpSpriteCanvas;
 
 /**
  * For Sprite 2 mode, we use a different strategy for managing sprites.
@@ -60,47 +55,52 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 			byte[] screenChanges) {
 		screenSpriteChanges = screenChanges;
 		
-		// no changes to sprites based on screen changes
+		// no changes to screen can affect sprites here
 	}
 
 	@Override
 	public void drawSprites(VdpCanvas canvas) {
 		//spriteCanvas.clear(null);
 		// clear the blocks where the sprites are moving
+		//int cleared = 0;
 		for (int i = 0; i < spritebitmap.length; i++) {
 			if ((spritebitmap[i] & knowndirty) != 0) {
 				int offset = spriteCanvas.getBitmapOffset(i % 32 * 8, i / 32 * 8);
 				spriteCanvas.clear8x8Block(offset);
+				//cleared++;
 			}
 		}
+		//System.out.print(cleared +" cleared; ");
 		super.drawSprites(spriteCanvas);
 		blitSpriteCanvas(canvas);
 	}
 
 	protected void blitSpriteCanvas(VdpCanvas screenCanvas) {
+		// where the screen changed, we need to draw our sprite blocks
 		int blockStride = screenCanvas.getWidth() / 8;
 		int blockMag = blockStride / 32;
 		int blockCount = 32 * screenCanvas.getHeight() / 8;
 		int screenOffs = 0;
-		RedrawBlock[] blocks = new RedrawBlock[screenCanvas.getBlockCount()];
-		int blockidx = 0;
+		//RedrawBlock[] blocks = new RedrawBlock[screenCanvas.getBlockCount()];
+		//int blockidx = 0;
 		for (int i = 0; i < blockCount; i += 32) {
 			for (int j = 0; j < 32; j++) {
-				if (spritebitmap[i + j] != 0 
-						|| screenSpriteChanges[(i + j) * blockMag] != 0 
-						|| (blockMag > 1 && screenSpriteChanges[(i + j) * blockMag + 1] != 0)) {
-					RedrawBlock block = new RedrawBlock();
+				if (screenSpriteChanges[(i + j) * blockMag] != 0 
+					|| (blockMag > 1 && screenSpriteChanges[(i + j) * blockMag + 1] != 0)) {
+					/*
 					blocks[blockidx++] = block;
 					block.r = i / 32 * 8;
 					block.c = j * blockMag;
 					block.w = blockMag * 8;
 					block.h = 8;
+					 */
 					screenCanvas.blitSpriteBlock(spriteCanvas, 
 							j * 8, i / 32 * 8, blockMag);
 				}
 			}
 			screenOffs += blockStride;
 		}
-		screenCanvas.markDirty(blocks, blockidx);
+		//System.out.println(blockidx + " dirty from sprites");
+		//screenCanvas.markDirty(blocks, blockidx);
 	}
 }

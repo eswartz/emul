@@ -120,7 +120,7 @@ public abstract class VdpCanvas {
 
 	/**
 	 * Set the real color that the "clear" color has
-	 * @param c 1-15 for a real color or 0 for transparent
+	 * @param c 1-15 for a real color or 0 for transparent, or some other value if supported 
 	 */
 	public void setClearColor(int c) {
 		this.clearColor = c;
@@ -513,13 +513,13 @@ public abstract class VdpCanvas {
 			ByteMemoryAccess byteReadMemoryAccess, int rowstride);
 
 
-	/*public void clearToEvenOddClearColors() {
+	public void clearToEvenOddClearColors() {
 		for (int r = 0; r < height; r += 8) {
 			for (int c = 0; c < width; c += 8) {
 				drawEightPixels(getBitmapOffset(c, r), (byte)0xaa, (byte)clearColor, (byte)clearColor1);
 			}
 		}
-	}*/
+	}
 
 	public int getClearColor() {
 		return clearColor;
