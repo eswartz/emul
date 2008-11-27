@@ -32,7 +32,7 @@ public class QtCanvas extends VdpCanvas {
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#clear()
 	 */
 	@Override
-	public void clear() {
+	public void clear(byte[] rgb) {
 		image.fill(getPixel(clearColor));
 	}
 

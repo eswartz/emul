@@ -496,7 +496,7 @@ public class VdpTMS9918A implements VdpHandler {
 			}
 			
 			if (vdpChanges.fullRedraw) {
-				vdpCanvas.clear();
+				vdpModeRedrawHandler.clear();
 				vdpCanvas.markDirty();
 			}
 			

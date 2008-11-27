@@ -96,11 +96,12 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	public void redraw() {
 		boolean becameBlank = vdpCanvas.isBlank() && !isBlank;
-		isBlank = becameBlank;
+		isBlank = vdpCanvas.isBlank();
 		
 		Rectangle redrawRect_ = vdpCanvas.getDirtyRect();
 		if (becameBlank)
 			redrawRect_ = new Rectangle(0, 0, vdpCanvas.width, vdpCanvas.height);
+			
 		if (redrawRect_ != null) {
 			final Rectangle redrawRect = redrawRect_;
 			
@@ -228,7 +229,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		} else {
 			if (wasBlank)
 				return;
-			bg = allocColor(bg, 0);
+			bg = allocColor(bg, vdpCanvas.getClearRGB());
 			gc.setBackground(bg);
 			gc.fillRectangle(updateRect);
 			wasBlank = true;
@@ -251,11 +252,12 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		redraw();
 	}
 
-	private Color allocColor(Color color, int idx) {
+	private Color allocColor(Color color, byte[] rgb) {
 		if (color != null)
 			color.dispose();
-		byte[] rgb;
-		rgb = vdpCanvas.getRGB(idx);
+		if (rgb == null)
+			rgb = vdpCanvas.getRGB(0);
+		
 		return new Color(shell.getDisplay(), rgb[0] & 0xff, rgb[1] & 0xff, rgb[2] & 0xff);
 	}
 }

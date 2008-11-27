@@ -32,13 +32,13 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#clear()
 	 */
 	@Override
-	public void clear() {
-		byte[] rgb0 = getRGB(clearColor);
+	public void clear(byte[] rgb) {
+		this.clearRGB = rgb;
 		int bpp = imageData.depth >> 3;
 		for (int i = 0; i < imageData.data.length; i += bpp) {
-			imageData.data[i] = rgb0[0];
-			imageData.data[i + 1] = rgb0[1];
-			imageData.data[i + 2] = rgb0[2];
+			imageData.data[i] = rgb[0];
+			imageData.data[i + 1] = rgb[1];
+			imageData.data[i + 2] = rgb[2];
 		}
 		if (imageData.alphaData != null) {
 			Arrays.fill(imageData.alphaData, 0, imageData.alphaData.length, (byte)-1);
@@ -215,9 +215,10 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 				
 				mem = access.memory[access.offset + j];
 
-				imageData.data[offs] = rgb3to8[(mem >> 5) & 0x7];
-				imageData.data[offs + 1] = rgb3to8[(mem >> 2) & 0x7];
-				imageData.data[offs + 2] = rgb2to8[mem & 0x3];
+				byte[] rgb = getGRB332(mem);
+				imageData.data[offs] = rgb[0];
+				imageData.data[offs + 1] = rgb[1];
+				imageData.data[offs + 2] = rgb[2];
 				
 				offs += 3;
 			}

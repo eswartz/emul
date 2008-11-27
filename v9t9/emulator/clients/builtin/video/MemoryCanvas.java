@@ -37,7 +37,7 @@ public class MemoryCanvas extends VdpCanvas {
 	}
 
 
-	public void clear() {
+	public void clear(byte[] rgb) {
 		Arrays.fill(bitmap, 0, bitmap.length, (byte) clearColor);
 	}
 

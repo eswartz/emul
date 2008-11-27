@@ -61,7 +61,7 @@ public abstract class TestVideoSpeedBase extends TestCase {
 			time("clearing canvas zoom " + zoom, COUNT, new ITimeable() {
 	
 				public void run() throws Exception {
-					canvas.clear();
+					canvas.clear(canvas.getRGB(canvas.getClearColor()));
 					updateAllAndWait();
 				}
 				
@@ -77,7 +77,7 @@ public abstract class TestVideoSpeedBase extends TestCase {
 	
 				public void run() throws Exception {
 					canvas.setClearColor(color[0]);
-					canvas.clear();
+					canvas.clear(canvas.getRGB(canvas.getClearColor()));
 					updateAllAndWait();
 					color[0] = color[0] == 1 ? 15 : 1;
 				}

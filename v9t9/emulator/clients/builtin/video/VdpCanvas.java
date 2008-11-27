@@ -138,7 +138,11 @@ public abstract class VdpCanvas {
 		markDirty();
 	}
 
-	public abstract void clear();
+	/** Clear the canvas to the clear color 
+	 * @param rgb TODO*/
+	public abstract void clear(byte[] rgb);
+	protected byte[] clearRGB;
+	public byte[] getClearRGB() { return clearRGB; } 
 
 	private boolean isBlank;
 
@@ -182,6 +186,15 @@ public abstract class VdpCanvas {
 		setRGB(idx, new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[b&0x7] });
 	}
 	
+	/** Get the 8-bit RGB values from unpacked 3-3-2 RGB  */
+	public byte[] getRGB332(int r, int g, int b) {
+		return new byte[] { rgb3to8[r & 0x7], rgb3to8[g & 0x7], rgb3to8[b & 0x7] };
+	}
+	
+	/** Get the 8-bit RGB values from a packed 3-3-2 RGB byte */
+	public byte[] getGRB332(byte rgb) {
+		return getRGB332((rgb >> 3), (rgb >> 5), rgb);
+	}
 	public byte[] getStockRGB(int i) {
 		return stockPalette[i];
 	}
@@ -482,5 +495,18 @@ public abstract class VdpCanvas {
 	 */
 	public abstract void draw8x8BitmapRGB332ColorBlock(int bitmapOffset,
 			ByteMemoryAccess byteReadMemoryAccess, int rowstride);
+
+
+	/*public void clearToEvenOddClearColors() {
+		for (int r = 0; r < height; r += 8) {
+			for (int c = 0; c < width; c += 8) {
+				drawEightPixels(getBitmapOffset(c, r), (byte)0xaa, (byte)clearColor, (byte)clearColor1);
+			}
+		}
+	}*/
+
+	public int getClearColor() {
+		return clearColor;
+	}
 
 }

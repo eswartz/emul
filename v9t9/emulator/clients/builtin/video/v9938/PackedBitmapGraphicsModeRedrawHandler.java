@@ -31,6 +31,10 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	protected int blockshift;
 	protected int blockstride;
 	protected int blockcount;
+	
+	// set when pages are blinking
+	protected int pageOffset;
+	
 	protected class ScreenBitmapTouchHandler implements VdpTouchHandler {
 		public void modify(int offs) {
 			int row = (offs / rowstride) >> 3;
@@ -55,6 +59,7 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	
 	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
 		/*  Redraw 8x8 blocks where pixels changed */
+		pageOffset = ((VdpV9938)vdpMemory).isBlinkOn() ? 0x8000 : 0;
 		int count = 0;
 		int screenSize = blockcount;
 		for (int i = 0; i < screenSize; i++) {

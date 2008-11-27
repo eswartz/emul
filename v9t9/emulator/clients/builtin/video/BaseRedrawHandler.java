@@ -100,4 +100,7 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 		
 	}
 	
+	public void clear() {
+		vdpCanvas.clear(vdpCanvas.getRGB(vdpCanvas.getClearColor()));
+	}
 }

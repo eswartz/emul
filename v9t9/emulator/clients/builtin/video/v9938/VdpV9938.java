@@ -337,10 +337,13 @@ public class VdpV9938 extends VdpTMS9918A {
 	
 	@Override
 	protected void setupBackdrop() {
-		if (get9938ModeNumber() == MODE_GRAPHICS5) {
+		int mode = get9938ModeNumber(); 
+		if (mode == MODE_GRAPHICS5) {
 			// even-odd tiling function
 			vdpCanvas.setClearColor(vdpbg & 0x3);
 			vdpCanvas.setClearColor1((vdpbg >> 2) & 0x3);
+		} else if (mode == MODE_GRAPHICS7) {
+			vdpCanvas.setClearColor((vdpfg << 4) | vdpbg);
 		} else {
 			super.setupBackdrop();
 		}
@@ -479,7 +482,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		super.tick();
 		
 		// the "blink" controls either the r7/r12 selection for text mode
-		// or the swapped page for graphics4-7 modes
+		// or the swapped odd/even page for graphics4-7 modes
 		if (vdpregs[13] != 0) {
 			if (--blinkPeriod <= 0) {
 				blinkOn = !blinkOn;
@@ -488,4 +491,9 @@ public class VdpV9938 extends VdpTMS9918A {
 			}
 		}
 	}
+
+	public boolean isBlinkOn() {
+		return blinkOn;
+	}
+	
 }

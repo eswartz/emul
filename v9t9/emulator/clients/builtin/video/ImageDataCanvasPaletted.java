@@ -36,7 +36,7 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#clear()
 	 */
 	@Override
-	public void clear() {
+	public void clear(byte[] rgb) {
 		Arrays.fill(imageData.data, 0, imageData.data.length, (byte) clearColor);
 	}
 
