@@ -217,7 +217,9 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			}
 			
 			//System.out.println(updateRect);
-			image = new Image(shell.getDisplay(), imageData);
+			synchronized (vdpCanvas) {
+				image = new Image(shell.getDisplay(), imageData);
+			}
 			
 			Rectangle destRect = updateRect;
 			

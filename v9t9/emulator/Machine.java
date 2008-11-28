@@ -40,8 +40,8 @@ abstract public class Machine {
     long upTime = 0;
     
     boolean allowInterrupts;
-    final int interruptTick = 1000 / 60;    // TODO: non-reduced rate
-    final int clientTick = 1000 / 100;
+    final int interruptTick = 1000 / 60;
+    final int clientTick = 1000 / 60;
     final int cpuTick = 1000 / 100;
     private long now;
     private TimerTask vdpInterruptTask;

@@ -119,35 +119,38 @@ public class VdpTMS9918A implements VdpHandler {
     	
     	int         redraw = doWriteVdpReg(reg, old, val);
 
-    	/*  This flag must be checked first because
-	 	   it affects the meaning of the following 
-	 	   calls and checks. */
-	 	if ((redraw & REDRAW_MODE) != 0) {
-	 		establishVideoMode();
-	 		setupBackdrop();
-	 		dirtyAll();
-	 	}
+    	synchronized (vdpCanvas) {
+			
+	    	/*  This flag must be checked first because
+		 	   it affects the meaning of the following 
+		 	   calls and checks. */
+		 	if ((redraw & REDRAW_MODE) != 0) {
+		 		establishVideoMode();
+		 		setupBackdrop();
+		 		dirtyAll();
+		 	}
+		
+		 	if ((redraw & REDRAW_SPRITES) != 0) {
+				dirtySprites();
+			}
 	
-	 	if ((redraw & REDRAW_SPRITES) != 0) {
-			dirtySprites();
+		 	if ((redraw & REDRAW_PALETTE) != 0) {
+		 		setupBackdrop();
+		 		dirtyAll();
+		 	}
+		
+		 	if ((redraw & REDRAW_BLANK) != 0) {
+		 		if ((vdpregs[1] & VdpTMS9918A.R1_NOBLANK) == 0) {
+		 			vdpCanvas.setBlank(true);
+		 			dirtyAll();
+		 			//update();
+		 		} else {
+		 			vdpCanvas.setBlank(false);
+		 			dirtyAll();
+		 			//update();
+		 		}
+		 	}
 		}
-
-	 	if ((redraw & REDRAW_PALETTE) != 0) {
-	 		setupBackdrop();
-	 		dirtyAll();
-	 	}
-	
-	 	if ((redraw & REDRAW_BLANK) != 0) {
-	 		if ((vdpregs[1] & VdpTMS9918A.R1_NOBLANK) == 0) {
-	 			vdpCanvas.setBlank(true);
-	 			dirtyAll();
-	 			//update();
-	 		} else {
-	 			vdpCanvas.setBlank(false);
-	 			dirtyAll();
-	 			//update();
-	 		}
-	 	}
 
     }
     
@@ -449,7 +452,7 @@ public class VdpTMS9918A implements VdpHandler {
     public byte readVdpStatus() {
 		/* >8802, status read */
     	byte ret = vdpStatus;
-		vdpStatus &= ~0xe0;		// thierry:  reset bits when read
+		vdpStatus &= ~0x80;
 		// TODO machine.getCpu().reset9901int(v9t9.cpu.Cpu.M_INT_VDP);
 
         return ret;
@@ -494,26 +497,31 @@ public class VdpTMS9918A implements VdpHandler {
 	public synchronized void update() {
 		if (!vdpchanged)
 			return;
-		
 	//	System.out.print('_');
 		if (vdpModeRedrawHandler != null) {
 			//long start = System.currentTimeMillis();
+
+			int count;
 			
-			vdpModeRedrawHandler.propagateTouches();
-			
-			if (vdpChanges.fullRedraw) {
-				vdpModeRedrawHandler.clear();
-				vdpCanvas.markDirty();
-			}
-			
-			if (spriteRedrawHandler != null) {
-				vdpStatus = spriteRedrawHandler.updateSpriteCoverage(vdpStatus, vdpChanges.fullRedraw);
-			}
-			
-			int count = vdpModeRedrawHandler.updateCanvas(blocks, vdpChanges.fullRedraw);
-			
-			if (spriteRedrawHandler != null && drawSprites) {
-				spriteRedrawHandler.updateCanvas(vdpChanges.fullRedraw);
+			// don't let video rendering happen in middle of updating
+			synchronized (vdpCanvas) {
+				vdpModeRedrawHandler.propagateTouches();
+				
+				if (vdpChanges.fullRedraw) {
+					vdpModeRedrawHandler.clear();
+					vdpCanvas.markDirty();
+				}
+				
+				if (spriteRedrawHandler != null) {
+					vdpStatus = spriteRedrawHandler.updateSpriteCoverage(vdpStatus, vdpChanges.fullRedraw);
+				}
+	
+	
+				count = vdpModeRedrawHandler.updateCanvas(blocks, vdpChanges.fullRedraw);
+				
+				if (spriteRedrawHandler != null && drawSprites) {
+					spriteRedrawHandler.updateCanvas(vdpChanges.fullRedraw);
+				}
 			}
 
 			vdpCanvas.markDirty(blocks, count);
@@ -537,6 +545,6 @@ public class VdpTMS9918A implements VdpHandler {
 	}
 
 	public void tick() {
-		
+		vdpStatus |= 0x80;
 	}
 }

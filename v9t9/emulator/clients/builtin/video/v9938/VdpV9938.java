@@ -52,6 +52,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	private int blinkOnPeriod;
 	private int blinkOffPeriod;
 	boolean blinkOn;
+	private boolean isEnhancedMode;
 	
 	public VdpV9938(MemoryDomain videoMemory, VdpCanvas vdpCanvas) {
 		super(videoMemory, vdpCanvas);
@@ -63,22 +64,22 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void reset() {
-		vdpCanvas.setRGB333(0, 0, 0, 0); 
-		vdpCanvas.setRGB333(1, 0, 0, 0); 
-		vdpCanvas.setRGB333(2, 1, 6, 1); 
-		vdpCanvas.setRGB333(3, 3, 7, 3); 
-		vdpCanvas.setRGB333(4, 1, 1, 7); 
-		vdpCanvas.setRGB333(5, 2, 3, 7); 
-		vdpCanvas.setRGB333(6, 5, 1, 1); 
-		vdpCanvas.setRGB333(7, 2, 6, 7); 
-		vdpCanvas.setRGB333(8, 7, 1, 1); 
-		vdpCanvas.setRGB333(9, 7, 3, 3); 
-		vdpCanvas.setRGB333(10, 6, 6, 1); 
-		vdpCanvas.setRGB333(11, 6, 6, 4); 
-		vdpCanvas.setRGB333(12, 4, 4, 1); 
-		vdpCanvas.setRGB333(13, 6, 2, 5); 
-		vdpCanvas.setRGB333(14, 5, 5, 5); 
-		vdpCanvas.setRGB333(15, 7, 7, 7); 
+		vdpCanvas.setGRB333(0, 0, 0, 0); 
+		vdpCanvas.setGRB333(1, 0, 0, 0); 
+		vdpCanvas.setGRB333(2, 6, 1, 1); 
+		vdpCanvas.setGRB333(3, 7, 3, 3); 
+		vdpCanvas.setGRB333(4, 1, 1, 7); 
+		vdpCanvas.setGRB333(5, 3, 2, 7); 
+		vdpCanvas.setGRB333(6, 1, 5, 1); 
+		vdpCanvas.setGRB333(7, 6, 2, 7); 
+		vdpCanvas.setGRB333(8, 1, 7, 1); 
+		vdpCanvas.setGRB333(9, 3, 7, 3); 
+		vdpCanvas.setGRB333(10, 6, 6, 1); 
+		vdpCanvas.setGRB333(11, 6, 6, 4); 
+		vdpCanvas.setGRB333(12, 4, 4, 1); 
+		vdpCanvas.setGRB333(13, 2, 6, 5); 
+		vdpCanvas.setGRB333(14, 5, 5, 5); 
+		vdpCanvas.setGRB333(15, 7, 7, 7); 
 	}
 	
 	/** 1: expansion RAM, 0: video RAM */
@@ -211,7 +212,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			break;
 		case 16:
 			// palette #
-			paletteidx = val;
+			paletteidx = (byte) (val & 0xf);
 			palettelatched = false;
 			break;
 		case 17:
@@ -271,10 +272,14 @@ public class VdpV9938 extends VdpTMS9918A {
 			palettelatched = true;
 		} else {
 			// first byte: red red/blue, second: green
-			vdpCanvas.setRGB333(paletteidx & 0xff, palettelatch >> 4, val & 0x7, palettelatch & 0x7);
+			int b = val & 0x7;
+			int g = palettelatch >> 4;
+			int r = palettelatch & 0x7;
+			//System.out.println("palette " + paletteidx + ": " + g +"|"+ r + "|"+ b);
+			vdpCanvas.setGRB333(paletteidx & 0xff, g, r, b);
 			dirtyAll();
 			
-			paletteidx++;
+			paletteidx = (byte) ((paletteidx+1)&0xf);
 			palettelatched = false;
 		}
 	}
@@ -293,7 +298,7 @@ public class VdpV9938 extends VdpTMS9918A {
     }
 
 	public boolean isEnhancedMode() {
-		return (vdpregs[0] & R0_M4 + R0_M5) != 0;
+		return isEnhancedMode;
 	}
 
 	/**
@@ -315,6 +320,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	protected void establishVideoMode() {
 		int mode = get9938ModeNumber();
 		vdpCanvas.setUseAltSpritePalette(false);
+		isEnhancedMode = true;
 		switch (mode) {
 		case MODE_TEXT2:
 			setText2Mode();
@@ -336,6 +342,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			setGraphics7Mode();
 			break;
 		default:
+			isEnhancedMode = false;
 			super.establishVideoMode();
 			break;
 		}

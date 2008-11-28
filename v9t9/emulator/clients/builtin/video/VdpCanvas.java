@@ -222,11 +222,11 @@ public abstract class VdpCanvas {
 	}
 	
 	/** Set the RGB triple for the palette entry, using 3-bit RGB. */
-	public void setRGB333(int idx, int r, int g, int b) {
+	public void setGRB333(int idx, int g, int r, int b) {
 		setRGB(idx, new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[b&0x7] });
 	}
 	
-	/** Get the 8-bit RGB values from unpacked 3-3-2 RGB  */
+	/** Get the 8-bit RGB values from unpacked 3-3-2 GRB  */
 	public byte[] getRGB332(int r, int g, int b) {
 		return new byte[] { rgb3to8[r & 0x7], rgb3to8[g & 0x7], rgb3to8[b & 0x7] };
 	}
