@@ -71,7 +71,4 @@ public abstract class SpriteBase {
 		this.changed = flag;
 	}
 	
-	/** Draw the sprite on the canvas */
-	abstract public void draw(VdpCanvas canvas);
-	
 }

@@ -148,7 +148,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 			int shift = (color & 0x80) != 0 ? -32 : 0;
 			color &= 0xf;
 			
-			if (false && y == 0xd0) {
+			if (y == 0xd0) {
 				deleted = true;
 			}
 			if (deleted) {

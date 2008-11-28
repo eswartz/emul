@@ -83,7 +83,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		}
 	}
 
-	protected void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask) {
+	public void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
 		byte[] fgRGB = getRGB(fg);
 		for (int i = 0; i < 8; i++) {
 			if ((mem & bitmask & 0x80) != 0) {
@@ -97,7 +97,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		}
 	}
 
-	protected void drawEightMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask) {
+	public void drawEightMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		byte[] fgRGB = getRGB(fg);
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
@@ -119,7 +119,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		}
 	}
 
-	protected void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask) {
+	public void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		byte[] fgRGB = getRGB(fg);
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
@@ -264,7 +264,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			for (int j = 0; j < 8; j++) {
 				byte cl = spriteCanvas.getColorAtOffset(sprOffset + j);
 				if (cl != 0) {
-					byte[] rgb = getRGB(cl);
+					byte[] rgb = getSpriteRGB(cl);
 					imageData.data[bitmapOffset] = rgb[0];
 					imageData.data[bitmapOffset + 1] = rgb[1];
 					imageData.data[bitmapOffset + 2] = rgb[2];

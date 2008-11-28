@@ -74,13 +74,13 @@ public class QtCanvas extends VdpCanvas {
 	}
 	
 	@Override
-	protected void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask) {
+	public void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask, boolean isLogicalOr) {
 		// TODO Auto-generated method stub
 		
 	}
 	
 	@Override
-	protected void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask) {
+	public void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
 		// TODO Auto-generated method stub
 		
 	}

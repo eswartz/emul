@@ -171,7 +171,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			}
 			if (CHANGED(old, val, R8_TP)) {
 				vdpCanvas.setClearFromPalette((val & R8_TP) != 0);
-				redraw |= REDRAW_PALETTE;
+				redraw |= REDRAW_PALETTE + REDRAW_SPRITES;
 			}
 			break;
 		case 9:
@@ -314,6 +314,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	@Override
 	protected void establishVideoMode() {
 		int mode = get9938ModeNumber();
+		vdpCanvas.setUseAltSpritePalette(false);
 		switch (mode) {
 		case MODE_TEXT2:
 			setText2Mode();
@@ -460,6 +461,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	
 	protected void setGraphics7Mode() {
 		vdpCanvas.setSize(256, vdpCanvas.getHeight());
+		vdpCanvas.setUseAltSpritePalette(true);
 		vdpModeRedrawHandler = new Graphics7ModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, createGraphics67ModeInfo());
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
@@ -468,10 +470,15 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 
 	
-	/** For the V9938, only the on-board 128K is used for display */
+	/** For the V9938, only the on-board 128K is used for display.
+	 * Also, when the graphics mode is a standard 9918A mode, the
+	 * old masking applies. */
 	@Override
 	protected int getModeAddressMask() {
-		return 0x1ffff;
+		if (isEnhancedMode())
+			return 0x1ffff;
+		else
+			return 0x3fff;
 	}
 	@Override
 	protected int getSpriteTableBase() {

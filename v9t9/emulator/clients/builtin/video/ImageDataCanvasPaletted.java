@@ -67,7 +67,7 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 		}
 	}
 	
-	protected void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask) {
+	public void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
 		for (int i = 0; i < 8; i++) {
 			if ((mem & bitmask & 0x80) != 0) {
 				imageData.data[offs] = fg;
@@ -78,7 +78,7 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 		}
 	}
 
-	protected void drawEightMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask) {
+	public void drawEightMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
 			if ((mem & bitmask & 0x8000) != 0) {
@@ -94,7 +94,7 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			mem <<= 1;
 		}
 	}
-	protected void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask) {
+	public void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
 			if ((mem & bitmask & 0x8000) != 0) {

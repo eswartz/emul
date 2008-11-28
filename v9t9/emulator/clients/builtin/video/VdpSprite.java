@@ -14,9 +14,7 @@ public class VdpSprite extends SpriteBase {
 	protected int lastx;
 	protected int lastshift;
 	private int sprrowbitmap;
-	private boolean hasPriority = true;
 	private ByteMemoryAccess colorStripe;
-	private int colorStride;
 	
 	public VdpSprite() {
 	}
@@ -28,14 +26,15 @@ public class VdpSprite extends SpriteBase {
 		if (color != this.color || colorStripe != null) {
 			this.color = (byte) color;
 			colorStripe = null;
-			colorStride = 0;
 			setBitmapDirty(true);
 		}
 	}
 	
-	public void setColorStripe(ByteMemoryAccess colorStripe, int colorStride) {
+	public void setColorStripe(ByteMemoryAccess colorStripe) {
 		this.colorStripe = colorStripe;
-		this.colorStride = colorStride;
+	}
+	public ByteMemoryAccess getColorStripe() {
+		return colorStripe;
 	}
 
 	public int getNumchars() {
@@ -66,17 +65,42 @@ public class VdpSprite extends SpriteBase {
 	public void markSpriteCoverage(int[] bitmap, int mask) {
 		// set the 8x8 blocks touched by the sprite
 		if (!deleted) {
-			int yrows = size + ((y & 7) != 0 ? 1 : 0);
-			int xcols = (size + (((x + shift) & 7) != 0 ? 1 : 0));
-			
-			for (int oy = 0; oy < yrows; oy += 8) {
-				int bmrowoffs = (((oy+y) & 0xff)/8) * 32;
-				if (bmrowoffs < bitmap.length) {
-					for (int ox = 0; ox < xcols; ox += 8) {
-						int bmcol = ((ox+x+shift) & 0xff) /8;
-						bitmap[bmrowoffs + bmcol] |= mask;
+			if (colorStripe == null) {
+				int yrows = size + ((y & 7) != 0 ? 1 : 0);
+				int xcols = (size + (((x + shift) & 7) != 0 ? 1 : 0));
+				
+				for (int oy = 0; oy < yrows; oy += 8) {
+					int bmrowoffs = (((oy+y) & 0xff)/8) * 32;
+					if (bmrowoffs < bitmap.length) {
+						for (int ox = 0; ox < xcols; ox += 8) {
+							int bmcol = ((ox+x+shift) & 0xff) /8;
+							bitmap[bmrowoffs + bmcol] |= mask;
+						}
 					}
 				}
+			} else {
+				// shift can be set per line!
+				int yrows = size + ((y & 7) != 0 ? 1 : 0);
+				ByteMemoryAccess access = new ByteMemoryAccess(colorStripe);
+				boolean ismag = !((numchars == 1 && size == 8) || (numchars == 4 && size == 16));
+				for (int oy = 0; oy < yrows; oy ++) {
+					// TODO: optimize to check only whether shift changes
+					int shift = (access.memory[access.offset] & 0x80) != 0 ? -32 : 0;
+					if (!ismag)
+						access.offset++;
+					else if (oy % 2 == 1)
+						access.offset++;
+						
+					int xcols = (size + (((x + shift) & 7) != 0 ? 1 : 0));
+					int bmrowoffs = (((oy+y) & 0xff)/8) * 32;
+					if (bmrowoffs < bitmap.length) {
+						for (int ox = 0; ox < xcols; ox += 8) {
+							int bmcol = ((ox+x+shift) & 0xff) /8;
+							bitmap[bmrowoffs + bmcol] |= mask;
+						}
+					}
+				}
+				
 			}
 		}
 	}
@@ -95,9 +119,8 @@ public class VdpSprite extends SpriteBase {
 		if (!deleted) {
 			for (int offs = 0; offs < size; offs++) {
 				int y = (this.y + offs) & 0xff;
-				if (y < rowcount.length && (!hasPriority || rowcount[y] < maxPerLine)) {
-					if (hasPriority) 
-						rowcount[y]++;
+				if (y < rowcount.length && rowcount[y] < maxPerLine) {
+					rowcount[y]++;
 					sprrowbitmap |= 1 << offs;
 				} else {
 					sprrowbitmap &= ~(1 << offs);
@@ -108,55 +131,14 @@ public class VdpSprite extends SpriteBase {
 		return isMaximal;
 	}
 
-	@Override
-	public void draw(VdpCanvas canvas) {
-		if (deleted || color == 0)
-			return;
-		
-		ByteMemoryAccess colors;
-		int colorStride;
-		if (colorStripe == null) {
-			colors = new ByteMemoryAccess(new byte[] { color }, 0);
-			colorStride = 0;
-		} else {
-			colors = colorStripe;
-			colorStride = this.colorStride;
-		}
-		
-		boolean doubleWidth = (canvas.getWidth() == 512);
-		
-		if (numchars == 1) {
-			if (size == 8) {
-				canvas.drawUnmagnifiedSpriteChar(y, x, shift, sprrowbitmap, pattern, colors, colorStride, doubleWidth); 
-			} else if (size == 16) {
-				canvas.drawMagnifiedSpriteChar(y, x, shift, sprrowbitmap, pattern, colors, colorStride, doubleWidth); 
-			}
-		} else if (numchars == 4) {
-			ByteMemoryAccess tmpPattern = new ByteMemoryAccess(pattern);
-			if (size == 16) {
-				canvas.drawUnmagnifiedSpriteChar(y, x, shift,sprrowbitmap, tmpPattern, colors, colorStride, doubleWidth);
-				tmpPattern.offset += 8;
-				canvas.drawUnmagnifiedSpriteChar(y + 8, x, shift, sprrowbitmap >> 8, tmpPattern, colors, colorStride, doubleWidth); 
-				tmpPattern.offset += 8;
-				canvas.drawUnmagnifiedSpriteChar(y, x + 8, shift, sprrowbitmap, tmpPattern, colors, colorStride, doubleWidth); 
-				tmpPattern.offset += 8;
-				canvas.drawUnmagnifiedSpriteChar(y + 8, x + 8, shift, sprrowbitmap >> 8, tmpPattern, colors, colorStride, doubleWidth); 
-			} else if (size == 32) {
-				canvas.drawMagnifiedSpriteChar(y, x, shift,sprrowbitmap, tmpPattern, colors, colorStride, doubleWidth);
-				tmpPattern.offset += 8;
-				canvas.drawMagnifiedSpriteChar(y + 16, x, shift, sprrowbitmap >> 16, tmpPattern, colors, colorStride, doubleWidth); 
-				tmpPattern.offset += 8;
-				canvas.drawMagnifiedSpriteChar(y, x + 16, shift, sprrowbitmap, tmpPattern, colors, colorStride, doubleWidth); 
-				tmpPattern.offset += 8;
-				canvas.drawMagnifiedSpriteChar(y + 16, x + 16, shift, sprrowbitmap >> 16, tmpPattern, colors, colorStride, doubleWidth); 
-			}
-		}
-		
-	}
-	
 	/** Update "last" values with current values. */
 	public void finishDraw() {
 		setBitmapDirty(false);
 	}
+	
+	public int getSprrowbitmap() {
+		return sprrowbitmap;
+	}
+
 
 }

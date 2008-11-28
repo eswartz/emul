@@ -8,6 +8,7 @@ import java.util.Arrays;
 import v9t9.emulator.clients.builtin.video.SpriteBase;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
+import v9t9.engine.memory.ByteMemoryAccess;
 
 
 public class VdpSpriteCanvas {
@@ -225,9 +226,131 @@ public class VdpSpriteCanvas {
 		for (int n = sprites.length; --n >= 0; ) {
 			VdpSprite sprite = sprites[n];
 			if (sprite.isBitmapDirty()) {
-				sprite.draw(canvas);
+				drawSprite(canvas, sprite);
 			}
 			sprite.finishDraw();
+		}
+	}
+
+	/**
+	 * Draws an 8x8 sprite character
+	 * @param y
+	 * @param x
+	 * @param shift the early clock shift (usu. 0 or -32)
+	 * @param rowbitmap a map of the rows which should be drawn, based on sprite priority
+	 * and N-sprites-per-line calculations.  The LSB corresponds to the top row.
+	 * @param pattern the sprite's pattern
+	 * @param color the color for "on" bits on the sprite; will not be 0
+	 * @param colorStride TODO
+	 * @param doubleWidth TODO
+	 */
+	protected void drawUnmagnifiedSpriteChar(VdpCanvas canvas, int y, int x, int shift, byte color, 
+			int rowbitmap, ByteMemoryAccess pattern) {
+		if (x + shift + 8 <= 0)
+			return;
+		
+		byte bitmask = -1;
+		if (x + shift < 0) {
+			bitmask &= 0xff >> (x + shift);
+		} else if (x + shift + 8 > 256) {
+			bitmask &= 0xff << ((x + shift + 8) - 256);
+		}
+		
+		x += shift;
+		for (int yy = 0; yy < 8; yy++) {
+			if (y >= canvas.getHeight())
+				continue;
+			if ((rowbitmap & (1 << yy)) != 0) {
+				byte patt = pattern.memory[pattern.offset + yy];
+				if (patt != 0) {
+					int block = canvas.getBitmapOffset(x, y);
+					canvas.drawEightSpritePixels(block, patt, color, bitmask, false);
+				}
+			}
+			y = (y + 1) & 0xff;
+		}
+	}
+
+	/**
+	 * Draws an 16x16 sprite character from an 8x8 pattern
+	 * @param y
+	 * @param x
+	 * @param shift the early clock shift (usu. 0 or -32)
+	 * @param rowbitmap a map of the rows which should be drawn, based on sprite priority
+	 * and N-sprites-per-line calculations.  The LSB corresponds to the top row.
+	 * @param pattern the sprite's pattern
+	 * @param color the color for "on" bits on the sprite; will not be 0
+	 * @param colorStride TODO
+	 * @param doubleWidth TODO
+	 */
+	protected void drawMagnifiedSpriteChar(VdpCanvas canvas, int y, int x, int shift, byte color, 
+			int rowbitmap, ByteMemoryAccess pattern) {
+		if (x + shift + 16 <= 0)
+			return;
+
+		short bitmask = -1;
+		if (x + shift < 0) {
+			bitmask &= 0xffff >> (x + shift);
+		} else if (x + shift + 16 > 256) {
+			bitmask &= 0xffff << ((x + shift + 16) - 256);
+		}
+		
+		x +=  shift;
+		for (int yy = 0; yy < 16; yy++) {
+			if (y >= canvas.getHeight())
+				continue;
+			if ((rowbitmap & (1 << yy)) != 0) {
+				byte patt = pattern.memory[pattern.offset + yy / 2];
+				if (patt != 0) {
+					int block = canvas.getBitmapOffset(x, y);
+					canvas.drawEightMagnifiedSpritePixels(block, patt, color, bitmask, false);
+				}
+			}
+			y = (y + 1) & 0xff;
+		}
+	}
+	
+	/** y,x */
+	protected static final int[] charshifts = { 0, 0, 8, 0, 0, 8, 8, 8 };
+	
+	protected void drawSprite(VdpCanvas canvas, VdpSprite sprite) {
+		if (sprite.isDeleted() || sprite.getColor() == 0)
+			return;
+		
+		/*
+		ByteMemoryAccess colors;
+		int colorStride;
+		if (colorStripe == null) {
+			colors = new ByteMemoryAccess(new byte[] { color }, 0);
+			colorStride = 0;
+		} else {
+			colors = colorStripe;
+			colorStride = this.colorStride;
+		}
+		
+		boolean doubleWidth = (canvas.getWidth() == 512);
+		*/
+		
+		int x = sprite.getX();
+		int y = sprite.getY();
+		int shift = sprite.getShift();
+		byte color = sprite.getColor();
+		int sprrowbitmap = sprite.getSprrowbitmap();
+		ByteMemoryAccess tmpPattern = new ByteMemoryAccess(sprite.getPattern());
+		
+		boolean ismag = (sprite.getSize() == 16 && sprite.getNumchars() == 1)
+			|| sprite.getSize() == 32;
+		
+		for (int c = 0; c < sprite.getNumchars(); c++) {
+			int rowshift = charshifts[c*2];
+			int colshift = charshifts[c*2+1];
+			if (!ismag)
+				drawUnmagnifiedSpriteChar(canvas, y + rowshift, x + colshift, 
+						shift, color, sprrowbitmap >> rowshift, tmpPattern);
+			else
+				drawMagnifiedSpriteChar(canvas, y + rowshift * 2, x + colshift * 2, 
+						shift, color, sprrowbitmap >> (rowshift*2), tmpPattern);
+			tmpPattern.offset += 8;
 		}
 	}
 }

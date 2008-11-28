@@ -53,9 +53,28 @@ public abstract class VdpCanvas {
 		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
 	};
 	
+	protected static final byte[][] altSpritePaletteGBR = {
+		{ 0, 0, 0 },
+		{ 0, 0, 2 },
+		{ 0, 3, 0 },
+		{ 0, 3, 2 },
+		{ 3, 0, 0 },
+		{ 3, 0, 2 },
+		{ 3, 3, 0 },
+		{ 3, 3, 2 },
+		{ 4, 7, 2 },
+		{ 0, 0, 7 },
+		{ 0, 7, 0 },
+		{ 0, 7, 7 },
+		{ 7, 0, 0 },
+		{ 7, 0, 7 },
+		{ 7, 7, 0 },
+		{ 7, 7, 7 }
+	};
 	protected byte colorPalette[][];
 	protected byte greyPalette[][];
-
+	protected byte altSpritePalette[][];
+	
 	protected static byte[] rgb3to8 = new byte[8];
 	protected static byte[] rgb2to8 = new byte[4];
 	static {
@@ -83,6 +102,12 @@ public abstract class VdpCanvas {
     	greyPalette = new byte[257][];
     	for (int i = 0; i < 16; i++)
     		greyPalette[i] = rgbToGrey(stockPalette[i]);
+    	
+    	altSpritePalette = new byte[16][];
+    	for (int i = 0; i < 16; i++) {
+    		altSpritePalette[i] = getRGB332(
+    				altSpritePaletteGBR[i][0], altSpritePaletteGBR[i][1], altSpritePaletteGBR[i][2]);
+    	}
     	
     	setGreyscale(false);
     	
@@ -157,6 +182,8 @@ public abstract class VdpCanvas {
 
 	private int yoffs;
 
+	private boolean useAltSpritePalette;
+
 	/** Get the RGB triple for the palette entry. */
 	public byte[] getRGB(int idx) {
 		if (idx == 0 && !clearFromPalette)
@@ -170,6 +197,18 @@ public abstract class VdpCanvas {
 			idx = clearColor1;
 		return thePalette[idx];
 	}
+	
+	/** Get the RGB triple for the palette entry for a sprite. */
+	public byte[] getSpriteRGB(int idx) {
+		if (idx == 0 && !clearFromPalette)
+			idx = clearColor;
+		if (useAltSpritePalette)
+			return altSpritePalette[idx];
+		else
+			return thePalette[idx];
+	}
+	
+	
 	
 	/** Set the RGB triple for the palette entry. */
 	public void setRGB(int idx, byte[] rgb) {
@@ -293,99 +332,18 @@ public abstract class VdpCanvas {
 	 */
 	abstract protected void drawSixPixels(int offs, byte mem, byte fg, byte bg); 
 
-	/**
-	 * Draws an 8x8 sprite character
-	 * @param y
-	 * @param x
-	 * @param shift the early clock shift (usu. 0 or -32)
-	 * @param rowbitmap a map of the rows which should be drawn, based on sprite priority
-	 * and N-sprites-per-line calculations.  The LSB corresponds to the top row.
-	 * @param pattern the sprite's pattern
-	 * @param color the color for "on" bits on the sprite; will not be 0
-	 * @param colorStride TODO
-	 * @param doubleWidth TODO
-	 */
-	public void drawUnmagnifiedSpriteChar(int y, int x, int shift, int rowbitmap, ByteMemoryAccess pattern,
-			ByteMemoryAccess color, int colorStride, boolean doubleWidth) {
-		if (x + shift + 8 <= 0)
-			return;
-		
-		byte bitmask = -1;
-		if (x + shift < 0) {
-			bitmask &= 0xff >> (x + shift);
-		} else if (x + shift + 8 > 256) {
-			bitmask &= 0xff << ((x + shift + 8) - 256);
-		}
-		
-		x = (x + shift) * (doubleWidth ? 2 : 1);
-		for (int yy = 0; yy < 8; yy++) {
-			if (y >= height)
-				continue;
-			if ((rowbitmap & (1 << yy)) != 0) {
-				byte patt = pattern.memory[pattern.offset + yy];
-				if (patt != 0) {
-					int block = getBitmapOffset(x, y);
-					if (doubleWidth)
-						drawEightMagnifiedSpritePixels(block, patt, color.memory[color.offset + yy * colorStride], bitmask);
-					else
-						drawEightSpritePixels(block, patt, color.memory[color.offset + yy * colorStride], bitmask);
-				}
-			}
-			y = (y + 1) & 0xff;
-		}
-	}
-
-	/**
-	 * Draws an 16x16 sprite character from an 8x8 pattern
-	 * @param y
-	 * @param x
-	 * @param shift the early clock shift (usu. 0 or -32)
-	 * @param rowbitmap a map of the rows which should be drawn, based on sprite priority
-	 * and N-sprites-per-line calculations.  The LSB corresponds to the top row.
-	 * @param pattern the sprite's pattern
-	 * @param color the color for "on" bits on the sprite; will not be 0
-	 * @param colorStride TODO
-	 * @param doubleWidth TODO
-	 */
-	public void drawMagnifiedSpriteChar(int y, int x, int shift, int rowbitmap, ByteMemoryAccess pattern,
-			ByteMemoryAccess color, int colorStride, boolean doubleWidth) {
-		if (x + shift + 16 <= 0)
-			return;
-
-		short bitmask = -1;
-		if (x + shift < 0) {
-			bitmask &= 0xffff >> (x + shift);
-		} else if (x + shift + 16 > 256) {
-			bitmask &= 0xffff << ((x + shift + 16) - 256);
-		}
-		
-		x = (x + shift) * (doubleWidth ? 2 : 1);
-		for (int yy = 0; yy < 16; yy++) {
-			if (y >= height)
-				continue;
-			if ((rowbitmap & (1 << yy)) != 0) {
-				byte patt = pattern.memory[pattern.offset + yy / 2];
-				if (patt != 0) {
-					int block = getBitmapOffset(x, y);
-					if (doubleWidth)
-						drawEightDoubleMagnifiedSpritePixels(block, patt, color.memory[color.offset + yy * colorStride], bitmask);
-					else
-						drawEightMagnifiedSpritePixels(block, patt, color.memory[color.offset + yy * colorStride], bitmask);
-				}
-			}
-			y = (y + 1) & 0xff;
-		}
-	}
-	
 	/** Draw eight pixels of an 8x1 row. 
-	 * @param bitmask mask of rows visible from top-down */
-	abstract protected void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask); 
+	 * @param bitmask mask of rows visible from top-down 
+	 * @param isLogicalOr TODO*/
+	public abstract void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask, boolean isLogicalOr); 
 	/** Draw 16 (8 magnified) pixels of an 8x1 row. 
-	 * @param bitmask mask of rows visible from top-down */
-	abstract protected void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask);
+	 * @param bitmask mask of rows visible from top-down 
+	 * @param isLogicalOr TODO*/
+	public abstract void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask, boolean isLogicalOr);
 	/** Draw 32 (8 magnified) pixels of an 8x1 row. 
-	 * @param bitmask mask of rows visible from top-down */
-	abstract protected void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask);
+	 * @param bitmask mask of rows visible from top-down 
+	 * @param isLogicalOr TODO*/
+	public abstract void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask, boolean isLogicalOr);
 	
 	public boolean isBlank() {
 		return isBlank;
@@ -539,5 +497,17 @@ public abstract class VdpCanvas {
 	 */
 	abstract public void blitSpriteBlock(MemoryCanvas spriteCanvas, int x, int y,
 			int blockMag);
+
+	public boolean isClearFromPalette() {
+		return clearFromPalette;
+	}
+
+	public boolean isUseAltSpritePalette() {
+		return useAltSpritePalette;
+	}
+
+	public void setUseAltSpritePalette(boolean useAltSpritePalette) {
+		this.useAltSpritePalette = useAltSpritePalette;
+	}
 
 }

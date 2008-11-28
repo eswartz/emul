@@ -62,39 +62,52 @@ public class MemoryCanvas extends VdpCanvas {
 		}
 	}
 	
-	protected void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask) {
-		for (int i = 0; i < 8; i++) {
-			if ((mem & 0x80) != 0) {
-				bitmap[offs++] = fg;
+	public void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
+		if (isLogicalOr) {
+			for (int i = 0; i < 8; i++) {
+				if ((mem & 0x80) != 0) {
+					bitmap[offs + i] |= fg;
+				}
+				mem <<= 1;
 			}
-			mem <<= 1;
+		} else {
+			for (int i = 0; i < 8; i++) {
+				if ((mem & 0x80) != 0) {
+					bitmap[offs + i] = fg;
+				}
+				mem <<= 1;
+			}
 		}
 	}
 
-	protected void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask) {
-		int rowOffset = getLineStride();
+	public void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask, boolean isLogicalOr) {
 		for (int i = 0; i < 8; i++) {
 			if ((mem & 0x80) != 0) {
-				bitmap[offs + i * 2] = fg;
-				bitmap[offs + i * 2 + 1] = fg;
-				bitmap[offs + rowOffset + i * 2] = fg;
-				bitmap[offs + rowOffset + i * 2 + 1] = fg;
+				if (isLogicalOr) {
+					bitmap[offs + i * 2] |= fg;
+					bitmap[offs + i * 2 + 1] |= fg;
+				} else {
+					bitmap[offs + i * 2] = fg;
+					bitmap[offs + i * 2 + 1] = fg;
+				}
 			}
 			mem <<= 1;
 		}
 	}
-	protected void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask) {
-		int rowOffset = getLineStride();
+	public void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask, boolean isLogicalOr) {
 		for (int i = 0; i < 8; i++) {
 			if ((mem & 0x80) != 0) {
-				bitmap[offs + i * 4] = fg;
-				bitmap[offs + i * 4 + 1] = fg;
-				bitmap[offs + i * 4 + 2] = fg;
-				bitmap[offs + i * 4 + 3] = fg;
-				bitmap[offs + rowOffset + i * 4] = fg;
-				bitmap[offs + rowOffset + i * 4 + 1] = fg;
-				bitmap[offs + rowOffset + i * 4 + 2] = fg;
-				bitmap[offs + rowOffset + i * 4 + 3] = fg;
+				if (isLogicalOr) {
+					bitmap[offs + i * 4] |= fg;
+					bitmap[offs + i * 4 + 1] |= fg;
+					bitmap[offs + i * 4 + 2] |= fg;
+					bitmap[offs + i * 4 + 3] |= fg;
+				} else {
+					bitmap[offs + i * 4] = fg;
+					bitmap[offs + i * 4 + 1] = fg;
+					bitmap[offs + i * 4 + 2] = fg;
+					bitmap[offs + i * 4 + 3] = fg;
+				}
 			}
 			mem <<= 1;
 		}
