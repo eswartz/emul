@@ -20,9 +20,12 @@ public interface NativeFile {
     /** Get the host file */
     public File getFile();
 
-    /** Read contents, excluding headers */
-    public void readContents(byte[] contents, int offset, int length) throws IOException;
+    /** Read contents, excluding headers  */
+    public int readContents(byte[] contents, int contentOffset, int offset, int length) throws IOException;
 
     /** Get the file size */
     public int getFileSize();
+
+    /** Write file contents, excluding headers */
+ 	public int writeContents(byte[] contents, int contentOffset, int offset, int length) throws IOException;
 }

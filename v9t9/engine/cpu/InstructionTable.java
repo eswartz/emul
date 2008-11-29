@@ -697,7 +697,12 @@ public class InstructionTable {
             }
     
         } else if (op < 0x1000) {
-            switch ((op & 0x7e0) >> 5) {
+            switch ((op & 0x1e0) >> 5) {
+        	// 0xc00
+    		case 0:				/* DSR, OP_DSR */
+    			inst.inst = InstructionTable.Idsr;
+    			break;
+
             // TODO: extended instructions
             }
     

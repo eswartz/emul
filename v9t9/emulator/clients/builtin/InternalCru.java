@@ -176,7 +176,7 @@ public class InternalCru implements CruHandler {
     public InternalCru(Machine machine, KeyboardState keyboardState) {
         this.machine = machine;
 		this.keyboardState = keyboardState;
-        this.manager = new CruManager();
+        this.manager = machine.getCruManager();
 
         registerInternalCru(0x2, 1, cruw9901_S);
         registerInternalCru(0x4, 1, cruw9901_S);

@@ -10,9 +10,6 @@ public class VdpSprite extends SpriteBase {
 	private ByteMemoryAccess pattern;
 	private int numchars;
 	
-	protected int lasty;
-	protected int lastx;
-	protected int lastshift;
 	private int sprrowbitmap;
 	private ByteMemoryAccess colorStripe;
 	
@@ -65,42 +62,19 @@ public class VdpSprite extends SpriteBase {
 	public void markSpriteCoverage(int[] bitmap, int mask) {
 		// set the 8x8 blocks touched by the sprite
 		if (!deleted) {
-			if (colorStripe == null) {
-				int yrows = size + ((y & 7) != 0 ? 1 : 0);
-				int xcols = (size + (((x + shift) & 7) != 0 ? 1 : 0));
-				
-				for (int oy = 0; oy < yrows; oy += 8) {
-					int bmrowoffs = (((oy+y) & 0xff)/8) * 32;
-					if (bmrowoffs < bitmap.length) {
-						for (int ox = 0; ox < xcols; ox += 8) {
-							int bmcol = ((ox+x+shift) & 0xff) /8;
-							bitmap[bmrowoffs + bmcol] |= mask;
-						}
+			
+			// for sprite mode 2, shift and sizeX are adjusted 
+			int yrows = sizeY + ((y & 7) != 0 ? 1 : 0);
+			int xcols = (sizeX + (((x + shift) & 7) != 0 ? 1 : 0));
+			
+			for (int oy = 0; oy < yrows; oy += 8) {
+				int bmrowoffs = (((oy+y) & 0xff)/8) * 32;
+				if (bmrowoffs < bitmap.length) {
+					for (int ox = 0; ox < xcols; ox += 8) {
+						int bmcol = ((ox+x+shift) & 0xff) /8;
+						bitmap[bmrowoffs + bmcol] |= mask;
 					}
 				}
-			} else {
-				// shift can be set per line!
-				int yrows = size + ((y & 7) != 0 ? 1 : 0);
-				ByteMemoryAccess access = new ByteMemoryAccess(colorStripe);
-				boolean ismag = !((numchars == 1 && size == 8) || (numchars == 4 && size == 16));
-				for (int oy = 0; oy < yrows; oy ++) {
-					// TODO: optimize to check only whether shift changes
-					int shift = (access.memory[access.offset] & 0x80) != 0 ? -32 : 0;
-					if (!ismag)
-						access.offset++;
-					else if (oy % 2 == 1)
-						access.offset++;
-						
-					int xcols = (size + (((x + shift) & 7) != 0 ? 1 : 0));
-					int bmrowoffs = (((oy+y) & 0xff)/8) * 32;
-					if (bmrowoffs < bitmap.length) {
-						for (int ox = 0; ox < xcols; ox += 8) {
-							int bmcol = ((ox+x+shift) & 0xff) /8;
-							bitmap[bmrowoffs + bmcol] |= mask;
-						}
-					}
-				}
-				
 			}
 		}
 	}
@@ -117,7 +91,7 @@ public class VdpSprite extends SpriteBase {
 		
 		boolean isMaximal = false;
 		if (!deleted) {
-			for (int offs = 0; offs < size; offs++) {
+			for (int offs = 0; offs < sizeY; offs++) {
 				int y = (this.y + offs) & 0xff;
 				if (y < rowcount.length && rowcount[y] < maxPerLine) {
 					rowcount[y]++;

@@ -10,6 +10,12 @@ import java.io.File;
 import java.io.IOException;
 
 public class NativeFileFactory {
+	/**
+	 * Create a NativeFile accessor for a native file on disk
+	 * @param file
+	 * @return new NativeFile
+	 * @throws IOException if cannot read file
+	 */
     public static NativeFile createNativeFile(File file) throws IOException {
         FDR fdr;
         

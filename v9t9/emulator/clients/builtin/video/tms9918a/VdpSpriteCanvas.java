@@ -241,8 +241,6 @@ public class VdpSpriteCanvas {
 	 * and N-sprites-per-line calculations.  The LSB corresponds to the top row.
 	 * @param pattern the sprite's pattern
 	 * @param color the color for "on" bits on the sprite; will not be 0
-	 * @param colorStride TODO
-	 * @param doubleWidth TODO
 	 */
 	protected void drawUnmagnifiedSpriteChar(VdpCanvas canvas, int y, int x, int shift, byte color, 
 			int rowbitmap, ByteMemoryAccess pattern) {
@@ -280,8 +278,6 @@ public class VdpSpriteCanvas {
 	 * and N-sprites-per-line calculations.  The LSB corresponds to the top row.
 	 * @param pattern the sprite's pattern
 	 * @param color the color for "on" bits on the sprite; will not be 0
-	 * @param colorStride TODO
-	 * @param doubleWidth TODO
 	 */
 	protected void drawMagnifiedSpriteChar(VdpCanvas canvas, int y, int x, int shift, byte color, 
 			int rowbitmap, ByteMemoryAccess pattern) {
@@ -317,20 +313,6 @@ public class VdpSpriteCanvas {
 		if (sprite.isDeleted() || sprite.getColor() == 0)
 			return;
 		
-		/*
-		ByteMemoryAccess colors;
-		int colorStride;
-		if (colorStripe == null) {
-			colors = new ByteMemoryAccess(new byte[] { color }, 0);
-			colorStride = 0;
-		} else {
-			colors = colorStripe;
-			colorStride = this.colorStride;
-		}
-		
-		boolean doubleWidth = (canvas.getWidth() == 512);
-		*/
-		
 		int x = sprite.getX();
 		int y = sprite.getY();
 		int shift = sprite.getShift();
@@ -338,8 +320,8 @@ public class VdpSpriteCanvas {
 		int sprrowbitmap = sprite.getSprrowbitmap();
 		ByteMemoryAccess tmpPattern = new ByteMemoryAccess(sprite.getPattern());
 		
-		boolean ismag = (sprite.getSize() == 16 && sprite.getNumchars() == 1)
-			|| sprite.getSize() == 32;
+		boolean ismag = (sprite.getSizeY() == 16 && sprite.getNumchars() == 1)
+			|| sprite.getSizeY() == 32;
 		
 		for (int c = 0; c < sprite.getNumchars(); c++) {
 			int rowshift = charshifts[c*2];

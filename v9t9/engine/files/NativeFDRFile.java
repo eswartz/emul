@@ -8,6 +8,7 @@ package v9t9.engine.files;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import v9t9.utils.Check;
@@ -33,13 +34,24 @@ public class NativeFDRFile implements NativeFile {
         return filename;
     }
 
-    public void readContents(byte[] contents, int offset, int length) throws IOException {
+    public int readContents(byte[] contents, int contentOffset, int offset, int length) throws IOException {
         FileInputStream fis = new FileInputStream(file);
         fis.skip(fdr.getFDRSize() + offset);
         int size = Math.min(fdr.getFileSize(), length);
-        fis.read(contents, 0, size);
+        int read = fis.read(contents, contentOffset, size);
         fis.close();
+        return read;
     }
+
+    public int writeContents(byte[] contents, int contentOffset, int offset,
+			int length) throws IOException {
+    	FileOutputStream fos = new FileOutputStream(file, true);
+        
+        fos.getChannel().position(offset + fdr.getFDRSize());
+        fos.write(contents, contentOffset, length);
+        fos.close();
+        return length;
+	}
 
     public int getFileSize() {
         return fdr.getFileSize();
@@ -48,5 +60,9 @@ public class NativeFDRFile implements NativeFile {
     public File getFile() {
         return file;
     }
+
+	public FDR getFDR() {
+		return fdr;
+	}
 
 }

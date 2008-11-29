@@ -130,9 +130,30 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 				sprite.setDeleted(false);
 				sprite.move(x, y);
 				sprite.setPattern(vdpMemory.getByteReadMemoryAccess(sprpatbase + ((ch & 0xfc) << 3)));
-				sprite.setSize(size);
+				
+				ByteMemoryAccess colorStripe = new ByteMemoryAccess(colorAccess);
+				sprite.setColorStripe(colorStripe);
+				
+				int sizeX = size;
+				int sizeY = size;
+				int origClock = -1;
+				
+				// a sprite counts as double-wide if it has 
+				for (int offs = 0; offs < 16; offs++) {
+					byte attr =colorStripe.memory[colorStripe.offset + offs];
+					int clock = (attr & 0x80) != 0 ? -32 : 0;
+					if (origClock == -1)
+						origClock = clock;
+					else if (clock != origClock) {
+						if (clock < origClock)
+							origClock = clock;
+						sizeX *= 2;
+						break;
+					}
+				}
+				sprite.setShift(origClock);
+				sprite.setSize(sizeX, sizeY);
 				sprite.setNumchars(numchars);
-				sprite.setColorStripe(new ByteMemoryAccess(colorAccess));
 				// also check whether the pattern content changed
 				if (vdpChanges.sprpat[ch] != 0)
 					sprite.setBitmapDirty(true);

@@ -32,10 +32,11 @@ import v9t9.engine.memory.MemoryDomain;
  * Graphics 7 mode:  0   0   1   1   1		= 28	>81E0, >800E
  * </pre>
  * TODO: toying with R2 and the row masking
- * TODO: sprite colors in mode 7 (pg 105)
+ * TODO: even-odd sprite colors in mode 5
  * TODO: mono mode should only need 64 bytes... but somehow the color mask is
  * affecting the pattern mask too?
- * TODO: mono mode (3) initial sprite blit is half-invisible
+ * TODO: figure out actual memory access times... from what I can tell,
+ * and wishful thinking, it's twice as fast as the TMS9918A memory. 
  * @author ejs  
  *
  */
@@ -79,7 +80,12 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpCanvas.setGRB333(12, 4, 4, 1); 
 		vdpCanvas.setGRB333(13, 2, 6, 5); 
 		vdpCanvas.setGRB333(14, 5, 5, 5); 
-		vdpCanvas.setGRB333(15, 7, 7, 7); 
+		vdpCanvas.setGRB333(15, 7, 7, 7);
+		
+		// color burst regs(pg 149)
+		vdpregs[20] = 0;
+		vdpregs[21] = 0x3b;
+		vdpregs[22] = 0x05;
 	}
 	
 	/** 1: expansion RAM, 0: video RAM */
@@ -387,9 +393,16 @@ public class VdpV9938 extends VdpTMS9918A {
 		return vdpModeInfo;
 	}
 
+	@Override
+	protected void setBitmapMode() {
+		super.setBitmapMode();
+		vdpMmio.setMemoryAccessCycles(4);
+		
+	}
 	protected void setGraphics3Mode() {
 		super.setBitmapMode();
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
+		vdpMmio.setMemoryAccessCycles(4);
 	}
 
 	private Sprite2RedrawHandler createSprite2RedrawHandler(boolean wide) {
@@ -402,7 +415,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpModeRedrawHandler = new Graphics4ModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, createGraphics45ModeInfo());
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
-		vdpMmio.setMemoryAccessCycles(8);
+		vdpMmio.setMemoryAccessCycles(4);
 		initUpdateBlocks(8);
 	}
 
@@ -432,7 +445,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpModeRedrawHandler = new Graphics5ModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, createGraphics45ModeInfo());
 		spriteRedrawHandler = createSprite2RedrawHandler(true);
-		vdpMmio.setMemoryAccessCycles(8);
+		vdpMmio.setMemoryAccessCycles(4);
 		initUpdateBlocks(8);
 	}
 
@@ -472,7 +485,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpModeRedrawHandler = new Graphics7ModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, createGraphics67ModeInfo());
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
-		vdpMmio.setMemoryAccessCycles(8);
+		vdpMmio.setMemoryAccessCycles(4);
 		initUpdateBlocks(8);
 	}
 

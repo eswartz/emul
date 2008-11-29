@@ -28,7 +28,7 @@ public abstract class FDR implements IFDRFlags {
     }
     
     /** filetype flags */
-    byte getFlags() {
+    public byte getFlags() {
         return flags;
     }
     /** # records per sector, 
@@ -36,26 +36,26 @@ public abstract class FDR implements IFDRFlags {
     255/(reclen+1) for VAR,
     0 for program
     */
-    byte getRecordsPerSector() {
+    public byte getRecordsPerSector() {
         return recspersec;
     }
     /** Get # sectors in file */
-    short getSectorsUsed() {
+    public short getSectorsUsed() {
         return secsused;
     }
     /** Get last byte used in file 
     (0 = no last empty sector) */
-    byte getByteOffset() {
+    public byte getByteOffset() {
         return byteoffs;
     }
     /** Get record length, 0 for program */
-    byte getRecordLength() {
+    public byte getRecordLength() {
         return reclen;
     }
     /** Get # records for FIXED file,
     # sectors for VARIABLE file,
     0 for program */
-    short getNumberRecords() {
+    public short getNumberRecords() {
         return numrecs;
     }
 

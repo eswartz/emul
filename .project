@@ -3,6 +3,8 @@
 	<name>V9t9j</name>
 	<comment></comment>
 	<projects>
+		<project>libanalogtv</project>
+		<project>libv9t9render</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

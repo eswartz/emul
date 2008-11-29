@@ -236,6 +236,11 @@ public class VdpTMS9918A implements VdpHandler {
     protected void establishVideoMode() {
     	/* Is the screen really blank? */
 		if (isBlank()) {
+			// clear the canvas first
+			if (vdpModeRedrawHandler != null)
+				vdpModeRedrawHandler.clear();
+			
+			// now, ignore any changes or redraw requests
 			setBlankMode();
 			return;
 		}
@@ -500,7 +505,7 @@ public class VdpTMS9918A implements VdpHandler {
 	//	System.out.print('_');
 		if (vdpModeRedrawHandler != null) {
 			//long start = System.currentTimeMillis();
-
+			
 			int count;
 			
 			// don't let video rendering happen in middle of updating

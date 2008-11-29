@@ -6,8 +6,14 @@
  */
 package v9t9.emulator.hardware.memory;
 
+import java.io.IOException;
+
 import v9t9.emulator.Machine;
+import v9t9.emulator.hardware.CruManager;
+import v9t9.emulator.hardware.CruWriter;
 import v9t9.emulator.hardware.TI994A;
+import v9t9.emulator.hardware.dsrs.DsrHandler;
+import v9t9.emulator.hardware.dsrs.EmuDiskDSR;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGramWriteArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGromReadArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleSoundArea;
@@ -76,6 +82,8 @@ public class StandardConsoleMemoryModel implements MemoryModel {
         
         if (machine instanceof TI994A)
         	defineMmioMemory((TI994A) machine);
+        
+        defineDevices(machine);
     }
 
 	protected void initSettings() {
@@ -110,7 +118,14 @@ public class StandardConsoleMemoryModel implements MemoryModel {
                 new ConsoleGramWriteArea(gplMmio)));
 		
 	}
-	   
+
+	protected void defineDevices(Machine machine) {
+		EmuDiskDSR dsr = new EmuDiskDSR(machine);
+		machine.getDSRManager().registerDsr(dsr);
+	}
+
+
+
 	public MemoryDomain getConsole() {
     	return CPU;
     }

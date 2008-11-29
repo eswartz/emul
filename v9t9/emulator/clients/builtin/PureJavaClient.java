@@ -113,9 +113,9 @@ public class PureJavaClient implements Client {
      */
     public void timerInterrupt() {
     	//System.out.print('.');
+    	keyboardHandler.scan(keyboardState);
     	video.update();
     	videoRenderer.redraw();
-    	keyboardHandler.scan(keyboardState);
     }
 
     /* (non-Javadoc)

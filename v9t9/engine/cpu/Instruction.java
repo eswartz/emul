@@ -566,6 +566,8 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.reads |= INST_RSRC_IO;
 	        }
 	
+	    } else if (inst == InstructionTable.Idsr) {
+	    	
 	    } else {
 	        Check.checkArg(mop1.type != MachineOperand.OP_NONE
 	                && mop1.type != MachineOperand.OP_IMMED);

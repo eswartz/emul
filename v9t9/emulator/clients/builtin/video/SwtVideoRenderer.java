@@ -8,10 +8,12 @@ import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.GCData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.internal.gtk.OS;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -20,6 +22,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
+import v9t9.jni.v9t9render.SWIGTYPE_p_AnalogTV;
+import v9t9.jni.v9t9render.V9t9Render;
 
 /**
  * Render video into an SWT window
@@ -27,20 +31,30 @@ import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
  *
  */
 public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
+	private static final boolean USE_ANALOGTV = false;
+	private static final boolean USE_GDKONLY = false;
+	private static final boolean USE_SWTONLY = false;
+	private static final boolean USE_NOISY = true;
+	
+	static {
+		System.loadLibrary("v9t9render");
+	}
 	private Shell shell;
 	private Canvas canvas;
 	private final ImageDataCanvas vdpCanvas;
 	private Color bg;
 
 	// global zoom
-	private int zoom = 2;
+	private int zoom = 3;
 	// zoom based on the resolution
-	private int zoomx = 2, zoomy = 2;
+	private float zoomx = 3, zoomy = 3;
+	private boolean sizedToZoom = false;
 	private Image image;
 	private Rectangle updateRect;
 	private boolean isBlank;
 	private boolean wasBlank;
 	private boolean isDirty;
+	private SWIGTYPE_p_AnalogTV analog;
 	
 	public SwtVideoRenderer(Display display, VdpCanvas canvas) {
 		shell = new Shell(display);
@@ -88,11 +102,12 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 	
 	protected Rectangle logicalToPhysical(int x, int y, int w, int h) {
-		return new Rectangle(x * zoomx, y * zoomy, w * zoomx, h * zoomy);
+		return new Rectangle((int)(x * zoomx), (int)(y * zoomy), (int)(w * zoomx), (int)(h * zoomy));
 	}
 	
 	protected Rectangle physicalToLogical(Rectangle physical) {
-		return new Rectangle(physical.x / zoomx, physical.y / zoomy, physical.width / zoomx, physical.height / zoomy);
+		return new Rectangle((int)(physical.x / zoomx), (int)(physical.y / zoomy), 
+				(int)(physical.width / zoomx), (int)(physical.height / zoomy));
 	}
 
 	public void redraw() {
@@ -112,30 +127,18 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			Display.getDefault().asyncExec(new Runnable() {
 	
 				public void run() {
-					if (canvas.isDisposed())
-						return;
-					
-					// update size if needed
-					updateZoomFactor();
-					
-					Point curSize = canvas.getSize();
-					
-					Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
-					
-					if (curSize.x != targetRect.width
-							|| curSize.y != targetRect.height) {
-						Point size = new Point(targetRect.width, targetRect.height);
-						canvas.setSize(size);
-						
-						Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
-						shell.setSize(trim.width, trim.height);
+					synchronized (vdpCanvas) {
+							if (canvas.isDisposed())
+								return;
+							
+							updateWidgetSize();
+							
+							Rectangle redrawPhys = logicalToPhysical(redrawRect);
+							canvas.redraw(redrawPhys.x, redrawPhys.y, 
+									redrawPhys.width, redrawPhys.height, false);
+							
+							isDirty = false;
 					}
-					
-					Rectangle redrawPhys = logicalToPhysical(redrawRect);
-					canvas.redraw(redrawPhys.x, redrawPhys.y, 
-							redrawPhys.width, redrawPhys.height, false);
-					
-					isDirty = false;
 				}
 				
 			});
@@ -143,14 +146,46 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		}
 	}
 	
+	protected void updateWidgetSize() {
+		// update size if needed
+		updateZoomFactor();
+		
+		Point curSize = canvas.getSize();
+		
+		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
+		
+		if (curSize.x != targetRect.width
+				|| curSize.y != targetRect.height) {
+			if (sizedToZoom) {
+				zoomx = (curSize.x + 255) / vdpCanvas.getWidth();
+				zoomy = (curSize.y + vdpCanvas.getHeight()-1) / vdpCanvas.getHeight();
+				zoom = (int) zoomy;
+				targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
+			} else {
+				sizedToZoom = true;
+			}
+			Point size = new Point(targetRect.width, targetRect.height);
+			canvas.setSize(size);
+			
+			Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
+			shell.setSize(trim.width, trim.height);
+			
+			if (USE_ANALOGTV && analog != null) {
+				V9t9Render.freeAnalogTv(analog);
+				analog = null;
+			}
+		}
+		
+	}
+
 	protected void updateZoomFactor() {
 		if (vdpCanvas.getWidth() > 256) {
-			zoomx = zoom / 2;
+			zoomx = (float) (zoom / 2.);
 		} else {
 			zoomx = zoom;
 		}
 		if (vdpCanvas.getHeight() > 212) {
-			zoomy = zoom / 2;
+			zoomy = (float) (zoom / 2.);
 		} else {
 			zoomy = zoom;
 		}
@@ -209,9 +244,60 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		}
 	}*/
 
+	@SuppressWarnings("restriction")
 	protected void repaint(GC gc, Rectangle updateRect) {
 		ImageData imageData = vdpCanvas.getImageData();
-		if (!isBlank && imageData != null) {
+		if (imageData != null) {
+			
+			if (USE_SWTONLY) {
+				Rectangle destRect = updateRect;
+				
+				destRect = destRect.intersection(logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight()));
+				
+				Rectangle imageRect = physicalToLogical(destRect);
+				imageRect = vdpCanvas.mapVisible(imageRect);
+				
+				blitImageData(gc, imageData, destRect, imageRect);
+			} else if (USE_GDKONLY) {
+				synchronized (vdpCanvas) {
+					Point canvasSize = canvas.getSize();
+					V9t9Render.renderGdkPixbufFromImageData(imageData.data,
+							imageData.width, imageData.height, imageData.bytesPerLine,
+							canvasSize.x, canvasSize.y,
+							OS.GTK_WIDGET_WINDOW(canvas.handle));
+				}
+			} else if (USE_NOISY) {
+				synchronized (vdpCanvas) {
+					Point canvasSize = canvas.getSize();
+					V9t9Render.renderNoisyGdkPixbufFromImageData(imageData.data,
+							imageData.width, imageData.height, imageData.bytesPerLine,
+							canvasSize.x, canvasSize.y,
+							OS.GTK_WIDGET_WINDOW(canvas.handle));
+				}
+			} else if (USE_ANALOGTV) {
+				Point canvasSize = canvas.getSize();
+				if (analog == null) {
+					analog = V9t9Render.allocateAnalogTv(canvasSize.x, canvasSize.y);
+				}
+				synchronized (vdpCanvas) {
+					V9t9Render.renderAnalogGdkPixbufFromImageData(
+							analog,
+							imageData.data,
+							imageData.width, imageData.height, imageData.bytesPerLine,
+							canvasSize.x, canvasSize.y,
+							OS.GTK_WIDGET_WINDOW(canvas.handle));
+				}
+			}
+			wasBlank = false;
+		
+		}
+		vdpCanvas.clearDirty();
+		
+	}
+
+	private void blitImageData(GC gc, ImageData imageData, Rectangle destRect,
+			Rectangle imageRect) {
+		if (!isBlank) {
 			if (image != null && !image.isDisposed()) {
 				image.dispose();
 			}
@@ -221,19 +307,11 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				image = new Image(shell.getDisplay(), imageData);
 			}
 			
-			Rectangle destRect = updateRect;
-			
-			destRect = destRect.intersection(logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight()));
-			
-			Rectangle imageRect = physicalToLogical(destRect);
-			imageRect = vdpCanvas.mapVisible(imageRect);
-			
 			gc.drawImage(image, 
 					imageRect.x, imageRect.y, 
 					imageRect.width, imageRect.height, 
 					destRect.x, destRect.y, 
 					destRect.width, destRect.height);
-			wasBlank = false;
 		} else {
 			if (wasBlank)
 				return;
@@ -242,8 +320,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			gc.fillRectangle(updateRect);
 			wasBlank = true;
 		}
-		vdpCanvas.clearDirty();
-		
 	}
 
 	public VdpCanvas getCanvas() {

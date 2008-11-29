@@ -31,6 +31,9 @@ public class DataFiles {
 			File file = new File(path, filepath);
 			if (file.exists())
 				return file;
+			file = new File(path, filepath.toLowerCase());
+			if (file.exists())
+				return file;
 		}
 		return new File(filepath);
 	}

@@ -9,7 +9,7 @@ package v9t9.emulator.clients.builtin.video;
 public abstract class SpriteBase {
 	protected int x = -1;
 	protected int y = -1;
-	protected int size;
+	protected int sizeY, sizeX;
 	protected int shift = -1;
 	protected boolean deleted;
 	protected boolean changed;
@@ -24,12 +24,22 @@ public abstract class SpriteBase {
 			setBitmapDirty(true);
 		}
 	}
-	public int getSize() {
-		return size;
+	public int getSizeY() {
+		return sizeY;
+	}
+	public int getSizeX() {
+		return sizeX;
 	}
 	public void setSize(int size) {
-		if (size != this.size) {
-			this.size = size;
+		if (size != this.sizeY || size != this.sizeX) {
+			this.sizeY = this.sizeX = size;
+			setBitmapDirty(true);
+		}
+	}
+	public void setSize(int sizeX, int sizeY) {
+		if (sizeY != this.sizeY || sizeX != this.sizeX) {
+			this.sizeY = sizeY;
+			this.sizeX = sizeX;
 			setBitmapDirty(true);
 		}
 	}

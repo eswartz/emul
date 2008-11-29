@@ -105,20 +105,22 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 			
 			byte attrb = attr.memory[attr.offset + yy];
 			int shift = (attrb & 0x80) != 0 ? -32 : 0;
-			if (x + shift + 8 <= 0)
-				continue;
 			byte color = (byte) (attrb & 0xf);
 			if (color == 0 && !canvas.isClearFromPalette())
 				continue;
 			
 			short bitmask = -1;
 			if (!magnified) {
+				if (x + shift + 8 <= 0)
+					continue;
 				if (x + shift < 0) {
 					bitmask &= 0xff >> (x + shift);
 				} else if (x + shift + 8 > 256) {
 					bitmask &= 0xff << ((x + shift + 8) - 256);
 				}
 			} else {
+				if (x + shift + 16 <= 0)
+					continue;
 				if (x + shift < 0) {
 					bitmask &= 0xffff >> (x + shift);
 				} else if (x + shift + 16 > 256) {
@@ -153,7 +155,6 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		if (sprite.isDeleted())
 			return;
 		
-		ByteMemoryAccess colors = new ByteMemoryAccess(sprite.getColorStripe());
 		boolean doubleWidth = canvas.getWidth() == 512;
 		
 		int x = sprite.getX();
@@ -161,17 +162,18 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		int sprrowbitmap = sprite.getSprrowbitmap();
 		ByteMemoryAccess tmpPattern = new ByteMemoryAccess(sprite.getPattern());
 		
-		boolean ismag = (sprite.getSize() == 16 && sprite.getNumchars() == 1)
-			|| sprite.getSize() == 32;
+		boolean ismag = (sprite.getSizeY() == 16 && sprite.getNumchars() == 1)
+			|| sprite.getSizeY() == 32;
 		int magfac = ismag ? 2  : 1;
 		
 		for (int c = 0; c < sprite.getNumchars(); c++) {
 			int rowshift = charshifts[c*2];
 			int colshift = charshifts[c*2+1];
+			ByteMemoryAccess colors = new ByteMemoryAccess(sprite.getColorStripe());
+			colors.offset += rowshift;
 			drawSpriteChar(canvas, y + rowshift * magfac, x + colshift * magfac, 
 						sprrowbitmap >> (rowshift * magfac), tmpPattern, colors, ismag, doubleWidth);
 			tmpPattern.offset += 8;
-			colors.offset += 16;
 		}
 	}
 	

@@ -9,7 +9,9 @@ package v9t9.emulator;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.MachineModel;
+import v9t9.emulator.hardware.dsrs.DSRManager;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.TerminatedException;
@@ -41,7 +43,7 @@ abstract public class Machine {
     
     boolean allowInterrupts;
     final int interruptTick = 1000 / 60;
-    final int clientTick = 1000 / 60;
+    final int clientTick = 1000 / 30;
     final int cpuTick = 1000 / 100;
     private long now;
     private TimerTask vdpInterruptTask;
@@ -49,12 +51,16 @@ abstract public class Machine {
     private TimerTask cpuTask;
 	protected MemoryModel memoryModel;
 	private VdpHandler vdp;
+	private CruManager cruManager;
+	private DSRManager dsrManager;
 	
     public Machine(MachineModel machineModel) {
     	this.memoryModel = machineModel.getMemoryModel();
     	this.memory = memoryModel.createMemory();
     	this.console = memoryModel.getConsole();
     	this.vdp = machineModel.createVdp(this);
+    	cruManager = new CruManager();
+    	dsrManager = new DSRManager(this);
     	memoryModel.initMemory(this);
     	
     	settings = new SettingsCollection();
@@ -205,6 +211,14 @@ abstract public class Machine {
 
     public VdpHandler getVdp() {
 		return vdp;
+	}
+
+	public CruManager getCruManager() {
+		return cruManager;
+	}
+
+	public DSRManager getDSRManager() {
+		return dsrManager;
 	}
 }
 

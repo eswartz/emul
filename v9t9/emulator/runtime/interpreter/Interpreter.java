@@ -901,6 +901,14 @@ public class Interpreter {
             };
             break;
 
+        case InstructionTable.Idsr:
+        	act = new InstructionAction() {
+
+				public void act(Block block) {
+					machine.getDSRManager().handleDSR(block);
+				}
+        	};
+        	break;
         }
 
         return act;

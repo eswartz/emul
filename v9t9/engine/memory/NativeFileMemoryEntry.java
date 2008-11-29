@@ -66,7 +66,7 @@ public class NativeFileMemoryEntry extends MemoryEntry {
         if (!bLoaded) {
             try {
                 byte[] data = new byte[filesize];
-                file.readContents(data, fileoffs, filesize);
+                file.readContents(data, 0, fileoffs, filesize);
                 area.copyFromBytes(data);
                 bLoaded = true;
             } catch (java.io.IOException e) {
