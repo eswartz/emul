@@ -26,4 +26,6 @@ public interface VideoRenderer {
 	void setZoom(int zoom);
 
 	VdpCanvas getCanvas();
+	
+	long getLastUpdateTime();
 }

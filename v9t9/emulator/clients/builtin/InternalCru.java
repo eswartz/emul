@@ -104,7 +104,6 @@ public class InternalCru implements CruHandler {
 	protected int latchedtimer;
 	protected int int9901;
 	protected int currentints;
-	protected boolean caps;
 
 	public static final int M_INT_EXT = 2;	// peripheral
 	public static final int M_INT_VDP = 4;	// VDP
@@ -153,12 +152,18 @@ public class InternalCru implements CruHandler {
 				return (currentints & ~(~0 << bit)) == 0 
 					&& (currentints & (1 << bit)) != 0 ? 1 : 0;
 			else {
-				int alphamask =
-					((bit - 3) == 4) ? ((alphaLock || !caps) ? 0 : 0x10) : 0;
-
+				int alphamask = 0;
+				
+				if (!alphaLock && mask == 0x10) {
+					alphamask = (!keyboardState.getAlpha()) ? 0 : 0x10;
+				}
 				//logger(_L | L_2, "crukeyboardcol=%X, mask=%X, addr=%2X\n", crukeyboardcol,
 				//	 mask, addr);
-				return (((keyboardState.getCrukeyboardmap()[crukeyboardcol] & mask) | alphamask)) != 0 ? 0 : 1;
+				int colMask = (keyboardState.getCrukeyboardmap()[crukeyboardcol] & mask);
+				int colBits = (colMask | alphamask);
+				//System.out.println("crukeyboardcol="+crukeyboardcol+" addr="+Utils.toHex2(addr)+" mask="+Utils.toHex2(mask)+" colMask="+Utils.toHex2(colMask)+" alphamask="+alphamask);
+				//System.out.println("foo: " +colBits);
+				return colBits != 0 ? 0 : 1;
 			}
 		}
 		
@@ -166,7 +171,7 @@ public class InternalCru implements CruHandler {
 	private CruReader cruralpha = new CruReader() {
 
 		public int read(int addr, int data, int num) {
-			return 0;
+			return keyboardState.getAlpha() ? 1 : 0;
 		}
 		
 	};

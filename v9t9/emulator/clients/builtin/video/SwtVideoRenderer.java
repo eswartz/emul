@@ -55,6 +55,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	private boolean wasBlank;
 	private boolean isDirty;
 	private SWIGTYPE_p_AnalogTV analog;
+	private long lastUpdateTime;
 	
 	public SwtVideoRenderer(Display display, VdpCanvas canvas) {
 		shell = new Shell(display);
@@ -246,6 +247,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	@SuppressWarnings("restriction")
 	protected void repaint(GC gc, Rectangle updateRect) {
+		long started = System.currentTimeMillis();
 		ImageData imageData = vdpCanvas.getImageData();
 		if (imageData != null) {
 			
@@ -289,7 +291,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				}
 			}
 			wasBlank = false;
-		
+			lastUpdateTime = System.currentTimeMillis() - started;
 		}
 		vdpCanvas.clearDirty();
 		
@@ -345,5 +347,9 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			rgb = vdpCanvas.getRGB(0);
 		
 		return new Color(shell.getDisplay(), rgb[0] & 0xff, rgb[1] & 0xff, rgb[2] & 0xff);
+	}
+	
+	public long getLastUpdateTime() {
+		return lastUpdateTime;
 	}
 }

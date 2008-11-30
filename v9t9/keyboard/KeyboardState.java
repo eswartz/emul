@@ -38,6 +38,7 @@ public class KeyboardState {
 
     /** 'real' shift keys being held down, as opposed to those being synthesized */
     private byte realshift;
+	private boolean alpha;
     
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
@@ -47,28 +48,39 @@ public class KeyboardState {
         and '?', but on the TI keyboard, 0x75 this is the key for '/' and
         '-'.  The target-specific code must trap '-', '/', '?', '_'
         and should use FCTN+I for '?'.*/
-    static final int latinto9901[] = new int[] {
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0-7 */
-        0xff, 0xff, 0xff, 0xff, 0xff, 0x50, 0xff, 0xff, /* 8-15 */
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 16-23 */
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 24-31 */
+    static final byte latinto9901[] = new byte[] {
+          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 0-7 */
+          -1,   -1,   -1,   -1,   -1, 0x50,   -1,   -1, /* 8-15 */
+          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 16-23 */
+          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 24-31 */
     
-        0x60, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 32-39 */
-        0xff, 0xff, 0xff, 0xff, 0x72, 0xff, 0x71, 0x75, /* 40-47 */
+        0x60,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 32-39 */
+          -1,   -1,   -1,   -1, 0x72,   -1, 0x71, 0x75, /* 40-47 */
         0x45, 0x35, 0x31, 0x32, 0x33, 0x34, 0x44, 0x43, /* 48-55 */
-        0x42, 0x41, 0xff, 0x65, 0xff, 0x70, 0xff, 0xff, /* 56-63 */
+        0x42, 0x41,   -1, 0x65,   -1, 0x70,   -1,   -1, /* 56-63 */
     
-        0xff, 0x25, 0x04, 0x02, 0x22, 0x12, 0x23, 0x24, /* 64-71 */
+          -1, 0x25, 0x04, 0x02, 0x22, 0x12, 0x23, 0x24, /* 64-71 */
         0x64, 0x52, 0x63, 0x62, 0x61, 0x73, 0x74, 0x51, /* 72-79 */
         0x55, 0x15, 0x13, 0x21, 0x14, 0x53, 0x03, 0x11, /* 80-87 */
-        0x01, 0x54, 0x05, 0xff, 0xff, 0xff, 0xff, 0xff, /* 88-95 */
+        0x01, 0x54, 0x05,   -1,   -1,   -1,   -1,   -1, /* 88-95 */
     
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 96-103 */
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 104-111 */
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 112-119 */
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff  /* 120-127 */
+          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 96-103 */
+          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 104-111 */
+          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 112-119 */
+          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1  /* 120-127 */
     };
 
+    /*	This macro tells us whether an ASCII code has a direct mapping
+	to a 9901 keyboard matrix location (stored in latinto9901[]).
+	The '/' character is special, since its 99/4A shifted value ('-') is not
+	the same as the standard keyboard's shifted value ('?'). 
+	(This is important when we are using a host keyboard module that
+    allows us to know the unshifted value of a pressed key.)
+     */
+
+    public boolean isAsciiDirectKey(char x) { 
+    	return (latinto9901[x] != -1 && (x) != '/');
+    }
 
     public KeyboardState() {
         
@@ -84,8 +96,9 @@ public class KeyboardState {
      * @param shift FCTN, SHIFT, CTRL mask
      * @param key normalized ASCII key: no lowercase or shifted characters
      */
-    public void setKey(boolean onoff, byte shift, byte key) {
+    public void setKey(boolean onoff, byte shift, int key) {
         byte b, r, c;
+        key &= 0xff;
 
         //if (shift && onoff)
             //logger(_L | L_1, "turned on [%d]:  cshift=%d, cctrl=%d, cfctn=%d\n",
@@ -162,7 +175,7 @@ public class KeyboardState {
         }
 
         if (key != 0) {
-            b = (byte) latinto9901[key];
+            b = latinto9901[key];
             /*if (b == 0xff)
                 logger(_L | LOG_ERROR,
                      _("keyboard_setkey:  got a key that should be faked '%c' (%d)\n\n"),
@@ -206,7 +219,7 @@ public class KeyboardState {
         getCrukeyboardmap()[c] |= (0x80 >> r);
     }
 
-    public boolean isSet(byte shift, byte key) {
+    public boolean isSet(byte shift, int key) {
         byte b, r, c;
         boolean res = false;
 
@@ -240,5 +253,13 @@ public class KeyboardState {
 
 	public byte[] getCrukeyboardmap() {
 		return crukeyboardmap;
+	}
+	
+	public void setAlpha(boolean on) {
+		this.alpha = on;
+	}
+
+	public boolean getAlpha() {
+		return alpha;
 	}
 }

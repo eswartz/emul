@@ -34,10 +34,18 @@ public class PureJavaClient implements Client {
 	private KeyboardHandler keyboardHandler;
 	private VideoRenderer videoRenderer;
 	private Display display;
+	private long nextVideoUpdate;
+	private long avgUpdateTime;
+	private long expectedUpdateTime;
+	private int displaySkips;
 
+	private final int QUANTUM = 1000 / 60;
+	
     public PureJavaClient(final Machine machine, VdpHandler vdp, Display display) {
     	this.display = display;
         this.machine = machine;
+        
+        expectedUpdateTime = QUANTUM;
         
         videoRenderer = new SwtVideoRenderer(display, vdp.getCanvas());
         video = vdp;
@@ -114,8 +122,38 @@ public class PureJavaClient implements Client {
     public void timerInterrupt() {
     	//System.out.print('.');
     	keyboardHandler.scan(keyboardState);
-    	video.update();
-    	videoRenderer.redraw();
+    	
+    	long start = System.currentTimeMillis();
+    	if (start >= nextVideoUpdate) {
+    		video.update();
+    		videoRenderer.redraw();
+    		
+    		// compensate for slow frames
+        	long elapsed = videoRenderer.getLastUpdateTime();
+    		if (elapsed / 2 >= expectedUpdateTime * 2) {
+    			System.out.println("slow :" + elapsed);
+    			//displaySkips += (elapsed + 1000 / 60 - 1) / (1000 / 60);
+    			expectedUpdateTime <<= 1;
+    			if (expectedUpdateTime > 1000)
+    				expectedUpdateTime = 1000;
+    			displaySkips = 0;
+    			//nextVideoUpdate = next + avgUpdateTime;
+    		} else if (elapsed <= expectedUpdateTime / 2 && elapsed >= QUANTUM) {
+    			displaySkips++;
+    			if (displaySkips > 10) {
+    				System.out.println("fast :" + (elapsed));
+	    			expectedUpdateTime >>= 1;
+	    			if (expectedUpdateTime < QUANTUM)
+	    				expectedUpdateTime = QUANTUM;
+	    			displaySkips = 0;
+    			}
+    			//nextVideoUpdate = start + 1000 / 60;
+    		}
+    		nextVideoUpdate = start + expectedUpdateTime;
+    		avgUpdateTime = (avgUpdateTime + elapsed * 9) / 10; 
+    	} else {
+    		//displaySkips--;
+    	}
     }
 
     /* (non-Javadoc)

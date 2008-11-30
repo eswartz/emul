@@ -30,6 +30,7 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 
 	private final KeyboardState keyboardState;
 	private Map<Integer, Long> keyTimeMap = new HashMap<Integer, Long>();
+	private boolean caps;
 	
 	public SwtKeyboardHandler(Shell shell, KeyboardState keyboardState) {
 		this.keyboardState = keyboardState;
@@ -64,6 +65,7 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 	}
 
 	private void updateKey(boolean pressed, int stateMask, int keyCode) {
+		
 		byte shift = 0;
 		
 		// separately pressed keys show up in keycode sometimes
@@ -75,9 +77,14 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 		if (((stateMask | keyCode) & SWT.ALT) != 0)
 			shift |= KeyboardState.FCTN;
 		
-		keyCode &= 0xff;
-		if (Character.isLowerCase(keyCode))
-			keyCode = Character.toUpperCase(keyCode);
+		if ((keyCode & SWT.KEYCODE_BIT) == 0) {
+			keyCode &= 0xff;
+			if (Character.isLowerCase(keyCode))
+				keyCode = Character.toUpperCase(keyCode);
+		}
+		
+		//byte realshift = keyboardState.getRealShift();
+		byte realshift = shift;
 		
 		synchronized (keyTimeMap) {
 			if (pressed) {
@@ -89,7 +96,91 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 					keyTimeMap.put(code, System.currentTimeMillis() + 1000);	// initial press
 			}
 		} 
-		keyboardState.setKey(pressed, shift, (byte) keyCode);
+		if (keyCode < 128 && keyboardState.isAsciiDirectKey((char) keyCode)) {
+			keyboardState.setKey(pressed, shift, (byte) keyCode);
+		} else {
+			if (keyCode == 0)
+				keyCode = shift;
+			
+			switch (keyCode) {
+
+				// shifts
+			case SWT.SHIFT:
+			case 1:
+				keyboardState.setKey(pressed, KeyboardState.SHIFT, 0);
+				break;
+			case SWT.CONTROL:
+			case 4:
+				keyboardState.setKey(pressed, KeyboardState.CTRL, 0);
+				break;
+			case SWT.ALT:
+			case 2:
+				keyboardState.setKey(pressed, KeyboardState.FCTN, 0);
+				break;
+
+			
+			case 13:
+				keyboardState.setKey(pressed, (byte)0, '\r');
+				break;
+
+			case SWT.CAPS_LOCK:
+				if (!pressed) {
+					keyboardState.setAlpha(!keyboardState.getAlpha());
+				}
+				break;
+			case SWT.BREAK:
+				if (pressed)
+					System.exit(0);
+				break;
+				// faked keys
+			case '`':
+				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'W'))
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'C');	/* ` */
+				else
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'W');	/* ~ */
+				break;
+			case '-':
+				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'U'))
+					keyboardState.setKey(pressed, KeyboardState.SHIFT, '/');	/* - */
+				else
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'U');	/* _ */
+				break;
+			case '[':
+				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'F'))
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'R');	/* [ */
+				else
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'F');	/* { */
+				break;
+			case ']':
+				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'G'))
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'T');	/* ] */
+				else
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'G');	/* } */
+				break;
+			case '\'':
+				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'P'))
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'O');	/* ' */
+				else
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'P');	/* " */
+				break;
+			case '/':
+				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'I'))
+					keyboardState.setKey(pressed, (byte)0, '/');	/* / */
+				else
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'I');	/* ? */
+				break;
+			case '\\':
+				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'A'))
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'Z');	/* \\ */
+				else
+					keyboardState.setKey(pressed, KeyboardState.FCTN, 'A');	/* | */
+				break;
+				
+			default:
+				System.out.println(keyCode);
+				
+			}
+		}
 	}
 	
 	/* (non-Javadoc)

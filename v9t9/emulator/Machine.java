@@ -43,7 +43,7 @@ abstract public class Machine {
     
     boolean allowInterrupts;
     final int interruptTick = 1000 / 60;
-    final int clientTick = 1000 / 30;
+    final int clientTick = 1000 / 60;
     final int cpuTick = 1000 / 100;
     private long now;
     private TimerTask vdpInterruptTask;

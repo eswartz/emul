@@ -160,7 +160,7 @@ public class CruManager {
                 mask = ~(~0 << used);
                 shift = (addr - orgaddr) / 2;
                 bits = readers.get(base).read(addr, val, used) & mask;
-                val = val & ~(mask << shift) | bits << shift;
+                val = (val & ~(mask << shift)) | (bits << shift);
                 num -= used;
                 addr += used * 2;
             }

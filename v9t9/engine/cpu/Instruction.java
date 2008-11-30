@@ -441,6 +441,7 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.cycles += 8;
 	        } else {
 	            mop1.type = MachineOperand.OP_OFFS_R12;
+	            mop1.val <<= 1;
 	            this.cycles += 12;
 	        }
 	
