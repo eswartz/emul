@@ -6,12 +6,14 @@
  */
 package v9t9.emulator.clients.builtin;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
@@ -47,7 +49,29 @@ public class PureJavaClient implements Client {
         
         expectedUpdateTime = QUANTUM;
         
-        videoRenderer = new SwtVideoRenderer(display, vdp.getCanvas());
+        if (false && videoRenderer == null && SWT.getPlatform().equals("gtk")) {
+        	try {
+        		Class<?> klass = getClass().getClassLoader().loadClass(
+        				SwtVideoRenderer.class.getName() + "OGL");
+        		videoRenderer = (VideoRenderer) klass.getConstructor(Display.class, VdpCanvas.class).newInstance(
+        				display, vdp.getCanvas());
+        	} catch (Exception e) {
+        		System.err.println("Cannot load OpenGL/GTK-specific support: " +e.getMessage());
+        	}
+        }
+        
+        if (videoRenderer == null && SWT.getPlatform().equals("gtk")) {
+        	try {
+	        	Class<?> klass = getClass().getClassLoader().loadClass(
+	        			SwtVideoRenderer.class.getName() + "GTK");
+	        	videoRenderer = (VideoRenderer) klass.getConstructor(Display.class, VdpCanvas.class).newInstance(
+	        			display, vdp.getCanvas());
+        	} catch (Exception e) {
+        		System.err.println("Cannot load GTK-specific support: " +e.getMessage());
+        	}
+        }
+        if (videoRenderer == null)
+        	videoRenderer = new SwtVideoRenderer(display, vdp.getCanvas());
         video = vdp;
         
         ((SwtVideoRenderer) videoRenderer).getShell().addShellListener(new ShellAdapter() {
@@ -123,15 +147,15 @@ public class PureJavaClient implements Client {
     	//System.out.print('.');
     	keyboardHandler.scan(keyboardState);
     	
-    	long start = System.currentTimeMillis();
-    	if (start >= nextVideoUpdate) {
+    	//long start = System.currentTimeMillis();
+    	if (videoRenderer.isIdle() ) {
     		video.update();
     		videoRenderer.redraw();
-    		
     		// compensate for slow frames
-        	long elapsed = videoRenderer.getLastUpdateTime();
-    		if (elapsed / 2 >= expectedUpdateTime * 2) {
-    			System.out.println("slow :" + elapsed);
+        	long elapsed = videoRenderer.getLastUpdateTime() * 4;
+        	//System.out.println(elapsed + " / " + expectedUpdateTime);
+    		if (elapsed * 2 >= expectedUpdateTime) {
+    			//System.out.println("slow :" + elapsed);
     			//displaySkips += (elapsed + 1000 / 60 - 1) / (1000 / 60);
     			expectedUpdateTime <<= 1;
     			if (expectedUpdateTime > 1000)
@@ -140,16 +164,18 @@ public class PureJavaClient implements Client {
     			//nextVideoUpdate = next + avgUpdateTime;
     		} else if (elapsed <= expectedUpdateTime / 2 && elapsed >= QUANTUM) {
     			displaySkips++;
-    			if (displaySkips > 10) {
-    				System.out.println("fast :" + (elapsed));
+    			if (displaySkips > 30) {
+    				//System.out.println("fast :" + (elapsed));
 	    			expectedUpdateTime >>= 1;
 	    			if (expectedUpdateTime < QUANTUM)
 	    				expectedUpdateTime = QUANTUM;
 	    			displaySkips = 0;
     			}
     			//nextVideoUpdate = start + 1000 / 60;
+    		} else {
+    			displaySkips = 0;
     		}
-    		nextVideoUpdate = start + expectedUpdateTime;
+    		nextVideoUpdate = System.currentTimeMillis() + expectedUpdateTime * 4;
     		avgUpdateTime = (avgUpdateTime + elapsed * 9) / 10; 
     	} else {
     		//displaySkips--;

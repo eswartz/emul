@@ -4,16 +4,16 @@
 package v9t9.emulator.clients.builtin.video;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.GCData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.internal.gtk.OS;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -22,8 +22,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
-import v9t9.jni.v9t9render.SWIGTYPE_p_AnalogTV;
-import v9t9.jni.v9t9render.V9t9Render;
 
 /**
  * Render video into an SWT window
@@ -31,31 +29,24 @@ import v9t9.jni.v9t9render.V9t9Render;
  *
  */
 public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
-	private static final boolean USE_ANALOGTV = false;
-	private static final boolean USE_GDKONLY = false;
-	private static final boolean USE_SWTONLY = false;
-	private static final boolean USE_NOISY = true;
 	
-	static {
-		System.loadLibrary("v9t9render");
-	}
-	private Shell shell;
-	private Canvas canvas;
-	private final ImageDataCanvas vdpCanvas;
-	private Color bg;
+	protected Shell shell;
+	protected Canvas canvas;
+	protected final ImageDataCanvas vdpCanvas;
+	protected Color bg;
 
 	// global zoom
-	private int zoom = 3;
+	protected int zoom = 3;
 	// zoom based on the resolution
-	private float zoomx = 3, zoomy = 3;
-	private boolean sizedToZoom = false;
-	private Image image;
-	private Rectangle updateRect;
-	private boolean isBlank;
-	private boolean wasBlank;
-	private boolean isDirty;
-	private SWIGTYPE_p_AnalogTV analog;
-	private long lastUpdateTime;
+	protected float zoomx = 3, zoomy = 3;
+	protected boolean sizedToZoom = false;
+	protected Image image;
+	protected Rectangle updateRect;
+	protected boolean isBlank;
+	protected boolean wasBlank;
+	protected boolean isDirty;
+	protected long lastUpdateTime;
+	private boolean busy;
 	
 	public SwtVideoRenderer(Display display, VdpCanvas canvas) {
 		shell = new Shell(display);
@@ -74,6 +65,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		this.vdpCanvas.setListener(this);		
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
+		initWidgets();
+		
 		// the canvas collects update regions in a big rect
 		this.canvas.addPaintListener(new PaintListener() {
 
@@ -87,6 +80,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				else {
 					updateRect.add(new Rectangle(e.x, e.y, e.width, e.height));
 				}
+				//System.out.println(updateRect);
 				if (e.count == 0) {
 					//System.out.println(updateRect);
 					repaint(e.gc, updateRect);
@@ -95,9 +89,21 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			}
 			
 		});
+		
+		this.canvas.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlResized(ControlEvent e) {
+				updateWidgetOnResize();
+			}
+		});
+		
+		
 		shell.open();
 	}
 
+	protected void initWidgets() {
+		
+	}
 	protected Rectangle logicalToPhysical(Rectangle logical) {
 		return logicalToPhysical(logical.x, logical.y, logical.width, logical.height);
 	}
@@ -132,7 +138,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 							if (canvas.isDisposed())
 								return;
 							
-							updateWidgetSize();
+							updateWidgetSizeForMode();
 							
 							Rectangle redrawPhys = logicalToPhysical(redrawRect);
 							canvas.redraw(redrawPhys.x, redrawPhys.y, 
@@ -147,36 +153,88 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		}
 	}
 	
-	protected void updateWidgetSize() {
+	/**
+	 * On a resize event, ensure that the resolution preserves the aspect ratio
+	 * and has an integral zoom factor in each axis.
+	 * The size the user sees depends on the current X and Y resolutions; 
+	 * factor that in when determining the nearest zoom.
+	 */
+	protected void updateWidgetOnResize() {
+		float oldzoomx = zoomx;
+		float oldzoomy = zoomy;
+		
+		if (sizedToZoom) {
+			Point curSize = canvas.getSize();
+			zoom = (int) (curSize.y + 64) / vdpCanvas.getHeight();
+			
+			if (zoom == 0)
+				zoom = 1;
+			zoomy = zoom;
+			if (vdpCanvas.getWidth() == 512)
+				zoomx = zoomy / 2.0f;
+			else
+				zoomx = zoomy;
+		} else {
+			sizedToZoom = true;
+		}
+		
+		if (zoomx != oldzoomx && zoomy != oldzoomy) {
+			getShell().getDisplay().asyncExec(new Runnable() {
+	
+				public void run() {
+					resizeWidgets();
+				}
+			
+			});
+		}
+		
+	}
+	
+	protected void resizeWidgets() {
+		if (canvas.isDisposed())
+			return;
+		
+		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
+		Point size = new Point(targetRect.width, targetRect.height);
+		canvas.setSize(size);
+		
+		Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
+		shell.setSize(trim.width, trim.height);
+		
+		//sizedToZoom = false;
+	}
+
+	/**
+	 * If the X or Y resolutions changed, ensure the widget can show it correctly
+	 * <p>
+	 * Currently, just update for the Y resolution change.
+	 */
+	protected void updateWidgetSizeForMode() {
 		// update size if needed
 		updateZoomFactor();
 		
-		Point curSize = canvas.getSize();
-		
-		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
-		
-		if (curSize.x != targetRect.width
-				|| curSize.y != targetRect.height) {
-			if (sizedToZoom) {
-				zoomx = (curSize.x + 255) / vdpCanvas.getWidth();
-				zoomy = (curSize.y + vdpCanvas.getHeight()-1) / vdpCanvas.getHeight();
-				zoom = (int) zoomy;
-				targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
+		resizeWidgets();
+	}
+
+	protected boolean zoomWithin(int physsize, float zoom, int logSize) {
+		return Math.abs(physsize / zoom - logSize) < 64;
+	}
+	protected void resizeToProportions(Point curSize, Rectangle targetRect) {
+		if (sizedToZoom) {
+			// avoid strangely growing or shrinking the window when y-res goes 192 <--> 212
+			if (zoomWithin(curSize.y, zoomy, vdpCanvas.getHeight())) {
+				zoomx = Math.round((zoom * 256) / vdpCanvas.getWidth());
+				zoomy = Math.round((curSize.y + 64) / vdpCanvas.getHeight());
 			} else {
-				sizedToZoom = true;
+				zoomx = Math.round((curSize.x + 255) / vdpCanvas.getWidth());
+				zoomy = Math.round((curSize.y + vdpCanvas.getHeight()-1) / vdpCanvas.getHeight());
 			}
-			Point size = new Point(targetRect.width, targetRect.height);
-			canvas.setSize(size);
-			
-			Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
-			shell.setSize(trim.width, trim.height);
-			
-			if (USE_ANALOGTV && analog != null) {
-				V9t9Render.freeAnalogTv(analog);
-				analog = null;
-			}
+			zoom = (int) zoomy;
+		} else {
+			sizedToZoom = true;
 		}
 		
+		resizeWidgets();
 	}
 
 	protected void updateZoomFactor() {
@@ -185,11 +243,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		} else {
 			zoomx = zoom;
 		}
-		if (vdpCanvas.getHeight() > 212) {
-			zoomy = (float) (zoom / 2.);
-		} else {
-			zoomy = zoom;
-		}
+		zoomy = zoom;
 	}
 
 	public void sync() {
@@ -245,59 +299,30 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		}
 	}*/
 
-	@SuppressWarnings("restriction")
 	protected void repaint(GC gc, Rectangle updateRect) {
+		lastUpdateTime = Long.MAX_VALUE;
+		busy = true;
 		long started = System.currentTimeMillis();
 		ImageData imageData = vdpCanvas.getImageData();
 		if (imageData != null) {
 			
-			if (USE_SWTONLY) {
-				Rectangle destRect = updateRect;
-				
-				destRect = destRect.intersection(logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight()));
-				
-				Rectangle imageRect = physicalToLogical(destRect);
-				imageRect = vdpCanvas.mapVisible(imageRect);
-				
-				blitImageData(gc, imageData, destRect, imageRect);
-			} else if (USE_GDKONLY) {
-				synchronized (vdpCanvas) {
-					Point canvasSize = canvas.getSize();
-					V9t9Render.renderGdkPixbufFromImageData(imageData.data,
-							imageData.width, imageData.height, imageData.bytesPerLine,
-							canvasSize.x, canvasSize.y,
-							OS.GTK_WIDGET_WINDOW(canvas.handle));
-				}
-			} else if (USE_NOISY) {
-				synchronized (vdpCanvas) {
-					Point canvasSize = canvas.getSize();
-					V9t9Render.renderNoisyGdkPixbufFromImageData(imageData.data,
-							imageData.width, imageData.height, imageData.bytesPerLine,
-							canvasSize.x, canvasSize.y,
-							OS.GTK_WIDGET_WINDOW(canvas.handle));
-				}
-			} else if (USE_ANALOGTV) {
-				Point canvasSize = canvas.getSize();
-				if (analog == null) {
-					analog = V9t9Render.allocateAnalogTv(canvasSize.x, canvasSize.y);
-				}
-				synchronized (vdpCanvas) {
-					V9t9Render.renderAnalogGdkPixbufFromImageData(
-							analog,
-							imageData.data,
-							imageData.width, imageData.height, imageData.bytesPerLine,
-							canvasSize.x, canvasSize.y,
-							OS.GTK_WIDGET_WINDOW(canvas.handle));
-				}
-			}
+			Rectangle destRect = updateRect;
+			
+			destRect = destRect.intersection(logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight()));
+			
+			Rectangle imageRect = physicalToLogical(destRect);
+			imageRect = vdpCanvas.mapVisible(imageRect);
+			
+			blitImageData(gc, imageData, destRect, imageRect);
 			wasBlank = false;
 			lastUpdateTime = System.currentTimeMillis() - started;
 		}
 		vdpCanvas.clearDirty();
+		busy = false;
 		
 	}
 
-	private void blitImageData(GC gc, ImageData imageData, Rectangle destRect,
+	protected void blitImageData(GC gc, ImageData imageData, Rectangle destRect,
 			Rectangle imageRect) {
 		if (!isBlank) {
 			if (image != null && !image.isDisposed()) {
@@ -340,7 +365,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		isDirty = true;
 	}
 
-	private Color allocColor(Color color, byte[] rgb) {
+	protected Color allocColor(Color color, byte[] rgb) {
 		if (color != null)
 			color.dispose();
 		if (rgb == null)
@@ -351,5 +376,9 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	
 	public long getLastUpdateTime() {
 		return lastUpdateTime;
+	}
+	
+	public boolean isIdle() {
+		return !busy;
 	}
 }

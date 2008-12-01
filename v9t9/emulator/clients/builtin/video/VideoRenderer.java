@@ -27,5 +27,8 @@ public interface VideoRenderer {
 
 	VdpCanvas getCanvas();
 	
+	/** Get the System.currentTimeMillis() when the last window redraw officially finished */
 	long getLastUpdateTime();
+	
+	boolean isIdle();
 }

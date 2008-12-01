@@ -484,7 +484,7 @@ public abstract class VdpCanvas {
 	}
 
 	public int getBlockCount() {
-		return (width / 8) * (height / 8);
+		return (width / 8) * ((height + 7) / 8);
 	}
 
 	/** 

@@ -43,7 +43,7 @@ public interface VdpHandler {
     
     ByteMemoryAccess getByteReadMemoryAccess(int vdpaddr); 
     
-    /** Update video periodically */
+    /** Update video canvas periodically */
     void update();
 
 	VdpCanvas getCanvas();

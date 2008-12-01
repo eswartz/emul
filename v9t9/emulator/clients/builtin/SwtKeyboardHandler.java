@@ -30,7 +30,6 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 
 	private final KeyboardState keyboardState;
 	private Map<Integer, Long> keyTimeMap = new HashMap<Integer, Long>();
-	private boolean caps;
 	
 	public SwtKeyboardHandler(Shell shell, KeyboardState keyboardState) {
 		this.keyboardState = keyboardState;
@@ -66,6 +65,7 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 
 	private void updateKey(boolean pressed, int stateMask, int keyCode) {
 		
+		//System.out.println("keyCode="+keyCode+"; pressed="+pressed);
 		byte shift = 0;
 		
 		// separately pressed keys show up in keycode sometimes
