@@ -282,6 +282,7 @@ extern const char * loc_gai_strerror(int ecode);
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <net/if.h> 
+#include <limits.h>
 
 #include <sys/user.h>
 typedef struct user_regs_struct REG_SET; 
