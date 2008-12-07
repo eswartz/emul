@@ -365,14 +365,6 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         this.cru = handler;
     }
 
-    public void yield() {
-    	
-    }
-    
-    public VdpCanvas getCanvas() {
-    	return video.getCanvas();
-    }
-    
     public void handleEvents() {
     	
     }
@@ -408,6 +400,19 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     public void tick() {
     	video.tick();
     	
+    }
+    
+    public boolean isThrottled() {
+    	return video.isThrottled();
+    }
+    public void updateVideo() {
+    }
+    public void work() {
+    	video.work();
+    }
+    
+    public void setCanvas(VdpCanvas canvas) {
+    	video.setCanvas(canvas);
     }
 }
 

@@ -13,9 +13,9 @@ import org.eclipse.swt.widgets.Display;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.HybridDemoClient;
 import v9t9.emulator.clients.builtin.PureJavaClient;
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
-import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.compiler.Compiler;
@@ -134,7 +134,9 @@ public class V9t9 {
         	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);
         }
-        
+        if (true) {
+        	VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
+        }
         
     	ExpRamArea.settingExpRam.setBoolean(true);
     }
@@ -144,12 +146,10 @@ public class V9t9 {
         Machine machine;
         
         if (findArgument(args, "--enhanced")) {
-        	//mavdp = new VdpV9938(app.getVdpMemoryDomain(), machine.getVdpMmio(), canvas);
         	machine = new TI994A(new EnhancedMachineModel());
         }
         else {
         	machine = new TI994A(new StandardMachineModel());
-        	//vdp = new VdpTMS9918A(app.getVdpMemoryDomain(), machine.getVdpMmio(), canvas);
         }
         
         final Display display = new Display();
@@ -168,31 +168,9 @@ public class V9t9 {
     }
 
 	private void run() {
-		Thread runner = new Thread("9900 Runner") {
-        	@Override
-        	public void run() {
-        		try {
-        			
-        	        while (machine.isRunning()) {
-        	            try {
-        	                machine.run();
-        	            } catch (AbortedException e) {
-        	                
-        	            } catch (Throwable t) {
-        	            	machine.setNotRunning();
-        	            	break;
-        	            }
-        	        }
-                } finally {
-                	machine.close();
-                }
-        	}
-        };
-        
+		
         machine.start();
 		machine.getCpu().contextSwitch(0);
-
-        runner.start();
         
         while (client.isAlive()) {
         	client.handleEvents();

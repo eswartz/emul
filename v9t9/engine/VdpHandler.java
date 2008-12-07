@@ -46,8 +46,6 @@ public interface VdpHandler {
     /** Update video canvas periodically */
     void update();
 
-	VdpCanvas getCanvas();
-	
 	VdpMmio getVdpMmio();
 	void setVdpMmio(VdpMmio mmio);
 
@@ -55,4 +53,11 @@ public interface VdpHandler {
 
 	/** 60Hz timer */
 	void tick();
+	
+	/** coprocessing */
+	boolean isThrottled();
+	void work();
+	
+	void setCanvas(VdpCanvas canvas);
+	
 }

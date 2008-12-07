@@ -34,10 +34,10 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 	
 	protected void drawBlock(RedrawBlock block) {
 		vdpCanvas.draw8x8BitmapRGB332ColorBlock(
-				vdpCanvas.getBitmapOffset(block.c, block.r),
-				 vdpMemory.getByteReadMemoryAccess(
-						vdpModeInfo.patt.base + rowstride * block.r + block.c + pageOffset),
-						rowstride);
+				block.c,
+				 block.r,
+						vdpMemory.getByteReadMemoryAccess(
+								vdpModeInfo.patt.base + rowstride * block.r + block.c + pageOffset), rowstride);
 	}
 
 	/** Backdrop isn't a normal color */

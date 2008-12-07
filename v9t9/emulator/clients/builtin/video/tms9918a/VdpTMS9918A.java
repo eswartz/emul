@@ -6,18 +6,24 @@
  */
 package v9t9.emulator.clients.builtin.video.tms9918a;
 
+import java.io.PrintWriter;
 import java.util.Arrays;
 
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
+import v9t9.emulator.clients.builtin.video.MemoryCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
+import v9t9.emulator.runtime.Logging;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.settings.ISettingListener;
+import v9t9.engine.settings.Setting;
+import v9t9.utils.Utils;
 
 /**
  * This is the 99/4A VDP chip.
@@ -58,6 +64,7 @@ public class VdpTMS9918A implements VdpHandler {
 	protected byte vdpStatus;
 	
 	protected VdpMmio vdpMmio;
+	protected PrintWriter vdplog;
 	public final static int VDP_INTERRUPT = 0x80;
 	public final static int VDP_COINC = 0x40;
 	public final static int VDP_FIVE_SPRITES = 0x20;
@@ -79,11 +86,33 @@ public class VdpTMS9918A implements VdpHandler {
 	public final static int MODE_BITMAP = 4;
 	public final static int MODE_MULTI = 2;
 	
-	public VdpTMS9918A(MemoryDomain videoMemory, VdpCanvas vdpCanvas) {
+    static public final String sDumpVdpAccess = "DumpVdpAccess";
+    static public final Setting settingDumpVdpAccess = new Setting(sDumpVdpAccess, new Boolean(false));
+
+	public VdpTMS9918A(MemoryDomain videoMemory) {
+		// interleave with CPU log
+		Logging.registerLog(settingDumpVdpAccess, "instrs_full.txt");
+		
+		settingDumpVdpAccess.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				if (setting.getBoolean())
+					vdplog = Logging.getLog(setting);
+				else
+					vdplog = null;
+			}
+			
+		});
+		
 		this.vdpMemory = videoMemory;
-		this.vdpCanvas = vdpCanvas;
+		this.vdpCanvas = new MemoryCanvas();
 		this.vdpregs = allocVdpRegs();
 		vdpCanvas.setSize(256, 192);
+	}
+	
+	protected void log(String msg) {
+		if (vdplog != null)
+			vdplog.println("[VDP] " + msg);
 	}
 	
 	public MemoryDomain getVideoMemory() {
@@ -116,6 +145,8 @@ public class VdpTMS9918A implements VdpHandler {
     	
     	byte old = vdpregs[reg];
     	vdpregs[reg] = val;
+    	
+   		log("register " + reg + " " + Utils.toHex2(old) + " -> " + Utils.toHex2(val));
     	
     	int         redraw = doWriteVdpReg(reg, old, val);
 
@@ -551,5 +582,18 @@ public class VdpTMS9918A implements VdpHandler {
 
 	public void tick() {
 		vdpStatus |= 0x80;
+	}
+	
+	public boolean isThrottled() {
+		return true;
+	}
+	
+	public void work() {
+		
+	}
+
+	public void setCanvas(VdpCanvas canvas) {
+		this.vdpCanvas = canvas;
+		canvas.markDirty();
 	}
 }

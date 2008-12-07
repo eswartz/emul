@@ -67,9 +67,6 @@ public class Interpreter {
        
         short op = op_x != null ? op_x : cpu.getConsole().readWord(pc);
 
-        if (pc >= 0x6000 && (op & 0xffc0) == 0x680) 
-            	pc += 0;
-
         // always re-read and re-fetch to ensure we get proper cycle counts
         // for reading the memory of the instruction
         //if ((ins = instructions.get(pc)) != null) {

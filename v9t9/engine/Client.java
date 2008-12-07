@@ -34,4 +34,6 @@ public interface Client {
 	boolean isAlive();
 
 	void handleEvents();
+
+	void updateVideo();
 }

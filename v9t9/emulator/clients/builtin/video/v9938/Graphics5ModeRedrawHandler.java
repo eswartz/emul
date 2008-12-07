@@ -36,11 +36,11 @@ public class Graphics5ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 	
 	protected void drawBlock(RedrawBlock block) {
 		vdpCanvas.draw8x8BitmapFourColorBlock(
-				vdpCanvas.getBitmapOffset(block.c, block.r),
-				 vdpMemory.getByteReadMemoryAccess(
-						vdpModeInfo.patt.base 
-						+ rowstride * block.r + (block.c >> 2) + pageOffset),
-						rowstride);
+				block.c,
+				 block.r,
+						vdpMemory.getByteReadMemoryAccess(
+								vdpModeInfo.patt.base 
+								+ rowstride * block.r + (block.c >> 2) + pageOffset), rowstride);
 	}
 	
 	@Override

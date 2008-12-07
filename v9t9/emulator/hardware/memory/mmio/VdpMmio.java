@@ -42,6 +42,11 @@ public abstract class VdpMmio implements ConsoleMmioReader, ConsoleMmioWriter {
 		return fullRamArea.memory[vdpaddr & fullRamMask];
 	}
 
+	public void writeFlatMemory(int vdpaddr, byte byt) {
+		fullRamArea.memory[vdpaddr & fullRamMask] = byt;
+		vdpHandler.touchAbsoluteVdpMemory(vdpaddr, byt);
+	}
+
 	public ByteMemoryAccess getByteReadMemoryAccess(int addr) {
 		return new ByteMemoryAccess(fullRamArea.memory, addr);
 	}
@@ -49,5 +54,6 @@ public abstract class VdpMmio implements ConsoleMmioReader, ConsoleMmioWriter {
 	public int getMemorySize() {
 		return fullRamArea.memory.length;
 	}
+
 
 }

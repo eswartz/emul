@@ -3,6 +3,7 @@
  */
 package v9t9.tests.video.speed;
 
+import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvasPaletted;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 
@@ -14,6 +15,9 @@ import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 public class TestVideoSpeedSwtPaletted extends TestVideoSpeedSwtBase {
 	@Override
 	protected SwtVideoRenderer createVideoRenderer() {
-		return new SwtVideoRenderer(display, new ImageDataCanvasPaletted());
+		SwtVideoRenderer swtVideoRenderer = new SwtVideoRenderer(display);
+		swtVideoRenderer.setCanvas(new ImageDataCanvasPaletted());
+		return swtVideoRenderer;
+
 	}
 }

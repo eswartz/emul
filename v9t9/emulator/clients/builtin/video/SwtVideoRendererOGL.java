@@ -25,56 +25,67 @@ public class SwtVideoRendererOGL extends SwtVideoRenderer {
 
 	private SWIGTYPE_p_OpenGL ogl;
 	
-	public SwtVideoRendererOGL(Display display, VdpCanvas canvas) {
-		super(display, canvas);
+	public SwtVideoRendererOGL(Display display) {
+		super(display);
+		
+	}
+	
+	protected VdpCanvas createCanvas() {
+		ogl = V9t9Render.allocateOpenGL(32 * 27);
+		return new GLCanvas(ogl);
 	}
 
 	protected void initWidgets() {
 		super.initWidgets();
-		ogl = V9t9Render.allocateOpenGL(256, 192, 
-					canvas.handle);
-		
+		V9t9Render.realizeOpenGL(ogl, canvas.handle);
 		
 	}
 	@Override
 	protected void resizeWidgets() {
+		if (!canvas.isVisible())
+			return;
 		super.resizeWidgets();
-		if (ogl != null)
-			V9t9Render.freeOpenGL(ogl);
+		//V9t9Render.freeOpenGL(ogl);
+		//ogl = V9t9Render.allocateOpenGL(32 *27);
 		canvas.setVisible(false);
-		ogl = V9t9Render.allocateOpenGL(256, 192, 
-				canvas.handle);
+		V9t9Render.realizeOpenGL(ogl, canvas.handle);
 		canvas.setVisible(true);
 	}
 
-	protected void repaint(GC gc, Rectangle updateRect) {
-		if (canvas.isDisposed())
-			return;
-		
-		if (!canvas.isVisible() || !shell.isVisible())
-			return;
-		
+	@Override
+	protected void doRepaint(GC gc, Rectangle updateRect) {
 		if (ogl == null)
 			return;
 		
-		long started = System.currentTimeMillis();
-		ImageData imageData = vdpCanvas.getImageData();
-		if (imageData != null) {
-			
-			Point canvasSize = canvas.getSize();
-			
-			synchronized (vdpCanvas) {
-				V9t9Render.renderOpenGLFromImageData(
-						ogl,
-						imageData.data,
-						imageData.width, imageData.height, imageData.bytesPerLine,
-						canvasSize.x, canvasSize.y);
+		if (vdpCanvas instanceof GLCanvas) {
+			GLCanvas glCanvas = (GLCanvas) vdpCanvas;
+			if (glCanvas.ogl != null) {
+				Point canvasSize = canvas.getSize();
+				synchronized (vdpCanvas) {
+					
+					V9t9Render. renderOpenGLFromBlocks(glCanvas.ogl,
+							vdpCanvas.getWidth(), vdpCanvas.getHeight(),
+							canvasSize.x, canvasSize.y,
+							updateRect.x, updateRect.y, updateRect.width, updateRect.height);
+					
+				}
 			}
-			wasBlank = false;
-			lastUpdateTime = System.currentTimeMillis() - started;
+		} else {
+			ImageData imageData = ((ImageDataCanvas) vdpCanvas).getImageData();
+			if (imageData != null) {
+				
+				Point canvasSize = canvas.getSize();
+				
+				synchronized (vdpCanvas) {
+					V9t9Render.renderOpenGLFromImageData(
+							ogl,
+							imageData.data,
+							imageData.width, imageData.height, imageData.bytesPerLine,
+							canvasSize.x, canvasSize.y,
+							updateRect.x, updateRect.y, updateRect.width, updateRect.height);
+				}
+			}
 		}
-		vdpCanvas.clearDirty();
-		
 	}
 
 }

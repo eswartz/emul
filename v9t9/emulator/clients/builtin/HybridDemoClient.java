@@ -86,7 +86,7 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
     	
         this.machine = machine;
        
-		videoRenderer = new SwtVideoRenderer(display, vdp.getCanvas());
+		videoRenderer = new SwtVideoRenderer(display);
         video = vdp;
         
         ((SwtVideoRenderer)videoRenderer).getShell().addShellListener(new ShellAdapter() {
@@ -386,5 +386,11 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
     public boolean isAlive() {
     	return !((SwtVideoRenderer)videoRenderer).getShell().isDisposed();
     }
+    
+    public void updateVideo() {
+    	// TODO Auto-generated method stub
+    	
+    }
+    
 }
 

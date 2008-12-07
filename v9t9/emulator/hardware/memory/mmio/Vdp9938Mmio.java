@@ -16,7 +16,7 @@ import v9t9.engine.memory.MemoryEntry;
 /** 
  * V9938 mmio chip entry
  * <p>
- * Models the card specified in the DIJIT Systems Advanced Video Processor Card (AVPC) manual
+ * Models the MSX V9938 card specified in the DIJIT Systems Advanced Video Processor Card (AVPC) manual
  * @author ejs
  */
 public class Vdp9938Mmio extends Vdp9918AMmio {

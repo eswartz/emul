@@ -3,25 +3,13 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.PaintEvent;
-import org.eclipse.swt.events.PaintListener;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.GCData;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.internal.gtk.OS;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
 
-import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 import v9t9.jni.v9t9render.SWIGTYPE_p_AnalogTV;
 import v9t9.jni.v9t9render.V9t9Render;
 
@@ -42,27 +30,30 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 
 	private SWIGTYPE_p_AnalogTV analog;
 	
-	public SwtVideoRendererGTK(Display display, VdpCanvas canvas) {
-		super(display, canvas);
+	public SwtVideoRendererGTK(Display display) {
+		super(display);
 	}
 
 	@Override
-	protected void resizeToProportions(Point curSize, Rectangle targetRect) {
-		super.resizeToProportions(curSize, targetRect);
-			
+	protected void resizeWidgets() {
+		super.resizeWidgets();
 		if (USE_ANALOGTV && analog != null) {
 			V9t9Render.freeAnalogTv(analog);
 			analog = null;
 		}
-		
 	}
 
-	@SuppressWarnings("restriction")
-	protected void repaint(GC gc, Rectangle updateRect) {
-		long started = System.currentTimeMillis();
-		ImageData imageData = vdpCanvas.getImageData();
+	@Override
+	protected void doRepaint(GC gc, Rectangle updateRect) {
+		if (!(vdpCanvas instanceof ImageDataCanvas))
+			return;
+		ImageData imageData = ((ImageDataCanvas) vdpCanvas).getImageData();
 		if (imageData != null) {
 			
+			// the actual canvas size might not match our wishes
+			Point canvasSize = new Point((int)(vdpCanvas.getWidth() * zoomx), 
+					(int)(vdpCanvas.getHeight() * zoomy));
+
 			if (USE_SWTONLY) {
 				Rectangle destRect = updateRect;
 				
@@ -74,7 +65,6 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 				blitImageData(gc, imageData, destRect, imageRect);
 			} else if (USE_GDKONLY) {
 				synchronized (vdpCanvas) {
-					Point canvasSize = canvas.getSize();
 					V9t9Render.renderGdkPixbufFromImageData(imageData.data,
 							imageData.width, imageData.height, imageData.bytesPerLine,
 							canvasSize.x, canvasSize.y,
@@ -83,7 +73,7 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 				}
 			} else if (USE_NOISY) {
 				synchronized (vdpCanvas) {
-					Point canvasSize = canvas.getSize();
+					//System.out.println("repaint: " + updateRect);
 					V9t9Render.renderNoisyGdkPixbufFromImageData(imageData.data,
 							imageData.width, imageData.height, imageData.bytesPerLine,
 							canvasSize.x, canvasSize.y,
@@ -91,7 +81,6 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 							OS.GTK_WIDGET_WINDOW(canvas.handle));
 				}
 			} else if (USE_ANALOGTV) {
-				Point canvasSize = canvas.getSize();
 				if (analog == null) {
 					analog = V9t9Render.allocateAnalogTv(canvasSize.x, canvasSize.y);
 				}
@@ -104,11 +93,7 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 							OS.GTK_WIDGET_WINDOW(canvas.handle));
 				}
 			}
-			wasBlank = false;
-			lastUpdateTime = System.currentTimeMillis() - started;
 		}
-		vdpCanvas.clearDirty();
-		
 	}
 
 }

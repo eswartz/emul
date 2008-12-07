@@ -7,7 +7,6 @@
 package v9t9.emulator.runtime;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.hardware.dsrs.DSRManager;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;

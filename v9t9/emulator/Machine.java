@@ -12,6 +12,7 @@ import java.util.TimerTask;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.dsrs.DSRManager;
+import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.TerminatedException;
@@ -36,6 +37,8 @@ abstract public class Machine {
     CruHandler cru;
     boolean bRunning;
     Timer timer;
+    Timer cpuTimer;
+    Timer videoTimer;
  
     long lastInterrupt = System.currentTimeMillis();
     long lastInfo = lastInterrupt;
@@ -43,16 +46,20 @@ abstract public class Machine {
     
     boolean allowInterrupts;
     final int interruptTick = 1000 / 60;
-    final int clientTick = 1000 / 30;
+    final int clientTick = 1000 / 100;
+    final int videoUpdateTick = 1000 / 30;
     final int cpuTick = 1000 / 100;
     private long now;
     private TimerTask vdpInterruptTask;
     private TimerTask clientTask;
-    private TimerTask cpuTask;
+    private TimerTask cpuTimingTask;
 	protected MemoryModel memoryModel;
 	private VdpHandler vdp;
 	private CruManager cruManager;
 	private DSRManager dsrManager;
+	private TimerTask videoUpdateTask;
+	private Thread machineRunner;
+	private Thread videoRunner;
 	
     public Machine(MachineModel machineModel) {
     	this.memoryModel = machineModel.getMemoryModel();
@@ -67,6 +74,8 @@ abstract public class Machine {
     	cpu = new Cpu(this, cpuTick);
     	executor = new Executor(cpu);
     	timer = new Timer();
+    	cpuTimer = new Timer();
+    	videoTimer = new Timer();
 	}
 
 	public interface ConsoleMmioReader {
@@ -112,28 +121,9 @@ abstract public class Machine {
     
     public void start() {
     	allowInterrupts = true;
-        vdpInterruptTask = new TimerTask() {
-
-            @Override
-			public void run() {
-            	vdp.tick();
-            	if (allowInterrupts) { 
-            		cpu.holdpin(Cpu.INTPIN_INTREQ);
-            	}
-            }
-        };
-        timer.scheduleAtFixedRate(vdpInterruptTask, 0, interruptTick);
-        
-        clientTask = new TimerTask() {
-        	
-        	@Override
-        	public void run() {
-        		if (client != null) client.timerInterrupt();
-        	}
-        };
-        timer.schedule(clientTask, 0, clientTick);
-        
-        cpuTask = new TimerTask() {
+    	
+        // the CPU emulation task 
+        cpuTimingTask = new TimerTask() {
         	
         	@Override
         	public void run() {
@@ -148,12 +138,102 @@ abstract public class Machine {
                 cpu.tick();
         	}
         };
-        timer.scheduleAtFixedRate(cpuTask, 0, cpuTick);
+        cpuTimer.scheduleAtFixedRate(cpuTimingTask, 0, cpuTick);
 
+        videoRunner = new Thread("Video Runner") {
+        	@Override
+        	public void run() {
+        		while (Machine.this.isRunning()) {
+	        		// delay if going too fast
+	    			while (vdp.isThrottled() && bRunning) {
+	    				// Just sleep.  Another timer thread will reset the throttle.
+	    				try {
+	    					Thread.sleep(10);
+	    				} catch (InterruptedException e) {
+	    					break;
+	    				}
+	    			}
+	    			vdp.work();
+        		}
+        	}
+        };
+        
+    	// the VDP processor interrupt task
+        vdpInterruptTask = new TimerTask() {
+
+            @Override
+			public void run() {
+            	vdp.tick();
+            	if (allowInterrupts) { 
+            		cpu.holdpin(Cpu.INTPIN_INTREQ);
+            	}
+            }
+        };
+        videoTimer.scheduleAtFixedRate(vdpInterruptTask, 0, interruptTick);
+        
+        // the potentially expensive task of blitting the screen to the
+        // physical screen -- not scheduled at a fixed rate to avoid
+        // overloading the CPU with pending redraw requests
+        videoUpdateTask = new TimerTask() {
+
+            @Override
+			public void run() {
+            	if (client != null) client.updateVideo();
+            }
+        };
+        videoTimer.schedule(videoUpdateTask, 0, videoUpdateTick);
+        
+        // the client's interrupt task, which lets it monitor
+        // other less expensive devices like the keyboard, sound,
+        // etc.
+        clientTask = new TimerTask() {
+        	
+        	@Override
+        	public void run() {
+        		if (client != null) client.timerInterrupt();
+        	}
+        };
+        timer.scheduleAtFixedRate(clientTask, 0, clientTick);
+        
         bRunning = true;
+        
+      	// the machine (well, actually, 9900) runner
+		machineRunner = new Thread("Machine Runner") {
+        	@Override
+        	public void run() {
+        		try {
+        	        while (Machine.this.isRunning()) {
+        	            try {
+        	            	// delay if going too fast
+        	        		if (Cpu.settingRealTime.getBoolean()) {
+        	        			while (cpu.isThrottled() && bRunning) {
+        	        				// Just sleep.  Another timer thread will reset the throttle.
+        	        				try {
+        	        					Thread.sleep(10);
+        	        				} catch (InterruptedException e) {
+        	        					break;
+        	        				}
+        	        			}
+        	        		}
+        	            	executor.execute();
+        	            } catch (AbortedException e) {
+        	                
+        	            } catch (Throwable t) {
+        	            	Machine.this.setNotRunning();
+        	            	break;
+        	            }
+        	        }
+                } finally {
+                	Machine.this.close();
+                }
+        	}
+        };
+        
+        machineRunner.start();
+        videoRunner.start();
     }
     
-    /**
+	/**
      * Forcibly stop the machine and throw TerminatedException
      */
     public void stop() {
@@ -164,24 +244,11 @@ abstract public class Machine {
 	public void setNotRunning() {
 		bRunning = false;
         timer.cancel();
+        cpuTimer.cancel();
+        videoTimer.cancel();
 	}
     
-    public void run() throws Throwable {
-		// delay if going too fast
-		if (Cpu.settingRealTime.getBoolean()) {
-			while (cpu.isThrottled() && bRunning) {
-				// Just sleep.  Another timer thread will reset the throttle.
-				try {
-					Thread.sleep(10);
-				} catch (InterruptedException e) {
-					break;
-				}
-			}
-		}
-    	executor.execute();
-    }
-
-    public Cpu getCpu() {
+	public Cpu getCpu() {
         return cpu;
     }
     public void setCpu(Cpu cpu) {

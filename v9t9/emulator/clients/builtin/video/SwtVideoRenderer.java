@@ -18,6 +18,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Canvas;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
@@ -32,7 +33,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	
 	protected Shell shell;
 	protected Canvas canvas;
-	protected final ImageDataCanvas vdpCanvas;
+	protected VdpCanvas vdpCanvas;
 	protected Color bg;
 
 	// global zoom
@@ -46,9 +47,10 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	protected boolean wasBlank;
 	protected boolean isDirty;
 	protected long lastUpdateTime;
-	private boolean busy;
+	protected boolean busy;
+	private boolean needResize;
 	
-	public SwtVideoRenderer(Display display, VdpCanvas canvas) {
+	public SwtVideoRenderer(Display display) {
 		shell = new Shell(display);
 		
 		GridLayout layout = new GridLayout();
@@ -61,8 +63,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		this.canvas.setLayoutData(gridData);
 		this.canvas.setLayout(new FillLayout());
 
-		this.vdpCanvas = (ImageDataCanvas) canvas;
-		this.vdpCanvas.setListener(this);		
+		setCanvas(createCanvas());
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
 		initWidgets();
@@ -101,6 +102,10 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		shell.open();
 	}
 
+	protected VdpCanvas createCanvas() {
+		return new ImageDataCanvas24Bit();
+	}
+
 	protected void initWidgets() {
 		
 	}
@@ -109,12 +114,13 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 	
 	protected Rectangle logicalToPhysical(int x, int y, int w, int h) {
-		return new Rectangle((int)(x * zoomx), (int)(y * zoomy), (int)(w * zoomx), (int)(h * zoomy));
+		return new Rectangle((int)(x * zoomx), (int)(y * zoomy), Math.round(w * zoomx), Math.round(h * zoomy));
 	}
 	
 	protected Rectangle physicalToLogical(Rectangle physical) {
 		return new Rectangle((int)(physical.x / zoomx), (int)(physical.y / zoomy), 
-				(int)(physical.width / zoomx), (int)(physical.height / zoomy));
+				(int)((physical.width + zoomx - 1) / zoomx), 
+				(int)((physical.height + zoomy - 1) / zoomy));
 	}
 
 	public void redraw() {
@@ -135,16 +141,16 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	
 				public void run() {
 					synchronized (vdpCanvas) {
-							if (canvas.isDisposed())
-								return;
-							
-							updateWidgetSizeForMode();
-							
-							Rectangle redrawPhys = logicalToPhysical(redrawRect);
-							canvas.redraw(redrawPhys.x, redrawPhys.y, 
-									redrawPhys.width, redrawPhys.height, false);
-							
-							isDirty = false;
+						if (canvas.isDisposed())
+							return;
+						
+						updateWidgetSizeForMode();
+						
+						Rectangle redrawPhys = logicalToPhysical(redrawRect);
+						canvas.redraw(redrawPhys.x, redrawPhys.y, 
+								redrawPhys.width, redrawPhys.height, false);
+						
+						isDirty = false;
 					}
 				}
 				
@@ -189,18 +195,25 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		}
 		
 	}
-	
 	protected void resizeWidgets() {
 		if (canvas.isDisposed())
 			return;
 		
 		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
 		Point size = new Point(targetRect.width, targetRect.height);
-		canvas.setSize(size);
+		Point curSize = canvas.getSize();
+		if (curSize.x == size.x && curSize.y == size.y)
+			return;
 		
+		//manualResize = true;
+		
+		Rectangle screenSize = shell.getDisplay().getClientArea();
 		Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
-		shell.setSize(trim.width, trim.height);
-		
+		if (trim.width - trim.x <= screenSize.width  && trim.height - trim.y <= screenSize.height) { 
+			//autoResize = true;
+			canvas.setSize(size);
+			shell.setSize(trim.width, trim.height);
+		}			
 		//sizedToZoom = false;
 	}
 
@@ -246,6 +259,9 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		zoomy = zoom;
 	}
 
+	public void canvasResized(VdpCanvas canvas) {
+		needResize = true;
+	}
 	public void sync() {
 		Display.getDefault().syncExec(new Runnable() {
 
@@ -300,26 +316,38 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}*/
 
 	protected void repaint(GC gc, Rectangle updateRect) {
+		if (canvas.isDisposed())
+			return;
+		
+		if (!canvas.isVisible() || !shell.isVisible())
+			return;
+
 		lastUpdateTime = Long.MAX_VALUE;
 		busy = true;
 		long started = System.currentTimeMillis();
-		ImageData imageData = vdpCanvas.getImageData();
-		if (imageData != null) {
-			
-			Rectangle destRect = updateRect;
-			
-			destRect = destRect.intersection(logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight()));
-			
-			Rectangle imageRect = physicalToLogical(destRect);
-			imageRect = vdpCanvas.mapVisible(imageRect);
-			
-			blitImageData(gc, imageData, destRect, imageRect);
-			wasBlank = false;
-			lastUpdateTime = System.currentTimeMillis() - started;
-		}
+		doRepaint(gc, updateRect);
+		wasBlank = false;
+		lastUpdateTime = System.currentTimeMillis() - started;
 		vdpCanvas.clearDirty();
 		busy = false;
 		
+	}
+
+	protected void doRepaint(GC gc, Rectangle updateRect) {
+		if (vdpCanvas instanceof ImageDataCanvas) {
+			ImageData imageData = ((ImageDataCanvas) vdpCanvas).getImageData();
+			if (imageData != null) {
+				
+				Rectangle destRect = updateRect;
+				
+				destRect = destRect.intersection(logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight()));
+				
+				Rectangle imageRect = physicalToLogical(destRect);
+				imageRect = vdpCanvas.mapVisible(imageRect);
+				
+				blitImageData(gc, imageData, destRect, imageRect);
+			}
+		}
 	}
 
 	protected void blitImageData(GC gc, ImageData imageData, Rectangle destRect,
@@ -380,5 +408,15 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	
 	public boolean isIdle() {
 		return !busy;
+	}
+
+	public Control getWidget() {
+		return canvas;
+	}
+
+	public void setCanvas(VdpCanvas vdpCanvas) {
+		this.vdpCanvas = vdpCanvas;
+		this.vdpCanvas.setListener(this);
+		updateWidgetSizeForMode();
 	}
 }

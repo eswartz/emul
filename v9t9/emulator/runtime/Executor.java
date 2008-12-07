@@ -6,9 +6,6 @@
  */
 package v9t9.emulator.runtime;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +17,6 @@ import v9t9.emulator.runtime.compiler.ICompilerStrategy;
 import v9t9.emulator.runtime.interpreter.Interpreter;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
 
 
@@ -44,8 +40,6 @@ public class Executor {
     public long nSwitches;
     public long nCompiles;
 
-    private PrintWriter dump, dumpfull;
-
 	private long nLastCycleCount;
 
 
@@ -56,6 +50,7 @@ public class Executor {
     static public final String sDumpFullInstructions = "DumpFullInstructions";
     static public final Setting settingDumpFullInstructions = new Setting(sDumpFullInstructions, new Boolean(false));
 
+    
     public Executor(Cpu cpu) {
         this.cpu = cpu;
         this.interp = new Interpreter(cpu.getMachine());
@@ -64,32 +59,8 @@ public class Executor {
         
         cpu.getMachine().getSettings().register(settingDumpInstructions);
         cpu.getMachine().getSettings().register(settingDumpFullInstructions);
-        settingDumpInstructions.addListener(new ISettingListener() {
-
-            public void changed(Setting setting, Object oldValue) {
-                if (setting.getBoolean() && dump == null) {
-                    File file = new File("/tmp/instrs.txt");
-                    try {
-                        dump = new PrintWriter(new FileOutputStream(file));
-                    } catch (FileNotFoundException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-            }});
-        settingDumpFullInstructions.addListener(new ISettingListener() {
-
-            public void changed(Setting setting, Object oldValue) {
-                if (setting.getBoolean() && dumpfull == null) {
-                    File file = new File("/tmp/instrs_full.txt");
-                    try {
-                        dumpfull = new PrintWriter(new FileOutputStream(file));
-                    } catch (FileNotFoundException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-            }});
+        Logging.registerLog(settingDumpInstructions, "instrs.txt");
+        Logging.registerLog(settingDumpFullInstructions, "instrs_full.txt");
     }
 
     public void interpretOneInstruction() {
@@ -150,11 +121,11 @@ public class Executor {
     }
 
     public PrintWriter getDump() {
-        return dump;
+        return Logging.getLog(settingDumpInstructions);
     }
 
     public PrintWriter getDumpfull() {
-        return dumpfull;
+    	return Logging.getLog(settingDumpFullInstructions);
     }
  
     /** Currently, only gather high-level info for one memory entry at a time */
