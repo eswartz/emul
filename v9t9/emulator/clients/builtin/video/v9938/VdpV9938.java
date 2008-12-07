@@ -755,15 +755,16 @@ public class VdpV9938 extends VdpTMS9918A {
 			cmdState.dx -= cmdState.dx % pixperbyte;
 			cmdState.nx -= cmdState.nx % pixperbyte;
 			
-			if ((cmdState.isDataMoveCommand = (cmdState.cmd == R46_CMD_HMMC))) 
-				statusvec[2] |= S2_TR;
+			cmdState.isDataMoveCommand = (cmdState.cmd == R46_CMD_HMMC); 
 		} else if (cmdState.cmd == R46_CMD_LMMC
 				|| cmdState.cmd == R46_CMD_LMMM
 				|| cmdState.cmd == R46_CMD_LMMV) {
 			
-			if ((cmdState.isDataMoveCommand = (cmdState.cmd == R46_CMD_LMMC)))
-				statusvec[2] |= S2_TR;
+			cmdState.isDataMoveCommand = (cmdState.cmd == R46_CMD_LMMC);
 		}
+		
+		// all clear
+		statusvec[2] = 0;
 		
 		if (vdplog != null)
 			log("MSX command " + Utils.toHex2(cmdState.cmd) + " arg=" + Utils.toHex2(cmdState.arg) 
