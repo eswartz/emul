@@ -105,6 +105,7 @@ public class ServerTCP extends ServerSocket {
         attrs.put(IPeer.ATTR_TRANSPORT_NAME, "TCP");
         attrs.put(IPeer.ATTR_IP_HOST, addr);
         attrs.put(IPeer.ATTR_IP_PORT, Integer.toString(getLocalPort()));
+        attrs.put(IPeer.ATTR_PROXY, "");
         ServerPeer p = new ServerPeer(attrs); 
         peers.add(p);
         return p;

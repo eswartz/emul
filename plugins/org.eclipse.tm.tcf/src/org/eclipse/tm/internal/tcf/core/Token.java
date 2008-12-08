@@ -67,4 +67,9 @@ public class Token implements IToken {
     public IChannel.ICommandListener getListener() {
         return listener;
     }
+    
+    @Override
+    public String toString() {
+        return id;
+    }
 }

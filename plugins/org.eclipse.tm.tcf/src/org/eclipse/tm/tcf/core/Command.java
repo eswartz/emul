@@ -76,7 +76,7 @@ public abstract class Command implements IChannel.ICommandListener {
         ErrorReport(String msg, Map<String,Object> attrs) {
             super(msg);
             this.attrs = attrs;
-            Object caused_by = attrs.get(IErrorReport.ERROR_CAUSE_BY);
+            Object caused_by = attrs.get(IErrorReport.ERROR_CAUSED_BY);
             if (caused_by != null) initCause(toError(caused_by, false));
         }
 

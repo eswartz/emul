@@ -83,6 +83,10 @@ public class LocatorProxy implements ILocator {
                 if (name.equals("peerAdded")) {
                     assert args.length == 1;
                     IPeer peer = new Peer((Map<String,String>)args[0]);
+                    if (peers.get(peer.getID()) != null) {
+                        Protocol.log("Invalid peerAdded event", new Error());
+                        return;
+                    }
                     peers.put(peer.getID(), peer);
                     for (LocatorListener l : listeners) {
                         try {

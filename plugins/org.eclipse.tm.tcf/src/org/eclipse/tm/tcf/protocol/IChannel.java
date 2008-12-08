@@ -110,7 +110,7 @@ public interface IChannel {
     interface IChannelListener {
 
         /**
-         * Called when a channel is opened.
+         * Called when a channel is opened or redirected.
          */
         void onChannelOpened();
 

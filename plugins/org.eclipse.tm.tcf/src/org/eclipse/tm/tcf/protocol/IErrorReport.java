@@ -39,7 +39,7 @@ public interface IErrorReport {
         ERROR_SEVERITY = "Severity",    // integer
         ERROR_ALT_CODE = "AltCode",     // integer
         ERROR_ALT_ORG = "AltOrg",       // string
-        ERROR_CAUSE_BY = "CausedBy";    // object
+        ERROR_CAUSED_BY = "CausedBy";   // object
     
     /** Error severity codes */
     public static final int

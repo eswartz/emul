@@ -29,10 +29,14 @@ import java.util.Map;
 
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
 import org.eclipse.tm.internal.tcf.core.RemotePeer;
+import org.eclipse.tm.internal.tcf.core.ServiceManager;
 import org.eclipse.tm.tcf.core.AbstractChannel;
 import org.eclipse.tm.tcf.core.AbstractPeer;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IPeer;
+import org.eclipse.tm.tcf.protocol.IService;
+import org.eclipse.tm.tcf.protocol.IServiceProvider;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -44,6 +48,7 @@ import org.eclipse.tm.tcf.services.ILocator;
  * for peers and to collect and maintain up-to-date
  * data about peer’s attributes.
  */
+// TODO: research usage of DNS-SD (DNS Service Discovery) to discover TCF peers
 public class LocatorService implements ILocator {
     
     private static final int DISCOVEY_PORT = 1534;
@@ -129,7 +134,7 @@ public class LocatorService implements ILocator {
             return address.getHostAddress() + ":" + port;
         }
     }
-
+    
     private static boolean old_java_version; 
     private static LocalPeer local_peer;
     
@@ -161,6 +166,7 @@ public class LocatorService implements ILocator {
     private Thread input_thread = new Thread() {
         public void run() {
             for (;;) {
+                DatagramSocket socket = LocatorService.this.socket;
                 try {
                     final DatagramPacket p = new DatagramPacket(inp_buf, inp_buf.length);
                     socket.receive(p);
@@ -175,11 +181,30 @@ public class LocatorService implements ILocator {
                     return;
                 }
                 catch (Exception x) {
+                    if (socket != LocatorService.this.socket) continue;
                     Protocol.log("Cannot read from datagram socket", x);
                 }
             }
         }
     };
+    
+    static {
+        ServiceManager.addServiceProvider(new IServiceProvider() {
+            
+            public IService[] getLocalService(final IChannel channel) {
+                channel.addCommandServer(locator, new IChannel.ICommandServer() {
+                    public void command(IToken token, String name, byte[] data) {
+                        locator.command((AbstractChannel)channel, token, name, data);
+                    }
+                });
+                return new IService[]{ locator };
+            }
+
+            public IService getServiceProxy(IChannel channel, String service_name) {
+                return null;
+            }
+        });
+    }
     
     public LocatorService() {
         locator = this;
@@ -201,6 +226,8 @@ public class LocatorService implements ILocator {
             socket.setBroadcast(true);
             input_thread.setName("TCF Locator Receiver");
             timer_thread.setName("TCF Locator Timer");
+            input_thread.setDaemon(true);
+            timer_thread.setDaemon(true);
             input_thread.start();
             timer_thread.start();
             listeners.add(new LocatorListener() {
@@ -249,26 +276,40 @@ public class LocatorService implements ILocator {
         peer.sendPeerRemovedEvent();
     }
 
-    public static void channelStarted(final AbstractChannel channel) {
-        channel.addCommandServer(locator, new IChannel.ICommandServer() {
-            public void command(IToken token, String name, byte[] data) {
-                locator.command(channel, token, name, data);
-            }
-        });
+    private Map<String,Object> makeErrorReport(int code, String msg) {
+        Map<String,Object> err = new HashMap<String,Object>();
+        err.put(IErrorReport.ERROR_TIME, new Long(System.currentTimeMillis()));
+        err.put(IErrorReport.ERROR_CODE, new Integer(code));
+        err.put(IErrorReport.ERROR_FORMAT, msg);
+        return err;
     }
 
-    private void command(AbstractChannel channel, IToken token, String name, byte[] data) {
+    private void command(final AbstractChannel channel, final IToken token, String name, byte[] data) {
         try {
             if (name.equals("redirect")) {
-                // String peer_id = (String)JSON.parseSequence(data)[0];
-                // TODO: perform local ILocator.redirect
+                String peer_id = (String)JSON.parseSequence(data)[0];
+                IPeer peer = peers.get(peer_id);
+                if (peer == null) {
+                    channel.sendResult(token, JSON.toJSONSequence(new Object[]{
+                            makeErrorReport(IErrorReport.TCF_ERROR_UNKNOWN_PEER, "Unknown peer ID") }));
+                    return;
+                }
                 channel.sendResult(token, JSON.toJSONSequence(new Object[]{ null }));
+                if (peer instanceof LocalPeer) {
+                    channel.sendEvent(Protocol.getLocator(), "Hello", JSON.toJSONSequence(
+                            new Object[]{ channel.getLocalServices() }));
+                    return;
+                }
+                new ChannelProxy(channel, peer.openChannel());
             }
             else if (name.equals("sync")) {
                 channel.sendResult(token, null);
             }
             else if (name.equals("getPeers")) {
-                channel.sendResult(token, JSON.toJSONSequence(new Object[]{ null, peers.values().toArray()}));
+                int i = 0;
+                Object[] arr = new Object[peers.size()];
+                for (IPeer p : peers.values()) arr[i++] = p.getAttributes(); 
+                channel.sendResult(token, JSON.toJSONSequence(new Object[]{ null, arr }));
             }
             else {
                 channel.terminate(new Exception("Illegal command: " + name));
@@ -444,7 +485,7 @@ public class LocatorService implements ILocator {
                     socket.send(new DatagramPacket(out_buf, i, subnet.broadcast, DISCOVEY_PORT));
                     for (Slave slave : slaves) {
                         if (!subnet.contains(slave.address)) continue;
-                        socket.send(new DatagramPacket(out_buf, out_buf.length, slave.address, slave.port));
+                        socket.send(new DatagramPacket(out_buf, i, slave.address, slave.port));
                     }
                     subnet.beacon_ok = true;
                 }

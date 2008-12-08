@@ -22,7 +22,7 @@ public class StandardServiceProvider implements IServiceProvider {
     private final String package_name = LocatorProxy.class.getPackage().getName();
     
     public IService[] getLocalService(IChannel channel) {
-        return new IService[]{ Protocol.getLocator(), new DiagnosticsService(channel) };
+        return new IService[]{ new DiagnosticsService(channel) };
     }
 
     public IService getServiceProxy(IChannel channel, String service_name) {

@@ -280,7 +280,6 @@ public class TCFNodeStackFrame extends TCFNode {
             Throwable error = stack_trace_context.getError();
             if (error == null) error = line_info.getError();
             if (error != null && ((TCFNodeExecContext)parent).isSuspended()) {
-                System.out.println(error.toString());            
                 result.setForeground(new RGB(255, 0, 0), 0);
                 result.setLabel(error.getClass().getName() + ": " + error.getMessage(), 0);
             }

@@ -344,7 +344,7 @@ public class MemoryProxy implements IMemory {
                     "\nException: " + toErrorString(data) +
                     "\nError code: " + code,
                     map, addr, ranges);
-            Object caused_by = map.get(IErrorReport.ERROR_CAUSE_BY);
+            Object caused_by = map.get(IErrorReport.ERROR_CAUSED_BY);
             if (caused_by != null) e.initCause(toError(caused_by, false));
             return e;
         }

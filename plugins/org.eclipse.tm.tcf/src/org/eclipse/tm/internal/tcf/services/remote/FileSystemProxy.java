@@ -102,7 +102,7 @@ public class FileSystemProxy implements IFileSystem {
                     "\nCommand: " + cmd +
                     "\nException: " + toErrorString(data) +
                     "\nError code: " + error_code, map);
-            Object caused_by = map.get(IErrorReport.ERROR_CAUSE_BY);
+            Object caused_by = map.get(IErrorReport.ERROR_CAUSED_BY);
             if (caused_by != null) s.initCause(toError(caused_by, false));
             return s;
         }

@@ -55,6 +55,7 @@ public class Transport {
     }
 
     public static void channelOpened(final AbstractChannel channel) {
+        assert !channels.contains(channel);
         channels.add(channel);
         for (Protocol.ChannelOpenListener l : listeners) {
             try {
@@ -67,6 +68,7 @@ public class Transport {
     }
 
     public static void channelClosed(final AbstractChannel channel, final Throwable x) {
+        assert channels.contains(channel);
         channels.remove(channel);
     }
     
@@ -100,7 +102,7 @@ public class Transport {
     public static void sendEvent(String service_name, String event_name, byte[] data) {
         for (Iterator<AbstractChannel> i = channels.iterator(); i.hasNext();) {
             AbstractChannel channel = i.next();
-            IService s = channel.getRemoteService(service_name);
+            IService s = channel.getLocalService(service_name);
             if (s != null) channel.sendEvent(s, event_name, data);
         }
     }

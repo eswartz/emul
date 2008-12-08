@@ -22,7 +22,6 @@ import org.eclipse.tm.internal.tcf.core.Token;
 import org.eclipse.tm.internal.tcf.core.Transport;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
 import org.eclipse.tm.internal.tcf.services.remote.GenericProxy;
-import org.eclipse.tm.internal.tcf.services.remote.LocatorProxy;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IService;
@@ -50,6 +49,15 @@ public abstract class AbstractChannel implements IChannel {
         public void onMessageSent(char type, String token,
                 String service, String name, byte[] data);
         
+        public void onChannelClosed(Throwable error);
+    }
+    
+    public interface Proxy {
+        
+        public void onCommand(IToken token, String service, String name, byte[] data);
+        
+        public void onEvent(String service, String name, byte[] data);
+
         public void onChannelClosed(Throwable error);
     }
 
@@ -117,16 +125,17 @@ public abstract class AbstractChannel implements IChannel {
     private final Collection<IChannelListener> channel_listeners = new ArrayList<IChannelListener>();
     private final Map<String,IChannel.IEventListener[]> event_listeners = new HashMap<String,IChannel.IEventListener[]>();
     private final Map<String,IChannel.ICommandServer> command_servers = new HashMap<String,IChannel.ICommandServer>();
-    private final Map<String,Message> inp_tokens = new HashMap<String,Message>();
     private final Map<String,Message> out_tokens = new HashMap<String,Message>();
     private final Thread inp_thread;
     private final Thread out_thread;
     private boolean notifying_channel_opened;
+    private boolean registered_with_trasport;
     private boolean shutdown;
     private int state = STATE_OPENNING;
     private IToken redirect_command;
     private final IPeer local_peer;
     private IPeer remote_peer;
+    private Proxy proxy;
 
     private static final int pending_command_limit = 32;
     private int local_congestion_level = -100;
@@ -145,14 +154,9 @@ public abstract class AbstractChannel implements IChannel {
 
     protected AbstractChannel(IPeer local_peer, IPeer remote_peer) {
         assert Protocol.isDispatchThread();
-        assert Protocol.getLocator().getPeers().get(local_peer.getID()) == local_peer;
-        assert Protocol.getLocator().getPeers().get(remote_peer.getID()) == remote_peer;
         this.remote_peer = remote_peer;
         this.local_peer = local_peer;
 
-        ServiceManager.onChannelCreated(this, local_service_by_name);
-        makeServiceByClassMap(local_service_by_name, local_service_by_class);
-        
         inp_thread = new Thread() {
 
             byte[] buf = new byte[1024];
@@ -234,7 +238,9 @@ public abstract class AbstractChannel implements IChannel {
                                 IOException x = new IOException("Connection reset by peer");
                                 try {
                                     Object[] args = JSON.parseSequence(eos);
-                                    if (args[0] != null) x = new IOException(Command.toErrorString(args[0]));
+                                    if (args.length > 0 && args[0] != null) {
+                                        x = new IOException(Command.toErrorString(args[0]));
+                                    }
                                 }
                                 catch (IOException e) {
                                     x = e;
@@ -328,23 +334,32 @@ public abstract class AbstractChannel implements IChannel {
         };
         inp_thread.setName("TCF Channel Receiver");
         out_thread.setName("TCF Channel Transmitter");
-
-        try {
-            Object[] args = new Object[]{ local_service_by_name.keySet() };  
-            sendEvent(Protocol.getLocator(), "Hello", JSON.toJSONSequence(args));
-        }
-        catch (IOException x) {
-            throw new Error(x);
-        }
     }
 
     protected void start() {
         assert Protocol.isDispatchThread();
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                try {
+                    if (proxy != null) return;
+                    ServiceManager.onChannelCreated(AbstractChannel.this, local_service_by_name);
+                    makeServiceByClassMap(local_service_by_name, local_service_by_class);
+                    Object[] args = new Object[]{ local_service_by_name.keySet() };  
+                    sendEvent(Protocol.getLocator(), "Hello", JSON.toJSONSequence(args));
+                }
+                catch (IOException x) {
+                    terminate(x);
+                }
+            }
+        });
         inp_thread.start();
         out_thread.start();
-        LocatorService.channelStarted(this);
     }
 
+    /**
+     * Redirect this channel to given peer using this channel remote peer locator service as a proxy.
+     * @param peer - peer that will become new remote communication endpoint of this channel
+     */
     public void redirect(IPeer peer) {
         assert Protocol.isDispatchThread();
         if (state == STATE_OPENNING) {
@@ -360,13 +375,15 @@ public abstract class AbstractChannel implements IChannel {
                 redirect_command = l.redirect(peer.getID(), new ILocator.DoneRedirect() {
                     public void doneRedirect(IToken token, Exception x) {
                         assert redirect_command == token;
-                        state = STATE_OPENNING;
                         redirect_command = null;
-                        remote_congestion_level = 0;
+                        if (state != STATE_OPENNING) return;
                         if (x != null) terminate(x);
-                        // Wait for next "Hello"
+                        remote_service_by_class.clear();
+                        remote_service_by_name.clear();
+                        event_listeners.clear();
                     }
                 });
+                state = STATE_OPENNING;
             }
             catch (Throwable x) {
                 terminate(x);
@@ -374,39 +391,6 @@ public abstract class AbstractChannel implements IChannel {
         }
     }
 
-    private void onLocatorHello(Collection<String> c) throws IOException {
-        if (state != STATE_OPENNING) throw new IOException("Invalid event: Locator.Hello");
-
-        remote_service_by_class.clear();
-        remote_service_by_name.clear();
-        
-        state = STATE_OPEN;
-        assert redirect_command == null;
-        if (redirect_queue.size() > 0) {
-            if (c.contains(ILocator.NAME)) {
-                remote_service_by_name.put(ILocator.NAME, new LocatorProxy(this));
-                makeServiceByClassMap(remote_service_by_name, remote_service_by_class);
-            }
-            redirect(redirect_queue.removeFirst());
-        }
-        else {
-            ServiceManager.onChannelOpened(this, c, remote_service_by_name);
-            makeServiceByClassMap(remote_service_by_name, remote_service_by_class);
-            notifying_channel_opened = true;
-            Transport.channelOpened(this);
-            listeners_array = channel_listeners.toArray(listeners_array);
-            for (int i = 0; i < listeners_array.length && listeners_array[i] != null; i++) {
-                try {
-                    listeners_array[i].onChannelOpened();
-                }
-                catch (Throwable x) {
-                    Protocol.log("Exception in channel listener", x);
-                }
-            }
-            notifying_channel_opened = false;
-        }
-    }
-    
     private void makeServiceByClassMap(Map<String,IService> by_name, Map<Class<?>,IService> by_class) {
         for (IService service : by_name.values()) {
             for (Class<?> fs : service.getClass().getInterfaces()) {
@@ -517,9 +501,20 @@ public abstract class AbstractChannel implements IChannel {
         assert Protocol.isDispatchThread();
         sendEndOfStream();
         if (state == STATE_CLOSED) return;
-        if (error != null) Protocol.log("TCF channel terminated", error);
         state = STATE_CLOSED;
-        Transport.channelClosed(this, error);
+        if (error != null) Protocol.log("TCF channel terminated", error);
+        if (registered_with_trasport) {
+            registered_with_trasport = false;
+            Transport.channelClosed(this, error);
+        }
+        if (proxy != null) {
+            try {
+                proxy.onChannelClosed(error);
+            }
+            catch (Throwable x) {
+                Protocol.log("Exception in channel listener", x);
+            }
+        }
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 if (!out_tokens.isEmpty()) {
@@ -538,7 +533,12 @@ public abstract class AbstractChannel implements IChannel {
                 }
                 listeners_array = channel_listeners.toArray(listeners_array);
                 for (int i = 0; i < listeners_array.length && listeners_array[i] != null; i++) {
-                    listeners_array[i].onChannelClosed(error);
+                    try {
+                        listeners_array[i].onChannelClosed(error);
+                    }
+                    catch (Throwable x) {
+                        Protocol.log("Exception in channel listener", x);
+                    }
                 }
                 if (trace_listeners != null) {
                     for (TraceListener l : trace_listeners) {
@@ -574,20 +574,27 @@ public abstract class AbstractChannel implements IChannel {
     
     public Collection<String> getLocalServices() {
         assert Protocol.isDispatchThread();
+        assert state != STATE_OPENNING;
         return local_service_by_name.keySet();
     }
 
     public Collection<String> getRemoteServices() {
+        assert Protocol.isDispatchThread();
+        assert state != STATE_OPENNING;
         return remote_service_by_name.keySet();
     }
     
     @SuppressWarnings("unchecked")
     public <V extends IService> V getLocalService(Class<V> cls) {
+        assert Protocol.isDispatchThread();
+        assert state != STATE_OPENNING;
         return (V)local_service_by_class.get(cls);
     }
 
     @SuppressWarnings("unchecked")
     public <V extends IService> V getRemoteService(Class<V> cls) {
+        assert Protocol.isDispatchThread();
+        assert state != STATE_OPENNING;
         return (V)remote_service_by_class.get(cls);
     }
     
@@ -599,11 +606,22 @@ public abstract class AbstractChannel implements IChannel {
     }
     
     public IService getLocalService(String service_name) {
+        assert Protocol.isDispatchThread();
+        assert state != STATE_OPENNING;
         return local_service_by_name.get(service_name);
     }
 
     public IService getRemoteService(String service_name) {
+        assert Protocol.isDispatchThread();
+        assert state != STATE_OPENNING;
         return remote_service_by_name.get(service_name);
+    }
+    
+    public void setProxy(Proxy proxy, Collection<String> services) throws IOException {
+        this.proxy = proxy;
+        sendEvent(Protocol.getLocator(), "Hello", JSON.toJSONSequence(new Object[]{ services }));
+        local_service_by_class.clear();
+        local_service_by_name.clear();
     }
     
     private void addToOutQueue(Message msg) {
@@ -616,7 +634,8 @@ public abstract class AbstractChannel implements IChannel {
 
     public IToken sendCommand(IService service, String name, byte[] args, ICommandListener listener) {
         assert Protocol.isDispatchThread();
-        if (state != STATE_OPEN) throw new Error("Channel is closed");
+        if (state == STATE_OPENNING) throw new Error("Channel is waiting for Hello message");
+        if (state == STATE_CLOSED) throw new Error("Channel is closed");
         final Message msg = new Message('C');
         msg.service = service.getName();
         msg.name = name;
@@ -639,15 +658,21 @@ public abstract class AbstractChannel implements IChannel {
         return token;
     }
 
+    public void sendProgress(IToken token, byte[] results) {
+        assert Protocol.isDispatchThread();
+        if (state != STATE_OPEN) throw new Error("Channel is closed");
+        Message msg = new Message('P');
+        msg.data = results;
+        msg.token = (Token)token;
+        addToOutQueue(msg);
+    }
+
     public void sendResult(IToken token, byte[] results) {
         assert Protocol.isDispatchThread();
-        if (state != STATE_OPEN) {
-            throw new Error("Channel is closed");
-        }
+        if (state != STATE_OPEN) throw new Error("Channel is closed");
         Message msg = new Message('R');
         msg.data = results;
         msg.token = (Token)token;
-        inp_tokens.remove(((Token)token).getID());
         addToOutQueue(msg);
     }
 
@@ -662,7 +687,7 @@ public abstract class AbstractChannel implements IChannel {
         msg.data = args;
         addToOutQueue(msg);
     }
-
+    
     @SuppressWarnings("unchecked")
     private void handleInput(Message msg) {
         assert Protocol.isDispatchThread();
@@ -681,18 +706,23 @@ public abstract class AbstractChannel implements IChannel {
         }
         try {
             Token token = null;
-            IChannel.IEventListener[] list = null;
-            IChannel.ICommandServer cmds = null;
             switch (msg.type) {
             case 'C':
-                token = msg.token;
-                inp_tokens.put(token.getID(), msg);
-                cmds = command_servers.get(msg.service);
-                if (cmds != null) {
-                    cmds.command(token, msg.name, msg.data);
+                if (state == STATE_OPENNING) {
+                    throw new IOException("Received command " + msg.service + "." + msg.name + " before Hello message");
+                }
+                if (proxy != null) {
+                    proxy.onCommand(msg.token, msg.service, msg.name, msg.data);
                 }
                 else {
-                    throw new IOException("Unknown command " + msg.service + "." + msg.name);
+                    token = msg.token;
+                    IChannel.ICommandServer cmds = command_servers.get(msg.service);
+                    if (cmds != null) {
+                        cmds.command(token, msg.name, msg.data);
+                    }
+                    else {
+                        throw new IOException("Unknown command " + msg.service + "." + msg.name);
+                    }
                 }
                 break;
             case 'P':
@@ -706,11 +736,43 @@ public abstract class AbstractChannel implements IChannel {
                 sendCongestionLevel();
                 break;
             case 'E':
-                if (msg.service.equals(ILocator.NAME) && msg.name.equals("Hello")) {
-                    onLocatorHello((Collection<String>)JSON.parseSequence(msg.data)[0]);
+                boolean hello = msg.service.equals(ILocator.NAME) && msg.name.equals("Hello");
+                if (hello) {
+                    remote_service_by_name.clear();
+                    remote_service_by_class.clear();
+                    ServiceManager.onChannelOpened(this, (Collection<String>)JSON.parseSequence(msg.data)[0], remote_service_by_name);
+                    makeServiceByClassMap(remote_service_by_name, remote_service_by_class);
+                }
+                if (proxy != null && state == STATE_OPEN) {
+                    proxy.onEvent(msg.service, msg.name, msg.data);
+                }
+                else if (hello) {
+                    assert state == STATE_OPENNING;                    
+                    state = STATE_OPEN;
+                    assert redirect_command == null;
+                    if (redirect_queue.size() > 0) {
+                        redirect(redirect_queue.removeFirst());
+                    }
+                    else {
+                        notifying_channel_opened = true;
+                        if (!registered_with_trasport) {
+                            Transport.channelOpened(this);
+                            registered_with_trasport = true;
+                        }
+                        listeners_array = channel_listeners.toArray(listeners_array);
+                        for (int i = 0; i < listeners_array.length && listeners_array[i] != null; i++) {
+                            try {
+                                listeners_array[i].onChannelOpened();
+                            }
+                            catch (Throwable x) {
+                                Protocol.log("Exception in channel listener", x);
+                            }
+                        }
+                        notifying_channel_opened = false;
+                    }
                 }
                 else {
-                    list = event_listeners.get(msg.service);
+                    IChannel.IEventListener[] list = event_listeners.get(msg.service);
                     if (list != null) {
                         for (int i = 0; i < list.length; i++) {
                             list[i].event(msg.name, msg.data);
@@ -742,9 +804,6 @@ public abstract class AbstractChannel implements IChannel {
         if (time - local_congestion_time < 500) return;
         assert Protocol.isDispatchThread();
         int level = Protocol.getCongestionLevel();
-        int n = inp_tokens.size() * 100 / pending_command_limit - 100;
-        if (n > level) level = n;
-        if (level > 100) level = 100;
         if (level == local_congestion_level) return;
         int i = (level - local_congestion_level) / 8;
         if (i != 0) level = local_congestion_level + i;
