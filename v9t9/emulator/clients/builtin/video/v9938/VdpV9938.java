@@ -41,7 +41,7 @@ import v9t9.utils.Utils;
  * promises "fast" CPU->VRAM movement but also requires tons of vwreg
  * writing, it must be only the VDP memory access, not the port access,
  * which is slow.
- * TODO: acceleration!
+ * TODO: acceleration: YMMV, SRCH, test HMMM and LMMM
  * @author ejs  
  *
  */

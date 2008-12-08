@@ -505,6 +505,17 @@ public abstract class VdpCanvas {
 	abstract public void blitSpriteBlock(MemoryCanvas spriteCanvas, int x, int y,
 			int blockMag);
 
+	/** 
+	 * Compose the block from the sprite canvas onto your canvas, in four-color mode 
+	 * @param spriteCanvas
+	 * @param x the sprite canvas X position
+	 * @param y the sprite canvas Y position
+	 * @param blockMag if 1, x/y map to the receiver, else x is doubled in the receiver
+	 * and the block is magnified 2x horizontally
+	 */
+	abstract public void blitFourColorSpriteBlock(MemoryCanvas spriteCanvas, int x,
+			int y, int blockMag);
+
 	public boolean isClearFromPalette() {
 		return clearFromPalette;
 	}

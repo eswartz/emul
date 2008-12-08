@@ -51,7 +51,7 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements VdpM
 			byte changes = vdpChanges.screen[i];
 			if (force || changes != 0) {			/* this screen pos updated? */
 				//logger(_L|L_3, _("redrawing char %d\n"), i);
-				int currchar = vdpMemory.readAbsoluteVdpMemory(screenBase + i) & 0xff;
+				int currchar = vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
 
 				RedrawBlock block = blocks[count++];
 				
@@ -61,7 +61,7 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements VdpM
 				redraw_graphics_block(
 						block,
 						vdpModeInfo.patt.base + (currchar << 3),
-						(byte) vdpMemory.readAbsoluteVdpMemory(vdpModeInfo.color.base + (currchar >> 3))); 
+						(byte) vdp.readAbsoluteVdpMemory(vdpModeInfo.color.base + (currchar >> 3))); 
 
 					/* can't redraw easily */
 				//if (changes == SC_SPRITE_COVERING)
@@ -77,7 +77,7 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements VdpM
 		bg = (byte) (color & 0xf);
 		fg = (byte) ((color >> 4) & 0xf);
 		
-		vdpCanvas.draw8x8TwoColorBlock(block.r, block.c, vdpMemory.getByteReadMemoryAccess(pattOffs), fg, bg);
+		vdpCanvas.draw8x8TwoColorBlock(block.r, block.c, vdp.getByteReadMemoryAccess(pattOffs), fg, bg);
 	}
 
 

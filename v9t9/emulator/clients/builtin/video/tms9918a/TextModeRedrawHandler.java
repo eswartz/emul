@@ -49,7 +49,7 @@ public class TextModeRedrawHandler extends BaseRedrawHandler implements
 
 		for (int i = 0; i < 960; i++) {
 			if (force || vdpChanges.screen[i] != VdpChanges.SC_UNTOUCHED) {			/* this screen pos updated? */
-				int currchar = vdpMemory.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+				int currchar = vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
 
 				RedrawBlock block = blocks[count++];
 				
@@ -58,7 +58,7 @@ public class TextModeRedrawHandler extends BaseRedrawHandler implements
 
 				int pattOffs = pattBase + (currchar << 3);
 				vdpCanvas.draw8x6TwoColorBlock(block.r, block.c, 
-						vdpMemory.getByteReadMemoryAccess(pattOffs), fg, bg);
+						vdp.getByteReadMemoryAccess(pattOffs), fg, bg);
 			}
 		}
 

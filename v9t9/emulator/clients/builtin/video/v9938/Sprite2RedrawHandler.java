@@ -110,8 +110,8 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 		int sprbase = vdpModeInfo.sprite.base;
 		int sprpatbase = vdpModeInfo.sprpat.base;
 		
-		ByteMemoryAccess access = vdpMemory.getByteReadMemoryAccess(sprbase);
-		ByteMemoryAccess colorAccess = vdpMemory.getByteReadMemoryAccess((sprbase - 0x200) & 0x1ffff);
+		ByteMemoryAccess access = vdp.getByteReadMemoryAccess(sprbase);
+		ByteMemoryAccess colorAccess = vdp.getByteReadMemoryAccess((sprbase - 0x200) & 0x1ffff);
 		
 		boolean deleted = false;
 		for (int i = 0; i < 32; i++) {
@@ -129,7 +129,7 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 			} else {
 				sprite.setDeleted(false);
 				sprite.move(x, y);
-				sprite.setPattern(vdpMemory.getByteReadMemoryAccess(sprpatbase + ((ch & 0xfc) << 3)));
+				sprite.setPattern(vdp.getByteReadMemoryAccess(sprpatbase + ((ch & 0xfc) << 3)));
 				
 				ByteMemoryAccess colorStripe = new ByteMemoryAccess(colorAccess);
 				sprite.setColorStripe(colorStripe);

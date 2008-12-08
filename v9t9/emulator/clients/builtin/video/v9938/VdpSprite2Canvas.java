@@ -7,6 +7,7 @@ import v9t9.emulator.clients.builtin.video.MemoryCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpSpriteCanvas;
+import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
@@ -17,7 +18,7 @@ import v9t9.engine.memory.ByteMemoryAccess;
  * <p>
  * Instead, a sprite color table is implicitly located
  * 512 bytes in front of the sprite attribute table.  Each entry is 16
- * bytes long and specifies attributes for each row of the sprite.
+ * bytes long and specifies attributes for each (non-magified) row of the sprite.
  * The color and early clock are moved here. 
  * A new flag allows for "canceling priority" on sprites, which effectively
  * means allowing them to OR with each other and not detect collisions.
@@ -67,7 +68,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	}
 
 	@Override
-	public void drawSprites(VdpCanvas canvas) {
+	public void drawSprites(VdpCanvas canvas, VdpHandler vdp) {
 		//spriteCanvas.clear(null);
 		// clear the blocks where the sprites are moving
 		//int cleared = 0;
@@ -79,8 +80,9 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 			}
 		}
 		//System.out.print(cleared +" cleared; ");
-		super.drawSprites(spriteCanvas);
-		blitSpriteCanvas(canvas);
+		super.drawSprites(spriteCanvas, vdp);
+		int modeNum =  ((VdpV9938) vdp).get9938ModeNumber();
+		blitSpriteCanvas(canvas, modeNum == VdpV9938.MODE_GRAPHICS5);
 	}
 
 	
@@ -177,31 +179,24 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		}
 	}
 	
-	protected void blitSpriteCanvas(VdpCanvas screenCanvas) {
+	protected void blitSpriteCanvas(VdpCanvas screenCanvas, boolean fourColorMode) {
 		// where the screen changed, we need to draw our sprite blocks
 		int blockStride = screenCanvas.getWidth() / 8;
 		int blockMag = blockStride / 32;
 		int blockCount = 32 * screenCanvas.getHeight() / 8;
 		int screenOffs = 0;
-		//RedrawBlock[] blocks = new RedrawBlock[screenCanvas.getBlockCount()];
-		//int blockidx = 0;
 		for (int i = 0; i < blockCount; i += 32) {
 			for (int j = 0; j < 32; j++) {
 				if (screenSpriteChanges[screenOffs + j * blockMag] != 0 
 					|| (blockMag > 1 && screenSpriteChanges[screenOffs + j * blockMag + 1] != 0)) {
-					/*
-					blocks[blockidx++] = block;
-					block.r = i / 32 * 8;
-					block.c = j * blockMag;
-					block.w = blockMag * 8;
-					block.h = 8;
-					 */
-					screenCanvas.blitSpriteBlock(spriteCanvas, j * 8, i / 32 * 8, blockMag);
+					
+					if (!fourColorMode)
+						screenCanvas.blitSpriteBlock(spriteCanvas, j * 8, i / 32 * 8, blockMag);
+					else
+						screenCanvas.blitFourColorSpriteBlock(spriteCanvas, j * 8, i / 32 * 8, blockMag);
 				}
 			}
 			screenOffs += blockStride;
 		}
-		//System.out.println(blockidx + " dirty from sprites");
-		//screenCanvas.markDirty(blocks, blockidx);
 	}
 }

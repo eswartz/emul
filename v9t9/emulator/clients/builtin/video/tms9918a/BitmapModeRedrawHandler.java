@@ -64,7 +64,7 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 		
 		for (int i = 0; i < 768; i++) {
 			int sector =  (i & 0x300);
-			int currchar = vdpMemory.readAbsoluteVdpMemory(vdpModeInfo.screen.base + i) & 0xff;	/* char # to update */
+			int currchar = vdp.readAbsoluteVdpMemory(vdpModeInfo.screen.base + i) & 0xff;	/* char # to update */
 			if (vdpChanges.patt[currchar + sector] != 0
 					|| vdpChanges.color[currchar + sector] != 0) { /* if color or pattern changed */
 				vdpChanges.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
@@ -87,7 +87,7 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 
 		for (int i = 0; i < 768; i++) {
 			if (force || vdpChanges.screen[i] != VdpChanges.SC_UNTOUCHED) {			/* this screen pos updated? */
-				int currchar = vdpMemory.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+				int currchar = vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
 
 				RedrawBlock block = blocks[count++];
 				
@@ -101,8 +101,8 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 				cp &= bitcolormask;
 				
 				vdpCanvas.draw8x8MultiColorBlock(block.r, block.c, 
-						vdpMemory.getByteReadMemoryAccess(pattBase + pp),
-						vdpMemory.getByteReadMemoryAccess(colorBase + cp));
+						vdp.getByteReadMemoryAccess(pattBase + pp),
+						vdp.getByteReadMemoryAccess(colorBase + cp));
 			}
 		}
 

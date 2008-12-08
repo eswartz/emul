@@ -52,7 +52,7 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 
 		for (int i = 0; i < 768; i++) {
 			if (force || vdpChanges.screen[i] != VdpChanges.SC_UNTOUCHED) {			/* this screen pos updated? */
-				int currchar = vdpMemory.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+				int currchar = vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
 
 				RedrawBlock block = blocks[count++];
 				
@@ -61,8 +61,8 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 
 				int pattOffs = pattBase + (currchar << 3) + ((i >> 5) & 3) * 2;
 				
-				byte mem1 = (byte) vdpMemory.readAbsoluteVdpMemory(pattOffs);
-				byte mem2 = (byte) vdpMemory.readAbsoluteVdpMemory(pattOffs + 1);
+				byte mem1 = (byte) vdp.readAbsoluteVdpMemory(pattOffs);
+				byte mem2 = (byte) vdp.readAbsoluteVdpMemory(pattOffs + 1);
 				
 				byte[] colors = { mem1, mem1, mem1, mem1, mem2, mem2, mem2, mem2 }; 
 

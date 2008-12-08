@@ -73,7 +73,7 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 					|| vdpChanges.screen[i] != VdpChanges.SC_UNTOUCHED			/* this screen pos updated? */
 					|| vdpChanges.color[i >> 3] != 0) 
 			{
-				int currchar = vdpMemory.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+				int currchar = vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
 
 				RedrawBlock block = blocks[count++];
 				
@@ -85,15 +85,15 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 				byte fg, bg;
 				fg = tfg; bg = tbg;
 
-				if (((VdpV9938)vdpMemory).blinkOn) {
-					byte blinkMap = vdpMemory.readAbsoluteVdpMemory(colorBase + i >> 3);
+				if (((VdpV9938)vdp).blinkOn) {
+					byte blinkMap = vdp.readAbsoluteVdpMemory(colorBase + i >> 3);
 					
 					if ((blinkMap & (i >> 3)) != 0) {
 						fg = bfg; bg = bbg;
 					}
 				}
 				vdpCanvas.draw8x6TwoColorBlock(block.r, block.c, 
-						vdpMemory.getByteReadMemoryAccess(pattOffs), 
+						vdp.getByteReadMemoryAccess(pattOffs), 
 						fg, bg);
 			}
 		}

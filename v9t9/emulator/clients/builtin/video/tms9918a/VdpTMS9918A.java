@@ -254,7 +254,7 @@ public class VdpTMS9918A implements VdpHandler {
     	return (vdpregs[1] & VdpTMS9918A.R1_NOBLANK) == 0;
     }
     
-    final protected int getModeNumber() {
+    public final int getModeNumber() {
 		return (vdpregs[1] & R1_M1) / R1_M1
 		+ (vdpregs[1] & R1_M2) / R1_M2 * 2
 		+ (vdpregs[0] & R0_M3) / R0_M3 * 4;

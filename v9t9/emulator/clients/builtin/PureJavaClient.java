@@ -154,7 +154,11 @@ public class PureJavaClient implements Client {
     public void updateVideo() {
     	//long start = System.currentTimeMillis();
     	if (videoRenderer.isIdle() ) {
-    		video.update();
+    		try {
+    			video.update();
+    		} catch (Throwable t) {
+    			t.printStackTrace();
+    		}
     		videoRenderer.redraw();
     		// compensate for slow frames
         	long elapsed = videoRenderer.getLastUpdateTime() * 4;

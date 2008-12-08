@@ -22,7 +22,7 @@ import v9t9.engine.VdpHandler;
  */
 public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 
-	protected final VdpHandler vdpMemory;
+	protected final VdpHandler vdp;
 	protected final VdpModeInfo vdpModeInfo;
 	protected final VdpChanges vdpChanges;
 	protected final VdpCanvas vdpCanvas;
@@ -31,10 +31,10 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 	protected byte vdpchanged;
 	protected final byte[] vdpregs;
 	
-	public BaseRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory, 
+	public BaseRedrawHandler(byte[] vdpregs, VdpHandler vdp, 
 			VdpChanges changed, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
 		this.vdpregs = vdpregs;
-		this.vdpMemory = vdpMemory;
+		this.vdp = vdp;
 		this.vdpChanges = changed;
 		this.vdpCanvas = vdpCanvas;
 		this.vdpModeInfo = modeInfo;
@@ -93,7 +93,7 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 		
 		int size = vdpModeInfo.screen.size;
 		for (int i = 0; i < size; i++) {
-			int currchar = vdpMemory.readAbsoluteVdpMemory(vdpModeInfo.screen.base + i) & 0xff;	/* char # to update */
+			int currchar = vdp.readAbsoluteVdpMemory(vdpModeInfo.screen.base + i) & 0xff;	/* char # to update */
 			if (vdpChanges.patt[currchar] != 0)	/* this pattern changed? */
 				vdpChanges.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
 		}

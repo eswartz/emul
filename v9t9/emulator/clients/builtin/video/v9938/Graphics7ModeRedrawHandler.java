@@ -36,7 +36,7 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		vdpCanvas.draw8x8BitmapRGB332ColorBlock(
 				block.c,
 				 block.r,
-						vdpMemory.getByteReadMemoryAccess(
+						vdp.getByteReadMemoryAccess(
 								vdpModeInfo.patt.base + rowstride * block.r + block.c + pageOffset), rowstride);
 	}
 

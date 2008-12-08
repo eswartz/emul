@@ -137,7 +137,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		int sprbase = vdpModeInfo.sprite.base;
 		int sprpatbase = vdpModeInfo.sprpat.base;
 		
-		ByteMemoryAccess access = vdpMemory.getByteReadMemoryAccess(sprbase);
+		ByteMemoryAccess access = vdp.getByteReadMemoryAccess(sprbase);
 		boolean deleted = false;
 		for (int i = 0; i < 32; i++) {
 			VdpSprite sprite = sprites[i];
@@ -163,7 +163,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 				sprite.move(x, y);
 				sprite.setColor(color);
 				sprite.setShift(shift);
-				sprite.setPattern(vdpMemory.getByteReadMemoryAccess(sprpatbase + ((ch & 0xfc) << 3)));
+				sprite.setPattern(vdp.getByteReadMemoryAccess(sprpatbase + ((ch & 0xfc) << 3)));
 				sprite.setSize(size);
 				sprite.setNumchars(numchars);
 				
@@ -193,7 +193,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	 * @param force
 	 */
 	public void updateCanvas(boolean force) {
-		spriteCanvas.drawSprites(vdpCanvas);
+		spriteCanvas.drawSprites(vdpCanvas, vdp);
 	}
 
 	public void redrawCanvas() {
