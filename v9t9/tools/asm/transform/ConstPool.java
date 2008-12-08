@@ -185,11 +185,14 @@ public class ConstPool {
 	public void injectInstruction(LLInstruction inst) {
 		try {
 			RawInstruction rawInst = inst.createRawInstruction();
-			short[] words = InstructionTable.encode(rawInst);
-			
 			int pc = rawInst.getPc();
-			if (assembler.getConsole().hasRamAccess(pc))
+			
+			// Obviously, RAM can change.  Also, jump instructions may be moved
+			// (there is a bug here too)
+			if (assembler.getConsole().hasRamAccess(pc) || rawInst.isJumpInst())
 				return;
+			
+			short[] words = InstructionTable.encode(rawInst);
 			
 			for (int i = 0; i < words.length; i++) {
 				short word = words[i];

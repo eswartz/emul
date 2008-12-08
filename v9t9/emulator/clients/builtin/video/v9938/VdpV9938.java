@@ -68,6 +68,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	/** Working variables for command execution */
 	class CommandVars {
 		int dx, dy;
+		int sx, sy;
 		/** nx ny, or maj/min for lines */
 		int nx, ny;
 		/** command, masked */
@@ -87,6 +88,10 @@ public class VdpV9938 extends VdpTMS9918A {
 		int ycnt;
 		public int dix;
 		public int diy;
+		/** destination memory select */
+		int mxd;
+		/** sourcememory select */
+		int mxs;
 	}
 	
 	private CommandVars cmdState = new CommandVars();
@@ -722,14 +727,16 @@ public class VdpV9938 extends VdpTMS9918A {
 		cmdState.arg = vdpregs[R45_ARG];
 		cmdState.dix = (cmdState.arg & R45_DIX) == 0 ? 1 : -1; 
 		cmdState.diy = (cmdState.arg & R45_DIY) == 0 ? 1 : -1;
-
+		cmdState.mxs = cmdState.arg & R45_MXS;
+		cmdState.mxd = cmdState.arg & R45_MXD;
 		cmdState.cnt = cmdState.ycnt = 0;
 		if (cmdState.cmd == R46_CMD_LINE) {
 			// in line mode, X/Y are biased into 16:16
 			int maj = readMaj();
 			int min = readMin();
 			if (vdplog != null)
-				log("Line: x="+cmdState.dx+",y="+cmdState.dy+",dix="+cmdState.dix+",diy="+cmdState.diy+",maj="+maj+", min="+min);
+				log("Line: x="+cmdState.dx+",y="+cmdState.dy+",dix="+cmdState.dix+",diy="+cmdState.diy
+						+",maj="+maj+",min="+min+",axis="+(vdpregs[45]&R45_MAJ));
 			int frac = maj != 0 ? min * 0x10000 / maj : 0;
 			if ((vdpregs[45] & R45_MAJ) == 0) {
 				cmdState.nx = 0x10000 * cmdState.dix;
@@ -752,6 +759,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			cmdState.op = R46_LOGOP_INP;
 			
 			// the high-speed moves are aligned to bytes
+			cmdState.sx -= cmdState.sx % pixperbyte;
 			cmdState.dx -= cmdState.dx % pixperbyte;
 			cmdState.nx -= cmdState.nx % pixperbyte;
 			
@@ -767,7 +775,9 @@ public class VdpV9938 extends VdpTMS9918A {
 		statusvec[2] = 0;
 		
 		if (vdplog != null)
-			log("MSX command " + Utils.toHex2(cmdState.cmd) + " arg=" + Utils.toHex2(cmdState.arg) 
+			log("MSX command " + Utils.toHex2(cmdState.cmd)
+					+ " arg=" + Utils.toHex2(cmdState.arg) 
+					+ " op=" + Utils.toHex2(cmdState.op)
 				+ " clr=" + Utils.toHex2(cmdState.clr)
 				+ " DX,DY= " + cmdState.dx + "," + cmdState.dy +"; NX,NY=" + cmdState.nx +","+ cmdState.ny);
 	}
@@ -776,7 +786,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	 * We execute one cycle of the command each tick.
 	 */
 	private void handleCommand() {
-		int addr;
+		int addr, saddr, daddr;
 		
 		switch (cmdState.cmd) {
 		case R46_CMD_STOP:
@@ -803,7 +813,7 @@ public class VdpV9938 extends VdpTMS9918A {
 				// always ready for next byte
 				statusvec[2] |= S2_TR;
 				addr = getAbsAddr(cmdState.dx + cmdState.cnt * cmdState.dix, 
-						cmdState.dy + cmdState.ycnt * cmdState.diy);
+						cmdState.dy + cmdState.ycnt * cmdState.diy, cmdState.mxd);
 				//System.out.println(cmdState.cnt+","+cmdState.ycnt+","+addr);
 				vdpMmio.writeFlatMemory(addr, vdpregs[R44_CLR]);
 				cmdState.cnt += pixperbyte;
@@ -816,11 +826,28 @@ public class VdpV9938 extends VdpTMS9918A {
 				}
 			}
 			break;
-			
+
+			// send byte rectangle from vram to vram
+		case R46_CMD_HMMM:
+			saddr = getAbsAddr(cmdState.sx + cmdState.cnt * cmdState.dix, 
+					cmdState.sy + cmdState.ycnt * cmdState.diy, cmdState.mxs);
+			daddr = getAbsAddr(cmdState.dx + cmdState.cnt * cmdState.dix, 
+					cmdState.dy + cmdState.ycnt * cmdState.diy, cmdState.mxd);
+			vdpMmio.writeFlatMemory(daddr, 
+					vdpMmio.readFlatMemory(saddr));
+			cmdState.cnt += pixperbyte;
+			if (cmdState.cnt > cmdState.nx) {
+				cmdState.cnt = 0;
+				if (++cmdState.ycnt > cmdState.ny) {
+					setAccelBusy(false);
+				}
+			}
+			break;
+
 			// send single CLR byte to rectangle
 		case R46_CMD_HMMV:
 			addr = getAbsAddr(cmdState.dx + cmdState.cnt * cmdState.dix, 
-					cmdState.dy + cmdState.ycnt * cmdState.diy);
+					cmdState.dy + cmdState.ycnt * cmdState.diy, cmdState.mxd);
 			vdpMmio.writeFlatMemory(addr, cmdState.clr);
 			cmdState.cnt += pixperbyte;
 			if (cmdState.cnt > cmdState.nx) {
@@ -860,7 +887,23 @@ public class VdpV9938 extends VdpTMS9918A {
 					setAccelBusy(false);
 				}
 			}
-			break;			
+			break;
+			
+			// send pixel rectangle from vram to vram
+		case R46_CMD_LMMM:
+			byte color = getPixel(cmdState.sx + cmdState.cnt * cmdState.dix, 
+					cmdState.sy + cmdState.ycnt * cmdState.diy);
+			setPixel(cmdState.dx + cmdState.cnt * cmdState.dix, 
+					cmdState.dy + cmdState.ycnt * cmdState.diy, cmdState.op, color);
+			cmdState.cnt += pixperbyte;
+			if (cmdState.cnt > cmdState.nx) {
+				cmdState.cnt = 0;
+				if (++cmdState.ycnt > cmdState.ny) {
+					setAccelBusy(false);
+				}
+			}
+			break;
+			
 		}
 		
 		
@@ -872,10 +915,32 @@ public class VdpV9938 extends VdpTMS9918A {
 	 * @param y
 	 * @return
 	 */
-	private int getAbsAddr(int x, int y) {
-		return (y * rowstride + (x / pixperbyte)) & 0x1ffff;
+	private int getAbsAddr(int x, int y, int ramSelect) {
+		if (ramSelect == 0)
+			return (y * rowstride + (x / pixperbyte)) & 0x1ffff;
+		else
+			return ((y * rowstride + (x / pixperbyte)) & 0xffff) + 0x20000;
 	}
 	
+	/**
+	 * Get a logical pixel
+	 *
+	 * @param x
+	 * @param y
+	 */
+	private byte getPixel(int x, int y) {
+		x &= 0x1ff;
+		y &= 0x3ff;
+		int addr = getAbsAddr(x, y, cmdState.mxs);
+		byte current = vdpMmio.readFlatMemory(addr);
+		int xmod = pixperbyte != 0 ? pixperbyte - 1 - x % pixperbyte : 0; 
+		int xshift = (xmod * pixshift);
+		
+		byte mask = (byte) (pixmask << xshift);
+		
+		return (byte) ((current & mask) >> xshift); 
+	}
+
 	/**
 	 * Set a logical pixel
 	 *
@@ -886,7 +951,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	private void setPixel(int x, int y, int color, int op) {
 		x &= 0x1ff;
 		y &= 0x3ff;
-		int addr = getAbsAddr(x, y);
+		int addr = getAbsAddr(x, y, cmdState.mxd);
 		byte current = vdpMmio.readFlatMemory(addr);
 		int xmod = pixperbyte != 0 ? pixperbyte - 1 - x % pixperbyte : 0; 
 		int xshift = (xmod * pixshift);
