@@ -74,8 +74,6 @@ static void channel_server_disconnected(Channel * c) {
 static void initiate_redirect(Channel * c1, const char * token, const char * id) {
     PeerServer * ps;
     Channel * c2;
-    Protocol * p1;
-    Protocol * p2;
 
     ps = peer_server_find(id);
     if (ps == NULL) {
@@ -93,13 +91,7 @@ static void initiate_redirect(Channel * c1, const char * token, const char * id)
         write_stream(&c1->out, MARKER_EOM);
         return;
     }
-    notify_channel_closed(c1);
-    protocol_release(c1->client_data);
     proxy_create(c1, c2);
-    spg = suspend_group_alloc();
-    channel_set_suspend_group(c1, spg);
-    channel_set_suspend_group(c2, spg);
-    channel_start(c2);
     write_stringz(&c1->out, "R");
     write_stringz(&c1->out, token);
     write_errno(&c1->out, 0);

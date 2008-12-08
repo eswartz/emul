@@ -37,7 +37,7 @@ static const char * LOCATOR = "Locator";
 
 struct ServiceInfo {
     void * owner;
-    const char * name;
+    char * name;
     struct ServiceInfo * next;
 };
 
@@ -103,7 +103,7 @@ ServiceInfo * protocol_get_service(void * owner, const char * name) {
     if (s == NULL) {
         s = (ServiceInfo *)loc_alloc(sizeof(ServiceInfo));
         s->owner = owner;
-        s->name = name;
+        s->name = loc_strdup(name);
         s->next = services;
         services = s;
     }
@@ -117,6 +117,7 @@ static void free_services(void * owner) {
     while ((s = *sp) != NULL) {
         if (s->owner == owner) {
             *sp = s->next;
+            loc_free(s->name);
             loc_free(s);
         }
         else {
@@ -196,26 +197,28 @@ void handle_protocol_message(Protocol * p, Channel * c) {
     }
     else if (type[0] == 'C') {
         Trap trap;
-        MessageHandlerInfo * mh;
         read_stringz(&c->inp, token, sizeof(token));
         read_stringz(&c->inp, service, sizeof(service));
         read_stringz(&c->inp, name, sizeof(name));
         trace(LOG_PROTOCOL, "Peer %s: Command: C %s %s %s ...", c->peer_name, token, service, name);
-        mh = find_message_handler(p, service, name);
-        if (mh == NULL) {
-            if (p->default_handler != NULL) {
-                args[0] = type;
-                args[1] = token;
-                args[2] = service;
-                args[3] = name;
-                p->default_handler(c, args, 4);
-                return;
-            }
-            trace(LOG_ALWAYS, "Unsupported TCF command: %s %s ...", service, name);
-            exception(ERR_PROTOCOL);
-        }
         if (set_trap(&trap)) {
-            mh->handler(token, c);
+            MessageHandlerInfo * mh = find_message_handler(p, service, name);
+            if (mh == NULL) {
+                if (p->default_handler != NULL) {
+                    args[0] = type;
+                    args[1] = token;
+                    args[2] = service;
+                    args[3] = name;
+                    p->default_handler(c, args, 4);
+                }
+                else {
+                    trace(LOG_ALWAYS, "Unsupported TCF command: %s %s ...", service, name);
+                    exception(ERR_PROTOCOL);
+                }
+            }
+            else {
+                mh->handler(token, c);
+            }
             clear_trap(&trap);
         }
         else {
@@ -226,62 +229,64 @@ void handle_protocol_message(Protocol * p, Channel * c) {
     }
     else if (type[0] == 'R') {
         Trap trap;
-        char *endptr;
-        unsigned long tokenid;
-        ReplyHandlerInfo *rh;
         read_stringz(&c->inp, token, sizeof(token));
         trace(LOG_PROTOCOL, "Peer %s: Reply: R %s ...", c->peer_name, token);
-        errno = 0;
-        tokenid = strtoul(token, &endptr, 10);
-        if (errno != 0 || *endptr != '\0' ||
-           (rh = find_reply_handler(c, tokenid, 1)) == NULL) {
-            if (p->default_handler != NULL) {
-                args[0] = type;
-                args[1] = token;
-                p->default_handler(c, args, 2);
-                return;
-            }
-            trace(LOG_ALWAYS, "Reply with unexpected token: %s", token);
-            exception(ERR_PROTOCOL);
-        }
         if (set_trap(&trap)) {
-            rh->handler(c, rh->client_data, 0);
-            loc_free(rh);
+            ReplyHandlerInfo * rh = NULL;
+            char * endptr = NULL;
+            unsigned long tokenid;
+            errno = 0;
+            tokenid = strtoul(token, &endptr, 10);
+            if (errno != 0 || *endptr != '\0' ||
+               (rh = find_reply_handler(c, tokenid, 1)) == NULL) {
+                if (p->default_handler != NULL) {
+                    args[0] = type;
+                    args[1] = token;
+                    p->default_handler(c, args, 2);
+                }
+                else {
+                    trace(LOG_ALWAYS, "Reply with unexpected token: %s", token);
+                    exception(ERR_PROTOCOL);
+                }
+            }
+            else {
+                rh->handler(c, rh->client_data, 0);
+                loc_free(rh);
+            }
             clear_trap(&trap);
         }
         else {
-            trace(LOG_ALWAYS, "Exception handling reply %ul: %d %s",
-                  rh->tokenid, trap.error, errno_to_str(trap.error));
-            loc_free(rh);
+            trace(LOG_ALWAYS, "Exception handling reply %s: %d %s",
+                  token, trap.error, errno_to_str(trap.error));
             exception(trap.error);
         }
     }
     else if (type[0] == 'E') {
         Trap trap;
-        EventHandlerInfo * eh;
         read_stringz(&c->inp, service, sizeof(service));
         read_stringz(&c->inp, name, sizeof(name));
         trace(LOG_PROTOCOL, "Peer %s: Event: E %s %s ...", c->peer_name, service, name);
-        if (strcmp(service, LOCATOR) == 0 && strcmp(name, "Hello") == 0) {
-            event_locator_hello(c);
-            return;
-        }
-        eh = find_event_handler(c, service, name);
-        if (eh == NULL && p->default_handler != NULL) {
-            args[0] = type;
-            args[1] = service;
-            args[2] = name;
-            p->default_handler(c, args, 3);
-            return;
-        }
         if (set_trap(&trap)) {
-            if (eh != NULL) {
-                eh->handler(c);
+            if (!c->hello_received && strcmp(service, LOCATOR) == 0 && strcmp(name, "Hello") == 0) {
+                event_locator_hello(c);
+                c->hello_received = 1;
             }
             else {
-                /* Eat the body of the event */
-                int ch;
-                while ((ch = read_stream(&c->inp)) != MARKER_EOM);
+                EventHandlerInfo * eh = find_event_handler(c, service, name);
+                if (eh == NULL && p->default_handler != NULL) {
+                    args[0] = type;
+                    args[1] = service;
+                    args[2] = name;
+                    p->default_handler(c, args, 3);
+                }
+                else if (eh != NULL) {
+                    eh->handler(c);
+                }
+                else {
+                    /* Eat the body of the event */
+                    int ch;
+                    while ((ch = read_stream(&c->inp)) != MARKER_EOM);
+                }
             }
             clear_trap(&trap);
         }
@@ -395,29 +400,24 @@ void send_hello_message(Protocol * p, Channel * c) {
 }
 
 static void event_locator_hello(Channel * c) {
-    int max;
-    int cnt;
-    char **list;
+    int cnt = 0;
+    char **list = NULL;
 
     if (read_stream(&c->inp) != '[') exception(ERR_PROTOCOL);
     if (peek_stream(&c->inp) == ']') {
         read_stream(&c->inp);
-        cnt = 0;
-        list = NULL;
     }
     else {
-        max = 1;
-        cnt = 0;
+        int max = 4;
         list = loc_alloc(max * sizeof *list);
         while (1) {
             char ch;
-            char service[256];
-            json_read_string(&c->inp, service, sizeof(service));
+            char * service = json_read_alloc_string(&c->inp);
             if (cnt == max) {
                 max *= 2;
                 list = loc_realloc(list, max * sizeof *list);
             }
-            list[cnt++] = loc_strdup(service);
+            list[cnt++] = service;
             ch = read_stream(&c->inp);
             if (ch == ',') continue;
             if (ch == ']') break;
@@ -432,6 +432,8 @@ static void event_locator_hello(Channel * c) {
         exception(ERR_JSON_SYNTAX);
     }
     if (c->peer_service_list != NULL) {
+        int i = 0;
+        while (i < c->peer_service_cnt) loc_free(c->peer_service_list[i++]);
         loc_free(c->peer_service_list);
     }
     c->peer_service_cnt = cnt;
@@ -491,10 +493,12 @@ static void channel_closed(Channel * c) {
     cnt = c->peer_service_cnt;
     list = c->peer_service_list;
     if (list) {
+        c->peer_service_cnt = 0;
         c->peer_service_list = NULL;
         while (cnt > 0) loc_free(list[--cnt]);
         loc_free(list);
     }
+    c->hello_received = 0;
 }
 
 Protocol * protocol_alloc(void) {

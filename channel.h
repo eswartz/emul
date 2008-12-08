@@ -49,6 +49,7 @@ struct Channel {
     LINK bclink;                        /* Broadcast list */
     LINK susplink;                      /* Suspend list */
     int congestion_level;               /* Congestion level */
+    int hello_received;                 /* "Hello" message has beed received - peer_service_list is valid */
 
     /* Populated by channel implementation */
     void (*start_comm)(Channel *);      /* Start communication */

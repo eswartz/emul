@@ -35,46 +35,50 @@ enum {
     ProxyStateDisconnected
 };
 
-typedef struct Proxy Proxy;
-struct Proxy {
+typedef struct Proxy {
     Channel * c;
     Protocol * proto;
     int other;
     int state;
     int instance;
-};
+} Proxy;
 
 static void proxy_connecting(Channel * c) {
-    Proxy * proxy = c->client_data;
+    Proxy * target = c->client_data;
+    Proxy * host = target + target->other;
 
-    assert(c == proxy->c);
-    assert(proxy->state == ProxyStateInitial);
-    proxy->state = ProxyStateConnecting;
-    trace(LOG_PROXY, "proxy connecting");
-    if (proxy[proxy->other].state == ProxyStateConnected) {
-        send_hello_message(proxy->proto, c);
-        flush_stream(&c->out);
-    }
+    assert(c == target->c);
+    assert(target->other == -1);
+    assert(target->state == ProxyStateInitial);
+    assert(host->state == ProxyStateConnected);
+
+    trace(LOG_PROXY, "Proxy waiting Hello from target");
+    target->state = ProxyStateConnecting;
+
+    send_hello_message(target->proto, target->c);
+    flush_stream(&target->c->out);
 }
 
 static void proxy_connected(Channel * c) {
-    Proxy * proxy = c->client_data;
+    Proxy * target = c->client_data;
+    Proxy * host = target + target->other;
     int i;
 
-    assert(c == proxy->c);
-    assert(proxy->state == ProxyStateConnecting);
-    proxy->state = ProxyStateConnected;
-    trace(LOG_PROXY, "proxy connected, peer services:");
-    for (i = 0; i < c->peer_service_cnt; i++) {
-        trace(LOG_PROXY, "  %s", c->peer_service_list[i]);
-        /* Include service names in other protocol hello message */
-        protocol_get_service(proxy[proxy->other].proto, c->peer_service_list[i]);
+    assert(target->c == c);
+    assert(target->other == -1);
+    assert(target->state == ProxyStateConnecting);
+    assert(host->state == ProxyStateConnected);
+
+    target->state = ProxyStateConnected;
+
+    trace(LOG_PROXY, "Proxy connected, target services:");
+    for (i = 0; i < target->c->peer_service_cnt; i++) {
+        trace(LOG_PROXY, "    %s", target->c->peer_service_list[i]);
+        protocol_get_service(host->proto, target->c->peer_service_list[i]);
     }
-    if (proxy[proxy->other].state == ProxyStateConnecting ||
-        proxy[proxy->other].state == ProxyStateConnected) {
-        send_hello_message(proxy[proxy->other].proto, proxy[proxy->other].c);
-        flush_stream(&proxy[proxy->other].c->out);
-    }
+
+    send_hello_message(host->proto, host->c);
+    flush_stream(&host->c->out);
 }
 
 static void proxy_receive(Channel * c) {
@@ -89,9 +93,15 @@ static void proxy_disconnected(Channel * c) {
     assert(c == proxy->c);
     assert(proxy->state == ProxyStateConnecting || proxy->state == ProxyStateConnected);
     proxy->state = ProxyStateDisconnected;
-    trace(LOG_PROXY, "proxy disconnected");
     if (proxy[proxy->other].state == ProxyStateDisconnected) {
+        trace(LOG_PROXY, "Proxy disconnected");
         if (proxy->other == -1) proxy--;
+        assert(proxy[0].c->spg == proxy[1].c->spg);
+        suspend_group_free(proxy[0].c->spg);
+        proxy[0].c->spg = proxy[1].c->spg = NULL;
+        proxy[0].c->client_data = proxy[1].c->client_data = NULL;
+        protocol_release(proxy[0].proto);
+        protocol_release(proxy[1].proto);
         loc_free(proxy);
     }
     else {
@@ -196,19 +206,35 @@ static void proxy_default_message_handler(Channel * c, char **argv, int argc) {
 }
 
 void proxy_create(Channel * c1, Channel * c2) {
-    Proxy * proxy = loc_alloc_zero(2*sizeof *proxy);
+    TCFSuspendGroup * spg = suspend_group_alloc();
+    Proxy * proxy = loc_alloc_zero(2 * sizeof *proxy);
+    int i;
+
     static int instance;
+
+    assert(c1->hello_received);
 
     proxy[0].c = c1;
     proxy[0].proto = protocol_alloc();
     proxy[0].other = 1;
-    proxy[0].state = ProxyStateConnecting;
+    proxy[0].state = ProxyStateConnected;
     proxy[0].instance = instance;
+
     proxy[1].c = c2;
     proxy[1].proto = protocol_alloc();
     proxy[1].other = -1;
     proxy[1].state = ProxyStateInitial;
     proxy[1].instance = instance++;
+
+    trace(LOG_PROXY, "Proxy created, host services:");
+    for (i = 0; i < c1->peer_service_cnt; i++) {
+        trace(LOG_PROXY, "    %s", c1->peer_service_list[i]);
+        protocol_get_service(proxy[1].proto, c1->peer_service_list[i]);
+    }
+    notify_channel_closed(c1);
+    protocol_release(c1->client_data);
+    c1->client_data = NULL;
+    c1->hello_received = 1;
 
     c1->connecting = proxy_connecting;
     c1->connected = proxy_connected;
@@ -223,4 +249,8 @@ void proxy_create(Channel * c1, Channel * c2) {
     c2->disconnected = proxy_disconnected;
     c2->client_data = proxy + 1;
     set_default_message_handler(proxy[1].proto, proxy_default_message_handler);
+
+    channel_set_suspend_group(c1, spg);
+    channel_set_suspend_group(c2, spg);
+    channel_start(c2);
  }
