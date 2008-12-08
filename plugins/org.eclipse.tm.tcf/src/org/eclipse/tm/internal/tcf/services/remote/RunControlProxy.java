@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.tm.internal.tcf.core.ReadOnlyMap;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -34,7 +33,6 @@ public class RunControlProxy implements IRunControl {
         private final Map<String, Object> props;
 
         RunContext(Map<String, Object> props) {
-            assert props instanceof ReadOnlyMap;
             this.props = props;
         }
 

@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.eclipse.tm.internal.tcf.core.ReadOnlyMap;
 import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -146,7 +145,6 @@ public class MemoryProxy implements IMemory {
         private final Map<String,Object> props;
 
         MemContext(Map<String,Object> props) {
-            assert props instanceof ReadOnlyMap;
             this.props = props;
         }
 

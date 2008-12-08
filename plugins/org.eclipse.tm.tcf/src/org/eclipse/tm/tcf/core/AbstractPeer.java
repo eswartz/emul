@@ -11,11 +11,11 @@
 package org.eclipse.tm.tcf.core;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.eclipse.tm.internal.tcf.core.ReadOnlyMap;
 import org.eclipse.tm.internal.tcf.core.Transport;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -43,7 +43,7 @@ public abstract class AbstractPeer implements IPeer {
         else {
             rw_attrs = new HashMap<String, String>();
         }
-        ro_attrs = new ReadOnlyMap<String, String>(rw_attrs);
+        ro_attrs = Collections.unmodifiableMap(rw_attrs);
         assert getID() != null;
         LocatorService.addPeer(this);
     }

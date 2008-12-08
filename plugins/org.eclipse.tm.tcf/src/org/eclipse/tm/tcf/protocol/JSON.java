@@ -20,13 +20,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import org.eclipse.tm.internal.tcf.core.ReadOnlyCollection;
-import org.eclipse.tm.internal.tcf.core.ReadOnlyMap;
 
 
 /**
@@ -291,7 +289,7 @@ public final class JSON {
                 }
             }
             read();
-            return new ReadOnlyCollection<Object>(l);
+            return Collections.unmodifiableCollection(l);
         case '{':
             Map<String,Object> m = new HashMap<String,Object>();
             read();
@@ -309,7 +307,7 @@ public final class JSON {
                 }
             }
             read();
-            return new ReadOnlyMap<String,Object>(m);
+            return Collections.unmodifiableMap(m);
         case 'n':
             read();
             if (cur_ch != 'u') error();

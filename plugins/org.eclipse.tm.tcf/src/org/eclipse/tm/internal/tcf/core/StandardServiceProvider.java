@@ -15,7 +15,6 @@ import org.eclipse.tm.internal.tcf.services.remote.LocatorProxy;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IServiceProvider;
-import org.eclipse.tm.tcf.protocol.Protocol;
 
 public class StandardServiceProvider implements IServiceProvider {
     
