@@ -256,6 +256,12 @@ public class MemoryCanvas extends VdpCanvas {
 			int blockMag) {
 		throw new IllegalArgumentException();
 	}
+	
+	@Override
+	public void blitFourColorSpriteBlock(MemoryCanvas spriteCanvas, int x,
+			int y, int blockMag) {
+		throw new IllegalArgumentException();
+	}
 
 	public void clear8x8Block(int offset) {
 		for (int i = 0; i < 8; i++) {

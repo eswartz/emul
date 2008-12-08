@@ -203,4 +203,10 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			int blockMag) {
 		throw new IllegalArgumentException();
 	}
+	
+	@Override
+	public void blitFourColorSpriteBlock(MemoryCanvas spriteCanvas, int x,
+			int y, int blockMag) {
+		throw new IllegalArgumentException();
+	}
 }

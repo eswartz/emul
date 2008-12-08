@@ -265,25 +265,21 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		int bitmapOffset = getBitmapOffset(x * blockMag, y);
 		try {
 			for (int i = 0; i < 8; i++) {
-				try {
-					for (int j = 0; j < 8; j++) {
-						byte cl = spriteCanvas.getColorAtOffset(sprOffset + j);
-						if (cl != 0) {
-							byte[] rgb = getSpriteRGB(cl);
-							imageData.data[bitmapOffset] = rgb[0];
-							imageData.data[bitmapOffset + 1] = rgb[1];
-							imageData.data[bitmapOffset + 2] = rgb[2];
-							if (blockMag > 1 && bitmapOffset < imageData.data.length) {
-								imageData.data[bitmapOffset + 3] = rgb[0];
-								imageData.data[bitmapOffset + 4] = rgb[1];
-								imageData.data[bitmapOffset + 5] = rgb[2];
-							}
+				for (int j = 0; j < 8; j++) {
+					byte cl = spriteCanvas.getColorAtOffset(sprOffset + j);
+					if (cl != 0) {
+						byte[] rgb = getSpriteRGB(cl);
+						imageData.data[bitmapOffset] = rgb[0];
+						imageData.data[bitmapOffset + 1] = rgb[1];
+						imageData.data[bitmapOffset + 2] = rgb[2];
+						if (blockMag > 1 && bitmapOffset < imageData.data.length) {
+							imageData.data[bitmapOffset + 3] = rgb[0];
+							imageData.data[bitmapOffset + 4] = rgb[1];
+							imageData.data[bitmapOffset + 5] = rgb[2];
 						}
-						bitmapOffset += 3 * blockMag;
 					}
-				} catch (ArrayIndexOutOfBoundsException e) {
-					// ignore
-				}					
+					bitmapOffset += 3 * blockMag;
+				}
 				sprOffset += spriteCanvas.getLineStride();
 				bitmapOffset += getLineStride() - 3 * 8 * blockMag;
 			}
@@ -300,10 +296,23 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		try {
 			for (int i = 0; i < 8; i++) {
 				int colorColumn = x % 2;
-				try {
-					for (int j = 0; j < 8; j++) {
-						byte col = spriteCanvas.getColorAtOffset(sprOffset + j);
-						byte cl;
+				for (int j = 0; j < 8; j++) {
+					byte col = spriteCanvas.getColorAtOffset(sprOffset + j);
+					byte cl;
+					if (colorColumn == 0)
+						cl = (byte) ((col & 0xc) >> 2);
+					else
+						cl = (byte) (col & 0x3);
+					if (cl != 0) {
+						byte[] rgb = getSpriteRGB(cl);
+						imageData.data[bitmapOffset] = rgb[0];
+						imageData.data[bitmapOffset + 1] = rgb[1];
+						imageData.data[bitmapOffset + 2] = rgb[2];
+					}
+					bitmapOffset += 3;
+					colorColumn ^= 1;
+					//System.out.println(j+","+(j * blockMag + x + 1));
+					if (blockMag > 1) {
 						if (colorColumn == 0)
 							cl = (byte) ((col & 0xc) >> 2);
 						else
@@ -316,23 +325,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 						}
 						bitmapOffset += 3;
 						colorColumn ^= 1;
-						if (blockMag > 1 && bitmapOffset + 6 < imageData.data.length) {
-							if (colorColumn == 0)
-								cl = (byte) ((col & 0xc) >> 2);
-							else
-								cl = (byte) (col & 0x3);
-							if (cl != 0) {
-								byte[] rgb = getSpriteRGB(cl);
-								imageData.data[bitmapOffset + 3] = rgb[0];
-								imageData.data[bitmapOffset + 4] = rgb[1];
-								imageData.data[bitmapOffset + 5] = rgb[2];
-							}
-							bitmapOffset += 3;
-							colorColumn ^= 1;
-						}
 					}
-				} catch (ArrayIndexOutOfBoundsException e) {
-					// ignore
 				}
 				sprOffset += spriteCanvas.getLineStride();
 				bitmapOffset += getLineStride() - 3 * 8 * blockMag;
