@@ -52,7 +52,8 @@ import org.eclipse.tm.tcf.services.ILocator;
 public class LocatorService implements ILocator {
     
     private static final int DISCOVEY_PORT = 1534;
-    private static final int MAX_PACKET_SIZE = 0x1000;
+    private static final int MAX_PACKET_SIZE = 9000 - 40 - 8;
+    private static final int PREF_PACKET_SIZE = 1500 - 40 - 8;
 
     private static LocatorService locator;
     private static final Map<String,IPeer> peers = new HashMap<String,IPeer>();
@@ -471,7 +472,7 @@ public class LocatorService implements ILocator {
             for (String key : attrs.keySet()) {
                 String s = key + "=" + attrs.get(key);
                 byte[] bt = s.getBytes("UTF-8");
-                if (i + bt.length + 1 > out_buf.length) break; 
+                if (i + bt.length >= out_buf.length) break; 
                 System.arraycopy(bt, 0, out_buf, i, bt.length);
                 i += bt.length;
                 out_buf[i++] = 0;
@@ -544,7 +545,7 @@ public class LocatorService implements ILocator {
                     if (only_linked && x.last_req_slaves_time + DATA_RETENTION_PERIOD < time) continue;
                     String s = x.port + ":" + x.address.getHostAddress();
                     byte[] bt = s.getBytes("UTF-8");
-                    if (i + bt.length >= out_buf.length) {
+                    if (i > 8 && i + bt.length >= PREF_PACKET_SIZE) {
                         socket.send(new DatagramPacket(out_buf, i, addr, port));
                         i = 8;
                     }
