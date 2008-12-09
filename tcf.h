@@ -15,11 +15,4 @@
 #ifndef D_tcf
 #define D_tcf
 
-#define PKT_SIZE 0x1000
-
-#define UDP_REQ_INFO 1
-#define UDP_ACK_INFO 2
-#define UDP_REQ_SLAVES 3
-#define UDP_ACK_SLAVES 4
-
 #endif
