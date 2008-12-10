@@ -30,8 +30,8 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 
 	private SWIGTYPE_p_AnalogTV analog;
 	
-	public SwtVideoRendererGTK(Display display) {
-		super(display);
+	public SwtVideoRendererGTK() {
+		super();
 	}
 
 	@Override

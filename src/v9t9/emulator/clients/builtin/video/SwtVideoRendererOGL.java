@@ -25,8 +25,8 @@ public class SwtVideoRendererOGL extends SwtVideoRenderer {
 
 	private SWIGTYPE_p_OpenGL ogl;
 	
-	public SwtVideoRendererOGL(Display display) {
-		super(display);
+	public SwtVideoRendererOGL() {
+		super();
 		
 	}
 	

@@ -68,6 +68,7 @@ public class KeyboardState {
     };
 	private final InternalCru cru;
 	private final Cpu cpu;
+	private long lastAbortTime;
 
     /*	This macro tells us whether an ASCII code has a direct mapping
 	to a 9901 keyboard matrix location (stored in latinto9901[]).
@@ -188,7 +189,7 @@ public class KeyboardState {
 	            
 	            // NMI on FCTN+SHIFT+CTRL
 	            if (shift == CTRL + FCTN + SHIFT && key == ' '
-	            		&& !TESTKBDCRU(r, c) && onoff) {
+	            		&& TESTKBDCRU(r, c) && !onoff) {
 	            	cpu.holdpin(Cpu.INTPIN_LOAD);
 	            }
 	            

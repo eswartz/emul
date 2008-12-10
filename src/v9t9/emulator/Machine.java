@@ -288,6 +288,10 @@ abstract public class Machine {
 	public DSRManager getDSRManager() {
 		return dsrManager;
 	}
+
+	public CruHandler getCru() {
+		return cru;
+	}
 }
 
 

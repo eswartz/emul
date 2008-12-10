@@ -106,9 +106,9 @@ public class V9t9 {
 	    	loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
 	    	loadModuleGrom("ExtBasic", "tiextg.bin");
 	    	
-	    	loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
 	    	loadModuleGrom("Parsec", "parsecg.bin");
 	    	loadModuleRom("Parsec", "parsecc.bin");
+	    	loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
 	    	
     	} else {
     		loadBankedConsoleRom("nforthA.rom", "nforthB.rom");

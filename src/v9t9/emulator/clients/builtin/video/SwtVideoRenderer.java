@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.builtin.video;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
@@ -18,46 +18,45 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Canvas;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
-import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 
 /**
- * Provide the emulator in an SWT window
+ * Render video into an SWT window
  * @author ejs
  *
  */
-public class SwtWindow {
+public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	
-	protected Shell shell;
-	protected Control videoControl;
-	protected SwtVideoRenderer videoRenderer;
+	protected Canvas canvas;
+	protected VdpCanvas vdpCanvas;
+	protected Color bg;
+
+	protected Image image;
+	protected Rectangle updateRect;
+	protected boolean isBlank;
+	protected boolean wasBlank;
+	protected boolean isDirty;
+	protected long lastUpdateTime;
+	protected boolean busy;
+	private Shell shell;
 	
 	// global zoom
 	protected int zoom = 3;
 	// zoom based on the resolution
 	protected float zoomx = 3, zoomy = 3;
 	protected boolean sizedToZoom = false;
-	private boolean needResize;
 	
-	public SwtWindow(Display display, SwtVideoRenderer renderer) {
-		shell = new Shell(display);
-		
-		GridLayout layout = new GridLayout();
-		layout.marginHeight = layout.marginWidth = 0;
-		shell.setLayout(layout);
-		shell.setBounds(800,800,0,0);
-		
-		this.videoRenderer = renderer;
-		this.videoControl = renderer.createControl(shell);
-		
-		this.canvas = new Canvas(shell, SWT.NO_BACKGROUND);
-		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		this.canvas.setLayoutData(gridData);
+	public SwtVideoRenderer() {
+	}
+
+	public Control createControl(Composite parent) {
+		this.shell = parent.getShell();
+		this.canvas = new Canvas(parent, SWT.NO_BACKGROUND);
 		this.canvas.setLayout(new FillLayout());
 
 		setCanvas(createCanvas());
@@ -95,8 +94,7 @@ public class SwtWindow {
 			}
 		});
 		
-		
-		shell.open();
+		return canvas;
 	}
 
 	protected VdpCanvas createCanvas() {
@@ -205,11 +203,12 @@ public class SwtWindow {
 		//manualResize = true;
 		
 		Rectangle screenSize = shell.getDisplay().getClientArea();
-		Rectangle trim = shell.computeTrim(0, 0, size.x, size.y);
+		Rectangle trim = canvas.getParent().computeTrim(0, 0, size.x, size.y);
 		if (trim.width - trim.x <= screenSize.width  && trim.height - trim.y <= screenSize.height) { 
 			//autoResize = true;
 			canvas.setSize(size);
-			shell.setSize(trim.width, trim.height);
+			//canvas.getShell().layout(true, true);
+			//canvas.getParent().setSize(trim.width, trim.height);
 		}			
 		//sizedToZoom = false;
 	}
@@ -257,7 +256,7 @@ public class SwtWindow {
 	}
 
 	public void canvasResized(VdpCanvas canvas) {
-		needResize = true;
+		//needResize = true;
 	}
 	public void sync() {
 		Display.getDefault().syncExec(new Runnable() {
@@ -416,4 +415,5 @@ public class SwtWindow {
 		this.vdpCanvas.setListener(this);
 		updateWidgetSizeForMode();
 	}
+
 }

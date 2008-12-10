@@ -54,8 +54,7 @@ public class PureJavaClient implements Client {
         	try {
         		Class<?> klass = getClass().getClassLoader().loadClass(
         				SwtVideoRenderer.class.getName() + "OGL");
-        		videoRenderer = (VideoRenderer) klass.getConstructor(Display.class).newInstance(
-        				display);
+        		videoRenderer = (VideoRenderer) klass.getConstructor().newInstance();
         	} catch (Exception e) {
         		System.err.println("Cannot load OpenGL/GTK-specific support: " +e.getMessage());
         	}
@@ -65,18 +64,20 @@ public class PureJavaClient implements Client {
         	try {
 	        	Class<?> klass = getClass().getClassLoader().loadClass(
 	        			SwtVideoRenderer.class.getName() + "GTK");
-	        	videoRenderer = (VideoRenderer) klass.getConstructor(Display.class).newInstance(
-	        			display);
+	        	videoRenderer = (VideoRenderer) klass.getConstructor().newInstance();
         	} catch (Exception e) {
         		System.err.println("Cannot load GTK-specific support: " +e.getMessage());
         	}
         }
         if (videoRenderer == null)
-        	videoRenderer = new SwtVideoRenderer(display);
+        	videoRenderer = new SwtVideoRenderer();
         video = vdp;
-        video.setCanvas(videoRenderer.getCanvas());
         
-        Shell shell = ((SwtVideoRenderer) videoRenderer).getShell();
+        SwtWindow window = new SwtWindow(display, (SwtVideoRenderer) videoRenderer, machine);
+
+        video.setCanvas(videoRenderer.getCanvas());
+
+        Shell shell = window.getShell();
 		shell.addShellListener(new ShellAdapter() {
 			@Override
 			public void shellClosed(ShellEvent e) {
