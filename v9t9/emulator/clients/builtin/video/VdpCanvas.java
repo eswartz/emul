@@ -112,6 +112,10 @@ public abstract class VdpCanvas {
     	
     	setGreyscale(false);
     	
+    	for (int i = 16;  i < 256; i++) {
+    		setRGB(i, new byte[] { 0, 0, 0 });
+    	}
+    	
 		setBlockWidth(8);
     	setSize(256, 192);
     }
@@ -479,7 +483,7 @@ public abstract class VdpCanvas {
 
 
 	public void clearToEvenOddClearColors() {
-		for (int r = 0; r < height; r += 8) {
+		for (int r = 0; r < height; r++) {
 			for (int c = 0; c < width; c += 8) {
 				drawEightPixels(getBitmapOffset(c, r), (byte)0xaa, (byte)clearColor, (byte)clearColor1);
 			}

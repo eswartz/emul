@@ -205,7 +205,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 				offs += 3;
 				
 				pix = (byte) ((mem >> 4) & 0x3);
-				rgb = getRGB(pix);
+				rgb = getRGB1(pix);
 				imageData.data[offs] = rgb[0];
 				imageData.data[offs + 1] = rgb[1];
 				imageData.data[offs + 2] = rgb[2];
@@ -213,7 +213,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 				offs += 3;
 				
 				pix = (byte) ((mem >> 2) & 0x3);
-				rgb = getRGB1(pix);
+				rgb = getRGB(pix);
 				imageData.data[offs] = rgb[0];
 				imageData.data[offs + 1] = rgb[1];
 				imageData.data[offs + 2] = rgb[2];

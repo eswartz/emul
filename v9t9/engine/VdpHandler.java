@@ -40,6 +40,10 @@ public interface VdpHandler {
     /** Read byte from absolute VDP memory at the given address
      */
     byte readAbsoluteVdpMemory(int vdpaddr);
+    /** Write byte to absolute VDP memory at the given address,
+     * also touching it.
+     */
+	void writeAbsoluteVdpMemory(int vdpaddr, byte byt);
     
     ByteMemoryAccess getByteReadMemoryAccess(int vdpaddr); 
     
@@ -59,5 +63,5 @@ public interface VdpHandler {
 	void work();
 	
 	void setCanvas(VdpCanvas canvas);
-	
+
 }

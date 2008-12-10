@@ -7,7 +7,6 @@ import v9t9.emulator.clients.builtin.video.MemoryCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpSpriteCanvas;
-import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
@@ -50,9 +49,11 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	private MemoryCanvas spriteCanvas;
 	/** which screen changes there were, requiring sprite reblits */
 	private byte[] screenSpriteChanges;
+	private final boolean evenOddColors;
 
-	public VdpSprite2Canvas(VdpCanvas canvas, int maxPerLine) {
+	public VdpSprite2Canvas(VdpCanvas canvas, int maxPerLine, boolean evenOddColors) {
 		super(canvas, maxPerLine);
+		this.evenOddColors = evenOddColors;
 		this.spriteCanvas = new MemoryCanvas();
 		spriteCanvas.setClearColor(0);
 		spriteCanvas.setSize(256, canvas.getHeight());
@@ -68,7 +69,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	}
 
 	@Override
-	public void drawSprites(VdpCanvas canvas, VdpHandler vdp) {
+	public void drawSprites(VdpCanvas canvas) {
 		//spriteCanvas.clear(null);
 		// clear the blocks where the sprites are moving
 		//int cleared = 0;
@@ -80,9 +81,9 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 			}
 		}
 		//System.out.print(cleared +" cleared; ");
-		super.drawSprites(spriteCanvas, vdp);
-		int modeNum =  ((VdpV9938) vdp).get9938ModeNumber();
-		blitSpriteCanvas(canvas, modeNum == VdpV9938.MODE_GRAPHICS5);
+		super.drawSprites(spriteCanvas);
+		
+		blitSpriteCanvas(canvas, evenOddColors);
 	}
 
 	

@@ -86,8 +86,8 @@ public class PureJavaClient implements Client {
 			}
 		});
 
-        keyboardState = new KeyboardState();
-        cru = new InternalCru(machine, keyboardState);
+        cru = new InternalCru(machine);
+        keyboardState = new KeyboardState(machine.getCpu(), (InternalCru) cru);
         
         sound = new SoundHandler() {
 

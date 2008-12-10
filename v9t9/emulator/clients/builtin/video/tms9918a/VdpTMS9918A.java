@@ -65,6 +65,7 @@ public class VdpTMS9918A implements VdpHandler {
 	
 	protected VdpMmio vdpMmio;
 	protected PrintWriter vdplog;
+	protected BlankModeRedrawHandler blankModeRedrawHandler;
 	public final static int VDP_INTERRUPT = 0x80;
 	public final static int VDP_COINC = 0x40;
 	public final static int VDP_FIVE_SPRITES = 0x20;
@@ -108,6 +109,9 @@ public class VdpTMS9918A implements VdpHandler {
 		this.vdpCanvas = new MemoryCanvas();
 		this.vdpregs = allocVdpRegs();
 		vdpCanvas.setSize(256, 192);
+		
+		blankModeRedrawHandler = new BlankModeRedrawHandler(
+				vdpregs, this, vdpChanges, vdpCanvas, createBlankModeInfo());
 	}
 	
 	protected void log(String msg) {
@@ -156,7 +160,7 @@ public class VdpTMS9918A implements VdpHandler {
 		 	   it affects the meaning of the following 
 		 	   calls and checks. */
 		 	if ((redraw & REDRAW_MODE) != 0) {
-		 		establishVideoMode();
+		 		setVideoMode();
 		 		setupBackdrop();
 		 		dirtyAll();
 		 	}
@@ -187,7 +191,7 @@ public class VdpTMS9918A implements VdpHandler {
     
     /** Set the backdrop based on the mode */
     protected void setupBackdrop() {
-    	vdpCanvas.setClearColor(vdpbg);
+    	vdpCanvas.setClearColor(vdpbg & 0xf);
 	}
 
 	protected int doWriteVdpReg(int reg, byte old, byte val) {
@@ -264,7 +268,7 @@ public class VdpTMS9918A implements VdpHandler {
      * Set up the vdpModeRedrawHandler, spriteRedrawHandler, and memory access
      * times for the mode defined by the vdp registers.
      */
-    protected void establishVideoMode() {
+    protected final void setVideoMode() {
     	/* Is the screen really blank? */
 		if (isBlank()) {
 			// clear the canvas first
@@ -273,9 +277,15 @@ public class VdpTMS9918A implements VdpHandler {
 			
 			// now, ignore any changes or redraw requests
 			setBlankMode();
-			return;
+			vdpModeRedrawHandler = blankModeRedrawHandler;
 		}
 		
+		/* Set up actual mode stuff too */
+		establishVideoMode();
+    }
+    
+    protected void establishVideoMode() {
+    			
 		switch (getModeNumber()) {
 		case MODE_TEXT:
 			setTextMode();
@@ -438,8 +448,6 @@ public class VdpTMS9918A implements VdpHandler {
 
 	protected void setBlankMode() {
 		vdpCanvas.setSize(256, vdpCanvas.getHeight());
-		vdpModeRedrawHandler = new BlankModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createBlankModeInfo());
 		spriteRedrawHandler = null;
 		vdpMmio.setMemoryAccessCycles(0);
 		initUpdateBlocks(8);
@@ -513,6 +521,10 @@ public class VdpTMS9918A implements VdpHandler {
     public byte readAbsoluteVdpMemory(int vdpaddr) {
     	return vdpMmio.readFlatMemory(vdpaddr);
     }
+    
+    public void writeAbsoluteVdpMemory(int vdpaddr, byte byt) {
+    	vdpMmio.writeFlatMemory(vdpaddr, byt);
+    }
 
 	public ByteMemoryAccess getByteReadMemoryAccess(int addr) {
 		return vdpMmio.getByteReadMemoryAccess(addr);
@@ -537,26 +549,26 @@ public class VdpTMS9918A implements VdpHandler {
 		if (vdpModeRedrawHandler != null) {
 			//long start = System.currentTimeMillis();
 			
-			int count;
+			int count = 0;
 			
 			// don't let video rendering happen in middle of updating
 			synchronized (vdpCanvas) {
 				vdpModeRedrawHandler.propagateTouches();
 				
 				if (vdpChanges.fullRedraw) {
+					// clear for the actual mode (not blank mode)
 					vdpModeRedrawHandler.clear();
 					vdpCanvas.markDirty();
 				}
 				
-				if (spriteRedrawHandler != null) {
-					vdpStatus = spriteRedrawHandler.updateSpriteCoverage(vdpStatus, vdpChanges.fullRedraw);
-				}
-	
-	
-				count = vdpModeRedrawHandler.updateCanvas(blocks, vdpChanges.fullRedraw);
-				
-				if (spriteRedrawHandler != null && drawSprites) {
-					spriteRedrawHandler.updateCanvas(vdpChanges.fullRedraw);
+				if (!isBlank()) {
+					if (spriteRedrawHandler != null) {
+						vdpStatus = spriteRedrawHandler.updateSpriteCoverage(vdpStatus, vdpChanges.fullRedraw);
+					}
+					count = vdpModeRedrawHandler.updateCanvas(blocks, vdpChanges.fullRedraw);
+					if (spriteRedrawHandler != null && drawSprites) {
+						spriteRedrawHandler.updateCanvas(vdpChanges.fullRedraw);
+					}
 				}
 			}
 

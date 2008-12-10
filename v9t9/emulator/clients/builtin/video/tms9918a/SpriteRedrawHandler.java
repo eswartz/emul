@@ -193,7 +193,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	 * @param force
 	 */
 	public void updateCanvas(boolean force) {
-		spriteCanvas.drawSprites(vdpCanvas, vdp);
+		spriteCanvas.drawSprites(vdpCanvas);
 	}
 
 	public void redrawCanvas() {

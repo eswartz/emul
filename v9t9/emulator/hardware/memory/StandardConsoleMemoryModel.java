@@ -82,11 +82,10 @@ public class StandardConsoleMemoryModel implements MemoryModel {
         
         if (machine instanceof TI994A)
         	defineMmioMemory((TI994A) machine);
-        
-        defineDevices(machine);
     }
 
 	protected void initSettings() {
+		ExpRamArea.settingExpRam.setBoolean(true);
 		ConsoleRamArea.settingEnhRam.setBoolean(false);
 	}
  
@@ -118,12 +117,6 @@ public class StandardConsoleMemoryModel implements MemoryModel {
                 new ConsoleGramWriteArea(gplMmio)));
 		
 	}
-
-	protected void defineDevices(Machine machine) {
-		EmuDiskDSR dsr = new EmuDiskDSR(machine);
-		machine.getDSRManager().registerDsr(dsr);
-	}
-
 
 
 	public MemoryDomain getConsole() {

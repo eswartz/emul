@@ -83,7 +83,7 @@ public abstract class MemoryArea {
         &&	area.areaWriteWord == areaWriteWord;
     }
 
-    abstract MemoryArea copy();
+    public abstract MemoryArea copy();
     
 	public static class DefaultAreaHandlers implements AreaReadByte, AreaWriteByte {
 	    /* (non-Javadoc)

@@ -702,6 +702,12 @@ public class InstructionTable {
     		case 0:				/* DSR, OP_DSR */
     			inst.inst = InstructionTable.Idsr;
     			break;
+    			// 0xd60
+    		case 11:			/* TICKS */
+    			inst.inst = InstructionTable.Iticks;
+    			mop1.type = MachineOperand.OP_REG;
+                mop1.val = (byte) (op & 0xf);
+    			break;
 
             // TODO: extended instructions
             }

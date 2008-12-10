@@ -65,10 +65,11 @@ abstract public class Machine {
     	this.memoryModel = machineModel.getMemoryModel();
     	this.memory = memoryModel.createMemory();
     	this.console = memoryModel.getConsole();
-    	this.vdp = machineModel.createVdp(this);
     	cruManager = new CruManager();
     	dsrManager = new DSRManager(this);
+    	this.vdp = machineModel.createVdp(this);
     	memoryModel.initMemory(this);
+    	machineModel.defineDevices(this);
     	
     	settings = new SettingsCollection();
     	cpu = new Cpu(this, cpuTick);

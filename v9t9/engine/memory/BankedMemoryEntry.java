@@ -29,7 +29,13 @@ public class BankedMemoryEntry extends MemoryEntry {
 		
 		this.currentBank = null;
 		this.currentBankIndex = 0;
-		selectBank(0);
+	}
+	
+	@Override
+	public void map() {
+		super.map();
+		if (currentBank == null)
+			selectBank(currentBankIndex);
 	}
 	
 	public void selectBank(int bank) {

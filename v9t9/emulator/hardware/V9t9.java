@@ -1,5 +1,5 @@
 /*
- * (c) Ed Swartz, 2005
+ * (c) Ed Swartz, 2008
  * 
  * Created on Feb 19, 2006
  *
@@ -169,8 +169,8 @@ public class V9t9 {
 
 	private void run() {
 		
-        machine.start();
 		machine.getCpu().contextSwitch(0);
+        machine.start();
         
         while (client.isAlive()) {
         	client.handleEvents();

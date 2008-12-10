@@ -249,7 +249,11 @@ public class Interpreter {
 				memory.writeByte(iblock.ea1, (byte) iblock.val1);
 			} else {
 				memory.writeWord(iblock.ea1, iblock.val1);
+				if (ins.inst == InstructionTable.Iticks) {
+					memory.writeWord(iblock.ea1 + 2, iblock.val2);
+				}
 			}
+				
         }
         if (mop2.dest != Operand.OP_DEST_FALSE) {
         	if (ins.inst == InstructionTable.Icb)
@@ -258,7 +262,8 @@ public class Interpreter {
 				memory.writeByte(iblock.ea2, (byte) iblock.val2);
 			} else {
                 memory.writeWord(iblock.ea2, iblock.val2);
-                if (ins.inst == InstructionTable.Impy || ins.inst == InstructionTable.Idiv) {
+                if (ins.inst == InstructionTable.Impy 
+                		|| ins.inst == InstructionTable.Idiv) {
                     memory.writeWord(iblock.ea2 + 2, iblock.val3);
                 }
             }
@@ -906,6 +911,17 @@ public class Interpreter {
 				}
         	};
         	break;
+        	
+        case InstructionTable.Iticks:
+        	act = new InstructionAction() {
+
+				public void act(Block block) {
+					block.val1 = (short) (machine.getCpu().getTickCount() >> 16);
+					block.val2 = (short) (machine.getCpu().getTickCount());
+				}
+        	};
+        	break;
+        	
         }
 
         return act;

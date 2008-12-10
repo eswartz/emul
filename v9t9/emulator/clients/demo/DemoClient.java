@@ -381,6 +381,10 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     	return video.readAbsoluteVdpMemory(vdpaddr);
     }
     
+    public void writeAbsoluteVdpMemory(int vdpaddr, byte byt) {
+    	video.writeAbsoluteVdpMemory(vdpaddr, byt);
+    }
+    
     public ByteMemoryAccess getByteReadMemoryAccess(int vdpaddr) {
     	return video.getByteReadMemoryAccess(vdpaddr);
     }

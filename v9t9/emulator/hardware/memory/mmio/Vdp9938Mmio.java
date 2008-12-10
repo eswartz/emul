@@ -8,6 +8,7 @@ package v9t9.emulator.hardware.memory.mmio;
 
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.engine.memory.BankedMemoryEntry;
+import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
@@ -40,6 +41,9 @@ public class Vdp9938Mmio extends Vdp9918AMmio {
 		return memorySize;
 	}
 
+    public ByteMemoryArea getMemoryArea() {
+    	return fullRamArea;
+    }
 	protected void initMemory(Memory memory, int memorySize) {
     	// use one area for all the banks, for easier access later
     	MemoryEntry[] banks = new MemoryEntry[memorySize >> 14];
@@ -96,6 +100,11 @@ public class Vdp9938Mmio extends Vdp9918AMmio {
 
 	public BankedMemoryEntry getMemoryBank() {
 		return memoryBank;
+	}
+	
+	@Override
+	public int getBankAddr() {
+		return memoryBank.getCurrentBank() << 14;
 	}
 	
 }

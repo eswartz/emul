@@ -8,6 +8,9 @@ package v9t9.keyboard;
 
 import java.util.Arrays;
 
+import v9t9.emulator.clients.builtin.InternalCru;
+import v9t9.emulator.runtime.Cpu;
+
 public class KeyboardState {
     /* Masks */
     public static final byte SHIFT = 1;
@@ -24,11 +27,6 @@ public class KeyboardState {
     static final byte JOY1_C = 6;
     static final byte JOY1_R = 7;
 
-    /** 
-     * CRU keyboard line map, organized by columns.  Rows are in bit 1 << row
-     */
-    private byte crukeyboardmap[] = new byte[8];
-
     /* Map of keys whose shifted/ctrled/fctned versions are being tracked */
     private byte fakemap[] = new byte[256];
     private byte shiftmap[] = new byte[256];
@@ -38,7 +36,6 @@ public class KeyboardState {
 
     /** 'real' shift keys being held down, as opposed to those being synthesized */
     private byte realshift;
-	private boolean alpha;
     
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
@@ -69,6 +66,8 @@ public class KeyboardState {
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 112-119 */
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1  /* 120-127 */
     };
+	private final InternalCru cru;
+	private final Cpu cpu;
 
     /*	This macro tells us whether an ASCII code has a direct mapping
 	to a 9901 keyboard matrix location (stored in latinto9901[]).
@@ -82,12 +81,14 @@ public class KeyboardState {
     	return (latinto9901[x] != -1 && (x) != '/');
     }
 
-    public KeyboardState() {
+    public KeyboardState(Cpu cpu, InternalCru cru) {
+		this.cpu = cpu;
+		this.cru = cru;
         
     }
     
     public void resetKeyboard() {
-        Arrays.fill(getCrukeyboardmap(), 0, 8, (byte)0);
+        Arrays.fill(cru.getKeyboardMap(), 0, 8, (byte)0);
     }
     
     /**
@@ -184,7 +185,15 @@ public class KeyboardState {
             if (b != -1) {
 	            r = (byte) (b >> 4);
 	            c = (byte) (b & 15);
+	            
+	            // NMI on FCTN+SHIFT+CTRL
+	            if (shift == CTRL + FCTN + SHIFT && key == ' '
+	            		&& !TESTKBDCRU(r, c) && onoff) {
+	            	cpu.holdpin(Cpu.INTPIN_LOAD);
+	            }
+	            
 	            CHANGEKBDCRU(r, c, onoff ? 1 : 0);
+	            
             }
         } else {
             if ((shift & SHIFT) != 0)
@@ -208,15 +217,15 @@ public class KeyboardState {
     }
 
     private boolean TESTKBDCRU(byte r, byte c) {
-        return (getCrukeyboardmap()[c] & (0x80 >> r)) != 0;
+        return (cru.getKeyboardMap()[c] & (0x80 >> r)) != 0;
     }
 
     private void RESETKBDCRU(byte r, byte c) {
-        getCrukeyboardmap()[c] &= ~(0x80 >> r);
+        cru.getKeyboardMap()[c] &= ~(0x80 >> r);
     }
 
     private void SETKBDCRU(byte r, byte c) {
-        getCrukeyboardmap()[c] |= (0x80 >> r);
+        cru.getKeyboardMap()[c] |= (0x80 >> r);
     }
 
     public boolean isSet(byte shift, int key) {
@@ -247,19 +256,11 @@ public class KeyboardState {
         return realshift;
     }
 
-	public void setCrukeyboardmap(byte crukeyboardmap[]) {
-		this.crukeyboardmap = crukeyboardmap;
-	}
-
-	public byte[] getCrukeyboardmap() {
-		return crukeyboardmap;
-	}
-	
 	public void setAlpha(boolean on) {
-		this.alpha = on;
+		this.cru.setAlphaLock(on);
 	}
 
 	public boolean getAlpha() {
-		return alpha;
+		return cru.getAlphaLock();
 	}
 }

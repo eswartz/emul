@@ -55,5 +55,13 @@ public abstract class VdpMmio implements ConsoleMmioReader, ConsoleMmioWriter {
 		return fullRamArea.memory.length;
 	}
 
+	/**
+	 * Get the base address for the current bank
+	 * @return
+	 */
+	public int getBankAddr() {
+		return 0;
+	}
+
 
 }

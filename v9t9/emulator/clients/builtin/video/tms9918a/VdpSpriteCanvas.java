@@ -8,7 +8,6 @@ import java.util.Arrays;
 import v9t9.emulator.clients.builtin.video.SpriteBase;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
-import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 
@@ -222,9 +221,8 @@ public class VdpSpriteCanvas {
 	/**
 	 * Draw sprites, after any modified screen blocks have been restored.
 	 * @param canvas the canvas to modify
-	 * @param vdp 
 	 */
-	public void drawSprites(VdpCanvas canvas, VdpHandler vdp) {
+	public void drawSprites(VdpCanvas canvas) {
 		for (int n = sprites.length; --n >= 0; ) {
 			VdpSprite sprite = sprites[n];
 			if (sprite.isBitmapDirty()) {

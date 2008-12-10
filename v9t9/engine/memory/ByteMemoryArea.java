@@ -21,6 +21,13 @@ public class ByteMemoryArea extends MemoryArea {
     	this.setWriteByteLatency((byte) latency);
     	this.setWriteWordLatency((byte) latency);
 	}
+    public ByteMemoryArea(int latency, byte[] memory, int offset) {
+		this(latency);
+		this.memory = memory;
+		this.read = memory;
+		this.write = memory;
+		this.offset = offset;
+	}
 	final static short getWord(byte[] memory, int offset, int addr) {
         /*
          * processor ignores word access on odd boundaries, and stores in
@@ -78,7 +85,7 @@ public class ByteMemoryArea extends MemoryArea {
          * @see v9t9.MemoryArea.AreaWriteByte#write(v9t9.MemoryArea, int, byte)
          */
         public void writeByte(MemoryArea area, int address, byte val) {
-            area.flatWriteByte(address, val);
+        	area.flatWriteByte(address, val);
         }
     }
     

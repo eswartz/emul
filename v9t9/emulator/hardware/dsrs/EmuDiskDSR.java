@@ -66,13 +66,11 @@ public class EmuDiskDSR implements DsrHandler {
 	private MemoryDomain console;
 	private final DSRManager manager;
 	private short vdpnamebuffer;
-	private MemoryDomain vdp;
 	private VdpHandler vdpHandler;
 	
 	public EmuDiskDSR(Machine machine) {
 		this.manager = machine.getDSRManager();
 		this.console = machine.getConsole();
-		this.vdp = machine.getVdp().getVideoMemory();
 		this.vdpHandler = machine.getVdp();
 	}
 	
@@ -84,7 +82,8 @@ public class EmuDiskDSR implements DsrHandler {
 		return 0x1000;
 	}
 	public void activate() throws IOException {
-		this.memoryEntry = DiskMemoryEntry.newWordMemoryFromFile(
+		if (memoryEntry == null)
+			this.memoryEntry = DiskMemoryEntry.newWordMemoryFromFile(
 					0x4000, 0x2000, "File Stream DSR ROM", console,
 					"emudisk.bin", 0, false);
 		
@@ -116,7 +115,7 @@ public class EmuDiskDSR implements DsrHandler {
 	
 			fnptr = pabaddr+9;
 	
-			opcode = vdp.readByte(fnptr-9);
+			opcode = readVdpByte(fnptr-9);
 	
 			//illegal opcode? 
 			if (opcode > 9)
@@ -230,9 +229,9 @@ public class EmuDiskDSR implements DsrHandler {
 	}
 
 	private void setPabError(int fnptr, int code) {
-		byte current = vdp.readByte(fnptr - 8);
+		byte current = readVdpByte(fnptr - 8);
 		current = (byte) ((current & ~0xe0) | (code << 5));
-		vdp.writeByte(fnptr - 8, current);
+		writeVdpByte(fnptr - 8, current);
 	}
 
 	private void bumpReturnAddress(Cpu cpu) {
@@ -352,15 +351,44 @@ public class EmuDiskDSR implements DsrHandler {
 		}
 	}
 
+	/**
+	 * Record a write to classic VDP memory
+	 * @param vaddr address in 0-0x3FFF range
+	 * @param read
+	 */
 	private void dirtyVdpMemory(short vaddr, int read) {
+		int base = vdpHandler.getVdpMmio().getBankAddr();
 		while (read-- > 0) {
-			vdpHandler.touchAbsoluteVdpMemory(vaddr, (byte) vdp.flatReadByte(vaddr));
+			vdpHandler.touchAbsoluteVdpMemory(
+					base + vaddr, 
+					(byte) vdpHandler.readAbsoluteVdpMemory(base + vaddr));
 			vaddr++;
 		}
 	}
 
+	/**
+	 * Get memory read/write access to classic VDP memory
+	 * @param vaddr address in 0-0x3FFF range
+	 * @return access to memory (need {@link #dirtyVdpMemory(short, int)} to notice)
+	 */
 	private ByteMemoryAccess getVdpMemory(short vaddr) {
-		return vdpHandler.getByteReadMemoryAccess(vaddr);
+		return vdpHandler.getByteReadMemoryAccess(
+				vdpHandler.getVdpMmio().getBankAddr() + vaddr);
+	}
+	
+	/**
+	 * Read byte add classic VDP memory
+	 * @param vaddr address in 0-0x3FFF range
+	 * @return byte
+	 */
+	private byte readVdpByte(int vaddr) {
+		int base = vdpHandler.getVdpMmio().getBankAddr();
+		return vdpHandler.readAbsoluteVdpMemory(base + vaddr);
+	}
+	
+	private void writeVdpByte(int vaddr, byte byt) {
+		int base = vdpHandler.getVdpMmio().getBankAddr();
+		vdpHandler.writeAbsoluteVdpMemory(base + vaddr, byt);
 	}
 
 	private short HOST2TI(short word) {
@@ -377,7 +405,7 @@ public class EmuDiskDSR implements DsrHandler {
 		StringBuilder builder = new StringBuilder();
 		int endAddr = addr;
 		while (endAddr < addr + 10) {
-			byte ch = vdp.readByte(endAddr);
+			byte ch = readVdpByte(endAddr);
 			if (ch == ' ')
 				break;
 			builder.append((char) ch);

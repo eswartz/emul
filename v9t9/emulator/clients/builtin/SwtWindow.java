@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.video;
+package v9t9.emulator.clients.builtin;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
@@ -22,41 +22,38 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 
 /**
- * Render video into an SWT window
+ * Provide the emulator in an SWT window
  * @author ejs
  *
  */
-public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
+public class SwtWindow {
 	
 	protected Shell shell;
-	protected Canvas canvas;
-	protected VdpCanvas vdpCanvas;
-	protected Color bg;
-
+	protected Control videoControl;
+	protected SwtVideoRenderer videoRenderer;
+	
 	// global zoom
 	protected int zoom = 3;
 	// zoom based on the resolution
 	protected float zoomx = 3, zoomy = 3;
 	protected boolean sizedToZoom = false;
-	protected Image image;
-	protected Rectangle updateRect;
-	protected boolean isBlank;
-	protected boolean wasBlank;
-	protected boolean isDirty;
-	protected long lastUpdateTime;
-	protected boolean busy;
 	private boolean needResize;
 	
-	public SwtVideoRenderer(Display display) {
+	public SwtWindow(Display display, SwtVideoRenderer renderer) {
 		shell = new Shell(display);
 		
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = layout.marginWidth = 0;
 		shell.setLayout(layout);
 		shell.setBounds(800,800,0,0);
+		
+		this.videoRenderer = renderer;
+		this.videoControl = renderer.createControl(shell);
 		
 		this.canvas = new Canvas(shell, SWT.NO_BACKGROUND);
 		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -419,5 +416,4 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		this.vdpCanvas.setListener(this);
 		updateWidgetSizeForMode();
 	}
-
 }

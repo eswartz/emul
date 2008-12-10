@@ -117,6 +117,7 @@ public class Cpu implements MemoryAccessListener {
     }
 
     private byte intpins;
+	private int ticks;
 
 	static public final String sRealTime = "RealTime";
 
@@ -171,8 +172,11 @@ public class Cpu implements MemoryAccessListener {
      * running.  All this can do is throw AbortedException().
      */
     public void abortIfInterrupted() {
-        if (status.getIntMask() != 0 && intpins != 0) {
-            intlevel = (byte) status.getIntMask();
+    	if (intpins != 0) {
+    		if (status.getIntMask() != 0)
+    			intlevel = (byte) status.getIntMask();
+    		else if ((intpins & INTPIN_LOAD) != 0)
+    			intlevel = 1;
         }
         if (intlevel != 0) {
            throw new AbortedException();
@@ -194,6 +198,7 @@ public class Cpu implements MemoryAccessListener {
 
         // non-maskable
         if ((intpins & INTPIN_LOAD) != 0) {
+        	intlevel = 0;	 // ???
             intpins &= ~INTPIN_LOAD;
             //logger(_L | 0, "**** NMI ****");
             System.out.println("**** NMI ****");
@@ -272,6 +277,7 @@ public class Cpu implements MemoryAccessListener {
 		currentcycles = 0;
 		//System.out.print('-');
 		//System.out.println("tick: " + currenttargetcycles);
+		ticks++;
 	}
 
 	public synchronized boolean isThrottled() {
@@ -289,5 +295,9 @@ public class Cpu implements MemoryAccessListener {
 	public synchronized long getTotalCycleCount() {
 		return totalcurrentcycles;
 	}
+	
+	public synchronized int getTickCount() {
+		return ticks;
+	} 
 
 }

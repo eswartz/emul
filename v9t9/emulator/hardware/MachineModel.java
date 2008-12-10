@@ -17,4 +17,6 @@ public interface MachineModel {
 	MemoryModel getMemoryModel();
 	
 	VdpHandler createVdp(Machine machine);
+	
+	void defineDevices(Machine machine);
 }

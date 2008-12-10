@@ -41,7 +41,7 @@ import v9t9.utils.Utils;
  * promises "fast" CPU->VRAM movement but also requires tons of vwreg
  * writing, it must be only the VDP memory access, not the port access,
  * which is slow.
- * TODO: acceleration: YMMV, SRCH, test HMMM and LMMM
+ * TODO: acceleration: YMMV, SRCH, test HMMM and LMMM; set registers to expected values when done
  * @author ejs  
  *
  */
@@ -498,9 +498,10 @@ public class VdpV9938 extends VdpTMS9918A {
 			// even-odd tiling function
 			vdpCanvas.setClearColor((vdpbg >> 2) & 0x3);
 			vdpCanvas.setClearColor1((vdpbg) & 0x3);
+			vdpCanvas.clearToEvenOddClearColors();
 		} else if (mode == MODE_GRAPHICS7) {
 			// an GRB 332 value is here
-			vdpCanvas.setClearColor(vdpregs[7]);
+			vdpCanvas.clear(vdpCanvas.getGRB332(vdpregs[7]));
 		} else {
 			super.setupBackdrop();
 		}
@@ -787,6 +788,12 @@ public class VdpV9938 extends VdpTMS9918A {
 	 */
 	private void handleCommand() {
 		int addr, saddr, daddr;
+		
+		if (pixperbyte == 0) {
+			// not a supported mode
+			setAccelBusy(false);
+			return;
+		}
 		
 		switch (cmdState.cmd) {
 		case R46_CMD_STOP:
