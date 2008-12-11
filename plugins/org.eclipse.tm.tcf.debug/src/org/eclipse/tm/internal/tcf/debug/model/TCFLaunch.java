@@ -426,11 +426,25 @@ public class TCFLaunch extends Launch {
         return last_context_exited;
     }
     
-    public void launchTCF(String mode, IPeer peer) throws DebugException {
+    public void launchTCF(String mode, String id) throws Exception {
         assert Protocol.isDispatchThread();
         this.mode = mode;
+        final LinkedList<String> path = new LinkedList<String>();
+        for (;;) {
+            int i = id.indexOf('/');
+            if (i <= 0) {
+                path.add(id);
+                break;
+            }
+            path.add(id.substring(0, i));
+            id = id.substring(i + 1);
+        }
         connecting = true;
+        String id0 = path.removeFirst();
+        IPeer peer = Protocol.getLocator().getPeers().get(id0);
+        if (peer == null) throw new Exception("Cannot locate peer " + id0);
         channel = peer.openChannel();
+        while (path.size() > 0) channel.redirect(path.removeFirst());
         channel.addChannelListener(new IChannel.IChannelListener() {
 
             public void onChannelOpened() {

@@ -116,7 +116,7 @@ public abstract class AbstractChannel implements IChannel {
 
     private static IChannelListener[] listeners_array = new IChannelListener[64];
 
-    private final LinkedList<IPeer> redirect_queue = new LinkedList<IPeer>();
+    private final LinkedList<String> redirect_queue = new LinkedList<String>();
     private final Map<Class<?>,IService> local_service_by_class = new HashMap<Class<?>,IService>();
     private final Map<Class<?>,IService> remote_service_by_class = new HashMap<Class<?>,IService>();
     private final Map<String,IService> local_service_by_name = new HashMap<String,IService>();
@@ -358,31 +358,63 @@ public abstract class AbstractChannel implements IChannel {
 
     /**
      * Redirect this channel to given peer using this channel remote peer locator service as a proxy.
-     * @param peer - peer that will become new remote communication endpoint of this channel
+     * @param peer_id - peer that will become new remote communication endpoint of this channel
      */
-    public void redirect(IPeer peer) {
+    public void redirect(final String peer_id) {
         assert Protocol.isDispatchThread();
         if (state == STATE_OPENNING) {
-            assert redirect_command == null;
-            redirect_queue.add(peer);
+            redirect_queue.add(peer_id);
         }
         else {
             assert state == STATE_OPEN;
+            assert redirect_command == null;
             try {
-                ILocator l = (ILocator)remote_service_by_class.get(ILocator.class);
-                if (l == null) throw new IOException("Peer " + peer.getID() + " has no locator service");
-                this.remote_peer = peer;
-                redirect_command = l.redirect(peer.getID(), new ILocator.DoneRedirect() {
-                    public void doneRedirect(IToken token, Exception x) {
-                        assert redirect_command == token;
-                        redirect_command = null;
-                        if (state != STATE_OPENNING) return;
-                        if (x != null) terminate(x);
-                        remote_service_by_class.clear();
-                        remote_service_by_name.clear();
-                        event_listeners.clear();
-                    }
-                });
+                final ILocator l = (ILocator)remote_service_by_class.get(ILocator.class);
+                if (l == null) throw new IOException("Cannot redirect channel: peer " +
+                        remote_peer.getID() + " has no locator service");
+                final IPeer peer = l.getPeers().get(peer_id);
+                if (peer == null) {
+                    // Peer not found, must wait for a while until peer is discovered or time out
+                    final boolean[] found = new boolean[1];
+                    Protocol.invokeLater(ILocator.DATA_RETENTION_PERIOD / 3, new Runnable() {
+                        public void run() {
+                            if (found[0]) return;
+                            terminate(new Exception("Peer " + peer_id + " not found"));
+                        }
+                    });
+                    l.addListener(new ILocator.LocatorListener() {
+                        public void peerAdded(IPeer peer) {
+                            if (peer.getID().equals(peer_id)) {
+                                found[0] = true;
+                                state = STATE_OPEN;
+                                l.removeListener(this);
+                                redirect(peer_id);
+                            }
+                        }
+                        public void peerChanged(IPeer peer) {
+                        }
+
+                        public void peerHeartBeat(String id) {
+                        }
+
+                        public void peerRemoved(String id) {
+                        }
+                    });
+                }
+                else {
+                    redirect_command = l.redirect(peer_id, new ILocator.DoneRedirect() {
+                        public void doneRedirect(IToken token, Exception x) {
+                            assert redirect_command == token;
+                            redirect_command = null;
+                            if (state != STATE_OPENNING) return;
+                            if (x != null) terminate(x);
+                            remote_peer = peer;
+                            remote_service_by_class.clear();
+                            remote_service_by_name.clear();
+                            event_listeners.clear();
+                        }
+                    });
+                }
                 state = STATE_OPENNING;
             }
             catch (Throwable x) {

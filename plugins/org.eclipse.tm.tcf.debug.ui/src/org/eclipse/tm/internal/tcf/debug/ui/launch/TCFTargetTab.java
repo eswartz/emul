@@ -740,20 +740,26 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     }
     
     private PeerInfo findPeerInfo(String path) {
+        assert Thread.currentThread() == display.getThread();
         int i = path.lastIndexOf('/');
         String id = null;
         PeerInfo[] arr = null;
         if (i < 0) {
             arr = peer_info.children;
+            if (arr == null) return null;
             id = path;
         }
         else {
             PeerInfo p = findPeerInfo(path.substring(0, i));
             if (p == null) return null;
             arr = p.children;
+            if (arr == null) {
+                TreeItem item = findItem(p);
+                item.setExpanded(true);
+                return null;
+            }
             id = path.substring(i + 1);
         }
-        if (arr == null) return null;
         for (int n = 0; n < arr.length; n++) {
             if (arr[n].id.equals(id)) return arr[n];
         }

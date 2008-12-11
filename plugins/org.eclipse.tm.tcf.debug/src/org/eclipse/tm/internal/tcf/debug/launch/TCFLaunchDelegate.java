@@ -19,7 +19,6 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
-import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
 
@@ -38,17 +37,16 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
     public ILaunch getLaunch(ILaunchConfiguration configuration, String mode) throws CoreException {
         return new TCFLaunch(configuration, mode);
     }
-
+    
     public void launch(final ILaunchConfiguration configuration, final String mode,
             final ILaunch launch, final IProgressMonitor monitor) throws CoreException {
         if (monitor != null) monitor.beginTask("Launching TCF debugger session", 1); //$NON-NLS-1$
+        final String id = configuration.getAttribute(ATTR_PEER_ID, "");
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    String id = configuration.getAttribute(ATTR_PEER_ID, "");
-                    IPeer peer = Protocol.getLocator().getPeers().get(id);
-                    if (peer == null) throw new IOException("Cannot locate peer " + id);
-                    ((TCFLaunch)launch).launchTCF(mode, peer);
+                    if (id == null || id.length() == 0) throw new IOException("Invalid peer ID");
+                    ((TCFLaunch)launch).launchTCF(mode, id);
                 }
                 catch (Throwable e) {
                     ((TCFLaunch)launch).setError(e);

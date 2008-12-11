@@ -69,7 +69,7 @@ public class LocatorProxy implements ILocator {
         public IChannel openChannel() {
             assert Protocol.isDispatchThread();
             IChannel c = channel.getRemotePeer().openChannel();
-            c.redirect(this);
+            c.redirect(getID());
             return c;
         }
     };
@@ -88,7 +88,7 @@ public class LocatorProxy implements ILocator {
                         return;
                     }
                     peers.put(peer.getID(), peer);
-                    for (LocatorListener l : listeners) {
+                    for (LocatorListener l : listeners.toArray(new LocatorListener[listeners.size()])) {
                         try {
                             l.peerAdded(peer);
                         }
@@ -104,7 +104,7 @@ public class LocatorProxy implements ILocator {
                     IPeer peer = peers.get(m.get(IPeer.ATTR_ID));
                     if (peer == null) return;
                     peers.put(peer.getID(), peer);
-                    for (LocatorListener l : listeners) {
+                    for (LocatorListener l : listeners.toArray(new LocatorListener[listeners.size()])) {
                         try {
                             l.peerChanged(peer);
                         }
@@ -118,7 +118,7 @@ public class LocatorProxy implements ILocator {
                     String id = (String)args[0];
                     IPeer peer = peers.remove(id);
                     if (peer == null) return;
-                    for (LocatorListener l : listeners) {
+                    for (LocatorListener l : listeners.toArray(new LocatorListener[listeners.size()])) {
                         try {
                             l.peerRemoved(id);
                         }
@@ -132,7 +132,7 @@ public class LocatorProxy implements ILocator {
                     String id = (String)args[0];
                     IPeer peer = peers.get(id);
                     if (peer == null) return;
-                    for (LocatorListener l : listeners) {
+                    for (LocatorListener l : listeners.toArray(new LocatorListener[listeners.size()])) {
                         try {
                             l.peerHeartBeat(id);
                         }
@@ -210,7 +210,7 @@ public class LocatorProxy implements ILocator {
                             if (peers.get(id) != null) continue;
                             IPeer peer = new Peer(m);
                             peers.put(id, peer);
-                            for (LocatorListener l : listeners) {
+                            for (LocatorListener l : listeners.toArray(new LocatorListener[listeners.size()])) {
                                 try {
                                     l.peerAdded(peer);
                                 }
