@@ -79,6 +79,7 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
 
     Connection connection;
 	private VideoRenderer videoRenderer;
+	private SwtWindow window;
 
     /** Construct the client as a demo running in a different TI994A 
      * @param display */
@@ -86,10 +87,14 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
     	
         this.machine = machine;
        
-		videoRenderer = new SwtVideoRenderer(display);
+		videoRenderer = new SwtVideoRenderer();
+
+        window = new SwtWindow(display, (SwtVideoRenderer) videoRenderer, machine);
+
+        video.setCanvas(videoRenderer.getCanvas());
         video = vdp;
         
-        ((SwtVideoRenderer)videoRenderer).getShell().addShellListener(new ShellAdapter() {
+        window.getShell().addShellListener(new ShellAdapter() {
 			@Override
 			public void shellClosed(ShellEvent e) {
 		        if (machine.isRunning()) {
@@ -379,12 +384,12 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
     }
 
     public void handleEvents() {
-    	Shell shell = ((SwtVideoRenderer)videoRenderer).getShell();
+    	Shell shell = window.getShell();
     	while (shell.getDisplay().readAndDispatch()) ;
     }
     
     public boolean isAlive() {
-    	return !((SwtVideoRenderer)videoRenderer).getShell().isDisposed();
+    	return !window.getShell().isDisposed();
     }
     
     public void updateVideo() {
