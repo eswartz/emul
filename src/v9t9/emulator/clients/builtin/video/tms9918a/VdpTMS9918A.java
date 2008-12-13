@@ -545,7 +545,7 @@ public class VdpTMS9918A implements VdpHandler {
 	public synchronized void update() {
 		if (!vdpchanged)
 			return;
-	//	System.out.print('_');
+		//System.out.println(System.currentTimeMillis());
 		if (vdpModeRedrawHandler != null) {
 			//long start = System.currentTimeMillis();
 			

@@ -32,7 +32,8 @@ public class SwtVideoRendererOGL extends SwtVideoRenderer {
 	
 	protected VdpCanvas createCanvas() {
 		ogl = V9t9Render.allocateOpenGL(32 * 27);
-		return new GLCanvas(ogl);
+		//return new GLCanvas(ogl);
+		return new ImageDataCanvas24Bit();
 	}
 
 	protected void initWidgets() {

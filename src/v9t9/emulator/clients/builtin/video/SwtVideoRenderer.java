@@ -56,7 +56,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	public Control createControl(Composite parent) {
 		this.shell = parent.getShell();
-		this.canvas = new Canvas(parent, SWT.NO_BACKGROUND);
+		this.canvas = new Canvas(parent, getStyleBits());
 		this.canvas.setLayout(new FillLayout());
 
 		setCanvas(createCanvas());
@@ -95,6 +95,10 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		});
 		
 		return canvas;
+	}
+
+	protected int getStyleBits() {
+		return SWT.NO_BACKGROUND;
 	}
 
 	protected VdpCanvas createCanvas() {
@@ -415,5 +419,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		this.vdpCanvas.setListener(this);
 		updateWidgetSizeForMode();
 	}
+	
+
 
 }

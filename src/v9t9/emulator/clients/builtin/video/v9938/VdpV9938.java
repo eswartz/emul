@@ -677,7 +677,6 @@ public class VdpV9938 extends VdpTMS9918A {
 				dirtyAll();
 			}
 		}
-		
 		//synchronized (accelLock) {
 			totaltargetcycles += targetcycles;
 			totalcurrentcycles += currentcycles;
@@ -709,9 +708,9 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	private void setAccelBusy(boolean flag) {
-		if (flag)
+		if (flag) {
 			statusvec[2] |= S2_CE;
-		else {
+		} else {
 			statusvec[2] &= ~S2_CE;
 			cmdState.cmd = 0;
 			cmdState.isDataMoveCommand = false;
@@ -802,6 +801,12 @@ public class VdpV9938 extends VdpTMS9918A {
 			
 		case R46_CMD_PSET:
 			setPixel(cmdState.dx, cmdState.dy, cmdState.clr & pixmask, cmdState.op);
+			setAccelBusy(false);
+			break;
+			
+		case R46_CMD_POINT:
+			byte pixel = getPixel(cmdState.dx, cmdState.dy);
+			statusvec[7] = pixel;
 			setAccelBusy(false);
 			break;
 			
@@ -967,7 +972,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		byte mask = (byte) (pixmask << xshift);
 		color = (color & pixmask) << xshift;
 		
-		// test if color is non-blank
+		// test if color is non-blank for TEST operations
 		if ((op & 0x8) != 0 && color == 0)
 			return;
 			

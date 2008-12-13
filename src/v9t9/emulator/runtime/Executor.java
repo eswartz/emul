@@ -42,6 +42,8 @@ public class Executor {
 
 	private long nLastCycleCount;
 
+	private ICpuController cpuController;
+
 
     static public final String sCompile = "Compile";
     static public final Setting settingCompile = new Setting(sCompile, new Boolean(false));
@@ -63,7 +65,18 @@ public class Executor {
         Logging.registerLog(settingDumpFullInstructions, "instrs_full.txt");
     }
 
-    public void interpretOneInstruction() {
+    public interface ICpuController {
+    	void act(Cpu cpu);
+    }
+    public synchronized void controlCpu(ICpuController controller) {
+    	cpuController = controller;
+    }
+    public synchronized void interpretOneInstruction() {
+    	if (cpuController != null) {
+    		ICpuController controller = cpuController;
+    		cpuController = null;
+    		controller.act(cpu);
+    	}
         interp.execute(cpu, null);
         nInstructions++;
     }

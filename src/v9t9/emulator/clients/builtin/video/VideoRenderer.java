@@ -22,10 +22,10 @@ public interface VideoRenderer {
     
     /** Synchronize so that screen updates are visible */
     void sync();
-    
-	void setZoom(int zoom);
 
 	VdpCanvas getCanvas();
+	
+	void setCanvas(VdpCanvas vdpCanvas);
 	
 	/** Get the System.currentTimeMillis() when the last window redraw officially finished */
 	long getLastUpdateTime();

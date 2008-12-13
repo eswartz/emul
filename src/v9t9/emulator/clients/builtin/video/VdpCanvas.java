@@ -96,11 +96,11 @@ public abstract class VdpCanvas {
 	}
 	
 	public VdpCanvas() {
-    	colorPalette = new byte[257][];
+    	colorPalette = new byte[16][];
     	for (int i = 0; i < 16; i++)
     		colorPalette[i] = stockPalette[i]; 
 
-    	greyPalette = new byte[257][];
+    	greyPalette = new byte[16][];
     	for (int i = 0; i < 16; i++)
     		greyPalette[i] = rgbToGrey(stockPalette[i]);
     	
@@ -112,9 +112,10 @@ public abstract class VdpCanvas {
     	
     	setGreyscale(false);
     	
+    	/*
     	for (int i = 16;  i < 256; i++) {
     		setRGB(i, new byte[] { 0, 0, 0 });
-    	}
+    	}*/
     	
 		setBlockWidth(8);
     	setSize(256, 192);

@@ -26,6 +26,7 @@ import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
+import v9t9.engine.memory.WordMemoryArea;
 
 public class V9t9 {
 
@@ -99,18 +100,41 @@ public class V9t9 {
     }
     
 	protected void loadMemory() throws IOException {
-    	if (false) {
+    	if (true) {
 	    	loadConsoleRom("994arom.bin");
 	    	loadConsoleGrom("994agrom.bin");
 	
-	    	loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
-	    	loadModuleGrom("ExtBasic", "tiextg.bin");
-	    	
-	    	loadModuleGrom("Parsec", "parsecg.bin");
-	    	loadModuleRom("Parsec", "parsecc.bin");
-	    	loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
-	    	
-    	} else {
+	    	if (true) {
+	    		loadModuleGrom("E/A", "eag.bin");
+	    		DiskMemoryEntry entry = DiskMemoryEntry.newWordMemoryFromFile(0xA000, 0x6000, "Ed's BASIC",
+	            		console,
+	                    "ed_basicH.bin", 0x0, false);
+	    		entry.load();
+	        	entry.area.setLatency(4);
+	        	for (int a = 0xA000; a < 0x10000; a+=2) {
+	        		console.writeWord(a, ((WordMemoryArea) entry.area).memory[(a - 0xA000) / 2]);
+	        	}
+	    		
+	    		entry = DiskMemoryEntry.newWordMemoryFromFile(0x2000, 0x2000, "Ed's BASIC",
+	            		console,
+	                    "ed_basicL.bin", 0x0, false);
+	    		entry.load();
+	        	entry.area.setLatency(4);
+	        	for (int a = 0x2000; a < 0x4000; a+=2) {
+	        		console.writeWord(a, ((WordMemoryArea) entry.area).memory[(a - 0x2000) / 2]);
+	        	}
+
+	    	} else {
+		    	loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
+		    	loadModuleGrom("ExtBasic", "tiextg.bin");
+		    	
+		    	loadModuleGrom("Parsec", "parsecg.bin");
+		    	loadModuleRom("Parsec", "parsecc.bin");
+		    	loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
+	    	}
+    	} 
+
+    	if (true) {
     		loadBankedConsoleRom("nforthA.rom", "nforthB.rom");
     		loadConsoleGrom("nforth.grm");
     		loadModuleRom("FORTH", "nforthc.bin");

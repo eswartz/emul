@@ -49,7 +49,7 @@ public class PureJavaClient implements Client {
         
         expectedUpdateTime = QUANTUM;
         
-        if (false && videoRenderer == null && SWT.getPlatform().equals("gtk")) {
+        if (false  &&  videoRenderer == null && SWT.getPlatform().equals("gtk")) {
         	// try OpenGL first ?
         	try {
         		Class<?> klass = getClass().getClassLoader().loadClass(
@@ -59,7 +59,18 @@ public class PureJavaClient implements Client {
         		System.err.println("Cannot load OpenGL/GTK-specific support: " +e.getMessage());
         	}
         }
-        
+
+        if (false && videoRenderer == null) {
+        	// try J3D first ?
+        	try {
+        		Class<?> klass = getClass().getClassLoader().loadClass(
+        				SwtVideoRenderer.class.getName() + "J3D");
+        		videoRenderer = (VideoRenderer) klass.getConstructor().newInstance();
+        	} catch (Exception e) {
+        		System.err.println("Cannot load J3D support: " +e.getMessage());
+        	}
+        }
+
         if (videoRenderer == null && SWT.getPlatform().equals("gtk")) {
         	try {
 	        	Class<?> klass = getClass().getClassLoader().loadClass(

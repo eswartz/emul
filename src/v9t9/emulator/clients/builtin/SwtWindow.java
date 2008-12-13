@@ -70,13 +70,10 @@ public class SwtWindow {
 		this.videoRenderer = renderer;
 
 		Composite mainComposite = shell;
-		//mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		//mainComposite.setLayout(new GridLayout(2, false));
+		
 		
 		final Composite screenComposite = new Composite(mainComposite, SWT.BORDER);
-		//layout = new GridLayout();
-		//layout.marginHeight = layout.marginWidth = 0;
-		//screenComposite.setLayout(layout);
+		
 		screenComposite.setLayout(new FillLayout());
 		GridData screenLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		screenLayoutData.minimumHeight = 256;
@@ -86,57 +83,16 @@ public class SwtWindow {
 		screenComposite.setLayoutData(screenLayoutData);
 		
 		this.videoControl = renderer.createControl(screenComposite);
-		//GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		//videoControl.setLayoutData(gridData);
+	
 		
 		File iconsFile = new File("icons/icons.png");
 		Image icons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
 		
-		/*
-		ExpandBar expandingButtons = new ExpandBar(mainComposite, SWT.V_SCROLL);
-		layout = new GridLayout();
-		layout.marginHeight = layout.marginWidth = 0;
-		expandingButtons.setLayout(layout);
-		expandingButtons.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, false, true));
-		*/
-		
-		//controlsComposite = new Composite(expandingButtons, SWT.NONE);
 		controlsComposite = new Composite(mainComposite, SWT.NO_RADIO_GROUP);
 		layout = new GridLayout();
 		layout.marginHeight = layout.marginWidth = 0;
 		controlsComposite.setLayout(layout);
 		controlsComposite.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, false, true));
-		
-		/*
-		ExpandItem expandingButton = new ExpandItem (expandingButtons, SWT.NONE, 0);
-		expandingButton.setControl(controlsComposite);
-		expandingButton.setText("Commands");
-		*/
-		//controlsComposite.setBackground(getShell().getDisplay().getSystemColor(SWT.COLOR_BLACK));
-		/*
-		mainComposite.setLayout(new Layout() {
-
-			@Override
-			protected Point computeSize(Composite composite, int whint,
-					int hhint, boolean flushCache) {
-				// get, don't compute, the size
-				Point screenSize = screenComposite.getSize();
-				Point buttonSize = controlsComposite.computeSize(whint, hhint);
-				return new Point(screenSize.x + buttonSize.x, Math.max(screenSize.y, buttonSize.y));
-			}
-
-			@Override
-			protected void layout(Composite composite, boolean flushCache) {
-				Point sz = composite.getSize();
-				Point screenSize = screenComposite.getSize();
-				if (screenSize.x < 256) screenSize.x = 256;
-				if (screenSize.y < 192) screenSize.y = 192;
-				screenComposite.setSize(screenSize);
-				controlsComposite.setSize(sz.x - screenSize.x, Math.max(sz.y, screenSize.y));
-			}
-			
-		});
-*/
 		
 		BasicButton abortButton = createButton(icons, 
 				new Rectangle(0, 64, 64, 64), "Send a NMI interrupt",
@@ -153,6 +109,23 @@ public class SwtWindow {
 				new Rectangle(0, 0, 64, 64),
 				"Toggle CPU logging");
 		
+		BasicButton basicButton = createButton(
+				icons, new Rectangle(0, 128, 64, 64),
+				"Branch to arbitrary address",
+				new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						SwtWindow.this.machine.getExecutor().controlCpu(new Executor.ICpuController() {
+
+							public void act(Cpu cpu) {
+								cpu.setPC((short)0xa000);								
+								cpu.setWP((short)0x83e0);								
+							}
+							
+						}) ;
+					}
+				});
+		
 
 		shell.open();
 		shell.setBounds(800, 800, shell.getSize().x, shell.getSize().y);
@@ -164,7 +137,6 @@ public class SwtWindow {
 		private final Button button;
 		private final Rectangle bounds;
 		private Image icon;
-		private int offset;
 		private Rectangle overlayBounds;
 
 		public BasicButton(Composite parent, int style, Image icon_, Rectangle bounds_, String tooltip) {
