@@ -208,7 +208,9 @@ public final class JSON {
                 read();
             }
         }
-        return new BigDecimal(val, scale - fraction);
+        // the scale is <tt>(unscaledVal &times; 10<sup>-scale</sup>)</tt>.
+        // the negative power!?!
+        return new BigDecimal(val, fraction - scale);
     }
     
     private static Object readNestedObject() throws IOException {
