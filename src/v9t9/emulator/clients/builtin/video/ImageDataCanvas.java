@@ -6,17 +6,13 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 
 	protected ImageData imageData;
 
-	public ImageDataCanvas() {
-		super();
-	}
-
 	public ImageData getImageData() {
 		return imageData;
 	}
 
 	@Override
-	public int getLineStride() {
-		return imageData.bytesPerLine;
+	final public int getLineStride() {
+		return bytesPerLine;
 	}
 
 

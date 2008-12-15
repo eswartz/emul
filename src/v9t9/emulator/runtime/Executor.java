@@ -114,8 +114,11 @@ public class Executor {
 			}
 			
 			if (interpreting) {
-				cpu.abortIfInterrupted();
 			    interpretOneInstruction();
+			    // do not allow interrupts after some instructions
+			    if (cpu.isAllowInts())
+			    	cpu.abortIfInterrupted();
+			    cpu.setAllowInts(true);
 			}
 			
 		} catch (TerminatedException e) {

@@ -14,7 +14,6 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
@@ -49,7 +48,7 @@ public class PureJavaClient implements Client {
         
         expectedUpdateTime = QUANTUM;
         
-        if (false  &&  videoRenderer == null && SWT.getPlatform().equals("gtk")) {
+        if (false && videoRenderer == null && SWT.getPlatform().equals("gtk")) {
         	// try OpenGL first ?
         	try {
         		Class<?> klass = getClass().getClassLoader().loadClass(
@@ -165,12 +164,13 @@ public class PureJavaClient implements Client {
     
     public void updateVideo() {
     	//long start = System.currentTimeMillis();
-    	if (videoRenderer.isIdle() ) {
-    		try {
-    			video.update();
-    		} catch (Throwable t) {
-    			t.printStackTrace();
-    		}
+    	if (videoRenderer.isIdle()) { 
+			try {
+				if (!video.update())
+					return;
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
     		videoRenderer.redraw();
     		// compensate for slow frames
         	long elapsed = videoRenderer.getLastUpdateTime() * 4;

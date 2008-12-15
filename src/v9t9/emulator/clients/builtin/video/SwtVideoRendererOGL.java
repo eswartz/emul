@@ -7,7 +7,6 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.widgets.Display;
 
 import v9t9.jni.v9t9render.SWIGTYPE_p_OpenGL;
 import v9t9.jni.v9t9render.V9t9Render;
@@ -58,6 +57,7 @@ public class SwtVideoRendererOGL extends SwtVideoRenderer {
 		if (ogl == null)
 			return;
 		
+		/*
 		if (vdpCanvas instanceof GLCanvas) {
 			GLCanvas glCanvas = (GLCanvas) vdpCanvas;
 			if (glCanvas.ogl != null) {
@@ -71,7 +71,7 @@ public class SwtVideoRendererOGL extends SwtVideoRenderer {
 					
 				}
 			}
-		} else {
+		} else*/ {
 			ImageData imageData = ((ImageDataCanvas) vdpCanvas).getImageData();
 			if (imageData != null) {
 				
@@ -81,7 +81,7 @@ public class SwtVideoRendererOGL extends SwtVideoRenderer {
 					V9t9Render.renderOpenGLFromImageData(
 							ogl,
 							imageData.data,
-							imageData.width, imageData.height, imageData.bytesPerLine,
+							vdpCanvas.getWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
 							canvasSize.x, canvasSize.y,
 							updateRect.x, updateRect.y, updateRect.width, updateRect.height);
 				}

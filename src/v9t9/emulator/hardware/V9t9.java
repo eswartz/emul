@@ -158,7 +158,7 @@ public class V9t9 {
         	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);
         }
-        if (true) {
+        if (false) {
         	VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
         }
         

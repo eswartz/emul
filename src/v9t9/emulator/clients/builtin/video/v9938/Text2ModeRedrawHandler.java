@@ -40,6 +40,15 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 
 	public void propagateTouches() {
 		propagatePatternTouches();
+		
+		// propagate blink changes
+		int size = vdpModeInfo.screen.size;
+		for (int i = 0; i < size; i++) {
+			int currchar = vdp.readAbsoluteVdpMemory(vdpModeInfo.screen.base + i) & 0xff;	/* char # to update */
+			if (vdpChanges.color[currchar >> 3] != 0)	/* this pattern changed? */
+				vdpChanges.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
+		}
+		
 	}
 
 	/* (non-Javadoc)

@@ -118,6 +118,7 @@ public class Cpu implements MemoryAccessListener {
 
     private byte intpins;
 	private int ticks;
+	private boolean allowInts;
 
 	static public final String sRealTime = "RealTime";
 
@@ -152,6 +153,7 @@ public class Cpu implements MemoryAccessListener {
         console.writeWord(newwp + 13 * 2, oldwp);
         console.writeWord(newwp + 14 * 2, oldpc);
         console.writeWord(newwp + 15 * 2, getST());
+        allowInts = false;
    }
 
     public void contextSwitch(int addr) {
@@ -298,6 +300,14 @@ public class Cpu implements MemoryAccessListener {
 	
 	public synchronized int getTickCount() {
 		return ticks;
+	}
+
+	public boolean isAllowInts() {
+		return allowInts;
+	}
+
+	public void setAllowInts(boolean allowInts) {
+		this.allowInts = allowInts;
 	} 
 
 }

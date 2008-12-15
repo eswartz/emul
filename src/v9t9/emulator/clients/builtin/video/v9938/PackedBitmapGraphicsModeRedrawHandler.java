@@ -28,9 +28,6 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	protected int blockstride;
 	protected int blockcount;
 	
-	// set when pages are blinking
-	protected int pageOffset;
-	
 	protected class ScreenBitmapTouchHandler implements VdpTouchHandler {
 		public void modify(int offs) {
 			int row = (offs / rowstride) >> 3;
@@ -49,29 +46,56 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		
 	protected abstract void init();
 	
+	@Override
+	public boolean touch(int addr) {
+		boolean visible = false;
+		if (((VdpV9938)vdp).isInterlacedEvenOdd()) {
+			int pageSize = ((VdpV9938) vdp).getGraphicsPageSize();
+			int pattBase = vdpModeInfo.patt.base ^ pageSize;
+			if (pattBase <= addr && addr < pattBase + vdpModeInfo.patt.size) {
+	    		vdpTouchBlock.patt.modify(addr - pattBase);
+	    		visible = true;
+	    	}
+		}
+			
+		return super.touch(addr) | visible;
+	}
 	public void propagateTouches() {
 		// we directly detect screen changes already
 	}
 	
 	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
 		/*  Redraw 8x8 blocks where pixels changed */
-		pageOffset = ((VdpV9938)vdp).isBlinkOn() ? 0x8000 : 0;
+		VdpV9938 vdpV9938 = (VdpV9938)vdp;
+		int pageOffset = vdpV9938.getGraphicsPageOffset();
+		boolean interlacedEvenOdd = vdpV9938.isInterlacedEvenOdd();
+		int graphicsPageSize = vdpV9938.getGraphicsPageSize();
+		
+		// for interlacing?
+		int halfRowStride = vdpCanvas.getLineStride() / 2;
+		int rowStrideOffset = 0; // pageOffset != 0 ? halfRowStride : 0;
+		
+		//System.out.println(pageOffset);
 		int count = 0;
 		int screenSize = blockcount;
 		for (int i = 0; i < screenSize; i++) {
 			byte changes = vdpChanges.screen[i];
-			if (force || changes != 0) {			/* this screen pos updated? */
+			if (force || changes != 0) {		
 				RedrawBlock block = blocks[count++];
 				
-				block.r = (i / blockstride) << 3;	/* for graphics mode */
+				block.r = (i / blockstride) << 3;
 				block.c = (i % blockstride) << 3;
 
-				drawBlock(block);
+				drawBlock(block, 0, rowStrideOffset);
+				if (interlacedEvenOdd) {
+					drawBlock(block, pageOffset ^ graphicsPageSize, rowStrideOffset ^ halfRowStride);
+				}
+					
 			}
 		}
 		return count;
 	}
 
-	abstract protected void drawBlock(RedrawBlock block);
+	abstract protected void drawBlock(RedrawBlock block, int pageOffset, int interlaceOffset);
 
 }

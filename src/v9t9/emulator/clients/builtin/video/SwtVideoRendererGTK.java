@@ -8,7 +8,6 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.internal.gtk.OS;
-import org.eclipse.swt.widgets.Display;
 
 import v9t9.jni.v9t9render.SWIGTYPE_p_AnalogTV;
 import v9t9.jni.v9t9render.V9t9Render;
@@ -18,6 +17,7 @@ import v9t9.jni.v9t9render.V9t9Render;
  * @author ejs
  *
  */
+@SuppressWarnings("restriction")
 public class SwtVideoRendererGTK extends SwtVideoRenderer {
 	private static final boolean USE_ANALOGTV = false;
 	private static final boolean USE_GDKONLY = false;
@@ -52,45 +52,51 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 			
 			// the actual canvas size might not match our wishes
 			Point canvasSize = new Point((int)(vdpCanvas.getWidth() * zoomx), 
-					(int)(vdpCanvas.getHeight() * zoomy));
+					(int)(vdpCanvas.getVisibleHeight() * zoomy));
 
 			if (USE_SWTONLY) {
 				Rectangle destRect = updateRect;
 				
-				destRect = destRect.intersection(logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight()));
+				destRect = destRect.intersection(logicalToPhysical(0, 0, 
+						vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight()));
 				
 				Rectangle imageRect = physicalToLogical(destRect);
 				imageRect = vdpCanvas.mapVisible(imageRect);
 				
 				blitImageData(gc, imageData, destRect, imageRect);
-			} else if (USE_GDKONLY) {
-				synchronized (vdpCanvas) {
-					V9t9Render.renderGdkPixbufFromImageData(imageData.data,
-							imageData.width, imageData.height, imageData.bytesPerLine,
-							canvasSize.x, canvasSize.y,
-							updateRect.x, updateRect.y, updateRect.width, updateRect.height,
-							OS.GTK_WIDGET_WINDOW(canvas.handle));
-				}
-			} else if (USE_NOISY) {
-				synchronized (vdpCanvas) {
-					//System.out.println("repaint: " + updateRect);
-					V9t9Render.renderNoisyGdkPixbufFromImageData(imageData.data,
-							imageData.width, imageData.height, imageData.bytesPerLine,
-							canvasSize.x, canvasSize.y,
-							updateRect.x, updateRect.y, updateRect.width, updateRect.height,
-							OS.GTK_WIDGET_WINDOW(canvas.handle));
-				}
-			} else if (USE_ANALOGTV) {
-				if (analog == null) {
-					analog = V9t9Render.allocateAnalogTv(canvasSize.x, canvasSize.y);
-				}
-				synchronized (vdpCanvas) {
-					V9t9Render.renderAnalogGdkPixbufFromImageData(
-							analog,
-							imageData.data,
-							imageData.width, imageData.height, imageData.bytesPerLine,
-							canvasSize.x, canvasSize.y,
-							OS.GTK_WIDGET_WINDOW(canvas.handle));
+			} else {
+				int lineStride = vdpCanvas.getLineStride();
+				if (vdpCanvas.isInterlacedEvenOdd)
+					lineStride /= 2;
+				if (USE_GDKONLY) {
+					synchronized (vdpCanvas) {
+						V9t9Render.renderGdkPixbufFromImageData(imageData.data,
+								vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight(), lineStride,
+								canvasSize.x, canvasSize.y,
+								updateRect.x, updateRect.y, updateRect.width, updateRect.height,
+								OS.GTK_WIDGET_WINDOW(canvas.handle));
+					}
+				} else if (USE_NOISY) {
+					synchronized (vdpCanvas) {
+						//System.out.println("repaint: " + updateRect);
+						V9t9Render.renderNoisyGdkPixbufFromImageData(imageData.data,
+								vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight(), lineStride,
+								canvasSize.x, canvasSize.y,
+								updateRect.x, updateRect.y, updateRect.width, updateRect.height,
+								OS.GTK_WIDGET_WINDOW(canvas.handle));
+					}
+				} else if (USE_ANALOGTV) {
+					if (analog == null) {
+						analog = V9t9Render.allocateAnalogTv(canvasSize.x, canvasSize.y);
+					}
+					synchronized (vdpCanvas) {
+						V9t9Render.renderAnalogGdkPixbufFromImageData(
+								analog,
+								imageData.data,
+								vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight(), lineStride,
+								canvasSize.x, canvasSize.y,
+								OS.GTK_WIDGET_WINDOW(canvas.handle));
+					}
 				}
 			}
 		}

@@ -31,7 +31,8 @@ public abstract class VdpCanvas {
 
 	/** width in pixels */
 	protected int width;
-
+	protected int bytesPerLine;
+	
 	/** height in pixels */
 	protected int height;
 
@@ -75,6 +76,8 @@ public abstract class VdpCanvas {
 	protected byte colorPalette[][];
 	protected byte greyPalette[][];
 	protected byte altSpritePalette[][];
+
+	protected boolean isInterlacedEvenOdd;
 	
 	protected static byte[] rgb3to8 = new byte[8];
 	protected static byte[] rgb2to8 = new byte[4];
@@ -140,7 +143,12 @@ public abstract class VdpCanvas {
 	}
 
 	public final void setSize(int x, int y) {
-		if (x != width || y != height) {
+		setSize(x, y, false);
+	}
+	
+	public final void setSize(int x, int y, boolean isInterlaced) {
+		if (x != width || y != height || isInterlaced != this.isInterlacedEvenOdd) {
+			this.isInterlacedEvenOdd = isInterlaced;
 			this.width = x;
 			this.height = y;
 			updateDirtyBuffer();
@@ -149,6 +157,8 @@ public abstract class VdpCanvas {
 				listener.canvasResized(this);
 		}
 	}
+
+	
 	public abstract void doChangeSize();
 
 	/**
@@ -417,6 +427,10 @@ public abstract class VdpCanvas {
 	public int getHeight() {
 		return height;
 	}
+	
+	public int getVisibleHeight() {
+		return height * (isInterlacedEvenOdd ? 2 : 1);
+	}
 
 	public void setGreyscale(boolean b) {
 		thePalette = b ? greyPalette : colorPalette;
@@ -446,41 +460,35 @@ public abstract class VdpCanvas {
 	/**
 	 * Draw an 8x8 block of pixels from the given memory, arranged as
 	 * &lt;color;&gt;&lt;color&gt; in nybbles. 
-	 * @param c TODO
+	 * @param offs
+	 * @param offs
 	 * @param access
 	 * @param rowstride access stride between rows
-	 * @param r
-	 * @param c
 	 */
 	public abstract void draw8x8BitmapTwoColorBlock(
-			int c,
-			int r,
-			ByteMemoryAccess access, int rowstride);
+			int offs,
+			ByteMemoryAccess access,
+			int rowstride);
 
 	/**
 	 * Draw an 8x8 block of pixels from the given memory, arranged as
 	 * &lt;color;&gt;&lt;color&gt;&lt;color;&gt;&lt;color&gt; in two-bit pieces. 
-	 * @param r TODO
+	 * @param offs
 	 * @param access
 	 * @param rowstride access stride between rows
-	 * @param r
-	 * @param c
 	 */
-	public abstract void draw8x8BitmapFourColorBlock(int c,
-			int r, ByteMemoryAccess access, int rowstride);
+	public abstract void draw8x8BitmapFourColorBlock(int offs,
+			ByteMemoryAccess access, int rowstride);
 
 	/**
 	 * Draw an 8x8 block of pixels from the given memory, arranged as
 	 * RGB 3-3-2 pixels. 
-	 * @param c TODO
-	 * @param r TODO
+	 * @param offset
 	 * @param rowstride access stride between rows
-	 * @param r
-	 * @param c
 	 * @param access
 	 */
-	public abstract void draw8x8BitmapRGB332ColorBlock(int c,
-			int r, ByteMemoryAccess byteReadMemoryAccess, int rowstride);
+	public abstract void draw8x8BitmapRGB332ColorBlock(int offset,
+			ByteMemoryAccess byteReadMemoryAccess, int rowstride);
 
 
 	public void clearToEvenOddClearColors() {
@@ -537,5 +545,6 @@ public abstract class VdpCanvas {
 	public Rectangle mapVisible(Rectangle logical) {
 		return new Rectangle(logical.x, logical.y, logical.width, logical.height);
 	}
+
 
 }

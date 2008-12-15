@@ -48,7 +48,7 @@ public interface VdpHandler {
     ByteMemoryAccess getByteReadMemoryAccess(int vdpaddr); 
     
     /** Update video canvas periodically */
-    void update();
+    boolean update();
 
 	VdpMmio getVdpMmio();
 	void setVdpMmio(VdpMmio mmio);

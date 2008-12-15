@@ -6,8 +6,6 @@ package v9t9.emulator.clients.builtin;
 import java.io.File;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ControlAdapter;
-import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.PaintEvent;
@@ -17,29 +15,19 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.ExpandBar;
-import org.eclipse.swt.widgets.ExpandItem;
-import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
-import v9t9.emulator.clients.builtin.video.VideoRenderer;
-import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.ISettingListener;
@@ -62,7 +50,7 @@ public class SwtWindow {
 	public SwtWindow(Display display, SwtVideoRenderer renderer, Machine machine) {
 		this.machine = machine;
 		shell = new Shell(display);
-		
+		shell.setText("V9t9");
 		GridLayout layout = new GridLayout(2, false);
 		layout.marginHeight = layout.marginWidth = 0;
 		shell.setLayout(layout);

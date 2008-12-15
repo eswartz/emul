@@ -26,8 +26,15 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		int allocHeight = height;
 		if ((height & 7) != 0)
 			allocHeight += 8;
-		return new ImageData(width, allocHeight, 24, palette);
+			
+		ImageData data = new ImageData(width, allocHeight * (isInterlacedEvenOdd ? 2 : 1), 24, palette);
+		if (isInterlacedEvenOdd)
+			bytesPerLine = data.bytesPerLine * 2;
+		else
+			bytesPerLine = data.bytesPerLine;
+		return data;
 	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#clear()
 	 */
@@ -49,12 +56,12 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#getBitmapOffset(int, int)
 	 */
 	@Override
-	public int getBitmapOffset(int x, int y) {
-		return imageData.bytesPerLine * (y) + (x) * (imageData.depth >> 3);
+	final public int getBitmapOffset(int x, int y) {
+		return getLineStride() * (y) + (x) * (imageData.depth >> 3);
 	}
 
 	@Override
-	public int getPixelStride() {
+	final public int getPixelStride() {
 		return imageData.depth >> 3;
 	}
 
@@ -147,10 +154,10 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		}
 	}
 	@Override
-	public void draw8x8BitmapTwoColorBlock(int c,
-			int r, ByteMemoryAccess access, int rowstride) {
+	public void draw8x8BitmapTwoColorBlock(int offs,
+			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
-		int offs = getBitmapOffset(c, r);
+		//int offs = getBitmapOffset(offs, r);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 4; j++) {
 				byte mem;
@@ -183,10 +190,10 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	}
 	
 	@Override
-	public void draw8x8BitmapFourColorBlock(int c,
-			int r, ByteMemoryAccess access, int rowstride) {
+	public void draw8x8BitmapFourColorBlock(int offs,
+			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
-		int offs = getBitmapOffset(c, r);
+		//int offs = getBitmapOffset(offs, r);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 2; j++) {
 				byte mem;
@@ -235,10 +242,10 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	}
 	
 	@Override
-	public void draw8x8BitmapRGB332ColorBlock(int c,
-			int r, ByteMemoryAccess access, int rowstride) {
+	public void draw8x8BitmapRGB332ColorBlock(int offs,
+			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
-		int offs = getBitmapOffset(c, r);
+		//int offs = getBitmapOffset(offset, r);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				byte mem;

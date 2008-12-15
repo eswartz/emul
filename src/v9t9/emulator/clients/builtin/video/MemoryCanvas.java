@@ -27,16 +27,6 @@ public class MemoryCanvas extends VdpCanvas {
 	public void doChangeSize() {
 	}
 
-	public int getWidth() {
-		return width;
-	}
-
-
-	public int getHeight() {
-		return height;
-	}
-
-
 	public void clear(byte[] rgb) {
 		Arrays.fill(bitmap, 0, bitmap.length, (byte) clearColor);
 	}
@@ -169,10 +159,10 @@ public class MemoryCanvas extends VdpCanvas {
 	}
 	
 	@Override
-	public void draw8x8BitmapTwoColorBlock(int c, int r,
-			ByteMemoryAccess access, int rowstride) {
+	public void draw8x8BitmapTwoColorBlock(int offs, ByteMemoryAccess access,
+			int rowstride) {
 		int lineStride = getLineStride();
-		int offs = getBitmapOffset(c, r);
+		//int offs = getBitmapOffset(offs, r);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 4; j++) {
 				byte mem;
@@ -196,10 +186,10 @@ public class MemoryCanvas extends VdpCanvas {
 	}
 	
 	@Override
-	public void draw8x8BitmapFourColorBlock(int c, int r,
-			ByteMemoryAccess access, int rowstride) {
+	public void draw8x8BitmapFourColorBlock(int offs, ByteMemoryAccess access,
+			int rowstride) {
 		int lineStride = getLineStride();
-		int offs = getBitmapOffset(c, r);
+		//int offs = getBitmapOffset(offs, r);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 2; j++) {
 				byte mem;
@@ -229,10 +219,10 @@ public class MemoryCanvas extends VdpCanvas {
 	}
 	
 	@Override
-	public void draw8x8BitmapRGB332ColorBlock(int c,
-			int r, ByteMemoryAccess access, int rowstride) {
+	public void draw8x8BitmapRGB332ColorBlock(int offs,
+			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
-		int offs = getBitmapOffset(c, r);
+		//int offs = getBitmapOffset(offset, r) + offset;
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				byte mem;

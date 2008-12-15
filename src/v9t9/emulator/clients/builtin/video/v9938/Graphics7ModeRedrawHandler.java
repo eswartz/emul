@@ -32,12 +32,12 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		blockcount = (vdpregs[9] & 0x80) != 0 ? 32*27 : 768;		
 	}
 	
-	protected void drawBlock(RedrawBlock block) {
+	protected void drawBlock(RedrawBlock block, int pageOffset, int interlaceOffset) {
 		vdpCanvas.draw8x8BitmapRGB332ColorBlock(
-				block.c,
-				 block.r,
-						vdp.getByteReadMemoryAccess(
-								vdpModeInfo.patt.base + rowstride * block.r + block.c + pageOffset), rowstride);
+			vdpCanvas.getBitmapOffset(block.c, block.r) + interlaceOffset,
+			 vdp.getByteReadMemoryAccess(
+					(vdpModeInfo.patt.base + rowstride * block.r + block.c) ^ pageOffset),
+			rowstride);
 	}
 
 	/** Backdrop isn't a normal color */

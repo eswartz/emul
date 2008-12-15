@@ -92,17 +92,47 @@ public class VdpV9938 extends VdpTMS9918A {
 		int mxd;
 		/** sourcememory select */
 		int mxs;
+		/** cycles used per op */
+		int cycleUse;
 	}
 	
 	private CommandVars cmdState = new CommandVars();
 	
-	//private Object accelLock = new Object();
-	private int targetcycles = 30000; // target # cycles to be executed per tick
-	private long totaltargetcycles; // total # target cycles expected
-	private int currenttargetcycles = 0; // current target cycles per tick
-	private int currentcycles = 0; // current cycles per tick
-	private long totalcurrentcycles; // total # current cycles executed
+	// the MSX 2 speed is 21 MHz (21477270 hz)
 	
+	// cycles for commands execute in 3579545 Hz (from blueMSX)
+	private int targetcycles = 3579545 / 60; // target # cycles to be executed per tick
+	private int currentcycles = 0; // current cycles left
+	private int pageOffset;
+	private int pageSize;
+	private boolean isInterlacedEvenOdd;
+	
+	/* from mame and blueMSX:
+	 * 
+     */
+	final static int command_cycles[][] = {
+			// SRCH x6
+			{ 92, 125, 92, 92 },
+			// LINE x7
+			{ 120, 147, 120, 120 },
+			// LMMV x8
+			{ 98, 137, 98, 124 },
+			// LMMM x9
+			{ 129, 197, 129, 132 },
+			// LMCM xA
+			{ 129, 197, 129, 132 },
+			// LMMC xB
+			{ 129, 197, 129, 132 },
+			// HMMV xC
+			{ 49, 65, 49, 62 },
+			// HMMM xD
+			{ 92, 136, 92, 97 },
+			// YMMM xE
+			{ 65, 125, 65, 68 },
+			// HMMC xF
+			{ 49, 65, 49, 62 },
+	};
+
 	public VdpV9938(MemoryDomain videoMemory) {
 		super(videoMemory);
 		reset();
@@ -172,9 +202,9 @@ public class VdpV9938 extends VdpTMS9918A {
 	/** 1: simultaneous mode */
 	//final public static int R9_S0 = 0x10;
 	/** 1: interlace */
-	//final public static int R9_IL = 0x8;
+	final public static int R9_IL = 0x8;
 	/** 1: interlace two screens on the even/odd field */
-	//final public static int R9_EO = 0x4;
+	final public static int R9_EO = 0x4;
 	/** 1: PAL, 0: NTSC */
 	//final public static int R9_NT = 0x2;
 	/** 1: *DLCLK in input mode, else output */
@@ -208,7 +238,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	final public static int R46_CMD = 46;	// 0x2E
 	final public static int R46_CMD_MASK = 0xf0;
 	final public static byte R46_CMD_HMMC = (byte) 0xf0;
-	final public static byte R46_CMD_VMMM = (byte) 0xe0;
+	final public static byte R46_CMD_YMMM = (byte) 0xe0;
 	final public static byte R46_CMD_HMMM = (byte) 0xd0;
 	final public static byte R46_CMD_HMMV = (byte) 0xc0;
 	final public static byte R46_CMD_LMMC = (byte) 0xb0;
@@ -268,6 +298,13 @@ public class VdpV9938 extends VdpTMS9918A {
 				redraw |= REDRAW_MODE;
 			}
 			break;
+		case 2:
+			// page
+			if (CHANGED(old, val, 0x60)) {
+				redraw |= REDRAW_MODE;
+				updateInterlaced();
+			}
+			break;
 		case 8:
 			// input bus, display mode, line count
 			if (CHANGED(old, val, R8_VR)) {
@@ -290,9 +327,13 @@ public class VdpV9938 extends VdpTMS9918A {
 		case 9:
 			// lines and stuff
 			if (CHANGED(old, val, R9_LN)) {
-				vdpCanvas.setSize(256, (val & R9_LN) != 0 ? 212 : 192);
+				//vdpCanvas.setSize(256, (val & R9_LN) != 0 ? 212 : 192);
 				redraw |= REDRAW_MODE;
 			}
+			if (CHANGED(old, val, R9_EO + R9_IL)) {
+				redraw |= REDRAW_MODE;
+			}
+			updateInterlaced();
 			break;
 		case 10:
 		case 11:
@@ -306,10 +347,9 @@ public class VdpV9938 extends VdpTMS9918A {
 			
 		case 13:
 			// blinking period (pg 6)
-			blinkOnPeriod = ((val >> 4) & 0xf) * 10;
-			blinkOffPeriod = (val & 0xf) * 10;
-			blinkPeriod = blinkOffPeriod;
-			blinkOn = false;
+			blinkOnPeriod = ((val >> 4) & 0xf);
+			blinkOffPeriod = (val & 0xf);
+			blinkPeriod = blinkOnPeriod + blinkOffPeriod;
 			// no redraw right now
 			break;
 			
@@ -340,10 +380,19 @@ public class VdpV9938 extends VdpTMS9918A {
 			vdpCanvas.setOffset(xoffs, yoffs);
 			dirtyAll();
 			break;
+			
+		case 19:
+			// set to the line # on which to generate an interrupt (?)
+			// R0 bit 4 enables
+			// http://map.tni.nl/articles/split_guide.php
+			break;
 		case 20:
 		case 21:
 		case 22:
 			// color burst registers
+			break;
+		case 23:
+			// vertical scroll?
 			break;
 			
 		case 32: // sx lo
@@ -360,7 +409,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		case 43: // ny hi (1)
 			break;
 		case 44: // CLR (data to transfer)
-			if (accelBusy() && cmdState.isDataMoveCommand) {
+			if (accelActive() && cmdState.isDataMoveCommand) {
 				// got the next byte
 				statusvec[2] &= ~S2_TR;
 				if (!isThrottled())
@@ -374,11 +423,9 @@ public class VdpV9938 extends VdpTMS9918A {
 			}
 			break;
 		case 46: // CMD
-			//synchronized (accelLock) {
-				//System.out.println("command " + vdpregs[46]);
 			if ((statusvec[2] & S2_CE) == 0) {
 				setupCommand();
-				setAccelBusy(true);
+				setAccelActive(true);
 				if (!isThrottled())
 					work();
 			}
@@ -386,6 +433,11 @@ public class VdpV9938 extends VdpTMS9918A {
 			break;
 		}
 		return redraw;
+	}
+
+	private void updateInterlaced() {
+		isInterlacedEvenOdd = (vdpregs[9] & R9_EO + R9_IL) == R9_EO + R9_IL 
+			&& (vdpregs[2] & 0x20) != 0;
 	}
 
 	private void switchBank() {
@@ -415,11 +467,11 @@ public class VdpV9938 extends VdpTMS9918A {
 			palettelatched = true;
 		} else {
 			// first byte: red red/blue, second: green
-			int b = val & 0x7;
-			int g = palettelatch >> 4;
-			int r = palettelatch & 0x7;
+			int r = palettelatch >> 4;
+			int b = palettelatch & 0x7;
+			int g = val & 0x7;
 			//System.out.println("palette " + paletteidx + ": " + g +"|"+ r + "|"+ b);
-			vdpCanvas.setGRB333(paletteidx & 0xff, g, r, b);
+			vdpCanvas.setGRB333(paletteidx & 0xf, g, r, b);
 			dirtyAll();
 			
 			paletteidx = (byte) ((paletteidx+1)&0xf);
@@ -464,6 +516,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		int mode = get9938ModeNumber();
 		vdpCanvas.setUseAltSpritePalette(false);
 		isEnhancedMode = true;
+		pageSize = 0x8000;
 		switch (mode) {
 		case MODE_TEXT2:
 			setText2Mode();
@@ -480,9 +533,11 @@ public class VdpV9938 extends VdpTMS9918A {
 			break;
 		case MODE_GRAPHICS6:
 			setGraphics6Mode();
+			pageSize = 0x10000;
 			break;
 		case MODE_GRAPHICS7:
 			setGraphics7Mode();
+			pageSize = 0x10000;
 			break;
 		default:
 			isEnhancedMode = false;
@@ -512,9 +567,10 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void setText2Mode() {
-		vdpCanvas.setSize(512, vdpCanvas.getHeight());
+		vdpCanvas.setSize(512, getVideoHeight());
+		vdpModeInfo = createText2ModeInfo();
 		vdpModeRedrawHandler = new Text2ModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createText2ModeInfo());
+				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
 		spriteRedrawHandler = null;
 		vdpMmio.setMemoryAccessCycles(1);
 		initUpdateBlocks(6);
@@ -549,9 +605,10 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void setGraphics4Mode() {
-		vdpCanvas.setSize(256, vdpCanvas.getHeight());
+		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
+		vdpModeInfo = createGraphics45ModeInfo();
 		vdpModeRedrawHandler = new Graphics4ModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createGraphics45ModeInfo());
+				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
 		vdpMmio.setMemoryAccessCycles(4);
 		rowstride = 256 / 2;
@@ -583,9 +640,10 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void setGraphics5Mode() {
-		vdpCanvas.setSize(512, vdpCanvas.getHeight());
+		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
+		vdpModeInfo = createGraphics45ModeInfo();
 		vdpModeRedrawHandler = new Graphics5ModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createGraphics45ModeInfo());
+				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(true);
 		rowstride = 512 / 4;
 		pixperbyte = 4;
@@ -596,9 +654,10 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 
 	protected void setGraphics6Mode() {
-		vdpCanvas.setSize(512, vdpCanvas.getHeight());
+		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
+		vdpModeInfo = createGraphics67ModeInfo();
 		vdpModeRedrawHandler = new Graphics6ModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createGraphics67ModeInfo());
+				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(true);
 		rowstride = 512 / 2;
 		pixperbyte = 2;
@@ -630,10 +689,11 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void setGraphics7Mode() {
-		vdpCanvas.setSize(256, vdpCanvas.getHeight());
+		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
 		vdpCanvas.setUseAltSpritePalette(true);
+		vdpModeInfo = createGraphics67ModeInfo();
 		vdpModeRedrawHandler = new Graphics7ModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createGraphics67ModeInfo());
+				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
 		rowstride = 256;
 		pixperbyte = 1;
@@ -668,46 +728,55 @@ public class VdpV9938 extends VdpTMS9918A {
 	public synchronized void tick() {
 		super.tick();
 		
-		// the "blink" controls either the r7/r12 selection for text mode
-		// (TODO: or the swapped odd/even page for graphics4-7 modes)
-		if (vdpregs[13] != 0) {
-			if (--blinkPeriod <= 0) {
-				blinkOn = !blinkOn;
-				blinkPeriod = blinkOn ? blinkOnPeriod : blinkOffPeriod;
+		// The "blink" controls either the r7/r12 selection for text mode
+		// or the page selection for graphics 4-7 modes
+		
+		// We don't redraw for interlacing; we just detect changes on both
+		// pages and draw them into an interleaved image.  There's not
+		// enough speed in this implementation to allow redrawing at 60 fps.
+		int prevPageOffset = pageOffset;
+		pageOffset = 0;
+		if (isEnhancedMode) {
+			//boolean isInterlaced = (vdpregs[9] & R9_IL) != 0; 
+			boolean isBlinking = (vdpregs[13] != 0) && (vdpregs[2] & 0x20) != 0;
+			/*if ((isBlinking || isInterlacedEvenOdd) && (vdpregs[2] & 0x20) != 0) {
+				if (isInterlacedEvenOdd())
+					pageOffset =((System.currentTimeMillis() / (1000 / 60)) % 2) != 0 ? pageSize : 0;
+				else
+					pageOffset =((System.currentTimeMillis() / (1000 / 6)) % blinkPeriod >= blinkOffPeriod) ? pageSize : 0;
+			}*/
+			if (isBlinking) {
+				pageOffset = ((System.currentTimeMillis() / (1000 / 6)) % blinkPeriod >= blinkOffPeriod) ? pageSize : 0;
+			}
+			
+			if (prevPageOffset != pageOffset) {
+				System.out.println("dirtying " + pageOffset);
+				vdpModeInfo.patt.base = getPatternTableBase() ^ pageOffset;
 				dirtyAll();
 			}
 		}
-		//synchronized (accelLock) {
-			totaltargetcycles += targetcycles;
-			totalcurrentcycles += currentcycles;
-			
-			// if we went over, aim for fewer this time
-			currenttargetcycles = (int) (totaltargetcycles - totalcurrentcycles);
-			currentcycles = 0;
-		//}
+		
+		if (currentcycles < 0)
+			currentcycles += targetcycles;
+		else
+			currentcycles = targetcycles;
 	}
 	
 	@Override
 	public boolean isThrottled() {
-		return !accelBusy() || (currentcycles >= currenttargetcycles);
+		return !accelActive() || (currentcycles <= 0);
 	}
 	
 	@Override
 	public synchronized void work() {
-		currentcycles += 1;
-		if (accelBusy())
-			handleCommand();
+		handleCommand();
 	}
 
-	public boolean isBlinkOn() {
-		return blinkOn;
-	}
-
-	private boolean accelBusy() {
+	private boolean accelActive() {
 		return (statusvec[2] & S2_CE) != 0;
 	}
 	
-	private void setAccelBusy(boolean flag) {
+	private void setAccelActive(boolean flag) {
 		if (flag) {
 			statusvec[2] |= S2_CE;
 		} else {
@@ -770,6 +839,16 @@ public class VdpV9938 extends VdpTMS9918A {
 			
 			cmdState.isDataMoveCommand = (cmdState.cmd == R46_CMD_LMMC);
 		}
+
+		// from MAME
+		int cmdIdx = (cmdState.cmd - R46_CMD_SRCH) >> 4;
+		if (cmdIdx >= 0 && cmdIdx < command_cycles.length) {
+			//int modeSelect = ((vdpregs[1]>>6)&1)|(vdpregs[8]&2)|((vdpregs[9]<<1)&4);
+			int modeSelect = (((vdpregs[1] >> 6)&1) | (vdpregs[8] & 2));
+			cmdState.cycleUse = command_cycles[cmdIdx][modeSelect];
+		} else {
+			cmdState.cycleUse = 0;
+		}
 		
 		// all clear
 		statusvec[2] = 0;
@@ -782,7 +861,7 @@ public class VdpV9938 extends VdpTMS9918A {
 				+ " DX,DY= " + cmdState.dx + "," + cmdState.dy +"; NX,NY=" + cmdState.nx +","+ cmdState.ny);
 	}
 	/**
-	 * Do some work of the acceleration command (under accelLock).
+	 * Do some work of the acceleration command.
 	 * We execute one cycle of the command each tick.
 	 */
 	private void handleCommand() {
@@ -790,33 +869,39 @@ public class VdpV9938 extends VdpTMS9918A {
 		
 		if (pixperbyte == 0) {
 			// not a supported mode
-			setAccelBusy(false);
+			setAccelActive(false);
 			return;
 		}
 		
 		switch (cmdState.cmd) {
 		case R46_CMD_STOP:
-			setAccelBusy(false);
+			setAccelActive(false);
 			return;
 			
 		case R46_CMD_PSET:
+			// instantaneous!
 			setPixel(cmdState.dx, cmdState.dy, cmdState.clr & pixmask, cmdState.op);
-			setAccelBusy(false);
+			setAccelActive(false);
 			break;
 			
 		case R46_CMD_POINT:
+			// instantaneous!
 			byte pixel = getPixel(cmdState.dx, cmdState.dy);
 			statusvec[7] = pixel;
-			setAccelBusy(false);
+			setAccelActive(false);
 			break;
 			
 		case R46_CMD_LINE:
-			setPixel(cmdState.dx >> 16, cmdState.dy >> 16, 
-				cmdState.clr, cmdState.op);
-			cmdState.dx += cmdState.nx;
-			cmdState.dy += cmdState.ny;
-			if (cmdState.cnt-- <= 0)
-				setAccelBusy(false);
+			while ((currentcycles -= cmdState.cycleUse) > 0) {
+				setPixel(cmdState.dx >> 16, cmdState.dy >> 16, 
+					cmdState.clr, cmdState.op);
+				cmdState.dx += cmdState.nx;
+				cmdState.dy += cmdState.ny;
+				if (cmdState.cnt-- <= 0) {
+					setAccelActive(false);
+					break;
+				}
+			}
 			break;
 			
 			// send a series of CLR bytes to rectangle
@@ -832,40 +917,47 @@ public class VdpV9938 extends VdpTMS9918A {
 				if (cmdState.cnt > cmdState.nx) {
 					cmdState.cnt = 0;
 					if (++cmdState.ycnt > cmdState.ny) {
-						setAccelBusy(false);
+						setAccelActive(false);
 						statusvec[2] &= ~S2_TR;
 					}
 				}
+				currentcycles -= cmdState.cycleUse;
 			}
 			break;
 
 			// send byte rectangle from vram to vram
 		case R46_CMD_HMMM:
-			saddr = getAbsAddr(cmdState.sx + cmdState.cnt * cmdState.dix, 
-					cmdState.sy + cmdState.ycnt * cmdState.diy, cmdState.mxs);
-			daddr = getAbsAddr(cmdState.dx + cmdState.cnt * cmdState.dix, 
-					cmdState.dy + cmdState.ycnt * cmdState.diy, cmdState.mxd);
-			vdpMmio.writeFlatMemory(daddr, 
-					vdpMmio.readFlatMemory(saddr));
-			cmdState.cnt += pixperbyte;
-			if (cmdState.cnt > cmdState.nx) {
-				cmdState.cnt = 0;
-				if (++cmdState.ycnt > cmdState.ny) {
-					setAccelBusy(false);
+			while ((currentcycles -= cmdState.cycleUse) > 0) {
+				saddr = getAbsAddr(cmdState.sx + cmdState.cnt * cmdState.dix, 
+						cmdState.sy + cmdState.ycnt * cmdState.diy, cmdState.mxs);
+				daddr = getAbsAddr(cmdState.dx + cmdState.cnt * cmdState.dix, 
+						cmdState.dy + cmdState.ycnt * cmdState.diy, cmdState.mxd);
+				vdpMmio.writeFlatMemory(daddr, 
+						vdpMmio.readFlatMemory(saddr));
+				cmdState.cnt += pixperbyte;
+				if (cmdState.cnt > cmdState.nx) {
+					cmdState.cnt = 0;
+					if (++cmdState.ycnt > cmdState.ny) {
+						setAccelActive(false);
+						break;
+					}
 				}
 			}
 			break;
 
 			// send single CLR byte to rectangle
 		case R46_CMD_HMMV:
-			addr = getAbsAddr(cmdState.dx + cmdState.cnt * cmdState.dix, 
-					cmdState.dy + cmdState.ycnt * cmdState.diy, cmdState.mxd);
-			vdpMmio.writeFlatMemory(addr, cmdState.clr);
-			cmdState.cnt += pixperbyte;
-			if (cmdState.cnt > cmdState.nx) {
-				cmdState.cnt = 0;
-				if (++cmdState.ycnt > cmdState.ny) {
-					setAccelBusy(false);
+			while ((currentcycles -= cmdState.cycleUse) > 0) {
+				addr = getAbsAddr(cmdState.dx + cmdState.cnt * cmdState.dix, 
+						cmdState.dy + cmdState.ycnt * cmdState.diy, cmdState.mxd);
+				vdpMmio.writeFlatMemory(addr, cmdState.clr);
+				cmdState.cnt += pixperbyte;
+				if (cmdState.cnt > cmdState.nx) {
+					cmdState.cnt = 0;
+					if (++cmdState.ycnt > cmdState.ny) {
+						setAccelActive(false);
+						break;
+					}
 				}
 			}
 			break;
@@ -878,10 +970,11 @@ public class VdpV9938 extends VdpTMS9918A {
 				setPixel(cmdState.dx + cmdState.cnt * cmdState.dix, 
 						cmdState.dy + cmdState.ycnt * cmdState.diy,
 						vdpregs[R44_CLR] & pixmask, cmdState.op);
+				currentcycles -= cmdState.cycleUse;
 				if (++cmdState.cnt > cmdState.nx) {
 					cmdState.cnt = 0;
 					if (++cmdState.ycnt > cmdState.ny) {
-						setAccelBusy(false);
+						setAccelActive(false);
 						statusvec[2] &= ~S2_TR;
 					}
 				}
@@ -890,28 +983,34 @@ public class VdpV9938 extends VdpTMS9918A {
 			
 			// send single CLR pixel to rectangle 
 		case R46_CMD_LMMV:
-			setPixel(cmdState.dx + cmdState.cnt * cmdState.dix, 
-					cmdState.dy + cmdState.ycnt * cmdState.diy,
-					cmdState.clr & pixmask, cmdState.op);
-			if (++cmdState.cnt > cmdState.nx) {
-				cmdState.cnt = 0;
-				if (++cmdState.ycnt > cmdState.ny) {
-					setAccelBusy(false);
+			while ((currentcycles -= cmdState.cycleUse) > 0) {
+				setPixel(cmdState.dx + cmdState.cnt * cmdState.dix, 
+						cmdState.dy + cmdState.ycnt * cmdState.diy,
+						cmdState.clr & pixmask, cmdState.op);
+				if (++cmdState.cnt > cmdState.nx) {
+					cmdState.cnt = 0;
+					if (++cmdState.ycnt > cmdState.ny) {
+						setAccelActive(false);
+						break;
+					}
 				}
 			}
 			break;
 			
 			// send pixel rectangle from vram to vram
 		case R46_CMD_LMMM:
-			byte color = getPixel(cmdState.sx + cmdState.cnt * cmdState.dix, 
-					cmdState.sy + cmdState.ycnt * cmdState.diy);
-			setPixel(cmdState.dx + cmdState.cnt * cmdState.dix, 
-					cmdState.dy + cmdState.ycnt * cmdState.diy, cmdState.op, color);
-			cmdState.cnt += pixperbyte;
-			if (cmdState.cnt > cmdState.nx) {
-				cmdState.cnt = 0;
-				if (++cmdState.ycnt > cmdState.ny) {
-					setAccelBusy(false);
+			while ((currentcycles -= cmdState.cycleUse) > 0) {
+				byte color = getPixel(cmdState.sx + cmdState.cnt * cmdState.dix, 
+						cmdState.sy + cmdState.ycnt * cmdState.diy);
+				setPixel(cmdState.dx + cmdState.cnt * cmdState.dix, 
+						cmdState.dy + cmdState.ycnt * cmdState.diy, cmdState.op, color);
+				cmdState.cnt += pixperbyte;
+				if (cmdState.cnt > cmdState.nx) {
+					cmdState.cnt = 0;
+					if (++cmdState.ycnt > cmdState.ny) {
+						setAccelActive(false);
+						break;
+					}
 				}
 			}
 			break;
@@ -1029,4 +1128,21 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 
 
+	@Override
+	protected int getVideoHeight() {
+		int baseHeight = ((vdpregs[9] & R9_LN) != 0 ? 212 : 192);
+		//return ((vdpregs[9] & R9_IL) != 0) ? baseHeight * 2 : baseHeight;
+		return baseHeight;
+	}
+
+	public synchronized int getGraphicsPageOffset() {
+		return pageOffset;
+	}
+	public int getGraphicsPageSize() {
+		return pageSize;
+	}
+
+	public boolean isInterlacedEvenOdd() {
+		return isInterlacedEvenOdd;
+	}
 }
