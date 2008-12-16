@@ -67,8 +67,8 @@ public class KeyboardState {
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1  /* 120-127 */
     };
 	private final InternalCru cru;
-	private final Cpu cpu;
-	private long lastAbortTime;
+	//private final Cpu cpu;
+	//private long lastAbortTime;
 
     /*	This macro tells us whether an ASCII code has a direct mapping
 	to a 9901 keyboard matrix location (stored in latinto9901[]).
@@ -83,7 +83,7 @@ public class KeyboardState {
     }
 
     public KeyboardState(Cpu cpu, InternalCru cru) {
-		this.cpu = cpu;
+		//this.cpu = cpu;
 		this.cru = cru;
         
     }
@@ -187,11 +187,13 @@ public class KeyboardState {
 	            r = (byte) (b >> 4);
 	            c = (byte) (b & 15);
 	            
+	            /*
 	            // NMI on FCTN+SHIFT+CTRL
 	            if (shift == CTRL + FCTN + SHIFT && key == ' '
 	            		&& TESTKBDCRU(r, c) && !onoff) {
 	            	cpu.holdpin(Cpu.INTPIN_LOAD);
 	            }
+	            */
 	            
 	            CHANGEKBDCRU(r, c, onoff ? 1 : 0);
 	            

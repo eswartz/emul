@@ -48,6 +48,8 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 		bitcolormask = (short) ((((short) (vdpregs[3] & 0x7f)) << 6) | 0x3f);
 
 		// thanks, Thierry!
+		// in "bitmap text" mode, the full pattern table is always addressed,
+		// otherwise, the color bits are used in the pattern masking
 		if ((vdpregs[1] & 0x10) != 0)
 			bitpattmask = (short) ((((short) (vdpregs[4] & 0x03) << 11)) | 0x7ff);
 		else

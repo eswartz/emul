@@ -31,16 +31,7 @@ import v9t9.utils.Utils;
  * Graphics 6 mode:  0   0   1   0   1		= 20	>81E0, >800A (bitmap 512x192x16)
  * Graphics 7 mode:  0   0   1   1   1		= 28	>81E0, >800E (bitmap 256x192x256)
  * </pre>
- * TODO: toying with R2, R9 and the row masking
- * TODO: even-odd sprite colors in mode 5
- * TODO: mono mode should only need 64 bytes... but somehow the color mask is
- * affecting the pattern mask too?
- * TODO: figure out actual memory access times... from what I can tell,
- * and wishful thinking, it's twice as fast as the TMS9918A memory. 
- * 081206: it seems that, given the existence of the HMMV command, which
- * promises "fast" CPU->VRAM movement but also requires tons of vwreg
- * writing, it must be only the VDP memory access, not the port access,
- * which is slow.
+ * TODO: toying with row masking
  * TODO: acceleration: YMMV, SRCH, test HMMM and LMMM; set registers to expected values when done
  * @author ejs  
  *
@@ -350,6 +341,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			blinkOffPeriod = (val & 0xf);
 			blinkPeriod = blinkOnPeriod + blinkOffPeriod;
 			blinkOn = false;
+			redraw |= REDRAW_PALETTE;
 			// no redraw right now
 			break;
 			

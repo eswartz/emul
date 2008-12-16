@@ -264,8 +264,10 @@ public class VdpTMS9918A implements VdpHandler {
 		int reg0 = vdpregs[0] & R0_M3;
 		int reg1 = vdpregs[1] & R1_M1 + R1_M2;
     	
-    	if (reg0 == R0_M3)
+    	if (reg0 == R0_M3) {
+    		// can support multi+bitmap or text+bitmap modes too... but not now
     		return MODE_BITMAP;
+    	}
     	if (reg1 == R1_M2)
     		return MODE_MULTI;
     	if (reg1 == R1_M1)
