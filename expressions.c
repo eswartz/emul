@@ -1723,6 +1723,10 @@ static void command_evaluate(char * token, Channel * c) {
             json_write_string(&c->out, "Type");
             write_stream(&c->out, ':');
             json_write_string(&c->out, symbol2id(&value.type));
+            write_stream(&c->out, ',');
+            json_write_string(&c->out, "ExeID");
+            write_stream(&c->out, ':');
+            json_write_string(&c->out, container_id(value.type.ctx));
             cnt++;
         }
 
