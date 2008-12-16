@@ -49,12 +49,12 @@ abstract class StepCommand implements IDebugCommandHandler {
                     if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
                     else node = model.getRootNode();
                     while (node != null && !node.isDisposed()) {
-                        if (!node.validateNode(this)) return;
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            ctx = ((TCFNodeExecContext)node).getRunContext();
+                            if (!node.validateNode(this)) return;
+                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
                         }
-                        if (!canExecute(ctx)) {
+                        if (ctx == null || !canExecute(ctx)) {
                             node = node.getParent();
                         }
                         else {
@@ -80,12 +80,12 @@ abstract class StepCommand implements IDebugCommandHandler {
                     if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
                     else node = model.getRootNode();
                     while (node != null && !node.isDisposed()) {
-                        if (!node.validateNode(this)) return;
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            ctx = ((TCFNodeExecContext)node).getRunContext();
+                            if (!node.validateNode(this)) return;
+                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
                         }
-                        if (!canExecute(ctx)) {
+                        if (ctx == null || !canExecute(ctx)) {
                             node = node.getParent();
                         }
                         else {

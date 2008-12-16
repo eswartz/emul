@@ -13,11 +13,13 @@ package org.eclipse.tm.internal.tcf.debug.model;
 import java.math.BigInteger;
 
 import org.eclipse.tm.tcf.services.ILineNumbers;
+import org.eclipse.tm.tcf.services.IMemory;
 
 /**
  * Objects of this class represent a mapping between an address and source code area. 
  */
 public class TCFSourceRef {
+    public IMemory.MemoryContext context;
     public BigInteger address;
     public ILineNumbers.CodeArea area;
     public Throwable error;

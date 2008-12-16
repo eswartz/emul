@@ -45,10 +45,10 @@ public class TerminateCommand implements ITerminateHandler {
                     TCFNode node = null;
                     if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
                     while (node != null && !node.isDisposed()) {
-                        if (!node.validateNode(this)) return;
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            ctx = ((TCFNodeExecContext)node).getRunContext();
+                            if (!node.validateNode(this)) return;
+                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
                         }
                         if (ctx != null && ctx.canTerminate()) {
                             res = true;
@@ -73,10 +73,10 @@ public class TerminateCommand implements ITerminateHandler {
                     TCFNode node = null;
                     if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
                     while (node != null && !node.isDisposed()) {
-                        if (!node.validateNode(this)) return;
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            ctx = ((TCFNodeExecContext)node).getRunContext();
+                            if (!node.validateNode(this)) return;
+                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
                         }
                         if (ctx != null && ctx.canTerminate()) {
                             set.add(ctx);

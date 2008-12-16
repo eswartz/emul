@@ -128,4 +128,20 @@
       </specification>
    </extension>
 
+   <extension point="org.eclipse.debug.ui.detailPaneFactories">
+      <detailFactories
+             class="org.eclipse.tm.internal.tcf.debug.ui.model.TCFDetailPaneFactory"
+             id="org.eclipse.tm.tcf.debug.DetailPaneFactory">
+         <enablement>
+            <with variable="selection">
+               <iterate>
+                  <or>
+                     <instanceof value="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode"/>
+                  </or>
+               </iterate>
+            </with>
+         </enablement>                   
+      </detailFactories>
+   </extension>
+    
 </plugin>

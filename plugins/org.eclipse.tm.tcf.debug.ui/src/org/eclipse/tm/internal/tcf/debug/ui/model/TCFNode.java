@@ -154,7 +154,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     /**
      * Return address of this node.
      * For executable contexts and stack frames address is current PC.
-     * @return
+     * @return BigInteger - remote memory address that is associated with this node
      */
     public BigInteger getAddress() {
         return null;
@@ -332,7 +332,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     public abstract boolean validateNode(Runnable done);
     
     /**
-     * Subclasses can use this method to validate a collection of nodes.
+     * Clients can use this method to validate a collection of nodes.
      * Validation of multiple nodes is expensive and should be avoided
      * when possible.
      * 
@@ -342,7 +342,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @param nodes
      * @return true if all nodes are already valid, false if validation is started.
      */
-    protected boolean validateNodes(Collection<TCFNode> nodes, Runnable done) {
+    public static boolean validateNodes(Collection<TCFNode> nodes, Runnable done) {
         TCFNode pending = null;
         for (TCFNode n : nodes) {
             if (!n.validateNode(null)) pending = n;

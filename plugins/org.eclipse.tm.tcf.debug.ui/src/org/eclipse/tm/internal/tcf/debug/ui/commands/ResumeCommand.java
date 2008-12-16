@@ -46,10 +46,10 @@ public class ResumeCommand implements IResumeHandler {
                     if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
                     else node = model.getRootNode();
                     while (node != null && !node.isDisposed()) {
-                        if (!node.validateNode(this)) return;
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            ctx = ((TCFNodeExecContext)node).getRunContext();
+                            if (!node.validateNode(this)) return;
+                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
                         }
                         if (ctx == null) {
                             node = node.getParent();
@@ -82,10 +82,10 @@ public class ResumeCommand implements IResumeHandler {
                     if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
                     else node = model.getRootNode();
                     while (node != null && !node.isDisposed()) {
-                        if (!node.validateNode(this)) return;
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            ctx = ((TCFNodeExecContext)node).getRunContext();
+                            if (!node.validateNode(this)) return;
+                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
                         }
                         if (ctx == null) {
                             node = node.getParent();

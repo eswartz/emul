@@ -99,6 +99,10 @@ public class ExpressionsProxy implements IExpressions {
             return (String)props.get(VAL_TYPE);
         }
 
+        public String getExeContextID() {
+            return (String)props.get(VAL_EXE_ID);
+        }
+
         public byte[] getValue() {
             return value;
         }

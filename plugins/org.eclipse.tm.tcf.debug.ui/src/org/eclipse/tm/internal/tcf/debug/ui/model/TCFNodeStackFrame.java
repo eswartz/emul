@@ -82,23 +82,41 @@ public class TCFNodeStackFrame extends TCFNode {
                     set(null, null, null);
                     return true;
                 }
+                IMemory.MemoryContext mem_ctx = null;
+                TCFNode p = parent;
+                while (p != null) {
+                    if (p instanceof TCFNodeExecContext) {
+                        TCFDataCache<IMemory.MemoryContext> cache = ((TCFNodeExecContext)p).getMemoryContext();
+                        if (!cache.validate()) {
+                            cache.wait(this);
+                            return false;
+                        }
+                        mem_ctx = cache.getData();
+                        if (mem_ctx != null) break;
+                    }
+                    p = p.parent;
+                }
                 TCFSourceRef l = line_info_cache.get(n);
                 if (l != null) {
+                    l.context = mem_ctx;
                     set(null, null, l);
                     return true;
                 }
                 ILineNumbers ln = model.getLaunch().getService(ILineNumbers.class);
                 if (ln == null) {
                     l = new TCFSourceRef();
+                    l.context = mem_ctx;
                     l.address = n;
                     set(null, null, l);
                     return true;
                 }
                 final BigInteger n0 = n;
                 final BigInteger n1 = n0.add(BigInteger.valueOf(1));
+                final IMemory.MemoryContext ctx = mem_ctx;
                 command = ln.mapToSource(parent.id, n0, n1, new ILineNumbers.DoneMapToSource() {
                     public void doneMapToSource(IToken token, Exception error, CodeArea[] areas) {
                         TCFSourceRef l = new TCFSourceRef();
+                        l.context = ctx;
                         l.address = n0;
                         if (error == null && areas != null && areas.length > 0) {
                             for (ILineNumbers.CodeArea area : areas) {
@@ -289,7 +307,7 @@ public class TCFNodeStackFrame extends TCFNode {
                     result.setLabel("...", 0);
                 }
                 else {
-                    String label = makeHexAddrString(l.address);
+                    String label = makeHexAddrString(l.context, l.address);
                     if (l.area != null && l.area.file != null) {
                         label += ": " + l.area.file + ", line " + l.area.start_line;
                     }
@@ -299,12 +317,11 @@ public class TCFNodeStackFrame extends TCFNode {
         }
     }
 
-    private String makeHexAddrString(Number n) {
+    private String makeHexAddrString(IMemory.MemoryContext m, Number n) {
         BigInteger i = null;
         if (n instanceof BigInteger) i = (BigInteger)n;
         else i = new BigInteger(n.toString());
         String s = i.toString(16);
-        IMemory.MemoryContext m = ((TCFNodeExecContext)parent).getMemoryContext();
         int sz = (m != null ? m.getAddressSize() : 4) * 2;
         int l = sz - s.length();
         if (l < 0) l = 0;

@@ -76,11 +76,13 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.StepReturnCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.SuspendCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.TerminateCommand;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IEditorInput;
@@ -119,6 +121,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private static final Map<ILaunchConfiguration,IEditorInput> editor_not_found = 
         new HashMap<ILaunchConfiguration,IEditorInput>();
     
+    private final Map<String,Map<String,TCFDataCache<ISymbols.Symbol>>> symbols =
+        new HashMap<String,Map<String,TCFDataCache<ISymbols.Symbol>>>();
+    
+    private final Map<String,Map<String,TCFDataCache<String[]>>> symbol_children =
+        new HashMap<String,Map<String,TCFDataCache<String[]>>>();
+    
     private TCFNodeLaunch launch_node;
     private boolean disposed;
 
@@ -150,6 +158,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 TCFNode node = getNode(contexts[i].getID());
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContextChanged(contexts[i]);
+                }
+                Map<String,TCFDataCache<ISymbols.Symbol>> m = symbols.remove(contexts[i].getID());
+                if (m != null) {
+                    for (TCFDataCache<ISymbols.Symbol> s : m.values()) s.cancel();
                 }
             }
             fireModelChanged();
@@ -567,6 +579,52 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (id.equals("")) return launch_node;
         assert Protocol.isDispatchThread();
         return id2node.get(id);
+    }
+    
+    public TCFDataCache<ISymbols.Symbol> getSymbolInfoCache(String mem_id, final String sym_id) {
+        Map<String,TCFDataCache<ISymbols.Symbol>> m = symbols.get(mem_id);
+        if (m == null) symbols.put(mem_id, m = new HashMap<String,TCFDataCache<ISymbols.Symbol>>());
+        TCFDataCache<ISymbols.Symbol> s = m.get(sym_id);
+        if (s == null) m.put(sym_id, s = new TCFDataCache<ISymbols.Symbol>(launch.getChannel()) {
+            @Override
+            protected boolean startDataRetrieval() {
+                ISymbols syms = getLaunch().getService(ISymbols.class);
+                if (sym_id == null || syms == null) {
+                    set(null, null, null);
+                    return true;
+                }
+                command = syms.getContext(sym_id, new ISymbols.DoneGetContext() {
+                    public void doneGetContext(IToken token, Exception error, ISymbols.Symbol sym) {
+                        set(token, error, sym);
+                    }
+                });
+                return false;
+            }
+        });
+        return s;
+    }
+
+    public TCFDataCache<String[]> getSymbolChildrenCache(String mem_id, final String sym_id) {
+        Map<String,TCFDataCache<String[]>> m = symbol_children.get(mem_id);
+        if (m == null) symbol_children.put(mem_id, m = new HashMap<String,TCFDataCache<String[]>>());
+        TCFDataCache<String[]> s = m.get(sym_id);
+        if (s == null) m.put(sym_id, s = new TCFDataCache<String[]>(launch.getChannel()) {
+            @Override
+            protected boolean startDataRetrieval() {
+                ISymbols syms = getLaunch().getService(ISymbols.class);
+                if (sym_id == null || syms == null) {
+                    set(null, null, null);
+                    return true;
+                }
+                command = syms.getChildren(sym_id, new ISymbols.DoneGetChildren() {
+                    public void doneGetChildren(IToken token, Exception error, String[] ids) {
+                        set(token, error, ids);
+                    }
+                });
+                return false;
+            }
+        });
+        return s;
     }
 
     public void update(IChildrenCountUpdate[] updates) {

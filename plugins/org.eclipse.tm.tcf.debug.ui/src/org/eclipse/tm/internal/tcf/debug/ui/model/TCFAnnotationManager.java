@@ -378,9 +378,10 @@ public class TCFAnnotationManager {
                 public void run() {
                     IRunControl.RunControlContext x = null;
                     TCFNode n = (TCFNode)adaptable;
-                    while (x == null && n != null) {
+                    while (x == null && n != null && !n.isDisposed()) {
                         if (n instanceof TCFNodeExecContext) {
-                            x = ((TCFNodeExecContext)n).getRunContext(); 
+                            if (!n.validateNode(this)) return;
+                            x = ((TCFNodeExecContext)n).getRunContext().getData(); 
                         }
                         n = n.parent;
                     }

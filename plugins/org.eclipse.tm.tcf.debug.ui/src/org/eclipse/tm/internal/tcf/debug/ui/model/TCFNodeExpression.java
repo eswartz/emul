@@ -1,5 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2008 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Eclipse Public License v1.0 
+ * which accompanies this distribution, and is available at 
+ * http://www.eclipse.org/legal/epl-v10.html 
+ *  
+ * Contributors:
+ *     Wind River Systems - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
@@ -14,10 +25,12 @@ import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
+// TODO: elements of long arrays need to be shown in groups 
 public class TCFNodeExpression extends TCFNode {
 
     private final String script;
@@ -192,19 +205,24 @@ public class TCFNodeExpression extends TCFNode {
                     value.wait(this);
                     return false;
                 }
-                String id = null;
-                if (value.getData() != null) id = value.getData().getTypeID();
-                ISymbols syms = model.getLaunch().getService(ISymbols.class);
-                if (id == null || syms == null) {
+                IExpressions.Value v = value.getData();
+                if (v == null) {
                     set(null, null, null);
                     return true;
                 }
-                command = syms.getContext(id, new ISymbols.DoneGetContext() {
-                    public void doneGetContext(IToken token, Exception error, ISymbols.Symbol sym) {
-                        set(token, error, sym);
-                    }
-                });
-                return false;
+                String ctx_id = v.getExeContextID();
+                String type_id = v.getTypeID();
+                if (ctx_id == null || type_id == null) {
+                    set(null, null, null);
+                    return true;
+                }
+                TCFDataCache<ISymbols.Symbol> s = model.getSymbolInfoCache(ctx_id, type_id);
+                if (!s.validate()) {
+                    s.wait(this);
+                    return false;
+                }
+                set(null, s.getError(), s.getData());
+                return true;
             }
         };
         children = new TCFChildrenSubExpressions(this);
@@ -267,71 +285,82 @@ public class TCFNodeExpression extends TCFNode {
         return type;
     }
     
-    private BigInteger toBigInteger(byte[] data, boolean big_endian, boolean sign_extension) {
+    private BigInteger toBigInteger(byte[] data, int offs, int size, boolean big_endian, boolean sign_extension) {
         byte[] temp = null;
         if (sign_extension) {
-            temp = new byte[data.length];
+            temp = new byte[size];
         }
         else {
-            temp = new byte[data.length + 1];
+            temp = new byte[size + 1];
             temp[0] = 0; // Extra byte to avoid sign extension by BigInteger
         }
         if (big_endian) {
-            System.arraycopy(data, 0, temp, sign_extension ? 0 : 1, data.length);
+            System.arraycopy(data, offs, temp, sign_extension ? 0 : 1, size);
         }
         else {
-            for (int i = 0; i < data.length; i++) {
-                temp[temp.length - i - 1] = data[i];
+            for (int i = 0; i < size; i++) {
+                temp[temp.length - i - 1] = data[i + offs];
             }
         }
         return new BigInteger(temp);
     }
     
-    private void setLabel(ILabelUpdate result, String name, int col, int radix) {
+    private String toNumberString(int radix, ISymbols.Symbol t, byte[] data, int offs, int size, boolean big_endian) {
         String s = null;
-        IExpressions.Value val = value.getData();
-        if (val != null) {
-            byte[] data = val.getValue();
-            if (data == null) s = "n/a";
-            if (s == null && data.length == 0) s = "";
-            if (s == null && radix == 10 && data.length <= 16) {
-                ISymbols.Symbol t = type.getData();
-                if (t != null) {
-                    switch (t.getTypeClass()) {
-                    case integer:
-                        s = toBigInteger(data, val.isBigEndian(), true).toString();
+        if (data == null) s = "N/A";
+        if (s == null && size == 0) s = "";
+        if (s == null && radix == 10 && size <= 16) {
+            if (t != null) {
+                switch (t.getTypeClass()) {
+                case integer:
+                    s = toBigInteger(data, offs, size, big_endian, true).toString();
+                    break;
+                case real:
+                    switch (t.getSize()) {
+                    case 4:
+                        s = Float.toString(Float.intBitsToFloat(toBigInteger(
+                                data, offs, size, big_endian, true).intValue()));
                         break;
-                    case real:
-                        switch (t.getSize()) {
-                        case 4:
-                            s = Float.toString(Float.intBitsToFloat(toBigInteger(
-                                    data, val.isBigEndian(), true).intValue()));
-                            break;
-                        case 8:
-                            s = Double.toString(Double.longBitsToDouble(toBigInteger(
-                                    data, val.isBigEndian(), true).longValue()));
-                            break;
-                        }
+                    case 8:
+                        s = Double.toString(Double.longBitsToDouble(toBigInteger(
+                                data, offs, size, big_endian, true).longValue()));
                         break;
                     }
-                }
-            }
-            if (s == null && data.length <= 16) {
-                s = toBigInteger(data, val.isBigEndian(), false).toString(radix);
-                switch (radix) {
-                case 8:
-                    if (!s.startsWith("0")) s = "0" + s;
-                    break;
-                case 16:
-                    int l = data.length * 2 - s.length();
-                    if (l < 0) l = 0;
-                    if (l > 16) l = 16;
-                    s = "0000000000000000".substring(0, l) + s;
                     break;
                 }
             }
         }
+        if (s == null && size <= 16) {
+            s = toBigInteger(data, offs, size, big_endian, false).toString(radix);
+            switch (radix) {
+            case 8:
+                if (!s.startsWith("0")) s = "0" + s;
+                break;
+            case 16:
+                int l = size * 2 - s.length();
+                if (l < 0) l = 0;
+                if (l > 16) l = 16;
+                s = "0000000000000000".substring(0, l) + s;
+                break;
+            }
+        }
+        if (s == null) s = "N/A";
+        return s;
+    }
+    
+    private String toNumberString(int radix) {
+        String s = null;
+        IExpressions.Value val = value.getData();
+        if (val != null) {
+            byte[] data = val.getValue();
+            s = toNumberString(radix, type.getData(), data, 0, data.length, val.isBigEndian());
+        }
         if (s == null) s = "...";
+        return s;
+    }
+    
+    private void setLabel(ILabelUpdate result, String name, int col, int radix) {
+        String s = toNumberString(radix);
         if (name == null) {
             result.setLabel(s, col);
         }
@@ -371,7 +400,7 @@ public class TCFNodeExpression extends TCFNode {
                 }
             }
         }
-        if (s == null) s = "";
+        if (s == null) s = "N/A";
         result.setLabel(s, col);
     }
     
@@ -386,12 +415,21 @@ public class TCFNodeExpression extends TCFNode {
         Throwable error = expression.getError();
         if (error == null) error = value.getError();
         if (error == null) error = type.getError();
+        String[] cols = result.getColumnIds();
         if (error != null) {
-            result.setForeground(new RGB(255, 0, 0), 0);
-            result.setLabel(name + ": " + error.getMessage(), 0);
+            if (cols == null || cols.length <= 1) {
+                result.setForeground(new RGB(255, 0, 0), 0);
+                result.setLabel(name + ": N/A", 0);
+            }
+            else {
+                result.setLabel(name, 0);
+                for (int i = 1; i < cols.length; i++) {
+                    result.setForeground(new RGB(255, 0, 0), i);
+                    result.setLabel("N/A", i);
+                }
+            }
         }
         else {
-            String[] cols = result.getColumnIds();
             if (cols == null) {
                 setLabel(result, name, 0, 16);
             }
@@ -413,6 +451,174 @@ public class TCFNodeExpression extends TCFNode {
                 }
             }
         }
+    }
+    
+    private void appendErrorText(StringBuffer bf, Throwable error) {
+        if (error == null) return;
+        bf.append("Exception: ");
+        for (;;) {
+            String s = error.getLocalizedMessage();
+            if (s == null || s.length() == 0) s = error.getClass().getName();
+            bf.append(s);
+            if (!s.endsWith("\n")) bf.append('\n');
+            Throwable cause = error.getCause();
+            if (cause == null) return;
+            bf.append("Caused by: ");
+            error = cause;
+        }
+    }
+    
+    private boolean appendArrayValueText(StringBuffer bf, int level, ISymbols.Symbol t,
+            byte[] data, int offs, int size, boolean big_endian, Runnable done) {
+        TCFDataCache<ISymbols.Symbol> c = model.getSymbolInfoCache(t.getExeContextID(), t.getBaseTypeID());
+        if (!c.validate()) {
+            c.wait(done);
+            return false;
+        }
+        ISymbols.Symbol b = c.getData();
+        int length = t.getLength();
+        if (level == 0) {
+            if (size == length) {
+                try {
+                    bf.append('"');
+                    String s = new String(data, offs, size, "ASCII");
+                    int l = s.length();
+                    String end_q = "\"";
+                    if (l > 300) {
+                        l = 300;
+                        end_q = "...";
+                    }
+                    for (int i = 0; i < l; i++) {
+                        char ch = s.charAt(i);
+                        if (ch < ' ') ch = ' ';
+                        bf.append(ch);
+                    }
+                    bf.append(end_q);
+                }
+                catch (UnsupportedEncodingException e) {
+                    Protocol.log("ASCII", e);
+                }
+                bf.append('\n');
+            }
+        }
+        if (b == null) return true;
+        int elem_size = size / length;
+        bf.append('[');
+        for (int n = 0; n < length; n++) {
+            if (n >= 100) {
+                bf.append("...");
+                break;
+            }
+            if (n > 0) bf.append(", ");
+            if (!appendValueText(bf, level + 1, b, data, offs + n * elem_size, elem_size, big_endian, done)) return false;
+        }
+        bf.append(']');
+        if (level == 0) bf.append('\n');
+        return true;
+    }
+    
+    private boolean appendCompositeValueText(StringBuffer bf, int level, ISymbols.Symbol t,
+            byte[] data, int offs, int size, boolean big_endian, Runnable done) {
+        TCFDataCache<String[]> c = model.getSymbolChildrenCache(t.getExeContextID(), t.getID());
+        if (!c.validate()) {
+            c.wait(done);
+            return false;
+        }
+        String[] ids = c.getData();
+        if (ids == null) return true;
+        bf.append('{');
+        for (String id : ids) {
+            if (id != ids[0]) bf.append(", ");
+            TCFDataCache<ISymbols.Symbol> s = model.getSymbolInfoCache(t.getExeContextID(), id);
+            if (!s.validate()) {
+                s.wait(done);
+                return false;
+            }
+            ISymbols.Symbol f = s.getData();
+            if (!appendValueText(bf, level + 1, f, data, offs + f.getOffset(), f.getSize(), big_endian, done)) return false;
+        }
+        bf.append('}');
+        return true;
+    }
+    
+    private boolean appendValueText(StringBuffer bf, int level, ISymbols.Symbol t,
+            byte[] data, int offs, int size, boolean big_endian, Runnable done) {
+        if (data == null) return true;
+        switch (t.getTypeClass()) {
+        case enumeration:
+        case integer:
+        case cardinal:
+        case real:
+            if (level == 0) {
+                bf.append("Dec: ");
+                bf.append(toNumberString(10, t, data, offs, size, big_endian));
+                bf.append("\n");
+                bf.append("Oct: ");
+                bf.append(toNumberString(8, t, data, offs, size, big_endian));
+                bf.append("\n");
+                bf.append("Hex: ");
+                bf.append(toNumberString(16, t, data, offs, size, big_endian));
+                bf.append("\n");
+            }
+            else if (t.getTypeClass() == ISymbols.TypeClass.cardinal) {
+                bf.append("0x");
+                bf.append(toNumberString(16, t, data, offs, size, big_endian));
+            }
+            else {
+                bf.append(toNumberString(10, t, data, offs, size, big_endian));
+            }
+            break;
+        case pointer:
+        case function:
+            if (level == 0) {
+                bf.append("Oct: ");
+                bf.append(toNumberString(8, t, data, offs, size, big_endian));
+                bf.append("\n");
+                bf.append("Hex: ");
+                bf.append(toNumberString(16, t, data, offs, size, big_endian));
+                bf.append("\n");
+            }
+            else {
+                bf.append("0x");
+                bf.append(toNumberString(16, t, data, offs, size, big_endian));
+            }
+            break;
+        case array:
+            if (!appendArrayValueText(bf, level, t, data, offs, size, big_endian, done)) return false;
+            break;
+        case composite:
+            if (!appendCompositeValueText(bf, level, t, data, offs, size, big_endian, done)) return false;
+            break;
+        default:
+            bf.append('?');
+            break;
+        }
+        return true;
+    }
+    
+    String getDetailText(Runnable done) {
+        StringBuffer bf = new StringBuffer();
+        appendErrorText(bf, expression.getError());
+        appendErrorText(bf, value.getError());
+        appendErrorText(bf, type.getError());
+        if (bf.length() == 0) {
+            IExpressions.Value v = value.getData();
+            if (v != null) {
+                byte[] data = v.getValue();
+                boolean big_endian = v.isBigEndian();
+                ISymbols.Symbol t = type.getData();
+                if (t != null) {
+                    if (!appendValueText(bf, 0, t, data, 0, data.length, big_endian, done)) return null;
+                }
+                else {
+                    bf.append("Hex: ");
+                    bf.append(toNumberString(16, t, data, 0, data.length, big_endian));
+                    bf.append("\n");
+                    bf.append("Value type is not available\n");
+                }
+            }
+        }
+        return bf.toString();
     }
 
     @Override

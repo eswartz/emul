@@ -171,7 +171,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                         error("Context is disposed");
                     }
                     else if (exec_ctx.validateNode(this)) {
-                        IMemory.MemoryContext mem = exec_ctx.getMemoryContext();
+                        IMemory.MemoryContext mem = exec_ctx.getMemoryContext().getData();
                         if (mem == null) {
                             error("Context does not provide memory access");
                         }
@@ -249,7 +249,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                         error("Context is disposed");
                     }
                     else if (exec_ctx.validateNode(this)) {
-                        final IMemory.MemoryContext mem = exec_ctx.getMemoryContext();
+                        final IMemory.MemoryContext mem = exec_ctx.getMemoryContext().getData();
                         if (mem == null) {
                             error("Context does not provide memory access");
                         }

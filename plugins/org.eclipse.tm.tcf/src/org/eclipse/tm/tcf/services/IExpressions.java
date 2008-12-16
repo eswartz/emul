@@ -126,6 +126,12 @@ public interface IExpressions extends IService {
         String getTypeID();
 
         /**
+         * Get execution context ID (thread or process) that owns type symbol for this value.
+         * @return execution context ID.
+         */
+        String getExeContextID();
+
+        /**
          * Check endianess of the values.
          * Big endian means decreasing numeric significance with increasing byte number. 
          * @return true if big endian.
@@ -151,6 +157,7 @@ public interface IExpressions extends IService {
     static final String
         VAL_CLASS = "Class",
         VAL_TYPE = "Type",
+        VAL_EXE_ID = "ExeID",
         VAL_BIG_ENDIAN = "BigEndian";
 
     /**

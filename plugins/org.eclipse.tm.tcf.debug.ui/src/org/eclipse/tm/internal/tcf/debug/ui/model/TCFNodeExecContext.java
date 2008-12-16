@@ -153,16 +153,12 @@ public class TCFNodeExecContext extends TCFNode {
         return line_info_cache;
     }
 
-    public IRunControl.RunControlContext getRunContext() {
-        assert Protocol.isDispatchThread();
-        if (!run_context.isValid()) return null;
-        return run_context.getData();
+    public TCFDataCache<IRunControl.RunControlContext> getRunContext() {
+        return run_context;
     }
 
-    public IMemory.MemoryContext getMemoryContext() {
-        assert Protocol.isDispatchThread();
-        if (!mem_context.isValid()) return null;
-        return mem_context.getData();
+    public TCFDataCache<IMemory.MemoryContext> getMemoryContext() {
+        return mem_context;
     }
 
     public boolean isRunning() {
