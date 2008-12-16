@@ -47,7 +47,6 @@ import v9t9.utils.Utils;
  */
 public class VdpV9938 extends VdpTMS9918A {
 
-	private byte paletteidx;
 	private boolean palettelatched;
 	private byte palettelatch;
 	private int statusidx;
@@ -350,6 +349,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			blinkOnPeriod = ((val >> 4) & 0xf);
 			blinkOffPeriod = (val & 0xf);
 			blinkPeriod = blinkOnPeriod + blinkOffPeriod;
+			blinkOn = false;
 			// no redraw right now
 			break;
 			
@@ -364,7 +364,6 @@ public class VdpV9938 extends VdpTMS9918A {
 			break;
 		case 16:
 			// palette #
-			paletteidx = (byte) (val & 0xf);
 			palettelatched = false;
 			break;
 		case 17:
@@ -467,14 +466,14 @@ public class VdpV9938 extends VdpTMS9918A {
 			palettelatched = true;
 		} else {
 			// first byte: red red/blue, second: green
-			int r = palettelatch >> 4;
+			int r = (palettelatch >> 4) & 0x7;
 			int b = palettelatch & 0x7;
 			int g = val & 0x7;
 			//System.out.println("palette " + paletteidx + ": " + g +"|"+ r + "|"+ b);
-			vdpCanvas.setGRB333(paletteidx & 0xf, g, r, b);
+			vdpCanvas.setGRB333(vdpregs[16] & 0xf, g, r, b);
 			dirtyAll();
 			
-			paletteidx = (byte) ((paletteidx+1)&0xf);
+			vdpregs[16] = (byte) ((vdpregs[16]+1)&0xf);
 			palettelatched = false;
 		}
 	}
@@ -500,24 +499,34 @@ public class VdpV9938 extends VdpTMS9918A {
 	 * Yields one of the MODE_xxx enums based on the current vdpregs[]
 	 * @return
 	 */
-	final protected int get9938ModeNumber() {
-		int mode = (vdpregs[1] & R1_M1) / R1_M1
-		+ (vdpregs[1] & R1_M2) / R1_M2 * 2
-		+ (vdpregs[0] & R0_M3) / R0_M3 * 4
-		+ (vdpregs[0] & R0_M4) / R0_M4 * 8
-		+ (vdpregs[0] & R0_M5) / R0_M5 * 16;
-		if ((mode & 1) != 0 && mode != MODE_TEXT && mode != MODE_TEXT2)
-			mode &= ~1;
-		return mode;
+	public int calculateModeNumber() {
+		int reg0 = vdpregs[0] & R0_M3 + R0_M4 + R0_M5;
+		int reg1 = vdpregs[1] & R1_M1 + R1_M2;
+		
+		if (reg1 == 0) {
+			if (reg0 == R0_M4)
+				return MODE_GRAPHICS3;
+			if (reg0 == R0_M3 + R0_M4)
+				return MODE_GRAPHICS4;
+			if (reg0 == R0_M5)
+				return MODE_GRAPHICS5;
+			if (reg0 == R0_M3 + R0_M5)
+				return MODE_GRAPHICS6;
+			if (reg0 == R0_M3 + R0_M4 + R0_M5)
+				return MODE_GRAPHICS7;
+		} else if (reg1 == R1_M1 && reg0 == R0_M4) {
+			return MODE_TEXT2;
+		}
+		return super.calculateModeNumber();
 	}
 	
 	@Override
 	protected void establishVideoMode() {
-		int mode = get9938ModeNumber();
+		modeNumber = calculateModeNumber();
 		vdpCanvas.setUseAltSpritePalette(false);
 		isEnhancedMode = true;
 		pageSize = 0x8000;
-		switch (mode) {
+		switch (modeNumber) {
 		case MODE_TEXT2:
 			setText2Mode();
 			dirtyAll();	// for border
@@ -548,13 +557,12 @@ public class VdpV9938 extends VdpTMS9918A {
 	
 	@Override
 	protected void setupBackdrop() {
-		int mode = get9938ModeNumber(); 
-		if (mode == MODE_GRAPHICS5) {
+		if (modeNumber == MODE_GRAPHICS5) {
 			// even-odd tiling function
 			vdpCanvas.setClearColor((vdpbg >> 2) & 0x3);
 			vdpCanvas.setClearColor1((vdpbg) & 0x3);
 			vdpCanvas.clearToEvenOddClearColors();
-		} else if (mode == MODE_GRAPHICS7) {
+		} else if (modeNumber == MODE_GRAPHICS7) {
 			// an GRB 332 value is here
 			vdpCanvas.clear(vdpCanvas.getGRB332(vdpregs[7]));
 		} else {
@@ -580,10 +588,12 @@ public class VdpV9938 extends VdpTMS9918A {
 		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
 		int ramsize = getModeAddressMask();
 		
-		vdpModeInfo.screen.base = (vdpregs[2] * 0x400) & ramsize;
+		vdpModeInfo.screen.base = ((vdpregs[2] & 0x7c) * 0x400) & ramsize;
 		vdpModeInfo.screen.size = 80 * 27;	// last 2.5 rows only visible in 212-line mode
-		vdpModeInfo.patt.base = getPatternTableBase() & ramsize;
+		vdpModeInfo.patt.base = getPatternTableBase();
 		vdpModeInfo.patt.size = 2048;
+		vdpModeInfo.color.base = (((vdpregs[10] << 8) | (vdpregs[3] & 0xf8)) << 6) & ramsize;
+		vdpModeInfo.color.size = 2160 / 8;
 		return vdpModeInfo;
 	}
 
@@ -716,12 +726,12 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	@Override
 	protected int getSpriteTableBase() {
-		return (((vdpregs[11] & 0x3) << 8) | (vdpregs[5] & 0xff)) << 7; 
+		return ((((vdpregs[11] & 0x3) << 8) | (vdpregs[5] & 0xff)) << 7) & getModeAddressMask(); 
 	}
 	
 	@Override
 	protected int getColorTableBase() {
-		return (((vdpregs[10] & 0x7) << 8) | (vdpregs[3] & 0xff)) << 6;
+		return ((((vdpregs[10] & 0x7) << 8) | (vdpregs[3] & 0xff)) << 6) & getModeAddressMask();
 	}
 	
 	@Override
@@ -729,31 +739,33 @@ public class VdpV9938 extends VdpTMS9918A {
 		super.tick();
 		
 		// The "blink" controls either the r7/r12 selection for text mode
-		// or the page selection for graphics 4-7 modes
+		// or the page selection for graphics 4-7 modes.
 		
 		// We don't redraw for interlacing; we just detect changes on both
 		// pages and draw them into an interleaved image.  There's not
 		// enough speed in this implementation to allow redrawing at 60 fps.
 		int prevPageOffset = pageOffset;
 		pageOffset = 0;
-		if (isEnhancedMode) {
-			//boolean isInterlaced = (vdpregs[9] & R9_IL) != 0; 
-			boolean isBlinking = (vdpregs[13] != 0) && (vdpregs[2] & 0x20) != 0;
-			/*if ((isBlinking || isInterlacedEvenOdd) && (vdpregs[2] & 0x20) != 0) {
-				if (isInterlacedEvenOdd())
-					pageOffset =((System.currentTimeMillis() / (1000 / 60)) % 2) != 0 ? pageSize : 0;
-				else
-					pageOffset =((System.currentTimeMillis() / (1000 / 6)) % blinkPeriod >= blinkOffPeriod) ? pageSize : 0;
-			}*/
-			if (isBlinking) {
-				pageOffset = ((System.currentTimeMillis() / (1000 / 6)) % blinkPeriod >= blinkOffPeriod) ? pageSize : 0;
+		if (isEnhancedMode && vdpregs[13] != 0) {
+			boolean isPageFlipping = (vdpregs[2] & 0x20) != 0;
+			boolean isBlinking = modeNumber == MODE_TEXT2;
+			
+			boolean isAltMode = (System.currentTimeMillis() / (1000 / 6)) % blinkPeriod >= blinkOffPeriod;
+			if (isPageFlipping) {
+				pageOffset = isAltMode ? pageSize : 0;
+				if (prevPageOffset != pageOffset) {
+					System.out.println("dirtying " + pageOffset);
+					vdpModeInfo.patt.base = getPatternTableBase() ^ pageOffset;
+					dirtyAll();
+				}
+			} else if (isBlinking) {
+				boolean wasOn = blinkOn;
+				blinkOn = isAltMode;
+				if (blinkOn != wasOn && vdpregs[12] != vdpregs[7]) {
+					dirtyAll();
+				}
 			}
 			
-			if (prevPageOffset != pageOffset) {
-				System.out.println("dirtying " + pageOffset);
-				vdpModeInfo.patt.base = getPatternTableBase() ^ pageOffset;
-				dirtyAll();
-			}
 		}
 		
 		if (currentcycles < 0)
@@ -1145,4 +1157,5 @@ public class VdpV9938 extends VdpTMS9918A {
 	public boolean isInterlacedEvenOdd() {
 		return isInterlacedEvenOdd;
 	}
+
 }

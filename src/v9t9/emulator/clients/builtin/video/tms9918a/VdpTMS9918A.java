@@ -67,6 +67,7 @@ public class VdpTMS9918A implements VdpHandler {
 	protected PrintWriter vdplog;
 	protected BlankModeRedrawHandler blankModeRedrawHandler;
 	protected VdpModeInfo vdpModeInfo;
+	protected int modeNumber;
 	public final static int VDP_INTERRUPT = 0x80;
 	public final static int VDP_COINC = 0x40;
 	public final static int VDP_FIVE_SPRITES = 0x20;
@@ -259,10 +260,17 @@ public class VdpTMS9918A implements VdpHandler {
     	return (vdpregs[1] & VdpTMS9918A.R1_NOBLANK) == 0;
     }
     
-    public final int getModeNumber() {
-		return (vdpregs[1] & R1_M1) / R1_M1
-		+ (vdpregs[1] & R1_M2) / R1_M2 * 2
-		+ (vdpregs[0] & R0_M3) / R0_M3 * 4;
+    public int calculateModeNumber() {
+		int reg0 = vdpregs[0] & R0_M3;
+		int reg1 = vdpregs[1] & R1_M1 + R1_M2;
+    	
+    	if (reg0 == R0_M3)
+    		return MODE_BITMAP;
+    	if (reg1 == R1_M2)
+    		return MODE_MULTI;
+    	if (reg1 == R1_M1)
+    		return MODE_TEXT;
+    	return MODE_GRAPHICS;
 	}
     
     /**
@@ -286,8 +294,8 @@ public class VdpTMS9918A implements VdpHandler {
     }
     
     protected void establishVideoMode() {
-    			
-		switch (getModeNumber()) {
+    	modeNumber = calculateModeNumber();
+		switch (modeNumber) {
 		case MODE_TEXT:
 			setTextMode();
 			dirtyAll();	// for border
@@ -325,7 +333,7 @@ public class VdpTMS9918A implements VdpHandler {
 	}
 
 	protected int getSpriteTableBase() {
-		return (vdpregs[5] * 0x80);
+		return (vdpregs[5] * 0x80) & getModeAddressMask();
 	}
 
 	protected void setGraphicsMode() {
@@ -349,11 +357,11 @@ public class VdpTMS9918A implements VdpHandler {
 		int ramsize = getModeAddressMask();
 		vdpModeInfo.screen.base = (vdpregs[2] * 0x400) & ramsize;
 		vdpModeInfo.screen.size = 768;
-		vdpModeInfo.color.base = getColorTableBase() & ramsize;
+		vdpModeInfo.color.base = getColorTableBase();
 		vdpModeInfo.color.size = 32;
-		vdpModeInfo.patt.base = getPatternTableBase() & ramsize;
+		vdpModeInfo.patt.base = getPatternTableBase();
 		vdpModeInfo.patt.size = 2048;
-		vdpModeInfo.sprite.base = getSpriteTableBase() & ramsize;
+		vdpModeInfo.sprite.base = getSpriteTableBase();
 		vdpModeInfo.sprite.size = 128;
 		vdpModeInfo.sprpat.base = (vdpregs[6] * 0x800) & ramsize;
 		vdpModeInfo.sprpat.size = 2048;
@@ -361,11 +369,11 @@ public class VdpTMS9918A implements VdpHandler {
 	}
 
 	protected int getPatternTableBase() {
-		return ((vdpregs[4] & 0xff) * 0x800);
+		return ((vdpregs[4] & 0xff) * 0x800) & getModeAddressMask();
 	}
 
 	protected int getColorTableBase() {
-		return ((vdpregs[3] & 0xff) * 0x40);
+		return ((vdpregs[3] & 0xff) * 0x40) & getModeAddressMask();
 	}
 
 	protected void setMultiMode() {
@@ -386,9 +394,9 @@ public class VdpTMS9918A implements VdpHandler {
 		vdpModeInfo.screen.size = 768;
 		vdpModeInfo.color.base = 0;
 		vdpModeInfo.color.size = 0;
-		vdpModeInfo.patt.base = getPatternTableBase() & ramsize;
+		vdpModeInfo.patt.base = getPatternTableBase();
 		vdpModeInfo.patt.size = 1536;
-		vdpModeInfo.sprite.base = getSpriteTableBase() & ramsize;
+		vdpModeInfo.sprite.base = getSpriteTableBase();
 		vdpModeInfo.sprite.size = 128;
 		
 		return vdpModeInfo;
@@ -412,7 +420,7 @@ public class VdpTMS9918A implements VdpHandler {
 		vdpModeInfo.screen.size = 960;
 		vdpModeInfo.color.base = 0;
 		vdpModeInfo.color.size = 0;
-		vdpModeInfo.patt.base = getPatternTableBase() & ramsize;
+		vdpModeInfo.patt.base = getPatternTableBase();
 		vdpModeInfo.patt.size = 2048;
 		vdpModeInfo.sprite.base = 0;
 		vdpModeInfo.sprite.size = 0;
@@ -437,15 +445,15 @@ public class VdpTMS9918A implements VdpHandler {
 
 		vdpModeInfo.screen.base = (vdpregs[2] * 0x400) & ramsize;
 		vdpModeInfo.screen.size = 768;
-		vdpModeInfo.sprite.base = getSpriteTableBase() & ramsize;
+		vdpModeInfo.sprite.base = getSpriteTableBase();
 		vdpModeInfo.sprite.size = 128;
 		vdpModeInfo.sprpat.base = (vdpregs[6] * 0x800) & ramsize;
 		vdpModeInfo.sprpat.size = 2048;
 
-		vdpModeInfo.color.base = getColorTableBase() & ~0x1fff & ramsize;
+		vdpModeInfo.color.base = getColorTableBase() & ~0x1fff;
 		vdpModeInfo.color.size = 6144;
 		
-		vdpModeInfo.patt.base = getPatternTableBase() & ~0x1fff & ramsize;
+		vdpModeInfo.patt.base = getPatternTableBase() & ~0x1fff;
 		vdpModeInfo.patt.size = 6144;
 		
 		return vdpModeInfo;
@@ -618,4 +626,9 @@ public class VdpTMS9918A implements VdpHandler {
 	protected int getVideoHeight() {
 		return 192;
 	}
+	
+	public int getModeNumber() {
+		return modeNumber;
+	}
+
 }

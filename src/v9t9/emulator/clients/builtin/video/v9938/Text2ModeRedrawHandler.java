@@ -44,8 +44,7 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		// propagate blink changes
 		int size = vdpModeInfo.screen.size;
 		for (int i = 0; i < size; i++) {
-			int currchar = vdp.readAbsoluteVdpMemory(vdpModeInfo.screen.base + i) & 0xff;	/* char # to update */
-			if (vdpChanges.color[currchar >> 3] != 0)	/* this pattern changed? */
+			if ((vdpChanges.color[i >> 3] & (0x80 >> (i & 7))) != 0)	/* this position changed? */
 				vdpChanges.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
 		}
 		
@@ -77,6 +76,7 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		bbg = (byte) (vdpregs[12] & 0xf);
 		bfg = (byte) ((vdpregs[12] >> 4) & 0xf);
 
+		boolean blinkOn = ((VdpV9938)vdp).blinkOn;
 		for (int i = 0; i < size; i++) {
 			if (force 
 					|| vdpChanges.screen[i] != VdpChanges.SC_UNTOUCHED			/* this screen pos updated? */
@@ -94,10 +94,10 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 				byte fg, bg;
 				fg = tfg; bg = tbg;
 
-				if (((VdpV9938)vdp).blinkOn) {
-					byte blinkMap = vdp.readAbsoluteVdpMemory(colorBase + i >> 3);
+				if (blinkOn) {
+					byte blinkMap = vdp.readAbsoluteVdpMemory(colorBase + (i >> 3));
 					
-					if ((blinkMap & (i >> 3)) != 0) {
+					if ((blinkMap & (0x80 >> (i & 7))) != 0) {
 						fg = bfg; bg = bbg;
 					}
 				}

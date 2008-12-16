@@ -35,7 +35,7 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 		vdpTouchBlock.sprite = modify_sprite_default;
 		vdpTouchBlock.sprpat = modify_sprpat_default;
 		
-		spriteCanvas = new VdpSprite2Canvas(vdpCanvas, 8, (((VdpV9938)vdp).get9938ModeNumber() == VdpV9938.MODE_GRAPHICS5));
+		spriteCanvas = new VdpSprite2Canvas(vdpCanvas, 8, (((VdpV9938)vdp).getModeNumber() == VdpV9938.MODE_GRAPHICS5));
 	}
 
 	@Override

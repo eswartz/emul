@@ -109,7 +109,7 @@ public abstract class VdpCanvas {
     	
     	altSpritePalette = new byte[16][];
     	for (int i = 0; i < 16; i++) {
-    		altSpritePalette[i] = getRGB332(
+    		altSpritePalette[i] = getGRB333(
     				altSpritePaletteGBR[i][0], altSpritePaletteGBR[i][1], altSpritePaletteGBR[i][2]);
     	}
     	
@@ -239,19 +239,19 @@ public abstract class VdpCanvas {
 		greyPalette[idx] = rgbToGrey(rgb);
 	}
 	
-	/** Set the RGB triple for the palette entry, using 3-bit RGB. */
+	/** Get the RGB triple for the 3-bit GRB. */
+	public byte[] getGRB333(int g, int r, int b) {
+		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[b&0x7] };
+	}
+
+	/** Set the RGB triple for the palette entry, using 3-bit RGB (usually from a palette). */
 	public void setGRB333(int idx, int g, int r, int b) {
-		setRGB(idx, new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[b&0x7] });
+		setRGB(idx, getGRB333(g, r, b));
 	}
 	
-	/** Get the 8-bit RGB values from unpacked 3-3-2 GRB  */
-	public byte[] getRGB332(int r, int g, int b) {
-		return new byte[] { rgb3to8[r & 0x7], rgb3to8[g & 0x7], rgb3to8[b & 0x7] };
-	}
-	
-	/** Get the 8-bit RGB values from a packed 3-3-2 RGB byte */
-	public byte[] getGRB332(byte rgb) {
-		return getRGB332((rgb >> 3), (rgb >> 5), rgb);
+	/** Get the 8-bit RGB values from a packed 3-3-2 GRB byte */
+	public byte[] getGRB332(byte grb) {
+		return new byte[] { rgb3to8[(grb >> 2) & 0x7], rgb3to8[(grb >> 5) & 0x7], rgb2to8[grb & 0x3] };
 	}
 	public byte[] getStockRGB(int i) {
 		return stockPalette[i];
