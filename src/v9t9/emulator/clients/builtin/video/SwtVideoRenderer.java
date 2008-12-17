@@ -15,6 +15,7 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -48,15 +49,28 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	// zoom based on the resolution
 	protected float zoomx = 3, zoomy = 3;
 	protected boolean sizedToZoom = false;
+	private GridData canvasLayoutData;
 	
 	public SwtVideoRenderer() {
 	}
 
+	/**
+	 * Create the control, and set it up with GridData.
+	 * @param parent
+	 * @return
+	 */
 	public Control createControl(Composite parent) {
 		this.shell = parent.getShell();
 		this.canvas = new Canvas(parent, getStyleBits());
 		this.canvas.setLayout(new FillLayout());
 
+		canvasLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		canvasLayoutData.minimumHeight = 256;
+		canvasLayoutData.minimumWidth = 192;
+		canvasLayoutData.widthHint = 256 * 3;
+		canvasLayoutData.heightHint = 192 * 3;
+		canvas.setLayoutData(canvasLayoutData);
+		
 		setCanvas(createCanvas());
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
@@ -96,7 +110,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 
 	protected int getStyleBits() {
-		return SWT.NO_BACKGROUND;
+		return 0; //SWT.NO_BACKGROUND;
 	}
 
 	protected VdpCanvas createCanvas() {
@@ -131,7 +145,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		if (becameBlank)
 			redrawRect_ = new Rectangle(0, 0, vdpCanvas.width, vdpCanvas.height);
 		
-		if (vdpCanvas.isInterlacedEvenOdd) {
+		if (vdpCanvas.isInterlacedEvenOdd()) {
 			redrawRect_.y *= 2;
 			redrawRect_.height *= 2;
 		}
@@ -179,7 +193,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			if (zoom == 0)
 				zoom = 1;
 			
-			if (vdpCanvas.isInterlacedEvenOdd)
+			if (vdpCanvas.isInterlacedEvenOdd())
 				zoomy = zoom / 2.0f;
 			else
 				zoomy = zoom;
@@ -216,12 +230,16 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		
 		// resize to fit the required physical space -- but avoid oscillating if the zoom
 		// is simply too large for the screen (where the WM might again resize it smaller)
-		Rectangle screenSize = shell.getDisplay().getClientArea();
-		Rectangle trim = canvas.getParent().computeTrim(0, 0, size.x, size.y);
-		if (trim.width - trim.x <= screenSize.width  && trim.height - trim.y <= screenSize.height) { 
+		if (canvasLayoutData.widthHint != size.x || canvasLayoutData.heightHint != size.y) {
+		//Rectangle screenSize = shell.getDisplay().getClientArea();
+		//Rectangle trim = canvas.getParent().computeTrim(0, 0, size.x, size.y);
+		//if (trim.width - trim.x <= screenSize.width  && trim.height - trim.y <= screenSize.height) { 
 			//autoResize = true;
+			canvasLayoutData.widthHint = size.x;
+			canvasLayoutData.heightHint = size.y;
+			
 			canvas.setSize(size);
-			//canvas.getShell().layout(true, true);
+			canvas.getShell().pack();
 			//canvas.getParent().setSize(trim.width, trim.height);
 		}			
 		//sizedToZoom = false;
@@ -241,7 +259,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		} else {
 			zoomx = zoom;
 		}
-		if (vdpCanvas.isInterlacedEvenOdd) {
+		if (vdpCanvas.isInterlacedEvenOdd()) {
 			zoomy = zoom / 2.f;
 		} else {
 			zoomy = zoom;

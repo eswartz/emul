@@ -236,6 +236,22 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 					keyboardState.setKey(pressed, KeyboardState.FCTN, 'A');	/* | */
 				break;
 				
+			case 8:
+				keyboardState.setKey(pressed, KeyboardState.FCTN, 'S');	/* BKSP */
+				break;
+				
+			case SWT.F1:
+			case SWT.F2:
+			case SWT.F3:
+			case SWT.F4:
+			case SWT.F5:
+			case SWT.F6:
+			case SWT.F7:
+			case SWT.F8:
+			case SWT.F9:
+				keyboardState.setKey(pressed, KeyboardState.FCTN, '1' + SWT.F1 - keyCode);	
+				break;
+				
 			default:
 				System.out.println(keyCode);
 				

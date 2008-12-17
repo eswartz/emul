@@ -497,7 +497,7 @@ public class Assembler {
 						for (int idx = 0; idx <  mem.length; idx++)
 							CPUFullRAM.writeByte(inst.getPc() + idx, mem[idx]);
 					}
-				} catch (ResolveException e) {
+				} catch (Exception e) {
 					reportError(e, descr, inst.toString(), e.getMessage());
 				}
 			}

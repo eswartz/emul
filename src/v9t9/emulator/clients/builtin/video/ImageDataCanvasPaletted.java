@@ -29,7 +29,7 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 		int allocHeight = height;
 		if ((height & 7) != 0)
 			allocHeight += 8;
-		return new ImageData(width * (isInterlacedEvenOdd ? 2 : 1), allocHeight, 8, palette);
+		return new ImageData(width * (isInterlacedEvenOdd() ? 2 : 1), allocHeight, 8, palette);
 	}
 
 	/* (non-Javadoc)

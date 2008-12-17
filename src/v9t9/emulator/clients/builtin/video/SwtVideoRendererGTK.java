@@ -66,7 +66,7 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 				blitImageData(gc, imageData, destRect, imageRect);
 			} else {
 				int lineStride = vdpCanvas.getLineStride();
-				if (vdpCanvas.isInterlacedEvenOdd)
+				if (vdpCanvas.isInterlacedEvenOdd())
 					lineStride /= 2;
 				if (USE_GDKONLY) {
 					synchronized (vdpCanvas) {

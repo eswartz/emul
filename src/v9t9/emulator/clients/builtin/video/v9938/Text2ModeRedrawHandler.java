@@ -11,6 +11,7 @@ import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
 import v9t9.engine.VdpHandler;
+import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
  * Text 2 mode
@@ -109,6 +110,30 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 
 
 		return count;
+	}
+
+	/**
+	 * See if a blinking toggle really affects anything on screen
+	 */
+	public void updateForBlink() {
+		// is there even a distinct blink color?
+		if (vdpregs[12] == vdpregs[7])
+			 return;
+		
+		// update any blink entries which are on
+		int screenBase = vdpModeInfo.screen.base;
+		int colorBase = vdpModeInfo.color.base;
+		ByteMemoryAccess access = vdp.getByteReadMemoryAccess(colorBase);
+		int size = vdpModeInfo.color.size;
+		for (int i = 0; i < size; i++) {
+			byte cur = access.memory[access.offset + i];
+			for (int j = 0; j < 8; j++) {
+				if ((cur & (0x80 >> j)) != 0) {
+					int screenOffs = (i << 3) + j;
+					touch(screenBase + screenOffs);
+				}
+			}
+		}
 	}
 
 }

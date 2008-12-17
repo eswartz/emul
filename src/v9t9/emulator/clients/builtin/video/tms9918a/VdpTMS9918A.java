@@ -339,7 +339,7 @@ public class VdpTMS9918A implements VdpHandler {
 	}
 
 	protected void setGraphicsMode() {
-		vdpCanvas.setSize(256, vdpCanvas.getHeight());
+		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createGraphicsModeInfo();
 		vdpModeRedrawHandler = new GraphicsModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
@@ -379,7 +379,7 @@ public class VdpTMS9918A implements VdpHandler {
 	}
 
 	protected void setMultiMode() {
-		vdpCanvas.setSize(256, vdpCanvas.getHeight());
+		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createMultiModeInfo();
 		vdpModeRedrawHandler = new MulticolorModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
@@ -405,7 +405,7 @@ public class VdpTMS9918A implements VdpHandler {
 	}
 
 	protected void setTextMode() {
-		vdpCanvas.setSize(256, vdpCanvas.getHeight());
+		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createTextModeInfo();
 		vdpModeRedrawHandler = new TextModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
@@ -432,7 +432,7 @@ public class VdpTMS9918A implements VdpHandler {
 	}
 
 	protected void setBitmapMode() {
-		vdpCanvas.setSize(256, vdpCanvas.getHeight());
+		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createBitmapModeInfo();
 		vdpModeRedrawHandler = new BitmapModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);

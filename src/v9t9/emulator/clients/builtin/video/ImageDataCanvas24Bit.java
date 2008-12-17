@@ -27,8 +27,8 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		if ((height & 7) != 0)
 			allocHeight += 8;
 			
-		ImageData data = new ImageData(width, allocHeight * (isInterlacedEvenOdd ? 2 : 1), 24, palette);
-		if (isInterlacedEvenOdd)
+		ImageData data = new ImageData(width, allocHeight * (isInterlacedEvenOdd() ? 2 : 1), 24, palette);
+		if (isInterlacedEvenOdd())
 			bytesPerLine = data.bytesPerLine * 2;
 		else
 			bytesPerLine = data.bytesPerLine;

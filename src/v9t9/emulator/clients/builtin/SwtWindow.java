@@ -62,16 +62,18 @@ public class SwtWindow {
 		
 		final Composite screenComposite = new Composite(mainComposite, SWT.BORDER);
 		
-		screenComposite.setLayout(new FillLayout());
+		screenComposite.setLayout(new GridLayout());
+		screenComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		/*
 		GridData screenLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		screenLayoutData.minimumHeight = 256;
 		screenLayoutData.minimumWidth = 192;
 		screenLayoutData.widthHint = 256 * 3;
 		screenLayoutData.heightHint = 192 * 3;
 		screenComposite.setLayoutData(screenLayoutData);
-		
+		*/
 		this.videoControl = renderer.createControl(screenComposite);
-	
+		//this.videoControl.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 		
 		File iconsFile = new File("icons/icons.png");
 		Image icons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());

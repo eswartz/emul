@@ -414,7 +414,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			}
 			break;
 		case 46: // CMD
-			if ((statusvec[2] & S2_CE) == 0) {
+			if ((statusvec[2] & S2_CE) == 0 && pixperbyte != 0) {
 				setupCommand();
 				setAccelActive(true);
 				if (!isThrottled())
@@ -739,22 +739,24 @@ public class VdpV9938 extends VdpTMS9918A {
 		int prevPageOffset = pageOffset;
 		pageOffset = 0;
 		if (isEnhancedMode && vdpregs[13] != 0) {
-			boolean isPageFlipping = (vdpregs[2] & 0x20) != 0;
 			boolean isBlinking = modeNumber == MODE_TEXT2;
+			boolean isPageFlipping = (vdpregs[2] & 0x20) != 0 && !isBlinking;
 			
 			boolean isAltMode = (System.currentTimeMillis() / (1000 / 6)) % blinkPeriod >= blinkOffPeriod;
 			if (isPageFlipping) {
 				pageOffset = isAltMode ? pageSize : 0;
 				if (prevPageOffset != pageOffset) {
-					System.out.println("dirtying " + pageOffset);
+					//System.out.println("dirtying " + pageOffset);
 					vdpModeInfo.patt.base = getPatternTableBase() ^ pageOffset;
 					dirtyAll();
 				}
 			} else if (isBlinking) {
 				boolean wasOn = blinkOn;
 				blinkOn = isAltMode;
-				if (blinkOn != wasOn && vdpregs[12] != vdpregs[7]) {
-					dirtyAll();
+				if (blinkOn != wasOn) {
+					if (vdpModeRedrawHandler instanceof Text2ModeRedrawHandler) {
+						((Text2ModeRedrawHandler) vdpModeRedrawHandler).updateForBlink();
+					}
 				}
 			}
 			
