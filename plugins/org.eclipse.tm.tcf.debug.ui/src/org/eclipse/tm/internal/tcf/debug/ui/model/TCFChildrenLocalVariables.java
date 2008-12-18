@@ -42,12 +42,14 @@ public class TCFChildrenLocalVariables extends TCFChildren {
             public void doneGetChildren(IToken token, Exception error, String[] contexts) {
                 Map<String,TCFNode> data = null;
                 if (command == token && error == null) {
+                    int cnt = 0;
                     data = new HashMap<String,TCFNode>();
                     for (String id : contexts) {
-                        TCFNode n = node.model.getNode(id);
+                        TCFNodeExpression n = (TCFNodeExpression)node.model.getNode(id);
                         if (n == null) n = new TCFNodeExpression(node, null, null, id, -1);
                         assert n.id.equals(id);
                         assert n.parent == node;
+                        n.setSortPosition(cnt++);
                         data.put(n.id, n);
                     }
                 }

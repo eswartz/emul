@@ -41,6 +41,8 @@ public class ImageCache {
         
         IMG_VARIABLE = "icons/full/obj16/genericvariable_obj.gif",
         
+        IMG_ARRAY_PARTITION = "icons/full/obj16/arraypartition_obj.gif",
+        
         IMG_STACK_FRAME_SUSPENDED = "icons/full/obj16/stckframe_obj.gif",
         IMG_STACK_FRAME_RUNNING = "icons/full/obj16/stckframe_running_obj.gif",
         

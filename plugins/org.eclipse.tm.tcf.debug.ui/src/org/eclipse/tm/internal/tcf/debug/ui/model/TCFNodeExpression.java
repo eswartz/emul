@@ -43,6 +43,7 @@ public class TCFNodeExpression extends TCFNode {
     private final TCFDataCache<IExpressions.Value> value;
     private final TCFDataCache<ISymbols.Symbol> type;
     private final TCFChildrenSubExpressions children;
+    private int sort_pos;
     
     private static int expr_cnt;
 
@@ -94,7 +95,9 @@ public class TCFNodeExpression extends TCFNode {
                     set(null, null, e);
                     return true;
                 }
-                TCFDataCache<String> t = ((TCFNodeExpression)parent).getExpressionText();
+                TCFNode n = parent;
+                while (n instanceof TCFNodeArrayPartition) n = n.parent;
+                TCFDataCache<String> t = ((TCFNodeExpression)n).getExpressionText();
                 if (!t.validate()) {
                     t.wait(this);
                     return false;
@@ -156,7 +159,7 @@ public class TCFNodeExpression extends TCFNode {
                         return true;
                     }
                     TCFNode n = parent;
-                    while (n instanceof TCFNodeExpression) n = n.parent;
+                    while (n instanceof TCFNodeExpression || n instanceof TCFNodeArrayPartition) n = n.parent;
                     command = exps.create(n.id, null, e, new IExpressions.DoneCreate() {
                         public void doneCreate(IToken token, Exception error, IExpressions.Expression context) {
                             if (isDisposed()) {
@@ -225,7 +228,7 @@ public class TCFNodeExpression extends TCFNode {
                 return true;
             }
         };
-        children = new TCFChildrenSubExpressions(this);
+        children = new TCFChildrenSubExpressions(this, 0, 0, 0);
     }
     
     @Override
@@ -271,6 +274,10 @@ public class TCFNodeExpression extends TCFNode {
     
     int getIndex() {
         return index;
+    }
+    
+    void setSortPosition(int sort_pos) {
+        this.sort_pos = sort_pos;
     }
     
     TCFDataCache<String> getExpressionText() {
@@ -374,6 +381,7 @@ public class TCFNodeExpression extends TCFNode {
         ISymbols.Symbol t = type.getData();
         if (t != null) {
             s = t.getName();
+            if (s == null && t.getSize() == 0) s = "<Void>";
             if (s == null) {
                 switch (t.getTypeClass()) {
                 case integer:
@@ -422,10 +430,18 @@ public class TCFNodeExpression extends TCFNode {
                 result.setLabel(name + ": N/A", 0);
             }
             else {
-                result.setLabel(name, 0);
-                for (int i = 1; i < cols.length; i++) {
-                    result.setForeground(new RGB(255, 0, 0), i);
-                    result.setLabel("N/A", i);
+                for (int i = 0; i < cols.length; i++) {
+                    String c = cols[i];
+                    if (c.equals(TCFColumnPresentationExpression.COL_NAME)) {
+                        result.setLabel(name, i);
+                    }
+                    else if (c.equals(TCFColumnPresentationExpression.COL_TYPE) && type.getError() == null) {
+                        setTypeLabel(result, i);
+                    }
+                    else {
+                        result.setForeground(new RGB(255, 0, 0), i);
+                        result.setLabel("N/A", i);
+                    }
                 }
             }
         }
@@ -535,6 +551,8 @@ public class TCFNodeExpression extends TCFNode {
                 return false;
             }
             ISymbols.Symbol f = s.getData();
+            bf.append(f.getName());
+            bf.append('=');
             if (!appendValueText(bf, level + 1, f, data, offs + f.getOffset(), f.getSize(), big_endian, done)) return false;
         }
         bf.append('}');
@@ -550,6 +568,10 @@ public class TCFNodeExpression extends TCFNode {
         case cardinal:
         case real:
             if (level == 0) {
+                bf.append("Size: ");
+                bf.append(t.getSize());
+                bf.append(" bytes\n");
+                if (t.getSize() == 0) break;
                 bf.append("Dec: ");
                 bf.append(toNumberString(10, t, data, offs, size, big_endian));
                 bf.append("\n");
@@ -670,5 +692,13 @@ public class TCFNodeExpression extends TCFNode {
     @Override
     protected String getImageName() {
         return ImageCache.IMG_VARIABLE;
+    }
+
+    @Override
+    public int compareTo(TCFNode n) {
+        TCFNodeExpression e = (TCFNodeExpression)n;
+        if (sort_pos < e.sort_pos) return -1;
+        if (sort_pos > e.sort_pos) return +1;
+        return 0;
     }
 }

@@ -91,10 +91,6 @@ public class TCFDetailPane implements IDetailPane {
                 if (s == null) return null;
                 bf.append(s);
             }
-            else {
-                bf.append(n.toString());
-                bf.append('\n');
-            }
         }
         return bf.toString();
     }

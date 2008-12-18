@@ -79,10 +79,12 @@ public class TCFChildrenExpressions extends TCFChildren {
         }
         HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
         IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
+        int cnt = 0;
         for (final IExpression e : m.getExpressions()) {
             String text = e.getExpressionText();
             TCFNodeExpression n = findScript(text);
             if (n == null) add(n = new TCFNodeExpression(node, text, null, null, -1));
+            n.setSortPosition(cnt++);
             data.put(n.id, n);
         }
         set(null, null, data);

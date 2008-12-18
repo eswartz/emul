@@ -190,6 +190,19 @@ public abstract class TCFDataCache<V> implements Runnable {
         post();
     }
     
+    @Override
+    public String toString() {
+        StringBuffer bf = new StringBuffer();
+        bf.append('[');
+        if (valid) bf.append("valid,");
+        if (posted) bf.append("posted,");
+        if (error != null) bf.append("error,");
+        bf.append("data=");
+        bf.append(data == null ? "null" : data.toString());
+        bf.append(']');
+        return bf.toString();
+    }
+    
     /**
      * Sub-classes should override this method to implement actual data retrieval logic.
      * @return true is all done, false if retrieval is in progress.
