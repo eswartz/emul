@@ -4,6 +4,7 @@
 package v9t9.tools.asm;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -178,7 +179,6 @@ public class Assembler {
 		generateObject(insts);
 		if (errorList.size() >0)
 			return false;
-		
 		
 		saveMemory();
 		
@@ -593,10 +593,21 @@ public class Assembler {
 			try {
 				entry.setDirty(true);
 				entry.save();
+				
+				writeSymbolTable(entry);
 			} catch (IOException e) {
 				errlog.println("Failed to save: " + e.getMessage());
 			}
 		}
+	}
+
+	private void writeSymbolTable(DiskMemoryEntry entry) throws IOException {
+		FileOutputStream fos = new FileOutputStream(entry.getSymbolFilepath());
+		PrintStream ps = new PrintStream(fos);
+		for (Symbol symbol : getSymbolTable().getSymbols()) {
+			ps.println(Utils.toHex4(symbol.getAddr()) + " " + symbol.getName());
+		}
+		ps.close();
 	}
 
 	public void pushSymbolTable() {

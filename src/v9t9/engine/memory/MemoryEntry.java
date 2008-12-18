@@ -6,7 +6,11 @@
  */
 package v9t9.engine.memory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.TreeMap;
 
 import v9t9.utils.Utils;
 
@@ -47,6 +51,8 @@ public class MemoryEntry {
     /** is the memory accessed as words or as bytes? */
     public boolean bWordAccess = true;
 
+	private TreeMap<Short, String> symbols;
+
     public MemoryEntry(String name, MemoryDomain domain, int addr,
             int size, MemoryArea area) {
         if (size <= 0 || addr < 0 || addr + size > MemoryDomain.PHYSMEMORYSIZE) {
@@ -67,6 +73,7 @@ public class MemoryEntry {
         this.name = name;
         this.domain = domain;
         this.area = area;
+        area.entry = this;
     }
 
     /* (non-Javadoc)
@@ -134,4 +141,43 @@ public class MemoryEntry {
     public void unload() {
         /* nothing */
     }
+
+    /** Load symbols from file in the form:
+     * 
+     * &lt;addr&gt; &lt;name&gt;
+     * @throws IOException 
+     */
+    public void loadSymbols(InputStream is) throws IOException {
+    	try {
+    		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+    		String line;
+    		while ((line = reader.readLine()) != null) {
+    			int idx = line.indexOf(' ');
+    			if (idx > 0) {
+    				int addr = Integer.parseInt(line.substring(0, idx), 16);
+    				String name = line.substring(idx+1);
+    				defineSymbol(addr, name);
+    			} 
+    		}
+    		
+    	} finally {
+    		is.close();
+    	}
+    }
+
+	public void defineSymbol(int addr, String name) {
+		if (addr < this.addr || addr >= this.addr + this.size) {
+			return;
+		}
+		if (symbols == null) {
+			symbols = new TreeMap<Short, String>();
+		}
+		symbols.put((short) addr, name);
+	}
+	
+	public String lookupSymbol(short addr) {
+		if (symbols == null) return null;
+		return symbols.get(addr);
+	}
+	
 }

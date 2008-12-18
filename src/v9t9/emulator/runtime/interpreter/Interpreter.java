@@ -13,6 +13,7 @@ import java.util.Map;
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.runtime.Cpu;
+import v9t9.emulator.runtime.Executor;
 import v9t9.engine.Client;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionAction;
@@ -20,6 +21,7 @@ import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Status;
+import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.utils.Utils;
 
@@ -176,6 +178,12 @@ public class Interpreter {
 	}
 
 	private void dumpFullStart(Instruction ins, PrintWriter dumpfull) {
+		MemoryArea area = iblock.domain.getArea(ins.pc);
+		String name = null;
+		if (area != null && area.entry != null) 
+			name = area.entry.lookupSymbol((short) ins.pc);
+		if (name != null)
+			dumpfull.println('"' + name + "\" ");
 		dumpfull.print(Utils.toHex4(ins.pc) + ": "
 		        + ins.toString() + " ==> ");
 	}
@@ -921,6 +929,15 @@ public class Interpreter {
 				}
         	};
         	break;
+        case InstructionTable.Idbg:
+        	act = new InstructionAction() {
+
+				public void act(Block block) {
+					Executor.settingDumpFullInstructions.setBoolean(block.val1 == 0);
+				}
+        	};
+        	break;
+        	
         	
         }
 

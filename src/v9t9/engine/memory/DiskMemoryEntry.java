@@ -6,6 +6,8 @@
  */
 package v9t9.engine.memory;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 import v9t9.engine.files.DataFiles;
@@ -198,6 +200,13 @@ public class DiskMemoryEntry extends MemoryEntry {
                 DataFiles.readMemoryImage(filepath, fileoffs, filesize, data);
                 area.copyFromBytes(data);
                 bLoaded = true;
+                
+                // see if it has symbols
+                String symbolfilepath = getSymbolFilepath();
+                File symfile = DataFiles.resolveFile(symbolfilepath);
+            	if (symfile.exists()) {
+            		loadSymbols(new FileInputStream(symfile));
+            	}
             } catch (java.io.IOException e) {
                 // TODO: error
             }
@@ -251,5 +260,18 @@ public class DiskMemoryEntry extends MemoryEntry {
 		bankedMemoryEntry.getBank(1).area.areaWriteByte = new BankTogglingAreaWriteByte(bankedMemoryEntry);
 
 		return bankedMemoryEntry;
+	}
+
+	public String getFilepath() {
+		return filepath;
+	}
+	
+	public String getSymbolFilepath() {
+		int idx = filepath.lastIndexOf('.');
+        if (idx >= 0) {
+        	return filepath.substring(0, idx) + ".sym";
+        } else {
+        	return filepath + ".sym";
+        }
 	}
 }

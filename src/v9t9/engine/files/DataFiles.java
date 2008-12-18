@@ -26,6 +26,11 @@ public class DataFiles {
 		searchPaths.add(filepath);
 	}
 	
+	/**
+	 * Look for a file along the search paths with the given name
+	 * @param filepath file name or relative path
+	 * @return File where it exists or a default location
+	 */
 	public static File resolveFile(String filepath) {
 		for (String path : searchPaths) {
 			File file = new File(path, filepath);
@@ -60,9 +65,10 @@ public class DataFiles {
      * @param offset offset in bytes into file
      * @param size maximum size to read
      * @param result 
+     * @return File located
      * @throws FileNotFoundException
      */
-    public static void readMemoryImage(String filepath, int offset, int size, byte[] result) 
+    public static File readMemoryImage(String filepath, int offset, int size, byte[] result) 
     	throws FileNotFoundException, IOException 
 	{
         // TODO: real work
@@ -86,14 +92,17 @@ public class DataFiles {
         stream.skip(offset);
         stream.read(result, 0, Math.min(size, result.length));
         stream.close();
+        
+        return file;
     }
 
     /**
      * @param filepath
      * @param realsize
      * @param memory
+     * @return File written
      */
-    public static void writeMemoryImage(String filepath, int size, byte[] memory)
+    public static File writeMemoryImage(String filepath, int size, byte[] memory)
     throws FileNotFoundException, IOException 
 	{
         // TODO: real work
@@ -103,6 +112,8 @@ public class DataFiles {
         FileOutputStream stream = new FileOutputStream(file);
         stream.write(memory, 0, size);
         stream.close();
+        
+        return file;
     }
     
 }

@@ -60,6 +60,8 @@ abstract public class Machine {
 	private TimerTask videoUpdateTask;
 	private Thread machineRunner;
 	private Thread videoRunner;
+	private boolean throttlingInterrupts;
+	protected int throttleCount;
 	
     public Machine(MachineModel machineModel) {
     	this.memoryModel = machineModel.getMemoryModel();
@@ -166,6 +168,13 @@ abstract public class Machine {
 			public void run() {
             	vdp.tick();
             	if (allowInterrupts) { 
+            		if (throttlingInterrupts) {
+            			if (throttleCount-- < 0) {
+            				throttleCount = 60;
+            			} else {
+            				return;
+            			}
+            		}
             		cpu.holdpin(Cpu.INTPIN_INTREQ);
             	}
             }
@@ -291,6 +300,15 @@ abstract public class Machine {
 
 	public CruHandler getCru() {
 		return cru;
+	}
+
+	/**
+	 * Throttle interrupts in certain cases, e.g. when we know
+	 * there is high load and don't want them to interfere.
+	 * @param flag
+	 */
+	public void setThrottleInterrupts(boolean flag) {
+		this.throttlingInterrupts = flag;
 	}
 }
 

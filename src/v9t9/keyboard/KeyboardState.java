@@ -98,9 +98,10 @@ public class KeyboardState {
      * @param shift FCTN, SHIFT, CTRL mask
      * @param key normalized ASCII key: no lowercase or shifted characters
      */
-    public void setKey(boolean onoff, byte shift, int key) {
+    public void setKey(boolean onoff, int shift, int key) {
         byte b, r, c;
         key &= 0xff;
+        shift &= 0xff;
 
         //if (shift && onoff)
             //logger(_L | L_1, "turned on [%d]:  cshift=%d, cctrl=%d, cfctn=%d\n",
@@ -125,7 +126,7 @@ public class KeyboardState {
             //logger(_L | L_1, _("Resetting %d for key %d\n"), fakemap[key], key);
             shift |= fakemap[key];
         }
-        fakemap[key] = onoff ? shift : 0;
+        fakemap[key] = (byte) (onoff ? shift : 0);
 
         if ((shift & SHIFT) != 0) {
             if (onoff) {

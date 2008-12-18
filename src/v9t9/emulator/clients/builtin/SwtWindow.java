@@ -84,7 +84,7 @@ public class SwtWindow {
 		controlsComposite.setLayout(layout);
 		controlsComposite.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, false, true));
 		
-		BasicButton abortButton = createButton(icons, 
+		/*BasicButton abortButton =*/ createButton(icons, 
 				new Rectangle(0, 64, 64, 64), "Send a NMI interrupt",
 				new SelectionAdapter() {
 					@Override
@@ -94,14 +94,14 @@ public class SwtWindow {
 					}
 				});
 
-		BasicButton logButton = createStateButton(Executor.settingDumpFullInstructions,
+		/*BasicButton logButton =*/ createStateButton(Executor.settingDumpFullInstructions,
 				icons, new Rectangle(0, 128, 64, 64),
 				new Rectangle(0, 0, 64, 64),
 				"Toggle CPU logging");
 		
-		BasicButton basicButton = createButton(
+		/*BasicButton basicButton =*/ createButton(
 				icons, new Rectangle(0, 128, 64, 64),
-				"Branch to arbitrary address",
+				"Branch to Condensed BASIC",
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
@@ -203,16 +203,22 @@ public class SwtWindow {
 		final BasicButton button = new BasicButton(controlsComposite, SWT.TOGGLE, icon, bounds, tooltip);
 		setting.addListener(new ISettingListener() {
 
-			public void changed(Setting setting, Object oldValue) {
-				if (setting.getBoolean()) {
-					button.setOverlayBounds(checkBounds);
-				} else {
-					button.setOverlayBounds(null);
-				}
-				if (setting.getBoolean() != button.getButton().getSelection()) {
-					button.getButton().setSelection(setting.getBoolean());
-				}
-				button.redraw();
+			public void changed(final Setting setting, final Object oldValue) {
+				Display.getDefault().asyncExec(new Runnable() {
+
+					public void run() {
+						if (setting.getBoolean()) {
+							button.setOverlayBounds(checkBounds);
+						} else {
+							button.setOverlayBounds(null);
+						}
+						if (setting.getBoolean() != button.getButton().getSelection()) {
+							button.getButton().setSelection(setting.getBoolean());
+						}
+						button.redraw();
+					}
+					
+				});
 			}
 			
 		});

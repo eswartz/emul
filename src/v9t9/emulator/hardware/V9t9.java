@@ -6,6 +6,7 @@
  */
 package v9t9.emulator.hardware;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.eclipse.swt.widgets.Display;
@@ -55,14 +56,15 @@ public class V9t9 {
     	machine.setClient(client);
     }
     
-    protected void loadConsoleRom(String filename) throws IOException {
+    protected DiskMemoryEntry loadConsoleRom(String filename) throws IOException {
     	DiskMemoryEntry cpuRomEntry = DiskMemoryEntry.newWordMemoryFromFile(0x0, 0x2000, "CPU ROM",
         		console,
                 filename, 0x0, false);
     	cpuRomEntry.area.setLatency(0);
 		memory.addAndMap(cpuRomEntry);
+		return cpuRomEntry;
     }
-    protected void loadBankedConsoleRom(String filename1, String filename2) throws IOException {
+    protected BankedMemoryEntry loadBankedConsoleRom(String filename1, String filename2) throws IOException {
     	BankedMemoryEntry cpuRomEntry = DiskMemoryEntry.newBankedWordMemoryFromFile(
     			0x0000,
     			0x2000,
@@ -71,32 +73,39 @@ public class V9t9 {
     			filename1, 0x0, filename2, 0x0);
     	cpuRomEntry.area.setLatency(0);
     	memory.addAndMap(cpuRomEntry);
+    	return cpuRomEntry;
     }
-    protected void loadConsoleGrom(String filename) throws IOException {
-    	memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x0, 0x6000, "CPU GROM", 
+    protected DiskMemoryEntry loadConsoleGrom(String filename) throws IOException {
+    	DiskMemoryEntry entry = DiskMemoryEntry.newByteMemoryFromFile(0x0, 0x6000, "CPU GROM", 
     			 ((StandardConsoleMemoryModel) memoryModel).GRAPHICS,
-    			filename, 0x0, false));
+    			filename, 0x0, false);
+		memory.addAndMap(entry);
+		return entry;
     }
 
-    protected void loadModuleRom(String name, String filename) throws IOException {
-    	memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, 
+    protected DiskMemoryEntry loadModuleRom(String name, String filename) throws IOException {
+    	DiskMemoryEntry entry = DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, 
     			name, console,
-    			filename, 0x0, false));
+    			filename, 0x0, false);
+		memory.addAndMap(entry);
+		return entry;
     }
-    protected void loadBankedModuleRom(String name, String filename1, String filename2) throws IOException {
-    	memory.addAndMap(DiskMemoryEntry.newBankedWordMemoryFromFile(
+    protected BankedMemoryEntry loadBankedModuleRom(String name, String filename1, String filename2) throws IOException {
+    	BankedMemoryEntry entry = DiskMemoryEntry.newBankedWordMemoryFromFile(
     			0x6000,
     			0x2000, memory,
     			name, console,
     			filename1, 0x0, 
-    			filename2, 0x0));
-    	
+    			filename2, 0x0);
+		memory.addAndMap(entry);
+    	return entry;
     }
-    protected void loadModuleGrom(String name, String filename) throws IOException {
-    	memory.addAndMap(DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, name, 
+    protected DiskMemoryEntry loadModuleGrom(String name, String filename) throws IOException {
+    	DiskMemoryEntry entry = DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, name, 
     			((StandardConsoleMemoryModel) memoryModel).GRAPHICS,
-    			filename, 0x0, false));
-    	
+    			filename, 0x0, false);
+		memory.addAndMap(entry);
+		return entry;
     }
     
 	protected void loadMemory() throws IOException {
@@ -135,9 +144,13 @@ public class V9t9 {
     	} 
 
     	if (true) {
+    		DiskMemoryEntry entry;
     		loadBankedConsoleRom("nforthA.rom", "nforthB.rom");
     		loadConsoleGrom("nforth.grm");
     		loadModuleRom("FORTH", "nforthc.bin");
+    		entry = loadModuleGrom("FORTH", "nforthg.bin");
+    		console.getArea(0xA000).entry.loadSymbols(
+    				new FileInputStream(DataFiles.resolveFile(entry.getSymbolFilepath())));
     	}
     }
 

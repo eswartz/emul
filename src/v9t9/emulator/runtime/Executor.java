@@ -17,6 +17,7 @@ import v9t9.emulator.runtime.compiler.ICompilerStrategy;
 import v9t9.emulator.runtime.interpreter.Interpreter;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
 
 
@@ -59,6 +60,13 @@ public class Executor {
         this.compilerStrategy = new CodeBlockCompilerStrategy(this);
         this.highLevelCodeInfoMap = new HashMap<MemoryEntry, HighLevelCodeInfo>();
         
+        settingDumpFullInstructions.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				Executor.this.cpu.getMachine().setThrottleInterrupts(setting.getBoolean());
+			}
+        	
+        });
         cpu.getMachine().getSettings().register(settingDumpInstructions);
         cpu.getMachine().getSettings().register(settingDumpFullInstructions);
         Logging.registerLog(settingDumpInstructions, "instrs.txt");

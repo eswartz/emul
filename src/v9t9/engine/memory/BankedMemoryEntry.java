@@ -68,6 +68,11 @@ public class BankedMemoryEntry extends MemoryEntry {
 		return banks.length;
 	}
 
-	
+	@Override
+	public String lookupSymbol(short addr) {
+		if (currentBank == null)
+			return null;
+		return currentBank.lookupSymbol(addr);
+	}
 
 }
