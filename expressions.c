@@ -1674,6 +1674,7 @@ static void command_create(char * token, Channel * c) {
 
 static void command_evaluate(char * token, Channel * c) {
     int err = 0;
+    int value_ok = 0;
     char id[256];
     char parent[256];
     char name[MAX_SYM_NAME];
@@ -1687,7 +1688,7 @@ static void command_evaluate(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
-    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 1, &value) < 0) err = errno;
+    if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 0, &value) < 0) err = errno;
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -1697,14 +1698,35 @@ static void command_evaluate(char * token, Channel * c) {
     else {
         JsonWriteBinaryState state;
 
-        assert(!value.remote);
+        value_ok = 1;
         json_write_binary_start(&state, &c->out);
-        json_write_binary_data(&state, value.value, value.size);
+        if (!value.remote) {
+            json_write_binary_data(&state, value.value, value.size);
+        }
+        else {
+            char buf[256];
+            size_t offs = 0;
+            while (offs < value.size) {
+                int size = value.size - offs;
+                if (size > sizeof(buf)) size = sizeof(buf);
+                if (offs >= 0x100000) {
+                    err = ERR_BUFFER_OVERFLOW;
+                    break;
+                }
+                if (context_read_mem(ctx, value.address + offs, buf, size) < 0) {
+                    err = errno;
+                    break;
+                }
+                check_breakpoints_on_memory_read(ctx, value.address + offs, buf, size);
+                json_write_binary_data(&state, buf, size);
+                offs += size;
+            }
+        }
         json_write_binary_end(&state);
         write_stream(&c->out, 0);
     }
     write_errno(&c->out, err);
-    if (err) {
+    if (!value_ok) {
         write_stringz(&c->out, "null");
     }
     else {

@@ -46,6 +46,8 @@ typedef struct test_struct {
     double f_double;
 } test_struct;
 
+typedef int test_array[10001];
+
 extern void tcf_test_func2(void);
 extern void tcf_test_func1(void);
 extern void tcf_test_func0(enum test_enum);
@@ -54,6 +56,7 @@ void tcf_test_func2(void) {
     int func2_local1 = 1;
     int func2_local2 = 2;
     test_struct func2_local3 = { enum_val3, 153, NULL, 3.14f, 2.71 };
+    test_array * func2_array = NULL;
     func2_local3.f_struct = &func2_local3;
     usleep(1000);
     func2_local1++;
