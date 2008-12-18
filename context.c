@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -292,7 +292,7 @@ char * context_suspend_reason(Context * ctx) {
     switch (code) {
     case 0:
         return "Suspended";
-    case EXCEPTION_SINGLE_STEP: 
+    case EXCEPTION_SINGLE_STEP:
         return "Step";
     case EXCEPTION_BREAKPOINT:
         if (ctx->debug_started) return "Suspended";
@@ -471,7 +471,7 @@ static void debug_event_handler(void * x) {
     HANDLE event_semaphore = args->event_semaphore;
 
     while (args != NULL) {
-        
+
         DEBUG_EVENT * debug_event = &args->event;
         Context * prs = context_find_from_pid(debug_event->dwProcessId);
         Context * ctx = context_find_from_pid(debug_event->dwThreadId);
@@ -761,7 +761,7 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
         errno = err;
         return -1;
     }
-    
+
     args->debug_thread = CreateThread(NULL, 0, debugger_thread_func, args, 0, &args->debug_thread_id);
     if (args->debug_thread == NULL) {
         int err = log_error("CreateThread", 0);
@@ -1017,7 +1017,7 @@ int context_stop(Context * ctx) {
     else {
         trace(LOG_CONTEXT, "context: temporary stop ctx %#x, id %#x", ctx, ctx->pid);
     }
-    
+
     taskLock();
     if (taskIsStopped(ctx->pid)) {
         taskUnlock();
@@ -1067,7 +1067,7 @@ static int kill_context(Context * ctx) {
 
 int context_continue(Context * ctx) {
     VXDBG_CTX vxdbg_ctx;
-    
+
     assert(is_dispatch_thread());
     assert(ctx->stopped);
     assert(!ctx->pending_intercept);
@@ -1085,7 +1085,7 @@ int context_continue(Context * ctx) {
         }
         ctx->regs_dirty = 0;
     }
-    
+
     if (ctx->pending_signals & (1 << SIGKILL)) {
         return kill_context(ctx);
     }
@@ -1110,7 +1110,7 @@ int context_continue(Context * ctx) {
 int context_single_step(Context * ctx) {
     VXDBG_CTX vxdbg_ctx;
     struct event_info * info;
-    
+
     assert(is_dispatch_thread());
     assert(ctx->stopped);
     assert(!ctx->pending_intercept);
@@ -1152,9 +1152,9 @@ int context_single_step(Context * ctx) {
 int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
 #ifdef _WRS_PERSISTENT_SW_BP
     vxdbgMemRead((void *)address, buf, size);
-#else    
+#else
     bcopy((void *)address, buf, size);
-#endif    
+#endif
     return 0;
 }
 
@@ -1163,15 +1163,15 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     vxdbgMemWrite((void *)address, buf, size);
 #else
     bcopy(buf, (void *)address, size);
-#endif    
+#endif
     return 0;
 }
 
 static void event_handler(void * arg) {
     struct event_info * info = (struct event_info *)arg;
-    Context * current_ctx = context_find_from_pid(info->current_ctx.ctxId); 
+    Context * current_ctx = context_find_from_pid(info->current_ctx.ctxId);
     Context * stopped_ctx = context_find_from_pid(info->stopped_ctx.ctxId);
-    
+
     switch (info->event) {
     case EVENT_HOOK_BREAKPOINT:
         if (stopped_ctx == NULL) break;
@@ -1270,12 +1270,12 @@ static void event_error(void * arg) {
 
 static void * event_thread_func(void * arg) {
     struct event_info * info;
-    
+
     taskPrioritySet(0, VX_TASK_PRIORITY_MIN);
     for (;;) {
         semTake(events_signal, WAIT_FOREVER);
         info = (struct event_info *)loc_alloc(sizeof(struct event_info));
-        
+
         SPIN_LOCK_ISR_TAKE(&events_lock);
         if (events_buf_overflow && events_inp == events_out) {
             SPIN_LOCK_ISR_GIVE(&events_lock);
@@ -1285,7 +1285,7 @@ static void * event_thread_func(void * arg) {
         *info = events[events_out];
         events_out = (events_out + 1) % MAX_EVENTS;
         SPIN_LOCK_ISR_GIVE(&events_lock);
-        
+
         if (info->event != EVENT_HOOK_IGNORE) {
             post_event(event_handler, info);
         }
@@ -1299,7 +1299,7 @@ static void vxdbg_event_hook(
         REG_SET *       regs,           /* task registers before exception */
         UINT32          addr,           /* breakpoint addr */
         VXDBG_BP_INFO * bp_info) {      /* breakpoint information */
-    
+
     struct event_info * info = event_info_alloc(EVENT_HOOK_BREAKPOINT);
     if (info != NULL) {
         if (stopped_ctx == NULL) info->event = EVENT_HOOK_STEP_DONE;
@@ -1352,7 +1352,7 @@ static void init(void) {
     taskCreateHookAdd((FUNCPTR)task_create_hook);
     taskDeleteHookAdd((FUNCPTR)task_delete_hook);
     vxdbgHookAdd(vxdbg_clnt_id, EVT_BP, vxdbg_event_hook);
-    vxdbgHookAdd(vxdbg_clnt_id, EVT_TRACE, vxdbg_event_hook);   
+    vxdbgHookAdd(vxdbg_clnt_id, EVT_TRACE, vxdbg_event_hook);
     check_error(pthread_create(&events_thread, &pthread_create_attr, event_thread_func, NULL));
 }
 
@@ -1420,12 +1420,12 @@ static LINK pending_list;
 static char * event_name(int event) {
     switch (event) {
     case 0: return "none";
-    case PTRACE_EVENT_FORK: return "fork";  
-    case PTRACE_EVENT_VFORK: return "vfork";  
-    case PTRACE_EVENT_CLONE: return "clone";  
-    case PTRACE_EVENT_EXEC: return "exec";  
-    case PTRACE_EVENT_VFORK_DONE: return "vfork-done";  
-    case PTRACE_EVENT_EXIT: return "exit";  
+    case PTRACE_EVENT_FORK: return "fork";
+    case PTRACE_EVENT_VFORK: return "vfork";
+    case PTRACE_EVENT_CLONE: return "clone";
+    case PTRACE_EVENT_EXEC: return "exec";
+    case PTRACE_EVENT_VFORK_DONE: return "vfork-done";
+    case PTRACE_EVENT_EXIT: return "exit";
     default:
         trace(LOG_ALWAYS, "event_name() called with unexpected event code %d", event);
         return "unknown";
@@ -1628,10 +1628,11 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     assert(is_dispatch_thread());
     assert(!ctx->exited);
     trace(LOG_CONTEXT, "context: write memory ctx %#x, pid %d, address 0x%08x, size %d", ctx, ctx->pid, address, size);
-    for (word_addr = address & ~3ul; word_addr < address + size; word_addr += WORD_SIZE) {
-        int i;
-        unsigned int word = 0;
+    assert(WORD_SIZE == sizeof(unsigned));
+    for (word_addr = address & ~(WORD_SIZE - 1); word_addr < address + size; word_addr += WORD_SIZE) {
+        unsigned word = 0;
         if (word_addr < address || word_addr + WORD_SIZE > address + size) {
+            int i;
             errno = 0;
             word = ptrace(PTRACE_PEEKDATA, ctx->pid, word_addr, 0);
             if (errno != 0) {
@@ -1641,12 +1642,14 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
                 errno = err;
                 return -1;
             }
-        }
-        for (i = 0; i < WORD_SIZE; i++) {
-            if (word_addr + i >= address && word_addr + i < address + size) {
-                /* TODO: big endian support */
-                ((unsigned char *)&word)[i] = ((unsigned char *)buf)[word_addr + i - address];
+            for (i = 0; i < WORD_SIZE; i++) {
+                if (word_addr + i >= address && word_addr + i < address + size) {
+                    ((char *)&word)[i] = ((char *)buf)[word_addr + i - address];
+                }
             }
+        }
+        else {
+            word = *(unsigned *)((char *)buf + (word_addr - address));
         }
         if (ptrace(PTRACE_POKEDATA, ctx->pid, word_addr, word) < 0) {
             int err = errno;
@@ -1664,9 +1667,9 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     assert(is_dispatch_thread());
     assert(!ctx->exited);
     trace(LOG_CONTEXT, "context: read memory ctx %#x, pid %d, address 0x%08x, size %d", ctx, ctx->pid, address, size);
-    for (word_addr = address & ~3ul; word_addr < address + size; word_addr += WORD_SIZE) {
-        int i;
-        unsigned int word = 0;
+    assert(WORD_SIZE == sizeof(unsigned));
+    for (word_addr = address & ~(WORD_SIZE - 1); word_addr < address + size; word_addr += WORD_SIZE) {
+        unsigned word = 0;
         errno = 0;
         word = ptrace(PTRACE_PEEKDATA, ctx->pid, word_addr, 0);
         if (errno != 0) {
@@ -1676,11 +1679,16 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
             errno = err;
             return -1;
         }
-        for (i = 0; i < WORD_SIZE; i++) {
-            if (word_addr + i >= address && word_addr + i < address + size) {
-                /* TODO: big endian support */
-                ((unsigned char *)buf)[word_addr + i - address] = ((unsigned char *)&word)[i];
+        if (word_addr < address || word_addr + WORD_SIZE > address + size) {
+            int i;
+            for (i = 0; i < WORD_SIZE; i++) {
+                if (word_addr + i >= address && word_addr + i < address + size) {
+                    ((char *)buf)[word_addr + i - address] = ((char *)&word)[i];
+                }
             }
+        }
+        else {
+            *(unsigned *)((char *)buf + (word_addr - address)) = word;
         }
     }
     return 0;
