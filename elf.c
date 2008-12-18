@@ -124,6 +124,17 @@ static void elf_cleanup_event(void * arg) {
     }
 }
 
+/* Swap bytes if ELF file endianness mismatch agent endianness */
+static void swap_bytes(void * buf, size_t size) {
+    int i;
+    char * p = (char *)buf;
+    for (i = 0; i < size / 2; i++) {
+        char x = p[i];
+        p[i] = p[size - i - 1];
+        p[size - i - 1] = x;
+    }
+}
+
 ELF_File * elf_open(char * file_name) {
     int error = 0;
     struct_stat st;
@@ -190,8 +201,19 @@ ELF_File * elf_open(char * file_name) {
         }
         else if (hdr.e_ident[EI_CLASS] == ELFCLASS32) {
             if (error == 0 && swap) {
-                /* TODO swap ELF file header bytes */
-                assert(0);
+                swap_bytes(&hdr.e_type, sizeof(hdr.e_type));
+                swap_bytes(&hdr.e_machine, sizeof(hdr.e_machine));
+                swap_bytes(&hdr.e_version, sizeof(hdr.e_version));
+                swap_bytes(&hdr.e_entry, sizeof(hdr.e_entry));
+                swap_bytes(&hdr.e_phoff, sizeof(hdr.e_phoff));
+                swap_bytes(&hdr.e_shoff, sizeof(hdr.e_shoff));
+                swap_bytes(&hdr.e_flags, sizeof(hdr.e_flags));
+                swap_bytes(&hdr.e_ehsize, sizeof(hdr.e_ehsize));
+                swap_bytes(&hdr.e_phentsize, sizeof(hdr.e_phentsize));
+                swap_bytes(&hdr.e_phnum, sizeof(hdr.e_phnum));
+                swap_bytes(&hdr.e_shentsize, sizeof(hdr.e_shentsize));
+                swap_bytes(&hdr.e_shnum, sizeof(hdr.e_shnum));
+                swap_bytes(&hdr.e_shstrndx, sizeof(hdr.e_shstrndx));
             }
             if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN) error = ERR_INV_FORMAT;
             if (error == 0 && hdr.e_version != EV_CURRENT) error = ERR_INV_FORMAT;
@@ -211,8 +233,16 @@ ELF_File * elf_open(char * file_name) {
                     else if (error == 0) {
                         ELF_Section * sec = loc_alloc_zero(sizeof(ELF_Section));
                         if (swap) {
-                            /* TODO swap ELF section header bytes */
-                            assert(0);
+                            swap_bytes(&shdr.sh_name, sizeof(shdr.sh_name));
+                            swap_bytes(&shdr.sh_type, sizeof(shdr.sh_type));
+                            swap_bytes(&shdr.sh_flags, sizeof(shdr.sh_flags));
+                            swap_bytes(&shdr.sh_addr, sizeof(shdr.sh_addr));
+                            swap_bytes(&shdr.sh_offset, sizeof(shdr.sh_offset));
+                            swap_bytes(&shdr.sh_size, sizeof(shdr.sh_size));
+                            swap_bytes(&shdr.sh_link, sizeof(shdr.sh_link));
+                            swap_bytes(&shdr.sh_info, sizeof(shdr.sh_info));
+                            swap_bytes(&shdr.sh_addralign, sizeof(shdr.sh_addralign));
+                            swap_bytes(&shdr.sh_entsize, sizeof(shdr.sh_entsize));
                         }
                         sec->file = file;
                         sec->index = cnt;
