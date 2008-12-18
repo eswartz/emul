@@ -252,20 +252,18 @@ static void command_get_children(char * token, Channel * c) {
     PROCESSENTRY32 pe32;
 
     snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (snapshot == INVALID_HANDLE_VALUE) err = GetLastError();
+    if (snapshot == INVALID_HANDLE_VALUE) err = set_win32_errno(GetLastError());
     pe32.dwSize = sizeof(PROCESSENTRY32);
     if (!err && !Process32First(snapshot, &pe32)) {
-        err = GetLastError();
+        err = set_win32_errno(GetLastError());
         CloseHandle(snapshot);
     }
+    write_errno(&c->out, err);
     if (err) {
-        /* TODO need better translation of WIN32 error codes to errno */
-        write_errno(&c->out, EINVAL);
         write_stringz(&c->out, "null");
     }
     else {
         int cnt = 0;
-        write_errno(&c->out, 0);
         write_stream(&c->out, '[');
         do {
             if (!attached_only || context_find_from_pid(pe32.th32ProcessID) != NULL) {
@@ -638,25 +636,25 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
     loc_free(hi);
 
     memset(hpipes, 0, sizeof(hpipes));
-        for (i = 0; i < 3; i++) fpipes[i][0] = fpipes[i][1] = -1;
+    for (i = 0; i < 3; i++) fpipes[i][0] = fpipes[i][1] = -1;
     if (!err) {
 #if defined(__CYGWIN__)
         for (i = 0; i < 3; i++) {
-                if (pipe(fpipes[i]) < 0) {
-                        err = errno;
-                        break;
-                }
-                hpipes[i][0] = (HANDLE)get_osfhandle(fpipes[i][0]);
-                hpipes[i][1] = (HANDLE)get_osfhandle(fpipes[i][1]);
+            if (pipe(fpipes[i]) < 0) {
+                err = errno;
+                break;
+            }
+            hpipes[i][0] = (HANDLE)get_osfhandle(fpipes[i][0]);
+            hpipes[i][1] = (HANDLE)get_osfhandle(fpipes[i][1]);
         }
 #else
         for (i = 0; i < 3; i++) {
-                if (!CreatePipe(&hpipes[i][0], &hpipes[i][1], NULL, PIPE_SIZE)) {
+            if (!CreatePipe(&hpipes[i][0], &hpipes[i][1], NULL, PIPE_SIZE)) {
                 err = set_win32_errno(GetLastError());
                 break;
-                }
-                fpipes[i][0] = _open_osfhandle((intptr_t)hpipes[i][0], O_TEXT);
-                fpipes[i][1] = _open_osfhandle((intptr_t)hpipes[i][1], O_TEXT);
+            }
+            fpipes[i][0] = _open_osfhandle((intptr_t)hpipes[i][0], O_TEXT);
+            fpipes[i][1] = _open_osfhandle((intptr_t)hpipes[i][1], O_TEXT);
         }
 #endif
     }
@@ -666,23 +664,23 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
         SetHandleInformation(hpipes[0][0], HANDLE_FLAG_INHERIT, TRUE);
         SetHandleInformation(hpipes[1][1], HANDLE_FLAG_INHERIT, TRUE);
         SetHandleInformation(hpipes[2][1], HANDLE_FLAG_INHERIT, TRUE);
-                memset(&si, 0, sizeof(si));
-                memset(&prs_info, 0, sizeof(prs_info));
-                si.cb = sizeof(si);
-                si.dwFlags |= STARTF_USESTDHANDLES;
-                si.hStdInput  = hpipes[0][0];
-                si.hStdOutput = hpipes[1][1];
-                si.hStdError  = hpipes[2][1];
-                if (CreateProcess(exe, cmd, NULL, NULL, TRUE, (attach ? CREATE_SUSPENDED : 0),
-                        (envp ? envp[0] : NULL), (dir[0] ? dir : NULL), &si, &prs_info) == 0)
-                {
-                        err = set_win32_errno(GetLastError());
-                }
-                else {
-                *pid = prs_info.dwProcessId;
-                CloseHandle(prs_info.hThread);
-                CloseHandle(prs_info.hProcess);
-            }
+        memset(&si, 0, sizeof(si));
+        memset(&prs_info, 0, sizeof(prs_info));
+        si.cb = sizeof(si);
+        si.dwFlags |= STARTF_USESTDHANDLES;
+        si.hStdInput  = hpipes[0][0];
+        si.hStdOutput = hpipes[1][1];
+        si.hStdError  = hpipes[2][1];
+        if (CreateProcess(exe, cmd, NULL, NULL, TRUE, (attach ? CREATE_SUSPENDED : 0),
+                (envp ? envp[0] : NULL), (dir[0] ? dir : NULL), &si, &prs_info) == 0)
+        {
+            err = set_win32_errno(GetLastError());
+        }
+        else {
+            *pid = prs_info.dwProcessId;
+            CloseHandle(prs_info.hThread);
+            CloseHandle(prs_info.hProcess);
+        }
     }
     close(fpipes[0][0]);
     close(fpipes[1][1]);
@@ -697,9 +695,9 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
         list_add_first(&(*prs)->link, &prs_list);
     }
     else {
-                close(fpipes[0][1]);
-                close(fpipes[1][0]);
-                close(fpipes[2][0]);
+        close(fpipes[0][1]);
+        close(fpipes[1][0]);
+        close(fpipes[2][0]);
     }
     loc_free(cmd);
     if (!err) return 0;
@@ -807,7 +805,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
 
 static int start_process(Channel * c, char ** envp, char * dir, char * exe, char ** args, int attach,
                 int * pid, int * selfattach, ChildProcess ** prs) {
-        int err = 0;
+    int err = 0;
     int p_inp[2];
     int p_out[2];
     int p_err[2];
