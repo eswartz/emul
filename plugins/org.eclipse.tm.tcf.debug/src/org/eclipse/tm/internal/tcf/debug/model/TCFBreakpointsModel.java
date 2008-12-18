@@ -61,7 +61,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     }
     
     public boolean isSupported(IChannel channel, IBreakpoint bp) {
-        // TODO implement per-channel breakpoint filtering
+        // TODO: implement per-channel breakpoint filtering
         return true;
     }
     

@@ -14,27 +14,22 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPo
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.jface.viewers.ISelection;
 
+// TODO: TCF model selection policy
 public class TCFModelSelectionPolicy implements IModelSelectionPolicy {
 
     public boolean contains(ISelection selection, IPresentationContext context) {
-        // TODO Auto-generated method stub
         return false;
     }
 
     public boolean isSticky(ISelection selection, IPresentationContext context) {
-        // TODO Auto-generated method stub
         return false;
     }
 
-    public boolean overrides(ISelection existing, ISelection candidate,
-            IPresentationContext context) {
-        // TODO Auto-generated method stub
+    public boolean overrides(ISelection existing, ISelection candidate, IPresentationContext context) {
         return false;
     }
 
-    public ISelection replaceInvalidSelection(ISelection invalidSelection,
-            ISelection newSelection) {
-        // TODO Auto-generated method stub
+    public ISelection replaceInvalidSelection(ISelection invalidSelection, ISelection newSelection) {
         return null;
     }
 }

@@ -184,7 +184,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         }
 
         public int getAddressableSize() throws DebugException {
-            // TODO support for addressable size other then 1 byte
+            // TODO: support for addressable size other then 1 byte
             return 1;
         }
 

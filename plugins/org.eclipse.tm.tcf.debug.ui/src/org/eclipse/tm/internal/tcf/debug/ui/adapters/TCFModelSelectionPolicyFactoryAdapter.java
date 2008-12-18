@@ -14,12 +14,11 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPo
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 
+// TODO: TCF model selection policy factory
 public class TCFModelSelectionPolicyFactoryAdapter implements IModelSelectionPolicyFactory {
 
     public IModelSelectionPolicy createModelSelectionPolicyAdapter(
             Object element, IPresentationContext context) {
-        // TODO Auto-generated method stub
         return null;
     }
-
 }

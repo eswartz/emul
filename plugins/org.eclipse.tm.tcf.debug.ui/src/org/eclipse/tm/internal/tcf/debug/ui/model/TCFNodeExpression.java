@@ -30,7 +30,7 @@ import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
-// TODO: elements of long arrays need to be shown in groups 
+// TODO: editing of expression values
 public class TCFNodeExpression extends TCFNode {
 
     private final String script;

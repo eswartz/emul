@@ -72,32 +72,25 @@ public class BreakpointCommand implements IToggleBreakpointsTargetExtension {
     }
 
     public boolean canToggleLineBreakpoints(IWorkbenchPart part, ISelection selection) {
-        // TODO Auto-generated method stub
         return false;
     }
 
     public void toggleLineBreakpoints(IWorkbenchPart part, ISelection selection) throws CoreException {
-        // TODO Auto-generated method stub
-        
+        // TODO: breakpoint command: toggle line breakpoint
     }
 
     public boolean canToggleMethodBreakpoints(IWorkbenchPart part, ISelection selection) {
-        // TODO Auto-generated method stub
         return false;
     }
 
     public void toggleMethodBreakpoints(IWorkbenchPart part, ISelection selection) throws CoreException {
-        // TODO Auto-generated method stub
-        
     }
 
     public boolean canToggleWatchpoints(IWorkbenchPart part, ISelection selection) {
-        // TODO Auto-generated method stub
         return false;
     }
 
     public void toggleWatchpoints(IWorkbenchPart part, ISelection selection) throws CoreException {
-        // TODO Auto-generated method stub
-        
+        // TODO: breakpoint command: toggle watchpoint
     }
 }
