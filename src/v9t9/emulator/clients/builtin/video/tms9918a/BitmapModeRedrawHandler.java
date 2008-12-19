@@ -24,14 +24,16 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 	protected VdpTouchHandler modify_color_bitmap = new VdpTouchHandler() {
 	
 		public void modify(int offs) {
-			vdpChanges.color[offs >> 3] = vdpchanged = 1;			
+			vdpChanges.color[offs >> 3] = 1;
+			vdpChanges.changed = true;
 		}
 		
 	};
 	protected VdpTouchHandler modify_patt_bitmap = new VdpTouchHandler() {
 	
 		public void modify(int offs) {
-			vdpChanges.patt[offs >> 3] = vdpchanged = 1;			
+			vdpChanges.patt[offs >> 3] = 1;
+			vdpChanges.changed = true;
 		}
 		
 	};

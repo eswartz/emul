@@ -32,7 +32,8 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		public void modify(int offs) {
 			int row = (offs / rowstride) >> 3;
 			int col = (offs % rowstride) >> blockshift;
-			vdpChanges.screen[row * blockstride + col] = vdpchanged = 1;
+			vdpChanges.screen[row * blockstride + col] = 1;
+			vdpChanges.changed = true;
 		}
 		
 	}

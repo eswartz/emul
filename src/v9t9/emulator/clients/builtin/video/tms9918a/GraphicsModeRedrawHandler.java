@@ -26,7 +26,7 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements VdpM
 		public void modify(int offs) {
 			int ptr = offs << 3;
 			Arrays.fill(vdpChanges.patt, ptr, ptr + 8, (byte)1);
-	    	vdpchanged = 1;			
+			vdpChanges.changed = true;			
 		}
 		
 	};

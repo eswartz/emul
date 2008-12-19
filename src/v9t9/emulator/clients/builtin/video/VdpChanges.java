@@ -5,7 +5,8 @@ package v9t9.emulator.clients.builtin.video;
 
 public class VdpChanges
 {
-	
+	// if anything changed in the tables
+	public boolean 	changed;
 	// if set, just redraw it all
 	public boolean	fullRedraw;
 	

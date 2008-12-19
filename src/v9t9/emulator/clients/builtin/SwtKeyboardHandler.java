@@ -239,7 +239,10 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 				break;
 				
 			case 8:
-				keyboardState.setKey(pressed, fctnShifted, 'S');	/* BKSP */
+				keyboardState.setKey(pressed, shift | KeyboardState.CTRL, 'H');	/* BKSP */
+				break;
+			case SWT.TAB:
+				keyboardState.setKey(pressed, shift | KeyboardState.CTRL, 'I');	/* TAB */
 				break;
 				
 			case SWT.F1:
@@ -267,11 +270,18 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 				keyboardState.setKey(pressed, fctnShifted, 'D');
 				break;
 				
+			case SWT.DEL:
+				keyboardState.setKey(pressed, fctnShifted, '1');	
+				break;
+			case SWT.INSERT:
+				keyboardState.setKey(pressed, fctnShifted, '2');	
+				break;
+				
 			case SWT.PAGE_UP:
-				keyboardState.setKey(pressed, fctnShifted, '8');		// REDO
+				keyboardState.setKey(pressed, fctnShifted, '6'); // (as per E/A and TI Writer)
 				break;
 			case SWT.PAGE_DOWN:
-				keyboardState.setKey(pressed, fctnShifted, '6');		// PROC'D
+				keyboardState.setKey(pressed, fctnShifted, '4'); // (as per E/A and TI Writer)
 				break;
 
 			case SWT.HOME:

@@ -95,8 +95,9 @@ public class Vdp9918AMmio extends VdpMmio {
 		   a read-before-write. */
 		vdpaddrflag = false;
 
+		byte oldval = (byte) videoMemory.flatReadByte(vdpaddr);
 		videoMemory.flatWriteByte(vdpaddr, val);
-		if (vdpHandler != null) {
+		if (vdpHandler != null && oldval != val) {
 			vdpHandler.touchAbsoluteVdpMemory(getAbsoluteAddress(vdpaddr), val);
 		}
 

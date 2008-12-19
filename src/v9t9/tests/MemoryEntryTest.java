@@ -7,7 +7,6 @@
 package v9t9.tests;
 
 import junit.framework.TestCase;
-import v9t9.emulator.hardware.TI994A;
 import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
@@ -19,7 +18,6 @@ import v9t9.engine.memory.ZeroWordMemoryArea;
  * @author ejs
  */
 public class MemoryEntryTest extends TestCase {
-    private TI994A machine;
     private MemoryDomain CPU;
     
     public static void main(String[] args) {
@@ -32,8 +30,7 @@ public class MemoryEntryTest extends TestCase {
     @Override
 	protected void setUp() throws Exception {
         super.setUp();
-        machine = new TI994A();
-        CPU = machine.getConsole();
+        CPU = new MemoryDomain();
    }
 
     /*
@@ -107,8 +104,9 @@ public class MemoryEntryTest extends TestCase {
         MemoryArea anArea = new ZeroWordMemoryArea(); 
         MemoryEntry ent = new MemoryEntry("most mem", CPU, 2048, MemoryDomain.PHYSMEMORYSIZE-2048, 
                 anArea);
-        ent.map();
-        assertTrue(ent.isMapped());
+        CPU.mapEntry(ent);
+        assertTrue(CPU.isEntryFullyMapped(ent));
+        assertTrue(CPU.isEntryMapped(ent));
     }
 
     public void testMapAndUnmap() {
@@ -116,7 +114,7 @@ public class MemoryEntryTest extends TestCase {
         MemoryEntry zEnt = new MemoryEntry("all mem", CPU, 0, MemoryDomain.PHYSMEMORYSIZE, 
                 zArea);
         assertTrue(zEnt != null);
-        zEnt.map();
+        CPU.mapEntry(zEnt);
         
         ByteMemoryArea anArea = new ByteMemoryArea();
         anArea.memory = new byte[1024];
@@ -128,7 +126,7 @@ public class MemoryEntryTest extends TestCase {
         MemoryEntry ent = new MemoryEntry("block", CPU, 2048, 1024, 
                 anArea);
         assertTrue(ent != null);
-        ent.map();
+        CPU.mapEntry(ent);
         
         byte val = CPU.readByte(2048); 
         assertTrue(val == (byte)0xaa);
@@ -136,20 +134,25 @@ public class MemoryEntryTest extends TestCase {
         assertTrue(CPU.readByte(2048+1024) == 0x0);
 
         /* allow map on top */
-        zEnt.map();
-        assertTrue(zEnt.isMapped());
+        CPU.mapEntry(zEnt);
+        assertTrue(CPU.isEntryMapped(zEnt));
+        assertTrue(CPU.isEntryFullyMapped(zEnt));
         assertTrue(CPU.readByte(2048) == 0x0);
+        assertFalse(CPU.isEntryFullyMapped(ent));
+        assertTrue(CPU.isEntryMapped(ent));
         
-        /* unmapping leaves zeroes, not old stuff */
-        zEnt.unmap();
-        assertTrue(!ent.isMapped());
-        assertTrue(!zEnt.isMapped());
-        assertTrue(CPU.readByte(2048) == 0x0);
+        /* unmapping leaves old stuff */
+        CPU.unmapEntry(zEnt);
+        assertFalse(CPU.isEntryMapped(zEnt));
+        assertFalse(CPU.isEntryFullyMapped(zEnt));
+        assertTrue(CPU.isEntryFullyMapped(ent));
+        assertTrue(CPU.isEntryMapped(ent));
+        assertEquals((byte)0xaa, CPU.readByte(2048));
         
-        ent.unmap();
-        assertTrue(!ent.isMapped());
-        assertTrue(!zEnt.isMapped());
-        assertTrue(CPU.readByte(2048) == 0x0);
+        CPU.unmapEntry(ent);
+        assertFalse(CPU.isEntryFullyMapped(zEnt));
+        assertFalse(CPU.isEntryMapped(zEnt));
+        assertEquals(0x0, CPU.readByte(2048));
         
     }
 

@@ -25,7 +25,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 
 		public void modify(int offs) {
 			vdpChanges.sprite |= (1<<(offs >> 2));
-			vdpchanged = 1;
+			vdpChanges.changed = true;
 		}
 
 	};
@@ -42,7 +42,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 				vdpChanges.sprpat[patt] = 1;
 			}
 
-			vdpchanged = 1;
+			vdpChanges.changed = true;
 		}
 
 	};

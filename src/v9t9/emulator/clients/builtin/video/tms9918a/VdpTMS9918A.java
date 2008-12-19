@@ -523,9 +523,9 @@ public class VdpTMS9918A implements VdpHandler {
     public synchronized void touchAbsoluteVdpMemory(int vdpaddr, byte val) {
     	try {
 			if (vdpModeRedrawHandler != null) {
-		    	vdpchanged |= vdpModeRedrawHandler.touch(vdpaddr);
+				vdpChanges.changed |= vdpModeRedrawHandler.touch(vdpaddr);
 		    	if (spriteRedrawHandler != null) {
-		    		vdpchanged |= spriteRedrawHandler.touch(vdpaddr);
+		    		vdpChanges.changed |= spriteRedrawHandler.touch(vdpaddr);
 		    	}
 			}
     	} catch (NullPointerException e) {
@@ -548,17 +548,17 @@ public class VdpTMS9918A implements VdpHandler {
 	protected void dirtySprites() {
 		vdpChanges.sprite = -1;
 		Arrays.fill(vdpChanges.sprpat, 0, vdpChanges.sprpat.length, (byte)1);
-		vdpchanged = true;
+		vdpChanges.changed = true;
 	}
 
 
 	protected void dirtyAll() {
-		vdpchanged = true;
+		vdpChanges.changed = true;
 		vdpChanges.fullRedraw = true;
 	}
 	
 	public synchronized boolean update() {
-		if (!vdpchanged)
+		if (!vdpChanges.changed)
 			return false;
 		//System.out.println(System.currentTimeMillis());
 		if (vdpModeRedrawHandler != null) {

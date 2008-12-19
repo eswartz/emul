@@ -8,8 +8,8 @@ package v9t9.engine.files;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 import v9t9.utils.Check;
 
@@ -22,6 +22,10 @@ public class NativeTextFile implements NativeFile {
         this.file = file;
     }
 
+    @Override
+    public String toString() {
+    	return file.getAbsolutePath() + " (text)";
+    }
     public String getFileName() {
         return file.getName();
     }
@@ -47,11 +51,11 @@ public class NativeTextFile implements NativeFile {
     }
 
     public int writeContents(byte[] contents, int contentOffset, int offset, int length) throws IOException {
-        FileOutputStream fos = new FileOutputStream(file, true);
+    	RandomAccessFile raf = new RandomAccessFile(file, "rw");
         
-        fos.getChannel().position(offset);
-        fos.write(contents, contentOffset, length);
-        fos.close();
+    	raf.seek(offset);
+        raf.write(contents, contentOffset, length);
+        raf.close();
         return length;
     }
 

@@ -28,7 +28,6 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 	protected final VdpCanvas vdpCanvas;
 	protected final VdpTouchHandlerBlock vdpTouchBlock;
 	
-	protected byte vdpchanged;
 	protected final byte[] vdpregs;
 	
 	public BaseRedrawHandler(byte[] vdpregs, VdpHandler vdp, 
@@ -50,14 +49,16 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 	protected VdpTouchHandler modify_screen_default = new VdpTouchHandler() {
 
 		public void modify(int offs) {
-			vdpChanges.screen[offs] = vdpchanged = VdpChanges.SC_BACKGROUND;
+			vdpChanges.screen[offs] = VdpChanges.SC_BACKGROUND;
+			vdpChanges.changed = true;
 		}
 		
 	};
 	protected VdpTouchHandler modify_patt_default = new VdpTouchHandler() {
 
 		public void modify(int offs) {
-			vdpChanges.patt[offs >> 3] = vdpchanged = 1;			
+			vdpChanges.patt[offs >> 3] = 1;
+			vdpChanges.changed = true;
 		}
 		
 	};

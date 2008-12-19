@@ -63,7 +63,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		this.shell = parent.getShell();
 		this.canvas = new Canvas(parent, getStyleBits());
 		this.canvas.setLayout(new FillLayout());
-
 		canvasLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		canvasLayoutData.minimumHeight = 256;
 		canvasLayoutData.minimumWidth = 192;
@@ -106,7 +105,12 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			}
 		});
 		
+		setupCanvas();
 		return canvas;
+	}
+
+	protected void setupCanvas() {
+		
 	}
 
 	protected int getStyleBits() {

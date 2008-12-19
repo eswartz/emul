@@ -24,7 +24,8 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 	protected VdpTouchHandler modify_color_text2 = new VdpTouchHandler() {
 		
 		public void modify(int offs) {
-			vdpChanges.color[offs] = vdpchanged = 1;			
+			vdpChanges.color[offs] = 1;
+			vdpChanges.changed = true;
 		}
 		
 	};
@@ -45,8 +46,9 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		// propagate blink changes
 		int size = vdpModeInfo.screen.size;
 		for (int i = 0; i < size; i++) {
-			if ((vdpChanges.color[i >> 3] & (0x80 >> (i & 7))) != 0)	/* this position changed? */
+			if ((vdpChanges.color[i >> 3]) != 0) { 	/* this position changed? */
 				vdpChanges.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
+			}
 		}
 		
 	}
@@ -68,7 +70,7 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		byte bfg, bbg;
 		
 		int size = vdpModeInfo.screen.size;
-		if ((vdpregs[8] & VdpV9938.R9_LN) == 0)
+		if ((vdpregs[9] & VdpV9938.R9_LN) == 0)
 			size = 80 * 24;
 		
 		tbg = (byte) (vdpregs[7] & 0xf);
@@ -130,7 +132,7 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 			for (int j = 0; j < 8; j++) {
 				if ((cur & (0x80 >> j)) != 0) {
 					int screenOffs = (i << 3) + j;
-					touch(screenBase + screenOffs);
+					vdpChanges.changed |= touch(screenBase + screenOffs);
 				}
 			}
 		}

@@ -8,8 +8,8 @@ package v9t9.engine.files;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 import v9t9.utils.Check;
 
@@ -29,6 +29,11 @@ public class NativeFDRFile implements NativeFile {
             this.filename = file.getName();
         }
     }
+    
+    @Override
+    public String toString() {
+    	return file + " (FDR)";
+    }
 
     public String getFileName() {
         return filename;
@@ -45,11 +50,11 @@ public class NativeFDRFile implements NativeFile {
 
     public int writeContents(byte[] contents, int contentOffset, int offset,
 			int length) throws IOException {
-    	FileOutputStream fos = new FileOutputStream(file, true);
+    	RandomAccessFile raf = new RandomAccessFile(file, "rw");
         
-        fos.getChannel().position(offset + fdr.getFDRSize());
-        fos.write(contents, contentOffset, length);
-        fos.close();
+    	raf.seek(offset + fdr.getFDRSize());
+        raf.write(contents, contentOffset, length);
+        raf.close();
         return length;
 	}
 

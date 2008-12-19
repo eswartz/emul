@@ -33,7 +33,16 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 	public SwtVideoRendererGTK() {
 		super();
 	}
+	
+	@Override
+	protected void setupCanvas() {
+		//OS.gtk_widget_set_app_paintable(canvas.handle, false);
+	}
 
+	@Override
+	protected int getStyleBits() {
+		return super.getStyleBits(); // | SWT.DOUBLE_BUFFERED;
+	}
 	@Override
 	protected void resizeWidgets() {
 		super.resizeWidgets();

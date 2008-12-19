@@ -48,7 +48,7 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 				&& addr < vdpModeInfo.sprite.base) {
 			
 			vdpChanges.sprite |= (1<< ((addr - sprcolbase) >> 4));
-			vdpchanged = 1;
+			vdpChanges.changed = true;
 			
 			visible = true;
 		}

@@ -46,12 +46,12 @@ public class DiskMemoryEntryTest extends TestCase {
         assertEquals(ent.bLoaded, false);
         assertEquals(ent.bStorable, false);
         
-        ent.map();
+        CPU.mapEntry(ent);
         
         assertEquals(ent.bLoaded, true);
         assertEquals(Integer.toHexString(CPU.readWord(0)), Integer.toHexString((short)0x83e0));
         
-        ent.unmap();
+        CPU.unmapEntry(ent);
         assertEquals(ent.bLoaded, false);
         assertEquals(CPU.readWord(0), (short)0);
     }
