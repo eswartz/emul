@@ -12,6 +12,7 @@ import v9t9.emulator.hardware.CruReader;
 import v9t9.emulator.hardware.CruWriter;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.CruHandler;
+import v9t9.keyboard.KeyboardState;
 
 /**
  * CRU implementation for the internal 99/4A hardware
@@ -21,9 +22,6 @@ public class InternalCru implements CruHandler {
     Machine machine;
 	private CruManager manager;
 
-	private byte[] crukeyboardmap = new byte[8];
-	/** actual state of alpha */
-	private boolean alphaLock;
 	private int crukeyboardcol;
 	/** Set to prevent reading alpha lock */
 	private boolean alphaLockMask;
@@ -157,11 +155,11 @@ public class InternalCru implements CruHandler {
 				int alphamask = 0;
 				
 				if (!alphaLockMask && mask == 0x10) {
-					alphamask = !alphaLock ? 0 : 0x10;
+					alphamask = !keyboardState.getAlpha() ? 0 : 0x10;
 				}
 				//logger(_L | L_2, "crukeyboardcol=%X, mask=%X, addr=%2X\n", crukeyboardcol,
 				//	 mask, addr);
-				int colMask = (crukeyboardmap[crukeyboardcol] & mask);
+				int colMask = (keyboardState.getKeyboardMap()[crukeyboardcol] & mask);
 				int colBits = (colMask | alphamask);
 				//System.out.println("crukeyboardcol="+crukeyboardcol+" addr="+Utils.toHex2(addr)+" mask="+Utils.toHex2(mask)+" colMask="+Utils.toHex2(colMask)+" alphamask="+alphamask);
 				//System.out.println("foo: " +colBits);
@@ -173,16 +171,19 @@ public class InternalCru implements CruHandler {
 	private CruReader cruralpha = new CruReader() {
 
 		public int read(int addr, int data, int num) {
-			return alphaLock ? 1 : 0;
+			return keyboardState.getAlpha() ? 1 : 0;
 		}
 		
 	};
 	private int intlevel;
 	private int intpins;
+	private final KeyboardState keyboardState;
 	
-    public InternalCru(Machine machine) {
+    public InternalCru(Machine machine, KeyboardState keyboardState) {
         this.machine = machine;
+		this.keyboardState = keyboardState;
         this.manager = machine.getCruManager();
+        
 
         registerInternalCru(0x2, 1, cruw9901_S);
         registerInternalCru(0x4, 1, cruw9901_S);
@@ -341,17 +342,5 @@ public class InternalCru implements CruHandler {
 			// take care of pending interrupts
 			handle9901();
 		}
-	}
-
-	public byte[] getKeyboardMap() {
-		return crukeyboardmap;
-	}
-
-	public void setAlphaLock(boolean alphaLock) {
-		this.alphaLock = alphaLock;
-	}
-
-	public boolean getAlphaLock() {
-		return alphaLock;
 	}
 }

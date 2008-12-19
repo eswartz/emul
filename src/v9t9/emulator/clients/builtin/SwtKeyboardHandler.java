@@ -130,7 +130,9 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 		}
 		
 		// immediately record it
-		updateKey(pressed, stateMask, keyCode);
+		synchronized (keyboardState) {
+			updateKey(pressed, stateMask, keyCode);
+		}
 	}
 	
 	private void updateKey(boolean pressed, int stateMask, int keyCode) {
@@ -292,7 +294,9 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 				break;
 
 			default:
-				System.out.println(keyCode);
+				if (keyCode != shift) {
+					System.out.println(keyCode);
+				}
 				
 			}
 		}
@@ -302,11 +306,13 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 	 * @see v9t9.emulator.handlers.KeyboardHandler#scan(v9t9.keyboard.KeyboardState)
 	 */
 	public void scan(KeyboardState state) {
-		state.resetKeyboard();
-	
-		synchronized (pressedKeys) {
-			for (KeyInfo info : pressedKeys) {
-				updateKey(true, pressedStateMask, info.keyCode);
+		synchronized(state) {
+			state.resetKeyboard();
+		
+			synchronized (pressedKeys) {
+				for (KeyInfo info : pressedKeys) {
+					updateKey(true, pressedStateMask, info.keyCode);
+				}
 			}
 		}
 	}

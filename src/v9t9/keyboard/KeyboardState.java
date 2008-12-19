@@ -8,7 +8,6 @@ package v9t9.keyboard;
 
 import java.util.Arrays;
 
-import v9t9.emulator.clients.builtin.InternalCru;
 import v9t9.emulator.runtime.Cpu;
 
 public class KeyboardState {
@@ -37,6 +36,10 @@ public class KeyboardState {
     /** 'real' shift keys being held down, as opposed to those being synthesized */
     private byte realshift;
     
+	private byte[] crukeyboardmap = new byte[8];
+	/** actual state of alpha */
+	private boolean alphaLock;
+
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
         which should be faked. */
@@ -66,7 +69,6 @@ public class KeyboardState {
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 112-119 */
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1  /* 120-127 */
     };
-	private final InternalCru cru;
 	//private final Cpu cpu;
 	//private long lastAbortTime;
 
@@ -82,14 +84,13 @@ public class KeyboardState {
     	return (latinto9901[x] != -1 && (x) != '/');
     }
 
-    public KeyboardState(Cpu cpu, InternalCru cru) {
+    public KeyboardState(Cpu cpu) {
 		//this.cpu = cpu;
-		this.cru = cru;
         
     }
     
-    public void resetKeyboard() {
-        Arrays.fill(cru.getKeyboardMap(), 0, 8, (byte)0);
+    public synchronized void resetKeyboard() {
+        Arrays.fill(getKeyboardMap(), 0, 8, (byte)0);
     }
     
     /**
@@ -98,7 +99,7 @@ public class KeyboardState {
      * @param shift FCTN, SHIFT, CTRL mask
      * @param key normalized ASCII key: no lowercase or shifted characters
      */
-    public void setKey(boolean onoff, int shift, int key) {
+    public synchronized void setKey(boolean onoff, int shift, int key) {
         byte b, r, c;
         key &= 0xff;
         shift &= 0xff;
@@ -221,18 +222,18 @@ public class KeyboardState {
     }
 
     private boolean TESTKBDCRU(byte r, byte c) {
-        return (cru.getKeyboardMap()[c] & (0x80 >> r)) != 0;
+        return (crukeyboardmap[c] & (0x80 >> r)) != 0;
     }
 
     private void RESETKBDCRU(byte r, byte c) {
-        cru.getKeyboardMap()[c] &= ~(0x80 >> r);
+    	crukeyboardmap[c] &= ~(0x80 >> r);
     }
 
     private void SETKBDCRU(byte r, byte c) {
-        cru.getKeyboardMap()[c] |= (0x80 >> r);
+    	crukeyboardmap[c] |= (0x80 >> r);
     }
 
-    public boolean isSet(byte shift, int key) {
+    public synchronized boolean isSet(byte shift, int key) {
         byte b, r, c;
         boolean res = false;
 
@@ -256,15 +257,15 @@ public class KeyboardState {
             return res;
     }
     
-    public byte getRealShift() {
-        return realshift;
-    }
-
-	public void setAlpha(boolean on) {
-		this.cru.setAlphaLock(on);
+	public synchronized void setAlpha(boolean on) {
+		this.alphaLock = on;
 	}
 
-	public boolean getAlpha() {
-		return cru.getAlphaLock();
+	public synchronized boolean getAlpha() {
+		return alphaLock;
+	}
+
+	public synchronized byte[] getKeyboardMap() {
+		return crukeyboardmap;
 	}
 }
