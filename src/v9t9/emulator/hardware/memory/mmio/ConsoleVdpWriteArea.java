@@ -11,7 +11,7 @@ public class ConsoleVdpWriteArea extends ConsoleMmioWriteArea {
     }
     
     @Override
-    public byte getWriteByteLatency() {
+    public byte getLatency() {
     	return (byte) (4 + ((VdpMmio)writer).getMemoryAccessCycles());
     }
 

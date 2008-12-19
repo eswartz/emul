@@ -4,7 +4,7 @@
 package v9t9.emulator.hardware.memory.mmio;
 
 import v9t9.emulator.Machine.ConsoleMmioWriter;
-import v9t9.engine.memory.MemoryArea;
+import v9t9.engine.memory.MemoryEntry;
 
 public class ConsoleMmioWriteArea extends ConsoleMmioArea {
     protected final ConsoleMmioWriter writer;
@@ -14,16 +14,16 @@ public class ConsoleMmioWriteArea extends ConsoleMmioArea {
 		if (writer == null) {
 			throw new NullPointerException();
 		}
-        
-        areaWriteByte = new AreaWriteByte() {
-            public void writeByte(MemoryArea area, int addr, byte val) {
-                //System.out.println("wrote addr " + Integer.toHexString(addr)
-                // + "="
-                //  + Integer.toHexString(val));
-                if (0 == (addr & 1)) {
-                    ConsoleMmioWriteArea.this.writer.write(addr, val);
-                }
-            }
-        };
     };
+    
+    @Override
+    public void writeByte(MemoryEntry entry, int addr, byte val) {
+    	if (0 == (addr & 1))
+    		writer.write(addr, val);
+    }
+    
+    @Override
+    public void writeWord(MemoryEntry entry, int addr, short val) {
+    	writer.write(addr, (byte) (val >> 8));
+    }
 }

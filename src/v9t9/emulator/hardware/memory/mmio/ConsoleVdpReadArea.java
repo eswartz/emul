@@ -12,7 +12,7 @@ public class ConsoleVdpReadArea extends ConsoleMmioReadArea {
     }
     
     @Override
-    public byte getReadByteLatency() {
+    public byte getLatency() {
     	return 5;
     }
 }

@@ -11,8 +11,6 @@ import java.util.Set;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.memory.MemoryArea;
-import v9t9.engine.memory.WordMemoryArea;
 import v9t9.tools.llinst.Block;
 import v9t9.tools.llinst.ContextSwitchRoutine;
 import v9t9.tools.llinst.HighLevelInstruction;
@@ -716,9 +714,8 @@ public class TestTopDown1 extends BaseTopDownTest
 	}
 
 	public void test994ARom_0() throws Exception {
-    	MemoryArea area = new WordMemoryArea();
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
-    	this.memory.addAndMap(DiskMemoryEntry.newFromFile(area, 0x0, 0x2000, "CPU ROM", CPU, path, 0, false));
+    	this.memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x0, 0x2000, "CPU ROM", CPU, path, 0, false));
     	phase.disassemble();
     	phase.addStandardROMRoutines();
     	phase.run();
@@ -732,9 +729,8 @@ public class TestTopDown1 extends BaseTopDownTest
     }
     
     public void test994ARom_BlockCrazy() throws Exception {
-    	MemoryArea area = new WordMemoryArea();
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
-    	this.memory.addAndMap(DiskMemoryEntry.newFromFile(area, 0x0, 0x2000, "CPU ROM", CPU, path, 0, false));
+    	this.memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x0, 0x2000, "CPU ROM", CPU, path, 0, false));
     	phase.disassemble();
     	phase.addStandardROMRoutines();
     	// add label at every instruction just to be sure it doesn't explode
@@ -756,9 +752,8 @@ public class TestTopDown1 extends BaseTopDownTest
     }
     
     public void test994ARom_1() throws Exception {
-    	MemoryArea area = new WordMemoryArea();
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
-    	this.memory.addAndMap(DiskMemoryEntry.newFromFile(area, 0x800, 0x800, "CPU ROM", CPU, path, 0x800, false));
+    	this.memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(0x800, 0x800, "CPU ROM", CPU, path, 0x800, false));
     	phase.decompileInfo.getMemoryRanges().clear();
     	phase.decompileInfo.getMemoryRanges().addRange(0x800, 0x800, true);
     	phase.disassemble();

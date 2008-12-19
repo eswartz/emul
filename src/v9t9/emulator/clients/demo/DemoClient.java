@@ -204,8 +204,8 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
         vdpPacket[vdpPacketSize++] = val;
     }
     
-    public void update() {
-    	
+    public boolean update() {
+    	return false;
     }
 
     /*

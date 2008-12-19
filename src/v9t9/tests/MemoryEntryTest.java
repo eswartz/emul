@@ -7,6 +7,7 @@
 package v9t9.tests;
 
 import junit.framework.TestCase;
+import v9t9.emulator.hardware.memory.ConsoleRamArea;
 import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
@@ -157,4 +158,49 @@ public class MemoryEntryTest extends TestCase {
     }
 
 
+    public void testCpuRamMemorySemantics() throws Exception {
+    	MemoryEntry entry = new MemoryEntry("CPU RAM",
+    			CPU,
+    			0x8000,
+    			0x400,
+    			new ConsoleRamArea());
+    	if (ConsoleRamArea.settingEnhRam.getBoolean()) {
+    		entry.writeWord(0x8000, (short) 0x1234);
+    		entry.writeWord(0x8300, (short) 0x5678);
+    		assertEquals(0x1234, entry.readWord(0x8000));
+    		assertEquals(0x5678, entry.readWord(0x8000));
+    	}
+
+    	ConsoleRamArea.settingEnhRam.setBoolean(false);
+    	_testCPURamNonEnhanced(entry);
+    	
+    	ConsoleRamArea.settingEnhRam.setBoolean(true);
+    	_testCPURamEnhanced(entry);
+    	
+    }
+
+	private void _testCPURamEnhanced(MemoryEntry entry) {
+		entry.writeWord(0x8000, (short) 0x1234);
+		entry.writeWord(0x8300, (short) 0x5678);
+		assertEquals(0x1234, entry.readWord(0x8000));
+		assertEquals(0x5678, entry.readWord(0x8300));
+		
+		entry.writeByte(0x8157, (byte) 0x11);
+		entry.writeByte(0x8357, (byte) 0x22);
+		assertEquals(0x11, entry.readByte(0x8157));
+		assertEquals(0x22, entry.readByte(0x8357));
+	}
+
+	private void _testCPURamNonEnhanced(MemoryEntry entry) {
+		entry.writeWord(0x8000, (short) 0x1234);
+		entry.writeWord(0x8300, (short) 0x5678);
+		assertEquals(0x5678, entry.readWord(0x8000));
+		assertEquals(0x5678, entry.readWord(0x8300));
+		
+		entry.writeByte(0x8157, (byte) 0x11);
+		entry.writeByte(0x8357, (byte) 0x22);
+		assertEquals(0x22, entry.readByte(0x8157));
+		assertEquals(0x22, entry.readByte(0x8357));
+		
+	}
 }

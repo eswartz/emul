@@ -197,8 +197,8 @@ public class EmuDiskDSR implements DsrHandler {
 			byte          opt;
 			short         addr1, addr2;
 	
-			dev = (byte) console.flatReadByte(rambase+0x4c);
-			opt = (byte) console.flatReadByte(rambase+0x4d);
+			dev = console.flatReadByte(rambase+0x4c);
+			opt = console.flatReadByte(rambase+0x4d);
 			addr1 = console.readWord(rambase+0x4e);
 			addr2 = console.readWord(rambase+0x50);
 	

@@ -10,8 +10,7 @@ import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.Memory;
-import v9t9.engine.memory.MemoryArea;
-import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.WindowBankedMemoryEntry;
 
 
 /** 
@@ -45,20 +44,11 @@ public class Vdp9938Mmio extends Vdp9918AMmio {
     	return fullRamArea;
     }
 	protected void initMemory(Memory memory, int memorySize) {
-    	MemoryEntry[] banks = new MemoryEntry[memorySize >> 14];
-    	for (int bank = 0; bank < banks.length; bank++) {
-    		MemoryArea tmp = fullRamArea.copy();
-    		tmp.offset = 0x4000 * bank; 
-    		MemoryEntry bankEntry = new MemoryEntry(
-    				"VDP RAM bank " + bank, 
-    				videoMemory, 0x0000, 0x4000,
-    				tmp);
-    		banks[bank] = bankEntry;
-    	}
-		
-		memoryBank = new BankedMemoryEntry(
+		memoryBank = new WindowBankedMemoryEntry(
 				memory, "VDP RAM",
-				banks);
+				videoMemory,
+				0x0000, 0x4000,
+				fullRamArea);
     	this.memoryEntry = memoryBank;
 		memory.addAndMap(memoryBank);
     }

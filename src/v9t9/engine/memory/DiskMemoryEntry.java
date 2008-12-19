@@ -38,7 +38,8 @@ public class DiskMemoryEntry extends MemoryEntry {
     /**
      * Read memory and create a memory entry with CPU byte ordering.
      * @param addr
-     * @param size
+     * @param size	the expected size of the entry (a maximum if != 0, else for 0, the
+     * actual size is used)
      * @param name
      * @param domain
      * @param filepath
@@ -51,8 +52,32 @@ public class DiskMemoryEntry extends MemoryEntry {
             int addr, int size, String name, 
             MemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) throws IOException {
-    	WordMemoryArea area = new WordMemoryArea(domain.getReadWordLatency(addr));
+    	
+    	WordMemoryArea area;
+    	
+    	if (!isStored) {
+			area = new WordMemoryArea();
+		} else {
+			area = new WordMemoryArea() {
+	    		public void writeByte(MemoryEntry entry, int addr, byte val) {
+	    			super.writeByte(entry, addr, val);
+	    			((DiskMemoryEntry) entry).setDirty(true);
+	    		}
+	    		@Override
+	    		public void writeWord(MemoryEntry entry, int addr, short val) {
+	    			super.writeWord(entry, addr, val);
+	    			((DiskMemoryEntry) entry).setDirty(true);
+	    		}
+    		};
+		}
+    	
+    	
         DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
+        area.setLatency(domain.getLatency(addr));
+        area.memory = new short[entry.size / 2];
+        area.read = area.memory;
+        if (isStored)
+        	area.write = area.memory;
         if (isStored) {
         	area.write = area.memory;
         }
@@ -62,7 +87,8 @@ public class DiskMemoryEntry extends MemoryEntry {
     /**
      * Read memory and create a memory entry with no byte ordering adjustment.
      * @param addr
-     * @param size
+     * @param size	the expected size of the entry (a maximum if != 0, else for 0, the
+     * actual size is used)
      * @param name
      * @param domain
      * @param filepath
@@ -75,13 +101,27 @@ public class DiskMemoryEntry extends MemoryEntry {
             int addr, int size, String name, 
             MemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) throws IOException {
-    	ByteMemoryArea area = new ByteMemoryArea();
     	
+    	ByteMemoryArea area;
+    	
+    	if (!isStored) {
+			area = new ByteMemoryArea();
+		} else {
+			area = new ByteMemoryArea() {
+	    		public void writeByte(MemoryEntry entry, int addr, byte val) {
+	    			super.writeByte(entry, addr, val);
+	    			((DiskMemoryEntry) entry).setDirty(true);
+	    		}
+    		};
+		}
+    	
+    
         DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
-        
-        if (isStored) {
-    		area.write = area.memory;
-    	}
+        area.setLatency(domain.getLatency(addr));
+        area.memory = new byte[entry.size];
+        area.read = area.memory;
+        if (isStored)
+        	area.write = area.memory;
         return entry;
     }
 
@@ -93,7 +133,7 @@ public class DiskMemoryEntry extends MemoryEntry {
      * @return the entry
      * @throws IOException if the memory cannot be read and is not stored
      */
-    static public DiskMemoryEntry newFromFile(
+    static private DiskMemoryEntry newFromFile(
             MemoryArea area, int addr, int size, String name, 
             MemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) throws IOException {
@@ -131,43 +171,12 @@ public class DiskMemoryEntry extends MemoryEntry {
 			}
         }
         
+        if (size == 0)
+        	size = filesize;
+        
         DiskMemoryEntry entry = new DiskMemoryEntry(area, addr, filesize, name, domain, filepath, fileoffs, filesize, isStored);
-
-        entry.updateMemoryArea();
         
         return entry;
-    }
-    
-    /**	Update the memory area given these parameters.
-     * @return
-     */
-    public void updateMemoryArea() {
-        if (area instanceof ByteMemoryArea) {
-            ByteMemoryArea bArea = (ByteMemoryArea) area;
-            bArea.memory = new byte[size];
-            bArea.read = bArea.memory;
-        } else {
-            WordMemoryArea wArea = (WordMemoryArea) area;
-            wArea.memory = new short[size/2];
-            wArea.read = wArea.memory;
-        }
-        
-        class DiskMemoryAreaHandlers extends MemoryArea.DefaultAreaHandlers {
-            private DiskMemoryEntry entry;
-            DiskMemoryAreaHandlers(DiskMemoryEntry entry) {
-                this.entry = entry;
-            }
-            @Override
-			public void writeByte(MemoryArea theArea, int address, byte val) {
-               entry.bDirty = true;
-               super.writeByte(theArea, address, val);
-            }
-        };
-        
-        /* notice when memory changes... */
-        if (bStorable) {
-			area.areaWriteByte = new DiskMemoryAreaHandlers(this);
-		}
     }
     
     DiskMemoryEntry(MemoryArea area, int addr, int size, String name,
@@ -186,6 +195,7 @@ public class DiskMemoryEntry extends MemoryEntry {
         this.filesize = filesize;
         this.bStorable = isStorable;
         this.bDirty = false;
+        this.area = area;
     }
     
     /* (non-Javadoc)
@@ -239,28 +249,51 @@ public class DiskMemoryEntry extends MemoryEntry {
         bLoaded = false;
     }
 
-	static public BankedMemoryEntry newBankedWordMemoryFromFile(
+    /**
+     * Create a memory entry for banked (ROM) memory that toggles based
+     * on the address written.
+     * @param addr
+     * @param size
+     * @param memory
+     * @param name
+     * @param domain
+     * @param filepath
+     * @param fileoffs
+     * @param filepath2
+     * @param fileoffs2
+     * @return
+     * @throws IOException
+     */
+	static public BankedMemoryEntry newWriteTogglingBankedWordMemoryFromFile(
 			int addr,
 	        int size, 
 	        Memory memory, 
 	        String name, MemoryDomain domain,
 	        String filepath, int fileoffs,
 	        String filepath2, int fileoffs2) throws IOException {
-		DiskMemoryEntry bank0 = newFromFile(
-				new WordMemoryArea(domain.getReadWordLatency(addr)), 
+		DiskMemoryEntry bank0 = newWordMemoryFromFile(
 				addr, size, name + " (bank 0)", domain, filepath, fileoffs, false);
-		DiskMemoryEntry bank1 = newFromFile(
-				new WordMemoryArea(domain.getReadWordLatency(addr)), 
+		DiskMemoryEntry bank1 = newWordMemoryFromFile(
 				addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
 		
-		BankedMemoryEntry bankedMemoryEntry = new BankedMemoryEntry(
-				memory, name, new MemoryEntry[] { bank0, bank1 });
-		
-		bankedMemoryEntry.getBank(0).area.areaWriteWord = null;
-		bankedMemoryEntry.getBank(0).area.areaWriteByte = new BankTogglingAreaWriteByte(bankedMemoryEntry);
-		bankedMemoryEntry.getBank(1).area.areaWriteWord = null;
-		bankedMemoryEntry.getBank(1).area.areaWriteByte = new BankTogglingAreaWriteByte(bankedMemoryEntry);
+		BankedMemoryEntry bankedMemoryEntry = new MultiBankedMemoryEntry(
+				memory, name, new MemoryEntry[] { bank0, bank1 }) {
+			@Override
+			public void writeByte(int addr, byte val) {
+				int bank = (addr & 2) >> 1;
+				selectBank(bank);
+				super.writeByte(addr, val);
+			}
+			
+			@Override
+			public void writeWord(int addr, short val) {
+				int bank = (addr & 2) >> 1;
+				selectBank(bank);
+				super.writeWord(addr, val);
+			}
 
+		};
+		
 		return bankedMemoryEntry;
 	}
 

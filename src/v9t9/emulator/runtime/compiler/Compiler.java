@@ -47,9 +47,8 @@ import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.WordMemoryArea;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.settings.Setting;
 import v9t9.utils.Utils;
 
@@ -992,11 +991,12 @@ public class Compiler {
     	if ((cpu.getWP() & 1) == 1) {
     		return false;
     	}
-        MemoryArea area = memory.getArea(cpu.getWP());
-        if (memory.getArea(cpu.getWP() + 31) != area) {
+    	MemoryEntry wpEntry = memory.getEntryAt(cpu.getWP());
+    	MemoryEntry wpEndEntry = memory.getEntryAt(cpu.getWP() + 31);
+        if (wpEntry != wpEndEntry) {
 			return false;
 		}
-        return area instanceof WordMemoryArea && area.hasWriteAccess();
+        return wpEntry.hasWriteAccess();
     }
 
 

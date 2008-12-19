@@ -12,7 +12,6 @@ import v9t9.emulator.hardware.CruReader;
 import v9t9.emulator.hardware.CruWriter;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.CruHandler;
-import v9t9.keyboard.KeyboardState;
 
 /**
  * CRU implementation for the internal 99/4A hardware

@@ -23,16 +23,15 @@ import v9t9.utils.Utils;
  * with the same characteristics and origin.  Each MemoryEntry may be associated with a
  * file on disk, either as ROM or a nonvolatile RAM image. 
  * 
- * A set of MemoryEntrys in a MemoryMap covers the entire span of addressable
+ * A set of MemoryEntrys in a MemoryDomain covers the entire span of addressable
  * memory. Multiple MemoryEntrys may cover parts of each other (and this is a
  * necessity for DSR ROMs, banked memory, etc). The Memory / MemoryDomains
  * structurally allow only one MemoryArea to be active at any given location,
- * though. To determine what MemoryEntrys contribute to the actual Memory, use
- * the backlink from MemoryArea to MemoryEntry.
+ * though. 
  * 
  * @author ejs
  */
-public class MemoryEntry {
+public class MemoryEntry implements MemoryAccess {
     /** start address */
     public int addr;
 
@@ -55,17 +54,17 @@ public class MemoryEntry {
 
     public MemoryEntry(String name, MemoryDomain domain, int addr,
             int size, MemoryArea area) {
-        if (size < 0 || addr < 0 || addr + size > MemoryDomain.PHYSMEMORYSIZE) {
+        if (size < 0 || addr < 0 /*|| addr + size > MemoryDomain.PHYSMEMORYSIZE*/) {
 			throw new AssertionError("illegal address range");
 		}
-        if ((addr & MemoryArea.AREASIZE-1) != 0) {
-			throw new AssertionError("illegal address: must live on " + MemoryArea.AREASIZE + " byte boundary");
+        if ((addr & MemoryDomain.AREASIZE-1) != 0) {
+			throw new AssertionError("illegal address: must live on " + MemoryDomain.AREASIZE + " byte boundary");
 		}
-        if (domain == null || area == null) {
+        if (domain == null) {
 			throw new NullPointerException();
 		}
-        if ((size & MemoryArea.AREASIZE-1) != 0) {
-        	size += MemoryArea.AREASIZE - (size & MemoryArea.AREASIZE-1);
+        if ((size & MemoryDomain.AREASIZE-1) != 0) {
+        	size += MemoryDomain.AREASIZE - (size & MemoryDomain.AREASIZE-1);
         }
         
         this.addr = addr;
@@ -73,7 +72,6 @@ public class MemoryEntry {
         this.name = name;
         this.domain = domain;
         this.area = area;
-        area.entry = this;
     }
 
     
@@ -141,23 +139,12 @@ public class MemoryEntry {
         if (name != null) {
 			return name;
 		}
-        return "[memory area >" + Utils.toHex4(addr) + "..." + Utils.toHex4(addr+size) + "]";
+        return "[memory entry >" + Utils.toHex4(addr) + "..." + Utils.toHex4(addr+size) + "]";
     }
     
-    /** Tell if entry is mapped (does not tell if something else may. */
-    //public boolean isMapped() {
-   // 	return domain.isEntryMapped(this);
-    	/*
-        MemoryDomain.AreaIterator iter = domain.new AreaIterator(addr, size);
-        while (iter.hasNext()) {
-            MemoryArea theArea = (MemoryArea)iter.next();
-            if (theArea.equals(area)) {
-                return true;
-            }
-        }
-        return false;
-        */
-    //}
+    public void setArea(MemoryArea area) {
+    	this.area = area;
+    }
     
     /** Map entry into address space */
     public void onMap() {
@@ -172,7 +159,7 @@ public class MemoryEntry {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-        //unload();
+        unload();
         //domain.unmapEntry(this);
         //domain.setArea(addr, size, new WordMemoryArea());
     }
@@ -235,4 +222,63 @@ public class MemoryEntry {
 		return domain;
 	}
 	
+	/**
+	 * Get the active area.
+	 * @return
+	 */
+	protected MemoryArea getArea() {
+		return area;
+	}
+	
+	/**
+	 * Get the mapping for the address
+	 * @param addr
+	 * @return
+	 */
+	protected int mapAddress(int addr) {
+		return addr;
+	}
+	public byte flatReadByte(int addr) {
+		return getArea().flatReadByte(this, mapAddress(addr));
+	}
+	
+	public short flatReadWord(int addr) {
+		return getArea().flatReadWord(this, mapAddress(addr));
+	}
+	
+	public void flatWriteByte(int addr, byte val) {
+		getArea().flatWriteByte(this, mapAddress(addr), val);
+	}
+	
+	public void flatWriteWord(int addr, short val) {
+		getArea().flatWriteWord(this, mapAddress(addr), val);
+	}
+	
+	public boolean hasReadAccess() {
+		return getArea().hasReadAccess();
+	}
+	
+	public boolean hasWriteAccess() {
+		return getArea().hasWriteAccess();
+	}
+	
+	public byte readByte(int addr) {
+		return getArea().readByte(this, mapAddress(addr));
+	}
+	
+	public short readWord(int addr) {
+		return getArea().readWord(this, mapAddress(addr));
+	}
+	
+	public void writeByte(int addr, byte val) {
+		getArea().writeByte(this, mapAddress(addr), val);
+	}
+	
+	public void writeWord(int addr, short val) {
+		getArea().writeWord(this, mapAddress(addr), val);
+	}
+	
+	public byte getLatency() {
+		return getArea().getLatency();
+	}
 }

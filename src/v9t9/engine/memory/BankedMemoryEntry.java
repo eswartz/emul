@@ -7,75 +7,74 @@ package v9t9.engine.memory;
 
 
 /**
- * Memory that supports multiple banks.
+ * Banked memory exposes different contents based on the
+ * current bank.  The concrete implementation reacts to
+ * bank changes via {@link #doSwitchBank(int)} and may override
+ * other MemoryEntry methods accordingly.
  * @author ejs
  *
  */
-public class BankedMemoryEntry extends MemoryEntry {
+public abstract class BankedMemoryEntry extends MemoryEntry {
 	
-	private MemoryEntry banks[];
-	private MemoryEntry currentBank;
-	private Memory memory;
 	private int currentBankIndex;
+	protected int bankCount;
+	private Memory memory;
 
 	public BankedMemoryEntry(Memory memory,
-			String name, MemoryEntry[] banks) {
-		super(name, banks[0].domain, banks[0].addr, banks[0].size, banks[0].area);
+			String name,
+			MemoryDomain domain,
+			int addr,
+			int size,
+			int bankCount) {
+		super(name, domain, addr, size, null);
 		
 		this.memory = memory;
-		
-		this.banks = new MemoryEntry[banks.length];
-		System.arraycopy(banks, 0, this.banks, 0, banks.length);
-		
-		this.currentBank = null;
-		this.currentBankIndex = 0;
+		this.currentBankIndex = -1;
+		this.bankCount = bankCount;
 	}
 	
 	@Override
 	public void onMap() {
 		super.onMap();
-		if (currentBank == null)
-			selectBank(currentBankIndex);
+		selectBank(currentBankIndex);
 	}
 	
 	public void selectBank(int bank) {
-		MemoryEntry newBankEntry = banks[bank];
-		if (currentBank == null || currentBank != newBankEntry) {
-			if (currentBank != null) {
-				memory.notifyListeners(currentBank);
-			//	currentBank.domain.unmapEntry(currentBank);
-			}
-			//domain.mapEntry(newBankEntry);
-			domain.switchBankedEntry(currentBank, newBankEntry);
-			currentBank = newBankEntry;
-			if (currentBank != null) {
-				memory.notifyListeners(currentBank);
-			}
+		if (currentBankIndex != bank) {
+			doSwitchBank(bank);
+			currentBankIndex = bank;
+			memory.notifyListeners(this);
 			currentBankIndex = bank;
 		}
 	}
 	
-	public MemoryEntry getCurrentBankEntry() {
-		return currentBank;
-	}
-	
+	abstract protected void doSwitchBank(int bank);
+
 	public int getCurrentBank() {
 		return currentBankIndex;
 	}
 
-	public MemoryEntry getBank(int i) {
-		return banks[i];
-	}
-
 	public int getBankCount() {
-		return banks.length;
+		return bankCount;
 	}
 
+	/*
 	@Override
-	public String lookupSymbol(short addr) {
-		if (currentBank == null)
-			return null;
-		return currentBank.lookupSymbol(addr);
+	public void writeByte(int addr, byte val) {
+		int bank = (addr & 2) >> 1;
+		selectBank(bank);
+		super.writeByte(addr, val);
 	}
-
+	
+	@Override
+	public void writeWord(int addr, short val) {
+		int bank = (addr & 2) >> 1;
+		selectBank(bank);
+		super.writeWord(addr, val);
+	}
+	*/
+	
+	public int getBankSize() {
+		return size;
+	}
 }

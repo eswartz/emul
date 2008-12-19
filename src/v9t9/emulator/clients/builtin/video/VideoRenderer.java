@@ -31,4 +31,6 @@ public interface VideoRenderer {
 	long getLastUpdateTime();
 	
 	boolean isIdle();
+
+	void setZoom(int zoom);
 }

@@ -27,6 +27,7 @@ public class Vdp9918AMmio extends VdpMmio {
      */
     public Vdp9918AMmio(Memory memory, VdpHandler vdp, int memorySize) {
     	super(new VdpRamArea(memorySize));
+    	fullRamArea.setHandler(vdp);
 		this.videoMemory = vdp.getVideoMemory();
 		initMemory(memory, memorySize);
 		vdp.setVdpMmio(this);
@@ -64,7 +65,7 @@ public class Vdp9918AMmio extends VdpMmio {
 		/* >8800, memory read */
 		byte ret;
 		ret = vdpreadahead;
-		vdpreadahead = (byte) videoMemory.flatReadByte(vdpaddr);
+		vdpreadahead = videoMemory.readByte(vdpaddr);
 		autoIncrementAddr();
 		return ret;
 	}
@@ -95,12 +96,9 @@ public class Vdp9918AMmio extends VdpMmio {
 		   a read-before-write. */
 		vdpaddrflag = false;
 
-		byte oldval = (byte) videoMemory.flatReadByte(vdpaddr);
-		videoMemory.flatWriteByte(vdpaddr, val);
-		if (vdpHandler != null && oldval != val) {
-			vdpHandler.touchAbsoluteVdpMemory(getAbsoluteAddress(vdpaddr), val);
-		}
-
+		//byte oldval = videoMemory.flatReadByte(vdpaddr);
+		videoMemory.writeByte(vdpaddr, val);
+		
 		autoIncrementAddr();
 		vdpreadahead = val;
 		
@@ -126,7 +124,7 @@ public class Vdp9918AMmio extends VdpMmio {
 				vdpaddr &= 0x3fff;
 			} else {
 				// read ahead one byte
-				vdpreadahead = (byte) videoMemory.flatReadByte(vdpaddr);
+				vdpreadahead = videoMemory.readByte(vdpaddr);
 				autoIncrementAddr();
 			}
 		}

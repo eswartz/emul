@@ -4,7 +4,7 @@
 package v9t9.emulator.hardware.memory.mmio;
 
 import v9t9.emulator.Machine.ConsoleMmioReader;
-import v9t9.engine.memory.MemoryArea;
+import v9t9.engine.memory.MemoryEntry;
 
 public class ConsoleMmioReadArea extends ConsoleMmioArea {
     protected final ConsoleMmioReader reader;
@@ -14,17 +14,27 @@ public class ConsoleMmioReadArea extends ConsoleMmioArea {
 		if (reader == null) {
 			throw new NullPointerException();
 		}
-
-        areaReadByte = new AreaReadByte() {
-            public byte readByte(MemoryArea area, int addr) {
-                //System.out.println("read byte from "
-                //      + Integer.toHexString(addr));
-                if (0 == (addr & 1)) {
-					return ConsoleMmioReadArea.this.reader.read(addr);
-				} else {
-					return 0;
-				}
-            }
-        };
     }
+	
+	@Override
+	public byte readByte(MemoryEntry entry, int addr) {
+		if (0 == (addr & 1))
+			return reader.read(addr);
+		return 0;
+	}
+	
+	@Override
+	public short readWord(MemoryEntry entry, int addr) {
+		return reader.read(addr);
+	}
+	
+	@Override
+	public byte flatReadByte(MemoryEntry entry, int addr) {
+		return 0;
+	}
+	
+	@Override
+	public short flatReadWord(MemoryEntry entry, int addr) {
+		return 0;
+	}
 }

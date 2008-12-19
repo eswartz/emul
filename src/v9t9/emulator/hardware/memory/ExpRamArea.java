@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.hardware.memory;
 
-import v9t9.engine.memory.MemoryArea;
+import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
 
 /** 99/4A expansion RAM, accessed over the peripheral bus */
@@ -24,33 +24,21 @@ public class ExpRamArea extends ConsoleMemoryArea {
 		}
 
         memory = new short[size/2];
-        read = memory;
-        write = memory;
+        read = settingExpRam.getBoolean() ? memory : null;
+        write = settingExpRam.getBoolean() ? memory : null;
 
-        /* only allow access if expansion memory is on */
-        class AreaHandlers implements AreaReadByte, AreaReadWord, AreaWriteByte, AreaWriteWord {
-            public byte readByte(MemoryArea area, int addr) {
-                return ExpRamArea.settingExpRam.getBoolean() ? area.flatReadByte(addr) : 0;
-            }
-            public short readWord(MemoryArea area, int addr) {
-                return ExpRamArea.settingExpRam.getBoolean() ? area.flatReadWord(addr) : 0;
-            }
-            public void writeByte(MemoryArea area, int addr, byte val) {
-                if (ExpRamArea.settingExpRam.getBoolean()) {
-					area.flatWriteByte(addr, val);
+        ExpRamArea.settingExpRam.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				if (setting.getBoolean()) {
+					read = memory;
+					write = memory;
+				} else {
+					read = null;
+					write = null;
 				}
-            }
-            public void writeWord(MemoryArea area, int addr, short val) {
-                if (ExpRamArea.settingExpRam.getBoolean()) {
-					area.flatWriteWord(addr, val);
-				}
-            }
-        }
-        
-        AreaHandlers handlers = new AreaHandlers();
-        areaReadByte = handlers;
-        areaReadWord = handlers;
-        areaWriteByte = handlers;
-        areaWriteWord = handlers;
+			}
+        	
+        });
     }
 }

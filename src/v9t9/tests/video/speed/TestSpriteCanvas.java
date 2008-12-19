@@ -11,7 +11,6 @@ import v9t9.emulator.clients.builtin.video.MemoryCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
-import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpSpriteCanvas;
 import v9t9.engine.memory.ByteMemoryAccess;
 

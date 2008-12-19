@@ -10,11 +10,8 @@ import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.BankedMemoryEntry;
-import v9t9.engine.memory.ByteMemoryArea;
-import v9t9.engine.memory.MemoryArea;
-import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryModel;
-import v9t9.engine.memory.MemoryArea.AreaWriteByte;
+import v9t9.engine.memory.WindowBankedMemoryEntry;
 
 /**
  * @author ejs
@@ -57,27 +54,13 @@ public class EnhancedMachineModel implements MachineModel {
 	}
 	
 	private void defineCpuVdpBanks(final Machine machine) {
-		ByteMemoryArea vdpMemory = vdpMmio.getMemoryArea();
-		MemoryEntry[] vdpCpuBanks = new MemoryEntry[vdpMemory.memory.length >> 14];
-    	for (int bank = 0; bank < vdpCpuBanks.length; bank++) {
-    		MemoryArea tmp = new ByteMemoryArea(8, vdpMemory.memory, bank << 14);
-    		MemoryEntry bankEntry = new MemoryEntry(
-    				"CPU VDP RAM bank " + bank, 
-    				machine.getConsole(), 0xC000, 0x4000,
-    				tmp);
-    		tmp.areaWriteByte = new AreaWriteByte() {
-
-				public void writeByte(MemoryArea area, int address, byte val) {
-					area.flatWriteByte(address, val);
-					vdp.touchAbsoluteVdpMemory((address & 0x3fff) + (cpuBankedVideo.getCurrentBank() << 14), val);
-				}
-    			
-    		};
-    		vdpCpuBanks[bank] = bankEntry;
-    	}
 		
-		cpuBankedVideo = new BankedMemoryEntry(machine.getMemory(),
-				"CPU VDP Bank", vdpCpuBanks);
+		cpuBankedVideo = new WindowBankedMemoryEntry(machine.getMemory(),
+				"CPU VDP Bank", 
+				machine.getConsole(),
+				0xC000,
+				0x4000,
+				vdpMmio.getMemoryArea());
 
 		machine.getCruManager().add(0x1400, 1, new CruWriter() {
 

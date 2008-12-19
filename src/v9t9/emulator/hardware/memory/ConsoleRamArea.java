@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.hardware.memory;
 
-import v9t9.engine.memory.MemoryArea;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.settings.Setting;
 
 /** Builtin console RAM: 256 bytes */
@@ -17,34 +17,26 @@ public class ConsoleRamArea extends ConsoleMemoryArea {
         memory = new short[0x400/2];
         read = memory;
         write = memory;
-
-        /*
-         * standard console RAM masks the addresses to 0x100 bytes; this is
-         * conventionally accessed at 0x8300
-         */
-        class AreaHandlers implements AreaReadByte, AreaReadWord, AreaWriteByte, AreaWriteWord {
-            public byte readByte(MemoryArea area, int addr) {
-                return area.flatReadByte(ConsoleRamArea.settingEnhRam.getBoolean() ? addr
-                        & AREASIZE - 1 : (addr & 0xff) + 0x0300);
-            }
-            public short readWord(MemoryArea area, int addr) {
-                return area.flatReadWord(ConsoleRamArea.settingEnhRam.getBoolean() ? addr
-                        & AREASIZE - 1 : (addr & 0xff) + 0x0300);
-            }
-            public void writeByte(MemoryArea area, int addr, byte val) {
-                area.flatWriteByte(ConsoleRamArea.settingEnhRam.getBoolean() ? addr & AREASIZE - 1
-                        : (addr & 0xff) + 0x0300, val);
-            }
-            public void writeWord(MemoryArea area, int addr, short val) {
-                area.flatWriteWord(ConsoleRamArea.settingEnhRam.getBoolean() ? addr & AREASIZE - 1
-                        : (addr & 0xff) + 0x0300, val);
-            }
-            
-        }
-        AreaHandlers handlers = new AreaHandlers();
-        areaReadByte = handlers;
-        areaReadWord = handlers;
-        areaWriteByte = handlers;
-        areaWriteWord = handlers;
     }
+	
+	private int maskAddress(int addr) {
+		if (!ConsoleRamArea.settingEnhRam.getBoolean())
+			 addr = (addr & 0xff) + 0x8300;
+		return addr;
+	}
+
+	public byte readByte(MemoryEntry entry, int addr) {
+		 return super.readByte(entry, maskAddress(addr));
+     }
+
+	public short readWord(MemoryEntry entry, int addr) {
+		 return super.readWord(entry, maskAddress(addr));
+     }
+     public void writeByte(MemoryEntry entry, int addr, byte val) {
+		 super.writeByte(entry, maskAddress(addr), val);
+     }
+     public void writeWord(MemoryEntry entry, int addr, short val) {
+		 super.writeWord(entry, maskAddress(addr), val);
+     }
+     
 }

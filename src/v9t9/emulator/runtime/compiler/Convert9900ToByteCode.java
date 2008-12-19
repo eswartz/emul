@@ -679,7 +679,7 @@ public class Convert9900ToByteCode {
 	        ilist.append(ifact.createGetField(MemoryArea.class.getName(),
 	                "offset", Type.INT));
 	        ilist.append(new ILOAD(info.localWp));
-	        ilist.append(new PUSH(info.pgen, MemoryArea.AREASIZE - 2));
+	        ilist.append(new PUSH(info.pgen, MemoryDomain.AREASIZE - 2));
 	        ilist.append(InstructionConstants.IAND);
 	        ilist.append(InstructionConstants.IADD);
 	        ilist.append(new PUSH(info.pgen, 1));

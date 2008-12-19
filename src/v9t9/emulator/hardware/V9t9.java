@@ -65,7 +65,7 @@ public class V9t9 {
 		return cpuRomEntry;
     }
     protected BankedMemoryEntry loadBankedConsoleRom(String filename1, String filename2) throws IOException {
-    	BankedMemoryEntry cpuRomEntry = DiskMemoryEntry.newBankedWordMemoryFromFile(
+    	BankedMemoryEntry cpuRomEntry = DiskMemoryEntry.newWriteTogglingBankedWordMemoryFromFile(
     			0x0000,
     			0x2000,
     			memory,
@@ -84,14 +84,14 @@ public class V9t9 {
     }
 
     protected DiskMemoryEntry loadModuleRom(String name, String filename) throws IOException {
-    	DiskMemoryEntry entry = DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0, 
+    	DiskMemoryEntry entry = DiskMemoryEntry.newWordMemoryFromFile(0x6000, 0x2000, 
     			name, console,
     			filename, 0x0, false);
 		memory.addAndMap(entry);
 		return entry;
     }
     protected BankedMemoryEntry loadBankedModuleRom(String name, String filename1, String filename2) throws IOException {
-    	BankedMemoryEntry entry = DiskMemoryEntry.newBankedWordMemoryFromFile(
+    	BankedMemoryEntry entry = DiskMemoryEntry.newWriteTogglingBankedWordMemoryFromFile(
     			0x6000,
     			0x2000, memory,
     			name, console,
@@ -168,7 +168,7 @@ public class V9t9 {
 	        Compiler.settingCompileFunctions.setBoolean(true);
     	}
         
-        if (false) {
+        if (true) {
         	//Executor.settingDumpInstructions.setBoolean(true);
         	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);

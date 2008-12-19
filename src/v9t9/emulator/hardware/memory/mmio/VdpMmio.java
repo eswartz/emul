@@ -2,19 +2,19 @@ package v9t9.emulator.hardware.memory.mmio;
 
 import v9t9.emulator.Machine.ConsoleMmioReader;
 import v9t9.emulator.Machine.ConsoleMmioWriter;
+import v9t9.emulator.hardware.memory.VdpRamArea;
 import v9t9.engine.Client;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
-import v9t9.engine.memory.ByteMemoryArea;
 
 public abstract class VdpMmio implements ConsoleMmioReader, ConsoleMmioWriter {
 
 	protected int currentaccesscycles;
 	protected VdpHandler vdpHandler;
-	protected ByteMemoryArea fullRamArea;
+	protected VdpRamArea fullRamArea;
 	private int fullRamMask;
 
-	public VdpMmio(ByteMemoryArea fullRamArea) {
+	public VdpMmio(VdpRamArea fullRamArea) {
 		this.fullRamArea = fullRamArea;
 		this.fullRamMask = fullRamArea.memory.length - 1;
 		fullRamMask |= (fullRamMask >> 1) | (fullRamMask >> 2) | (fullRamMask >> 3);

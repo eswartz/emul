@@ -21,7 +21,6 @@ import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Status;
-import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.utils.Utils;
@@ -32,8 +31,6 @@ import v9t9.utils.Utils;
  * @author ejs
  */
 public class Interpreter {
-//    Cpu cpu;
-
     Machine machine;
 
     MemoryDomain memory;

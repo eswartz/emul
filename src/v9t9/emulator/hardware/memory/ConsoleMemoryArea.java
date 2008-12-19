@@ -9,6 +9,5 @@ import v9t9.engine.memory.WordMemoryArea;
 public class ConsoleMemoryArea extends WordMemoryArea {
     public ConsoleMemoryArea(int latency) {
     	super(latency);
-        bWordAccess = true;
     }
 }

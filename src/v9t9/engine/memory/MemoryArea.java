@@ -14,154 +14,107 @@ package v9t9.engine.memory;
  * @author ejs
  */
 public abstract class MemoryArea {
-	/**
-	 * An area is the smallest unit of memory which has the same essential
-	 * behavior, as far as we know. We choose 1k because the TI-99/4A memory
-	 * mapped areas for VDP, GROM, etc are accessed 1k apart from each other.
-	 */
-	static public final int AREASIZE = 1024;
-
-	static public final int AREASHIFT = 10;
-
-	public interface AreaReadWord {
-		short readWord(MemoryArea area, int address);
+    public MemoryArea(int latency) {
+    	this.latency = (byte) latency;
 	}
-
-	public interface AreaReadByte {
-		byte readByte(MemoryArea area, int address);
-	}
-
-	public interface AreaWriteWord {
-		void writeWord(MemoryArea area, int address, short val);
-	}
-
-	public interface AreaWriteByte {
-		void writeByte(MemoryArea area, int address, byte val);
-	}
-
-	/*
-	 * These routines are used before the memory maps when using the
-	 * Domain.read/write functions, but the memory is used first when the
-	 * Memory.MEMORY_XXX_XXX static functions are used to read CPU memory.
-	 */
-	public AreaReadWord areaReadWord;
-
-	public AreaReadByte areaReadByte;
-
-	public AreaWriteWord areaWriteWord;
-
-	public AreaWriteByte areaWriteByte;
-
-    public MemoryEntry entry;
     
-    /** Offset into the given memory entry */
-    public int offset;
-    
-    /** The cycle count for accessing a byte of memory from this area. */
-    protected byte writeWordLatency;
-
-    protected byte writeByteLatency;
-
-    protected byte readWordLatency;
-
-    protected byte readByteLatency;
+    /** The cycle count for accessing memory from this area. 
+     * This is understood to be the "native bus" latency -- either
+     * accessing a byte on an 8-bit bus or a word on a 16-bit bus.
+     * In the TMS9900, in CPU memory, bytes are accessed as words, 
+     * so the latency does not depend on the unit size.  */
+    private byte latency;
     
     abstract int getSize();
     
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-	public boolean equals(Object obj) {
-        if (!(obj instanceof MemoryArea)) {
-			return false;
-		}
-        MemoryArea area = (MemoryArea)obj;
-        return area.areaReadByte == areaReadByte
-        &&	area.areaWriteByte == areaWriteByte
-        &&	area.areaReadWord == areaReadWord
-        &&	area.areaWriteWord == areaWriteWord;
-    }
-
-    public abstract MemoryArea copy();
-    
-	public static class DefaultAreaHandlers implements AreaReadByte, AreaWriteByte {
-	    /* (non-Javadoc)
-         * @see v9t9.MemoryArea.AreaReadWord#read(v9t9.MemoryArea, int)
-         */
-        public byte readByte(MemoryArea area, int address) {
-            return area.flatReadByte(address);
-        }
-        
-        /* (non-Javadoc)
-         * @see v9t9.MemoryArea.AreaWriteByte#write(v9t9.MemoryArea, int, byte)
-         */
-        public void writeByte(MemoryArea area, int address, byte val) {
-            area.flatWriteByte(address, val);
-        }
-	}
-	
-	final boolean isMemoryMapped() {
-		return areaReadWord != null || areaReadByte != null
-				|| areaWriteWord != null || areaWriteByte != null;
-	}
-
 	abstract public boolean hasWriteAccess();
 
 	abstract public boolean hasReadAccess();
 
-	/*
-	 * "Flat" memory access bypasses any semantics and just tries to
-	 * read readable memory and write writeable memory.
+	/**
+	 * Read a word at the given 16-bit address, without side effects.
+	 * @param entry TODO
+	 * @param addr address
 	 */
-	public abstract short flatReadWord(int addr);
+	public short flatReadWord(MemoryEntry entry, int addr) {
+		return readWord(entry, addr);
+	}
 
-    public abstract byte flatReadByte(int addr);
-
-    public abstract void flatWriteWord(int addr, short val);
-
-    public abstract void flatWriteByte(int addr, byte val);
-
-	/*
-	 * 	All of these safely and laboriously access memory in the way
-	 * 	God intended.
+	/**
+	 * Read a byte at the given 16-bit address, without side effects.
+	 * @param entry TODO
+	 * @param addr address
 	 */
-    abstract short readWord(int addr);
+    public byte flatReadByte(MemoryEntry entry, int addr) {
+    	return readByte(entry, addr);
+    }
 
-    abstract byte readByte(int addr);
+	/**
+	 * Write a word at the given 16-bit address, without side effects.
+	 * @param entry TODO
+	 * @param addr address
+	 */
+    public void flatWriteWord(MemoryEntry entry, int addr, short val) {
+    	writeWord(entry, addr, val);
+    }
 
-    abstract void writeWord(int addr, short val);
+	/**
+	 * Write a byte at the given 16-bit address, without side effects.
+	 * @param entry TODO
+	 * @param addr address
+	 */
+    public void flatWriteByte(MemoryEntry entry, int addr, byte val) {
+    	writeByte(entry, addr, val);
+    }
 
-    abstract void writeByte(int addr, byte val);
+	/**
+	 * Read a word at the given 16-bit address.
+	 * @param entry TODO
+	 * @param addr address
+	 */
+    abstract short readWord(MemoryEntry entry, int addr);
 
+	/**
+	 * Read a byte at the given 16-bit address.
+	 * @param entry TODO
+	 * @param addr address
+	 */
+    abstract byte readByte(MemoryEntry entry, int addr);
+
+	/**
+	 * Write a word at the given 16-bit address.
+	 * @param entry TODO
+	 * @param addr address
+	 */
+    abstract void writeWord(MemoryEntry entry, int addr, short val);
+
+	/**
+	 * Write a byte at the given 16-bit address.
+	 * @param entry TODO
+	 * @param addr address
+	 */
+    abstract void writeByte(MemoryEntry entry, int addr, byte val);
+
+    /**
+     * Save the content of the memory the given array (sized based on the entry)
+     * @param array
+     */
     abstract void copyToBytes(byte[] array);
+    /**
+     * Read the content of the memory the given array (sized based on the entry)
+     * @param array
+     */
     abstract void copyFromBytes(byte[] array);
 
-	public void setReadByteLatency(int readByteLatency) {
-		this.readByteLatency = (byte) readByteLatency;
-	}
-
-	public byte getReadByteLatency() {
-		return readByteLatency;
-	}
-
-	public void setReadWordLatency(int readWordLatency) {
-		this.readWordLatency = (byte) readWordLatency;
-	}
-
-	public byte getReadWordLatency() {
-		return readWordLatency;
-	}
-
-	public void setWriteByteLatency(int writeByteLatency) {
-		this.writeByteLatency = (byte) writeByteLatency;
-	}
-
-	public byte getWriteByteLatency() {
-		return writeByteLatency;
-	}
-
 	public void setLatency(int latency) {
-		readByteLatency = readWordLatency = writeByteLatency = writeWordLatency = (byte) latency;
+		this.latency = (byte) latency;
+	}
+
+	protected void setLatency(byte latency) {
+		this.latency = latency;
+	}
+
+	protected byte getLatency() {
+		return latency;
 	}
 }
