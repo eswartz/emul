@@ -16,10 +16,7 @@ public class ByteMemoryArea extends MemoryArea {
 		this(0);
 	}
     public ByteMemoryArea(int latency) {
-    	this.setReadByteLatency((byte) latency);
-    	this.setReadWordLatency((byte) latency);
-    	this.setWriteByteLatency((byte) latency);
-    	this.setWriteWordLatency((byte) latency);
+    	this.setLatency((byte) latency);
 	}
     public ByteMemoryArea(int latency, byte[] memory, int offset) {
 		this(latency);

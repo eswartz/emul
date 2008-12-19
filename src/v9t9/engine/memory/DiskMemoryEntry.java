@@ -199,7 +199,7 @@ public class DiskMemoryEntry extends MemoryEntry {
                 byte[] data = new byte[filesize];
                 DataFiles.readMemoryImage(filepath, fileoffs, filesize, data);
                 area.copyFromBytes(data);
-                bLoaded = true;
+               
                 
                 // see if it has symbols
                 String symbolfilepath = getSymbolFilepath();
@@ -208,7 +208,9 @@ public class DiskMemoryEntry extends MemoryEntry {
             		loadSymbols(new FileInputStream(symfile));
             	}
             } catch (java.io.IOException e) {
-                // TODO: error
+                e.printStackTrace();
+            } finally {
+            	bLoaded = true;
             }
         }
     }

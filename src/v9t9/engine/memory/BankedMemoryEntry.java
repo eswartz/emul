@@ -32,19 +32,22 @@ public class BankedMemoryEntry extends MemoryEntry {
 	}
 	
 	@Override
-	public void map() {
-		super.map();
+	public void onMap() {
+		super.onMap();
 		if (currentBank == null)
 			selectBank(currentBankIndex);
 	}
 	
 	public void selectBank(int bank) {
-		if (currentBank == null || currentBank != banks[bank]) {
+		MemoryEntry newBankEntry = banks[bank];
+		if (currentBank == null || currentBank != newBankEntry) {
 			if (currentBank != null) {
 				memory.notifyListeners(currentBank);
+			//	currentBank.domain.unmapEntry(currentBank);
 			}
-			currentBank = banks[bank];
-			currentBank.map();
+			//domain.mapEntry(newBankEntry);
+			domain.switchBankedEntry(currentBank, newBankEntry);
+			currentBank = newBankEntry;
 			if (currentBank != null) {
 				memory.notifyListeners(currentBank);
 			}

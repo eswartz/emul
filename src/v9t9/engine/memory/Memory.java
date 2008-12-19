@@ -14,8 +14,6 @@ import java.util.List;
  */
 public class Memory {
 
-    public MemoryMap map;
-
     private List<MemoryListener> listeners;
 
 	private final MemoryModel model;
@@ -39,20 +37,13 @@ public class Memory {
 	}
     
     public void addAndMap(MemoryEntry entry) {
-        map.add(entry);
-        entry.map();
+        entry.domain.mapEntry(entry);
         notifyListeners(entry);
-    }
-    
-    public void addDomain(MemoryDomain domain) {
-        map.add(domain);
     }
     
     public Memory(MemoryModel model) {
         this.model = model;
 		listeners = new java.util.ArrayList<MemoryListener>();
-        
-        map = new MemoryMap();
     }
 
 	public MemoryModel getModel() {

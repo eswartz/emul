@@ -45,7 +45,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
      * @return
      */
     public boolean isCompilable(MemoryEntry ent) {
-        return ent != null && ent.isMapped() && ent.area.hasReadAccess()
+        return ent != null && ent.getDomain().isEntryFullyMapped(ent) && ent.area.hasReadAccess()
          //&& !ent.area.hasWriteAccess()
         ; // for now
     }
@@ -58,7 +58,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	 * @return code block or null if not compilable
 	 */
 	private CodeBlock getCodeBlock(int pc, short wp) {
-	    MemoryEntry ent = executor.cpu.memory.map.lookupEntry(executor.cpu.getConsole(), pc);
+	    MemoryEntry ent = executor.cpu.getConsole().getEntryAt(pc);
 	    if (!isCompilable(ent)) {
 			return null;
 		}

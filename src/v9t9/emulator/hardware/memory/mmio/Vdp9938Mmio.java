@@ -17,7 +17,7 @@ import v9t9.engine.memory.MemoryEntry;
 /** 
  * V9938 mmio chip entry
  * <p>
- * Models the MSX V9938 card specified in the DIJIT Systems Advanced Video Processor Card (AVPC) manual
+ * Models the MSX V9938 card access specified in the DIJIT Systems Advanced Video Processor Card (AVPC) manual
  * @author ejs
  */
 public class Vdp9938Mmio extends Vdp9918AMmio {
@@ -45,7 +45,6 @@ public class Vdp9938Mmio extends Vdp9918AMmio {
     	return fullRamArea;
     }
 	protected void initMemory(Memory memory, int memorySize) {
-    	// use one area for all the banks, for easier access later
     	MemoryEntry[] banks = new MemoryEntry[memorySize >> 14];
     	for (int bank = 0; bank < banks.length; bank++) {
     		MemoryArea tmp = fullRamArea.copy();

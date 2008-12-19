@@ -27,7 +27,7 @@ public class EnhancedMachineModel implements MachineModel {
 	private BankedMemoryEntry cpuBankedVideo;
 	private VdpV9938 vdp;
 	private boolean vdpCpuBanked;
-	protected MemoryEntry currentMemory;
+	//protected MemoryEntry currentMemory;
 	
 	public EnhancedMachineModel() {
 		memoryModel = new EnhancedConsoleMemoryModel();
@@ -84,13 +84,13 @@ public class EnhancedMachineModel implements MachineModel {
 			public int write(int addr, int data, int num) {
 				if (data == 1) {
 					vdpCpuBanked = true;
-					currentMemory = machine.getMemory().map.lookupEntry(machine.getConsole(), 0xc000);
-					cpuBankedVideo.map();
+					//currentMemory = machine.getMemory().map.lookupEntry(machine.getConsole(), 0xc000);
+					cpuBankedVideo.domain.mapEntry(cpuBankedVideo);
 				} else {
 					vdpCpuBanked = false;
-					cpuBankedVideo.unmap();
-					if (currentMemory != null)
-						currentMemory.map();
+					cpuBankedVideo.domain.unmapEntry(cpuBankedVideo);
+					//if (currentMemory != null)
+					//	currentMemory.map();
 				}
 				return 0;
 			}

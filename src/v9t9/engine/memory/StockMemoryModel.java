@@ -18,7 +18,6 @@ public class StockMemoryModel implements MemoryModel {
 	public StockMemoryModel() {
 		memory = new Memory(this);
 		CPU = new MemoryDomain();
-		memory.addDomain(CPU);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.engine.memory.MemoryModel#connectClient(v9t9.engine.Client)

@@ -30,7 +30,6 @@ public class TestV9938 {
 	public void setUp() throws Exception {
 		EnhancedConsoleMemoryModel model = new EnhancedConsoleMemoryModel();
 		Memory memory = model.createMemory();
-		memory.addDomain(model.VIDEO);
 		v9938 = new VdpV9938(model.VIDEO);
 		this.mmio = new Vdp9938Mmio(memory, v9938, 0x20000);
 		

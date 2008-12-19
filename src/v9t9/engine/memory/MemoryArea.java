@@ -156,9 +156,6 @@ public abstract class MemoryArea {
 	public void setWriteByteLatency(int writeByteLatency) {
 		this.writeByteLatency = (byte) writeByteLatency;
 	}
-	public void setWriteWordLatency(int writeWordLatency) {
-		this.writeWordLatency = (byte) writeWordLatency;
-	}
 
 	public byte getWriteByteLatency() {
 		return writeByteLatency;

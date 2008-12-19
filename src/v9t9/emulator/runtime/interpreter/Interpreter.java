@@ -23,6 +23,7 @@ import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.utils.Utils;
 
 /**
@@ -178,10 +179,10 @@ public class Interpreter {
 	}
 
 	private void dumpFullStart(Instruction ins, PrintWriter dumpfull) {
-		MemoryArea area = iblock.domain.getArea(ins.pc);
+		MemoryEntry entry = iblock.domain.getEntryAt(ins.pc);
 		String name = null;
-		if (area != null && area.entry != null) 
-			name = area.entry.lookupSymbol((short) ins.pc);
+		if (entry != null) 
+			name = entry.lookupSymbol((short) ins.pc);
 		if (name != null)
 			dumpfull.println('"' + name + "\" ");
 		dumpfull.print(Utils.toHex4(ins.pc) + ": "

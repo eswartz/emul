@@ -76,18 +76,65 @@ public class MemoryEntry {
         area.entry = this;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
+    
     @Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + addr;
+		result = prime * result + ((area == null) ? 0 : area.hashCode());
+		result = prime * result + (bWordAccess ? 1231 : 1237);
+		result = prime * result + ((domain == null) ? 0 : domain.hashCode());
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + size;
+		return result;
+	}
+
+
+	@Override
 	public boolean equals(Object obj) {
-        MemoryEntry ent = (MemoryEntry)obj;
-        return ent.addr == addr
-        &&	ent.size == size
-        &&	ent.area == area
-        &&	ent.domain == domain
-        &&	ent.name == name;
-    }
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		MemoryEntry other = (MemoryEntry) obj;
+		if (addr != other.addr) {
+			return false;
+		}
+		if (area == null) {
+			if (other.area != null) {
+				return false;
+			}
+		} else if (!area.equals(other.area)) {
+			return false;
+		}
+		if (bWordAccess != other.bWordAccess) {
+			return false;
+		}
+		if (domain == null) {
+			if (other.domain != null) {
+				return false;
+			}
+		} else if (!domain.equals(other.domain)) {
+			return false;
+		}
+		if (name == null) {
+			if (other.name != null) {
+				return false;
+			}
+		} else if (!name.equals(other.name)) {
+			return false;
+		}
+		if (size != other.size) {
+			return false;
+		}
+		return true;
+	}
     
     @Override
 	public String toString() {
@@ -97,8 +144,10 @@ public class MemoryEntry {
         return "[memory area >" + Utils.toHex4(addr) + "..." + Utils.toHex4(addr+size) + "]";
     }
     
-    /** Tell if entry is mapped. */
-    public boolean isMapped() {
+    /** Tell if entry is mapped (does not tell if something else may. */
+    //public boolean isMapped() {
+   // 	return domain.isEntryMapped(this);
+    	/*
         MemoryDomain.AreaIterator iter = domain.new AreaIterator(addr, size);
         while (iter.hasNext()) {
             MemoryArea theArea = (MemoryArea)iter.next();
@@ -107,23 +156,25 @@ public class MemoryEntry {
             }
         }
         return false;
-    }
+        */
+    //}
     
     /** Map entry into address space */
-    public void map() {
-        domain.setArea(addr, size, area);
+    public void onMap() {
+    	//domain.mapEntry(this);
         load();
     }
 
     /** Unmap entry from address space */
-    public void unmap() {
+    public void onUnmap() {
         try {
 			save();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-        unload();
-        domain.setArea(addr, size, new WordMemoryArea());
+        //unload();
+        //domain.unmapEntry(this);
+        //domain.setArea(addr, size, new WordMemoryArea());
     }
 
     /** Save entry, if applicable 
@@ -178,6 +229,10 @@ public class MemoryEntry {
 	public String lookupSymbol(short addr) {
 		if (symbols == null) return null;
 		return symbols.get(addr);
+	}
+
+	public MemoryDomain getDomain() {
+		return domain;
 	}
 	
 }

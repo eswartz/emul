@@ -63,11 +63,6 @@ public class StandardConsoleMemoryModel implements MemoryModel {
         GRAPHICS = new MemoryDomain(0);
         VIDEO = new MemoryDomain(0);
         SPEECH = new MemoryDomain(0);
-
-        memory.addDomain(CPU);
-        memory.addDomain(VIDEO);
-        memory.addDomain(GRAPHICS);
-        memory.addDomain(SPEECH);
         
         return memory;
         

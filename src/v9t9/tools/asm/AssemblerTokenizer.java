@@ -72,8 +72,14 @@ public class AssemblerTokenizer {
 					image += (char) ch;
 					ch = reader.read();
 				} while (ch != -1 && ch >= '0' && ch <= '9');
-				if (ch != -1) reader.unread();
-				number = Integer.parseInt(image);
+				int radix = 10;
+				if (ch == 'b' || ch == 'B')
+					radix = 2;
+				else if (ch == 'h' || ch == 'H')
+					radix = 16;
+				else if (ch != -1) 
+					reader.unread();
+				number = Integer.parseInt(image, radix);
 				return NUMBER;
 			} else if (ch == '>') {
 				do {

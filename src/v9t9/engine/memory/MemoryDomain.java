@@ -7,6 +7,8 @@
 package v9t9.engine.memory;
 
 import java.util.Iterator;
+import java.util.ListIterator;
+import java.util.Stack;
 
 /**
  * @author ejs
@@ -44,12 +46,23 @@ public class MemoryDomain {
     
     private int baseLatency;
     
+    private Stack<MemoryEntry> mappedEntries = new Stack<MemoryEntry>();
+	private MemoryEntry zeroMemoryEntry;
+    
     public MemoryDomain(int latency) {
     	baseLatency = latency;
-        MemoryArea area = new ZeroWordMemoryArea(latency);
-        setArea(0, PHYSMEMORYSIZE, area);        
+    	
+    	zeroMemoryEntry = new MemoryEntry("Unmapped memory",
+    			this,
+    			0,
+    			PHYSMEMORYSIZE,
+    			new ZeroWordMemoryArea(latency));
+    	
+        //setArea(0, PHYSMEMORYSIZE, area);
+    	mapEntry(zeroMemoryEntry);
     }
-    public MemoryDomain() {
+    
+	public MemoryDomain() {
     	this(1);
     }
     
@@ -307,6 +320,108 @@ public class MemoryDomain {
 	public int getReadWordLatency(int addr) {
 		MemoryArea area = getArea(addr);
 		return area.readWordLatency;
+	}
+
+	/**
+	 * Tell if the entry has been mapped at all -- though it may
+	 * have been obscured in the meantime.
+	 * @param memoryEntry
+	 * @return true if the entry has been mapped
+	 */
+	public boolean isEntryMapped(MemoryEntry memoryEntry) {
+		return mappedEntries.contains(memoryEntry);
+	}
+	/**
+	 * Tell if the entry has been mapped and is fully visible
+	 * @param memoryEntry
+	 * @return true if all MemoryAreas for the entry are visible
+	 */
+	public boolean isEntryFullyMapped(MemoryEntry memoryEntry) {
+		AreaIterator iter = new AreaIterator(memoryEntry.addr, memoryEntry.size);
+        while (iter.hasNext()) {
+            MemoryArea theArea = (MemoryArea)iter.next();
+            if (theArea.entry != memoryEntry) {
+                return false;
+            }
+        }
+        return true;
+	}
+
+	/**
+	 * Map a memory entry, so that its range of addresses
+	 * replace any handled by existing entries.
+	 * @param memoryEntry
+	 */
+	public void mapEntry(MemoryEntry memoryEntry) {
+		if (!mappedEntries.contains(memoryEntry))
+			mappedEntries.add(memoryEntry);
+		mapEntryAreas(memoryEntry);
+		memoryEntry.onMap();
+	}
+
+	private void mapEntryAreas(MemoryEntry memoryEntry) {
+		setArea(memoryEntry.addr, memoryEntry.size, memoryEntry.area);
+	}
+
+	/**
+	 * Unmap a memory entry, exposing any entries previously mapped.
+	 * @param memoryEntry
+	 */
+	public void unmapEntry(MemoryEntry memoryEntry) {
+		// TODO: remove from end?
+		mappedEntries.remove(memoryEntry);
+		
+		int maxAddr = -1, maxEndAddr = 0;
+		for (ListIterator<MemoryEntry> entryIter = mappedEntries.listIterator(mappedEntries.size());
+			entryIter.hasPrevious(); ) {
+			MemoryEntry entry = entryIter.previous();
+			if (entry.addr + entry.size > memoryEntry.addr 
+					&& entry.addr < memoryEntry.addr + memoryEntry.size) {
+				int overlappingAddr = Math.max(memoryEntry.addr, entry.addr);
+				int overlappingSize = memoryEntry.addr + memoryEntry.size - overlappingAddr;
+				setArea(overlappingAddr, overlappingSize, entry.area);
+				if (overlappingAddr > maxAddr)
+					maxAddr = overlappingAddr;
+				if (overlappingAddr + overlappingSize > maxEndAddr)
+					maxEndAddr = overlappingAddr + overlappingSize;
+				if (maxAddr == memoryEntry.addr && maxEndAddr == memoryEntry.addr + memoryEntry.size)
+					break;
+			}
+		}
+		memoryEntry.onUnmap();
+	}
+
+	/**
+	 * Quickly swap banked entries. 
+	 * @param currentBank
+	 * @param newBankEntry
+	 */
+	public void switchBankedEntry(MemoryEntry currentBank,
+			MemoryEntry newBankEntry) {
+		if (currentBank != null && newBankEntry != null && isEntryMapped(currentBank)) {
+			if (currentBank != newBankEntry) {
+				mappedEntries.remove(currentBank);
+				currentBank.onUnmap();
+				mappedEntries.add(newBankEntry);
+				newBankEntry.onMap();
+				mapEntryAreas(newBankEntry);
+			}
+		} else {
+			if (currentBank != null) 
+				unmapEntry(currentBank);
+			if (newBankEntry != null)
+				mapEntry(newBankEntry);
+		}
+	}
+
+	public MemoryEntry getEntryAt(int addr) {
+		for (ListIterator<MemoryEntry> entryIter = mappedEntries.listIterator(mappedEntries.size());
+			entryIter.hasPrevious(); ) {
+			MemoryEntry entry = entryIter.previous();
+			if (entry.addr <= addr && addr < entry.addr + entry.size)
+				return entry;
+		}
+		return null;
 	}
 
 }

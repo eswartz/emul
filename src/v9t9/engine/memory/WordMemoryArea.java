@@ -12,20 +12,11 @@ package v9t9.engine.memory;
  * @author ejs
  */
 public class WordMemoryArea extends MemoryArea {
-	/**
-	 * All CPU memory arrays in V9t9 are arranged by words. Accessing a word
-	 * from memory is very simple.  Accessing a byte means reading the word
-     * and extracting part of it (big-endian: low address is high byte).
-	 */
-
 	public WordMemoryArea() {
 		this(0);
 	}
     public WordMemoryArea(int latency) {
-    	this.setReadByteLatency((byte) latency);
-    	this.setReadWordLatency((byte) latency);
-    	this.setWriteByteLatency((byte) latency);
-    	this.setWriteWordLatency((byte) latency);
+    	this.setLatency((byte) latency);
 	}
 
 	/**

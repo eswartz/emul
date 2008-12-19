@@ -88,11 +88,11 @@ public class EmuDiskDSR implements DsrHandler {
 					"emudisk.bin", 0, false);
 		
 		manager.activate(this);
-		memoryEntry.map();
+		console.mapEntry(memoryEntry);
 	}
 	
 	public void deactivate() {
-		memoryEntry.unmap();
+		console.unmapEntry(memoryEntry);
 		manager.deactivate(this);
 	}
 
@@ -273,7 +273,7 @@ public class EmuDiskDSR implements DsrHandler {
 			short	secnum = console.readWord(parms + 2);
 
 			System.out.println("reading "+secs+" sectors from sector #"+secnum+
-					" from file, storing to >"+Utils.toHex4(vaddr));
+					" in " + file + ", storing to >"+Utils.toHex4(vaddr));
 
 			ByteMemoryAccess access = getVdpMemory(vaddr);
 			try {
@@ -337,11 +337,13 @@ public class EmuDiskDSR implements DsrHandler {
 			short   vaddr = console.readWord(parms);
 			short	secnum = console.readWord(parms + 2);
 
-			System.out.println("writing "+secs+" sectors from sector #"+secnum+
-					" from file, reading from >"+Utils.toHex4(vaddr));
+			System.out.println("writing "+secs+" sectors to sector #"+secnum+
+					" in " + file + ", reading from >"+Utils.toHex4(vaddr));
 
 			ByteMemoryAccess access = getVdpMemory(vaddr);
 			try {
+				String contents = new String(access.memory, access.offset, secs * 256);
+				System.out.println(contents);
 				int wrote = file.writeContents(access.memory, access.offset, secnum * 256, secs * 256);
 				// error will be set if sector write failed
 				console.writeByte(rambase+0x4D, (byte) ((wrote + 255) >> 8));

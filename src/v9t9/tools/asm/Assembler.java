@@ -79,10 +79,10 @@ public class Assembler {
 			"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
 	
     public Assembler() {
-    	CPUFullRAMEntry.map();
-    	StdCPURAM.map();
-    	StdCPUExpHiRAM.map();
-    	StdCPUExpLoRAM.map();
+    	CPUFullRAM.mapEntry(CPUFullRAMEntry);
+    	StdCPU.mapEntry(StdCPURAM);
+    	StdCPU.mapEntry(StdCPUExpHiRAM);
+    	StdCPU.mapEntry(StdCPUExpLoRAM);
     	
     	OperandParser operandParser = new OperandParser();
     	operandParser.appendStage(new AssemblerOperandParserStage(this));
@@ -585,7 +585,7 @@ public class Assembler {
 	public void addMemoryEntry(DiskMemoryEntry entry) {
 		memoryRanges.addRange(entry.addr, entry.size, true);
 		memoryEntries.add(entry);
-		entry.map();
+		getWritableConsole().mapEntry(entry);
 	}
 
 	private void saveMemory() {

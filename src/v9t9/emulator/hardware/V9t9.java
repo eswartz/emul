@@ -149,7 +149,9 @@ public class V9t9 {
     		loadConsoleGrom("nforth.grm");
     		loadModuleRom("FORTH", "nforthc.bin");
     		entry = loadModuleGrom("FORTH", "nforthg.bin");
-    		console.getArea(0xA000).entry.loadSymbols(
+    		
+    		// the high-GROM code is copied into RAM here
+    		console.getEntryAt(0xA000).loadSymbols(
     				new FileInputStream(DataFiles.resolveFile(entry.getSymbolFilepath())));
     	}
     }
@@ -167,7 +169,7 @@ public class V9t9 {
     	}
         
         if (false) {
-        	Executor.settingDumpInstructions.setBoolean(true);
+        	//Executor.settingDumpInstructions.setBoolean(true);
         	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);
         }
