@@ -55,7 +55,7 @@ public class MemoryEntry {
 
     public MemoryEntry(String name, MemoryDomain domain, int addr,
             int size, MemoryArea area) {
-        if (size <= 0 || addr < 0 || addr + size > MemoryDomain.PHYSMEMORYSIZE) {
+        if (size < 0 || addr < 0 || addr + size > MemoryDomain.PHYSMEMORYSIZE) {
 			throw new AssertionError("illegal address range");
 		}
         if ((addr & MemoryArea.AREASIZE-1) != 0) {

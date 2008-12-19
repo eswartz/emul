@@ -91,6 +91,9 @@ public class MemoryDomain {
     void setArea(int addr, int size, MemoryArea handler) {
         MemoryArea tmp = handler.copy();
 
+        if (size == 0)
+        	return;
+        	
         if (size < MemoryArea.AREASIZE
                 || (addr & MemoryArea.AREASIZE - 1) != 0) {
 			throw new AssertionError(
