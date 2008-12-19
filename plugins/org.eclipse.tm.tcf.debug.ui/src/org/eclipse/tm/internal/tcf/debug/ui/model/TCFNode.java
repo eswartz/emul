@@ -16,7 +16,6 @@ import java.util.Collection;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
@@ -118,7 +117,6 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     @SuppressWarnings("unchecked")
     public Object getAdapter(final Class adapter) {
         if (adapter.isInstance(model)) return model;
-        if (adapter == ILaunch.class) return model.getLaunch();
         Object o = model.getAdapter(adapter, TCFNode.this);
         if (o != null) return o;
         return super.getAdapter(adapter);

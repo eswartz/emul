@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.commands.IDisconnectHandler;
 import org.eclipse.debug.core.commands.IResumeHandler;
@@ -40,6 +41,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.TreeModelViewer;
 import org.eclipse.debug.ui.AbstractDebugView;
@@ -127,6 +129,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Map<String,Map<String,TCFDataCache<String[]>>> symbol_children =
         new HashMap<String,Map<String,TCFDataCache<String[]>>>();
     
+    private final IModelSelectionPolicy selection_policy;
+
     private TCFNodeLaunch launch_node;
     private boolean disposed;
 
@@ -373,6 +377,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     TCFModel(TCFLaunch launch) {
         assert display != null;
         this.launch = launch;
+        selection_policy = new TCFModelSelectionPolicy(this);
         commands.put(ISuspendHandler.class, new SuspendCommand(this));
         commands.put(IResumeHandler.class, new ResumeCommand(this));
         commands.put(ITerminateHandler.class, new TerminateCommand(this));
@@ -384,6 +389,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     @SuppressWarnings("unchecked")
     public Object getAdapter(final Class adapter, final TCFNode node) {
+        if (adapter == ILaunch.class) return launch;
+        if (adapter == IModelSelectionPolicy.class) return selection_policy;
         return new TCFTask<Object>() {
             public void run() {
                 Object o = null;
@@ -579,6 +586,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (id.equals("")) return launch_node;
         assert Protocol.isDispatchThread();
         return id2node.get(id);
+    }
+    
+    public IModelSelectionPolicy getSelectionPolicy() {
+        return selection_policy;
     }
     
     public TCFDataCache<ISymbols.Symbol> getSymbolInfoCache(String mem_id, final String sym_id) {

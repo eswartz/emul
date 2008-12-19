@@ -13,12 +13,12 @@ package org.eclipse.tm.internal.tcf.debug.ui.adapters;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 
-// TODO: TCF model selection policy factory
-public class TCFModelSelectionPolicyFactoryAdapter implements IModelSelectionPolicyFactory {
+public class TCFModelSelectionPolicyFactory implements IModelSelectionPolicyFactory {
 
     public IModelSelectionPolicy createModelSelectionPolicyAdapter(
             Object element, IPresentationContext context) {
-        return null;
+        return ((TCFNode)element).getModel().getSelectionPolicy();
     }
 }

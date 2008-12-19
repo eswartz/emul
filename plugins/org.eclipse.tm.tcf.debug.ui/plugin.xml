@@ -17,10 +17,11 @@
          <adapter type="org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory"/>
       </factory>
       <factory
-         class="org.eclipse.tm.internal.tcf.debug.ui.adapters.TCFBreakpointAdapterFactory"
+         class="org.eclipse.tm.internal.tcf.debug.ui.adapters.TCFNodeAdapterFactory"
          adaptableType="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
          <adapter type="org.eclipse.debug.ui.actions.IToggleBreakpointsTarget"/>
          <adapter type="org.eclipse.debug.ui.actions.IToggleBreakpointsTargetExtension"/>
+         <adapter type="org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicyFactory"/>
       </factory>
    </extension>
    

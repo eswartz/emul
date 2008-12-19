@@ -39,6 +39,9 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         this.pool_margin = pool_margin;
     }
     
+    /**
+     * Dispose the cache and all nodes in the nodes pool.
+     */
     void dispose() {
         assert !disposed;
         if (!node_pool.isEmpty()) {
@@ -50,6 +53,11 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         super.reset(null);
     }
     
+    /**
+     * Remove a node from cache.
+     * The method is called every time a node is disposed.
+     * @param id - node ID
+     */
     void dispose(String id) {
         node_pool.remove(id);
         if (isValid()) {
@@ -58,6 +66,10 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         }
     }
     
+    /**
+     * Check if the cache is disposed.
+     * @return true if disposed.
+     */
     boolean isDisposed() {
         return disposed;
     }
@@ -132,7 +144,8 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         }
     }
     
-    /** Return collection of all nodes, including current children as well as
+    /**
+     * Return collection of all nodes, including current children as well as
      * currently unused nodes from the pool.
      * To get only current children use getData() method.
      * @return Collection of nodes.
