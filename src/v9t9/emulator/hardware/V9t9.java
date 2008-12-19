@@ -168,7 +168,7 @@ public class V9t9 {
 	        Compiler.settingCompileFunctions.setBoolean(true);
     	}
         
-        if (true) {
+        if (false) {
         	//Executor.settingDumpInstructions.setBoolean(true);
         	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);

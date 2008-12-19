@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+import v9t9.emulator.runtime.Executor;
+import v9t9.emulator.runtime.Logging;
 import v9t9.engine.files.DataFiles;
 
 /**
@@ -281,14 +283,24 @@ public class DiskMemoryEntry extends MemoryEntry {
 			@Override
 			public void writeByte(int addr, byte val) {
 				int bank = (addr & 2) >> 1;
-				selectBank(bank);
+				if (selectBank(bank)) {
+					if (Executor.settingDumpFullInstructions.getBoolean()) {
+						Logging.getLog(Executor.settingDumpFullInstructions).
+							println("=== Switched to bank " + bank);
+					}
+				}
 				super.writeByte(addr, val);
 			}
 			
 			@Override
 			public void writeWord(int addr, short val) {
 				int bank = (addr & 2) >> 1;
-				selectBank(bank);
+				if (selectBank(bank)) {
+					if (Executor.settingDumpFullInstructions.getBoolean()) {
+						Logging.getLog(Executor.settingDumpFullInstructions).
+							println("=== Switched to bank " + bank);
+					}
+				}
 				super.writeWord(addr, val);
 			}
 

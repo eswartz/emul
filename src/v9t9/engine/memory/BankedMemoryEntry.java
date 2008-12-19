@@ -39,13 +39,15 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 		selectBank(currentBankIndex);
 	}
 	
-	public void selectBank(int bank) {
+	public boolean selectBank(int bank) {
 		if (currentBankIndex != bank) {
 			doSwitchBank(bank);
 			currentBankIndex = bank;
 			memory.notifyListeners(this);
 			currentBankIndex = bank;
+			return true;
 		}
+		return false;
 	}
 	
 	abstract protected void doSwitchBank(int bank);
