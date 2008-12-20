@@ -31,6 +31,10 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 
 	@Override
 	protected int mapAddress(int addr) {
-		return addr + bankOffset;
+		return (addr & 0xffff) + bankOffset;
+	}
+	
+	public int getBankOffset() {
+		return bankOffset;
 	}
 }

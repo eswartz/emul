@@ -236,7 +236,7 @@ public class MemoryEntry implements MemoryAccess {
 	 * @return
 	 */
 	protected int mapAddress(int addr) {
-		return addr;
+		return addr & 0xffff;
 	}
 	public byte flatReadByte(int addr) {
 		return getArea().flatReadByte(this, mapAddress(addr));
