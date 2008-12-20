@@ -142,7 +142,7 @@ public class MachineOperand implements Operand {
     	    return Integer.toString(val);
 
     	case OP_OFFS_R12: {
-    		byte offs = (byte) (val & 0xff);
+    		byte offs = (byte) ((val >> 1) & 0xff);
     	    return ">" + (offs < 0 ? "-" : "") +Integer.toHexString(offs < 0 ? -offs : offs);
     	}
 
