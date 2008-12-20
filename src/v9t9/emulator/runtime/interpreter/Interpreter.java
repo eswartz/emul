@@ -14,7 +14,6 @@ import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
-import v9t9.engine.Client;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionAction;
 import v9t9.engine.cpu.InstructionTable;
@@ -39,8 +38,6 @@ public class Interpreter {
     
     InstructionAction.Block iblock;
 
-    private Client client;
-    
     public Interpreter(Machine machine) {
         this.machine = machine;
         this.memory = machine.getCpu().getConsole();
@@ -61,7 +58,6 @@ public class Interpreter {
          */
         Instruction ins;
         int pc = cpu.getPC();
-        this.client = machine.getClient();
         
         int origCycleCount = cpu.getCurrentCycleCount();
        
@@ -748,7 +744,7 @@ public class Interpreter {
         case InstructionTable.Isbo:
             act = new InstructionAction() {
                 public void act(Block block) {
-                    client.getCruHandler().writeBits(block.val1, 1, 1);
+                	machine.getCruManager().writeBits(block.val1, 1, 1);
                 }
             };
             break;
@@ -756,7 +752,7 @@ public class Interpreter {
         case InstructionTable.Isbz:
             act = new InstructionAction() {
                 public void act(Block block) {
-                    client.getCruHandler().writeBits(block.val1, 0, 1);
+                	machine.getCruManager().writeBits(block.val1, 0, 1);
                 }
             };
             break;
@@ -764,7 +760,7 @@ public class Interpreter {
         case InstructionTable.Itb:
             act = new InstructionAction() {
                 public void act(Block block) {
-                    block.val1 = (short) client.getCruHandler().readBits(block.val1, 1);
+                    block.val1 = (short) machine.getCruManager().readBits(block.val1, 1);
                     block.val2 = 0;
                 }
             };
@@ -845,7 +841,7 @@ public class Interpreter {
         case InstructionTable.Ildcr:
             act = new InstructionAction() {
                 public void act(Block block) {
-                    client.getCruHandler().writeBits(
+                	machine.getCruManager().writeBits(
                             memory.readWord(block.wp + 12 * 2), block.val1,
                             block.val2);
                 }
@@ -855,7 +851,7 @@ public class Interpreter {
         case InstructionTable.Istcr:
             act = new InstructionAction() {
                 public void act(Block block) {
-                    block.val1 = (short) client.getCruHandler().readBits(
+                    block.val1 = (short) machine.getCruManager().readBits(
                             memory.readWord(block.wp + 12 * 2), block.val2);
                 }
             };

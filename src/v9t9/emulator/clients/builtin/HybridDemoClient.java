@@ -20,6 +20,7 @@ import v9t9.emulator.clients.demo.Connection;
 import v9t9.emulator.clients.demo.FifoConnection;
 import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
+import v9t9.engine.KeyboardHandler;
 import v9t9.engine.SoundHandler;
 import v9t9.engine.VdpHandler;
 
@@ -395,6 +396,10 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
     public void updateVideo() {
     	// TODO Auto-generated method stub
     	
+    }
+    
+    public KeyboardHandler getKeyboardHandler() {
+    	return null;
     }
     
 }

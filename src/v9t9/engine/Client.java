@@ -22,9 +22,6 @@ public interface Client {
     SoundHandler getSoundHandler();
     void setSoundHandler(SoundHandler handler);
     
-    CruHandler getCruHandler();
-    void setCruHandler(CruHandler handler);
-
     /**
      * Handle one timer tick (nominally 1/60 second).  
      *
@@ -36,4 +33,6 @@ public interface Client {
 	void handleEvents();
 
 	void updateVideo();
+
+	KeyboardHandler getKeyboardHandler();
 }

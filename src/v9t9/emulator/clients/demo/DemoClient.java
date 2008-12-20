@@ -13,6 +13,7 @@ import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
+import v9t9.engine.KeyboardHandler;
 import v9t9.engine.SoundHandler;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -417,6 +418,10 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     
     public void setCanvas(VdpCanvas canvas) {
     	video.setCanvas(canvas);
+    }
+    
+    public KeyboardHandler getKeyboardHandler() {
+    	return null;
     }
 }
 

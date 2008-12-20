@@ -10,11 +10,13 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
+import v9t9.engine.CruHandler;
+
 /**
  * This class handles a set of CRU handlers
  * @author ejs
  */
-public class CruManager {
+public class CruManager implements CruHandler {
     
     public CruManager() {
         readers = new TreeMap<Integer, CruReader>();

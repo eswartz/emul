@@ -4,6 +4,7 @@
 package v9t9.emulator.hardware;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.InternalCru9901;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.dsrs.EmuDiskDSR;
 import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
@@ -41,6 +42,8 @@ public class StandardMachineModel implements MachineModel {
 	}
 	
 	public void defineDevices(Machine machine) {
+		machine.getCpu().setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
+		
 		EmuDiskDSR dsr = new EmuDiskDSR(machine);
 		machine.getDSRManager().registerDsr(dsr);
 	}

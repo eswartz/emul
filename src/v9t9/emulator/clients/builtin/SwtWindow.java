@@ -5,7 +5,11 @@ package v9t9.emulator.clients.builtin;
 
 import java.io.File;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.RTFTransfer;
+import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.PaintEvent;
@@ -89,7 +93,7 @@ public class SwtWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						SwtWindow.this.machine.getCpu().holdpin(Cpu.INTPIN_LOAD);
+						SwtWindow.this.machine.getCpu().setPin(Cpu.PIN_LOAD);
 						restoreFocus();
 					}
 				});
@@ -99,7 +103,7 @@ public class SwtWindow {
 				new Rectangle(0, 0, 64, 64),
 				"Toggle CPU logging");
 		
-		/*BasicButton basicButton =*/ createButton(
+		/*BasicButton basicButton =*/ /*createButton(
 				icons, new Rectangle(0, 128, 64, 64),
 				"Branch to Condensed BASIC",
 				new SelectionAdapter() {
@@ -114,7 +118,29 @@ public class SwtWindow {
 							
 						}) ;
 					}
-				});
+				});*/
+		
+		createButton(icons, new Rectangle(0, 192, 64, 64),
+				"Paste clipboard contents",
+				new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						Clipboard clip = new Clipboard(getShell().getDisplay());
+						String contents = (String) clip.getContents(TextTransfer.getInstance());
+						if (contents == null) {
+							contents = (String) clip.getContents(RTFTransfer.getInstance());
+						}
+						if (contents != null) {
+							SwtWindow.this.machine.getClient().getKeyboardHandler().pasteText(contents);
+						} else {
+							
+							
+							MessageDialog.openError(getShell(), "Paste Error", 
+									"Cannot paste: no text on clipboard");
+						}
+						clip.dispose();
+					}
+			});
 		
 
 		shell.open();

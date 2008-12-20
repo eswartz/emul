@@ -9,6 +9,7 @@ package v9t9.emulator;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import v9t9.emulator.clients.builtin.InternalCru9901;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.dsrs.DSRManager;
@@ -23,6 +24,7 @@ import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.settings.SettingsCollection;
+import v9t9.keyboard.KeyboardState;
 
 /** Encapsulate all the information about a running emulated machine.
  * @author ejs
@@ -34,7 +36,6 @@ abstract public class Machine {
     Cpu cpu;
     Executor executor;
     Client client;
-    CruHandler cru;
     boolean bRunning;
     Timer timer;
     Timer cpuTimer;
@@ -62,6 +63,7 @@ abstract public class Machine {
 	private Thread videoRunner;
 	private boolean throttlingInterrupts;
 	protected int throttleCount;
+	private KeyboardState keyboardState;
 	
     public Machine(MachineModel machineModel) {
     	this.memoryModel = machineModel.getMemoryModel();
@@ -69,12 +71,15 @@ abstract public class Machine {
     	this.console = memoryModel.getConsole();
     	cruManager = new CruManager();
     	dsrManager = new DSRManager(this);
+    	
     	this.vdp = machineModel.createVdp(this);
     	memoryModel.initMemory(this);
-    	machineModel.defineDevices(this);
     	
     	settings = new SettingsCollection();
     	cpu = new Cpu(this, cpuTick);
+    	keyboardState = new KeyboardState(cpu);
+    	machineModel.defineDevices(this);
+    	
     	executor = new Executor(cpu);
     	timer = new Timer();
     	cpuTimer = new Timer();
@@ -167,16 +172,14 @@ abstract public class Machine {
             @Override
 			public void run() {
             	vdp.tick();
-            	if (allowInterrupts) { 
-            		if (throttlingInterrupts) {
-            			if (throttleCount-- < 0) {
-            				throttleCount = 60;
-            			} else {
-            				return;
-            			}
-            		}
-            		cpu.holdpin(Cpu.INTPIN_INTREQ);
-            	}
+        		if (throttlingInterrupts) {
+        			if (throttleCount-- < 0) {
+        				throttleCount = 60;
+        			} else {
+        				return;
+        			}
+        		}
+        		cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
             }
         };
         videoTimer.scheduleAtFixedRate(vdpInterruptTask, 0, interruptTick);
@@ -299,7 +302,7 @@ abstract public class Machine {
 	}
 
 	public CruHandler getCru() {
-		return cru;
+		return cruManager;
 	}
 
 	/**
@@ -309,6 +312,10 @@ abstract public class Machine {
 	 */
 	public void setThrottleInterrupts(boolean flag) {
 		this.throttlingInterrupts = flag;
+	}
+
+	public KeyboardState getKeyboardState() {
+		return keyboardState;
 	}
 }
 

@@ -7,6 +7,7 @@
 package v9t9.emulator.runtime;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.hardware.CruAccess;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
@@ -27,13 +28,14 @@ public class Cpu implements MemoryAccessListener {
 	private short PC;
 	/** workspace pointer */
 	private short WP;
-	/** current handled interrupt level */
-	private byte intlevel;
 	long lastInterrupt;
 	/* interrupt pins */
-	public static final int INTPIN_RESET = 1;
-	public static final int INTPIN_LOAD = 2;
-	public static final int INTPIN_INTREQ = 4;
+	//public static final int INTPIN_RESET = 1;
+	//public static final int INTPIN_LOAD = 2;
+	//public static final int INTPIN_INTREQ = 4;
+	public static final int INTLEVEL_RESET = 0;
+	public static final int INTLEVEL_LOAD = 1;
+	public static final int INTLEVEL_INTREQ = 2;
 	
 	/*	Variables for controlling a "real time" emulation of the 9900
 	processor.  Each call to execute() sets an estimated cycle count
@@ -111,14 +113,44 @@ public class Cpu implements MemoryAccessListener {
         WP = wp;
     }
 
-    public void holdpin(int mask) {
-        intpins |= (byte) mask;
-        //abortIfInterrupted();
+    public void resetInterruptRequest() {
+    	pins &= ~PIN_INTREQ;
+    }
+    
+    /**
+     * Called by the TMS9901 to indicate an interrupt is available.
+     * @param level
+     */
+    public void setInterruptRequest(byte level) {
+    	pins |= PIN_INTREQ;
+    	ic = forceIcTo1 ? 1 : level;
+    }
+    
+    /**
+     * Called when hardware triggers another pin.
+     */
+    public void setPin(int mask) {
+    	pins |= mask;
     }
 
-    private byte intpins;
+    /** 
+     * When set, implement TI-99/4A behavior where all interrupts
+     * are perceived as level 1.
+     */
+    private boolean forceIcTo1 = true;
+    
+    private static final int PIN_INTREQ = 1 << 31;
+    public static final int PIN_LOAD = 1 << 3;
+    public static final int PIN_RESET = 1 << 5;
+    
+    /** State of the pins above  */
+    private int pins;
+    /** When intreq, the interrupt level (IC* bits on the TMS9900). */
+    private byte ic;
+    
 	private int ticks;
 	private boolean allowInts;
+	private CruAccess cruAccess;
 
 	static public final String sRealTime = "RealTime";
 
@@ -165,91 +197,71 @@ public class Cpu implements MemoryAccessListener {
              */
             // TODO
             //trigger9901int(M_INT_VDP);
-            holdpin(INTPIN_INTREQ);
+            //holdpin(INTPIN_INTREQ);
         }
     }
 
     /**
-     * Called by compiled code to see if it's time to stop
-     * running.  All this can do is throw AbortedException().
+     * Poll the TMS9901 to see if any interrupts are pending.
      */
-    public void abortIfInterrupted() {
-    	if (intpins != 0) {
-    		if (status.getIntMask() != 0)
-    			intlevel = (byte) status.getIntMask();
-    		else if ((intpins & INTPIN_LOAD) != 0)
-    			intlevel = 1;
-        }
-        if (intlevel != 0) {
-           throw new AbortedException();
-        }
-            
+    public void checkInterrupts() {
+    	// do not allow interrupts after some instructions
+	    if (!allowInts) {
+	    	allowInts = true;
+	    	return;
+	    }
+    	
+	    if (cruAccess != null) {
+	    	cruAccess.pollForPins(this);
+	    }
+	    
+    	if (((pins & PIN_INTREQ) != 0 && status.getIntMask() >= ic)) {
+    		//System.out.println("Triggering interrupt... "+ic);
+    		throw new AbortedException();
+    	}
+    	else if (((pins &  PIN_LOAD + PIN_RESET) != 0)) {
+    		System.out.println("Pins set... "+pins);
+    		throw new AbortedException();
+    	}            
     }
     
-    public void handleInterrupts() {
-        if (intlevel != 0) {
-            handleInterrupt();
-        }
-    }
-
     /**
-     *  
+     * Called by toplevel in response to the AbortedException from above
+     * (TODO: see if these still need to be distinct steps)
      */
-    private void handleInterrupt() {
-        //      any sort of interrupt that sets intpins9900
-
-        // non-maskable
-        if ((intpins & INTPIN_LOAD) != 0) {
-        	intlevel = 0;	 // ???
-            intpins &= ~INTPIN_LOAD;
-            //logger(_L | 0, "**** NMI ****");
+    public void handleInterrupts() {
+    	// non-maskable
+    	if ((pins & PIN_LOAD) != 0) {
+            // non-maskable
+            
+        	// this is ordinarily reset by external hardware, but
+        	// we don't yet have a way to scan instruction execution
+        	pins &= ~PIN_LOAD;
+        	
             System.out.println("**** NMI ****");
             contextSwitch(0xfffc);
-            //instcycles += 22;
-            //execute_current_inst();
-            machine.getExecutor().interpretOneInstruction();
-            //throw new AbortedException();
-        } else
-        // non-maskable (?)
-        if ((intpins & INTPIN_RESET) != 0) {
-            intpins &= ~INTPIN_RESET;
-            //logger(_L | 0, "**** RESET ****\n");
+            
+            addCycles(22);
+        } else if ((pins & PIN_RESET) != 0) {
+        	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
             contextSwitch(0);
-            //instcycles += 26;
-            //execute_current_inst();
+            addCycles(26);
             machine.getExecutor().interpretOneInstruction();
             //throw new AbortedException();
-        } else
-        // maskable
-        if ((intpins & INTPIN_INTREQ) != 0) {
-            //short highmask = (short) (1 << (intlevel + 1));
-
-            // 99/4A console hardcodes all interrupts as level 1,
-            // so if any are available, level 1 is it.
-            if (intlevel != 0
-            // TODO: && read9901int() &&
-            //(!(stateflag & ST_DEBUG) || (allow_debug_interrupts))
-            ) {
-                //System.out.println("**** INT ****");
-                intpins &= ~INTPIN_INTREQ;
-                contextSwitch(0x4);
-                intlevel = 0;
+        } else if ((pins & PIN_INTREQ) != 0 && status.getIntMask() >= ic) {	// already checked int mask in status
+            // maskable
+        	pins &= ~PIN_INTREQ;
+        	
+            contextSwitch(0x4 * ic);
+            addCycles(22);
+            
+            // no more interrupt until 9901 gives us another
+            ic = 0;
                 
-                //instcycles += 22;
-                //execute_current_inst();
-                
-                // for now, we need to do this, otherwise the compiled code may check intlevel and immediately ... oh, I dunno
-                machine.getExecutor().interpretOneInstruction();
-                //machine.getExecutor().execute();
-                //throw new AbortedException();
-            }
-        } else {
-			intpins = 0; // invalid
-		}
-
-        //if (intpins == 0)
-        //	stateflag &= ~ST_INTERRUPT;
+            // for now, we need to do this, otherwise the compiled code may check intlevel and immediately ... oh, I dunno
+            machine.getExecutor().interpretOneInstruction();
+        }
     }
 
 	public int getRegister(int reg) {
@@ -308,6 +320,14 @@ public class Cpu implements MemoryAccessListener {
 
 	public void setAllowInts(boolean allowInts) {
 		this.allowInts = allowInts;
+	}
+
+	public void setCruAccess(CruAccess access) {
+		this.cruAccess = access;
+	}
+
+	public CruAccess getCruAccess() {
+		return cruAccess;
 	} 
 
 }

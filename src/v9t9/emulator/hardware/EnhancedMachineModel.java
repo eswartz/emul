@@ -4,6 +4,7 @@
 package v9t9.emulator.hardware;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.InternalCru9901;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.hardware.dsrs.EmuDiskDSR;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
@@ -47,6 +48,8 @@ public class EnhancedMachineModel implements MachineModel {
 	}
 
 	public void defineDevices(final Machine machine) {
+		machine.getCpu().setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
+		
 		EmuDiskDSR dsr = new EmuDiskDSR(machine);
 		machine.getDSRManager().registerDsr(dsr);
 		
@@ -60,7 +63,18 @@ public class EnhancedMachineModel implements MachineModel {
 				machine.getConsole(),
 				0xC000,
 				0x4000,
-				vdpMmio.getMemoryArea());
+				vdpMmio.getMemoryArea()) {
+			@Override
+			public void writeByte(int addr, byte val) {
+				super.writeByte(addr, val);
+				vdp.touchAbsoluteVdpMemory((addr & 0x3fff) + getBankOffset(), val);
+			}
+			@Override
+			public void writeWord(int addr, short val) {
+				super.writeWord(addr, val);
+				vdp.touchAbsoluteVdpMemory((addr & 0x3fff) + getBankOffset(), (byte) (val >> 8));
+			}
+		};
 
 		machine.getCruManager().add(0x1400, 1, new CruWriter() {
 

@@ -7,18 +7,18 @@
 package v9t9.emulator.clients.builtin;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.hardware.CruAccess;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.CruReader;
 import v9t9.emulator.hardware.CruWriter;
 import v9t9.emulator.runtime.Cpu;
-import v9t9.engine.CruHandler;
 import v9t9.keyboard.KeyboardState;
 
 /**
- * CRU implementation for the internal 99/4A hardware
+ * CRU handlers for the TMS9901 (as attached to a TI-99/4A)
  * @author ejs
  */
-public class InternalCru implements CruHandler {
+public class InternalCru9901 implements CruAccess {
     Machine machine;
 	private CruManager manager;
 
@@ -41,20 +41,25 @@ public class InternalCru implements CruHandler {
 				//logger(_L | L_2, "cruw9901_S:  hw9901.latchedclockinvl=%04X\n",
 					// hw9901.latchedclockinvl);
 			} else {
-				int         mask = (~((~0) << num)) << bit;
+				//int         mask = (~((~0) << num)) << bit;
+				int mask = 1 << bit;
 		
 				//logger(_L | L_2, _("Altering 9901 bit... addr=%04X, data=%04X,mask=%04X\n"), addr,
 				//	 data, mask);
 		
 				//  First, writing a 0 will disable the interrupt,
 				//  and writing a 1 will enable it, or acknowledge it.
-				int9901 = (int9901 & ~mask) | (data << bit);
+				if (data == 0) {
+					int9901 &= ~mask;
+				} else { 
+					if ((currentints & mask) != 0)
+						acknowledgeInterrupt(bit);
+					int9901 |= mask;
+				}
+				
 				//logger(_L | L_2, _("before reset: int9901 = %04X, currentints = %04X\n"), hw9901.int9901,
 				//	 hw9901.currentints);
 		
-				//  This will acknowledge the interrupt, and possibly
-				//  trigger a lower-level pending interrupt.
-				reset9901int(data << bit);
 				//logger(_L | L_2, _("after reset: int9901 = %04X, currentints = %04X\n"), hw9901.int9901,
 				//	 hw9901.currentints);
 		
@@ -102,12 +107,27 @@ public class InternalCru implements CruHandler {
 	};
 	protected boolean clockmode;
 	protected int latchedtimer;
+	
+	/** Enabled interrupt mask.  Any request to trigger an interrupt not
+	 * enabled in this mask will be ignored.
+	 */
 	protected int int9901;
+	/** Currently active interrupts.  These are fed to the TMS9900
+	 * via {@link Cpu#setInterruptRequest(byte)} in priority order. */
 	protected int currentints;
 
-	public static final int M_INT_EXT = 2;	// peripheral
-	public static final int M_INT_VDP = 4;	// VDP
-	public static final int M_INT_CLOCK = 8;	// clock
+	/** intlevel for peripheral interrupt */ 
+	public static final int INT_EXT = 1;
+	/** int9901/currentints mask for peripheral interrupt */ 
+	public static final int M_INT_EXT = 2;
+	/** intlevel for VDP interrupt */ 
+	public static final int INT_VDP = 2;
+	/** int9901/currentints mask for VDP interrupt */ 
+	public static final int M_INT_VDP = 4;
+	/** intlevel for clock interrupt */ 
+	public static final int INT_CLOCK = 3;
+	/** int9901/currentints mask for clock interrupt */ 
+	public static final int M_INT_CLOCK = 8;
 
 	private CruReader crur9901_0 = new CruReader() {
 		public int read(int addr, int data, int num) {
@@ -121,7 +141,7 @@ public class InternalCru implements CruHandler {
 			if (clockmode)
 				return latchedtimer & 1;
 			else if ((int9901 & M_INT_EXT) != 0) {
-				return (currentints & M_INT_EXT) != 0 ? 0 : 1;
+				return (currentints & M_INT_EXT) == 0 ? 0 : 1;
 			} else
 				return 0;
 		}
@@ -132,7 +152,7 @@ public class InternalCru implements CruHandler {
 			if (clockmode)
 				return (latchedtimer >> 1) & 1;
 			else if ((int9901 & M_INT_VDP) != 0) {
-				return (currentints & M_INT_VDP) != 0 ? 0 : 1;
+				return (currentints & M_INT_VDP) == 0 ? 0 : 1;
 			} else
 				return 0;
 		}
@@ -155,14 +175,10 @@ public class InternalCru implements CruHandler {
 				int alphamask = 0;
 				
 				if (!alphaLockMask && mask == 0x10) {
-					alphamask = !keyboardState.getAlpha() ? 0 : 0x10;
+					alphamask = keyboardState.getAlpha() ? 0 : 0x10;
 				}
-				//logger(_L | L_2, "crukeyboardcol=%X, mask=%X, addr=%2X\n", crukeyboardcol,
-				//	 mask, addr);
-				int colMask = (keyboardState.getKeyboardMap()[crukeyboardcol] & mask);
+				int colMask = (keyboardState.getKeyboardRow(crukeyboardcol) & mask);
 				int colBits = (colMask | alphamask);
-				//System.out.println("crukeyboardcol="+crukeyboardcol+" addr="+Utils.toHex2(addr)+" mask="+Utils.toHex2(mask)+" colMask="+Utils.toHex2(colMask)+" alphamask="+alphamask);
-				//System.out.println("foo: " +colBits);
 				return colBits != 0 ? 0 : 1;
 			}
 		}
@@ -171,15 +187,15 @@ public class InternalCru implements CruHandler {
 	private CruReader cruralpha = new CruReader() {
 
 		public int read(int addr, int data, int num) {
+			keyboardState.resetProbe();
 			return keyboardState.getAlpha() ? 1 : 0;
 		}
 		
 	};
 	private int intlevel;
-	private int intpins;
 	private final KeyboardState keyboardState;
 	
-    public InternalCru(Machine machine, KeyboardState keyboardState) {
+    public InternalCru9901(Machine machine, KeyboardState keyboardState) {
         this.machine = machine;
 		this.keyboardState = keyboardState;
         this.manager = machine.getCruManager();
@@ -250,69 +266,20 @@ public class InternalCru implements CruHandler {
     	return manager;
     }
     
-    public void writeBits(int addr, int val, int num) {
-        addr &= 0x1fff;
-
-        //System.out.println("CRU write: >" + Utils.toHex4(addr) + "[" + num + "], " + Utils.toHex4(val));
-
-    	if (addr < 0x1000) {
-    		addr &= 0x3f;
-    	}
-
-    	if (addr >= 0x30) {
-    	    // TODO
-    	//	setclockmode9901(0);
-    	}
-
-    	manager.writeBits(addr, val, num);
-    }
-
-    /**
-     * @param s
-     * @param value
-     * @return
-     */
-    public int readBits(int addr, int num) {
-        addr &= 0x1fff;
-        //logger(_L | L_2, _("CRU read: >%04X[%d] = \n"), addr, num);
-       // System.out.print("CRU read: >" + Utils.toHex4(addr) + "[" + num + "] = ");
-        
-    	if (addr >= 0x30) {
-    	    // TODO
-    		//setclockmode9901(0);
-    	}
-        
-    	int val = manager.readBits(addr, num);
-        //System.out.println(Utils.toHex4(val));
-
-        return val;
-    }
     
-    /**
-	handle9901() is called when something about the 
-	interrupt state changes (processor interrupt mask,
-	pending interrupt mask, etc).  If an interrupt is needed,
-	this triggers the INTPIN_INTREQ pin on the 9900, and sets the 
-	ST_INTERRUPT flag in stateflag.
-	*/
-	void handle9901()
-	{
+	public void pollForPins(Cpu cpu) {
 		// any of these interrupts enabled?  [optimization]
+		cpu.resetInterruptRequest();
 		if ((currentints & int9901) != 0) {
-			// There are 16 levels, and intlevel is 16 bits.
-			// When it goes from 0x8000 to 0, we will see there
-			// are no interrupts that can be passed.
-			intlevel = M_INT_EXT;
-			while (intlevel != 0 && ((currentints & int9901) & intlevel) == 0)
-				intlevel =
-					(intlevel << 1) & (M_INT_EXT | M_INT_VDP | M_INT_CLOCK);
+			intlevel = 15;
+			while (intlevel != 0 && ((currentints & int9901) & (1 << intlevel)) == 0)
+				intlevel--;
 	
 			if (intlevel != 0) {
-				System.out.println(
-						"Triggering interrupt... "+intlevel+"/"+currentints+"/"+int9901);
-	
-				intpins |= Cpu.INTPIN_INTREQ;
-				//stateflag |= ST_INTERRUPT;
+				//System.out.println(
+				//		"Requesting interrupt... "+intlevel+"/"+currentints+"/"+int9901);
+				
+				cpu.setInterruptRequest((byte) intlevel);
 			}
 		}
 	}
@@ -320,27 +287,25 @@ public class InternalCru implements CruHandler {
 	/**
 		Trigger an interrupt, via hardware.
 	*/
-	void trigger9901int(int mask)
-	{
-		if ((int9901 & mask) != 0) {
-			currentints |= mask;
-	
-			// see if it applies
-			handle9901();
+	public void triggerInterrupt(int level) {
+		if ((int9901 & (1 << level)) != 0) {
+			if ((currentints & (1 << level)) == 0) {
+				currentints |= 1 << level;
+				//System.out.println(
+				//		"Hardware triggered interrupt... "+level+"/"+currentints+"/"+int9901);
+			}
+		}
+	}
+
+	public void acknowledgeInterrupt(int level) {
+		if ((currentints & (1 << level)) != 0) {
+			currentints &= ~(1 << level);
+			//System.out.println(
+			//		"Acknowledged interrupt... "+level+"/"+currentints+"/"+int9901);
+		} else {
+			//System.out.println(
+			//		"??? acknowledged unset interrupt... "+level+"/"+currentints+"/"+int9901);
 		}
 	}
 	
-	
-	/**
-		Reset an interrupt, via hardware.
-	*/
-	void reset9901int(int mask)
-	{
-		if ((currentints & mask) != 0) {
-			currentints &= ~mask;
-	
-			// take care of pending interrupts
-			handle9901();
-		}
-	}
 }

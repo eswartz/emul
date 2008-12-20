@@ -39,7 +39,7 @@ abstract public class CompiledCode {
         this.exec = exec;
         this.cpu = exec.cpu;
         this.memory = exec.cpu.getConsole();
-        this.cru = exec.cpu.getMachine().getClient().getCruHandler();
+        this.cru = exec.cpu.getMachine().getCruManager();
         if (exec.cpu.getMachine() instanceof TI994A) {
         	this.vdp9918AMmio = ((TI994A)exec.cpu.getMachine()).getVdpMmio();
         	this.gplMmio = ((TI994A)exec.cpu.getMachine()).getGplMmio();

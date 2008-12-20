@@ -39,6 +39,7 @@ public class KeyboardState {
 	private byte[] crukeyboardmap = new byte[8];
 	/** actual state of alpha */
 	private boolean alphaLock;
+	private int probedColumns;
 
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
@@ -93,6 +94,153 @@ public class KeyboardState {
         Arrays.fill(getKeyboardMap(), 0, 8, (byte)0);
     }
     
+    /**
+     * Post an ASCII character, applying any conversions to make it
+     * a legal keystroke on the 99/4A keyboard.
+     * @param pressed
+     * @param shift extra shift keys
+     * @param ch
+     * @return true if we could represent it as ASCII
+     */
+    public synchronized boolean postCharacter(boolean pressed, byte shift, char ch) {
+    	//System.out.println("post: ch=" + ch + "; shift="+ Utils.toHex2(shift)+"; pressed="+pressed);
+    	if (isAsciiDirectKey(ch)) {
+    		setKey(pressed, shift, ch);
+    		return true;
+    	}
+    	
+		int fctnShifted = shift | FCTN;
+
+    	switch (ch) {
+		
+		case 8:
+			setKey(pressed, shift | KeyboardState.CTRL, 'H');	/* BKSP */
+			break;
+		case 9:
+			setKey(pressed, shift | KeyboardState.CTRL, 'I');	/* TAB */
+			break;
+			
+		case 13:
+			setKey(pressed, (byte)0, '\r');
+			break;
+			
+			// shifted keys
+		case '!':
+			setKey(pressed, shift | KeyboardState.SHIFT, '1');
+			break;
+		case '@':
+			setKey(pressed, shift | KeyboardState.SHIFT, '2');
+			break;
+		case '#':
+			setKey(pressed, shift | KeyboardState.SHIFT, '3');
+			break;
+		case '$':
+			setKey(pressed, shift | KeyboardState.SHIFT, '4');
+			break;
+		case '%':
+			setKey(pressed, shift | KeyboardState.SHIFT, '5');
+			break;
+		case '^':
+			setKey(pressed, shift | KeyboardState.SHIFT, '6');
+			break;
+		case '&':
+			setKey(pressed, shift | KeyboardState.SHIFT, '7');
+			break;
+		case '*':
+			setKey(pressed, shift | KeyboardState.SHIFT, '8');
+			break;
+		case '(':
+			setKey(pressed, shift | KeyboardState.SHIFT, '9');
+			break;
+		case ')':
+			setKey(pressed, shift | KeyboardState.SHIFT, '0');
+			break;
+		case '+':
+			setKey(pressed, shift | KeyboardState.SHIFT, '=');
+			break;
+		case '<':
+			setKey(pressed, shift | KeyboardState.SHIFT, ',');
+			break;
+		case '>':
+			setKey(pressed, shift | KeyboardState.SHIFT, '.');
+			break;
+		case ':':
+			setKey(pressed, shift | KeyboardState.SHIFT, ';');
+			break;
+			// faked keys
+		case '`':
+			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'W'))
+				setKey(pressed, fctnShifted, 'C');	/* ` */
+			else
+				setKey(pressed, fctnShifted, 'W');	/* ~ */
+			break;
+		case '~':
+			setKey(pressed, shift | KeyboardState.FCTN, 'W');
+			break;
+		case '-':
+			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'U'))
+				setKey(pressed, KeyboardState.SHIFT, '/');	/* - */
+			else
+				setKey(pressed, fctnShifted, 'U');	/* _ */
+			break;
+		case '_':
+			setKey(pressed, shift | KeyboardState.FCTN, 'U');
+			break;
+		case '[':
+			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'F'))
+				setKey(pressed, fctnShifted, 'R');	/* [ */
+			else
+				setKey(pressed, fctnShifted, 'F');	/* { */
+			break;
+		case '{':
+			setKey(pressed, shift | KeyboardState.FCTN, 'F');
+			break;
+		case ']':
+			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'G'))
+				setKey(pressed, fctnShifted, 'T');	/* ] */
+			else
+				setKey(pressed, fctnShifted, 'G');	/* } */
+			break;
+		case '}':
+			setKey(pressed, shift | KeyboardState.FCTN, 'G');
+			break;
+			
+		case '\'':
+			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'P'))
+				setKey(pressed, fctnShifted, 'O');	/* ' */
+			else
+				setKey(pressed, fctnShifted, 'P');	/* " */
+			break;
+		case '"':
+			setKey(pressed, shift | KeyboardState.FCTN, 'P');
+			break;
+		case '/':
+			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'I'))
+				setKey(pressed, (byte)0, '/');	/* / */
+			else
+				setKey(pressed, fctnShifted, 'I');	/* ? */
+			break;
+		case '?':
+			setKey(pressed, shift | KeyboardState.FCTN, 'I');
+			break;
+		case '\\':
+			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'A'))
+				setKey(pressed, fctnShifted, 'Z');	/* \\ */
+			else
+				setKey(pressed, fctnShifted, 'A');	/* | */
+			break;
+		case '|':
+			setKey(pressed, shift | KeyboardState.FCTN, 'A');
+			break;
+			
+    	case 127:
+    		setKey(pressed, fctnShifted, '1');	
+			break;
+		default:
+			return false;
+    	}
+    	return true;
+    }
     /**
      * Set a key in the map.
      * @param onoff true: pressed, false: released
@@ -267,5 +415,18 @@ public class KeyboardState {
 
 	public synchronized byte[] getKeyboardMap() {
 		return crukeyboardmap;
+	}
+
+	public synchronized int getKeyboardRow(int column) {
+		probedColumns |= (1 << column);
+		return crukeyboardmap[column];
+	}
+	
+	public synchronized boolean wasKeyboardProbed() {
+		return probedColumns == 0x3f;
+	}
+
+	public void resetProbe() {
+		probedColumns = 0;
 	}
 }

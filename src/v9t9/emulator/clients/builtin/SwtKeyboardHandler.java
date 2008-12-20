@@ -5,6 +5,8 @@ package v9t9.emulator.clients.builtin;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
@@ -53,6 +55,8 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 	private int pressedStateMask;
 	
 	private final KeyboardState keyboardState;
+
+	private Timer pasteTimer;
 	
 	public SwtKeyboardHandler(Control control, KeyboardState keyboardState) {
 		this.keyboardState = keyboardState;
@@ -101,6 +105,11 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 		long now = System.currentTimeMillis();
 		boolean found = false;
 		
+		if (pasteTimer != null && pressed && keyCode == SWT.ESC) {
+			cancelPaste();
+			return;
+		}
+		
 		synchronized (pressedKeys) {
 			for (Iterator<KeyInfo> iter = pressedKeys.iterator();
 				iter.hasNext(); ) { 
@@ -135,6 +144,12 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 		}
 	}
 	
+	private void cancelPaste() {
+		keyboardState.resetKeyboard();
+		pasteTimer.cancel();
+		pasteTimer = null;
+	}
+
 	private void updateKey(boolean pressed, int stateMask, int keyCode) {
 		
 		//System.out.println("keyCode="+keyCode+"; stateMask="+stateMask+"; pressed="+pressed);
@@ -156,11 +171,9 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 		}
 		
 		//byte realshift = keyboardState.getRealShift();
-		byte realshift = shift;
-		
-		if (keyCode < 128 && keyboardState.isAsciiDirectKey((char) keyCode)) {
-			keyboardState.setKey(pressed, shift, (byte) keyCode);
-		} else {
+		//byte realshift = shift;
+
+		if (keyCode > 128 || !keyboardState.postCharacter(pressed, shift, (char) keyCode)) {
 			if (keyCode == 0)
 				keyCode = shift;
 			
@@ -182,11 +195,6 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 				keyboardState.setKey(pressed, KeyboardState.FCTN, 0);
 				break;
 
-			
-			case 13:
-				keyboardState.setKey(pressed, (byte)0, '\r');
-				break;
-
 			case SWT.CAPS_LOCK:
 				if (!pressed) {
 					keyboardState.setAlpha(!keyboardState.getAlpha());
@@ -196,57 +204,6 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 				if (pressed)
 					System.exit(0);
 				break;
-				// faked keys
-			case '`':
-				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'W'))
-					keyboardState.setKey(pressed, fctnShifted, 'C');	/* ` */
-				else
-					keyboardState.setKey(pressed, fctnShifted, 'W');	/* ~ */
-				break;
-			case '-':
-				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'U'))
-					keyboardState.setKey(pressed, KeyboardState.SHIFT, '/');	/* - */
-				else
-					keyboardState.setKey(pressed, fctnShifted, 'U');	/* _ */
-				break;
-			case '[':
-				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'F'))
-					keyboardState.setKey(pressed, fctnShifted, 'R');	/* [ */
-				else
-					keyboardState.setKey(pressed, fctnShifted, 'F');	/* { */
-				break;
-			case ']':
-				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'G'))
-					keyboardState.setKey(pressed, fctnShifted, 'T');	/* ] */
-				else
-					keyboardState.setKey(pressed, fctnShifted, 'G');	/* } */
-				break;
-			case '\'':
-				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'P'))
-					keyboardState.setKey(pressed, fctnShifted, 'O');	/* ' */
-				else
-					keyboardState.setKey(pressed, fctnShifted, 'P');	/* " */
-				break;
-			case '/':
-				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'I'))
-					keyboardState.setKey(pressed, (byte)0, '/');	/* / */
-				else
-					keyboardState.setKey(pressed, fctnShifted, 'I');	/* ? */
-				break;
-			case '\\':
-				if (0 == (realshift & KeyboardState.SHIFT) && !keyboardState.isSet(KeyboardState.FCTN, 'A'))
-					keyboardState.setKey(pressed, fctnShifted, 'Z');	/* \\ */
-				else
-					keyboardState.setKey(pressed, fctnShifted, 'A');	/* | */
-				break;
-				
-			case 8:
-				keyboardState.setKey(pressed, shift | KeyboardState.CTRL, 'H');	/* BKSP */
-				break;
-			case SWT.TAB:
-				keyboardState.setKey(pressed, shift | KeyboardState.CTRL, 'I');	/* TAB */
-				break;
-				
 			case SWT.F1:
 			case SWT.F2:
 			case SWT.F3:
@@ -272,9 +229,10 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 				keyboardState.setKey(pressed, fctnShifted, 'D');
 				break;
 				
-			case SWT.DEL:
-				keyboardState.setKey(pressed, fctnShifted, '1');	
-				break;
+				
+			//case SWT.DEL:
+			//	keyboardState.setKey(pressed, fctnShifted, '1');	
+			//	break;
 			case SWT.INSERT:
 				keyboardState.setKey(pressed, fctnShifted, '2');	
 				break;
@@ -306,6 +264,9 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 	 * @see v9t9.emulator.handlers.KeyboardHandler#scan(v9t9.keyboard.KeyboardState)
 	 */
 	public void scan(KeyboardState state) {
+		if (pasteTimer != null)
+			return;
+		
 		synchronized(state) {
 			state.resetKeyboard();
 		
@@ -316,4 +277,74 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 			}
 		}
 	}
+	
+	/**
+	 * Paste text into the clipboard
+	 * @param contents
+	 */
+	public void pasteText(String contents) {
+
+		contents = contents.replaceAll("(\r\n|\r|\n)", "\r");
+		contents = contents.replaceAll("\t", "    ");
+		final char[] chs = contents.toCharArray();
+		pasteTimer = new Timer("Paster");
+		TimerTask pasteCharacterTask = new TimerTask() {
+			int index = 0;
+			byte prevShift = 0;
+			char prevCh = 0;
+			int successiveCharTimeout;
+			@Override
+			public void run() {
+				if (pasteTimer == null)
+					return;
+				
+				// only send chars as fast as the machine is reading
+				if (!keyboardState.wasKeyboardProbed())
+					return;
+				
+				if (index <= chs.length) {
+					if (prevCh != 0)
+						keyboardState.postCharacter(false, prevShift, prevCh);
+					
+					if (index < chs.length) {
+						char ch = chs[index];
+						byte shift = 0;
+
+						if (Character.isLowerCase(ch)) {
+				    		ch = Character.toUpperCase(ch);
+				    		shift &= ~ KeyboardState.SHIFT;
+				    	} else if (Character.isUpperCase(ch)) {
+				    		shift |= KeyboardState.SHIFT;
+				    	}
+				    	
+						//System.out.println("ch="+ch+"; prevCh="+prevCh+"; sCT="+successiveCharTimeout);
+						if (ch == prevCh) {
+							if (successiveCharTimeout == 0) {
+								// need to inject a spacer to distinguish 
+								// successive repeated characters
+								keyboardState.resetKeyboard();
+								prevCh = 0;
+								successiveCharTimeout = 2;
+								return;
+							} else if (--successiveCharTimeout > 0) {
+								return;
+							}
+						}
+						
+						index++;
+						
+						keyboardState.postCharacter(true, shift, ch);
+						
+						prevCh = ch;
+						prevShift = shift;
+					} else {
+						cancelPaste();
+					}
+				}
+			}
+			
+		};
+		pasteTimer.scheduleAtFixedRate(pasteCharacterTask, 0, 1000 / 30); 
+	}
+
 }

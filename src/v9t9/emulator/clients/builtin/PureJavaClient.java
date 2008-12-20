@@ -21,7 +21,6 @@ import v9t9.engine.CruHandler;
 import v9t9.engine.KeyboardHandler;
 import v9t9.engine.SoundHandler;
 import v9t9.engine.VdpHandler;
-import v9t9.keyboard.KeyboardState;
 
 /**
  * This client does all its own dang work!
@@ -29,10 +28,9 @@ import v9t9.keyboard.KeyboardState;
  */
 public class PureJavaClient implements Client {
     VdpHandler video;
-    CruHandler cru;
+    CruHandler cruHandler;
     private Machine machine;
 	private SoundHandler sound;
-	private KeyboardState keyboardState;
 	private KeyboardHandler keyboardHandler;
 	private VideoRenderer videoRenderer;
 	private Display display;
@@ -97,8 +95,8 @@ public class PureJavaClient implements Client {
 			}
 		});
 
-		keyboardState = new KeyboardState(machine.getCpu());
-        cru = new InternalCru(machine, keyboardState);
+		//cruHandler = //new InternalCru(machine, keyboardState);
+        cruHandler = machine.getCru(); 
         //keyboardState = new KeyboardState(machine.getCpu(), (InternalCru) cru);
         
         sound = new SoundHandler() {
@@ -109,7 +107,8 @@ public class PureJavaClient implements Client {
         	
         };
         
-        keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(), keyboardState);
+        keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(),
+        		machine.getKeyboardState());
     }
     /*
      * (non-Javadoc)
@@ -160,7 +159,7 @@ public class PureJavaClient implements Client {
      */
     public void timerInterrupt() {
     	//System.out.print('.');
-    	keyboardHandler.scan(keyboardState);
+    	keyboardHandler.scan(machine.getKeyboardState());
     }
     
     public void updateVideo() {
@@ -219,12 +218,8 @@ public class PureJavaClient implements Client {
         this.sound = handler;
     }
    
-    public CruHandler getCruHandler() {
-        return cru;
-    }
-    
-    public void setCruHandler(CruHandler handler) {
-        this.cru = handler;
+    public KeyboardHandler getKeyboardHandler() {
+    	return keyboardHandler;
     }
     
     public void handleEvents() {

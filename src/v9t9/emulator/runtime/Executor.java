@@ -76,6 +76,11 @@ public class Executor {
     public interface ICpuController {
     	void act(Cpu cpu);
     }
+    
+    /** Allow for an event to inject behavior before the next instruction
+     * executes.
+     * @param controller
+     */
     public synchronized void controlCpu(ICpuController controller) {
     	cpuController = controller;
     }
@@ -123,10 +128,7 @@ public class Executor {
 			
 			if (interpreting) {
 			    interpretOneInstruction();
-			    // do not allow interrupts after some instructions
-			    if (cpu.isAllowInts())
-			    	cpu.abortIfInterrupted();
-			    cpu.setAllowInts(true);
+			    cpu.checkInterrupts();
 			}
 			
 		} catch (TerminatedException e) {
