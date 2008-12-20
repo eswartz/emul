@@ -9,8 +9,8 @@ package v9t9.emulator;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import v9t9.emulator.clients.builtin.InternalCru9901;
 import v9t9.emulator.hardware.CruManager;
+import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.dsrs.DSRManager;
 import v9t9.emulator.runtime.AbortedException;

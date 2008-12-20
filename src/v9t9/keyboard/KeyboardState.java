@@ -11,10 +11,10 @@ import java.util.Arrays;
 import v9t9.emulator.runtime.Cpu;
 
 public class KeyboardState {
-    /* Masks */
-    public static final byte SHIFT = 1;
-    public static final byte FCTN = 2;
-    public static final byte CTRL = 4;
+    /* Masks, corresponding to column 0 */
+    public static final byte SHIFT = 0x20;
+    public static final byte FCTN = 0x10;
+    public static final byte CTRL = 0x40;
     
     /* CRU rows and columns */
     private static final byte SHIFT_R = 2;
@@ -98,163 +98,166 @@ public class KeyboardState {
      * Post an ASCII character, applying any conversions to make it
      * a legal keystroke on the 99/4A keyboard.
      * @param pressed
+     * @param synthetic if true, the character came from, e.g., pasted text,
+     * and there are not distinct shift key events; otherwise, apply logic
+     * to detect the patterns of real shift key presses and releases
      * @param shift extra shift keys
      * @param ch
      * @return true if we could represent it as ASCII
      */
-    public synchronized boolean postCharacter(boolean pressed, byte shift, char ch) {
+    public synchronized boolean postCharacter(boolean pressed, boolean synthetic, byte shift, char ch) {
     	//System.out.println("post: ch=" + ch + "; shift="+ Utils.toHex2(shift)+"; pressed="+pressed);
     	if (isAsciiDirectKey(ch)) {
-    		setKey(pressed, shift, ch);
+    		setKey(pressed, synthetic, shift, ch);
     		return true;
     	}
     	
 		int fctnShifted = shift | FCTN;
-
-    	switch (ch) {
+    	int ctrlShifted = shift | CTRL;
+    	
+		switch (ch) {
 		
 		case 8:
-			setKey(pressed, shift | KeyboardState.CTRL, 'H');	/* BKSP */
+			setKey(pressed, synthetic, ctrlShifted, 'H');	/* BKSP */
 			break;
 		case 9:
-			setKey(pressed, shift | KeyboardState.CTRL, 'I');	/* TAB */
+			setKey(pressed, synthetic, ctrlShifted, 'I');	/* TAB */
 			break;
 			
 		case 13:
-			setKey(pressed, (byte)0, '\r');
+			setKey(pressed, synthetic, (byte)0, '\r');
 			break;
 			
 			// shifted keys
 		case '!':
-			setKey(pressed, shift | KeyboardState.SHIFT, '1');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '1');
 			break;
 		case '@':
-			setKey(pressed, shift | KeyboardState.SHIFT, '2');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '2');
 			break;
 		case '#':
-			setKey(pressed, shift | KeyboardState.SHIFT, '3');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '3');
 			break;
 		case '$':
-			setKey(pressed, shift | KeyboardState.SHIFT, '4');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '4');
 			break;
 		case '%':
-			setKey(pressed, shift | KeyboardState.SHIFT, '5');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '5');
 			break;
 		case '^':
-			setKey(pressed, shift | KeyboardState.SHIFT, '6');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '6');
 			break;
 		case '&':
-			setKey(pressed, shift | KeyboardState.SHIFT, '7');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '7');
 			break;
 		case '*':
-			setKey(pressed, shift | KeyboardState.SHIFT, '8');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '8');
 			break;
 		case '(':
-			setKey(pressed, shift | KeyboardState.SHIFT, '9');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '9');
 			break;
 		case ')':
-			setKey(pressed, shift | KeyboardState.SHIFT, '0');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '0');
 			break;
 		case '+':
-			setKey(pressed, shift | KeyboardState.SHIFT, '=');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '=');
 			break;
 		case '<':
-			setKey(pressed, shift | KeyboardState.SHIFT, ',');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, ',');
 			break;
 		case '>':
-			setKey(pressed, shift | KeyboardState.SHIFT, '.');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, '.');
 			break;
 		case ':':
-			setKey(pressed, shift | KeyboardState.SHIFT, ';');
+			setKey(pressed, synthetic, shift | KeyboardState.SHIFT, ';');
 			break;
+			
 			// faked keys
 		case '`':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'W'))
-				setKey(pressed, fctnShifted, 'C');	/* ` */
+				setKey(pressed, synthetic, fctnShifted, 'C');	/* ` */
 			else
-				setKey(pressed, fctnShifted, 'W');	/* ~ */
+				setKey(pressed, synthetic, fctnShifted, 'W');	/* ~ */
 			break;
 		case '~':
-			setKey(pressed, shift | KeyboardState.FCTN, 'W');
+			setKey(pressed, synthetic, fctnShifted, 'W');
 			break;
 		case '-':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'U'))
-				setKey(pressed, KeyboardState.SHIFT, '/');	/* - */
+				setKey(pressed, synthetic, KeyboardState.SHIFT, '/');	/* - */
 			else
-				setKey(pressed, fctnShifted, 'U');	/* _ */
+				setKey(pressed, synthetic, fctnShifted, 'U');	/* _ */
 			break;
 		case '_':
-			setKey(pressed, shift | KeyboardState.FCTN, 'U');
+			setKey(pressed, synthetic, fctnShifted, 'U');
 			break;
 		case '[':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'F'))
-				setKey(pressed, fctnShifted, 'R');	/* [ */
+				setKey(pressed, synthetic, fctnShifted, 'R');	/* [ */
 			else
-				setKey(pressed, fctnShifted, 'F');	/* { */
+				setKey(pressed, synthetic, fctnShifted, 'F');	/* { */
 			break;
 		case '{':
-			setKey(pressed, shift | KeyboardState.FCTN, 'F');
+			setKey(pressed, synthetic, fctnShifted, 'F');
 			break;
 		case ']':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'G'))
-				setKey(pressed, fctnShifted, 'T');	/* ] */
+				setKey(pressed, synthetic, fctnShifted, 'T');	/* ] */
 			else
-				setKey(pressed, fctnShifted, 'G');	/* } */
+				setKey(pressed, synthetic, fctnShifted, 'G');	/* } */
 			break;
 		case '}':
-			setKey(pressed, shift | KeyboardState.FCTN, 'G');
+			setKey(pressed, synthetic, fctnShifted, 'G');
 			break;
 			
 		case '\'':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'P'))
-				setKey(pressed, fctnShifted, 'O');	/* ' */
+				setKey(pressed, synthetic, fctnShifted, 'O');	/* ' */
 			else
-				setKey(pressed, fctnShifted, 'P');	/* " */
+				setKey(pressed, synthetic, fctnShifted, 'P');	/* " */
 			break;
 		case '"':
-			setKey(pressed, shift | KeyboardState.FCTN, 'P');
+			setKey(pressed, synthetic, fctnShifted, 'P');
 			break;
 		case '/':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'I'))
-				setKey(pressed, (byte)0, '/');	/* / */
+				setKey(pressed, synthetic, (byte)0, '/');	/* / */
 			else
-				setKey(pressed, fctnShifted, 'I');	/* ? */
+				setKey(pressed, synthetic, fctnShifted, 'I');	/* ? */
 			break;
 		case '?':
-			setKey(pressed, shift | KeyboardState.FCTN, 'I');
+			setKey(pressed, synthetic, fctnShifted, 'I');
 			break;
 		case '\\':
 			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'A'))
-				setKey(pressed, fctnShifted, 'Z');	/* \\ */
+				setKey(pressed, synthetic, fctnShifted, 'Z');	/* \\ */
 			else
-				setKey(pressed, fctnShifted, 'A');	/* | */
+				setKey(pressed, synthetic, fctnShifted, 'A');	/* | */
 			break;
 		case '|':
-			setKey(pressed, shift | KeyboardState.FCTN, 'A');
+			setKey(pressed, synthetic, fctnShifted, 'A');
 			break;
 			
     	case 127:
-    		setKey(pressed, fctnShifted, '1');	
+    		setKey(pressed, synthetic, fctnShifted, '1');	
 			break;
 		default:
 			return false;
     	}
     	return true;
     }
+    
     /**
      * Set a key in the map.
      * @param onoff true: pressed, false: released
+     * @param synthetic if true, the shift + key are sent together from a synthetic
+     * event; else, shifts are sent in separate events from keys, so track them
      * @param shift FCTN, SHIFT, CTRL mask
      * @param key normalized ASCII key: no lowercase or shifted characters
      */
-    public synchronized void setKey(boolean onoff, int shift, int key) {
-        byte b, r, c;
+    public synchronized void setKey(boolean onoff, boolean synthetic, int shift, int key) {
         key &= 0xff;
         shift &= 0xff;
-
-        //if (shift && onoff)
-            //logger(_L | L_1, "turned on [%d]:  cshift=%d, cctrl=%d, cfctn=%d\n",
-                 //shift, cshift, cctrl, cfctn);
 
         /* macros bound to high keys */
         /*
@@ -263,14 +266,74 @@ public class KeyboardState {
             return;
         }*/
 
-        /*  This complicated code maintains a map of shifts
-           that we've explicitly turned on with other keys.  The
-           reason we need to know all this is that there are
-           multiple "on" events (repeats) but only one "off"
-           event.  If we do "left arrow on" (FCTN+S), 
-           "right arrow on" (FCTN+D), and "left arrow off" (FCTN+S)
-           we cannot reset FCTN since FCTN+D is still pressed.  Etc. */
+        if (!synthetic) {
+        	shift = trackRealShiftKeys(onoff, shift, key);
+       
+	
+	        if (key != 0) {
+	            changeKeyboardMatrix(onoff, key);
+	        } else {
+	            if ((shift & SHIFT) != 0)
+	                realshift = (byte) ((realshift & ~SHIFT) | (onoff ? SHIFT : 0));
+	            if ((shift & CTRL) != 0)
+	                realshift = (byte) ((realshift & ~CTRL) | (onoff ? CTRL : 0));
+	            if ((shift & FCTN) != 0)
+	                realshift = (byte) ((realshift & ~FCTN) | (onoff ? FCTN : 0));
+	        }
+        } else {
+        	// a shift key is sent at the same time as a key
+        	changeKeyboardShifts(onoff, shift);
+        	changeKeyboardMatrix(onoff, key);
+        }
+        //if (shift && !onoff)
+//            logger(_L | L_1, "turned off [%d]: cshift=%d, cctrl=%d, cfctn=%d\n\n",
+                 //shift, cshift, cctrl, cfctn);
+    }
 
+	private void changeKeyboardMatrix(boolean onoff, int key) {
+		byte b;
+		byte r;
+		byte c;
+		b = latinto9901[key];
+		/*if (b == 0xff)
+		    logger(_L | LOG_ERROR,
+		         _("keyboard_setkey:  got a key that should be faked '%c' (%d)\n\n"),
+		         key, key);*/
+		//System.out.println("b = "+b + "; onoff="+onoff +"; shift="+Utils.toHex4(shift));
+		if (b != -1) {
+		    r = (byte) (b >> 4);
+		    c = (byte) (b & 15);
+		    
+		    /*
+		    // NMI on FCTN+SHIFT+CTRL
+		    if (shift == CTRL + FCTN + SHIFT && key == ' '
+		    		&& TESTKBDCRU(r, c) && !onoff) {
+		    	cpu.holdpin(Cpu.INTPIN_LOAD);
+		    }
+		    */
+		    
+		    CHANGEKBDCRU(r, c, onoff ? 1 : 0);
+		    
+		}
+	}
+	
+	private void changeKeyboardShifts(boolean onoff, int shift) {
+		if (onoff)
+			crukeyboardmap[0] |= shift;
+		else
+			crukeyboardmap[0] &= ~shift;
+	}
+
+    /**
+	 * This complicated code maintains a map of shifts that we've explicitly
+	 * turned on with other keys. The reason we need to know all this is that
+	 * there are multiple "on" events (repeats) but only one "off" event. If we
+	 * do "left arrow on" (FCTN+S), "right arrow on" (FCTN+D), and
+	 * "left arrow off" (FCTN+S) we cannot reset FCTN since FCTN+D is still
+	 * pressed. Etc.
+	 */
+
+	private int trackRealShiftKeys(boolean onoff, int shift, int key) {
         if (!onoff && shift == 0 && fakemap[key] != 0) {
             //logger(_L | L_1, _("Resetting %d for key %d\n"), fakemap[key], key);
             shift |= fakemap[key];
@@ -325,42 +388,8 @@ public class KeyboardState {
                     CHANGEKBDCRU(CTRL_R, CTRL_C, 0);
             }
         }
-
-        if (key != 0) {
-            b = latinto9901[key];
-            /*if (b == 0xff)
-                logger(_L | LOG_ERROR,
-                     _("keyboard_setkey:  got a key that should be faked '%c' (%d)\n\n"),
-                     key, key);*/
-            //System.out.println("b = "+b + "; onoff="+onoff +"; shift="+Utils.toHex4(shift));
-            if (b != -1) {
-	            r = (byte) (b >> 4);
-	            c = (byte) (b & 15);
-	            
-	            /*
-	            // NMI on FCTN+SHIFT+CTRL
-	            if (shift == CTRL + FCTN + SHIFT && key == ' '
-	            		&& TESTKBDCRU(r, c) && !onoff) {
-	            	cpu.holdpin(Cpu.INTPIN_LOAD);
-	            }
-	            */
-	            
-	            CHANGEKBDCRU(r, c, onoff ? 1 : 0);
-	            
-            }
-        } else {
-            if ((shift & SHIFT) != 0)
-                realshift = (byte) ((realshift & ~SHIFT) | (onoff ? SHIFT : 0));
-            if ((shift & CTRL) != 0)
-                realshift = (byte) ((realshift & ~CTRL) | (onoff ? CTRL : 0));
-            if ((shift & FCTN) != 0)
-                realshift = (byte) ((realshift & ~FCTN) | (onoff ? FCTN : 0));
-        }
-
-        //if (shift && !onoff)
-//            logger(_L | L_1, "turned off [%d]: cshift=%d, cctrl=%d, cfctn=%d\n\n",
-                 //shift, cshift, cctrl, cfctn);
-    }
+		return shift;
+	}
     
     private void CHANGEKBDCRU(byte r, byte c, int v) {
         if (v != 0)

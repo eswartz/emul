@@ -4,13 +4,9 @@
  * Created on Dec 24, 2004
  *
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.hardware;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.hardware.CruAccess;
-import v9t9.emulator.hardware.CruManager;
-import v9t9.emulator.hardware.CruReader;
-import v9t9.emulator.hardware.CruWriter;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.keyboard.KeyboardState;
 

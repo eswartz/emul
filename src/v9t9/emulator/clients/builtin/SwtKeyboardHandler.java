@@ -173,7 +173,7 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 		//byte realshift = keyboardState.getRealShift();
 		//byte realshift = shift;
 
-		if (keyCode > 128 || !keyboardState.postCharacter(pressed, shift, (char) keyCode)) {
+		if (keyCode > 128 || !keyboardState.postCharacter(pressed, false, shift, (char) keyCode)) {
 			if (keyCode == 0)
 				keyCode = shift;
 			
@@ -184,15 +184,15 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 				// shifts
 			case SWT.SHIFT:
 			case 1:
-				keyboardState.setKey(pressed, KeyboardState.SHIFT, 0);
+				keyboardState.setKey(pressed, false, KeyboardState.SHIFT, 0);
 				break;
 			case SWT.CONTROL:
 			case 4:
-				keyboardState.setKey(pressed, KeyboardState.CTRL, 0);
+				keyboardState.setKey(pressed, false, KeyboardState.CTRL, 0);
 				break;
 			case SWT.ALT:
 			case 2:
-				keyboardState.setKey(pressed, KeyboardState.FCTN, 0);
+				keyboardState.setKey(pressed, false, KeyboardState.FCTN, 0);
 				break;
 
 			case SWT.CAPS_LOCK:
@@ -213,20 +213,20 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 			case SWT.F7:
 			case SWT.F8:
 			case SWT.F9:
-				keyboardState.setKey(pressed, fctnShifted, '1' + SWT.F1 - keyCode);	
+				keyboardState.setKey(pressed, false, fctnShifted, '1' + SWT.F1 - keyCode);	
 				break;
 				
 			case SWT.ARROW_UP:
-				keyboardState.setKey(pressed, fctnShifted, 'E');
+				keyboardState.setKey(pressed, false, fctnShifted, 'E');
 				break;
 			case SWT.ARROW_DOWN:
-				keyboardState.setKey(pressed, fctnShifted, 'X');
+				keyboardState.setKey(pressed, false, fctnShifted, 'X');
 				break;
 			case SWT.ARROW_LEFT:
-				keyboardState.setKey(pressed, fctnShifted, 'S');
+				keyboardState.setKey(pressed, false, fctnShifted, 'S');
 				break;
 			case SWT.ARROW_RIGHT:
-				keyboardState.setKey(pressed, fctnShifted, 'D');
+				keyboardState.setKey(pressed, false, fctnShifted, 'D');
 				break;
 				
 				
@@ -234,21 +234,21 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 			//	keyboardState.setKey(pressed, fctnShifted, '1');	
 			//	break;
 			case SWT.INSERT:
-				keyboardState.setKey(pressed, fctnShifted, '2');	
+				keyboardState.setKey(pressed, false, fctnShifted, '2');	
 				break;
 				
 			case SWT.PAGE_UP:
-				keyboardState.setKey(pressed, fctnShifted, '6'); // (as per E/A and TI Writer)
+				keyboardState.setKey(pressed, false, fctnShifted, '6'); // (as per E/A and TI Writer)
 				break;
 			case SWT.PAGE_DOWN:
-				keyboardState.setKey(pressed, fctnShifted, '4'); // (as per E/A and TI Writer)
+				keyboardState.setKey(pressed, false, fctnShifted, '4'); // (as per E/A and TI Writer)
 				break;
 
 			case SWT.HOME:
-				keyboardState.setKey(pressed, fctnShifted, '5');		// BEGIN
+				keyboardState.setKey(pressed, false, fctnShifted, '5');		// BEGIN
 				break;
 			case SWT.END:
-				keyboardState.setKey(pressed, fctnShifted, '0');		// Fctn-0
+				keyboardState.setKey(pressed, false, fctnShifted, '0');		// Fctn-0
 				break;
 
 			default:
@@ -304,7 +304,7 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 				
 				if (index <= chs.length) {
 					if (prevCh != 0)
-						keyboardState.postCharacter(false, prevShift, prevCh);
+						keyboardState.postCharacter(false, true, prevShift, prevCh);
 					
 					if (index < chs.length) {
 						char ch = chs[index];
@@ -333,7 +333,7 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 						
 						index++;
 						
-						keyboardState.postCharacter(true, shift, ch);
+						keyboardState.postCharacter(true, true, shift, ch);
 						
 						prevCh = ch;
 						prevShift = shift;

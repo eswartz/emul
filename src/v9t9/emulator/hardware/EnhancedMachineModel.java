@@ -4,7 +4,6 @@
 package v9t9.emulator.hardware;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.InternalCru9901;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.hardware.dsrs.EmuDiskDSR;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
