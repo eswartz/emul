@@ -210,4 +210,8 @@ public class ConstPool {
 			// unresolved inst
 		}
 	}
+
+	public int getSize() {
+		return tableSize;
+	}
 }

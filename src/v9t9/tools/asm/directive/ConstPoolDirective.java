@@ -47,7 +47,10 @@ public class ConstPoolDirective extends Directive {
 		setPc(assembler.getPc());
 
 		symbol.setAddr(assembler.getPc());
-		
+
+		// skip table
+		assembler.setPc((assembler.getPc() + constPool.getSize() + 1) & 0xfffe);
+
 		return new IInstruction[] { this };
 	}
 	
