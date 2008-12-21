@@ -146,13 +146,13 @@ public class AssemblerOperandParserStage implements IOperandParserStage {
 			t = tokenizer.nextToken();
 			String labelName = "$" + target;
 			if (t == '+') {
-				// forward ref: don't use current one
-				symbol = assembler.getSymbolTable().createSymbol(labelName);
+				symbol = assembler.findForwardLocalLabel(labelName);
 			} else {
+				symbol = assembler.findBackwardLocalLabel(labelName);
 				// back ref: use previous one
-				symbol = assembler.getSymbolTable().findSymbol(labelName);
-				if (symbol == null)
-					throw new ParseException("No previous label " + labelName);
+				//symbol = assembler.getSymbolTable().findSymbol(labelName);
+				//if (symbol == null)
+				//	throw new ParseException("No previous label " + labelName);
 			}
 			return new SymbolOperand(symbol);
 		} else {

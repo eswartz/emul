@@ -310,6 +310,22 @@ public class Assembler {
 		return label;
 	}
 
+	public Symbol findForwardLocalLabel(String labelName) {
+		// forward ref: don't use current one unless it's also unresolved
+		Symbol symbol = getSymbolTable().findSymbolLocal(labelName);
+		if (symbol == null || labelTable.containsKey(symbol))
+			symbol = getSymbolTable().createSymbol(labelName);
+		return symbol;
+	}
+
+	public Symbol findBackwardLocalLabel(String labelName) throws ParseException {
+		// back ref: use previous one
+		Symbol symbol = getSymbolTable().findSymbolLocal(labelName);
+		if (symbol == null)
+			throw new ParseException("No previous label " + labelName);
+		return symbol;
+	}
+
 	/** Reference a symbol, either returning the existing symbol
 	 * or defining a forward reference
 	 * @param string

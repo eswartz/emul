@@ -145,7 +145,7 @@ public class MacroInstructionParserStage implements IInstructionParserStage {
 			
 			String argValue = parseArgument(tokenizer, ",");
 			
-			argMap.put(argName, argValue);
+			argMap.put(argName, argValue.trim());
 			argCnt--;
 			if (argCnt > 0) {
 				int t = tokenizer.nextToken();
