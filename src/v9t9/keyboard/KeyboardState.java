@@ -92,6 +92,8 @@ public class KeyboardState {
     
     public synchronized void resetKeyboard() {
         Arrays.fill(getKeyboardMap(), 0, 8, (byte)0);
+        Arrays.fill(fakemap, 0, fakemap.length, (byte)0);
+        realshift = 0;
     }
     
     /**

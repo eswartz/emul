@@ -113,7 +113,7 @@ public class V9t9 {
 	    	loadConsoleRom("994arom.bin");
 	    	loadConsoleGrom("994agrom.bin");
 	
-	    	if (true) {
+	    	if (false) {
 	    		loadModuleGrom("E/A", "eag.bin");
 	    		DiskMemoryEntry entry = DiskMemoryEntry.newWordMemoryFromFile(0xA000, 0x6000, "Ed's BASIC",
 	            		console,
@@ -133,13 +133,16 @@ public class V9t9 {
 	        		console.writeWord(a, ((WordMemoryArea) entry.area).memory[(a - 0x2000) / 2]);
 	        	}
 
-	    	} else {
+	    	} else if (false) {
 		    	loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
 		    	loadModuleGrom("ExtBasic", "tiextg.bin");
 		    	
 		    	loadModuleGrom("Parsec", "parsecg.bin");
 		    	loadModuleRom("Parsec", "parsecc.bin");
 		    	loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
+	    	} else {
+		    	loadModuleRom("Logo", "logoc.bin");
+		    	loadModuleGrom("Logo", "logog.bin");
 	    	}
     	} 
 

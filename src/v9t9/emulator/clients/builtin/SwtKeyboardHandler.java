@@ -110,6 +110,9 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 			return;
 		}
 		
+		//System.out.println("recordKey: pressed="+pressed+"; statemask="+Integer.toHexString(stateMask)
+		//		+"; keyCode="+keyCode);
+
 		synchronized (pressedKeys) {
 			for (Iterator<KeyInfo> iter = pressedKeys.iterator();
 				iter.hasNext(); ) { 
@@ -130,9 +133,12 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 				pressedKeys.add(new KeyInfo(keyCode, now + KEY_LIFE));
 			}
 			
-			// shift keys are reported in a keyup event
-			if (!pressed && keyCode >= 0x10000)
-				pressedStateMask &= ~stateMask;
+			// shift keys are reported sometimes in keycode and sometimes in stateMask
+			if (keyCode >= 0x10000 && (keyCode & SWT.KEYCODE_BIT) == 0)
+				if (pressed)
+					pressedStateMask |= keyCode;
+				else
+					pressedStateMask &= ~keyCode;
 			else
 				pressedStateMask = stateMask;
 		
@@ -140,7 +146,7 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 		
 		// immediately record it
 		synchronized (keyboardState) {
-			updateKey(pressed, stateMask, keyCode);
+			//updateKey(pressed, stateMask, keyCode);
 		}
 	}
 	
@@ -172,26 +178,27 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 		
 		//byte realshift = keyboardState.getRealShift();
 		//byte realshift = shift;
-
+		
 		if (keyCode > 128 || !keyboardState.postCharacter(pressed, false, shift, (char) keyCode)) {
 			if (keyCode == 0)
 				keyCode = shift;
 			
 			int fctnShifted = shift | KeyboardState.FCTN;
 			
+			//System.out.println("Handling non-postable key: " + keyCode + "; shift="+shift);
 			switch (keyCode) {
 
 				// shifts
 			case SWT.SHIFT:
-			case 1:
+			case KeyboardState.SHIFT:
 				keyboardState.setKey(pressed, false, KeyboardState.SHIFT, 0);
 				break;
 			case SWT.CONTROL:
-			case 4:
+			case KeyboardState.CTRL:
 				keyboardState.setKey(pressed, false, KeyboardState.CTRL, 0);
 				break;
 			case SWT.ALT:
-			case 2:
+			case KeyboardState.FCTN:
 				keyboardState.setKey(pressed, false, KeyboardState.FCTN, 0);
 				break;
 
@@ -271,6 +278,7 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 			state.resetKeyboard();
 		
 			synchronized (pressedKeys) {
+				updateKey(true, pressedStateMask, 0);
 				for (KeyInfo info : pressedKeys) {
 					updateKey(true, pressedStateMask, info.keyCode);
 				}
@@ -344,7 +352,7 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 			}
 			
 		};
-		pasteTimer.scheduleAtFixedRate(pasteCharacterTask, 0, 1000 / 30); 
+		pasteTimer.scheduleAtFixedRate(pasteCharacterTask, 0, 1000 / 20); 
 	}
 
 }
