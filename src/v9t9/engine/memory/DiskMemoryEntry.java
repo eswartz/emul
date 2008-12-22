@@ -9,6 +9,7 @@ package v9t9.engine.memory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.Logging;
@@ -296,9 +297,9 @@ public class DiskMemoryEntry extends MemoryEntry {
 			public void writeWord(int addr, short val) {
 				int bank = (addr & 2) >> 1;
 				if (selectBank(bank)) {
-					if (Executor.settingDumpFullInstructions.getBoolean()) {
-						Logging.getLog(Executor.settingDumpFullInstructions).
-							println("=== Switched to bank " + bank);
+					PrintWriter log = Logging.getLog(Executor.settingDumpFullInstructions);
+					if (log != null) {
+						log.println("=== Switched to bank " + bank);
 					}
 				}
 				super.writeWord(addr, val);

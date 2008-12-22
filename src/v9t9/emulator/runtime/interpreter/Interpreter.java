@@ -487,9 +487,9 @@ public class Interpreter {
         case InstructionTable.Ix:
             act = new InstructionAction() {
                 public void act(Block block) {
-                    short newPc = block.pc;
+                    //short newPc = block.pc;
                     execute(cpu, block.val1);
-                    block.pc = newPc;
+                    //block.pc = newPc;
                 }
             };
             break;

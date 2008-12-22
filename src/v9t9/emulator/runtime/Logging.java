@@ -54,9 +54,14 @@ public class Logging {
                     File file = settingToFilenameMap.get(setting);
                     try {
                         dump = fileToStreamMap.get(file);
-                        if (dump == null) {
+                        if (dump != null) {
+                        	dump.println("Enabling " + setting.getName());
+                        	// might be an error
+                        }
+                        if (dump == null || dump.checkError()) {
                         	dump = new PrintWriter(new FileOutputStream(file, true));
                         	fileToStreamMap.put(file, dump);
+                        	dump.println("Enabling " + setting.getName());
                         }
                         settingToPrintwriterMap.put(setting, dump);
                     } catch (FileNotFoundException e) {

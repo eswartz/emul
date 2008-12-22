@@ -160,7 +160,7 @@ public class Cpu implements MemoryAccessListener {
 	static public final String sCyclesPerSecond = "CyclesPerSecond";
 
 	static public final Setting settingCyclesPerSecond = new Setting(
-			sCyclesPerSecond, new Integer(3300000));
+			sCyclesPerSecond, new Integer(3000000));
 
     //public static Object executionToken;
 
@@ -308,6 +308,10 @@ public class Cpu implements MemoryAccessListener {
 
 	public synchronized long getTotalCycleCount() {
 		return totalcurrentcycles;
+	}
+	
+	public synchronized long getTotalCurrentCycleCount() {
+		return totalcurrentcycles + currentcycles;
 	}
 	
 	public synchronized int getTickCount() {

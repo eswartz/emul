@@ -21,8 +21,22 @@ public class InternalCru9901 implements CruAccess {
 	private int crukeyboardcol;
 	/** Set to prevent reading alpha lock */
 	private boolean alphaLockMask;
-	protected int latchedclockinvl;
+	protected int clockRegister;
+	protected int clockDecrementerRegister;
+	protected int clockReadRegister;
 	
+	
+	private CruWriter cruw9901_0 = new CruWriter() {
+
+		public int write(int addr, int data, int num) {
+			clockmode = (data != 0);
+			if (clockmode) {
+				clockReadRegister = clockDecrementerRegister;
+			}
+			return 0;
+		}
+		
+	};
 	/*
 	Change an interrupt enable, or change bit in clock interval
 	*/
@@ -32,8 +46,9 @@ public class InternalCru9901 implements CruAccess {
 			int         bit = addr / 2;
 		
 			if (clockmode) {
-				latchedclockinvl =
-					(latchedclockinvl & ~(1 << bit)) | (data << bit);
+				clockRegister =
+					(clockRegister & ~(1 << bit)) | (data << bit);
+				resetClock();
 				//logger(_L | L_2, "cruw9901_S:  hw9901.latchedclockinvl=%04X\n",
 					// hw9901.latchedclockinvl);
 			} else {
@@ -165,8 +180,7 @@ public class InternalCru9901 implements CruAccess {
 			if (clockmode)
 				return (latchedtimer >> (bit - 1)) & 0x1;
 			else if ((int9901 & (1 << bit)) != 0)
-				return (currentints & ~(~0 << bit)) == 0 
-					&& (currentints & (1 << bit)) != 0 ? 1 : 0;
+				return (currentints & (1 << bit)) == 0 ? 0 : 1;
 			else {
 				int alphamask = 0;
 				
@@ -190,6 +204,7 @@ public class InternalCru9901 implements CruAccess {
 	};
 	private int intlevel;
 	private final KeyboardState keyboardState;
+	private long clockTargetCycleCount;
 	
     public InternalCru9901(Machine machine, KeyboardState keyboardState) {
         this.machine = machine;
@@ -197,6 +212,7 @@ public class InternalCru9901 implements CruAccess {
         this.manager = machine.getCruManager();
         
 
+        registerInternalCru(0x0, 1, cruw9901_0);
         registerInternalCru(0x2, 1, cruw9901_S);
         registerInternalCru(0x4, 1, cruw9901_S);
         registerInternalCru(0x6, 1, cruw9901_S);
@@ -231,7 +247,13 @@ public class InternalCru9901 implements CruAccess {
         registerInternalCru(0x2a, 1, cruralpha);
     }
 
-    /** Register handler for a range of bits.  Note that the internal bus
+    protected void resetClock() {
+		clockDecrementerRegister = clockRegister;
+		clockTargetCycleCount = machine.getCpu().getTotalCurrentCycleCount() + 64;
+		//System.out.println("Reset clock to " + clockRegister);
+	}
+
+	/** Register handler for a range of bits.  Note that the internal bus
      * aliases in blocks of 0x40.
      * @param addr
      * @param bits
@@ -264,6 +286,24 @@ public class InternalCru9901 implements CruAccess {
     
     
 	public void pollForPins(Cpu cpu) {
+		// while polling, also handle clock if in I/O mode
+		if (clockRegister != 0 && !clockmode) {
+			// this decrements once every 64 cycles
+			long nowCycles = machine.getCpu().getTotalCurrentCycleCount();
+			while (clockTargetCycleCount < nowCycles) {
+				if (--clockDecrementerRegister == 0) {
+					//System.out.println("tick");
+					if ((int9901 & M_INT_CLOCK) != 0) {
+						triggerInterrupt(INT_CLOCK);
+					}
+					resetClock();
+					break;
+				}
+				clockTargetCycleCount += 64;
+				clockReadRegister = clockDecrementerRegister;
+			}
+		}
+		
 		// any of these interrupts enabled?  [optimization]
 		cpu.resetInterruptRequest();
 		if ((currentints & int9901) != 0) {
