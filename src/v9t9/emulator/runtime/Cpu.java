@@ -6,6 +6,8 @@
  */
 package v9t9.emulator.runtime;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.CruAccess;
 import v9t9.engine.cpu.Status;
@@ -61,21 +63,20 @@ public class Cpu implements MemoryAccessListener {
         this.console = machine.getConsole();
         this.console.setAccessListener(this);
         this.status = new Status();
-        this.baseclockhz = settingCyclesPerSecond.getInt();
         this.interruptTick = interruptTick;
-        this.targetcycles = (int)((long) baseclockhz * interruptTick / 1000);
-        this.currenttargetcycles = this.targetcycles;
-        System.out.println("target: " + targetcycles);
         
         settingCyclesPerSecond.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
 				baseclockhz = setting.getInt();
-				targetcycles = baseclockhz / Cpu.this.interruptTick;
-				currenttargetcycles = targetcycles;
+				targetcycles = (int)((long) baseclockhz * Cpu.this.interruptTick / 1000);
+		        currenttargetcycles = targetcycles;
+		        System.out.println("target: " + targetcycles);
 			}
         	
         });
+        
+        settingCyclesPerSecond.setInt(3000000);
     }
 
     public short getPC() {
@@ -139,7 +140,7 @@ public class Cpu implements MemoryAccessListener {
      */
     private boolean forceIcTo1 = true;
     
-    private static final int PIN_INTREQ = 1 << 31;
+    public static final int PIN_INTREQ = 1 << 31;
     public static final int PIN_LOAD = 1 << 3;
     public static final int PIN_RESET = 1 << 5;
     
@@ -160,7 +161,7 @@ public class Cpu implements MemoryAccessListener {
 	static public final String sCyclesPerSecond = "CyclesPerSecond";
 
 	static public final Setting settingCyclesPerSecond = new Setting(
-			sCyclesPerSecond, new Integer(3000000));
+			sCyclesPerSecond, new Integer(0));
 
     //public static Object executionToken;
 
@@ -212,14 +213,19 @@ public class Cpu implements MemoryAccessListener {
 	    }
     	
 	    if (cruAccess != null) {
+	    	pins &= ~PIN_INTREQ;
 	    	cruAccess.pollForPins(this);
+	    	if (cruAccess.isInterruptWaiting()) {
+	    		ic = forceIcTo1 ? 1 : cruAccess.getInterruptLevel(); 
+	    		if (status.getIntMask() >= ic) {
+	    			//System.out.println("Triggering interrupt... "+ic);
+	    			pins |= PIN_INTREQ;
+	    			throw new AbortedException();
+	    		}
+	    	}
 	    }
 	    
-    	if (((pins & PIN_INTREQ) != 0 && status.getIntMask() >= ic)) {
-    		//System.out.println("Triggering interrupt... "+ic);
-    		throw new AbortedException();
-    	}
-    	else if (((pins &  PIN_LOAD + PIN_RESET) != 0)) {
+    	if (((pins &  PIN_LOAD + PIN_RESET) != 0)) {
     		System.out.println("Pins set... "+pins);
     		throw new AbortedException();
     	}            
@@ -332,6 +338,31 @@ public class Cpu implements MemoryAccessListener {
 
 	public CruAccess getCruAccess() {
 		return cruAccess;
+	}
+
+	public void saveState(IDialogSettings section) {
+		section.put("PC", PC);
+		section.put("WP", WP);
+		section.put("status", status.flatten());
+		section.put("ForceAllIntsLevel1", forceIcTo1);
+		settingRealTime.saveState(section);
+		settingCyclesPerSecond.saveState(section);
+		cruAccess.saveState(section.addNewSection("CRU"));
+	}
+
+	public void loadState(IDialogSettings section) {
+		if (section == null) {
+			setPin(INTLEVEL_RESET);
+			return;
+		}
+		
+		PC = (short) section.getInt("PC");
+		WP = (short) section.getInt("WP");
+		status.expand((short) section.getInt("status"));
+		forceIcTo1 = section.getBoolean("ForceAllIntsLevel1");
+		settingRealTime.loadState(section);
+		settingCyclesPerSecond.loadState(section);
+		cruAccess.loadState(section.getSection("CRU"));
 	} 
 
 }

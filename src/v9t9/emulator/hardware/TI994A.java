@@ -52,13 +52,13 @@ public class TI994A extends Machine {
     }
     
  	public MemoryDomain getGplMemoryDomain() {
-		return ((StandardConsoleMemoryModel) memoryModel).GRAPHICS;
+		return memory.getDomain("GRAPHICS");
 	}
 	public MemoryDomain getSpeechMemoryDomain() {
-		return ((StandardConsoleMemoryModel) memoryModel).SPEECH;
+		return memory.getDomain("SPEECH");
 	}
 	public MemoryDomain getVdpMemoryDomain() {
-		return ((StandardConsoleMemoryModel) memoryModel).VIDEO;
+		return memory.getDomain("VIDEO");
 	}
 
 }

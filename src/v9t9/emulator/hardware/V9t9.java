@@ -16,7 +16,6 @@ import v9t9.emulator.clients.builtin.HybridDemoClient;
 import v9t9.emulator.clients.builtin.PureJavaClient;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.ExpRamArea;
-import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.compiler.Compiler;
@@ -77,7 +76,7 @@ public class V9t9 {
     }
     protected DiskMemoryEntry loadConsoleGrom(String filename) throws IOException {
     	DiskMemoryEntry entry = DiskMemoryEntry.newByteMemoryFromFile(0x0, 0x6000, "CPU GROM", 
-    			 ((StandardConsoleMemoryModel) memoryModel).GRAPHICS,
+    			memory.getDomain("GRAPHICS"),
     			filename, 0x0, false);
 		memory.addAndMap(entry);
 		return entry;
@@ -102,7 +101,7 @@ public class V9t9 {
     }
     protected DiskMemoryEntry loadModuleGrom(String name, String filename) throws IOException {
     	DiskMemoryEntry entry = DiskMemoryEntry.newByteMemoryFromFile(0x6000, 0, name, 
-    			((StandardConsoleMemoryModel) memoryModel).GRAPHICS,
+    			memory.getDomain("GRAPHICS"),
     			filename, 0x0, false);
 		memory.addAndMap(entry);
 		return entry;

@@ -3,6 +3,8 @@
  */
 package v9t9.engine.memory;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 
 
 
@@ -50,5 +52,22 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	@Override
 	protected MemoryArea getArea() {
 		return currentBank.getArea();
+	}
+
+	@Override
+	protected void doSaveBankEntries(IDialogSettings section) {
+		for (int idx = 0; idx < banks.length; idx++) {
+			MemoryEntry entry = banks[idx];
+			entry.saveState(section.addNewSection("" + idx));
+		}		
+	}
+
+	@Override
+	protected void doLoadBankEntries(IDialogSettings section) {
+		if (section == null) return;
+		for (int idx = 0; idx < banks.length; idx++) {
+			MemoryEntry entry = banks[idx];
+			entry.loadState(section.getSection("" + idx));
+		}		
 	}
 }

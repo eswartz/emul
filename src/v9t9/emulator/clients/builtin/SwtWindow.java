@@ -4,7 +4,9 @@
 package v9t9.emulator.clients.builtin;
 
 import java.io.File;
+import java.io.IOException;
 
+import org.eclipse.jface.dialogs.DialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
@@ -28,6 +30,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
@@ -50,6 +53,7 @@ public class SwtWindow {
 	
 	private final Machine machine;
 	private Composite controlsComposite;
+	private DialogSettings settings;
 	
 	public SwtWindow(Display display, SwtVideoRenderer renderer, Machine machine) {
 		this.machine = machine;
@@ -98,6 +102,16 @@ public class SwtWindow {
 					}
 				});
 
+		createButton(icons, 
+				new Rectangle(0, 256, 64, 64), "Reset the computer",
+				new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						SwtWindow.this.machine.getCpu().setPin(Cpu.PIN_RESET);
+						restoreFocus();
+					}
+				});
+
 		/*BasicButton logButton =*/ createStateButton(Executor.settingDumpFullInstructions,
 				icons, new Rectangle(0, 128, 64, 64),
 				new Rectangle(0, 0, 64, 64),
@@ -121,7 +135,7 @@ public class SwtWindow {
 				});*/
 		
 		createButton(icons, new Rectangle(0, 192, 64, 64),
-				"Paste clipboard contents",
+				"Paste into keyboard",
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
@@ -142,10 +156,79 @@ public class SwtWindow {
 					}
 			});
 		
+		createButton(icons, new Rectangle(0, 384, 64, 64),
+				"Save machine state",
+				new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						String filename = selectFile("MachineStatePath", "saves", "save0.sav", SWT.SAVE);
+						
+						if (filename != null) {
+							try {
+								SwtWindow.this.machine.saveState(filename);
+							} catch (Throwable e1) {
+								MessageDialog.openError(getShell(), "Save error", 
+										"Failed to save machine state:\n\n" + e1.getMessage());
+							}
+						}
+					}
+
+			});
+		
+		createButton(icons, new Rectangle(0, 448, 64, 64),
+				"Load machine state",
+				new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						String filename = selectFile("MachineStatePath", "saves", "save0.sav", SWT.OPEN);
+						
+						if (filename != null) {
+							try {
+								SwtWindow.this.machine.restoreState(filename);
+							} catch (Throwable e1) {
+								MessageDialog.openError(getShell(), "Load error", 
+										"Failed to load machine state:\n\n" + e1.getMessage());
+							
+							}
+						}
+						
+					}
+			});
 
 		shell.open();
 		shell.setBounds(800, 800, shell.getSize().x, shell.getSize().y);
 		shell.pack();
+	}
+
+	protected String selectFile(String configPath, String subdir, String fileName, int style) {
+		DialogSettings settings = getApplicationSettings();
+		String savePath = settings.get(configPath);
+		if (savePath == null) {
+			savePath = getBaseConfigurationPath() + File.separatorChar + subdir + File.separatorChar;
+			File saveDir = new File(savePath);
+			saveDir.mkdirs();
+		}
+		
+		FileDialog dialog = new FileDialog(getShell(), style);
+		dialog.setFilterPath(savePath);
+		dialog.setFileName(fileName);
+		String filename = dialog.open();
+		return filename;
+	}
+
+	protected String getBaseConfigurationPath() {
+		return System.getProperty("user.home") + File.separatorChar + ".v9t9j" + File.separatorChar;
+	}
+
+	protected DialogSettings getApplicationSettings() {
+		if (settings == null) {
+			settings = new DialogSettings("root");
+			try {
+				settings.load(getBaseConfigurationPath() + "config");
+			} catch (IOException e) {
+			}
+		}
+		return settings;
 	}
 
 	class BasicButton extends Composite {

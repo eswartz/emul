@@ -8,6 +8,8 @@ package v9t9.emulator.clients.demo;
 
 import java.io.IOException;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
@@ -422,6 +424,16 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     
     public KeyboardHandler getKeyboardHandler() {
     	return null;
+    }
+    
+    public void loadState(IDialogSettings section) {
+    	// TODO Auto-generated method stub
+    	
+    }
+    
+    public void saveState(IDialogSettings section) {
+    	// TODO Auto-generated method stub
+    	
     }
 }
 

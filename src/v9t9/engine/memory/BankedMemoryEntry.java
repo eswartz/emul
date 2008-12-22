@@ -3,6 +3,8 @@
  */
 package v9t9.engine.memory;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 
 
 
@@ -79,4 +81,36 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	public int getBankSize() {
 		return size;
 	}
+	
+	@Override
+	public void saveState(IDialogSettings section) {
+		super.saveState(section);
+		section.put("CurrentBankIndex", currentBankIndex);
+		
+		doSaveBankEntries(section.addNewSection("Banks"));
+	}
+	
+	abstract protected void doSaveBankEntries(IDialogSettings section);
+
+	@Override
+	protected void saveMemoryContents(IDialogSettings section) {
+		// do this per-bank
+	}
+	
+	@Override
+	protected void loadMemoryContents(IDialogSettings section) {
+		// do this per-bank
+	}
+	
+	@Override
+	public void loadState(IDialogSettings section) {
+		super.loadState(section);
+
+		doLoadBankEntries(section.getSection("Banks"));
+		
+		selectBank(section.getInt("CurrentBankIndex"));
+		
+	}
+
+	abstract protected void doLoadBankEntries(IDialogSettings section);
 }

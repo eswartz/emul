@@ -3,6 +3,8 @@
  */
 package v9t9.engine.memory;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 /**
  * This is banked memory which exposes a portion of a larger
  * MemoryArea based on the current bank.
@@ -36,5 +38,16 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 	
 	public int getBankOffset() {
 		return bankOffset;
+	}
+	
+	@Override
+	protected void doSaveBankEntries(IDialogSettings section) {
+		getArea().saveContents(section, this);
+	}
+	
+	@Override
+	protected void doLoadBankEntries(IDialogSettings section) {
+		if (section == null) return;
+		getArea().loadContents(section, this);
 	}
 }

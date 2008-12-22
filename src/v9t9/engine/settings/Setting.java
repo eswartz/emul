@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 /** A single configurable setting.
  * @author ejs
  */
@@ -77,4 +79,21 @@ public class Setting {
         storage = val;
         notifyListeners(old);
     }
+	public void saveState(IDialogSettings section) {
+		if (storage instanceof Integer)
+			section.put(name, Integer.toString(getInt()));
+		else
+			section.put(name, getValue().toString());
+	}
+	public void loadState(IDialogSettings section) {
+		String value = section.get(name);
+		if (value != null) {
+			if (storage instanceof Boolean)
+				setValue(Boolean.parseBoolean(value));
+			else if (storage instanceof Integer)
+				setValue(Integer.parseInt(value));
+			else
+				setValue(value);
+		}
+	}
 }

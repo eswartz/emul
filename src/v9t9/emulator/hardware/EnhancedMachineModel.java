@@ -41,7 +41,7 @@ public class EnhancedMachineModel implements MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getVdp()
 	 */
 	public VdpHandler createVdp(Machine machine) {
-		vdp = new VdpV9938(memoryModel.VIDEO);
+		vdp = new VdpV9938(machine.getMemory().getDomain("VIDEO"));
 		vdpMmio = new Vdp9938Mmio(machine.getMemory(), vdp, 0x20000);
 		return vdp;
 	}

@@ -9,6 +9,8 @@ package v9t9.emulator.clients.builtin.video.tms9918a;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.MemoryCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
@@ -633,4 +635,25 @@ public class VdpTMS9918A implements VdpHandler {
 		return modeNumber;
 	}
 
+	public void saveState(IDialogSettings section) {
+		String[] regState = new String[vdpregs.length];
+		for (int i = 0; i < vdpregs.length; i++) {
+			regState[i] = Utils.toHex2(vdpregs[i]);
+		}
+		section.put("Registers", regState);
+		settingDumpVdpAccess.saveState(section);
+	}
+	
+	public void loadState(IDialogSettings section) {
+		if (section == null) return;
+		
+		String[] regState = section.getArray("Registers");
+		if (regState != null) {
+			for (int i = 0; i < regState.length; i++) {
+				writeVdpReg(i, (byte) Integer.parseInt(regState[i], 16));
+			}
+		}
+		
+		settingDumpVdpAccess.loadState(section);
+	}
 }

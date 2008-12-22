@@ -8,6 +8,8 @@ package v9t9.engine.memory;
 
 import java.util.Stack;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 /**
  * @author ejs
  */
@@ -268,6 +270,50 @@ public class MemoryDomain implements MemoryAccess {
 			if (newBankEntry != null)
 				mapEntry(newBankEntry);
 		}
+	}
+
+	public void saveState(IDialogSettings section) {
+		int idx = 0;
+		for (MemoryEntry entry : mappedEntries) {
+			if (entry != zeroMemoryEntry && isEntryFullyMapped(entry)) {
+				entry.saveState(section.addNewSection(""+ idx));
+				idx++;
+			}
+		}
+	}
+
+	public void loadState(IDialogSettings section) {
+		// XXX: this doesn't really recreate memory, just reloads contents
+		//unmapAll();
+		if (section == null) {
+			return;
+		}
+
+		for (IDialogSettings entryStore : section.getSections()) {
+			String name = entryStore.get("Name");
+			MemoryEntry entry = findFullyMappedEntry(name);
+			if (entry != null) {
+				entry.loadState(entryStore);
+			} else {
+				System.out.println("Cannot find memory entry: " + name);
+			}
+		}
+		
+	}
+
+
+	public MemoryEntry findFullyMappedEntry(String name) {
+		for (MemoryEntry entry : mappedEntries) {
+			if (entry.getName().equals(name) && isEntryFullyMapped(entry)) {
+				return entry;
+			}
+		}
+		return null;
+	}
+
+	public void unmapAll() {
+		mappedEntries.clear();
+		mapEntry(zeroMemoryEntry);
 	}
 
 

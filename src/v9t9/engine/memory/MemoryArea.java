@@ -6,6 +6,13 @@
  */
 package v9t9.engine.memory;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import net.iHarder.Base64;
+
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 /**
  * A memory area is the smallest unit of contiguous memory which has the
  * same behavior and callbacks.  Each has (possibly) unique handling for
@@ -117,4 +124,45 @@ public abstract class MemoryArea {
 	protected byte getLatency() {
 		return latency;
 	}
+
+	public void saveContents(IDialogSettings section, MemoryEntry entry) {
+		List<String> contents = new ArrayList<String>();
+		int endAddr = entry.addr + getSize();
+		for(int saveAddr = entry.addr; saveAddr < endAddr; saveAddr += 256) {
+			int perLine = saveAddr + 256 < endAddr ? 256 : endAddr - saveAddr;
+			byte[] chunk = new byte[perLine];
+			boolean allZero = true;
+			for (int idx = 0; idx < perLine; idx++) {
+				byte byt = flatReadByte(entry, saveAddr + idx);
+				chunk[idx] = byt;
+				allZero &= (byt == 0);
+			}
+			if (!allZero) {
+				String encoded = Base64.encodeBytes(chunk, Base64.GZIP);
+				contents.add(Integer.toHexString(saveAddr) + ":" + encoded);
+			}
+		}
+		section.put("Contents", (String[]) contents.toArray(new String[contents.size()]));		
+	}
+
+	public void loadContents(IDialogSettings section, MemoryEntry memoryEntry) {
+		String[] contents = section.getArray("Contents");
+		if (contents == null)
+			return;
+		
+		for (String entry : contents) {
+			int cidx = entry.indexOf(':');
+			try {
+				int saveAddr = Integer.parseInt(entry.substring(0, cidx), 16);
+				String encoded = entry.substring(cidx + 1);
+				byte[] chunk = Base64.decode(encoded, Base64.GZIP);
+				for (int idx = 0; idx < chunk.length; idx++) {
+					flatWriteByte(memoryEntry, saveAddr++, chunk[idx]);
+				}
+			} catch (NumberFormatException e) {
+				// not a chunk
+			}
+		}		
+	}
+
 }

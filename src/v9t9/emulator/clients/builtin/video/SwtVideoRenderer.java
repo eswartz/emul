@@ -114,7 +114,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 
 	protected int getStyleBits() {
-		return 0; //SWT.NO_BACKGROUND;
+		return SWT.NO_BACKGROUND;
 	}
 
 	protected VdpCanvas createCanvas() {

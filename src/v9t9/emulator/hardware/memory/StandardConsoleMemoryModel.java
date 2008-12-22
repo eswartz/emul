@@ -29,16 +29,16 @@ import v9t9.engine.memory.MemoryModel;
  */
 public class StandardConsoleMemoryModel implements MemoryModel {
     /* CPU ROM/RAM */
-    public MemoryDomain CPU;
+    private MemoryDomain CPU;
 
     /* GPL ROM/RAM */
-    public MemoryDomain GRAPHICS;
+    private MemoryDomain GRAPHICS;
 
     /* VDP RAM */
-    public MemoryDomain VIDEO;
+    private MemoryDomain VIDEO;
 
     /* Speech ROM */
-    public MemoryDomain SPEECH;
+    private MemoryDomain SPEECH;
 
     public SoundMmio soundMmio;
     public SpeechMmio speechMmio;
@@ -58,6 +58,10 @@ public class StandardConsoleMemoryModel implements MemoryModel {
         VIDEO = new MemoryDomain();
         SPEECH = new MemoryDomain();
         
+        memory.addDomain("CPU", CPU);
+        memory.addDomain("GRAPHICS", GRAPHICS);
+        memory.addDomain("VIDEO", VIDEO);
+        memory.addDomain("SPEECH", SPEECH);
         return memory;
         
     }

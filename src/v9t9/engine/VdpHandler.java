@@ -6,6 +6,8 @@
  */
 package v9t9.engine;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -63,5 +65,9 @@ public interface VdpHandler {
 	void work();
 	
 	void setCanvas(VdpCanvas canvas);
+
+	void saveState(IDialogSettings section);
+
+	void loadState(IDialogSettings section);
 
 }

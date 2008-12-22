@@ -6,6 +6,8 @@
  */
 package v9t9.utils;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 
 
 /** Global settings for the emulator as a whole.
@@ -63,7 +65,50 @@ public class Utils  {
     	return builder.toString();
     }
 
-	public static Object toHex2(int value) {
+	public static String toHex2(int value) {
 		return padByte(Integer.toHexString(value & 0xff).toUpperCase());
+	}
+
+	/**
+	 * Read an integer without a superfluous NumberFormatException from
+	 * a missing key.
+	 * @param section
+	 * @param key
+	 * @return
+	 */
+	public static int readSavedInt(IDialogSettings section, String key) {
+		String value = section.get(key);
+		if (value == null) {
+			return 0;
+		} else {
+			try {
+				return Integer.parseInt(value);
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+				return 0;
+			}
+		}
+	}
+	
+	/**
+	 * Read a boolean without a superfluous NumberFormatException from
+	 * a missing key.
+
+	 * @param section
+	 * @param key
+	 * @return
+	 */
+	public static boolean readSavedBoolean(IDialogSettings section, String key) {
+		String value = section.get(key);
+		if (value == null) {
+			return false;
+		} else {
+			try {
+				return Boolean.parseBoolean(value);
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+				return false;
+			}
+		}
 	}
 }

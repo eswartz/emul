@@ -7,10 +7,19 @@
 package v9t9.engine.memory;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
+import java.util.zip.GZIPOutputStream;
+
+import net.iHarder.Base64;
+
+import org.eclipse.jface.dialogs.IDialogSettings;
 
 import v9t9.utils.Utils;
 
@@ -280,5 +289,38 @@ public class MemoryEntry implements MemoryAccess {
 	
 	public byte getLatency() {
 		return getArea().getLatency();
+	}
+
+
+	public String getName() {
+		return name;
+	}
+
+
+	public void saveState(IDialogSettings section) {
+		section.put("Class", getClass().getCanonicalName());
+		section.put("Name", getName());
+		section.put("Address", addr);
+		section.put("Size", size);
+		saveMemoryContents(section);
+	}
+
+
+	protected void saveMemoryContents(IDialogSettings section) {
+		if (area.hasWriteAccess()) {
+			area.saveContents(section, this);
+		}
+	}
+
+
+	public void loadState(IDialogSettings section) {
+		loadMemoryContents(section);
+	}
+
+
+	protected void loadMemoryContents(IDialogSettings section) {
+		if (area.hasReadAccess()) {
+			area.loadContents(section, this);
+		}
 	}
 }

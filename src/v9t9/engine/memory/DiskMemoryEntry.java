@@ -11,6 +11,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.Logging;
 import v9t9.engine.files.DataFiles;
@@ -285,9 +287,10 @@ public class DiskMemoryEntry extends MemoryEntry {
 			public void writeByte(int addr, byte val) {
 				int bank = (addr & 2) >> 1;
 				if (selectBank(bank)) {
-					if (Executor.settingDumpFullInstructions.getBoolean()) {
-						Logging.getLog(Executor.settingDumpFullInstructions).
-							println("=== Switched to bank " + bank);
+					
+					PrintWriter log = Logging.getLog(Executor.settingDumpFullInstructions);
+					if (log != null) {
+						log.println("=== Switched to bank " + bank);
 					}
 				}
 				super.writeByte(addr, val);
@@ -321,5 +324,14 @@ public class DiskMemoryEntry extends MemoryEntry {
         } else {
         	return filepath + ".sym";
         }
+	}
+	
+	@Override
+	public void saveState(IDialogSettings section) {
+		super.saveState(section);
+		section.put("FilePath", filepath);
+		section.put("FileOffs", fileoffs);
+		section.put("FileSize", filesize);
+		section.put("Storable", bStorable);
 	}
 }

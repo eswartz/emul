@@ -6,8 +6,11 @@
  */
 package v9t9.emulator;
 
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import org.eclipse.jface.dialogs.DialogSettings;
 
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.InternalCru9901;
@@ -81,9 +84,6 @@ abstract public class Machine {
     	machineModel.defineDevices(this);
     	
     	executor = new Executor(cpu);
-    	timer = new Timer();
-    	cpuTimer = new Timer();
-    	videoTimer = new Timer();
 	}
 
 	public interface ConsoleMmioReader {
@@ -130,20 +130,24 @@ abstract public class Machine {
     public void start() {
     	allowInterrupts = true;
     	
+    	timer = new Timer();
+    	cpuTimer = new Timer();
+    	videoTimer = new Timer();
+    	
         // the CPU emulation task 
         cpuTimingTask = new TimerTask() {
         	
         	@Override
         	public void run() {
-        		now = System.currentTimeMillis();
-
-                if (now >= lastInfo + 1000) {
-                    upTime += now - lastInfo;
-                    //executor.dumpStats();
-                    lastInfo = now;
-                }
-                
-                cpu.tick();
+    			now = System.currentTimeMillis();
+    			
+    			if (now >= lastInfo + 1000) {
+    				upTime += now - lastInfo;
+    				//executor.dumpStats();
+    				lastInfo = now;
+    			}
+    			
+    			cpu.tick();
         	}
         };
         cpuTimer.scheduleAtFixedRate(cpuTimingTask, 0, cpuTick);
@@ -214,31 +218,30 @@ abstract public class Machine {
 		machineRunner = new Thread("Machine Runner") {
         	@Override
         	public void run() {
-        		try {
-        	        while (Machine.this.isRunning()) {
-        	            try {
-        	            	// delay if going too fast
-        	        		if (Cpu.settingRealTime.getBoolean()) {
-        	        			while (cpu.isThrottled() && bRunning) {
-        	        				// Just sleep.  Another timer thread will reset the throttle.
-        	        				try {
-        	        					Thread.sleep(10);
-        	        				} catch (InterruptedException e) {
-        	        					break;
-        	        				}
-        	        			}
-        	        		}
-        	            	executor.execute();
-        	            } catch (AbortedException e) {
-        	                
-        	            } catch (Throwable t) {
-        	            	Machine.this.setNotRunning();
-        	            	break;
-        	            }
-        	        }
-                } finally {
-                	Machine.this.close();
-                }
+    	        while (Machine.this.isRunning()) {
+    	            try {
+    	            	synchronized (Machine.this) {
+	    	            	// delay if going too fast
+								
+	    	        		if (Cpu.settingRealTime.getBoolean()) {
+	    	        			while (cpu.isThrottled() && bRunning) {
+	    	        				// Just sleep.  Another timer thread will reset the throttle.
+	    	        				try {
+	    	        					Thread.sleep(10);
+	    	        				} catch (InterruptedException e) {
+	    	        					break;
+	    	        				}
+	    	        			}
+	    	        		}
+	    	        		executor.execute();
+    	            	}
+    	            } catch (AbortedException e) {
+    	                
+    	            } catch (Throwable t) {
+    	            	Machine.this.setNotRunning();
+    	            	break;
+    	            }
+    	        }
         	}
         };
         
@@ -256,6 +259,8 @@ abstract public class Machine {
 
 	public void setNotRunning() {
 		bRunning = false;
+		machineRunner.interrupt();
+		videoRunner.interrupt();
         timer.cancel();
         cpuTimer.cancel();
         videoTimer.cancel();
@@ -316,6 +321,34 @@ abstract public class Machine {
 
 	public KeyboardState getKeyboardState() {
 		return keyboardState;
+	}
+
+	public synchronized void saveState(String filename) throws IOException {
+		DialogSettings settings = new DialogSettings("state");
+		cpu.saveState(settings.addNewSection("CPU"));
+		memory.saveState(settings.addNewSection("Memory"));
+		vdp.saveState(settings.addNewSection("VDP"));
+		settings.save(filename);
+	}
+
+	public synchronized void restoreState(String filename) throws IOException {
+		machineRunner.interrupt();
+		videoRunner.interrupt();
+		timer.cancel();
+		cpuTimer.cancel();
+		videoTimer.cancel();
+		
+		DialogSettings settings = new DialogSettings("state");
+		settings.load(filename);
+		
+		memory.loadState(settings.getSection("Memory"));
+		cpu.loadState(settings.getSection("CPU"));
+		vdp.loadState(settings.getSection("VDP"));
+		keyboardState.resetKeyboard();
+		
+		//Executor.settingDumpFullInstructions.setBoolean(true);
+		
+		start();
 	}
 }
 
