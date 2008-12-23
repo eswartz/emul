@@ -28,16 +28,6 @@ public class TI994A extends Machine {
         getSettings().register(ConsoleRamArea.settingEnhRam);
     }
     
-    @Override
-	public void setClient(Client client) {
-        super.setClient(client);
-        
-        getVdpMmio().setClient(client);
-        getGplMmio().setClient(client);
-        getSoundMmio().setClient(client);
-        getSpeechMmio().setClient(client);
-    }
-    
     public v9t9.emulator.hardware.memory.mmio.SoundMmio getSoundMmio() {
         return ((StandardConsoleMemoryModel) memoryModel).soundMmio;
     }

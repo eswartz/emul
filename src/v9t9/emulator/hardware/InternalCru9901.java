@@ -134,6 +134,14 @@ public class InternalCru9901 implements CruAccess {
 		}
 		
 	};
+	private CruWriter cruwAudioGate = new CruWriter() {
+		
+		public int write(int addr, int data, int num) {
+			machine.getSound().getSoundHandler().audioGate(data);
+			return 0;
+		}
+		
+	};
 	protected boolean clockmode;
 	
 	/** Enabled interrupt mask.  Any request to trigger an interrupt not
@@ -261,7 +269,9 @@ public class InternalCru9901 implements CruAccess {
         registerInternalCru(0x26, 1, cruwkeyboard_1);
         registerInternalCru(0x28, 1, cruwkeyboard_2);
         registerInternalCru(0x2A, 1, cruwAlpha);
-		
+
+        registerInternalCru(0x30, 1, cruwAudioGate);
+        
         registerInternalCru(0x0, 1, crur9901_0);
         registerInternalCru(0x2, 1, crur9901_1);
         registerInternalCru(0x4, 1, crur9901_2);
@@ -275,6 +285,7 @@ public class InternalCru9901 implements CruAccess {
         registerInternalCru(0x14, 1, crur9901_KS);
         registerInternalCru(0x1e, 1, crur9901_15);
         registerInternalCru(0x2a, 1, cruralpha);
+
     }
 
     private void reset() {

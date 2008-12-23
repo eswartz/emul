@@ -30,7 +30,6 @@ public class PureJavaClient implements Client {
     VdpHandler video;
     CruHandler cruHandler;
     private Machine machine;
-	private SoundHandler sound;
 	private KeyboardHandler keyboardHandler;
 	private VideoRenderer videoRenderer;
 	private Display display;
@@ -98,17 +97,10 @@ public class PureJavaClient implements Client {
 		//cruHandler = //new InternalCru(machine, keyboardState);
         cruHandler = machine.getCru(); 
         //keyboardState = new KeyboardState(machine.getCpu(), (InternalCru) cru);
-        
-        sound = new SoundHandler() {
-
-			public void writeSound(byte val) {
-				
-			}
-        	
-        };
+        machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
         
         keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(),
-        		machine.getKeyboardState());
+        		machine.getKeyboardState(), machine);
     }
     /*
      * (non-Javadoc)
@@ -203,21 +195,6 @@ public class PureJavaClient implements Client {
     	}
     }
 
-    /* (non-Javadoc)
-     * @see v9t9.Client#getSound()
-     */
-    public SoundHandler getSoundHandler() {
-        return sound;
-    }
-
-    /*
-     *  (non-Javadoc)
-     * @see v9t9.Client#setSoundHandler(v9t9.sound.SoundHandler)
-     */
-    public void setSoundHandler(SoundHandler handler) {
-        this.sound = handler;
-    }
-   
     public KeyboardHandler getKeyboardHandler() {
     	return keyboardHandler;
     }

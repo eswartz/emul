@@ -45,8 +45,7 @@ public class Executor {
 
 	private ICpuController cpuController;
 
-
-    static public final String sCompile = "Compile";
+	static public final String sCompile = "Compile";
     static public final Setting settingCompile = new Setting(sCompile, new Boolean(false));
     static public final String sDumpInstructions = "DumpInstructions";
     static public final Setting settingDumpInstructions = new Setting(sDumpInstructions, new Boolean(false));
@@ -71,6 +70,9 @@ public class Executor {
         cpu.getMachine().getSettings().register(settingDumpFullInstructions);
         Logging.registerLog(settingDumpInstructions, "instrs.txt");
         Logging.registerLog(settingDumpFullInstructions, "instrs_full.txt");
+        
+        
+
     }
 
     public interface ICpuController {

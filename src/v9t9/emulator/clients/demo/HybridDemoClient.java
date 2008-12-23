@@ -4,7 +4,7 @@
  * Created on Dec 18, 2004
  *
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.demo;
 
 import java.io.IOException;
 
@@ -14,10 +14,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.SwtWindow;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
-import v9t9.emulator.clients.demo.Connection;
-import v9t9.emulator.clients.demo.FifoConnection;
 import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
 import v9t9.engine.KeyboardHandler;
@@ -401,6 +400,16 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
     public KeyboardHandler getKeyboardHandler() {
     	return null;
     }
+
+	public void updateVoice(int vn, int updateFlags) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void dispose() {
+		// TODO Auto-generated method stub
+		
+	}
     
 }
 

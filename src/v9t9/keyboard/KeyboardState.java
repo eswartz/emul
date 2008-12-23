@@ -457,7 +457,7 @@ public class KeyboardState {
 		return probedColumns == 0x3f;
 	}
 
-	public void resetProbe() {
+	public synchronized void resetProbe() {
 		probedColumns = 0;
 	}
 }

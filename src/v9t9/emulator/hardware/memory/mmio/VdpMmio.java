@@ -22,9 +22,6 @@ public abstract class VdpMmio implements ConsoleMmioReader, ConsoleMmioWriter {
 
 	abstract public int getAddr();
 
-	public void setClient(Client client) {
-	}
-
 	public int getMemoryAccessCycles() {
 		return currentaccesscycles;
 	}

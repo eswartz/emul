@@ -93,8 +93,4 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter {
     		gromaddr = getNextAddr(gromaddr);
     	}    
     }
-
-	public void setClient(Client client) {
-		
-	}
 }

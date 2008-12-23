@@ -16,12 +16,6 @@ package v9t9.engine;
 public interface Client {
     void close();
     
-    VdpHandler getVideoHandler();
-    void setVideoHandler(VdpHandler video);
-
-    SoundHandler getSoundHandler();
-    void setSoundHandler(SoundHandler handler);
-    
     /**
      * Handle one timer tick (nominally 1/60 second).  
      *

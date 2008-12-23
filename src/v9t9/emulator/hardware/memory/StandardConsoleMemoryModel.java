@@ -7,6 +7,7 @@
 package v9t9.emulator.hardware.memory;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.SoundTMS9919;
 import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGramWriteArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGromReadArea;
@@ -69,7 +70,7 @@ public class StandardConsoleMemoryModel implements MemoryModel {
     public void initMemory(Machine machine) {
         defineConsoleMemory(machine);
      
-        soundMmio = new SoundMmio();
+        soundMmio = new SoundMmio(machine.getSound());
         gplMmio = new GplMmio(GRAPHICS);
         speechMmio = new SpeechMmio();
         

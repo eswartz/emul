@@ -11,6 +11,7 @@ import java.io.IOException;
 import org.eclipse.jface.dialogs.IDialogSettings;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.SoundTMS9919.SoundVoice;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.Client;
@@ -435,5 +436,23 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     	// TODO Auto-generated method stub
     	
     }
+
+	public void updateVoice(int vn, SoundVoice v) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	public void updateSound() {
+	}
+
+	public void dispose() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void updateVoice(int vn, int updateFlags) {
+		// TODO Auto-generated method stub
+		
+	}
 }
 

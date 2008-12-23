@@ -12,6 +12,7 @@ import java.util.TimerTask;
 
 import org.eclipse.jface.dialogs.DialogSettings;
 
+import v9t9.emulator.clients.builtin.SoundTMS9919;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.MachineModel;
@@ -26,6 +27,8 @@ import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
+import v9t9.engine.settings.ISettingListener;
+import v9t9.engine.settings.Setting;
 import v9t9.engine.settings.SettingsCollection;
 import v9t9.keyboard.KeyboardState;
 
@@ -67,6 +70,11 @@ abstract public class Machine {
 	private boolean throttlingInterrupts;
 	protected int throttleCount;
 	private KeyboardState keyboardState;
+	protected Object executionLock = new Object();
+	protected boolean bExecuting;
+	private SoundTMS9919 sound;
+	static public final String sPauseMachine = "PauseMachine";
+	static public final Setting settingPauseMachine = new Setting(sPauseMachine, new Boolean(false));
 	
     public Machine(MachineModel machineModel) {
     	this.memoryModel = machineModel.getMemoryModel();
@@ -75,6 +83,7 @@ abstract public class Machine {
     	cruManager = new CruManager();
     	dsrManager = new DSRManager(this);
     	
+    	sound = new SoundTMS9919();
     	this.vdp = machineModel.createVdp(this);
     	memoryModel.initMemory(this);
     	
@@ -84,6 +93,17 @@ abstract public class Machine {
     	machineModel.defineDevices(this);
     	
     	executor = new Executor(cpu);
+    	
+    	settingPauseMachine.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				synchronized (executionLock) {
+					bExecuting = !setting.getBoolean();
+					executionLock.notifyAll();
+				}
+			}
+        	
+        });
 	}
 
 	public interface ConsoleMmioReader {
@@ -220,9 +240,14 @@ abstract public class Machine {
         	public void run() {
     	        while (Machine.this.isRunning()) {
     	            try {
-    	            	synchronized (Machine.this) {
+    	            	// synchronize on events like debugging, loading/saving, etc
+	            		synchronized (executionLock) {
+	            			while (!bExecuting) {
+	            				executionLock.wait();
+	            			}
+	            		}
+	            		synchronized (executionLock) {
 	    	            	// delay if going too fast
-								
 	    	        		if (Cpu.settingRealTime.getBoolean()) {
 	    	        			while (cpu.isThrottled() && bRunning) {
 	    	        				// Just sleep.  Another timer thread will reset the throttle.
@@ -234,7 +259,7 @@ abstract public class Machine {
 	    	        			}
 	    	        		}
 	    	        		executor.execute();
-    	            	}
+	            		}
     	            } catch (AbortedException e) {
     	                
     	            } catch (Throwable t) {
@@ -247,6 +272,11 @@ abstract public class Machine {
         
         machineRunner.start();
         videoRunner.start();
+        
+        synchronized (executionLock) {
+			bExecuting = true;
+			executionLock.notifyAll();
+		}
     }
     
 	/**
@@ -258,12 +288,17 @@ abstract public class Machine {
     }
 
 	public void setNotRunning() {
+		synchronized (executionLock) {
+			bExecuting = false;
+			executionLock.notifyAll();
+		}
 		bRunning = false;
 		machineRunner.interrupt();
 		videoRunner.interrupt();
         timer.cancel();
         cpuTimer.cancel();
         videoTimer.cancel();
+        getSound().getSoundHandler().dispose();
 	}
     
 	public Cpu getCpu() {
@@ -324,19 +359,34 @@ abstract public class Machine {
 	}
 
 	public synchronized void saveState(String filename) throws IOException {
+		synchronized (executionLock) {
+			bExecuting = false;
+			executionLock.notifyAll();
+		}
 		DialogSettings settings = new DialogSettings("state");
 		cpu.saveState(settings.addNewSection("CPU"));
 		memory.saveState(settings.addNewSection("Memory"));
 		vdp.saveState(settings.addNewSection("VDP"));
+		sound.saveState(settings.addNewSection("Sound"));
 		settings.save(filename);
+		synchronized (executionLock) {
+			bExecuting = true;
+			executionLock.notifyAll();
+		}
 	}
 
 	public synchronized void restoreState(String filename) throws IOException {
+		/*
 		machineRunner.interrupt();
 		videoRunner.interrupt();
 		timer.cancel();
 		cpuTimer.cancel();
 		videoTimer.cancel();
+		*/
+		synchronized (executionLock) {
+			bExecuting = false;
+			executionLock.notifyAll();
+		}
 		
 		DialogSettings settings = new DialogSettings("state");
 		settings.load(filename);
@@ -344,11 +394,21 @@ abstract public class Machine {
 		memory.loadState(settings.getSection("Memory"));
 		cpu.loadState(settings.getSection("CPU"));
 		vdp.loadState(settings.getSection("VDP"));
+		sound.loadState(settings.getSection("Sound"));
 		keyboardState.resetKeyboard();
 		
 		//Executor.settingDumpFullInstructions.setBoolean(true);
 		
-		start();
+		//start();
+		
+		synchronized (executionLock) {
+			bExecuting = true;
+			executionLock.notifyAll();
+		}
+	}
+
+	public SoundTMS9919 getSound() {
+		return sound;
 	}
 }
 

@@ -15,8 +15,6 @@ import v9t9.engine.Client;
  */
 public class SpeechMmio implements ConsoleMmioWriter, v9t9.emulator.Machine.ConsoleMmioReader {
 
-    /*private*/ Client client;
-
 	public SpeechMmio() {
     }
 
@@ -30,9 +28,5 @@ public class SpeechMmio implements ConsoleMmioWriter, v9t9.emulator.Machine.Cons
     public void write(int addr, byte val) {
         System.out.println("speech write: " + (val&0xff));
     }
-
-	public void setClient(Client client) {
-		this.client = client;
-	}
 
 }

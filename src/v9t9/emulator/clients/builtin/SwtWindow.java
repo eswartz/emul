@@ -195,6 +195,10 @@ public class SwtWindow {
 					}
 			});
 
+		createStateButton(Machine.settingPauseMachine, icons, new Rectangle(0, 512, 64, 64),
+				new Rectangle(0, 0, 64, 64),
+				"Pause machine");
+
 		shell.open();
 		shell.setBounds(800, 800, shell.getSize().x, shell.getSize().y);
 		shell.pack();

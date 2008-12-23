@@ -16,6 +16,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.emulator.Machine;
 import v9t9.engine.KeyboardHandler;
 import v9t9.keyboard.KeyboardState;
 
@@ -57,9 +58,12 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 	private final KeyboardState keyboardState;
 
 	private Timer pasteTimer;
+
+	private final Machine machine;
 	
-	public SwtKeyboardHandler(Control control, KeyboardState keyboardState) {
+	public SwtKeyboardHandler(Control control, KeyboardState keyboardState, Machine machine) {
 		this.keyboardState = keyboardState;
+		this.machine = machine;
 		
 		if (true) {
 			Shell shell = control.getShell();
@@ -306,8 +310,14 @@ public class SwtKeyboardHandler implements KeyboardHandler {
 				if (pasteTimer == null)
 					return;
 				
+				if (!machine.isRunning())
+					cancelPaste();
+				
 				// only send chars as fast as the machine is reading
 				if (!keyboardState.wasKeyboardProbed())
+					return;
+				
+				if (Machine.settingPauseMachine.getBoolean())
 					return;
 				
 				if (index <= chs.length) {

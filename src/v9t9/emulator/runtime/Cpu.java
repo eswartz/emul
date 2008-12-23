@@ -23,7 +23,7 @@ import v9t9.engine.settings.Setting;
  * @author ejs
  */
 public class Cpu implements MemoryAccessListener {
-	Machine machine;
+    Machine machine;
 	public Memory memory;
 	private MemoryDomain console;
 	/** program counter */
@@ -77,6 +77,7 @@ public class Cpu implements MemoryAccessListener {
         });
         
         settingCyclesPerSecond.setInt(3000000);
+        
     }
 
     public short getPC() {
@@ -363,6 +364,10 @@ public class Cpu implements MemoryAccessListener {
 		settingRealTime.loadState(section);
 		settingCyclesPerSecond.loadState(section);
 		cruAccess.loadState(section.getSection("CRU"));
+	}
+
+	public int getTargetCycleCount() {
+		return targetcycles;
 	} 
 
 }

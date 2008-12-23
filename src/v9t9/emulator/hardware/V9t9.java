@@ -12,9 +12,9 @@ import java.io.IOException;
 import org.eclipse.swt.widgets.Display;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.HybridDemoClient;
 import v9t9.emulator.clients.builtin.PureJavaClient;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
+import v9t9.emulator.clients.demo.HybridDemoClient;
 import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
