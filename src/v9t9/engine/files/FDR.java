@@ -45,8 +45,8 @@ public abstract class FDR implements IFDRFlags {
     }
     /** Get last byte used in file 
     (0 = no last empty sector) */
-    public byte getByteOffset() {
-        return byteoffs;
+    public int getByteOffset() {
+        return byteoffs & 0xff;
     }
     /** Get record length, 0 for program */
     public byte getRecordLength() {
@@ -69,7 +69,7 @@ public abstract class FDR implements IFDRFlags {
     public int getFileSize() {
         int full = secsused * 256;
         if (byteoffs != 0) {
-			full = full - 256 + byteoffs;
+			full = full - 256 + (byteoffs & 0xff);
 		}
         return full;
     }

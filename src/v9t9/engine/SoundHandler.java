@@ -17,9 +17,11 @@ public interface SoundHandler {
 	int UPDATE_NOISE = 2;
 	int UPDATE_VOLUME = 4;
 	
-	void updateVoice(int vn, int updateFlags);
+	void updateVoice(int vn, int updateFlags, int pos, int total);
 	
-	void audioGate(int bit);
+	void audioGate(int bit, int pos, int total);
+	
+	void flushAudio();
 	
 	void dispose();
 	

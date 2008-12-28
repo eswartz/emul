@@ -4,14 +4,8 @@
 package v9t9.emulator.clients.builtin;
 
 import java.io.File;
-import java.io.IOException;
 
-import org.eclipse.jface.dialogs.DialogSettings;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.dnd.Clipboard;
-import org.eclipse.swt.dnd.RTFTransfer;
-import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.PaintEvent;
@@ -30,12 +24,10 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
-import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
@@ -45,28 +37,22 @@ import v9t9.engine.settings.Setting;
  * @author ejs
  *
  */
-public class SwtWindow {
+public class SwtWindow extends BaseEmulatorWindow {
 	
 	protected Shell shell;
 	protected Control videoControl;
-	protected SwtVideoRenderer videoRenderer;
-	
-	private final Machine machine;
 	private Composite controlsComposite;
-	private DialogSettings settings;
-	
 	public SwtWindow(Display display, SwtVideoRenderer renderer, Machine machine) {
-		this.machine = machine;
+		super(machine);
+		setVideoRenderer(renderer);
+		
 		shell = new Shell(display);
 		shell.setText("V9t9");
 		GridLayout layout = new GridLayout(2, false);
 		layout.marginHeight = layout.marginWidth = 0;
 		shell.setLayout(layout);
 		
-		this.videoRenderer = renderer;
-
 		Composite mainComposite = shell;
-		
 		
 		final Composite screenComposite = new Composite(mainComposite, SWT.BORDER);
 		
@@ -86,7 +72,7 @@ public class SwtWindow {
 		File iconsFile = new File("icons/icons.png");
 		Image icons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
 		
-		controlsComposite = new Composite(mainComposite, SWT.NO_RADIO_GROUP);
+		controlsComposite = new Composite(mainComposite, SWT.NO_RADIO_GROUP | SWT.NO_FOCUS);
 		layout = new GridLayout();
 		layout.marginHeight = layout.marginWidth = 0;
 		controlsComposite.setLayout(layout);
@@ -97,7 +83,7 @@ public class SwtWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						SwtWindow.this.machine.getCpu().setPin(Cpu.PIN_LOAD);
+						sendNMI();
 						restoreFocus();
 					}
 				});
@@ -107,7 +93,7 @@ public class SwtWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						SwtWindow.this.machine.getCpu().setPin(Cpu.PIN_RESET);
+						sendReset();
 						restoreFocus();
 					}
 				});
@@ -139,20 +125,7 @@ public class SwtWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						Clipboard clip = new Clipboard(getShell().getDisplay());
-						String contents = (String) clip.getContents(TextTransfer.getInstance());
-						if (contents == null) {
-							contents = (String) clip.getContents(RTFTransfer.getInstance());
-						}
-						if (contents != null) {
-							SwtWindow.this.machine.getClient().getKeyboardHandler().pasteText(contents);
-						} else {
-							
-							
-							MessageDialog.openError(getShell(), "Paste Error", 
-									"Cannot paste: no text on clipboard");
-						}
-						clip.dispose();
+						pasteClipboardToKeyboard();
 					}
 			});
 		
@@ -161,16 +134,7 @@ public class SwtWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						String filename = selectFile("MachineStatePath", "saves", "save0.sav", SWT.SAVE);
-						
-						if (filename != null) {
-							try {
-								SwtWindow.this.machine.saveState(filename);
-							} catch (Throwable e1) {
-								MessageDialog.openError(getShell(), "Save error", 
-										"Failed to save machine state:\n\n" + e1.getMessage());
-							}
-						}
+						saveMachineState();
 					}
 
 			});
@@ -180,18 +144,7 @@ public class SwtWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						String filename = selectFile("MachineStatePath", "saves", "save0.sav", SWT.OPEN);
-						
-						if (filename != null) {
-							try {
-								SwtWindow.this.machine.restoreState(filename);
-							} catch (Throwable e1) {
-								MessageDialog.openError(getShell(), "Load error", 
-										"Failed to load machine state:\n\n" + e1.getMessage());
-							
-							}
-						}
-						
+						loadMachineState();
 					}
 			});
 
@@ -199,40 +152,10 @@ public class SwtWindow {
 				new Rectangle(0, 0, 64, 64),
 				"Pause machine");
 
+		screenComposite.setFocus();
 		shell.open();
 		shell.setBounds(800, 800, shell.getSize().x, shell.getSize().y);
 		shell.pack();
-	}
-
-	protected String selectFile(String configPath, String subdir, String fileName, int style) {
-		DialogSettings settings = getApplicationSettings();
-		String savePath = settings.get(configPath);
-		if (savePath == null) {
-			savePath = getBaseConfigurationPath() + File.separatorChar + subdir + File.separatorChar;
-			File saveDir = new File(savePath);
-			saveDir.mkdirs();
-		}
-		
-		FileDialog dialog = new FileDialog(getShell(), style);
-		dialog.setFilterPath(savePath);
-		dialog.setFileName(fileName);
-		String filename = dialog.open();
-		return filename;
-	}
-
-	protected String getBaseConfigurationPath() {
-		return System.getProperty("user.home") + File.separatorChar + ".v9t9j" + File.separatorChar;
-	}
-
-	protected DialogSettings getApplicationSettings() {
-		if (settings == null) {
-			settings = new DialogSettings("root");
-			try {
-				settings.load(getBaseConfigurationPath() + "config");
-			} catch (IOException e) {
-			}
-		}
-		return settings;
 	}
 
 	class BasicButton extends Composite {
@@ -243,9 +166,21 @@ public class SwtWindow {
 		private Rectangle overlayBounds;
 
 		public BasicButton(Composite parent, int style, Image icon_, Rectangle bounds_, String tooltip) {
-			super(parent, SWT.NO_FOCUS);
+			super(parent, SWT.NO_FOCUS | SWT.NO_RADIO_GROUP);
 			this.icon = icon_;
 			this.bounds = bounds_;
+			
+			addKeyListener(new KeyListener() {
+				
+				public void keyPressed(KeyEvent e) {
+					e.doit = false;
+				}
+	
+				public void keyReleased(KeyEvent e) {
+					e.doit = false;
+				}
+				
+			});
 			
 			GridData data = new GridData(bounds.width, bounds.height);
 			setLayoutData(data);
@@ -289,9 +224,21 @@ public class SwtWindow {
 			
 			button.addSelectionListener(new SelectionAdapter() {
 				@Override
+				public void widgetDefaultSelected(SelectionEvent e) {
+					e.doit = false;
+				}
+				@Override
 				public void widgetSelected(SelectionEvent e) {
 					restoreFocus();
 				}
+			});
+			
+			button.addTraverseListener(new TraverseListener() {
+
+				public void keyTraversed(TraverseEvent e) {
+					e.doit = false;
+				}
+				
 			});
 		}
 		

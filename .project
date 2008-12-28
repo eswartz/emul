@@ -5,6 +5,7 @@
 	<projects>
 		<project>libanalogtv</project>
 		<project>libv9t9render</project>
+		<project>sdljava</project>
 		<project>V9t9</project>
 	</projects>
 	<buildSpec>

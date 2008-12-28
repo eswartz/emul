@@ -19,7 +19,6 @@ import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
 import v9t9.engine.KeyboardHandler;
-import v9t9.engine.SoundHandler;
 import v9t9.engine.VdpHandler;
 
 /**

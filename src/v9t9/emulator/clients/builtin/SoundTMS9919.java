@@ -7,6 +7,7 @@ import java.text.MessageFormat;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 
+import v9t9.emulator.Machine;
 import v9t9.engine.SoundHandler;
 import v9t9.utils.Utils;
 
@@ -49,6 +50,7 @@ public class SoundTMS9919 {
 		byte	volume;			
 		int		period, hertz;	// calculated from OPERATION_FREQUENCY_xxx
 		
+		// These following fields are used by the sound handler.
 		int		div;
 
 		public boolean alt;
@@ -60,7 +62,14 @@ public class SoundTMS9919 {
 		public int ns1;
 
 		public int ns2;
-		
+
+		@Override
+		public String toString() {
+			if (volume == 0)
+				return "[SILENT]";
+			else
+				return "hertz="+hertz+"; volume="+volume;
+		}
 		int OPERATION_TO_NOISE_TYPE() {
 			return ( operation[OPERATION_CONTROL] & 0x4 );
 		}
@@ -105,12 +114,13 @@ public class SoundTMS9919 {
 		
 			if (false) {
 				System.out.println(MessageFormat.format(
-						"voice_cache_values: lo=>{0}, hi=>{1}, period=>{2}, hertz={3}, volume={4}",
+						"voice_cache_values[{5}]: lo=>{0}, hi=>{1}, period=>{2}, hertz={3}, volume={4}",
 					   Utils.toHex4(operation[OPERATION_FREQUENCY_LO]), 
 					   Utils.toHex4(operation[OPERATION_FREQUENCY_HI]),
 					   Utils.toHex4(period),
 					   hertz,
-					   volume));
+					   volume,
+					   voice));
 			}
 		}
 
@@ -154,27 +164,18 @@ public class SoundTMS9919 {
 		return ((p) > 1 ? (111860 / (p)) : (55930));
 	}
 
-	/*	Audio gate info. */
-	
-	class AudioGate
-	{
-		int base_time, last_time;		/* base time for making noise, 
-											last time gate accessed */
-		int length;						/* how long to trigger */
-		int hertz;						/* reference for length */
-		boolean latch;						/* last bit was on or off? */
-		boolean play;						/* is gate on or off? */
-	};
-
-	AudioGate audiogate = new AudioGate();
-
 	int	cvoice;
 
 	private SoundHandler soundHandler;
+
+	private final Machine machine;
 	
-	public SoundTMS9919() {
-		for (int i = 0; i < sound_voices.length; i++)
-			sound_voices[i] = new SoundVoice(); 
+	public SoundTMS9919(Machine machine) {
+		this.machine = machine;
+		for (int i = 0; i < sound_voices.length; i++) {
+			sound_voices[i] = new SoundVoice();
+			sound_voices[i].voice = i;
+		}
 		sound_voices[VOICE_NOISE].ns1 = 0x55555555;
 		sound_voices[VOICE_NOISE].ns2 = 0x55555555;
 	}
@@ -186,6 +187,7 @@ public class SoundTMS9919 {
 	public void writeSound(byte val) {
 		SoundVoice v;
 		/*  handle command byte */
+		//System.out.println("sound byte: " + Utils.toHex2(val));
 		if ((val & 0x80) != 0) {
 			int vn = OPERATION_TO_VOICE(val);
 			cvoice = vn;
@@ -209,7 +211,9 @@ public class SoundTMS9919 {
 				v.operation[OPERATION_ATTENUATION] = val;
 				v.cacheVoices();
 				if (soundHandler != null)
-					soundHandler.updateVoice(vn, SoundHandler.UPDATE_VOLUME);
+					soundHandler.updateVoice(vn, SoundHandler.UPDATE_VOLUME,
+							machine.getCpu().getCurrentCycleCount(),
+							machine.getCpu().getCurrentTargetCycleCount());
 				break;
 			case 6:				/* noise ctl */
 				v.operation[OPERATION_CONTROL] = val;
@@ -219,7 +223,9 @@ public class SoundTMS9919 {
 				v.operation[OPERATION_ATTENUATION] = val;
 				v.cacheVoices();
 				if (soundHandler != null)
-					soundHandler.updateVoice(vn, SoundHandler.UPDATE_VOLUME);
+					soundHandler.updateVoice(vn, SoundHandler.UPDATE_VOLUME,
+							machine.getCpu().getCurrentCycleCount(),
+							machine.getCpu().getCurrentTargetCycleCount());
 				break;
 			}
 		}
@@ -230,7 +236,9 @@ public class SoundTMS9919 {
 			v.cacheVoices();
 			updateNoise();
 			if (soundHandler != null)
-				soundHandler.updateVoice(cvoice, SoundHandler.UPDATE_NOISE);
+				soundHandler.updateVoice(cvoice, SoundHandler.UPDATE_NOISE,
+						machine.getCpu().getCurrentCycleCount(),
+						machine.getCpu().getCurrentTargetCycleCount());
 		}
 	}
 
@@ -258,7 +266,9 @@ public class SoundTMS9919 {
 			 || cvoice == VOICE_NOISE)
 		{
 			if (soundHandler != null)
-				soundHandler.updateVoice(VOICE_NOISE, SoundHandler.UPDATE_NOISE);
+				soundHandler.updateVoice(VOICE_NOISE, SoundHandler.UPDATE_NOISE,
+						machine.getCpu().getCurrentCycleCount(),
+						machine.getCpu().getCurrentTargetCycleCount());
 		}
 	}
 

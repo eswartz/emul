@@ -410,6 +410,16 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
 		// TODO Auto-generated method stub
 		
 	}
+
+	public void audioGate(int bit, int pos, int total) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void flush() {
+		// TODO Auto-generated method stub
+		
+	}
     
 }
 

@@ -83,7 +83,7 @@ abstract public class Machine {
     	cruManager = new CruManager();
     	dsrManager = new DSRManager(this);
     	
-    	sound = new SoundTMS9919();
+    	sound = new SoundTMS9919(this);
     	this.vdp = machineModel.createVdp(this);
     	memoryModel.initMemory(this);
     	
@@ -168,6 +168,7 @@ abstract public class Machine {
     			}
     			
     			cpu.tick();
+    			sound.getSoundHandler().flushAudio();
         	}
         };
         cpuTimer.scheduleAtFixedRate(cpuTimingTask, 0, cpuTick);
@@ -409,6 +410,11 @@ abstract public class Machine {
 
 	public SoundTMS9919 getSound() {
 		return sound;
+	}
+
+	/** in ms */
+	public int getCpuTickLength() {
+		return cpuTick;
 	}
 }
 

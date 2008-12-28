@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Display;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.PureJavaClient;
+import v9t9.emulator.clients.builtin.SdlJavaClient;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.clients.demo.HybridDemoClient;
 import v9t9.emulator.hardware.memory.ExpRamArea;
@@ -37,6 +38,9 @@ public class V9t9 {
 		DataFiles.addSearchPath("l:/src/V9t9/tools/Forth");
 		DataFiles.addSearchPath("l:/src/v9t9-data/roms");
 		DataFiles.addSearchPath("l:/src/v9t9-data/modules");
+		DataFiles.addSearchPath("/tmp");
+		DataFiles.addSearchPath("M:/fun/tidisk/eddie18");
+		DataFiles.addSearchPath("/media/M/fun/tidisk/eddie18");
 	}
 
 	private Memory memory;
@@ -132,13 +136,13 @@ public class V9t9 {
 	        		console.writeWord(a, ((WordMemoryArea) entry.area).memory[(a - 0x2000) / 2]);
 	        	}
 
-	    	} else if (false) {
-		    	loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
-		    	loadModuleGrom("ExtBasic", "tiextg.bin");
+	    	} else if (true) {
 		    	
 		    	loadModuleGrom("Parsec", "parsecg.bin");
 		    	loadModuleRom("Parsec", "parsecc.bin");
-		    	loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
+		    	//loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
+		    	loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
+		    	loadModuleGrom("ExtBasic", "tiextg.bin");
 	    	} else {
 		    	loadModuleRom("Logo", "logoc.bin");
 		    	loadModuleGrom("Logo", "logog.bin");
@@ -175,7 +179,7 @@ public class V9t9 {
         	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);
         }
-        if (true) {
+        if (false) {
         	VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
         }
         
@@ -193,12 +197,15 @@ public class V9t9 {
         	machine = new TI994A(new StandardMachineModel());
         }
         
-        final Display display = new Display();
         Client client;
-        if (findArgument(args, "--pure"))
-        	client = new PureJavaClient(machine, machine.getVdp(), display);
-        else
-        	client = new HybridDemoClient(machine, machine.getVdp(), display);
+        if (findArgument(args, "--pure")) {
+        	client = new PureJavaClient(machine, machine.getVdp(), new Display());
+        }
+        else if (findArgument(args, "--sdl")) {
+			client = new SdlJavaClient(machine, machine.getVdp());
+		} else {
+			client = new HybridDemoClient(machine, machine.getVdp(), new Display());
+		}
         
         final V9t9 app = new V9t9(machine, client);
         

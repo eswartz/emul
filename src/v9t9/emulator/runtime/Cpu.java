@@ -313,6 +313,10 @@ public class Cpu implements MemoryAccessListener {
 		return currentcycles;
 	}
 
+	public synchronized int getCurrentTargetCycleCount() {
+		return currenttargetcycles;
+	}
+
 	public synchronized long getTotalCycleCount() {
 		return totalcurrentcycles;
 	}

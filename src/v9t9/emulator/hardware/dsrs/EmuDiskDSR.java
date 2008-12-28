@@ -111,9 +111,9 @@ public class EmuDiskDSR implements DsrHandler {
 									console.readWord(rambase+0x54) -
 									PABREC_SIZE);
 			byte opcode;
-			int fnptr;
+			short fnptr;
 	
-			fnptr = pabaddr+9;
+			fnptr = (short) (pabaddr+9);
 	
 			opcode = readVdpByte(fnptr-9);
 	
@@ -128,9 +128,13 @@ public class EmuDiskDSR implements DsrHandler {
 					DSKScratch, DSKStatus
 				};*/
 	
-				System.out.println("[not] doing operation "+opcode+" on DSK"+code);
-				//opcodehandlers[opcode] (code, fnptr);
-				setPabError(fnptr, 1);
+				if (opcode == 5) {
+					DSKLoad((byte) code, fnptr);
+				} else {
+					System.out.println("[not] doing operation "+opcode+" on DSK"+code);
+					//opcodehandlers[opcode] (code, fnptr);
+					setPabError(fnptr, 1);
+				}
 			}
 	
 			//  return, indicating that the DSR handled the operation 
@@ -237,6 +241,193 @@ public class EmuDiskDSR implements DsrHandler {
 	private void bumpReturnAddress(Cpu cpu) {
 		console.writeWord(cpu.getWP() + 11*2, (short) (console.readWord(cpu.getWP() + 11*2) + 2));
 	}
+	
+	/*	Error codes (byte 1, pflags)*/
+	final static int
+		m_error	= 0x7 << 5,
+
+		e_baddevice = 0x0,
+		e_readonly = 1 << 5,
+		e_badopenmode = 2 << 5,
+		e_illegal = 3 << 5,
+		e_outofspace = 4 << 5,
+		e_endoffile	= 5 << 5,
+		e_hardwarefailure = 6 << 5,
+		e_badfiletype = 7 << 5
+	;
+	
+	class PabOpException extends IOException {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -5048051203516224874L;
+
+		public PabOpException() {
+			super();
+			// TODO Auto-generated constructor stub
+		}
+
+		public PabOpException(String message) {
+			super(message);
+			// TODO Auto-generated constructor stub
+		}
+
+		
+	}
+
+	
+	class pabrec
+	{
+		byte	opcode;		/* 0 file operation (f_xxx) */
+		byte	pflags;		/* 1 file access code (fp_xxx) + open mode (m_xxx) [IN]*/
+							/* error code [OUT] */
+		short	addr;		/* 2 VDP record address */
+		byte	preclen;	/* 4 file record length */
+		byte	charcount;	/* 5 characters used in record */
+		short	recnum;		/* 6 current record (seek position) */
+		byte	scrnoffs;	/* 8 screen offset (for CSx) */
+		byte	namelen;	/* 9 length of filename following */
+		String	name;		/* filename */
+	}
+
+	class PabHandler {
+		private byte len;
+		private short fnaddr;
+		private short pabaddr;
+		private String fname;
+		private byte dev;
+		private NativeFile file;
+		private pabrec pabrec;
+
+		public PabHandler(byte dev, short fn) throws PabOpException {
+			/*  0x8356 holds a pointer into VDP RAM to the end
+			   of the device name (RS232|, DSK|., DSK1|.ed) */
+		
+			//pf.fnptr = fn;
+			//fiad_tifile_clear(&pf->tf);
+		
+			this.dev = dev;
+			len = readVdpByte(fn);					/* length of device+filename */
+			fnaddr = (short) (console.readWord(rambase+0x56) + 1);	/* addr of filename (skip period) */
+			//module_logger(&emuDiskDSR, _L | L_2, _("getfilespec_pab:  fnaddr++ at 0x8356 = %20.20s       \n"),
+			len -= console.readWord(rambase+0x54) + 1;	/* minus length of device + period */
+			//module_logger(&emuDiskDSR, _L | L_2, _("getfilespec_pab:  length of device 0x8354 = %04X\n"),
+			//	 memory_read_word(rambase+0x54));
+			fname = readFilename(fnaddr, len);
+			pabaddr = (short) (fn - 9);
+		
+			if (fname.indexOf('.') >= 0) {
+				setPabError(fn, e_badfiletype);
+				throw new PabOpException();
+			}
+			
+			try {
+				this.file = NativeFileFactory.createNativeFile(DataFiles.resolveFile(fname));
+			} catch (IOException e) {
+				throw (PabOpException) new PabOpException().initCause(e);
+			}
+			
+			pabrec = new pabrec();
+		}
+
+		public void fetch(boolean opening) {
+
+			pabrec.opcode = readVdpByte(pabaddr);
+			pabrec.addr = readVdpShort(pabaddr + 2);
+			pabrec.charcount = readVdpByte(pabaddr + 5);
+			pabrec.recnum = readVdpShort(pabaddr + 6);
+			pabrec.scrnoffs = readVdpByte(pabaddr + 8);
+			pabrec.namelen = readVdpByte(pabaddr + 9);
+
+			/* 
+			   TI BASIC appears to trash these bytes after
+			   opening the file.  We stubbornly continue to
+			   use them, however, so don't reread from the
+			   real PAB after opening. 
+			*/
+			if (opening)
+			{
+				pabrec.pflags = readVdpByte(pabaddr + 1);
+				pabrec.preclen = readVdpByte(pabaddr + 4);
+
+				//module_logger(&emuDiskDSR, _L | L_3, _("PAB contents: flags=>%02X, reclen=%d, addr=>%04X, charcount=%d, recnum=%d\n"),
+				//	   pf->pab.pflags, pf->pab.preclen,
+				//	   pf->pab.addr, pf->pab.charcount, pf->pab.recnum);
+			}
+			else
+			{
+				//module_logger(&emuDiskDSR, _L | L_3, _("PAB contents: addr=>%04X, charcount=%d, recnum=%d\n"),
+				//	   pf->pab.addr, pf->pab.charcount, pf->pab.recnum);
+
+			}
+		}
+
+		/**
+		 * Compare that the PAB and file match
+		 * @param file2
+		 * @return
+		 */
+		public boolean compareToFile() {
+			return true;
+		}
+
+		public void setError(int code) {
+			byte current = readVdpByte(pabaddr + 1);
+			current = (byte) ((current & ~0xe0) | (code << 5));
+			writeVdpByte(pabaddr + 1, current);			
+		}
+	}
+	
+
+
+	private void DSKLoad(byte dev, short fnptr) {
+		PabHandler pab;
+		try {
+			pab = new PabHandler(dev, fnptr);
+
+		} catch (PabOpException e) {
+			e.printStackTrace();
+			return;
+		}
+		
+		/* read PAB */
+		pab.fetch(true /*opening*/);
+
+		if (!pab.compareToFile())
+			return;
+			
+		pab.setError(0);
+
+		ByteMemoryAccess access = getVdpMemory(pab.pabrec.addr);
+		try {
+			int read = pab.file.readContents(access.memory, access.offset, 
+					0, pab.pabrec.recnum);
+			dirtyVdpMemory(pab.pabrec.addr, read);
+			
+			if (read >= 0) {
+				// no error or EOF (which is okay for DSKLoad)
+
+				// EJS 050221: nope, this isn't documented behavior
+				// and it breaks TI Artist! when loading printer files.
+				//pab->recnum = len;
+			} else {
+				// failure
+				pab.setError(e_hardwarefailure);
+			}
+
+		} catch (IOException e) {
+			pab.setError(es_hardware);
+		}
+		
+		/* save changed PAB info */
+		//pab_store_to_vdp(&pf);
+
+		/* close file */
+		//pab_close_file(&pf);
+		
+	}
+
 
 	private void directDiskInput(byte dev, byte secs, short fname, int parms) {
 		String filename = readBareFilename(fname);
@@ -260,7 +451,7 @@ public class EmuDiskDSR implements DsrHandler {
 				console.writeWord(parms + 2, fdr.getSectorsUsed());
 				console.writeByte(parms + 4, fdr.getFlags());
 				console.writeByte(parms + 5, fdr.getRecordsPerSector());
-				console.writeByte(parms + 6, fdr.getByteOffset());
+				console.writeByte(parms + 6, (byte) fdr.getByteOffset());
 				console.writeByte(parms + 7, fdr.getRecordLength());
 				console.writeWord(parms + 8, HOST2TI(fdr.getNumberRecords()));
 			} else {
@@ -379,13 +570,24 @@ public class EmuDiskDSR implements DsrHandler {
 	}
 	
 	/**
-	 * Read byte add classic VDP memory
+	 * Read byte in classic VDP memory
 	 * @param vaddr address in 0-0x3FFF range
 	 * @return byte
 	 */
 	private byte readVdpByte(int vaddr) {
 		int base = vdpHandler.getVdpMmio().getBankAddr();
 		return vdpHandler.readAbsoluteVdpMemory(base + vaddr);
+	}
+	
+	/**
+	 * Read word in classic VDP memory
+	 * @param vaddr address in 0-0x3FFF range
+	 * @return byte
+	 */
+	private short readVdpShort(int vaddr) {
+		int base = vdpHandler.getVdpMmio().getBankAddr();
+		return (short) ((vdpHandler.readAbsoluteVdpMemory(base + vaddr) << 8)
+			| (vdpHandler.readAbsoluteVdpMemory(base + vaddr + 1) & 0xff));
 	}
 	
 	private void writeVdpByte(int vaddr, byte byt) {
@@ -410,6 +612,17 @@ public class EmuDiskDSR implements DsrHandler {
 			byte ch = readVdpByte(endAddr);
 			if (ch == ' ')
 				break;
+			builder.append((char) ch);
+			endAddr++;
+		}
+		return builder.toString();
+	}
+	
+	private String readFilename(short addr, int len) {
+		StringBuilder builder = new StringBuilder();
+		int endAddr = addr;
+		while (len-- > 0) {
+			byte ch = readVdpByte(endAddr);
 			builder.append((char) ch);
 			endAddr++;
 		}

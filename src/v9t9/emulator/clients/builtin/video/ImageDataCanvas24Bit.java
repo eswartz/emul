@@ -16,18 +16,23 @@ import v9t9.engine.memory.ByteMemoryAccess;
  *
  */
 public class ImageDataCanvas24Bit extends ImageDataCanvas {
+	private static PaletteData stockPaletteData = new PaletteData(0xFF0000, 0xFF00, 0xFF);
+
 	public ImageDataCanvas24Bit() {
 		setSize(256, 192);
 	}
 	
+	protected PaletteData getPaletteData() {
+		return stockPaletteData;
+	}
+
 	@Override
 	protected ImageData createImageData() {
-		PaletteData palette = new PaletteData(0xFF0000, 0xFF00, 0xFF);
 		int allocHeight = height;
 		if ((height & 7) != 0)
 			allocHeight += 8;
 			
-		ImageData data = new ImageData(width, allocHeight * (isInterlacedEvenOdd() ? 2 : 1), 24, palette);
+		ImageData data = new ImageData(width, allocHeight * (isInterlacedEvenOdd() ? 2 : 1), 24, getPaletteData());
 		if (isInterlacedEvenOdd())
 			bytesPerLine = data.bytesPerLine * 2;
 		else
