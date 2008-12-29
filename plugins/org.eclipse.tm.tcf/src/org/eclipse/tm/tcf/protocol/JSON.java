@@ -279,7 +279,7 @@ public final class JSON {
             read();
             return new String(tmp_buf, 0, tmp_buf_pos);
         case '[':
-            Collection<Object> l = new ArrayList<Object>();
+            List<Object> l = new ArrayList<Object>();
             read();
             if (cur_ch <= 0) error();
             if (cur_ch != ']') {
@@ -291,7 +291,7 @@ public final class JSON {
                 }
             }
             read();
-            return Collections.unmodifiableCollection(l);
+            return Collections.unmodifiableList(l);
         case '{':
             Map<String,Object> m = new HashMap<String,Object>();
             read();
