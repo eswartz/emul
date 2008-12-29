@@ -45,6 +45,8 @@ public class Executor {
 
 	private ICpuController cpuController;
 
+	public int nVdpInterrupts;
+
 	static public final String sCompile = "Compile";
     static public final Setting settingCompile = new Setting(sCompile, new Boolean(false));
     static public final String sDumpInstructions = "DumpInstructions";
@@ -179,12 +181,15 @@ public class Executor {
         
         System.out.println("# instructions / second: " + nInstructions
         		+ " (cycles = " + (cpu.getTotalCycleCount() - nLastCycleCount) + "; "
-        		+ compileAvg / 100 + "." + compileAvg % 100 + "% compiled, " 
-        		+ nSwitches + " context switches, " + nCompiles + " compiles)");
+        		+ (settingCompile.getBoolean() ? 
+        		compileAvg / 100 + "." + compileAvg % 100 + "% compiled, " 
+        		+ nSwitches + " context switches, " + nCompiles + " compiles)" : "")
+        		+ "; VDP Interrupts = " +nVdpInterrupts + " (honored = " + cpu.getAndResetInterruptCount() + ")");
         nInstructions = 0;
         nCompiledInstructions = 0;
         nSwitches = 0;
         nCompiles = 0;
+        nVdpInterrupts = 0;
         nLastCycleCount = cpu.getTotalCycleCount();
 	}
 

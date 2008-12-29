@@ -389,9 +389,16 @@ public class InternalCru9901 implements CruAccess {
 			resetInterruptRequest();
 			
 			if ((currentints & int9901) != 0) {
-				int intlevel = 15;
-				while (intlevel != 0 && ((currentints & int9901) & (1 << intlevel)) == 0)
-					intlevel--;
+				int intlevel;
+				
+				// optimize for typical case
+				if ((currentints & int9901) == (1 << INT_VDP)) {
+					intlevel = 1;
+				} else {
+					intlevel = 15;
+					while (intlevel != 0 && ((currentints & int9901) & (1 << intlevel)) == 0)
+						intlevel--;
+				}
 		
 				if (intlevel != 0) {
 					//System.out.println(

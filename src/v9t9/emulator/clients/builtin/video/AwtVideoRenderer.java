@@ -3,16 +3,22 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
+import java.awt.Canvas;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.HierarchyBoundsAdapter;
+import java.awt.event.HierarchyEvent;
+import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.awt.image.ImageObserver;
 import java.nio.ByteBuffer;
 
-import org.eclipse.swt.graphics.Point;
-
-import sdljava.SDLException;
-import sdljava.video.SDLRect;
-import sdljava.video.SDLSurface;
-import sdljava.video.SDLVideo;
-import v9t9.emulator.clients.builtin.SdlUtils;
-import v9t9.emulator.clients.builtin.SdlWindow;
+import v9t9.emulator.clients.builtin.AwtWindow;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
 
@@ -20,7 +26,7 @@ import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
  * @author Ed
  *
  */
-public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
+public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	static {
 		System.loadLibrary("v9t9renderutils");
@@ -40,46 +46,58 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	private int desiredHeight;
 
-	private final SdlWindow sdlWindow;
+	private final AwtWindow window;
 
-	private SDLSurface surface;
+	private BufferedImage surface;
+	private Canvas canvas;
 
-	private SDLRect updateRect;
+	private Rectangle updateRect;
 	
-	public SdlVideoRenderer(SdlWindow sdlWindow) throws SDLException {
-		this.sdlWindow = sdlWindow;
-		updateRect = new SDLRect(0, 0, 0, 0);
+	public AwtVideoRenderer(AwtWindow window) {
+		this.window = window;
+		updateRect = new Rectangle(0, 0, 0, 0);
 		setCanvas(new ImageDataCanvas24Bit());
 		desiredWidth = (int)(zoomx * 256);
 		desiredHeight = (int)(zoomy * 192);
-		getRenderingSurface();
+		this.canvas = new Canvas() {
+
+			private static final long serialVersionUID = 8795221581767897631L;
+			
+			@Override
+			public void paint(Graphics g) {
+				Rectangle clipRect = g.getClipBounds();
+				doRedraw(g, 
+						clipRect.x, clipRect.y, 
+						clipRect.width, clipRect.height);
+					
+			}
+			
+			@Override
+			public void update(Graphics g) {
+				paint(g);
+			}
+			
+		};
+		canvas.setFocusTraversalKeysEnabled(false);
+		canvas.setFocusable(true);
+		//canvas.setIgnoreRepaint(true);
+		canvas.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
+			@Override
+			public void ancestorResized(HierarchyEvent e) {
+				updateWidgetOnResize(canvas.getWidth(), canvas.getHeight());
+			}
+		});
+		
+		doResizeToFit();
 		
 	}
 	
-	private synchronized void getRenderingSurface() throws SDLException {
-		long flags = SDLVideo.SDL_SWSURFACE /*| SDLVideo.SDL_RESIZABLE*/;
-		
-		/*
-		try {
-			surface = SDLVideo.createRGBSurface(
-					flags,
-					desiredWidth, desiredHeight, 
-					24, 0xFF, 0xFF00, 0xFF0000, 0);
-		} catch (SDLException e) {
-			System.err.println("Could not acquire hardware surface");
-		}
-		if (surface == null)*/
-		if (surface != null && surface.getSwigSurface() != null)
-			surface.freeSurface();
-		
-		{
-			surface = SDLVideo.createRGBSurface(
-					flags,
-					desiredWidth, 
-					desiredHeight,
-					24, 0xFF, 0xFF00, 0xFF0000, 0);
-		}
-		sdlWindow.setDesiredScreenSize(desiredWidth, desiredHeight);
+	private void doResizeToFit()  {
+		canvas.setPreferredSize(new Dimension(desiredWidth, desiredHeight));
+		canvas.setSize(new Dimension(desiredWidth, desiredHeight));
+
+		//canvas.setSize(new Dimension(desiredWidth, desiredHeight));
+		window.setDesiredScreenSize(desiredWidth, desiredHeight);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#getCanvas()
@@ -109,16 +127,16 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 		return true;
 	}
 
-	protected SDLRect logicalToPhysical(SDLRect logical) {
+	protected Rectangle logicalToPhysical(Rectangle logical) {
 		return logicalToPhysical(logical.x, logical.y, logical.width, logical.height);
 	}
 	
-	protected SDLRect logicalToPhysical(int x, int y, int w, int h) {
-		return new SDLRect((int)(x * zoomx), (int)(y * zoomy), Math.round(w * zoomx), Math.round(h * zoomy));
+	protected Rectangle logicalToPhysical(int x, int y, int w, int h) {
+		return new Rectangle((int)(x * zoomx), (int)(y * zoomy), Math.round(w * zoomx), Math.round(h * zoomy));
 	}
 	
-	protected SDLRect physicalToLogical(SDLRect physical) {
-		return new SDLRect((int)(physical.x / zoomx), (int)(physical.y / zoomy), 
+	protected Rectangle physicalToLogical(Rectangle physical) {
+		return new Rectangle((int)(physical.x / zoomx), (int)(physical.y / zoomy), 
 				(int)((physical.width + zoomx - 1) / zoomx), 
 				(int)((physical.height + zoomy - 1) / zoomy));
 	}
@@ -127,16 +145,8 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 	 * Add a rectangle to the update region.  Does not immediately redraw.
 	 * @param rect
 	 */
-	public void update(SDLRect rect) {
-		if (updateRect.width == 0 || updateRect.height == 0) {
-			updateRect.x = rect.x;
-			updateRect.y = rect.y;
-			updateRect.width = rect.width;
-			updateRect.height = rect.height;
-		}
-		else {
-			SdlUtils.addRect(updateRect, rect);
-		}
+	public void update(Rectangle rect) {
+		updateRect.add(rect);
 		isDirty = true;
 		//System.out.println("Updating " + updateRect);
 	}
@@ -151,9 +161,10 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 		boolean becameBlank = vdpCanvas.isBlank() && !isBlank;
 		isBlank = vdpCanvas.isBlank();
 		
-		SDLRect redrawRect_ = SdlUtils.convertRect(vdpCanvas.getDirtyRect());
+		org.eclipse.swt.graphics.Rectangle dirtyRect = vdpCanvas.getDirtyRect(); 
+		Rectangle redrawRect_ = new Rectangle(dirtyRect.x, dirtyRect.y, dirtyRect.width, dirtyRect.height);
 		if (becameBlank)
-			redrawRect_ = new SDLRect(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
+			redrawRect_ = new Rectangle(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
 		
 		if (vdpCanvas.isInterlacedEvenOdd()) {
 			redrawRect_.y *= 2;
@@ -161,16 +172,22 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 		}
 		
 		if (redrawRect_ != null) {
-			final SDLRect redrawRect = redrawRect_;
+			final Rectangle redrawRect = redrawRect_;
 			
 			updateWidgetSizeForMode();
 			
-			SDLRect redrawPhys = logicalToPhysical(redrawRect);
+			Rectangle redrawPhys = logicalToPhysical(redrawRect);
 			//System.out.println("Adding canvas " + redrawPhys);
 			update(redrawPhys);
 			
 			//System.out.println("Redrawing " + updateRect);
-			sdlRedraw(updateRect.x, updateRect.y, 
+			
+			BufferStrategy bufferStrategy = window.getBufferStrategy();
+			doRedraw(bufferStrategy.getDrawGraphics(), updateRect.x, updateRect.y, 
+					updateRect.width, updateRect.height);
+			
+			bufferStrategy.show();
+			canvas.repaint(updateRect.x, updateRect.y, 
 					updateRect.width, updateRect.height);
 			
 			updateRect.width = 0;
@@ -178,8 +195,8 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 			updateRect.x = 0;
 			updateRect.y = 0;
 			isDirty = false;
-			
 			vdpCanvas.clearDirty();
+
 		}
 	}
 
@@ -190,7 +207,7 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 	 * The size the user sees depends on the current X and Y resolutions; 
 	 * factor that in when determining the nearest zoom.
 	 */
-	public void updateWidgetOnResize(int width, int height) {
+	protected void updateWidgetOnResize(int width, int height) {
 		float oldzoomx = zoomx;
 		float oldzoomy = zoomy;
 		
@@ -210,11 +227,7 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 			zoomx = zoom;
 		
 		if (zoomx != oldzoomx && zoomy != oldzoomy) {
-			try {
-				getRenderingSurface();
-			} catch (SDLException e) {
-				e.printStackTrace();
-			}
+			resizeWidgets();
 		}
 		
 	}
@@ -222,9 +235,9 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 		if (surface == null)
 			return;
 		
-		SDLRect targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight());
+		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight());
 		Point size = new Point(targetRect.width, targetRect.height);
-		Point curSize = new Point(surface.getWidth(), surface.getHeight());
+		Point curSize = new Point(canvas.getWidth(), canvas.getHeight());
 		if (curSize.x == size.x && curSize.y == size.y)
 			return;
 		
@@ -236,18 +249,7 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 			desiredWidth= size.x;
 			desiredHeight= size.y;
 			
-			try {
-				getRenderingSurface();
-			} catch (SDLException e) {
-				desiredWidth = curSize.x;
-				desiredHeight = curSize.y;
-				try {
-					getRenderingSurface();
-				} catch (SDLException e1) {
-					e1.printStackTrace();
-					System.exit(1);
-				}
-			}
+			doResizeToFit();
 		}
 	}
 
@@ -305,45 +307,40 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 		
 	}
 	
-	protected void sdlRedraw(int x, int y, int width, int height) {
-		if (surface == null || surface.getSwigSurface() == null)
-			return;
+	protected synchronized void doRedraw(Graphics g, int x, int y, int width, int height) {
+		if (surface == null || surface.getWidth() != desiredHeight || surface.getHeight() != desiredHeight) {
+			surface = new BufferedImage(desiredWidth, desiredHeight, BufferedImage.TYPE_INT_BGR);
+		}
+
 		int destWidth = surface.getWidth();
 		int destHeight = surface.getHeight();
-		byte[] scaledData = new byte[destWidth * destHeight * 3];
-		V9t9RenderUtils.scaleImage(
-				scaledData,
-				vdpCanvas.getImageData().data,
-				vdpCanvas.getWidth(), vdpCanvas.getHeight(),
-				vdpCanvas.getLineStride(),
-				destWidth, destHeight,
-				x, y, width, height);
-				
-		V9t9RenderUtils.addNoise(scaledData, destWidth, destHeight,
-				destWidth * 3, vdpCanvas.getWidth(), vdpCanvas.getHeight());
 		
-		//System.out.println("buffer size: " + buffer.limit()+"; scaled data size: " + scaledData.data.length);
-		ByteBuffer buffer = surface.getPixelData();
-		buffer.clear();
-		buffer.put(scaledData);
-		try {
-			surface.updateRect(x, y, width, height);
-		} catch (SDLException e) {
-			e.printStackTrace();
+		//System.out.println(
+		//		"surface size: " + surface.getWidth()+"/"+surface.getHeight()+"; " + x +"/"+y+"/"+width+"/"+height);
+		DataBufferInt buffer = (DataBufferInt) surface.getRaster().getDataBuffer();
+		synchronized (vdpCanvas) {
+			V9t9RenderUtils.scaleImageToRGBA(
+					buffer.getData(),
+					vdpCanvas.getImageData().data,
+					vdpCanvas.getWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
+					destWidth, destHeight,
+					0, 0, destWidth, destHeight);
 		}
-		
-		if (sdlWindow != null) {
-			try {
-				sdlWindow.handleExpose(x, y, width, height);
-			} catch (SDLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
+		V9t9RenderUtils.addNoiseRGBA(buffer.getData(), 
+				destWidth, destHeight, destWidth * 4,
+				vdpCanvas.getWidth(), vdpCanvas.getHeight());
+
+		g.drawImage(
+					surface,
+					x, y, x + width, y + height,
+					x, y, x + width, y + height,
+					canvas);
+		//window.getBufferStrategy().show();
+		//while (canvas.imageUpdate(surface, ImageObserver.ALLBITS, x, y, width, height)) ;
 	}
 
-	public SDLSurface getSurface() {
-		return surface;
+	public Component getAwtCanvas() {
+		return canvas;
 	}
 
 }

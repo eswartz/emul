@@ -5,7 +5,11 @@ package v9t9.emulator.clients.builtin;
 
 import java.io.File;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.RTFTransfer;
+import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.PaintEvent;
@@ -24,6 +28,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
@@ -300,4 +305,35 @@ public class SwtWindow extends BaseEmulatorWindow {
 		return shell;
 	}
 
+	protected void pasteClipboardToKeyboard() {
+		Clipboard clip = new Clipboard(Display.getDefault());
+		String contents = (String) clip.getContents(TextTransfer.getInstance());
+		if (contents == null) {
+			contents = (String) clip.getContents(RTFTransfer.getInstance());
+		}
+		if (contents != null) {
+			machine.getClient().getKeyboardHandler().pasteText(contents);
+		} else {
+			showErrorMessage("Paste Error", 
+					"Cannot paste: no text on clipboard");
+		}
+		clip.dispose();
+		
+	}
+
+	@Override
+	protected void showErrorMessage(String title, String msg) {
+		MessageDialog.openError(getShell(), title, msg);
+	}
+
+
+	@Override
+	protected String openFileSelectionDialog(String title, String directory,
+			String fileName, boolean isSave) {
+		FileDialog dialog = new FileDialog(getShell(), isSave ? SWT.SAVE : SWT.OPEN);
+		dialog.setFilterPath(directory);
+		dialog.setFileName(fileName);
+		String filename = dialog.open();
+		return filename;
+	}
 }

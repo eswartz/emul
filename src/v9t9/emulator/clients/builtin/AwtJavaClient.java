@@ -1,0 +1,209 @@
+/*
+ * (c) Ed Swartz, 2005
+ * 
+ * Created on Dec 18, 2004
+ *
+ */
+package v9t9.emulator.clients.builtin;
+
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.video.AwtVideoRenderer;
+import v9t9.emulator.runtime.TerminatedException;
+import v9t9.engine.Client;
+import v9t9.engine.CruHandler;
+import v9t9.engine.KeyboardHandler;
+import v9t9.engine.VdpHandler;
+
+/**
+ * This client uses SDL for the video and keyboard.
+ * @author ejs
+ */
+public class AwtJavaClient implements Client {
+    VdpHandler video;
+    CruHandler cruHandler;
+    private Machine machine;
+	private AwtKeyboardHandler keyboardHandler;
+	private AwtVideoRenderer videoRenderer;
+	private AwtWindow window;
+
+    public AwtJavaClient(final Machine machine, VdpHandler vdp) {
+    	this.machine = machine;
+        video = vdp;
+        
+        /*
+    	awtThreadGroup = new ThreadGroup("AWT threads");
+    	awtThreadGroup.setDaemon(true);
+    	
+    	Thread thread = new Thread(awtThreadGroup, new Runnable() {
+
+			public void run() {
+				init();
+			}
+    		
+    	});
+    	
+    	thread.start();
+    	try {
+			thread.join();
+		} catch (InterruptedException e) {
+		}*/
+        init();
+    }
+    
+    protected void init() {
+    	window = new AwtWindow( machine);
+		
+		videoRenderer = window.getVideoRenderer();
+    	
+		window.getFrame().addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				close();
+			}
+		});
+        
+        
+        video.setCanvas(videoRenderer.getCanvas());
+
+        
+        
+        /*Shell shell = window.getShell();
+		shell.addShellListener(new ShellAdapter() {
+			@Override
+			public void shellClosed(ShellEvent e) {
+		        if (machine.isRunning()) {
+		        	machine.setNotRunning();
+		        }
+			}
+		});*/
+
+        cruHandler = machine.getCru(); 
+        machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
+        
+        //keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(),
+        //		machine.getKeyboardState(), machine);
+        keyboardHandler = new AwtKeyboardHandler(
+        		videoRenderer.getAwtCanvas(),
+        		machine.getKeyboardState(), machine);
+    }
+    /*
+     * (non-Javadoc)
+     * 
+     * @see v9t9.Client#close()
+     */
+    public void close() {
+    	try {
+    		machine.stop();
+    	} catch (TerminatedException e) {
+    		// expected
+    		window.dispose();
+    		System.exit(0);
+    	}
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see v9t9.Client#getVideo()
+     */
+    public v9t9.engine.VdpHandler getVideoHandler() {
+        return video;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see v9t9.Client#setVideo(vdp.Handler)
+     */
+    public void setVideoHandler(v9t9.engine.VdpHandler video) {
+        this.video = video;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#finalize()
+     */
+    @Override
+	protected void finalize() throws Throwable {
+    	close();
+    	super.finalize();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see v9t9.Client#timerTick()
+     */
+    public void timerInterrupt() {
+    	//System.out.print('.');
+    	keyboardHandler.scan(machine.getKeyboardState());
+    }
+    
+    public void updateVideo() {
+    	//long start = System.currentTimeMillis();
+    	if (videoRenderer.isIdle()) { 
+			try {
+				if (!video.update())
+					return;
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
+    		videoRenderer.redraw();
+    	}
+    }
+
+    public KeyboardHandler getKeyboardHandler() {
+    	return keyboardHandler;
+    }
+    
+    /*
+    public void handleEvents() {
+    	SDLEvent event;
+		try {
+			while ( (event = SDLEvent.pollEvent()) != null ) {
+				if ( event.getType() == SDLEvent.SDL_QUIT ) {
+					close();
+					continue;
+				}
+				if (event.getType() == SDLEvent.SDL_KEYUP ||
+						event.getType() == SDLEvent.SDL_KEYDOWN) {
+					keyboardHandler.handleEvent((SDLKeyboardEvent) event);
+					continue;
+				}
+				if (event.getType() == SDLEvent.SDL_VIDEORESIZE) {
+					window.handleResize((SDLResizeEvent) event);
+					continue;
+				}
+				if (event.getType() == SDLEvent.SDL_VIDEOEXPOSE) {
+					window.handleExpose((SDLExposeEvent) event);
+					continue;
+				}
+				if (event.getType() == SDLEvent.SDL_MOUSEBUTTONDOWN) {
+					window.handleMouse((SDLMouseButtonEvent) event);
+					continue;
+				}
+				if (event.getType() == SDLEvent.SDL_MOUSEMOTION) {
+					window.handleMouse((SDLMouseMotionEvent) event);
+					continue;
+				}
+			}
+		} catch (SDLException e) {
+			close();
+		}
+		
+    }
+    */
+
+    public void handleEvents() {
+    	
+    }
+    public boolean isAlive() {
+    	//return !display.isDisposed();
+    	return true;
+    }
+}
+

@@ -153,6 +153,7 @@ public class Cpu implements MemoryAccessListener {
 	private int ticks;
 	private boolean allowInts;
 	private CruAccess cruAccess;
+	private int interrupts;
 
 	static public final String sRealTime = "RealTime";
 
@@ -214,15 +215,14 @@ public class Cpu implements MemoryAccessListener {
 	    }
     	
 	    if (cruAccess != null) {
-	    	pins &= ~PIN_INTREQ;
+	    	//pins &= ~PIN_INTREQ;
 	    	cruAccess.pollForPins(this);
 	    	if (cruAccess.isInterruptWaiting()) {
 	    		ic = forceIcTo1 ? 1 : cruAccess.getInterruptLevel(); 
 	    		if (status.getIntMask() >= ic) {
 	    			//System.out.println("Triggering interrupt... "+ic);
 	    			pins |= PIN_INTREQ;
-	    			throw new AbortedException();
-	    		}
+	    			throw new AbortedException();	    		}
 	    	}
 	    }
 	    
@@ -260,6 +260,7 @@ public class Cpu implements MemoryAccessListener {
             // maskable
         	pins &= ~PIN_INTREQ;
         	
+        	interrupts++;
             contextSwitch(0x4 * ic);
             addCycles(22);
             
@@ -372,6 +373,12 @@ public class Cpu implements MemoryAccessListener {
 
 	public int getTargetCycleCount() {
 		return targetcycles;
-	} 
+	}
+	
+	public int getAndResetInterruptCount() {
+		int n = interrupts;
+		interrupts = 0;
+		return n;
+	}
 
 }

@@ -34,8 +34,8 @@ public abstract class BaseEmulatorWindow {
 		this.videoRenderer = videoRenderer;
 	}
 
-	protected String selectFile(String configPath, String subdir, String fileName,
-			int style) {
+	protected String selectFile(String title, String configPath, String subdir,
+			String fileName, boolean isSave) {
 		
 		DialogSettings settings = getApplicationSettings();
 		String savePath = settings.get(configPath);
@@ -45,15 +45,13 @@ public abstract class BaseEmulatorWindow {
 			saveDir.mkdirs();
 		}
 		
-		FileDialog dialog = new FileDialog(getShell(), style);
-		dialog.setFilterPath(savePath);
-		dialog.setFileName(fileName);
-		String filename = dialog.open();
+		String filename = openFileSelectionDialog(title, savePath, fileName, isSave);
 		
 		return filename;
 	}
 
-	abstract protected Shell getShell();
+	abstract protected String openFileSelectionDialog(String title, String directory,
+			String fileName, boolean isSave);
 
 	protected String getBaseConfigurationPath() {
 		return System.getProperty("user.home") + File.separatorChar + ".v9t9j" + File.separatorChar;
@@ -78,50 +76,32 @@ public abstract class BaseEmulatorWindow {
 		machine.getCpu().setPin(Cpu.PIN_RESET);
 	}
 	protected void loadMachineState() {
-		String filename = selectFile("MachineStatePath", "saves", "save0.sav", SWT.OPEN);
+		String filename = selectFile("Select saved machine state", "MachineStatePath", "saves", "save0.sav", false);
 		
 		if (filename != null) {
 			try {
 				machine.restoreState(filename);
 			} catch (Throwable e1) {
-				MessageDialog.openError(getShell(), "Load error", 
+				showErrorMessage("Load error", 
 						"Failed to load machine state:\n\n" + e1.getMessage());
 			
 			}
 		}
-				
 	}
 
+	abstract protected void showErrorMessage(String title, String msg);
+
 	protected void saveMachineState() {
-		String filename = selectFile("MachineStatePath", "saves", "save0.sav", SWT.SAVE);
+		String filename = selectFile("Select location to save machine state", "MachineStatePath", "saves", "save0.sav", true);
 		
 		if (filename != null) {
 			try {
 				machine.saveState(filename);
 			} catch (Throwable e1) {
-				MessageDialog.openError(getShell(), "Save error", 
+				showErrorMessage("Save error", 
 						"Failed to save machine state:\n\n" + e1.getMessage());
 			}
-		}		
+		}	
 	}
-
-	protected void pasteClipboardToKeyboard() {
-		Clipboard clip = new Clipboard(Display.getDefault());
-		String contents = (String) clip.getContents(TextTransfer.getInstance());
-		if (contents == null) {
-			contents = (String) clip.getContents(RTFTransfer.getInstance());
-		}
-		if (contents != null) {
-			machine.getClient().getKeyboardHandler().pasteText(contents);
-		} else {
-			
-			
-			MessageDialog.openError(getShell(), "Paste Error", 
-					"Cannot paste: no text on clipboard");
-		}
-		clip.dispose();
-		
-	}
-
 
 }

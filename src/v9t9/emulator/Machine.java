@@ -205,6 +205,7 @@ abstract public class Machine {
         			}
         		}
         		cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
+        		executor.nVdpInterrupts++;
             }
         };
         videoTimer.scheduleAtFixedRate(vdpInterruptTask, 0, interruptTick);

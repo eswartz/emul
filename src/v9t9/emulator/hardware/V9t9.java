@@ -12,6 +12,7 @@ import java.io.IOException;
 import org.eclipse.swt.widgets.Display;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.AwtJavaClient;
 import v9t9.emulator.clients.builtin.PureJavaClient;
 import v9t9.emulator.clients.builtin.SdlJavaClient;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
@@ -198,11 +199,14 @@ public class V9t9 {
         }
         
         Client client;
-        if (findArgument(args, "--pure")) {
+        if (findArgument(args, "--swt")) {
         	client = new PureJavaClient(machine, machine.getVdp(), new Display());
         }
         else if (findArgument(args, "--sdl")) {
-			client = new SdlJavaClient(machine, machine.getVdp());
+			client = new SdlJavaClient(machine, machine.getVdp()); 
+        }
+        else if (findArgument(args, "--awt")) {
+			client = new AwtJavaClient(machine, machine.getVdp());
 		} else {
 			client = new HybridDemoClient(machine, machine.getVdp(), new Display());
 		}

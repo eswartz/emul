@@ -35,7 +35,9 @@ public class JavaSoundHandler implements SoundHandler {
 	//private TimerTask mixerTask;
 	
 	private byte[] soundGeneratorWaveForm;
+	private byte[] soundGeneratorWaveForm2;
 	private byte[] audioGateWaveForm;
+	private byte[] audioGateWaveForm2;
 
 	private int soundFramesPerTick;
 
@@ -56,18 +58,29 @@ public class JavaSoundHandler implements SoundHandler {
 	//private Mixer mixer;
 	
 	private FileOutputStream fos;
+	private Thread soundWritingThread;
+	private Object soundWritingToken = new Object();
+	protected boolean soundWritingRequest;
+	private final Machine machine;
+	private byte[] soundToWrite;
+	private byte[] audioToWrite;
+	
 	{
-		try {
-			if (File.separatorChar == '/')
-				fos = new FileOutputStream("/tmp/v9t9_audio.raw");
-			else
-				fos = new FileOutputStream("c:/temp/v9t9_audio.raw");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+		if (false) {
+			try {
+				if (File.separatorChar == '/')
+					fos = new FileOutputStream("/tmp/v9t9_audio.raw");
+				else
+					fos = new FileOutputStream("c:/temp/v9t9_audio.raw");
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	public JavaSoundHandler(Machine machine) {
+		
+		this.machine = machine;
 		sound = machine.getSound();
 		stdFormat = new AudioFormat(55930, 8, 1, true, false);
 		Line.Info slInfo = new DataLine.Info(SourceDataLine.class,
@@ -103,8 +116,63 @@ public class JavaSoundHandler implements SoundHandler {
 			System.err.println("Line not available");
 			e.printStackTrace();
 			soundGeneratorWaveForm = new byte[0];
+			soundGeneratorWaveForm2 = new byte[0];
+			audioGateWaveForm = new byte[0];
+			audioGateWaveForm2 = new byte[0];
 			return;
 		}
+		
+		
+		soundWritingThread = new Thread(new Runnable() {
+
+			public void run() {
+				while (true) {
+					// wait for the main thread(s) to send us data to write,
+					// which we do here in a separate thread to allow for
+					// the potential of blocking.
+					synchronized (soundWritingToken) {
+						while (!soundWritingRequest) {
+							try {
+								soundWritingToken.wait();
+							} catch (InterruptedException e) {
+								if (!JavaSoundHandler.this.machine.isRunning())
+									return;
+							}
+						}
+						
+						if (fos != null) {
+							try {
+								fos.write(soundToWrite, 0, soundToWrite.length);
+							} catch (IOException e) {
+								try {
+									fos.close();
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+							}
+						}
+
+						/*byte prev = soundGeneratorWaveForm[0];
+						for (int i = 1; i < length; i++) {
+							byte nprev = soundGeneratorWaveForm[i];
+							soundGeneratorWaveForm[i] = (byte) ((prev + soundGeneratorWaveForm[i]) / 2);
+							prev = nprev;
+						}*/
+						soundGeneratorLine.write(soundToWrite, 0, soundToWrite.length);
+						
+						
+						if (/*!audioSilence &&*/ audioToWrite != null) {
+							audioGateLine.write(
+									audioToWrite, 0, audioToWrite.length);
+						}
+						
+						soundWritingRequest = false;
+					}
+				}
+			}
+			
+		}, "Sound Writing");
+		soundWritingThread.start();
 		
 		toggleSound(true);
 	}
@@ -119,7 +187,9 @@ public class JavaSoundHandler implements SoundHandler {
 		}
 		
 		soundGeneratorWaveForm = new byte[stdFormat.getFrameSize() * soundFramesPerTick];
+		soundGeneratorWaveForm2 = new byte[stdFormat.getFrameSize() * soundFramesPerTick];
 		audioGateWaveForm = new byte[audioGateFormat.getFrameSize() * audioGateFramesPerTick];
+		audioGateWaveForm2 = new byte[audioGateFormat.getFrameSize() * audioGateFramesPerTick];
 		soundClock = (int) stdFormat.getFrameRate();
 		
 		/*
@@ -171,7 +241,7 @@ public class JavaSoundHandler implements SoundHandler {
 	/* (non-Javadoc)
 	 * @see v9t9.engine.SoundHandler#updateVoice(int, v9t9.emulator.clients.builtin.Sound99xx.voiceinfo)
 	 */
-	public synchronized void updateVoice(int vn, int updateFlags, int pos, int total) {
+	public void updateVoice(int vn, int updateFlags, int pos, int total) {
 		if (vn >= 4) 
 			throw new IllegalArgumentException("Did not expect more than 4 voices");
 
@@ -204,7 +274,10 @@ public class JavaSoundHandler implements SoundHandler {
 		lastUpdatedPos = currentPos;
 	}
 
-	protected void updateSoundGenerator(int from, int to) {
+	protected synchronized void updateSoundGenerator(int from, int to) {
+		if (from >= to)
+			return;
+		
 		SoundVoice[] vs = sound.getSoundVoices();
 		boolean iswhite = vs[SoundTMS9919.VOICE_NOISE].OPERATION_TO_NOISE_TYPE() == SoundTMS9919.NOISE_WHITE;
 		
@@ -230,18 +303,6 @@ public class JavaSoundHandler implements SoundHandler {
 					}
 				}
 				soundGeneratorWaveForm[i] = (byte) (sample >> 18);
-			}
-			if (fos != null) {
-				try {
-					fos.write(soundGeneratorWaveForm, 0, soundGeneratorWaveForm.length);
-					fos.flush();
-				} catch (IOException e) {
-					try {
-						fos.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-				}
 			}
 		} else {
 			if (from < to)
@@ -291,6 +352,8 @@ public class JavaSoundHandler implements SoundHandler {
 	}
 
 	public void dispose() {
+		if (soundWritingThread != null)
+			soundWritingThread.interrupt();
 		//if (mixTimer != null)
 		//	mixTimer.cancel();
 		if (audioGateLine != null)
@@ -319,32 +382,28 @@ public class JavaSoundHandler implements SoundHandler {
 	public synchronized void flushAudio() {
 		int length = soundGeneratorWaveForm.length;
 		updateSoundGenerator(lastUpdatedPos, length);
-		
-		/*byte prev = soundGeneratorWaveForm[0];
-		for (int i = 1; i < length; i++) {
-			byte nprev = soundGeneratorWaveForm[i];
-			soundGeneratorWaveForm[i] = (byte) ((prev + soundGeneratorWaveForm[i]) / 2);
-			prev = nprev;
-		}*/
-		soundGeneratorLine.write(
-				soundGeneratorWaveForm, 0, length);
 		lastUpdatedPos = 0;
 		
-		
-		if (/*!audioSilence &&*/ audioGateWaveForm != null) {
-			audioGateLine.write(
-					audioGateWaveForm, 0, audioGateWaveForm.length);
-			if (false) {
-				for (int i = 0; i < audioGateWaveForm.length; i++)
-					System.out.print(audioGateWaveForm[i]!=0?'1':'0');
-				System.out.println();
-			}
-			Arrays.fill(audioGateWaveForm, (byte) 0);
-			//audioSilence = true;
-			//System.out.println(maxAudioPos);
-			//maxAudioPos = -1;
+		synchronized (soundWritingToken) {
+			
+			// swap buffers so we're not writing the same one being
+			// pushed to the device
+			byte[] t = soundGeneratorWaveForm;
+			soundGeneratorWaveForm = soundGeneratorWaveForm2;
+			soundGeneratorWaveForm2 = t;
+			t = audioGateWaveForm;
+			audioGateWaveForm = audioGateWaveForm2;
+			audioGateWaveForm2 = t;
+			
+			// tell the thread which ones to read from
+			soundToWrite = soundGeneratorWaveForm2;
+			audioToWrite = audioGateWaveForm2;
+			soundWritingRequest = true;
+			soundWritingToken.notifyAll();
+			
+			//Arrays.fill(audioGateWaveForm, (byte) 0);
 		}
-		
+		Arrays.fill(audioGateWaveForm, (byte) 0);
 	}
 
 }
