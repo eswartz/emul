@@ -34,7 +34,7 @@ public class StandardMachineModel implements MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getVdp()
 	 */
 	public VdpHandler createVdp(Machine machine) {
-		VdpTMS9918A vdp = new VdpTMS9918A(machine.getMemory().getDomain("VIDEO"));
+		VdpTMS9918A vdp = new VdpTMS9918A(machine, machine.getMemory().getDomain("VIDEO"));
 		new Vdp9918AMmio(machine.getMemory(), vdp, 0x4000);
 		return vdp;
 	}

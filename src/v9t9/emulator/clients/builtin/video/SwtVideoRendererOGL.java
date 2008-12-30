@@ -81,7 +81,7 @@ public class SwtVideoRendererOGL extends SwtVideoRenderer {
 					V9t9Render.renderOpenGLFromImageData(
 							ogl,
 							imageData.data,
-							vdpCanvas.getWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
+							vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
 							canvasSize.x, canvasSize.y,
 							updateRect.x, updateRect.y, updateRect.width, updateRect.height);
 				}

@@ -4,14 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import org.eclipse.jface.dialogs.DialogSettings;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.dnd.Clipboard;
-import org.eclipse.swt.dnd.RTFTransfer;
-import org.eclipse.swt.dnd.TextTransfer;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
@@ -92,6 +84,9 @@ public abstract class BaseEmulatorWindow {
 	abstract protected void showErrorMessage(String title, String msg);
 
 	protected void saveMachineState() {
+		boolean old = Machine.settingPauseMachine.getBoolean();
+		Machine.settingPauseMachine.setBoolean(true);
+		
 		String filename = selectFile("Select location to save machine state", "MachineStatePath", "saves", "save0.sav", true);
 		
 		if (filename != null) {
@@ -101,7 +96,9 @@ public abstract class BaseEmulatorWindow {
 				showErrorMessage("Save error", 
 						"Failed to save machine state:\n\n" + e1.getMessage());
 			}
-		}	
+		}
+		Machine.settingPauseMachine.setBoolean(old);
+		
 	}
 
 }

@@ -149,7 +149,7 @@ public abstract class VdpCanvas {
 	public final void setSize(int x, int y, boolean isInterlaced) {
 		if (x != width || y != height || isInterlaced != this.isInterlacedEvenOdd) {
 			this.isInterlacedEvenOdd = isInterlaced;
-			this.width = x;
+			this.width = visibleToActualWidth(x);
 			this.height = y;
 			updateDirtyBuffer();
 			doChangeSize();
@@ -159,6 +159,13 @@ public abstract class VdpCanvas {
 	}
 
 	
+	protected int visibleToActualWidth(int x) {
+		return x + 16;
+	}
+	protected int actualToVisibleWidth(int x) {
+		return x - 16;
+	}
+
 	public abstract void doChangeSize();
 
 	/**
@@ -420,10 +427,20 @@ public abstract class VdpCanvas {
 		this.listener = listener;
 	}
 	
+	/** Get the full screen width (this includes any overscan and possibly extra pixels
+	 * not intended to be seen). */
 	public int getWidth() {
 		return width;
 	}
 	
+	/** Get the full screen width (this includes any overscan and possibly extra pixels
+	 * not intended to be seen). */
+	public int getVisibleWidth() {
+		return actualToVisibleWidth(width);
+	}
+	
+	
+	/** Get the nominal screen height. This does not count interlacing. */
 	public int getHeight() {
 		return height;
 	}
@@ -504,7 +521,7 @@ public abstract class VdpCanvas {
 	}
 
 	public int getBlockCount() {
-		return (width / 8) * ((height + 7) / 8);
+		return (getVisibleWidth() / 8) * ((height + 7) / 8);
 	}
 
 	/** 

@@ -13,6 +13,7 @@ import java.util.TimerTask;
 import org.eclipse.jface.dialogs.DialogSettings;
 
 import v9t9.emulator.clients.builtin.SoundTMS9919;
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.MachineModel;
@@ -30,6 +31,8 @@ import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
 import v9t9.engine.settings.SettingsCollection;
+import v9t9.engine.timer.FastTimer;
+import v9t9.engine.timer.FastTimerTask;
 import v9t9.keyboard.KeyboardState;
 
 /** Encapsulate all the information about a running emulated machine.
@@ -44,7 +47,8 @@ abstract public class Machine {
     Client client;
     boolean bRunning;
     Timer timer;
-    Timer cpuTimer;
+    FastTimer cpuTimer;
+    //Timer cpuTimer;
     Timer videoTimer;
  
     long lastInterrupt = System.currentTimeMillis();
@@ -52,14 +56,14 @@ abstract public class Machine {
     long upTime = 0;
     
     boolean allowInterrupts;
-    final int interruptTick = 1000 / 60;
     final int clientTick = 1000 / 100;
     final int videoUpdateTick = 1000 / 30;
-    final int cpuTick = 1000 / 100;
+    final int cpuTicksPerSec = 100;
+    final int vdpInterruptsPerSec = 60;
     private long now;
-    private TimerTask vdpInterruptTask;
+    //private TimerTask vdpInterruptTask;
     private TimerTask clientTask;
-    private TimerTask cpuTimingTask;
+    private FastTimerTask cpuTimingTask;
 	protected MemoryModel memoryModel;
 	private VdpHandler vdp;
 	private CruManager cruManager;
@@ -67,7 +71,6 @@ abstract public class Machine {
 	private TimerTask videoUpdateTask;
 	private Thread machineRunner;
 	private Thread videoRunner;
-	private boolean throttlingInterrupts;
 	protected int throttleCount;
 	private KeyboardState keyboardState;
 	protected Object executionLock = new Object();
@@ -75,6 +78,8 @@ abstract public class Machine {
 	private SoundTMS9919 sound;
 	static public final String sPauseMachine = "PauseMachine";
 	static public final Setting settingPauseMachine = new Setting(sPauseMachine, new Boolean(false));
+	static public final String sThrottleInterrupts = "ThrottleVDPInterrupts";
+	static public final Setting settingThrottleInterrupts = new Setting(sThrottleInterrupts, new Boolean(false));
 	
     public Machine(MachineModel machineModel) {
     	this.memoryModel = machineModel.getMemoryModel();
@@ -88,7 +93,7 @@ abstract public class Machine {
     	memoryModel.initMemory(this);
     	
     	settings = new SettingsCollection();
-    	cpu = new Cpu(this, cpuTick);
+    	cpu = new Cpu(this, 1000 / cpuTicksPerSec, vdp);
     	keyboardState = new KeyboardState(cpu);
     	machineModel.defineDevices(this);
     	
@@ -151,28 +156,65 @@ abstract public class Machine {
     	allowInterrupts = true;
     	
     	timer = new Timer();
-    	cpuTimer = new Timer();
+    	cpuTimer = new FastTimer();
     	videoTimer = new Timer();
-    	
-        // the CPU emulation task 
-        cpuTimingTask = new TimerTask() {
-        	
-        	@Override
+
+        // the CPU emulation task (a fast timer because 100 Hz is a little too much for Windows) 
+        cpuTimingTask = new FastTimerTask() {
+
+			private int vdpInterruptDelta;
+
+			@Override
         	public void run() {
     			now = System.currentTimeMillis();
+    			//System.out.print(now);
+    			
+    	
+    			//System.out.print(now);
     			
     			if (now >= lastInfo + 1000) {
     				upTime += now - lastInfo;
-    				//executor.dumpStats();
+    				executor.dumpStats();
     				lastInfo = now;
+    				vdpInterruptDelta = 0;
     			}
     			
     			cpu.tick();
+
+    			// In Win32, the timer is not nearly as accurate as 1/100 second,
+    			// so we get a lot of interrupts at the same time.
+    			
+    			// Synchronize VDP interrupts along with the CPU in the same task
+    			// so we don't succumb to misscheduling between different timers
+    			// OR timer tasks.
+    			if (bExecuting && !VdpTMS9918A.settingCpuSynchedVdpInterrupt.getBoolean()) {
+	    			vdpInterruptDelta += vdpInterruptsPerSec * 65536 / cpuTicksPerSec;
+	    			//System.out.print("[VDP delt:" + vdpInterruptDelta + "]");
+	    			if (vdpInterruptDelta >= 65536) {
+				
+						vdpInterruptDelta -= 65536;
+	    				vdp.tick();
+	            		if (settingThrottleInterrupts.getBoolean()) {
+	            			if (throttleCount-- < 0) {
+	            				throttleCount = 60;
+	            			} else {
+	            				return;
+	            			}
+	            		}
+	            		
+	            		cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
+	            		executor.nVdpInterrupts++;
+	            		//System.out.print('!');
+	    			}
+    			}
+    			
     			sound.getSoundHandler().flushAudio();
+    			
         	}
         };
-        cpuTimer.scheduleAtFixedRate(cpuTimingTask, 0, cpuTick);
-
+        cpuTimer.scheduleTask(cpuTimingTask, cpuTicksPerSec);
+        
+        
         videoRunner = new Thread("Video Runner") {
         	@Override
         	public void run() {
@@ -191,24 +233,6 @@ abstract public class Machine {
         	}
         };
         
-    	// the VDP processor interrupt task
-        vdpInterruptTask = new TimerTask() {
-
-            @Override
-			public void run() {
-            	vdp.tick();
-        		if (throttlingInterrupts) {
-        			if (throttleCount-- < 0) {
-        				throttleCount = 60;
-        			} else {
-        				return;
-        			}
-        		}
-        		cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
-        		executor.nVdpInterrupts++;
-            }
-        };
-        videoTimer.scheduleAtFixedRate(vdpInterruptTask, 0, interruptTick);
         
         // the potentially expensive task of blitting the screen to the
         // physical screen -- not scheduled at a fixed rate to avoid
@@ -247,8 +271,6 @@ abstract public class Machine {
 	            			while (!bExecuting) {
 	            				executionLock.wait();
 	            			}
-	            		}
-	            		synchronized (executionLock) {
 	    	            	// delay if going too fast
 	    	        		if (Cpu.settingRealTime.getBoolean()) {
 	    	        			while (cpu.isThrottled() && bRunning) {
@@ -347,15 +369,6 @@ abstract public class Machine {
 		return cruManager;
 	}
 
-	/**
-	 * Throttle interrupts in certain cases, e.g. when we know
-	 * there is high load and don't want them to interfere.
-	 * @param flag
-	 */
-	public void setThrottleInterrupts(boolean flag) {
-		this.throttlingInterrupts = flag;
-	}
-
 	public KeyboardState getKeyboardState() {
 		return keyboardState;
 	}
@@ -413,9 +426,8 @@ abstract public class Machine {
 		return sound;
 	}
 
-	/** in ms */
-	public int getCpuTickLength() {
-		return cpuTick;
+	public int getCpuTicksPerSec() {
+		return cpuTicksPerSec;
 	}
 }
 

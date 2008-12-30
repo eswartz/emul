@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.emulator.Machine;
 import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
 import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.emulator.runtime.compiler.ICompiledCode;
@@ -64,7 +65,7 @@ public class Executor {
         settingDumpFullInstructions.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
-				Executor.this.cpu.getMachine().setThrottleInterrupts(setting.getBoolean());
+				Machine.settingThrottleInterrupts.setBoolean(setting.getBoolean());
 			}
         	
         });

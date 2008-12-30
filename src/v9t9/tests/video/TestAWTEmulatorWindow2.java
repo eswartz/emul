@@ -97,12 +97,12 @@ public class TestAWTEmulatorWindow2 {
 		byte[] scaledData = new byte[bounds.width * bounds.height * 3];
 		V9t9RenderUtils.scaleImage(scaledData, 
 				vdpCanvas.getImageData().data,
-				vdpCanvas.getWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
+				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
 				bounds.width, bounds.height,
 				0, 0, bounds.width, bounds.height);
 		V9t9RenderUtils.addNoise(scaledData, 
 				bounds.width, bounds.height, bounds.width * 3,
-				vdpCanvas.getWidth(), vdpCanvas.getHeight());
+				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
 		
 		ComponentColorModel colorModel = new ComponentColorModel(
 				ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB),

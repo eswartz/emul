@@ -57,7 +57,7 @@ public interface VdpHandler {
 
 	MemoryDomain getVideoMemory();
 
-	/** 60Hz timer */
+	/** 60Hz timer.  Use this or syncVdpInterrupt / addCpuCycles */
 	void tick();
 	
 	/** coprocessing */
@@ -70,4 +70,9 @@ public interface VdpHandler {
 
 	void loadState(IDialogSettings section);
 
+	/** This is called regularly from the CPU and should trigger the VDP
+	 * interrupt according to the desired frequency. */
+	void syncVdpInterrupt();
+
+	void addCpuCycles(int cycles);
 }

@@ -3,6 +3,7 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
+import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
@@ -123,8 +124,8 @@ public class VdpV9938 extends VdpTMS9918A {
 			{ 49, 65, 49, 62 },
 	};
 
-	public VdpV9938(MemoryDomain videoMemory) {
-		super(videoMemory);
+	public VdpV9938(Machine machine, MemoryDomain videoMemory) {
+		super(machine, videoMemory);
 		reset();
 	}
 
@@ -403,8 +404,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			if (accelActive() && cmdState.isDataMoveCommand) {
 				// got the next byte
 				statusvec[2] &= ~S2_TR;
-				if (!isThrottled())
-					work();
+				work();
 			}
 			break;
 		case 45: // ARG
@@ -417,8 +417,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			if ((statusvec[2] & S2_CE) == 0 && pixperbyte != 0) {
 				setupCommand();
 				setAccelActive(true);
-				if (!isThrottled())
-					work();
+				work();
 			}
 			//}
 			break;
@@ -775,7 +774,8 @@ public class VdpV9938 extends VdpTMS9918A {
 	
 	@Override
 	public synchronized void work() {
-		handleCommand();
+		if (!isThrottled())
+			handleCommand();
 	}
 
 	private boolean accelActive() {

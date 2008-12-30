@@ -45,7 +45,12 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		if (pasteTimer == null)
 			lastKeystrokeTime = System.currentTimeMillis();
 		
-		if (ascii < 32 && (modifiers & KeyEvent.CTRL_MASK) != 0) {
+		//System.out.println("modifiers="+Integer.toHexString(modifiers)+"; keyCode="+keyCode+"; ascii="+(int)ascii);
+		
+		if (ascii == KeyEvent.CHAR_UNDEFINED && keyCode < 128 && keyboardState.isAsciiDirectKey((char) keyCode)) {
+			ascii = (char) keyCode;
+		}
+		if (ascii <= 32 && (modifiers & KeyEvent.CTRL_MASK) != 0) {
 			// control char
 			ascii = (char) keyCode;
 		}
@@ -62,7 +67,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		if ((modifiers & KeyEvent.ALT_DOWN_MASK + KeyEvent.META_DOWN_MASK + KeyEvent.ALT_MASK + KeyEvent.META_MASK) != 0)
 			shift |= KeyboardState.FCTN;
 		
-		if (ascii == 0 || ascii == 0xffff || !keyboardState.postCharacter(pressed, false, shift, ascii)) {
+		if ((ascii == 0 || ascii == 0xffff) || !keyboardState.postCharacter(pressed, false, shift, ascii)) {
 			byte fctn = (byte) (KeyboardState.FCTN | shift);
 			
 			switch (keyCode) {

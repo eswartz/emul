@@ -201,7 +201,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				zoomy = zoom / 2.0f;
 			else
 				zoomy = zoom;
-			if (vdpCanvas.getWidth() == 512)
+			if (vdpCanvas.getVisibleWidth() == 512)
 				zoomx = zoom / 2.0f;
 			else
 				zoomx = zoom;
@@ -224,7 +224,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		if (canvas.isDisposed())
 			return;
 		
-		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight());
+		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight());
 		Point size = new Point(targetRect.width, targetRect.height);
 		Point curSize = canvas.getSize();
 		if (curSize.x == size.x && curSize.y == size.y)
@@ -258,7 +258,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	 */
 	protected void updateWidgetSizeForMode() {
 		// update size if needed
-		if (vdpCanvas.getWidth() > 256) {
+		if (vdpCanvas.getVisibleWidth() > 256) {
 			zoomx = zoom / 2.f;
 		} else {
 			zoomx = zoom;
@@ -279,10 +279,10 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		if (sizedToZoom) {
 			// avoid strangely growing or shrinking the window when y-res goes 192 <--> 212
 			if (zoomWithin(curSize.y, zoomy, vdpCanvas.getVisibleHeight())) {
-				zoomx = Math.round((zoom * 256) / vdpCanvas.getWidth());
+				zoomx = Math.round((zoom * 256) / vdpCanvas.getVisibleWidth());
 				zoomy = Math.round((curSize.y + 64) / vdpCanvas.getVisibleHeight());
 			} else {
-				zoomx = Math.round((curSize.x + 255) / vdpCanvas.getWidth());
+				zoomx = Math.round((curSize.x + 255) / vdpCanvas.getVisibleWidth());
 				zoomy = Math.round((curSize.y + vdpCanvas.getVisibleHeight()-1) / vdpCanvas.getVisibleHeight());
 			}
 			zoom = (int) zoomy;
@@ -375,7 +375,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				Rectangle destRect = updateRect;
 				
 				destRect = destRect.intersection(logicalToPhysical(0, 0, 
-						vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight()));
+						vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight()));
 				
 				Rectangle imageRect = physicalToLogical(destRect);
 				imageRect = vdpCanvas.mapVisible(imageRect);

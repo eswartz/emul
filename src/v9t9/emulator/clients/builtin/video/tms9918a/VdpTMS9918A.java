@@ -11,6 +11,7 @@ import java.util.Arrays;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 
+import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.MemoryCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
@@ -18,7 +19,9 @@ import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
+import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
+import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Logging;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -93,8 +96,42 @@ public class VdpTMS9918A implements VdpHandler {
 	
     static public final String sDumpVdpAccess = "DumpVdpAccess";
     static public final Setting settingDumpVdpAccess = new Setting(sDumpVdpAccess, new Boolean(false));
+    static public final String sVdpInterruptRate = "VdpInterruptRate";
+    static public final Setting settingVdpInterruptRate = new Setting(sVdpInterruptRate, new Integer(60));
 
-	public VdpTMS9918A(MemoryDomain videoMemory) {
+    // this should pretty much stay on
+    static public final Setting settingCpuSynchedVdpInterrupt = new Setting("CpuSynchedVdpInterrupt",
+    		new Boolean(true));
+
+	/** The circular counter for VDP interrupt timing. */
+	private int vdpInterruptFrac;
+	/** The number of CPU cycles corresponding to 1/60 second */
+	private int vdpInterruptLimit;
+	private int throttleCount;
+	private final Machine machine;
+
+
+	public VdpTMS9918A(Machine machine, MemoryDomain videoMemory) {
+		this.machine = machine;
+		
+		settingVdpInterruptRate.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				recalcInterruptTiming();
+			}
+			
+		});
+		
+		Cpu.settingCyclesPerSecond.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				recalcInterruptTiming();
+			}
+			
+		});
+		
+		recalcInterruptTiming();
+		
 		// interleave with CPU log
 		Logging.registerLog(settingDumpVdpAccess, "instrs_full.txt");
 		
@@ -118,6 +155,12 @@ public class VdpTMS9918A implements VdpHandler {
 				vdpregs, this, vdpChanges, vdpCanvas, createBlankModeInfo());
 	}
 	
+	protected void recalcInterruptTiming() {
+        vdpInterruptLimit = Cpu.settingCyclesPerSecond.getInt() / settingVdpInterruptRate.getInt();
+        vdpInterruptFrac = 0;
+        System.out.println("VDP interrupt target: " + vdpInterruptLimit);		
+	}
+
 	protected void log(String msg) {
 		if (vdplog != null)
 			vdplog.println("[VDP] " + msg);
@@ -642,6 +685,8 @@ public class VdpTMS9918A implements VdpHandler {
 		}
 		section.put("Registers", regState);
 		settingDumpVdpAccess.saveState(section);
+		settingCpuSynchedVdpInterrupt.saveState(section);
+		settingVdpInterruptRate.saveState(section);
 	}
 	
 	public void loadState(IDialogSettings section) {
@@ -655,5 +700,45 @@ public class VdpTMS9918A implements VdpHandler {
 		}
 		
 		settingDumpVdpAccess.loadState(section);
+		settingCpuSynchedVdpInterrupt.loadState(section);
+		settingVdpInterruptRate.loadState(section);
+	}
+	
+	
+	public void syncVdpInterrupt() {
+		if (!settingCpuSynchedVdpInterrupt.getBoolean())
+			return;
+		
+		// In Win32, the timer is not nearly as accurate as 1/100 second,
+		// so we get a lot of interrupts at the same time.
+		
+		// Synchronize VDP interrupts along with the CPU in the same task
+		// so we don't succumb to misscheduling between different timers
+		// OR timer tasks.
+		//System.out.print("[VDP delt:" + vdpInterruptFrac + "]");
+		if (vdpInterruptFrac >= vdpInterruptLimit) {
+	
+			vdpInterruptFrac -= vdpInterruptLimit;
+			
+			if (machine.getExecutor().nVdpInterrupts < settingVdpInterruptRate.getInt()) {
+	    		if (Machine.settingThrottleInterrupts.getBoolean()) {
+	    			if (throttleCount-- < 0) {
+	    				throttleCount = 60;
+	    			} else {
+	    				return;
+	    			}
+	    		}
+	    		
+	    		tick();
+	    		
+	    		machine.getCpu().getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
+	    		machine.getExecutor().nVdpInterrupts++;
+	    		//System.out.print('!');
+			}
+		}
+	}
+	
+	public void addCpuCycles(int cycles) {
+		vdpInterruptFrac += cycles;
 	}
 }

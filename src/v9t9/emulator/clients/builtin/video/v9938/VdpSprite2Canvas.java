@@ -158,7 +158,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		if (sprite.isDeleted())
 			return;
 		
-		boolean doubleWidth = canvas.getWidth() == 512;
+		boolean doubleWidth = canvas.getVisibleWidth() == 512;
 		
 		int x = sprite.getX();
 		int y = sprite.getY();
@@ -182,7 +182,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	
 	protected void blitSpriteCanvas(VdpCanvas screenCanvas, boolean fourColorMode) {
 		// where the screen changed, we need to draw our sprite blocks
-		int blockStride = screenCanvas.getWidth() / 8;
+		int blockStride = screenCanvas.getVisibleWidth() / 8;
 		int blockMag = blockStride / 32;
 		int blockCount = 32 * screenCanvas.getHeight() / 8;
 		int screenOffs = 0;

@@ -10,6 +10,7 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.CruAccess;
+import v9t9.engine.VdpHandler;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
@@ -55,10 +56,11 @@ public class Cpu implements MemoryAccessListener {
 	int         currentcycles = 0;	// current cycles per tick
 	long         totalcurrentcycles;	// total # current cycles executed
 	private int interruptTick;	// # ms between CPU syncs
-	
+	private final VdpHandler vdp;
 
-    public Cpu(Machine machine, int interruptTick) {
+    public Cpu(Machine machine, int interruptTick, VdpHandler vdp) {
         this.machine = machine;
+		this.vdp = vdp;
         this.memory = machine.getMemory();
         this.console = machine.getConsole();
         this.console.setAccessListener(this);
@@ -77,7 +79,18 @@ public class Cpu implements MemoryAccessListener {
         });
         
         settingCyclesPerSecond.setInt(3000000);
-        
+
+        Machine.settingPauseMachine.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				if (!setting.getBoolean()) {
+					currenttargetcycles = currentcycles = 0;
+					totalcurrentcycles = totaltargetcycles = 0;
+				}
+			}
+        	
+        });
+
     }
 
     public short getPC() {
@@ -213,7 +226,9 @@ public class Cpu implements MemoryAccessListener {
 	    	allowInts = true;
 	    	return;
 	    }
-    	
+	    
+	    vdp.syncVdpInterrupt();
+	    
 	    if (cruAccess != null) {
 	    	//pins &= ~PIN_INTREQ;
 	    	cruAccess.pollForPins(this);
@@ -222,14 +237,19 @@ public class Cpu implements MemoryAccessListener {
 	    		if (status.getIntMask() >= ic) {
 	    			//System.out.println("Triggering interrupt... "+ic);
 	    			pins |= PIN_INTREQ;
-	    			throw new AbortedException();	    		}
-	    	}
+	    			throw new AbortedException();	    		
+	    		} else {
+	    			//System.out.print('-');
+	    		}
+	    	} 
 	    }
 	    
     	if (((pins &  PIN_LOAD + PIN_RESET) != 0)) {
     		System.out.println("Pins set... "+pins);
     		throw new AbortedException();
-    	}            
+    	}   
+    	
+    	
     }
     
     /**
@@ -260,6 +280,7 @@ public class Cpu implements MemoryAccessListener {
             // maskable
         	pins &= ~PIN_INTREQ;
         	
+        	//System.out.print('=');
         	interrupts++;
             contextSwitch(0x4 * ic);
             addCycles(22);
@@ -286,6 +307,9 @@ public class Cpu implements MemoryAccessListener {
 
 	public synchronized void addCycles(int cycles) {
 		this.currentcycles += cycles; 
+		
+		vdp.addCpuCycles(cycles);
+		//vdpInterruptFrac += cycles;
 		//if (currentcycles > targetcycles)
 		//	System.out.print('!');
 	}
@@ -300,6 +324,10 @@ public class Cpu implements MemoryAccessListener {
 		//System.out.print('-');
 		//System.out.println("tick: " + currenttargetcycles);
 		ticks++;
+		
+		//if ((ticks % 60) == 0) {
+		//	vdpInterruptFrac = 0;
+		//}
 	}
 
 	public synchronized boolean isThrottled() {
@@ -326,6 +354,7 @@ public class Cpu implements MemoryAccessListener {
 		return totalcurrentcycles + currentcycles;
 	}
 	
+	/** Get the tick count, in ms */
 	public synchronized int getTickCount() {
 		return ticks;
 	}
@@ -371,6 +400,7 @@ public class Cpu implements MemoryAccessListener {
 		cruAccess.loadState(section.getSection("CRU"));
 	}
 
+	/** Get target # cycles to be executed per tick */
 	public int getTargetCycleCount() {
 		return targetcycles;
 	}

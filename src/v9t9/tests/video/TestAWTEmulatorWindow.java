@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import org.eclipse.swt.graphics.ImageData;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
+import v9t9.emulator.hardware.V9t9;
 import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
 
 /**
@@ -107,12 +108,12 @@ public class TestAWTEmulatorWindow {
 		V9t9RenderUtils.scaleImageToRGBA(
 				buffer.getData(),
 				vdpCanvas.getImageData().data,
-				vdpCanvas.getWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
+				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
 				bounds.width, bounds.height,
 				0, 0, bounds.width, bounds.height);
 		V9t9RenderUtils.addNoiseRGBA(buffer.getData(), 
 				bounds.width, bounds.height, bounds.width * 4,
-				vdpCanvas.getWidth(), vdpCanvas.getHeight());
+				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
 		
 		return image;
 	}

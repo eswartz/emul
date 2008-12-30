@@ -20,6 +20,9 @@ import java.nio.ByteBuffer;
 
 import v9t9.emulator.clients.builtin.AwtWindow;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
+import v9t9.emulator.hardware.V9t9;
+import v9t9.engine.settings.ISettingListener;
+import v9t9.engine.settings.Setting;
 import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
 
 /**
@@ -90,6 +93,13 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		
 		doResizeToFit();
 		
+		V9t9.settingMonitorDrawing.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				vdpCanvas.markDirty();
+			}
+			
+		});
 	}
 	
 	private void doResizeToFit()  {
@@ -208,6 +218,9 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	 * factor that in when determining the nearest zoom.
 	 */
 	protected void updateWidgetOnResize(int width, int height) {
+		if (width <= 0 || height <= 0)
+			return;
+		
 		float oldzoomx = zoomx;
 		float oldzoomy = zoomy;
 		
@@ -221,7 +234,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			zoomy = zoom / 2.0f;
 		else
 			zoomy = zoom;
-		if (vdpCanvas.getWidth() == 512)
+		if (vdpCanvas.getVisibleWidth() == 512)
 			zoomx = zoom / 2.0f;
 		else
 			zoomx = zoom;
@@ -235,7 +248,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		if (surface == null)
 			return;
 		
-		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight());
+		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight());
 		Point size = new Point(targetRect.width, targetRect.height);
 		Point curSize = new Point(canvas.getWidth(), canvas.getHeight());
 		if (curSize.x == size.x && curSize.y == size.y)
@@ -262,7 +275,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	 */
 	protected void updateWidgetSizeForMode() {
 		// update size if needed
-		if (vdpCanvas.getWidth() > 256) {
+		if (vdpCanvas.getVisibleWidth() > 256) {
 			zoomx = zoom / 2.f;
 		} else {
 			zoomx = zoom;
@@ -322,13 +335,15 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			V9t9RenderUtils.scaleImageToRGBA(
 					buffer.getData(),
 					vdpCanvas.getImageData().data,
-					vdpCanvas.getWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
+					vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
 					destWidth, destHeight,
 					0, 0, destWidth, destHeight);
 		}
-		V9t9RenderUtils.addNoiseRGBA(buffer.getData(), 
-				destWidth, destHeight, destWidth * 4,
-				vdpCanvas.getWidth(), vdpCanvas.getHeight());
+		if (V9t9.settingMonitorDrawing.getBoolean()) {
+			V9t9RenderUtils.addNoiseRGBA(buffer.getData(), 
+					destWidth, destHeight, destWidth * 4,
+					vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
+		}
 
 		g.drawImage(
 					surface,

@@ -204,7 +204,7 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 			zoomy = zoom / 2.0f;
 		else
 			zoomy = zoom;
-		if (vdpCanvas.getWidth() == 512)
+		if (vdpCanvas.getVisibleWidth() == 512)
 			zoomx = zoom / 2.0f;
 		else
 			zoomx = zoom;
@@ -222,7 +222,7 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 		if (surface == null)
 			return;
 		
-		SDLRect targetRect = logicalToPhysical(0, 0, vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight());
+		SDLRect targetRect = logicalToPhysical(0, 0, vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight());
 		Point size = new Point(targetRect.width, targetRect.height);
 		Point curSize = new Point(surface.getWidth(), surface.getHeight());
 		if (curSize.x == size.x && curSize.y == size.y)
@@ -260,7 +260,7 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 	 */
 	protected void updateWidgetSizeForMode() {
 		// update size if needed
-		if (vdpCanvas.getWidth() > 256) {
+		if (vdpCanvas.getVisibleWidth() > 256) {
 			zoomx = zoom / 2.f;
 		} else {
 			zoomx = zoom;
@@ -314,13 +314,13 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 		V9t9RenderUtils.scaleImage(
 				scaledData,
 				vdpCanvas.getImageData().data,
-				vdpCanvas.getWidth(), vdpCanvas.getHeight(),
+				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(),
 				vdpCanvas.getLineStride(),
 				destWidth, destHeight,
 				x, y, width, height);
 				
 		V9t9RenderUtils.addNoise(scaledData, destWidth, destHeight,
-				destWidth * 3, vdpCanvas.getWidth(), vdpCanvas.getHeight());
+				destWidth * 3, vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
 		
 		//System.out.println("buffer size: " + buffer.limit()+"; scaled data size: " + scaledData.data.length);
 		ByteBuffer buffer = surface.getPixelData();

@@ -47,7 +47,7 @@ public class SwtVideoRendererWin32 extends SwtVideoRenderer {
 		if (imageData != null) {
 			
 			// the actual canvas size might not match our wishes
-			Point canvasSize = new Point((int)(vdpCanvas.getWidth() * zoomx), 
+			Point canvasSize = new Point((int)(vdpCanvas.getVisibleWidth() * zoomx), 
 					(int)(vdpCanvas.getVisibleHeight() * zoomy));
 
 			int lineStride = vdpCanvas.getLineStride();
@@ -57,7 +57,7 @@ public class SwtVideoRendererWin32 extends SwtVideoRenderer {
 			synchronized (vdpCanvas) {
 				//System.out.println("repaint: " + updateRect);
 				V9t9Render.renderNoisyWin32ImageFromImageData(imageData.data,
-						vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight(), lineStride,
+						vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight(), lineStride,
 						canvasSize.x, canvasSize.y,
 						updateRect.x, updateRect.y, updateRect.width, updateRect.height,
 						canvas.handle);

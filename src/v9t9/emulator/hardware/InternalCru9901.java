@@ -14,7 +14,7 @@ import v9t9.keyboard.KeyboardState;
 import v9t9.utils.Utils;
 
 /**
- * CRU handlers for the TMS9901 (as attached to a TI-99/4A)
+ * CRU handlers for the TMS9901 (as attached to a TI-99/4A).
  * @author ejs
  */
 public class InternalCru9901 implements CruAccess {

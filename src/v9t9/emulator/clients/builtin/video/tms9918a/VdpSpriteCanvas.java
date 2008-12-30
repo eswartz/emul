@@ -96,7 +96,7 @@ public class VdpSpriteCanvas {
 	 */
 	protected void updateSpriteBitmapForScreenChanges(VdpCanvas screenCanvas,
 			byte[] screenChanges) {
-		int blockStride = screenCanvas.getWidth() / 8;
+		int blockStride = screenCanvas.getVisibleWidth() / 8;
 		int blockMag = blockStride / 32;
 		int blockCount = 32 * screenCanvas.getHeight() / 8;
 		int screenOffs = 0;
@@ -198,7 +198,7 @@ public class VdpSpriteCanvas {
 	 */
 	protected void updateScreenBitmapForSpriteChanges(VdpCanvas screenCanvas,
 			byte[] screenChanges) {
-		int blockStride = screenCanvas.getWidth() / 8;
+		int blockStride = screenCanvas.getVisibleWidth() / 8;
 		int blockMag = blockStride / 32;
 		int blockCount = 32 * screenCanvas.getHeight() / 8;
 		int screenOffs = 0;

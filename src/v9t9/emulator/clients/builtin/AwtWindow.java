@@ -4,17 +4,20 @@
 package v9t9.emulator.clients.builtin;
 
 import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.Container;
-import java.awt.Dialog;
 import java.awt.Dimension;
-import java.awt.FileDialog;
 import java.awt.Frame;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Paint;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -32,13 +35,9 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFileChooser;
 
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.AwtVideoRenderer;
+import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
@@ -54,7 +53,6 @@ public class AwtWindow extends BaseEmulatorWindow {
 	protected Canvas videoControl;
 	private Container controlsContainer;
 	private BufferedImage icons;
-	private Shell shell;
 	private BufferStrategy bufferStrategy;
 	private GridBagLayout controlsLayout;
 	public AwtWindow(final Machine machine) {
@@ -87,7 +85,24 @@ public class AwtWindow extends BaseEmulatorWindow {
 			icons = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
 		}
 		
-		controlsContainer = new Container();
+		controlsContainer = new Container() {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void paint(Graphics g) {
+				Graphics2D g2d = (Graphics2D) g;
+				Paint oldPaint = g2d.getPaint();
+				GradientPaint paint = new GradientPaint(new Point(0, 0), new Color(0xf0f0f0),
+						new Point(getWidth() / 2, 0), new Color(0xc0c0c0), true);
+				g2d.setPaint(paint);
+				g2d.fillRect(0, 0, getWidth(), getHeight());
+				g2d.setPaint(oldPaint);
+				super.paint(g);
+			}
+		};
 		controlsLayout = new GridBagLayout();
 		controlsContainer.setLayout(controlsLayout);
 		controlsContainer.setFocusable(false);
@@ -113,8 +128,7 @@ public class AwtWindow extends BaseEmulatorWindow {
 				});
 
 		createStateButton(Executor.settingDumpFullInstructions,
-				icons, new Rectangle(0, 128, 64, 64),
-				new Rectangle(0, 0, 64, 64),
+				new Rectangle(0, 128, 64, 64), new Rectangle(0, 0, 64, 64),
 				"Toggle CPU logging");
 		
 		/*BasicButton basicButton =*/ /*createButton(
@@ -163,17 +177,20 @@ public class AwtWindow extends BaseEmulatorWindow {
 		controlsContainer.setPreferredSize(new Dimension(64, 64 * controlsContainer.getComponentCount()));
 		
 		//controlsContainer.add(Box.createVerHorizontalStrut(64));
-		//createStateButton(Machine.settingPauseMachine, icons, new Rectangle(0, 512, 64, 64),
-		//		new Rectangle(0, 0, 64, 64),
-		//		"Pause machine");
+		createStateButton(Machine.settingPauseMachine, new Rectangle(0, 512, 64, 64), new Rectangle(0, 0, 64, 64),
+				"Pause machine");
+
+		createStateButton(V9t9.settingMonitorDrawing, new Rectangle(0, 576, 64, 64), new Rectangle(0, 0, 64, 64), 
+				"Apply monitor effect to video");
+
 
 		//screenContainer.setFocus();
 
 
 		frame.setVisible(true);
-		//frame.setBounds(800, 800, 256 * 3, 192 * 3);
+		//frame.setBounds(800, 800, 256 * 3 + 96, 200 * 3);
 		frame.setLocation(800, 800);
-		
+		frame.pack();
 		frame.createBufferStrategy(1);
 		bufferStrategy = frame.getBufferStrategy();
 
@@ -245,8 +262,7 @@ public class AwtWindow extends BaseEmulatorWindow {
 	
 	
 	private BasicButton createStateButton(final Setting setting,
-			BufferedImage icons, Rectangle bounds, final Rectangle checkBounds,
-			String tooltip) {
+			Rectangle bounds, final Rectangle checkBounds, String tooltip) {
 		
 		final BasicButton button = createButton(icons, bounds, tooltip, new ButtonPressHandler() {
 
@@ -255,6 +271,7 @@ public class AwtWindow extends BaseEmulatorWindow {
 			}
 			
 		});
+		
 		setting.addListener(new ISettingListener() {
 
 			public void changed(final Setting setting, final Object oldValue) {
@@ -267,6 +284,9 @@ public class AwtWindow extends BaseEmulatorWindow {
 			}
 			
 		});
+		
+		if (setting.getBoolean())
+			button.setOverlayBounds(checkBounds);
 		return button;
 	}
 
@@ -315,11 +335,14 @@ public class AwtWindow extends BaseEmulatorWindow {
 		JFileChooser chooser = new JFileChooser(directory);
 		chooser.setDialogTitle(title);
 		chooser.setSelectedFile(new File(directory, fileName));
+		int ret;
 		if (isSave)
-			chooser.showSaveDialog(frame);
+			ret = chooser.showSaveDialog(frame);
 		else
-			chooser.showOpenDialog(frame);
-		return chooser.getSelectedFile() != null ? chooser.getSelectedFile().getAbsolutePath() : null;
+			ret = chooser.showOpenDialog(frame);
+		if (ret == JFileChooser.CANCEL_OPTION)
+			return null;
+		return chooser.getSelectedFile().getAbsolutePath();
 	}
 	
 	@Override

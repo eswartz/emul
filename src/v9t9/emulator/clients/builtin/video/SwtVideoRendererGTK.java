@@ -60,14 +60,14 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 		if (imageData != null) {
 			
 			// the actual canvas size might not match our wishes
-			Point canvasSize = new Point((int)(vdpCanvas.getWidth() * zoomx), 
+			Point canvasSize = new Point((int)(vdpCanvas.getVisibleWidth() * zoomx), 
 					(int)(vdpCanvas.getVisibleHeight() * zoomy));
 
 			if (USE_SWTONLY) {
 				Rectangle destRect = updateRect;
 				
 				destRect = destRect.intersection(logicalToPhysical(0, 0, 
-						vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight()));
+						vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight()));
 				
 				Rectangle imageRect = physicalToLogical(destRect);
 				imageRect = vdpCanvas.mapVisible(imageRect);
@@ -80,7 +80,7 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 				if (USE_GDKONLY) {
 					synchronized (vdpCanvas) {
 						V9t9Render.renderGdkPixbufFromImageData(imageData.data,
-								vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight(), lineStride,
+								vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight(), lineStride,
 								canvasSize.x, canvasSize.y,
 								updateRect.x, updateRect.y, updateRect.width, updateRect.height,
 								OS.GTK_WIDGET_WINDOW(canvas.handle));
@@ -89,7 +89,7 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 					synchronized (vdpCanvas) {
 						//System.out.println("repaint: " + updateRect);
 						V9t9Render.renderNoisyGdkPixbufFromImageData(imageData.data,
-								vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight(), lineStride,
+								vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight(), lineStride,
 								canvasSize.x, canvasSize.y,
 								updateRect.x, updateRect.y, updateRect.width, updateRect.height,
 								OS.GTK_WIDGET_WINDOW(canvas.handle));
@@ -102,7 +102,7 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 						V9t9Render.renderAnalogGdkPixbufFromImageData(
 								analog,
 								imageData.data,
-								vdpCanvas.getWidth(), vdpCanvas.getVisibleHeight(), lineStride,
+								vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight(), lineStride,
 								canvasSize.x, canvasSize.y,
 								OS.GTK_WIDGET_WINDOW(canvas.handle));
 					}
