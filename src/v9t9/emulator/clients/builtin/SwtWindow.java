@@ -32,7 +32,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.ISwtVideoRenderer;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
@@ -47,7 +47,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	protected Shell shell;
 	protected Control videoControl;
 	private Composite controlsComposite;
-	public SwtWindow(Display display, SwtVideoRenderer renderer, Machine machine) {
+	public SwtWindow(Display display, ISwtVideoRenderer renderer, Machine machine) {
 		super(machine);
 		setVideoRenderer(renderer);
 		

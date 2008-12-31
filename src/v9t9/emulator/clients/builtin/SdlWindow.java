@@ -126,7 +126,6 @@ public class SdlWindow extends BaseEmulatorWindow {
 		_display.dispose();
 	}
 	
-	@Override
 	protected Shell getShell() {
 		return _shell;
 	}
@@ -433,6 +432,19 @@ public class SdlWindow extends BaseEmulatorWindow {
 	}
 	public SDLRect getScreenRect() {
 		return screenRect;
+	}
+
+	@Override
+	protected String openFileSelectionDialog(String title, String directory,
+			String fileName, boolean isSave) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void showErrorMessage(String title, String msg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	

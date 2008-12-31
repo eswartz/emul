@@ -50,11 +50,16 @@ public class Cpu implements MemoryAccessListener {
 	
 	int         instcycles;	// cycles for each instruction
 	
-	int         targetcycles;	// target # cycles to be executed per tick
-	int         currenttargetcycles;	// target # cycles to be executed for this tick
-	long         totaltargetcycles;	// total # target cycles expected
-	int         currentcycles = 0;	// current cycles per tick
-	long         totalcurrentcycles;	// total # current cycles executed
+	/** target # cycles to be executed per tick */
+	int         targetcycles;	
+	/** target # cycles to be executed for this tick */
+	int         currenttargetcycles;	//
+	/**  total # target cycles expected throughout execution */
+	long         totaltargetcycles;	//
+	/** current cycles per tick */
+	int         currentcycles = 0;	// 
+	/** total # current cycles executed */
+	long         totalcurrentcycles;	// 
 	private int interruptTick;	// # ms between CPU syncs
 	private final VdpHandler vdp;
 
@@ -320,6 +325,10 @@ public class Cpu implements MemoryAccessListener {
 		
 		// if we went over, aim for fewer this time
 		currenttargetcycles = (int) (totaltargetcycles - totalcurrentcycles);
+		if (currenttargetcycles > settingCyclesPerSecond.getInt()) {
+			// something really threw us off -- just start over
+			totalcurrentcycles = totaltargetcycles;
+		}
 		currentcycles = 0;
 		//System.out.print('-');
 		//System.out.println("tick: " + currenttargetcycles);

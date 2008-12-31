@@ -29,7 +29,7 @@ import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
  * @author ejs
  *
  */
-public class SwtVideoRenderer implements VideoRenderer, ICanvasListener {
+public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVideoRenderer {
 	
 	protected Canvas canvas;
 	protected VdpCanvas vdpCanvas;

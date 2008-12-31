@@ -6,14 +6,13 @@
  */
 package v9t9.emulator.clients.builtin;
 
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.ISwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
@@ -25,7 +24,7 @@ import v9t9.engine.VdpHandler;
  * This client does all its own dang work!
  * @author ejs
  */
-public class PureJavaClient implements Client {
+public class SwtJavaClient implements Client {
     VdpHandler video;
     CruHandler cruHandler;
     private Machine machine;
@@ -38,48 +37,16 @@ public class PureJavaClient implements Client {
 
 	private final int QUANTUM = 1000 / 60;
 	
-    public PureJavaClient(final Machine machine, VdpHandler vdp, Display display) {
+    public SwtJavaClient(final Machine machine, VdpHandler vdp, ISwtVideoRenderer renderer, KeyboardHandler keyboardHandler, Display display) {
     	this.display = display;
         this.machine = machine;
         
         expectedUpdateTime = QUANTUM;
         
-        if (false && videoRenderer == null && SWT.getPlatform().equals("gtk")) {
-        	// try OpenGL first ?
-        	try {
-        		Class<?> klass = getClass().getClassLoader().loadClass(
-        				SwtVideoRenderer.class.getName() + "OGL");
-        		videoRenderer = (VideoRenderer) klass.getConstructor().newInstance();
-        	} catch (Exception e) {
-        		System.err.println("Cannot load OpenGL/GTK-specific support: " +e.getMessage());
-        	}
-        }
-
-        if (false && videoRenderer == null) {
-        	// try J3D first ?
-        	try {
-        		Class<?> klass = getClass().getClassLoader().loadClass(
-        				SwtVideoRenderer.class.getName() + "J3D");
-        		videoRenderer = (VideoRenderer) klass.getConstructor().newInstance();
-        	} catch (Exception e) {
-        		System.err.println("Cannot load J3D support: " +e.getMessage());
-        	}
-        }
-
-        if (videoRenderer == null && SWT.getPlatform().equals("gtk")) {
-        	try {
-	        	Class<?> klass = getClass().getClassLoader().loadClass(
-	        			SwtVideoRenderer.class.getName() + "GTK");
-	        	videoRenderer = (VideoRenderer) klass.getConstructor().newInstance();
-        	} catch (Exception e) {
-        		System.err.println("Cannot load GTK-specific support: " +e.getMessage());
-        	}
-        }
-        if (videoRenderer == null)
-        	videoRenderer = new SwtVideoRenderer();
+        videoRenderer = renderer;
         video = vdp;
         
-        SwtWindow window = new SwtWindow(display, (SwtVideoRenderer) videoRenderer, machine);
+        SwtWindow window = new SwtWindow(display, (ISwtVideoRenderer) videoRenderer, machine);
 
         video.setCanvas(videoRenderer.getCanvas());
 
@@ -98,8 +65,9 @@ public class PureJavaClient implements Client {
         //keyboardState = new KeyboardState(machine.getCpu(), (InternalCru) cru);
         machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
         
-        keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(),
-        		machine.getKeyboardState(), machine);
+        this.keyboardHandler = keyboardHandler;
+        //keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(),
+        //		machine.getKeyboardState(), machine);
     }
     /*
      * (non-Javadoc)

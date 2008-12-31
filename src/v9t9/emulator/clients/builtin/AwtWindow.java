@@ -3,7 +3,6 @@
  */
 package v9t9.emulator.clients.builtin;
 
-import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -37,6 +36,7 @@ import javax.swing.JFileChooser;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.AwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.IAwtVideoRendererContainer;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.ISettingListener;
@@ -47,10 +47,9 @@ import v9t9.engine.settings.Setting;
  * @author ejs
  *
  */
-public class AwtWindow extends BaseEmulatorWindow {
+public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererContainer {
 	
 	protected Frame frame;
-	protected Canvas videoControl;
 	private Container controlsContainer;
 	private BufferedImage icons;
 	private BufferStrategy bufferStrategy;
@@ -63,8 +62,7 @@ public class AwtWindow extends BaseEmulatorWindow {
 		GraphicsConfiguration gc = device.getDefaultConfiguration();
 		frame = new Frame(gc);
 		
-		
-		AwtVideoRenderer renderer = new AwtVideoRenderer(this);
+		AwtVideoRenderer renderer = new AwtVideoRenderer();
 		setVideoRenderer(renderer);
 		
 		//frame.setIgnoreRepaint(true);

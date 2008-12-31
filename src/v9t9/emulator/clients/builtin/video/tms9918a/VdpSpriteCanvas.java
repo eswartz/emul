@@ -310,7 +310,12 @@ public class VdpSpriteCanvas {
 	protected static final int[] charshifts = { 0, 0, 8, 0, 0, 8, 8, 8 };
 	
 	protected void drawSprite(VdpCanvas canvas, VdpSprite sprite) {
-		if (sprite.isDeleted() || sprite.getColor() == 0)
+		if (sprite.isDeleted()) {
+			//System.out.println("sprite is deleted");
+			return;
+		}
+		
+		if (sprite.getColor() == 0)
 			return;
 		
 		int x = sprite.getX();

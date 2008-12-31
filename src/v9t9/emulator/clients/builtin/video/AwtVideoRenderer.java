@@ -6,19 +6,16 @@ package v9t9.emulator.clients.builtin.video;
 import java.awt.Canvas;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.HierarchyBoundsAdapter;
 import java.awt.event.HierarchyEvent;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-import java.awt.image.ImageObserver;
-import java.nio.ByteBuffer;
 
-import v9t9.emulator.clients.builtin.AwtWindow;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.engine.settings.ISettingListener;
@@ -49,15 +46,13 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	private int desiredHeight;
 
-	private final AwtWindow window;
 
 	private BufferedImage surface;
 	private Canvas canvas;
 
 	private Rectangle updateRect;
 	
-	public AwtVideoRenderer(AwtWindow window) {
-		this.window = window;
+	public AwtVideoRenderer() {
 		updateRect = new Rectangle(0, 0, 0, 0);
 		setCanvas(new ImageDataCanvas24Bit());
 		desiredWidth = (int)(zoomx * 256);
@@ -77,17 +72,19 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			
 			@Override
 			public void update(Graphics g) {
+				// do not clear background
 				paint(g);
 			}
 			
 		};
 		canvas.setFocusTraversalKeysEnabled(false);
 		canvas.setFocusable(true);
-		//canvas.setIgnoreRepaint(true);
 		canvas.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
 			@Override
 			public void ancestorResized(HierarchyEvent e) {
-				updateWidgetOnResize(canvas.getWidth(), canvas.getHeight());
+				int width = canvas.getWidth();
+				int height = canvas.getHeight();
+				updateWidgetOnResize(width, height);
 			}
 		});
 		
@@ -106,9 +103,21 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		canvas.setPreferredSize(new Dimension(desiredWidth, desiredHeight));
 		canvas.setSize(new Dimension(desiredWidth, desiredHeight));
 
-		//canvas.setSize(new Dimension(desiredWidth, desiredHeight));
-		window.setDesiredScreenSize(desiredWidth, desiredHeight);
+		resizeTopLevel();
+		
+		//container.setDesiredScreenSize(desiredWidth, desiredHeight);
 	}
+	protected void resizeTopLevel() {
+		//canvas.setSize(new Dimension(desiredWidth, desiredHeight));
+		Component comp = canvas;
+		while (comp != null && !(comp instanceof Window)) {
+		    comp = comp.getParent();
+		}
+		Window topLevel = (Window) comp;
+		if (topLevel != null)
+			topLevel.pack();
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#getCanvas()
 	 */
@@ -192,7 +201,10 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			
 			//System.out.println("Redrawing " + updateRect);
 			
-			BufferStrategy bufferStrategy = window.getBufferStrategy();
+			
+			//BufferStrategy bufferStrategy = getBufferStrategy();
+			
+			BufferStrategy bufferStrategy = canvas.getBufferStrategy();
 			doRedraw(bufferStrategy.getDrawGraphics(), updateRect.x, updateRect.y, 
 					updateRect.width, updateRect.height);
 			
@@ -357,5 +369,6 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	public Component getAwtCanvas() {
 		return canvas;
 	}
+	
 
 }

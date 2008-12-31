@@ -9,12 +9,20 @@ package v9t9.emulator.hardware;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.AwtJavaClient;
-import v9t9.emulator.clients.builtin.PureJavaClient;
+import v9t9.emulator.clients.builtin.AwtKeyboardHandler;
+import v9t9.emulator.clients.builtin.SwtJavaClient;
 import v9t9.emulator.clients.builtin.SdlJavaClient;
+import v9t9.emulator.clients.builtin.SwtKeyboardHandler;
+import v9t9.emulator.clients.builtin.video.AwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.ISwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.SwtAwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.clients.demo.HybridDemoClient;
 import v9t9.emulator.hardware.memory.ExpRamArea;
@@ -202,16 +210,65 @@ public class V9t9 {
         }
         
         Client client;
-        if (findArgument(args, "--swt")) {
-        	client = new PureJavaClient(machine, machine.getVdp(), new Display());
+        Display display = new Display();
+		if (findArgument(args, "--swt")) {
+        	ISwtVideoRenderer videoRenderer = null;
+        	if (false && videoRenderer == null && SWT.getPlatform().equals("gtk")) {
+            	// try OpenGL first ?
+            	try {
+            		Class<?> klass = Class.forName(
+            				SwtVideoRenderer.class.getName() + "OGL");
+            		videoRenderer = (ISwtVideoRenderer) klass.getConstructor().newInstance();
+            	} catch (Exception e) {
+            		System.err.println("Cannot load OpenGL/GTK-specific support: " +e.getMessage());
+            	}
+            }
+
+            if (false && videoRenderer == null) {
+            	// try J3D first ?
+            	try {
+            		Class<?> klass = Class.forName(
+            				SwtVideoRenderer.class.getName() + "J3D");
+            		videoRenderer = (ISwtVideoRenderer) klass.getConstructor().newInstance();
+            	} catch (Exception e) {
+            		System.err.println("Cannot load J3D support: " +e.getMessage());
+            	}
+            }
+
+            if (videoRenderer == null && SWT.getPlatform().equals("gtk")) {
+            	try {
+    	        	Class<?> klass = Class.forName(
+    	        			SwtVideoRenderer.class.getName() + "GTK");
+    	        	videoRenderer = (ISwtVideoRenderer) klass.getConstructor().newInstance();
+            	} catch (Exception e) {
+            		System.err.println("Cannot load GTK-specific support: " +e.getMessage());
+            	}
+            }
+            if (videoRenderer == null)
+            	videoRenderer = new SwtVideoRenderer();
+            
+            SwtKeyboardHandler keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(),
+            				machine.getKeyboardState(), machine);
+            		
+        	client = new SwtJavaClient(machine, machine.getVdp(), videoRenderer, keyboardHandler, display);
         }
         else if (findArgument(args, "--sdl")) {
 			client = new SdlJavaClient(machine, machine.getVdp()); 
         }
         else if (findArgument(args, "--awt")) {
 			client = new AwtJavaClient(machine, machine.getVdp());
-		} else {
-			client = new HybridDemoClient(machine, machine.getVdp(), new Display());
+		} 
+        else if (findArgument(args, "--swtawt")) {
+        	SwtAwtVideoRenderer videoRenderer = new SwtAwtVideoRenderer(display);
+			client = new SwtJavaClient(machine, machine.getVdp(), 
+					videoRenderer, 
+					new AwtKeyboardHandler(
+			        		videoRenderer.getAwtCanvas(),
+			        		machine.getKeyboardState(), machine),
+					display);
+		} 
+        else {
+			client = new HybridDemoClient(machine, machine.getVdp(), display);
 		}
         
         final V9t9 app = new V9t9(machine, client);
