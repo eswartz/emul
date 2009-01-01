@@ -9,6 +9,9 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.internal.gtk.OS;
 
+import v9t9.emulator.hardware.V9t9;
+import v9t9.engine.settings.ISettingListener;
+import v9t9.engine.settings.Setting;
 import v9t9.jni.v9t9render.SWIGTYPE_p_AnalogTV;
 import v9t9.jni.v9t9render.V9t9Render;
 
@@ -32,6 +35,15 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 	
 	public SwtVideoRendererGTK() {
 		super();
+		
+		V9t9.settingMonitorDrawing.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				if (USE_NOISY)
+					vdpCanvas.markDirty();
+			}
+			
+		});
 	}
 	
 	@Override

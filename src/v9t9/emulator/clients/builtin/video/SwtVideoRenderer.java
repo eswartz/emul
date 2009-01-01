@@ -458,5 +458,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	}
 	
 
+	public void setFocus() {
+		canvas.setFocus();		
+	}
 
 }

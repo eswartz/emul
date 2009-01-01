@@ -64,14 +64,14 @@ public abstract class BaseKeyboardHandler implements KeyboardHandler {
 				if (!machine.isRunning())
 					cancelPaste();
 				
-				// only send chars as fast as the machine is reading
-				if (!keyboardState.wasKeyboardProbed())
-					return;
-				
 				if (Machine.settingPauseMachine.getBoolean())
 					return;
 				
 				if (index <= chs.length) {
+					// only send chars as fast as the machine is reading
+					if (!keyboardState.wasKeyboardProbed())
+						return;
+					
 					if (prevCh != 0)
 						keyboardState.postCharacter(false, true, prevShift, prevCh);
 					
@@ -104,6 +104,7 @@ public abstract class BaseKeyboardHandler implements KeyboardHandler {
 						
 						keyboardState.postCharacter(true, true, shift, ch);
 						
+						
 						prevCh = ch;
 						prevShift = shift;
 					} else {
@@ -113,7 +114,8 @@ public abstract class BaseKeyboardHandler implements KeyboardHandler {
 			}
 			
 		};
-		pasteTimer.scheduleAtFixedRate(pasteCharacterTask, 0, 1000 / 20); 
+		// TODO: find a better way to ensure the keyboard was scanned fully
+		pasteTimer.scheduleAtFixedRate(pasteCharacterTask, 0, 1000 / 15); 
 	}
 
 	public static void main(String[] args) {

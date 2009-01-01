@@ -181,10 +181,10 @@ public class Executor {
         compileAvg = ((int) (compiled * 10000));
         
         System.out.println("# instructions / second: " + nInstructions
-        		+ " (cycles = " + (cpu.getTotalCycleCount() - nLastCycleCount) + "; "
+        		+ " (cycles = " + (cpu.getTotalCycleCount() - nLastCycleCount) 
         		+ (settingCompile.getBoolean() ? 
-        		compileAvg / 100 + "." + compileAvg % 100 + "% compiled, " 
-        		+ nSwitches + " context switches, " + nCompiles + " compiles)" : "")
+        		"; " + compileAvg / 100 + "." + compileAvg % 100 + "% compiled, " 
+        		+ nSwitches + " context switches, " + nCompiles + " compiles)" : ")")
         		+ "; VDP Interrupts = " +nVdpInterrupts + " (honored = " + cpu.getAndResetInterruptCount() + ")");
         nInstructions = 0;
         nCompiledInstructions = 0;

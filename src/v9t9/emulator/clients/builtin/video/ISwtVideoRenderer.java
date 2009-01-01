@@ -13,4 +13,5 @@ import org.eclipse.swt.widgets.Control;
  */
 public interface ISwtVideoRenderer extends VideoRenderer {
 	Control createControl(Composite parent);
+
 }

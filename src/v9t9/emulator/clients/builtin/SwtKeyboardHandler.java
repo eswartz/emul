@@ -60,40 +60,6 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 	public SwtKeyboardHandler(Control control, KeyboardState keyboardState, Machine machine) {
 		super(keyboardState, machine);
 		
-		if (true) {
-			Shell shell = control.getShell();
-		 	shell.getDisplay().addFilter(SWT.KeyDown, new Listener() {
-	
-				public void handleEvent(Event event) {
-					recordKey(true, event.stateMask, event.keyCode);
-					event.doit = false;
-					
-				}
-				
-			});
-			shell.getDisplay().addFilter(SWT.KeyUp, new Listener() {
-	
-				public void handleEvent(Event event) {
-					recordKey(false, event.stateMask, event.keyCode);
-					event.doit = false;
-				}
-				
-			});
-		} else {
-			control.setFocus();
-			control.addKeyListener(new KeyListener() {
-	
-				public void keyPressed(KeyEvent e) {
-					recordKey(true, e.stateMask, e.keyCode);
-				}
-	
-	
-				public void keyReleased(KeyEvent e) {
-					recordKey(false, e.stateMask, e.keyCode);
-				}
-				
-			});
-		}
 	}
 
 	/**
@@ -320,5 +286,43 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		}
 		display.dispose ();
 
+	}
+
+	public void init(Control control) {
+		if (true) {
+			Shell shell = control.getShell();
+		 	shell.getDisplay().addFilter(SWT.KeyDown, new Listener() {
+	
+				public void handleEvent(Event event) {
+					recordKey(true, event.stateMask, event.keyCode);
+					event.doit = false;
+					
+				}
+				
+			});
+			shell.getDisplay().addFilter(SWT.KeyUp, new Listener() {
+	
+				public void handleEvent(Event event) {
+					recordKey(false, event.stateMask, event.keyCode);
+					event.doit = false;
+				}
+				
+			});
+		} else {
+			control.setFocus();
+			control.addKeyListener(new KeyListener() {
+	
+				public void keyPressed(KeyEvent e) {
+					recordKey(true, e.stateMask, e.keyCode);
+				}
+	
+	
+				public void keyReleased(KeyEvent e) {
+					recordKey(false, e.stateMask, e.keyCode);
+				}
+				
+			});
+		}
+		
 	}
 }

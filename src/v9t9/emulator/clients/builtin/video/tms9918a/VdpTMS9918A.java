@@ -201,7 +201,7 @@ public class VdpTMS9918A implements VdpHandler {
     	
     	int         redraw = doWriteVdpReg(reg, old, val);
 
-    	synchronized (vdpCanvas) {
+    	//synchronized (vdpCanvas) {
 			
 	    	/*  This flag must be checked first because
 		 	   it affects the meaning of the following 
@@ -232,7 +232,7 @@ public class VdpTMS9918A implements VdpHandler {
 		 			//update();
 		 		}
 		 	}
-		}
+		//}
 
     }
     

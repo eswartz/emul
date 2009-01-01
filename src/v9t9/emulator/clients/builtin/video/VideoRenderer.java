@@ -33,4 +33,7 @@ public interface VideoRenderer {
 	boolean isIdle();
 
 	void setZoom(int zoom);
+	
+	void setFocus();
+
 }

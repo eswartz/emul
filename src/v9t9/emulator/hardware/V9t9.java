@@ -37,6 +37,7 @@ import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.WordMemoryArea;
+import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
 
 public class V9t9 {
@@ -247,7 +248,7 @@ public class V9t9 {
             if (videoRenderer == null)
             	videoRenderer = new SwtVideoRenderer();
             
-            SwtKeyboardHandler keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(),
+            SwtKeyboardHandler keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getShell(),
             				machine.getKeyboardState(), machine);
             		
         	client = new SwtJavaClient(machine, machine.getVdp(), videoRenderer, keyboardHandler, display);

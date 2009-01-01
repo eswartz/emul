@@ -4,7 +4,6 @@
 package v9t9.emulator.clients.builtin;
 import java.awt.AWTEvent;
 import java.awt.AWTEventMulticaster;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;

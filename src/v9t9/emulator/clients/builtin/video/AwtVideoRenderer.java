@@ -90,10 +90,16 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		
 		doResizeToFit();
 		
+
 		V9t9.settingMonitorDrawing.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
-				vdpCanvas.markDirty();
+				synchronized (AwtVideoRenderer.this) {
+					synchronized (vdpCanvas) {
+						vdpCanvas.markDirty();
+					}
+					redraw();
+				}
 			}
 			
 		});
@@ -165,7 +171,10 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	 * @param rect
 	 */
 	public void update(Rectangle rect) {
-		updateRect.add(rect);
+		if (updateRect.isEmpty())
+			updateRect = rect;
+		else
+			updateRect.add(rect);
 		isDirty = true;
 		//System.out.println("Updating " + updateRect);
 	}
@@ -173,10 +182,16 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#redraw()
 	 */
-	public void redraw() {
+	public synchronized void redraw() {
 		if (!isDirty)
 			return;
 		
+		synchronized (vdpCanvas) {
+			doRedraw();
+		}
+	}
+
+	private void doRedraw() {
 		boolean becameBlank = vdpCanvas.isBlank() && !isBlank;
 		isBlank = vdpCanvas.isBlank();
 		
@@ -369,6 +384,9 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	public Component getAwtCanvas() {
 		return canvas;
 	}
-	
+
+	public void setFocus() {
+		canvas.requestFocus();
+	}
 
 }

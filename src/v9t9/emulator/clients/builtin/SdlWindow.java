@@ -7,7 +7,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import sdljava.SDLException;
@@ -56,7 +58,7 @@ public class SdlWindow extends BaseEmulatorWindow {
 	public SdlWindow(Machine machine) throws SDLException {
 		super(machine);
 
-		_display = new Display();
+		_display = Display.getDefault();
 		_shell = new Shell(_display); 
 		
 		videoRenderer = new SdlVideoRenderer(this);
@@ -89,7 +91,7 @@ public class SdlWindow extends BaseEmulatorWindow {
 						"Paste into keyboard",
 				new ButtonPressHandler() {
 					public void pressed() {
-						pasteClipboardToKeyboard();
+						//pasteClipboardToKeyboard();
 					}
 				});
 		
@@ -437,8 +439,11 @@ public class SdlWindow extends BaseEmulatorWindow {
 	@Override
 	protected String openFileSelectionDialog(String title, String directory,
 			String fileName, boolean isSave) {
-		// TODO Auto-generated method stub
-		return null;
+		FileDialog dialog = new FileDialog(getShell(), isSave ? SWT.SAVE : SWT.OPEN);
+		dialog.setFilterPath(directory);
+		dialog.setFileName(fileName);
+		String filename = dialog.open();
+		return filename;
 	}
 
 	@Override

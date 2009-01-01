@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.ISwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
@@ -66,6 +67,8 @@ public class SwtJavaClient implements Client {
         machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
         
         this.keyboardHandler = keyboardHandler;
+        if (keyboardHandler instanceof SwtKeyboardHandler)
+        	((SwtKeyboardHandler) keyboardHandler).init(((SwtVideoRenderer) videoRenderer).getWidget());
         //keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(),
         //		machine.getKeyboardState(), machine);
     }

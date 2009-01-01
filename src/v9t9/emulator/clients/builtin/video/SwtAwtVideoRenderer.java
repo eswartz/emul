@@ -25,6 +25,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 
 	private Frame frame;
 	private Shell shell;
+	private Canvas awtContainer;
 
 	public SwtAwtVideoRenderer(Display display) {
 		super();
@@ -35,16 +36,18 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	 */
 	public Control createControl(Composite parent) {
 		shell = parent.getShell();
-		Canvas canvas = new Canvas(parent, SWT.EMBEDDED | SWT.NO_MERGE_PAINTS | SWT.NO_BACKGROUND | SWT.NO_REDRAW_RESIZE);
-		frame = SWT_AWT.new_Frame(canvas);
+		awtContainer = new Canvas(parent, SWT.EMBEDDED | SWT.NO_MERGE_PAINTS | SWT.NO_BACKGROUND | SWT.NO_REDRAW_RESIZE);
+		frame = SWT_AWT.new_Frame(awtContainer);
 		frame.add(getAwtCanvas());
 		frame.createBufferStrategy(1);
 		frame.setFocusTraversalKeysEnabled(false);
 		frame.setIgnoreRepaint(true);
 		
+		frame.setFocusable(true);
+		
 		// no layout -- let canvas size drive it
 		//frame.setLayout(new FlowLayout());
-		canvas.setLayout(new Layout() {
+		awtContainer.setLayout(new Layout() {
 
 			@Override
 			protected Point computeSize(Composite composite, int hint,
@@ -66,7 +69,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 			}
 			
 		});
-		canvas.setLayoutData(GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).create());
+		awtContainer.setLayoutData(GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).create());
 		/*
 		canvas.addControlListener(new ControlAdapter() {
 			@Override
@@ -75,7 +78,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 			}
 		});
 		*/
-		return canvas;
+		return awtContainer;
 	}
 	
 	@Override
@@ -90,6 +93,9 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		});
 		
 	}
-	
+
+	public void setFocus() {
+		getAwtCanvas().requestFocus();
+	}
 
 }
