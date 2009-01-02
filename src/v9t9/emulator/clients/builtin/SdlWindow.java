@@ -44,8 +44,6 @@ public class SdlWindow extends BaseEmulatorWindow {
 	private SDLRect buttonsRect;
 	private int screenWidth;
 	private int screenHeight;
-	private int desiredScreenWidth;
-	private int desiredScreenHeight;
 	private boolean fullExpose;
 	private boolean resizePending;
 	private SDLButton hoverButton;
@@ -61,7 +59,8 @@ public class SdlWindow extends BaseEmulatorWindow {
 		_display = Display.getDefault();
 		_shell = new Shell(_display); 
 		
-		videoRenderer = new SdlVideoRenderer(this);
+		videoRenderer = new SdlVideoRenderer();
+		((SdlVideoRenderer) videoRenderer).setSdlWindow(this);
 		File iconsFile = new File("icons/icons.png");
 		icons = SDLImage.load(iconsFile.getAbsolutePath());
 		
@@ -117,7 +116,7 @@ public class SdlWindow extends BaseEmulatorWindow {
 				new SDLRect(0, 0, 64, 64),
 				"Pause machine");
 		
-		setDesiredScreenSize(256 * 3, 192 * 3);
+		((SdlVideoRenderer)videoRenderer).setDesiredScreenSize(256 * 3, 192 * 3);
 		
 	}
 	
@@ -177,18 +176,13 @@ public class SdlWindow extends BaseEmulatorWindow {
 			e.printStackTrace();
 		}
 	}
-	public void setDesiredScreenSize(int screenWidth, int screenHeight) throws SDLException {
-		this.desiredScreenWidth = screenWidth;
-		this.desiredScreenHeight = screenHeight;
-		resizePending = true;
-		
-	}
 
 	protected synchronized void resizeWindow() throws SDLException {
-		int width = desiredScreenWidth + BUTTONS_WIDTH;
-		int height = Math.max(desiredScreenHeight, buttons.size() * BUTTON_HEIGHT);
+		int width = ((SdlVideoRenderer)videoRenderer).getDesiredWidth() + BUTTONS_WIDTH;
+		int height = Math.max(((SdlVideoRenderer)videoRenderer).getDesiredHeight(), buttons.size() * BUTTON_HEIGHT);
 		resizeWindow(width, height);
 		resizePending = false;
+		((SdlVideoRenderer) videoRenderer).setResizePending(false);
 		
 	}
 	protected synchronized void resizeWindow(int width, int height) throws SDLException {
@@ -231,7 +225,7 @@ public class SdlWindow extends BaseEmulatorWindow {
 
 	public synchronized void handleExpose(int x, int y, int width, int height) throws SDLException {
 		//System.out.println("Expose? " + x + "/" +y + "/"+width + "/" +height);
-		if (resizePending) {
+		if (resizePending || ((SdlVideoRenderer) videoRenderer).isResizePending()) {
 			resizeWindow();
 			return;
 		}

@@ -4,40 +4,25 @@
 package v9t9.emulator.clients.builtin;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.RTFTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.events.MouseAdapter;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.PaintEvent;
-import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.events.TraverseEvent;
-import org.eclipse.swt.events.TraverseListener;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Widget;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.ISwtVideoRenderer;
@@ -91,7 +76,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		File iconsFile = new File("icons/icons.png");
 		Image icons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
 		
-		buttonBar = new ButtonBar(mainComposite, SWT.HORIZONTAL);
+		buttonBar = new ButtonBar(mainComposite, SWT.HORIZONTAL, videoRenderer);
 		buttonBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 		/*
 		controlsComposite = new Composite(mainComposite, SWT.NO_RADIO_GROUP | SWT.NO_FOCUS);
@@ -192,229 +177,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 		renderer.setFocus();
 
 	}
-
-	class ButtonBar extends Composite {
-
-		private GridLayout layout;
-		private boolean isHorizontal;
-
-		public ButtonBar(Composite parent, int style) {
-			super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS);
-			this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
-			layout = new GridLayout(1, true);
-			layout.marginHeight = layout.marginWidth = 0;
-			setLayout(layout);
-			
-			addPaintListener(new PaintListener() {
-
-				public void paintControl(PaintEvent e) {
-					paintButtonBar(e.gc, e.widget, new Point(0, 0), getSize());
-				}
-				
-			});
-		}
-
-		protected void paintButtonBar(GC gc, Widget w, Point offset,  Point size) {
-			gc.setForeground(w.getDisplay().getSystemColor(SWT.COLOR_WHITE));
-			gc.setBackground(w.getDisplay().getSystemColor(SWT.COLOR_GRAY));
-			if (isHorizontal) {
-				gc.fillGradientRectangle(offset.x, offset.y + size.y / 2, size.x, size.y / 2, true);
-				gc.fillGradientRectangle(offset.x, offset.y + size.y / 2, size.x, -size.y / 2, true);
-			} else {
-				gc.fillGradientRectangle(offset.x + size.x / 2, offset.y, size.x, size.y, false);
-				gc.fillGradientRectangle(offset.x + size.x / 2, offset.y, -size.x / 2, size.y, false);
-				
-			}
-		}
-	}
-	class BasicButton extends Canvas {
-
-		private final Rectangle bounds;
-		private Image icon;
-		private Rectangle overlayBounds;
-		private List<SelectionListener> listeners;
-		private boolean selected;
-
-		public BasicButton(ButtonBar buttonBar, int style, Image icon_, Rectangle bounds_, String tooltip) {
-			super(buttonBar, SWT.NO_FOCUS | SWT.NO_RADIO_GROUP /*| SWT.NO_BACKGROUND*/);
-			
-			buttonBar.layout.numColumns++;
-			
-			this.icon = icon_;
-			this.bounds = bounds_;
-			this.listeners = new ArrayList<SelectionListener>();
-			addKeyListener(new KeyListener() {
-				
-				public void keyPressed(KeyEvent e) {
-					e.doit = false;
-				}
-	
-				public void keyReleased(KeyEvent e) {
-					e.doit = false;
-				}
-				
-			});
-			
-			GridData data = new GridData(bounds.width, bounds.height);
-			data.minimumHeight = 8;
-			data.grabExcessHorizontalSpace = false;
-			data.grabExcessVerticalSpace = false;
-			setLayoutData(data);
-			setLayout(new FillLayout());
-			
-			setToolTipText(tooltip);
-			
-			addPaintListener(new PaintListener() {
-	
-				public void paintControl(PaintEvent e) {
-					Point size = getSize();
-					((ButtonBar)getParent()).paintButtonBar(e.gc, BasicButton.this, new Point(0, 0), size);
-					e.gc.drawImage(icon, bounds.x, bounds.y, bounds.width, bounds.height, 
-							0, 0, size.x, size.y);
-					if (overlayBounds != null)
-						e.gc.drawImage(icon, overlayBounds.x, overlayBounds.y, overlayBounds.width, overlayBounds.height, 
-								0, 0, size.y, size.y);
-				}
-				
-			});
-			addTraverseListener(new TraverseListener() {
-	
-				public void keyTraversed(TraverseEvent e) {
-					e.doit = false;
-				}
-				
-			});
-			
-			addMouseListener(new MouseAdapter() {
-				@Override
-				public void mouseUp(MouseEvent e) {
-					SelectionListener[] array = (SelectionListener[]) listeners.toArray(new SelectionListener[listeners.size()]);
-					Event event = new Event();
-					event.widget = BasicButton.this;
-					SelectionEvent selEvent = new SelectionEvent(event);
-					for (SelectionListener listener : array) {
-						listener.widgetSelected(selEvent);
-					}
-					videoRenderer.setFocus();
-				}
-			});
-			
-		}
-
-		public void setOverlayBounds(Rectangle overlayBounds) {
-			this.overlayBounds = overlayBounds;
-		}
-
-		public void addSelectionListener(SelectionListener listener) {
-			listeners.add(listener);
-		}
-
-		public boolean getSelection() {
-			return selected;
-		}
-
-		public void setSelection(boolean flag) {
-			if (flag != selected) {
-				this.selected = flag;
-				redraw();
-			}
-		}
-	}
-
-	/*
-	class BasicButton extends Composite {
-
-		private final Button button;
-		private final Rectangle bounds;
-		private Image icon;
-		private Rectangle overlayBounds;
-
-		public BasicButton(Composite parent, int style, Image icon_, Rectangle bounds_, String tooltip) {
-			super(parent, SWT.NO_FOCUS | SWT.NO_RADIO_GROUP);
-			this.icon = icon_;
-			this.bounds = bounds_;
-			
-			addKeyListener(new KeyListener() {
-				
-				public void keyPressed(KeyEvent e) {
-					e.doit = false;
-				}
-	
-				public void keyReleased(KeyEvent e) {
-					e.doit = false;
-				}
-				
-			});
-			
-			GridData data = new GridData(bounds.width, bounds.height);
-			setLayoutData(data);
-			setLayout(new FillLayout());
-			
-			button = new Button(this, style | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
-			
-			//button.setImage(icon);
-			button.setToolTipText(tooltip);
-			
-			
-			button.addPaintListener(new PaintListener() {
-	
-				public void paintControl(PaintEvent e) {
-					e.gc.drawImage(icon, bounds.x, bounds.y, bounds.width, bounds.height, 
-							0, 0, bounds.width, bounds.height);
-					if (overlayBounds != null)
-						e.gc.drawImage(icon, overlayBounds.x, overlayBounds.y, overlayBounds.width, overlayBounds.height, 
-								0, 0, overlayBounds.width, overlayBounds.height);
-				}
-				
-			});
-			button.addKeyListener(new KeyListener() {
-	
-				public void keyPressed(KeyEvent e) {
-					e.doit = false;
-				}
-	
-				public void keyReleased(KeyEvent e) {
-					e.doit = false;
-				}
-				
-			});
-			button.addTraverseListener(new TraverseListener() {
-	
-				public void keyTraversed(TraverseEvent e) {
-					e.doit = false;
-				}
-				
-			});
-			
-			button.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetDefaultSelected(SelectionEvent e) {
-					e.doit = false;
-				}
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					restoreFocus();
-				}
-			});
-			
-			button.addTraverseListener(new TraverseListener() {
-
-				public void keyTraversed(TraverseEvent e) {
-					e.doit = false;
-				}
-				
-			});
-		}
-		
-		public Button getButton() {
-			return button;
-		}
-
-		public void setOverlayBounds(Rectangle overlayBounds) {
-			this.overlayBounds = overlayBounds;
-		}
-	}
-	*/
 
 	private BasicButton createButton(ButtonBar buttonBar, final Image icon, final Rectangle bounds, String tooltip, SelectionListener selectionListener) {
 		BasicButton button = new BasicButton(buttonBar, SWT.PUSH, icon, bounds, tooltip);

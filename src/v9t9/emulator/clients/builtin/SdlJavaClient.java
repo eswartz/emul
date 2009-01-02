@@ -36,7 +36,6 @@ public class SdlJavaClient implements Client {
 
     public SdlJavaClient(final Machine machine, VdpHandler vdp) {
     	try {
-			SDLMain.init(SDLMain.SDL_INIT_VIDEO);
 			window = new SdlWindow(machine);
 			videoRenderer = window.getVideoRenderer();
 		} catch (SDLException e) {

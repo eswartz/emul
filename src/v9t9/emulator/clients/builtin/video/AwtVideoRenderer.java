@@ -21,6 +21,7 @@ import v9t9.emulator.hardware.V9t9;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
 import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
+import v9t9.utils.Utils;
 
 /**
  * @author Ed
@@ -54,7 +55,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	
 	public AwtVideoRenderer() {
 		updateRect = new Rectangle(0, 0, 0, 0);
-		setCanvas(new ImageDataCanvas24Bit());
+		setCanvas(new ImageDataCanvas24Bit(0));
 		desiredWidth = (int)(zoomx * 256);
 		desiredHeight = (int)(zoomy * 192);
 		this.canvas = new Canvas() {
@@ -157,13 +158,14 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 	
 	protected Rectangle logicalToPhysical(int x, int y, int w, int h) {
-		return new Rectangle((int)(x * zoomx), (int)(y * zoomy), Math.round(w * zoomx), Math.round(h * zoomy));
+		return new Rectangle((int)((x - vdpCanvas.getXOffset()) * zoomx), (int)(y * zoomy), Math.round(w * zoomx), Math.round(h * zoomy));
 	}
 	
 	protected Rectangle physicalToLogical(Rectangle physical) {
-		return new Rectangle((int)(physical.x / zoomx), (int)(physical.y / zoomy), 
-				(int)((physical.width + zoomx - 1) / zoomx), 
-				(int)((physical.height + zoomy - 1) / zoomy));
+		return new Rectangle((int)(physical.x / zoomx) + vdpCanvas.getXOffset(), 
+				(int)(physical.y / zoomy), 
+				(int)((physical.width + zoomx / 2) / zoomx), 
+				(int)((physical.height + zoomy / 2) / zoomy));
 	}
 
 	/**
@@ -355,28 +357,83 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		int destWidth = surface.getWidth();
 		int destHeight = surface.getHeight();
 		
-		//System.out.println(
-		//		"surface size: " + surface.getWidth()+"/"+surface.getHeight()+"; " + x +"/"+y+"/"+width+"/"+height);
+		//System.out.println("surface size: " + surface.getWidth()+"/"+surface.getHeight()+"; " + x +"/"+y+"/"+width+"/"+height);
 		DataBufferInt buffer = (DataBufferInt) surface.getRaster().getDataBuffer();
-		synchronized (vdpCanvas) {
-			V9t9RenderUtils.scaleImageToRGBA(
-					buffer.getData(),
-					vdpCanvas.getImageData().data,
-					vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
-					destWidth, destHeight,
-					0, 0, destWidth, destHeight);
-		}
-		if (V9t9.settingMonitorDrawing.getBoolean()) {
-			V9t9RenderUtils.addNoiseRGBA(buffer.getData(), 
-					destWidth, destHeight, destWidth * 4,
-					vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
-		}
-
-		g.drawImage(
+		if (true) {
+			//width += x; x= 0; 
+			//height += y; y = 0;
+			
+			if (x + width > destWidth)
+				width = destWidth - x;
+			if (y + height > destHeight)
+				height = destHeight - y;
+			
+			if (width < 0 || height < 0)
+				return;
+			
+			Rectangle logRect = physicalToLogical(new Rectangle(x, y, width, height));
+			Rectangle physRect = logicalToPhysical(logRect);
+			x = physRect.x; y = physRect.y; width = physRect.width; height = physRect.height;
+			/*
+			if (logRect.x + logRect.width > vdpCanvas.getVisibleWidth())
+				logRect.width = vdpCanvas.getVisibleWidth() - logRect.x;
+			if (logRect.y + logRect.height > vdpCanvas.getHeight())
+				logRect.height = vdpCanvas.getVisibleHeight() - logRect.y;
+				*/
+			int srcoffset = vdpCanvas.getDisplayAdjustOffset() 
+			+ (logRect.y * vdpCanvas.getLineStride() + logRect.x * vdpCanvas.getPixelStride());
+			//System.out.println("logRect = " + logRect + " x/y="+x+","+y+"; width/height="+width+","+height+"; srcoffset="+srcoffset);
+			
+			synchronized (vdpCanvas) {
+				V9t9RenderUtils.scaleImageToRGBA(
+						buffer.getData(),
+						vdpCanvas.getImageData().data, 
+						srcoffset,
+						logRect.width, logRect.height, vdpCanvas.getLineStride(),
+						width, height, destWidth * 4,
+						x, y, width, height);
+			}
+			//System.out.println("scaled");
+			if (V9t9.settingMonitorDrawing.getBoolean()) {
+				// modify a slightly larger area 
+				//if (logRect.x > 0) { logRect.x--; logRect.width++; }
+				if (logRect.y > 0) { logRect.y--; logRect.height++; }
+				//if (logRect.x + logRect.width + 2 <= vdpCanvas.getVisibleWidth()) logRect.width+=2;
+				if (logRect.y + logRect.height + 2 <= vdpCanvas.getVisibleHeight()) logRect.height++;
+				
+				Rectangle nphys = logicalToPhysical(logRect);
+				
+				V9t9RenderUtils.addNoiseRGBA(buffer.getData(),
+						destWidth * 4 * nphys.y + 4 * nphys.x,
+						nphys.width, nphys.height, destWidth * 4,
+						logRect.width, logRect.height);
+			}
+			g.drawImage(
 					surface,
 					x, y, x + width, y + height,
 					x, y, x + width, y + height,
 					canvas);
+		} else {
+			synchronized (vdpCanvas) {
+				V9t9RenderUtils.scaleImageToRGBA(
+						buffer.getData(),
+						vdpCanvas.getImageData().data, vdpCanvas.getDisplayAdjustOffset(),
+						vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
+						destWidth, destHeight, destWidth * 4,
+						0, 0, destWidth, destHeight);
+			}
+			if (V9t9.settingMonitorDrawing.getBoolean()) {
+				V9t9RenderUtils.addNoiseRGBA(buffer.getData(), 0,
+						destWidth, destHeight, destWidth * 4,
+						vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
+			}
+			g.drawImage(
+					surface,
+					x, y, x + width, y + height,
+					x, y, x + width, y + height,
+					canvas);
+		}
+		
 		//window.getBufferStrategy().show();
 		//while (canvas.imageUpdate(surface, ImageObserver.ALLBITS, x, y, width, height)) ;
 	}

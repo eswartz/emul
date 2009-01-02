@@ -19,6 +19,10 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	private static PaletteData stockPaletteData = new PaletteData(0xFF0000, 0xFF00, 0xFF);
 
 	public ImageDataCanvas24Bit() {
+		this(16);
+	}
+	public ImageDataCanvas24Bit(int displayAdjust) {
+		super(displayAdjust);
 		setSize(256, 192);
 	}
 	
@@ -31,12 +35,13 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		int allocHeight = height;
 		if ((height & 7) != 0)
 			allocHeight += 8;
-			
+		
 		ImageData data = new ImageData(width, allocHeight * (isInterlacedEvenOdd() ? 2 : 1), 24, getPaletteData());
 		if (isInterlacedEvenOdd())
 			bytesPerLine = data.bytesPerLine * 2;
 		else
 			bytesPerLine = data.bytesPerLine;
+		
 		return data;
 	}
 	
@@ -62,7 +67,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	 */
 	@Override
 	final public int getBitmapOffset(int x, int y) {
-		return getLineStride() * (y) + (x) * (imageData.depth >> 3);
+		return getLineStride() * (y) + (x + extraSpace / 2) * (imageData.depth >> 3);
 	}
 
 	@Override

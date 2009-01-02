@@ -118,14 +118,14 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	}
 
 	protected VdpCanvas createCanvas() {
-		return new ImageDataCanvas24Bit();
+		return new ImageDataCanvas24Bit(0);
 	}
 
 	protected void initWidgets() {
 		
 	}
 	protected Rectangle logicalToPhysical(Rectangle logical) {
-		return logicalToPhysical(logical.x, logical.y, logical.width, logical.height);
+		return logicalToPhysical(logical.x /*- vdpCanvas.getXOffset()*/, logical.y, logical.width, logical.height);
 	}
 	
 	protected Rectangle logicalToPhysical(int x, int y, int w, int h) {
@@ -133,10 +133,12 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	}
 	
 	protected Rectangle physicalToLogical(Rectangle physical) {
-		return new Rectangle((int)(physical.x / zoomx), (int)(physical.y / zoomy), 
+		return new Rectangle((int)(physical.x / zoomx) /*+ vdpCanvas.getXOffset()*/, 
+				(int)(physical.y / zoomy), 
 				(int)((physical.width + zoomx - 1) / zoomx), 
 				(int)((physical.height + zoomy - 1) / zoomy));
 	}
+
 
 	public void redraw() {
 		if (!isDirty)
@@ -258,7 +260,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	 */
 	protected void updateWidgetSizeForMode() {
 		// update size if needed
-		if (vdpCanvas.getVisibleWidth() > 256) {
+		if (vdpCanvas.getVisibleWidth() == 512) {
 			zoomx = zoom / 2.f;
 		} else {
 			zoomx = zoom;

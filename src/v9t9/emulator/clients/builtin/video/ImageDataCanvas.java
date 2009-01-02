@@ -6,6 +6,10 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 
 	protected ImageData imageData;
 
+	public ImageDataCanvas(int extraSpace) {
+		super(extraSpace);
+	}
+
 	public ImageData getImageData() {
 		return imageData;
 	}
@@ -23,5 +27,10 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 	}
 
 	abstract protected ImageData createImageData();
+
+	public int getDisplayAdjustOffset() {
+		int displayAdjust = getYOffset() * getLineStride() + (getXOffset() + this.extraSpace / 2) * getPixelStride();
+		return displayAdjust;
+	}
 
 }

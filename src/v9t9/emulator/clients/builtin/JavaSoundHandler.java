@@ -151,7 +151,7 @@ public class JavaSoundHandler implements SoundHandler {
 						AudioChunk chunk = null;
 						
 						try {
-							soundQueue.wait(10);
+							soundQueue.wait();
 						} catch (InterruptedException e) {
 							break;
 						}
@@ -425,6 +425,10 @@ public class JavaSoundHandler implements SoundHandler {
 		
 		soundQueue.add(new AudioChunk(soundGeneratorWaveForm, audioGateWaveForm));
 		
+		synchronized (soundQueue) {
+			soundQueue.notify();
+			
+		}
 		soundGeneratorWaveForm = new byte[soundGeneratorWaveForm.length];
 		audioGateWaveForm = new byte[audioGateWaveForm.length];
 		/*
@@ -447,7 +451,7 @@ public class JavaSoundHandler implements SoundHandler {
 			//Arrays.fill(audioGateWaveForm, (byte) 0);
 		}
 		*/
-		Arrays.fill(audioGateWaveForm, (byte) 0);
+		//Arrays.fill(audioGateWaveForm, (byte) 0);
 	}
 
 }

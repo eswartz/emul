@@ -12,14 +12,17 @@ import java.io.IOException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 
+import sdljava.SDLException;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.AwtJavaClient;
 import v9t9.emulator.clients.builtin.AwtKeyboardHandler;
+import v9t9.emulator.clients.builtin.SdlKeyboardHandler;
 import v9t9.emulator.clients.builtin.SwtJavaClient;
 import v9t9.emulator.clients.builtin.SdlJavaClient;
 import v9t9.emulator.clients.builtin.SwtKeyboardHandler;
 import v9t9.emulator.clients.builtin.video.AwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.ISwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.SwtSdlVideoRenderer;
 import v9t9.emulator.clients.builtin.video.SwtAwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
@@ -265,6 +268,19 @@ public class V9t9 {
 					videoRenderer, 
 					new AwtKeyboardHandler(
 			        		videoRenderer.getAwtCanvas(),
+			        		machine.getKeyboardState(), machine),
+					display);
+		} 
+        else if (findArgument(args, "--swtsdl")) {
+        	SwtSdlVideoRenderer videoRenderer;
+			try {
+				videoRenderer = new SwtSdlVideoRenderer();
+			} catch (SDLException e) {
+				throw (IOException) new IOException().initCause(e);
+			}
+			client = new SwtJavaClient(machine, machine.getVdp(), 
+					videoRenderer, 
+					new SdlKeyboardHandler(
 			        		machine.getKeyboardState(), machine),
 					display);
 		} 

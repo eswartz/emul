@@ -81,6 +81,8 @@ public abstract class VdpCanvas {
 	
 	protected static byte[] rgb3to8 = new byte[8];
 	protected static byte[] rgb2to8 = new byte[4];
+
+	protected final int extraSpace;
 	static {
 		for (int i = 0; i < 8; i++) {
 			byte val = (byte) i;
@@ -99,7 +101,12 @@ public abstract class VdpCanvas {
 	}
 	
 	public VdpCanvas() {
-    	colorPalette = new byte[16][];
+		this(8);
+	}
+	public VdpCanvas(int extraSpace) {
+		
+    	this.extraSpace = extraSpace;
+		colorPalette = new byte[16][];
     	for (int i = 0; i < 16; i++)
     		colorPalette[i] = stockPalette[i]; 
 
@@ -158,12 +165,15 @@ public abstract class VdpCanvas {
 		}
 	}
 
-	
+	/** Convert the width displayed with the width in the canvas.
+	 * We have 16 extra pixels for V9938 panning.  */
 	protected int visibleToActualWidth(int x) {
-		return x + 16;
+		return x + extraSpace;
 	}
+	/** Convert the width in the canvas to the width displayed.  We have 16 extra
+	 * pixels for V9938 panning. */
 	protected int actualToVisibleWidth(int x) {
-		return x - 16;
+		return x - extraSpace;
 	}
 
 	public abstract void doChangeSize();
@@ -359,15 +369,15 @@ public abstract class VdpCanvas {
 
 	/** Draw eight pixels of an 8x1 row. 
 	 * @param bitmask mask of rows visible from top-down 
-	 * @param isLogicalOr TODO*/
+	 * @param isLogicalOr */
 	public abstract void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask, boolean isLogicalOr); 
 	/** Draw 16 (8 magnified) pixels of an 8x1 row. 
 	 * @param bitmask mask of rows visible from top-down 
-	 * @param isLogicalOr TODO*/
+	 * @param isLogicalOr */
 	public abstract void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask, boolean isLogicalOr);
 	/** Draw 32 (8 magnified) pixels of an 8x1 row. 
 	 * @param bitmask mask of rows visible from top-down 
-	 * @param isLogicalOr TODO*/
+	 * @param isLogicalOr */
 	public abstract void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask, boolean isLogicalOr);
 	
 	public boolean isBlank() {

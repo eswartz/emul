@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import org.eclipse.swt.graphics.Point;
 
 import sdljava.SDLException;
+import sdljava.SDLMain;
 import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
 import sdljava.video.SDLVideo;
@@ -36,27 +37,30 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	private boolean isBlank;
 
-	private int desiredWidth;
+	protected int desiredWidth;
 
-	private int desiredHeight;
+	protected int desiredHeight;
 
-	private final SdlWindow sdlWindow;
-
-	private SDLSurface surface;
+	protected SDLSurface surface;
 
 	private SDLRect updateRect;
+
+	private boolean resizePending;
+
+	private SdlWindow sdlWindow;
 	
-	public SdlVideoRenderer(SdlWindow sdlWindow) throws SDLException {
-		this.sdlWindow = sdlWindow;
+	public SdlVideoRenderer() throws SDLException {
+		if (SDLMain.wasInit(SDLMain.SDL_INIT_VIDEO) !=  SDLMain.SDL_INIT_VIDEO)
+			SDLMain.init(SDLMain.SDL_INIT_VIDEO);
 		updateRect = new SDLRect(0, 0, 0, 0);
-		setCanvas(new ImageDataCanvas24Bit());
+		setCanvas(new ImageDataCanvas24Bit(16));
 		desiredWidth = (int)(zoomx * 256);
 		desiredHeight = (int)(zoomy * 192);
 		getRenderingSurface();
 		
 	}
 	
-	private synchronized void getRenderingSurface() throws SDLException {
+	protected synchronized void getRenderingSurface() throws SDLException {
 		long flags = SDLVideo.SDL_SWSURFACE /*| SDLVideo.SDL_RESIZABLE*/;
 		
 		/*
@@ -79,8 +83,17 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 					desiredHeight,
 					24, 0xFF, 0xFF00, 0xFF0000, 0);
 		}
-		sdlWindow.setDesiredScreenSize(desiredWidth, desiredHeight);
+		resizeTopLevel();
+		
 	}
+	protected void resizeTopLevel() {
+		resizePending = true;	
+	}
+	
+	public boolean isResizePending() {
+		return resizePending;
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#getCanvas()
 	 */
@@ -313,13 +326,13 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 		byte[] scaledData = new byte[destWidth * destHeight * 3];
 		V9t9RenderUtils.scaleImage(
 				scaledData,
-				vdpCanvas.getImageData().data,
+				vdpCanvas.getImageData().data, vdpCanvas.getDisplayAdjustOffset(),
 				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(),
 				vdpCanvas.getLineStride(),
-				destWidth, destHeight,
+				destWidth, destHeight, destWidth * 3,
 				x, y, width, height);
 				
-		V9t9RenderUtils.addNoise(scaledData, destWidth, destHeight,
+		V9t9RenderUtils.addNoise(scaledData, 0, destWidth, destHeight,
 				destWidth * 3, vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
 		
 		//System.out.println("buffer size: " + buffer.limit()+"; scaled data size: " + scaledData.data.length);
@@ -332,6 +345,7 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 			e.printStackTrace();
 		}
 		
+		// TODO: this expose needs to happen somewhere but shouldn't depend on sdlWindow like this
 		if (sdlWindow != null) {
 			try {
 				sdlWindow.handleExpose(x, y, width, height);
@@ -341,9 +355,34 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 			}
 		}
 	}
+	
+	public void setSdlWindow(SdlWindow window) {
+		this.sdlWindow = window;
+	}
 
 	public SDLSurface getSurface() {
 		return surface;
+	}
+
+	public void setFocus() {
+		
+	}
+
+	public int getDesiredWidth() {
+		return desiredWidth;
+	}
+	public int getDesiredHeight() {
+		return desiredHeight;
+	}
+
+	public void setDesiredScreenSize(int i, int j) {
+		desiredWidth = i;
+		desiredHeight = j;
+		resizePending = true;
+	}
+
+	public void setResizePending(boolean b) {
+		resizePending = b;
 	}
 
 }

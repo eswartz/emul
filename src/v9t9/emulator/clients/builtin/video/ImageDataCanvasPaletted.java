@@ -18,6 +18,11 @@ import v9t9.engine.memory.ByteMemoryAccess;
  */
 public class ImageDataCanvasPaletted extends ImageDataCanvas {
 	
+	public ImageDataCanvasPaletted(int extraSpace) {
+		super(extraSpace);
+		// TODO Auto-generated constructor stub
+	}
+
 	@Override
 	protected ImageData createImageData() {
 		RGB[] colors = new RGB[16];
