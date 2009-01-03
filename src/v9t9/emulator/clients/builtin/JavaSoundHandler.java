@@ -390,6 +390,9 @@ public class JavaSoundHandler implements SoundHandler {
 	public void dispose() {
 		if (soundWritingThread != null)
 			soundWritingThread.interrupt();
+		synchronized (soundQueue) {
+			soundQueue.notify();
+		}
 		//if (mixTimer != null)
 		//	mixTimer.cancel();
 		if (audioGateLine != null)
