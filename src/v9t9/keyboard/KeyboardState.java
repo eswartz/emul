@@ -8,7 +8,9 @@ package v9t9.keyboard;
 
 import java.util.Arrays;
 
+import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.runtime.Cpu;
+import v9t9.utils.Utils;
 
 public class KeyboardState {
     /* Masks, corresponding to column 0 */
@@ -37,9 +39,12 @@ public class KeyboardState {
     private byte realshift;
     
 	private byte[] crukeyboardmap = new byte[8];
+	private boolean lastAlphaLock;
+	private byte[] lastcrukeyboardmap = new byte[8];
 	/** actual state of alpha */
 	private boolean alphaLock;
 	private int probedColumns;
+	private Cpu cpu;
 
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
@@ -86,14 +91,16 @@ public class KeyboardState {
     }
 
     public KeyboardState(Cpu cpu) {
-		//this.cpu = cpu;
+		this.cpu = cpu;
         
     }
     
     public synchronized void resetKeyboard() {
-        Arrays.fill(getKeyboardMap(), 0, 8, (byte)0);
+        Arrays.fill(crukeyboardmap, 0, 8, (byte)0);
+        Arrays.fill(lastcrukeyboardmap, 0, 8, (byte)0);
         Arrays.fill(fakemap, 0, fakemap.length, (byte)0);
         realshift = 0;
+        probedColumns = 0;
     }
     
     /**
@@ -246,6 +253,12 @@ public class KeyboardState {
 		default:
 			return false;
     	}
+		
+		// force the CPU to notice
+		if (cpu.isThrottled()) {
+			cpu.addAllowedCycles(3000);
+			//cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
+		}
     	return true;
     }
     
@@ -441,7 +454,7 @@ public class KeyboardState {
 	}
 
 	public synchronized boolean getAlpha() {
-		return alphaLock;
+		return lastAlphaLock;
 	}
 
 	public synchronized byte[] getKeyboardMap() {
@@ -450,7 +463,7 @@ public class KeyboardState {
 
 	public synchronized int getKeyboardRow(int column) {
 		probedColumns |= (1 << column);
-		return crukeyboardmap[column];
+		return lastcrukeyboardmap[column];
 	}
 	
 	public synchronized boolean wasKeyboardProbed() {
@@ -459,5 +472,12 @@ public class KeyboardState {
 
 	public synchronized void resetProbe() {
 		probedColumns = 0;
+		pushQueuedKey();
+	}
+
+	public synchronized void pushQueuedKey() {
+		System.arraycopy(crukeyboardmap, 0, lastcrukeyboardmap, 0, 8);
+		//for (int i=0;i<8;i++) System.out.print(Utils.toHex2(crukeyboardmap[i])+" "); System.out.println();
+		lastAlphaLock = alphaLock;
 	}
 }

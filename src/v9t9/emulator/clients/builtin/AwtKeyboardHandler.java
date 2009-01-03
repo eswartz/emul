@@ -18,16 +18,22 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 
 	private long lastKeystrokeTime;
 
-	public AwtKeyboardHandler(Component component, KeyboardState keyboardState, Machine machine) {
+	public AwtKeyboardHandler(Component component, final KeyboardState keyboardState, Machine machine) {
 		super(keyboardState, machine);
 		component.addKeyListener(new KeyListener() {
 
 			public void keyPressed(KeyEvent e) {
-				handleKey(true, e.getModifiers(), e.getKeyCode(), e.getKeyChar());
+				synchronized (keyboardState) {
+					//keyboardState.pushQueuedKey();
+					handleKey(true, e.getModifiers(), e.getKeyCode(), e.getKeyChar());
+				}
 			}
 
 			public void keyReleased(KeyEvent e) {
-				handleKey(false, e.getModifiers(), e.getKeyCode(), e.getKeyChar());
+				synchronized (keyboardState) {
+					//keyboardState.pushQueuedKey();
+					handleKey(false, e.getModifiers(), e.getKeyCode(), e.getKeyChar());
+				}
 			}
 
 			public void keyTyped(KeyEvent e) {
@@ -45,7 +51,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		if (pasteTimer == null)
 			lastKeystrokeTime = System.currentTimeMillis();
 		
-		//System.out.println("modifiers="+Integer.toHexString(modifiers)+"; keyCode="+keyCode+"; ascii="+(int)ascii);
+		System.out.println("pressed="+pressed+"; modifiers="+Integer.toHexString(modifiers)+"; keyCode="+keyCode+"; ascii="+(int)ascii);
 		
 		if (ascii == KeyEvent.CHAR_UNDEFINED && keyCode < 128 && keyboardState.isAsciiDirectKey((char) keyCode)) {
 			ascii = (char) keyCode;
@@ -67,22 +73,24 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		if ((modifiers & KeyEvent.ALT_DOWN_MASK + KeyEvent.META_DOWN_MASK + KeyEvent.ALT_MASK + KeyEvent.META_MASK) != 0)
 			shift |= KeyboardState.FCTN;
 		
-		if ((ascii == 0 || ascii == 0xffff) || !keyboardState.postCharacter(pressed, false, shift, ascii)) {
+		boolean synthetic = true;
+		 
+		if ((ascii == 0 || ascii == 0xffff) || !keyboardState.postCharacter(pressed, synthetic, shift, ascii)) {
 			byte fctn = (byte) (KeyboardState.FCTN | shift);
 			
 			switch (keyCode) {
 			case KeyEvent.VK_SHIFT:
-				keyboardState.setKey(pressed, false, KeyboardState.SHIFT, 0);
+				keyboardState.setKey(pressed, synthetic, KeyboardState.SHIFT, 0);
 				break;
 			case KeyEvent.VK_CONTROL:
-				keyboardState.setKey(pressed, false, KeyboardState.CTRL, 0);
+				keyboardState.setKey(pressed, synthetic, KeyboardState.CTRL, 0);
 				break;
 			case KeyEvent.VK_ALT:
 			case KeyEvent.VK_META:
-				keyboardState.setKey(pressed, false, KeyboardState.FCTN, 0);
+				keyboardState.setKey(pressed, synthetic, KeyboardState.FCTN, 0);
 				break;
 			case KeyEvent.VK_ENTER:
-				keyboardState.setKey(pressed, false, shift, '\r');
+				keyboardState.setKey(pressed, synthetic, shift, '\r');
 				break;
 				
 			case KeyEvent.VK_CAPS_LOCK:
@@ -103,43 +111,43 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			case KeyEvent.VK_F7:
 			case KeyEvent.VK_F8:
 			case KeyEvent.VK_F9:
-				keyboardState.setKey(pressed, false, fctn, '1' + KeyEvent.VK_F1 - keyCode);	
+				keyboardState.setKey(pressed, synthetic, fctn, '1' + KeyEvent.VK_F1 - keyCode);	
 				break;
 				
 			case KeyEvent.VK_UP:
 			case KeyEvent.VK_KP_UP:
-				keyboardState.setKey(pressed, false, fctn, 'E');
+				keyboardState.setKey(pressed, synthetic, fctn, 'E');
 				break;
 			case KeyEvent.VK_DOWN:
 			case KeyEvent.VK_KP_DOWN:
-				keyboardState.setKey(pressed, false, fctn, 'X');
+				keyboardState.setKey(pressed, synthetic, fctn, 'X');
 				break;
 			case KeyEvent.VK_LEFT:
 			case KeyEvent.VK_KP_LEFT:
-				keyboardState.setKey(pressed, false, fctn, 'S');
+				keyboardState.setKey(pressed, synthetic, fctn, 'S');
 				break;
 			case KeyEvent.VK_RIGHT:
 			case KeyEvent.VK_KP_RIGHT:
-				keyboardState.setKey(pressed, false, fctn, 'D');
+				keyboardState.setKey(pressed, synthetic, fctn, 'D');
 				break;
 				
 				
 			case KeyEvent.VK_INSERT:
-				keyboardState.setKey(pressed, false, fctn, '2');	
+				keyboardState.setKey(pressed, synthetic, fctn, '2');	
 				break;
 				
 			case KeyEvent.VK_PAGE_UP:
-				keyboardState.setKey(pressed, false, fctn, '6'); // (as per E/A and TI Writer)
+				keyboardState.setKey(pressed, synthetic, fctn, '6'); // (as per E/A and TI Writer)
 				break;
 			case KeyEvent.VK_PAGE_DOWN:
-				keyboardState.setKey(pressed, false, fctn, '4'); // (as per E/A and TI Writer)
+				keyboardState.setKey(pressed, synthetic, fctn, '4'); // (as per E/A and TI Writer)
 				break;
 
 			case KeyEvent.VK_HOME:
-				keyboardState.setKey(pressed, false, fctn, '5');		// BEGIN
+				keyboardState.setKey(pressed, synthetic, fctn, '5');		// BEGIN
 				break;
 			case KeyEvent.VK_END:
-				keyboardState.setKey(pressed, false, fctn, '0');		// Fctn-0
+				keyboardState.setKey(pressed, synthetic, fctn, '0');		// Fctn-0
 				break;
 				
 			default:

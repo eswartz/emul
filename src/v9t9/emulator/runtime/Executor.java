@@ -190,7 +190,6 @@ public class Executor {
         nCompiledInstructions = 0;
         nSwitches = 0;
         nCompiles = 0;
-        nVdpInterrupts = 0;
         nLastCycleCount = cpu.getTotalCycleCount();
 	}
 

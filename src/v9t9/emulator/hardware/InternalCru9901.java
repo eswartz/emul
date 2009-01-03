@@ -129,6 +129,10 @@ public class InternalCru9901 implements CruAccess {
 	private CruWriter cruwAlpha = new CruWriter() {
 
 		public int write(int addr, int data, int num) {
+			if (data != 0) {
+				keyboardState.resetProbe();
+				//keyboardState.nextQueuedKey();
+			}
 			alphaLockMask = data != 0;
 			return 0;
 		}
@@ -234,7 +238,6 @@ public class InternalCru9901 implements CruAccess {
 	private CruReader cruralpha = new CruReader() {
 
 		public int read(int addr, int data, int num) {
-			keyboardState.resetProbe();
 			return keyboardState.getAlpha() ? 1 : 0;
 		}
 		

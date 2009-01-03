@@ -320,16 +320,20 @@ public class Cpu implements MemoryAccessListener {
 	}
 
 	public synchronized void tick() {
-		totaltargetcycles += targetcycles;
+		//totaltargetcycles += targetcycles;
 		totalcurrentcycles += currentcycles;
 		
 		// if we went over, aim for fewer this time
 		currenttargetcycles = (int) (totaltargetcycles - totalcurrentcycles);
-		if (currenttargetcycles > settingCyclesPerSecond.getInt()) {
+		if (currenttargetcycles > settingCyclesPerSecond.getInt() * 2) {
 			// something really threw us off -- just start over
 			totalcurrentcycles = totaltargetcycles;
 		}
 		currentcycles = 0;
+		
+		totaltargetcycles += targetcycles;
+		//totalcurrentcycles += currentcycles;
+
 		//System.out.print('-');
 		//System.out.println("tick: " + currenttargetcycles);
 		ticks++;
@@ -418,6 +422,11 @@ public class Cpu implements MemoryAccessListener {
 		int n = interrupts;
 		interrupts = 0;
 		return n;
+	}
+
+	public void addAllowedCycles(int i) {
+		currenttargetcycles += i;
+		
 	}
 
 }

@@ -229,7 +229,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	}
 
 	protected void pasteClipboardToKeyboard() {
-		Clipboard clip = new Clipboard(Display.getDefault());
+		Clipboard clip = new Clipboard(shell.getDisplay());
 		String contents = (String) clip.getContents(TextTransfer.getInstance());
 		if (contents == null) {
 			contents = (String) clip.getContents(RTFTransfer.getInstance());
