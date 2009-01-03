@@ -315,6 +315,10 @@ public class MemoryDomain implements MemoryAccess {
 		mappedEntries.clear();
 		mapEntry(zeroMemoryEntry);
 	}
+	
+	public MemoryEntry[] getMemoryEntries() {
+		return entries;
+	}
 
 
 }

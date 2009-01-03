@@ -1,0 +1,57 @@
+
+Enhanced memory model
+=======================
+
+Finally tired of dealing with arcane bank-switching and jumping around the memory map to find
+pockets of ROM and RAM, I decided to start over and treat this system like an actual custom-assembled
+computer using the 9900 CPU, 9938 VDP, 9919 sound chip, and speech chip.
+
+1) We want consecutive ROM and RAM blocks
+2) We want ROM at >0000 and >FFF0 so we can have interrupt vectors and XOP vectors safe from overwriting
+3) We want more RAM space!  
+4) We can still allow DSRs to swap into >4000 for compatibility.  Well-written ROMs also allow for
+the CPU RAM block (& workspace) to move, so we don't have to adhere to this.  On the other hand,
+the VDP/GPL/etc I/O ports need to be at the standard addresses (at least for my own code).
+
+>0000
+    CPU ROM, part 1     | FORTH ROM, part 1
+>2000
+    CPU ROM, part 2     | FORTH ROM, part 2
+>4000
+    RAM                 | DSR ROM
+>6000
+    RAM
+>8000
+    RAM                 | standard MMIO
+>A000
+    RAM
+>C000
+    RAM
+>E000
+    RAM
+>FF80
+    MMIO
+        >FF80=VDPRD
+        >FF82=VDPST
+        >FF88=VDPWD
+        >FF8A=VDPWA
+        >FF8C=VDPCL
+        >FF8E=VDPWI
+        
+        >FF90=GPLRD
+        >FF92=GPLRA
+        >FF94=GPLWD
+        >FF96=GPLWA
+        
+        >FFA0=sound
+        
+        >FFB0=speech
+        
+    >FFC0=CPU ROM select
+    >FFC2=FORTH ROM select
+    >FFC4=>8400->9FFF is RAM
+    >FFC6=>8400->9FFF is MMIO (old-style)
+    
+    >FFFC=NMI interrupt vector
+    
+        

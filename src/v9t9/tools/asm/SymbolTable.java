@@ -90,4 +90,8 @@ public class SymbolTable {
 			parent.undefineSymbols();
 	}
 
+	public void clear() {
+		nameTable.clear();
+	}
+
 }

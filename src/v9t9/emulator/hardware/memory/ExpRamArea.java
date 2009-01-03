@@ -19,7 +19,7 @@ public class ExpRamArea extends ConsoleMemoryArea {
     public ExpRamArea(int size) {
     	super(4);
     	
-        if (!(size == 0x2000 || size == 0x6000)) {
+        if (!(size == 0x2000 || size == 0x6000 || size == 0xC000)) {
 			throw new IllegalArgumentException("unexpected expanded RAM size");
 		}
 

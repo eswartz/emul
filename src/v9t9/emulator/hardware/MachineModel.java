@@ -4,6 +4,7 @@
 package v9t9.emulator.hardware;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryModel;
 

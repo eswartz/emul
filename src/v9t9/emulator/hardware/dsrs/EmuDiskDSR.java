@@ -215,7 +215,7 @@ public class EmuDiskDSR implements DsrHandler {
 				} else if (code == D_DOUTPUT) {
 					directDiskOutput(dev, opt, addr1, addr2);
 				} else {
-					console.writeByte(0x8350, es_badfuncerr);
+					console.writeByte(rambase + 0x50, es_badfuncerr);
 				}
 				
 				bumpReturnAddress(cpu);
@@ -301,7 +301,7 @@ public class EmuDiskDSR implements DsrHandler {
 		private pabrec pabrec;
 
 		public PabHandler(byte dev, short fn) throws PabOpException {
-			/*  0x8356 holds a pointer into VDP RAM to the end
+			/*  rambase+0x56 holds a pointer into VDP RAM to the end
 			   of the device name (RS232|, DSK|., DSK1|.ed) */
 		
 			//pf.fnptr = fn;
@@ -310,9 +310,9 @@ public class EmuDiskDSR implements DsrHandler {
 			this.dev = dev;
 			len = readVdpByte(fn);					/* length of device+filename */
 			fnaddr = (short) (console.readWord(rambase+0x56) + 1);	/* addr of filename (skip period) */
-			//module_logger(&emuDiskDSR, _L | L_2, _("getfilespec_pab:  fnaddr++ at 0x8356 = %20.20s       \n"),
+			//module_logger(&emuDiskDSR, _L | L_2, _("getfilespec_pab:  fnaddr++ at rambase+0x56 = %20.20s       \n"),
 			len -= console.readWord(rambase+0x54) + 1;	/* minus length of device + period */
-			//module_logger(&emuDiskDSR, _L | L_2, _("getfilespec_pab:  length of device 0x8354 = %04X\n"),
+			//module_logger(&emuDiskDSR, _L | L_2, _("getfilespec_pab:  length of device rambase+0x54 = %04X\n"),
 			//	 memory_read_word(rambase+0x54));
 			fname = readFilename(fnaddr, len);
 			pabaddr = (short) (fn - 9);

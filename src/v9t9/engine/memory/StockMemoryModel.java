@@ -4,6 +4,10 @@
 package v9t9.engine.memory;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.hardware.memory.mmio.GplMmio;
+import v9t9.emulator.hardware.memory.mmio.SoundMmio;
+import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
+import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.Client;
 
 /**
@@ -49,5 +53,24 @@ public class StockMemoryModel implements MemoryModel {
 
 	public void initMemory(Machine machine) {
 		
+	}
+	
+	public GplMmio getGplMmio() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	public SoundMmio getSoundMmio() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	public SpeechMmio getSpeechMmio() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	public VdpMmio getVdpMmio() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

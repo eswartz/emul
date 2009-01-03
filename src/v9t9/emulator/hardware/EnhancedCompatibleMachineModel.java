@@ -14,11 +14,10 @@ import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.WindowBankedMemoryEntry;
 
 /**
- * This is an enhanced machine model that has a more regular memory model as well.
  * @author ejs
  *
  */
-public class EnhancedMachineModel implements MachineModel {
+public class EnhancedCompatibleMachineModel implements MachineModel {
 
 	private EnhancedConsoleMemoryModel memoryModel;
 	private Vdp9938Mmio vdpMmio;
@@ -27,7 +26,7 @@ public class EnhancedMachineModel implements MachineModel {
 	private boolean vdpCpuBanked;
 	//protected MemoryEntry currentMemory;
 	
-	public EnhancedMachineModel() {
+	public EnhancedCompatibleMachineModel() {
 		memoryModel = new EnhancedConsoleMemoryModel();
 	}
 	

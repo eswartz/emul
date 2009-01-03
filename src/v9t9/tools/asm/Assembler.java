@@ -89,6 +89,7 @@ public class Assembler {
     	StandardInstructionParserStage instStage = new StandardInstructionParserStage(operandParser);
 
     	// handle directives first to trap DATA and BYTE
+    	instructionParser.appendStage(new ConditionalInstructionParserStage(this, operandParser));
     	instructionParser.appendStage(new DirectiveInstructionParserStage(operandParser));
     	instructionParser.appendStage(instStage);
     	instructionParser.appendStage(new MacroInstructionParserStage(
@@ -640,6 +641,19 @@ public class Assembler {
 
 	public ConstPool getConstPool() {
 		return constPool;
+	}
+
+	public void defineEquate(String equ) {
+    	int val = 1;
+    	int idx = equ.indexOf('=');
+    	if (idx > 0) {
+    		val = Integer.parseInt(equ.substring(idx+1));
+    		equ = equ.substring(0, idx);
+    	}
+    	Equate equate = new Equate(getSymbolTable(),
+    			equ, val);
+    	equate.setDefined(true);
+    	getSymbolTable().addSymbol(equate);
 	}
 
 }

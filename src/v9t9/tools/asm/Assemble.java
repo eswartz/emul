@@ -24,7 +24,7 @@ public class Assemble {
     public static void main(String[] args) throws IOException {
         Assembler assembler = new Assembler();
         
-        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:");
+        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:D:e:");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -35,6 +35,15 @@ public class Assemble {
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
             					0x0, 0x2000, "CPU ROM",
+            					assembler.getWritableConsole(),
+            					getopt.getOptarg(),
+            					0x0,
+            					true));
+            	break;
+            case 'e':
+            	assembler.addMemoryEntry(
+            			DiskMemoryEntry.newWordMemoryFromFile(
+            					0x0, 0x4000, "CPU ROM",
             					assembler.getWritableConsole(),
             					getopt.getOptarg(),
             					0x0,
@@ -75,7 +84,12 @@ public class Assemble {
             		System.err.println("Failed to create list file: " + e.getMessage());
             		System.exit(1);
             	}
-            	break;            	
+            	break;   
+            case 'D': {
+            	String equ = getopt.getOptarg();
+            	assembler.defineEquate(equ);
+            	break;    
+            }
             default:
             	//throw new AssertionError();
     
@@ -106,15 +120,16 @@ public class Assemble {
     private static void help() {
         System.out
                 .println("\n"
-                        + "tiasm 9900 Disassembler v2.0\n"
+                        + "tiasm 9900 Assembler v2.0\n"
                         + "\n" 
                         +
-                        "TIASM <input file> [-r <console ROM output>] [-m <module ROM output>]\n" +
-           			 "[-d <DSR ROM output>] [-g <console GROM output>] [<list file>]\n" +
+                        "TIASM <input file> [-r|e <console ROM output>] [-m <module ROM output>]\n" +
+           			 "[-d <DSR ROM output>] [-g <console GROM output>] [-Dequ=val] [<list file>]\n" +
            			 "\n"+
            			 "-r saves the 8k memory block at >0000.\n" +
            			 "-m saves the 8k memory block at >6000.\n" +
            			 "-d saves the 8k memory block at >4000.\n" +
+           			 "-e saves the 16k memory block at >0000.\n" +
            			 "-g saves the 24k memory block at >0000.  This can only be used with -m.\n");
 
     }

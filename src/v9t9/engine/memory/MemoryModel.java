@@ -4,6 +4,10 @@
 package v9t9.engine.memory;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.hardware.memory.mmio.GplMmio;
+import v9t9.emulator.hardware.memory.mmio.SoundMmio;
+import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
+import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 
 /**
  * This defines the model for memory in the emulator.
@@ -33,4 +37,26 @@ public interface MemoryModel {
 	 * Get the console memory.
 	 */
 	MemoryDomain getConsole();
+	
+	/**
+	 * Get the VDP MMIO. 
+	 */
+	VdpMmio getVdpMmio();
+	
+	/**
+	 * Get the GPL MMIO. 
+	 */
+	GplMmio getGplMmio();
+	
+	/**
+	 * Get the sound MMIO. 
+	 */
+	SoundMmio getSoundMmio();
+	
+	/**
+	 * Get the speech MMIO. 
+	 */
+	SpeechMmio getSpeechMmio();
+	
+	
 }

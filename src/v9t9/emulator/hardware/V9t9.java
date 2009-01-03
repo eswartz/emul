@@ -16,18 +16,17 @@ import sdljava.SDLException;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.AwtJavaClient;
 import v9t9.emulator.clients.builtin.AwtKeyboardHandler;
+import v9t9.emulator.clients.builtin.SdlJavaClient;
 import v9t9.emulator.clients.builtin.SdlKeyboardHandler;
 import v9t9.emulator.clients.builtin.SwtJavaClient;
-import v9t9.emulator.clients.builtin.SdlJavaClient;
 import v9t9.emulator.clients.builtin.SwtKeyboardHandler;
-import v9t9.emulator.clients.builtin.video.AwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.ISwtVideoRenderer;
-import v9t9.emulator.clients.builtin.video.SwtSdlVideoRenderer;
 import v9t9.emulator.clients.builtin.video.SwtAwtVideoRenderer;
+import v9t9.emulator.clients.builtin.video.SwtSdlVideoRenderer;
 import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
-import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.clients.demo.HybridDemoClient;
+import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
@@ -40,7 +39,6 @@ import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.WordMemoryArea;
-import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
 
 public class V9t9 {
@@ -128,7 +126,7 @@ public class V9t9 {
     }
     
 	protected void loadMemory() throws IOException {
-    	if (true) {
+		if (!(memoryModel instanceof EnhancedConsoleMemoryModel)) {
 	    	loadConsoleRom("994arom.bin");
 	    	loadConsoleGrom("994agrom.bin");
 	
@@ -163,19 +161,33 @@ public class V9t9 {
 		    	loadModuleRom("Logo", "logoc.bin");
 		    	loadModuleGrom("Logo", "logog.bin");
 	    	}
-    	} 
+    	} else { 
 
-    	if (true) {
+    		// enhanced model can only load FORTH for now
     		DiskMemoryEntry entry;
-    		loadBankedConsoleRom("nforthA.rom", "nforthB.rom");
+    		
+    		
+    		loadEnhancedBankedConsoleRom("nforthA.rom", "nforthB.rom");
     		loadConsoleGrom("nforth.grm");
-    		loadModuleRom("FORTH", "nforthc.bin");
     		entry = loadModuleGrom("FORTH", "nforthg.bin");
+    		
     		
     		// the high-GROM code is copied into RAM here
     		console.getEntryAt(0xA000).loadSymbols(
     				new FileInputStream(DataFiles.resolveFile(entry.getSymbolFilepath())));
     	}
+    }
+
+    protected BankedMemoryEntry loadEnhancedBankedConsoleRom(String filename1, String filename2) throws IOException {
+    	BankedMemoryEntry cpuRomEntry = DiskMemoryEntry.newWriteTogglingBankedWordMemoryFromFile(
+    			0x0000,
+    			0x4000,
+    			memory,
+    			"CPU ROM (enhanced)", console,
+    			filename1, 0x0, filename2, 0x0);
+    	cpuRomEntry.area.setLatency(0);
+    	memory.addAndMap(cpuRomEntry);
+    	return cpuRomEntry;
     }
 
 	protected void setupDefaults() {
@@ -190,7 +202,7 @@ public class V9t9 {
 	        Compiler.settingCompileFunctions.setBoolean(true);
     	}
         
-        if (false) {
+        if (true) {
         	//Executor.settingDumpInstructions.setBoolean(true);
         	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);

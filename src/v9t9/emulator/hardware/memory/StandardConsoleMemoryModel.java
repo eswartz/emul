@@ -19,6 +19,7 @@ import v9t9.emulator.hardware.memory.mmio.ConsoleVdpWriteArea;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SoundMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
+import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -30,7 +31,7 @@ import v9t9.engine.memory.MemoryModel;
  */
 public class StandardConsoleMemoryModel implements MemoryModel {
     /* CPU ROM/RAM */
-    private MemoryDomain CPU;
+    protected MemoryDomain CPU;
 
     /* GPL ROM/RAM */
     private MemoryDomain GRAPHICS;
@@ -46,6 +47,8 @@ public class StandardConsoleMemoryModel implements MemoryModel {
     public GplMmio gplMmio;
 
 	protected Memory memory;
+
+	private VdpMmio vdpMmio;
     
     public StandardConsoleMemoryModel() {
     	initSettings();
@@ -74,8 +77,10 @@ public class StandardConsoleMemoryModel implements MemoryModel {
         gplMmio = new GplMmio(GRAPHICS);
         speechMmio = new SpeechMmio();
         
-        if (machine instanceof TI994A)
+        if (machine instanceof TI994A) {
+        	vdpMmio = ((TI994A) machine).getVdpMmio();
         	defineMmioMemory((TI994A) machine);
+        }
     }
 
 	protected void initSettings() {
@@ -124,5 +129,21 @@ public class StandardConsoleMemoryModel implements MemoryModel {
     		return 0;
     	// standard latency for external memory is 4 cycles
     	return 4;
+    }
+    
+    public GplMmio getGplMmio() {
+    	return gplMmio;
+    }
+    
+    public SoundMmio getSoundMmio() {
+    	return soundMmio;
+    }
+    
+    public SpeechMmio getSpeechMmio() {
+    	return speechMmio;
+    }
+    
+    public VdpMmio getVdpMmio() {
+    	return vdpMmio;
     }
 }

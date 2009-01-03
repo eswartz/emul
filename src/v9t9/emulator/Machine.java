@@ -431,6 +431,7 @@ abstract public class Machine {
 	public int getCpuTicksPerSec() {
 		return cpuTicksPerSec;
 	}
+
 }
 
 
