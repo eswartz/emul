@@ -37,11 +37,6 @@ public class JavaSoundHandler implements SoundHandler {
 	private int soundFramesPerTick;
 	private int soundClock;
 
-	private SourceDataLine audioGateLine;
-	private AudioFormat audioGateFormat;
-	private int audioGateFramesPerTick;
-	private byte[] audioGateWaveForm;
-
 	private SourceDataLine speechLine;
 	private AudioFormat speechFormat;
 	private int speechFramesPerTick;
@@ -123,20 +118,6 @@ public class JavaSoundHandler implements SoundHandler {
 				return;
 			}
 		}
-		audioGateFormat = new AudioFormat(55900, 8, 1, true, false);
-		Line.Info agInfo = new DataLine.Info(SourceDataLine.class,
-				audioGateFormat);
-		if (!AudioSystem.isLineSupported(agInfo)) {
-			System.err.println("Line not supported: " + agInfo);
-
-			audioGateFormat = new AudioFormat(44100, 8, 1, true, false);
-			slInfo = new DataLine.Info(SourceDataLine.class, audioGateFormat);
-
-			if (!AudioSystem.isLineSupported(slInfo)) {
-				System.err.println("Line not supported: " + stdFormat);
-				return;
-			}
-		}
 
 		speechFormat = new AudioFormat(8000, 16, 1, true, false);
 		Line.Info spInfo = new DataLine.Info(SourceDataLine.class, speechFormat);
@@ -150,10 +131,6 @@ public class JavaSoundHandler implements SoundHandler {
 					.getCpuTicksPerSec());
 			soundGeneratorLine = (SourceDataLine) AudioSystem.getLine(slInfo);
 			soundGeneratorLine.open(stdFormat, soundFramesPerTick * 10);
-			audioGateFramesPerTick = (int) (audioGateFormat.getFrameRate() / machine
-					.getCpuTicksPerSec());
-			audioGateLine = (SourceDataLine) AudioSystem.getLine(agInfo);
-			audioGateLine.open(audioGateFormat, audioGateFramesPerTick * 10);
 			speechFramesPerTick = (int) (speechFormat.getFrameRate() / machine
 					.getCpuTicksPerSec());
 			speechLine = (SourceDataLine) AudioSystem.getLine(spInfo);
@@ -162,7 +139,6 @@ public class JavaSoundHandler implements SoundHandler {
 			System.err.println("Line not available");
 			e.printStackTrace();
 			soundGeneratorWaveForm = new byte[0];
-			audioGateWaveForm = new byte[0];
 			speechWaveForm = new byte[0];
 			return;
 		}
@@ -220,32 +196,6 @@ public class JavaSoundHandler implements SoundHandler {
 							}
 						}
 					}
-
-					if (chunk.audioToWrite != null) {
-						audioGateLine.write(chunk.audioToWrite, 0,
-								chunk.audioToWrite.length);
-					}
-
-					/*
-					if (chunk.speechToWrite != null) {
-						speechLine.write(chunk.speechToWrite, 0,
-								chunk.speechToWrite.length);
-
-						if (speechFos != null) {
-							try {
-								speechFos.write(chunk.speechToWrite, 0,
-										chunk.speechToWrite.length);
-							} catch (IOException e) {
-								try {
-									speechFos.close();
-									speechFos = null;
-								} catch (IOException e1) {
-									e1.printStackTrace();
-								}
-							}
-						}
-
-					}*/
 
 					// soundWritingRequest = false;
 				}
@@ -313,18 +263,14 @@ public class JavaSoundHandler implements SoundHandler {
 	public void toggleSound(boolean enabled) {
 		if (enabled) {
 			soundGeneratorLine.start();
-			audioGateLine.start();
 			speechLine.start();
 		} else {
 			soundGeneratorLine.stop();
-			audioGateLine.stop();
 			speechLine.stop();
 		}
 
 		soundGeneratorWaveForm = new byte[stdFormat.getFrameSize()
 				* soundFramesPerTick];
-		audioGateWaveForm = new byte[audioGateFormat.getFrameSize()
-				* audioGateFramesPerTick];
 		speechWaveForm = new byte[speechFormat.getFrameSize()
 				* speechFramesPerTick];
 		soundClock = (int) stdFormat.getFrameRate();
@@ -362,24 +308,26 @@ public class JavaSoundHandler implements SoundHandler {
 		// System.out.println("Updating " + from + " to " + to);
 		SoundVoice[] vs = sound.getSoundVoices();
 
-		int[] voices = { -1, -1, -1, -1 };
+		int[] voices = new int[vs.length];
+		Arrays.fill(voices, -1);
+		
 		int vcnt = 0;
-		for (int vi = 0; vi < 4; vi++) {
+		for (int vi = 0; vi < vs.length; vi++) {
 			if (vs[vi].volume != 0)
 				voices[vcnt++] = vi;
 		}
-
 		if (vcnt > 0) {
 			for (int i = from; i < to; i++) {
 				int sample = 0;
 				for (int vidx = 0; vidx < vcnt; vidx++) {
 					int vi = voices[vidx];
 					SoundVoice v = vs[vi];
-					int sampleDelta = (v.voice & 1) != 0 ? atten[v.volume]
+					int sampleDelta = (vi & 1) != 0 ? atten[v.volume]
 							: -atten[v.volume];
 					sample = v.generate(soundClock, sample, sampleDelta);
 				}
-				soundGeneratorWaveForm[i] = (byte) (sample >> 18);
+				//soundGeneratorWaveForm[i] = (byte) (sample >> 18);
+				soundGeneratorWaveForm[i] = (byte) ((sample >> 16) / vcnt);
 			}
 		} else {
 			if (from < to)
@@ -403,19 +351,17 @@ public class JavaSoundHandler implements SoundHandler {
 		// mixTimer.cancel();
 		if (speechLine != null)
 			speechLine.close();
-		if (audioGateLine != null)
-			audioGateLine.close();
 		if (soundGeneratorLine != null)
 			soundGeneratorLine.close();
 	}
 
 	// int maxAudioPos;
-	public void audioGate(int bit, int pos, int total) {
-		if (audioGateWaveForm != null && bit != 0) {
-			int idx = (int) ((long) pos * (audioGateFramesPerTick - 1) / total);
-			if (idx >= audioGateWaveForm.length)
-				idx = audioGateWaveForm.length - 1;
-			audioGateWaveForm[idx] = (byte) 0x80;
+	public void audioGate(boolean on, int pos, int total) {
+		if (soundGeneratorWaveForm != null && on) {
+			int idx = (int) ((long) pos * (soundFramesPerTick - 1) / total);
+			if (idx >= soundGeneratorWaveForm.length)
+				idx = soundGeneratorWaveForm.length - 1;
+			soundGeneratorWaveForm[idx] |= (byte) 0x80;
 		}
 	}
 
@@ -445,14 +391,13 @@ public class JavaSoundHandler implements SoundHandler {
 
 
 		soundQueue.add(new AudioChunk(soundGeneratorWaveForm,
-				audioGateWaveForm, null));
+				null, null));
 
 		synchronized (soundQueue) {
 			soundQueue.notify();
 
 		}
 		soundGeneratorWaveForm = new byte[soundGeneratorWaveForm.length];
-		audioGateWaveForm = new byte[audioGateWaveForm.length];
 		
 
 		boolean anySpeech = (lastSpeechUpdatedPos > 0);

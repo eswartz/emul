@@ -15,8 +15,6 @@ public interface SoundHandler {
 	
 	void updateVoice(int pos, int total);
 	
-	void audioGate(int bit, int pos, int total);
-	
 	void flushAudio();
 	
 	void dispose();

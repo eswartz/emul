@@ -27,6 +27,36 @@ public class SoundTMS9919 {
 		OPERATION_ATTENUATION = 2		/* low 4 bits [1vv1yyyy] */
 	;
 
+	public abstract class SoundVoice
+	{
+		/** // volume, 0 == off, 0xf == loudest */
+		byte	volume;			
+
+		private final String name;
+
+		public SoundVoice(String name) {
+			this.name = name;
+		}
+		@Override
+		public String toString() {
+			if (volume == 0)
+				return name + " [SILENT]";
+			else
+				return name + " volume="+volume;
+		}
+		abstract void cacheVoices();
+		abstract int generate(int soundClock, int sample, int sampleDelta);
+		public String getName() {
+			return name;
+		}
+		public void saveState(IDialogSettings section) {
+			section.put("Volume", volume);
+		}
+		public void loadState(IDialogSettings section) {
+			volume = (byte) Utils.readSavedInt(section, "Volume");
+		}
+	};
+
 	/*	This struct is defined through writes
 	to the sound port.  
 	
@@ -42,26 +72,22 @@ public class SoundTMS9919 {
 	whether the stype represents a fixed-frequency sound or one that is
 	derived from the frequency of channel 2.
 	 */
-	public abstract class SoundVoice
+	public abstract class ClockedSoundVoice extends SoundVoice
 	{
-		int		voice;
-		
 		byte	operation[] = { 0, 0, 0 };	// operation bytes
 		
-		/** // volume, 0 == off, 0xf == loudest */
-		byte	volume;			
 		int		period, hertz;	// calculated from OPERATION_FREQUENCY_xxx
 		
 		int		div;			// divisor to add to the delta per clock
 		int		delta;			// current accumulator, tracking the clock
-		boolean	out;			// current output of generator (on or off)
 
+		public ClockedSoundVoice(String name) {
+			super(name);
+		}
+		
 		@Override
 		public String toString() {
-			if (volume == 0)
-				return "[SILENT]";
-			else
-				return "hertz="+hertz+"; volume="+volume;
+			return super.toString() + "; hertz="+hertz;
 		}
 		int OPERATION_TO_NOISE_TYPE() {
 			return ( operation[OPERATION_CONTROL] & 0x4 );
@@ -93,26 +119,46 @@ public class SoundTMS9919 {
 					   Utils.toHex4(period),
 					   hertz,
 					   volume,
-					   voice));
+					   getName()));
 			}
 		}
-		abstract void cacheVoices();
-		abstract int generate(int soundClock, int sample, int sampleDelta);
+		
+		@Override
+		public void loadState(IDialogSettings settings) {
+			super.loadState(settings);
+			operation[0] = (byte) Utils.readSavedInt(settings, "Op1");
+			operation[1] = (byte) Utils.readSavedInt(settings, "Op2");
+			operation[2] = (byte) Utils.readSavedInt(settings, "Op3");
+			div = (byte) Utils.readSavedInt(settings, "Accumulator");
+		}
+		
+		@Override
+		public void saveState(IDialogSettings settings) {
+			super.saveState(settings);
+			settings.put("Op1", operation[0]);
+			settings.put("Op2", operation[1]);
+			settings.put("Op3", operation[2]);
+			settings.put("Accumulator", div);
+		}
 	};
 
-	public class ToneGeneratorVoice extends SoundVoice
+	public class ToneGeneratorVoice extends ClockedSoundVoice
 	{
+		private boolean out;
+		public ToneGeneratorVoice(int number) {
+			super("Voice " + number);
+		}
 		void cacheVoices()
 		{
-				volume = OPERATION_TO_VOLUME();
-				period = OPERATION_TO_PERIOD();
-				hertz = PERIOD_TO_HERTZ(period);
+			volume = OPERATION_TO_VOLUME();
+			period = OPERATION_TO_PERIOD();
+			hertz = PERIOD_TO_HERTZ(period);
 
-				if (hertz * 2 < 55938) {
-					delta = hertz * 2;
-				} else {
-					delta = 0;
-				}
+			if (hertz * 2 < 55938) {
+				delta = hertz * 2;
+			} else {
+				delta = 0;
+			}
 				
 			dump();
 		}
@@ -132,12 +178,28 @@ public class SoundTMS9919 {
 			}	
 			return sample;
 		}
+		
+		@Override
+		public void loadState(IDialogSettings settings) {
+			super.loadState(settings);
+			out = Utils.readSavedBoolean(settings, "Out");
+		}
+		
+		@Override
+		public void saveState(IDialogSettings settings) {
+			super.saveState(settings);
+			settings.put("Out", out);
+		}
 	};
 	
-	public class NoiseGeneratorVoice extends SoundVoice
+	public class NoiseGeneratorVoice extends ClockedSoundVoice
 	{
 		boolean isWhite;
 		int ns1;
+		
+		public NoiseGeneratorVoice() {
+			super("Noise");
+		}
 		void cacheVoices()
 		{
 			int periodtype = OPERATION_TO_NOISE_PERIOD();
@@ -152,8 +214,8 @@ public class SoundTMS9919 {
 				hertz = PERIOD_TO_HERTZ(period);
 			} else {
 				volume = OPERATION_TO_VOLUME();
-				period = sound_voices[VOICE_TONE_2].period;
-				hertz = sound_voices[VOICE_TONE_2].hertz;
+				period = ((ClockedSoundVoice) sound_voices[VOICE_TONE_2]).period;
+				hertz = ((ClockedSoundVoice)sound_voices[VOICE_TONE_2]).hertz;
 			}
 		
 			if (isWhite) {
@@ -165,7 +227,6 @@ public class SoundTMS9919 {
 				ns1 = (short) 0x8000;		// TODO: this should reset when the type of noise or sound changes only
 				div = 0;
 			}
-			out = true;
 			
 			dump();
 		}
@@ -202,15 +263,61 @@ public class SoundTMS9919 {
 					//sample += sampleDelta;
 					while (div >= soundClock) 
 						div -= soundClock;
-				} else {
-					//sample -= sampleDelta;
 				}
 			}
 			return sample;
 		}
+		
+		@Override
+		public void saveState(IDialogSettings settings) {
+			super.saveState(settings);
+			settings.put("Shifter", ns1);
+		}
+		
+		@Override
+		public void loadState(IDialogSettings settings) {
+			super.loadState(settings);
+			ns1 = Utils.readSavedInt(settings, "Shifter");
+		}
 	};
 	
 
+	public class AudioGateVoice extends SoundVoice {
+
+		private boolean state;
+
+		public AudioGateVoice() {
+			super("Audio Gate");
+		}
+		
+		@Override
+		void cacheVoices() {
+			volume = (byte) (state ? 15 : 0);
+		}
+
+		@Override
+		int generate(int soundClock, int sample, int sampleDelta) {
+			sample += sampleDelta;
+			return sample;
+		}
+		
+		@Override
+		public void loadState(IDialogSettings settings) {
+			super.loadState(settings);
+			volume = (byte) (Utils.readSavedBoolean(settings, "State") ? 15 : 0);
+		}
+		
+		@Override
+		public void saveState(IDialogSettings settings) {
+			super.saveState(settings);
+			settings.put("State", volume != 0);
+		}
+
+		public void setState(boolean b) {
+			state = b;
+		}
+		
+	}
 	
 
 	
@@ -218,9 +325,10 @@ public class SoundTMS9919 {
 		VOICE_TONE_0 = 0, 
 		VOICE_TONE_1 = 1, 
 		VOICE_TONE_2 = 2, 
-		VOICE_NOISE = 3;
+		VOICE_NOISE = 3,
+		VOICE_AUDIO = 4;
 
-	private SoundVoice sound_voices[] = new SoundVoice[4];
+	private SoundVoice sound_voices[] = new SoundVoice[5];
 
 	int OPERATION_TO_VOICE(int op) {
 		return ( ((op) & 0x60) >> 5);
@@ -257,29 +365,28 @@ public class SoundTMS9919 {
 	private SoundHandler soundHandler;
 
 	private final Machine machine;
-	
+
 	public SoundTMS9919(Machine machine) {
 		this.machine = machine;
 		for (int i = 0; i < 3; i++) {
-			sound_voices[i] = new ToneGeneratorVoice();
-			sound_voices[i].voice = i;
+			sound_voices[i] = new ToneGeneratorVoice(i);
 		}
 		sound_voices[VOICE_NOISE] = new NoiseGeneratorVoice();
-		sound_voices[VOICE_NOISE].voice = VOICE_NOISE;
+		sound_voices[VOICE_AUDIO] = new AudioGateVoice();
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.engine.SoundHandler#writeSound(byte)
 	 */
 	public void writeSound(byte val) {
-		SoundVoice v;
+		ClockedSoundVoice v;
 		/*  handle command byte */
 		//System.out.println("sound byte: " + Utils.toHex2(val));
 		int vn;
 		if ((val & 0x80) != 0) {
 			vn = OPERATION_TO_VOICE(val);
 			cvoice = vn;
-			v = sound_voices[vn];
+			v = (ClockedSoundVoice) sound_voices[vn];
 			switch ((val & 0x70) >> 4) 
 			{
 			case 0:				/* T1 FRQ */
@@ -305,7 +412,7 @@ public class SoundTMS9919 {
 		/*  second frequency byte */
 		else {
 			vn = cvoice;
-			v = sound_voices[vn];
+			v = (ClockedSoundVoice) sound_voices[vn];
 			v.operation[OPERATION_FREQUENCY_HI] = val;
 		}
 		
@@ -318,7 +425,7 @@ public class SoundTMS9919 {
 	void
 	updateNoise()
 	{
-		SoundVoice v = sound_voices[VOICE_NOISE];
+		ClockedSoundVoice v = (ClockedSoundVoice) sound_voices[VOICE_NOISE];
 		
 		if ((cvoice == VOICE_TONE_2 && v.OPERATION_TO_NOISE_PERIOD() == NOISE_PERIOD_VARIABLE)
 			 || cvoice == VOICE_NOISE)
@@ -343,22 +450,27 @@ public class SoundTMS9919 {
 	}
 	
 	public void saveState(IDialogSettings settings) {
-		for (int vn = 0; vn < 4; vn++) {
+		for (int vn = 0; vn < sound_voices.length; vn++) {
 			SoundVoice v = sound_voices[vn];
-			for (int idx = 0; idx < 3; idx++) {
-				settings.put("" + vn + "." + idx, v.operation[idx]);
-			}
+			v.saveState(settings.addNewSection(v.getName()));
+			
 		}
 	}
 	public void loadState(IDialogSettings settings) {
 		if (settings == null) return;
-		for (int vn = 0; vn < 4; vn++) {
+		for (int vn = 0; vn < sound_voices.length; vn++) {
 			SoundVoice v = sound_voices[vn];
-			for (int idx = 0; idx < 3; idx++) {
-				v.operation[idx] = (byte) Utils.readSavedInt(settings, "" + vn + "." + idx);
-
-			}
+			v.loadState(settings.getSection(v.getName()));
 			v.cacheVoices();
 		}
+	}
+
+	public void setAudioGate(boolean b) {
+		AudioGateVoice v = (AudioGateVoice) sound_voices[VOICE_AUDIO];
+		v.setState(b);
+		v.cacheVoices();
+		if (soundHandler != null)
+			soundHandler.updateVoice(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
+
 	}
 }

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import v9t9.engine.CruHandler;
+import v9t9.utils.Utils;
 
 /**
  * This class handles a set of CRU handlers
@@ -84,6 +85,7 @@ public class CruManager implements CruHandler {
      * @param bits
      */
     public void writeBits(int addr, int val, int num) {
+    	//System.out.println(Utils.toHex4(addr) + " @" + num + " = " + val);
         Iterator<Integer> iter = writers.keySet().iterator();
         while (iter.hasNext() && num > 0) {
             Integer base = iter.next();
