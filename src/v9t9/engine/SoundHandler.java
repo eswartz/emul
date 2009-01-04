@@ -20,6 +20,8 @@ public interface SoundHandler {
 	void flushAudio();
 	
 	void dispose();
+
+	void speech(short sample);
 	
 }
 

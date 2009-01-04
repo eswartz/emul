@@ -6,10 +6,12 @@
  */
 package v9t9.emulator.hardware.memory.mmio;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+
 import v9t9.emulator.Machine.ConsoleMmioReader;
 import v9t9.emulator.Machine.ConsoleMmioWriter;
-import v9t9.engine.Client;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.utils.Utils;
 
 /** GPL chip entry
  * @author ejs
@@ -93,4 +95,14 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter {
     		gromaddr = getNextAddr(gromaddr);
     	}    
     }
+
+	public void loadState(IDialogSettings section) {
+		gromaddr = (short) Utils.readSavedInt(section, "Addr");
+		gromaddrflag = Utils.readSavedBoolean(section, "AddrFlag");
+	}
+
+	public void saveState(IDialogSettings section) {
+		section.put("Addr", gromaddr);
+		section.put("AddrFlag", gromaddrflag);
+	}
 }

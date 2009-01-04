@@ -152,11 +152,14 @@ public class V9t9 {
 
 	    	} else if (true) {
 		    	
-		    	loadModuleGrom("Parsec", "parsecg.bin");
-		    	loadModuleRom("Parsec", "parsecc.bin");
 		    	//loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
-		    	loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
-		    	loadModuleGrom("ExtBasic", "tiextg.bin");
+	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
+	    		loadModuleGrom("ExtBasic", "tiextg.bin");
+	    		loadModuleGrom("Parsec", "parsecg.bin");
+	    		loadModuleRom("Parsec", "parsecc.bin");
+	    		
+	    		loadModuleGrom("TEII", "teiig.bin");
+	    		loadModuleRom("TEII", "teiic.bin");
 	    	} else {
 		    	loadModuleRom("Logo", "logoc.bin");
 		    	loadModuleGrom("Logo", "logog.bin");
@@ -207,7 +210,7 @@ public class V9t9 {
 	        Compiler.settingCompileFunctions.setBoolean(true);
     	}
         
-        if (true) {
+        if (false) {
         	//Executor.settingDumpInstructions.setBoolean(true);
         	Executor.settingDumpFullInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);

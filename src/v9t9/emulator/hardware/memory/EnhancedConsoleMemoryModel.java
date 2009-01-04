@@ -8,14 +8,6 @@ package v9t9.emulator.hardware.memory;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.TI994A;
-import v9t9.emulator.hardware.memory.mmio.ConsoleGramWriteArea;
-import v9t9.emulator.hardware.memory.mmio.ConsoleGromReadArea;
-import v9t9.emulator.hardware.memory.mmio.ConsoleSoundArea;
-import v9t9.emulator.hardware.memory.mmio.ConsoleSpeechReadArea;
-import v9t9.emulator.hardware.memory.mmio.ConsoleSpeechWriteArea;
-import v9t9.emulator.hardware.memory.mmio.ConsoleVdpReadArea;
-import v9t9.emulator.hardware.memory.mmio.ConsoleVdpWriteArea;
-import v9t9.emulator.hardware.memory.mmio.SoundMmio;
 import v9t9.engine.memory.MemoryEntry;
 
 

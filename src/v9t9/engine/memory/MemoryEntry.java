@@ -7,17 +7,10 @@
 package v9t9.engine.memory;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.TreeMap;
-import java.util.zip.GZIPOutputStream;
-
-import net.iHarder.Base64;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 

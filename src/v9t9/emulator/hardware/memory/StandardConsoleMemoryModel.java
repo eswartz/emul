@@ -7,7 +7,6 @@
 package v9t9.emulator.hardware.memory;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.SoundTMS9919;
 import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGramWriteArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGromReadArea;
@@ -75,7 +74,7 @@ public class StandardConsoleMemoryModel implements MemoryModel {
      
         soundMmio = new SoundMmio(machine.getSound());
         gplMmio = new GplMmio(GRAPHICS);
-        speechMmio = new SpeechMmio();
+        speechMmio = new SpeechMmio(machine);
         
         if (machine instanceof TI994A) {
         	vdpMmio = ((TI994A) machine).getVdpMmio();
@@ -120,15 +119,6 @@ public class StandardConsoleMemoryModel implements MemoryModel {
 
 	public MemoryDomain getConsole() {
     	return CPU;
-    }
-    
-    public int getLatency(int addr) {
-    	if (addr < 0x2000)
-    		return 0;
-    	if (addr >= 0x8000 && addr < 0x8400)
-    		return 0;
-    	// standard latency for external memory is 4 cycles
-    	return 4;
     }
     
     public GplMmio getGplMmio() {

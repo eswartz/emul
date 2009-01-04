@@ -13,7 +13,6 @@ import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
-import v9t9.engine.Client;
 import v9t9.engine.memory.MemoryDomain;
 
 public class TI994A extends Machine {

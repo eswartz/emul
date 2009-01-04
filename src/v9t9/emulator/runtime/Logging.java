@@ -50,7 +50,8 @@ public class Logging {
             public void changed(Setting setting, Object oldValue) {
             	PrintWriter dump = settingToPrintwriterMap.get(setting);
             	
-                if (setting.getBoolean() && dump == null) {
+            	boolean enabled = isSettingEnabled(1, setting);
+                if (enabled && dump == null) {
                     File file = settingToFilenameMap.get(setting);
                     try {
                         dump = fileToStreamMap.get(file);
@@ -76,15 +77,64 @@ public class Logging {
 	}
 	
 	/**
+	 * Register a log file for the given setting.  Must register before setting value.
+	 * Multiple settings may share a file.
+	 * @param setting the boolean setting 
+	 * @param logFileName filename, which will live in a temporary directory 
+	 * unless absolute
+	 */
+	public static void registerLog(Setting setting, PrintWriter writer) {
+		if ((setting.getValue() instanceof Integer && setting.getInt() > 0)
+				|| setting.getBoolean())
+			settingToPrintwriterMap.put(setting, writer);
+		
+		setting.addListener(new ISettingListener() {
+
+            public void changed(Setting setting, Object oldValue) {
+            	PrintWriter dump = settingToPrintwriterMap.get(setting);
+            	
+            	boolean enabled = isSettingEnabled(1, setting);
+                if (enabled && dump == null) {
+                	dump = new PrintWriter(System.out, true);
+                	dump.println("Enabling " + setting.getName());
+                    settingToPrintwriterMap.put(setting, dump);
+                } else if (!enabled && dump != null) {
+                	settingToPrintwriterMap.remove(setting);
+                }
+            }});
+		
+	}
+	
+	/**
+	 * Get the log for a given setting, if its level is level is matched
+	 * @param level 1+ for integer-based level
+	 * @param setting
+	 * @return PrintWriter or <code>null</code>
+	 */
+	public static PrintWriter getLog(int level, Setting setting) {
+		boolean enabled = isSettingEnabled(level, setting);
+		if (enabled)
+			return settingToPrintwriterMap.get(setting);
+		else
+			return null;
+	}
+
+	private static boolean isSettingEnabled(int level, Setting setting) {
+		boolean enabled;
+		if (setting.getValue() instanceof Integer) 
+			enabled = setting.getInt() >= level;
+		else
+			enabled = setting.getBoolean();
+		return enabled;
+	}
+
+	/**
 	 * Get the log for a given setting, if it's true.
 	 * @param setting
 	 * @return PrintWriter or <code>null</code>
 	 */
 	public static PrintWriter getLog(Setting setting) {
-		if (setting.getBoolean())
-			return settingToPrintwriterMap.get(setting);
-		else
-			return null;
+		return getLog(1, setting);
 	}
 	
 	/**
@@ -95,6 +145,19 @@ public class Logging {
 	 */
 	public static void writeLogLine(Setting setting, String msg) {
 		PrintWriter pw = getLog(setting);
+		if (pw != null) {
+			pw.println(msg);
+		}
+	}
+	
+	/**
+	 * Lazy method of writing to a log which may or may not be open.
+	 * Message thrown away if log is not open.
+	 * @param setting setting controlling the log
+	 * @param msg text to write
+	 */
+	public static void writeLogLine(int level, Setting setting, String msg) {
+		PrintWriter pw = getLog(level, setting);
 		if (pw != null) {
 			pw.println(msg);
 		}

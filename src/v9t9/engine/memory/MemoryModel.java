@@ -15,14 +15,6 @@ import v9t9.emulator.hardware.memory.mmio.VdpMmio;
  *
  */
 public interface MemoryModel {
-	/** Get the latency for accessing memory at this address.
-	 * This is typically used only for initializing MemoryDomain and MemoryAreas,
-	 * which take over the task of tracking memory cycle counts.
-	 * @param addr
-	 * @return number of cycles to access a byte
-	 */
-	int getLatency(int addr);
-	
 	/**
 	 * Get the memory defined by the model.
 	 */

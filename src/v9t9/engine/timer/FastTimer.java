@@ -19,10 +19,8 @@ public class FastTimer {
 	private ITimer timer;
 	private ArrayList<FastTimerTaskInfo> taskinfos;
 	private Object controlLock;
-	private Object dummy = new Object();
 	private Thread timerThread;
 	private static int gCnt;
-	private long minimumdelay;
 	
 	class FastTimerTaskInfo {
 		public FastTimerTaskInfo(FastTimerTask task, long delay) {
@@ -70,7 +68,7 @@ public class FastTimer {
 					HRTimer.timeBeginPeriod(10);
 				}
 				try {
-					long prev = timer.getTimeNs();
+					//long prev = timer.getTimeNs();
 					//double prevd = timer.getTimeDouble();
 					while (true) {
 						try {
@@ -82,8 +80,14 @@ public class FastTimer {
 							long now = timer.getTimeNs();
 							//long elapsed = now - prev;
 							//System.out.print(elapsed + ",");
+							
+							FastTimerTaskInfo[] infoArray;
+							synchronized (taskinfos) {
+								infoArray = (FastTimerTaskInfo[]) taskinfos.toArray(new FastTimerTaskInfo[taskinfos
+										.size()]);
+							}
 	
-							for (FastTimerTaskInfo info : taskinfos) {
+							for (FastTimerTaskInfo info : infoArray) {
 								if (now >= info.deadline) {
 									//System.out.println("moving from " + info.deadline + " by " + info.delay + " to " + (info.delay + info.deadline));
 									 
@@ -96,7 +100,7 @@ public class FastTimer {
 									info.task.run();
 								}
 							}
-							prev = now;
+							//prev = now;
 						}
 					}
 				} finally {
@@ -115,7 +119,6 @@ public class FastTimer {
 			if (timerThread != null) {
 				timerThread.interrupt();
 				taskinfos.clear();
-				minimumdelay = 0;
 				timerThread = null;
 			}
 		}

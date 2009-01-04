@@ -5,7 +5,6 @@ package v9t9.emulator.runtime;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Timer;
 
 /**
  *	The demo file format is very rudimentary.

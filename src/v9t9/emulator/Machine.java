@@ -17,7 +17,6 @@ import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.MachineModel;
-import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.hardware.dsrs.DSRManager;
 import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Cpu;
@@ -181,7 +180,7 @@ abstract public class Machine {
     			
     			if (now >= lastInfo + 1000) {
     				upTime += now - lastInfo;
-    				executor.dumpStats();
+    				//executor.dumpStats();
     				executor.nVdpInterrupts = 0;
     				lastInfo = now;
     				vdpInterruptDelta = 0;
@@ -388,6 +387,7 @@ abstract public class Machine {
 		}
 		DialogSettings settings = new DialogSettings("state");
 		cpu.saveState(settings.addNewSection("CPU"));
+		getMemoryModel().getGplMmio().saveState(settings.addNewSection("GPL"));
 		memory.saveState(settings.addNewSection("Memory"));
 		vdp.saveState(settings.addNewSection("VDP"));
 		sound.saveState(settings.addNewSection("Sound"));
@@ -415,6 +415,7 @@ abstract public class Machine {
 		settings.load(filename);
 		
 		memory.loadState(settings.getSection("Memory"));
+		getMemoryModel().getGplMmio().loadState(settings.getSection("GPL"));
 		cpu.loadState(settings.getSection("CPU"));
 		vdp.loadState(settings.getSection("VDP"));
 		sound.loadState(settings.getSection("Sound"));
