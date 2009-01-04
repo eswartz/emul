@@ -173,13 +173,18 @@ public class V9t9 {
     		
     		
     		// the high-GROM code is copied into RAM here
-    		console.getEntryAt(0xA000).loadSymbols(
-    				new FileInputStream(DataFiles.resolveFile(entry.getSymbolFilepath())));
+    		try {
+	    		console.getEntryAt(0x6000).loadSymbols(
+	    				new FileInputStream(DataFiles.resolveFile(entry.getSymbolFilepath())));
+    		} catch (IOException e) {
+    			
+    		}
     	}
     }
 
     protected BankedMemoryEntry loadEnhancedBankedConsoleRom(String filename1, String filename2) throws IOException {
-    	BankedMemoryEntry cpuRomEntry = DiskMemoryEntry.newWriteTogglingBankedWordMemoryFromFile(
+    	// not toggled based on writes to the ROM, but MMIO
+    	BankedMemoryEntry cpuRomEntry = DiskMemoryEntry.newBankedWordMemoryFromFile(
     			0x0000,
     			0x4000,
     			memory,

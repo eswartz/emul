@@ -8,6 +8,7 @@ import v9t9.emulator.hardware.memory.mmio.ConsoleMmioArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryListener;
+import v9t9.engine.memory.MultiBankedMemoryEntry;
 
 /**
  * Enhanced memory-mapped I/O area, which is much compacted (and yes, sheds any 
@@ -28,6 +29,14 @@ import v9t9.engine.memory.MemoryListener;
         >FFA0=sound
         
         >FFB0=speech
+        
+	    >FFC0=CPU ROM select               
+	    >FFC2=FORTH ROM select             
+	    >FFC4=>8400->9FFF is RAM            TODO
+	    >FFC6=>8400->9FFF is MMIO (old-style)   TODO
+	    
+	    >FFFC=NMI interrupt vector          TODO
+        
 </pre> 
  * @author ejs
  *
@@ -46,9 +55,13 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
 	public static final int GPLWD = 0xFF94;
 	public static final int GPLWA = 0xFF96;
 	public static final int SOUND = 0xFFA0;
+	public static final int BANKA = 0xFFC0;
+	public static final int BANKB = 0xFFC2;
+	public static final int NMI = 0xFFFC;
 	
 	private final Machine machine;
 	private MemoryEntry underlyingMemory;
+	private MultiBankedMemoryEntry romMemory;
 		
 	EnhanchedConsoleMmioArea(Machine machine) {
 		this.machine = machine;
@@ -56,7 +69,8 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
     };
     
     public void notifyMemoryMapChanged(MemoryEntry entry) {
-		if (entry.addr >= 0x10000 - MemoryDomain.AREASIZE || entry.addr + entry.size < 0x10000) {
+		if ((entry.addr >= 0x10000 - MemoryDomain.AREASIZE || entry.addr + entry.size < 0x10000)
+				|| (entry.addr < 0x4000)) {
 			findUnderlyingMemory();
 		}
 	}
@@ -66,12 +80,20 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
     		if (entry.addr < MMIO_BASE && entry.addr + entry.size >= 0x10000 && entry.area != this) {
     			underlyingMemory = entry;
     		}
+    		else if (entry.addr < 0x4000) {
+    			if (entry instanceof MultiBankedMemoryEntry) {
+					romMemory = (MultiBankedMemoryEntry) entry;
+				} else {
+					romMemory = null;
+				}
+    		}
+
     	}
 	}
 
     @Override
     public void writeByte(MemoryEntry entry, int addr, byte val) {
-    	if (addr < MMIO_BASE) {
+    	if (addr < MMIO_BASE || addr >= NMI) {
     		underlyingMemory.area.flatWriteByte(underlyingMemory, addr, val);
     		return;
     	}
@@ -83,7 +105,7 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
     
 	@Override
     public void writeWord(MemoryEntry entry, int addr, short val) {
-    	if (addr < MMIO_BASE) {
+    	if (addr < MMIO_BASE || addr >= NMI) {
     		underlyingMemory.area.flatWriteWord(underlyingMemory, addr, val);
     		return;
     	}
@@ -93,7 +115,7 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
 
 	@Override
 	public byte readByte(MemoryEntry entry, int addr) {
-		if (addr < MMIO_BASE)
+		if (addr < MMIO_BASE || addr >= NMI)
 			return underlyingMemory.area.flatReadByte(underlyingMemory, addr);
     	if ((addr & 1) != 0)
     		return 0;
@@ -102,7 +124,7 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
 	
 	@Override
 	public short readWord(MemoryEntry entry, int addr) {
-		if (addr < MMIO_BASE)
+		if (addr < MMIO_BASE || addr >= NMI)
 			return underlyingMemory.area.flatReadWord(underlyingMemory, addr);
 		return (short) (readByte(entry, addr) << 8);
 	}
@@ -120,6 +142,16 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
     		break;
     	case SOUND:
     		machine.getMemoryModel().getSoundMmio().write(addr, val);
+    		break;
+    	case BANKA:
+    		if (romMemory != null) {
+    			romMemory.selectBank(0);
+    		}
+    		break;
+    	case BANKB:
+    		if (romMemory != null) {
+    			romMemory.selectBank(1);
+    		}
     		break;
     	}
 		

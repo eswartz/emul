@@ -7,11 +7,14 @@ pockets of ROM and RAM, I decided to start over and treat this system like an ac
 computer using the 9900 CPU, 9938 VDP, 9919 sound chip, and speech chip.
 
 1) We want consecutive ROM and RAM blocks
-2) We want ROM at >0000 and >FFF0 so we can have interrupt vectors and XOP vectors safe from overwriting
+2) We want ROM at >0000 still so we can have interrupt vectors and XOP vectors safe from overwriting
 3) We want more RAM space!  
 4) We can still allow DSRs to swap into >4000 for compatibility.  Well-written ROMs also allow for
-the CPU RAM block (& workspace) to move, so we don't have to adhere to this.  On the other hand,
-the VDP/GPL/etc I/O ports need to be at the standard addresses (at least for my own code).
+the CPU RAM block (& workspace) to move, so we don't have to adhere to the standard addresses as
+long as we provide a space for them.
+5) A possible problem -- DSRs use R15 to find all the other addresses, but expect to find some 
+addresses >400 apart from each other.  We don't want to waste that much space, though.  If we ever
+support a "real" DSR with this, we'll probably need to patch it.
 
 >0000
     CPU ROM, part 1     | FORTH ROM, part 1
@@ -47,10 +50,10 @@ the VDP/GPL/etc I/O ports need to be at the standard addresses (at least for my 
         
         >FFB0=speech
         
-    >FFC0=CPU ROM select
-    >FFC2=FORTH ROM select
-    >FFC4=>8400->9FFF is RAM
-    >FFC6=>8400->9FFF is MMIO (old-style)
+    >FFC0=CPU ROM select               
+    >FFC2=FORTH ROM select             
+    >FFC4=>8400->9FFF is RAM            TODO
+    >FFC6=>8400->9FFF is MMIO (old-style)   TODO
     
     >FFFC=NMI interrupt vector
     

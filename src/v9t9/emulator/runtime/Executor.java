@@ -74,7 +74,13 @@ public class Executor {
         Logging.registerLog(settingDumpInstructions, "instrs.txt");
         Logging.registerLog(settingDumpFullInstructions, "instrs_full.txt");
         
-        
+        Machine.settingPauseMachine.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				nLastCycleCount = 0;				
+			}
+        	
+        });
 
     }
 

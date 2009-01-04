@@ -105,11 +105,14 @@ abstract public class Machine {
 			public void changed(Setting setting, Object oldValue) {
 				synchronized (executionLock) {
 					bExecuting = !setting.getBoolean();
+					cpu.resetCycleCounts();
 					executionLock.notifyAll();
 				}
 			}
         	
         });
+    	
+
 	}
 
 	public interface ConsoleMmioReader {
@@ -167,6 +170,9 @@ abstract public class Machine {
 
 			@Override
         	public void run() {
+				if (!bExecuting)
+					return;
+				
     			now = System.currentTimeMillis();
     			//System.out.print(now);
     			

@@ -21,7 +21,6 @@ import v9t9.emulator.hardware.V9t9;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
 import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
-import v9t9.utils.Utils;
 
 /**
  * @author Ed

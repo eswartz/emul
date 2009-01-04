@@ -22,6 +22,7 @@ import v9t9.emulator.clients.builtin.SoundTMS9919.SoundVoice;
 import v9t9.engine.SoundHandler;
 
 /**
+ * TMS9919 / SN76489 emulation
  * @author ejs
  *
  */
@@ -73,7 +74,7 @@ public class JavaSoundHandler implements SoundHandler {
 	ConcurrentLinkedQueue<AudioChunk> soundQueue;
 	
 	{
-		if (false) {
+		if (true) {
 			try {
 				if (File.separatorChar == '/')
 					fos = new FileOutputStream("/tmp/v9t9_audio.raw");
@@ -139,6 +140,8 @@ public class JavaSoundHandler implements SoundHandler {
 			return;
 		}
 		
+		// TODO: add a listener to the settingPauseMachine and send empty data to
+		// the sound chip then
 		
 		soundWritingThread = new Thread(new Runnable() {
 
@@ -147,8 +150,8 @@ public class JavaSoundHandler implements SoundHandler {
 					// wait for the main thread(s) to send us data to write,
 					// which we do here in a separate thread to allow for
 					// the potential of blocking.
+					AudioChunk chunk = null;
 					synchronized (soundQueue) {
-						AudioChunk chunk = null;
 						
 						try {
 							soundQueue.wait();
@@ -165,7 +168,8 @@ public class JavaSoundHandler implements SoundHandler {
 						//System.out.println("sound queue: " + soundQueue.size());
 						if (chunk == null)
 							continue;
-
+					}
+					
 						/*
 						while (!soundWritingRequest) {
 							try {
@@ -203,7 +207,6 @@ public class JavaSoundHandler implements SoundHandler {
 						}
 						
 						//soundWritingRequest = false;
-					}
 				}
 			}
 			
@@ -275,36 +278,12 @@ public class JavaSoundHandler implements SoundHandler {
 	/* (non-Javadoc)
 	 * @see v9t9.engine.SoundHandler#updateVoice(int, v9t9.emulator.clients.builtin.Sound99xx.voiceinfo)
 	 */
-	public void updateVoice(int vn, int updateFlags, int pos, int total) {
-		if (vn >= 4) 
-			throw new IllegalArgumentException("Did not expect more than 4 voices");
-
-		// need to update all the voices together
-		SoundVoice v = sound.getSoundVoices()[vn];
-		
-		//for (int vi = SoundTMS9919.VOICE_TONE_0; vi <= SoundTMS9919.VOICE_TONE_2; vi++) {
-		if (vn < SoundTMS9919.VOICE_NOISE) {
-			if (v.hertz * 2 < soundClock) {
-				v.delta = v.hertz * 2;
-			} else {
-				v.delta = 0;
-			}
-			v.sampleDelta = (v.voice & 1) != 0 ? atten[v.volume] : -atten[v.volume];
-	//	}
-		} else {
-			if (v.OPERATION_TO_NOISE_TYPE() == SoundTMS9919.NOISE_WHITE) {
-				v.delta = v.hertz;
-			} else {
-				//clock = m->soundhz * PERIODMULT;
-				v.delta = v.hertz / 16;
-			}
-			v.div = v.volume != 0 ? v.div : 0;
-			//v.sampleDelta = v.volume * 127 / 15;
-			v.sampleDelta = atten[v.volume];
-		}
+	public void updateVoice(int pos, int total) {
 		
 		if (soundGeneratorWaveForm != null) {
-			int currentPos = pos * soundGeneratorWaveForm.length / total;
+			int currentPos = (int) ((long)pos * soundGeneratorWaveForm.length / total);
+			if (currentPos < 0)
+				currentPos = 0;
 			updateSoundGenerator(lastUpdatedPos, currentPos);
 			lastUpdatedPos = currentPos;
 		}
@@ -314,8 +293,8 @@ public class JavaSoundHandler implements SoundHandler {
 		if (from >= to)
 			return;
 		
+		//System.out.println("Updating " + from + " to " + to);
 		SoundVoice[] vs = sound.getSoundVoices();
-		boolean iswhite = vs[SoundTMS9919.VOICE_NOISE].OPERATION_TO_NOISE_TYPE() == SoundTMS9919.NOISE_WHITE;
 		
 		int[] voices = { -1, -1, -1, -1 };
 		int vcnt = 0;
@@ -330,13 +309,8 @@ public class JavaSoundHandler implements SoundHandler {
 				for (int vidx = 0; vidx < vcnt; vidx++) {
 					int vi = voices[vidx];
 					SoundVoice v = vs[vi];
-					if (v.voice < SoundTMS9919.VOICE_NOISE) {
-						sample = combineSquareWaveform(v, sample);
-					} else if (iswhite) {
-						sample = combineWhiteNoiseWaveform(v, sample);
-					} else {
-						sample = combinePeriodicNoiseWaveform(v, sample, i % 16 == 0);
-					}
+					int sampleDelta = (v.voice & 1) != 0 ? atten[v.volume] : -atten[v.volume];
+					sample = v.generate(soundClock, sample, sampleDelta);
 				}
 				soundGeneratorWaveForm[i] = (byte) (sample >> 18);
 			}
@@ -346,46 +320,6 @@ public class JavaSoundHandler implements SoundHandler {
 		}
 	}
 
-	private int combineWhiteNoiseWaveform(SoundVoice v, int sample) {
-		v.div += v.delta;
-		while (v.div >= soundClock) {
-			v.ns1 = (v.ns1<<1) | ((v.ns1>>31) & 1);
-			v.ns1 ^= v.ns2;	
-			if ((v.ns2 += v.ns1)==0)	v.ns2++;
-			v.div -= soundClock;
-		}
-		if ((v.ns1 & 1) != 0 ) {
-			sample += v.sampleDelta;
-		}
-		return sample;
-	}
-	private int combinePeriodicNoiseWaveform(SoundVoice v, int sample, boolean go) {
-		v.div += v.delta;
-		if (v.div >= soundClock) {
-			sample += v.sampleDelta;
-			while (v.div >= soundClock)
-				v.div -= soundClock;
-		} else {
-			sample -= v.sampleDelta;
-		}
-		return sample;
-	}
-
-	private int combineSquareWaveform(SoundVoice v, int sample) {
-		if (!v.alt) {
-			sample += v.sampleDelta;
-		} else {
-			sample -= v.sampleDelta;
-		}
-		v.div += v.delta;
-		
-		// this loop usually executes only once
-		while (v.div >= soundClock) {
-			v.alt = !v.alt;
-			v.div -= soundClock;
-		}	
-		return sample;
-	}
 
 	public void dispose() {
 		if (soundWritingThread != null)

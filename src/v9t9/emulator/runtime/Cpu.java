@@ -85,17 +85,6 @@ public class Cpu implements MemoryAccessListener {
         
         settingCyclesPerSecond.setInt(3000000);
 
-        Machine.settingPauseMachine.addListener(new ISettingListener() {
-
-			public void changed(Setting setting, Object oldValue) {
-				if (!setting.getBoolean()) {
-					currenttargetcycles = currentcycles = 0;
-					totalcurrentcycles = totaltargetcycles = 0;
-				}
-			}
-        	
-        });
-
     }
 
     public short getPC() {
@@ -427,6 +416,11 @@ public class Cpu implements MemoryAccessListener {
 	public void addAllowedCycles(int i) {
 		currenttargetcycles += i;
 		
+	}
+
+	public void resetCycleCounts() {
+		currenttargetcycles = currentcycles = 0;
+		totalcurrentcycles = totaltargetcycles = 0;
 	}
 
 }

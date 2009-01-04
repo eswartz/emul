@@ -218,6 +218,21 @@ public class MemoryDomain implements MemoryAccess {
 		}
         return true;
 	}
+	
+	/**
+	 * Tell if the entry has been mapped but is fully obscured
+	 * @param memoryEntry
+	 * @return true if all MemoryAreas for the entry are covered
+	 */
+	public boolean isEntryFullyUnmapped(MemoryEntry memoryEntry) {
+		for (int addr = memoryEntry.addr; addr < memoryEntry.addr + memoryEntry.size; addr += AREASIZE) {
+			MemoryEntry theEntry = getEntryAt(addr);
+			if (theEntry == memoryEntry)
+				return false;
+		}
+        return true;
+	}
+
 
 	/**
 	 * Map a memory entry, so that its range of addresses
@@ -275,7 +290,7 @@ public class MemoryDomain implements MemoryAccess {
 	public void saveState(IDialogSettings section) {
 		int idx = 0;
 		for (MemoryEntry entry : mappedEntries) {
-			if (entry != zeroMemoryEntry && isEntryFullyMapped(entry)) {
+			if (entry != zeroMemoryEntry && !isEntryFullyUnmapped(entry)) {
 				entry.saveState(section.addNewSection(""+ idx));
 				idx++;
 			}
@@ -291,7 +306,7 @@ public class MemoryDomain implements MemoryAccess {
 
 		for (IDialogSettings entryStore : section.getSections()) {
 			String name = entryStore.get("Name");
-			MemoryEntry entry = findFullyMappedEntry(name);
+			MemoryEntry entry = findMappedEntry(name);
 			if (entry != null) {
 				entry.loadState(entryStore);
 			} else {
@@ -305,6 +320,15 @@ public class MemoryDomain implements MemoryAccess {
 	public MemoryEntry findFullyMappedEntry(String name) {
 		for (MemoryEntry entry : mappedEntries) {
 			if (entry.getName().equals(name) && isEntryFullyMapped(entry)) {
+				return entry;
+			}
+		}
+		return null;
+	}
+
+	public MemoryEntry findMappedEntry(String name) {
+		for (MemoryEntry entry : mappedEntries) {
+			if (entry.getName().equals(name) && !isEntryFullyUnmapped(entry)) {
 				return entry;
 			}
 		}

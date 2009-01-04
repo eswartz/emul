@@ -255,6 +255,37 @@ public class DiskMemoryEntry extends MemoryEntry {
     }
 
     /**
+     * Create a memory entry for banked (ROM) memory.
+     * @param addr
+     * @param size
+     * @param memory
+     * @param name
+     * @param domain
+     * @param filepath
+     * @param fileoffs
+     * @param filepath2
+     * @param fileoffs2
+     * @return
+     * @throws IOException
+     */
+	static public BankedMemoryEntry newBankedWordMemoryFromFile(
+			int addr,
+	        int size, 
+	        Memory memory, 
+	        String name, MemoryDomain domain,
+	        String filepath, int fileoffs,
+	        String filepath2, int fileoffs2) throws IOException {
+		DiskMemoryEntry bank0 = newWordMemoryFromFile(
+				addr, size, name + " (bank 0)", domain, filepath, fileoffs, false);
+		DiskMemoryEntry bank1 = newWordMemoryFromFile(
+				addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
+		
+		BankedMemoryEntry bankedMemoryEntry = new MultiBankedMemoryEntry(
+				memory, name, new MemoryEntry[] { bank0, bank1 });
+		return bankedMemoryEntry;
+	}
+
+    /**
      * Create a memory entry for banked (ROM) memory that toggles based
      * on the address written.
      * @param addr
