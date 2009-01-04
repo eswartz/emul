@@ -51,7 +51,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		if (pasteTimer == null)
 			lastKeystrokeTime = System.currentTimeMillis();
 		
-		System.out.println("pressed="+pressed+"; modifiers="+Integer.toHexString(modifiers)+"; keyCode="+keyCode+"; ascii="+(int)ascii);
+		//System.out.println("pressed="+pressed+"; modifiers="+Integer.toHexString(modifiers)+"; keyCode="+keyCode+"; ascii="+(int)ascii);
 		
 		if (ascii == KeyEvent.CHAR_UNDEFINED && keyCode < 128 && keyboardState.isAsciiDirectKey((char) keyCode)) {
 			ascii = (char) keyCode;

@@ -13,6 +13,8 @@ import v9t9.utils.Utils;
 
 /**
  * Controller for the TMS9919 sound chip
+ * <p>
+ * 3579545 Hz divided by 32 = 111860.78125 / 2 = 55930 Hz maximum frequency 
  * @author ejs
  *
  */
@@ -157,7 +159,7 @@ public class SoundTMS9919 {
 			if (isWhite) {
 				delta = hertz;
 			} else {
-				delta = hertz / 16;
+				delta = hertz;
 			}
 			if (prevType != isWhite || (wasSilent && volume != 0) || (isWhite && ns1 == 0)) {
 				ns1 = (short) 0x8000;		// TODO: this should reset when the type of noise or sound changes only
@@ -184,17 +186,24 @@ public class SoundTMS9919 {
 					sample += sampleDelta;
 				}
 			} else {
-				if (ns1 != 0) {
-					sample += sampleDelta;
+				// For periodic noise, the generator is "on" 1/15 of the time.
+				// The clock is the hertz / 15.
+				
+				// ns1 steps through 16 cycles, where 0x8000 through 0x2 are low, and 0x1 is high 
+				if (ns1 <= 1) {
+					sample -= sampleDelta * 2;
 				}
-				ns1 = (short) ((ns1 >>> 1) & 0x7fff);
 				if (div >= soundClock) {
-					ns1 = (short) 0x8000;
+					if (ns1 == 1) {
+						sample += sampleDelta * 4;
+						ns1 = (short) 0x8000;
+					}
+					ns1 = (short) ((ns1 >>> 1) & 0x7fff);
 					//sample += sampleDelta;
 					while (div >= soundClock) 
 						div -= soundClock;
 				} else {
-					sample -= sampleDelta;
+					//sample -= sampleDelta;
 				}
 			}
 			return sample;

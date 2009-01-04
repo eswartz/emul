@@ -77,6 +77,8 @@ public class Utils  {
 	 * @return
 	 */
 	public static int readSavedInt(IDialogSettings section, String key) {
+		if (section == null)
+			return 0;
 		String value = section.get(key);
 		if (value == null) {
 			return 0;
@@ -99,6 +101,8 @@ public class Utils  {
 	 * @return
 	 */
 	public static boolean readSavedBoolean(IDialogSettings section, String key) {
+		if (section == null)
+			return false;
 		String value = section.get(key);
 		if (value == null) {
 			return false;

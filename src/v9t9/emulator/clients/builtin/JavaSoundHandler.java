@@ -81,7 +81,7 @@ public class JavaSoundHandler implements SoundHandler {
 	private Thread speechWritingThread;
 
 	{
-		if (false) {
+		if (true) {
 			try {
 				if (File.separatorChar == '/')
 					soundFos = new FileOutputStream("/tmp/v9t9_audio.raw");
@@ -91,7 +91,7 @@ public class JavaSoundHandler implements SoundHandler {
 				e.printStackTrace();
 			}
 		}
-		if (true) {
+		if (false) {
 			try {
 				if (File.separatorChar == '/')
 					speechFos = new FileOutputStream("/tmp/v9t9_speech.raw");
