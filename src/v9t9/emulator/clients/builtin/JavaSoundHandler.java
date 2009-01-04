@@ -296,12 +296,15 @@ public class JavaSoundHandler implements SoundHandler {
 			int currentPos = (int) ((long) pos * soundGeneratorWaveForm.length / total);
 			if (currentPos < 0)
 				currentPos = 0;
+			//System.out.print(currentPos+" ");
 			updateSoundGenerator(lastUpdatedPos, currentPos);
 			lastUpdatedPos = currentPos;
 		}
 	}
 
 	protected synchronized void updateSoundGenerator(int from, int to) {
+		if (to > soundGeneratorWaveForm.length)
+			to = soundGeneratorWaveForm.length;
 		if (from >= to)
 			return;
 
@@ -381,23 +384,40 @@ public class JavaSoundHandler implements SoundHandler {
 		}
 	}
 
-	public synchronized void flushAudio() {
+	public synchronized void flushAudio(int pos, int limit) {
 		if (soundGeneratorWaveForm == null)
 			return;
 
+		// hmm, it would be nice if the audio gate could work perfectly,
+		// but the calculations of its data have assumed the "limit" would
+		// match reality, when sometimes the tick comes earlier or later.
+		//int length = lastUpdatedPos;
+		/*
+		int length = (int) ((long)pos * soundGeneratorWaveForm.length / limit);
+		if (length < lastUpdatedPos)
+			length = lastUpdatedPos;
+		if (length > soundGeneratorWaveForm.length)
+			length = soundGeneratorWaveForm.length;
+					byte[] part = new byte[length];
+		System.arraycopy(soundGeneratorWaveForm, 0, part, 0, length);
+		Arrays.fill(soundGeneratorWaveForm, (byte) 0);
+		soundQueue.add(new AudioChunk(part,
+				null, null));
+
+			*/
+		
 		int length = soundGeneratorWaveForm.length;
 		updateSoundGenerator(lastUpdatedPos, length);
 		lastUpdatedPos = 0;
-
-
 		soundQueue.add(new AudioChunk(soundGeneratorWaveForm,
 				null, null));
+		soundGeneratorWaveForm = new byte[soundGeneratorWaveForm.length];
+
 
 		synchronized (soundQueue) {
 			soundQueue.notify();
 
 		}
-		soundGeneratorWaveForm = new byte[soundGeneratorWaveForm.length];
 		
 
 		boolean anySpeech = (lastSpeechUpdatedPos > 0);
