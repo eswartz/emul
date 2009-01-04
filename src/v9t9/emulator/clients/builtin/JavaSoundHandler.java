@@ -154,10 +154,13 @@ public class JavaSoundHandler implements SoundHandler {
 					synchronized (soundQueue) {
 						
 						try {
-							soundQueue.wait();
+							soundQueue.wait(1000);
 						} catch (InterruptedException e) {
 							break;
 						}
+						if (Thread.interrupted())
+							return;
+						
 						chunk = soundQueue.poll();
 						
 						// toss extra chunks if too many arrive

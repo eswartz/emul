@@ -64,6 +64,7 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
 	private MultiBankedMemoryEntry romMemory;
 		
 	EnhanchedConsoleMmioArea(Machine machine) {
+		super(0);
 		this.machine = machine;
 		machine.getMemory().addListener(this);
     };

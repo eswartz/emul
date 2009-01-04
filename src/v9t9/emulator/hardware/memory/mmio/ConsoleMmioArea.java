@@ -9,7 +9,11 @@ import v9t9.engine.memory.ZeroWordMemoryArea;
 public class ConsoleMmioArea extends WordMemoryArea {
     public ConsoleMmioArea() {
     	// the 16->8 bit multiplexer forces all accesses to be slow
-    	super(4);
+    	this(4);
+    	
+    }
+    public ConsoleMmioArea(int latency) {
+    	super(latency);
         bWordAccess = true;
         memory = ZeroWordMemoryArea.zeroes;
     }

@@ -60,7 +60,7 @@ public class DSRManager {
 	public void handleDSR(Block block) {
 		short callpc = (short) (block.pc - 2);
 		short opcode = block.domain.readWord(callpc);
-		short crubase = block.domain.readWord(0x83D0);
+		short crubase = block.domain.readWord((block.wp & ~0xff) | 0x83D0);
 
 		if (callpc >= 0x4000 && callpc < 0x6000) {
 			
