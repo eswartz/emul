@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.video;
+package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.ImageData;
@@ -9,6 +9,7 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.internal.win32.OS;
 
+import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.jni.v9t9render.V9t9Render;
 
 /**

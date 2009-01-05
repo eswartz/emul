@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.builtin.sdl;
 
 import org.eclipse.swt.graphics.Rectangle;
 

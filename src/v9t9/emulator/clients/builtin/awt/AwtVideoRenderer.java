@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.video;
+package v9t9.emulator.clients.builtin.awt;
 
 import java.awt.Canvas;
 import java.awt.Component;
@@ -16,6 +16,10 @@ import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 
+import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
+import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.engine.settings.ISettingListener;
@@ -55,8 +59,8 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	public AwtVideoRenderer() {
 		updateRect = new Rectangle(0, 0, 0, 0);
 		setCanvas(new ImageDataCanvas24Bit(0));
-		desiredWidth = (int)(zoomx * 256);
-		desiredHeight = (int)(zoomy * 192);
+		//desiredWidth = (int)(zoomx * 256);
+		//desiredHeight = (int)(zoomy * 192);
 		this.canvas = new Canvas() {
 
 			private static final long serialVersionUID = 8795221581767897631L;
@@ -88,6 +92,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			}
 		});
 		
+		//updateWidgetSizeForMode();
 		doResizeToFit();
 		
 
@@ -108,13 +113,10 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	private void doResizeToFit()  {
 		canvas.setPreferredSize(new Dimension(desiredWidth, desiredHeight));
 		canvas.setSize(new Dimension(desiredWidth, desiredHeight));
-
 		resizeTopLevel();
-		
-		//container.setDesiredScreenSize(desiredWidth, desiredHeight);
 	}
+	
 	protected void resizeTopLevel() {
-		//canvas.setSize(new Dimension(desiredWidth, desiredHeight));
 		Component comp = canvas;
 		while (comp != null && !(comp instanceof Window)) {
 		    comp = comp.getParent();
@@ -276,9 +278,6 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		
 	}
 	protected void resizeWidgets() {
-		if (surface == null)
-			return;
-		
 		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight());
 		Point size = new Point(targetRect.width, targetRect.height);
 		Point curSize = new Point(canvas.getWidth(), canvas.getHeight());
@@ -290,8 +289,8 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		// resize to fit the required physical space -- but avoid oscillating if the zoom
 		// is simply too large for the screen (where the WM might again resize it smaller)
 		if (desiredWidth != size.x || desiredHeight != size.y) {
-			desiredWidth= size.x;
-			desiredHeight= size.y;
+			desiredWidth = size.x;
+			desiredHeight = size.y;
 			
 			doResizeToFit();
 		}
@@ -353,6 +352,9 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	
 	protected synchronized void doRedraw(Graphics g, int x, int y, int width, int height) {
 		if (surface == null || surface.getWidth() != desiredWidth || surface.getHeight() != desiredHeight) {
+			// ignore redraw request before we've decided our side
+			if (desiredWidth == 0 || desiredHeight == 0)
+				return;
 			System.out.println("New BufferedImage");
 			surface = new BufferedImage(desiredWidth, desiredHeight, BufferedImage.TYPE_INT_BGR);
 		}

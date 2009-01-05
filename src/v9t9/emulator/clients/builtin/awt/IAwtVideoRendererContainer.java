@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.video;
+package v9t9.emulator.clients.builtin.awt;
 
 import java.awt.image.BufferStrategy;
 

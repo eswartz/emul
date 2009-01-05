@@ -14,16 +14,16 @@ import org.eclipse.swt.widgets.Display;
 
 import sdljava.SDLException;
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.AwtJavaClient;
-import v9t9.emulator.clients.builtin.AwtKeyboardHandler;
-import v9t9.emulator.clients.builtin.SdlJavaClient;
-import v9t9.emulator.clients.builtin.SdlKeyboardHandler;
-import v9t9.emulator.clients.builtin.SwtJavaClient;
-import v9t9.emulator.clients.builtin.SwtKeyboardHandler;
-import v9t9.emulator.clients.builtin.video.ISwtVideoRenderer;
-import v9t9.emulator.clients.builtin.video.SwtAwtVideoRenderer;
-import v9t9.emulator.clients.builtin.video.SwtSdlVideoRenderer;
-import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
+import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
+import v9t9.emulator.clients.builtin.awt.AwtKeyboardHandler;
+import v9t9.emulator.clients.builtin.sdl.SdlJavaClient;
+import v9t9.emulator.clients.builtin.sdl.SdlKeyboardHandler;
+import v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer;
+import v9t9.emulator.clients.builtin.swt.SwtAwtVideoRenderer;
+import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
+import v9t9.emulator.clients.builtin.swt.SwtKeyboardHandler;
+import v9t9.emulator.clients.builtin.swt.SwtSdlVideoRenderer;
+import v9t9.emulator.clients.builtin.swt.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.clients.demo.HybridDemoClient;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
@@ -324,7 +324,7 @@ public class V9t9 {
         while (client.isAlive()) {
         	client.handleEvents();
 	    	
-	    	if (!machine.isRunning())
+	    	if (!machine.isAlive())
 	    		break;
 	    	
 	    	// don't eat up CPU

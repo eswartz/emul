@@ -4,13 +4,18 @@
  * Created on Dec 18, 2004
  *
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.builtin.sdl;
 
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
+import sdljava.SDLException;
+import sdljava.SDLMain;
+import sdljava.event.SDLEvent;
+import sdljava.event.SDLExposeEvent;
+import sdljava.event.SDLKeyboardEvent;
+import sdljava.event.SDLMouseButtonEvent;
+import sdljava.event.SDLMouseMotionEvent;
+import sdljava.event.SDLResizeEvent;
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.video.AwtVideoRenderer;
+import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
@@ -21,49 +26,25 @@ import v9t9.engine.VdpHandler;
  * This client uses SDL for the video and keyboard.
  * @author ejs
  */
-public class AwtJavaClient implements Client {
+public class SdlJavaClient implements Client {
     VdpHandler video;
     CruHandler cruHandler;
     private Machine machine;
-	private AwtKeyboardHandler keyboardHandler;
-	private AwtVideoRenderer videoRenderer;
-	private AwtWindow window;
+	private SdlKeyboardHandler keyboardHandler;
+	private SdlVideoRenderer videoRenderer;
+	private SdlWindow window;
 
-    public AwtJavaClient(final Machine machine, VdpHandler vdp) {
-    	this.machine = machine;
-        video = vdp;
-        
-        /*
-    	awtThreadGroup = new ThreadGroup("AWT threads");
-    	awtThreadGroup.setDaemon(true);
-    	
-    	Thread thread = new Thread(awtThreadGroup, new Runnable() {
-
-			public void run() {
-				init();
-			}
-    		
-    	});
-    	
-    	thread.start();
+    public SdlJavaClient(final Machine machine, VdpHandler vdp) {
     	try {
-			thread.join();
-		} catch (InterruptedException e) {
-		}*/
-        init();
-    }
-    
-    protected void init() {
-    	window = new AwtWindow( machine);
-		
-		videoRenderer = window.getVideoRenderer();
+			window = new SdlWindow(machine);
+			videoRenderer = window.getVideoRenderer();
+		} catch (SDLException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
     	
-		window.getFrame().addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				close();
-			}
-		});
+        this.machine = machine;
+        video = vdp;
         
         
         video.setCanvas(videoRenderer.getCanvas());
@@ -85,9 +66,7 @@ public class AwtJavaClient implements Client {
         
         //keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(),
         //		machine.getKeyboardState(), machine);
-        keyboardHandler = new AwtKeyboardHandler(
-        		videoRenderer.getAwtCanvas(),
-        		machine.getKeyboardState(), machine);
+        keyboardHandler = new SdlKeyboardHandler(machine.getKeyboardState(), machine);
     }
     /*
      * (non-Javadoc)
@@ -97,10 +76,10 @@ public class AwtJavaClient implements Client {
     public void close() {
     	try {
     		machine.stop();
+    		window.dispose();
+    		SDLMain.quit();
     	} catch (TerminatedException e) {
     		// expected
-    		window.dispose();
-    		System.exit(0);
     	}
     }
 
@@ -160,9 +139,9 @@ public class AwtJavaClient implements Client {
     	return keyboardHandler;
     }
     
-    /*
     public void handleEvents() {
     	SDLEvent event;
+    	/* Poll input queue, run keyboard loop */
 		try {
 			while ( (event = SDLEvent.pollEvent()) != null ) {
 				if ( event.getType() == SDLEvent.SDL_QUIT ) {
@@ -196,11 +175,7 @@ public class AwtJavaClient implements Client {
 		}
 		
     }
-    */
-
-    public void handleEvents() {
-    	
-    }
+    
     public boolean isAlive() {
     	//return !display.isDisposed();
     	return true;

@@ -45,7 +45,7 @@ abstract public class Machine {
     Cpu cpu;
     Executor executor;
     Client client;
-    boolean bRunning;
+    boolean bAlive;
     Timer timer;
     FastTimer cpuTimer;
     //Timer cpuTimer;
@@ -126,7 +126,7 @@ abstract public class Machine {
 
 
     public void close() {
-        bRunning = false;
+        bAlive = false;
         if (client != null) {
 			client.close();
 		}
@@ -151,8 +151,8 @@ abstract public class Machine {
         return settings;
     }
     
-    public boolean isRunning() {
-        return bRunning;
+    public boolean isAlive() {
+        return bAlive;
     }
     
     public void start() {
@@ -225,9 +225,9 @@ abstract public class Machine {
         videoRunner = new Thread("Video Runner") {
         	@Override
         	public void run() {
-        		while (Machine.this.isRunning()) {
+        		while (Machine.this.isAlive()) {
 	        		// delay if going too fast
-	    			while (vdp.isThrottled() && bRunning) {
+	    			while (vdp.isThrottled() && bAlive) {
 	    				// Just sleep.  Another timer thread will reset the throttle.
 	    				try {
 	    					Thread.sleep(10);
@@ -265,13 +265,13 @@ abstract public class Machine {
         };
         timer.scheduleAtFixedRate(clientTask, 0, clientTick);
         
-        bRunning = true;
+        bAlive = true;
         
       	// the machine (well, actually, 9900) runner
 		machineRunner = new Thread("Machine Runner") {
         	@Override
         	public void run() {
-    	        while (Machine.this.isRunning()) {
+    	        while (Machine.this.isAlive()) {
     	            try {
     	            	// synchronize on events like debugging, loading/saving, etc
 	            		synchronized (executionLock) {
@@ -280,7 +280,7 @@ abstract public class Machine {
 	            			}
 	    	            	// delay if going too fast
 	    	        		if (Cpu.settingRealTime.getBoolean()) {
-	    	        			while (cpu.isThrottled() && bRunning) {
+	    	        			while (cpu.isThrottled() && bAlive) {
 	    	        				// Just sleep.  Another timer thread will reset the throttle.
 	    	        				try {
 	    	        					Thread.sleep(10);
@@ -323,7 +323,7 @@ abstract public class Machine {
 			bExecuting = false;
 			executionLock.notifyAll();
 		}
-		bRunning = false;
+		bAlive = false;
 		machineRunner.interrupt();
 		videoRunner.interrupt();
         timer.cancel();

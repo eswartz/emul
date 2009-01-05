@@ -4,7 +4,7 @@
  * Created on Dec 18, 2004
  *
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
@@ -12,8 +12,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.video.ISwtVideoRenderer;
-import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
+import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
@@ -55,7 +54,7 @@ public class SwtJavaClient implements Client {
 		shell.addShellListener(new ShellAdapter() {
 			@Override
 			public void shellClosed(ShellEvent e) {
-		        if (machine.isRunning()) {
+		        if (machine.isAlive()) {
 		        	machine.setNotRunning();
 		        }
 			}

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.builtin.sound;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -18,6 +18,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.SoundTMS9919;
 import v9t9.emulator.clients.builtin.SoundTMS9919.SoundVoice;
 import v9t9.engine.SoundHandler;
 
@@ -316,7 +317,7 @@ public class JavaSoundHandler implements SoundHandler {
 		
 		int vcnt = 0;
 		for (int vi = 0; vi < vs.length; vi++) {
-			if (vs[vi].volume != 0)
+			if (vs[vi].getVolume() != 0)
 				voices[vcnt++] = vi;
 		}
 		if (vcnt > 0) {
@@ -325,8 +326,8 @@ public class JavaSoundHandler implements SoundHandler {
 				for (int vidx = 0; vidx < vcnt; vidx++) {
 					int vi = voices[vidx];
 					SoundVoice v = vs[vi];
-					int sampleDelta = (vi & 1) != 0 ? atten[v.volume]
-							: -atten[v.volume];
+					int sampleDelta = (vi & 1) != 0 ? atten[v.getVolume()]
+							: -atten[v.getVolume()];
 					sample = v.generate(soundClock, sample, sampleDelta);
 				}
 				//soundGeneratorWaveForm[i] = (byte) (sample >> 18);
@@ -379,8 +380,10 @@ public class JavaSoundHandler implements SoundHandler {
 				lastSpeechUpdatedPos = 0;
 				speechWaveForm = new byte[speechWaveForm.length];
 			}
-			speechWaveForm[lastSpeechUpdatedPos++] = (byte) (sample & 0xff);
-			speechWaveForm[lastSpeechUpdatedPos++] = (byte) (sample >> 8);
+			if (lastSpeechUpdatedPos < speechWaveForm.length) {
+				speechWaveForm[lastSpeechUpdatedPos++] = (byte) (sample & 0xff);
+				speechWaveForm[lastSpeechUpdatedPos++] = (byte) (sample >> 8);
+			}
 		}
 	}
 

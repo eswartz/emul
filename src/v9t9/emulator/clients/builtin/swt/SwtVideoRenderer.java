@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.video;
+package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
@@ -22,6 +22,10 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
+import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 
 /**
@@ -149,7 +153,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		
 		Rectangle redrawRect_ = vdpCanvas.getDirtyRect();
 		if (becameBlank)
-			redrawRect_ = new Rectangle(0, 0, vdpCanvas.width, vdpCanvas.height);
+			redrawRect_ = new Rectangle(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
 		
 		if (vdpCanvas.isInterlacedEvenOdd()) {
 			redrawRect_.y *= 2;

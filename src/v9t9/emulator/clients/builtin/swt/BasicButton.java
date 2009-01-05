@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.builtin.swt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,11 +32,13 @@ class BasicButton extends Canvas {
 	private Rectangle overlayBounds;
 	private List<SelectionListener> listeners;
 	private boolean selected;
+	private ButtonBar buttonBar;
 
 	public BasicButton(ButtonBar buttonBar, int style, Image icon_, Rectangle bounds_, String tooltip) {
-		super(buttonBar, SWT.NO_FOCUS | SWT.NO_RADIO_GROUP /*| SWT.NO_BACKGROUND*/);
+		super(buttonBar.getComposite(), SWT.NO_FOCUS | SWT.NO_RADIO_GROUP /*| SWT.NO_BACKGROUND*/);
 		
-		buttonBar.layout.numColumns++;
+		this.buttonBar = buttonBar;
+		buttonBar.addedButton();
 		
 		this.icon = icon_;
 		this.bounds = bounds_;
@@ -54,7 +56,8 @@ class BasicButton extends Canvas {
 		});
 		
 		GridData data = new GridData(bounds.width, bounds.height);
-		data.minimumHeight = 8;
+		data.minimumHeight = 8;	// the minimums above override this
+		data.minimumWidth = 8;	// the minimums above override this
 		data.grabExcessHorizontalSpace = false;
 		data.grabExcessVerticalSpace = false;
 		setLayoutData(data);
@@ -66,7 +69,7 @@ class BasicButton extends Canvas {
 
 			public void paintControl(PaintEvent e) {
 				Point size = getSize();
-				((ButtonBar)getParent()).paintButtonBar(e.gc, BasicButton.this, new Point(0, 0), size);
+				BasicButton.this.buttonBar.paintButtonBar(e.gc, BasicButton.this, new Point(0, 0), size);
 				e.gc.drawImage(icon, bounds.x, bounds.y, bounds.width, bounds.height, 
 						0, 0, size.x, size.y);
 				if (overlayBounds != null)
@@ -93,7 +96,7 @@ class BasicButton extends Canvas {
 				for (SelectionListener listener : array) {
 					listener.widgetSelected(selEvent);
 				}
-				((ButtonBar)getParent()).videoRenderer.setFocus();
+				BasicButton.this.buttonBar.videoRenderer.setFocus();
 			}
 		});
 		
@@ -117,4 +120,5 @@ class BasicButton extends Canvas {
 			redraw();
 		}
 	}
+	
 }

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.builtin.swt;
 
 import java.io.File;
 
@@ -10,6 +10,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.RTFTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.events.FocusAdapter;
+import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -25,7 +27,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.video.ISwtVideoRenderer;
+import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.ISettingListener;
@@ -41,7 +43,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	protected Shell shell;
 	protected Control videoControl;
 	private ButtonBar buttonBar;
-	public SwtWindow(Display display, ISwtVideoRenderer renderer, Machine machine) {
+	public SwtWindow(Display display, final ISwtVideoRenderer renderer, Machine machine) {
 		super(machine);
 		setVideoRenderer(renderer);
 		
@@ -62,37 +64,15 @@ public class SwtWindow extends BaseEmulatorWindow {
 		// need to use extra space so the window will let the screen grow or shrink
 		GridData screenLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		screenComposite.setLayoutData(screenLayoutData);
-		/*
-		GridData screenLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		screenLayoutData.minimumHeight = 256;
-		screenLayoutData.minimumWidth = 192;
-		screenLayoutData.widthHint = 256 * 3;
-		screenLayoutData.heightHint = 192 * 3;
-		screenComposite.setLayoutData(screenLayoutData);
-		*/
+		
 		this.videoControl = renderer.createControl(screenComposite);
-		//this.videoControl.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 		
 		File iconsFile = new File("icons/icons.png");
 		Image icons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
 		
 		buttonBar = new ButtonBar(mainComposite, SWT.HORIZONTAL, videoRenderer);
-		buttonBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-		/*
-		controlsComposite = new Composite(mainComposite, SWT.NO_RADIO_GROUP | SWT.NO_FOCUS);
-		layout = new GridLayout();
-		layout.marginHeight = layout.marginWidth = 0;
-		controlsComposite.setLayout(layout);
-		controlsComposite.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, false, true));
-		controlsComposite.addPaintListener(new PaintListener() {
-
-			public void paintControl(PaintEvent e) {
-				paintButtonBar(e.gc, e.widget, new Point(0, 0), controlsComposite.getSize());
-			}
-			
-		});
-		*/
-		/*BasicButton abortButton =*/ createButton(buttonBar, 
+		
+		createButton(buttonBar, 
 				icons, new Rectangle(0, 64, 64, 64),
 				"Send a NMI interrupt", new SelectionAdapter() {
 					@Override
@@ -110,7 +90,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					}
 				});
 
-		/*BasicButton logButton =*/ createStateButton(buttonBar,
+		createStateButton(buttonBar,
 				Executor.settingDumpFullInstructions, icons,
 				new Rectangle(0, 128, 64, 64),
 				new Rectangle(0, 0, 64, 64), "Toggle CPU logging");
@@ -173,6 +153,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 		Rectangle displaySize = shell.getDisplay().getBounds();
 		Point shellSize = shell.getSize();
 		shell.setBounds(displaySize.width - shellSize.x, displaySize.height - shellSize.y, shellSize.x, shellSize.y);
+		
+		shell.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				renderer.setFocus();
+			}
+		});
 		
 		renderer.setFocus();
 

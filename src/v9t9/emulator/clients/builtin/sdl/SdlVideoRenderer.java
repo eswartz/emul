@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.video;
+package v9t9.emulator.clients.builtin.sdl;
 
 import java.nio.ByteBuffer;
 
@@ -12,8 +12,10 @@ import sdljava.SDLMain;
 import sdljava.video.SDLRect;
 import sdljava.video.SDLSurface;
 import sdljava.video.SDLVideo;
-import v9t9.emulator.clients.builtin.SdlUtils;
-import v9t9.emulator.clients.builtin.SdlWindow;
+import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
+import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
 

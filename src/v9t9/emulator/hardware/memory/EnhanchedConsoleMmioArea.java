@@ -55,6 +55,8 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
 	public static final int GPLWD = 0xFF94;
 	public static final int GPLWA = 0xFF96;
 	public static final int SOUND = 0xFFA0;
+	public static final int SPCHWT = 0xFFB0;
+	public static final int SPCHRD = 0xFFB2;
 	public static final int BANKA = 0xFFC0;
 	public static final int BANKB = 0xFFC2;
 	public static final int NMI = 0xFFFC;
@@ -144,6 +146,9 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
     	case SOUND:
     		machine.getMemoryModel().getSoundMmio().write(addr, val);
     		break;
+    	case SPCHWT:
+    		machine.getMemoryModel().getSpeechMmio().write(addr, val);
+    		break;
     	case BANKA:
     		if (romMemory != null) {
     			romMemory.selectBank(0);
@@ -166,6 +171,8 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
     	case GPLRD:
     	case GPLRA:
     		return machine.getMemoryModel().getGplMmio().read(addr);
+    	case SPCHRD:
+    		return machine.getMemoryModel().getSpeechMmio().read(addr);
     	}
 		return 0;
 	}

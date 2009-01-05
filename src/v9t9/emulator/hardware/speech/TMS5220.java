@@ -6,6 +6,7 @@ package v9t9.emulator.hardware.speech;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.speech.LPCSpeech.Fetcher;
 import v9t9.emulator.hardware.speech.LPCSpeech.Sender;
 import v9t9.emulator.runtime.Logging;
@@ -75,6 +76,8 @@ public class TMS5220 implements Fetcher, Sender {
 			new Integer(1));
 
 	private Sender sender;
+
+	private Machine machine;
 	
 	public TMS5220(MemoryDomain speech) {
 		
@@ -124,15 +127,17 @@ public class TMS5220 implements Fetcher, Sender {
 			gate = (gate & ~GT_RDAT) | GT_RSTAT;
 			ret = data;
 		}
-		Logging.writeLogLine(2, settingLogSpeech, "Speech read: " + Utils.toHex2(ret));
+		Logging.writeLogLine(3, settingLogSpeech, "Speech read: " + Utils.toHex2(ret));
 		return ret;
 	}
 
 	public void command(byte cmd) {
 		command = (byte) (cmd & 0x70);
-		Logging.writeLogLine(3, settingLogSpeech,
+		if (Logging.getLog(3, settingLogSpeech) != null) {
+			Logging.writeLogLine(3, settingLogSpeech,
 				"Cmd="+Utils.toHex2(cmd)+"  Status: " + 
 				Utils.toHex2(status));
+		}
 		switch (command) {
 		case 0x00:
 		case 0x20:
@@ -140,6 +145,7 @@ public class TMS5220 implements Fetcher, Sender {
 			break;
 		case 0x10:
 			readMemory();
+			gate = (gate & ~GT_RSTAT) | GT_RDAT;
 			break;
 		case 0x30:
 			readAndBranch();
@@ -168,7 +174,7 @@ public class TMS5220 implements Fetcher, Sender {
 		else
 			data = speechRom.readByte(addr);
 		addr++;
-		gate = (gate & ~GT_RSTAT) | GT_RDAT;
+		//
 		Logging.writeLogLine(2, settingLogSpeech,
 				"Speech memory "+Utils.toHex4(addr)+" = " + Utils.toHex2(data));
 		return data;
@@ -181,7 +187,7 @@ public class TMS5220 implements Fetcher, Sender {
 			data = 0;
 		else
 			data = speechRom.readByte(addr);
-		gate = (gate & ~GT_RSTAT) | GT_RDAT;
+		//gate = (gate & ~GT_RSTAT) | GT_RDAT;
 		return data & 0xff;
 	}
 
@@ -222,7 +228,7 @@ public class TMS5220 implements Fetcher, Sender {
 
 		// wait for previous sample to end, or else we
 		// can end up stacking tons of digitized data
-		//speech_wait_complete(1);
+		speech_wait_complete(1);
 
 //		SPEECHPLAY(vms_Speech, NULL, 0L, speech_hertz);
 
@@ -230,11 +236,12 @@ public class TMS5220 implements Fetcher, Sender {
 		bit = 0;					/* start on byte boundary */
 		status |= SS_SPEAKING | SS_TS;
 
+		/*
 		while ((status & SS_SPEAKING) != 0)
 			generateSpeech();			// not scheduled
 		lpc.init();
-		
-		//SpeechOn();
+		*/
+		SpeechOn();
 		
 	}
 	
@@ -364,6 +371,12 @@ public class TMS5220 implements Fetcher, Sender {
 	
 				@Override
 				public void run() {
+					if (machine != null) {
+						if (!machine.isAlive())
+							SpeechDone();
+						if (Machine.settingPauseMachine.getBoolean())
+							return;
+					}
 					generateSpeech();
 				}
 				
@@ -372,7 +385,7 @@ public class TMS5220 implements Fetcher, Sender {
 		}
 	}
 
-	protected synchronized void generateSpeech() {
+	protected void generateSpeech() {
 		boolean do_frame = false;
 
 		Logging.writeLogLine(2, settingLogSpeech,
@@ -384,6 +397,17 @@ public class TMS5220 implements Fetcher, Sender {
 				if (0 == (status & SS_BL)) {	/* enough data in the buffer? */
 					status |= SS_TS;		/* whee!  Start talking */
 					do_frame = true;
+				} else {
+					if (timeout-- <= 0) {
+						//speech_wait_complete(1);
+
+						reset();
+						//demo_record_event(demo_type_speech, demo_speech_terminating);
+
+						// this apparently happens in normal cases
+						Logging.writeLogLine(1, settingLogSpeech,
+							"Speech timed out");
+					}
 				}
 			}
 			else {
@@ -495,4 +519,8 @@ public class TMS5220 implements Fetcher, Sender {
 		
 	}
 
+	public void setMachine(Machine machine) {
+		this.machine = machine;
+		
+	}
 }

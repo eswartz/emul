@@ -1,10 +1,12 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.video;
+package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 
 /**
  * Interface implemented by SWT-compatible video renderers.

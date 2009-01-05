@@ -34,6 +34,7 @@ public class SpeechMmio implements ConsoleMmioWriter, v9t9.emulator.Machine.Cons
 			}
 			
 		});
+		sp.setMachine(machine);
     }
 
     public byte read(int addrMask) {

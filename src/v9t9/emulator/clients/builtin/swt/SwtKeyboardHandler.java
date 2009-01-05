@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.builtin.swt;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -17,6 +17,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.BaseKeyboardHandler;
 import v9t9.keyboard.KeyboardState;
 import v9t9.utils.Utils;
 

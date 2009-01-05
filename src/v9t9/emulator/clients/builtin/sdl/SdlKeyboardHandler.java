@@ -1,12 +1,13 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.builtin.sdl;
 
 import sdljava.event.SDLEvent;
 import sdljava.event.SDLKey;
 import sdljava.event.SDLKeyboardEvent;
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.BaseKeyboardHandler;
 import v9t9.keyboard.KeyboardState;
 
 /**

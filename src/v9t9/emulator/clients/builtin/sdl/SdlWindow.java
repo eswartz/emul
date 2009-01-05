@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.builtin.sdl;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,7 +25,8 @@ import sdljava.video.SDLVideo;
 import sdljava.x.swig.SDLPressedState;
 import sdljavax.gfx.SDLGfx;
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.video.SdlVideoRenderer;
+import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
+import v9t9.emulator.clients.builtin.ButtonPressHandler;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.Setting;
 

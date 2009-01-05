@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.video;
+package v9t9.emulator.clients.builtin.swt;
 
 import java.awt.Component;
 import java.awt.Frame;
@@ -16,6 +16,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Shell;
+
+import v9t9.emulator.clients.builtin.awt.AwtVideoRenderer;
 
 /**
  * @author ejs
@@ -86,8 +88,10 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		Display.getDefault().asyncExec(new Runnable() {
 
 			public void run() {
-				if (shell != null && !shell.isDisposed())
+				if (shell != null && !shell.isDisposed()) {
+					awtContainer.pack();
 					shell.pack();				
+				}
 			}
 			
 		});

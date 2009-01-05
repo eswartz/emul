@@ -1,13 +1,14 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.clients.builtin.awt;
 
 import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.BaseKeyboardHandler;
 import v9t9.keyboard.KeyboardState;
 
 /**

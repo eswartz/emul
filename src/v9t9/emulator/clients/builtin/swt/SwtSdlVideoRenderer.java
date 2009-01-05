@@ -1,22 +1,18 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.video;
-
-import java.awt.Component;
+package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
-import org.eclipse.swt.widgets.Shell;
 
 import sdljava.SDLException;
-import sdljava.video.SDLVideo;
+import v9t9.emulator.clients.builtin.sdl.SdlVideoRenderer;
 
 /**
  * @author Ed
@@ -24,7 +20,6 @@ import sdljava.video.SDLVideo;
  */
 public class SwtSdlVideoRenderer extends SdlVideoRenderer implements ISwtVideoRenderer {
 
-	private Shell shell;
 	private Canvas sdlContainer;
 
 	public SwtSdlVideoRenderer() throws SDLException {
@@ -32,7 +27,7 @@ public class SwtSdlVideoRenderer extends SdlVideoRenderer implements ISwtVideoRe
 	}
 
 	public Control createControl(Composite parent) {
-		shell = parent.getShell();
+		//shell = parent.getShell();
 		sdlContainer = new Canvas(parent, SWT.EMBEDDED | SWT.NO_MERGE_PAINTS | SWT.NO_BACKGROUND | SWT.NO_REDRAW_RESIZE);
 		
 		// no layout -- let canvas size drive it

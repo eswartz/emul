@@ -61,7 +61,7 @@ public abstract class BaseKeyboardHandler implements KeyboardHandler {
 				if (pasteTimer == null)
 					return;
 				
-				if (!machine.isRunning())
+				if (!machine.isAlive())
 					cancelPaste();
 				
 				if (Machine.settingPauseMachine.getBoolean())

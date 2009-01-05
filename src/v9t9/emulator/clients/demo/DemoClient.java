@@ -464,5 +464,22 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
 		// TODO Auto-generated method stub
 		
 	}
+
+	public void addCpuCycles(int cycles) {
+		// TODO Auto-generated method stub
+		
+	}
+	public void flushAudio(int pos, int total) {
+		// TODO Auto-generated method stub
+		
+	}
+	public void speech(short sample) {
+		// TODO Auto-generated method stub
+		
+	}
+	public void syncVdpInterrupt() {
+		// TODO Auto-generated method stub
+		
+	}
 }
 

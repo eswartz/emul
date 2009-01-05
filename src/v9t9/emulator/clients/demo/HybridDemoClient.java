@@ -14,8 +14,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.SwtWindow;
-import v9t9.emulator.clients.builtin.video.SwtVideoRenderer;
+import v9t9.emulator.clients.builtin.swt.SwtVideoRenderer;
+import v9t9.emulator.clients.builtin.swt.SwtWindow;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
@@ -97,7 +97,7 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
         window.getShell().addShellListener(new ShellAdapter() {
 			@Override
 			public void shellClosed(ShellEvent e) {
-		        if (machine.isRunning()) {
+		        if (machine.isAlive()) {
 		        	machine.setNotRunning();
 		        }
 			}
@@ -420,6 +420,15 @@ public class HybridDemoClient implements Client, SoundHandler, CruHandler {
 		// TODO Auto-generated method stub
 		
 	}
-    
+
+	public void flushAudio(int pos, int total) {
+		// TODO Auto-generated method stub
+		
+	}
+	public void speech(short sample) {
+		// TODO Auto-generated method stub
+		
+	}
+	
 }
 

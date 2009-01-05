@@ -30,7 +30,7 @@ public class SoundTMS9919 {
 	public abstract class SoundVoice
 	{
 		/** // volume, 0 == off, 0xf == loudest */
-		byte	volume;			
+		private byte	volume;			
 
 		private final String name;
 
@@ -45,7 +45,7 @@ public class SoundTMS9919 {
 				return name + " volume="+volume;
 		}
 		abstract void cacheVoices();
-		abstract int generate(int soundClock, int sample, int sampleDelta);
+		public abstract int generate(int soundClock, int sample, int sampleDelta);
 		public String getName() {
 			return name;
 		}
@@ -54,6 +54,12 @@ public class SoundTMS9919 {
 		}
 		public void loadState(IDialogSettings section) {
 			volume = (byte) Utils.readSavedInt(section, "Volume");
+		}
+		public void setVolume(byte volume) {
+			this.volume = volume;
+		}
+		public byte getVolume() {
+			return volume;
 		}
 	};
 
@@ -118,7 +124,7 @@ public class SoundTMS9919 {
 					   Utils.toHex4(operation[OPERATION_FREQUENCY_HI]),
 					   Utils.toHex4(period),
 					   hertz,
-					   volume,
+					   getVolume(),
 					   getName()));
 			}
 		}
@@ -150,7 +156,7 @@ public class SoundTMS9919 {
 		}
 		void cacheVoices()
 		{
-			volume = OPERATION_TO_VOLUME();
+			setVolume(OPERATION_TO_VOLUME());
 			period = OPERATION_TO_PERIOD();
 			hertz = PERIOD_TO_HERTZ(period);
 
@@ -163,7 +169,7 @@ public class SoundTMS9919 {
 			dump();
 		}
 
-		int generate(int soundClock, int sample, int sampleDelta) {
+		public int generate(int soundClock, int sample, int sampleDelta) {
 			if (!out) {
 				sample += sampleDelta;
 			} else {
@@ -204,16 +210,16 @@ public class SoundTMS9919 {
 		{
 			int periodtype = OPERATION_TO_NOISE_PERIOD();
 			boolean prevType = isWhite;
-			boolean wasSilent = volume == 0;
+			boolean wasSilent = getVolume() == 0;
 			isWhite = OPERATION_TO_NOISE_TYPE() == NOISE_WHITE;
 			
 			
 			if (periodtype != NOISE_PERIOD_VARIABLE) {
-				volume = OPERATION_TO_VOLUME();
+				setVolume(OPERATION_TO_VOLUME());
 				period = noise_period[periodtype];
 				hertz = PERIOD_TO_HERTZ(period);
 			} else {
-				volume = OPERATION_TO_VOLUME();
+				setVolume(OPERATION_TO_VOLUME());
 				period = ((ClockedSoundVoice) sound_voices[VOICE_TONE_2]).period;
 				hertz = ((ClockedSoundVoice)sound_voices[VOICE_TONE_2]).hertz;
 			}
@@ -223,7 +229,7 @@ public class SoundTMS9919 {
 			} else {
 				delta = hertz;
 			}
-			if (prevType != isWhite || (wasSilent && volume != 0) || (isWhite && ns1 == 0)) {
+			if (prevType != isWhite || (wasSilent && getVolume() != 0) || (isWhite && ns1 == 0)) {
 				ns1 = (short) 0x8000;		// TODO: this should reset when the type of noise or sound changes only
 				div = 0;
 			}
@@ -231,7 +237,7 @@ public class SoundTMS9919 {
 			dump();
 		}
 
-		int generate(int soundClock, int sample, int sampleDelta) {
+		public int generate(int soundClock, int sample, int sampleDelta) {
 			div += delta;
 			if (isWhite) {
 				
@@ -292,11 +298,11 @@ public class SoundTMS9919 {
 		
 		@Override
 		void cacheVoices() {
-			volume = (byte) (state ? 15 : 0);
+			setVolume((byte) (state ? 15 : 0));
 		}
 
 		@Override
-		int generate(int soundClock, int sample, int sampleDelta) {
+		public int generate(int soundClock, int sample, int sampleDelta) {
 			sample += sampleDelta;
 			return sample;
 		}
@@ -304,13 +310,13 @@ public class SoundTMS9919 {
 		@Override
 		public void loadState(IDialogSettings settings) {
 			super.loadState(settings);
-			volume = (byte) (Utils.readSavedBoolean(settings, "State") ? 15 : 0);
+			setVolume((byte) (Utils.readSavedBoolean(settings, "State") ? 15 : 0));
 		}
 		
 		@Override
 		public void saveState(IDialogSettings settings) {
 			super.saveState(settings);
-			settings.put("State", volume != 0);
+			settings.put("State", getVolume() != 0);
 		}
 
 		public void setState(boolean b) {
