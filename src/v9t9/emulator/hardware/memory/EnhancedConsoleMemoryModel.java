@@ -37,7 +37,7 @@ public class EnhancedConsoleMemoryModel extends StandardConsoleMemoryModel {
 	
 	protected void defineMmioMemory(TI994A machine) {
 		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0xFC00, 0x0400,
-                new EnhanchedConsoleMmioArea(machine)));
+                new EnhancedConsoleMmioArea(machine)));
 		
 		/*
 		// TODO: remove

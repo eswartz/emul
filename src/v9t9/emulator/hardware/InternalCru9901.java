@@ -141,7 +141,7 @@ public class InternalCru9901 implements CruAccess {
 	private CruWriter cruwAudioGate = new CruWriter() {
 		
 		public int write(int addr, int data, int num) {
-			machine.getSound().setAudioGate(data != 0);
+			machine.getSound().setAudioGate(addr, data != 0);
 			return 0;
 		}
 		

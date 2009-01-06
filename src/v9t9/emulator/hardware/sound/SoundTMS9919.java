@@ -1,13 +1,14 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin;
+package v9t9.emulator.hardware.sound;
 
 import java.text.MessageFormat;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.engine.SoundHandler;
 import v9t9.utils.Utils;
 
@@ -18,7 +19,7 @@ import v9t9.utils.Utils;
  * @author ejs
  *
  */
-public class SoundTMS9919 {
+public class SoundTMS9919 implements SoundProvider {
 
 	/* These are used as an index into the operation[] field */
 	final static int OPERATION_FREQUENCY_LO = 0,		/* low 4 bits [1vv0yyyy] */
@@ -29,7 +30,7 @@ public class SoundTMS9919 {
 
 	public abstract class SoundVoice
 	{
-		/** // volume, 0 == off, 0xf == loudest */
+		/** volume, 0 == off, 0xf == loudest */
 		private byte	volume;			
 
 		private final String name;
@@ -44,7 +45,7 @@ public class SoundTMS9919 {
 			else
 				return name + " volume="+volume;
 		}
-		abstract void cacheVoices();
+		protected abstract void setupVoice();
 		public abstract int generate(int soundClock, int sample, int sampleDelta);
 		public String getName() {
 			return name;
@@ -95,23 +96,19 @@ public class SoundTMS9919 {
 		public String toString() {
 			return super.toString() + "; hertz="+hertz;
 		}
-		int OPERATION_TO_NOISE_TYPE() {
+		protected int getOperationNoiseType() {
 			return ( operation[OPERATION_CONTROL] & 0x4 );
 		}
 
-		int OPERATION_TO_NOISE_PERIOD()  {
+		protected int getOperationNoisePeriod()  {
 			return ( operation[OPERATION_CONTROL] & 0x3 );
 		}
 		
-		byte OPERATION_TO_ATTENUATION() {
+		protected byte getOperationAttenuation() {
 			return (byte) ( operation[OPERATION_ATTENUATION] & 0xf );
 		}
-
-		byte OPERATION_TO_VOLUME() {
-			return (byte) ( 0xf - OPERATION_TO_ATTENUATION() );
-		}
 		
-		int OPERATION_TO_PERIOD() {
+		protected int getOperationPeriod() {
 			return ( (operation[OPERATION_FREQUENCY_LO] & 0xf) |
 			( (operation[OPERATION_FREQUENCY_HI] & 0x3f) << 4 ) );
 		}
@@ -154,11 +151,11 @@ public class SoundTMS9919 {
 		public ToneGeneratorVoice(int number) {
 			super("Voice " + number);
 		}
-		void cacheVoices()
+		protected void setupVoice()
 		{
-			setVolume(OPERATION_TO_VOLUME());
-			period = OPERATION_TO_PERIOD();
-			hertz = PERIOD_TO_HERTZ(period);
+			setVolume((byte) (0xf - getOperationAttenuation()));
+			period = getOperationPeriod();
+			hertz = periodToHertz(period);
 
 			if (hertz * 2 < 55938) {
 				delta = hertz * 2;
@@ -206,22 +203,21 @@ public class SoundTMS9919 {
 		public NoiseGeneratorVoice() {
 			super("Noise");
 		}
-		void cacheVoices()
+		protected void setupVoice()
 		{
-			int periodtype = OPERATION_TO_NOISE_PERIOD();
+			int periodtype = getOperationNoisePeriod();
 			boolean prevType = isWhite;
 			boolean wasSilent = getVolume() == 0;
-			isWhite = OPERATION_TO_NOISE_TYPE() == NOISE_WHITE;
+			isWhite = getOperationNoiseType() == NOISE_WHITE;
 			
 			
+			setVolume((byte) (0xf - getOperationAttenuation()));
 			if (periodtype != NOISE_PERIOD_VARIABLE) {
-				setVolume(OPERATION_TO_VOLUME());
 				period = noise_period[periodtype];
-				hertz = PERIOD_TO_HERTZ(period);
+				hertz = periodToHertz(period);
 			} else {
-				setVolume(OPERATION_TO_VOLUME());
 				period = ((ClockedSoundVoice) sound_voices[VOICE_TONE_2]).period;
-				hertz = ((ClockedSoundVoice)sound_voices[VOICE_TONE_2]).hertz;
+				hertz = ((ClockedSoundVoice) sound_voices[VOICE_TONE_2]).hertz;
 			}
 		
 			if (isWhite) {
@@ -266,7 +262,6 @@ public class SoundTMS9919 {
 						ns1 = (short) 0x8000;
 					}
 					ns1 = (short) ((ns1 >>> 1) & 0x7fff);
-					//sample += sampleDelta;
 					while (div >= soundClock) 
 						div -= soundClock;
 				}
@@ -297,7 +292,8 @@ public class SoundTMS9919 {
 		}
 		
 		@Override
-		void cacheVoices() {
+		protected
+		void setupVoice() {
 			setVolume((byte) (state ? 15 : 0));
 		}
 
@@ -336,7 +332,7 @@ public class SoundTMS9919 {
 
 	private SoundVoice sound_voices[] = new SoundVoice[5];
 
-	int OPERATION_TO_VOICE(int op) {
+	private static int getOperationVoice(int op) {
 		return ( ((op) & 0x60) >> 5);
 	}
 
@@ -362,7 +358,7 @@ public class SoundTMS9919 {
 	};
 
 
-	int PERIOD_TO_HERTZ(int p) {
+	private static int periodToHertz(int p) {
 		return ((p) > 1 ? (111860 / (p)) : (55930));
 	}
 
@@ -384,13 +380,13 @@ public class SoundTMS9919 {
 	/* (non-Javadoc)
 	 * @see v9t9.engine.SoundHandler#writeSound(byte)
 	 */
-	public void writeSound(byte val) {
+	public void writeSound(int addr, byte val) {
 		ClockedSoundVoice v;
 		/*  handle command byte */
 		//System.out.println("sound byte: " + Utils.toHex2(val));
 		int vn;
 		if ((val & 0x80) != 0) {
-			vn = OPERATION_TO_VOICE(val);
+			vn = getOperationVoice(val);
 			cvoice = vn;
 			v = (ClockedSoundVoice) sound_voices[vn];
 			switch ((val & 0x70) >> 4) 
@@ -422,7 +418,7 @@ public class SoundTMS9919 {
 			v.operation[OPERATION_FREQUENCY_HI] = val;
 		}
 		
-		v.cacheVoices();
+		v.setupVoice();
 		updateNoise();
 		if (soundHandler != null)
 			soundHandler.updateVoice(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
@@ -433,10 +429,10 @@ public class SoundTMS9919 {
 	{
 		ClockedSoundVoice v = (ClockedSoundVoice) sound_voices[VOICE_NOISE];
 		
-		if ((cvoice == VOICE_TONE_2 && v.OPERATION_TO_NOISE_PERIOD() == NOISE_PERIOD_VARIABLE)
+		if ((cvoice == VOICE_TONE_2 && v.getOperationNoisePeriod() == NOISE_PERIOD_VARIABLE)
 			 || cvoice == VOICE_NOISE)
 		{
-			v.cacheVoices();
+			v.setupVoice();
 		}
 	}
 
@@ -467,14 +463,14 @@ public class SoundTMS9919 {
 		for (int vn = 0; vn < sound_voices.length; vn++) {
 			SoundVoice v = sound_voices[vn];
 			v.loadState(settings.getSection(v.getName()));
-			v.cacheVoices();
+			v.setupVoice();
 		}
 	}
 
-	public void setAudioGate(boolean b) {
+	public void setAudioGate(int addr, boolean b) {
 		AudioGateVoice v = (AudioGateVoice) sound_voices[VOICE_AUDIO];
 		v.setState(b);
-		v.cacheVoices();
+		v.setupVoice();
 		if (soundHandler != null)
 			soundHandler.updateVoice(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
 

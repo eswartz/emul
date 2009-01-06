@@ -4,6 +4,7 @@
 package v9t9.emulator.hardware;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryModel;
 
@@ -19,4 +20,6 @@ public interface MachineModel {
 	VdpHandler createVdp(Machine machine);
 	
 	void defineDevices(Machine machine);
+
+	SoundProvider createSoundProvider(Machine machine);
 }

@@ -18,8 +18,8 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.SoundTMS9919;
-import v9t9.emulator.clients.builtin.SoundTMS9919.SoundVoice;
+import v9t9.emulator.clients.builtin.SoundProvider;
+import v9t9.emulator.hardware.sound.SoundTMS9919.SoundVoice;
 import v9t9.engine.SoundHandler;
 
 /**
@@ -43,7 +43,7 @@ public class JavaSoundHandler implements SoundHandler {
 	private int speechFramesPerTick;
 	private byte[] speechWaveForm;
 
-	private SoundTMS9919 sound;
+	private SoundProvider sound;
 
 	// private boolean audioSilence;
 

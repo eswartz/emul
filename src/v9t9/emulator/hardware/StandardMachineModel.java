@@ -4,10 +4,12 @@
 package v9t9.emulator.hardware;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.dsrs.EmuDiskDSR;
 import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9918AMmio;
+import v9t9.emulator.hardware.sound.SoundTMS9919;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryModel;
 
@@ -46,4 +48,7 @@ public class StandardMachineModel implements MachineModel {
 		machine.getDSRManager().registerDsr(dsr);
 	}
 
+	public SoundProvider createSoundProvider(Machine machine) {
+		return new SoundTMS9919(machine);
+	}
 }

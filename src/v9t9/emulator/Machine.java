@@ -12,12 +12,13 @@ import java.util.TimerTask;
 
 import org.eclipse.jface.dialogs.DialogSettings;
 
-import v9t9.emulator.clients.builtin.SoundTMS9919;
+import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.dsrs.DSRManager;
+import v9t9.emulator.hardware.sound.SoundTMS9919;
 import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
@@ -75,7 +76,7 @@ abstract public class Machine {
 	private KeyboardState keyboardState;
 	protected Object executionLock = new Object();
 	protected boolean bExecuting;
-	private SoundTMS9919 sound;
+	private SoundProvider sound;
 	static public final String sPauseMachine = "PauseMachine";
 	static public final Setting settingPauseMachine = new Setting(sPauseMachine, new Boolean(false));
 	static public final String sThrottleInterrupts = "ThrottleVDPInterrupts";
@@ -88,7 +89,7 @@ abstract public class Machine {
     	cruManager = new CruManager();
     	dsrManager = new DSRManager(this);
     	
-    	sound = new SoundTMS9919(this);
+    	sound = machineModel.createSoundProvider(this);
     	this.vdp = machineModel.createVdp(this);
     	memoryModel.initMemory(this);
     	
@@ -431,7 +432,7 @@ abstract public class Machine {
 		}
 	}
 
-	public SoundTMS9919 getSound() {
+	public SoundProvider getSound() {
 		return sound;
 	}
 

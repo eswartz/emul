@@ -4,10 +4,12 @@
 package v9t9.emulator.hardware;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.hardware.dsrs.EmuDiskDSR;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
+import v9t9.emulator.hardware.sound.MultiSoundTMS9919;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.MemoryModel;
@@ -47,6 +49,10 @@ public class EnhancedMachineModel implements MachineModel {
 		return vdp;
 	}
 
+	public SoundProvider createSoundProvider(Machine machine) {
+		return new MultiSoundTMS9919(machine);		// !!!
+	}
+	
 	public void defineDevices(final Machine machine) {
 		machine.getCpu().setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
 		

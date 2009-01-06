@@ -45,10 +45,10 @@ support a "real" DSR with this, we'll probably need to patch it.
         >FF92=GPLRA
         >FF94=GPLWD
         >FF96=GPLWA
+        >FF98=SPCHWT
+        >FF9A=SPCHRD
         
-        >FFA0=sound
-        
-        >FFB0=speech
+        >FFA0->FFBF=sound
         
     >FFC0=CPU ROM select               
     >FFC2=FORTH ROM select             

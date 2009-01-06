@@ -352,7 +352,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	
 	protected synchronized void doRedraw(Graphics g, int x, int y, int width, int height) {
 		if (surface == null || surface.getWidth() != desiredWidth || surface.getHeight() != desiredHeight) {
-			// ignore redraw request before we've decided our side
+			// ignore redraw request before we've decided our size
 			if (desiredWidth == 0 || desiredHeight == 0)
 				return;
 			System.out.println("New BufferedImage");
@@ -400,6 +400,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			int srcoffset = vdpCanvas.getDisplayAdjustOffset() 
 			+ (logRect.y * vdpCanvas.getLineStride() + logRect.x * vdpCanvas.getPixelStride());
 			//System.out.println("logRect = " + logRect + " x/y="+x+","+y+"; width/height="+width+","+height+"; srcoffset="+srcoffset);
+			//System.out.println("srcoffset="+srcoffset+"; mod="+(srcoffset%3));
 			
 			synchronized (vdpCanvas) {
 				V9t9RenderUtils.scaleImageToRGBA(

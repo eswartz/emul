@@ -41,7 +41,7 @@ import v9t9.engine.memory.MultiBankedMemoryEntry;
  * @author ejs
  *
  */
-public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryListener {
+public class EnhancedConsoleMmioArea extends ConsoleMmioArea implements MemoryListener {
 
 	private static final int MMIO_BASE = 0xFF80;
 	public static final int VDPRD = 0xFF80;
@@ -54,9 +54,9 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
 	public static final int GPLRA = 0xFF92;
 	public static final int GPLWD = 0xFF94;
 	public static final int GPLWA = 0xFF96;
-	public static final int SOUND = 0xFFA0;
-	public static final int SPCHWT = 0xFFB0;
-	public static final int SPCHRD = 0xFFB2;
+	public static final int SPCHWT = 0xFF98;
+	public static final int SPCHRD = 0xFF9A;
+	public static final int SOUND = 0xFFA0;	// 0x20!
 	public static final int BANKA = 0xFFC0;
 	public static final int BANKB = 0xFFC2;
 	public static final int NMI = 0xFFFC;
@@ -65,7 +65,7 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
 	private MemoryEntry underlyingMemory;
 	private MultiBankedMemoryEntry romMemory;
 		
-	EnhanchedConsoleMmioArea(Machine machine) {
+	EnhancedConsoleMmioArea(Machine machine) {
 		super(0);
 		this.machine = machine;
 		machine.getMemory().addListener(this);
@@ -143,9 +143,6 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
     	case GPLWA:
     		machine.getMemoryModel().getGplMmio().write(addr, val);
     		break;
-    	case SOUND:
-    		machine.getMemoryModel().getSoundMmio().write(addr, val);
-    		break;
     	case SPCHWT:
     		machine.getMemoryModel().getSpeechMmio().write(addr, val);
     		break;
@@ -160,7 +157,10 @@ public class EnhanchedConsoleMmioArea extends ConsoleMmioArea implements MemoryL
     		}
     		break;
     	}
-		
+
+    	if (addr >= SOUND && addr <= SOUND + 0x20) {
+    		machine.getMemoryModel().getSoundMmio().write(addr, val);
+    	}
 	}
 
 	private byte readMmio(int addr) {
