@@ -18,6 +18,9 @@ public interface SoundProvider {
 	/** Get all the existing sound voices. */
 	SoundVoice[] getSoundVoices();
 
+	/** Is this stereo? */
+	boolean isStereo();
+
 	/** Write a byte to the sound chip(s) */
 	void writeSound(int addr, byte val);
 

@@ -50,7 +50,7 @@ public class EnhancedCompatibleMachineModel implements MachineModel {
 	}
 	
 	public SoundProvider createSoundProvider(Machine machine) {
-		return new SoundTMS9919(machine);
+		return new SoundTMS9919(machine, null);
 	}
 
 	public void defineDevices(final Machine machine) {

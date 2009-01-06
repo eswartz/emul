@@ -148,8 +148,8 @@ public class SoundTMS9919 implements SoundProvider {
 	public class ToneGeneratorVoice extends ClockedSoundVoice
 	{
 		private boolean out;
-		public ToneGeneratorVoice(int number) {
-			super("Voice " + number);
+		public ToneGeneratorVoice(String name, int number) {
+			super((name != null ? name + " " : "") + "Voice " + number);
 		}
 		protected void setupVoice()
 		{
@@ -200,8 +200,8 @@ public class SoundTMS9919 implements SoundProvider {
 		boolean isWhite;
 		int ns1;
 		
-		public NoiseGeneratorVoice() {
-			super("Noise");
+		public NoiseGeneratorVoice(String name) {
+			super((name != null ? name + " " : "") + "Noise");
 		}
 		protected void setupVoice()
 		{
@@ -287,8 +287,8 @@ public class SoundTMS9919 implements SoundProvider {
 
 		private boolean state;
 
-		public AudioGateVoice() {
-			super("Audio Gate");
+		public AudioGateVoice(String name) {
+			super((name != null ? name + " " : "") + "Audio Gate");
 		}
 		
 		@Override
@@ -368,13 +368,13 @@ public class SoundTMS9919 implements SoundProvider {
 
 	private final Machine machine;
 
-	public SoundTMS9919(Machine machine) {
+	public SoundTMS9919(Machine machine, String name) {
 		this.machine = machine;
 		for (int i = 0; i < 3; i++) {
-			sound_voices[i] = new ToneGeneratorVoice(i);
+			sound_voices[i] = new ToneGeneratorVoice(name, i);
 		}
-		sound_voices[VOICE_NOISE] = new NoiseGeneratorVoice();
-		sound_voices[VOICE_AUDIO] = new AudioGateVoice();
+		sound_voices[VOICE_NOISE] = new NoiseGeneratorVoice(name);
+		sound_voices[VOICE_AUDIO] = new AudioGateVoice(name);
 	}
 	
 	/* (non-Javadoc)
@@ -474,5 +474,9 @@ public class SoundTMS9919 implements SoundProvider {
 		if (soundHandler != null)
 			soundHandler.updateVoice(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
 
+	}
+	
+	public boolean isStereo() {
+		return false;
 	}
 }

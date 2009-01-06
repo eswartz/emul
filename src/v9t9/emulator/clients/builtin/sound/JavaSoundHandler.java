@@ -106,12 +106,12 @@ public class JavaSoundHandler implements SoundHandler {
 		soundQueue = new ConcurrentLinkedQueue<AudioChunk>();
 		speechQueue = new ConcurrentLinkedQueue<AudioChunk>();
 
-		stdFormat = new AudioFormat(55900, 8, 1, true, false);
+		stdFormat = new AudioFormat(55900, 8, 2, true, false);
 		Line.Info slInfo = new DataLine.Info(SourceDataLine.class, stdFormat);
 		if (!AudioSystem.isLineSupported(slInfo)) {
 			System.err.println("Line not supported: " + stdFormat);
 
-			stdFormat = new AudioFormat(44100, 8, 1, true, false);
+			stdFormat = new AudioFormat(44100, 8, 2, true, false);
 			slInfo = new DataLine.Info(SourceDataLine.class, stdFormat);
 
 			if (!AudioSystem.isLineSupported(slInfo)) {
@@ -131,7 +131,7 @@ public class JavaSoundHandler implements SoundHandler {
 			soundFramesPerTick = (int) (stdFormat.getFrameRate() / machine
 					.getCpuTicksPerSec());
 			soundGeneratorLine = (SourceDataLine) AudioSystem.getLine(slInfo);
-			soundGeneratorLine.open(stdFormat, soundFramesPerTick * 10);
+			soundGeneratorLine.open(stdFormat, soundFramesPerTick * 20);
 			speechFramesPerTick = (int) (speechFormat.getFrameRate() / machine
 					.getCpuTicksPerSec());
 			speechLine = (SourceDataLine) AudioSystem.getLine(spInfo);
@@ -315,23 +315,38 @@ public class JavaSoundHandler implements SoundHandler {
 		int[] voices = new int[vs.length];
 		Arrays.fill(voices, -1);
 		
-		int vcnt = 0;
+		boolean isStereo = sound.isStereo();
+		int vcnt = 0, vcntL = 0, vcntR = 0;
 		for (int vi = 0; vi < vs.length; vi++) {
-			if (vs[vi].getVolume() != 0)
+			if (vs[vi].getVolume() != 0) {
 				voices[vcnt++] = vi;
+				if (isStereo && (vi & 4) != 0)
+					vcntL++;
+				else
+					vcntR++;
+			}
 		}
 		if (vcnt > 0) {
+			if (isStereo) to--;
 			for (int i = from; i < to; i++) {
-				int sample = 0;
+				int sampleL = 0;
+				int sampleR = 0;
 				for (int vidx = 0; vidx < vcnt; vidx++) {
 					int vi = voices[vidx];
 					SoundVoice v = vs[vi];
-					int sampleDelta = (vi & 1) != 0 ? atten[v.getVolume()]
-							: -atten[v.getVolume()];
-					sample = v.generate(soundClock, sample, sampleDelta);
-				}
+					int sampleDelta = atten[v.getVolume()];
+					if (isStereo && (vi & 4) != 0) 
+						sampleL = v.generate(soundClock, sampleL, sampleDelta);
+					else
+						sampleR = v.generate(soundClock, sampleR, sampleDelta);
+				}	
 				//soundGeneratorWaveForm[i] = (byte) (sample >> 18);
-				soundGeneratorWaveForm[i] = (byte) ((sample >> 16) / vcnt);
+				if (isStereo) {
+					soundGeneratorWaveForm[i++] = vcntL > 0 ? (byte) ((sampleL >> 16) / vcntL) : 0;
+					soundGeneratorWaveForm[i] = vcntR > 0 ? (byte) ((sampleR >> 16) / vcntR) : 0;
+				} else {
+					soundGeneratorWaveForm[i] = (byte) ((sampleR >> 16) / vcnt);
+				}
 			}
 		} else {
 			if (from < to)

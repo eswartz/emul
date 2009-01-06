@@ -88,16 +88,21 @@ public class FastTimer {
 							}
 	
 							for (FastTimerTaskInfo info : infoArray) {
-								if (now >= info.deadline) {
-									//System.out.println("moving from " + info.deadline + " by " + info.delay + " to " + (info.delay + info.deadline));
-									 
-									info.deadline += info.delay;
-									info.task.run();
-								}
-								else if ((now ^ info.deadline) < 0) {
-									// clock overflowed
-									info.deadline = now + info.delay;
-									info.task.run();
+								try {
+									if (now >= info.deadline) {
+										//System.out.println("moving from " + info.deadline + " by " + info.delay + " to " + (info.delay + info.deadline));
+										 
+										info.deadline += info.delay;
+										info.task.run();
+									}
+									else if ((now ^ info.deadline) < 0) {
+										// clock overflowed
+										info.deadline = now + info.delay;
+										info.task.run();
+									}
+								} catch (Throwable t) {
+									t.printStackTrace();
+									info.deadline = -1;
 								}
 							}
 							//prev = now;
