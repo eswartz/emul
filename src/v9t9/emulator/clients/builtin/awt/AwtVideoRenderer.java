@@ -68,6 +68,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			@Override
 			public void paint(Graphics g) {
 				Rectangle clipRect = g.getClipBounds();
+				//System.out.println("Clippy rect: " + clipRect);
 				doRedraw(g, 
 						clipRect.x, clipRect.y, 
 						clipRect.width, clipRect.height);
@@ -193,53 +194,51 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			return;
 		
 		synchronized (vdpCanvas) {
-			doRedraw();
-		}
-	}
+			boolean becameBlank = vdpCanvas.isBlank() && !isBlank;
+			isBlank = vdpCanvas.isBlank();
+			
+			org.eclipse.swt.graphics.Rectangle dirtyRect = vdpCanvas.getDirtyRect(); 
+			Rectangle redrawRect_ = new Rectangle(dirtyRect.x, dirtyRect.y, dirtyRect.width, dirtyRect.height);
+			if (becameBlank)
+				redrawRect_ = new Rectangle(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
+			
+			if (vdpCanvas.isInterlacedEvenOdd()) {
+				redrawRect_.y *= 2;
+				redrawRect_.height *= 2;
+			}
+			
+			if (redrawRect_ != null) {
+				final Rectangle redrawRect = redrawRect_;
+				
+				// if resizing, no point redrawing
+				if (updateWidgetSizeForMode())
+					return;
+				
+				Rectangle redrawPhys = logicalToPhysical(redrawRect);
+				//System.out.println("Adding canvas " + redrawPhys);
+				update(redrawPhys);
+				
+				//System.out.println("Redrawing " + updateRect);
+				
+				
+				//BufferStrategy bufferStrategy = getBufferStrategy();
+				
+				//BufferStrategy bufferStrategy = canvas.getBufferStrategy();
+				//doRedraw(bufferStrategy.getDrawGraphics(), updateRect.x, updateRect.y, 
+				//		updateRect.width, updateRect.height);
+				
+				//bufferStrategy.show();
+				canvas.repaint(updateRect.x, updateRect.y, 
+						updateRect.width, updateRect.height);
+				
+				updateRect.width = 0;
+				updateRect.height = 0;
+				updateRect.x = 0;
+				updateRect.y = 0;
+				isDirty = false;
+				vdpCanvas.clearDirty();
 
-	private void doRedraw() {
-		boolean becameBlank = vdpCanvas.isBlank() && !isBlank;
-		isBlank = vdpCanvas.isBlank();
-		
-		org.eclipse.swt.graphics.Rectangle dirtyRect = vdpCanvas.getDirtyRect(); 
-		Rectangle redrawRect_ = new Rectangle(dirtyRect.x, dirtyRect.y, dirtyRect.width, dirtyRect.height);
-		if (becameBlank)
-			redrawRect_ = new Rectangle(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
-		
-		if (vdpCanvas.isInterlacedEvenOdd()) {
-			redrawRect_.y *= 2;
-			redrawRect_.height *= 2;
-		}
-		
-		if (redrawRect_ != null) {
-			final Rectangle redrawRect = redrawRect_;
-			
-			updateWidgetSizeForMode();
-			
-			Rectangle redrawPhys = logicalToPhysical(redrawRect);
-			//System.out.println("Adding canvas " + redrawPhys);
-			update(redrawPhys);
-			
-			//System.out.println("Redrawing " + updateRect);
-			
-			
-			//BufferStrategy bufferStrategy = getBufferStrategy();
-			
-			BufferStrategy bufferStrategy = canvas.getBufferStrategy();
-			doRedraw(bufferStrategy.getDrawGraphics(), updateRect.x, updateRect.y, 
-					updateRect.width, updateRect.height);
-			
-			bufferStrategy.show();
-			canvas.repaint(updateRect.x, updateRect.y, 
-					updateRect.width, updateRect.height);
-			
-			updateRect.width = 0;
-			updateRect.height = 0;
-			updateRect.x = 0;
-			updateRect.y = 0;
-			isDirty = false;
-			vdpCanvas.clearDirty();
-
+			}
 		}
 	}
 
@@ -277,12 +276,18 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		}
 		
 	}
-	protected void resizeWidgets() {
+	
+	/**
+	 * Resize the widgets if they need to change to fit the
+	 * zoom level.
+	 * @return true if resize queued
+	 */
+	protected boolean resizeWidgets() {
 		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight());
 		Point size = new Point(targetRect.width, targetRect.height);
 		Point curSize = new Point(canvas.getWidth(), canvas.getHeight());
 		if (curSize.x == size.x && curSize.y == size.y)
-			return;
+			return false;
 		
 		//manualResize = true;
 		
@@ -293,7 +298,9 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			desiredHeight = size.y;
 			
 			doResizeToFit();
+			return true;
 		}
+		return false;
 	}
 
 	/**
@@ -302,8 +309,9 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	 * adjust the zooms to keep the same physical resolution.  For the 192/212
 	 * change in Y resolution, we assume there is "wiggle room" to resize the
 	 * window.
+	 * @return true if resize queued
 	 */
-	protected void updateWidgetSizeForMode() {
+	protected boolean updateWidgetSizeForMode() {
 		// update size if needed
 		if (vdpCanvas.getVisibleWidth() > 256) {
 			zoomx = zoom / 2.f;
@@ -316,7 +324,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			zoomy = zoom;
 		}
 		
-		resizeWidgets();
+		return resizeWidgets();
 	}
 
 	protected boolean zoomWithin(int physsize, float zoom, int logSize) {

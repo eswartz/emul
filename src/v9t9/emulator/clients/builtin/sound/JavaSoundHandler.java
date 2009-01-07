@@ -280,7 +280,6 @@ public class JavaSoundHandler implements SoundHandler {
 
 	static final int atten[] = {
 			0x00000000,
-			// 0x00080000,
 			0x0009A9C5, 0x000BAC10, 0x000E1945, 0x001107A1, 0x001491FC,
 			0x0018D8C4, 0x001E0327, 0x00244075, 0x002BC9D6, 0x0034E454,
 			0x003FE353, 0x004D2B8C, 0x005D36AB, 0x007097A5, 0x007FFFFF };
@@ -297,6 +296,8 @@ public class JavaSoundHandler implements SoundHandler {
 			int currentPos = (int) ((long) pos * soundGeneratorWaveForm.length / total);
 			if (currentPos < 0)
 				currentPos = 0;
+			if (sound.isStereo())
+				currentPos &= ~1;
 			//System.out.print(currentPos+" ");
 			updateSoundGenerator(lastUpdatedPos, currentPos);
 			lastUpdatedPos = currentPos;
@@ -328,6 +329,7 @@ public class JavaSoundHandler implements SoundHandler {
 		}
 		if (vcnt > 0) {
 			if (isStereo) to--;
+			
 			for (int i = from; i < to; i++) {
 				int sampleL = 0;
 				int sampleR = 0;
@@ -340,7 +342,6 @@ public class JavaSoundHandler implements SoundHandler {
 					else
 						sampleR = v.generate(soundClock, sampleR, sampleDelta);
 				}	
-				//soundGeneratorWaveForm[i] = (byte) (sample >> 18);
 				if (isStereo) {
 					soundGeneratorWaveForm[i++] = vcntL > 0 ? (byte) ((sampleL >> 16) / vcntL) : 0;
 					soundGeneratorWaveForm[i] = vcntR > 0 ? (byte) ((sampleR >> 16) / vcntR) : 0;
