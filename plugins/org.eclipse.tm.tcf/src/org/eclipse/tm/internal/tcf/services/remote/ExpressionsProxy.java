@@ -108,7 +108,7 @@ public class ExpressionsProxy implements IExpressions {
         }
 
         public TypeClass getTypeClass() {
-            Number n = (Number)props.get(PROP_SIZE);
+            Number n = (Number)props.get(VAL_CLASS);
             if (n != null) {
                 switch (n.intValue()) {
                 case 1: return TypeClass.cardinal;

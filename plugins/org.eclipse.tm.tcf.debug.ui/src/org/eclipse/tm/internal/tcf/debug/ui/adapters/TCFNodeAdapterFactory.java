@@ -11,7 +11,6 @@
 package org.eclipse.tm.internal.tcf.debug.ui.adapters;
 
 import org.eclipse.core.runtime.IAdapterFactory;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicyFactory;
 import org.eclipse.debug.ui.actions.IToggleBreakpointsTarget;
 import org.eclipse.debug.ui.actions.IToggleBreakpointsTargetExtension;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.BreakpointCommand;
@@ -23,18 +22,15 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
     private static final Class<?>[] adapter_list = {
         IToggleBreakpointsTarget.class,
         IToggleBreakpointsTargetExtension.class,
-        IModelSelectionPolicyFactory.class
     };
     
     private final BreakpointCommand breakpoint_command = new BreakpointCommand();
-    private final TCFModelSelectionPolicyFactory model_selection_factory = new TCFModelSelectionPolicyFactory();
-
+    
     @SuppressWarnings("unchecked")
     public Object getAdapter(Object obj, Class cls) {
         if (obj instanceof TCFNode) {
             if (cls == IToggleBreakpointsTarget.class) return breakpoint_command;
             if (cls == IToggleBreakpointsTargetExtension.class) return breakpoint_command;
-            if (cls == IModelSelectionPolicyFactory.class) return model_selection_factory;
         }
         return null;
     }

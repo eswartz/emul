@@ -26,6 +26,8 @@ public class TCFChildrenExpressions extends TCFChildren {
     
     private final IExpressionsListener listener = new IExpressionsListener() {
         
+        int generation;
+        
         public void expressionsAdded(IExpression[] expressions) {
             expressionsRemoved(expressions);
         }
@@ -35,10 +37,13 @@ public class TCFChildrenExpressions extends TCFChildren {
         }
 
         public void expressionsRemoved(IExpression[] expressions) {
+            final int g = ++generation;
             Protocol.invokeLater(new Runnable() {
                 public void run() {
                     reset();
-                    node.parent.addModelDelta(IModelDelta.CONTENT);
+                    if (g != generation) return;
+                    node.addModelDelta(IModelDelta.CONTENT);
+                    node.model.fireModelChanged();
                 }
             });
         }

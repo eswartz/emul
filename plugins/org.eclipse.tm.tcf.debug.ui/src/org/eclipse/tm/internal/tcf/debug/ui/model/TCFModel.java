@@ -42,6 +42,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicy;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.TreeModelViewer;
 import org.eclipse.debug.ui.AbstractDebugView;
@@ -129,6 +130,14 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Map<String,Map<String,TCFDataCache<String[]>>> symbol_children =
         new HashMap<String,Map<String,TCFDataCache<String[]>>>();
     
+    private final IModelSelectionPolicyFactory model_selection_factory = new IModelSelectionPolicyFactory() {
+
+        public IModelSelectionPolicy createModelSelectionPolicyAdapter(
+                Object element, IPresentationContext context) {
+            return selection_policy;
+        }
+    };
+
     private final IModelSelectionPolicy selection_policy;
 
     private TCFNodeLaunch launch_node;
@@ -391,6 +400,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     public Object getAdapter(final Class adapter, final TCFNode node) {
         if (adapter == ILaunch.class) return launch;
         if (adapter == IModelSelectionPolicy.class) return selection_policy;
+        if (adapter == IModelSelectionPolicyFactory.class) return model_selection_factory;
         return new TCFTask<Object>() {
             public void run() {
                 Object o = null;
@@ -586,10 +596,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (id.equals("")) return launch_node;
         assert Protocol.isDispatchThread();
         return id2node.get(id);
-    }
-    
-    public IModelSelectionPolicy getSelectionPolicy() {
-        return selection_policy;
     }
     
     public TCFDataCache<ISymbols.Symbol> getSymbolInfoCache(String mem_id, final String sym_id) {
@@ -854,33 +860,48 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (error != null) launch.setError(null);
         display.asyncExec(new Runnable() {
             public void run() {
+                IWorkbenchWindow[] windows = PlatformUI.getWorkbench().getWorkbenchWindows();
+                if (windows == null) return;
+                for (IWorkbenchWindow window : windows) {
+                    IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_DEBUG_VIEW);
+                    if (view != null) ((StructuredViewer)view.getViewer()).refresh(launch);
+                }
+            }
+        });
+        if (error != null) showMessageBox("TCF Launch Error", error);
+    }
+    
+    /*
+     * Show error message box in active workbench window. 
+     * @param title - message box title.
+     * @param error - error to be shown.
+     */
+    public void showMessageBox(final String title, final Throwable error) {
+        display.asyncExec(new Runnable() {
+            public void run() {
                 IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
                 if (window == null) return;
-                IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_DEBUG_VIEW);
-                if (view != null) ((StructuredViewer)view.getViewer()).refresh(launch);
-                if (error != null) {
-                    StringBuffer buf = new StringBuffer();
-                    Throwable err = error;
-                    while (err != null) {
-                        String msg = err.getLocalizedMessage();
-                        if (msg == null || msg.length() == 0) msg = err.getClass().getName();
-                        buf.append(msg);
-                        err = err.getCause();
-                        if (err != null) {
-                            buf.append('\n');
-                            buf.append("Caused by:\n");
-                        }
+                StringBuffer buf = new StringBuffer();
+                Throwable err = error;
+                while (err != null) {
+                    String msg = err.getLocalizedMessage();
+                    if (msg == null || msg.length() == 0) msg = err.getClass().getName();
+                    buf.append(msg);
+                    err = err.getCause();
+                    if (err != null) {
+                        buf.append('\n');
+                        buf.append("Caused by:\n");
                     }
-                    MessageBox mb = new MessageBox(window.getShell(), SWT.ICON_ERROR | SWT.OK);
-                    mb.setText("TCF Launch Error");
-                    mb.setMessage(buf.toString());
-                    mb.open();
                 }
+                MessageBox mb = new MessageBox(window.getShell(), SWT.ICON_ERROR | SWT.OK);
+                mb.setText(title);
+                mb.setMessage(buf.toString());
+                mb.open();
             }
         });
     }
     
-    /**
+    /*
      * Open an editor for given editor input.
      * @param input - IEditorInput representing a source file to be shown in the editor 
      * @param id - editor type ID
@@ -905,7 +926,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return editor[0];
     }   
 
-    /**
+    /*
      * Returns the line information for the given line in the given editor
      */
     private IRegion getLineInformation(ITextEditor editor, int lineNumber) {

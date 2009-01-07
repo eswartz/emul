@@ -120,7 +120,7 @@ public interface IExpressions extends IService {
         ISymbols.TypeClass getTypeClass();
         
         /**
-         * Get expression type ID. Symbols service can be used to get type properties.
+         * Get value type ID. Symbols service can be used to get type properties.
          * @return type ID.
          */
         String getTypeID();

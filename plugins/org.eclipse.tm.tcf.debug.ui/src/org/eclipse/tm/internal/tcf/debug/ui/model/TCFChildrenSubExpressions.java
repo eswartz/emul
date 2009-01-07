@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
@@ -136,14 +137,30 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         }
         if (type_class == ISymbols.TypeClass.pointer) {
             Map<String,TCFNode> data = new HashMap<String,TCFNode>();
-            TCFNodeExpression n = findIndex(0);
-            if (n == null) n = new TCFNodeExpression(node, null, null, null, 0);
-            n.setSortPosition(0);
-            data.put(n.id, n);
+            TCFDataCache<IExpressions.Value> value = ((TCFNodeExpression)exp).getValue();
+            if (!value.validate()) {
+                value.wait(this);
+                return false;
+            }
+            IExpressions.Value v = value.getData();
+            if (v != null && !isNull(v.getValue())) {
+                TCFNodeExpression n = findIndex(0);
+                if (n == null) n = new TCFNodeExpression(node, null, null, null, 0);
+                n.setSortPosition(0);
+                data.put(n.id, n);
+            }
             set(null, null, data);
             return true;
         }
         set(null, null, new HashMap<String,TCFNode>());
+        return true;
+    }
+    
+    private boolean isNull(byte[] data) {
+        if (data == null) return true;
+        for (byte b : data) {
+            if (b != 0) return false;
+        }
         return true;
     }
 }

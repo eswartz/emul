@@ -21,7 +21,6 @@
          adaptableType="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
          <adapter type="org.eclipse.debug.ui.actions.IToggleBreakpointsTarget"/>
          <adapter type="org.eclipse.debug.ui.actions.IToggleBreakpointsTargetExtension"/>
-         <adapter type="org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicyFactory"/>
       </factory>
    </extension>
    

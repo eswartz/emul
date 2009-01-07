@@ -13,14 +13,22 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 
+import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.IExpressionManager;
+import org.eclipse.debug.core.model.IExpression;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementEditor;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.ui.IDebugUIConstants;
+import org.eclipse.jface.viewers.CellEditor;
+import org.eclipse.jface.viewers.ICellModifier;
+import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -29,9 +37,9 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
+import org.eclipse.tm.tcf.util.TCFTask;
 
-// TODO: editing of expression values
-public class TCFNodeExpression extends TCFNode {
+public class TCFNodeExpression extends TCFNode implements IElementEditor {
 
     private final String script;
     private final String field_id;
@@ -700,5 +708,152 @@ public class TCFNodeExpression extends TCFNode {
         if (sort_pos < e.sort_pos) return -1;
         if (sort_pos > e.sort_pos) return +1;
         return 0;
+    }
+    
+    public CellEditor getCellEditor(IPresentationContext context, String column_id, Object element, Composite parent) {
+        assert element == this;
+        if (TCFColumnPresentationExpression.COL_NAME.equals(column_id) && script != null) {
+            return new TextCellEditor(parent);
+        } 
+        if (TCFColumnPresentationExpression.COL_HEX_VALUE.equals(column_id)) {
+            return new TextCellEditor(parent);
+        } 
+        if (TCFColumnPresentationExpression.COL_DEC_VALUE.equals(column_id)) {
+            return new TextCellEditor(parent);
+        } 
+        return null;
+    }
+
+    private static final ICellModifier cell_modifier = new ICellModifier() {
+
+        public boolean canModify(Object element, final String property) {
+            final TCFNodeExpression node = (TCFNodeExpression)element;
+            return new TCFTask<Boolean>() {
+                public void run() {
+                    if (TCFColumnPresentationExpression.COL_NAME.equals(property)) {
+                        done(node.script != null);
+                        return;
+                    }
+                    if (!node.validateNode(this)) return;
+                    if (node.expression.getData() != null && node.expression.getData().canAssign()) {
+                        if (TCFColumnPresentationExpression.COL_HEX_VALUE.equals(property)) {
+                            done(TCFNumberFormat.isValidHexNumber(node.toNumberString(16)) == null);
+                            return;
+                        }
+                        if (TCFColumnPresentationExpression.COL_DEC_VALUE.equals(property)) {
+                            done(TCFNumberFormat.isValidDecNumber(true, node.toNumberString(10)) == null);
+                            return;
+                        }
+                    }
+                    done(Boolean.FALSE);
+                }
+            }.getE();
+        }
+
+        public Object getValue(Object element, final String property) {
+            final TCFNodeExpression node = (TCFNodeExpression)element;
+            return new TCFTask<String>() {
+                public void run() {
+                    if (TCFColumnPresentationExpression.COL_NAME.equals(property)) {
+                        done(node.script);
+                        return;
+                    }
+                    if (!node.validateNode(this)) return;
+                    if (node.value.getData() != null) {
+                        if (TCFColumnPresentationExpression.COL_HEX_VALUE.equals(property)) {
+                            done(node.toNumberString(16));
+                            return;
+                        }
+                        if (TCFColumnPresentationExpression.COL_DEC_VALUE.equals(property)) {
+                            done(node.toNumberString(10));
+                            return;
+                        }
+                    }
+                    done(null);
+                }
+            }.getE();
+        }
+
+        public void modify(Object element, final String property, final Object value) {
+            if (value == null) return;
+            final TCFNodeExpression node = (TCFNodeExpression)element;
+            new TCFTask<Boolean>() {
+                public void run() {
+                    try {
+                        if (TCFColumnPresentationExpression.COL_NAME.equals(property)) {
+                            if (!node.script.equals(value)) {
+                                IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
+                                for (final IExpression e : m.getExpressions()) {
+                                    if (node.script.equals(e.getExpressionText())) m.removeExpression(e);
+                                }
+                                IExpression e = m.newWatchExpression((String)value);
+                                m.addExpression(e);
+                            }
+                            done(Boolean.TRUE);
+                            return;
+                        }
+                        if (!node.validateNode(this)) return;
+                        if (node.expression.getData() != null && node.expression.getData().canAssign()) {
+                            byte[] bf = null;
+                            int size = node.expression.getData().getSize();
+                            boolean is_float = false;
+                            boolean big_endian = false;
+                            boolean signed = false;
+                            IExpressions.Value eval = node.value.getData();
+                            if (eval != null) {
+                                switch(eval.getTypeClass()) {
+                                case real:
+                                    is_float = true;
+                                case integer:
+                                    signed = true;
+                                    break;
+                                }
+                                big_endian = eval.isBigEndian();
+                                size = eval.getValue().length;
+                            }
+                            String input = (String)value;
+                            String error = null;
+                            if (TCFColumnPresentationExpression.COL_HEX_VALUE.equals(property)) {
+                                error = TCFNumberFormat.isValidHexNumber(input);
+                                if (error == null) bf = TCFNumberFormat.toByteArray(input, 16, false, size, signed, big_endian);
+                            }
+                            else if (TCFColumnPresentationExpression.COL_DEC_VALUE.equals(property)) {
+                                error = TCFNumberFormat.isValidDecNumber(is_float, input);
+                                if (error == null) bf = TCFNumberFormat.toByteArray(input, 10, is_float, size, signed, big_endian);
+                            }
+                            if (error != null) throw new Exception("Invalid value: " + value, new Exception(error));
+                            if (bf != null) {
+                                IExpressions exps = node.model.getLaunch().getService(IExpressions.class);
+                                exps.assign(node.expression.getData().getID(), bf, new IExpressions.DoneAssign() {
+                                    public void doneAssign(IToken token, Exception error) {
+                                        if (error != null) {
+                                            node.model.showMessageBox("Cannot modify element value", error);
+                                            done(Boolean.FALSE);
+                                        }
+                                        else {
+                                            node.value.reset();
+                                            node.addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+                                            node.model.fireModelChanged();
+                                            done(Boolean.TRUE);
+                                        }
+                                    }
+                                });
+                                return;
+                            }
+                        }
+                        done(Boolean.FALSE);
+                    }
+                    catch (Throwable x) {
+                        node.model.showMessageBox("Cannot modify element value", x);
+                        done(Boolean.FALSE);
+                    }
+                }
+            }.getE();
+        }
+    };
+    
+    public ICellModifier getCellModifier(IPresentationContext context, Object element) {
+        assert element == this;
+        return cell_modifier;
     }
 }

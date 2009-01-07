@@ -13,20 +13,26 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementEditor;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.ui.IDebugUIConstants;
+import org.eclipse.jface.viewers.CellEditor;
+import org.eclipse.jface.viewers.ICellModifier;
+import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.util.TCFDataCache;
+import org.eclipse.tm.tcf.util.TCFTask;
 
 
 //TODO: hierarchical registers
-public class TCFNodeRegister extends TCFNode {
+public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
     private final TCFDataCache<IRegisters.RegistersContext> context;
     private final TCFDataCache<byte[]> value;
@@ -150,28 +156,7 @@ public class TCFNodeRegister extends TCFNode {
             }
         }
         else if (data != null) {
-            byte[] temp = new byte[data.length + 1];
-            temp[0] = 0; // Extra byte to avoid sign extension by BigInteger
-            if (ctx.isBigEndian()) {
-                System.arraycopy(data, 0, temp, 1, data.length);
-            }
-            else {
-                for (int i = 0; i < data.length; i++) {
-                    temp[temp.length - i - 1] = data[i];
-                }
-            }
-            String s = new BigInteger(temp).toString(radix);
-            switch (radix) {
-            case 8:
-                if (!s.startsWith("0")) s = "0" + s;
-                break;
-            case 16:
-                int l = data.length * 2 - s.length();
-                if (l < 0) l = 0;
-                if (l > 16) l = 16;
-                s = "0000000000000000".substring(0, l) + s;
-                break;
-            }
+            String s = toNumberString(radix);
             if (col >= 0) {
                 result.setLabel(s, col);
             }
@@ -179,6 +164,35 @@ public class TCFNodeRegister extends TCFNode {
                 result.setLabel(ctx.getName() + " = " + s, 0);
             }
         }
+    }
+    
+    private String toNumberString(int radix) {
+        IRegisters.RegistersContext ctx = context.getData();
+        byte[] data = value.getData();
+        if (ctx == null || data == null) return "N/A";
+        byte[] temp = new byte[data.length + 1];
+        temp[0] = 0; // Extra byte to avoid sign extension by BigInteger
+        if (ctx.isBigEndian()) {
+            System.arraycopy(data, 0, temp, 1, data.length);
+        }
+        else {
+            for (int i = 0; i < data.length; i++) {
+                temp[temp.length - i - 1] = data[i];
+            }
+        }
+        String s = new BigInteger(temp).toString(radix);
+        switch (radix) {
+        case 8:
+            if (!s.startsWith("0")) s = "0" + s;
+            break;
+        case 16:
+            int l = data.length * 2 - s.length();
+            if (l < 0) l = 0;
+            if (l > 16) l = 16;
+            s = "0000000000000000".substring(0, l) + s;
+            break;
+        }
+        return s;
     }
 
     private String bool(boolean b) {
@@ -235,5 +249,116 @@ public class TCFNodeRegister extends TCFNode {
     @Override
     protected String getImageName() {
         return ImageCache.IMG_REGISTER;
+    }
+
+    public CellEditor getCellEditor(IPresentationContext context, String column_id, Object element, Composite parent) {
+        assert element == this;
+        if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(column_id)) {
+            return new TextCellEditor(parent);
+        } 
+        if (TCFColumnPresentationRegister.COL_DEC_VALUE.equals(column_id)) {
+            return new TextCellEditor(parent);
+        } 
+        return null;
+    }
+
+    private static final ICellModifier cell_modifier = new ICellModifier() {
+
+        public boolean canModify(Object element, final String property) {
+            final TCFNodeRegister node = (TCFNodeRegister)element;
+            return new TCFTask<Boolean>() {
+                public void run() {
+                    if (!node.validateNode(this)) return;
+                    if (node.context.getData() != null && node.context.getData().isWriteable()) {
+                        if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(property)) {
+                            done(TCFNumberFormat.isValidHexNumber(node.toNumberString(16)) == null);
+                            return;
+                        }
+                        if (TCFColumnPresentationRegister.COL_DEC_VALUE.equals(property)) {
+                            done(TCFNumberFormat.isValidDecNumber(true, node.toNumberString(10)) == null);
+                            return;
+                        }
+                    }
+                    done(Boolean.FALSE);
+                }
+            }.getE();
+        }
+
+        public Object getValue(Object element, final String property) {
+            final TCFNodeRegister node = (TCFNodeRegister)element;
+            return new TCFTask<String>() {
+                public void run() {
+                    if (!node.validateNode(this)) return;
+                    if (node.value.getData() != null) {
+                        if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(property)) {
+                            done(node.toNumberString(16));
+                            return;
+                        }
+                        if (TCFColumnPresentationRegister.COL_DEC_VALUE.equals(property)) {
+                            done(node.toNumberString(10));
+                            return;
+                        }
+                    }
+                    done(null);
+                }
+            }.getE();
+        }
+
+        public void modify(Object element, final String property, final Object value) {
+            if (value == null) return;
+            final TCFNodeRegister node = (TCFNodeRegister)element;
+            new TCFTask<Boolean>() {
+                public void run() {
+                    try {
+                        if (!node.validateNode(this)) return;
+                        IRegisters.RegistersContext ctx = node.context.getData();
+                        if (ctx != null && ctx.isWriteable()) {
+                            byte[] bf = null;
+                            boolean is_float = ctx.isFloat();
+                            int size = ctx.getSize();
+                            boolean big_endian = ctx.isBigEndian();
+                            String input = (String)value;
+                            String error = null;
+                            if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(property)) {
+                                error = TCFNumberFormat.isValidHexNumber(input);
+                                if (error == null) bf = TCFNumberFormat.toByteArray(input, 16, false, size, false, big_endian);
+                            }
+                            else if (TCFColumnPresentationRegister.COL_DEC_VALUE.equals(property)) {
+                                error = TCFNumberFormat.isValidDecNumber(is_float, input);
+                                if (error == null) bf = TCFNumberFormat.toByteArray(input, 10, is_float, size, is_float, big_endian);
+                            }
+                            if (error != null) throw new Exception("Invalid value: " + value, new Exception(error));
+                            if (bf != null) {
+                                ctx.set(bf, new IRegisters.DoneSet() {
+                                    public void doneSet(IToken token, Exception error) {
+                                        if (error != null) {
+                                            node.model.showMessageBox("Cannot modify register value", error);
+                                            done(Boolean.FALSE);
+                                        }
+                                        else {
+                                            node.value.reset();
+                                            node.addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+                                            node.model.fireModelChanged();
+                                            done(Boolean.TRUE);
+                                        }
+                                    }
+                                });
+                                return;
+                            }
+                        }
+                        done(Boolean.FALSE);
+                    }
+                    catch (Throwable x) {
+                        node.model.showMessageBox("Cannot modify register value", x);
+                        done(Boolean.FALSE);
+                    }
+                }
+            }.getE();
+        }
+    };
+    
+    public ICellModifier getCellModifier(IPresentationContext context, Object element) {
+        assert element == this;
+        return cell_modifier;
     }
 }
