@@ -80,6 +80,10 @@ static StringValue * str_alloc_list = NULL;
 static Context * expression_context = NULL;
 static int expression_frame = STACK_NO_FRAME;
 
+#define MAX_ID_CALLBACKS 8
+static ExpressionIdentifierCallBack * id_callbacks[MAX_ID_CALLBACKS];
+static int id_callback_cnt = 0;
+
 static void * alloc_str(int size) {
     if (str_pool_cnt + size <= STR_POOL_SIZE) {
         char * s = str_pool + str_pool_cnt;
@@ -94,7 +98,15 @@ static void * alloc_str(int size) {
     }
 }
 
-void string_value(Value * v, char * str) {
+void set_value(Value * v, void * data, size_t size) {
+    v->remote = 0;
+    v->address = 0;
+    v->size = size;
+    v->value = alloc_str(v->size);
+    memcpy(v->value, data, v->size);
+}
+
+static void string_value(Value * v, char * str) {
     memset(v, 0, sizeof(Value));
     v->type_class = TYPE_CLASS_ARRAY;
     if (str != NULL) {
@@ -361,10 +373,11 @@ static void next_sy(void) {
             text_sy = ch;
             return;
         case '\'':
+            memset(&text_val, 0, sizeof(text_val));
             text_val.type_class = TYPE_CLASS_INTEGER;
             text_val.size = sizeof(int);
             text_val.value = alloc_str(text_val.size);
-            text_val.remote = 0;
+            text_val.constant = 1;
             *(int *)text_val.value = next_char_val();
             if (text_ch != '\'') error(ERR_INV_EXPRESSION, "Missing 'single quote'");
             next_ch();
@@ -379,10 +392,11 @@ static void next_sy(void) {
                     next_char_val();
                     len++;
                 }
+                memset(&text_val, 0, sizeof(text_val));
                 text_val.type_class = TYPE_CLASS_ARRAY;
                 text_val.size = len + 1;
                 text_val.value = alloc_str(text_val.size);
-                text_val.remote = 0;
+                text_val.constant = 1;
                 text_pos = pos - 1;
                 next_ch();
                 while (text_ch != '"') {
@@ -398,10 +412,11 @@ static void next_sy(void) {
             if (text_ch == 'x') {
                 uns64 value = 0;
                 next_ch();
+                memset(&text_val, 0, sizeof(text_val));
                 text_val.type_class = TYPE_CLASS_CARDINAL;
                 text_val.size = sizeof(uns64);
                 text_val.value = alloc_str(text_val.size);
-                text_val.remote = 0;
+                text_val.constant = 1;
                 while (text_ch >= '0' && text_ch <= '9' ||
                         text_ch >= 'A' && text_ch <= 'F' ||
                         text_ch >= 'a' && text_ch <= 'f') {
@@ -411,10 +426,11 @@ static void next_sy(void) {
             }
             else {
                 int64 value = 0;
+                memset(&text_val, 0, sizeof(text_val));
                 text_val.type_class = TYPE_CLASS_INTEGER;
                 text_val.size = sizeof(int64);
                 text_val.value = alloc_str(text_val.size);
-                text_val.remote = 0;
+                text_val.constant = 1;
                 while (text_ch >= '0' && text_ch <= '7') {
                     value = (value << 3) | next_oct();
                 }
@@ -425,10 +441,11 @@ static void next_sy(void) {
         default:
             if (ch >= '0' && ch <= '9') {
                 int64 value = ch - '0';
+                memset(&text_val, 0, sizeof(text_val));
                 text_val.type_class = TYPE_CLASS_INTEGER;
                 text_val.size = sizeof(int64);
                 text_val.value = alloc_str(text_val.size);
-                text_val.remote = 0;
+                text_val.constant = 1;
                 while (text_ch >= '0' && text_ch <= '9') {
                     value = (value * 10) + next_dec();
                 }
@@ -444,10 +461,11 @@ static void next_sy(void) {
                     len++;
                     next_ch();
                 }
+                memset(&text_val, 0, sizeof(text_val));
                 text_val.type_class = TYPE_CLASS_ARRAY;
                 text_val.size = len + 1;
                 text_val.value = alloc_str(text_val.size);
-                text_val.remote = 0;
+                text_val.constant = 1;
                 text_pos = pos - 1;
                 next_ch();
                 while (is_name_character(text_ch)) {
@@ -466,7 +484,11 @@ static void next_sy(void) {
 }
 
 static void identifier(char * name, Value * v) {
+    int i;
     memset(v, 0, sizeof(Value));
+    for (i = 0; i < id_callback_cnt; i++) {
+        if (id_callbacks[i](expression_context, expression_frame, name, v)) return;
+    }
     if (expression_context == NULL) {
         exception(ERR_INV_CONTEXT);
     }
@@ -477,6 +499,7 @@ static void identifier(char * name, Value * v) {
         else {
             string_value(v, container_id(expression_context));
         }
+        v->constant = 1;
         return;
     }
 #if SERVICE_Symbols
@@ -502,7 +525,7 @@ static void identifier(char * name, Value * v) {
                     }
                     v->size = size;
                     v->value = alloc_str(v->size);
-                    v->remote = 0;
+                    v->constant = 1;
                     memcpy(v->value, value, size);
                     loc_free(value);
                 }
@@ -541,6 +564,7 @@ static void load_value(Value * v) {
     void * value;
 
     if (!v->remote) return;
+    assert(!v->constant);
     value = alloc_str(v->size);
     if (context_read_mem(expression_context, v->address, value, v->size) < 0) {
         error(errno, "Can't read variable value");
@@ -742,6 +766,7 @@ static void op_deref(int mode, Value * v) {
     }
     v->value = NULL;
     v->remote = 1;
+    v->constant = 0;
 #else
     error(ERR_UNSUPPORTED, "Symbols service not available");
 #endif
@@ -877,6 +902,7 @@ static void op_addr(int mode, Value * v) {
     v->size = sizeof(ContextAddress);
     v->value = alloc_str(text_val.size);
     v->remote = 0;
+    assert(!v->constant);
     *(ContextAddress *)v->value = v->address;
     v->address = 0;
     v->type_class = TYPE_CLASS_POINTER;
@@ -952,6 +978,8 @@ static void unary_expression(int mode, Value * v) {
                 v->size = sizeof(int64);
                 v->value = value;
             }
+            assert(!v->remote);
+            memset(&v->type, 0, sizeof(Symbol));
         }
         break;
     case '!':
@@ -968,6 +996,8 @@ static void unary_expression(int mode, Value * v) {
                 v->size = sizeof(int);
                 v->value = value;
             }
+            assert(!v->remote);
+            memset(&v->type, 0, sizeof(Symbol));
         }
         break;
     case '~':
@@ -983,6 +1013,8 @@ static void unary_expression(int mode, Value * v) {
                 v->size = sizeof(int64);
                 v->value = value;
             }
+            assert(!v->remote);
+            memset(&v->type, 0, sizeof(Symbol));
         }
         break;
     default:
@@ -1044,6 +1076,7 @@ static void multiplicative_expression(int mode, Value * v) {
                 v->value = value;
             }
             v->remote = 0;
+            v->constant = v->constant && x.constant;
             memset(&v->type, 0, sizeof(Symbol));
         }
     }
@@ -1107,6 +1140,7 @@ static void additive_expression(int mode, Value * v) {
                 v->value = value;
             }
             v->remote = 0;
+            v->constant = v->constant && x.constant;
             memset(&v->type, 0, sizeof(Symbol));
         }
     }
@@ -1154,10 +1188,11 @@ static void shift_expression(int mode, Value * v) {
                     v->type_class = TYPE_CLASS_INTEGER;
                 }
             }
-            memset(&v->type, 0, sizeof(Symbol));
             v->value = value;
             v->size = sizeof(uns64);
             v->remote = 0;
+            v->constant = v->constant && x.constant;
+            memset(&v->type, 0, sizeof(Symbol));
         }
     }
 }
@@ -1207,11 +1242,12 @@ static void relational_expression(int mode, Value * v) {
                 case SY_GEQ: *value = to_int(mode, v) >= to_int(mode, &x); break;
                 }
             }
-            memset(&v->type, 0, sizeof(Symbol));
             v->type_class = TYPE_CLASS_INTEGER;
             v->value = mode != MODE_NORMAL ? 0 : value;
             v->size = sizeof(int);
             v->remote = 0;
+            v->constant = v->constant && x.constant;
+            memset(&v->type, 0, sizeof(Symbol));
         }
     }
 }
@@ -1237,11 +1273,12 @@ static void equality_expression(int mode, Value * v) {
                 *value = to_int(mode, v) == to_int(mode, &x);
             }
             if (sy == SY_NEQ) *value = !*value;
-            memset(&v->type, 0, sizeof(Symbol));
             v->type_class = TYPE_CLASS_INTEGER;
             v->value = mode != MODE_NORMAL ? 0 : value;
             v->size = sizeof(int);
             v->remote = 0;
+            v->constant = v->constant && x.constant;
+            memset(&v->type, 0, sizeof(Symbol));
         }
     }
 }
@@ -1264,10 +1301,11 @@ static void and_expression(int mode, Value * v) {
             else {
                 v->type_class = TYPE_CLASS_INTEGER;
             }
-            memset(&v->type, 0, sizeof(Symbol));
             v->value = mode != MODE_NORMAL ? 0 : value;
             v->size = sizeof(int64);
             v->remote = 0;
+            v->constant = v->constant && x.constant;
+            memset(&v->type, 0, sizeof(Symbol));
         }
     }
 }
@@ -1290,10 +1328,11 @@ static void exclusive_or_expression(int mode, Value * v) {
             else {
                 v->type_class = TYPE_CLASS_INTEGER;
             }
-            memset(&v->type, 0, sizeof(Symbol));
             v->value = mode != MODE_NORMAL ? 0 : value;
             v->size = sizeof(int64);
             v->remote = 0;
+            v->constant = v->constant && x.constant;
+            memset(&v->type, 0, sizeof(Symbol));
         }
     }
 }
@@ -1316,10 +1355,11 @@ static void inclusive_or_expression(int mode, Value * v) {
             else {
                 v->type_class = TYPE_CLASS_INTEGER;
             }
-            memset(&v->type, 0, sizeof(Symbol));
             v->value = mode != MODE_NORMAL ? 0 : value;
             v->size = sizeof(int64);
             v->remote = 0;
+            v->constant = v->constant && x.constant;
+            memset(&v->type, 0, sizeof(Symbol));
         }
     }
 }
@@ -1331,7 +1371,10 @@ static void logical_and_expression(int mode, Value * v) {
         int b = to_boolean(mode, v);
         next_sy();
         inclusive_or_expression(b ? mode : MODE_SKIP, &x);
-        if (b) *v = x;
+        if (b) {
+            if (!v->constant) x.constant = 0;
+            *v = x;
+        }
     }
 }
 
@@ -1342,7 +1385,10 @@ static void logical_or_expression(int mode, Value * v) {
         int b = to_boolean(mode, v);
         next_sy();
         logical_and_expression(!b ? mode : MODE_SKIP, &x);
-        if (!b) *v = x;
+        if (!b) {
+            if (!v->constant) x.constant = 0;
+            *v = x;
+        }
     }
 }
 
@@ -1357,6 +1403,7 @@ static void conditional_expression(int mode, Value * v) {
         if (text_sy != ':') error(ERR_INV_EXPRESSION, "Missing ':'");
         next_sy();
         conditional_expression(!b ? mode : MODE_SKIP, &y);
+        if (!v->constant) x.constant = y.constant = 0;
         *v = b ? x : y;
     }
 }
@@ -1965,7 +2012,7 @@ static void command_assign(char * token, Channel * c) {
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
-    write_errno(&c->out, errno);
+    write_errno(&c->out, err);
     write_stream(&c->out, MARKER_EOM);
 }
 
@@ -2009,32 +2056,13 @@ static void on_channel_close(Channel * c) {
     }
 }
 
+void add_identifier_callback(ExpressionIdentifierCallBack * callback) {
+    assert(id_callback_cnt < MAX_ID_CALLBACKS);
+    id_callbacks[id_callback_cnt++] = callback;
+}
+
 void ini_expressions_service(Protocol * proto) {
     unsigned i;
-#ifndef  NDEBUG
-    Value v;
-    assert(evaluate_expression(NULL, STACK_NO_FRAME, "0", 1, &v) == 0);
-    assert(v.type_class == TYPE_CLASS_INTEGER && v.size == sizeof(int64) && *(int *)v.value == 0);
-    assert(evaluate_expression(NULL, STACK_NO_FRAME, "0.", 1, &v) != 0);
-    assert(evaluate_expression(NULL, STACK_NO_FRAME, "2 * 2", 1, &v) == 0);
-    assert(v.type_class == TYPE_CLASS_INTEGER && v.size == sizeof(int64) && *(int64 *)v.value == 4);
-    assert(evaluate_expression(NULL, STACK_NO_FRAME, "1 ? 2 : 3", 1, &v) == 0);
-    assert(v.type_class == TYPE_CLASS_INTEGER && v.size == sizeof(int64) && *(int64 *)v.value == 2);
-    assert(evaluate_expression(NULL, STACK_NO_FRAME, "0 ? 2 : 3", 1, &v) == 0);
-    assert(v.type_class == TYPE_CLASS_INTEGER && v.size == sizeof(int64) && *(int64 *)v.value == 3);
-    assert(evaluate_expression(NULL, STACK_NO_FRAME, "(1?2:3) == 2 && (0?2:3) == 3", 1, &v) == 0);
-    assert(v.type_class == TYPE_CLASS_INTEGER && v.size == sizeof(int) && *(int *)v.value == 1);
-    assert(evaluate_expression(NULL, STACK_NO_FRAME, "(1?2:3) != 2 || (0?2:3) != 3", 1, &v) == 0);
-    assert(v.type_class == TYPE_CLASS_INTEGER && v.size == sizeof(int) && *(int *)v.value == 0);
-    assert(evaluate_expression(NULL, STACK_NO_FRAME, "5>2 && 4<6", 1, &v) == 0);
-    assert(v.type_class == TYPE_CLASS_INTEGER && v.size == sizeof(int) && *(int *)v.value == 1);
-    assert(evaluate_expression(NULL, STACK_NO_FRAME, "5<=2 || 4>=6", 1, &v) == 0);
-    assert(v.type_class == TYPE_CLASS_INTEGER && v.size == sizeof(int) && *(int *)v.value == 0);
-    assert(evaluate_expression(NULL, STACK_NO_FRAME, "((5*2+7-1)/2)>>1==4 && 1<<3==8 && 5%2==1", 1, &v) == 0);
-    assert(v.type_class == TYPE_CLASS_INTEGER && v.size == sizeof(int) && *(int *)v.value == 1);
-    assert(evaluate_expression(NULL, STACK_NO_FRAME, "\042ABC\042 + \042DEF\042 == \042ABCDEF\042", 1, &v) == 0);
-    assert(v.type_class == TYPE_CLASS_INTEGER && v.size == sizeof(int) && *(int *)v.value == 1);
-#endif
     list_init(&expressions);
     for (i = 0; i < ID2EXP_HASH_SIZE; i++) list_init(id2exp + i);
     add_channel_close_listener(on_channel_close);

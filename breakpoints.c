@@ -520,7 +520,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
             Value c;
             int frame = context_has_state(ctx) ? STACK_TOP_FRAME : STACK_NO_FRAME;
             if (evaluate_expression(ctx, frame, bp->condition, 1, &c) == 0) {
-                if (!value_to_boolean(&c)) continue;
+                if (c.constant && !value_to_boolean(&c)) continue;
             }
         }
         if (context_sensitive_address) {
