@@ -369,6 +369,7 @@ public class EmuDiskDSR implements DsrHandler {
 		 * @return
 		 */
 		public boolean compareToFile() {
+			// TODO
 			return true;
 		}
 
@@ -507,6 +508,7 @@ public class EmuDiskDSR implements DsrHandler {
 
 		if (secs == 0) {
 			// write FDR info
+			// TODO
 			/*
 			if (file instanceof NativeFDRFile) {
 				NativeFDRFile fdrFile = (NativeFDRFile) file;
@@ -590,6 +592,11 @@ public class EmuDiskDSR implements DsrHandler {
 			| (vdpHandler.readAbsoluteVdpMemory(base + vaddr + 1) & 0xff));
 	}
 	
+	/**
+	 * Write byte in classic VDP memory
+	 * @param vaddr address in 0-0x3FFF range
+	 * @return byte
+	 */
 	private void writeVdpByte(int vaddr, byte byt) {
 		int base = vdpHandler.getVdpMmio().getBankAddr();
 		vdpHandler.writeAbsoluteVdpMemory(base + vaddr, byt);

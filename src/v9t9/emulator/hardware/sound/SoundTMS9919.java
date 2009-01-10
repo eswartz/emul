@@ -153,7 +153,9 @@ public class SoundTMS9919 implements SoundProvider {
 		}
 		protected void setupVoice()
 		{
+			byte lastVolume = getVolume();
 			setVolume((byte) (0xf - getOperationAttenuation()));
+			int lastPeriod = period;
 			period = getOperationPeriod();
 			hertz = periodToHertz(period);
 
@@ -162,6 +164,10 @@ public class SoundTMS9919 implements SoundProvider {
 			} else {
 				delta = 0;
 			}
+			
+			// keep waves in sync
+			if (lastPeriod != period || (lastVolume == 0) != (getVolume() == 0))
+				div = 0;
 				
 			dump();
 		}

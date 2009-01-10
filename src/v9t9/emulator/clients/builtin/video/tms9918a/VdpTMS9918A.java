@@ -108,12 +108,8 @@ public class VdpTMS9918A implements VdpHandler {
 	/** The number of CPU cycles corresponding to 1/60 second */
 	private int vdpInterruptLimit;
 	private int throttleCount;
-	private final Machine machine;
 
-
-	public VdpTMS9918A(Machine machine, MemoryDomain videoMemory) {
-		this.machine = machine;
-		
+	public VdpTMS9918A(MemoryDomain videoMemory) {
 		settingVdpInterruptRate.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
@@ -705,7 +701,7 @@ public class VdpTMS9918A implements VdpHandler {
 	}
 	
 	
-	public void syncVdpInterrupt() {
+	public void syncVdpInterrupt(Machine machine) {
 		if (!settingCpuSynchedVdpInterrupt.getBoolean())
 			return;
 		

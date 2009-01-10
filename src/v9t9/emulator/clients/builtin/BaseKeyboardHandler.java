@@ -115,7 +115,7 @@ public abstract class BaseKeyboardHandler implements KeyboardHandler {
 			
 		};
 		// TODO: find a better way to ensure the keyboard was scanned fully
-		pasteTimer.schedule(pasteCharacterTask, 0, 1000 / 10); 
+		pasteTimer.schedule(pasteCharacterTask, 0, 1000 / 30); 
 	}
 
 	public static void main(String[] args) {

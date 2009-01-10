@@ -8,6 +8,7 @@ package v9t9.engine;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 
+import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -71,8 +72,9 @@ public interface VdpHandler {
 	void loadState(IDialogSettings section);
 
 	/** This is called regularly from the CPU and should trigger the VDP
-	 * interrupt according to the desired frequency. */
-	void syncVdpInterrupt();
+	 * interrupt according to the desired frequency. 
+	 * @param machine TODO*/
+	void syncVdpInterrupt(Machine machine);
 
 	void addCpuCycles(int cycles);
 }

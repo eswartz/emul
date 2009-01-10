@@ -106,12 +106,12 @@ public class TestAWTEmulatorWindow {
 		}
 		DataBufferInt buffer = (DataBufferInt) image.getRaster().getDataBuffer();
 		V9t9RenderUtils.scaleImageToRGBA(
-				buffer.getData(),
-				vdpCanvas.getImageData().data,
+				buffer.getData(), 
+				vdpCanvas.getImageData().data, 0,
 				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
-				bounds.width, bounds.height,
+				bounds.width, bounds.height, bounds.width * 4,
 				0, 0, bounds.width, bounds.height);
-		V9t9RenderUtils.addNoiseRGBA(buffer.getData(), 
+		V9t9RenderUtils.addNoiseRGBA(buffer.getData(), 0,
 				bounds.width, bounds.height, bounds.width * 4,
 				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
 		

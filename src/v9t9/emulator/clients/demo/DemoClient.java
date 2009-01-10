@@ -477,7 +477,7 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
 		// TODO Auto-generated method stub
 		
 	}
-	public void syncVdpInterrupt() {
+	public void syncVdpInterrupt(Machine machine) {
 		// TODO Auto-generated method stub
 		
 	}

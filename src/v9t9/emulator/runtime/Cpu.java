@@ -221,7 +221,7 @@ public class Cpu implements MemoryAccessListener {
 	    	return;
 	    }
 	    
-	    vdp.syncVdpInterrupt();
+	    vdp.syncVdpInterrupt(machine);
 	    
 	    if (cruAccess != null) {
 	    	//pins &= ~PIN_INTREQ;

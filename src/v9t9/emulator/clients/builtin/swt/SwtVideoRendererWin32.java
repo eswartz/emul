@@ -7,7 +7,6 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.internal.win32.OS;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.jni.v9t9render.V9t9Render;
@@ -57,11 +56,13 @@ public class SwtVideoRendererWin32 extends SwtVideoRenderer {
 		
 			synchronized (vdpCanvas) {
 				//System.out.println("repaint: " + updateRect);
-				V9t9Render.renderNoisyWin32ImageFromImageData(imageData.data,
+				/*
+				V9t9Render.renderNoisyWin32ImageFromImageData(imageData.data, 0,
 						vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight(), lineStride,
-						canvasSize.x, canvasSize.y,
+						canvasSize.x, canvasSize.y, canvasSize.x * 4,
 						updateRect.x, updateRect.y, updateRect.width, updateRect.height,
 						canvas.handle);
+						*/
 			}
 		}
 	}

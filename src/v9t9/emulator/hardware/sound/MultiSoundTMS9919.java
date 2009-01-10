@@ -90,6 +90,8 @@ public class MultiSoundTMS9919 implements SoundProvider {
 	}
 
 	public void loadState(IDialogSettings section) {
+		if (section == null)
+			return;
 		int idx = 0;
 		for (SoundTMS9919 chip : chips) {
 			chip.loadState(section.getSection("" + idx));

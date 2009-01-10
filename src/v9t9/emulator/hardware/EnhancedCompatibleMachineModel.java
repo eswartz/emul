@@ -44,7 +44,7 @@ public class EnhancedCompatibleMachineModel implements MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getVdp()
 	 */
 	public VdpHandler createVdp(Machine machine) {
-		vdp = new VdpV9938(machine, machine.getMemory().getDomain("VIDEO"));
+		vdp = new VdpV9938(machine.getMemory().getDomain("VIDEO"));
 		vdpMmio = new Vdp9938Mmio(machine.getMemory(), vdp, 0x20000);
 		return vdp;
 	}
@@ -82,7 +82,7 @@ public class EnhancedCompatibleMachineModel implements MachineModel {
 			}
 		};
 
-		machine.getCruManager().add(0x1400, 1, new CruWriter() {
+		machine.getCruManager().add(0x1402, 1, new CruWriter() {
 
 			public int write(int addr, int data, int num) {
 				if (data == 1) {
@@ -105,7 +105,7 @@ public class EnhancedCompatibleMachineModel implements MachineModel {
 				// independent banking from VDP
 				if (vdpCpuBanked) {
 					int currentBank = cpuBankedVideo.getCurrentBank();
-					int bit = (addr - 0x1402) >> 1;
+					int bit = (addr - 0x1404) >> 1;
 					currentBank = (currentBank & ~(1 << bit)) | (data << bit);
 					cpuBankedVideo.selectBank(currentBank);
 				}
@@ -113,9 +113,9 @@ public class EnhancedCompatibleMachineModel implements MachineModel {
 			}
 			
 		};
-		machine.getCruManager().add(0x1402, 1, bankSelector);
 		machine.getCruManager().add(0x1404, 1, bankSelector);
 		machine.getCruManager().add(0x1406, 1, bankSelector);
+		machine.getCruManager().add(0x1408, 1, bankSelector);
 	}
 
 }

@@ -3,7 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
-import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
@@ -124,8 +123,8 @@ public class VdpV9938 extends VdpTMS9918A {
 			{ 49, 65, 49, 62 },
 	};
 
-	public VdpV9938(Machine machine, MemoryDomain videoMemory) {
-		super(machine, videoMemory);
+	public VdpV9938(MemoryDomain videoMemory) {
+		super(videoMemory);
 		reset();
 	}
 

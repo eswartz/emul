@@ -158,7 +158,7 @@ public class EnhancedConsoleMmioArea extends ConsoleMmioArea implements MemoryLi
     		break;
     	}
 
-    	if (addr >= SOUND && addr <= SOUND + 0x20) {
+    	if (addr >= SOUND && addr < SOUND + 0x20) {
     		machine.getMemoryModel().getSoundMmio().write(addr, val);
     	}
 	}
