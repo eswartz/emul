@@ -18,7 +18,6 @@ import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.dsrs.DSRManager;
-import v9t9.emulator.hardware.sound.SoundTMS9919;
 import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;

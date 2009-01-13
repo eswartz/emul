@@ -8,7 +8,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -70,8 +71,8 @@ public class JavaSoundHandler implements SoundHandler {
 
 	}
 
-	ConcurrentLinkedQueue<AudioChunk> soundQueue;
-	ConcurrentLinkedQueue<AudioChunk> speechQueue;
+	BlockingQueue<AudioChunk> soundQueue;
+	BlockingQueue<AudioChunk> speechQueue;
 	private Thread speechWritingThread;
 
 	{
@@ -101,8 +102,8 @@ public class JavaSoundHandler implements SoundHandler {
 
 		sound = machine.getSound();
 
-		soundQueue = new ConcurrentLinkedQueue<AudioChunk>();
-		speechQueue = new ConcurrentLinkedQueue<AudioChunk>();
+		soundQueue = new LinkedBlockingQueue<AudioChunk>();
+		speechQueue = new LinkedBlockingQueue<AudioChunk>();
 
 		stdFormat = new AudioFormat(55900, 8, 2, true, false);
 		Line.Info slInfo = new DataLine.Info(SourceDataLine.class, stdFormat);
@@ -150,31 +151,17 @@ public class JavaSoundHandler implements SoundHandler {
 
 			public void run() {
 				while (true) {
-					// wait for the main thread(s) to send us data to write,
-					// which we do here in a separate thread to allow for
-					// the potential of blocking.
 					AudioChunk chunk = null;
-					synchronized (soundQueue) {
+					
+					try {
+						chunk = soundQueue.take();
+					} catch (InterruptedException e2) {
+						return;
+					}
 
+					// toss extra chunks if too many arrive
+					while (chunk != null && soundQueue.size() > 2) {
 						chunk = soundQueue.poll();
-						
-						if (chunk == null) {
-							try {
-								soundQueue.wait(500);
-							} catch (InterruptedException e) {
-								break;
-							}
-							if (Thread.interrupted() || !machine.isAlive())
-								return;
-
-							continue;
-						}
-
-						// toss extra chunks if too many arrive
-						while (chunk != null && soundQueue.size() > 2) {
-							chunk = soundQueue.poll();
-						}
-
 					}
 
 					if (chunk.soundToWrite != null) {
@@ -195,8 +182,6 @@ public class JavaSoundHandler implements SoundHandler {
 							}
 						}
 					}
-
-					// soundWritingRequest = false;
 				}
 			}
 
@@ -208,25 +193,11 @@ public class JavaSoundHandler implements SoundHandler {
 
 			public void run() {
 				while (true) {
-					// wait for the main thread(s) to send us data to write,
-					// which we do here in a separate thread to allow for
-					// the potential of blocking.
 					AudioChunk chunk = null;
-					synchronized (speechQueue) {
-
-						chunk = speechQueue.poll();
-
-						if (chunk == null) {
-							try {
-								speechQueue.wait(500);
-							} catch (InterruptedException e) {
-								break;
-							}
-							if (Thread.interrupted())
-								return;
-							continue;
-						}
-						
+					try {
+						chunk = speechQueue.take();
+					} catch (InterruptedException e) {
+						return;
 					}
 
 					if (chunk.speechToWrite != null) {
@@ -248,8 +219,6 @@ public class JavaSoundHandler implements SoundHandler {
 						}
 
 					}
-
-					// soundWritingRequest = false;
 				}
 			}
 
@@ -354,17 +323,10 @@ public class JavaSoundHandler implements SoundHandler {
 	public void dispose() {
 		if (soundWritingThread != null)
 			soundWritingThread.interrupt();
-		synchronized (soundQueue) {
-			soundQueue.notify();
-		}
 		
 		if (speechWritingThread != null)
 			speechWritingThread.interrupt();
-		synchronized (speechQueue) {
-			speechQueue.notify();
-		}
-		// if (mixTimer != null)
-		// mixTimer.cancel();
+		
 		if (speechLine != null)
 			speechLine.close();
 		if (soundGeneratorLine != null)
@@ -385,9 +347,9 @@ public class JavaSoundHandler implements SoundHandler {
 		if (speechWaveForm != null) {
 
 			if (lastSpeechUpdatedPos >= speechWaveForm.length) {
-				speechQueue.add(new AudioChunk(null, null, speechWaveForm));
-				synchronized (speechQueue) {
-					speechQueue.notify();
+				try {
+					speechQueue.put(new AudioChunk(null, null, speechWaveForm));
+				} catch (InterruptedException e) {
 				}
 				lastSpeechUpdatedPos = 0;
 				speechWaveForm = new byte[speechWaveForm.length];
@@ -424,29 +386,24 @@ public class JavaSoundHandler implements SoundHandler {
 		int length = soundGeneratorWaveForm.length;
 		updateSoundGenerator(lastUpdatedPos, length);
 		lastUpdatedPos = 0;
-		soundQueue.add(new AudioChunk(soundGeneratorWaveForm,
-				null, null));
-		soundGeneratorWaveForm = new byte[soundGeneratorWaveForm.length];
-
-
-		synchronized (soundQueue) {
-			soundQueue.notify();
-
+		try {
+			soundQueue.put(new AudioChunk(soundGeneratorWaveForm,
+					null, null));
+		} catch (InterruptedException e) {
 		}
-		
+		soundGeneratorWaveForm = new byte[soundGeneratorWaveForm.length];
 
 		boolean anySpeech = (lastSpeechUpdatedPos > 0);
 		if (anySpeech) {
 			Arrays.fill(speechWaveForm, lastSpeechUpdatedPos,
 					speechWaveForm.length, (byte) 0);
 			lastSpeechUpdatedPos = 0;
-			speechQueue.add(new AudioChunk(null, null, speechWaveForm));
+			try {
+				speechQueue.put(new AudioChunk(null, null, speechWaveForm));
+			} catch (InterruptedException e) {
+			}
 			
 			speechWaveForm = new byte[speechWaveForm.length];
-		}
-		synchronized (speechQueue) {
-			speechQueue.notify();
-
 		}
 	}
 
