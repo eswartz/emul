@@ -288,6 +288,7 @@ ChannelServer * channel_server(PeerServer * ps) {
         return channel_tcp_server(ps);
     }
     else {
+        errno = ERR_UNSUPPORTED;
         return NULL;
     }
 }
@@ -302,6 +303,7 @@ Channel * channel_connect(PeerServer * ps) {
         return channel_tcp_connect(ps);
     }
     else {
+        errno = ERR_UNSUPPORTED;
         return NULL;
     }
 }

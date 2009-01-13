@@ -72,29 +72,17 @@ static void channel_server_disconnected(Channel * c) {
 }
 
 static void initiate_redirect(Channel * c1, const char * token, const char * id) {
-    PeerServer * ps;
-    Channel * c2;
+    PeerServer * ps = NULL;
+    Channel * c2 = NULL;
+    int error = 0;
 
-    ps = peer_server_find(id);
-    if (ps == NULL) {
-        write_stringz(&c1->out, "R");
-        write_stringz(&c1->out, token);
-        write_errno(&c1->out, ERR_UNKNOWN_PEER);
-        write_stream(&c1->out, MARKER_EOM);
-        return;
-    }
-    c2 = channel_connect(ps);
-    if (c2 == NULL) {
-        write_stringz(&c1->out, "R");
-        write_stringz(&c1->out, token);
-        write_errno(&c1->out, ERR_UNKNOWN_PEER);
-        write_stream(&c1->out, MARKER_EOM);
-        return;
-    }
-    proxy_create(c1, c2);
+    if ((ps = peer_server_find(id)) == NULL) error = ERR_UNKNOWN_PEER;
+    if (!error && (c2 = channel_connect(ps)) == NULL) error = errno;
+    if (!error) proxy_create(c1, c2);
+
     write_stringz(&c1->out, "R");
     write_stringz(&c1->out, token);
-    write_errno(&c1->out, 0);
+    write_errno(&c1->out, error);
     write_stream(&c1->out, MARKER_EOM);
 }
 

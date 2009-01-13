@@ -354,8 +354,10 @@ static ChannelTCP * create_channel(int sock) {
 
     assert(sock >= 0);
     if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&i, sizeof(i)) < 0) {
-        trace(LOG_ALWAYS, "Can't set TCP_NODELAY option on a socket: %s", errno_to_str(errno));
+        int error = errno;
+        trace(LOG_ALWAYS, "Can't set TCP_NODELAY option on a socket: %s", errno_to_str(error));
         closesocket(sock);
+        errno = error;
         return NULL;
     }
 
@@ -521,6 +523,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     error = loc_getaddrinfo(host, port, &hints, &reslist);
     if (error) {
         trace(LOG_ALWAYS, "getaddrinfo error: %s", loc_gai_strerror(error));
+        errno = error;
         return NULL;
     }
     sock = -1;
@@ -580,6 +583,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     loc_freeaddrinfo(reslist);
     if (sock < 0) {
         trace(LOG_ALWAYS, "Socket %s error: %s", reason, errno_to_str(error));
+        errno = error;
         return NULL;
     }
     si = loc_alloc_zero(sizeof *si);
@@ -623,6 +627,7 @@ Channel * channel_tcp_connect(PeerServer * ps) {
     error = loc_getaddrinfo(host, port, &hints, &reslist);
     if (error) {
         trace(LOG_ALWAYS, "getaddrinfo error: %s", loc_gai_strerror(error));
+        errno = error;
         return NULL;
     }
     sock = -1;
@@ -635,6 +640,7 @@ Channel * channel_tcp_connect(PeerServer * ps) {
             reason = "create";
             continue;
         }
+        /* TODO: connect() should be called by background thread since it can block for long period of time */
         if (connect(sock, res->ai_addr, res->ai_addrlen)) {
             error = errno;
             reason = "connect";
@@ -649,6 +655,7 @@ Channel * channel_tcp_connect(PeerServer * ps) {
     loc_freeaddrinfo(reslist);
     if (sock < 0) {
         trace(LOG_ALWAYS, "socket %s error: %s", reason, errno_to_str(error));
+        errno = error;
         return NULL;
     }
 

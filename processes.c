@@ -456,6 +456,117 @@ static void command_signal(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
+static void command_get_signal_list(char * token, Channel * c) {
+    int err = 0;
+    char id[256];
+    pid_t pid, parent;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    pid = id2pid(id, &parent);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+
+    if (parent != 0) {
+        err = ERR_INV_CONTEXT;
+        write_stringz(&c->out, "null");
+    }
+    else {
+        int i = 0;
+        int n = 0;
+        write_stream(&c->out, '[');
+        for (i = 0; i < 32; i++) {
+            char * name = signal_name(i);
+            if (name != NULL) {
+                if (n > 0) write_stream(&c->out, ',');
+                write_stream(&c->out, '{');
+                json_write_string(&c->out, "Name");
+                write_stream(&c->out, ':');
+                json_write_string(&c->out, name);
+                write_stream(&c->out, ',');
+                json_write_string(&c->out, "Code");
+                write_stream(&c->out, ':');
+                json_write_long(&c->out, i);
+                write_stream(&c->out, '}');
+                n++;
+            }
+        }
+        write_stream(&c->out, ']');
+        write_stream(&c->out, 0);
+    }
+
+    write_errno(&c->out, err);
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_get_signal_mask(char * token, Channel * c) {
+    int err = 0;
+    char id[256];
+    pid_t pid, parent;
+    Context * ctx = NULL;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    pid = id2pid(id, &parent);
+    ctx = context_find_from_pid(pid);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+
+    if (parent != 0 || ctx == NULL) {
+        err = ERR_INV_CONTEXT;
+        write_stringz(&c->out, "null");
+        write_stringz(&c->out, "null");
+    }
+    else {
+        json_write_long(&c->out, ctx->sig_intercept);
+        write_stream(&c->out, 0);
+        json_write_long(&c->out, ctx->sig_ignore);
+        write_stream(&c->out, 0);
+    }
+
+    write_errno(&c->out, err);
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_set_signal_mask(char * token, Channel * c) {
+    int err = 0;
+    char id[256];
+    pid_t pid, parent;
+    Context * ctx = NULL;
+    int intercept;
+    int ignore;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    intercept = json_read_long(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    ignore = json_read_long(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    pid = id2pid(id, &parent);
+    ctx = context_find_from_pid(pid);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+
+    if (parent != 0 || ctx == NULL) {
+        err = ERR_INV_CONTEXT;
+    }
+    else {
+        ctx->sig_intercept = intercept;
+        ctx->sig_ignore = ignore;
+    }
+
+    write_errno(&c->out, err);
+    write_stream(&c->out, MARKER_EOM);
+}
+
 static void command_get_environment(char * token, Channel * c) {
     char ** p = environ;
 
@@ -956,6 +1067,9 @@ void ini_processes_service(Protocol * proto) {
     add_command_handler(proto, PROCESSES, "detach", command_detach);
     add_command_handler(proto, PROCESSES, "terminate", command_terminate);
     add_command_handler(proto, PROCESSES, "signal", command_signal);
+    add_command_handler(proto, PROCESSES, "getSignalList", command_get_signal_list);
+    add_command_handler(proto, PROCESSES, "getSignalMask", command_get_signal_mask);
+    add_command_handler(proto, PROCESSES, "setSignalMask", command_set_signal_mask);
     add_command_handler(proto, PROCESSES, "getEnvironment", command_get_environment);
     add_command_handler(proto, PROCESSES, "start", command_start);
 }

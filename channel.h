@@ -94,12 +94,14 @@ extern void add_channel_close_listener(ChannelCloseListener listener);
 extern void notify_channel_closed(Channel *);
 
 /*
- * Start TCF channel server
+ * Start TCF channel server.
+ * On error returns NULL and sets errno.
  */
 extern ChannelServer * channel_server(PeerServer *);
 
 /*
- * Connect to TCF channel server
+ * Connect to TCF channel server.
+ * On error returns NULL and sets errno.
  */
 extern Channel * channel_connect(PeerServer *);
 

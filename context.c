@@ -834,13 +834,13 @@ int context_single_step(Context * ctx) {
     assert(ctx->stopped);
     assert(!ctx->pending_intercept);
     assert(!ctx->exited);
-#ifdef __i386__
     if (ctx->regs_error) {
         trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#x, pid %d, error %d",
             ctx, ctx->pid, ctx->regs_error);
         errno = ctx->regs_error;
         return -1;
     }
+#ifdef __i386__
     ctx->regs.EFlags |= 0x100;
     ctx->regs_dirty = 1;
 #else
@@ -1530,6 +1530,10 @@ int context_continue(Context * ctx) {
     assert(!ctx->pending_intercept);
     assert(!ctx->pending_step);
     assert(!ctx->exited);
+    if (ctx->sig_ignore & (1 << signal)) {
+        ctx->pending_signals &= ~(1 << signal);
+        signal = 0;
+    }
     trace(LOG_CONTEXT, "context: resuming ctx %#x, pid %d, with signal %d", ctx, ctx->pid, signal);
 #ifdef __i386__
     /* Bug in ptrace: trap flag is not cleared after single step */
@@ -1883,6 +1887,7 @@ process_event:
     if (info->signal != SIGSTOP && info->signal != SIGTRAP) {
         assert(info->signal < 32);
         ctx->pending_signals |= 1 << info->signal;
+        if (ctx->sig_intercept & (1 << info->signal)) ctx->pending_intercept = 1;
     }
     if (info->signal == SIGTRAP && info->event == PTRACE_EVENT_EXIT) {
         ctx->exiting = 1;

@@ -20,12 +20,14 @@
 #define D_channel_tcp
 
 /*
- * Start TCP channel listener
+ * Start TCP channel listener.
+ * On error returns NULL and sets errno.
  */
 extern ChannelServer * channel_tcp_server(PeerServer *);
 
 /*
- * Connect client side over TCP
+ * Connect client side over TCP.
+ * On error returns NULL and sets errno.
  */
 extern Channel * channel_tcp_connect(PeerServer *);
 
