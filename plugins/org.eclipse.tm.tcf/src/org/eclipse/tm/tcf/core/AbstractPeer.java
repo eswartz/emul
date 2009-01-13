@@ -47,6 +47,12 @@ public abstract class AbstractPeer implements IPeer {
         assert getID() != null;
         LocatorService.addPeer(this);
     }
+    
+    void onChannelTerminated() {
+        // A channel to this peer was terminated:
+        // not delaying next heart beat helps client to recover much faster. 
+        last_heart_beat_time = 0;
+    }
 
     public void updateAttributes(Map<String,String> attrs) {
         boolean equ = true;
@@ -84,6 +90,7 @@ public abstract class AbstractPeer implements IPeer {
             catch (IOException x) {
                 Protocol.log("Locator: failed to send 'peerChanged' event", x);
             }
+            last_heart_beat_time = time;
         }
         else if (last_heart_beat_time + ILocator.DATA_RETENTION_PERIOD / 4 < time) {
             for (LocatorListener l : LocatorService.getListeners()) {
@@ -101,8 +108,8 @@ public abstract class AbstractPeer implements IPeer {
             catch (IOException x) {
                 Protocol.log("Locator: failed to send 'peerHeartBeat' event", x);
             }
+            last_heart_beat_time = time;
         }
-        last_heart_beat_time = time;
     }
     
     public void sendPeerAddedEvent() {

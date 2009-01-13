@@ -35,9 +35,12 @@ public class LocatorProxy implements ILocator {
     
     private class Peer implements IPeer {
         
+        private final IPeer parent;
+        
         private final Map<String, String> attrs;
         
-        Peer(Map<String,String> attrs) {
+        Peer(IPeer parent, Map<String,String> attrs) {
+            this.parent = parent;
             this.attrs = attrs;
         }
 
@@ -68,7 +71,7 @@ public class LocatorProxy implements ILocator {
 
         public IChannel openChannel() {
             assert Protocol.isDispatchThread();
-            IChannel c = channel.getRemotePeer().openChannel();
+            IChannel c = parent.openChannel();
             c.redirect(getID());
             return c;
         }
@@ -82,7 +85,7 @@ public class LocatorProxy implements ILocator {
                 Object[] args = JSON.parseSequence(data);
                 if (name.equals("peerAdded")) {
                     assert args.length == 1;
-                    IPeer peer = new Peer((Map<String,String>)args[0]);
+                    IPeer peer = new Peer(channel.getRemotePeer(), (Map<String,String>)args[0]);
                     if (peers.get(peer.getID()) != null) {
                         Protocol.log("Invalid peerAdded event", new Error());
                         return;
@@ -208,7 +211,7 @@ public class LocatorProxy implements ILocator {
                             Map<String,String> m = (Map<String,String>)o;
                             String id = m.get(IPeer.ATTR_ID);
                             if (peers.get(id) != null) continue;
-                            IPeer peer = new Peer(m);
+                            IPeer peer = new Peer(channel.getRemotePeer(), m);
                             peers.put(id, peer);
                             for (LocatorListener l : listeners.toArray(new LocatorListener[listeners.size()])) {
                                 try {

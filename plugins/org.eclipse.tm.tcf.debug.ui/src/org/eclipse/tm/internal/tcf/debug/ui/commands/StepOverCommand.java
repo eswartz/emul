@@ -26,6 +26,7 @@ import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace.StackTraceContext;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
+// TODO: drop to frame command
 
 public class StepOverCommand extends StepCommand implements IStepOverHandler {
     

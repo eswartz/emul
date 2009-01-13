@@ -76,6 +76,9 @@
          point="org.eclipse.ui.perspectiveExtensions">
       <perspectiveExtension
             targetID="org.eclipse.debug.ui.DebugPerspective">
+         <actionSet
+               id="org.eclipse.tm.tcf.debug.ui.DebuggerActionSet">
+         </actionSet>
          <view
                relative="org.eclipse.ui.console.ConsoleView"
                relationship="stack"
@@ -144,4 +147,21 @@
       </detailFactories>
    </extension>
     
+   <extension point="org.eclipse.ui.actionSets">
+      <actionSet
+            label="%DebuggerActionSet.label"
+            id="org.eclipse.tm.tcf.debug.ui.DebuggerActionSet">
+         <action
+            id="org.eclipse.tm.tcf.debug.ui.actions.Signals"
+            toolbarPath="org.eclipse.debug.ui.launchActionSet/debug"
+            hoverIcon="icons/signals.gif"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.SignalsCommand"
+            disabledIcon="icons/signals.gif"
+            icon="icons/signals.gif"
+            helpContextId="signals_command_context"
+            label="%SignalsCommand.label"
+            style="push">
+         </action>
+      </actionSet>
+   </extension>
 </plugin>

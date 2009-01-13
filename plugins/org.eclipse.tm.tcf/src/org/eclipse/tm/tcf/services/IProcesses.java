@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.services;
 
+import java.util.Collection;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.protocol.IService;
@@ -165,10 +166,60 @@ public interface IProcesses extends IService {
          * @return pending command handle, can be used to cancel the command.
          */
         IToken signal(int signal, DoneCommand done);
+        
+        /**
+         * Get list of signals that can be send to the process.
+         * @param done - call back interface called when operation is completed.
+         * @return pending command handle, can be used to cancel the command.
+         */
+        IToken getSignalList(DoneGetSignalList done);
+
+        /**
+         * Get process signal mask.
+         * Bits in the mask control how signals should be handled by debug agent.
+         * @param done - call back interface called when operation is completed.
+         * @return pending command handle, can be used to cancel the command.
+         */
+        IToken getSignalMask(DoneGetSignalMask done);
+        
+        /**
+         * Set process signal mask. 
+         * @param intercept - bit-set of signals that should suspend execution of the process.
+         * Process is suspended before it receives the signal.  
+         * @param ignore - bit-set of signals that should not be passed to the process.
+         * @param done - call back interface called when operation is completed.
+         * @return pending command handle, can be used to cancel the command.
+         */
+        IToken setSignalMask(int intercept, int ignore, DoneCommand done);
     }
     
+    /**
+     * Call-back interface to be called when command is complete.
+     */
     interface DoneCommand {
         void doneCommand(IToken token, Exception error);
+    }
+    
+    /**
+     * Call-back interface to be called when "getSignalList" command is complete.
+     */
+    interface DoneGetSignalList {
+        void doneGetSignalList(IToken token, Collection<Map<String,Object>> list, Exception error);
+    }
+    
+    /**
+     * Signal property names used by "getSignalList" command.
+     */
+    static final String
+        SIG_NAME = "Name",
+        SIG_CODE = "Code",
+        SIG_DESCRIPTION = "Description";
+    
+    /**
+     * Call-back interface to be called when "getSignalMask" command is complete.
+     */
+    interface DoneGetSignalMask {
+        void doneGetSignalMask(IToken token, int intercept, int ignore, Exception error);
     }
     
     /**
@@ -178,6 +229,9 @@ public interface IProcesses extends IService {
      */
     IToken getEnvironment(DoneGetEnvironment done);
     
+    /**
+     * Call-back interface to be called when "getEnvironment" command is complete.
+     */
     interface DoneGetEnvironment {
         void doneGetEnvironment(IToken token, Exception error, Map<String,String> environment);
     }
@@ -199,6 +253,9 @@ public interface IProcesses extends IService {
             String[] command_line, Map<String,String> environment,
             boolean attach, DoneStart done);
     
+    /**
+     * Call-back interface to be called when "start" command is complete.
+     */
     interface DoneStart {
         void doneStart(IToken token, Exception error, ProcessContext process);
     }

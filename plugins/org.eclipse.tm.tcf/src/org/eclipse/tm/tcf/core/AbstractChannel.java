@@ -534,7 +534,10 @@ public abstract class AbstractChannel implements IChannel {
         sendEndOfStream();
         if (state == STATE_CLOSED) return;
         state = STATE_CLOSED;
-        if (error != null) Protocol.log("TCF channel terminated", error);
+        if (error != null) {
+            if (remote_peer instanceof AbstractPeer) ((AbstractPeer)remote_peer).onChannelTerminated();
+            Protocol.log("TCF channel terminated", error);
+        }
         if (registered_with_trasport) {
             registered_with_trasport = false;
             Transport.channelClosed(this, error);
