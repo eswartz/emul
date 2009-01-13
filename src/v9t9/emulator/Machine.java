@@ -46,7 +46,7 @@ abstract public class Machine {
     Cpu cpu;
     Executor executor;
     Client client;
-    boolean bAlive;
+    volatile boolean bAlive;
     Timer timer;
     FastTimer cpuTimer;
     //Timer cpuTimer;
@@ -75,8 +75,9 @@ abstract public class Machine {
 	protected int throttleCount;
 	private KeyboardState keyboardState;
 	protected Object executionLock = new Object();
-	protected boolean bExecuting;
+	volatile protected boolean bExecuting;
 	private SoundProvider sound;
+	
 	static public final String sPauseMachine = "PauseMachine";
 	static public final Setting settingPauseMachine = new Setting(sPauseMachine, new Boolean(false));
 	static public final String sThrottleInterrupts = "ThrottleVDPInterrupts";
@@ -206,7 +207,7 @@ abstract public class Machine {
 	    				vdp.tick();
 	            		if (settingThrottleInterrupts.getBoolean()) {
 	            			if (throttleCount-- < 0) {
-	            				throttleCount = 60;
+	            				throttleCount = 6;
 	            			} else {
 	            				return;
 	            			}

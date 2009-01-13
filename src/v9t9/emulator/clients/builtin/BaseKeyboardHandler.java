@@ -23,8 +23,6 @@ import v9t9.utils.Utils;
  */
 public abstract class BaseKeyboardHandler implements KeyboardHandler {
 
-	
-	protected Timer pasteTimer;
 
 	protected final Machine machine;
 
@@ -36,87 +34,10 @@ public abstract class BaseKeyboardHandler implements KeyboardHandler {
 	}
 
 	protected void cancelPaste() {
-		keyboardState.resetKeyboard();
-		pasteTimer.cancel();
-		pasteTimer = null;
+		keyboardState.cancelPaste();
 	}
 
-	/**
-	 * Paste text into the clipboard
-	 * @param contents
-	 */
-	public void pasteText(String contents) {
 
-		contents = contents.replaceAll("(\r\n|\r|\n)", "\r");
-		contents = contents.replaceAll("\t", "    ");
-		final char[] chs = contents.toCharArray();
-		pasteTimer = new Timer("Paster");
-		TimerTask pasteCharacterTask = new TimerTask() {
-			int index = 0;
-			byte prevShift = 0;
-			char prevCh = 0;
-			int successiveCharTimeout;
-			@Override
-			public void run() {
-				if (pasteTimer == null)
-					return;
-				
-				if (!machine.isAlive())
-					cancelPaste();
-				
-				if (Machine.settingPauseMachine.getBoolean())
-					return;
-				
-				if (index <= chs.length) {
-					// only send chars as fast as the machine is reading
-					if (!keyboardState.wasKeyboardProbed())
-						return;
-					
-					if (prevCh != 0)
-						keyboardState.postCharacter(false, true, prevShift, prevCh);
-					
-					if (index < chs.length) {
-						char ch = chs[index];
-						byte shift = 0;
-
-						if (Character.isLowerCase(ch)) {
-				    		ch = Character.toUpperCase(ch);
-				    		shift &= ~ KeyboardState.SHIFT;
-				    	} else if (Character.isUpperCase(ch)) {
-				    		shift |= KeyboardState.SHIFT;
-				    	}
-				    	
-						//System.out.println("ch="+ch+"; prevCh="+prevCh+"; sCT="+successiveCharTimeout);
-						if (ch == prevCh) {
-							if (successiveCharTimeout == 0) {
-								// need to inject a spacer to distinguish 
-								// successive repeated characters
-								keyboardState.resetKeyboard();
-								prevCh = 0;
-								successiveCharTimeout = 2;
-								return;
-							} else if (--successiveCharTimeout > 0) {
-								return;
-							}
-						}
-						
-						index++;
-						
-						keyboardState.postCharacter(true, true, shift, ch);
-						
-						
-						prevCh = ch;
-						prevShift = shift;
-					} else {
-						cancelPaste();
-					}
-				}
-			}
-			
-		};
-		// TODO: find a better way to ensure the keyboard was scanned fully
-		pasteTimer.schedule(pasteCharacterTask, 0, 1000 / 30); 
-	}
 
 	public static void main(String[] args) {
 		Display display = new Display();

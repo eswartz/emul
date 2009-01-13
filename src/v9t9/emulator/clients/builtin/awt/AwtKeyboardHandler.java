@@ -9,6 +9,8 @@ import java.awt.event.KeyListener;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseKeyboardHandler;
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
+import v9t9.emulator.runtime.Cpu;
 import v9t9.keyboard.KeyboardState;
 
 /**
@@ -44,12 +46,12 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 	}
 
 	protected void handleKey(boolean pressed, int modifiers, int keyCode, char ascii) {
-		if (pasteTimer != null && pressed && keyCode == KeyEvent.VK_ESCAPE) {
-			cancelPaste();
+		if (keyboardState.isPasting() && pressed && keyCode == KeyEvent.VK_ESCAPE) {
+			keyboardState.cancelPaste();
 			return;
 		}
 		
-		if (pasteTimer == null)
+		//if (pasteTimer == null)
 			lastKeystrokeTime = System.currentTimeMillis();
 		
 		//System.out.println("pressed="+pressed+"; modifiers="+Integer.toHexString(modifiers)+"; keyCode="+keyCode+"; ascii="+(int)ascii);
@@ -151,6 +153,10 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				keyboardState.setKey(pressed, synthetic, fctn, '0');		// Fctn-0
 				break;
 				
+			case KeyEvent.VK_SCROLL_LOCK:
+				Cpu.settingRealTime.setBoolean(!pressed);
+				VdpTMS9918A.settingCpuSynchedVdpInterrupt.setBoolean(!pressed);
+				break;
 			default:
 				System.out.println("Unhandled keycode: " + keyCode);
 			}

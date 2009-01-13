@@ -236,6 +236,8 @@ public class InternalCru9901 implements CruAccess {
 	private CruReader cruralpha = new CruReader() {
 
 		public int read(int addr, int data, int num) {
+			keyboardState.setProbe();
+			
 			return keyboardState.getAlpha() ? 1 : 0;
 		}
 		

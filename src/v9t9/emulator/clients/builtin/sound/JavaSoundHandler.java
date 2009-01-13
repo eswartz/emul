@@ -47,8 +47,6 @@ public class JavaSoundHandler implements SoundHandler {
 
 	// private boolean audioSilence;
 
-	protected boolean wasSilent;
-
 	protected int lastUpdatedPos;
 	protected int lastSpeechUpdatedPos;
 
@@ -99,7 +97,7 @@ public class JavaSoundHandler implements SoundHandler {
 		}
 	}
 
-	public JavaSoundHandler(Machine machine) {
+	public JavaSoundHandler(final Machine machine) {
 
 		sound = machine.getSound();
 
@@ -166,7 +164,7 @@ public class JavaSoundHandler implements SoundHandler {
 							} catch (InterruptedException e) {
 								break;
 							}
-							if (Thread.interrupted())
+							if (Thread.interrupted() || !machine.isAlive())
 								return;
 
 							continue;

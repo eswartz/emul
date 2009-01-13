@@ -19,9 +19,4 @@ public interface KeyboardHandler {
      *
      */
     public void scan(KeyboardState state);
-    
-    /**
-     * Inject text into the keyboard at a steady pace
-     */
-    public void pasteText(String contents);
 }

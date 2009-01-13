@@ -7,7 +7,10 @@
 package v9t9.keyboard;
 
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.utils.Utils;
@@ -45,6 +48,11 @@ public class KeyboardState {
 	private boolean alphaLock;
 	private int probedColumns;
 	private Cpu cpu;
+
+	
+	//protected Timer pasteTimer;
+	protected Runnable pasteTask;
+	private boolean pasteNext;
 
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
@@ -471,13 +479,112 @@ public class KeyboardState {
 	}
 
 	public synchronized void resetProbe() {
+		if (isPasting() && pasteNext)
+			pasteTask.run();
 		probedColumns = 0;
 		pushQueuedKey();
+		pasteNext = true;
+	}
+	
+	public synchronized void setProbe() {
+		pasteNext = true;
 	}
 
 	public synchronized void pushQueuedKey() {
 		System.arraycopy(crukeyboardmap, 0, lastcrukeyboardmap, 0, 8);
 		//for (int i=0;i<8;i++) System.out.print(Utils.toHex2(crukeyboardmap[i])+" "); System.out.println();
 		lastAlphaLock = alphaLock;
+	}
+
+	public void cancelPaste() {
+		resetKeyboard();
+		pasteTask = null;
+		
+	}
+	
+	/**
+	 * Paste text into the clipboard
+	 * @param contents
+	 */
+	public void pasteText(String contents) {
+
+		contents = contents.replaceAll("(\r\n|\r|\n)", "\r");
+		contents = contents.replaceAll("\t", "    ");
+		final char[] chs = contents.toCharArray();
+		pasteTask = new Runnable() {
+			int index = 0;
+			byte prevShift = 0;
+			char prevCh = 0;
+			int successiveCharTimeout;
+			int runDelay;
+			public void run() {
+				if (!cpu.getMachine().isAlive())
+					cancelPaste();
+				
+				if (Machine.settingPauseMachine.getBoolean())
+					return;
+				
+				if (runDelay > 0) {
+					runDelay--;
+					return;
+				} else {
+					runDelay = 20;
+				}
+				if (index <= chs.length) {
+					// only send chars as fast as the machine is reading
+					//if (!wasKeyboardProbed())
+					//	return;
+					
+					if (prevCh != 0)
+						postCharacter(false, true, prevShift, prevCh);
+					
+					if (index < chs.length) {
+						char ch = chs[index];
+						byte shift = 0;
+
+						if (Character.isLowerCase(ch)) {
+				    		ch = Character.toUpperCase(ch);
+				    		shift &= ~ KeyboardState.SHIFT;
+				    	} else if (Character.isUpperCase(ch)) {
+				    		shift |= KeyboardState.SHIFT;
+				    	}
+				    	
+						//System.out.println("ch="+ch+"; prevCh="+prevCh+"; sCT="+successiveCharTimeout);
+						if (ch == prevCh) {
+							postCharacter(false, true, shift, ch);
+							prevCh = 0;
+							return;
+							/*
+							if (successiveCharTimeout == 0) {
+								// need to inject a spacer to distinguish 
+								// successive repeated characters
+								resetKeyboard();
+								prevCh = 0;
+								successiveCharTimeout = 2;
+								return;
+							} else if (--successiveCharTimeout > 0) {
+								return;
+							}
+							*/
+						}
+						
+						index++;
+						
+						postCharacter(true, true, shift, ch);
+						
+						
+						prevCh = ch;
+						prevShift = shift;
+					} else {
+						cancelPaste();
+					}
+				}
+			}
+			
+		};
+	}
+
+	public boolean isPasting() {
+		return pasteTask != null;
 	}
 }

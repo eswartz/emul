@@ -317,7 +317,7 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 		
 			if (t.isDataFlavorSupported(DataFlavor.stringFlavor)) {
 				String contents = t.getTransferData(DataFlavor.stringFlavor).toString();
-				machine.getClient().getKeyboardHandler().pasteText(contents);
+				machine.getKeyboardState().pasteText(contents);
 			} else {
 				throw new Exception("Cannot convert clipboard to text");
 			}

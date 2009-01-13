@@ -33,8 +33,8 @@ public class SdlKeyboardHandler extends BaseKeyboardHandler {
 		
 		boolean pressed = event.getType() == SDLEvent.SDL_KEYDOWN;
 		
-		if (pasteTimer != null && pressed && event.getSym() == SDLKey.SDLK_ESCAPE) {
-			cancelPaste();
+		if (keyboardState.isPasting() && pressed && event.getSym() == SDLKey.SDLK_ESCAPE) {
+			keyboardState.cancelPaste();
 			return;
 		}
 		

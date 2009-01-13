@@ -85,6 +85,15 @@ public class Cpu implements MemoryAccessListener {
         
         settingCyclesPerSecond.setInt(3000000);
 
+        settingRealTime.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				tick();
+				totalcurrentcycles = totaltargetcycles;
+				currenttargetcycles = settingCyclesPerSecond.getInt();
+			}
+        	
+        });
     }
 
     public short getPC() {
