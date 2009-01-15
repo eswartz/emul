@@ -56,7 +56,7 @@ public abstract class TCFDataCache<V> implements Runnable {
     }
     
     /**
-     * @return true if data retrieval is in progress.
+     * @return true if data retrieval command is in progress.
      */
     public boolean isPending() {
         return command != null;

@@ -18,6 +18,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
 /**
@@ -41,11 +42,51 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
     private boolean done;
     private Throwable error;
     private boolean canceled;
+    private IChannel channel;
+    private IChannel.IChannelListener channel_listener;
     
+    /**
+     * Construct a TCF task object and schedule it for execution.
+     */
     public TCFTask() {
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 try {
+                    TCFTask.this.run();
+                }
+                catch (Throwable x) {
+                    if (!done && error == null) error(x);
+                }
+            }
+        });
+    }
+    
+    /**
+     * Construct a TCF task object and schedule it for execution.
+     * The task will be aborted if the given channel is closed or
+     * terminated while the task is in progress.
+     * @param channel
+     */
+    public TCFTask(final IChannel channel) {
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                try {
+                    if (channel.getState() != IChannel.STATE_OPEN) throw new Exception("Channel is closed");
+                    TCFTask.this.channel = channel;
+                    channel_listener = new IChannel.IChannelListener() {
+
+                        public void congestionLevel(int level) {
+                        }
+
+                        public void onChannelClosed(Throwable error) {
+                            if (error == null) error = new Exception("Channel is closed");
+                            error(error);
+                        }
+
+                        public void onChannelOpened() {
+                        }
+                    };
+                    channel.addChannelListener(channel_listener);
                     TCFTask.this.run();
                 }
                 catch (Throwable x) {
@@ -69,6 +110,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         assert this.result == null;
         this.result = result;
         done = true;
+        if (channel != null) channel.removeChannelListener(channel_listener);
         notifyAll();
     }
     
@@ -86,6 +128,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         assert this.result == null;
         assert !done;
         this.error = error;
+        if (channel != null) channel.removeChannelListener(channel_listener);
         notifyAll();
     }
 
@@ -111,6 +154,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         if (isDone()) return false;
         canceled = true;
         error = new CancellationException();
+        if (channel != null) channel.removeChannelListener(channel_listener);
         notifyAll();
         return true;
     }

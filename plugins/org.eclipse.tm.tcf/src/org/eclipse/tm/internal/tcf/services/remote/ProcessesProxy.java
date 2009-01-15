@@ -123,10 +123,10 @@ public class ProcessesProxy implements IProcesses {
                     Collection<Map<String,Object>> list = null;
                     if (error == null) {
                         assert args.length == 2;
-                        list = toSignalList(args[0]);
-                        error = toError(args[1]);
+                        error = toError(args[0]);
+                        list = toSignalList(args[1]);
                     }
-                    done.doneGetSignalList(token, list, error);
+                    done.doneGetSignalList(token, error, list);
                 }
             }.token;
         }
@@ -140,11 +140,11 @@ public class ProcessesProxy implements IProcesses {
                     int ignore = 0;
                     if (error == null) {
                         assert args.length == 3;
-                        if (args[0] != null) intercept = ((Number)args[0]).intValue();
-                        if (args[1] != null) ignore = ((Number)args[1]).intValue();
-                        error = toError(args[2]);
+                        error = toError(args[0]);
+                        if (args[1] != null) intercept = ((Number)args[1]).intValue();
+                        if (args[2] != null) ignore = ((Number)args[2]).intValue();
                     }
-                    done.doneGetSignalMask(token, intercept, ignore, error);
+                    done.doneGetSignalMask(token, error, intercept, ignore);
                 }
             }.token;
         }

@@ -204,7 +204,7 @@ public interface IProcesses extends IService {
      * Call-back interface to be called when "getSignalList" command is complete.
      */
     interface DoneGetSignalList {
-        void doneGetSignalList(IToken token, Collection<Map<String,Object>> list, Exception error);
+        void doneGetSignalList(IToken token, Exception error, Collection<Map<String,Object>> list);
     }
     
     /**
@@ -219,7 +219,7 @@ public interface IProcesses extends IService {
      * Call-back interface to be called when "getSignalMask" command is complete.
      */
     interface DoneGetSignalMask {
-        void doneGetSignalMask(IToken token, int intercept, int ignore, Exception error);
+        void doneGetSignalMask(IToken token, Exception error, int intercept, int ignore);
     }
     
     /**

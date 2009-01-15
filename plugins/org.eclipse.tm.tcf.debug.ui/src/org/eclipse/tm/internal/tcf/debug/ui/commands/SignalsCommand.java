@@ -10,48 +10,25 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.ui.IActionDelegate2;
-import org.eclipse.ui.IViewActionDelegate;
-import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.IWorkbenchWindowActionDelegate;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
 
-public class SignalsCommand implements IViewActionDelegate, IActionDelegate2, IWorkbenchWindowActionDelegate {
+public class SignalsCommand extends AbstractActionDelegate {
 
-    private IAction action;
-
-    public void init(IViewPart view) {
-        // TODO Auto-generated method stub
-        
+    
+    protected void selectionChanged() {
+        boolean e = false;
+        TCFNode n = getSelectedNode();
+        if (n instanceof TCFNodeExecContext) e = true;
+        if (n instanceof TCFNodeStackFrame) e = true;
+        getAction().setEnabled(e);
     }
 
-    public void run(IAction action) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    public void selectionChanged(IAction action, ISelection selection) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    public void dispose() {
-        action = null;
-    }
-
-    public void init(IAction action) {
-        this.action = action;
-    }
-
-    public void runWithEvent(IAction action, Event event) {
-        run(action);
-    }
-
-    public void init(IWorkbenchWindow window) {
-        // TODO Auto-generated method stub
-        
+    protected void run() {
+        TCFNode n = getSelectedNode();
+        if (n instanceof TCFNodeStackFrame || n instanceof TCFNodeExecContext) {
+            new SignalsDialog(getWindow().getShell(), n).open();
+        }
     }
 }

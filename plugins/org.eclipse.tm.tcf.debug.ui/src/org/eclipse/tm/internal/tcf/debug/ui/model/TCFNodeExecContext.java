@@ -29,6 +29,7 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
@@ -43,6 +44,7 @@ public class TCFNodeExecContext extends TCFNode {
 
     private final TCFDataCache<IMemory.MemoryContext> mem_context;
     private final TCFDataCache<IRunControl.RunControlContext> run_context;
+    private final TCFDataCache<IProcesses.ProcessContext> prs_context;
     private final TCFDataCache<TCFContextState> state;
 
     private final Map<BigInteger,TCFSourceRef> line_info_cache;
@@ -97,6 +99,23 @@ public class TCFNodeExecContext extends TCFNode {
                 return false;
             }
         };
+        prs_context = new TCFDataCache<IProcesses.ProcessContext>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                assert command == null;
+                IProcesses prs = model.getLaunch().getService(IProcesses.class);
+                if (prs == null) {
+                    set(null, null, null);
+                    return true;
+                }
+                command = prs.getContext(id, new IProcesses.DoneGetContext() {
+                    public void doneGetContext(IToken token, Exception error, IProcesses.ProcessContext context) {
+                        set(token, error, context);
+                    }
+                });
+                return false;
+            }
+        };
         state = new TCFDataCache<TCFContextState>(channel) {
             @Override
             protected boolean startDataRetrieval() {
@@ -128,6 +147,7 @@ public class TCFNodeExecContext extends TCFNode {
     @Override
     void dispose() {
         run_context.reset(null);
+        prs_context.reset(null);
         mem_context.reset(null);
         state.reset(null);
         children_exec.dispose();
@@ -145,6 +165,10 @@ public class TCFNodeExecContext extends TCFNode {
         run_context.reset(ctx);
     }
 
+    void setProcessContext(IProcesses.ProcessContext ctx) {
+        prs_context.reset(ctx);
+    }
+
     void setMemoryContext(IMemory.MemoryContext ctx) {
         mem_context.reset(ctx);
     }
@@ -155,6 +179,10 @@ public class TCFNodeExecContext extends TCFNode {
 
     public TCFDataCache<IRunControl.RunControlContext> getRunContext() {
         return run_context;
+    }
+
+    public TCFDataCache<IProcesses.ProcessContext> getProcessContext() {
+        return prs_context;
     }
 
     public TCFDataCache<IMemory.MemoryContext> getMemoryContext() {
@@ -453,6 +481,7 @@ public class TCFNodeExecContext extends TCFNode {
         
         if (!mem_context.validate()) pending = mem_context;
         if (!run_context.validate()) pending = run_context;
+        if (!prs_context.validate()) pending = prs_context;
         if (pending != null) {
             pending.wait(done);
             return false;

@@ -92,7 +92,7 @@ class PeerPropsDialog extends Dialog {
         }
     }
     
-    protected PeerPropsDialog(Shell parent, Image image, Map<String,String> attrs, boolean enable_editing) {
+    PeerPropsDialog(Shell parent, Image image, Map<String,String> attrs, boolean enable_editing) {
         super(parent);
         this.image = image;
         this.attrs = attrs;
