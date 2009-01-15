@@ -468,9 +468,10 @@ static void command_get_signal_list(char * token, Channel * c) {
     pid = id2pid(id, &parent);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
+    if (parent != 0) err = ERR_INV_CONTEXT;
 
-    if (parent != 0) {
-        err = ERR_INV_CONTEXT;
+    write_errno(&c->out, err);
+    if (err) {
         write_stringz(&c->out, "null");
     }
     else {
@@ -497,7 +498,6 @@ static void command_get_signal_list(char * token, Channel * c) {
         write_stream(&c->out, 0);
     }
 
-    write_errno(&c->out, err);
     write_stream(&c->out, MARKER_EOM);
 }
 
@@ -513,12 +513,13 @@ static void command_get_signal_mask(char * token, Channel * c) {
 
     pid = id2pid(id, &parent);
     ctx = context_find_from_pid(pid);
+    if (parent != 0 || ctx == NULL) err = ERR_INV_CONTEXT;
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
+    write_errno(&c->out, err);
 
-    if (parent != 0 || ctx == NULL) {
-        err = ERR_INV_CONTEXT;
+    if (err) {
         write_stringz(&c->out, "null");
         write_stringz(&c->out, "null");
     }
@@ -529,7 +530,6 @@ static void command_get_signal_mask(char * token, Channel * c) {
         write_stream(&c->out, 0);
     }
 
-    write_errno(&c->out, err);
     write_stream(&c->out, MARKER_EOM);
 }
 
@@ -551,10 +551,6 @@ static void command_set_signal_mask(char * token, Channel * c) {
 
     pid = id2pid(id, &parent);
     ctx = context_find_from_pid(pid);
-
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-
     if (parent != 0 || ctx == NULL) {
         err = ERR_INV_CONTEXT;
     }
@@ -563,6 +559,8 @@ static void command_set_signal_mask(char * token, Channel * c) {
         ctx->sig_ignore = ignore;
     }
 
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
     write_errno(&c->out, err);
     write_stream(&c->out, MARKER_EOM);
 }
