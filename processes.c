@@ -439,18 +439,18 @@ static void command_signal(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
 
-    if (parent != 0) {
-        err = ERR_INV_CONTEXT;
+#if defined(WIN32)
+    err = ENOSYS;
+#elif defined(_WRS_KERNEL)
+    if (kill(pid, signal) < 0) err = errno;
+#else
+    if (parent == 0) {
+        if (kill(pid, signal) < 0) err = errno;
     }
     else {
-#if defined(WIN32)
-        err = ENOSYS;
-#elif defined(_WRS_KERNEL)
-        if (kill(pid, signal) < 0) err = errno;
-#else
-        if (kill(pid, signal) < 0) err = errno;
-#endif
+        if (tkill(pid, signal) < 0) err = errno;
     }
+#endif
 
     write_errno(&c->out, err);
     write_stream(&c->out, MARKER_EOM);
@@ -459,16 +459,16 @@ static void command_signal(char * token, Channel * c) {
 static void command_get_signal_list(char * token, Channel * c) {
     int err = 0;
     char id[256];
-    pid_t pid, parent;
+    pid_t pid;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    pid = id2pid(id, &parent);
+    pid = id2pid(id, NULL);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
-    if (parent != 0) err = ERR_INV_CONTEXT;
+    /* pid is ignored, same signal list for all */
 
     write_errno(&c->out, err);
     if (err) {
@@ -504,29 +504,32 @@ static void command_get_signal_list(char * token, Channel * c) {
 static void command_get_signal_mask(char * token, Channel * c) {
     int err = 0;
     char id[256];
-    pid_t pid, parent;
+    pid_t pid;
     Context * ctx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    pid = id2pid(id, &parent);
+    pid = id2pid(id, NULL);
     ctx = context_find_from_pid(pid);
-    if (parent != 0 || ctx == NULL) err = ERR_INV_CONTEXT;
+    if (ctx == NULL) err = ERR_INV_CONTEXT;
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
 
-    if (err) {
+    if (ctx == NULL) {
+        write_stringz(&c->out, "null");
         write_stringz(&c->out, "null");
         write_stringz(&c->out, "null");
     }
     else {
-        json_write_long(&c->out, ctx->sig_intercept);
+        json_write_long(&c->out, ctx->sig_dont_stop);
         write_stream(&c->out, 0);
-        json_write_long(&c->out, ctx->sig_ignore);
+        json_write_long(&c->out, ctx->sig_dont_pass);
+        write_stream(&c->out, 0);
+        json_write_long(&c->out, ctx->pending_signals);
         write_stream(&c->out, 0);
     }
 
@@ -536,27 +539,27 @@ static void command_get_signal_mask(char * token, Channel * c) {
 static void command_set_signal_mask(char * token, Channel * c) {
     int err = 0;
     char id[256];
-    pid_t pid, parent;
+    pid_t pid;
     Context * ctx = NULL;
-    int intercept;
-    int ignore;
+    int dont_stop;
+    int dont_pass;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    intercept = json_read_long(&c->inp);
+    dont_stop = json_read_long(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    ignore = json_read_long(&c->inp);
+    dont_pass = json_read_long(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    pid = id2pid(id, &parent);
+    pid = id2pid(id, NULL);
     ctx = context_find_from_pid(pid);
-    if (parent != 0 || ctx == NULL) {
+    if (ctx == NULL) {
         err = ERR_INV_CONTEXT;
     }
     else {
-        ctx->sig_intercept = intercept;
-        ctx->sig_ignore = ignore;
+        ctx->sig_dont_stop = dont_stop;
+        ctx->sig_dont_pass = dont_pass;
     }
 
     write_stringz(&c->out, "R");

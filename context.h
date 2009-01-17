@@ -54,8 +54,8 @@ struct Context {
     int                 pending_intercept;  /* host is waiting for this context to be suspended */
     int                 pending_safe_event; /* safe events are waiting for this context to be stopped */
     unsigned long       pending_signals;    /* bitset of signals that were received, but not handled yet */
-    unsigned long       sig_intercept;      /* bitset of signals that should be intercepted by the debugger */
-    unsigned long       sig_ignore;         /* bitset of signals that should not be passed to the context */
+    unsigned long       sig_dont_stop;      /* bitset of signals that should not be intercepted by the debugger */
+    unsigned long       sig_dont_pass;      /* bitset of signals that should not be delivered to the context */
     int                 signal;             /* signal that stopped this context */
     REG_SET             regs;               /* copy of context registers, updated when context stops */
     int                 regs_error;         /* if not 0, 'regs' is invalid */

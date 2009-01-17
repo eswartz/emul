@@ -775,7 +775,6 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     if (ctx->pending_safe_event) check_safe_events(ctx);
     if (ctx->signal != SIGSTOP && ctx->signal != SIGTRAP) {
         send_event_context_exception(&bcg->out, ctx);
-        ctx->pending_intercept = 1;
     }
     if (ctx->pending_intercept) {
         send_event_context_suspended(&bcg->out, ctx);

@@ -1520,8 +1520,15 @@ int context_stop(Context * ctx) {
 
 int context_continue(Context * ctx) {
     int signal = 0;
-    if (ctx->pending_signals != 0) {
+    while (ctx->pending_signals != 0) {
         while ((ctx->pending_signals & (1 << signal)) == 0) signal++;
+        if (ctx->sig_dont_pass & (1 << signal)) {
+            ctx->pending_signals &= ~(1 << signal);
+            signal = 0;
+        }
+        else {
+            break;
+        }
     }
     assert(signal != SIGSTOP);
     assert(signal != SIGTRAP);
@@ -1530,10 +1537,6 @@ int context_continue(Context * ctx) {
     assert(!ctx->pending_intercept);
     assert(!ctx->pending_step);
     assert(!ctx->exited);
-    if (ctx->sig_ignore & (1 << signal)) {
-        ctx->pending_signals &= ~(1 << signal);
-        signal = 0;
-    }
     trace(LOG_CONTEXT, "context: resuming ctx %#x, pid %d, with signal %d", ctx, ctx->pid, signal);
 #ifdef __i386__
     /* Bug in ptrace: trap flag is not cleared after single step */
@@ -1864,6 +1867,8 @@ process_event:
         link_context(ctx2);
         assert(ctx2->parent == NULL);
         trace(LOG_EVENTS, "event: new context 0x%x, pid %d", ctx2, ctx2->pid);
+        ctx2->sig_dont_stop = ctx->sig_dont_stop;
+        ctx2->sig_dont_pass = ctx->sig_dont_pass;
         if (info->event == PTRACE_EVENT_CLONE) {
             ctx2->mem = ctx->mem;
             ctx2->parent = ctx->parent != NULL ? ctx->parent : ctx;
@@ -1887,7 +1892,7 @@ process_event:
     if (info->signal != SIGSTOP && info->signal != SIGTRAP) {
         assert(info->signal < 32);
         ctx->pending_signals |= 1 << info->signal;
-        if (ctx->sig_intercept & (1 << info->signal)) ctx->pending_intercept = 1;
+        if ((ctx->sig_dont_stop & (1 << info->signal)) == 0) ctx->pending_intercept = 1;
     }
     if (info->signal == SIGTRAP && info->event == PTRACE_EVENT_EXIT) {
         ctx->exiting = 1;
