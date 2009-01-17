@@ -158,39 +158,6 @@ public interface IProcesses extends IService {
          * @return pending command handle, can be used to cancel the command.
          */
         IToken terminate(DoneCommand done);
-    
-        /**
-         * Send a signal to a process.
-         * @param signal - signal ID.
-         * @param done - call back interface called when operation is completed.
-         * @return pending command handle, can be used to cancel the command.
-         */
-        IToken signal(int signal, DoneCommand done);
-        
-        /**
-         * Get list of signals that can be send to the process.
-         * @param done - call back interface called when operation is completed.
-         * @return pending command handle, can be used to cancel the command.
-         */
-        IToken getSignalList(DoneGetSignalList done);
-
-        /**
-         * Get process signal mask.
-         * Bits in the mask control how signals should be handled by debug agent.
-         * @param done - call back interface called when operation is completed.
-         * @return pending command handle, can be used to cancel the command.
-         */
-        IToken getSignalMask(DoneGetSignalMask done);
-        
-        /**
-         * Set process signal mask. 
-         * @param intercept - bit-set of signals that should suspend execution of the process.
-         * Process is suspended before it receives the signal.  
-         * @param ignore - bit-set of signals that should not be passed to the process.
-         * @param done - call back interface called when operation is completed.
-         * @return pending command handle, can be used to cancel the command.
-         */
-        IToken setSignalMask(int intercept, int ignore, DoneCommand done);
     }
     
     /**
@@ -216,12 +183,57 @@ public interface IProcesses extends IService {
         SIG_DESCRIPTION = "Description";
     
     /**
+     * Get list of signals that can be send to the process.
+     * @param done - call back interface called when operation is completed.
+     * @return pending command handle, can be used to cancel the command.
+     */
+    IToken getSignalList(String context_id, DoneGetSignalList done);
+
+    /**
+     * Get process signal mask.
+     * Bits in the mask control how signals should be handled by debug agent.
+     * When new context is created it inherits the mask from its parent.
+     * If context is not attached the command will return an error. 
+     * @param done - call back interface called when operation is completed.
+     * @return pending command handle, can be used to cancel the command.
+     */
+    IToken getSignalMask(String context_id, DoneGetSignalMask done);
+    
+    /**
+     * Set process signal mask. 
+     * Bits in the mask control how signals should be handled by debug agent.
+     * If context is not attached the command will return an error. 
+     * @param dont_stop - bit-set of signals that should not suspend execution of the process.
+     * By default, debugger suspends a process before it receives a signal.  
+     * @param dont_pass - bit-set of signals that should not be delivered to the process.
+     * @param done - call back interface called when operation is completed.
+     * @return pending command handle, can be used to cancel the command.
+     */
+    IToken setSignalMask(String context_id, int dont_stop, int dont_pass, DoneCommand done);
+
+    /**
      * Call-back interface to be called when "getSignalMask" command is complete.
      */
     interface DoneGetSignalMask {
-        void doneGetSignalMask(IToken token, Exception error, int intercept, int ignore);
+        /**
+         * @param token - command handle.
+         * @param dont_stop - bit-set of signals that should suspend execution of the process.
+         * @param dont_pass - bit-set of signals that should not be delivered to the process.
+         * @param pending - bit-set of signals that are generated but not delivered yet.
+         * Note: "pending" is meaningful only if the context is suspended.
+         */
+        void doneGetSignalMask(IToken token, Exception error, int dont_stop, int dont_pass, int pending);
     }
     
+    /**
+     * Send a signal to a process or thread.
+     * @param context_id - context ID.
+     * @param signal - signal code.
+     * @param done - call back interface called when operation is completed.
+     * @return pending command handle, can be used to cancel the command.
+     */
+    IToken signal(String context_id, int signal, DoneCommand done);
+
     /**
      * Get default set of environment variables used to start a new process.
      * @param done - call back interface called when operation is completed.

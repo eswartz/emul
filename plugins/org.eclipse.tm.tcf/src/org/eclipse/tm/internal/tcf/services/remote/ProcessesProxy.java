@@ -87,71 +87,9 @@ public class ProcessesProxy implements IProcesses {
             }.token;
         }
 
-        public IToken signal(int signal, final DoneCommand done) {
-            return new Command(channel, ProcessesProxy.this,
-                    "signal", new Object[]{ getID(), signal }) {
-                @Override
-                public void done(Exception error, Object[] args) {
-                    if (error == null) {
-                        assert args.length == 1;
-                        error = toError(args[0]);
-                    }
-                    done.doneCommand(token, error);
-                }
-            }.token;
-        }
-
         public IToken terminate(final DoneCommand done) {
             return new Command(channel, ProcessesProxy.this,
                     "terminate", new Object[]{ getID() }) {
-                @Override
-                public void done(Exception error, Object[] args) {
-                    if (error == null) {
-                        assert args.length == 1;
-                        error = toError(args[0]);
-                    }
-                    done.doneCommand(token, error);
-                }
-            }.token;
-        }
-
-        public IToken getSignalList(final DoneGetSignalList done) {
-            return new Command(channel, ProcessesProxy.this,
-                    "getSignalList", new Object[]{ getID() }) {
-                @Override
-                public void done(Exception error, Object[] args) {
-                    Collection<Map<String,Object>> list = null;
-                    if (error == null) {
-                        assert args.length == 2;
-                        error = toError(args[0]);
-                        list = toSignalList(args[1]);
-                    }
-                    done.doneGetSignalList(token, error, list);
-                }
-            }.token;
-        }
-
-        public IToken getSignalMask(final DoneGetSignalMask done) {
-            return new Command(channel, ProcessesProxy.this,
-                    "getSignalMask", new Object[]{ getID() }) {
-                @Override
-                public void done(Exception error, Object[] args) {
-                    int intercept = 0;
-                    int ignore = 0;
-                    if (error == null) {
-                        assert args.length == 3;
-                        error = toError(args[0]);
-                        if (args[1] != null) intercept = ((Number)args[1]).intValue();
-                        if (args[2] != null) ignore = ((Number)args[2]).intValue();
-                    }
-                    done.doneGetSignalMask(token, error, intercept, ignore);
-                }
-            }.token;
-        }
-
-        public IToken setSignalMask(int intercept, int ignore, final DoneCommand done) {
-            return new Command(channel, ProcessesProxy.this,
-                    "terminate", new Object[]{ getID(), intercept, ignore }) {
                 @Override
                 public void done(Exception error, Object[] args) {
                     if (error == null) {
@@ -279,6 +217,70 @@ public class ProcessesProxy implements IProcesses {
                     if (args[1] != null) ctx = new ProcessContext((Map<String, Object>)args[1]);
                 }
                 done.doneStart(token, error, ctx);
+            }
+        }.token;
+    }
+
+    public IToken getSignalList(String context_id, final DoneGetSignalList done) {
+        return new Command(channel, ProcessesProxy.this,
+                "getSignalList", new Object[]{ context_id }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                Collection<Map<String,Object>> list = null;
+                if (error == null) {
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    list = toSignalList(args[1]);
+                }
+                done.doneGetSignalList(token, error, list);
+            }
+        }.token;
+    }
+
+    public IToken getSignalMask(String context_id, final DoneGetSignalMask done) {
+        return new Command(channel, ProcessesProxy.this,
+                "getSignalMask", new Object[]{ context_id }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                int dont_stop = 0;
+                int dont_pass = 0;
+                int pending = 0;
+                if (error == null) {
+                    assert args.length == 4;
+                    error = toError(args[0]);
+                    if (args[1] != null) dont_stop = ((Number)args[1]).intValue();
+                    if (args[2] != null) dont_pass = ((Number)args[2]).intValue();
+                    if (args[3] != null) pending = ((Number)args[3]).intValue();
+                }
+                done.doneGetSignalMask(token, error, dont_stop, dont_pass, pending);
+            }
+        }.token;
+    }
+
+    public IToken setSignalMask(String context_id, int dont_stop, int dont_pass, final DoneCommand done) {
+        return new Command(channel, ProcessesProxy.this,
+                "setSignalMask", new Object[]{ context_id, dont_stop, dont_pass }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                if (error == null) {
+                    assert args.length == 1;
+                    error = toError(args[0]);
+                }
+                done.doneCommand(token, error);
+            }
+        }.token;
+    }
+
+    public IToken signal(String context_id, int signal, final DoneCommand done) {
+        return new Command(channel, ProcessesProxy.this,
+                "signal", new Object[]{ context_id, signal }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                if (error == null) {
+                    assert args.length == 1;
+                    error = toError(args[0]);
+                }
+                done.doneCommand(token, error);
             }
         }.token;
     }

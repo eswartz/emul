@@ -103,6 +103,14 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     public TCFModel getModel() {
         return model;
     }
+    
+    /**
+     * Get TCF ID of the node.
+     * @return TCF ID
+     */
+    public String getID() {
+        return id;
+    }
 
     /**
      * Returns an object which is an instance of the given class

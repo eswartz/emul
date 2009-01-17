@@ -63,7 +63,30 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
     
     /**
      * Construct a TCF task object and schedule it for execution.
-     * The task will be aborted if the given channel is closed or
+     * The task will be canceled if it is not completed after given timeout.
+     * @param timeout - max time in milliseconds.
+     */
+    public TCFTask(long timeout) {
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                try {
+                    TCFTask.this.run();
+                }
+                catch (Throwable x) {
+                    if (!done && error == null) error(x);
+                }
+            }
+        });
+        Protocol.invokeLater(timeout, new Runnable() {
+            public void run() {
+                cancel(true);
+            }
+        });
+    }
+    
+    /**
+     * Construct a TCF task object and schedule it for execution.
+     * The task will be canceled if the given channel is closed or
      * terminated while the task is in progress.
      * @param channel
      */
@@ -78,9 +101,8 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
                         public void congestionLevel(int level) {
                         }
 
-                        public void onChannelClosed(Throwable error) {
-                            if (error == null) error = new Exception("Channel is closed");
-                            error(error);
+                        public void onChannelClosed(final Throwable error) {
+                            cancel(true);
                         }
 
                         public void onChannelOpened() {
@@ -176,7 +198,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         if (error != null) {
             if (error instanceof ExecutionException) throw (ExecutionException)error;
             if (error instanceof InterruptedException) throw (InterruptedException)error;
-            throw new ExecutionException(error);
+            throw new ExecutionException("TCF task aborted", error);
         }
         return result;
     }
@@ -200,7 +222,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         }
         if (error != null) {
             if (error instanceof Error) throw (Error)error;
-            throw new Error(error);
+            throw new Error("TCF task aborted", error);
         }
         return result;
     }
@@ -224,7 +246,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         }
         if (error != null) {
             if (error instanceof IOException) throw (IOException)error;
-            IOException y = new IOException();
+            IOException y = new IOException("TCF task aborted");
             y.initCause(error);
             throw y;
         }
@@ -255,7 +277,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
             if (error instanceof InterruptedException) throw (InterruptedException)error;
             if (error instanceof ExecutionException) throw (ExecutionException)error;
             if (error instanceof TimeoutException) throw (TimeoutException)error;
-            throw new ExecutionException(error);
+            throw new ExecutionException("TCF task aborted", error);
         }
         return result;
     }
@@ -283,10 +305,18 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         return error != null || done;
     }
     
+    /**
+     * Return task execution error if any.
+     * @return Throwable object or null
+     */
     protected Throwable getError() {
         return error;
     }
     
+    /**
+     * Return task execution result if any.
+     * @return result object
+     */
     protected V getResult() {
         return result;
     }

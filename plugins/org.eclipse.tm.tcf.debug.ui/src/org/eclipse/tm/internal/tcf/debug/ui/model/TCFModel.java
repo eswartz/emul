@@ -66,6 +66,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
@@ -879,8 +880,16 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     public void showMessageBox(final String title, final Throwable error) {
         display.asyncExec(new Runnable() {
             public void run() {
-                IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-                if (window == null) return;
+                Shell shell = display.getActiveShell();
+                if (shell == null) {
+                    IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+                    if (window == null) {
+                        IWorkbenchWindow[] windows = PlatformUI.getWorkbench().getWorkbenchWindows();
+                        if (windows == null || windows.length == 0) return;
+                        window = windows[0];
+                    }
+                    shell = window.getShell();
+                }
                 StringBuffer buf = new StringBuffer();
                 Throwable err = error;
                 while (err != null) {
@@ -893,7 +902,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         buf.append("Caused by:\n");
                     }
                 }
-                MessageBox mb = new MessageBox(window.getShell(), SWT.ICON_ERROR | SWT.OK);
+                MessageBox mb = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
                 mb.setText(title);
                 mb.setMessage(buf.toString());
                 mb.open();
