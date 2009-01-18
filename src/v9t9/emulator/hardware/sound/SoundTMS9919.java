@@ -115,7 +115,12 @@ public class SoundTMS9919 implements SoundProvider {
 		
 		protected void dump() {
 			if (false) {
-				System.out.println(MessageFormat.format(
+				if (getVolume() == 0)
+					System.out.println(MessageFormat.format(
+							"voice_cache_values[{0}]: hz={1}   OFF",
+							getName(), hertz));
+				else
+					System.out.println(MessageFormat.format(
 						"voice_cache_values[{5}]: lo=>{0}, hi=>{1}, period=>{2}, hertz={3}, volume={4}",
 					   Utils.toHex4(operation[OPERATION_FREQUENCY_LO]), 
 					   Utils.toHex4(operation[OPERATION_FREQUENCY_HI]),
@@ -159,7 +164,7 @@ public class SoundTMS9919 implements SoundProvider {
 			period = getOperationPeriod();
 			hertz = periodToHertz(period);
 
-			if (hertz * 2 < 55938) {
+			if (hertz * 2 < 55930) {
 				delta = hertz * 2;
 			} else {
 				delta = 0;

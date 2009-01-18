@@ -308,10 +308,10 @@ public class JavaSoundHandler implements SoundHandler {
 						sampleR = v.generate(soundClock, sampleR, sampleDelta);
 				}	
 				if (isStereo) {
-					soundGeneratorWaveForm[i++] = vcntL != 0 ? (byte) ((sampleL >> 16) / vcntL) : 0;
-					soundGeneratorWaveForm[i++] = vcntR != 0 ? (byte) ((sampleR >> 16) / vcntR) : 0;
+					soundGeneratorWaveForm[i++] = vcntL != 0 ? (byte) ((sampleL / vcntL) >> 16) : 0;
+					soundGeneratorWaveForm[i++] = vcntR != 0 ? (byte) ((sampleR / vcntR) >> 16) : 0;
 				} else {
-					soundGeneratorWaveForm[i++] = (byte) ((sampleR >> 16) / vcnt);
+					soundGeneratorWaveForm[i++] = (byte) ((sampleR / vcnt) >> 16);
 				}
 			}
 		} else {

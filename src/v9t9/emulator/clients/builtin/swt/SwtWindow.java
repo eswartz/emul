@@ -181,6 +181,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 				Display.getDefault().asyncExec(new Runnable() {
 
 					public void run() {
+						if (button.isDisposed())
+							return;
 						if (setting.getBoolean()) {
 							button.setOverlayBounds(checkBounds);
 						} else {
