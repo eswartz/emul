@@ -6,7 +6,7 @@ package v9t9.emulator.clients.builtin;
 import org.eclipse.jface.dialogs.IDialogSettings;
 
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
-import v9t9.emulator.hardware.sound.SoundTMS9919.SoundVoice;
+import v9t9.emulator.hardware.sound.SoundVoice;
 import v9t9.engine.SoundHandler;
 
 /**
@@ -17,9 +17,6 @@ import v9t9.engine.SoundHandler;
 public interface SoundProvider {
 	/** Get all the existing sound voices. */
 	SoundVoice[] getSoundVoices();
-
-	/** Is this stereo? */
-	boolean isStereo();
 
 	/** Write a byte to the sound chip(s) */
 	void writeSound(int addr, byte val);
@@ -33,4 +30,5 @@ public interface SoundProvider {
 
 	void setAudioGate(int addr, boolean b);
 
+	void tick();
 }

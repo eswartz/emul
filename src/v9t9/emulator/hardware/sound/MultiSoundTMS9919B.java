@@ -11,32 +11,39 @@ import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.SoundHandler;
 
 /**
- * Multiple packed TMS9919 chips.  This provides a TMS9919 at any number
- * of addresses.  It is based on the description of the FORTI sound chips at
- * <http://nouspikel.group.shef.ac.uk//ti99/forti.htm>
+ * Multiple packed TMS9919 chips.  This provides four TMS9919Bs, 
+ * each with four addresses, after the traditional TMS9919 sound chip.
+ * <p>
+ * BASE = console chip
+ * BASE + 4 = #1 std
+ * BASE + 6 = #1 effects
+ * BASE + 8 = #2 std
+ * BASE + 10 = #2 effects
+ * BASE + 12 = #3 std
+ * BASE + 14 = #3 effects
+ * BASE + 16 = #4 std
+ * BASE + 18 = #4 effects
  * @author ejs
  *
  */
-public class MultiSoundTMS9919 implements SoundProvider {
+public class MultiSoundTMS9919B implements SoundProvider {
 
 	private SoundTMS9919[] chips;
 	private SoundVoice[] voices;
 	private SoundHandler soundHandler;
 	private final Machine machine;
 	
-	public MultiSoundTMS9919(Machine machine) {
+	public MultiSoundTMS9919B(Machine machine) {
 		// 5 chips: the original TMS9919 on the console and 4 extra on the card
 		
 		this.machine = machine;
-		// Prolly in the card, the console chip is ignored, because it
-		// borks the intended use of stereo on the other chips.
-		// So we ignore it.
 		this.chips = new SoundTMS9919[5];
-		for (int i = 0; i < 5; i++) {
-			chips[i] = new SoundTMS9919(machine, "Chip #" + i);
+		chips[0] = new SoundTMS9919(machine, "Console Chip");
+		for (int i = 0; i < 4; i++) {
+			chips[i + 1] = new SoundTMS9919B(machine, "Chip #" + i);
 			
-			byte balance = (byte) (i == 0 ? 0 : ((i & 1) != 0 ? -128 : 127)); 
-			for (SoundVoice voice : chips[i].getSoundVoices()) {
+			byte balance = (byte) ((i & 1) == 0 ? -128 : 127); 
+			for (SoundVoice voice : chips[i + 1].getSoundVoices()) {
 				voice.setBalance(balance);
 			}
 		}
@@ -45,10 +52,10 @@ public class MultiSoundTMS9919 implements SoundProvider {
 
 	public synchronized SoundVoice[] getSoundVoices() {
 		if (voices == null) {
-			voices = new SoundVoice[4 * 4 + 1];
+			voices = new SoundVoice[chips.length * 4 + 1];
 			int idx = 0;
-			for (int i = 0; i < 4; i++) {
-				SoundTMS9919 chip = chips[i + 1];
+			for (int i = 0; i < chips.length; i++) {
+				SoundTMS9919 chip = chips[i];
 				SoundVoice[] chipVoices = chip.getSoundVoices();
 				System.arraycopy(chipVoices, 0, voices, idx, 4);
 				idx += 4;
@@ -62,24 +69,24 @@ public class MultiSoundTMS9919 implements SoundProvider {
 		if ((addr & 0xff) < 0xC0) {
 			int mask = addr & 0x1e;
 			
-			// Ignore main chip.  It only provides audio gate -- if that.
-			//chips[0].writeSound(addr, val);
-			
-			int chip = 1;
-			// the low 4 bits of the word address tell (NAND-wise)
-			// which chip to target
-			for (int bit = 2; bit <= 0x10; bit += bit) {
-				if ((mask & bit) == 0 && chip < chips.length) {
-					chips[chip].writeSound(addr, val);
-				}
-				chip++;
+			if (mask == 0) {
+				// Main chip.  It only provides audio gate -- if that.
+				chips[0].writeSound(addr, val);
+				return;
 			}
-			soundHandler.updateVoice(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
+			
+			int chip = 1 + ((mask - 4) / 4);
+			
+			if (chip < chips.length) {
+				chips[chip].writeSound(addr, val);
+			
+				soundHandler.updateVoice(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
+			}
 		}
 	}
 	
 	public void setAudioGate(int addr, boolean b) {
-		// assume it's the first one... I don't think the audio gates are wired to the chips
+		// Only the console chip has audio gate.
 		chips[0].setAudioGate(addr, b);
 	}
 

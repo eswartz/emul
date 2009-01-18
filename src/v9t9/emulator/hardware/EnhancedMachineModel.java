@@ -10,6 +10,7 @@ import v9t9.emulator.hardware.dsrs.EmuDiskDSR;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.emulator.hardware.sound.MultiSoundTMS9919;
+import v9t9.emulator.hardware.sound.MultiSoundTMS9919B;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.MemoryModel;
@@ -50,7 +51,7 @@ public class EnhancedMachineModel implements MachineModel {
 	}
 
 	public SoundProvider createSoundProvider(Machine machine) {
-		return new MultiSoundTMS9919(machine);		// !!!
+		return new MultiSoundTMS9919B(machine);
 	}
 	
 	public void defineDevices(final Machine machine) {

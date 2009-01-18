@@ -13,7 +13,7 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
-import v9t9.emulator.hardware.sound.SoundTMS9919.SoundVoice;
+import v9t9.emulator.hardware.sound.SoundVoice;
 import v9t9.engine.Client;
 import v9t9.engine.CruHandler;
 import v9t9.engine.KeyboardHandler;

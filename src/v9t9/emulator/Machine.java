@@ -187,8 +187,7 @@ abstract public class Machine {
     				vdpInterruptDelta = 0;
     			}
     			
-    			sound.getSoundHandler().flushAudio(getCpu().getCurrentCycleCount(), 
-    					getCpu().getCurrentTargetCycleCount());
+    			sound.tick();
     			cpu.tick();
 
     			// In Win32, the timer is not nearly as accurate as 1/100 second,
