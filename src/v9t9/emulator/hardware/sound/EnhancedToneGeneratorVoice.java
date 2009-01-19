@@ -28,7 +28,7 @@ public class EnhancedToneGeneratorVoice extends ToneGeneratorVoice implements En
 	}
 
 	@Override
-	protected void updateDivisor() {
+	protected void updateAccumulator() {
 		effectsController.updateDivisor();
 	}
 	@Override

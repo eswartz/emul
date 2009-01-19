@@ -29,7 +29,7 @@ public class EnhancedNoiseGeneratorVoice extends NoiseGeneratorVoice implements 
 	}
 	
 	@Override
-	protected void updateDivisor() {
+	protected void updateAccumulator() {
 		effectsController.updateDivisor();
 	}
 	@Override

@@ -86,6 +86,7 @@ public class SoundTMS9919B extends SoundTMS9919 {
 		CMD_ENV_HOLD_RELEASE = 3,
 		CMD_VIBRATO = 4,
 		CMD_TREMOLO = 5,
+		CMD_WAVEFORM = 6,
 		CMD_RELEASE = 15;
 	
 	protected int lastCommand;
@@ -155,6 +156,9 @@ public class SoundTMS9919B extends SoundTMS9919 {
 			case CMD_TREMOLO:
 				voice.getEffectsController().setTremolo(
 						(val >> 4) & 0xf, val & 0xf);
+				break;
+			case CMD_WAVEFORM:
+				voice.getEffectsController().setWaveform(val & 0xf);
 				break;
 			}
 		} else {

@@ -17,6 +17,9 @@ public class EffectsController {
 	private static final int VOL_SHIFT = 24;
 	private static final int VOL_SCALE = (1 << VOL_SHIFT);
 	private static final int VOL_MASK = (VOL_SCALE - 1);
+	private static final int VOL_TO_SAMPLE = (VOL_SHIFT - 23) + 4;
+	//private static final int VOL_TO_SAMPLE_BIAS = ~(~0 << (VOL_TO_SAMPLE - 1));
+	
 	final static int OP_ATTACK = 0,
 		OP_DECAY = 1,
 		OP_HOLD = 2,
@@ -32,7 +35,7 @@ public class EffectsController {
 	
 	static {
 		for (int i = 0; i < sines.length; i++) {
-			sines[i] = (short) (Math.sin(i * 360 * Math.PI / 180. / sines.length) * 32768);
+			sines[i] = (short) (Math.sin(i * 2 * Math.PI / sines.length) * 32767);
 		}
 	}
 	
@@ -55,6 +58,8 @@ public class EffectsController {
 	private int tremoloAmount;
 	private int tremoloIncr;
 	private int tremoloClock;
+
+	private int waveform;
 	
 	public EffectsController(ClockedSoundVoice voice) {
 		this.voice = voice;
@@ -69,6 +74,7 @@ public class EffectsController {
 		sustain = 0;
 		vibratoAmount = 0;
 		tremoloAmount = 0;
+		waveform = 0;
 		volume = voice.getVolume() << VOL_SHIFT;
 		index = -1;
 	}
@@ -95,6 +101,10 @@ public class EffectsController {
 	 */
 	public void stopEnvelope() {
 		index = -1;
+		timeout = 0; 
+		clock = 0;
+		volume = voice.getVolume() << VOL_SHIFT;
+		voldelta = 0;
 	}
 	
 	/**
@@ -151,10 +161,7 @@ public class EffectsController {
 		switch (index) {
 		case -1:
 			// done
-			voice.setVolume((byte) 0);
-			index = -1;
-			fromVolume = 0;
-			targetVolume = 0;
+			stopEnvelope();
 			return;
 		case OP_ATTACK:
 			// attack: 0 to full volume
@@ -209,18 +216,13 @@ public class EffectsController {
 			while (vibratoClock >= SOUND_CLOCK * 16)
 				vibratoClock -= SOUND_CLOCK * 16;
 		}
-		voice.div += voice.delta + vib;
+		voice.accum += voice.incr + vib;
 		//while (voice.div < 0)
 		//	voice.div += soundClock;
 	}
 
 	public int getCurrentSample() {
-		return isEnvelopeSet() ? (index >= 0 ? calcSampleMagnitude() : 0)
-				: volume;
-	}
-	
-	private int calcSampleMagnitude() {
-		int basic = volume >> (4 + (VOL_SHIFT - 23));
+		int basic = volume >> VOL_TO_SAMPLE;
 	
 		
 		if (tremoloAmount != 0) {
@@ -234,26 +236,64 @@ public class EffectsController {
 			}
 		}
 		
-		if (false) {
-			//basic = (int) ((long)basic * voice.div / (SOUND_CLOCK / 2));		// sawtooth
-			
-			// triangle
-			if (voice instanceof ToneGeneratorVoice) {
-				if (((ToneGeneratorVoice)voice).out)
-					basic = (int) ((long)basic * voice.div / (SOUND_CLOCK / 2));
-				else
-					basic = (int) ((long)basic * (SOUND_CLOCK - voice.div) / (SOUND_CLOCK / 2));
-			}
-			
-			
-		} else {
-			if (voice instanceof ToneGeneratorVoice) {
-				if ((((ToneGeneratorVoice)voice).out))
+		if (voice instanceof ToneGeneratorVoice) {
+			ToneGeneratorVoice toneGen = (ToneGeneratorVoice) voice;
+			int half = SOUND_CLOCK / 2;
+			int quarter = SOUND_CLOCK / 4;
+			switch (waveform) {
+			case 0:
+			default:
+				if (toneGen.out)
 					basic = -basic;
+				break;
+			case 1:
+				// sawtooth
+				basic = (int) (((long)basic * voice.accum ) / half );		
+				break;
+			case 2:
+				// triangle
+				if (voice.accum < half)
+					basic = (int) ((long)basic * voice.accum / quarter - basic);
+				else
+					basic = (int) ((long)basic * (SOUND_CLOCK - voice.accum) / quarter - basic);
+				break;
+			case 3: {
+				// sine
+				int ang = voice.accum * sines.length / SOUND_CLOCK;
+				if (ang < 0) ang += sines.length; else if (ang >= sines.length) ang -= sines.length;
+				basic = (int) ((long) basic * sines[ang] / 32768);
+				break;
 			}
+			case 4:
+				// half saw
+				if (voice.accum < half)
+					basic = (int) (((long)basic * voice.accum ) / half );	
+				else
+					basic = 0;
+				break;
+			case 5: {
+				// abs sine
+				int ang = voice.accum * sines.length / SOUND_CLOCK;
+				if (ang < 0) ang += sines.length; else if (ang >= sines.length) ang -= sines.length;
+				basic = (int) ((long) basic * Math.abs(sines[ang]) / 32768);
+				break;
+			}
+			case 6:
+				// half triangle
+				if (voice.accum >= quarter && voice.accum < half + quarter) {
+					if (voice.accum < half)
+						basic = (int) ((long)basic * voice.accum / quarter - basic);
+					else
+						basic = (int) ((long)basic * (SOUND_CLOCK - voice.accum) / quarter - basic);
+				}
+				else
+					basic = 0;
+				break;
+			}
+			
 		}
 		
-		
+		//System.out.println(voice.getName() + ": " + basic);
 		return basic;
 	}
 
@@ -270,6 +310,8 @@ public class EffectsController {
 					index++;
 					nextADHR();
 				}
+			} else {
+				volume = 0;
 			}
 		}
 		if (tremoloAmount != 0) {
@@ -296,6 +338,10 @@ public class EffectsController {
 		tremoloIncr = rate;
 		tremoloClock = 0;
 		
+	}
+
+	public void setWaveform(int i) {
+		this.waveform = i;
 	}
 	
 	

@@ -347,7 +347,8 @@ public class JavaSoundHandler implements SoundHandler {
 		lastUpdatedPos = 0;
 
 		for (int i = 0; i < length; i++) {
-			soundGeneratorWaveForm[i] = (byte) (soundGeneratorWorkBuffer[i] >> 16);
+			int sample = soundGeneratorWorkBuffer[i];
+			soundGeneratorWaveForm[i] = (byte) (sample >> 16);
 		}
 		Arrays.fill(soundGeneratorWorkBuffer, 0);
 

@@ -23,14 +23,14 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 		hertz = SoundTMS9919.periodToHertz(period);
 
 		if (hertz * 2 < 55930) {
-			delta = hertz * 2;
+			incr = hertz * 2;
 		} else {
-			delta = 0;
+			incr = 0;
 		}
 		
 		// keep waves in sync
 		if (lastPeriod != period || (lastVolume == 0) != (getVolume() == 0))
-			div = 0;
+			accum = 0;
 			
 		dump();
 	}
@@ -55,16 +55,21 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 	@Override
 	public void generate(int soundClock, int[] soundGeneratorWorkBuffer,
 			int from, int to) {
-		int sampleL, sampleR;
-		
+		int ratio = 128 + balance;
 		while (from < to) {
 			updateEffect();
-			updateDivisor();
+			updateAccumulator();
+			
+			// this loop usually executes only once
+			while (accum >= soundClock) {
+				out = !out;
+				accum -= soundClock;
+			}
 			
 			int sampleMagnitude = getCurrentMagnitude();
-			int ratio = 128 + balance;
-			sampleL = ((255 - ratio) * sampleMagnitude) >> 8;
-			sampleR = (ratio * sampleMagnitude) >> 8;
+			
+			int sampleL = ((256 - ratio) * sampleMagnitude) >> 8;
+			int sampleR = (ratio * sampleMagnitude) >> 8;
 			
 			soundGeneratorWorkBuffer[from++] += sampleL;
 			soundGeneratorWorkBuffer[from++] += sampleR;
@@ -79,11 +84,7 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 			}
 			*/
 			
-			// this loop usually executes only once
-			while (div >= soundClock) {
-				out = !out;
-				div -= soundClock;
-			}
+			
 		}
 	}
 	
