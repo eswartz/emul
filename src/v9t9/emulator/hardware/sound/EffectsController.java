@@ -10,6 +10,10 @@ import java.util.Arrays;
  *
  */
 public class EffectsController {
+	public boolean DUMP = false;
+
+	private static final int SOUND_CLOCK = 55930;
+	
 	private static final int VOL_SHIFT = 24;
 	private static final int VOL_SCALE = (1 << VOL_SHIFT);
 	private static final int VOL_MASK = (VOL_SCALE - 1);
@@ -23,6 +27,15 @@ public class EffectsController {
 		50, 100, 200, 400,
 		800, 1600, 3200, 6400
 	};
+	
+	final static short sines[] = new short[256];
+	
+	static {
+		for (int i = 0; i < sines.length; i++) {
+			sines[i] = (short) (Math.sin(i * 360 * Math.PI / 180. / sines.length) * 32768);
+		}
+	}
+	
 	private int[] adhr = new int[4];
 	private int sustain;
 	private int index;		// operation currently on, -1 means inactive
@@ -32,11 +45,17 @@ public class EffectsController {
 	private final ClockedSoundVoice voice;
 	private int voldelta;
 	private int volume;
-	private boolean isReleased;
 
 	private int sustainVolume;
 
 	private byte fullVolume;
+	private int vibratoAmount;
+	private int vibratoIncr;
+	private int vibratoClock;
+	private int tremoloAmount;
+	private int tremoloIncr;
+	private int tremoloClock;
+	
 	public EffectsController(ClockedSoundVoice voice) {
 		this.voice = voice;
 		index = -1;
@@ -47,8 +66,11 @@ public class EffectsController {
 	 */
 	public void reset() {
 		Arrays.fill(adhr, 0);
+		sustain = 0;
+		vibratoAmount = 0;
+		tremoloAmount = 0;
+		volume = voice.getVolume() << VOL_SHIFT;
 		index = -1;
-		isReleased = true;
 	}
 	
 	public int getADSR(int op) {
@@ -78,14 +100,19 @@ public class EffectsController {
 	/**
 	 * Call when a voice's volume is set to non-zero.
 	 */
-	public void startEnvelope() {
+	public void updateVoice() {
+		fullVolume = voice.getVolume();
+		vibratoClock = 0;
+		tremoloClock = 0;
+		
 		if (isEnvelopeSet()) {
-			isReleased = false;
 			index = OP_ATTACK;
-			fullVolume = voice.getVolume();
-			sustainVolume = fullVolume * sustain / 16;
+			sustainVolume = (fullVolume * sustain + 15) / 16;
+			volume = 0;
+			voice.setVolume((byte) 0);
 			nextADHR();
 		} else {
+			volume = fullVolume << VOL_SHIFT;
 			index = -1;
 		}
 	}
@@ -95,7 +122,6 @@ public class EffectsController {
 	 */
 	public void startRelease() {
 		if (isEnvelopeSet()) {
-			isReleased = true;
 			index = OP_RELEASE;
 			nextADHR();
 		}
@@ -111,56 +137,56 @@ public class EffectsController {
 			ticks1000 = getEnvelopePortionTime();
 			if (ticks1000 == 0) {
 				index++;
-				if (index == OP_RELEASE + 1)
-					break;
 			} else {
 				break;
 			}
-		} while (true);
+		} while (index < OP_RELEASE);
 		
 		int fromVolume = 0, targetVolume = 0;
 		
+		if (index > OP_RELEASE) {
+			index = -1;
+		}
+		
 		switch (index) {
 		case -1:
-			return;
-		case OP_ATTACK:
-			// attack: 0 to full volume
-			fromVolume = 0;
-			targetVolume = fullVolume;
-			break;
-		case OP_DECAY:
-			// decay: current volume to sustain
-			fromVolume = fullVolume;
-			targetVolume = sustainVolume;
-			break;
-		case OP_HOLD:
-			// hold: remain at sustain
-			fromVolume = sustainVolume;
-			targetVolume = sustainVolume;
-			break;
-		case OP_RELEASE:
-			// release:  from current volume (since this can happen
-			// at any time during a note) to silence
-			fromVolume = volume / VOL_SCALE;
-			targetVolume = 0;
-			break;
-		case OP_RELEASE + 1:
 			// done
 			voice.setVolume((byte) 0);
 			index = -1;
 			fromVolume = 0;
 			targetVolume = 0;
 			return;
+		case OP_ATTACK:
+			// attack: 0 to full volume
+			fromVolume = 0 * VOL_SCALE;
+			targetVolume = fullVolume * VOL_SCALE;
+			break;
+		case OP_DECAY:
+			// decay: current volume to sustain
+			fromVolume = fullVolume * VOL_SCALE;
+			targetVolume = sustainVolume * VOL_SCALE;
+			break;
+		case OP_HOLD:
+			// hold: remain at sustain
+			fromVolume = sustainVolume * VOL_SCALE;
+			targetVolume = sustainVolume * VOL_SCALE;
+			break;
+		case OP_RELEASE:
+			// release:  from current volume (since this can happen
+			// at any time during a note) to silence
+			fromVolume = volume;
+			targetVolume = 0;
+			break;
 		}
 		
-		timeout = (int) ((long)ticks1000 * 55930 / 1000); 
+		timeout = (int) ((long)ticks1000 * SOUND_CLOCK / 1000); 
 		clock = 0;
-		volume = fromVolume * VOL_SCALE;
-		voldelta = (int) ((long) (targetVolume - fromVolume) * VOL_SCALE / timeout);
+		volume = fromVolume;
+		voldelta = (targetVolume - fromVolume) / timeout;
 		
-		if (false)
+		if (DUMP)
 			System.out.println(voice.getName() + ": ADHR#"+ index+
-				"; volume = " + fromVolume+"; voldelta = " +(targetVolume - fromVolume)
+				"; volume = " + (fromVolume>>VOL_SHIFT)+"; voldelta = " +((targetVolume - fromVolume)>>VOL_SHIFT)
 				+" over " + ticks1000 + " ms");
 	}
 
@@ -176,49 +202,100 @@ public class EffectsController {
 	}
 
 	public void updateDivisor() {
-		voice.div += voice.delta;
+		int vib = 0;
+		if (vibratoAmount != 0) {
+			vib = sines[vibratoClock * sines.length / SOUND_CLOCK / 16] * vibratoAmount / 65536;
+			vibratoClock += vibratoIncr;
+			while (vibratoClock >= SOUND_CLOCK * 16)
+				vibratoClock -= SOUND_CLOCK * 16;
+		}
+		voice.div += voice.delta + vib;
+		//while (voice.div < 0)
+		//	voice.div += soundClock;
 	}
 
 	public int getCurrentSample() {
-		return sustain == 0 ? voice.getSampleSize(voice.getVolume())
-				: (index >= 0 ? calcSampleMagnitude() : 0); 
+		return isEnvelopeSet() ? (index >= 0 ? calcSampleMagnitude() : 0)
+				: volume;
 	}
-	public synchronized boolean updateSample() {
-		boolean changed = false;
+	
+	private int calcSampleMagnitude() {
+		int basic = volume >> (4 + (VOL_SHIFT - 23));
+	
+		
+		if (tremoloAmount != 0) {
+			if (volume > 0) {
+				int sin = sines[tremoloClock * sines.length / SOUND_CLOCK];
+				int delta = tremoloAmount * sin;
+				
+				// reduce magnitude by maximum tremolo
+				basic += delta - tremoloAmount * 32768;
+				//basic += sin * tremoloAmount ;
+			}
+		}
+		
+		if (false) {
+			//basic = (int) ((long)basic * voice.div / (SOUND_CLOCK / 2));		// sawtooth
+			
+			// triangle
+			if (voice instanceof ToneGeneratorVoice) {
+				if (((ToneGeneratorVoice)voice).out)
+					basic = (int) ((long)basic * voice.div / (SOUND_CLOCK / 2));
+				else
+					basic = (int) ((long)basic * (SOUND_CLOCK - voice.div) / (SOUND_CLOCK / 2));
+			}
+			
+			
+		} else {
+			if (voice instanceof ToneGeneratorVoice) {
+				if ((((ToneGeneratorVoice)voice).out))
+					basic = -basic;
+			}
+		}
+		
+		
+		return basic;
+	}
+
+	public synchronized void updateEffect() {
 		if (isEnvelopeSet()) {
 			if (index >= 0) {
 				clock++;
 				int oldVol = volume;
 				volume += voldelta;
-				if (((oldVol ^ volume) & ~(VOL_MASK >> 4)) != 0) { 
-					changed = true;
-					voice.sampleMagnitude = calcSampleMagnitude();
-					if (false) {
-						if (((oldVol ^ volume) & ~VOL_MASK) != 0) { 
-							System.out.println(voice.getName() + ": volume = " + (volume>>VOL_SHIFT));
-						}
-					}
+				if (DUMP && ((oldVol ^ volume) & ~VOL_MASK) != 0) { 
+					System.out.println(voice.getName() + ": volume = " + (volume>>VOL_SHIFT));
 				}
 				if (clock >= timeout) {
 					index++;
 					nextADHR();
-					changed = true;
-				}
-			} else {
-				if (voice.sampleMagnitude != 0) {
-					voice.sampleMagnitude = 0;
-					changed = true;
 				}
 			}
 		}
-		return changed;
+		if (tremoloAmount != 0) {
+			if (volume > 0) {
+				tremoloClock += tremoloIncr;
+				while (tremoloClock >= SOUND_CLOCK)
+					tremoloClock -= SOUND_CLOCK;
+			}
+		}
+	}
+	
+	public boolean isActive() {
+		return isEnvelopeSet() && index >= 0;
 	}
 
-	private int calcSampleMagnitude() {
-		if (VOL_SHIFT < 24)
-			return volume << (23 - VOL_SHIFT - 4);	// 0xFffff -> 0x7Ffff8
-		else
-			return volume >> (4 + (VOL_SHIFT - 23));
+	public void setVibrato(int amount, int rate) {
+		vibratoAmount = amount * 8;
+		vibratoIncr = rate * 16;
+		vibratoClock = 0;
+	}
+
+	public void setTremolo(int amount, int rate) {
+		tremoloAmount = amount;
+		tremoloIncr = rate;
+		tremoloClock = 0;
+		
 	}
 	
 	

@@ -13,8 +13,6 @@ public abstract class SoundVoice
 	private byte	volume;			
 
 	private final String name;
-
-	protected int sampleMagnitude;
 	
 	/** how the left/right channels are balanced; -128 for all left to 127 for all right */
 	protected byte balance;
@@ -63,7 +61,7 @@ public abstract class SoundVoice
 		return volume;
 	}
 	public abstract void generate(int soundClock, int[] soundGeneratorWorkBuffer,
-			int from, int to, int active);
+			int from, int to);
 	public boolean isActive() {
 		return volume > 0;
 	}

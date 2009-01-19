@@ -86,19 +86,17 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 	
 	@Override
 	public void generate(int soundClock, int[] soundGeneratorWorkBuffer,
-			int from, int to, int active) {
+			int from, int to) {
 		int sampleL, sampleR;
-		sampleMagnitude = getCurrentMagnitude();
-		int ratio = 128 + balance;
-		sampleL = ((255 - ratio) * sampleMagnitude / active) >> 8;
-		sampleR = (ratio * sampleMagnitude / active) >> 8;
 		while (from < to) {
 			updateDivisor();
-			if (updateMagnitude()) {
-				ratio = 128 + balance;
-				sampleL = ((255 - ratio) * sampleMagnitude / active) >> 8;
-				sampleR = (ratio * sampleMagnitude / active) >> 8;
-			}
+			updateEffect();
+			
+			int sampleMagnitude = getCurrentMagnitude();
+			int ratio = 128 + balance;
+			sampleL = ((255 - ratio) * sampleMagnitude) >> 8;
+			sampleR = (ratio * sampleMagnitude) >> 8;
+
 			if (isWhite) {
 				
 				// thanks to John Kortink (http://web.inter.nl.net/users/J.Kortink/home/articles/sn76489/)
@@ -133,6 +131,7 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 						div -= soundClock;
 				}
 			}
+			
 			from += 2;
 		}
 	}

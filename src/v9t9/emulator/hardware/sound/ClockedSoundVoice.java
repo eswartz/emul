@@ -66,8 +66,7 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		div += delta;
 	}
 	
-	protected boolean updateMagnitude() {
-		return false;
+	protected void updateEffect() {
 	}
 	
 	@Override

@@ -36,7 +36,12 @@ public class EnhancedToneGeneratorVoice extends ToneGeneratorVoice implements En
 		return effectsController.getCurrentSample();
 	}
 	@Override
-	protected boolean updateMagnitude() {
-		return effectsController.updateSample();
+	protected void updateEffect() {
+		effectsController.updateEffect();
 	}
+	@Override
+	public boolean isActive() {
+		return super.isActive() || effectsController.isActive();
+	}
+	
 }

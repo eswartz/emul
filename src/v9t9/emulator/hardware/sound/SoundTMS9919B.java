@@ -3,13 +3,7 @@
  */
 package v9t9.emulator.hardware.sound;
 
-import java.text.MessageFormat;
-
-import org.eclipse.jface.dialogs.IDialogSettings;
-
 import v9t9.emulator.Machine;
-import v9t9.emulator.clients.builtin.SoundProvider;
-import v9t9.engine.SoundHandler;
 import v9t9.utils.Utils;
 
 /**
@@ -21,26 +15,29 @@ import v9t9.utils.Utils;
  * First, the minimum frequency allowed is 54 Hz, by making use of an extra
  * bit in the "hi frequency" command.
  * <p>
- * Secondly, the sound chip uses two address ports.  The first acts as it
- * did in the TMS9919.  The second allows setting envelopes and effects.
+ * Secondly, the sound chip uses three address ports.  The first acts as it
+ * did in the TMS9919.  The second allows sending commands, and the third
+ * accepts arguments for those commands.
  <pre>
-   General pattern:  
+   Command pattern:
    
 		7    6    5    4    3    2    1    0
 		1    <v  #>    1    <.  command #  .>		
-		1    <v  #>    0    <.  argument   .>		
 		
    Commands:
    
    		0000 = reset all effects on voice
    		0001 = enable/disable envelope (argument: sustain ratio)
-   		0010 = set envelope attack  (argument: attack time)
-   		0011 = set envelope decay   (argument: decay time)
-   		0100 = set envelope hold    (argument: hold time)
-   		0101 = set envelope release (argument: release time)
+   		0010 = set envelope attack + decay (argument: attack time | decay time)
+   		0011 = set envelope hold + release (argument: decay time | release time)
+   		
+   		0100 = set vibrato			(argument: amount | rate)
+   		0101 = set tremolo			(argument: amount | rate)
    		
    		1111 = indicate note release (argument ignored)
 		
+	Envelopes
+	
 		The enable envelope (1) command acts as both the enablement of envelopes 
 		and the setting for the sustain level of the ADSR envelope.  A sustain
 		ratio of 0 is meaningless (a hold of 0 can have the same effect). 
@@ -63,6 +60,19 @@ import v9t9.utils.Utils;
 		attack, decay, hold, and release times are given by the table in
 		{@link EffectsController#tickTimes}.
 
+	Vibrato
+	
+		The pitch is vibrated according to the given amount and rate.
+		
+		Amount is a 4-bit field controlling from 1 to 15 cycles (dependent on pitch).
+		Rate is a 4-bit field controlling the speed.
+
+	Tremolo
+	
+		The volume is vibrated according to the given amount and rate.
+		
+		Amount is a 4-bit field controlling from 1 to 15 cycles (dependent on pitch).
+		Rate is a 4-bit field controlling the speed.
  * </pre>
  * @author ejs
  *
@@ -72,13 +82,15 @@ public class SoundTMS9919B extends SoundTMS9919 {
 	protected final int 
 		CMD_RESET = 0,
 		CMD_ENVELOPE = 1,
-		CMD_ENV_ATTACK = 2,
-		CMD_ENV_DECAY = 3,
-		CMD_ENV_HOLD = 4,
-		CMD_ENV_RELEASE = 5,
+		CMD_ENV_ATTACK_DECAY = 2,
+		CMD_ENV_HOLD_RELEASE = 3,
+		CMD_VIBRATO = 4,
+		CMD_TREMOLO = 5,
 		CMD_RELEASE = 15;
 	
 	protected int lastCommand;
+
+	private int cmdVoice;
 	
 	public SoundTMS9919B(Machine machine, String name) {
 		super(machine, name);
@@ -98,50 +110,52 @@ public class SoundTMS9919B extends SoundTMS9919 {
 	 * @see v9t9.engine.SoundHandler#writeSound(byte)
 	 */
 	public void writeSound(int addr, byte val) {
-		System.out.println("Writing " + Utils.toHex2(addr & 0x2) + " := " + Utils.toHex2(val));
-		if ((addr & 2) != 0) {
+		System.out.println("Writing " + Utils.toHex2(addr & 0x6) + " := " + Utils.toHex2(val));
+		if ((addr & 0x6) == 0x2) {
 			// command byte
 			if ((val & 0x80) != 0) {
-				cvoice = getOperationVoice(val);
-				EnhancedVoice voice = (EnhancedVoice) sound_voices[cvoice];
+				cmdVoice = getOperationVoice(val);
+				EnhancedVoice voice = (EnhancedVoice) sound_voices[cmdVoice];
 				
-				if ((val & 0x10) != 0) {
-					lastCommand = (val & 0xf);
-					switch (lastCommand) {
-					case CMD_RESET:
-						voice.getEffectsController().reset();
-						break;
-					case CMD_RELEASE:
-						voice.getEffectsController().startRelease();
-						break;
-					default:
-						// others take an argument next time
-					}
-				} else {
-					switch (lastCommand) {
-					case CMD_RESET:
-						// in case we get here too
-						voice.getEffectsController().reset();
-						break;
-					case CMD_ENVELOPE:
-						voice.getEffectsController().setSustain(val & 0xf);
-						break;
-					case CMD_ENV_ATTACK:
-						voice.getEffectsController().setADSR(EffectsController.OP_ATTACK, val & 0xf);
-						break;
-					case CMD_ENV_DECAY:
-						voice.getEffectsController().setADSR(EffectsController.OP_DECAY, val & 0xf);
-						break;
-					case CMD_ENV_HOLD:
-						voice.getEffectsController().setADSR(EffectsController.OP_HOLD, val & 0xf);
-						break;
-					case CMD_ENV_RELEASE:
-						voice.getEffectsController().setADSR(EffectsController.OP_RELEASE, val & 0xf);
-						break;
-					}
-
+				lastCommand = (val & 0xf);
+				switch (lastCommand) {
+				case CMD_RESET:
+					voice.getEffectsController().reset();
+					break;
+				case CMD_RELEASE:
+					voice.getEffectsController().startRelease();
+					break;
+				default:
+					// others take an argument next time
 				}
-				
+			}
+		} else if ((addr & 0x6) == 0x4) {
+			// data 
+			EnhancedVoice voice = (EnhancedVoice) sound_voices[cmdVoice];
+			switch (lastCommand) {
+			case CMD_ENVELOPE:
+				voice.getEffectsController().setSustain(val & 0xf);
+				break;
+			case CMD_ENV_ATTACK_DECAY:
+				voice.getEffectsController().setADSR(
+						EffectsController.OP_ATTACK, (val >> 4) & 0xf);
+				voice.getEffectsController().setADSR(
+						EffectsController.OP_DECAY, val & 0xf);
+				break;
+			case CMD_ENV_HOLD_RELEASE:
+				voice.getEffectsController().setADSR(
+						EffectsController.OP_HOLD, (val >> 4) & 0xf);
+				voice.getEffectsController().setADSR(
+						EffectsController.OP_RELEASE, val & 0xf);
+				break;
+			case CMD_VIBRATO:
+				voice.getEffectsController().setVibrato(
+						(val >> 4) & 0xf, val & 0xf);
+				break;
+			case CMD_TREMOLO:
+				voice.getEffectsController().setTremolo(
+						(val >> 4) & 0xf, val & 0xf);
+				break;
 			}
 		} else {
 			super.writeSound(addr, val);
@@ -152,22 +166,22 @@ public class SoundTMS9919B extends SoundTMS9919 {
 	protected void updateVoice(ClockedSoundVoice v, byte val) {
 		super.updateVoice(v, val);
 		if ((val & 0x90) == 0x90) { 
-			EnhancedVoice voice = (EnhancedVoice) sound_voices[cvoice];
+			EnhancedVoice voice = (EnhancedVoice) sound_voices[cmdVoice];
 			byte vol = ((ClockedSoundVoice) voice).getVolume();
 			if (vol == 0)
 				voice.getEffectsController().stopEnvelope();
 			else
-				voice.getEffectsController().startEnvelope();
+				voice.getEffectsController().updateVoice();
 		}
 	}
 	
 	@Override
 	public void tick() {
 		super.tick();
-		
+		/*
 		for (int idx = VOICE_TONE_0; idx <= VOICE_NOISE; idx++) {
 			((EnhancedVoice) sound_voices[idx]).getEffectsController().tick();
-		}
+		}*/
 	}
 	
 }

@@ -28,8 +28,8 @@ public class AudioGateVoice extends SoundVoice {
 	}*/
 	
 	public void generate(int soundClock, int[] soundGeneratorWorkBuffer,
-			int from, int to, int active) {
-		int sampleDelta = volumeToMagntiude24[getVolume()] / active;
+			int from, int to) {
+		int sampleDelta = volumeToMagntiude24[getVolume()];
 		while (from < to) {
 			soundGeneratorWorkBuffer[from++] += sampleDelta;
 		}

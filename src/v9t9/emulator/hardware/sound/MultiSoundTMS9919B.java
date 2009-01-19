@@ -70,15 +70,16 @@ public class MultiSoundTMS9919B implements SoundProvider {
 			int mask = addr & 0x1e;
 			
 			if (mask == 0) {
-				// Main chip.  It only provides audio gate -- if that.
+				// Main chip.
 				chips[0].writeSound(addr, val);
 				return;
 			}
 			
-			int chip = 1 + ((mask - 4) / 4);
+			int chip = 1 + ((mask - 2) / 6);
+			int offs = mask + 6 - 2 - (chip * 6);
 			
 			if (chip < chips.length) {
-				chips[chip].writeSound(addr, val);
+				chips[chip].writeSound(offs, val);
 			
 				soundHandler.updateVoice(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
 			}

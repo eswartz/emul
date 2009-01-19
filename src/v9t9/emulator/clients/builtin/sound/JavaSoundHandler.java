@@ -106,7 +106,7 @@ public class JavaSoundHandler implements SoundHandler {
 		soundQueue = new LinkedBlockingQueue<AudioChunk>();
 		speechQueue = new LinkedBlockingQueue<AudioChunk>();
 
-		stdFormat = new AudioFormat(55900, 8, 2, true, false);
+		stdFormat = new AudioFormat(55930, 8, 2, true, false);
 		Line.Info slInfo = new DataLine.Info(SourceDataLine.class, stdFormat);
 		if (!AudioSystem.isLineSupported(slInfo)) {
 			System.err.println("Line not supported: " + stdFormat);
@@ -154,7 +154,7 @@ public class JavaSoundHandler implements SoundHandler {
 			public void run() {
 				while (true) {
 					AudioChunk chunk = null;
-					
+
 					try {
 						chunk = soundQueue.take();
 					} catch (InterruptedException e2) {
@@ -169,7 +169,7 @@ public class JavaSoundHandler implements SoundHandler {
 					if (chunk.soundToWrite != null) {
 						soundGeneratorLine.write(chunk.soundToWrite, 0,
 								chunk.soundToWrite.length);
-						
+
 						if (soundFos != null) {
 							try {
 								soundFos.write(chunk.soundToWrite, 0,
@@ -189,8 +189,7 @@ public class JavaSoundHandler implements SoundHandler {
 
 		}, "Sound Writing");
 		soundWritingThread.start();
-		
-		
+
 		speechWritingThread = new Thread(new Runnable() {
 
 			public void run() {
@@ -242,14 +241,12 @@ public class JavaSoundHandler implements SoundHandler {
 		soundGeneratorWaveForm = new byte[stdFormat.getFrameSize()
 				* soundFramesPerTick];
 		soundGeneratorWorkBuffer = new int[stdFormat.getFrameSize()
-		                                  * soundFramesPerTick];
+				* soundFramesPerTick];
 		speechWaveForm = new byte[speechFormat.getFrameSize()
 				* speechFramesPerTick];
 		soundClock = (int) stdFormat.getFrameRate();
 
 	}
-
-	
 
 	/*
 	 * (non-Javadoc)
@@ -265,7 +262,7 @@ public class JavaSoundHandler implements SoundHandler {
 				currentPos = 0;
 			// force left channel
 			currentPos &= ~1;
-			//System.out.print(currentPos+" ");
+			// System.out.print(currentPos+" ");
 			updateSoundGenerator(lastUpdatedPos, currentPos);
 			lastUpdatedPos = currentPos;
 		}
@@ -277,84 +274,37 @@ public class JavaSoundHandler implements SoundHandler {
 		if (from >= to)
 			return;
 
-		// System.out.println("Updating " + from + " to " + to);
 		SoundVoice[] vs = sound.getSoundVoices();
 
-		/*
-		int[] voices = new int[vs.length];
-		Arrays.fill(voices, -1);
-		
-		boolean isStereo = sound.isStereo();
-		int vcnt = 0, vcntL = 0, vcntR = 0;
-		for (int vi = 0; vi < vs.length; vi++) {
-			if (vs[vi].getVolume() != 0) {
-				voices[vcnt++] = vi;
-				if (isStereo && (vi & 4) != 0)
-					vcntL++;
-				else
-					vcntR++;
-			}
-		}*/
-		//if (vcnt > 0) 
-		{
-			/*
-			for (int i = from; i < to;) {
-				int sampleL = 0;
-				int sampleR = 0;
-				for (int vidx = 0; vidx < vcnt; vidx++) {
-					int vi = voices[vidx];
-					SoundVoice v = vs[vi];
-					if (isStereo && (vi & 4) != 0) 
-						sampleL = v.generate(soundClock, sampleL);
-					else
-						sampleR = v.generate(soundClock, sampleR);
-				}	
-				if (isStereo) {
-					soundGeneratorWaveForm[i++] = vcntL != 0 ? (byte) ((sampleL / vcntL) >> 16) : 0;
-					soundGeneratorWaveForm[i++] = vcntR != 0 ? (byte) ((sampleR / vcntR) >> 16) : 0;
-				} else {
-					soundGeneratorWaveForm[i++] = (byte) ((sampleR / vcnt) >> 16);
-				}
-			}*/
-			int active = 0;
-			for (SoundVoice v : vs) {
-				if (v.isActive())
-					active++;
-			}
-			for (SoundVoice v : vs) {
-				if (v.isActive())
-					v.generate(soundClock, soundGeneratorWorkBuffer, from, to, active);
-			}
-			
-//		} else {
-	//		if (from < to)
-		//		Arrays.fill(soundGeneratorWorkBuffer, from, to, (byte) 0);
+		int active = 0;
+		for (SoundVoice v : vs) {
+			if (v.isActive())
+				active++;
 		}
+		if (active > 0) {
+			for (SoundVoice v : vs) {
+				if (v.isActive())
+					v.generate(soundClock, soundGeneratorWorkBuffer, from, to);
+			}
+			while (from < to) {
+				soundGeneratorWorkBuffer[from++] /= active;
+			}
+		}
+
 	}
 
 	public void dispose() {
 		if (soundWritingThread != null)
 			soundWritingThread.interrupt();
-		
+
 		if (speechWritingThread != null)
 			speechWritingThread.interrupt();
-		
+
 		if (speechLine != null)
 			speechLine.close();
 		if (soundGeneratorLine != null)
 			soundGeneratorLine.close();
 	}
-
-	// int maxAudioPos;
-	/*
-	public void audioGate(boolean on, int pos, int total) {
-		if (soundGeneratorWaveForm != null && on) {
-			int idx = (int) ((long) pos * (soundFramesPerTick - 1) / total);
-			if (idx >= soundGeneratorWaveForm.length)
-				idx = soundGeneratorWaveForm.length - 1;
-			soundGeneratorWaveForm[idx] |= (byte) 0x80;
-		}
-	}*/
 
 	public synchronized void speech(short sample) {
 		if (speechWaveForm != null) {
@@ -381,33 +331,28 @@ public class JavaSoundHandler implements SoundHandler {
 		// hmm, it would be nice if the audio gate could work perfectly,
 		// but the calculations of its data have assumed the "limit" would
 		// match reality, when sometimes the tick comes earlier or later.
-		//int length = lastUpdatedPos;
+		// int length = lastUpdatedPos;
 		/*
-		int length = (int) ((long)pos * soundGeneratorWaveForm.length / limit);
-		if (length < lastUpdatedPos)
-			length = lastUpdatedPos;
-		if (length > soundGeneratorWaveForm.length)
-			length = soundGeneratorWaveForm.length;
-					byte[] part = new byte[length];
-		System.arraycopy(soundGeneratorWaveForm, 0, part, 0, length);
-		Arrays.fill(soundGeneratorWaveForm, (byte) 0);
-		soundQueue.add(new AudioChunk(part,
-				null, null));
+		 * int length = (int) ((long)pos soundGeneratorWaveForm.length / limit);
+		 * if (length < lastUpdatedPos) length = lastUpdatedPos; if (length >
+		 * soundGeneratorWaveForm.length) length =
+		 * soundGeneratorWaveForm.length; byte[] part = new byte[length];
+		 * System.arraycopy(soundGeneratorWaveForm, 0, part, 0, length);
+		 * Arrays.fill(soundGeneratorWaveForm, (byte) 0); soundQueue.add(new
+		 * AudioChunk(part, null, null));
+		 */
 
-			*/
-		
 		int length = soundGeneratorWaveForm.length;
 		updateSoundGenerator(lastUpdatedPos, length);
 		lastUpdatedPos = 0;
-		
+
 		for (int i = 0; i < length; i++) {
 			soundGeneratorWaveForm[i] = (byte) (soundGeneratorWorkBuffer[i] >> 16);
 		}
 		Arrays.fill(soundGeneratorWorkBuffer, 0);
-		
+
 		try {
-			soundQueue.put(new AudioChunk(soundGeneratorWaveForm,
-					null, null));
+			soundQueue.put(new AudioChunk(soundGeneratorWaveForm, null, null));
 		} catch (InterruptedException e) {
 		}
 		soundGeneratorWaveForm = new byte[soundGeneratorWaveForm.length];
@@ -421,7 +366,7 @@ public class JavaSoundHandler implements SoundHandler {
 				speechQueue.put(new AudioChunk(null, null, speechWaveForm));
 			} catch (InterruptedException e) {
 			}
-			
+
 			speechWaveForm = new byte[speechWaveForm.length];
 		}
 	}

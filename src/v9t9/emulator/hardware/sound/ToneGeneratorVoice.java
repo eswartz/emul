@@ -9,7 +9,7 @@ import v9t9.utils.Utils;
 
 public class ToneGeneratorVoice extends ClockedSoundVoice
 {
-	private boolean out;
+	protected boolean out;
 	public ToneGeneratorVoice(String name, int number) {
 		super((name != null ? name + " " : "") + "Voice " + number);
 	}
@@ -54,18 +54,22 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 	
 	@Override
 	public void generate(int soundClock, int[] soundGeneratorWorkBuffer,
-			int from, int to, int active) {
+			int from, int to) {
 		int sampleL, sampleR;
-		sampleMagnitude = getCurrentMagnitude();
-		int ratio = 128 + balance;
-		sampleL = ((255 - ratio) * sampleMagnitude / active) >> 8;
-		sampleR = (ratio * sampleMagnitude / active) >> 8;
+		
 		while (from < to) {
-			if (updateMagnitude()) {
-				ratio = 128 + balance;
-				sampleL = ((255 - ratio) * sampleMagnitude / active) >> 8;
-				sampleR = (ratio * sampleMagnitude / active) >> 8;
-			}
+			updateEffect();
+			updateDivisor();
+			
+			int sampleMagnitude = getCurrentMagnitude();
+			int ratio = 128 + balance;
+			sampleL = ((255 - ratio) * sampleMagnitude) >> 8;
+			sampleR = (ratio * sampleMagnitude) >> 8;
+			
+			soundGeneratorWorkBuffer[from++] += sampleL;
+			soundGeneratorWorkBuffer[from++] += sampleR;
+			
+			/*
 			if (!out) {
 				soundGeneratorWorkBuffer[from++] += sampleL;
 				soundGeneratorWorkBuffer[from++] += sampleR;
@@ -73,7 +77,7 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 				soundGeneratorWorkBuffer[from++] -= sampleL;
 				soundGeneratorWorkBuffer[from++] -= sampleR;
 			}
-			updateDivisor();
+			*/
 			
 			// this loop usually executes only once
 			while (div >= soundClock) {
@@ -81,6 +85,12 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 				div -= soundClock;
 			}
 		}
+	}
+	
+	@Override
+	public int getCurrentMagnitude() {
+		int mag = super.getCurrentMagnitude();
+		return out ? mag : -mag;
 	}
 	
 	@Override
