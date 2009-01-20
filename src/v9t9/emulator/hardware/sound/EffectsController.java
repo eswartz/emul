@@ -217,6 +217,11 @@ public class EffectsController {
 				vibratoClock -= SOUND_CLOCK * 16;
 		}
 		voice.accum += voice.incr + vib;
+		
+		if (voice.period > 0)
+			voice.clock = (voice.clock + 1) % voice.period;
+		else
+			voice.clock = 0;
 		//while (voice.div < 0)
 		//	voice.div += soundClock;
 	}
@@ -236,58 +241,75 @@ public class EffectsController {
 			}
 		}
 		
-		if (voice instanceof ToneGeneratorVoice) {
+		if (voice.period > 0 && voice instanceof ToneGeneratorVoice) {
 			ToneGeneratorVoice toneGen = (ToneGeneratorVoice) voice;
-			int half = SOUND_CLOCK / 2;
-			int quarter = SOUND_CLOCK / 4;
+			//int half = SOUND_CLOCK / 2;
+			//int quarter = SOUND_CLOCK / 4;
+			
+			int half = (voice.period / 2);
+			int quarter = voice.period / 4;
+			
+			int ang = voice.clock * sines.length / voice.period;
+			if (ang < 0) ang += sines.length; else if (ang >= sines.length) ang -= sines.length;
+			
 			switch (waveform) {
 			case 0:
 			default:
 				if (toneGen.out)
 					basic = -basic;
 				break;
-			case 1:
+			case 1: {
 				// sawtooth
-				basic = (int) (((long)basic * voice.accum ) / half );		
+				basic = (int) (((long)basic * voice.clock ) / voice.period - basic / 2 ) * 2;		
 				break;
+			}
 			case 2:
 				// triangle
-				if (voice.accum < half)
-					basic = (int) ((long)basic * voice.accum / quarter - basic);
+				if (voice.clock <= half)
+					basic = (int) ((long)basic * voice.clock / quarter - basic);
 				else
-					basic = (int) ((long)basic * (SOUND_CLOCK - voice.accum) / quarter - basic);
+					basic = (int) ((long)basic * (voice.period - voice.clock) / quarter - basic);
 				break;
 			case 3: {
 				// sine
-				int ang = voice.accum * sines.length / SOUND_CLOCK;
 				if (ang < 0) ang += sines.length; else if (ang >= sines.length) ang -= sines.length;
 				basic = (int) ((long) basic * sines[ang] / 32768);
 				break;
 			}
 			case 4:
 				// half saw
-				if (voice.accum < half)
-					basic = (int) (((long)basic * voice.accum ) / half );	
+				if (voice.clock < half)
+					basic = (int) (((long)basic * voice.clock ) / half - basic / 2 ) * 2;	
 				else
 					basic = 0;
 				break;
 			case 5: {
-				// abs sine
-				int ang = voice.accum * sines.length / SOUND_CLOCK;
-				if (ang < 0) ang += sines.length; else if (ang >= sines.length) ang -= sines.length;
-				basic = (int) ((long) basic * Math.abs(sines[ang]) / 32768);
+				// half sine
+				int sin = sines[ang];
+				if (sin > 0)
+					basic = (int) ((long) basic * sin / 32768);
+				else
+					basic = 0;
 				break;
 			}
 			case 6:
 				// half triangle
-				if (voice.accum >= quarter && voice.accum < half + quarter) {
-					if (voice.accum < half)
-						basic = (int) ((long)basic * voice.accum / quarter - basic);
+				if (voice.clock >= quarter && voice.clock < quarter + half) {
+					if (voice.clock <= half)
+						basic = (int) ((long)basic * voice.clock / quarter- basic);
 					else
-						basic = (int) ((long)basic * (SOUND_CLOCK - voice.accum) / quarter - basic);
+						basic = (int) ((long)basic * (voice.period - voice.clock) / quarter - basic);
 				}
 				else
 					basic = 0;
+				break;
+			case 7:
+				// tangent
+				int cang = (ang + sines.length / 4) % sines.length;
+				int sin = sines[ang];
+				int cos = sines[cang];
+				if (cos != 0) 
+					basic = (int) ((long) basic * sin / cos / 2);
 				break;
 			}
 			

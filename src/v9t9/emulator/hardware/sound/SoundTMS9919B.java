@@ -34,6 +34,8 @@ import v9t9.utils.Utils;
    		0100 = set vibrato			(argument: amount | rate)
    		0101 = set tremolo			(argument: amount | rate)
    		
+   		0110 = set waveform			(argument: wave)
+   		
    		1111 = indicate note release (argument ignored)
 		
 	Envelopes
@@ -73,6 +75,18 @@ import v9t9.utils.Utils;
 		
 		Amount is a 4-bit field controlling from 1 to 15 cycles (dependent on pitch).
 		Rate is a 4-bit field controlling the speed.
+		
+	Waveform
+	
+		0 = square
+		1 = saw
+		2 = triangle
+		3 = sine
+		4 = half-saw
+		5 = half-triangle
+		6 = half-sine
+		7 = tangent
+		
  * </pre>
  * @author ejs
  *

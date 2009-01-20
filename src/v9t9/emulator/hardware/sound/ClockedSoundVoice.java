@@ -15,6 +15,7 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	
 	protected int		period, hertz;	// calculated from OPERATION_FREQUENCY_xxx
 	
+	protected int		clock;			// clock, stepping from 0 to period
 	protected int		accum;			// current accumulator, tracking the clock
 	protected int		incr;			// amount to add to the div per clock
 
@@ -64,6 +65,10 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	
 	protected void updateAccumulator() {
 		accum += incr;
+		if (period > 0)
+			clock = (clock + 1) % period;
+		else
+			clock = 0;
 	}
 	
 	protected void updateEffect() {
@@ -75,7 +80,8 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		operation[0] = (byte) Utils.readSavedInt(settings, "Op1");
 		operation[1] = (byte) Utils.readSavedInt(settings, "Op2");
 		operation[2] = (byte) Utils.readSavedInt(settings, "Op3");
-		accum = (byte) Utils.readSavedInt(settings, "Accumulator");
+		accum = Utils.readSavedInt(settings, "Accumulator");
+		clock = Utils.readSavedInt(settings, "Clock");
 	}
 	
 	@Override
@@ -85,5 +91,6 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		settings.put("Op2", operation[1]);
 		settings.put("Op3", operation[2]);
 		settings.put("Accumulator", accum);
+		settings.put("Clock", clock);
 	}
 }
