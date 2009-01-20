@@ -160,6 +160,9 @@ public class JavaSoundHandler implements SoundHandler {
 					} catch (InterruptedException e2) {
 						return;
 					}
+					
+					if (soundGeneratorLine == null)
+						return;
 
 					// toss extra chunks if too many arrive
 					while (chunk != null && soundQueue.size() > 2) {
@@ -201,6 +204,9 @@ public class JavaSoundHandler implements SoundHandler {
 						return;
 					}
 
+					if (speechLine == null)
+						return;
+					
 					if (chunk.speechToWrite != null) {
 						speechLine.write(chunk.speechToWrite, 0,
 								chunk.speechToWrite.length);
@@ -294,16 +300,33 @@ public class JavaSoundHandler implements SoundHandler {
 	}
 
 	public void dispose() {
-		if (soundWritingThread != null)
-			soundWritingThread.interrupt();
-
-		if (speechWritingThread != null)
-			speechWritingThread.interrupt();
-
-		if (speechLine != null)
+		if (speechLine != null) {
 			speechLine.close();
-		if (soundGeneratorLine != null)
+			speechLine = null;
+		}
+		if (soundGeneratorLine != null) {
 			soundGeneratorLine.close();
+			soundGeneratorLine = null;
+		}
+		
+		if (soundWritingThread != null) {
+			soundWritingThread.interrupt();
+			try {
+				soundWritingThread.join();
+			} catch (InterruptedException e) {
+				
+			}
+		}
+
+		if (speechWritingThread != null) {
+			speechWritingThread.interrupt();
+			try {
+				speechWritingThread.join();
+			} catch (InterruptedException e) {
+				
+			}
+		}
+
 	}
 
 	public synchronized void speech(short sample) {

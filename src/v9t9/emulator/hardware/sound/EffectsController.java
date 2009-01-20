@@ -26,9 +26,9 @@ public class EffectsController {
 		OP_RELEASE = 3;
 	final static int tickTimes[] = {
 		0, 5, 10, 15,
-		20, 25, 30, 35,
-		50, 100, 200, 400,
-		800, 1600, 3200, 6400
+		20, 30, 40, 50,
+		60, 75, 100, 200,
+		400, 800, 1600, 3200
 	};
 	
 	final static short sines[] = new short[256];
@@ -143,14 +143,14 @@ public class EffectsController {
 
 	private synchronized void nextADHR() {
 		int ticks1000;
-		do {
+		//do {
 			ticks1000 = getEnvelopePortionTime();
-			if (ticks1000 == 0) {
-				index++;
-			} else {
-				break;
-			}
-		} while (index < OP_RELEASE);
+		//	if (ticks1000 == 0) {
+		//		index++;
+		//	} else {
+		//		break;
+		//	}
+		//} while (index < OP_RELEASE);
 		
 		int fromVolume = 0, targetVolume = 0;
 		
@@ -189,7 +189,10 @@ public class EffectsController {
 		timeout = (int) ((long)ticks1000 * SOUND_CLOCK / 1000); 
 		clock = 0;
 		volume = fromVolume;
-		voldelta = (targetVolume - fromVolume) / timeout;
+		if (timeout > 0)
+			voldelta = (targetVolume - fromVolume) / timeout;
+		else
+			voldelta = 0;
 		
 		if (DUMP)
 			System.out.println(voice.getName() + ": ADHR#"+ index+

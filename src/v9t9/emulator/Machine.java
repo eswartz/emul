@@ -326,9 +326,19 @@ abstract public class Machine {
 		bAlive = false;
 		machineRunner.interrupt();
 		videoRunner.interrupt();
-        timer.cancel();
+		timer.cancel();
         cpuTimer.cancel();
         videoTimer.cancel();
+		try {
+			videoRunner.join();
+		} catch (InterruptedException e) {
+		}
+		try {
+			machineRunner.join();
+		} catch (InterruptedException e) {
+			
+		}
+        
         getSound().getSoundHandler().dispose();
 	}
     

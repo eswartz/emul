@@ -95,11 +95,9 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 			int sampleL = 0;
 			int sampleR = 0;
 			
-			if (ns1 <= 1) {
-				sampleMagnitude = getCurrentMagnitude();
-				sampleL = ((256 - ratio) * sampleMagnitude) >> 8;
-				sampleR = (ratio * sampleMagnitude) >> 8;
-			}
+			sampleMagnitude = getCurrentMagnitude();
+			sampleL = ((256 - ratio) * sampleMagnitude) >> 8;
+			sampleR = (ratio * sampleMagnitude) >> 8;
 			updateAccumulator();
 			
 			if (isWhite) {
