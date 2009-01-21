@@ -629,7 +629,7 @@ static void process_exited(ChildProcess * prs) {
     list_remove(&prs->link);
     close(prs->inp);
     close(prs->out);
-    close(prs->err);
+    if (prs->out != prs->err) close(prs->err);
     loc_free(prs);
 #if defined(_WRS_KERNEL)
     semGive(prs_list_lock);
@@ -913,7 +913,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
     return -1;
 }
 
-#else
+#elif USE_PIPES
 
 static int start_process(Channel * c, char ** envp, char * dir, char * exe, char ** args, int attach,
                 int * pid, int * selfattach, ChildProcess ** prs) {
@@ -984,6 +984,65 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
     return -1;
 }
 
+#else
+
+static int start_process(Channel * c, char ** envp, char * dir, char * exe, char ** args, int attach,
+                int * pid, int * selfattach, ChildProcess ** prs) {
+    int err = 0;
+    int fd_tty_master = -1;
+    char * tty_slave_name = NULL;
+
+    fd_tty_master = posix_openpt(O_RDWR|O_NOCTTY);
+    if (fd_tty_master < 0 || grantpt(fd_tty_master) < 0 ||
+        unlockpt(fd_tty_master) < 0 || (tty_slave_name = ptsname(fd_tty_master)) == NULL) err = errno;
+
+    if (err == 0 && fd_tty_master < 3) {
+        int fd0 = fd_tty_master;
+        if ((fd_tty_master = dup(fd_tty_master)) < 0 || close(fd0)) err = errno;
+    }
+
+    if (!err) {
+        *pid = fork();
+        if (*pid < 0) err = errno;
+        if (*pid == 0) {
+            int fd = -1;
+            int fd_tty_slave = -1;
+
+            setsid();
+            if (!err && (fd = sysconf(_SC_OPEN_MAX)) < 0) err = errno;
+            if (!err && (fd_tty_slave = open(tty_slave_name, O_RDWR)) < 0) err = errno;
+            if (!err && dup2(fd_tty_slave, 0) < 0) err = errno;
+            if (!err && dup2(fd_tty_slave, 1) < 0) err = errno;
+            if (!err && dup2(fd_tty_slave, 2) < 0) err = errno;
+            while (!err && fd > 3) close(--fd);
+            if (!err && attach && context_attach_self() < 0) err = errno;
+            if (!err) {
+                execve(exe, args, envp);
+                err = errno;
+            }
+            if (!attach) err = 1;
+            else if (err < 1) err = EINVAL;
+            else if (err > 0xff) err = EINVAL;
+            exit(err);
+        }
+    }
+    if (!err) {
+        *prs = loc_alloc_zero(sizeof(ChildProcess));
+        (*prs)->inp = fd_tty_master;
+        (*prs)->out = fd_tty_master;
+        (*prs)->err = fd_tty_master;
+        (*prs)->pid = *pid;
+        (*prs)->bcg = c->bcg;
+        list_add_first(&(*prs)->link, &prs_list);
+    }
+
+    *selfattach = 1;
+
+    if (!err) return 0;
+    errno = err;
+    return -1;
+}
+
 #endif
 
 static void command_start(char * token, Channel * c) {
@@ -1018,7 +1077,7 @@ static void command_start(char * token, Channel * c) {
         if (err == 0 && start_process(c, envp, dir, exe, args, attach, &pid, &selfattach, &prs) < 0) err = errno;
         if (prs != NULL) {
             read_process_output(prs, 0);
-            read_process_output(prs, 1);
+            if (prs->out != prs->err) read_process_output(prs, 1);
         }
         if (attach && !err) {
             AttachDoneArgs * data = loc_alloc_zero(sizeof *data);

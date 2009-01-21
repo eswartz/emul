@@ -120,7 +120,7 @@ static void write_line_info(OutputStream * out, CompUnit * unit,
     for (i = 0; i < unit->mStatesCnt - 1; i++) {
         LineNumbersState * state = unit->mStates + i;
         LineNumbersState * next = unit->mStates + i + 1;
-        if (state->mEndSequence) continue;
+        if (state->mFlags & LINE_EndSequence) continue;
         if (next->mAddress > addr0 && state->mAddress < addr1) {
             if (*cnt > 0) write_stream(out, ',');
             write_stream(out, '{');
@@ -172,29 +172,29 @@ static void write_line_info(OutputStream * out, CompUnit * unit,
                 write_stream(out, ':');
                 json_write_ulong(out, state->mISA);
             }
-            if (state->mIsStmt) {
+            if (state->mFlags & LINE_IsStmt) {
                 write_stream(out, ',');
                 json_write_string(out, "IsStmt");
                 write_stream(out, ':');
-                json_write_boolean(out, state->mIsStmt);
+                json_write_boolean(out, 1);
             }
-            if (state->mBasicBlock) {
+            if (state->mFlags & LINE_BasicBlock) {
                 write_stream(out, ',');
                 json_write_string(out, "BasicBlock");
                 write_stream(out, ':');
-                json_write_boolean(out, state->mBasicBlock);
+                json_write_boolean(out, 1);
             }
-            if (state->mPrologueEnd) {
+            if (state->mFlags & LINE_PrologueEnd) {
                 write_stream(out, ',');
                 json_write_string(out, "PrologueEnd");
                 write_stream(out, ':');
-                json_write_boolean(out, state->mPrologueEnd);
+                json_write_boolean(out, 1);
             }
-            if (state->mEpilogueBegin) {
+            if (state->mFlags & LINE_EpilogueBegin) {
                 write_stream(out, ',');
                 json_write_string(out, "EpilogueBegin");
                 write_stream(out, ':');
-                json_write_boolean(out, state->mEpilogueBegin);
+                json_write_boolean(out, 1);
             }
             write_stream(out, '}');
             (*cnt)++;
@@ -241,7 +241,7 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineT
                                 LineNumbersState * next = unit->mStates + j + 1;
                                 char * state_dir = unit->mDir;
                                 char * state_name = unit->mName;
-                                if (state->mEndSequence) continue;
+                                if (state->mFlags & LINE_EndSequence) continue;
                                 if ((unsigned)line < state->mLine) continue;
                                 if ((unsigned)line >= next->mLine) continue;
                                 if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {

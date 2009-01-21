@@ -1518,25 +1518,40 @@ int context_stop(Context * ctx) {
     return 0;
 }
 
-int context_continue(Context * ctx) {
-    int signal = 0;
-    while (ctx->pending_signals != 0) {
-        while ((ctx->pending_signals & (1 << signal)) == 0) signal++;
-        if (ctx->sig_dont_pass & (1 << signal)) {
-            ctx->pending_signals &= ~(1 << signal);
-            signal = 0;
-        }
-        else {
-            break;
+static int syscall_never_returns(Context * ctx) {
+    if (ctx->syscall_enter) {
+        switch (ctx->syscall_id) {
+        case __NR_sigreturn:
+            return 1;
         }
     }
-    assert(signal != SIGSTOP);
-    assert(signal != SIGTRAP);
+    return 0;
+}
+
+int context_continue(Context * ctx) {
+    int signal = 0;
+
     assert(is_dispatch_thread());
     assert(ctx->stopped);
     assert(!ctx->pending_intercept);
     assert(!ctx->pending_step);
     assert(!ctx->exited);
+
+    if (!ctx->syscall_enter) {
+        while (ctx->pending_signals != 0) {
+            while ((ctx->pending_signals & (1 << signal)) == 0) signal++;
+            if (ctx->sig_dont_pass & (1 << signal)) {
+                ctx->pending_signals &= ~(1 << signal);
+                signal = 0;
+            }
+            else {
+                break;
+            }
+        }
+        assert(signal != SIGSTOP);
+        assert(signal != SIGTRAP);
+    }
+
     trace(LOG_CONTEXT, "context: resuming ctx %#x, pid %d, with signal %d", ctx, ctx->pid, signal);
 #ifdef __i386__
     /* Bug in ptrace: trap flag is not cleared after single step */
@@ -1578,6 +1593,11 @@ int context_continue(Context * ctx) {
         return -1;
     }
     ctx->pending_signals &= ~(1 << signal);
+    if (syscall_never_returns(ctx)) {
+        ctx->syscall_enter = 0;
+        ctx->syscall_exit = 0;
+        ctx->syscall_id = 0;
+    }
     ctx->stopped = 0;
     event_context_started(ctx);
     return 0;
@@ -1589,6 +1609,7 @@ int context_single_step(Context * ctx) {
     assert(!ctx->pending_intercept);
     assert(!ctx->pending_step);
     assert(!ctx->exited);
+    if (syscall_never_returns(ctx)) return context_continue(ctx);
     trace(LOG_CONTEXT, "context: single step ctx %#x, pid %d", ctx, ctx->pid);
     if (ctx->regs_dirty) {
         if (ptrace(PTRACE_SETREGS, ctx->pid, 0, &ctx->regs) < 0) {
@@ -1879,6 +1900,7 @@ process_event:
             ctx2->mem = ctx2->pid;
         }
         assert(ctx2->mem != 0);
+        ctx2->syscall_enter = 1;
         event_context_created(ctx2);
         break;
 
@@ -1927,15 +1949,17 @@ process_event:
         if (info->syscall && !ctx->regs_error) {
             if (!ctx->syscall_enter) {
                 ctx->syscall_id = get_syscall_id(ctx);
+                ctx->syscall_pc = get_regs_PC(ctx->regs);
                 ctx->syscall_enter = 1;
                 ctx->syscall_exit = 0;
                 trace(LOG_EVENTS, "event: pid %d enter sys call %d, PC = %d (0x%08x)",
-                    ctx->pid, ctx->syscall_id, get_regs_PC(ctx->regs), get_regs_PC(ctx->regs));
+                    ctx->pid, ctx->syscall_id, ctx->syscall_pc, ctx->syscall_pc);
             }
             else {
-                assert(pc0 == get_regs_PC(ctx->regs));
-                ctx->syscall_enter = 0;
-                ctx->syscall_exit = 1;
+                if (ctx->syscall_pc != get_regs_PC(ctx->regs)) {
+                    trace(LOG_ALWAYS, "Invalid PC at sys call exit: pid %d, sys call %d, PC %d (0x%08x), expected PC %d (0x%08x)",
+                        ctx->pid, ctx->syscall_id, get_regs_PC(ctx->regs), get_regs_PC(ctx->regs), ctx->syscall_pc, ctx->syscall_pc);
+                }
                 trace(LOG_EVENTS, "event: pid %d exit sys call %d, PC = %d (0x%08x)",
                     ctx->pid, ctx->syscall_id, get_regs_PC(ctx->regs), get_regs_PC(ctx->regs));
                 switch (ctx->syscall_id) {
@@ -1947,12 +1971,16 @@ process_event:
                     event_context_changed(ctx);
                     break;
                 }
+                ctx->syscall_enter = 0;
+                ctx->syscall_exit = 1;
             }
         }
         else {
             if (!ctx->syscall_enter || ctx->regs_error || pc0 != get_regs_PC(ctx->regs)) {
                 ctx->syscall_enter = 0;
                 ctx->syscall_exit = 0;
+                ctx->syscall_id = 0;
+                ctx->syscall_pc = 0;
             }
             trace(LOG_EVENTS, "event: pid %d stopped at PC = %d (0x%08x)",
                 ctx->pid, get_regs_PC(ctx->regs), get_regs_PC(ctx->regs));

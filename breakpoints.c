@@ -422,7 +422,7 @@ static void address_expression_error(BreakpointInfo * bp) {
     char * err_txt;
     assert(errno != 0);
     if (bp->error) return;
-    bp->error = errno;
+    bp->error = get_exception_errno();
     err_txt = errno_to_str(errno);
     size = strlen(bp->address) + strlen(err_txt) + 128;
     assert(bp->err_msg == NULL);

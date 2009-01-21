@@ -87,6 +87,7 @@ struct Context {
     int                 syscall_enter;
     int                 syscall_exit;
     int                 syscall_id;
+    ContextAddress      syscall_pc;
     int                 end_of_step;
 #endif
 #if ENABLE_ELF

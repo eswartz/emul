@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007-2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -532,7 +532,7 @@ static void identifier(char * name, Value * v) {
                 return;
             case SYM_CLASS_REFERENCE:
                 v->remote = 1;
-                if (get_symbol_size(&sym, &v->size) < 0) {
+                if (get_symbol_size(&sym, expression_frame, &v->size) < 0) {
                     error(errno, "Cannot retrieve symbol size");
                 }
                 if (get_symbol_address(&sym, expression_frame, &v->address) < 0) {
@@ -761,7 +761,7 @@ static void op_deref(int mode, Value * v) {
     if (get_symbol_type_class(&v->type, &v->type_class) < 0) {
         error(errno, "Cannot retrieve symbol type class");
     }
-    if (get_symbol_size(&v->type, &v->size) < 0) {
+    if (get_symbol_size(&v->type, expression_frame, &v->size) < 0) {
         error(errno, "Cannot retrieve symbol size");
     }
     v->value = NULL;
@@ -814,7 +814,7 @@ static void op_field(int mode, Value * v) {
         if (sym.sym_class != SYM_CLASS_REFERENCE) {
             error(ERR_UNSUPPORTED, "Invalid symbol class");
         }
-        if (get_symbol_size(&sym, &size) < 0) {
+        if (get_symbol_size(&sym, expression_frame, &size) < 0) {
             error(errno, "Cannot retrieve field size");
         }
         if (get_symbol_offset(&sym, &offs) < 0) {
@@ -872,7 +872,7 @@ static void op_index(int mode, Value * v) {
     if (get_symbol_base_type(&v->type, &type) < 0) {
         error(errno, "Cannot get array element type");
     }
-    if (get_symbol_size(&type, &size) < 0) {
+    if (get_symbol_size(&type, expression_frame, &size) < 0) {
         error(errno, "Cannot get array element type");
     }
     /* TODO: array lowest bound */
@@ -1587,7 +1587,7 @@ static int expression_context_id(char * id, char * parent, Context ** ctx, int *
     return 0;
 }
 
-static void write_context(OutputStream * out, char * id, char * parent, char * name, Symbol * sym, Expression * expr) {
+static void write_context(OutputStream * out, char * id, char * parent, int frame, char * name, Symbol * sym, Expression * expr) {
     write_stream(out, '{');
     json_write_string(out, "ID");
     write_stream(out, ':');
@@ -1663,7 +1663,7 @@ static void write_context(OutputStream * out, char * id, char * parent, char * n
             json_write_string(out, symbol2id(&type));
         }
 
-        if (get_symbol_size(sym, &size) == 0) {
+        if (get_symbol_size(sym, frame, &size) == 0) {
             write_stream(out, ',');
 
             json_write_string(out, "Size");
@@ -1708,7 +1708,7 @@ static void command_get_context(char * token, Channel * c) {
         write_stringz(&c->out, "null");
     }
     else {
-        write_context(&c->out, id, parent, name, &sym, expr);
+        write_context(&c->out, id, parent, frame, name, &sym, expr);
         write_stream(&c->out, 0);
     }
 
@@ -1815,6 +1815,7 @@ static void command_create(char * token, Channel * c) {
     char language[256];
     char * script;
     int err = 0;
+    int frame = STACK_NO_FRAME;
     Expression * e;
 
     json_read_string(&c->inp, parent, sizeof(parent));
@@ -1835,7 +1836,6 @@ static void command_create(char * token, Channel * c) {
 
     if (!err) {
         Context * ctx = NULL;
-        int frame = 0;
         Value value;
         if ((ctx = id2ctx(parent)) != NULL) {
             frame = STACK_TOP_FRAME;
@@ -1866,7 +1866,7 @@ static void command_create(char * token, Channel * c) {
     else {
         list_add_last(&e->link_all, &expressions);
         list_add_last(&e->link_id, id2exp + expression_hash(e->id));
-        write_context(&c->out, e->id, parent, NULL, NULL, e);
+        write_context(&c->out, e->id, parent, frame, NULL, NULL, e);
         write_stream(&c->out, 0);
     }
 

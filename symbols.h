@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007-2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -99,7 +99,7 @@ extern int get_symbol_type_class(const Symbol * sym, int * type_class);
 extern int get_symbol_name(const Symbol * sym, char ** name);
 
 /* Get value size of the type, in bytes */
-extern int get_symbol_size(const Symbol * sym, size_t * size);
+extern int get_symbol_size(const Symbol * sym, int frame, size_t * size);
 
 /* Get base type ID */
 extern int get_symbol_base_type(const Symbol * sym, Symbol * base_type);
@@ -108,7 +108,7 @@ extern int get_symbol_base_type(const Symbol * sym, Symbol * base_type);
 extern int get_symbol_index_type(const Symbol * sym, Symbol * index_type);
 
 /* Get array length (number of elements) */
-extern int get_symbol_length(const Symbol * sym, unsigned long * length);
+extern int get_symbol_length(const Symbol * sym, int frame, unsigned long * length);
 
 /* Get children type IDs (struct, union, class, function and enum), clients should call loc_free to dispose resul */
 extern int get_symbol_children(const Symbol * sym, Symbol ** children, int * count);

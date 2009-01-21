@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007-2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -148,8 +148,8 @@ static int find_in_sym_table(DWARFCache * cache, Context * ctx, char * name, Sym
     unsigned m = 0;
     unsigned h = calc_symbol_name_hash(name);
     SymLocation * loc = (SymLocation *)sym->location;
-    while (m < cache->sym_sections_cnt) {
-        SymbolSection * tbl = cache->sym_sections[m];
+    while (m < cache->mSymSectionsCnt) {
+        SymbolSection * tbl = cache->mSymSections[m];
         unsigned n = tbl->mSymbolHash[h];
         while (n) {
             if (cache->mFile->elf64) {
@@ -281,7 +281,7 @@ static void enumerate_local_vars(Context * ctx, ObjectInfo * obj, ContextAddress
         case TAG_formal_parameter:
         case TAG_local_variable:
         case TAG_variable:
-            if (level > 0) {
+            if (level > 0 && obj->mName != NULL) {
                 object2symbol(ctx, obj, &sym);
                 call_back(args, obj->mName, &sym);
             }
@@ -438,8 +438,8 @@ int id2symbol(char * id, Symbol * sym) {
             if (loc->obj == NULL) exception(ERR_INV_CONTEXT);
         }
         if (tbl_index) {
-            if (tbl_index > cache->sym_sections_cnt) exception(ERR_INV_CONTEXT);
-            loc->tbl = cache->sym_sections[tbl_index - 1];
+            if (tbl_index > cache->mSymSectionsCnt) exception(ERR_INV_CONTEXT);
+            loc->tbl = cache->mSymSections[tbl_index - 1];
         }
         clear_trap(&trap);
         return 0;
@@ -652,51 +652,54 @@ int get_symbol_name(const Symbol * sym, char ** name) {
     return 0;
 }
 
-int get_symbol_size(const Symbol * sym, size_t * size) {
+static U8_T get_object_length(Context * ctx, ObjectInfo * obj, int frame) {
+    if (obj->mLength.mForm != 0) {
+        return evaluate_dynamic_property(ctx, frame, obj, &obj->mLength);
+    }
+    if (obj->mLowBound.mForm != 0 && obj->mUpperBound.mForm != 0) {
+        return evaluate_dynamic_property(ctx, frame, obj, &obj->mUpperBound) -
+            evaluate_dynamic_property(ctx, frame, obj, &obj->mLowBound) + 1;
+    }
+    return 0;
+}
+
+int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
     if (((SymLocation *)sym->location)->pointer) {
         *size = sizeof(void *);
         return 0;
     }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL) {
-        if (sym->sym_class == SYM_CLASS_REFERENCE && obj->mSize == 0 && obj->mType != NULL) obj = obj->mType;
-        while (obj->mSize == 0 && obj->mType != NULL) {
-            if (obj->mTag != TAG_typedef &&
-                obj->mTag != TAG_enumeration_type)
-                break;
+        size_t length = 1;
+        Trap trap;
+        if (!set_trap(&trap)) return -1;
+        if (sym->sym_class == SYM_CLASS_REFERENCE && obj->mSize.mForm == 0 && obj->mType != NULL) obj = obj->mType;
+        while (obj->mSize.mForm == 0 && obj->mType != NULL) {
+            if (obj->mTag != TAG_typedef && obj->mTag != TAG_enumeration_type) break;
             obj = obj->mType;
         }
         if (obj->mTag == TAG_array_type) {
             int i = dimension;
-            unsigned length = 1;
             ObjectInfo * idx = obj->mChildren;
             while (i > 0 && idx != NULL) {
                 idx = idx->mSibling;
                 i--;
             }
-            if (idx == NULL) {
-                errno = ERR_INV_CONTEXT;
-                return -1;
-            }
+            if (idx == NULL) exception(ERR_INV_CONTEXT);
             while (idx != NULL) {
-                length *= idx->mLength;
+                length *= (size_t)get_object_length(sym->ctx, idx, frame);
                 idx = idx->mSibling;
             }
-            if (obj->mType != NULL) {
+            if (obj->mType == NULL) exception(ERR_INV_CONTEXT);
+            obj = obj->mType;
+            while (obj->mSize.mForm == 0 && obj->mType != NULL) {
+                if (obj->mTag != TAG_typedef && obj->mTag != TAG_enumeration_type) break;
                 obj = obj->mType;
-                while (obj->mSize == 0 && obj->mType != NULL) {
-                    if (obj->mTag != TAG_typedef &&
-                        obj->mTag != TAG_enumeration_type)
-                        break;
-                    obj = obj->mType;
-                }
-                *size = (size_t)(length * obj->mSize);
-                return 0;
             }
-            errno = ERR_INV_CONTEXT;
-            return -1;
         }
-        *size = (size_t)obj->mSize;
+        if (obj->mSize.mForm == 0) *size = 0;
+        else *size = length * (size_t)evaluate_dynamic_property(sym->ctx, frame, obj, &obj->mSize);
+        clear_trap(&trap);
     }
     else if (sym32 != NULL) {
         *size = (size_t)sym32->st_size;
@@ -768,7 +771,7 @@ int get_symbol_index_type(const Symbol * sym, Symbol * index_type) {
     return -1;
 }
 
-int get_symbol_length(const Symbol * sym, unsigned long * length) {
+int get_symbol_length(const Symbol * sym, int frame, unsigned long * length) {
     if (((SymLocation *)sym->location)->pointer) {
         *length = 1;
         return 0;
@@ -784,7 +787,10 @@ int get_symbol_length(const Symbol * sym, unsigned long * length) {
                 i--;
             }
             if (idx != NULL) {
-                *length = idx->mLength;
+                Trap trap;
+                if (!set_trap(&trap)) return -1;
+                *length = (unsigned long)get_object_length(sym->ctx, idx, frame);
+                clear_trap(&trap);
                 return 0;
             }
         }
@@ -794,12 +800,12 @@ int get_symbol_length(const Symbol * sym, unsigned long * length) {
 }
 
 int get_symbol_children(const Symbol * sym, Symbol ** children, int * count) {
+    int n = 0;
     if (((SymLocation *)sym->location)->pointer) {
         *children = NULL;
         *count = 0;
         return 0;
     }
-    int n = 0;
     if (unpack(sym) < 0) return -1;
     *children = NULL;
     if (obj != NULL) {
@@ -894,11 +900,11 @@ int get_symbol_pointer(const Symbol * sym, Symbol * ptr) {
         if (unpack(ptr) < 0) return -1;
         obj = get_object_type(obj);
         if (obj != NULL) {
-                object2symbol(ptr->ctx, obj, ptr);
+            object2symbol(ptr->ctx, obj, ptr);
         }
         else {
-                memset(ptr, 0, sizeof(Symbol));
-                ptr->sym_class = SYM_CLASS_TYPE;
+            memset(ptr, 0, sizeof(Symbol));
+            ptr->sym_class = SYM_CLASS_TYPE;
         }
     }
     assert(ptr->sym_class == SYM_CLASS_TYPE);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2006-2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -28,6 +28,7 @@
 typedef struct FileInfo FileInfo;
 typedef struct LocationInfo LocationInfo;
 typedef struct ObjectInfo ObjectInfo;
+typedef struct DynamicProperty DynamicProperty;
 typedef struct LineNumbersState LineNumbersState;
 typedef struct CompUnit CompUnit;
 typedef struct SymbolSection SymbolSection;
@@ -61,6 +62,18 @@ struct LocationInfo {
     U1_T mList;
 };
 
+struct DynamicProperty {
+    union {
+        ObjectInfo * mObj;
+        struct {
+            U1_T * mAddr;
+            size_t mSize;
+        } mExpr;
+        U8_T mValue;
+    } mData;
+    U2_T mForm;
+};
+
 struct ObjectInfo {
     ObjectInfo * mHashNext;
     ObjectInfo * mListNext;
@@ -85,9 +98,10 @@ struct ObjectInfo {
     U1_T mBitStride;
     U1_T mOrdering;
     U2_T mEncoding;
-    U8_T mSize;
-    U4_T mLowBound;
-    U4_T mLength;
+    DynamicProperty mSize;
+    DynamicProperty mLowBound;
+    DynamicProperty mUpperBound;
+    DynamicProperty mLength;
     ObjectInfo * mType;
     ObjectInfo * mSpecification;
     CompUnit * mCompUnit;
@@ -96,17 +110,19 @@ struct ObjectInfo {
     U4_T mDeclLine;
 };
 
+#define LINE_IsStmt         0x01
+#define LINE_BasicBlock     0x02
+#define LINE_PrologueEnd    0x04
+#define LINE_EpilogueBegin  0x08
+#define LINE_EndSequence    0x10
+
 struct LineNumbersState {
-    unsigned mFile;
-    unsigned mLine;
-    unsigned mColumn;
     ContextAddress mAddress;
+    U4_T mFile;
+    U4_T mLine;
+    U2_T mColumn;
+    U1_T mFlags;
     U1_T mISA;
-    U1_T mIsStmt;
-    U1_T mBasicBlock;
-    U1_T mPrologueEnd;
-    U1_T mEpilogueBegin;
-    U1_T mEndSequence;
 };
 
 struct CompUnit {
@@ -145,15 +161,17 @@ struct CompUnit {
 struct DWARFCache {
     int magic;
     ELF_File * mFile;
+    int mErrorCode;
+    char mErrorMsg[256];
     CompUnit ** mCompUnits;
     unsigned mCompUnitsCnt;
     ELF_Section * mDebugRanges;
     ELF_Section * mDebugARanges;
     ELF_Section * mDebugLine;
     ELF_Section * mDebugLoc;
-    SymbolSection ** sym_sections;
-    unsigned sym_sections_cnt;
-    unsigned sym_sections_len;
+    SymbolSection ** mSymSections;
+    unsigned mSymSectionsCnt;
+    unsigned mSymSectionsLen;
     ObjectInfo ** mObjectHash;
     ObjectInfo * mObjectList;
     Elf_Sym ** mSymbolHash;
@@ -161,9 +179,16 @@ struct DWARFCache {
     DWARFCache * mLineInfoNext;
 };
 
+/* Return DWARF cache for given file, create and populate the chae if needed, throw an exception if error */
 extern DWARFCache * get_dwarf_cache(ELF_File * file);
+
 extern unsigned calc_symbol_name_hash(char * s);
+
 extern void load_line_numbers(DWARFCache * cache, CompUnit * unit);
+
 extern ObjectInfo * find_object(DWARFCache * cache, U8_T ID);
+
+/* Return value of DWARF object dynamic property in given context, throw an exception if error */
+extern U8_T evaluate_dynamic_property(Context * ctx, int frame, ObjectInfo * obj, DynamicProperty * prop);
 
 #endif

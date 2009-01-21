@@ -36,11 +36,14 @@
 #define MD_WRITE    2
 #define MD_ADDRESS  3
 #define MD_FBASE    4
+#define MD_PROPERTY 5
 
 static int sMode;
 static U1_T * sDataBuf;
 static size_t sDataBufSize;
 static int sDataDone;
+static U1_T * sExprBuf;
+static size_t sExprBufSize;
 
 static Context * sLocContext;
 static ObjectInfo * sLocObject;
@@ -69,31 +72,6 @@ static ObjectInfo * get_parent_function(ObjectInfo * Info) {
     return NULL;
 }
 
-/*
-  I386 GNU DWARF register numbers:
-   0: AX
-   1: CX
-   2: DX
-   3: BX
-   4: SP
-   5: BP
-   6: SI
-   7: DI
-   8: IP
-   9: Flags
-  11..18: I387 ST0..ST7
-  21..28: XMM0..XMM7
-  29..36: MM0..MM7
-  37: FCTRL
-  38: FSTAT
-  39: MXCSR
-  40: ES
-  41: CS
-  42: SS
-  43: DS
-  44: FS
-  45: GS
-*/
 static int get_register(unsigned rg, U8_T * value) {
 #if defined(__linux__) && defined(__i386__) || \
     defined(_WRS_KERNEL) && (CPU_FAMILY==SIMNT || CPU_FAMILY==I80X86)
@@ -212,6 +190,7 @@ static int register_access_expression(unsigned rg) {
         sExprStack[sExprStackLen++] = Data;
         return 0;
     case MD_READ:
+    case MD_PROPERTY:
         if (get_register(rg, &Data) < 0) return -1;
         switch (sDataBufSize) {
         case 1:
@@ -357,6 +336,24 @@ static int evaluate_expression(U1_T * Buf, size_t Size) {
                 sExprStack[sExprStackLen - 1] = Data;
             }            
             break;
+        case OP_deref_size:
+            check_e_stack(1);
+            {
+                U1_T Tmp[8];
+                ContextAddress Addr = (ContextAddress)sExprStack[sExprStackLen - 1];
+                U1_T Size = dio_ReadU1();
+                if (context_read_mem(sLocContext, Addr, Tmp, Size) < 0) return -1;
+                check_breakpoints_on_memory_read(sLocContext, Addr, Tmp, Size);
+                switch (Size)  {
+                case 1: Data = *Tmp; break;
+                case 2: Data = *(U2_T *)Tmp; break;
+                case 4: Data = *(U4_T *)Tmp; break;
+                case 8: Data = *(U8_T *)Tmp; break;
+                default: assert(0);
+                }
+                sExprStack[sExprStackLen - 1] = Data;
+            }            
+            break;
         case OP_const1u:
             sExprStack[sExprStackLen++] = dio_ReadU1();
             break;
@@ -430,6 +427,25 @@ static int evaluate_expression(U1_T * Buf, size_t Size) {
                 if (context_read_mem(sLocContext, Addr, Tmp, dio_gAddressSize) < 0) return -1;
                 check_breakpoints_on_memory_read(sLocContext, Addr, Tmp, dio_gAddressSize);
                 switch (dio_gAddressSize)  {
+                case 1: Data = *Tmp; break;
+                case 2: Data = *(U2_T *)Tmp; break;
+                case 4: Data = *(U4_T *)Tmp; break;
+                case 8: Data = *(U8_T *)Tmp; break;
+                default: assert(0);
+                }
+                sExprStack[sExprStackLen - 2] = Data;
+                sExprStackLen--;
+            }            
+            break;
+        case OP_xderef_size:
+            check_e_stack(2);
+            {
+                U1_T Tmp[8];
+                ContextAddress Addr = (ContextAddress)sExprStack[sExprStackLen - 1];
+                U1_T Size = dio_ReadU1();
+                if (context_read_mem(sLocContext, Addr, Tmp, Size) < 0) return -1;
+                check_breakpoints_on_memory_read(sLocContext, Addr, Tmp, Size);
+                switch (Size)  {
                 case 1: Data = *Tmp; break;
                 case 2: Data = *(U2_T *)Tmp; break;
                 case 4: Data = *(U4_T *)Tmp; break;
@@ -714,8 +730,6 @@ static int evaluate_expression(U1_T * Buf, size_t Size) {
             sExprStack[sExprStackLen++] = sBaseAddresss;
             break;
         case OP_piece:
-        case OP_deref_size:
-        case OP_xderef_size:
         case OP_call2:
         case OP_call4:
         case OP_call_ref:
@@ -755,7 +769,12 @@ static int evaluate(Context * Ctx, int Frame, ObjectInfo * Info) {
         sExprStack[sExprStackLen++] = sBaseAddresss;
     }
     if (set_trap(&trap)) {
-        if (evaluate_location(&Info->mLocation) < 0) error = errno;
+        if (sMode == MD_PROPERTY) {
+            if (evaluate_expression(sExprBuf, sExprBufSize) < 0) error = errno;
+        }
+        else {
+            if (evaluate_location(&Info->mLocation) < 0) error = errno;
+        }
         clear_trap(&trap);
     }
     else {
@@ -786,6 +805,10 @@ static int evaluate(Context * Ctx, int Frame, ObjectInfo * Info) {
                 if (context_write_mem(sLocContext, Addr, sDataBuf, sDataBufSize) < 0) error = errno;
             }
             break;
+        case MD_PROPERTY:
+            assert(sDataBufSize == sizeof(U8_T));
+            *(U8_T *)sDataBuf = *sExprStack;
+            break;
         }
     }
     
@@ -808,6 +831,8 @@ int dwarf_expression_addr(Context * Ctx, int Frame, U8_T Base, ObjectInfo * Info
     }
 
     sMode = MD_ADDRESS;
+    sExprBuf = NULL;
+    sExprBufSize = 0;
     sDataBuf = (U1_T *)address;
     sDataBufSize = sizeof(U8_T);
     sBaseAddresss = Base;
@@ -816,6 +841,8 @@ int dwarf_expression_addr(Context * Ctx, int Frame, U8_T Base, ObjectInfo * Info
 
 int dwarf_expression_read(Context * Ctx, int Frame, ObjectInfo * Info, U1_T * Buf, size_t Size) {
     sMode = MD_READ;
+    sExprBuf = NULL;
+    sExprBufSize = 0;
     sDataBuf = Buf;
     sDataBufSize = Size;
     sBaseAddresss = 0;
@@ -824,9 +851,23 @@ int dwarf_expression_read(Context * Ctx, int Frame, ObjectInfo * Info, U1_T * Bu
 
 int dwarf_expression_write(Context * Ctx, int Frame, ObjectInfo * Info, U1_T * Buf, size_t Size) {
     sMode = MD_WRITE;
+    sExprBuf = NULL;
+    sExprBufSize = 0;
     sDataBuf = Buf;
     sDataBufSize = Size;
     sBaseAddresss = 0;
+    return evaluate(Ctx, Frame, Info);
+}
+
+int dwarf_dynamic_property_expression(Context * Ctx, int Frame, ObjectInfo * Info, U1_T * ExprAddr, size_t ExprSize, U8_T * Result) {
+    U8_T Addr = 0;
+    if (dwarf_expression_addr(Ctx, Frame, 0, Info, &Addr) < 0) return -1;
+    sMode = MD_PROPERTY;
+    sExprBuf = ExprAddr;
+    sExprBufSize = ExprSize;
+    sDataBuf = (U1_T *)Result;
+    sDataBufSize = sizeof(U8_T);
+    sBaseAddresss = Addr;
     return evaluate(Ctx, Frame, Info);
 }
 

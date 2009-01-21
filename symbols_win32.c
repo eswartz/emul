@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007-2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -317,7 +317,7 @@ int get_symbol_name(const Symbol * sym, char ** name) {
     return 0;
 }
 
-int get_symbol_size(const Symbol * sym, size_t * size) {
+int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
     uns64 res = 0;
     Symbol type = *sym;
     DWORD tag = 0;
@@ -377,7 +377,7 @@ int get_symbol_index_type(const Symbol * sym, Symbol * type) {
     return 0;
 }
 
-int get_symbol_length(const Symbol * sym, unsigned long * length) {
+int get_symbol_length(const Symbol * sym, int frame, unsigned long * length) {
     DWORD res = 0;
     Symbol type = *sym;
     DWORD tag = 0;

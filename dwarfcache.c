@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007-2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -28,6 +28,7 @@
 #include "dwarf.h"
 #include "dwarfio.h"
 #include "dwarfcache.h"
+#include "dwarfexpr.h"
 #include "exceptions.h"
 #include "myalloc.h"
 
@@ -68,8 +69,8 @@ static char * get_elf_symbol_name(unsigned n) {
         Elf32_Sym * s = (Elf32_Sym *)sym;
         Name = s->st_name;
     }
-    for (n = 0; n < sCache->sym_sections_cnt; n++) {
-        SymbolSection * tbl = sCache->sym_sections[n];
+    for (n = 0; n < sCache->mSymSectionsCnt; n++) {
+        SymbolSection * tbl = sCache->mSymSections[n];
         if (sym < tbl->mSymPool) continue;
         if (sym >= tbl->mSymPool + tbl->mSymPoolSize) continue;
         assert(Name < tbl->mStrPoolSize);
@@ -98,26 +99,29 @@ static U8_T get_elf_symbol_address(Elf_Sym * x) {
     return 0;
 }
 
-static U8_T get_object_value_size(ObjectInfo * Info) {
-    if (Info->mSize != 0) return Info->mSize;
-    switch (Info->mTag) {
-    case TAG_pointer_type:
-    case TAG_reference_type:
-        return Info->mCompUnit->mAddressSize;
-    case TAG_subrange_type:
-    case TAG_volatile_type:
-    case TAG_const_type:
-    case TAG_typedef:
-    case TAG_formal_parameter:
-    case TAG_global_variable:
-    case TAG_local_variable:
-    case TAG_variable:
-    case TAG_constant:
-    case TAG_enumerator:
-        if (Info->mType != NULL) return get_object_value_size(Info->mType);
-        break;
+static DynamicProperty get_object_value_size(ObjectInfo * Info) {
+    if (Info->mSize.mForm == 0) {
+        switch (Info->mTag) {
+        case TAG_pointer_type:
+        case TAG_reference_type:
+            Info->mSize.mForm = FORM_UDATA;
+            Info->mSize.mData.mValue = Info->mCompUnit->mAddressSize;
+            break;
+        case TAG_subrange_type:
+        case TAG_volatile_type:
+        case TAG_const_type:
+        case TAG_typedef:
+        case TAG_formal_parameter:
+        case TAG_global_variable:
+        case TAG_local_variable:
+        case TAG_variable:
+        case TAG_constant:
+        case TAG_enumerator:
+            if (Info->mType != NULL) return get_object_value_size(Info->mType);
+            break;
+        }
     }
-    return 0;
+    return Info->mSize;
 }
 
 static CompUnit * find_comp_unit(U8_T ID) {
@@ -171,8 +175,8 @@ static void find_symbol_entry(ObjectInfo * Info) {
                 unsigned n;
                 while (k > i && get_elf_symbol_address(sSymbolHash[k - 1]) == Addr) k--;
                 Info->mSymbol = k;
-                for (n = 0; n < sCache->sym_sections_cnt; n++) {
-                    SymbolSection * tbl = sCache->sym_sections[n];
+                for (n = 0; n < sCache->mSymSectionsCnt; n++) {
+                    SymbolSection * tbl = sCache->mSymSections[n];
                     if (sSymbolHash[k] < tbl->mSymPool) continue;
                     if (sSymbolHash[k] >= tbl->mSymPool + tbl->mSymPoolSize) continue;
                     Info->mSymbolSection = tbl;
@@ -182,6 +186,76 @@ static void find_symbol_entry(ObjectInfo * Info) {
             }
         }
     }
+}
+
+static void set_dynamic_property(DynamicProperty * Prop, U2_T Form) {
+    Prop->mForm = Form;
+    switch (Form) {
+    case FORM_REF       :
+    case FORM_REF_ADDR  :
+    case FORM_REF1      :
+    case FORM_REF2      :
+    case FORM_REF4      :
+    case FORM_REF8      :
+    case FORM_REF_UDATA :
+        Prop->mData.mObj = find_object_info(dio_gFormRef);
+        break;
+    case FORM_DATA1     :
+    case FORM_DATA2     :
+    case FORM_DATA4     :
+    case FORM_DATA8     :
+    case FORM_SDATA     :
+    case FORM_UDATA     :
+    case FORM_FLAG      :
+        Prop->mData.mValue = dio_gFormData;
+        break;
+    default:
+        dio_ChkBlock(Form, &Prop->mData.mExpr.mAddr, &Prop->mData.mExpr.mSize);
+        break;
+    }
+}
+
+U8_T evaluate_dynamic_property(Context * ctx, int frame, ObjectInfo * obj, DynamicProperty * Prop) {
+    U8_T Res = 0;
+    size_t Size = 0;
+    U1_T Buf[8];
+    int big_endian;
+    unsigned i;
+
+    switch (Prop->mForm) {
+    case FORM_REF       :
+    case FORM_REF_ADDR  :
+    case FORM_REF1      :
+    case FORM_REF2      :
+    case FORM_REF4      :
+    case FORM_REF8      :
+    case FORM_REF_UDATA :
+        big_endian = obj->mCompUnit->mFile->big_endian;
+        Size = (size_t)evaluate_dynamic_property(ctx, frame, Prop->mData.mObj, &Prop->mData.mObj->mSize);
+        if (Size < 1 || Size > sizeof(Buf)) exception(ERR_INV_DATA_TYPE);
+        if (dwarf_expression_read(ctx, frame, Prop->mData.mObj, Buf, (size_t)Size) < 0) {
+            exception(errno);
+        }
+        for (i = 0; i < Size; i++) {
+            Res = (Res << 8) | Buf[big_endian ? i : Size - i - 1];
+        }
+        break;
+    case FORM_DATA1     :
+    case FORM_DATA2     :
+    case FORM_DATA4     :
+    case FORM_DATA8     :
+    case FORM_SDATA     :
+    case FORM_UDATA     :
+    case FORM_FLAG      :
+        Res = Prop->mData.mValue;
+        break;
+    default:
+        if (dwarf_dynamic_property_expression(ctx, frame, obj, Prop->mData.mExpr.mAddr, Prop->mData.mExpr.mSize, &Res) < 0) {
+            exception(errno);
+        }
+        break;
+    }
+    return Res;
 }
 
 static void entry_callback(U2_T Tag, U2_T Attr, U2_T Form);
@@ -303,9 +377,6 @@ static void read_tag_com_unit(U2_T Attr, U2_T Form) {
 
 static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
     static ObjectInfo * Info;
-    static U4_T UpperBound;
-    static int LengthOK;
-    static int UpperBoundOK;
     static U8_T Sibling;
 
     switch (Attr) {
@@ -316,14 +387,10 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
             Info->mCompUnit = sCompUnit;
             Info->mParent = sParentObject;
             /* TODO: Default AT_lower_bound value is language dependand */
-            UpperBound = 0;
-            LengthOK = 0;
-            UpperBoundOK = 0;
             Sibling = 0;
         }
         else {
             find_symbol_entry(Info);
-            if (!LengthOK && UpperBoundOK) Info->mLength = UpperBound - Info->mLowBound + 1;
             if (Tag == TAG_enumerator && Info->mType == NULL) Info->mType = sParentObject;
             if (sPrevSibling != NULL) sPrevSibling->mSibling = Info;
             else if (sParentObject != NULL) sParentObject->mChildren = Info;
@@ -339,10 +406,11 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
                 sParentObject = Parent;
                 sPrevSibling = PrevSibling;
             }
-            if (Tag == TAG_enumeration_type && Info->mLength == 0 && Info->mChildren != NULL) {
+            if (Tag == TAG_enumeration_type && Info->mLength.mForm == 0 && Info->mChildren != NULL) {
                 ObjectInfo * Obj = Info->mChildren;
+                Info->mLength.mForm = FORM_UDATA;
                 while (Obj != NULL) {
-                    Info->mLength++;
+                    Info->mLength.mData.mValue++;
                     Obj = Obj->mSibling;
                 }
             }
@@ -378,8 +446,7 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
         Info->mEncoding = (U2_T)dio_gFormData;
         break;
     case AT_byte_size:
-        dio_ChkData(Form);
-        Info->mSize = dio_gFormData;
+        set_dynamic_property(&Info->mSize, Form);
         break;
     case AT_stride_size:
         dio_ChkData(Form);
@@ -442,18 +509,13 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
         Info->mName = dio_gFormDataAddr;
         break;
     case AT_lower_bound:
-        dio_ChkData(Form);
-        Info->mLowBound = (U4_T)dio_gFormData;
+        set_dynamic_property(&Info->mLowBound, Form);
         break;
     case AT_upper_bound:
-        dio_ChkData(Form);
-        UpperBound = (U4_T)dio_gFormData;
-        UpperBoundOK = 1;
+        set_dynamic_property(&Info->mUpperBound, Form);
         break;
     case AT_count:
-        dio_ChkData(Form);
-        Info->mLength = (U4_T)dio_gFormData;
-        LengthOK = 1;
+        set_dynamic_property(&Info->mLength, Form);
         break;
     case AT_decl_file:
         dio_ChkData(Form);
@@ -501,16 +563,16 @@ static void load_symbol_tables(void) {
             U1_T * str_data = NULL;
             U1_T * sym_data = NULL;
             SymbolSection * tbl = (SymbolSection *)loc_alloc_zero(sizeof(SymbolSection));
-            if (sCache->sym_sections == NULL) {
-                sCache->sym_sections_len = 8;
-                sCache->sym_sections = loc_alloc(sizeof(SymbolSection *) * sCache->sym_sections_len);
+            if (sCache->mSymSections == NULL) {
+                sCache->mSymSectionsLen = 8;
+                sCache->mSymSections = loc_alloc(sizeof(SymbolSection *) * sCache->mSymSectionsLen);
             }
-            else if (sCache->sym_sections_cnt >= sCache->sym_sections_len) {
-                sCache->sym_sections_len *= 8;
-                sCache->sym_sections = loc_realloc(sCache->sym_sections, sizeof(SymbolSection *) * sCache->sym_sections_len);
+            else if (sCache->mSymSectionsCnt >= sCache->mSymSectionsLen) {
+                sCache->mSymSectionsLen *= 8;
+                sCache->mSymSections = loc_realloc(sCache->mSymSections, sizeof(SymbolSection *) * sCache->mSymSectionsLen);
             }
-            tbl->mIndex = sCache->sym_sections_cnt++;
-            sCache->sym_sections[tbl->mIndex] = tbl;
+            tbl->mIndex = sCache->mSymSectionsCnt++;
+            sCache->mSymSections[tbl->mIndex] = tbl;
             if (sym_sec->link >= File->section_cnt || (str_sec = File->sections[sym_sec->link]) == NULL) {
                 exception(EINVAL);
             }
@@ -552,8 +614,8 @@ static void load_symbol_tables(void) {
     sCache->mSymbolHash = loc_alloc(sizeof(void *) * cnt);
     sCache->mSymbolTableLen = cnt;
     cnt = 0;
-    for (idx = 0; idx < sCache->sym_sections_cnt; idx++) {
-        SymbolSection * tbl = sCache->sym_sections[idx];
+    for (idx = 0; idx < sCache->mSymSectionsCnt; idx++) {
+        SymbolSection * tbl = sCache->mSymSections[idx];
         unsigned i;
         for (i = 0; i < tbl->sym_cnt; i++) {
             if (File->elf64) {
@@ -571,10 +633,12 @@ static void load_symbol_tables(void) {
 }
 
 static void load_debug_sections(void) {
+    Trap trap;
     unsigned idx;
     ELF_File * File = sCache->mFile;
     ObjectInfo * Info;
 
+    memset(&trap, 0, sizeof(trap));
     sSymbolHash = sCache->mSymbolHash;
     sSymbolTableLen = sCache->mSymbolTableLen;
     sObjectList = NULL;
@@ -592,12 +656,16 @@ static void load_debug_sections(void) {
             sPrevSibling = NULL;
             dio_EnterSection(sec, 0);
             dio_gVersion = strcmp(sec->name, ".debug") == 0 ? 1 : 2;
-            while (dio_GetPos() < sec->size) dio_ReadUnit(entry_callback);
+            if (set_trap(&trap)) {
+                while (dio_GetPos() < sec->size) dio_ReadUnit(entry_callback);
+                clear_trap(&trap);
+            }
             dio_ExitSection();
             sParentObject = NULL;
             sPrevSibling = NULL;
             sCompUnit = NULL;
             sDebugSection = NULL;
+            if (trap.error) break;
         }
         else if (strcmp(sec->name, ".debug_ranges") == 0) {
             sCache->mDebugRanges = sec;
@@ -612,15 +680,26 @@ static void load_debug_sections(void) {
             sCache->mDebugLoc = sec;
         }
     }
+
     Info = sObjectList;
     while (Info != NULL) {
-        if (Info->mSize == 0) Info->mSize = get_object_value_size(Info);
+        if (Info->mSize.mForm == 0) Info->mSize = get_object_value_size(Info);
         if (Info->mConstValueAddr == NULL && Info->mConstValueSize > 0) {
+            U8_T Size = 0;
             assert(Info->mConstValueSize == sizeof(Info->mConstValue));
-            if (Info->mSize > 0 && Info->mSize <= Info->mConstValueSize) {
-                Info->mConstValueAddr = (U1_T *)&Info->mConstValue;
-                Info->mConstValueSize = (size_t)Info->mSize;
-                if (File->big_endian) Info->mConstValueAddr += sizeof(Info->mConstValue) - Info->mSize;
+            switch (Info->mSize.mForm) {
+            case FORM_DATA1     :
+            case FORM_DATA2     :
+            case FORM_DATA4     :
+            case FORM_DATA8     :
+            case FORM_SDATA     :
+            case FORM_UDATA     :
+                Size = Info->mSize.mData.mValue;
+                if (Size > 0 && Size <= Info->mConstValueSize) {
+                    Info->mConstValueAddr = (U1_T *)&Info->mConstValue;
+                    Info->mConstValueSize = (size_t)Size;
+                    if (File->big_endian) Info->mConstValueAddr += sizeof(Info->mConstValue) - Size;
+                }
             }
         }
         Info = Info->mListNext;
@@ -635,6 +714,7 @@ static void load_debug_sections(void) {
     sObjectList = NULL;
     sObjectListTail = NULL;
     sCompUnitsMax = 0;
+    if (trap.error) str_exception(trap.error, trap.msg);
 }
 
 static void free_unit_cache(CompUnit * Unit) {
@@ -666,8 +746,8 @@ static void free_dwarf_cache(ELF_File * File) {
             loc_free(Unit);
         }
         loc_free(Cache->mCompUnits);
-        for (i = 0; i < Cache->sym_sections_cnt; i++) {
-            SymbolSection * tbl = Cache->sym_sections[i];
+        for (i = 0; i < Cache->mSymSectionsCnt; i++) {
+            SymbolSection * tbl = Cache->mSymSections[i];
             loc_free(tbl->mHashNext);
             loc_free(tbl);
         }
@@ -684,29 +764,31 @@ static void free_dwarf_cache(ELF_File * File) {
 }
 
 DWARFCache * get_dwarf_cache(ELF_File * File) {
-    if (File->dwarf_dt_cache == NULL) {
+    DWARFCache * Cache = (DWARFCache *)File->dwarf_dt_cache;
+    if (Cache == NULL) {
         Trap trap;
+        if (!sCloseListenerOK) {
+            elf_add_close_listener(free_dwarf_cache);
+            sCloseListenerOK = 1;
+        }
+        sCache = Cache = (DWARFCache *)(File->dwarf_dt_cache = loc_alloc_zero(sizeof(DWARFCache)));
+        sCache->magic = SYM_CACHE_MAGIC;
+        sCache->mFile = File;
+        sCache->mObjectHash = loc_alloc_zero(sizeof(ObjectInfo *) * OBJ_HASH_SIZE);
         if (set_trap(&trap)) {
             dio_LoadAbbrevTable(File);
-            sCache = (DWARFCache *)(File->dwarf_dt_cache = loc_alloc_zero(sizeof(DWARFCache)));
-            sCache->magic = SYM_CACHE_MAGIC;
-            sCache->mFile = File;
-            sCache->mObjectHash = loc_alloc_zero(sizeof(ObjectInfo *) * OBJ_HASH_SIZE);
             load_symbol_tables();
             load_debug_sections();
-            sCache = NULL;
-            if (!sCloseListenerOK) {
-                elf_add_close_listener(free_dwarf_cache);
-                sCloseListenerOK = 1;
-            }
             clear_trap(&trap);
         }
         else {
-            free_dwarf_cache(File);
-            str_exception(trap.error, trap.msg);
+            sCache->mErrorCode = trap.error;
+            strncpy(sCache->mErrorMsg, trap.msg, sizeof(sCache->mErrorMsg));
         }
+        sCache = NULL;
     }
-    return (DWARFCache *)File->dwarf_dt_cache;
+    if (Cache->mErrorCode) str_exception(Cache->mErrorCode, Cache->mErrorMsg);
+    return Cache;
 }
 
 static void add_dir(CompUnit * Unit, char * Name) {
@@ -801,16 +883,14 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
         memset(&state, 0, sizeof(state));
         state.mFile = 1;
         state.mLine = 1;
-        state.mIsStmt = is_stmt_default;
+        if (is_stmt_default) state.mFlags |= LINE_IsStmt;
         while (dio_GetPos() < dio_gUnitPos + unit_size) {
             U1_T opcode = dio_ReadU1();
             if (opcode >= opcode_base) {
                 state.mLine += (unsigned)((int)((opcode - opcode_base) % line_range) + line_base);
                 state.mAddress += (opcode - opcode_base) / line_range * min_instruction_length;
                 add_state(Unit, &state);
-                state.mBasicBlock = 0;
-                state.mPrologueEnd = 0;
-                state.mEpilogueBegin = 0;
+                state.mFlags &= ~(LINE_BasicBlock | LINE_PrologueEnd | LINE_EpilogueBegin);
             }
             else if (opcode == 0) {
                 U4_T op_size = dio_ReadULEB128();
@@ -829,12 +909,13 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
                     break;
                 }
                 case DW_LNE_end_sequence:
-                    state.mEndSequence = 1;
+                    state.mFlags |= LINE_EndSequence;
                     add_state(Unit, &state);
                     memset(&state, 0, sizeof(state));
                     state.mFile = 1;
                     state.mLine = 1;
-                    state.mIsStmt = is_stmt_default;
+                    if (is_stmt_default) state.mFlags |= LINE_IsStmt;
+                    else state.mFlags &= ~LINE_IsStmt;
                     break;
                 case DW_LNE_set_address:
                     state.mAddress = (ContextAddress)dio_ReadAddress();
@@ -849,9 +930,7 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
                 switch (opcode) {
                 case DW_LNS_copy:
                     add_state(Unit, &state);
-                    state.mBasicBlock = 0;
-                    state.mPrologueEnd = 0;
-                    state.mEpilogueBegin = 0;
+                    state.mFlags &= ~(LINE_BasicBlock | LINE_PrologueEnd | LINE_EpilogueBegin);
                     break;
                 case DW_LNS_advance_pc:
                     state.mAddress += (ContextAddress)(dio_ReadU8LEB128() * min_instruction_length);
@@ -866,10 +945,10 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
                     state.mColumn = dio_ReadULEB128();
                     break;
                 case DW_LNS_negate_stmt:
-                    state.mIsStmt = !state.mIsStmt;
+                    state.mFlags ^= LINE_IsStmt;
                     break;
                 case DW_LNS_set_basic_block:
-                    state.mBasicBlock = 1;
+                    state.mFlags |= LINE_BasicBlock;
                     break;
                 case DW_LNS_const_add_pc:
                     state.mAddress += (255 - opcode_base) / line_range * min_instruction_length;
@@ -878,10 +957,10 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
                     state.mAddress += dio_ReadU2();
                     break;
                 case DW_LNS_set_prologue_end:
-                    state.mPrologueEnd = 1;
+                    state.mFlags |= LINE_PrologueEnd;
                     break;
                 case DW_LNS_set_epilogue_begin:
-                    state.mEpilogueBegin = 1;
+                    state.mFlags |= LINE_EpilogueBegin;
                     break;
                 case DW_LNS_set_isa:
                     state.mISA = (U1_T)dio_ReadULEB128();

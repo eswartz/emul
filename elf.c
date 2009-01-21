@@ -57,7 +57,7 @@ struct MemoryMap {
 };
 
 #define MAX_CACHED_FILES 32
-#define MAX_FILE_AGE 30
+#define MAX_FILE_AGE 60
 
 static ELF_File * files = NULL;
 static ELFCloseListener * listeners = NULL;

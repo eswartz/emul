@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007-2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -51,6 +51,7 @@ static void command_get_context(char * token, Channel * c) {
         unsigned long length = 0;
         unsigned long offset = 0;
         ContextAddress address = 0;
+        int frame = STACK_NO_FRAME; /* TODO: symbol frame */
 
         write_stream(&c->out, '{');
 
@@ -100,14 +101,14 @@ static void command_get_context(char * token, Channel * c) {
             write_stream(&c->out, ',');
         }
 
-        if (get_symbol_size(&sym, &size) == 0) {
+        if (get_symbol_size(&sym, frame, &size) == 0) {
             json_write_string(&c->out, "Size");
             write_stream(&c->out, ':');
             json_write_long(&c->out, size);
             write_stream(&c->out, ',');
         }
 
-        if (get_symbol_length(&sym, &length) == 0) {
+        if (get_symbol_length(&sym, frame, &length) == 0) {
             json_write_string(&c->out, "Length");
             write_stream(&c->out, ':');
             json_write_long(&c->out, length);
@@ -122,7 +123,7 @@ static void command_get_context(char * token, Channel * c) {
                 write_stream(&c->out, ',');
             }
 
-            if (get_symbol_address(&sym, STACK_NO_FRAME, &address) == 0) {
+            if (get_symbol_address(&sym, frame, &address) == 0) {
                 json_write_string(&c->out, "Address");
                 write_stream(&c->out, ':');
                 json_write_long(&c->out, address);
