@@ -539,7 +539,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         if (info.children != null) {
             for (PeerInfo p : info.children) disconnectPeer(p);
         }
-        assert !info.children_pending || info.channel != null;
+        assert !info.children_pending || info == peer_info || info.channel != null;
         if (info.listener != null) {
             info.locator.removeListener(info.listener);
             info.listener = null;
@@ -548,15 +548,6 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         if (info.channel != null) {
             info.channel.close();
             info.channel = null;
-        }
-        if (display != null) {
-            display.asyncExec(new Runnable() {
-                public void run() {
-                    info.children_pending = false;
-                    info.children_error = null;
-                    info.children = null;
-                }
-            });
         }
     }
     

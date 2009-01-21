@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.launch;
 
-import java.io.IOException;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.debug.core.ILaunch;
@@ -44,13 +42,7 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
         final String id = configuration.getAttribute(ATTR_PEER_ID, "");
         Protocol.invokeLater(new Runnable() {
             public void run() {
-                try {
-                    if (id == null || id.length() == 0) throw new IOException("Invalid peer ID");
-                    ((TCFLaunch)launch).launchTCF(mode, id);
-                }
-                catch (Throwable e) {
-                    ((TCFLaunch)launch).setError(e);
-                }
+                ((TCFLaunch)launch).launchTCF(mode, id);
                 if (monitor != null) monitor.done();
             }
         });

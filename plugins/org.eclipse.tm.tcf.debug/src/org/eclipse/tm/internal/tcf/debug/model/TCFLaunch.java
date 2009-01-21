@@ -12,6 +12,7 @@ package org.eclipse.tm.internal.tcf.debug.model;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -426,41 +427,47 @@ public class TCFLaunch extends Launch {
         return last_context_exited;
     }
     
-    public void launchTCF(String mode, String id) throws Exception {
+    public void launchTCF(String mode, String id) {
         assert Protocol.isDispatchThread();
         this.mode = mode;
-        final LinkedList<String> path = new LinkedList<String>();
-        for (;;) {
-            int i = id.indexOf('/');
-            if (i <= 0) {
-                path.add(id);
-                break;
+        try {
+            if (id == null || id.length() == 0) throw new IOException("Invalid peer ID");
+            final LinkedList<String> path = new LinkedList<String>();
+            for (;;) {
+                int i = id.indexOf('/');
+                if (i <= 0) {
+                    path.add(id);
+                    break;
+                }
+                path.add(id.substring(0, i));
+                id = id.substring(i + 1);
             }
-            path.add(id.substring(0, i));
-            id = id.substring(i + 1);
+            String id0 = path.removeFirst();
+            IPeer peer = Protocol.getLocator().getPeers().get(id0);
+            if (peer == null) throw new Exception("Cannot locate peer " + id0);
+            channel = peer.openChannel();
+            while (path.size() > 0) channel.redirect(path.removeFirst());
+            channel.addChannelListener(new IChannel.IChannelListener() {
+    
+                public void onChannelOpened() {
+                    onConnected();
+                }
+    
+                public void congestionLevel(int level) {
+                }
+    
+                public void onChannelClosed(Throwable error) {
+                    channel.removeChannelListener(this);
+                    onDisconnected(error);
+                }
+    
+            });
+            assert channel.getState() == IChannel.STATE_OPENNING; 
+            connecting = true;
         }
-        connecting = true;
-        String id0 = path.removeFirst();
-        IPeer peer = Protocol.getLocator().getPeers().get(id0);
-        if (peer == null) throw new Exception("Cannot locate peer " + id0);
-        channel = peer.openChannel();
-        while (path.size() > 0) channel.redirect(path.removeFirst());
-        channel.addChannelListener(new IChannel.IChannelListener() {
-
-            public void onChannelOpened() {
-                onConnected();
-            }
-
-            public void congestionLevel(int level) {
-            }
-
-            public void onChannelClosed(Throwable error) {
-                channel.removeChannelListener(this);
-                onDisconnected(error);
-            }
-
-        });
-        assert channel.getState() == IChannel.STATE_OPENNING; 
+        catch (Throwable e) {
+            onDisconnected(e);
+        }
     }
     
     public void addContextAction(TCFAction action, String context_id) {

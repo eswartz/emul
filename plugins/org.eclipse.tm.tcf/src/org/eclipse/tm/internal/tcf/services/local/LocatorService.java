@@ -30,6 +30,7 @@ import java.util.Map;
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
 import org.eclipse.tm.internal.tcf.core.RemotePeer;
 import org.eclipse.tm.internal.tcf.core.ServiceManager;
+import org.eclipse.tm.internal.tcf.core.Transport;
 import org.eclipse.tm.tcf.core.AbstractChannel;
 import org.eclipse.tm.tcf.core.AbstractPeer;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -337,18 +338,23 @@ public class LocatorService implements ILocator {
             }
         }
         /* Cleanup peers table */
-        ArrayList<RemotePeer> l = null;
+        ArrayList<RemotePeer> stale_peers = null;
         for (IPeer p : peers.values()) {
             if (p instanceof RemotePeer) {
                 RemotePeer r = (RemotePeer)p;
                 if (r.getLastUpdateTime() + DATA_RETENTION_PERIOD < time) {
-                    if (l == null) l = new ArrayList<RemotePeer>();
-                    l.add(r);
+                    if (stale_peers == null) stale_peers = new ArrayList<RemotePeer>();
+                    stale_peers.add(r);
                 }
             }
         }
-        if (l != null) {
-            for (RemotePeer p : l) p.dispose();
+        if (stale_peers != null) {
+            IChannel[] open_channels = Transport.getOpenChannels();
+            HashSet<IPeer> connected_peers = new HashSet<IPeer>();
+            for (IChannel c : open_channels) connected_peers.add(c.getRemotePeer());
+            for (RemotePeer p : stale_peers) {
+                if (!connected_peers.contains(p)) p.dispose();
+            }
         }
         /* Try to become a master */
         if (socket.getLocalPort() != DISCOVEY_PORT && last_master_packet_time + DATA_RETENTION_PERIOD / 2 <= time) {

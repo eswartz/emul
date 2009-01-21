@@ -377,7 +377,6 @@ public class TCFNodeExecContext extends TCFNode {
     void onContextChanged(IRunControl.RunControlContext context) {
         assert !disposed;
         run_context.reset(context);
-        resumed_cnt++;
         children_stack.onSourceMappingChange();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
@@ -389,7 +388,6 @@ public class TCFNodeExecContext extends TCFNode {
     void onContextChanged(IMemory.MemoryContext context) {
         assert !disposed;
         mem_context.reset(context);
-        resumed_cnt++;
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 

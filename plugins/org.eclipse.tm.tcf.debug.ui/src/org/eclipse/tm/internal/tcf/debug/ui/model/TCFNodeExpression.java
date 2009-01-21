@@ -526,15 +526,17 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
             }
         }
         if (b == null) return true;
-        int elem_size = size / length;
         bf.append('[');
-        for (int n = 0; n < length; n++) {
-            if (n >= 100) {
-                bf.append("...");
-                break;
+        if (length > 0) {
+            int elem_size = size / length;
+            for (int n = 0; n < length; n++) {
+                if (n >= 100) {
+                    bf.append("...");
+                    break;
+                }
+                if (n > 0) bf.append(", ");
+                if (!appendValueText(bf, level + 1, b, data, offs + n * elem_size, elem_size, big_endian, done)) return false;
             }
-            if (n > 0) bf.append(", ");
-            if (!appendValueText(bf, level + 1, b, data, offs + n * elem_size, elem_size, big_endian, done)) return false;
         }
         bf.append(']');
         if (level == 0) bf.append('\n');

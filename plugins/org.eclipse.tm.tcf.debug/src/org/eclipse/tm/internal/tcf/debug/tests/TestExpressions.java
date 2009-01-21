@@ -11,6 +11,7 @@
 package org.eclipse.tm.internal.tcf.debug.tests;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -170,7 +171,7 @@ class TestExpressions implements ITCFTest,
             thread_ctx.getState(new IRunControl.DoneGetState() {
                 public void doneGetState(IToken token, Exception error,
                         boolean suspended, String pc, String reason,
-                        Map<String, Object> params) {
+                        Map<String,Object> params) {
                     if (error != null) {
                         exit(error);
                     }
@@ -292,7 +293,7 @@ class TestExpressions implements ITCFTest,
     }
 
     public void containerSuspended(String context, String pc, String reason,
-            Map<String, Object> params, String[] suspended_ids) {
+            Map<String,Object> params, String[] suspended_ids) {
         for (String id : suspended_ids) {
             assert id != null;
             contextSuspended(id, null, null, null);
@@ -314,7 +315,7 @@ class TestExpressions implements ITCFTest,
     public void contextResumed(String context) {
     }
 
-    public void contextSuspended(String context, String pc, String reason, Map<String, Object> params) {
+    public void contextSuspended(String context, String pc, String reason, Map<String,Object> params) {
         if (context.equals(thread_id)) {
             suspended_pc = pc;
             if (waiting_suspend) {
@@ -331,16 +332,25 @@ class TestExpressions implements ITCFTest,
 
     //--------------------------- Breakpoints listener ---------------------------//
 
-    public void breakpointStatusChanged(String id, Map<String, Object> status) {
-        if (id.equals(bp_id)) {
+    @SuppressWarnings("unchecked")
+    public void breakpointStatusChanged(String id, Map<String,Object> status) {
+        if (id.equals(bp_id) && process_id != null) {
             String s = (String)status.get(IBreakpoints.STATUS_ERROR);
             if (s != null) exit(new Exception(s));
+            Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)status.get(IBreakpoints.STATUS_INSTANCES);
+            if (list == null) exit(new Exception("Invalis BP status"));
+            boolean ok = false;
+            for (Map<String,Object> map : list) {
+                String ctx = (String)map.get(IBreakpoints.INSTANCE_CONTEXT);
+                if (process_id.equals(ctx) && map.get(IBreakpoints.INSTANCE_ERROR) == null) ok = true;
+            }
+            if (!ok) exit(new Exception("Invalis BP status"));
         }
     }
 
-    public void contextAdded(Map<String, Object>[] bps) {
+    public void contextAdded(Map<String,Object>[] bps) {
     }
 
-    public void contextChanged(Map<String, Object>[] bps) {
+    public void contextChanged(Map<String,Object>[] bps) {
     }
 }

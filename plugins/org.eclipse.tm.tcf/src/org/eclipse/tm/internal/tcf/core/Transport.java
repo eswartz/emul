@@ -85,11 +85,13 @@ public class Transport {
     }
 
     public static void peerDisposed(AbstractPeer peer) {
+        Exception error = null;
         Collection<AbstractChannel> bf = new ArrayList<AbstractChannel>(channels);
         for (Iterator<AbstractChannel> i = bf.iterator(); i.hasNext();) {
             AbstractChannel c = i.next();
             if (c.getRemotePeer() != peer) continue;
-            c.close();
+            if (error == null) error = new Exception("Peer is disposed");
+            c.terminate(error);
         }
     }
 
