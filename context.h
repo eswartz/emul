@@ -98,6 +98,9 @@ struct Context {
 extern void ini_contexts(void);
 
 extern char * signal_name(int signal);
+extern char * signal_description(int signal);
+extern unsigned signal_code(int signal);
+
 extern char * context_state_name(Context * ctx);
 extern char * context_suspend_reason(Context * ctx);
 

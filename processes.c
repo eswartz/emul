@@ -480,16 +480,29 @@ static void command_get_signal_list(char * token, Channel * c) {
         write_stream(&c->out, '[');
         for (i = 0; i < 32; i++) {
             char * name = signal_name(i);
-            if (name != NULL) {
+            char * desc = signal_description(i);
+            if (name != NULL || desc != NULL) {
                 if (n > 0) write_stream(&c->out, ',');
                 write_stream(&c->out, '{');
-                json_write_string(&c->out, "Name");
+                json_write_string(&c->out, "Index");
                 write_stream(&c->out, ':');
-                json_write_string(&c->out, name);
+                json_write_long(&c->out, i);
+                if (name != NULL) {
+                    write_stream(&c->out, ',');
+                    json_write_string(&c->out, "Name");
+                    write_stream(&c->out, ':');
+                    json_write_string(&c->out, name);
+                }
+                if (desc != NULL) {
+                    write_stream(&c->out, ',');
+                    json_write_string(&c->out, "Description");
+                    write_stream(&c->out, ':');
+                    json_write_string(&c->out, desc);
+                }
                 write_stream(&c->out, ',');
                 json_write_string(&c->out, "Code");
                 write_stream(&c->out, ':');
-                json_write_long(&c->out, i);
+                json_write_ulong(&c->out, signal_code(i));
                 write_stream(&c->out, '}');
                 n++;
             }

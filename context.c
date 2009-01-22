@@ -35,9 +35,10 @@ static ContextEventListener * event_listeners = NULL;
 
 LINK context_root = { NULL, NULL };
 
+#ifndef WIN32
+
 #define CASE(var) case var: return ""#var;
 char * signal_name(int signal) {
-#ifndef WIN32
     switch (signal) {
     CASE(SIGHUP)
     CASE(SIGINT)
@@ -79,10 +80,19 @@ char * signal_name(int signal) {
 #endif
     CASE(SIGSYS)
     }
-#endif
     return NULL;
 }
 #undef CASE
+
+char * signal_description(int signal) {
+    return NULL;
+}
+
+unsigned signal_code(int signal) {
+    return signal;
+}
+
+#endif
 
 Context * context_find_from_pid(pid_t pid) {
     LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(pid)];
@@ -283,27 +293,99 @@ typedef struct DebugEvent {
     struct DebugEvent * next;
 } DebugEvent;
 
+typedef struct ExceptionName {
+    DWORD code;
+    char * name;
+    char * desc;
+} ExceptionName;
+
+static ExceptionName exception_names[] = {
+    { 0x40010005, NULL, "Control-C" },
+    { 0x40010008, NULL, "Control-Break" },
+    { EXCEPTION_DATATYPE_MISALIGNMENT, "EXCEPTION_DATATYPE_MISALIGNMENT", "Datatype Misalignment" },
+    { EXCEPTION_ACCESS_VIOLATION, "EXCEPTION_ACCESS_VIOLATION", "Access Violation" },
+    { EXCEPTION_IN_PAGE_ERROR, "EXCEPTION_IN_PAGE_ERROR", "In Page Error" },
+    { EXCEPTION_ILLEGAL_INSTRUCTION, "EXCEPTION_ILLEGAL_INSTRUCTION", "Illegal Instruction" },
+    { EXCEPTION_ARRAY_BOUNDS_EXCEEDED, "EXCEPTION_ARRAY_BOUNDS_EXCEEDED", "Array Bounds Exceeded" },
+    { EXCEPTION_FLT_DENORMAL_OPERAND, "EXCEPTION_FLT_DENORMAL_OPERAND", "Float Denormal Operand" },
+    { EXCEPTION_FLT_DIVIDE_BY_ZERO, "EXCEPTION_FLT_DIVIDE_BY_ZERO", "Float Divide by Zero" },
+    { EXCEPTION_FLT_INEXACT_RESULT, "EXCEPTION_FLT_INEXACT_RESULT", "Float Inexact Result" },
+    { EXCEPTION_FLT_INVALID_OPERATION, "EXCEPTION_FLT_INVALID_OPERATION", "Float Invalid Operation" },
+    { EXCEPTION_FLT_OVERFLOW, "EXCEPTION_FLT_OVERFLOW", "Float Overflow" },
+    { EXCEPTION_FLT_STACK_CHECK, "EXCEPTION_FLT_STACK_CHECK", "Float Stack Check" },
+    { EXCEPTION_FLT_UNDERFLOW, "EXCEPTION_FLT_UNDERFLOW", "Float Underflow" },
+    { EXCEPTION_NONCONTINUABLE_EXCEPTION, "EXCEPTION_NONCONTINUABLE_EXCEPTION", "Noncontinuable Exception" },
+    { EXCEPTION_INVALID_DISPOSITION, "EXCEPTION_INVALID_DISPOSITION", "Invalid Disposition" },
+    { EXCEPTION_INT_DIVIDE_BY_ZERO, "EXCEPTION_INT_DIVIDE_BY_ZERO", "Integer Divide by Zero" },
+    { EXCEPTION_INT_OVERFLOW, "EXCEPTION_INT_OVERFLOW", "Integer Overflow" },
+    { EXCEPTION_PRIV_INSTRUCTION, "EXCEPTION_PRIV_INSTRUCTION", "Privileged Instruction" },
+    { EXCEPTION_STACK_OVERFLOW, "EXCEPTION_STACK_OVERFLOW", "Stack Overflow" },
+    { EXCEPTION_GUARD_PAGE, "EXCEPTION_GUARD_PAGE", "Guard Page" },
+    { 0xC0000194, "EXCEPTION_POSSIBLE_DEADLOCK", "Possible Deadlock" },
+    { EXCEPTION_INVALID_HANDLE, "EXCEPTION_INVALID_HANDLE", "Invalid Handle" },
+    { 0xc0000017, NULL, "No Memory" },
+    { 0xc0000135, NULL, "DLL Not Found" },
+    { 0xc0000142, NULL, "DLL Initialization Failed" },
+    { 0xc06d007e, NULL, "Module Not Found" },
+    { 0xc06d007f, NULL, "Procedure Not Found" },
+    { 0xe06d7363, NULL, "Microsoft C++ Exception" },
+};
+
+#define EXCEPTION_NAMES_CNT (sizeof(exception_names) / sizeof(ExceptionName))
+
 #define EXCEPTION_DEBUGGER_IO 0x406D1388
 
 char * context_suspend_reason(Context * ctx) {
-    DWORD code = ctx->suspend_reason.ExceptionRecord.ExceptionCode;
+    DWORD exception_code = ctx->suspend_reason.ExceptionRecord.ExceptionCode;
     static char buf[64];
+    int n = 0;
 
-    switch (code) {
-    case 0:
-        return "Suspended";
-    case EXCEPTION_SINGLE_STEP:
-        return "Step";
-    case EXCEPTION_BREAKPOINT:
-        if (ctx->debug_started) return "Suspended";
-        return "Breakpoint";
-    case EXCEPTION_DEBUGGER_IO:
-        return "Debugger IO request";
+    if (ctx->stopped_by_bp) return "Breakpoint";
+    if (exception_code == 0) return "Suspended";
+    if (ctx->debug_started && exception_code == EXCEPTION_BREAKPOINT) return "Suspended";
+    if (exception_code == EXCEPTION_SINGLE_STEP) return "Step";
+
+    while (n < EXCEPTION_NAMES_CNT) {
+        if (exception_names[n].code == exception_code) return exception_names[n].desc;
+        n++;
     }
-    snprintf(buf, sizeof(buf), "Exception 0x%08x", code);
+
+    snprintf(buf, sizeof(buf), "Exception 0x%08x", exception_code);
     return buf;
 }
 
+char * signal_name(int signal) {
+    int n = signal - 1;
+    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].name;
+    return NULL;
+}
+
+char * signal_description(int signal) {
+    int n = signal - 1;
+    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].desc;
+    return NULL;
+}
+
+unsigned signal_code(int signal) {
+    int n = signal - 1;
+    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].code;
+    return 0;
+}
+
+static int get_signal_index(Context * ctx) {
+    DWORD exception_code = ctx->suspend_reason.ExceptionRecord.ExceptionCode;
+    int n = 0;
+
+    if (exception_code == 0) return 0;
+    if (ctx->debug_started && exception_code == EXCEPTION_BREAKPOINT) return 0;
+
+    while (n < EXCEPTION_NAMES_CNT) {
+        if (exception_names[n].code == exception_code) return n;
+        n++;
+    }
+    return 0;
+}
+ 
 static char * win32_debug_event_name(int event) {
     switch (event) {
     case CREATE_PROCESS_DEBUG_EVENT:
@@ -334,16 +416,17 @@ static int log_error(char * fn, int ok) {
     return err;
 }
 
-static void event_win32_context_stopped(void * arg) {
-    Context * ctx = (Context *)arg;
-    DWORD event_code = ctx->pending_event.ExceptionRecord.ExceptionCode;
+static void event_win32_context_exited(Context * ctx);
 
-    if (ctx->stopped && event_code == 0) return;
+static void event_win32_context_stopped(Context * ctx) {
+    DWORD exception_code = ctx->pending_event.ExceptionRecord.ExceptionCode;
+
+    if (ctx->exited || ctx->stopped && exception_code == 0) return;
     memcpy(&ctx->suspend_reason, &ctx->pending_event, sizeof(EXCEPTION_DEBUG_INFO));
     memset(&ctx->pending_event, 0, sizeof(EXCEPTION_DEBUG_INFO));
 
     trace(LOG_CONTEXT, "context: stopped: ctx %#x, pid %d, exception 0x%08x",
-        ctx, ctx->pid, event_code);
+        ctx, ctx->pid, exception_code);
     assert(is_dispatch_thread());
     assert(!ctx->stopped);
     assert(ctx->handle != NULL);
@@ -351,7 +434,11 @@ static void event_win32_context_stopped(void * arg) {
 
     if (SuspendThread(ctx->handle) == (DWORD)-1) {
         DWORD err = GetLastError();
-        if (err == ERROR_ACCESS_DENIED && event_code == 0) return; /* Already exited */
+        if (err == ERROR_ACCESS_DENIED && exception_code == 0) {
+            /* Already exited */
+            event_win32_context_exited(ctx);
+            return;
+        }
         log_error("SuspendThread", 0);
         return;
     }
@@ -370,7 +457,7 @@ static void event_win32_context_stopped(void * arg) {
     ctx->signal = SIGTRAP;
     ctx->stopped = 1;
     ctx->stopped_by_bp = 0;
-    switch (event_code) {
+    switch (exception_code) {
     case 0:
         break;
     case EXCEPTION_SINGLE_STEP:
@@ -390,17 +477,28 @@ static void event_win32_context_stopped(void * arg) {
         trace(LOG_ALWAYS, "Debugger IO request 0x%08x", ctx->suspend_reason.ExceptionRecord.ExceptionInformation[0]);
         break;
     default:
+        {
+            int signal = get_signal_index(ctx);
+            if (signal != 0 && (ctx->sig_dont_stop & (1 << signal)) != 0) break;
+        }
         ctx->pending_intercept = 1;
         break;
     }
     event_context_stopped(ctx);
 }
 
+static void event_win32_context_stopped_async(void * arg) {
+    Context * ctx = (Context *)arg;
+    event_win32_context_stopped(ctx);
+    context_unlock(ctx);
+}
+
 static void event_win32_context_started(Context * ctx) {
+    DWORD exception_code = ctx->suspend_reason.ExceptionRecord.ExceptionCode;
     trace(LOG_CONTEXT, "context: started: ctx %#x, pid %d", ctx, ctx->pid);
     assert(ctx->stopped);
     ctx->stopped = 0;
-    ctx->debug_started = 0;
+    if (ctx->debug_started && exception_code == EXCEPTION_BREAKPOINT) ctx->debug_started = 0;
     event_context_started(ctx);
 }
 
@@ -412,7 +510,7 @@ static void event_win32_context_exited(Context * ctx) {
     while (!list_is_empty(&ctx->children)) {
         Context * c = cldl2ctxp(ctx->children.next);
         assert(c->parent == ctx);
-        event_win32_context_exited(c);
+        if (!c->exited) event_win32_context_exited(c);
     }
     ctx->exiting = 0;
     ctx->exited = 1;
@@ -443,7 +541,8 @@ static int win32_resume(Context * ctx) {
     ctx->regs_dirty = 0;
     if (ctx->pending_event.ExceptionRecord.ExceptionCode != 0) {
         event_win32_context_started(ctx);
-        post_event(event_win32_context_stopped, ctx);
+        context_lock(ctx);
+        post_event(event_win32_context_stopped_async, ctx);
         return 0;
     }
     if (ctx->parent->pending_signals & (1 << SIGKILL)) {
@@ -529,18 +628,23 @@ static void debug_event_handler(void * x) {
                 break;
             }
             memcpy(&ctx->pending_event, &args->event.u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
-            if (!ctx->stopped) event_win32_context_stopped(ctx);
+            if (!ctx->stopped) {
+                int signal = 0;
+                event_win32_context_stopped(ctx);
+                signal = get_signal_index(ctx);
+                if (signal != 0 && (ctx->sig_dont_pass & (1 << signal)) != 0) {
+                    args->continue_status = DBG_CONTINUE;
+                }
+            }
             break;
         case EXIT_THREAD_DEBUG_EVENT:
             assert(prs != NULL);
-            if (ctx == NULL) break;
-            event_win32_context_exited(ctx);
+            if (ctx && !ctx->exited) event_win32_context_exited(ctx);
             ctx = NULL;
             break;
         case EXIT_PROCESS_DEBUG_EVENT:
             assert(prs != NULL);
-            assert(ctx != NULL);
-            event_win32_context_exited(ctx);
+            if (ctx && !ctx->exited) event_win32_context_exited(ctx);
             event_win32_context_exited(prs);
             prs = ctx = NULL;
             break;
@@ -663,7 +767,7 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 /* 1. according to the documentation, we should get only one CREATE_PROCESS_DEBUG_EVENT. */
                 /* 2. if second CREATE_PROCESS_DEBUG_EVENT is handled immediately, debugee crashes. */
                 memcpy(&fantom_process, &event_buffer, sizeof(event_buffer));
-                CloseHandle(fantom_process.event.u.CreateProcessInfo.hFile);
+//                CloseHandle(fantom_process.event.u.CreateProcessInfo.hFile);
                 SuspendThread(fantom_process.event.u.CreateProcessInfo.hThread);
                 ResumeThread(create_process.event.u.CreateProcessInfo.hThread);
             }
@@ -797,12 +901,13 @@ int context_stop(Context * ctx) {
     assert(!ctx->stopped);
     assert(!ctx->exited);
     if (SuspendThread(ctx->handle) == (DWORD)-1) {
-        DWORD err = GetLastError();
-        if (err == ERROR_ACCESS_DENIED) return 0;
-        errno = log_error("SuspendThread", 0);
-        return -1;
+        if (GetLastError() != ERROR_ACCESS_DENIED) {
+            errno = log_error("SuspendThread", 0);
+            return -1;
+        }
     }
-    post_event(event_win32_context_stopped, ctx);
+    context_lock(ctx);
+    post_event(event_win32_context_stopped_async, ctx);
     return 0;
 }
 
