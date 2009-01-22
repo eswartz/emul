@@ -49,7 +49,7 @@ import org.eclipse.tm.tcf.util.TCFTask;
 class SignalsDialog extends Dialog {
 
     private static final int 
-        SIZING_TABLE_WIDTH = 500,
+        SIZING_TABLE_WIDTH = 800,
         SIZING_TABLE_HEIGHT = 300;
 
     private static final String[] column_names = { "Code", "Name", "Description", "Don't stop", "Don't pass", "Pending" };
@@ -148,7 +148,11 @@ class SignalsDialog extends Dialog {
             Signal s = (Signal)element;
             switch (column) {
             case 0:
-                return s.attrs.get(IProcesses.SIG_CODE).toString(); 
+                long n = ((Number)s.attrs.get(IProcesses.SIG_CODE)).longValue();
+                if (n < 32) return Long.toString(n);
+                String q = Long.toHexString(n);
+                if (q.length() < 8) q = "00000000".substring(q.length()) + q;
+                return "0x" + q;
             case 1:
                 return (String)s.attrs.get(IProcesses.SIG_NAME); 
             case 2:
@@ -224,11 +228,11 @@ class SignalsDialog extends Dialog {
                                 Signal[] list = new Signal[sigs.list.size()];
                                 for (Map<String,Object> m : sigs.list) {
                                     Signal s = list[n++] = new Signal();
-                                    int code = 1 << ((Number)m.get(IProcesses.SIG_CODE)).intValue();
+                                    int mask = 1 << ((Number)m.get(IProcesses.SIG_INDEX)).intValue();
                                     s.attrs = m;
-                                    s.dont_stop = (dont_stop & code) != 0;
-                                    s.dont_pass = (dont_pass & code) != 0;
-                                    s.pending = (pending & code) != 0;
+                                    s.dont_stop = (dont_stop & mask) != 0;
+                                    s.dont_pass = (dont_pass & mask) != 0;
+                                    s.pending = (pending & mask) != 0;
                                 }
                                 SignalState state = new SignalState();
                                 state.context_id = sigs.context_id;
@@ -298,11 +302,23 @@ class SignalsDialog extends Dialog {
         data.heightHint = SIZING_TABLE_HEIGHT;
         signal_table.setLayoutData(data);
         
+        int w = SIZING_TABLE_WIDTH / (column_names.length + 5);
         for (int i = 0; i < column_names.length; i++) {
             final TableColumn column = new TableColumn(signal_table, SWT.LEAD, i);
             column.setMoveable(false);
             column.setText(column_names[i]);
-            column.setWidth(SIZING_TABLE_WIDTH / column_names.length);
+            switch (i) {
+            case 0:
+                column.setWidth(w * 2);
+                break;
+            case 1:
+            case 2:
+                column.setWidth(w * 3);
+                break;
+            default:
+                column.setWidth(w);
+                break;
+            }
         }
         signal_table.setHeaderVisible(true);
         signal_table.setLinesVisible(true);
@@ -327,7 +343,7 @@ class SignalsDialog extends Dialog {
                             case 5:
                                 if (s.pending) {
                                     // Cannot clear a signal that is already generated
-                                    Number code = (Number)s.attrs.get(IProcesses.SIG_CODE);
+                                    Number code = (Number)s.attrs.get(IProcesses.SIG_INDEX);
                                     Signal x = org_signals.get(code);
                                     if (x != null && x.pending) break;
                                 }
@@ -359,7 +375,7 @@ class SignalsDialog extends Dialog {
         
         org_signals = new HashMap<Number,Signal>();
         for (Signal s : (Signal[])content_provider.getElements(null)) {
-            org_signals.put((Number)s.attrs.get(IProcesses.SIG_CODE), s.copy());
+            org_signals.put((Number)s.attrs.get(IProcesses.SIG_INDEX), s.copy());
         }
     }
 
@@ -383,12 +399,12 @@ class SignalsDialog extends Dialog {
                 int dont_pass_set = 0;
                 final LinkedList<Number> send_list = new LinkedList<Number>();
                 for (Signal s : state.list) {
-                    Number code = (Number)s.attrs.get(IProcesses.SIG_CODE);
-                    Signal x = org_signals.get(code);
+                    Number index = (Number)s.attrs.get(IProcesses.SIG_INDEX);
+                    Signal x = org_signals.get(index);
                     if (!set_mask) set_mask = x == null || x.dont_stop != s.dont_stop || x.dont_pass != s.dont_pass;
-                    if (s.dont_stop) dont_stop_set |= 1 << code.intValue();
-                    if (s.dont_pass) dont_pass_set |= 1 << code.intValue();
-                    if ((x == null || !x.pending) && s.pending) send_list.add(code);
+                    if (s.dont_stop) dont_stop_set |= 1 << index.intValue();
+                    if (s.dont_pass) dont_pass_set |= 1 << index.intValue();
+                    if ((x == null || !x.pending) && s.pending) send_list.add((Number)s.attrs.get(IProcesses.SIG_CODE));
                 }
                 if (set_mask) {
                     final int dont_stop = dont_stop_set;
@@ -409,7 +425,7 @@ class SignalsDialog extends Dialog {
                     new TCFTask<Boolean>(channel) {
                         public void run() {
                             final IProcesses prs = channel.getRemoteService(IProcesses.class);
-                            prs.signal(state.context_id, send_list.removeFirst().intValue(), new IProcesses.DoneCommand() {
+                            prs.signal(state.context_id, send_list.removeFirst().longValue(), new IProcesses.DoneCommand() {
                                 public void doneCommand(IToken token, Exception error) {
                                     if (error != null) {
                                         error(error);
@@ -418,7 +434,7 @@ class SignalsDialog extends Dialog {
                                         done(Boolean.TRUE);
                                     }
                                     else {
-                                        prs.signal(state.context_id, send_list.removeFirst().intValue(), this);
+                                        prs.signal(state.context_id, send_list.removeFirst().longValue(), this);
                                     }
                                 }
                             });

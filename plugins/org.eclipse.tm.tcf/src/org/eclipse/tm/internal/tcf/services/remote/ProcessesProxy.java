@@ -271,7 +271,7 @@ public class ProcessesProxy implements IProcesses {
         }.token;
     }
 
-    public IToken signal(String context_id, int signal, final DoneCommand done) {
+    public IToken signal(String context_id, long signal, final DoneCommand done) {
         return new Command(channel, ProcessesProxy.this,
                 "signal", new Object[]{ context_id, signal }) {
             @Override

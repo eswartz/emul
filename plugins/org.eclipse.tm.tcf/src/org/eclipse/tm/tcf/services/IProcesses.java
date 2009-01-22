@@ -178,9 +178,10 @@ public interface IProcesses extends IService {
      * Signal property names used by "getSignalList" command.
      */
     static final String
-        SIG_NAME = "Name",
-        SIG_CODE = "Code",
-        SIG_DESCRIPTION = "Description";
+        SIG_INDEX = "Index",    // Number - bit no the in signal mask
+        SIG_NAME = "Name",      // String
+        SIG_CODE = "Code",      // Number 
+        SIG_DESCRIPTION = "Description"; // String
     
     /**
      * Get list of signals that can be send to the process.
@@ -232,7 +233,7 @@ public interface IProcesses extends IService {
      * @param done - call back interface called when operation is completed.
      * @return pending command handle, can be used to cancel the command.
      */
-    IToken signal(String context_id, int signal, DoneCommand done);
+    IToken signal(String context_id, long signal, DoneCommand done);
 
     /**
      * Get default set of environment variables used to start a new process.
