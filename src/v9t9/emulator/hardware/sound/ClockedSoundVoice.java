@@ -40,13 +40,13 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	}
 	
 	protected int getOperationPeriod() {
-		byte mask = 0x3f; //(byte) (isEnhanced ? 0x7f : 0x3f);
-		return ( (operation[SoundTMS9919.OPERATION_FREQUENCY_LO] & 0xf) |
-		( (operation[SoundTMS9919.OPERATION_FREQUENCY_HI] & mask) << 4 ) );
+		int period = ( (operation[SoundTMS9919.OPERATION_FREQUENCY_LO] & 0xf) |
+		( (operation[SoundTMS9919.OPERATION_FREQUENCY_HI] & 0x3f) << 4 ) );
+		return period;
 	}
 	
 	protected void dump() {
-		if (true) {
+		if (false) {
 			if (getVolume() == 0)
 				System.out.println(MessageFormat.format(
 						"voice_cache_values[{0}]: hz={1}   OFF",

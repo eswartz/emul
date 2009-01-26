@@ -24,7 +24,7 @@ import v9t9.emulator.hardware.sound.SoundVoice;
 import v9t9.engine.SoundHandler;
 
 /**
- * TMS9919 / SN76489 emulation
+ * Mixing and output for sound and speech
  * 
  * @author ejs
  * 
@@ -34,7 +34,8 @@ public class JavaSoundHandler implements SoundHandler {
 	// private static final long SOUND_UPDATE_RATE = 100; // times per second
 
 	private SourceDataLine soundGeneratorLine;
-	private int[] soundGeneratorWorkBuffer;
+	private volatile int[] soundGeneratorWorkBuffer;
+	private int[] soundGeneratorWorkBuffer2;
 	private byte[] soundGeneratorWaveForm;
 	private AudioFormat stdFormat;
 	private int soundFramesPerTick;
@@ -49,8 +50,8 @@ public class JavaSoundHandler implements SoundHandler {
 
 	// private boolean audioSilence;
 
-	protected int lastUpdatedPos;
-	protected int lastSpeechUpdatedPos;
+	protected volatile int lastUpdatedPos;
+	protected volatile int lastSpeechUpdatedPos;
 
 	// private Mixer mixer;
 
@@ -75,6 +76,7 @@ public class JavaSoundHandler implements SoundHandler {
 	BlockingQueue<AudioChunk> soundQueue;
 	BlockingQueue<AudioChunk> speechQueue;
 	private Thread speechWritingThread;
+	private DFTAnalyzer dftAnalyzer;
 
 	{
 		if (true) {
@@ -87,7 +89,7 @@ public class JavaSoundHandler implements SoundHandler {
 				e.printStackTrace();
 			}
 		}
-		if (false) {
+		if (true) {
 			try {
 				if (File.separatorChar == '/')
 					speechFos = new FileOutputStream("/tmp/v9t9_speech.raw");
@@ -135,12 +137,13 @@ public class JavaSoundHandler implements SoundHandler {
 			speechFramesPerTick = (int) (speechFormat.getFrameRate() / machine
 					.getCpuTicksPerSec());
 			speechLine = (SourceDataLine) AudioSystem.getLine(spInfo);
-			speechLine.open(speechFormat, speechFramesPerTick * 10);
+			speechLine.open(speechFormat, speechFramesPerTick * 20);
 		} catch (LineUnavailableException e) {
 			System.err.println("Line not available");
 			e.printStackTrace();
 			soundGeneratorWaveForm = new byte[0];
 			soundGeneratorWorkBuffer = new int[0];
+			soundGeneratorWorkBuffer2 = new int[0];
 			speechWaveForm = new byte[0];
 			return;
 		}
@@ -161,8 +164,11 @@ public class JavaSoundHandler implements SoundHandler {
 						return;
 					}
 					
+					//if (chunk != null) dft(chunk.soundToWrite);
+					
 					if (soundGeneratorLine == null)
 						return;
+					
 
 					// toss extra chunks if too many arrive
 					while (chunk != null && soundQueue.size() > 2) {
@@ -235,6 +241,13 @@ public class JavaSoundHandler implements SoundHandler {
 		toggleSound(true);
 	}
 
+	protected void dft(byte[] soundToWrite) {
+		if (dftAnalyzer == null)
+			//dftAnalyzer = new DFTAnalyzer(10);		// analyze 10 bits, e.g. same amount possible via clock
+			dftAnalyzer = new DFTAnalyzer(8);
+		dftAnalyzer.send(soundToWrite);
+	}
+
 	public void toggleSound(boolean enabled) {
 		if (enabled) {
 			soundGeneratorLine.start();
@@ -248,6 +261,8 @@ public class JavaSoundHandler implements SoundHandler {
 				* soundFramesPerTick];
 		soundGeneratorWorkBuffer = new int[stdFormat.getFrameSize()
 				* soundFramesPerTick];
+		soundGeneratorWorkBuffer2 = new int[stdFormat.getFrameSize()
+               * soundFramesPerTick];
 		speechWaveForm = new byte[speechFormat.getFrameSize()
 				* speechFramesPerTick];
 		soundClock = (int) stdFormat.getFrameRate();
@@ -260,7 +275,7 @@ public class JavaSoundHandler implements SoundHandler {
 	 * @see v9t9.engine.SoundHandler#updateVoice(int,
 	 * v9t9.emulator.clients.builtin.Sound99xx.voiceinfo)
 	 */
-	public void updateVoice(int pos, int total) {
+	public synchronized void updateVoice(int pos, int total) {
 
 		if (soundGeneratorWaveForm != null) {
 			int currentPos = (int) ((long) pos * soundGeneratorWaveForm.length / total);
@@ -282,21 +297,52 @@ public class JavaSoundHandler implements SoundHandler {
 
 		SoundVoice[] vs = sound.getSoundVoices();
 
-		int active = 0;
-		for (SoundVoice v : vs) {
-			if (v.isActive())
-				active++;
-		}
-		if (active > 0) {
+		if (true) {
+			int active = 0;
 			for (SoundVoice v : vs) {
-				if (v.isActive())
+				if (v.isActive()) {
+					//Arrays.fill(soundGeneratorWorkBuffer2, 0);
 					v.generate(soundClock, soundGeneratorWorkBuffer, from, to);
+					active++;
+				}
 			}
-			while (from < to) {
-				soundGeneratorWorkBuffer[from++] /= active;
+			if (active > 0) {
+				int div = 2;
+				for (int i = from; i < to; i++) {
+					int s = soundGeneratorWorkBuffer[i];
+					if (div > 0) s /= div;
+					if (s > 0x7fffff)
+						s = 0x7fffff;
+					else if (s < -0x7fffff)
+						s = -0x7fffff;
+					soundGeneratorWorkBuffer[i] = s;
+				}
+			}
+		} else {
+			for (SoundVoice v : vs) {
+				if (v.isActive()) {
+					Arrays.fill(soundGeneratorWorkBuffer2, 0);
+					v.generate(soundClock, soundGeneratorWorkBuffer2, from, to);
+					// mix them together
+					for (int i = from; i < to; i++) {
+						int a = soundGeneratorWorkBuffer[i];
+						int b = soundGeneratorWorkBuffer2[i];
+						int c;
+						if (a == 0)
+							c = b;
+						else if (b == 0)
+							c = a;
+						else if ((a ^ b) < 0) {
+							c = (a + b) ;
+						} else {
+							c = (int) (((long)a + (long)b - a * b / 0x1000000) );
+						}
+						soundGeneratorWorkBuffer[i] = c;
+					}
+				}
 			}
 		}
-
+			
 	}
 
 	public void dispose() {
@@ -369,6 +415,17 @@ public class JavaSoundHandler implements SoundHandler {
 		updateSoundGenerator(lastUpdatedPos, length);
 		lastUpdatedPos = 0;
 
+		if (false) {
+			int prevL = 0, prevR = 0;
+			for (int i = 0; i < length; i+=2) {
+				int sampleL = soundGeneratorWorkBuffer[i];
+				soundGeneratorWorkBuffer[i] = (prevL + sampleL) >> 1;
+				prevL = sampleL;
+				int sampleR = soundGeneratorWorkBuffer[i+1];
+				soundGeneratorWorkBuffer[i+1] = (prevR + sampleR) >> 1;
+				prevR = sampleR;
+			}
+		}
 		for (int i = 0; i < length; i++) {
 			int sample = soundGeneratorWorkBuffer[i];
 			soundGeneratorWaveForm[i] = (byte) (sample >> 16);

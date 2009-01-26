@@ -39,6 +39,42 @@ public class EffectsController {
 		}
 	}
 	
+	final static int WAVELENGTH = 256;
+	
+	// http://www.music.mcgill.ca/~gary/307/week5/bandlimited.html
+	// and Wikipedia
+	// bandlimited sawtooth wave
+	final static short sawtooth[] = new short[WAVELENGTH];
+
+	// bandlimited triangle wave
+	final static short triangle[] = new short[WAVELENGTH];
+	
+	// bandlimited square wave
+	final static short square[] = new short[WAVELENGTH];
+
+	static {
+		for (int i = 0; i < WAVELENGTH; i++) {
+			double phase = i * 2 * Math.PI / WAVELENGTH;
+			double ssample = 0.0;
+			for (int k = 1; k <= WAVELENGTH * 2; k++) {
+				ssample += Math.sin(phase * k) / k;
+			}
+			sawtooth[i] = (short)((-2 * ssample / Math.PI) * 32767);
+			
+			double tsample = 0.0;
+			for (int k = 1; k <= WAVELENGTH / 2; k+=2) {
+				tsample += Math.sin(phase * k) * Math.pow(-1, (k-1)/2.0) / (k*k);
+			}
+			triangle[i] = (short)((8 * tsample / (Math.PI * Math.PI)) * 32767);
+			
+			double qsample = 0.0;
+			for (int k = 1; k <= WAVELENGTH * 2; k++) {
+				qsample += Math.sin(phase * (2 * k - 1)) / (2 * k - 1);
+			}
+			square[i] = (short)((4 * qsample / Math.PI) * 32767);
+		}
+	}
+	
 	private int[] adhr = new int[4];
 	private int sustain;
 	private int index;		// operation currently on, -1 means inactive
@@ -63,7 +99,7 @@ public class EffectsController {
 	
 	public EffectsController(ClockedSoundVoice voice) {
 		this.voice = voice;
-		index = -1;
+		reset();
 	}
 
 	/**
@@ -74,7 +110,7 @@ public class EffectsController {
 		sustain = 0;
 		vibratoAmount = 0;
 		tremoloAmount = 0;
-		waveform = 0;
+		waveform = 3;
 		volume = voice.getVolume() << VOL_SHIFT;
 		index = -1;
 	}
@@ -231,7 +267,8 @@ public class EffectsController {
 
 	public int getCurrentSample() {
 		int basic = volume >> VOL_TO_SAMPLE;
-	
+		if (basic == 0)
+			return basic;
 		
 		if (tremoloAmount != 0) {
 			if (volume > 0) {
@@ -245,34 +282,39 @@ public class EffectsController {
 		}
 		
 		if (voice.period > 0 && voice instanceof ToneGeneratorVoice) {
-			ToneGeneratorVoice toneGen = (ToneGeneratorVoice) voice;
-			//int half = SOUND_CLOCK / 2;
-			//int quarter = SOUND_CLOCK / 4;
-			
 			int half = (voice.period / 2);
-			int quarter = voice.period / 4;
+			int quarter = (voice.period / 4);
 			
 			int ang = voice.clock * sines.length / voice.period;
 			if (ang < 0) ang += sines.length; else if (ang >= sines.length) ang -= sines.length;
+			int wang = voice.clock * WAVELENGTH / voice.period;
+			if (wang < 0) wang += WAVELENGTH; else if (wang >= WAVELENGTH) wang -= WAVELENGTH;
 			
 			switch (waveform) {
 			case 0:
-			default:
-				if (toneGen.out)
-					basic = -basic;
-				break;
-			case 1: {
-				// sawtooth
-				basic = (int) (((long)basic * voice.clock ) / voice.period - basic / 2 ) * 2;		
+			default: {
+				//if (toneGen.out)
+				//	basic = -basic;
+				basic = (int) (((long) basic * square[wang] / 32768));
 				break;
 			}
-			case 2:
+			case 1: {
+				// sawtooth
+				//basic = (int) (((long)basic * voice.clock ) / voice.period - basic / 2 ) * 2;
+				basic = (int) (((long) basic * sawtooth[wang] / 32768));
+				break;
+			}
+			case 2: {
 				// triangle
+				/*
 				if (voice.clock <= half)
 					basic = (int) ((long)basic * voice.clock / quarter - basic);
 				else
 					basic = (int) ((long)basic * (voice.period - voice.clock) / quarter - basic);
+					*/
+				basic = (int) (((long) basic * triangle[wang] / 32768));
 				break;
+			}
 			case 3: {
 				// sine
 				if (ang < 0) ang += sines.length; else if (ang >= sines.length) ang -= sines.length;
@@ -281,8 +323,9 @@ public class EffectsController {
 			}
 			case 4:
 				// half saw
-				if (voice.clock < half)
-					basic = (int) (((long)basic * voice.clock ) / half - basic / 2 ) * 2;	
+				if (voice.clock <= half)
+					//basic = (int) (((long)basic * voice.clock ) / half - basic / 2 ) * 2;
+					basic = (int) (((long) basic * sawtooth[wang] / 32768));
 				else
 					basic = 0;
 				break;
@@ -297,11 +340,13 @@ public class EffectsController {
 			}
 			case 6:
 				// half triangle
-				if (voice.clock >= quarter && voice.clock < quarter + half) {
-					if (voice.clock <= half)
-						basic = (int) ((long)basic * voice.clock / quarter- basic);
-					else
-						basic = (int) ((long)basic * (voice.period - voice.clock) / quarter - basic);
+				//if (voice.clock >= quarter && voice.clock < quarter + half) {
+				if (voice.clock <= half) {
+					//if (voice.clock <= half)
+					//	basic = (int) ((long)basic * voice.clock / quarter- basic);
+					//else
+					//	basic = (int) ((long)basic * (voice.period - voice.clock) / quarter - basic);
+					basic = (int) (((long) basic * triangle[wang] / 32768));
 				}
 				else
 					basic = 0;
@@ -350,6 +395,7 @@ public class EffectsController {
 	
 	public boolean isActive() {
 		return isEnvelopeSet() && index >= 0;
+		//return volume != 0;
 	}
 
 	public void setVibrato(int amount, int rate) {

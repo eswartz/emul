@@ -10,7 +10,7 @@ import v9t9.utils.Utils;
 public class NoiseGeneratorVoice extends ClockedSoundVoice
 {
 	boolean isWhite;
-	int ns1;
+	volatile int ns1;
 	private final ClockedSoundVoice pairedVoice2;
 	
 	public NoiseGeneratorVoice(String name, ClockedSoundVoice pairedVoice2) {
@@ -47,43 +47,6 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 		dump();
 	}
 
-	/*
-	public int generate(int soundClock, int sample) {
-		updateDivisor();
-		if (isWhite) {
-			
-			// thanks to John Kortink (http://web.inter.nl.net/users/J.Kortink/home/articles/sn76489/)
-			// for the exact algorithm here!
-			while (div >= soundClock) {
-				short rx = (short) ((ns1 ^ ((ns1 >>> 1) & 0x7fff) ));
-				rx = (short) (0x4000 & (rx << 14));
-				ns1 = (short) (rx | ((ns1 >>> 1) & 0x7fff) );
-				div -= soundClock;
-			}
-			if ((ns1 & 1) != 0 ) {
-				sample += sampleDelta;
-			}
-		} else {
-			// For periodic noise, the generator is "on" 1/15 of the time.
-			// The clock is the hertz / 15.
-			
-			// ns1 steps through 16 cycles, where 0x8000 through 0x2 are low, and 0x1 is high 
-			if (ns1 <= 1) {
-				sample -= sampleDelta * 2;
-			}
-			if (div >= soundClock) {
-				if (ns1 == 1) {
-					sample += sampleDelta * 4;
-					ns1 = (short) 0x8000;
-				}
-				ns1 = (short) ((ns1 >>> 1) & 0x7fff);
-				while (div >= soundClock) 
-					div -= soundClock;
-			}
-		}
-		return sample;
-	}*/
-	
 	@Override
 	public void generate(int soundClock, int[] soundGeneratorWorkBuffer,
 			int from, int to) {
@@ -118,17 +81,12 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 				// For periodic noise, the generator is "on" 1/15 of the time.
 				// The clock is the hertz / 15.
 				
-				// ns1 steps through 16 cycles, where 0x8000 through 0x2 are low, and 0x1 is high 
 				if (ns1 <= 1) {
 					soundGeneratorWorkBuffer[from] -= sampleL * 2;
 					soundGeneratorWorkBuffer[from+1] -= sampleR * 2;
+					ns1 = (short) 0x8000;
 				}
 				if (accum >= soundClock) {
-					if (ns1 == 1) {
-						soundGeneratorWorkBuffer[from] += sampleL * 4;
-						soundGeneratorWorkBuffer[from + 1] += sampleR * 4;
-						ns1 = (short) 0x8000;
-					}
 					ns1 = (short) ((ns1 >>> 1) & 0x7fff);
 					while (accum >= soundClock) 
 						accum -= soundClock;

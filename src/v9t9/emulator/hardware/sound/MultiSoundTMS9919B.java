@@ -38,7 +38,8 @@ public class MultiSoundTMS9919B implements SoundProvider {
 		
 		this.machine = machine;
 		this.chips = new SoundTMS9919[5];
-		chips[0] = new SoundTMS9919(machine, "Console Chip");
+		//chips[0] = new SoundTMS9919(machine, "Console Chip");
+		chips[0] = new SoundTMS9919B(machine, "Console Chip");
 		for (int i = 0; i < 4; i++) {
 			chips[i + 1] = new SoundTMS9919B(machine, "Chip #" + i);
 			

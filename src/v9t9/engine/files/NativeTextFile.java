@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import v9t9.utils.Check;
+import v9t9.utils.Utils;
 
 public class NativeTextFile implements NativeFile {
 
@@ -44,7 +45,7 @@ public class NativeTextFile implements NativeFile {
         size = Math.min(size, length);
         
         Check.checkArg(size < (long)Integer.MAX_VALUE);
-        fis.skip(offset);
+        Utils.skipFully(fis, offset);
         int ret = fis.read(contents, contentOffset, size);
         fis.close();
         return ret;

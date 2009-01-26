@@ -28,9 +28,17 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 			incr = 0;
 		}
 		
-		// keep waves in sync
-		if (lastPeriod != period || (lastVolume == 0) != (getVolume() == 0))
-			accum = 0;
+		// reset clock on volume == 0 to avoid clicks
+		if (/*lastPeriod != period ||*/ (lastVolume == 0) != (getVolume() == 0)) {
+			if (period > 0) {
+				clock %= period;
+				accum %= 55930;
+			}
+			else {
+				accum = 0;
+				clock = 0;
+			}
+		}
 			
 		dump();
 	}

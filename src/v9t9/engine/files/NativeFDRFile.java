@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import v9t9.utils.Check;
+import v9t9.utils.Utils;
 
 public class NativeFDRFile implements NativeFile {
 
@@ -41,7 +42,7 @@ public class NativeFDRFile implements NativeFile {
 
     public int readContents(byte[] contents, int contentOffset, int offset, int length) throws IOException {
         FileInputStream fis = new FileInputStream(file);
-        fis.skip(fdr.getFDRSize() + offset);
+        Utils.skipFully(fis, fdr.getFDRSize() + offset);
         int size = Math.min(fdr.getFileSize(), length);
         int read = fis.read(contents, contentOffset, size);
         fis.close();

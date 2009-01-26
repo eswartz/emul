@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import v9t9.utils.Utils;
+
 
 /**
  * @author ejs
@@ -89,7 +91,7 @@ public class DataFiles {
      
         /* read the chunk */
         FileInputStream stream = new FileInputStream(file);
-        stream.skip(offset);
+        Utils.skipFully(stream, offset);
         stream.read(result, 0, Math.min(size, result.length));
         stream.close();
         

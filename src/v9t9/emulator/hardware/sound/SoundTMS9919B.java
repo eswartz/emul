@@ -4,7 +4,6 @@
 package v9t9.emulator.hardware.sound;
 
 import v9t9.emulator.Machine;
-import v9t9.utils.Utils;
 
 /**
  * Controller for the TMS9919(B) sound chip.
@@ -125,11 +124,13 @@ public class SoundTMS9919B extends SoundTMS9919 {
 	 * @see v9t9.engine.SoundHandler#writeSound(byte)
 	 */
 	public void writeSound(int addr, byte val) {
-		System.out.println("Writing " + Utils.toHex2(addr & 0x6) + " := " + Utils.toHex2(val));
+		//System.out.println("Writing " + Utils.toHex2(addr & 0x6) + " := " + Utils.toHex2(val));
 		if ((addr & 0x6) == 0x2) {
 			// command byte
 			if ((val & 0x80) != 0) {
 				cmdVoice = getOperationVoice(val);
+				if (!(sound_voices[cmdVoice] instanceof EnhancedVoice))
+					return;
 				EnhancedVoice voice = (EnhancedVoice) sound_voices[cmdVoice];
 				
 				lastCommand = (val & 0xf);
@@ -146,6 +147,8 @@ public class SoundTMS9919B extends SoundTMS9919 {
 			}
 		} else if ((addr & 0x6) == 0x4) {
 			// data 
+			if (!(sound_voices[cmdVoice] instanceof EnhancedVoice))
+				return;
 			EnhancedVoice voice = (EnhancedVoice) sound_voices[cmdVoice];
 			switch (lastCommand) {
 			case CMD_ENVELOPE:
@@ -183,7 +186,7 @@ public class SoundTMS9919B extends SoundTMS9919 {
 	@Override
 	protected void updateVoice(ClockedSoundVoice v, byte val) {
 		super.updateVoice(v, val);
-		if ((val & 0x90) == 0x90) { 
+		if (sound_voices[cmdVoice] instanceof EnhancedVoice && (val & 0x90) == 0x90) { 
 			EnhancedVoice voice = (EnhancedVoice) sound_voices[cmdVoice];
 			byte vol = ((ClockedSoundVoice) voice).getVolume();
 			if (vol == 0)

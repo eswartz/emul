@@ -54,18 +54,20 @@ public class TestSpeech {
 		
 		MemoryDomain speechMem = new MemoryDomain();
 		DataFiles.addSearchPath("/usr/local/src/v9t9-data/roms");
+		DataFiles.addSearchPath("l:/src/v9t9-data/roms");
 		TMS5220 tms5220 = new TMS5220(speechMem);
 		
 		TMS5220.settingLogSpeech.setInt(1);
 		LPCSpeech speech = new LPCSpeech();
 		speech.init();
 		
-		final FileOutputStream fos = new FileOutputStream("/tmp/speech.raw");
+		final FileOutputStream fos = new FileOutputStream("c:/temp/speech.raw");
 		
 		Sender sender = new Sender() {
 
 			public void send(short val, int pos, int length) {
 				
+				//val ^= 0x8000;
 				if (speechIdx >= speechWaveForm.length) {
 					speechLine.write(speechWaveForm, 0, speechWaveForm.length);
 					speechIdx = 0;
@@ -78,9 +80,9 @@ public class TestSpeech {
 					fos.write(val >> 8);
 				} catch (IOException e) {
 				}
-				//if (pos == 0)
-				//	System.out.println();
-				//System.out.print(val + " ");
+				if (pos == 0)
+					System.out.println();
+				System.out.print(val + " ");
 			}
 			
 		};

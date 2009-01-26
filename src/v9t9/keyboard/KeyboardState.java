@@ -7,13 +7,9 @@
 package v9t9.keyboard;
 
 import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.runtime.Cpu;
-import v9t9.utils.Utils;
 
 public class KeyboardState {
     /* Masks, corresponding to column 0 */
@@ -482,7 +478,8 @@ public class KeyboardState {
 		if (isPasting() && pasteNext)
 			pasteTask.run();
 		probedColumns = 0;
-		pushQueuedKey();
+		if (!isPasting())
+			pushQueuedKey();
 		pasteNext = true;
 	}
 	
@@ -515,7 +512,6 @@ public class KeyboardState {
 			int index = 0;
 			byte prevShift = 0;
 			char prevCh = 0;
-			int successiveCharTimeout;
 			int runDelay;
 			public void run() {
 				if (!cpu.getMachine().isAlive())

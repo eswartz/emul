@@ -192,6 +192,9 @@ public class InternalCru9901 implements CruAccess {
 			if (clockmode)
 				return (clockReadRegister >> 1) & 1;
 			else if ((int9901 & M_INT_VDP) != 0) {
+				// if the keyboard is not scanned continuously, this
+				// is a way to trap it in the standard TI ROM
+				keyboardState.resetProbe();
 				return (currentints & M_INT_VDP) == 0 ? 0 : 1;
 			} else
 				return 0;

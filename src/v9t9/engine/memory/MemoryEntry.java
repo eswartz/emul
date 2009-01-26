@@ -194,9 +194,13 @@ public class MemoryEntry implements MemoryAccess {
     		while ((line = reader.readLine()) != null) {
     			int idx = line.indexOf(' ');
     			if (idx > 0) {
-    				int addr = Integer.parseInt(line.substring(0, idx), 16);
-    				String name = line.substring(idx+1);
-    				defineSymbol(addr, name);
+    				try {
+	    				int addr = Integer.parseInt(line.substring(0, idx), 16);
+	    				String name = line.substring(idx+1);
+	    				defineSymbol(addr, name);
+    				} catch (NumberFormatException e) {
+    					
+    				}
     			} 
     		}
     		

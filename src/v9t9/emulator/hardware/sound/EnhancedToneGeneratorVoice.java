@@ -18,9 +18,8 @@ public class EnhancedToneGeneratorVoice extends ToneGeneratorVoice implements En
 	}
 
 	protected int getOperationPeriod() {
-		byte mask = 0x7f;
 		return ( (operation[SoundTMS9919.OPERATION_FREQUENCY_LO] & 0xf) |
-		( (operation[SoundTMS9919.OPERATION_FREQUENCY_HI] & mask) << 4 ) );
+		( (operation[SoundTMS9919.OPERATION_FREQUENCY_HI] & 0x7f) << 4 ) );
 	}
 	
 	public EffectsController getEffectsController() {

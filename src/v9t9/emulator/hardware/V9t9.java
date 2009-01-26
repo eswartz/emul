@@ -155,9 +155,13 @@ public class V9t9 {
 		    	//loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
 	    		loadModuleGrom("Parsec", "parsecg.bin");
 	    		loadModuleRom("Parsec", "parsecc.bin");
-	    		
 	    		loadModuleGrom("TEII", "teiig.bin");
 	    		loadModuleRom("TEII", "teiic.bin");
+	    		loadModuleRom("Alpiner", "alpinerc.bin");
+	    		loadModuleGrom("Alpiner", "alpinerg.bin");
+	    		loadModuleGrom("Mash", "mashg.bin");
+	    		loadModuleRom("Mash", "mashc.bin");
+	    		
 	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
 	    		loadModuleGrom("ExtBasic", "tiextg.bin");
 	    	} else {
