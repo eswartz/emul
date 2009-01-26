@@ -74,14 +74,13 @@ final static int FL_last	= 8;		/* stop frame seen */
 	private final static int ONE = (32768);
 	private final static int MD(int a, int b) { return (((a)*(b))/ONE); }
 
-	private static int LPC_TO_PCM(int val) {
-		//val >>= 6;
-		if (val < -512)
+	private static int LPC_TO_PCM(int ylatch) {
+		if (ylatch < -512)
 			return -0x8000;
-		if (val > 511)
+		if (ylatch > 511)
 			return 0x7fff;
 	
-		return val << 6;
+		return ylatch << 6;
 	}
 
 	private void clearToSilence()
@@ -321,7 +320,8 @@ final static int FL_last	= 8;		/* stop frame seen */
 					ns2++;
 			} else {
 				/* get next chirp value */
-				int cptr = ppctr * 200 / length;
+				int cptr = ppctr % RomTables.chirptable.length;
+				//int cptr = ppctr * 200 / length;
 				U = cptr < RomTables.chirptable.length ? RomTables.chirptable[cptr] : 0;
 				U = (U * ebf + 128) / 256;
 
