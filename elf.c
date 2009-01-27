@@ -126,7 +126,7 @@ static void elf_cleanup_event(void * arg) {
 
 /* Swap bytes if ELF file endianness mismatch agent endianness */
 static void swap_bytes(void * buf, size_t size) {
-    int i;
+    size_t i;
     char * p = (char *)buf;
     for (i = 0; i < size / 2; i++) {
         char x = p[i];

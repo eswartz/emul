@@ -24,11 +24,12 @@
 #define D_dwarfcache
 
 #include "elf.h"
+#include "dwarfio.h"
 
 typedef struct FileInfo FileInfo;
 typedef struct LocationInfo LocationInfo;
 typedef struct ObjectInfo ObjectInfo;
-typedef struct DynamicProperty DynamicProperty;
+typedef struct PropertyValue PropertyValue;
 typedef struct LineNumbersState LineNumbersState;
 typedef struct CompUnit CompUnit;
 typedef struct SymbolSection SymbolSection;
@@ -56,24 +57,6 @@ struct SymbolSection {
     unsigned * mHashNext;
 };
 
-struct LocationInfo {
-    U1_T * mAddr;
-    size_t mSize;
-    U1_T mList;
-};
-
-struct DynamicProperty {
-    union {
-        ObjectInfo * mObj;
-        struct {
-            U1_T * mAddr;
-            size_t mSize;
-        } mExpr;
-        U8_T mValue;
-    } mData;
-    U2_T mForm;
-};
-
 struct ObjectInfo {
     ObjectInfo * mHashNext;
     ObjectInfo * mListNext;
@@ -83,31 +66,29 @@ struct ObjectInfo {
 
     U2_T mTag;
     U8_T mID;
-    U8_T mLowPC;
-    U8_T mHighPC;
-    U8_T mConstValue;
-    U1_T * mConstValueAddr;
-    size_t mConstValueSize;
-    LocationInfo mLocation;
-    LocationInfo mFrameBase;
+
+    ContextAddress mLowPC;
+    ContextAddress mHighPC;
+
     SymbolSection * mSymbolSection;
     U4_T mSymbol;
-    U1_T mDeclaration;
-    U1_T mPrototyped;
-    U1_T mExternal;
-    U1_T mBitStride;
-    U1_T mOrdering;
     U2_T mEncoding;
-    DynamicProperty mSize;
-    DynamicProperty mLowBound;
-    DynamicProperty mUpperBound;
-    DynamicProperty mLength;
     ObjectInfo * mType;
-    ObjectInfo * mSpecification;
     CompUnit * mCompUnit;
     char * mName;
-    U4_T mDeclFile;
-    U4_T mDeclLine;
+};
+
+struct PropertyValue {
+    Context * mContext;
+    int mFrame;
+    ObjectInfo * mObject;
+    U2_T mAttr;
+    U2_T mForm;
+    U8_T mValue;
+    U1_T * mAddr;
+    size_t mSize;
+    int mBigEndian;
+    int (*mAccessFunc)(PropertyValue *, int, U8_T *);
 };
 
 #define LINE_IsStmt         0x01
@@ -133,8 +114,8 @@ struct CompUnit {
     ContextAddress mLowPC;
     ContextAddress mHighPC;
 
-    U2_T mVersion;
-    U1_T mAddressSize;
+    DIO_UnitDescriptor mDesc;
+
     U8_T mDebugRangesOffs;
     U8_T mLineInfoOffs;
     char * mName;
@@ -179,16 +160,23 @@ struct DWARFCache {
     DWARFCache * mLineInfoNext;
 };
 
-/* Return DWARF cache for given file, create and populate the chae if needed, throw an exception if error */
+/* Return DWARF cache for given file, create and populate the cache if needed, throw an exception if error */
 extern DWARFCache * get_dwarf_cache(ELF_File * file);
 
 extern unsigned calc_symbol_name_hash(char * s);
 
+/* Load line number information for given compilation unit, throw an exception if error */
 extern void load_line_numbers(DWARFCache * cache, CompUnit * unit);
 
+/* Find ObjectInfo by ID */
 extern ObjectInfo * find_object(DWARFCache * cache, U8_T ID);
 
-/* Return value of DWARF object dynamic property in given context, throw an exception if error */
-extern U8_T evaluate_dynamic_property(Context * ctx, int frame, ObjectInfo * obj, DynamicProperty * prop);
+/* Read a property of a DWARF object, on error set errno and return -1 */
+extern int read_dwarf_object_property(Context * ctx, int frame, ObjectInfo * obj, int attr_tag, PropertyValue * value);
+
+/* Read and evaluate a property of a DWARF object, on error set errno and return -1 */
+extern int read_and_evaluate_dwarf_object_property(Context * ctx, int frame, U8_T base, ObjectInfo * obj, int attr_tag, PropertyValue * value);
+
+extern U8_T get_numeric_property_value(PropertyValue * Value);
 
 #endif

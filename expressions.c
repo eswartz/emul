@@ -440,16 +440,29 @@ static void next_sy(void) {
             return;
         default:
             if (ch >= '0' && ch <= '9') {
+                int pos = text_pos - 2;
                 int64 value = ch - '0';
-                memset(&text_val, 0, sizeof(text_val));
-                text_val.type_class = TYPE_CLASS_INTEGER;
-                text_val.size = sizeof(int64);
-                text_val.value = alloc_str(text_val.size);
-                text_val.constant = 1;
                 while (text_ch >= '0' && text_ch <= '9') {
                     value = (value * 10) + next_dec();
                 }
-                *(int64 *)text_val.value = value;
+                memset(&text_val, 0, sizeof(text_val));
+                if (text_ch == '.') {
+                    char * end = NULL;
+                    double x = strtod(text + pos, &end);
+                    text_pos = end - text;
+                    next_ch();
+                    text_val.type_class = TYPE_CLASS_REAL;
+                    text_val.size = sizeof(double);
+                    text_val.value = alloc_str(text_val.size);
+                    *(double *)text_val.value = x;
+                }
+                else {
+                    text_val.type_class = TYPE_CLASS_INTEGER;
+                    text_val.size = sizeof(int64);
+                    text_val.value = alloc_str(text_val.size);
+                    *(int64 *)text_val.value = value;
+                }
+                text_val.constant = 1;
                 text_sy = SY_VAL;
                 return;
             }
@@ -596,8 +609,23 @@ static int is_whole_number(Value * v) {
 }
 
 static int64 to_int(int mode, Value * v) {
-    if (mode != MODE_NORMAL) return 0;
+    if (mode != MODE_NORMAL) {
+        if (v->remote) {
+            v->value = alloc_str(v->size);
+            v->remote = 0;
+        }
+        return 0;
+    }
 
+    if (v->type_class == TYPE_CLASS_POINTER) {
+        load_value(v);
+        switch (v->size)  {
+        case 1: return *(unsigned char *)v->value;
+        case 2: return *(unsigned short *)v->value;
+        case 4: return *(unsigned long *)v->value;
+        case 8: return *(uns64 *)v->value;
+        }
+    }
     if (is_number(v)) {
         load_value(v);
 
@@ -630,7 +658,13 @@ static int64 to_int(int mode, Value * v) {
 }
 
 static uns64 to_uns(int mode, Value * v) {
-    if (mode != MODE_NORMAL) return 0;
+    if (mode != MODE_NORMAL) {
+        if (v->remote) {
+            v->value = alloc_str(v->size);
+            v->remote = 0;
+        }
+        return 0;
+    }
 
     if (v->type_class == TYPE_CLASS_ARRAY && v->remote) {
         return (uns64)v->address;
@@ -676,7 +710,13 @@ static uns64 to_uns(int mode, Value * v) {
 }
 
 static double to_double(int mode, Value * v) {
-    if (mode != MODE_NORMAL) return 0;
+    if (mode != MODE_NORMAL) {
+        if (v->remote) {
+            v->value = alloc_str(v->size);
+            v->remote = 0;
+        }
+        return 0;
+    }
 
     if (is_number(v)) {
         load_value(v);
@@ -821,7 +861,7 @@ static void op_field(int mode, Value * v) {
             error(errno, "Cannot retrieve field offset");
         }
         if (offs + size > v->size) {
-            error(errno, "Invalid field offset and/or size");
+            error(ERR_INV_EXPRESSION, "Invalid field offset and/or size");
         }
         if (v->remote) {
             if (mode != MODE_TYPE) v->address += offs;
@@ -1039,15 +1079,17 @@ static void multiplicative_expression(int mode, Value * v) {
             if (!is_number(v) || !is_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Numeric types expected");
             }
-            if (sy != '*' && to_int(mode, &x) == 0) {
+            if (mode == MODE_NORMAL && sy != '*' && to_int(mode, &x) == 0) {
                 error(ERR_INV_EXPRESSION, "Dividing by zero");
             }
             if (v->type_class == TYPE_CLASS_REAL || x.type_class == TYPE_CLASS_REAL) {
                 double * value = alloc_str(sizeof(double));
-                switch (sy) {
-                case '*': *value = to_double(mode, v) * to_double(mode, &x); break;
-                case '/': *value = to_double(mode, v) / to_double(mode, &x); break;
-                default: error(ERR_INV_EXPRESSION, "Invalid type");
+                if (mode == MODE_NORMAL) {
+                    switch (sy) {
+                    case '*': *value = to_double(mode, v) * to_double(mode, &x); break;
+                    case '/': *value = to_double(mode, v) / to_double(mode, &x); break;
+                    default: error(ERR_INV_EXPRESSION, "Invalid type");
+                    }
                 }
                 v->type_class = TYPE_CLASS_REAL;
                 v->size = sizeof(double);
@@ -1055,10 +1097,12 @@ static void multiplicative_expression(int mode, Value * v) {
             }
             else if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
                 uns64 * value = alloc_str(sizeof(uns64));
-                switch (sy) {
-                case '*': *value = to_uns(mode, v) * to_uns(mode, &x); break;
-                case '/': *value = to_uns(mode, v) / to_uns(mode, &x); break;
-                case '%': *value = to_uns(mode, v) % to_uns(mode, &x); break;
+                if (mode == MODE_NORMAL) {
+                    switch (sy) {
+                    case '*': *value = to_uns(mode, v) * to_uns(mode, &x); break;
+                    case '/': *value = to_uns(mode, v) / to_uns(mode, &x); break;
+                    case '%': *value = to_uns(mode, v) % to_uns(mode, &x); break;
+                    }
                 }
                 v->type_class = TYPE_CLASS_CARDINAL;
                 v->size = sizeof(uns64);
@@ -1066,10 +1110,12 @@ static void multiplicative_expression(int mode, Value * v) {
             }
             else {
                 int64 * value = alloc_str(sizeof(int64));
-                switch (sy) {
-                case '*': *value = to_int(mode, v) * to_int(mode, &x); break;
-                case '/': *value = to_int(mode, v) / to_int(mode, &x); break;
-                case '%': *value = to_int(mode, v) % to_int(mode, &x); break;
+                if (mode == MODE_NORMAL) {
+                    switch (sy) {
+                    case '*': *value = to_int(mode, v) * to_int(mode, &x); break;
+                    case '/': *value = to_int(mode, v) / to_int(mode, &x); break;
+                    case '%': *value = to_int(mode, v) % to_int(mode, &x); break;
+                    }
                 }
                 v->type_class = TYPE_CLASS_INTEGER;
                 v->size = sizeof(int64);
@@ -1242,8 +1288,9 @@ static void relational_expression(int mode, Value * v) {
                 case SY_GEQ: *value = to_int(mode, v) >= to_int(mode, &x); break;
                 }
             }
+            if (mode != MODE_NORMAL) *value = 0;
             v->type_class = TYPE_CLASS_INTEGER;
-            v->value = mode != MODE_NORMAL ? 0 : value;
+            v->value = value;
             v->size = sizeof(int);
             v->remote = 0;
             v->constant = v->constant && x.constant;
@@ -1273,8 +1320,9 @@ static void equality_expression(int mode, Value * v) {
                 *value = to_int(mode, v) == to_int(mode, &x);
             }
             if (sy == SY_NEQ) *value = !*value;
+            if (mode != MODE_NORMAL) *value = 0;
             v->type_class = TYPE_CLASS_INTEGER;
-            v->value = mode != MODE_NORMAL ? 0 : value;
+            v->value = value;
             v->size = sizeof(int);
             v->remote = 0;
             v->constant = v->constant && x.constant;
@@ -1301,7 +1349,8 @@ static void and_expression(int mode, Value * v) {
             else {
                 v->type_class = TYPE_CLASS_INTEGER;
             }
-            v->value = mode != MODE_NORMAL ? 0 : value;
+            if (mode != MODE_NORMAL) *value = 0;
+            v->value = value;
             v->size = sizeof(int64);
             v->remote = 0;
             v->constant = v->constant && x.constant;
@@ -1328,7 +1377,8 @@ static void exclusive_or_expression(int mode, Value * v) {
             else {
                 v->type_class = TYPE_CLASS_INTEGER;
             }
-            v->value = mode != MODE_NORMAL ? 0 : value;
+            if (mode != MODE_NORMAL) *value = 0;
+            v->value = value;
             v->size = sizeof(int64);
             v->remote = 0;
             v->constant = v->constant && x.constant;
@@ -1355,7 +1405,8 @@ static void inclusive_or_expression(int mode, Value * v) {
             else {
                 v->type_class = TYPE_CLASS_INTEGER;
             }
-            v->value = mode != MODE_NORMAL ? 0 : value;
+            if (mode != MODE_NORMAL) *value = 0;
+            v->value = value;
             v->size = sizeof(int64);
             v->remote = 0;
             v->constant = v->constant && x.constant;

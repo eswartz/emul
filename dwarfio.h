@@ -22,11 +22,19 @@
 
 #include "elf.h"
 
-extern U2_T dio_gVersion;
-extern U1_T dio_g64bit;
-extern U1_T dio_gAddressSize;
-extern U8_T dio_gUnitPos;   /* Offset in the section */
-extern U4_T dio_gUnitSize;
+typedef struct DIO_UnitDescriptor {
+    ELF_File * mFile;
+    ELF_Section * mSection;
+    U2_T mVersion;
+    U1_T m64bit;
+    U1_T mAddressSize;
+    U8_T mUnitOffs;
+    U4_T mUnitSize;
+    U4_T mAbbrevTableOffs;
+    struct DIO_Abbreviation ** mAbbrevTable;
+    U4_T mAbbrevTableSize;
+} DIO_UnitDescriptor;
+
 extern U8_T dio_gEntryPos;
 
 extern U8_T dio_gFormRef;   /* Absolute address */
@@ -34,8 +42,8 @@ extern U8_T dio_gFormData;
 extern size_t dio_gFormDataSize;
 extern void * dio_gFormDataAddr;
 
-extern void dio_EnterSection(ELF_Section * Section, U8_T Offset);
-extern void dio_EnterSectionData(ELF_File * File, U1_T * Data, U8_T Offset, U8_T Size);
+extern void dio_EnterDebugSection(DIO_UnitDescriptor * Unit, ELF_Section * Section, U8_T Offset);
+extern void dio_EnterDataSection(DIO_UnitDescriptor * Unit, U1_T * Data, U8_T Offset, U8_T Size);
 extern void dio_ExitSection(void);
 
 extern void dio_Skip(I8_T Bytes);
@@ -64,7 +72,7 @@ typedef void (*DIO_EntryCallBack)(U2_T /* Tag */, U2_T /* Attr */, U2_T /* Form 
  * and then called after the entry with Attr = 0 and Form = 0.
  * This sequence is repeated for each entry in the debug info unit.
  */
-extern void dio_ReadUnit(DIO_EntryCallBack CallBack);
+extern void dio_ReadUnit(DIO_UnitDescriptor * Unit, DIO_EntryCallBack CallBack);
 extern void dio_ReadEntry(DIO_EntryCallBack CallBack);
 
 extern void dio_LoadAbbrevTable(ELF_File * File);

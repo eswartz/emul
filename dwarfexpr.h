@@ -21,11 +21,6 @@
 #include "context.h"
 #include "dwarfcache.h"
 
-extern int dwarf_expression_addr(Context * ctx, int frame, U8_T base, ObjectInfo * obj, U8_T * address);
-extern int dwarf_expression_read(Context * ctx, int frame, ObjectInfo * obj, U1_T * buf, size_t size);
-extern int dwarf_expression_write(Context * ctx, int frame, ObjectInfo * obj, U1_T * buf, size_t size);
-
-extern int dwarf_dynamic_property_expression(Context * ctx, int frame, ObjectInfo * obj,
-                                             U1_T * expr_addr, size_t expr_size, U8_T * result);
+extern int dwarf_evaluate_expression(U8_T base, PropertyValue * value);
 
 #endif

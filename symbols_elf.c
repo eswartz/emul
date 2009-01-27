@@ -652,13 +652,30 @@ int get_symbol_name(const Symbol * sym, char ** name) {
     return 0;
 }
 
-static U8_T get_object_length(Context * ctx, ObjectInfo * obj, int frame) {
-    if (obj->mLength.mForm != 0) {
-        return evaluate_dynamic_property(ctx, frame, obj, &obj->mLength);
+static int get_num_prop(Context * ctx, int frame, ObjectInfo * obj, int at, U8_T * res) {
+    PropertyValue v;
+
+    if (read_and_evaluate_dwarf_object_property(ctx, frame, 0, obj, at, &v) < 0) return 0;
+    *res = get_numeric_property_value(&v);
+    return 1;
+}
+
+static U8_T get_object_length(Context * ctx, int frame, ObjectInfo * obj) {
+    U8_T x, y;
+
+    if (get_num_prop(ctx, frame, obj, AT_count, &x)) return x;
+    if (get_num_prop(ctx, frame, obj, AT_upper_bound, &x)) {
+        if (get_num_prop(ctx, frame, obj, AT_lower_bound, &y)) return x + 1 - y;
+        return x + 1;
     }
-    if (obj->mLowBound.mForm != 0 && obj->mUpperBound.mForm != 0) {
-        return evaluate_dynamic_property(ctx, frame, obj, &obj->mUpperBound) -
-            evaluate_dynamic_property(ctx, frame, obj, &obj->mLowBound) + 1;
+    if (obj->mTag == TAG_enumeration_type) {
+        ObjectInfo * c = obj->mChildren;
+        x = 0;
+        while (c != NULL) {
+            x++;
+            c = c->mSibling;
+        }
+        return x;
     }
     return 0;
 }
@@ -669,16 +686,25 @@ int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
         return 0;
     }
     if (unpack(sym) < 0) return -1;
+    *size = 0;
     if (obj != NULL) {
-        size_t length = 1;
         Trap trap;
+        int ok = 0;
+        U8_T sz = 0;
+
         if (!set_trap(&trap)) return -1;
-        if (sym->sym_class == SYM_CLASS_REFERENCE && obj->mSize.mForm == 0 && obj->mType != NULL) obj = obj->mType;
-        while (obj->mSize.mForm == 0 && obj->mType != NULL) {
+        if (dimension == 0) ok = get_num_prop(sym->ctx, frame, obj, AT_byte_size, &sz);
+        if (!ok && sym->sym_class == SYM_CLASS_REFERENCE && obj->mType != NULL) {
+            obj = obj->mType;
+            if (dimension == 0) ok = get_num_prop(sym->ctx, frame, obj, AT_byte_size, &sz);
+        }
+        while (!ok && obj->mType != NULL) {
             if (obj->mTag != TAG_typedef && obj->mTag != TAG_enumeration_type) break;
             obj = obj->mType;
+            if (dimension == 0) ok = get_num_prop(sym->ctx, frame, obj, AT_byte_size, &sz);
         }
-        if (obj->mTag == TAG_array_type) {
+        if (!ok && obj->mTag == TAG_array_type) {
+            size_t length = 1;
             int i = dimension;
             ObjectInfo * idx = obj->mChildren;
             while (i > 0 && idx != NULL) {
@@ -687,18 +713,20 @@ int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
             }
             if (idx == NULL) exception(ERR_INV_CONTEXT);
             while (idx != NULL) {
-                length *= (size_t)get_object_length(sym->ctx, idx, frame);
+                length *= (size_t)get_object_length(sym->ctx, frame, idx);
                 idx = idx->mSibling;
             }
             if (obj->mType == NULL) exception(ERR_INV_CONTEXT);
             obj = obj->mType;
-            while (obj->mSize.mForm == 0 && obj->mType != NULL) {
+            ok = get_num_prop(sym->ctx, frame, obj, AT_byte_size, &sz);
+            while (!ok && obj->mType != NULL) {
                 if (obj->mTag != TAG_typedef && obj->mTag != TAG_enumeration_type) break;
                 obj = obj->mType;
+                ok = get_num_prop(sym->ctx, frame, obj, AT_byte_size, &sz);
             }
+            if (ok) sz *= length;
         }
-        if (obj->mSize.mForm == 0) *size = 0;
-        else *size = length * (size_t)evaluate_dynamic_property(sym->ctx, frame, obj, &obj->mSize);
+        if (ok) *size = (size_t)sz;
         clear_trap(&trap);
     }
     else if (sym32 != NULL) {
@@ -706,9 +734,6 @@ int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
     }
     else if (sym64 != NULL) {
         *size = (size_t)sym64->st_size;
-    }
-    else {
-        *size = 0;
     }
     return 0;
 }
@@ -789,7 +814,7 @@ int get_symbol_length(const Symbol * sym, int frame, unsigned long * length) {
             if (idx != NULL) {
                 Trap trap;
                 if (!set_trap(&trap)) return -1;
-                *length = (unsigned long)get_object_length(sym->ctx, idx, frame);
+                *length = (unsigned long)get_object_length(sym->ctx, frame, idx);
                 clear_trap(&trap);
                 return 0;
             }
@@ -834,9 +859,9 @@ int get_symbol_offset(const Symbol * sym, unsigned long * offset) {
     }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL && obj->mTag == TAG_member) {
-        U8_T addr = 0;
-        if (dwarf_expression_addr(sym->ctx, STACK_NO_FRAME, 0, obj, &addr) < 0) return -1;
-        *offset = (unsigned long)addr;
+        U8_T v;
+        if (!get_num_prop(sym->ctx, STACK_NO_FRAME, obj, AT_data_member_location, &v)) return -1;
+        *offset = (unsigned long)v;
         return 0;
     }
     errno = ERR_INV_CONTEXT;
@@ -849,10 +874,26 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
         return -1;
     }
     if (unpack(sym) < 0) return -1;
-    if (obj != NULL && obj->mConstValueAddr != NULL) {
-        *size = obj->mConstValueSize;
-        *value = loc_alloc(obj->mConstValueSize);
-        memcpy(*value, obj->mConstValueAddr, obj->mConstValueSize);
+    if (obj != NULL) {
+        PropertyValue v;
+        if (read_and_evaluate_dwarf_object_property(sym->ctx, STACK_NO_FRAME, 0, obj, AT_const_value, &v) < 0) return -1;
+        if (v.mAddr != NULL) {
+            *size = v.mSize;
+            *value = loc_alloc(v.mSize);
+            memcpy(*value, v.mAddr, v.mSize);
+        }
+        else {
+            size_t sz = sizeof(v.mValue);
+            U1_T * bf = loc_alloc(sz);
+            U8_T n = v.mValue;
+            size_t i = 0;
+            for (i = 0; i < sz; i++) {
+                bf[v.mBigEndian ? sz - i - 1 : i] = n & 0xffu;
+                n = n >> 8;
+            }
+            *size = sz;
+            *value = bf;
+        }
         return 0;
     }
     errno = ERR_INV_CONTEXT;
@@ -866,9 +907,9 @@ int get_symbol_address(const Symbol * sym, int frame, ContextAddress * address) 
     }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL && obj->mTag != TAG_member) {
-        U8_T addr = 0;
-        if (dwarf_expression_addr(sym->ctx, frame, 0, obj, &addr) < 0) return -1;
-        *address = (ContextAddress)addr;
+        U8_T v;
+        if (!get_num_prop(sym->ctx, frame, obj, AT_location, &v)) return -1;
+        *address = (ContextAddress)v;
         return 0;
     }
     if (sym32 != NULL) {

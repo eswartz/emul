@@ -54,15 +54,6 @@
 -        channel.c in function channels_suspend(): Should we add “assert(!suspended);” to make sure it is not called multiple
          times since we don’t have a suspend count?
 
--        context.c, line 891 & 928: 
-
-          o   should say “~(WORD_SIZE-1)” instead of “~3ul”
-
--        processes.c, line 266: 
-
-          o   We should have an abstraction of the signal number or some way from the client to map between names and numbers
-               so clients don’t have to be target dependent.
-
 -        registers.c:
 
           o   Get/set commands does not handle reading multiple registers.  Should it?

@@ -30,12 +30,14 @@
 #include "dwarfcache.h"
 #include "dwarfexpr.h"
 #include "exceptions.h"
+#include "breakpoints.h"
 #include "myalloc.h"
 
 #define OBJ_HASH_SIZE          (0x10000-1)
 
 static DWARFCache * sCache;
 static ELF_Section * sDebugSection;
+static DIO_UnitDescriptor sUnitDesc;
 static ObjectInfo * sObjectList;
 static ObjectInfo * sObjectListTail;
 static Elf_Sym ** sSymbolHash;
@@ -97,31 +99,6 @@ static U8_T get_elf_symbol_address(Elf_Sym * x) {
         }
     }
     return 0;
-}
-
-static DynamicProperty get_object_value_size(ObjectInfo * Info) {
-    if (Info->mSize.mForm == 0) {
-        switch (Info->mTag) {
-        case TAG_pointer_type:
-        case TAG_reference_type:
-            Info->mSize.mForm = FORM_UDATA;
-            Info->mSize.mData.mValue = Info->mCompUnit->mAddressSize;
-            break;
-        case TAG_subrange_type:
-        case TAG_volatile_type:
-        case TAG_const_type:
-        case TAG_typedef:
-        case TAG_formal_parameter:
-        case TAG_global_variable:
-        case TAG_local_variable:
-        case TAG_variable:
-        case TAG_constant:
-        case TAG_enumerator:
-            if (Info->mType != NULL) return get_object_value_size(Info->mType);
-            break;
-        }
-    }
-    return Info->mSize;
 }
 
 static CompUnit * find_comp_unit(U8_T ID) {
@@ -186,76 +163,6 @@ static void find_symbol_entry(ObjectInfo * Info) {
             }
         }
     }
-}
-
-static void set_dynamic_property(DynamicProperty * Prop, U2_T Form) {
-    Prop->mForm = Form;
-    switch (Form) {
-    case FORM_REF       :
-    case FORM_REF_ADDR  :
-    case FORM_REF1      :
-    case FORM_REF2      :
-    case FORM_REF4      :
-    case FORM_REF8      :
-    case FORM_REF_UDATA :
-        Prop->mData.mObj = find_object_info(dio_gFormRef);
-        break;
-    case FORM_DATA1     :
-    case FORM_DATA2     :
-    case FORM_DATA4     :
-    case FORM_DATA8     :
-    case FORM_SDATA     :
-    case FORM_UDATA     :
-    case FORM_FLAG      :
-        Prop->mData.mValue = dio_gFormData;
-        break;
-    default:
-        dio_ChkBlock(Form, &Prop->mData.mExpr.mAddr, &Prop->mData.mExpr.mSize);
-        break;
-    }
-}
-
-U8_T evaluate_dynamic_property(Context * ctx, int frame, ObjectInfo * obj, DynamicProperty * Prop) {
-    U8_T Res = 0;
-    size_t Size = 0;
-    U1_T Buf[8];
-    int big_endian;
-    unsigned i;
-
-    switch (Prop->mForm) {
-    case FORM_REF       :
-    case FORM_REF_ADDR  :
-    case FORM_REF1      :
-    case FORM_REF2      :
-    case FORM_REF4      :
-    case FORM_REF8      :
-    case FORM_REF_UDATA :
-        big_endian = obj->mCompUnit->mFile->big_endian;
-        Size = (size_t)evaluate_dynamic_property(ctx, frame, Prop->mData.mObj, &Prop->mData.mObj->mSize);
-        if (Size < 1 || Size > sizeof(Buf)) exception(ERR_INV_DATA_TYPE);
-        if (dwarf_expression_read(ctx, frame, Prop->mData.mObj, Buf, (size_t)Size) < 0) {
-            exception(errno);
-        }
-        for (i = 0; i < Size; i++) {
-            Res = (Res << 8) | Buf[big_endian ? i : Size - i - 1];
-        }
-        break;
-    case FORM_DATA1     :
-    case FORM_DATA2     :
-    case FORM_DATA4     :
-    case FORM_DATA8     :
-    case FORM_SDATA     :
-    case FORM_UDATA     :
-    case FORM_FLAG      :
-        Res = Prop->mData.mValue;
-        break;
-    default:
-        if (dwarf_dynamic_property_expression(ctx, frame, obj, Prop->mData.mExpr.mAddr, Prop->mData.mExpr.mSize, &Res) < 0) {
-            exception(errno);
-        }
-        break;
-    }
-    return Res;
 }
 
 static void entry_callback(U2_T Tag, U2_T Attr, U2_T Form);
@@ -334,10 +241,8 @@ static void read_tag_com_unit(U2_T Attr, U2_T Form) {
         if (Form) {
             Unit = find_comp_unit(sDebugSection->addr + dio_gEntryPos);
             Unit->mFile = sCache->mFile;
-            Unit->mDebugRangesOffs = ~(U8_T)0;
-            Unit->mVersion = dio_gVersion;
-            Unit->mAddressSize = dio_gAddressSize;
             Unit->mSection = sDebugSection;
+            Unit->mDebugRangesOffs = ~(U8_T)0;
         }
         else {
             assert(sParentObject == NULL);
@@ -406,14 +311,6 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
                 sParentObject = Parent;
                 sPrevSibling = PrevSibling;
             }
-            if (Tag == TAG_enumeration_type && Info->mLength.mForm == 0 && Info->mChildren != NULL) {
-                ObjectInfo * Obj = Info->mChildren;
-                Info->mLength.mForm = FORM_UDATA;
-                while (Obj != NULL) {
-                    Info->mLength.mData.mValue++;
-                    Obj = Obj->mSibling;
-                }
-            }
         }
         break;
     case AT_sibling:
@@ -445,85 +342,17 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
         dio_ChkData(Form);
         Info->mEncoding = (U2_T)dio_gFormData;
         break;
-    case AT_byte_size:
-        set_dynamic_property(&Info->mSize, Form);
-        break;
-    case AT_stride_size:
-        dio_ChkData(Form);
-        Info->mBitStride = (U1_T)dio_gFormData;
-        break;
-    case AT_ordering:
-        dio_ChkData(Form);
-        Info->mOrdering = (U1_T)dio_gFormData;
-        break;
-    case AT_declaration:
-        dio_ChkFlag(Form);
-        Info->mDeclaration = (U1_T)dio_gFormData;
-        break;
-    case AT_external:
-        dio_ChkFlag(Form);
-        Info->mExternal = (U1_T)dio_gFormData;
-        break;
-    case AT_prototyped:
-        if (dio_gVersion == 1) {
-            Info->mPrototyped = 1;
-        }
-        else {
-            dio_ChkFlag(Form);
-            Info->mPrototyped = (U1_T)dio_gFormData;
-        }
-        break;
-    case AT_specification_v1:
-    case AT_specification_v2:
-        dio_ChkRef(Form);
-        Info->mSpecification = find_object_info(dio_gFormRef);
-        break;
     case AT_low_pc:
         dio_ChkAddr(Form);
-        Info->mLowPC = dio_gFormRef;
+        Info->mLowPC = (ContextAddress)dio_gFormRef;
         break;
     case AT_high_pc:
         dio_ChkAddr(Form);
-        Info->mHighPC = dio_gFormRef;
-        break;
-    case AT_location:
-    case AT_data_member_location:
-        dio_ChkBlock(Form, &Info->mLocation.mAddr, &Info->mLocation.mSize);
-        Info->mLocation.mList = Form == FORM_DATA4 || Form == FORM_DATA8;
-        break;
-    case AT_frame_base:
-        dio_ChkBlock(Form, &Info->mFrameBase.mAddr, &Info->mFrameBase.mSize);
-        Info->mFrameBase.mList = Form == FORM_DATA4 || Form == FORM_DATA8;
-        break;
-    case AT_const_value:
-        if (Form == FORM_SDATA || Form == FORM_UDATA) {
-            Info->mConstValue = dio_gFormData;
-            Info->mConstValueSize = sizeof(dio_gFormData);
-        }
-        else {
-            dio_ChkBlock(Form, &Info->mConstValueAddr, &Info->mConstValueSize);
-        }
+        Info->mHighPC = (ContextAddress)dio_gFormRef;
         break;
     case AT_name:
         dio_ChkString(Form);
         Info->mName = dio_gFormDataAddr;
-        break;
-    case AT_lower_bound:
-        set_dynamic_property(&Info->mLowBound, Form);
-        break;
-    case AT_upper_bound:
-        set_dynamic_property(&Info->mUpperBound, Form);
-        break;
-    case AT_count:
-        set_dynamic_property(&Info->mLength, Form);
-        break;
-    case AT_decl_file:
-        dio_ChkData(Form);
-        Info->mDeclFile = (U4_T)dio_gFormData;
-        break;
-    case AT_decl_line:
-        dio_ChkData(Form);
-        Info->mDeclLine = (U4_T)dio_gFormData;
         break;
     }
 }
@@ -636,7 +465,6 @@ static void load_debug_sections(void) {
     Trap trap;
     unsigned idx;
     ELF_File * File = sCache->mFile;
-    ObjectInfo * Info;
 
     memset(&trap, 0, sizeof(trap));
     sSymbolHash = sCache->mSymbolHash;
@@ -654,10 +482,12 @@ static void load_debug_sections(void) {
             sDebugSection = sec;
             sParentObject = NULL;
             sPrevSibling = NULL;
-            dio_EnterSection(sec, 0);
-            dio_gVersion = strcmp(sec->name, ".debug") == 0 ? 1 : 2;
+            dio_EnterDebugSection(NULL, sec, 0);
             if (set_trap(&trap)) {
-                while (dio_GetPos() < sec->size) dio_ReadUnit(entry_callback);
+                while (dio_GetPos() < sec->size) {
+                    dio_ReadUnit(&sUnitDesc, entry_callback);
+                    sCompUnit->mDesc = sUnitDesc;
+                }
                 clear_trap(&trap);
             }
             dio_ExitSection();
@@ -681,29 +511,6 @@ static void load_debug_sections(void) {
         }
     }
 
-    Info = sObjectList;
-    while (Info != NULL) {
-        if (Info->mSize.mForm == 0) Info->mSize = get_object_value_size(Info);
-        if (Info->mConstValueAddr == NULL && Info->mConstValueSize > 0) {
-            U8_T Size = 0;
-            assert(Info->mConstValueSize == sizeof(Info->mConstValue));
-            switch (Info->mSize.mForm) {
-            case FORM_DATA1     :
-            case FORM_DATA2     :
-            case FORM_DATA4     :
-            case FORM_DATA8     :
-            case FORM_SDATA     :
-            case FORM_UDATA     :
-                Size = Info->mSize.mData.mValue;
-                if (Size > 0 && Size <= Info->mConstValueSize) {
-                    Info->mConstValueAddr = (U1_T *)&Info->mConstValue;
-                    Info->mConstValueSize = (size_t)Size;
-                    if (File->big_endian) Info->mConstValueAddr += sizeof(Info->mConstValue) - Size;
-                }
-            }
-        }
-        Info = Info->mListNext;
-    }
     if (sObjectList == NULL) {
         loc_free(sCache->mObjectHash);
         sCache->mObjectHash = NULL;
@@ -716,6 +523,166 @@ static void load_debug_sections(void) {
     sCompUnitsMax = 0;
     if (trap.error) str_exception(trap.error, trap.msg);
 }
+
+static U2_T gop_gAttr = 0;
+static U2_T gop_gForm = 0;
+static U8_T gop_gFormRef = 0;   /* Absolute address */
+static U8_T gop_gFormData = 0;
+static size_t gop_gFormDataSize = 0;
+static void * gop_gFormDataAddr = NULL;
+
+static void get_object_property_callback(U2_T Tag, U2_T Attr, U2_T Form) {
+    if (Attr != gop_gAttr) return;
+    gop_gForm = Form;
+    gop_gFormRef = dio_gFormRef;
+    gop_gFormData = dio_gFormData;
+    gop_gFormDataSize = dio_gFormDataSize;
+    gop_gFormDataAddr = dio_gFormDataAddr;
+}
+
+U8_T get_numeric_property_value(PropertyValue * Value) {
+    unsigned i;
+    U8_T Res = 0;
+
+    assert(Value->mAccessFunc == NULL);
+    if (Value->mAddr != NULL) {
+        for (i = 0; i < Value->mSize; i++) {
+            Res = (Res << 8) | Value->mAddr[Value->mBigEndian ? i : Value->mSize - i - 1];
+        }
+    }
+    else {
+        Res = Value->mValue;
+    }
+    return Res;
+}
+
+int read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, int Attr, PropertyValue * Value) {
+    Trap trap;
+
+    memset(Value, 0, sizeof(PropertyValue));
+    Value->mContext = Ctx;
+    Value->mFrame = Frame;
+    Value->mObject = Obj;
+    Value->mAttr = Attr;
+    Value->mBigEndian = Obj->mCompUnit->mFile->big_endian;
+
+    if (Attr == AT_location && Obj->mLowPC != 0) {
+        Value->mValue = Obj->mLowPC;
+        return 0;
+    }
+
+    sCompUnit = Obj->mCompUnit;
+    sCache = (DWARFCache *)sCompUnit->mFile->dwarf_dt_cache;
+    sDebugSection = sCompUnit->mSection;
+    dio_EnterDebugSection(&sCompUnit->mDesc, sDebugSection, Obj->mID - sDebugSection->addr);
+    if (set_trap(&trap)) {
+        gop_gAttr = Attr;
+        gop_gForm = 0;
+        dio_ReadEntry(get_object_property_callback);
+        clear_trap(&trap);
+    }
+    dio_ExitSection();
+    sCompUnit = NULL;
+    sCache = NULL;
+    sDebugSection = NULL;
+    if (trap.error) return -1;
+
+    switch (Value->mForm = gop_gForm) {
+    case FORM_REF       :
+    case FORM_REF_ADDR  :
+    case FORM_REF1      :
+    case FORM_REF2      :
+    case FORM_REF4      :
+    case FORM_REF8      :
+    case FORM_REF_UDATA :
+        {
+            ObjectInfo * RefObj = find_object(sCache, gop_gFormRef);
+            PropertyValue ValueAddr;
+
+            if (read_and_evaluate_dwarf_object_property(Ctx, Frame, 0, RefObj, AT_location, &ValueAddr) < 0) return -1;
+            if (ValueAddr.mAccessFunc != NULL) {
+                ValueAddr.mAccessFunc(&ValueAddr, 0, &Value->mValue);
+            }
+            else {
+                static U1_T Buf[8];
+                PropertyValue ValueSize;
+                ContextAddress Addr;
+                size_t Size;
+
+                Addr = (ContextAddress)get_numeric_property_value(&ValueAddr);
+                if (read_and_evaluate_dwarf_object_property(Ctx, Frame, Addr, RefObj, AT_byte_size, &ValueSize) < 0) return -1;
+                Size = (size_t)get_numeric_property_value(&ValueSize);
+                if (Size < 1 || Size > sizeof(Buf)) {
+                    errno = ERR_INV_DATA_TYPE;
+                    return -1;
+                }
+                if (context_read_mem(Ctx, Addr, Buf, Size) < 0) return -1;
+                check_breakpoints_on_memory_read(Ctx, Addr, Buf, Size);
+                Value->mAddr = Buf;
+                Value->mSize = Size;
+            }
+        }
+        break;
+    case FORM_DATA1     :
+    case FORM_DATA2     :
+    case FORM_DATA4     :
+    case FORM_DATA8     :
+    case FORM_FLAG      :
+    case FORM_BLOCK1    :
+    case FORM_BLOCK2    :
+    case FORM_BLOCK4    :
+    case FORM_BLOCK     :
+        Value->mAddr = gop_gFormDataAddr;
+        Value->mSize = gop_gFormDataSize;
+        break;
+    case FORM_SDATA     :
+    case FORM_UDATA     :
+        Value->mValue = gop_gFormData;
+        break;
+    default:
+        errno = ENOENT;
+        return -1;
+    }
+    return 0;
+}
+
+int read_and_evaluate_dwarf_object_property(Context * Ctx, int Frame, U8_T Base, ObjectInfo * Obj, int Attr, PropertyValue * Value) {
+    if (read_dwarf_object_property(Ctx, Frame, Obj, Attr, Value) < 0) {
+        if (errno == ENOENT && Attr == AT_data_member_location && Obj->mTag == TAG_member && Obj->mParent->mTag == TAG_union_type) {
+            Value->mValue = 0;
+            return 0;
+        }
+        return -1;
+    }
+    assert(Value->mContext == Ctx);
+    assert(Value->mFrame == Frame);
+    assert(Value->mObject == Obj);
+    assert(Value->mAttr == Attr);
+    if (Attr == AT_location || Attr == AT_data_member_location || Attr == AT_frame_base) {
+        switch (Value->mForm) {
+        case FORM_DATA4     :
+        case FORM_DATA8     :
+        case FORM_BLOCK1    :
+        case FORM_BLOCK2    :
+        case FORM_BLOCK4    :
+        case FORM_BLOCK     :
+            if (dwarf_evaluate_expression(Base, Value) < 0) return -1;
+            break;
+        }
+    }
+    else if (Attr == AT_count || Attr == AT_byte_size || Attr == AT_lower_bound || Attr == AT_upper_bound) {
+        switch (Value->mForm) {
+        case FORM_BLOCK1    :
+        case FORM_BLOCK2    :
+        case FORM_BLOCK4    :
+        case FORM_BLOCK     :
+            if (dwarf_evaluate_expression(Base, Value) < 0) return -1;
+            break;
+        }
+    }
+    return 0;
+}
+
 
 static void free_unit_cache(CompUnit * Unit) {
     Unit->mFilesCnt = 0;
@@ -819,11 +786,8 @@ static void add_state(CompUnit * Unit, LineNumbersState * state) {
 void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
     Trap trap;
     if (Unit->mFiles != NULL && Unit->mDirs != NULL) return;
-    dio_EnterSection(Cache->mDebugLine, Unit->mLineInfoOffs);
-    dio_gVersion = Unit->mVersion;
-    dio_g64bit = Unit->mFile->elf64;
-    dio_gAddressSize = Unit->mAddressSize;
-    dio_gUnitPos = Unit->mLineInfoOffs;
+    if (elf_load(Cache->mDebugLine)) exception(errno);
+    dio_EnterDataSection(&Unit->mDesc, Cache->mDebugLine->data, Unit->mLineInfoOffs, Cache->mDebugLine->size);
     if (set_trap(&trap)) {
         U8_T header_pos = 0;
         U1_T opcode_base = 0;
@@ -884,7 +848,7 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
         state.mFile = 1;
         state.mLine = 1;
         if (is_stmt_default) state.mFlags |= LINE_IsStmt;
-        while (dio_GetPos() < dio_gUnitPos + unit_size) {
+        while (dio_GetPos() < Unit->mLineInfoOffs + unit_size) {
             U1_T opcode = dio_ReadU1();
             if (opcode >= opcode_base) {
                 state.mLine += (unsigned)((int)((opcode - opcode_base) % line_range) + line_base);

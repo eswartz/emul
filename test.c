@@ -38,19 +38,30 @@ typedef enum test_enum {
     enum_val3 = 3
 } test_enum;
 
+typedef union test_union {
+    int x;
+    float y;
+} test_union;
+
 typedef struct test_struct {
     test_enum f_enum;
     int f_int;
     struct test_struct * f_struct;
     float f_float;
     double f_double;
+    test_union f_union;
 } test_struct;
 
 typedef int test_array[10001];
 
+extern void tcf_test_func3(void);
 extern void tcf_test_func2(void);
 extern void tcf_test_func1(void);
 extern void tcf_test_func0(enum test_enum);
+
+void tcf_test_func3(void) {
+    usleep(1000);
+}
 
 void tcf_test_func2(void) {
     int func2_local1 = 1;
@@ -58,7 +69,7 @@ void tcf_test_func2(void) {
     test_struct func2_local3 = { enum_val3, 153, NULL, 3.14f, 2.71 };
     test_array * func2_array = NULL;
     func2_local3.f_struct = &func2_local3;
-    usleep(1000);
+    tcf_test_func3();
     func2_local1++;
     func2_local2 = func2_local1;
 }

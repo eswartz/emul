@@ -58,11 +58,6 @@ struct DIO_Cache {
 
 typedef struct DIO_Cache DIO_Cache;
 
-U2_T dio_gVersion = 0;
-U1_T dio_g64bit = 0;
-U1_T dio_gAddressSize = 4;
-U8_T dio_gUnitPos = 0;
-U4_T dio_gUnitSize = 0;
 U8_T dio_gEntryPos = 0;
 
 U8_T dio_gFormRef = 0;
@@ -72,11 +67,10 @@ void * dio_gFormDataAddr = NULL;
 
 static ELF_Section * sSection;
 static U1_T sBigEndian;
-static DIO_Abbreviation ** sAbbrevTable = NULL;
-static U4_T sAbbrevTableSize = 0;
 static U1_T * sData;
 static U8_T sDataPos;
 static U8_T sDataLen;
+static DIO_UnitDescriptor * sUnit;
 
 static void dio_CloseELF(ELF_File * File) {
     U4_T n, m;
@@ -116,33 +110,27 @@ static DIO_Cache * dio_GetCache(ELF_File * File) {
     return Cache;
 }
 
-void dio_EnterSection(ELF_Section * Section, U8_T Offset) {
+void dio_EnterDebugSection(DIO_UnitDescriptor * Unit, ELF_Section * Section, U8_T Offset) {
     if (elf_load(Section)) exception(errno);
     sSection = Section;
     sData = Section->data;
     sDataPos = Offset;
     sDataLen = Section->size;
     sBigEndian = Section->file->big_endian;
-    dio_gVersion = 0;
-    dio_g64bit = 0;
-    dio_gAddressSize = 4;
-    dio_gUnitPos = 0;
-    dio_gUnitSize = 0;
+    sUnit = Unit;
     dio_gEntryPos = 0;
+    assert(sData != NULL);
 }
 
-void dio_EnterSectionData(ELF_File * File, U1_T * Data, U8_T Offset, U8_T Size) {
+void dio_EnterDataSection(DIO_UnitDescriptor * Unit, U1_T * Data, U8_T Offset, U8_T Size) {
     sSection = NULL;
     sData = Data;
     sDataPos = Offset;
     sDataLen = Size;
-    sBigEndian = File->big_endian;
-    dio_gVersion = 0;
-    dio_g64bit = 0;
-    dio_gAddressSize = 4;
-    dio_gUnitPos = 0;
-    dio_gUnitSize = 0;
+    sBigEndian = Unit->mFile->big_endian;
+    sUnit = Unit;
     dio_gEntryPos = 0;
+    assert(sData != NULL);
 }
 
 void dio_ExitSection() {
@@ -150,6 +138,7 @@ void dio_ExitSection() {
     sDataPos = 0;
     sDataLen = 0;
     sData = NULL;
+    sUnit = NULL;
 }
 
 U8_T dio_GetPos() {
@@ -261,7 +250,7 @@ U8_T dio_ReadUX(int Size) {
 }
 
 U8_T dio_ReadAddress(void) {
-    switch (dio_gAddressSize) {
+    switch (sUnit->mAddressSize) {
     case 2:
         return dio_ReadU2();
     case 4:
@@ -337,17 +326,17 @@ static void dio_ReadFormRef(void) {
 }
 
 static void dio_ReadFormRelRef(U8_T Offset) {
-    if (dio_gUnitSize > 0 && Offset >= dio_gUnitSize) {
+    if (sUnit->mUnitSize > 0 && Offset >= sUnit->mUnitSize) {
         str_exception(ERR_INV_DWARF, "invalid REF attribute value");
     }
-    dio_gFormRef = sSection->addr + dio_gUnitPos + Offset;
+    dio_gFormRef = sSection->addr + sUnit->mUnitOffs + Offset;
 }
 
 static void dio_ReadFormRefAddr(void) {
-    U4_T Size = dio_gAddressSize;
-    if (dio_gVersion >= 3) Size = dio_g64bit ? 8 : 4;
+    U4_T Size = sUnit->mAddressSize;
+    if (sUnit->mVersion >= 3) Size = sUnit->m64bit ? 8 : 4;
     dio_gFormRef = dio_ReadUX(Size);
-}
+}    
 
 static void dio_ReadFormString(void) {
     dio_gFormDataAddr = sData + sDataPos;
@@ -356,7 +345,7 @@ static void dio_ReadFormString(void) {
 }
 
 static void dio_ReadFormStringRef(void) {
-    U8_T Offset = dio_ReadUX(dio_g64bit ? 8 : 4);
+    U8_T Offset = dio_ReadUX(sUnit->m64bit ? 8 : 4);
     U4_T StringTableSize = 0;
     U1_T * StringTable = dio_LoadStringTable(&StringTableSize);
     dio_gFormDataAddr = StringTable + Offset;
@@ -407,14 +396,15 @@ void dio_ReadEntry(DIO_EntryCallBack CallBack) {
     U4_T AttrPos = 0;
     U4_T EntrySize = 0;
     int Init = 1;
+
     dio_gEntryPos = dio_GetPos();
-    if (dio_gVersion >= 2) {
+    if (sUnit->mVersion >= 2) {
         U4_T AbbrCode = dio_ReadULEB128();
         if (AbbrCode == 0) return;
-        if (AbbrCode >= sAbbrevTableSize || sAbbrevTable[AbbrCode] == NULL) {
+        if (AbbrCode >= sUnit->mAbbrevTableSize || sUnit->mAbbrevTable[AbbrCode] == NULL) {
             str_exception(ERR_INV_DWARF, "invalid abbreviation table");
         }
-        Abbr =  sAbbrevTable[AbbrCode];
+        Abbr =  sUnit->mAbbrevTable[AbbrCode];
         Tag = Abbr->mTag;
     }
     else {
@@ -451,15 +441,15 @@ void dio_ReadEntry(DIO_EntryCallBack CallBack) {
         }
         if (Attr != 0 && Form != 0) dio_ReadAttribute(Attr, Form);
         if (Tag == TAG_compile_unit) {
-            if (Attr == AT_sibling && dio_gUnitSize == 0) {
+            if (Attr == AT_sibling && sUnit->mUnitSize == 0) {
                 dio_ChkRef(Form);
-                assert(dio_gVersion == 1);
-                dio_gUnitSize = (U4_T)(dio_gFormRef - sSection->addr - dio_gUnitPos);
-                assert(dio_gUnitPos < dio_GetPos());
-                assert(dio_gUnitPos + dio_gUnitSize >= dio_GetPos());
+                assert(sUnit->mVersion == 1);
+                sUnit->mUnitSize = (U4_T)(dio_gFormRef - sSection->addr - sUnit->mUnitOffs);
+                assert(sUnit->mUnitOffs < dio_GetPos());
+                assert(sUnit->mUnitOffs + sUnit->mUnitSize >= dio_GetPos());
             }
             else if (Attr == 0 && Form == 0) {
-                if (dio_gUnitSize == 0) str_exception(ERR_INV_DWARF, "missing compilation unit sibling attribute");
+                if (sUnit->mUnitSize == 0) str_exception(ERR_INV_DWARF, "missing compilation unit sibling attribute");
             }
         }
         CallBack(Tag, Attr, Form);
@@ -467,34 +457,37 @@ void dio_ReadEntry(DIO_EntryCallBack CallBack) {
     }
 }
 
-static void dio_FindAbbrevTable(U4_T Offset, DIO_Abbreviation *** AbbrevTable, U4_T * AbbrevTableSize);
+static void dio_FindAbbrevTable(void);
 
-void dio_ReadUnit(DIO_EntryCallBack CallBack) {
-    dio_gUnitPos = dio_GetPos();
-    dio_g64bit = 0;
-    if (dio_gVersion >= 2) {
-        dio_gUnitSize = dio_ReadU4();
-        if (dio_gUnitSize == 0xffffffffu) {
-            dio_g64bit = 1;
+void dio_ReadUnit(DIO_UnitDescriptor * Unit, DIO_EntryCallBack CallBack) {
+    memset(Unit, 0, sizeof(DIO_UnitDescriptor));
+    sUnit = Unit;
+    sUnit->mFile = sSection->file;
+    sUnit->mSection = sSection;
+    sUnit->mUnitOffs = dio_GetPos();
+    sUnit->m64bit = 0;
+    if (strcmp(sSection->name, ".debug") != 0) {
+        sUnit->mUnitSize = dio_ReadU4();
+        if (sUnit->mUnitSize == 0xffffffffu) {
+            sUnit->m64bit = 1;
             str_exception(ERR_INV_DWARF, "64-bit DWARF is not supported yet");
         }
         else {
-            dio_gUnitSize += 4;
+            sUnit->mUnitSize += 4;
         }
-        dio_gVersion = dio_ReadU2();
-        dio_FindAbbrevTable(dio_ReadU4(), &sAbbrevTable, &sAbbrevTableSize);
-        dio_gAddressSize = dio_ReadU1();
+        sUnit->mVersion = dio_ReadU2();
+        sUnit->mAbbrevTableOffs = dio_ReadU4();
+        sUnit->mAddressSize = dio_ReadU1();
+        dio_FindAbbrevTable();
     }
     else {
-        dio_gUnitSize = 0;
-        dio_gVersion = 1;
-        dio_gAddressSize = 4;
-        sAbbrevTable = NULL;
-        sAbbrevTableSize = 0;
+        sUnit->mVersion = 1;
+        sUnit->mAddressSize = 4;
     }
-    while (dio_gUnitSize == 0 || dio_GetPos() < dio_gUnitPos + dio_gUnitSize) {
+    while (sUnit->mUnitSize == 0 || dio_GetPos() < sUnit->mUnitOffs + sUnit->mUnitSize) {
         dio_ReadEntry(CallBack);
     }
+    sUnit = NULL;
 }
 
 #define dio_AbbrevTableHash(Offset) (((unsigned)(Offset)) / 16 % ABBREV_TABLE_SIZE)
@@ -522,7 +515,7 @@ void dio_LoadAbbrevTable(ELF_File * File) {
         }
     }
     if (Section == NULL) return;
-    dio_EnterSection(Section, 0);
+    dio_EnterDebugSection(NULL, Section, 0);
     for (;;) {
         U4_T AttrPos = 0;
         U2_T Tag = 0;
@@ -580,23 +573,23 @@ void dio_LoadAbbrevTable(ELF_File * File) {
     dio_ExitSection();
 }
 
-static void dio_FindAbbrevTable(U4_T Offset, DIO_Abbreviation *** AbbrevTable, U4_T * AbbrevTableSize) {
+static void dio_FindAbbrevTable(void) {
     DIO_Cache * Cache = dio_GetCache(sSection->file);
     if (Cache->mAbbrevTable != NULL) {
-        U4_T Hash = dio_AbbrevTableHash(Offset);
+        U4_T Hash = dio_AbbrevTableHash(sUnit->mAbbrevTableOffs);
         DIO_AbbrevSet * AbbrevSet = Cache->mAbbrevTable[Hash];
         while (AbbrevSet != NULL) {
-            if (AbbrevSet->mOffset == Offset) {
-                *AbbrevTable = AbbrevSet->mTable;
-                *AbbrevTableSize = AbbrevSet->mSize;
+            if (AbbrevSet->mOffset == sUnit->mAbbrevTableOffs) {
+                sUnit->mAbbrevTable = AbbrevSet->mTable;
+                sUnit->mAbbrevTableSize = AbbrevSet->mSize;
                 return;
             }
             AbbrevSet = AbbrevSet->mNext;
         }
     }
+    sUnit->mAbbrevTable = NULL;
+    sUnit->mAbbrevTableSize = 0;
     str_exception(ERR_INV_DWARF, "invalid abbreviation table offset");
-    *AbbrevTable = NULL;
-    *AbbrevTableSize = 0;
 }
 
 void dio_ChkFlag(U2_T Form) {

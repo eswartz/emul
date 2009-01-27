@@ -32,29 +32,10 @@
 #include "errors.h"
 #include "trace.h"
 
-#define MD_READ     1
-#define MD_WRITE    2
-#define MD_ADDRESS  3
-#define MD_FBASE    4
-#define MD_PROPERTY 5
-
-static int sMode;
-static U1_T * sDataBuf;
-static size_t sDataBufSize;
-static int sDataDone;
-static U1_T * sExprBuf;
-static size_t sExprBufSize;
-
-static Context * sLocContext;
-static ObjectInfo * sLocObject;
-static int sLocFrame;
-static U8_T sBaseAddresss;
-static ContextAddress sLocIP;
-static ContextAddress sLocFP;
-
 static U8_T * sExprStack = NULL;
 static unsigned sExprStackLen = 0;
 static unsigned sExprStackMax = 0;
+static int sKeepStack = 0;
 
 #define check_e_stack(n) if (sExprStackLen < n) { errno = ERR_INV_DWARF; return -1; }
 
@@ -72,54 +53,55 @@ static ObjectInfo * get_parent_function(ObjectInfo * Info) {
     return NULL;
 }
 
-static int get_register(unsigned rg, U8_T * value) {
+static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
 #if defined(__linux__) && defined(__i386__) || \
     defined(_WRS_KERNEL) && (CPU_FAMILY==SIMNT || CPU_FAMILY==I80X86)
-    if (is_top_frame(sLocContext, sLocFrame)) {
+    ContextAddress IP, FP;
+    if (is_top_frame(Ctx, Frame)) {
         switch (rg) {
         case 0:
-            *value = sLocContext->regs.eax;
+            *value = Ctx->regs.eax;
             return 0;
         case 1:
-            *value = sLocContext->regs.ecx;
+            *value = Ctx->regs.ecx;
             return 0;
         case 2:
-            *value = sLocContext->regs.edx;
+            *value = Ctx->regs.edx;
             return 0;
         case 3:
-            *value = sLocContext->regs.ebx;
+            *value = Ctx->regs.ebx;
             return 0;
         case 4:
-            *value = sLocContext->regs.esp;
+            *value = Ctx->regs.esp;
             return 0;
         case 5:
-            *value = sLocContext->regs.ebp;
+            *value = Ctx->regs.ebp;
             return 0;
         case 6:
-            *value = sLocContext->regs.esi;
+            *value = Ctx->regs.esi;
             return 0;
         case 7:
-            *value = sLocContext->regs.edi;
+            *value = Ctx->regs.edi;
             return 0;
         case 8:
 #ifdef _WRS_KERNEL
-            *value = (unsigned)sLocContext->regs.pc;
+            *value = (unsigned)Ctx->regs.pc;
 #else            
-            *value = sLocContext->regs.eip;
+            *value = Ctx->regs.eip;
 #endif            
             return 0;
         case 9:
-            *value = sLocContext->regs.eflags;
+            *value = Ctx->regs.eflags;
             return 0;
         }
     }
-    if (sLocIP == 0 && get_frame_info(sLocContext, sLocFrame, &sLocIP, NULL, &sLocFP) < 0) return -1;
+    if (get_frame_info(Ctx, Frame, &IP, NULL, &FP) < 0) return -1;
     switch (rg){
     case 5:
-        *value = sLocFP;
+        *value = FP;
         return 0;
     case 8:
-        *value = sLocIP;
+        *value = IP;
         return 0;
     }
     trace(LOG_ALWAYS, "get_register: Unsupported DWARF register number %d", rg); 
@@ -130,44 +112,44 @@ static int get_register(unsigned rg, U8_T * value) {
 #endif
 }
 
-static int set_register(unsigned rg, U8_T value) {
+static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
 #if defined(__linux__) && defined(__i386__) || \
     defined(_WRS_KERNEL) && (CPU_FAMILY==SIMNT || CPU_FAMILY==I80X86)
-    if (is_top_frame(sLocContext, sLocFrame)) {
+    if (is_top_frame(Ctx, Frame)) {
         switch (rg) {
         case 0:
-            sLocContext->regs.eax = (unsigned long)value;
+            Ctx->regs.eax = (unsigned long)value;
             return 0;
         case 1:
-            sLocContext->regs.ecx = (unsigned long)value;
+            Ctx->regs.ecx = (unsigned long)value;
             return 0;
         case 2:
-            sLocContext->regs.edx = (unsigned long)value;
+            Ctx->regs.edx = (unsigned long)value;
             return 0;
         case 3:
-            sLocContext->regs.ebx = (unsigned long)value;
+            Ctx->regs.ebx = (unsigned long)value;
             return 0;
         case 4:
-            sLocContext->regs.esp = (unsigned long)value;
+            Ctx->regs.esp = (unsigned long)value;
             return 0;
         case 5:
-            sLocContext->regs.ebp = (unsigned long)value;
+            Ctx->regs.ebp = (unsigned long)value;
             return 0;
         case 6:
-            sLocContext->regs.esi = (unsigned long)value;
+            Ctx->regs.esi = (unsigned long)value;
             return 0;
         case 7:
-            sLocContext->regs.edi = (unsigned long)value;
+            Ctx->regs.edi = (unsigned long)value;
             return 0;
         case 8:
 #ifdef _WRS_KERNEL
-            sLocContext->regs.pc = (void *)(unsigned long)value;
+            Ctx->regs.pc = (void *)(unsigned long)value;
 #else            
-            sLocContext->regs.eip = (unsigned long)value;
+            Ctx->regs.eip = (unsigned long)value;
 #endif            
             return 0;
         case 9:
-            sLocContext->regs.eflags = (unsigned long)value;
+            Ctx->regs.eflags = (unsigned long)value;
             return 0;
         }
     }
@@ -180,133 +162,17 @@ static int set_register(unsigned rg, U8_T value) {
 #endif
 }
 
-static int register_access_expression(unsigned rg) {
-    U8_T Data = 0;
-
-    assert(!sDataDone);
-    switch (sMode) {
-    case MD_FBASE:
-        if (get_register(rg, &Data) < 0) return -1;
-        sExprStack[sExprStackLen++] = Data;
-        return 0;
-    case MD_READ:
-    case MD_PROPERTY:
-        if (get_register(rg, &Data) < 0) return -1;
-        switch (sDataBufSize) {
-        case 1:
-            *sDataBuf = (U1_T)Data;
-            break;
-        case 2:
-            *(U2_T *)sDataBuf = (U2_T)Data;
-            break;
-        case 4:
-            *(U4_T *)sDataBuf = (U4_T)Data;
-            break;
-        case 8:
-            *(U8_T *)sDataBuf = Data;
-            break;
-        default:
-            errno = ERR_INV_DWARF;
-            return -1;
-        }
-        break;
-    case MD_WRITE:
-        switch (sDataBufSize) {
-        case 1:
-            Data = *sDataBuf;
-            break;
-        case 2:
-            Data = *(U2_T *)sDataBuf;
-            break;
-        case 4:
-            Data = *(U4_T *)sDataBuf;
-            break;
-        case 8:
-            Data = *(U8_T *)sDataBuf;
-            break;
-        default:
-            errno = ERR_INV_DWARF;
-            return -1;
-        }
-        set_register(rg, Data);
-        break;
-    default:
-        errno = ERR_INV_DWARF;
-        return -1;
-    }
-    sDataDone = 1;
-    return 0;
+static int register_access_func(PropertyValue * Value, int write, U8_T * Data) {
+    if (write) return set_register(Value->mContext, Value->mFrame, (unsigned)Value->mValue, *Data);
+    return get_register(Value->mContext, Value->mFrame, (unsigned)Value->mValue, Data);
 }
 
-static void enter_section(CompUnit * Unit, U1_T * Data, U8_T Offset, U8_T Size) {
-    dio_EnterSectionData(Unit->mFile, Data, Offset, Size);
-    dio_gVersion = Unit->mVersion;
-    dio_g64bit = Unit->mFile->elf64;
-    dio_gAddressSize = Unit->mAddressSize;
-}
-
-static int evaluate_expression(U1_T * Buf, size_t Size);
-
-static int evaluate_location(const LocationInfo * Loc) {
-    if (Loc->mList) {
-        U1_T * Addr = NULL;
-        U8_T Offset = 0;
-        U8_T Base = 0;
-        U8_T BaseMark = 0;
-        DWARFCache * Cache = (DWARFCache *)sLocObject->mCompUnit->mFile->dwarf_dt_cache;
-        assert(Cache->magic == SYM_CACHE_MAGIC);
-        if (Cache->mDebugLoc == NULL) {
-            errno = ERR_INV_DWARF;
-            return -1;
-        }
-        enter_section(sLocObject->mCompUnit, Loc->mAddr, 0, Loc->mSize);
-        switch (Loc->mSize) {
-        case 4:
-            Offset = dio_ReadU4();
-            BaseMark = ~(U4_T)0;
-            break;
-        case 8:
-            Offset = dio_ReadU8();
-            BaseMark = ~(U8_T)0;
-            break;
-        default:
-            errno = ERR_INV_DWARF;
-            return -1;
-        }
-        if (elf_load(Cache->mDebugLoc) < 0) return -1;
-        Addr = Cache->mDebugLoc->data;
-        Base = sLocObject->mCompUnit->mLowPC;
-        enter_section(sLocObject->mCompUnit, Addr, Offset, Cache->mDebugLoc->size);
-        while (1) {
-            U8_T Addr0 = dio_ReadAddress();
-            U8_T Addr1 = dio_ReadAddress();
-            if (Addr0 == BaseMark) {
-                Base = Addr1;
-            }
-            else if (Addr0 == 0 && Addr1 == 0) {
-                break;
-            }
-            else {
-                U2_T Size = dio_ReadU2();
-                if (sLocIP == 0 && get_frame_info(sLocContext, sLocFrame, &sLocIP, NULL, &sLocFP) < 0) return -1;
-                if (sLocIP >= Base + Addr0 && sLocIP < Base + Addr1) {
-                    return evaluate_expression(Addr + dio_GetPos(), Size);
-                }
-                dio_Skip(Size);
-            }
-        }
-        errno = ERR_INV_ADDRESS;
-        return -1;
-    }
-    return evaluate_expression(Loc->mAddr, Loc->mSize);
-}
-
-static int evaluate_expression(U1_T * Buf, size_t Size) {
+static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * Buf, size_t Size) {
     if (Size == 0) {
         errno = ERR_INV_DWARF;
         return -1;
     }
-    enter_section(sLocObject->mCompUnit, Buf, 0, Size);
+    dio_EnterDataSection(&Value->mObject->mCompUnit->mDesc, Buf, 0, Size);
     while (dio_GetPos() < Size) {
         U1_T Op = dio_ReadU1();
         U8_T Data = 0;
@@ -324,9 +190,10 @@ static int evaluate_expression(U1_T * Buf, size_t Size) {
             {
                 U1_T Tmp[8];
                 ContextAddress Addr = (ContextAddress)sExprStack[sExprStackLen - 1];
-                if (context_read_mem(sLocContext, Addr, Tmp, dio_gAddressSize) < 0) return -1;
-                check_breakpoints_on_memory_read(sLocContext, Addr, Tmp, dio_gAddressSize);
-                switch (dio_gAddressSize)  {
+                size_t Size = Value->mObject->mCompUnit->mDesc.mAddressSize;
+                if (context_read_mem(Value->mContext, Addr, Tmp, Size) < 0) return -1;
+                check_breakpoints_on_memory_read(Value->mContext, Addr, Tmp, Size);
+                switch (Size)  {
                 case 1: Data = *Tmp; break;
                 case 2: Data = *(U2_T *)Tmp; break;
                 case 4: Data = *(U4_T *)Tmp; break;
@@ -342,8 +209,8 @@ static int evaluate_expression(U1_T * Buf, size_t Size) {
                 U1_T Tmp[8];
                 ContextAddress Addr = (ContextAddress)sExprStack[sExprStackLen - 1];
                 U1_T Size = dio_ReadU1();
-                if (context_read_mem(sLocContext, Addr, Tmp, Size) < 0) return -1;
-                check_breakpoints_on_memory_read(sLocContext, Addr, Tmp, Size);
+                if (context_read_mem(Value->mContext, Addr, Tmp, Size) < 0) return -1;
+                check_breakpoints_on_memory_read(Value->mContext, Addr, Tmp, Size);
                 switch (Size)  {
                 case 1: Data = *Tmp; break;
                 case 2: Data = *(U2_T *)Tmp; break;
@@ -424,9 +291,10 @@ static int evaluate_expression(U1_T * Buf, size_t Size) {
             {
                 U1_T Tmp[8];
                 ContextAddress Addr = (ContextAddress)sExprStack[sExprStackLen - 1];
-                if (context_read_mem(sLocContext, Addr, Tmp, dio_gAddressSize) < 0) return -1;
-                check_breakpoints_on_memory_read(sLocContext, Addr, Tmp, dio_gAddressSize);
-                switch (dio_gAddressSize)  {
+                size_t Size = Value->mObject->mCompUnit->mDesc.mAddressSize;
+                if (context_read_mem(Value->mContext, Addr, Tmp, Size) < 0) return -1;
+                check_breakpoints_on_memory_read(Value->mContext, Addr, Tmp, Size);
+                switch (Size)  {
                 case 1: Data = *Tmp; break;
                 case 2: Data = *(U2_T *)Tmp; break;
                 case 4: Data = *(U4_T *)Tmp; break;
@@ -443,8 +311,8 @@ static int evaluate_expression(U1_T * Buf, size_t Size) {
                 U1_T Tmp[8];
                 ContextAddress Addr = (ContextAddress)sExprStack[sExprStackLen - 1];
                 U1_T Size = dio_ReadU1();
-                if (context_read_mem(sLocContext, Addr, Tmp, Size) < 0) return -1;
-                check_breakpoints_on_memory_read(sLocContext, Addr, Tmp, Size);
+                if (context_read_mem(Value->mContext, Addr, Tmp, Size) < 0) return -1;
+                check_breakpoints_on_memory_read(Value->mContext, Addr, Tmp, Size);
                 switch (Size)  {
                 case 1: Data = *Tmp; break;
                 case 2: Data = *(U2_T *)Tmp; break;
@@ -649,21 +517,23 @@ static int evaluate_expression(U1_T * Buf, size_t Size) {
         case OP_reg31:
             {
                 unsigned n = Op - OP_reg0;
-                if (sExprStackLen != 0 || dio_GetPos() < Size) {
+                if (dio_GetPos() < Size) {
                     errno = ERR_INV_DWARF;
                     return -1;
                 }
-                if (register_access_expression(n) < 0) return -1;
+                Value->mValue = n;
+                Value->mAccessFunc = register_access_func;
             }
             break;
         case OP_regx:
             {
                 unsigned n = dio_ReadULEB128();
-                if (sExprStackLen != 0 || dio_GetPos() < Size) {
+                if (dio_GetPos() < Size) {
                     errno = ERR_INV_DWARF;
                     return -1;
                 }
-                if (register_access_expression(n) < 0) return -1;
+                Value->mValue = n;
+                Value->mAccessFunc = register_access_func;
             }
             break;
         case OP_breg0:
@@ -698,36 +568,44 @@ static int evaluate_expression(U1_T * Buf, size_t Size) {
         case OP_breg29:
         case OP_breg30:
         case OP_breg31:
-            if (get_register(Op - OP_breg0, sExprStack + sExprStackLen) < 0) return -1;
+            if (get_register(Value->mContext, Value->mFrame, Op - OP_breg0, sExprStack + sExprStackLen) < 0) return -1;
             sExprStack[sExprStackLen++] += dio_ReadS8LEB128();
             break;
         case OP_fbreg:
             {
                 U8_T Pos = dio_GetPos();
-                ObjectInfo * Obj = sLocObject;
-                int Mode = sMode;
-                sMode = MD_FBASE;
-                sLocObject = get_parent_function(sLocObject);
-                if (sLocObject == NULL || sLocObject->mFrameBase.mAddr == NULL) {
-                    errno = ERR_INV_DWARF;
+                PropertyValue FP;
+                ObjectInfo * Parent = get_parent_function(Value->mObject);
+                int error = 0;
+
+                sKeepStack++;
+                if (Parent == NULL) error = ERR_INV_DWARF;
+                if (!error && read_and_evaluate_dwarf_object_property(Value->mContext, Value->mFrame, 0, Parent, AT_frame_base, &FP) < 0) error = errno;
+                sKeepStack--;
+
+                dio_EnterDataSection(&Value->mObject->mCompUnit->mDesc, Buf, Pos, Size);
+                if (error) {
+                    errno = error;
                     return -1;
                 }
-                if (evaluate_location(&sLocObject->mFrameBase) < 0) return -1;
-                sLocObject = Obj;
-                sMode = Mode;
-                enter_section(sLocObject->mCompUnit, Buf, Pos, Size);
+                if (FP.mAccessFunc != NULL) {
+                    if (FP.mAccessFunc(&FP, 0, sExprStack + sExprStackLen++) < 0) return -1;
+                }
+                else {
+                    sExprStack[sExprStackLen++] = get_numeric_property_value(&FP);
+                }
                 assert(sExprStackLen > 0);
                 sExprStack[sExprStackLen - 1] += dio_ReadS8LEB128();
             }
             break;
         case OP_bregx:
-            if (get_register(dio_ReadULEB128(), sExprStack + sExprStackLen) < 0) return -1;
+            if (get_register(Value->mContext, Value->mFrame, dio_ReadULEB128(), sExprStack + sExprStackLen) < 0) return -1;
             sExprStack[sExprStackLen++] += dio_ReadS8LEB128();
             break;
         case OP_nop:
             break;
         case OP_push_object_address:
-            sExprStack[sExprStackLen++] = sBaseAddresss;
+            sExprStack[sExprStackLen++] = BaseAddress;
             break;
         case OP_piece:
         case OP_call2:
@@ -749,126 +627,105 @@ static int evaluate_expression(U1_T * Buf, size_t Size) {
     return 0;
 }
 
-static int evaluate(Context * Ctx, int Frame, ObjectInfo * Info) {
+static int evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
+    U1_T * Addr = NULL;
+    U8_T Offset = 0;
+    U8_T Base = 0;
+    U8_T BaseMark = 0;
+    ContextAddress IP = 0;
+    DWARFCache * Cache = (DWARFCache *)Value->mObject->mCompUnit->mFile->dwarf_dt_cache;
+
+    assert(Cache->magic == SYM_CACHE_MAGIC);
+    if (Cache->mDebugLoc == NULL) {
+        errno = ERR_INV_DWARF;
+        return -1;
+    }
+    if (elf_load(Cache->mDebugLoc) < 0) return -1;
+    if (get_frame_info(Value->mContext, Value->mFrame, &IP, NULL, NULL) < 0) return -1;
+    dio_EnterDataSection(&Value->mObject->mCompUnit->mDesc, Value->mAddr, 0, Value->mSize);
+    switch (Value->mSize) {
+    case 4:
+        Offset = dio_ReadU4();
+        BaseMark = ~(U4_T)0;
+        break;
+    case 8:
+        Offset = dio_ReadU8();
+        BaseMark = ~(U8_T)0;
+        break;
+    default:
+        errno = ERR_INV_DWARF;
+        return -1;
+    }
+    Addr = Cache->mDebugLoc->data;
+    Base = Value->mObject->mCompUnit->mLowPC;
+    dio_EnterDataSection(&Value->mObject->mCompUnit->mDesc, Addr, Offset, Cache->mDebugLoc->size);
+    while (1) {
+        U8_T Addr0 = dio_ReadAddress();
+        U8_T Addr1 = dio_ReadAddress();
+        if (Addr0 == BaseMark) {
+            Base = Addr1;
+        }
+        else if (Addr0 == 0 && Addr1 == 0) {
+            break;
+        }
+        else {
+            U2_T Size = dio_ReadU2();
+            if (IP >= Base + Addr0 && IP < Base + Addr1) {
+                return evaluate_expression(BaseAddresss, Value, Addr + dio_GetPos(), Size);
+            }
+            dio_Skip(Size);
+        }
+    }
+    dio_ExitSection();
+    errno = ERR_INV_ADDRESS;
+    return -1;
+}
+
+int dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
     Trap trap;
     int error = 0;
 
-    sDataDone = 0;
-    sExprStackLen = 0;
-    sLocContext = Ctx;
-    sLocFrame = Frame;
-    sLocObject = Info;
-    sLocIP = 0;
-    sLocFP = 0;
+    assert(sKeepStack >= 0);
+    if (!sKeepStack) sExprStackLen = 0;
 
     if (sExprStack == NULL) {
         sExprStackMax = 8;
         sExprStack = loc_alloc(sizeof(U8_T) * sExprStackMax);
     }
-    if (Info->mTag == TAG_member) {
-        sExprStack[sExprStackLen++] = sBaseAddresss;
+    if (Value->mAttr == AT_data_member_location) {
+        sExprStack[sExprStackLen++] = BaseAddress;
     }
     if (set_trap(&trap)) {
-        if (sMode == MD_PROPERTY) {
-            if (evaluate_expression(sExprBuf, sExprBufSize) < 0) error = errno;
+        if (Value->mAccessFunc != NULL || Value->mAddr == NULL || Value->mSize == 0) {
+            error = ERR_INV_DWARF;
+        }
+        else if (Value->mForm == FORM_DATA4 || Value->mForm == FORM_DATA8) {
+            if (evaluate_location(BaseAddress, Value) < 0) error = errno;
         }
         else {
-            if (evaluate_location(&Info->mLocation) < 0) error = errno;
+            if (evaluate_expression(BaseAddress, Value, Value->mAddr, Value->mSize) < 0) error = errno;
         }
         clear_trap(&trap);
     }
     else {
         error = trap.error;
     }
-    if (!error && sExprStackLen != 1) {
-        error = ERR_INV_DWARF;
-    }
+
+    if (!error && !sKeepStack && sExprStackLen != (Value->mAccessFunc == NULL ? 1 : 0)) error = ERR_INV_DWARF;
 
     if (!error) {
-        switch (sMode) {
-        case MD_ADDRESS:
-            assert(sDataDone == 0);
-            assert(sDataBufSize == sizeof(U8_T));
-            *(U8_T *)sDataBuf = *sExprStack;
-            break;
-        case MD_READ:
-            if (!sDataDone) {
-                ContextAddress Addr = (ContextAddress)*sExprStack;
-                if (context_read_mem(sLocContext, Addr, sDataBuf, sDataBufSize) < 0) error = errno;
-                if (!error) check_breakpoints_on_memory_read(sLocContext, Addr, sDataBuf, sDataBufSize);
-            }
-            break;
-        case MD_WRITE:
-            if (!sDataDone) {
-                ContextAddress Addr = (ContextAddress)*sExprStack;
-                check_breakpoints_on_memory_write(sLocContext, Addr, sDataBuf, sDataBufSize);
-                if (context_write_mem(sLocContext, Addr, sDataBuf, sDataBufSize) < 0) error = errno;
-            }
-            break;
-        case MD_PROPERTY:
-            assert(sDataBufSize == sizeof(U8_T));
-            *(U8_T *)sDataBuf = *sExprStack;
-            break;
+        if (Value->mAccessFunc == NULL) {
+            assert(sExprStackLen > 0);
+            Value->mValue = sExprStack[--sExprStackLen];
         }
+        Value->mAddr = NULL;
+        Value->mSize = 0;
     }
     
-    sExprStackLen = 0;
-    sLocContext = NULL;
-    sLocFrame = 0;
-    sLocObject = NULL;
-    sLocIP = 0;
-    sLocFP = 0;
+    if (!sKeepStack) sExprStackLen = 0;
 
     errno = error;
     return error ? -1 : 0;
-}
-
-int dwarf_expression_addr(Context * Ctx, int Frame, U8_T Base, ObjectInfo * Info, U8_T * address) {
-
-    if (Info->mLowPC != 0) {
-        *address = Info->mLowPC;
-        return 0;
-    }
-
-    sMode = MD_ADDRESS;
-    sExprBuf = NULL;
-    sExprBufSize = 0;
-    sDataBuf = (U1_T *)address;
-    sDataBufSize = sizeof(U8_T);
-    sBaseAddresss = Base;
-    return evaluate(Ctx, Frame, Info);
-}
-
-int dwarf_expression_read(Context * Ctx, int Frame, ObjectInfo * Info, U1_T * Buf, size_t Size) {
-    sMode = MD_READ;
-    sExprBuf = NULL;
-    sExprBufSize = 0;
-    sDataBuf = Buf;
-    sDataBufSize = Size;
-    sBaseAddresss = 0;
-    return evaluate(Ctx, Frame, Info);
-}
-
-int dwarf_expression_write(Context * Ctx, int Frame, ObjectInfo * Info, U1_T * Buf, size_t Size) {
-    sMode = MD_WRITE;
-    sExprBuf = NULL;
-    sExprBufSize = 0;
-    sDataBuf = Buf;
-    sDataBufSize = Size;
-    sBaseAddresss = 0;
-    return evaluate(Ctx, Frame, Info);
-}
-
-int dwarf_dynamic_property_expression(Context * Ctx, int Frame, ObjectInfo * Info, U1_T * ExprAddr, size_t ExprSize, U8_T * Result) {
-    U8_T Addr = 0;
-    if (dwarf_expression_addr(Ctx, Frame, 0, Info, &Addr) < 0) return -1;
-    sMode = MD_PROPERTY;
-    sExprBuf = ExprAddr;
-    sExprBufSize = ExprSize;
-    sDataBuf = (U1_T *)Result;
-    sDataBufSize = sizeof(U8_T);
-    sBaseAddresss = Addr;
-    return evaluate(Ctx, Frame, Info);
 }
 
 #endif

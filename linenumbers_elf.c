@@ -50,13 +50,13 @@ static CompUnit * find_unit(DWARFCache * cache, ContextAddress addr0, ContextAdd
         if (u->mDebugRangesOffs != ~(U8_T)0 && cache->mDebugRanges != NULL) {
             U8_T base = u->mLowPC;
             U8_T max = 0;
-            dio_gUnitPos = u->mDebugRangesOffs;
-            dio_EnterSection(cache->mDebugRanges, dio_gUnitPos);
+            if (elf_load(cache->mDebugRanges)) exception(errno);
+            dio_EnterDataSection(&u->mDesc, cache->mDebugRanges->data, u->mDebugRangesOffs, cache->mDebugRanges->size);
             while (1) {
                 U8_T x = dio_ReadAddress();
                 U8_T y = dio_ReadAddress();
                 if (x == 0 && y == 0) break;
-                if (x == ((U8_T)1 << dio_gAddressSize * 8) - 1) {
+                if (x == ((U8_T)1 << u->mDesc.mAddressSize * 8) - 1) {
                     base = y;
                 }
                 else {

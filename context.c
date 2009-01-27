@@ -1490,9 +1490,11 @@ static void init(void) {
 #define PTRACE_EVENT_EXIT       6
 
 #define USE_ESRCH_WORKAROUND    1
+#define USE_PTRACE_SYSCALL      0
 
 #define WORD_SIZE   4
 
+#if USE_PTRACE_SYSCALL
 #define PTRACE_FLAGS ( \
     PTRACE_O_TRACESYSGOOD | \
     PTRACE_O_TRACEFORK | \
@@ -1501,6 +1503,15 @@ static void init(void) {
     PTRACE_O_TRACEEXEC | \
     PTRACE_O_TRACEVFORKDONE | \
     PTRACE_O_TRACEEXIT)
+#else
+#define PTRACE_FLAGS ( \
+    PTRACE_O_TRACEFORK | \
+    PTRACE_O_TRACEVFORK | \
+    PTRACE_O_TRACECLONE | \
+    PTRACE_O_TRACEEXEC | \
+    PTRACE_O_TRACEVFORKDONE | \
+    PTRACE_O_TRACEEXIT)
+#endif
 
 struct pid_exit_info {
     pid_t       pid;
@@ -1683,7 +1694,7 @@ int context_continue(Context * ctx) {
         }
         ctx->regs_dirty = 0;
     }
-    if (ptrace(PTRACE_SYSCALL, ctx->pid, 0, signal) < 0) {
+    if (ptrace((ctx->ptrace_flags & PTRACE_O_TRACESYSGOOD) != 0 ? PTRACE_SYSCALL : PTRACE_CONT, ctx->pid, 0, signal) < 0) {
         int err = errno;
 #if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
@@ -1692,7 +1703,7 @@ int context_continue(Context * ctx) {
             return 0;
         }
 #endif
-        trace(LOG_ALWAYS, "error: ptrace(PTRACE_SYSCALL, ...) failed: ctx %#x, pid %d, error %d %s",
+        trace(LOG_ALWAYS, "error: ptrace(PTRACE_CONT, ...) failed: ctx %#x, pid %d, error %d %s",
             ctx, ctx->pid, err, errno_to_str(err));
         errno = err;
         return -1;
@@ -2005,7 +2016,6 @@ process_event:
             ctx2->mem = ctx2->pid;
         }
         assert(ctx2->mem != 0);
-        ctx2->syscall_enter = 1;
         event_context_created(ctx2);
         break;
 
