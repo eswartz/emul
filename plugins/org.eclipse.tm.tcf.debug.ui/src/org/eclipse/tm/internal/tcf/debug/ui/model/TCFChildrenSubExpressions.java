@@ -144,10 +144,19 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             }
             IExpressions.Value v = value.getData();
             if (v != null && !isNull(v.getValue())) {
-                TCFNodeExpression n = findIndex(0);
-                if (n == null) n = new TCFNodeExpression(node, null, null, null, 0);
-                n.setSortPosition(0);
-                data.put(n.id, n);
+                TCFDataCache<ISymbols.Symbol> base_type = node.model.getSymbolInfoCache(
+                        type_sym.getExeContextID(), type_sym.getBaseTypeID());
+                if (!base_type.validate()) {
+                    base_type.wait(this);
+                    return false;
+                }
+                ISymbols.Symbol base_type_sym = base_type.getData();
+                if (base_type_sym == null || base_type_sym.getSize() != 0) {
+                    TCFNodeExpression n = findIndex(0);
+                    if (n == null) n = new TCFNodeExpression(node, null, null, null, 0);
+                    n.setSortPosition(0);
+                    data.put(n.id, n);
+                }
             }
             set(null, null, data);
             return true;

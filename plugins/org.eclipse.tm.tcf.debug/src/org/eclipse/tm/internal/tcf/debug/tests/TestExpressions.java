@@ -35,7 +35,7 @@ class TestExpressions implements ITCFTest,
     
     private String bp_id;
     private boolean bp_ok;
-    private IDiagnostics.ISymbol sym_func2;
+    private IDiagnostics.ISymbol sym_func3;
     private String process_id;
     private String thread_id;
     private IRunControl.RunControlContext thread_ctx;
@@ -47,6 +47,40 @@ class TestExpressions implements ITCFTest,
         new HashMap<String,IExpressions.Expression>();
     private final Map<String,IExpressions.Value> expr_val =
         new HashMap<String,IExpressions.Value>();
+    
+    private static String[] test_expressions = {
+        "func2_local1 == func2_local1",
+        "func2_local1 != func2_local2",
+        "1.34 == 1.34",
+        "1.34 != 1.35",
+        "1 ? 1 : 0",
+        "!func2_local1 ? 0 : 1",
+        "(0 || 0) == 0",
+        "(0 || func2_local1) == 1",
+        "(func2_local1 || 0) == 1",
+        "(func2_local1 || func2_local1) == 1",
+        "(0 && 0) == 0",
+        "(0 && func2_local1) == 0",
+        "(func2_local1 && 0) == 0",
+        "(func2_local1 && func2_local1) == 1",
+        "(func2_local1 | func2_local2) == 3",
+        "(func2_local1 & func2_local2) == 0",
+        "(func2_local1 ^ func2_local2) == 3",
+        "(func2_local1 < func2_local2)",
+        "(func2_local1 <= func2_local2)",
+        "!(func2_local1 > func2_local2)",
+        "!(func2_local1 >= func2_local2)",
+        "(func2_local1 < 1.1)",
+        "(func2_local1 <= 1.1)",
+        "!(func2_local1 > 1.1)",
+        "!(func2_local1 >= 1.1)",
+        "(func2_local2 << 2) == 8",
+        "(func2_local2 >> 1) == 1",
+        "+func2_local2 == 2",
+        "-func2_local2 == -2",
+        "((func2_local1 + func2_local2) * 2 - 2) / 2 == 2",
+        "func2_local3.f_struct->f_struct->f_struct == &func2_local3"
+    };
     
     TestExpressions(TCFTestSuite test_suite, IChannel channel) {
         this.test_suite = test_suite;
@@ -105,7 +139,7 @@ class TestExpressions implements ITCFTest,
             Map<String,Object> m = new HashMap<String,Object>();
             m.put(IBreakpoints.PROP_ID, bp_id);
             m.put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
-            m.put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
+            m.put(IBreakpoints.PROP_LOCATION, "tcf_test_func3");
             bp.set(new Map[]{ m }, new IBreakpoints.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) {
@@ -186,21 +220,21 @@ class TestExpressions implements ITCFTest,
             });
             return;
         }
-        if (sym_func2 == null) {
-            diag.getSymbol(process_id, "tcf_test_func2", new IDiagnostics.DoneGetSymbol() {
+        if (sym_func3 == null) {
+            diag.getSymbol(process_id, "tcf_test_func3", new IDiagnostics.DoneGetSymbol() {
                 public void doneGetSymbol(IToken token, Throwable error, IDiagnostics.ISymbol symbol) {
                     if (error != null) {
                         exit(error);
                     }
                     else {
-                        sym_func2 = symbol;
+                        sym_func3 = symbol;
                         runTest();
                     }
                 }
             });
             return;
         }
-        BigInteger pc0 = new BigInteger(sym_func2.getValue().toString());
+        BigInteger pc0 = new BigInteger(sym_func3.getValue().toString());
         BigInteger pc1 = new BigInteger(suspended_pc);
         if (!pc0.equals(pc1)) {
             suspended_pc = null;
@@ -227,7 +261,7 @@ class TestExpressions implements ITCFTest,
             return;
         }
         if (local_vars == null) {
-            expr.getChildren(stack_trace[stack_trace.length - 1], new IExpressions.DoneGetChildren() {
+            expr.getChildren(stack_trace[stack_trace.length - 2], new IExpressions.DoneGetChildren() {
                 public void doneGetChildren(IToken token, Exception error, String[] context_ids) {
                     if (error != null) {
                         exit(error);
@@ -256,6 +290,22 @@ class TestExpressions implements ITCFTest,
                 return;
             }
         }
+        for (final String id : test_expressions) {
+            if (expr_ctx.get(id) == null) {
+                expr.create(stack_trace[stack_trace.length - 2], null, id, new IExpressions.DoneCreate() {
+                    public void doneCreate(IToken token, Exception error, IExpressions.Expression ctx) {
+                        if (error != null) {
+                            exit(error);
+                        }
+                        else {
+                            expr_ctx.put(id, ctx);
+                            runTest();
+                        }
+                    }
+                });
+                return;
+            }
+        }
         for (final String id : local_vars) {
             if (expr_val.get(id) == null) {
                 expr.evaluate(id, new IExpressions.DoneEvaluate() {
@@ -265,6 +315,28 @@ class TestExpressions implements ITCFTest,
                         }
                         else {
                             expr_val.put(id, ctx);
+                            runTest();
+                        }
+                    }
+                });
+                return;
+            }
+        }
+        for (final String id : test_expressions) {
+            if (expr_val.get(id) == null) {
+                expr.evaluate(expr_ctx.get(id).getID(), new IExpressions.DoneEvaluate() {
+                    public void doneEvaluate(IToken token, Exception error, IExpressions.Value ctx) {
+                        if (error != null) {
+                            exit(error);
+                        }
+                        else {
+                            expr_val.put(id, ctx);
+                            byte[] arr = ctx.getValue();
+                            boolean b = false;
+                            for (byte x : arr) {
+                                if (x != 0) b = true;
+                            }
+                            if (!b) exit(new Exception("Invalid value of expression \"" + id + "\""));
                             runTest();
                         }
                     }

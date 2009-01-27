@@ -301,6 +301,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     }
     
     private BigInteger toBigInteger(byte[] data, int offs, int size, boolean big_endian, boolean sign_extension) {
+        assert offs + size <= data.length;
         byte[] temp = null;
         if (sign_extension) {
             temp = new byte[size];
@@ -494,6 +495,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     
     private boolean appendArrayValueText(StringBuffer bf, int level, ISymbols.Symbol t,
             byte[] data, int offs, int size, boolean big_endian, Runnable done) {
+        assert offs + size <= data.length;
         TCFDataCache<ISymbols.Symbol> c = model.getSymbolInfoCache(t.getExeContextID(), t.getBaseTypeID());
         if (!c.validate()) {
             c.wait(done);
@@ -561,6 +563,10 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                 return false;
             }
             ISymbols.Symbol f = s.getData();
+            if (f == null || offs + f.getOffset() + f.getSize() > data.length) {
+                bf.append('?');
+                continue;
+            }
             bf.append(f.getName());
             bf.append('=');
             if (!appendValueText(bf, level + 1, f, data, offs + f.getOffset(), f.getSize(), big_endian, done)) return false;
@@ -828,6 +834,9 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                                 IExpressions exps = node.model.getLaunch().getService(IExpressions.class);
                                 exps.assign(node.expression.getData().getID(), bf, new IExpressions.DoneAssign() {
                                     public void doneAssign(IToken token, Exception error) {
+                                        TCFNodeExpression n = node;
+                                        while (n.parent instanceof TCFNodeExpression) n = (TCFNodeExpression)n.parent;
+                                        n.onSuspended();
                                         if (error != null) {
                                             node.model.showMessageBox("Cannot modify element value", error);
                                             done(Boolean.FALSE);
