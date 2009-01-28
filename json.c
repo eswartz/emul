@@ -591,6 +591,7 @@ static void skip_object(InputStream * inp) {
                 exception(ERR_JSON_SYNTAX);
             }
         }
+        return;
     }
     exception(ERR_JSON_SYNTAX);
 }
