@@ -448,7 +448,7 @@ static void refresh_all_peer_server(void *x) {
 static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr) {
     /* Create a human readable channel name that uniquely identifies remote peer */
     char name[128];
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__MINGW32__)
     /* inet_ntop() is not available before Windows Vista */
     assert(addr->sa_family == AF_INET);
     c->addr = *addr;

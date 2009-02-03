@@ -793,7 +793,7 @@ static void command_mkdir(char * token, Channel * c) {
     if (attrs.flags & ATTR_PERMISSIONS) {
         mode = attrs.permissions;
     }
-#if defined(_MSC_VER) || defined(_WRS_KERNEL)
+#if defined(_MSC_VER) || defined(_WRS_KERNEL) || defined(__MINGW32__)
     if (mkdir(path) < 0) err = errno;
 #else
     if (mkdir(path, mode) < 0) err = errno;

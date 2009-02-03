@@ -23,14 +23,14 @@
 
 #if defined(WIN32)
 
-#if defined(__CYGWIN__)
+#if defined(__GNUC__)
 #  include <imagehlp.h>
 #else
 #  define _NO_CVCONST_H
 #  include <dbghelp.h>
 #endif
 
-#if defined(__CYGWIN__)
+#if defined(__GNUC__)
 typedef enum _IMAGEHLP_SYMBOL_TYPE_INFO {
     TI_GET_SYMTAG,
     TI_GET_SYMNAME,

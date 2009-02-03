@@ -21,7 +21,6 @@
 
 #include "mdep.h"
 #include "config.h"
-#include <sys/types.h>
 #include "link.h"
 
 extern LINK context_root;

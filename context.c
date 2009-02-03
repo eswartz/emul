@@ -1464,7 +1464,6 @@ static void init(void) {
 #else
 
 #include <sys/wait.h>
-#include <sys/types.h>
 #include <sys/ptrace.h>
 #include <asm/unistd.h>
 #include <sched.h>

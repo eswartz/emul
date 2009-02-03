@@ -445,14 +445,14 @@ int wsa_sendto(int socket, const void * buf, size_t size, int flags,
 
 #endif /* WIN32 */
 
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 
 static __int64 file_time_to_unix_time (const FILETIME * ft) {
     __int64 res = (__int64)ft->dwHighDateTime << 32;
 
     res |= ft->dwLowDateTime;
-    res /= 10;                  /* from 100 nano-sec periods to usec */
-    res -= 11644473600000000u;  /* from Win epoch to Unix epoch */
+    res /= 10;                   /* from 100 nano-sec periods to usec */
+    res -= 11644473600000000ull; /* from Win epoch to Unix epoch */
     return res;
 }
 
@@ -512,6 +512,25 @@ int ftruncate(int fd, int64 size) {
     return ret ? 0 : -1;
 }
 
+int getuid(void) {
+    /* Windows user is always a superuser :) */
+    return 0;
+}
+
+int geteuid(void) {
+    return 0;
+}
+
+int getgid(void) {
+    return 0;
+}
+
+int getegid(void) {
+    return 0;
+}
+#endif
+
+#if defined(_MSC_VER)
 DIR * opendir(const char *path) {
     DIR * d = (DIR *)loc_alloc(sizeof(DIR));
     if (!d) { errno = ENOMEM; return 0; }
@@ -554,23 +573,6 @@ int closedir(DIR * d) {
     if (d->hdl >= 0) r = _findclose(d->hdl);
     loc_free(d);
     return r;
-}
-
-int getuid(void) {
-    /* Windows user is always a superuser :) */
-    return 0;
-}
-
-int geteuid(void) {
-    return 0;
-}
-
-int getgid(void) {
-    return 0;
-}
-
-int getegid(void) {
-    return 0;
 }
 #endif
 
@@ -976,7 +978,7 @@ const char * loc_gai_strerror(int ecode) {
     return buf;
 }
 
-#elif defined(WIN32) && defined(__GNUC__)
+#elif defined(WIN32) && defined(__CYGWIN__)
 
 const char * loc_gai_strerror(int ecode) {
     static char buf[128];

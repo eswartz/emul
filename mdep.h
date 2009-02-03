@@ -26,9 +26,13 @@
 #if defined(WIN32) || defined(__CYGWIN__)
 /* MS Windows NT/XP */
 
-#define _WIN32_WINNT 0x0500
+#define _WIN32_WINNT 0x0501
 
-#ifdef _MSC_VER 
+#if defined(__CYGWIN__)
+#  define _WIN32_IE 0x0501
+#elif defined(__MINGW32__)
+#  define _WIN32_IE 0x0501
+#elif defined(_MSC_VER)
 #  pragma warning(disable:4615)
 #  pragma warning(disable:4996)
 #  ifdef _DEBUG
@@ -42,6 +46,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/utime.h>
 #include <io.h>
@@ -52,15 +57,6 @@ typedef unsigned __int64 uns64;
 #define FILE_PATH_SIZE MAX_PATH
 
 typedef int socklen_t;
-#ifdef __GNUC__
-#define _WIN32_IE 0x0500
-#else
-#define __i386__
-typedef unsigned long pid_t;
-extern int inet_aton(const char * cp, struct in_addr * inp);
-#endif
-
-typedef unsigned long useconds_t;
 
 typedef CONTEXT REG_SET;
 #define get_regs_SP(x) ((x).Esp)
@@ -71,7 +67,7 @@ typedef CONTEXT REG_SET;
 extern unsigned char BREAK_INST[];  /* breakpoint instruction */
 #define BREAK_SIZE 1                /* breakpoint instruction size */
 
-#ifdef __GNUC__
+#if defined(__CYGWIN__)
 
 #ifndef _LARGEFILE_SOURCE
 #error "Need CC command line option: -D_LARGEFILE_SOURCE"
@@ -91,7 +87,7 @@ extern int __stdcall getaddrinfo(const char *, const char *,
                 const struct addrinfo *, struct addrinfo **);
 extern const char * loc_gai_strerror(int ecode);
 
-#else /* not __GNUC__ */
+#else /* not __CYGWIN__ */
 
 #include <direct.h>
 
@@ -106,12 +102,19 @@ struct timespec {
 
 #define ETIMEDOUT 100
 
-//#define vsnprintf _vsnprintf
+#if defined(__MINGW32__)
+typedef unsigned int useconds_t;
+#elif defined(_MSC_VER)
+#define __i386__
+typedef unsigned long pid_t;
+typedef unsigned long useconds_t;
+#endif
 
 #define CLOCK_REALTIME 1
 typedef int clockid_t;
 extern int clock_gettime(clockid_t clock_id, struct timespec * tp); 
 extern void usleep(useconds_t useconds);
+extern int inet_aton(const char * cp, struct in_addr * inp);
 
 /*
  * PThreads emulation.
@@ -123,6 +126,7 @@ typedef void * pthread_cond_t;
 typedef void * pthread_mutexattr_t;
 typedef void * pthread_condattr_t;
 
+extern int pthread_attr_init(pthread_attr_t * attr);
 extern int pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr);
 extern int pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * attr);
 extern int pthread_cond_destroy(pthread_cond_t * cond);
@@ -151,6 +155,7 @@ extern int ftruncate(int f, int64 size);
 #define futime _futime
 #define snprintf _snprintf
 
+#if !defined(__GNUC__)
 struct DIR {
   long hdl;
   struct _finddatai64_t blk;
@@ -170,6 +175,7 @@ typedef struct DIR DIR;
 extern DIR * opendir(const char * path);
 extern int closedir(DIR * dir);
 extern struct dirent * readdir(DIR * dir);
+#endif
 
 #define loc_gai_strerror gai_strerror
 
@@ -178,7 +184,7 @@ extern int geteuid(void);
 extern int getgid(void);
 extern int getegid(void);
 
-#endif /* __GNUC__ */
+#endif /* __CYGWIN__ */
 
 /*
  * Windows socket functions don't set errno as expected.

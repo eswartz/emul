@@ -23,7 +23,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <signal.h>
 #include <errno.h>
 #include <assert.h>
