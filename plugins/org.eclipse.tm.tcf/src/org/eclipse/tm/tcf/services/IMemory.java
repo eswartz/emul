@@ -38,6 +38,7 @@ public interface IMemory extends IService {
      *   
      * @param id – context ID. 
      * @param done - call back interface called when operation is completed.
+     * @return - pending command handle.
      */
     IToken getContext(String id, DoneGetContext done);
 
@@ -67,6 +68,7 @@ public interface IMemory extends IService {
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
      * by previous getChildren commands.
      * @param done - call back interface called when operation is completed.
+     * @return - pending command handle.
      */
     IToken getChildren(String parent_context_id, DoneGetChildren done);
 

@@ -84,6 +84,14 @@ public class TCFTestSuite {
         });
         pending_tests.add(new Runnable() {
             public void run() {
+                listener.progress("Running Streams Test...", ++count_done, count_total);
+                for (IChannel channel : channels) {
+                    active_tests.put(new TestStreams(TCFTestSuite.this, channel), channel);
+                }
+            }
+        });
+        pending_tests.add(new Runnable() {
+            public void run() {
                 int i = 0;
                 listener.progress("Running Run Control Test...", ++count_done, count_total);
                 for (IChannel channel : channels) {

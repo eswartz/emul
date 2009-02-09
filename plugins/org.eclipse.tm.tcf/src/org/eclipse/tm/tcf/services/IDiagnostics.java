@@ -21,45 +21,182 @@ import org.eclipse.tm.tcf.protocol.IToken;
 
 public interface IDiagnostics extends IService {
 
-    public static final String NAME = "Diagnostics";
+    static final String NAME = "Diagnostics";
     
-    public IToken echo(String s, DoneEcho done);
+    /**
+     * 'echo' command result returns same string that was given as command argument.
+     * The command is used to test communication channel ability to transmit arbitrary strings in
+     * both directions.  
+     * @param s - any string.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */
+    IToken echo(String s, DoneEcho done);
     
-    public interface DoneEcho {
-        public void doneEcho(IToken token, Throwable error, String s);
+    /**
+     * Call back interface for 'echo' command.
+     */
+    interface DoneEcho {
+        /**
+         * Called when 'echo' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param s - same string as the command argument.
+         */
+        void doneEcho(IToken token, Throwable error, String s);
     }
 
-    public IToken getTestList(DoneGetTestList done);
+    /**
+     * Get list of test names that are implemented by the service.
+     * Clients can request remote peer to run a test from the list.
+     * When started, a test performs a predefined set actions.
+     * Nature of test actions is uniquely identified by test name.
+     * Exact description of test actions is a contract between client and remote peer,
+     * and it is not part of Diagnostics service specifications.
+     * Clients should not attempt to run a test if they don't recognize the test name.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */
+    IToken getTestList(DoneGetTestList done);
     
-    public interface DoneGetTestList {
-        public void doneGetTestList(IToken token, Throwable error, String[] list);
+    /**
+     * Call back interface for 'getTestList' command.
+     */
+    interface DoneGetTestList {
+        /**
+         * Called when 'getTestList' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param list - names of tests that are supported by the peer. 
+         */
+        void doneGetTestList(IToken token, Throwable error, String[] list);
     }
     
-    public IToken runTest(String s, DoneRunTest done);
+    /**
+     * Run a test. When started, a test performs a predefined set actions.
+     * Nature of test actions is uniquely identified by test name.
+     * Running test usually has associated execution context ID.
+     * Depending on the test, the ID can be used with services RunControl and/or Processes services to control
+     * test execution, and to obtain test results.
+     * @param name - test name
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */
+    IToken runTest(String name, DoneRunTest done);
     
-    public interface DoneRunTest {
-        public void doneRunTest(IToken token, Throwable error, String context_id);
+    /**
+     * Call back interface for 'runTest' command.
+     */
+    interface DoneRunTest {
+        /**
+         * Called when 'runTest' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param context_id - test execution contest ID.
+         */
+        void doneRunTest(IToken token, Throwable error, String context_id);
     }
 
-    public IToken cancelTest(String context_id, DoneCancelTest done);
+    /**
+     * Cancel execution of a test.
+     * @param context_id - text execution context ID.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */
+    IToken cancelTest(String context_id, DoneCancelTest done);
     
-    public interface DoneCancelTest {
-        public void doneCancelTest(IToken token, Throwable error);
+    /**
+     * Call back interface for 'cancelTest' command.
+     */
+    interface DoneCancelTest {
+        /**
+         * Called when 'cancelTest' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         */
+        void doneCancelTest(IToken token, Throwable error);
     }
     
-    public IToken getSymbol(String context_id, String symbol_name, DoneGetSymbol done);
+    /**
+     * Get information about a symbol in text execution context.
+     * @param context_id
+     * @param symbol_name
+     * @param done
+     * @return
+     */
+    IToken getSymbol(String context_id, String symbol_name, DoneGetSymbol done);
     
-    public interface DoneGetSymbol {
-        public void doneGetSymbol(IToken token, Throwable error, ISymbol symbol);
+    /**
+     * Call back interface for 'getSymbol' command.
+     */
+    interface DoneGetSymbol {
+        /**
+         * Called when 'getSymbol' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param symbol
+         */
+        void doneGetSymbol(IToken token, Throwable error, ISymbol symbol);
     }
     
-    public interface ISymbol {
-        public String getSectionName();
-        public Number getValue();
-        public boolean isUndef();
-        public boolean isCommon();
-        public boolean isGlobal();
-        public boolean isLocal();
-        public boolean isAbs();
+    /**
+     * Interface to access result value of 'getSymbol' command.
+     */
+    interface ISymbol {
+        String getSectionName();
+        Number getValue();
+        boolean isUndef();
+        boolean isCommon();
+        boolean isGlobal();
+        boolean isLocal();
+        boolean isAbs();
+    }
+    
+    /**
+     * Create a pair of virtual streams, @see IStreams service.
+     * Remote ends of the streams are connected, so any data sent into 'inp' stream
+     * will become for available for reading from 'out' stream.
+     * The command is used for testing virtual streams.
+     * @param inp_buf_size - buffer size in bytes of the input stream.
+     * @param out_buf_size - buffer size in bytes of the output stream.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */
+    IToken createTestStreams(int inp_buf_size, int out_buf_size, DoneCreateTestStreams done);
+    
+    /**
+     * Call back interface for 'createTestStreams' command.
+     */
+    interface DoneCreateTestStreams {
+        
+        /**
+         * Called when 'createTestStreams' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param inp_id - the input stream ID.
+         * @param out_id - the output stream ID.
+         */
+        void doneCreateTestStreams(IToken token, Throwable error, String inp_id, String out_id);
+    }
+    
+    /**
+     * Dispose a virtual stream that was created by 'createTestStreams' command.
+     * @param id - the stream ID.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */
+    IToken disposeTestStream(String id, DoneDisposeTestStream done);
+    
+    /**
+     * Call back interface for 'disposeTestStream' command.
+     */
+    interface DoneDisposeTestStream {
+        
+        /**
+         * Called when 'createTestStreams' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         */
+        void doneDisposeTestStream(IToken token, Throwable error);
     }
 }

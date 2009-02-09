@@ -101,4 +101,24 @@ public class DiagnosticsService implements IDiagnostics {
         });
         return token;
     }
+
+    public IToken createTestStreams(int inp_buf_size, int out_buf_size, final DoneCreateTestStreams done) {
+        final IToken token = new Token();
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                done.doneCreateTestStreams(token, new Exception("Not implemented"), null, null);
+            }
+        });
+        return token;
+    }
+
+    public IToken disposeTestStream(String id, final DoneDisposeTestStream done) {
+        final IToken token = new Token();
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                done.doneDisposeTestStream(token, new Exception("Invalid context"));
+            }
+        });
+        return token;
+    }
 }

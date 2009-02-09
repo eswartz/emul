@@ -126,6 +126,11 @@ public interface IBreakpoints extends IService {
      * Call back interface for breakpoint service commands.
      */
     interface DoneCommand {
+        /**
+         * Called when command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         */
         void doneCommand(IToken token, Exception error);
     }
 
@@ -138,6 +143,7 @@ public interface IBreakpoints extends IService {
      * 
      * @param properties - array of breakpoints.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */
     IToken set(Map<String,Object>[] properties, DoneCommand done);
 
@@ -145,6 +151,7 @@ public interface IBreakpoints extends IService {
      * Called when breakpoint is added into breakpoints table.
      * @param properties - breakpoint properties.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */
     IToken add(Map<String,Object> properties, DoneCommand done);
 
@@ -152,6 +159,7 @@ public interface IBreakpoints extends IService {
      * Called when breakpoint properties are changed.
      * @param properties - breakpoint properties.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */
     IToken change(Map<String,Object> properties, DoneCommand done);
 
@@ -159,6 +167,7 @@ public interface IBreakpoints extends IService {
      * Tell target to change (only) PROP_ENABLED breakpoint property to 'true'.
      * @param ids - array of enabled breakpoint identifiers.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */
     IToken enable(String[] ids, DoneCommand done);
 
@@ -166,6 +175,7 @@ public interface IBreakpoints extends IService {
      * Tell target to change (only) PROP_ENABLED breakpoint property to 'false'.
      * @param ids - array of disabled breakpoint identifiers.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */
     IToken disable(String[] ids, DoneCommand done);
 
@@ -173,16 +183,27 @@ public interface IBreakpoints extends IService {
      * Tell target to remove breakpoints.
      * @param id - unique breakpoint identifier.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */
     IToken remove(String[] ids, DoneCommand done);
     
     /**
      * Upload IDs of breakpoints known to target agent.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */
     IToken getIDs(DoneGetIDs done);
 
+    /**
+     * Call back interface for 'getIDs' command.
+     */
     interface DoneGetIDs {
+        /**
+         * Called when 'getIDs' command is done. 
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param ids - IDs of breakpoints known to target agent.
+         */
         void doneGetIDs(IToken token, Exception error, String[] ids);
     }
 
@@ -193,7 +214,16 @@ public interface IBreakpoints extends IService {
      */
     IToken getProperties(String id, DoneGetProperties done);
 
+    /**
+     * Call back interface for 'getProperties' command.
+     */
     interface DoneGetProperties {
+        /**
+         * Called when 'getProperties' command is done. 
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param properties - properties of the breakpoint.
+         */
         void doneGetProperties(IToken token, Exception error, Map<String,Object> properties);
     }
 
@@ -201,10 +231,20 @@ public interface IBreakpoints extends IService {
      * Upload status of given breakpoint from target agent.
      * @param id - unique breakpoint identifier.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */
     IToken getStatus(String id, DoneGetStatus done);
 
+    /**
+     * Call back interface for 'getStatus' command.
+     */
     interface DoneGetStatus {
+        /**
+         * Called when 'getStatus' command is done. 
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param status - status of the breakpoint.
+         */
         void doneGetStatus(IToken token, Exception error, Map<String,Object> status);
     }
 
@@ -217,10 +257,20 @@ public interface IBreakpoints extends IService {
      * capabilities.
      * @param id - a context ID or null.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */
     IToken getCapabilities(String id, DoneGetCapabilities done);
 
+    /**
+     * Call back interface for 'getCapabilities' command.
+     */
     interface DoneGetCapabilities {
+        /**
+         * Called when 'getCapabilities' command is done. 
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param capabilities - breakpoints service capabilities description.
+         */
         void doneGetCapabilities(IToken token, Exception error, Map<String,Object> capabilities);
     }
 

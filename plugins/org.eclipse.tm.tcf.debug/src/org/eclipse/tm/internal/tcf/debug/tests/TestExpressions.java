@@ -410,7 +410,10 @@ class TestExpressions implements ITCFTest,
             String s = (String)status.get(IBreakpoints.STATUS_ERROR);
             if (s != null) exit(new Exception(s));
             Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)status.get(IBreakpoints.STATUS_INSTANCES);
-            if (list == null) exit(new Exception("Invalis BP status"));
+            if (list == null) {
+                exit(new Exception("Invalis BP status"));
+                return;
+            }
             boolean ok = false;
             for (Map<String,Object> map : list) {
                 String ctx = (String)map.get(IBreakpoints.INSTANCE_CONTEXT);

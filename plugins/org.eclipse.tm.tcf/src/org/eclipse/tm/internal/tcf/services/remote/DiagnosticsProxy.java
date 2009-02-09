@@ -145,6 +145,36 @@ public class DiagnosticsProxy implements IDiagnostics {
         }.token;
     }
 
+    public IToken createTestStreams(int inp_buf_size, int out_buf_size, final DoneCreateTestStreams done) {
+        return new Command(channel, this, "createTestStreams", new Object[]{ inp_buf_size, out_buf_size }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                String inp_id = null;
+                String out_id = null;
+                if (error == null) {
+                    assert args.length == 3;
+                    error = toError(args[0]);
+                    inp_id = (String)args[1];
+                    out_id = (String)args[2];
+                }
+                done.doneCreateTestStreams(token, error, inp_id, out_id);
+            }
+        }.token;
+    }
+
+    public IToken disposeTestStream(String id, final DoneDisposeTestStream done) {
+        return new Command(channel, this, "disposeTestStream", new Object[]{ id }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                if (error == null) {
+                    assert args.length == 1;
+                    error = toError(args[0]);
+                }
+                done.doneDisposeTestStream(token, error);
+            }
+        }.token;
+    }
+
     @SuppressWarnings("unchecked")
     private String[] toStringArray(Object o) {
         if (o == null) return null;
