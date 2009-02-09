@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.eclipse.tm.internal.tcf.core.Transport;
+import org.eclipse.tm.internal.tcf.core.TransportManager;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -151,7 +151,7 @@ public abstract class AbstractPeer implements IPeer {
 
     public void dispose() {
         assert Protocol.isDispatchThread();
-        Transport.peerDisposed(this);
+        TransportManager.peerDisposed(this);
         LocatorService.removePeer(this);
     }
 
@@ -181,6 +181,6 @@ public abstract class AbstractPeer implements IPeer {
     }
     
     public IChannel openChannel() {
-        return Transport.openChannel(this);
+        return TransportManager.openChannel(this);
     }
 }

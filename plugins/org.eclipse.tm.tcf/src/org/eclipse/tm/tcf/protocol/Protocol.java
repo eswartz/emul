@@ -15,7 +15,7 @@ import java.util.TreeSet;
 
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
 import org.eclipse.tm.internal.tcf.core.ServiceManager;
-import org.eclipse.tm.internal.tcf.core.Transport;
+import org.eclipse.tm.internal.tcf.core.TransportManager;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
 import org.eclipse.tm.tcf.services.ILocator;
 
@@ -268,7 +268,7 @@ public final class Protocol {
      * @return an array of IChannel
      */
     public static IChannel[] getOpenChannels() {
-        return Transport.getOpenChannels();
+        return TransportManager.getOpenChannels();
     }
     
     /**
@@ -284,7 +284,7 @@ public final class Protocol {
      * @param listener
      */
     public static void addChannelOpenListener(ChannelOpenListener listener) {
-        Transport.addChanelOpenListener(listener);
+        TransportManager.addChanelOpenListener(listener);
     }
 
     /**
@@ -292,7 +292,7 @@ public final class Protocol {
      * @param listener
      */
     public static void removeChannelOpenListener(ChannelOpenListener listener) {
-        Transport.removeChanelOpenListener(listener);
+        TransportManager.removeChanelOpenListener(listener);
     }
 
     /**
@@ -300,7 +300,7 @@ public final class Protocol {
      * The message is sent to all open communication channels – broadcasted.
      */
     public static void sendEvent(String service_name, String event_name, byte[] data) {
-        Transport.sendEvent(service_name, event_name, data);
+        TransportManager.sendEvent(service_name, event_name, data);
     }
     
     /**
@@ -315,7 +315,7 @@ public final class Protocol {
      * messages are delivered to corresponding targets.
      */
     public static void sync(Runnable done) {
-        Transport.sync(done);
+        TransportManager.sync(done);
     }
     
     /**
@@ -392,5 +392,21 @@ public final class Protocol {
      */
     public static void removeServiceProvider(IServiceProvider provider){
         ServiceManager.removeServiceProvider(provider);
+    }
+
+    /**
+     * Register s transport provider. 
+     * @param provider - ITransportProvider implementation
+     */
+    public static void addTransportProvider(ITransportProvider provider){
+        TransportManager.addTransportProvider(provider);
+    }
+    
+    /**
+     * Unregister s transport provider. 
+     * @param provider - ITransportProvider implementation
+     */
+    public static void removeTransportProvider(ITransportProvider provider){
+        TransportManager.removeTransportProvider(provider);
     }
 }

@@ -30,7 +30,7 @@ import java.util.Map;
 import org.eclipse.tm.internal.tcf.core.LocalPeer;
 import org.eclipse.tm.internal.tcf.core.RemotePeer;
 import org.eclipse.tm.internal.tcf.core.ServiceManager;
-import org.eclipse.tm.internal.tcf.core.Transport;
+import org.eclipse.tm.internal.tcf.core.TransportManager;
 import org.eclipse.tm.tcf.core.AbstractChannel;
 import org.eclipse.tm.tcf.core.AbstractPeer;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -349,7 +349,7 @@ public class LocatorService implements ILocator {
             }
         }
         if (stale_peers != null) {
-            IChannel[] open_channels = Transport.getOpenChannels();
+            IChannel[] open_channels = TransportManager.getOpenChannels();
             HashSet<IPeer> connected_peers = new HashSet<IPeer>();
             for (IChannel c : open_channels) connected_peers.add(c.getRemotePeer());
             for (RemotePeer p : stale_peers) {

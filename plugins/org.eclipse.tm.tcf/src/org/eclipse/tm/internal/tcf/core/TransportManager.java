@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007-2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
@@ -12,6 +12,7 @@ package org.eclipse.tm.internal.tcf.core;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -25,33 +26,70 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.ITransportProvider;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILocator;
 
 
-public class Transport {
+public class TransportManager {
 
     private static final Collection<AbstractChannel> channels =
         new LinkedList<AbstractChannel>();
     private static final Collection<Protocol.ChannelOpenListener> listeners = 
         new LinkedList<Protocol.ChannelOpenListener>();
+    private static final HashMap<String,ITransportProvider> transports =
+        new HashMap<String,ITransportProvider>();
     
+    static {
+        addTransportProvider(new ITransportProvider() {
+
+            public String getName() {
+                return "TCP";
+            }
+
+            public IChannel openChannel(IPeer peer) {
+                assert getName().equals(peer.getTransportName());
+                Map<String,String> attrs = peer.getAttributes();
+                String host = attrs.get(IPeer.ATTR_IP_HOST);
+                String port = attrs.get(IPeer.ATTR_IP_PORT);
+                if (host == null) throw new Error("No host name");
+                if (port == null) throw new Error("No port number");
+                return new ChannelTCP(peer, host, Integer.parseInt(port));
+            }
+        });
+        
+        addTransportProvider(new ITransportProvider() {
+
+            public String getName() {
+                return "Loop";
+            }
+
+            public IChannel openChannel(IPeer peer) {
+                assert getName().equals(peer.getTransportName());
+                return new ChannelLoop(peer);
+            }
+        });
+    }
+    
+    public static void addTransportProvider(ITransportProvider transport) {
+        String name = transport.getName();
+        assert name != null;
+        if (transports.get(name) != null) throw new Error("Already registered: " + name);
+        transports.put(name, transport);
+    }
+    
+    public static void removeTransportProvider(ITransportProvider transport) {
+        String name = transport.getName();
+        assert name != null;
+        if (transports.get(name) == transport) transports.remove(name);
+    }
     
     public static IChannel openChannel(IPeer peer) {
-        String transport = peer.getTransportName();
-        if (transport == null) throw new Error("Unknown transport");
-        if (transport.equals("Loop")) {
-            return new ChannelLoop(peer);
-        }
-        if (transport.equals("TCP")) {
-            Map<String,String> attrs = peer.getAttributes();
-            String host = attrs.get(IPeer.ATTR_IP_HOST);
-            String port = attrs.get(IPeer.ATTR_IP_PORT);
-            if (host == null) throw new Error("No host name");
-            if (port == null) throw new Error("No port number");
-            return new ChannelTCP(peer, host, Integer.parseInt(port));
-        }
-        throw new Error("Unknown transport name: " + transport);
+        String name = peer.getTransportName();
+        if (name == null) throw new Error("No transport name");
+        ITransportProvider transport = transports.get(name);
+        if (transport == null) throw new Error("Unknown transport name: " + name);
+        return transport.openChannel(peer);
     }
 
     public static void channelOpened(final AbstractChannel channel) {

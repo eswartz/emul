@@ -19,7 +19,7 @@ import java.util.Map;
 
 import org.eclipse.tm.internal.tcf.core.ServiceManager;
 import org.eclipse.tm.internal.tcf.core.Token;
-import org.eclipse.tm.internal.tcf.core.Transport;
+import org.eclipse.tm.internal.tcf.core.TransportManager;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
 import org.eclipse.tm.internal.tcf.services.remote.GenericProxy;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -540,7 +540,7 @@ public abstract class AbstractChannel implements IChannel {
         }
         if (registered_with_trasport) {
             registered_with_trasport = false;
-            Transport.channelClosed(this, error);
+            TransportManager.channelClosed(this, error);
         }
         if (proxy != null) {
             try {
@@ -791,7 +791,7 @@ public abstract class AbstractChannel implements IChannel {
                     else {
                         notifying_channel_opened = true;
                         if (!registered_with_trasport) {
-                            Transport.channelOpened(this);
+                            TransportManager.channelOpened(this);
                             registered_with_trasport = true;
                         }
                         listeners_array = channel_listeners.toArray(listeners_array);
