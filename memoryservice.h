@@ -16,8 +16,8 @@
  * TCF Memory - memory access service.
  */
 
-#ifndef D_memory
-#define D_memory
+#ifndef D_memoryservice
+#define D_memoryservice
 
 /*
  * Initialize memory service.

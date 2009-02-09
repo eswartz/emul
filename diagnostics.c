@@ -29,6 +29,7 @@
 #include "runctrl.h"
 #include "symbols.h"
 #include "stacktrace.h"
+#include "streamsservice.h"
 #include "test.h"
 #include "myalloc.h"
 
@@ -195,12 +196,123 @@ static void command_get_symbol(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
+#if SERVICE_Streams
+
+typedef struct StreamsTest {
+    VirtualStream * inp;
+    VirtualStream * out;
+    char buf[111];
+    unsigned buf_pos;
+    unsigned buf_len;
+    int inp_eos;
+    int out_eos;
+} StreamsTest;
+
+static void streams_test_callback(VirtualStream * stream, int event_code, void * args) {
+    StreamsTest * st = (StreamsTest *)args;
+
+    switch (event_code) {
+    case VS_EVENT_SPACE_AVAILABLE:
+        if (stream != st->out) return;
+        break;
+    case VS_EVENT_DATA_AVAILABLE:
+        if (stream != st->inp) return;
+        break;
+    }
+
+    if (st->buf_pos == st->buf_len && !st->inp_eos) {
+        st->buf_pos = st->buf_len = 0;
+        virtual_stream_get_data(st->inp, st->buf, sizeof(st->buf), &st->buf_len, &st->inp_eos);
+    }
+
+    if (st->buf_len > st->buf_pos || st->inp_eos != st->out_eos) {
+        unsigned done = 0;
+        virtual_stream_add_data(st->out, st->buf + st->buf_pos, st->buf_len - st->buf_pos, &done, st->inp_eos);
+        st->buf_pos += done;
+        if (st->buf_pos == st->buf_len && st->inp_eos) st->out_eos = 1;
+    }
+    {
+        char id[256];
+        virtual_stream_get_id(st->inp, id, sizeof(id));
+    }
+}
+
+#endif
+
+static void command_create_test_streams(char * token, Channel * c) {
+    char id_inp[256];
+    char id_out[256];
+    long buf_size0;
+    long buf_size1;
+    int err = 0;
+
+    buf_size0 = json_read_long(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    buf_size1 = json_read_long(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    
+#if SERVICE_Streams
+    if (buf_size0 <= 0 || buf_size1 <= 0) err = ERR_INV_NUMBER;
+    if (!err) {
+        StreamsTest * st = loc_alloc_zero(sizeof(StreamsTest));
+        virtual_stream_create(DIAGNOSTICS, (unsigned)buf_size0,
+            VS_ENABLE_REMOTE_WRITE, streams_test_callback, st, &st->inp);
+        virtual_stream_create(DIAGNOSTICS, (unsigned)buf_size1,
+            VS_ENABLE_REMOTE_READ, streams_test_callback, st, &st->out);
+        virtual_stream_get_id(st->inp, id_inp, sizeof(id_inp));
+        virtual_stream_get_id(st->out, id_out, sizeof(id_out));
+    }
+#else
+    err = ERR_UNSUPPORTED;
+#endif
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    if (err) {
+        write_stringz(&c->out, "null");
+        write_stringz(&c->out, "null");
+    }
+    else {
+        json_write_string(&c->out, id_inp);
+        write_stream(&c->out, 0);
+        json_write_string(&c->out, id_out);
+        write_stream(&c->out, 0);
+    }
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_dispose_test_stream(char * token, Channel * c) {
+    char id[256];
+    int err = 0;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    
+#if SERVICE_Streams
+    if (!err) {
+        VirtualStream * stream = virtual_stream_find(id);
+        if (stream == NULL) err = errno;
+        else virtual_stream_delete(stream);
+    }
+#else
+    err = ERR_UNSUPPORTED;
+#endif
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    write_stream(&c->out, MARKER_EOM);
+}
+
 void ini_diagnostics_service(Protocol * proto) {
     add_command_handler(proto, DIAGNOSTICS, "echo", command_echo);
     add_command_handler(proto, DIAGNOSTICS, "getTestList", command_get_test_list);
     add_command_handler(proto, DIAGNOSTICS, "runTest", command_run_test);
     add_command_handler(proto, DIAGNOSTICS, "cancelTest", command_cancel_test);
     add_command_handler(proto, DIAGNOSTICS, "getSymbol", command_get_symbol);
+    add_command_handler(proto, DIAGNOSTICS, "createTestStreams", command_create_test_streams);
+    add_command_handler(proto, DIAGNOSTICS, "disposeTestStream", command_dispose_test_stream);
 }
 
 

@@ -575,6 +575,8 @@ static void debug_event_handler(void * x) {
         Context * prs = context_find_from_pid(debug_event->dwProcessId);
         Context * ctx = context_find_from_pid(debug_event->dwThreadId);
 
+        assert(ctx == NULL || ctx->parent == prs);
+
         switch (debug_event->dwDebugEventCode) {
         case CREATE_PROCESS_DEBUG_EVENT:
             assert(prs == NULL);
@@ -630,23 +632,23 @@ static void debug_event_handler(void * x) {
             memcpy(&ctx->pending_event, &args->event.u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
             if (!ctx->stopped) {
                 int signal = 0;
+                context_lock(ctx);
                 event_win32_context_stopped(ctx);
                 signal = get_signal_index(ctx);
                 if (signal != 0 && (ctx->sig_dont_pass & (1 << signal)) != 0) {
                     args->continue_status = DBG_CONTINUE;
                 }
+                context_unlock(ctx);
             }
             break;
         case EXIT_THREAD_DEBUG_EVENT:
             assert(prs != NULL);
             if (ctx && !ctx->exited) event_win32_context_exited(ctx);
-            ctx = NULL;
             break;
         case EXIT_PROCESS_DEBUG_EVENT:
             assert(prs != NULL);
             if (ctx && !ctx->exited) event_win32_context_exited(ctx);
             event_win32_context_exited(prs);
-            prs = ctx = NULL;
             break;
         case LOAD_DLL_DEBUG_EVENT:
             assert(prs != NULL);
@@ -674,7 +676,6 @@ static void debug_event_handler(void * x) {
                 debug_event->dwProcessId, debug_event->u.RipInfo.dwType, debug_event->u.RipInfo.dwError);
             break;
         }
-        assert(ctx == NULL || ctx->parent == prs);
         args = args->next;
     }
 

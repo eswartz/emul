@@ -1113,6 +1113,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\streamsservice.c"
+			>
+		</File>
+		<File
+			RelativePath=".\streamsservice.h"
+			>
+		</File>
+		<File
 			RelativePath=".\symbols.c"
 			>
 		</File>
