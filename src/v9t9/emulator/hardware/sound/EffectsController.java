@@ -12,7 +12,7 @@ import java.util.Arrays;
 public class EffectsController {
 	public boolean DUMP = false;
 
-	private static final int SOUND_CLOCK = 55930;
+	static final int SOUND_CLOCK = 55930;
 	
 	private static final int VOL_SHIFT = 24;
 	private static final int VOL_SCALE = (1 << VOL_SHIFT);
@@ -96,6 +96,14 @@ public class EffectsController {
 	private int tremoloClock;
 
 	private int waveform;
+
+	private int sweepClocks;
+
+	private int sweepRate;
+
+	private int sweepCounter;
+
+	private int sweepDelta;
 	
 	public EffectsController(ClockedSoundVoice voice) {
 		this.voice = voice;
@@ -110,7 +118,7 @@ public class EffectsController {
 		sustain = 0;
 		vibratoAmount = 0;
 		tremoloAmount = 0;
-		waveform = 3;
+		waveform = 0;
 		volume = voice.getVolume() << VOL_SHIFT;
 		index = -1;
 	}
@@ -148,6 +156,7 @@ public class EffectsController {
 	 */
 	public void updateVoice() {
 		fullVolume = voice.getVolume();
+		volume = voice.getVolume() << VOL_SHIFT;
 		vibratoClock = 0;
 		tremoloClock = 0;
 		
@@ -283,7 +292,7 @@ public class EffectsController {
 		
 		if (voice.period > 0 && voice instanceof ToneGeneratorVoice) {
 			int half = (voice.period / 2);
-			int quarter = (voice.period / 4);
+			//int quarter = (voice.period / 4);
 			
 			int ang = voice.clock * sines.length / voice.period;
 			if (ang < 0) ang += sines.length; else if (ang >= sines.length) ang -= sines.length;
@@ -391,6 +400,20 @@ public class EffectsController {
 					tremoloClock -= SOUND_CLOCK;
 			}
 		}
+		if (sweepClocks > 0) {
+			sweepCounter += sweepRate;
+			if (sweepRate > 0) {
+				while (sweepCounter >= 65536) {
+					voice.clock++;
+					sweepCounter -= 65536;
+				}
+			} else if (sweepRate < 0) {
+				while (sweepCounter < 0) {
+					voice.clock--;
+					sweepCounter += 65536;
+				}
+			}
+		}
 	}
 	
 	public boolean isActive() {
@@ -413,6 +436,18 @@ public class EffectsController {
 
 	public void setWaveform(int i) {
 		this.waveform = i;
+	}
+
+	public void setSweepTarget(int target) {
+		sweepDelta = (target - voice.clock);
+	}
+
+	public void setSweepTime(int clocks) {
+		sweepClocks = clocks;
+		if (sweepClocks != 0 && sweepDelta != 0) {
+			sweepRate = sweepDelta * 65536 / sweepClocks;
+			sweepCounter = 0;
+		}
 	}
 	
 	

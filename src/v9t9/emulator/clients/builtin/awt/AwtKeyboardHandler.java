@@ -171,7 +171,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 	 */
 	public void scan(KeyboardState state) {
 		// all handled incrementally, but just in case something goes goofy...
-		if (lastKeystrokeTime + 500 < System.currentTimeMillis()) {
+		if (!state.isPasting() && lastKeystrokeTime + 500 < System.currentTimeMillis()) {
 			lastKeystrokeTime = System.currentTimeMillis();
 			state.resetKeyboard();
 		}

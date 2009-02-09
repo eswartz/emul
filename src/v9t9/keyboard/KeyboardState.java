@@ -475,9 +475,9 @@ public class KeyboardState {
 	}
 
 	public synchronized void resetProbe() {
+		probedColumns = 0;
 		if (isPasting() && pasteNext)
 			pasteTask.run();
-		probedColumns = 0;
 		if (!isPasting())
 			pushQueuedKey();
 		pasteNext = true;
@@ -508,6 +508,8 @@ public class KeyboardState {
 		contents = contents.replaceAll("(\r\n|\r|\n)", "\r");
 		contents = contents.replaceAll("\t", "    ");
 		final char[] chs = contents.toCharArray();
+		
+		// this runnable is manually executed, not scheduled
 		pasteTask = new Runnable() {
 			int index = 0;
 			byte prevShift = 0;

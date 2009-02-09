@@ -28,6 +28,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.ISettingListener;
@@ -94,7 +95,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				Executor.settingDumpFullInstructions, icons,
 				new Rectangle(0, 128, 64, 64),
 				new Rectangle(0, 0, 64, 64), "Toggle CPU logging");
-		
+
 		/*BasicButton basicButton =*/ /*createButton(
 				icons, new Rectangle(0, 128, 64, 64),
 				"Branch to Condensed BASIC",

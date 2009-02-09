@@ -150,10 +150,14 @@ public class SoundTMS9919 implements SoundProvider {
 		if ((cvoice == VOICE_TONE_2 && v.getOperationNoisePeriod() == NOISE_PERIOD_VARIABLE)
 			 || cvoice == VOICE_NOISE)
 		{
-			v.setupVoice();
+			updateNoiseVoice(v);
 		}
 	}
 
+
+	protected void updateNoiseVoice(ClockedSoundVoice v) {
+		v.setupVoice();
+	}
 
 	public SoundHandler getSoundHandler() {
 		return soundHandler;

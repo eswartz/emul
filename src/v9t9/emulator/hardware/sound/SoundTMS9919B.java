@@ -4,6 +4,7 @@
 package v9t9.emulator.hardware.sound;
 
 import v9t9.emulator.Machine;
+import v9t9.utils.Utils;
 
 /**
  * Controller for the TMS9919(B) sound chip.
@@ -34,6 +35,9 @@ import v9t9.emulator.Machine;
    		0101 = set tremolo			(argument: amount | rate)
    		
    		0110 = set waveform			(argument: wave)
+   		
+   		0111 = sweep to tone proportion	(argument: clock proportion )
+   		1000 = sweep to tone time	(argument: time )
    		
    		1111 = indicate note release (argument ignored)
 		
@@ -86,6 +90,20 @@ import v9t9.emulator.Machine;
 		6 = half-sine
 		7 = tangent
 		
+	Sweep
+	
+		Set up the clock scale first, then set time to non-zero which starts the
+		countdown at a rate of 1/64 s.  
+		
+		Scale:
+				127 = + 100%
+				64 = +50%
+				0 = off
+				-64 = -50%
+				-128 = -100%
+				
+	
+		
  * </pre>
  * @author ejs
  *
@@ -100,6 +118,8 @@ public class SoundTMS9919B extends SoundTMS9919 {
 		CMD_VIBRATO = 4,
 		CMD_TREMOLO = 5,
 		CMD_WAVEFORM = 6,
+		CMD_SWEEP_PROPORTION = 7,
+		CMD_SWEEP_TIME = 8,
 		CMD_RELEASE = 15;
 	
 	protected int lastCommand;
@@ -177,6 +197,20 @@ public class SoundTMS9919B extends SoundTMS9919 {
 			case CMD_WAVEFORM:
 				voice.getEffectsController().setWaveform(val & 0xf);
 				break;
+			case CMD_SWEEP_PROPORTION: {
+				int target = ((ClockedSoundVoice) sound_voices[cmdVoice]).getClock();
+				if (val > 0)
+					target += (target * val / 127);
+				else
+					target -= (target * -val / 128);
+				voice.getEffectsController().setSweepTarget(target);
+				break;
+			}
+			case CMD_SWEEP_TIME: {
+				int clocks = (val & 0xff) * EffectsController.SOUND_CLOCK * 64 / 255;
+				voice.getEffectsController().setSweepTime(clocks);
+				break;
+			}
 			}
 		} else {
 			super.writeSound(addr, val);
@@ -186,14 +220,20 @@ public class SoundTMS9919B extends SoundTMS9919 {
 	@Override
 	protected void updateVoice(ClockedSoundVoice v, byte val) {
 		super.updateVoice(v, val);
-		if (sound_voices[cmdVoice] instanceof EnhancedVoice && (val & 0x90) == 0x90) { 
+		if (sound_voices[cmdVoice] instanceof EnhancedVoice && (val & 0x80) == 0x80) { 
 			EnhancedVoice voice = (EnhancedVoice) sound_voices[cmdVoice];
 			byte vol = ((ClockedSoundVoice) voice).getVolume();
-			if (vol == 0)
+			if (vol == 0 || (val & 0x90) == 0x80)
 				voice.getEffectsController().stopEnvelope();
 			else
 				voice.getEffectsController().updateVoice();
 		}
+	}
+	
+	@Override
+	protected void updateNoiseVoice(ClockedSoundVoice v) {
+		super.updateNoiseVoice(v);
+		
 	}
 	
 	@Override

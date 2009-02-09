@@ -61,7 +61,7 @@ public class TestSpeech {
 		LPCSpeech speech = new LPCSpeech();
 		speech.init();
 		
-		final FileOutputStream fos = new FileOutputStream("c:/temp/speech.raw");
+		final FileOutputStream fos = new FileOutputStream("/tmp/speech.raw");
 		
 		Sender sender = new Sender() {
 

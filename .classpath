@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry kind="lib" path="/sdljava/lib/sdljava.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry excluding="api/" kind="src" path="Base64-2.2.2"/>
 	<classpathentry kind="src" path="HRTimer/src">
@@ -14,7 +15,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/bcel"/>
 	<classpathentry kind="lib" path="/sdljava/lib/bsh.jar"/>
 	<classpathentry kind="lib" path="/sdljava/lib/jdom.jar"/>
-	<classpathentry kind="lib" path="/sdljava/lib/sdljava.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sdljava">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="sdljava/lib"/>

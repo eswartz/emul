@@ -37,6 +37,7 @@ import javax.swing.JFileChooser;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.ButtonPressHandler;
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.ISettingListener;

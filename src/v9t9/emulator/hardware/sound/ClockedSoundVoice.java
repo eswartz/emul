@@ -93,4 +93,8 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		settings.put("Accumulator", accum);
 		settings.put("Clock", clock);
 	}
+
+	public int getClock() {
+		return clock;
+	}
 }
