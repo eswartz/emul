@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "errors.h"
-#include "elf.h"
+#include "tcf_elf.h"
 #include "myalloc.h"
 #include "symbols.h"
 #include "stacktrace.h"

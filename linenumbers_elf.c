@@ -32,7 +32,7 @@
 #include "exceptions.h"
 #include "json.h"
 #include "protocol.h"
-#include "elf.h"
+#include "tcf_elf.h"
 #include "dwarfio.h"
 #include "dwarf.h"
 #include "dwarfcache.h"

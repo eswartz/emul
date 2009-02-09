@@ -23,7 +23,13 @@
 #ifndef D_dwarfcache
 #define D_dwarfcache
 
-#include "elf.h"
+#include "mdep.h"
+#include "config.h"
+
+#if ENABLE_ELF
+
+#include "context.h"
+#include "tcf_elf.h"
 #include "dwarfio.h"
 
 typedef struct FileInfo FileInfo;
@@ -178,5 +184,7 @@ extern int read_dwarf_object_property(Context * ctx, int frame, ObjectInfo * obj
 extern int read_and_evaluate_dwarf_object_property(Context * ctx, int frame, U8_T base, ObjectInfo * obj, int attr_tag, PropertyValue * value);
 
 extern U8_T get_numeric_property_value(PropertyValue * Value);
+
+#endif
 
 #endif

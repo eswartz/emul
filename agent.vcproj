@@ -517,30 +517,6 @@
 			>
 		</File>
 		<File
-			RelativePath="elf.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="elf.h"
-			>
-		</File>
-		<File
 			RelativePath="errors.c"
 			>
 			<FileConfiguration
@@ -1194,6 +1170,14 @@
 		</File>
 		<File
 			RelativePath="tcf.h"
+			>
+		</File>
+		<File
+			RelativePath=".\tcf_elf.c"
+			>
+		</File>
+		<File
+			RelativePath=".\tcf_elf.h"
 			>
 		</File>
 		<File

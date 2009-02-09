@@ -26,7 +26,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
-#include "elf.h"
+#include "tcf_elf.h"
 #include "myalloc.h"
 #include "exceptions.h"
 #include "events.h"

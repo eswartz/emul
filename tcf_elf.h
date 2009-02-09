@@ -19,11 +19,14 @@
 #define D_elf
 
 #include "mdep.h"
-#include "context.h"
+#include "config.h"
+
+#if ENABLE_ELF
 
 #if !defined(WIN32)
 #  include <elf.h>
 #endif
+#include "context.h"
 
 #if defined(WIN32)
 
@@ -264,6 +267,8 @@ extern int elf_load(ELF_Section * section);
  */
 typedef void (*ELFCloseListener)(ELF_File *);
 extern void elf_add_close_listener(ELFCloseListener listener);
+
+#endif
 
 #endif
 
