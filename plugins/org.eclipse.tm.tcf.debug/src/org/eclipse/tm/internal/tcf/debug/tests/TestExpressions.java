@@ -264,7 +264,10 @@ class TestExpressions implements ITCFTest,
             expr.getChildren(stack_trace[stack_trace.length - 2], new IExpressions.DoneGetChildren() {
                 public void doneGetChildren(IToken token, Exception error, String[] context_ids) {
                     if (error != null) {
-                        exit(error);
+                        // Need to continue tests even if local variables info is not available.
+                        // TODO: need to distinguish absence of debug info from other errors.
+                        local_vars = new String[0];
+                        runTest();
                     }
                     else {
                         local_vars = context_ids;
@@ -291,6 +294,7 @@ class TestExpressions implements ITCFTest,
             }
         }
         for (final String id : test_expressions) {
+            if (local_vars.length == 0 && id.indexOf("local") >= 0) continue;
             if (expr_ctx.get(id) == null) {
                 expr.create(stack_trace[stack_trace.length - 2], null, id, new IExpressions.DoneCreate() {
                     public void doneCreate(IToken token, Exception error, IExpressions.Expression ctx) {
@@ -322,7 +326,7 @@ class TestExpressions implements ITCFTest,
                 return;
             }
         }
-        for (final String id : test_expressions) {
+        for (final String id : expr_ctx.keySet()) {
             if (expr_val.get(id) == null) {
                 expr.evaluate(expr_ctx.get(id).getID(), new IExpressions.DoneEvaluate() {
                     public void doneEvaluate(IToken token, Exception error, IExpressions.Value ctx) {
