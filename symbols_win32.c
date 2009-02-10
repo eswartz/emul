@@ -46,6 +46,7 @@ typedef struct SymLocation {
     ULONG64 module;
     ULONG index;
     unsigned pointer;
+    void * address;
 } SymLocation;
 
 static char * tmp_buf = NULL;
@@ -500,6 +501,10 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
 int get_symbol_address(const Symbol * sym, int frame, ContextAddress * addr) {
     SYMBOL_INFO * info = NULL;
 
+    if (((SymLocation *)sym->location)->address != NULL) {
+        *addr = (ContextAddress)((SymLocation *)sym->location)->address;
+        return 0;
+    }
     if (((SymLocation *)sym->location)->pointer) {
         errno = ERR_INV_CONTEXT;
         return -1;
@@ -528,12 +533,40 @@ int get_symbol_pointer(const Symbol * sym, Symbol * ptr) {
     return 0;
 }
 
+static int find_test_symbol(Context * ctx, char * name, Symbol * sym) {
+    /* This code allows to run TCF diagnostic tests when symbols info is not available */
+    if (strncmp(name, "tcf_test_", 9) == 0) {
+        extern void tcf_test_func0(void);
+        extern void tcf_test_func1(void);
+        extern void tcf_test_func2(void);
+        extern void tcf_test_func3(void);
+        extern char * tcf_test_array;
+        SymLocation * loc = (SymLocation *)sym->location;
+        memset(sym, 0, sizeof(Symbol));
+        sym->ctx = ctx;
+        if (strcmp(name, "tcf_test_array") == 0) {
+            sym->sym_class = SYM_CLASS_REFERENCE;
+            loc->address = &tcf_test_array;
+        }
+        else {
+            sym->sym_class = SYM_CLASS_FUNCTION;
+            if (strcmp(name, "tcf_test_func0") == 0) loc->address = &tcf_test_func0;
+            else if (strcmp(name, "tcf_test_func1") == 0) loc->address = &tcf_test_func1;
+            else if (strcmp(name, "tcf_test_func2") == 0) loc->address = &tcf_test_func2;
+            else if (strcmp(name, "tcf_test_func3") == 0) loc->address = &tcf_test_func3;
+        }
+        if (loc->address != NULL) return 0;
+    }
+    return -1;
+}
+
 int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
     SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
     IMAGEHLP_STACK_FRAME stack_frame;
     HANDLE process = ctx->parent == NULL ? ctx->handle : ctx->parent->handle;
 
+    memset(info, 0, sizeof(SYMBOL_INFO));
     info->SizeOfStruct = sizeof(SYMBOL_INFO);
     info->MaxNameLen = MAX_SYM_NAME;
 
@@ -543,30 +576,31 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
 
     if (!SymSetContext(process, &stack_frame, NULL)) {
         DWORD err = GetLastError();
-        if (err != ERROR_SUCCESS) {
-            if (err == ERROR_MOD_NOT_FOUND && frame != STACK_NO_FRAME) {
-                /* No local symbols data, search global scope */
-                if (get_stack_frame(ctx, STACK_NO_FRAME, &stack_frame) < 0) {
-                    return -1;
-                }
-                if (!SymSetContext(process, &stack_frame, NULL)) {
-                    DWORD err = GetLastError();
-                    if (err != ERROR_SUCCESS) {
-                        set_win32_errno(err);
-                        return -1;
-                    }
-                }
-            }
-            else {
-                set_win32_errno(err);
+        if (err == ERROR_SUCCESS) {
+            /* Don't know why Windows does that */
+        }
+        else if (err == ERROR_MOD_NOT_FOUND && frame != STACK_NO_FRAME) {
+            /* No local symbols data, search global scope */
+            if (get_stack_frame(ctx, STACK_NO_FRAME, &stack_frame) < 0) {
                 return -1;
             }
+            if (!SymSetContext(process, &stack_frame, NULL)) {
+                DWORD err = GetLastError();
+                if (err != ERROR_SUCCESS) {
+                    set_win32_errno(err);
+                    return find_test_symbol(ctx, name, sym);
+                }
+            }
+        }
+        else {
+            set_win32_errno(err);
+            return find_test_symbol(ctx, name, sym);
         }
     }
 
     if (!SymFromName(process, name, info)) {
         set_win32_errno(GetLastError());
-        return -1;
+        return find_test_symbol(ctx, name, sym);
     }
     syminfo2symbol(ctx, info, sym);
     return 0;
@@ -602,7 +636,10 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
 
     if (!SymSetContext(process, &stack_frame, NULL)) {
         DWORD err = GetLastError();
-        if (err != ERROR_SUCCESS) {
+        if (err == ERROR_SUCCESS) {
+            /* Don't know why Windows does that */
+        }
+        else {
             set_win32_errno(err);
             return -1;
         }

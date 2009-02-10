@@ -77,7 +77,6 @@ extern unsigned char BREAK_INST[];  /* breakpoint instruction */
 #error "Need CC command line option: -D_GNU_SOURCE"
 #endif
 
-#include <pthread.h>
 #include <sys/unistd.h>
 
 typedef struct stat struct_stat;
@@ -116,33 +115,6 @@ extern int clock_gettime(clockid_t clock_id, struct timespec * tp);
 extern void usleep(useconds_t useconds);
 extern int inet_aton(const char * cp, struct in_addr * inp);
 
-/*
- * PThreads emulation.
- */
-typedef void * pthread_t;
-typedef void * pthread_attr_t;
-typedef void * pthread_mutex_t;
-typedef void * pthread_cond_t;
-typedef void * pthread_mutexattr_t;
-typedef void * pthread_condattr_t;
-
-extern int pthread_attr_init(pthread_attr_t * attr);
-extern int pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr);
-extern int pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * attr);
-extern int pthread_cond_destroy(pthread_cond_t * cond);
-
-extern int pthread_cond_signal(pthread_cond_t * cond);
-extern int pthread_cond_broadcast(pthread_cond_t * cond);
-extern int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex);
-extern int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
-                                  const struct timespec * abstime);
-extern int pthread_mutex_lock(pthread_mutex_t * mutex);
-extern int pthread_mutex_unlock(pthread_mutex_t * mutex);
-extern pthread_t pthread_self(void);
-extern int pthread_create(pthread_t * thread, const pthread_attr_t * attr,
-                          void * (*start_routine)(void *), void * arg);
-extern int pthread_join(pthread_t thread, void **value_ptr);
-
 #define lseek _lseeki64
 typedef struct _stati64 struct_stat;
 #define stat _stati64
@@ -155,6 +127,18 @@ extern int ftruncate(int f, int64 size);
 #define futime _futime
 #define snprintf _snprintf
 
+#define loc_gai_strerror gai_strerror
+
+extern int getuid(void);
+extern int geteuid(void);
+extern int getgid(void);
+extern int getegid(void);
+
+#endif /* __CYGWIN__ */
+
+/*
+ * readdir() emulation
+ */
 #if !defined(__GNUC__)
 struct DIR {
   long hdl;
@@ -175,16 +159,38 @@ typedef struct DIR DIR;
 extern DIR * opendir(const char * path);
 extern int closedir(DIR * dir);
 extern struct dirent * readdir(DIR * dir);
+#endif /* !__GNUC__ */
+
+/*
+ * PThreads emulation.
+ */
+#if defined(__CYGWIN__)
+#  include <cygwin/types.h>
+#else
+typedef void * pthread_t;
+typedef void * pthread_attr_t;
+typedef void * pthread_mutex_t;
+typedef void * pthread_cond_t;
+typedef void * pthread_mutexattr_t;
+typedef void * pthread_condattr_t;
 #endif
 
-#define loc_gai_strerror gai_strerror
+extern int pthread_attr_init(pthread_attr_t * attr);
+extern int pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr);
+extern int pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * attr);
+extern int pthread_cond_destroy(pthread_cond_t * cond);
 
-extern int getuid(void);
-extern int geteuid(void);
-extern int getgid(void);
-extern int getegid(void);
-
-#endif /* __CYGWIN__ */
+extern int pthread_cond_signal(pthread_cond_t * cond);
+extern int pthread_cond_broadcast(pthread_cond_t * cond);
+extern int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex);
+extern int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
+                                  const struct timespec * abstime);
+extern int pthread_mutex_lock(pthread_mutex_t * mutex);
+extern int pthread_mutex_unlock(pthread_mutex_t * mutex);
+extern pthread_t pthread_self(void);
+extern int pthread_create(pthread_t * thread, const pthread_attr_t * attr,
+                          void * (*start_routine)(void *), void * arg);
+extern int pthread_join(pthread_t thread, void **value_ptr);
 
 /*
  * Windows socket functions don't set errno as expected.

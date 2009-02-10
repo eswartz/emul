@@ -152,7 +152,7 @@ static void command_map_to_source(char * token, Channel * c) {
                 }
             }
             else {
-                err = set_win32_errno(w);
+                not_found = 1;
             }
         }
         else {
