@@ -31,6 +31,7 @@ extern int json_read_boolean(InputStream * inp);
 extern long json_read_long(InputStream * inp);
 extern unsigned long json_read_ulong(InputStream * inp);
 extern int64 json_read_int64(InputStream * inp);
+extern double json_read_double(InputStream * inp);
 extern char * json_read_alloc_string(InputStream * inp);
 extern char ** json_read_alloc_string_array(InputStream * inp, int * len);
 
@@ -45,6 +46,7 @@ extern char * json_skip_object(InputStream * inp);
 extern void json_write_ulong(OutputStream * out, unsigned long n);
 extern void json_write_long(OutputStream * out, long n);
 extern void json_write_int64(OutputStream * out, int64 n);
+extern void json_write_double(OutputStream * out, double n);
 extern void json_write_char(OutputStream * out, char ch);
 extern void json_write_string(OutputStream * out, const char * str);
 extern void json_write_string_len(OutputStream * out, const char * str, size_t len);
