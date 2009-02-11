@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.services.remote;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Map;
 
@@ -83,6 +84,26 @@ public class DiagnosticsProxy implements IDiagnostics {
                     str = (String)args[0];
                 }
                 done.doneEcho(token, error, str);
+            }
+        }.token;
+    }
+
+    public IToken echoFP(BigDecimal n, final DoneEchoFP done) {
+        return new Command(channel, this, "echoFP", new Object[]{ n }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                BigDecimal n = null;
+                if (error == null) {
+                    assert args.length == 1;
+                    Number x = (Number)args[0];
+                    if (x instanceof BigDecimal) {
+                        n = (BigDecimal)x;
+                    }
+                    else {
+                        n = new BigDecimal(x.toString());
+                    }
+                }
+                done.doneEchoFP(token, error, n);
             }
         }.token;
     }

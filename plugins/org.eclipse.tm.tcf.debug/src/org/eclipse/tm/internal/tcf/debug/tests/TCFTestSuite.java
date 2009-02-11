@@ -68,6 +68,14 @@ public class TCFTestSuite {
         });
         pending_tests.add(new Runnable() {
             public void run() {
+                listener.progress("Running Echo FP Test...", ++count_done, count_total);
+                for (IChannel channel : channels) {
+                    active_tests.put(new TestEchoFP(TCFTestSuite.this, channel), channel);
+                }
+            }
+        });
+        pending_tests.add(new Runnable() {
+            public void run() {
                 listener.progress("Running Debugger Attach/Terminate Test...", ++count_done, count_total);
                 for (IChannel channel : channels) {
                     active_tests.put(new TestAttachTerminate(TCFTestSuite.this, channel), channel);

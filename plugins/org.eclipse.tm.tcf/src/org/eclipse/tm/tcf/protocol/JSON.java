@@ -187,7 +187,7 @@ public final class JSON {
         return n;
     }
     
-    private static Object readFloat(BigInteger val) throws IOException {
+    private static Object readFloat(boolean sign, BigInteger val) throws IOException {
         int scale = 0;
         int fraction = 0;
         if (cur_ch == '.') {
@@ -208,8 +208,7 @@ public final class JSON {
                 read();
             }
         }
-        // the scale is <tt>(unscaledVal &times; 10<sup>-scale</sup>)</tt>.
-        // the negative power!?!
+        if (sign) val = val.negate();
         return new BigDecimal(val, fraction - scale);
     }
     
@@ -348,10 +347,10 @@ public final class JSON {
                     v = v * 10 + (cur_ch - '0');
                     read();
                     if (cur_ch < '0' || cur_ch > '9') {
-                        if (neg) v = -v;
                         if (cur_ch == '.' || cur_ch == 'E' || cur_ch == 'e') {
-                            return readFloat(BigInteger.valueOf(v));
+                            return readFloat(neg, BigInteger.valueOf(v));
                         }
+                        if (neg) v = -v;
                         return Integer.valueOf(v);
                     }
                 }
@@ -360,24 +359,25 @@ public final class JSON {
                     vl = vl * 10 + (cur_ch - '0');
                     read();
                     if (cur_ch < '0' || cur_ch > '9') {
-                        if (neg) vl = -vl;
                         if (cur_ch == '.' || cur_ch == 'E' || cur_ch == 'e') {
-                            return readFloat(BigInteger.valueOf(vl));
+                            return readFloat(neg, BigInteger.valueOf(vl));
                         }
+                        if (neg) vl = -vl;
                         return Long.valueOf(vl);
                     }
                 }
                 StringBuffer sb = new StringBuffer();
-                if (neg) sb.append('-');
                 sb.append(vl);
                 while (true) {
                     sb.append(cur_ch);
                     read();
                     if (cur_ch < '0' || cur_ch > '9') {
+                        BigInteger n = new BigInteger(sb.toString());
                         if (cur_ch == '.' || cur_ch == 'E' || cur_ch == 'e') {
-                            return readFloat(new BigInteger(sb.toString()));
+                            return readFloat(neg, n);
                         }
-                        return new BigInteger(sb.toString());
+                        if (neg) n = n.negate();
+                        return n;
                     }
                 }
             }

@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.services.local;
 
+import java.math.BigDecimal;
+
 import org.eclipse.tm.internal.tcf.core.Token;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -26,19 +28,30 @@ public class DiagnosticsService implements IDiagnostics {
         
         public void command(IToken token, String name, byte[] data) {
             try {
-                if (name.equals("echo")) {
-                    channel.sendResult(token, data);
-                }
-                else if (name.equals("getTestList")) {
-                    channel.sendResult(token, JSON.toJSONSequence(new Object[]{
-                            null, new String[0]}));
-                }
-                else {
-                    channel.terminate(new Exception("Illegal command: " + name));
-                }
+                command(token, name, JSON.parseSequence(data));
             }
             catch (Throwable x) {
                 channel.terminate(x);
+            }
+        }
+        
+        private void command(IToken token, String name, Object[] args) throws Exception {
+            if (name.equals("echo")) {
+                if (args.length != 1) throw new Exception("Invalid number of arguments");
+                String s = (String)args[0];
+                channel.sendResult(token, JSON.toJSONSequence(new Object[]{ s }));
+            }
+            else if (name.equals("echoFP")) {
+                if (args.length != 1) throw new Exception("Invalid number of arguments");
+                Number n = (Number)args[0];
+                channel.sendResult(token, JSON.toJSONSequence(new Object[]{ n }));
+            }
+            else if (name.equals("getTestList")) {
+                if (args.length != 0) throw new Exception("Invalid number of arguments");
+                channel.sendResult(token, JSON.toJSONSequence(new Object[]{ null, new String[0] }));
+            }
+            else {
+                throw new Exception("Illegal command: " + name);
             }
         }
     }
@@ -57,6 +70,16 @@ public class DiagnosticsService implements IDiagnostics {
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 done.doneEcho(token, null, s);
+            }
+        });
+        return token;
+    }
+
+    public IToken echoFP(final BigDecimal n, final DoneEchoFP done) {
+        final IToken token = new Token();
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                done.doneEchoFP(token, null, n);
             }
         });
         return token;

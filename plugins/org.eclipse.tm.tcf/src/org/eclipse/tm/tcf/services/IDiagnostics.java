@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.services;
 
+import java.math.BigDecimal;
+
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
 
@@ -44,6 +46,29 @@ public interface IDiagnostics extends IService {
          * @param s - same string as the command argument.
          */
         void doneEcho(IToken token, Throwable error, String s);
+    }
+
+    /**
+     * 'echoFP' command result returns same floating point number that was given as command argument.
+     * The command is used to test communication channel ability to transmit arbitrary floating point numbers in
+     * both directions.  
+     * @param n - any floating point number.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */
+    IToken echoFP(BigDecimal n, DoneEchoFP done);
+    
+    /**
+     * Call back interface for 'echoFP' command.
+     */
+    interface DoneEchoFP {
+        /**
+         * Called when 'echoFP' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param n - same number as the command argument.
+         */
+        void doneEchoFP(IToken token, Throwable error, BigDecimal n);
     }
 
     /**
