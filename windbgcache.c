@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <stdio.h>
 #include "mdep.h"
 #include "config.h"
 
@@ -27,18 +28,38 @@
 
 static HINSTANCE dbghelp_dll = NULL;
 
-static char * pathes[] = {
-    "C:\\Program Files\\Debugging Tools for Windows\\dbghelp.dll",
-    ".\\dbghelp.dll",
-    "dbghelp.dll",
+static wchar_t * pathes[] = {
+    L"%\\Debugging Tools for Windows (x86)\\dbghelp.dll",
+    L"%\\Debugging Tools for Windows\\dbghelp.dll",
+    L".\\dbghelp.dll",
+    L"dbghelp.dll",
     NULL
 };
 
 static FARPROC GetProc(char * name) {
     if (dbghelp_dll == NULL) {
-        char ** p = pathes;
+        wchar_t ** p = pathes;
         while (dbghelp_dll == NULL && *p != NULL) {
-            dbghelp_dll = LoadLibrary (*p);
+            if (**p == '%') {
+                HKEY key;
+                if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+                        L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion",
+                        0, KEY_READ, &key) == ERROR_SUCCESS) {
+                    wchar_t buf[FILE_PATH_SIZE];
+                    DWORD size = sizeof(buf);
+                    memset(buf, 0, sizeof(buf));
+                    if (RegQueryValueExW(key,
+                            L"ProgramFilesDir",
+                            NULL, NULL, (LPBYTE)buf, &size) == ERROR_SUCCESS) {
+                        wcsncat(buf, *p + 1, FILE_PATH_SIZE - size / sizeof(wchar_t));
+                        dbghelp_dll = LoadLibraryW(buf);
+                    }
+                    RegCloseKey(key);
+                }
+            }
+            else {
+                dbghelp_dll = LoadLibraryW(*p);
+            }
             p++;
         }
         if (dbghelp_dll == NULL) return NULL;
