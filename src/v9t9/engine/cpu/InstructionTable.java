@@ -488,7 +488,7 @@ public class InstructionTable {
 	 * @return
 	 */
 	public static String getInstName(int inst) {
-		return instToName.get(new Integer(inst));
+		return instToName.get(inst);
 	}
 	
    /**

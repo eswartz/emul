@@ -63,13 +63,11 @@ public class Interpreter {
        
         short op = op_x != null ? op_x : cpu.getConsole().readWord(pc);
 
-        // always re-read and re-fetch to ensure we get proper cycle counts
-        // for reading the memory of the instruction
-        //if ((ins = instructions.get(pc)) != null) {
-        //    ins = ins.update(op, (short)pc, cpu.getConsole());
-        //} else {
+        if ((ins = instructions.get(pc)) != null) {
+            ins = ins.update(op, (short)pc, cpu.getConsole());
+        } else {
             ins = new Instruction(InstructionTable.decodeInstruction(op, pc, cpu.getConsole()));
-        //}
+        }
         instructions.put(pc, ins);
 
         MachineOperand mop1 = (MachineOperand) ins.op1;

@@ -181,7 +181,7 @@ abstract public class Machine {
     			
     			if (now >= lastInfo + 1000) {
     				upTime += now - lastInfo;
-    				//executor.dumpStats();
+    				executor.dumpStats();
     				executor.nVdpInterrupts = 0;
     				lastInfo = now;
     				vdpInterruptDelta = 0;

@@ -669,16 +669,45 @@ public class Instruction extends RawInstruction implements IInstruction {
      * @param status2
      */
     public Instruction update(short op, short thePc, MemoryDomain domain) {
+    	boolean isSame = true;
+    	// obvious changes: this usually happens due to an X instruction and its generated instruction
         if (this.opcode != op || this.pc != thePc) {
-            // TODO: check for modified immediates, i.e. self modifying code
-            // out-of-date instruction
             if (this.pc != thePc) {
 				throw new AssertionError("wrong PC? " + v9t9.utils.Utils.toHex4(this.pc) + " != " + v9t9.utils.Utils.toHex4(thePc));
 			}
-            //System.out.println("need to regenerate instruction: >" + v9t9.Utils.toHex4(thePc) + " "+ this);
-            return new Instruction(InstructionTable.decodeInstruction(op, thePc, domain));
+            isSame = false;
+        } else {
+        	// check for modified immediates (the other kind of self-modifying code)
+        	int pcStep = (thePc + 2) & 0xfffe;
+        	MachineOperand mop1 = (MachineOperand)op1;
+        	if (mop1.type != MachineOperand.OP_NONE) {
+        		
+				if (mop1.hasImmediate()) {
+					if (domain.readWord(pcStep) != mop1.immed)
+						isSame = false;
+					pcStep += 2;
+        		} else {
+        			mop1.cycles = 0;
+        			MachineOperand mop2 = (MachineOperand)op2;
+        			if (mop2.type != MachineOperand.OP_NONE) {
+	        			if (mop2.hasImmediate()) {
+	        				if (domain.readWord(pcStep) != mop2.immed) {
+	        					isSame = false;
+	        				}
+	        				mop2.cycles = 0;
+	        			}
+        			}
+        		}
+        	}
         }
-        return this;
+        
+        if (isSame) {
+        	return this;
+        }
+        
+        //System.out.println("need to regenerate instruction: >" + v9t9.Utils.toHex4(thePc) + " "+ this);
+        return new Instruction(InstructionTable.decodeInstruction(op, thePc, domain));
+
     }
 
     public int compareTo(Instruction o) {

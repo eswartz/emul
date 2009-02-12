@@ -394,7 +394,7 @@ public class JavaSoundHandler implements SoundHandler {
 	}
 
 	public synchronized void flushAudio(int pos, int limit) {
-		if (soundGeneratorWaveForm == null)
+		if (soundGeneratorWaveForm == null || (soundGeneratorWaveForm.length == 0 && speechWaveForm.length == 0))
 			return;
 
 		// hmm, it would be nice if the audio gate could work perfectly,
