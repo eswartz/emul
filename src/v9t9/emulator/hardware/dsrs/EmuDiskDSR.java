@@ -431,6 +431,11 @@ public class EmuDiskDSR implements DsrHandler {
 
 
 	private void directDiskInput(byte dev, byte secs, short fname, int parms) {
+		if (dev != 1) {
+			setSubError(e_hardwarefailure, null);
+			return;
+		}
+			
 		String filename = readBareFilename(fname);
 		NativeFile file = null;
 		
@@ -480,6 +485,11 @@ public class EmuDiskDSR implements DsrHandler {
 	}
 
 	private void directDiskOutput(byte dev, byte secs, short fname, int parms) {
+		if (dev != 1) {
+			setSubError(e_hardwarefailure, null);
+			return;
+		}
+		
 		String filename = readBareFilename(fname);
 		NativeFile file = null;
 		
