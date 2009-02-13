@@ -47,7 +47,7 @@ struct AsyncReqInfo {
             size_t bufsz;
 
             /* Out */
-            size_t rval;
+            int rval;
         } fio;
         struct {
             /* In */
@@ -63,7 +63,7 @@ struct AsyncReqInfo {
 #endif
 
             /* Out */
-            size_t rval;
+            int rval;
         } sio;
         struct {
             /* In */

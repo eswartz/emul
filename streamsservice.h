@@ -40,6 +40,7 @@ extern VirtualStream * virtual_stream_find(char * id);
 
 extern int virtual_stream_add_data(VirtualStream * stream, char * buf, unsigned buf_size, unsigned * data_size, int eos);
 extern int virtual_stream_get_data(VirtualStream * stream, char * buf, unsigned buf_size, unsigned * data_size, int * eos);
+extern int virtual_stream_is_empty(VirtualStream * stream);
 
 /*
  * Initialize streams service.

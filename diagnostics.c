@@ -242,10 +242,6 @@ static void streams_test_callback(VirtualStream * stream, int event_code, void *
         st->buf_pos += done;
         if (st->buf_pos == st->buf_len && st->inp_eos) st->out_eos = 1;
     }
-    {
-        char id[256];
-        virtual_stream_get_id(st->inp, id, sizeof(id));
-    }
 }
 
 #endif

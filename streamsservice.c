@@ -180,8 +180,6 @@ static void delete_read_request(ReadRequest * r) {
         write_errno(&c->out, ERR_COMMAND_CANCELLED);
         json_write_long(&c->out, 0);
         write_stream(&c->out, 0);
-        json_write_long(&c->out, 0);
-        write_stream(&c->out, 0);
         json_write_boolean(&c->out, 1);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
@@ -230,12 +228,14 @@ static void delete_stream(void * args) {
 static void notify_data_available(void * args) {
     VirtualStream * stream = (VirtualStream *)args;
     assert(stream->magic == STREAM_MAGIC);
+    if (stream->deleted) return;
     stream->callback(stream, VS_EVENT_DATA_AVAILABLE, stream->callback_args);
 }
 
 static void notify_space_available(void * args) {
     VirtualStream * stream = (VirtualStream *)args;
     assert(stream->magic == STREAM_MAGIC);
+    if (stream->deleted) return;
     stream->callback(stream, VS_EVENT_SPACE_AVAILABLE, stream->callback_args);
 }
 
@@ -527,6 +527,12 @@ int virtual_stream_get_data(VirtualStream * stream, char * buf, unsigned buf_siz
         post_event(notify_space_available, stream);
     }
     return 0;
+}
+
+int virtual_stream_is_empty(VirtualStream * stream) {
+    assert(stream->magic == STREAM_MAGIC);
+    assert(!stream->deleted);
+    return stream->buf_out == stream->buf_inp;
 }
 
 void virtual_stream_delete(VirtualStream * stream) {

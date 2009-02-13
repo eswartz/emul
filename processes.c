@@ -41,6 +41,7 @@
 #include "exceptions.h"
 #include "runctrl.h"
 #include "filesystem.h"
+#include "streamsservice.h"
 #include "processes.h"
 
 static const char * PROCESSES = "Processes";
@@ -86,14 +87,20 @@ typedef struct ChildProcess {
     int inp;
     int out;
     int err;
+    char inp_id[256];
+    char out_id[256];
+    char err_id[256];
     unsigned exit_code;
 } ChildProcess;
 
 typedef struct ProcessOutput {
-    int stream_id;
     ChildProcess * prs;
     AsyncReqInfo req;
-    char buf[0x400];
+    int req_posted;
+    char buf[PIPE_SIZE];
+    size_t buf_pos;
+    int eos;
+    VirtualStream * vstream;
 } ProcessOutput;
 
 #define link2prs(A)  ((ChildProcess *)((char *)(A) - offsetof(ChildProcess, link)))
@@ -103,8 +110,21 @@ static LINK prs_list;
 static SEM_ID prs_list_lock = NULL;
 #endif
 
+static ChildProcess * find_process(int pid) {
+    LINK * qhp = &prs_list;
+    LINK * qp = qhp->next;
+
+    while (qp != qhp) {
+        ChildProcess * prs = link2prs(qp);
+        if (prs->pid == pid) return prs;
+        qp = qp->next;
+    }
+    return NULL;
+}
+
 static void write_context(OutputStream * out, int pid) {
-    Context * ctx = NULL;
+    Context * ctx = context_find_from_pid(pid);
+    ChildProcess * prs = find_process(pid);
 
     write_stream(out, '{');
 
@@ -134,7 +154,6 @@ static void write_context(OutputStream * out, int pid) {
     }
 #endif
 
-    ctx = context_find_from_pid(pid);
     if (ctx != NULL) {
         json_write_string(out, "Attached");
         write_stream(out, ':');
@@ -142,36 +161,32 @@ static void write_context(OutputStream * out, int pid) {
         write_stream(out, ',');
     }
 
+    if (prs != NULL) {
+        if (*prs->inp_id) {
+            json_write_string(out, "StdInID");
+            write_stream(out, ':');
+            json_write_string(out, prs->inp_id);
+            write_stream(out, ',');
+        }
+        if (*prs->out_id) {
+            json_write_string(out, "StdOutID");
+            write_stream(out, ':');
+            json_write_string(out, prs->out_id);
+            write_stream(out, ',');
+        }
+        if (*prs->err_id) {
+            json_write_string(out, "StdErrID");
+            write_stream(out, ':');
+            json_write_string(out, prs->err_id);
+            write_stream(out, ',');
+        }
+    }
+
     json_write_string(out, "ID");
     write_stream(out, ':');
     json_write_string(out, pid2id(pid, 0));
 
     write_stream(out, '}');
-}
-
-static void send_event_process_output(OutputStream * out, ProcessOutput * buf) {
-    ChildProcess * prs = buf->prs;
-    JsonWriteBinaryState state;
-
-    assert(buf->req.u.fio.rval > 0);
-    assert(buf->req.u.fio.bufp == buf->buf);
-
-    write_stringz(out, "E");
-    write_stringz(out, PROCESSES);
-    write_stringz(out, "output");
-
-    json_write_string(out, pid2id(prs->pid, 0));
-    write_stream(out, 0);
-
-    json_write_long(out, buf->stream_id);
-    write_stream(out, 0);
-
-    json_write_binary_start(&state, out);
-    json_write_binary_data(&state, buf->buf, buf->req.u.fio.rval);
-    json_write_binary_end(&state);
-    write_stream(out, 0);
-
-    write_stream(out, MARKER_EOM);
 }
 
 static void send_event_process_exited(OutputStream * out, ChildProcess * prs) {
@@ -619,18 +634,6 @@ static void start_done(int error, Context * ctx, void * arg) {
     loc_free(data);
 }
 
-static ChildProcess * find_process(int pid) {
-    LINK * qhp = &prs_list;
-    LINK * qp = qhp->next;
-
-    while (qp != qhp) {
-        ChildProcess * prs = link2prs(qp);
-        if (prs->pid == pid) return prs;
-        qp = qp->next;
-    }
-    return NULL;
-}
-
 static void process_exited(ChildProcess * prs) {
     assert(prs->refs == 0);
     /* TODO: process exit code */
@@ -649,35 +652,70 @@ static void process_exited(ChildProcess * prs) {
 #endif
 }
 
-static void read_process_output_done(void * x) {
-    AsyncReqInfo * req = x;
-    ProcessOutput * out = (ProcessOutput *)req->client_data;
-    ChildProcess * prs = out->prs;
+static void streams_callback(VirtualStream * stream, int event_code, void * args) {
+    ProcessOutput * out = (ProcessOutput *)args;
 
-    if ((int)req->u.fio.rval > 0) {
-        send_event_process_output(&prs->bcg->out, out);
-        flush_stream(&prs->bcg->out);
-        async_req_post(req);
-    }
-    else {
-        prs->refs--;
-        if (prs->refs == 0) process_exited(prs);
-        loc_free(out);
+    assert(out->vstream == stream);
+    if (!out->req_posted) {
+        int buf_len = out->req.u.fio.rval;
+        int err = 0;
+        int eos = 0;
+
+        if (buf_len < 0) {
+            buf_len = 0;
+            err = out->req.error;
+        }
+        if (buf_len == 0) eos = 1;
+
+        assert(buf_len <= sizeof(out->buf));
+        assert(out->buf_pos <= (size_t)buf_len);
+        assert(out->req.u.fio.bufp == out->buf);
+
+        if (out->buf_pos < (size_t)buf_len || out->eos != eos) {
+            size_t done = 0;
+            virtual_stream_add_data(stream, out->buf + out->buf_pos, buf_len - out->buf_pos, &done, eos);
+            out->buf_pos += done;
+            if (eos) out->eos = 1;
+        }
+
+        if (out->buf_pos >= (size_t)buf_len) {
+            if (!eos) {
+                out->req_posted = 1;
+                async_req_post(&out->req);
+            }
+            else if (virtual_stream_is_empty(stream)) {
+                ChildProcess * prs = out->prs;
+                prs->refs--;
+                if (prs->refs == 0) process_exited(prs);
+                virtual_stream_delete(stream);
+                loc_free(out);
+            }
+        }
     }
 }
 
-static void read_process_output(ChildProcess * prs, int stream_id) {
+static void read_process_output_done(void * x) {
+    AsyncReqInfo * req = x;
+    ProcessOutput * out = (ProcessOutput *)req->client_data;
+
+    out->buf_pos = 0;
+    out->req_posted = 0;
+    streams_callback(out->vstream, 0, out);
+}
+
+static void read_process_output(ChildProcess * prs, int fd, char * id, size_t id_size) {
     ProcessOutput * out = loc_alloc_zero(sizeof(ProcessOutput));
-    out->prs = prs;
-    out->stream_id = stream_id;
+    (out->prs = prs)->refs++;
     out->req.client_data = out;
     out->req.done = read_process_output_done;
     out->req.type = AsyncReqRead;
     out->req.u.fio.bufp = out->buf;
     out->req.u.fio.bufsz = sizeof(out->buf);
-    out->req.u.fio.fd = stream_id == 0 ? prs->out : prs->err;
+    out->req.u.fio.fd = fd;
+    virtual_stream_create(PROCESSES, 0x1000, VS_ENABLE_REMOTE_READ, streams_callback, out, &out->vstream);
+    virtual_stream_get_id(out->vstream, id, id_size);
+    out->req_posted = 1;
     async_req_post(&out->req);
-    prs->refs++;
 }
 
 #if defined(WIN32)
@@ -1089,8 +1127,8 @@ static void command_start(char * token, Channel * c) {
         if (dir[0] != 0 && chdir(dir) < 0) err = errno;
         if (err == 0 && start_process(c, envp, dir, exe, args, attach, &pid, &selfattach, &prs) < 0) err = errno;
         if (prs != NULL) {
-            read_process_output(prs, 0);
-            if (prs->out != prs->err) read_process_output(prs, 1);
+            read_process_output(prs, prs->out, prs->out_id, sizeof(prs->out_id));
+            if (prs->out != prs->err) read_process_output(prs, prs->err, prs->err_id, sizeof(prs->err_id));
         }
         if (attach && !err) {
             AttachDoneArgs * data = loc_alloc_zero(sizeof *data);
