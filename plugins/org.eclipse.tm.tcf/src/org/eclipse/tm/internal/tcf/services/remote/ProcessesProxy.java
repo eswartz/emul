@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -124,14 +123,7 @@ public class ProcessesProxy implements IProcesses {
             public void event(String name, byte[] data) {
                 try {
                     Object[] args = JSON.parseSequence(data);
-                    if (name.equals("output")) {
-                        assert args.length == 3;
-                        byte[] buf = null;
-                        String str = (String)args[2];
-                        if (str != null) buf = Base64.toByteArray(str.toCharArray());
-                        listener.output((String)args[0], ((Number)args[1]).intValue(), buf);
-                    }
-                    else if (name.equals("exited")) {
+                    if (name.equals("exited")) {
                         assert args.length == 2;
                         listener.exited((String)args[0], ((Number)args[1]).intValue());
                     }

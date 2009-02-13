@@ -47,6 +47,11 @@ public class TCFModelManager {
             TCFModel model = models.get(launch);
             if (model != null) model.onContextActionsStart();
         }
+
+        public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data) {
+            TCFModel model = models.get(launch);
+            if (model != null) model.onProcessOutput(process_id, stream_id, data);
+        }
     };
 
     private final ILaunchesListener debug_launch_listener = new ILaunchesListener() {

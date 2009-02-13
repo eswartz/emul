@@ -141,6 +141,9 @@ public class TCFAnnotationManager {
 
         public void onContextActionsStart(TCFLaunch launch) {
         }
+
+        public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data) {
+        }
     };
     
     private final ISelectionListener selection_listener = new ISelectionListener() {
@@ -187,7 +190,7 @@ public class TCFAnnotationManager {
         TCFLaunch.addListener(launch_listener);
         displayExec(new Runnable() {
             public void run() {
-                if (display.getShells().length > 0) {
+                if (PlatformUI.isWorkbenchRunning()) {
                     for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
                         window_listener.windowOpened(window);
                     }

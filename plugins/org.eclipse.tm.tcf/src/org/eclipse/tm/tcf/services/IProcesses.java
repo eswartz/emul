@@ -22,7 +22,11 @@ import org.eclipse.tm.tcf.protocol.IToken;
  * information, allows to start and terminate a process, and allows
  * to attach and detach a process for debugging. Debug services,
  * like IMemory and IRunControl, require a process to be attached
- * before they can access it. 
+ * before they can access it.
+ * 
+ * If a process is started by this service, its standard input/output streams are 
+ * available for client to read/write using Streams service. Stream type of such
+ * streams is set to "Processes".
  */
 public interface IProcesses extends IService {
 
@@ -94,7 +98,16 @@ public interface IProcesses extends IService {
         PROP_CAN_TERMINATE = "CanTerminate",
         
         /** Process name. Client UI can show this name to a user */
-        PROP_NAME = "Name";
+        PROP_NAME = "Name",
+        
+        /** Process standard input stream ID */
+        PROP_STDIN_ID = "StdInID",
+        
+        /** Process standard output stream ID */
+        PROP_STDOUT_ID = "StdOutID",
+        
+        /** Process standard error stream ID */
+        PROP_STDERR_ID = "StdErrID";
     
     interface ProcessContext {
         
@@ -286,19 +299,10 @@ public interface IProcesses extends IService {
     void removeListener(ProcessesListener listener);
 
     /**
-     * Process event listener is notified when a process exits or
-     * sends a text to stdout/stderr.
+     * Process event listener is notified when a process exits.
      * Event are reported only for processes that were started by 'start' command. 
      */
     interface ProcessesListener {
-        
-        /**
-         * Called every time a process output is received.
-         * @param process_id - process context ID
-         * @param stream_id - 0 stdout, 1 - stderr
-         * @param data - byte array of process output data
-         */
-        void output(String process_id, int stream_id, byte[] data);
         
         /**
          * Called when a process exits.

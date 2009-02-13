@@ -43,6 +43,7 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
 import org.eclipse.tm.tcf.services.IProcesses;
+import org.eclipse.tm.tcf.services.IStreams;
 import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
 import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
 import org.eclipse.tm.tcf.services.IProcesses.ProcessContext;
@@ -59,6 +60,8 @@ public class TCFLaunch extends Launch {
         public void onContextActionsStart(TCFLaunch launch);
         
         public void onContextActionsDone(TCFLaunch launch);
+        
+        public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data);
     }
 
     private static final Collection<Listener> listeners = new ArrayList<Listener>();
@@ -72,10 +75,28 @@ public class TCFLaunch extends Launch {
     private boolean shutdown;
     private boolean last_context_exited;
     private ProcessContext process;
+    private IToken process_start_command;
 
     private int context_action_cnt;
     private final HashMap<String,LinkedList<Runnable>> context_action_queue =
         new HashMap<String,LinkedList<Runnable>>();
+    
+    private HashSet<String> stream_ids = new HashSet<String>();
+    
+    private final IStreams.StreamsListener streams_listener = new IStreams.StreamsListener() {
+
+        public void created(String stream_type, String stream_id) {
+            if (process_start_command == null) {
+                disconnectStream(stream_id);
+            }
+            else {
+                stream_ids.add(stream_id);
+            }
+        }
+
+        public void disposed(String stream_type, String stream_id) {
+        }
+    };
     
     public TCFLaunch(ILaunchConfiguration launchConfiguration, String mode) {
         super(launchConfiguration, mode, null);
@@ -83,30 +104,7 @@ public class TCFLaunch extends Launch {
 
     private void onConnected() {
         // The method is called when TCF channel is successfully connected.
-        try {
-            final Runnable done = new Runnable() {
-                public void run() {
-                    connecting = false;
-                    for (Listener l : listeners) l.onConnected(TCFLaunch.this);
-                    fireChanged();
-                }
-            };
-            if (mode.equals(ILaunchManager.DEBUG_MODE)) {
-                breakpoints_status = new TCFBreakpointsStatus(this);
-                Activator.getBreakpointsModel().downloadBreakpoints(channel, new Runnable() {
-                    public void run() {
-                        if (channel.getState() != IChannel.STATE_OPEN) return;
-                        runLaunchSequence(done);
-                    }
-                });
-            }
-            else {
-                runLaunchSequence(done);
-            }
-        }
-        catch (Exception x) {
-            channel.terminate(x);
-        }
+        subscribeStreamsService();
     }
     
     private void onDisconnected(Throwable error) {
@@ -128,7 +126,62 @@ public class TCFLaunch extends Launch {
             }
         });
     }
+    
+    private void subscribeStreamsService() {
+        try {
+            IStreams streams = getService(IStreams.class);
+            if (streams != null) {
+                streams.subscribe(IProcesses.NAME, streams_listener, new IStreams.DoneSubscribe() {
+                    public void doneSubscribe(IToken token, Exception error) {
+                        if (channel.getState() != IChannel.STATE_OPEN) return;
+                        if (error != null) {
+                            channel.terminate(error);
+                        }
+                        else {
+                            downloadBreakpoints();
+                        }
+                    }
+                });
+            }
+            else {
+                downloadBreakpoints();
+            }
+        }
+        catch (Exception x) {
+            channel.terminate(x);
+        }
+    }
 
+    private void downloadBreakpoints() {
+        try {
+            if (mode.equals(ILaunchManager.DEBUG_MODE)) {
+                breakpoints_status = new TCFBreakpointsStatus(this);
+                Activator.getBreakpointsModel().downloadBreakpoints(channel, new Runnable() {
+                    public void run() {
+                        if (channel.getState() != IChannel.STATE_OPEN) return;
+                        runLaunchSequence();
+                    }
+                });
+            }
+            else {
+                runLaunchSequence();
+            }
+        }
+        catch (Exception x) {
+            channel.terminate(x);
+        }
+    }
+
+    private void runLaunchSequence() {
+        runLaunchSequence(new Runnable() {
+            public void run() {
+                connecting = false;
+                for (Listener l : listeners) l.onConnected(TCFLaunch.this);
+                fireChanged();
+            }
+        });
+    }
+    
     private String[] toArgsArray(String file, String cmd) {
         // Create arguments list from a command line.
         int i = 0;
@@ -202,13 +255,16 @@ public class TCFLaunch extends Launch {
                                 return;
                             }
                             boolean attach = mode.equals(ILaunchManager.DEBUG_MODE);
-                            ps.start(dir, file, toArgsArray(file, args), vars, attach, new IProcesses.DoneStart() {
+                            process_start_command = ps.start(dir, file, toArgsArray(file, args),
+                                    vars, attach, new IProcesses.DoneStart() {
                                 public void doneStart(IToken token, Exception error, final ProcessContext process) {
+                                    process_start_command = null;
                                     if (error != null) {
                                         channel.terminate(error);
                                         return;
                                     }
                                     TCFLaunch.this.process = process;
+                                    connectProcessStreams();
                                     done.run();
                                 }
                             });
@@ -322,6 +378,64 @@ public class TCFLaunch extends Launch {
             program_path = project.getFile(local_file).getLocation();
         }
         return program_path.toOSString();
+    }
+    
+    private void connectProcessStreams() {
+        final IStreams streams = getService(IStreams.class);
+        if (streams == null) return;
+        final String inp_id = (String)process.getProperties().get(IProcesses.PROP_STDIN_ID);
+        final String out_id = (String)process.getProperties().get(IProcesses.PROP_STDOUT_ID);
+        final String err_id = (String)process.getProperties().get(IProcesses.PROP_STDERR_ID);
+        for (final String id : stream_ids) {
+            if (id.equals(inp_id)) {
+                // TODO: process input stream handling
+            }
+            else if (id.equals(out_id)) {
+                connectStream(id, 0);
+            }
+            else if (id.equals(err_id)) {
+                connectStream(id, 1);
+            }
+            else {
+                disconnectStream(id);
+            }
+        }
+    }
+    
+    private void connectStream(final String id, final int no) {
+        final String peocess_id = process.getID();
+        final IStreams streams = getService(IStreams.class);
+        IStreams.DoneRead done = new IStreams.DoneRead() {
+            boolean canceled;
+            public void doneRead(IToken token, Exception error, int lost_size, byte[] data, boolean eos) {
+                if (canceled) return;
+                // TODO: handle process output data loss
+                if (data != null && data.length > 0) {
+                    for (Listener l : listeners) l.onProcessOutput(TCFLaunch.this, peocess_id, no, data);
+                }
+                if (eos || error != null) {
+                    canceled = true;
+                    // TODO: report error reading process output
+                    disconnectStream(id);
+                    return;
+                }
+                streams.read(id, 0x1000, this);
+            }
+        };
+        streams.read(id, 0x1000, done);
+        streams.read(id, 0x1000, done);
+        streams.read(id, 0x1000, done);
+        streams.read(id, 0x1000, done);
+    }
+    
+    private void disconnectStream(String id) {
+        IStreams streams = getService(IStreams.class);
+        streams.disconnect(id, new IStreams.DoneDisconnect() {
+            public void doneDisconnect(IToken token, Exception error) {
+                if (channel.getState() != IChannel.STATE_OPEN) return;
+                if (error != null) channel.terminate(error);
+            }
+        });
     }
     
     protected void runShutdownSequence(final Runnable done) {

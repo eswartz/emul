@@ -324,49 +324,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 onLastContextRemoved();
             }
         }
-
-        public void output(String process_id, int stream_id, byte[] data) {
-            try {
-                IProcesses.ProcessContext prs = launch.getProcessContext();
-                if (prs == null || !process_id.equals(prs.getID())) return;
-                Map<Integer,MessageConsoleStream> streams = consoles.get(process_id);
-                if (streams == null) consoles.put(process_id, streams = new HashMap<Integer,MessageConsoleStream>());
-                MessageConsoleStream stream = streams.get(stream_id);
-                if (stream == null) {
-                    MessageConsole console = null;
-                    for (MessageConsoleStream s : streams.values()) console = s.getConsole();
-                    if (console == null) {
-                        final MessageConsole c = console = new MessageConsole("TCF " + process_id,
-                                ImageCache.getImageDescriptor(ImageCache.IMG_TCF));
-                        display.asyncExec(new Runnable() {
-                            public void run() {
-                                try {
-                                    IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
-                                    manager.addConsoles(new IConsole[]{ c });
-                                    IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-                                    if (w == null) return;
-                                    IWorkbenchPage page = w.getActivePage();
-                                    if (page == null) return;
-                                    IConsoleView view = (IConsoleView)page.showView(IConsoleConstants.ID_CONSOLE_VIEW);
-                                    view.display(c);
-                                }
-                                catch (Throwable x) {
-                                    Activator.log("Cannot open console view", x);
-                                }
-                            }
-                        });
-                    }
-                    stream = console.newMessageStream();
-                    stream.setColor(stream_id >= 0 && stream_id < console_colors.length ?
-                            console_colors[stream_id] : console_colors[0]);
-                    streams.put(stream_id, stream);
-                }
-                stream.print(new String(data, 0, data.length, "UTF-8"));
-            }
-            catch (Throwable x) {
-                Activator.log("Cannot write to console", x);
-            }
-        }
     };
     
     public static void setDisplay(Display display) {
@@ -454,6 +411,49 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
         refreshLaunchView();
         assert id2node.size() == 0;
+    }
+    
+    void onProcessOutput(String process_id, int stream_id, byte[] data) {
+        try {
+            IProcesses.ProcessContext prs = launch.getProcessContext();
+            if (prs == null || !process_id.equals(prs.getID())) return;
+            Map<Integer,MessageConsoleStream> streams = consoles.get(process_id);
+            if (streams == null) consoles.put(process_id, streams = new HashMap<Integer,MessageConsoleStream>());
+            MessageConsoleStream stream = streams.get(stream_id);
+            if (stream == null) {
+                MessageConsole console = null;
+                for (MessageConsoleStream s : streams.values()) console = s.getConsole();
+                if (console == null) {
+                    final MessageConsole c = console = new MessageConsole("TCF " + process_id,
+                            ImageCache.getImageDescriptor(ImageCache.IMG_TCF));
+                    display.asyncExec(new Runnable() {
+                        public void run() {
+                            try {
+                                IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
+                                manager.addConsoles(new IConsole[]{ c });
+                                IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+                                if (w == null) return;
+                                IWorkbenchPage page = w.getActivePage();
+                                if (page == null) return;
+                                IConsoleView view = (IConsoleView)page.showView(IConsoleConstants.ID_CONSOLE_VIEW);
+                                view.display(c);
+                            }
+                            catch (Throwable x) {
+                                Activator.log("Cannot open console view", x);
+                            }
+                        }
+                    });
+                }
+                stream = console.newMessageStream();
+                stream.setColor(stream_id >= 0 && stream_id < console_colors.length ?
+                        console_colors[stream_id] : console_colors[0]);
+                streams.put(stream_id, stream);
+            }
+            stream.print(new String(data, 0, data.length, "UTF-8"));
+        }
+        catch (Throwable x) {
+            Activator.log("Cannot write to console", x);
+        }
     }
     
     void onContextActionsStart() {
