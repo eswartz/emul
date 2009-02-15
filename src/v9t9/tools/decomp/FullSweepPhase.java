@@ -336,7 +336,7 @@ public class FullSweepPhase extends Phase {
 
         flowWP();
         
-        dumpInstructions();
+        //dumpInstructions();
         //dumpBlocks();
     }
 }

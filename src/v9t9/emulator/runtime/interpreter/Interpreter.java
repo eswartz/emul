@@ -20,6 +20,7 @@ import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Status;
+import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.utils.Utils;
@@ -34,14 +35,17 @@ public class Interpreter {
 
     MemoryDomain memory;
 
-    Map<Integer, Instruction> instructions;
+    // per-PC prebuilt instructions
+    Map<MemoryArea, Instruction[]> parsedInstructions; 
+    //Instruction[] instructions; 
     
     InstructionAction.Block iblock;
 
     public Interpreter(Machine machine) {
         this.machine = machine;
         this.memory = machine.getCpu().getConsole();
-        instructions = new HashMap<Integer, Instruction>();
+        //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
+        parsedInstructions = new HashMap<MemoryArea, Instruction[]>();
         iblock = new InstructionAction.Block();
         iblock.domain = memory;
      }
@@ -57,18 +61,29 @@ public class Interpreter {
          * referenced in operands
          */
         Instruction ins;
-        int pc = cpu.getPC();
+        int pc = cpu.getPC() & 0xfffe;
         
         int origCycleCount = cpu.getCurrentCycleCount();
        
-        short op = op_x != null ? op_x : cpu.getConsole().readWord(pc);
-
-        if ((ins = instructions.get(pc)) != null) {
-            ins = ins.update(op, (short)pc, cpu.getConsole());
+        short op;
+        if (op_x != null) {
+        	op = op_x;
+        	ins = new Instruction(InstructionTable.decodeInstruction(op, pc, cpu.getConsole()));
         } else {
-            ins = new Instruction(InstructionTable.decodeInstruction(op, pc, cpu.getConsole()));
+        	op = cpu.getConsole().readWord(pc);
+        	MemoryArea area = cpu.getConsole().getEntryAt(pc).getArea();
+        	Instruction[] instructions = parsedInstructions.get(area);
+        	if (instructions == null) {
+        		instructions = new Instruction[65536/2];
+        		parsedInstructions.put(area, instructions);
+        	}
+        	if ((ins = instructions[pc/2]) != null) {
+        		ins = ins.update(op, pc, cpu.getConsole());
+        	} else {
+        		ins = new Instruction(InstructionTable.decodeInstruction(op, pc, cpu.getConsole()));
+        	}
+        	instructions[pc/2] = ins;
         }
-        instructions.put(pc, ins);
 
         MachineOperand mop1 = (MachineOperand) ins.op1;
         MachineOperand mop2 = (MachineOperand) ins.op2;
@@ -683,7 +698,13 @@ public class Interpreter {
         	iblock.val2 = (short) (machine.getCpu().getTickCount());
         	break;
         case InstructionTable.Idbg:
-        	Executor.settingDumpFullInstructions.setBoolean(iblock.val1 == 0);
+        	int oldCount = machine.getExecutor().debugCount; 
+        	if (iblock.val1 == 0)
+        		machine.getExecutor().debugCount++;
+        	else
+        		machine.getExecutor().debugCount--;
+        	if ((oldCount == 0) != (machine.getExecutor().debugCount == 0))
+        		Executor.settingDumpFullInstructions.setBoolean(iblock.val1 == 0);
         	break;
         	
         	

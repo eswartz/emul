@@ -113,4 +113,9 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	}
 
 	abstract protected void doLoadBankEntries(IDialogSettings section);
+	
+	@Override
+	public String getUniqueName() {
+		return super.getUniqueName() + " #" + currentBankIndex + "";
+	}
 }

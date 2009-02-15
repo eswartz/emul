@@ -320,7 +320,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 					ns2++;
 			} else {
 				/* get next chirp value */
-				int cptr = ppctr % RomTables.chirptable.length;
+				int cptr = ppctr; // % RomTables.chirptable.length;
 				//int cptr = ppctr * 200 / length;
 				U = cptr < RomTables.chirptable.length ? RomTables.chirptable[cptr] : 0;
 				U = (U * ebf + 128) / 256;

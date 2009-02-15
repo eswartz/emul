@@ -31,7 +31,7 @@ public class EnhancedConsoleMemoryModel extends StandardConsoleMemoryModel {
 	protected void defineConsoleMemory(Machine machine) {
 	    MemoryEntry entry = new MemoryEntry("Super 48K expansion RAM", CPU, 
 	    		0x4000, 0xC000, new ExpRamArea(0, 0xC000));
-	    entry.area.setLatency(0);
+	    entry.getArea().setLatency(0);
 		memory.addAndMap(entry);
 	}
 	

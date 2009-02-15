@@ -49,10 +49,10 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 		return currentBank.lookupSymbol(addr);
 	}
 	
-	@Override
-	protected MemoryArea getArea() {
-		return currentBank.getArea();
-	}
+	//@Override
+	//public MemoryArea getArea() {
+	//	return currentBank.getArea();
+	//}
 
 	@Override
 	protected void doSaveBankEntries(IDialogSettings section) {
@@ -69,5 +69,10 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 			MemoryEntry entry = banks[idx];
 			entry.loadState(section.getSection("" + idx));
 		}		
+	}
+	
+	@Override
+	public String getUniqueName() {
+		return currentBank != null ? currentBank.getUniqueName() : super.getUniqueName();
 	}
 }

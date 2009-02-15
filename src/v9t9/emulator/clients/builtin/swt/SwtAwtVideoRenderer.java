@@ -5,11 +5,19 @@ package v9t9.emulator.clients.builtin.swt;
 
 import java.awt.Component;
 import java.awt.Frame;
+import java.awt.event.ContainerAdapter;
+import java.io.File;
 
 import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.awt.SWT_AWT;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -38,6 +46,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	 */
 	public Control createControl(Composite parent) {
 		shell = parent.getShell();
+		
 		awtContainer = new Canvas(parent, SWT.EMBEDDED | SWT.NO_MERGE_PAINTS | SWT.NO_BACKGROUND | SWT.NO_REDRAW_RESIZE);
 		frame = SWT_AWT.new_Frame(awtContainer);
 		frame.add(getAwtCanvas());
@@ -46,40 +55,40 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		frame.setIgnoreRepaint(true);
 		
 		frame.setFocusable(true);
-		
+
 		// no layout -- let canvas size drive it
 		//frame.setLayout(new FlowLayout());
 		awtContainer.setLayout(new Layout() {
 
 			@Override
-			protected Point computeSize(Composite composite, int hint,
-					int hint2, boolean flushCache) {
+			protected Point computeSize(Composite composite, int whint,
+					int hhint, boolean flushCache) {
 				Component awtCanvas = getAwtCanvas();
 				return new Point(awtCanvas.getWidth(), awtCanvas.getHeight());
+				//Rectangle area = composite.computeTrim(0, 0, awtCanvas.getWidth(), awtCanvas.getHeight());
+				//System.out.println("Area is " + area + " for " +awtCanvas.getWidth() + " x " + awtCanvas.getHeight());
+				//return new Point(area.width, area.height);
+				
 			}
 
 			@Override
 			protected void layout(Composite composite, boolean flushCache) {
+				//Rectangle myBounds = composite.getClientArea();
 				Point mySize = composite.getSize();
+				//Point mySize = new Point(myBounds.width, myBounds.height);
 				Component awtCanvas = getAwtCanvas();
 				awtCanvas.setSize(mySize.x, mySize.y);
-				
-				// 
-				//Dimension awtSize = awtCanvas.getSize();
-				//frame.setLocation((mySize.x - awtSize.width) / 2, (mySize.y - awtSize.height) / 2);
-				//composite.setSize(awtCanvas.getWidth(), awtCanvas.getHeight());
 			}
 			
 		});
-		awtContainer.setLayoutData(GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).create());
-		/*
-		canvas.addControlListener(new ControlAdapter() {
+		
+		awtContainer.addControlListener(new ControlAdapter() {
 			@Override
 			public void controlResized(ControlEvent e) {
-				((Control) e.getSource()).getShell().pack();
+				Point size = ((Control)e.widget).getSize();
+				updateWidgetOnResize(size.x, size.y);
 			}
 		});
-		*/
 		return awtContainer;
 	}
 	
@@ -89,6 +98,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 
 			public void run() {
 				if (shell != null && !shell.isDisposed()) {
+					System.out.println("Packing");
 					awtContainer.pack();
 					shell.pack();				
 				}

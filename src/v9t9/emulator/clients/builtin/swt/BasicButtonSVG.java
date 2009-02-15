@@ -6,6 +6,7 @@ package v9t9.emulator.clients.builtin.swt;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -26,17 +27,19 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Event;
 
-class BasicButton extends Canvas {
+class BasicButtonSVG extends Canvas {
 
 	private final Rectangle bounds;
-	private Image icon;
+	private SVGLoader icon;
 	private Rectangle overlayBounds;
 	private List<SelectionListener> listeners;
 	private boolean selected;
 	private ButtonBar buttonBar;
 	private boolean isHighlighted;
+	private Image overlayImage;
+	private Image image;
 	
-	public BasicButton(ButtonBar buttonBar, int style, Image icon_, Rectangle bounds_, String tooltip) {
+	public BasicButtonSVG(ButtonBar buttonBar, int style, SVGLoader icon_, Rectangle bounds_, String tooltip) {
 		super(buttonBar.getComposite(), SWT.NO_FOCUS | SWT.NO_RADIO_GROUP /*| SWT.NO_BACKGROUND*/);
 		
 		this.buttonBar = buttonBar;
@@ -44,8 +47,6 @@ class BasicButton extends Canvas {
 		
 		this.icon = icon_;
 		this.bounds = bounds_;
-		//bounds.x *= 2; bounds.y *= 2;
-		//bounds.width *= 2; bounds.height *= 2;
 		this.listeners = new ArrayList<SelectionListener>();
 		addKeyListener(new KeyListener() {
 			
@@ -108,15 +109,22 @@ class BasicButton extends Canvas {
 		});
 		
 	}
+	
+	@Override
+	public void dispose() {
+		super.dispose();
+		if (image != null) {
+			image.dispose();
+			image = null;
+		}
+		if (overlayImage != null) {
+			overlayImage.dispose();
+			overlayImage = null;
+		}
+	}
 
 	public void setOverlayBounds(Rectangle overlayBounds) {
-		if (overlayBounds == null)
-			this.overlayBounds = null;
-		else
-			this.overlayBounds = overlayBounds; 
-				//new Rectangle(
-				//overlayBounds.x * 2, overlayBounds.y * 2,
-				//overlayBounds.width * 2, overlayBounds.height * 2);
+		this.overlayBounds = overlayBounds;
 	}
 
 	public void addSelectionListener(SelectionListener listener) {
@@ -137,18 +145,43 @@ class BasicButton extends Canvas {
 	protected void doPaint(PaintEvent e) {
 		Point size = getSize();
 		this.buttonBar.paintButtonBar(e.gc, this, new Point(0, 0), size);
-		//e.gc.setAntialias(SWT.ON);
-		e.gc.drawImage(icon, bounds.x, bounds.y, bounds.width, bounds.height, 
-				0, 0, size.x, size.y);
+		
+		e.gc.drawImage(getImage(), 0, 0);
 		if (overlayBounds != null)
-			e.gc.drawImage(icon, overlayBounds.x, overlayBounds.y, overlayBounds.width, overlayBounds.height, 
-					0, 0, size.y, size.y);
-		//e.gc.setAntialias(SWT.OFF);
+			e.gc.drawImage(getOverlayImage(), 0, 0);
 		if (isHighlighted) {
 			e.gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_BLACK));
 			e.gc.setLineStyle(SWT.LINE_DOT);
 			e.gc.drawRectangle(0, 0, size.x - 1, size.y - 1);
 		}
+	}
+
+	private synchronized Image getOverlayImage() {
+		Rectangle bounds = new Rectangle(0, 0, getSize().x, getSize().y);
+		if (overlayImage == null || !overlayImage.getBounds().equals(bounds)) {
+			if (overlayImage != null)
+				overlayImage.dispose();
+			try {
+				overlayImage = new Image(getDisplay(), icon.getImageData(overlayBounds, getSize()));
+			} catch (CoreException e) {
+				e.printStackTrace();
+			}
+		}
+		return overlayImage;
+	}
+
+	private synchronized Image getImage() {
+		Rectangle buttonbounds = new Rectangle(0, 0, getSize().x, getSize().y);
+		if (image == null || !image.getBounds().equals(buttonbounds)) {
+			if (image != null)
+				image.dispose();
+			try {
+				image = new Image(getDisplay(), icon.getImageData(bounds, getSize()));
+			} catch (CoreException e) {
+				e.printStackTrace();
+			}
+		}
+		return image;
 	}
 
 	protected void doClick() {
@@ -159,8 +192,7 @@ class BasicButton extends Canvas {
 		for (SelectionListener listener : array) {
 			listener.widgetSelected(selEvent);
 		}
-		getShell().setFocus();
-		//this.buttonBar.videoRenderer.setFocus();
+		this.buttonBar.videoRenderer.setFocus();
 	}
 	
 	protected void doMouseEnter() {

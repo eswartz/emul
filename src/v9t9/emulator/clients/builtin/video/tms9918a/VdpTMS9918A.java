@@ -142,6 +142,12 @@ public class VdpTMS9918A implements VdpHandler {
 			
 		});
 		
+		Cpu.settingRealTime.addListener(new ISettingListener() {
+			public void changed(Setting setting, Object oldValue) {
+				VdpTMS9918A.settingCpuSynchedVdpInterrupt.setBoolean(setting.getBoolean());				
+			}
+		});
+		
 		this.vdpMemory = videoMemory;
 		this.vdpCanvas = new MemoryCanvas();
 		this.vdpregs = allocVdpRegs();

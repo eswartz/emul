@@ -37,4 +37,12 @@ public class ConsoleMmioReadArea extends ConsoleMmioArea {
 	public short flatReadWord(MemoryEntry entry, int addr) {
 		return 0;
 	}
+	
+	@Override
+	public void flatWriteByte(MemoryEntry entry, int addr, byte val) {
+	}
+	
+	@Override
+	public void flatWriteWord(MemoryEntry entry, int addr, short val) {
+	}
 }

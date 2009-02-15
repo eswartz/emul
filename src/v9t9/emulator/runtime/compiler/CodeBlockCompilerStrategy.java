@@ -7,7 +7,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import v9t9.emulator.runtime.Executor;
+import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.utils.Pair;
 
 /**
  * @author ejs
@@ -20,7 +22,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
     // and too many makes classes that are too large to optimize
     static final short BLOCKSIZE = 0x100;   
 
-    Map<Integer, CodeBlock> codeblocks;
+    Map<Pair<MemoryArea, Integer>, CodeBlock> codeblocks;
     DirectLoader loader;
 
 	private Executor executor;
@@ -30,7 +32,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	public CodeBlockCompilerStrategy(Executor executor) {
 		this.executor = executor;
 		this.compiler = new Compiler(executor.cpu);
-        codeblocks = new TreeMap<Integer, CodeBlock>();
+        codeblocks = new TreeMap<Pair<MemoryArea, Integer>, CodeBlock>();
         loader = new DirectLoader();
 
 	}
@@ -45,7 +47,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
      * @return
      */
     public boolean isCompilable(MemoryEntry ent) {
-        return ent != null && ent.getDomain().isEntryFullyMapped(ent) && ent.area.hasReadAccess()
+        return ent != null && ent.getDomain().isEntryFullyMapped(ent) && ent.getArea().hasReadAccess()
          //&& !ent.area.hasWriteAccess()
         ; // for now
     }
@@ -62,15 +64,16 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	    if (!isCompilable(ent)) {
 			return null;
 		}
-	
+	    
 	    Integer blockaddr = new Integer(pc & ~(BLOCKSIZE - 1));
+	    Pair<MemoryArea, Integer> key = new Pair<MemoryArea, Integer>(ent.getArea(), blockaddr);
 	    CodeBlock cb;
-	    if ((cb = codeblocks.get(blockaddr)) == null
+	    if ((cb = codeblocks.get(key)) == null
 	            || !cb.matches(ent)) {
 	        cb = new CodeBlock(executor, loader, ent, blockaddr.shortValue(), BLOCKSIZE);
 	        cb.compile(compiler);
 	        executor.nCompiles++;
-	        codeblocks.put(blockaddr, cb);
+	        codeblocks.put(key, cb);
 	    }
 	    return cb;
 	}

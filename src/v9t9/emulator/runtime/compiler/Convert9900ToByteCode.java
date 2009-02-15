@@ -27,6 +27,7 @@ import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.WordMemoryArea;
 
 /**
@@ -43,7 +44,7 @@ public class Convert9900ToByteCode {
 	    InstructionList skiplist;
 	
 	    MachineOperand mop1 = (MachineOperand) ins.op1;
-	    //MachineOperand mop2 = (MachineOperand) ins.op2;
+	    MachineOperand mop2 = (MachineOperand) ins.op2;
 	    switch (ins.inst) {
 	    case InstructionTable.Idata:
 	        return null;
@@ -131,13 +132,9 @@ public class Convert9900ToByteCode {
 	     */
 	
 	    case InstructionTable.Iidle:
-	        // cpu.idle(); // TODO
-	        break;
+	    	return null;
 	    case InstructionTable.Irset:
-	        ilist.append(new PUSH(info.pgen, 0));
-	        ilist.append(new ISTORE(info.localVal1));
-	        // cpu.rset(); // TODO
-	        break;
+	    	return null;
 	    case InstructionTable.Irtwp:
 	        ilist.append(new ILOAD(info.localWp)); // WP
 	        ilist.append(new PUSH(info.pgen, 30)); // WP, 30
@@ -170,13 +167,13 @@ public class Convert9900ToByteCode {
 	        break;
 	    case InstructionTable.Ickon:
 	        // TODO
-	        break;
+	    	return null;
 	    case InstructionTable.Ickof:
 	        // TODO
-	        break;
+	    	return null;
 	    case InstructionTable.Ilrex:
 	        // TODO
-	        break;
+	    	return null;
 	    case InstructionTable.Iblwp:
 	        if (false && mop1.isConstant()) {
 	            /*
@@ -444,29 +441,22 @@ public class Convert9900ToByteCode {
 	        break;
 	
 	    case InstructionTable.Ixop:
-	        if (false && mop1.isConstant()) {
-	            OperandCompiler.compileReadAbsWord(info, ilist,
-	                    (short) (mop1.val * 2 + 0x40));
-	        } else {
-	            ilist.append(new ILOAD(info.localVal1));
-	            ilist.append(new PUSH(info.pgen, 2));
-	            ilist.append(InstructionConstants.ISHL);
-	            ilist.append(new PUSH(info.pgen, 0x40));
-	            ilist.append(InstructionConstants.IADD);
-	            ilist.append(InstructionConstants.DUP);
-	            OperandCompiler.compileReadWord(info, ilist);
-	        }
-	        if (false && mop1.isConstant()) {
-	            OperandCompiler.compileReadAbsWord(info, ilist,
-	                    (short) (mop1.val * 2 + 0x42));
-	        } else {
-	            ilist.append(new ISTORE(info.localWp));
-	            ilist.append(new PUSH(info.pgen, 2));
-	            ilist.append(InstructionConstants.IADD);
-	            ilist.append(InstructionConstants.I2S);
-	            OperandCompiler.compileReadWord(info, ilist);
-	        }
-	        ilist.append(new ISTORE(info.localPc));
+	    	OperandCompiler.compileReadAbsWord(info, ilist,
+	    			(short) (mop2.val * 4 + 0x40));
+	    	ilist.append(InstructionConstants.DUP);
+	    	ilist.append(new ISTORE(info.localWp));
+	    	
+	    	OperandCompiler.compileReadAbsWord(info, ilist,
+	    			(short) (mop2.val * 4 + 0x42));
+	    	ilist.append(new ISTORE(info.localPc));
+	    	
+	    	//memory.writeWord(iblock.wp + 11 * 2, iblock.ea1);
+            ilist.append(new PUSH(info.pgen, 11 * 2));
+            ilist.append(InstructionConstants.IADD);
+            ilist.append(InstructionConstants.I2S);
+            ilist.append(new ILOAD(info.localEa1));
+            //ilist.append(InstructionConstants.SWAP);
+            OperandCompiler.compileWriteWord(info, ilist);
 	        break;
 	
 	    case InstructionTable.Impy:
@@ -608,7 +598,7 @@ public class Convert9900ToByteCode {
 	        break;
 	
 	    default:
-	        /* not handled */
+	        /* not handled: interpret it */
 	        return null;
 	    }
 	
@@ -658,30 +648,28 @@ public class Convert9900ToByteCode {
 	            && Compiler.settingOptimizeRegAccess.getBoolean()) {
 	        // get the wp memory...
 	        ilist.append(new ALOAD(info.localMemory));
-	        // ... area
+	        // ... entry
 	        ilist.append(new ILOAD(info.localWp));
 	        ilist.append(ifact.createInvoke(MemoryDomain.class.getName(),
-	                "getArea", new ObjectType(MemoryArea.class.getName()),
+	                "getEntryAt", new ObjectType(MemoryEntry.class.getName()),
 	                new Type[] { Type.INT }, Constants.INVOKEVIRTUAL));
+	        ilist.append(ifact.createInvoke(MemoryEntry.class.getName(),
+	                "getArea", new ObjectType(MemoryArea.class.getName()),
+	                new Type[] { }, Constants.INVOKEVIRTUAL));
 	        // ... as a WordMemoryArea
 	        ilist.append(ifact
 	                .createCast(new ObjectType(MemoryArea.class.getName()),
 	                        new ObjectType(WordMemoryArea.class.getName())));
 	
 	        // ... and get the memory
-	        ilist.append(InstructionConstants.DUP);
+	        //ilist.append(InstructionConstants.DUP);
 	        ilist.append(ifact.createGetField(WordMemoryArea.class.getName(),
 	                "memory", new ArrayType(Type.SHORT, 1)));
 	        ilist.append(new ASTORE(info.localWpWordMemory));
 	
 	        // ... and get the offset of the WP into this
-	        // (area.offset + (WP & 0xfffe)) >> 1
-	        ilist.append(ifact.createGetField(MemoryArea.class.getName(),
-	                "offset", Type.INT));
+	        // WP >> 1
 	        ilist.append(new ILOAD(info.localWp));
-	        ilist.append(new PUSH(info.pgen, MemoryDomain.AREASIZE - 2));
-	        ilist.append(InstructionConstants.IAND);
-	        ilist.append(InstructionConstants.IADD);
 	        ilist.append(new PUSH(info.pgen, 1));
 	        ilist.append(InstructionConstants.ISHR);
 	        ilist.append(new ISTORE(info.localWpOffset));

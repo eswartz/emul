@@ -52,6 +52,10 @@ public class FunctionInstructionRangeCompiler implements
 		    		// note: need low-level instr here (insts[j])
 		    		compiler.generateInstruction(inst.pc, insts[j], info, chunks[i]);
 		            
+		    		// not compiled?
+		            if (chunks[i].chunk == null)
+		            	chunks[i] = null;
+
 		            if (inst == block.getLast())
 		            	break;
 		            

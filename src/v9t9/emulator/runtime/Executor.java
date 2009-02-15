@@ -17,6 +17,7 @@ import v9t9.emulator.runtime.compiler.ICompiledCode;
 import v9t9.emulator.runtime.compiler.ICompilerStrategy;
 import v9t9.emulator.runtime.interpreter.Interpreter;
 import v9t9.engine.HighLevelCodeInfo;
+import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
@@ -31,7 +32,7 @@ public class Executor {
 
     public Cpu cpu;
 
-    public Map<MemoryEntry, HighLevelCodeInfo> highLevelCodeInfoMap;
+    public Map<MemoryArea, HighLevelCodeInfo> highLevelCodeInfoMap;
     public Interpreter interp;
     ICompilerStrategy compilerStrategy;
     
@@ -44,7 +45,7 @@ public class Executor {
 
 	private long nLastCycleCount;
 
-	private ICpuController cpuController;
+	//private ICpuController cpuController;
 
 	public int nVdpInterrupts;
 
@@ -55,16 +56,22 @@ public class Executor {
     static public final String sDumpFullInstructions = "DumpFullInstructions";
     static public final Setting settingDumpFullInstructions = new Setting(sDumpFullInstructions, new Boolean(false));
 
+    /** counter for DBG/DBGF instructions */
+    public int debugCount;
     
     public Executor(Cpu cpu) {
         this.cpu = cpu;
         this.interp = new Interpreter(cpu.getMachine());
         this.compilerStrategy = new CodeBlockCompilerStrategy(this);
-        this.highLevelCodeInfoMap = new HashMap<MemoryEntry, HighLevelCodeInfo>();
+        this.highLevelCodeInfoMap = new HashMap<MemoryArea, HighLevelCodeInfo>();
         
         settingDumpFullInstructions.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
+				if (setting.getBoolean())
+					debugCount++;
+				else
+					debugCount--;
 				Machine.settingThrottleInterrupts.setBoolean(setting.getBoolean());
 			}
         	
@@ -92,29 +99,48 @@ public class Executor {
      * executes.
      * @param controller
      */
-    public synchronized void controlCpu(ICpuController controller) {
-    	cpuController = controller;
-    }
+   // public synchronized void controlCpu(ICpuController controller) {
+    //	cpuController = controller;
+    //}
     public synchronized void interpretOneInstruction() {
-    	if (cpuController != null) {
-    		ICpuController controller = cpuController;
-    		cpuController = null;
-    		controller.act(cpu);
-    	}
+    	//if (cpuController != null) {
+    	//	ICpuController controller = cpuController;
+    	//	cpuController = null;
+    	//	controller.act(cpu);
+    	//}
         interp.execute(cpu, null);
         nInstructions++;
     }
 
     /** 
-     * Run an unbounded amount of code -- usually multiple instructions
-     * if compiling, or one instruction if interpreting.  Some external factor
+     * Run an unbounded amount of code.  Some external factor
      * tells the execution unit when to stop.  The interpret/compile
      * setting is sticky until execution is interrupted.
      * @throws AbortedException when interrupt or other machine event stops execution
      */
-    public void execute() throws AbortedException {
-		try {
-			boolean interpreting = false;
+    public void execute() {
+		if (settingCompile.getBoolean()) {
+			executeCompilableCode();
+		} else {
+			if (Cpu.settingRealTime.getBoolean()) {
+				while (!cpu.isThrottled()) {
+					interpretOneInstruction();
+					cpu.checkAndHandleInterrupts();
+				}
+			} else {
+				// pretend the realtime setting doesn't change often
+				for (int i = 0; i < 1000; i++) {
+					interpretOneInstruction();
+					cpu.checkAndHandleInterrupts();
+				}	
+			}
+			
+		}
+    }
+
+    private void executeCompilableCode() {
+    	try {
+	    	boolean interpreting = false;
 			if (settingCompile.getBoolean()) {
 				/* try to make or run native code, which may fail */
 				short pc = cpu.getPC();
@@ -123,7 +149,7 @@ public class Executor {
 			    	settingDumpInstructions.setBoolean(true);
 			        settingDumpFullInstructions.setBoolean(true);
 			    }
-
+	
 				ICompiledCode code = compilerStrategy.getCompiledCode(cpu.getPC() & 0xffff, cpu.getWP());
 			    if (code == null || !code.run()) {
 			    	// Returns false if an instruction couldn't be executed
@@ -141,23 +167,11 @@ public class Executor {
 			    interpretOneInstruction();
 			    cpu.checkInterrupts();
 			}
-			
-		} catch (TerminatedException e) {
-			throw e;
-		} catch (AbortedException e) {
-            if (getDumpfull() != null) {
-				getDumpfull().println("*** Aborted");
-			}
-            if (getDump() != null) {
-				getDump().println("*** Aborted");
-			}
+    	} catch (AbortedException e) {
             cpu.handleInterrupts();
-		} catch (Throwable t) {
-			t.printStackTrace();
 		}
-    }
-
-    public PrintWriter getDump() {
+	}
+	public PrintWriter getDump() {
         return Logging.getLog(settingDumpInstructions);
     }
 
@@ -167,12 +181,13 @@ public class Executor {
  
     /** Currently, only gather high-level info for one memory entry at a time */
     public HighLevelCodeInfo getHighLevelCode(MemoryEntry entry) {
-    	HighLevelCodeInfo highLevel = highLevelCodeInfoMap.get(entry);
+    	MemoryArea area = entry.getArea();
+    	HighLevelCodeInfo highLevel = highLevelCodeInfoMap.get(area);
     	if (highLevel == null) {
-    		System.out.println("Initializing high level info for " + entry);
+    		System.out.println("Initializing high level info for " + entry + " / " + area);
     		highLevel = new HighLevelCodeInfo(cpu.getConsole());
     		highLevel.disassemble(entry.addr, entry.size);
-    		highLevelCodeInfoMap.put(entry, highLevel);
+    		highLevelCodeInfoMap.put(area, highLevel);
     	}
     	return highLevel;
     }

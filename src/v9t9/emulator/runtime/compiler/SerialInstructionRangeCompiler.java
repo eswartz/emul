@@ -68,6 +68,10 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	            compiler.generateInstruction((short) (addr + i * 2),
 	                    insts[i], info, chunks[i]);
 	
+	            // not compiled?
+	            if (chunks[i].chunk == null)
+	            	chunks[i] = null;
+	            
 	            // lifetime calculations
 	            if (Compiler.settingOptimize.getBoolean() && chunks[i] != null) {
 	            	BytecodeOptimizer.peephole(info, chunks[i]);
@@ -84,7 +88,7 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	            	//
 	            	// note: we insert a GOTO in case the instruction is greater than 2 bytes,
 	            	// since the (garbage) words in the instruction are also compiled
-	            	if (ii.ins.size > 2) {
+	            	if (ii.ins.size > 2 || (i + 1 < numinsts && chunks[i+1] == null)) {
 	                    short target = (short) (ii.ins.pc + ii.ins.size);
 	                    int index = (target - addr) / 2;
 	                    //if (target < addr + size && index >= 0
@@ -98,7 +102,7 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	            	}
 	            } else {
 	            	// the jump has updated the PC, so re-switch 
-	                ii.chunk.append(new GOTO(info.switchInst));
+	                ii.chunk.append(new GOTO(info.doneInst));
 	            }
 	        }
 	    }

@@ -12,15 +12,14 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Widget;
-
-import v9t9.emulator.clients.builtin.video.VideoRenderer;
 
 class ButtonBar extends Composite {
 
-	GridLayout layout;
+	ButtonBarLayout layout;
 	private boolean isHorizontal;
-	final VideoRenderer videoRenderer;
 	private Composite buttonComposite;
 
 	/**
@@ -29,26 +28,23 @@ class ButtonBar extends Composite {
 	 * @param style
 	 * @param videoRenderer
 	 */
-	public ButtonBar(Composite parent, int style, VideoRenderer videoRenderer) {
+	public ButtonBar(Composite parent, int style) {
 		// the bar itself is the full width of the parent
 		super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS);
-		this.videoRenderer = videoRenderer;
 		this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
 		
-		setLayoutData(new GridData(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL, false, false));
-
-		GridLayout mainLayout = new GridLayout(1, false);
-		mainLayout.marginHeight = mainLayout.marginWidth = 0;
-		setLayout(mainLayout);
-		
+		//setLayoutData(new GridData(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL, false, false));
+		setLayoutData(new GridData(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL, true, true));
 
 		// the inner composite contains the buttons, tightly packed
 		buttonComposite = new Composite(this, SWT.NO_RADIO_GROUP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
-		
-		// start off with one horizontal cell; in #addedButton() the columns is increased for horizontal bars
-		layout = new GridLayout(1, true);
-		layout.marginHeight = layout.marginWidth = 0;
+		layout = new ButtonBarLayout();
 		buttonComposite.setLayout(layout);
+		
+		// //start off with one horizontal cell; in #addedButton() the columns is increased for horizontal bars
+		//layout = new GridLayout(1, true);
+		//layout.marginHeight = layout.marginWidth = 0;
+		//buttonComposite.setLayout(layout);
 		
 		buttonComposite.setLayoutData(GridDataFactory.fillDefaults()
 				.align(isHorizontal ? SWT.CENTER : SWT.FILL, isHorizontal ? SWT.FILL : SWT.CENTER)
@@ -70,6 +66,72 @@ class ButtonBar extends Composite {
 			}
 			
 		});
+	}
+	
+	class ButtonBarLayout extends Layout {
+
+		@Override
+		protected Point computeSize(Composite composite, int whint, int hhint,
+				boolean flushCache) {
+			int w, h ;
+			Control[] kids = composite.getChildren();
+			int num = kids.length;
+			if (num == 0)
+				num = 1;
+			
+			int minsize, maxsize;
+			int size;
+			Point cursize = composite.getParent().getSize();
+			if (isHorizontal) {
+				maxsize =  cursize.x * 3 / 4 / num;
+				minsize = cursize.y;
+			} else {
+				maxsize = cursize.y * 3 / 4 / num;
+				minsize = cursize.x;
+			}
+			size = Math.max(minsize, maxsize);
+			if (size < 16)
+				size = 16;
+			else if (size > 128)
+				size = 128;
+			
+			if (isHorizontal) {
+				w = whint >= 0 ? whint : size * num;
+				h = hhint >= 0 ? hhint : size;
+			} else {
+				w = whint >= 0 ? whint : size;
+				h = hhint >= 0 ? hhint : size * num;
+			}
+			return new Point(w, h);
+		}
+
+		@Override
+		protected void layout(Composite composite, boolean flushCache) {
+			Control[] kids = composite.getChildren();
+			int num = kids.length;
+			if (num == 0)
+				num = 1;
+			
+			Point curSize = composite.getSize();
+			int size;
+			int x = 0, y = 0;
+			if (isHorizontal) {
+				size = curSize.y;
+				x = (curSize.x - size * num) / 2;
+			} else {
+				size = curSize.x;
+				y = (curSize.y - size * num) / 2;
+			}
+			
+			for (Control kid : kids) {
+				kid.setBounds(x, y, size, size);
+				if (isHorizontal)
+					x += size;
+				else
+					y += size;
+			}
+		}
+		
 	}
 
 	protected void paintButtonBar(GC gc, Widget w, Point offset,  Point size) {
@@ -94,8 +156,6 @@ class ButtonBar extends Composite {
 	}
 
 	public void addedButton() {
-		if (isHorizontal)
-			layout.numColumns++;		
 	}
 
 	public void setHorizontal(boolean isHorizontal) {

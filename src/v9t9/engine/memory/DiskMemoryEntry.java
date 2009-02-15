@@ -365,4 +365,9 @@ public class DiskMemoryEntry extends MemoryEntry {
 		section.put("FileSize", filesize);
 		section.put("Storable", bStorable);
 	}
+	
+	@Override
+	public String getUniqueName() {
+		return filepath;
+	}
 }

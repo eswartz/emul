@@ -77,7 +77,7 @@ public class V9t9 {
     	DiskMemoryEntry cpuRomEntry = DiskMemoryEntry.newWordMemoryFromFile(0x0, 0x2000, "CPU ROM",
         		console,
                 filename, 0x0, false);
-    	cpuRomEntry.area.setLatency(0);
+    	cpuRomEntry.getArea().setLatency(0);
 		memory.addAndMap(cpuRomEntry);
 		return cpuRomEntry;
     }
@@ -88,7 +88,7 @@ public class V9t9 {
     			memory,
     			"CPU ROM", console,
     			filename1, 0x0, filename2, 0x0);
-    	cpuRomEntry.area.setLatency(0);
+    	cpuRomEntry.getArea().setLatency(0);
     	memory.addAndMap(cpuRomEntry);
     	return cpuRomEntry;
     }
@@ -136,34 +136,36 @@ public class V9t9 {
 	            		console,
 	                    "ed_basicH.bin", 0x0, false);
 	    		entry.load();
-	        	entry.area.setLatency(4);
-	        	for (int a = 0xA000; a < 0x10000; a+=2) {
-	        		console.writeWord(a, ((WordMemoryArea) entry.area).memory[(a - 0xA000) / 2]);
+	        	entry.getArea().setLatency(4);
+	        	short[] memory = ((WordMemoryArea) entry.getArea()).memory;
+				for (int a = 0xA000; a < 0x10000; a+=2) {
+	        		console.writeWord(a, memory[(a - 0xA000) / 2]);
 	        	}
 	    		
 	    		entry = DiskMemoryEntry.newWordMemoryFromFile(0x2000, 0x2000, "Ed's BASIC",
 	            		console,
 	                    "ed_basicL.bin", 0x0, false);
 	    		entry.load();
-	        	entry.area.setLatency(4);
+	        	entry.getArea().setLatency(4);
+	        	memory = ((WordMemoryArea) entry.getArea()).memory;
 	        	for (int a = 0x2000; a < 0x4000; a+=2) {
-	        		console.writeWord(a, ((WordMemoryArea) entry.area).memory[(a - 0x2000) / 2]);
+	        		console.writeWord(a, memory[(a - 0x2000) / 2]);
 	        	}
 
 	    	} else if (true) {
 		    	
 		    	//loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
-	    		loadModuleGrom("Parsec", "parsecg.bin");
-	    		loadModuleRom("Parsec", "parsecc.bin");
 	    		loadModuleRom("Alpiner", "alpinerc.bin");
 	    		loadModuleGrom("Alpiner", "alpinerg.bin");
 	    		loadModuleGrom("Mash", "mashg.bin");
 	    		loadModuleRom("Mash", "mashc.bin");
 	    		
-	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
-	    		loadModuleGrom("ExtBasic", "tiextg.bin");
+	    		loadModuleGrom("Parsec", "parsecg.bin");
+	    		loadModuleRom("Parsec", "parsecc.bin");
 	    		loadModuleGrom("TEII", "teiig.bin");
 	    		loadModuleRom("TEII", "teiic.bin");
+	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
+	    		loadModuleGrom("ExtBasic", "tiextg.bin");
 	    	} else {
 		    	loadModuleRom("Logo", "logoc.bin");
 		    	loadModuleGrom("Logo", "logog.bin");
@@ -197,21 +199,26 @@ public class V9t9 {
     			memory,
     			"CPU ROM (enhanced)", console,
     			filename1, 0x0, filename2, 0x0);
-    	cpuRomEntry.area.setLatency(0);
+    	cpuRomEntry.getArea().setLatency(0);
     	memory.addAndMap(cpuRomEntry);
     	return cpuRomEntry;
     }
 
 	protected void setupDefaults() {
     	Cpu.settingRealTime.setBoolean(true);
+    	
+    	// compile?  and waste a lot of effort to get nothing done?
     	if (false) {
     		Cpu.settingRealTime.setBoolean(false);
 	    	Executor.settingCompile.setBoolean(true);
-	        Compiler.settingOptimize.setBoolean(true);
-	        Compiler.settingOptimizeRegAccess.setBoolean(true);
+	    	//Compiler.settingDebugInstructions.setBoolean(true);
+	    	Compiler.settingOptimize.setBoolean(true);
+	        //Compiler.settingOptimizeRegAccess.setBoolean(true);
 	        Compiler.settingOptimizeStatus.setBoolean(true);
-	        Compiler.settingCompileOptimizeCallsWithData.setBoolean(true);
-	        Compiler.settingCompileFunctions.setBoolean(true);
+	        //Compiler.settingCompileOptimizeCallsWithData.setBoolean(true);
+	        //Compiler.settingCompileFunctions.setBoolean(true);
+	        //Executor.settingDumpInstructions.setBoolean(true);
+	        //Executor.settingDumpFullInstructions.setBoolean(true);
     	}
         
         if (false) {

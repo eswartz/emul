@@ -25,10 +25,10 @@ abstract public class CompiledCode {
     protected MemoryDomain memory;
     protected Executor exec;
     protected CruHandler cru;
-    protected int nInstructions;
+    protected int nInstructions, nCycles;
     
     // used for debugging
-    protected VdpMmio vdp9918AMmio;
+    protected VdpMmio vdpMmio;
     protected GplMmio gplMmio;
     
     public CompiledCode() {
@@ -41,7 +41,7 @@ abstract public class CompiledCode {
         this.memory = exec.cpu.getConsole();
         this.cru = exec.cpu.getMachine().getCruManager();
         if (exec.cpu.getMachine() instanceof TI994A) {
-        	this.vdp9918AMmio = ((TI994A)exec.cpu.getMachine()).getVdpMmio();
+        	this.vdpMmio = ((TI994A)exec.cpu.getMachine()).getVdpMmio();
         	this.gplMmio = ((TI994A)exec.cpu.getMachine()).getGplMmio();
         }
     }
@@ -49,7 +49,7 @@ abstract public class CompiledCode {
    
     abstract public boolean run();
     
-    public void dump(short pc, short wp, Status status, short vdpaddr, short gromaddr) {
+    public void dump(short pc, short wp, Status status, int vdpaddr, int gromaddr) {
         PrintWriter dump = exec.getDump();
         if (dump != null) {
             dump.println(Utils.toHex4(pc)

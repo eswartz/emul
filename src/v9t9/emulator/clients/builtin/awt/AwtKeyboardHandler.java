@@ -4,12 +4,12 @@
 package v9t9.emulator.clients.builtin.awt;
 
 import java.awt.Component;
+import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseKeyboardHandler;
-import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.keyboard.KeyboardState;
 
@@ -27,14 +27,12 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 
 			public void keyPressed(KeyEvent e) {
 				synchronized (keyboardState) {
-					//keyboardState.pushQueuedKey();
 					handleKey(true, e.getModifiers(), e.getKeyCode(), e.getKeyChar());
 				}
 			}
 
 			public void keyReleased(KeyEvent e) {
 				synchronized (keyboardState) {
-					//keyboardState.pushQueuedKey();
 					handleKey(false, e.getModifiers(), e.getKeyCode(), e.getKeyChar());
 				}
 			}
@@ -51,8 +49,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			return;
 		}
 		
-		//if (pasteTimer == null)
-			lastKeystrokeTime = System.currentTimeMillis();
+		lastKeystrokeTime = System.currentTimeMillis();
 		
 		//System.out.println("pressed="+pressed+"; modifiers="+Integer.toHexString(modifiers)+"; keyCode="+keyCode+"; ascii="+(int)ascii);
 		
@@ -66,6 +63,12 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		if (ascii < 128) {
 			if (Character.isLowerCase(ascii))
 				ascii = Character.toUpperCase(ascii);
+		}
+		
+		// backspace?
+		if (ascii == 8 && modifiers == 0) {
+			keyboardState.setKey(pressed, true, KeyboardState.SHIFT + KeyboardState.FCTN, 'S');
+			return;
 		}
 		
 		byte shift = 0;
@@ -98,7 +101,13 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				
 			case KeyEvent.VK_CAPS_LOCK:
 				if (pressed) {
-					keyboardState.setAlpha(!keyboardState.getAlpha());
+					boolean on;
+					try {
+						on = !Toolkit.getDefaultToolkit().getLockingKeyState(keyCode);
+					} catch (UnsupportedOperationException e) {
+						on = !keyboardState.getAlpha();
+					}
+					keyboardState.setAlpha(on);
 				}
 				break;
 			case KeyEvent.VK_CANCEL:
@@ -157,8 +166,17 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				break;
 				
 			case KeyEvent.VK_SCROLL_LOCK:
-				Cpu.settingRealTime.setBoolean(!pressed);
-				VdpTMS9918A.settingCpuSynchedVdpInterrupt.setBoolean(!pressed);
+				if (pressed) {
+					boolean speedy;
+					try {
+						speedy = !Toolkit.getDefaultToolkit().getLockingKeyState(keyCode);
+					} catch (UnsupportedOperationException e) {
+						// hmm
+						speedy = !Cpu.settingRealTime.getBoolean();
+					}
+					Cpu.settingRealTime.setBoolean(speedy);
+					//VdpTMS9918A.settingCpuSynchedVdpInterrupt.setBoolean(speedy);
+				}
 				break;
 			default:
 				System.out.println("Unhandled keycode: " + keyCode);

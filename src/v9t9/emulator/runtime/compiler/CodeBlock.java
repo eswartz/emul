@@ -44,8 +44,9 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         this.ent = ent;
         this.addr = addr;
         this.size = size;
-        this.baseName = createBaseIdentifier(ent.name); 
-        this.className = this.getClass().getName() + "$" + baseName;
+        this.baseName = createBaseIdentifier(ent.getUniqueName()); 
+        this.className = this.getClass().getName() + "$" + baseName + "_";
+        exec.cpu.getMachine().getMemory().addListener(this);
     }
     
     String createBaseIdentifier(String entName) {
@@ -110,7 +111,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
                 clear();
                 System.out.println("compiling code block at >"
                         + v9t9.utils.Utils.toHex4(addr) + ":"
-                        + v9t9.utils.Utils.toHex4(size) + "/" + ent);
+                        + v9t9.utils.Utils.toHex4(size) + "/" + ent.getUniqueName());
 
                 highLevel.analyze();
                 
@@ -163,11 +164,10 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         /* now execute */
         running = true;
         code.nInstructions = 0;
-        //int origpc = exec.cpu.getPC() & 0xffff;
+        code.nCycles = 0;
         boolean ret = true;
         AbortedException abort = null;
         try {
-            //Cpu.executionToken = ValidExecutionToken.INSTANCE;
             ret = code.run();
         }
         catch (AbortedException e) {
@@ -177,8 +177,11 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         	
         	// throws due to AbortedException usually 
 	        running = false;
-	        exec.nInstructions += code.nInstructions;
-	        exec.nCompiledInstructions += code.nInstructions;
+	        if (code != null) {
+		        exec.nInstructions += code.nInstructions;
+		        exec.nCompiledInstructions += code.nInstructions;
+		        exec.cpu.addCycles(code.nCycles);
+	        }
 	        //System.out.println("invoked "+code.nInstructions+" at "+Utils.toHex4(origpc)+" to "+Utils.toHex4(exec.cpu.getPC()));
 	        
 	        if (abort == null && !ret) {
@@ -247,9 +250,8 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
      * @see v9t9.Memory.Listener#notifyMemoryChanged(v9t9.MemoryEntry)
      */
     public void notifyMemoryMapChanged(MemoryEntry entry) {
-        /* clear the compiled cache no matter what was changed, for now */
-        System.out.println("Memory map changed");
-        clear();
+    	//System.out.println("Memory map changed");
+        //clear();
         if (running) {
 			throw new AbortedException();
 		} 

@@ -6,6 +6,7 @@ package v9t9.emulator.clients.builtin.video.v9938;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
+import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.utils.Utils;
@@ -762,7 +763,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			
 		}
 		
-		if (currentcycles < 0)
+		if (/*!Cpu.settingRealTime.getBoolean() ||*/ currentcycles < 0)
 			currentcycles += targetcycles;
 		else
 			currentcycles = targetcycles;

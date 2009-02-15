@@ -342,19 +342,6 @@ public class InternalCru9901 implements CruAccess {
     	return manager;
     }
 
-    public void resetInterruptRequest() {
-    	intreq = false;
-    }
-    
-    /**
-     * Indicate an interrupt is available.
-     * @param intlevel 
-     */
-    public void setInterruptRequest(byte intlevel) {
-    	this.intreq = true;
-    	this.ic = intlevel; 
-    }
-    
     public boolean isInterruptWaiting() {
     	return intreq;
     }
@@ -370,50 +357,53 @@ public class InternalCru9901 implements CruAccess {
     
 	public void pollForPins(Cpu cpu) {
 		// interrupts not generated in clock mode
-		if (!clockmode) {
-			// while polling, also handle clock if in I/O mode
-			if (clockRegister != 0) {
-				// this decrements once every 64 cycles
-				long nowCycles = cpu.getTotalCurrentCycleCount();
-				while (clockTargetCycleCount < nowCycles) {
-					if (--clockDecrementerRegister <= 0) {
-						//System.out.println("tick");
-						if (!suppressClockInterrupts && (int9901 & M_INT_CLOCK) != 0) {
-							triggerInterrupt(INT_CLOCK);
-							
-							// "When the clock interrupt is active, the clock mask must be written
-							// to clear the interrupt."
-							suppressClockInterrupts = true;
-						}
-						resetClock();
-						break;
-					}
-					clockTargetCycleCount += 64;
-					clockReadRegister = clockDecrementerRegister;
-				}
-			}
-			
-			resetInterruptRequest();
-			
-			if ((currentints & int9901) != 0) {
-				int intlevel;
-				
-				// optimize for typical case
-				if ((currentints & int9901) == (1 << INT_VDP)) {
-					intlevel = 1;
-				} else {
-					intlevel = 15;
-					while (intlevel != 0 && ((currentints & int9901) & (1 << intlevel)) == 0)
-						intlevel--;
-				}
+		if (clockmode) {
+			return;
+		}
 		
-				if (intlevel != 0) {
-					//System.out.println(
-					//		"Requesting interrupt... "+intlevel+"/"+currentints+"/"+int9901);
-
-					setInterruptRequest((byte) intlevel);
-					cpu.setPin(Cpu.PIN_INTREQ);
+		// while polling, also handle clock if in I/O mode
+		if (clockRegister != 0) {
+			// this decrements once every 64 cycles
+			long nowCycles = cpu.getTotalCurrentCycleCount();
+			while (clockTargetCycleCount < nowCycles) {
+				if (--clockDecrementerRegister <= 0) {
+					//System.out.println("tick");
+					if (!suppressClockInterrupts && (int9901 & M_INT_CLOCK) != 0) {
+						triggerInterrupt(INT_CLOCK);
+						
+						// "When the clock interrupt is active, the clock mask must be written
+						// to clear the interrupt."
+						suppressClockInterrupts = true;
+					}
+					resetClock();
+					break;
 				}
+				clockTargetCycleCount += 64;
+				clockReadRegister = clockDecrementerRegister;
+			}
+		}
+		
+		intreq = false;
+		
+		if ((currentints & int9901) != 0) {
+			int intlevel;
+			
+			// optimize for typical case
+			if ((currentints & int9901) == (1 << INT_VDP)) {
+				intlevel = 1;
+			} else {
+				intlevel = 15;
+				while (intlevel != 0 && ((currentints & int9901) & (1 << intlevel)) == 0)
+					intlevel--;
+			}
+	
+			if (intlevel != 0) {
+				//System.out.println(
+				//		"Requesting interrupt... "+intlevel+"/"+currentints+"/"+int9901);
+
+				this.intreq = true;
+				this.ic = ((byte) intlevel);
+				cpu.setPin(Cpu.PIN_INTREQ);
 			}
 		}
 	}

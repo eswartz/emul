@@ -383,7 +383,7 @@ public class Compiler {
 
         /* generate code for the specific opcode */
         InstructionList actlist = Convert9900ToByteCode.getCompileAction(ins, info);
-
+        
         /*
         // If jumping, there is the potential for an infinite loop,
         // so this is a good time to see if we need to stop to handle
@@ -410,18 +410,25 @@ public class Compiler {
             ilist.append(InstructionConstants.THIS);
             ilist.append(new GETFIELD(info.vdpIndex));
             ilist.append(info.ifact.createInvoke(VdpMmio.class
-                    .getName(), "getAddr", Type.SHORT, Type.NO_ARGS,
+                    .getName(), "getAddr", Type.INT, Type.NO_ARGS,
                     Constants.INVOKEVIRTUAL));
             ilist.append(InstructionConstants.THIS);
             ilist.append(new GETFIELD(info.gplIndex));
             ilist.append(info.ifact.createInvoke(GplMmio.class
-                    .getName(), "getAddr", Type.SHORT, Type.NO_ARGS,
+                    .getName(), "getAddr", Type.INT, Type.NO_ARGS,
                     Constants.INVOKEVIRTUAL));
             ilist.append(info.ifact.createInvoke(CompiledCode.class
                     .getName(), "dump", Type.VOID, new Type[] { Type.SHORT,
                     Type.SHORT,
                     new ObjectType(v9t9.engine.cpu.Status.class.getName()),
-                    Type.SHORT, Type.SHORT }, Constants.INVOKEVIRTUAL));
+                    Type.INT, Type.INT}, Constants.INVOKEVIRTUAL));
+        }
+
+        // no compilation?
+        if (actlist == null) {
+        	//System.out.println("Interpreting >" + Utils.toHex4(ins.pc) + " " + ins);
+        	ii.ins = ins;
+        	return;
         }
 
         // update # instructions executed
@@ -437,6 +444,8 @@ public class Compiler {
 
         /* compose operand values and instruction timings */
         fetchOperands(ins, pc, info);
+
+        ilist.append(new IINC(info.localCycles, ins.cycles + ((MachineOperand) ins.op1).cycles + ((MachineOperand) ins.op2).cycles));
 
         if (settingDebugInstructions.getBoolean()) {
             dumpFull(info, ilist, ins, "dumpBefore", ins.toString());
@@ -762,16 +771,16 @@ public class Compiler {
         info.sw = new TABLESWITCH(pcs, new InstructionHandle[numInsts], null);
         info.switchInst = ilist.append(InstructionConstants.NOP);
 
-        // Check interrupt mask, etc. to throw AbortedException if execution should stop
+        // Add cycles from "nCycles" and reset, for timing that depends on CPU
         //
-        // If jumping, there is the potential for an infinite loop,
-        // so this is a good time to see if we need to stop to handle
-        // interrupts, etc.
         ilist.append(InstructionConstants.THIS);
         ilist.append(new GETFIELD(info.cpuIndex));
-        ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
-                "abortIfInterrupted", Type.VOID, Type.NO_ARGS,
+        ilist.append(new ILOAD(info.localCycles));
+        ilist.append(info.ifact.createInvoke(Cpu.class.getName(),
+        		"addCycles", Type.VOID, new Type[] { Type.INT },
                 Constants.INVOKEVIRTUAL));
+        ilist.append(InstructionConstants.ICONST_0);
+        ilist.append(new ISTORE(info.localCycles));
 
         ilist.append(new ILOAD(info.localPc));
         ilist.append(InstructionConstants.ICONST_1);
@@ -801,8 +810,8 @@ public class Compiler {
         // ALL PATHS leave return code on stack: 
         // true to keep trying to compile, false when hitting instruction in range but not compiled
         InstructionList cleanupList = new InstructionList();
+
         InstructionHandle cleanupInst = cleanupList.append(InstructionConstants.NOP);
-        
         ilist.append(cleanupList);
 
         // flush local variables back to CPU
@@ -831,26 +840,21 @@ public class Compiler {
         info.ilist = null;
         info.memory = cpu.getConsole();
 
-        int cpuIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
+        info.cpuIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
                 "cpu", Utility.getSignature(v9t9.emulator.runtime.Cpu.class.getName()));
-        int memoryIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
+        info.memoryIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
                 "memory", Utility.getSignature(v9t9.engine.memory.MemoryDomain.class.getName()));
-        int cruIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
+        info.cruIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
                 "cru", Utility.getSignature(v9t9.engine.CruHandler.class.getName()));
-        int nInstsIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
+        info.nInstructionsIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
                 "nInstructions", Utility.getSignature("int"));
-        int vdpIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
-                "vdp", Utility.getSignature(v9t9.emulator.hardware.memory.mmio.VdpMmio.class.getName()));
-        int gplIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
-                "gpl", Utility.getSignature(v9t9.emulator.hardware.memory.mmio.GplMmio.class.getName()));
+        info.nCyclesIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
+                "nCycles", Utility.getSignature("int"));
+        info.vdpIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
+                "vdpMmio", Utility.getSignature(v9t9.emulator.hardware.memory.mmio.VdpMmio.class.getName()));
+        info.gplIndex = pgen.addFieldref(v9t9.emulator.runtime.compiler.CompiledCode.class.getName(), // className,
+                "gplMmio", Utility.getSignature(v9t9.emulator.hardware.memory.mmio.GplMmio.class.getName()));
 
-        info.cpuIndex = cpuIndex;
-        info.memoryIndex = memoryIndex;
-        info.cruIndex = cruIndex;
-        info.nInstructionsIndex = nInstsIndex;
-        info.vdpIndex = vdpIndex;
-        info.gplIndex = gplIndex;
-        
         // create locals
         LocalVariableGen lg;
         lg = mgen.addLocalVariable("pc", Type.SHORT, null, null);
@@ -873,6 +877,8 @@ public class Compiler {
         info.localMemory = lg.getIndex();
         lg = mgen.addLocalVariable("nInsts", Type.INT, null, null);
         info.localInsts = lg.getIndex();
+        lg = mgen.addLocalVariable("nCycles", Type.INT, null, null);
+        info.localCycles = lg.getIndex();
 
         if (settingOptimize.getBoolean()
                 && settingOptimizeRegAccess.getBoolean()) {
@@ -888,6 +894,17 @@ public class Compiler {
         info.breakList = new InstructionList();
         info.doneInst = info.breakList.append(new ICONST(1));
         info.breakInst = info.breakList.append(InstructionConstants.NOP);
+
+        // Check interrupt mask, etc. to throw AbortedException if execution should stop
+        //
+        // If jumping, there is the potential for an infinite loop,
+        // so this is a good time to see if we need to stop to handle
+        // interrupts, etc.
+        info.breakList.append(InstructionConstants.THIS);
+        info.breakList.append(new GETFIELD(info.cpuIndex));
+        info.breakList.append(info.ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
+                "checkInterrupts", Type.VOID, Type.NO_ARGS,
+                Constants.INVOKEVIRTUAL));
 
 		return info;
 	}
@@ -925,6 +942,9 @@ public class Compiler {
 	    ilist.append(InstructionConstants.THIS);
 	    ilist.append(new GETFIELD(info.nInstructionsIndex));
 	    ilist.append(new ISTORE(info.localInsts));
+	    ilist.append(InstructionConstants.THIS);
+	    ilist.append(new GETFIELD(info.nCyclesIndex));
+	    ilist.append(new ISTORE(info.localCycles));
 	
 	    // clear locals to avoid warnings
 	    ilist.append(InstructionConstants.ICONST_0);
@@ -978,6 +998,9 @@ public class Compiler {
 	    ilist.append(InstructionConstants.THIS);
 	    ilist.append(new ILOAD(info.localInsts));
 	    ilist.append(new PUTFIELD(info.nInstructionsIndex));
+	    ilist.append(InstructionConstants.THIS);
+	    ilist.append(new ILOAD(info.localCycles));
+	    ilist.append(new PUTFIELD(info.nCyclesIndex));
 	
 	    return first;
 	}

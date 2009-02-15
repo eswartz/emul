@@ -59,17 +59,13 @@ public class SwtJavaClient implements Client {
 		        }
 			}
 		});
-
-		//cruHandler = //new InternalCru(machine, keyboardState);
+		
         cruHandler = machine.getCru(); 
-        //keyboardState = new KeyboardState(machine.getCpu(), (InternalCru) cru);
         machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
         
         this.keyboardHandler = keyboardHandler;
         if (keyboardHandler instanceof SwtKeyboardHandler)
         	((SwtKeyboardHandler) keyboardHandler).init(((SwtVideoRenderer) videoRenderer).getWidget());
-        //keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(),
-        //		machine.getKeyboardState(), machine);
     }
     /*
      * (non-Javadoc)

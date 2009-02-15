@@ -130,8 +130,8 @@ public class TopDownPhase extends Phase {
 			
 		} while (changed);
 		
-		dumpInstructions();
-		dumpBlocks();
+		//dumpInstructions();
+		//dumpBlocks();
 	}
 
 	private void flowBlock(Block block /*Routine routine, List<Block> unresolvedBlocks,

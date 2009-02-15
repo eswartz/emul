@@ -668,7 +668,7 @@ public class Instruction extends RawInstruction implements IInstruction {
      * @param wp2
      * @param status2
      */
-    public Instruction update(short op, short thePc, MemoryDomain domain) {
+    public Instruction update(short op, int thePc, MemoryDomain domain) {
     	boolean isSame = true;
     	// obvious changes: this usually happens due to an X instruction and its generated instruction
         if (this.opcode != op || this.pc != thePc) {
@@ -705,7 +705,7 @@ public class Instruction extends RawInstruction implements IInstruction {
         	return this;
         }
         
-        //System.out.println("need to regenerate instruction: >" + v9t9.Utils.toHex4(thePc) + " "+ this);
+        System.out.println("need to regenerate instruction: >" + v9t9.utils.Utils.toHex4(thePc) + " "+ this);
         return new Instruction(InstructionTable.decodeInstruction(op, thePc, domain));
 
     }

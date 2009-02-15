@@ -21,6 +21,7 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 		super(memory, name, domain, addr, size, area.getSize() / size);
 		selectBank(0);
 		setArea(area);
+		addrOffset = bankOffset;
 	}
 
 	/* (non-Javadoc)
@@ -29,12 +30,13 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 	@Override
 	protected void doSwitchBank(int bank) {
 		bankOffset = bank * getBankSize();
+		addrOffset = bankOffset;
 	}
 
-	@Override
-	protected int mapAddress(int addr) {
-		return (addr & 0xffff) + bankOffset;
-	}
+	//@Override
+	//protected int mapAddress(int addr) {
+	//	return (addr & (size - 1)) + bankOffset;
+	//}
 	
 	public int getBankOffset() {
 		return bankOffset;

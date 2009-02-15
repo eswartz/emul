@@ -3,6 +3,10 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
@@ -12,6 +16,7 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
@@ -468,4 +473,10 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		canvas.setFocus();		
 	}
 
+	public void saveScreenShot(File file) throws IOException {
+		ImageLoader imageLoader = new ImageLoader();
+		imageLoader.data = new ImageData[] { image.getImageData() };
+		imageLoader.save(new FileOutputStream(file), SWT.IMAGE_PNG);
+	}
+	
 }

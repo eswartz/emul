@@ -33,7 +33,7 @@ import v9t9.utils.Utils;
  * 
  * @author ejs
  */
-public class MemoryEntry implements MemoryAccess {
+public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
     /** start address */
     public int addr;
 
@@ -47,12 +47,14 @@ public class MemoryEntry implements MemoryAccess {
     public MemoryDomain domain;
 
     /** how the memory acts */
-    public MemoryArea area;
+    protected MemoryArea area;
     
     /** is the memory accessed as words or as bytes? */
     public boolean bWordAccess = true;
 
 	private TreeMap<Short, String> symbols;
+
+	protected int addrOffset = 0;
 
     public MemoryEntry(String name, MemoryDomain domain, int addr,
             int size, MemoryArea area) {
@@ -143,7 +145,7 @@ public class MemoryEntry implements MemoryAccess {
 		}
         return "[memory entry >" + Utils.toHex4(addr) + "..." + Utils.toHex4(addr+size) + "]";
     }
-    
+
     public void setArea(MemoryArea area) {
     	this.area = area;
     }
@@ -232,7 +234,7 @@ public class MemoryEntry implements MemoryAccess {
 	 * Get the active area.
 	 * @return
 	 */
-	protected MemoryArea getArea() {
+	public final MemoryArea getArea() {
 		return area;
 	}
 	
@@ -241,51 +243,51 @@ public class MemoryEntry implements MemoryAccess {
 	 * @param addr
 	 * @return
 	 */
-	protected int mapAddress(int addr) {
-		return addr & 0xffff;
+	protected final int mapAddress(int addr) {
+		return (addr & 0xffff) + addrOffset;
 	}
 	public byte flatReadByte(int addr) {
-		return getArea().flatReadByte(this, mapAddress(addr));
+		return area.flatReadByte(this, mapAddress(addr));
 	}
 	
 	public short flatReadWord(int addr) {
-		return getArea().flatReadWord(this, mapAddress(addr));
+		return area.flatReadWord(this, mapAddress(addr));
 	}
 	
 	public void flatWriteByte(int addr, byte val) {
-		getArea().flatWriteByte(this, mapAddress(addr), val);
+		area.flatWriteByte(this, mapAddress(addr), val);
 	}
 	
 	public void flatWriteWord(int addr, short val) {
-		getArea().flatWriteWord(this, mapAddress(addr), val);
+		area.flatWriteWord(this, mapAddress(addr), val);
 	}
 	
 	public boolean hasReadAccess() {
-		return getArea().hasReadAccess();
+		return area.hasReadAccess();
 	}
 	
 	public boolean hasWriteAccess() {
-		return getArea().hasWriteAccess();
+		return area.hasWriteAccess();
 	}
 	
 	public byte readByte(int addr) {
-		return getArea().readByte(this, mapAddress(addr));
+		return area.readByte(this, mapAddress(addr));
 	}
 	
 	public short readWord(int addr) {
-		return getArea().readWord(this, mapAddress(addr));
+		return area.readWord(this, mapAddress(addr));
 	}
 	
 	public void writeByte(int addr, byte val) {
-		getArea().writeByte(this, mapAddress(addr), val);
+		area.writeByte(this, mapAddress(addr), val);
 	}
 	
 	public void writeWord(int addr, short val) {
-		getArea().writeWord(this, mapAddress(addr), val);
+		area.writeWord(this, mapAddress(addr), val);
 	}
 	
 	public byte getLatency() {
-		return getArea().getLatency();
+		return area.getLatency();
 	}
 
 
@@ -319,5 +321,18 @@ public class MemoryEntry implements MemoryAccess {
 		if (area.hasReadAccess()) {
 			area.loadContents(section, this);
 		}
+	}
+
+
+	public int compareTo(MemoryEntry o) {
+		int diff = domain.hashCode() - o.domain.hashCode();
+		if (diff != 0) return diff;
+		diff = addr - o.addr; 
+		return diff;
+	}
+
+
+	public String getUniqueName() {
+		return name;
 	}
 }

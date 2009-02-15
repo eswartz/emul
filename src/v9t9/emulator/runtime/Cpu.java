@@ -6,6 +6,8 @@
  */
 package v9t9.emulator.runtime;
 
+import java.io.PrintWriter;
+
 import org.eclipse.jface.dialogs.IDialogSettings;
 
 import v9t9.emulator.Machine;
@@ -222,12 +224,13 @@ public class Cpu implements MemoryAccessListener {
 
     /**
      * Poll the TMS9901 to see if any interrupts are pending.
+     * @return true if any pending
      */
-    public void checkInterrupts() {
+    public final boolean doCheckInterrupts() {
     	// do not allow interrupts after some instructions
 	    if (!allowInts) {
 	    	allowInts = true;
-	    	return;
+	    	return false;
 	    }
 	    
 	    vdp.syncVdpInterrupt(machine);
@@ -240,7 +243,7 @@ public class Cpu implements MemoryAccessListener {
 	    		if (status.getIntMask() >= ic) {
 	    			//System.out.println("Triggering interrupt... "+ic);
 	    			pins |= PIN_INTREQ;
-	    			throw new AbortedException();	    		
+	    			return true;    		
 	    		} else {
 	    			//System.out.print('-');
 	    		}
@@ -249,17 +252,35 @@ public class Cpu implements MemoryAccessListener {
 	    
     	if (((pins &  PIN_LOAD + PIN_RESET) != 0)) {
     		System.out.println("Pins set... "+pins);
-    		throw new AbortedException();
+    		return true;
     	}   
     	
-    	
+    	return false;
+    }
+    
+    /**
+     * Poll the TMS9901 to see if any interrupts are pending.
+     * @throws AbortedException if interrupt waiting
+     */
+    public final void checkInterrupts() {
+    	if (doCheckInterrupts())
+    		throw new AbortedException();
     }
     
     /**
      * Called by toplevel in response to the AbortedException from above
      * (TODO: see if these still need to be distinct steps)
      */
-    public void handleInterrupts() {
+    public final void handleInterrupts() {
+    	PrintWriter dumpfull = getMachine().getExecutor().getDumpfull();
+		if (dumpfull != null) {
+    		dumpfull.println("*** Aborted");
+		}
+        PrintWriter dump = getMachine().getExecutor().getDump();
+		if (dump != null) {
+        	dump.println("*** Aborted");
+		}
+        
     	// non-maskable
     	if ((pins & PIN_LOAD) != 0) {
             // non-maskable
@@ -296,6 +317,10 @@ public class Cpu implements MemoryAccessListener {
         }
     }
 
+    public final void checkAndHandleInterrupts() {
+    	if (doCheckInterrupts())
+    		handleInterrupts();
+    }
 	public int getRegister(int reg) {
         return console.readWord(WP + reg*2);
     }
@@ -304,7 +329,7 @@ public class Cpu implements MemoryAccessListener {
 		this.console = console;
 	}
 
-	public MemoryDomain getConsole() {
+	public final MemoryDomain getConsole() {
 		return console;
 	}
 
@@ -345,7 +370,7 @@ public class Cpu implements MemoryAccessListener {
 		return (currentcycles >= currenttargetcycles);
 	}
 
-	public void access(boolean read, boolean word, int cycles) {
+	public void access(int cycles) {
 		addCycles(cycles);
 	}
 

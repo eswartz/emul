@@ -6,14 +6,10 @@ package v9t9.emulator.clients.builtin.swt;
 import java.io.File;
 
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.layout.GridDataFactory;
-import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.RTFTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
-import org.eclipse.swt.events.ControlAdapter;
-import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -29,7 +25,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
@@ -44,131 +39,40 @@ import v9t9.engine.settings.Setting;
  * @author ejs
  *
  */
-public class SwtWindow extends BaseEmulatorWindow {
+public class SwtWindowSVG extends BaseEmulatorWindow {
 	
 	protected Shell shell;
 	protected Control videoControl;
 	private ButtonBar buttonBar;
-	public SwtWindow(Display display, final ISwtVideoRenderer renderer, Machine machine) {
+	public SwtWindowSVG(Display display, final ISwtVideoRenderer renderer, Machine machine) {
 		super(machine);
 		setVideoRenderer(renderer);
 		
 		shell = new Shell(display);
 		shell.setText("V9t9");
-		
-		File iconFile = new File("icons/v9t9.png");
-		Image icon = new Image(shell.getDisplay(), iconFile.getAbsolutePath());
-		
-		shell.setImage(icon);
-
 		GridLayout layout = new GridLayout(1, false);
 		layout.marginHeight = layout.marginWidth = 0;
 		shell.setLayout(layout);
 		
-		shell.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlResized(ControlEvent e) {
-				shell.getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						if (!shell.isDisposed())
-							shell.pack();
-					}
-				});
-			}
-		});
-		
 		Composite mainComposite = shell;
 		
-		/*
 		final Composite screenComposite = new Composite(mainComposite, SWT.BORDER);
 		
 		GridLayout screenLayout = new GridLayout();
 		screenLayout.marginHeight = screenLayout.marginWidth = 2;
 		screenComposite.setLayout(screenLayout);
-		
 		// need to FILL so we can detect when our space has shrunk or grown;
 		// need to use extra space so the window will let the screen grow or shrink
-		final GridData screenLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		GridData screenLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		screenComposite.setLayoutData(screenLayoutData);
 		
 		this.videoControl = renderer.createControl(screenComposite);
 		
-		final GridData rendererLayoutData = GridDataFactory.fillDefaults().indent(0, 0)
-			.align(SWT.FILL, SWT.FILL).grab(true, true).create();
-		videoControl.setLayoutData(rendererLayoutData);
-*/
-		/*
-		screenComposite.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlResized(ControlEvent e) {
-				GridData screenData = (GridData)videoControl.getLayoutData();
-				screenLayoutData.widthHint = screenData.widthHint;
-				screenLayoutData.heightHint = screenData.heightHint;
-				System.out.println("laying out screenComposite to " + ((Control) e.widget).getSize());
-				System.out.println("suggesting exact size of " + screenData.widthHint + " x " + screenData.heightHint);
-
-			}
-		});
-		 */
+		File iconsFile = new File("icons/icons.svg");
+		SVGLoader icons = new SVGLoader(iconsFile);
 		
-		this.videoControl = renderer.createControl(mainComposite);
+		buttonBar = new ButtonBar(mainComposite, SWT.HORIZONTAL, videoRenderer);
 		
-		final GridData rendererLayoutData = GridDataFactory.swtDefaults().indent(0, 0)
-			.align(SWT.FILL, SWT.FILL)
-			.grab(true, true)
-			.create();
-		videoControl.setLayoutData(rendererLayoutData);
-		
-		videoControl.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlResized(ControlEvent e) {
-				/*
-				Point size = videoControl.getSize();
-				System.out.println("videoControl size is " + size);
-				int width = videoRenderer.getCanvas().getWidth();
-				int height = videoRenderer.getCanvas().getHeight();
-				int zoom = 1;
-				while (width * (zoom + 1) <= size.x && height * (zoom + 1) <= size.y) {
-					zoom++;
-				}
-				width *= zoom;
-				height *= zoom;
-				if (width != size.x || height != size.y) {
-					System.out.println("Hinting size: " + width + "/"+height);
-					rendererLayoutData.widthHint = width;
-					rendererLayoutData.heightHint = height;
-					final Point newSize = new Point(width, height);
-					getShell().getDisplay().asyncExec(new Runnable() {
-						public void run() {
-							
-							//videoControl.setSize(newSize);
-							getShell().pack();
-							
-						}
-					});
-				}
-				*/
-				getShell().getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						
-						//videoControl.setSize(newSize);
-			//			getShell().pack();
-						
-					}
-				});
-				
-			}
-		});
-		
-		File iconsFile = new File("icons/icons.png");
-		Image icons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
-		
-		buttonBar = new ButtonBar(mainComposite, SWT.HORIZONTAL);
-		GridLayout mainLayout = new GridLayout(1, false);
-		mainLayout.marginHeight = mainLayout.marginWidth = 0;
-		buttonBar.setLayout(mainLayout);
-		
-
 		createButton(buttonBar, 
 				icons, new Rectangle(0, 64, 64, 64),
 				"Send a NMI interrupt", new SelectionAdapter() {
@@ -255,9 +159,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 		shell.open();
 		shell.pack();
-		//Rectangle displaySize = shell.getDisplay().getBounds();
-		//Point shellSize = shell.getSize();
-		//shell.setBounds(displaySize.width - shellSize.x, displaySize.height - shellSize.y, shellSize.x, shellSize.y);
+		Rectangle displaySize = shell.getDisplay().getBounds();
+		Point shellSize = shell.getSize();
+		shell.setBounds(displaySize.width - shellSize.x, displaySize.height - shellSize.y, shellSize.x, shellSize.y);
 		
 		shell.addFocusListener(new FocusAdapter() {
 			@Override
@@ -270,13 +174,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 	}
 
-	private BasicButton createButton(ButtonBar buttonBar, final Image icon, final Rectangle bounds, String tooltip, SelectionListener selectionListener) {
+	private BasicButton createButton(ButtonBar buttonBar, final SVGLoader icon, final Rectangle bounds, String tooltip, SelectionListener selectionListener) {
 		BasicButton button = new BasicButton(buttonBar, SWT.PUSH, icon, bounds, tooltip);
 		button.addSelectionListener(selectionListener);
 		return button;
 	}
 	
-	private BasicButton createStateButton(ButtonBar buttonBar, final Setting setting, final Image icon,
+	private BasicButton createStateButton(ButtonBar buttonBar, final Setting setting, final SVGLoader icon,
 			final Rectangle bounds,
 			final Rectangle checkBounds, String tooltip) {
 		final BasicButton button = new BasicButton(buttonBar, SWT.TOGGLE, icon, bounds, tooltip);

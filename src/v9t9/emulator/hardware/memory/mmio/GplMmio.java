@@ -40,7 +40,7 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter {
         return (short) (addr+1 & 0x1fff | gromaddr & 0xe000);
     }
     
-    public short getAddr() {
+    public int getAddr() {
         return gromaddr;
     }
     

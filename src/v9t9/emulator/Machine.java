@@ -181,10 +181,10 @@ abstract public class Machine {
     			
     			if (now >= lastInfo + 1000) {
     				upTime += now - lastInfo;
-    				executor.dumpStats();
+    				//executor.dumpStats();
     				executor.nVdpInterrupts = 0;
     				lastInfo = now;
-    				vdpInterruptDelta = 0;
+    				//vdpInterruptDelta = 0;
     			}
     			
     			sound.tick();
@@ -272,28 +272,31 @@ abstract public class Machine {
         	@Override
         	public void run() {
     	        while (Machine.this.isAlive()) {
+    	        	// delay if going too fast
+    				if (Cpu.settingRealTime.getBoolean()) {
+    					while (cpu.isThrottled() && cpu.getMachine().bAlive) {
+    						// Just sleep.  Another timer thread will reset the throttle.
+    						try {
+    							Thread.sleep(10);
+    						} catch (InterruptedException e) {
+    							return;
+    						}
+    					}
+    				}
+    				
     	            try {
     	            	// synchronize on events like debugging, loading/saving, etc
 	            		synchronized (executionLock) {
-	            			while (!bExecuting) {
+	            			while (!bExecuting && isAlive()) {
 	            				executionLock.wait();
 	            			}
-	    	            	// delay if going too fast
-	    	        		if (Cpu.settingRealTime.getBoolean()) {
-	    	        			while (cpu.isThrottled() && bAlive) {
-	    	        				// Just sleep.  Another timer thread will reset the throttle.
-	    	        				try {
-	    	        					Thread.sleep(10);
-	    	        				} catch (InterruptedException e) {
-	    	        					break;
-	    	        				}
-	    	        			}
-	    	        		}
+	            			
 	    	        		executor.execute();
 	            		}
     	            } catch (AbortedException e) {
     	                
     	            } catch (Throwable t) {
+    	            	t.printStackTrace();
     	            	Machine.this.setNotRunning();
     	            	break;
     	            }

@@ -12,9 +12,13 @@ import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.HierarchyBoundsAdapter;
 import java.awt.event.HierarchyEvent;
-import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.awt.image.WritableRaster;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
@@ -89,6 +93,8 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			public void ancestorResized(HierarchyEvent e) {
 				int width = canvas.getWidth();
 				int height = canvas.getHeight();
+				System.out.println("Resized to: " + width + "/" + height);
+
 				updateWidgetOnResize(width, height);
 			}
 		});
@@ -112,8 +118,14 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 	
 	private void doResizeToFit()  {
-		canvas.setPreferredSize(new Dimension(desiredWidth, desiredHeight));
-		canvas.setSize(new Dimension(desiredWidth, desiredHeight));
+		
+		Dimension preferredSize = new Dimension(desiredWidth, desiredHeight);
+		if (!canvas.isPreferredSizeSet() || !canvas.getPreferredSize().equals(preferredSize)) {
+			System.out.println("Desiring size: " + desiredWidth + "/" + desiredHeight);
+	
+			canvas.setPreferredSize(preferredSize);
+			canvas.setSize(preferredSize);
+		}
 		resizeTopLevel();
 	}
 	
@@ -258,6 +270,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		
 		Point curSize = new Point(width, height);
 		zoom = (int) (curSize.y + 64) / vdpCanvas.getHeight();
+		//zoom = (int) (curSize.y ) / vdpCanvas.getHeight();
 		
 		if (zoom == 0)
 			zoom = 1;
@@ -273,8 +286,9 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		
 		if (zoomx != oldzoomx && zoomy != oldzoomy) {
 			resizeWidgets();
+		} else {
+			doResizeToFit();
 		}
-		
 	}
 	
 	/**
@@ -474,4 +488,11 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		canvas.requestFocus();
 	}
 
+	public synchronized void saveScreenShot(File file) throws IOException {
+		synchronized (vdpCanvas) {
+			WritableRaster raster = surface.copyData(null);
+			BufferedImage saveImage = new BufferedImage(surface.getColorModel(), raster, false, null);
+			ImageIO.write(saveImage, "png", file);
+		}
+	}
 }

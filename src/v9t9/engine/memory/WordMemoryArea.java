@@ -21,7 +21,7 @@ public class WordMemoryArea extends MemoryArea {
     public WordMemoryArea(int latency) {
     	super(latency);
 	}
-
+    
 	public boolean bWordAccess = true;
 
 	/* actual memory for area, except for empty mem */

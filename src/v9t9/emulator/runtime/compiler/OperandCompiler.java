@@ -319,7 +319,7 @@ public class OperandCompiler {
 	        InstructionList ilist, int val) {
 	    ilist.append(new ILOAD(info.localWpOffset));
 	    if (val != 0) {
-	        ilist.append(new PUSH(info.pgen, val)); // short[]
+	        ilist.append(new PUSH(info.pgen, val)); // short[] index
 	        ilist.append(InstructionConstants.IADD);
 	    }
 	}
