@@ -3,6 +3,7 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
@@ -14,6 +15,7 @@ import v9t9.emulator.clients.builtin.video.VideoRenderer;
  *
  */
 public interface ISwtVideoRenderer extends VideoRenderer {
-	Control createControl(Composite parent);
+	Control createControl(Composite parent, int flags);
 
+	void addMouseEventListener(MouseListener listener);
 }

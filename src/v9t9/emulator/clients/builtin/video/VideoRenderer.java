@@ -37,8 +37,10 @@ public interface VideoRenderer {
 	boolean isIdle();
 
 	void setZoom(int zoom);
+	int getZoom();
 	
 	void setFocus();
 
 	void saveScreenShot(File file) throws IOException;
+
 }

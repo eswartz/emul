@@ -68,9 +68,9 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	 * @param parent
 	 * @return
 	 */
-	public Control createControl(Composite parent) {
+	public Control createControl(Composite parent, int flags) {
 		this.shell = parent.getShell();
-		this.canvas = new Canvas(parent, getStyleBits());
+		this.canvas = new Canvas(parent, flags | getStyleBits());
 		this.canvas.setLayout(new FillLayout());
 		canvasLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		canvasLayoutData.minimumHeight = 256;
@@ -429,10 +429,17 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		return vdpCanvas;
 	}
 
-	public void setZoom(int zoom) {
-		this.zoom = zoom;
-		isDirty = true;
-		redraw();
+	public synchronized void setZoom(int zoom) {
+		synchronized (vdpCanvas) {
+			this.zoom = zoom;
+			isDirty = true;
+			updateWidgetSizeForMode();
+			redraw();
+		}
+	}
+	
+	public int getZoom() {
+		return zoom;
 	}
 
 	public void canvasDirtied(VdpCanvas canvas) {

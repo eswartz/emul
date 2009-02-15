@@ -10,7 +10,6 @@ import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
@@ -79,21 +78,32 @@ class ButtonBar extends Composite {
 			if (num == 0)
 				num = 1;
 			
-			int minsize, maxsize;
 			int size;
+			int axis;
 			Point cursize = composite.getParent().getSize();
 			if (isHorizontal) {
-				maxsize =  cursize.x * 3 / 4 / num;
-				minsize = cursize.y;
+				//maxsize =  cursize.x * 3 / 4 / num;
+				axis = cursize.x;
+				//maxsize =  cursize.x / num;
+				//minsize = cursize.y;
 			} else {
-				maxsize = cursize.y * 3 / 4 / num;
-				minsize = cursize.x;
+				//maxsize = cursize.y * 3 / 4 / num;
+				//maxsize = cursize.y / num;
+				//minsize = cursize.x;
+				axis = cursize.y;
 			}
+			/*
 			size = Math.max(minsize, maxsize);
 			if (size < 16)
 				size = 16;
 			else if (size > 128)
 				size = 128;
+			*/
+			int scale = 4;
+			while (scale < 7 && (num * (1 << (scale + 1))) < axis) {
+				scale++;
+			}
+			size = 1 << scale;
 			
 			if (isHorizontal) {
 				w = whint >= 0 ? whint : size * num;

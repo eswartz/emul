@@ -20,7 +20,11 @@ public abstract class BaseEmulatorWindow {
 	}
 	
 	public void dispose() {
-		
+		try {
+			settings.save(getSettingsConfigurationPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	public void setVideoRenderer(VideoRenderer videoRenderer) {
 		this.videoRenderer = videoRenderer;
@@ -85,11 +89,15 @@ public abstract class BaseEmulatorWindow {
 		if (settings == null) {
 			settings = new DialogSettings("root");
 			try {
-				settings.load(getBaseConfigurationPath() + "config");
+				settings.load(getSettingsConfigurationPath());
 			} catch (IOException e) {
 			}
 		}
 		return settings;
+	}
+
+	private String getSettingsConfigurationPath() {
+		return getBaseConfigurationPath() + "config";
 	}
 	
 	protected void sendNMI() {

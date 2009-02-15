@@ -66,7 +66,7 @@ public class SwtWindowSVG extends BaseEmulatorWindow {
 		GridData screenLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		screenComposite.setLayoutData(screenLayoutData);
 		
-		this.videoControl = renderer.createControl(screenComposite);
+		this.videoControl = renderer.createControl(screenComposite, SWT.BORDER);
 		
 		File iconsFile = new File("icons/icons.svg");
 		SVGLoader icons = new SVGLoader(iconsFile);

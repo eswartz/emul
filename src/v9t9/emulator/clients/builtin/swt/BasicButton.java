@@ -35,6 +35,7 @@ class BasicButton extends Canvas {
 	private boolean selected;
 	private ButtonBar buttonBar;
 	private boolean isHighlighted;
+	private boolean pressed;
 	
 	public BasicButton(ButtonBar buttonBar, int style, Image icon_, Rectangle bounds_, String tooltip) {
 		super(buttonBar.getComposite(), SWT.NO_FOCUS | SWT.NO_RADIO_GROUP /*| SWT.NO_BACKGROUND*/);
@@ -86,8 +87,12 @@ class BasicButton extends Canvas {
 		
 		addMouseListener(new MouseAdapter() {
 			@Override
+			public void mouseDown(MouseEvent e) {
+				doClickStart();
+			}
+			@Override
 			public void mouseUp(MouseEvent e) {
-				doClick();
+				doClickStop(e);
 			}
 		});
 		
@@ -138,20 +143,35 @@ class BasicButton extends Canvas {
 		Point size = getSize();
 		this.buttonBar.paintButtonBar(e.gc, this, new Point(0, 0), size);
 		//e.gc.setAntialias(SWT.ON);
+		int offset = pressed ? 2 : 0;
 		e.gc.drawImage(icon, bounds.x, bounds.y, bounds.width, bounds.height, 
-				0, 0, size.x, size.y);
+				offset, offset, size.x, size.y);
 		if (overlayBounds != null)
 			e.gc.drawImage(icon, overlayBounds.x, overlayBounds.y, overlayBounds.width, overlayBounds.height, 
 					0, 0, size.y, size.y);
 		//e.gc.setAntialias(SWT.OFF);
 		if (isHighlighted) {
 			e.gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_BLACK));
-			e.gc.setLineStyle(SWT.LINE_DOT);
-			e.gc.drawRectangle(0, 0, size.x - 1, size.y - 1);
+			//e.gc.setLineStyle(SWT.LINE_DOT);
+			//e.gc.drawRectangle(0, 0, size.x - 1, size.y - 1);
+			e.gc.drawFocus(0, 0, size.x - 1, size.y - 1);
 		}
 	}
+	
+	protected void doClickStart() {
+		pressed = true;
+		redraw();
+	}
 
-	protected void doClick() {
+	protected void doClickStop(MouseEvent e) {
+		pressed = false;
+		redraw();
+
+		// released outside button
+		Point size = getSize();
+		if (e.x < 0 || e.y < 0 || e.x > size.x || e.y > size.y)
+			return;
+		
 		SelectionListener[] array = (SelectionListener[]) listeners.toArray(new SelectionListener[listeners.size()]);
 		Event event = new Event();
 		event.widget = this;
@@ -161,6 +181,7 @@ class BasicButton extends Canvas {
 		}
 		getShell().setFocus();
 		//this.buttonBar.videoRenderer.setFocus();
+		
 	}
 	
 	protected void doMouseEnter() {

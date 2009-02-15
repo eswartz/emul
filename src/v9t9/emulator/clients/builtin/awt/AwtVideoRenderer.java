@@ -93,7 +93,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			public void ancestorResized(HierarchyEvent e) {
 				int width = canvas.getWidth();
 				int height = canvas.getHeight();
-				System.out.println("Resized to: " + width + "/" + height);
+				//System.out.println("Resized to: " + width + "/" + height);
 
 				updateWidgetOnResize(width, height);
 			}
@@ -119,6 +119,11 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	
 	private void doResizeToFit()  {
 		
+		if (desiredWidth == 0 || desiredHeight == 0) {
+			desiredWidth = (int) (vdpCanvas.getVisibleWidth() * zoomx);
+			desiredHeight = (int) (vdpCanvas.getVisibleHeight() * zoomy);
+		}
+		
 		Dimension preferredSize = new Dimension(desiredWidth, desiredHeight);
 		if (!canvas.isPreferredSizeSet() || !canvas.getPreferredSize().equals(preferredSize)) {
 			System.out.println("Desiring size: " + desiredWidth + "/" + desiredHeight);
@@ -127,6 +132,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			canvas.setSize(preferredSize);
 		}
 		resizeTopLevel();
+		
 	}
 	
 	protected void resizeTopLevel() {
@@ -210,8 +216,10 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			isBlank = vdpCanvas.isBlank();
 			
 			org.eclipse.swt.graphics.Rectangle dirtyRect = vdpCanvas.getDirtyRect(); 
-			Rectangle redrawRect_ = new Rectangle(dirtyRect.x, dirtyRect.y, dirtyRect.width, dirtyRect.height);
-			if (becameBlank)
+			Rectangle redrawRect_ = null;
+			if (dirtyRect != null)
+				redrawRect_ = new Rectangle(dirtyRect.x, dirtyRect.y, dirtyRect.width, dirtyRect.height);
+			if (becameBlank || redrawRect_ == null)
 				redrawRect_ = new Rectangle(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
 			
 			if (vdpCanvas.isInterlacedEvenOdd()) {
@@ -363,6 +371,10 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	public void setZoom(int zoom) {
 		isDirty = true;
 		this.zoom = zoom;
+	}
+	
+	public int getZoom() {
+		return zoom;
 	}
 
 	/* (non-Javadoc)

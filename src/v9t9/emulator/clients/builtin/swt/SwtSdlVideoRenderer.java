@@ -26,7 +26,7 @@ public class SwtSdlVideoRenderer extends SdlVideoRenderer implements ISwtVideoRe
 		super();
 	}
 
-	public Control createControl(Composite parent) {
+	public Control createControl(Composite parent, int flags) {
 		//shell = parent.getShell();
 		sdlContainer = new Canvas(parent, SWT.EMBEDDED | SWT.NO_MERGE_PAINTS | SWT.NO_BACKGROUND | SWT.NO_REDRAW_RESIZE);
 		

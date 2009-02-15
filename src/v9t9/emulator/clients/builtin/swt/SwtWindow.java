@@ -7,15 +7,19 @@ import java.io.File;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
-import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.RTFTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
-import org.eclipse.swt.events.ControlAdapter;
-import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.MenuEvent;
+import org.eclipse.swt.events.MenuListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -26,10 +30,14 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Decorations;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.swt.widgets.Layout;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
@@ -38,6 +46,7 @@ import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
+import v9t9.utils.Utils;
 
 /**
  * Provide the emulator in an SWT window
@@ -49,11 +58,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 	protected Shell shell;
 	protected Control videoControl;
 	private ButtonBar buttonBar;
-	public SwtWindow(Display display, final ISwtVideoRenderer renderer, Machine machine) {
+	public SwtWindow(Display display, final ISwtVideoRenderer renderer, final Machine machine) {
 		super(machine);
 		setVideoRenderer(renderer);
 		
-		shell = new Shell(display);
+		shell = new Shell(display, SWT.SHELL_TRIM & ~SWT.RESIZE);
 		shell.setText("V9t9");
 		
 		File iconFile = new File("icons/v9t9.png");
@@ -61,104 +70,97 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		shell.setImage(icon);
 
-		GridLayout layout = new GridLayout(1, false);
-		layout.marginHeight = layout.marginWidth = 0;
-		shell.setLayout(layout);
-		
-		shell.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlResized(ControlEvent e) {
-				shell.getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						if (!shell.isDisposed())
-							shell.pack();
-					}
-				});
+		shell.addDisposeListener(new DisposeListener() {
+
+			public void widgetDisposed(DisposeEvent e) {
+				dispose();
 			}
+			
 		});
+		
+		if (false) {
+			Menu bar = new Menu(shell, SWT.BAR);
+			createAppMenu(shell, bar, false);
+			shell.setMenuBar(bar);
+		}
 		
 		Composite mainComposite = shell;
+		GridLayout layout = new GridLayout(1, false);
+		layout.marginHeight = layout.marginWidth = 2;
+		mainComposite.setLayout(layout);
 		
-		/*
-		final Composite screenComposite = new Composite(mainComposite, SWT.BORDER);
 		
-		GridLayout screenLayout = new GridLayout();
-		screenLayout.marginHeight = screenLayout.marginWidth = 2;
-		screenComposite.setLayout(screenLayout);
-		
-		// need to FILL so we can detect when our space has shrunk or grown;
-		// need to use extra space so the window will let the screen grow or shrink
-		final GridData screenLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		screenComposite.setLayoutData(screenLayoutData);
-		
-		this.videoControl = renderer.createControl(screenComposite);
-		
-		final GridData rendererLayoutData = GridDataFactory.fillDefaults().indent(0, 0)
-			.align(SWT.FILL, SWT.FILL).grab(true, true).create();
-		videoControl.setLayoutData(rendererLayoutData);
-*/
-		/*
-		screenComposite.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlResized(ControlEvent e) {
-				GridData screenData = (GridData)videoControl.getLayoutData();
-				screenLayoutData.widthHint = screenData.widthHint;
-				screenLayoutData.heightHint = screenData.heightHint;
-				System.out.println("laying out screenComposite to " + ((Control) e.widget).getSize());
-				System.out.println("suggesting exact size of " + screenData.widthHint + " x " + screenData.heightHint);
-
-			}
-		});
-		 */
-		
-		this.videoControl = renderer.createControl(mainComposite);
+		this.videoControl = renderer.createControl(mainComposite, SWT.BORDER);
 		
 		final GridData rendererLayoutData = GridDataFactory.swtDefaults().indent(0, 0)
-			.align(SWT.FILL, SWT.FILL)
-			.grab(true, true)
+			//.align(SWT.FILL, SWT.FILL)
+			//.grab(true, true)
 			.create();
 		videoControl.setLayoutData(rendererLayoutData);
 		
-		videoControl.addControlListener(new ControlAdapter() {
+		((ISwtVideoRenderer) videoRenderer).addMouseEventListener(new MouseAdapter() {
+
 			@Override
-			public void controlResized(ControlEvent e) {
-				/*
-				Point size = videoControl.getSize();
-				System.out.println("videoControl size is " + size);
-				int width = videoRenderer.getCanvas().getWidth();
-				int height = videoRenderer.getCanvas().getHeight();
-				int zoom = 1;
-				while (width * (zoom + 1) <= size.x && height * (zoom + 1) <= size.y) {
-					zoom++;
-				}
-				width *= zoom;
-				height *= zoom;
-				if (width != size.x || height != size.y) {
-					System.out.println("Hinting size: " + width + "/"+height);
-					rendererLayoutData.widthHint = width;
-					rendererLayoutData.heightHint = height;
-					final Point newSize = new Point(width, height);
-					getShell().getDisplay().asyncExec(new Runnable() {
-						public void run() {
-							
-							//videoControl.setSize(newSize);
-							getShell().pack();
+			public void mouseUp(final MouseEvent e) {
+				//System.out.println("Mouse detected " + e);
+				if (e.button == 3) {
+					
+					final Shell menuShell = new Shell(getShell(), SWT.ON_TOP | SWT.TOOL);
+					menuShell.setSize(4, 4);
+					Point shellLoc = (((Control)e.widget).toDisplay(e.x, e.y));
+					menuShell.setLocation(shellLoc);
+					final Menu menu = createAppMenu(menuShell, menuShell, true);
+					menuShell.open();
+					menuShell.setVisible(false);
+					menuShell.addFocusListener(new FocusListener() {
+						public void focusLost(FocusEvent e) {
+							menu.dispose();
+						}
+
+						public void focusGained(FocusEvent e) {
 							
 						}
 					});
+					menuShell.getDisplay().syncExec(new Runnable() {
+						public void run() {
+							runMenu(null, 0, 0, menu);
+							menuShell.dispose();		
+						}
+					});
+					
 				}
-				*/
-				getShell().getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						
-						//videoControl.setSize(newSize);
-			//			getShell().pack();
-						
+			}
+			
+		});
+		
+		//videoControl.setMenu(createZoomMenu(shell));
+		
+		
+		/*
+		// unzoom if the zoom is too big
+		shell.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlResized(ControlEvent e) {
+				Point size = shell.getSize();
+				Rectangle area = shell.getDisplay().getClientArea();
+				if (size.y >= area.height) {
+					final int curZoom = videoRenderer.getZoom();
+					if (curZoom > 1) {
+						shell.getDisplay().asyncExec(new Runnable() {
+							public void run() {
+								try {
+									Thread.sleep(250);
+								} catch (InterruptedException e) {
+								}
+								System.out.println("Rezooming to " + (curZoom - 1));
+								videoRenderer.setZoom(curZoom - 1);
+							}
+						});
 					}
-				});
-				
+				}
 			}
 		});
+		*/
 		
 		File iconsFile = new File("icons/icons.png");
 		Image icons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
@@ -253,8 +255,27 @@ public class SwtWindow extends BaseEmulatorWindow {
 					}
 			});
 
+		createButton(buttonBar, 
+				icons, new Rectangle(0, 704, 64, 64),
+				"Zoom the screen", new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						Control button = (Control) e.widget;
+						showZoomMenu(button, 0, 0);
+					}
+				});
+		
 		shell.open();
-		shell.pack();
+		
+		shell.getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				int zoom = Utils.readSavedInt(getApplicationSettings(), "ZoomLevel");
+				if (zoom > 0) {
+					videoRenderer.setZoom(zoom);
+				}
+			}
+		});
+		
 		//Rectangle displaySize = shell.getDisplay().getBounds();
 		//Point shellSize = shell.getSize();
 		//shell.setBounds(displaySize.width - shellSize.x, displaySize.height - shellSize.y, shellSize.x, shellSize.y);
@@ -267,7 +288,112 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 		
 		renderer.setFocus();
+	}
 
+	private Menu createAppMenu(Decorations control, Object parent, boolean isPopup) {
+		Menu appMenu;
+		if (parent instanceof Decorations)
+			appMenu = new Menu((Decorations) parent, SWT.POP_UP);
+		else if (parent instanceof Menu)
+			appMenu = (Menu) parent;
+		else if (parent instanceof MenuItem)
+			appMenu = new Menu((MenuItem) parent);
+		else if (parent instanceof Control)
+			appMenu = new Menu((Control) parent);
+		else
+			throw new IllegalArgumentException(parent.toString());
+		
+		MenuItem fileMenuHeader = new MenuItem(appMenu, SWT.CASCADE);
+		fileMenuHeader.setText("&File");
+		
+		Menu fileMenu = new Menu(control, SWT.DROP_DOWN);
+		fileMenuHeader.setMenu(fileMenu);
+		
+		MenuItem exit = new MenuItem(fileMenu, SWT.NONE);
+		exit.setText("E&xit");
+		exit.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				System.exit(0);
+			}
+		});
+		
+		Menu viewMenu = appMenu;
+		if (!isPopup) {
+			MenuItem viewMenuHeader = new MenuItem(appMenu, SWT.CASCADE);
+			viewMenuHeader.setText("&View");
+			
+			viewMenu = new Menu(control, SWT.DROP_DOWN);
+			viewMenuHeader.setMenu(viewMenu);
+		}
+		
+		MenuItem zoom = new MenuItem(viewMenu, SWT.CASCADE);
+		zoom.setText("&Zoom");
+		
+		Menu zoomMenu = new Menu(zoom);
+		populateZoomMenu(zoomMenu);
+		zoom.setMenu(zoomMenu);
+		
+		return appMenu;
+	}
+	
+	@Override
+	public void dispose() {
+		super.dispose();
+	}
+
+	protected void showZoomMenu(final Control parent, final int x, final int y) {
+			final Menu menu = createZoomMenu(parent);
+			runMenu(parent, x, y, menu);
+			menu.dispose();		
+	}
+
+	private void runMenu(final Control parent, final int x, final int y,
+			final Menu menu) {
+		if (parent != null) {
+			Point loc = menu.getParent().toControl(parent.toDisplay(x, y)); 
+			menu.setLocation(loc);
+		}
+		menu.setVisible(true);
+		
+		//System.out.println("Running menu");
+		final Shell menuShell = getShell();
+		Display display = menuShell.getDisplay();
+		while (!menu.isDisposed() && menu.isVisible()) {
+			if (!display.readAndDispatch())
+				display.sleep();
+		}
+		
+	}
+
+	private Menu createZoomMenu(final Control parent) {
+		final Menu menu = new Menu(parent);
+		return populateZoomMenu(menu);
+	}
+
+	private Menu populateZoomMenu(final Menu menu) {
+		int curZoom = videoRenderer.getZoom();
+		int[] zooms = { 1, 2, 3, 4, 5, 6, 7, 8 };
+		for (final int zoom : zooms) {
+			MenuItem item = new MenuItem(menu, SWT.RADIO);
+			item.setText("" + zoom);
+			if (zoom == curZoom)
+				item.setSelection(true);
+			item.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					setScreenZoom(zoom);
+					getApplicationSettings().put("ZoomLevel", zoom);
+				}
+
+			});
+		}
+		return menu;
+	}
+
+	protected void setScreenZoom(int zoom) {
+		System.out.println("Set zoom to " + zoom);
+		videoRenderer.setZoom(zoom);
 	}
 
 	private BasicButton createButton(ButtonBar buttonBar, final Image icon, final Rectangle bounds, String tooltip, SelectionListener selectionListener) {
