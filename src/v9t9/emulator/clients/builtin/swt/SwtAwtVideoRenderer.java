@@ -107,9 +107,13 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 				Component awtCanvas = getAwtCanvas();
 				
 				Point canvasSize = new Point(awtCanvas.getWidth(), awtCanvas.getHeight());
-				if (true)
-					return canvasSize;
+				int width = canvasSize.x;
+				int height = canvasSize.y;
+				//Rectangle trim = composite.computeTrim(0, 0, width, height);
 				
+				return new Point(width, height);
+				
+/*
 				Rectangle parentBounds = composite.getParent().getBounds();
 				
 				int width = getCanvas().getWidth();
@@ -125,6 +129,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 					return canvasSize;
 				
 				return new Point(width, height);
+				*/
 				//Rectangle area = composite.computeTrim(0, 0, awtCanvas.getWidth(), awtCanvas.getHeight());
 				//System.out.println("Area is " + area + " for " +awtCanvas.getWidth() + " x " + awtCanvas.getHeight());
 				//return new Point(area.width, area.height);
@@ -137,7 +142,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 				Point mySize = composite.getSize();
 				//Point mySize = new Point(myBounds.width, myBounds.height);
 				Component awtCanvas = getAwtCanvas();
-				awtCanvas.setSize(mySize.x, mySize.y);
+				//awtCanvas.setSize(mySize.x, mySize.y);
 			}
 			
 		});

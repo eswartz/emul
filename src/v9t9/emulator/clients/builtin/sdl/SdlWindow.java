@@ -27,6 +27,7 @@ import sdljavax.gfx.SDLGfx;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.ButtonPressHandler;
+import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.Setting;
 
@@ -62,7 +63,7 @@ public class SdlWindow extends BaseEmulatorWindow {
 		
 		videoRenderer = new SdlVideoRenderer();
 		((SdlVideoRenderer) videoRenderer).setSdlWindow(this);
-		File iconsFile = new File("icons/icons.png");
+		File iconsFile = V9t9.getDataFile("icons/icons.png");
 		icons = SDLImage.load(iconsFile.getAbsolutePath());
 		
 		createButton(new SDLRect(0, 64, 64, 64), 

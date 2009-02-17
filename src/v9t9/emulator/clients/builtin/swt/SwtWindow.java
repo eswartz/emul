@@ -28,6 +28,7 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Decorations;
@@ -39,6 +40,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.forms.widgets.ExpandableComposite;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
@@ -58,6 +60,10 @@ public class SwtWindow extends BaseEmulatorWindow {
 	protected Shell shell;
 	protected Control videoControl;
 	private ButtonBar buttonBar;
+	private Button controlsExpander;
+	private MemoryViewer cpuMemory;
+	private Composite controlsComposite;
+	
 	public SwtWindow(Display display, final ISwtVideoRenderer renderer, final Machine machine) {
 		super(machine);
 		setVideoRenderer(renderer);
@@ -65,7 +71,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell = new Shell(display, SWT.SHELL_TRIM & ~SWT.RESIZE);
 		shell.setText("V9t9");
 		
-		File iconFile = new File("icons/v9t9.png");
+		File iconFile = V9t9.getDataFile("icons/v9t9.png");
 		Image icon = new Image(shell.getDisplay(), iconFile.getAbsolutePath());
 		
 		shell.setImage(icon);
@@ -89,22 +95,37 @@ public class SwtWindow extends BaseEmulatorWindow {
 		layout.marginHeight = layout.marginWidth = 2;
 		mainComposite.setLayout(layout);
 		
+		Composite topComposite = new Composite(mainComposite, SWT.NONE);
+		layout = new GridLayout(2, false);
+		topComposite.setLayout(layout);
+		topComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
 		
-		this.videoControl = renderer.createControl(mainComposite, SWT.BORDER);
+		this.videoControl = renderer.createControl(topComposite, SWT.BORDER);
 		
-		final GridData rendererLayoutData = GridDataFactory.swtDefaults().indent(0, 0)
-			//.align(SWT.FILL, SWT.FILL)
-			//.grab(true, true)
+		final GridData rendererLayoutData = GridDataFactory.swtDefaults()
+			.indent(0, 0)
+			.align(SWT.CENTER, SWT.CENTER)
+			.grab(true, true)
 			.create();
 		videoControl.setLayoutData(rendererLayoutData);
 		
+		createExpandableControlsComposite(topComposite);
+		
 		((ISwtVideoRenderer) videoRenderer).addMouseEventListener(new MouseAdapter() {
-
+			
 			@Override
-			public void mouseUp(final MouseEvent e) {
+			public void mouseDown(final MouseEvent e) {
+				
 				//System.out.println("Mouse detected " + e);
+				if (e.button == 1) {
+					videoControl.forceFocus();
+					return;
+				}
 				if (e.button == 3) {
 					
+					// we need this horrible hack or else the
+					// menu will disappear immediately because SWT and AWT
+					// don't agree on events
 					final Shell menuShell = new Shell(getShell(), SWT.ON_TOP | SWT.TOOL);
 					menuShell.setSize(4, 4);
 					Point shellLoc = (((Control)e.widget).toDisplay(e.x, e.y));
@@ -133,36 +154,31 @@ public class SwtWindow extends BaseEmulatorWindow {
 			
 		});
 		
-		//videoControl.setMenu(createZoomMenu(shell));
+		createButtons(mainComposite);
 		
+		shell.open();
 		
-		/*
-		// unzoom if the zoom is too big
-		shell.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlResized(ControlEvent e) {
-				Point size = shell.getSize();
-				Rectangle area = shell.getDisplay().getClientArea();
-				if (size.y >= area.height) {
-					final int curZoom = videoRenderer.getZoom();
-					if (curZoom > 1) {
-						shell.getDisplay().asyncExec(new Runnable() {
-							public void run() {
-								try {
-									Thread.sleep(250);
-								} catch (InterruptedException e) {
-								}
-								System.out.println("Rezooming to " + (curZoom - 1));
-								videoRenderer.setZoom(curZoom - 1);
-							}
-						});
-					}
+		shell.getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				int zoom = Utils.readSavedInt(getApplicationSettings(), "ZoomLevel");
+				if (zoom > 0) {
+					videoRenderer.setZoom(zoom);
 				}
 			}
 		});
-		*/
 		
-		File iconsFile = new File("icons/icons.png");
+		shell.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				renderer.setFocus();
+			}
+		});
+		
+		renderer.setFocus();
+	}
+
+	private void createButtons(Composite mainComposite) {
+		File iconsFile = V9t9.getDataFile("icons/icons.png");
 		Image icons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
 		
 		buttonBar = new ButtonBar(mainComposite, SWT.HORIZONTAL);
@@ -261,33 +277,50 @@ public class SwtWindow extends BaseEmulatorWindow {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
 						Control button = (Control) e.widget;
-						showZoomMenu(button, 0, 0);
+						Point size = button.getSize();
+						showZoomMenu(button, size.x / 2, size.y / 2);
 					}
 				});
+	}
+
+	private void createExpandableControlsComposite(Composite parent) {
+		final Composite controlsExpanderComposite = new Composite(parent, SWT.NONE);
+		controlsExpanderComposite.setLayout(new GridLayout(2, false));
+		GridDataFactory.swtDefaults().applyTo(controlsExpanderComposite);
 		
-		shell.open();
+		controlsExpander = new Button(controlsExpanderComposite, SWT.ARROW | SWT.RIGHT | SWT.NO_FOCUS);
+		GridDataFactory.swtDefaults().applyTo(controlsExpander);
 		
-		shell.getDisplay().asyncExec(new Runnable() {
-			public void run() {
-				int zoom = Utils.readSavedInt(getApplicationSettings(), "ZoomLevel");
-				if (zoom > 0) {
-					videoRenderer.setZoom(zoom);
-				}
-			}
-		});
+		controlsComposite = new Composite(controlsExpanderComposite, SWT.NONE);
+		GridDataFactory.swtDefaults().hint(0, 0).applyTo(controlsComposite);
 		
-		//Rectangle displaySize = shell.getDisplay().getBounds();
-		//Point shellSize = shell.getSize();
-		//shell.setBounds(displaySize.width - shellSize.x, displaySize.height - shellSize.y, shellSize.x, shellSize.y);
+		controlsComposite.setVisible(false);
 		
-		shell.addFocusListener(new FocusAdapter() {
+		controlsComposite.setLayout(new GridLayout(1, false));
+		
+		controlsExpander.addSelectionListener(new SelectionAdapter() {
 			@Override
-			public void focusGained(FocusEvent e) {
-				renderer.setFocus();
+			public void widgetSelected(SelectionEvent e) {
+				if (controlsComposite.isVisible()) {
+					controlsComposite.setVisible(false);
+					GridDataFactory.swtDefaults().hint(0, 0).applyTo(controlsComposite);
+				} else {
+					controlsComposite.setVisible(true);
+					Rectangle bounds = getShell().getClientArea();
+					GridDataFactory.swtDefaults().hint(-1, bounds.height).applyTo(controlsComposite);
+				}
+				getShell().pack();
+				videoControl.forceFocus();
 			}
 		});
 		
-		renderer.setFocus();
+		createControls();
+	}
+
+	private void createControls() {
+		cpuMemory = new MemoryViewer(controlsComposite, SWT.NONE, machine.getMemory());
+		
+		GridDataFactory.fillDefaults().grab(false, true).applyTo(cpuMemory);
 	}
 
 	private Menu createAppMenu(Decorations control, Object parent, boolean isPopup) {
@@ -339,6 +372,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	
 	@Override
 	public void dispose() {
+		cpuMemory.dispose();
 		super.dispose();
 	}
 
@@ -351,7 +385,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private void runMenu(final Control parent, final int x, final int y,
 			final Menu menu) {
 		if (parent != null) {
-			Point loc = menu.getParent().toControl(parent.toDisplay(x, y)); 
+			Point loc = parent.toDisplay(x, y); 
 			menu.setLocation(loc);
 		}
 		menu.setVisible(true);

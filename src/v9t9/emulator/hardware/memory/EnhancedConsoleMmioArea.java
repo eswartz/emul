@@ -82,12 +82,15 @@ public class EnhancedConsoleMmioArea extends ConsoleMmioArea implements MemoryLi
 
 
     
-    public void notifyMemoryMapChanged(MemoryEntry entry) {
+    public void physicalMemoryMapChanged(MemoryEntry entry) {
 		if ((entry.addr >= 0x10000 - MemoryDomain.AREASIZE || entry.addr + entry.size < 0x10000)
 				|| (entry.addr < 0x4000)) {
 			findUnderlyingMemory();
 		}
 	}
+    public void logicalMemoryMapChanged(MemoryEntry entry) {
+    	physicalMemoryMapChanged(entry);
+    }
 
     private void findUnderlyingMemory() {
     	for (MemoryEntry entry : machine.getMemory().getDomain("CPU").getMemoryEntries()) {

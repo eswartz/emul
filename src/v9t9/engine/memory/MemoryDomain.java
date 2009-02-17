@@ -6,6 +6,9 @@
  */
 package v9t9.engine.memory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Stack;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -39,6 +42,11 @@ public class MemoryDomain implements MemoryAccess {
     	void access(int cycles);
     }
     
+    /** Listener for noticing memory writes. */
+    public interface MemoryWriteListener {
+    	void changed(MemoryEntry entry, int addr);
+    }
+    
     public MemoryAccessListener nullMemoryAccessListener = new MemoryAccessListener() {
 
 		public void access(int cycles) {
@@ -46,13 +54,23 @@ public class MemoryDomain implements MemoryAccess {
     	
     };
     
+    public MemoryWriteListener nullMemoryWriteListener = new MemoryWriteListener() {
+
+		public void changed(MemoryEntry entry, int addr) {
+		}
+    	
+    };
+    
     private MemoryAccessListener accessListener = nullMemoryAccessListener;
+    
+    private MemoryWriteListener writeListener = nullMemoryWriteListener;
     
     private MemoryEntry entries[] = new MemoryEntry[NUMAREAS];
     
     private Stack<MemoryEntry> mappedEntries = new Stack<MemoryEntry>();
 	private MemoryEntry zeroMemoryEntry;
     
+	
     public MemoryDomain(int latency) {
     	zeroMemoryEntry = new MemoryEntry("Unmapped memory",
     			this,
@@ -158,12 +176,14 @@ public class MemoryDomain implements MemoryAccess {
     	MemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry.getLatency());
         entry.writeByte(addr, val);
+        writeListener.changed(entry, addr & 0xffff);
     }
 
     public final void writeWord(int addr, short val) {
         MemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry.getLatency());
         entry.writeWord(addr, val);
+        writeListener.changed(entry, addr & 0xfffe);
     }
 
     public final boolean hasRamAccess(int addr) {
@@ -186,7 +206,15 @@ public class MemoryDomain implements MemoryAccess {
     }
 
 	public void setAccessListener(MemoryAccessListener listener) {
+		if (listener == null)
+			listener = nullMemoryAccessListener;
 		this.accessListener = listener;
+	}
+	
+	public void setWriteListener(MemoryWriteListener listener) {
+		if (listener == null)
+			listener = nullMemoryWriteListener;
+		this.writeListener = listener;
 	}
 	public int getLatency(int addr) {
 		MemoryEntry entry = getEntryAt(addr);
@@ -342,5 +370,32 @@ public class MemoryDomain implements MemoryAccess {
 		return entries;
 	}
 
+	/**
+	 * Get all the memory entries, with individual banks expanded
+	 * @return
+	 */
+	public MemoryEntry[] getFlattenedMemoryEntries() {
+		List<MemoryEntry> entryList = new ArrayList<MemoryEntry>();
+		for (MemoryEntry entry : mappedEntries) {
+			if (entry == zeroMemoryEntry  || !isEntryMapped(entry))
+				continue;
+			if (entry instanceof MultiBankedMemoryEntry) {
+				MultiBankedMemoryEntry banked = (MultiBankedMemoryEntry) entry;
+				entryList.addAll(Arrays.asList(banked.getBanks()));
+			} else if (entry instanceof BankedMemoryEntry) {
+				BankedMemoryEntry banked = (BankedMemoryEntry) entry;
+				for (int i = 0; i < banked.getBankCount(); i++) {
+					entryList.add(new BankedMemoryProxyEntry(banked, i));
+				}
+			} else {
+				entryList.add(entry);
+			}
+		}
+		return (MemoryEntry[]) entryList.toArray(new MemoryEntry[entryList.size()]);
+	}
+
+	public void writeMemory(int vdpaddr) {
+		writeListener.changed(getEntryAt(vdpaddr), vdpaddr);
+	}
 
 }

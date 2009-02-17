@@ -76,7 +76,7 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 		frame.setFocusCycleRoot(true);
 		frame.setFocusTraversalKeysEnabled(false);
 		
-		File iconsFile = new File("icons/icons.png");
+		File iconsFile = V9t9.getDataFile("icons/icons.png");
 		try {
 			icons = ImageIO.read(iconsFile);
 		} catch (IOException e1) {

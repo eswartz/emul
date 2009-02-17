@@ -569,6 +569,7 @@ public class VdpTMS9918A implements VdpHandler {
      */
     public synchronized void touchAbsoluteVdpMemory(int vdpaddr, byte val) {
     	try {
+    		vdpMemory.writeMemory(vdpaddr & 0x3fff);
 			if (vdpModeRedrawHandler != null) {
 				vdpChanges.changed |= vdpModeRedrawHandler.touch(vdpaddr);
 		    	if (spriteRedrawHandler != null) {

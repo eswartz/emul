@@ -32,12 +32,22 @@ public class Memory {
 		listeners.remove(listener);
 	}
 
-	public void notifyListeners(MemoryEntry entry) {
+	public void notifyListenersOfPhysicalChange(MemoryEntry entry) {
 		if (listeners != null) {
 			for (Iterator<MemoryListener> iter = listeners.iterator(); iter
 					.hasNext();) {
 				MemoryListener element = iter.next();
-				element.notifyMemoryMapChanged(entry);
+				element.physicalMemoryMapChanged(entry);
+			}
+		}
+	}
+	
+	public void notifyListenersOfLogicalChange(MemoryEntry entry) {
+		if (listeners != null) {
+			for (Iterator<MemoryListener> iter = listeners.iterator(); iter
+					.hasNext();) {
+				MemoryListener element = iter.next();
+				element.logicalMemoryMapChanged(entry);
 			}
 		}
 	}
@@ -51,7 +61,7 @@ public class Memory {
 	}
     public void addAndMap(MemoryEntry entry) {
         entry.domain.mapEntry(entry);
-        notifyListeners(entry);
+        notifyListenersOfPhysicalChange(entry);
     }
     
     public Memory(MemoryModel model) {
@@ -74,6 +84,10 @@ public class Memory {
 		for (Map.Entry<String, MemoryDomain> entry : domains.entrySet()) {
 			entry.getValue().loadState(section.getSection(entry.getKey()));
 		}
+	}
+
+	public MemoryDomain[] getDomains() {
+		return (MemoryDomain[]) domains.values().toArray(new MemoryDomain[domains.values().size()]);
 	}
 
 }

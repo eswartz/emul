@@ -75,4 +75,8 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	public String getUniqueName() {
 		return currentBank != null ? currentBank.getUniqueName() : super.getUniqueName();
 	}
+	
+	public MemoryEntry[] getBanks() {
+		return banks;
+	}
 }

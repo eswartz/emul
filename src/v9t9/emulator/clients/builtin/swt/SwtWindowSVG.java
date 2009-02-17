@@ -68,10 +68,10 @@ public class SwtWindowSVG extends BaseEmulatorWindow {
 		
 		this.videoControl = renderer.createControl(screenComposite, SWT.BORDER);
 		
-		File iconsFile = new File("icons/icons.svg");
+		File iconsFile = V9t9.getDataFile("icons/icons.svg");
 		SVGLoader icons = new SVGLoader(iconsFile);
 		
-		buttonBar = new ButtonBar(mainComposite, SWT.HORIZONTAL, videoRenderer);
+		buttonBar = new ButtonBar(mainComposite, SWT.HORIZONTAL);
 		
 		createButton(buttonBar, 
 				icons, new Rectangle(0, 64, 64, 64),
@@ -174,16 +174,16 @@ public class SwtWindowSVG extends BaseEmulatorWindow {
 
 	}
 
-	private BasicButton createButton(ButtonBar buttonBar, final SVGLoader icon, final Rectangle bounds, String tooltip, SelectionListener selectionListener) {
-		BasicButton button = new BasicButton(buttonBar, SWT.PUSH, icon, bounds, tooltip);
+	private BasicButtonSVG createButton(ButtonBar buttonBar, final SVGLoader icon, final Rectangle bounds, String tooltip, SelectionListener selectionListener) {
+		BasicButtonSVG button = new BasicButtonSVG(buttonBar, SWT.PUSH, icon, bounds, tooltip);
 		button.addSelectionListener(selectionListener);
 		return button;
 	}
 	
-	private BasicButton createStateButton(ButtonBar buttonBar, final Setting setting, final SVGLoader icon,
+	private BasicButtonSVG createStateButton(ButtonBar buttonBar, final Setting setting, final SVGLoader icon,
 			final Rectangle bounds,
 			final Rectangle checkBounds, String tooltip) {
-		final BasicButton button = new BasicButton(buttonBar, SWT.TOGGLE, icon, bounds, tooltip);
+		final BasicButtonSVG button = new BasicButtonSVG(buttonBar, SWT.TOGGLE, icon, bounds, tooltip);
 		setting.addListener(new ISettingListener() {
 
 			public void changed(final Setting setting, final Object oldValue) {

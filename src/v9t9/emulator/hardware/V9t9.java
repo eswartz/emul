@@ -6,6 +6,7 @@
  */
 package v9t9.emulator.hardware;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
@@ -351,6 +352,10 @@ public class V9t9 {
     		if (arg.equals(string))
     			return true;
 		return false;
+	}
+
+	public static File getDataFile(String string) {
+		return new File(string);
 	}
 
 }

@@ -13,15 +13,12 @@ import org.eclipse.jface.dialogs.IDialogSettings;
  */
 public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 
-	private int bankOffset;
-
 	public WindowBankedMemoryEntry(Memory memory, String name,
 			MemoryDomain domain, int addr, int size,
 			MemoryArea area) {
 		super(memory, name, domain, addr, size, area.getSize() / size);
 		selectBank(0);
 		setArea(area);
-		addrOffset = bankOffset;
 	}
 
 	/* (non-Javadoc)
@@ -29,8 +26,7 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 	 */
 	@Override
 	protected void doSwitchBank(int bank) {
-		bankOffset = bank * getBankSize();
-		addrOffset = bankOffset;
+		addrOffset = bank * getBankSize();
 	}
 
 	//@Override
@@ -39,7 +35,7 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 	//}
 	
 	public int getBankOffset() {
-		return bankOffset;
+		return addrOffset;
 	}
 	
 	@Override
@@ -51,5 +47,12 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 	protected void doLoadBankEntries(IDialogSettings section) {
 		if (section == null) return;
 		getArea().loadContents(section, this);
+	}
+	
+	@Override
+	public boolean contains(int addr) {
+		int base = getCurrentBank() * getBankSize();
+		return (addr >= base 
+				&& addr < base + getBankSize());
 	}
 }

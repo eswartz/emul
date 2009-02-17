@@ -249,12 +249,19 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
     /* (non-Javadoc)
      * @see v9t9.Memory.Listener#notifyMemoryChanged(v9t9.MemoryEntry)
      */
-    public void notifyMemoryMapChanged(MemoryEntry entry) {
+    public void logicalMemoryMapChanged(MemoryEntry entry) {
     	//System.out.println("Memory map changed");
         //clear();
         if (running) {
 			throw new AbortedException();
 		} 
+    }
+    public void physicalMemoryMapChanged(MemoryEntry entry) {
+    	//System.out.println("Memory map changed");
+    	//clear();
+    	if (running) {
+    		throw new AbortedException();
+    	} 
     }
 
 

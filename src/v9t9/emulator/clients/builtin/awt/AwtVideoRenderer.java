@@ -126,7 +126,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		
 		Dimension preferredSize = new Dimension(desiredWidth, desiredHeight);
 		if (!canvas.isPreferredSizeSet() || !canvas.getPreferredSize().equals(preferredSize)) {
-			System.out.println("Desiring size: " + desiredWidth + "/" + desiredHeight);
+			//System.out.println("Desiring size: " + desiredWidth + "/" + desiredHeight);
 	
 			canvas.setPreferredSize(preferredSize);
 			canvas.setSize(preferredSize);

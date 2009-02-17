@@ -54,7 +54,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 
 	private TreeMap<Short, String> symbols;
 
-	protected int addrOffset = 0;
+	public int addrOffset = 0;
 
     public MemoryEntry(String name, MemoryDomain domain, int addr,
             int size, MemoryArea area) {
@@ -286,7 +286,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 		area.writeWord(this, mapAddress(addr), val);
 	}
 	
-	public byte getLatency() {
+	public final byte getLatency() {
 		return area.getLatency();
 	}
 
@@ -334,5 +334,10 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 
 	public String getUniqueName() {
 		return name;
+	}
+
+
+	public boolean contains(int addr) {
+		return addr >= this.addr + this.addrOffset && addr < this.addr + this.addrOffset + this.size;
 	}
 }

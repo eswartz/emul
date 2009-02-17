@@ -45,7 +45,7 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 		if (currentBankIndex != bank) {
 			doSwitchBank(bank);
 			currentBankIndex = bank;
-			memory.notifyListeners(this);
+			memory.notifyListenersOfLogicalChange(this);
 			currentBankIndex = bank;
 			return true;
 		}
