@@ -10,6 +10,7 @@ import java.io.IOException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
@@ -484,6 +485,10 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		ImageLoader imageLoader = new ImageLoader();
 		imageLoader.data = new ImageData[] { image.getImageData() };
 		imageLoader.save(new FileOutputStream(file), SWT.IMAGE_PNG);
+	}
+
+	public void addMouseEventListener(MouseListener listener) {
+		canvas.addMouseListener(listener);
 	}
 	
 }

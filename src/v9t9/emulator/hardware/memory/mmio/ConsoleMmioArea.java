@@ -17,4 +17,9 @@ public class ConsoleMmioArea extends WordMemoryArea {
         bWordAccess = true;
         memory = ZeroWordMemoryArea.zeroes;
     }
+    
+    @Override
+    public boolean hasReadAccess() {
+    	return false;
+    }
 }

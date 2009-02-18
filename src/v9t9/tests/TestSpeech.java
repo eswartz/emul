@@ -52,7 +52,7 @@ public class TestSpeech {
 		speechWaveForm = new byte[200 * 2];
 		speechIdx = 0;
 		
-		MemoryDomain speechMem = new MemoryDomain();
+		MemoryDomain speechMem = new MemoryDomain("Speech");
 		DataFiles.addSearchPath("/usr/local/src/v9t9-data/roms");
 		DataFiles.addSearchPath("l:/src/v9t9-data/roms");
 		TMS5220 tms5220 = new TMS5220(speechMem);

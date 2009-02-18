@@ -71,6 +71,8 @@ public class FastTimer {
 					//long prev = timer.getTimeNs();
 					//double prevd = timer.getTimeDouble();
 					while (true) {
+						if (timerThread == null)
+							break;
 						try {
 							Thread.sleep(0, 50000);
 						} catch (InterruptedException e) {

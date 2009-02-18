@@ -69,10 +69,12 @@ public class MemoryDomain implements MemoryAccess {
     
     private Stack<MemoryEntry> mappedEntries = new Stack<MemoryEntry>();
 	private MemoryEntry zeroMemoryEntry;
+	private final String name;
     
 	
-    public MemoryDomain(int latency) {
-    	zeroMemoryEntry = new MemoryEntry("Unmapped memory",
+    public MemoryDomain(String name, int latency) {
+    	this.name = name;
+		zeroMemoryEntry = new MemoryEntry("Unmapped memory",
     			this,
     			0,
     			PHYSMEMORYSIZE,
@@ -82,8 +84,8 @@ public class MemoryDomain implements MemoryAccess {
     	mapEntry(zeroMemoryEntry);
     }
     
-	public MemoryDomain() {
-    	this(0);
+	public MemoryDomain(String name) {
+    	this(name, 0);
     }
     
     /** For testing, create a RAM-accessible memory domain which spans
@@ -92,7 +94,7 @@ public class MemoryDomain implements MemoryAccess {
      * @return
      */
     public static MemoryDomain newFromArray(short[] data, boolean bWordAccess) {
-        MemoryDomain domain = new MemoryDomain();
+        MemoryDomain domain = new MemoryDomain("CPU");
         WordMemoryArea area = WordMemoryArea.newDefaultArea();
         area.bWordAccess = bWordAccess;
         area.memory = data;
@@ -396,6 +398,10 @@ public class MemoryDomain implements MemoryAccess {
 
 	public void writeMemory(int vdpaddr) {
 		writeListener.changed(getEntryAt(vdpaddr), vdpaddr);
+	}
+
+	public String getName() {
+		return name;
 	}
 
 }

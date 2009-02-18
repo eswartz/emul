@@ -56,10 +56,10 @@ public class StandardConsoleMemoryModel implements MemoryModel {
     public Memory createMemory() {
     	this.memory = new Memory(this);
     	
-        CPU = new MemoryDomain(4);
-        GRAPHICS = new MemoryDomain();
-        VIDEO = new MemoryDomain();
-        SPEECH = new MemoryDomain();
+        CPU = new MemoryDomain("Console", 4);
+        GRAPHICS = new MemoryDomain("GROM/GRAM");
+        VIDEO = new MemoryDomain("VDP");
+        SPEECH = new MemoryDomain("Speech");
         
         memory.addDomain("CPU", CPU);
         memory.addDomain("GRAPHICS", GRAPHICS);

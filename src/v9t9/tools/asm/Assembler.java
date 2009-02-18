@@ -40,7 +40,7 @@ public class Assembler {
 	private int DEBUG = 0;
 	
 	/** memory domain for area-sensitive view of the world */
-    private MemoryDomain StdCPU = new MemoryDomain();
+    private MemoryDomain StdCPU = new MemoryDomain("CPU Std");
     private MemoryEntry StdCPURAM = new MemoryEntry("Std CPU RAM",
     		StdCPU, 0x8000, 0x400, new StockRamArea(0x400));
     private MemoryEntry StdCPUExpLoRAM = new MemoryEntry("Std CPU Low Exp RAM",
@@ -49,7 +49,7 @@ public class Assembler {
     		StdCPU, 0xA000, 0x6000, new StockRamArea(0x6000));
     
     /** memory domain for the assembler's view of the world */
-    private MemoryDomain CPUFullRAM = new MemoryDomain();
+    private MemoryDomain CPUFullRAM = new MemoryDomain("CPU Write");
     private MemoryEntry CPUFullRAMEntry = new MemoryEntry("Assembler RAM",
     		CPUFullRAM, 0, 0x10000, new StockRamArea(0x10000));
     
