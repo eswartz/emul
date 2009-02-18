@@ -65,7 +65,6 @@ public class MemoryViewer extends Composite {
 	private TableViewer byteTableViewer;
 	private ComboViewer entryViewer;
 	private final Memory memory;
-	private Timer timer;
 	private TimerTask refreshTask;
 	protected MemoryRange currentRange;
 	private Button refreshButton;
@@ -75,8 +74,9 @@ public class MemoryViewer extends Composite {
 	private Button filterButton;
 	private boolean filterMemory;
 	protected Set<Integer> changedMemory;
+	private Timer timer;
 
-	public MemoryViewer(Composite parent, int style, Memory memory) {
+	public MemoryViewer(Composite parent, int style, Memory memory, final Timer timer) {
 		super(parent, style);
 		this.memory = memory;
 		changedMemory = new TreeSet<Integer>();
@@ -101,12 +101,12 @@ public class MemoryViewer extends Composite {
 			
 		});
 		
-		timer = new Timer();
+		this.timer = timer;
 		refreshTask = new TimerTask() {
 
 			@Override
 			public void run() {
-				if (autoRefresh && !isDisposed())
+				if (timer != null && autoRefresh && !isDisposed())
 					getDisplay().asyncExec(new Runnable() {
 						public void run() {
 							refreshViewer();
@@ -115,7 +115,7 @@ public class MemoryViewer extends Composite {
 			}
 			
 		};
-		timer.scheduleAtFixedRate(refreshTask, 0, 250);
+		timer.schedule(refreshTask, 0, 250);
 		
 	}
 
@@ -123,6 +123,7 @@ public class MemoryViewer extends Composite {
 	public void dispose() {
 		refreshTask.cancel();
 		timer.cancel();
+		timer = null;
 		super.dispose();
 	}
 	
@@ -306,7 +307,6 @@ public class MemoryViewer extends Composite {
 		// hmmm... FontRegister.createFont() is busted
 		Font textFont = JFaceResources.getTextFont();
 		FontData[] fontData = textFont.getFontData();
-		textFont.dispose();
 		int len = 0;
 		while (len < fontData.length && fontData[len] != null) 
 			len++;
@@ -333,6 +333,10 @@ public class MemoryViewer extends Composite {
 		byteTableViewer.setCellModifier(new ByteMemoryCellModifier(byteTableViewer));
 		byteTableViewer.setCellEditors(editors);
 		
+		addTableContextMenu(table);
+	}
+
+	private void addTableContextMenu(final Table table) {
 		Menu menu = new Menu(table);
 		MenuItem item;
 		item = new MenuItem(menu, SWT.NONE);
@@ -378,6 +382,7 @@ public class MemoryViewer extends Composite {
 		for (TableColumn column : byteTableViewer.getTable().getColumns())
 			column.pack();
 		byteTableViewer.getTable().setLayoutDeferred(false);
+		//MemoryViewer.this.getShell().layout(true, true);
 		MemoryViewer.this.getShell().pack();
 		
 	}

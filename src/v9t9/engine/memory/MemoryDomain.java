@@ -63,7 +63,7 @@ public class MemoryDomain implements MemoryAccess {
     
     private MemoryAccessListener accessListener = nullMemoryAccessListener;
     
-    private MemoryWriteListener writeListener = nullMemoryWriteListener;
+    private List<MemoryWriteListener> writeListeners = null;
     
     private MemoryEntry entries[] = new MemoryEntry[NUMAREAS];
     
@@ -178,14 +178,22 @@ public class MemoryDomain implements MemoryAccess {
     	MemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry.getLatency());
         entry.writeByte(addr, val);
-        writeListener.changed(entry, addr & 0xffff);
+        if (writeListeners != null)
+        	fireWriteEvent(entry, addr & 0xffff);
     }
 
-    public final void writeWord(int addr, short val) {
+    private void fireWriteEvent(MemoryEntry entry, int addr) {
+    	for (MemoryWriteListener listener : writeListeners) {
+    		listener.changed(entry, addr);
+    	}
+	}
+
+	public final void writeWord(int addr, short val) {
         MemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry.getLatency());
         entry.writeWord(addr, val);
-        writeListener.changed(entry, addr & 0xfffe);
+        if (writeListeners != null)
+        	fireWriteEvent(entry, addr & 0xfffe);
     }
 
     public final boolean hasRamAccess(int addr) {
@@ -213,11 +221,26 @@ public class MemoryDomain implements MemoryAccess {
 		this.accessListener = listener;
 	}
 	
-	public void setWriteListener(MemoryWriteListener listener) {
-		if (listener == null)
-			listener = nullMemoryWriteListener;
-		this.writeListener = listener;
+	public synchronized void addWriteListener(MemoryWriteListener listener) {
+		List<MemoryWriteListener> newListeners = new ArrayList<MemoryWriteListener>();
+		if (writeListeners != null)
+			newListeners.addAll(writeListeners);
+		if (!newListeners.contains(listener))
+			newListeners.add(listener);
+		writeListeners = newListeners;
 	}
+	public synchronized void removeWriteListener(MemoryWriteListener listener) {
+		if (writeListeners == null)
+			return;
+		List<MemoryWriteListener> newListeners = new ArrayList<MemoryWriteListener>();
+		newListeners.addAll(writeListeners);
+		newListeners.remove(listener);
+		if (newListeners.size() == 0)
+			writeListeners = null;
+		else
+			writeListeners = newListeners;
+	}
+	
 	public int getLatency(int addr) {
 		MemoryEntry entry = getEntryAt(addr);
 		return entry.getLatency();
@@ -396,8 +419,9 @@ public class MemoryDomain implements MemoryAccess {
 		return (MemoryEntry[]) entryList.toArray(new MemoryEntry[entryList.size()]);
 	}
 
-	public void writeMemory(int vdpaddr) {
-		writeListener.changed(getEntryAt(vdpaddr), vdpaddr);
+	public void writeMemory(int addr) {
+		if (writeListeners != null)
+			fireWriteEvent(getEntryAt(addr), addr);
 	}
 
 	public String getName() {

@@ -4,6 +4,9 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -11,6 +14,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.RTFTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
@@ -62,12 +67,16 @@ public class SwtWindow extends BaseEmulatorWindow {
 	protected Control videoControl;
 	private ButtonBar buttonBar;
 	private Button controlsExpander;
-	private MemoryViewer cpuMemory;
 	private Composite controlsComposite;
+	private List<Shell> toolShells;
+	private Timer toolUiTimer;
 	
 	public SwtWindow(Display display, final ISwtVideoRenderer renderer, final Machine machine) {
 		super(machine);
 		setVideoRenderer(renderer);
+		
+		toolShells = new ArrayList<Shell>();
+		toolUiTimer = new Timer(true);
 		
 		shell = new Shell(display, SWT.SHELL_TRIM & ~SWT.RESIZE);
 		shell.setText("V9t9");
@@ -319,9 +328,59 @@ public class SwtWindow extends BaseEmulatorWindow {
 	}
 
 	private void createControls() {
-		cpuMemory = new MemoryViewer(controlsComposite, SWT.NONE, machine.getMemory());
+		Button spawnMemoryViewButton = new Button(controlsComposite, SWT.PUSH | SWT.NO_FOCUS);
+		spawnMemoryViewButton.setText("View Memory...");
+		spawnMemoryViewButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
+				shell.setLayout(new GridLayout(1, false));
+				final MemoryViewer cpuMemory = new MemoryViewer(shell, SWT.NONE, machine.getMemory(), toolUiTimer);
+				
+				//GridDataFactory.fillDefaults().grab(true, true).applyTo(cpuMemory);
+				final GridData data = GridDataFactory.swtDefaults().grab(true, true).minSize(300, 300).create();
+				cpuMemory.setLayoutData(data);
+				
+				shell.addDisposeListener(new DisposeListener() {
+					public void widgetDisposed(DisposeEvent e) {
+						cpuMemory.dispose();
+					}
+				});
+				/*
+				cpuMemory.addControlListener(new ControlAdapter() {
+					@Override
+					public void controlResized(ControlEvent e) {
+						Composite composite = (Composite)e.widget;
+						//data.heightHint = composite.getSize().y;
+					}
+				});
+				shell.addControlListener(new ControlAdapter() {
+					@Override
+					public void controlResized(ControlEvent e) {
+						shell.getDisplay().asyncExec(new Runnable() {
+							public void run() {
+								shell.pack();
+							}
+						});
+					}
+				});*/
+				
+				shell.open();
+				shell.pack();
+				
+				addToolShell(shell);
+			}
+		});
 		
-		GridDataFactory.fillDefaults().grab(false, true).applyTo(cpuMemory);
+	}
+
+	protected void addToolShell(final Shell toolShell) {
+		toolShells.add(toolShell);
+		toolShell.addDisposeListener(new DisposeListener() {
+			public void widgetDisposed(DisposeEvent e) {
+				toolShells.remove(toolShell);
+			}
+		});
 	}
 
 	private Menu createAppMenu(Decorations control, Object parent, boolean isPopup) {
@@ -373,7 +432,10 @@ public class SwtWindow extends BaseEmulatorWindow {
 	
 	@Override
 	public void dispose() {
-		cpuMemory.dispose();
+		toolUiTimer.cancel();
+		for (Object shell : toolShells.toArray()) {
+			((Shell)shell).dispose();
+		}
 		super.dispose();
 	}
 

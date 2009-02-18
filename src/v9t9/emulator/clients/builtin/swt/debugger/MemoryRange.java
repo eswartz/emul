@@ -73,7 +73,7 @@ public class MemoryRange {
 		synchronized (changedMemory) {
 			changedMemory.clear();
 		}
-		entry.domain.setWriteListener(memoryWriteListener);
+		entry.domain.addWriteListener(memoryWriteListener);
 	}
 	public int getAddress() {
 		return addr;
@@ -105,7 +105,7 @@ public class MemoryRange {
 		hiRange = 0;
 	}
 	public void removeMemoryListener() {
-		entry.domain.setWriteListener(null);
+		entry.domain.removeWriteListener(memoryWriteListener);
 	}
 	public int getSize() {
 		return len;
