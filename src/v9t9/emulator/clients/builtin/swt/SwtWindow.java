@@ -338,7 +338,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				final MemoryViewer cpuMemory = new MemoryViewer(shell, SWT.NONE, machine.getMemory(), toolUiTimer);
 				
 				//GridDataFactory.fillDefaults().grab(true, true).applyTo(cpuMemory);
-				final GridData data = GridDataFactory.swtDefaults().grab(true, true).minSize(300, 300).create();
+				final GridData data = GridDataFactory.fillDefaults().grab(true, true).create();
 				cpuMemory.setLayoutData(data);
 				
 				shell.addDisposeListener(new DisposeListener() {

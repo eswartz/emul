@@ -122,8 +122,6 @@ public class MemoryViewer extends Composite {
 	@Override
 	public void dispose() {
 		refreshTask.cancel();
-		timer.cancel();
-		timer = null;
 		super.dispose();
 	}
 	
