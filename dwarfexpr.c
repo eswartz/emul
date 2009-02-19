@@ -183,7 +183,11 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
         }
         switch (Op) {
         case OP_addr:
-            sExprStack[sExprStackLen++] = dio_ReadAddress();
+            if ((sExprStack[sExprStackLen++] = elf_map_to_run_time_address(
+                    Value->mContext, Value->mObject->mCompUnit->mFile, dio_ReadAddress())) == 0) {
+                errno = ERR_INV_DWARF;
+                return -1;
+            }
             break;
         case OP_deref:
             check_e_stack(1);
@@ -670,7 +674,9 @@ static int evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
         }
         else {
             U2_T Size = dio_ReadU2();
-            if (IP >= Base + Addr0 && IP < Base + Addr1) {
+            ContextAddress RTAddr0 = elf_map_to_run_time_address(Value->mContext, Cache->mFile, Base + Addr0);
+            ContextAddress RTAddr1 = Addr1 - Addr0 + RTAddr0;
+            if (RTAddr0 != 0 && IP >= RTAddr0 && IP < RTAddr1) {
                 return evaluate_expression(BaseAddresss, Value, Addr + dio_GetPos(), Size);
             }
             dio_Skip(Size);

@@ -40,15 +40,17 @@
 
 static const char * LINENUMBERS = "LineNumbers";
 
-static CompUnit * find_unit(DWARFCache * cache, ContextAddress addr0, ContextAddress addr1, ContextAddress * addr_next) {
+static CompUnit * find_unit(Context * ctx, DWARFCache * cache, ContextAddress addr0, ContextAddress addr1, ContextAddress * addr_next) {
     U4_T i;
+    ContextAddress addr_min = 0;
     CompUnit * unit = NULL;
-    ContextAddress low_pc = 0;
     /* TODO: faster unit search */
     for (i = 0; i < cache->mCompUnitsCnt; i++) {
         CompUnit * u = cache->mCompUnits[i];
+        ContextAddress base = elf_map_to_run_time_address(ctx, cache->mFile, u->mLowPC);
+        ContextAddress size = u->mHighPC - u->mLowPC;
+        if (base == 0 || size == 0) continue;
         if (u->mDebugRangesOffs != ~(U8_T)0 && cache->mDebugRanges != NULL) {
-            U8_T base = u->mLowPC;
             U8_T max = 0;
             if (elf_load(cache->mDebugRanges)) exception(errno);
             dio_EnterDataSection(&u->mDesc, cache->mDebugRanges->data, u->mDebugRangesOffs, cache->mDebugRanges->size);
@@ -57,15 +59,15 @@ static CompUnit * find_unit(DWARFCache * cache, ContextAddress addr0, ContextAdd
                 U8_T y = dio_ReadAddress();
                 if (x == 0 && y == 0) break;
                 if (x == ((U8_T)1 << u->mDesc.mAddressSize * 8) - 1) {
-                    base = y;
+                    base = (ContextAddress)y;
                 }
                 else {
                     x = base + x;
                     y = base + y;
                     if (addr0 < y && addr1 > x) {
-                        if (unit == NULL || low_pc > x) {
+                        if (unit == NULL || addr_min > x) {
                             unit = u;
-                            low_pc = (ContextAddress)x;
+                            addr_min = (ContextAddress)x;
                             *addr_next = (ContextAddress)y;
                         }
                     }
@@ -73,23 +75,21 @@ static CompUnit * find_unit(DWARFCache * cache, ContextAddress addr0, ContextAdd
             }
             dio_ExitSection();
         }
-        else if (u->mLowPC != 0 && u->mHighPC != 0) {
-            if (addr0 < u->mHighPC && addr1 > u->mLowPC) {
-                if (unit == NULL || low_pc > u->mLowPC) {
-                    unit = u;
-                    low_pc = u->mLowPC;
-                    *addr_next = u->mHighPC;
-                }
+        else if (addr0 < base + size && addr1 > base) {
+            if (unit == NULL || addr_min > base) {
+                unit = u;
+                addr_min = base;
+                *addr_next = base + size;
             }
         }
     }
     return unit;
 }
 
-static void load_line_numbers_in_range(DWARFCache * cache, ContextAddress addr0, ContextAddress addr1) {
+static void load_line_numbers_in_range(Context * ctx, DWARFCache * cache, ContextAddress addr0, ContextAddress addr1) {
     while (addr0 < addr1) {
         ContextAddress next = 0;
-        CompUnit * unit = find_unit(cache, addr0, addr1, &next);
+        CompUnit * unit = find_unit(ctx, cache, addr0, addr1, &next);
         if (unit == NULL) break;
         load_line_numbers(cache, unit);
         addr0 = next;
@@ -111,7 +111,7 @@ static int cmp_file(char * file, char * dir, char * name) {
     return 0;
 }
 
-static void write_line_info(OutputStream * out, CompUnit * unit,
+static void write_line_info(Context * ctx, OutputStream * out, CompUnit * unit,
                             ContextAddress addr0, ContextAddress addr1,
                             int * cnt, FileInfo ** file_info) {
     U4_T i;
@@ -120,8 +120,10 @@ static void write_line_info(OutputStream * out, CompUnit * unit,
     for (i = 0; i < unit->mStatesCnt - 1; i++) {
         LineNumbersState * state = unit->mStates + i;
         LineNumbersState * next = unit->mStates + i + 1;
+        ContextAddress state_addr = elf_map_to_run_time_address(ctx, unit->mFile, state->mAddress);
+        ContextAddress next_addr = elf_map_to_run_time_address(ctx, unit->mFile, next->mAddress);
         if (state->mFlags & LINE_EndSequence) continue;
-        if (next->mAddress > addr0 && state->mAddress < addr1) {
+        if (next_addr > addr0 && state_addr < addr1) {
             if (*cnt > 0) write_stream(out, ',');
             write_stream(out, '{');
             json_write_string(out, "SLine");
@@ -161,11 +163,11 @@ static void write_line_info(OutputStream * out, CompUnit * unit,
             write_stream(out, ',');
             json_write_string(out, "SAddr");
             write_stream(out, ':');
-            json_write_ulong(out, state->mAddress);
+            json_write_ulong(out, state_addr);
             write_stream(out, ',');
             json_write_string(out, "EAddr");
             write_stream(out, ':');
-            json_write_ulong(out, next->mAddress);
+            json_write_ulong(out, next_addr);
             if (state->mISA != 0) {
                 write_stream(out, ',');
                 json_write_string(out, "ISA");
@@ -219,6 +221,7 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineT
                 for (i = 0; i < cache->mCompUnitsCnt; i++) {
                     CompUnit * unit = cache->mCompUnits[i];
                     int equ = 0;
+                    assert(unit->mFile == file);
                     if (unit->mDir != NULL && unit->mName != NULL) {
                         equ = cmp_file(file_name, unit->mDir, unit->mName);
                     }
@@ -241,6 +244,7 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineT
                                 LineNumbersState * next = unit->mStates + j + 1;
                                 char * state_dir = unit->mDir;
                                 char * state_name = unit->mName;
+                                ContextAddress addr = 0;
                                 if (state->mFlags & LINE_EndSequence) continue;
                                 if ((unsigned)line < state->mLine) continue;
                                 if ((unsigned)line >= next->mLine) continue;
@@ -250,7 +254,9 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineT
                                     state_name = f->mName;
                                 }
                                 if (!cmp_file(file_name, state_dir, state_name)) continue;
-                                callback(user_args, state->mAddress);
+                                addr = elf_map_to_run_time_address(ctx, file, state->mAddress);
+                                if (addr == 0) continue;
+                                callback(user_args, addr);
                             }
                         }
                     }
@@ -302,7 +308,7 @@ static void command_map_to_source(char * token, Channel * c) {
             Trap trap;
             if (set_trap(&trap)) {
                 DWARFCache * cache = get_dwarf_cache(file);
-                load_line_numbers_in_range(cache, addr0, addr1);
+                load_line_numbers_in_range(ctx, cache, addr0, addr1);
                 clear_trap(&trap);
                 if (cache_last == NULL) {
                     cache_first = cache;
@@ -338,9 +344,9 @@ static void command_map_to_source(char * token, Channel * c) {
             if (set_trap(&trap)) {
                 while (err == 0 && addr0 < addr1) {
                     ContextAddress next = 0;
-                    CompUnit * unit = find_unit(cache, addr0, addr1, &next);
+                    CompUnit * unit = find_unit(ctx, cache, addr0, addr1, &next);
                     if (unit == NULL) break;
-                    write_line_info(&c->out, unit, addr0, addr1, &cnt, &file_info);
+                    write_line_info(ctx, &c->out, unit, addr0, addr1, &cnt, &file_info);
                     addr0 = next;
                 }
                 clear_trap(&trap);

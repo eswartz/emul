@@ -84,6 +84,19 @@
 #define STT_SECTION     3
 #define STT_FILE        4
 
+#define PT_NULL         0
+#define PT_LOAD         1
+#define PT_DYNAMIC      2
+#define PT_INTERP       3
+#define PT_NOTE         4
+#define PT_SHLIB        5
+#define PT_PHDR         6
+#define PT_TLS          7
+
+#define PF_X            (1 << 0)
+#define PF_W            (1 << 1)
+#define PF_R            (1 << 2)
+
 typedef unsigned long  Elf32_Addr;
 typedef unsigned short Elf32_Half;
 typedef unsigned long  Elf32_Off;
@@ -119,6 +132,17 @@ typedef struct Elf32_Shdr {
     Elf32_Word sh_addralign;
     Elf32_Word sh_entsize;
 } Elf32_Shdr;
+
+typedef struct Elf32_Phdr {
+    Elf32_Word p_type;
+    Elf32_Off  p_offset;
+    Elf32_Addr p_vaddr;
+    Elf32_Addr p_paddr;
+    Elf32_Word p_filesz;
+    Elf32_Word p_memsz;
+    Elf32_Word p_flags;
+    Elf32_Word p_align;
+} Elf32_Phdr;
 
 typedef struct Elf32_Sym {
     Elf32_Word    st_name;
@@ -177,10 +201,9 @@ typedef signed int I4_T;
 typedef uns64 U8_T;
 typedef int64 I8_T;
 
-struct ELF_File;
-struct ELF_Section;
-typedef struct ELF_Section ELF_Section;
 typedef struct ELF_File ELF_File;
+typedef struct ELF_Section ELF_Section;
+typedef struct ELF_PHeader ELF_PHeader;
 
 struct ELF_File {
     ELF_File * next;
@@ -193,10 +216,15 @@ struct ELF_File {
     int fd;
 
     int big_endian; /* 0 - least significant first, 1 - most significat first */
+    int pic;        /* > 0 if position independend code, e.g. shared object file */
     int elf64;
+
     unsigned section_cnt;
-    ELF_Section ** sections;
+    ELF_Section * sections;
     char * str_pool;
+
+    unsigned pheader_cnt;
+    ELF_PHeader * pheaders;
 
     void * dwarf_io_cache;
     void * dwarf_dt_cache;
@@ -221,6 +249,16 @@ struct ELF_Section {
     
     void * mmap_addr;
     size_t mmap_size;
+};
+
+struct ELF_PHeader {
+    U4_T type;
+    U8_T offset;
+    U8_T address;
+    U8_T file_size;
+    U8_T mem_size;
+    U4_T flags;
+    U4_T align;
 };
 
 /*
@@ -267,6 +305,11 @@ extern int elf_load(ELF_Section * section);
  */
 typedef void (*ELFCloseListener)(ELF_File *);
 extern void elf_add_close_listener(ELFCloseListener listener);
+
+/*
+ * Map link-time address in an ELF file to run-time address in a context.
+ */
+extern ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ContextAddress addr);
 
 #endif
 

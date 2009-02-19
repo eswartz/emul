@@ -44,15 +44,17 @@ typedef struct MemoryRegion MemoryRegion;
 struct MemoryRegion {
     ContextAddress addr;
     unsigned long size;
+    unsigned long file_offs;
     char * file_name;
+    unsigned flags;
     ELF_File * file;
 };
 
 typedef struct MemoryMap MemoryMap;
 
 struct MemoryMap {
-    int region_cnt;
-    int region_max;
+    unsigned region_cnt;
+    unsigned region_max;
     MemoryRegion * regions;
 };
 
@@ -82,12 +84,10 @@ static void elf_dispose(ELF_File * file) {
     if (file->fd >= 0) close(file->fd);
     if (file->sections != NULL) {
         for (n = 0; n < file->section_cnt; n++) {
-            ELF_Section * s = file->sections[n];
-            if (s == NULL) continue;
+            ELF_Section * s = file->sections + n;
 #ifdef USE_MMAP
             if (s->mmap_addr != NULL) munmap(s->mmap_addr, s->mmap_size);
 #endif
-            loc_free(file->sections[n]);
         }
         loc_free(file->sections);
     }
@@ -216,22 +216,20 @@ ELF_File * elf_open(char * file_name) {
                 swap_bytes(&hdr.e_shstrndx, sizeof(hdr.e_shstrndx));
             }
             if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN) error = ERR_INV_FORMAT;
+            if (hdr.e_type != ET_EXEC) file->pic = 1;
             if (error == 0 && hdr.e_version != EV_CURRENT) error = ERR_INV_FORMAT;
             if (error == 0 && hdr.e_shoff == 0) error = ERR_INV_FORMAT;
             if (error == 0 && lseek(file->fd, hdr.e_shoff, SEEK_SET) == (off_t)-1) error = errno;
             if (error == 0) {
                 unsigned cnt = 0;
-                file->sections = loc_alloc_zero(sizeof(ELF_Section *) * hdr.e_shnum);
+                file->sections = loc_alloc_zero(sizeof(ELF_Section) * hdr.e_shnum);
                 file->section_cnt = hdr.e_shnum;
                 while (error == 0 && cnt < hdr.e_shnum) {
                     Elf32_Shdr shdr;
                     memset(&shdr, 0, sizeof(shdr));
                     if (error == 0 && read(file->fd, (char *)&shdr, hdr.e_shentsize) < 0) error = errno;
-                    if (cnt == 0) {
-                        file->sections[cnt++] = NULL;
-                    }
-                    else if (error == 0) {
-                        ELF_Section * sec = loc_alloc_zero(sizeof(ELF_Section));
+                    if (error == 0) {
+                        ELF_Section * sec = file->sections + cnt;
                         if (swap) {
                             swap_bytes(&shdr.sh_name, sizeof(shdr.sh_name));
                             swap_bytes(&shdr.sh_type, sizeof(shdr.sh_type));
@@ -254,7 +252,39 @@ ELF_File * elf_open(char * file_name) {
                         sec->addr = shdr.sh_addr;
                         sec->link = shdr.sh_link;
                         sec->info = shdr.sh_info;
-                        file->sections[cnt++] = sec;
+                        cnt++;
+                    }
+                }
+            }
+            if (error == 0 && lseek(file->fd, hdr.e_phoff, SEEK_SET) == (off_t)-1) error = errno;
+            if (error == 0) {
+                unsigned cnt = 0;
+                file->pheaders = loc_alloc_zero(sizeof(ELF_PHeader) * hdr.e_phnum);
+                file->pheader_cnt = hdr.e_phnum;
+                while (error == 0 && cnt < hdr.e_phnum) {
+                    Elf32_Phdr phdr;
+                    memset(&phdr, 0, sizeof(phdr));
+                    if (error == 0 && read(file->fd, (char *)&phdr, hdr.e_phentsize) < 0) error = errno;
+                    if (error == 0) {
+                        ELF_PHeader * p = file->pheaders + cnt;
+                        if (swap) {
+                            swap_bytes(&phdr.p_type, sizeof(phdr.p_type));
+                            swap_bytes(&phdr.p_offset, sizeof(phdr.p_offset));
+                            swap_bytes(&phdr.p_vaddr, sizeof(phdr.p_vaddr));
+                            swap_bytes(&phdr.p_paddr, sizeof(phdr.p_paddr));
+                            swap_bytes(&phdr.p_filesz, sizeof(phdr.p_filesz));
+                            swap_bytes(&phdr.p_memsz, sizeof(phdr.p_memsz));
+                            swap_bytes(&phdr.p_flags, sizeof(phdr.p_flags));
+                            swap_bytes(&phdr.p_align, sizeof(phdr.p_align));
+                        }
+                        p->type = phdr.p_type;
+                        p->offset = phdr.p_offset;
+                        p->address = phdr.p_vaddr;
+                        p->file_size = phdr.p_filesz;
+                        p->mem_size = phdr.p_memsz;
+                        p->flags = phdr.p_flags;
+                        p->align = phdr.p_align;
+                        cnt++;
                     }
                 }
             }
@@ -266,18 +296,16 @@ ELF_File * elf_open(char * file_name) {
         else {
             error = ERR_INV_FORMAT;
         }
-        if (error == 0) {
-            ELF_Section * str = file->sections[hdr.e_shstrndx];
-            if (str != NULL) {
-                file->str_pool = loc_alloc((size_t)str->size);
-                if (lseek(file->fd, str->offset, SEEK_SET) == (off_t)-1) error = errno;
-                if (error == 0 && read(file->fd, file->str_pool, (size_t)str->size) < 0) error = errno;
-                if (error == 0) {
-                    unsigned i;
-                    for (i = 1; i < file->section_cnt; i++) {
-                        ELF_Section * sec = file->sections[i];
-                        sec->name = file->str_pool + sec->name_offset;
-                    }
+        if (error == 0 && hdr.e_shstrndx != 0 && hdr.e_shstrndx < file->section_cnt) {
+            ELF_Section * str = file->sections + hdr.e_shstrndx;
+            file->str_pool = loc_alloc((size_t)str->size);
+            if (lseek(file->fd, str->offset, SEEK_SET) == (off_t)-1) error = errno;
+            if (error == 0 && read(file->fd, file->str_pool, (size_t)str->size) < 0) error = errno;
+            if (error == 0) {
+                unsigned i;
+                for (i = 1; i < file->section_cnt; i++) {
+                    ELF_Section * sec = file->sections + i;
+                    sec->name = file->str_pool + sec->name_offset;
                 }
             }
         }
@@ -324,7 +352,7 @@ void elf_close(ELF_File * file) {
 }
 
 static void dispose_memory_map(MemoryMap * map) {
-    int i;
+    unsigned i;
 
     for (i = 0; i < map->region_cnt; i++) {
         MemoryRegion * r = map->regions + i;
@@ -406,8 +434,16 @@ static MemoryMap * get_memory_map(Context * ctx) {
         memset(r, 0, sizeof(MemoryRegion));
         r->addr = addr0;
         r->size = addr1 - addr0;
+        r->file_offs = offset;
         if (inode != 0 && file_name[0]) {
             r->file_name = loc_strdup(file_name);
+        }
+        for (i = 0; permissions[i]; i++) {
+            switch (permissions[i]) {
+            case 'r': r->flags |= PF_R; break;
+            case 'w': r->flags |= PF_W; break;
+            case 'x': r->flags |= PF_X; break;
+            }
         }
     }
     fclose(file);
@@ -418,7 +454,7 @@ static MemoryMap * get_memory_map(Context * ctx) {
 #endif
 
 ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress addr1) {
-    int i;
+    unsigned i;
     MemoryMap * map = NULL;
 
     elf_list_ctx = ctx;
@@ -446,7 +482,7 @@ ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress ad
 }
 
 ELF_File * elf_list_next(Context * ctx) {
-    int i;
+    unsigned i;
     MemoryMap * map = NULL;
 
     assert(ctx == elf_list_ctx);
@@ -471,7 +507,7 @@ ELF_File * elf_list_next(Context * ctx) {
 }
 
 void elf_list_done(Context * ctx) {
-    int i;
+    unsigned i;
     MemoryMap * map = NULL;
 
     assert(ctx == elf_list_ctx);
@@ -495,5 +531,29 @@ void elf_add_close_listener(ELFCloseListener listener) {
     }
     listeners[listeners_cnt++] = listener;
 }
+
+ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ContextAddress addr) {
+    unsigned i, j;
+    MemoryMap * map;
+
+    if (!file->pic) return addr;
+    map = get_memory_map(ctx);
+    if (map == NULL) return addr;
+    for (i = 0; i < map->region_cnt; i++) {
+        MemoryRegion * r = map->regions + i;
+        if (r->file_name != NULL && strcmp(r->file_name, file->name) == 0) {
+            for (j = 0; j < file->pheader_cnt; j++) {
+                ELF_PHeader * p = file->pheaders + j;
+                if (p->type != PT_LOAD) continue;
+                if (p->offset < r->file_offs || p->offset + p->mem_size > r->file_offs + r->size) continue;
+                if (addr < p->address || addr >= p->address + p->mem_size) continue;
+                if ((p->flags & PF_W) != (r->flags & PF_W)) continue;
+                return (ContextAddress)(addr - p->address + p->offset - r->file_offs + r->addr);
+            }
+        }
+    }
+    return 0;
+}
+
 
 #endif

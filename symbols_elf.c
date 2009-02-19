@@ -120,8 +120,12 @@ static int find_in_object_tree(Context * ctx, ObjectInfo * list, ContextAddress 
         case TAG_subprogram:
         case TAG_entry_point:
         case TAG_lexical_block:
-            if (obj->mLowPC <= ip && obj->mHighPC > ip) {
-                if (find_in_object_tree(ctx, obj->mChildren, ip, name, sym)) return 1;
+            {
+                ContextAddress addr0 = elf_map_to_run_time_address(ctx, obj->mCompUnit->mFile, obj->mLowPC);
+                ContextAddress addr1 = obj->mHighPC - obj->mLowPC + addr0;
+                if (addr0 != 0 && addr0 <= ip && addr1 > ip) {
+                    if (find_in_object_tree(ctx, obj->mChildren, ip, name, sym)) return 1;
+                }
             }
             break;
         }
@@ -134,11 +138,14 @@ static int find_in_dwarf(DWARFCache * cache, Context * ctx, char * name, Context
     unsigned i;
     for (i = 0; i < cache->mCompUnitsCnt; i++) {
         CompUnit * unit = cache->mCompUnits[i];
-        if (unit->mLowPC <= ip && unit->mHighPC > ip) {
+        ContextAddress addr0 = elf_map_to_run_time_address(ctx, unit->mFile, unit->mLowPC);
+        ContextAddress addr1 = unit->mHighPC - unit->mLowPC + addr0;
+        if (addr0 != 0 && addr0 <= ip && addr1 > ip) {
             if (find_in_object_tree(ctx, unit->mChildren, ip, name, sym)) return 1;
             if (unit->mBaseTypes != NULL) {
                 if (find_in_object_tree(ctx, unit->mBaseTypes->mChildren, ip, name, sym)) return 1;
             }
+            return 0;
         }
     }
     return 0;
@@ -274,8 +281,12 @@ static void enumerate_local_vars(Context * ctx, ObjectInfo * obj, ContextAddress
         case TAG_subprogram:
         case TAG_entry_point:
         case TAG_lexical_block:
-            if (obj->mLowPC <= ip && obj->mHighPC > ip) {
-                enumerate_local_vars(ctx, obj->mChildren, ip, level + 1, call_back, args);
+            {
+                ContextAddress addr0 = elf_map_to_run_time_address(ctx, obj->mCompUnit->mFile, obj->mLowPC);
+                ContextAddress addr1 = obj->mHighPC - obj->mLowPC + addr0;
+                if (addr0 != 0 && addr0 <= ip && addr1 > ip) {
+                    enumerate_local_vars(ctx, obj->mChildren, ip, level + 1, call_back, args);
+                }
             }
             break;
         case TAG_formal_parameter:
@@ -310,8 +321,11 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
                     unsigned i;
                     for (i = 0; i < cache->mCompUnitsCnt; i++) {
                         CompUnit * unit = cache->mCompUnits[i];
-                        if (unit->mLowPC <= ip && unit->mHighPC > ip) {
+                        ContextAddress addr0 = elf_map_to_run_time_address(ctx, unit->mFile, unit->mLowPC);
+                        ContextAddress addr1 = unit->mHighPC - unit->mLowPC + addr0;
+                        if (addr0 != 0 && addr0 <= ip && addr1 > ip) {
                             enumerate_local_vars(ctx, unit->mChildren, ip, 0, call_back, args);
+                            break;
                         }
                     }
                 }
@@ -452,9 +466,8 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     ELF_File * file = elf_list_first(ctx, addr, addr);
     while (file != NULL) {
         unsigned idx;
-        for (idx = 0; idx < file->section_cnt; idx++) {
-            ELF_Section * sec = file->sections[idx];
-            if (sec == NULL) continue;
+        for (idx = 1; idx < file->section_cnt; idx++) {
+            ELF_Section * sec = file->sections + idx;
             if (sec->name == NULL) continue;
             if (strcmp(sec->name, ".plt") != 0) continue;
             if (addr >= sec->addr && addr < sec->addr + sec->size) {
@@ -916,7 +929,7 @@ int get_symbol_address(const Symbol * sym, int frame, ContextAddress * address) 
         switch (ELF32_ST_TYPE(sym32->st_info)) {
         case STT_OBJECT:
         case STT_FUNC:
-            *address = (ContextAddress)sym32->st_value;
+            *address = elf_map_to_run_time_address(sym->ctx, file, (ContextAddress)sym32->st_value);
             return 0;
         }
     }
@@ -924,7 +937,7 @@ int get_symbol_address(const Symbol * sym, int frame, ContextAddress * address) 
         switch (ELF64_ST_TYPE(sym64->st_info)) {
         case STT_OBJECT:
         case STT_FUNC:
-            *address = (ContextAddress)sym64->st_value;
+            *address = elf_map_to_run_time_address(sym->ctx, file, (ContextAddress)sym64->st_value);
             return 0;
         }
     }

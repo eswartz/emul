@@ -280,11 +280,11 @@ static U1_T * dio_LoadStringTable(U4_T * StringTableSize) {
         ELF_Section * Section = NULL;
 
         for (ID = 1; ID < File->section_cnt; ID++) {
-            if (strcmp(File->sections[ID]->name, ".debug_str") == 0) {
+            if (strcmp(File->sections[ID].name, ".debug_str") == 0) {
                 if (Section != NULL) {
                     str_exception(ERR_INV_DWARF, "more then one .debug_str section in a file");
                 }
-                Section = File->sections[ID];
+                Section = File->sections + ID;
                 assert(Section->file == File);
             }
         }
@@ -507,11 +507,11 @@ void dio_LoadAbbrevTable(ELF_File * File) {
 
     assert(sSection == NULL);
     for (ID = 1; ID < File->section_cnt; ID++) {
-        if (strcmp(File->sections[ID]->name, ".debug_abbrev") == 0) {
+        if (strcmp(File->sections[ID].name, ".debug_abbrev") == 0) {
             if (Section != NULL) {
                 str_exception(ERR_INV_DWARF, "more then one .debug_abbrev section in a file");
             }
-            Section = File->sections[ID];
+            Section = File->sections + ID;
         }
     }
     if (Section == NULL) return;

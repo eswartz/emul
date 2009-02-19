@@ -382,9 +382,8 @@ static void load_symbol_tables(void) {
     ELF_File * File = sCache->mFile;
     unsigned sym_size = File->elf64 ? sizeof(Elf64_Sym) : sizeof(Elf32_Sym);
 
-    for (idx = 0; idx < File->section_cnt; idx++) {
-        ELF_Section * sym_sec = File->sections[idx];
-        if (sym_sec == NULL) continue;
+    for (idx = 1; idx < File->section_cnt; idx++) {
+        ELF_Section * sym_sec = File->sections + idx;
         if (sym_sec->size == 0) continue;
         if (sym_sec->type == SHT_SYMTAB) {
             unsigned i;
@@ -402,9 +401,8 @@ static void load_symbol_tables(void) {
             }
             tbl->mIndex = sCache->mSymSectionsCnt++;
             sCache->mSymSections[tbl->mIndex] = tbl;
-            if (sym_sec->link >= File->section_cnt || (str_sec = File->sections[sym_sec->link]) == NULL) {
-                exception(EINVAL);
-            }
+            if (sym_sec->link == 0 || sym_sec->link >= File->section_cnt) exception(EINVAL);
+            str_sec = File->sections + sym_sec->link;
             if (elf_load(sym_sec) < 0) exception(errno);
             if (elf_load(str_sec) < 0) exception(errno);
             sym_data = sym_sec->data;
@@ -473,9 +471,8 @@ static void load_debug_sections(void) {
     sObjectListTail = NULL;
     sCompUnitsMax = 0;
 
-    for (idx = 0; idx < File->section_cnt; idx++) {
-        ELF_Section * sec = File->sections[idx];
-        if (sec == NULL) continue;
+    for (idx = 1; idx < File->section_cnt; idx++) {
+        ELF_Section * sec = File->sections + idx;
         if (sec->size == 0) continue;
         if (sec->name == NULL) continue;
         if (strcmp(sec->name, ".debug") == 0 || strcmp(sec->name, ".debug_info") == 0) {

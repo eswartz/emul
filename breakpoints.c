@@ -1406,7 +1406,7 @@ SkipBreakpointInfo * skip_breakpoint(Context * ctx) {
 #endif
 }
 
-static void event_context_created_or_exited(Context * ctx, void * client_data) {
+static void event_context_changed(Context * ctx, void * client_data) {
     if (ctx->parent == NULL) replant_breakpoints((TCFBroadcastGroup *)client_data);
 }
 
@@ -1417,8 +1417,11 @@ static void channel_close_listener(Channel * c) {
 void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     int i;
     static ContextEventListener listener = {
-        event_context_created_or_exited,
-        event_context_created_or_exited
+        event_context_changed,
+        event_context_changed,
+        NULL,
+        NULL,
+        event_context_changed
     };
     add_context_event_listener(&listener, bcg);
     list_init(&breakpoints);
