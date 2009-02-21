@@ -68,7 +68,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 
 		MouseListener l = new MouseListener() {
 			public void mousePressed(MouseEvent e) {
-				convertMouseEvent(SWT.MouseDown, e);
+				//convertMouseEvent(SWT.MouseDown, e);
 			}
 
 			public void mouseReleased(MouseEvent e) {
@@ -88,7 +88,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 					convertMouseEvent(SWT.MouseDoubleClick, e);
 				else {
 					convertMouseEvent(SWT.MouseDown, e);
-					convertMouseEvent(SWT.MouseUp, e);
+					//convertMouseEvent(SWT.MouseUp, e);
 				}
 			}
 			

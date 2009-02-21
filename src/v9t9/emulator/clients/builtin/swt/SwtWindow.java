@@ -127,34 +127,20 @@ public class SwtWindow extends BaseEmulatorWindow {
 					videoControl.forceFocus();
 					return;
 				}
-				if (e.button == 3) {
+				if (!SWT.getPlatform().equals("win32") && e.button == 3) {
+					showAppMenu(e);
 					
-					// we need this horrible hack or else the
-					// menu will disappear immediately because SWT and AWT
-					// don't agree on events
-					final Shell menuShell = new Shell(getShell(), SWT.ON_TOP | SWT.TOOL);
-					menuShell.setSize(4, 4);
-					Point shellLoc = (((Control)e.widget).toDisplay(e.x, e.y));
-					menuShell.setLocation(shellLoc);
-					final Menu menu = createAppMenu(menuShell, menuShell, true);
-					menuShell.open();
-					menuShell.setVisible(false);
-					menuShell.addFocusListener(new FocusListener() {
-						public void focusLost(FocusEvent e) {
-							menu.dispose();
-						}
-
-						public void focusGained(FocusEvent e) {
-							
-						}
-					});
-					menuShell.getDisplay().syncExec(new Runnable() {
-						public void run() {
-							runMenu(null, 0, 0, menu);
-							menuShell.dispose();		
-						}
-					});
 					
+				}
+			}
+			
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.MouseAdapter#mouseUp(org.eclipse.swt.events.MouseEvent)
+			 */
+			@Override
+			public void mouseUp(MouseEvent e) {
+				if (SWT.getPlatform().equals("win32") && e.button == 3) {
+					showAppMenu(e);
 				}
 			}
 			
@@ -181,6 +167,38 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 		
 		renderer.setFocus();
+	}
+
+	/**
+	 * 
+	 */
+	protected void showAppMenu(MouseEvent e) {
+		// we need this horrible hack or else the
+		// menu will disappear immediately because SWT and AWT
+		// don't agree on events
+		final Shell menuShell = new Shell(getShell(), SWT.ON_TOP | SWT.TOOL);
+		menuShell.setSize(16, 16);
+		Point shellLoc = (((Control)e.widget).toDisplay(e.x, e.y));
+		menuShell.setLocation(shellLoc);
+		final Menu menu = createAppMenu(menuShell, menuShell, true);
+		menuShell.open();
+		menuShell.setVisible(false);
+		menuShell.addFocusListener(new FocusListener() {
+			public void focusLost(FocusEvent e) {
+				menu.dispose();
+			}
+
+			public void focusGained(FocusEvent e) {
+				
+			}
+		});
+		menuShell.getDisplay().syncExec(new Runnable() {
+			public void run() {
+				runMenu(null, 0, 0, menu);
+				menuShell.dispose();		
+			}
+		});
+		
 	}
 
 	private void createButtons(Composite mainComposite) {
@@ -453,11 +471,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 			Point loc = parent.toDisplay(x, y); 
 			menu.setLocation(loc);
 		}
+		System.out.println("position: " + menu.getParent().getLocation());
 		menu.setVisible(true);
 		
 		//System.out.println("Running menu");
 		final Shell menuShell = getShell();
 		Display display = menuShell.getDisplay();
+		while (display.readAndDispatch()) /**/ ;
+
 		while (!menu.isDisposed() && menu.isVisible()) {
 			if (!display.readAndDispatch())
 				display.sleep();

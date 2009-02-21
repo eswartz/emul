@@ -44,10 +44,6 @@ class InstContentProvider implements ILazyContentProvider {
 		insts.add(row);
 	}
 	
-	public void refreshTable() {
-		//tableViewer.setItemCount(insts.size());
-	}
-	
 	public int getCount() {
 		return insts.size();
 	}

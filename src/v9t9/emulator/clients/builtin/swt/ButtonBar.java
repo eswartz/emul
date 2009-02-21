@@ -15,7 +15,9 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Widget;
 
-class ButtonBar extends Composite {
+import v9t9.emulator.clients.builtin.swt.ImageButton.ButtonParentDrawer;
+
+class ButtonBar extends Composite implements ButtonParentDrawer {
 
 	ButtonBarLayout layout;
 	private boolean isHorizontal;
@@ -155,6 +157,13 @@ class ButtonBar extends Composite {
 			gc.fillGradientRectangle(offset.x + size.x / 2, offset.y, -size.x / 2, size.y, false);
 			
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ImageButton.ButtonParentDrawer#draw(org.eclipse.swt.graphics.GC, v9t9.emulator.clients.builtin.swt.ImageButton, org.eclipse.swt.graphics.Point, org.eclipse.swt.graphics.Point)
+	 */
+	public void drawBackground(GC gc, ImageButton imageButton, Point offset, Point size) {
+		paintButtonBar(gc, imageButton, offset, size);
 	}
 
 	/**

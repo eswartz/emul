@@ -6,7 +6,6 @@ package v9t9.emulator.clients.builtin.swt;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -19,50 +18,52 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 
-class BasicButtonSVG extends Canvas {
+/**
+ * A button with an image, which is allowed to be transparent.
+ * @author ejs
+ *
+ */
+public class ImageButton extends Canvas {
 
+	public interface ButtonParentDrawer {
+		Composite getComposite();
+		void drawBackground(GC gc, ImageButton imageButton, Point offset, Point size);
+		void addedButton();
+	}
 	private final Rectangle bounds;
-	private SVGLoader icon;
+	private Image icon;
 	private Rectangle overlayBounds;
 	private List<SelectionListener> listeners;
 	private boolean selected;
-	private ButtonBar buttonBar;
+	private ButtonParentDrawer parentDrawer;
 	private boolean isHighlighted;
-	private Image overlayImage;
-	private Image image;
+	private boolean pressed;
 	
-	public BasicButtonSVG(ButtonBar buttonBar, int style, SVGLoader icon_, Rectangle bounds_, String tooltip) {
-		super(buttonBar.getComposite(), SWT.NO_FOCUS | SWT.NO_RADIO_GROUP /*| SWT.NO_BACKGROUND*/);
+	public ImageButton(ButtonParentDrawer parentDrawer, int style, Image icon_, Rectangle bounds_, String tooltip) {
+		super(parentDrawer.getComposite(),  style /*| SWT.NO_BACKGROUND*/);
 		
-		this.buttonBar = buttonBar;
-		buttonBar.addedButton();
+		this.parentDrawer = parentDrawer;
+		parentDrawer.addedButton();
 		
 		this.icon = icon_;
 		this.bounds = bounds_;
 		this.listeners = new ArrayList<SelectionListener>();
-		addKeyListener(new KeyListener() {
-			
-			public void keyPressed(KeyEvent e) {
-				e.doit = false;
-			}
-
-			public void keyReleased(KeyEvent e) {
-				e.doit = false;
-			}
-			
-		});
+		
 		
 		GridData data = new GridData(bounds.width, bounds.height);
-		data.minimumHeight = 8;	// the minimums above override this
-		data.minimumWidth = 8;	// the minimums above override this
+		//data.minimumHeight = 8;	// the minimums above override this
+		//data.minimumWidth = 8;	// the minimums above override this
 		data.grabExcessHorizontalSpace = false;
 		data.grabExcessVerticalSpace = false;
 		setLayoutData(data);
@@ -77,18 +78,18 @@ class BasicButtonSVG extends Canvas {
 			}
 			
 		});
-		addTraverseListener(new TraverseListener() {
-
-			public void keyTraversed(TraverseEvent e) {
-				e.doit = false;
-			}
-			
-		});
+		
 		
 		addMouseListener(new MouseAdapter() {
 			@Override
+			public void mouseDown(MouseEvent e) {
+				if (e.button == 1)
+					doClickStart();
+			}
+			@Override
 			public void mouseUp(MouseEvent e) {
-				doClick();
+				if (e.button == 1)
+					doClickStop(e);
 			}
 		});
 		
@@ -109,22 +110,15 @@ class BasicButtonSVG extends Canvas {
 		});
 		
 	}
-	
-	@Override
-	public void dispose() {
-		super.dispose();
-		if (image != null) {
-			image.dispose();
-			image = null;
-		}
-		if (overlayImage != null) {
-			overlayImage.dispose();
-			overlayImage = null;
-		}
-	}
 
 	public void setOverlayBounds(Rectangle overlayBounds) {
-		this.overlayBounds = overlayBounds;
+		if (overlayBounds == null)
+			this.overlayBounds = null;
+		else
+			this.overlayBounds = overlayBounds; 
+				//new Rectangle(
+				//overlayBounds.x * 2, overlayBounds.y * 2,
+				//overlayBounds.width * 2, overlayBounds.height * 2);
 	}
 
 	public void addSelectionListener(SelectionListener listener) {
@@ -132,7 +126,10 @@ class BasicButtonSVG extends Canvas {
 	}
 
 	public boolean getSelection() {
-		return selected;
+		if ((getStyle() & SWT.PUSH) != 0)
+			return selected;
+		else
+			return pressed;
 	}
 
 	public void setSelection(boolean flag) {
@@ -144,47 +141,51 @@ class BasicButtonSVG extends Canvas {
 
 	protected void doPaint(PaintEvent e) {
 		Point size = getSize();
-		this.buttonBar.paintButtonBar(e.gc, this, new Point(0, 0), size);
-		
-		e.gc.drawImage(getImage(), 0, 0);
+		this.parentDrawer.drawBackground(e.gc, this, new Point(0, 0), size);
+		//e.gc.setAntialias(SWT.ON);
+		int offset = 0;
+		if ((getStyle() & SWT.TOGGLE) != 0) {
+			if (pressed && overlayBounds == null) {
+				Color bg = e.gc.getBackground();
+				e.gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
+				e.gc.fillRectangle(0, 0, size.x, size.y);
+				e.gc.setBackground(bg);
+			}
+		} else {
+		}
+		offset = pressed ? 2 : 0;
+		e.gc.drawImage(icon, bounds.x, bounds.y, bounds.width, bounds.height, 
+				offset, offset, size.x, size.y);
 		if (overlayBounds != null)
-			e.gc.drawImage(getOverlayImage(), 0, 0);
+			e.gc.drawImage(icon, overlayBounds.x, overlayBounds.y, overlayBounds.width, overlayBounds.height, 
+					0, 0, size.y, size.y);
+		//e.gc.setAntialias(SWT.OFF);
 		if (isHighlighted) {
 			e.gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_BLACK));
-			e.gc.setLineStyle(SWT.LINE_DOT);
-			e.gc.drawRectangle(0, 0, size.x - 1, size.y - 1);
+			//e.gc.setLineStyle(SWT.LINE_DOT);
+			//e.gc.drawRectangle(0, 0, size.x - 1, size.y - 1);
+			e.gc.drawFocus(0, 0, size.x - 1, size.y - 1);
 		}
 	}
-
-	private synchronized Image getOverlayImage() {
-		Rectangle bounds = new Rectangle(0, 0, getSize().x, getSize().y);
-		if (overlayImage == null || !overlayImage.getBounds().equals(bounds)) {
-			if (overlayImage != null)
-				overlayImage.dispose();
-			try {
-				overlayImage = new Image(getDisplay(), icon.getImageData(overlayBounds, getSize()));
-			} catch (CoreException e) {
-				e.printStackTrace();
-			}
-		}
-		return overlayImage;
+	
+	protected void doClickStart() {
+		if ((getStyle() & SWT.PUSH) != 0)
+			pressed = true;
+		redraw();
 	}
 
-	private synchronized Image getImage() {
-		Rectangle buttonbounds = new Rectangle(0, 0, getSize().x, getSize().y);
-		if (image == null || !image.getBounds().equals(buttonbounds)) {
-			if (image != null)
-				image.dispose();
-			try {
-				image = new Image(getDisplay(), icon.getImageData(bounds, getSize()));
-			} catch (CoreException e) {
-				e.printStackTrace();
-			}
-		}
-		return image;
-	}
+	protected void doClickStop(MouseEvent e) {
+		if ((getStyle() & SWT.PUSH) != 0)
+			pressed = false;
+		else
+			pressed = !pressed;
+		redraw();
 
-	protected void doClick() {
+		// released outside button
+		Point size = getSize();
+		if (e.x < 0 || e.y < 0 || e.x > size.x || e.y > size.y)
+			return;
+		
 		SelectionListener[] array = (SelectionListener[]) listeners.toArray(new SelectionListener[listeners.size()]);
 		Event event = new Event();
 		event.widget = this;
@@ -193,6 +194,8 @@ class BasicButtonSVG extends Canvas {
 			listener.widgetSelected(selEvent);
 		}
 		getShell().setFocus();
+		//this.buttonBar.videoRenderer.setFocus();
+		
 	}
 	
 	protected void doMouseEnter() {
