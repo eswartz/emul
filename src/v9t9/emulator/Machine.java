@@ -73,7 +73,7 @@ abstract public class Machine {
 	private Thread videoRunner;
 	protected int throttleCount;
 	private KeyboardState keyboardState;
-	protected Object executionLock = new Object();
+	private Object executionLock = new Object();
 	volatile protected boolean bExecuting;
 	private SoundProvider sound;
 	
@@ -103,11 +103,12 @@ abstract public class Machine {
     	settingPauseMachine.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
-				synchronized (executionLock) {
+				//synchronized (executionLock) {
 					bExecuting = !setting.getBoolean();
+					executor.interruptExecution = Boolean.TRUE;
 					cpu.resetCycleCounts();
-					executionLock.notifyAll();
-				}
+				//	executionLock.notifyAll();
+				//}
 			}
         	
         });
@@ -181,7 +182,7 @@ abstract public class Machine {
     			
     			if (now >= lastInfo + 1000) {
     				upTime += now - lastInfo;
-    				//executor.dumpStats();
+    				executor.dumpStats();
     				executor.nVdpInterrupts = 0;
     				lastInfo = now;
     				//vdpInterruptDelta = 0;
@@ -294,7 +295,8 @@ abstract public class Machine {
 	    	        		executor.execute();
 	            		}
     	            } catch (AbortedException e) {
-    	                
+    	            } catch (InterruptedException e) {
+      	              	break;
     	            } catch (Throwable t) {
     	            	t.printStackTrace();
     	            	Machine.this.setNotRunning();
@@ -446,6 +448,17 @@ abstract public class Machine {
 
 	public int getCpuTicksPerSec() {
 		return cpuTicksPerSec;
+	}
+
+	public Object getExecutionLock() {
+		return executionLock;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isExecuting() {
+		return bExecuting;
 	}
 
 }

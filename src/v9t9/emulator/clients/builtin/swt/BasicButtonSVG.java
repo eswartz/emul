@@ -192,7 +192,6 @@ class BasicButtonSVG extends Canvas {
 		for (SelectionListener listener : array) {
 			listener.widgetSelected(selEvent);
 		}
-		this.buttonBar.videoRenderer.setFocus();
 	}
 	
 	protected void doMouseEnter() {

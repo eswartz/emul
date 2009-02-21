@@ -7,7 +7,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
@@ -444,8 +446,19 @@ public class SdlWindow extends BaseEmulatorWindow {
 
 	@Override
 	protected void showErrorMessage(String title, String msg) {
-		// TODO Auto-generated method stub
-		
+		MessageDialog.openError(getShell(), title, msg);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.BaseEmulatorWindow#openDirectorySelectionDialog(java.lang.String, java.lang.String)
+	 */
+	@Override
+	protected String openDirectorySelectionDialog(String title, String directory) {
+		DirectoryDialog dialog = new DirectoryDialog(getShell(), SWT.NONE);
+		dialog.setText(title);
+		dialog.setFilterPath(directory);
+		String dirname = dialog.open();
+		return dirname;
 	}
 
 	

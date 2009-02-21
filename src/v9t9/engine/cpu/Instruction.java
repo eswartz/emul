@@ -125,8 +125,6 @@ public class Instruction extends RawInstruction implements IInstruction {
 
     public int reads, writes;	// what resources (INST_RSRC_xxx) are read and written?
     
-    InstructionAction action;
-
     public String toString() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(getName());
@@ -175,7 +173,6 @@ public class Instruction extends RawInstruction implements IInstruction {
     	this.jump = inst.jump;
     	this.reads = inst.reads;
     	this.writes = inst.writes;
-    	this.action = inst.action;
 	}
 
  
@@ -342,18 +339,21 @@ public class Instruction extends RawInstruction implements IInstruction {
 	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Iinc:
+	        	// these instructions use the 2nd operand in the status calculation
 	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
 	            mop2.type = MachineOperand.OP_CNT;
 	            mop2.val = 1;
 	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Iinct:
+	        	// these instructions use the 2nd operand in the status calculation
 	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
 	            mop2.type = MachineOperand.OP_CNT;
 	            mop2.val = 2;
 	            this.cycles += 10;
 	            break;
 	        case InstructionTable.Idec:
+	        	// these instructions use the 2nd operand in the status calculation
 	            this.stsetBefore = Instruction.st_ADD_LAECO_REV;
 	            mop2.type = MachineOperand.OP_CNT;
 	            mop2.val = -1;
@@ -637,7 +637,6 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        }
 	    }
 	
-	    
 	    // synthesize bits from other info
 	    if (this.jump != INST_JUMP_FALSE) {
 	        this.writes |= INST_RSRC_PC;
@@ -680,7 +679,7 @@ public class Instruction extends RawInstruction implements IInstruction {
         	// check for modified immediates (the other kind of self-modifying code)
         	int pcStep = (thePc + 2) & 0xfffe;
         	MachineOperand mop1 = (MachineOperand)op1;
-        	if (mop1.type != MachineOperand.OP_NONE) {
+        	if (inst != InstructionTable.Idata && mop1.type != MachineOperand.OP_NONE) {
         		
 				if (mop1.hasImmediate()) {
 					if (domain.readWord(pcStep) != mop1.immed)

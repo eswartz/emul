@@ -35,11 +35,10 @@ public class MemoryDomain implements MemoryAccess {
 
     /** Listener for noticing memory accesses. */
     public interface MemoryAccessListener {
-    	/** Indicate that a read/write of a byte/word occurred, taking the given number
-    	 * of CPU cycles.
-    	 * @param cycles total cycles
+    	/** Indicate that a memory entry was accessed.
+    	 * @param entry
     	 */
-    	void access(int cycles);
+    	void access(MemoryEntry entry);
     }
     
     /** Listener for noticing memory writes. */
@@ -49,7 +48,7 @@ public class MemoryDomain implements MemoryAccess {
     
     public MemoryAccessListener nullMemoryAccessListener = new MemoryAccessListener() {
 
-		public void access(int cycles) {
+		public void access(MemoryEntry entry) {
 		}
     	
     };
@@ -61,8 +60,8 @@ public class MemoryDomain implements MemoryAccess {
     	
     };
     
-    private MemoryAccessListener accessListener = nullMemoryAccessListener;
     
+    private MemoryAccessListener accessListener = nullMemoryAccessListener;
     private List<MemoryWriteListener> writeListeners = null;
     
     private MemoryEntry entries[] = new MemoryEntry[NUMAREAS];
@@ -140,43 +139,43 @@ public class MemoryDomain implements MemoryAccess {
 
     public final short flatReadWord(int addr) {
         MemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry.getLatency());
+        accessListener.access(entry);
         return entry.flatReadWord(addr);
     }
 
     public final byte flatReadByte(int addr) {
     	MemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry.getLatency());
+        accessListener.access(entry);
         return entry.flatReadByte(addr);
     }
 
     public final void flatWriteByte(int addr, byte val) {
     	MemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry.getLatency());
+        accessListener.access(entry);
         entry.flatWriteByte(addr, val);
     }
 
     public final void flatWriteWord(int addr, short val) {
     	MemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry.getLatency());
+        accessListener.access(entry);
         entry.flatWriteWord(addr, val);
     }
 
     public final byte readByte(int addr) {
     	MemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry.getLatency());
+        accessListener.access(entry);
         return entry.readByte(addr);
     }
 
     public final short readWord(int addr) {
     	MemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry.getLatency());
+        accessListener.access(entry);
         return entry.readWord(addr);
     }
 
     public final void writeByte(int addr, byte val) {
     	MemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry.getLatency());
+        accessListener.access(entry);
         entry.writeByte(addr, val);
         if (writeListeners != null)
         	fireWriteEvent(entry, addr & 0xffff);
@@ -190,7 +189,7 @@ public class MemoryDomain implements MemoryAccess {
 
 	public final void writeWord(int addr, short val) {
         MemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry.getLatency());
+        accessListener.access(entry);
         entry.writeWord(addr, val);
         if (writeListeners != null)
         	fireWriteEvent(entry, addr & 0xfffe);

@@ -16,6 +16,7 @@ import v9t9.engine.VdpHandler;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryDomain.MemoryAccessListener;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
@@ -370,8 +371,8 @@ public class Cpu implements MemoryAccessListener {
 		return (currentcycles >= currenttargetcycles);
 	}
 
-	public void access(int cycles) {
-		addCycles(cycles);
+	public void access(MemoryEntry entry) {
+		addCycles(entry.getLatency());
 	}
 
 	public synchronized int getCurrentCycleCount() {

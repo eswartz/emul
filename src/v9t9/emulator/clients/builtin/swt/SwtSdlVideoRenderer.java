@@ -5,6 +5,7 @@ package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
@@ -62,6 +63,13 @@ public class SwtSdlVideoRenderer extends SdlVideoRenderer implements ISwtVideoRe
 		// or wire up a way for us to have a native bridge to do it
 		
 		return sdlContainer;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer#addMouseEventListener(org.eclipse.swt.events.MouseListener)
+	 */
+	public void addMouseEventListener(MouseListener listener) {
+		sdlContainer.addMouseListener(listener);
 	}
 
 }

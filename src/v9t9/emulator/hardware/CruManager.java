@@ -26,6 +26,9 @@ public class CruManager implements CruHandler {
     private Map<Integer, CruReader> readers;
 	private Map<Integer, CruWriter> writers;
     
+	private CruWriter[] writerArray;
+	private CruReader[] readerArray;
+	
     /*
      *  base is a base ADDRESS
      * 	range is in BITS, not address units:  base ... base + range*2
@@ -42,6 +45,7 @@ public class CruManager implements CruHandler {
             throw new AssertionError("overlapping I/O at "+Integer.toHexString(base));
         }
         readers.put(baseObj, access);
+        ensureReaderArray();
     }
 
     public void add(int base, int range, CruWriter access) {
@@ -55,7 +59,8 @@ public class CruManager implements CruHandler {
         if (writers.get(baseObj) != null) {
             throw new AssertionError("overlapping I/O at "+Integer.toHexString(base));
         }
-        writers.put(baseObj, access);        
+        writers.put(baseObj, access);
+        ensureWriterArray();
     }
 
     public void remove(int base, int range, CruReader access) {
@@ -66,6 +71,7 @@ public class CruManager implements CruHandler {
             throw new AssertionError("only single-bit ranges allowed, got " + Integer.toHexString(range));
         }
         readers.remove(new Integer(base));
+        ensureReaderArray();
     }
 
     public void remove(int base, int range, CruWriter access) {
@@ -76,6 +82,7 @@ public class CruManager implements CruHandler {
             throw new AssertionError("only single-bit ranges allowed, got " + Integer.toHexString(range));
         }
         writers.remove(new Integer(base));
+        ensureWriterArray();
     }
 
     /**
@@ -83,7 +90,60 @@ public class CruManager implements CruHandler {
      * @param value
      * @param bits
      */
-    public void writeBits(int addr, int val, int num) {
+    public final void writeBits(int addr, int val, int num) {
+        while (num > 0) {
+        	CruWriter writer = writerArray[addr / 2];
+        	if (writer != null) {
+                writer.write(addr, val & (~(~0 << 1)), 1);
+
+        	}
+        	num -= 1;
+        	addr += 1 * 2;
+        	val >>= 1;
+        }
+    }
+
+	private void ensureWriterArray() {
+		writerArray = new CruWriter[0x1000];
+		for (Map.Entry<Integer, CruWriter> entry : writers.entrySet()) {
+			writerArray[entry.getKey() / 2] = entry.getValue();
+		}
+	}
+    
+    /**
+     * @param address  CRU address line (multiplied by 2)
+     * @param value
+     * @return
+     */
+    public final int readBits(int addr, int num) {
+    	int val = 0;
+    	int orgaddr = addr;
+    	while (num > 0) {
+         	CruReader reader = readerArray[addr / 2];
+         	int shift = (addr - orgaddr) / 2;
+            int bits = 0;
+            if (reader != null) {
+            	bits = reader.read(addr, val, 1) & (~(~0 << 1));
+            }
+            val = (val & ~((~(~0 << 1)) << shift)) | (bits << shift);
+            num -= 1;
+            addr += 1 * 2;
+    	}
+        return val;
+    }
+
+	private void ensureReaderArray() {
+		readerArray = new CruReader[0x1000];
+		for (Map.Entry<Integer, CruReader> entry : readers.entrySet()) {
+			readerArray[entry.getKey() / 2] = entry.getValue();
+		}
+	}
+    /**
+     * @param addr CRU address line (multiplied by 2)
+     * @param value
+     * @param bits
+     */
+    public void writeBits_(int addr, int val, int num) {
     	//System.out.println(Utils.toHex4(addr) + " @" + num + " = " + val);
         Iterator<Integer> iter = writers.keySet().iterator();
         while (iter.hasNext() && num > 0) {
@@ -127,7 +187,7 @@ public class CruManager implements CruHandler {
      * @param value
      * @return
      */
-    public int readBits(int addr, int num) {
+    public int readBits_(int addr, int num) {
         int orgaddr;
         int val = 0;
         

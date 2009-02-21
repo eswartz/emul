@@ -51,6 +51,13 @@ public class Status {
         this.bits = bits;
     }
 
+    public void copyTo(Status copy) {
+        copy.lastval = lastval;
+        copy.lastcmp = lastcmp;
+        copy.lastparity = lastparity;
+        copy.bits = bits;
+    }
+
     public Status(short val) {
         expand(val);
     }

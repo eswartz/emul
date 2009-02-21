@@ -49,6 +49,7 @@ import org.eclipse.ui.forms.widgets.ExpandableComposite;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
+import v9t9.emulator.clients.builtin.swt.debugger.CpuViewer;
 import v9t9.emulator.clients.builtin.swt.debugger.MemoryViewer;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
@@ -334,43 +335,49 @@ public class SwtWindow extends BaseEmulatorWindow {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
-				shell.setLayout(new GridLayout(1, false));
 				final MemoryViewer cpuMemory = new MemoryViewer(shell, SWT.NONE, machine.getMemory(), toolUiTimer);
-				
-				//GridDataFactory.fillDefaults().grab(true, true).applyTo(cpuMemory);
-				final GridData data = GridDataFactory.fillDefaults().grab(true, true).create();
-				cpuMemory.setLayoutData(data);
-				
-				shell.addDisposeListener(new DisposeListener() {
-					public void widgetDisposed(DisposeEvent e) {
-						cpuMemory.dispose();
-					}
-				});
-				/*
-				cpuMemory.addControlListener(new ControlAdapter() {
-					@Override
-					public void controlResized(ControlEvent e) {
-						Composite composite = (Composite)e.widget;
-						//data.heightHint = composite.getSize().y;
-					}
-				});
-				shell.addControlListener(new ControlAdapter() {
-					@Override
-					public void controlResized(ControlEvent e) {
-						shell.getDisplay().asyncExec(new Runnable() {
-							public void run() {
-								shell.pack();
-							}
-						});
-					}
-				});*/
-				
-				shell.open();
-				shell.pack();
-				
-				addToolShell(shell);
+				createToolShell(shell, cpuMemory);
 			}
 		});
+		
+		
+		Button spawnCpuViewButton = new Button(controlsComposite, SWT.PUSH | SWT.NO_FOCUS);
+		spawnCpuViewButton.setText("View CPU...");
+		spawnCpuViewButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
+				final CpuViewer cpuViewer = new CpuViewer(shell, SWT.NONE, machine, toolUiTimer);
+				createToolShell(shell, cpuViewer);
+			}
+		});
+	}
+
+	protected void createToolShell(Shell shell, final Composite tool) {
+		shell.setLayout(new GridLayout(1, false));
+		
+		final GridData data = GridDataFactory.fillDefaults().grab(true, true).hint(400, 300).create();
+		tool.setLayoutData(data);
+		
+		shell.addDisposeListener(new DisposeListener() {
+			public void widgetDisposed(DisposeEvent e) {
+				tool.dispose();
+			}
+		});
+		
+		shell.open();
+		shell.pack();
+		
+		shell.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlResized(ControlEvent e) {
+				// try to stay the same (user controlled) size and not 
+				// grow to full screen when next packed
+				data.heightHint = tool.getSize().y;
+			}
+		});
+		
+		addToolShell(shell);
 		
 	}
 
@@ -530,7 +537,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				setting.setBoolean(!setting.getBoolean());
+				getShell().getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						setting.setBoolean(!setting.getBoolean());
+					}
+				});
 			}
 		});
 		

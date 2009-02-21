@@ -3,6 +3,8 @@
  */
 package v9t9.emulator.clients.builtin.sdl;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.eclipse.swt.graphics.Point;
@@ -385,6 +387,20 @@ public class SdlVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	public void setResizePending(boolean b) {
 		resizePending = b;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#getZoom()
+	 */
+	public int getZoom() {
+		return zoom;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#saveScreenShot(java.io.File)
+	 */
+	public void saveScreenShot(File file) throws IOException {
+		throw new IOException("Not implemented");
 	}
 
 }

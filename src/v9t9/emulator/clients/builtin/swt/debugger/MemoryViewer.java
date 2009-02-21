@@ -175,32 +175,6 @@ public class MemoryViewer extends Composite {
 		entryViewer = new ComboViewer(this, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.NO_FOCUS);
 		entryViewer.setContentProvider(new ArrayContentProvider());
 		entryViewer.setLabelProvider(new MemoryEntryLabelProvider());
-		/*entryViewer.setSorter(new ViewerSorter() {
-			@Override
-			public int compare(Viewer viewer, Object e1, Object e2) {
-				if (e1 instanceof MemoryEntry && e2 instanceof MemoryEntry) {
-					MemoryEntry me1 = (MemoryEntry) e1;
-					MemoryEntry me2 = (MemoryEntry) e2;
-					if (me1.hasWriteAccess()) {
-						if (me2.hasWriteAccess())
-							return me1.addr - me2.addr;
-						else
-							return -1;
-					}
-					if (me1.hasReadAccess()) {
-						if (me2.hasWriteAccess())
-							return 1;
-						else if (me2.hasReadAccess())
-							return me1.addr - me2.addr;
-						else
-							return 0;
-					}
-					return -1;
-				}
-				return super.compare(viewer, e1, e2);
-			}
-		});*/
-		
 		entryViewer.setFilters(new ViewerFilter[] {
 			new ViewerFilter() {
 
@@ -302,17 +276,8 @@ public class MemoryViewer extends Composite {
 		props[17] = "0123456789ABCDEF";
 		new TableColumn(table, SWT.NO_FOCUS | SWT.CENTER).setText(props[17]);
 		
-		// hmmm... FontRegister.createFont() is busted
-		Font textFont = JFaceResources.getTextFont();
-		FontData[] fontData = textFont.getFontData();
-		int len = 0;
-		while (len < fontData.length && fontData[len] != null) 
-			len++;
-		FontData[] fontData2 = new FontData[len];
-		System.arraycopy(fontData, 0, fontData2, 0, len);
-		///
 		
-		FontDescriptor fontDescriptor = FontDescriptor.createFrom(fontData2);
+		FontDescriptor fontDescriptor = Utils.getFontDescriptor(JFaceResources.getTextFont());
 		fontDescriptor = fontDescriptor.increaseHeight(-2);
 		table.setFont(fontDescriptor.createFont(getDisplay()));
 		
@@ -333,6 +298,7 @@ public class MemoryViewer extends Composite {
 		
 		addTableContextMenu(table);
 	}
+
 
 	private void addTableContextMenu(final Table table) {
 		Menu menu = new Menu(table);

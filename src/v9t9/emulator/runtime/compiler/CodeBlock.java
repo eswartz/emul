@@ -34,6 +34,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
 	int size;
 	MemoryEntry ent;
 	private Compiler compiler;
+	private AbortedException gAbortedException = new AbortedException();
     
     static int uniqueClassSuffix;
 
@@ -171,6 +172,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
             ret = code.run();
         }
         catch (AbortedException e) {
+        	exec.nSwitches++;
         	abort = e;
         }
         finally {
@@ -253,14 +255,14 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
     	//System.out.println("Memory map changed");
         //clear();
         if (running) {
-			throw new AbortedException();
+			throw gAbortedException;
 		} 
     }
     public void physicalMemoryMapChanged(MemoryEntry entry) {
     	//System.out.println("Memory map changed");
     	//clear();
     	if (running) {
-    		throw new AbortedException();
+    		throw gAbortedException;
     	} 
     }
 

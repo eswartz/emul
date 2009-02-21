@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.resource.FontDescriptor;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 
 
 
@@ -150,4 +153,19 @@ public class Utils  {
     		remaining -= skipped;
     	}
     }
+	
+
+	public static FontDescriptor getFontDescriptor(Font font) {
+		// hmmm... FontRegister.createFont() is busted
+		FontData[] fontData = font.getFontData();
+		int len = 0;
+		while (len < fontData.length && fontData[len] != null) 
+			len++;
+		FontData[] fontData2 = new FontData[len];
+		System.arraycopy(fontData, 0, fontData2, 0, len);
+		///
+		
+		FontDescriptor fontDescriptor = FontDescriptor.createFrom(fontData2);
+		return fontDescriptor;
+	}
 }

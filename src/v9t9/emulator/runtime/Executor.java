@@ -7,7 +7,10 @@
 package v9t9.emulator.runtime;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import v9t9.emulator.Machine;
@@ -55,10 +58,15 @@ public class Executor {
     static public final Setting settingDumpInstructions = new Setting(sDumpInstructions, new Boolean(false));
     static public final String sDumpFullInstructions = "DumpFullInstructions";
     static public final Setting settingDumpFullInstructions = new Setting(sDumpFullInstructions, new Boolean(false));
+    static public final Setting settingSingleStep = new Setting("SingleStep", new Boolean(false));
 
     /** counter for DBG/DBGF instructions */
     public int debugCount;
+
+	public volatile Boolean interruptExecution;
     
+	private InstructionListener[] instructionListeners;
+	
     public Executor(Cpu cpu) {
         this.cpu = cpu;
         this.interp = new Interpreter(cpu.getMachine());
@@ -67,12 +75,49 @@ public class Executor {
         
         settingDumpFullInstructions.addListener(new ISettingListener() {
 
+        	DumpFullReporter reporter = new DumpFullReporter(Executor.this.cpu);
 			public void changed(Setting setting, Object oldValue) {
-				if (setting.getBoolean())
-					debugCount++;
-				else
-					debugCount--;
 				Machine.settingThrottleInterrupts.setBoolean(setting.getBoolean());
+				
+				if (setting.getBoolean()) {
+					Executor.this.addInstructionListener(reporter);
+				} else {
+					Executor.this.removeInstructionListener(reporter);
+				}
+				interruptExecution = Boolean.TRUE;
+			}
+        	
+        });
+        settingDumpInstructions.addListener(new ISettingListener() {
+        	DumpReporter reporter = new DumpReporter(Executor.this.cpu);
+			public void changed(Setting setting, Object oldValue) {
+				if (setting.getBoolean()) {
+					Executor.this.addInstructionListener(reporter);
+				} else {
+					Executor.this.removeInstructionListener(reporter);
+				}
+				interruptExecution = Boolean.TRUE;
+			}
+        	
+        });
+        Machine.settingPauseMachine.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				interruptExecution = Boolean.TRUE;
+			}
+        	
+        });
+        settingSingleStep.addListener(new ISettingListener() {
+        	
+        	public void changed(Setting setting, Object oldValue) {
+        		interruptExecution = Boolean.TRUE;
+        	}
+        	
+        });
+        Cpu.settingRealTime.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				interruptExecution = Boolean.TRUE;
 			}
         	
         });
@@ -91,23 +136,7 @@ public class Executor {
 
     }
 
-    public interface ICpuController {
-    	void act(Cpu cpu);
-    }
-    
-    /** Allow for an event to inject behavior before the next instruction
-     * executes.
-     * @param controller
-     */
-   // public synchronized void controlCpu(ICpuController controller) {
-    //	cpuController = controller;
-    //}
     public synchronized void interpretOneInstruction() {
-    	//if (cpuController != null) {
-    	//	ICpuController controller = cpuController;
-    	//	cpuController = null;
-    	//	controller.act(cpu);
-    	//}
         interp.execute(cpu, null);
         nInstructions++;
     }
@@ -121,22 +150,35 @@ public class Executor {
     public void execute() {
 		if (settingCompile.getBoolean()) {
 			executeCompilableCode();
+		} else if (settingSingleStep.getBoolean()){
+			interpretOneInstruction();
+			cpu.checkAndHandleInterrupts();
 		} else {
+			interruptExecution = Boolean.FALSE;
 			if (Cpu.settingRealTime.getBoolean()) {
-				while (!cpu.isThrottled()) {
+				while (!cpu.isThrottled() && !interruptExecution) {
 					interpretOneInstruction();
 					cpu.checkAndHandleInterrupts();
 				}
 			} else {
-				// pretend the realtime setting doesn't change often
-				for (int i = 0; i < 1000; i++) {
-					interpretOneInstruction();
-					cpu.checkAndHandleInterrupts();
-				}	
+				// pretend the realtime and instructionListeners settings don't change often
+				if (instructionListeners == null) {
+					for (int i = 0; i < 1000 && !interruptExecution; i++) {
+						interp.executeFast(cpu, null);
+				        nInstructions++;
+						cpu.checkAndHandleInterrupts();
+					}
+				} else {
+					for (int i = 0; i < 1000 && !interruptExecution; i++) {
+						interp.execute(cpu, null);
+				        nInstructions++;
+						cpu.checkAndHandleInterrupts();
+					}
+				}
 			}
-			
 		}
     }
+    
 
     private void executeCompilableCode() {
     	try {
@@ -171,11 +213,11 @@ public class Executor {
             cpu.handleInterrupts();
 		}
 	}
-	public PrintWriter getDump() {
+	public static PrintWriter getDump() {
         return Logging.getLog(settingDumpInstructions);
     }
 
-    public PrintWriter getDumpfull() {
+    public static PrintWriter getDumpfull() {
     	return Logging.getLog(settingDumpFullInstructions);
     }
  
@@ -212,6 +254,37 @@ public class Executor {
         nSwitches = 0;
         nCompiles = 0;
         nLastCycleCount = cpu.getTotalCycleCount();
+	}
+
+	/**
+	 * @return
+	 */
+	public InstructionListener[] getInstructionListeners() {
+		return instructionListeners;
+	}
+	
+	public void addInstructionListener(InstructionListener listener) {
+		List<InstructionListener> newListeners;
+		if (instructionListeners == null) {
+			newListeners = new ArrayList<InstructionListener>();
+		} else {
+			newListeners = new ArrayList<InstructionListener>(Arrays.asList(instructionListeners));
+		}
+		if (!newListeners.contains(listener))
+			newListeners.add(listener);
+		instructionListeners = (InstructionListener[]) newListeners
+				.toArray(new InstructionListener[newListeners.size()]);
+	}
+	public void removeInstructionListener(InstructionListener listener) {
+		if (instructionListeners == null)
+			return;
+		List<InstructionListener> newListeners = new ArrayList<InstructionListener>(Arrays.asList(instructionListeners));
+		newListeners.remove(listener);
+		if (newListeners.size() == 0)
+			instructionListeners = null;
+		else
+			instructionListeners = (InstructionListener[]) newListeners
+				.toArray(new InstructionListener[newListeners.size()]);
 	}
 
 }

@@ -9,7 +9,7 @@ import java.util.List;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.CruWriter;
-import v9t9.engine.cpu.InstructionAction.Block;
+import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.utils.Utils;
 
 /**
@@ -57,10 +57,10 @@ public class DSRManager {
 	 *	handles those opcodes by calling the DSR module 'filehandler'
 	 *	callback.
 	 */
-	public void handleDSR(Block block) {
-		short callpc = (short) (block.pc - 2);
-		short opcode = block.domain.readWord(callpc);
-		short crubase = block.domain.readWord((block.wp & ~0xff) | 0x00D0);
+	public void handleDSR(InstructionWorkBlock instructionWorkBlock) {
+		short callpc = (short) (instructionWorkBlock.pc - 2);
+		short opcode = instructionWorkBlock.domain.readWord(callpc);
+		short crubase = instructionWorkBlock.domain.readWord((instructionWorkBlock.wp & ~0xff) | 0x00D0);
 
 		if (callpc >= 0x4000 && callpc < 0x6000) {
 			
@@ -73,7 +73,7 @@ public class DSRManager {
 				// error or otherwise terminate instead of continuing
 				// to scan CRU bases
 				if (activeDsr.handleDSR(machine.getCpu(), (short) (opcode  & 0x3f))) {
-					block.pc = block.domain.readWord(block.wp + 11 * 2);
+					instructionWorkBlock.pc = instructionWorkBlock.domain.readWord(instructionWorkBlock.wp + 11 * 2);
 				}
 			}
 		}

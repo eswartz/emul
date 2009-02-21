@@ -264,14 +264,14 @@ public abstract class Phase {
 			if (CPU.readByte(addr) == (byte) 0xaa) {
 				System.out.println("Scanning standard header at >"
 						+ Utils.toHex4(addr));
-				addr = CPU.readWord(addr + 4);
-				addProgramList(addr);
-				addr = CPU.readWord(addr + 6);
-				addProgramList(addr);
-				addr = CPU.readWord(addr + 8);
-				addProgramList(addr);
-				addr = CPU.readWord(addr + 10);
-				addProgramList(addr);
+				int paddr = CPU.readWord(addr + 4);
+				addProgramList(paddr);
+				paddr = CPU.readWord(addr + 6);
+				addProgramList(paddr);
+				paddr = CPU.readWord(addr + 8);
+				addProgramList(paddr);
+				paddr = CPU.readWord(addr + 10);
+				addProgramList(paddr);
 			}
 
 			if (addr == 0) {
