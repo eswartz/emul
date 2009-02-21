@@ -18,6 +18,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -28,6 +29,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.swt.ImageButton;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.InstructionListener;
@@ -43,11 +45,11 @@ import v9t9.utils.Utils;
  */
 public class CpuViewer extends Composite implements InstructionListener {
 
-	private Button playPauseButton;
+	private ImageButton playPauseButton;
 	private Image playImage;
 	private Image pauseImage;
 	private Image stepImage;
-	private Button stepButton;
+	private ImageButton stepButton;
 	private ISettingListener pauseListener;
 	private final Machine machine;
 
@@ -56,17 +58,45 @@ public class CpuViewer extends Composite implements InstructionListener {
 	private TimerTask refreshTask;
 	private Text nextInstructionText;
 	private Image watchImage;
-	private Button watchButton;
+	private ImageButton watchButton;
 	protected boolean isWatching;
 	private boolean showNextInstruction;
 	
+	static class CpuButtonBar extends Composite implements ImageButton.ButtonParentDrawer {
+
+		public CpuButtonBar(Composite parent, int style) {
+			super(parent, style);
+		}
+
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.swt.ImageButton.ButtonParentDrawer#addedButton()
+		 */
+		public void addedButton() {
+		}
+
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.swt.ImageButton.ButtonParentDrawer#drawBackground(org.eclipse.swt.graphics.GC, v9t9.emulator.clients.builtin.swt.ImageButton, org.eclipse.swt.graphics.Point, org.eclipse.swt.graphics.Point)
+		 */
+		public void drawBackground(GC gc, ImageButton imageButton,
+				Point offset, Point size) {
+			gc.fillRectangle(offset.x, offset.y, size.x, size.y);
+		}
+
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.swt.ImageButton.ButtonParentDrawer#getComposite()
+		 */
+		public Composite getComposite() {
+			return this;
+		}
+		
+	}
 	public CpuViewer(Composite parent, int style, final Machine machine, Timer timer) {
 		super(parent, style);
 		this.machine = machine;
 		
 		setLayout(new GridLayout());
 		
-		Composite buttonBar = new Composite(this, SWT.NONE);
+		CpuButtonBar buttonBar = new CpuButtonBar(this, SWT.NONE);
 		GridDataFactory.swtDefaults().grab(true, false).align(SWT.RIGHT, SWT.CENTER).applyTo(buttonBar);
 		GridLayoutFactory.swtDefaults().numColumns(10).applyTo(buttonBar);
 
@@ -76,9 +106,11 @@ public class CpuViewer extends Composite implements InstructionListener {
 		
 		playImage = getSubImage(icons, 0, 0, 24, 24);
 		pauseImage = getSubImage(icons, 24, 0, 24, 24);
-		playPauseButton = new Button(buttonBar, SWT.TOGGLE);
-		GridDataFactory.swtDefaults()/*.hint(24, 24)*/.applyTo(playPauseButton);
-		playPauseButton.setToolTipText("Run or pause the machine");
+		//playPauseButton = new Button(buttonBar, SWT.TOGGLE | SWT.TRANSPARENT);
+		playPauseButton = new ImageButton(buttonBar, SWT.TOGGLE, icons, new Rectangle(0, 0, 24, 24), 
+				"Run or pause the machine");
+		//GridDataFactory.swtDefaults()/*.hint(24, 24)*/.applyTo(playPauseButton);
+		//playPauseButton.setToolTipText();
 		
 		updatePlayPauseButtonImage();
 		playPauseButton.setSelection(Machine.settingPauseMachine.getBoolean());
@@ -126,11 +158,12 @@ public class CpuViewer extends Composite implements InstructionListener {
 		////
 		
 		stepImage = getSubImage(icons, 48, 0, 24, 24);
-		stepButton = new Button(buttonBar, SWT.PUSH);
-		stepButton.setImage(stepImage);
-		stepButton.setToolTipText("Single step over the next instruction (pauses if running)");
+		stepButton = new ImageButton(buttonBar, SWT.PUSH, stepImage, new Rectangle(0, 0, 24, 24), 
+				"Single step over the next instruction (pauses if running)");
+		//stepButton.setImage(stepImage);
+		//stepButton.setToolTipText("Single step over the next instruction (pauses if running)");
 		
-		GridDataFactory.swtDefaults()/*.hint(24, 24)*/.applyTo(stepButton);
+		//GridDataFactory.swtDefaults()/*.hint(24, 24)*/.applyTo(stepButton);
 		
 		stepButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -149,12 +182,12 @@ public class CpuViewer extends Composite implements InstructionListener {
 		///
 
 		watchImage = getSubImage(icons, 72, 0, 24, 24);
-		watchButton = new Button(buttonBar, SWT.TOGGLE);
-		watchButton.setImage(watchImage);
-		watchButton.setToolTipText("If pressed, record every instruction executed; else only update periodically");
+		watchButton = new ImageButton(buttonBar, SWT.TOGGLE, watchImage, new Rectangle(0, 0, 24, 24),
+				"If pressed, record every instruction executed; else only update periodically");
+		//watchButton.setImage(watchImage);
+		//watchButton.setToolTipText("If pressed, record every instruction executed; else only update periodically");
 		
-		GridDataFactory.swtDefaults()/*.hint(24, 24)*/.applyTo(watchButton);
-		
+		//GridDataFactory.swtDefaults()/*.hint(24, 24)*/.applyTo(watchButton);
 		watchButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -221,9 +254,11 @@ public class CpuViewer extends Composite implements InstructionListener {
 
 	private void updatePlayPauseButtonImage() {
 		if (Machine.settingPauseMachine.getBoolean()) {
-			playPauseButton.setImage(pauseImage);
+			//playPauseButton.setImage(pauseImage);
+			playPauseButton.setOverlayBounds(new Rectangle(24, 0, 24, 24));
 		} else {
-			playPauseButton.setImage(playImage);
+			//playPauseButton.setImage(playImage);
+			playPauseButton.setOverlayBounds(null);
 		}
 		playPauseButton.update();
 	}
@@ -273,12 +308,14 @@ public class CpuViewer extends Composite implements InstructionListener {
 		if (Executor.settingSingleStep.getBoolean()) {
 			Executor.settingSingleStep.setBoolean(false);
 			Machine.settingPauseMachine.setBoolean(true);
+			machine.getExecutor().interruptExecution = Boolean.TRUE;
 		}
 		//throw new AbortedException();
-		machine.getExecutor().interruptExecution = Boolean.TRUE;
 	}
 
 	protected void refreshTable() {
+		if (isDisposed())
+			return;
 		getDisplay().syncExec(new Runnable() {
 			public void run() {
 				//instContentProvider.refreshTable();
