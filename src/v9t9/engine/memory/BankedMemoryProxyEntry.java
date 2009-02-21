@@ -3,7 +3,6 @@
  */
 package v9t9.engine.memory;
 
-import v9t9.utils.Utils;
 
 /**
  * This entry is used to provide flattened views of banked entries

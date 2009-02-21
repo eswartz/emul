@@ -10,8 +10,6 @@ import org.eclipse.jface.viewers.ILazyContentProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 
-import v9t9.engine.memory.MemoryEntry;
-
 class InstContentProvider implements ILazyContentProvider {
 
 	private List<InstRow> insts;

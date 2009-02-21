@@ -50,7 +50,7 @@ abstract public class CompiledCode {
     abstract public boolean run();
     
     public void dump(short pc, short wp, Status status, int vdpaddr, int gromaddr) {
-        PrintWriter dump = exec.getDump();
+        PrintWriter dump = Executor.getDump();
         if (dump != null) {
             dump.println(Utils.toHex4(pc)
                     + " "
@@ -69,7 +69,7 @@ abstract public class CompiledCode {
             short ea1, short val1, 
             short ea2, short val2,
             int op1type, int op1dest, int op2type, int op2dest) {
-        PrintWriter dumpfull = exec.getDumpfull();
+        PrintWriter dumpfull = Executor.getDumpfull();
         
         if (dumpfull != null) {
             dumpfull.print("*" + Utils.toHex4(pc) + ": "
@@ -93,7 +93,7 @@ abstract public class CompiledCode {
             short ea1, short val1, 
             short ea2, short val2,
             int op1type, int op1dest, int op2type, int op2dest) {
-        PrintWriter dumpfull = exec.getDumpfull();
+        PrintWriter dumpfull = Executor.getDumpfull();
         if (dumpfull != null) {
             if (op1type != MachineOperand.OP_NONE
                     && op1dest != Operand.OP_DEST_FALSE) {

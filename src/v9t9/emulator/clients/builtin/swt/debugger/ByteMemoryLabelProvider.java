@@ -3,8 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.swt.debugger;
 
-import java.util.Set;
-
 import org.eclipse.jface.viewers.BaseLabelProvider;
 import org.eclipse.jface.viewers.ITableColorProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;

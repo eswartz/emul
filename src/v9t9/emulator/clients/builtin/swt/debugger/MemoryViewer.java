@@ -17,9 +17,6 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ComboViewer;
-import org.eclipse.jface.viewers.IColorProvider;
-import org.eclipse.jface.viewers.IFontDecorator;
-import org.eclipse.jface.viewers.IFontProvider;
 import org.eclipse.jface.viewers.ILazyContentProvider;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -29,15 +26,9 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
-import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.MenuDetectEvent;
-import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
@@ -74,7 +65,6 @@ public class MemoryViewer extends Composite {
 	private Button filterButton;
 	private boolean filterMemory;
 	protected Set<Integer> changedMemory;
-	private Timer timer;
 
 	public MemoryViewer(Composite parent, int style, Memory memory, final Timer timer) {
 		super(parent, style);
@@ -101,7 +91,6 @@ public class MemoryViewer extends Composite {
 			
 		});
 		
-		this.timer = timer;
 		refreshTask = new TimerTask() {
 
 			@Override

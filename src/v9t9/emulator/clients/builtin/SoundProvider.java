@@ -5,7 +5,6 @@ package v9t9.emulator.clients.builtin;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 
-import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.hardware.sound.SoundVoice;
 import v9t9.engine.SoundHandler;
 

@@ -9,14 +9,12 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
-import v9t9.jni.v9t9render.V9t9Render;
 
 /**
  * Render video into an SWT window
  * @author ejs
  *
  */
-@SuppressWarnings("restriction")
 public class SwtVideoRendererWin32 extends SwtVideoRenderer {
 	
 	static {

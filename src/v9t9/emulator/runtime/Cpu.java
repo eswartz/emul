@@ -273,11 +273,11 @@ public class Cpu implements MemoryAccessListener {
      * (TODO: see if these still need to be distinct steps)
      */
     public final void handleInterrupts() {
-    	PrintWriter dumpfull = getMachine().getExecutor().getDumpfull();
+    	PrintWriter dumpfull = Executor.getDumpfull();
 		if (dumpfull != null) {
     		dumpfull.println("*** Aborted");
 		}
-        PrintWriter dump = getMachine().getExecutor().getDump();
+        PrintWriter dump = Executor.getDump();
 		if (dump != null) {
         	dump.println("*** Aborted");
 		}

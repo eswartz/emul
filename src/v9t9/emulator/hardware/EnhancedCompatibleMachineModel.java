@@ -10,7 +10,6 @@ import v9t9.emulator.hardware.dsrs.EmuDiskDSR;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.emulator.hardware.sound.SoundTMS9919;
-import v9t9.emulator.hardware.speech.TMS5220;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.MemoryModel;

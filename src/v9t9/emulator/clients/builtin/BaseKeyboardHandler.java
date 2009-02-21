@@ -3,9 +3,6 @@
  */
 package v9t9.emulator.clients.builtin;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;

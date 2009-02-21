@@ -6,12 +6,10 @@
  */
 package v9t9.emulator.runtime.interpreter;
 
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.emulator.Machine;
-import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.InstructionListener;
@@ -23,8 +21,6 @@ import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.utils.Utils;
 
 /**
  * This class interprets 9900 instructions one by one.

@@ -3,8 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.swt.debugger;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -12,23 +10,15 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.viewers.CellEditor;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.graphics.TextStyle;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
@@ -39,8 +29,6 @@ import org.eclipse.swt.widgets.Text;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.V9t9;
-import v9t9.emulator.runtime.AbortedException;
-import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.engine.cpu.Instruction;
@@ -58,7 +46,6 @@ public class CpuViewer extends Composite implements InstructionListener {
 	private Button playPauseButton;
 	private Image playImage;
 	private Image pauseImage;
-	private final Timer timer;
 	private Image stepImage;
 	private Button stepButton;
 	private ISettingListener pauseListener;
@@ -76,8 +63,6 @@ public class CpuViewer extends Composite implements InstructionListener {
 	public CpuViewer(Composite parent, int style, final Machine machine, Timer timer) {
 		super(parent, style);
 		this.machine = machine;
-		
-		this.timer = timer;
 		
 		setLayout(new GridLayout());
 		
