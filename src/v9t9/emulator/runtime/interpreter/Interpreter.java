@@ -36,15 +36,15 @@ public class Interpreter {
     Map<MemoryArea, Instruction[]> parsedInstructions; 
     //Instruction[] instructions; 
     
-    InstructionWorkBlock iinstructionWorkBlock;
+    InstructionWorkBlock iblock;
 
     public Interpreter(Machine machine) {
         this.machine = machine;
         this.memory = machine.getCpu().getConsole();
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
         parsedInstructions = new HashMap<MemoryArea, Instruction[]>();
-        iinstructionWorkBlock = new InstructionWorkBlock();
-        iinstructionWorkBlock.domain = memory;
+        iblock = new InstructionWorkBlock();
+        iblock.domain = memory;
      }
 
     /**
@@ -120,13 +120,13 @@ public class Interpreter {
             dumpStart(cpu, ins, dump);
         }*/
 
-        iinstructionWorkBlock.cycles = cpu.getCurrentCycleCount();
+        iblock.cycles = cpu.getCurrentCycleCount();
         
         /* get current operand values and instruction timings */
         fetchOperands(cpu, ins, cpu.getWP(), cpu.getStatus());
 
-        InstructionWorkBlock instructionWorkBlock = new InstructionWorkBlock();
-        this.iinstructionWorkBlock.copyTo(instructionWorkBlock);
+        InstructionWorkBlock block = new InstructionWorkBlock();
+        this.iblock.copyTo(block);
         
         /* dump values before execution */
         /*
@@ -152,7 +152,7 @@ public class Interpreter {
         
         cpu.addCycles(ins.cycles + mop1.cycles + mop2.cycles);
 
-        instructionWorkBlock.cycles = cpu.getCurrentCycleCount();
+        block.cycles = cpu.getCurrentCycleCount();
         
         /* dump values after execution */
         /*
@@ -163,7 +163,7 @@ public class Interpreter {
         /* notify listeners */
         if (instructionListeners != null) {
         	for (InstructionListener listener : instructionListeners) {
-        		listener.executed(instructionWorkBlock, iinstructionWorkBlock);
+        		listener.executed(block, iblock);
         	}
         }
 	}
@@ -203,31 +203,31 @@ public class Interpreter {
      * @param memory2
      */
     private void fetchOperands(Cpu cpu, Instruction ins, short wp, Status st) {
-        iinstructionWorkBlock.inst = ins;
-        iinstructionWorkBlock.pc = (short) (iinstructionWorkBlock.inst.pc + iinstructionWorkBlock.inst.size);
-        iinstructionWorkBlock.wp = cpu.getWP();
-        iinstructionWorkBlock.status = st;
+        iblock.inst = ins;
+        iblock.pc = (short) (iblock.inst.pc + iblock.inst.size);
+        iblock.wp = cpu.getWP();
+        iblock.status = st;
         
-        MachineOperand mop1 = (MachineOperand) iinstructionWorkBlock.inst.op1;
-        MachineOperand mop2 = (MachineOperand) iinstructionWorkBlock.inst.op2;
+        MachineOperand mop1 = (MachineOperand) iblock.inst.op1;
+        MachineOperand mop2 = (MachineOperand) iblock.inst.op2;
 
         if (mop1.type != MachineOperand.OP_NONE) {
         	mop1.cycles = 0;
-			iinstructionWorkBlock.ea1 = mop1.getEA(memory, iinstructionWorkBlock.inst.pc, wp);
+			iblock.ea1 = mop1.getEA(memory, iblock.inst.pc, wp);
 		}
         if (mop2.type != MachineOperand.OP_NONE) {
         	mop2.cycles = 0;
-			iinstructionWorkBlock.ea2 = mop2.getEA(memory, iinstructionWorkBlock.inst.pc, wp);
+			iblock.ea2 = mop2.getEA(memory, iblock.inst.pc, wp);
 		}
         if (mop1.type != MachineOperand.OP_NONE) {
         	//if (ins.inst != InstructionTable.Ili)		// even LI will read in the real hardware
-        	iinstructionWorkBlock.val1 = mop1.getValue(memory, iinstructionWorkBlock.ea1);
+        	iblock.val1 = mop1.getValue(memory, iblock.ea1);
 		}
         if (mop2.type != MachineOperand.OP_NONE) {
-			iinstructionWorkBlock.val2 = mop2.getValue(memory, iinstructionWorkBlock.ea2);
+			iblock.val2 = mop2.getValue(memory, iblock.ea2);
 		}
-        if (iinstructionWorkBlock.inst.inst == InstructionTable.Idiv) {
-            iinstructionWorkBlock.val3 = memory.readWord(iinstructionWorkBlock.ea2 + 2);
+        if (iblock.inst.inst == InstructionTable.Idiv) {
+            iblock.val3 = memory.readWord(iblock.ea2 + 2);
         }
     }
 
@@ -239,11 +239,11 @@ public class Interpreter {
         MachineOperand mop2 = (MachineOperand) ins.op2;
         if (mop1.dest != Operand.OP_DEST_FALSE) {
             if (mop1.byteop) {
-				memory.writeByte(iinstructionWorkBlock.ea1, (byte) iinstructionWorkBlock.val1);
+				memory.writeByte(iblock.ea1, (byte) iblock.val1);
 			} else {
-				memory.writeWord(iinstructionWorkBlock.ea1, iinstructionWorkBlock.val1);
+				memory.writeWord(iblock.ea1, iblock.val1);
 				if (ins.inst == InstructionTable.Iticks) {
-					memory.writeWord(iinstructionWorkBlock.ea1 + 2, iinstructionWorkBlock.val2);
+					memory.writeWord(iblock.ea1 + 2, iblock.val2);
 				}
 			}
 				
@@ -252,30 +252,30 @@ public class Interpreter {
         	if (ins.inst == InstructionTable.Icb)
         		mop2.dest = 1;
             if (mop2.byteop) {
-				memory.writeByte(iinstructionWorkBlock.ea2, (byte) iinstructionWorkBlock.val2);
+				memory.writeByte(iblock.ea2, (byte) iblock.val2);
 			} else {
-                memory.writeWord(iinstructionWorkBlock.ea2, iinstructionWorkBlock.val2);
+                memory.writeWord(iblock.ea2, iblock.val2);
                 if (ins.inst == InstructionTable.Impy 
                 		|| ins.inst == InstructionTable.Idiv) {
-                    memory.writeWord(iinstructionWorkBlock.ea2 + 2, iinstructionWorkBlock.val3);
+                    memory.writeWord(iblock.ea2 + 2, iblock.val3);
                 }
             }
         }
 
         if ((ins.writes & Instruction.INST_RSRC_ST) != 0) {
-			cpu.setStatus(iinstructionWorkBlock.status);
+			cpu.setStatus(iblock.status);
 		}
 
         /* do this after flushing status */
         if ((ins.writes & Instruction.INST_RSRC_CTX) != 0) {
             /* update PC first */
-            cpu.setPC((short) (iinstructionWorkBlock.inst.pc + iinstructionWorkBlock.inst.size));
-            cpu.contextSwitch(iinstructionWorkBlock.wp, iinstructionWorkBlock.pc);
+            cpu.setPC((short) (iblock.inst.pc + iblock.inst.size));
+            cpu.contextSwitch(iblock.wp, iblock.pc);
         } else {
             /* flush register changes */
-            cpu.setPC(iinstructionWorkBlock.pc);
+            cpu.setPC(iblock.pc);
             if ((ins.writes & Instruction.INST_RSRC_WP) != 0) {
-				cpu.setWP(iinstructionWorkBlock.wp);
+				cpu.setWP(iblock.wp);
 			}
         }
     }
@@ -290,71 +290,71 @@ public class Interpreter {
             // just a note that Status should be up to date, for future work
             return;
         case Instruction.st_INT:
-            iinstructionWorkBlock.status.setIntMask(iinstructionWorkBlock.val1);
+            iblock.status.setIntMask(iblock.val1);
             break;
         case Instruction.st_ADD_BYTE_LAECOP:
-            iinstructionWorkBlock.status.set_ADD_BYTE_LAECOP((byte) iinstructionWorkBlock.val2,
-                    (byte) iinstructionWorkBlock.val1);
+            iblock.status.set_ADD_BYTE_LAECOP((byte) iblock.val2,
+                    (byte) iblock.val1);
             break;
         case Instruction.st_ADD_LAECO:
-            iinstructionWorkBlock.status.set_ADD_LAECO(iinstructionWorkBlock.val2, iinstructionWorkBlock.val1);
+            iblock.status.set_ADD_LAECO(iblock.val2, iblock.val1);
             break;
         case Instruction.st_ADD_LAECO_REV:
-            iinstructionWorkBlock.status.set_ADD_LAECO(iinstructionWorkBlock.val1, iinstructionWorkBlock.val2);
+            iblock.status.set_ADD_LAECO(iblock.val1, iblock.val2);
             break;
         case Instruction.st_SUB_BYTE_LAECOP:
-            iinstructionWorkBlock.status.set_SUB_BYTE_LAECOP((byte) iinstructionWorkBlock.val2,
-                    (byte) iinstructionWorkBlock.val1);
+            iblock.status.set_SUB_BYTE_LAECOP((byte) iblock.val2,
+                    (byte) iblock.val1);
             break;
         case Instruction.st_SUB_LAECO:
-            iinstructionWorkBlock.status.set_SUB_LAECO(iinstructionWorkBlock.val2, iinstructionWorkBlock.val1);
+            iblock.status.set_SUB_LAECO(iblock.val2, iblock.val1);
             break;
 
         case Instruction.st_BYTE_CMP:
-            iinstructionWorkBlock.status.set_BYTE_CMP((byte) iinstructionWorkBlock.val1,
-                    (byte) iinstructionWorkBlock.val2);
+            iblock.status.set_BYTE_CMP((byte) iblock.val1,
+                    (byte) iblock.val2);
             break;
 
         case Instruction.st_CMP:
-            iinstructionWorkBlock.status.set_CMP(iinstructionWorkBlock.val1, iinstructionWorkBlock.val2);
+            iblock.status.set_CMP(iblock.val1, iblock.val2);
             break;
         case Instruction.st_DIV_O:
-            iinstructionWorkBlock.status
-                    .set_O((iinstructionWorkBlock.val1 & 0xffff) <= (iinstructionWorkBlock.val2 & 0xffff));
+            iblock.status
+                    .set_O((iblock.val1 & 0xffff) <= (iblock.val2 & 0xffff));
             break;
         case Instruction.st_E:
-            iinstructionWorkBlock.status.set_E(iinstructionWorkBlock.val1 == iinstructionWorkBlock.val2);
+            iblock.status.set_E(iblock.val1 == iblock.val2);
             break;
         case Instruction.st_LAE:
-            iinstructionWorkBlock.status.set_LAE(iinstructionWorkBlock.val2);
+            iblock.status.set_LAE(iblock.val2);
             break;
         case Instruction.st_LAE_1:
-            iinstructionWorkBlock.status.set_LAE(iinstructionWorkBlock.val1);
+            iblock.status.set_LAE(iblock.val1);
             break;
 
         case Instruction.st_BYTE_LAEP:
-            iinstructionWorkBlock.status.set_BYTE_LAEP((byte) iinstructionWorkBlock.val2);
+            iblock.status.set_BYTE_LAEP((byte) iblock.val2);
             break;
         case Instruction.st_BYTE_LAEP_1:
-            iinstructionWorkBlock.status.set_BYTE_LAEP((byte) iinstructionWorkBlock.val1);
+            iblock.status.set_BYTE_LAEP((byte) iblock.val1);
             break;
 
         case Instruction.st_LAEO:
-            iinstructionWorkBlock.status.set_LAEO(iinstructionWorkBlock.val1);
+            iblock.status.set_LAEO(iblock.val1);
 
         case Instruction.st_O:
-            iinstructionWorkBlock.status.set_O(iinstructionWorkBlock.val1 == (short) 0x8000);
+            iblock.status.set_O(iblock.val1 == (short) 0x8000);
             break;
 
         case Instruction.st_SHIFT_LEFT_CO:
-            iinstructionWorkBlock.status.set_SHIFT_LEFT_CO(iinstructionWorkBlock.val1, iinstructionWorkBlock.val2);
+            iblock.status.set_SHIFT_LEFT_CO(iblock.val1, iblock.val2);
             break;
         case Instruction.st_SHIFT_RIGHT_C:
-            iinstructionWorkBlock.status.set_SHIFT_RIGHT_C(iinstructionWorkBlock.val1, iinstructionWorkBlock.val2);
+            iblock.status.set_SHIFT_RIGHT_C(iblock.val1, iblock.val2);
             break;
 
         case Instruction.st_XOP:
-            iinstructionWorkBlock.status.set_X();
+            iblock.status.set_X();
             break;
 
         default:
@@ -374,27 +374,27 @@ public class Interpreter {
         case InstructionTable.Idata:
             break;
         case InstructionTable.Ili:
-        	iinstructionWorkBlock.val1 = iinstructionWorkBlock.val2;
+        	iblock.val1 = iblock.val2;
             break;
         case InstructionTable.Iai:
-        	iinstructionWorkBlock.val1 += iinstructionWorkBlock.val2;
+        	iblock.val1 += iblock.val2;
             break;
         case InstructionTable.Iandi:
-        	iinstructionWorkBlock.val1 &= iinstructionWorkBlock.val2;
+        	iblock.val1 &= iblock.val2;
             break;
         case InstructionTable.Iori:
-        	iinstructionWorkBlock.val1 |= iinstructionWorkBlock.val2;
+        	iblock.val1 |= iblock.val2;
             break;
         case InstructionTable.Ici:
             break;
         case InstructionTable.Istwp:
-        	iinstructionWorkBlock.val1 = iinstructionWorkBlock.wp;
+        	iblock.val1 = iblock.wp;
             break;
         case InstructionTable.Istst:
-        	iinstructionWorkBlock.val1 = iinstructionWorkBlock.status.flatten();
+        	iblock.val1 = iblock.status.flatten();
             break;
         case InstructionTable.Ilwpi:
-        	iinstructionWorkBlock.wp = iinstructionWorkBlock.val1;
+        	iblock.wp = iblock.val1;
             break;
         case InstructionTable.Ilimi:
             // all done in status (Status#setIntMask() performed as post-instruction
@@ -407,9 +407,9 @@ public class Interpreter {
             //cpu.rset(); // TODO
             break;
         case InstructionTable.Irtwp:
-        	iinstructionWorkBlock.status.expand(memory.readWord(iinstructionWorkBlock.wp + 15 * 2));
-        	iinstructionWorkBlock.pc = memory.readWord(iinstructionWorkBlock.wp + 14 * 2);
-        	iinstructionWorkBlock.wp = memory.readWord(iinstructionWorkBlock.wp + 13 * 2);
+        	iblock.status.expand(memory.readWord(iblock.wp + 15 * 2));
+        	iblock.pc = memory.readWord(iblock.wp + 14 * 2);
+        	iblock.wp = memory.readWord(iblock.wp + 13 * 2);
             break;
         case InstructionTable.Ickon:
             // TODO
@@ -421,198 +421,198 @@ public class Interpreter {
             // TODO
             break;
         case InstructionTable.Iblwp:
-        	iinstructionWorkBlock.wp = memory.readWord(iinstructionWorkBlock.val1);
-        	iinstructionWorkBlock.pc = memory.readWord(iinstructionWorkBlock.val1 + 2);
+        	iblock.wp = memory.readWord(iblock.val1);
+        	iblock.pc = memory.readWord(iblock.val1 + 2);
             break;
 
         case InstructionTable.Ib:
-        	iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	iblock.pc = iblock.val1;
             break;
         case InstructionTable.Ix:
         	//short newPc = block.pc;
-        	execute(cpu, iinstructionWorkBlock.val1);
+        	execute(cpu, iblock.val1);
         	//block.pc = newPc;
             break;
         case InstructionTable.Iclr:
-        	iinstructionWorkBlock.val1 = 0;
+        	iblock.val1 = 0;
             break;
         case InstructionTable.Ineg:
-        	iinstructionWorkBlock.val1 = (short) -iinstructionWorkBlock.val1;
+        	iblock.val1 = (short) -iblock.val1;
             break;
         case InstructionTable.Iinv:
-        	iinstructionWorkBlock.val1 = (short) ~iinstructionWorkBlock.val1;
+        	iblock.val1 = (short) ~iblock.val1;
             break;
         case InstructionTable.Iinc:
         case InstructionTable.Iinct:
         case InstructionTable.Idec:
         case InstructionTable.Idect:
-        	iinstructionWorkBlock.val1 += iinstructionWorkBlock.val2;
+        	iblock.val1 += iblock.val2;
             break;
         case InstructionTable.Ibl:
-        	memory.writeWord(iinstructionWorkBlock.wp + 11 * 2, iinstructionWorkBlock.pc);
-        	iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	memory.writeWord(iblock.wp + 11 * 2, iblock.pc);
+        	iblock.pc = iblock.val1;
             break;
         case InstructionTable.Iswpb:
-        	iinstructionWorkBlock.val1 = (short) (iinstructionWorkBlock.val1 >> 8 & 0xff | iinstructionWorkBlock.val1 << 8 & 0xff00);
+        	iblock.val1 = (short) (iblock.val1 >> 8 & 0xff | iblock.val1 << 8 & 0xff00);
             break;
         case InstructionTable.Iseto:
-        	iinstructionWorkBlock.val1 = -1;
+        	iblock.val1 = -1;
             break;
         case InstructionTable.Iabs:
-        	if ((iinstructionWorkBlock.val1 & 0x8000) != 0) {
-        		iinstructionWorkBlock.val1 = (short) -iinstructionWorkBlock.val1;
+        	if ((iblock.val1 & 0x8000) != 0) {
+        		iblock.val1 = (short) -iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
         case InstructionTable.Isra:
-        	iinstructionWorkBlock.val1 = (short) (iinstructionWorkBlock.val1 >> iinstructionWorkBlock.val2);
-        	cpu.addCycles(iinstructionWorkBlock.val2 * 2);
+        	iblock.val1 = (short) (iblock.val1 >> iblock.val2);
+        	cpu.addCycles(iblock.val2 * 2);
             break;
         case InstructionTable.Isrl:
-        	iinstructionWorkBlock.val1 = (short) ((iinstructionWorkBlock.val1 & 0xffff) >> iinstructionWorkBlock.val2);
-        	cpu.addCycles(iinstructionWorkBlock.val2 * 2);
+        	iblock.val1 = (short) ((iblock.val1 & 0xffff) >> iblock.val2);
+        	cpu.addCycles(iblock.val2 * 2);
             break;
 
         case InstructionTable.Isla:
-        	iinstructionWorkBlock.val1 = (short) (iinstructionWorkBlock.val1 << iinstructionWorkBlock.val2);
-        	cpu.addCycles(iinstructionWorkBlock.val2 * 2);
+        	iblock.val1 = (short) (iblock.val1 << iblock.val2);
+        	cpu.addCycles(iblock.val2 * 2);
             break;
 
         case InstructionTable.Isrc:
-        	iinstructionWorkBlock.val1 = (short) ((iinstructionWorkBlock.val1 & 0xffff) >> iinstructionWorkBlock.val2 | (iinstructionWorkBlock.val1 & 0xffff) << 16 - iinstructionWorkBlock.val2);
-        	cpu.addCycles(iinstructionWorkBlock.val2 * 2);
+        	iblock.val1 = (short) ((iblock.val1 & 0xffff) >> iblock.val2 | (iblock.val1 & 0xffff) << 16 - iblock.val2);
+        	cpu.addCycles(iblock.val2 * 2);
             break;
 
         case InstructionTable.Ijmp:
-        	iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	iblock.pc = iblock.val1;
         	cpu.addCycles(2);
             break;
         case InstructionTable.Ijlt:
-        	if (iinstructionWorkBlock.status.isLT()) {
-        		iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	if (iblock.status.isLT()) {
+        		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
         case InstructionTable.Ijle:
-        	if (iinstructionWorkBlock.status.isLE()) {
-        		iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	if (iblock.status.isLE()) {
+        		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
 
         case InstructionTable.Ijeq:
-        	if (iinstructionWorkBlock.status.isEQ()) {
-        		iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	if (iblock.status.isEQ()) {
+        		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
         case InstructionTable.Ijhe:
-        	if (iinstructionWorkBlock.status.isHE()) {
-        		iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	if (iblock.status.isHE()) {
+        		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
         case InstructionTable.Ijgt:
-        	if (iinstructionWorkBlock.status.isGT()) {
-        		iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	if (iblock.status.isGT()) {
+        		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
         case InstructionTable.Ijne:
-        	if (iinstructionWorkBlock.status.isNE()) {
-        		iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	if (iblock.status.isNE()) {
+        		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
         case InstructionTable.Ijnc:
-        	if (!iinstructionWorkBlock.status.isC()) {
-        		iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	if (!iblock.status.isC()) {
+        		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
         case InstructionTable.Ijoc:
-        	if (iinstructionWorkBlock.status.isC()) {
-        		iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	if (iblock.status.isC()) {
+        		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
         case InstructionTable.Ijno:
-        	if (!iinstructionWorkBlock.status.isO()) {
-        		iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	if (!iblock.status.isO()) {
+        		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
         case InstructionTable.Ijl:
-        	if (iinstructionWorkBlock.status.isL()) {
-        		iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	if (iblock.status.isL()) {
+        		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
         	}
             break;
         case InstructionTable.Ijh:
-        	if (iinstructionWorkBlock.status.isH()) {
-        		iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+        	if (iblock.status.isH()) {
+        		iblock.pc = iblock.val1;
         		cpu.addCycles(2);
             }
             break;
 
         case InstructionTable.Ijop:
             // jump on ODD parity
-            if (iinstructionWorkBlock.status.isP()) {
-				iinstructionWorkBlock.pc = iinstructionWorkBlock.val1;
+            if (iblock.status.isP()) {
+				iblock.pc = iblock.val1;
 				cpu.addCycles(2);
             }
             break;
 
         case InstructionTable.Isbo:
-        	machine.getCruManager().writeBits(iinstructionWorkBlock.val1, 1, 1);
+        	machine.getCruManager().writeBits(iblock.val1, 1, 1);
             break;
 
         case InstructionTable.Isbz:
-        	machine.getCruManager().writeBits(iinstructionWorkBlock.val1, 0, 1);
+        	machine.getCruManager().writeBits(iblock.val1, 0, 1);
             break;
 
         case InstructionTable.Itb:
-        	iinstructionWorkBlock.val1 = (short) machine.getCruManager().readBits(iinstructionWorkBlock.val1, 1);
-        	iinstructionWorkBlock.val2 = 0;
+        	iblock.val1 = (short) machine.getCruManager().readBits(iblock.val1, 1);
+        	iblock.val2 = 0;
             break;
 
         case InstructionTable.Icoc:
-        	iinstructionWorkBlock.val2 = (short) (iinstructionWorkBlock.val1 & iinstructionWorkBlock.val2);
+        	iblock.val2 = (short) (iblock.val1 & iblock.val2);
             break;
 
         case InstructionTable.Iczc:
-        	iinstructionWorkBlock.val2 = (short) (iinstructionWorkBlock.val1 & ~iinstructionWorkBlock.val2);
+        	iblock.val2 = (short) (iblock.val1 & ~iblock.val2);
             break;
 
         case InstructionTable.Ixor:
-        	iinstructionWorkBlock.val2 ^= iinstructionWorkBlock.val1;
+        	iblock.val2 ^= iblock.val1;
             break;
 
         case InstructionTable.Ixop:
-        	iinstructionWorkBlock.wp = memory.readWord(iinstructionWorkBlock.val2 * 4 + 0x40);
-            iinstructionWorkBlock.pc = memory.readWord(iinstructionWorkBlock.val2 * 4 + 0x42);
-            memory.writeWord(iinstructionWorkBlock.wp + 11 * 2, iinstructionWorkBlock.ea1);
+        	iblock.wp = memory.readWord(iblock.val2 * 4 + 0x40);
+            iblock.pc = memory.readWord(iblock.val2 * 4 + 0x42);
+            memory.writeWord(iblock.wp + 11 * 2, iblock.ea1);
             break;
 
         case InstructionTable.Impy:
-            int val = (iinstructionWorkBlock.val1 & 0xffff)
-                    * (iinstructionWorkBlock.val2 & 0xffff);
+            int val = (iblock.val1 & 0xffff)
+                    * (iblock.val2 & 0xffff);
             // manually write second reg
-            iinstructionWorkBlock.val3 = (short) val;
+            iblock.val3 = (short) val;
             //memory.writeWord(block.op2.ea + 2, (short) val);
-            iinstructionWorkBlock.val2 = (short) (val >> 16);
+            iblock.val2 = (short) (val >> 16);
             break;
 
         case InstructionTable.Idiv:
             // manually read second reg
-            if (iinstructionWorkBlock.val1 > iinstructionWorkBlock.val2) {
-                short low = iinstructionWorkBlock.val3;
+            if (iblock.val1 > iblock.val2) {
+                short low = iblock.val3;
                 //short low = memory.readWord(block.op2.ea + 2);
-                int dval = (iinstructionWorkBlock.val2 & 0xffff) << 16
+                int dval = (iblock.val2 & 0xffff) << 16
                         | low & 0xffff;
                 try {
-                    iinstructionWorkBlock.val2 = (short) (dval / (iinstructionWorkBlock.val1 & 0xffff));
-                    iinstructionWorkBlock.val3 = (short) (dval % (iinstructionWorkBlock.val1 & 0xffff));
+                    iblock.val2 = (short) (dval / (iblock.val1 & 0xffff));
+                    iblock.val3 = (short) (dval % (iblock.val1 & 0xffff));
                 } catch (ArithmeticException e) {
                 	cpu.addCycles((124 + 92) / 2 - 16);
                 }
@@ -626,22 +626,22 @@ public class Interpreter {
 
         case InstructionTable.Ildcr:
         	machine.getCruManager().writeBits(
-                    memory.readWord(iinstructionWorkBlock.wp + 12 * 2), iinstructionWorkBlock.val1,
-                    iinstructionWorkBlock.val2);
+                    memory.readWord(iblock.wp + 12 * 2), iblock.val1,
+                    iblock.val2);
             break;
 
         case InstructionTable.Istcr:
-        	iinstructionWorkBlock.val1 = (short) machine.getCruManager().readBits(
-        			memory.readWord(iinstructionWorkBlock.wp + 12 * 2), iinstructionWorkBlock.val2);
+        	iblock.val1 = (short) machine.getCruManager().readBits(
+        			memory.readWord(iblock.wp + 12 * 2), iblock.val2);
             break;
         case InstructionTable.Iszc:
         case InstructionTable.Iszcb:
-        	iinstructionWorkBlock.val2 &= ~iinstructionWorkBlock.val1;
+        	iblock.val2 &= ~iblock.val1;
             break;
 
         case InstructionTable.Is:
         case InstructionTable.Isb:
-        	iinstructionWorkBlock.val2 -= iinstructionWorkBlock.val1;
+        	iblock.val2 -= iblock.val1;
             break;
 
         case InstructionTable.Ic:
@@ -650,35 +650,35 @@ public class Interpreter {
 
         case InstructionTable.Ia:
         case InstructionTable.Iab:
-        	iinstructionWorkBlock.val2 += iinstructionWorkBlock.val1;
+        	iblock.val2 += iblock.val1;
             break;
 
         case InstructionTable.Imov:
         case InstructionTable.Imovb:
-        	iinstructionWorkBlock.val2 = iinstructionWorkBlock.val1;
+        	iblock.val2 = iblock.val1;
             break;
 
         case InstructionTable.Isoc:
         case InstructionTable.Isocb:
-        	iinstructionWorkBlock.val2 |= iinstructionWorkBlock.val1;
+        	iblock.val2 |= iblock.val1;
             break;
 
         case InstructionTable.Idsr:
-        	machine.getDSRManager().handleDSR(iinstructionWorkBlock);
+        	machine.getDSRManager().handleDSR(iblock);
         	break;
         	
         case InstructionTable.Iticks:
-        	iinstructionWorkBlock.val1 = (short) (machine.getCpu().getTickCount() >> 16);
-        	iinstructionWorkBlock.val2 = (short) (machine.getCpu().getTickCount());
+        	iblock.val1 = (short) (machine.getCpu().getTickCount() >> 16);
+        	iblock.val2 = (short) (machine.getCpu().getTickCount());
         	break;
         case InstructionTable.Idbg:
         	int oldCount = machine.getExecutor().debugCount; 
-        	if (iinstructionWorkBlock.val1 == 0)
+        	if (iblock.val1 == 0)
         		machine.getExecutor().debugCount++;
         	else
         		machine.getExecutor().debugCount--;
         	if ((oldCount == 0) != (machine.getExecutor().debugCount == 0))
-        		Executor.settingDumpFullInstructions.setBoolean(iinstructionWorkBlock.val1 == 0);
+        		Executor.settingDumpFullInstructions.setBoolean(iblock.val1 == 0);
         	break;
         	
         	

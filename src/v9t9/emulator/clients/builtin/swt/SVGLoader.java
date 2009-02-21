@@ -1,7 +1,6 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,7 +13,11 @@ import org.apache.batik.util.XMLResourceDescriptor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.swt.graphics.*;
+import org.eclipse.swt.graphics.Device;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -36,11 +39,7 @@ public class SVGLoader {
 	private Device device;
 
     public SVGLoader(File file) {
-        try {
-            this.uri = file.toURL().toString();
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException(e);
-        }
+    	this.uri = file.toURI().toString();
     }
     
     

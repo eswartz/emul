@@ -19,10 +19,16 @@ class InstLabelProvider extends BaseLabelProvider implements ITableLabelProvider
 
 	public String getColumnText(Object element, int columnIndex) {
 		InstRow row = (InstRow)element;
-		if (columnIndex == 0)
+		switch (columnIndex) {
+		case 0:
 			return row.getAddress();
-		else if (columnIndex == 1)
+		case 1:
 			return row.getInst();
+		case 2:
+			return row.getOp1();
+		case 3:
+			return row.getOp2();
+		}
 		return null;
 	}
 

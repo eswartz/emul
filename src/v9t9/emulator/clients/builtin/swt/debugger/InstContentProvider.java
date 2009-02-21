@@ -54,4 +54,12 @@ class InstContentProvider implements ILazyContentProvider {
 	public Object getLast() {
 		return insts.size() > 0 ? insts.get(insts.size() - 1) : null;
 	}
+
+	/**
+	 * 
+	 */
+	public void clear() {
+		insts.clear();
+		tableViewer.setItemCount(0);
+	}
 }

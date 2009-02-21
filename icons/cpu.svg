@@ -17,7 +17,7 @@
    version="1.0"
    sodipodi:docname="cpu.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
-   inkscape:export-filename="l:/src/V9t9j/icons/cpu.png"
+   inkscape:export-filename="/usr/local/src/V9t9j/icons/cpu.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
   <defs
@@ -164,6 +164,24 @@
        x2="68.398876"
        y2="12"
        gradientTransform="translate(21,0)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient21672"
+       id="linearGradient3208"
+       x1="100.5"
+       y1="12.5"
+       x2="115.5"
+       y2="12.5"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient21672"
+       id="linearGradient3216"
+       x1="75.5"
+       y1="12"
+       x2="92.5"
+       y2="12"
+       gradientUnits="userSpaceOnUse" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -176,15 +194,17 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="11.2"
-     inkscape:cx="83.48883"
-     inkscape:cy="8.4077247"
+     inkscape:cx="97.595973"
+     inkscape:cy="6.443439"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:window-width="966"
      inkscape:window-height="693"
      inkscape:window-x="281"
-     inkscape:window-y="379">
+     inkscape:window-y="379"
+     showguides="true"
+     inkscape:guide-bbox="true">
     <inkscape:grid
        type="xygrid"
        id="grid2383"
@@ -279,7 +299,7 @@
        width="512"
        height="24" />
     <path
-       style="opacity:0.87999998;fill:#0aff01;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="opacity:0.87999998000000001;fill:url(#linearGradient3216);fill-opacity:1.0;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        d="M 92,12 C 90.751606,10.06377 86,8 84,8 C 82,8 78,9 76,12 C 77,14 81,16 84,16 C 87,16 90,14 92,12 z"
        id="path2423"
        sodipodi:nodetypes="czcsc" />
@@ -293,5 +313,18 @@
        sodipodi:ry="3.5"
        d="M 87,12.5 A 3.5,3.5 0 1 1 80,12.5 A 3.5,3.5 0 1 1 87,12.5 z"
        transform="matrix(1,0,0,0.8367347,0.5,2.6122449)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use2417"
+       id="use3197"
+       transform="translate(24,4e-7)"
+       width="512"
+       height="24" />
+    <path
+       style="opacity:0.87999998000000001;fill:url(#linearGradient3208);fill-opacity:1.0;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 108,10 L 103,6 L 101,9 L 106,13 L 103,18 L 106,20 L 109,15 L 113,18 L 115,15 L 111,12 L 114,7 L 111,5 L 108,10 z"
+       id="path3199"
+       sodipodi:nodetypes="ccccccccccccc" />
   </g>
 </svg>

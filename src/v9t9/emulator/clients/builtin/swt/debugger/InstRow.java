@@ -3,30 +3,44 @@
  */
 package v9t9.emulator.clients.builtin.swt.debugger;
 
+import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.Operand;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.utils.Utils;
+
 /**
  * @author ejs
  *
  */
 public class InstRow {
 
-	private final String addr;
-	private final String inst;
-
 	private static int gCounter;
 	private final int count = gCounter++;
+	private final InstructionWorkBlock before;
+	private final InstructionWorkBlock after;
 	/**
-	 * @param addr
-	 * @param inst
+	 * @param before
+	 * @param after
 	 */
-	public InstRow(String addr, String inst) {
-		this.addr = addr;
-		this.inst = inst;
+	public InstRow(InstructionWorkBlock before, InstructionWorkBlock after) {
+		this.before = before;
+		this.after = after;
 	}
 
 	/**
 	 * @return
 	 */
 	public String getAddress() {
+		String addr = ">" + Utils.toHex4(before.pc);
+		
+		MemoryEntry entry = before.domain.getEntryAt(before.pc);
+		if (entry != null) { 
+			String name = entry.lookupSymbol((short) (before.pc & 0xfffe));
+			if (name != null) {
+				return name + " " + addr;
+			}
+		}
 		return addr;
 	}
 
@@ -34,16 +48,7 @@ public class InstRow {
 	 * @return
 	 */
 	public String getInst() {
-		return inst;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((addr == null) ? 0 : addr.hashCode());
-		result = prime * result + ((inst == null) ? 0 : inst.hashCode());
-		return result;
+		return before.inst.toString();
 	}
 
 	@Override
@@ -61,22 +66,44 @@ public class InstRow {
 		if (count != other.count) {
 			return false;
 		}
-		if (addr == null) {
-			if (other.addr != null) {
-				return false;
-			}
-		} else if (!addr.equals(other.addr)) {
-			return false;
-		}
-		if (inst == null) {
-			if (other.inst != null) {
-				return false;
-			}
-		} else if (!inst.equals(other.inst)) {
-			return false;
-		}
 		return true;
 	}
 
+	/**
+	 * @return
+	 */
+	public String getOp1() {
+		MachineOperand mop1 = (MachineOperand) before.inst.op1;
+		if (mop1.type == MachineOperand.OP_NONE) {
+			return "";
+		}
+		StringBuilder builder = new StringBuilder();
+		if (mop1.dest != Operand.OP_DEST_KILLED) {
+			builder.append(mop1.valueString(before.ea1, before.val1));
+		}
+		if (mop1.dest != Operand.OP_DEST_FALSE) {
+			if (builder.length() > 0)
+				builder.append(" => ");
+			builder.append(mop1.valueString(after.ea1, after.val1));
+		}
+		return builder.toString();
+	}
+
+	public String getOp2() {
+		MachineOperand mop2 = (MachineOperand) before.inst.op2;
+		if (mop2.type == MachineOperand.OP_NONE) {
+			return "";
+		}
+		StringBuilder builder = new StringBuilder();
+		if (mop2.dest != Operand.OP_DEST_KILLED) {
+			builder.append(mop2.valueString(before.ea2, before.val2));
+		}
+		if (mop2.dest != Operand.OP_DEST_FALSE) {
+			if (builder.length() > 0)
+				builder.append(" => ");
+			builder.append(mop2.valueString(after.ea2, after.val2));
+		}
+		return builder.toString();
+	}
 	
 }

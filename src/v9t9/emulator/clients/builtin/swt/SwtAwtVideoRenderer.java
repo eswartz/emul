@@ -17,7 +17,6 @@ import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -139,9 +138,9 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 			@Override
 			protected void layout(Composite composite, boolean flushCache) {
 				//Rectangle myBounds = composite.getClientArea();
-				Point mySize = composite.getSize();
+				//Point mySize = composite.getSize();
 				//Point mySize = new Point(myBounds.width, myBounds.height);
-				Component awtCanvas = getAwtCanvas();
+				//Component awtCanvas = getAwtCanvas();
 				//awtCanvas.setSize(mySize.x, mySize.y);
 			}
 			
