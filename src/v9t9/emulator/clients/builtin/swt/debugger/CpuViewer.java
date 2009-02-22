@@ -14,6 +14,8 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.layout.GridLayout;
@@ -60,6 +62,8 @@ public class CpuViewer extends Composite implements InstructionListener {
 	private boolean sizedColumns;
 	private Image clearImage;
 	private Button clearButton;
+	private Font tableFont;
+	private Font smallerFont;
 	
 	public CpuViewer(Composite parent, int style, final Machine machine, Timer timer) {
 		super(parent, style);
@@ -86,11 +90,9 @@ public class CpuViewer extends Composite implements InstructionListener {
 		playPauseButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				getDisplay().asyncExec(new Runnable() {
+				machine.asyncExec(new Runnable() {
 					public void run() {
-						Machine.settingPauseMachine.setBoolean(playPauseButton.getSelection());
-						updatePlayPauseButtonImage();	
-						refreshTable();
+						Machine.settingPauseMachine.setBoolean(!Machine.settingPauseMachine.getBoolean());
 						//resizeTable();
 					}
 				});
@@ -139,7 +141,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 		stepButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				getDisplay().asyncExec(new Runnable() {
+				machine.asyncExec(new Runnable() {
 					public void run() {
 						//if (!Machine.settingPauseMachine.getBoolean())
 						//	resizeTable();
@@ -197,6 +199,20 @@ public class CpuViewer extends Composite implements InstructionListener {
 		final Table table = instTableViewer.getTable();
 		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(table);
 		
+
+		FontDescriptor fontDescriptor = Utils.getFontDescriptor(JFaceResources.getTextFont());
+		//fontDescriptor = fontDescriptor.increaseHeight(-2);
+		tableFont = fontDescriptor.createFont(getDisplay());
+		table.setFont(tableFont);
+		
+		GC gc = new GC(getDisplay());
+		gc.setFont(tableFont);
+		int charWidth = gc.stringExtent("M").x;
+		gc.dispose();
+
+		FontDescriptor smallerFontDescriptor = fontDescriptor.increaseHeight(-2);
+		smallerFont = smallerFontDescriptor.createFont(getDisplay());
+		
 		TableColumn column;
 		String[] props = new String[5];
 		
@@ -204,43 +220,37 @@ public class CpuViewer extends Composite implements InstructionListener {
 		column = new TableColumn(table, SWT.LEFT);
 		column.setText(props[0]);
 		column.setMoveable(true);
+		column.setWidth(charWidth * 20);
 		
 		props[1] = "Inst";
 		column = new TableColumn(table, SWT.LEFT);
 		column.setText(props[1]);
 		column.setMoveable(true);
+		column.setWidth(charWidth * 60);
 		
 		props[2] = "Op1";
 		column = new TableColumn(table, SWT.LEFT);
 		column.setText(props[2]);
 		column.setMoveable(true);
+		column.setWidth(charWidth * 20);
 
 		props[3] = "Op2";
 		column = new TableColumn(table, SWT.LEFT);
 		column.setText(props[3]);
 		column.setMoveable(true);
+		column.setWidth(charWidth * 20);
 
-
-		FontDescriptor fontDescriptor = Utils.getFontDescriptor(JFaceResources.getTextFont());
-		//fontDescriptor = fontDescriptor.increaseHeight(-2);
-		table.setFont(fontDescriptor.createFont(getDisplay()));
-		
-		
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		
 		instTableViewer.setColumnProperties(props);
-		
-		for (TableColumn column1 : instTableViewer.getTable().getColumns()) {
-			column1.pack();
-		}
 		
 		nextInstructionText = new Text(this, SWT.READ_ONLY | SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(nextInstructionText);
 		
 		////
 		
-		//Machine.settingPauseMachine.setBoolean(true);
+		Machine.settingPauseMachine.setBoolean(true);
 		machine.getExecutor().addInstructionListener(this);
 		
 		refreshTask = new TimerTask() {
@@ -251,8 +261,13 @@ public class CpuViewer extends Composite implements InstructionListener {
 					return;
 				showNextInstruction = true;
 				synchronized (machine.getExecutionLock()) {
-					if (machine.isExecuting())
-						refreshTable();
+					if (machine.isExecuting()) {
+						getDisplay().asyncExec(new Runnable() {
+							public void run() {
+								refreshTable();
+							}
+						});
+					}
 				}
 			}
 			
@@ -312,6 +327,8 @@ public class CpuViewer extends Composite implements InstructionListener {
 			refreshTask.cancel();
 			refreshTask = null;
 		}
+		tableFont.dispose();
+		smallerFont.dispose();
 		Machine.settingPauseMachine.removeListener(pauseListener);
 		playImage.dispose();
 		pauseImage.dispose();
@@ -334,7 +351,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 			InstRow row = new InstRow(before, after);
 			instContentProvider.addInstRow(row);
 			showNextInstruction = false;
-			refreshTable();
+			//refreshTable();
 		}
 		if (Executor.settingSingleStep.getBoolean()) {
 			Executor.settingSingleStep.setBoolean(false);
@@ -358,7 +375,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 					instTableViewer.getTable().setSelection(new int[] { count - 1 });
 					
 					if (!sizedColumns && count > 100) {
-						resizeTable();
+						//resizeTable();
 						sizedColumns = true;
 					}
 					if (false) {

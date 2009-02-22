@@ -8,8 +8,10 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
+import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.SoundHandler;
+import v9t9.utils.Utils;
 
 /**
  * Controller for the TMS9919 sound chip
@@ -174,6 +176,7 @@ public class SoundTMS9919 implements SoundProvider {
 	}
 	
 	public void saveState(IDialogSettings settings) {
+		JavaSoundHandler.settingPlaySound.saveState(settings);
 		for (int vn = 0; vn < sound_voices.length; vn++) {
 			SoundVoice v = sound_voices[vn];
 			v.saveState(settings.addNewSection(v.getName()));
@@ -182,9 +185,11 @@ public class SoundTMS9919 implements SoundProvider {
 	}
 	public void loadState(IDialogSettings settings) {
 		if (settings == null) return;
+		JavaSoundHandler.settingPlaySound.loadState(settings);
 		for (int vn = 0; vn < sound_voices.length; vn++) {
 			SoundVoice v = sound_voices[vn];
-			v.loadState(settings.getSection(v.getName()));
+			String name = v.getName();
+			v.loadState(settings.getSection(name));
 			v.setupVoice();
 		}
 	}

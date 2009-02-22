@@ -64,12 +64,10 @@ public class MemoryViewer extends Composite {
 	private boolean pinMemory;
 	private Button filterButton;
 	private boolean filterMemory;
-	protected Set<Integer> changedMemory;
 
 	public MemoryViewer(Composite parent, int style, Memory memory, final Timer timer) {
 		super(parent, style);
 		this.memory = memory;
-		changedMemory = new TreeSet<Integer>();
 
 		setLayout(new GridLayout(2, false));
 		
@@ -336,7 +334,7 @@ public class MemoryViewer extends Composite {
 			column.pack();
 		byteTableViewer.getTable().setLayoutDeferred(false);
 		//MemoryViewer.this.getShell().layout(true, true);
-		MemoryViewer.this.getShell().pack();
+		//MemoryViewer.this.getShell().pack();
 		
 	}
 

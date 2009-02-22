@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
@@ -40,11 +42,13 @@ public class ImageButton extends Canvas {
 	private final Rectangle bounds;
 	private Image icon;
 	private Rectangle overlayBounds;
+	private Rectangle menuOverlayBounds;
 	private List<SelectionListener> listeners;
 	private boolean selected;
 	private ButtonParentDrawer parentDrawer;
 	private boolean isHighlighted;
 	private boolean pressed;
+	private boolean isMenuHovering;
 	
 	public ImageButton(ButtonParentDrawer parentDrawer, int style, Image icon_, Rectangle bounds_, String tooltip) {
 		super(parentDrawer.getComposite(),  style /*| SWT.NO_BACKGROUND*/);
@@ -79,8 +83,21 @@ public class ImageButton extends Canvas {
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseDown(MouseEvent e) {
-				if (e.button == 1)
+				if (e.button == 1) {
+					if (menuOverlayBounds != null && isMenuHovering) {
+						Event me = new Event();
+						me.button = e.button;
+						me.display = e.display;
+						me.item = ImageButton.this;
+						me.stateMask = e.stateMask;
+						me.type = SWT.MenuDetect;
+						me.x = e.x;
+						me.y = e.y;
+						notifyListeners(SWT.MenuDetect, me);
+						return;
+					}
 					doClickStart();
+				}
 			}
 			@Override
 			public void mouseUp(MouseEvent e) {
@@ -92,19 +109,26 @@ public class ImageButton extends Canvas {
 		addMouseTrackListener(new MouseTrackListener() {
 
 			public void mouseEnter(MouseEvent e) {
-				doMouseEnter();
+				doMouseEnter(e);
 			}
 
 			public void mouseExit(MouseEvent e) {
-				doMouseExit();
+				doMouseExit(e);
 			}
 
 			public void mouseHover(MouseEvent e) {
-				doMouseHover();
+				doMouseHover(e);
 			}
 			
 		});
 		
+		addMouseMoveListener(new MouseMoveListener() {
+
+			public void mouseMove(MouseEvent e) {
+				doMouseMove(e);
+			}
+			
+		});
 	}
 
 	public void setOverlayBounds(Rectangle overlayBounds) {
@@ -117,6 +141,9 @@ public class ImageButton extends Canvas {
 				//overlayBounds.width * 2, overlayBounds.height * 2);
 	}
 
+	public void setMenuOverlayBounds(Rectangle menuOverlayBounds) {
+		this.menuOverlayBounds = menuOverlayBounds;
+	}
 	public void addSelectionListener(SelectionListener listener) {
 		listeners.add(listener);
 	}
@@ -146,6 +173,7 @@ public class ImageButton extends Canvas {
 				e.gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
 				e.gc.fillRectangle(0, 0, size.x, size.y);
 				e.gc.setBackground(bg);
+				offset = 2;
 			}
 		} else {
 		}
@@ -155,6 +183,12 @@ public class ImageButton extends Canvas {
 		if (overlayBounds != null)
 			e.gc.drawImage(icon, overlayBounds.x, overlayBounds.y, overlayBounds.width, overlayBounds.height, 
 					0, 0, size.y, size.y);
+		
+		if (menuOverlayBounds != null && isMenuHovering) {
+			e.gc.drawImage(icon, menuOverlayBounds.x, menuOverlayBounds.y, menuOverlayBounds.width, menuOverlayBounds.height, 
+					0, 0, size.y, size.y);
+		}
+		
 		//e.gc.setAntialias(SWT.OFF);
 		if (isHighlighted) {
 			e.gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_BLACK));
@@ -194,19 +228,47 @@ public class ImageButton extends Canvas {
 		
 	}
 	
-	protected void doMouseEnter() {
+	protected void doMouseEnter(MouseEvent e) {
 		setCursor(getShell().getDisplay().getSystemCursor(SWT.CURSOR_HAND));
 		isHighlighted = true;
+
+		checkMenu(e);
+		
 		redraw();
 	}
 	
-	protected void doMouseExit() {
+	private void checkMenu(MouseEvent e) {
+		if (menuOverlayBounds != null) {
+			Point corner = getSize();
+			corner.x -= corner.x / 3;
+			corner.y -= corner.y / 3;
+			if (e.x >= corner.x
+					&& e.y >= corner.y) {
+				if (!isMenuHovering) {
+					isMenuHovering = true;
+					redraw();
+				}
+				return;
+			}
+			if (isMenuHovering) {
+				isMenuHovering = false;
+				redraw();
+			}
+		}
+		
+	}
+
+	protected void doMouseExit(MouseEvent e) {
 		setCursor(null);
 		isHighlighted = false;
+		isMenuHovering = false;
 		redraw();
 	}
 
-	protected void doMouseHover() {
-		
+	protected void doMouseHover(MouseEvent e) {
+		checkMenu(e);
+	}
+	protected void doMouseMove(MouseEvent e) {
+		checkMenu(e);
 	}
 }

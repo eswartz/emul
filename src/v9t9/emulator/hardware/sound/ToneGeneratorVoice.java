@@ -18,7 +18,7 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 	{
 		byte lastVolume = getVolume();
 		setVolume((byte) (0xf - getOperationAttenuation()));
-		int lastPeriod = period;
+		//int lastPeriod = period;
 		period = getOperationPeriod();
 		hertz = SoundTMS9919.periodToHertz(period);
 

@@ -27,7 +27,8 @@ import v9t9.engine.settings.Setting;
  * @author ejs
  */
 public class Cpu implements MemoryAccessListener {
-    Machine machine;
+    public static final int TMS_9900_BASE_CYCLES_PER_SEC = 3000000;
+	Machine machine;
 	public Memory memory;
 	private MemoryDomain console;
 	/** program counter */
@@ -86,14 +87,16 @@ public class Cpu implements MemoryAccessListener {
         	
         });
         
-        settingCyclesPerSecond.setInt(3000000);
+        settingCyclesPerSecond.setInt(TMS_9900_BASE_CYCLES_PER_SEC);
 
         settingRealTime.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
 				tick();
-				totalcurrentcycles = totaltargetcycles;
-				currenttargetcycles = settingCyclesPerSecond.getInt();
+				if (setting.getBoolean()) {
+					totalcurrentcycles = totaltargetcycles;
+					currenttargetcycles = settingCyclesPerSecond.getInt() * Cpu.this.interruptTick / 1000;
+				}
 			}
         	
         });
@@ -335,9 +338,11 @@ public class Cpu implements MemoryAccessListener {
 	}
 
 	public synchronized void addCycles(int cycles) {
-		this.currentcycles += cycles; 
-		
-		vdp.addCpuCycles(cycles);
+		if (cycles != 0) {
+			this.currentcycles += cycles; 
+			
+			vdp.addCpuCycles(cycles);
+		}
 		//vdpInterruptFrac += cycles;
 		//if (currentcycles > targetcycles)
 		//	System.out.print('!');

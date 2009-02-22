@@ -21,6 +21,7 @@ import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
 
 /**
  * This class interprets 9900 instructions one by one.
@@ -173,21 +174,24 @@ public class Interpreter {
 	    int pc = cpu.getPC() & 0xfffe;
 	    
 	    short op;
-	    if (op_x != null) {
+	    MemoryDomain console = cpu.getConsole();
+		if (op_x != null) {
 	    	op = op_x;
-	    	ins = new Instruction(InstructionTable.decodeInstruction(op, pc, cpu.getConsole()));
+	    	ins = new Instruction(InstructionTable.decodeInstruction(op, pc, console));
 	    } else {
-	    	op = cpu.getConsole().readWord(pc);
-	    	MemoryArea area = cpu.getConsole().getEntryAt(pc).getArea();
+	    	MemoryEntry entry = console.getEntryAt(pc);
+	    	op = entry.readWord(pc);
+	    	MemoryArea area = entry.getArea();
 	    	Instruction[] instructions = parsedInstructions.get(area);
 	    	if (instructions == null) {
 	    		instructions = new Instruction[65536/2];
 	    		parsedInstructions.put(area, instructions);
 	    	}
 	    	if ((ins = instructions[pc/2]) != null) {
-	    		ins = ins.update(op, pc, cpu.getConsole());
+	    		// expensive (10%)
+	    		ins = ins.update(op, pc, console);
 	    	} else {
-	    		ins = new Instruction(InstructionTable.decodeInstruction(op, pc, cpu.getConsole()));
+	    		ins = new Instruction(InstructionTable.decodeInstruction(op, pc, console));
 	    	}
 	    	instructions[pc/2] = ins;
 	    }

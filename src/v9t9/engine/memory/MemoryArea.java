@@ -139,8 +139,9 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 
 	public void saveContents(IDialogSettings section, MemoryEntry entry) {
 		List<String> contents = new ArrayList<String>();
+		//int endAddr = entry.addr + getSize();
+		//endAddr = Math.min(endAddr, entry.addr + entry.size);
 		int endAddr = entry.addr + getSize();
-		endAddr = Math.min(endAddr, entry.addr + entry.size);
 		for(int saveAddr = entry.addr; saveAddr < endAddr; saveAddr += 256) {
 			int perLine = saveAddr + 256 < endAddr ? 256 : endAddr - saveAddr;
 			byte[] chunk = new byte[perLine];

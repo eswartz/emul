@@ -156,8 +156,13 @@ public class SdlWindow extends BaseEmulatorWindow {
 		button.setHandler(new ButtonPressHandler() {
 
 			public void pressed() {
-				setting.setBoolean(!setting.getBoolean());
-				if (setting.getBoolean()) {
+				final boolean set = !setting.getBoolean();
+				machine.asyncExec(new Runnable() {
+					public void run() {
+						setting.setBoolean(set);
+					}
+				});
+				if (set) {
 					button.setCheckRect(checkRect);
 				} else {
 					button.setCheckRect(null);

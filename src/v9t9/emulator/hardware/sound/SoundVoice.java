@@ -5,8 +5,6 @@ package v9t9.emulator.hardware.sound;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 
-import v9t9.utils.Utils;
-
 public abstract class SoundVoice
 {
 	/** volume, 0 == off, 0xf == loudest */
@@ -43,10 +41,12 @@ public abstract class SoundVoice
 		return name;
 	}
 	public void saveState(IDialogSettings section) {
-		section.put("Volume", volume);
+		// derived
+		//section.put("Volume", volume);
 	}
 	public void loadState(IDialogSettings section) {
-		volume = (byte) Utils.readSavedInt(section, "Volume");
+		// derived
+		//volume = (byte) Utils.readSavedInt(section, "Volume");
 	}
 	public void setVolume(byte volume) {
 		this.volume = volume;

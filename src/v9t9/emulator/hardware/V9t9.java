@@ -28,7 +28,6 @@ import v9t9.emulator.clients.builtin.swt.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.clients.demo.HybridDemoClient;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
-import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.compiler.Compiler;
@@ -231,7 +230,7 @@ public class V9t9 {
         	VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
         }
         
-    	ExpRamArea.settingExpRam.setBoolean(true);
+    	Machine.settingExpRam.setBoolean(true);
     }
     
     public static void main(String args[]) throws IOException {

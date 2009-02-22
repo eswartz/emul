@@ -22,5 +22,6 @@ public class EnhancedCompatibleConsoleMemoryModel extends StandardConsoleMemoryM
 	@Override
 	protected void initSettings() {
 		ConsoleRamArea.settingEnhRam.setBoolean(true);
+
 	}
 }

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 
+import org.eclipse.jface.dialogs.DialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
@@ -21,6 +22,8 @@ import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -44,9 +47,11 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
+import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.clients.builtin.swt.debugger.CpuViewer;
 import v9t9.emulator.clients.builtin.swt.debugger.MemoryViewer;
 import v9t9.emulator.hardware.V9t9;
+import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
@@ -66,6 +71,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private Composite controlsComposite;
 	private List<Shell> toolShells;
 	private Timer toolUiTimer;
+	private Image mainIcons;
 	
 	public SwtWindow(Display display, final ISwtVideoRenderer renderer, final Machine machine) {
 		super(machine);
@@ -148,14 +154,28 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		createButtons(mainComposite);
 		
+		JavaSoundHandler.settingPlaySound.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				JavaSoundHandler.settingPlaySound.saveState(getApplicationSettings());
+			}
+			
+		});
+		
 		shell.open();
 		
 		shell.getDisplay().asyncExec(new Runnable() {
 			public void run() {
-				int zoom = Utils.readSavedInt(getApplicationSettings(), "ZoomLevel");
+				DialogSettings applicationSettings = getApplicationSettings();
+				
+				int zoom = Utils.readSavedInt(applicationSettings, "ZoomLevel");
 				if (zoom > 0) {
 					videoRenderer.setZoom(zoom);
 				}
+				
+				Cpu.settingCyclesPerSecond.loadState(applicationSettings);
+				Cpu.settingRealTime.loadState(applicationSettings);
+				JavaSoundHandler.settingPlaySound.loadState(applicationSettings);
 			}
 		});
 		
@@ -203,16 +223,15 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 	private void createButtons(Composite mainComposite) {
 		File iconsFile = V9t9.getDataFile("icons/icons.png");
-		Image icons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
+		mainIcons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
 		
 		buttonBar = new ButtonBar(mainComposite, SWT.HORIZONTAL);
 		GridLayout mainLayout = new GridLayout(1, false);
 		mainLayout.marginHeight = mainLayout.marginWidth = 0;
 		buttonBar.setLayout(mainLayout);
-		
 
-		createButton(buttonBar, 
-				icons, new Rectangle(0, 64, 64, 64),
+
+		createButton(buttonBar, 1,
 				"Send a NMI interrupt", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
@@ -220,8 +239,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					}
 				});
 
-		createButton(buttonBar, 
-				icons, new Rectangle(0, 256, 64, 64),
+		createButton(buttonBar, 4,
 				"Reset the computer", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
@@ -230,9 +248,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 				});
 
 		createStateButton(buttonBar,
-				Executor.settingDumpFullInstructions, icons,
-				new Rectangle(0, 128, 64, 64),
-				new Rectangle(0, 0, 64, 64), "Toggle CPU logging");
+				Executor.settingDumpFullInstructions, 
+				2, 0, "Toggle CPU logging");
 
 		/*BasicButton basicButton =*/ /*createButton(
 				icons, new Rectangle(0, 128, 64, 64),
@@ -251,8 +268,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					}
 				});*/
 		
-		createButton(buttonBar, icons,
-				new Rectangle(0, 192, 64, 64),
+		createButton(buttonBar, 3,
 				"Paste into keyboard", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
@@ -260,8 +276,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					}
 			});
 		
-		createButton(buttonBar, icons,
-				new Rectangle(0, 384, 64, 64),
+		createButton(buttonBar, 6,
 				"Save machine state", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
@@ -270,8 +285,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 			});
 		
-		createButton(buttonBar, icons,
-				new Rectangle(0, 448, 64, 64),
+		createButton(buttonBar, 7,
 				"Load machine state", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
@@ -279,15 +293,15 @@ public class SwtWindow extends BaseEmulatorWindow {
 					}
 			});
 
-		createStateButton(buttonBar, Machine.settingPauseMachine, icons,
-				new Rectangle(0, 512, 64, 64),
-				new Rectangle(0, 0, 64, 64), "Pause machine");
+		createStateButton(buttonBar, Machine.settingPauseMachine,
+				8, 0,
+				 "Pause machine");
 
-		createStateButton(buttonBar, V9t9.settingMonitorDrawing, icons, new Rectangle(0, 576, 64, 64), 
-				new Rectangle(0, 0, 64, 64), "Apply monitor effect to video");
+		createStateButton(buttonBar, V9t9.settingMonitorDrawing,  
+				9, 0, 
+				"Apply monitor effect to video");
 
-		createButton(buttonBar, icons,
-				new Rectangle(0, 640, 64, 64),
+		createButton(buttonBar, 10,
 				"Take screenshot", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
@@ -295,16 +309,48 @@ public class SwtWindow extends BaseEmulatorWindow {
 					}
 			});
 
-		createButton(buttonBar, 
-				icons, new Rectangle(0, 704, 64, 64),
+		createButton(buttonBar, 11,
 				"Zoom the screen", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
 						Control button = (Control) e.widget;
 						Point size = button.getSize();
-						showZoomMenu(button, size.x / 2, size.y / 2);
+						showMenu(createZoomMenu(button), button, size.x / 2, size.y / 2);
 					}
 				});
+		
+		createButton(buttonBar, 12,
+				"Accelerate execution", new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						Control button = (Control) e.widget;
+						Point size = button.getSize();
+						showMenu(createAccelMenu(button), button, size.x / 2, size.y / 2);
+					}
+				});
+		
+		final BasicButton soundButton = createStateButton(buttonBar, 
+				JavaSoundHandler.settingPlaySound, 
+				true, null,
+				13, 14,
+				"Sound options");
+	/*	soundButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				Control button = (Control) e.widget;
+				Point size = button.getSize();
+				showMenu(createSoundMenu(button), button, size.x / 2, size.y / 2);
+			}
+		});*/
+		
+		soundButton.setMenuOverlayBounds(mainIconIndexToBounds(15));
+		soundButton.addMenuDetectListener(new MenuDetectListener() {
+
+			public void menuDetected(MenuDetectEvent e) {
+				Control button = (Control) e.widget;
+				showMenu(createSoundMenu(button), button, e.x, e.y);
+			}
+		});
 	}
 
 	private void createExpandableControlsComposite(Composite parent) {
@@ -447,6 +493,23 @@ public class SwtWindow extends BaseEmulatorWindow {
 		populateZoomMenu(zoomMenu);
 		zoom.setMenu(zoomMenu);
 		
+		
+		Menu emuMenu = appMenu;
+		if (!isPopup) {
+			MenuItem emuMenuHeader = new MenuItem(appMenu, SWT.CASCADE);
+			emuMenuHeader.setText("&Emulation");
+			
+			emuMenu = new Menu(control, SWT.DROP_DOWN);
+			emuMenuHeader.setMenu(emuMenu);
+		}
+		
+		MenuItem accel= new MenuItem(emuMenu, SWT.CASCADE);
+		accel.setText("&Accelerate");
+		
+		Menu accelMenu = new Menu(zoom);
+		populateAccelMenu(accelMenu);
+		accel.setMenu(accelMenu);
+		
 		return appMenu;
 	}
 	
@@ -459,10 +522,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 		super.dispose();
 	}
 
-	protected void showZoomMenu(final Control parent, final int x, final int y) {
-			final Menu menu = createZoomMenu(parent);
-			runMenu(parent, x, y, menu);
-			menu.dispose();		
+	protected void showMenu(Menu menu, final Control parent, final int x, final int y) {
+		runMenu(parent, x, y, menu);
+		menu.dispose();		
 	}
 
 	private void runMenu(final Control parent, final int x, final int y,
@@ -510,22 +572,128 @@ public class SwtWindow extends BaseEmulatorWindow {
 		}
 		return menu;
 	}
-
+	
 	protected void setScreenZoom(int zoom) {
 		System.out.println("Set zoom to " + zoom);
 		videoRenderer.setZoom(zoom);
 	}
 
-	private BasicButton createButton(ButtonBar buttonBar, final Image icon, final Rectangle bounds, String tooltip, SelectionListener selectionListener) {
-		BasicButton button = new BasicButton(buttonBar, SWT.PUSH, icon, bounds, tooltip);
+	private Menu createAccelMenu(final Control parent) {
+		final Menu menu = new Menu(parent);
+		return populateAccelMenu(menu);
+	}
+
+	private Menu populateAccelMenu(final Menu menu) {
+		for (int mult = 1; mult <= 10; mult++) {
+			createAccelMenuItem(menu, mult, mult + "x");
+		}
+
+		new MenuItem(menu, SWT.SEPARATOR);
+		
+		MenuItem item = new MenuItem(menu, SWT.CHECK);
+		item.setText("Unbounded");
+		if (!Cpu.settingRealTime.getBoolean()) {
+			item.setSelection(true);
+		}
+		item.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				boolean setting = !Cpu.settingRealTime.getBoolean();
+				Cpu.settingRealTime.setBoolean(setting);
+				getApplicationSettings().put("RealTime", setting);
+			}
+		});
+
+		new MenuItem(menu, SWT.SEPARATOR);
+		
+		for (int div = 2; div <= 5; div++) {
+			createAccelMenuItem(menu, 1.0 / div, "1/" + div);
+		}
+
+		return menu;
+	}
+
+	private void createAccelMenuItem(final Menu menu, double factor, String label) {
+		boolean isRealTime = Cpu.settingRealTime.getBoolean();
+		int curCycles = Cpu.settingCyclesPerSecond.getInt();
+		MenuItem item = new MenuItem(menu, SWT.RADIO);
+		final int cycles = (int) (Cpu.TMS_9900_BASE_CYCLES_PER_SEC * factor);
+		item.setText(label + " (" + cycles + ")");
+		if (isRealTime && cycles == curCycles) {
+			item.setSelection(true);
+		}
+		item.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				Cpu.settingRealTime.setBoolean(true);
+				Cpu.settingCyclesPerSecond.setInt(cycles);
+				getApplicationSettings().put("CyclesPerSecond", cycles);
+			}
+		});
+	}
+	
+	
+	private Menu createSoundMenu(final Control parent) {
+		final Menu menu = new Menu(parent);
+		return populateSoundMenu(menu);
+	}
+
+	private Menu populateSoundMenu(final Menu menu) {
+		MenuItem item = new MenuItem(menu, SWT.CHECK);
+		String filename = JavaSoundHandler.settingRecordSoundOutputFile.getString();
+		if (filename != null) {
+			item.setText("Stop recording to " + filename);
+			item.setSelection(true);
+			item.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					JavaSoundHandler.settingRecordSoundOutputFile.setString(null);
+				}
+
+			});
+		} else {
+			item.setText("Record sound...");
+			item.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					String filenameBase = openFileSelectionDialog("Record sound to", getBaseConfigurationPath(), "sound.raw", true);
+					File saveFile = null;
+					if (filenameBase != null) {
+						saveFile = getUniqueFile(filenameBase);
+						if (saveFile == null) {
+							showErrorMessage("Save error", 
+									"Too many sound files here!");
+							return;
+						}
+					}
+					JavaSoundHandler.settingRecordSoundOutputFile.setString(saveFile != null ? saveFile.getAbsolutePath() : null);
+				}
+
+			});
+		}
+		return menu;
+	}
+	
+	private BasicButton createButton(ButtonBar buttonBar, int iconIndex, String tooltip, SelectionListener selectionListener) {
+		Rectangle bounds = mainIconIndexToBounds(iconIndex);
+		BasicButton button = new BasicButton(buttonBar, SWT.PUSH, mainIcons, bounds, tooltip);
 		button.addSelectionListener(selectionListener);
 		return button;
 	}
 	
-	private BasicButton createStateButton(ButtonBar buttonBar, final Setting setting, final Image icon,
-			final Rectangle bounds,
-			final Rectangle checkBounds, String tooltip) {
-		final BasicButton button = new BasicButton(buttonBar, SWT.TOGGLE, icon, bounds, tooltip);
+	private Rectangle mainIconIndexToBounds(int iconIndex) {
+		Rectangle bounds = mainIcons.getBounds();
+		int unit = bounds.width;
+		return new Rectangle(0, unit * iconIndex, unit, unit); 
+	}
+
+	private BasicButton createStateButton(ButtonBar buttonBar, final Setting setting, 
+			final boolean inverted, final Point noClickCorner, 
+			int iconIndex, final int overlayIndex, String tooltip) {
+		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH, 
+				mainIcons, 
+				mainIconIndexToBounds(iconIndex), 
+				tooltip);
 		setting.addListener(new ISettingListener() {
 
 			public void changed(final Setting setting, final Object oldValue) {
@@ -534,8 +702,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 					public void run() {
 						if (button.isDisposed())
 							return;
-						if (setting.getBoolean()) {
-							button.setOverlayBounds(checkBounds);
+						if (setting.getBoolean() != inverted) {
+							button.setOverlayBounds(mainIconIndexToBounds(overlayIndex));
 						} else {
 							button.setOverlayBounds(null);
 						}
@@ -553,21 +721,32 @@ public class SwtWindow extends BaseEmulatorWindow {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				getShell().getDisplay().asyncExec(new Runnable() {
+				if (noClickCorner != null) {
+					if (e.x >= noClickCorner.x || e.y >= noClickCorner.y)
+						return;
+				}
+				machine.asyncExec(new Runnable() {
 					public void run() {
 						setting.setBoolean(!setting.getBoolean());
 					}
 				});
+				//getShell().getDisplay().asyncExec(new Runnable() {
+					//public void run() {
+					//}
+				//});
 			}
 		});
 		
-		if (setting.getBoolean()) {
-			button.setOverlayBounds(checkBounds);
+		if (setting.getBoolean() != inverted) {
+			button.setOverlayBounds(mainIconIndexToBounds(overlayIndex));
 			button.setSelection(setting.getBoolean());
 		}
 		return button;
 	}
-
+	private BasicButton createStateButton(ButtonBar buttonBar, final Setting setting, 
+			int iconIndex, int overlayIndex, String tooltip) {
+		return createStateButton(buttonBar, setting, false, null, iconIndex, overlayIndex, tooltip);
+	}
 	public Shell getShell() {
 		return shell;
 	}

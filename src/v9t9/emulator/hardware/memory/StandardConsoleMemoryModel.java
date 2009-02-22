@@ -83,7 +83,7 @@ public class StandardConsoleMemoryModel implements MemoryModel {
     }
 
 	protected void initSettings() {
-		ExpRamArea.settingExpRam.setBoolean(true);
+		Machine.settingExpRam.setBoolean(true);
 		ConsoleRamArea.settingEnhRam.setBoolean(false);
 	}
  

@@ -3,8 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.sound;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -22,6 +20,8 @@ import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.hardware.sound.SoundVoice;
 import v9t9.engine.SoundHandler;
+import v9t9.engine.settings.ISettingListener;
+import v9t9.engine.settings.Setting;
 
 /**
  * Mixing and output for sound and speech
@@ -78,33 +78,135 @@ public class JavaSoundHandler implements SoundHandler {
 	private Thread speechWritingThread;
 	private DFTAnalyzer dftAnalyzer;
 
-	{
-		if (true) {
-			try {
-				if (File.separatorChar == '/')
-					soundFos = new FileOutputStream("/tmp/v9t9_audio.raw");
-				else
-					soundFos = new FileOutputStream("c:/temp/v9t9_audio.raw");
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
-		}
-		if (true) {
-			try {
-				if (File.separatorChar == '/')
-					speechFos = new FileOutputStream("/tmp/v9t9_speech.raw");
-				else
-					speechFos = new FileOutputStream("c:/temp/v9t9_speech.raw");
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
-		}
-	}
+	public static Setting settingPlaySound = new Setting("PlaySound", new Boolean(true));
+	public static Setting settingRecordSoundOutputFile = new Setting("RecordSoundOutputFile", (String)null);
+	public static Setting settingRecordSpeechOutputFile = new Setting("RecordSpeechOutputFile", (String)null);
+	private final Machine machine;
 
 	public JavaSoundHandler(final Machine machine) {
 
+		this.machine = machine;
+		settingRecordSoundOutputFile.addListener(new ISettingListener() {
+			public void changed(Setting setting, Object oldValue) {
+				if (soundFos != null) {
+					try {
+						soundFos.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+						soundFos = null;
+					}
+				}
+				String filename = setting.getString();
+				if (filename != null) {
+					try {
+						soundFos = new FileOutputStream(filename);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			
+		});
+		
+		settingRecordSpeechOutputFile.addListener(new ISettingListener() {
+			public void changed(Setting setting, Object oldValue) {
+				if (speechFos != null) {
+					try {
+						speechFos.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+						speechFos = null;
+					}
+				}
+				String filename = setting.getString();
+				if (filename != null) {
+					try {
+						speechFos = new FileOutputStream(filename);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			
+		});
 		sound = machine.getSound();
 
+		settingPlaySound.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				toggleSound(setting.getBoolean());
+			}
+			
+		});
+		
+		toggleSound(settingPlaySound.getBoolean());
+	}
+
+	protected void dft(byte[] soundToWrite) {
+		if (dftAnalyzer == null)
+			//dftAnalyzer = new DFTAnalyzer(10);		// analyze 10 bits, e.g. same amount possible via clock
+			dftAnalyzer = new DFTAnalyzer(8);
+		dftAnalyzer.send(soundToWrite);
+	}
+
+	public synchronized void toggleSound(boolean enabled) {
+		if (enabled) {
+			startSound();
+		} else {
+			stopSound();
+		}
+	}
+
+	private synchronized void stopSound() {
+		if (soundFos != null) {
+			try {
+				soundFos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			soundFos = null;
+		}
+		if (speechFos != null) {
+			try {
+				speechFos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			speechFos = null;
+		}
+		if (speechLine != null) {
+			speechLine.close();
+			speechLine = null;
+		}
+		if (soundGeneratorLine != null) {
+			soundGeneratorLine.close();
+			soundGeneratorLine = null;
+		}
+		
+		if (soundWritingThread != null) {
+			soundWritingThread.interrupt();
+			try {
+				soundWritingThread.join();
+			} catch (InterruptedException e) {
+				
+			}
+			soundWritingThread = null;
+		}
+
+		if (speechWritingThread != null) {
+			speechWritingThread.interrupt();
+			try {
+				speechWritingThread.join();
+			} catch (InterruptedException e) {
+				
+			}
+			speechWritingThread = null;
+		}
+	}
+
+	private synchronized void startSound() {
+		stopSound();
+		
 		soundQueue = new LinkedBlockingQueue<AudioChunk>();
 		speechQueue = new LinkedBlockingQueue<AudioChunk>();
 
@@ -129,6 +231,7 @@ public class JavaSoundHandler implements SoundHandler {
 			return;
 		}
 
+		
 		try {
 			soundFramesPerTick = (int) (stdFormat.getFrameRate() / machine
 					.getCpuTicksPerSec());
@@ -237,36 +340,19 @@ public class JavaSoundHandler implements SoundHandler {
 
 		}, "Speech Writing");
 		speechWritingThread.start();
-
-		toggleSound(true);
-	}
-
-	protected void dft(byte[] soundToWrite) {
-		if (dftAnalyzer == null)
-			//dftAnalyzer = new DFTAnalyzer(10);		// analyze 10 bits, e.g. same amount possible via clock
-			dftAnalyzer = new DFTAnalyzer(8);
-		dftAnalyzer.send(soundToWrite);
-	}
-
-	public void toggleSound(boolean enabled) {
-		if (enabled) {
-			soundGeneratorLine.start();
-			speechLine.start();
-		} else {
-			soundGeneratorLine.stop();
-			speechLine.stop();
-		}
-
+		
+		soundGeneratorLine.start();
+		speechLine.start();
+		
 		soundGeneratorWaveForm = new byte[stdFormat.getFrameSize()
-				* soundFramesPerTick];
+		                  				* soundFramesPerTick];
 		soundGeneratorWorkBuffer = new int[stdFormat.getFrameSize()
 				* soundFramesPerTick];
 		soundGeneratorWorkBuffer2 = new int[stdFormat.getFrameSize()
-               * soundFramesPerTick];
+		         * soundFramesPerTick];
 		speechWaveForm = new byte[speechFormat.getFrameSize()
 				* speechFramesPerTick];
 		soundClock = (int) stdFormat.getFrameRate();
-
 	}
 
 	/*
@@ -346,32 +432,7 @@ public class JavaSoundHandler implements SoundHandler {
 	}
 
 	public void dispose() {
-		if (speechLine != null) {
-			speechLine.close();
-			speechLine = null;
-		}
-		if (soundGeneratorLine != null) {
-			soundGeneratorLine.close();
-			soundGeneratorLine = null;
-		}
-		
-		if (soundWritingThread != null) {
-			soundWritingThread.interrupt();
-			try {
-				soundWritingThread.join();
-			} catch (InterruptedException e) {
-				
-			}
-		}
-
-		if (speechWritingThread != null) {
-			speechWritingThread.interrupt();
-			try {
-				speechWritingThread.join();
-			} catch (InterruptedException e) {
-				
-			}
-		}
+		stopSound();
 
 	}
 

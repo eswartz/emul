@@ -9,9 +9,9 @@ package v9t9.tests;
 import java.util.Random;
 
 import junit.framework.TestCase;
+import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.hardware.memory.ConsoleRamArea;
-import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.engine.memory.MemoryDomain;
 
 /**
@@ -60,7 +60,7 @@ public class MemoryTest extends TestCase {
             CPU.writeByte(i, (byte) 0);
         }
 
-        machine.getSettings().setBool(ExpRamArea.sExpRam, true);
+        machine.getSettings().setBool(Machine.sExpRam, true);
         machine.getSettings().setBool(ConsoleRamArea.sEnhRam, true);
 
         int firstRAM = 0;
@@ -99,7 +99,7 @@ public class MemoryTest extends TestCase {
         assertEquals(CPU.readWord(firstRAM + 1), 0x1234);
 
         /* turn off expansion RAM, shouldn't get anything from it... */
-        machine.getSettings().setBool(ExpRamArea.sExpRam, false);
+        machine.getSettings().setBool(Machine.sExpRam, false);
         for (i = 0x2000; i < 0x4000; i++) {
             byte red = CPU.readByte(i);
             if (red != 0) {

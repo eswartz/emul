@@ -41,6 +41,8 @@ class InstContentProvider implements ILazyContentProvider {
 	}
 	
 	public void addInstRow(final InstRow row) {
+		if (insts.size() > 100000)
+			insts = new ArrayList<InstRow>(insts.subList(insts.size() / 2, insts.size()));
 		insts.add(row);
 	}
 	

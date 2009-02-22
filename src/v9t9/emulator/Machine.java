@@ -7,10 +7,12 @@
 package v9t9.emulator;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.eclipse.jface.dialogs.DialogSettings;
+import org.eclipse.jface.dialogs.IDialogSettings;
 
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
@@ -76,6 +78,9 @@ abstract public class Machine {
 	private Object executionLock = new Object();
 	volatile protected boolean bExecuting;
 	private SoundProvider sound;
+	private List<Runnable> runnableList;
+	static public final String sExpRam = "MemoryExpansion32K";
+	static public final Setting settingExpRam = new Setting(sExpRam, new Boolean(false));
 	
 	static public final String sPauseMachine = "PauseMachine";
 	static public final Setting settingPauseMachine = new Setting(sPauseMachine, new Boolean(false));
@@ -83,6 +88,7 @@ abstract public class Machine {
 	static public final Setting settingThrottleInterrupts = new Setting(sThrottleInterrupts, new Boolean(false));
 	
     public Machine(MachineModel machineModel) {
+    	runnableList = new LinkedList<Runnable>();
     	this.memoryModel = machineModel.getMemoryModel();
     	this.memory = memoryModel.createMemory();
     	this.console = memoryModel.getConsole();
@@ -103,12 +109,13 @@ abstract public class Machine {
     	settingPauseMachine.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
-				//synchronized (executionLock) {
+				executor.interruptExecution = Boolean.TRUE;
+				synchronized (executionLock) {
 					bExecuting = !setting.getBoolean();
 					executor.interruptExecution = Boolean.TRUE;
 					cpu.resetCycleCounts();
-				//	executionLock.notifyAll();
-				//}
+					executionLock.notifyAll();
+				}
 			}
         	
         });
@@ -171,53 +178,54 @@ abstract public class Machine {
 
 			@Override
         	public void run() {
-				if (!bExecuting)
-					return;
+				synchronized (executionLock) {
+					if (!bExecuting)
+						return;
 				
-    			now = System.currentTimeMillis();
-    			//System.out.print(now);
-    			
-    	
-    			//System.out.print(now);
-    			
-    			if (now >= lastInfo + 1000) {
-    				upTime += now - lastInfo;
-    				executor.dumpStats();
-    				executor.nVdpInterrupts = 0;
-    				lastInfo = now;
-    				//vdpInterruptDelta = 0;
-    			}
-    			
-    			sound.tick();
-    			cpu.tick();
-
-    			// In Win32, the timer is not nearly as accurate as 1/100 second,
-    			// so we get a lot of interrupts at the same time.
-    			
-    			// Synchronize VDP interrupts along with the CPU in the same task
-    			// so we don't succumb to misscheduling between different timers
-    			// OR timer tasks.
-    			if (bExecuting && !VdpTMS9918A.settingCpuSynchedVdpInterrupt.getBoolean()) {
-	    			vdpInterruptDelta += vdpInterruptsPerSec * 65536 / cpuTicksPerSec;
-	    			//System.out.print("[VDP delt:" + vdpInterruptDelta + "]");
-	    			if (vdpInterruptDelta >= 65536) {
-				
-						vdpInterruptDelta -= 65536;
-	    				vdp.tick();
-	            		if (settingThrottleInterrupts.getBoolean()) {
-	            			if (throttleCount-- < 0) {
-	            				throttleCount = 6;
-	            			} else {
-	            				return;
-	            			}
-	            		}
-	            		
-	            		cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
-	            		executor.nVdpInterrupts++;
-	            		//System.out.print('!');
+	    			now = System.currentTimeMillis();
+	    			//System.out.print(now);
+	    			
+	    	
+	    			//System.out.print(now);
+	    			
+	    			if (now >= lastInfo + 1000) {
+	    				upTime += now - lastInfo;
+	    				executor.dumpStats();
+	    				executor.nVdpInterrupts = 0;
+	    				lastInfo = now;
+	    				//vdpInterruptDelta = 0;
 	    			}
-    			}
-    			
+	    			
+	    			sound.tick();
+	    			cpu.tick();
+	
+	    			// In Win32, the timer is not nearly as accurate as 1/100 second,
+	    			// so we get a lot of interrupts at the same time.
+	    			
+	    			// Synchronize VDP interrupts along with the CPU in the same task
+	    			// so we don't succumb to misscheduling between different timers
+	    			// OR timer tasks.
+	    			if (bExecuting && !VdpTMS9918A.settingCpuSynchedVdpInterrupt.getBoolean()) {
+		    			vdpInterruptDelta += vdpInterruptsPerSec * 65536 / cpuTicksPerSec;
+		    			//System.out.print("[VDP delt:" + vdpInterruptDelta + "]");
+		    			if (vdpInterruptDelta >= 65536) {
+					
+							vdpInterruptDelta -= 65536;
+		    				vdp.tick();
+		            		if (settingThrottleInterrupts.getBoolean()) {
+		            			if (throttleCount-- < 0) {
+		            				throttleCount = 6;
+		            			} else {
+		            				return;
+		            			}
+		            		}
+		            		
+		            		cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
+		            		executor.nVdpInterrupts++;
+		            		//System.out.print('!');
+		    			}
+	    			}
+				}    			
         	}
         };
         cpuTimer.scheduleTask(cpuTimingTask, cpuTicksPerSec);
@@ -273,12 +281,22 @@ abstract public class Machine {
         	@Override
         	public void run() {
     	        while (Machine.this.isAlive()) {
+    	        	synchronized (runnableList) {
+	            		Runnable runnable;
+	            		while (runnableList.size() > 0) {
+	            			runnable = runnableList.remove(0);
+	            			runnable.run();
+	            		}
+					}
+	            	
+    	        	
     	        	// delay if going too fast
     				if (Cpu.settingRealTime.getBoolean()) {
-    					while (cpu.isThrottled() && cpu.getMachine().bAlive) {
+    					if (cpu.isThrottled() && cpu.getMachine().bAlive) {
     						// Just sleep.  Another timer thread will reset the throttle.
     						try {
     							Thread.sleep(10);
+    							continue;
     						} catch (InterruptedException e) {
     							return;
     						}
@@ -288,11 +306,12 @@ abstract public class Machine {
     	            try {
     	            	// synchronize on events like debugging, loading/saving, etc
 	            		synchronized (executionLock) {
-	            			while (!bExecuting && isAlive()) {
+	            			if (!bExecuting && isAlive()) {
 	            				executionLock.wait();
 	            			}
-	            			
-	    	        		executor.execute();
+	            			if (bExecuting) {
+	            				executor.execute();
+	            			}
 	            		}
     	            } catch (AbortedException e) {
     	            } catch (InterruptedException e) {
@@ -391,25 +410,23 @@ abstract public class Machine {
 		return keyboardState;
 	}
 
-	public synchronized void saveState(String filename) throws IOException {
+	public synchronized void saveState(IDialogSettings settings) {
 		synchronized (executionLock) {
 			bExecuting = false;
 			executionLock.notifyAll();
 		}
-		DialogSettings settings = new DialogSettings("state");
 		cpu.saveState(settings.addNewSection("CPU"));
 		getMemoryModel().getGplMmio().saveState(settings.addNewSection("GPL"));
 		memory.saveState(settings.addNewSection("Memory"));
 		vdp.saveState(settings.addNewSection("VDP"));
 		sound.saveState(settings.addNewSection("Sound"));
-		settings.save(filename);
 		synchronized (executionLock) {
 			bExecuting = true;
 			executionLock.notifyAll();
 		}
 	}
 
-	public synchronized void restoreState(String filename) throws IOException {
+	public synchronized void restoreState(IDialogSettings settings) throws IOException {
 		/*
 		machineRunner.interrupt();
 		videoRunner.interrupt();
@@ -421,9 +438,6 @@ abstract public class Machine {
 			bExecuting = false;
 			executionLock.notifyAll();
 		}
-		
-		DialogSettings settings = new DialogSettings("state");
-		settings.load(filename);
 		
 		memory.loadState(settings.getSection("Memory"));
 		getMemoryModel().getGplMmio().loadState(settings.getSection("GPL"));
@@ -458,7 +472,18 @@ abstract public class Machine {
 	 * @return
 	 */
 	public boolean isExecuting() {
-		return bExecuting;
+		synchronized (executionLock) {
+			return bExecuting;
+		}
+	}
+
+	public void asyncExec(Runnable runnable) {
+		synchronized (runnableList) {
+			runnableList.add(runnable);
+		}
+		//synchronized (executionLock) {
+		//	executionLock.notifyAll();
+		//}
 	}
 
 }

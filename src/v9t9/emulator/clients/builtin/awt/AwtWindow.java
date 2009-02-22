@@ -265,7 +265,11 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 		final BasicButton button = createButton(icons, bounds, tooltip, new ButtonPressHandler() {
 
 			public void pressed() {
-				setting.setBoolean(!setting.getBoolean());
+				machine.asyncExec(new Runnable() {
+					public void run() {
+						setting.setBoolean(!setting.getBoolean());
+					}
+				});
 			}
 			
 		});

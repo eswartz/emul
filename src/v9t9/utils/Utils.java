@@ -91,7 +91,7 @@ public class Utils  {
 			return 0;
 		} else {
 			try {
-				return Integer.parseInt(value);
+				return parseInt(value);
 			} catch (NumberFormatException e) {
 				e.printStackTrace();
 				return 0;
@@ -105,22 +105,26 @@ public class Utils  {
 
 	 * @param section
 	 * @param key
-	 * @return
+	 * @param defaultIfUndefined
+	 * @return setting
 	 */
-	public static boolean readSavedBoolean(IDialogSettings section, String key) {
+	public static boolean readSavedBoolean(IDialogSettings section, String key, boolean defaultIfUndefined) {
 		if (section == null)
 			return false;
 		String value = section.get(key);
 		if (value == null) {
-			return false;
+			return defaultIfUndefined;
 		} else {
 			try {
 				return Boolean.parseBoolean(value);
 			} catch (NumberFormatException e) {
 				e.printStackTrace();
-				return false;
+				return defaultIfUndefined;
 			}
 		}
+	}
+	public static boolean readSavedBoolean(IDialogSettings section, String key) {
+		return readSavedBoolean(section, key, false);
 	}
 	
 	static byte   swapped_nybbles[] = 

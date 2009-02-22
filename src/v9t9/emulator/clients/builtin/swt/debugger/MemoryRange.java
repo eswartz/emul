@@ -43,6 +43,7 @@ public class MemoryRange {
 	}
 	public boolean contains(MemoryEntry entry, int addr) {
 		return this.entry.domain == entry.domain &&
+			this.entry.contains(addr) &&
 			addr >= this.addr && addr < this.addr + this.len;
 	}
 	public boolean isWordMemory() {

@@ -671,30 +671,27 @@ public class Instruction extends RawInstruction implements IInstruction {
     	boolean isSame = true;
     	// obvious changes: this usually happens due to an X instruction and its generated instruction
         if (this.opcode != op || this.pc != thePc) {
-            if (this.pc != thePc) {
-				throw new AssertionError("wrong PC? " + v9t9.utils.Utils.toHex4(this.pc) + " != " + v9t9.utils.Utils.toHex4(thePc));
-			}
+            //if (this.pc != thePc) {
+			//	throw new AssertionError("wrong PC? " + v9t9.utils.Utils.toHex4(this.pc) + " != " + v9t9.utils.Utils.toHex4(thePc));
+			//}
             isSame = false;
         } else {
         	// check for modified immediates (the other kind of self-modifying code)
         	int pcStep = (thePc + 2) & 0xfffe;
         	MachineOperand mop1 = (MachineOperand)op1;
         	if (inst != InstructionTable.Idata && mop1.type != MachineOperand.OP_NONE) {
-        		
+        		mop1.cycles = 0;
 				if (mop1.hasImmediate()) {
 					if (domain.readWord(pcStep) != mop1.immed)
 						isSame = false;
 					pcStep += 2;
         		} else {
-        			mop1.cycles = 0;
         			MachineOperand mop2 = (MachineOperand)op2;
-        			if (mop2.type != MachineOperand.OP_NONE) {
-	        			if (mop2.hasImmediate()) {
-	        				if (domain.readWord(pcStep) != mop2.immed) {
-	        					isSame = false;
-	        				}
-	        				mop2.cycles = 0;
-	        			}
+        			if (mop2.type != MachineOperand.OP_NONE && mop2.hasImmediate()) {
+        				if (domain.readWord(pcStep) != mop2.immed) {
+        					isSame = false;
+        				}
+        				mop2.cycles = 0;
         			}
         		}
         	}

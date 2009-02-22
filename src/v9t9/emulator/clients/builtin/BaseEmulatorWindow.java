@@ -114,7 +114,10 @@ public abstract class BaseEmulatorWindow {
 		
 		if (filename != null) {
 			try {
-				machine.restoreState(filename);
+				DialogSettings settings = new DialogSettings("state");
+				settings.load(filename);
+				
+				machine.restoreState(settings);
 			} catch (Throwable e1) {
 				showErrorMessage("Load error", 
 						"Failed to load machine state:\n\n" + e1.getMessage());
@@ -126,8 +129,10 @@ public abstract class BaseEmulatorWindow {
 	abstract protected void showErrorMessage(String title, String msg);
 
 	protected void saveMachineState() {
-		boolean old = Machine.settingPauseMachine.getBoolean();
-		Machine.settingPauseMachine.setBoolean(true);
+		
+		// get immediately
+		DialogSettings settings = new DialogSettings("state");
+		machine.saveState(settings);
 		
 		String filename = selectFile(
 				"Select location to save machine state", "MachineStatePath", 
@@ -135,14 +140,12 @@ public abstract class BaseEmulatorWindow {
 		
 		if (filename != null) {
 			try {
-				machine.saveState(filename);
+				settings.save(filename);
 			} catch (Throwable e1) {
 				showErrorMessage("Save error", 
 						"Failed to save machine state:\n\n" + e1.getMessage());
 			}
 		}
-		Machine.settingPauseMachine.setBoolean(old);
-		
 	}
 
 	protected void screenshot() {
@@ -152,21 +155,8 @@ public abstract class BaseEmulatorWindow {
 		String filenameBase = selectFile(
 				"Select screenshot file", "ScreenShotsBase", "screenshots", "screen.png", true, true);
 		if (filenameBase != null) {
-			File fileBase = new File(filenameBase);
-			File dir = fileBase.getParentFile();
-			String base = fileBase.getName();
-			int extPtr = base.lastIndexOf('.');
-			if (extPtr < 0) extPtr = base.length();
-			String ext = base.substring(extPtr);
-			base = base.substring(0, extPtr);
-			
-			File saveFile = null; 
-			for (int count = 0; count < 10000; count++) {
-				saveFile = new File(dir, base + (count != 0 ? "" + count : "") + ext);
-				if (!saveFile.exists())
-					break;
-			}
-			if (saveFile.exists()) {
+			File saveFile = getUniqueFile(filenameBase);
+			if (saveFile == null) {
 				showErrorMessage("Save error", 
 						"Too many screenshots here!");
 				clearConfigVar("ScreenShotsBase");
@@ -180,5 +170,25 @@ public abstract class BaseEmulatorWindow {
 				}
 			}
 		}
+	}
+	
+	protected File getUniqueFile(String filenameBase) {
+		File fileBase = new File(filenameBase);
+		File dir = fileBase.getParentFile();
+		String base = fileBase.getName();
+		int extPtr = base.lastIndexOf('.');
+		if (extPtr < 0) extPtr = base.length();
+		String ext = base.substring(extPtr);
+		base = base.substring(0, extPtr);
+		
+		File saveFile = null; 
+		for (int count = 0; count < 10000; count++) {
+			saveFile = new File(dir, base + (count != 0 ? "" + count : "") + ext);
+			if (!saveFile.exists())
+				break;
+		}
+		if (saveFile.exists())
+			return null;
+		return saveFile;
 	}
 }

@@ -210,7 +210,11 @@ public class SwtWindowSVG extends BaseEmulatorWindow {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				setting.setBoolean(!setting.getBoolean());
+				machine.asyncExec(new Runnable() {
+					public void run() {
+						setting.setBoolean(!setting.getBoolean());
+					}
+				});
 			}
 		});
 		

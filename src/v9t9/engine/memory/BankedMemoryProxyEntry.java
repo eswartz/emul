@@ -13,6 +13,7 @@ package v9t9.engine.memory;
 public class BankedMemoryProxyEntry extends MemoryEntry {
 
 	private final int bank;
+	private final BankedMemoryEntry banked;
 
 	public BankedMemoryProxyEntry(BankedMemoryEntry banked, int bank) {
 		super(banked.getName() + " #" +bank,
@@ -20,6 +21,7 @@ public class BankedMemoryProxyEntry extends MemoryEntry {
 				banked.addr,
 				banked.size,
 				banked.area);
+		this.banked = banked;
 		this.bank = bank;
 		addrOffset = bank * banked.getBankSize();
 	}
@@ -32,5 +34,10 @@ public class BankedMemoryProxyEntry extends MemoryEntry {
 			entry.getCurrentBank() == bank; 
 		}
 		return super.equals(obj);
+	}
+	
+	@Override
+	public boolean contains(int addr) {
+		return super.contains(addr + banked.getCurrentBank() * banked.getBankSize());
 	}
 }
