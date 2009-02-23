@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.runtime.CpuMetrics.MetricEntry;
 import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
 import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.emulator.runtime.compiler.ICompiledCode;
@@ -46,8 +47,6 @@ public class Executor {
     public long nSwitches;
     public long nCompiles;
 
-	private long nLastCycleCount;
-
 	//private ICpuController cpuController;
 
 	public int nVdpInterrupts;
@@ -66,9 +65,12 @@ public class Executor {
 	public volatile Boolean interruptExecution;
     
 	private InstructionListener[] instructionListeners;
+
+	private final CpuMetrics cpuMetrics;
 	
-    public Executor(Cpu cpu) {
+    public Executor(Cpu cpu, CpuMetrics cpuMetrics) {
         this.cpu = cpu;
+		this.cpuMetrics = cpuMetrics;
         this.interp = new Interpreter(cpu.getMachine());
         this.compilerStrategy = new CodeBlockCompilerStrategy(this);
         this.highLevelCodeInfoMap = new HashMap<MemoryArea, HighLevelCodeInfo>();
@@ -129,7 +131,7 @@ public class Executor {
         Machine.settingPauseMachine.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
-				nLastCycleCount = 0;				
+				Executor.this.cpuMetrics.resetLastCycleCount();				
 			}
         	
         });
@@ -234,26 +236,19 @@ public class Executor {
     	return highLevel;
     }
 
-	public void dumpStats() {
-        int compileAvg = 0;
-        if (nInstructions == 0) {
-        	return;
-        }
-        
-        double compiled = (double)nCompiledInstructions / (double)nInstructions;
-        compileAvg = ((int) (compiled * 10000));
-        
-        System.out.println("# instructions / second: " + nInstructions
-        		+ " (cycles = " + (cpu.getTotalCycleCount() - nLastCycleCount) 
-        		+ (settingCompile.getBoolean() ? 
-        		"; " + compileAvg / 100 + "." + compileAvg % 100 + "% compiled, " 
-        		+ nSwitches + " context switches, " + nCompiles + " compiles)" : ")")
-        		+ "; VDP Interrupts = " +nVdpInterrupts + " (honored = " + cpu.getAndResetInterruptCount() + ")");
+	public void recordMetrics() {
+		MetricEntry entry = cpuMetrics.log(nInstructions,
+				cpu.getTotalCycleCount(), Cpu.settingCyclesPerSecond.getInt(),
+				nVdpInterrupts, cpu.getAndResetInterruptCount(), 
+				nCompiledInstructions, nSwitches, nCompiles);
+		
+		if (entry != null) {
+			//entry.dump();
+		}
         nInstructions = 0;
         nCompiledInstructions = 0;
         nSwitches = 0;
         nCompiles = 0;
-        nLastCycleCount = cpu.getTotalCycleCount();
 	}
 
 	/**

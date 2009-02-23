@@ -253,7 +253,7 @@ public class SwtWindowSVG extends BaseEmulatorWindow {
 
 	@Override
 	protected String openFileSelectionDialog(String title, String directory,
-			String fileName, boolean isSave) {
+			String fileName, boolean isSave, String[] extensions) {
 		FileDialog dialog = new FileDialog(getShell(), isSave ? SWT.SAVE : SWT.OPEN);
 		dialog.setText(title);
 		dialog.setFilterPath(directory);

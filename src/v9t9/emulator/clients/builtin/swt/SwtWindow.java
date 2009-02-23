@@ -35,6 +35,7 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Decorations;
@@ -45,6 +46,7 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
@@ -72,6 +74,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private List<Shell> toolShells;
 	private Timer toolUiTimer;
 	private Image mainIcons;
+	private Canvas cpuMetricsCanvas;
 	
 	public SwtWindow(Display display, final ISwtVideoRenderer renderer, final Machine machine) {
 		super(machine);
@@ -152,12 +155,20 @@ public class SwtWindow extends BaseEmulatorWindow {
 			
 		});
 		
+		/*
+		Composite controlBar = new Composite(mainComposite, SWT.NONE);
+		GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, true).applyTo(controlBar);
+		GridLayoutFactory.fillDefaults().margins(2, 2).applyTo(controlBar);
+		*/
 		createButtons(mainComposite);
+		
+		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar, SWT.BORDER, machine.getCpuMetrics());
+		
 		
 		JavaSoundHandler.settingPlaySound.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
-				JavaSoundHandler.settingPlaySound.saveState(getApplicationSettings());
+				JavaSoundHandler.settingPlaySound.saveState(EmulatorSettings.getInstance().getApplicationSettings());
 			}
 			
 		});
@@ -166,7 +177,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		shell.getDisplay().asyncExec(new Runnable() {
 			public void run() {
-				DialogSettings applicationSettings = getApplicationSettings();
+				DialogSettings applicationSettings = EmulatorSettings.getInstance().getApplicationSettings();
 				
 				int zoom = Utils.readSavedInt(applicationSettings, "ZoomLevel");
 				if (zoom > 0) {
@@ -221,11 +232,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 	}
 
-	private void createButtons(Composite mainComposite) {
+	private void createButtons(Composite parent) {
 		File iconsFile = V9t9.getDataFile("icons/icons.png");
 		mainIcons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
 		
-		buttonBar = new ButtonBar(mainComposite, SWT.HORIZONTAL);
+		buttonBar = new ButtonBar(parent, SWT.HORIZONTAL);
 		GridLayout mainLayout = new GridLayout(1, false);
 		mainLayout.marginHeight = mainLayout.marginWidth = 0;
 		buttonBar.setLayout(mainLayout);
@@ -268,6 +279,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					}
 				});*/
 		
+		/*
 		createButton(buttonBar, 3,
 				"Paste into keyboard", new SelectionAdapter() {
 					@Override
@@ -275,24 +287,19 @@ public class SwtWindow extends BaseEmulatorWindow {
 						pasteClipboardToKeyboard();
 					}
 			});
+		*/
 		
 		createButton(buttonBar, 6,
-				"Save machine state", new SelectionAdapter() {
+				"Load or save machine state", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						saveMachineState();
+						Control button = (Control) e.widget;
+						Point size = button.getSize();
+						showMenu(createFilePopupMenu(button), button, size.x / 2, size.y / 2);
 					}
 
 			});
 		
-		createButton(buttonBar, 7,
-				"Load machine state", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						loadMachineState();
-					}
-			});
-
 		createStateButton(buttonBar, Machine.settingPauseMachine,
 				8, 0,
 				 "Pause machine");
@@ -466,8 +473,17 @@ public class SwtWindow extends BaseEmulatorWindow {
 		fileMenuHeader.setText("&File");
 		
 		Menu fileMenu = new Menu(control, SWT.DROP_DOWN);
+		populateFileMenu(fileMenu, true);
 		fileMenuHeader.setMenu(fileMenu);
+
+		MenuItem editMenuHeader = new MenuItem(appMenu, SWT.CASCADE);
+		editMenuHeader.setText("&Edit");
 		
+		Menu editMenu = new Menu(control, SWT.DROP_DOWN);
+		populateEditMenu(editMenu);
+		editMenuHeader.setMenu(editMenu);
+
+		/*
 		MenuItem exit = new MenuItem(fileMenu, SWT.NONE);
 		exit.setText("E&xit");
 		exit.addSelectionListener(new SelectionAdapter() {
@@ -476,7 +492,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				System.exit(0);
 			}
 		});
-		
+		*/
 		Menu viewMenu = appMenu;
 		if (!isPopup) {
 			MenuItem viewMenuHeader = new MenuItem(appMenu, SWT.CASCADE);
@@ -506,7 +522,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		MenuItem accel= new MenuItem(emuMenu, SWT.CASCADE);
 		accel.setText("&Accelerate");
 		
-		Menu accelMenu = new Menu(zoom);
+		Menu accelMenu = new Menu(accel);
 		populateAccelMenu(accelMenu);
 		accel.setMenu(accelMenu);
 		
@@ -515,6 +531,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 	
 	@Override
 	public void dispose() {
+		cpuMetricsCanvas.dispose();
+		
 		toolUiTimer.cancel();
 		for (Object shell : toolShells.toArray()) {
 			((Shell)shell).dispose();
@@ -565,7 +583,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					setScreenZoom(zoom);
-					getApplicationSettings().put("ZoomLevel", zoom);
+					EmulatorSettings.getInstance().getApplicationSettings().put("ZoomLevel", zoom);
 				}
 
 			});
@@ -578,6 +596,56 @@ public class SwtWindow extends BaseEmulatorWindow {
 		videoRenderer.setZoom(zoom);
 	}
 
+	private Menu createFilePopupMenu(final Control parent) {
+		final Menu menu = new Menu(parent);
+		return populateFileMenu(menu, false);
+	}
+	
+	private Menu populateFileMenu(final Menu menu, boolean withExit) {
+		MenuItem open = new MenuItem(menu, SWT.NONE);
+		open.setText("&Open machine state");
+		open.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				loadMachineState();
+			}
+		});
+		MenuItem save = new MenuItem(menu, SWT.NONE);
+		save.setText("&Save machine state");
+		save.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				saveMachineState();
+			}
+		});
+
+		if (withExit) {
+			MenuItem exit = new MenuItem(menu, SWT.NONE);
+			exit.setText("E&xit");
+			exit.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					System.exit(0);
+				}
+			});
+		}
+		
+		return menu;
+	}
+	
+	private Menu populateEditMenu(final Menu menu) {
+		MenuItem paste = new MenuItem(menu, SWT.NONE);
+		paste.setText("&Paste into keyboard");
+		paste.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				pasteClipboardToKeyboard();
+			}
+		});
+		
+		return menu;
+	}
+	
 	private Menu createAccelMenu(final Control parent) {
 		final Menu menu = new Menu(parent);
 		return populateAccelMenu(menu);
@@ -600,7 +668,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			public void widgetSelected(SelectionEvent e) {
 				boolean setting = !Cpu.settingRealTime.getBoolean();
 				Cpu.settingRealTime.setBoolean(setting);
-				getApplicationSettings().put("RealTime", setting);
+				EmulatorSettings.getInstance().getApplicationSettings().put("RealTime", setting);
 			}
 		});
 
@@ -627,7 +695,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			public void widgetSelected(SelectionEvent e) {
 				Cpu.settingRealTime.setBoolean(true);
 				Cpu.settingCyclesPerSecond.setInt(cycles);
-				getApplicationSettings().put("CyclesPerSecond", cycles);
+				EmulatorSettings.getInstance().getApplicationSettings().put("CyclesPerSecond", cycles);
 			}
 		});
 	}
@@ -656,7 +724,10 @@ public class SwtWindow extends BaseEmulatorWindow {
 			item.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					String filenameBase = openFileSelectionDialog("Record sound to", getBaseConfigurationPath(), "sound.raw", true);
+					String filenameBase = openFileSelectionDialog("Record sound to...", 
+							EmulatorSettings.getInstance().getBaseConfigurationPath(), 
+							"sound", true,
+							JavaSoundHandler.getSoundFileExtensions());
 					File saveFile = null;
 					if (filenameBase != null) {
 						saveFile = getUniqueFile(filenameBase);
@@ -775,12 +846,33 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 	@Override
 	protected String openFileSelectionDialog(String title, String directory,
-			String fileName, boolean isSave) {
+			String fileName, boolean isSave, String[] extensions) {
 		FileDialog dialog = new FileDialog(getShell(), isSave ? SWT.SAVE : SWT.OPEN);
 		dialog.setText(title);
 		dialog.setFilterPath(directory);
 		dialog.setFileName(fileName);
+		
+		if (extensions != null) {
+			String[] exts = new String[extensions.length];
+			String[] names = new String[extensions.length];
+			int idx = 0;
+			for (String extension : extensions) {
+				String[] split = extension.split("\\|");
+				exts[idx] = split[0];
+				names[idx] = split[1];
+				idx++;
+			}
+			dialog.setFilterExtensions(exts);
+			dialog.setFilterNames(names);
+		}
 		String filename = dialog.open();
+		
+		if (filename != null && extensions != null) {
+			int extIdx = new File(filename).getName().lastIndexOf('.');
+			if (extIdx < 0) {
+				filename += '.' + dialog.getFilterExtensions()[dialog.getFilterIndex()];
+			}
+		}
 		return filename;
 	}
 	

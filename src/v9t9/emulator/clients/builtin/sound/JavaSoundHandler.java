@@ -3,18 +3,23 @@
  */
 package v9t9.emulator.clients.builtin.sound;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
+import javax.sound.sampled.AudioFileFormat.Type;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
@@ -37,7 +42,7 @@ public class JavaSoundHandler implements SoundHandler {
 	private volatile int[] soundGeneratorWorkBuffer;
 	private int[] soundGeneratorWorkBuffer2;
 	private byte[] soundGeneratorWaveForm;
-	private AudioFormat stdFormat;
+	private AudioFormat soundFormat;
 	private int soundFramesPerTick;
 	private int soundClock;
 
@@ -89,12 +94,8 @@ public class JavaSoundHandler implements SoundHandler {
 		settingRecordSoundOutputFile.addListener(new ISettingListener() {
 			public void changed(Setting setting, Object oldValue) {
 				if (soundFos != null) {
-					try {
-						soundFos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-						soundFos = null;
-					}
+					closeSoundDumpFile(soundFos, soundFormat, (String) oldValue);
+					soundFos = null;
 				}
 				String filename = setting.getString();
 				if (filename != null) {
@@ -111,12 +112,8 @@ public class JavaSoundHandler implements SoundHandler {
 		settingRecordSpeechOutputFile.addListener(new ISettingListener() {
 			public void changed(Setting setting, Object oldValue) {
 				if (speechFos != null) {
-					try {
-						speechFos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-						speechFos = null;
-					}
+					closeSoundDumpFile(speechFos, speechFormat, (String) oldValue);
+					speechFos = null;
 				}
 				String filename = setting.getString();
 				if (filename != null) {
@@ -210,16 +207,16 @@ public class JavaSoundHandler implements SoundHandler {
 		soundQueue = new LinkedBlockingQueue<AudioChunk>();
 		speechQueue = new LinkedBlockingQueue<AudioChunk>();
 
-		stdFormat = new AudioFormat(55930, 8, 2, true, false);
-		Line.Info slInfo = new DataLine.Info(SourceDataLine.class, stdFormat);
+		soundFormat = new AudioFormat(55930, 8, 2, true, false);
+		Line.Info slInfo = new DataLine.Info(SourceDataLine.class, soundFormat);
 		if (!AudioSystem.isLineSupported(slInfo)) {
-			System.err.println("Line not supported: " + stdFormat);
+			System.err.println("Line not supported: " + soundFormat);
 
-			stdFormat = new AudioFormat(44100, 8, 2, true, false);
-			slInfo = new DataLine.Info(SourceDataLine.class, stdFormat);
+			soundFormat = new AudioFormat(44100, 8, 2, true, false);
+			slInfo = new DataLine.Info(SourceDataLine.class, soundFormat);
 
 			if (!AudioSystem.isLineSupported(slInfo)) {
-				System.err.println("Line not supported: " + stdFormat);
+				System.err.println("Line not supported: " + soundFormat);
 				return;
 			}
 		}
@@ -233,10 +230,10 @@ public class JavaSoundHandler implements SoundHandler {
 
 		
 		try {
-			soundFramesPerTick = (int) (stdFormat.getFrameRate() / machine
+			soundFramesPerTick = (int) (soundFormat.getFrameRate() / machine
 					.getCpuTicksPerSec());
 			soundGeneratorLine = (SourceDataLine) AudioSystem.getLine(slInfo);
-			soundGeneratorLine.open(stdFormat, soundFramesPerTick * 20);
+			soundGeneratorLine.open(soundFormat, soundFramesPerTick * 20);
 			speechFramesPerTick = (int) (speechFormat.getFrameRate() / machine
 					.getCpuTicksPerSec());
 			speechLine = (SourceDataLine) AudioSystem.getLine(spInfo);
@@ -344,15 +341,15 @@ public class JavaSoundHandler implements SoundHandler {
 		soundGeneratorLine.start();
 		speechLine.start();
 		
-		soundGeneratorWaveForm = new byte[stdFormat.getFrameSize()
+		soundGeneratorWaveForm = new byte[soundFormat.getFrameSize()
 		                  				* soundFramesPerTick];
-		soundGeneratorWorkBuffer = new int[stdFormat.getFrameSize()
+		soundGeneratorWorkBuffer = new int[soundFormat.getFrameSize()
 				* soundFramesPerTick];
-		soundGeneratorWorkBuffer2 = new int[stdFormat.getFrameSize()
+		soundGeneratorWorkBuffer2 = new int[soundFormat.getFrameSize()
 		         * soundFramesPerTick];
 		speechWaveForm = new byte[speechFormat.getFrameSize()
 				* speechFramesPerTick];
-		soundClock = (int) stdFormat.getFrameRate();
+		soundClock = (int) soundFormat.getFrameRate();
 	}
 
 	/*
@@ -511,6 +508,81 @@ public class JavaSoundHandler implements SoundHandler {
 
 			speechWaveForm = new byte[speechWaveForm.length];
 		}
+	}
+
+	private void closeSoundDumpFile(FileOutputStream fos, AudioFormat format, String filename) {
+		try {
+			fos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		if (filename != null) {
+			// convert to the file type
+			AudioFileFormat.Type fileType = AudioFileFormat.Type.WAVE;
+			
+			int idx = filename.lastIndexOf('.');
+			if (idx >= 0) {
+				String ext = filename.substring(idx + 1);
+				Type[] types = AudioSystem.getAudioFileTypes();
+				for (Type type : types) {
+					System.out.println("Type:" + type + " ext=" + type.getExtension());
+					if (type.getExtension().equalsIgnoreCase(ext)) {
+						fileType = type;
+						break;
+					}
+				}
+			}
+			
+			File soundFile = new File(filename);
+			File soundFileRaw = new File(filename + ".tmp");
+			soundFileRaw.delete();
+			
+			boolean converted = false;
+			try {
+				if (!soundFile.renameTo(soundFileRaw))
+					return;
+
+				AudioInputStream is = null;
+				
+				try {
+					is = new AudioInputStream(
+							new FileInputStream(soundFileRaw),
+							format,
+							soundFileRaw.length());
+				} catch (IOException e) {
+					e.printStackTrace();
+					return;
+				}
+				
+				try {
+					AudioSystem.write(is, fileType, soundFile);
+					
+					soundFileRaw.delete();
+					converted = true;
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} finally {
+				if (!converted) {
+					System.err.println("Could not convert raw sound file (" + format + ") to " + fileType);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Get the supported file types
+	 * @return
+	 */
+	public static String[] getSoundFileExtensions() {
+
+		Type[] types = AudioSystem.getAudioFileTypes();
+		String[] extensions = new String[types.length];
+		for (int idx = 0; idx < extensions.length; idx++) {
+			extensions[idx] = types[idx].getExtension() + "|" + types[idx].toString();
+		}
+		return extensions;
 	}
 
 }

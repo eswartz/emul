@@ -333,7 +333,7 @@ public class AwtWindow extends BaseEmulatorWindow implements IAwtVideoRendererCo
 
 	@Override
 	protected String openFileSelectionDialog(String title, String directory,
-			String fileName, boolean isSave) {
+			String fileName, boolean isSave, String[] extensions) {
 		JFileChooser chooser = new JFileChooser(directory);
 		chooser.setDialogTitle(title);
 		chooser.setSelectedFile(new File(directory, fileName));

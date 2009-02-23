@@ -5,44 +5,41 @@ import java.io.IOException;
 
 import org.eclipse.jface.dialogs.DialogSettings;
 
+import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.runtime.Cpu;
 
 public abstract class BaseEmulatorWindow {
 
+	/**
+	 * 
+	 */
+	private static final String[] MACHINE_SAVE_FILE_EXTENSIONS = new String[] { ".sav|V9t9 machine save file" };
 	protected VideoRenderer videoRenderer;
 	protected final Machine machine;
-	protected DialogSettings settings;
 
 	public BaseEmulatorWindow(Machine machine) {
 		this.machine = machine;
+		EmulatorSettings.getInstance().load();
 	}
 	
 	public void dispose() {
-		try {
-			settings.save(getSettingsConfigurationPath());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		EmulatorSettings.getInstance().save();
 	}
+	
 	public void setVideoRenderer(VideoRenderer videoRenderer) {
 		this.videoRenderer = videoRenderer;
 	}
 
-	protected void clearConfigVar(String configVar) {
-		DialogSettings settings = getApplicationSettings();
-		settings.put(configVar, (String)null);
-	}
-	
 	protected String selectFile(String title, String configVar, String defaultSubdir,
-			String fileName, boolean isSave, boolean ifUndefined) {
+			String fileName, boolean isSave, boolean ifUndefined, String[] extensions) {
 		
 		boolean isUndefined = false;
-		DialogSettings settings = getApplicationSettings();
+		DialogSettings settings = EmulatorSettings.getInstance().getApplicationSettings();
 		String configPath = settings.get(configVar);
 		if (configPath == null) {
-			configPath = getBaseConfigurationPath() + defaultSubdir + File.separatorChar + fileName;
+			configPath = EmulatorSettings.getInstance().getBaseConfigurationPath() + defaultSubdir + File.separatorChar + fileName;
 			isUndefined = true;
 			File saveDir = new File(configPath);
 			saveDir.getParentFile().mkdirs();
@@ -50,7 +47,8 @@ public abstract class BaseEmulatorWindow {
 			return configPath;
 		}
 		
-		String filename = openFileSelectionDialog(title, new File(configPath).getParent(), fileName, isSave);
+		String filename = openFileSelectionDialog(title, new File(configPath).getParent(), fileName, 
+				isSave, extensions);
 		if (filename != null && isUndefined) {
 			settings.put(configVar, filename);
 		}
@@ -60,10 +58,10 @@ public abstract class BaseEmulatorWindow {
 	protected String selectDirectory(String title, String configVar, String defaultSubdir,
 			boolean ifUndefined) {
 		boolean isUndefined = false;
-		DialogSettings settings = getApplicationSettings();
+		DialogSettings settings = EmulatorSettings.getInstance().getApplicationSettings();
 		String configDir = settings.get(configVar);
 		if (configDir == null) {
-			configDir = getBaseConfigurationPath() + File.separatorChar + defaultSubdir + File.separatorChar;
+			configDir = EmulatorSettings.getInstance().getBaseConfigurationPath() + File.separatorChar + defaultSubdir + File.separatorChar;
 			File saveDir = new File(configDir);
 			saveDir.mkdirs();
 			isUndefined = true;
@@ -77,29 +75,19 @@ public abstract class BaseEmulatorWindow {
 		}
 		return dirname;
 	}
+	/**
+	 * Open a file selection dialog (which is used to open or save files).
+	 * @param title title of dialog
+	 * @param directory base directory, or <code>null</code>
+	 * @param fileName base filename
+	 * @param isSave true: saving a file, false: opening
+	 * @param extensions array of entries in the form "extension|label"; first entry is default extension
+	 * @return full path to selected file, or <code>null</code> if canceled
+	 */
 	abstract protected String openFileSelectionDialog(String title, String directory,
-			String fileName, boolean isSave);
+			String fileName, boolean isSave, String[] extensions);
 	abstract protected String openDirectorySelectionDialog(String title, String directory);
 
-	protected String getBaseConfigurationPath() {
-		return System.getProperty("user.home") + File.separatorChar + ".v9t9j" + File.separatorChar;
-	}
-
-	protected DialogSettings getApplicationSettings() {
-		if (settings == null) {
-			settings = new DialogSettings("root");
-			try {
-				settings.load(getSettingsConfigurationPath());
-			} catch (IOException e) {
-			}
-		}
-		return settings;
-	}
-
-	private String getSettingsConfigurationPath() {
-		return getBaseConfigurationPath() + "config";
-	}
-	
 	protected void sendNMI() {
 		machine.getCpu().setPin(Cpu.PIN_LOAD);
 	}
@@ -110,7 +98,7 @@ public abstract class BaseEmulatorWindow {
 	protected void loadMachineState() {
 		String filename = selectFile(
 				"Select saved machine state", "MachineStatePath", "saves", 
-				"save0.sav", false, false);
+				"save0.sav", false, false, MACHINE_SAVE_FILE_EXTENSIONS);
 		
 		if (filename != null) {
 			try {
@@ -136,7 +124,7 @@ public abstract class BaseEmulatorWindow {
 		
 		String filename = selectFile(
 				"Select location to save machine state", "MachineStatePath", 
-				"saves", "save0.sav", true, false);
+				"saves", "save0.sav", true, false, MACHINE_SAVE_FILE_EXTENSIONS);
 		
 		if (filename != null) {
 			try {
@@ -153,13 +141,14 @@ public abstract class BaseEmulatorWindow {
 		//String dirname = selectDirectory(
 		//		"Select screenshot directory", "ScreenShotsPath", "screenshots", true);
 		String filenameBase = selectFile(
-				"Select screenshot file", "ScreenShotsBase", "screenshots", "screen.png", true, true);
+				"Select screenshot file", "ScreenShotsBase", "screenshots", "screen.png", true, true, 
+				new String[] { ".png|PNG file" });
 		if (filenameBase != null) {
 			File saveFile = getUniqueFile(filenameBase);
 			if (saveFile == null) {
 				showErrorMessage("Save error", 
 						"Too many screenshots here!");
-				clearConfigVar("ScreenShotsBase");
+				EmulatorSettings.getInstance().clearConfigVar("ScreenShotsBase");
 				screenshot();
 			} else {
 				try {

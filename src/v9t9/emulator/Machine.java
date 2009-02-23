@@ -22,6 +22,7 @@ import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.dsrs.DSRManager;
 import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Cpu;
+import v9t9.emulator.runtime.CpuMetrics;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
@@ -79,6 +80,7 @@ abstract public class Machine {
 	volatile protected boolean bExecuting;
 	private SoundProvider sound;
 	private List<Runnable> runnableList;
+	private CpuMetrics cpuMetrics;
 	static public final String sExpRam = "MemoryExpansion32K";
 	static public final Setting settingExpRam = new Setting(sExpRam, new Boolean(false));
 	
@@ -104,16 +106,17 @@ abstract public class Machine {
     	keyboardState = new KeyboardState(cpu);
     	machineModel.defineDevices(this);
     	
-    	executor = new Executor(cpu);
+    	cpuMetrics = new CpuMetrics();
+    	executor = new Executor(cpu, cpuMetrics);
     	
     	settingPauseMachine.addListener(new ISettingListener() {
 
 			public void changed(Setting setting, Object oldValue) {
 				executor.interruptExecution = Boolean.TRUE;
 				synchronized (executionLock) {
-					bExecuting = !setting.getBoolean();
 					executor.interruptExecution = Boolean.TRUE;
 					cpu.resetCycleCounts();
+					bExecuting = !setting.getBoolean();
 					executionLock.notifyAll();
 				}
 			}
@@ -190,7 +193,7 @@ abstract public class Machine {
 	    			
 	    			if (now >= lastInfo + 1000) {
 	    				upTime += now - lastInfo;
-	    				executor.dumpStats();
+	    				executor.recordMetrics();
 	    				executor.nVdpInterrupts = 0;
 	    				lastInfo = now;
 	    				//vdpInterruptDelta = 0;
@@ -307,7 +310,7 @@ abstract public class Machine {
     	            	// synchronize on events like debugging, loading/saving, etc
 	            		synchronized (executionLock) {
 	            			if (!bExecuting && isAlive()) {
-	            				executionLock.wait();
+	            				executionLock.wait(100);
 	            			}
 	            			if (bExecuting) {
 	            				executor.execute();
@@ -484,6 +487,10 @@ abstract public class Machine {
 		//synchronized (executionLock) {
 		//	executionLock.notifyAll();
 		//}
+	}
+
+	public CpuMetrics getCpuMetrics() {
+		return cpuMetrics;
 	}
 
 }

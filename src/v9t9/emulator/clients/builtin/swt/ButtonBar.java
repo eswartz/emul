@@ -83,6 +83,7 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 			int size;
 			int axis;
 			Point cursize = composite.getParent().getSize();
+			System.out.println("cursize: "+ cursize);
 			if (isHorizontal) {
 				//maxsize =  cursize.x * 3 / 4 / num;
 				axis = cursize.x;

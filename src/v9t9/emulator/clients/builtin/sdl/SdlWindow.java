@@ -441,7 +441,7 @@ public class SdlWindow extends BaseEmulatorWindow {
 
 	@Override
 	protected String openFileSelectionDialog(String title, String directory,
-			String fileName, boolean isSave) {
+			String fileName, boolean isSave, String[] extensions) {
 		FileDialog dialog = new FileDialog(getShell(), isSave ? SWT.SAVE : SWT.OPEN);
 		dialog.setFilterPath(directory);
 		dialog.setFileName(fileName);
