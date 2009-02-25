@@ -6,6 +6,8 @@
  */
 package v9t9.engine.cpu;
 
+import v9t9.utils.Utils;
+
 
 /**
  * The CPU status word is a flattened array of bits, many of which are hard to
@@ -50,7 +52,23 @@ public class Status {
         this.lastparity = lastparity;
         this.bits = bits;
     }
+    
+    public Status(short val) {
+        expand(val);
+    }
 
+    @Override
+    public String toString() {
+    	flatten();
+    	return ((bits & Status.ST_L) != 0 ? "L" : " ")
+    		+ ((bits & Status.ST_A) != 0 ? "A" : " ")
+    		+ ((bits & Status.ST_E) != 0 ? "E" : " ")
+    		+ ((bits & Status.ST_C) != 0 ? "C" : " ")
+    		+ ((bits & Status.ST_O) != 0 ? "O" : " ")
+    		+ ((bits & Status.ST_P) != 0 ? "P" : " ")
+    		+ ((bits & Status.ST_X) != 0 ? "X" : " ")
+    		+ (Utils.toHex2(bits & 0xf));
+    }
     public void copyTo(Status copy) {
         copy.lastval = lastval;
         copy.lastcmp = lastcmp;
@@ -58,9 +76,7 @@ public class Status {
         copy.bits = bits;
     }
 
-    public Status(short val) {
-        expand(val);
-    }
+    
 
     @Override
 	protected Object clone()  {

@@ -51,6 +51,7 @@ import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.clients.builtin.swt.debugger.CpuViewer;
+import v9t9.emulator.clients.builtin.swt.debugger.DebuggerWindow;
 import v9t9.emulator.clients.builtin.swt.debugger.MemoryViewer;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Cpu;
@@ -69,7 +70,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 	protected Shell shell;
 	protected Control videoControl;
 	private ButtonBar buttonBar;
-	private Button controlsExpander;
 	private Composite controlsComposite;
 	private List<Shell> toolShells;
 	private Timer toolUiTimer;
@@ -124,7 +124,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			.create();
 		videoControl.setLayoutData(rendererLayoutData);
 		
-		createExpandableControlsComposite(topComposite);
+		//createExpandableControlsComposite(topComposite);
 		
 		((ISwtVideoRenderer) videoRenderer).addMouseEventListener(new MouseAdapter() {
 			
@@ -262,6 +262,18 @@ public class SwtWindow extends BaseEmulatorWindow {
 				Executor.settingDumpFullInstructions, 
 				2, 0, "Toggle CPU logging");
 
+		createButton(buttonBar,
+				7, "Create debugger window", 
+				new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
+						final DebuggerWindow window = new DebuggerWindow(shell, SWT.NONE, machine, toolUiTimer);
+						createToolShell(shell, window, "DebuggerWindowBounds");	
+					}
+			}
+		);
+		
 		/*BasicButton basicButton =*/ /*createButton(
 				icons, new Rectangle(0, 128, 64, 64),
 				"Branch to Condensed BASIC",
@@ -365,6 +377,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		controlsExpanderComposite.setLayout(new GridLayout(2, false));
 		GridDataFactory.swtDefaults().applyTo(controlsExpanderComposite);
 		
+		Button controlsExpander;
 		controlsExpander = new Button(controlsExpanderComposite, SWT.ARROW | SWT.RIGHT | SWT.NO_FOCUS);
 		GridDataFactory.swtDefaults().applyTo(controlsExpander);
 		
@@ -402,7 +415,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			public void widgetSelected(SelectionEvent e) {
 				final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
 				final MemoryViewer cpuMemory = new MemoryViewer(shell, SWT.NONE, machine.getMemory(), toolUiTimer);
-				createToolShell(shell, cpuMemory);
+				createToolShell(shell, cpuMemory, "MemoryWindowBounds");
 			}
 		});
 		
@@ -414,12 +427,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 			public void widgetSelected(SelectionEvent e) {
 				final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
 				final CpuViewer cpuViewer = new CpuViewer(shell, SWT.NONE, machine, toolUiTimer);
-				createToolShell(shell, cpuViewer);
+				createToolShell(shell, cpuViewer, "CpuWindowBounds");
 			}
 		});
 	}
 
-	protected void createToolShell(Shell shell, final Composite tool) {
+	protected void createToolShell(final Shell shell, final Composite tool, final String boundsPref) {
+		shell.setImage(getShell().getImage());
 		shell.setLayout(new GridLayout(1, false));
 		
 		final GridData data = GridDataFactory.fillDefaults().grab(true, true).hint(400, 300).create();
@@ -432,7 +446,24 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 		
 		shell.open();
-		shell.pack();
+		
+		String boundsStr = EmulatorSettings.getInstance().getApplicationSettings().get(boundsPref);
+		if (boundsStr != null) {
+			String[] parts = boundsStr.split("\\|");
+			try {
+				Rectangle savedBounds = new Rectangle(
+						Integer.parseInt(parts[0]),
+						Integer.parseInt(parts[1]),
+						Integer.parseInt(parts[2]),
+						Integer.parseInt(parts[3]));
+				
+				shell.setBounds(savedBounds);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				
+			} catch (NumberFormatException e) {
+				
+			}
+		}
 		
 		shell.addControlListener(new ControlAdapter() {
 			@Override
@@ -443,6 +474,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		});
 		
+		shell.addDisposeListener(new DisposeListener() {
+			public void widgetDisposed(DisposeEvent e) {
+				Rectangle bounds = shell.getBounds();
+				String boundsStr = bounds.x + "|" + bounds.y + "|" + bounds.width + "|" + bounds.height;
+				EmulatorSettings.getInstance().getApplicationSettings().put(boundsPref, boundsStr);
+			}
+		});
 		addToolShell(shell);
 		
 	}
@@ -666,9 +704,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 		item.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				boolean setting = !Cpu.settingRealTime.getBoolean();
+				boolean setting = false;
 				Cpu.settingRealTime.setBoolean(setting);
-				EmulatorSettings.getInstance().getApplicationSettings().put("RealTime", setting);
+				Cpu.settingRealTime.saveState(EmulatorSettings.getInstance().getApplicationSettings());
 			}
 		});
 
@@ -695,7 +733,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 			public void widgetSelected(SelectionEvent e) {
 				Cpu.settingRealTime.setBoolean(true);
 				Cpu.settingCyclesPerSecond.setInt(cycles);
-				EmulatorSettings.getInstance().getApplicationSettings().put("CyclesPerSecond", cycles);
+				Cpu.settingRealTime.saveState(EmulatorSettings.getInstance().getApplicationSettings());
+				Cpu.settingCyclesPerSecond.saveState(EmulatorSettings.getInstance().getApplicationSettings());
 			}
 		});
 	}

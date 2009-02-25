@@ -91,7 +91,10 @@ public class CruManager implements CruHandler {
      * @param bits
      */
     public final void writeBits(int addr, int val, int num) {
+    	addr &= 0x1fff;
         while (num > 0) {
+        	if (addr >= 0x2000)
+        		return;
         	CruWriter writer = writerArray[addr / 2];
         	if (writer != null) {
                 writer.write(addr, val & (~(~0 << 1)), 1);
@@ -116,9 +119,12 @@ public class CruManager implements CruHandler {
      * @return
      */
     public final int readBits(int addr, int num) {
+    	addr &= 0x1fff;
     	int val = 0;
     	int orgaddr = addr;
     	while (num > 0) {
+    		if (addr >= 0x2000)
+    			break;
          	CruReader reader = readerArray[addr / 2];
          	int shift = (addr - orgaddr) / 2;
             int bits = 0;

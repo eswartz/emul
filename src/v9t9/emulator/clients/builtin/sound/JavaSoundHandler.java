@@ -36,8 +36,6 @@ import v9t9.engine.settings.Setting;
  */
 public class JavaSoundHandler implements SoundHandler {
 
-	// private static final long SOUND_UPDATE_RATE = 100; // times per second
-
 	private SourceDataLine soundGeneratorLine;
 	private volatile int[] soundGeneratorWorkBuffer;
 	private int[] soundGeneratorWorkBuffer2;
@@ -266,15 +264,14 @@ public class JavaSoundHandler implements SoundHandler {
 					
 					//if (chunk != null) dft(chunk.soundToWrite);
 					
-					if (soundGeneratorLine == null)
-						return;
-					
-
 					// toss extra chunks if too many arrive
 					while (chunk != null && soundQueue.size() > 2) {
 						chunk = soundQueue.poll();
 					}
 
+					if (soundGeneratorLine == null)
+						return;
+					
 					if (chunk.soundToWrite != null) {
 						soundGeneratorLine.write(chunk.soundToWrite, 0,
 								chunk.soundToWrite.length);
@@ -359,7 +356,9 @@ public class JavaSoundHandler implements SoundHandler {
 	 * v9t9.emulator.clients.builtin.Sound99xx.voiceinfo)
 	 */
 	public synchronized void updateVoice(int pos, int total) {
-
+		if (total == 0)
+			return;
+		
 		if (soundGeneratorWaveForm != null) {
 			int currentPos = (int) ((long) pos * soundGeneratorWaveForm.length / total);
 			if (currentPos < 0)
@@ -526,7 +525,6 @@ public class JavaSoundHandler implements SoundHandler {
 				String ext = filename.substring(idx + 1);
 				Type[] types = AudioSystem.getAudioFileTypes();
 				for (Type type : types) {
-					System.out.println("Type:" + type + " ext=" + type.getExtension());
 					if (type.getExtension().equalsIgnoreCase(ext)) {
 						fileType = type;
 						break;

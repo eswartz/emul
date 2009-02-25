@@ -13,8 +13,10 @@ import v9t9.utils.Utils;
 
 class ByteMemoryLabelProvider extends BaseLabelProvider implements ITableLabelProvider, ITableColorProvider {
 	private Color changedMemoryBackground;
+	private Color alternatingWordForeground;
 
-	public ByteMemoryLabelProvider(Color changedMemoryBackground) {
+	public ByteMemoryLabelProvider(Color alternatingWordForeground, Color changedMemoryBackground) {
+		this.alternatingWordForeground = alternatingWordForeground;
 		this.changedMemoryBackground = changedMemoryBackground;
 	}
 	public Image getColumnImage(Object element, int columnIndex) {
@@ -37,6 +39,9 @@ class ByteMemoryLabelProvider extends BaseLabelProvider implements ITableLabelPr
 	}
 
 	public Color getForeground(Object element, int columnIndex) {
+		if (columnIndex >= 1 && columnIndex <= 16
+				&& ((columnIndex - 1) / 2) % 2 == 0)
+			return alternatingWordForeground;
 		return null;
 	}
 	

@@ -12,6 +12,8 @@ import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
@@ -190,7 +192,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 		icons.dispose();
 		
 		///
-		instTableViewer = new TableViewer(this, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL + SWT.NO_FOCUS);
+		instTableViewer = new TableViewer(this, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL + SWT.NO_FOCUS + SWT.FULL_SELECTION);
 		instContentProvider = new InstContentProvider();
 		instTableViewer.setContentProvider(instContentProvider);
 		instTableViewer.setLabelProvider(new InstLabelProvider(
@@ -203,16 +205,16 @@ public class CpuViewer extends Composite implements InstructionListener {
 		FontDescriptor fontDescriptor = Utils.getFontDescriptor(JFaceResources.getTextFont());
 		//fontDescriptor = fontDescriptor.increaseHeight(-2);
 		tableFont = fontDescriptor.createFont(getDisplay());
-		table.setFont(tableFont);
-		
-		GC gc = new GC(getDisplay());
-		gc.setFont(tableFont);
-		int charWidth = gc.stringExtent("M").x;
-		gc.dispose();
-
 		FontDescriptor smallerFontDescriptor = fontDescriptor.increaseHeight(-2);
 		smallerFont = smallerFontDescriptor.createFont(getDisplay());
 		
+		table.setFont(smallerFont);
+		
+		GC gc = new GC(getDisplay());
+		gc.setFont(smallerFont);
+		int charWidth = gc.stringExtent("M").x;
+		gc.dispose();
+
 		TableColumn column;
 		String[] props = new String[5];
 		
@@ -246,6 +248,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 		instTableViewer.setColumnProperties(props);
 		
 		nextInstructionText = new Text(this, SWT.READ_ONLY | SWT.BORDER);
+		nextInstructionText.setFont(smallerFont);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(nextInstructionText);
 		
 		////
@@ -275,6 +278,27 @@ public class CpuViewer extends Composite implements InstructionListener {
 		timer.schedule(refreshTask, 0, 250);
 		
 		instTableViewer.setInput(new Object());
+		
+		addDisposeListener(new DisposeListener() {
+
+			public void widgetDisposed(DisposeEvent e) {
+				machine.getExecutor().removeInstructionListener(CpuViewer.this);
+				if (refreshTask != null) {
+					refreshTask.cancel();
+					refreshTask = null;
+				}
+				tableFont.dispose();
+				smallerFont.dispose();
+				Machine.settingPauseMachine.removeListener(pauseListener);
+				playImage.dispose();
+				pauseImage.dispose();
+				stepImage.dispose();
+				watchImage.dispose();
+				clearImage.dispose();
+				Machine.settingPauseMachine.setBoolean(false);				
+			}
+			
+		});
 	}
 
 
@@ -320,26 +344,6 @@ public class CpuViewer extends Composite implements InstructionListener {
 
 
 
-	@Override
-	public void dispose() {
-		machine.getExecutor().removeInstructionListener(this);
-		if (refreshTask != null) {
-			refreshTask.cancel();
-			refreshTask = null;
-		}
-		tableFont.dispose();
-		smallerFont.dispose();
-		Machine.settingPauseMachine.removeListener(pauseListener);
-		playImage.dispose();
-		pauseImage.dispose();
-		stepImage.dispose();
-		watchImage.dispose();
-		clearImage.dispose();
-		Machine.settingPauseMachine.setBoolean(false);
-		
-		super.dispose();
-	}
-	
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionWorkBlock, v9t9.engine.cpu.InstructionWorkBlock)
@@ -388,7 +392,14 @@ public class CpuViewer extends Composite implements InstructionListener {
 					
 					if (isWatching || Machine.settingPauseMachine.getBoolean()) {
 						Instruction inst = machine.getExecutor().interp.getInstruction(machine.getCpu());
-						nextInstructionText.setText(inst.toString());
+						String instString = inst.toString();
+						instString += "                        ".substring(0, 24 - instString.length());
+						nextInstructionText.setText(
+								">" + Utils.toHex4(inst.pc) + "\t\t" 
+								+ instString
+								+"\tWP=>" 
+								+ Utils.toHex4(machine.getCpu().getWP())
+								+ "\t\tST=" + machine.getCpu().getStatus());
 					} else {
 						nextInstructionText.setText("");
 					}

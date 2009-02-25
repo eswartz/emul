@@ -300,6 +300,7 @@ public class Cpu implements MemoryAccessListener {
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
+            status.expand((short) 0);
             contextSwitch(0);
             addCycles(26);
             machine.getExecutor().interpretOneInstruction();

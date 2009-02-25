@@ -27,9 +27,20 @@ import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseTrackAdapter;
+import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.RGB;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
@@ -39,6 +50,7 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
 
 import v9t9.emulator.hardware.V9t9;
 import v9t9.engine.memory.Memory;
@@ -64,6 +76,7 @@ public class MemoryViewer extends Composite {
 	private boolean pinMemory;
 	private Button filterButton;
 	private boolean filterMemory;
+	private Font tableFont;
 
 	public MemoryViewer(Composite parent, int style, Memory memory, final Timer timer) {
 		super(parent, style);
@@ -71,7 +84,7 @@ public class MemoryViewer extends Composite {
 
 		setLayout(new GridLayout(2, false));
 		
-		createByteTable();
+		createTable();
 		
 		memory.addListener(new MemoryListener() {
 
@@ -104,13 +117,16 @@ public class MemoryViewer extends Composite {
 		};
 		timer.schedule(refreshTask, 0, 250);
 		
+		addDisposeListener(new DisposeListener() {
+
+			public void widgetDisposed(DisposeEvent e) {
+				refreshTask.cancel();		
+				tableFont.dispose();
+			}
+			
+		});
 	}
 
-	@Override
-	public void dispose() {
-		refreshTask.cancel();
-		super.dispose();
-	}
 	
 	protected void scrollToActiveRegion(int lowRange, int hiRange) {
 		int row = getMemoryRowIndex(lowRange);
@@ -158,7 +174,7 @@ public class MemoryViewer extends Composite {
 				+ entry.getDomain().getName() + " >" + Utils.toHex4(entry.addr + entry.addrOffset) + ")";
 		}
 	}
-	protected void createByteTable() {
+	protected void createTable() {
 		entryViewer = new ComboViewer(this, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.NO_FOCUS);
 		entryViewer.setContentProvider(new ArrayContentProvider());
 		entryViewer.setLabelProvider(new MemoryEntryLabelProvider());
@@ -241,9 +257,10 @@ public class MemoryViewer extends Composite {
 		});
 
 		
-		byteTableViewer = new TableViewer(this, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL + SWT.NO_FOCUS);
+		byteTableViewer = new TableViewer(this, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL + SWT.NO_FOCUS + SWT.FULL_SELECTION);
 		byteTableViewer.setContentProvider(new MemoryContentProvider());
 		byteTableViewer.setLabelProvider(new ByteMemoryLabelProvider(
+				new Color(getDisplay(), new RGB(64, 64, 128)),
 				getDisplay().getSystemColor(SWT.COLOR_RED)
 				));
 		
@@ -258,18 +275,29 @@ public class MemoryViewer extends Composite {
 		for (int i = 0; i < 16; i++) {
 			String id = Integer.toHexString(i).toUpperCase();
 			props[i + 1] = id;
-			new TableColumn(table, SWT.CENTER | SWT.NO_FOCUS).setText(id);
+			new TableColumn(table, SWT.CENTER).setText(id + " ");
 		}
 		props[17] = "0123456789ABCDEF";
-		new TableColumn(table, SWT.NO_FOCUS | SWT.CENTER).setText(props[17]);
-		
+		new TableColumn(table, SWT.CENTER).setText(props[17]);
 		
 		FontDescriptor fontDescriptor = Utils.getFontDescriptor(JFaceResources.getTextFont());
 		fontDescriptor = fontDescriptor.increaseHeight(-2);
-		table.setFont(fontDescriptor.createFont(getDisplay()));
+		tableFont = fontDescriptor.createFont(getDisplay());
+		table.setFont(tableFont);
 		
-		for (int i = 0; i < 18; i++) {
-			table.getColumn(i).pack();
+		GC gc = new GC(table);
+		gc.setFont(tableFont);
+		int width = gc.stringExtent("FFFF").x;
+		gc.dispose();
+		
+		table.getColumn(0).setWidth(width);
+		for (int i = 1; i <= 16; i++) {
+			table.getColumn(i).setWidth(width / 2);
+		}
+		table.getColumn(17).setWidth(width * 2);
+		
+		for (TableColumn column : table.getColumns()) {
+			column.pack();
 		}
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
@@ -284,6 +312,76 @@ public class MemoryViewer extends Composite {
 		byteTableViewer.setCellEditors(editors);
 		
 		addTableContextMenu(table);
+		
+		table.addMouseTrackListener(new MouseTrackAdapter() {
+			@Override
+			public void mouseHover(MouseEvent e) {
+				TableItem item = table.getItem(new Point(e.x, e.y));
+				if (item != null) {
+					for (int i = 0; i <= 16; i++) {
+						Rectangle bounds = item.getTextBounds(i);
+						if (e.x >= bounds.x && e.x < bounds.x + bounds.width) {
+							MemoryRange range = (MemoryRange) byteTableViewer.getInput();
+							MemoryRow row = (MemoryRow) item.getData();
+							if (i > 0) i--;
+							int addr = row.getAddress() + i;
+							
+							// see if the address's symbol is known
+							String descr = ">" + Utils.toHex4(addr);
+							String symbol = getSymbolFor(range, addr);
+							if (symbol != null) {
+								descr += " = " + symbol;
+							} else if ((addr & 1) != 0) {
+								// hovering over byte?
+								addr &= ~1;
+								symbol = getSymbolFor(range, addr);
+								if (symbol != null) {
+									descr += " = " + symbol;
+								}
+							}
+							
+							// see if we can look up the word AT the address
+							addr = range.getEntry().flatReadWord(addr);
+							symbol = getSymbolFor(range, addr);
+							if (symbol != null) {
+								descr += "\n= >" + Utils.toHex4(addr) + " = " + symbol;
+							}
+							
+							table.setToolTipText(descr);
+							return;
+						}
+					}
+				}
+				setToolTipText(null);
+			}
+
+			private String getSymbolFor(MemoryRange range, int addr) {
+				MemoryEntry entry = range.getEntry();
+				if (entry.addr <= addr && entry.addr + entry.size > addr) {
+					return entry.lookupSymbol((short) addr);
+				}
+				String symbols = null;
+				for (MemoryEntry e : entry.getDomain().getFlattenedMemoryEntries()) {
+					String sym = e.lookupSymbol((short) addr);
+					if (sym != null) {
+						if (symbols != null)
+							symbols += ", " + sym;
+						else
+							symbols = sym;
+					}
+				}
+				return symbols;
+			}
+
+			@Override
+			public void mouseEnter(MouseEvent e) {
+				setToolTipText(null);
+			}
+			@Override
+			public void mouseExit(MouseEvent e) {
+				setToolTipText(null);
+			}
+		});
 	}
 
 
@@ -330,8 +428,8 @@ public class MemoryViewer extends Composite {
 		byteTableViewer.getTable().setLayoutDeferred(true);
 		byteTableViewer.setInput(range);
 		currentRange = range;
-		for (TableColumn column : byteTableViewer.getTable().getColumns())
-			column.pack();
+		//for (TableColumn column : byteTableViewer.getTable().getColumns())
+		//	column.pack();
 		byteTableViewer.getTable().setLayoutDeferred(false);
 		//MemoryViewer.this.getShell().layout(true, true);
 		//MemoryViewer.this.getShell().pack();
