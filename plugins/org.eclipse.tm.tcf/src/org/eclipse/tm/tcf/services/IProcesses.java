@@ -181,20 +181,20 @@ public interface IProcesses extends IService {
     }
     
     /**
-     * Call-back interface to be called when "getSignalList" command is complete.
-     */
-    interface DoneGetSignalList {
-        void doneGetSignalList(IToken token, Exception error, Collection<Map<String,Object>> list);
-    }
-    
-    /**
      * Signal property names used by "getSignalList" command.
      */
     static final String
-        SIG_INDEX = "Index",    // Number - bit no the in signal mask
-        SIG_NAME = "Name",      // String
-        SIG_CODE = "Code",      // Number 
-        SIG_DESCRIPTION = "Description"; // String
+        /** Number, bit position in the signal mask */
+        SIG_INDEX = "Index",
+        
+        /** String, signal name, for example "SIGHUP" */
+        SIG_NAME = "Name",
+        
+        /** Number, signal code, as defined by OS */
+        SIG_CODE = "Code",
+        
+        /** String, human readable description of the signal */
+        SIG_DESCRIPTION = "Description";
     
     /**
      * Get list of signals that can be send to the process.
@@ -204,7 +204,14 @@ public interface IProcesses extends IService {
     IToken getSignalList(String context_id, DoneGetSignalList done);
 
     /**
-     * Get process signal mask.
+     * Call-back interface to be called when "getSignalList" command is complete.
+     */
+    interface DoneGetSignalList {
+        void doneGetSignalList(IToken token, Exception error, Collection<Map<String,Object>> list);
+    }
+    
+    /**
+     * Get process or thread signal mask.
      * Bits in the mask control how signals should be handled by debug agent.
      * When new context is created it inherits the mask from its parent.
      * If context is not attached the command will return an error. 
@@ -214,31 +221,31 @@ public interface IProcesses extends IService {
     IToken getSignalMask(String context_id, DoneGetSignalMask done);
     
     /**
-     * Set process signal mask. 
-     * Bits in the mask control how signals should be handled by debug agent.
-     * If context is not attached the command will return an error. 
-     * @param dont_stop - bit-set of signals that should not suspend execution of the process.
-     * By default, debugger suspends a process before it receives a signal.  
-     * @param dont_pass - bit-set of signals that should not be delivered to the process.
-     * @param done - call back interface called when operation is completed.
-     * @return pending command handle, can be used to cancel the command.
-     */
-    IToken setSignalMask(String context_id, int dont_stop, int dont_pass, DoneCommand done);
-
-    /**
      * Call-back interface to be called when "getSignalMask" command is complete.
      */
     interface DoneGetSignalMask {
         /**
          * @param token - command handle.
-         * @param dont_stop - bit-set of signals that should suspend execution of the process.
-         * @param dont_pass - bit-set of signals that should not be delivered to the process.
+         * @param dont_stop - bit-set of signals that should suspend execution of the context.
+         * @param dont_pass - bit-set of signals that should not be delivered to the context.
          * @param pending - bit-set of signals that are generated but not delivered yet.
          * Note: "pending" is meaningful only if the context is suspended.
          */
         void doneGetSignalMask(IToken token, Exception error, int dont_stop, int dont_pass, int pending);
     }
     
+    /**
+     * Set process or thread signal mask. 
+     * Bits in the mask control how signals should be handled by debug agent.
+     * If context is not attached the command will return an error. 
+     * @param dont_stop - bit-set of signals that should not suspend execution of the context.
+     * By default, debugger suspends a context before it receives a signal.  
+     * @param dont_pass - bit-set of signals that should not be delivered to the context.
+     * @param done - call back interface called when operation is completed.
+     * @return pending command handle, can be used to cancel the command.
+     */
+    IToken setSignalMask(String context_id, int dont_stop, int dont_pass, DoneCommand done);
+
     /**
      * Send a signal to a process or thread.
      * @param context_id - context ID.
@@ -264,8 +271,6 @@ public interface IProcesses extends IService {
 
     /**
      * Start a new process on remote machine.
-     * Clients can register ProcessesListener to receive process output.
-     * 
      * @param directory - initial value of working directory for the process.
      * @param file - process image file.
      * @param command_line - command line arguments for the process.

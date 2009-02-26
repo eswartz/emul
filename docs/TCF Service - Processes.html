@@ -16,7 +16,11 @@
         <li><a href='#CmdAttach'>Attach</a>
         <li><a href='#CmdDetach'>Detach</a>
         <li><a href='#CmdTerminate'>Terminate</a>
+        <li><a href='#CmdGetSignalList'>Get Signal List</a>
+        <li><a href='#CmdGetSignalMask'>Get Signal Mask</a>
+        <li><a href='#CmdSetSignalMask'>Set Signal Mask</a>
         <li><a href='#CmdSignal'>Signal</a>
+        <li><a href='#CmdGetEnvironment'>Get Environment</a>
         <li><a href='#CmdStart'>Start</a>
     </ul>
     <li><a href='#Events'>Events</a>
@@ -30,6 +34,10 @@ information, allows to start and terminate a process, and allows
 to attach and detach a process for debugging. Debug services,
 like Memory and Run Control, require a process to be attached
 before they can access it.</p>
+
+<p>If a process is started by this service, its standard input/output streams are 
+available for client to read/write using Streams service. Stream type of such
+streams is set to "Processes".</p>
 
 <p>Command and event parameters are encoded
 as zero terminated <a href='TCF Specification.html#JSON'>JSON</a> strings.</p>
@@ -157,13 +165,79 @@ C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; terminate &bull; <i>&lt;st
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
-<h3><a name='CmdSignal'>Signal</a></h3>
+<h3><a name='CmdGetSignalList'>Get Signal List</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; signal &bull; <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;int: signal&gt;</i> &bull;
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getSignalList &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
-<p>The command sends a signal to a process.</p>
+<p>The command returns a complete list of available signals. The list containg all signals that can be sent to a given context.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of signal descriptions&gt;</i> &bull;
+
+<i>&lt;array of signal descriptions&gt;</i>
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;signal description list&gt;</i> ]
+  
+<i>&lt;signal description list&gt;</i>
+    &rArr; <i>&lt;object: signal description&gt;</i>
+    &rArr; <i>&lt;signal description list&gt;</i> , <i>&lt;object: signal description&gt;</i>
+</font></b></pre>
+
+<p>Signal description is a list of properties. Predefined signal properties are:</p>
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Index" : <i>&lt;int&gt;</i></font></b></code>
+    - bit position of the signal in bitsets that are used by Get Signal Mask and Set Signal Mask commands.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Name" : <i>&lt;string&gt;</i></font></b></code>
+    - signal name. Client UI can show this name to a user.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Code" : <i>&lt;string&gt;</i></font></b></code>
+    - human readable description of the signal.
+</ul>
+
+
+<h3><a name='CmdGetSignalMask'>Get Signal Mask</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getSignalMask &bull; <i>&lt;string: context ID&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command returns signal mask of a process or a thread.
+Bits in the mask control how signals should be handled by debug agent.
+When new context is created it inherits the mask from its parent.
+If context is not attached the command will return an error.</p>
+
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;int: don't stop bitset&gt;</i> &bull; <i>&lt;int: don't pass bitset&gt;</i> &bull; <i>&lt;int: pending bitset&gt;</i> &bull;
+</font></b></pre>
+<ul>
+    <li>don't stop bitset - signals that should suspend execution of the context.
+    <li>don't pass bitset - signals that should not be delivered to the context.
+    <li>pending bitset - signals that are generated but not delivered yet.
+</ul>
+Note: "pending bitset" is meaningful only if the context is suspended.
+
+<h3><a name='CmdSetSignalMask'>Set Signal Mask</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; setSignalMask &bull; <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;int: don't stop bitset&gt;</i> &bull; <i>&lt;int: don't pass bitset&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command sets signal mask of a process or a thread.
+Bits in the mask control how signals should be handled by debug agent.
+If context is not attached the command will return an error.</p>
+<ul>
+    <li>don't stop bitset - signals that should not suspend execution of the context.
+    By default, debugger suspends a process before it receives a signal.  
+    <li>don't pass bitset - signals that should not be delivered to the context.
+</ul>
  
 <p>Reply:</p>
  
@@ -171,11 +245,39 @@ C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; signal &bull; <i>&lt;strin
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
+<h3><a name='CmdSignal'>Signal</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; signal &bull; <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;int: signal&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command sends a signal to a context.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
+</font></b></pre>
+
+<h3><a name='CmdGetEnvironment'>Get Environment</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getEnvironment &bull;
+</font></b></pre>
+
+<p>The command returns default set of environment variables used to start a new process.</p>
+ 
+<p>Reply:</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;object: environment variables&gt;</i> &bull;
+</font></b></pre>
+
 <h3><a name='CmdStart'>Start</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; start &bull; <i>&lt;string: working directory&gt;</i> &bull; <i>&lt;string: program image file&gt;</i> &bull;
-    <i>&lt;string array: command line&gt;</i> &bull; <i>&lt;string array: environment variables&gt;</i> &bull; <i>&lt;boolean: attach&gt;</i> &bull;
+    <i>&lt;string array: command line&gt;</i> &bull; <i>&lt;object: environment variables&gt;</i> &bull; <i>&lt;boolean: attach&gt;</i> &bull;
 
 <i>&lt;string array&gt;</i>
     &rArr; null
@@ -188,12 +290,14 @@ C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; start &bull; <i>&lt;string
 </font></b></pre>
 
 <p>The command starts a new process on remote machine.
-<i>&lt;string: working directory&gt;</i> - initial value of working directory for the process.
-<i>&lt;string: program image file&gt;</i> - image file to start process with.
-<i>&lt;string array: command line&gt;</i> - command line arguments for the process.
-<i>&lt;string array: environment variables&gt;</i> - list of environment variables for the process,
-they will be added to default process environment. 
-<i>&lt;boolean: attach&gt;</i> - if true debugger should be attached to the process.</p>
+<ul>
+        <li><i>&lt;string: working directory&gt;</i> - initial value of working directory for the process.
+        <li><i>&lt;string: program image file&gt;</i> - image file to start process with.
+        <li><i>&lt;string array: command line&gt;</i> - command line arguments for the process.
+        <li><i>&lt;object: environment variables&gt;</i> - list of environment variables for the process,
+        they will be added to default process environment. 
+        <li><i>&lt;boolean: attach&gt;</i> - if true debugger should be attached to the process.</p>
+</ul>
  
 <p>Reply:</p>
  
@@ -205,7 +309,12 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;c
 
 <h2><a name='Events'>Events</a></h2>
 
-<p>No events are currently defined for Processes service.</p>
+<p>Processes service broadcasts notification event when a proceess exits.
+Only processes that were started by the service will generate exit event.</p>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull; <i>&lt;int: exit code&gt;</i> &bull;
+</font></b></pre>
 
 <h2><a name='API'>API</a></h2>
  
@@ -224,8 +333,8 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;c
      * If the ID is not a process ID, 'IProcesses.getContext' may not return any
      * useful information
      *    
-     * <font color=#7F9FBF><font color=#7F9FBF>@param</font></font> id &ndash; context ID. 
-     * <font color=#7F9FBF><font color=#7F9FBF>@param</font></font> done - call back interface called when operation is completed.
+     * <font color=#7F9FBF>@param</font> id &ndash; context ID. 
+     * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
      */</font>
     IToken getContext(String id, DoneGetContext done);
 
@@ -280,8 +389,17 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;c
         PROP_CAN_TERMINATE = "CanTerminate",
         
         <font color=#3F5FBF>/** Process name. Client UI can show this name to a user */</font>
-        PROP_NAME = "Name";
-    
+        PROP_NAME = "Name",
+
+        <font color=#3F5FBF>/** Process standard input stream ID */</font>
+        PROP_STDIN_ID = "StdInID",
+        
+        <font color=#3F5FBF>/** Process standard output stream ID */</font>
+        PROP_STDOUT_ID = "StdOutID",
+        
+        <font color=#3F5FBF>/** Process standard error stream ID */</font>
+        PROP_STDERR_ID = "StdErrID";
+   
     <font color=#7F0055>interface</font> ProcessContext {
         
         <font color=#3F5FBF>/** 
@@ -306,13 +424,13 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;c
         <font color=#3F5FBF>/**
          * Utility method to read context property PROP_ATTACHED.
          * Services like IRunControl, IMemory, IBreakpoints work only with attached processes.
-         * <font color=#7F9FBF><font color=#7F9FBF>@return</font></font> value of PROP_ATTACHED.
+         * <font color=#7F9FBF>@return</font> value of PROP_ATTACHED.
          */</font>
         <font color=#7F0055>boolean</font> isAttached();
 
         <font color=#3F5FBF>/**
          * Utility method to read context property PROP_CAN_TERMINATE.
-         * <font color=#7F9FBF><font color=#7F9FBF>@return</font></font> value of PROP_CAN_TERMINATE.
+         * <font color=#7F9FBF>@return</font> value of PROP_CAN_TERMINATE.
          */</font>
         <font color=#7F0055>boolean</font> canTerminate();
 
@@ -344,18 +462,99 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;c
          * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
          */</font>
         IToken terminate(DoneCommand done);
-    
-        <font color=#3F5FBF>/**
-         * Send a signal to a process.
-         * <font color=#7F9FBF>@param</font> signal - signal ID.
-         * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
-         * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
-         */</font>
-        IToken signal(<font color=#7F0055>int</font> signal, DoneCommand done);
     }
     
     <font color=#7F0055>interface</font> DoneCommand {
         <font color=#7F0055>void</font> doneCommand(IToken token, Exception error);
+    }
+
+    <font color=#3F5FBF>/**
+     * Signal property names used by "getSignalList" command.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        <font color=#3F5FBF>/** Number, bit position in the signal mask */</font>
+        SIG_INDEX = "Index",
+        
+        <font color=#3F5FBF>/** String, signal name, for example "SIGHUP" */</font>
+        SIG_NAME = "Name",
+        
+        <font color=#3F5FBF>/** Number, signal code, as defined by OS */</font>
+        SIG_CODE = "Code",
+        
+        <font color=#3F5FBF>/** String, human readable description of the signal */</font>
+        SIG_DESCRIPTION = "Description";
+    
+    <font color=#3F5FBF>/**
+     * Get list of signals that can be send to the context.
+     * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+     * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
+     */</font>
+    IToken getSignalList(String context_id, DoneGetSignalList done);
+
+    <font color=#3F5FBF>/**
+     * Call-back interface to be called when "getSignalList" command is complete.
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetSignalList {
+        <font color=#7F0055>void</font> doneGetSignalList(IToken token, Exception error, Collection<Map<String,Object>> list);
+    }
+    
+    <font color=#3F5FBF>/**
+     * Get process or thread signal mask.
+     * Bits in the mask control how signals should be handled by debug agent.
+     * When new context is created it inherits the mask from its parent.
+     * If context is not attached the command will return an error. 
+     * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+     * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
+     */</font>
+    IToken getSignalMask(String context_id, DoneGetSignalMask done);
+    
+    <font color=#3F5FBF>/**
+     * Call-back interface to be called when "getSignalMask" command is complete.
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetSignalMask {
+        <font color=#3F5FBF>/**
+         * <font color=#7F9FBF>@param</font> token - command handle.
+         * <font color=#7F9FBF>@param</font> dont_stop - bit-set of signals that should suspend execution of the context.
+         * <font color=#7F9FBF>@param</font> dont_pass - bit-set of signals that should not be delivered to the context.
+         * <font color=#7F9FBF>@param</font> pending - bit-set of signals that are generated but not delivered yet.
+         * Note: "pending" is meaningful only if the context is suspended.
+         */</font>
+        <font color=#7F0055>void</font> doneGetSignalMask(IToken token, Exception error, <font color=#7F0055>int</font> dont_stop, <font color=#7F0055>int</font> dont_pass, <font color=#7F0055>int</font> pending);
+    }
+    
+    <font color=#3F5FBF>/**
+     * Set process or thread signal mask. 
+     * Bits in the mask control how signals should be handled by debug agent.
+     * If context is not attached the command will return an error. 
+     * <font color=#7F9FBF>@param</font> dont_stop - bit-set of signals that should not suspend execution of the context.
+     * By default, debugger suspends a context before it receives a signal.  
+     * <font color=#7F9FBF>@param</font> dont_pass - bit-set of signals that should not be delivered to the context.
+     * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+     * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
+     */</font>
+    IToken setSignalMask(String context_id, <font color=#7F0055>int</font> dont_stop, <font color=#7F0055>int</font> dont_pass, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Send a signal to a process or thread.
+     * <font color=#7F9FBF>@param</font> context_id - context ID.
+     * <font color=#7F9FBF>@param</font> signal - signal code.
+     * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+     * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
+     */</font>
+    IToken signal(String context_id, <font color=#7F0055>long</font> signal, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Get default set of environment variables used to start a new process.
+     * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+     * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
+     */</font>
+    IToken getEnvironment(DoneGetEnvironment done);
+    
+    <font color=#3F5FBF>/**
+     * Call-back interface to be called when "getEnvironment" command is complete.
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetEnvironment {
+        <font color=#7F0055>void</font> doneGetEnvironment(IToken token, Exception error, Map<String,String> environment);
     }
 
     <font color=#3F5FBF>/**
@@ -364,6 +563,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;c
      * <font color=#7F9FBF>@param</font> file - process image file.
      * <font color=#7F9FBF>@param</font> command_line - command line arguments for the process.
      * <font color=#7F9FBF>@param</font> environment - list of environment variables for the process. 
+     * if null then default set of environment variables will be used. 
      * <font color=#7F9FBF>@param</font> attach - if true debugger should be attached to the process.
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
      * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
@@ -371,8 +571,37 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;c
     IToken start(String directory, String file,
             String[] command_line, String[] environment, <font color=#7F0055>boolean</font> attach, DoneStart done);
     
+    <font color=#3F5FBF>/**
+     * Call-back interface to be called when "start" command is complete.
+     */</font>
     <font color=#7F0055>interface</font> DoneStart {
         <font color=#7F0055>void</font> doneStart(IToken token, Exception error, ProcessContext process);
+    }
+
+    <font color=#3F5FBF>/**
+     * Add processes service event listener.
+     * <font color=#7F9FBF>@param</font> listener - event listener implementation.
+     */</font>
+    <font color=#7F0055>void</font> addListener(ProcessesListener listener);
+
+    <font color=#3F5FBF>/**
+     * Remove processes service event listener.
+     * <font color=#7F9FBF>@param</font> listener - event listener implementation.
+     */</font>
+    <font color=#7F0055>void</font> removeListener(ProcessesListener listener);
+
+    <font color=#3F5FBF>/**
+     * Process event listener is notified when a process exits.
+     * Event are reported only for processes that were started by 'start' command. 
+     */</font>
+    <font color=#7F0055>interface</font> ProcessesListener {
+        
+        <font color=#3F5FBF>/**
+         * Called when a process exits.
+         * <font color=#7F9FBF>@param</font> process_id - process context ID
+         * <font color=#7F9FBF>@param</font> exit_code - process exit code
+         */</font>
+        <font color=#7F0055>void</font> exited(String process_id, <font color=#7F0055>int</font> exit_code);
     }
 }
 </pre>
