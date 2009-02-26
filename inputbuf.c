@@ -52,9 +52,9 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
 
     assert(ibuf->message_count > 0);
     assert(ibuf->handling_msg == HandleMsgActive);
-    assert(out >= ibuf->buf && out <= ibuf->buf+BUF_SIZE);
+    assert(out >= ibuf->buf && out <= ibuf->buf + BUF_SIZE);
     assert(out == inp->end);
-    if (out == ibuf->buf+BUF_SIZE) {
+    if (out == ibuf->buf + BUF_SIZE) {
         inp->end = inp->cur = out = ibuf->buf;
     }
     if (out != ibuf->out) {
@@ -67,8 +67,8 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
         if (out == ibuf->inp && !ibuf->full) {
             /* No data available */
             assert(ibuf->long_msg || ibuf->eof);
-            assert(ibuf->message_count == 1);
             if (ibuf->eof) return MARKER_EOS;
+            assert(ibuf->message_count == 1);
             ibuf_trigger_read(ibuf);
             ibuf->wait_read(ibuf);
             continue;
@@ -102,7 +102,7 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
         if (res != ESC) {
             /* Plain data - fast path */
             inp->cur = out;
-            max = out < ibuf->inp ? ibuf->inp : ibuf->buf+BUF_SIZE;
+            max = out < ibuf->inp ? ibuf->inp : ibuf->buf + BUF_SIZE;
             while (++out != max && *out != ESC);
             inp->end = out;
             if (peeking) return res;
@@ -140,7 +140,7 @@ void ibuf_read_done(InputBuf * ibuf, int len) {
     esc = ibuf->esc;
     while (len-- > 0) {
         unsigned char ch = *inp++;
-        if (inp == ibuf->buf+BUF_SIZE) inp = ibuf->buf;
+        if (inp == ibuf->buf + BUF_SIZE) inp = ibuf->buf;
         if (esc) {
             esc = 0;
             switch (ch) {
