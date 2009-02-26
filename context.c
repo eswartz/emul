@@ -237,12 +237,7 @@ static void event_context_stopped(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     assert(ctx->ref_count > 0);
     if (ctx->stopped_by_bp) {
-        if (evaluate_breakpoint_condition(ctx)) {
-            ctx->pending_intercept = 1;
-        }
-        else {
-            skip_breakpoint(ctx);
-        }
+        evaluate_breakpoint_condition(ctx);
     }
     while (listener != NULL) {
         if (listener->context_stopped != NULL) {
@@ -489,6 +484,7 @@ static void event_win32_context_stopped(Context * ctx) {
 
 static void event_win32_context_stopped_async(void * arg) {
     Context * ctx = (Context *)arg;
+    ctx->context_stopped_async_pending = 0;
     event_win32_context_stopped(ctx);
     context_unlock(ctx);
 }
@@ -632,7 +628,13 @@ static void debug_event_handler(void * x) {
             memcpy(&ctx->pending_event, &args->event.u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
             if (!ctx->stopped) {
                 int signal = 0;
-                context_lock(ctx);
+                if (ctx->context_stopped_async_pending) {
+                    cancel_event(event_win32_context_stopped_async, ctx, 0);
+                    ctx->context_stopped_async_pending = 0;
+                }
+                else {
+                    context_lock(ctx);
+                }
                 event_win32_context_stopped(ctx);
                 signal = get_signal_index(ctx);
                 if (signal != 0 && (ctx->sig_dont_pass & (1 << signal)) != 0) {
@@ -907,17 +909,24 @@ int context_stop(Context * ctx) {
             return -1;
         }
     }
-    context_lock(ctx);
-    post_event(event_win32_context_stopped_async, ctx);
+    if (!ctx->context_stopped_async_pending) {
+        context_lock(ctx);
+        post_event(event_win32_context_stopped_async, ctx);
+        ctx->context_stopped_async_pending = 1;
+    }
     return 0;
 }
 
 int context_continue(Context * ctx) {
-    trace(LOG_CONTEXT, "context: resuming ctx %#x, pid %d", ctx, ctx->pid);
+    assert(is_dispatch_thread());
     assert(context_has_state(ctx));
     assert(ctx->stopped);
     assert(!ctx->intercepted);
     assert(!ctx->exited);
+
+    if (skip_breakpoint(ctx, 0)) return 0;
+
+    trace(LOG_CONTEXT, "context: resuming ctx %#x, pid %d", ctx, ctx->pid);
 #ifdef __i386__
     if (!ctx->pending_step && (ctx->regs.EFlags & 0x100) != 0) {
         ctx->regs.EFlags &= ~0x100;
@@ -934,12 +943,14 @@ int context_continue(Context * ctx) {
 }
 
 int context_single_step(Context * ctx) {
-    trace(LOG_CONTEXT, "context: single step ctx %#x, pid %d", ctx, ctx->pid);
     assert(is_dispatch_thread());
     assert(context_has_state(ctx));
     assert(ctx->stopped);
-    assert(!ctx->pending_intercept);
     assert(!ctx->exited);
+
+    if (skip_breakpoint(ctx, 1)) return 0;
+
+    trace(LOG_CONTEXT, "context: single step ctx %#x, pid %d", ctx, ctx->pid);
     if (ctx->regs_error) {
         trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#x, pid %d, error %d",
             ctx, ctx->pid, ctx->regs_error);
@@ -1180,6 +1191,9 @@ int context_continue(Context * ctx) {
     assert(!ctx->exited);
     assert(!ctx->pending_step);
     assert(taskIsStopped(ctx->pid));
+
+    if (skip_breakpoint(ctx, 0)) return 0;
+
     trace(LOG_CONTEXT, "context: continue ctx %#x, id %#x", ctx, ctx->pid);
 
     if (ctx->regs_dirty) {
@@ -1219,9 +1233,11 @@ int context_single_step(Context * ctx) {
 
     assert(is_dispatch_thread());
     assert(ctx->stopped);
-    assert(!ctx->pending_intercept);
     assert(!ctx->pending_step);
     assert(!ctx->exited);
+
+    if (skip_breakpoint(ctx, 1)) return 0;
+
     trace(LOG_CONTEXT, "context: single step ctx %#x, id %#x", ctx, ctx->pid);
 
     if (ctx->regs_dirty) {
@@ -1626,8 +1642,10 @@ int context_stop(Context * ctx) {
     assert(!ctx->intercepted);
     if (tkill(ctx->pid, SIGSTOP) < 0) {
         int err = errno;
-        trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: ctx %#x, pid %d, error %d %s",
-            ctx, ctx->pid, err, errno_to_str(err));
+        if (err != ESRCH) {
+            trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: ctx %#x, pid %d, error %d %s",
+                ctx, ctx->pid, err, errno_to_str(err));
+        }
         errno = err;
         return -1;
     }
@@ -1652,6 +1670,8 @@ int context_continue(Context * ctx) {
     assert(!ctx->pending_intercept);
     assert(!ctx->pending_step);
     assert(!ctx->exited);
+
+    if (skip_breakpoint(ctx, 0)) return 0;
 
     if (!ctx->syscall_enter) {
         while (ctx->pending_signals != 0) {
@@ -1722,9 +1742,11 @@ int context_continue(Context * ctx) {
 int context_single_step(Context * ctx) {
     assert(is_dispatch_thread());
     assert(ctx->stopped);
-    assert(!ctx->pending_intercept);
     assert(!ctx->pending_step);
     assert(!ctx->exited);
+
+    if (skip_breakpoint(ctx, 1)) return 0;
+
     if (syscall_never_returns(ctx)) return context_continue(ctx);
     trace(LOG_CONTEXT, "context: single step ctx %#x, pid %d", ctx, ctx->pid);
     if (ctx->regs_dirty) {
@@ -2194,10 +2216,24 @@ static void init(void) {
 
 #endif
 
+unsigned context_word_size(Context * ctx) {
+    /* Place holder to support variable context word size */
+    return sizeof(ContextAddress);
+}
+
 void add_context_event_listener(ContextEventListener * listener, void * client_data) {
     listener->client_data = client_data;
     listener->next = event_listeners;
     event_listeners = listener;
+}
+
+static void eventpoint_at_main(Context * ctx, void * args) {
+#if ENABLE_ELF
+    ctx->debug_structure_searched = 0;
+    ctx->debug_structure_address = 0;
+#endif
+    ctx->pending_intercept = 1;
+    event_context_changed(ctx);
 }
 
 void ini_contexts(void) {
@@ -2208,4 +2244,5 @@ void ini_contexts(void) {
         list_init(&context_pid_root[i]);
     }
     init();
+    create_eventpoint("main", eventpoint_at_main, NULL);
 }

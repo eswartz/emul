@@ -44,6 +44,7 @@
 #include "link.h"
 #include "linenumbers.h"
 #include "stacktrace.h"
+#include "memorymap.h"
 
 #if defined(_WRS_KERNEL)
 #  include <private/vxdbgLibP.h>
@@ -51,7 +52,6 @@
 
 typedef struct BreakpointRef BreakpointRef;
 typedef struct BreakpointAttribute BreakpointAttribute;
-typedef struct BreakpointInfo BreakpointInfo;
 typedef struct BreakInstruction BreakInstruction;
 
 struct BreakpointRef {
@@ -88,6 +88,9 @@ struct BreakpointInfo {
     int hit_count;
     BreakpointAttribute * unsupported;
 
+    EventPointCallBack * event_callback;
+    void * event_callback_args;
+
     /* Last status report contents: */
     int status_unsupported;
     int status_error;
@@ -107,7 +110,7 @@ struct BreakInstruction {
     char saved_code[BREAK_SIZE];
 #endif
     int error;
-    int skip;
+    int skip_cnt;
     BreakpointInfo ** refs;
     int ref_size;
     int ref_cnt;
@@ -143,6 +146,7 @@ static LINK addr2instr[ADDR2INSTR_HASH_SIZE];
 static LINK inp2br[INP2BR_HASH_SIZE];
 
 static int replanting = 0;
+static TCFBroadcastGroup * broadcast_group = NULL;
 
 static unsigned id2bp_hash(char * id) {
     unsigned hash = 0;
@@ -150,10 +154,28 @@ static unsigned id2bp_hash(char * id) {
     return hash % ID2BP_HASH_SIZE;
 }
 
+static void select_instruction_context(BreakInstruction * bi) {
+    if (bi->ctx->exited || is_running(bi->ctx)) {
+        LINK * qp = context_root.next;
+        while (qp != &context_root) {
+            Context * ctx = ctxl2ctxp(qp);
+            qp = qp->next;
+            if (ctx->mem == bi->ctx->mem && !ctx->exited && !is_running(ctx)) {
+                assert(bi->ctx != ctx);
+                context_unlock(bi->ctx);
+                context_lock(ctx);
+                bi->ctx = ctx;
+                break;
+            }
+        }
+    }
+}
+
 static void plant_instruction(BreakInstruction * bi) {
-    assert(!bi->skip);
+    assert(!bi->skip_cnt);
     assert(!bi->planted);
     bi->error = 0;
+    select_instruction_context(bi);
 #if defined(_WRS_KERNEL)
     bi->vxdbg_ctx.ctxId = bi->ctx_cnt == 1 ? bi->ctx->pid : 0;
     bi->vxdbg_ctx.ctxId = 0;
@@ -188,6 +210,7 @@ static int verify_instruction(BreakInstruction * bi) {
 static void remove_instruction(BreakInstruction * bi) {
     assert(bi->planted);
     assert(!bi->error);
+    select_instruction_context(bi);
 #if defined(_WRS_KERNEL)
     {
         VXDBG_BP_DEL_INFO info;
@@ -236,27 +259,11 @@ static void delete_unused_instructions(void) {
     while (l != &instructions) {
         BreakInstruction * bi = link_all2bi(l);
         l = l->next;
-        if (bi->skip) continue;
+        if (bi->skip_cnt) continue;
         if (bi->ref_cnt == 0) {
             list_remove(&bi->link_all);
             list_remove(&bi->link_adr);
-            if (bi->planted) {
-                if (bi->ctx->exited || is_running(bi->ctx)) {
-                    LINK * qp = context_root.next;
-                    while (qp != &context_root) {
-                        Context * ctx = ctxl2ctxp(qp);
-                        qp = qp->next;
-                        if (ctx->mem == bi->ctx->mem && !ctx->exited && !is_running(ctx)) {
-                            assert(bi->ctx != ctx);
-                            context_unlock(bi->ctx);
-                            context_lock(ctx);
-                            bi->ctx = ctx;
-                            break;
-                        }
-                    }
-                }
-                remove_instruction(bi);
-            }
+            if (bi->planted) remove_instruction(bi);
             context_unlock(bi->ctx);
             loc_free(bi->refs);
             loc_free(bi);
@@ -274,19 +281,10 @@ static void delete_unused_instructions(void) {
 static BreakInstruction * find_instruction(Context * ctx, ContextAddress address) {
     int hash = addr2instr_hash(address);
     LINK * l = addr2instr[hash].next;
-    assert(!ctx->exited);
     while (l != addr2instr + hash) {
         BreakInstruction * bi = link_adr2bi(l);
+        if (bi->ctx->mem == ctx->mem && bi->address == address) return bi;
         l = l->next;
-        if (bi->ctx->mem == ctx->mem && bi->address == address) {
-            if (bi->ctx->exited || is_running(bi->ctx)) {
-                assert(bi->ctx != ctx);
-                context_unlock(bi->ctx);
-                context_lock(ctx);
-                bi->ctx = ctx;
-            }
-            return bi;
-        }
     }
     return NULL;
 }
@@ -337,6 +335,7 @@ void check_breakpoints_on_memory_write(Context * ctx, ContextAddress address, vo
 static void write_breakpoint_status(OutputStream * out, BreakpointInfo * bp) {
     BreakpointAttribute * u = bp->unsupported;
 
+    assert(*bp->id);
     write_stream(out, '{');
 
     if (u != NULL) {
@@ -432,6 +431,7 @@ static void address_expression_error(BreakpointInfo * bp) {
 
 static void plant_breakpoint_in_context(BreakpointInfo * bp, Context * ctx, ContextAddress address) {
     BreakInstruction * bi = NULL;
+    if (address == 0) return;
     bi = find_instruction(ctx, address);
     if (bi == NULL) {
         bi = add_instruction(ctx, address);
@@ -533,7 +533,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
                     }
                     continue;
                 }
-                if (v.type_class != TYPE_CLASS_INTEGER && v.type_class != TYPE_CLASS_CARDINAL) {
+                if (v.type_class != TYPE_CLASS_INTEGER && v.type_class != TYPE_CLASS_CARDINAL && v.type_class != TYPE_CLASS_POINTER) {
                     errno = ERR_INV_DATA_TYPE;
                     address_expression_error(bp);
                     continue;
@@ -572,7 +572,7 @@ static void plant_breakpoint(BreakpointInfo * bp) {
 
 static void free_bp(BreakpointInfo * bp) {
     list_remove(&bp->link_all);
-    list_remove(&bp->link_id);
+    if (&bp->id) list_remove(&bp->link_id);
     loc_free(bp->err_msg);
     loc_free(bp->address);
 #if SERVICE_LineNumbers
@@ -592,7 +592,6 @@ static void free_bp(BreakpointInfo * bp) {
 
 static void event_replant_breakpoints(void * arg) {
     int event_cnt = 0;
-    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)arg;
     LINK * l = breakpoints.next;
 
     replanting = 0;
@@ -608,25 +607,27 @@ static void event_replant_breakpoints(void * arg) {
         if (bp->enabled && bp->unsupported == NULL) {
             plant_breakpoint(bp);
         }
-        if (bp->status_unsupported != (bp->unsupported != NULL) ||
-            bp->status_error != bp->error ||
-            bp->status_planted != bp->planted) {
-            send_event_breakpoint_status(&bcg->out, bp);
-            bp->status_unsupported = bp->unsupported != NULL;
-            bp->status_error = bp->error;
-            bp->status_planted = bp->planted;
-            event_cnt++;
+        if (*bp->id) {
+            if (bp->status_unsupported != (bp->unsupported != NULL) ||
+                bp->status_error != bp->error ||
+                bp->status_planted != bp->planted) {
+                send_event_breakpoint_status(&broadcast_group->out, bp);
+                bp->status_unsupported = bp->unsupported != NULL;
+                bp->status_error = bp->error;
+                bp->status_planted = bp->planted;
+                event_cnt++;
+            }
         }
     }
     delete_unused_instructions();
-    if (event_cnt > 0) flush_stream(&bcg->out);
+    if (event_cnt > 0) flush_stream(&broadcast_group->out);
 }
 
-static void replant_breakpoints(TCFBroadcastGroup * bcg) {
+static void replant_breakpoints(void) {
     if (list_is_empty(&breakpoints) && list_is_empty(&instructions)) return;
     if (replanting) return;
     replanting = 1;
-    post_safe_event(event_replant_breakpoints, bcg);
+    post_safe_event(event_replant_breakpoints, NULL);
 }
 
 static int str_equ(char * x, char * y) {
@@ -794,6 +795,7 @@ static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp)
 
     write_stream(out, '{');
 
+    assert(*bp->id);
     json_write_string(out, "ID");
     write_stream(out, ':');
     json_write_string(out, bp->id);
@@ -872,7 +874,9 @@ static void send_event_context_added(OutputStream * out, BreakpointInfo * bp) {
     write_stream(out, MARKER_EOM);
 }
 
-static void send_event_context_changed(OutputStream * out, BreakpointInfo * bp) {
+static void send_event_context_changed(BreakpointInfo * bp) {
+    OutputStream * out = &broadcast_group->out;
+
     write_stringz(out, "E");
     write_stringz(out, BREAKPOINTS);
     write_stringz(out, "contextChanged");
@@ -884,7 +888,9 @@ static void send_event_context_changed(OutputStream * out, BreakpointInfo * bp) 
     write_stream(out, MARKER_EOM);
 }
 
-static void send_event_context_removed(OutputStream * out, BreakpointInfo * bp) {
+static void send_event_context_removed(BreakpointInfo * bp) {
+    OutputStream * out = &broadcast_group->out;
+
     write_stringz(out, "E");
     write_stringz(out, BREAKPOINTS);
     write_stringz(out, "contextRemoved");
@@ -902,6 +908,8 @@ static void add_breakpoint(Channel * c, BreakpointInfo * bp) {
     BreakpointInfo * p = NULL;
     int added = 0;
     int chng = 0;
+
+    assert(*bp->id);
     p = find_breakpoint(bp->id);
     if (p == NULL) {
         int hash = id2bp_hash(bp->id);
@@ -930,18 +938,18 @@ static void add_breakpoint(Channel * c, BreakpointInfo * bp) {
         assert(!list_is_empty(&p->refs));
     }
     if (chng || added) {
-        if (p->planted || p->enabled && p->unsupported == NULL) replant_breakpoints(c->bcg);
+        if (p->planted || p->enabled && p->unsupported == NULL) replant_breakpoints();
     }
-    if (added) send_event_context_added(&c->bcg->out, p);
-    else if (chng) send_event_context_changed(&c->bcg->out, p);
+    if (added) send_event_context_added(&broadcast_group->out, p);
+    else if (chng) send_event_context_changed(p);
 }
 
-static void remove_breakpoint(Channel * c, BreakpointInfo * bp) {
+static void remove_breakpoint(BreakpointInfo * bp) {
     assert(list_is_empty(&bp->refs));
-    send_event_context_removed(&c->bcg->out, bp);
+    if (*bp->id) send_event_context_removed(bp);
     if (bp->planted) {
         bp->deleted = 1;
-        replant_breakpoints(c->bcg);
+        replant_breakpoints();
     }
     else {
         free_bp(bp);
@@ -953,7 +961,7 @@ static void remove_ref(Channel * c, BreakpointRef * br) {
     list_remove(&br->link_inp);
     list_remove(&br->link_bp);
     loc_free(br);
-    if (list_is_empty(&bp->refs)) remove_breakpoint(c, bp);
+    if (list_is_empty(&bp->refs)) remove_breakpoint(bp);
 }
 
 static void delete_breakpoint_refs(Channel * c) {
@@ -970,16 +978,21 @@ static void delete_breakpoint_refs(Channel * c) {
 static void command_ini_bps(char * token, Channel * c) {
     int ch;
     LINK * l = breakpoints.next;
+
+    /* Delete all breakpoints of this channel */
+    delete_breakpoint_refs(c);
+
+    /* Report breakpoints from other channels */
     while (l != &breakpoints) {
         BreakpointInfo * bp = link_all2bp(l);
         l = l->next;
         if (bp->deleted) continue;
+        if (!*bp->id) continue;
         send_event_context_added(&c->out, bp);
         send_event_breakpoint_status(&c->out, bp);
     }
 
-    delete_breakpoint_refs(c);
-
+    /* Add breakpoints for this channel */
     ch = read_stream(&c->inp);
     if (ch == 'n') {
         if (read_stream(&c->inp) != 'u') exception(ERR_JSON_SYNTAX);
@@ -1011,6 +1024,7 @@ static void command_ini_bps(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
+    flush_stream(&broadcast_group->out);
 }
 
 static void command_get_bp_ids(char * token, Channel * c) {
@@ -1101,6 +1115,7 @@ static void command_bp_add(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
+    flush_stream(&broadcast_group->out);
 }
 
 static void command_bp_change(char * token, Channel * c) {
@@ -1115,6 +1130,7 @@ static void command_bp_change(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
+    flush_stream(&broadcast_group->out);
 }
 
 static void command_bp_enable(char * token, Channel * c) {
@@ -1138,8 +1154,8 @@ static void command_bp_enable(char * token, Channel * c) {
                 bp = find_breakpoint(id);
                 if (bp != NULL && !bp->enabled) {
                     bp->enabled = 1;
-                    if (!bp->deleted && bp->unsupported == NULL) replant_breakpoints(c->bcg);
-                    send_event_context_changed(&c->bcg->out, bp);
+                    if (!bp->deleted && bp->unsupported == NULL) replant_breakpoints();
+                    send_event_context_changed(bp);
                 }
                 ch = read_stream(&c->inp);
                 if (ch == ',') continue;
@@ -1155,6 +1171,7 @@ static void command_bp_enable(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
+    flush_stream(&broadcast_group->out);
 }
 
 static void command_bp_disable(char * token, Channel * c) {
@@ -1178,8 +1195,8 @@ static void command_bp_disable(char * token, Channel * c) {
                 bp = find_breakpoint(id);
                 if (bp != NULL && bp->enabled) {
                     bp->enabled = 0;
-                    if (bp->planted) replant_breakpoints(c->bcg);
-                    send_event_context_changed(&c->bcg->out, bp);
+                    if (bp->planted) replant_breakpoints();
+                    send_event_context_changed(bp);
                 }
                 ch = read_stream(&c->inp);
                 if (ch == ',') continue;
@@ -1195,6 +1212,7 @@ static void command_bp_disable(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
+    flush_stream(&broadcast_group->out);
 }
 
 static void command_bp_remove(char * token, Channel * c) {
@@ -1227,11 +1245,11 @@ static void command_bp_remove(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
+    flush_stream(&broadcast_group->out);
 }
 
 static void command_get_capabilities(char * token, Channel * c) {
@@ -1283,13 +1301,13 @@ static void command_get_capabilities(char * token, Channel * c) {
 
 int is_breakpoint_address(Context * ctx, ContextAddress address) {
     BreakInstruction * bi = find_instruction(ctx, address);
-    return bi != NULL && !bi->skip && !bi->error;
+    return bi != NULL && bi->planted;
 }
 
-int evaluate_breakpoint_condition(Context * ctx) {
+void evaluate_breakpoint_condition(Context * ctx) {
     int i;
     BreakInstruction * bi = find_instruction(ctx, get_regs_PC(ctx->regs));
-    if (bi == NULL) return 0;
+    if (bi == NULL) return;
     assert(ctx->stopped);
     for (i = 0; i < bi->ref_cnt; i++) {
         BreakpointInfo * bp = bi->refs[i];
@@ -1302,72 +1320,71 @@ int evaluate_breakpoint_condition(Context * ctx) {
             Value v;
             if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, 1, &v) < 0) {
                 trace(LOG_ALWAYS, "%s: %s", errno_to_str(errno), bp->condition);
-                return 1;
             }
-            if (!value_to_boolean(&v)) continue;
+            else if (!value_to_boolean(&v)) {
+                continue;
+            }
         }
         if (bp->ignore_count > 0) {
             bp->hit_count++;
-            if (bp->hit_count < bp->ignore_count) continue;
+            if (bp->hit_count >= bp->ignore_count) continue;
             bp->hit_count = 0;
         }
-        return 1;
+        if (bp->event_callback != NULL) {
+            bp->event_callback(ctx, bp->event_callback_args);
+        }
+        else {
+            ctx->pending_intercept = 1;
+        }
     }
-    return 0;
 }
 
 #ifndef _WRS_KERNEL
 
 static void safe_restore_breakpoint(void * arg) {
-    SkipBreakpointInfo * sb = (SkipBreakpointInfo *)arg;
-    BreakInstruction * bi = find_instruction(sb->ctx, sb->address);
+    Context * ctx = (Context *)arg;
+    BreakInstruction * bi = (BreakInstruction *)ctx->stepping_over_bp;
 
-    if (bi != NULL && bi->skip) {
-        assert(bi->error == 0);
-        bi->skip = 0;
+    assert(bi->skip_cnt > 0);
+    assert(find_instruction(ctx, bi->address) == bi);
+    bi->skip_cnt--;
+    if (bi->skip_cnt == 0 && !bi->error && bi->ref_cnt > 0 && !bi->planted && !replanting) {
         plant_instruction(bi);
     }
-    if (sb->done) sb->done(sb);
-    if (sb->c) stream_unlock(sb->c);
-    context_unlock(sb->ctx);
-    loc_free(sb);
+    ctx->stepping_over_bp = NULL;
+    context_unlock(ctx);
 }
 
 static void safe_skip_breakpoint(void * arg) {
-    SkipBreakpointInfo * sb = (SkipBreakpointInfo *)arg;
+    Context * ctx = (Context *)arg;
+    BreakInstruction * bi = (BreakInstruction *)ctx->stepping_over_bp;
+    int error = 0;
 
-    assert(!sb->ctx->exited);
-    assert(sb->ctx->stopped);
-    assert(!sb->ctx->intercepted);
-    assert(!sb->ctx->regs_error);
-    assert(sb->address == get_regs_PC(sb->ctx->regs));
-
-    if (sb->error == 0) {
-        BreakInstruction * bi = find_instruction(sb->ctx, sb->address);
-        if (bi != NULL && !bi->skip) {
-            if (bi->planted) remove_instruction(bi);
-            if (bi->error) {
-                sb->error = bi->error;
-            }
-            else {
-                bi->skip = 1;
-            }
-        }
+    assert(bi->skip_cnt > 0);
+    if (ctx->exited) {
+        safe_restore_breakpoint(ctx);
+        return;
     }
-    if (sb->error == 0) {
-        post_safe_event(safe_restore_breakpoint, sb);
-        if (context_single_step(sb->ctx) < 0) {
-            sb->error = errno;
-        }
-        else if (sb->pending_intercept) {
-            sb->ctx->pending_intercept = 1;
-        }
+
+    assert(ctx->stopped);
+    assert(!ctx->intercepted);
+    assert(!ctx->regs_error);
+    assert(bi != NULL);
+    assert(bi->address == get_regs_PC(ctx->regs));
+
+    if (bi->planted) remove_instruction(bi);
+    if (bi->error) error = bi->error;
+
+    if (error == 0) {
+        post_safe_event(safe_restore_breakpoint, ctx);
+        if (context_single_step(ctx) < 0) error = errno;
     }
     else {
-        if (sb->done) sb->done(sb);
-        if (sb->c) stream_unlock(sb->c);
-        context_unlock(sb->ctx);
-        loc_free(sb);
+        safe_restore_breakpoint(ctx);
+    }
+
+    if (error) {
+        trace(LOG_ALWAYS, "Skip breakpoint error: %d %s", error, errno_to_str(error));
     }
 }
 
@@ -1378,36 +1395,69 @@ static void safe_skip_breakpoint(void * arg) {
  * the breakpoint temporarily before the context can be resumed.
  * This function function removes break instruction, then does single step
  * over breakpoint location, then restores break intruction.
- * Return: NULL if it is OK to resume context from current state,
- * SkipBreakpointInfo pointer if context needs to step over a breakpoint.
+ * Return: 0 if it is OK to resume context from current state,
+ * return 1 if context needs to step over a breakpoint.
  */
-SkipBreakpointInfo * skip_breakpoint(Context * ctx) {
+int skip_breakpoint(Context * ctx, int single_step) {
     BreakInstruction * bi;
-    SkipBreakpointInfo * sb;
 
     assert(!ctx->exited);
     assert(ctx->stopped);
+    assert(single_step || ctx->stepping_over_bp == NULL);
+
+    if (ctx->stepping_over_bp != NULL) return 0;
+    if (ctx->exited || ctx->exiting || !ctx->stopped_by_bp) return 0;
 
 #ifdef _WRS_KERNEL
     /* VxWork debug library can skip breakpoint when neccesary, no code is needed here */
-    return NULL;
+    return 0;
 #else
-    if (ctx->exited || ctx->exiting) return NULL;
     assert(!ctx->regs_error);
     bi = find_instruction(ctx, get_regs_PC(ctx->regs));
-    if (bi == NULL || bi->error) return NULL;
-    assert(!bi->skip);
-    sb = (SkipBreakpointInfo *)loc_alloc_zero(sizeof(SkipBreakpointInfo));
+    if (bi == NULL || bi->error) return 0;
+    bi->skip_cnt++;
+    ctx->stepping_over_bp = bi;
+    assert(bi->skip_cnt > 0);
     context_lock(ctx);
-    sb->ctx = ctx;
-    sb->address = get_regs_PC(ctx->regs);
-    post_safe_event(safe_skip_breakpoint, sb);
-    return sb;
+    post_safe_event(safe_skip_breakpoint, ctx);
+    return 1;
 #endif
 }
 
+BreakpointInfo * create_eventpoint(char * location, EventPointCallBack * callback, void * callback_args) {
+    BreakpointInfo * p = (BreakpointInfo *)loc_alloc_zero(sizeof(BreakpointInfo));
+    p->enabled = 1;
+    p->address = loc_strdup(location);
+    p->event_callback = callback;
+    p->event_callback_args = callback_args;
+    list_init(&p->refs);
+    assert(breakpoints.next != NULL);
+    list_add_last(&p->link_all, &breakpoints);
+    replant_breakpoints();
+    return p;
+}
+
+void destroy_eventpoint(BreakpointInfo * eventpoint) {
+    remove_breakpoint(eventpoint);
+}
+
 static void event_context_changed(Context * ctx, void * client_data) {
-    if (ctx->parent == NULL) replant_breakpoints((TCFBroadcastGroup *)client_data);
+    replant_breakpoints();
+}
+
+static void event_code_unmapped(Context * ctx, ContextAddress addr, ContextAddress size, void * client_data) {
+    /* Unmapping a code section unplants all breakpoint instructions in that section as side effect.
+     * This function udates service data structure to reflect that.
+     */
+    LINK * l = instructions.next;
+    while (l != &instructions) {
+        BreakInstruction * bi = link_all2bi(l);
+        l = l->next;
+        if (bi->ctx->mem != ctx->mem) continue;
+        if (!bi->planted) continue;
+        if (bi->address < addr || bi->address >= addr + size) continue;
+        bi->planted = 0;
+    }
 }
 
 static void channel_close_listener(Channel * c) {
@@ -1416,14 +1466,25 @@ static void channel_close_listener(Channel * c) {
 
 void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     int i;
-    static ContextEventListener listener = {
-        event_context_changed,
-        event_context_changed,
-        NULL,
-        NULL,
-        event_context_changed
-    };
-    add_context_event_listener(&listener, bcg);
+    broadcast_group = bcg;
+
+    {
+        static ContextEventListener listener = {
+            event_context_changed,
+            event_context_changed,
+            NULL,
+            NULL,
+            event_context_changed
+        };
+        add_context_event_listener(&listener, NULL);
+    }
+    {
+        static MemoryMapEventListener listener = {
+            event_context_changed,
+            event_code_unmapped,
+        };
+        add_memory_map_event_listener(&listener, NULL);
+    }
     list_init(&breakpoints);
     list_init(&instructions);
     for (i = 0; i < ADDR2INSTR_HASH_SIZE; i++) list_init(addr2instr + i);

@@ -134,37 +134,6 @@ static ObjectInfo * find_object_info(U8_T ID) {
     return Info;
 }
 
-static void find_symbol_entry(ObjectInfo * Info) {
-    U8_T Addr = Info->mLowPC;
-    if (Addr != 0) {
-        unsigned i = 0;
-        unsigned j = sSymbolTableLen - 1;
-        while (i <= j) {
-            unsigned k = (i + j) / 2;
-            U8_T AddrK = get_elf_symbol_address(sSymbolHash[k]);
-            if (AddrK < Addr) {
-                i = k + 1;
-            }
-            else if (AddrK > Addr) {
-                j = k - 1;
-            }
-            else {
-                unsigned n;
-                while (k > i && get_elf_symbol_address(sSymbolHash[k - 1]) == Addr) k--;
-                Info->mSymbol = k;
-                for (n = 0; n < sCache->mSymSectionsCnt; n++) {
-                    SymbolSection * tbl = sCache->mSymSections[n];
-                    if (sSymbolHash[k] < tbl->mSymPool) continue;
-                    if (sSymbolHash[k] >= tbl->mSymPool + tbl->mSymPoolSize) continue;
-                    Info->mSymbolSection = tbl;
-                    break;
-                }
-                break;
-            }
-        }
-    }
-}
-
 static void entry_callback(U2_T Tag, U2_T Attr, U2_T Form);
 
 static void read_mod_fund_type(U2_T Form, ObjectInfo ** Type) {
@@ -295,7 +264,6 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
             Sibling = 0;
         }
         else {
-            find_symbol_entry(Info);
             if (Tag == TAG_enumerator && Info->mType == NULL) Info->mType = sParentObject;
             if (sPrevSibling != NULL) sPrevSibling->mSibling = Info;
             else if (sParentObject != NULL) sParentObject->mChildren = Info;

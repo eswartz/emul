@@ -46,6 +46,7 @@ struct Context {
     pid_t               mem;                /* context memory space identifier */
     int                 stopped;            /* OS kernel has stopped this context */
     int                 stopped_by_bp;      /* stopped by breakpoint */
+    void *              stepping_over_bp;   /* if not NULL context is stepping over a breakpoint */
     int                 exiting;            /* context is about to exit */
     int                 exited;             /* context exited */
     int                 intercepted;        /* context is reported to a host as suspended */
@@ -77,6 +78,7 @@ struct Context {
     int                 debug_started;
     EXCEPTION_DEBUG_INFO pending_event;
     EXCEPTION_DEBUG_INFO suspend_reason;
+    int                 context_stopped_async_pending;
 #else /* Linux/Unix */
     ContextAttachCallBack * attach_callback;
     void *              attach_data;
@@ -91,6 +93,9 @@ struct Context {
 #endif
 #if ENABLE_ELF
     void *              memory_map;
+    int                 debug_structure_searched;
+    ContextAddress      debug_structure_address;
+    ContextAddress      loader_state;
 #endif
 };
 
@@ -164,6 +169,7 @@ extern int context_continue(Context * ctx);
 extern int context_single_step(Context * ctx);
 extern int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size);
 extern int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size);
+extern unsigned context_word_size(Context * ctx);
 
 typedef struct ContextEventListener {
     void (*context_created)(Context * ctx, void * client_data);
@@ -171,6 +177,7 @@ typedef struct ContextEventListener {
     void (*context_stopped)(Context * ctx, void * client_data);
     void (*context_started)(Context * ctx, void * client_data);
     void (*context_changed)(Context * ctx, void * client_data);
+    /* Private: */
     void * client_data;
     struct ContextEventListener * next;
 } ContextEventListener;

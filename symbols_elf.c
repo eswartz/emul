@@ -55,8 +55,6 @@ static void object2symbol(Context * ctx, ObjectInfo * obj, Symbol * sym) {
     memset(sym, 0, sizeof(Symbol));
     sym->ctx = ctx;
     loc->obj = obj;
-    loc->tbl = obj->mSymbolSection;
-    loc->index = obj->mSymbol;
     switch (obj->mTag) {
     case TAG_global_subroutine:
     case TAG_subroutine:
@@ -556,6 +554,34 @@ static ObjectInfo * get_object_type(ObjectInfo * obj) {
     return NULL;
 }
 
+static int get_num_prop(Context * ctx, int frame, ObjectInfo * obj, int at, U8_T * res) {
+    PropertyValue v;
+
+    if (read_and_evaluate_dwarf_object_property(ctx, frame, 0, obj, at, &v) < 0) return 0;
+    *res = get_numeric_property_value(&v);
+    return 1;
+}
+
+static U8_T get_object_length(Context * ctx, int frame, ObjectInfo * obj) {
+    U8_T x, y;
+
+    if (get_num_prop(ctx, frame, obj, AT_count, &x)) return x;
+    if (get_num_prop(ctx, frame, obj, AT_upper_bound, &x)) {
+        if (get_num_prop(ctx, frame, obj, AT_lower_bound, &y)) return x + 1 - y;
+        return x + 1;
+    }
+    if (obj->mTag == TAG_enumeration_type) {
+        ObjectInfo * c = obj->mChildren;
+        x = 0;
+        while (c != NULL) {
+            x++;
+            c = c->mSibling;
+        }
+        return x;
+    }
+    return 0;
+}
+
 int get_symbol_type(const Symbol * sym, Symbol * type) {
     if (((SymLocation *)sym->location)->pointer) {
         *type = *sym;
@@ -661,34 +687,6 @@ int get_symbol_name(const Symbol * sym, char ** name) {
     }
     else {
         *name = NULL;
-    }
-    return 0;
-}
-
-static int get_num_prop(Context * ctx, int frame, ObjectInfo * obj, int at, U8_T * res) {
-    PropertyValue v;
-
-    if (read_and_evaluate_dwarf_object_property(ctx, frame, 0, obj, at, &v) < 0) return 0;
-    *res = get_numeric_property_value(&v);
-    return 1;
-}
-
-static U8_T get_object_length(Context * ctx, int frame, ObjectInfo * obj) {
-    U8_T x, y;
-
-    if (get_num_prop(ctx, frame, obj, AT_count, &x)) return x;
-    if (get_num_prop(ctx, frame, obj, AT_upper_bound, &x)) {
-        if (get_num_prop(ctx, frame, obj, AT_lower_bound, &y)) return x + 1 - y;
-        return x + 1;
-    }
-    if (obj->mTag == TAG_enumeration_type) {
-        ObjectInfo * c = obj->mChildren;
-        x = 0;
-        while (c != NULL) {
-            x++;
-            c = c->mSibling;
-        }
-        return x;
     }
     return 0;
 }

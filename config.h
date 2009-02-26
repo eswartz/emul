@@ -54,7 +54,7 @@
 #define ENABLE_Discovery    1
 #define ENABLE_Cmdline      1
 
-#define ENABLE_ELF          (((SERVICE_LineNumbers) || (SERVICE_Symbols)) && !TARGET_WINDOWS)
+#define ENABLE_ELF              TARGET_UNIX
 
 #ifdef CONFIG_MAIN
 /*
@@ -118,6 +118,10 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
 #if SERVICE_Streams
     ini_streams_service(proto);
 #endif
+#if ENABLE_ELF
+    ini_elf();
+#endif
+    ini_memory_map_service();
     ini_diagnostics_service(proto);
 }
 

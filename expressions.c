@@ -554,7 +554,7 @@ static void identifier(char * name, Value * v) {
                 return;
             case SYM_CLASS_FUNCTION:
                 v->type_class = TYPE_CLASS_CARDINAL;
-                v->size = sizeof(ContextAddress);
+                v->size = context_word_size(expression_context);
                 v->value = alloc_str(v->size);
                 v->remote = 0;
                 if (get_symbol_address(&sym, expression_frame, (ContextAddress *)v->value) < 0) {
@@ -939,7 +939,7 @@ static void op_index(int mode, Value * v) {
 static void op_addr(int mode, Value * v) {
     if (mode == MODE_SKIP) return;
     if (!v->remote) error(ERR_INV_EXPRESSION, "Invalid '&': value has no address");
-    v->size = sizeof(ContextAddress);
+    v->size = context_word_size(expression_context);
     v->value = alloc_str(text_val.size);
     v->remote = 0;
     assert(!v->constant);

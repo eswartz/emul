@@ -76,8 +76,6 @@ struct ObjectInfo {
     ContextAddress mLowPC;
     ContextAddress mHighPC;
 
-    SymbolSection * mSymbolSection;
-    U4_T mSymbol;
     U2_T mEncoding;
     ObjectInfo * mType;
     CompUnit * mCompUnit;

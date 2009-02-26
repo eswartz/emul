@@ -25,23 +25,13 @@
 #include "context.h"
 #include "protocol.h"
 
-typedef struct SkipBreakpointInfo SkipBreakpointInfo;
-
-struct SkipBreakpointInfo {
-    Context * ctx;
-    ContextAddress address;
-    int pending_intercept;
-    void (*done)(SkipBreakpointInfo *);
-    Channel * c;
-    char token[256];
-    int error;
-};
+typedef struct BreakpointInfo BreakpointInfo;
 
 #if SERVICE_Breakpoints
 
-extern int evaluate_breakpoint_condition(Context * ctx);
+extern void evaluate_breakpoint_condition(Context * ctx);
 
-extern SkipBreakpointInfo * skip_breakpoint(Context * ctx);
+extern int skip_breakpoint(Context * ctx, int single_step);
 
 /* Return 1 if break instruction is planted at given address in the context memory */
 extern int is_breakpoint_address(Context * ctx, ContextAddress address);
@@ -52,13 +42,24 @@ extern void check_breakpoints_on_memory_read(Context * ctx, ContextAddress addre
 /* Check if data is about to be written over planted break instructions and adjust the data and breakpoint backing storage */
 extern void check_breakpoints_on_memory_write(Context * ctx, ContextAddress address, void * buf, size_t size);
 
+/* Evenpoint callback. It is called when context is suspended by eventpoint, right before "context_stopped" event */
+typedef void EventPointCallBack(Context *, void *);
+
+/* Create, plant and return eventpoint. Eventpoints are breakpoints that are created by agent to control execution of debugee.
+ * Eventpoint are not exposed through "Breakpoints" TCF service, they are handled by agent itself. */
+extern BreakpointInfo * create_eventpoint(char * location, EventPointCallBack * callback, void * callback_args);
+
+/* Unplant and destroy eventpoint */
+extern void destroy_eventpoint(BreakpointInfo * eventpoint);
+
 #else
 
-#define evaluate_breakpoint_condition(ctx) 0
-#define skip_breakpoint(ctx) 0
+#define evaluate_breakpoint_condition(ctx)
+#define skip_breakpoint(ctx, single_step) 0
 #define is_breakpoint_address(ctx, address) 0
 #define check_breakpoints_on_memory_read(ctx, address, buf, size)
 #define check_breakpoints_on_memory_write(ctx, address, buf, size)
+#define create_eventpoint(location, callback, callback_args) 0
 
 #endif
 

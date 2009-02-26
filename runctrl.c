@@ -345,14 +345,6 @@ static void send_simple_result(Channel * c, char * token, int err) {
 
 static void send_event_context_resumed(OutputStream * out, Context * ctx);
 
-static void done_skip_breakpoint(SkipBreakpointInfo * s) {
-    Channel * c = s->c;
-    if (!is_stream_closed(c)) {
-        send_simple_result(c, s->token, s->error);
-        flush_stream(&c->out);
-    }
-}
-
 static void command_resume(char * token, Channel * c) {
     char id[256];
     long mode;
@@ -386,16 +378,7 @@ static void command_resume(char * token, Channel * c) {
         err = EINVAL;
     }
     else if (mode == RM_RESUME || mode == RM_STEP_INTO) {
-        SkipBreakpointInfo * sb = skip_breakpoint(ctx);
         send_event_context_resumed(&c->bcg->out, ctx);
-        if (sb != NULL) {
-            if (mode == RM_STEP_INTO) sb->pending_intercept = 1;
-            sb->done = done_skip_breakpoint;
-            sb->c = c;
-            stream_lock(c);
-            strcpy(sb->token, token);
-            return;
-        }
         if (mode == RM_STEP_INTO) {
             if (context_single_step(ctx) < 0) {
                 err = errno;
@@ -404,8 +387,8 @@ static void command_resume(char * token, Channel * c) {
                 ctx->pending_intercept = 1;
             }
         }
-        else {
-            if (context_continue(ctx) < 0) err = errno;
+        else if (context_continue(ctx) < 0) {
+            err = errno;
         }
     }
     else {

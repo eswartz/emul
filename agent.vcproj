@@ -849,6 +849,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\memorymap.c"
+			>
+		</File>
+		<File
+			RelativePath=".\memorymap.h"
+			>
+		</File>
+		<File
 			RelativePath="memoryservice.c"
 			>
 			<FileConfiguration

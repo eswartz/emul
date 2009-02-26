@@ -68,7 +68,7 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineToAddr
 static int read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
     int err = 0;
     if (context_read_mem(ctx, address, buf, size) < 0) err = errno;
-    check_breakpoints_on_memory_read(ctx, address, buf, size);
+    else check_breakpoints_on_memory_read(ctx, address, buf, size);
     return err;
 }
 
