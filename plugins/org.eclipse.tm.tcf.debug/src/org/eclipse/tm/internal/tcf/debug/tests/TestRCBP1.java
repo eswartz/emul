@@ -70,6 +70,8 @@ class TestRCBP1 implements ITCFTest,
     private boolean done_starting_test_process;
     private int resume_cnt = 0;
     private IToken cancel_test_cmd;
+    private boolean bp_set_done; 
+    private boolean bp_change_done; 
 
     private class SuspendedContext {
         final String id;
@@ -116,7 +118,7 @@ class TestRCBP1 implements ITCFTest,
             if (m0.get(IBreakpoints.PROP_ENABLED) == null) m0.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
             if (m1.get(IBreakpoints.PROP_ENABLED) == null) m1.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
             if (!m1.equals(m0)) {
-                exit(new Exception("Invalid data in Breakpoints event"));
+                exit(new Exception("Invalid data in Breakpoints event: " + m0 + " != " + m1));
                 return false;
             }
             return true;
@@ -224,6 +226,7 @@ class TestRCBP1 implements ITCFTest,
     
     @SuppressWarnings("unchecked")
     private void iniBreakpoints() {
+        assert !bp_set_done;
         Map<String,Object> m[] = new Map[4];
         for (int i = 0; i < m.length; i++) {
             m[i] = new HashMap();
@@ -252,6 +255,7 @@ class TestRCBP1 implements ITCFTest,
         }
         bp.set(m, new IBreakpoints.DoneCommand() {
             public void doneCommand(IToken token, Exception error) {
+                bp_set_done = true;
                 if (error != null) {
                     exit(error);
                 }
@@ -358,8 +362,11 @@ class TestRCBP1 implements ITCFTest,
     
     private void doneStartingTestProcess() {
         assert !done_starting_test_process;
+        assert get_state_cmds.isEmpty();
         assert resume_cnt == 0;
         assert threads.size() == suspended.size() + running.size();
+        assert bp_set_done;
+        assert !bp_change_done;
         if (threads.size() == 0) return;
         done_starting_test_process = true;
         final String bp_id = "TcfTestBP3" + channel_id;
@@ -378,11 +385,16 @@ class TestRCBP1 implements ITCFTest,
         bp_list.put(bp_id, m);
         bp.change(m, new IBreakpoints.DoneCommand() {
             public void doneCommand(IToken token, Exception error) {
+                bp_change_done = true;
                 if (error != null) exit(error);
             }
         });
         Protocol.sync(new Runnable() {
             public void run() {
+                if (!bp_change_done) {
+                    exit(new Exception("Protocol.sync() test failed"));
+                    return;
+                }
                 m.put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
                 bp.enable(new String[]{ bp_id }, new IBreakpoints.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
@@ -552,7 +564,7 @@ class TestRCBP1 implements ITCFTest,
         ILineNumbers.DoneMapToSource ln_done = new ILineNumbers.DoneMapToSource() {
             public void doneMapToSource(IToken token, Exception error, CodeArea[] areas) {
                 if (error != null) exit(error);
-                if (mm != null) runMemoryTest(sc0);
+                else if (mm != null) runMemoryTest(sc0);
                 else if (rg != null) runRegistersTest(sc0);
                 else resume(sc0);
             }
