@@ -65,6 +65,7 @@ public interface IProcesses extends IService {
      * @param parent_context_id – parent context ID. Can be null –
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
      * by previous getContext or getChildren commands. 
+     * @param attached_only - if true return only attached process IDs.
      * @param done - call back interface called when operation is completed.
      */
     IToken getChildren(String parent_context_id, boolean attached_only, DoneGetChildren done);

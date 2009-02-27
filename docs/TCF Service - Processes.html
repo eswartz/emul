@@ -97,7 +97,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;c
 <h3><a name='CmdGetChildren'>Get Children</a></h3>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getChildren &bull; <i>&lt;string: parent context ID&gt;</i> &bull;
+C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getChildren &bull; <i>&lt;string: parent context ID&gt;</i> &bull; <i>&lt;boolean: attached only&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command requests a list of contexts available for process control commands.</p>
@@ -106,6 +106,7 @@ C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getChildren &bull; <i>&lt;
 of context IDs retrieved by previous getChildren commands, or it can be obtained from another service.
 Contexts hierarchy can be simple plain list or it can form a tree. It is up to target agent developers to
 choose layout that is most descriptive for a given target.</p>
+<p>If <i>&lt;boolean: attached only&gt;</i> is true, the command returns only those processes that are attached for debugging.</p>
  
 <p>Reply:</p>
  
@@ -356,6 +357,7 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
      * <font color=#7F9FBF>@param</font> parent_context_id &ndash; parent context ID. Can be null &ndash;
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
      * by previous getContext or getChildren commands. 
+     * <font color=#7F9FBF>@param</font> attached_only - if true return only attached process IDs.
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
      */</font>
     IToken getChildren(String parent_context_id, <font color=#7F0055>boolean</font> attached_only, DoneGetChildren done);
