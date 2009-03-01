@@ -221,4 +221,12 @@ public class EnhancedConsoleMmioArea extends ConsoleMmioArea implements MemoryLi
 		if (isRAMAddr(addr))
 			super.flatWriteWord(entry, addr, val);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.WordMemoryArea#getSize()
+	 */
+	@Override
+	protected int getSize() {
+		return 0x400;
+	}
 }

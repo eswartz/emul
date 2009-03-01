@@ -120,6 +120,7 @@ public class SoundTMS9919B extends SoundTMS9919 {
 		CMD_WAVEFORM = 6,
 		CMD_SWEEP_PROPORTION = 7,
 		CMD_SWEEP_TIME = 8,
+		CMD_BALANCE = 9,
 		CMD_RELEASE = 15;
 	
 	protected int lastCommand;
@@ -211,6 +212,9 @@ public class SoundTMS9919B extends SoundTMS9919 {
 				voice.getEffectsController().setSweepTime(clocks);
 				break;
 			}
+			case CMD_BALANCE:
+				((SoundVoice)voice).setBalance(val);
+				break;
 			}
 		} else {
 			super.writeSound(addr, val);

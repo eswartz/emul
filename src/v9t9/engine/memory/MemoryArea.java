@@ -44,7 +44,7 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
      * so the latency does not depend on the unit size.  */
     private byte latency;
     
-    abstract int getSize();
+    abstract protected int getSize();
     
 	abstract public boolean hasWriteAccess();
 

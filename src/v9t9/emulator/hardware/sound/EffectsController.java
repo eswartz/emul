@@ -449,6 +449,4 @@ public class EffectsController {
 			sweepCounter = 0;
 		}
 	}
-	
-	
 }

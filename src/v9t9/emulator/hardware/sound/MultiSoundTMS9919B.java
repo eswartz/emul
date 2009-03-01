@@ -43,10 +43,10 @@ public class MultiSoundTMS9919B implements SoundProvider {
 		for (int i = 0; i < 4; i++) {
 			chips[i + 1] = new SoundTMS9919B(machine, "Chip #" + i);
 			
-			byte balance = (byte) ((i & 1) == 0 ? -128 : 128); 
+			/*byte balance = (byte) ((i & 1) == 0 ? -128 : 127); 
 			for (SoundVoice voice : chips[i + 1].getSoundVoices()) {
 				voice.setBalance(balance);
-			}
+			}*/
 		}
 		voices = null;
 	}

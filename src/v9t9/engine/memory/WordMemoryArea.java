@@ -64,7 +64,7 @@ public class WordMemoryArea extends MemoryArea {
 	}
 
     @Override
-	int getSize() {
+	protected int getSize() {
         return memory != null ? memory.length*2 : 0;
     }
 

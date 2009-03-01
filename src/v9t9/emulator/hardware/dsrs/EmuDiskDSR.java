@@ -454,12 +454,12 @@ public class EmuDiskDSR implements DsrHandler {
 			if (file instanceof NativeFDRFile) {
 				NativeFDRFile fdrFile = (NativeFDRFile) file;
 				FDR fdr = fdrFile.getFDR();
-				console.writeWord(parms + 2, fdr.getSectorsUsed());
-				console.writeByte(parms + 4, fdr.getFlags());
-				console.writeByte(parms + 5, fdr.getRecordsPerSector());
+				console.writeWord(parms + 2, (short) fdr.getSectorsUsed());
+				console.writeByte(parms + 4, (byte) fdr.getFlags());
+				console.writeByte(parms + 5, (byte) fdr.getRecordsPerSector());
 				console.writeByte(parms + 6, (byte) fdr.getByteOffset());
-				console.writeByte(parms + 7, fdr.getRecordLength());
-				console.writeWord(parms + 8, HOST2TI(fdr.getNumberRecords()));
+				console.writeByte(parms + 7, (byte) fdr.getRecordLength());
+				console.writeWord(parms + 8, HOST2TI((short) fdr.getNumberRecords()));
 			} else {
 				console.writeWord(parms + 2, (short) ((file.getFileSize() + 255) / 256));
 			}

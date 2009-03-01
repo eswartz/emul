@@ -61,7 +61,7 @@ public class ByteMemoryArea extends MemoryArea {
     }
 
     @Override
-	int getSize() {
+	protected int getSize() {
         return memory != null ? memory.length : 0;
     }
     
