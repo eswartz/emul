@@ -89,9 +89,12 @@ static void read_stringz(InputStream * inp, char * str, size_t size) {
     unsigned len = 0;
     for (;;) {
         int ch = read_stream(inp);
-        if (ch <= 0) break;
-        if (len < size - 1) str[len] = ch;
-        len++;
+        if (ch == 0) break;
+        if (ch < 0) {
+            trace(LOG_ALWAYS, "Unexpected end of message");
+            exception(ERR_PROTOCOL);
+        }
+        if (len < size - 1) str[len++] = ch;
     }
     str[len] = 0;
 }

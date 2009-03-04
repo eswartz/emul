@@ -24,10 +24,13 @@
 #include "events.h"
 #include "trace.h"
 
-#define ERR_SYSTEM  STD_ERR_BASE
+#define ERR_SYSTEM  (ERR_EXCEPTION + 1)
+#define ERR_GAI     (ERR_EXCEPTION + 2)
 
 static char * exception_msg;
 static int exception_no;
+
+static int errno_gai;
 
 #ifdef WIN32
 
@@ -80,7 +83,7 @@ static char * system_strerror(void) {
 
 #endif
 
-char * errno_to_str(int err) {
+const char * errno_to_str(int err) {
     static char buf[256];
     switch (err) {
     case ERR_ALREADY_STOPPED:
@@ -131,17 +134,22 @@ char * errno_to_str(int err) {
         return "Invalid data type";
     case ERR_INV_COMMAND:
         return "Command is not recognized";
-    case ERR_SYSTEM:
-        return system_strerror();
+    case ERR_INV_TRANSPORT:
+        return "Invalid transport name";
     case ERR_EXCEPTION:
         snprintf(buf, sizeof(buf), "%s: %s", exception_msg, errno_to_str(exception_no));
         return buf;
+    case ERR_SYSTEM:
+        return system_strerror();
+    case ERR_GAI:
+        return loc_gai_strerror(errno_gai);
     default:
         return strerror(err);
     }
 }
 
 void set_exception_errno(int no, char * msg) {
+    assert(is_dispatch_thread());
     if (msg == NULL) {
         errno = no;
     }
@@ -154,6 +162,13 @@ void set_exception_errno(int no, char * msg) {
 
 int get_exception_errno(void) {
     if (errno == ERR_EXCEPTION) return exception_no;
+    return errno;
+}
+
+int set_gai_errno(int n) {
+    assert(is_dispatch_thread());
+    errno = ERR_GAI;
+    errno_gai = n;
     return errno;
 }
 

@@ -56,10 +56,12 @@ int main(int argc, char ** argv) {
     int error;
     int interactive = 1;
     char * s;
-    char * log_name = 0;
+    char * log_name = "-";
     char * script_name = 0;
     char * node = NULL;
     Protocol * proto;
+
+    log_mode = 0;
 
     ini_mdep();
     ini_trace();
@@ -70,7 +72,6 @@ int main(int argc, char ** argv) {
 
     progname = "tcf";
     open_log_file("-");
-    log_mode = 0;
 
 #else
 

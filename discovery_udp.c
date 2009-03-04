@@ -182,7 +182,7 @@ static int create_server_socket(void) {
     error = loc_getaddrinfo(NULL, "", &hints, &reslist);
     if (error) {
         trace(LOG_ALWAYS, "getaddrinfo error: %s", loc_gai_strerror(error));
-        return error;
+        return set_gai_errno(error);
     }
     for (res = reslist; res != NULL; res = res->ai_next) {
         int def_port = 0;

@@ -39,24 +39,18 @@ static Channel * chan;
 static FILE * infile;
 static int interactive_flag;
 static int cmdline_suspended;
+static int cmdline_pending;
+static char * cmdline_string;
 static pthread_mutex_t cmdline_mutex;
 static pthread_cond_t cmdline_signal;
 static pthread_t interactive_thread;
 
 static void channel_connecting(Channel * c) {
-    trace(LOG_ALWAYS, "channel_connecting");
-
     send_hello_message(c->client_data, c);
     flush_stream(&c->out);
 }
 
 static void channel_connected(Channel * c) {
-    int i;
-
-    trace(LOG_ALWAYS, "channel_connected, services:");
-    for (i = 0; i < c->peer_service_cnt; i++) {
-        trace(LOG_ALWAYS, "  %s", c->peer_service_list[i]);
-    }
 }
 
 static void channel_receive(Channel * c) {
@@ -64,7 +58,6 @@ static void channel_receive(Channel * c) {
 }
 
 static void channel_disconnected(Channel * c) {
-    trace(LOG_ALWAYS, "channel_disconnected");
     if (chan == c) chan = NULL;
 }
 
@@ -73,12 +66,14 @@ static int cmd_exit(char * s) {
     return 0;
 }
 
+static void cmd_done(void);
+
 static void display_tcf_reply(Channel * c, void * client_data, int error) {
     int i;
 
     if (error) {
-        printf("reply error %d: %s\n", error, errno_to_str(error));
-        cmdline_resume();
+        printf("Reply error %d: %s\n", error, errno_to_str(error));
+        cmd_done();
         return;
     }
     for (;;) {
@@ -88,7 +83,7 @@ static void display_tcf_reply(Channel * c, void * client_data, int error) {
         putchar(i);
     }
     putchar('\n');
-    cmdline_resume();
+    cmd_done();
 }
 
 #define maxargs 20
@@ -100,7 +95,7 @@ static int cmd_tcf(char *s) {
     Channel * c = chan;
 
     if (c == NULL) {
-        printf("error: channel not connected, use 'connect' command\n");
+        printf("Error: Channel not connected, use 'connect' command\n");
         return 0;
     }
     ind = 0;
@@ -109,7 +104,7 @@ static int cmd_tcf(char *s) {
         args[ind] = strtok(NULL, " \t");
     }
     if (args[0] == NULL || args[1] == NULL) {
-        printf("error: expected at least service and command name arguments\n");
+        printf("Error: Expected at least service and command name arguments\n");
         return 0;
     }
     protocol_send_command(c->client_data, c, args[0], args[1], display_tcf_reply, c);
@@ -135,6 +130,7 @@ static int print_peer_flags(PeerServer * ps) {
         { 0 }
     };
 
+    printf("  ");
     cnt = 0;
     for (i = 0; flagnames[i].flag != 0; i++) {
         if (flags & flagnames[i].flag) {
@@ -176,7 +172,7 @@ static int cmd_peerinfo(char * s) {
     printf("Peer information: %s\n", s);
     ps = peer_server_find(s);
     if (ps == NULL) {
-        fprintf(stderr, "error: cannot find id: %s\n", s);
+        fprintf(stderr, "Error: Cannot find id: %s\n", s);
         return 0;
     }
     printf("  ID: %s\n", ps->id);
@@ -192,17 +188,19 @@ static int cmd_connect(char * s) {
     PeerServer * ps;
     Protocol * proto;
     Channel * c;
+    int error = 0;
 
     ps = channel_peer_from_url(s);
     if (ps == NULL) {
-        fprintf(stderr, "error: cannot parse peer identifer: %s\n", s);
+        fprintf(stderr, "Error: Cannot parse peer identifer: %s\n", s);
         return 0;
     }
     proto = protocol_alloc();
     c = channel_connect(ps);
+    if (c == NULL) error = errno;
     peer_server_free(ps);
     if (c == NULL) {
-        fprintf(stderr, "error: cannot estabilish connection\n");
+        fprintf(stderr, "Error: Cannot connect: %s\n", errno_to_str(error));
         return 0;
     }
     c->connecting = channel_connecting;
@@ -218,7 +216,7 @@ static int cmd_connect(char * s) {
 static void event_cmd_line(void * arg) {
     char * s = (char *)arg;
     int len;
-    int delayed;
+    int delayed = 0;
     struct {
         char * cmd;
         char * help;
@@ -232,47 +230,58 @@ static void event_cmd_line(void * arg) {
         { 0 }
     }, *cp;
 
-    while (*s && isspace(*s)) s++;
-    if (*s == '\0') {
-        cmdline_resume();
+    if (cmdline_suspended) {
+        cmdline_string = s;
         return;
     }
-    for (cp = cmds; cp->cmd != 0; cp++) {
-        len = strlen(cp->cmd);
-        if (strncmp(s, cp->cmd, len) == 0 && (s[len] == 0 || isspace(s[len]))) {
-            s += len;
-            while (*s && isspace(*s)) s++;
-            delayed = cp->hnd(s);
-            break;
-        }
-    }
-    if (cp->cmd == 0) {
-        fprintf(stderr, "Unknown command: %s\n", s);
-        fprintf(stderr, "Available commands:\n");
+
+    while (*s && isspace(*s)) s++;
+    if (*s) {
         for (cp = cmds; cp->cmd != 0; cp++) {
-            fprintf(stderr, "  %-10s - %s\n", cp->cmd, cp->help);
+            len = strlen(cp->cmd);
+            if (strncmp(s, cp->cmd, len) == 0 && (s[len] == 0 || isspace(s[len]))) {
+                s += len;
+                while (*s && isspace(*s)) s++;
+                delayed = cp->hnd(s);
+                break;
+            }
         }
-        delayed = 0;
+        if (cp->cmd == 0) {
+            fprintf(stderr, "Unknown command: %s\n", s);
+            fprintf(stderr, "Available commands:\n");
+            for (cp = cmds; cp->cmd != 0; cp++) {
+                fprintf(stderr, "  %-10s - %s\n", cp->cmd, cp->help);
+            }
+        }
     }
     loc_free(arg);
-    if (!delayed) cmdline_resume();
+    if (!delayed) cmd_done();
 }
 
 void cmdline_suspend(void) {
+    assert(!cmdline_suspended);
     cmdline_suspended = 1;
 }
 
 void cmdline_resume(void) {
-    if (interactive_thread == 0) {
-        cmdline_suspended = 0;
+    assert(cmdline_suspended);
+    cmdline_suspended = 0;
+    if (cmdline_string != NULL) {
+        post_event(event_cmd_line, cmdline_string);
+        cmdline_string = NULL;
     }
-    else {
-        check_error(pthread_mutex_lock(&cmdline_mutex));
-        assert(cmdline_suspended);
-        check_error(pthread_cond_signal(&cmdline_signal));
-        cmdline_suspended = 0;
-        check_error(pthread_mutex_unlock(&cmdline_mutex));
-    }
+}
+
+static void cmd_done_event(void * arg) {
+    check_error(pthread_mutex_lock(&cmdline_mutex));
+    assert(cmdline_pending);
+    cmdline_pending = 0;
+    check_error(pthread_cond_signal(&cmdline_signal));
+    check_error(pthread_mutex_unlock(&cmdline_mutex));
+}
+
+static void cmd_done(void) {
+    post_event(cmd_done_event, NULL);
 }
 
 static void * interactive_handler(void * x) {
@@ -282,7 +291,7 @@ static void * interactive_handler(void * x) {
 
     check_error(pthread_mutex_lock(&cmdline_mutex));
     while (!done) {
-        if (cmdline_suspended) {
+        if (cmdline_pending) {
             check_error(pthread_cond_wait(&cmdline_signal, &cmdline_mutex));
             continue;
         }
@@ -299,7 +308,7 @@ static void * interactive_handler(void * x) {
             buf[--len] = '\0';
         }
         post_event(event_cmd_line, loc_strdup(buf));
-        cmdline_suspended = 1;
+        cmdline_pending = 1;
     }
     check_error(pthread_mutex_unlock(&cmdline_mutex));
     return NULL;
@@ -308,7 +317,7 @@ static void * interactive_handler(void * x) {
 void open_script_file(char * script_name) {
     if (script_name == NULL || (infile = fopen(script_name, "r")) == NULL) {
         if (script_name == NULL) script_name = "<null>";
-        fprintf(stderr, "TCF: error: cannot open script file %s\n", script_name);
+        fprintf(stderr, "Error: Cannot open script file %s\n", script_name);
         exit(1);
     }
 }

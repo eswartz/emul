@@ -237,7 +237,7 @@ static void send_eof_and_close(Channel * channel, int err) {
 static void handle_channel_msg(void * x) {
     Trap trap;
     ChannelTCP * c = (ChannelTCP *)x;
-    int hasmsg;
+    int has_msg;
 
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
@@ -249,9 +249,9 @@ static void handle_channel_msg(void * x) {
         c->ibuf.handling_msg = HandleMsgIdle;
         return;
     }
-    hasmsg = ibuf_start_message(&c->ibuf);
-    if (hasmsg <= 0) {
-        if (hasmsg < 0) {
+    has_msg = ibuf_start_message(&c->ibuf);
+    if (has_msg <= 0) {
+        if (has_msg < 0) {
             trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel 0x%08x %s", c, c->chan.peer_name);
             channel_close(&c->chan);
         }
@@ -262,9 +262,8 @@ static void handle_channel_msg(void * x) {
         clear_trap(&trap);
     }
     else {
-        trace(LOG_ALWAYS, "Exception handling protocol message: %d %s",
+        trace(LOG_ALWAYS, "Exception in message handler: %d %s",
               trap.error, errno_to_str(trap.error));
-        c->ibuf.handling_msg = HandleMsgIdle;
         channel_close(&c->chan);
         return;
     }
@@ -304,10 +303,8 @@ static void tcp_trigger_message(InputBuf * ibuf) {
 
 static int channel_get_message_count(Channel * c) {
     ChannelTCP * channel = channel2tcp(c);
-    int cnt;
     assert(is_dispatch_thread());
-    cnt = channel->ibuf.message_count;
-    return cnt;
+    return channel->ibuf.message_count;
 }
 
 static void tcp_channel_read_done(void * x) {
@@ -523,7 +520,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     error = loc_getaddrinfo(host, port, &hints, &reslist);
     if (error) {
         trace(LOG_ALWAYS, "getaddrinfo error: %s", loc_gai_strerror(error));
-        errno = error;
+        set_gai_errno(error);
         return NULL;
     }
     sock = -1;
@@ -620,6 +617,7 @@ Channel * channel_tcp_connect(PeerServer * ps) {
     struct addrinfo * res = NULL;
     struct sockaddr peer_addr;
 
+    if (port == NULL) port = "1534";
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
@@ -627,7 +625,7 @@ Channel * channel_tcp_connect(PeerServer * ps) {
     error = loc_getaddrinfo(host, port, &hints, &reslist);
     if (error) {
         trace(LOG_ALWAYS, "getaddrinfo error: %s", loc_gai_strerror(error));
-        errno = error;
+        set_gai_errno(error);
         return NULL;
     }
     sock = -1;

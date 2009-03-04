@@ -703,7 +703,7 @@ void write_error_object(OutputStream * out, int err) {
     }
     else {
         int code = ERR_OTHER - STD_ERR_BASE;
-        char * msg = errno_to_str(err);
+        const char * msg = errno_to_str(err);
 
         write_stream(out, '{');
         if (err == ERR_EXCEPTION) err = get_exception_errno();

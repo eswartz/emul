@@ -71,6 +71,7 @@ struct GetContextArgs {
 static SafeEvent * safe_event_list = NULL;
 static int safe_event_pid_count = 0;
 static int safe_event_generation = 0;
+static int safe_event_running = 0;
 
 #if !defined(WIN32) && !defined(_WRS_KERNEL)
 static char * get_executable(pid_t pid) {
@@ -687,6 +688,7 @@ static void run_safe_events(void * arg) {
         }
         assert(is_all_stopped());
         safe_event_list = i->next;
+        safe_event_running = 1;
         if (set_trap(&trap)) {
             i->done(i->arg);
             clear_trap(&trap);
@@ -695,6 +697,7 @@ static void run_safe_events(void * arg) {
             trace(LOG_ALWAYS, "Unhandled exception in \"safe\" event dispatch: %d %s",
                   trap.error, errno_to_str(trap.error));
         }
+        safe_event_running = 0;
         loc_free(i);
         if ((int)arg != safe_event_generation) return;
     }
@@ -723,9 +726,11 @@ void post_safe_event(EventCallBack * done, void * arg) {
     i->arg = arg;
     if (safe_event_list == NULL) {
         assert(safe_event_pid_count == 0);
-        channels_suspend(suspend_group);
-        cmdline_suspend();
-        post_event(run_safe_events, (void *)++safe_event_generation);
+        if (!safe_event_running) {
+            channels_suspend(suspend_group);
+            cmdline_suspend();
+            post_event(run_safe_events, (void *)++safe_event_generation);
+        }
     }
     assert(are_channels_suspended(suspend_group));
     i->next = safe_event_list;

@@ -48,16 +48,19 @@
 #define ERR_UNSUPPORTED         (STD_ERR_BASE + 23)
 #define ERR_INV_DATA_TYPE       (STD_ERR_BASE + 24)
 #define ERR_INV_COMMAND         (STD_ERR_BASE + 25)
+#define ERR_INV_TRANSPORT       (STD_ERR_BASE + 26)
 
 #define ERR_EXCEPTION           (STD_ERR_BASE + 100)
 
 /*
  * Convert error code to human readable string
  */
-extern char * errno_to_str(int error);
+extern const char * errno_to_str(int error);
 
 extern void set_exception_errno(int no, char * msg);
 extern int get_exception_errno(void);
+
+extern int set_gai_errno(int gai_error_code);
 
 /*
  * check_error(): Check error code.

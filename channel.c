@@ -204,74 +204,54 @@ int is_stream_closed(Channel * c) {
 }
 
 PeerServer * channel_peer_from_url(const char * url) {
-    int c;
     int i;
     const char * s;
-    char * name;
-    char * value;
     char transport[16];
-    PeerServer * ps;
-
-    ps = peer_server_alloc();
-    peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Agent"));
-    peer_server_addprop(ps, loc_strdup("OSName"), loc_strdup(get_os_name()));
+    PeerServer * ps = peer_server_alloc();
 
     s = url;
     i = 0;
-    while ((c = *s) != '\0' && c != ':' && isalpha(c) && i < sizeof transport) {
-        transport[i++] = islower(c) ? toupper(c) : c;
+    while (*s && isalpha(*s) && i < sizeof transport) transport[i++] = toupper(*s++);
+    if (*s == ':' && i < sizeof transport) {
         s++;
+        peer_server_addprop(ps, loc_strdup("TransportName"), loc_strndup(transport, i));
+        url = s;
     }
-    if (c == ':' && i < sizeof transport) {
-        s++;
-        transport[i++] = '\0';
-        if (strcmp(transport, "TCP") != 0) {
-            /* Assume implicit "TCP:" */
-            s = url;
-            value = "TCP";
-        }
-        else {
-            value = transport;
-            url = s;
-        }
-        peer_server_addprop(ps, loc_strdup("TransportName"), loc_strdup(value));
+    else {
+        s = url;
     }
-    while ((c = *s) != '\0' && c != ':' && c != ';') s++;
-    if (s != url) {
-        peer_server_addprop(ps, loc_strdup("Host"), loc_strndup(url, s - url));
-    }
-    if (c == ':') {
+    while (*s && *s != ':' && *s != ';') s++;
+    if (s != url) peer_server_addprop(ps, loc_strdup("Host"), loc_strndup(url, s - url));
+    if (*s == ':') {
         s++;
         url = s;
-        while ((c = *s) != '\0' && c != ';') s++;
-        if (s != url) {
-            peer_server_addprop(ps, loc_strdup("Port"), loc_strndup(url, s - url));
-        }
+        while (*s && *s != ';') s++;
+        if (s != url) peer_server_addprop(ps, loc_strdup("Port"), loc_strndup(url, s - url));
     }
 
-    while (c == ';') {
+    while (*s == ';') {
+        char * name;
+        char * value;
         s++;
         url = s;
-        while ((c = *s) != '\0' && c != '=') s++;
-        if (c != '=' || s == url) {
+        while (*s && *s != '=') s++;
+        if (*s != '=' || s == url) {
             s = url - 1;
-            c = *s;
             break;
         }
         name = loc_strndup(url, s - url);
         s++;
         url = s;
-        while ((c = *s) != '\0' && c != ';') s++;
-        if (c != ';') {
+        while (*s && *s != ';') s++;
+        if (*s != ';') {
             loc_free(name);
             s = url - 1;
-            c = *s;
             break;
         }
         value = loc_strndup(url, s - url);
         peer_server_addprop(ps, name, value);
     }
-    if (c != '\0') {
+    if (*s != '\0') {
         peer_server_free(ps);
         return NULL;
     }
@@ -282,13 +262,13 @@ PeerServer * channel_peer_from_url(const char * url) {
  * Start TCF channel server
  */
 ChannelServer * channel_server(PeerServer * ps) {
-    char * transportname = peer_server_getprop(ps, "TransportName", "");
+    char * transportname = peer_server_getprop(ps, "TransportName", NULL);
 
-    if (strcmp(transportname, "TCP") == 0) {
+    if (transportname == NULL || strcmp(transportname, "TCP") == 0) {
         return channel_tcp_server(ps);
     }
     else {
-        errno = ERR_UNSUPPORTED;
+        errno = ERR_INV_TRANSPORT;
         return NULL;
     }
 }
@@ -297,13 +277,13 @@ ChannelServer * channel_server(PeerServer * ps) {
  * Connect to TCF channel server
  */
 Channel * channel_connect(PeerServer * ps) {
-    char * transportname = peer_server_getprop(ps, "TransportName", "");
+    char * transportname = peer_server_getprop(ps, "TransportName", NULL);
 
-    if (strcmp(transportname, "TCP") == 0) {
+    if (transportname == NULL || strcmp(transportname, "TCP") == 0) {
         return channel_tcp_connect(ps);
     }
     else {
-        errno = ERR_UNSUPPORTED;
+        errno = ERR_INV_TRANSPORT;
         return NULL;
     }
 }

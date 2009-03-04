@@ -418,7 +418,7 @@ static void send_event_breakpoint_status(OutputStream * out, BreakpointInfo * bp
 static void address_expression_error(BreakpointInfo * bp) {
     /* TODO: per-context address expression error report */
     int size;
-    char * err_txt;
+    const char * err_txt;
     assert(errno != 0);
     if (bp->error) return;
     bp->error = get_exception_errno();
