@@ -196,6 +196,15 @@ public class DiagnosticsProxy implements IDiagnostics {
         }.token;
     }
 
+    public IToken not_implemented_command(final DoneNotImplementedCommand done) {
+        return new Command(channel, this, "not implemented command", null) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                done.doneNotImplementedCommand(token, error);
+            }
+        }.token;
+    }
+
     @SuppressWarnings("unchecked")
     private String[] toStringArray(Object o) {
         if (o == null) return null;

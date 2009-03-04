@@ -314,7 +314,7 @@ public class LocatorService implements ILocator {
                 channel.sendResult(token, JSON.toJSONSequence(new Object[]{ null, arr }));
             }
             else {
-                channel.terminate(new Exception("Illegal command: " + name));
+                channel.rejectCommand(token);
             }
         }
         catch (Throwable x) {

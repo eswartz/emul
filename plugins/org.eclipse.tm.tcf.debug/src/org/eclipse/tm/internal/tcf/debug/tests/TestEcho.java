@@ -13,6 +13,7 @@ package org.eclipse.tm.internal.tcf.debug.tests;
 import java.util.LinkedList;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IDiagnostics;
 
@@ -33,7 +34,20 @@ class TestEcho implements ITCFTest, IDiagnostics.DoneEcho {
             test_suite.done(this, null);
         }
         else {
-            for (int i = 0; i < 32; i++) sendMessage();
+            diag.not_implemented_command(new IDiagnostics.DoneNotImplementedCommand() {
+
+                public void doneNotImplementedCommand(IToken token, Throwable error) {
+                    if (!(error instanceof IErrorReport)) {
+                        test_suite.done(TestEcho.this, new Exception("Invalid responce to unimplemented command"));
+                        return;
+                    }
+                    if (((IErrorReport)error).getErrorCode() != IErrorReport.TCF_ERROR_INV_COMMAND) {
+                        test_suite.done(TestEcho.this, new Exception("Invalid error code in responce to unimplemented command"));
+                        return;
+                    }
+                    for (int i = 0; i < 32; i++) sendMessage();
+                }
+            });
         }
     }
     

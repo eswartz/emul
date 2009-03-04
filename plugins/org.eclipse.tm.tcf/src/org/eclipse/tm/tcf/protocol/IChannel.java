@@ -73,7 +73,8 @@ public interface IChannel {
         void result(IToken token, byte[] data);
 
         /**
-         * Called when communication channel was closed while command was waiting for result.
+         * Called when command is terminated because communication channel was closed or
+         * command is not recognized by remote peer.
          * @param token - command handle
          * @param error - exception that forced the channel to close
          */
@@ -89,6 +90,18 @@ public interface IChannel {
      * @param results - result message arguments encoded into array of bytes
      */
     void sendResult(IToken token, byte[] results);
+
+    /**
+     * Reject a command by sending "N" result message to remote peer.
+     * Clients should reject commands that they don't recognize.
+     * Messages can be queued locally before
+     * transmission. Sending messages too fast can fill up communication channel
+     * buffers. Calling thread will be blocked until enough buffer space is
+     * freed up by transmitting pending messages.
+     * @param token - command handle
+     * @param results - result message arguments encoded into array of bytes
+     */
+    void rejectCommand(IToken token);
 
     /**
      * Get current level of out-bound traffic congestion.

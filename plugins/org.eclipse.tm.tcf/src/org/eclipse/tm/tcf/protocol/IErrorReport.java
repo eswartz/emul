@@ -86,7 +86,8 @@ public interface IErrorReport {
         TCF_ERROR_INV_DWARF           = 21,
         TCF_ERROR_SYM_NOT_FOUND       = 22,
         TCF_ERROR_UNSUPPORTED         = 23,
-        TCF_ERROR_INV_DATA_TYPE       = 24;
+        TCF_ERROR_INV_DATA_TYPE       = 24,
+        TCF_ERROR_INV_COMMAND         = 25;
     
     public int getErrorCode();
     

@@ -23,6 +23,7 @@ import org.eclipse.tm.internal.tcf.core.TransportManager;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
 import org.eclipse.tm.internal.tcf.services.remote.GenericProxy;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -159,6 +160,7 @@ public abstract class AbstractChannel implements IChannel {
 
         inp_thread = new Thread() {
 
+            final byte[] empty_byte_array = new byte[0];
             byte[] buf = new byte[1024];
             byte[] eos;
 
@@ -170,8 +172,11 @@ public abstract class AbstractChannel implements IChannel {
                 int len = 0;
                 for (;;) {
                     int n = read();
-                    if (n == end) break;
-                    if (n < 0) throw new IOException("Communication channel is closed by remote peer");
+                    if (n <= 0) {
+                        if (n == end) break;
+                        if (n == EOM) throw new IOException("Unexpected end of message");
+                        if (n < 0) throw new IOException("Communication channel is closed by remote peer");
+                    }
                     if (len >= buf.length) {
                         byte[] tmp = new byte[buf.length * 2];
                         System.arraycopy(buf, 0, tmp, 0, len);
@@ -179,13 +184,29 @@ public abstract class AbstractChannel implements IChannel {
                     }
                     buf[len++] = (byte)n;
                 }
+                if (len == 0) return empty_byte_array;
                 byte[] res = new byte[len];
                 System.arraycopy(buf, 0, res, 0, len);
                 return res;
             }
 
             private String readString() throws IOException {
-                return new String(readBytes(0), "UTF8");
+                int len = 0;
+                for (;;) {
+                    int n = read();
+                    if (n <= 0) {
+                        if (n == 0) break;
+                        if (n == EOM) throw new IOException("Unexpected end of message");
+                        if (n < 0) throw new IOException("Communication channel is closed by remote peer");
+                    }
+                    if (len >= buf.length) {
+                        byte[] tmp = new byte[buf.length * 2];
+                        System.arraycopy(buf, 0, tmp, 0, len);
+                        buf = tmp;
+                    }
+                    buf[len++] = (byte)n;
+                }
+                return new String(buf, 0, len, "UTF8");
             }
 
             public void run() {
@@ -206,7 +227,9 @@ public abstract class AbstractChannel implements IChannel {
                             msg.name = readString();
                             msg.data = readBytes(EOM);
                             break;
+                        case 'P':
                         case 'R':
+                        case 'N':
                             msg.token = new Token(readBytes(0));
                             msg.data = readBytes(EOM);
                             break;
@@ -711,6 +734,14 @@ public abstract class AbstractChannel implements IChannel {
         addToOutQueue(msg);
     }
 
+    public void rejectCommand(IToken token) {
+        assert Protocol.isDispatchThread();
+        if (state != STATE_OPEN) throw new Error("Channel is closed");
+        Message msg = new Message('N');
+        msg.token = (Token)token;
+        addToOutQueue(msg);
+    }
+
     public void sendEvent(IService service, String name, byte[] args) {
         assert Protocol.isDispatchThread();
         if (!(state == STATE_OPEN || state == STATE_OPENNING && service instanceof ILocator)) {
@@ -756,7 +787,7 @@ public abstract class AbstractChannel implements IChannel {
                         cmds.command(token, msg.name, msg.data);
                     }
                     else {
-                        throw new IOException("Unknown command " + msg.service + "." + msg.name);
+                        rejectCommand(token);
                     }
                 }
                 break;
@@ -769,6 +800,11 @@ public abstract class AbstractChannel implements IChannel {
                 token = out_tokens.remove(msg.token.getID()).token;
                 token.getListener().result(token, msg.data);
                 sendCongestionLevel();
+                break;
+            case 'N':
+                token = out_tokens.remove(msg.token.getID()).token;
+                token.getListener().terminated(token, new ErrorReport(
+                        "Command is not recognized", IErrorReport.TCF_ERROR_INV_COMMAND));
                 break;
             case 'E':
                 boolean hello = msg.service.equals(ILocator.NAME) && msg.name.equals("Hello");

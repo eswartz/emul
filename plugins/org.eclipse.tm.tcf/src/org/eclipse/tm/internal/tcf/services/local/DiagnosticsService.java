@@ -51,7 +51,7 @@ public class DiagnosticsService implements IDiagnostics {
                 channel.sendResult(token, JSON.toJSONSequence(new Object[]{ null, new String[0] }));
             }
             else {
-                throw new Exception("Illegal command: " + name);
+                channel.rejectCommand(token);
             }
         }
     }
@@ -140,6 +140,16 @@ public class DiagnosticsService implements IDiagnostics {
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 done.doneDisposeTestStream(token, new Exception("Invalid context"));
+            }
+        });
+        return token;
+    }
+
+    public IToken not_implemented_command(final DoneNotImplementedCommand done) {
+        final IToken token = new Token();
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                done.doneNotImplementedCommand(token, new Exception("Not implemented"));
             }
         });
         return token;

@@ -540,7 +540,8 @@ string as returned by Service.getName().</p>
 <p>Command name interpretation depends on a service.</p>
  
 <p>A command should always be answered with result packed. Result does not have to
-be positive &ndash; it can include an error code, but there always must be one. Since client
+be positive &ndash; it can include an error code, or it can be special "N" result that indicates that command was not recognized,
+but there always must be one. Since client
 cannot detect that a response is missing, if for some reasons peer is not able to
 answer a command, it should consider such situation a fatal communication error and
 it must shutdown the communication channel. It is not necessary to wait for result
@@ -554,13 +555,14 @@ store the requests and time to process them.</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;result&gt;</i>
+    &rArr; N &bull; <i>&lt;token&gt;</i> &bull;
     &rArr; R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;byte array: result data&gt;</i>
-    &rArr; P &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;byte array: result data&gt;</i>
+    &rArr; P &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;byte array: progress data&gt;</i>
 </font></b></pre>
 
-<p>Result packets start with string &ldquo;P&rdquo; for intermediate result and &ldquo;R&rdquo; for final
-result. Receiving of &ldquo;R&rdquo; result concludes execution of corresponding command.
-There should be exactly one &ldquo;R&rdquo; result for each command. In addition, command execution can produce any number of
+<p>Result packets start with string &ldquo;P&rdquo; for intermediate result, &ldquo;R&rdquo; for final
+result, and &ldquo;N&rdquo; if command is not recognized. Receiving of &ldquo;R&rdquo; or &ldquo;N&rdquo; result concludes execution of corresponding command.
+There should be exactly one &ldquo;R&rdquo; or &ldquo;N&rdquo; result for each command. In addition, command execution can produce any number of
 intermediate &ldquo;P&rdquo; results. &ldquo;P&rdquo; results can be sent before &ldquo;R&rdquo;, and it can serve, for
 example, as command execution progress report when execution takes long time.</p>
  

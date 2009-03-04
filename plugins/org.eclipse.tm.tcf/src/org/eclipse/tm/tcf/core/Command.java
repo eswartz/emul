@@ -68,39 +68,6 @@ public abstract class Command implements IChannel.ICommandListener {
     
     private static final SimpleDateFormat timestamp_format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     
-    private class ErrorReport extends Exception implements IErrorReport {
-        
-        private static final long serialVersionUID = 3687543884858739977L;
-        private final Map<String,Object> attrs;
-        
-        ErrorReport(String msg, Map<String,Object> attrs) {
-            super(msg);
-            this.attrs = attrs;
-            Object caused_by = attrs.get(IErrorReport.ERROR_CAUSED_BY);
-            if (caused_by != null) initCause(toError(caused_by, false));
-        }
-
-        public int getErrorCode() {
-            Number n = (Number)attrs.get(ERROR_CODE);
-            if (n == null) return 0;
-            return n.intValue();
-        }
-
-        public int getAltCode() {
-            Number n = (Number)attrs.get(ERROR_ALT_CODE);
-            if (n == null) return 0;
-            return n.intValue();
-        }
-
-        public String getAltOrg() {
-            return (String)attrs.get(ERROR_ALT_ORG);
-        }
-
-        public Map<String, Object> getAttributes() {
-            return attrs;
-        }
-    }
-    
     public Command(IChannel channel, IService service, String command, Object[] args) {
         this.service = service;
         this.command = command;
@@ -196,7 +163,7 @@ public abstract class Command implements IChannel.ICommandListener {
         return "Invalid error report format";
     }
     
-    private static void appendErrorProps(StringBuffer bf, Map<String,Object> map) {
+    static void appendErrorProps(StringBuffer bf, Map<String,Object> map) {
         Number time = (Number)map.get(IErrorReport.ERROR_TIME);
         Number code = (Number)map.get(IErrorReport.ERROR_CODE);
         String service = (String)map.get(IErrorReport.ERROR_SERVICE);

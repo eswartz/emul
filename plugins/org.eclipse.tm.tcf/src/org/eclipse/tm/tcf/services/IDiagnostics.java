@@ -224,4 +224,22 @@ public interface IDiagnostics extends IService {
          */
         void doneDisposeTestStream(IToken token, Throwable error);
     }
+    
+    /**
+     * Send a command that is not implemented by peer.
+     * Used to test handling of 'N' messages by communication channel.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */
+    IToken not_implemented_command(DoneNotImplementedCommand done);
+    
+    interface DoneNotImplementedCommand {
+        
+        /**
+         * Called when 'not_implemented_command' command is done.
+         * @param token - command handle.
+         * @param error - error object.
+         */
+        void doneNotImplementedCommand(IToken token, Throwable error);
+    }
 }
