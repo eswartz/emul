@@ -77,7 +77,7 @@ static void display_tcf_reply(Channel * c, void * client_data, int error) {
     int i;
 
     if (error) {
-        printf("reply error %d\n", error);
+        printf("reply error %d: %s\n", error, errno_to_str(error));
         cmdline_resume();
         return;
     }

@@ -42,7 +42,8 @@ typedef void (*ProtocolEventHandler)(Channel *);
  * Callback fucntion for replies of commands.  If error is non-zero
  * then no data should be read of the input steam.
  */
-typedef void (*ReplyHandlerCB)(Channel *, void *client_data, int error);
+/* TODO: need additional argument in ReplyHandlerCB to distinguish R and P responses */
+typedef void (*ReplyHandlerCB)(Channel *, void * client_data, int error);
 
 /*
  * Read and dispatch one protocol message.

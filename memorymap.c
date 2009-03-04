@@ -19,6 +19,7 @@
 #include "config.h"
 
 #include <assert.h>
+#include <errno.h>
 #if defined(_WRS_KERNEL)
 #elif defined(WIN32)
 #else

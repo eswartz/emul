@@ -179,6 +179,14 @@ static ReplyHandlerInfo * find_reply_handler(Channel * c, unsigned long tokenid,
     return NULL;
 }
 
+static void skip_until_EOM(Channel * c) {
+    while (1) {
+        int ch = read_stream(&c->inp);
+        if (ch == MARKER_EOM) return;
+        if (ch == MARKER_EOS) return;
+    }
+}
+
 static void event_locator_hello(Channel * c);
 
 void handle_protocol_message(Protocol * p, Channel * c) {
@@ -212,8 +220,11 @@ void handle_protocol_message(Protocol * p, Channel * c) {
                     p->default_handler(c, args, 4);
                 }
                 else {
-                    trace(LOG_ALWAYS, "Unsupported TCF command: %s %s ...", service, name);
-                    exception(ERR_PROTOCOL);
+                    trace(LOG_PROTOCOL, "Command is not recognized: %s %s ...", service, name);
+                    skip_until_EOM(c);
+                    write_stringz(&c->out, "N");
+                    write_stringz(&c->out, token);
+                    write_stream(&c->out, MARKER_EOM);
                 }
             }
             else {
@@ -227,10 +238,10 @@ void handle_protocol_message(Protocol * p, Channel * c) {
             exception(trap.error);
         }
     }
-    else if (type[0] == 'R') {
+    else if (type[0] == 'R' || type[0] == 'P' || type[0] == 'N') {
         Trap trap;
         read_stringz(&c->inp, token, sizeof(token));
-        trace(LOG_PROTOCOL, "Peer %s: Reply: R %s ...", c->peer_name, token);
+        trace(LOG_PROTOCOL, "Peer %s: Reply: %c %s ...", type[0], c->peer_name, token);
         if (set_trap(&trap)) {
             ReplyHandlerInfo * rh = NULL;
             char * endptr = NULL;
@@ -238,7 +249,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
             errno = 0;
             tokenid = strtoul(token, &endptr, 10);
             if (errno != 0 || *endptr != '\0' ||
-               (rh = find_reply_handler(c, tokenid, 1)) == NULL) {
+               (rh = find_reply_handler(c, tokenid, type[0] != 'P')) == NULL) {
                 if (p->default_handler != NULL) {
                     args[0] = type;
                     args[1] = token;
@@ -250,8 +261,13 @@ void handle_protocol_message(Protocol * p, Channel * c) {
                 }
             }
             else {
-                rh->handler(c, rh->client_data, 0);
-                loc_free(rh);
+                int error = 0;
+                if (type[0] == 'N') {
+                    skip_until_EOM(c);
+                    error = ERR_INV_COMMAND;
+                }
+                rh->handler(c, rh->client_data, error);
+                if (type[0] != 'P') loc_free(rh);
             }
             clear_trap(&trap);
         }
@@ -283,9 +299,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
                     eh->handler(c);
                 }
                 else {
-                    /* Eat the body of the event */
-                    int ch;
-                    while ((ch = read_stream(&c->inp)) != MARKER_EOM);
+                    skip_until_EOM(c);
                 }
             }
             clear_trap(&trap);
@@ -354,7 +368,7 @@ void add_event_handler(Channel * c, const char * service, const char * name, Pro
     event_handlers[h] = eh;
 }
 
-ReplyHandlerInfo * protocol_send_command(Protocol * p, Channel * c, const char *service, const char *name, ReplyHandlerCB handler, void *client_data) {
+ReplyHandlerInfo * protocol_send_command(Protocol * p, Channel * c, const char * service, const char * name, ReplyHandlerCB handler, void * client_data) {
     ReplyHandlerInfo *rh;
     int h;
     unsigned long tokenid;

@@ -129,6 +129,8 @@ char * errno_to_str(int err) {
         return "Invalid data size";
     case ERR_INV_DATA_TYPE:
         return "Invalid data type";
+    case ERR_INV_COMMAND:
+        return "Command is not recognized";
     case ERR_SYSTEM:
         return system_strerror();
     case ERR_EXCEPTION:

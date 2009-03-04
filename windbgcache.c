@@ -17,10 +17,11 @@
  * Current implementation delegates all its job to DBGHELP.DLL.
  */
 
-#include <assert.h>
-#include <stdio.h>
 #include "mdep.h"
 #include "config.h"
+
+#include <assert.h>
+#include <stdio.h>
 
 #if defined(WIN32)
 

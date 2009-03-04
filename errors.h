@@ -47,6 +47,7 @@
 #define ERR_SYM_NOT_FOUND       (STD_ERR_BASE + 22)
 #define ERR_UNSUPPORTED         (STD_ERR_BASE + 23)
 #define ERR_INV_DATA_TYPE       (STD_ERR_BASE + 24)
+#define ERR_INV_COMMAND         (STD_ERR_BASE + 25)
 
 #define ERR_EXCEPTION           (STD_ERR_BASE + 100)
 
