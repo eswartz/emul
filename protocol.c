@@ -244,7 +244,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
     else if (type[0] == 'R' || type[0] == 'P' || type[0] == 'N') {
         Trap trap;
         read_stringz(&c->inp, token, sizeof(token));
-        trace(LOG_PROTOCOL, "Peer %s: Reply: %c %s ...", type[0], c->peer_name, token);
+        trace(LOG_PROTOCOL, "Peer %s: Reply: %c %s ...", c->peer_name, type[0], token);
         if (set_trap(&trap)) {
             ReplyHandlerInfo * rh = NULL;
             char * endptr = NULL;
