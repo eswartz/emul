@@ -61,6 +61,7 @@ typedef struct StringValue StringValue;
 #define SY_A_MUL 276
 #define SY_A_DIV 277
 #define SY_A_MOD 278
+#define SY_SIZEOF 279
 
 #define MODE_NORMAL 0
 #define MODE_TYPE   1
@@ -104,6 +105,20 @@ void set_value(Value * v, void * data, size_t size) {
     v->size = size;
     v->value = alloc_str(v->size);
     memcpy(v->value, data, v->size);
+}
+
+static void set_ctx_word_value(Value * v, ContextAddress data) {
+    v->remote = 0;
+    v->address = 0;
+    v->size = context_word_size(expression_context);
+    v->value = alloc_str(v->size);
+    switch (v->size) {
+    case 1: *(unsigned char *)v->value = (unsigned char)data; break;
+    case 2: *(unsigned short *)v->value = (unsigned short)data; break;
+    case 4: *(unsigned long *)v->value = (unsigned long)data; break;
+    case 8: *(uns64 *)v->value = data; break;
+    default: assert(0);
+    }
 }
 
 static void string_value(Value * v, char * str) {
@@ -487,7 +502,8 @@ static void next_sy(void) {
                 }
                 assert(cnt == len);
                 ((char *)text_val.value)[cnt] = 0;
-                text_sy = SY_ID;
+                if (strcmp(text_val.value, "sizeof") == 0) text_sy = SY_SIZEOF;
+                else text_sy = SY_ID;
                 return;
             }
             error(ERR_INV_EXPRESSION, "Illegal character");
@@ -496,11 +512,11 @@ static void next_sy(void) {
     }
 }
 
-static void identifier(char * name, Value * v) {
+static int identifier(char * name, Value * v) {
     int i;
     memset(v, 0, sizeof(Value));
     for (i = 0; i < id_callback_cnt; i++) {
-        if (id_callbacks[i](expression_context, expression_frame, name, v)) return;
+        if (id_callbacks[i](expression_context, expression_frame, name, v)) return SYM_CLASS_VALUE;
     }
     if (expression_context == NULL) {
         exception(ERR_INV_CONTEXT);
@@ -513,7 +529,7 @@ static void identifier(char * name, Value * v) {
             string_value(v, container_id(expression_context));
         }
         v->constant = 1;
-        return;
+        return SYM_CLASS_VALUE;
     }
 #if SERVICE_Symbols
     {
@@ -542,7 +558,7 @@ static void identifier(char * name, Value * v) {
                     memcpy(v->value, value, size);
                     loc_free(value);
                 }
-                return;
+                break;
             case SYM_CLASS_REFERENCE:
                 v->remote = 1;
                 if (get_symbol_size(&sym, expression_frame, &v->size) < 0) {
@@ -551,26 +567,54 @@ static void identifier(char * name, Value * v) {
                 if (get_symbol_address(&sym, expression_frame, &v->address) < 0) {
                     error(errno, "Cannot retrieve symbol address");
                 }
-                return;
+                break;
             case SYM_CLASS_FUNCTION:
-                v->type_class = TYPE_CLASS_CARDINAL;
-                v->size = context_word_size(expression_context);
-                v->value = alloc_str(v->size);
-                v->remote = 0;
-                if (get_symbol_address(&sym, expression_frame, (ContextAddress *)v->value) < 0) {
-                    error(errno, "Cannot retrieve symbol address");
+                {
+                    ContextAddress word = 0;
+                    v->type_class = TYPE_CLASS_CARDINAL;
+                    if (get_symbol_address(&sym, expression_frame, &word) < 0) {
+                        error(errno, "Cannot retrieve symbol address");
+                    }
+                    set_ctx_word_value(v, word);
                 }
-                return;
+                break;
             case SYM_CLASS_TYPE:
-                error(ERR_INV_EXPRESSION, "Symbol is a type and has no value");
+                assert(v->size == 0);
+                break;
             default:
                 error(ERR_UNSUPPORTED, "Invalid symbol class");
             }
+            return sym.sym_class;
         }
     }
 #else
     error(ERR_UNSUPPORTED, "Symbols service not available");
 #endif
+    return SYM_CLASS_UNKNOWN;
+}
+
+static int type_name(int mode, Symbol * type) {
+    Value v;
+    char * name = text_val.value;
+    int sym_class;
+
+    if (text_sy != SY_ID) return 0;
+    next_sy();
+    sym_class = identifier(name, &v);
+    if (sym_class != SYM_CLASS_TYPE) return 0;
+    while (text_sy == '*') {
+        next_sy();
+        if (mode == MODE_SKIP) continue;
+#if SERVICE_Symbols
+        if (get_symbol_pointer(&v.type, &v.type)) {
+            error(errno, "Cannot get pointer type");
+        }
+#else
+        memset(&v.type, 0, sizeof(v.type));
+#endif
+    }
+    *type = v.type;
+    return 1;
 }
 
 static void load_value(Value * v) {
@@ -767,7 +811,10 @@ static void primary_expression(int mode, Value * v) {
         next_sy();
     }
     else if (text_sy == SY_ID) {
-        if (mode != MODE_SKIP) identifier((char *)text_val.value, v);
+        if (mode != MODE_SKIP) {
+            int sym_class = identifier((char *)text_val.value, v);
+            if (sym_class == SYM_CLASS_TYPE) error(ERR_INV_EXPRESSION, "Illegal usage of type name");
+        }
         next_sy();
     }
     else {
@@ -814,9 +861,7 @@ static void op_deref(int mode, Value * v) {
 
 static void op_field(int mode, Value * v) {
     char * name = text_val.value;
-    if (text_sy != SY_ID) {
-        error(ERR_INV_EXPRESSION, "Field name expected");
-    }
+    if (text_sy != SY_ID) error(ERR_INV_EXPRESSION, "Field name expected");
     next_sy();
     if (mode == MODE_SKIP) return;
     if (v->type_class != TYPE_CLASS_COMPOSITE) {
@@ -939,12 +984,8 @@ static void op_index(int mode, Value * v) {
 static void op_addr(int mode, Value * v) {
     if (mode == MODE_SKIP) return;
     if (!v->remote) error(ERR_INV_EXPRESSION, "Invalid '&': value has no address");
-    v->size = context_word_size(expression_context);
-    v->value = alloc_str(text_val.size);
-    v->remote = 0;
     assert(!v->constant);
-    *(ContextAddress *)v->value = v->address;
-    v->address = 0;
+    set_ctx_word_value(v, v->address);
     v->type_class = TYPE_CLASS_POINTER;
 #if SERVICE_Symbols
     if (get_symbol_pointer(&v->type, &v->type)) {
@@ -954,6 +995,48 @@ static void op_addr(int mode, Value * v) {
     memset(&v->type, 0, sizeof(v->type));
 #endif
 }
+
+static void unary_expression(int mode, Value * v);
+
+static void op_sizeof(int mode, Value * v) {
+    Symbol type;
+    int pos;
+    int p = text_sy == '(';
+
+    if (p) next_sy();
+    pos = text_pos - 2;
+    if (type_name(mode, &type)) {
+        if (mode != MODE_SKIP) {
+            size_t type_size = 0;
+#if SERVICE_Symbols
+            if (get_symbol_size(&type, expression_frame, &type_size) < 0) {
+                error(errno, "Cannot retrieve symbol size");
+            }
+#endif
+            set_ctx_word_value(v, type_size);
+            memset(&v->type, 0, sizeof(v->type));
+            v->type_class = TYPE_CLASS_CARDINAL;
+            v->constant = 1;
+        }
+    }
+    else {
+        text_pos = pos;
+        next_ch();
+        next_sy();
+        unary_expression(mode == MODE_NORMAL ? MODE_TYPE : mode, v);
+        if (mode != MODE_SKIP) {
+            set_ctx_word_value(v, v->size);
+            memset(&v->type, 0, sizeof(v->type));
+            v->type_class = TYPE_CLASS_CARDINAL;
+            v->constant = 1;
+        }
+    }
+    if (p) {
+        if (text_sy != ')') error(ERR_INV_EXPRESSION, "')' expected");
+        next_sy();
+    }
+}
+
 
 static void postfix_expression(int mode, Value * v) {
     primary_expression(mode, v);
@@ -992,6 +1075,10 @@ static void unary_expression(int mode, Value * v) {
         next_sy();
         unary_expression(mode, v);
         op_addr(mode, v);
+        break;
+    case SY_SIZEOF:
+        next_sy();
+        op_sizeof(mode, v);
         break;
     case '+':
         next_sy();
@@ -1064,8 +1151,126 @@ static void unary_expression(int mode, Value * v) {
 }
 
 static void cast_expression(int mode, Value * v) {
-    /* TODO: cast_expression() */
-    unary_expression(mode, v);
+    if (text_sy == '(') {
+#if SERVICE_Symbols
+        Symbol type;
+        int type_class = TYPE_CLASS_UNKNOWN;
+        size_t type_size = 0;
+        int pos = text_pos - 2;
+        
+        assert(text[pos] == '(');
+        next_sy();
+        if (!type_name(mode, &type)) {
+            text_pos = pos;
+            next_ch();
+            next_sy();
+            assert(text_sy == '(');
+            unary_expression(mode, v);
+            return;
+        }
+        if (text_sy != ')') error(ERR_INV_EXPRESSION, "')' expected");
+        next_sy();
+        cast_expression(mode, v);
+        if (mode == MODE_SKIP) return;
+        if (get_symbol_type_class(&type, &type_class) < 0) {
+            error(errno, "Cannot retrieve symbol type class");
+        }
+        if (get_symbol_size(&type, expression_frame, &type_size) < 0) {
+            error(errno, "Cannot retrieve symbol size");
+        }
+        if (v->remote && v->size == type_size) {
+            /* A type cast can be an l-value expression as long as the size does not change */
+            int ok = 0;
+            switch (type_class) {
+            case TYPE_CLASS_CARDINAL:
+            case TYPE_CLASS_POINTER:
+            case TYPE_CLASS_INTEGER:
+            case TYPE_CLASS_ENUMERATION:
+                switch (v->type_class) {
+                case TYPE_CLASS_CARDINAL:
+                case TYPE_CLASS_POINTER:
+                case TYPE_CLASS_INTEGER:
+                case TYPE_CLASS_ENUMERATION:
+                    ok = 1;
+                    break;
+                }
+                break;
+            case TYPE_CLASS_REAL:
+                ok = v->type_class == TYPE_CLASS_REAL;
+                break;
+            }
+            if (ok) {
+                v->type = type;
+                v->type_class = type_class;
+                return;
+            }
+        }
+        switch (type_class) {
+        case TYPE_CLASS_UNKNOWN:
+            error(ERR_INV_EXPRESSION, "Unknown type class");
+            break;
+        case TYPE_CLASS_CARDINAL:
+        case TYPE_CLASS_POINTER:
+            {
+                uns64 value = to_uns(mode, v);
+                v->type = type;
+                v->type_class = type_class;
+                v->size = type_size;
+                v->remote = 0;
+                v->value = alloc_str(v->size);
+                switch (v->size) {
+                case 1: *(unsigned char *)v->value = (unsigned char)value; break;
+                case 2: *(unsigned short *)v->value = (unsigned short)value; break;
+                case 4: *(unsigned long *)v->value = (unsigned long)value; break;
+                case 8: *(uns64 *)v->value = value; break;
+                default: assert(0);
+                }
+            }
+            break;
+        case TYPE_CLASS_INTEGER:
+        case TYPE_CLASS_ENUMERATION:
+            {
+                int64 value = to_int(mode, v);
+                v->type = type;
+                v->type_class = type_class;
+                v->size = type_size;
+                v->remote = 0;
+                v->value = alloc_str(v->size);
+                switch (v->size) {
+                case 1: *(signed char *)v->value = (signed char)value; break;
+                case 2: *(signed short *)v->value = (signed short)value; break;
+                case 4: *(signed long *)v->value = (signed long)value; break;
+                case 8: *(int64 *)v->value = value; break;
+                default: assert(0);
+                }
+            }
+            break;
+        case TYPE_CLASS_REAL:
+            {
+                double value = to_double(mode, v);
+                v->type = type;
+                v->type_class = type_class;
+                v->size = type_size;
+                v->remote = 0;
+                v->value = alloc_str(v->size);
+                switch (v->size) {
+                case 4: *(float *)v->value = (float)value; break;
+                case 8: *(double *)v->value = value; break;
+                default: assert(0);
+                }
+            }
+            break;
+        default:
+            error(ERR_INV_EXPRESSION, "Invalid type cast: illegal destination type");
+            break;
+        }
+#else
+    error(ERR_UNSUPPORTED, "Symbols service not available");
+#endif
+    }
+    else {
+        unary_expression(mode, v);
+    }
 }
 
 static void multiplicative_expression(int mode, Value * v) {

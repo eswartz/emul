@@ -565,6 +565,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
     IMAGEHLP_STACK_FRAME stack_frame;
     HANDLE process = ctx->parent == NULL ? ctx->handle : ctx->parent->handle;
+    DWORD64 module;
 
     memset(info, 0, sizeof(SYMBOL_INFO));
     info->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -598,12 +599,19 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
         }
     }
 
-    if (!SymFromName(process, name, info)) {
-        set_win32_errno(GetLastError());
-        return find_test_symbol(ctx, name, sym);
+    if (SymFromName(process, name, info)) {
+        syminfo2symbol(ctx, info, sym);
+        return 0;
     }
-    syminfo2symbol(ctx, info, sym);
-    return 0;
+    module = SymGetModuleBase64(process, stack_frame.InstructionOffset);
+    if (module != 0) {
+        if (SymGetTypeFromName(process, module, name, info)) {
+            syminfo2symbol(ctx, info, sym);
+            return 0;
+        }
+    }
+    if (set_win32_errno(GetLastError()) == 0) errno = ERR_SYM_NOT_FOUND;
+    return find_test_symbol(ctx, name, sym);
 }
 
 typedef struct EnumerateSymbolsContext {

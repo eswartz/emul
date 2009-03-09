@@ -70,8 +70,13 @@ int set_win32_errno(DWORD win32_error_code) {
      * store actual error code in errno_win32, which is used later
      * when anyone calls errno_to_str() to get actual error message string.
      */
-    errno = ERR_SYSTEM;
-    errno_win32 = win32_error_code;
+    if (win32_error_code) {
+        errno = ERR_SYSTEM;
+        errno_win32 = win32_error_code;
+    }
+    else {
+        errno = 0;
+    }
     return errno;
 }
 

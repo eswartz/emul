@@ -207,6 +207,8 @@ enum DataKind {
 #define SymSetContext LocSymSetContext
 #define SymFromName LocSymFromName
 #define SymEnumSymbols LocSymEnumSymbols
+#define SymGetTypeFromName LocSymGetTypeFromName
+#define SymGetModuleBase64 LocSymGetModuleBase64
 #define SymLoadModule64 LocSymLoadModule64
 #define SymUnloadModule64 LocSymUnloadModule64
 #define SymCleanup LocSymCleanup
@@ -221,6 +223,8 @@ extern BOOL SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index, PSYMBO
 extern BOOL SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame, PIMAGEHLP_CONTEXT Context);
 extern BOOL SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol);
 extern BOOL SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask, PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback, PVOID UserContext);
+extern BOOL SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Name, PSYMBOL_INFO Symbol);
+extern DWORD64 SymGetModuleBase64(HANDLE hProcess, ULONG64 Address);
 extern BOOL SymLoadModule64(HANDLE hProcess, HANDLE hFile, PCSTR ImageName, PCSTR ModuleName, DWORD64 BaseOfDll, DWORD SizeOfDll);
 extern BOOL SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll);
 extern BOOL SymCleanup(HANDLE hProcess);
