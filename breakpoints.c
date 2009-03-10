@@ -1497,7 +1497,7 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     add_command_handler(proto, BREAKPOINTS, "enable", command_bp_enable);
     add_command_handler(proto, BREAKPOINTS, "disable", command_bp_disable);
     add_command_handler(proto, BREAKPOINTS, "remove", command_bp_remove);
-    add_command_handler(proto, BREAKPOINTS, "getBreakpointIDs", command_get_bp_ids);
+    add_command_handler(proto, BREAKPOINTS, "getIDs", command_get_bp_ids);
     add_command_handler(proto, BREAKPOINTS, "getProperties", command_get_properties);
     add_command_handler(proto, BREAKPOINTS, "getStatus", command_get_status);
     add_command_handler(proto, BREAKPOINTS, "getCapabilities", command_get_capabilities);
