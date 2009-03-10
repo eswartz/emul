@@ -226,7 +226,7 @@ static struct MemoryCommandArgs * read_command_args(char * token, Channel * c, i
         if (cmd != CMD_GET) {
             int ch;
             while ((ch = read_stream(&c->inp)) != 0) {
-                if (ch == MARKER_EOM) exception(ERR_JSON_SYNTAX);
+                if (ch < 0) exception(ERR_JSON_SYNTAX);
             }
             if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
         }

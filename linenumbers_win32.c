@@ -51,9 +51,12 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineToAddr
         img_line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
 
         if (!SymGetLineFromName(ctx->handle, NULL, file, line, &offset, &img_line)) {
-            err = set_win32_errno(GetLastError());
+            DWORD win_err = GetLastError();
+            if (win_err != ERROR_NOT_FOUND) {
+                err = set_win32_errno(win_err);
+            }
         }
-        if (err == 0) {
+        else {
             callback(user_args, img_line.Address);
         }
     }
