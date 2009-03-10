@@ -171,14 +171,16 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                     command = exps.create(n.id, null, e, new IExpressions.DoneCreate() {
                         public void doneCreate(IToken token, Exception error, IExpressions.Expression context) {
                             if (isDisposed()) {
-                                IExpressions exps = channel.getRemoteService(IExpressions.class);
-                                exps.dispose(context.getID(), new IExpressions.DoneDispose() {
-                                    public void doneDispose(IToken token, Exception error) {
-                                        if (error == null) return;
-                                        if (channel.getState() != IChannel.STATE_OPEN) return;
-                                        Activator.log("Error disposing remote expression evaluator", error);
-                                    }
-                                });
+                                if (error == null && context != null) {
+                                    IExpressions exps = channel.getRemoteService(IExpressions.class);
+                                    exps.dispose(context.getID(), new IExpressions.DoneDispose() {
+                                        public void doneDispose(IToken token, Exception error) {
+                                            if (error == null) return;
+                                            if (channel.getState() != IChannel.STATE_OPEN) return;
+                                            Activator.log("Error disposing remote expression evaluator", error);
+                                        }
+                                    });
+                                }
                                 return;
                             }
                             set(token, error, context);

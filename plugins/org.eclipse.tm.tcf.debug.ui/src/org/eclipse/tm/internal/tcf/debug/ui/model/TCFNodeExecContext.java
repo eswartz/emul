@@ -235,6 +235,10 @@ public class TCFNodeExecContext extends TCFNode {
     public TCFChildrenStackTrace getStackTrace() {
         return children_stack;
     }
+    
+    public TCFChildrenExecContext getChildren() {
+        return children_exec;
+    }
 
     @Override
     public int getNodeIndex(IPresentationContext p, TCFNode n) {

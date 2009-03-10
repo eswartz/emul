@@ -389,6 +389,52 @@ class TestRCBP1 implements ITCFTest,
                 if (error != null) exit(error);
             }
         });
+        bp.getIDs(new IBreakpoints.DoneGetIDs() {
+            public void doneGetIDs(IToken token, Exception error, String[] ids) {
+                if (error != null) {
+                    exit(error);
+                    return;
+                }
+                if (!bp_change_done) {
+                    exit(new Exception("Invalid responce order"));
+                    return;
+                }
+                HashSet<String> s = new HashSet<String>();
+                for (String id : ids) s.add(id);
+                for (String id : bp_list.keySet()) {
+                    if (!s.contains(id)) {
+                        exit(new Exception("BP is not listed by Breakpoints.getIDs: " + id));
+                        return;
+                    }
+                }
+            }
+        });
+        for (final String id : bp_list.keySet()) {
+            bp.getProperties(id, new IBreakpoints.DoneGetProperties() {
+                public void doneGetProperties(IToken token, Exception error, Map<String,Object> properties) {
+                    if (error != null) {
+                        exit(error);
+                        return;
+                    }
+                    HashMap<String,Object> m0 = new HashMap<String,Object>(properties);
+                    HashMap<String,Object> m1 = (HashMap<String,Object>)bp_list.get(id);
+                    if (m0.get(IBreakpoints.PROP_ENABLED) == null) m0.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
+                    if (m1.get(IBreakpoints.PROP_ENABLED) == null) m1.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
+                    if (!m1.equals(m0)) {
+                        exit(new Exception("Invalid data returned by Breakpoints.getProperties: " + m0 + " != " + m1));
+                        return;
+                    }
+                }
+            });
+            bp.getStatus(id, new IBreakpoints.DoneGetStatus() {
+                public void doneGetStatus(IToken token, Exception error, Map<String,Object> status) {
+                    if (error != null) {
+                        exit(error);
+                        return;
+                    }
+                }
+            });
+        }
         Protocol.sync(new Runnable() {
             public void run() {
                 if (!bp_change_done) {

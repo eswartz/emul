@@ -143,6 +143,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private TCFNodeLaunch launch_node;
     private boolean disposed;
+    private boolean debug_view_selection_set;
 
     private static int debug_view_selection_cnt;
     private static int display_source_cnt;
@@ -277,7 +278,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (node instanceof TCFNodeExecContext) {
                 final TCFNodeExecContext exe = (TCFNodeExecContext)node;
                 exe.onContextSuspended(pc, reason, params);
-                setDebugViewSelection(context);
+                setDebugViewSelection(context, false);
             }
             fireModelChanged();
             display.asyncExec(new Runnable() {
@@ -732,7 +733,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return null;
     }
     
-    public void setDebugViewSelection(final String node_id) {
+    public void setDebugViewSelection(final String node_id, boolean initial_selection) {
+        assert Protocol.isDispatchThread();
+        if (initial_selection && debug_view_selection_set) return;
+        debug_view_selection_set = true;
         final int cnt = ++debug_view_selection_cnt;
         display.asyncExec(new Runnable() {
             public void run() {
@@ -759,7 +763,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         for (TCFModelProxy proxy : model_proxies.values()) {
                             if (proxy.getProxyViewer() == viewer) {
                                 proxy.fireModelChanged();
-                                proxy.addDelta(node, IModelDelta.SELECT | IModelDelta.REVEAL);
+                                proxy.addDelta(node, IModelDelta.REVEAL);
+                                proxy.fireModelChanged();
+                                proxy.addDelta(node, IModelDelta.SELECT);
                                 proxy.fireModelChanged();
                             }
                         }
@@ -775,6 +781,21 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
      * The method is normally called from SourceLookupService.
      */
     public void displaySource(Object element, final IWorkbenchPage page, boolean forceSourceLookup) {
+        if (element instanceof TCFNodeExecContext) {
+            final TCFNodeExecContext node = (TCFNodeExecContext)element;
+            element = new TCFTask<TCFNode>() {
+                public void run() {
+                    if (!node.validateNode(this)) return;
+                    if (!node.isSuspended()) {
+                        done(node);
+                    }
+                    else {
+                        TCFNodeStackFrame f = node.getTopFrame();
+                        done(f == null ? node : f);
+                    }
+                }
+            }.getE();
+        }
         if (element instanceof TCFNodeStackFrame) {
             final TCFNodeStackFrame stack_frame = (TCFNodeStackFrame)element;
             final int cnt = ++display_source_cnt;

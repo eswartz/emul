@@ -41,12 +41,12 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
         if (selection instanceof IStructuredSelection) {
             IStructuredSelection ss = (IStructuredSelection)selection;
             Object e = ss.getFirstElement();
-            if (e instanceof TCFNode) return isSticky((TCFNode)e);
+            if (e instanceof TCFNode) return isSuspended((TCFNode)e);
         }
         return false;
     }
     
-    private boolean isSticky(final TCFNode node) {
+    private boolean isSuspended(final TCFNode node) {
         return new TCFTask<Boolean>() {
             public void run() {
                 TCFNode n = node;
@@ -73,12 +73,12 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
                 if (el_existing == null) return true;
                 if (el_existing == el_candidate) return true;
                 if (el_existing instanceof TCFNode && el_candidate instanceof TCFNode) {
-                    if (el_existing instanceof TCFNodeStackFrame && candidate instanceof TCFNodeStackFrame) {
+                    if (el_existing instanceof TCFNodeStackFrame && el_candidate instanceof TCFNodeStackFrame) {
                         TCFNodeStackFrame curr = (TCFNodeStackFrame)el_existing;
                         TCFNodeStackFrame next = (TCFNodeStackFrame)el_candidate;
-                        return curr.parent == next.parent || !isSticky(curr);
+                        return curr.parent == next.parent || !isSuspended(curr);
                     }
-                    return !isSticky((TCFNode)el_existing);
+                    return !isSuspended((TCFNode)el_existing);
                 }
             }
         }
