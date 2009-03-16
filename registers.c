@@ -454,6 +454,26 @@ static void command_setm(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
+static void read_filter_attrs(InputStream * inp, char * nm, void * arg) {
+    loc_free(json_skip_object(inp));
+}
+
+static void command_search(char * token, Channel * c) {
+    char id[256];
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_struct(&c->inp, read_filter_attrs, NULL);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, ERR_UNSUPPORTED);
+    write_stringz(&c->out, "null");
+    write_stream(&c->out, MARKER_EOM);
+}
+
 void ini_registers_service(Protocol * proto) {
     add_command_handler(proto, REGISTERS, "getContext", command_get_context);
     add_command_handler(proto, REGISTERS, "getChildren", command_get_children);
@@ -461,6 +481,7 @@ void ini_registers_service(Protocol * proto) {
     add_command_handler(proto, REGISTERS, "set", command_set);
     add_command_handler(proto, REGISTERS, "getm", command_getm);
     add_command_handler(proto, REGISTERS, "setm", command_setm);
+    add_command_handler(proto, REGISTERS, "search", command_search);
 }
 
 #endif

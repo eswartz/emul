@@ -88,6 +88,19 @@ static void write_context(OutputStream * out, Context * ctx) {
     write_stream(out, ':');
     json_write_ulong(out, sizeof(char *));
     
+    write_stream(out, ',');
+    json_write_string(out, "AccessTypes");
+    write_stream(out, ':');
+    write_stream(out, '[');
+    json_write_string(out, "instruction");
+    write_stream(out, ',');
+    json_write_string(out, "data");
+#if !defined(_WRS_KERNEL)
+    write_stream(out, ',');
+    json_write_string(out, "user");
+#endif
+    write_stream(out, ']');
+
     write_stream(out, '}');
 }
 
