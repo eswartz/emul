@@ -162,16 +162,31 @@ public class MemoryProxy implements IMemory {
             return n.intValue();
         }
 
-        public int getProcessID() {
-            Number n = (Number)props.get(PROP_PROCESS_ID);
-            if (n == null) return 0;
-            return n.intValue();
+        public String getProcessID() {
+            return (String)props.get(PROP_PROCESS_ID);
         }
 
         public boolean isBigEndian() {
             Boolean n = (Boolean)props.get(PROP_BIG_ENDIAN);
             if (n == null) return false;
             return n.booleanValue();
+        }
+
+        @SuppressWarnings("unchecked")
+        public Collection<String> getAccessTypes() {
+            return (Collection<String>)props.get(PROP_ACCESS_TYPES);
+        }
+
+        public Number getEndBound() {
+            return (Number)props.get(PROP_END_BOUND);
+        }
+
+        public String getName() {
+            return (String)props.get(PROP_NAME);
+        }
+
+        public Number getStartBound() {
+            return (Number)props.get(PROP_START_BOUND);
         }
 
         public Map<String, Object> getProperties() {

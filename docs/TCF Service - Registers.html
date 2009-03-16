@@ -17,6 +17,7 @@
         <li><a href='#CmdGetRegister'>Get Register</a>
         <li><a href='#CmdSetMultiple'>Set Multiple Registers</a>
         <li><a href='#CmdGetMultiple'>Get Multiple Registers</a>
+        <li><a href='#CmdSearch'>Search for Registers</a>
     </ul>
     <li><a href='#Events'>Events</a>
     <li><a href='#API'>API</a>
@@ -35,7 +36,7 @@ multiple locations. This allows:
 <ol>
     <li> to get/set multiple register contexts in one command
     <li> to specify offset and size for get/set on large register groups
-    <li> to get/set trunkated register values, e.g. only the low 32 bits of a 64-bit register
+    <li> to get/set truncated register values, e.g. only the low 32 bits of a 64-bit register
 </ol>
  
 <h2><a name='Cmds'>Commands</a></h2>
@@ -89,7 +90,7 @@ Service sends contextChanged event to notify changes in context data.</p>
     - context description.
 
     <li><code><b><font face="Courier New" size=2 color=#333399>"Size" : <i>&lt;int&gt;</i></font></b></code>
-    - context size in bytes. Byte arrays in get/set commandss should be same size.
+    - context size in bytes. Byte arrays in get/set commands should be same size.
     Hardware register can be smaller then this size, for example in case
     when register size is not an even number of bytes. In such case implementation
     should add/remove padding that consists of necessary number of zero bits.
@@ -117,6 +118,7 @@ Service sends contextChanged event to notify changes in context data.</p>
 
     <li><code><b><font face="Courier New" size=2 color=#333399>"BigEndian" : <i>&lt;boolean&gt;</i></font></b></code>
     - true if big endian, which means decreasing numeric significance with increasing bit number.
+    If absent default if false, which implies little endianess. The endianess is used to encode and decode values of get, getm, set and setm commands.
 
     <li><code><b><font face="Courier New" size=2 color=#333399>"LeftToRight" : <i>&lt;boolean&gt;</i></font></b></code>
     - true if the lowest numbered bit (i.e. bit #0 or bit #1, depending on "FirstBit" value) should be shown to user as the left-most bit.
@@ -129,7 +131,61 @@ Service sends contextChanged event to notify changes in context data.</p>
 
     <li><code><b><font face="Courier New" size=2 color=#333399>"Values" : <i>&lt;array of named values&gt;</i></font></b></code>
     - predefined names (mnemonics) for some of context values.
+        <pre><b><font face="Courier New" size=2 color=#333399>
+        <i>&lt;array of named values&gt;</i>
+                &rArr; null
+                &rArr; [ ]
+                &rArr; [ <i>&lt;named values list&gt;</i> ]
+  
+        <i>&lt;named values list&gt;</i>
+                &rArr; <i>&lt;object: named value properties&gt;</i>
+                &rArr; <i>&lt;named values list&gt;</i> , <i>&lt;object: named value properties&gt;</i>
+        </font></b></pre>
+    Named value properties are:
+    <ul>
+        <li><code><b><font face="Courier New" size="2" color="#333399">"Name"</font></b></code>
+        - Name (menemonic) of the value.
+        <li><code><b><font face="Courier New" size="2" color="#333399">"Value"</font></b></code>
+        - BASE64 encoded binary bits of the value.
+        <li><code><b><font face="Courier New" size="2" color="#333399">"Description"</font></b></code>
+        - Short, human readable description of the value.
+        </ul>
+        <p>
 
+    <li><code><b><font face="Courier New" size="2" color="#333399">"MemoryAddress" : <i>&lt;int&gt;</i></font></b></code>
+    - The address of a memory mapped register. If MemoryContext is provided, the address is referring into that context.
+
+    <li><code><b><font face="Courier New" size="2" color="#333399">"MemoryContext" : <i>&lt;string&gt;</i></font></b></code>
+    - The context ID of a memory context in which a memory mapped register is located. Used together with MemoryAddress to inform where in memory memory mapped registers are located.
+      If absent and MemoryAddress is defined, the context ID of this context is used as default.
+
+    <li><code><b><font face="Courier New" size="2" color="#333399">"CanSearch" : <i>&lt;array of strings&gt;</i></font></b></code>
+    - A list of attribute names which can be searched for starting on this context.
+      If absent the context does not support search.
+
+    <li><code><b><font face="Courier New" size="2" color="#333399">"Role" : <i>&lt;string&gt;</i></font></b></code>
+    - The role the register plays in a program execution.
+
+    <p>Predefined register role strings are:</p>
+    <ul>
+        <li><code><b><font face="Courier New" size="2" color="#333399">"PC"</font></b></code>
+        - Program counter. Defines instruction to execute next.
+
+        <li><code><b><font face="Courier New" size="2" color="#333399">"SP"</font></b></code>
+        - Register defining the current stack pointer location.
+
+        <li><code><b><font face="Courier New" size="2" color="#333399">"FP"</font></b></code>
+        - Register defining the current frame pointer location.
+
+        <li><code><b><font face="Courier New" size="2" color="#333399">"RET"</font></b></code>
+        - Register used to store the return address for calls.
+
+        <li><code><b><font face="Courier New" size="2" color="#333399">"CORE"</font></b></code>
+        - Indicates register or register groups which belong to the core state.
+          Commonly set for general purpose registers,
+          condition code and other registers which are of special
+          interest for determining the state.
+   </ul>
 </ul>
 
 <h3><a name='CmdGetChildren'>Get Children</a></h3>
@@ -255,12 +311,75 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;s
 <p>Error report provides integer error code and a short, human readable explanation
 of error. Value is BASE64 encoded byte array of binary data. Byte array size should match the sum of location sizes.</p>
 
+<h3><a name='CmdSearch'>Search for Registers</a></h3>
+ 
+<pre><b><font face="Courier New" size="2" color="#333399">
+C &bull; &lt;token&gt; &bull; Registers &bull; search &bull; <i>&lt;string: start context ID&gt; &bull; &lt;object:filter properties&gt;</i> &bull;
+</font></b></pre>
+
+<p>Search returns a path to each context with properties matching the filter. A path consists of a list of 
+    context ids starting with a direct child of the start context up to the found context.
+    Search is only supported for properties listed in the CanSearch property.
+
+<p>Predefined filter object properties are:</p>
+<ul>
+    <li><code><b><font face="Courier New" size="2" color="#333399">"Name" : <i>&lt;string&gt;</i></font></b></code>
+    - The name of the property this filter applies to. Must be one of the names listed in the CanSearch property.
+        </li>
+    <li><code><b><font face="Courier New" size="2" color="#333399">"EqualValue" : <i>&lt;string&gt;</i></font></b></code>
+    - The value which is searched for.
+        </li>
+</ul>
+</p>
+ 
+<p>Result message:</p>
+ 
+<pre><b><font face="Courier New" size="2" color="#333399">
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of context Paths&gt;</i> &bull;
+
+<i>&lt;array of context Paths&gt;</i>
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;context Path list&gt;</i> ]
+  
+<i>&lt;context Path list&gt;</i>
+    &rArr; <i>&lt;array of context IDs&gt;</i>
+    &rArr; <i>&lt;context Path list&gt;</i> , <i>&lt;array of context IDs&gt;</i>
+
+</font></b></pre>
+
+<p>Error report provides integer error code and a short, human readable explanation of error.
+In the result, each matching context is provided with the path of parents starting with the direct
+children of the starting node up to the matching node.
+Multiple found entries are returned as an array of those paths.
+</p>
+Example Assume the following context hierarchy:
+
+<pre><b><font face="Courier New" size="2">
+{"Name" : "Core", "ID":"ID_C"}
+        {"Name" : "Group0", "ID":"ID_G0", "Role":"CORE"}
+                {"Name" : "PC", "ID":"ID_PC", "Role":"PC"}
+                {"Name" : "SP", "ID":"ID_SP", "Role":"SP"}
+        {"Name" : "Group1", "ID":"ID_G1"}
+                {"Name" : "R0", "ID":"ID_R0"}
+</font></b></pre>
+
+With this setup, the following commands and responses could take place:
+
+<pre><b><font face="Courier New" size="2">
+C &bull; "1234" &bull; Registers &bull; search &bull; "ID_C" &bull; {"Name":"Name", "EqualValue":"PC"} &bull;
+R &bull; "1234" &bull; [["ID_G0", "ID_PC"]] &bull;
+
+C &bull; "1235" &bull; Registers &bull; search &bull; "ID_C" &bull; {"Name":"Role", "EqualValue":"CORE"} &bull;
+R &bull; "1235" &bull; [["ID_G0"]] &bull;
+</font></b></pre>
+
 <h2><a name='Events'>Events</a></h2>
  
 <p>Registers service broadcasts notification events when registers contexts are changed, and when
 a register content is altered by "set" commands.</p>
  
-<pre><b><font face="Courier New" size=2 color=#333399>
+<pre><b><font face="Courier New" size="2" color="#333399">
 E &bull; Registers &bull; contextChanged &bull;
 E &bull; Registers &bull; registerChanged &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
@@ -279,25 +398,47 @@ E &bull; Registers &bull; registerChanged &bull; <i>&lt;string: context ID&gt;</
      * Context property names.
      */</font>
     <font color=#7F0055>static final</font> String
-        PROP_ID = "ID",
-        PROP_PARENT_ID = "ParentID",
-        PROP_PROCESS_ID = "ProcessID",
-        PROP_NAME = "Name",
-        PROP_DESCRIPTION = "Description",
-        PROP_SIZE = "Size",
-        PROP_READBLE = "Readable",
-        PROP_READ_ONCE = "ReadOnce",
-        PROP_WRITEABLE = "Writeable",
-        PROP_WRITE_ONCE = "WriteOnce",
-        PROP_SIDE_EFFECTS = "SideEffects",
-        PROP_VOLATILE = "Volatile",
-        PROP_FLOAT = "Float",
-        PROP_BIG_ENDIAN = "BigEndian",
-        PROP_LEFT_TO_RIGHT = "LeftToRight",
-        PROP_FIST_BIT = "FirstBit",
-        PROP_BITS = "Bits",
-        PROP_VALUES = "Values";
-        
+        PROP_ID = "ID",                         <font color=#3F5FBF>/** String, ID of the context */</font>
+        PROP_PARENT_ID = "ParentID",            <font color=#3F5FBF>/** String, ID of a parent context */</font>
+        PROP_PROCESS_ID = "ProcessID",          <font color=#3F5FBF>/** String, process ID */</font>
+        PROP_NAME = "Name",                     <font color=#3F5FBF>/** String, context name */</font>
+        PROP_DESCRIPTION = "Description",       <font color=#3F5FBF>/** String, context description */</font>
+        PROP_SIZE = "Size",                     <font color=#3F5FBF>/** Number, context size in bytes. Byte arrays in get/set commands should be same size */</font>
+        PROP_READBLE = "Readable",              <font color=#3F5FBF>/** Boolean, true if context value can be read */</font>
+        PROP_READ_ONCE = "ReadOnce",            <font color=#3F5FBF>/** Boolean, true if reading the context (register) destroys its current value */</font>
+        PROP_WRITEABLE = "Writeable",           <font color=#3F5FBF>/** Boolean, true if context value can be written */</font>
+        PROP_WRITE_ONCE = "WriteOnce",          <font color=#3F5FBF>/** Boolean, true if register value can not be overwritten - every write counts */</font>
+        PROP_SIDE_EFFECTS = "SideEffects",      <font color=#3F5FBF>/** Boolean, true if writing the context can change values of other registers */</font>
+        PROP_VOLATILE = "Volatile",             <font color=#3F5FBF>/** Boolean, true if the register value can change even when target is stopped */</font>
+        PROP_FLOAT = "Float",                   <font color=#3F5FBF>/** Boolean, true if the register value is a floating-point value */</font>
+        PROP_BIG_ENDIAN = "BigEndian",          <font color=#3F5FBF>/** Boolean, true if big endian */</font>
+        PROP_LEFT_TO_RIGHT = "LeftToRight",     <font color=#3F5FBF>/** Boolean, true if the lowest numbered bit should be shown to user as the left-most bit */</font>
+        PROP_FIST_BIT = "FirstBit",             <font color=#3F5FBF>/** Number, bit numbering base (0 or 1) to use when showing bits to user */</font>
+        PROP_BITS = "Bits",                     <font color=#3F5FBF>/** Number, if context is a bit field, contains the field bit numbers in the parent context */</font>
+        PROP_VALUES = "Values",                 <font color=#3F5FBF>/** Array of Map, predefined names (mnemonics) for some of context values */</font>
+        PROP_MEMORY_ADDRESS = "MemoryAddress",  <font color=#3F5FBF>/** Number, the address of a memory mapped register */</font>
+        PROP_MEMORY_CONTEXT = "MemoryContext",  <font color=#3F5FBF>/** String, the context ID of a memory context in which a memory mapped register is located */</font>
+        PROP_CAN_SEARCH = "CanSearch",          <font color=#3F5FBF>/** Array of String, a list of attribute names which can be searched for starting on this context */</font>
+        PROP_ROLE = "Role";                     <font color=#3F5FBF>/** String, the role the register plays in a program execution */</font>
+    
+    <font color=#3F5FBF>/**
+     * Role property names.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        ROLE_PC = "PC",                         <font color=#3F5FBF>/** Program counter. Defines instruction to execute next */</font>
+        ROLE_SP = "SP",                         <font color=#3F5FBF>/** Register defining the current stack pointer location */</font>
+        ROLE_FP = "FP",                         <font color=#3F5FBF>/** Register defining the current frame pointer location */</font>
+        ROLE_RET = "RET",                       <font color=#3F5FBF>/** Register used to store the return address for calls */</font>
+        ROLE_CORE = "CORE";                     <font color=#3F5FBF>/** Indicates register or register groups which belong to the core state */</font>
+    
+    <font color=#3F5FBF>/**
+     * Filter property names.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        SEARCH_NAME = "Name",                   <font color=#3F5FBF>/** The name of the property this filter applies too */</font>
+        SEARCH_EQUAL_VALUE = "EqualValue";      <font color=#3F5FBF>/** The value which is searched for */</font>
+
+
     <font color=#3F5FBF>/**
      * Retrieve context info for given context ID.
      *   
@@ -464,10 +605,34 @@ E &bull; Registers &bull; registerChanged &bull; <i>&lt;string: context ID&gt;</
         NamedValue[] getNamedValues();
         
         <font color=#3F5FBF>/**
-         * Get complete map of context properties.
-         * <font color=#7F9FBF>@return</font> map of context properties.
+         * Get the address of a memory mapped register.
+         * <font color=#7F9FBF>@return</font> address.
          */</font>
-        Map&lt;String,Object&gt; getProperties();
+        Number getMemoryAddress();
+        
+        <font color=#3F5FBF>/**
+         * Get the context ID of a memory context in which a memory mapped register is located. 
+         * <font color=#7F9FBF>@return</font> memory context ID.
+         */</font>
+        String getMemoryContext();
+        
+        <font color=#3F5FBF>/**
+         * Get a list of property names which can be searched for starting on this context
+         * <font color=#7F9FBF>@return</font> collection of property names.
+         */</font>
+        Collection<String> canSearch();
+        
+        <font color=#3F5FBF>/**
+         * Get the role the register plays in a program execution.
+         * <font color=#7F9FBF>@return</font> role name.
+         */</font>
+        String getRole();
+
+        <font color=#3F5FBF>/**
+         * Get complete map of context properties.
+         * <font color=#7F9FBF>@return</font> map of all available context properties.
+         */</font>
+        Map<String,Object> getProperties();
         
         <font color=#3F5FBF>/**
          * Read value of the context.
@@ -483,8 +648,17 @@ E &bull; Registers &bull; registerChanged &bull; <i>&lt;string: context ID&gt;</
          * <font color=#7F9FBF>@return</font> - pending command handle.
          */</font>
         IToken set(byte[] value, DoneSet done);
+
+       <font color=#3F5FBF>/**
+         * Search register contexts that passes given search filter.
+         * Search is only supported for properties listed in the "CanSearch" property.
+         * <font color=#7F9FBF>@param</font> filter - properties bag that defines search filter.
+         * <font color=#7F9FBF>@param</font> done - call back object.
+         * <font color=#7F9FBF>@return</font> - pending command handle.
+         */</font>
+         IToken search(Map&lt;String,Object&gt; filter, DoneSearch done);
     }
-    
+
     <font color=#3F5FBF>/**
      * A register context can have predefined names (mnemonics) for some its values.
      * NamedValue objects represent such values. 
@@ -550,6 +724,12 @@ E &bull; Registers &bull; registerChanged &bull; <i>&lt;string: context ID&gt;</
      * 'get' command call back interface.
      */</font>
     <font color=#7F0055>interface</font> DoneGet {
+        <font color=#3F5FBF>/**
+         * Called when value retrieval is done.
+         * <font color=#7F9FBF>@param</font> token - command handle
+         * <font color=#7F9FBF>@param</font> error - error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> value - context value as array of bytes.
+         */</font>
         <font color=#7F0055>void</font> doneGet(IToken token, Exception error, byte[] value);
     }
     
@@ -557,7 +737,25 @@ E &bull; Registers &bull; registerChanged &bull; <i>&lt;string: context ID&gt;</
      * 'set' command call back interface.
      */</font>
     <font color=#7F0055>interface</font> DoneSet {
+        <font color=#3F5FBF>/**
+         * Called when value setting is done.
+         * <font color=#7F9FBF>@param</font> token - command handle.
+         * <font color=#7F9FBF>@param</font> error - error description if operation failed, null if succeeded.
+         */</font>
         <font color=#7F0055>void</font> doneSet(IToken token, Exception error);
+    }
+
+    <font color=#3F5FBF>/**
+     * 'search' command call back interface.
+     */</font>
+    <font color=#7F0055>interface</font> DoneSearch {
+        <font color=#3F5FBF>/**
+         * Called when context search is done.
+         * <font color=#7F9FBF>@param</font> token - command handle.
+         * <font color=#7F9FBF>@param</font> error - error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> paths - array of paths to each context with properties matching the filter
+         */</font>
+        <font color=#7F0055>void</font> doneSearch(IToken token, String[][] paths);
     }
 
     <font color=#3F5FBF>/**
@@ -593,6 +791,8 @@ E &bull; Registers &bull; registerChanged &bull; <i>&lt;string: context ID&gt;</
          * corresponding cached registers data.
          * Not every change is notified - it is not possible,
          * only those, which are not caused by normal execution of the debuggee.
+         * At least, changes caused by "set" command should be notified.
+         * <font color=#7F9FBF>@param</font> id - register context ID.
          */</font>
         <font color=#7F0055>void</font> registerChanged(String context_id);
     }

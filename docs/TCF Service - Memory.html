@@ -110,11 +110,65 @@ Service sends contextChanged event to notify changes in context data.</p>
     <li><code><b><font face="Courier New" size=2 color=#333399>"ParentID" : <i>&lt;string&gt;</i></font></b></code>
     - ID of a parent context.
 
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ProcessID" : <i>&lt;string&gt;</i></font></b></code>
+    - process ID.
+
     <li><code><b><font face="Courier New" size=2 color=#333399>"BigEndian" : <i>&lt;boolean&gt;</i></font></b></code>
     - true if memory is big-endian.
 
     <li><code><b><font face="Courier New" size=2 color=#333399>"AddressSize" : <i>&lt;int&gt;</i></font></b></code>
     - size of memory address in bytes.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Name" : <i>&lt;int&gt;</i></font></b></code>
+    - name of the context, can be used for UI purposes.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"StartBound" : <i>&lt;int&gt;</i></font></b></code>
+    - lowest address (inclusive) which is valid for the context.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"EndBound" : <i>&lt;int&gt;</i></font></b></code>
+    - highest address (inclusive) which is valid for the context.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"AccessTypes" : <i>&lt;array of strings&gt;</i></font></b></code>
+    - Defines the access types allowed for this context.
+        <p>Target system can support multiple different memory access types, like instruction and data access.
+    Different access types can use different logic for address translation and memory mapping, so they can
+    end up accessing different data bits, even if address is the same.
+    Each distinct access type should be represented by separate memory context.
+    A memory context can represent multiple access types if they are equivalent - all access same memory bits.
+    Same data bits can be exposed through multiple memory contexts.</p>
+
+    <p>Predefined access types are:</p>
+    <ul>
+        <li><code><b><font face="Courier New" size=2 color=#333399>"instruction"</font></b></code>
+        - Context represent instructions fetch access.
+
+        <li><code><b><font face="Courier New" size=2 color=#333399>"data"</font></b></code>
+        - Context represents data access.
+
+        <li><code><b><font face="Courier New" size=2 color=#333399>"io"</font></b></code>
+        - Context represents IO peripherals.
+
+        <li><code><b><font face="Courier New" size=2 color=#333399>"user"</font></b></code>
+        - Context represents a user (e.g. application running in Linux) view to memory.
+
+        <li><code><b><font face="Courier New" size=2 color=#333399>"supervisor"</font></b></code>
+        - Context represents a supervisor (e.g. Linux kernel) view to memory.
+
+        <li><code><b><font face="Courier New" size=2 color=#333399>"hypervisor"</font></b></code>
+        - Context represents a hypervisor view to memory.
+
+        <li><code><b><font face="Courier New" size=2 color=#333399>"virtual"</font></b></code>
+        - Context uses virtual addresses.
+
+        <li><code><b><font face="Courier New" size=2 color=#333399>"physical"</font></b></code>
+        - Context uses physical addresses.
+
+        <li><code><b><font face="Courier New" size=2 color=#333399>"cache"</font></b></code>
+        - Context is a cache.
+
+        <li><code><b><font face="Courier New" size=2 color=#333399>"tlb"</font></b></code>
+        - Context is a TLB memory.
+    </ul>
 </ul>
 
 <h3><a name='CmdGetChildren'>Get Children</a></h3>
@@ -274,6 +328,41 @@ E &bull; Memory &bull; memoryChanged &bull; <i>&lt;string: context ID&gt;</i> &b
     <font color=#7F0055>static final</font> String NAME = "Memory";
 
     <font color=#3F5FBF>/**
+     * Context property names.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        PROP_ID = "ID",                         <font color=#3F5FBF>/** String, ID of the context, same as getContext command argument */</font>
+        PROP_PARENT_ID = "ParentID",            <font color=#3F5FBF>/** String, ID of a parent context */</font>
+        PROP_PROCESS_ID = "ProcessID",          <font color=#3F5FBF>/** String, process ID, see Processes service */</font>
+        PROP_BIG_ENDIAN = "BigEndian",          <font color=#3F5FBF>/** Boolean, true if memory is big-endian */</font>
+        PROP_ADDRESS_SIZE = "AddressSize",      <font color=#3F5FBF>/** Number, size of memory address in bytes */</font>
+        PROP_NAME = "Name",                     <font color=#3F5FBF>/** String, name of the context, can be used for UI purposes */</font>
+        PROP_START_BOUND = "StartBound",        <font color=#3F5FBF>/** Number, lowest address (inclusive) which is valid for the context */</font>
+        PROP_END_BOUND = "EndBound",            <font color=#3F5FBF>/** Number, highest address (inclusive) which is valid for the context */</font>
+        PROP_ACCESS_TYPES = "AccessTypes";      <font color=#3F5FBF>/** Array of String, the access types allowed for this context */</font>
+    
+    <font color=#3F5FBF>/**
+     * Values of "AccessTypes".
+     * Target system can support multiple different memory access types, like instruction and data access.
+     * Different access types can use different logic for address translation and memory mapping, so they can
+     * end up accessing different data bits, even if address is the same.
+     * Each distinct access type should be represented by separate memory context.
+     * A memory context can represent multiple access types if they are equivalent - all access same memory bits.
+     * Same data bits can be exposed through multiple memory contexts.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        ACCESS_INSTRUCTION = "instruction",     <font color=#3F5FBF>/** Context represent instructions fetch access */</font>
+        ACCESS_DATA = "data",                   <font color=#3F5FBF>/** Context represents data access */</font>
+        ACCESS_IO = "io",                       <font color=#3F5FBF>/** Context represents IO peripherals */</font>
+        ACCESS_USER = "user",                   <font color=#3F5FBF>/** Context represents a user (e.g. application running in Linux) view to memory */</font>
+        ACCESS_SUPERVISOR = "supervisor",       <font color=#3F5FBF>/** Context represents a supervisor (e.g. Linux kernel) view to memory */</font>
+        ACCESS_HYPERVISOR = "hypervisor",       <font color=#3F5FBF>/** Context represents a hypervisor view to memory */</font>
+        ACCESS_VIRTUAL = "virtual",             <font color=#3F5FBF>/** Context uses virtual addresses */</font>
+        ACCESS_PHYSICAL = "physical",           <font color=#3F5FBF>/** Context uses physical addresses */</font>
+        ACCESS_CACHE = "cache",                 <font color=#3F5FBF>/** Context is a cache */</font>
+        ACCESS_TLB = "tlb";                     <font color=#3F5FBF>/** Context is a TLB memory */</font>
+    
+    <font color=#3F5FBF>/**
      * Retrieve context info for given context ID.
      *   
      * <font color=#7F9FBF>@param</font> id &ndash; context ID. 
@@ -339,22 +428,65 @@ E &bull; Memory &bull; memoryChanged &bull; <i>&lt;string: context ID&gt;</i> &b
     <font color=#7F0055>interface</font> MemoryContext {
  
         <font color=#3F5FBF>/** 
-         * Retrieve context ID.
-         * Same as getProperties().get("id")
+         * Get context ID.
+         * <font color=#7F9FBF>@return</font> context ID.
          */</font>
         String getID();
- 
+
         <font color=#3F5FBF>/** 
-         * Return true if the context has children.
-         * Same as getProperties().get("has_children")
-         * Children can be retrieved by getContexts call.
+         * Get parent context ID.
+         * <font color=#7F9FBF>@return</font> parent ID.
          */</font>
-        <font color=#7F0055>boolean</font> hasChildren();
- 
+        String getParentID();
+        
         <font color=#3F5FBF>/** 
-         * Retrieve context properties.
+         * Get process ID, if applicable.
+         * <font color=#7F9FBF>@return</font> process ID.
          */</font>
-        Map&lt;String,Object&gt; getProperties();
+        String getProcessID();
+        
+        <font color=#3F5FBF>/** 
+         * Get memory endianess.
+         * <font color=#7F9FBF>@return</font> true if memory id big-endian.
+         */</font>
+        boolean isBigEndian();
+        
+        <font color=#3F5FBF>/** 
+         * Get memory address size.
+         * <font color=#7F9FBF>@return</font> number of bytes used to store memory address value.
+         */</font>
+        int getAddressSize();
+        
+        <font color=#3F5FBF>/** 
+         * Get memory context name.
+         * The name can be used for UI purposes.
+         * <font color=#7F9FBF>@return</font> context name.
+         */</font>
+        String getName();
+        
+        <font color=#3F5FBF>/** 
+         * Get lowest address (inclusive) which is valid for the context.
+         * <font color=#7F9FBF>@return</font> lowest address.
+         */</font>
+        Number getStartBound();
+        
+        <font color=#3F5FBF>/** 
+         * Get highest address (inclusive) which is valid for the context.
+         * <font color=#7F9FBF>@return</font> highest address.
+         */</font>
+        Number getEndBound();
+        
+        <font color=#3F5FBF>/** 
+         * Get the access types allowed for this context.
+         * <font color=#7F9FBF>@return</font> collection of access type names.
+         */</font>
+        Collection&lt;String> getAccessTypes();
+
+        <font color=#3F5FBF>/** 
+         * Get context properties.
+         * <font color=#7F9FBF>@return</font> all available context properties.
+         */</font>
+        Map&lt;String,Object> getProperties();
  
         <font color=#3F5FBF>/**
          * Set target memory.
@@ -375,15 +507,15 @@ E &bull; Memory &bull; memoryChanged &bull; <i>&lt;string: context ID&gt;</i> &b
          */</font>
         <font color=#7F0055>void</font> fill(long addr, <font color=#7F0055>int</font> word_size, byte[] value,
                           <font color=#7F0055>int</font> size, <font color=#7F0055>int</font> mode, DoneMemory done);
-    
-        <font color=#3F5FBF>/**
-         * Client callback interface for set(), get() and fill().
-         */</font>
-        <font color=#7F0055>interface</font> DoneMemory {
-            <font color=#7F0055>void</font> doneMemory(MemoryError error);
-        }
     }
  
+    <font color=#3F5FBF>/**
+     * Client callback interface for set(), get() and fill().
+     */</font>
+    <font color=#7F0055>interface</font> DoneMemory {
+        <font color=#7F0055>void</font> doneMemory(MemoryError error);
+    }
+
     <font color=#7F0055>class</font> MemoryError <font color=#7F0055>extends</font> Exception {
     }
   
@@ -419,8 +551,22 @@ E &bull; Memory &bull; memoryChanged &bull; <i>&lt;string: context ID&gt;</i> &b
         
     }
  
+    <font color=#3F5FBF>/**
+     * Add memory service event listener.
+     * <font color=#7F9FBF>@param</font> listener - event listener implementation.
+     */</font>
     <font color=#7F0055>void</font> addListener(MemoryListener listener);
- 
+
+    <font color=#3F5FBF>/**
+     * Remove memory service event listener.
+     * <font color=#7F9FBF>@param</font> listener - event listener implementation.
+     */</font>
+    <font color=#7F0055>void</font> removeListener(MemoryListener listener);
+
+    <font color=#3F5FBF>/**
+     * Memory event listener is notified when memory context hierarchy
+     * changes, and when memory is modified by memory service commands. 
+     */</font>
     <font color=#7F0055>interface</font> MemoryListener {
  
         <font color=#3F5FBF>/**

@@ -13,6 +13,7 @@ package org.eclipse.tm.internal.tcf.dsf.services;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -37,6 +38,7 @@ import org.eclipse.tm.internal.tcf.dsf.Activator;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRegisters.DoneGet;
+import org.eclipse.tm.tcf.services.IRegisters.DoneSearch;
 import org.eclipse.tm.tcf.services.IRegisters.DoneSet;
 import org.eclipse.tm.tcf.services.IRegisters.NamedValue;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -157,10 +159,28 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                 public boolean isWriteable() {
                     return false;
                 }
+                public Collection<String> canSearch() {
+                    return null;
+                }
+                public Number getMemoryAddress() {
+                    return null;
+                }
+                public String getMemoryContext() {
+                    return null;
+                }
+                public String getProcessID() {
+                    return null;
+                }
+                public String getRole() {
+                    return null;
+                }
                 public IToken get(DoneGet done) {
                     throw new Error();
                 }
                 public IToken set(byte[] value, DoneSet done) {
+                    throw new Error();
+                }
+                public IToken search(Map<String, Object> filter, DoneSearch done) {
                     throw new Error();
                 }
             };

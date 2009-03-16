@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.services;
 
+import java.util.Collection;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.protocol.IService;
@@ -27,24 +28,45 @@ public interface IRegisters extends IService {
      * Context property names.
      */
     static final String
-        PROP_ID = "ID",
-        PROP_PARENT_ID = "ParentID",
-        PROP_PROCESS_ID = "ProcessID",
-        PROP_NAME = "Name",
-        PROP_DESCRIPTION = "Description",
-        PROP_SIZE = "Size",
-        PROP_READBLE = "Readable",
-        PROP_READ_ONCE = "ReadOnce",
-        PROP_WRITEABLE = "Writeable",
-        PROP_WRITE_ONCE = "WriteOnce",
-        PROP_SIDE_EFFECTS = "SideEffects",
-        PROP_VOLATILE = "Volatile",
-        PROP_FLOAT = "Float",
-        PROP_BIG_ENDIAN = "BigEndian",
-        PROP_LEFT_TO_RIGHT = "LeftToRight",
-        PROP_FIST_BIT = "FirstBit",
-        PROP_BITS = "Bits",
-        PROP_VALUES = "Values";
+        PROP_ID = "ID",                         /** String, ID of the context */
+        PROP_PARENT_ID = "ParentID",            /** String, ID of a parent context */
+        PROP_PROCESS_ID = "ProcessID",          /** String, process ID */
+        PROP_NAME = "Name",                     /** String, context name */
+        PROP_DESCRIPTION = "Description",       /** String, context description */
+        PROP_SIZE = "Size",                     /** Number, context size in bytes. Byte arrays in get/set commands should be same size */
+        PROP_READBLE = "Readable",              /** Boolean, true if context value can be read */
+        PROP_READ_ONCE = "ReadOnce",            /** Boolean, true if reading the context (register) destroys its current value */
+        PROP_WRITEABLE = "Writeable",           /** Boolean, true if context value can be written */
+        PROP_WRITE_ONCE = "WriteOnce",          /** Boolean, true if register value can not be overwritten - every write counts */
+        PROP_SIDE_EFFECTS = "SideEffects",      /** Boolean, true if writing the context can change values of other registers */
+        PROP_VOLATILE = "Volatile",             /** Boolean, true if the register value can change even when target is stopped */
+        PROP_FLOAT = "Float",                   /** Boolean, true if the register value is a floating-point value */
+        PROP_BIG_ENDIAN = "BigEndian",          /** Boolean, true if big endian */
+        PROP_LEFT_TO_RIGHT = "LeftToRight",     /** Boolean, true if the lowest numbered bit should be shown to user as the left-most bit */
+        PROP_FIST_BIT = "FirstBit",             /** Number, bit numbering base (0 or 1) to use when showing bits to user */ 
+        PROP_BITS = "Bits",                     /** Number, if context is a bit field, contains the field bit numbers in the parent context */
+        PROP_VALUES = "Values",                 /** Array of Map, predefined names (mnemonics) for some of context values */
+        PROP_MEMORY_ADDRESS = "MemoryAddress",  /** Number, the address of a memory mapped register */
+        PROP_MEMORY_CONTEXT = "MemoryContext",  /** String, the context ID of a memory context in which a memory mapped register is located */
+        PROP_CAN_SEARCH = "CanSearch",          /** Array of String, a list of attribute names which can be searched for starting on this context */
+        PROP_ROLE = "Role";                     /** String, the role the register plays in a program execution */
+    
+    /**
+     * Values of context property "Role".
+     */
+    static final String
+        ROLE_PC = "PC",                         /** Program counter. Defines instruction to execute next */
+        ROLE_SP = "SP",                         /** Register defining the current stack pointer location */
+        ROLE_FP = "FP",                         /** Register defining the current frame pointer location */
+        ROLE_RET = "RET",                       /** Register used to store the return address for calls */
+        ROLE_CORE = "CORE";                     /** Indicates register or register groups which belong to the core state */
+    
+    /**
+     * Search filter properties.
+     */
+    static final String
+        SEARCH_NAME = "Name",                   /** The name of the property this filter applies too */
+        SEARCH_EQUAL_VALUE = "EqualValue";      /** The value which is searched for */
         
     /**
      * Retrieve context info for given context ID.
@@ -114,6 +136,12 @@ public interface IRegisters extends IService {
         String getParentID();
         
         /**
+         * Get process ID, if applicable.
+         * @return process ID.
+         */
+        String getProcessID();
+        
+        /**
          * Get context (register, register group, bit field) name.
          * @return context name.
          */
@@ -181,6 +209,7 @@ public interface IRegisters extends IService {
         /**
          * Check endianess of the context.
          * Big endian means decreasing numeric significance with increasing bit number. 
+         * The endianess is used to encode and decode values of get, getm, set and setm commands.
          * @return true if big endian.
          */
         boolean isBigEndian();
@@ -214,8 +243,32 @@ public interface IRegisters extends IService {
         NamedValue[] getNamedValues();
         
         /**
+         * Get the address of a memory mapped register.
+         * @return address.
+         */
+        Number getMemoryAddress();
+        
+        /**
+         * Get the context ID of a memory context in which a memory mapped register is located. 
+         * @return memory context ID.
+         */
+        String getMemoryContext();
+        
+        /**
+         * Get a list of property names which can be searched for starting on this context
+         * @return collection of property names.
+         */
+        Collection<String> canSearch();
+        
+        /**
+         * Get the role the register plays in a program execution.
+         * @return role name.
+         */
+        String getRole();
+
+        /**
          * Get complete map of context properties.
-         * @return map of context properties.
+         * @return map of all available context properties.
          */
         Map<String,Object> getProperties();
         
@@ -233,6 +286,15 @@ public interface IRegisters extends IService {
          * @return - pending command handle.
          */
         IToken set(byte[] value, DoneSet done);
+        
+        /**
+         * Search register contexts that passes given search filter.
+         * Search is only supported for properties listed in the "CanSearch" property.
+         * @param filter - properties bag that defines search filter.
+         * @param done - call back object.
+         * @return - pending command handle.
+         */
+        IToken search(Map<String,Object> filter, DoneSearch done);
     }
     
     /**
@@ -315,10 +377,23 @@ public interface IRegisters extends IService {
     interface DoneSet {
         /**
          * Called when value setting is done.
-         * @param token - command handle
+         * @param token - command handle.
          * @param error – error description if operation failed, null if succeeded.
          */
         void doneSet(IToken token, Exception error);
+    }
+    
+    /**
+     * 'search' command call back interface.
+     */
+    interface DoneSearch {
+        /**
+         * Called when context search is done.
+         * @param token - command handle.
+         * @param error – error description if operation failed, null if succeeded.
+         * @param paths - array of paths to each context with properties matching the filter
+         */
+        void doneSearch(IToken token, Exception error, String[][] paths);
     }
 
     /**

@@ -663,7 +663,7 @@ class TestRCBP1 implements ITCFTest,
                     exit(new Exception("Bad memory context data: invalid ID"));
                 }
                 Object pid = context.getProperties().get(IRunControl.PROP_PROCESS_ID);
-                if (pid != null && !pid.equals(mem_ctx.getProperties().get(IMemory.PROP_PROCESS_ID))) {
+                if (pid != null && !pid.equals(mem_ctx.getProcessID())) {
                     exit(new Exception("Bad memory context data: invalid ProcessID"));
                 }
                 final boolean big_endian = mem_ctx.isBigEndian();

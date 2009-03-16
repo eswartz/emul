@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.services;
 
+import java.util.Collection;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.protocol.IService;
@@ -27,11 +28,36 @@ public interface IMemory extends IService {
      * Context property names.
      */
     static final String
-        PROP_ID = "ID",
-        PROP_PARENT_ID = "ParentID",
-        PROP_PROCESS_ID = "ProcessID",
-        PROP_BIG_ENDIAN = "BigEndian",
-        PROP_ADDRESS_SIZE = "AddressSize";
+        PROP_ID = "ID",                         /** String, ID of the context, same as getContext command argument */
+        PROP_PARENT_ID = "ParentID",            /** String, ID of a parent context */
+        PROP_PROCESS_ID = "ProcessID",          /** String, process ID, see Processes service */
+        PROP_BIG_ENDIAN = "BigEndian",          /** Boolean, true if memory is big-endian */
+        PROP_ADDRESS_SIZE = "AddressSize",      /** Number, size of memory address in bytes */
+        PROP_NAME = "Name",                     /** String, name of the context, can be used for UI purposes */
+        PROP_START_BOUND = "StartBound",        /** Number, lowest address (inclusive) which is valid for the context */
+        PROP_END_BOUND = "EndBound",            /** Number, highest address (inclusive) which is valid for the context */
+        PROP_ACCESS_TYPES = "AccessTypes";      /** Array of String, the access types allowed for this context */
+    
+    /**
+     * Values of "AccessTypes".
+     * Target system can support multiple different memory access types, like instruction and data access.
+     * Different access types can use different logic for address translation and memory mapping, so they can
+     * end up accessing different data bits, even if address is the same.
+     * Each distinct access type should be represented by separate memory context.
+     * A memory context can represent multiple access types if they are equivalent - all access same memory bits.
+     * Same data bits can be exposed through multiple memory contexts.
+     */
+    static final String
+        ACCESS_INSTRUCTION = "instruction",     /** Context represent instructions fetch access */
+        ACCESS_DATA = "data",                   /** Context represents data access */
+        ACCESS_IO = "io",                       /** Context represents IO peripherals */
+        ACCESS_USER = "user",                   /** Context represents a user (e.g. application running in Linux) view to memory */
+        ACCESS_SUPERVISOR = "supervisor",       /** Context represents a supervisor (e.g. Linux kernel) view to memory */
+        ACCESS_HYPERVISOR = "hypervisor",       /** Context represents a hypervisor view to memory */
+        ACCESS_VIRTUAL = "virtual",             /** Context uses virtual addresses */
+        ACCESS_PHYSICAL = "physical",           /** Context uses physical addresses */
+        ACCESS_CACHE = "cache",                 /** Context is a cache */
+        ACCESS_TLB = "tlb";                     /** Context is a TLB memory */
     
     /**
      * Retrieve context info for given context ID.
@@ -101,37 +127,63 @@ public interface IMemory extends IService {
     interface MemoryContext {
 
         /** 
-         * Retrieve context ID.
-         * Same as (String)getProperties().get(“ID”)
+         * Get context ID.
+         * @return context ID.
          */
         String getID();
 
         /** 
-         * Retrieve parent context ID.
-         * Same as (String)getProperties().get(“ParentID”)
+         * Get parent context ID.
+         * @return parent ID.
          */
         String getParentID();
         
         /**
-         * Retrieves process ID, if applicable.
+         * Get process ID, if applicable.
          * @return process ID.
          */
-        int getProcessID();
+        String getProcessID();
         
         /**
-         * Retrieve memory endianess.
+         * Get memory endianess.
          * @return true if memory id big-endian.
          */
         boolean isBigEndian();
         
         /**
-         * Retrieve memory address size.
+         * Get memory address size.
          * @return number of bytes used to store memory address value.
          */
         int getAddressSize();
+        
+        /**
+         * Get memory context name.
+         * The name can be used for UI purposes.
+         * @return context name.
+         */
+        String getName();
+        
+        /**
+         * Get lowest address (inclusive) which is valid for the context.
+         * @return lowest address.
+         */
+        Number getStartBound();
+        
+        /**
+         * Get highest address (inclusive) which is valid for the context.
+         * @return highest address.
+         */
+        Number getEndBound();
+        
+        /**
+         * Get the access types allowed for this context.
+         * @return collection of access type names.
+         */
+        Collection<String> getAccessTypes();
 
         /** 
-         * Retrieve context properties.
+         * Get context properties.
+         * @return all available context properties.
          */
         Map<String,Object> getProperties();
 

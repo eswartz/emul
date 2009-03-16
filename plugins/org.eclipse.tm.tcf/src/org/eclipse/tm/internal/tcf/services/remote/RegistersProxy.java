@@ -131,6 +131,28 @@ public class RegistersProxy implements IRegisters {
             return n.booleanValue();
         }
 
+        @SuppressWarnings("unchecked")
+        public Collection<String> canSearch() {
+            return (Collection<String>)props.get(PROP_CAN_SEARCH);
+        }
+
+        public Number getMemoryAddress() {
+            return (Number)props.get(PROP_MEMORY_ADDRESS);
+        }
+
+        public String getMemoryContext() {
+            return (String)props.get(PROP_MEMORY_CONTEXT);
+        }
+
+        public String getProcessID() {
+            return (String)props.get(PROP_PROCESS_ID);
+        }
+
+        public String getRole() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
         public IToken get(final DoneGet done) {
             return new Command(channel, RegistersProxy.this, "get",
                     new Object[]{ getID() }) {
@@ -158,6 +180,22 @@ public class RegistersProxy implements IRegisters {
                         error = toError(args[0]);
                     }
                     done.doneSet(token, error);
+                }
+            }.token;
+        }
+
+        public IToken search(Map<String,Object> filter, final DoneSearch done) {
+            return new Command(channel, RegistersProxy.this, "search",
+                    new Object[]{ getID(), filter }) {
+                @Override
+                public void done(Exception error, Object[] args) {
+                    String[][] paths = null;
+                    if (error == null) {
+                        assert args.length == 2;
+                        error = toError(args[0]);
+                        paths = toPathArray(args[1]);
+                    }
+                    done.doneSearch(token, error, paths);
                 }
             }.token;
         }
@@ -282,6 +320,18 @@ public class RegistersProxy implements IRegisters {
         int[] arr = new int[c.size()];
         for (Number n : c) arr[i++] = n.intValue();
         return arr;
+    }
+    
+    @SuppressWarnings("unchecked")
+    private String[][] toPathArray(Object o) {
+        if (o == null) return null;
+        Collection<Collection<String>> c = (Collection<Collection<String>>)o;
+        int i = 0;
+        String[][] r = new String[c.size()][];
+        for (Collection<String> p : c) {
+            r[i++] = (String[])p.toArray(new String[p.size()]);
+        }
+        return r;
     }
     
     private static class NamedValueInfo implements NamedValue {
