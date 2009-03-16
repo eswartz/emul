@@ -66,6 +66,7 @@
 #include "runctrl.h"
 #include "breakpoints.h"
 #include "memoryservice.h"
+#include "memorymap.h"
 #include "registers.h"
 #include "stacktrace.h"
 #include "symbols.h"

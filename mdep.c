@@ -997,3 +997,35 @@ const char * loc_gai_strerror(int ecode) {
 }
 
 #endif
+
+#if defined(WIN32) || defined(_WRS_KERNEL)
+
+int is_daemon(void) {
+    return 0;
+}
+
+void become_daemon(void) {
+    fprintf(stderr, "tcf-agent: Running in the background is not supported on %s\n", get_os_name());
+    exit(1);
+}
+
+#else
+
+#include <syslog.h>
+
+static int running_as_daemon = 0;
+
+int is_daemon(void) {
+    return running_as_daemon;
+}
+
+void become_daemon(void) {
+    assert(!running_as_daemon);
+    openlog("tcf-agent", LOG_PID, LOG_DAEMON);
+    if (daemon(0, 0) < 0) {
+        syslog(LOG_MAKEPRI(LOG_DAEMON, LOG_ERR), "Cannot become a daemon: %m");
+        exit(1);
+    }
+    running_as_daemon = 1;
+}
+#endif

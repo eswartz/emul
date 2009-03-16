@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# For Redhat systems
+#
+# chkconfig: 345 29 71
+# processname: /usr/sbin/tcf-agent
+# description: Target Communication Framework
+
+#
+# Location of the TCF daemon and the init directory
+#
+DAEMON_PATH=/usr/sbin/tcf-agent
+DAEMON_NAME=`basename $DAEMON_PATH`
+
+#
+# Determine which kind of configuration we're using
+#
+system=unknown
+if [ -f /etc/redhat-release ]; then
+    system=redhat
+else
+    echo "$0: Unknown system, please port and contact dsdp-tcf-dev@eclipse.org" 1>&2
+    exit 1
+fi
+
+if [ $system = redhat ]; then
+    . /etc/init.d/functions
+fi
+
+test -e $DAEMON_PATH || exit 0
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+export PATH
+
+# Redhat start/stop function.
+#
+function redhat()
+{
+
+#
+# See how we were called.
+#
+case "$1" in
+  start)
+    echo -n $"Starting $DAEMON_NAME:"
+    $DAEMON_PATH -d -L- -l0
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ] ; then
+      success "$DAEMON_NAME startup"
+    else
+      failure "$DAEMON_NAME startup"
+    fi
+    [ $RETVAL = 0 ] && touch /var/lock/subsys/$DAEMON_NAME
+    echo
+    ;;
+  stop)
+    echo -n $"Stopping $DAEMON_NAME:"
+    count=0
+    while [ -n "`/sbin/pidof $DAEMON_PATH`" -a $count -lt 10 ] ; do
+      killproc $DAEMON_PATH -USR2 >& /dev/null
+      sleep 1
+      RETVAL=$?
+      if [ $RETVAL != 0 -o -n "`/sbin/pidof $DAEMON_PATH`" ] ; then
+        sleep 3
+      fi
+      count=`expr $count + 1`
+    done
+    rm -f /var/lock/subsys/$DAEMON_NAME
+    if [ -n "`/sbin/pidof $DAEMON_PATH`" ] ; then
+      failure "$DAEMON_NAME shutdown"
+    else
+      success "$DAEMON_NAME shutdown"
+    fi
+    echo
+    ;;
+  restart)
+    redhat stop
+    redhat start
+    ;;
+  status)
+    if [ -n "`/sbin/pidof $DAEMON_PATH`" ] ; then
+      echo "$DAEMON_NAME is running"
+    else
+      echo "$DAEMON_NAME is not running"
+    fi
+    ;;
+  condrestart)
+    [ -f /var/lock/subsys/$DAEMON_NAME ] && redhat restart
+    ;;
+  *)
+  echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+esac
+}
+
+
+RETVAL=0
+
+if [ $system = redhat ]; then
+  redhat "$@"
+fi
+
+exit $RETVAL

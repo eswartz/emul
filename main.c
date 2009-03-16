@@ -82,6 +82,7 @@ int main(int argc, char ** argv) {
 #endif
     int c;
     int ind;
+    int daemon = 0;
     int interactive = 0;
     char * s;
     char * log_name = 0;
@@ -125,6 +126,10 @@ int main(int argc, char ** argv) {
                 exit(0);
                 break;
 
+            case 'd':
+                daemon = 1;
+                break;
+
             case 'l':
             case 'L':
             case 's':
@@ -162,6 +167,7 @@ int main(int argc, char ** argv) {
         }
     }
 
+    if (daemon) become_daemon();
     open_log_file(log_name);
 
 #endif

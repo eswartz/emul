@@ -640,40 +640,39 @@ static void run_safe_events(void * arg) {
     assert(safe_event_list != NULL);
     assert(are_channels_suspended(suspend_group));
 
+    safe_event_pid_count = 0;
+
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
-        int error = 0;
         Context * ctx = ctxl2ctxp(qp);
-        if (ctx->exited || ctx->exiting) continue;
-        if (ctx->stopped) continue;
-        if (!context_has_state(ctx)) continue;
-        if (ctx->pending_step && ctx->pending_safe_event < STOP_ALL_MAX_CNT / 2) continue;
-        if (context_stop(ctx) < 0) {
-            error = errno;
+        if (ctx->exited || ctx->exiting || ctx->stopped || !context_has_state(ctx)) {
+            ctx->pending_safe_event = 0;
+            continue;
+        }
+        if (!ctx->pending_step || ctx->pending_safe_event >= STOP_ALL_MAX_CNT / 2) {
+            if (context_stop(ctx) < 0) {
+                int error = errno;
 #ifdef _WRS_KERNEL
-            if (error == S_vxdbgLib_INVALID_CTX) {
-                /* Most often this means that context has exited,
-                 * but exit event is not delivered yet.
-                 * Not an error. */
-                error = 0;
-            }
+                if (error == S_vxdbgLib_INVALID_CTX) {
+                    /* Most often this means that context has exited,
+                     * but exit event is not delivered yet.
+                     * Not an error. */
+                    error = 0;
+                }
 #endif                
+                if (error) {
+                    trace(LOG_ALWAYS, "error: can't temporary stop pid %d; error %d: %s",
+                        ctx->pid, error, errno_to_str(error));
+                }
+            }
         }
-        if (error) {
-            trace(LOG_ALWAYS, "error: can't temporary stop pid %d; error %d: %s",
-                ctx->pid, error, errno_to_str(error));
-        }
-        if (!ctx->pending_safe_event) {
-            ctx->pending_safe_event = 1;
-            safe_event_pid_count++;
-        }
-        else if (ctx->pending_safe_event == STOP_ALL_MAX_CNT) {
+        if (ctx->pending_safe_event >= STOP_ALL_MAX_CNT) {
             trace(LOG_ALWAYS, "error: can't temporary stop pid %d; error: timeout", ctx->pid);
             ctx->exiting = 1;
             ctx->pending_safe_event = 0;
-            safe_event_pid_count--;
         }
         else {
             ctx->pending_safe_event++;
+            safe_event_pid_count++;
         }
     }
 

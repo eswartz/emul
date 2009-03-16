@@ -353,9 +353,19 @@ static size_t get_sa_len(const struct sockaddr *addr) {
 
 extern pthread_attr_t pthread_create_attr;
 
+/* Return Operating System name */
 extern char * get_os_name(void);
+
+/* Get user home directory path */
 extern char * get_user_home(void);
 
+/* Switch to running in the background, rather than under the direct control of a user */
+extern void become_daemon(void);
+
+/* Return 1 if running in the background, return 0 othewise */
+extern int is_daemon(void);
+
+/* Initialize mdep module */
 extern void ini_mdep(void);
 
 #endif
