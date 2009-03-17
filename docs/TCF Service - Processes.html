@@ -36,7 +36,7 @@ like Memory and Run Control, require a process to be attached
 before they can access it.</p>
 
 <p>If a process is started by this service, its standard input/output streams are 
-available for client to read/write using Streams service. Stream type of such
+available for client to read/write using <a href='TCF Service - Streams.html'>Streams Service</a>. Stream type of such
 streams is set to "Processes".</p>
 
 <p>Command and event parameters are encoded
@@ -92,6 +92,15 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;c
         
     <li><code><b><font face="Courier New" size=2 color=#333399>"CanTerminate" : <i>&lt;boolean&gt;</i></font></b></code>
     - true if the service can terminate the process.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"StdInID" : <i>&lt;string&gt;</i></font></b></code>
+    - process standard input stream ID.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"StdOutID" : <i>&lt;string&gt;</i></font></b></code>
+    - process standard output stream ID.
+        
+    <li><code><b><font face="Courier New" size=2 color=#333399>"StdErrID" : <i>&lt;string&gt;</i></font></b></code>
+    - process standard error stream ID.
 </ul>
 
 <h3><a name='CmdGetChildren'>Get Children</a></h3>
