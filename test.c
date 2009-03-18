@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -182,7 +182,11 @@ int run_test_process(ContextAttachCallBack * done, void * data) {
         if (context_attach_self() < 0) exit(1);
         fd = sysconf(_SC_OPEN_MAX);
         while (fd-- > 2) close(fd);
+#if defined(__APPLE__)
+        if (kill(getpid(), SIGSTOP) < 0) exit(1);
+#else
         if (tkill(getpid(), SIGSTOP) < 0) exit(1);
+#endif
         test_proc();
         exit(0);
     }

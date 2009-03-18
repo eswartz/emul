@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -42,7 +42,375 @@ static const char SYS_MON[] = "SysMonitor";
 #include <dirent.h>
 #include <pwd.h>
 #include <grp.h>
+#if !defined(__APPLE__)
 #include <linux/param.h>
+#endif
+
+#if defined(__APPLE__)
+#include <assert.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/sysctl.h>
+#include <mach/mach.h>
+#include <mach/task_info.h>
+#include <mach/thread_info.h>
+
+typedef struct kinfo_proc kinfo_proc;
+
+static void write_string_array(OutputStream * out, char **ap, int len) {
+    int cnt;
+
+    write_stream(out, '[');
+    for (cnt = 0; cnt < len; cnt++) {
+        if (cnt > 0) write_stream(out, ',');
+        json_write_string(out, ap[cnt]);
+    }
+    write_stream(out, ']');
+}
+
+static void free_array(char **ap, int len) {
+    int c;
+    for (c = 0; c < len; c++) {
+        free(*ap++);
+    }
+    free(ap);
+}
+
+/*
+ * Get kernel process information for all processes.
+ */
+static int get_allprocesses(kinfo_proc **kprocs, int *nprocs)
+{
+    size_t          len;
+    kinfo_proc *    kp;
+    int             mib_name[] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL};
+    int             mib_len = 3;
+
+    if (sysctl(mib_name, mib_len, NULL, &len, NULL, 0) < 0) {
+        return -1;
+    }
+
+    kp = (struct kinfo_proc *)malloc(len);
+
+    if (sysctl(mib_name, mib_len, kp, &len, NULL, 0) < 0) {
+        free(kp);
+        return -1;
+    }
+
+    *kprocs = kp;
+    *nprocs = len / sizeof(kinfo_proc);
+    return 0;
+}
+
+/*
+ * Get kernel process information for a specified pid.
+ */
+static kinfo_proc *get_process(pid_t pid)
+{
+    kinfo_proc *        kp;
+    int                 mib_name[] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, 0};
+    int                 mib_len = 4;
+    size_t              len = sizeof(kinfo_proc);
+
+    mib_name[3] = pid;
+
+    kp = malloc(len);
+    if (kp == NULL) {
+        return NULL;
+    }
+
+    if (sysctl(mib_name, mib_len, kp, &len, NULL, 0) < 0) {
+        free(kp);
+        return NULL;
+    }
+
+    return kp;
+}
+
+static void write_context(OutputStream * out, char * id, char * parent_id, kinfo_proc * p) {
+    struct passwd * pwd;
+    struct group *  grp;
+
+    write_stream(out, '{');
+
+    json_write_string(out, "UID");
+    write_stream(out, ':');
+    json_write_long(out, p->kp_eproc.e_ucred.cr_uid);
+    write_stream(out, ',');
+
+    json_write_string(out, "UGID");
+    write_stream(out, ':');
+    json_write_long(out, p->kp_eproc.e_pcred.p_rgid);
+    write_stream(out, ',');
+
+    pwd = getpwuid(p->kp_eproc.e_ucred.cr_uid);
+    if (pwd != NULL) {
+        json_write_string(out, "UserName");
+        write_stream(out, ':');
+        json_write_string(out, pwd->pw_name);
+        write_stream(out, ',');
+    }
+
+    grp = getgrgid(p->kp_eproc.e_pcred.p_rgid);
+    if (grp != NULL) {
+        json_write_string(out, "GroupName");
+        write_stream(out, ':');
+        json_write_string(out, grp->gr_name);
+        write_stream(out, ',');
+    }
+
+    json_write_string(out, "File");
+    write_stream(out, ':');
+    json_write_string(out, p->kp_proc.p_comm);
+    write_stream(out, ',');
+
+    json_write_string(out, "PID");
+    write_stream(out, ':');
+    json_write_long(out, p->kp_proc.p_pid);
+    write_stream(out, ',');
+
+    json_write_string(out, "State");
+    write_stream(out, ':');
+    write_stream(out, '"');
+    json_write_char(out, p->kp_proc.p_stat);
+    write_stream(out, '"');
+    write_stream(out, ',');
+
+    if (p->kp_eproc.e_ppid > 0) {
+        json_write_string(out, "PPID");
+        write_stream(out, ':');
+        json_write_long(out, p->kp_eproc.e_ppid);
+        write_stream(out, ',');
+    }
+
+    json_write_string(out, "PGRP");
+    write_stream(out, ':');
+    json_write_long(out, p->kp_eproc.e_pgid);
+    write_stream(out, ',');
+
+    if (p->kp_eproc.e_tpgid > 0) {
+        json_write_string(out, "TGID");
+        write_stream(out, ':');
+        json_write_long(out, p->kp_eproc.e_tpgid);
+        write_stream(out, ',');
+    }
+
+    json_write_string(out, "Flags");
+    write_stream(out, ':');
+    json_write_long(out, p->kp_proc.p_flag);
+    write_stream(out, ',');
+
+    json_write_string(out, "UTime");
+    write_stream(out, ':');
+    json_write_int64(out, p->kp_proc.p_uticks);
+    write_stream(out, ',');
+
+    json_write_string(out, "STime");
+    write_stream(out, ':');
+    json_write_int64(out, p->kp_proc.p_sticks);
+    write_stream(out, ',');
+
+    json_write_string(out, "Priority");
+    write_stream(out, ':');
+    json_write_long(out, (long)p->kp_proc.p_priority);
+    write_stream(out, ',');
+
+    if (p->kp_proc.p_nice != 0) {
+        json_write_string(out, "Nice");
+        write_stream(out, ':');
+        json_write_long(out, (long)p->kp_proc.p_nice);
+        write_stream(out, ',');
+    }
+
+    if (parent_id != NULL && parent_id[0] != 0) {
+        json_write_string(out, "ParentID");
+        write_stream(out, ':');
+        json_write_string(out, parent_id);
+        write_stream(out, ',');
+    }
+
+    json_write_string(out, "ID");
+    write_stream(out, ':');
+    json_write_string(out, id);
+
+    write_stream(out, '}');
+}
+
+static void command_get_context(char * token, Channel * c) {
+    char            id[256];
+    pid_t           pid = 0;
+    pid_t           parent = 0;
+    int             err = 0;
+    kinfo_proc *    p;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+
+    pid = id2pid(id, &parent);
+    p = get_process(pid);
+    if (p == NULL) err = errno;
+
+    write_errno(&c->out, err);
+
+    if (err == 0 && pid != 0) {
+        char *parent_id;
+        asprintf(&parent_id, "%d", parent);
+        write_context(&c->out, id, parent == 0 ? NULL : parent_id, p);
+        write_stream(&c->out, 0);
+        free(parent_id);
+    }
+    else {
+        write_stringz(&c->out, "null");
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_get_children(char * token, Channel * c) {
+    int     err = 0;
+    char    id[256];
+    pid_t   pid = 0;
+    pid_t   parent = 0;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+
+    pid = id2pid(id, &parent);
+
+    if (parent != 0) {
+        write_errno(&c->out, 0);
+        write_stringz(&c->out, "null");
+    }
+    else {
+        if (pid == 0) {
+            int             np;
+            int             i;
+            int             n;
+            kinfo_proc *    p;
+
+            if (get_allprocesses(&p, &np) < 0) {
+                write_errno(&c->out, errno);
+                write_stringz(&c->out, "null");
+            }
+            else {
+                write_errno(&c->out, 0);
+                write_stream(&c->out, '[');
+                for (n = 0, i = 0; i < np; i++) {
+                    if (p->kp_proc.p_pid != 0) {
+                        if (n > 0) write_stream(&c->out, ',');
+                        json_write_string(&c->out, pid2id(p->kp_proc.p_pid, 0));
+                        n++;
+                    }
+                    p++;
+                }
+                write_stream(&c->out, ']');
+                write_stream(&c->out, 0);
+            }
+        }
+        else {
+            kinfo_proc *    p;
+
+            p = get_process(pid);
+            if (p == NULL) {
+                write_errno(&c->out, errno);
+                write_stringz(&c->out, "null");
+            }
+            else {
+                task_port_t task;
+
+                if (task_for_pid(mach_task_self(), pid, &task) != KERN_SUCCESS) {
+                    /*
+                     * User is probably not in procmod group
+                     */
+                    write_errno(&c->out, 0);
+                    write_stringz(&c->out, "[]");
+                }
+                else {
+                    unsigned int        thread_count;
+                    thread_port_array_t thread_list;
+
+                    if (task_threads(task, &thread_list, &thread_count) != KERN_SUCCESS) {
+                        write_errno(&c->out, errno);
+                        write_stringz(&c->out, "null");
+                    }
+                    else {
+                        int cnt;
+                        write_errno(&c->out, 0);
+                        write_stream(&c->out, '[');
+                        for (cnt = 0; cnt < thread_count; cnt++) {
+                            if (cnt > 0) write_stream(&c->out, ',');
+                            json_write_string(&c->out, pid2id(thread_list[cnt], pid));
+                        }
+                        write_stream(&c->out, ']');
+                        write_stream(&c->out, 0);
+                    }
+                }
+            }
+        }
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_get_command_line(char * token, Channel * c) {
+    int             err;
+    char            id[256];
+    pid_t           pid;
+    pid_t           parent;
+    kinfo_proc *    p;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    pid = id2pid(id, &parent);
+    if (pid != 0 && parent == 0) {
+        p = get_process(pid);
+        if (p == NULL) err = errno;
+    }
+    else {
+        err = ERR_INV_CONTEXT;
+    }
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+
+    write_errno(&c->out, err);
+
+    if (err != 0) {
+        write_stringz(&c->out, "null");
+    } else {
+        write_stringz(&c->out, p->kp_proc.p_comm);
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_get_environment(char * token, Channel * c) {
+    char            id[256];
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, 0);
+    write_stringz(&c->out, "[]");
+
+    write_stream(&c->out, MARKER_EOM);
+}
+#else
 
 #define BUF_EOF (-1)
 
@@ -500,7 +868,7 @@ static void command_get_context(char * token, Channel * c) {
     }
 
     write_errno(&c->out, err);
-    
+
     if (err == 0 && pid != 0) {
         char bf[256];
         write_context(&c->out, id, parent == 0 ? NULL : strcpy(bf, pid2id(parent, 0)), dir);
@@ -593,7 +961,7 @@ static void command_get_command_line(char * token, Channel * c) {
     if (err == 0 && (f = open("cmdline", O_RDONLY)) < 0) err = errno;
 
     write_errno(&c->out, err);
-    
+
     if (err == 0) {
         write_string_array(&c->out, f);
         close(f);
@@ -636,7 +1004,7 @@ static void command_get_environment(char * token, Channel * c) {
     if (err == 0 && (f = open("environ", O_RDONLY)) < 0) err = errno;
 
     write_errno(&c->out, err);
-    
+
     if (err == 0) {
         write_string_array(&c->out, f);
         close(f);
@@ -648,6 +1016,7 @@ static void command_get_environment(char * token, Channel * c) {
 
     write_stream(&c->out, MARKER_EOM);
 }
+#endif
 
 extern void ini_sys_mon_service(Protocol * proto) {
     add_command_handler(proto, SYS_MON, "getContext", command_get_context);
@@ -657,4 +1026,5 @@ extern void ini_sys_mon_service(Protocol * proto) {
 }
 
 #endif
+
 

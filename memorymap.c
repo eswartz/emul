@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -22,6 +22,7 @@
 #include <errno.h>
 #if defined(_WRS_KERNEL)
 #elif defined(WIN32)
+#elif defined(__APPLE__)
 #else
 #  include <stdio.h>
 #  include <linux/kdev_t.h>
@@ -51,7 +52,7 @@ static void dispose_memory_map(MemoryMap * map) {
     loc_free(map);
 }
 
-#if defined(_WRS_KERNEL) || defined(WIN32)
+#if defined(_WRS_KERNEL) || defined(WIN32) || defined(__APPLE__)
 
 static void event_memory_map_changed(Context * ctx, void * client_data) {
 }
@@ -105,7 +106,7 @@ static MemoryMap * get_memory_map(Context * ctx) {
             }
         }
         file_name[i++] = 0;
-        
+
         if (map->region_cnt >= map->region_max) {
             map->region_max += 8;
             map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
@@ -198,4 +199,5 @@ void ini_memory_map_service(void) {
     };
     add_context_event_listener(&listener, NULL);
 }
+
 

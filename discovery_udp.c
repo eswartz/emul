@@ -21,7 +21,7 @@
  *
  * TCF discovery scope is one subnet. Access across subnets is supported by TCF proxy.
  *
- * TCF discovery participants use a dedicated UDP port - 1534, however discovery will 
+ * TCF discovery participants use a dedicated UDP port - 1534, however discovery will
  * work fine if the port is not available for some participants, but at least one
  * participant on a subnet must be able to bind itself to the default port, otherwise the protocol
  * will not function properly. An agent that owns a default port is called "master",
@@ -29,7 +29,7 @@
  *
  * Every slave will check periodically availability of default port, and can become a master if
  * the port becomes available.
- * 
+ *
  * Since slaves cannot receive multicast packets, each agent maintains a list of slaves,
  * and uses unicast packets to sent info to agents from the list.
  */
@@ -172,7 +172,7 @@ static int create_server_socket(void) {
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;
     struct sockaddr_in local_addr;
-    int local_addr_size = sizeof(local_addr);
+    socklen_t local_addr_size = sizeof(local_addr);
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
@@ -444,7 +444,7 @@ static void udp_send_req_slaves(struct sockaddr_in * addr) {
 static void udp_send_ack_slaves_one(SlaveInfo * slave) {
     char buf[MAX_PACKET_SIZE];
     ip_ifc_info * ifc;
-    time_t timenow = time(NULL);    
+    time_t timenow = time(NULL);
 
     for (ifc = ifc_list; ifc < &ifc_list[ifc_cnt]; ifc++) {
         int n = 0;
@@ -478,7 +478,7 @@ static void udp_send_ack_slaves_one(SlaveInfo * slave) {
 static void udp_send_ack_slaves_all(struct sockaddr_in * addr, int only_linked) {
     char buf[MAX_PACKET_SIZE];
     ip_ifc_info * ifc;
-    time_t timenow = time(NULL);    
+    time_t timenow = time(NULL);
 
     trace(LOG_DISCOVERY, "ACK_SLAVES to %s:%d",
         inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));

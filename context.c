@@ -380,7 +380,7 @@ static int get_signal_index(Context * ctx) {
     }
     return 0;
 }
- 
+
 static char * win32_debug_event_name(int event) {
     switch (event) {
     case CREATE_PROCESS_DEBUG_EVENT:
@@ -1476,6 +1476,563 @@ static void init(void) {
     vxdbgHookAdd(vxdbg_clnt_id, EVT_BP, vxdbg_event_hook);
     vxdbgHookAdd(vxdbg_clnt_id, EVT_TRACE, vxdbg_event_hook);
     check_error(pthread_create(&events_thread, &pthread_create_attr, event_thread_func, NULL));
+}
+
+#elif defined(__APPLE__)
+
+#include <sys/syscall.h>
+#include <sys/wait.h>
+#include <sys/ptrace.h>
+#include <sched.h>
+#include <mach/thread_status.h>
+
+#define WORD_SIZE   4
+
+struct pid_exit_info {
+    pid_t       pid;
+    int         status;
+    int         signal;
+};
+
+struct pid_stop_info {
+    pid_t       pid;
+    int         signal;
+    int         event;
+    int         syscall;
+};
+
+static pthread_t wpid_thread;
+static pid_t my_pid = 0;
+static pthread_mutex_t waitpid_lock;
+static pthread_cond_t waitpid_cond;
+static int attach_poll_rate;
+static LINK pending_list;
+
+char * context_suspend_reason(Context * ctx) {
+    static char reason[128];
+
+    if (ctx->stopped_by_bp) return "Breakpoint";
+    if (ctx->end_of_step) return "Step";
+    if (ctx->syscall_enter) return "System Call";
+    if (ctx->syscall_exit) return "System Return";
+    if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) {
+        return "Suspended";
+    }
+    if (signal_name(ctx->signal)) {
+        snprintf(reason, sizeof(reason), "Signal %d %s", ctx->signal, signal_name(ctx->signal));
+        return reason;
+    }
+
+    snprintf(reason, sizeof(reason), "Signal %d", ctx->signal);
+    return reason;
+}
+
+int context_attach_self(void) {
+    pid_t pid = getpid();
+
+    if (ptrace(PT_TRACE_ME, 0, 0, 0) < 0) {
+        int err = errno;
+        trace(LOG_ALWAYS, "error: ptrace(PTRACE_TRACEME) failed: pid %d, error %d %s",
+              pid, err, errno_to_str(err));
+        errno = err;
+        return -1;
+    }
+    return 0;
+}
+
+int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
+    Context * ctx = NULL;
+
+    assert(done != NULL);
+    check_error(pthread_mutex_lock(&waitpid_lock));
+    if (!selfattach && ptrace(PT_ATTACH, pid, 0, 0) < 0) {
+        int err = errno;
+        trace(LOG_ALWAYS, "error: ptrace(PTRACE_ATTACH) failed: pid %d, error %d %s",
+            pid, err, errno_to_str(err));
+        check_error(pthread_mutex_unlock(&waitpid_lock));
+        errno = err;
+        return -1;
+    }
+    ctx = create_context(pid);
+    list_add_first(&ctx->ctxl, &pending_list);
+    ctx->mem = pid;
+    ctx->attach_callback = done;
+    ctx->attach_data = data;
+    ctx->pending_intercept = 1;
+    /* TODO: context_attach works only for main task in a process */
+    attach_poll_rate = 1;
+    trace(LOG_WAITPID, "waitpid: poll rate reset");
+    check_error(pthread_cond_signal(&waitpid_cond));
+    check_error(pthread_mutex_unlock(&waitpid_lock));
+    return 0;
+}
+
+int context_has_state(Context * ctx) {
+    return 1;
+}
+
+int context_stop(Context * ctx) {
+    trace(LOG_CONTEXT, "context:%s suspending ctx %#x pid %d",
+        ctx->pending_intercept ? "" : " temporary", ctx, ctx->pid);
+    assert(is_dispatch_thread());
+    assert(!ctx->exited);
+    assert(!ctx->stopped);
+    assert(!ctx->regs_dirty);
+    assert(!ctx->intercepted);
+    if (kill(ctx->pid, SIGSTOP) < 0) {
+        int err = errno;
+        if (err != ESRCH) {
+            trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: ctx %#x, pid %d, error %d %s",
+                ctx, ctx->pid, err, errno_to_str(err));
+        }
+        errno = err;
+        return -1;
+    }
+    return 0;
+}
+
+static int syscall_never_returns(Context * ctx) {
+    if (ctx->syscall_enter) {
+        switch (ctx->syscall_id) {
+        case SYS_sigreturn:
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int context_continue(Context * ctx) {
+    int signal = 0;
+
+    assert(is_dispatch_thread());
+    assert(ctx->stopped);
+    assert(!ctx->pending_intercept);
+    assert(!ctx->pending_step);
+    assert(!ctx->exited);
+
+    if (skip_breakpoint(ctx, 0)) return 0;
+
+    if (!ctx->syscall_enter) {
+        while (ctx->pending_signals != 0) {
+            while ((ctx->pending_signals & (1 << signal)) == 0) signal++;
+            if (ctx->sig_dont_pass & (1 << signal)) {
+                ctx->pending_signals &= ~(1 << signal);
+                signal = 0;
+            }
+            else {
+                break;
+            }
+        }
+        assert(signal != SIGSTOP);
+        assert(signal != SIGTRAP);
+    }
+
+    trace(LOG_CONTEXT, "context: resuming ctx %#x, pid %d, with signal %d", ctx, ctx->pid, signal);
+#ifdef __i386__
+    /* Bug in ptrace: trap flag is not cleared after single step */
+    if (ctx->regs.__eflags & 0x100) {
+        ctx->regs.__eflags &= ~0x100;
+        ctx->regs_dirty = 1;
+    }
+#endif
+    if (ctx->regs_dirty) {
+        unsigned int state_count;
+        if (thread_set_state(ctx->pid, x86_THREAD_STATE32, &ctx->regs, &state_count) != KERN_SUCCESS) {
+            int err = errno;
+            trace(LOG_ALWAYS, "error: thread_set_state failed: ctx %#x, pid %d, error %d %s",
+                ctx, ctx->pid, err, errno_to_str(err));
+            errno = err;
+            return -1;
+        }
+        ctx->regs_dirty = 0;
+    }
+    if (ptrace(PT_CONTINUE, ctx->pid, 0, signal) < 0) {
+        int err = errno;
+#if USE_ESRCH_WORKAROUND
+        if (err == ESRCH) {
+            ctx->stopped = 0;
+            event_context_started(ctx);
+            return 0;
+        }
+#endif
+        trace(LOG_ALWAYS, "error: ptrace(PTRACE_CONT, ...) failed: ctx %#x, pid %d, error %d %s",
+            ctx, ctx->pid, err, errno_to_str(err));
+        errno = err;
+        return -1;
+    }
+    ctx->pending_signals &= ~(1 << signal);
+    if (syscall_never_returns(ctx)) {
+        ctx->syscall_enter = 0;
+        ctx->syscall_exit = 0;
+        ctx->syscall_id = 0;
+    }
+    ctx->stopped = 0;
+    event_context_started(ctx);
+    return 0;
+}
+
+int context_single_step(Context * ctx) {
+    assert(is_dispatch_thread());
+    assert(ctx->stopped);
+    assert(!ctx->pending_step);
+    assert(!ctx->exited);
+
+    if (skip_breakpoint(ctx, 1)) return 0;
+
+    if (syscall_never_returns(ctx)) return context_continue(ctx);
+    trace(LOG_CONTEXT, "context: single step ctx %#x, pid %d", ctx, ctx->pid);
+    if (ctx->regs_dirty) {
+        unsigned int state_count;
+        if (thread_set_state(ctx->pid, x86_THREAD_STATE32, &ctx->regs, &state_count) != KERN_SUCCESS) {
+            int err = errno;
+            trace(LOG_ALWAYS, "error: thread_set_state failed: ctx %#x, pid %d, error %d %s",
+                ctx, ctx->pid, err, errno_to_str(err));
+            errno = err;
+            return -1;
+        }
+        ctx->regs_dirty = 0;
+    }
+    if (ptrace(PT_STEP, ctx->pid, 0, 0) < 0) {
+        int err = errno;
+#if USE_ESRCH_WORKAROUND
+        if (err == ESRCH) {
+            ctx->stopped = 0;
+            ctx->pending_step = 1;
+            event_context_started(ctx);
+            return 0;
+        }
+#endif
+        trace(LOG_ALWAYS, "error: ptrace(PTRACE_SINGLESTEP, ...) failed: ctx %#x, pid %d, error %d %s",
+            ctx, ctx->pid, err, errno_to_str(err));
+        errno = err;
+        return -1;
+    }
+    ctx->pending_step = 1;
+    ctx->stopped = 0;
+    event_context_started(ctx);
+    return 0;
+}
+
+int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
+    /*
+    ContextAddress word_addr;
+    assert(is_dispatch_thread());
+    assert(!ctx->exited);
+    trace(LOG_CONTEXT, "context: write memory ctx %#x, pid %d, address 0x%08x, size %d", ctx, ctx->pid, address, size);
+    assert(WORD_SIZE == sizeof(unsigned));
+    for (word_addr = address & ~(WORD_SIZE - 1); word_addr < address + size; word_addr += WORD_SIZE) {
+        unsigned word = 0;
+        if (word_addr < address || word_addr + WORD_SIZE > address + size) {
+            int i;
+            errno = 0;
+            word = ptrace(PT_PEEKDATA, ctx->pid, word_addr, 0);
+            if (errno != 0) {
+                int err = errno;
+                trace(LOG_ALWAYS, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#x, pid %d, error %d %s",
+                    ctx, ctx->pid, err, errno_to_str(err));
+                errno = err;
+                return -1;
+            }
+            for (i = 0; i < WORD_SIZE; i++) {
+                if (word_addr + i >= address && word_addr + i < address + size) {
+                    ((char *)&word)[i] = ((char *)buf)[word_addr + i - address];
+                }
+            }
+        }
+        else {
+            word = *(unsigned *)((char *)buf + (word_addr - address));
+        }
+        if (ptrace(PT_POKEDATA, ctx->pid, word_addr, word) < 0) {
+            int err = errno;
+            trace(LOG_ALWAYS, "error: ptrace(PTRACE_POKEDATA, ...) failed: ctx %#x, pid %d, error %d %s",
+                ctx, ctx->pid, err, errno_to_str(err));
+            errno = err;
+            return -1;
+        }
+    }
+    */
+    return 0;
+}
+
+int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
+    /*
+    ContextAddress word_addr;
+    assert(is_dispatch_thread());
+    assert(!ctx->exited);
+    trace(LOG_CONTEXT, "context: read memory ctx %#x, pid %d, address 0x%08x, size %d", ctx, ctx->pid, address, size);
+    assert(WORD_SIZE == sizeof(unsigned));
+    for (word_addr = address & ~(WORD_SIZE - 1); word_addr < address + size; word_addr += WORD_SIZE) {
+        unsigned word = 0;
+        errno = 0;
+        word = ptrace(PT_PEEKDATA, ctx->pid, word_addr, 0);
+        if (errno != 0) {
+            int err = errno;
+            trace(LOG_ALWAYS, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#x, pid %d, error %d %s",
+                ctx, ctx->pid, err, errno_to_str(err));
+            errno = err;
+            return -1;
+        }
+        if (word_addr < address || word_addr + WORD_SIZE > address + size) {
+            int i;
+            for (i = 0; i < WORD_SIZE; i++) {
+                if (word_addr + i >= address && word_addr + i < address + size) {
+                    ((char *)buf)[word_addr + i - address] = ((char *)&word)[i];
+                }
+            }
+        }
+        else {
+            *(unsigned *)((char *)buf + (word_addr - address)) = word;
+        }
+    }
+    */
+    return 0;
+}
+
+static Context * find_pending(pid_t pid) {
+    LINK * qp = pending_list.next;
+    while (qp != &pending_list) {
+        Context * c = ctxl2ctxp(qp);
+        if (c->pid == pid) return c;
+        qp = qp->next;
+    }
+    return NULL;
+}
+
+static void event_pid_exited(void * arg) {
+    struct pid_exit_info * info = arg;
+    Context * ctx;
+
+    ctx = context_find_from_pid(info->pid);
+    if (ctx == NULL) {
+        ctx = find_pending(info->pid);
+        if (ctx == NULL) {
+            trace(LOG_EVENTS, "event: ctx not found, pid %d, exit status %d, term signal %d",
+                info->pid, info->status, info->signal);
+        }
+        else {
+            assert(ctx->ref_count == 0);
+            if (ctx->attach_callback != NULL) {
+                if (info->status == 0) info->status = EINVAL;
+                ctx->attach_callback(info->status, ctx, ctx->attach_data);
+                ctx->attach_callback = NULL;
+                ctx->attach_data = NULL;
+            }
+            assert(list_is_empty(&ctx->children));
+            assert(ctx->parent == NULL);
+            list_remove(&ctx->ctxl);
+            loc_free(ctx);
+        }
+    }
+    else {
+        assert(ctx->attach_callback == NULL);
+        if (ctx->stopped || ctx->intercepted || ctx->exited) {
+            trace(LOG_EVENTS, "event: ctx %#x, pid %d, exit status %d unexpected, stopped %d, intercepted %d, exited %d",
+                ctx, info->pid, info->status, ctx->stopped, ctx->intercepted, ctx->exited);
+            if (ctx->stopped) {
+                ctx->stopped = 0;
+                event_context_started(ctx);
+            }
+        }
+        else {
+            trace(LOG_EVENTS, "event: ctx %#x, pid %d, exit status %d", ctx, info->pid, info->status);
+        }
+        if (!list_is_empty(&ctx->children)) {
+            /* Linux kernel 2.4 does not notify waitpid() when thread exits if the thread is not main thread.
+             * As workaround, assume all non-main thread have exited and remove them from ctx->children list.
+             */
+            while (!list_is_empty(&ctx->children)) {
+                Context * c = cldl2ctxp(ctx->children.next);
+                assert(!c->exited);
+                assert(c->parent == ctx);
+                c->exiting = 0;
+                c->exited = 1;
+                event_context_exited(c);
+                list_remove(&c->cldl);
+                context_unlock(c->parent);
+                c->parent = NULL;
+                context_unlock(c);
+            }
+        }
+        /* Note: ctx->exiting should be 1 here. However, PTRACE_EVENT_EXIT can be lost by PTRACE because of racing
+         * between PTRACE_SYSCALL and SIGTRAP/PTRACE_EVENT_EXIT. So, ctx->exiting can be 0.
+         */
+        ctx->exiting = 0;
+        ctx->exited = 1;
+        event_context_exited(ctx);
+        if (ctx->parent != NULL) {
+            list_remove(&ctx->cldl);
+            context_unlock(ctx->parent);
+            ctx->parent = NULL;
+        }
+        context_unlock(ctx);
+    }
+    loc_free(info);
+}
+
+static void event_pid_stopped(void * arg) {
+    unsigned long msg = 0;
+    Context * ctx = NULL;
+    Context * ctx2 = NULL;
+    struct pid_stop_info * info = arg;
+    struct pid_stop_info * pending_eap;
+
+process_event:
+    pending_eap = NULL;
+    trace(LOG_EVENTS, "event: pid %d stopped, signal %d",
+        info->pid, info->signal);
+
+    ctx = context_find_from_pid(info->pid);
+
+    if (ctx == NULL) {
+        ctx = find_pending(info->pid);
+        if (ctx != NULL) {
+            link_context(ctx);
+            event_context_created(ctx);
+            if (ctx->attach_callback) {
+                ctx->attach_callback(0, ctx, ctx->attach_data);
+                ctx->attach_callback = NULL;
+                ctx->attach_data = NULL;
+            }
+        }
+    }
+
+    if (ctx == NULL) {
+        /* Clone & fork notifications can arrive after child
+         * notification because the clone/fork notification comes from
+         * the parent while the stop notification comes from the child
+         * and Linux does not seem to order between them. */
+        trace(LOG_EVENTS, "event: pid %d is not traced - expecting OOO clone, fork or vfork event for pid", info->pid);
+        ctx = create_context(info->pid);
+        list_add_first(&ctx->ctxl, &pending_list);
+        ctx->pending_clone = info;
+        return;
+    }
+    else if (ctx->pending_clone != NULL) {
+        trace(LOG_ALWAYS, "event: pid %d received stop event before processing of pending_clone event - ignored", info->pid);
+        loc_free(info);
+        return;
+    }
+    assert(!ctx->exited);
+
+    if (info->signal != SIGSTOP && info->signal != SIGTRAP) {
+        assert(info->signal < 32);
+        ctx->pending_signals |= 1 << info->signal;
+        if ((ctx->sig_dont_stop & (1 << info->signal)) == 0) ctx->pending_intercept = 1;
+    }
+    if (!ctx->stopped) {
+        thread_state_t state;
+        unsigned int state_count;
+        ContextAddress pc0 = ctx->regs_error ? 0 : get_regs_PC(ctx->regs);
+        assert(!ctx->regs_dirty);
+        assert(!ctx->intercepted);
+        ctx->regs_error = 0;
+        if (thread_get_state(ctx->pid, x86_THREAD_STATE32, &ctx->regs, &state_count) != KERN_SUCCESS) {
+            assert(errno != 0);
+            ctx->regs_error = errno;
+            trace(LOG_ALWAYS, "error: thread_get_state failed; pid %d, error %d %s",
+                ctx->pid, errno, errno_to_str(errno));
+        }
+
+        if (!ctx->syscall_enter || ctx->regs_error || pc0 != get_regs_PC(ctx->regs)) {
+            ctx->syscall_enter = 0;
+            ctx->syscall_exit = 0;
+            ctx->syscall_id = 0;
+            ctx->syscall_pc = 0;
+        }
+        trace(LOG_EVENTS, "event: pid %d stopped at PC = %d (0x%08x)",
+            ctx->pid, get_regs_PC(ctx->regs), get_regs_PC(ctx->regs));
+
+        if (info->signal == SIGSTOP && ctx->pending_step && !ctx->regs_error && pc0 == get_regs_PC(ctx->regs)) {
+            trace(LOG_EVENTS, "event: pid %d, single step failed because of pending SIGSTOP, retrying");
+            ptrace(PT_STEP, ctx->pid, 0, 0);
+        }
+        else {
+            ctx->signal = info->signal;
+            ctx->ptrace_event = info->event;
+            ctx->stopped = 1;
+            ctx->stopped_by_bp = 0;
+            ctx->end_of_step = 0;
+            if (ctx->signal == SIGTRAP && ctx->ptrace_event == 0 && !info->syscall) {
+                ctx->stopped_by_bp = !ctx->regs_error &&
+                    is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE);
+                ctx->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;
+            }
+            ctx->pending_step = 0;
+            if (ctx->stopped_by_bp) {
+                set_regs_PC(ctx->regs, get_regs_PC(ctx->regs) - BREAK_SIZE);
+                ctx->regs_dirty = 1;
+            }
+            event_context_stopped(ctx);
+        }
+    }
+
+    loc_free(info);
+    if (pending_eap != NULL) {
+        info = pending_eap;
+        goto process_event;
+    }
+}
+
+static void * wpid_handler(void * x) {
+    pid_t pid;
+    int err;
+    int status;
+    struct timespec timeout;
+
+    attach_poll_rate = 1;
+    for (;;) {
+        if ((pid = waitpid(-1, &status, 0)) == (pid_t)-1) {
+            if (errno == ECHILD) {
+                check_error(pthread_mutex_lock(&waitpid_lock));
+                if(attach_poll_rate < 60*1000) {
+                    attach_poll_rate = (attach_poll_rate*3 + 1)/2;
+                }
+                clock_gettime(CLOCK_REALTIME, &timeout);
+                timeout.tv_sec += attach_poll_rate / 1000;
+                timeout.tv_nsec += (attach_poll_rate % 1000) * 1000 * 1000;
+                if (timeout.tv_nsec >= 1000 * 1000 * 1000) {
+                    timeout.tv_nsec -= 1000 * 1000 * 1000;
+                    timeout.tv_sec++;
+                }
+                trace(LOG_WAITPID, "waitpid: poll rate = %d", attach_poll_rate);
+                err = pthread_cond_timedwait(&waitpid_cond, &waitpid_lock, &timeout);
+                if (err != ETIMEDOUT) check_error(err);
+                check_error(pthread_mutex_unlock(&waitpid_lock));
+                continue;
+            }
+            check_error(errno);
+        }
+        trace(LOG_WAITPID, "waitpid: pid %d status %#x", pid, status);
+        if (WIFEXITED(status) || WIFSIGNALED(status)) {
+            struct pid_exit_info * info = loc_alloc_zero(sizeof(struct pid_exit_info));
+            info->pid = pid;
+            if (WIFEXITED(status)) info->status = WIFEXITED(status);
+            else info->signal = WTERMSIG(status);
+            post_event(event_pid_exited, info);
+        }
+        else if (WIFSTOPPED(status)) {
+            struct pid_stop_info * info = loc_alloc_zero(sizeof(struct pid_stop_info));
+            info->pid = pid;
+            info->signal = WSTOPSIG(status) & 0x7f;
+            //info->syscall = (WSTOPSIG(status) & 0x80) != 0;
+            //info->event = status >> 16;
+            info->syscall = 0;
+            info->event = 0;
+            post_event(event_pid_stopped, info);
+        }
+        else {
+            trace(LOG_ALWAYS, "unexpected status (0x%x) from waitpid (pid %d)", status, pid);
+        }
+    }
+}
+
+static void init(void) {
+    list_init(&pending_list);
+    check_error(pthread_mutex_init(&waitpid_lock, NULL));
+    check_error(pthread_cond_init(&waitpid_cond, NULL));
+    my_pid = getpid();
+    /* Create thread to get process events using waitpid() */
+    check_error(pthread_create(&wpid_thread, &pthread_create_attr, wpid_handler, NULL));
 }
 
 #else

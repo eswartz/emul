@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -71,6 +71,18 @@ static REG_INDEX regs_index[] = {
     { "eip",    REG_OFFSET(Eip),    4},
     { "cs",     REG_OFFSET(SegCs),  4},
     { "ss",     REG_OFFSET(SegSs),  4},
+    { NULL,     0,                  0},
+#elif defined(__APPLE__) && defined(__i386__)
+    { "edi",    REG_OFFSET(__edi),    4},
+    { "esi",    REG_OFFSET(__esi),    4},
+    { "ebp",    REG_OFFSET(__ebp),    4},
+    { "esp",    REG_OFFSET(__esp),    4},
+    { "ebx",    REG_OFFSET(__ebx),    4},
+    { "edx",    REG_OFFSET(__edx),    4},
+    { "ecx",    REG_OFFSET(__ecx),    4},
+    { "eax",    REG_OFFSET(__eax),    4},
+    { "eflags", REG_OFFSET(__eflags), 4},
+    { "eip",    REG_OFFSET(__eip),    4},
     { NULL,     0,                  0},
 #else
     { "edi",    REG_OFFSET(edi),    4},
@@ -199,7 +211,7 @@ static void command_get_context(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (id2register(id, &ctx, &idx) < 0) err = errno;
-    
+
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
@@ -272,7 +284,7 @@ static void command_get(char * token, Channel * c) {
 
     if (id2register(id, &ctx, &idx) < 0) err = errno;
     else if (!ctx->intercepted) err = ERR_IS_RUNNING;
-    
+
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
@@ -315,7 +327,7 @@ static void command_set(char * token, Channel * c) {
 
     if (id2register(id, &ctx, &idx) < 0) err = errno;
     else if (!ctx->intercepted) err = ERR_IS_RUNNING;
-    
+
     if (err == 0) {
         char * data = (char *)&ctx->regs + idx->regOff;
         int size = REG_WIDTH(*idx);
@@ -485,4 +497,5 @@ void ini_registers_service(Protocol * proto) {
 }
 
 #endif
+
 

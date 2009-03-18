@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -16,7 +16,7 @@
  * Machine and OS dependend definitions.
  * This module implements host OS abstraction layer that helps make
  * agent code portable between Linux, Windows, VxWorks and potentially other OSes.
- * 
+ *
  * mdep.h must be included first, before any other header files.
  */
 
@@ -111,7 +111,7 @@ typedef unsigned long useconds_t;
 
 #define CLOCK_REALTIME 1
 typedef int clockid_t;
-extern int clock_gettime(clockid_t clock_id, struct timespec * tp); 
+extern int clock_gettime(clockid_t clock_id, struct timespec * tp);
 extern void usleep(useconds_t useconds);
 extern int inet_aton(const char * cp, struct in_addr * inp);
 
@@ -231,7 +231,7 @@ extern char * canonicalize_file_name(const char * path);
 #include <inetLib.h>
 #include <regs.h>
 #include <pthread.h>
-#include <sys/ioctl.h> 
+#include <sys/ioctl.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
 #include <wrn/coreip/sockLib.h>
@@ -254,7 +254,7 @@ typedef unsigned long useconds_t;
 #define lstat stat
 typedef struct stat struct_stat;
 #define ifr_netmask ifr_addr
-#define SA_LEN(addr) ((addr)->sa_len)  
+#define SA_LEN(addr) ((addr)->sa_len)
 
 extern int truncate(char * path, int64 size);
 extern char * canonicalize_file_name(const char * path);
@@ -271,6 +271,88 @@ extern int loc_getaddrinfo(const char * nodename, const char * servname,
        const struct addrinfo * hints, struct addrinfo ** res);
 extern const char * loc_gai_strerror(int ecode);
 
+#elif defined(__APPLE__)
+#ifndef _LARGEFILE_SOURCE
+#error "Need CC command line option: -D_LARGEFILE_SOURCE"
+#endif
+
+#ifndef _GNU_SOURCE
+#error "Need CC command line option: -D_GNU_SOURCE"
+#endif
+
+#include <unistd.h>
+#include <memory.h>
+#include <pthread.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <limits.h>
+
+#include <mach/thread_status.h>
+typedef x86_thread_state32_t REG_SET;
+
+#define loc_freeaddrinfo freeaddrinfo
+#define loc_getaddrinfo getaddrinfo
+#define loc_gai_strerror gai_strerror
+
+#define O_BINARY 0
+#define O_LARGEFILE 0
+#define FILE_PATH_SIZE PATH_MAX
+#define closesocket close
+#define ifr_netmask ifr_addr
+#define canonicalize_file_name(path)    realpath(path, NULL)
+
+typedef int64_t int64;
+typedef uint64_t uns64;
+typedef struct stat struct_stat;
+
+#define get_regs_SP(x) ((x).__esp)
+#define get_regs_BP(x) ((x).__ebp)
+#define get_regs_PC(x) ((x).__eip)
+#define set_regs_PC(x,y) (x).__eip = (unsigned long)(y)
+
+#ifndef SA_LEN
+# ifdef HAVE_SOCKADDR_SA_LEN
+#  define SA_LEN(addr) ((addr)->sa_len)
+# else /* HAVE_SOCKADDR_SA_LEN */
+#  ifdef HAVE_STRUCT_SOCKADDR_STORAGE
+static size_t get_sa_len(const struct sockaddr *addr) {
+    switch (addr->sa_family) {
+#   ifdef AF_UNIX
+        case AF_UNIX: return sizeof(struct sockaddr_un);
+#   endif
+#   ifdef AF_INET
+        case AF_INET: return (sizeof (struct sockaddr_in));
+#   endif
+#   ifdef AF_INET6
+        case AF_INET6: return (sizeof (struct sockaddr_in6));
+#   endif
+        default: return (sizeof (struct sockaddr));
+    }
+}
+#   define SA_LEN(addr)   (get_sa_len(addr))
+#  else /* HAVE_SOCKADDR_STORAGE */
+#   define SA_LEN(addr)   (sizeof (struct sockaddr))
+#  endif /* HAVE_SOCKADDR_STORAGE */
+# endif /* HAVE_SOCKADDR_SA_LEN */
+#endif /* SA_LEN */
+
+extern unsigned char BREAK_INST[];  /* breakpoint instruction */
+#define BREAK_SIZE 1                /* breakpoint instruction size */
+
+#define CLOCK_REALTIME 1
+typedef int clockid_t;
+extern int clock_gettime(clockid_t clock_id, struct timespec * tp);
+
+extern char **environ;
+
+/* Mac OS X */
 #else
 /* Linux, UNIX */
 
@@ -289,15 +371,15 @@ extern const char * loc_gai_strerror(int ecode);
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/time.h>
-#include <sys/ioctl.h> 
+#include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#include <net/if.h> 
+#include <net/if.h>
 #include <limits.h>
 
 #include <sys/user.h>
-typedef struct user_regs_struct REG_SET; 
+typedef struct user_regs_struct REG_SET;
 
 #define loc_freeaddrinfo freeaddrinfo
 #define loc_getaddrinfo getaddrinfo
@@ -323,31 +405,31 @@ typedef struct stat struct_stat;
 extern unsigned char BREAK_INST[];  /* breakpoint instruction */
 #define BREAK_SIZE 1                /* breakpoint instruction size */
 
-#ifndef SA_LEN  
-# ifdef HAVE_SOCKADDR_SA_LEN  
-#  define SA_LEN(addr) ((addr)->sa_len)  
-# else /* HAVE_SOCKADDR_SA_LEN */  
-#  ifdef HAVE_STRUCT_SOCKADDR_STORAGE  
-static size_t get_sa_len(const struct sockaddr *addr) {  
-    switch (addr->sa_family) {  
-#   ifdef AF_UNIX  
+#ifndef SA_LEN
+# ifdef HAVE_SOCKADDR_SA_LEN
+#  define SA_LEN(addr) ((addr)->sa_len)
+# else /* HAVE_SOCKADDR_SA_LEN */
+#  ifdef HAVE_STRUCT_SOCKADDR_STORAGE
+static size_t get_sa_len(const struct sockaddr *addr) {
+    switch (addr->sa_family) {
+#   ifdef AF_UNIX
         case AF_UNIX: return sizeof(struct sockaddr_un);
 #   endif
-#   ifdef AF_INET  
-        case AF_INET: return (sizeof (struct sockaddr_in));  
-#   endif  
-#   ifdef AF_INET6  
-        case AF_INET6: return (sizeof (struct sockaddr_in6));  
-#   endif  
-        default: return (sizeof (struct sockaddr));  
-    }  
-}  
-#   define SA_LEN(addr)   (get_sa_len(addr))  
-#  else /* HAVE_SOCKADDR_STORAGE */  
-#   define SA_LEN(addr)   (sizeof (struct sockaddr))  
-#  endif /* HAVE_SOCKADDR_STORAGE */  
-# endif /* HAVE_SOCKADDR_SA_LEN */  
-#endif /* SA_LEN */  
+#   ifdef AF_INET
+        case AF_INET: return (sizeof (struct sockaddr_in));
+#   endif
+#   ifdef AF_INET6
+        case AF_INET6: return (sizeof (struct sockaddr_in6));
+#   endif
+        default: return (sizeof (struct sockaddr));
+    }
+}
+#   define SA_LEN(addr)   (get_sa_len(addr))
+#  else /* HAVE_SOCKADDR_STORAGE */
+#   define SA_LEN(addr)   (sizeof (struct sockaddr))
+#  endif /* HAVE_SOCKADDR_STORAGE */
+# endif /* HAVE_SOCKADDR_SA_LEN */
+#endif /* SA_LEN */
 
 #endif
 

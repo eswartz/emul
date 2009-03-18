@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -36,7 +36,7 @@ pthread_attr_t pthread_create_attr;
 /*********************************************************************
     Support of pthreads on Windows is implemented according to
     reccomendations from the paper:
-    
+
     Strategies for Implementing POSIX Condition Variables on Win32
     C++ Report, SIGS, Vol. 10, No. 5, June, 1998
 
@@ -61,9 +61,9 @@ static void check_w32_error(const char * fn, int ok) {
     if (ok) return;
 
     error = GetLastError();
-    if (!FormatMessage( 
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-        FORMAT_MESSAGE_FROM_SYSTEM | 
+    if (!FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
         error,
@@ -223,7 +223,7 @@ int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const
 int pthread_cond_signal(pthread_cond_t * cond) {
     int have_waiters = 0;
     PThreadCond * p = (PThreadCond *)*cond;
-    
+
     EnterCriticalSection(&p->waiters_count_lock);
     have_waiters = p->waiters_count > 0;
     LeaveCriticalSection(&p->waiters_count_lock);
@@ -689,6 +689,52 @@ void ini_mdep(void) {
     pthread_attr_setname(&pthread_create_attr, "tTcf");
 }
 
+#elif defined(__APPLE__)
+#include <pwd.h>
+#include <sys/utsname.h>
+
+unsigned char BREAK_INST[] = { 0xcc };
+
+int clock_gettime(clockid_t clock_id, struct timespec * tp) {
+    struct timeval tv;
+
+    assert(clock_id == CLOCK_REALTIME);
+    if (!tp) {
+        errno = EINVAL;
+        return -1;
+    }
+    if (gettimeofday(&tv, NULL) < 0) {
+        return -1;
+    }
+    tp->tv_sec  = tv.tv_sec;
+    tp->tv_nsec = tv.tv_usec * 1000;
+    return 0;
+}
+
+char * get_os_name(void) {
+    static char str[256];
+    struct utsname info;
+    memset(&info, 0, sizeof(info));
+    uname(&info);
+    assert(strlen(info.sysname) + strlen(info.release) < sizeof(str));
+    snprintf(str, sizeof(str), "%s %s", info.sysname, info.release);
+    return str;
+}
+
+char * get_user_home(void) {
+    static char buf[PATH_MAX];
+    if (buf[0] == 0) {
+        struct passwd * pwd = getpwuid(getuid());
+        if (pwd == NULL) return NULL;
+        strcpy(buf, pwd->pw_dir);
+    }
+    return buf;
+}
+
+void ini_mdep(void) {
+    pthread_attr_init(&pthread_create_attr);
+    pthread_attr_setstacksize(&pthread_create_attr, 0x8000);
+}
 #else
 
 #include <pwd.h>
@@ -889,9 +935,9 @@ int loc_getaddrinfo(const char * nodename, const char * servname,
     const char * host = NULL;
     struct addrinfo * ai = NULL;
     union sockaddr_union * sa = NULL;
-    
+
     *res = NULL;
-    
+
     if (hints != NULL) {
         flags = hints->ai_flags;
         family = hints->ai_family;
@@ -934,14 +980,14 @@ int loc_getaddrinfo(const char * nodename, const char * servname,
     if (protocol == 0) {
         protocol = socktype == SOCK_STREAM ? IPPROTO_TCP : IPPROTO_UDP;
     }
-    
+
     sa = loc_alloc_zero(sizeof(*sa));
     err = ipcom_getsockaddrbyaddr(family, host, (struct sockaddr *)sa);
     if (err) {
         loc_free(sa);
         return err;
     }
-    
+
     ai = loc_alloc_zero(sizeof(*ai));
     switch (family) {
     case AF_INET:
@@ -959,7 +1005,7 @@ int loc_getaddrinfo(const char * nodename, const char * servname,
         loc_free(ai);
         return 2;
     }
-    
+
     ai->ai_flags = 0;
     ai->ai_family = family;
     ai->ai_socktype = socktype;

@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -23,12 +23,12 @@
 
 #if ENABLE_ELF
 
-#if !defined(WIN32)
+#if !defined(WIN32) && !defined(__APPLE__)
 #  include <elf.h>
 #endif
 #include "context.h"
 
-#if defined(WIN32)
+#if defined(WIN32) || defined(__APPLE__)
 
 #define EI_MAG0        0
 #define EI_MAG1        1
@@ -208,7 +208,7 @@ typedef struct {
 
 #endif
 
-#if defined(_WRS_KERNEL) || defined(WIN32)
+#if defined(_WRS_KERNEL) || defined(WIN32) || defined(__APPLE__)
 
 typedef uns64           Elf64_Addr;
 typedef unsigned short  Elf64_Half;
@@ -304,8 +304,8 @@ struct ELF_Section {
     U8_T size;
     U8_T addr;
     U4_T link;
-    U4_T info;    
-    
+    U4_T info;
+
     void * mmap_addr;
     size_t mmap_size;
 };
@@ -379,4 +379,5 @@ extern void ini_elf(void);
 #endif
 
 #endif
+
 

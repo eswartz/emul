@@ -130,6 +130,7 @@ static void write_context(OutputStream * out, int pid) {
 
 #if defined(WIN32)
 #elif defined(_WRS_KERNEL)
+#elif defined(__APPLE__)
 #else
     {
         char dir[FILE_PATH_SIZE];
@@ -221,6 +222,7 @@ static void command_get_context(char * token, Channel * c) {
 #if defined(WIN32)
 #elif defined(_WRS_KERNEL)
         if (TASK_ID_VERIFY(pid) == ERROR) err = ERR_INV_CONTEXT;
+#elif defined(__APPLE__)
 #else
         struct_stat st;
         char dir[FILE_PATH_SIZE];
@@ -316,6 +318,7 @@ static void command_get_children(char * token, Channel * c) {
         }
         write_stream(&c->out, ']');
         write_stream(&c->out, 0);
+#elif defined(__APPLE__)
 #else
         DIR * proc = opendir("/proc");
         if (proc == NULL) {
@@ -429,6 +432,8 @@ static void command_terminate(char * token, Channel * c) {
         }
 #elif defined(_WRS_KERNEL)
         if (kill(pid, SIGTERM) < 0) err = errno;
+#elif defined(__APPLE__)
+        if (kill(pid, SIGTERM) < 0) err = errno;
 #else
         if (kill(pid, SIGTERM) < 0) err = errno;
 #endif
@@ -457,6 +462,8 @@ static void command_signal(char * token, Channel * c) {
 #if defined(WIN32)
     err = ENOSYS;
 #elif defined(_WRS_KERNEL)
+    if (kill(pid, signal) < 0) err = errno;
+#elif defined(__APPLE__)
     if (kill(pid, signal) < 0) err = errno;
 #else
     if (parent == 0) {
@@ -672,7 +679,7 @@ static void streams_callback(VirtualStream * stream, int event_code, void * args
         assert(out->req.u.fio.bufp == out->buf);
 
         if (out->buf_pos < (size_t)buf_len || out->eos != eos) {
-            size_t done = 0;
+            unsigned done = 0;
             virtual_stream_add_data(stream, out->buf + out->buf_pos, buf_len - out->buf_pos, &done, eos);
             out->buf_pos += done;
             if (eos) out->eos = 1;
@@ -1186,5 +1193,6 @@ void ini_processes_service(Protocol * proto) {
 }
 
 #endif
+
 
 

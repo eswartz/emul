@@ -8,7 +8,7 @@ CFLAGS=-O
 endif
 CFLAGS:=$(CFLAGS) -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -Wmissing-prototypes 
 
-OPSYS=$(shell uname -o)
+OPSYS=$(shell uname -o 2>/dev/null || uname -s)
 MACHINE=$(shell uname -m)
 ifeq ($(OPSYS),Cygwin)
 LIBS=-lws2_32 -liphlpapi
@@ -17,7 +17,12 @@ ifeq ($(OPSYS),Msys)
 CFLAGS:=-mwin32 $(CFLAGS)
 LIBS=-lws2_32 -liphlpapi
 else
+ifeq ($(OPSYS),Darwin)
+LIBS=-lpthread
+RANLIB=ranlib $@
+else
 LIBS=-lpthread -lrt
+endif
 endif
 endif
 
@@ -36,6 +41,7 @@ all:	$(EXECS)
 
 $(BINDIR)/libtcf.a : $(OFILES)
 	ar -rc $@ $(OFILES)
+	$(RUNLIB)
 
 $(BINDIR)/agent: $(BINDIR)/main.o $(BINDIR)/libtcf.a
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main.o $(BINDIR)/libtcf.a $(LIBS)

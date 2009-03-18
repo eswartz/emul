@@ -86,9 +86,9 @@ static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
         case 8:
 #ifdef _WRS_KERNEL
             *value = (unsigned)Ctx->regs.pc;
-#else            
+#else
             *value = Ctx->regs.eip;
-#endif            
+#endif
             return 0;
         case 9:
             *value = Ctx->regs.eflags;
@@ -104,7 +104,55 @@ static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
         *value = IP;
         return 0;
     }
-    trace(LOG_ALWAYS, "get_register: Unsupported DWARF register number %d", rg); 
+    trace(LOG_ALWAYS, "get_register: Unsupported DWARF register number %d", rg);
+    errno = ERR_UNSUPPORTED;
+    return -1;
+#elif defined(__APPLE__) && defined(__i386__)
+    ContextAddress IP, FP;
+    if (is_top_frame(Ctx, Frame)) {
+        switch (rg) {
+        case 0:
+            *value = Ctx->regs.__eax;
+            return 0;
+        case 1:
+            *value = Ctx->regs.__ecx;
+            return 0;
+        case 2:
+            *value = Ctx->regs.__edx;
+            return 0;
+        case 3:
+            *value = Ctx->regs.__ebx;
+            return 0;
+        case 4:
+            *value = Ctx->regs.__esp;
+            return 0;
+        case 5:
+            *value = Ctx->regs.__ebp;
+            return 0;
+        case 6:
+            *value = Ctx->regs.__esi;
+            return 0;
+        case 7:
+            *value = Ctx->regs.__edi;
+            return 0;
+        case 8:
+            *value = Ctx->regs.__eip;
+            return 0;
+        case 9:
+            *value = Ctx->regs.__eflags;
+            return 0;
+        }
+    }
+    if (get_frame_info(Ctx, Frame, &IP, NULL, &FP) < 0) return -1;
+    switch (rg){
+    case 5:
+        *value = FP;
+        return 0;
+    case 8:
+        *value = IP;
+        return 0;
+    }
+    trace(LOG_ALWAYS, "get_register: Unsupported DWARF register number %d", rg);
     errno = ERR_UNSUPPORTED;
     return -1;
 #else
@@ -114,7 +162,7 @@ static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
 
 static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
 #if defined(__linux__) && defined(__i386__) || \
-    defined(_WRS_KERNEL) && (CPU_FAMILY==SIMNT || CPU_FAMILY==I80X86)
+   defined(_WRS_KERNEL) && (CPU_FAMILY==SIMNT || CPU_FAMILY==I80X86)
     if (is_top_frame(Ctx, Frame)) {
         switch (rg) {
         case 0:
@@ -144,19 +192,57 @@ static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
         case 8:
 #ifdef _WRS_KERNEL
             Ctx->regs.pc = (void *)(unsigned long)value;
-#else            
+#else
             Ctx->regs.eip = (unsigned long)value;
-#endif            
+#endif
             return 0;
         case 9:
             Ctx->regs.eflags = (unsigned long)value;
             return 0;
         }
     }
-    trace(LOG_ALWAYS, "set_register: Unsupported DWARF register number %d", rg); 
+    trace(LOG_ALWAYS, "set_register: Unsupported DWARF register number %d", rg);
     errno = ERR_UNSUPPORTED;
     return -1;
 
+#elif defined(__APPLE__) && defined(__i386__)
+    if (is_top_frame(Ctx, Frame)) {
+        switch (rg) {
+        case 0:
+            Ctx->regs.__eax = (unsigned long)value;
+            return 0;
+        case 1:
+            Ctx->regs.__ecx = (unsigned long)value;
+            return 0;
+        case 2:
+            Ctx->regs.__edx = (unsigned long)value;
+            return 0;
+        case 3:
+            Ctx->regs.__ebx = (unsigned long)value;
+            return 0;
+        case 4:
+            Ctx->regs.__esp = (unsigned long)value;
+            return 0;
+        case 5:
+            Ctx->regs.__ebp = (unsigned long)value;
+            return 0;
+        case 6:
+            Ctx->regs.__esi = (unsigned long)value;
+            return 0;
+        case 7:
+            Ctx->regs.__edi = (unsigned long)value;
+            return 0;
+        case 8:
+            Ctx->regs.__eip = (unsigned long)value;
+            return 0;
+        case 9:
+            Ctx->regs.__eflags = (unsigned long)value;
+            return 0;
+        }
+    }
+    trace(LOG_ALWAYS, "set_register: Unsupported DWARF register number %d", rg);
+    errno = ERR_UNSUPPORTED;
+    return -1;
 #else
 #error "Unknown DWARF registers mapping"
 #endif
@@ -205,7 +291,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
                 default: assert(0);
                 }
                 sExprStack[sExprStackLen - 1] = Data;
-            }            
+            }
             break;
         case OP_deref_size:
             check_e_stack(1);
@@ -223,7 +309,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
                 default: assert(0);
                 }
                 sExprStack[sExprStackLen - 1] = Data;
-            }            
+            }
             break;
         case OP_const1u:
             sExprStack[sExprStackLen++] = dio_ReadU1();
@@ -307,7 +393,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
                 }
                 sExprStack[sExprStackLen - 2] = Data;
                 sExprStackLen--;
-            }            
+            }
             break;
         case OP_xderef_size:
             check_e_stack(2);
@@ -326,7 +412,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
                 }
                 sExprStack[sExprStackLen - 2] = Data;
                 sExprStackLen--;
-            }            
+            }
             break;
         case OP_abs:
             check_e_stack(1);
@@ -392,7 +478,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
             sExprStack[sExprStackLen - 1] >>= sExprStack[sExprStackLen];
             break;
         case OP_shra:
-            {   
+            {
                 U8_T Cnt;
                 check_e_stack(2);
                 Data = sExprStack[sExprStackLen - 2];
@@ -622,7 +708,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
         case OP_deref2:
         case OP_add:
         default:
-            trace(LOG_ALWAYS, "Unsupported DWARF expression op 0x%02x", Op); 
+            trace(LOG_ALWAYS, "Unsupported DWARF expression op 0x%02x", Op);
             errno = ERR_UNSUPPORTED;
             return -1;
         }
@@ -727,7 +813,7 @@ int dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
         Value->mAddr = NULL;
         Value->mSize = 0;
     }
-    
+
     if (!sKeepStack) sExprStackLen = 0;
 
     errno = error;
@@ -735,4 +821,5 @@ int dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
 }
 
 #endif
+
 
