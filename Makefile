@@ -1,12 +1,14 @@
 CONF=Debug
 
-CC=gcc
+CC ?= gcc
+AR ?= ar
+
 ifeq ($(CONF),Debug)
-CFLAGS=-g
+CFLAGS += -g
 else
-CFLAGS=-O
+CFLAGS += -O
 endif
-CFLAGS:=$(CFLAGS) -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -Wmissing-prototypes 
+CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -Wmissing-prototypes
 
 OPSYS=$(shell uname -o 2>/dev/null || uname -s)
 MACHINE=$(shell uname -m)
@@ -28,7 +30,7 @@ endif
 
 VERSION=$(shell grep "%define version " tcf-agent.spec | sed -e "s/%define version //")
 BINDIR=$(OPSYS)/$(MACHINE)/$(CONF)
-INSTALLROOT=/tmp
+INSTALLROOT ?= /tmp
 SBIN=/usr/sbin
 INIT=/etc/init.d
 
@@ -40,7 +42,7 @@ EXECS=$(BINDIR)/agent $(BINDIR)/client $(BINDIR)/tcfreg $(BINDIR)/valueadd $(BIN
 all:	$(EXECS)
 
 $(BINDIR)/libtcf.a : $(OFILES)
-	ar -rc $@ $(OFILES)
+	$(AR) -rc $@ $^
 	$(RANLIB)
 
 $(BINDIR)/agent: $(BINDIR)/main.o $(BINDIR)/libtcf.a
