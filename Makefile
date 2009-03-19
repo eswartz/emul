@@ -41,7 +41,7 @@ all:	$(EXECS)
 
 $(BINDIR)/libtcf.a : $(OFILES)
 	ar -rc $@ $(OFILES)
-	$(RUNLIB)
+	$(RANLIB)
 
 $(BINDIR)/agent: $(BINDIR)/main.o $(BINDIR)/libtcf.a
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main.o $(BINDIR)/libtcf.a $(LIBS)
