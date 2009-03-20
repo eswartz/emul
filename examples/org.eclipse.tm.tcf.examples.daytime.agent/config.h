@@ -23,6 +23,8 @@
 #ifndef D_config
 #define D_config
 
+#include "mdep.h"
+
 #if defined(WIN32) || defined(__CYGWIN__)
 #  define TARGET_UNIX       0
 #elif defined(_WRS_KERNEL)
