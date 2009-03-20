@@ -34,7 +34,6 @@
  * and uses unicast packets to sent info to agents from the list.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #if ENABLE_Discovery

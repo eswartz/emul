@@ -15,7 +15,7 @@
 /*
  * This module implements DWARF expressions evaluation.
  */
-#include "mdep.h"
+
 #include "config.h"
 
 #if ENABLE_ELF

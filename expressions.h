@@ -43,6 +43,8 @@ typedef struct Value Value;
  */
 typedef int ExpressionIdentifierCallBack(Context *, int /*frame*/, char * /*name*/, Value *);
 
+#if SERVICE_Expressions
+
 /*
  * Evaluate given expression in given context.
  * If load != 0 then result value is always loaded into a local buffer.
@@ -67,8 +69,6 @@ extern void set_value(Value * v, void * data, size_t size);
  * The callbacks are called for each identifier found in an expression during evaluation.
  */
 extern void add_identifier_callback(ExpressionIdentifierCallBack * callback);
-
-#if SERVICE_Expressions
 
 extern void ini_expressions_service(Protocol * proto);
 

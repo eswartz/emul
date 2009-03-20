@@ -20,7 +20,6 @@
  * require a process to be attached before they can access it.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #if SERVICE_Processes

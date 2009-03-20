@@ -16,7 +16,6 @@
  * Agent self-testing service.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #if SERVICE_RunControl

@@ -16,8 +16,10 @@
  * Expression evaluation service.
  */
 
-#include "mdep.h"
 #include "config.h"
+
+#if SERVICE_Expressions
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -28,6 +30,11 @@
 #include "symbols.h"
 #include "breakpoints.h"
 #include "expressions.h"
+#include "json.h"
+#include "context.h"
+#include "stacktrace.h"
+#include "breakpoints.h"
+#include "symbols.h"
 
 #define STR_POOL_SIZE 1024
 
@@ -1742,14 +1749,6 @@ ContextAddress value_to_address(Value * v) {
     return r;
 }
 
-#if SERVICE_Expressions
-
-#include "json.h"
-#include "context.h"
-#include "stacktrace.h"
-#include "breakpoints.h"
-#include "symbols.h"
-
 typedef struct Expression Expression;
 
 struct Expression {
@@ -2330,4 +2329,4 @@ void ini_expressions_service(Protocol * proto) {
     add_command_handler(proto, EXPRESSIONS, "dispose", command_dispose);
 }
 
-#endif
+#endif  /* if SERVICE_Expressions */

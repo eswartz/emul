@@ -18,9 +18,7 @@
 #ifndef D_memorymap
 #define D_memorymap
 
-#include "mdep.h"
 #include "config.h"
-
 #include "context.h"
 
 typedef struct MemoryRegion MemoryRegion;

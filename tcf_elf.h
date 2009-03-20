@@ -18,7 +18,6 @@
 #ifndef D_elf
 #define D_elf
 
-#include "mdep.h"
 #include "config.h"
 
 #if ENABLE_ELF

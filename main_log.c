@@ -21,7 +21,6 @@
  * It can be used as diagnostic and debugging tool.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #include <stdio.h>

@@ -16,7 +16,6 @@
  * Agent main module.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #include <stdio.h>

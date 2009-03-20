@@ -15,7 +15,7 @@
 /*
  * This module implements reading and caching of ELF files.
  */
-#include "mdep.h"
+
 #include "config.h"
 
 #if ENABLE_ELF

@@ -16,7 +16,6 @@
  * Target service implementation: file system access (TCF name FileSystem)
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #if SERVICE_FileSystem

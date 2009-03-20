@@ -16,7 +16,6 @@
  * Target service implementation: run control (TCF name RunControl)
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #if SERVICE_RunControl

@@ -18,7 +18,6 @@
 #ifndef D_windbgcache
 #define D_windbgcache
 
-#include "mdep.h"
 #include "config.h"
 
 #if defined(WIN32)

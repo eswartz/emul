@@ -16,7 +16,6 @@
  * TCF Registers - CPU registers access service.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #if SERVICE_Registers

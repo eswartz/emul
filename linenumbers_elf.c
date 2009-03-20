@@ -18,10 +18,9 @@
  * machine instruction addresses in the executable object.
  */
 
-#include "mdep.h"
 #include "config.h"
 
-#if (SERVICE_LineNumbers) && (ENABLE_ELF)
+#if SERVICE_LineNumbers && ENABLE_ELF
 
 #include <errno.h>
 #include <assert.h>

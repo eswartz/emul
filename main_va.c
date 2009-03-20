@@ -21,7 +21,6 @@
  * The code is intended to be an example of service proxing implementation.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #include <stdio.h>
@@ -182,7 +181,9 @@ int main(int argc, char ** argv) {
     bcg = broadcast_group_alloc();
     spg = suspend_group_alloc();
     proto = protocol_alloc();
+#if SERVICE_Locator
     ini_locator_service(proto, bcg);
+#endif
 
     ps = channel_peer_from_url(url);
     if (ps == NULL) {

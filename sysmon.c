@@ -12,7 +12,6 @@
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
-#include "mdep.h"
 #include "config.h"
 
 #if SERVICE_SysMonitor

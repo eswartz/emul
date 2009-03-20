@@ -16,7 +16,6 @@
  * TCF Memory - memory access service.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #if SERVICE_Memory

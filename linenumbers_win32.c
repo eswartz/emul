@@ -18,10 +18,9 @@
  * machine instruction addresses in the executable object.
  */
 
-#include "mdep.h"
 #include "config.h"
 
-#if (SERVICE_LineNumbers) && defined(WIN32)
+#if SERVICE_LineNumbers && defined(WIN32)
 
 #include <errno.h>
 #include <assert.h>

@@ -19,11 +19,9 @@
  * when a program's execution should be interrupted.
  */
 
-#include "mdep.h"
 #include "config.h"
-#if SERVICE_Breakpoints
 
-/* TODO: replant breakpoints when shared lib is loaded or unloaded */
+#if SERVICE_Breakpoints
 
 #include <stdlib.h>
 #include <string.h>

@@ -19,7 +19,6 @@
 #ifndef D_runctrl
 #define D_runctrl
 
-#include "mdep.h"
 #include "config.h"
 #include "events.h"
 #include "context.h"

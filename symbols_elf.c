@@ -13,9 +13,9 @@
  *******************************************************************************/
 
 /*
- * Symbols service.- ELF version
+ * Symbols service - ELF version
  */
-#include "mdep.h"
+
 #include "config.h"
 
 #if (SERVICE_Symbols) && (ENABLE_ELF)

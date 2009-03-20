@@ -16,7 +16,6 @@
  * Command line interpreter.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #if ENABLE_Cmdline

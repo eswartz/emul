@@ -16,7 +16,8 @@
  * This module handles process/thread OS contexts and their state machine.
  */
 
-#include "mdep.h"
+#include "config.h"
+
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
@@ -28,14 +29,132 @@
 #include "myalloc.h"
 #include "breakpoints.h"
 
-#define CONTEXT_PID_ROOT_SIZE 1024
-#define CONTEXT_PID_HASH(PID) ((unsigned)(PID) % CONTEXT_PID_ROOT_SIZE)
-static LINK context_pid_root[CONTEXT_PID_ROOT_SIZE];
 static ContextEventListener * event_listeners = NULL;
 
-LINK context_root = { NULL, NULL };
+char * pid2id(pid_t pid, pid_t parent) {
+    static char s[64];
+    char * p = s + sizeof(s);
+    unsigned long n = (long)pid;
+    *(--p) = 0;
+    do {
+        *(--p) = (char)(n % 10 + '0');
+        n = n / 10;
+    }
+    while (n != 0);
+    if (parent != 0) {
+        n = (long)parent;
+        *(--p) = '.';
+        do {
+            *(--p) = (char)(n % 10 + '0');
+            n = n / 10;
+        }
+        while (n != 0);
+    }
+    *(--p) = 'P';
+    return p;
+}
 
-#ifndef WIN32
+char * thread_id(Context * ctx) {
+    if (ctx->parent == NULL) return pid2id(ctx->pid, ctx->pid);
+    assert(ctx->parent->parent == NULL);
+    return pid2id(ctx->pid, ctx->parent->pid);
+}
+
+char * container_id(Context * ctx) {
+    if (ctx->parent != NULL) ctx = ctx->parent;
+    assert(ctx->parent == NULL);
+    return pid2id(ctx->pid, 0);
+}
+
+pid_t id2pid(char * id, pid_t * parent) {
+    pid_t pid = 0;
+    if (parent != NULL) *parent = 0;
+    if (id == NULL) return 0;
+    if (id[0] != 'P') return 0;
+    if (id[1] == 0) return 0;
+    pid = (pid_t)strtol(id + 1, &id, 10);
+    if (id[0] == '.') {
+        if (id[1] == 0) return 0;
+        if (parent != NULL) *parent = pid;
+        pid = (pid_t)strtol(id + 1, &id, 10);
+    }
+    if (id[0] != 0) return 0;
+    return pid;
+}
+
+Context * id2ctx(char * id) {
+    pid_t pid = id2pid(id, NULL);
+    if (pid == 0) return NULL;
+    return context_find_from_pid(pid);
+}
+
+void add_context_event_listener(ContextEventListener * listener, void * client_data) {
+    listener->client_data = client_data;
+    listener->next = event_listeners;
+    event_listeners = listener;
+}
+
+#ifdef WIN32
+
+typedef struct ExceptionName {
+    DWORD code;
+    char * name;
+    char * desc;
+} ExceptionName;
+
+static ExceptionName exception_names[] = {
+    { 0x40010005, NULL, "Control-C" },
+    { 0x40010008, NULL, "Control-Break" },
+    { EXCEPTION_DATATYPE_MISALIGNMENT, "EXCEPTION_DATATYPE_MISALIGNMENT", "Datatype Misalignment" },
+    { EXCEPTION_ACCESS_VIOLATION, "EXCEPTION_ACCESS_VIOLATION", "Access Violation" },
+    { EXCEPTION_IN_PAGE_ERROR, "EXCEPTION_IN_PAGE_ERROR", "In Page Error" },
+    { EXCEPTION_ILLEGAL_INSTRUCTION, "EXCEPTION_ILLEGAL_INSTRUCTION", "Illegal Instruction" },
+    { EXCEPTION_ARRAY_BOUNDS_EXCEEDED, "EXCEPTION_ARRAY_BOUNDS_EXCEEDED", "Array Bounds Exceeded" },
+    { EXCEPTION_FLT_DENORMAL_OPERAND, "EXCEPTION_FLT_DENORMAL_OPERAND", "Float Denormal Operand" },
+    { EXCEPTION_FLT_DIVIDE_BY_ZERO, "EXCEPTION_FLT_DIVIDE_BY_ZERO", "Float Divide by Zero" },
+    { EXCEPTION_FLT_INEXACT_RESULT, "EXCEPTION_FLT_INEXACT_RESULT", "Float Inexact Result" },
+    { EXCEPTION_FLT_INVALID_OPERATION, "EXCEPTION_FLT_INVALID_OPERATION", "Float Invalid Operation" },
+    { EXCEPTION_FLT_OVERFLOW, "EXCEPTION_FLT_OVERFLOW", "Float Overflow" },
+    { EXCEPTION_FLT_STACK_CHECK, "EXCEPTION_FLT_STACK_CHECK", "Float Stack Check" },
+    { EXCEPTION_FLT_UNDERFLOW, "EXCEPTION_FLT_UNDERFLOW", "Float Underflow" },
+    { EXCEPTION_NONCONTINUABLE_EXCEPTION, "EXCEPTION_NONCONTINUABLE_EXCEPTION", "Noncontinuable Exception" },
+    { EXCEPTION_INVALID_DISPOSITION, "EXCEPTION_INVALID_DISPOSITION", "Invalid Disposition" },
+    { EXCEPTION_INT_DIVIDE_BY_ZERO, "EXCEPTION_INT_DIVIDE_BY_ZERO", "Integer Divide by Zero" },
+    { EXCEPTION_INT_OVERFLOW, "EXCEPTION_INT_OVERFLOW", "Integer Overflow" },
+    { EXCEPTION_PRIV_INSTRUCTION, "EXCEPTION_PRIV_INSTRUCTION", "Privileged Instruction" },
+    { EXCEPTION_STACK_OVERFLOW, "EXCEPTION_STACK_OVERFLOW", "Stack Overflow" },
+    { EXCEPTION_GUARD_PAGE, "EXCEPTION_GUARD_PAGE", "Guard Page" },
+    { 0xC0000194, "EXCEPTION_POSSIBLE_DEADLOCK", "Possible Deadlock" },
+    { EXCEPTION_INVALID_HANDLE, "EXCEPTION_INVALID_HANDLE", "Invalid Handle" },
+    { 0xc0000017, NULL, "No Memory" },
+    { 0xc0000135, NULL, "DLL Not Found" },
+    { 0xc0000142, NULL, "DLL Initialization Failed" },
+    { 0xc06d007e, NULL, "Module Not Found" },
+    { 0xc06d007f, NULL, "Procedure Not Found" },
+    { 0xe06d7363, NULL, "Microsoft C++ Exception" },
+};
+
+#define EXCEPTION_NAMES_CNT (sizeof(exception_names) / sizeof(ExceptionName))
+
+char * signal_name(int signal) {
+    int n = signal - 1;
+    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].name;
+    return NULL;
+}
+
+char * signal_description(int signal) {
+    int n = signal - 1;
+    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].desc;
+    return NULL;
+}
+
+unsigned signal_code(int signal) {
+    int n = signal - 1;
+    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].code;
+    return 0;
+}
+
+#else
 
 #define CASE(var) case var: return ""#var;
 char * signal_name(int signal) {
@@ -94,6 +213,14 @@ unsigned signal_code(int signal) {
 
 #endif
 
+#if ENABLE_DebugContext
+
+#define CONTEXT_PID_ROOT_SIZE 1024
+#define CONTEXT_PID_HASH(PID) ((unsigned)(PID) % CONTEXT_PID_ROOT_SIZE)
+static LINK context_pid_root[CONTEXT_PID_ROOT_SIZE];
+
+LINK context_root = { NULL, NULL };
+
 Context * context_find_from_pid(pid_t pid) {
     LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(pid)];
     LINK * qp = qhp->next;
@@ -106,6 +233,22 @@ Context * context_find_from_pid(pid_t pid) {
         qp = qp->next;
     }
     return NULL;
+}
+
+void context_lock(Context * ctx) {
+    assert(ctx->ref_count > 0);
+    ctx->ref_count++;
+}
+
+void context_unlock(Context * ctx) {
+    assert(ctx->ref_count > 0);
+    if (--(ctx->ref_count) == 0) {
+        assert(list_is_empty(&ctx->children));
+        assert(ctx->parent == NULL);
+        list_remove(&ctx->ctxl);
+        list_remove(&ctx->pidl);
+        loc_free(ctx);
+    }
 }
 
 static void link_context(Context * ctx) {
@@ -128,80 +271,6 @@ static Context * create_context(pid_t pid) {
     list_init(&ctx->pidl);
     list_init(&ctx->cldl);
     return ctx;
-}
-
-char * pid2id(pid_t pid, pid_t parent) {
-    static char s[64];
-    char * p = s + sizeof(s);
-    unsigned long n = (long)pid;
-    *(--p) = 0;
-    do {
-        *(--p) = (char)(n % 10 + '0');
-        n = n / 10;
-    }
-    while (n != 0);
-    if (parent != 0) {
-        n = (long)parent;
-        *(--p) = '.';
-        do {
-            *(--p) = (char)(n % 10 + '0');
-            n = n / 10;
-        }
-        while (n != 0);
-    }
-    *(--p) = 'P';
-    return p;
-}
-
-char * thread_id(Context * ctx) {
-    assert(context_has_state(ctx));
-    if (ctx->parent == NULL) return pid2id(ctx->pid, ctx->pid);
-    assert(ctx->parent->parent == NULL);
-    return pid2id(ctx->pid, ctx->parent->pid);
-}
-
-char * container_id(Context * ctx) {
-    if (ctx->parent != NULL) ctx = ctx->parent;
-    assert(ctx->parent == NULL);
-    return pid2id(ctx->pid, 0);
-}
-
-pid_t id2pid(char * id, pid_t * parent) {
-    pid_t pid = 0;
-    if (parent != NULL) *parent = 0;
-    if (id == NULL) return 0;
-    if (id[0] != 'P') return 0;
-    if (id[1] == 0) return 0;
-    pid = (pid_t)strtol(id + 1, &id, 10);
-    if (id[0] == '.') {
-        if (id[1] == 0) return 0;
-        if (parent != NULL) *parent = pid;
-        pid = (pid_t)strtol(id + 1, &id, 10);
-    }
-    if (id[0] != 0) return 0;
-    return pid;
-}
-
-Context * id2ctx(char * id) {
-    pid_t pid = id2pid(id, NULL);
-    if (pid == 0) return NULL;
-    return context_find_from_pid(pid);
-}
-
-void context_lock(Context * ctx) {
-    assert(ctx->ref_count > 0);
-    ctx->ref_count++;
-}
-
-void context_unlock(Context * ctx) {
-    assert(ctx->ref_count > 0);
-    if (--(ctx->ref_count) == 0) {
-        assert(list_is_empty(&ctx->children));
-        assert(ctx->parent == NULL);
-        list_remove(&ctx->ctxl);
-        list_remove(&ctx->pidl);
-        loc_free(ctx);
-    }
 }
 
 char * context_state_name(Context * ctx) {
@@ -288,46 +357,6 @@ typedef struct DebugEvent {
     struct DebugEvent * next;
 } DebugEvent;
 
-typedef struct ExceptionName {
-    DWORD code;
-    char * name;
-    char * desc;
-} ExceptionName;
-
-static ExceptionName exception_names[] = {
-    { 0x40010005, NULL, "Control-C" },
-    { 0x40010008, NULL, "Control-Break" },
-    { EXCEPTION_DATATYPE_MISALIGNMENT, "EXCEPTION_DATATYPE_MISALIGNMENT", "Datatype Misalignment" },
-    { EXCEPTION_ACCESS_VIOLATION, "EXCEPTION_ACCESS_VIOLATION", "Access Violation" },
-    { EXCEPTION_IN_PAGE_ERROR, "EXCEPTION_IN_PAGE_ERROR", "In Page Error" },
-    { EXCEPTION_ILLEGAL_INSTRUCTION, "EXCEPTION_ILLEGAL_INSTRUCTION", "Illegal Instruction" },
-    { EXCEPTION_ARRAY_BOUNDS_EXCEEDED, "EXCEPTION_ARRAY_BOUNDS_EXCEEDED", "Array Bounds Exceeded" },
-    { EXCEPTION_FLT_DENORMAL_OPERAND, "EXCEPTION_FLT_DENORMAL_OPERAND", "Float Denormal Operand" },
-    { EXCEPTION_FLT_DIVIDE_BY_ZERO, "EXCEPTION_FLT_DIVIDE_BY_ZERO", "Float Divide by Zero" },
-    { EXCEPTION_FLT_INEXACT_RESULT, "EXCEPTION_FLT_INEXACT_RESULT", "Float Inexact Result" },
-    { EXCEPTION_FLT_INVALID_OPERATION, "EXCEPTION_FLT_INVALID_OPERATION", "Float Invalid Operation" },
-    { EXCEPTION_FLT_OVERFLOW, "EXCEPTION_FLT_OVERFLOW", "Float Overflow" },
-    { EXCEPTION_FLT_STACK_CHECK, "EXCEPTION_FLT_STACK_CHECK", "Float Stack Check" },
-    { EXCEPTION_FLT_UNDERFLOW, "EXCEPTION_FLT_UNDERFLOW", "Float Underflow" },
-    { EXCEPTION_NONCONTINUABLE_EXCEPTION, "EXCEPTION_NONCONTINUABLE_EXCEPTION", "Noncontinuable Exception" },
-    { EXCEPTION_INVALID_DISPOSITION, "EXCEPTION_INVALID_DISPOSITION", "Invalid Disposition" },
-    { EXCEPTION_INT_DIVIDE_BY_ZERO, "EXCEPTION_INT_DIVIDE_BY_ZERO", "Integer Divide by Zero" },
-    { EXCEPTION_INT_OVERFLOW, "EXCEPTION_INT_OVERFLOW", "Integer Overflow" },
-    { EXCEPTION_PRIV_INSTRUCTION, "EXCEPTION_PRIV_INSTRUCTION", "Privileged Instruction" },
-    { EXCEPTION_STACK_OVERFLOW, "EXCEPTION_STACK_OVERFLOW", "Stack Overflow" },
-    { EXCEPTION_GUARD_PAGE, "EXCEPTION_GUARD_PAGE", "Guard Page" },
-    { 0xC0000194, "EXCEPTION_POSSIBLE_DEADLOCK", "Possible Deadlock" },
-    { EXCEPTION_INVALID_HANDLE, "EXCEPTION_INVALID_HANDLE", "Invalid Handle" },
-    { 0xc0000017, NULL, "No Memory" },
-    { 0xc0000135, NULL, "DLL Not Found" },
-    { 0xc0000142, NULL, "DLL Initialization Failed" },
-    { 0xc06d007e, NULL, "Module Not Found" },
-    { 0xc06d007f, NULL, "Procedure Not Found" },
-    { 0xe06d7363, NULL, "Microsoft C++ Exception" },
-};
-
-#define EXCEPTION_NAMES_CNT (sizeof(exception_names) / sizeof(ExceptionName))
-
 #define EXCEPTION_DEBUGGER_IO 0x406D1388
 
 char * context_suspend_reason(Context * ctx) {
@@ -347,24 +376,6 @@ char * context_suspend_reason(Context * ctx) {
 
     snprintf(buf, sizeof(buf), "Exception 0x%08x", exception_code);
     return buf;
-}
-
-char * signal_name(int signal) {
-    int n = signal - 1;
-    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].name;
-    return NULL;
-}
-
-char * signal_description(int signal) {
-    int n = signal - 1;
-    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].desc;
-    return NULL;
-}
-
-unsigned signal_code(int signal) {
-    int n = signal - 1;
-    if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].code;
-    return 0;
 }
 
 static int get_signal_index(Context * ctx) {
@@ -2778,12 +2789,6 @@ unsigned context_word_size(Context * ctx) {
     return sizeof(ContextAddress);
 }
 
-void add_context_event_listener(ContextEventListener * listener, void * client_data) {
-    listener->client_data = client_data;
-    listener->next = event_listeners;
-    event_listeners = listener;
-}
-
 static void eventpoint_at_main(Context * ctx, void * args) {
 #if ENABLE_ELF
     ctx->debug_structure_searched = 0;
@@ -2803,3 +2808,21 @@ void ini_contexts(void) {
     init();
     create_eventpoint("main", eventpoint_at_main, NULL);
 }
+
+#else
+
+int context_attach_self(void) {
+    errno = ERR_UNSUPPORTED;
+    return -1;
+}
+
+int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
+    errno = ERR_UNSUPPORTED;
+    return -1;
+}
+
+Context * context_find_from_pid(pid_t pid) {
+    return NULL;
+}
+
+#endif  /* if ENABLE_DebugContext */

@@ -19,7 +19,6 @@
 #ifndef D_context
 #define D_context
 
-#include "mdep.h"
 #include "config.h"
 #include "link.h"
 

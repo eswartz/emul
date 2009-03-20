@@ -23,7 +23,6 @@
 #ifndef D_dwarfcache
 #define D_dwarfcache
 
-#include "mdep.h"
 #include "config.h"
 
 #if ENABLE_ELF

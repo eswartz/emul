@@ -17,7 +17,6 @@
  * Current implementation delegates all its job to DBGHELP.DLL.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #include <assert.h>

@@ -18,7 +18,6 @@
  * All it does is running TCF UDP auto-discovery protocol.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #include <stdio.h>

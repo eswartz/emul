@@ -16,7 +16,6 @@
  * Target service implementation: stack trace (TCF name StackTrace)
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #if SERVICE_StackTrace

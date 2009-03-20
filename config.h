@@ -36,25 +36,64 @@
 #  define TARGET_UNIX       1
 #endif
 
-#define SERVICE_Locator         TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
-#define SERVICE_RunControl      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
-#define SERVICE_Breakpoints     TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
-#define SERVICE_Memory          TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
-#define SERVICE_Registers       TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
-#define SERVICE_StackTrace      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
-#define SERVICE_Symbols         TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
-#define SERVICE_LineNumbers     TARGET_UNIX || TARGET_WINDOWS
-#define SERVICE_Processes       TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
-#define SERVICE_FileSystem      TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
-#define SERVICE_SysMonitor      TARGET_UNIX
-#define SERVICE_Expressions     TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
-#define SERVICE_Streams         TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS
+#if !defined(SERVICE_Locator)
+#define SERVICE_Locator         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_RunControl)
+#define SERVICE_RunControl      (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_Breakpoints)
+#define SERVICE_Breakpoints     (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_Memory)
+#define SERVICE_Memory          (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_MemoryMap)
+#define SERVICE_MemoryMap       (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_Registers)
+#define SERVICE_Registers       (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_StackTrace)
+#define SERVICE_StackTrace      (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_Symbols)
+#define SERVICE_Symbols         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_LineNumbers)
+#define SERVICE_LineNumbers     (TARGET_UNIX || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_Processes)
+#define SERVICE_Processes       (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_FileSystem)
+#define SERVICE_FileSystem      (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_SysMonitor)
+#define SERVICE_SysMonitor      (TARGET_UNIX)
+#endif
+#if !defined(SERVICE_Expressions)
+#define SERVICE_Expressions     (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_Streams)
+#define SERVICE_Streams         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
 
-#define ENABLE_Trace        1
-#define ENABLE_Discovery    1
-#define ENABLE_Cmdline      1
-
-#define ENABLE_ELF              TARGET_UNIX
+#if !defined(ENABLE_Trace)
+#define ENABLE_Trace            1
+#endif
+#if !defined(ENABLE_Discovery)
+#define ENABLE_Discovery        1
+#endif
+#if !defined(ENABLE_Cmdline)
+#define ENABLE_Cmdline          1
+#endif
+#if !defined(ENABLE_DebugContext)
+#define ENABLE_DebugContext     (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(ENABLE_ELF)
+#define ENABLE_ELF              (TARGET_UNIX && (SERVICE_Symbols || SERVICE_LineNumbers))
+#endif
 
 #ifdef CONFIG_MAIN
 /*
@@ -78,6 +117,7 @@
 #include "expressions.h"
 #include "streamsservice.h"
 #include "proxy.h"
+#include "tcf_elf.h"
 
 static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
 #if SERVICE_Locator
@@ -91,6 +131,9 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
 #endif
 #if SERVICE_Memory
     ini_memory_service(proto, bcg);
+#endif
+#if SERVICE_MemoryMap
+    ini_memory_map_service();
 #endif
 #if SERVICE_Registers
     ini_registers_service(proto);
@@ -119,10 +162,12 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
 #if SERVICE_Streams
     ini_streams_service(proto);
 #endif
+#if ENABLE_DebugContext
+    ini_contexts();
+#endif
 #if ENABLE_ELF
     ini_elf();
 #endif
-    ini_memory_map_service();
     ini_diagnostics_service(proto);
 }
 

@@ -16,7 +16,6 @@
  * Agent main module.
  */
 
-#include "mdep.h"
 #define CONFIG_MAIN
 #include "config.h"
 
@@ -178,7 +177,6 @@ int main(int argc, char ** argv) {
     spg = suspend_group_alloc();
     proto = protocol_alloc();
     ini_services(proto, bcg, spg);
-    ini_contexts();
 
     ps = channel_peer_from_url(url);
     if (ps == NULL) {

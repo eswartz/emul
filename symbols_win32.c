@@ -13,9 +13,9 @@
  *******************************************************************************/
 
 /*
- * Symbols service.- Windows version
+ * Symbols service - Windows version
  */
-#include "mdep.h"
+
 #include "config.h"
 
 #if (SERVICE_Symbols) && defined(WIN32)

@@ -15,8 +15,10 @@
 /*
  * This module holds execution context memory maps.
  */
-#include "mdep.h"
+
 #include "config.h"
+
+#if SERVICE_MemoryMap
 
 #include <assert.h>
 #include <errno.h>
@@ -201,3 +203,4 @@ void ini_memory_map_service(void) {
 }
 
 
+#endif

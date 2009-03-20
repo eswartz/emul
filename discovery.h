@@ -19,7 +19,6 @@
 #ifndef D_discovery
 #define D_discovery
 
-#include "mdep.h"
 #include "config.h"
 #include "protocol.h"
 #include "channel.h"
@@ -36,7 +35,10 @@
  */
 extern void discovery_start(void);
 
+#if SERVICE_Locator
 
 extern void ini_locator_service(Protocol * p, TCFBroadcastGroup * bcg);
+
+#endif
 
 #endif

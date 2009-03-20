@@ -16,7 +16,6 @@
  * Implements auto-discovery and Locator service.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #include <stddef.h>

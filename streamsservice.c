@@ -16,7 +16,6 @@
  * TCF Streams - generic streams service.
  */
 
-#include "mdep.h"
 #include "config.h"
 
 #if SERVICE_Streams

@@ -17,7 +17,6 @@
  * This service is used for framework and agents testing.
  */
 
-#include "mdep.h"
 #include "config.h"
 #include <signal.h>
 #include <assert.h>
