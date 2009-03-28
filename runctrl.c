@@ -53,6 +53,7 @@ static TCFSuspendGroup * suspend_group = NULL;
 typedef struct SafeEvent SafeEvent;
 
 struct SafeEvent {
+    int mem;
     EventCallBack * done;
     void * arg;
     SafeEvent * next;
@@ -70,7 +71,6 @@ struct GetContextArgs {
 static SafeEvent * safe_event_list = NULL;
 static int safe_event_pid_count = 0;
 static int safe_event_generation = 0;
-static int safe_event_running = 0;
 
 #if !defined(WIN32) && !defined(_WRS_KERNEL)
 static char * get_executable(pid_t pid) {
@@ -247,7 +247,7 @@ static void command_get_context(char * token, Channel * c) {
         s->ctx = ctx;
         context_lock(ctx);
         id2pid(id, &s->parent);
-        post_safe_event(event_get_context, s);
+        post_safe_event(ctx->mem, event_get_context, s);
     }
 }
 
@@ -467,7 +467,7 @@ int terminate_debug_context(TCFBroadcastGroup * bcg, Context * ctx) {
         args->ctx = ctx;
         args->bcg = bcg;
         context_lock(ctx);
-        post_safe_event(event_terminate, args);
+        post_safe_event(ctx->mem, event_terminate, args);
     }
     if (err) {
         errno = err;
@@ -601,12 +601,13 @@ static void send_event_context_exception(OutputStream * out, Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-int is_all_stopped(void) {
+int is_all_stopped(int mem) {
     LINK * qp;
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
         Context * ctx = ctxl2ctxp(qp);
         if (ctx->exited || ctx->exiting) continue;
         if (!context_has_state(ctx)) continue;
+        if (mem > 0 && ctx->mem != mem) continue;
         if (!ctx->stopped) return 0;
     }
     return are_channels_suspended(suspend_group);
@@ -634,16 +635,22 @@ static void continue_temporary_stopped(void * arg) {
 
 static void run_safe_events(void * arg) {
     LINK * qp;
+    int mem;
 
     if ((int)arg != safe_event_generation) return;
     assert(safe_event_list != NULL);
     assert(are_channels_suspended(suspend_group));
 
     safe_event_pid_count = 0;
+    mem = safe_event_list->mem;
 
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
         Context * ctx = ctxl2ctxp(qp);
         if (ctx->exited || ctx->exiting || ctx->stopped || !context_has_state(ctx)) {
+            ctx->pending_safe_event = 0;
+            continue;
+        }
+        if (mem > 0 && ctx->mem != mem) {
             ctx->pending_safe_event = 0;
             continue;
         }
@@ -663,6 +670,7 @@ static void run_safe_events(void * arg) {
                         ctx->pid, error, errno_to_str(error));
                 }
             }
+            assert(!ctx->stopped);
         }
         if (ctx->pending_safe_event >= STOP_ALL_MAX_CNT) {
             trace(LOG_ALWAYS, "error: can't temporary stop pid %d; error: timeout", ctx->pid);
@@ -675,18 +683,20 @@ static void run_safe_events(void * arg) {
         }
     }
 
-    if ((int)arg != safe_event_generation) return;
-
     while (safe_event_list) {
         Trap trap;
         SafeEvent * i = safe_event_list;
+        assert((int)arg == safe_event_generation);
         if (safe_event_pid_count > 0) {
             post_event_with_delay(run_safe_events, (void *)++safe_event_generation, STOP_ALL_TIMEOUT);
             return;
         }
-        assert(is_all_stopped());
+        if (mem > 0 && i->mem != mem) {
+            post_event(run_safe_events, (void *)++safe_event_generation);
+            return;
+        }
+        assert(is_all_stopped(i->mem));
         safe_event_list = i->next;
-        safe_event_running = 1;
         if (set_trap(&trap)) {
             i->done(i->arg);
             clear_trap(&trap);
@@ -695,7 +705,6 @@ static void run_safe_events(void * arg) {
             trace(LOG_ALWAYS, "Unhandled exception in \"safe\" event dispatch: %d %s",
                   trap.error, errno_to_str(trap.error));
         }
-        safe_event_running = 0;
         loc_free(i);
         if ((int)arg != safe_event_generation) return;
     }
@@ -718,13 +727,14 @@ static void check_safe_events(Context * ctx) {
     }
 }
 
-void post_safe_event(EventCallBack * done, void * arg) {
+void post_safe_event(int mem, EventCallBack * done, void * arg) {
     SafeEvent * i = (SafeEvent *)loc_alloc(sizeof(SafeEvent));
+    i->mem = mem;
     i->done = done;
     i->arg = arg;
     if (safe_event_list == NULL) {
         assert(safe_event_pid_count == 0);
-        if (!safe_event_running) {
+        if (!are_channels_suspended(suspend_group)) {
             channels_suspend(suspend_group);
             cmdline_suspend();
             post_event(run_safe_events, (void *)++safe_event_generation);

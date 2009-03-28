@@ -29,9 +29,11 @@
  * Temporary suspends handling of incoming messages and stops all debuggee threads.
  * Callback function 'done' will be called when everything is stopped and
  * it is safe to access debuggee memory, plant breakpoints, etc.
+ * 'mem' is memory ID, only threads that belong to that memory are stopped.
+ * if 'mem' = 0, stopp all threads.
  */
 #if SERVICE_RunControl
-extern void post_safe_event(EventCallBack * done, void * arg);
+extern void post_safe_event(int mem, EventCallBack * done, void * arg);
 #else
 #define post_safe_event post_event
 #endif
@@ -39,8 +41,10 @@ extern void post_safe_event(EventCallBack * done, void * arg);
 /*
  * Return 1 if all threads in debuggee are stopped and handling of incoming messages
  * is suspended and it is safe to access debuggee memory, plant breakpoints, etc.
+ * 'mem' is memory ID, only threads that belong to that memory are checked.
+ * if 'mem' = 0, check all threads.
  */
-extern int is_all_stopped(void);
+extern int is_all_stopped(int mem);
 
 /*
  * Terminate debug context - thread or process.

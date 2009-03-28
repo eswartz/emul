@@ -625,7 +625,7 @@ static void replant_breakpoints(void) {
     if (list_is_empty(&breakpoints) && list_is_empty(&instructions)) return;
     if (replanting) return;
     replanting = 1;
-    post_safe_event(event_replant_breakpoints, NULL);
+    post_safe_event(0, event_replant_breakpoints, NULL);
 }
 
 static int str_equ(char * x, char * y) {
@@ -1374,7 +1374,7 @@ static void safe_skip_breakpoint(void * arg) {
     if (bi->error) error = bi->error;
 
     if (error == 0) {
-        post_safe_event(safe_restore_breakpoint, ctx);
+        post_safe_event(ctx->mem, safe_restore_breakpoint, ctx);
         if (context_single_step(ctx) < 0) error = errno;
     }
     else {
@@ -1417,7 +1417,7 @@ int skip_breakpoint(Context * ctx, int single_step) {
     ctx->stepping_over_bp = bi;
     assert(bi->skip_cnt > 0);
     context_lock(ctx);
-    post_safe_event(safe_skip_breakpoint, ctx);
+    post_safe_event(ctx->mem, safe_skip_breakpoint, ctx);
     return 1;
 #endif
 }

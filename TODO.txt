@@ -51,9 +51,6 @@
           o   It would be good if the InputStream and OutputStream was designed so characters could be read/written without
                causing a function call in the normal case.  Something similar to stdio getc/putc.
 
--        channel.c in function channels_suspend(): Should we add “assert(!suspended);” to make sure it is not called multiple
-         times since we don’t have a suspend count?
-
 -        registers.c:
 
           o   Get/set commands does not handle reading multiple registers.  Should it?

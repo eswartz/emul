@@ -354,7 +354,7 @@ static void safe_memory_set(void * parm) {
 
 static void command_set(char * token, Channel * c) {
     struct MemoryCommandArgs * args = read_command_args(token, c, CMD_SET);
-    if (args != NULL) post_safe_event(safe_memory_set, args);
+    if (args != NULL) post_safe_event(args->ctx->mem, safe_memory_set, args);
 }
 
 static void safe_memory_get(void * parm) {
@@ -412,7 +412,7 @@ static void safe_memory_get(void * parm) {
 
 static void command_get(char * token, Channel * c) {
     struct MemoryCommandArgs * args = read_command_args(token, c, CMD_GET);
-    if (args != NULL) post_safe_event(safe_memory_get, args);
+    if (args != NULL) post_safe_event(args->ctx->mem, safe_memory_get, args);
 }
 
 static void safe_memory_fill(void * parm) {
@@ -503,7 +503,7 @@ static void safe_memory_fill(void * parm) {
 
 static void command_fill(char * token, Channel * c) {
     struct MemoryCommandArgs * args = read_command_args(token, c, CMD_FILL);
-    if (args != NULL) post_safe_event(safe_memory_fill, args);
+    if (args != NULL) post_safe_event(args->ctx->mem, safe_memory_fill, args);
 }
 
 static void send_event_context_added(OutputStream * out, Context * ctx) {

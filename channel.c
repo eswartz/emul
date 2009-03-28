@@ -69,6 +69,7 @@ static void write_all(OutputStream * out, int byte) {
 
 void channels_suspend(TCFSuspendGroup * p) {
     assert(is_dispatch_thread());
+    assert(!p->suspended);
     trace(LOG_PROTOCOL, "All channels suspended");
     p->suspended = 1;
 }
