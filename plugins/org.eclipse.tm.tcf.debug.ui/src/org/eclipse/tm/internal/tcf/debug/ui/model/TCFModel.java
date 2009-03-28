@@ -781,24 +781,29 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
      * The method is normally called from SourceLookupService.
      */
     public void displaySource(Object element, final IWorkbenchPage page, boolean forceSourceLookup) {
+        final int cnt = ++display_source_cnt;
         if (element instanceof TCFNodeExecContext) {
             final TCFNodeExecContext node = (TCFNodeExecContext)element;
             element = new TCFTask<TCFNode>() {
                 public void run() {
-                    if (!node.validateNode(this)) return;
-                    if (!node.isSuspended()) {
-                        done(node);
+                    if (node.disposed) {
+                        done(null);
                     }
                     else {
-                        TCFNodeStackFrame f = node.getTopFrame();
-                        done(f == null ? node : f);
+                        if (!node.validateNode(this)) return;
+                        if (!node.isSuspended()) {
+                            done(null);
+                        }
+                        else {
+                            TCFNodeStackFrame f = node.getTopFrame();
+                            done(f == null ? node : f);
+                        }
                     }
                 }
             }.getE();
         }
         if (element instanceof TCFNodeStackFrame) {
             final TCFNodeStackFrame stack_frame = (TCFNodeStackFrame)element;
-            final int cnt = ++display_source_cnt;
             Protocol.invokeLater(new Runnable() {
                 public void run() {
                     if (cnt != display_source_cnt) return;
@@ -845,8 +850,14 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                                     stack_frame.parent.id, stack_frame.getFrameNo() == 0, line);
                         }
                     }
+                    else {
+                        displaySource(cnt, null, null, page, null, false, 0);
+                    }
                 }
             });
+        }
+        else {
+            displaySource(cnt, null, null, page, null, false, 0);
         }
     }
     
