@@ -40,38 +40,6 @@ public class ChannelTCP extends StreamChannel {
                     socket.setTcpNoDelay(true);
                     inp = new BufferedInputStream(socket.getInputStream());
                     out = new BufferedOutputStream(socket.getOutputStream());
-                    /* Uncomment for testing of buffers.
-                    inp = new BufferedInputStream(new FilterInputStream(socket.getInputStream()) {
-                        public int read() throws IOException {
-                            System.out.println("Inp 1");
-                            return in.read();
-                        }
-                        public int read(byte b[]) throws IOException {
-                            int n = in.read(b);
-                            System.out.println("Inp " + n);
-                            return n;
-                        }
-                        public int read(byte b[], int off, int len) throws IOException {
-                            int n = in.read(b, off, len);
-                            System.out.println("Inp " + n);
-                            return n;
-                        }
-                    });
-                    out = new BufferedOutputStream(new FilterOutputStream(socket.getOutputStream()){
-                        public void write(int b) throws IOException {
-                            System.out.println("Out 1");
-                            out.write(b);
-                        }
-                        public void write(byte b[]) throws IOException {
-                            System.out.println("Out " + b.length);
-                            out.write(b);
-                        }
-                        public void write(byte b[], int off, int len) throws IOException {
-                            System.out.println("Out " + len);
-                            out.write(b, off, len);
-                        }
-                    });
-                    */
                     Protocol.invokeLater(new Runnable() {
                         public void run() {
                             ChannelTCP.this.start();
