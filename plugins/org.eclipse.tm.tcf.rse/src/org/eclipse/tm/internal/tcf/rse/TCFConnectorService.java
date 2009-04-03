@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ * Martin Oberhuber (Wind River) - [269682] Get port from RSE Property
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse;
 
@@ -100,8 +101,12 @@ public class TCFConnectorService extends BasicConnectorService {
         }
         if (channel == null) {
             final String host = getHostName().toLowerCase();
-            // TODO: final int port = getPort();
-            final int port = TCFConnectorServiceManager.TCF_PORT;
+            int tmpPort = getConnectPort();
+            if (tmpPort <= 0) {
+                //Default fallback
+                tmpPort = TCFConnectorServiceManager.TCF_PORT;
+            }
+            final int port = tmpPort;
             IPeer peer = null;
             String ports = Integer.toString(port);
             ILocator locator = Protocol.getLocator();
