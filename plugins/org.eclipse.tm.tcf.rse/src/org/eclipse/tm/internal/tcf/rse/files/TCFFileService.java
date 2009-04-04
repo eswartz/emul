@@ -93,9 +93,10 @@ public class TCFFileService extends AbstractFileService {
             .getInstance().getConnectorService(host, ITCFSubSystem.class);
     }
 
+    @Override
     public String getDescription() {
-        return "The TCF File Service uses the Target Communication Framework to provide service" +
-            "for the Files subsystem. It requires a TCF agent to be running on the remote machine.";
+        return "The TCF File Service uses the Target Communication Framework to provide service" + //$NON-NLS-1$
+            "for the Files subsystem. It requires a TCF agent to be running on the remote machine."; //$NON-NLS-1$
     }
 
     public SystemMessage getMessage(Throwable x) {
@@ -103,8 +104,9 @@ public class TCFFileService extends AbstractFileService {
                 SystemMessage.ERROR, x.getMessage(), x);
     }
 
+    @Override
     public String getName() {
-        return "TCF File Service";
+        return "TCF File Service"; //$NON-NLS-1$
     }
 
     private String toRemotePath(String parent, String name) throws SystemMessageException {
@@ -113,16 +115,16 @@ public class TCFFileService extends AbstractFileService {
         if (parent != null) parent = parent.replace('\\', '/');
         if (name != null) name = name.replace('\\', '/');
         if (parent == null || parent.length() == 0) s = name;
-        else if (name == null || name.equals(".")) s = parent;
-        else if (name.equals("/")) s = parent;
-        else if (parent.endsWith("/")) s = parent + name;
+        else if (name == null || name.equals(".")) s = parent; //$NON-NLS-1$
+        else if (name.equals("/")) s = parent; //$NON-NLS-1$
+        else if (parent.endsWith("/")) s = parent + name; //$NON-NLS-1$
         else s = parent + '/' + name;
-        if (s.startsWith("./") || s.equals(".")) {
+        if (s.startsWith("./") || s.equals(".")) { //$NON-NLS-1$ //$NON-NLS-2$
             UserInfo ui = getUserInfo();
             if (ui.error != null) throw new SystemMessageException(getMessage(ui.error));
             s = ui.home.replace('\\', '/') + s.substring(1);
         }
-        while (s.endsWith("/.")) s = s.substring(0, s.length() - 2);
+        while (s.endsWith("/.")) s = s.substring(0, s.length() - 2); //$NON-NLS-1$
         return s;
     }
 
@@ -141,7 +143,7 @@ public class TCFFileService extends AbstractFileService {
                     }
                 });
             }
-        }.getS(monitor, "Copy: " + srcName);
+        }.getS(monitor, "Copy: " + srcName); //$NON-NLS-1$
     }
 
     public void copyBatch(String[] srcParents,
@@ -184,7 +186,7 @@ public class TCFFileService extends AbstractFileService {
                     }
                 });
             }
-        }.getS(monitor, "Create folder");
+        }.getS(monitor, "Create folder"); //$NON-NLS-1$
     }
 
     public void delete(String parent,
@@ -218,9 +220,10 @@ public class TCFFileService extends AbstractFileService {
                     }
                 });
             }
-        }.getS(monitor, "Delete");
+        }.getS(monitor, "Delete"); //$NON-NLS-1$
     }
 
+    @Override
     public void deleteBatch(String[] remoteParents, String[] fileNames,
             IProgressMonitor monitor)
             throws SystemMessageException {
@@ -232,12 +235,12 @@ public class TCFFileService extends AbstractFileService {
     public void download(final String parent,
             final String name, final File file, final boolean is_binary,
             final String host_encoding, IProgressMonitor monitor) throws SystemMessageException {
-        monitor.beginTask("Download", 1);
+        monitor.beginTask("Download", 1); //$NON-NLS-1$
         try {
             file.getParentFile().mkdirs();
             InputStream inp = getInputStream(parent, name, is_binary, new NullProgressMonitor());
             OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
-            copyStream(inp, out, is_binary, "UTF8", host_encoding);
+            copyStream(inp, out, is_binary, "UTF8", host_encoding); //$NON-NLS-1$
         }
         catch (Exception x) {
             if (x instanceof SystemMessageException) throw (SystemMessageException)x;
@@ -248,8 +251,9 @@ public class TCFFileService extends AbstractFileService {
         }
     }
 
+    @Override
     public String getEncoding(IProgressMonitor monitor) throws SystemMessageException {
-        return "UTF8";
+        return "UTF8"; //$NON-NLS-1$
     }
 
     public IHostFile getFile(final String parent,
@@ -273,9 +277,10 @@ public class TCFFileService extends AbstractFileService {
                     }
                 });
             }
-        }.getS(monitor, "Stat");
+        }.getS(monitor, "Stat"); //$NON-NLS-1$
     }
 
+    @Override
     protected IHostFile[] internalFetch(final String parent, final String filter, final int fileType, final IProgressMonitor monitor)
             throws SystemMessageException {
         final String path = toRemotePath(parent, null);
@@ -347,9 +352,10 @@ public class TCFFileService extends AbstractFileService {
                     }
                 });
             }
-        }.getS(monitor, "Get files and folders");
+        }.getS(monitor, "Get files and folders"); //$NON-NLS-1$
     }
 
+    @Override
     public InputStream getInputStream(final String parent, final String name, boolean isBinary, IProgressMonitor monitor)
             throws SystemMessageException {
         final String path = toRemotePath(parent, name);
@@ -364,10 +370,11 @@ public class TCFFileService extends AbstractFileService {
                     }
                 });
             }
-        }.getS(monitor, "Get input stream");
+        }.getS(monitor, "Get input stream"); //$NON-NLS-1$
         return new TCFFileInputStream(handle);
     }
 
+    @Override
     public OutputStream getOutputStream(final String parent, final String name, boolean isBinary, IProgressMonitor monitor)
             throws SystemMessageException {
         final String path = toRemotePath(parent, name);
@@ -383,7 +390,7 @@ public class TCFFileService extends AbstractFileService {
                     }
                 });
             }
-        }.getS(monitor, "Get output stream");
+        }.getS(monitor, "Get output stream"); //$NON-NLS-1$
         return new TCFFileOutputStream(handle);
     }
 
@@ -406,13 +413,13 @@ public class TCFFileService extends AbstractFileService {
                     }
                 });
             }
-        }.getS(monitor, "Get roots");
+        }.getS(monitor, "Get roots"); //$NON-NLS-1$
     }
 
     public IHostFile getUserHome() {
         UserInfo ui = getUserInfo();
         try {
-            return getFile(ui.home, ".", new NullProgressMonitor());
+            return getFile(ui.home, ".", new NullProgressMonitor()); //$NON-NLS-1$
         }
         catch (SystemMessageException e) {
             throw new Error(e);
@@ -438,7 +445,7 @@ public class TCFFileService extends AbstractFileService {
                     }
                 });
             }
-        }.getS(monitor, "Move");
+        }.getS(monitor, "Move"); //$NON-NLS-1$
     }
 
     public void rename(String remoteParent,
@@ -468,7 +475,7 @@ public class TCFFileService extends AbstractFileService {
                     }
                 });
             }
-        }.getS(monitor, "Set modification time");
+        }.getS(monitor, "Set modification time"); //$NON-NLS-1$
     }
 
     public void setReadOnly(final String parent,
@@ -505,16 +512,16 @@ public class TCFFileService extends AbstractFileService {
                     }
                 });
             }
-        }.getS(monitor, "Set permissions");
+        }.getS(monitor, "Set permissions"); //$NON-NLS-1$
     }
 
     public void upload(InputStream inp,
             String parent, String name, boolean isBinary,
             String hostEncoding, IProgressMonitor monitor) throws SystemMessageException {
-        monitor.beginTask("Upload", 1);
+        monitor.beginTask("Upload", 1); //$NON-NLS-1$
         try {
             OutputStream out = getOutputStream(parent, name, isBinary, new NullProgressMonitor());
-            copyStream(inp, out, isBinary, hostEncoding, "UTF8");
+            copyStream(inp, out, isBinary, hostEncoding, "UTF8"); //$NON-NLS-1$
         }
         catch (Throwable x) {
             if (x instanceof SystemMessageException) throw (SystemMessageException)x;
@@ -529,11 +536,11 @@ public class TCFFileService extends AbstractFileService {
             String parent, String name, boolean isBinary,
             String srcEncoding, String hostEncoding, IProgressMonitor monitor)
             throws SystemMessageException {
-        monitor.beginTask("Upload", 1);
+        monitor.beginTask("Upload", 1); //$NON-NLS-1$
         try {
             OutputStream out = getOutputStream(parent, name, isBinary, new NullProgressMonitor());
             InputStream inp = new BufferedInputStream(new FileInputStream(localFile));
-            copyStream(inp, out, isBinary, hostEncoding, "UTF8");
+            copyStream(inp, out, isBinary, hostEncoding, "UTF8"); //$NON-NLS-1$
         }
         catch (Throwable x) {
             if (x instanceof SystemMessageException) throw (SystemMessageException)x;
@@ -548,8 +555,8 @@ public class TCFFileService extends AbstractFileService {
             boolean is_binary, String inp_encoding, String out_encoding) throws IOException {
         try {
             if (!is_binary) {
-                if (inp_encoding.equals("UTF-8")) inp_encoding = "UTF8";
-                if (out_encoding.equals("UTF-8")) out_encoding = "UTF8";
+                if (inp_encoding == null || inp_encoding.equals("UTF-8")) inp_encoding = "UTF8"; //$NON-NLS-1$ //$NON-NLS-2$
+                if (out_encoding == null || out_encoding.equals("UTF-8")) out_encoding = "UTF8"; //$NON-NLS-1$ //$NON-NLS-2$
             }
             if (is_binary || inp_encoding.equals(out_encoding)) {
                 byte[] buf = new byte[0x1000];
