@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,9 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
- * Martin Oberhuber (Wind River) - [238564] Adopt TM 3.0 APIs
+ *     Martin Oberhuber (Wind River) - [238564] Adopt TM 3.0 APIs
+ *     Uwe Stieber (Wind River) - [271224] NPE in TCFFileService#download
+ *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.files;
 
@@ -61,8 +63,10 @@ public class TCFFileService extends AbstractFileService {
     private UserInfo user_info;
 
     private static final class UserInfo {
+        @SuppressWarnings("unused")
         final int r_uid;
         final int e_uid;
+        @SuppressWarnings("unused")
         final int r_gid;
         final int e_gid;
         final String home;
@@ -139,7 +143,7 @@ public class TCFFileService extends AbstractFileService {
                 fs.copy(src, tgt, false, false, new IFileSystem.DoneCopy() {
                     public void doneCopy(IToken token, FileSystemException error) {
                         if (error != null) error(error);
-                        else done(true);
+                        else done(Boolean.TRUE);
                     }
                 });
             }
@@ -208,7 +212,7 @@ public class TCFFileService extends AbstractFileService {
                                     error(error);
                                     return;
                                 }
-                                done(true);
+                                done(Boolean.TRUE);
                             }
                         };
                         if (attrs.isDirectory()) {
@@ -441,7 +445,7 @@ public class TCFFileService extends AbstractFileService {
                 fs.rename(src_path, tgt_path, new IFileSystem.DoneRename() {
                     public void doneRename(IToken token, FileSystemException error) {
                         if (error != null) error(error);
-                        else done(true);
+                        else done(Boolean.TRUE);
                     }
                 });
             }
@@ -471,7 +475,7 @@ public class TCFFileService extends AbstractFileService {
                 fs.setstat(path, attrs, new IFileSystem.DoneSetStat() {
                     public void doneSetStat(IToken token, FileSystemException error) {
                         if (error != null) error(error);
-                        else done(true);
+                        else done(Boolean.TRUE);
                     }
                 });
             }
@@ -506,7 +510,7 @@ public class TCFFileService extends AbstractFileService {
                         fs.setstat(path, new_attrs, new IFileSystem.DoneSetStat() {
                             public void doneSetStat(IToken token, FileSystemException error) {
                                 if (error != null) error(error);
-                                else done(true);
+                                else done(Boolean.TRUE);
                             }
                         });
                     }

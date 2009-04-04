@@ -7,7 +7,8 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
- * Martin Oberhuber (Wind River) - [269682] Get port from RSE Property
+ *     Martin Oberhuber (Wind River) - [269682] Get port from RSE Property
+ *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse;
 
@@ -38,14 +39,14 @@ public class TCFConnectorService extends BasicConnectorService {
     private final List<Runnable> state_change = new ArrayList<Runnable>();
 
     public TCFConnectorService(IHost host, int port) {
-        super("TCF", "Target Communication Framework", host, port);
+        super("TCF", "Target Communication Framework", host, port); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     @Override
     protected void internalConnect(IProgressMonitor monitor) throws Exception {
         assert !Protocol.isDispatchThread();
         final Exception[] res = new Exception[1];
-        monitor.beginTask("Connecting " + getHostName(), 1);
+        monitor.beginTask("Connecting " + getHostName(), 1); //$NON-NLS-1$
         synchronized (res) {
             Protocol.invokeLater(new Runnable() {
                 public void run() {
@@ -62,7 +63,7 @@ public class TCFConnectorService extends BasicConnectorService {
     protected void internalDisconnect(IProgressMonitor monitor) throws Exception {
         assert !Protocol.isDispatchThread();
         final Exception[] res = new Exception[1];
-        monitor.beginTask("Disconnecting " + getHostName(), 1);
+        monitor.beginTask("Disconnecting " + getHostName(), 1); //$NON-NLS-1$
         synchronized (res) {
             Protocol.invokeLater(new Runnable() {
                 public void run() {
@@ -113,7 +114,7 @@ public class TCFConnectorService extends BasicConnectorService {
             for (Iterator<IPeer> i = locator.getPeers().values().iterator(); i.hasNext();) {
                 IPeer p = i.next();
                 Map<String, String> attrs = p.getAttributes();
-                if ("TCP".equals(attrs.get(IPeer.ATTR_TRANSPORT_NAME)) &&
+                if ("TCP".equals(attrs.get(IPeer.ATTR_TRANSPORT_NAME)) && //$NON-NLS-1$
                         host.equalsIgnoreCase(attrs.get(IPeer.ATTR_IP_HOST)) &&
                         ports.equals(attrs.get(IPeer.ATTR_IP_PORT))) {
                     peer = p;
@@ -122,12 +123,13 @@ public class TCFConnectorService extends BasicConnectorService {
             }
             if (peer == null) {
                 Map<String, String> attrs = new HashMap<String, String>();
-                attrs.put(IPeer.ATTR_ID, "RSE:" + host + ":" + port);
+                attrs.put(IPeer.ATTR_ID, "RSE:" + host + ":" + port); //$NON-NLS-1$ //$NON-NLS-2$
                 attrs.put(IPeer.ATTR_NAME, getName());
-                attrs.put(IPeer.ATTR_TRANSPORT_NAME, "TCP");
+                attrs.put(IPeer.ATTR_TRANSPORT_NAME, "TCP"); //$NON-NLS-1$
                 attrs.put(IPeer.ATTR_IP_HOST, host);
                 attrs.put(IPeer.ATTR_IP_PORT, ports);
                 peer = new AbstractPeer(attrs) {
+                    @Override
                     public IChannel openChannel() {
                         return new ChannelTCP(this, host, port);
                     }
@@ -198,16 +200,16 @@ public class TCFConnectorService extends BasicConnectorService {
     }
 
     public ISysMonitor getSysMonitorService() {
-        if (channel == null || channel.getState() != IChannel.STATE_OPEN) throw new Error("Not connected");
+        if (channel == null || channel.getState() != IChannel.STATE_OPEN) throw new Error("Not connected"); //$NON-NLS-1$
         ISysMonitor m = channel.getRemoteService(ISysMonitor.class);
-        if (m == null) throw new Error("Remote peer does not support SysMonitor service");
+        if (m == null) throw new Error("Remote peer does not support SysMonitor service"); //$NON-NLS-1$
         return m;
     }
 
     public IFileSystem getFileSystemService() {
-        if (channel == null || channel.getState() != IChannel.STATE_OPEN) throw new Error("Not connected");
+        if (channel == null || channel.getState() != IChannel.STATE_OPEN) throw new Error("Not connected"); //$NON-NLS-1$
         IFileSystem m = channel.getRemoteService(IFileSystem.class);
-        if (m == null) throw new Error("Remote peer does not support FileSystem service");
+        if (m == null) throw new Error("Remote peer does not support FileSystem service"); //$NON-NLS-1$
         return m;
     }
 }

@@ -1,12 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.processes;
 
@@ -22,9 +23,10 @@ import org.eclipse.tm.internal.tcf.rse.TCFConnectorService;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorServiceManager;
 
 public class TCFProcessSubSystemConfiguration extends ProcessServiceSubSystemConfiguration {
-    
+
     private final TCFProcessAdapter process_adapter = new TCFProcessAdapter();
 
+    @Override
     @SuppressWarnings("unchecked")
     public Class getServiceImplType() {
         return TCFProcessService.class;
@@ -45,11 +47,13 @@ public class TCFProcessSubSystemConfiguration extends ProcessServiceSubSystemCon
         return process_adapter;
     }
 
+    @Override
     public IConnectorService getConnectorService(IHost host) {
         return TCFConnectorServiceManager.getInstance()
             .getConnectorService(host, ITCFSubSystem.class);
     }
 
+    @Override
     public void setConnectorService(IHost host, IConnectorService connectorService) {
         TCFConnectorServiceManager.getInstance().setConnectorService(host, getServiceImplType(), connectorService);
     }

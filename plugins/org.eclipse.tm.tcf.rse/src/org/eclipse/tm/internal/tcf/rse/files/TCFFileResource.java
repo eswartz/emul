@@ -1,13 +1,14 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
- * Anna Dushistova (MontaVista) - [247164][tcf] a lot of file/directory properties are not supported    
+ *     Anna Dushistova (MontaVista) - [247164][tcf] a lot of file/directory properties are not supported
+ *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.files;
 
@@ -20,14 +21,14 @@ import org.eclipse.tm.tcf.services.IFileSystem;
 
 
 public class TCFFileResource extends AbstractResource implements IHostFile, IHostFilePermissionsContainer{
-    
+
     private final TCFFileService service;
     private String parent;
     private String name;
     private final IFileSystem.FileAttrs attrs;
     private final boolean root;
     private IHostFilePermissions permissions;
-    
+
     public TCFFileResource(TCFFileService service, String parent, String name,
             IFileSystem.FileAttrs attrs, boolean root) {
         if (name == null) {
@@ -38,7 +39,7 @@ public class TCFFileResource extends AbstractResource implements IHostFile, IHos
             }
             else if (i == 0) {
                 name  = parent.substring(i + 1);
-                parent = "/";
+                parent = "/"; //$NON-NLS-1$
             }
             else {
                 name = parent;
@@ -50,9 +51,9 @@ public class TCFFileResource extends AbstractResource implements IHostFile, IHos
         this.name = name;
         this.attrs = attrs;
         this.root = root;
-        this.permissions = new HostFilePermissions(attrs.permissions, "" + attrs.uid, "" + attrs.gid);
+        this.permissions = new HostFilePermissions(attrs.permissions, "" + attrs.uid, "" + attrs.gid); //$NON-NLS-1$ //$NON-NLS-2$
     }
-    
+
     private String toLocalPath(String path) {
         if (path.length() > 1 && path.charAt(1) == ':') {
             return path.replace('/', '\\');
@@ -76,7 +77,7 @@ public class TCFFileResource extends AbstractResource implements IHostFile, IHos
 
     public synchronized String getAbsolutePath() {
         if (root) return toLocalPath(name);
-        if (parent.endsWith("/")) return toLocalPath(parent + name);
+        if (parent.endsWith("/")) return toLocalPath(parent + name); //$NON-NLS-1$
         return toLocalPath(parent + '/' + name);
     }
 
@@ -116,7 +117,7 @@ public class TCFFileResource extends AbstractResource implements IHostFile, IHos
     }
 
     public synchronized boolean isHidden() {
-        return name.startsWith(".");
+        return name.startsWith("."); //$NON-NLS-1$
     }
 
     public synchronized boolean isRoot() {
@@ -125,11 +126,11 @@ public class TCFFileResource extends AbstractResource implements IHostFile, IHos
 
     public synchronized void renameTo(String path) {
         path = path.replace('\\', '/');
-        if (path.equals("/")) {
-            parent = name = "/";
+        if (path.equals("/")) { //$NON-NLS-1$
+            parent = name = "/"; //$NON-NLS-1$
             return;
         }
-        assert !path.endsWith("/");
+        assert !path.endsWith("/"); //$NON-NLS-1$
         int i = path.lastIndexOf('/');
         parent = path.substring(0, i);
         name = path.substring(i + 1);
@@ -141,6 +142,6 @@ public class TCFFileResource extends AbstractResource implements IHostFile, IHos
 
     public void setPermissions(IHostFilePermissions permissions) {
         this.permissions = permissions;
-        
+
     }
 }

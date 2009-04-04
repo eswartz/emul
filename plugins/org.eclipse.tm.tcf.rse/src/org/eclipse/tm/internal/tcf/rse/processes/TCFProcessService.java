@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,8 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
- * Martin Oberhuber (Wind River) - [238564] Adopt TM 3.0 APIs
+ *     Martin Oberhuber (Wind River) - [238564] Adopt TM 3.0 APIs
+ *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.processes;
 
@@ -52,20 +53,24 @@ public class TCFProcessService extends AbstractProcessService implements
         root = new TCFProcessResource(this, null, null, null);
     }
 
+    @Override
     public String getDescription() {
-        return "The TCF Process Service uses the Target Communication Framework to provide service for the Processes subsystem." +
-            " It requires a TCF agent to be running on the remote machine.";
+        return "The TCF Process Service uses the Target Communication Framework to provide service for the Processes subsystem." + //$NON-NLS-1$
+            " It requires a TCF agent to be running on the remote machine."; //$NON-NLS-1$
     }
 
+    @Override
     public String getName() {
-        return "TCF Process Service";
+        return "TCF Process Service"; //$NON-NLS-1$
     }
 
+    @Override
     public IHostProcess getParentProcess(long PID, IProgressMonitor monitor)
             throws SystemMessageException {
         return getProcess(getProcess(PID, monitor).getPPid(), monitor);
     }
 
+    @Override
     public IHostProcess getProcess(final long PID, IProgressMonitor monitor)
             throws SystemMessageException {
         return new TCFRSETask<IHostProcess>() {
@@ -75,9 +80,9 @@ public class TCFProcessService extends AbstractProcessService implements
                     error(root.getChildrenError());
                     return;
                 }
-                done(pid2res.get(PID));
+                done(pid2res.get(Long.valueOf(PID)));
             }
-        }.getS(monitor, "Get process properties");
+        }.getS(monitor, "Get process properties"); //$NON-NLS-1$
     }
 
     public String[] getSignalTypes() {
@@ -104,6 +109,7 @@ public class TCFProcessService extends AbstractProcessService implements
         Arrays.sort(arr, c);
     }
 
+    @Override
     public IHostProcess[] listAllProcesses(IProgressMonitor monitor) throws SystemMessageException {
         HostProcessFilterImpl rpfs = new HostProcessFilterImpl();
         return listAllProcesses(rpfs, monitor);
@@ -124,10 +130,10 @@ public class TCFProcessService extends AbstractProcessService implements
             public void run() {
                 TCFProcessResource parent = (TCFProcessResource)up;
                 if (parent == null) {
-                    error(new IOException("Invalid parent"));
+                    error(new IOException("Invalid parent")); //$NON-NLS-1$
                     return;
                 }
-                if (filter.getPpid() != null && filter.getPpid().equals("*") || parent.getChildrenError() != null) {
+                if (filter.getPpid() != null && filter.getPpid().equals("*") || parent.getChildrenError() != null) { //$NON-NLS-1$
                     for (Iterator<TCFProcessResource> i = pid2res.values().iterator(); i.hasNext();) {
                         TCFProcessResource r = i.next();
                         if (eqaulIDs(parent.getID(), r.getParentID())) {
@@ -140,7 +146,7 @@ public class TCFProcessService extends AbstractProcessService implements
                 }
                 done(parent);
             }
-        }.getS(monitor, "Flush processes cache");
+        }.getS(monitor, "Flush processes cache"); //$NON-NLS-1$
         return new TCFRSETask<IHostProcess[]>() {
             public void run() {
                 if (!loadProcesses(this, parent)) return;
@@ -160,9 +166,10 @@ public class TCFProcessService extends AbstractProcessService implements
                 sort(arr);
                 done(arr);
             }
-        }.getS(monitor, "List processes");
+        }.getS(monitor, "List processes"); //$NON-NLS-1$
     }
 
+    @Override
     public IHostProcess[] listAllProcesses(String exeNameFilter, String userNameFilter, String stateFilter, IProgressMonitor monitor)
             throws SystemMessageException {
         HostProcessFilterImpl rpfs = new HostProcessFilterImpl();
@@ -172,17 +179,20 @@ public class TCFProcessService extends AbstractProcessService implements
         return listAllProcesses(rpfs, monitor);
     }
 
+    @Override
     public IHostProcess[] listChildProcesses(long parentPID, IProgressMonitor monitor) throws SystemMessageException {
         HostProcessFilterImpl rpfs = new HostProcessFilterImpl();
         return listChildProcesses(parentPID, rpfs, monitor);
     }
 
+    @Override
     public IHostProcess[] listChildProcesses(long parentPID, IHostProcessFilter filter, IProgressMonitor monitor)
             throws SystemMessageException {
         filter.setPpid(Long.toString(parentPID));
         return listAllProcesses(filter, monitor);
     }
 
+    @Override
     public IHostProcess[] listRootProcesses(IProgressMonitor monitor)
             throws SystemMessageException {
         IHostProcess[] roots = new IHostProcess[1];
@@ -256,7 +266,7 @@ public class TCFProcessService extends AbstractProcessService implements
         }
         for (Iterator<TCFProcessResource> i = id2res.values().iterator(); i.hasNext();) {
             TCFProcessResource r = i.next();
-            if (pid2res.get(r.getPid()) == null) i.remove();
+            if (pid2res.get(Long.valueOf(r.getPid())) == null) i.remove();
         }
         parent.setChildrenError(error);
         parent.runChildrenWaitList();

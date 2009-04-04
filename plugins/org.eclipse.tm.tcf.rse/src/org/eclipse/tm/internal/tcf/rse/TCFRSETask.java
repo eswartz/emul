@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,8 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
- * Martin Oberhuber (Wind River) - [238564] Adopt TM 3.0 APIs
+ *     Martin Oberhuber (Wind River) - [238564] Adopt TM 3.0 APIs
+ *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse;
 
@@ -39,7 +40,7 @@ public abstract class TCFRSETask<V> extends TCFTask<V> {
         }
         catch (Throwable e) {
             if (e instanceof SystemMessageException) throw (SystemMessageException)e;
-            SystemMessage m = new SystemMessage("TCF", "C", "0001",
+            SystemMessage m = new SystemMessage("TCF", "C", "0001", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     SystemMessage.ERROR, e.getClass().getName(), e.getMessage());
             throw new SystemMessageException(m);
         }

@@ -1,13 +1,14 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
- * Wind River Systems - initial API and implementation
- * Anna Dushistova (MontaVista) - [246996] [tcf] NullPointerException when trying to copy the process
+ *     Wind River Systems - initial API and implementation
+ *     Anna Dushistova (MontaVista) - [246996] [tcf] NullPointerException when trying to copy the process
+ *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.processes;
 
@@ -216,7 +217,7 @@ public class TCFProcessResource extends AbstractResource implements
     }
 
     public String getLabel() {
-        return Long.toString(getPid()) + " " + name;
+        return Long.toString(getPid()) + " " + name; //$NON-NLS-1$
     }
 
     public String getName() {
@@ -359,7 +360,8 @@ public class TCFProcessResource extends AbstractResource implements
         // TODO: cancelChildrenLoading
     }
 
+    @Override
     public String toString() {
-        return "[" + getStatusLine() + "]";
+        return "[" + getStatusLine() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
     }
 }

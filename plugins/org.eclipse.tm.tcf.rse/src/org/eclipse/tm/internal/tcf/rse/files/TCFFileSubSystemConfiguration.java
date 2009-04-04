@@ -1,12 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.files;
 
@@ -35,7 +36,7 @@ import org.eclipse.tm.internal.tcf.rse.TCFConnectorService;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorServiceManager;
 
 public class TCFFileSubSystemConfiguration extends FileServiceSubSystemConfiguration {
-    
+
     private final TCFFileAdapter file_adapter = new TCFFileAdapter();
 
     @Override
@@ -74,20 +75,24 @@ public class TCFFileSubSystemConfiguration extends FileServiceSubSystemConfigura
         return false;
     }
 
+    @Override
     public IConnectorService getConnectorService(IHost host) {
         return TCFConnectorServiceManager.getInstance()
             .getConnectorService(host, ITCFSubSystem.class);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Class getServiceImplType() {
         return TCFFileService.class;
     }
 
+    @Override
     public void setConnectorService(IHost host, IConnectorService connectorService) {
         TCFConnectorServiceManager.getInstance().setConnectorService(host, getServiceImplType(), connectorService);
     }
 
+    @Override
     protected ISystemFilterPool createDefaultFilterPool(ISystemFilterPoolManager mgr) {
         ISystemFilterPool pool = null;
         try {
@@ -95,19 +100,19 @@ public class TCFFileSubSystemConfiguration extends FileServiceSubSystemConfigura
 
             Vector<String> filterStrings = new Vector<String>();
             RemoteFileFilterString myHomeFilterString = new RemoteFileFilterString(this);
-            myHomeFilterString.setPath(".");
-            myHomeFilterString.setFile("*");
+            myHomeFilterString.setPath("."); //$NON-NLS-1$
+            myHomeFilterString.setFile("*"); //$NON-NLS-1$
             filterStrings.add(myHomeFilterString.toString());
-            ISystemFilter filter = mgr.createSystemFilter(pool, "Home", filterStrings);
+            ISystemFilter filter = mgr.createSystemFilter(pool, "Home", filterStrings); //$NON-NLS-1$
             filter.setNonChangable(true);
             filter.setSingleFilterStringOnly(true);
 
             filterStrings = new Vector<String>();
             RemoteFileFilterString rootFilesFilterString = new RemoteFileFilterString(this);
-            rootFilesFilterString.setPath("");
-            rootFilesFilterString.setFile("*");
-            filterStrings.add(rootFilesFilterString.toString());                    
-            filter = mgr.createSystemFilter(pool, "Root", filterStrings);                 
+            rootFilesFilterString.setPath(""); //$NON-NLS-1$
+            rootFilesFilterString.setFile("*"); //$NON-NLS-1$
+            filterStrings.add(rootFilesFilterString.toString());
+            filter = mgr.createSystemFilter(pool, "Root", filterStrings);                  //$NON-NLS-1$
             filter.setNonChangable(true);
             filter.setSingleFilterStringOnly(true);
         }

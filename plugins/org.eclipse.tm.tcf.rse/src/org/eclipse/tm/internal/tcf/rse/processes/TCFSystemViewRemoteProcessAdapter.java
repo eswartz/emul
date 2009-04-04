@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.processes;
 
@@ -55,25 +56,30 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
     private static IPropertyDescriptor[] properties = null;
     //private SystemKillProcessAction killProcessAction;
 
-    private static final String PROP_PC_UTIME = "PCUTime";
-    private static final String PROP_PC_STIME = "PCSTime";
+    private static final String PROP_PC_UTIME = "PCUTime"; //$NON-NLS-1$
+    private static final String PROP_PC_STIME = "PCSTime"; //$NON-NLS-1$
 
+    @Override
     public boolean canDrag(Object element) {
         return true;
     }
 
+    @Override
     public boolean canDrag(SystemRemoteResourceSet elements) {
         return true;
     }
 
+    @Override
     public Object doDrag(Object element, boolean sameSystemType, IProgressMonitor monitor) {
         return getText(element);
     }
 
+    @Override
     public ISystemResourceSet doDrag(SystemRemoteResourceSet set, IProgressMonitor monitor) {
         return set;
     }
 
+    @Override
     public void addActions(SystemMenuManager menu,
                     IStructuredSelection selection, Shell parent, String menuGroup) {
         /*
@@ -84,11 +90,12 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
 
         if (copyClipboardAction == null) {
             Clipboard clipboard = RSEUIPlugin.getTheSystemRegistryUI().getSystemClipboard();
-            copyClipboardAction = new SystemCopyToClipboardAction(shell, clipboard);
+            copyClipboardAction = new SystemCopyToClipboardAction(getShell(), clipboard);
         }
         menu.add(menuGroup, copyClipboardAction);
     }
 
+    @Override
     public ISubSystem getSubSystem(Object element) {
         if (element instanceof IRemoteProcess) {
             IRemoteProcess process = (IRemoteProcess)element;
@@ -97,6 +104,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         return super.getSubSystem(element);
     }
 
+    @Override
     public ImageDescriptor getImageDescriptor(Object element) {
         IRemoteProcess process = (IRemoteProcess)element;
         TCFProcessResource r = (TCFProcessResource)process.getObject();
@@ -120,6 +128,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         return (text == null) ? "" : text; //$NON-NLS-1$
     }
 
+    @Override
     public String getAlternateText(Object element) {
         IRemoteProcess process = (IRemoteProcess)element;
         String allProperties = process.getAllProperties();
@@ -131,10 +140,12 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         return "" + process.getPid(); //$NON-NLS-1$
     }
 
+    @Override
     public String getType(Object element) {
-        return "Process";
+        return "Process"; //$NON-NLS-1$
     }
 
+    @Override
     public Object getParent(Object element) {
         IRemoteProcess process = (IRemoteProcess) element;
         IRemoteProcess parent = process.getParentRemoteProcess();
@@ -144,10 +155,12 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         return parent;
     }
 
+    @Override
     public boolean hasChildren(IAdaptable element) {
         return getChildren(element, new NullProgressMonitor()).length > 0;
     }
 
+    @Override
     public Object[] getChildren(IAdaptable element, IProgressMonitor monitor) {
         IRemoteProcess process = (IRemoteProcess)element;
         IRemoteProcessSubSystem ss = process.getParentRemoteProcessSubSystem();
@@ -182,6 +195,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         return children;
     }
 
+    @Override
     protected IPropertyDescriptor[] internalGetPropertyDescriptors() {
         if (properties != null) return properties;
         List<IPropertyDescriptor> l = new ArrayList<IPropertyDescriptor>();
@@ -243,6 +257,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
      * Returns the current value for the named property.
      * @return the current value of the given property
      */
+    @Override
     protected Object internalGetPropertyValue(Object key) {
         return getPropertyValue(key, true);
     }
@@ -254,6 +269,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
      * @param formatted indication of whether to return the value in formatted or raw form
      * @return the current value of the given property
      */
+    @Override
     public Object getPropertyValue(Object property, boolean formatted) {
         String name = (String)property;
         TCFRemoteProcess process = (TCFRemoteProcess)propertySourceInput;
@@ -301,16 +317,16 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
             StringBuffer buf = new StringBuffer();
             if (!h[0].equals(BigInteger.ZERO)) {
                 buf.append(h[0]);
-                buf.append("h ");
+                buf.append("h "); //$NON-NLS-1$
             }
             if (buf.length() > 0 || !h[1].equals(BigInteger.ZERO)) {
                 buf.append(h[1]);
-                buf.append("m ");
+                buf.append("m "); //$NON-NLS-1$
             }
             buf.append(m[1]);
             buf.append('.');
             String ms = s[1].toString();
-            buf.append("000".substring(ms.length()));
+            buf.append("000".substring(ms.length())); //$NON-NLS-1$
             buf.append(ms);
             buf.append('s');
             return buf.toString();
@@ -332,7 +348,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         if (o instanceof Number) {
             BigInteger n = new BigInteger(o.toString());
             StringBuffer buf = new StringBuffer();
-            buf.append("0x");
+            buf.append("0x"); //$NON-NLS-1$
             formatHex(buf, n, 0);
             return buf.toString();
         }
@@ -351,7 +367,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
                     while (i < 63 && (n & (1l << (i + 1))) != 0) i++;
                     buf.append(i0);
                     if (i0 != i) {
-                        buf.append("..");
+                        buf.append(".."); //$NON-NLS-1$
                         buf.append(i);
                     }
                 }

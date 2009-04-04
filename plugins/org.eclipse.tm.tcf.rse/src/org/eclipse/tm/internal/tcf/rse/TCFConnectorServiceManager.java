@@ -1,12 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse;
 
@@ -16,10 +17,10 @@ import org.eclipse.rse.core.subsystems.IConnectorService;
 import org.eclipse.rse.core.subsystems.ISubSystem;
 
 public class TCFConnectorServiceManager extends AbstractConnectorServiceManager {
-    
+
     public static int TCF_PORT = 1534;
-    
-    private static final TCFConnectorServiceManager manager = 
+
+    private static final TCFConnectorServiceManager manager =
         new TCFConnectorServiceManager();
 
     @Override
