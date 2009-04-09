@@ -17,10 +17,10 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
 /**
- * Objects of this class are used cache TCF remote data.
+ * Objects of this class are used to cache TCF remote data.
  * The cache is asynchronous state machine. The states are:
  *  1. Valid - cache is in sync with remote data, use getError() and getData() to get cached data;
- *  2. Invalid - cache is out out of sync, start data retrieval by calling validate();
+ *  2. Invalid - cache is out of sync, start data retrieval by calling validate();
  *  3. Pending - cache is waiting result of a command that was sent to remote peer.
  * @param <V> - type of data to be stored in the cache.
  */
