@@ -23,6 +23,7 @@ import org.eclipse.tm.tcf.services.IExpressions;
 public class TCFChildrenExpressions extends TCFChildren {
 
     private final TCFNodeStackFrame node;
+    private final IExpressionManager exp_manager;
     
     private final IExpressionsListener listener = new IExpressionsListener() {
         
@@ -52,14 +53,13 @@ public class TCFChildrenExpressions extends TCFChildren {
     TCFChildrenExpressions(TCFNodeStackFrame node) {
         super(node.model.getLaunch().getChannel(), 32);
         this.node = node;
-        IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
-        m.addExpressionListener(listener);
+        exp_manager = DebugPlugin.getDefault().getExpressionManager();
+        exp_manager.addExpressionListener(listener);
     }
 
     @Override
     void dispose() {
-        IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
-        m.removeExpressionListener(listener);
+        exp_manager.removeExpressionListener(listener);
         super.dispose();
     }
     
@@ -83,9 +83,8 @@ public class TCFChildrenExpressions extends TCFChildren {
             return true;
         }
         HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
-        IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
         int cnt = 0;
-        for (final IExpression e : m.getExpressions()) {
+        for (final IExpression e : exp_manager.getExpressions()) {
             String text = e.getExpressionText();
             TCFNodeExpression n = findScript(text);
             if (n == null) add(n = new TCFNodeExpression(node, text, null, null, -1));
