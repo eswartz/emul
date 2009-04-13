@@ -18,6 +18,7 @@ import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.util.TCFTask;
 
 
 public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
@@ -32,8 +33,17 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
         ATTR_WORKING_DIRECTORY = ITCFConstants.ID_TCF_DEBUG_MODEL + ".WorkingDirectory",
         ATTR_USE_TERMINAL = ITCFConstants.ID_TCF_DEBUG_MODEL + ".UseTerminal";
 
-    public ILaunch getLaunch(ILaunchConfiguration configuration, String mode) throws CoreException {
-        return new TCFLaunch(configuration, mode);
+    public ILaunch getLaunch(final ILaunchConfiguration configuration, final String mode) throws CoreException {
+        return new TCFTask<ILaunch>() {
+            int cnt;
+            public void run() {
+                // Need to delay at least one dispatch cycle to work around
+                // a possible racing between thread that calls getLaunch() and 
+                // the process of activation of other TCF plug-ins. 
+                if (cnt++ < 2) Protocol.invokeLater(this);
+                else done(new TCFLaunch(configuration, mode));
+            }
+        }.getE();
     }
     
     public void launch(final ILaunchConfiguration configuration, final String mode,

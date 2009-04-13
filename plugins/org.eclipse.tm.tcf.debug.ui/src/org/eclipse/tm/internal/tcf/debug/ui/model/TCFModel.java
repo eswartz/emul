@@ -67,7 +67,7 @@ import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Device;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
@@ -107,6 +107,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         IModelProxyFactory, IColumnPresentationFactory, ISourceDisplay {
 
     private final TCFLaunch launch;
+    private final Display display;
     
     private final Map<IPresentationContext,TCFModelProxy> model_proxies =
         new HashMap<IPresentationContext,TCFModelProxy>();
@@ -147,8 +148,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private static int debug_view_selection_cnt;
     private static int display_source_cnt;
-    private static Display display;
-    private static Color console_colors[];
 
     private final IMemory.MemoryListener mem_listener = new IMemory.MemoryListener() {
 
@@ -327,24 +326,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     };
     
-    public static void setDisplay(Display display) {
-        assert display.getThread() == Thread.currentThread();
-        TCFModel.display = display;
-        console_colors = new Color[4];
-        for (int i = 0; i < console_colors.length; i++) {
-            int id = SWT.COLOR_BLACK;
-            switch (i) {
-            case 1: id = SWT.COLOR_RED; break;
-            case 2: id = SWT.COLOR_BLUE; break;
-            case 3: id = SWT.COLOR_GREEN; break;
-            }
-            console_colors[i] = display.getSystemColor(id);
-        }
-    }
-
     TCFModel(TCFLaunch launch) {
-        assert display != null;
         this.launch = launch;
+        display = Display.getDefault();
         selection_policy = new TCFModelSelectionPolicy(this);
         commands.put(ISuspendHandler.class, new SuspendCommand(this));
         commands.put(IResumeHandler.class, new ResumeCommand(this));
@@ -414,7 +398,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         assert id2node.size() == 0;
     }
     
-    void onProcessOutput(String process_id, int stream_id, byte[] data) {
+    void onProcessOutput(String process_id, final int stream_id, byte[] data) {
         try {
             IProcesses.ProcessContext prs = launch.getProcessContext();
             if (prs == null || !process_id.equals(prs.getID())) return;
@@ -427,9 +411,17 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (console == null) {
                     final MessageConsole c = console = new MessageConsole("TCF " + process_id,
                             ImageCache.getImageDescriptor(ImageCache.IMG_TCF));
+                    final MessageConsoleStream s = stream = console.newMessageStream();
                     display.asyncExec(new Runnable() {
                         public void run() {
                             try {
+                                int color_id = SWT.COLOR_BLACK;
+                                switch (stream_id) {
+                                case 1: color_id = SWT.COLOR_RED; break;
+                                case 2: color_id = SWT.COLOR_BLUE; break;
+                                case 3: color_id = SWT.COLOR_GREEN; break;
+                                }
+                                s.setColor(display.getSystemColor(color_id));
                                 IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
                                 manager.addConsoles(new IConsole[]{ c });
                                 IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
@@ -445,9 +437,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         }
                     });
                 }
-                stream = console.newMessageStream();
-                stream.setColor(stream_id >= 0 && stream_id < console_colors.length ?
-                        console_colors[stream_id] : console_colors[0]);
                 streams.put(stream_id, stream);
             }
             stream.print(new String(data, 0, data.length, "UTF-8"));
@@ -891,17 +880,20 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private void refreshLaunchView() {
         final Throwable error = launch.getError();
         if (error != null) launch.setError(null);
-        display.asyncExec(new Runnable() {
-            public void run() {
-                IWorkbenchWindow[] windows = PlatformUI.getWorkbench().getWorkbenchWindows();
-                if (windows == null) return;
-                for (IWorkbenchWindow window : windows) {
-                    IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_DEBUG_VIEW);
-                    if (view != null) ((StructuredViewer)view.getViewer()).refresh(launch);
+        synchronized (Device.class) {
+            if (display.isDisposed()) return;
+            display.asyncExec(new Runnable() {
+                public void run() {
+                    IWorkbenchWindow[] windows = PlatformUI.getWorkbench().getWorkbenchWindows();
+                    if (windows == null) return;
+                    for (IWorkbenchWindow window : windows) {
+                        IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_DEBUG_VIEW);
+                        if (view != null) ((StructuredViewer)view.getViewer()).refresh(launch);
+                    }
                 }
-            }
-        });
-        if (error != null) showMessageBox("TCF Launch Error", error);
+            });
+            if (error != null) showMessageBox("TCF Launch Error", error);
+        }
     }
     
     /*

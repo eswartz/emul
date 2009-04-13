@@ -91,6 +91,9 @@ public class TCFAnnotationManager {
         new HashMap<IWorkbenchWindow,WorkbenchWindowInfo>();
     
     private final TCFLaunch.Listener launch_listener = new TCFLaunch.Listener() {
+        
+        public void onCreated(TCFLaunch launch) {
+        }
 
         public void onConnected(final TCFLaunch launch) {
             updateActiveLaunch();

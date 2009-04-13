@@ -52,6 +52,8 @@ import org.eclipse.tm.tcf.services.IProcesses.ProcessContext;
 public class TCFLaunch extends Launch {
 
     public interface Listener {
+        
+        public void onCreated(TCFLaunch launch);
 
         public void onConnected(TCFLaunch launch);      
 
@@ -100,6 +102,7 @@ public class TCFLaunch extends Launch {
     
     public TCFLaunch(ILaunchConfiguration launchConfiguration, String mode) {
         super(launchConfiguration, mode, null);
+        for (Listener l : listeners) l.onCreated(TCFLaunch.this);
     }
 
     private void onConnected() {
@@ -118,7 +121,7 @@ public class TCFLaunch extends Launch {
         for (Iterator<Listener> i = listeners.iterator(); i.hasNext();) {
             i.next().onDisconnected(this);
         }
-        fireChanged();
+        if (DebugPlugin.getDefault() != null) fireChanged();
         runShutdownSequence(new Runnable() {
             public void run() {
                 shutdown = true;
@@ -429,6 +432,7 @@ public class TCFLaunch extends Launch {
     }
     
     private void disconnectStream(String id) {
+        if (channel.getState() != IChannel.STATE_OPEN) return;
         IStreams streams = getService(IStreams.class);
         streams.disconnect(id, new IStreams.DoneDisconnect() {
             public void doneDisconnect(IToken token, Exception error) {

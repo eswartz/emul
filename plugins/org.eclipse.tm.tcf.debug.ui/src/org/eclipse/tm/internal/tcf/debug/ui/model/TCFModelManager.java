@@ -17,7 +17,6 @@ import java.util.Map;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchesListener;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
@@ -27,28 +26,40 @@ public class TCFModelManager {
     private final Map<TCFLaunch,TCFModel> models = new HashMap<TCFLaunch,TCFModel>();
 
     private final TCFLaunch.Listener tcf_launch_listener = new TCFLaunch.Listener() {
+        
+        public void onCreated(TCFLaunch launch) {
+            assert Protocol.isDispatchThread();
+            assert models.get(launch) == null;
+            TCFModel model = new TCFModel(launch);
+            models.put(launch, model);
+        }
 
         public void onConnected(TCFLaunch launch) {
+            assert Protocol.isDispatchThread();
             TCFModel model = models.get(launch);
             if (model != null) model.onConnected();
         }
 
         public void onDisconnected(TCFLaunch launch) {
+            assert Protocol.isDispatchThread();
             TCFModel model = models.get(launch);
             if (model != null) model.onDisconnected();
         }
 
         public void onContextActionsDone(TCFLaunch launch) {
+            assert Protocol.isDispatchThread();
             TCFModel model = models.get(launch);
             if (model != null) model.onContextActionsDone();
         }
 
         public void onContextActionsStart(TCFLaunch launch) {
+            assert Protocol.isDispatchThread();
             TCFModel model = models.get(launch);
             if (model != null) model.onContextActionsStart();
         }
 
         public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data) {
+            assert Protocol.isDispatchThread();
             TCFModel model = models.get(launch);
             if (model != null) model.onProcessOutput(process_id, stream_id, data);
         }
@@ -56,31 +67,7 @@ public class TCFModelManager {
 
     private final ILaunchesListener debug_launch_listener = new ILaunchesListener() {
         
-        boolean init_done;
-
         public void launchesAdded(final ILaunch[] launches) {
-            if (!init_done) {
-                final Display display = Display.getDefault();
-                display.syncExec(new Runnable() {
-                    public void run() {
-                        TCFModel.setDisplay(display);
-                    }
-                });
-                init_done = true;
-            }
-            Protocol.invokeAndWait(new Runnable() {
-                public void run() {
-                    for (int i = 0; i < launches.length; i++) {
-                        if (launches[i] instanceof TCFLaunch) {
-                            TCFLaunch launch = (TCFLaunch)launches[i];
-                            assert models.get(launch) == null;
-                            TCFModel model = new TCFModel(launch);
-                            models.put(launch, model);
-                            assert launch.getChannel() == null;
-                        }
-                    }
-                }
-            });
         }
 
         public void launchesChanged(final ILaunch[] launches) {
