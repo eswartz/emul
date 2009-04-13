@@ -45,5 +45,5 @@ public interface IEventQueue {
      *         messages (no traffic), 0 means optimal load, and positive numbers
      *         indicate level of congestion.
      */
-    public int getCongestion();
+    int getCongestion();
 }
