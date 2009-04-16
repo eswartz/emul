@@ -38,6 +38,8 @@ class TestExpressions implements ITCFTest,
     private IDiagnostics.ISymbol sym_func3;
     private String process_id;
     private String thread_id;
+    private boolean process_exited;
+    private boolean test_done;
     private IRunControl.RunControlContext thread_ctx;
     private String suspended_pc;
     private boolean waiting_suspend;
@@ -112,8 +114,8 @@ class TestExpressions implements ITCFTest,
                                 return;
                             }
                         }
+                        exit(null);
                     }
-                    exit(null);
                 }
             });
         }
@@ -348,6 +350,7 @@ class TestExpressions implements ITCFTest,
                 return;
             }
         }
+        test_done = true;
         diag.cancelTest(process_id, new IDiagnostics.DoneCancelTest() {
             public void doneCancelTest(IToken token, Throwable error) {
                 exit(error);
@@ -386,6 +389,12 @@ class TestExpressions implements ITCFTest,
     }
 
     public void contextRemoved(String[] context_ids) {
+        for (String id : context_ids) {
+            if (id.equals(process_id)) {
+                process_exited = true;
+                if (!test_done) exit(new Exception("Test process exited too soon"));
+            }
+        }
     }
 
     public void contextResumed(String context) {
@@ -410,12 +419,12 @@ class TestExpressions implements ITCFTest,
 
     @SuppressWarnings("unchecked")
     public void breakpointStatusChanged(String id, Map<String,Object> status) {
-        if (id.equals(bp_id) && process_id != null) {
+        if (id.equals(bp_id) && process_id != null && !process_exited) {
             String s = (String)status.get(IBreakpoints.STATUS_ERROR);
             if (s != null) exit(new Exception(s));
             Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)status.get(IBreakpoints.STATUS_INSTANCES);
             if (list == null) {
-                exit(new Exception("Invalis BP status"));
+                exit(new Exception("Invalid BP status"));
                 return;
             }
             boolean ok = false;
@@ -423,7 +432,7 @@ class TestExpressions implements ITCFTest,
                 String ctx = (String)map.get(IBreakpoints.INSTANCE_CONTEXT);
                 if (process_id.equals(ctx) && map.get(IBreakpoints.INSTANCE_ERROR) == null) ok = true;
             }
-            if (!ok) exit(new Exception("Invalis BP status"));
+            if (!ok) exit(new Exception("Invalid BP status"));
         }
     }
 

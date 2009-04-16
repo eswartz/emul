@@ -132,6 +132,7 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
         public synchronized void onMessageReceived(char type, String token,
                 String service, String name, byte[] data) {
             try {
+                if ("Locator".equals(service) && "peerHeartBeat".equals(name)) return;
                 bf.append("Inp: ");
                 bf.append(type);
                 if (token != null) {
@@ -168,6 +169,7 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
         public synchronized void onMessageSent(char type, String token,
                 String service, String name, byte[] data) {
             try {
+                if ("Locator".equals(service) && "peerHeartBeat".equals(name)) return;
                 bf.append("Out: ");
                 bf.append(type);
                 if (token != null) {

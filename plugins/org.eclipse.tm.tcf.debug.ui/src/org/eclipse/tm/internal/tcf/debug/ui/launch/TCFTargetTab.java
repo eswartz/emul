@@ -20,6 +20,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
 import org.eclipse.jface.window.Window;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.ModifyEvent;
@@ -40,6 +41,8 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.ProgressBar;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
@@ -50,6 +53,7 @@ import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFUserDefPeer;
 import org.eclipse.tm.internal.tcf.debug.tests.TCFTestSuite;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.internal.tcf.debug.ui.launch.setup.SetupWizardDialog;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -371,15 +375,21 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         composite.setFont(font);
         composite.setLayout(layout);
         composite.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.VERTICAL_ALIGN_FILL));
+        Menu menu = new Menu(peer_tree);
+        SelectionAdapter sel_adapter = null;
         
         final Button button_new = new Button(composite, SWT.PUSH);
         button_new.setText("N&ew...");
         button_new.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
-        button_new.addSelectionListener(new SelectionAdapter() {
+        button_new.addSelectionListener(sel_adapter = new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 final Map<String,String> attrs = new HashMap<String,String>();
-                if (new PeerPropsDialog(getShell(), getImage(), attrs, true).open() != Window.OK) return;
+                SetupWizardDialog wizard = new SetupWizardDialog(attrs);
+                WizardDialog dialog = new WizardDialog(getShell(), wizard);
+                dialog.create();
+                if (dialog.open() != Window.OK) return;
+                if (attrs.isEmpty()) return;
                 Protocol.invokeLater(new Runnable() {
                     public void run() {
                         new TCFUserDefPeer(attrs);
@@ -388,11 +398,14 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 });
             }
         });
+        final MenuItem item_new = new MenuItem(menu, SWT.PUSH);
+        item_new.setText("N&ew...");
+        item_new.addSelectionListener(sel_adapter);
 
         final Button button_edit = new Button(composite, SWT.PUSH);
         button_edit.setText("E&dit...");
         button_edit.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
-        button_edit.addSelectionListener(new SelectionAdapter() {
+        button_edit.addSelectionListener(sel_adapter = new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 TreeItem[] selection = peer_tree.getSelection();
@@ -410,11 +423,14 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 });
             }
         });
+        final MenuItem item_edit = new MenuItem(menu, SWT.PUSH);
+        item_edit.setText("E&dit...");
+        item_edit.addSelectionListener(sel_adapter);
 
         final Button button_remove = new Button(composite, SWT.PUSH);
         button_remove.setText("&Remove");
         button_remove.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
-        button_remove.addSelectionListener(new SelectionAdapter() {
+        button_remove.addSelectionListener(sel_adapter = new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 TreeItem[] selection = peer_tree.getSelection();
@@ -430,13 +446,17 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 });
             }
         });
+        final MenuItem item_remove = new MenuItem(menu, SWT.PUSH);
+        item_remove.setText("&Remove");
+        item_remove.addSelectionListener(sel_adapter);
         
         createVerticalSpacer(composite, 20);
+        new MenuItem(menu, SWT.SEPARATOR);
 
         final Button button_test = new Button(composite, SWT.PUSH);
         button_test.setText("Run &Tests");
         button_test.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
-        button_test.addSelectionListener(new SelectionAdapter() {
+        button_test.addSelectionListener(sel_adapter = new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 TreeItem[] selection = peer_tree.getSelection();
@@ -446,11 +466,14 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 }
             }
         });
+        final MenuItem item_test = new MenuItem(menu, SWT.PUSH);
+        item_test.setText("Run &Tests");
+        item_test.addSelectionListener(sel_adapter);
 
         final Button button_loop = new Button(composite, SWT.PUSH);
         button_loop.setText("Tests &Loop");
         button_loop.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
-        button_loop.addSelectionListener(new SelectionAdapter() {
+        button_loop.addSelectionListener(sel_adapter = new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 TreeItem[] selection = peer_tree.getSelection();
@@ -460,6 +483,11 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 }
             }
         });
+        final MenuItem item_loop = new MenuItem(menu, SWT.PUSH);
+        item_loop.setText("Tests &Loop");
+        item_loop.addSelectionListener(sel_adapter);
+        
+        peer_tree.setMenu(menu);
         
         update_peer_buttons = new Runnable() {
 
@@ -471,6 +499,10 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 button_remove.setEnabled(info != null && info.peer instanceof TCFUserDefPeer);
                 button_test.setEnabled(info != null);
                 button_loop.setEnabled(info != null);
+                item_edit.setEnabled(info != null);
+                item_remove.setEnabled(info != null && info.peer instanceof TCFUserDefPeer);
+                item_test.setEnabled(info != null);
+                item_loop.setEnabled(info != null);
             }
         };
         update_peer_buttons.run();
