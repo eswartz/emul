@@ -25,8 +25,6 @@ import java.net.SocketException;
 class TelnetClient extends AbstractRemoteShell {
     
     private Socket socket;
-    private BufferedReader inp;
-    private PrintWriter out;
     private boolean logged;
 
     TelnetClient(InetAddress address, int port,
