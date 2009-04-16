@@ -450,7 +450,6 @@ static void plant_breakpoint_in_context(BreakpointInfo * bp, Context * ctx, Cont
     }
     else {
         bp->planted++;
-        bp->hit_count = 0;
     }
 }
 
@@ -1152,6 +1151,7 @@ static void command_bp_enable(char * token, Channel * c) {
                 bp = find_breakpoint(id);
                 if (bp != NULL && !bp->enabled) {
                     bp->enabled = 1;
+                    bp->hit_count = 0;
                     if (!bp->deleted && bp->unsupported == NULL) replant_breakpoints();
                     send_event_context_changed(bp);
                 }
@@ -1323,11 +1323,9 @@ void evaluate_breakpoint_condition(Context * ctx) {
                 continue;
             }
         }
-        if (bp->ignore_count > 0) {
-            bp->hit_count++;
-            if (bp->hit_count >= bp->ignore_count) continue;
-            bp->hit_count = 0;
-        }
+        bp->hit_count++;
+        if (bp->hit_count <= bp->ignore_count) continue;
+        bp->hit_count = 0;
         if (bp->event_callback != NULL) {
             bp->event_callback(ctx, bp->event_callback_args);
         }
