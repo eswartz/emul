@@ -29,6 +29,7 @@ import org.eclipse.ui.IWorkbenchPart;
 public class BreakpointCommand implements IToggleBreakpointsTargetExtension {
     
     public boolean canToggleBreakpoints(IWorkbenchPart part, ISelection selection) {
+        if (selection.isEmpty()) return false;
         Object obj = ((IStructuredSelection)selection).getFirstElement();
         if (obj instanceof TCFNode) {
             final TCFNode node = (TCFNode)obj;
@@ -47,6 +48,7 @@ public class BreakpointCommand implements IToggleBreakpointsTargetExtension {
     }
 
     public void toggleBreakpoints(IWorkbenchPart part, ISelection selection) throws CoreException {
+        if (selection.isEmpty()) return;
         Object obj = ((IStructuredSelection)selection).getFirstElement();
         if (obj instanceof TCFNode) {
             final TCFNode node = (TCFNode)obj;
