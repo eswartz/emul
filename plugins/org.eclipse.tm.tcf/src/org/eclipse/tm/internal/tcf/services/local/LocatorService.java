@@ -406,7 +406,19 @@ public class LocatorService implements ILocator {
                         Method m1 = ia.getClass().getMethod("getNetworkPrefixLength");
                         Method m2 = ia.getClass().getMethod("getAddress");
                         Method m3 = ia.getClass().getMethod("getBroadcast");
-                        set.add(new SubNet((Short)m1.invoke(ia), (InetAddress)m2.invoke(ia), (InetAddress)m3.invoke(ia)));
+                        int network_prefix_len = (Short)m1.invoke(ia);
+                        InetAddress address = (InetAddress)m2.invoke(ia);
+                        InetAddress broadcast = (InetAddress)m3.invoke(ia);
+                        if (broadcast == null) {
+                            // getBroadcast() on the Linux loopback interface addresses returns null
+                            byte[] buf = address.getAddress();
+                            int address_len = buf.length * 8;
+                            for (int i = network_prefix_len; i < address_len; i++) {
+                                buf[i / 8] |= 1 << (i % 8);
+                            }
+                            broadcast = InetAddress.getByAddress(buf);
+                        }
+                        set.add(new SubNet(network_prefix_len, address, broadcast));
                     }
                 }
                 catch (Exception x) {
