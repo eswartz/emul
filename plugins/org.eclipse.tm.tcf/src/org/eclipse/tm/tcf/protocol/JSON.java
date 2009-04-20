@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -207,6 +206,7 @@ public final class JSON {
                 scale = scale * 10 + cur_ch - '0';
                 read();
             }
+            if (neg) scale = -scale;
         }
         if (sign) val = val.negate();
         return new BigDecimal(val, fraction - scale);
@@ -517,7 +517,7 @@ public final class JSON {
         }
     }
 
-    private static byte[] toBytes() throws UnsupportedEncodingException {
+    private static byte[] toBytes() {
         int inp_pos = 0;
         int out_pos = 0;
         while (inp_pos < tmp_buf_pos) {
