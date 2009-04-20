@@ -240,7 +240,7 @@ public interface IExpressions extends IService {
     }
 
     /**
-     * Dispose an expression context that was created by createContext()
+     * Dispose an expression context that was created by create()
      * @param id - the expression context ID
      * @param done - call back interface called when operation is completed.
      * @return - pending command handle.
