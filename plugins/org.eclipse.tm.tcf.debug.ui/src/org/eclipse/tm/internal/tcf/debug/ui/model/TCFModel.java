@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
@@ -56,6 +58,8 @@ import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.IConsoleView;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
+import org.eclipse.debug.ui.contexts.ISuspendTrigger;
+import org.eclipse.debug.ui.contexts.ISuspendTriggerListener;
 import org.eclipse.debug.ui.sourcelookup.CommonSourceNotFoundEditorInput;
 import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
 import org.eclipse.jface.text.BadLocationException;
@@ -104,10 +108,15 @@ import org.eclipse.ui.texteditor.ITextEditor;
  * keeping the cache in a coherent state, and feeding UI with up-to-date data.
  */
 public class TCFModel implements IElementContentProvider, IElementLabelProvider,
-        IModelProxyFactory, IColumnPresentationFactory, ISourceDisplay {
+        IModelProxyFactory, IColumnPresentationFactory, ISourceDisplay, ISuspendTrigger {
 
     private final TCFLaunch launch;
     private final Display display;
+    
+    private final List<ISuspendTriggerListener> suspend_trigger_listeners =
+        new LinkedList<ISuspendTriggerListener>();
+    
+    private int suspend_trigger_generation;
     
     private final Map<IPresentationContext,TCFModelProxy> model_proxies =
         new HashMap<IPresentationContext,TCFModelProxy>();
@@ -219,6 +228,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 ((TCFNodeExecContext)node).onContextSuspended(pc, reason, params);
             }
             fireModelChanged();
+            runSuspendTrigger();
         }
 
         public void contextAdded(IRunControl.RunControlContext[] contexts) {
@@ -280,6 +290,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 setDebugViewSelection(context, false);
             }
             fireModelChanged();
+            runSuspendTrigger();
             display.asyncExec(new Runnable() {
                 public void run() {
                     Activator.getAnnotationManager().onContextSuspended(TCFModel.this, context);
@@ -328,7 +339,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     
     TCFModel(TCFLaunch launch) {
         this.launch = launch;
-        display = Display.getDefault();
+        display = PlatformUI.getWorkbench().getDisplay();
         selection_policy = new TCFModelSelectionPolicy(this);
         commands.put(ISuspendHandler.class, new SuspendCommand(this));
         commands.put(IResumeHandler.class, new ResumeCommand(this));
@@ -982,5 +993,35 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             provider.disconnect(input);
         }
         return null;
+    }
+
+    public synchronized void addSuspendTriggerListener(ISuspendTriggerListener listener) {
+        suspend_trigger_listeners.add(listener);
+    }
+
+    public synchronized void removeSuspendTriggerListener(ISuspendTriggerListener listener) {
+        suspend_trigger_listeners.remove(listener);
     }       
+    
+    private synchronized void runSuspendTrigger() {
+        final int generation = ++suspend_trigger_generation;
+        final ISuspendTriggerListener[] listeners = suspend_trigger_listeners.toArray(
+                new ISuspendTriggerListener[suspend_trigger_listeners.size()]);
+        if (listeners.length == 0) return;
+        display.asyncExec(new Runnable() {
+            public void run() {
+                synchronized (TCFModel.this) {
+                    if (generation != suspend_trigger_generation) return;
+                }
+                for (final ISuspendTriggerListener listener : listeners) {
+                    try {
+                        listener.suspended(launch, null);
+                    }
+                    catch (Throwable x) {
+                        Activator.log(x);
+                    };             
+                }        
+            }
+        });
+    }
 }

@@ -183,7 +183,7 @@ public class TCFAnnotationManager {
         }
     };
     
-    private final Display display = Display.getDefault();
+    private final Display display = PlatformUI.getWorkbench().getDisplay();
     private int refresh_breakpoint_view_cnt = 0;
     private int update_active_launch_cnt = 0;
     private boolean disposed;

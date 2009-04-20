@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementContentProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactory;
+import org.eclipse.debug.ui.contexts.ISuspendTrigger;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
@@ -27,6 +28,7 @@ public class TCFLaunchAdapterFactory implements IAdapterFactory {
         IElementLabelProvider.class,
         IElementContentProvider.class,
         IModelProxyFactory.class,
+        ISuspendTrigger.class,
     };
 
     private static final IElementLabelProvider launch_label_provider = new TCFLaunchLabelProvider();
