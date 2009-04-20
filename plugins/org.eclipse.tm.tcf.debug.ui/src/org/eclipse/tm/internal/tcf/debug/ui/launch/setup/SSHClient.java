@@ -47,6 +47,7 @@ class SSHClient extends AbstractRemoteShell {
         ServiceReference ref = ctx.getServiceReference(IJSchService.class.getName());
         IJSchService s = (IJSchService)ctx.getService(ref);
         session = s.createSession(host, 22, user);
+        session.setPassword(password);
         new UserInfoPrompter(session);
         session.connect(30000);
         channel = session.openChannel("shell");
