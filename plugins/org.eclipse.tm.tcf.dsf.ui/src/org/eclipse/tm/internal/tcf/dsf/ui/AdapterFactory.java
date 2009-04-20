@@ -47,6 +47,7 @@ import org.eclipse.tm.internal.tcf.dsf.launch.TCFDSFLaunch;
 import org.eclipse.tm.internal.tcf.dsf.ui.actions.TcfTerminateCommand;
 import org.eclipse.tm.internal.tcf.dsf.ui.viewmodel.ViewModelAdapter;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.ui.PlatformUI;
 
 
 @SuppressWarnings("restriction")
@@ -156,7 +157,7 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
         assert session_adapter_set_map.isEmpty();
         DsfSession.addSessionEndedListener(this);
         DebugPlugin.getDefault().getLaunchManager().addLaunchListener(this);
-        final Display display = Display.getDefault();
+        final Display display = PlatformUI.getWorkbench().getDisplay();
         display.asyncExec(new Runnable() {
             public void run() {
                 final DisplayDsfExecutor executer = DisplayDsfExecutor.getDisplayDsfExecutor(display);

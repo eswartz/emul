@@ -49,6 +49,7 @@ import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFRunControl;
 import org.eclipse.tm.internal.tcf.dsf.services.TCFDSFStack;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.util.TCFDataCache;
+import org.eclipse.ui.PlatformUI;
 
 
 @SuppressWarnings("restriction")
@@ -59,7 +60,7 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
     }
     
     private void doneViewerUpdate(final IViewerUpdate req) {
-        Display.getDefault().asyncExec(new Runnable() {
+        PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
             public void run() {
                 req.done();
             }

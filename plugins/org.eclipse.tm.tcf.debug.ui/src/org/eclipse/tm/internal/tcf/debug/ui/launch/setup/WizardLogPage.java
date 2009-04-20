@@ -149,18 +149,42 @@ class WizardLogPage extends WizardPage implements Runnable {
             }
             if (url == null) throw new Exception("Unsupported target OS or CPU");
             
-            send("uudecode", true);
-            send("begin-base64 644 " + fnm, true);
-            InputStream inp = url.openStream();
-            byte[] buf = new byte[0x100 * 3];
-            for (;;) {
-                int len = inp.read(buf);
-                if (len < 0) break;
-                send(new String(Base64.toBase64(buf, 0, len)), false);
-            }
-            send("====", true);
+            send("which base64", true);
             s = waitPrompt();
-            if (s.length() > 0) throw new Exception(s);
+            if (s.indexOf(':') < 0) {
+                send("base64 -d >" + fnm, true);
+                InputStream inp = url.openStream();
+                byte[] buf = new byte[0x100 * 3];
+                for (;;) {
+                    int len = inp.read(buf);
+                    if (len < 0) break;
+                    send(new String(Base64.toBase64(buf, 0, len)), false);
+                }
+                send("\004", true);
+                s = waitPrompt();
+                if (s.length() > 0) throw new Exception(s);
+            }
+            else {
+                send("which uudecode", true);
+                s = waitPrompt();
+                if (s.indexOf(':') < 0) {
+                    send("uudecode", true);
+                    send("begin-base64 644 " + fnm, true);
+                    InputStream inp = url.openStream();
+                    byte[] buf = new byte[0x100 * 3];
+                    for (;;) {
+                        int len = inp.read(buf);
+                        if (len < 0) break;
+                        send(new String(Base64.toBase64(buf, 0, len)), false);
+                    }
+                    send("====", true);
+                    s = waitPrompt();
+                    if (s.length() > 0) throw new Exception(s);
+                }
+                else {
+                    throw new Exception("No base64 or uudecode commands available");
+                }
+            }
             send("rpm -e tcf-agent", true);
             waitPrompt();
             send("rpm -i " + fnm, true);
