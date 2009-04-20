@@ -251,6 +251,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         if (!expression.isValid() || expression.getData() == null) return;
         final IChannel channel = model.getLaunch().getChannel();
         if (channel.getState() != IChannel.STATE_OPEN) return;
+        if (var_id != null) return;
         IExpressions exps = channel.getRemoteService(IExpressions.class);
         exps.dispose(expression.getData().getID(), new IExpressions.DoneDispose() {
             public void doneDispose(IToken token, Exception error) {
