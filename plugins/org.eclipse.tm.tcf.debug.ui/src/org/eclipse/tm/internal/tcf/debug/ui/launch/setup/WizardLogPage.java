@@ -166,6 +166,9 @@ class WizardLogPage extends WizardPage implements Runnable {
             send("rpm -i " + fnm, true);
             s = waitPrompt();
             if (s.length() > 0) throw new Exception(s);
+            send("rm -f " + fnm, true);
+            s = waitPrompt();
+            if (s.length() > 0) throw new Exception(s);
             if (!user.equals("root")) {
                 send("exit", true);
                 waitPrompt();
