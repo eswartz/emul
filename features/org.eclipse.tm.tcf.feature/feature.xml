@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.eclipse.tm.tcf.feature"
+      label="%featureName"
+      version="0.2.0.qualifier"
+      provider-name="%providerName">
+
+   <description url="http://wiki.eclipse.org/DSDP/TM/TCF_FAQ">
+      %description
+   </description>
+
+   <copyright>
+      %copyright
+   </copyright>
+
+   <license url="license.html">
+      %license
+   </license>
+
+   <url>
+      <update label="%updateSiteName" url="http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk"/>
+   </url>
+
+   <requires>
+      <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="org.eclipse.debug.core"/>
+      <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.ui.ide"/>
+      <import plugin="org.eclipse.ui.console"/>
+      <import plugin="org.eclipse.ui.workbench.texteditor"/>
+      <import plugin="org.eclipse.text"/>
+      <import plugin="org.eclipse.jface.text"/>
+      <import plugin="org.eclipse.debug.ui"/>
+      <import plugin="com.jcraft.jsch" version="0.1.37" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.jsch.core" version="1.1.100" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.jsch.ui" version="1.1.100" match="greaterOrEqual"/>
+   </requires>
+
+   <plugin
+         id="org.eclipse.tm.tcf"
+         download-size="0"
+         install-size="0"
+         version="0.2.0.qualifier"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tm.tcf.debug"
+         download-size="0"
+         install-size="0"
+         version="0.2.0.qualifier"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tm.tcf.debug.ui"
+         download-size="0"
+         install-size="0"
+         version="0.2.0.qualifier"
+         unpack="false"/>
+
+</feature>

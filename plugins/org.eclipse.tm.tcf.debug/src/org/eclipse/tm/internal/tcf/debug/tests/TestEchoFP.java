@@ -32,22 +32,9 @@ public class TestEchoFP  implements ITCFTest, IDiagnostics.DoneEchoFP {
     }
     
     private void sendMessage() {
-        StringBuffer buf = new StringBuffer();
-        buf.append(Integer.toHexString(count));
-        for (int i = 0; i < 64; i++) {
-            buf.append('-');
-            buf.append((char)(0x400 * i + count));
-        }
-        BigDecimal s = null;
-        switch (count % 10) {
-        case 0: s = BigDecimal.valueOf(0); break;
-        case 1: s = BigDecimal.valueOf(-1.1); break;
-        case 2: s = BigDecimal.valueOf(+1.1); break;
-        case 3: s = BigDecimal.valueOf(rnd.nextInt()); break;
-        default: s = new BigDecimal(rnd.nextInt() / 1000000.0); break;
-        }
-        msgs.add(s);
-        diag.echoFP(s, this);
+        BigDecimal n = BigDecimal.valueOf(rnd.nextInt(), rnd.nextInt(61) - 30);
+        msgs.add(n);
+        diag.echoFP(n, this);
         count++;
     }
     
@@ -60,7 +47,7 @@ public class TestEchoFP  implements ITCFTest, IDiagnostics.DoneEchoFP {
         else if (s.doubleValue() != b.doubleValue()) {
             test_suite.done(this, new Exception("EchoFP test failed: " + s.doubleValue() + " != " + b.doubleValue()));
         }
-        else if (count < 0x400) {
+        else if (count < 0x800) {
             sendMessage();
         }
         else if (msgs.isEmpty()){

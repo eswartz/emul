@@ -48,14 +48,7 @@ public class TCFTestSuite {
         public void progress(String label, int done, int total);
         public void done(Collection<Throwable> errors);
     }
-    
-    @SuppressWarnings("serial")
-    private static class CancelException extends Exception {
-        CancelException() {
-            super("Canceled");
-        }
-    }
-    
+        
     public TCFTestSuite(final IPeer peer, final TestListener listener) throws IOException {
         this.listener = listener;
         pending_tests.add(new Runnable() {
@@ -166,7 +159,7 @@ public class TCFTestSuite {
                     for (int i = 0; i < channels.length; i++) {
                         if (channels[i] == channel) {
                             channels[i] = null;
-                            if (error != null && !(error instanceof CancelException)) errors.add(error);
+                            if (error != null) errors.add(error);
                             for (Iterator<ITCFTest> n = active_tests.keySet().iterator(); n.hasNext();) {
                                 if (active_tests.get(n.next()) == channel) n.remove();
                             }
@@ -181,8 +174,7 @@ public class TCFTestSuite {
                     else if (active_tests.isEmpty()) {
                         for (int i = 0; i < channels.length; i++) {
                             if (channels[i] != null && channels[i].getState() != IChannel.STATE_CLOSED) {
-                                if (errors.isEmpty()) channels[i].close();
-                                else channels[i].terminate(new CancelException());
+                                channels[i].close();
                             }
                         }
                     }
@@ -207,9 +199,7 @@ public class TCFTestSuite {
         }
         canceled = true;
         for (IChannel c : channels) {
-            if (c != null && c.getState() != IChannel.STATE_CLOSED) {
-                c.terminate(new CancelException());
-            }
+            if (c != null && c.getState() != IChannel.STATE_CLOSED) c.close();
         }
     }
     
@@ -223,7 +213,7 @@ public class TCFTestSuite {
     
     void done(ITCFTest test, Throwable error) {
         assert active_tests.get(test) != null;
-        if (error != null) errors.add(error);
+        if (error != null && !canceled) errors.add(error);
         active_tests.remove(test);
         if (active_tests.isEmpty()) runNextTest();
     }
@@ -233,8 +223,7 @@ public class TCFTestSuite {
             if (cancel || errors.size() > 0 || pending_tests.size() == 0) {
                 for (IChannel channel : channels) {
                     if (channel != null && channel.getState() != IChannel.STATE_CLOSED) {
-                        if (errors.isEmpty()) channel.close();
-                        else channel.terminate(new CancelException());
+                        channel.close();
                     }
                 }
                 return;

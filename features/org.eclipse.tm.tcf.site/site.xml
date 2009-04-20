@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/org.eclipse.tm.tcf.feature_0.2.0.200904181820.jar" id="org.eclipse.tm.tcf.feature" version="0.2.0.200904181820">
+      <category name="org.eclipse.tm"/>
+   </feature>
+   <category-def name="org.eclipse.tm" label="Remote Access and Device Development"/>
+</site>
