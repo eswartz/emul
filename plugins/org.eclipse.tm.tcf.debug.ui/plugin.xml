@@ -79,6 +79,7 @@
          <view
                relative="org.eclipse.ui.console.ConsoleView"
                relationship="stack"
+               visible="false"
                id="org.eclipse.tm.tcf.TraceView">
          </view>
       </perspectiveExtension>
