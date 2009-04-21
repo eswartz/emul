@@ -137,7 +137,6 @@ public class LocatorService implements ILocator {
         }
     }
     
-    private static boolean old_java_version; 
     private static LocalPeer local_peer;
     
     private DatagramSocket socket;
@@ -409,31 +408,18 @@ public class LocatorService implements ILocator {
                         int network_prefix_len = (Short)m1.invoke(ia);
                         InetAddress address = (InetAddress)m2.invoke(ia);
                         InetAddress broadcast = (InetAddress)m3.invoke(ia);
-                        if (broadcast == null) {
-                            // getBroadcast() on the Linux loopback interface addresses returns null
-                            byte[] buf = address.getAddress();
-                            int address_len = buf.length * 8;
-                            for (int i = network_prefix_len; i < address_len; i++) {
-                                buf[i / 8] |= 1 << (i % 8);
-                            }
-                            broadcast = InetAddress.getByAddress(buf);
-                        }
+                        if (broadcast == null) broadcast = address;
                         set.add(new SubNet(network_prefix_len, address, broadcast));
                     }
                 }
                 catch (Exception x) {
-                    if (!old_java_version) {
-                        Protocol.log("TCF dicovery needs Java 6 or better", x);
-                        old_java_version = true;
-                    }
+                    // Java 1.5 or older
+                    // TODO: need a better way to get broadcast addresses on Java 1.5 VM 
                     Enumeration<InetAddress> n = f.getInetAddresses();
                     while (n.hasMoreElements()) {
                         InetAddress addr = n.nextElement();
                         byte[] buf = addr.getAddress();
-                        if (buf.length != 4) {
-                            // TODO: Support IPv6
-                            continue;
-                        }
+                        if (buf.length != 4) continue;
                         buf[3] = (byte)255;
                         try {
                             set.add(new SubNet(24, addr, InetAddress.getByAddress(buf)));
