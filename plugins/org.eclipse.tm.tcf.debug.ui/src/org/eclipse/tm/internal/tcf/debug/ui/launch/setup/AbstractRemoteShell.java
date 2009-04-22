@@ -21,7 +21,7 @@ abstract class AbstractRemoteShell implements IRemoteShell {
     protected PrintWriter out;
 
     public synchronized void write(String s) {
-        out.print(s);
+        out.write(s);
     }
 
     public synchronized void expect(String s) throws IOException {
@@ -40,16 +40,26 @@ abstract class AbstractRemoteShell implements IRemoteShell {
                 if (ch == '\r') continue;
                 if (debug) System.out.write(ch);
                 for (int i = 0; i < pos.length; i++) {
-                    if ((char)ch == s[i].charAt(pos[i])) {
+                    String p = s[i];
+                    if (ch == p.charAt(pos[i])) {
                         pos[i]++;
-                        if (pos[i] == s[i].length()) return i;
-                    }
-                    else if (ch == s[i].charAt(0)) {
-                        pos[i] = 1;
-                        if (pos[i] == s[i].length()) return i;
+                        if (pos[i] == p.length()) return i;
                     }
                     else {
-                        pos[i] = 0;
+                        int nps = pos[i];
+                        while (nps > 0) {
+                            if (ch == p.charAt(nps - 1)) {
+                                int j = nps - 2;
+                                int k = pos[i] - 1;
+                                while (j >= 0 && p.charAt(j) == p.charAt(k)) {
+                                    j--;
+                                    k--;
+                                }
+                                if (j < 0) break;
+                            }
+                            nps--;
+                        }
+                        pos[i] = nps;
                     }
                 }
                 buf.append((char)ch);
