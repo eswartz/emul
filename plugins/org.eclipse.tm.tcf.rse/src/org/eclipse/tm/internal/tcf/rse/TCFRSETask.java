@@ -41,7 +41,9 @@ public abstract class TCFRSETask<V> extends TCFTask<V> {
         catch (Throwable e) {
             if (e instanceof SystemMessageException) throw (SystemMessageException)e;
             SystemMessage m = new SystemMessage("TCF", "C", "0001", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    SystemMessage.ERROR, e.getClass().getName(), e.getMessage());
+                    SystemMessage.ERROR,
+                    "TCF task aborted".equals(e.getMessage()) && e.getCause() != null ? e.getCause().getMessage() : e.getMessage(), //$NON-NLS-1$
+                    ""); //$NON-NLS-1$
             throw new SystemMessageException(m);
         }
         finally {
