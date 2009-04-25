@@ -9,6 +9,7 @@
  *     Wind River Systems - initial API and implementation
  *     Martin Oberhuber (Wind River) - [238564] Adopt TM 3.0 APIs
  *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
+ *     Uwe Stieber (Wind River) - [273572] SystemMessage contains exception class name instead of error message
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse;
 
