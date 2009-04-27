@@ -75,7 +75,7 @@ typedef struct ChannelServer ChannelServer;
 struct ChannelServer {
     void * client_data;                 /* Client data */
     void (*new_conn)(ChannelServer *, Channel *); /* New connection call back */
-    void (*close)(ChannelServer *);     /* Closed channel server */
+    void (*close)(ChannelServer *);     /* Close channel server */
 };
 
 /*
