@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -16,10 +16,16 @@
  * Implements input and output stream over TCP/IP transport.
  */
 
-#include "mdep.h"
+#include "config.h"
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
+#if ENABLE_SSL
+#  include <openssl/ssl.h>
+#  include <fcntl.h>
+#else
+   typedef void SSL;
+#endif
 #include "tcf.h"
 #include "channel.h"
 #include "channel_tcp.h"
@@ -49,8 +55,12 @@ struct ChannelTCP {
     int magic;              /* Magic number */
     int socket;             /* Socket file descriptor */
     struct sockaddr addr;   /* Socket remote address */
+    SSL * ssl;
     int lock_cnt;           /* Stream lock count, when > 0 channel cannot be deleted */
     int read_pending;       /* Read request is pending */
+    unsigned char * read_buf;
+    int read_buf_size;
+    int read_done;
 
     /* Input stream buffer */
     InputBuf ibuf;
@@ -80,7 +90,7 @@ struct ServerTCP {
 #define out2channel(A)  ((Channel *)((char *)(A) - offsetof(Channel, out)))
 #define server2tcp(A)   ((ServerTCP *)((char *)(A) - offsetof(ServerTCP, serv)))
 #define servlink2tcp(A) ((ServerTCP *)((char *)(A) - offsetof(ServerTCP, servlink)))
-#define ibuf2tcp(A)    ((ChannelTCP *)((char *)(A) - offsetof(ChannelTCP, ibuf)))
+#define ibuf2tcp(A)     ((ChannelTCP *)((char *)(A) - offsetof(ChannelTCP, ibuf)))
 
 static LINK server_list;
 static void tcp_channel_read_done(void * x);
@@ -100,77 +110,111 @@ static void delete_channel(ChannelTCP * c) {
     channel_clear_broadcast_group(&c->chan);
     channel_clear_suspend_group(&c->chan);
     c->magic = 0;
+#if ENABLE_SSL
+    if (c->ssl) SSL_free(c->ssl);
+#endif
     loc_free(c->chan.peer_name);
     loc_free(c);
 }
 
-static void tcp_lock(Channel * c) {
-    ChannelTCP * channel = channel2tcp(c);
+static void tcp_lock(Channel * channel) {
+    ChannelTCP * c = channel2tcp(channel);
     assert(is_dispatch_thread());
-    assert(channel->magic == CHANNEL_MAGIC);
-    channel->lock_cnt++;
+    assert(c->magic == CHANNEL_MAGIC);
+    c->lock_cnt++;
 }
 
-static void tcp_unlock(Channel * c) {
-    ChannelTCP * channel = channel2tcp(c);
+static void tcp_unlock(Channel * channel) {
+    ChannelTCP * c = channel2tcp(channel);
     assert(is_dispatch_thread());
-    assert(channel->magic == CHANNEL_MAGIC);
-    assert(channel->lock_cnt > 0);
-    channel->lock_cnt--;
-    if (channel->lock_cnt == 0 && !channel->read_pending) {
-        delete_channel(channel);
+    assert(c->magic == CHANNEL_MAGIC);
+    assert(c->lock_cnt > 0);
+    c->lock_cnt--;
+    if (c->lock_cnt == 0 && !c->read_pending) {
+        delete_channel(c);
     }
 }
 
-static int tcp_is_closed(Channel * c) {
-    ChannelTCP * channel = channel2tcp(c);
+static int tcp_is_closed(Channel * channel) {
+    ChannelTCP * c = channel2tcp(channel);
     assert(is_dispatch_thread());
-    assert(channel->magic == CHANNEL_MAGIC);
-    assert(channel->lock_cnt > 0);
-    return channel->socket < 0;
+    assert(c->magic == CHANNEL_MAGIC);
+    assert(c->lock_cnt > 0);
+    return c->socket < 0;
 }
 
 static void tcp_flush_stream(OutputStream * out) {
     int cnt = 0;
-    ChannelTCP * channel = channel2tcp(out2channel(out));
+    ChannelTCP * c = channel2tcp(out2channel(out));
     assert(is_dispatch_thread());
-    assert(channel->magic == CHANNEL_MAGIC);
-    if (channel->obuf_inp == 0) return;
-    if (channel->socket < 0) return;
-    if (channel->out_errno) return;
-    while (cnt < channel->obuf_inp) {
-        int wr = send(channel->socket, channel->obuf + cnt, channel->obuf_inp - cnt, 0);
-        if (wr < 0) {
-            int err = errno;
-            trace(LOG_PROTOCOL, "Can't send() on channel 0x%08x: %d %s", channel, err, errno_to_str(err));
-            channel->out_errno = err;
-            return;
+    assert(c->magic == CHANNEL_MAGIC);
+    if (c->obuf_inp == 0) return;
+    if (c->socket < 0) return;
+    if (c->out_errno) return;
+    while (cnt < c->obuf_inp) {
+        int wr = 0;
+        if (c->ssl) {
+#if ENABLE_SSL
+            wr = SSL_write(c->ssl, c->obuf + cnt, c->obuf_inp - cnt);
+            if (wr <= 0) {
+                int err = SSL_get_error(c->ssl, wr);
+                if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+                    struct timeval tv;
+                    fd_set readfds;
+                    fd_set writefds;
+                    fd_set errorfds;
+                    FD_ZERO(&readfds);
+                    FD_ZERO(&writefds);
+                    FD_ZERO(&errorfds);
+                    if (err == SSL_ERROR_WANT_READ) FD_SET(c->socket, &readfds);
+                    if (err == SSL_ERROR_WANT_WRITE) FD_SET(c->socket, &writefds);
+                    FD_SET(c->socket, &errorfds);
+                    tv.tv_sec = 10L;
+                    tv.tv_usec = 0;
+                    if (select(c->socket + 1, &readfds, &writefds, &errorfds, &tv) >= 0) continue;
+                }
+                trace(LOG_ALWAYS, "Can't SSL_write() on channel 0x%08x: %d", c, err);
+                c->out_errno = EIO;
+                return;
+            }
+#else
+            assert(0);
+#endif
+        }
+        else {
+            wr = send(c->socket, c->obuf + cnt, c->obuf_inp - cnt, 0);
+            if (wr < 0) {
+                int err = errno;
+                trace(LOG_PROTOCOL, "Can't send() on channel 0x%08x: %d %s", c, err, errno_to_str(err));
+                c->out_errno = err;
+                return;
+            }
         }
         cnt += wr;
     }
-    assert(cnt == channel->obuf_inp);
-    channel->obuf_inp = 0;
+    assert(cnt == c->obuf_inp);
+    c->obuf_inp = 0;
 }
 
 static void tcp_write_stream(OutputStream * out, int byte) {
-    ChannelTCP * channel = channel2tcp(out2channel(out));
+    ChannelTCP * c = channel2tcp(out2channel(out));
     int b0 = byte;
     assert(is_dispatch_thread());
-    assert(channel->magic == CHANNEL_MAGIC);
-    if (channel->socket < 0) return;
-    if (channel->out_errno) return;
+    assert(c->magic == CHANNEL_MAGIC);
+    if (c->socket < 0) return;
+    if (c->out_errno) return;
     if (b0 < 0) byte = ESC;
-    channel->obuf[channel->obuf_inp++] = byte;
-    if (channel->obuf_inp == BUF_SIZE) tcp_flush_stream(out);
+    c->obuf[c->obuf_inp++] = byte;
+    if (c->obuf_inp == BUF_SIZE) tcp_flush_stream(out);
     if (b0 < 0 || b0 == ESC) {
         if (b0 == ESC) byte = 0;
         else if (b0 == MARKER_EOM) byte = 1;
         else if (b0 == MARKER_EOS) byte = 2;
         else assert(0);
-        if (channel->socket < 0) return;
-        if (channel->out_errno) return;
-        channel->obuf[channel->obuf_inp++] = byte;
-        if (channel->obuf_inp == BUF_SIZE) tcp_flush_stream(out);
+        if (c->socket < 0) return;
+        if (c->out_errno) return;
+        c->obuf[c->obuf_inp++] = byte;
+        if (c->obuf_inp == BUF_SIZE) tcp_flush_stream(out);
     }
     if (b0 == MARKER_EOM) {
         int congestion_level = out2channel(out)->congestion_level;
@@ -179,41 +223,57 @@ static void tcp_write_stream(OutputStream * out, int byte) {
 }
 
 static void tcp_post_read(InputBuf * ibuf, unsigned char * buf, int size) {
-    ChannelTCP * channel = ibuf2tcp(ibuf);
+    ChannelTCP * c = ibuf2tcp(ibuf);
 
-    if (channel->read_pending || channel->socket < 0) return;
-    channel->read_pending = 1;
-    channel->rdreq.u.sio.bufp = buf;
-    channel->rdreq.u.sio.bufsz = size;
-    async_req_post(&channel->rdreq);
+    if (c->read_pending || c->socket < 0) return;
+    c->read_pending = 1;
+    c->read_buf = buf;
+    c->read_buf_size = size;
+    if (c->ssl) {
+#if ENABLE_SSL
+        c->read_done = SSL_read(c->ssl, c->read_buf, c->read_buf_size);
+        if (c->read_done > 0) {
+            post_event(c->rdreq.done, &c->rdreq);
+            return;
+        }
+#else
+        assert(0);
+#endif
+    }
+    else {
+        c->read_done = 0;
+        c->rdreq.u.sio.bufp = buf;
+        c->rdreq.u.sio.bufsz = size;
+    }
+    async_req_post(&c->rdreq);
 }
 
 static void tcp_wait_read(InputBuf * ibuf) {
-    ChannelTCP * channel = ibuf2tcp(ibuf);
+    ChannelTCP * c = ibuf2tcp(ibuf);
 
     /* Wait for read to complete */
-    assert(channel->lock_cnt > 0);
-    assert(channel->read_pending != 0);
-    cancel_event(tcp_channel_read_done, &channel->rdreq, 1);
-    tcp_channel_read_done(&channel->rdreq);
+    assert(c->lock_cnt > 0);
+    assert(c->read_pending != 0);
+    cancel_event(tcp_channel_read_done, &c->rdreq, 1);
+    tcp_channel_read_done(&c->rdreq);
 }
 
 static int tcp_read_stream(InputStream * inp) {
-    Channel * c = inp2channel(inp);
-    ChannelTCP * channel = channel2tcp(c);
+    Channel * channel = inp2channel(inp);
+    ChannelTCP * c = channel2tcp(channel);
 
-    assert(channel->lock_cnt > 0);
+    assert(c->lock_cnt > 0);
     if (inp->cur < inp->end) return *inp->cur++;
-    return ibuf_get_more(&channel->ibuf, inp, 0);
+    return ibuf_get_more(&c->ibuf, inp, 0);
 }
 
 static int tcp_peek_stream(InputStream * inp) {
-    Channel * c = inp2channel(inp);
-    ChannelTCP * channel = channel2tcp(c);
+    Channel * channel = inp2channel(inp);
+    ChannelTCP * c = channel2tcp(channel);
 
-    assert(channel->lock_cnt > 0);
+    assert(c->lock_cnt > 0);
     if (inp->cur < inp->end) return *inp->cur;
-    return ibuf_get_more(&channel->ibuf, inp, 1);
+    return ibuf_get_more(&c->ibuf, inp, 1);
 }
 
 static void send_eof_and_close(Channel * channel, int err) {
@@ -279,32 +339,32 @@ static void handle_channel_msg(void * x) {
     }
 }
 
-static void channel_check_pending(Channel * c) {
-    ChannelTCP * channel = channel2tcp(c);
+static void channel_check_pending(Channel * channel) {
+    ChannelTCP * c = channel2tcp(channel);
 
     assert(is_dispatch_thread());
-    if (channel->ibuf.handling_msg == HandleMsgIdle &&
-        channel->ibuf.message_count && !is_suspended(channel)) {
-        post_event(handle_channel_msg, channel);
-        channel->ibuf.handling_msg = HandleMsgTriggered;
+    if (c->ibuf.handling_msg == HandleMsgIdle &&
+        c->ibuf.message_count && !is_suspended(c)) {
+        post_event(handle_channel_msg, c);
+        c->ibuf.handling_msg = HandleMsgTriggered;
     }
 }
 
 static void tcp_trigger_message(InputBuf * ibuf) {
-    ChannelTCP * channel = ibuf2tcp(ibuf);
+    ChannelTCP * c = ibuf2tcp(ibuf);
 
     assert(is_dispatch_thread());
-    assert(channel->ibuf.message_count > 0);
-    if (channel->ibuf.handling_msg == HandleMsgIdle && !is_suspended(channel)) {
-        post_event(handle_channel_msg, channel);
-        channel->ibuf.handling_msg = HandleMsgTriggered;
+    assert(c->ibuf.message_count > 0);
+    if (c->ibuf.handling_msg == HandleMsgIdle && !is_suspended(c)) {
+        post_event(handle_channel_msg, c);
+        c->ibuf.handling_msg = HandleMsgTriggered;
     }
 }
 
-static int channel_get_message_count(Channel * c) {
-    ChannelTCP * channel = channel2tcp(c);
+static int channel_get_message_count(Channel * channel) {
+    ChannelTCP * c = channel2tcp(channel);
     assert(is_dispatch_thread());
-    return channel->ibuf.message_count;
+    return c->ibuf.message_count;
 }
 
 static void tcp_channel_read_done(void * x) {
@@ -323,10 +383,35 @@ static void tcp_channel_read_done(void * x) {
         }
         return;
     }
-    len = c->rdreq.u.sio.rval;
-    if (req->error) {
-        trace(LOG_ALWAYS, "Can't read from socket: %s", errno_to_str(req->error));
-        len = 0;                        /* Treat error as eof */
+    if (c->ssl) {
+#if ENABLE_SSL
+        if (c->read_done > 0) {
+            len = c->read_done;
+        }
+        else {
+            len = SSL_read(c->ssl, c->read_buf, c->read_buf_size);
+            if (len <= 0) {
+                int err = SSL_get_error(c->ssl, len);
+                if (err == SSL_ERROR_WANT_READ) {
+                    tcp_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
+                    return;
+                }
+                trace(LOG_ALWAYS, "Can't SSL_read() on channel 0x%08x: %d", c, err);
+                len = 0;
+            }
+        }
+#else
+        assert(0);
+#endif
+    }
+    else {
+        assert(c->read_buf == c->rdreq.u.sio.bufp);
+        assert(c->read_buf_size == c->rdreq.u.sio.bufsz);
+        len = c->rdreq.u.sio.rval;
+        if (req->error) {
+            trace(LOG_ALWAYS, "Can't read from socket: %s", errno_to_str(req->error));
+            len = 0; /* Treat error as eof */
+        }
     }
     ibuf_read_done(&c->ibuf, len);
 }
@@ -336,18 +421,35 @@ static void start_channel(Channel * channel) {
 
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
+    assert(c->socket >= 0);
     c->chan.connecting(&c->chan);
     c->rdreq.done = tcp_channel_read_done;
     c->rdreq.client_data = c;
-    c->rdreq.type = AsyncReqRecv;
-    c->rdreq.u.sio.sock = c->socket;
-    c->rdreq.u.sio.flags = 0;
+    if (c->ssl) {
+#if ENABLE_SSL
+        c->rdreq.type = AsyncReqSelect;
+        c->rdreq.u.select.nfds = c->socket + 1;
+        FD_ZERO(&c->rdreq.u.select.readfds);
+        FD_ZERO(&c->rdreq.u.select.writefds);
+        FD_ZERO(&c->rdreq.u.select.errorfds);
+        FD_SET(c->socket, &c->rdreq.u.select.readfds);
+        FD_SET(c->socket, &c->rdreq.u.select.errorfds);
+        c->rdreq.u.select.timeout.tv_sec = 10;
+#else
+        assert(0);
+#endif
+    }
+    else {
+        c->rdreq.type = AsyncReqRecv;
+        c->rdreq.u.sio.sock = c->socket;
+        c->rdreq.u.sio.flags = 0;
+    }
     ibuf_trigger_read(&c->ibuf);
 }
 
-static ChannelTCP * create_channel(int sock) {
+static ChannelTCP * create_channel(int sock, int ssl, int server) {
     const int i = 1;
-    ChannelTCP * c;
+    ChannelTCP * c = NULL;
 
     assert(sock >= 0);
     if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&i, sizeof(i)) < 0) {
@@ -360,6 +462,86 @@ static ChannelTCP * create_channel(int sock) {
 
     c = loc_alloc_zero(sizeof *c);
     c->magic = CHANNEL_MAGIC;
+
+    if (ssl) {
+#if ENABLE_SSL
+        static SSL_CTX * ssl_ctx = NULL;
+        static X509 * cert = NULL;
+        static RSA * rsa_key = NULL;
+        long opts = 0;
+
+        if (ssl_ctx == NULL) {
+            OpenSSL_add_all_algorithms();
+            SSL_load_error_strings();
+            SSL_library_init();
+            while (!RAND_status()) {
+                struct timespec ts;
+                clock_gettime(CLOCK_REALTIME, &ts);
+                RAND_add(&ts.tv_nsec, sizeof(ts.tv_nsec), 0.1);
+            }
+            ssl_ctx = SSL_CTX_new(SSLv23_method());
+        }
+
+        if (cert == NULL) {
+            const char * subject_name = "TCF";
+            const char * issuer_name = "TCF";
+            RSA * rsa = RSA_generate_key(512, 3, NULL, "RSA");
+            EVP_PKEY * public_key = NULL;
+            ASN1_INTEGER * serial = NULL;
+            X509_NAME * name = NULL;
+            int err = rsa == NULL;
+
+            if (!err && !RSA_check_key(rsa)) err = 1;
+            if (!err) {
+                public_key = EVP_PKEY_new();
+                EVP_PKEY_assign_RSA(public_key, rsa);
+                cert = X509_new();
+                X509_set_version(cert, 2L);
+                serial = ASN1_INTEGER_new();
+                ASN1_INTEGER_set(serial, 1);
+                X509_set_serialNumber(cert, serial);
+                ASN1_INTEGER_free(serial);
+                X509_gmtime_adj(X509_get_notBefore(cert), 0L);
+                X509_gmtime_adj(X509_get_notAfter(cert), 60 * 60 *24 * 365L);
+                name = X509_get_subject_name(cert);
+                X509_NAME_add_entry_by_txt(name, "commonName", MBSTRING_ASC,
+                    (unsigned char *)subject_name, strlen(subject_name), -1, 0);
+                name = X509_get_issuer_name(cert);
+                X509_NAME_add_entry_by_txt(name, "commonName", MBSTRING_ASC,
+                    (unsigned char *)issuer_name, strlen(issuer_name), -1, 0);
+            }
+            if (!err && !X509_set_pubkey(cert, public_key)) err = 1;
+            if (!err) X509_sign(cert, public_key, EVP_md5());
+            if (!err && !X509_verify(cert, public_key)) err = 1;
+            if (err) {
+                trace(LOG_ALWAYS, "Cannot create server sertificate: %s", ERR_error_string(ERR_get_error(), NULL));
+                if (cert != NULL) X509_free(cert);
+                else if (rsa != NULL) RSA_free(rsa);
+                closesocket(sock);
+                loc_free(c);
+                errno = EINVAL;
+                cert = NULL;
+                return NULL;
+            }
+            rsa_key = rsa;
+        }
+
+        if ((opts = fcntl(sock, F_GETFL, NULL)) < 0) return NULL;
+        opts |= O_NONBLOCK;
+        if (fcntl(sock, F_SETFL, opts) < 0) return NULL;
+        c->ssl = SSL_new(ssl_ctx);
+        SSL_set_fd(c->ssl, sock);
+        if (server) {
+            SSL_use_certificate(c->ssl, cert);
+            SSL_use_RSAPrivateKey(c->ssl, rsa_key);
+            SSL_set_accept_state(c->ssl);
+        }
+        else {
+            SSL_set_connect_state(c->ssl);
+        }
+#endif
+    }
+
     c->chan.inp.read = tcp_read_stream;
     c->chan.inp.peek = tcp_peek_stream;
     c->chan.out.write = tcp_write_stream;
@@ -445,17 +627,18 @@ static void refresh_all_peer_server(void *x) {
 static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr) {
     /* Create a human readable channel name that uniquely identifies remote peer */
     char name[128];
+    char * fmt = c->ssl != NULL ? "SSL:%s:%d" : "TCP:%s:%d";
 #if defined(_MSC_VER) || defined(__MINGW32__)
     /* inet_ntop() is not available before Windows Vista */
     assert(addr->sa_family == AF_INET);
     c->addr = *addr;
-    snprintf(name, sizeof(name), "TCP:%s:%d",
+    snprintf(name, sizeof(name), fmt,
         inet_ntoa(((struct sockaddr_in *)&c->addr)->sin_addr),
         ntohs(((struct sockaddr_in *)&c->addr)->sin_port));
 #else
     char nbuf[128];
     c->addr = *addr;
-    snprintf(name, sizeof(name), "TCP:%s:%d",
+    snprintf(name, sizeof(name), fmt,
         inet_ntop(addr->sa_family, &((struct sockaddr_in *)&c->addr)->sin_addr, nbuf, sizeof(nbuf)),
         ntohs(((struct sockaddr_in *)&c->addr)->sin_port));
 #endif
@@ -465,7 +648,7 @@ static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr) {
 static void tcp_server_accept_done(void * x) {
     AsyncReqInfo * req = x;
     ServerTCP * si = req->client_data;
-    ChannelTCP * c;
+    ChannelTCP * c = NULL;
     int sock;
     struct sockaddr peer_addr;
 
@@ -482,7 +665,7 @@ static void tcp_server_accept_done(void * x) {
     sock = req->u.acc.rval;
     peer_addr = si->addr;
     async_req_post(req);
-    c = create_channel(sock);
+    c = create_channel(sock, strcmp(peer_server_getprop(si->ps, "TransportName", ""), "SSL") == 0, 1);
     if (c == NULL) return;
     set_peer_addr(c, &peer_addr);
     si->serv.new_conn(&si->serv, &c->chan);
@@ -657,7 +840,7 @@ Channel * channel_tcp_connect(PeerServer * ps) {
         return NULL;
     }
 
-    c = create_channel(sock);
+    c = create_channel(sock, strcmp(peer_server_getprop(ps, "TransportName", ""), "SSL") == 0, 0);
     if (c == NULL) return NULL;
     set_peer_addr(c, &peer_addr);
     return &c->chan;

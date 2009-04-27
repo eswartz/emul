@@ -13,7 +13,7 @@
  *******************************************************************************/
 
 /*
- * Implements input and output stream over TCP/IP transport and UDP based auto discovery.
+ * Transport agnostic channel implementation.
  */
 
 #include "mdep.h"
@@ -265,7 +265,7 @@ PeerServer * channel_peer_from_url(const char * url) {
 ChannelServer * channel_server(PeerServer * ps) {
     char * transportname = peer_server_getprop(ps, "TransportName", NULL);
 
-    if (transportname == NULL || strcmp(transportname, "TCP") == 0) {
+    if (transportname == NULL || strcmp(transportname, "TCP") == 0 || strcmp(transportname, "SSL") == 0) {
         return channel_tcp_server(ps);
     }
     else {
@@ -280,7 +280,7 @@ ChannelServer * channel_server(PeerServer * ps) {
 Channel * channel_connect(PeerServer * ps) {
     char * transportname = peer_server_getprop(ps, "TransportName", NULL);
 
-    if (transportname == NULL || strcmp(transportname, "TCP") == 0) {
+    if (transportname == NULL || strcmp(transportname, "TCP") == 0 || strcmp(transportname, "SSL") == 0) {
         return channel_tcp_connect(ps);
     }
     else {

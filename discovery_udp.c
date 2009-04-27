@@ -256,7 +256,6 @@ static int create_server_socket(void) {
 
 static int udp_send_peer_info(PeerServer * ps, void * arg) {
     struct sockaddr_in * addr = arg;
-    char * transport = NULL;
     char * host = NULL;
     struct in_addr src_addr;
     int n;
@@ -265,8 +264,6 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
     if ((ps->flags & PS_FLAG_LOCAL) == 0) return 0;
     if ((ps->flags & PS_FLAG_DISCOVERABLE) == 0) return 0;
 
-    transport = peer_server_getprop(ps, "TransportName", "");
-    if (strcmp(transport, "TCP") != 0 && strcmp(transport, "UDP") != 0) return 0;
     host = peer_server_getprop(ps, "Host", NULL);
 #ifdef _WRS_KERNEL
     /* VxWorks inet_aton() return codes are opposite to standard */

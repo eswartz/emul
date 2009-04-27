@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -119,7 +119,19 @@ static void * worker_thread_handler(void * x) {
             }
             break;
 #endif
-
+        case AsyncReqSelect:
+        {
+            struct timeval tv;
+            tv.tv_sec = (long)req->u.select.timeout.tv_sec;
+            tv.tv_usec = req->u.select.timeout.tv_nsec / 1000;
+            req->u.select.rval = select(req->u.select.nfds, &req->u.select.readfds,
+                        &req->u.select.writefds, &req->u.select.errorfds, &tv);
+            if (req->u.con.rval == -1) {
+                req->error = errno;
+                assert(req->error);
+            }
+            break;
+        }
         default:
             req->error = ENOSYS;
             break;

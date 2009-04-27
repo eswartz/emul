@@ -23,7 +23,7 @@ ifeq ($(OPSYS),Darwin)
 LIBS=-lpthread
 RANLIB=ranlib $@
 else
-LIBS=-lpthread -lrt
+LIBS=-lpthread -lssl -lrt
 endif
 endif
 endif
