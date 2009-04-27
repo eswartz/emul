@@ -78,6 +78,7 @@ public abstract class AbstractChannel implements IChannel {
             this.type = type;
         }
 
+        @Override
         public String toString() {
             try {
                 StringBuffer bf = new StringBuffer();
@@ -115,7 +116,7 @@ public abstract class AbstractChannel implements IChannel {
         }
     }
 
-    private static IChannelListener[] listeners_array = new IChannelListener[64];
+    private static IChannelListener[] listeners_array = new IChannelListener[4];
 
     private final LinkedList<String> redirect_queue = new LinkedList<String>();
     private final Map<Class<?>,IService> local_service_by_class = new HashMap<Class<?>,IService>();
@@ -209,6 +210,7 @@ public abstract class AbstractChannel implements IChannel {
                 return new String(buf, 0, len, "UTF8");
             }
 
+            @Override
             public void run() {
                 try {
                     while (true) {
@@ -285,6 +287,7 @@ public abstract class AbstractChannel implements IChannel {
 
         out_thread = new Thread() {
 
+            @Override
             public void run() {
                 try {
                     while (true) {
@@ -462,6 +465,7 @@ public abstract class AbstractChannel implements IChannel {
 
     public void addChannelListener(IChannelListener listener) {
         assert Protocol.isDispatchThread();
+        assert listener != null;
         channel_listeners.add(listener);
     }
 
@@ -557,9 +561,8 @@ public abstract class AbstractChannel implements IChannel {
         sendEndOfStream();
         if (state == STATE_CLOSED) return;
         state = STATE_CLOSED;
-        if (error != null) {
-            if (remote_peer instanceof AbstractPeer) ((AbstractPeer)remote_peer).onChannelTerminated();
-            Protocol.log("TCF channel terminated", error);
+        if (error != null && remote_peer instanceof AbstractPeer) {
+            ((AbstractPeer)remote_peer).onChannelTerminated();
         }
         if (registered_with_trasport) {
             registered_with_trasport = false;
@@ -585,17 +588,23 @@ public abstract class AbstractChannel implements IChannel {
                         if (s.length() > 72) s = s.substring(0, 72) + "...]";
                         IOException y = new IOException("Command " + s + " aborted");
                         y.initCause(x);
-                        msg.token.getListener().terminated(msg.token, y); 
+                        msg.token.getListener().terminated(msg.token, y);
                     }
                     out_tokens.clear();
                 }
-                listeners_array = channel_listeners.toArray(listeners_array);
-                for (int i = 0; i < listeners_array.length && listeners_array[i] != null; i++) {
-                    try {
-                        listeners_array[i].onChannelClosed(error);
-                    }
-                    catch (Throwable x) {
-                        Protocol.log("Exception in channel listener", x);
+                if (channel_listeners.isEmpty()) {
+                    Protocol.log("TCF channel terminated", error);
+                }
+                else {
+                    listeners_array = channel_listeners.toArray(listeners_array);
+                    for (IChannelListener l : listeners_array) {
+                        if (l == null) break;
+                        try {
+                            l.onChannelClosed(error);
+                        }
+                        catch (Throwable x) {
+                            Protocol.log("Exception in channel listener", x);
+                        }
                     }
                 }
                 if (trace_listeners != null) {
@@ -699,6 +708,7 @@ public abstract class AbstractChannel implements IChannel {
         msg.name = name;
         msg.data = args;
         Token token = new Token(listener) {
+            @Override
             public boolean cancel() {
                 assert Protocol.isDispatchThread();
                 if (state != STATE_OPEN) return false;
@@ -831,9 +841,10 @@ public abstract class AbstractChannel implements IChannel {
                             registered_with_trasport = true;
                         }
                         listeners_array = channel_listeners.toArray(listeners_array);
-                        for (int i = 0; i < listeners_array.length && listeners_array[i] != null; i++) {
+                        for (IChannelListener l : listeners_array) {
+                            if (l == null) break;
                             try {
-                                listeners_array[i].onChannelOpened();
+                                l.onChannelOpened();
                             }
                             catch (Throwable x) {
                                 Protocol.log("Exception in channel listener", x);
