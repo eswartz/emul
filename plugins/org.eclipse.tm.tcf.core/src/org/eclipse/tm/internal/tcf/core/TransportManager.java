@@ -54,7 +54,24 @@ public class TransportManager {
                 String port = attrs.get(IPeer.ATTR_IP_PORT);
                 if (host == null) throw new Error("No host name");
                 if (port == null) throw new Error("No port number");
-                return new ChannelTCP(peer, host, Integer.parseInt(port));
+                return new ChannelTCP(peer, host, Integer.parseInt(port), false);
+            }
+        });
+        
+        addTransportProvider(new ITransportProvider() {
+
+            public String getName() {
+                return "SSL";
+            }
+
+            public IChannel openChannel(IPeer peer) {
+                assert getName().equals(peer.getTransportName());
+                Map<String,String> attrs = peer.getAttributes();
+                String host = attrs.get(IPeer.ATTR_IP_HOST);
+                String port = attrs.get(IPeer.ATTR_IP_PORT);
+                if (host == null) throw new Error("No host name");
+                if (port == null) throw new Error("No port number");
+                return new ChannelTCP(peer, host, Integer.parseInt(port), true);
             }
         });
         

@@ -23,7 +23,6 @@ import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.subsystems.BasicConnectorService;
 import org.eclipse.rse.core.subsystems.CommunicationsEvent;
 import org.eclipse.tm.tcf.core.AbstractPeer;
-import org.eclipse.tm.tcf.core.ChannelTCP;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -128,12 +127,7 @@ public class TCFConnectorService extends BasicConnectorService {
                 attrs.put(IPeer.ATTR_TRANSPORT_NAME, "TCP"); //$NON-NLS-1$
                 attrs.put(IPeer.ATTR_IP_HOST, host);
                 attrs.put(IPeer.ATTR_IP_PORT, ports);
-                peer = new AbstractPeer(attrs) {
-                    @Override
-                    public IChannel openChannel() {
-                        return new ChannelTCP(this, host, port);
-                    }
-                };
+                peer = new AbstractPeer(attrs);
             }
             channel = peer.openChannel();
             channel.addChannelListener(new IChannel.IChannelListener() {

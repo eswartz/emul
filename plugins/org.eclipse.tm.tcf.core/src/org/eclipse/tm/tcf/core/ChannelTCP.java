@@ -17,6 +17,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.security.auth.x500.X500Principal;
 
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -31,13 +39,37 @@ public class ChannelTCP extends StreamChannel {
     private OutputStream out;
     private boolean closed;
 
-    public ChannelTCP(IPeer remote_peer, final String host, final int port) {
+    public ChannelTCP(IPeer remote_peer, final String host, final int port, final boolean ssl) {
         super(remote_peer);
         Thread thread = new Thread() {
             public void run() {
                 try {
-                    socket = new Socket(host, port);
-                    socket.setTcpNoDelay(true);
+                        if (ssl) {
+                        SSLContext context = SSLContext.getInstance("TLS");
+                        X509TrustManager tm = new X509TrustManager() {
+                                                        public void checkClientTrusted(X509Certificate[] chain, String auth_type) throws CertificateException {
+                                                                throw new CertificateException();
+                                                        }
+                                                        public void checkServerTrusted(X509Certificate[] chain, String auth_type) throws CertificateException {
+                                                                if ("RSA".equals(auth_type) && chain != null && chain.length == 1) {
+                                                                        X500Principal issuer = chain[0].getIssuerX500Principal();
+                                                                        if (issuer.getName().equals("CN=TCF")) return;
+                                                                }
+                                                                throw new CertificateException();
+                                                        }
+                                                        public X509Certificate[] getAcceptedIssuers() {
+                                                                return null;
+                                                        }
+                        };
+                        context.init(null, new TrustManager[] { tm }, null);
+                                socket = context.getSocketFactory().createSocket(host, port);
+                        socket.setTcpNoDelay(true);
+                        ((SSLSocket)socket).startHandshake();
+                        }
+                        else {
+                                socket = new Socket(host, port);
+                        socket.setTcpNoDelay(true);
+                        }
                     inp = new BufferedInputStream(socket.getInputStream());
                     out = new BufferedOutputStream(socket.getOutputStream());
                     Protocol.invokeLater(new Runnable() {
@@ -46,7 +78,7 @@ public class ChannelTCP extends StreamChannel {
                         }
                     });
                 }
-                catch (final IOException x) {
+                catch (final Exception x) {
                     Protocol.invokeLater(new Runnable() {
                         public void run() {
                             ChannelTCP.this.terminate(x);
@@ -57,6 +89,10 @@ public class ChannelTCP extends StreamChannel {
         };
         thread.setName("TCF Socket Connect");
         thread.start();
+    }
+    
+    public ChannelTCP(IPeer remote_peer, String host, int port) {
+        this(remote_peer, host, port, false);
     }
     
     public ChannelTCP(IPeer local_peer, IPeer remote_peer, Socket socket) throws IOException {

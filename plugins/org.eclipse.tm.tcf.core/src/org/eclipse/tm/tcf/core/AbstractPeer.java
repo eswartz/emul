@@ -28,7 +28,7 @@ import org.eclipse.tm.tcf.services.ILocator.LocatorListener;
 /**
  * Abstract implementation of IPeer interface.
  */
-public abstract class AbstractPeer implements IPeer {
+public class AbstractPeer implements IPeer {
 
     private final Map<String, String> ro_attrs;
     private final Map<String, String> rw_attrs;
