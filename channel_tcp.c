@@ -459,6 +459,13 @@ static ChannelTCP * create_channel(int sock, int ssl, int server) {
         errno = error;
         return NULL;
     }
+    if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *)&i, sizeof(i)) < 0) {
+        int error = errno;
+        trace(LOG_ALWAYS, "Can't set SO_KEEPALIVE option on a socket: %s", errno_to_str(error));
+        closesocket(sock);
+        errno = error;
+        return NULL;
+    }
 
     c = loc_alloc_zero(sizeof *c);
     c->magic = CHANNEL_MAGIC;
