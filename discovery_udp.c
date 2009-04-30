@@ -58,7 +58,7 @@
 static int ifc_cnt;
 static ip_ifc_info ifc_list[MAX_IFC];
 static time_t last_req_slaves_time[MAX_IFC];
-static int beacon_ok[MAX_IFC];
+static int send_all_ok[MAX_IFC];
 
 static int udp_server_port = 0;
 static int udp_server_socket = -1;
@@ -103,13 +103,20 @@ static void app_strz(char * buf, int * pos, char * str) {
     app_char(buf, pos, 0);
 }
 
-static int get_addr(char * buf, int * pos, struct sockaddr_in * addr) {
+static int get_slave_addr(char * buf, int * pos, struct sockaddr_in * addr, time_t * timestamp) {
     char * port = buf + *pos;
+    char * stmp = buf + *pos;
     char * host = buf + *pos;
     int len = strlen(buf + *pos);
+    int n = 0;
 
+    while (*port && *port != ':') port++;
+    if (*port == ':') *port++ = 0;
+
+    host = port;
     while (*host && *host != ':') host++;
     if (*host == ':') *host++ = 0;
+
     *pos += len + 1;
 
     memset(addr, 0, sizeof(*addr));
@@ -120,7 +127,13 @@ static int get_addr(char * buf, int * pos, struct sockaddr_in * addr) {
 #else
     if (inet_aton(host, &addr->sin_addr) == 0) return 0;
 #endif
-    addr->sin_port = htons(atoi(port));
+    n = atoi(port);
+    if (n == DISCOVERY_TCF_PORT) return 0;
+    addr->sin_port = htons(n);
+    *timestamp = 0;
+    while (*stmp >= '0' && *stmp <= '9') {
+        *timestamp = (*timestamp * 10) + (*stmp++ - '0');
+    }
     return 1;
 }
 
@@ -288,29 +301,29 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
             /* Server address not matching this interface */
             continue;
         }
-        if (addr != NULL &&
-            (ifc->addr & ifc->mask) != (addr->sin_addr.s_addr & ifc->mask)) {
-            /* Packet destination address not matching this interface */
-            continue;
-        }
+
         if (addr == NULL) {
             dst_addr = &dst_addr_buf;
             memset(&dst_addr_buf, 0, sizeof dst_addr_buf);
             dst_addr->sin_family = AF_INET;
             dst_addr->sin_port = htons(DISCOVERY_TCF_PORT);
             dst_addr->sin_addr.s_addr = ifc->addr | ~ifc->mask;
-            beacon_ok[n] = 1;
         }
         else {
+            if ((ifc->addr & ifc->mask) != (addr->sin_addr.s_addr & ifc->mask)) {
+                /* Packet destination address does not match this interface */
+                continue;
+            }
             dst_addr = addr;
         }
         trace(LOG_DISCOVERY, "ACK_INFO to %s:%d, ID=%s",
             inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port), ps->id);
+        send_all_ok[n] = 1;
 
         buf[pos++] = 'T';
         buf[pos++] = 'C';
         buf[pos++] = 'F';
-        buf[pos++] = '1';
+        buf[pos++] = UDP_VERSION;
         buf[pos++] = UDP_ACK_INFO;
         buf[pos++] = 0;
         buf[pos++] = 0;
@@ -347,7 +360,7 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
             while (n < slave_cnt) {
                 SlaveInfo * s = slave_info + n++;
                 if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) {
-                    /* Slave address not matching this interface */
+                    /* Slave address does not match this interface */
                     continue;
                 }
                 trace(LOG_DISCOVERY, "ACK_INFO to %s:%d, ID=%s",
@@ -368,49 +381,89 @@ static void udp_send_ack_info(struct sockaddr_in * addr) {
 }
 
 static void udp_send_req_info(struct sockaddr_in * addr) {
-    int i = 0;
-    int n = 0;
-    char buf[MAX_PACKET_SIZE];
-    ip_ifc_info * ifc;
+    int n;
+    for (n = 0; n < ifc_cnt; n++) {
+        int i = 0;
+        char buf[MAX_PACKET_SIZE];
+        ip_ifc_info * ifc = ifc_list + n;
+        struct sockaddr_in * dst_addr;
+        struct sockaddr_in dst_addr_buf;
 
-    buf[i++] = 'T';
-    buf[i++] = 'C';
-    buf[i++] = 'F';
-    buf[i++] = '1';
-    buf[i++] = UDP_REQ_INFO;
-    buf[i++] = 0;
-    buf[i++] = 0;
-    buf[i++] = 0;
-
-    if (addr == NULL) {
-        trace(LOG_DISCOVERY, "Broadcast REQ_INFO");
-        /* Broadcast to all masters */
-        for (ifc = ifc_list; ifc < &ifc_list[ifc_cnt]; ifc++) {
-            struct sockaddr_in dst_addr;
-            memset(&dst_addr, 0, sizeof dst_addr);
-            dst_addr.sin_family = AF_INET;
-            dst_addr.sin_port = htons(DISCOVERY_TCF_PORT);
-            dst_addr.sin_addr.s_addr = ifc->addr | ~ifc->mask;
-            if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)&dst_addr, sizeof dst_addr) < 0) {
-                trace(LOG_ALWAYS, "Can't send UDP discovery request packet to %s:%d: %s",
-                      inet_ntoa(dst_addr.sin_addr), ntohs(dst_addr.sin_port), errno_to_str(errno));
-            }
+        if (addr == NULL) {
+            dst_addr = &dst_addr_buf;
+            memset(&dst_addr_buf, 0, sizeof dst_addr_buf);
+            dst_addr->sin_family = AF_INET;
+            dst_addr->sin_port = htons(DISCOVERY_TCF_PORT);
+            dst_addr->sin_addr.s_addr = ifc->addr | ~ifc->mask;
         }
-        /* Notify known slaves */
-        n = 0;
-        while (n < slave_cnt) {
-            SlaveInfo * s = slave_info + n++;
-            if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)&s->addr, sizeof s->addr) < 0) {
-                trace(LOG_ALWAYS, "Can't send UDP discovery request packet to %s:%d: %s",
-                      inet_ntoa(s->addr.sin_addr), ntohs(s->addr.sin_port), errno_to_str(errno));
+        else {
+            if ((ifc->addr & ifc->mask) != (addr->sin_addr.s_addr & ifc->mask)) {
+                /* Packet destination address does not match this interface */
+                continue;
             }
+            dst_addr = addr;
+        }
+
+        trace(LOG_DISCOVERY, "REQ_INFO to %s:%d",
+            inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port));
+
+        buf[i++] = 'T';
+        buf[i++] = 'C';
+        buf[i++] = 'F';
+        buf[i++] = UDP_VERSION;
+        buf[i++] = UDP_REQ_INFO;
+        buf[i++] = 0;
+        buf[i++] = 0;
+        buf[i++] = 0;
+
+        if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)dst_addr, sizeof(struct sockaddr_in)) < 0) {
+            trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
+                  inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port), errno_to_str(errno));
         }
     }
-    else {
-        trace(LOG_DISCOVERY, "REQ_INFO to %s:%d", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
-        if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof *addr) < 0) {
-            trace(LOG_ALWAYS, "Can't send UDP discovery request packet to %s:%d: %s",
-                  inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno_to_str(errno));
+}
+
+static void udp_send_empty_packet(struct sockaddr_in * addr) {
+    int n;
+    for (n = 0; n < ifc_cnt; n++) {
+        int i = 0;
+        char buf[MAX_PACKET_SIZE];
+        ip_ifc_info * ifc = ifc_list + n;
+        struct sockaddr_in * dst_addr;
+        struct sockaddr_in dst_addr_buf;
+
+        if (send_all_ok[n]) continue;
+
+        if (addr == NULL) {
+            dst_addr = &dst_addr_buf;
+            memset(&dst_addr_buf, 0, sizeof dst_addr_buf);
+            dst_addr->sin_family = AF_INET;
+            dst_addr->sin_port = htons(DISCOVERY_TCF_PORT);
+            dst_addr->sin_addr.s_addr = ifc->addr | ~ifc->mask;
+        }
+        else {
+            if ((ifc->addr & ifc->mask) != (addr->sin_addr.s_addr & ifc->mask)) {
+                /* Packet destination address does not match this interface */
+                continue;
+            }
+            dst_addr = addr;
+        }
+
+        trace(LOG_DISCOVERY, "ACK_SLAVES to %s:%d",
+            inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port));
+
+        buf[i++] = 'T';
+        buf[i++] = 'C';
+        buf[i++] = 'F';
+        buf[i++] = UDP_VERSION;
+        buf[i++] = UDP_ACK_SLAVES;
+        buf[i++] = 0;
+        buf[i++] = 0;
+        buf[i++] = 0;
+
+        if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)dst_addr, sizeof(struct sockaddr_in)) < 0) {
+            trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
+                  inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port), errno_to_str(errno));
         }
     }
 }
@@ -425,7 +478,7 @@ static void udp_send_req_slaves(struct sockaddr_in * addr) {
     buf[i++] = 'T';
     buf[i++] = 'C';
     buf[i++] = 'F';
-    buf[i++] = '1';
+    buf[i++] = UDP_VERSION;
     buf[i++] = UDP_REQ_SLAVES;
     buf[i++] = 0;
     buf[i++] = 0;
@@ -437,7 +490,7 @@ static void udp_send_req_slaves(struct sockaddr_in * addr) {
     }
 }
 
-static void udp_send_ack_slaves_one(SlaveInfo * slave) {
+static void udp_send_ack_slaves_one(SlaveInfo * s) {
     char buf[MAX_PACKET_SIZE];
     ip_ifc_info * ifc;
     time_t timenow = time(NULL);
@@ -446,20 +499,22 @@ static void udp_send_ack_slaves_one(SlaveInfo * slave) {
         int n = 0;
         int i = 0;
         char str[256];
-        if ((ifc->addr & ifc->mask) != (slave->addr.sin_addr.s_addr & ifc->mask)) continue;
+        if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) continue;
         buf[i++] = 'T';
         buf[i++] = 'C';
         buf[i++] = 'F';
-        buf[i++] = '1';
+        buf[i++] = UDP_VERSION;
         buf[i++] = UDP_ACK_SLAVES;
         buf[i++] = 0;
         buf[i++] = 0;
         buf[i++] = 0;
-        snprintf(str, sizeof(str), "%d:%s", ntohs(slave->addr.sin_port), inet_ntoa(slave->addr.sin_addr));
+        snprintf(str, sizeof(str), "%lld:%u:%s", (long long)s->last_packet_time,
+            ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
         app_strz(buf, &i, str);
 
         while (n < slave_cnt) {
             SlaveInfo * s = slave_info + n++;
+            if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) continue;
             if (s->last_req_slaves_time + PEER_DATA_RETENTION_PERIOD < timenow) continue;
             trace(LOG_DISCOVERY, "ACK_SLAVES to %s:%d",
                 inet_ntoa(s->addr.sin_addr), ntohs(s->addr.sin_port));
@@ -471,24 +526,22 @@ static void udp_send_ack_slaves_one(SlaveInfo * slave) {
     }
 }
 
-static void udp_send_ack_slaves_all(struct sockaddr_in * addr, int only_linked) {
+static void udp_send_ack_slaves_all(struct sockaddr_in * addr) {
     char buf[MAX_PACKET_SIZE];
-    ip_ifc_info * ifc;
+    int k;
     time_t timenow = time(NULL);
 
-    trace(LOG_DISCOVERY, "ACK_SLAVES to %s:%d",
-        inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
-
-    for (ifc = ifc_list; ifc < &ifc_list[ifc_cnt]; ifc++) {
+    for (k = 0; k < ifc_cnt; k++) {
         int n = 0;
         int i = 0;
+        ip_ifc_info * ifc = ifc_list + k;
 
         if ((ifc->addr & ifc->mask) != (addr->sin_addr.s_addr & ifc->mask)) continue;
 
         buf[i++] = 'T';
         buf[i++] = 'C';
         buf[i++] = 'F';
-        buf[i++] = '1';
+        buf[i++] = UDP_VERSION;
         buf[i++] = UDP_ACK_SLAVES;
         buf[i++] = 0;
         buf[i++] = 0;
@@ -498,9 +551,11 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr, int only_linked) 
             char str[256];
             SlaveInfo * s = slave_info + n++;
             if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) continue;
-            if (only_linked && s->last_req_slaves_time + PEER_DATA_RETENTION_PERIOD < timenow) continue;
-            snprintf(str, sizeof(str), "%d:%s", ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
+            snprintf(str, sizeof(str), "%lld:%u:%s", (long long)s->last_packet_time,
+                ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
             if (i + strlen(str) >= PREF_PACKET_SIZE) {
+                trace(LOG_DISCOVERY, "ACK_SLAVES to %s:%d",
+                    inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
                 if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0) {
                     trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
                           inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno_to_str(errno));
@@ -508,51 +563,31 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr, int only_linked) 
                 i = 8;
             }
             app_strz(buf, &i, str);
+            send_all_ok[k] = 1;
         }
 
-        if (i > 8 && sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0) {
-            trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
-                  inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno_to_str(errno));
-        }
-    }
-}
-
-static void udp_send_ack_slaves_beacon(void) {
-    int n;
-    for (n = 0; n < ifc_cnt; n++) {
-        if (!beacon_ok[n]) {
-            int i = 0;
-            char buf[MAX_PACKET_SIZE];
-            ip_ifc_info * ifc = ifc_list + n;
-            struct sockaddr_in addr;
-
-            memset(&addr, 0, sizeof addr);
-            addr.sin_family = AF_INET;
-            addr.sin_port = htons(DISCOVERY_TCF_PORT);
-            addr.sin_addr.s_addr = ifc->addr | ~ifc->mask;
-
-            trace(LOG_DISCOVERY, "ACK_SLAVES (beacon) to %s:%d",
-                inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-
-            buf[i++] = 'T';
-            buf[i++] = 'C';
-            buf[i++] = 'F';
-            buf[i++] = '1';
-            buf[i++] = UDP_ACK_SLAVES;
-            buf[i++] = 0;
-            buf[i++] = 0;
-            buf[i++] = 0;
-
-            if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) < 0) {
+        if (i > 8) {
+            trace(LOG_DISCOVERY, "ACK_SLAVES to %s:%d",
+                inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
+            if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0) {
                 trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
-                      inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), errno_to_str(errno));
+                      inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno_to_str(errno));
             }
         }
     }
 }
 
+static void udp_send_all(struct sockaddr_in * addr, SlaveInfo * s) {
+    memset(send_all_ok, 0, sizeof(send_all_ok));
+    udp_send_ack_info(addr);
+    if (addr != NULL && s != NULL && s->last_req_slaves_time + PEER_DATA_RETENTION_PERIOD >= time(NULL)) {
+        udp_send_ack_slaves_all(addr);
+    }
+    udp_send_empty_packet(addr);
+}
+
 static void udp_refresh_timer(void * arg) {
-    time_t timenow = time(0);
+    time_t timenow = time(NULL);
 
     if (slave_cnt > 0) {
         /* Cleanup slave table */
@@ -577,9 +612,7 @@ static void udp_refresh_timer(void * arg) {
     ifc_cnt = build_ifclist(udp_server_socket, MAX_IFC, ifc_list);
 
     /* Broadcast peer info */
-    memset(beacon_ok, 0, sizeof(beacon_ok));
-    udp_send_ack_info(NULL);
-    if (udp_server_port != DISCOVERY_TCF_PORT) udp_send_ack_slaves_beacon();
+    udp_send_all(NULL, NULL);
 
     post_event_with_delay(udp_refresh_timer, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
 }
@@ -594,13 +627,13 @@ static int is_remote(struct sockaddr_in * addr) {
     return 1;
 }
 
-static SlaveInfo * add_slave(struct sockaddr_in * addr) {
+static SlaveInfo * add_slave(struct sockaddr_in * addr, time_t timestamp) {
     int i = 0;
     SlaveInfo * s = NULL;
     while (i < slave_cnt) {
         s = slave_info + i++;
         if (memcmp(&s->addr, addr, sizeof(struct sockaddr_in)) == 0) {
-            s->last_packet_time = time(0);
+            if (s->last_packet_time < timestamp) s->last_packet_time = timestamp;
             return s;
         }
     }
@@ -616,18 +649,17 @@ static SlaveInfo * add_slave(struct sockaddr_in * addr) {
     }
     s = slave_info + slave_cnt++;
     s->addr = *addr;
-    s->last_packet_time = time(0);
+    s->last_packet_time = timestamp;
     udp_send_req_info(addr);
-    udp_send_ack_info(addr);
+    udp_send_all(addr, s);
     udp_send_ack_slaves_one(s);
     return s;
 }
 
-static void udp_receive_req_info(void) {
+static void udp_receive_req_info(SlaveInfo * s) {
     trace(LOG_DISCOVERY, "REQ_INFO from %s:%d",
         inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
-    udp_send_ack_info(&recvreq_addr);
-    udp_send_ack_slaves_all(&recvreq_addr, 1);
+    udp_send_all(&recvreq_addr, s);
 }
 
 static void udp_receive_ack_info(void) {
@@ -670,7 +702,7 @@ static void udp_receive_ack_info(void) {
 static void udp_receive_req_slaves(void) {
     trace(LOG_DISCOVERY, "REQ_SLAVES from %s:%d",
         inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
-    udp_send_ack_slaves_all(&recvreq_addr, 0);
+    udp_send_ack_slaves_all(&recvreq_addr);
 }
 
 static void udp_receive_ack_slaves(void) {
@@ -680,10 +712,11 @@ static void udp_receive_ack_slaves(void) {
         inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
     while (pos < len) {
         struct sockaddr_in addr;
-        if (get_addr(recvreq_buf, &pos, &addr)) {
+        time_t timestamp;
+        if (get_slave_addr(recvreq_buf, &pos, &addr, &timestamp)) {
             trace(LOG_DISCOVERY, "  Slave at %s:%d",
                 inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-            add_slave(&addr);
+            add_slave(&addr, timestamp);
         }
     }
 }
@@ -704,44 +737,44 @@ static void udp_server_recv(void * x) {
     }
     else {
         recvreq_error_cnt = 0;
-        if (recvreq.u.sio.rval < 8 || strncmp(recvreq_buf, "TCF1", 4) != 0) {
-            trace(LOG_ALWAYS, "Received malformed UDP packet from %s:%d",
-                inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
-        }
-        else if (is_remote(&recvreq_addr)) {
+        if (recvreq.u.sio.rval >= 8 &&
+                recvreq_buf[0] == 'T' &&
+                recvreq_buf[1] == 'C' &&
+                recvreq_buf[2] == 'F' &&
+                recvreq_buf[3] == UDP_VERSION &&
+                is_remote(&recvreq_addr)) {
+            int n = 0;
+            time_t timenow = time(NULL);
             SlaveInfo * s = NULL;
             if (ntohs(recvreq_addr.sin_port) != DISCOVERY_TCF_PORT) {
                 /* Packet from a slave, save its address */
-                s = add_slave(&recvreq_addr);
+                s = add_slave(&recvreq_addr, timenow);
             }
             switch (recvreq_buf[4]) {
             case UDP_REQ_INFO:
-                udp_receive_req_info();
+                udp_receive_req_info(s);
                 break;
             case UDP_ACK_INFO:
                 udp_receive_ack_info();
                 break;
             case UDP_REQ_SLAVES:
-                if (s != NULL) s->last_req_slaves_time = s->last_packet_time;
+                if (s != NULL) s->last_req_slaves_time = timenow;
                 udp_receive_req_slaves();
                 break;
             case UDP_ACK_SLAVES:
                 udp_receive_ack_slaves();
                 break;
             }
-            if (udp_server_port != DISCOVERY_TCF_PORT) {
-                /* Packet from a master, ask for list of slaves */
-                int n = 0;
-                time_t timenow = time(NULL);
-                for (n = 0; n < ifc_cnt; n++) {
-                    ip_ifc_info * ifc = ifc_list + n;
-                    if ((ifc->addr & ifc->mask) != (recvreq_addr.sin_addr.s_addr & ifc->mask)) continue;
-                    if (timenow > last_req_slaves_time[n] + PEER_DATA_RETENTION_PERIOD / 3) {
-                        udp_send_req_slaves(&recvreq_addr);
-                        last_req_slaves_time[n] = timenow;
-                    }
-                    /* Remember time only if master is on local host */
-                    if (ifc->addr == recvreq_addr.sin_addr.s_addr) last_master_packet_time = timenow;
+            for (n = 0; n < ifc_cnt; n++) {
+                ip_ifc_info * ifc = ifc_list + n;
+                if ((ifc->addr & ifc->mask) != (recvreq_addr.sin_addr.s_addr & ifc->mask)) continue;
+                if (timenow > last_req_slaves_time[n] + PEER_DATA_RETENTION_PERIOD / 3) {
+                    udp_send_req_slaves(&recvreq_addr);
+                    last_req_slaves_time[n] = timenow;
+                }
+                /* Remember time only if local host master */
+                if (ifc->addr == recvreq_addr.sin_addr.s_addr && ntohs(recvreq_addr.sin_port) == DISCOVERY_TCF_PORT) {
+                    last_master_packet_time = timenow;
                 }
             }
         }
@@ -765,8 +798,8 @@ int discovery_start_udp(void) {
     peer_server_add_listener(local_peer_changed, NULL);
     post_event_with_delay(udp_refresh_timer, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
     ifc_cnt = build_ifclist(udp_server_socket, MAX_IFC, ifc_list);
-    udp_send_ack_info(NULL);
     udp_send_req_info(NULL);
+    udp_send_all(NULL, NULL);
     return 0;
 }
 

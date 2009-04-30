@@ -35,6 +35,8 @@
 #define UDP_REQ_SLAVES  3   /* List of slaves request */
 #define UDP_ACK_SLAVES  4   /* List of slaves - contains list of socket addresses */
 
+#define UDP_VERSION     '2'
+
 /*
  * Start UDP discovery server
  */
