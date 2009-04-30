@@ -10,6 +10,7 @@
  *     Martin Oberhuber (Wind River) - [238564] Adopt TM 3.0 APIs
  *     Uwe Stieber (Wind River) - [271224] NPE in TCFFileService#download
  *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
+ *     Uwe Stieber (Wind River) - [274277] The TCF file service subsystem implementation is not updating the progress monitor
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.files;
 
@@ -239,12 +240,13 @@ public class TCFFileService extends AbstractFileService {
     public void download(final String parent,
             final String name, final File file, final boolean is_binary,
             final String host_encoding, IProgressMonitor monitor) throws SystemMessageException {
-        monitor.beginTask("Download", 1); //$NON-NLS-1$
+        IHostFile hostFile = getFile(parent, name, new NullProgressMonitor());
+        monitor.beginTask("Downloading " + toRemotePath(parent, name) + " ...", Long.valueOf(hostFile.getSize() / 1024).intValue()); //$NON-NLS-1$ //$NON-NLS-2$
         try {
             file.getParentFile().mkdirs();
             InputStream inp = getInputStream(parent, name, is_binary, new NullProgressMonitor());
             OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
-            copyStream(inp, out, is_binary, "UTF8", host_encoding); //$NON-NLS-1$
+            copyStream(inp, out, is_binary, "UTF8", host_encoding, monitor); //$NON-NLS-1$
         }
         catch (Exception x) {
             if (x instanceof SystemMessageException) throw (SystemMessageException)x;
@@ -525,7 +527,8 @@ public class TCFFileService extends AbstractFileService {
         monitor.beginTask("Upload", 1); //$NON-NLS-1$
         try {
             OutputStream out = getOutputStream(parent, name, isBinary, new NullProgressMonitor());
-            copyStream(inp, out, isBinary, hostEncoding, "UTF8"); //$NON-NLS-1$
+            // As we cannot determine the local file size, redirect the worked ticks to a NullProgressMonitor.
+            copyStream(inp, out, isBinary, hostEncoding, "UTF8", new NullProgressMonitor()); //$NON-NLS-1$
         }
         catch (Throwable x) {
             if (x instanceof SystemMessageException) throw (SystemMessageException)x;
@@ -540,11 +543,11 @@ public class TCFFileService extends AbstractFileService {
             String parent, String name, boolean isBinary,
             String srcEncoding, String hostEncoding, IProgressMonitor monitor)
             throws SystemMessageException {
-        monitor.beginTask("Upload", 1); //$NON-NLS-1$
+        monitor.beginTask("Uploading " + localFile.toString() + " ...", Long.valueOf(localFile.length() / 1024).intValue()); //$NON-NLS-1$ //$NON-NLS-2$
         try {
             OutputStream out = getOutputStream(parent, name, isBinary, new NullProgressMonitor());
             InputStream inp = new BufferedInputStream(new FileInputStream(localFile));
-            copyStream(inp, out, isBinary, hostEncoding, "UTF8"); //$NON-NLS-1$
+            copyStream(inp, out, isBinary, hostEncoding, "UTF8", monitor); //$NON-NLS-1$
         }
         catch (Throwable x) {
             if (x instanceof SystemMessageException) throw (SystemMessageException)x;
@@ -556,7 +559,7 @@ public class TCFFileService extends AbstractFileService {
     }
 
     private void copyStream(InputStream inp, OutputStream out,
-            boolean is_binary, String inp_encoding, String out_encoding) throws IOException {
+            boolean is_binary, String inp_encoding, String out_encoding, IProgressMonitor monitor) throws IOException {
         try {
             if (!is_binary) {
                 if (inp_encoding == null || inp_encoding.equals("UTF-8")) inp_encoding = "UTF8"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -568,6 +571,7 @@ public class TCFFileService extends AbstractFileService {
                     int buf_len = inp.read(buf);
                     if (buf_len < 0) break;
                     out.write(buf, 0, buf_len);
+                    if (monitor != null) monitor.worked(buf_len / 1024);
                 }
             }
             else {
@@ -578,6 +582,7 @@ public class TCFFileService extends AbstractFileService {
                     int buf_len = reader.read(buf);
                     if (buf_len < 0) break;
                     writer.write(buf, 0, buf_len);
+                    if (monitor != null) monitor.worked(buf_len / 1024);
                 }
                 writer.flush();
             }
