@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
@@ -44,32 +44,32 @@ public class ChannelTCP extends StreamChannel {
         Thread thread = new Thread() {
             public void run() {
                 try {
-                        if (ssl) {
+                    if (ssl) {
                         SSLContext context = SSLContext.getInstance("TLS");
                         X509TrustManager tm = new X509TrustManager() {
-                                                        public void checkClientTrusted(X509Certificate[] chain, String auth_type) throws CertificateException {
-                                                                throw new CertificateException();
-                                                        }
-                                                        public void checkServerTrusted(X509Certificate[] chain, String auth_type) throws CertificateException {
-                                                                if ("RSA".equals(auth_type) && chain != null && chain.length == 1) {
-                                                                        X500Principal issuer = chain[0].getIssuerX500Principal();
-                                                                        if (issuer.getName().equals("CN=TCF")) return;
-                                                                }
-                                                                throw new CertificateException();
-                                                        }
-                                                        public X509Certificate[] getAcceptedIssuers() {
-                                                                return null;
-                                                        }
+                            public void checkClientTrusted(X509Certificate[] chain, String auth_type) throws CertificateException {
+                                throw new CertificateException();
+                            }
+                            public void checkServerTrusted(X509Certificate[] chain, String auth_type) throws CertificateException {
+                                if ("RSA".equals(auth_type) && chain != null && chain.length >= 1) {
+                                    X500Principal issuer = chain[0].getIssuerX500Principal();
+                                    if (issuer.getName().equals("CN=TCF")) return;
+                                }
+                                throw new CertificateException();
+                            }
+                            public X509Certificate[] getAcceptedIssuers() {
+                                return null;
+                            }
                         };
                         context.init(null, new TrustManager[] { tm }, null);
-                                socket = context.getSocketFactory().createSocket(host, port);
-                        socket.setTcpNoDelay(true);
-                        ((SSLSocket)socket).startHandshake();
-                        }
-                        else {
-                                socket = new Socket(host, port);
-                        socket.setTcpNoDelay(true);
-                        }
+                        socket = context.getSocketFactory().createSocket(host, port);
+                    }
+                    else {
+                        socket = new Socket(host, port);
+                    }
+                    socket.setTcpNoDelay(true);
+                    socket.setKeepAlive(true);
+                    if (ssl) ((SSLSocket)socket).startHandshake();
                     inp = new BufferedInputStream(socket.getInputStream());
                     out = new BufferedOutputStream(socket.getOutputStream());
                     Protocol.invokeLater(new Runnable() {
