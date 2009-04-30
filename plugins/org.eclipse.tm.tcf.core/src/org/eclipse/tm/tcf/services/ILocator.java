@@ -35,7 +35,12 @@ public interface ILocator extends IService {
     /**
      * Peer data retention period in milliseconds.
      */
-    static final long DATA_RETENTION_PERIOD = 60 * 1000; 
+    static final long DATA_RETENTION_PERIOD = 60 * 1000;
+    
+    /**
+     * Auto-configuration protocol version.
+     */
+    static char CONF_VERSION = '2';
 
     /**
      * Auto-configuration command and response codes.
