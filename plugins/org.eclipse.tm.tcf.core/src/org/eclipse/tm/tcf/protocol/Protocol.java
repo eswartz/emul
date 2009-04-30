@@ -268,6 +268,7 @@ public final class Protocol {
      * @return an array of IChannel
      */
     public static IChannel[] getOpenChannels() {
+        assert isDispatchThread();
         return TransportManager.getOpenChannels();
     }
     
@@ -284,6 +285,7 @@ public final class Protocol {
      * @param listener
      */
     public static void addChannelOpenListener(ChannelOpenListener listener) {
+        assert isDispatchThread();
         TransportManager.addChanelOpenListener(listener);
     }
 
@@ -292,6 +294,7 @@ public final class Protocol {
      * @param listener
      */
     public static void removeChannelOpenListener(ChannelOpenListener listener) {
+        assert isDispatchThread();
         TransportManager.removeChanelOpenListener(listener);
     }
 
@@ -300,6 +303,7 @@ public final class Protocol {
      * The message is sent to all open communication channels – broadcasted.
      */
     public static void sendEvent(String service_name, String event_name, byte[] data) {
+        assert isDispatchThread();
         TransportManager.sendEvent(service_name, event_name, data);
     }
     
@@ -315,6 +319,7 @@ public final class Protocol {
      * messages are delivered to corresponding targets.
      */
     public static void sync(Runnable done) {
+        assert isDispatchThread();
         TransportManager.sync(done);
     }
     
@@ -399,6 +404,7 @@ public final class Protocol {
      * @param provider - ITransportProvider implementation
      */
     public static void addTransportProvider(ITransportProvider provider){
+        assert isDispatchThread();
         TransportManager.addTransportProvider(provider);
     }
     
@@ -407,6 +413,7 @@ public final class Protocol {
      * @param provider - ITransportProvider implementation
      */
     public static void removeTransportProvider(ITransportProvider provider){
+        assert isDispatchThread();
         TransportManager.removeTransportProvider(provider);
     }
 }

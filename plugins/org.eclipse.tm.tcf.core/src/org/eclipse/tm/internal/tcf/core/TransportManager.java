@@ -112,7 +112,8 @@ public class TransportManager {
     public static void channelOpened(final AbstractChannel channel) {
         assert !channels.contains(channel);
         channels.add(channel);
-        for (Protocol.ChannelOpenListener l : listeners) {
+        Protocol.ChannelOpenListener[] array = listeners.toArray(new Protocol.ChannelOpenListener[listeners.size()]);
+        for (Protocol.ChannelOpenListener l : array) {
             try {
                 l.onChannelOpen(channel);
             }
@@ -132,6 +133,7 @@ public class TransportManager {
     }
     
     public static void addChanelOpenListener(Protocol.ChannelOpenListener listener) {
+        assert listener != null;
         listeners.add(listener);
     }
 
