@@ -59,7 +59,7 @@ public class Activator extends Plugin {
             public void log(String msg, Throwable x) {
                 if (debug) {
                     System.err.println(msg);
-                    x.printStackTrace();
+                    if (x != null) x.printStackTrace();
                 }
                 if (plugin != null && getLog() != null) {
                     getLog().log(new Status(IStatus.ERROR, 

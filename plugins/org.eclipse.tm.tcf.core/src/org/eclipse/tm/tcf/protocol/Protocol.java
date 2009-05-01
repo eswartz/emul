@@ -246,7 +246,7 @@ public final class Protocol {
     public static synchronized void log(String msg, Throwable x) {
         if (logger == null) {
             System.err.println(msg);
-            x.printStackTrace();
+            if (x != null) x.printStackTrace();
         }
         else {
             logger.log(msg, x);
@@ -275,6 +275,12 @@ public final class Protocol {
     /**
      * Interface to be implemented by clients willing to be notified when
      * new TCF communication channel is opened.
+     * 
+     * The interface allows a client to get pointers to channel objects
+     * that were opened by somebody else. If a client open a channel itself, it already has
+     * the pointer and does not need Protocol.ChannelOpenListener. If a channel is created,
+     * for example, by remote peer connecting to the client, the only way to get the pointer
+     * is Protocol.ChannelOpenListener.
      */
     public interface ChannelOpenListener {
         public void onChannelOpen(IChannel channel);
