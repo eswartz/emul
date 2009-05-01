@@ -43,6 +43,8 @@ extern int is_dispatch_thread(void);
 
 extern void run_event_loop(void);
 
+extern void cancel_event_loop(void);
+
 extern void ini_events_queue(void);
 
 #endif
