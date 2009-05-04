@@ -1,6 +1,14 @@
 %define name tcf-agent
 %define version 0.0.1
+%define release 1
+
+%if %(test -e /etc/fedora-release && echo 1 || echo 0)
 %define release 1.fc%(rpm -q --queryformat='%{VERSION}' fedora-release 2>/dev/null)
+%endif
+
+%if %(test -e /etc/redhat-release && echo 1 || echo 0)
+%define release 1.rh%(rpm -q --queryformat='%{VERSION}' redhat-release 2>/dev/null)
+%endif
 
 Name: %{name}
 Summary: Target Communication Framework agent
