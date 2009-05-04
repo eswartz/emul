@@ -43,7 +43,7 @@ function redhat()
 case "$1" in
   start)
     echo -n $"Starting $DAEMON_NAME:"
-    $DAEMON_PATH -d -L- -l0
+    $DAEMON_PATH -d -L- -l0 -s SSL:
     RETVAL=$?
     if [ $RETVAL -eq 0 ] ; then
       success "$DAEMON_NAME startup"

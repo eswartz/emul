@@ -1,6 +1,6 @@
 %define name tcf-agent
 %define version 0.0.1
-%define release 1.fc5
+%define release 1.fc%(rpm -q --queryformat='%{VERSION}' fedora-release 2>/dev/null)
 
 Name: %{name}
 Summary: Target Communication Framework agent
