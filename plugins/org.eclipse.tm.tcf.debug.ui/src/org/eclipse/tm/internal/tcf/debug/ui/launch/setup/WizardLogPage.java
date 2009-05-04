@@ -127,17 +127,17 @@ class WizardLogPage extends WizardPage implements Runnable {
             s = waitPrompt();
             if (s.length() > 0) throw new Exception(s);
             send("uname -o", true);
-            String os = waitPrompt();
-            while (os.endsWith("\n")) os = os.substring(0, os.length() - 1);
+            String os = waitPrompt().replace('\n', ' ').trim();
             send("uname -m", true);
-            String machine = waitPrompt();
-            while (machine.endsWith("\n")) machine = machine.substring(0, machine.length() - 1);
+            String machine = waitPrompt().replace('\n', ' ').trim();
             String version = "0.0.1";
-            String release = "1.fc5";
+            send("rpm -q --queryformat='%{VERSION}\\n' fedora-release 2>/dev/null ", true);
+            String release = "1.fc" + waitPrompt().replace('\n', ' ').trim();
             
             URL url = null;
             String fnm = null;
             Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
+            String machine0 = machine;
             for (;;) {
                 fnm = "tcf-agent-" + version + "-" + release + "." + machine + ".rpm";
                 url = FileLocator.find(bundle, new Path("agent/" + os + "/" + machine + "/" + fnm), null);
@@ -145,7 +145,17 @@ class WizardLogPage extends WizardPage implements Runnable {
                 if (machine.equals("i686")) machine = "i586";
                 else if (machine.equals("i586")) machine = "i486";
                 else if (machine.equals("i486")) machine = "i386";
-                else break;
+                else {
+                    machine = machine0;
+                    if (release.equals("1.fc8")) release = "1.fc7";
+                    else if (release.equals("1.fc7")) release = "1.fc6";
+                    else if (release.equals("1.fc6")) release = "1.fc5";
+                    else if (release.equals("1.fc5")) release = "1.fc4";
+                    else if (release.equals("1.fc4")) release = "1.fc3";
+                    else if (release.equals("1.fc3")) release = "1.fc2";
+                    else if (release.equals("1.fc2")) release = "1.fc1";
+                    else break;
+                }
             }
             if (url == null) throw new Exception("Unsupported target OS or CPU");
             

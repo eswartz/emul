@@ -38,32 +38,32 @@
    </requires>
 
    <plugin
+         id="org.eclipse.tm.tcf.core"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
          id="org.eclipse.tm.tcf"
          download-size="0"
          install-size="0"
-         version="0.2.0.qualifier"
+         version="0.0.0"
          unpack="false"/>
 
    <plugin
          id="org.eclipse.tm.tcf.debug"
          download-size="0"
          install-size="0"
-         version="0.2.0.qualifier"
+         version="0.0.0"
          unpack="false"/>
 
    <plugin
          id="org.eclipse.tm.tcf.debug.ui"
          download-size="0"
          install-size="0"
-         version="0.2.0.qualifier"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.tm.tcf.core"
-         download-size="0"
-         install-size="0"
          version="0.0.0"
-         fragment="true"
          unpack="false"/>
 
 </feature>

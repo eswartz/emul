@@ -3,7 +3,7 @@
    <description url="http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/releases/0.2.0">
       TCF update site
    </description>
-   <feature url="features/org.eclipse.tm.tcf.feature_0.2.0.200904201641.jar" id="org.eclipse.tm.tcf.feature" version="0.2.0.200904201641">
+   <feature url="features/org.eclipse.tm.tcf.feature_0.2.0.200905041337.jar" id="org.eclipse.tm.tcf.feature" version="0.2.0.200905041337">
       <category name="org.eclipse.tm"/>
    </feature>
    <category-def name="org.eclipse.tm" label="Remote Access and Device Development"/>
