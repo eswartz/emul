@@ -9,7 +9,3 @@ Require-Bundle: org.eclipse.core.runtime
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Eclipse-LazyStart: true
-Export-Package: org.eclipse.tm.tcf.core,
- org.eclipse.tm.tcf.protocol,
- org.eclipse.tm.tcf.services,
- org.eclipse.tm.tcf.util

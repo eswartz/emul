@@ -10,10 +10,13 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.rse.core,
  org.eclipse.rse.ui,
  org.eclipse.rse.services,
- org.eclipse.tm.tcf,
  org.eclipse.ui.views,
  org.eclipse.rse.subsystems.files.core,
  org.eclipse.rse.subsystems.processes.core
+Import-package: org.eclipse.tm.tcf.core;version="0.2.0",
+ org.eclipse.tm.tcf.protocol;version="0.2.0",
+ org.eclipse.tm.tcf.services;version="0.2.0",
+ org.eclipse.tm.tcf.util;version="0.2.0"
 Bundle-ActivationPolicy: lazy
 Eclipse-LazyStart: true
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
