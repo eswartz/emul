@@ -902,12 +902,14 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         if (data != null && data != info) item.removeAll();
         item.setData("TCFPeerInfo", info);
         String text[] = new String[5];
-        for (int i = 0; i < text.length; i++) text[i] = "";
         text[0] = info.attrs.get(IPeer.ATTR_NAME);
         text[1] = info.attrs.get(IPeer.ATTR_OS_NAME);
         text[2] = info.attrs.get(IPeer.ATTR_TRANSPORT_NAME);
         text[3] = info.attrs.get(IPeer.ATTR_IP_HOST);
         text[4] = info.attrs.get(IPeer.ATTR_IP_PORT);
+        for (int i = 0; i < text.length; i++) {
+            if (text[i] == null) text[i] = "";
+        }
         item.setText(text);
         item.setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
         item.setImage(ImageCache.getImage(getImageName(info)));

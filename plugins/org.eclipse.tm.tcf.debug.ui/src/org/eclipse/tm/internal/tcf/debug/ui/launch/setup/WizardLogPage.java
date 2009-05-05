@@ -131,46 +131,76 @@ class WizardLogPage extends WizardPage implements Runnable {
             send("uname -m", true);
             String machine = waitPrompt().replace('\n', ' ').trim();
             String version = "0.0.1";
-            send("rpm -q --queryformat='%{VERSION}\\n' fedora-release 2>/dev/null ", true);
-            String release = "1.fc" + waitPrompt().replace('\n', ' ').trim();
-            
-            URL url = null;
-            String fnm = null;
             Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
+            
+            URL url = FileLocator.find(bundle, new Path("agent/get-os-tag"), null);
+            if (url == null) throw new Exception("Cannot find get-os-tag script");
+            send("cat >get-os-tag", true);
+            InputStream inp = url.openStream();
+            byte[] buf = new byte[0x100 * 3];
+            for (;;) {
+                int len = inp.read(buf);
+                if (len < 0) break;
+                shell.write(new String(buf, 0, len, "ASCII"));
+                for (int i = 0; i < len; i++) {
+                    if (buf[i] == '\n') shell.expect("\n");
+                }
+            }
+            inp.close();
+            shell.write("\004");
+            s = waitPrompt();
+            if (s.length() > 0) throw new Exception(s);
+
+            send("chmod u+x get-os-tag", true);
+            s = waitPrompt();
+            if (s.length() > 0) throw new Exception(s);
+            
+            send("./get-os-tag", true);
+            String os_tag = waitPrompt().replace('\n', ' ').trim();
+            
+            send("rm -f get-os-tag", true);
+            s = waitPrompt();
+            if (s.length() > 0) throw new Exception(s);
+            
+            url = null;
+            String fnm = null;
             String machine0 = machine;
             for (;;) {
-                fnm = "tcf-agent-" + version + "-" + release + "." + machine + ".rpm";
-                url = FileLocator.find(bundle, new Path("agent/" + os + "/" + machine + "/" + fnm), null);
+                for (int release = 16; url == null && release > 0; release--) {
+                    fnm = "tcf-agent-" + version + "-" + release + "." + os_tag + "." + machine + ".rpm";
+                    url = FileLocator.find(bundle, new Path("agent/" + os + "/" + machine + "/" + fnm), null);
+                }
                 if (url != null) break;
                 if (machine.equals("i686")) machine = "i586";
                 else if (machine.equals("i586")) machine = "i486";
                 else if (machine.equals("i486")) machine = "i386";
                 else {
                     machine = machine0;
-                    if (release.equals("1.fc8")) release = "1.fc7";
-                    else if (release.equals("1.fc7")) release = "1.fc6";
-                    else if (release.equals("1.fc6")) release = "1.fc5";
-                    else if (release.equals("1.fc5")) release = "1.fc4";
-                    else if (release.equals("1.fc4")) release = "1.fc3";
-                    else if (release.equals("1.fc3")) release = "1.fc2";
-                    else if (release.equals("1.fc2")) release = "1.fc1";
+                    if (os_tag.startsWith("fc")) {
+                        int n = Integer.parseInt(os_tag.substring(2)) - 1;
+                        if (n <= 0) break;
+                        os_tag = "fc" + n;
+                    }
+                    else if (os_tag.startsWith("rh")) {
+                        int n = Integer.parseInt(os_tag.substring(2)) - 1;
+                        if (n <= 0) break;
+                        os_tag = "rh" + n;
+                    }
                     else break;
                 }
             }
             if (url == null) throw new Exception("Unsupported target OS or CPU");
             
+            inp = url.openStream();
             send("which base64", true);
             s = waitPrompt();
             if (s.indexOf(':') < 0) {
                 send("base64 -di >" + fnm, true);
-                InputStream inp = url.openStream();
-                byte[] buf = new byte[0x100 * 3];
                 for (;;) {
                     int len = inp.read(buf);
                     if (len < 0) break;
                     send(new String(Base64.toBase64(buf, 0, len)), false);
                 }
-                inp.close();
                 shell.write("\004");
                 s = waitPrompt();
                 if (s.length() > 0) throw new Exception(s);
@@ -181,14 +211,11 @@ class WizardLogPage extends WizardPage implements Runnable {
                 if (s.indexOf(':') < 0) {
                     send("uudecode", true);
                     send("begin-base64 644 " + fnm, true);
-                    InputStream inp = url.openStream();
-                    byte[] buf = new byte[0x100 * 3];
                     for (;;) {
                         int len = inp.read(buf);
                         if (len < 0) break;
                         send(new String(Base64.toBase64(buf, 0, len)), false);
                     }
-                    inp.close();
                     send("====", true);
                     s = waitPrompt();
                     if (s.length() > 0) throw new Exception(s);
@@ -197,6 +224,8 @@ class WizardLogPage extends WizardPage implements Runnable {
                     throw new Exception("No base64 or uudecode commands available");
                 }
             }
+            inp.close();
+            
             send("rpm -e tcf-agent", true);
             waitPrompt();
             send("rpm -i " + fnm, true);
