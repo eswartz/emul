@@ -341,8 +341,6 @@ static void safe_memory_set(void * parm) {
         write_stringz(out, "null");
     }
     else {
-        char msg[0x400];
-        strncpy(msg, errno_to_str(err), sizeof(msg));
         write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
     }
     write_stream(out, MARKER_EOM);
@@ -399,8 +397,6 @@ static void safe_memory_get(void * parm) {
         write_stringz(out, "null");
     }
     else {
-        char msg[0x400];
-        strncpy(msg, errno_to_str(err), sizeof(msg));
         write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_READ, err);
     }
     write_stream(out, MARKER_EOM);
@@ -490,8 +486,6 @@ static void safe_memory_fill(void * parm) {
         write_stringz(out, "null");
     }
     else {
-        char msg[0x400];
-        strncpy(msg, errno_to_str(err), sizeof(msg));
         write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
     }
     write_stream(out, MARKER_EOM);
