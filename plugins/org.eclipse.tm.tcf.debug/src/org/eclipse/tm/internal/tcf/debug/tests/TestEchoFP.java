@@ -38,14 +38,18 @@ public class TestEchoFP  implements ITCFTest, IDiagnostics.DoneEchoFP {
         count++;
     }
     
+    private boolean cmp(double x, double y) {
+        return (float)x == (float)y;
+    }
+    
     public void doneEchoFP(IToken token, Throwable error, BigDecimal b) {
         BigDecimal s = msgs.removeFirst();
         if (!test_suite.isActive(this)) return;
         if (error != null) {
             test_suite.done(this, error);
         }
-        else if (s.doubleValue() != b.doubleValue()) {
-            test_suite.done(this, new Exception("EchoFP test failed: " + s.doubleValue() + " != " + b.doubleValue()));
+        else if (!cmp(s.doubleValue(), b.doubleValue())) {
+            test_suite.done(this, new Exception("EchoFP test failed: " + s + " != " + b));
         }
         else if (count < 0x800) {
             sendMessage();
