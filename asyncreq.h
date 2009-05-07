@@ -33,6 +33,7 @@ enum {
     AsyncReqConnect,                    /* Connect to socket */
     AsyncReqWaitpid,                    /* Wait for process change */
     AsyncReqSelect,                     /* Do select() on file handles */
+    AsyncReqClose,                      /* File close */
 };
 
 typedef struct AsyncReqInfo AsyncReqInfo;

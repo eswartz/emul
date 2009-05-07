@@ -132,6 +132,13 @@ static void * worker_thread_handler(void * x) {
             }
             break;
         }
+        case AsyncReqClose:
+            req->u.fio.rval = close(req->u.fio.fd);
+            if (req->u.fio.rval == -1) {
+                req->error = errno;
+                assert(req->error);
+            }
+            break;
         default:
             req->error = ENOSYS;
             break;
@@ -144,14 +151,8 @@ static void * worker_thread_handler(void * x) {
         wt->req = NULL;
         list_add_last(&wt->wtlink, &wtlist);
         for (;;) {
-            LINK *link;
-
             check_error(pthread_cond_wait(&wt->cond, &wtlock));
             if (wt->req != NULL) break;
-            for (link = wtlist.next; link != &wtlist; link = link->next) {
-                if (wtlink2wt(link) == wt) break;
-            }
-            assert(link != &wtlist);
         }
         check_error(pthread_mutex_unlock(&wtlock));
     }
@@ -162,7 +163,6 @@ void async_req_post(AsyncReqInfo *req) {
     WorkerThread * wt;
 
     trace(LOG_ASYNCREQ, "async_req_post: req %p, type %d", req, req->type);
-    if (wtlist.next == NULL) list_init(&wtlist);
     check_error(pthread_mutex_lock(&wtlock));
     if (list_is_empty(&wtlist)) {
         int error;
@@ -189,5 +189,6 @@ void async_req_post(AsyncReqInfo *req) {
 }
 
 void ini_asyncreq(void) {
+    list_init(&wtlist);
     check_error(pthread_mutex_init(&wtlock, NULL));
 }
