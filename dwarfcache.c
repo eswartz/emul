@@ -714,7 +714,7 @@ DWARFCache * get_dwarf_cache(ELF_File * File) {
         }
         else {
             sCache->mErrorCode = trap.error;
-            strncpy(sCache->mErrorMsg, trap.msg, sizeof(sCache->mErrorMsg));
+            strncpy(sCache->mErrorMsg, trap.msg, sizeof(sCache->mErrorMsg) - 1);
         }
         sCache = NULL;
     }
