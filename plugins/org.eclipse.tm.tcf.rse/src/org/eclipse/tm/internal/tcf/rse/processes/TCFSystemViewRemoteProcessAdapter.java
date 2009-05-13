@@ -110,13 +110,13 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         TCFProcessResource r = (TCFProcessResource)process.getObject();
         String state = r.getState();
         if (r.getParentID() != null) {
-            if (state.indexOf('R') >= 0) {
+            if (state == null || state.indexOf('R') >= 0) {
                 return Activator.getDefault().getImageDescriptorFromPath("icons/thread-r.gif"); //$NON-NLS-1$
             }
             return Activator.getDefault().getImageDescriptorFromPath("icons/thread-s.gif"); //$NON-NLS-1$
         }
         else {
-            if (state.indexOf('R') >= 0) {
+            if (state == null || state.indexOf('R') >= 0) {
                 return Activator.getDefault().getImageDescriptorFromPath("icons/process-r.gif"); //$NON-NLS-1$
             }
             return Activator.getDefault().getImageDescriptorFromPath("icons/process-s.gif"); //$NON-NLS-1$

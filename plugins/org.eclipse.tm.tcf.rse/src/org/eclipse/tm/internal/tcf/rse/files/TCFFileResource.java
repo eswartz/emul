@@ -51,7 +51,8 @@ public class TCFFileResource extends AbstractResource implements IHostFile, IHos
         this.name = name;
         this.attrs = attrs;
         this.root = root;
-        this.permissions = new HostFilePermissions(attrs.permissions, "" + attrs.uid, "" + attrs.gid); //$NON-NLS-1$ //$NON-NLS-2$
+        if (attrs != null) this.permissions = new HostFilePermissions(
+                attrs.permissions, "" + attrs.uid, "" + attrs.gid); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     private String toLocalPath(String path) {
