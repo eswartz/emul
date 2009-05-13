@@ -40,7 +40,7 @@ CFILES=$(wildcard *.c)
 EXECS=$(BINDIR)/agent $(BINDIR)/client $(BINDIR)/tcfreg $(BINDIR)/valueadd $(BINDIR)/tcflog
 
 ifdef SERVICES
-CFLAGS += $(shell services-to-cflags $(SERVICES))
+CFLAGS += $(shell ./services-to-cflags $(SERVICES))
 endif
 
 all:	$(EXECS)
