@@ -609,7 +609,7 @@ char * get_os_name(void) {
 char * get_user_home(void) {
     static char buf[MAX_PATH];
     if (buf[0] != 0) return buf;
-    if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, buf))) return buf;
+    if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, SHGFP_TYPE_CURRENT, buf))) return buf;
     return NULL;
 }
 
