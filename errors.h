@@ -55,10 +55,10 @@
 /*
  * Convert error code to human readable string
  */
-extern const char * errno_to_str(int error);
+extern const char * errno_to_str(int no);
 
 extern void set_exception_errno(int no, char * msg);
-extern int get_exception_errno(void);
+extern int get_exception_errno(int no);
 
 extern int set_gai_errno(int gai_error_code);
 
@@ -78,6 +78,7 @@ extern void check_error_debug(char * file, int line, int error);
  * Set errno to WIN32 error code.
  */
 extern int set_win32_errno(DWORD win32_error_code);
+extern DWORD get_win32_errno(int no);
 #endif
 
 

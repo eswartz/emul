@@ -21,36 +21,29 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include "sysmon.h"
 #include "protocol.h"
+#include "exceptions.h"
+#include "myalloc.h"
 #include "json.h"
 #include "context.h"
 #include "errors.h"
 
 static const char SYS_MON[] = "SysMonitor";
 
-#if defined(WIN32)
-#  error "SysMonitor service is not supported for Windows"
-#elif defined(_WRS_KERNEL)
+#if defined(_WRS_KERNEL)
 #  error "SysMonitor service is not supported for VxWorks"
 #endif
 
-#include <sys/stat.h>
-#include <fcntl.h>
+#if defined(__APPLE__)
+
 #include <unistd.h>
 #include <dirent.h>
 #include <pwd.h>
 #include <grp.h>
-#if !defined(__APPLE__)
-#include <linux/param.h>
-#endif
-
-#if defined(__APPLE__)
-#include <assert.h>
-#include <errno.h>
 #include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <sys/sysctl.h>
 #include <mach/mach.h>
 #include <mach/task_info.h>
@@ -409,7 +402,588 @@ static void command_get_environment(char * token, Channel * c) {
 
     write_stream(&c->out, MARKER_EOM);
 }
+
+#elif defined(WIN32)
+
+#include <windows.h>
+#include <winternl.h>
+
+typedef struct _RTL_DRIVE_LETTER_CURDIR {
+    USHORT                  Flags;
+    USHORT                  Length;
+    ULONG                   TimeStamp;
+    UNICODE_STRING          DosPath;
+} RTL_DRIVE_LETTER_CURDIR, *PRTL_DRIVE_LETTER_CURDIR;
+
+typedef struct _RTL_USER_PROCESS_PARAMETERS {
+    ULONG                   MaximumLength;
+    ULONG                   Length;
+    ULONG                   Flags;
+    ULONG                   DebugFlags;
+    PVOID                   ConsoleHandle;
+    ULONG                   ConsoleFlags;
+    HANDLE                  StdInputHandle;
+    HANDLE                  StdOutputHandle;
+    HANDLE                  StdErrorHandle;
+    UNICODE_STRING          CurrentDirectoryPath;
+    HANDLE                  CurrentDirectoryHandle;
+    UNICODE_STRING          DllPath;
+    UNICODE_STRING          ImagePathName;
+    UNICODE_STRING          CommandLine;
+    PVOID                   Environment;
+    ULONG                   StartingPositionLeft;
+    ULONG                   StartingPositionTop;
+    ULONG                   Width;
+    ULONG                   Height;
+    ULONG                   CharWidth;
+    ULONG                   CharHeight;
+    ULONG                   ConsoleTextAttributes;
+    ULONG                   WindowFlags;
+    ULONG                   ShowWindowFlags;
+    UNICODE_STRING          WindowTitle;
+    UNICODE_STRING          DesktopName;
+    UNICODE_STRING          ShellInfo;
+    UNICODE_STRING          RuntimeData;
+    RTL_DRIVE_LETTER_CURDIR DLCurrentDirectory[0x20];
+} RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
+
+typedef struct _PEB_LDR_DATA * PPEB_LDR_DATA;
+typedef struct _PEBLOCKROUTINE * PPEBLOCKROUTINE;
+typedef struct _PEB_FREE_BLOCK * PPEB_FREE_BLOCK;
+typedef PVOID * PPVOID;
+
+typedef struct _PROCESS_ENVIRONMENT_BLOCK {
+    BOOLEAN                 InheritedAddressSpace;
+    BOOLEAN                 ReadImageFileExecOptions;
+    BOOLEAN                 BeingDebugged;
+    BOOLEAN                 Spare;
+    HANDLE                  Mutant;
+    PVOID                   ImageBaseAddress;
+    PPEB_LDR_DATA           LoaderData;
+    PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
+    PVOID                   SubSystemData;
+    PVOID                   ProcessHeap;
+    PVOID                   FastPebLock;
+    PPEBLOCKROUTINE         FastPebLockRoutine;
+    PPEBLOCKROUTINE         FastPebUnlockRoutine;
+    ULONG                   EnvironmentUpdateCount;
+    PPVOID                  KernelCallbackTable;
+    PVOID                   EventLogSection;
+    PVOID                   EventLog;
+    PPEB_FREE_BLOCK         FreeList;
+    ULONG                   TlsExpansionCounter;
+    PVOID                   TlsBitmap;
+    ULONG                   TlsBitmapBits[0x2];
+    PVOID                   ReadOnlySharedMemoryBase;
+    PVOID                   ReadOnlySharedMemoryHeap;
+    PPVOID                  ReadOnlyStaticServerData;
+    PVOID                   AnsiCodePageData;
+    PVOID                   OemCodePageData;
+    PVOID                   UnicodeCaseTableData;
+    ULONG                   NumberOfProcessors;
+    ULONG                   NtGlobalFlag;
+    BYTE                    Spare2[0x4];
+    LARGE_INTEGER           CriticalSectionTimeout;
+    ULONG                   HeapSegmentReserve;
+    ULONG                   HeapSegmentCommit;
+    ULONG                   HeapDeCommitTotalFreeThreshold;
+    ULONG                   HeapDeCommitFreeBlockThreshold;
+    ULONG                   NumberOfHeaps;
+    ULONG                   MaximumNumberOfHeaps;
+    PPVOID                  *ProcessHeaps;
+    PVOID                   GdiSharedHandleTable;
+    PVOID                   ProcessStarterHelper;
+    PVOID                   GdiDCAttributeList;
+    PVOID                   LoaderLock;
+    ULONG                   OSMajorVersion;
+    ULONG                   OSMinorVersion;
+    ULONG                   OSBuildNumber;
+    ULONG                   OSPlatformId;
+    ULONG                   ImageSubSystem;
+    ULONG                   ImageSubSystemMajorVersion;
+    ULONG                   ImageSubSystemMinorVersion;
+    ULONG                   GdiHandleBuffer[0x22];
+    ULONG                   PostProcessInitRoutine;
+    ULONG                   TlsExpansionBitmap;
+    BYTE                    TlsExpansionBitmapBits[0x80];
+    ULONG                   SessionId;
+} loc_PEB, *loc_PPEB;
+
+typedef struct loc_PROCESS_BASIC_INFORMATION {
+    NTSTATUS                ExitStatus;
+    loc_PPEB                PebBaseAddress;
+    ULONG_PTR               AffinityMask;
+    LONG                    BasePriority;
+    ULONG_PTR               UniqueProcessId;
+    ULONG_PTR               InheritedFromUniqueProcessId;
+} PBI;
+
+static PBI pbi;
+static loc_PEB peb;
+static RTL_USER_PROCESS_PARAMETERS upa;
+
+static int get_process_info(HANDLE prs) {
+    static NTSTATUS (NTAPI * QueryInformationProcessProc)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG) = NULL;
+    SIZE_T len = 0;
+
+    memset(&pbi, 0, sizeof(pbi));
+    memset(&peb, 0, sizeof(peb));
+    memset(&upa, 0, sizeof(upa));
+
+    if (QueryInformationProcessProc == NULL) {
+        *(FARPROC *)&QueryInformationProcessProc = GetProcAddress(GetModuleHandle("NTDLL.DLL"), "ZwQueryInformationProcess");
+        if (QueryInformationProcessProc == NULL) {
+            set_win32_errno(GetLastError());
+            return -1;
+        }
+    }
+    if (QueryInformationProcessProc(prs, ProcessBasicInformation, &pbi, sizeof(pbi), &len) < 0) {
+        set_win32_errno(GetLastError());
+        return -1;
+    }
+
+    if (pbi.PebBaseAddress != NULL) {
+        if (ReadProcessMemory(prs, (LPCVOID)pbi.PebBaseAddress, &peb, sizeof(peb), &len) == 0) {
+            set_win32_errno(GetLastError());
+            return -1;
+        }
+
+        if (peb.ProcessParameters != NULL) {
+            if (ReadProcessMemory(prs, (LPCVOID)peb.ProcessParameters, &upa, sizeof(upa), &len) == 0) {
+                set_win32_errno(GetLastError());
+                return -1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+static int write_unicode_string(OutputStream * out, HANDLE prs, UNICODE_STRING str, char * name) {
+    if (str.Buffer != NULL) {
+        wchar_t w_fnm[FILE_PATH_SIZE];
+        SIZE_T buff_size = str.Length;
+        SIZE_T read_size = 0;
+        if (buff_size > sizeof(w_fnm)) buff_size = sizeof(w_fnm);
+        if (ReadProcessMemory(prs, (LPCVOID)str.Buffer, w_fnm, buff_size, &read_size)) {
+            char a_fnm[FILE_PATH_SIZE * 2];
+            DWORD k = wcslen(w_fnm);
+            int n = WideCharToMultiByte(CP_UTF8, 0, w_fnm, k, a_fnm, sizeof(a_fnm), NULL, NULL);
+            a_fnm[n] = 0;
+            write_stream(out, ',');
+            json_write_string(out, name);
+            write_stream(out, ':');
+            json_write_string(out, a_fnm);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void write_time(OutputStream * out, FILETIME tm, int64 base, char * name) {
+    write_stream(out, ',');
+
+    json_write_string(out, name);
+    write_stream(out, ':');
+    json_write_int64(out, (((int64)tm.dwLowDateTime | ((int64)tm.dwHighDateTime << 32)) - base) / 10000);
+}
+
+static void write_process_context(OutputStream * out, char * id, pid_t pid, HANDLE prs) {
+    write_stream(out, '{');
+
+    json_write_string(out, "ID");
+    write_stream(out, ':');
+    json_write_string(out, id);
+
+    write_stream(out, ',');
+
+    json_write_string(out, "PID");
+    write_stream(out, ':');
+    json_write_ulong(out, pid);
+
+    write_unicode_string(out, prs, upa.ImagePathName, "File");
+    write_unicode_string(out, prs, upa.CurrentDirectoryPath, "CWD");
+
+    {
+        FILETIME c_time, e_time, k_time, u_time;
+        if (GetProcessTimes(prs, &c_time, &e_time, &k_time, &u_time)) {
+            static int64 system_start_time = 0; /* In FILETIME format: 100-nanosecond intervals since January 1, 1601 (UTC). */
+            if (system_start_time == 0) {
+                HKEY key;
+                if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+                        L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+                        0, KEY_READ, &key) == ERROR_SUCCESS) {
+                    wchar_t buf[FILE_PATH_SIZE];
+                    DWORD size = sizeof(buf);
+                    memset(buf, 0, sizeof(buf));
+                    if (RegQueryValueExW(key,
+                            L"PagingFiles",
+                            NULL, NULL, (LPBYTE)buf, &size) == ERROR_SUCCESS) {
+                        WIN32_FIND_DATAW data;
+                        HANDLE h = INVALID_HANDLE_VALUE;
+                        int n = 0;
+                        while (n < FILE_PATH_SIZE && buf[n] != 0) n++;
+                        while (n > 0 && buf[n - 1] != ' ') n--;
+                        while (n > 0 && buf[n - 1] == ' ') n--;
+                        while (n > 0 && buf[n - 1] != ' ') n--;
+                        while (n > 0 && buf[n - 1] == ' ') n--;
+                        buf[n] = 0;
+                        h = FindFirstFileW(buf, &data);
+                        if (h != INVALID_HANDLE_VALUE) {
+                            system_start_time = (int64)data.ftLastWriteTime.dwLowDateTime | ((int64)data.ftLastWriteTime.dwHighDateTime << 32);
+                            FindClose(h);
+                        }
+                    }
+                    RegCloseKey(key);
+                }
+            }
+            if (system_start_time == 0) {
+                SYSTEMTIME st;
+                FILETIME ft;
+                GetSystemTime(&st);
+                if (SystemTimeToFileTime(&st, &ft)) {
+                    system_start_time = (int64)ft.dwLowDateTime | ((int64)ft.dwHighDateTime << 32);
+                    system_start_time -= (int64)GetTickCount() * 10000; /* Note: GetTickCount() is valid only first 49 days */
+                }
+            }
+            if ((c_time.dwLowDateTime != 0 || c_time.dwHighDateTime != 0) && system_start_time != 0) {
+                write_time(out, c_time, system_start_time, "StartTime");
+            }
+            write_time(out, k_time, 0, "STime");
+            write_time(out, u_time, 0, "UTime");
+        }
+    }
+
+    write_stream(out, '}');
+}
+
+static void command_get_context(char * token, Channel * c) {
+    char id[256];
+    pid_t pid = 0;
+    pid_t parent = 0;
+    int err = 0;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+
+    pid = id2pid(id, &parent);
+    if (parent != 0) {
+        write_errno(&c->out, err);
+        write_stringz(&c->out, "null");
+    }
+    else if (pid != 0) {
+        HANDLE prs = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+        if (prs == NULL) err = set_win32_errno(GetLastError());
+        if (err == 0 && get_process_info(prs) < 0) err = errno;
+        write_errno(&c->out, err);
+        if (err == 0) {
+            write_process_context(&c->out, id, pid, prs);
+            write_stream(&c->out, 0);
+        }
+        else {
+            write_stringz(&c->out, "null");
+        }
+        if (prs != NULL) CloseHandle(prs);
+    }
+    else {
+        write_errno(&c->out, err);
+        write_stringz(&c->out, "null");
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_get_children(char * token, Channel * c) {
+    char id[256];
+    pid_t pid = 0;
+    pid_t parent = 0;
+    int err = 0;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+
+    pid = id2pid(id, &parent);
+
+    if (parent != 0) {
+        /* Children of a thread: none */
+        write_errno(&c->out, 0);
+        write_stringz(&c->out, "null");
+    }
+    else if (pid != 0) {
+        /* Children of a process: threads */
+        /* TODO: enumerate threads */
+        write_errno(&c->out, 0);
+        write_stringz(&c->out, "null");
+    }
+    else {
+        /* Children of the root: processes */
+        static BOOL (WINAPI * EnumProcessesProc)(DWORD *, DWORD, DWORD *) = NULL;
+        HANDLE heap = GetProcessHeap();
+        DWORD * prs_ids = NULL;
+        int prs_cnt = 0;
+        if (EnumProcessesProc == NULL) {
+            HINSTANCE psapi = LoadLibrary("PSAPI.DLL");
+            if (psapi == NULL) {
+                err = set_win32_errno(GetLastError());
+            }
+            else {
+                *(FARPROC *)&EnumProcessesProc = GetProcAddress(psapi, "EnumProcesses");
+                if (EnumProcessesProc == NULL) err = set_win32_errno(GetLastError());
+            }
+        }
+        if (err == 0) {
+            DWORD size_allocated = 128;
+            DWORD size_returned = 0;
+            do {
+                size_allocated *= 2;
+                if (prs_ids != NULL) HeapFree(heap, 0, prs_ids);
+                prs_ids = (DWORD *)HeapAlloc(heap, 0, size_allocated);
+                if (prs_ids == NULL) {
+                    err = set_win32_errno(GetLastError());
+                    break;
+                }
+                if (!EnumProcessesProc(prs_ids, size_allocated, &size_returned)) {
+                    err = set_win32_errno(GetLastError());
+                    break;
+                }
+            }
+            while (size_returned == size_allocated);
+            prs_cnt = size_returned / sizeof(DWORD);
+        }
+        write_errno(&c->out, err);
+        if (err == 0) {
+            int pos = 0;
+            int cnt = 0;
+            write_stream(&c->out, '[');
+            for (pos = 0; pos < prs_cnt; pos++) {
+                if (prs_ids[pos] == 0) continue;
+                if (cnt > 0) write_stream(&c->out, ',');
+                json_write_string(&c->out, pid2id(prs_ids[pos], 0));
+                cnt++;
+            }
+            write_stream(&c->out, ']');
+            write_stream(&c->out, 0);
+        }
+        else {
+            write_stringz(&c->out, "null");
+        }
+        if (prs_ids != NULL) HeapFree(heap, 0, prs_ids);
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_get_command_line(char * token, Channel * c) {
+    char id[256];
+    pid_t pid = 0;
+    pid_t parent = 0;
+    int err = 0;
+    HANDLE prs = NULL;
+    wchar_t * cmd = NULL;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+
+    pid = id2pid(id, &parent);
+    if (pid != 0 && parent == 0) {
+        prs = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+        if (prs == NULL) err = set_win32_errno(GetLastError());
+    }
+    else {
+        err = ERR_INV_CONTEXT;
+    }
+    if (err == 0 && get_process_info(prs) < 0) err = errno;
+    if (err == 0 && upa.CommandLine.Buffer != NULL) {
+        SIZE_T cmd_size = upa.CommandLine.Length;
+        SIZE_T read_size = 0;
+        cmd = loc_alloc(cmd_size);
+        if (ReadProcessMemory(prs, (LPCVOID)upa.CommandLine.Buffer, cmd, cmd_size, &read_size) == 0) {
+            err = set_win32_errno(GetLastError());
+        }
+    }
+    if (prs != NULL) CloseHandle(prs);
+
+    write_errno(&c->out, err);
+
+    if (err == 0 && cmd != NULL) {
+        wchar_t * p = cmd;
+        wchar_t * e = cmd + upa.CommandLine.Length / sizeof(wchar_t);
+        int cnt = 0;
+        write_stream(&c->out, '[');
+        while (p < e && *p) {
+            int quotation = 0;
+            if (*p == ' ') { p++; continue; }
+            if (*p == '\t') { p++; continue; }
+            if (cnt > 0) write_stream(&c->out, ',');
+            write_stream(&c->out, '"');
+            while (p < e && *p) {
+                char buf[0x100];
+                int k = 0;
+                while (p < e && *p && k < sizeof(buf) / 4) {
+                    if (*p == '"' || *p == '\\' || *p == ' ' || *p == '\t') break;
+                    p++;
+                    k++;
+                }
+                if (k > 0) {
+                    int i = 0;
+                    int n = WideCharToMultiByte(CP_UTF8, 0, p - k, k, buf, sizeof(buf), NULL, NULL);
+                    while (i < n) json_write_char(&c->out, buf[i++]);
+                    if (p == e || *p == 0) break;
+                }
+                if (*p == '"') {
+                    quotation = !quotation;
+                    p++;
+                }
+                else if (*p == '\\') {
+                    p++;
+                    if (p == e) {
+                        json_write_char(&c->out, '\\');
+                    }
+                    else if (*p == '"') {
+                        json_write_char(&c->out, '"');
+                        p++;
+                    }
+                    else if (*p == '\\') {
+                        json_write_char(&c->out, '\\');
+                        p++;
+                    }
+                    else {
+                        json_write_char(&c->out, '\\');
+                    }
+                }
+                else if (*p == ' ' || *p == '\t') {
+                    p++;
+                    if (!quotation) break;
+                    json_write_char(&c->out, ' ');
+                }
+                else {
+                    assert(k > 0);
+                }
+            }
+            write_stream(&c->out, '"');
+            cnt++;
+        }
+        write_stream(&c->out, ']');
+        write_stream(&c->out, 0);
+    }
+    else {
+        write_stringz(&c->out, "null");
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+    loc_free(cmd);
+}
+
+static void command_get_environment(char * token, Channel * c) {
+    char id[256];
+    pid_t pid = 0;
+    pid_t parent = 0;
+    int err = 0;
+    HANDLE prs = NULL;
+    wchar_t * env = NULL;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+
+    pid = id2pid(id, &parent);
+    if (pid != 0 && parent == 0) {
+        prs = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+        if (prs == NULL) err = set_win32_errno(GetLastError());
+    }
+    else {
+        err = ERR_INV_CONTEXT;
+    }
+    if (err == 0 && get_process_info(prs) < 0) err = errno;
+    if (err == 0 && upa.Environment != NULL) {
+        wchar_t buf[0x100];
+        SIZE_T buf_pos = 0;
+        SIZE_T buf_len = 0;
+        SIZE_T env_size = 0;
+        int cnt = 0;
+
+        for (;;) {
+            if (buf_pos >= buf_len) {
+                SIZE_T len = 0;
+                if (ReadProcessMemory(prs, (LPCVOID)((SIZE_T)upa.Environment + env_size), buf, sizeof(buf), &len) == 0) {
+                    err = set_win32_errno(GetLastError());
+                    break;
+                }
+                buf_pos = 0;
+                buf_len = len / sizeof(wchar_t);
+            }
+            env_size += sizeof(wchar_t);
+            if (buf[buf_pos++] == 0) {
+                cnt++;
+                if (cnt == 2) break;
+            }
+            else {
+                cnt = 0;
+            }
+        }
+
+        if (err == 0) {
+            env = loc_alloc(env_size);
+            if (ReadProcessMemory(prs, (LPCVOID)upa.Environment, env, env_size, &buf_len) == 0) {
+                err = set_win32_errno(GetLastError());
+            }
+        }
+    }
+    if (prs != NULL) CloseHandle(prs);
+
+    write_errno(&c->out, err);
+
+    if (err == 0 && env != NULL) {
+        wchar_t * p = env;
+        int cnt = 0;
+        write_stream(&c->out, '[');
+        while (*p) {
+            if (cnt > 0) write_stream(&c->out, ',');
+            write_stream(&c->out, '"');
+            while (*p) {
+                char buf[0x100];
+                int k = 0, n = 0, i = 0;
+                while (*p && k < sizeof(buf) / 4) { p++; k++; }
+                n = WideCharToMultiByte(CP_UTF8, 0, p - k, k, buf, sizeof(buf), NULL, NULL);
+                while (i < n) json_write_char(&c->out, buf[i++]);
+            }
+            p++;
+            write_stream(&c->out, '"');
+            cnt++;
+        }
+        write_stream(&c->out, ']');
+        write_stream(&c->out, 0);
+    }
+    else {
+        write_stringz(&c->out, "null");
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+    loc_free(env);
+}
+
 #else
+
+#include <unistd.h>
+#include <dirent.h>
+#include <pwd.h>
+#include <grp.h>
+#include <linux/param.h>
 
 #define BUF_EOF (-1)
 
@@ -882,8 +1456,6 @@ static void command_get_context(char * token, Channel * c) {
 
 static void command_get_children(char * token, Channel * c) {
     char id[256];
-    DIR * proc = NULL;
-    char dir[FILE_PATH_SIZE];
     pid_t pid = 0;
     pid_t parent = 0;
 
@@ -895,14 +1467,16 @@ static void command_get_children(char * token, Channel * c) {
     write_stringz(&c->out, token);
 
     pid = id2pid(id, &parent);
-    if (pid == 0) strcpy(dir, "/proc");
-    else snprintf(dir, sizeof(dir), "/proc/%d/task", pid);
 
     if (parent != 0) {
         write_errno(&c->out, 0);
         write_stringz(&c->out, "null");
     }
     else {
+        DIR * proc = NULL;
+        char dir[FILE_PATH_SIZE];
+        if (pid == 0) strcpy(dir, "/proc");
+        else snprintf(dir, sizeof(dir), "/proc/%d/task", pid);
         proc = opendir(dir);
         if (proc == NULL) {
             write_errno(&c->out, errno);
@@ -935,7 +1509,7 @@ static void command_get_command_line(char * token, Channel * c) {
     pid_t pid = 0;
     pid_t parent = 0;
     int err = 0;
-    char dir[256];
+    char dir[FILE_PATH_SIZE];
     int f;
 
     json_read_string(&c->inp, id, sizeof(id));
@@ -978,7 +1552,7 @@ static void command_get_environment(char * token, Channel * c) {
     pid_t pid = 0;
     pid_t parent = 0;
     int err = 0;
-    char dir[256];
+    char dir[FILE_PATH_SIZE];
     int f;
 
     json_read_string(&c->inp, id, sizeof(id));

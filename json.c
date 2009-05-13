@@ -652,7 +652,7 @@ char * json_skip_object(InputStream * inp) {
 
 static void write_error_code(OutputStream * out, int err, int code) {
     /* code - TCF error code */
-    /* err - TCF alt code - OS specific error code */
+    /* err - errno value*/
     struct timespec timenow;
 
     if (clock_gettime(CLOCK_REALTIME, &timenow) == 0) {
@@ -665,6 +665,29 @@ static void write_error_code(OutputStream * out, int err, int code) {
 
         write_stream(out, ',');
     }
+
+#ifdef WIN32
+    if (get_win32_errno(err)) {
+        json_write_string(out, "Code");
+        write_stream(out, ':');
+        json_write_long(out, ERR_OTHER - STD_ERR_BASE);
+
+        write_stream(out, ',');
+
+        json_write_string(out, "AltCode");
+        write_stream(out, ':');
+        json_write_long(out, get_win32_errno(err));
+
+        write_stream(out, ',');
+
+        json_write_string(out, "AltOrg");
+        write_stream(out, ':');
+        json_write_string(out, "WIN32");
+
+        write_stream(out, ',');
+        return;
+    }
+#endif
 
     json_write_string(out, "Code");
     write_stream(out, ':');
@@ -706,7 +729,8 @@ void write_error_object(OutputStream * out, int err) {
         const char * msg = errno_to_str(err);
 
         write_stream(out, '{');
-        if (err == ERR_EXCEPTION) err = get_exception_errno();
+
+        err = get_exception_errno(err);
         if (err > STD_ERR_BASE) code = err - STD_ERR_BASE;
         write_error_code(out, err, code);
 
@@ -725,8 +749,11 @@ void write_errno(OutputStream * out, int err) {
 
 void write_service_error(OutputStream * out, int err, const char * service_name, int service_error) {
     if (err != 0) {
+        const char * msg = errno_to_str(err);
+
         write_stream(out, '{');
 
+        err = get_exception_errno(err);
         write_error_code(out, err, service_error);
 
         json_write_string(out, "Service");
@@ -737,7 +764,7 @@ void write_service_error(OutputStream * out, int err, const char * service_name,
 
         json_write_string(out, "Format");
         write_stream(out, ':');
-        json_write_string(out, errno_to_str(err));
+        json_write_string(out, msg);
 
         write_stream(out, '}');
     }

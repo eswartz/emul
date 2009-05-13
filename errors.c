@@ -55,7 +55,8 @@ static char * system_strerror(void) {
     }
     else {
         int l;
-        snprintf(msg, sizeof(msg), "System Error %d: %s", errno_win32, msg_buf, sizeof(msg));
+        strncpy(msg, msg_buf, sizeof(msg) - 1);
+        msg[sizeof(msg) - 1] = 0;
         LocalFree(msg_buf);
         l = strlen(msg);
         while (l > 0 && (msg[l - 1] == '\n' || msg[l - 1] == '\r')) l--;
@@ -78,6 +79,10 @@ int set_win32_errno(DWORD win32_error_code) {
         errno = 0;
     }
     return errno;
+}
+
+DWORD get_win32_errno(int no) {
+    return no == ERR_SYSTEM ? errno_win32 : 0;
 }
 
 #else
@@ -165,9 +170,8 @@ void set_exception_errno(int no, char * msg) {
     }
 }
 
-int get_exception_errno(void) {
-    if (errno == ERR_EXCEPTION) return exception_no;
-    return errno;
+int get_exception_errno(int no) {
+    return no == ERR_EXCEPTION ? exception_no : no;
 }
 
 int set_gai_errno(int n) {
