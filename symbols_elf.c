@@ -37,6 +37,7 @@
 #include "dwarfcache.h"
 #include "dwarfexpr.h"
 #include "stacktrace.h"
+#include "test.h"
 #include "symbols.h"
 
 typedef struct SymLocation {
@@ -50,33 +51,6 @@ typedef struct SymLocation {
     unsigned dimension;
     unsigned pointer;
 } SymLocation;
-
-static int find_test_symbol(Context * ctx, char * name, Symbol * sym) {
-    /* This code allows to run TCF diagnostic tests when symbols info is not available */
-    if (strncmp(name, "tcf_test_", 9) == 0) {
-        extern void tcf_test_func0(void);
-        extern void tcf_test_func1(void);
-        extern void tcf_test_func2(void);
-        extern void tcf_test_func3(void);
-        extern char * tcf_test_array;
-        SymLocation * loc = (SymLocation *)sym->location;
-        memset(sym, 0, sizeof(Symbol));
-        sym->ctx = ctx;
-        if (strcmp(name, "tcf_test_array") == 0) {
-            sym->sym_class = SYM_CLASS_REFERENCE;
-            loc->address = &tcf_test_array;
-        }
-        else {
-            sym->sym_class = SYM_CLASS_FUNCTION;
-            if (strcmp(name, "tcf_test_func0") == 0) loc->address = &tcf_test_func0;
-            else if (strcmp(name, "tcf_test_func1") == 0) loc->address = &tcf_test_func1;
-            else if (strcmp(name, "tcf_test_func2") == 0) loc->address = &tcf_test_func2;
-            else if (strcmp(name, "tcf_test_func3") == 0) loc->address = &tcf_test_func3;
-        }
-        if (loc->address != NULL) return 0;
-    }
-    return -1;
-}
 
 static void object2symbol(Context * ctx, ObjectInfo * obj, Symbol * sym) {
     SymLocation * loc = (SymLocation *)sym->location;
@@ -291,7 +265,10 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
         }
     }
 
-    if (!found) found = find_test_symbol(ctx, name, sym) >= 0;
+    if (!found) {
+        SymLocation * loc = (SymLocation *)sym->location;
+        found = find_test_symbol(ctx, name, sym, &loc->address) >= 0;
+    }
 
     if (error == 0 && !found) error = ERR_SYM_NOT_FOUND;
 

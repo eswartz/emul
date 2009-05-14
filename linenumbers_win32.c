@@ -106,8 +106,9 @@ static void command_map_to_source(char * token, Channel * c) {
 
     memset(&line, 0, sizeof(line));
     line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
+    if (addr0 >= addr1) not_found = 1;
 
-    if (err == 0 && !SymGetLineFromAddr(ctx->handle, addr0, &offset, &line)) {
+    while (err == 0 && not_found == 0 && !SymGetLineFromAddr(ctx->handle, addr0, &offset, &line)) {
         DWORD w = GetLastError();
         if (w == ERROR_MOD_NOT_FOUND) {
             not_found = 1;
@@ -145,13 +146,6 @@ static void command_map_to_source(char * token, Channel * c) {
             if (dest != 0) {
                 addr0 = dest;
                 addr1 = dest + 1;
-                if (SymGetLineFromAddr(ctx->handle, dest, &offset, &line)) {
-                    addr0 = dest;
-                    addr1 = dest + 1;
-                }
-                else {
-                    err = set_win32_errno(w);
-                }
             }
             else {
                 not_found = 1;
@@ -175,7 +169,7 @@ static void command_map_to_source(char * token, Channel * c) {
     else {
         int cnt = 0;
         write_stream(&c->out, '[');
-        while (addr0 < addr1) {
+        while (1) {
             if (cnt > 0) write_stream(&c->out, ',');
             write_stream(&c->out, '{');
             json_write_string(&c->out, "SLine");

@@ -59,7 +59,8 @@ struct Context {
     REG_SET             regs;               /* copy of context registers, updated when context stops */
     int                 regs_error;         /* if not 0, 'regs' is invalid */
     int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
-    void *              stack_trace;
+    void *              stack_trace;        /* pointer to StackTrace service data cache */
+    int                 test_process;       /* if not 0, the process is test process started by Diagnostics service */
 
 /* OS dependant context attributes */
 #if defined(_WRS_KERNEL)

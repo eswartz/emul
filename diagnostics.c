@@ -84,6 +84,7 @@ static void run_test_done(int error, Context * ctx, void * arg) {
     RunTestDoneArgs * data = arg;
     Channel * c = data->c;
 
+    ctx->test_process = 1;
     if (!is_stream_closed(c)) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, data->token);

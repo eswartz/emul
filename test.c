@@ -115,6 +115,29 @@ void test_proc(void) {
     }
 }
 
+int find_test_symbol(Context * ctx, char * name, Symbol * sym, void ** addr) {
+    /* This code allows to run TCF diagnostic tests when symbols info is not available */
+    if (ctx->parent != NULL) ctx = ctx->parent;
+    if (ctx->test_process && strncmp(name, "tcf_test_", 9) == 0) {
+        memset(sym, 0, sizeof(Symbol));
+        *addr = NULL;
+        sym->ctx = ctx;
+        if (strcmp(name, "tcf_test_array") == 0) {
+            sym->sym_class = SYM_CLASS_REFERENCE;
+            *addr = &tcf_test_array;
+        }
+        else {
+            sym->sym_class = SYM_CLASS_FUNCTION;
+            if (strcmp(name, "tcf_test_func0") == 0) *addr = &tcf_test_func0;
+            else if (strcmp(name, "tcf_test_func1") == 0) *addr = &tcf_test_func1;
+            else if (strcmp(name, "tcf_test_func2") == 0) *addr = &tcf_test_func2;
+            else if (strcmp(name, "tcf_test_func3") == 0) *addr = &tcf_test_func3;
+        }
+        if (*addr != NULL) return 0;
+    }
+    return -1;
+}
+
 #if defined(WIN32)
 typedef struct ContextAttachArgs {
     ContextAttachCallBack * done;
