@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.ISysMonitor;
 import org.eclipse.tm.tcf.services.ISysMonitor.SysMonitorContext;
@@ -41,6 +42,10 @@ class TestSysMonitor implements ITCFTest {
                                     cmds.remove(token);
                                     if (error != null) {
                                         // Some errors are expected, like "Access Denied"
+                                        if (!(error instanceof IErrorReport)) {
+                                            exit(error);
+                                            return;
+                                        }
                                     }
                                     else {
                                         procs.put(id, context);
@@ -62,11 +67,13 @@ class TestSysMonitor implements ITCFTest {
                 public void doneGetEnvironment(IToken token, Exception error, String[] environment) {
                     cmds.remove(token);
                     if (error != null) {
-                        exit(error);
+                        // Some errors are expected, like "Access Denied"
+                        if (!(error instanceof IErrorReport)) {
+                            exit(error);
+                            return;
+                        }
                     }
-                    else {
-                        if (cmds.isEmpty()) getCommandLine();
-                    }
+                    if (cmds.isEmpty()) getCommandLine();
                 }
             }));
         }
@@ -79,11 +86,13 @@ class TestSysMonitor implements ITCFTest {
                 public void doneGetCommandLine(IToken token, Exception error, String[] cmd_line) {
                     cmds.remove(token);
                     if (error != null) {
-                        exit(error);
+                        // Some errors are expected, like "Access Denied"
+                        if (!(error instanceof IErrorReport)) {
+                            exit(error);
+                            return;
+                        }
                     }
-                    else {
-                        if (cmds.isEmpty()) exit(null);
-                    }
+                    if (cmds.isEmpty()) exit(null);
                 }
             }));
         }
