@@ -266,6 +266,22 @@ static void advance_stream_buffer(VirtualStream * stream) {
     }
 }
 
+static StreamClient * create_client(VirtualStream * stream, Channel * channel) {
+    StreamClient * client = loc_alloc_zero(sizeof(StreamClient));
+    list_init(&client->link_hash);
+    list_init(&client->link_stream);
+    list_init(&client->link_all);
+    list_init(&client->read_requests);
+    list_init(&client->write_requests);
+    client->stream = stream;
+    client->channel = channel;
+    list_add_first(&client->link_hash, &handle_hash[get_client_hash(stream->id, channel)]);
+    list_add_first(&client->link_stream, &stream->clients);
+    list_add_first(&client->link_all, &clients);
+    stream->ref_cnt++;
+    return client;
+}
+
 static void delete_client(StreamClient * client) {
     VirtualStream * stream = client->stream;
     Trap trap;
@@ -388,20 +404,9 @@ void virtual_stream_create(const char * type, unsigned buf_len, unsigned access,
         Subscription * h = all2subscription(l);
         if (strcmp(type, h->type) == 0) {
             Trap trap;
-            StreamClient * client = loc_alloc_zero(sizeof(StreamClient));
-            list_init(&client->link_hash);
-            list_init(&client->link_stream);
-            list_init(&client->link_all);
-            list_init(&client->read_requests);
-            list_init(&client->write_requests);
-            client->stream = stream;
-            client->channel = h->channel;
-            list_add_first(&client->link_hash, &handle_hash[get_client_hash(stream->id, h->channel)]);
-            list_add_first(&client->link_stream, &stream->clients);
-            list_add_first(&client->link_all, &clients);
-            stream->ref_cnt++;
+            create_client(stream, h->channel);
             if (set_trap(&trap)) {
-                send_event_stream_created(&client->channel->out, stream);
+                send_event_stream_created(&h->channel->out, stream);
                 clear_trap(&trap);
             }
             else {
@@ -749,6 +754,26 @@ static void command_eos(char * token, Channel * c) {
     }
 }
 
+static void command_connect(char * token, Channel * c) {
+    char id[256];
+    int err = 0;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    if (find_client(id, c) == NULL) {
+        VirtualStream * stream = virtual_stream_find(id);
+        if (stream == NULL) err = errno;
+        else create_client(stream, c);
+    }
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    write_stream(&c->out, MARKER_EOM);
+}
+
 static void command_disconnect(char * token, Channel * c) {
     char id[256];
     StreamClient * client = NULL;
@@ -806,6 +831,7 @@ void ini_streams_service(Protocol * proto) {
     add_command_handler(proto, STREAMS, "read", command_read);
     add_command_handler(proto, STREAMS, "write", command_write);
     add_command_handler(proto, STREAMS, "eos", command_eos);
+    add_command_handler(proto, STREAMS, "connect", command_connect);
     add_command_handler(proto, STREAMS, "disconnect", command_disconnect);
 }
 
