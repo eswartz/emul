@@ -31,6 +31,19 @@ public class StreamsProxy implements IStreams {
         this.channel = channel;
     }
 
+    public IToken connect(String stream_id, final DoneConnect done) {
+        return new Command(channel, this, "connect", new Object[]{ stream_id }) {
+            @Override
+            public void done(Exception error, Object[] args) {
+                if (error == null) {
+                    assert args.length == 1;
+                    error = toError(args[0]);
+                }
+                done.doneConnect(token, error);
+            }
+        }.token;
+    }
+
     public IToken disconnect(String stream_id, final DoneDisconnect done) {
         return new Command(channel, this, "disconnect", new Object[]{ stream_id }) {
             @Override

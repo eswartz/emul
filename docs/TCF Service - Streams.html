@@ -16,6 +16,7 @@
         <li><a href='#CmdRead'>Read</a>
         <li><a href='#CmdWrite'>Write</a>
         <li><a href='#CmdEOS'>End of Stream</a>
+        <li><a href='#CmdConnect'>Connect</a>
         <li><a href='#CmdDisconnect'>Disconnect</a>
     </ul>
     <li><a href='#Events'>Events</a>
@@ -147,6 +148,22 @@ C &bull; <i>&lt;token&gt;</i> &bull; Streams &bull; eos &bull; <i>&lt;string: st
 </font></b></pre>
 
 <p>The command sends End Of Stream marker to a stream. No more writing to the stream is allowed after that.</p>
+ 
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
+</font></b></pre>
+
+<h3><a name='CmdConnect'>Connect</a></h3>
+ 
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Streams &bull; connect &bull; <i>&lt;string: stream ID&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command connects client to a stream. Some data might be dropped from the stream by the time "connect" command is executed.
+Client should be able to re-sync with stream data if it wants to read from such stream.
+If a client wants to read a stream from the beginning it should use "subscribe" command instead of "connect"</p>
  
 <p>Reply:</p>
 

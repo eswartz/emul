@@ -170,6 +170,30 @@ public interface IStreams extends IService {
     }
 
     /**
+     * Connect client to a stream.
+     * Some data might be dropped from the stream by the time "connect" command is executed.
+         * Client should be able to re-sync with stream data if it wants to read from such stream.
+         * If a client wants to read a stream from the beginning it should use "subscribe" command
+         * instead of "connect".
+     * @param stream_id - ID of the stream.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */
+    IToken connect(String stream_id, DoneConnect done);
+    
+    /**
+     * Call back interface for 'connect' command.
+     */
+    interface DoneConnect {
+        /**
+         * Called when 'connect' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         */
+        void doneConnect(IToken token, Exception error);
+    }
+
+    /**
      * Disconnect client from a stream.
      * @param stream_id - ID of the stream.
      * @param done - command result call back object.
