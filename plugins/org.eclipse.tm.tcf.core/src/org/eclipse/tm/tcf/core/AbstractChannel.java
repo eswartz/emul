@@ -584,11 +584,16 @@ public abstract class AbstractChannel implements IChannel {
                     else if (error != null) x = new Exception(error);
                     else x = new IOException("Channel is closed");
                     for (Message msg : out_tokens.values()) {
-                        String s = msg.toString();
-                        if (s.length() > 72) s = s.substring(0, 72) + "...]";
-                        IOException y = new IOException("Command " + s + " aborted");
-                        y.initCause(x);
-                        msg.token.getListener().terminated(msg.token, y);
+                        try {
+                            String s = msg.toString();
+                            if (s.length() > 72) s = s.substring(0, 72) + "...]";
+                            IOException y = new IOException("Command " + s + " aborted");
+                            y.initCause(x);
+                            msg.token.getListener().terminated(msg.token, y);
+                        }
+                        catch (Throwable e) {
+                            Protocol.log("Exception in command listener", e);
+                        }
                     }
                     out_tokens.clear();
                 }
@@ -783,6 +788,16 @@ public abstract class AbstractChannel implements IChannel {
         try {
             Token token = null;
             switch (msg.type) {
+            case 'P':
+            case 'R':
+            case 'N':
+                String token_id = msg.token.getID();
+                Message cmd = msg.type == 'P' ? out_tokens.get(token_id) : out_tokens.remove(token_id);
+                if (cmd == null) throw new Exception("Invalid token received: " + token_id);
+                token = cmd.token;
+                break;
+            }
+            switch (msg.type) {
             case 'C':
                 if (state == STATE_OPENNING) {
                     throw new IOException("Received command " + msg.service + "." + msg.name + " before Hello message");
@@ -802,17 +817,14 @@ public abstract class AbstractChannel implements IChannel {
                 }
                 break;
             case 'P':
-                token = out_tokens.get(msg.token.getID()).token;
                 token.getListener().progress(token, msg.data);
                 sendCongestionLevel();
                 break;
             case 'R':
-                token = out_tokens.remove(msg.token.getID()).token;
                 token.getListener().result(token, msg.data);
                 sendCongestionLevel();
                 break;
             case 'N':
-                token = out_tokens.remove(msg.token.getID()).token;
                 token.getListener().terminated(token, new ErrorReport(
                         "Command is not recognized", IErrorReport.TCF_ERROR_INV_COMMAND));
                 break;
