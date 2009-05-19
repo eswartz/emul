@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -147,7 +147,7 @@ static void proxy_default_message_handler(Channel * c, char **argv, int argc) {
         write_string(&otherc->out, "R");
         i = 1;
     }
-    else if (argv[0][0] == 'R') {
+    else if (argv[0][0] == 'R' || argv[0][0] == 'P' || argv[0][0] == 'N') {
         if (argv[1][0] != 'R') {
             trace(LOG_ALWAYS, "Reply with unexpected token: %s", argv[1]);
             exception(ERR_PROTOCOL);
