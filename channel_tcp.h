@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -19,16 +19,18 @@
 #ifndef D_channel_tcp
 #define D_channel_tcp
 
+#include "channel.h"
+
 /*
  * Start TCP channel listener.
  * On error returns NULL and sets errno.
  */
-extern ChannelServer * channel_tcp_server(PeerServer *);
+extern ChannelServer * channel_tcp_server(PeerServer * server);
 
 /*
  * Connect client side over TCP.
  * On error returns NULL and sets errno.
  */
-extern Channel * channel_tcp_connect(PeerServer *);
+extern void channel_tcp_connect(PeerServer * server, ChannelConnectCallBack callback, void * callback_args);
 
 #endif

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -65,9 +65,6 @@ struct Channel {
     void (*connected)(Channel *);       /* Called when channel negotiation is complete */
     void (*receive)(Channel *);         /* Called when messages has been received */
     void (*disconnected)(Channel *);    /* Called when channel is disconnected */
-
-    /* Channel redirecting handler. */
-    void (*redirecting)(Channel *, const char * token, const char * id);
 };
 
 typedef struct ChannelServer ChannelServer;
@@ -103,7 +100,8 @@ extern ChannelServer * channel_server(PeerServer *);
  * Connect to TCF channel server.
  * On error returns NULL and sets errno.
  */
-extern Channel * channel_connect(PeerServer *);
+typedef void (*ChannelConnectCallBack)(void * /* callback_args */, int /* error */, Channel *);
+extern void channel_connect(PeerServer * server, ChannelConnectCallBack callback, void * callback_args);
 
 /*
  * Start communication of a newly created channel

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -70,21 +70,6 @@ static void channel_server_disconnected(Channel * c) {
     trace(LOG_PROTOCOL, "channel server disconnected");
 }
 
-static void initiate_redirect(Channel * c1, const char * token, const char * id) {
-    PeerServer * ps = NULL;
-    Channel * c2 = NULL;
-    int error = 0;
-
-    if ((ps = peer_server_find(id)) == NULL) error = ERR_UNKNOWN_PEER;
-    if (!error && (c2 = channel_connect(ps)) == NULL) error = errno;
-    if (!error) proxy_create(c1, c2);
-
-    write_stringz(&c1->out, "R");
-    write_stringz(&c1->out, token);
-    write_errno(&c1->out, error);
-    write_stream(&c1->out, MARKER_EOM);
-}
-
 static void channel_new_connection(ChannelServer * serv, Channel * c) {
     protocol_reference(proto);
     c->client_data = proto;
@@ -94,7 +79,6 @@ static void channel_new_connection(ChannelServer * serv, Channel * c) {
     c->disconnected = channel_server_disconnected;
     channel_set_suspend_group(c, spg);
     channel_set_broadcast_group(c, bcg);
-    c->redirecting = initiate_redirect;
     channel_start(c);
 }
 

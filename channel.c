@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -277,15 +277,14 @@ ChannelServer * channel_server(PeerServer * ps) {
 /*
  * Connect to TCF channel server
  */
-Channel * channel_connect(PeerServer * ps) {
+void channel_connect(PeerServer * ps, ChannelConnectCallBack callback, void * callback_args) {
     char * transportname = peer_server_getprop(ps, "TransportName", NULL);
 
     if (transportname == NULL || strcmp(transportname, "TCP") == 0 || strcmp(transportname, "SSL") == 0) {
-        return channel_tcp_connect(ps);
+        channel_tcp_connect(ps, callback, callback_args);
     }
     else {
-        errno = ERR_INV_TRANSPORT;
-        return NULL;
+        callback(callback_args, ERR_INV_TRANSPORT, NULL);
     }
 }
 

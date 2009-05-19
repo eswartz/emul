@@ -236,6 +236,12 @@ static void tcp_post_read(InputBuf * ibuf, unsigned char * buf, int size) {
             post_event(c->rdreq.done, &c->rdreq);
             return;
         }
+        FD_ZERO(&c->rdreq.u.select.readfds);
+        FD_ZERO(&c->rdreq.u.select.writefds);
+        FD_ZERO(&c->rdreq.u.select.errorfds);
+        FD_SET(c->socket, &c->rdreq.u.select.readfds);
+        FD_SET(c->socket, &c->rdreq.u.select.errorfds);
+        c->rdreq.u.select.timeout.tv_sec = 10;
 #else
         assert(0);
 #endif
@@ -429,12 +435,6 @@ static void start_channel(Channel * channel) {
 #if ENABLE_SSL
         c->rdreq.type = AsyncReqSelect;
         c->rdreq.u.select.nfds = c->socket + 1;
-        FD_ZERO(&c->rdreq.u.select.readfds);
-        FD_ZERO(&c->rdreq.u.select.writefds);
-        FD_ZERO(&c->rdreq.u.select.errorfds);
-        FD_SET(c->socket, &c->rdreq.u.select.readfds);
-        FD_SET(c->socket, &c->rdreq.u.select.errorfds);
-        c->rdreq.u.select.timeout.tv_sec = 10;
 #else
         assert(0);
 #endif
@@ -794,61 +794,82 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     return &si->serv;
 }
 
-Channel * channel_tcp_connect(PeerServer * ps) {
-    const int i = 1;
-    int sock = -1;
-    ChannelTCP * c = NULL;
+typedef struct ChannelConnectInfo {
+    ChannelConnectCallBack callback;
+    void * callback_args;
+    int ssl;
+    struct sockaddr peer_addr;
+    size_t peer_addr_len;
+    int sock;
+    AsyncReqInfo req;
+} ChannelConnectInfo;
+
+static void channel_tcp_connect_done(void * args) {
+    ChannelConnectInfo * info = (ChannelConnectInfo *)((AsyncReqInfo *)args)->client_data;
+    if (info->req.error) {
+        info->callback(info->callback_args, info->req.error, NULL);
+        closesocket(info->sock);
+    }
+    else {
+        ChannelTCP * c = create_channel(info->sock, info->ssl, 0);
+        if (c == NULL) {
+            info->callback(info->callback_args, errno, NULL);
+            closesocket(info->sock);
+        }
+        else {
+            set_peer_addr(c, &info->peer_addr);
+            info->callback(info->callback_args, 0, &c->chan);
+        }
+    }
+    loc_free(info);
+}
+
+void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void * callback_args) {
     int error = 0;
-    char * reason = NULL;
     char * host = peer_server_getprop(ps, "Host", NULL);
     char * port = peer_server_getprop(ps, "Port", NULL);
     struct addrinfo hints;
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;
-    struct sockaddr peer_addr;
-
+    ChannelConnectInfo * info = NULL;
+    
     if (port == NULL) port = "1534";
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     error = loc_getaddrinfo(host, port, &hints, &reslist);
+    if (error) error = set_gai_errno(error);
+    if (!error) {
+        info = loc_alloc_zero(sizeof(ChannelConnectInfo));
+        for (res = reslist; res != NULL; res = res->ai_next) {
+            assert(sizeof(info->peer_addr) >= res->ai_addrlen);
+            memcpy(&info->peer_addr, res->ai_addr, res->ai_addrlen);
+            info->peer_addr_len = res->ai_addrlen;
+            info->sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+            if (info->sock < 0) error = errno;
+            break;
+        }
+        loc_freeaddrinfo(reslist);
+    }
+    if (!error && info->peer_addr_len == 0) error = ENOENT;
     if (error) {
-        trace(LOG_ALWAYS, "getaddrinfo error: %s", loc_gai_strerror(error));
-        set_gai_errno(error);
-        return NULL;
-    }
-    sock = -1;
-    reason = NULL;
-    memset(&peer_addr, 0, sizeof(peer_addr));
-    for (res = reslist; res != NULL; res = res->ai_next) {
-        sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-        if (sock < 0) {
-            error = errno;
-            reason = "create";
-            continue;
+        if (info != NULL) {
+            if (info->sock >= 0) closesocket(info->sock);
+            loc_free(info);
         }
-        /* TODO: connect() should be called by background thread since it can block for long period of time */
-        if (connect(sock, res->ai_addr, res->ai_addrlen)) {
-            error = errno;
-            reason = "connect";
-            closesocket(sock);
-            sock = -1;
-            continue;
-        }
-        assert(sizeof(peer_addr) >= res->ai_addrlen);
-        memcpy(&peer_addr, res->ai_addr, res->ai_addrlen);
-        break;
+        callback(callback_args, error, NULL);
     }
-    loc_freeaddrinfo(reslist);
-    if (sock < 0) {
-        trace(LOG_ALWAYS, "socket %s error: %s", reason, errno_to_str(error));
-        errno = error;
-        return NULL;
+    else {
+        info->callback = callback;
+        info->callback_args = callback_args;
+        info->ssl = strcmp(peer_server_getprop(ps, "TransportName", ""), "SSL") == 0;
+        info->req.client_data = info;
+        info->req.done = channel_tcp_connect_done;
+        info->req.type = AsyncReqConnect;
+        info->req.u.con.sock = info->sock;
+        info->req.u.con.addr = &info->peer_addr;
+        info->req.u.con.addrlen = info->peer_addr_len;
+        async_req_post(&info->req);
     }
-
-    c = create_channel(sock, strcmp(peer_server_getprop(ps, "TransportName", ""), "SSL") == 0, 0);
-    if (c == NULL) return NULL;
-    set_peer_addr(c, &peer_addr);
-    return &c->chan;
 }

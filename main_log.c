@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -41,11 +41,31 @@
 static char * progname;
 static char * dest_url = "TCF::1534";
 
-static void channel_server_connecting(Channel * c1) {
+typedef struct ConnectInfo {
     PeerServer * ps;
-    Channel * c2;
-    Protocol * p1;
-    Protocol * p2;
+    Channel * c1;
+} ConnectInfo;
+
+static void connect_done(void * args, int error, Channel * c2) {
+    ConnectInfo * info = (ConnectInfo *)args;
+    Channel * c1 = info->c1;
+
+    stream_unlock(c1);
+    if (error) {
+        fprintf(stderr, "cannot connect to peer: %s\n", dest_url);
+        channel_close(c1);
+    }
+    else {
+        proxy_create(c1, c2);
+        channel_start(c2);
+    }
+    peer_server_free(info->ps);
+    loc_free(info);
+}
+
+static void channel_server_connecting(Channel * c1) {
+    PeerServer * ps = NULL;
+    ConnectInfo * info = NULL;
 
     trace(LOG_ALWAYS, "channel server connecting");
 
@@ -55,15 +75,11 @@ static void channel_server_connecting(Channel * c1) {
         channel_close(c1);
         return;
     }
-    c2 = channel_connect(ps);
-    peer_server_free(ps);
-    if (c2 == NULL) {
-        fprintf(stderr, "cannot connect to peer: %s\n", dest_url);
-        channel_close(c1);
-        return;
-    }
-    proxy_create(c1, c2);
-    channel_start(c2);
+    stream_lock(c1);
+    info = loc_alloc_zero(sizeof(ConnectInfo));
+    info->ps = ps;
+    info->c1 = c1;
+    channel_connect(ps, connect_done, info);
 }
 
 static void channel_new_connection(ChannelServer * serv, Channel * c) {

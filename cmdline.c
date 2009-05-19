@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -183,33 +183,36 @@ static int cmd_peerinfo(char * s) {
     return 0;
 }
 
+static void connect_done(void * args, int error, Channel * c) {
+    PeerServer * ps = (PeerServer *)args;
+
+    if (error) {
+        fprintf(stderr, "Error: Cannot connect: %s\n", errno_to_str(error));
+    }
+    else {
+        c->connecting = channel_connecting;
+        c->connected = channel_connected;
+        c->receive = channel_receive;
+        c->disconnected = channel_disconnected;
+        c->client_data = protocol_alloc();
+        channel_start(c);
+        chan = c;
+    }
+    peer_server_free(ps);
+    cmd_done();
+}
+
 static int cmd_connect(char * s) {
-    PeerServer * ps;
-    Protocol * proto;
-    Channel * c;
-    int error = 0;
+    PeerServer * ps = NULL;
 
     ps = channel_peer_from_url(s);
     if (ps == NULL) {
         fprintf(stderr, "Error: Cannot parse peer identifer: %s\n", s);
         return 0;
     }
-    proto = protocol_alloc();
-    c = channel_connect(ps);
-    if (c == NULL) error = errno;
-    peer_server_free(ps);
-    if (c == NULL) {
-        fprintf(stderr, "Error: Cannot connect: %s\n", errno_to_str(error));
-        return 0;
-    }
-    c->connecting = channel_connecting;
-    c->connected = channel_connected;
-    c->receive = channel_receive;
-    c->disconnected = channel_disconnected;
-    c->client_data = proto;
-    channel_start(c);
-    chan = c;
-    return 0;
+
+    channel_connect(ps, connect_done, ps);
+    return 1;
 }
 
 static void event_cmd_line(void * arg) {

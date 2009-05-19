@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -25,6 +25,7 @@
 #include "discovery_udp.h"
 #include "protocol.h"
 #include "channel.h"
+#include "proxy.h"
 #include "myalloc.h"
 #include "events.h"
 #include "trace.h"
@@ -95,20 +96,47 @@ static void command_sync(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
+typedef struct RedirectInfo {
+    Channel * channel;
+    char token[256];
+} RedirectInfo;
+
+static void channel_connected(void * args, int error, Channel * c2) {
+    RedirectInfo * info = (RedirectInfo *)args;
+    Channel * c1 = info->channel;
+
+    if (!error) proxy_create(c1, c2);
+
+    write_stringz(&c1->out, "R");
+    write_stringz(&c1->out, info->token);
+    write_errno(&c1->out, error);
+    write_stream(&c1->out, MARKER_EOM);
+    stream_unlock(c1);
+    loc_free(info);
+}
+
 static void command_redirect(char * token, Channel * c) {
     char id[256];
+    PeerServer * ps = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    if (c->redirecting != NULL) {
-        c->redirecting(c, token, id);
-        return;
+
+    ps = peer_server_find(id);
+    if (ps != NULL) {
+        RedirectInfo * info = loc_alloc_zero(sizeof(RedirectInfo));
+        stream_lock(c);
+        info->channel = c;
+        strncpy(info->token, token, sizeof(info->token) - 1);
+        channel_connect(ps, channel_connected, info);
     }
-    write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
-    write_errno(&c->out, ERR_UNSUPPORTED);
-    write_stream(&c->out, MARKER_EOM);
+    else {
+        write_stringz(&c->out, "R");
+        write_stringz(&c->out, token);
+        write_errno(&c->out, ERR_UNKNOWN_PEER);
+        write_stream(&c->out, MARKER_EOM);
+    }
 }
 
 static void command_get_peers(char * token, Channel * c) {
