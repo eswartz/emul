@@ -801,6 +801,8 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     }
     
     private void runDiagnostics(TreeItem item, boolean loop) {
+        PeerInfo info = findPeerInfo(item);
+        if (info == null) return;
         final Shell shell = new Shell(getShell(), SWT.TITLE | SWT.PRIMARY_MODAL);
         GridLayout layout = new GridLayout();
         layout.verticalSpacing = 0;
@@ -834,10 +836,10 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         Rectangle rc1 = shell.getBounds();
         shell.setLocation(rc0.x + (rc0.width - rc1.width) / 2, rc0.y + (rc0.height - rc1.height) / 2);
         shell.setVisible(true);
-        runDiagnostics(item, loop, test, shell, label, bar);
+        runDiagnostics(info, loop, test, shell, label, bar);
     }
     
-    private void runDiagnostics(final TreeItem item, final boolean loop, final TCFTestSuite[] test,
+    private void runDiagnostics(final PeerInfo info, final boolean loop, final TCFTestSuite[] test,
             final Shell shell, final CLabel label, final ProgressBar bar) {
         final TCFTestSuite.TestListener done = new TCFTestSuite.TestListener() {
             private String last_text = "";
@@ -872,7 +874,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                                     ImageCache.getImage(ImageCache.IMG_TCF), errors).open();
                         }
                         else if (loop && !b && display != null) {
-                            runDiagnostics(item, true, test, shell, label, bar);
+                            runDiagnostics(info, true, test, shell, label, bar);
                         }
                         else {
                             shell.dispose();
@@ -881,7 +883,6 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 });
             }
         };
-        final PeerInfo info = findPeerInfo(item);
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 try {
