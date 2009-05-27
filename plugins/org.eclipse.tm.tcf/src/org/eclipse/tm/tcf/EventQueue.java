@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -34,7 +34,7 @@ class EventQueue implements IEventQueue, Runnable {
     EventQueue() {
         thread = new Thread(this);
         thread.setDaemon(true);
-        thread.setName("TCF Event Dispatch");
+        thread.setName("TCF Event Dispatch"); //$NON-NLS-1$
         // Need to monitor jobs to detect congestion
         Job.getJobManager().addJobChangeListener(new IJobChangeListener() {
 
@@ -60,11 +60,11 @@ class EventQueue implements IEventQueue, Runnable {
             }
         });
     }
-    
+
     void start() {
         thread.start();
     }
-    
+
     void shutdown() {
         try {
             synchronized (this) {
@@ -77,12 +77,12 @@ class EventQueue implements IEventQueue, Runnable {
             thread.join();
         }
         catch (Exception e) {
-            Protocol.log("Failed to shutdown TCF event dispatch thread", e);
+            Protocol.log("Failed to shutdown TCF event dispatch thread", e); //$NON-NLS-1$
         }
     }
 
     private void error(Throwable x) {
-        Protocol.log("Unhandled excetion in TCF event dispatch", x);
+        Protocol.log("Unhandled excetion in TCF event dispatch", x); //$NON-NLS-1$
     }
 
     public void run() {
@@ -107,7 +107,7 @@ class EventQueue implements IEventQueue, Runnable {
 
     public synchronized void invokeLater(final Runnable r) {
         assert r != null;
-        if (shutdown) throw new IllegalStateException("TCF event dispatch is shutdown");
+        if (shutdown) throw new IllegalStateException("TCF event dispatch is shutdown"); //$NON-NLS-1$
         queue.add(r);
         if (waiting) {
             waiting = false;
@@ -118,7 +118,7 @@ class EventQueue implements IEventQueue, Runnable {
     public boolean isDispatchThread() {
         return Thread.currentThread() == thread;
     }
-    
+
     public synchronized int getCongestion() {
         int l0 = job_cnt / 10 - 100;
         int l1 = queue.size() / 10 - 100;

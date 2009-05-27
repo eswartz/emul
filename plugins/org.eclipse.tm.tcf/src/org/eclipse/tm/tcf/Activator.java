@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -30,7 +30,7 @@ import org.osgi.framework.BundleListener;
  */
 public class Activator extends Plugin {
 
-    public static final String PLUGIN_ID = "org.eclipse.tm.tcf";
+    public static final String PLUGIN_ID = "org.eclipse.tm.tcf"; //$NON-NLS-1$
 
     private static Activator plugin;
     private static boolean debug;
@@ -62,7 +62,7 @@ public class Activator extends Plugin {
                     if (x != null) x.printStackTrace();
                 }
                 if (plugin != null && getLog() != null) {
-                    getLog().log(new Status(IStatus.ERROR, 
+                    getLog().log(new Status(IStatus.ERROR,
                             getBundle().getSymbolicName(), IStatus.OK, msg, x));
                 }
             }
@@ -87,7 +87,7 @@ public class Activator extends Plugin {
     @SuppressWarnings("unchecked")
     private void runTCFStartup() {
         try {
-            IExtensionPoint point = Platform.getExtensionRegistry().getExtensionPoint(PLUGIN_ID, "startup");
+            IExtensionPoint point = Platform.getExtensionRegistry().getExtensionPoint(PLUGIN_ID, "startup"); //$NON-NLS-1$
             IExtension[] extensions = point.getExtensions();
             for (int i = 0; i < extensions.length; i++) {
                 try {
@@ -103,12 +103,12 @@ public class Activator extends Plugin {
                     }
                 }
                 catch (Throwable x) {
-                    Protocol.log("TCF startup error", x);
+                    Protocol.log("TCF startup error", x); //$NON-NLS-1$
                 }
             }
         }
         catch (Exception x) {
-            Protocol.log("TCF startup error", x);
+            Protocol.log("TCF startup error", x); //$NON-NLS-1$
         }
     }
 }
