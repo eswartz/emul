@@ -30,6 +30,7 @@
 #include "myalloc.h"
 #include "test.h"
 #include "cmdline.h"
+#include "channel_tcp.h"
 
 static char * progname;
 static Protocol * proto;
@@ -127,6 +128,11 @@ int main(int argc, char ** argv) {
 
             case 'd':
                 daemon = 1;
+                break;
+
+            case 'c':
+                generate_ssl_certificate();
+                exit(0);
                 break;
 
             case 'l':

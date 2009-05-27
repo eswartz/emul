@@ -23,6 +23,9 @@
 #if ENABLE_SSL
 #  include <openssl/ssl.h>
 #  include <fcntl.h>
+#  ifndef _MSC_VER
+#    include <dirent.h>
+#  endif
 #else
    typedef void SSL;
 #endif
@@ -32,6 +35,7 @@
 #include "discovery.h"
 #include "myalloc.h"
 #include "protocol.h"
+#include "errors.h"
 #include "events.h"
 #include "exceptions.h"
 #include "trace.h"
@@ -95,6 +99,57 @@ struct ServerTCP {
 static LINK server_list;
 static void tcp_channel_read_done(void * x);
 static void handle_channel_msg(void * x);
+
+#if ENABLE_SSL
+#define ERR_SSL (STD_ERR_BASE + 200)
+static const char * issuer_name = "TCF";
+static char * tcf_dir = "/etc/tcf";
+static SSL_CTX * ssl_ctx = NULL;
+static X509 * ssl_cert = NULL;
+static RSA * rsa_key = NULL;
+
+static void ini_ssl(void) {
+    static int inited = 0;
+    if (inited) return;
+    OpenSSL_add_all_algorithms();
+    SSL_load_error_strings();
+    SSL_library_init();
+    while (!RAND_status()) {
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        RAND_add(&ts.tv_nsec, sizeof(ts.tv_nsec), 0.1);
+    }
+    inited = 1;
+}
+
+static int certificate_verify_callback(int preverify_ok, X509_STORE_CTX * ctx) {
+    char fnm[FILE_PATH_SIZE];
+    DIR * dir = NULL;
+    int err = 0;
+    int found = 0;
+
+    snprintf(fnm, sizeof(fnm), "%s/ssl", tcf_dir);
+    if (!err && (dir = opendir(fnm)) == NULL) err = errno;
+    while (!err && !found) {
+        int l = 0;
+        X509 * cert = NULL;
+        FILE * fp = NULL;
+        struct dirent * ent = readdir(dir);
+        if (ent == NULL) break;
+        l = strlen(ent->d_name);
+        if (l < 5 || strcmp(ent->d_name + l -5 , ".cert") != 0) continue;
+        snprintf(fnm, sizeof(fnm), "%s/ssl/%s", tcf_dir, ent->d_name);
+        if (!err && (fp = fopen(fnm, "r")) == NULL) err = errno;
+        if (!err && (cert = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL) err = ERR_SSL;
+        if (!err && fclose(fp) != 0) err = errno;
+        if (!err && X509_cmp(X509_STORE_CTX_get_current_cert(ctx), cert) == 0) found = 1;
+    }
+    if (dir != NULL && closedir(dir) < 0 && !err) err = errno;
+    if (err) trace(LOG_ALWAYS, "Cannot read certificate: %s",
+        err == ERR_SSL ? (char *)ERR_error_string(ERR_get_error(), NULL) : (char *)errno_to_str(err));
+    return err == 0 && found;
+}
+#endif
 
 static void delete_channel(ChannelTCP * c) {
     trace(LOG_PROTOCOL, "Deleting channel 0x%08x", c);
@@ -173,7 +228,8 @@ static void tcp_flush_stream(OutputStream * out) {
                     tv.tv_usec = 0;
                     if (select(c->socket + 1, &readfds, &writefds, &errorfds, &tv) >= 0) continue;
                 }
-                trace(LOG_ALWAYS, "Can't SSL_write() on channel 0x%08x: %d", c, err);
+                trace(LOG_ALWAYS, "Can't SSL_write() on channel 0x%08x: %s", c,
+                    ERR_error_string(ERR_get_error(), NULL));
                 c->out_errno = EIO;
                 return;
             }
@@ -402,7 +458,8 @@ static void tcp_channel_read_done(void * x) {
                     tcp_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
                     return;
                 }
-                trace(LOG_ALWAYS, "Can't SSL_read() on channel 0x%08x: %d", c, err);
+                trace(LOG_ALWAYS, "Can't SSL_read() on channel 0x%08x: %s", c,
+                    ERR_error_string(ERR_get_error(), NULL));
                 len = 0;
             }
         }
@@ -447,9 +504,10 @@ static void start_channel(Channel * channel) {
     ibuf_trigger_read(&c->ibuf);
 }
 
-static ChannelTCP * create_channel(int sock, int ssl, int server) {
+static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
     const int i = 1;
     ChannelTCP * c = NULL;
+    SSL * ssl = NULL;
 
     assert(sock >= 0);
     if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&i, sizeof(i)) < 0) {
@@ -467,88 +525,51 @@ static ChannelTCP * create_channel(int sock, int ssl, int server) {
         return NULL;
     }
 
-    c = loc_alloc_zero(sizeof *c);
-    c->magic = CHANNEL_MAGIC;
-
-    if (ssl) {
+    if (en_ssl) {
 #if ENABLE_SSL
-        static SSL_CTX * ssl_ctx = NULL;
-        static X509 * cert = NULL;
-        static RSA * rsa_key = NULL;
         long opts = 0;
 
         if (ssl_ctx == NULL) {
-            OpenSSL_add_all_algorithms();
-            SSL_load_error_strings();
-            SSL_library_init();
-            while (!RAND_status()) {
-                struct timespec ts;
-                clock_gettime(CLOCK_REALTIME, &ts);
-                RAND_add(&ts.tv_nsec, sizeof(ts.tv_nsec), 0.1);
-            }
+            ini_ssl();
             ssl_ctx = SSL_CTX_new(SSLv23_method());
+            SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, certificate_verify_callback);
         }
 
-        if (cert == NULL) {
-            const char * subject_name = "TCF";
-            const char * issuer_name = "TCF";
-            RSA * rsa = RSA_generate_key(512, 3, NULL, "RSA");
-            EVP_PKEY * public_key = NULL;
-            ASN1_INTEGER * serial = NULL;
-            X509_NAME * name = NULL;
-            int err = rsa == NULL;
-
-            if (!err && !RSA_check_key(rsa)) err = 1;
-            if (!err) {
-                public_key = EVP_PKEY_new();
-                EVP_PKEY_assign_RSA(public_key, rsa);
-                cert = X509_new();
-                X509_set_version(cert, 2L);
-                serial = ASN1_INTEGER_new();
-                ASN1_INTEGER_set(serial, 1);
-                X509_set_serialNumber(cert, serial);
-                ASN1_INTEGER_free(serial);
-                X509_gmtime_adj(X509_get_notBefore(cert), 0L);
-                X509_gmtime_adj(X509_get_notAfter(cert), 60 * 60 *24 * 365L);
-                name = X509_get_subject_name(cert);
-                X509_NAME_add_entry_by_txt(name, "commonName", MBSTRING_ASC,
-                    (unsigned char *)subject_name, strlen(subject_name), -1, 0);
-                name = X509_get_issuer_name(cert);
-                X509_NAME_add_entry_by_txt(name, "commonName", MBSTRING_ASC,
-                    (unsigned char *)issuer_name, strlen(issuer_name), -1, 0);
-            }
-            if (!err && !X509_set_pubkey(cert, public_key)) err = 1;
-            if (!err) X509_sign(cert, public_key, EVP_md5());
-            if (!err && !X509_verify(cert, public_key)) err = 1;
+        if (ssl_cert == NULL) {
+            int err = 0;
+            char fnm[FILE_PATH_SIZE];
+            FILE * fp = NULL;
+            snprintf(fnm, sizeof(fnm), "%s/ssl/local.priv", tcf_dir);
+            if (!err && (fp = fopen(fnm, "r")) == NULL) err = errno;
+            if (!err && (rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL)) == NULL) err = ERR_SSL;
+            if (!err && fclose(fp) != 0) err = errno;
+            snprintf(fnm, sizeof(fnm), "%s/ssl/local.cert", tcf_dir);
+            if (!err && (fp = fopen(fnm, "r")) == NULL) err = errno;
+            if (!err && (ssl_cert = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL) err = ERR_SSL;
+            if (!err && fclose(fp) != 0) err = errno;
             if (err) {
-                trace(LOG_ALWAYS, "Cannot create server sertificate: %s", ERR_error_string(ERR_get_error(), NULL));
-                if (cert != NULL) X509_free(cert);
-                else if (rsa != NULL) RSA_free(rsa);
-                closesocket(sock);
-                loc_free(c);
-                errno = EINVAL;
-                cert = NULL;
+                trace(LOG_ALWAYS, "Cannot read server certificate: %s",
+                    err == ERR_SSL ? (char *)ERR_error_string(ERR_get_error(), NULL) : (char *)errno_to_str(err));
+                errno = ERR_SSL ? EINVAL : err;
                 return NULL;
             }
-            rsa_key = rsa;
         }
 
         if ((opts = fcntl(sock, F_GETFL, NULL)) < 0) return NULL;
         opts |= O_NONBLOCK;
         if (fcntl(sock, F_SETFL, opts) < 0) return NULL;
-        c->ssl = SSL_new(ssl_ctx);
-        SSL_set_fd(c->ssl, sock);
-        if (server) {
-            SSL_use_certificate(c->ssl, cert);
-            SSL_use_RSAPrivateKey(c->ssl, rsa_key);
-            SSL_set_accept_state(c->ssl);
-        }
-        else {
-            SSL_set_connect_state(c->ssl);
-        }
+        ssl = SSL_new(ssl_ctx);
+        SSL_set_fd(ssl, sock);
+        SSL_use_certificate(ssl, ssl_cert);
+        SSL_use_RSAPrivateKey(ssl, rsa_key);
+        if (server) SSL_set_accept_state(ssl);
+        else SSL_set_connect_state(ssl);
 #endif
     }
 
+    c = loc_alloc_zero(sizeof *c);
+    c->magic = CHANNEL_MAGIC;
+    c->ssl = ssl;
     c->chan.inp.read = tcp_read_stream;
     c->chan.inp.peek = tcp_peek_stream;
     c->chan.out.write = tcp_write_stream;
@@ -872,4 +893,66 @@ void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void 
         info->req.u.con.addrlen = info->peer_addr_len;
         async_req_post(&info->req);
     }
+}
+
+void generate_ssl_certificate(void) {
+#if ENABLE_SSL
+    char subject_name[256];
+    char fnm[FILE_PATH_SIZE];
+    X509 * cert = NULL;
+    RSA * rsa = NULL;
+    EVP_PKEY * rsa_key = NULL;
+    ASN1_INTEGER * serial = NULL;
+    X509_NAME * name = NULL;
+    int err = 0;
+    struct_stat st;
+    FILE * fp;
+
+    ini_ssl();
+    if (!err && (rsa = RSA_generate_key(2048, 3, NULL, "RSA")) == NULL) err = ERR_SSL;
+    if (!err && !RSA_check_key(rsa)) err = ERR_SSL;
+    if (!err && gethostname(subject_name, sizeof(subject_name)) != 0) err = errno;
+    if (!err) {
+        rsa_key = EVP_PKEY_new();
+        EVP_PKEY_assign_RSA(rsa_key, rsa);
+        cert = X509_new();
+        X509_set_version(cert, 2L);
+        serial = ASN1_INTEGER_new();
+        ASN1_INTEGER_set(serial, 1);
+        X509_set_serialNumber(cert, serial);
+        ASN1_INTEGER_free(serial);
+        X509_gmtime_adj(X509_get_notBefore(cert), 0L);
+        X509_gmtime_adj(X509_get_notAfter(cert), 60 * 60 * 24 * 365L * 10L);
+        name = X509_get_subject_name(cert);
+        X509_NAME_add_entry_by_txt(name, "commonName", MBSTRING_ASC,
+            (unsigned char *)subject_name, strlen(subject_name), -1, 0);
+        name = X509_get_issuer_name(cert);
+        X509_NAME_add_entry_by_txt(name, "commonName", MBSTRING_ASC,
+            (unsigned char *)issuer_name, strlen(issuer_name), -1, 0);
+    }
+    if (!err && !X509_set_pubkey(cert, rsa_key)) err = ERR_SSL;
+    if (!err) X509_sign(cert, rsa_key, EVP_md5());
+    if (!err && !X509_verify(cert, rsa_key)) err = ERR_SSL;
+    if (stat(tcf_dir, &st) != 0 && mkdir(tcf_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) err = errno;
+    snprintf(fnm, sizeof(fnm), "%s/ssl", tcf_dir);
+    if (stat(fnm, &st) != 0 && mkdir(fnm, S_IRWXU) != 0) err = errno;
+    snprintf(fnm, sizeof(fnm), "%s/ssl/local.priv", tcf_dir);
+    if (!err && (fp = fopen(fnm, "w")) == NULL) err = errno;
+    if (!err && !PEM_write_PKCS8PrivateKey(fp, rsa_key, NULL, NULL, 0, NULL, NULL)) err = ERR_SSL;
+    if (!err && fclose(fp) != 0) err = errno;
+    if (!err && chmod(fnm, S_IRWXU) != 0) err = errno;
+    snprintf(fnm, sizeof(fnm), "%s/ssl/local.cert", tcf_dir);
+    if (!err && (fp = fopen(fnm, "w")) == NULL) err = errno;
+    if (!err && !PEM_write_X509(fp, cert)) err = ERR_SSL;
+    if (!err && fclose(fp) != 0) err = errno;
+    if (!err && chmod(fnm, S_IRWXU) != 0) err = errno;
+    if (err) {
+        fprintf(stderr, "Cannot create server certificate: %s\n",
+            err == ERR_SSL ? (char *)ERR_error_string(ERR_get_error(), NULL) : (char *)errno_to_str(err));
+    }
+    if (cert != NULL) X509_free(cert);
+    if (rsa != NULL) RSA_free(rsa);
+#else
+    fprintf(stderr, "SSL support not available\n");
+#endif
 }

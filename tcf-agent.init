@@ -16,7 +16,7 @@ DAEMON_NAME=`basename $DAEMON_PATH`
 # Determine which kind of configuration we're using
 #
 system=unknown
-if [ -f /etc/redhat-release ]; then
+if [ -f /etc/redhat-release -o -f /etc/fedora-release ]; then
     system=redhat
 else
     echo "$0: Unknown system, please port and contact dsdp-tcf-dev@eclipse.org" 1>&2

@@ -33,4 +33,9 @@ extern ChannelServer * channel_tcp_server(PeerServer * server);
  */
 extern void channel_tcp_connect(PeerServer * server, ChannelConnectCallBack callback, void * callback_args);
 
+/*
+ * Generate SSL certificate to be used with SSL channels.
+ */
+extern void generate_ssl_certificate(void);
+
 #endif

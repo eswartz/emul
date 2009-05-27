@@ -73,8 +73,8 @@ clean:
 
 install: all
 	install -d -m 755 $(INSTALLROOT)$(SBIN)
+	install -d -m 755 $(INSTALLROOT)$(INIT)
 	install -c $(BINDIR)/agent -m 755 $(INSTALLROOT)$(SBIN)/tcf-agent
-	install -d -m 755 $(INSTALLROOT)/$(INIT)
 	install -c tcf-agent.init -m 755 $(INSTALLROOT)$(INIT)/tcf-agent
 
 tcf-agent-$(VERSION).tar.bz2: $(HFILES) $(CFILES) Makefile tcf-agent.spec tcf-agent.init

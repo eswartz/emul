@@ -28,14 +28,13 @@ rm -rf $RPM_BUILD_ROOT
 make all CONF=Release 
 
 %install
-mkdir -p -m755 $RPM_BUILD_ROOT/etc/init.d
-mkdir -p -m755 $RPM_BUILD_ROOT%{_sbindir}
 make install CONF=Release INSTALLROOT=$RPM_BUILD_ROOT SBIN=%{_sbindir}
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 
 %post
+%{_sbindir}/tcf-agent -c
 chkconfig --add %{name}
 /sbin/service %{name} start > /dev/null 2>&1 || :
 
