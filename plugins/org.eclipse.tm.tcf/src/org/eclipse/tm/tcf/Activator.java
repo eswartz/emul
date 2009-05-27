@@ -17,8 +17,10 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.tm.tcf.core.ChannelTCP;
 import org.eclipse.tm.tcf.protocol.ILogger;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.ssl.TCFSecurityManager;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleEvent;
@@ -50,10 +52,20 @@ public class Activator extends Plugin {
         plugin = this;
     }
 
+    /**
+     * Returns the shared instance
+     *
+     * @return the shared instance
+     */
+    public static Activator getDefault() {
+        return plugin;
+    }
+
     @Override
     public void start(BundleContext context) throws Exception {
         super.start(context);
         debug = Platform.inDebugMode();
+        ChannelTCP.setSSLContext(TCFSecurityManager.createSSLContext());
         Protocol.setLogger(new ILogger() {
 
             public void log(String msg, Throwable x) {

@@ -368,6 +368,7 @@ public abstract class AbstractChannel implements IChannel {
             public void run() {
                 try {
                     if (proxy != null) return;
+                    if (state == STATE_CLOSED) return;
                     ServiceManager.onChannelCreated(AbstractChannel.this, local_service_by_name);
                     makeServiceByClassMap(local_service_by_name, local_service_by_class);
                     Object[] args = new Object[]{ local_service_by_name.keySet() };  

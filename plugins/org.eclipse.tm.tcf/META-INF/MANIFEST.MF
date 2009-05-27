@@ -10,3 +10,4 @@ Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Eclipse-LazyStart: true
 Eclipse-ExtensibleAPI: true
+Export-Package: org.eclipse.tm.tcf.ssl;version="0.2.0"

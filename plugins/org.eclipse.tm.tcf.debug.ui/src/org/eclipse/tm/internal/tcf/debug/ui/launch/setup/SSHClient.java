@@ -56,7 +56,7 @@ class SSHClient extends AbstractRemoteShell {
         channel.setInputStream(inp.inp);
         channel.setOutputStream(out.out);
         this.out = new PrintWriter(inp.out, true);
-        this.inp = new BufferedReader(new InputStreamReader(new TimeOutInputStream(out.inp, 512, 30000), "UTF-8"));
+        this.inp = new BufferedReader(new InputStreamReader(new TimeOutInputStream(out.inp, 512, 60000), "UTF-8"));
         channel.connect(30000);
         write("export PS1=\"" + PROMPT + "\"\n");
         expect(PROMPT + "\"\n");

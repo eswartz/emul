@@ -10,8 +10,15 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.launch.setup;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
@@ -35,6 +42,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.tcf.core.Base64;
+import org.eclipse.tm.tcf.ssl.TCFSecurityManager;
 import org.osgi.framework.Bundle;
 
 class WizardLogPage extends WizardPage implements Runnable {
@@ -123,9 +131,7 @@ class WizardLogPage extends WizardPage implements Runnable {
                 s = waitPrompt();
                 if (s.length() > 0) throw new Exception(s);
             }
-            send("cd /tmp", true);
-            s = waitPrompt();
-            if (s.length() > 0) throw new Exception(s);
+            exec("cd /tmp");
             send("uname -o", true);
             String os = waitPrompt().replace('\n', ' ').trim();
             send("uname -m", true);
@@ -151,16 +157,12 @@ class WizardLogPage extends WizardPage implements Runnable {
             s = waitPrompt();
             if (s.length() > 0) throw new Exception(s);
 
-            send("chmod u+x get-os-tag", true);
-            s = waitPrompt();
-            if (s.length() > 0) throw new Exception(s);
+            exec("chmod u+x get-os-tag");
             
             send("./get-os-tag", true);
             String os_tag = waitPrompt().replace('\n', ' ').trim();
             
-            send("rm -f get-os-tag", true);
-            s = waitPrompt();
-            if (s.length() > 0) throw new Exception(s);
+            exec("rm -f get-os-tag");
             
             url = null;
             String fnm = null;
@@ -228,12 +230,23 @@ class WizardLogPage extends WizardPage implements Runnable {
             
             send("rpm -e tcf-agent", true);
             waitPrompt();
-            send("rpm -i " + fnm, true);
-            s = waitPrompt();
-            if (s.length() > 0) throw new Exception(s);
-            send("rm -f " + fnm, true);
-            s = waitPrompt();
-            if (s.length() > 0) throw new Exception(s);
+            exec("rpm -i " + fnm);
+            exec("rm -f " + fnm);
+            
+            File certs = TCFSecurityManager.getCertificatesDirectory();
+
+            File local_cert = new File(certs, "local.cert");
+            File local_priv = new File(certs, "local.priv");
+            
+            if (!local_cert.exists() || !local_priv.exists()) {
+                copyRemoteSecret("local.cert", local_cert);
+                copyRemoteSecret("local.priv", local_priv);
+                exec("/usr/sbin/tcf-agent -c");
+            }
+            
+            copyRemoteSecret("local.cert", new File(certs, host + ".cert"));
+            copyLocalSecret(local_cert, InetAddress.getLocalHost().getHostName() + ".cert");
+            
             if (!user.equals("root")) {
                 send("exit", true);
                 waitPrompt();
@@ -252,6 +265,30 @@ class WizardLogPage extends WizardPage implements Runnable {
             }
         }
         done(error);
+    }
+    
+    private void copyRemoteSecret(String from, File to) throws Exception {
+        send("cat /etc/tcf/ssl/" + from, true);
+        String s = waitPrompt();
+        if (s.indexOf("-----BEGIN ") != 0) throw new Exception(s);
+        BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(to), "ASCII"));
+        wr.write(s);
+        wr.close();
+    }
+    
+    private void copyLocalSecret(File from, String to) throws Exception {
+        send("cat >/etc/tcf/ssl/" + to, true);
+        BufferedReader rd = new BufferedReader(new InputStreamReader(
+                new FileInputStream(from), "ASCII"));
+        for (;;) {
+            String s = rd.readLine();
+            if (s == null) break;
+            send(s, true);
+        }
+        shell.write("\004");
+        String s = waitPrompt();
+        if (s.length() > 0) throw new Exception(s);
     }
     
     private void send(final String s, boolean log) throws IOException {
@@ -304,6 +341,12 @@ class WizardLogPage extends WizardPage implements Runnable {
             });
         }
         return s;
+    }
+    
+    private void exec(String cmd) throws Exception {
+        send(cmd, true);
+        String s = waitPrompt();
+        if (s.length() > 0) throw new Exception(s);
     }
     
     private void done(final Throwable error) {
