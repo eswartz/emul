@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.tm.tcf.internal.extensions.TcfServiceProvidersExtensionPointManager;
 import org.eclipse.tm.tcf.core.ChannelTCP;
 import org.eclipse.tm.tcf.protocol.ILogger;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -48,9 +49,13 @@ public class Activator extends Plugin {
         }
     };
 
+    /**
+     * Constructor.
+     */
     public Activator() {
         plugin = this;
     }
+
 
     /**
      * Returns the shared instance
@@ -58,9 +63,12 @@ public class Activator extends Plugin {
      * @return the shared instance
      */
     public static Activator getDefault() {
-        return plugin;
+            return plugin;
     }
 
+    /* (non-Javadoc)
+     * @see org.eclipse.core.runtime.Plugin#start(org.osgi.framework.BundleContext)
+     */
     @Override
     public void start(BundleContext context) throws Exception {
         super.start(context);
@@ -88,6 +96,9 @@ public class Activator extends Plugin {
         context.addBundleListener(bundle_listener);
     }
 
+    /* (non-Javadoc)
+     * @see org.eclipse.core.runtime.Plugin#stop(org.osgi.framework.BundleContext)
+     */
     @Override
     public void stop(BundleContext context) throws Exception {
         context.removeBundleListener(bundle_listener);
@@ -122,5 +133,8 @@ public class Activator extends Plugin {
         catch (Exception x) {
             Protocol.log("TCF startup error", x); //$NON-NLS-1$
         }
+
+        // Register service providers contributed via Eclipse extension point
+        TcfServiceProvidersExtensionPointManager.getInstance().registerServiceProviders();
     }
 }

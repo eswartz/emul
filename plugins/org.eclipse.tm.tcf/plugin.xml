@@ -3,5 +3,6 @@
 <plugin>
 
    <extension-point id="startup" name="TCF Startup" schema="schema/startup.exsd"/>
+   <extension-point id="serviceProviders" name="TCF Service Providers" schema="schema/serviceProviders.exsd"/>
 
 </plugin>
