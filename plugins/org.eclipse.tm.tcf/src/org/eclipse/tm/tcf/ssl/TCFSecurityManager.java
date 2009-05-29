@@ -43,7 +43,7 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 public class TCFSecurityManager {
     
     public static File getCertificatesDirectory() {
-        File certs = Activator.getDefault().getStateLocation().append("certificates").toFile();
+        File certs = Activator.getDefault().getStateLocation().append("certificates").toFile(); //$NON-NLS-1$
         if (!certs.exists()) certs.mkdirs();
         return certs;
     }
@@ -52,13 +52,13 @@ public class TCFSecurityManager {
         try {
             final File certs = getCertificatesDirectory();
             if (!certs.exists()) certs.mkdirs();
-            final CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            SSLContext context = SSLContext.getInstance("TLS");
+            final CertificateFactory cf = CertificateFactory.getInstance("X.509"); //$NON-NLS-1$
+            SSLContext context = SSLContext.getInstance("TLS"); //$NON-NLS-1$
             
             X509ExtendedKeyManager km = new X509ExtendedKeyManager() {
 
                 public X509Certificate[] getCertificateChain(String alias) {
-                    File f = new File(certs, "Local.cert");
+                    File f = new File(certs, "Local.cert"); //$NON-NLS-1$
                     try {
                         InputStream inp = new BufferedInputStream(new FileInputStream(f));
                         X509Certificate cert = (X509Certificate)cf.generateCertificate(inp);
@@ -66,76 +66,76 @@ public class TCFSecurityManager {
                         return new X509Certificate[] { cert };
                     }
                     catch (Exception x) {
-                        Protocol.log("Cannot read certificate: " + f, x);
+                        Protocol.log("Cannot read certificate: " + f, x); //$NON-NLS-1$
                         return null;
                     }
                 }
                 
                 public PrivateKey getPrivateKey(String alias) {
-                    File f = new File(certs, "Local.priv");
+                    File f = new File(certs, "Local.priv"); //$NON-NLS-1$
                     try {
-                        BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(f), "ASCII"));
+                        BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(f), "ASCII")); //$NON-NLS-1$
                         StringBuffer bf = new StringBuffer();
                         boolean app = false;
                         for (;;) {
                             String s = r.readLine();
-                            if (s == null) new Exception("Invalid format");
-                            else if (s.indexOf("-----BEGIN ") == 0) app = true;
-                            else if (s.indexOf("-----END ") == 0) break;
+                            if (s == null) new Exception("Invalid format"); //$NON-NLS-1$
+                            else if (s.indexOf("-----BEGIN ") == 0) app = true; //$NON-NLS-1$
+                            else if (s.indexOf("-----END ") == 0) break; //$NON-NLS-1$
                             else if (app) bf.append(s); 
                         }
                         r.close();
-                        KeyFactory kf = KeyFactory.getInstance("RSA");
+                        KeyFactory kf = KeyFactory.getInstance("RSA"); //$NON-NLS-1$
                         byte[] bytes = Base64.toByteArray(bf.toString().toCharArray());
                         return kf.generatePrivate(new PKCS8EncodedKeySpec(bytes));
                     }
                     catch (Exception x) {
-                        Protocol.log("Cannot read private key: " + f, x);
+                        Protocol.log("Cannot read private key: " + f, x); //$NON-NLS-1$
                         return null;
                     }
                 }
                 
                 public String[] getClientAliases(String keyType, Principal[] issuers) {
-                    return new String[] { "TCF" };
+                    return new String[] { "TCF" }; //$NON-NLS-1$
                 }
                 
                 public String chooseClientAlias(String[] keyType, Principal[] issuers, Socket socket) {
-                    return "TCF";
+                    return "TCF"; //$NON-NLS-1$
                 }
                 
                 public String[] getServerAliases(String keyType, Principal[] issuers) {
-                    return new String[] { "TCF" };
+                    return new String[] { "TCF" }; //$NON-NLS-1$
                 }
                 
                 public String chooseServerAlias(String keyType, Principal[] issuers, Socket socket) {
-                    return "TCF";
+                    return "TCF"; //$NON-NLS-1$
                 }
             };
             
             X509TrustManager tm = new X509TrustManager() {
                 
                 public void checkClientTrusted(X509Certificate[] chain, String auth_type) throws CertificateException {
-                    if ("RSA".equals(auth_type) && chain != null && chain.length == 1) {
+                    if ("RSA".equals(auth_type) && chain != null && chain.length == 1) { //$NON-NLS-1$
                         for (X509Certificate cert : getAcceptedIssuers()) {
                             if (cert.equals(chain[0])) return;
                         }
                     }
-                    throw new CertificateException("Client certificate validation failed");
+                    throw new CertificateException("Client certificate validation failed"); //$NON-NLS-1$
                 }
                 
                 public void checkServerTrusted(X509Certificate[] chain, String auth_type) throws CertificateException {
-                    if ("RSA".equals(auth_type) && chain != null && chain.length == 1) {
+                    if ("RSA".equals(auth_type) && chain != null && chain.length == 1) { //$NON-NLS-1$
                         for (X509Certificate cert : getAcceptedIssuers()) {
                             if (cert.equals(chain[0])) return;
                         }
                     }
-                    throw new CertificateException("Server certificate validation failed");
+                    throw new CertificateException("Server certificate validation failed"); //$NON-NLS-1$
                 }
                 
                 public X509Certificate[] getAcceptedIssuers() {
                     ArrayList<X509Certificate> list = new ArrayList<X509Certificate>();
                     for (String fnm : certs.list()) {
-                        if (!fnm.endsWith(".cert")) continue;
+                        if (!fnm.endsWith(".cert")) continue; //$NON-NLS-1$
                         try {
                             InputStream inp = new BufferedInputStream(new FileInputStream(new File(certs, fnm)));
                             X509Certificate cert = (X509Certificate)cf.generateCertificate(inp);
@@ -143,7 +143,7 @@ public class TCFSecurityManager {
                             list.add(cert);
                         }
                         catch (Throwable x) {
-                            Protocol.log("Cannot load certificate: " + fnm, x);
+                            Protocol.log("Cannot load certificate: " + fnm, x); //$NON-NLS-1$
                         }
                     }
                     return list.toArray(new X509Certificate[list.size()]);
@@ -154,7 +154,7 @@ public class TCFSecurityManager {
             return context;
         }
         catch (Throwable x) {
-            Protocol.log("Cannot initialize SSL context", x);
+            Protocol.log("Cannot initialize SSL context", x); //$NON-NLS-1$
             return null;
         }
     }
