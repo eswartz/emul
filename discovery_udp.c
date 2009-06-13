@@ -650,6 +650,7 @@ static SlaveInfo * add_slave(struct sockaddr_in * addr, time_t timestamp) {
     s = slave_info + slave_cnt++;
     s->addr = *addr;
     s->last_packet_time = timestamp;
+    s->last_req_slaves_time = time(NULL);
     udp_send_req_info(addr);
     udp_send_all(addr, s);
     udp_send_ack_slaves_one(s);
