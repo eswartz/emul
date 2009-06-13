@@ -38,6 +38,10 @@ typedef void (*ProtocolMessageHandler)(Channel *, char **, int);
 typedef void (*ProtocolCommandHandler)(char *, Channel *);
 typedef void (*ProtocolEventHandler)(Channel *);
 
+typedef void (*ProtocolMessageHandler2)(Channel *, char **, int, void * client_data);
+typedef void (*ProtocolCommandHandler2)(char *, Channel *, void * client_data);
+typedef void (*ProtocolEventHandler2)(Channel *, void * client_data);
+
 /*
  * Callback fucntion for replies of commands.  If error is non-zero
  * then no data should be read of the input steam.
@@ -70,6 +74,7 @@ extern ServiceInfo * protocol_get_service(void * owner, const char * name);
  * specified protocl, that belongs to 'service' and has name 'name'.
  */
 extern void add_command_handler(Protocol *, const char * service, const char * name, ProtocolCommandHandler handler);
+extern void add_command_handler2(Protocol *, const char * service, const char * name, ProtocolCommandHandler2 handler, void * client_data);
 
 /*
  * Register event message handler.
@@ -77,6 +82,7 @@ extern void add_command_handler(Protocol *, const char * service, const char * n
  * specified channel, that belongs to 'service' and has name 'name'.
  */
 extern void add_event_handler(Channel *, const char * service, const char * name, ProtocolEventHandler handler);
+extern void add_event_handler2(Channel *, const char * service, const char * name, ProtocolEventHandler2 handler, void * client_data);
 
 /*
  * Set protocol default message handler.
@@ -84,6 +90,7 @@ extern void add_event_handler(Channel *, const char * service, const char * name
  * assigned by add_command_handler() or add_event_handler()
  */
 extern void set_default_message_handler(Protocol *, ProtocolMessageHandler handler);
+extern void set_default_message_handler2(Protocol *, ProtocolMessageHandler2 handler, void * client_data);
 
 /*
  * Send command header and register reply handler and associated client data.

@@ -45,7 +45,8 @@ struct MessageHandlerInfo {
     Protocol * p;
     ServiceInfo * service;
     const char * name;
-    ProtocolCommandHandler handler;
+    ProtocolCommandHandler2 handler;
+    void * client_data;
     struct MessageHandlerInfo * next;
 };
 
@@ -55,7 +56,8 @@ struct EventHandlerInfo {
     Channel * c;
     ServiceInfo * service;
     const char * name;
-    ProtocolEventHandler handler;
+    ProtocolEventHandler2 handler;
+    void * client_data;
     struct EventHandlerInfo * next;
 };
 
@@ -82,7 +84,8 @@ static int ini_done = 0;
 struct Protocol {
     int lock_cnt;           /* Lock count, cannot delete when > 0 */
     unsigned long tokenid;
-    ProtocolMessageHandler default_handler;
+    ProtocolMessageHandler2 default_handler;
+    void * client_data;
 };
 
 static void read_stringz(InputStream * inp, char * str, size_t size) {
@@ -220,7 +223,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
                     args[1] = token;
                     args[2] = service;
                     args[3] = name;
-                    p->default_handler(c, args, 4);
+                    p->default_handler(c, args, 4, p->client_data);
                 }
                 else {
                     trace(LOG_PROTOCOL, "Command is not recognized: %s %s ...", service, name);
@@ -231,7 +234,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
                 }
             }
             else {
-                mh->handler(token, c);
+                mh->handler(token, c, mh->client_data);
             }
             clear_trap(&trap);
         }
@@ -256,7 +259,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
                 if (p->default_handler != NULL) {
                     args[0] = type;
                     args[1] = token;
-                    p->default_handler(c, args, 2);
+                    p->default_handler(c, args, 2, p->client_data);
                 }
                 else {
                     trace(LOG_ALWAYS, "Reply with unexpected token: %s", token);
@@ -296,10 +299,10 @@ void handle_protocol_message(Protocol * p, Channel * c) {
                     args[0] = type;
                     args[1] = service;
                     args[2] = name;
-                    p->default_handler(c, args, 3);
+                    p->default_handler(c, args, 3, p->client_data);
                 }
                 else if (eh != NULL) {
-                    eh->handler(c);
+                    eh->handler(c, eh->client_data);
                 }
                 else {
                     skip_until_EOM(c);
@@ -337,7 +340,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
     else {
         if (p->default_handler != NULL) {
             args[0] = type;
-            p->default_handler(c, args, 1);
+            p->default_handler(c, args, 1, p->client_data);
             return;
         }
         trace(LOG_ALWAYS, "Invalid TCF message: %s ...", type);
@@ -345,28 +348,59 @@ void handle_protocol_message(Protocol * p, Channel * c) {
     }
 }
 
+static void message_handler_old(Channel * c, char ** args, int nargs, void * client_data) {
+	ProtocolMessageHandler handler = client_data;
+	handler(c, args, nargs);
+}
+
 void set_default_message_handler(Protocol *p, ProtocolMessageHandler handler) {
+    set_default_message_handler2(p, message_handler_old, handler);
+}
+
+void set_default_message_handler2(Protocol *p, ProtocolMessageHandler2 handler, void * client_data) {
     p->default_handler = handler;
+    p->client_data = client_data;
+}
+
+static void command_handler_old(char * token, Channel * c, void * client_data)
+{
+    ProtocolCommandHandler handler = client_data;
+    handler(token, c);
 }
 
 void add_command_handler(Protocol * p, const char * service, const char * name, ProtocolCommandHandler handler) {
+    add_command_handler2(p, service, name, command_handler_old, handler);
+}
+
+void add_command_handler2(Protocol * p, const char * service, const char * name, ProtocolCommandHandler2 handler, void * client_data) {
     unsigned h = message_hash(p, service, name);
     MessageHandlerInfo * mh = (MessageHandlerInfo *)loc_alloc(sizeof(MessageHandlerInfo));
     mh->p = p;
     mh->service = protocol_get_service(p, service);
     mh->name = name;
     mh->handler = handler;
+    mh->client_data = client_data;
     mh->next = message_handlers[h];
     message_handlers[h] = mh;
 }
 
+static void event_handler_old(Channel * c, void * client_data) {
+    ProtocolEventHandler handler = client_data;
+    handler(c);
+}
+
 void add_event_handler(Channel * c, const char * service, const char * name, ProtocolEventHandler handler) {
+    add_event_handler2(c, service, name, event_handler_old, handler);
+}
+
+void add_event_handler2(Channel * c, const char * service, const char * name, ProtocolEventHandler2 handler, void * client_data) {
     unsigned h = event_hash(c, service, name);
     EventHandlerInfo * eh = (EventHandlerInfo *)loc_alloc(sizeof(EventHandlerInfo));
     eh->c = c;
     eh->service = protocol_get_service(c, service);
     eh->name = name;
     eh->handler = handler;
+    eh->client_data = client_data;
     eh->next = event_handlers[h];
     event_handlers[h] = eh;
 }
