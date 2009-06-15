@@ -386,10 +386,11 @@ static void command_attach(char * token, Channel * c) {
         AttachDoneArgs * data = loc_alloc_zero(sizeof *data);
         data->c = c;
         strcpy(data->token, token);
-        stream_lock(c);
-        if (context_attach(pid, attach_done, data, 0) == 0) return;
+        if (context_attach(pid, attach_done, data, 0) == 0) {
+            stream_lock(c);
+            return;
+        }
         err = errno;
-        stream_unlock(c);
         loc_free(data);
     }
     write_stringz(&c->out, "R");
@@ -1140,11 +1141,12 @@ static void command_start(char * token, Channel * c) {
             AttachDoneArgs * data = loc_alloc_zero(sizeof *data);
             data->c = c;
             strcpy(data->token, token);
-            stream_lock(c);
             pending = context_attach(pid, start_done, data, selfattach) == 0;
-            if (!pending) {
+            if (pending) {
+                stream_lock(c);
+            }
+            else {
                 err = errno;
-                stream_unlock(c);
                 loc_free(data);
             }
         }

@@ -50,15 +50,19 @@ static void connect_done(void * args, int error, Channel * c2) {
     ConnectInfo * info = (ConnectInfo *)args;
     Channel * c1 = info->c1;
 
+    if (!is_stream_closed(c1)) {
+        if (error) {
+            fprintf(stderr, "cannot connect to peer: %s\n", dest_url);
+            channel_close(c1);
+        }
+        else {
+            proxy_create(c1, c2);
+        }
+    }
+    else if (!error) {
+        channel_close(c2);
+    }
     stream_unlock(c1);
-    if (error) {
-        fprintf(stderr, "cannot connect to peer: %s\n", dest_url);
-        channel_close(c1);
-    }
-    else {
-        proxy_create(c1, c2);
-        channel_start(c2);
-    }
     peer_server_free(info->ps);
     loc_free(info);
 }

@@ -112,10 +112,11 @@ static void command_run_test(char * token, Channel * c) {
         RunTestDoneArgs * data = loc_alloc_zero(sizeof(RunTestDoneArgs));
         data->c = c;
         strcpy(data->token, token);
-        stream_lock(c);
-        if (run_test_process(run_test_done, data) == 0) return;
+        if (run_test_process(run_test_done, data) == 0) {
+            stream_lock(c);
+            return;
+        }
         err = errno;
-        stream_unlock(c);
         loc_free(data);
 #else
         err = EINVAL;

@@ -105,12 +105,17 @@ static void channel_connected(void * args, int error, Channel * c2) {
     RedirectInfo * info = (RedirectInfo *)args;
     Channel * c1 = info->channel;
 
-    if (!error) proxy_create(c1, c2);
+    if (!is_stream_closed(c1)) {
+        if (!error) proxy_create(c1, c2);
 
-    write_stringz(&c1->out, "R");
-    write_stringz(&c1->out, info->token);
-    write_errno(&c1->out, error);
-    write_stream(&c1->out, MARKER_EOM);
+        write_stringz(&c1->out, "R");
+        write_stringz(&c1->out, info->token);
+        write_errno(&c1->out, error);
+        write_stream(&c1->out, MARKER_EOM);
+    }
+    else if (!error) {
+        channel_close(c2);
+    }
     stream_unlock(c1);
     loc_free(info);
 }

@@ -45,7 +45,7 @@ static const char * MEMORY = "Memory";
 
 #define BUF_SIZE    0x1000
 
-struct MemoryCommandArgs {
+typedef struct MemoryCommandArgs {
     Channel * c;
     char token[256];
     ContextAddress addr;
@@ -53,7 +53,7 @@ struct MemoryCommandArgs {
     int word_size;
     int mode;
     Context * ctx;
-};
+} MemoryCommandArgs;
 
 static void write_context(OutputStream * out, Context * ctx) {
     assert(!ctx->exited);
@@ -211,10 +211,10 @@ static void command_get_children(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
-static struct MemoryCommandArgs * read_command_args(char * token, Channel * c, int cmd) {
+static MemoryCommandArgs * read_command_args(char * token, Channel * c, int cmd) {
     int err = 0;
     char id[256];
-    struct MemoryCommandArgs buf;
+    MemoryCommandArgs buf;
     memset(&buf, 0, sizeof(buf));
 
     json_read_string(&c->inp, id, sizeof(id));
@@ -252,8 +252,8 @@ static struct MemoryCommandArgs * read_command_args(char * token, Channel * c, i
         return NULL;
     }
     else {
-        struct MemoryCommandArgs * args = (struct MemoryCommandArgs *)
-            loc_alloc(sizeof(struct MemoryCommandArgs));
+        MemoryCommandArgs * args = (MemoryCommandArgs *)
+            loc_alloc(sizeof(MemoryCommandArgs));
         *args = buf;
         args->c = c;
         strncpy(args->token, token, sizeof(args->token));
@@ -295,208 +295,220 @@ static void send_event_memory_changed(OutputStream * out, Context * ctx, Context
 }
 
 static void safe_memory_set(void * parm) {
-    struct MemoryCommandArgs * args = (struct MemoryCommandArgs *)parm;
+    MemoryCommandArgs * args = (MemoryCommandArgs *)parm;
     Channel * c = args->c;
-    InputStream * inp = &c->inp;
-    OutputStream * out = &c->out;
-    char * token = args->token;
-    ContextAddress addr0 = args->addr;
-    ContextAddress addr = args->addr;
-    unsigned long size = 0;
-    int word_size = args->word_size;
-    int mode = args->mode;
     Context * ctx = args->ctx;
-    char buf[BUF_SIZE];
-    int err = 0;
-    JsonReadBinaryState state;
 
-    if (ctx->exiting || ctx->exited) err = ERR_ALREADY_EXITED;
+    if (!is_stream_closed(c)) {
 
-    json_read_binary_start(&state, inp);
-    for (;;) {
-        int rd = json_read_binary_data(&state, buf, sizeof(buf));
-        if (rd == 0) break;
-        if (err == 0) {
-            /* TODO: word size, mode */
-            check_breakpoints_on_memory_write(ctx, addr, buf, rd);
-            if (context_write_mem(ctx, addr, buf, rd) < 0) {
-                err = errno;
+        InputStream * inp = &c->inp;
+        OutputStream * out = &c->out;
+        char * token = args->token;
+        ContextAddress addr0 = args->addr;
+        ContextAddress addr = args->addr;
+        unsigned long size = 0;
+        int word_size = args->word_size;
+        int mode = args->mode;
+        char buf[BUF_SIZE];
+        int err = 0;
+        JsonReadBinaryState state;
+
+        if (ctx->exiting || ctx->exited) err = ERR_ALREADY_EXITED;
+
+        json_read_binary_start(&state, inp);
+        for (;;) {
+            int rd = json_read_binary_data(&state, buf, sizeof(buf));
+            if (rd == 0) break;
+            if (err == 0) {
+                /* TODO: word size, mode */
+                check_breakpoints_on_memory_write(ctx, addr, buf, rd);
+                if (context_write_mem(ctx, addr, buf, rd) < 0) {
+                    err = errno;
+                }
+                else {
+                    addr += rd;
+                }
             }
-            else {
-                addr += rd;
-            }
+            size += rd;
         }
-        size += rd;
-    }
-    json_read_binary_end(&state);
-    if (read_stream(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        json_read_binary_end(&state);
+        if (read_stream(inp) != 0) exception(ERR_JSON_SYNTAX);
+        if (read_stream(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    send_event_memory_changed(&c->bcg->out, ctx, addr0, size);
+        send_event_memory_changed(&c->bcg->out, ctx, addr0, size);
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    write_errno(out, err);
-    if (err == 0) {
-        write_stringz(out, "null");
+        write_stringz(out, "R");
+        write_stringz(out, token);
+        write_errno(out, err);
+        if (err == 0) {
+            write_stringz(out, "null");
+        }
+        else {
+            write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
+        }
+        write_stream(out, MARKER_EOM);
+        flush_stream(out);
     }
-    else {
-        write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
-    }
-    write_stream(out, MARKER_EOM);
-    flush_stream(out);
     stream_unlock(c);
     context_unlock(ctx);
     loc_free(args);
 }
 
 static void command_set(char * token, Channel * c) {
-    struct MemoryCommandArgs * args = read_command_args(token, c, CMD_SET);
+    MemoryCommandArgs * args = read_command_args(token, c, CMD_SET);
     if (args != NULL) post_safe_event(args->ctx->mem, safe_memory_set, args);
 }
 
 static void safe_memory_get(void * parm) {
-    struct MemoryCommandArgs * args = (struct MemoryCommandArgs *)parm;
+    MemoryCommandArgs * args = (MemoryCommandArgs *)parm;
     Channel * c = args->c;
-    OutputStream * out = &args->c->out;
-    char * token = args->token;
-    ContextAddress addr0 = args->addr;
-    ContextAddress addr = args->addr;
-    unsigned long size = args->size;
-    int word_size = args->word_size;
-    int mode = args->mode;
     Context * ctx = args->ctx;
-    char buf[BUF_SIZE];
-    int err = 0;
-    JsonWriteBinaryState state;
 
-    if (ctx->exiting || ctx->exited) err = ERR_ALREADY_EXITED;
+    if (!is_stream_closed(c)) {
 
-    write_stringz(out, "R");
-    write_stringz(out, token);
+        OutputStream * out = &args->c->out;
+        char * token = args->token;
+        ContextAddress addr0 = args->addr;
+        ContextAddress addr = args->addr;
+        unsigned long size = args->size;
+        int word_size = args->word_size;
+        int mode = args->mode;
+        char buf[BUF_SIZE];
+        int err = 0;
+        JsonWriteBinaryState state;
 
-    json_write_binary_start(&state, out);
-    while (err == 0 && addr < addr0 + size) {
-        int rd = addr0 + size - addr;
-        if (rd > BUF_SIZE) rd = BUF_SIZE;
-        /* TODO: word size, mode */
-        if (context_read_mem(ctx, addr, buf, rd) < 0) {
-            err = errno;
+        if (ctx->exiting || ctx->exited) err = ERR_ALREADY_EXITED;
+
+        write_stringz(out, "R");
+        write_stringz(out, token);
+
+        json_write_binary_start(&state, out);
+        while (err == 0 && addr < addr0 + size) {
+            int rd = addr0 + size - addr;
+            if (rd > BUF_SIZE) rd = BUF_SIZE;
+            /* TODO: word size, mode */
+            if (context_read_mem(ctx, addr, buf, rd) < 0) {
+                err = errno;
+            }
+            else {
+                check_breakpoints_on_memory_read(ctx, addr, buf, rd);
+                json_write_binary_data(&state, buf, rd);
+                addr += rd;
+            }
+        }
+        json_write_binary_end(&state);
+        write_stream(out, 0);
+
+        write_errno(out, err);
+        if (err == 0) {
+            write_stringz(out, "null");
         }
         else {
-            check_breakpoints_on_memory_read(ctx, addr, buf, rd);
-            json_write_binary_data(&state, buf, rd);
-            addr += rd;
+            write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_READ, err);
         }
+        write_stream(out, MARKER_EOM);
+        flush_stream(out);
     }
-    json_write_binary_end(&state);
-    write_stream(out, 0);
-
-    write_errno(out, err);
-    if (err == 0) {
-        write_stringz(out, "null");
-    }
-    else {
-        write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_READ, err);
-    }
-    write_stream(out, MARKER_EOM);
-    flush_stream(out);
     stream_unlock(c);
     context_unlock(ctx);
     loc_free(args);
 }
 
 static void command_get(char * token, Channel * c) {
-    struct MemoryCommandArgs * args = read_command_args(token, c, CMD_GET);
+    MemoryCommandArgs * args = read_command_args(token, c, CMD_GET);
     if (args != NULL) post_safe_event(args->ctx->mem, safe_memory_get, args);
 }
 
 static void safe_memory_fill(void * parm) {
-    struct MemoryCommandArgs * args = (struct MemoryCommandArgs *)parm;
+    MemoryCommandArgs * args = (MemoryCommandArgs *)parm;
     Channel * c = args->c;
-    InputStream * inp = &c->inp;
-    OutputStream * out = &c->out;
-    char * token = args->token;
-    ContextAddress addr0 = args->addr;
-    ContextAddress addr = args->addr;
-    unsigned long size = args->size;
-    int word_size = args->word_size;
-    int mode = args->mode;
     Context * ctx = args->ctx;
-    char buf[0x1000];
-    int buf_pos = 0;
-    int err = 0;
 
-    if (ctx->exiting || ctx->exited) err = ERR_ALREADY_EXITED;
+    if (!is_stream_closed(c)) {
 
-    if (read_stream(inp) != '[') exception(ERR_JSON_SYNTAX);
-    if (peek_stream(inp) == ']') {
-        read_stream(inp);
-    }
-    else {
-        while (1) {
-            char ch;
-            if (err == 0) {
-                if (buf_pos >= sizeof(buf)) err = ERR_BUFFER_OVERFLOW;
-                else buf[buf_pos++] = (char)json_read_ulong(inp);
+        InputStream * inp = &c->inp;
+        OutputStream * out = &c->out;
+        char * token = args->token;
+        ContextAddress addr0 = args->addr;
+        ContextAddress addr = args->addr;
+        unsigned long size = args->size;
+        int word_size = args->word_size;
+        int mode = args->mode;
+        char buf[0x1000];
+        int buf_pos = 0;
+        int err = 0;
+
+        if (ctx->exiting || ctx->exited) err = ERR_ALREADY_EXITED;
+
+        if (read_stream(inp) != '[') exception(ERR_JSON_SYNTAX);
+        if (peek_stream(inp) == ']') {
+            read_stream(inp);
+        }
+        else {
+            while (1) {
+                char ch;
+                if (err == 0) {
+                    if (buf_pos >= sizeof(buf)) err = ERR_BUFFER_OVERFLOW;
+                    else buf[buf_pos++] = (char)json_read_ulong(inp);
+                }
+                else {
+                    json_read_ulong(inp);
+                }
+                ch = read_stream(inp);
+                if (ch == ',') continue;
+                if (ch == ']') break;
+                exception(ERR_JSON_SYNTAX);
+            }
+        }
+        if (read_stream(inp) != 0) exception(ERR_JSON_SYNTAX);
+        if (read_stream(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+        while (err == 0 && buf_pos < (int)size && buf_pos <= sizeof(buf) / 2) {
+            if (buf_pos == 0) {
+                buf[buf_pos++] = 0;
             }
             else {
-                json_read_ulong(inp);
+                memcpy(buf + buf_pos, buf, buf_pos);
+                buf_pos *= 2;
             }
-            ch = read_stream(inp);
-            if (ch == ',') continue;
-            if (ch == ']') break;
-            exception(ERR_JSON_SYNTAX);
         }
-    }
-    if (read_stream(inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    while (err == 0 && buf_pos < (int)size && buf_pos <= sizeof(buf) / 2) {
-        if (buf_pos == 0) {
-            buf[buf_pos++] = 0;
+        while (err == 0 && addr < addr0 + size) {
+            char tmp[sizeof(buf)];
+            int wr = addr0 + size - addr;
+            if (wr > buf_pos) wr = buf_pos;
+            /* TODO: word size, mode */
+            memcpy(tmp, buf, wr);
+            check_breakpoints_on_memory_write(ctx, addr, tmp, wr);
+            if (context_write_mem(ctx, addr, tmp, wr) < 0) {
+                err = errno;
+            }
+            else {
+                addr += wr;
+            }
+        }
+
+        send_event_memory_changed(&c->bcg->out, ctx, addr0, size);
+
+        write_stringz(out, "R");
+        write_stringz(out, token);
+        write_errno(out, err);
+        if (err == 0) {
+            write_stringz(out, "null");
         }
         else {
-            memcpy(buf + buf_pos, buf, buf_pos);
-            buf_pos *= 2;
+            write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
         }
+        write_stream(out, MARKER_EOM);
+        flush_stream(out);
     }
-
-    while (err == 0 && addr < addr0 + size) {
-        char tmp[sizeof(buf)];
-        int wr = addr0 + size - addr;
-        if (wr > buf_pos) wr = buf_pos;
-        /* TODO: word size, mode */
-        memcpy(tmp, buf, wr);
-        check_breakpoints_on_memory_write(ctx, addr, tmp, wr);
-        if (context_write_mem(ctx, addr, tmp, wr) < 0) {
-            err = errno;
-        }
-        else {
-            addr += wr;
-        }
-    }
-
-    send_event_memory_changed(&c->bcg->out, ctx, addr0, size);
-
-    write_stringz(out, "R");
-    write_stringz(out, token);
-    write_errno(out, err);
-    if (err == 0) {
-        write_stringz(out, "null");
-    }
-    else {
-        write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
-    }
-    write_stream(out, MARKER_EOM);
-    flush_stream(out);
     stream_unlock(c);
     context_unlock(ctx);
     loc_free(args);
 }
 
 static void command_fill(char * token, Channel * c) {
-    struct MemoryCommandArgs * args = read_command_args(token, c, CMD_FILL);
+    MemoryCommandArgs * args = read_command_args(token, c, CMD_FILL);
     if (args != NULL) post_safe_event(args->ctx->mem, safe_memory_fill, args);
 }
 
