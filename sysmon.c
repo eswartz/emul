@@ -406,7 +406,17 @@ static void command_get_environment(char * token, Channel * c) {
 #elif defined(WIN32)
 
 #include <windows.h>
-#include <winternl.h>
+
+typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR  Buffer;
+} UNICODE_STRING;
+
+typedef enum _PROCESSINFOCLASS {
+    ProcessBasicInformation = 0,
+    ProcessWow64Information = 26
+} PROCESSINFOCLASS;
 
 typedef struct _RTL_DRIVE_LETTER_CURDIR {
     USHORT                  Flags;
@@ -510,7 +520,7 @@ typedef struct _PROCESS_ENVIRONMENT_BLOCK {
 } loc_PEB, *loc_PPEB;
 
 typedef struct loc_PROCESS_BASIC_INFORMATION {
-    NTSTATUS                ExitStatus;
+    LONG                    ExitStatus;
     loc_PPEB                PebBaseAddress;
     ULONG_PTR               AffinityMask;
     LONG                    BasePriority;
@@ -523,7 +533,7 @@ static loc_PEB peb;
 static RTL_USER_PROCESS_PARAMETERS upa;
 
 static int get_process_info(HANDLE prs) {
-    static NTSTATUS (NTAPI * QueryInformationProcessProc)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG) = NULL;
+    static LONG (NTAPI * QueryInformationProcessProc)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG) = NULL;
     SIZE_T len = 0;
 
     memset(&pbi, 0, sizeof(pbi));
