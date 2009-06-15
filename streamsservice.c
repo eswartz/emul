@@ -382,6 +382,7 @@ static void send_read_reply(StreamClient * client, char * token, unsigned long s
     json_write_boolean(&c->out, eos);
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
+    flush_stream(&c->out);
 }
 
 void virtual_stream_create(const char * type, unsigned buf_len, unsigned access,
