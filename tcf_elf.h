@@ -136,8 +136,6 @@
 #define DT_LOPROC       0x70000000
 #define DT_HIPROC       0x7fffffff
 
-#define DT_MIPS_RLD_MAP 0x70000016
-
 typedef unsigned long  Elf32_Addr;
 typedef unsigned short Elf32_Half;
 typedef unsigned long  Elf32_Off;
@@ -240,6 +238,10 @@ typedef struct {
     } d_un;
 } Elf64_Dyn;
 
+#endif
+
+#ifndef DT_MIPS_RLD_MAP
+#define DT_MIPS_RLD_MAP 0x70000016
 #endif
 
 typedef struct Elf_Sym {

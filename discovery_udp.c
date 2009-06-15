@@ -184,8 +184,12 @@ static int create_server_socket(void) {
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;
     struct sockaddr_in local_addr;
+#if defined(_WRS_KERNEL)
+    int local_addr_size = sizeof(local_addr);
+#else
     socklen_t local_addr_size = sizeof(local_addr);
-
+#endif
+    
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;

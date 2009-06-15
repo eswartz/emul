@@ -31,7 +31,7 @@
 typedef struct Symbol {
     Context * ctx;
     int sym_class;
-    char location[24];
+    char location[28];
 } Symbol;
 
 #define SYM_CLASS_UNKNOWN       0

@@ -30,6 +30,7 @@
 #include "myalloc.h"
 #include "exceptions.h"
 #include "expressions.h"
+#include "breakpoints.h"
 #include "memorymap.h"
 #include "events.h"
 #include "trace.h"

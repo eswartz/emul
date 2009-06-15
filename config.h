@@ -92,7 +92,7 @@
 #define ENABLE_DebugContext     (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
 #if !defined(ENABLE_ELF)
-#define ENABLE_ELF              (TARGET_UNIX && (SERVICE_Symbols || SERVICE_LineNumbers))
+#define ENABLE_ELF              ((TARGET_UNIX || TARGET_VXWORKS) && (SERVICE_Symbols || SERVICE_LineNumbers))
 #endif
 #if !defined(ENABLE_SSL)
 #define ENABLE_SSL              (TARGET_UNIX)

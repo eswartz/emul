@@ -234,6 +234,7 @@ extern char * canonicalize_file_name(const char * path);
 #include <sys/ioctl.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
+#include <selectLib.h>
 #include <wrn/coreip/sockLib.h>
 #include <wrn/coreip/hostLib.h>
 
