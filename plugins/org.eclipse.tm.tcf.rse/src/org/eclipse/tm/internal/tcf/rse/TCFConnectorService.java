@@ -14,7 +14,6 @@ package org.eclipse.tm.internal.tcf.rse;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -35,21 +34,23 @@ public class TCFConnectorService extends BasicConnectorService {
 
     private IChannel channel;
     private Throwable channel_error;
-    private final List<Runnable> state_change = new ArrayList<Runnable>();
+    private final List<Runnable> wait_list = new ArrayList<Runnable>();
+    
+    private boolean poll_timer_started;
 
     public TCFConnectorService(IHost host, int port) {
         super("TCF", "Target Communication Framework", host, port); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     @Override
-    protected void internalConnect(IProgressMonitor monitor) throws Exception {
+    protected void internalConnect(final IProgressMonitor monitor) throws Exception {
         assert !Protocol.isDispatchThread();
         final Exception[] res = new Exception[1];
         monitor.beginTask("Connecting " + getHostName(), 1); //$NON-NLS-1$
         synchronized (res) {
             Protocol.invokeLater(new Runnable() {
                 public void run() {
-                    connectTCFChannel(res);
+                    if (!connectTCFChannel(res, monitor)) add_to_wait_list(this);
                 }
             });
             res.wait();
@@ -59,14 +60,14 @@ public class TCFConnectorService extends BasicConnectorService {
     }
 
     @Override
-    protected void internalDisconnect(IProgressMonitor monitor) throws Exception {
+    protected void internalDisconnect(final IProgressMonitor monitor) throws Exception {
         assert !Protocol.isDispatchThread();
         final Exception[] res = new Exception[1];
         monitor.beginTask("Disconnecting " + getHostName(), 1); //$NON-NLS-1$
         synchronized (res) {
             Protocol.invokeLater(new Runnable() {
                 public void run() {
-                    disconnectTCFChannel(res);
+                    if (!disconnectTCFChannel(res, monitor)) add_to_wait_list(this);
                 }
             });
             res.wait();
@@ -84,8 +85,27 @@ public class TCFConnectorService extends BasicConnectorService {
         });
         return res[0];
     }
-
-    private void connectTCFChannel(final Exception[] res) {
+    
+    private void add_to_wait_list(Runnable cb) {
+        wait_list.add(cb);
+        if (poll_timer_started) return;
+        Protocol.invokeLater(1000, new Runnable() {
+            public void run() {
+                poll_timer_started = false;
+                run_wait_list();
+            }
+        });
+        poll_timer_started = true;
+    }
+    
+    private void run_wait_list() {
+        if (wait_list.isEmpty()) return;
+        Runnable[] r = wait_list.toArray(new Runnable[wait_list.size()]);
+        wait_list.clear();
+        for (int i = 0; i < r.length; i++) r[i].run();
+    }
+    
+    private boolean connectTCFChannel(Exception[] res, IProgressMonitor monitor) {
         if (channel != null) {
             switch (channel.getState()) {
             case IChannel.STATE_OPEN:
@@ -95,102 +115,94 @@ public class TCFConnectorService extends BasicConnectorService {
                     else if (channel_error != null) res[0] = new Exception(channel_error);
                     else res[0] = null;
                     res.notify();
+                    return true;
                 }
-                return;
+            }
+        }
+        if (monitor.isCanceled()) {
+            synchronized (res) {
+                res[0] = new Exception("Canceled"); //$NON-NLS-1$
+                if (channel != null) channel.terminate(res[0]);
+                res.notify();
+                return true;
             }
         }
         if (channel == null) {
-            final String host = getHostName().toLowerCase();
-            int tmpPort = getConnectPort();
-            if (tmpPort <= 0) {
+            String host = getHostName().toLowerCase();
+            int port = getConnectPort();
+            if (port <= 0) {
                 //Default fallback
-                tmpPort = TCFConnectorServiceManager.TCF_PORT;
+                port = TCFConnectorServiceManager.TCF_PORT;
             }
-            final int port = tmpPort;
             IPeer peer = null;
-            String ports = Integer.toString(port);
+            String port_str = Integer.toString(port);
             ILocator locator = Protocol.getLocator();
-            for (Iterator<IPeer> i = locator.getPeers().values().iterator(); i.hasNext();) {
-                IPeer p = i.next();
+            for (IPeer p : locator.getPeers().values()) {
                 Map<String, String> attrs = p.getAttributes();
                 if ("TCP".equals(attrs.get(IPeer.ATTR_TRANSPORT_NAME)) && //$NON-NLS-1$
                         host.equalsIgnoreCase(attrs.get(IPeer.ATTR_IP_HOST)) &&
-                        ports.equals(attrs.get(IPeer.ATTR_IP_PORT))) {
+                        port_str.equals(attrs.get(IPeer.ATTR_IP_PORT))) {
                     peer = p;
                     break;
                 }
             }
             if (peer == null) {
                 Map<String, String> attrs = new HashMap<String, String>();
-                attrs.put(IPeer.ATTR_ID, "RSE:" + host + ":" + port); //$NON-NLS-1$ //$NON-NLS-2$
+                attrs.put(IPeer.ATTR_ID, "RSE:" + host + ":" + port_str); //$NON-NLS-1$ //$NON-NLS-2$
                 attrs.put(IPeer.ATTR_NAME, getName());
                 attrs.put(IPeer.ATTR_TRANSPORT_NAME, "TCP"); //$NON-NLS-1$
                 attrs.put(IPeer.ATTR_IP_HOST, host);
-                attrs.put(IPeer.ATTR_IP_PORT, ports);
+                attrs.put(IPeer.ATTR_IP_PORT, port_str);
                 peer = new AbstractPeer(attrs);
             }
             channel = peer.openChannel();
             channel.addChannelListener(new IChannel.IChannelListener() {
 
                 public void onChannelOpened() {
-                    onConnected();
+                    assert channel != null;
+                    run_wait_list();
                 }
 
                 public void congestionLevel(int level) {
                 }
 
                 public void onChannelClosed(Throwable error) {
+                    assert channel != null;
                     channel.removeChannelListener(this);
-                    onDisconnected(error);
+                    channel_error = error;
+                    if (wait_list.isEmpty()) {
+                        fireCommunicationsEvent(CommunicationsEvent.CONNECTION_ERROR);
+                    }
+                    else {
+                        run_wait_list();
+                    }
+                    channel = null;
+                    channel_error = null;
                 }
 
             });
             assert channel.getState() == IChannel.STATE_OPENNING;
         }
-        state_change.add(new Runnable() {
-            public void run() {
-                connectTCFChannel(res);
-            }
-        });
+        return false;
     }
 
-    private void disconnectTCFChannel(final Exception[] res) {
+    private boolean disconnectTCFChannel(Exception[] res, IProgressMonitor monitor) {
         if (channel == null || channel.getState() == IChannel.STATE_CLOSED) {
             synchronized (res) {
                 res[0] = null;
                 res.notify();
+                return true;
             }
-            return;
+        }
+        if (monitor.isCanceled()) {
+            synchronized (res) {
+                res[0] = new Exception("Canceled"); //$NON-NLS-1$
+                res.notify();
+                return true;
+            }
         }
         if (channel.getState() == IChannel.STATE_OPEN) channel.close();
-        state_change.add(new Runnable() {
-            public void run() {
-                disconnectTCFChannel(res);
-            }
-        });
-    }
-
-    private void onConnected() {
-        assert channel != null;
-        if (state_change.isEmpty()) return;
-        Runnable[] r = state_change.toArray(new Runnable[state_change.size()]);
-        state_change.clear();
-        for (int i = 0; i < r.length; i++) r[i].run();
-    }
-
-    private void onDisconnected(Throwable error) {
-        assert channel != null;
-        channel_error = error;
-        if (state_change.isEmpty()) {
-            fireCommunicationsEvent(CommunicationsEvent.CONNECTION_ERROR);
-        }
-        else {
-            Runnable[] r = state_change.toArray(new Runnable[state_change.size()]);
-            state_change.clear();
-            for (int i = 0; i < r.length; i++) r[i].run();
-        }
-        channel = null;
-        channel_error = null;
+        return false;
     }
 
     public ISysMonitor getSysMonitorService() {
