@@ -349,8 +349,8 @@ void handle_protocol_message(Protocol * p, Channel * c) {
 }
 
 static void message_handler_old(Channel * c, char ** args, int nargs, void * client_data) {
-	ProtocolMessageHandler handler = client_data;
-	handler(c, args, nargs);
+    ProtocolMessageHandler handler = client_data;
+    handler(c, args, nargs);
 }
 
 void set_default_message_handler(Protocol *p, ProtocolMessageHandler handler) {
