@@ -136,7 +136,19 @@ public class TCFTestSuite {
         channels = new IChannel[NUM_CHANNELS];
         Protocol.invokeLater(new Runnable() {
             public void run() {
-                openChannels(peer);
+                try {
+                    openChannels(peer);
+                }
+                catch (Throwable x) {
+                    errors.add(x);
+                    int cnt = 0;
+                    for (int i = 0; i < channels.length; i++) {
+                        if (channels[i] == null) continue;
+                        if (channels[i].getState() != IChannel.STATE_CLOSED) channels[i].close();
+                        cnt++;
+                    }
+                    if (cnt == 0) listener.done(errors);
+                }
             }
         });
     }
@@ -160,7 +172,7 @@ public class TCFTestSuite {
 
                 public void onChannelClosed(Throwable error) {
                     channel.removeChannelListener(this);
-                    if (error == null && (!active_tests.isEmpty() || !pending_tests.isEmpty()) && !cancel) {
+                    if (error == null && errors.isEmpty() && (!active_tests.isEmpty() || !pending_tests.isEmpty()) && !cancel) {
                         error = new IOException("Remote peer closed connection before all tests finished");
                     }
                     int cnt = 0;
@@ -172,20 +184,12 @@ public class TCFTestSuite {
                                 if (active_tests.get(n.next()) == channel) n.remove();
                             }
                         }
-                        else if (channels[i] != null) {
-                            cnt++;
-                        }
+                        if (channels[i] == null) continue;
+                        if (active_tests.isEmpty() && pending_tests.isEmpty() &&
+                                channels[i].getState() != IChannel.STATE_CLOSED) channels[i].close();
+                        cnt++;
                     }
-                    if (cnt == 0) {
-                        listener.done(errors);
-                    }
-                    else if (active_tests.isEmpty()) {
-                        for (int i = 0; i < channels.length; i++) {
-                            if (channels[i] != null && channels[i].getState() != IChannel.STATE_CLOSED) {
-                                channels[i].close();
-                            }
-                        }
-                    }
+                    if (cnt == 0) listener.done(errors);
                 }
             });
         }
