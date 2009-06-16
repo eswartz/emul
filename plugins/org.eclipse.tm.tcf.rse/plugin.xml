@@ -4,7 +4,7 @@
    <extension
          point="org.eclipse.rse.core.systemTypes">
       <systemType
-            description="Connects using Target Commenucation Framework"
+            description="Connects using Target Communication Framework"
             icon="icons/tcf.gif"
             iconLive="icons/tcf.gif"
             id="org.eclipse.tm.tcf.rse.systemType"
