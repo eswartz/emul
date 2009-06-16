@@ -48,7 +48,7 @@ extern int print_trace(int mode, char * fmt, ...);
 
 extern FILE * log_file;
 
-#define trace log_file && print_trace
+#define trace if (log_file) print_trace
 
 #else /* not ENABLE_Trace */
 
