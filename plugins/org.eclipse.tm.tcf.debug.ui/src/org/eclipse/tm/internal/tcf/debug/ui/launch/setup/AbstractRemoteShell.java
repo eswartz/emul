@@ -19,6 +19,10 @@ abstract class AbstractRemoteShell implements IRemoteShell {
     protected boolean debug;
     protected BufferedReader inp;
     protected PrintWriter out;
+    
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
 
     public synchronized void write(String s) {
         out.write(s);

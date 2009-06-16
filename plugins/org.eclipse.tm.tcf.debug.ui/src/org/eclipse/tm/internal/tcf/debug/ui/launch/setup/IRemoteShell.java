@@ -45,4 +45,9 @@ interface IRemoteShell {
      * @throws IOException
      */
     void close() throws IOException;
+    
+    /**
+     * Enable/disable debug output to System.out.
+     */
+    void setDebug(boolean debug);
 }

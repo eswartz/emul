@@ -143,7 +143,7 @@ class WizardLogPage extends WizardPage implements Runnable {
             if (url == null) throw new Exception("Cannot find get-os-tag script");
             send("cat >get-os-tag", true);
             InputStream inp = url.openStream();
-            byte[] buf = new byte[0x100 * 3];
+            byte[] buf = new byte[0x100];
             for (;;) {
                 int len = inp.read(buf);
                 if (len < 0) break;
@@ -198,11 +198,7 @@ class WizardLogPage extends WizardPage implements Runnable {
             s = waitPrompt();
             if (s.indexOf(':') < 0) {
                 send("base64 -di >" + fnm, true);
-                for (;;) {
-                    int len = inp.read(buf);
-                    if (len < 0) break;
-                    send(new String(Base64.toBase64(buf, 0, len)), false);
-                }
+                sendBase64(inp);
                 shell.write("\004");
                 s = waitPrompt();
                 if (s.length() > 0) throw new Exception(s);
@@ -213,11 +209,7 @@ class WizardLogPage extends WizardPage implements Runnable {
                 if (s.indexOf(':') < 0) {
                     send("uudecode", true);
                     send("begin-base64 644 " + fnm, true);
-                    for (;;) {
-                        int len = inp.read(buf);
-                        if (len < 0) break;
-                        send(new String(Base64.toBase64(buf, 0, len)), false);
-                    }
+                    sendBase64(inp);
                     send("====", true);
                     s = waitPrompt();
                     if (s.length() > 0) throw new Exception(s);
@@ -228,9 +220,10 @@ class WizardLogPage extends WizardPage implements Runnable {
             }
             inp.close();
             
-            send("rpm -e tcf-agent", true);
+            send("rpm -e --quiet tcf-agent", true);
             waitPrompt();
-            exec("rpm -i " + fnm);
+            exec("rm -f /etc/init.d/tcf-agent*");
+            exec("rpm -i --quiet " + fnm);
             exec("rm -f " + fnm);
             
             File certs = TCFSecurityManager.getCertificatesDirectory();
@@ -265,6 +258,20 @@ class WizardLogPage extends WizardPage implements Runnable {
             }
         }
         done(error);
+    }
+    
+    private void sendBase64(InputStream inp) throws Exception {
+        byte[] buf = new byte[0x100 * 3];
+        for (;;) {
+            int len = 0;
+            while (len < buf.length) {
+                int rd = inp.read(buf, len, buf.length - len);
+                if (rd < 0) break;
+                len += rd;
+            }
+            if (len == 0) break;
+            send(new String(Base64.toBase64(buf, 0, len)), false);
+        }
     }
     
     private void copyRemoteSecret(String from, File to) throws Exception {
