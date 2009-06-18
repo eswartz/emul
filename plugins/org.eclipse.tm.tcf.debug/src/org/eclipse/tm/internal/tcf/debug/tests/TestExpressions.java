@@ -421,18 +421,16 @@ class TestExpressions implements ITCFTest,
     public void breakpointStatusChanged(String id, Map<String,Object> status) {
         if (id.equals(bp_id) && process_id != null && !process_exited) {
             String s = (String)status.get(IBreakpoints.STATUS_ERROR);
-            if (s != null) exit(new Exception(s));
+            if (s != null) exit(new Exception("Invalid BP status: " + s));
             Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)status.get(IBreakpoints.STATUS_INSTANCES);
-            if (list == null) {
-                exit(new Exception("Invalid BP status"));
-                return;
-            }
-            boolean ok = false;
+            if (list == null) return;
+            String err = null;
             for (Map<String,Object> map : list) {
                 String ctx = (String)map.get(IBreakpoints.INSTANCE_CONTEXT);
-                if (process_id.equals(ctx) && map.get(IBreakpoints.INSTANCE_ERROR) == null) ok = true;
+                if (process_id.equals(ctx) && map.get(IBreakpoints.INSTANCE_ERROR) != null)
+                    err = (String)map.get(IBreakpoints.INSTANCE_ERROR);
             }
-            if (!ok) exit(new Exception("Invalid BP status"));
+            if (err != null) exit(new Exception("Invalid BP status: " + err));
         }
     }
 
