@@ -237,6 +237,10 @@ extern char * canonicalize_file_name(const char * path);
 #include <selectLib.h>
 #include <wrn/coreip/sockLib.h>
 #include <wrn/coreip/hostLib.h>
+#if _WRS_VXWORKS_MAJOR > 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR >= 7
+#  include <private/taskLibP.h>
+#  define kernelVersion() vxWorksVersion
+#endif
 
 #define environ taskIdCurrent->ppEnviron
 
