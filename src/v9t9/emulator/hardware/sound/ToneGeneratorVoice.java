@@ -19,9 +19,9 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 		byte lastVolume = getVolume();
 		setVolume((byte) (0xf - getOperationAttenuation()));
 		//int lastPeriod = period;
-		period = getOperationPeriod();
-		hertz = SoundTMS9919.periodToHertz(period);
-
+		period16 = getOperationPeriod() * soundClock;
+		hertz = SoundTMS9919.period16ToHertz(period16);
+		
 		if (hertz * 2 < 55930) {
 			incr = hertz * 2;
 		} else {
@@ -30,9 +30,9 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 		
 		// reset clock on volume == 0 to avoid clicks
 		if (/*lastPeriod != period ||*/ (lastVolume == 0) != (getVolume() == 0)) {
-			if (period > 0) {
-				clock %= period;
-				accum %= 55930;
+			if (period16 > 0) {
+				clock %= period16;
+				accum %= soundClock;
 			}
 			else {
 				accum = 0;
@@ -61,8 +61,8 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 	}*/
 	
 	@Override
-	public void generate(int soundClock, int[] soundGeneratorWorkBuffer,
-			int from, int to) {
+	public void generate(int[] soundGeneratorWorkBuffer, int from,
+			int to) {
 		int ratio = 128 + balance;
 		while (from < to) {
 			updateEffect();

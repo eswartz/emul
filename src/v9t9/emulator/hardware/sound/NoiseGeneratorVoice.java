@@ -27,18 +27,14 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 		
 		setVolume((byte) (0xf - getOperationAttenuation()));
 		if (periodtype != SoundTMS9919.NOISE_PERIOD_VARIABLE) {
-			period = SoundTMS9919.noise_period[periodtype];
-			hertz = SoundTMS9919.periodToHertz(period);
+			period16 = SoundTMS9919.noise_period[periodtype] * soundClock;
+			hertz = SoundTMS9919.period16ToHertz(period16);
 		} else {
-			period = pairedVoice2.period;
+			period16 = pairedVoice2.period16;
 			hertz = pairedVoice2.hertz;
 		}
 	
-		if (isWhite) {
-			incr = hertz;
-		} else {
-			incr = hertz;
-		}
+		incr = hertz;
 		if (prevType != isWhite || (wasSilent && getVolume() != 0) || (isWhite && ns1 == 0)) {
 			ns1 = (short) 0x8000;		// TODO: this should reset when the type of noise or sound changes only
 			accum = 0;
@@ -48,8 +44,8 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 	}
 
 	@Override
-	public void generate(int soundClock, int[] soundGeneratorWorkBuffer,
-			int from, int to) {
+	public void generate(int[] soundGeneratorWorkBuffer, int from,
+			int to) {
 		int ratio = 128 + balance;
 		while (from < to) {
 			updateEffect();

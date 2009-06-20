@@ -28,6 +28,7 @@ import v9t9.emulator.clients.builtin.swt.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.clients.demo.HybridDemoClient;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
+import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.compiler.Compiler;
@@ -152,7 +153,7 @@ public class V9t9 {
 	        		console.writeWord(a, memory[(a - 0x2000) / 2]);
 	        	}
 
-	    	} else if (true) {
+	    	} else if (false) {
 		    	
 		    	//loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
 	    		loadModuleRom("Alpiner", "alpinerc.bin");
@@ -162,13 +163,16 @@ public class V9t9 {
 	    		
 	    		loadModuleGrom("Parsec", "parsecg.bin");
 	    		loadModuleRom("Parsec", "parsecc.bin");
-	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
-	    		loadModuleGrom("ExtBasic", "tiextg.bin");
 	    		loadModuleGrom("TEII", "teiig.bin");
 	    		loadModuleRom("TEII", "teiic.bin");
+	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
+	    		loadModuleGrom("ExtBasic", "tiextg.bin");
 	    	} else {
 		    	loadModuleRom("Logo", "logoc.bin");
 		    	loadModuleGrom("Logo", "logog.bin");
+		    	//loadModuleRom("PRK", "prkc.bin");
+		    	loadModuleGrom("PRK", "prkg.bin");
+		    	ExpRamArea.settingExpRam.setBoolean(true);
 	    	}
     	} else { 
 

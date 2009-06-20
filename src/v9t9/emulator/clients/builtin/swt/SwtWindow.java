@@ -897,7 +897,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			int idx = 0;
 			for (String extension : extensions) {
 				String[] split = extension.split("\\|");
-				exts[idx] = split[0];
+				exts[idx] = "*" + split[0];
 				names[idx] = split[1];
 				idx++;
 			}

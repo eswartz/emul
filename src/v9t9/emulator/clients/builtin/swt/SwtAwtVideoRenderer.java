@@ -17,6 +17,7 @@ import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -108,9 +109,11 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 				Point canvasSize = new Point(awtCanvas.getWidth(), awtCanvas.getHeight());
 				int width = canvasSize.x;
 				int height = canvasSize.y;
-				//Rectangle trim = composite.computeTrim(0, 0, width, height);
+				Rectangle trim = composite.computeTrim(0, 0, width, height);
 				
-				return new Point(width, height);
+				// hmm, the window manager seems to do weird things now
+				
+				return new Point(width - (trim.width - width), height - (trim.height - height));
 				
 /*
 				Rectangle parentBounds = composite.getParent().getBounds();

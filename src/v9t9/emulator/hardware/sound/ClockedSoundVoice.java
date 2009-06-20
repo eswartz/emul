@@ -11,16 +11,25 @@ import v9t9.utils.Utils;
 
 public abstract class ClockedSoundVoice extends SoundVoice
 {
+	protected static final int		CLOCKSTEP = 55930;		// clock stepper, balancing desired clock of 55930 by actual generated frequency
+	protected int		soundClock;			// the driving clock
+
 	protected byte	operation[] = { 0, 0, 0 };	// operation bytes
 	
-	protected int		period, hertz;	// calculated from OPERATION_FREQUENCY_xxx
+	protected int		period16;		// from operation, scaled by 55930
+	protected int		hertz;			// calculated from OPERATION_FREQUENCY_xxx
 	
-	protected int		clock;			// clock, stepping from 0 to period
+	protected int		clock;			// clock, stepping from 0 to period16 by clockstep
 	protected int		accum;			// current accumulator, tracking the clock
-	protected int		incr;			// amount to add to the div per clock
+	protected int		incr;			// amount to add to the accum per clock
 
 	public ClockedSoundVoice(String name) {
 		super(name);
+		this.soundClock = 55930;
+	}
+	
+	public void setSoundClock(int clock) {
+		this.soundClock = clock;
 	}
 	
 	@Override
@@ -56,7 +65,7 @@ public abstract class ClockedSoundVoice extends SoundVoice
 					"voice_cache_values[{5}]: lo=>{0}, hi=>{1}, period=>{2}, hertz={3}, volume={4}",
 				   Utils.toHex4(operation[SoundTMS9919.OPERATION_FREQUENCY_LO]), 
 				   Utils.toHex4(operation[SoundTMS9919.OPERATION_FREQUENCY_HI]),
-				   Utils.toHex4(period),
+				   Utils.toHex4(period16 / 65536),
 				   hertz,
 				   getVolume(),
 				   getName()));
@@ -65,8 +74,8 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	
 	protected void updateAccumulator() {
 		accum += incr;
-		if (period > 0)
-			clock = (clock + 1) % period;
+		if (period16 > 0)
+			clock = (clock + CLOCKSTEP) % period16;
 		else
 			clock = 0;
 	}

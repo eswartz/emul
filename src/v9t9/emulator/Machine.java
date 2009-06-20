@@ -223,8 +223,11 @@ abstract public class Machine {
 		            			}
 		            		}
 		            		
-		            		cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
-		            		executor.nVdpInterrupts++;
+		            		// a real interrupt only occurs if wanted
+		            		if ((vdp.readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
+			            		cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
+			            		executor.nVdpInterrupts++;
+		            		}
 		            		//System.out.print('!');
 		    			}
 	    			}

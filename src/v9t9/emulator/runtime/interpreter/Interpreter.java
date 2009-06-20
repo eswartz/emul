@@ -432,11 +432,12 @@ public class Interpreter {
         case InstructionTable.Ib:
         	iblock.pc = iblock.val1;
             break;
-        case InstructionTable.Ix:
-        	//short newPc = block.pc;
+        case InstructionTable.Ix: {
+        	short newPc = iblock.pc;
         	execute(cpu, iblock.val1);
-        	//block.pc = newPc;
+        	iblock.pc = newPc;
             break;
+        }
         case InstructionTable.Iclr:
         	iblock.val1 = 0;
             break;
@@ -671,10 +672,12 @@ public class Interpreter {
         	machine.getDSRManager().handleDSR(iblock);
         	break;
         	
-        case InstructionTable.Iticks:
-        	iblock.val1 = (short) (machine.getCpu().getTickCount() >> 16);
-        	iblock.val2 = (short) (machine.getCpu().getTickCount());
+        case InstructionTable.Iticks: {
+        	int count = machine.getCpu().getTickCount();
+        	iblock.val1 = (short) (count >> 16);
+        	iblock.val2 = (short) (count & 0xffff);
         	break;
+        }
         case InstructionTable.Idbg:
         	int oldCount = machine.getExecutor().debugCount; 
         	if (iblock.val1 == 0)

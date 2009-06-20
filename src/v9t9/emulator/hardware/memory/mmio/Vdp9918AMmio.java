@@ -118,7 +118,11 @@ public class Vdp9918AMmio extends VdpMmio {
 	protected void writeAddress(byte val) {
 	    /* >8C02, address write */
 
-		vdpaddr = (short) (vdpaddr >> 8 & 0xff | val << 8);
+		if (vdpaddrflag) {
+			vdpaddr = (vdpaddr & 0xff) | (val << 8);
+		} else {
+			vdpaddr = (vdpaddr & 0xff00) | (val & 0xff);
+		}
 		if ((vdpaddrflag = !vdpaddrflag) == false) {
 			if (VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
 				Logging.writeLogLine(VdpTMS9918A.settingDumpVdpAccess, "VDP address: " + Utils.toHex4(vdpaddr));

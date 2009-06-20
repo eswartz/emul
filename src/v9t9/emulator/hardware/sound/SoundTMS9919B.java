@@ -4,7 +4,6 @@
 package v9t9.emulator.hardware.sound;
 
 import v9t9.emulator.Machine;
-import v9t9.utils.Utils;
 
 /**
  * Controller for the TMS9919(B) sound chip.
@@ -38,6 +37,8 @@ import v9t9.utils.Utils;
    		
    		0111 = sweep to tone proportion	(argument: clock proportion )
    		1000 = sweep to tone time	(argument: time )
+   		
+   		1001 = set balance 			(argument: range, -128=left, 127=right)
    		
    		1111 = indicate note release (argument ignored)
 		
@@ -208,7 +209,7 @@ public class SoundTMS9919B extends SoundTMS9919 {
 				break;
 			}
 			case CMD_SWEEP_TIME: {
-				int clocks = (val & 0xff) * EffectsController.SOUND_CLOCK * 64 / 255;
+				int clocks = (val & 0xff) * ((ClockedSoundVoice)voice).soundClock * 64 / 255;
 				voice.getEffectsController().setSweepTime(clocks);
 				break;
 			}

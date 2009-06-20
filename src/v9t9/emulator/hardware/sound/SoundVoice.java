@@ -60,8 +60,8 @@ public abstract class SoundVoice
 	public byte getVolume() {
 		return volume;
 	}
-	public abstract void generate(int soundClock, int[] soundGeneratorWorkBuffer,
-			int from, int to);
+	public abstract void generate(int[] soundGeneratorWorkBuffer, int from,
+			int to);
 	public boolean isActive() {
 		return volume > 0;
 	}

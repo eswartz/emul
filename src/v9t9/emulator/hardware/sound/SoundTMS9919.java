@@ -11,15 +11,11 @@ import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.SoundHandler;
-import v9t9.utils.Utils;
 
 /**
  * Controller for the TMS9919 sound chip
  * <p>
  * 3579545 Hz divided by 32 = 111860.78125 / 2 = 55930 Hz maximum frequency
- * <p>
- * This allows "enhanced" operation, which allows frequency clocks up to 0x7ff
- * (i.e. 54 hz) and an additional address decode which allows effects programming.
  * @author ejs
  *
  */
@@ -68,7 +64,10 @@ public class SoundTMS9919 implements SoundProvider {
 
 
 	protected static int periodToHertz(int p) {
-		return ((p) > 1 ? (111860 / (p)) : (55930));
+		return ((p) > 1 ? (111860 / (p)) : 55930);
+	}
+	protected static int period16ToHertz(int p) {
+		return (int) ((p) > 1 ? ((long)111860 * 55930 / (p)) : 55930 * 55930);
 	}
 
 	protected int	cvoice;

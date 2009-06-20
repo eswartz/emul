@@ -23,6 +23,7 @@ import javax.sound.sampled.AudioFileFormat.Type;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
+import v9t9.emulator.hardware.sound.ClockedSoundVoice;
 import v9t9.emulator.hardware.sound.SoundVoice;
 import v9t9.engine.SoundHandler;
 import v9t9.engine.settings.ISettingListener;
@@ -232,10 +233,20 @@ public class JavaSoundHandler implements SoundHandler {
 					.getCpuTicksPerSec());
 			soundGeneratorLine = (SourceDataLine) AudioSystem.getLine(slInfo);
 			soundGeneratorLine.open(soundFormat, soundFramesPerTick * 20);
+			
+			System.out.println("Sound format: " + soundFormat);
 			speechFramesPerTick = (int) (speechFormat.getFrameRate() / machine
 					.getCpuTicksPerSec());
 			speechLine = (SourceDataLine) AudioSystem.getLine(spInfo);
 			speechLine.open(speechFormat, speechFramesPerTick * 20);
+			System.out.println("Speech format: " + speechFormat);
+
+			soundClock = (int) soundFormat.getFrameRate();
+
+			for (SoundVoice voice : sound.getSoundVoices()) {
+				if (voice instanceof ClockedSoundVoice)
+					((ClockedSoundVoice) voice).setSoundClock(soundClock);
+			}
 		} catch (LineUnavailableException e) {
 			System.err.println("Line not available");
 			e.printStackTrace();
@@ -346,7 +357,6 @@ public class JavaSoundHandler implements SoundHandler {
 		         * soundFramesPerTick];
 		speechWaveForm = new byte[speechFormat.getFrameSize()
 				* speechFramesPerTick];
-		soundClock = (int) soundFormat.getFrameRate();
 	}
 
 	/*
@@ -384,7 +394,7 @@ public class JavaSoundHandler implements SoundHandler {
 			for (SoundVoice v : vs) {
 				if (v.isActive()) {
 					//Arrays.fill(soundGeneratorWorkBuffer2, 0);
-					v.generate(soundClock, soundGeneratorWorkBuffer, from, to);
+					v.generate(soundGeneratorWorkBuffer, from, to);
 					active++;
 				}
 			}
@@ -404,7 +414,7 @@ public class JavaSoundHandler implements SoundHandler {
 			for (SoundVoice v : vs) {
 				if (v.isActive()) {
 					Arrays.fill(soundGeneratorWorkBuffer2, 0);
-					v.generate(soundClock, soundGeneratorWorkBuffer2, from, to);
+					v.generate(soundGeneratorWorkBuffer2, from, to);
 					// mix them together
 					for (int i = from; i < to; i++) {
 						int a = soundGeneratorWorkBuffer[i];
