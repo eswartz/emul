@@ -37,12 +37,22 @@
 #include "breakpoints.h"
 #include "cmdline.h"
 
-#define RM_RESUME           0
-#define RM_STEP_OVER        1
-#define RM_STEP_INTO        2
-#define RM_STEP_OVER_LINE   3
-#define RM_STEP_INTO_LINE   4
-#define RM_STEP_OUT         5
+#define RM_RESUME                   0
+#define RM_STEP_OVER                1
+#define RM_STEP_INTO                2
+#define RM_STEP_OVER_LINE           3
+#define RM_STEP_INTO_LINE           4
+#define RM_STEP_OUT                 5
+#define RM_REVERSE_RESUME           6
+#define RM_REVERSE_STEP_OVER        7
+#define RM_REVERSE_STEP_INTO        8
+#define RM_REVERSE_STEP_OVER_LINE   9
+#define RM_REVERSE_STEP_INTO_LINE   10
+#define RM_REVERSE_STEP_OUT         11
+#define RM_STEP_OVER_RANGE          12
+#define RM_STEP_INTO_RANGE          13
+#define RM_REVERSE_STEP_OVER_RANGE  14
+#define RM_REVERSE_STEP_INTO_RANGE  15
 
 #define STOP_ALL_TIMEOUT 1000000
 #define STOP_ALL_MAX_CNT 20
@@ -345,6 +355,13 @@ static void send_simple_result(Channel * c, char * token, int err) {
 
 static void send_event_context_resumed(OutputStream * out, Context * ctx);
 
+static void resume_params_callback(InputStream * inp, char * name, void * args) {
+    int * err = (int *)args;
+    /* Current agent implementation does not support resume parameters */
+    loc_free(json_skip_object(inp));
+    *err = ERR_UNSUPPORTED;
+}
+
 static void command_resume(char * token, Channel * c) {
     char id[256];
     long mode;
@@ -358,43 +375,48 @@ static void command_resume(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     count = json_read_long(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (peek_stream(&c->inp) != MARKER_EOM) {
+        json_read_struct(&c->inp, resume_params_callback, &err);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    }
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    ctx = id2ctx(id);
-    assert(safe_event_list == NULL);
+    if (err == 0) {
+        ctx = id2ctx(id);
+        assert(safe_event_list == NULL);
 
-    if (ctx == NULL) {
-        err = ERR_INV_CONTEXT;
-    }
-    else if (ctx->exited) {
-        err = ERR_ALREADY_EXITED;
-    }
-    else if (!ctx->intercepted) {
-        err = ERR_ALREADY_RUNNING;
-    }
-    else if (ctx->regs_error) {
-        err = ctx->regs_error;
-    }
-    else if (count != 1) {
-        err = EINVAL;
-    }
-    else if (mode == RM_RESUME || mode == RM_STEP_INTO) {
-        send_event_context_resumed(&c->bcg->out, ctx);
-        if (mode == RM_STEP_INTO) {
-            if (context_single_step(ctx) < 0) {
+        if (ctx == NULL) {
+            err = ERR_INV_CONTEXT;
+        }
+        else if (ctx->exited) {
+            err = ERR_ALREADY_EXITED;
+        }
+        else if (!ctx->intercepted) {
+            err = ERR_ALREADY_RUNNING;
+        }
+        else if (ctx->regs_error) {
+            err = ctx->regs_error;
+        }
+        else if (count != 1) {
+            err = EINVAL;
+        }
+        else if (mode == RM_RESUME || mode == RM_STEP_INTO) {
+            send_event_context_resumed(&c->bcg->out, ctx);
+            if (mode == RM_STEP_INTO) {
+                if (context_single_step(ctx) < 0) {
+                    err = errno;
+                }
+                else {
+                    ctx->pending_intercept = 1;
+                }
+            }
+            else if (context_continue(ctx) < 0) {
                 err = errno;
             }
-            else {
-                ctx->pending_intercept = 1;
-            }
         }
-        else if (context_continue(ctx) < 0) {
-            err = errno;
+        else {
+            err = EINVAL;
         }
     }
-    else {
-        err = EINVAL;
-    }
-
     send_simple_result(c, token, err);
 }
 
