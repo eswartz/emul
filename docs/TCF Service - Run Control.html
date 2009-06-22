@@ -159,54 +159,98 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; RunControl &bull; resume &bull; <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;int: mode&gt;</i> &bull; <i>&lt;int: count&gt;</i> &bull;
+C &bull; <i>&lt;token&gt;</i> &bull; RunControl &bull; resume &bull; <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;int: mode&gt;</i> &bull; <i>&lt;int: count&gt;</i> &bull; <i>&lt;object: parameters&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command resumes execution of given context. The command should fail if CanResume
 property of the context is '0' for given mode. If context's IsContainer = true, the command is propagated
 to context's children. Only contexts with HasState = true can be resumed.</p>
+<p>The command can have optional argument that contains set of resume parameters, for example stepping range definition.</p>
 
 <p>Resume modes:</p>
-<ul>
-    <li><code>RM_RESUME = 0</code> - resume normal execution. Execution will
-     continue until suspended by command or breakpoint.
+    <ul>
+        <li>
+            <code>RM_RESUME = 0</code> - resume normal execution. Execution will
+            continue until suspended by command or breakpoint.
+        </li>
 
-    <li><code>RM_STEP_OVER = 1</code> - step over a single instruction. If instruction
-     is function call, execution continues until control returns from the function.
+        <li>
+            <code>RM_STEP_OVER = 1</code> - step over a single instruction. If instruction
+            is function call, execution continues until control returns from the function.
+        </li>
 
-    <li><code>RM_STEP_INTO = 2</code> - single instruction in given context.
+        <li>
+            <code>RM_STEP_INTO = 2</code> - single instruction in given context.
+        </li>
 
-    <li><code>RM_STEP_OVER_LINE = 3</code> - resume execution of given context until control reaches instruction
-    that belongs to a different line of source code, but runs any functions called at
-    full speed. Error is returned if line number information not available.
+        <li>
+            <code>RM_STEP_OVER_LINE = 3</code> - resume execution of given context until control reaches instruction
+            that belongs to a different line of source code, but runs any functions called at
+            full speed. Error is returned if line number information not available.
+        </li>
 
-    <li><code>RM_STEP_INTO_LINE = 4</code> - resumes execution of given context until control reaches instruction 
-    that belongs to a different line of source code. If a function is called,
-    stop at first line of the function code. Error is returned if line number
-    information not available.
+        <li>
+            <code>RM_STEP_INTO_LINE = 4</code> - resumes execution of given context until control reaches instruction
+            that belongs to a different line of source code. If a function is called,
+            stop at first line of the function code. Error is returned if line number
+            information not available.
+        </li>
 
-    <li><code>RM_STEP_OUT = 5</code> - resume execution of given context until control returns from current
-    function.
+        <li>
+            <code>RM_STEP_OUT = 5</code> - resume execution of given context until control returns from current
+            function.
+        </li>
 
-    <li><code>RM_REVERSE_RESUME = 6</code> - reverse of <code>RM_RESUME</code>; resume backward execution. Execution will
-    continue until suspended by command or breakpoint.
+        <li>
+            <code>RM_REVERSE_RESUME = 6</code> - reverse of <code>RM_RESUME</code>; resume backward execution. Execution will
+            continue until suspended by command or breakpoint.
+        </li>
 
-    <li><code>RM_REVERSE_STEP_OVER = 7</code> - reverse of <code>RM_STEP_OVER</code>; reverse step over a single instruction. 
-    This effectively "un-executes" the previous instruction.
+        <li>
+            <code>RM_REVERSE_STEP_OVER = 7</code> - reverse of <code>RM_STEP_OVER</code>; reverse step over a single instruction.
+        </li>
 
-    <li><code>RM_REVERSE_STEP_INTO = 8</code> - reverse of <code>RM_STEP_INTO</code>; reverse step into a single instruction in the given context.
+        <li>
+            <code>RM_REVERSE_STEP_INTO = 8</code> - reverse of <code>RM_STEP_INTO</code>; reverse step into a single instruction in the given context.
+            This effectively "un-executes" the previous instruction.
+        </li>
 
-    <li><code>RM_REVERSE_STEP_OVER_LINE = 9</code> - reverse of <code>RM_STEP_OVER_LINE</code>; resume backward execution 
-    of given context until control reaches the beginning of the code block corresponding to a different source line.
-    Error is returned if line number information not available.
+        <li>
+            <code>RM_REVERSE_STEP_OVER_LINE = 9</code> - reverse of <code>RM_STEP_OVER_LINE</code>; resume backward execution
+            of given context until control reaches an instruction that belongs to a different source line.
+            If the line contains a function call then don't stop until get out of the function.
+            Error is returned if line number information not available.
+        </li>
 
-    <li><code>RM_REVERSE_STEP_INTO_LINE = 10</code> - reverse of <code>RM_STEP_INTO_LINE</code>; resume backward execution of given context 
-    until control reaches an instruction that belongs to a different line of source code. 
-    If a function is called, stop at the beginning of the last line of the function code.
-    Error is returned if line number information not available.
+        <li>
+            <code>RM_REVERSE_STEP_INTO_LINE = 10</code> - reverse of <code>RM_STEP_INTO_LINE</code>; resume backward execution of given context
+            until control reaches an instruction that belongs to a different line of source code.
+            If a function is called, stop at the beginning of the last line of the function code.
+            Error is returned if line number information not available.
+        </li>
 
-    <li><code>RM_REVERSE_STEP_OUT = 11</code> - reverse of <code>RM_STEP_OUT</code>; resume backward execution of 
-    the given context until control reaches the point where the function was called.
-</ul>
+        <li>
+            <code>RM_REVERSE_STEP_OUT = 11</code> - reverse of <code>RM_STEP_OUT</code>; resume backward execution of
+            the given context until control reaches the point where the current function was called.
+        </li>
+
+        <li>
+            <code>RM_STEP_OVER_RANGE = 12</code> - step over instructions until PC is outside the specified range.
+            If any function call within the range is considered to be in range.
+        </li>
+
+        <li>
+            <code>RM_STEP_INTO_RANGE = 13</code> - step instruction until PC is outside the specified range for any reason.
+        </li>
+
+        <li>
+            <code>RM_REVERSE_STEP_OVER_RANGE = 14</code> - reverse of <code>RM_STEP_OVER_RANGE</code>.
+        </li>
+
+        <li>
+            <code>RM_REVERSE_STEP_INTO_RANGE = 15</code> - reverse of <code>RM_STEP_INTO_RANGE</code>.
+        </li>
+    </ul>
   
 <p>Result message:</p>
  

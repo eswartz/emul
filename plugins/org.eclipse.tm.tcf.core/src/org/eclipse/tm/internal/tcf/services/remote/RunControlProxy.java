@@ -110,6 +110,11 @@ public class RunControlProxy implements IRunControl {
             return command("resume", new Object[]{ getID(), mode, count }, done);
         }
 
+        public IToken resume(int mode, int count, Map<String,Object> params, DoneCommand done) {
+            if (params == null) return resume(mode, count, done);
+            return command("resume", new Object[]{ getID(), mode, count, params }, done);
+        }
+
         public IToken suspend(DoneCommand done) {
             return command("suspend", new Object[]{ getID() }, done);
         }

@@ -632,7 +632,7 @@ class TestRCBP1 implements ITCFTest,
         IRunControl.RunControlContext ctx = threads.get(sc.id);
         if (ctx != null && !sc.resumed) {
             sc.resumed = true;
-            ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+            ctx.resume(IRunControl.RM_RESUME, 1, new HashMap<String,Object>(), new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (test_suite.cancel) return;
                     if (!test_suite.isActive(TestRCBP1.this)) return;
