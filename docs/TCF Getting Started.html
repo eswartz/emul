@@ -42,8 +42,8 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
        <li>DD (Device Debug) SDK 1.0.0<br>
        <a href='http://download.eclipse.org/dsdp/dd/downloads/'>http://download.eclipse.org/dsdp/dd/downloads/</a>
        </ul>
-   <li>Checkout TCF code from Eclipse SVN repository:
-       <pre>svn co svn://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf</pre>
+   <li>Checkout TCF code from <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk'>Eclipse SVN repository</a>:
+       <pre>svn co svn://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk</pre>
    <li>Run Eclipse:
       <pre>eclipse.exe -vm &lt;JDK path&gt;\bin\javaw.exe -data &lt;Workspace path&gt; -vmargs -Xmx200M</pre>
    <li>Open "Java" perspective.
@@ -56,6 +56,7 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
                <ul>
            <li>org.eclipse.tm.tcf.dsf
            <li>org.eclipse.tm.tcf.dsf.ui
+           <li>org.eclipse.tm.tcf.cdt.ui
            </ul>
        </ul>
    <!--
@@ -94,10 +95,14 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
 
 <dl>
     <dt><b>org.eclipse.tm.tcf</b>
-    <dd>This is the main TCF plugin. It contains the framework itself and interfaces for standard services.
-    It is the only TCF plugin, which should be required by a TCF client. The rest of TCF plugins are
+    <dd>This is the main TCF plugin. It contains Eclipse integration code for the framework.
+    It is the only TCF plugin, which (together with its fragments) should be required by a TCF client. The rest of TCF plugins are
     clients developed as a reference implementation or for demonstration purposes. 
     <p>
+    <dt><b>org.eclipse.tm.tcf.core</b>
+	<dd>This is a fragment of <b>org.eclipse.tm.tcf</b> plugin. It contains the framework itself and interfaces for standard services.
+	The Java code in the fragment does not have any Eclipse dependencies and can be used outside Eclipse.
+	<p>
     <dt><b>org.eclipse.tm.tcf.debug, org.eclipse.tm.tcf.debug.ui</b>
     <dd>This is a prototype code that connects Eclipse Debug Framework and Target Communication Framework.
     It allows to launch Eclipse debug session by connecting to a target running TCF agent,
@@ -112,6 +117,10 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
     <dd>This plugin allows Remote System Explorer (RSE) to connect to remote machines using TCF as communication protocol.
     It includes implementation of RSE services as TCF clients.
     <p>
+    <dt><b>org.eclipse.tm.tcf.cdt.ui</b>
+    <dd>This optional plugin improves integration between CDT and TCF debugger prototype.
+	It helps to search for CDT projects and executable files when creating TCF launch configuration.
+    <p>
     <dt><b>org.eclipse.tm.tcf.examples.daytime</b>
     <dd>This is an example plugin.
     The Example shows how TCF/Java binding can be extended for a new, user defined service.
@@ -125,16 +134,14 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
 <p><b>CDT</b> can be used to build TCF agent.
 CDT .project file is located in <code>&lt;TCF Root&gt;/agent</code> directory.
 
-<p><b>Linux</b> is the recommended evaluation platform, since most TCF services
-are implemented. To build the agent:
+<p><b>Linux</b>: To build the agent:
 <ul>
    <li>Run <code>make</code> command in <code>&lt;TCF Root&gt;/agent</code> directory.
    <li>Start agent: <pre>GNU/Linux/i686/Debug/agent -L- -l0</pre>
        Use other -l option values to increase agent log details level.
 </ul>
 
-<p>On <b>Windows</b>, SysMonitor service is not implemented, so RSE Processes demos will not work.
-For building the agent, there are two possibilities:<ul>
+<p><b>Windows</b>: For building the agent, there are two possibilities:<ul>
 <li>Building with gcc (freely available from <a href="http://wascana.sourceforge.net/">Wascana</a>,
 <a href="http://www.cygwin.com">Cygwin</a> or the
 <a href="http://www.mingw.org/">MinGW32 project</a>): run
@@ -155,10 +162,9 @@ following changes in settings may be necessary:<ul>
 </ul></li> 
 </ul></p>
 
-<p>On <b>VxWorks</b>, the file service as well as most debug services are currently
-working. Line number mapping and the SysMonitor service (required for RSE Processes
+<p>On <b>VxWorks</b>, line number mapping and the SysMonitor service (needed for RSE Processes
 Demo) are not yet implemented.<br/>
-To build the agent: Use Wind River Workbench 3.0 and VxWorks 6.6 to create a Kernel Module
+To build the agent: Use Wind River Workbench 3.0 or 3.1, and VxWorks 6.6 or 6.7 to create a Kernel Module
 project out of source code in <code>&lt;TCF Root&gt;/agent</code> directory. Use Workbench
 commands to build and run the agent. To run the agent on VxWorks Simulator
 you will need to setup a simulated network - see Networking with the VxWorks Simulator chapter
