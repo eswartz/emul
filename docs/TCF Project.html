@@ -9,7 +9,7 @@
 <H1>Target Communication Framework project</H1>
 
 <P>
-<H2><A name=Index></A>Index</H2>
+<H2><A name='Index'></A>Index</H2>
 
 <UL>
   <LI><A href="#Summary">Summary</A> 
@@ -21,7 +21,7 @@
 </UL>
 
 <P>
-<H2><A name=Summary></A>Summary </H2>
+<H2><A name='Summary'></A>Summary </H2>
 
 <P>Today almost every device software development tool on the market has its own 
 method of communication with target system. Communication methods often conflict 
@@ -31,7 +31,7 @@ to establish common ground in the area of communication protocols between
 development tools and embedded devices. 
 
 <P>
-<H2><A name=Goals></A>Goals </H2>
+<H2><A name='Goals'></A>Goals </H2>
 <P>
 <UL>
   <LI>Universal, extensible, simple, lightweight, vendor agnostic framework for 
@@ -42,7 +42,7 @@ development tools and embedded devices.
   <LI>Small overhead and footprint on target side. </LI></UL>
 <P>
 
-<H2><A name=Features></A>Features </H2>
+<H2><A name='Features'></A>Features </H2>
 <P><A href="TCF Specification.html">Target Communication Framework Specification</A> is a document 
 describing design goals, requirements and format of TCF communication protocol, 
 as well as framework API and software design considerations. 
@@ -55,7 +55,7 @@ common services is needed to achieve certain level of compatibility of
 tools/targets, see <A href="TCF Services.html">TCF Services Specification</A>
 as starting point of this work. 
 
-<H2><A name=Agent></A>Reference implementation of a target agent</H2>
+<H2><A name='Agent'></A>Reference implementation of a target agent</H2>
 
 <P>Current reference implementation of TCF target agents is fully functional, 
 can run on Windows, Linux and VxWorks.  On Linux it is implemented 
@@ -84,7 +84,9 @@ The agent provides the following services:
     CPU/memory utilization data. On Linux it is implemented using /proc file 
     system, on Windows and VxWorks it is not currently supported. 
 
-    <LI>File System - provides access to remote file system. 
+    <LI>File System - provides access to remote file system.
+    
+    <LI>Streams - a generic service to support streaming of data between host and target.
 
     <LI>Diagnostics - allows testing of communication channel and agent 
     functionality.
@@ -97,7 +99,7 @@ target and reconfiguring of the agent for specific needs. The code is written in
 ANSI C. See <A href="TCF Linux Agent Prototype.html">TCF Linux Agent Prototype</A>
 for more details about the agent code. 
 
-<H2><A name=Debugger></A>Prototype of a debugger based on Eclipse Debug Framework and TCF</H2>
+<H2><A name='Debugger'></A>Prototype of a debugger based on Eclipse Debug Framework and TCF</H2>
 
 <P>The prototype code connects Eclipse Debug Framework and Target Communication 
 Framework. It allows to launch Eclipse debug session by connecting to a target 
@@ -116,7 +118,7 @@ hierarchy allows debugger views to be "data driven" or, in other words, dynamica
 adapt to a given targets capabilities and structure, without a need to modify 
 debugger code to support a new target.
  
-<H2><A name=RSE></A>Prototype of a system monitor and remote file access based on Remote System Explorer and TCF</H2>
+<H2><A name='RSE'></A>Prototype of a system monitor and remote file access based on Remote System Explorer and TCF</H2>
 
 <P>Remote System Explorer is an Eclipse based component that allows users to 
 create connections to remote machines and explore their file systems, see list 

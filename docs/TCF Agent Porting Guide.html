@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<head>
+    <title>TCF Agent Porting Guide</title>
+</head>
+
+<body lang='EN-US'>
+
+    <h1>TCF Agent Porting Guide</h1>
+
+    <p>
+        Copyright (c) 2009 Wind River Systems, Inc. Made available under the EPL v1.0
+    </p>
+    <p>
+        Direct comments, questions to the <a href="mailto:dsdp-tcf-dev@eclipse.org">dsdp-tcf-dev@eclipse.org</a> mailing list
+    </p>
+
+    <h2>Table of Contents</h2>
+    <ul>
+        <li>
+            <a href='#Introduction'>Introduction</a>
+        </li>
+        <li>
+            <a href='#Customizing'>Customizing and Porting TCF Agent</a>
+        </li>
+        <li>
+            <a href='#NewOS'>Porting TCF Agent to a New OS Platform</a>
+        </li>
+        <li>
+            <a href='#NewCPU'>Porting TCF Agent to a New CPU Type</a>
+        </li>
+        <li>
+            <a href='#NewExeFile'>Adding Support For a New Executable File Format</a>
+        </li>
+        <li>
+            <a href='#NewDebugData'>Adding Support For a New Debug Data Format</a>
+        </li>
+    </ul>
+
+    <h2>
+        <a name='Introduction'>Introduction</a>
+    </h2>
+
+    <p>
+        TCF Agent is a lightweight reference implementation of TCF protocol that supports basic debugging and other TCF services.
+        It is written in C and can be used for remote debugging of software written for Linux, Windows XP or VxWorks.
+        See <a href='TCF Getting Started.html'>TCF Getting Started</a> for instructions on how to get the source code and build the agent.
+    </p>
+
+
+    <h2>
+        <a name='Customizing'>Customizing and Porting TCF Agent</a>
+    </h2>
+
+    <p>
+        Most of TCF agent configuration is done at compile time.
+        Conditional compilation statements in the source code assume that both the agent and inferior code will run on same OS platform and
+        on same CPU type that were used to build the agent.
+        Building an agent that can run on one machine while controlling execution of code on another machine might be possible, but not fully supported at this time.
+    </p>
+
+    <p>
+        It is important to know concurrency model used by the agent code before making any changes.
+        Most of the agent code is event driven: it has a main loop that retrieves events from an event queue and executes them sequentially by calling event handlers by a single thread.
+        Single threaded event driven design provides good level of concurrency (equivalent to cooperative multithreading), while greatly reduces need for synchronization -
+        each event dispatch cycle can be viewed as fully synchronized atomic operation.
+    </p>
+    
+    <p>
+        Event driven code should avoid long running or potentially blocking operations in event handlers since they can stop all event processing for indefinite time.
+        Such operations should use asynchronous APIs (like POSIX Asynchronous I/O), or should be performed by background threads.
+        Treat background threads with extreme caution - agent data structures are not intended for multithreaded access.
+        Background thread scope should be limited to a single module and it should not call agent public APIs.
+        Instead they should communicate with the rest of the code by posting events.
+    </p>
+    
+    <p>
+        An event is essentially a function pointer (a call-back) that points to event handler, plus a data pointer.
+        Call-backs are also used throughout the agent code to subscribe listeners for various state change notifications.
+        Using events and call-backs, as a design principle, is also known as inversion of control.
+        Note that, in general, inversion of control is not compatible with traditional multithreaded programming model that used mutexes to protect shared data from racing conditions.
+    </p>
+    
+    <p>
+        It should be much easier to port the agent if you don't need all TCF services.
+        For example, for RSE integration you only need File System, System Monitor and Processes services,
+        so you can disable all other services by editing <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/config.h'>config.h</a>.
+    </p>
+
+    <p>
+        Source file context.c implements low level debugger functionality, however it is still pulled in even if you disable all debugger related services.
+        If you don't need debugger support in the agent, you can replace context.c with a dummy implementation that does nothing and always returns an error.
+    </p>
+
+    <p>
+        It is better to create a separate directory with alternative versions of
+        <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/config.h'>config.h</a>,
+        <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/context.h'>context.h,</a>
+        <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/context.c'>context.c,</a>
+        <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/Makefile'>Makefile,</a>
+        etc., instead of editing original files.
+        The idea is that Makefile will search that directory first, and if a file not found there, it will search original agent sources.
+        See <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/examples/org.eclipse.tm.tcf.examples.daytime.agent'>examples/org.eclipse.tm.tcf.examples.daytime.agent</a>
+        for an example of a custom TCF agent.
+        Of course, if changes are generic enough to be useful for other ports, then it is better to change code in the main directory.
+    </p>
+
+    <p>
+        Please, consider contributing your changes of the source code back to eclipse.org.
+    </p>
+
+    <h2>
+        <a name='NewOS'>Porting TCF Agent to a New OS Platform</a>
+    </h2>
+
+    <p>
+        TBD
+    </p>
+
+    <h2>
+        <a name='NewCPU'>Porting TCF Agent to a New CPU Type</a>
+    </h2>
+
+    <p>Searching TCF agent source code for __i386__ is a good way to find all places where the source code depends on CPU type.</p>
+    <p>There are several files in the code that might need changes in order to support a new CPU type:</p>
+
+    <dl>
+        <dt>
+            <b>
+                <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/context.c'>context.c</a>
+            </b>
+        </dt>
+        <dd>
+            The module provides low level debugger functionality: attach/detach, suspend/resume, single step, memory read/write.
+            It uses OS debug APIs to do its job. Most of the code does not depend on CPU type, however, single stepping is not always directly
+            supported by OS, and its implementation needs to be reviewed and changed to support new CPU type.
+        </dd>
+        <dt>
+            <b>
+                <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/dwarfexpr.c'>dwarfexpr.c</a>
+            </b>
+        </dt>
+        <dd>
+            The module implements evaluation of <a href='http://en.wikipedia.org/wiki/DWARF'>DWARF</a> expressions.
+            The module is used only if the agent is built to support
+            <a href='http://en.wikipedia.org/wiki/Executable_and_Linkable_Format'>ELF</a> executable file format and
+            <a href='http://en.wikipedia.org/wiki/DWARF'>DWARF</a> debugging data format.
+            No need to change the module if <a href='http://en.wikipedia.org/wiki/Executable_and_Linkable_Format'>ELF</a> or
+            <a href='http://en.wikipedia.org/wiki/DWARF'>DWARF</a> support is not required.
+            <a href='http://en.wikipedia.org/wiki/DWARF'>DWARF</a> expressions can have references to CPU registers.
+            Register access code needs to be changed to support new CPU type.
+            Note that different compilers can use different numbers to identify same registers of same CPU.
+        </dd>
+        <dt>
+            <b>
+                <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/registers.c'>registers.c</a>
+            </b>
+        </dt>
+        <dd>
+            The module implements <a href='TCF Service - Registers.html'>Registers service</a>. The code has static variable "regs_index" that contains a table of CPU registers.
+            The table holds names, offsets and sizes of CPU registers. Offset and size define location of register data in REG_SET structure,
+            which represents snapshot of register values of an execution context. Definition of the variable needs to be changed to support new CPU type.
+        </dd>
+        <dt>
+            <b>
+                <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/stacktrace.c'>stacktrace.c</a>
+            </b>
+        </dt>
+        <dd>
+            The module implements <a href='TCF Service - Stack Trace.html'>Stack Trace service</a>.
+            The module contains "trace_stack" function that creates stack trace by walking a stack of an executable context.
+            Stack trace data format is defined by two struct declarations: StackTrace and StackFrame.
+            The data structure is generic, however the code that created the data structure is CPU dependand.
+            Alternative version of "trace_stack" function needs to be provided to support new CPU type.
+        </dd>
+    </dl>
+
+    <h2>
+        <a name='NewExeFile'>Adding Support For a New Executable File Format</a>
+    </h2>
+
+    <p>
+        TBD
+    </p>
+
+    <h2>
+        <a name='NewDebugData'>Adding Support For a New Debug Data Format</a>
+    </h2>
+
+    <p>
+        TBD
+    </p>
+
+</body>
+</HTML>
