@@ -100,7 +100,7 @@ static REG_INDEX regs_index[] = {
 
 #else
 
-/* TODO: Linux: support for CPU types other then I86 */
+/* TODO: support for CPU types other then I86 */
 #error "Unknown CPU"
 
 #endif

@@ -56,11 +56,6 @@ struct StackTrace {
 typedef struct StackFrame StackFrame;
 typedef struct StackTrace StackTrace;
 
-typedef void StackTraceCallBack(
-    StackFrame *,   /* stack frame description */
-    void *          /* client data pointer */
-);
-
 static Context dump_stack_ctx;
 
 static void add_frame(Context * ctx, StackFrame * frame) {
@@ -137,6 +132,8 @@ static int read_mem(Context * ctx, ContextAddress address, void * buf, size_t si
         return err;
     }
 }
+
+#if defined(__i386__)
 
 #define MAX_FRAMES  1000
 
@@ -285,6 +282,12 @@ static int trace_stack(Context * ctx) {
 
     return 0;
 }
+
+#else
+
+#error "Unknown CPU"
+
+#endif
 
 #endif
 
