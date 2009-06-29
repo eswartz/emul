@@ -156,9 +156,8 @@ static void delete_channel(ChannelTCP * c) {
     assert(c->lock_cnt == 0);
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->read_pending == 0);
-    if (c->ibuf.handling_msg != HandleMsgIdle) {
+    if (c->ibuf.handling_msg == HandleMsgTriggered) {
         /* Cancel pending message handling since channel object is gone. */
-        assert(c->ibuf.handling_msg == HandleMsgTriggered);
         c->ibuf.handling_msg = HandleMsgIdle;
         cancel_event(handle_channel_msg, c, 0);
     }
