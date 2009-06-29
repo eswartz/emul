@@ -53,13 +53,6 @@
     </h2>
 
     <p>
-        Most of TCF agent configuration is done at compile time.
-        Conditional compilation statements in the source code assume that both the agent and inferior code will run on same OS platform and
-        on same CPU type that were used to build the agent.
-        Building an agent that can run on one machine while controlling execution of code on another machine might be possible, but not fully supported at this time.
-    </p>
-
-    <p>
         It is important to know concurrency model used by the agent code before making any changes.
         Most of the agent code is event driven: it has a main loop that retrieves events from an event queue and executes them sequentially by calling event handlers by a single thread.
         Single threaded event driven design provides good level of concurrency (equivalent to cooperative multithreading), while greatly reduces need for synchronization -
@@ -80,16 +73,26 @@
         Using events and call-backs, as a design principle, is also known as inversion of control.
         Note that, in general, inversion of control is not compatible with traditional multithreaded programming model that used mutexes to protect shared data from racing conditions.
     </p>
+
+    <p>
+        Most of TCF agent configuration is done at compile time.
+        Conditional compilation statements in the source code assume that both the agent and inferior code will run on same OS platform and
+        on same CPU type that were used to build the agent.
+        Building an agent that can run on one machine while controlling execution of code on another machine might be possible, but not fully supported at this time.
+    </p>
+
+    <p>
+        Header file <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/config.h'>config.h</a> contains macro definitions that control agent configuration.
+        All C files in the agent code include <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/config.h'>config.h</a> before other header files.
+        Individual services or features can be enabled or disabled by changing definitions in the file.
+        Also, macro values can be overwritten by using -D option in C compiler command line.
+        Agent <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/Makefile'>Makefile</a> contains additional logic that makes it even more convenient to build different agent configurations.
+    </p>
     
     <p>
         It should be much easier to port the agent if you don't need all TCF services.
         For example, for RSE integration you only need File System, System Monitor and Processes services,
         so you can disable all other services by editing <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/config.h'>config.h</a>.
-    </p>
-
-    <p>
-        Source file context.c implements low level debugger functionality, however it is still pulled in even if you disable all debugger related services.
-        If you don't need debugger support in the agent, you can replace context.c with a dummy implementation that does nothing and always returns an error.
     </p>
 
     <p>
@@ -114,9 +117,17 @@
     </h2>
 
     <p>
-        TBD
+        In order to improve portability, instead of using non-portable native OS calls, agent code uses POSIX APIs whenever possible.
+        When a POSIX API is not available for particular platform, and it can be easily emulated, it is done in mdep.h/mdep.c files.
+        For example, mdep.h/mdep.c contains emulation of POSIX Threads for Win32, since the API is not available with Microsoft C compiler.
+        API emulation does not have to be complete, it only needs to implement functionality that is used by the agent.
     </p>
 
+    <p>
+        When it is not possible or not feasible to use portable POSIX APIs, the agent code contains conditional compilation statements that
+        use well known macros like WIN32, __CYGWIN__, __MINGW32__, etc. Such places might require editing when porting to a new OS.
+    </p>
+    
     <h2>
         <a name='NewCPU'>Porting TCF Agent to a New CPU Type</a>
     </h2>
