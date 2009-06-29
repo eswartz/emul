@@ -6,7 +6,7 @@ AR ?= ar
 ifeq ($(CONF),Debug)
 CFLAGS += -g
 else
-CFLAGS += -O
+CFLAGS += -O -DNDEBUG
 endif
 CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -Wmissing-prototypes
 
