@@ -16,7 +16,7 @@
  * This module defines agent error codes in addition to system codes defined in errno.h
  */
 
-#include "mdep.h"
+#include "config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>

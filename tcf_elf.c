@@ -469,6 +469,8 @@ ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, Conte
     return 0;
 }
 
+#if SERVICE_Expressions && ENABLE_DebugContext
+
 static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddress * addr) {
     unsigned i, j;
 
@@ -712,8 +714,10 @@ static void eventpoint_at_loader(Context * ctx, void * args) {
     ctx->loader_state = state;
 }
 
+#endif /* SERVICE_Expressions && ENABLE_DebugContext */
+
 void ini_elf(void) {
-#if SERVICE_Expressions
+#if SERVICE_Expressions && ENABLE_DebugContext
     add_identifier_callback(expression_identifier_callback);
     create_eventpoint("$loader_brk", eventpoint_at_loader, NULL);
 #endif

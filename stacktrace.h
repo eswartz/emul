@@ -26,6 +26,8 @@
 #define STACK_BOTTOM_FRAME 0
 #define STACK_NO_FRAME  (-1)
 
+#if SERVICE_StackTrace
+
 /*
  * Dump current stack trace into log.
  * The function can be used to debug the agent itself.
@@ -62,5 +64,12 @@ extern int is_top_frame(Context * ctx, int frame);
  */
 extern void ini_stack_trace_service(Protocol *, TCFBroadcastGroup *);
 
+#else /* SERVICE_StackTrace */
 
-#endif
+#define get_frame_info(ctx, frame, ip, rp, fp) (errno = ERR_UNSUPPORTED, -1)
+#define is_stack_frame_id(id, ctx, frame) 0
+#define get_stack_frame_id(ctx, frame) NULL
+#define is_top_frame(ctx, frame) (frame == STACK_TOP_FRAME)
+
+#endif /* SERVICE_StackTrace */
+#endif /* D_stacktrace */

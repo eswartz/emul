@@ -590,8 +590,11 @@ static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
 
 int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     if (find_pe_symbol(ctx, frame, name, sym) < 0) {
+        int err = errno;
         SymLocation * loc = (SymLocation *)sym->location;
-        return find_test_symbol(ctx, name, sym, &loc->address);
+        if (find_test_symbol(ctx, name, sym, &loc->address) >= 0) return 0;
+        errno = err;
+        return -1;
     }
     return 0;
 }

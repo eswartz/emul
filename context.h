@@ -60,7 +60,9 @@ struct Context {
     int                 regs_error;         /* if not 0, 'regs' is invalid */
     int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
     void *              stack_trace;        /* pointer to StackTrace service data cache */
+#if ENABLE_RCBP_TEST
     int                 test_process;       /* if not 0, the process is test process started by Diagnostics service */
+#endif
 
 /* OS dependant context attributes */
 #if defined(_WRS_KERNEL)
@@ -133,6 +135,8 @@ extern pid_t id2pid(char * id, pid_t * parent);
  */
 extern Context * id2ctx(char * id);
 
+#if ENABLE_DebugContext
+
 /*
  * Find a context by PID
  */
@@ -163,13 +167,60 @@ extern void context_lock(Context * ctx);
  */
 extern void context_unlock(Context * ctx);
 
+/*
+ * Return 1 if the context has running/stopped state, return 0 othewise
+ */
 extern int context_has_state(Context * ctx);
+
+/*
+ * Stop execution of the context.
+ * Execution can be resumed by calling context_continue()
+ * Return -1 and set errno if the context cannot be stopped.
+ */
 extern int context_stop(Context * ctx);
+
+/*
+ * Resume execution of the context.
+ * Return -1 and set errno if the context cannot be resumed.
+ */
 extern int context_continue(Context * ctx);
+
+/*
+ * Perform single instruction step on the context.
+ * Return -1 and set errno if the context cannot be single stepped.
+ */
 extern int context_single_step(Context * ctx);
+
+/*
+ * Write context memory.
+ * Make sure check_breakpoints_on_memory_write() has been called before writing to context memory.
+ * Return -1 and set errno if the context memory cannot be written.
+ */
 extern int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size);
+
+/*
+ * Read context memory.
+ * Make sure check_breakpoints_on_memory_read() will be called after reading context memory.
+ * Return -1 and set errno if the context cannot be read.
+ */
 extern int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size);
+
+/*
+ * Return context memory word size in bytes.
+ */
 extern unsigned context_word_size(Context * ctx);
+
+#else /* ENABLE_DebugContext */
+
+#define context_find_from_pid(pid) NULL
+#define context_attach(pid, done, client_data, selfattach) (errno = ERR_UNSUPPORTED, -1)
+#define context_attach_self() (errno = ERR_UNSUPPORTED, -1)
+#define context_has_state(ctx) 0
+#define context_read_mem(ctx, address, buf, size) (errno = ERR_INV_CONTEXT, -1)
+#define context_write_mem(ctx, address, buf, size) (errno = ERR_INV_CONTEXT, -1)
+#define context_word_size(ctx) sizeof(void *)
+
+#endif /* ENABLE_DebugContext */
 
 typedef struct ContextEventListener {
     void (*context_created)(Context * ctx, void * client_data);

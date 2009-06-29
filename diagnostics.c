@@ -72,14 +72,14 @@ static void command_get_test_list(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-#if SERVICE_RunControl
+#if ENABLE_RCBP_TEST
     if (context_root.next != NULL) arr = "[\"RCBP1\"]";
 #endif
     write_stringz(&c->out, arr);
     write_stream(&c->out, MARKER_EOM);
 }
 
-#if SERVICE_RunControl
+#if ENABLE_RCBP_TEST
 static void run_test_done(int error, Context * ctx, void * arg) {
     RunTestDoneArgs * data = arg;
     Channel * c = data->c;
@@ -108,7 +108,7 @@ static void command_run_test(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (strcmp(id, "RCBP1") == 0) {
-#if SERVICE_RunControl
+#if ENABLE_RCBP_TEST
         RunTestDoneArgs * data = loc_alloc_zero(sizeof(RunTestDoneArgs));
         data->c = c;
         strcpy(data->token, token);
@@ -141,7 +141,7 @@ static void command_cancel_test(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-#if SERVICE_RunControl
+#if ENABLE_RCBP_TEST
     if (terminate_debug_context(c->bcg, id2ctx(id)) != 0) err = errno;
 #else
     err = ERR_UNSUPPORTED;

@@ -2812,20 +2812,4 @@ void ini_contexts(void) {
     create_eventpoint("main", eventpoint_at_main, NULL);
 }
 
-#else
-
-int context_attach_self(void) {
-    errno = ERR_UNSUPPORTED;
-    return -1;
-}
-
-int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
-    errno = ERR_UNSUPPORTED;
-    return -1;
-}
-
-Context * context_find_from_pid(pid_t pid) {
-    return NULL;
-}
-
 #endif  /* if ENABLE_DebugContext */

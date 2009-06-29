@@ -25,7 +25,7 @@
  * while allows for high level of concurrency.
  */
 
-#include "mdep.h"
+#include "config.h"
 #include <time.h>
 #include <assert.h>
 #include "myalloc.h"

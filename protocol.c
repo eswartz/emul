@@ -20,7 +20,7 @@
  * protocol is used and what services do.
  */
 
-#include "mdep.h"
+#include "config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>

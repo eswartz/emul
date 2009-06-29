@@ -18,7 +18,7 @@
 
 #include "config.h"
 
-#if SERVICE_RunControl
+#if ENABLE_RCBP_TEST
 
 #include <stdlib.h>
 #include <stdio.h>

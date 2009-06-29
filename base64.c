@@ -19,7 +19,7 @@
  * Also TCF version of the encoding does not allow characters outside of the BASE64 alphabet. 
  */
 
-#include "mdep.h"
+#include "config.h"
 #include <assert.h>
 #include "base64.h"
 #include "exceptions.h"

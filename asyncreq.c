@@ -12,7 +12,7 @@
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
-#include "mdep.h"
+#include "config.h"
 #include <assert.h>
 #include <stddef.h>
 #include "myalloc.h"

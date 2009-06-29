@@ -16,7 +16,7 @@
  * Transport agnostic channel implementation.
  */
 
-#include "mdep.h"
+#include "config.h"
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>

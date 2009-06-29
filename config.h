@@ -89,13 +89,16 @@
 #define ENABLE_Cmdline          1
 #endif
 #if !defined(ENABLE_DebugContext)
-#define ENABLE_DebugContext     (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#define ENABLE_DebugContext     (SERVICE_RunControl || SERVICE_Breakpoints || SERVICE_Memory || SERVICE_Registers || SERVICE_StackTrace)
 #endif
 #if !defined(ENABLE_ELF)
 #define ENABLE_ELF              ((TARGET_UNIX || TARGET_VXWORKS) && (SERVICE_Symbols || SERVICE_LineNumbers))
 #endif
 #if !defined(ENABLE_SSL)
 #define ENABLE_SSL              (TARGET_UNIX)
+#endif
+#if !defined(ENABLE_RCBP_TEST)
+#define ENABLE_RCBP_TEST        (SERVICE_RunControl && SERVICE_Breakpoints)
 #endif
 
 #ifdef CONFIG_MAIN

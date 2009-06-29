@@ -22,7 +22,7 @@
 #ifndef D_json
 #define D_json
 
-#include "mdep.h"
+#include "config.h"
 #include <stdlib.h>
 #include "streams.h"
 

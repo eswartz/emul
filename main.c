@@ -120,7 +120,7 @@ int main(int argc, char ** argv) {
                 break;
 
             case 't':
-#if SERVICE_RunControl
+#if ENABLE_DebugContext
                 test_proc();
 #endif
                 exit(0);

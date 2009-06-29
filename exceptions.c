@@ -30,7 +30,7 @@
  * Only main thread is allowed to use exceptions.
  */
 
-#include "mdep.h"
+#include "config.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>

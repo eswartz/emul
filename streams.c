@@ -16,7 +16,7 @@
  * Abstract byte stream. Bytes in the stream can be divided into groups - messages.
  */
 
-#include "mdep.h"
+#include "config.h"
 #include "streams.h"
 
 int (read_stream)(InputStream * inp) {
