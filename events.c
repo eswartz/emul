@@ -246,11 +246,26 @@ void cancel_event_loop(void) {
 }
 
 void run_event_loop(void) {
+    unsigned event_cnt = 0;
     assert(is_dispatch_thread());
     check_error(pthread_mutex_lock(&event_lock));
+
     while (process_events) {
+
         event_node * ev = NULL;
-        if (event_queue != NULL) {
+
+        if (timer_queue != NULL && (event_queue == NULL || (event_cnt & 0x3fu) == 0)) {
+            struct timespec timenow;
+            if (clock_gettime(CLOCK_REALTIME, &timenow)) {
+                check_error(errno);
+            }
+            if (time_cmp(&timer_queue->runtime, &timenow) <= 0) {
+                ev = timer_queue;
+                timer_queue = ev->next;
+            }
+        }
+
+        if (ev == NULL && event_queue != NULL) {
             ev = event_queue;
             event_queue = ev->next;
             if (event_queue == NULL) {
@@ -258,29 +273,24 @@ void run_event_loop(void) {
                 event_last = NULL;
             }
         }
-        else if (timer_queue != NULL) {
-            struct timespec timenow;
-            if (clock_gettime(CLOCK_REALTIME, &timenow)) {
-                check_error(errno);
-            }
-            ev = timer_queue;
-            if (time_cmp(&timer_queue->runtime, &timenow) > 0) {
-                int error = pthread_cond_timedwait(&event_cond, &event_lock, &ev->runtime);
+
+        if (ev == NULL) {
+            if (timer_queue != NULL) {
+                int error = pthread_cond_timedwait(&event_cond, &event_lock, &timer_queue->runtime);
                 if (error && error != ETIMEDOUT) check_error(error);
-                continue;
             }
-            timer_queue = ev->next;
+            else {
+                check_error(pthread_cond_wait(&event_cond, &event_lock));
+            }
         }
         else {
-            check_error(pthread_cond_wait(&event_cond, &event_lock));
-            continue;
+            check_error(pthread_mutex_unlock(&event_lock));
+            trace(LOG_EVENTCORE, "run_event_loop: event %#x handler %#x arg %#x", ev, ev->handler, ev->arg);
+            ev->handler(ev->arg);
+            check_error(pthread_mutex_lock(&event_lock));
+            free_node(ev);
+            event_cnt++;
         }
-
-        check_error(pthread_mutex_unlock(&event_lock));
-        trace(LOG_EVENTCORE, "run_event_loop: event %#x handler %#x arg %#x", ev, ev->handler, ev->arg);
-        ev->handler(ev->arg);
-        check_error(pthread_mutex_lock(&event_lock));
-        free_node(ev);
     }
 }
 
