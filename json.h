@@ -90,4 +90,4 @@ extern void json_write_binary_start(JsonWriteBinaryState * state, OutputStream *
 extern void json_write_binary_data(JsonWriteBinaryState * state, const char * str, size_t len);
 extern void json_write_binary_end(JsonWriteBinaryState * state);
 
-#endif
+#endif /* D_json */

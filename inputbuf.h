@@ -54,4 +54,4 @@ extern void ibuf_flush(InputBuf * ibuf, InputStream * inp);
 extern void ibuf_read_done(InputBuf * ibuf, int len);
 extern int ibuf_start_message(InputBuf * ibuf);
 
-#endif
+#endif /* D_input_buf */

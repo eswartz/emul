@@ -160,7 +160,7 @@ typedef VOID IMAGEHLP_CONTEXT, *PIMAGEHLP_CONTEXT;
 
 typedef BOOL (CALLBACK *PSYM_ENUMERATESYMBOLS_CALLBACK)(PSYMBOL_INFO pSymInfo, ULONG SymbolSize, PVOID UserContext);
 
-#endif
+#endif /* defined(__GNUC__) */
 
 enum BasicType { 
    btNoType   = 0,
@@ -228,5 +228,5 @@ extern BOOL SymLoadModule64(HANDLE hProcess, HANDLE hFile, PCSTR ImageName, PCST
 extern BOOL SymUnloadModule64(HANDLE hProcess, DWORD64 BaseOfDll);
 extern BOOL SymCleanup(HANDLE hProcess);
 
-#endif
-#endif
+#endif /* defined(WIN32) */
+#endif /* D_windbgcache */

@@ -56,4 +56,4 @@ struct LINK {
             (list)->prev->next = (item); \
         }
 
-#endif
+#endif /* D_link */

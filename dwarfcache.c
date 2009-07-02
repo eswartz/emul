@@ -920,4 +920,4 @@ ObjectInfo * find_object(DWARFCache * Cache, U8_T ID) {
     return NULL;
 }
 
-#endif
+#endif /* ENABLE_ELF */

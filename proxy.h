@@ -24,6 +24,6 @@
 
 extern void proxy_create(Channel * c1, Channel * c2);
 
-#endif
+#endif /* D_proxy */
 
 

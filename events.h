@@ -30,21 +30,65 @@
 
 typedef void EventCallBack(void *);
 
+/*
+ * Causes event to have its handler
+ * function called in the dispatch thread of the framework.
+ * Events are dispatched in same order as queued.
+ * If post_event is called from the dispatching thread
+ * the handler will still be deferred until
+ * all pending events have been processed.
+ *
+ * This function can be invoked from any thread.
+ *
+ * handler - the function that should be executed asynchronously.
+ * arg - pointer to event data.
+ */
 extern void post_event(EventCallBack * handler, void * arg);
+
+/*
+ * Causes event to have its handler
+ * function called in the dispatch thread of the framework.
+ * The event is dispatched after given delay.
+ *
+ * This function can be invoked from any thread.
+ *
+ * handler - the function that should be executed asynchronously.
+ * arg - pointer to event data.
+ * us_delay - microseconds to delay event dispatch.
+ */
 extern void post_event_with_delay(EventCallBack * handler, void * arg, unsigned long us_delay);
 
-/* Cancel pending event with matching 'handler' and 'arg', or if event
+/*
+ * Cancel pending event with matching 'handler' and 'arg', or if event
  * is not pending and 'wait' is true then wait for matching event to
  * be posted.  Can only be called from the dispatch thread.  Returns
- * true if a posted event was cancelled. */
+ * true if a posted event was cancelled.
+ */
 extern int cancel_event(EventCallBack * handler, void * arg, int wait);
 
+/*
+ * Returns true if the calling thread is TCF event dispatch thread.
+ * Use this call the ensure that a given task is being executed (or not being)
+ * on dispatch thread.
+ */
 extern int is_dispatch_thread(void);
 
+/*
+ * Run TCF event loop.
+ * Should be called from main().
+ */
 extern void run_event_loop(void);
 
+/*
+ * Cancel event loop.
+ * The function causes run_event_loop() to stop event dispatching and return.
+ */
 extern void cancel_event_loop(void);
 
+/*
+ * Initialize event queue.
+ * Should be called from main before run_event_loop().
+ */
 extern void ini_events_queue(void);
 
-#endif
+#endif /* D_events */

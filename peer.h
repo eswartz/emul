@@ -83,4 +83,4 @@ typedef void (*peer_server_listener)(PeerServer *ps, int changeType, void * clie
 /* Peer server list change listener */
 extern void peer_server_add_listener(peer_server_listener listener, void * client_data);
 
-#endif
+#endif /* D_peer */

@@ -182,6 +182,6 @@ extern int read_and_evaluate_dwarf_object_property(Context * ctx, int frame, U8_
 
 extern U8_T get_numeric_property_value(PropertyValue * Value);
 
-#endif
+#endif /* ENABLE_ELF */
 
-#endif
+#endif /* D_dwarfcache */

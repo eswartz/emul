@@ -35,4 +35,4 @@ extern int write_base64(OutputStream * out, const char * buf, int len);
  */
 extern int read_base64(InputStream * inp, char * buf, int buf_size);
 
-#endif
+#endif /* D_base64 */

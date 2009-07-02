@@ -808,4 +808,4 @@ int discovery_start_udp(void) {
     return 0;
 }
 
-#endif
+#endif /* ENABLE_Discovery */

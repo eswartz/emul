@@ -38,4 +38,4 @@ extern void channel_tcp_connect(PeerServer * server, ChannelConnectCallBack call
  */
 extern void generate_ssl_certificate(void);
 
-#endif
+#endif /* D_channel_tcp */

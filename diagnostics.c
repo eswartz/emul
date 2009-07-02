@@ -245,7 +245,7 @@ static void streams_test_callback(VirtualStream * stream, int event_code, void *
     }
 }
 
-#endif
+#endif /* SERVICE_Streams */
 
 static void command_create_test_streams(char * token, Channel * c) {
     char id_inp[256];

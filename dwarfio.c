@@ -660,4 +660,4 @@ void dio_ChkString(U2_T Form) {
     str_exception(ERR_INV_DWARF, "FORM_STRING expected");
 }
 
-#endif
+#endif /* ENABLE_ELF */

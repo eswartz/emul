@@ -48,4 +48,4 @@ extern int virtual_stream_is_empty(VirtualStream * stream);
 extern void ini_streams_service(Protocol * proto);
 
 
-#endif
+#endif /* D_streamsservice */

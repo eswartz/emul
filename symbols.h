@@ -139,4 +139,4 @@ extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
  */
 extern void ini_symbols_service(Protocol * proto);
 
-#endif
+#endif /* D_symbols */

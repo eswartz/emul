@@ -34,4 +34,4 @@ extern int line_to_address(Context * ctx, char * file, int line, int column, Lin
 extern void ini_line_numbers_service(Protocol *);
 
 
-#endif
+#endif /* D_linenumbers */

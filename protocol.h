@@ -124,4 +124,4 @@ extern void protocol_reference(Protocol *);
  */
 extern void protocol_release(Protocol *);
 
-#endif
+#endif /* D_protocol */

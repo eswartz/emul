@@ -848,4 +848,4 @@ void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendG
     add_command_handler(proto, RUN_CONTROL, "terminate", command_terminate);
 }
 
-#endif
+#endif /* SERVICE_RunControl */

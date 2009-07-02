@@ -54,4 +54,4 @@ extern int (peek_stream)(InputStream * inp);
 extern void write_string(OutputStream * out, const char * str);
 extern void write_stringz(OutputStream * out, const char * str);
 
-#endif
+#endif /* D_streams */

@@ -133,4 +133,4 @@ extern int are_channels_suspended(TCFSuspendGroup * p);
 extern void channels_resume(TCFSuspendGroup * p);
 extern int channels_get_message_count(TCFSuspendGroup * p);
 
-#endif
+#endif /* D_channel */

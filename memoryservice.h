@@ -25,4 +25,4 @@
 extern void ini_memory_service(Protocol * proto, TCFBroadcastGroup * bcg);
 
 
-#endif
+#endif /* D_memoryservice */

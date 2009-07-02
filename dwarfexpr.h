@@ -23,4 +23,4 @@
 
 extern int dwarf_evaluate_expression(U8_T base, PropertyValue * value);
 
-#endif
+#endif /* D_dwarfexpr */

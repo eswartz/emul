@@ -333,4 +333,4 @@ void ini_cmdline_handler(int interactive) {
     check_error(pthread_create(&interactive_thread, &pthread_create_attr, interactive_handler, 0));
 }
 
-#endif
+#endif /* ENABLE_Cmdline */

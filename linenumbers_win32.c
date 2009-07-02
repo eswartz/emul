@@ -207,5 +207,5 @@ void ini_line_numbers_service(Protocol * proto) {
     add_command_handler(proto, LINENUMBERS, "mapToSource", command_map_to_source);
 }
 
-#endif
+#endif /* SERVICE_LineNumbers && defined(WIN32) */
 

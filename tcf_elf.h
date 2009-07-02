@@ -377,8 +377,8 @@ extern ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file
  */
 extern void ini_elf(void);
 
-#endif
+#endif /* ENABLE_ELF */
 
-#endif
+#endif /* D_elf */
 
 

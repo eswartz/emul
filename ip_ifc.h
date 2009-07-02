@@ -30,4 +30,4 @@ typedef struct {
  */
 extern int build_ifclist(int sock, int max, ip_ifc_info * list);
 
-#endif
+#endif /* D_ip_ifc */

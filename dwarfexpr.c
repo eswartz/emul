@@ -820,6 +820,6 @@ int dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
     return error ? -1 : 0;
 }
 
-#endif
+#endif /* ENABLE_ELF */
 
 

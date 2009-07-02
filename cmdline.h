@@ -26,11 +26,11 @@ extern void cmdline_resume(void);
 extern void ini_cmdline_handler(int interactive);
 extern void open_script_file(char * script_name);
 
-#else
+#else /* ENABLE_Cmdline */
 
 #define cmdline_suspend() 0
 #define cmdline_resume() 0
 
-#endif
+#endif /* ENABLE_Cmdline */
 
-#endif
+#endif /* D_cmdline */

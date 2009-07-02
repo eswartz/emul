@@ -39,6 +39,6 @@ extern void discovery_start(void);
 
 extern void ini_locator_service(Protocol * p, TCFBroadcastGroup * bcg);
 
-#endif
+#endif /* SERVICE_Locator */
 
-#endif
+#endif /* D_discovery */

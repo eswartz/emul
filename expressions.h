@@ -72,7 +72,7 @@ extern void add_identifier_callback(ExpressionIdentifierCallBack * callback);
 
 extern void ini_expressions_service(Protocol * proto);
 
-#endif
+#endif /* SERVICE_Expressions */
 
-#endif
+#endif /* D_expression */
 

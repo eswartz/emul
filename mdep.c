@@ -574,7 +574,7 @@ int closedir(DIR * d) {
     loc_free(d);
     return r;
 }
-#endif
+#endif /* defined(_MSC_VER) */
 
 
 #if defined(WIN32)

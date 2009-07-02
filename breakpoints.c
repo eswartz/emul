@@ -1384,7 +1384,7 @@ static void safe_skip_breakpoint(void * arg) {
     }
 }
 
-#endif
+#endif /* ifndef _WRS_KERNEL */
 
 /*
  * When a context is stopped by breakpoint, it is necessary to disable
@@ -1499,4 +1499,4 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     add_command_handler(proto, BREAKPOINTS, "getCapabilities", command_get_capabilities);
 }
 
-#endif
+#endif /* SERVICE_Breakpoints */

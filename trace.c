@@ -84,7 +84,7 @@ int print_trace(int mode, char *fmt, ...) {
     }
 }
 
-#endif
+#endif /* ENABLE_Trace */
 
 void open_log_file(char * log_name) {
 #if ENABLE_Trace
@@ -98,7 +98,7 @@ void open_log_file(char * log_name) {
         fprintf(stderr, "TCF: error: cannot create log file %s\n", log_name);
         exit(1);
     }
-#endif
+#endif /* ENABLE_Trace */
 }
 
 void ini_trace(void) {
@@ -107,7 +107,7 @@ void ini_trace(void) {
         perror("pthread_mutex_init");
         exit(1);
     }
-#endif
+#endif /* ENABLE_Trace */
 }
 
 

@@ -149,7 +149,7 @@ static int certificate_verify_callback(int preverify_ok, X509_STORE_CTX * ctx) {
         err == ERR_SSL ? (char *)ERR_error_string(ERR_get_error(), NULL) : (char *)errno_to_str(err));
     return err == 0 && found;
 }
-#endif
+#endif /* ENABLE_SSL */
 
 static void delete_channel(ChannelTCP * c) {
     trace(LOG_PROTOCOL, "Deleting channel 0x%08x", c);
@@ -425,6 +425,7 @@ static void tcp_trigger_message(InputBuf * ibuf) {
 static int channel_get_message_count(Channel * channel) {
     ChannelTCP * c = channel2tcp(channel);
     assert(is_dispatch_thread());
+    if (c->ibuf.handling_msg != HandleMsgTriggered) return 0;
     return c->ibuf.message_count;
 }
 
@@ -951,7 +952,7 @@ void generate_ssl_certificate(void) {
     }
     if (cert != NULL) X509_free(cert);
     if (rsa != NULL) RSA_free(rsa);
-#else
+#else /* ENABLE_SSL */
     fprintf(stderr, "SSL support not available\n");
-#endif
+#endif /* ENABLE_SSL */
 }

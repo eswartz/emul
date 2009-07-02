@@ -121,4 +121,4 @@ void async_req_post(AsyncReqInfo * req);
 
 void ini_asyncreq(void);
 
-#endif
+#endif /* D_asyncreq */

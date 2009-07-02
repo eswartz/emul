@@ -64,4 +64,4 @@ extern void ini_trace(void);
 
 extern void open_log_file(char * name);
 
-#endif
+#endif /* D_trace */

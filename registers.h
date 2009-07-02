@@ -27,4 +27,4 @@
 extern void ini_registers_service(Protocol *);
 
 
-#endif
+#endif /* D_registers */

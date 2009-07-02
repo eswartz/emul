@@ -198,6 +198,6 @@ void ini_symbols_service(Protocol * proto) {
     add_command_handler(proto, SYMBOLS, "getChildren", command_get_children);
 }
 
-#endif
+#endif /* SERVICE_Symbols */
 
 

@@ -84,5 +84,5 @@ extern void dio_ChkData(U2_T Form);
 extern void dio_ChkBlock(U2_T Form, U1_T ** Buf, size_t * Size);
 extern void dio_ChkString(U2_T Form);
 
-#endif
+#endif /* D_dwarfio */
 

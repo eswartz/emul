@@ -42,4 +42,4 @@
  */
 extern int discovery_start_udp(void);
 
-#endif
+#endif /* D_discovery_udp */

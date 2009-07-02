@@ -24,4 +24,4 @@
 
 extern void ini_diagnostics_service(Protocol *);
 
-#endif
+#endif /* D_diagnostics */

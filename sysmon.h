@@ -26,4 +26,4 @@
  */
 extern void ini_sys_mon_service(Protocol *);
 
-#endif
+#endif /* D_sysmon */

@@ -57,4 +57,4 @@ extern int terminate_debug_context(TCFBroadcastGroup * bcg, Context * ctx);
  */
 extern void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg);
 
-#endif
+#endif /* D_runctrl */

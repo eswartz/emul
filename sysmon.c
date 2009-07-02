@@ -1608,6 +1608,6 @@ extern void ini_sys_mon_service(Protocol * proto) {
     add_command_handler(proto, SYS_MON, "getEnvironment", command_get_environment);
 }
 
-#endif
+#endif /* SERVICE_SysMonitor */
 
 

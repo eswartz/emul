@@ -196,7 +196,7 @@ void ini_locator_service(Protocol * p, TCFBroadcastGroup * bcg) {
     add_command_handler(p, LOCATOR, "redirect", command_redirect);
     add_command_handler(p, LOCATOR, "getPeers", command_get_peers);
 }
-#endif
+#endif /* SERVICE_Locator */
 
 void discovery_start(void) {
 #if ENABLE_Discovery

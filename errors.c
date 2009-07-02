@@ -195,7 +195,7 @@ void check_error(int error) {
     exit(1);
 }
 
-#else
+#else /* NDEBUG */
 
 void check_error_debug(char * file, int line, int error) {
     if (error == 0) return;
@@ -211,4 +211,4 @@ void check_error_debug(char * file, int line, int error) {
     exit(1);
 }
 
-#endif
+#endif /* NDEBUG */

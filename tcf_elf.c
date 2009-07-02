@@ -720,7 +720,7 @@ void ini_elf(void) {
 #if SERVICE_Expressions && ENABLE_DebugContext
     add_identifier_callback(expression_identifier_callback);
     create_eventpoint("$loader_brk", eventpoint_at_loader, NULL);
-#endif
+#endif /* SERVICE_Expressions && ENABLE_DebugContext */
 }
 
-#endif
+#endif /* ENABLE_ELF */

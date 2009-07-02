@@ -840,4 +840,4 @@ void ini_streams_service(Protocol * proto) {
     add_command_handler(proto, STREAMS, "disconnect", command_disconnect);
 }
 
-#endif
+#endif /* SERVICE_Streams */

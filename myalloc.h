@@ -30,4 +30,4 @@ extern char * loc_strndup(const char * s, size_t len);
 
 extern void loc_free(void * p);
 
-#endif
+#endif /* D_myalloc */

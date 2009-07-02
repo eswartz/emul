@@ -13,12 +13,13 @@
  *******************************************************************************/
 
 /*
- * Symbols service - ELF version
+ * Symbols service - ELF version.
  */
 
 #include "config.h"
 
-#if (SERVICE_Symbols) && (ENABLE_ELF)
+#if SERVICE_Symbols && ENABLE_ELF
+
 #if defined(_WRS_KERNEL)
 #  include <symLib.h>
 #  include <sysSymTbl.h>
@@ -976,5 +977,6 @@ int get_symbol_pointer(const Symbol * sym, Symbol * ptr) {
     ((SymLocation *)ptr->location)->pointer++;
     return 0;
 }
-#endif
+
+#endif /* SERVICE_Symbols && ENABLE_ELF */
 

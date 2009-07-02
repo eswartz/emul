@@ -82,4 +82,4 @@ extern DWORD get_win32_errno(int no);
 #endif
 
 
-#endif
+#endif /* D_errors */

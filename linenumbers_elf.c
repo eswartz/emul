@@ -13,7 +13,8 @@
  *******************************************************************************/
 
 /*
- * TCF service line Numbers
+ * TCF service line Numbers - ELF version.
+ *
  * The service associates locations in the source files with the corresponding
  * machine instruction addresses in the executable object.
  */
@@ -367,5 +368,5 @@ void ini_line_numbers_service(Protocol * proto) {
     add_command_handler(proto, LINENUMBERS, "mapToSource", command_map_to_source);
 }
 
-#endif
+#endif /* SERVICE_LineNumbers && ENABLE_ELF */
 

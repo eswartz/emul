@@ -495,6 +495,6 @@ void ini_registers_service(Protocol * proto) {
     add_command_handler(proto, REGISTERS, "search", command_search);
 }
 
-#endif
+#endif /* SERVICE_Registers */
 
 

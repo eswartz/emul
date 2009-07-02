@@ -1249,6 +1249,6 @@ void ini_file_system_service(Protocol * proto) {
     add_command_handler(proto, FILE_SYSTEM, "roots", command_roots);
 }
 
-#endif
+#endif /* SERVICE_FileSystem */
 
 

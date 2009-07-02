@@ -220,4 +220,4 @@ extern BOOL SymCleanup(HANDLE hProcess) {
 }
 
 
-#endif
+#endif /* defined(WIN32) */

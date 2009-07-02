@@ -54,4 +54,4 @@ extern void clear_trap(Trap * trap);
 extern void exception(int error);
 extern void str_exception(int error, char * msg);
 
-#endif
+#endif /* D_exceptions */

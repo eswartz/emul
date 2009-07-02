@@ -154,7 +154,7 @@ static void done_context_attach(int error, Context * ctx, void * data) {
     CloseHandle(args->process);
     loc_free(args);
 }
-#endif
+#endif /* defined(WIN32) */
 
 int run_test_process(ContextAttachCallBack * done, void * data) {
 #if defined(WIN32)
@@ -216,4 +216,4 @@ int run_test_process(ContextAttachCallBack * done, void * data) {
 #endif
 }
 
-#endif
+#endif /* ENABLE_RCBP_TEST */
