@@ -78,6 +78,7 @@ public class TCFLaunch extends Launch {
     private boolean last_context_exited;
     private ProcessContext process;
     private IToken process_start_command;
+    private String process_input_stream_id;
 
     private int context_action_cnt;
     private final HashMap<String,LinkedList<Runnable>> context_action_queue =
@@ -384,14 +385,15 @@ public class TCFLaunch extends Launch {
     }
     
     private void connectProcessStreams() {
+        assert process_start_command == null;
         final IStreams streams = getService(IStreams.class);
         if (streams == null) return;
         final String inp_id = (String)process.getProperties().get(IProcesses.PROP_STDIN_ID);
         final String out_id = (String)process.getProperties().get(IProcesses.PROP_STDOUT_ID);
         final String err_id = (String)process.getProperties().get(IProcesses.PROP_STDERR_ID);
-        for (final String id : stream_ids) {
+        for (final String id : stream_ids.toArray(new String[stream_ids.size()])) {
             if (id.equals(inp_id)) {
-                // TODO: process input stream handling
+                process_input_stream_id = id;
             }
             else if (id.equals(out_id)) {
                 connectStream(id, 0);
@@ -409,15 +411,15 @@ public class TCFLaunch extends Launch {
         final String peocess_id = process.getID();
         final IStreams streams = getService(IStreams.class);
         IStreams.DoneRead done = new IStreams.DoneRead() {
-            boolean canceled;
+            boolean disconnected;
             public void doneRead(IToken token, Exception error, int lost_size, byte[] data, boolean eos) {
-                if (canceled) return;
+                if (disconnected) return;
                 // TODO: handle process output data loss
                 if (data != null && data.length > 0) {
                     for (Listener l : listeners) l.onProcessOutput(TCFLaunch.this, peocess_id, no, data);
                 }
                 if (eos || error != null) {
-                    canceled = true;
+                    disconnected = true;
                     // TODO: report error reading process output
                     disconnectStream(id);
                     return;
@@ -432,6 +434,7 @@ public class TCFLaunch extends Launch {
     }
     
     private void disconnectStream(String id) {
+        stream_ids.remove(id);
         if (channel.getState() != IChannel.STATE_OPEN) return;
         IStreams streams = getService(IStreams.class);
         streams.disconnect(id, new IStreams.DoneDisconnect() {
@@ -488,13 +491,47 @@ public class TCFLaunch extends Launch {
         return process;
     }
     
+    public void writeProcessInputStream(byte[] buf, int pos, int len) {
+        assert Protocol.isDispatchThread();
+        if (channel.getState() != IChannel.STATE_OPEN) return;
+        if (process_input_stream_id == null) return;
+        IStreams streams = getService(IStreams.class);
+        if (streams == null) return;
+        streams.write(process_input_stream_id, buf, pos, len, new IStreams.DoneWrite() {
+            public void doneWrite(IToken token, Exception error) {
+                // TODO: stream write error handling
+            }
+        });
+    }
+    
     public boolean isConnecting() {
         return connecting;
     }
     
     public void onLastContextRemoved() {
         last_context_exited = true;
-        channel.close();
+        closeChannel();
+    }
+    
+    public void closeChannel() {
+        assert Protocol.isDispatchThread();
+        if (channel == null) return;
+        if (channel.getState() == IChannel.STATE_CLOSED) return;
+        IStreams streams = getService(IStreams.class);
+        final Set<IToken> cmds = new HashSet<IToken>();
+        for (String id : stream_ids) {
+            cmds.add(streams.disconnect(id, new IStreams.DoneDisconnect() {
+                public void doneDisconnect(IToken token, Exception error) {
+                    cmds.remove(token);
+                    if (channel.getState() == IChannel.STATE_CLOSED) return;
+                    if (error != null) channel.terminate(error);
+                    else if (cmds.isEmpty()) channel.close();
+                }
+            }));
+        }
+        stream_ids.clear();
+        process_input_stream_id = null;
+        if (cmds.isEmpty()) channel.close();
     }
 
     public IPeer getPeer() {
@@ -519,9 +556,7 @@ public class TCFLaunch extends Launch {
         try {
             Protocol.invokeLater(new Runnable() {
                 public void run() {
-                    if (channel != null && channel.getState() != IChannel.STATE_CLOSED) {
-                        channel.close();
-                    }
+                    closeChannel();
                 }
             });
         }
