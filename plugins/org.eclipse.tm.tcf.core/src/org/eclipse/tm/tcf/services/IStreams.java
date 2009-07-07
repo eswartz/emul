@@ -24,7 +24,7 @@ import org.eclipse.tm.tcf.protocol.IToken;
  *  4. Flow control: peers can throttle data flow of individual streams by delaying 'read' and 'write' commands.   
  */
 public interface IStreams extends IService {
-    
+
     /**
      * Service name.
      */
@@ -39,14 +39,14 @@ public interface IStreams extends IService {
      * If not disconnected, client is required to send 'read' commands as necessary to prevent stream buffer overflow.
      */
     interface StreamsListener {
-        
+
         /**
          * Called when a new stream is created. 
          * @param stream_type - source type of the stream.
          * @param stream_id - ID of the stream.
          */
         void created(String stream_type, String stream_id);
-        
+
         /**
          * Called when a stream is disposed. 
          * @param stream_type - source type of the stream.
@@ -54,7 +54,7 @@ public interface IStreams extends IService {
          */
         void disposed(String stream_type, String stream_id);
     }
-    
+
     /**
      * Clients must subscribe for one or more stream types to be able to send or receive stream data.
      * Subscribers receive notifications when a stream of given type is created or disposed.
@@ -65,7 +65,7 @@ public interface IStreams extends IService {
      * @return - pending command handle.
      */
     IToken subscribe(String stream_type, StreamsListener listener, DoneSubscribe done);
-    
+
     /**
      * Call back interface for 'subscribe' command.
      */
@@ -81,7 +81,7 @@ public interface IStreams extends IService {
      * @return - pending command handle.
      */
     IToken unsubscribe(String stream_type, StreamsListener listener, DoneUnsubscribe done);
-    
+
     /**
      * Call back interface for 'unsubscribe' command.
      */
@@ -103,7 +103,7 @@ public interface IStreams extends IService {
      * @return - pending command handle.
      */
     IToken read(String stream_id, int size, DoneRead done);
-    
+
     /**
      * Call back interface for 'read' command.
      */
@@ -136,7 +136,7 @@ public interface IStreams extends IService {
      * @return - pending command handle.
      */
     IToken write(String stream_id, byte[] buf, int offset, int size, DoneWrite done);
-    
+
     /**
      * Call back interface for 'write' command.
      */
@@ -148,7 +148,7 @@ public interface IStreams extends IService {
          */
         void doneWrite(IToken token, Exception error);
     }
-    
+
     /**
      * Send End Of Stream marker to a stream. No more writing to the stream is allowed after that. 
      * @param stream_id - ID of the stream.
@@ -156,7 +156,7 @@ public interface IStreams extends IService {
      * @return - pending command handle.
      */
     IToken eos(String stream_id, DoneEOS done);
-    
+
     /**
      * Call back interface for 'eos' command.
      */
@@ -172,15 +172,15 @@ public interface IStreams extends IService {
     /**
      * Connect client to a stream.
      * Some data might be dropped from the stream by the time "connect" command is executed.
-         * Client should be able to re-sync with stream data if it wants to read from such stream.
-         * If a client wants to read a stream from the beginning it should use "subscribe" command
-         * instead of "connect".
+     * Client should be able to re-sync with stream data if it wants to read from such stream.
+     * If a client wants to read a stream from the beginning it should use "subscribe" command
+     * instead of "connect".
      * @param stream_id - ID of the stream.
      * @param done - command result call back object.
      * @return - pending command handle.
      */
     IToken connect(String stream_id, DoneConnect done);
-    
+
     /**
      * Call back interface for 'connect' command.
      */
@@ -200,7 +200,7 @@ public interface IStreams extends IService {
      * @return - pending command handle.
      */
     IToken disconnect(String stream_id, DoneDisconnect done);
-    
+
     /**
      * Call back interface for 'disconnect' command.
      */

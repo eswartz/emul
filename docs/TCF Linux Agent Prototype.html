@@ -1,199 +1,275 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML>
-<HEAD>
-        <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1251">
-        <TITLE>This is a brief description of the TCF Linux user-mode agent prototype implementation</TITLE>
-        <META NAME="GENERATOR" CONTENT="OpenOffice.org 2.2  (Win32)">
-        <META NAME="CREATED" CONTENT="20070830;12381303">
-        <META NAME="CHANGED" CONTENT="16010101;0">
-        <STYLE TYPE="text/css">
-        <!--
-                H1 { color: #000000 }
-                P { color: #000000 }
-                P.western { font-size: 13pt }
-                H2 { color: #000000 }
-        -->
-        </STYLE>
-</HEAD>
-<BODY LANG="en-US" TEXT="#000000" DIR="LTR">
+<html>
 
-<P>This is a brief description of the TCF Linux
-user-mode agent prototype implementation. The agent is implemented as
+<head>
+        <TITLE>TCF Agent Prototype Implementation</TITLE>
+</head>
+
+<body LANG="EN-US">
+
+<h1>TCF Agent Prototype Implementation</h1>
+
+<p>
+    Copyright (c) 2009 Wind River Systems, Inc. Made available under the EPL v1.0
+</p>
+<p>
+    Direct comments, questions to the <a href="mailto:dsdp-tcf-dev@eclipse.org">dsdp-tcf-dev@eclipse.org</a> mailing list
+</p>
+
+<h2>Table of Contents</h2>
+<ul>
+    <li>
+        <a href='#Introduction'>Introduction</a>
+    </li>
+    <li>
+        <a href='#Framework'>Target Communication Framework</a>
+    </li>
+    <li>
+        <a href='#Services'>Services</a>
+    </li>
+    <li>
+        <a href='#Context'>Executable Context Handling</a>
+    </li>
+    <li>
+        <a href='#EventQueue'>Agent Event Queue</a>
+    </li>
+    <li>
+        <a href='#Misc'>Misc</a>
+    </li>
+    <li>
+        <a href='#Architecture'>Architecture</a>
+    </li>
+</ul>
+
+<h1><a name='Introduction'>Inroduction<a></h1>
+
+<p>This is a brief description of the TCF
+agent prototype implementation.</p>
+
+<p>The agent is implemented in C.
+The code mostly uses POSIX APIs to improve portability.
+
+
+<p>The agent is implemented as
 an event driven program. The main event queue is handled by a single
 thread &ndash; the event dispatch thread. Some sub-systems are using
 other threads locally, but will never call other sub-systems using
 these threads. Instead an event will be placed on the main event
-queue to handle the inter sub-system communication.</P>
+queue to handle the inter sub-system communication.</p>
 
-<H1>Main Program</H1>
+<p>Main program parses command line options and initialized sub-systems</p>
+<p>Files:</p>
+<ul>
+        <li>main.c</li>
+</ul>
 
-<P>Main program parses command line options and initialized sub-systems</P>
-<P>Files:</P>
-<P>main.c</P>
+<h1><a name='Framework'>Target Communication Framework</a></h1>
 
-<H1>Target Communication Framework</H1>
+<h3>Command and Event Registration and Dispatch</h3>
 
-<H2>Command and Event Registration and Dispatch</H2>
-
-<P>This module handles registration of command and
+<p>This module handles registration of command and
 event handlers. It is called when new messages are received and will
 dispatch messages to the appropriate handler. It has no knowledge of
-what transport protocol is used and what services do.</P>
-<P>Files:</P>
-<P>protocol.c</P>
-<P>protocol.h</P>
+what transport protocol is used and what services do.</p>
+<p>Files:</p>
+<ul>
+        <li>protocol.c</li>
+        <li>protocol.h</li>
+</ul>
 
-<H2>Transport Layer</H2>
+<h3>Transport Layer</h3>
 
-<P>Implements input and output stream over TCP/IP
-transport and UDP based server side auto discovery.</P>
-<P>Files:</P>
-<P>channel.c</P>
-<P>channel.h</P>
-<P>tcf.h</P>
+<p>Implements input and output stream over TCP/IP
+transport and UDP based auto discovery.</p>
+<p>Files:</p>
+<ul>
+        <li>channel.c</li>
+        <li>channel.h</li>
+        <li>channel_tcp.c</li>
+        <li>channel_tcp.h</li>
+        <li>discovery.c</li>
+        <li>discovery.h</li>
+        <li>discovery_udp.c</li>
+        <li>discovery_udp.h</li>
+        <li>tcf.h</li>
+</ul>
 
-<H2>Input and Output Stream Interface and Library</H2>
+<h3>Input and Output Stream Interface and Library</h3>
 
-<P>This module defines the input and output stream
-interface and support library functions.</P>
-<P>Files:</P>
-<P>streams.c</P>
-<P>streams.h</P>
+<p>This module defines generic input and output stream
+interfaces and supporting library functions.</p>
+<p>Files:</p>
+<ul>
+        <li>streams.c</li>
+        <li>streams.h</li>
+</ul>
 
-<H1>Services</H1>
+<h1><a name='Services'>Services</a></h1>
 
-<H2>Breakpoint</H2>
+<h3>Breakpoint</h3>
 
-<P>The breakpoint services implements a global
-breakpoint list.</P>
-<P>Files:</P>
-<P>breakpoints.c</P>
-<P>breakpoints.h</P>
+<p>The breakpoint services implements a global
+breakpoint list.</p>
+<p>Files:</p>
+<ul>
+        <li>breakpoints.c</li>
+        <li>breakpoints.h</li>
+</ul>
 
-<H2>Run Control</H2>
+<h3>Run Control</h3>
 
-<P>This module implements the run control service. It
+<p>This module implements the run control service. It
 builds uses the context module to do low level control of contexts.
 It implements a &ldquo;safe queue&rdquo; which contains events that
-that should be processed then their context is suspended. Incoming
+that should be processed then executable contexts are suspended. Incoming
 TCF messages are suspended while the safe queue is non-empty and are
-resumed when the last safe queue entry is handled.</P>
-<P>Files:</P>
-<P>runctrl.c</P>
-<P>runctrl.h</P>
+resumed when the last safe queue entry is handled.</p>
+<p>Files:</p>
+<ul>
+        <li>runctrl.c</li>
+        <li>runctrl.h</li>
+</ul>
 
-<H2>System Monitoring</H2>
+<h3>System Monitoring</h3>
 
-<P>This module provides system level monitoring
-information, similar to the UNIX top or Windows task manager.</P>
-<P>Files:</P>
-<P>sysmon.c</P>
-<P>sysmon.h</P>
+<p>This module provides system level monitoring
+information, similar to the UNIX top or Windows task manager.</p>
+<p>Files:</p>
+<ul>
+        <li>sysmon.c</li>
+        <li>sysmon.h</li>
+</ul>
 
-<H2>Agent Diagnostics</H2>
+<h3>Agent Diagnostics</h3>
 
-<P>This service is used to do end-to-end self test
-from the host to the target.</P>
-<P>Files:</P>
-<P>diagnostics.c</P>
-<P>diagnostics.h</P>
+<p>This service is used to do end-to-end self test
+from the host to the target.</p>
+<p>Files:</p>
+<ul>
+        <li>diagnostics.c</li>
+        <li>diagnostics.h</li>
+</ul>
 
-<H1>OS Context Handling</H1>
+<h1><a name='Context'>Executable Context Handling</a></h1>
 
-<P>This module handles process/thread OS contexts and
-their state machine. All ptrace() handling is isolated to here.</P>
-<P>Files:</P>
-<P>context.c</P>
-<P>context.h</P>
+<p>This module handles process/thread OS contexts and
+their state machine. All ptrace() handling is isolated to here.</p>
+<p>Files:</p>
+<ul>
+        <li>context.c</li>
+        <li>context.h</li>
+</ul>
 
-<H1>Agent Event Queue</H1>
+<h1><a name='EventQueue'>Agent Event Queue<a></h1>
 
-<P>This module implements the main event queue
+<p>This module implements the main event queue
 dispatch and queuing. All events are processed by a single thread.
-Any thread can queue new events.</P>
-<P>Files:</P>
-<P>events.c</P>
-<P>events.h</P>
+Any thread can queue new events.</p>
+<p>Files:</p>
+<ul>
+        <li>events.c</li>
+        <li>events.h</li>
+</ul>
 
-<H1>Misc</H1>
+<h1><a name='Misc'>Misc</a></h1>
 
-<H2>Command line interpreter</H2>
+<h3>Command line interpreter</h3>
 
-<P>The module allows a user to interact with agent. Current implementation of command line interpreter is incomplete.</P>
-<P>Files:</P>
-<P>cmdline.c</P>
-<P>cmdline.h</P>
+<p>The module allows a user to interact with agent. Current implementation of command line interpreter is incomplete.</p>
+<p>Files:</p>
+<ul>
+        <li>cmdline.c</li>
+        <li>cmdline.h</li>
+</ul>
 
-<H2>Error message display</H2>
+<h3>Error message display</h3>
 
-<P>This module defines agent error codes in addition to system codes defined in errno.h</P>
-<P>Files:</P>
-<P>errors.c</P>
-<P>errors.h</P>
+<p>This module defines agent error codes in addition to system codes defined in errno.h</p>
+<p>Files:</p>
+<ul>
+        <li>errors.c</li>
+        <li>errors.h</li>
+</ul>
 
-<H2>Exception Handling</H2>
+<h3>Exception Handling</h3>
 
-<P>Exception handling. Functionality is similar to C++ try/catch.</P>
-<P>Files:</P>
-<P>exceptions.c</P>
-<P>exceptions.h</P>
+<p>Exception handling. Functionality is similar to C++ try/catch.</p>
+<p>Files:</p>
+<ul>
+        <li>exceptions.c</li>
+        <li>exceptions.h</li>
+</ul>
 
-<H2>JSON Library</H2>
+<h3>JSON Library</h3>
 
-<P>The module contains utility functions for parsing and generating of JSON text.
+<p>The module contains utility functions for parsing and generating of JSON text.
 TCF standard services use JSON as messages format. See <a href='TCF Specification.html#JSON'>JSON - Preferred Marshaling</a>
-for JSON description.</P>
-<P>Files:</P>
-<P>json.c</P>
-<P>json.h</P>
+for JSON description.</p>
+<p>Files:</p>
+<ul>
+        <li>json.c</li>
+        <li>json.h</li>
+</ul>
 
-<H2>Double Linked List</H2>
+<h3>Double Linked List</h3>
 
-<P>Utilitity module to support double linked lists.</P>
-<P>Files:</P>
-<P>link.h</P>
+<p>Utilitity module to support double linked lists.</p>
+<p>Files:</p>
+<ul>
+        <li>link.h</li>
+</ul>
 
-<H2>Host OS Abstraction</H2>
+<h3>Host OS Abstraction</h3>
 
-<P>Machine and OS dependend definitions.
+<p>Machine and OS dependend definitions.
 This module implements host OS abstraction layer that helps make
-agent code portable between Linux, Windows, VxWorks and potentially other OSes.</P>
-<P>Files:</P>
-<P>mdep.c</P>
-<P>mdep.h</P>
+agent code portable between Linux, Windows, VxWorks and potentially other OSes.</p>
+<p>Files:</p>
+<ul>
+        <li>mdep.c</li>
+        <li>mdep.h</li>
+</ul>
 
-<H2>Malloc Abstraction</H2>
+<h3>Malloc Abstraction</h3>
 
-<P>Provides local versions of malloc(), realloc() and free().</P>
-<P>Files:</P>
-<P>myalloc.c</P>
-<P>myalloc.h</P>
+<p>Provides local versions of malloc(), realloc() and free().</p>
+<p>Files:</p>
+<ul>
+        <li>myalloc.c</li>
+        <li>myalloc.h</li>
+</ul>
 
-<H2>Proxy</H2>
+<h3>Proxy</h3>
 
-<P>Proxy service should allow tunneling of TCF messages to another target on behalf of a client.
-This service intended to be used when a client has no direct access to a target.</P>
-<P>Files:</P>
-<P>proxy.c</P>
-<P>proxy.h</P>
+<p>Proxy service should allow tunneling of TCF messages to another target on behalf of a client.
+This service intended to be used when a client has no direct access to a target.</p>
+<p>Files:</p>
+<ul>
+        <li>proxy.c</li>
+        <li>proxy.h</li>
+</ul>
 
-<H2>Test Application</H2>
+<h3>Test Application</h3>
 
-<P>Test application is used by Diagnostics service to run various tests.</P>
-<P>Files:</P>
-<P>test.c</P>
-<P>test.h</P>
+<p>Test application is used by Diagnostics service to run various tests.</p>
+<p>Files:</p>
+<ul>
+        <li>test.c</li>
+        <li>test.h</li>
+</ul>
 
-<H2>Debug Logging</H2>
+<h3>Debug Logging</h3>
 
-<P>The module implements logging and tracing that is mostly intended for debugging of the agent.</P>
-<P>Files:</P>
-<P>trace.c</P>
-<P>trace.h</P>
+<p>The module implements logging and tracing that is mostly intended for debugging of the agent.</p>
+<p>Files:</p>
+<ul>
+        <li>trace.c</li>
+        <li>trace.h</li>
+</ul>
 
-<H1>Architecture</H1>
+<h1><a name='Architecture'>Architecture</a></h1>
 
-<P><IMG SRC="TCF%20Architecture.png" NAME="graphics1" ALIGN=BOTTOM WIDTH=647 HEIGHT=359 BORDER=0></P>
+<p><img SRC="TCF%20Architecture.png" NAME="graphics1" ALIGN=BOTTOM WIDTH=647 HEIGHT=359 BORDER=0></p>
 
-</BODY>
-</HTML>
+</body>
+</html>
