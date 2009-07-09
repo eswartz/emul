@@ -41,6 +41,7 @@
 #include "runctrl.h"
 #include "filesystem.h"
 #include "streamsservice.h"
+#include "waitpid.h"
 #include "processes.h"
 
 static const char * PROCESSES = "Processes";
@@ -81,16 +82,17 @@ typedef struct AttachDoneArgs {
 typedef struct ChildProcess {
     LINK link;
     int pid;
-    int refs;
     TCFBroadcastGroup * bcg;
     int inp;
     int out;
     int err;
     struct ProcessInput * inp_struct;
+    struct ProcessOutput * out_struct;
+    struct ProcessOutput * err_struct;
     char inp_id[256];
     char out_id[256];
     char err_id[256];
-    unsigned exit_code;
+    long exit_code;
 } ChildProcess;
 
 typedef struct ProcessOutput {
@@ -654,8 +656,6 @@ static void start_done(int error, Context * ctx, void * arg) {
 }
 
 static void process_exited(ChildProcess * prs) {
-    assert(prs->refs == 0);
-    /* TODO: process exit code */
     send_event_process_exited(&prs->bcg->out, prs);
     flush_stream(&prs->bcg->out);
 #if defined(_WRS_KERNEL)
@@ -675,6 +675,8 @@ static void process_exited(ChildProcess * prs) {
             inp->prs = NULL;
         }
     }
+    if (prs->out_struct) prs->out_struct->prs = NULL;
+    if (prs->err_struct) prs->err_struct->prs = NULL;
     loc_free(prs);
 #if defined(_WRS_KERNEL)
     semGive(prs_list_lock);
@@ -750,6 +752,10 @@ static void process_output_streams_callback(VirtualStream * stream, int event_co
             err = out->req.error;
         }
         if (buf_len == 0) eos = 1;
+        if (out->prs == NULL) {
+            eos = 1;
+            err = 0;
+        }
 
         assert(buf_len <= sizeof(out->buf));
         assert(out->buf_pos <= (size_t)buf_len);
@@ -769,9 +775,10 @@ static void process_output_streams_callback(VirtualStream * stream, int event_co
                 async_req_post(&out->req);
             }
             else if (virtual_stream_is_empty(stream)) {
-                ChildProcess * prs = out->prs;
-                prs->refs--;
-                if (prs->refs == 0) process_exited(prs);
+                if (out->prs != NULL) {
+                    if (out == out->prs->out_struct) out->prs->out_struct = NULL;
+                    if (out == out->prs->err_struct) out->prs->err_struct = NULL;
+                }
                 virtual_stream_delete(stream);
                 loc_free(out);
             }
@@ -788,9 +795,9 @@ static void read_process_output_done(void * x) {
     process_output_streams_callback(out->vstream, 0, out);
 }
 
-static void read_process_output(ChildProcess * prs, int fd, char * id, size_t id_size) {
+static ProcessOutput * read_process_output(ChildProcess * prs, int fd, char * id, size_t id_size) {
     ProcessOutput * out = loc_alloc_zero(sizeof(ProcessOutput));
-    (out->prs = prs)->refs++;
+    out->prs = prs;
     out->req.client_data = out;
     out->req.done = read_process_output_done;
     out->req.type = AsyncReqRead;
@@ -801,6 +808,7 @@ static void read_process_output(ChildProcess * prs, int fd, char * id, size_t id
     virtual_stream_get_id(out->vstream, id, id_size);
     out->req_posted = 1;
     async_req_post(&out->req);
+    return out;
 }
 
 #if defined(WIN32)
@@ -1213,20 +1221,25 @@ static void command_start(char * token, Channel * c) {
         if (err == 0 && start_process(c, envp, dir, exe, args, attach, &pid, &selfattach, &prs) < 0) err = errno;
         if (prs != NULL) {
             write_process_input(prs);
-            read_process_output(prs, prs->out, prs->out_id, sizeof(prs->out_id));
-            if (prs->out != prs->err) read_process_output(prs, prs->err, prs->err_id, sizeof(prs->err_id));
+            prs->out_struct = read_process_output(prs, prs->out, prs->out_id, sizeof(prs->out_id));
+            if (prs->out != prs->err) prs->err_struct = read_process_output(prs, prs->err, prs->err_id, sizeof(prs->err_id));
         }
-        if (attach && !err) {
-            AttachDoneArgs * data = loc_alloc_zero(sizeof *data);
-            data->c = c;
-            strcpy(data->token, token);
-            pending = context_attach(pid, start_done, data, selfattach) == 0;
-            if (pending) {
-                stream_lock(c);
+        if (!err) {
+            if (attach) {
+                AttachDoneArgs * data = loc_alloc_zero(sizeof *data);
+                data->c = c;
+                strcpy(data->token, token);
+                pending = context_attach(pid, start_done, data, selfattach) == 0;
+                if (pending) {
+                    stream_lock(c);
+                }
+                else {
+                    err = errno;
+                    loc_free(data);
+                }
             }
             else {
-                err = errno;
-                loc_free(data);
+                add_waitpid_process(pid);
             }
         }
         if (!pending) {
@@ -1251,6 +1264,17 @@ static void command_start(char * token, Channel * c) {
     if (trap.error) exception(trap.error);
 }
 
+static void waitpid_listener(int pid, int exited, int exit_code, int signal, int event_code, int syscall, void * args) {
+    if (exited) {
+        ChildProcess * prs = find_process(pid);
+        if (prs) {
+            if (signal != 0) prs->exit_code = -signal;
+            else prs->exit_code = exit_code;
+            process_exited(prs);
+        }
+    }
+}
+
 void ini_processes_service(Protocol * proto) {
 #if defined(_WRS_KERNEL)
     prs_list_lock = semMCreate(SEM_Q_PRIORITY);
@@ -1259,6 +1283,7 @@ void ini_processes_service(Protocol * proto) {
     if (taskDeleteHookAdd((FUNCPTR)task_delete_hook) != OK) check_error(errno);
 #endif
     list_init(&prs_list);
+    add_waitpid_listener(waitpid_listener, NULL);
     add_command_handler(proto, PROCESSES, "getContext", command_get_context);
     add_command_handler(proto, PROCESSES, "getChildren", command_get_children);
     add_command_handler(proto, PROCESSES, "attach", command_attach);

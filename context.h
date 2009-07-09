@@ -84,7 +84,7 @@ struct Context {
 #else /* Linux/Unix */
     ContextAttachCallBack * attach_callback;
     void *              attach_data;
-    void *              pending_clone;      /* waiting for clone or fork to bind this to parent */
+    int                 pending_clone;      /* waiting for clone or fork to bind this to parent */
     int                 ptrace_flags;
     int                 ptrace_event;
     int                 syscall_enter;

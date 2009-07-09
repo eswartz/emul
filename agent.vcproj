@@ -1273,6 +1273,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\waitpid.c"
+			>
+		</File>
+		<File
+			RelativePath=".\waitpid.h"
+			>
+		</File>
+		<File
 			RelativePath="windbgcache.c"
 			>
 			<FileConfiguration
