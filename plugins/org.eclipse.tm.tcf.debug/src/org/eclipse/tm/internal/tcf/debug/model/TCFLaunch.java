@@ -79,6 +79,7 @@ public class TCFLaunch extends Launch {
     private ProcessContext process;
     private IToken process_start_command;
     private String process_input_stream_id;
+    private int process_exit_code;
 
     private int context_action_cnt;
     private final HashMap<String,LinkedList<Runnable>> context_action_queue =
@@ -98,6 +99,13 @@ public class TCFLaunch extends Launch {
         }
 
         public void disposed(String stream_type, String stream_id) {
+        }
+    };
+    
+    private final IProcesses.ProcessesListener prs_listener = new IProcesses.ProcessesListener() {
+
+        public void exited(String process_id, int exit_code) {
+            if (process_id.equals(process.getID())) process_exit_code = exit_code;
         }
     };
     
@@ -268,6 +276,7 @@ public class TCFLaunch extends Launch {
                                         return;
                                     }
                                     TCFLaunch.this.process = process;
+                                    ps.addListener(prs_listener);
                                     connectProcessStreams();
                                     done.run();
                                 }
@@ -578,6 +587,10 @@ public class TCFLaunch extends Launch {
 
     public boolean isExited() {
         return last_context_exited;
+    }
+    
+    public int getExitCode() {
+        return process_exit_code;
     }
     
     public void launchTCF(String mode, String id) {

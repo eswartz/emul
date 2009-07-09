@@ -13,11 +13,9 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunch;
@@ -132,16 +130,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         new HashMap<String,IMemoryBlockRetrievalExtension>();
     
     private class Console {
-        final String id;
         final IOConsole console;
         final Map<Integer,IOConsoleOutputStream> out;
         
-        Console(String id, final IOConsole console) {
-            this.id = id;
+        Console(final IOConsole console) {
             this.console = console;
             out = new HashMap<Integer,IOConsoleOutputStream>();
-            process2console.put(id, this);
-            consoles.add(this);
             Thread t = new Thread() {
                 public void run() {
                     try {
@@ -167,7 +161,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
         
         void close() {
-            if (process2console.get(id) != this) return;
             for (IOConsoleOutputStream stream : out.values()) {
                 try {
                     stream.close();
@@ -182,12 +175,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             catch (IOException x) {
                 Activator.log("Cannot close console stream", x);
             }
-            process2console.remove(id);
         }
     }
 
-    private final Map<String,Console> process2console = new HashMap<String,Console>();
-    private final Set<Console> consoles = new HashSet<Console>();
+    private Console console;
 
     private static final Map<ILaunchConfiguration,IEditorInput> editor_not_found = 
         new HashMap<ILaunchConfiguration,IEditorInput>();
@@ -379,11 +370,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final IProcesses.ProcessesListener prs_listener = new IProcesses.ProcessesListener() {
 
         public void exited(String process_id, int exit_code) {
-            Console console = process2console.get(process_id);
-            if (console != null) {
-                console.close();
-                onLastContextRemoved();
-            }
+            IProcesses.ProcessContext prs = launch.getProcessContext();
+            if (prs != null && process_id.equals(prs.getID())) onLastContextRemoved();
         }
     };
     
@@ -463,7 +451,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         try {
             IProcesses.ProcessContext prs = launch.getProcessContext();
             if (prs == null || !process_id.equals(prs.getID())) return;
-            Console console = process2console.get(process_id);
             if (console == null) {
                 final IOConsole c = new IOConsole("TCF " + process_id, null,
                         ImageCache.getImageDescriptor(ImageCache.IMG_TCF), "UTF-8", true);
@@ -484,7 +471,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         }
                     }
                 });
-                console = new Console(process_id, c);
+                console = new Console(c);
             }
             IOConsoleOutputStream stream = console.out.get(stream_id);
             if (stream == null) {
@@ -565,11 +552,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private void onLastContextRemoved() {
         Protocol.invokeLater(1000, new Runnable() {
             public void run() {
-                for (Console console : consoles) {
-                    for (IOConsoleOutputStream stream : console.out.values()) {
-                        if (!stream.isClosed()) return;
-                    }
-                }
                 if (launch_node == null) return;
                 if (launch_node.isDisposed()) return;
                 if (!launch_node.validateNode(this)) return;
@@ -594,18 +576,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
     
     void dispose() {
-        if (!consoles.isEmpty()) {
-            int i = 0;
-            final IOConsole[] buf = new IOConsole[consoles.size()];
-            for (Console console : consoles) {
-                console.close();
-                buf[i++] = console.console;
-            }
-            consoles.clear();
+        if (console != null) {
             display.asyncExec(new Runnable() {
                 public void run() {
+                    console.close();
                     IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
-                    manager.removeConsoles(buf);
+                    manager.removeConsoles(new IOConsole[]{ console.console });
                 }
             });
         }

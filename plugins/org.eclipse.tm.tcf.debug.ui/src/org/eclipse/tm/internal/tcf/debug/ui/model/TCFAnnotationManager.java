@@ -97,7 +97,9 @@ public class TCFAnnotationManager {
 
         public void onConnected(final TCFLaunch launch) {
             updateActiveLaunch();
-            launch.getBreakpointsStatus().addListener(new ITCFBreakpointListener() {
+            TCFBreakpointsStatus bps = launch.getBreakpointsStatus();
+            if (bps == null) return;
+            bps.addListener(new ITCFBreakpointListener() {
 
                 public void breakpointStatusChanged(String id) {
                     displayExec(new Runnable() {
@@ -281,7 +283,7 @@ public class TCFAnnotationManager {
         final TCFLaunch launch = active_launch;
         final String[] text = new String[1];
         text[0] = breakpoint.getText();
-        if (launch != null) {
+        if (launch != null && launch.getBreakpointsStatus() != null) {
             Protocol.invokeAndWait(new Runnable() {
                 public void run() {
                     TCFBreakpointsStatus bs = launch.getBreakpointsStatus();

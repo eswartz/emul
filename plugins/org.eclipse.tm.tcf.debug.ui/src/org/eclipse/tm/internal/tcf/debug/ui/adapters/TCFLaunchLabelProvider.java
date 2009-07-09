@@ -25,9 +25,17 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
             TCFLaunch launch = (TCFLaunch)result.getElement();
             result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_TCF), 0);
             String status = "";
-            if (launch.isConnecting()) status = "Connecting";
-            else if (launch.isExited()) status = "Exited";
-            else if (launch.isDisconnected()) status = "Disconnected";
+            if (launch.isConnecting()) {
+                status = "Connecting";
+            }
+            else if (launch.isExited()) {
+                status = "Exited";
+                int code = launch.getExitCode();
+                if (code != 0) status += ", exit code " + code;
+            }
+            else if (launch.isDisconnected()) {
+                status = "Disconnected";
+            }
             Throwable error = launch.getError();
             if (error != null) {
                 String msg = error.getLocalizedMessage();
