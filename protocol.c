@@ -437,6 +437,10 @@ void send_hello_message(Protocol * p, Channel * c) {
     write_stringz(&c->out, LOCATOR);
     write_stringz(&c->out, "Hello");
     write_stream(&c->out, '[');
+#if ENABLE_ZeroCopy
+    json_write_string(&c->out, "ZeroCopy");
+    cnt++;
+#endif
     while (s) {
         if (s->owner == p) {
             if (cnt != 0) write_stream(&c->out, ',');
@@ -454,6 +458,7 @@ static void event_locator_hello(Channel * c) {
     int cnt = 0;
     char **list = NULL;
 
+    c->out.supports_zero_copy = 0;
     if (read_stream(&c->inp) != '[') exception(ERR_PROTOCOL);
     if (peek_stream(&c->inp) == ']') {
         read_stream(&c->inp);
@@ -464,6 +469,7 @@ static void event_locator_hello(Channel * c) {
         while (1) {
             char ch;
             char * service = json_read_alloc_string(&c->inp);
+            if (strcmp(service, "ZeroCopy") == 0) c->out.supports_zero_copy = 1;
             if (cnt == max) {
                 max *= 2;
                 list = loc_realloc(list, max * sizeof *list);

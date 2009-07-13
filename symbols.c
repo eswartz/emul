@@ -131,12 +131,9 @@ static void command_get_context(char * token, Channel * c) {
         }
 
         if (sym.sym_class == SYM_CLASS_VALUE && get_symbol_value(&sym, &value, &size) == 0) {
-            JsonWriteBinaryState state;
             json_write_string(&c->out, "Value");
             write_stream(&c->out, ':');
-            json_write_binary_start(&state, &c->out);
-            json_write_binary_data(&state, value, size);
-            json_write_binary_end(&state);
+            json_write_binary(&c->out, value, size);
             write_stream(&c->out, ',');
         }
 

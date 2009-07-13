@@ -1842,7 +1842,7 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
     }
 }
 
-static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
+static Context * event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     unsigned long msg = 0;
     Context * ctx = NULL;
     Context * ctx2 = NULL;
@@ -1855,6 +1855,10 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     if (ctx == NULL) {
         ctx = find_pending(pid);
         if (ctx != NULL) {
+            if (ctx->pending_clone_event) {
+                trace(LOG_ALWAYS, "event: pid %d received stop event before processing of pending_clone event - ignored", pid);
+                return NULL;
+            }
             link_context(ctx);
             event_context_created(ctx);
             if (ctx->attach_callback) {
@@ -1873,17 +1877,13 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         trace(LOG_EVENTS, "event: pid %d is not traced - expecting OOO clone, fork or vfork event for pid", pid);
         ctx = create_context(pid);
         list_add_first(&ctx->ctxl, &pending_list);
-        assert(signal == 0);
         assert(syscall == 0);
-        ctx->pending_clone = event;
-        return;
+        ctx->pending_clone_event = event;
+        ctx->pending_clone_signal = signal;
+        return NULL;
     }
-    else if (ctx->pending_clone) {
-        trace(LOG_ALWAYS, "event: pid %d received stop event before processing of pending_clone event - ignored", pid);
-        return;
-    }
-    assert(!ctx->exited);
 
+    assert(!ctx->exited);
     if (signal != SIGSTOP && signal != SIGTRAP) {
         assert(signal < 32);
         ctx->pending_signals |= 1 << signal;
@@ -1946,9 +1946,10 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
     else {
         Context * ctx = event_pid_stopped(pid, signal, event_code, syscall);
         while (ctx != NULL) {
-            event_code = ctx->pending_clone;
-            ctx->pending_clone = 0;
-            ctx = event_pid_stopped(ctx->pid, 0, event_code, 0);
+            event_code = ctx->pending_clone_event;
+            signal = ctx->pending_clone_signal;
+            ctx->pending_clone_event = 0;
+            ctx = event_pid_stopped(ctx->pid, signal, event_code, 0);
         }
     }
 }
@@ -2406,14 +2407,17 @@ static Context * event_pid_stopped(pid_t pid, int signal, int event, int syscall
     Context * ctx2 = NULL;
     Context * pending_eap = NULL;
 
-    trace(LOG_EVENTS, "event: pid %d stopped, signal %d, event %s",
-        pid, signal, event_name(event));
+    trace(LOG_EVENTS, "event: pid %d stopped, signal %d, event %s", pid, signal, event_name(event));
 
     ctx = context_find_from_pid(pid);
 
     if (ctx == NULL) {
         ctx = find_pending(pid);
         if (ctx != NULL) {
+            if (ctx->pending_clone_event) {
+                trace(LOG_ALWAYS, "event: pid %d received stop event before processing of pending_clone event - ignored", pid);
+                return NULL;
+            }
             link_context(ctx);
             event_context_created(ctx);
             if (ctx->attach_callback) {
@@ -2432,15 +2436,12 @@ static Context * event_pid_stopped(pid_t pid, int signal, int event, int syscall
         trace(LOG_EVENTS, "event: pid %d is not traced - expecting OOO clone, fork or vfork event for pid", pid);
         ctx = create_context(pid);
         list_add_first(&ctx->ctxl, &pending_list);
-        assert(signal == 0);
         assert(syscall == 0);
-        ctx->pending_clone = event;
-        return;
+        ctx->pending_clone_event = event;
+        ctx->pending_clone_signal = signal;
+        return NULL;
     }
-    else if (ctx->pending_clone) {
-        trace(LOG_ALWAYS, "event: pid %d received stop event before processing of pending_clone event - ignored", pid);
-        return;
-    }
+
     assert(!ctx->exited);
     assert(!ctx->stopped || event == 0 || event == PTRACE_EVENT_EXIT);
     if (ctx->ptrace_flags != PTRACE_FLAGS) {
@@ -2467,7 +2468,7 @@ static Context * event_pid_stopped(pid_t pid, int signal, int event, int syscall
         assert(msg != 0);
         ctx2 = find_pending(msg);
         if (ctx2) {
-            assert(ctx2->pending_clone);
+            assert(ctx2->pending_clone_event);
             pending_eap = ctx2;
         }
         else {
@@ -2503,7 +2504,7 @@ static Context * event_pid_stopped(pid_t pid, int signal, int event, int syscall
         ctx->pending_signals |= 1 << signal;
         if ((ctx->sig_dont_stop & (1 << signal)) == 0) ctx->pending_intercept = 1;
     }
-    if (signal == SIGTRAP && event == PTRACE_EVENT_EXIT) {
+    if (event == PTRACE_EVENT_EXIT) {
         ctx->exiting = 1;
         ctx->regs_dirty = 0;
     }
@@ -2524,7 +2525,7 @@ static Context * event_pid_stopped(pid_t pid, int signal, int event, int syscall
                  *
                  * Workaround: Ignore current event, assume context is running.
                  */
-                return;
+                return pending_eap;
             }
 #endif
             ctx->regs_error = errno;
@@ -2606,9 +2607,10 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
     else {
         Context * ctx = event_pid_stopped(pid, signal, event_code, syscall);
         while (ctx != NULL) {
-            event_code = ctx->pending_clone;
-            ctx->pending_clone = 0;
-            ctx = event_pid_stopped(ctx->pid, 0, event_code, 0);
+            event_code = ctx->pending_clone_event;
+            signal = ctx->pending_clone_signal;
+            ctx->pending_clone_event = 0;
+            ctx = event_pid_stopped(ctx->pid, signal, event_code, 0);
         }
     }
 }

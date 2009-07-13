@@ -371,9 +371,9 @@ static void send_read_reply(StreamClient * client, char * token, unsigned long s
     if (read1 + read2 > 0) {
         JsonWriteBinaryState state;
 
-        json_write_binary_start(&state, &c->out);
-        if (read1 > 0) json_write_binary_data(&state, data1, read1);
-        if (read2 > 0) json_write_binary_data(&state, data2, read2);
+        json_write_binary_start(&state, &c->out, read1 + read2);
+        json_write_binary_data(&state, data1, read1);
+        json_write_binary_data(&state, data2, read2);
         json_write_binary_end(&state);
         write_stream(&c->out, 0);
     }

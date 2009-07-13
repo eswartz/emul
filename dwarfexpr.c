@@ -96,7 +96,7 @@ static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
         }
     }
     if (get_frame_info(Ctx, Frame, &IP, NULL, &FP) < 0) return -1;
-    switch (rg){
+    switch (rg) {
     case 5:
         *value = FP;
         return 0;
@@ -144,7 +144,7 @@ static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
         }
     }
     if (get_frame_info(Ctx, Frame, &IP, NULL, &FP) < 0) return -1;
-    switch (rg){
+    switch (rg) {
     case 5:
         *value = FP;
         return 0;

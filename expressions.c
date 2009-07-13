@@ -2145,6 +2145,7 @@ static void command_evaluate(char * token, Channel * c) {
 
     if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
     if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 0, &value) < 0) err = errno;
+    if (value.size >= 0x100000) err = ERR_BUFFER_OVERFLOW;
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -2155,7 +2156,7 @@ static void command_evaluate(char * token, Channel * c) {
         JsonWriteBinaryState state;
 
         value_ok = 1;
-        json_write_binary_start(&state, &c->out);
+        json_write_binary_start(&state, &c->out, value.size);
         if (!value.remote) {
             json_write_binary_data(&state, value.value, value.size);
         }
@@ -2165,15 +2166,10 @@ static void command_evaluate(char * token, Channel * c) {
             while (offs < value.size) {
                 int size = value.size - offs;
                 if (size > sizeof(buf)) size = sizeof(buf);
-                if (offs >= 0x100000) {
-                    err = ERR_BUFFER_OVERFLOW;
-                    break;
+                if (!err) {
+                    if (context_read_mem(ctx, value.address + offs, buf, size) < 0) err = errno;
+                    else check_breakpoints_on_memory_read(ctx, value.address + offs, buf, size);
                 }
-                if (context_read_mem(ctx, value.address + offs, buf, size) < 0) {
-                    err = errno;
-                    break;
-                }
-                check_breakpoints_on_memory_read(ctx, value.address + offs, buf, size);
                 json_write_binary_data(&state, buf, size);
                 offs += size;
             }

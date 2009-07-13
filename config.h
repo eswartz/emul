@@ -79,6 +79,9 @@
 #define SERVICE_Streams         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
 
+#if !defined(ENABLE_ZeroCopy)
+#define ENABLE_ZeroCopy           1
+#endif
 #if !defined(ENABLE_Trace)
 #define ENABLE_Trace            1
 #endif

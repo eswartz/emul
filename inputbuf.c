@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Michael Sills-Lavoie(École Polytechnique de Montréal) - tcf2 bloc support
  *******************************************************************************/
 
 /*
@@ -30,9 +31,11 @@ static void ibuf_new_message(InputBuf * ibuf) {
 }
 
 static void ibuf_eof(InputBuf * ibuf) {
-    /* Treat eof as a message */
-    ibuf->eof = 1;
-    ibuf_new_message(ibuf);
+    if (!ibuf->eof) {
+        /* Treat eof as a message */
+        ibuf->eof = 1;
+        ibuf_new_message(ibuf);
+    }
 }
 
 void ibuf_trigger_read(InputBuf * ibuf) {
@@ -45,10 +48,9 @@ void ibuf_trigger_read(InputBuf * ibuf) {
 }
 
 int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
-    unsigned char *out = inp->cur;
-    unsigned char *max;
-    int esc = 0;
-    int res;
+    unsigned char * out = inp->cur;
+    unsigned char * max;
+    int ch;
 
     assert(ibuf->message_count > 0);
     assert(ibuf->handling_msg == HandleMsgActive);
@@ -64,6 +66,7 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
         ibuf_trigger_read(ibuf);
     }
     for (;;) {
+        if (out == ibuf->buf + BUF_SIZE) out = ibuf->buf;
         if (out == ibuf->inp && !ibuf->full) {
             /* No data available */
             assert(ibuf->long_msg || ibuf->eof);
@@ -75,59 +78,105 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
         }
 
         /* Data available */
-        res = *out;
-        if (esc) {
-            switch (res) {
+        ch = *out;
+        
+#if ENABLE_ZeroCopy
+        if (ibuf->out_size_mode) {
+            /* Reading the size of the bin data */
+            assert(!ibuf->out_esc);
+            ibuf->out_data_size |= (ch & 0x7f) << (ibuf->out_size_mode++ - 1) * 7;
+            if ((ch & 0x80) == 0) ibuf->out_size_mode = 0;
+            out++;
+            continue;
+        }
+        if (ibuf->out_data_size > 0) {
+            /* Reading the bin data */
+            assert(!ibuf->out_esc);
+            inp->cur = out;
+            max = out <= ibuf->inp ? ibuf->inp : ibuf->buf + BUF_SIZE;
+            if (max - out < ibuf->out_data_size) {
+                ibuf->out_data_size -= max - out;
+                out = max;
+            }
+            else {
+                out += ibuf->out_data_size;
+                ibuf->out_data_size = 0;
+            }
+            inp->end = out;
+            if (!peeking) inp->cur++;
+            return ch;
+        }
+#endif
+        
+        if (ibuf->out_esc) {
+            switch (ch) {
             case 0:
-                res = ESC;
-                if (peeking) return res;
+                ch = ESC;
                 break;
             case 1:
-                res = MARKER_EOM;
-                if (peeking) return res;
-                ibuf->message_count--;
-                ibuf->handling_msg = HandleMsgIdle;
-                if (ibuf->message_count) {
-                    ibuf->trigger_message(ibuf);
+                ch = MARKER_EOM;
+                if (!peeking) {
+                    ibuf->message_count--;
+                    ibuf->handling_msg = HandleMsgIdle;
+                    if (ibuf->message_count) {
+                        ibuf->trigger_message(ibuf);
+                    }
                 }
                 break;
             case 2:
-                res = MARKER_EOS;
-                if (peeking) return res;
+                ch = MARKER_EOS;
                 break;
+#if ENABLE_ZeroCopy
+            case 3:
+                ibuf->out_size_mode = 1;
+                ibuf->out_data_size = 0;
+                ibuf->out_esc = 0;
+                out++;
+                continue;
+#endif
             }
-            inp->cur = inp->end = ++out;
-            return res;
+            if (!peeking) {
+                ibuf->out_esc = 0;
+                out++;
+            }
+            inp->cur = inp->end = out;
+            return ch;
         }
-        if (res != ESC) {
+        if (ch != ESC) {
             /* Plain data - fast path */
             inp->cur = out;
-            max = out < ibuf->inp ? ibuf->inp : ibuf->buf + BUF_SIZE;
-            while (++out != max && *out != ESC);
+            max = out <= ibuf->inp ? ibuf->inp : ibuf->buf + BUF_SIZE;
+            while (out != max && *out != ESC) out++;
             inp->end = out;
-            if (peeking) return res;
-            inp->cur++;
-            return res;
+            if (!peeking) inp->cur++;
+            return ch;
         }
-        if (++out == ibuf->buf+BUF_SIZE) out = ibuf->buf;
-        esc = 1;
+        ibuf->out_esc = 1;
+        out++;
     }
 }
 
 void ibuf_init(InputBuf * ibuf, InputStream * inp) {
     inp->cur = inp->end = ibuf->out = ibuf->inp = ibuf->buf;
+#if ENABLE_ZeroCopy
+    ibuf->out_data_size = ibuf->out_size_mode = 0;
+    ibuf->inp_data_size = ibuf->inp_size_mode = 0;
+#endif
 }
 
 void ibuf_flush(InputBuf * ibuf, InputStream * inp) {
     inp->cur = inp->end = ibuf->out = ibuf->inp;
     ibuf->full = 0;
     ibuf->message_count = 0;
+#if ENABLE_ZeroCopy
+    ibuf->out_data_size = ibuf->out_size_mode = 0;
+    ibuf->inp_data_size = ibuf->inp_size_mode = 0;
+#endif
 }
 
 void ibuf_read_done(InputBuf * ibuf, int len) {
     unsigned char * inp;
-    int esc;
-
+    
     assert(len >= 0);
     if (len == 0) {
         ibuf_eof(ibuf);
@@ -137,12 +186,26 @@ void ibuf_read_done(InputBuf * ibuf, int len) {
 
     /* Preprocess newly read data to count messages */
     inp = ibuf->inp;
-    esc = ibuf->esc;
     while (len-- > 0) {
         unsigned char ch = *inp++;
         if (inp == ibuf->buf + BUF_SIZE) inp = ibuf->buf;
-        if (esc) {
-            esc = 0;
+        
+#if ENABLE_ZeroCopy
+        if (ibuf->inp_size_mode) {
+            /* Reading the size of the bin data */
+            assert(!ibuf->inp_esc);
+            ibuf->inp_data_size |= (ch & 0x7f) << (ibuf->inp_size_mode++ - 1) * 7;
+            if ((ch & 0x80) == 0) ibuf->inp_size_mode = 0;
+            continue;
+        }
+        if (ibuf->inp_data_size > 0) {
+            assert(!ibuf->inp_esc);
+            ibuf->inp_data_size--;
+            continue;
+        }
+#endif
+        if (ibuf->inp_esc) {
+            ibuf->inp_esc = 0;
             switch (ch) {
             case 0:
                 /* ESC byte */
@@ -161,6 +224,13 @@ void ibuf_read_done(InputBuf * ibuf, int len) {
                 /* EOS - End Of Stream */
                 ibuf_eof(ibuf);
                 break;
+#if ENABLE_ZeroCopy
+            case 3:
+                /* Entering bin size mode */
+                ibuf->inp_size_mode = 1;
+                ibuf->inp_data_size = 0;
+                break;
+#endif
             default:
                 /* Invalid escape sequence */
                 trace(LOG_ALWAYS, "Protocol: Invalid escape sequence");
@@ -169,10 +239,9 @@ void ibuf_read_done(InputBuf * ibuf, int len) {
             }
         }
         else if (ch == ESC) {
-            esc = 1;
+            ibuf->inp_esc = 1;
         }
     }
-    ibuf->esc = esc;
     ibuf->inp = inp;
 
     if (inp == ibuf->out) {

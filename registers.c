@@ -290,11 +290,7 @@ static void command_get(char * token, Channel * c) {
     if (err == 0) {
         char * data = (char *)&ctx->regs + idx->regOff;
         int size = REG_WIDTH(*idx);
-        JsonWriteBinaryState state;
-
-        json_write_binary_start(&state, &c->out);
-        json_write_binary_data(&state, data, size);
-        json_write_binary_end(&state);
+        json_write_binary(&c->out, data, size);
         write_stream(&c->out, 0);
     }
     else {
@@ -422,7 +418,7 @@ static void command_getm(char * token, Channel * c) {
     if (err == 0) {
         int i = 0;
         JsonWriteBinaryState state;
-        json_write_binary_start(&state, &c->out);
+        json_write_binary_start(&state, &c->out, -1);
         for (i = 0; i < buf_pos; i++) {
             Location * l = buf + i;
             char * data = (char *)&l->ctx->regs + l->idx->regOff + l->offs;

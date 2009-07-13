@@ -55,31 +55,45 @@ static const int char2int[] = {
     49, 50, 51
 };
 
+#define OBF_SIZE 0x100
+
 int write_base64(OutputStream * out, const char * buf0, int len) {
     int pos = 0;
     const unsigned char * buf = (const unsigned char *)buf0;
 
+    char obf[OBF_SIZE + 8];
+    int obf_len;
+
+    obf_len = 0;
     while (pos < len) {
         int byte0 = buf[pos++];
-        write_stream(out, int2char[byte0 >> 2]);
+        obf[obf_len++] = int2char[byte0 >> 2];
         if (pos == len) {
-            write_stream(out, int2char[(byte0 << 4) & 0x3f]);
-            write_stream(out, '=');
-            write_stream(out, '=');
+            obf[obf_len++] = int2char[(byte0 << 4) & 0x3f];
+            obf[obf_len++] = '=';
+            obf[obf_len++] = '=';
         }
         else {
             int byte1 = buf[pos++];
-            write_stream(out, int2char[(byte0 << 4) & 0x3f | (byte1 >> 4)]);
+            obf[obf_len++] = int2char[(byte0 << 4) & 0x3f | (byte1 >> 4)];
             if (pos == len) {
-                write_stream(out, int2char[(byte1 << 2) & 0x3f]);
-                write_stream(out, '=');
+                obf[obf_len++] = int2char[(byte1 << 2) & 0x3f];
+                obf[obf_len++] = '=';
             }
             else {
                 int byte2 = buf[pos++];
-                write_stream(out, int2char[(byte1 << 2) & 0x3f | (byte2 >> 6)]);
-                write_stream(out, int2char[byte2 & 0x3f]);
+                obf[obf_len++] = int2char[(byte1 << 2) & 0x3f | (byte2 >> 6)];
+                obf[obf_len++] = int2char[byte2 & 0x3f];
             }
         }
+        if (obf_len >= OBF_SIZE) {
+            write_bloc_stream(out, obf, obf_len);
+            obf_len = 0;
+        }
+    }
+    if (obf_len > 0) {
+        write_bloc_stream(out, obf, obf_len);
+        obf_len = 0;
     }
     assert(pos == len);
     return ((len + 2) / 3) * 4;

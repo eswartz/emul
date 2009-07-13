@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Michael Sills-Lavoie(École Polytechnique de Montréal) - tcf2 bloc support
  *******************************************************************************/
 
 /*
@@ -45,7 +46,6 @@
 #include "asyncreq.h"
 #include "inputbuf.h"
 
-#define ESC 3
 #define BUF_SIZE 0x1000
 #define CHANNEL_MAGIC 0x87208956
 #define MAX_IFC 10
@@ -197,11 +197,12 @@ static int tcp_is_closed(Channel * channel) {
     return c->socket < 0;
 }
 
-static void tcp_flush_stream(OutputStream * out) {
+static void tcp_flush_with_flags(OutputStream * out, int flags) {
     int cnt = 0;
     ChannelTCP * c = channel2tcp(out2channel(out));
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
+    assert(c->obuf_inp <= BUF_SIZE);
     if (c->obuf_inp == 0) return;
     if (c->socket < 0) return;
     if (c->out_errno) return;
@@ -237,7 +238,7 @@ static void tcp_flush_stream(OutputStream * out) {
 #endif
         }
         else {
-            wr = send(c->socket, c->obuf + cnt, c->obuf_inp - cnt, 0);
+            wr = send(c->socket, c->obuf + cnt, c->obuf_inp - cnt, flags);
             if (wr < 0) {
                 int err = errno;
                 trace(LOG_PROTOCOL, "Can't send() on channel 0x%08x: %d %s", c, err, errno_to_str(err));
@@ -251,30 +252,75 @@ static void tcp_flush_stream(OutputStream * out) {
     c->obuf_inp = 0;
 }
 
+static void tcp_flush_stream(OutputStream * out) {
+    tcp_flush_with_flags(out, 0);
+}
+
 static void tcp_write_stream(OutputStream * out, int byte) {
     ChannelTCP * c = channel2tcp(out2channel(out));
-    int b0 = byte;
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
     if (c->socket < 0) return;
     if (c->out_errno) return;
-    if (b0 < 0) byte = ESC;
-    c->obuf[c->obuf_inp++] = byte;
-    if (c->obuf_inp == BUF_SIZE) tcp_flush_stream(out);
-    if (b0 < 0 || b0 == ESC) {
-        if (b0 == ESC) byte = 0;
-        else if (b0 == MARKER_EOM) byte = 1;
-        else if (b0 == MARKER_EOS) byte = 2;
+    if (c->obuf_inp == BUF_SIZE) tcp_flush_with_flags(out, MSG_MORE);
+    c->obuf[c->obuf_inp++] = byte < 0 ? ESC : byte;
+    if (byte < 0 || byte == ESC) {
+        int esc;
+        if (byte == ESC) esc = 0;
+        else if (byte == MARKER_EOM) esc = 1;
+        else if (byte == MARKER_EOS) esc = 2;
         else assert(0);
         if (c->socket < 0) return;
         if (c->out_errno) return;
-        c->obuf[c->obuf_inp++] = byte;
-        if (c->obuf_inp == BUF_SIZE) tcp_flush_stream(out);
+        if (c->obuf_inp == BUF_SIZE) tcp_flush_with_flags(out, MSG_MORE);
+        c->obuf[c->obuf_inp++] = esc;
     }
-    if (b0 == MARKER_EOM) {
+    if (byte == MARKER_EOM) {
         int congestion_level = out2channel(out)->congestion_level;
         if (congestion_level > 0) usleep(congestion_level * 2500);
     }
+}
+
+static void tcp_write_bloc_stream(OutputStream * out, const char * bytes, int size) {
+    int cnt = 0;
+    ChannelTCP * c = channel2tcp(out2channel(out));
+
+#if ENABLE_ZeroCopy
+    if (!c->ssl && out->supports_zero_copy && size > 32) {
+        /* Send the binary data escape seq */
+        unsigned n = size;
+        if (c->obuf_inp >= BUF_SIZE - 8) tcp_flush_with_flags(out, MSG_MORE);
+        c->obuf[c->obuf_inp++] = ESC;
+        c->obuf[c->obuf_inp++] = 3;
+        for (;;) {
+            if (n <= 0x7fu) {
+                c->obuf[c->obuf_inp++] = n;
+                break;
+            }
+            c->obuf[c->obuf_inp++] = (n & 0x7fu) | 0x80u;
+            n = n >> 7;
+        }
+        /* We need to flush the buffer then send our data */
+        tcp_flush_with_flags(out, MSG_MORE);
+
+        if (c->socket < 0) return;
+        if (c->out_errno) return;
+        
+        while (cnt < size) {
+            int wr = send(c->socket, bytes + cnt, size - cnt, MSG_MORE);
+            if (wr < 0) {
+                int err = errno;
+                trace(LOG_PROTOCOL, "Can't send() on channel 0x%08x: %d %s", c, err, errno_to_str(err));
+                c->out_errno = err;
+                return;
+            }
+            cnt += wr;
+        }
+        return;
+    }
+#endif /* ENABLE_ZeroCopy */
+        
+    while (cnt < size) tcp_write_stream(out, (unsigned char)bytes[cnt++]);
 }
 
 static void tcp_post_read(InputBuf * ibuf, unsigned char * buf, int size) {
@@ -346,8 +392,8 @@ static void send_eof_and_close(Channel * channel, int err) {
     ibuf_read_done(&c->ibuf, 0);      /* EOF */
     tcp_write_stream(&c->chan.out, MARKER_EOS);
     write_errno(&c->chan.out, err);
-    c->chan.out.write(&c->chan.out, MARKER_EOM);
-    c->chan.out.flush(&c->chan.out);
+    tcp_write_stream(&c->chan.out, MARKER_EOM);
+    tcp_flush_stream(&c->chan.out);
     closesocket(c->socket);
     c->socket = -1;
     notify_channel_closed(channel);
@@ -574,6 +620,7 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
     c->chan.inp.peek = tcp_peek_stream;
     c->chan.out.write = tcp_write_stream;
     c->chan.out.flush = tcp_flush_stream;
+    c->chan.out.write_bloc = tcp_write_bloc_stream;
     c->chan.start_comm = start_channel;
     c->chan.check_pending = channel_check_pending;
     c->chan.message_count = channel_get_message_count;

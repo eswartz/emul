@@ -392,19 +392,17 @@ static void safe_memory_get(void * parm) {
             write_stringz(out, "R");
             write_stringz(out, token);
 
-            json_write_binary_start(&state, out);
-            while (err == 0 && addr < addr0 + size) {
+            json_write_binary_start(&state, out, size);
+            while (addr < addr0 + size) {
                 int rd = addr0 + size - addr;
                 if (rd > BUF_SIZE) rd = BUF_SIZE;
                 /* TODO: word size, mode */
-                if (context_read_mem(ctx, addr, buf, rd) < 0) {
-                    err = errno;
+                if (err == 0) {
+                    if (context_read_mem(ctx, addr, buf, rd) < 0) err = errno;
+                    else check_breakpoints_on_memory_read(ctx, addr, buf, rd);
                 }
-                else {
-                    check_breakpoints_on_memory_read(ctx, addr, buf, rd);
-                    json_write_binary_data(&state, buf, rd);
-                    addr += rd;
-                }
+                json_write_binary_data(&state, buf, rd);
+                addr += rd;
             }
             json_write_binary_end(&state);
             write_stream(out, 0);

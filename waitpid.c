@@ -62,10 +62,7 @@ typedef struct WaitPIDThread {
 static WaitPIDThread * threads = NULL;
 static HANDLE semaphore = NULL;
 
-static int check_error_win32(int ok) {
-    if (ok) return 0;
-    check_error(set_win32_errno(GetLastError()));
-}
+#define check_error_win32(ok) { if (!(ok)) check_error(set_win32_errno(GetLastError())); }
 
 static void waitpid_event(void * args) {
     int i;
@@ -115,7 +112,7 @@ void add_waitpid_process(int pid) {
         thread->next = threads;
         threads = thread;
         check_error_win32((thread->handles[thread->handle_cnt++] = CreateSemaphore(NULL, 0, 1, NULL)) != NULL);
-        check_error_win32(CreateThread(NULL, 0, waitpid_thread_func, thread, 0, &thread->thread));
+        check_error_win32(CreateThread(NULL, 0, waitpid_thread_func, thread, 0, &thread->thread) != NULL);
     }
     check_error_win32((prs = OpenProcess(PROCESS_QUERY_INFORMATION | SYNCHRONIZE, FALSE, pid)) != NULL);
     thread->handles[thread->handle_cnt++] = prs;
@@ -206,7 +203,7 @@ static void * wpid_handler(void * x) {
             if (errno == ECHILD) {
                 struct timespec timeout;
                 check_error(pthread_mutex_lock(&waitpid_lock));
-                if(waitpid_poll_rate < 60 * 1000) {
+                if (waitpid_poll_rate < 60 * 1000) {
                     waitpid_poll_rate = (waitpid_poll_rate * 3 + 1)/2;
                 }
                 clock_gettime(CLOCK_REALTIME, &timeout);

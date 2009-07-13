@@ -394,7 +394,7 @@ static void command_open(char * token, Channel * c) {
     }
     file = open(path, to_local_open_flags(flags), attrs.permissions); 
 
-    if (file < 0){
+    if (file < 0) {
         err = errno;
     }
     else {
@@ -418,17 +418,8 @@ static void reply_close(char * token, OutputStream * out, int err) {
 static void reply_read(char * token, OutputStream * out, int err, void * buf, unsigned len, int eof) {
     write_stringz(out, "R");
     write_stringz(out, token);
-    if (buf != NULL) {
-        JsonWriteBinaryState state;
-
-        json_write_binary_start(&state, out);
-        json_write_binary_data(&state, buf, len);
-        json_write_binary_end(&state);
-        write_stream(out, 0);
-    }
-    else {
-        write_stringz(out, "null");
-    }
+    json_write_binary(out, buf, len);
+    write_stream(out, 0);
     write_fs_errno(out, err);
     json_write_boolean(out, eof);
     write_stream(out, 0);
@@ -837,7 +828,7 @@ static void command_opendir(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     dir = opendir(path); 
-    if (dir == NULL){
+    if (dir == NULL) {
         err = errno;
     }
     else {

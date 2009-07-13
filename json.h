@@ -10,6 +10,7 @@
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Michael Sills-Lavoie(École Polytechnique de Montréal) - tcf2 bloc support
  *******************************************************************************/
 
 /*
@@ -64,30 +65,40 @@ extern void write_service_error(OutputStream * out, int err, const char * servic
  * because the streaming does not give visibility to all data at once
  * and some encoding schemes require data to come in groups, for
  * example for base64 data encodes 3 bytes at the time.  The members
- * fo the state structures are private to the implementation and
+ * of the state structures are private to the implementation and
  * should not be used in any way by clients of the API.
  */
+
+extern char * json_read_alloc_binary(InputStream * inp, int * size);
+extern void json_write_binary(OutputStream * out, const char * data, size_t size);
 
 typedef struct JsonReadBinaryState {
     /* Private members */
     InputStream * inp;
+    int encoding;
+    int size_start;
+    int size_done;
     unsigned rem;
     char buf[3];
 } JsonReadBinaryState;
 
 extern void json_read_binary_start(JsonReadBinaryState * state, InputStream * inp);
-extern size_t json_read_binary_data(JsonReadBinaryState * state, char * buf, size_t len);
+extern size_t json_read_binary_data(JsonReadBinaryState * state, char * buf, size_t buf_size);
 extern void json_read_binary_end(JsonReadBinaryState * state);
 
 typedef struct JsonWriteBinaryState {
     /* Private members */
     OutputStream * out;
+    int encoding;
+    int size_start;
+    int size_done;
     unsigned rem;
     char buf[3];
 } JsonWriteBinaryState;
 
-extern void json_write_binary_start(JsonWriteBinaryState * state, OutputStream * out);
-extern void json_write_binary_data(JsonWriteBinaryState * state, const char * str, size_t len);
+/* json_write_binary_start() argument 'size' can be 0 if client does not know the size upfront */
+extern void json_write_binary_start(JsonWriteBinaryState * state, OutputStream * out, int size);
+extern void json_write_binary_data(JsonWriteBinaryState * state, const char * data, size_t size);
 extern void json_write_binary_end(JsonWriteBinaryState * state);
 
 #endif /* D_json */

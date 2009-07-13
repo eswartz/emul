@@ -10,6 +10,7 @@
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Michael Sills-Lavoie(École Polytechnique de Montréal) - tcf2 bloc support
  *******************************************************************************/
 
 /*
@@ -19,6 +20,7 @@
 #ifndef D_input_buf
 #define D_input_buf
 
+#include "config.h"
 #include "streams.h"
 
 #define ESC 3
@@ -31,11 +33,18 @@ struct InputBuf {
     unsigned char * inp;
     unsigned char * out;
     int full;
-    int esc;
+    int inp_esc;
+    int out_esc;
     int eof;
     int long_msg;           /* Message is longer then buffer, start handling before EOM */
     int message_count;      /* Number of messages waiting to be dispatched */
     int handling_msg;       /* Channel in the process of handling a message */
+#if ENABLE_ZeroCopy
+    int out_size_mode;      /* Checking the binary data size */
+    int out_data_size;      /* Size of the bin data to get */
+    int inp_size_mode;      /* (Read done) Checking the binary data size */
+    int inp_data_size;      /* (Read done) Size of the bin data to get */
+#endif
     void (*post_read)(InputBuf *, unsigned char *, int);
     void (*wait_read)(InputBuf *);
     void (*trigger_message)(InputBuf *);

@@ -10,6 +10,7 @@
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Michael Sills-Lavoie(École Polytechnique de Montréal) - tcf2 bloc support
  *******************************************************************************/
 
 /*
@@ -25,20 +26,21 @@
  */
 #define MARKER_EOM  (-1)
 #define MARKER_EOS  (-2)
-#define MARKER_NULL (-3)
 
 typedef struct OutputStream OutputStream;
 
 struct OutputStream {
+    int supports_zero_copy; /* Stream supports bloc (zero copy) write */
     void (*write)(OutputStream * stream, int byte);
+    void (*write_bloc)(OutputStream * stream, const char * bytes, int size);
     void (*flush)(OutputStream * stream);
 };
 
 typedef struct InputStream InputStream;
 
 struct InputStream {
-    unsigned char *cur;
-    unsigned char *end;
+    unsigned char * cur;
+    unsigned char * end;
     int (*read)(InputStream * stream);
     int (*peek)(InputStream * stream);
 };
@@ -47,6 +49,7 @@ struct InputStream {
 #define peek_stream(inp) (((inp)->cur < (inp)->end) ? *(inp)->cur : (inp)->peek((inp)))
 
 #define write_stream(out, b) (out)->write((out), (b))
+#define write_bloc_stream(out, b, size) (out)->write_bloc((out), (b), (size))
 #define flush_stream(out) (out)->flush((out))
 
 extern int (read_stream)(InputStream * inp);
