@@ -101,8 +101,6 @@ struct timespec {
 
 #define ETIMEDOUT 100
 
-#define MSG_MORE 0
-
 #if defined(__MINGW32__)
 typedef unsigned int useconds_t;
 #elif defined(_MSC_VER)
@@ -137,6 +135,8 @@ extern int getgid(void);
 extern int getegid(void);
 
 #endif /* __CYGWIN__ */
+
+#define MSG_MORE 0
 
 /*
  * readdir() emulation
