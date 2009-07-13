@@ -14,11 +14,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IFileSystem;
 
 
@@ -294,8 +294,7 @@ public class FileSystemProxy implements IFileSystem {
                     assert args.length == 3;
                     s = toFSError(args[1]);
                     if (s == null) {
-                        String str = (String)args[0];
-                        if (str != null) b = Base64.toByteArray(str.toCharArray());
+                        b = JSON.toByteArray(args[0]);
                         eof = ((Boolean)args[2]).booleanValue();
                     }
                 }
@@ -451,7 +450,7 @@ public class FileSystemProxy implements IFileSystem {
         assert handle.getService() == this;
         String id = ((FileHandle)handle).id;
         return new FileSystemCommand("write", new Object[]{
-                id, Long.valueOf(offset), Base64.toBase64(data, data_pos, data_size) }) {
+                id, Long.valueOf(offset), new JSON.Binary(data, data_pos, data_size) }) {
             public void done(Exception error, Object[] args) {
                 Status s = null;
                 if (error != null) {

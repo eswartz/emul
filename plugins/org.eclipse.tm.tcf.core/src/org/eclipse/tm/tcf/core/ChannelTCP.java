@@ -126,6 +126,12 @@ public class ChannelTCP extends StreamChannel {
     }
 
     @Override
+    protected final void put(byte[] buf) throws IOException {
+        if (closed) return;
+        out.write(buf);
+    }
+
+    @Override
     protected final void flush() throws IOException {
         if (closed) return;
         out.flush();

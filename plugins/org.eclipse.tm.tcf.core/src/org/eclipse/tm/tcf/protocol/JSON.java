@@ -10,11 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.protocol;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -24,6 +20,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import org.eclipse.tm.tcf.core.Base64;
 
 
 /**
@@ -54,14 +52,28 @@ public final class JSON {
     
     private static final Map<Class<?>,ObjectWriter> object_writers = new HashMap<Class<?>,ObjectWriter>(); 
     
+    /** Wrapper class for binary byte blocs */
+    public final static class Binary {
+        public final byte[] bytes;
+        public final int offs;
+        public final int size;
+        
+        public Binary(byte[] bytes, int offs, int size) {
+            this.bytes = bytes;
+            this.offs = offs;
+            this.size = size;
+        }
+    }
+    
     private static char[] tmp_buf = new char[0x1000];
     private static byte[] tmp_bbf = new byte[0x1000];
     private static int tmp_buf_pos;
+    private static boolean zero_copy;
+    private static Binary[] bin_buf = new Binary[0x10];
+    private static int bin_buf_pos;
     
-    private static Reader reader;
-    private static final char[] cur_buf = new char[0x1000];
-    private static int cur_buf_pos;
-    private static int cur_buf_len;
+    private static byte[] inp;
+    private static int inp_pos;
     private static int cur_ch;
     
     // This buffer is used to create nice error reports 
@@ -117,18 +129,32 @@ public final class JSON {
         if (n >= 10) writeUInt(n / 10);
         write((char)('0' + n % 10));
     }
-
-    private static void read() throws IOException {
-        if (cur_buf_pos >= cur_buf_len) {
-            cur_buf_len = reader.read(cur_buf);
-            cur_buf_pos = 0;
-            if (cur_buf_len < 0) {
-                cur_buf_len = 0;
-                cur_ch = -1;
-                return;
+    
+    private static int readUTF8Char() {
+        if (inp_pos >= inp.length) return -1;
+        int ch = inp[inp_pos++];
+        if (ch < 0) {
+            if ((ch & 0xe0) == 0xc0) {
+                ch = (ch & 0x1f) << 6;
+                ch |= inp[inp_pos++] & 0x3f;
+            }
+            else if ((ch & 0xf0) == 0xe0) {
+                ch = (ch & 0x0f) << 12;
+                ch |= (inp[inp_pos++] & 0x3f) << 6;
+                ch |= inp[inp_pos++] & 0x3f;
+            }
+            else if ((ch & 0xf0) == 0xf0) {
+                ch = (ch & 0x0f) << 18;
+                ch |= (inp[inp_pos++] & 0x3f) << 12;
+                ch |= (inp[inp_pos++] & 0x3f) << 6;
+                ch |= inp[inp_pos++] & 0x3f;
             }
         }
-        cur_ch = cur_buf[cur_buf_pos++];
+        return ch;
+    }
+
+    private static void read() throws IOException {
+        cur_ch = readUTF8Char();
         err_buf[err_buf_pos++] = (char)cur_ch;
         if (err_buf_pos >= err_buf.length) {
             err_buf_pos = 0;
@@ -154,7 +180,7 @@ public final class JSON {
                 ch = err_buf[(err_buf_pos + i) % err_buf.length];
             }
             else {
-                int n = reader.read();
+                int n = readUTF8Char();
                 if (n < 0) break;
                 ch = (char)n;
             }
@@ -214,6 +240,19 @@ public final class JSON {
     
     private static Object readNestedObject() throws IOException {
         switch (cur_ch) {
+        case '(':
+            read();
+            int len = 0;
+            while (cur_ch >= '0' && cur_ch <= '9') {
+                len = len * 10 + (cur_ch - '0');
+                read();
+            }
+            if (cur_ch != ')') error();
+            byte[] res = new byte[len];
+            System.arraycopy(inp, inp_pos, res, 0, len);
+            inp_pos += len;
+            read();
+            return res;
         case '"':
             read();
             tmp_buf_pos = 0;
@@ -263,17 +302,7 @@ public final class JSON {
                 else {
                     tmp_buf[tmp_buf_pos++] = (char)cur_ch;
                 }
-                if (cur_buf_pos >= cur_buf_len) {
-                    read();
-                }
-                else {
-                    cur_ch = cur_buf[cur_buf_pos++];
-                    err_buf[err_buf_pos++] = (char)cur_ch;
-                    if (err_buf_pos >= err_buf.length) {
-                        err_buf_pos = 0;
-                        err_buf_cnt++;
-                    }
-                }
+                read();
             }
             read();
             return new String(tmp_buf, 0, tmp_buf_pos);
@@ -435,6 +464,9 @@ public final class JSON {
                 case 0:
                     write("\\u0000");
                     break;
+                case 1:
+                    write("\\u0001");
+                    break;
                 case '\r':
                     write("\\r");
                     break;
@@ -459,6 +491,19 @@ public final class JSON {
                 }
             }
             write('"');
+        }
+        else if (o instanceof Binary) {
+            Binary b = (Binary)o;
+            if (zero_copy) {
+                write('(');
+                write(Integer.toString(b.size));
+                write(')');
+                write((char)1);
+                bin_buf[bin_buf_pos++] = b;
+            }
+            else {
+                writeObject(Base64.toBase64(b.bytes, b.offs, b.size));
+            }
         }
         else if (o instanceof byte[]) {
             write('[');
@@ -520,14 +565,25 @@ public final class JSON {
     private static byte[] toBytes() {
         int inp_pos = 0;
         int out_pos = 0;
+        int blc_pos = 0;
         while (inp_pos < tmp_buf_pos) {
-            if (out_pos >= tmp_bbf.length - 4) {
+            if (out_pos > tmp_bbf.length - 4) {
                 byte[] tmp = new byte[tmp_bbf.length * 2];
                 System.arraycopy(tmp_bbf, 0, tmp, 0, out_pos);
                 tmp_bbf = tmp;
             }
             int ch = tmp_buf[inp_pos++];
-            if (ch < 0x80) {
+            if (ch == 1) {
+                Binary b = bin_buf[blc_pos++];
+                while (out_pos > tmp_bbf.length - b.size) {
+                    byte[] tmp = new byte[tmp_bbf.length * 2];
+                    System.arraycopy(tmp_bbf, 0, tmp, 0, out_pos);
+                    tmp_bbf = tmp;
+                }
+                System.arraycopy(b.bytes, b.offs, tmp_bbf, out_pos, b.size);
+                out_pos += b.size;
+            }
+            else if (ch < 0x80) {
                 tmp_bbf[out_pos++] = (byte)ch; 
             }
             else if (ch < 0x800) {
@@ -554,6 +610,8 @@ public final class JSON {
     public static String toJSON(Object o) throws IOException {
         assert Protocol.isDispatchThread();
         tmp_buf_pos = 0;
+        bin_buf_pos = 0;
+        zero_copy = false;
         writeObject(o);
         return new String(tmp_buf, 0, tmp_buf_pos);
     }
@@ -561,6 +619,8 @@ public final class JSON {
     public static byte[] toJASONBytes(Object o) throws IOException {
         assert Protocol.isDispatchThread();
         tmp_buf_pos = 0;
+        bin_buf_pos = 0;
+        zero_copy = false;
         writeObject(o);
         return toBytes();
     }
@@ -569,6 +629,8 @@ public final class JSON {
         assert Protocol.isDispatchThread();
         if (o == null || o.length == 0) return null;
         tmp_buf_pos = 0;
+        bin_buf_pos = 0;
+        zero_copy = false;
         for (int i = 0; i < o.length; i++) {
             writeObject(o[i]);
             write((char)0);
@@ -576,38 +638,51 @@ public final class JSON {
         return toBytes();
     }
 
-    public static Object parseOne(String s) throws IOException {
+    public static byte[] toJSONSequence(Object[] o, boolean zero_copy) throws IOException {
         assert Protocol.isDispatchThread();
-        if (s.length() == 0) return null;
-        reader = new StringReader(s);
-        err_buf_pos = 0;
-        err_buf_cnt = 0;
-        cur_buf_pos = 0;
-        cur_buf_len = 0;
-        read();
-        return readObject();
+        if (o == null || o.length == 0) return null;
+        tmp_buf_pos = 0;
+        bin_buf_pos = 0;
+        JSON.zero_copy = zero_copy;
+        for (int i = 0; i < o.length; i++) {
+            writeObject(o[i]);
+            write((char)0);
+        }
+        return toBytes();
     }
 
     public static Object parseOne(byte[] b) throws IOException {
         assert Protocol.isDispatchThread();
         if (b.length == 0) return null;
-        reader = new InputStreamReader(new ByteArrayInputStream(b), "UTF8");
+        inp = b;
+        inp_pos = 0;
         err_buf_pos = 0;
         err_buf_cnt = 0;
-        cur_buf_pos = 0;
-        cur_buf_len = 0;
         read();
         return readObject();
     }
 
     public static Object[] parseSequence(byte[] b) throws IOException {
         assert Protocol.isDispatchThread();
-        reader = new InputStreamReader(new ByteArrayInputStream(b), "UTF8");
+        inp = b;
+        inp_pos = 0;
         err_buf_pos = 0;
         err_buf_cnt = 0;
-        cur_buf_pos = 0;
-        cur_buf_len = 0;
         read();
         return readSequence();
+    }
+    
+    public static byte[] toByteArray(Object o) {
+        if (o == null) return null;
+        if (o instanceof byte[]) return (byte[])o;
+        if (o instanceof char[]) return Base64.toByteArray((char[])o);
+        if (o instanceof String) return Base64.toByteArray(((String)o).toCharArray());
+        throw new Error();
+    }
+    
+    public static void toByteArray(byte[] buf, int offs, int size, Object o) {
+        if (o instanceof char[]) Base64.toByteArray(buf, offs, size, (char[])o);
+        else if (o instanceof String) Base64.toByteArray(buf, offs, size, ((String)o).toCharArray());
+        else if (o != null) System.arraycopy(toByteArray(o), 0, buf, offs, size);
     }
 }

@@ -28,6 +28,8 @@ import org.eclipse.tm.tcf.protocol.IPeer;
 public abstract class StreamChannel extends AbstractChannel {
 
     public static final int ESC = 3;
+    
+    private int bin_data_size;
 
     public StreamChannel(IPeer remote_peer) {
         super(remote_peer);
@@ -39,22 +41,38 @@ public abstract class StreamChannel extends AbstractChannel {
 
     protected abstract int get() throws IOException;
     protected abstract void put(int n) throws IOException;
+    
+    protected void put(byte[] buf) throws IOException {
+        for (byte b : buf) put(b & 0xff);
+    }
 
     @Override
     protected final int read() throws IOException {
-        int res = get();
-        if (res < 0) return EOS;
-        assert res >= 0 && res <= 0xff;
-        if (res != ESC) return res;
-        int n = get();
-        switch (n) {
-        case 0: return ESC;
-        case 1: return EOM;
-        case 2: return EOS;
-        default:
-            if (n < 0) return EOS;
-            assert false;
-            return 0;
+        for (;;) {
+            int res = get();
+            if (res < 0) return EOS;
+            assert res >= 0 && res <= 0xff;
+            if (bin_data_size > 0) {
+                bin_data_size--;
+                return res;
+            }
+            if (res != ESC) return res;
+            int n = get();
+            switch (n) {
+            case 0: return ESC;
+            case 1: return EOM;
+            case 2: return EOS;
+            case 3:
+                for (int i = 0;; i += 7) {
+                    res = get();
+                    bin_data_size |= (res & 0x7f) << i;
+                    if ((res & 0x80) == 0) break;
+                }
+                break;
+            default:
+                if (n < 0) return EOS;
+                assert false;
+            }
         }
     }
 
@@ -72,10 +90,25 @@ public abstract class StreamChannel extends AbstractChannel {
 
     @Override
     protected void write(byte[] buf) throws IOException {
-        for (int i = 0; i < buf.length; i++) {
-            int n = buf[i] & 0xff;
-            put(n);
-            if (n == ESC) put(0);
+        if (buf.length > 32 && isZeroCopySupported()) {
+            put(ESC); put(3);
+            int n = buf.length;
+            for (;;) {
+                if (n <= 0x7f) {
+                    put(n);
+                    break;
+                }
+                put((n & 0x7f) | 0x80);
+                n = n >> 7;
+            }
+            put(buf);
+        }
+        else {
+            for (byte b : buf) {
+                int n = b & 0xff;
+                put(n);
+                if (n == ESC) put(0);
+            }
         }
     }
 }

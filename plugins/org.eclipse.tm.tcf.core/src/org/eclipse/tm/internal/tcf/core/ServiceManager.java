@@ -58,6 +58,12 @@ public class ServiceManager {
     }
     
     public static void onChannelCreated(IChannel channel, Map<String,IService> services) {
+        IService zero_copy = new IService() {
+            public String getName() {
+                return "ZeroCopy";
+            }
+        };
+        services.put(zero_copy.getName(), zero_copy);
         for (IServiceProvider provider : providers) {
             IService[] arr = provider.getLocalService(channel);
             if (arr == null) continue;

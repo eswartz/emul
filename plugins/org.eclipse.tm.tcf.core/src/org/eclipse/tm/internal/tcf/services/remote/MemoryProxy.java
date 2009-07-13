@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
@@ -225,8 +224,7 @@ public class MemoryProxy implements IMemory {
                         }
                         else {
                             assert args.length == 3;
-                            String str = (String)args[0];
-                            if (str != null) Base64.toByteArray(buf, offs, size, str.toCharArray());
+                            JSON.toByteArray(buf, offs, size, args[0]);
                             e = toMemoryError(addr, args[1], args[2]);
                         }
                         done.doneMemory(token, e);
@@ -237,7 +235,7 @@ public class MemoryProxy implements IMemory {
         public IToken set(final Number addr, int word_size,
                 byte[] buf, int offs, int size, int mode, final DoneMemory done) {
             return new MemoryCommand("set", new Object[] {
-                    getID(), addr, word_size, size, mode, Base64.toBase64(buf, offs, size)
+                    getID(), addr, word_size, size, mode, new JSON.Binary(buf, offs, size)
                 } ) {
                     public void done(Exception error, Object[] args) {
                         MemoryError e = null;

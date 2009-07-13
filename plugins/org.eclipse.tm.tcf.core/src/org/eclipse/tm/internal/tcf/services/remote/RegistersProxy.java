@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -162,8 +161,7 @@ public class RegistersProxy implements IRegisters {
                     if (error == null) {
                         assert args.length == 2;
                         error = toError(args[0]);
-                        String str = (String)args[1];
-                        if (str != null) val = Base64.toByteArray(str.toCharArray());
+                        val = JSON.toByteArray(args[1]);
                     }
                     done.doneGet(token, error, val);
                 }
@@ -172,7 +170,7 @@ public class RegistersProxy implements IRegisters {
 
         public IToken set(byte[] value, final DoneSet done) {
             return new Command(channel, RegistersProxy.this, "set",
-                    new Object[]{ getID(), Base64.toBase64(value, 0, value.length) }) {
+                    new Object[]{ getID(), new JSON.Binary(value, 0, value.length) }) {
                 @Override
                 public void done(Exception error, Object[] args) {
                     if (error == null) {
@@ -252,8 +250,7 @@ public class RegistersProxy implements IRegisters {
                 if (error == null) {
                     assert args.length == 2;
                     error = toError(args[0]);
-                    String str = (String)args[1];
-                    if (str != null) val = Base64.toByteArray(str.toCharArray());
+                    val = JSON.toByteArray(args[1]);
                 }
                 done.doneGet(token, error, val);
             }
@@ -262,7 +259,7 @@ public class RegistersProxy implements IRegisters {
 
     public IToken setm(Location[] locs, byte[] value, final DoneSet done) {
         return new Command(channel, this, "setm",
-                new Object[]{ locs, Base64.toBase64(value, 0, value.length) }) {
+                new Object[]{ locs, new JSON.Binary(value, 0, value.length) }) {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {
@@ -343,9 +340,7 @@ public class RegistersProxy implements IRegisters {
         NamedValueInfo(Map<String,Object> m) {
             desc = (String)m.get("Description");
             name = (String)m.get("Name");
-            String str = (String)m.get("Value");
-            if (str == null) value = null;
-            else value = Base64.toByteArray(str.toCharArray());
+            value = JSON.toByteArray(m.get("Value"));
         }
 
         public String getDescription() {

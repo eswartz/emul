@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -79,11 +78,10 @@ public class StreamsProxy implements IStreams {
                 boolean eos = false;
                 if (error == null) {
                     assert args.length == 4;
-                    String str = (String)args[0];
+                    data = JSON.toByteArray(args[0]);
                     error = toError(args[1]);
                     lost_size = ((Number)args[2]).intValue();
                     eos = ((Boolean)args[3]).booleanValue();
-                    if (str != null) data = Base64.toByteArray(str.toCharArray());
                 }
                 done.doneRead(token, error, lost_size, data, eos);
             }
@@ -147,7 +145,7 @@ public class StreamsProxy implements IStreams {
     }
 
     public IToken write(String stream_id, byte[] buf, int offset, int size, final DoneWrite done) {
-        return new Command(channel, this, "write", new Object[]{ stream_id, size, Base64.toBase64(buf, offset, size) }) {
+        return new Command(channel, this, "write", new Object[]{ stream_id, size, new JSON.Binary(buf, offset, size) }) {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {

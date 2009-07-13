@@ -3,10 +3,10 @@ package org.eclipse.tm.internal.tcf.services.remote;
 import java.util.Collection;
 import java.util.Map;
 
-import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.ISymbols;
 
 public class SymbolsProxy implements ISymbols {
@@ -20,13 +20,7 @@ public class SymbolsProxy implements ISymbols {
         
         Context(Map<String,Object> props) {
             this.props = props;
-            String s = (String)props.get(PROP_VALUE);
-            if (s == null) {
-                value = null;
-            }
-            else {
-                value = Base64.toByteArray(s.toCharArray());
-            }
+            value = JSON.toByteArray(props.get(PROP_VALUE));
         }
 
         public Number getAddress() {

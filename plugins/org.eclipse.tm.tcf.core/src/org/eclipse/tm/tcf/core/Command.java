@@ -74,7 +74,8 @@ public abstract class Command implements IChannel.ICommandListener {
         this.args = args;
         IToken t = null;
         try {
-            t = channel.sendCommand(service, command, JSON.toJSONSequence(args), this);
+            boolean zero_copy = ((AbstractChannel)channel).isZeroCopySupported();
+            t = channel.sendCommand(service, command, JSON.toJSONSequence(args, zero_copy), this);
         }
         catch (Throwable y) {
             t = new Token();

@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.tm.tcf.core.Base64;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -136,7 +135,7 @@ public class ExpressionsProxy implements IExpressions {
     }
 
     public IToken assign(String id, byte[] value, final DoneAssign done) {
-        return new Command(channel, this, "assign", new Object[]{ id, Base64.toBase64(value, 0, value.length) }) {
+        return new Command(channel, this, "assign", new Object[]{ id, new JSON.Binary(value, 0, value.length) }) {
             @Override
             public void done(Exception error, Object[] args) {
                 if (error == null) {
@@ -186,7 +185,7 @@ public class ExpressionsProxy implements IExpressions {
                 Map<String,Object> props = null;
                 if (error == null) {
                     assert args.length == 3;
-                    if (args[0] != null) value = Base64.toByteArray(((String)args[0]).toCharArray());
+                    value = JSON.toByteArray(args[0]);
                     error = toError(args[1]);
                     props = (Map<String,Object>)args[2];
                 }

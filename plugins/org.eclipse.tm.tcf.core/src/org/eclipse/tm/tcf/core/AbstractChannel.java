@@ -138,6 +138,7 @@ public abstract class AbstractChannel implements IChannel {
     private final IPeer local_peer;
     private IPeer remote_peer;
     private Proxy proxy;
+    private boolean zero_copy;
 
     private static final int pending_command_limit = 32;
     private int local_congestion_level = -100;
@@ -770,6 +771,10 @@ public abstract class AbstractChannel implements IChannel {
         addToOutQueue(msg);
     }
     
+    public boolean isZeroCopySupported() {
+        return zero_copy;
+    }
+    
     @SuppressWarnings("unchecked")
     private void handleInput(Message msg) {
         assert Protocol.isDispatchThread();
@@ -836,6 +841,7 @@ public abstract class AbstractChannel implements IChannel {
                     remote_service_by_class.clear();
                     ServiceManager.onChannelOpened(this, (Collection<String>)JSON.parseSequence(msg.data)[0], remote_service_by_name);
                     makeServiceByClassMap(remote_service_by_name, remote_service_by_class);
+                    zero_copy = remote_service_by_name.containsKey("ZeroCopy");
                 }
                 if (proxy != null && state == STATE_OPEN) {
                     proxy.onEvent(msg.service, msg.name, msg.data);
