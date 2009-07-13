@@ -760,6 +760,9 @@ static void process_output_streams_callback(VirtualStream * stream, int event_co
         assert(buf_len <= sizeof(out->buf));
         assert(out->buf_pos <= (size_t)buf_len);
         assert(out->req.u.fio.bufp == out->buf);
+#ifdef __linux
+        if (err == EIO) err = 0;
+#endif
         if (err) trace(LOG_ALWAYS, "Can't read process output stream: %d %s", err, errno_to_str(err));
 
         if (out->buf_pos < (size_t)buf_len || out->eos != eos) {
