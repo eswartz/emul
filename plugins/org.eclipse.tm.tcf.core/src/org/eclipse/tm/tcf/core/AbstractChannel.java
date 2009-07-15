@@ -677,6 +677,7 @@ public abstract class AbstractChannel implements IChannel {
         if (!(remote_service_by_name.get(service_proxy.getName()) instanceof GenericProxy)) throw new Error("Proxy already set"); 
         if (remote_service_by_class.get(service_interface) != null) throw new Error("Proxy already set");
         remote_service_by_class.put(service_interface, service_proxy);
+        remote_service_by_name.put(service_proxy.getName(), service_proxy);
     }
     
     public IService getLocalService(String service_name) {
