@@ -15,6 +15,11 @@
 #include "config.h"
 #include <assert.h>
 #include <stddef.h>
+#if defined(WIN32)
+#elif defined(_WRS_KERNEL)
+#else
+#  include <sys/wait.h>
+#endif
 #include "myalloc.h"
 #include "trace.h"
 #include "events.h"
@@ -156,7 +161,6 @@ static void * worker_thread_handler(void * x) {
         }
         check_error(pthread_mutex_unlock(&wtlock));
     }
-    return NULL;
 }
 
 void async_req_post(AsyncReqInfo *req) {

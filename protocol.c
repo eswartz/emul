@@ -97,7 +97,7 @@ static void read_stringz(InputStream * inp, char * str, size_t size) {
             trace(LOG_ALWAYS, "Unexpected end of message");
             exception(ERR_PROTOCOL);
         }
-        if (len < size - 1) str[len++] = ch;
+        if (len < size - 1) str[len++] = (char)ch;
     }
     str[len] = 0;
 }
@@ -134,7 +134,7 @@ static void free_services(void * owner) {
 
 static unsigned message_hash(Protocol * p, const char * service, const char * name) {
     int i;
-    unsigned h = (unsigned)p;
+    unsigned h = (unsigned)p >> 4;
     for (i = 0; service[i]; i++) h += service[i];
     for (i = 0; name[i]; i++) h += name[i];
     h = h + h / MESSAGE_HASH_SIZE;
@@ -152,7 +152,7 @@ static MessageHandlerInfo * find_message_handler(Protocol * p, char * service, c
 
 static unsigned event_hash(Channel * c, const char * service, const char * name) {
     int i;
-    unsigned h = (unsigned)c;
+    unsigned h = (unsigned)c >> 4;
     for (i = 0; service[i]; i++) h += service[i];
     for (i = 0; name[i]; i++) h += name[i];
     h = h + h / EVENT_HASH_SIZE;
@@ -168,7 +168,7 @@ static EventHandlerInfo * find_event_handler(Channel * c, char * service, char *
     return NULL;
 }
 
-#define reply_hash(c, tokenid) (((unsigned)(c)+(unsigned)(tokenid)) % REPLY_HASH_SIZE)
+#define reply_hash(c, tokenid) ((((unsigned)(c) >> 4) + (unsigned)(tokenid)) % REPLY_HASH_SIZE)
 
 static ReplyHandlerInfo * find_reply_handler(Channel * c, unsigned long tokenid, int take) {
     ReplyHandlerInfo ** rhp = &reply_handlers[reply_hash(c, tokenid)];
@@ -186,7 +186,7 @@ static ReplyHandlerInfo * find_reply_handler(Channel * c, unsigned long tokenid,
 }
 
 static void skip_until_EOM(Channel * c) {
-    while (1) {
+    for (;;) {
         int ch = read_stream(&c->inp);
         if (ch == MARKER_EOM) return;
         if (ch == MARKER_EOS) return;
@@ -466,8 +466,8 @@ static void event_locator_hello(Channel * c) {
     else {
         int max = 4;
         list = loc_alloc(max * sizeof *list);
-        while (1) {
-            char ch;
+        for (;;) {
+            int ch;
             char * service = json_read_alloc_string(&c->inp);
             if (strcmp(service, "ZeroCopy") == 0) c->out.supports_zero_copy = 1;
             if (cnt == max) {

@@ -49,6 +49,7 @@ static const char * PROCESSES = "Processes";
 #if defined(WIN32)
 #  include "tlhelp32.h"
 #  ifdef _MSC_VER
+#    pragma warning(disable:4201) /* nonstandard extension used : nameless struct/union (in winternl.h) */
 #    include "winternl.h"
 #  else
 #    include "ntdef.h"
@@ -283,6 +284,7 @@ static void command_get_children(char * token, Channel * c) {
 
     snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snapshot == INVALID_HANDLE_VALUE) err = set_win32_errno(GetLastError());
+    memset(&pe32, 0, sizeof(pe32));
     pe32.dwSize = sizeof(PROCESSENTRY32);
     if (!err && !Process32First(snapshot, &pe32)) {
         err = set_win32_errno(GetLastError());
@@ -313,7 +315,7 @@ static void command_get_children(char * token, Channel * c) {
         int ids_cnt = 0;
         int ids_max = 500;
         int * ids = (int *)loc_alloc(ids_max * sizeof(int));
-        while (1) {
+        for (;;) {
             ids_cnt = taskIdListGet(ids, ids_max);
             if (ids_cnt < ids_max) break;
             loc_free(ids);
@@ -875,7 +877,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
 
     size = sizeof(SYSTEM_HANDLE_INFORMATION) * 16;
     hi = loc_alloc(size);
-    while (1) {
+    for (;;) {
         status = QuerySystemInformationProc(SystemHandleInformation, hi, size, &size);
         if (status != STATUS_INFO_LENGTH_MISMATCH) break;
         hi = loc_realloc(hi, size);

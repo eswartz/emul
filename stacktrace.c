@@ -515,18 +515,6 @@ static void command_get_children(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
-static void dump_stack_callback(
-    void *     callAdrs,       /* address from which function was called */
-    int        funcAdrs,       /* address of function called */
-    int        nargs,          /* number of arguments in function call */
-    int *      args,           /* pointer to function args */
-    int        taskId,         /* task's ID */
-    int        isKernelAdrs    /* TRUE if Kernel addresses */
-    )
-{
-    trace(LOG_ALWAYS, "  0x%08x", callAdrs);
-}
-
 static void delete_stack_trace(Context * ctx, void * client_data) {
     if (ctx->stack_trace != NULL) {
         loc_free(ctx->stack_trace);

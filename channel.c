@@ -212,7 +212,7 @@ PeerServer * channel_peer_from_url(const char * url) {
 
     s = url;
     i = 0;
-    while (*s && isalpha(*s) && i < sizeof transport) transport[i++] = toupper(*s++);
+    while (*s && isalpha(*s) && i < sizeof transport) transport[i++] = (char)toupper(*s++);
     if (*s == ':' && i < sizeof transport) {
         s++;
         peer_server_addprop(ps, loc_strdup("TransportName"), loc_strndup(transport, i));

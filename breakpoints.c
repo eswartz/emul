@@ -122,18 +122,18 @@ static const char * BREAKPOINTS = "Breakpoints";
 #define ADDR2INSTR_HASH_SIZE 1023
 #define addr2instr_hash(addr) ((unsigned)((addr) + ((addr) >> 8)) % ADDR2INSTR_HASH_SIZE)
 
-#define link_all2bi(A)  ((BreakInstruction *)((char *)(A) - (int)&((BreakInstruction *)0)->link_all))
-#define link_adr2bi(A)  ((BreakInstruction *)((char *)(A) - (int)&((BreakInstruction *)0)->link_adr))
+#define link_all2bi(A)  ((BreakInstruction *)((char *)(A) - offsetof(BreakInstruction, link_all)))
+#define link_adr2bi(A)  ((BreakInstruction *)((char *)(A) - offsetof(BreakInstruction, link_adr)))
 
 #define ID2BP_HASH_SIZE 1023
 
-#define link_all2bp(A)  ((BreakpointInfo *)((char *)(A) - (int)&((BreakpointInfo *)0)->link_all))
-#define link_id2bp(A)   ((BreakpointInfo *)((char *)(A) - (int)&((BreakpointInfo *)0)->link_id))
+#define link_all2bp(A)  ((BreakpointInfo *)((char *)(A) - offsetof(BreakpointInfo, link_all)))
+#define link_id2bp(A)   ((BreakpointInfo *)((char *)(A) - offsetof(BreakpointInfo, link_id)))
 
 #define INP2BR_HASH_SIZE 127
 
-#define link_inp2br(A)  ((BreakpointRef *)((char *)(A) - (int)&((BreakpointRef *)0)->link_inp))
-#define link_bp2br(A)   ((BreakpointRef *)((char *)(A) - (int)&((BreakpointRef *)0)->link_bp))
+#define link_inp2br(A)  ((BreakpointRef *)((char *)(A) - offsetof(BreakpointRef, link_inp)))
+#define link_bp2br(A)   ((BreakpointRef *)((char *)(A) - offsetof(BreakpointRef, link_bp)))
 
 static LINK breakpoints;
 static LINK id2bp[ID2BP_HASH_SIZE];
@@ -415,7 +415,7 @@ static void send_event_breakpoint_status(OutputStream * out, BreakpointInfo * bp
 
 static void address_expression_error(BreakpointInfo * bp) {
     /* TODO: per-context address expression error report */
-    int size;
+    size_t size;
     const char * err_txt;
     assert(errno != 0);
     if (bp->error) return;
@@ -465,7 +465,6 @@ static void plant_breakpoint_address_iterator(void * x, ContextAddress address) 
 
 static void plant_breakpoint(BreakpointInfo * bp) {
     LINK * qp;
-    char * p = NULL;
     int context_sensitive_address = 0;
     ContextAddress bp_addr = 0;
 
@@ -741,7 +740,7 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
         read_stream(inp);
     }
     else {
-        while (1) {
+        for (;;) {
             int ch;
             char name[256];
             json_read_string(inp, name, sizeof(name));
@@ -1002,7 +1001,7 @@ static void command_ini_bps(char * token, Channel * c) {
             read_stream(&c->inp);
         }
         else {
-            while (1) {
+            for (;;) {
                 int ch;
                 BreakpointInfo bp;
                 read_breakpoint_properties(&c->inp, &bp);
@@ -1143,7 +1142,7 @@ static void command_bp_enable(char * token, Channel * c) {
             read_stream(&c->inp);
         }
         else {
-            while (1) {
+            for (;;) {
                 int ch;
                 char id[256];
                 BreakpointInfo * bp;
@@ -1185,7 +1184,7 @@ static void command_bp_disable(char * token, Channel * c) {
             read_stream(&c->inp);
         }
         else {
-            while (1) {
+            for (;;) {
                 int ch;
                 char id[256];
                 BreakpointInfo * bp;
@@ -1226,7 +1225,7 @@ static void command_bp_remove(char * token, Channel * c) {
             read_stream(&c->inp);
         }
         else {
-            while (1) {
+            for (;;) {
                 int ch;
                 char id[256];
                 BreakpointRef * br;

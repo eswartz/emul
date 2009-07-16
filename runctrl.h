@@ -44,7 +44,7 @@ extern void post_safe_event(int mem, EventCallBack * done, void * arg);
  * 'mem' is memory ID, only threads that belong to that memory are checked.
  * if 'mem' = 0, check all threads.
  */
-extern int is_all_stopped(int mem);
+extern int is_all_stopped(pid_t mem);
 
 /*
  * Terminate debug context - thread or process.

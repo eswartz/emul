@@ -406,6 +406,7 @@ static void command_get_environment(char * token, Channel * c) {
 #elif defined(WIN32)
 
 #include <windows.h>
+#include <wchar.h>
 
 typedef struct _UNICODE_STRING {
     USHORT Length;
@@ -1520,7 +1521,7 @@ static void command_get_command_line(char * token, Channel * c) {
     pid_t parent = 0;
     int err = 0;
     char dir[FILE_PATH_SIZE];
-    int f;
+    int f = -1;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -1563,7 +1564,7 @@ static void command_get_environment(char * token, Channel * c) {
     pid_t parent = 0;
     int err = 0;
     char dir[FILE_PATH_SIZE];
-    int f;
+    int f = -1;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);

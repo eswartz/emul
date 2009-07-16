@@ -23,6 +23,8 @@
 #include <assert.h>
 #if ENABLE_SSL
 #  include <openssl/ssl.h>
+#  include <openssl/rand.h>
+#  include <openssl/err.h>
 #  include <fcntl.h>
 #  ifndef _MSC_VER
 #    include <dirent.h>
@@ -263,9 +265,9 @@ static void tcp_write_stream(OutputStream * out, int byte) {
     if (c->socket < 0) return;
     if (c->out_errno) return;
     if (c->obuf_inp == BUF_SIZE) tcp_flush_with_flags(out, MSG_MORE);
-    c->obuf[c->obuf_inp++] = byte < 0 ? ESC : byte;
+    c->obuf[c->obuf_inp++] = (char)(byte < 0 ? ESC : byte);
     if (byte < 0 || byte == ESC) {
-        int esc;
+        char esc = 0;
         if (byte == ESC) esc = 0;
         else if (byte == MARKER_EOM) esc = 1;
         else if (byte == MARKER_EOS) esc = 2;
@@ -294,7 +296,7 @@ static void tcp_write_bloc_stream(OutputStream * out, const char * bytes, int si
         c->obuf[c->obuf_inp++] = 3;
         for (;;) {
             if (n <= 0x7fu) {
-                c->obuf[c->obuf_inp++] = n;
+                c->obuf[c->obuf_inp++] = (char)n;
                 break;
             }
             c->obuf[c->obuf_inp++] = (n & 0x7fu) | 0x80u;
@@ -478,7 +480,7 @@ static int channel_get_message_count(Channel * channel) {
 static void tcp_channel_read_done(void * x) {
     AsyncReqInfo * req = x;
     ChannelTCP * c = req->client_data;
-    int len;
+    int len = 0;
 
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
@@ -515,7 +517,7 @@ static void tcp_channel_read_done(void * x) {
     }
     else {
         assert(c->read_buf == c->rdreq.u.sio.bufp);
-        assert(c->read_buf_size == c->rdreq.u.sio.bufsz);
+        assert((size_t)c->read_buf_size == c->rdreq.u.sio.bufsz);
         len = c->rdreq.u.sio.rval;
         if (req->error) {
             trace(LOG_ALWAYS, "Can't read from socket: %s", errno_to_str(req->error));
@@ -646,9 +648,9 @@ static void refresh_peer_server(int sock, PeerServer * ps) {
 #else
     socklen_t sinlen;
 #endif
-    char *transport;
-    char *str_host;
+    char * transport;
     char str_port[32];
+    char str_host[64];
     char str_id[64];
     int ifcind;
     struct in_addr src_addr;
@@ -675,16 +677,16 @@ static void refresh_peer_server(int sock, PeerServer * ps) {
         transport = peer_server_getprop(ps2, "TransportName", NULL);
         assert(transport != NULL);
         snprintf(str_port, sizeof(str_port), "%d", ntohs(sin.sin_port));
-        str_host = loc_strdup(inet_ntoa(src_addr));
+        inet_ntop(AF_INET, &src_addr, str_host, sizeof(str_host));
         snprintf(str_id, sizeof(str_id), "%s:%s:%s", transport, str_host, str_port);
         peer_server_addprop(ps2, loc_strdup("ID"), loc_strdup(str_id));
-        peer_server_addprop(ps2, loc_strdup("Host"), str_host);
+        peer_server_addprop(ps2, loc_strdup("Host"), loc_strdup(str_host));
         peer_server_addprop(ps2, loc_strdup("Port"), loc_strdup(str_port));
         peer_server_add(ps2, PEER_DATA_RETENTION_PERIOD);
     }
 }
 
-static void refresh_all_peer_server(void *x) {
+static void refresh_all_peer_server(void * x) {
     LINK * l;
 
     if (list_is_empty(&server_list)) {
@@ -703,20 +705,11 @@ static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr) {
     /* Create a human readable channel name that uniquely identifies remote peer */
     char name[128];
     char * fmt = c->ssl != NULL ? "SSL:%s:%d" : "TCP:%s:%d";
-#if defined(_MSC_VER) || defined(__MINGW32__)
-    /* inet_ntop() is not available before Windows Vista */
-    assert(addr->sa_family == AF_INET);
-    c->addr = *addr;
-    snprintf(name, sizeof(name), fmt,
-        inet_ntoa(((struct sockaddr_in *)&c->addr)->sin_addr),
-        ntohs(((struct sockaddr_in *)&c->addr)->sin_port));
-#else
     char nbuf[128];
     c->addr = *addr;
     snprintf(name, sizeof(name), fmt,
-        inet_ntop(addr->sa_family, &((struct sockaddr_in *)&c->addr)->sin_addr, nbuf, sizeof(nbuf)),
-        ntohs(((struct sockaddr_in *)&c->addr)->sin_port));
-#endif
+        inet_ntop(addr->sa_family, &((struct sockaddr_in *)addr)->sin_addr, nbuf, sizeof(nbuf)),
+        ntohs(((struct sockaddr_in *)addr)->sin_port));
     c->chan.peer_name = loc_strdup(name);
 }
 
@@ -758,7 +751,6 @@ static void server_close(ChannelServer * serv) {
 }
 
 ChannelServer * channel_tcp_server(PeerServer * ps) {
-    const int i = 1;
     int sock;
     int error;
     char * reason = NULL;
@@ -792,12 +784,15 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
             continue;
         }
 #ifdef __linux
-        if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&i, sizeof(i)) < 0) {
-            error = errno;
-            reason = "setsockopt";
-            closesocket(sock);
-            sock = -1;
-            continue;
+        {
+            const int i = 1;
+            if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&i, sizeof(i)) < 0) {
+                error = errno;
+                reason = "setsockopt";
+                closesocket(sock);
+                sock = -1;
+                continue;
+            }
         }
 #endif
         if (res->ai_addr->sa_family == AF_INET) {
@@ -915,8 +910,13 @@ void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void 
             memcpy(&info->peer_addr, res->ai_addr, res->ai_addrlen);
             info->peer_addr_len = res->ai_addrlen;
             info->sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-            if (info->sock < 0) error = errno;
-            break;
+            if (info->sock < 0) {
+                error = errno;
+            }
+            else {
+                error = 0;
+                break;
+            }
         }
         loc_freeaddrinfo(reslist);
     }

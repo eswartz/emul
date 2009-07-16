@@ -35,7 +35,6 @@
 static char * progname;
 static Protocol * proto;
 static ChannelServer * serv;
-static ChannelServer * serv2;
 static TCFBroadcastGroup * bcg;
 static TCFSuspendGroup * spg;
 

@@ -121,15 +121,10 @@ static int get_slave_addr(char * buf, int * pos, struct sockaddr_in * addr, time
 
     memset(addr, 0, sizeof(*addr));
     addr->sin_family = AF_INET;
-#ifdef _WRS_KERNEL
-    /* VxWorks inet_aton() return codes are opposite to standard */
-    if (inet_aton(host, &addr->sin_addr) != OK) return 0;
-#else
-    if (inet_aton(host, &addr->sin_addr) == 0) return 0;
-#endif
+    if (inet_pton(AF_INET, host, &addr->sin_addr) <= 0) return 0;
     n = atoi(port);
     if (n == DISCOVERY_TCF_PORT) return 0;
-    addr->sin_port = htons(n);
+    addr->sin_port = htons((unsigned short)n);
     *timestamp = 0;
     while (*stmp >= '0' && *stmp <= '9') {
         *timestamp = (*timestamp * 10) + (*stmp++ - '0');
@@ -190,6 +185,7 @@ static int create_server_socket(void) {
     socklen_t local_addr_size = sizeof(local_addr);
 #endif
     
+    memset(&local_addr, 0, sizeof(local_addr));
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
@@ -282,12 +278,7 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
     if ((ps->flags & PS_FLAG_DISCOVERABLE) == 0) return 0;
 
     host = peer_server_getprop(ps, "Host", NULL);
-#ifdef _WRS_KERNEL
-    /* VxWorks inet_aton() return codes are opposite to standard */
-    if (host == NULL || inet_aton(host, &src_addr) != OK) return 0;
-#else
-    if (host == NULL || inet_aton(host, &src_addr) == 0) return 0;
-#endif
+    if (host == NULL || inet_pton(AF_INET, host, &src_addr) <= 0) return 0;
     if (peer_server_getprop(ps, "Port", NULL) == NULL) return 0;
 
     for (n = 0; n < ifc_cnt; n++) {
@@ -533,7 +524,6 @@ static void udp_send_ack_slaves_one(SlaveInfo * s) {
 static void udp_send_ack_slaves_all(struct sockaddr_in * addr) {
     char buf[MAX_PACKET_SIZE];
     int k;
-    time_t timenow = time(NULL);
 
     for (k = 0; k < ifc_cnt; k++) {
         int n = 0;
@@ -727,9 +717,8 @@ static void udp_receive_ack_slaves(void) {
 }
 
 static void udp_server_recv(void * x) {
-    AsyncReqInfo * req = x;
     assert(recvreq_pending != 0);
-    assert(req == &recvreq);
+    assert(x == &recvreq);
     recvreq_pending = 0;
     if (recvreq.error != 0) {
         if (recvreq_generation != udp_server_generation) {

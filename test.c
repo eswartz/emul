@@ -66,7 +66,6 @@ void tcf_test_func2(void) {
     int func2_local1 = 1;
     int func2_local2 = 2;
     test_struct func2_local3 = { enum_val3, 153, NULL, 3.14f, 2.71 };
-    test_array * func2_array = NULL;
     func2_local3.f_struct = &func2_local3;
     tcf_test_func3();
     func2_local1++;

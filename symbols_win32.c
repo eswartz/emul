@@ -134,7 +134,7 @@ static void syminfo2symbol(Context * ctx, SYMBOL_INFO * info, Symbol * sym) {
 
 static int get_type_tag(Symbol * type, DWORD * tag) {
     DWORD dword;
-    while (1) {
+    for (;;) {
         if (get_type_info(type, TI_GET_SYMTAG, &dword) < 0) return -1;
         if (dword != SymTagTypedef && dword != SymTagFunction && dword != SymTagData) break;
         if (get_type_info(type, TI_GET_TYPE, &dword) < 0) return -1;
@@ -165,7 +165,7 @@ int id2symbol(char * id, Symbol * sym) {
         return -1;
     }
     p = id + 3;
-    while (1) {
+    for (;;) {
         if (*p >= '0' && *p <= '9') module = (module << 4) | (*p - '0');
         else if (*p >= 'A' && *p <= 'F') module = (module << 4) | (*p - 'A' + 10);
         else break;
@@ -175,7 +175,7 @@ int id2symbol(char * id, Symbol * sym) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
-    while (1) {
+    for (;;) {
         if (*p >= '0' && *p <= '9') index = (index << 4) | (*p - '0');
         else if (*p >= 'A' && *p <= 'F') index = (index << 4) | (*p - 'A' + 10);
         else break;
@@ -185,7 +185,7 @@ int id2symbol(char * id, Symbol * sym) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
-    while (1) {
+    for (;;) {
         if (*p >= '0' && *p <= '9') pointer = (pointer << 4) | (*p - '0');
         else if (*p >= 'A' && *p <= 'F') pointer = (pointer << 4) | (*p - 'A' + 10);
         else break;
@@ -299,7 +299,7 @@ int get_symbol_name(const Symbol * sym, char ** name) {
             tmp_buf_size = 256;
             tmp_buf = loc_alloc(tmp_buf_size);
         }
-        while (1) {
+        for (;;) {
             len = WideCharToMultiByte(CP_UTF8, 0, ptr, -1, tmp_buf, tmp_buf_size, NULL, NULL);
             if (len != 0) break;
             err = GetLastError();
@@ -337,7 +337,6 @@ int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
 
 int get_symbol_type(const Symbol * sym, Symbol * type) {
     DWORD tag = 0;
-    DWORD index = 0;
 
     *type = *sym;
     if (!((SymLocation *)type->location)->pointer) {

@@ -92,13 +92,13 @@ struct Subscription {
     Channel * channel;
 };
 
-#define hash2client(A)          ((StreamClient *)((char *)(A) - (int)&((StreamClient *)0)->link_hash))
-#define stream2client(A)        ((StreamClient *)((char *)(A) - (int)&((StreamClient *)0)->link_stream))
-#define all2client(A)           ((StreamClient *)((char *)(A) - (int)&((StreamClient *)0)->link_all))
-#define all2subscription(A)     ((Subscription *)((char *)(A) - (int)&((Subscription *)0)->link_all))
-#define all2stream(A)           ((VirtualStream *)((char *)(A) - (int)&((VirtualStream *)0)->link_all))
-#define client2read_request(A)  ((ReadRequest *)((char *)(A) - (int)&((ReadRequest *)0)->link_client))
-#define client2write_request(A) ((WriteRequest *)((char *)(A) - (int)&((WriteRequest *)0)->link_client))
+#define hash2client(A)          ((StreamClient *)((char *)(A) - offsetof(StreamClient, link_hash)))
+#define stream2client(A)        ((StreamClient *)((char *)(A) - offsetof(StreamClient, link_stream)))
+#define all2client(A)           ((StreamClient *)((char *)(A) - offsetof(StreamClient, link_all)))
+#define all2subscription(A)     ((Subscription *)((char *)(A) - offsetof(Subscription, link_all)))
+#define all2stream(A)           ((VirtualStream *)((char *)(A) - offsetof(VirtualStream, link_all)))
+#define client2read_request(A)  ((ReadRequest *)((char *)(A) - offsetof(ReadRequest, link_client)))
+#define client2write_request(A) ((WriteRequest *)((char *)(A) - offsetof(WriteRequest, link_client)))
 
 #define HANDLE_HASH_SIZE 0x100
 static LINK handle_hash[HANDLE_HASH_SIZE];
@@ -332,9 +332,9 @@ static void delete_subscription(Subscription * s) {
 static void send_read_reply(StreamClient * client, char * token, unsigned long size) {
     VirtualStream * stream = client->stream;
     Channel * c = client->channel;
-    long lost = 0;
-    long read1 = 0;
-    long read2 = 0;
+    unsigned lost = 0;
+    unsigned read1 = 0;
+    unsigned read2 = 0;
     int eos = 0;
     char * data1 = NULL;
     char * data2 = NULL;

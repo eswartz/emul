@@ -44,7 +44,7 @@ int line_to_address(Context * ctx, char * file, int line, int column, LineToAddr
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
     if (err == 0) {
-        DWORD offset = 0;
+        LONG offset = 0;
         IMAGEHLP_LINE img_line;
         memset(&img_line, 0, sizeof(img_line));
         img_line.SizeOfStruct = sizeof(IMAGEHLP_LINE);
@@ -169,7 +169,7 @@ static void command_map_to_source(char * token, Channel * c) {
     else {
         int cnt = 0;
         write_stream(&c->out, '[');
-        while (1) {
+        for (;;) {
             if (cnt > 0) write_stream(&c->out, ',');
             write_stream(&c->out, '{');
             json_write_string(&c->out, "SLine");

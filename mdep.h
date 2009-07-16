@@ -33,8 +33,9 @@
 #elif defined(__MINGW32__)
 #  define _WIN32_IE 0x0501
 #elif defined(_MSC_VER)
-#  pragma warning(disable:4615)
-#  pragma warning(disable:4996)
+#  pragma warning(disable:4100) /* unreferenced formal parameter */
+#  pragma warning(disable:4996) /* 'strcpy': This function or variable may be unsafe */
+#  pragma warning(disable:4152) /* nonstandard extension, function/data pointer conversion in expression */
 #  ifdef _DEBUG
 #    define _CRTDBG_MAP_ALLOC
 #    include <stdlib.h>
@@ -113,7 +114,6 @@ typedef unsigned long useconds_t;
 typedef int clockid_t;
 extern int clock_gettime(clockid_t clock_id, struct timespec * tp);
 extern void usleep(useconds_t useconds);
-extern int inet_aton(const char * cp, struct in_addr * inp);
 
 #define lseek _lseeki64
 typedef struct _stati64 struct_stat;
@@ -137,6 +137,9 @@ extern int getegid(void);
 #endif /* __CYGWIN__ */
 
 #define MSG_MORE 0
+
+extern const char * inet_ntop(int af, const void * src, char * dst, socklen_t size);
+extern int inet_pton(int af, const char * src, void * dst);
 
 /*
  * readdir() emulation
@@ -262,6 +265,7 @@ typedef unsigned long useconds_t;
 typedef struct stat struct_stat;
 #define ifr_netmask ifr_addr
 #define SA_LEN(addr) ((addr)->sa_len)
+#define MSG_MORE 0
 
 extern int truncate(char * path, int64 size);
 extern char * canonicalize_file_name(const char * path);

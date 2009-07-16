@@ -63,7 +63,7 @@ static TCFSuspendGroup * suspend_group = NULL;
 typedef struct SafeEvent SafeEvent;
 
 struct SafeEvent {
-    int mem;
+    pid_t mem;
     EventCallBack * done;
     void * arg;
     SafeEvent * next;
@@ -290,8 +290,8 @@ static void command_get_children(char * token, Channel * c) {
         LINK * qp;
         int cnt = 0;
         pid_t ppd = 0;
-        pid_t pid = id2pid(id, &ppd);
         Context * parent = id2ctx(id);
+        id2pid(id, &ppd);
         if (parent != NULL && parent->parent == NULL && ppd == 0) {
             if (!parent->exited && context_has_state(parent)) {
                 if (cnt > 0) write_stream(&c->out, ',');
@@ -623,7 +623,7 @@ static void send_event_context_exception(OutputStream * out, Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-int is_all_stopped(int mem) {
+int is_all_stopped(pid_t mem) {
     LINK * qp;
     for (qp = context_root.next; qp != &context_root; qp = qp->next) {
         Context * ctx = ctxl2ctxp(qp);
@@ -657,7 +657,7 @@ static void continue_temporary_stopped(void * arg) {
 
 static void run_safe_events(void * arg) {
     LINK * qp;
-    int mem;
+    pid_t mem;
 
     if ((int)arg != safe_event_generation) return;
     assert(safe_event_list != NULL);

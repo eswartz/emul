@@ -44,12 +44,11 @@ typedef struct Proxy {
 
 static void proxy_connecting(Channel * c) {
     Proxy * target = c->client_data;
-    Proxy * host = target + target->other;
 
     assert(c == target->c);
     assert(target->other == -1);
     assert(target->state == ProxyStateInitial);
-    assert(host->state == ProxyStateConnected);
+    assert((target + target->other)->state == ProxyStateConnected);
 
     trace(LOG_PROXY, "Proxy waiting Hello from target");
     target->state = ProxyStateConnecting;
@@ -113,9 +112,7 @@ static char logbuf[1024];
 static void logchr(char ** pp, int c) {
     char * p = *pp;
 
-    if (p + 2 < logbuf+sizeof logbuf) {
-        *p++ = c;
-    }
+    if (p + 2 < logbuf + sizeof logbuf) *p++ = (char)c;
     *pp = p;
 }
 
@@ -124,14 +121,12 @@ static void logstr(char ** pp, char * s) {
     int c;
 
     while ((c = *s++) != '\0') {
-        if (p + 2 < logbuf+sizeof logbuf) {
-            *p++ = c;
-        }
+        if (p + 2 < logbuf + sizeof logbuf) *p++ = (char)c;
     }
     *pp = p;
 }
 
-static void proxy_default_message_handler(Channel * c, char **argv, int argc) {
+static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
     Proxy * proxy = c->client_data;
     Channel * otherc = proxy[proxy->other].c;
     char * p;

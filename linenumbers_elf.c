@@ -51,10 +51,9 @@ static CompUnit * find_unit(Context * ctx, DWARFCache * cache, ContextAddress ad
         ContextAddress size = u->mHighPC - u->mLowPC;
         if (base == 0 || size == 0) continue;
         if (u->mDebugRangesOffs != ~(U8_T)0 && cache->mDebugRanges != NULL) {
-            U8_T max = 0;
             if (elf_load(cache->mDebugRanges)) exception(errno);
             dio_EnterDataSection(&u->mDesc, cache->mDebugRanges->data, u->mDebugRangesOffs, cache->mDebugRanges->size);
-            while (1) {
+            for (;;) {
                 U8_T x = dio_ReadAddress();
                 U8_T y = dio_ReadAddress();
                 if (x == 0 && y == 0) break;

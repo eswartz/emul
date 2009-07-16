@@ -108,9 +108,9 @@ struct IORequest {
     LINK link_reqs;
 };
 
-#define hash2file(A)    ((OpenFileInfo *)((char *)(A) - (int)&((OpenFileInfo *)0)->link_hash))
-#define ring2file(A)    ((OpenFileInfo *)((char *)(A) - (int)&((OpenFileInfo *)0)->link_ring))
-#define reqs2req(A)     ((IORequest *)((char *)(A) - (int)&((IORequest *)0)->link_reqs))
+#define hash2file(A)    ((OpenFileInfo *)((char *)(A) - offsetof(OpenFileInfo, link_hash)))
+#define ring2file(A)    ((OpenFileInfo *)((char *)(A) - offsetof(OpenFileInfo, link_ring)))
+#define reqs2req(A)     ((IORequest *)((char *)(A) - offsetof(IORequest, link_reqs)))
 
 static unsigned long handle_cnt = 0;
 
@@ -123,7 +123,6 @@ static LINK file_info_ring = { NULL, NULL };
 #endif
 
 static OpenFileInfo * create_open_file_info(Channel * ch, char * path, int file, DIR * dir) {
-    int i = 0;
     LINK * list_head = NULL;
 
     OpenFileInfo * h = (OpenFileInfo *)loc_alloc_zero(sizeof(OpenFileInfo));
@@ -211,8 +210,6 @@ static void channel_close_listener(Channel * c) {
 }
 
 static void write_fs_errno(OutputStream * out, int err) {
-    char * msg = NULL;
-    int status = 0;
     switch (err) {
     case ERR_EOF:
         write_service_error(out, err, FILE_SYSTEM, FSERR_EOF);
@@ -906,7 +903,6 @@ static void command_readdir(char * token, Channel * c) {
 
 static void command_remove(char * token, Channel * c) {
     char path[FILE_PATH_SIZE];
-    DIR * dir = NULL;
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
@@ -923,7 +919,6 @@ static void command_remove(char * token, Channel * c) {
 
 static void command_rmdir(char * token, Channel * c) {
     char path[FILE_PATH_SIZE];
-    DIR * dir = NULL;
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
@@ -1140,8 +1135,6 @@ static void command_user(char * token, Channel * c) {
 static void command_roots(char * token, Channel * c) {
     struct_stat st;
     int err = 0;
-    int cnt = 0;
-    int disk = 0;
 
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");
@@ -1149,24 +1142,28 @@ static void command_roots(char * token, Channel * c) {
     write_stream(&c->out, '[');
 
 #ifdef WIN32
-    for (disk = 'A'; disk <= 'Z'; disk++) {
-        char path[32];
-        snprintf(path, sizeof(path), "%c:/", disk);
-        memset(&st, 0, sizeof(st));
-        if (stat(path, &st) == 0) {
-            FileAttrs attrs;
-            if (cnt > 0) write_stream(&c->out, ',');
-            write_stream(&c->out, '{');
-            json_write_string(&c->out, "FileName");
-            write_stream(&c->out, ':');
-            json_write_string(&c->out, path);
-            fill_attrs(&attrs, &st);
-            write_stream(&c->out, ',');
-            json_write_string(&c->out, "Attrs");
-            write_stream(&c->out, ':');
-            write_file_attrs(&c->out, &attrs);
-            write_stream(&c->out, '}');
-            cnt++;
+    {
+        int cnt = 0;
+        int disk = 0;
+        for (disk = 'A'; disk <= 'Z'; disk++) {
+            char path[32];
+            snprintf(path, sizeof(path), "%c:/", disk);
+            memset(&st, 0, sizeof(st));
+            if (stat(path, &st) == 0) {
+                FileAttrs attrs;
+                if (cnt > 0) write_stream(&c->out, ',');
+                write_stream(&c->out, '{');
+                json_write_string(&c->out, "FileName");
+                write_stream(&c->out, ':');
+                json_write_string(&c->out, path);
+                fill_attrs(&attrs, &st);
+                write_stream(&c->out, ',');
+                json_write_string(&c->out, "Attrs");
+                write_stream(&c->out, ':');
+                write_file_attrs(&c->out, &attrs);
+                write_stream(&c->out, '}');
+                cnt++;
+            }
         }
     }
 #elif defined(_WRS_KERNEL)

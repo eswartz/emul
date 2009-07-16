@@ -58,36 +58,6 @@ static int write_peer_properties(PeerServer * ps, void * arg) {
     return 0;
 }
 
-static PeerServer * read_peer_properties(InputStream * inp) {
-    PeerServer * ps;
-
-    if (read_stream(inp) != '{') exception(ERR_JSON_SYNTAX);
-    ps = peer_server_alloc();
-    if (peek_stream(inp) == '}') {
-        read_stream(inp);
-        return ps;
-    }
-    while (1) {
-        int ch;
-        char *name;
-        char *value;
-
-        name = json_read_alloc_string(inp);
-        if (read_stream(inp) != ':') {
-            loc_free(name);
-            exception(ERR_JSON_SYNTAX);
-        }
-        value = json_read_alloc_string(inp);
-        peer_server_addprop(ps, name, value);
-        ch = read_stream(inp);
-        if (ch == ',') continue;
-        if (ch == '}') break;
-        peer_server_free(ps);
-        exception(ERR_JSON_SYNTAX);
-    }
-    return ps;
-}
-
 static void command_sync(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");

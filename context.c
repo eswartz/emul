@@ -375,7 +375,7 @@ char * context_suspend_reason(Context * ctx) {
         n++;
     }
 
-    snprintf(buf, sizeof(buf), "Exception 0x%08x", exception_code);
+    snprintf(buf, sizeof(buf), "Exception 0x%08lx", (unsigned long)exception_code);
     return buf;
 }
 
@@ -561,7 +561,7 @@ static int win32_resume(Context * ctx) {
         ctx->parent->pending_signals &= ~(1 << SIGKILL);
         ctx->parent->exiting = 1;
     }
-    while (1) {
+    for (;;) {
         DWORD cnt = ResumeThread(ctx->handle);
         if (cnt == (DWORD)-1) {
             errno = log_error("ResumeThread", 0);
@@ -748,8 +748,7 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
     fantom_process.debug_thread_args = args;
     fantom_process.event_semaphore = event_semaphore;
 
-    while (1) {
-        DebugEvent * buf = NULL;
+    for (;;) {
         DEBUG_EVENT * debug_event = &event_buffer.event;
 
         memset(debug_event, 0, sizeof(DEBUG_EVENT));

@@ -749,7 +749,7 @@ static int evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
     Addr = Cache->mDebugLoc->data;
     Base = Value->mObject->mCompUnit->mLowPC;
     dio_EnterDataSection(&Value->mObject->mCompUnit->mDesc, Addr, Offset, Cache->mDebugLoc->size);
-    while (1) {
+    for (;;) {
         U8_T Addr0 = dio_ReadAddress();
         U8_T Addr1 = dio_ReadAddress();
         if (Addr0 == BaseMark) {

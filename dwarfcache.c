@@ -39,7 +39,6 @@ static ELF_Section * sDebugSection;
 static DIO_UnitDescriptor sUnitDesc;
 static ObjectInfo * sObjectList;
 static ObjectInfo * sObjectListTail;
-static Elf_Sym ** sSymbolHash;
 static unsigned sSymbolTableLen;
 static CompUnit * sCompUnit;
 static unsigned sCompUnitsMax;
@@ -57,27 +56,6 @@ unsigned calc_symbol_name_hash(char * s) {
         h &= ~g;
     }
     return h % SYM_HASH_SIZE;
-}
-
-static char * get_elf_symbol_name(unsigned n) {
-    Elf_Sym * sym = sSymbolHash[n];
-    U8_T Name = 0;
-    if (sCache->mFile->elf64) {
-        Elf64_Sym * s = (Elf64_Sym *)sym;
-        Name = s->st_name;
-    }
-    else {
-        Elf32_Sym * s = (Elf32_Sym *)sym;
-        Name = s->st_name;
-    }
-    for (n = 0; n < sCache->mSymSectionsCnt; n++) {
-        SymbolSection * tbl = sCache->mSymSections[n];
-        if (sym < tbl->mSymPool) continue;
-        if (sym >= tbl->mSymPool + tbl->mSymPoolSize) continue;
-        assert(Name < tbl->mStrPoolSize);
-        return tbl->mStrPool + Name;
-    }
-    return NULL;
 }
 
 static U8_T get_elf_symbol_address(Elf_Sym * x) {
@@ -432,7 +410,6 @@ static void load_debug_sections(void) {
     ELF_File * File = sCache->mFile;
 
     memset(&trap, 0, sizeof(trap));
-    sSymbolHash = sCache->mSymbolHash;
     sSymbolTableLen = sCache->mSymbolTableLen;
     sObjectList = NULL;
     sObjectListTail = NULL;
@@ -480,7 +457,6 @@ static void load_debug_sections(void) {
         sCache->mObjectHash = NULL;
     }
     sCache->mObjectList = sObjectList;
-    sSymbolHash = NULL;
     sSymbolTableLen = 0;
     sObjectList = NULL;
     sObjectListTail = NULL;
@@ -852,7 +828,8 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
                     dio_Skip(op_size - 1);
                     break;
                 }
-                assert(dio_GetPos() == op_pos + op_size);
+                if (dio_GetPos() != op_pos + op_size)
+                    str_exception(ERR_INV_DWARF, "Invalid line info op size");
             }
             else {
                 switch (opcode) {

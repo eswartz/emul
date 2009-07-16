@@ -309,8 +309,6 @@ static void safe_memory_set(void * parm) {
             ContextAddress addr0 = args->addr;
             ContextAddress addr = args->addr;
             unsigned long size = 0;
-            int word_size = args->word_size;
-            int mode = args->mode;
             char buf[BUF_SIZE];
             int err = 0;
             JsonReadBinaryState state;
@@ -381,8 +379,6 @@ static void safe_memory_get(void * parm) {
             ContextAddress addr0 = args->addr;
             ContextAddress addr = args->addr;
             unsigned long size = args->size;
-            int word_size = args->word_size;
-            int mode = args->mode;
             char buf[BUF_SIZE];
             int err = 0;
             JsonWriteBinaryState state;
@@ -448,8 +444,6 @@ static void safe_memory_fill(void * parm) {
             ContextAddress addr0 = args->addr;
             ContextAddress addr = args->addr;
             unsigned long size = args->size;
-            int word_size = args->word_size;
-            int mode = args->mode;
             char buf[0x1000];
             int buf_pos = 0;
             int err = 0;
@@ -461,8 +455,8 @@ static void safe_memory_fill(void * parm) {
                 read_stream(inp);
             }
             else {
-                while (1) {
-                    char ch;
+                for (;;) {
+                    int ch;
                     if (err == 0) {
                         if (buf_pos >= sizeof(buf)) err = ERR_BUFFER_OVERFLOW;
                         else buf[buf_pos++] = (char)json_read_ulong(inp);

@@ -8,7 +8,8 @@ CFLAGS += -g
 else
 CFLAGS += -O -DNDEBUG
 endif
-CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -Wmissing-prototypes
+CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE
+CFLAGS += -Wall -Wmissing-prototypes -Wno-parentheses
 
 OPSYS=$(shell uname -o 2>/dev/null || uname -s)
 MACHINE=$(shell uname -m)

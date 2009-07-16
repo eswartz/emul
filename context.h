@@ -24,9 +24,9 @@
 
 extern LINK context_root;
 
-#define ctxl2ctxp(A)    ((Context *)((char *)(A) - (int)&((Context *)0)->ctxl))
-#define pidl2ctxp(A)    ((Context *)((char *)(A) - (int)&((Context *)0)->pidl))
-#define cldl2ctxp(A)    ((Context *)((char *)(A) - (int)&((Context *)0)->cldl))
+#define ctxl2ctxp(A)    ((Context *)((char *)(A) - offsetof(Context, ctxl)))
+#define pidl2ctxp(A)    ((Context *)((char *)(A) - offsetof(Context, pidl)))
+#define cldl2ctxp(A)    ((Context *)((char *)(A) - offsetof(Context, cldl)))
 
 typedef unsigned long ContextAddress; /* Type to represent byted address inside context memory */
 
@@ -60,6 +60,7 @@ struct Context {
     int                 regs_error;         /* if not 0, 'regs' is invalid */
     int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
     void *              stack_trace;        /* pointer to StackTrace service data cache */
+    void *              memory_map;         /* pointer to MemoryMap service data cache */
 #if ENABLE_RCBP_TEST
     int                 test_process;       /* if not 0, the process is test process started by Diagnostics service */
 #endif
@@ -95,7 +96,6 @@ struct Context {
     int                 end_of_step;
 #endif
 #if ENABLE_ELF
-    void *              memory_map;
     int                 debug_structure_searched;
     ContextAddress      debug_structure_address;
     ContextAddress      loader_state;

@@ -28,32 +28,34 @@ struct LINK {
     LINK * prev;
 };
 
-#define list_init(list) do { \
-            (list)->next = (list)->prev = (list);   \
-        } while(0)
+#define list_init(list) { \
+            (list)->next = (list)->prev = (list); \
+        }
 
 #define list_is_empty(list) ((list)->next == (list) && (list)->prev == (list))
 
-#define list_remove(item) do { \
-            (item)->prev->next = (item)->next;         \
-            (item)->next->prev = (item)->prev;         \
-        } while(0)
+#define list_remove(item) { \
+            (item)->prev->next = (item)->next; \
+            (item)->next->prev = (item)->prev; \
+        }
 
-#define list_add_first(item,list) do { \
-            (item)->next = (list)->next; (item)->prev = (list);         \
-            (list)->next->prev = (item); (list)->next = (item);         \
-        } while(0)
+#define list_add_first(item,list) { \
+            (item)->next = (list)->next; (item)->prev = (list); \
+            (list)->next->prev = (item); (list)->next = (item); \
+        }
 
-#define list_add_last(item,list) do { \
+#define list_add_last(item,list) { \
             (item)->next = (list); (item)->prev = (list)->prev; \
             (list)->prev->next = (item); (list)->prev = (item); \
-        } while(0)
+        }
 
-#define list_concat(item,list) if (!list_is_empty(list)) { \
-            (item)->prev->next = (list)->next; \
-            (list)->next->prev = (item)->prev; \
-            (item)->prev = (list)->prev; \
-            (list)->prev->next = (item); \
+#define list_concat(item,list) { \
+            if (!list_is_empty(list)) { \
+                (item)->prev->next = (list)->next; \
+                (list)->next->prev = (item)->prev; \
+                (item)->prev = (list)->prev; \
+                (list)->prev->next = (item); \
+            } \
         }
 
 #endif /* D_link */

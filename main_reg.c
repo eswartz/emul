@@ -42,7 +42,6 @@ int main(int argc, char **argv) {
 #endif
     int c;
     int ind;
-    int error;
     char *s;
     char *log_name = 0;
 

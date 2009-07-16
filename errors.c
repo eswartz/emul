@@ -51,7 +51,7 @@ static char * system_strerror(void) {
         0,
         NULL))
     {
-        snprintf(msg, sizeof(msg), "System Error Code %d", errno_win32);
+        snprintf(msg, sizeof(msg), "System Error Code %lu", (unsigned long)errno_win32);
     }
     else {
         int l;
@@ -83,12 +83,6 @@ int set_win32_errno(DWORD win32_error_code) {
 
 DWORD get_win32_errno(int no) {
     return no == ERR_SYSTEM ? errno_win32 : 0;
-}
-
-#else
-
-static char * system_strerror(void) {
-    assert(0);
 }
 
 #endif
@@ -149,8 +143,10 @@ const char * errno_to_str(int err) {
     case ERR_EXCEPTION:
         snprintf(buf, sizeof(buf), "%s: %s", exception_msg, errno_to_str(exception_no));
         return buf;
+#ifdef WIN32
     case ERR_SYSTEM:
         return system_strerror();
+#endif
     case ERR_GAI:
         return loc_gai_strerror(errno_gai);
     default:

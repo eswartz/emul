@@ -105,7 +105,7 @@ int read_base64(InputStream * inp, char * buf, int buf_size) {
 
     assert(buf_size >= 3);
     while (pos + 3 <= buf_size) {
-        int n0, n1, n2, n3;
+        int n0 = 0, n1 = 0, n2 = 0, n3 = 0;
         int ch0, ch1, ch2, ch3;
 
         ch0 = peek_stream(inp);

@@ -193,7 +193,7 @@ static void * wpid_handler(void * x) {
         int err;
         int status;
         EventInfo * info;
-
+        /* TODO: use AsyncReqWaitpid instead of calling waitpid() directly */
 #if defined(__APPLE__)
         pid = waitpid(-1, &status, 0);
 #else

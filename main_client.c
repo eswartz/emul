@@ -52,13 +52,10 @@ int main(int argc, char ** argv) {
 #endif
     int c;
     int ind;
-    int error;
     int interactive = 1;
     char * s;
     char * log_name = "-";
     char * script_name = 0;
-    char * node = NULL;
-    Protocol * proto;
 
     log_mode = 0;
 

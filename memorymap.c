@@ -54,10 +54,13 @@ static void dispose_memory_map(MemoryMap * map) {
     loc_free(map);
 }
 
-#if defined(_WRS_KERNEL) || defined(WIN32) || defined(__APPLE__)
-
 static void event_memory_map_changed(Context * ctx, void * client_data) {
+    if (ctx->memory_map == NULL) return;
+    dispose_memory_map((MemoryMap *)ctx->memory_map);
+    ctx->memory_map = NULL;
 }
+
+#if defined(_WRS_KERNEL) || defined(WIN32) || defined(__APPLE__)
 
 static MemoryMap * get_memory_map(Context * ctx) {
     errno = 0;
@@ -65,12 +68,6 @@ static MemoryMap * get_memory_map(Context * ctx) {
 }
 
 #else
-
-static void event_memory_map_changed(Context * ctx, void * client_data) {
-    if (ctx->memory_map == NULL) return;
-    dispose_memory_map((MemoryMap *)ctx->memory_map);
-    ctx->memory_map = NULL;
-}
 
 static MemoryMap * get_memory_map(Context * ctx) {
     char maps_file_name[FILE_PATH_SIZE];
@@ -100,7 +97,7 @@ static MemoryMap * get_memory_map(Context * ctx) {
             &addr0, &addr1, permissions, &offset, &dev_ma, &dev_mi, &inode);
         if (cnt == 0 || cnt == EOF) break;
 
-        while (1) {
+        for (;;) {
             int ch = fgetc(file);
             if (ch == '\n' || ch == EOF) break;
             if (i < FILE_PATH_SIZE - 1 && (ch != ' ' || i > 0)) {

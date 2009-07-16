@@ -19,11 +19,11 @@
 
 #include "config.h"
 
-#include <assert.h>
-#include <stdio.h>
-
 #if defined(WIN32)
 
+#include <assert.h>
+#include <stdio.h>
+#include <wchar.h>
 #include "windbgcache.h"
 
 static HINSTANCE dbghelp_dll = NULL;

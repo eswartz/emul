@@ -68,7 +68,7 @@ int build_ifclist(int sock, int max, ip_ifc_info *list) {
     ifc.ifc_buf = if_bbf;
     if (ioctl(sock, SIOCGIFCONF, &ifc) < 0) {
         trace(LOG_ALWAYS, "error: ioctl(SIOCGIFCONF) returned %d: %s", errno, errno_to_str(errno));
-        return;
+        return 0;
     }
     ind = 0;
     cp = (char *)ifc.ifc_req;

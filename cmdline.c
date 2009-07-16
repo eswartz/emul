@@ -62,7 +62,6 @@ static void channel_disconnected(Channel * c) {
 
 static int cmd_exit(char * s) {
     exit(0);
-    return 0;
 }
 
 static void cmd_done(void);
@@ -146,7 +145,6 @@ static int print_peer_flags(PeerServer * ps) {
 }
 
 static int print_peer_summary(PeerServer * ps, void * client_data) {
-    unsigned int flags = ps->flags;
     char *s;
 
     printf("  %s", ps->id);

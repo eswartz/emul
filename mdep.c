@@ -53,57 +53,24 @@ typedef struct {
     size_t was_broadcast;
 } PThreadCond;
 
-static void check_w32_error(const char * fn, int ok) {
-    char msg[256];
-    LPVOID msg_buf;
-    DWORD error;
-
-    if (ok) return;
-
-    error = GetLastError();
-    if (!FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-        error,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language */
-        (LPTSTR) &msg_buf,
-        0,
-        NULL))
-    {
-        snprintf(msg, sizeof(msg), "Win32 error %d", error);
-    }
-    else {
-        int l;
-        snprintf(msg, sizeof(msg), "Win32 error %d: %s", error, msg_buf, sizeof(msg));
-        LocalFree(msg_buf);
-        l = strlen(msg);
-        while (l > 0 && (msg[l - 1] == '\n' || msg[l - 1] == '\r')) l--;
-        msg[l] = 0;
-    }
-    fprintf(stderr, "Fatal error: pthreads, %s: %s\n", fn, msg);
-    exit(1);
-}
-
 int pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr) {
     assert(attr == NULL);
     *mutex = CreateMutex(NULL, FALSE, NULL);
-    check_w32_error("CreateMutex", *mutex != NULL);
+    if (*mutex == NULL) return set_win32_errno(GetLastError());
     return 0;
 }
 
 int pthread_mutex_lock(pthread_mutex_t * mutex) {
     assert(mutex != NULL);
     assert(*mutex != NULL);
-    check_w32_error("WaitForSingleObject", WaitForSingleObject(*mutex, INFINITE) != WAIT_FAILED);
+    if (WaitForSingleObject(*mutex, INFINITE) == WAIT_FAILED) return set_win32_errno(GetLastError());
     return 0;
 }
 
 int pthread_mutex_unlock(pthread_mutex_t * mutex) {
     assert(mutex != NULL);
     assert(*mutex != NULL);
-    check_w32_error("ReleaseMutex", ReleaseMutex(*mutex));
+    if (!ReleaseMutex(*mutex)) return set_win32_errno(GetLastError());
     return 0;
 }
 
@@ -113,10 +80,10 @@ int pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * attr) {
     p->waiters_count = 0;
     p->was_broadcast = 0;
     p->sema = CreateSemaphore(NULL, 0, 0x7fffffff, NULL);
-    check_w32_error("CreateSemaphore", p->sema != NULL);
+    if (p->sema == NULL) return set_win32_errno(GetLastError());
     InitializeCriticalSection(&p->waiters_count_lock);
     p->waiters_done = CreateEvent(NULL, FALSE, FALSE, NULL);
-    check_w32_error("CreateEvent", p->waiters_done != NULL);
+    if (p->waiters_done == NULL) return set_win32_errno(GetLastError());
     *cond = (pthread_cond_t)p;
     return 0;
 }
@@ -134,7 +101,7 @@ int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex) {
     /* semaphore until <pthread_cond_signal> or <pthread_cond_broadcast> */
     /* are called by another thread. */
     res = SignalObjectAndWait(*mutex, p->sema, INFINITE, FALSE);
-    check_w32_error("SignalObjectAndWait", res != WAIT_FAILED);
+    if (res == WAIT_FAILED) return set_win32_errno(GetLastError());
 
     /* Reacquire lock to avoid race conditions. */
     EnterCriticalSection(&p->waiters_count_lock);
@@ -153,13 +120,13 @@ int pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex) {
         /* This call atomically signals the <waiters_done_> event and waits until */
         /* it can acquire the <mutex>.  This is required to ensure fairness.  */
         DWORD err = SignalObjectAndWait(p->waiters_done, *mutex, INFINITE, FALSE);
-        check_w32_error("SignalObjectAndWait", err != WAIT_FAILED);
+        if (err == WAIT_FAILED) return set_win32_errno(GetLastError());
     }
     else {
         /* Always regain the external mutex since that's the guarantee we */
         /* give to our callers.  */
         DWORD err = WaitForSingleObject(*mutex, INFINITE);
-        check_w32_error("WaitForSingleObject", err != WAIT_FAILED);
+        if (err == WAIT_FAILED) return set_win32_errno(GetLastError());
     }
     assert(res == WAIT_OBJECT_0);
     return 0;
@@ -187,7 +154,7 @@ int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const
     /* semaphore until <pthread_cond_signal> or <pthread_cond_broadcast> */
     /* are called by another thread. */
     res = SignalObjectAndWait(*mutex, p->sema, timeout, FALSE);
-    check_w32_error("SignalObjectAndWait", res != WAIT_FAILED);
+    if (res == WAIT_FAILED) return set_win32_errno(GetLastError());
 
     /* Reacquire lock to avoid race conditions. */
     EnterCriticalSection(&p->waiters_count_lock);
@@ -206,13 +173,13 @@ int pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const
         /* This call atomically signals the <waiters_done> event and waits until */
         /* it can acquire the <mutex>.  This is required to ensure fairness.  */
         DWORD err = SignalObjectAndWait(p->waiters_done, *mutex, INFINITE, FALSE);
-        check_w32_error("SignalObjectAndWait", err != WAIT_FAILED);
+        if (err == WAIT_FAILED) return set_win32_errno(GetLastError());
     }
     else {
         /* Always regain the external mutex since that's the guarantee we */
         /* give to our callers.  */
         DWORD err = WaitForSingleObject(*mutex, INFINITE);
-        check_w32_error("WaitForSingleObject", err != WAIT_FAILED);
+        if (err == WAIT_FAILED) return set_win32_errno(GetLastError());
     }
 
     if (res == WAIT_TIMEOUT) return errno = ETIMEDOUT;
@@ -229,7 +196,9 @@ int pthread_cond_signal(pthread_cond_t * cond) {
     LeaveCriticalSection(&p->waiters_count_lock);
 
     /* If there aren't any waiters, then this is a no-op.   */
-    if (have_waiters) check_w32_error("ReleaseSemaphore", ReleaseSemaphore(p->sema, 1, 0));
+    if (have_waiters) {
+        if (!ReleaseSemaphore(p->sema, 1, 0)) return set_win32_errno(GetLastError());
+    }
     return 0;
 }
 
@@ -251,13 +220,13 @@ int pthread_cond_broadcast(pthread_cond_t * cond) {
 
     if (have_waiters) {
         /* Wake up all the waiters atomically. */
-        check_w32_error("ReleaseSemaphore", ReleaseSemaphore(p->sema, p->waiters_count, 0));
+        if (!ReleaseSemaphore(p->sema, p->waiters_count, 0)) return set_win32_errno(GetLastError());
 
         LeaveCriticalSection(&p->waiters_count_lock);
 
         /* Wait for all the awakened threads to acquire the counting */
         /* semaphore.  */
-        check_w32_error("WaitForSingleObject", WaitForSingleObject(p->waiters_done, INFINITE) != WAIT_FAILED);
+        if (WaitForSingleObject(p->waiters_done, INFINITE) == WAIT_FAILED) return set_win32_errno(GetLastError());
         /* This assignment is okay, even without the <waiters_count_lock_> held  */
         /* because no other waiter threads can wake up to access it. */
         p->was_broadcast = 0;
@@ -272,8 +241,8 @@ int pthread_cond_destroy(pthread_cond_t * cond) {
     PThreadCond * p = (PThreadCond *)*cond;
 
     DeleteCriticalSection(&p->waiters_count_lock);
-    check_w32_error("CloseHandle", CloseHandle(p->sema));
-    check_w32_error("CloseHandle", CloseHandle(p->waiters_done));
+    if (!CloseHandle(p->sema)) return set_win32_errno(GetLastError());
+    if (!CloseHandle(p->waiters_done)) return set_win32_errno(GetLastError());
 
     loc_free(p);
     *cond = NULL;
@@ -321,11 +290,9 @@ int pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 }
 
 int pthread_join(pthread_t thread, void ** value_ptr) {
-    check_w32_error("WaitForSingleObject", WaitForSingleObject(thread, INFINITE) != WAIT_FAILED);
-    if (value_ptr != NULL && !GetExitCodeThread(thread, (LPDWORD)value_ptr)) {
-        return EINVAL;
-    }
-    check_w32_error("CloseHandle", CloseHandle(thread));
+    if (WaitForSingleObject(thread, INFINITE) == WAIT_FAILED) return set_win32_errno(GetLastError());
+    if (value_ptr != NULL && !GetExitCodeThread(thread, (LPDWORD)value_ptr)) return EINVAL;
+    if (!CloseHandle(thread)) return set_win32_errno(GetLastError());
     return 0;
 }
 
@@ -443,11 +410,44 @@ int wsa_sendto(int socket, const void * buf, size_t size, int flags,
     return res;
 }
 
+/* inet_ntop()/inet_pton() are not available before Windows Vista */
+const char * inet_ntop(int af, const void * src, char * dst, socklen_t size) {
+    char * str = NULL;
+    if (af != AF_INET) {
+#ifdef EAFNOSUPPORT
+        errno = EAFNOSUPPORT;
+#else
+        errno = EINVAL;
+#endif
+        return NULL;
+    }
+    str = inet_ntoa(*(struct in_addr *)src);
+    if ((socklen_t)strlen(str) >= size) {
+        errno = ENOSPC;
+        return NULL;
+    }
+    return strcpy(dst, str);
+}
+
+int inet_pton(int af, const char * src, void * dst) {
+    if (af != AF_INET) {
+#ifdef EAFNOSUPPORT
+        errno = EAFNOSUPPORT;
+#else
+        errno = EINVAL;
+#endif
+        return -1;
+    }
+    if (src == NULL || *src == 0) return 0;
+    if ((((struct in_addr *)dst)->s_addr = inet_addr(src)) == INADDR_NONE) return 0;
+    return 1;
+}
+
 #endif /* WIN32 */
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
 
-static __int64 file_time_to_unix_time (const FILETIME * ft) {
+static __int64 file_time_to_unix_time(const FILETIME * ft) {
     __int64 res = (__int64)ft->dwHighDateTime << 32;
 
     res |= ft->dwLowDateTime;
@@ -474,10 +474,6 @@ int clock_gettime(clockid_t clock_id, struct timespec * tp) {
 
 void usleep(useconds_t useconds) {
     Sleep(useconds / 1000);
-}
-
-int inet_aton(const char *cp, struct in_addr *inp) {
-    return ( inp->s_addr = inet_addr(cp) ) != INADDR_NONE;
 }
 
 int truncate(const char * path, int64 size) {
@@ -602,7 +598,7 @@ char * get_os_name(void) {
     case 6:
         return "Windows Vista";
     }
-    snprintf(str, sizeof(str), "Windows %d.%d", info.dwMajorVersion, info.dwMinorVersion);
+    snprintf(str, sizeof(str), "Windows %d.%d", (int)info.dwMajorVersion, (int)info.dwMinorVersion);
     return str;
 }
 

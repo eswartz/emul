@@ -160,42 +160,26 @@ static int find_in_sym_table(DWARFCache * cache, Context * ctx, char * name, Sym
         SymbolSection * tbl = cache->mSymSections[m];
         unsigned n = tbl->mSymbolHash[h];
         while (n) {
-            if (cache->mFile->elf64) {
-                Elf64_Sym * s = (Elf64_Sym *)tbl->mSymPool + n;
-                if (strcmp(name, tbl->mStrPool + s->st_name) == 0) {
-                    memset(sym, 0, sizeof(Symbol));
-                    sym->ctx = ctx;
-                    switch (ELF64_ST_TYPE(s->st_info)) {
-                    case STT_FUNC:
-                        sym->sym_class = SYM_CLASS_FUNCTION;
-                        break;
-                    case STT_OBJECT:
-                        sym->sym_class = SYM_CLASS_REFERENCE;
-                        break;
-                    }
-                    assert(m <= 0xff);
-                    loc->tbl = tbl;
-                    loc->index = n;
-                    return 1;
+            U8_T st_name = cache->mFile->elf64 ? 
+                ((Elf64_Sym *)tbl->mSymPool + n)->st_name :
+                ((Elf32_Sym *)tbl->mSymPool + n)->st_name;
+            if (strcmp(name, tbl->mStrPool + st_name) == 0) {
+                int st_type = cache->mFile->elf64 ?
+                    ELF64_ST_TYPE(((Elf64_Sym *)tbl->mSymPool + n)->st_info) :
+                    ELF32_ST_TYPE(((Elf32_Sym *)tbl->mSymPool + n)->st_info);
+                memset(sym, 0, sizeof(Symbol));
+                sym->ctx = ctx;
+                switch (st_type) {
+                case STT_FUNC:
+                    sym->sym_class = SYM_CLASS_FUNCTION;
+                    break;
+                case STT_OBJECT:
+                    sym->sym_class = SYM_CLASS_REFERENCE;
+                    break;
                 }
-            }
-            else {
-                Elf32_Sym * s = (Elf32_Sym *)tbl->mSymPool + n;
-                if (strcmp(name, tbl->mStrPool + s->st_name) == 0) {
-                    memset(sym, 0, sizeof(Symbol));
-                    sym->ctx = ctx;
-                    switch (ELF32_ST_TYPE(s->st_info)) {
-                    case STT_FUNC:
-                        sym->sym_class = SYM_CLASS_FUNCTION;
-                        break;
-                    case STT_OBJECT:
-                        sym->sym_class = SYM_CLASS_REFERENCE;
-                        break;
-                    }
-                    loc->tbl = tbl;
-                    loc->index = n;
-                    return 1;
-                }
+                loc->tbl = tbl;
+                loc->index = n;
+                return 1;
             }
             n = tbl->mHashNext[n];
         }
@@ -378,7 +362,7 @@ char * symbol2id(const Symbol * sym) {
 static unsigned read_hex(char ** s) {
     unsigned res = 0;
     char * p = *s;
-    while (1) {
+    for (;;) {
         if (*p >= '0' && *p <= '9') res = (res << 4) | (*p - '0');
         else if (*p >= 'A' && *p <= 'F') res = (res << 4) | (*p - 'A' + 10);
         else break;
@@ -391,7 +375,7 @@ static unsigned read_hex(char ** s) {
 static unsigned long long read_hex_ll(char ** s) {
     unsigned long long res = 0;
     char * p = *s;
-    while (1) {
+    for (;;) {
         if (*p >= '0' && *p <= '9') res = (res << 4) | (*p - '0');
         else if (*p >= 'A' && *p <= 'F') res = (res << 4) | (*p - 'A' + 10);
         else break;

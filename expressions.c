@@ -422,7 +422,7 @@ static void next_sy(void) {
                 text_pos = pos - 1;
                 next_ch();
                 while (text_ch != '"') {
-                    ((char *)text_val.value)[cnt++] = next_char_val();
+                    ((char *)text_val.value)[cnt++] = (char)next_char_val();
                 }
                 assert(cnt == len);
                 ((char *)text_val.value)[cnt] = 0;
@@ -504,7 +504,7 @@ static void next_sy(void) {
                 text_pos = pos - 1;
                 next_ch();
                 while (is_name_character(text_ch)) {
-                    ((char *)text_val.value)[cnt++] = text_ch;
+                    ((char *)text_val.value)[cnt++] = (char)text_ch;
                     next_ch();
                 }
                 assert(cnt == len);
@@ -886,6 +886,7 @@ static void op_field(int mode, Value * v) {
         if (get_symbol_children(&v->type, &children, &count) < 0) {
             error(errno, "Cannot retrieve field list");
         }
+        memset(&sym, 0, sizeof(sym));
         for (i = 0; i < count; i++) {
             char * s = NULL;
             if (get_symbol_name(children + i, &s) < 0) {
@@ -1047,7 +1048,7 @@ static void op_sizeof(int mode, Value * v) {
 
 static void postfix_expression(int mode, Value * v) {
     primary_expression(mode, v);
-    while (1) {
+    for (;;) {
         if (text_sy == '.') {
             next_sy();
             op_field(mode, v);
@@ -1765,8 +1766,8 @@ struct Expression {
     char type[256];
 };
 
-#define link_all2exp(A)  ((Expression *)((char *)(A) - (int)&((Expression *)0)->link_all))
-#define link_id2exp(A)   ((Expression *)((char *)(A) - (int)&((Expression *)0)->link_id))
+#define link_all2exp(A)  ((Expression *)((char *)(A) - offsetof(Expression, link_all)))
+#define link_id2exp(A)   ((Expression *)((char *)(A) - offsetof(Expression, link_id)))
 
 #define ID2EXP_HASH_SIZE 1023
 
@@ -2092,6 +2093,7 @@ static void command_create(char * token, Channel * c) {
     if (!err) {
         Context * ctx = NULL;
         Value value;
+        memset(&value, 0, sizeof(value));
         if ((ctx = id2ctx(parent)) != NULL) {
             frame = STACK_TOP_FRAME;
         }
@@ -2139,6 +2141,7 @@ static void command_evaluate(char * token, Channel * c) {
     Expression * expr = NULL;
     Value value;
 
+    memset(&value, 0, sizeof(value));
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
@@ -2229,6 +2232,7 @@ static void command_assign(char * token, Channel * c) {
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
 
+    memset(&value, 0, sizeof(value));
     if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
     if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 0, &value) < 0) err = errno;
 

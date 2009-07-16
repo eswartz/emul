@@ -373,7 +373,7 @@ static int read_location_list(InputStream * inp) {
             read_stream(inp);
         }
         else {
-            while (1) {
+            for (;;) {
                 int ch = read_stream(inp);
                 if (ch == 'n') {
                     if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);

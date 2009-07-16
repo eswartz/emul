@@ -49,7 +49,7 @@ static void realloc_buf(void) {
     }
 }
 
-#define buf_add(ch) { if (buf_pos >= buf_size) realloc_buf(); buf[buf_pos++] = ch; }
+#define buf_add(ch) { if (buf_pos >= buf_size) realloc_buf(); buf[buf_pos++] = (char)(ch); }
 
 void json_write_ulong(OutputStream * out, unsigned long n) {
     if (n >= 10) {
@@ -91,7 +91,7 @@ void json_write_boolean(OutputStream * out, int b) {
     else write_string(out, "false");
 }
 
-static char hex_digit(unsigned n) {
+static int hex_digit(unsigned n) {
     n &= 0xf;
     if (n < 10) return '0' + n;
     return 'A' + (n - 10);
@@ -247,7 +247,7 @@ long json_read_long(InputStream * inp) {
     }
     if (ch < '0' || ch > '9') exception(ERR_JSON_SYNTAX);
     res = ch - '0';
-    while (1) {
+    for (;;) {
         ch = peek_stream(inp);
         if (ch < '0' || ch > '9') break;
         read_stream(inp);
@@ -267,7 +267,7 @@ unsigned long json_read_ulong(InputStream * inp) {
     }
     if (ch < '0' || ch > '9') exception(ERR_JSON_SYNTAX);
     res = ch - '0';
-    while (1) {
+    for (;;) {
         ch = peek_stream(inp);
         if (ch < '0' || ch > '9') break;
         read_stream(inp);
@@ -287,7 +287,7 @@ int64 json_read_int64(InputStream * inp) {
     }
     if (ch < '0' || ch > '9') exception(ERR_JSON_SYNTAX);
     res = ch - '0';
-    while (1) {
+    for (;;) {
         ch = peek_stream(inp);
         if (ch < '0' || ch > '9') break;
         read_stream(inp);
@@ -322,7 +322,7 @@ double json_read_double(InputStream * inp) {
         case 'E':
         case '.':
             if (pos >= sizeof(buf) - 1) exception(ERR_BUFFER_OVERFLOW);
-            buf[pos++] = read_stream(inp);
+            buf[pos++] = (char)read_stream(inp);
             continue;
         }
         break;
@@ -416,7 +416,7 @@ char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
             read_stream(inp);
         }
         else {
-            while (1) {
+            for (;;) {
                 int ch = read_stream(inp);
                 int len = 0;
                 if (len_pos >= len_buf_size) {
@@ -484,7 +484,7 @@ int json_read_array(InputStream * inp, JsonArrayCallBack * call_back, void * arg
         read_stream(inp);
         return 1;
     }
-    while (1) {
+    for (;;) {
         call_back(inp, arg);
         ch = read_stream(inp);
         if (ch == ',') continue;
@@ -517,7 +517,7 @@ size_t json_read_binary_data(JsonReadBinaryState * state, char * buf, size_t len
     size_t res = 0;
     if (state->encoding == ENCODING_BINARY) {
         if (len > (size_t)(state->size_start - state->size_done)) len = state->size_start - state->size_done;
-        while (res < len) buf[res++] = read_stream(state->inp);
+        while (res < len) buf[res++] = (char)read_stream(state->inp);
     }
     else {
         while (len > 0) {
@@ -693,7 +693,7 @@ static void skip_object(InputStream * inp) {
         return;
     }
     if (ch == '-' || ch >= '0' && ch <= '9') {
-        while (1) {
+        for (;;) {
             ch = peek_stream(inp);
             if (ch < '0' || ch > '9') break;
             skip_char(inp);
@@ -705,7 +705,7 @@ static void skip_object(InputStream * inp) {
             skip_char(inp);
         }
         else {
-            while (1) {
+            for (;;) {
                 int ch;
                 skip_object(inp);
                 ch = skip_char(inp);
@@ -721,7 +721,7 @@ static void skip_object(InputStream * inp) {
             skip_char(inp);
         }
         else {
-            while (1) {
+            for (;;) {
                 int ch;
                 skip_object(inp);
                 if (skip_char(inp) != ':') exception(ERR_JSON_SYNTAX);
