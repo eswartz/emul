@@ -589,7 +589,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
             if (level == 0) {
                 bf.append("Size: ");
                 bf.append(t.getSize());
-                bf.append(" bytes\n");
+                bf.append(t.getSize() == 1 ? " byte\n" : " bytes\n");
                 if (t.getSize() == 0) break;
                 bf.append("Dec: ");
                 bf.append(toNumberString(10, t, data, offs, size, big_endian));

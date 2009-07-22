@@ -675,12 +675,19 @@ public class LocatorService implements ILocator {
             }
             String id = map.get(IPeer.ATTR_ID);
             if (id == null) throw new Exception("Invalid peer info: no ID");
-            IPeer peer = peers.get(id);
-            if (peer instanceof RemotePeer) {
-                ((RemotePeer)peer).updateAttributes(map);
-            }
-            else if (peer == null) {
-                new RemotePeer(map);
+            String peer_host = map.get(IPeer.ATTR_IP_HOST);
+            if (peer_host == null) return;
+            InetAddress peer_addr = InetAddress.getByName(peer_host);
+            for (SubNet subnet : subnets) {
+                if (!subnet.contains(peer_addr)) continue;
+                IPeer peer = peers.get(id);
+                if (peer instanceof RemotePeer) {
+                    ((RemotePeer)peer).updateAttributes(map);
+                }
+                else if (peer == null) {
+                    new RemotePeer(map);
+                }
+                break;
             }
         }
         catch (Exception x) {

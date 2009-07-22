@@ -256,7 +256,12 @@ class TestExpressions implements ITCFTest,
                     }
                     else {
                         stack_trace = context_ids;
-                        runTest();
+                        if (stack_trace == null || stack_trace.length < 2) {
+                            exit(new Exception("Invalid stack trace"));
+                        }
+                        else {
+                            runTest();
+                        }
                     }
                 }
             });

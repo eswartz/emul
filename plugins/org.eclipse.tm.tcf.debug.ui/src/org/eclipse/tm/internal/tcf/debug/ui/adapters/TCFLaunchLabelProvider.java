@@ -31,7 +31,8 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
             else if (launch.isExited()) {
                 status = "Exited";
                 int code = launch.getExitCode();
-                if (code != 0) status += ", exit code " + code;
+                if (code > 0) status += ", exit code " + code;
+                if (code < 0) status += ", signal " + (-code); // TODO: signal name
             }
             else if (launch.isDisconnected()) {
                 status = "Disconnected";
