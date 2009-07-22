@@ -682,6 +682,7 @@ static void udp_receive_ack_info(void) {
         p++;
     }
     if (p != NULL && ps->id != NULL) {
+        /* TODO: should ignore peer info if peer host does not belong to one of known subnets */
         trace(LOG_DISCOVERY, "ACK_INFO from %s:%d, ID=%s",
             inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port), ps->id);
         ps->flags = PS_FLAG_DISCOVERABLE;

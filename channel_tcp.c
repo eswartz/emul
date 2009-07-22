@@ -154,7 +154,7 @@ static int certificate_verify_callback(int preverify_ok, X509_STORE_CTX * ctx) {
 #endif /* ENABLE_SSL */
 
 static void delete_channel(ChannelTCP * c) {
-    trace(LOG_PROTOCOL, "Deleting channel 0x%08x", c);
+    trace(LOG_PROTOCOL, "Deleting channel %#lx", c);
     assert(c->lock_cnt == 0);
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->read_pending == 0);
@@ -230,7 +230,7 @@ static void tcp_flush_with_flags(OutputStream * out, int flags) {
                     tv.tv_usec = 0;
                     if (select(c->socket + 1, &readfds, &writefds, &errorfds, &tv) >= 0) continue;
                 }
-                trace(LOG_ALWAYS, "Can't SSL_write() on channel 0x%08x: %s", c,
+                trace(LOG_ALWAYS, "Can't SSL_write() on channel %#lx: %s", c,
                     ERR_error_string(ERR_get_error(), NULL));
                 c->out_errno = EIO;
                 return;
@@ -243,7 +243,7 @@ static void tcp_flush_with_flags(OutputStream * out, int flags) {
             wr = send(c->socket, c->obuf + cnt, c->obuf_inp - cnt, flags);
             if (wr < 0) {
                 int err = errno;
-                trace(LOG_PROTOCOL, "Can't send() on channel 0x%08x: %d %s", c, err, errno_to_str(err));
+                trace(LOG_PROTOCOL, "Can't send() on channel %#lx: %d %s", c, err, errno_to_str(err));
                 c->out_errno = err;
                 return;
             }
@@ -312,7 +312,7 @@ static void tcp_write_bloc_stream(OutputStream * out, const char * bytes, int si
             int wr = send(c->socket, bytes + cnt, size - cnt, MSG_MORE);
             if (wr < 0) {
                 int err = errno;
-                trace(LOG_PROTOCOL, "Can't send() on channel 0x%08x: %d %s", c, err, errno_to_str(err));
+                trace(LOG_PROTOCOL, "Can't send() on channel %#lx: %d %s", c, err, errno_to_str(err));
                 c->out_errno = err;
                 return;
             }
@@ -421,7 +421,7 @@ static void handle_channel_msg(void * x) {
     has_msg = ibuf_start_message(&c->ibuf);
     if (has_msg <= 0) {
         if (has_msg < 0) {
-            trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel 0x%08x %s", c, c->chan.peer_name);
+            trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel %#lx %s", c, c->chan.peer_name);
             channel_close(&c->chan);
         }
         return;
@@ -506,7 +506,7 @@ static void tcp_channel_read_done(void * x) {
                     tcp_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
                     return;
                 }
-                trace(LOG_ALWAYS, "Can't SSL_read() on channel 0x%08x: %s", c,
+                trace(LOG_ALWAYS, "Can't SSL_read() on channel %#lx: %s", c,
                     ERR_error_string(ERR_get_error(), NULL));
                 len = 0;
             }

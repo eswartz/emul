@@ -50,7 +50,7 @@ struct VirtualStream {
     int ref_cnt;
     int deleted;
     LINK clients;
-    uns64 pos;
+    uint64_t pos;
     char * buf;
     unsigned buf_len;
     unsigned buf_inp;
@@ -66,14 +66,14 @@ struct StreamClient {
     LINK write_requests;
     VirtualStream * stream;
     Channel * channel;
-    uns64 pos;
+    uint64_t pos;
 };
 
 struct ReadRequest {
     LINK link_client;
     StreamClient * client;
     char token[256];
-    unsigned size;
+    size_t size;
 };
 
 struct WriteRequest {
@@ -81,8 +81,8 @@ struct WriteRequest {
     StreamClient * client;
     char token[256];
     char * data;
-    unsigned offs;
-    unsigned size;
+    size_t offs;
+    size_t size;
     int eos;
 };
 
@@ -108,7 +108,7 @@ static LINK subscriptions;
 static unsigned id_cnt = 0;
 
 static unsigned get_client_hash(unsigned id, Channel * c) {
-    return (id + (unsigned)c) % HANDLE_HASH_SIZE;
+    return (id + (unsigned)(size_t)c) % HANDLE_HASH_SIZE;
 }
 
 static int str2id(char * s, unsigned * id) {
@@ -244,8 +244,8 @@ static void notify_space_available(void * args) {
 
 static void advance_stream_buffer(VirtualStream * stream) {
     unsigned len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
-    uns64 min_pos = ~(uns64)0;
-    uns64 buf_pos = stream->pos - len;
+    uint64_t min_pos = ~(uint64_t)0;
+    uint64_t buf_pos = stream->pos - len;
     LINK * l;
 
     assert(stream->access & VS_ENABLE_REMOTE_READ);
@@ -254,7 +254,7 @@ static void advance_stream_buffer(VirtualStream * stream) {
         assert(client->pos <= stream->pos);
         if (client->pos < min_pos) min_pos = client->pos;
     }
-    if (min_pos == ~(uns64)0) {
+    if (min_pos == ~(uint64_t)0) {
         stream->buf_out = stream->buf_inp;
     }
     else if (min_pos > buf_pos) {
@@ -329,7 +329,7 @@ static void delete_subscription(Subscription * s) {
     loc_free(s);
 }
 
-static void send_read_reply(StreamClient * client, char * token, unsigned long size) {
+static void send_read_reply(StreamClient * client, char * token, size_t size) {
     VirtualStream * stream = client->stream;
     Channel * c = client->channel;
     unsigned lost = 0;
@@ -343,7 +343,7 @@ static void send_read_reply(StreamClient * client, char * token, unsigned long s
 
     assert(len > 0 || stream->eos);
     assert(client->pos <= stream->pos);
-    if ((uns64)len < stream->pos - client->pos) {
+    if ((uint64_t)len < stream->pos - client->pos) {
         lost = (long)(stream->pos - client->pos - len);
     }
     else {
@@ -389,7 +389,7 @@ static void send_read_reply(StreamClient * client, char * token, unsigned long s
     flush_stream(&c->out);
 }
 
-void virtual_stream_create(const char * type, unsigned buf_len, unsigned access,
+void virtual_stream_create(const char * type, size_t buf_len, unsigned access,
         VirtualStreamCallBack * callback, void * callback_args, VirtualStream ** res) {
     LINK * l;
     VirtualStream * stream = loc_alloc_zero(sizeof(VirtualStream));
@@ -438,7 +438,7 @@ VirtualStream * virtual_stream_find(char * id) {
     return NULL;
 }
 
-int virtual_stream_add_data(VirtualStream * stream, char * buf, unsigned buf_size, unsigned * data_size, int eos) {
+int virtual_stream_add_data(VirtualStream * stream, char * buf, size_t buf_size, size_t * data_size, int eos) {
     int err = 0;
 
     assert(stream->magic == STREAM_MAGIC);
@@ -486,8 +486,8 @@ int virtual_stream_add_data(VirtualStream * stream, char * buf, unsigned buf_siz
     return err ? -1 : 0;
 }
 
-int virtual_stream_get_data(VirtualStream * stream, char * buf, unsigned buf_size, unsigned * data_size, int * eos) {
-    unsigned len;
+int virtual_stream_get_data(VirtualStream * stream, char * buf, size_t buf_size, size_t * data_size, int * eos) {
+    size_t len;
     
     assert(stream->magic == STREAM_MAGIC);
     len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
@@ -515,7 +515,7 @@ int virtual_stream_get_data(VirtualStream * stream, char * buf, unsigned buf_siz
             StreamClient * client = stream2client(l);
             if (!list_is_empty(&client->write_requests)) {
                 WriteRequest * r = client2write_request(client->write_requests.next);
-                unsigned done = 0;
+                size_t done = 0;
                 int error = 0;
                 if (virtual_stream_add_data(client->stream, r->data + r->offs,
                     r->size - r->offs, &done, r->eos) < 0) error = errno;
@@ -613,7 +613,7 @@ static void command_unsubscribe(char * token, Channel * c) {
 
 static void command_read(char * token, Channel * c) {
     char id[256];
-    unsigned long size = 0;
+    size_t size = 0;
     StreamClient * client = NULL;
     int err = 0;
 
@@ -692,7 +692,7 @@ static void command_write(char * token, Channel * c) {
                 size_t rd = json_read_binary_data(&state, buf, sizeof(buf));
                 if (rd == 0) break;
                 if (!err) {
-                    unsigned done = 0;
+                    size_t done = 0;
                     if (virtual_stream_add_data(client->stream, buf, rd, &done, 0) < 0) err = errno;
                     assert(done <= rd);
                     offs += done;
@@ -730,7 +730,7 @@ static void command_write(char * token, Channel * c) {
 static void command_eos(char * token, Channel * c) {
     char id[256];
     StreamClient * client = NULL;
-    unsigned done = 0;
+    size_t done = 0;
     WriteRequest * r = NULL;
     int err = 0;
 

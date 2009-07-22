@@ -240,6 +240,7 @@ static void * wpid_handler(void * x) {
             loc_free(info);
         }
     }
+    return NULL;
 }
 
 static void init(void) {

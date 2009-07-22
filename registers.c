@@ -54,10 +54,8 @@ typedef struct {
 
 #define REG_OFFSET(name) offsetof(REG_SET, name)
 
-#if defined(__i386__)
-
 static REG_INDEX regs_index[] = {
-#ifdef WIN32
+#if defined(WIN32) && defined(__i386__)
     { "edi",    REG_OFFSET(Edi),    4},
     { "esi",    REG_OFFSET(Esi),    4},
     { "ebp",    REG_OFFSET(Ebp),    4},
@@ -70,7 +68,6 @@ static REG_INDEX regs_index[] = {
     { "eip",    REG_OFFSET(Eip),    4},
     { "cs",     REG_OFFSET(SegCs),  4},
     { "ss",     REG_OFFSET(SegSs),  4},
-    { NULL,     0,                  0},
 #elif defined(__APPLE__) && defined(__i386__)
     { "edi",    REG_OFFSET(__edi),    4},
     { "esi",    REG_OFFSET(__esi),    4},
@@ -82,8 +79,34 @@ static REG_INDEX regs_index[] = {
     { "eax",    REG_OFFSET(__eax),    4},
     { "eflags", REG_OFFSET(__eflags), 4},
     { "eip",    REG_OFFSET(__eip),    4},
-    { NULL,     0,                  0},
-#else
+#elif defined(__x86_64__)
+    { "rax",    REG_OFFSET(rax),    8},
+    { "rbx",    REG_OFFSET(rbx),    8},
+    { "rcx",    REG_OFFSET(rcx),    8},
+    { "rdx",    REG_OFFSET(rdx),    8},
+    { "rsi",    REG_OFFSET(rsi),    8},
+    { "rdi",    REG_OFFSET(rdi),    8},
+    { "r8",     REG_OFFSET(r8),     8},
+    { "r9",     REG_OFFSET(r9),     8},
+    { "r10",    REG_OFFSET(r10),    8},
+    { "r11",    REG_OFFSET(r11),    8},
+    { "r12",    REG_OFFSET(r12),    8},
+    { "r13",    REG_OFFSET(r13),    8},
+    { "r14",    REG_OFFSET(r14),    8},
+    { "r15",    REG_OFFSET(r15),    8},
+    { "rbp",    REG_OFFSET(rbp),    8},
+    { "rsp",    REG_OFFSET(rsp),    8},
+    { "rip",    REG_OFFSET(rip),    8},
+    { "eflags", REG_OFFSET(eflags), 4},
+    { "cs",     REG_OFFSET(cs),     4},
+    { "ss",     REG_OFFSET(ss),     4},
+    { "ds",     REG_OFFSET(ds),     4},
+    { "es",     REG_OFFSET(es),     4},
+    { "fs",     REG_OFFSET(fs),     4},
+    { "gs",     REG_OFFSET(gs),     4},
+    { "fs_base", REG_OFFSET(fs_base), 4},
+    { "gs_base", REG_OFFSET(gs_base), 4},
+#elif defined(__i386__)
     { "edi",    REG_OFFSET(edi),    4},
     { "esi",    REG_OFFSET(esi),    4},
     { "ebp",    REG_OFFSET(ebp),    4},
@@ -94,16 +117,11 @@ static REG_INDEX regs_index[] = {
     { "eax",    REG_OFFSET(eax),    4},
     { "eflags", REG_OFFSET(eflags), 4},
     { "eip",    REG_OFFSET(eip),    4},
-    { NULL,     0,                  0},
-#endif
-};
-
 #else
-
-/* TODO: support for CPU types other then I86 */
-#error "Unknown CPU"
-
+#  error "Unknown CPU"
 #endif
+    { NULL,     0,                  0},
+};
 
 #endif /* _WRS_KERNEL */
 

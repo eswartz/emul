@@ -115,8 +115,8 @@ static void entry_callback(U2_T Tag, U2_T Attr, U2_T Form);
 
 static void read_mod_fund_type(U2_T Form, ObjectInfo ** Type) {
     U1_T * Buf;
-    U4_T BufSize;
-    U4_T BufPos;
+    size_t BufSize;
+    size_t BufPos;
     dio_ChkBlock(Form, &Buf, &BufSize);
     *Type = find_object_info(sDebugSection->addr + dio_GetPos() - 1);
     (*Type)->mTag = TAG_lo_user;
@@ -147,8 +147,8 @@ static void read_mod_fund_type(U2_T Form, ObjectInfo ** Type) {
 
 static void read_mod_user_def_type(U2_T Form, ObjectInfo ** Type) {
     U1_T * Buf;
-    U4_T BufSize;
-    U4_T BufPos;
+    size_t BufSize;
+    size_t BufPos;
     int i;
     U4_T Ref = 0;
     dio_ChkBlock(Form, &Buf, &BufSize);
@@ -738,6 +738,7 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
         I1_T line_base = 0;
         U1_T line_range = 0;
         U8_T unit_size = 0;
+        int dwarf64 = 0;
         LineNumbersState state;
         
         /* Read header */
@@ -745,12 +746,13 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
         if (unit_size == 0xffffffffu) {
             unit_size = dio_ReadU8();
             unit_size += 12;
+            dwarf64 = 1;
         }
         else {
             unit_size += 4;
         }
         dio_ReadU2(); /* line info version */
-        header_size = Cache->mFile->elf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
+        header_size = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
         header_pos = dio_GetPos();
         min_instruction_length = dio_ReadU1();
         is_stmt_default = dio_ReadU1() != 0;

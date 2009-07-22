@@ -80,7 +80,7 @@ struct GetContextArgs {
 
 static SafeEvent * safe_event_list = NULL;
 static int safe_event_pid_count = 0;
-static int safe_event_generation = 0;
+static uintptr_t safe_event_generation = 0;
 
 #if !defined(WIN32) && !defined(_WRS_KERNEL)
 static char * get_executable(pid_t pid) {
@@ -638,7 +638,7 @@ int is_all_stopped(pid_t mem) {
 static void continue_temporary_stopped(void * arg) {
     LINK * qp;
 
-    if ((int)arg != safe_event_generation) return;
+    if ((uintptr_t)arg != safe_event_generation) return;
     assert(safe_event_list == NULL);
 
     if (channels_get_message_count(suspend_group) > 0) {
@@ -659,7 +659,7 @@ static void run_safe_events(void * arg) {
     LINK * qp;
     pid_t mem;
 
-    if ((int)arg != safe_event_generation) return;
+    if ((uintptr_t)arg != safe_event_generation) return;
     assert(safe_event_list != NULL);
     assert(are_channels_suspended(suspend_group));
 
@@ -708,7 +708,7 @@ static void run_safe_events(void * arg) {
     while (safe_event_list) {
         Trap trap;
         SafeEvent * i = safe_event_list;
-        assert((int)arg == safe_event_generation);
+        assert((uintptr_t)arg == safe_event_generation);
         if (safe_event_pid_count > 0) {
             post_event_with_delay(run_safe_events, (void *)++safe_event_generation, STOP_ALL_TIMEOUT);
             return;
@@ -728,7 +728,7 @@ static void run_safe_events(void * arg) {
                   trap.error, errno_to_str(trap.error));
         }
         loc_free(i);
-        if ((int)arg != safe_event_generation) return;
+        if ((uintptr_t)arg != safe_event_generation) return;
     }
 
     channels_resume(suspend_group);

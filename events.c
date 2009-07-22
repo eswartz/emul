@@ -131,9 +131,9 @@ void post_event_with_delay(EventCallBack * handler, void * arg, unsigned long de
     if (timer_queue == ev) {
         check_error(pthread_cond_signal(&event_cond));
     }
-    trace(LOG_EVENTCORE, "post_event: event %#x handler %#x arg %#x runtime %02d%02d.%03d",
-        ev, ev->handler, ev->arg, ev->runtime.tv_sec / 60 % 60, ev->runtime.tv_sec % 60,
-        ev->runtime.tv_nsec / 1000000);
+    trace(LOG_EVENTCORE, "post_event: event %#lx, handler %#lx, arg %#lx, runtime %02d%02d.%03d",
+        ev, ev->handler, ev->arg,
+        ev->runtime.tv_sec / 60 % 60, ev->runtime.tv_sec % 60, ev->runtime.tv_nsec / 1000000);
     check_error(pthread_mutex_unlock(&event_lock));
 }
 
@@ -158,7 +158,7 @@ void post_event(EventCallBack * handler, void *arg) {
         event_last->next = ev;
         event_last = ev;
     }
-    trace(LOG_EVENTCORE, "post_event: event %#x handler %#x arg %#x", ev, ev->handler, ev->arg);
+    trace(LOG_EVENTCORE, "post_event: event %#lx, handler %#lx, arg %#lx", ev, ev->handler, ev->arg);
     check_error(pthread_mutex_unlock(&event_lock));
 }
 
@@ -170,7 +170,7 @@ int cancel_event(EventCallBack * handler, void *arg, int wait) {
     assert(handler != NULL);
     assert(cancel_handler == NULL);
 
-    trace(LOG_EVENTCORE, "cancel_event: handler %#x, arg %#x, wait %d", handler, arg, wait);
+    trace(LOG_EVENTCORE, "cancel_event: handler %#lx, arg %#lx, wait %d", handler, arg, wait);
     check_error(pthread_mutex_lock(&event_lock));
     prev = NULL;
     ev = event_queue;
@@ -285,7 +285,7 @@ void run_event_loop(void) {
         }
         else {
             check_error(pthread_mutex_unlock(&event_lock));
-            trace(LOG_EVENTCORE, "run_event_loop: event %#x handler %#x arg %#x", ev, ev->handler, ev->arg);
+            trace(LOG_EVENTCORE, "run_event_loop: event %#lx, handler %#lx, arg %#lx", ev, ev->handler, ev->arg);
             ev->handler(ev->arg);
             check_error(pthread_mutex_lock(&event_lock));
             free_node(ev);

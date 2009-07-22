@@ -125,6 +125,7 @@ ELF_File * elf_open(char * file_name) {
     struct_stat st;
     ELF_File * prev = NULL;
     ELF_File * file = files;
+    unsigned str_index = 0;
 
     if (!elf_cleanup_posted) {
         post_event_with_delay(elf_cleanup_event, NULL, 1000000);
@@ -273,17 +274,109 @@ ELF_File * elf_open(char * file_name) {
                     }
                 }
             }
+            str_index = hdr.e_shstrndx;
         }
         else if (hdr.e_ident[EI_CLASS] == ELFCLASS64) {
+            Elf64_Ehdr hdr;
             file->elf64 = 1;
-            /* TODO ELF64 */
-            error = ERR_INV_FORMAT;
+            memset(&hdr, 0, sizeof(hdr));
+            if (error == 0 && lseek(file->fd, 0, SEEK_SET) == (off_t)-1) error = errno;
+            if (error == 0 && read(file->fd, (char *)&hdr, sizeof(hdr)) < 0) error = errno;
+            if (file->byte_swap) {
+                SWAP(hdr.e_type);
+                SWAP(hdr.e_machine);
+                SWAP(hdr.e_version);
+                SWAP(hdr.e_entry);
+                SWAP(hdr.e_phoff);
+                SWAP(hdr.e_shoff);
+                SWAP(hdr.e_flags);
+                SWAP(hdr.e_ehsize);
+                SWAP(hdr.e_phentsize);
+                SWAP(hdr.e_phnum);
+                SWAP(hdr.e_shentsize);
+                SWAP(hdr.e_shnum);
+                SWAP(hdr.e_shstrndx);
+            }
+            if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN) error = ERR_INV_FORMAT;
+            if (hdr.e_type != ET_EXEC) file->pic = 1;
+            if (error == 0 && hdr.e_version != EV_CURRENT) error = ERR_INV_FORMAT;
+            if (error == 0 && hdr.e_shoff == 0) error = ERR_INV_FORMAT;
+            if (error == 0 && lseek(file->fd, hdr.e_shoff, SEEK_SET) == (off_t)-1) error = errno;
+            if (error == 0) {
+                unsigned cnt = 0;
+                file->sections = loc_alloc_zero(sizeof(ELF_Section) * hdr.e_shnum);
+                file->section_cnt = hdr.e_shnum;
+                while (error == 0 && cnt < hdr.e_shnum) {
+                    Elf64_Shdr shdr;
+                    memset(&shdr, 0, sizeof(shdr));
+                    if (error == 0 && read(file->fd, (char *)&shdr, hdr.e_shentsize) < 0) error = errno;
+                    if (error == 0) {
+                        ELF_Section * sec = file->sections + cnt;
+                        if (file->byte_swap) {
+                            SWAP(shdr.sh_name);
+                            SWAP(shdr.sh_type);
+                            SWAP(shdr.sh_flags);
+                            SWAP(shdr.sh_addr);
+                            SWAP(shdr.sh_offset);
+                            SWAP(shdr.sh_size);
+                            SWAP(shdr.sh_link);
+                            SWAP(shdr.sh_info);
+                            SWAP(shdr.sh_addralign);
+                            SWAP(shdr.sh_entsize);
+                        }
+                        sec->file = file;
+                        sec->index = cnt;
+                        sec->name_offset = shdr.sh_name;
+                        sec->type = shdr.sh_type;
+                        sec->offset = shdr.sh_offset;
+                        sec->size = shdr.sh_size;
+                        sec->flags = shdr.sh_flags;
+                        sec->addr = shdr.sh_addr;
+                        sec->link = shdr.sh_link;
+                        sec->info = shdr.sh_info;
+                        cnt++;
+                    }
+                }
+            }
+            if (error == 0 && lseek(file->fd, hdr.e_phoff, SEEK_SET) == (off_t)-1) error = errno;
+            if (error == 0) {
+                unsigned cnt = 0;
+                file->pheaders = loc_alloc_zero(sizeof(ELF_PHeader) * hdr.e_phnum);
+                file->pheader_cnt = hdr.e_phnum;
+                while (error == 0 && cnt < hdr.e_phnum) {
+                    Elf64_Phdr phdr;
+                    memset(&phdr, 0, sizeof(phdr));
+                    if (error == 0 && read(file->fd, (char *)&phdr, hdr.e_phentsize) < 0) error = errno;
+                    if (error == 0) {
+                        ELF_PHeader * p = file->pheaders + cnt;
+                        if (file->byte_swap) {
+                            SWAP(phdr.p_type);
+                            SWAP(phdr.p_offset);
+                            SWAP(phdr.p_vaddr);
+                            SWAP(phdr.p_paddr);
+                            SWAP(phdr.p_filesz);
+                            SWAP(phdr.p_memsz);
+                            SWAP(phdr.p_flags);
+                            SWAP(phdr.p_align);
+                        }
+                        p->type = phdr.p_type;
+                        p->offset = phdr.p_offset;
+                        p->address = phdr.p_vaddr;
+                        p->file_size = phdr.p_filesz;
+                        p->mem_size = phdr.p_memsz;
+                        p->flags = phdr.p_flags;
+                        p->align = phdr.p_align;
+                        cnt++;
+                    }
+                }
+            }
+            str_index = hdr.e_shstrndx;
         }
         else {
             error = ERR_INV_FORMAT;
         }
-        if (error == 0 && hdr.e_shstrndx != 0 && hdr.e_shstrndx < file->section_cnt) {
-            ELF_Section * str = file->sections + hdr.e_shstrndx;
+        if (error == 0 && str_index != 0 && str_index < file->section_cnt) {
+            ELF_Section * str = file->sections + str_index;
             file->str_pool = loc_alloc((size_t)str->size);
             if (lseek(file->fd, str->offset, SEEK_SET) == (off_t)-1) error = errno;
             if (error == 0 && read(file->fd, file->str_pool, (size_t)str->size) < 0) error = errno;
@@ -323,7 +416,7 @@ int elf_load(ELF_Section * s) {
         }
         s->data = (char *)s->mmap_addr + (size_t)(s->offset - offs);
     }
-    trace(LOG_ELF, "Section %s in ELF file %s is mapped to 0x%08x", s->name, s->file->name, s->data);
+    trace(LOG_ELF, "Section %s in ELF file %s is mapped to %#lx", s->name, s->file->name, s->data);
     return 0;
 #else
     errno = ERR_UNSUPPORTED;
@@ -599,14 +692,14 @@ static int read_memory_word(Context * ctx, ContextAddress addr, ContextAddress *
         {
             char buf[8];
             if (context_read_mem(ctx, addr, buf, sizeof(buf)) < 0) return -1;
-            *word = (ContextAddress)*(uns64 *)buf;
+            *word = (ContextAddress)*(uint64_t *)buf;
             return 0;
         }
     case 4:
         {
             char buf[4];
             if (context_read_mem(ctx, addr, buf, sizeof(buf)) < 0) return -1;
-            *word = (ContextAddress)*(unsigned long *)buf;
+            *word = (ContextAddress)*(uint32_t *)buf;
             return 0;
         }
     default:

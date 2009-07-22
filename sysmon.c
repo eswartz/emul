@@ -591,12 +591,12 @@ static int write_unicode_string(OutputStream * out, HANDLE prs, UNICODE_STRING s
     return 0;
 }
 
-static void write_time(OutputStream * out, FILETIME tm, int64 base, char * name) {
+static void write_time(OutputStream * out, FILETIME tm, int64_t base, char * name) {
     write_stream(out, ',');
 
     json_write_string(out, name);
     write_stream(out, ':');
-    json_write_int64(out, (((int64)tm.dwLowDateTime | ((int64)tm.dwHighDateTime << 32)) - base) / 10000);
+    json_write_int64(out, (((int64_t)tm.dwLowDateTime | ((int64_t)tm.dwHighDateTime << 32)) - base) / 10000);
 }
 
 static void write_process_context(OutputStream * out, char * id, pid_t pid, HANDLE prs) {
@@ -618,7 +618,7 @@ static void write_process_context(OutputStream * out, char * id, pid_t pid, HAND
     {
         FILETIME c_time, e_time, k_time, u_time;
         if (GetProcessTimes(prs, &c_time, &e_time, &k_time, &u_time)) {
-            static int64 system_start_time = 0; /* In FILETIME format: 100-nanosecond intervals since January 1, 1601 (UTC). */
+            static int64_t system_start_time = 0; /* In FILETIME format: 100-nanosecond intervals since January 1, 1601 (UTC). */
             if (system_start_time == 0) {
                 HKEY key;
                 if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
@@ -641,7 +641,7 @@ static void write_process_context(OutputStream * out, char * id, pid_t pid, HAND
                         buf[n] = 0;
                         h = FindFirstFileW(buf, &data);
                         if (h != INVALID_HANDLE_VALUE) {
-                            system_start_time = (int64)data.ftLastWriteTime.dwLowDateTime | ((int64)data.ftLastWriteTime.dwHighDateTime << 32);
+                            system_start_time = (int64_t)data.ftLastWriteTime.dwLowDateTime | ((int64_t)data.ftLastWriteTime.dwHighDateTime << 32);
                             FindClose(h);
                         }
                     }
@@ -653,8 +653,8 @@ static void write_process_context(OutputStream * out, char * id, pid_t pid, HAND
                 FILETIME ft;
                 GetSystemTime(&st);
                 if (SystemTimeToFileTime(&st, &ft)) {
-                    system_start_time = (int64)ft.dwLowDateTime | ((int64)ft.dwHighDateTime << 32);
-                    system_start_time -= (int64)GetTickCount() * 10000; /* Note: GetTickCount() is valid only first 49 days */
+                    system_start_time = (int64_t)ft.dwLowDateTime | ((int64_t)ft.dwHighDateTime << 32);
+                    system_start_time -= (int64_t)GetTickCount() * 10000; /* Note: GetTickCount() is valid only first 49 days */
                 }
             }
             if ((c_time.dwLowDateTime != 0 || c_time.dwHighDateTime != 0) && system_start_time != 0) {
@@ -1266,22 +1266,22 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
 
                 json_write_string(out, "UTime");
                 write_stream(out, ':');
-                json_write_int64(out, (int64)utime * 1000 / HZ);
+                json_write_int64(out, (int64_t)utime * 1000 / HZ);
                 write_stream(out, ',');
 
                 json_write_string(out, "STime");
                 write_stream(out, ':');
-                json_write_int64(out, (int64)stime * 1000 / HZ);
+                json_write_int64(out, (int64_t)stime * 1000 / HZ);
                 write_stream(out, ',');
 
                 json_write_string(out, "CUTime");
                 write_stream(out, ':');
-                json_write_int64(out, (int64)cutime * 1000 / HZ);
+                json_write_int64(out, (int64_t)cutime * 1000 / HZ);
                 write_stream(out, ',');
 
                 json_write_string(out, "CSTime");
                 write_stream(out, ':');
-                json_write_int64(out, (int64)cstime * 1000 / HZ);
+                json_write_int64(out, (int64_t)cstime * 1000 / HZ);
                 write_stream(out, ',');
 
                 json_write_string(out, "Priority");
@@ -1299,13 +1299,13 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
                 if (itrealvalue != 0) {
                     json_write_string(out, "ITRealValue");
                     write_stream(out, ':');
-                    json_write_int64(out, (int64)itrealvalue * 1000 / HZ);
+                    json_write_int64(out, (int64_t)itrealvalue * 1000 / HZ);
                     write_stream(out, ',');
                 }
 
                 json_write_string(out, "StartTime");
                 write_stream(out, ':');
-                json_write_int64(out, (int64)starttime * 1000 / HZ);
+                json_write_int64(out, (int64_t)starttime * 1000 / HZ);
                 write_stream(out, ',');
 
                 json_write_string(out, "VSize");

@@ -20,8 +20,8 @@
 #define D_ip_ifc
 
 typedef struct {
-    unsigned long addr;
-    unsigned long mask;
+    uint32_t addr;
+    uint32_t mask;
 } ip_ifc_info;
 
 /*

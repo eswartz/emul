@@ -105,7 +105,7 @@ struct BreakInstruction {
     VXDBG_CTX vxdbg_ctx;
     VXDBG_BP_ID vxdbg_id;
 #else
-    char saved_code[BREAK_SIZE];
+    char saved_code[16];
 #endif
     int error;
     int skip_cnt;
@@ -185,6 +185,7 @@ static void plant_instruction(BreakInstruction * bi) {
         assert(bi->error != 0);
     }
 #else
+    assert(sizeof(bi->saved_code) >= BREAK_SIZE);
     if (context_read_mem(bi->ctx, bi->address, bi->saved_code, BREAK_SIZE) < 0) {
         bi->error = errno;
     }
@@ -922,7 +923,7 @@ static void add_breakpoint(Channel * c, BreakpointInfo * bp) {
     }
     r = find_breakpoint_ref(p, inp);
     if (r == NULL) {
-        unsigned inp_hash = (unsigned)inp / 16 % INP2BR_HASH_SIZE;
+        unsigned inp_hash = (unsigned)(size_t)inp / 16 % INP2BR_HASH_SIZE;
         r = (BreakpointRef *)loc_alloc_zero(sizeof(BreakpointRef));
         list_add_last(&r->link_inp, inp2br + inp_hash);
         list_add_last(&r->link_bp, &p->refs);
@@ -962,7 +963,7 @@ static void remove_ref(Channel * c, BreakpointRef * br) {
 
 static void delete_breakpoint_refs(Channel * c) {
     InputStream * inp = &c->inp;
-    unsigned hash = (unsigned)inp / 16 % INP2BR_HASH_SIZE;
+    unsigned hash = (unsigned)(size_t)inp / 16 % INP2BR_HASH_SIZE;
     LINK * l = inp2br[hash].next;
     while (l != &inp2br[hash]) {
         BreakpointRef * br = link_inp2br(l);
@@ -1024,8 +1025,7 @@ static void command_ini_bps(char * token, Channel * c) {
 }
 
 static void command_get_bp_ids(char * token, Channel * c) {
-    unsigned hash = (unsigned)&c->inp / 16 % INP2BR_HASH_SIZE;
-    LINK * l = inp2br[hash].next;
+    LINK * l = breakpoints.next;
     int cnt = 0;
 
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
@@ -1034,14 +1034,14 @@ static void command_get_bp_ids(char * token, Channel * c) {
     write_errno(&c->out, 0);
     write_stream(&c->out, '[');
 
-    while (l != &inp2br[hash]) {
-        BreakpointRef * br = link_inp2br(l);
+    while (l != &breakpoints) {
+        BreakpointInfo * bp = link_all2bp(l);
         l = l->next;
-        if (br->inp == &c->inp) {
-            if (cnt > 0) write_stream(&c->out, ',');
-            json_write_string(&c->out, br->bp->id);
-            cnt++;
-        }
+        if (bp->deleted) continue;
+        if (!*bp->id) continue;
+        if (cnt > 0) write_stream(&c->out, ',');
+        json_write_string(&c->out, bp->id);
+        cnt++;
     }
 
     write_stream(&c->out, ']');

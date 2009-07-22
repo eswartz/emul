@@ -29,7 +29,7 @@ typedef struct DIO_UnitDescriptor {
     U1_T m64bit;
     U1_T mAddressSize;
     U8_T mUnitOffs;
-    U4_T mUnitSize;
+    U8_T mUnitSize;
     U4_T mAbbrevTableOffs;
     struct DIO_Abbreviation ** mAbbrevTable;
     U4_T mAbbrevTableSize;

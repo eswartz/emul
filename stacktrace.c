@@ -123,17 +123,15 @@ static int read_mem(Context * ctx, ContextAddress address, void * buf, size_t si
     if (ctx == &dump_stack_ctx) {
         /* Tracing current thread stack */
         memmove(buf, (void *)address, size);
-        return 0;
     }
     else {
-        int err = 0;
-        if (context_read_mem(ctx, address, buf, size) < 0) err = errno;
-        else check_breakpoints_on_memory_read(ctx, address, buf, size);
-        return err;
+        if (context_read_mem(ctx, address, buf, size) < 0) return -1;
+        check_breakpoints_on_memory_read(ctx, address, buf, size);
     }
+    return 0;
 }
 
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 
 #define MAX_FRAMES  1000
 
@@ -149,6 +147,7 @@ static int read_mem(Context * ctx, ContextAddress address, void * buf, size_t si
 #define ENTER       0xc8
 #define RET         0xc3
 #define RETADD      0xc2
+#define REXW        0x48
 
 /*
  * trace_jump - resolve any JMP instructions to final destination
@@ -196,8 +195,8 @@ static ContextAddress trace_jump(Context * ctx, ContextAddress addr) {
             ContextAddress ptr;
             if (read_mem(ctx, addr + 1, &instr, 1) < 0) break;
             if (instr != JMPN) break;
-            if (read_mem(ctx, addr + 2, &ptr, 4) < 0) break;
-            if (read_mem(ctx, ptr, &dest, 4)) break;
+            if (read_mem(ctx, addr + 2, &ptr, sizeof(ptr)) < 0) break;
+            if (read_mem(ctx, ptr, &dest, sizeof(dest)) < 0) break;
         }
         else {
             break;
@@ -209,6 +208,15 @@ static ContextAddress trace_jump(Context * ctx, ContextAddress addr) {
     return addr;
 }
 
+static int func_entry(unsigned char * code) {
+    if (*code != PUSH_EBP) return 0;
+    code++;
+    if (*code == REXW) code++;
+    if (code[0] == MOV_ESP00 && code[1] == MOV_ESP01) return 1;
+    if (code[0] == MOV_ESP10 && code[1] == MOV_ESP11) return 1;
+    return 0;
+}
+
 static int trace_stack(Context * ctx) {
     ContextAddress pc = get_regs_PC(ctx->regs);
     ContextAddress fp = get_regs_BP(ctx->regs);
@@ -216,7 +224,7 @@ static int trace_stack(Context * ctx) {
 
     ContextAddress addr = trace_jump(ctx, pc);
     ContextAddress plt = is_plt_section(ctx, addr);
-    unsigned char code[4];
+    unsigned char code[5];
     unsigned cnt = 0;
 
     /*
@@ -232,11 +240,11 @@ static int trace_stack(Context * ctx) {
         if (addr - plt == 0) {
             fp = get_regs_SP(ctx->regs);
         }
-        else if (addr - plt < 16) {
-            fp = get_regs_SP(ctx->regs) + 4;
+        else if (addr - plt < sizeof(ContextAddress) * 4) {
+            fp = get_regs_SP(ctx->regs) + sizeof(ContextAddress);
         }
-        else if ((addr - plt) % 16 < 8) {
-            fp = get_regs_SP(ctx->regs) - 4;
+        else if ((addr - plt) % (sizeof(ContextAddress) * 4) < sizeof(ContextAddress) * 2) {
+            fp = get_regs_SP(ctx->regs) - sizeof(ContextAddress);
         }
         else {
             fp = get_regs_SP(ctx->regs);
@@ -245,14 +253,11 @@ static int trace_stack(Context * ctx) {
     else {
         if (read_mem(ctx, addr - 1, code, sizeof(code)) < 0) return -1;
 
-        if (code[1] == PUSH_EBP &&
-            (code[2] == MOV_ESP00 && code[3] == MOV_ESP01 || code[2] == MOV_ESP10 && code[3] == MOV_ESP11) ||
-            code[1] == ENTER || code[1] == RET || code[1] == RETADD) {
+        if (func_entry(code + 1) || code[1] == ENTER || code[1] == RET || code[1] == RETADD) {
             fp_prev = fp;
-            fp = get_regs_SP(ctx->regs) - 4;
+            fp = get_regs_SP(ctx->regs) - sizeof(ContextAddress);
         }
-        else if (code[0] == PUSH_EBP &&
-            (code[1] == MOV_ESP00 && code[2] == MOV_ESP01 || code[1] == MOV_ESP10 && code[2] == MOV_ESP11)) {
+        else if (func_entry(code)) {
             fp_prev = fp;
             fp = get_regs_SP(ctx->regs);
         }
@@ -539,7 +544,7 @@ void dump_stack_trace(void) {
         s = create_stack_trace(&dump_stack_ctx);
         for (i = 0; i < s->frame_cnt; i++) {
             StackFrame * f = s->frames + i;
-            trace(LOG_ALWAYS, "  0x%08x 0x%08x", f->ip, f->fp);
+            trace(LOG_ALWAYS, "  0x%0*lx 0x%0*lx", sizeof(f->ip) * 2, f->ip, sizeof(f->fp) * 2, f->fp);
         }
     }
     CloseHandle(dump_stack_ctx.handle);

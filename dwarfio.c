@@ -469,7 +469,8 @@ void dio_ReadUnit(DIO_UnitDescriptor * Unit, DIO_EntryCallBack CallBack) {
         sUnit->mUnitSize = dio_ReadU4();
         if (sUnit->mUnitSize == 0xffffffffu) {
             sUnit->m64bit = 1;
-            str_exception(ERR_INV_DWARF, "64-bit DWARF is not supported yet");
+            sUnit->mUnitSize = dio_ReadU8();
+            sUnit->mUnitSize += 12;
         }
         else {
             sUnit->mUnitSize += 4;
@@ -549,13 +550,12 @@ void dio_LoadAbbrevTable(ELF_File * File) {
             U4_T Form = dio_ReadULEB128();
             if (Attr >= 0x10000 || Form >= 0x10000) str_exception(ERR_INV_DWARF, "invalid abbreviation table");
             if (Attr == 0 && Form == 0) {
-                DIO_Abbreviation * Abbr = AbbrevTable[ID];
-                assert(Abbr == NULL);
-                Abbr = (DIO_Abbreviation *)loc_alloc_zero(sizeof(DIO_Abbreviation) + sizeof(U2_T) * (AttrPos - 2));
+                DIO_Abbreviation * Abbr = loc_alloc_zero(sizeof(DIO_Abbreviation) - sizeof(U2_T) * 2 + sizeof(U2_T) * AttrPos);
                 Abbr->mTag = Tag;
                 Abbr->mChildren = Children;
                 Abbr->mAttrLen = AttrPos;
                 memcpy(Abbr->mAttrs, AttrBuf, sizeof(U2_T) * AttrPos);
+                assert(AbbrevTable[ID] == NULL);
                 AbbrevTable[ID] = Abbr;
                 break;
             }

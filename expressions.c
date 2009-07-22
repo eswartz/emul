@@ -120,10 +120,10 @@ static void set_ctx_word_value(Value * v, ContextAddress data) {
     v->size = context_word_size(expression_context);
     v->value = alloc_str(v->size);
     switch (v->size) {
-    case 1: *(unsigned char *)v->value = (unsigned char)data; break;
-    case 2: *(unsigned short *)v->value = (unsigned short)data; break;
-    case 4: *(unsigned long *)v->value = (unsigned long)data; break;
-    case 8: *(uns64 *)v->value = data; break;
+    case 1: *(uint8_t *)v->value = (uint8_t)data; break;
+    case 2: *(uint16_t *)v->value = (uint16_t)data; break;
+    case 4: *(uint32_t *)v->value = (uint32_t)data; break;
+    case 8: *(uint64_t *)v->value = data; break;
     default: assert(0);
     }
 }
@@ -432,11 +432,11 @@ static void next_sy(void) {
             return;
         case '0':
             if (text_ch == 'x') {
-                uns64 value = 0;
+                uint64_t value = 0;
                 next_ch();
                 memset(&text_val, 0, sizeof(text_val));
                 text_val.type_class = TYPE_CLASS_CARDINAL;
-                text_val.size = sizeof(uns64);
+                text_val.size = sizeof(uint64_t);
                 text_val.value = alloc_str(text_val.size);
                 text_val.constant = 1;
                 while (text_ch >= '0' && text_ch <= '9' ||
@@ -444,26 +444,26 @@ static void next_sy(void) {
                         text_ch >= 'a' && text_ch <= 'f') {
                     value = (value << 4) | next_hex();
                 }
-                *(uns64 *)text_val.value = value;
+                *(uint64_t *)text_val.value = value;
             }
             else {
-                int64 value = 0;
+                int64_t value = 0;
                 memset(&text_val, 0, sizeof(text_val));
                 text_val.type_class = TYPE_CLASS_INTEGER;
-                text_val.size = sizeof(int64);
+                text_val.size = sizeof(int64_t);
                 text_val.value = alloc_str(text_val.size);
                 text_val.constant = 1;
                 while (text_ch >= '0' && text_ch <= '7') {
                     value = (value << 3) | next_oct();
                 }
-                *(int64 *)text_val.value = value;
+                *(int64_t *)text_val.value = value;
             }
             text_sy = SY_VAL;
             return;
         default:
             if (ch >= '0' && ch <= '9') {
                 int pos = text_pos - 2;
-                int64 value = ch - '0';
+                int64_t value = ch - '0';
                 while (text_ch >= '0' && text_ch <= '9') {
                     value = (value * 10) + next_dec();
                 }
@@ -480,9 +480,9 @@ static void next_sy(void) {
                 }
                 else {
                     text_val.type_class = TYPE_CLASS_INTEGER;
-                    text_val.size = sizeof(int64);
+                    text_val.size = sizeof(int64_t);
                     text_val.value = alloc_str(text_val.size);
-                    *(int64 *)text_val.value = value;
+                    *(int64_t *)text_val.value = value;
                 }
                 text_val.constant = 1;
                 text_sy = SY_VAL;
@@ -659,7 +659,7 @@ static int is_whole_number(Value * v) {
     return 0;
 }
 
-static int64 to_int(int mode, Value * v) {
+static int64_t to_int(int mode, Value * v) {
     if (mode != MODE_NORMAL) {
         if (v->remote) {
             v->value = alloc_str(v->size);
@@ -671,10 +671,10 @@ static int64 to_int(int mode, Value * v) {
     if (v->type_class == TYPE_CLASS_POINTER) {
         load_value(v);
         switch (v->size)  {
-        case 1: return *(unsigned char *)v->value;
-        case 2: return *(unsigned short *)v->value;
-        case 4: return *(unsigned long *)v->value;
-        case 8: return *(uns64 *)v->value;
+        case 1: return *(uint8_t *)v->value;
+        case 2: return *(uint16_t *)v->value;
+        case 4: return *(uint32_t *)v->value;
+        case 8: return *(uint64_t *)v->value;
         }
     }
     if (is_number(v)) {
@@ -682,24 +682,24 @@ static int64 to_int(int mode, Value * v) {
 
         if (v->type_class == TYPE_CLASS_REAL) {
             switch (v->size)  {
-            case 4: return (int64)*(float *)v->value;
-            case 8: return (int64)*(double *)v->value;
+            case 4: return (int64_t)*(float *)v->value;
+            case 8: return (int64_t)*(double *)v->value;
             }
         }
         else if (v->type_class == TYPE_CLASS_CARDINAL) {
             switch (v->size)  {
-            case 1: return (int64)*(unsigned char *)v->value;
-            case 2: return (int64)*(unsigned short *)v->value;
-            case 4: return (int64)*(unsigned long *)v->value;
-            case 8: return (int64)*(uns64 *)v->value;
+            case 1: return (int64_t)*(uint8_t *)v->value;
+            case 2: return (int64_t)*(uint16_t *)v->value;
+            case 4: return (int64_t)*(uint32_t *)v->value;
+            case 8: return (int64_t)*(uint64_t *)v->value;
             }
         }
         else {
             switch (v->size)  {
-            case 1: return *(signed char *)v->value;
-            case 2: return *(short *)v->value;
-            case 4: return *(long *)v->value;
-            case 8: return *(int64 *)v->value;
+            case 1: return *(int8_t *)v->value;
+            case 2: return *(int16_t *)v->value;
+            case 4: return *(int32_t *)v->value;
+            case 8: return *(int64_t *)v->value;
             }
         }
     }
@@ -708,7 +708,7 @@ static int64 to_int(int mode, Value * v) {
     return 0;
 }
 
-static uns64 to_uns(int mode, Value * v) {
+static uint64_t to_uns(int mode, Value * v) {
     if (mode != MODE_NORMAL) {
         if (v->remote) {
             v->value = alloc_str(v->size);
@@ -718,15 +718,15 @@ static uns64 to_uns(int mode, Value * v) {
     }
 
     if (v->type_class == TYPE_CLASS_ARRAY && v->remote) {
-        return (uns64)v->address;
+        return (uint64_t)v->address;
     }
     if (v->type_class == TYPE_CLASS_POINTER) {
         load_value(v);
         switch (v->size)  {
-        case 1: return *(unsigned char *)v->value;
-        case 2: return *(unsigned short *)v->value;
-        case 4: return *(unsigned long *)v->value;
-        case 8: return *(uns64 *)v->value;
+        case 1: return *(uint8_t *)v->value;
+        case 2: return *(uint16_t *)v->value;
+        case 4: return *(uint32_t *)v->value;
+        case 8: return *(uint64_t *)v->value;
         }
     }
     if (is_number(v)) {
@@ -734,24 +734,24 @@ static uns64 to_uns(int mode, Value * v) {
 
         if (v->type_class == TYPE_CLASS_REAL) {
             switch (v->size)  {
-            case 4: return (uns64)*(float *)v->value;
-            case 8: return (uns64)*(double *)v->value;
+            case 4: return (uint64_t)*(float *)v->value;
+            case 8: return (uint64_t)*(double *)v->value;
             }
         }
         else if (v->type_class == TYPE_CLASS_CARDINAL) {
             switch (v->size)  {
-            case 1: return *(unsigned char *)v->value;
-            case 2: return *(unsigned short *)v->value;
-            case 4: return *(unsigned long *)v->value;
-            case 8: return *(uns64 *)v->value;
+            case 1: return *(uint8_t *)v->value;
+            case 2: return *(uint16_t *)v->value;
+            case 4: return *(uint32_t *)v->value;
+            case 8: return *(uint64_t *)v->value;
             }
         }
         else {
             switch (v->size)  {
-            case 1: return (uns64)*(signed char *)v->value;
-            case 2: return (uns64)*(short *)v->value;
-            case 4: return (uns64)*(long *)v->value;
-            case 8: return (uns64)*(int64 *)v->value;
+            case 1: return (uint64_t)*(int8_t *)v->value;
+            case 2: return (uint64_t)*(int16_t *)v->value;
+            case 4: return (uint64_t)*(int32_t *)v->value;
+            case 8: return (uint64_t)*(int64_t *)v->value;
             }
         }
     }
@@ -780,18 +780,18 @@ static double to_double(int mode, Value * v) {
         }
         else if (v->type_class == TYPE_CLASS_CARDINAL) {
             switch (v->size)  {
-            case 1: return (double)*(unsigned char *)v->value;
-            case 2: return (double)*(unsigned short *)v->value;
-            case 4: return (double)*(unsigned long *)v->value;
-            case 8: return (double)*(uns64 *)v->value;
+            case 1: return (double)*(uint8_t *)v->value;
+            case 2: return (double)*(uint16_t *)v->value;
+            case 4: return (double)*(uint32_t *)v->value;
+            case 8: return (double)*(uint64_t *)v->value;
             }
         }
         else {
             switch (v->size)  {
-            case 1: return (double)*(signed char *)v->value;
-            case 2: return (double)*(short *)v->value;
-            case 4: return (double)*(long *)v->value;
-            case 8: return (double)*(int64 *)v->value;
+            case 1: return (double)*(int8_t *)v->value;
+            case 2: return (double)*(int16_t *)v->value;
+            case 4: return (double)*(int32_t *)v->value;
+            case 8: return (double)*(int64_t *)v->value;
             }
         }
     }
@@ -842,9 +842,9 @@ static void op_deref(int mode, Value * v) {
         else {
             load_value(v);
             switch (v->size)  {
-            case 2: v->address = (ContextAddress)*(unsigned short *)v->value; break;
-            case 4: v->address = (ContextAddress)*(unsigned long *)v->value; break;
-            case 8: v->address = (ContextAddress)*(uns64 *)v->value; break;
+            case 2: v->address = (ContextAddress)*(uint16_t *)v->value; break;
+            case 4: v->address = (ContextAddress)*(uint32_t *)v->value; break;
+            case 8: v->address = (ContextAddress)*(uint64_t *)v->value; break;
             default: error(ERR_INV_EXPRESSION, "Invalid value size");
             }
         }
@@ -938,7 +938,7 @@ static void op_field(int mode, Value * v) {
 static void op_index(int mode, Value * v) {
 #if SERVICE_Symbols
     Value i;
-    unsigned offs = 0;
+    unsigned long offs = 0;
     size_t size = 0;
     Symbol type;
 
@@ -955,9 +955,9 @@ static void op_index(int mode, Value * v) {
         else {
             load_value(v);
             switch (v->size)  {
-            case 2: v->address = (ContextAddress)*(unsigned short *)v->value; break;
-            case 4: v->address = (ContextAddress)*(unsigned long *)v->value; break;
-            case 8: v->address = (ContextAddress)*(uns64 *)v->value; break;
+            case 2: v->address = (ContextAddress)*(uint16_t *)v->value; break;
+            case 4: v->address = (ContextAddress)*(uint32_t *)v->value; break;
+            case 8: v->address = (ContextAddress)*(uint64_t *)v->value; break;
             default: error(ERR_INV_EXPRESSION, "Invalid value size");
             }
         }
@@ -969,7 +969,7 @@ static void op_index(int mode, Value * v) {
         error(errno, "Cannot get array element type");
     }
     /* TODO: array lowest bound */
-    offs = (unsigned)to_uns(mode, &i) * size;
+    offs = (unsigned long)to_uns(mode, &i) * size;
     if (v->type_class == TYPE_CLASS_ARRAY && offs + size > v->size) {
         error(ERR_INV_EXPRESSION, "Invalid index");
     }
@@ -1107,10 +1107,10 @@ static void unary_expression(int mode, Value * v) {
                 v->value = value;
             }
             else if (v->type_class != TYPE_CLASS_CARDINAL) {
-                int64 * value = alloc_str(sizeof(int64));
+                int64_t * value = alloc_str(sizeof(int64_t));
                 *value = -to_int(mode, v);
                 v->type_class = TYPE_CLASS_INTEGER;
-                v->size = sizeof(int64);
+                v->size = sizeof(int64_t);
                 v->value = value;
             }
             assert(!v->remote);
@@ -1143,9 +1143,9 @@ static void unary_expression(int mode, Value * v) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
             else {
-                int64 * value = alloc_str(sizeof(int64));
+                int64_t * value = alloc_str(sizeof(int64_t));
                 *value = ~to_int(mode, v);
-                v->size = sizeof(int64);
+                v->size = sizeof(int64_t);
                 v->value = value;
             }
             assert(!v->remote);
@@ -1220,17 +1220,17 @@ static void cast_expression(int mode, Value * v) {
         case TYPE_CLASS_CARDINAL:
         case TYPE_CLASS_POINTER:
             {
-                uns64 value = to_uns(mode, v);
+                uint64_t value = to_uns(mode, v);
                 v->type = type;
                 v->type_class = type_class;
                 v->size = type_size;
                 v->remote = 0;
                 v->value = alloc_str(v->size);
                 switch (v->size) {
-                case 1: *(unsigned char *)v->value = (unsigned char)value; break;
-                case 2: *(unsigned short *)v->value = (unsigned short)value; break;
-                case 4: *(unsigned long *)v->value = (unsigned long)value; break;
-                case 8: *(uns64 *)v->value = value; break;
+                case 1: *(uint8_t *)v->value = (uint8_t)value; break;
+                case 2: *(uint16_t *)v->value = (uint16_t)value; break;
+                case 4: *(uint32_t *)v->value = (uint32_t)value; break;
+                case 8: *(uint64_t *)v->value = value; break;
                 default: assert(0);
                 }
             }
@@ -1238,17 +1238,17 @@ static void cast_expression(int mode, Value * v) {
         case TYPE_CLASS_INTEGER:
         case TYPE_CLASS_ENUMERATION:
             {
-                int64 value = to_int(mode, v);
+                int64_t value = to_int(mode, v);
                 v->type = type;
                 v->type_class = type_class;
                 v->size = type_size;
                 v->remote = 0;
                 v->value = alloc_str(v->size);
                 switch (v->size) {
-                case 1: *(signed char *)v->value = (signed char)value; break;
-                case 2: *(signed short *)v->value = (signed short)value; break;
-                case 4: *(signed long *)v->value = (signed long)value; break;
-                case 8: *(int64 *)v->value = value; break;
+                case 1: *(int8_t *)v->value = (int8_t)value; break;
+                case 2: *(int16_t *)v->value = (int16_t)value; break;
+                case 4: *(int32_t *)v->value = (int32_t)value; break;
+                case 8: *(int64_t *)v->value = value; break;
                 default: assert(0);
                 }
             }
@@ -1309,7 +1309,7 @@ static void multiplicative_expression(int mode, Value * v) {
                 v->value = value;
             }
             else if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
-                uns64 * value = alloc_str(sizeof(uns64));
+                uint64_t * value = alloc_str(sizeof(uint64_t));
                 if (mode == MODE_NORMAL) {
                     switch (sy) {
                     case '*': *value = to_uns(mode, v) * to_uns(mode, &x); break;
@@ -1318,11 +1318,11 @@ static void multiplicative_expression(int mode, Value * v) {
                     }
                 }
                 v->type_class = TYPE_CLASS_CARDINAL;
-                v->size = sizeof(uns64);
+                v->size = sizeof(uint64_t);
                 v->value = value;
             }
             else {
-                int64 * value = alloc_str(sizeof(int64));
+                int64_t * value = alloc_str(sizeof(int64_t));
                 if (mode == MODE_NORMAL) {
                     switch (sy) {
                     case '*': *value = to_int(mode, v) * to_int(mode, &x); break;
@@ -1331,7 +1331,7 @@ static void multiplicative_expression(int mode, Value * v) {
                     }
                 }
                 v->type_class = TYPE_CLASS_INTEGER;
-                v->size = sizeof(int64);
+                v->size = sizeof(int64_t);
                 v->value = value;
             }
             v->remote = 0;
@@ -1379,23 +1379,23 @@ static void additive_expression(int mode, Value * v) {
                 v->value = value;
             }
             else if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
-                uns64 * value = alloc_str(sizeof(uns64));
+                uint64_t * value = alloc_str(sizeof(uint64_t));
                 switch (sy) {
                 case '+': *value = to_uns(mode, v) + to_uns(mode, &x); break;
                 case '-': *value = to_uns(mode, v) - to_uns(mode, &x); break;
                 }
                 v->type_class = TYPE_CLASS_CARDINAL;
-                v->size = sizeof(uns64);
+                v->size = sizeof(uint64_t);
                 v->value = value;
             }
             else {
-                int64 * value = alloc_str(sizeof(int64));
+                int64_t * value = alloc_str(sizeof(int64_t));
                 switch (sy) {
                 case '+': *value = to_int(mode, v) + to_int(mode, &x); break;
                 case '-': *value = to_int(mode, v) - to_int(mode, &x); break;
                 }
                 v->type_class = TYPE_CLASS_INTEGER;
-                v->size = sizeof(int64);
+                v->size = sizeof(int64_t);
                 v->value = value;
             }
             v->remote = 0;
@@ -1413,7 +1413,7 @@ static void shift_expression(int mode, Value * v) {
         next_sy();
         additive_expression(mode, &x);
         if (mode != MODE_SKIP) {
-            uns64 * value = alloc_str(sizeof(uns64));
+            uint64_t * value = alloc_str(sizeof(uint64_t));
             if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
@@ -1448,7 +1448,7 @@ static void shift_expression(int mode, Value * v) {
                 }
             }
             v->value = value;
-            v->size = sizeof(uns64);
+            v->size = sizeof(uint64_t);
             v->remote = 0;
             v->constant = v->constant && x.constant;
             memset(&v->type, 0, sizeof(Symbol));
@@ -1551,7 +1551,7 @@ static void and_expression(int mode, Value * v) {
         next_sy();
         equality_expression(mode, &x);
         if (mode != MODE_SKIP) {
-            int64 * value = alloc_str(sizeof(int64));
+            int64_t * value = alloc_str(sizeof(int64_t));
             if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
@@ -1564,7 +1564,7 @@ static void and_expression(int mode, Value * v) {
             }
             if (mode != MODE_NORMAL) *value = 0;
             v->value = value;
-            v->size = sizeof(int64);
+            v->size = sizeof(int64_t);
             v->remote = 0;
             v->constant = v->constant && x.constant;
             memset(&v->type, 0, sizeof(Symbol));
@@ -1579,7 +1579,7 @@ static void exclusive_or_expression(int mode, Value * v) {
         next_sy();
         and_expression(mode, &x);
         if (mode != MODE_SKIP) {
-            int64 * value = alloc_str(sizeof(int64));
+            int64_t * value = alloc_str(sizeof(int64_t));
             if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
@@ -1592,7 +1592,7 @@ static void exclusive_or_expression(int mode, Value * v) {
             }
             if (mode != MODE_NORMAL) *value = 0;
             v->value = value;
-            v->size = sizeof(int64);
+            v->size = sizeof(int64_t);
             v->remote = 0;
             v->constant = v->constant && x.constant;
             memset(&v->type, 0, sizeof(Symbol));
@@ -1607,7 +1607,7 @@ static void inclusive_or_expression(int mode, Value * v) {
         next_sy();
         exclusive_or_expression(mode, &x);
         if (mode != MODE_SKIP) {
-            int64 * value = alloc_str(sizeof(int64));
+            int64_t * value = alloc_str(sizeof(int64_t));
             if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
@@ -1620,7 +1620,7 @@ static void inclusive_or_expression(int mode, Value * v) {
             }
             if (mode != MODE_NORMAL) *value = 0;
             v->value = value;
-            v->size = sizeof(int64);
+            v->size = sizeof(int64_t);
             v->remote = 0;
             v->constant = v->constant && x.constant;
             memset(&v->type, 0, sizeof(Symbol));

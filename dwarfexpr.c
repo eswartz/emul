@@ -104,9 +104,73 @@ static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
         *value = IP;
         return 0;
     }
-    trace(LOG_ALWAYS, "get_register: Unsupported DWARF register number %d", rg);
-    errno = ERR_UNSUPPORTED;
-    return -1;
+#elif defined(__linux__) && defined(__x86_64__)
+    ContextAddress RA, FP;
+    if (is_top_frame(Ctx, Frame)) {
+        switch (rg) {
+        case 0:
+            *value = Ctx->regs.rax;
+            return 0;
+        case 1:
+            *value = Ctx->regs.rbx;
+            return 0;
+        case 2:
+            *value = Ctx->regs.rcx;
+            return 0;
+        case 3:
+            *value = Ctx->regs.rdx;
+            return 0;
+        case 4:
+            *value = Ctx->regs.rsi;
+            return 0;
+        case 5:
+            *value = Ctx->regs.rdi;
+            return 0;
+        case 6:
+            *value = Ctx->regs.rbp;
+            return 0;
+        case 7:
+            *value = Ctx->regs.rsp;
+            return 0;
+        case 8:
+            *value = Ctx->regs.r8;
+            return 0;
+        case 9:
+            *value = Ctx->regs.r9;
+            return 0;
+        case 10:
+            *value = Ctx->regs.r10;
+            return 0;
+        case 11:
+            *value = Ctx->regs.r11;
+            return 0;
+        case 12:
+            *value = Ctx->regs.r11;
+            return 0;
+        case 13:
+            *value = Ctx->regs.r13;
+            return 0;
+        case 14:
+            *value = Ctx->regs.r14;
+            return 0;
+        case 15:
+            *value = Ctx->regs.r15;
+            return 0;
+        case 16:
+            if (get_frame_info(Ctx, Frame, NULL, &RA, NULL) < 0) return -1;
+            *value = RA;
+            return 0;
+        }
+    }
+    if (get_frame_info(Ctx, Frame, NULL, &RA, &FP) < 0) return -1;
+    switch (rg) {
+    case 6:
+        *value = FP;
+        return 0;
+    case 16:
+        *value = RA;
+        return 0;
+    }
 #elif defined(__APPLE__) && defined(__i386__)
     ContextAddress IP, FP;
     if (is_top_frame(Ctx, Frame)) {
@@ -152,12 +216,12 @@ static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
         *value = IP;
         return 0;
     }
-    trace(LOG_ALWAYS, "get_register: Unsupported DWARF register number %d", rg);
-    errno = ERR_UNSUPPORTED;
-    return -1;
 #else
 #error "Unknown DWARF registers mapping"
 #endif
+    trace(LOG_ALWAYS, "get_register: Unsupported DWARF register number %d", rg);
+    errno = ERR_UNSUPPORTED;
+    return -1;
 }
 
 static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
@@ -201,10 +265,59 @@ static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
             return 0;
         }
     }
-    trace(LOG_ALWAYS, "set_register: Unsupported DWARF register number %d", rg);
-    errno = ERR_UNSUPPORTED;
-    return -1;
-
+#elif defined(__linux__) && defined(__x86_64__)
+    if (is_top_frame(Ctx, Frame)) {
+        switch (rg) {
+        case 0:
+            Ctx->regs.rax = (unsigned long)value;
+            return 0;
+        case 1:
+            Ctx->regs.rbx = (unsigned long)value;
+            return 0;
+        case 2:
+            Ctx->regs.rcx = (unsigned long)value;
+            return 0;
+        case 3:
+            Ctx->regs.rdx = (unsigned long)value;
+            return 0;
+        case 4:
+            Ctx->regs.rsi = (unsigned long)value;
+            return 0;
+        case 5:
+            Ctx->regs.rdi = (unsigned long)value;
+            return 0;
+        case 6:
+            Ctx->regs.rbp = (unsigned long)value;
+            return 0;
+        case 7:
+            Ctx->regs.rsp = (unsigned long)value;
+            return 0;
+        case 8:
+            Ctx->regs.r8 = (unsigned long)value;
+            return 0;
+        case 9:
+            Ctx->regs.r9 = (unsigned long)value;
+            return 0;
+        case 10:
+            Ctx->regs.r10 = (unsigned long)value;
+            return 0;
+        case 11:
+            Ctx->regs.r11 = (unsigned long)value;
+            return 0;
+        case 12:
+            Ctx->regs.r12 = (unsigned long)value;
+            return 0;
+        case 13:
+            Ctx->regs.r13 = (unsigned long)value;
+            return 0;
+        case 14:
+            Ctx->regs.r14 = (unsigned long)value;
+            return 0;
+        case 15:
+            Ctx->regs.r15 = (unsigned long)value;
+            return 0;
+        }
+    }
 #elif defined(__APPLE__) && defined(__i386__)
     if (is_top_frame(Ctx, Frame)) {
         switch (rg) {
@@ -240,12 +353,12 @@ static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
             return 0;
         }
     }
-    trace(LOG_ALWAYS, "set_register: Unsupported DWARF register number %d", rg);
-    errno = ERR_UNSUPPORTED;
-    return -1;
 #else
 #error "Unknown DWARF registers mapping"
 #endif
+    trace(LOG_ALWAYS, "set_register: Unsupported DWARF register number %d", rg);
+    errno = ERR_UNSUPPORTED;
+    return -1;
 }
 
 static int register_access_func(PropertyValue * Value, int write, U8_T * Data) {

@@ -134,7 +134,7 @@ static void free_services(void * owner) {
 
 static unsigned message_hash(Protocol * p, const char * service, const char * name) {
     int i;
-    unsigned h = (unsigned)p >> 4;
+    unsigned h = (unsigned)(size_t)p >> 4;
     for (i = 0; service[i]; i++) h += service[i];
     for (i = 0; name[i]; i++) h += name[i];
     h = h + h / MESSAGE_HASH_SIZE;
@@ -152,7 +152,7 @@ static MessageHandlerInfo * find_message_handler(Protocol * p, char * service, c
 
 static unsigned event_hash(Channel * c, const char * service, const char * name) {
     int i;
-    unsigned h = (unsigned)c >> 4;
+    unsigned h = (unsigned)(size_t)c >> 4;
     for (i = 0; service[i]; i++) h += service[i];
     for (i = 0; name[i]; i++) h += name[i];
     h = h + h / EVENT_HASH_SIZE;
@@ -168,7 +168,7 @@ static EventHandlerInfo * find_event_handler(Channel * c, char * service, char *
     return NULL;
 }
 
-#define reply_hash(c, tokenid) ((((unsigned)(c) >> 4) + (unsigned)(tokenid)) % REPLY_HASH_SIZE)
+#define reply_hash(c, tokenid) ((((unsigned)(size_t)(c) >> 4) + (unsigned)(tokenid)) % REPLY_HASH_SIZE)
 
 static ReplyHandlerInfo * find_reply_handler(Channel * c, unsigned long tokenid, int take) {
     ReplyHandlerInfo ** rhp = &reply_handlers[reply_hash(c, tokenid)];

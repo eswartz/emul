@@ -48,13 +48,13 @@
 #define ELFMAG   "\177ELF"
 #define SELFMAG  4
 
-#define ELFCLASSNONE 0
-#define ELFCLASS32   1
-#define ELFCLASS64   2
+#define ELFCLASSNONE   0
+#define ELFCLASS32     1
+#define ELFCLASS64     2
 
-#define ELFDATANONE  0
-#define ELFDATA2LSB  1
-#define ELFDATA2MSB  2
+#define ELFDATANONE    0
+#define ELFDATA2LSB    1
+#define ELFDATA2MSB    2
 
 #define ET_NONE        0
 #define ET_REL         1
@@ -136,11 +136,11 @@
 #define DT_LOPROC       0x70000000
 #define DT_HIPROC       0x7fffffff
 
-typedef unsigned long  Elf32_Addr;
-typedef unsigned short Elf32_Half;
-typedef unsigned long  Elf32_Off;
-typedef signed   long  Elf32_Sword;
-typedef unsigned long  Elf32_Word;
+typedef uint32_t    Elf32_Addr;
+typedef uint16_t    Elf32_Half;
+typedef uint32_t    Elf32_Off;
+typedef int32_t     Elf32_Sword;
+typedef uint32_t    Elf32_Word;
 
 typedef struct Elf32_Ehdr {
     unsigned char e_ident[EI_NIDENT];
@@ -207,24 +207,54 @@ typedef struct {
 
 #if defined(_WRS_KERNEL) || defined(WIN32) || defined(__APPLE__)
 
-typedef uns64           Elf64_Addr;
-typedef unsigned short  Elf64_Half;
-typedef unsigned long   Elf64_Word;
-typedef signed long     Elf64_Sword;
-typedef uns64           Elf64_Xword;
-typedef int64           Elf64_Sxword;
-typedef uns64           Elf64_Off;
-typedef unsigned short  Elf64_Section;
+typedef uint64_t        Elf64_Addr;
+typedef uint16_t        Elf64_Half;
+typedef uint32_t        Elf64_Word;
+typedef int32_t         Elf64_Sword;
+typedef uint64_t        Elf64_Xword;
+typedef int64_t         Elf64_Sxword;
+typedef uint64_t        Elf64_Off;
+typedef uint16_t        Elf64_Section;
 typedef Elf64_Half      Elf64_Versym;
-typedef unsigned short  Elf64_Quarter;
+typedef uint16_t        Elf64_Quarter;
 
 typedef struct {
-    Elf64_Word  st_name;
-    unsigned char st_info;
-    unsigned char st_other;
+    uint8_t       e_ident[EI_NIDENT];
+    Elf64_Half    e_type;
+    Elf64_Half    e_machine;
+    Elf64_Word    e_version;
+    Elf64_Addr    e_entry;
+    Elf64_Off     e_phoff;
+    Elf64_Off     e_shoff;
+    Elf64_Word    e_flags;
+    Elf64_Half    e_ehsize;
+    Elf64_Half    e_phentsize;
+    Elf64_Half    e_phnum;
+    Elf64_Half    e_shentsize;
+    Elf64_Half    e_shnum;
+    Elf64_Half    e_shstrndx;
+} Elf64_Ehdr;
+
+typedef struct {
+    Elf64_Word    sh_name;
+    Elf64_Word    sh_type;
+    Elf64_Xword   sh_flags;
+    Elf64_Addr    sh_addr;
+    Elf64_Off     sh_offset;
+    Elf64_Xword   sh_size;
+    Elf64_Word    sh_link;
+    Elf64_Word    sh_info;
+    Elf64_Xword   sh_addralign;
+    Elf64_Xword   sh_entsize;
+} Elf64_Shdr;
+
+typedef struct {
+    Elf64_Word    st_name;
+    uint8_t       st_info;
+    uint8_t       st_other;
     Elf64_Section st_shndx;
-    Elf64_Addr  st_value;
-    Elf64_Xword st_size;
+    Elf64_Addr    st_value;
+    Elf64_Xword   st_size;
 } Elf64_Sym;
 
 #define ELF64_ST_BIND(info)             ((info) >> 4)
@@ -237,6 +267,17 @@ typedef struct {
         Elf64_Addr d_ptr;
     } d_un;
 } Elf64_Dyn;
+
+typedef struct {
+    Elf64_Word    p_type;
+    Elf64_Word    p_flags;
+    Elf64_Off     p_offset;
+    Elf64_Addr    p_vaddr;
+    Elf64_Addr    p_paddr;
+    Elf64_Xword   p_filesz;
+    Elf64_Xword   p_memsz;
+    Elf64_Xword   p_align;
+} Elf64_Phdr;
 
 #endif
 
@@ -251,14 +292,14 @@ typedef struct Elf_Sym {
     } u;
 } Elf_Sym;
 
-typedef unsigned char U1_T;
-typedef signed char I1_T;
-typedef unsigned short U2_T;
-typedef signed short I2_T;
-typedef unsigned int U4_T;
-typedef signed int I4_T;
-typedef uns64 U8_T;
-typedef int64 I8_T;
+typedef uint8_t  U1_T;
+typedef int8_t   I1_T;
+typedef uint16_t U2_T;
+typedef int16_t  I2_T;
+typedef uint32_t U4_T;
+typedef int32_t  I4_T;
+typedef uint64_t U8_T;
+typedef int64_t  I8_T;
 
 typedef struct ELF_File ELF_File;
 typedef struct ELF_Section ELF_Section;

@@ -292,7 +292,7 @@ void channel_connect(PeerServer * ps, ChannelConnectCallBack callback, void * ca
  * Start communication of a newly created channel
  */
 void channel_start(Channel * c) {
-    trace(LOG_PROTOCOL, "Starting channel 0x%08x %s", c, c->peer_name);
+    trace(LOG_PROTOCOL, "Starting channel %#lx %s", c, c->peer_name);
     c->start_comm(c);
 }
 
@@ -300,6 +300,6 @@ void channel_start(Channel * c) {
  * Close communication channel
  */
 void channel_close(Channel *c) {
-    trace(LOG_PROTOCOL, "Closing channel 0x%08x %s", c, c->peer_name);
+    trace(LOG_PROTOCOL, "Closing channel %#lx %s", c, c->peer_name);
     c->close(c, 0);
 }

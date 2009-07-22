@@ -77,12 +77,12 @@ typedef struct FileAttrs FileAttrs;
 
 struct FileAttrs {
     int flags;
-    int64 size;
+    int64_t size;
     int uid;
     int gid;
     int permissions;
-    int64 atime;
-    int64 mtime;
+    int64_t atime;
+    int64_t mtime;
 };
 
 struct OpenFileInfo {
@@ -102,7 +102,7 @@ struct IORequest {
     int req;
     char token[256];
     OpenFileInfo * handle;
-    int64 offset;
+    int64_t offset;
     FileAttrs attrs;
     AsyncReqInfo info;
     LINK link_reqs;
@@ -254,8 +254,8 @@ static void fill_attrs(FileAttrs * attrs, struct_stat * buf) {
     attrs->uid = buf->st_uid;
     attrs->gid = buf->st_gid;
     attrs->permissions = buf->st_mode;
-    attrs->atime = (int64)buf->st_atime * 1000;
-    attrs->mtime = (int64)buf->st_mtime * 1000;
+    attrs->atime = (int64_t)buf->st_atime * 1000;
+    attrs->mtime = (int64_t)buf->st_mtime * 1000;
 }
 
 static void read_file_attrs(InputStream * inp, char * nm, void * arg) {
@@ -637,7 +637,7 @@ static void command_close(char * token, Channel * c) {
 static void command_read(char * token, Channel * c) {
     char id[256];
     OpenFileInfo * h = NULL;
-    int64 offset;
+    int64_t offset;
     unsigned long len;
 
     json_read_string(&c->inp, id, sizeof(id));
@@ -666,7 +666,7 @@ static void command_read(char * token, Channel * c) {
 static void command_write(char * token, Channel * c) {
     char id[256];
     OpenFileInfo * h = NULL;
-    int64 offset;
+    int64_t offset;
     unsigned long len = 0;
     JsonReadBinaryState state;
 
@@ -1057,7 +1057,7 @@ static void command_copy(char * token, Channel * c) {
     int fi = -1;
     int fo = -1;
     int err = 0;
-    int64 pos = 0;
+    int64_t pos = 0;
 
     read_path(&c->inp, src, sizeof(src));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);

@@ -31,15 +31,15 @@ typedef void VirtualStreamCallBack(VirtualStream * /* stream */, int /* event */
 #define VS_ENABLE_REMOTE_READ       0x01
 #define VS_ENABLE_REMOTE_WRITE      0x02
 
-extern void virtual_stream_create(const char * type, unsigned buf_len, unsigned access,
+extern void virtual_stream_create(const char * type, size_t buf_len, unsigned access,
     VirtualStreamCallBack * callback, void * callback_args, VirtualStream ** res);
 extern void virtual_stream_delete(VirtualStream * stream);
 
 extern void virtual_stream_get_id(VirtualStream * stream, char * id_buf, size_t buf_size);
 extern VirtualStream * virtual_stream_find(char * id);
 
-extern int virtual_stream_add_data(VirtualStream * stream, char * buf, unsigned buf_size, unsigned * data_size, int eos);
-extern int virtual_stream_get_data(VirtualStream * stream, char * buf, unsigned buf_size, unsigned * data_size, int * eos);
+extern int virtual_stream_add_data(VirtualStream * stream, char * buf, size_t buf_size, size_t * data_size, int eos);
+extern int virtual_stream_get_data(VirtualStream * stream, char * buf, size_t buf_size, size_t * data_size, int * eos);
 extern int virtual_stream_is_empty(VirtualStream * stream);
 
 /*

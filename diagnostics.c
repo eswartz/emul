@@ -214,8 +214,8 @@ typedef struct StreamsTest {
     VirtualStream * inp;
     VirtualStream * out;
     char buf[111];
-    unsigned buf_pos;
-    unsigned buf_len;
+    size_t buf_pos;
+    size_t buf_len;
     int inp_eos;
     int out_eos;
 } StreamsTest;
@@ -238,7 +238,7 @@ static void streams_test_callback(VirtualStream * stream, int event_code, void *
     }
 
     if (st->buf_len > st->buf_pos || st->inp_eos != st->out_eos) {
-        unsigned done = 0;
+        size_t done = 0;
         virtual_stream_add_data(st->out, st->buf + st->buf_pos, st->buf_len - st->buf_pos, &done, st->inp_eos);
         st->buf_pos += done;
         if (st->buf_pos == st->buf_len && st->inp_eos) st->out_eos = 1;

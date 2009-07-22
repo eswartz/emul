@@ -52,8 +52,18 @@
 #include <sys/utime.h>
 #include <io.h>
 
-typedef __int64 int64;
-typedef unsigned __int64 uns64;
+#if defined(_MSC_VER)
+typedef signed __int8 int8_t;
+typedef unsigned __int8 uint8_t;
+typedef signed __int16 int16_t;
+typedef unsigned __int16 uint16_t;
+typedef signed __int32 int32_t;
+typedef unsigned __int32 uint32_t;
+typedef signed __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#else
+#  include <stdint.h>
+#endif
 
 #define FILE_PATH_SIZE MAX_PATH
 
@@ -120,8 +130,8 @@ typedef struct _stati64 struct_stat;
 #define stat _stati64
 #define lstat _stati64
 #define fstat _fstati64
-extern int truncate(const char * path, int64 size);
-extern int ftruncate(int f, int64 size);
+extern int truncate(const char * path, int64_t size);
+extern int ftruncate(int f, int64_t size);
 #define utimbuf _utimbuf
 #define utime _utime
 #define futime _futime
@@ -153,7 +163,7 @@ struct DIR {
 
 struct dirent {
   char d_name[FILE_PATH_SIZE];
-  int64 d_size;
+  int64_t d_size;
   time_t d_atime;
   time_t d_ctime;
   time_t d_wtime;
@@ -254,8 +264,7 @@ extern char * canonicalize_file_name(const char * path);
 
 #define closesocket close
 
-typedef long long int64;
-typedef unsigned long long uns64;
+typedef unsigned long uintptr_t; 
 typedef unsigned long useconds_t;
 
 #define FILE_PATH_SIZE PATH_MAX
@@ -267,7 +276,7 @@ typedef struct stat struct_stat;
 #define SA_LEN(addr) ((addr)->sa_len)
 #define MSG_MORE 0
 
-extern int truncate(char * path, int64 size);
+extern int truncate(char * path, int64_t size);
 extern char * canonicalize_file_name(const char * path);
 
 extern void usleep(useconds_t useconds);
@@ -304,6 +313,7 @@ extern const char * loc_gai_strerror(int ecode);
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <limits.h>
+#include <stdint.h>
 
 #include <mach/thread_status.h>
 typedef x86_thread_state32_t REG_SET;
@@ -319,8 +329,6 @@ typedef x86_thread_state32_t REG_SET;
 #define ifr_netmask ifr_addr
 #define canonicalize_file_name(path)    realpath(path, NULL)
 
-typedef int64_t int64;
-typedef uint64_t uns64;
 typedef struct stat struct_stat;
 
 #define get_regs_SP(x) ((x).__esp)
@@ -388,9 +396,21 @@ extern char **environ;
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <limits.h>
+#include <stdint.h>
 
 #include <sys/user.h>
 typedef struct user_regs_struct REG_SET;
+#if __WORDSIZE == 64
+#  define get_regs_SP(x) ((x).rsp)
+#  define get_regs_BP(x) ((x).rbp)
+#  define get_regs_PC(x) ((x).rip)
+#  define set_regs_PC(x,y) (x).rip = (unsigned long)(y)
+#else
+#  define get_regs_SP(x) ((x).esp)
+#  define get_regs_BP(x) ((x).ebp)
+#  define get_regs_PC(x) ((x).eip)
+#  define set_regs_PC(x,y) (x).eip = (unsigned long)(y)
+#endif
 
 #define loc_freeaddrinfo freeaddrinfo
 #define loc_getaddrinfo getaddrinfo
@@ -404,24 +424,18 @@ extern int tkill(pid_t pid, int signal);
 
 #define closesocket close
 
-typedef __int64_t int64;
-typedef __uint64_t uns64;
 typedef struct stat struct_stat;
 
-#define get_regs_SP(x) ((x).esp)
-#define get_regs_BP(x) ((x).ebp)
-#define get_regs_PC(x) ((x).eip)
-#define set_regs_PC(x,y) (x).eip = (unsigned long)(y)
-
 extern unsigned char BREAK_INST[];  /* breakpoint instruction */
-#define BREAK_SIZE 1                /* breakpoint instruction size */
+#define BREAK_SIZE get_break_size() /* breakpoint instruction size */
+extern size_t get_break_size(void);
 
 #ifndef SA_LEN
 # ifdef HAVE_SOCKADDR_SA_LEN
 #  define SA_LEN(addr) ((addr)->sa_len)
 # else /* HAVE_SOCKADDR_SA_LEN */
 #  ifdef HAVE_STRUCT_SOCKADDR_STORAGE
-static size_t get_sa_len(const struct sockaddr *addr) {
+static size_t get_sa_len(const struct sockaddr * addr) {
     switch (addr->sa_family) {
 #   ifdef AF_UNIX
         case AF_UNIX: return sizeof(struct sockaddr_un);

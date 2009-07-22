@@ -28,7 +28,7 @@
 
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 
-int build_ifclist(int sock, int max, ip_ifc_info *list) {
+int build_ifclist(int sock, int max, ip_ifc_info * list) {
 #ifdef WIN32
     int i;
     int ind;
@@ -75,8 +75,11 @@ int build_ifclist(int sock, int max, ip_ifc_info *list) {
     while (cp < (char *)ifc.ifc_req + ifc.ifc_len && ind < max) {
         struct ifreq * ifreq_addr = (struct ifreq *)cp;
         struct ifreq ifreq_mask = *ifreq_addr;
-        cp += sizeof(ifreq_addr->ifr_name);
-        cp += MAX(SA_LEN(&ifreq_addr->ifr_addr), sizeof(ifreq_addr->ifr_addr));
+        size_t size = sizeof(struct ifreq);
+        /* BSD systems allow sockaddrs to be longer than their sizeof */
+        if (SA_LEN(&ifreq_addr->ifr_addr) > sizeof(ifreq_addr->ifr_addr))
+            size += SA_LEN(&ifreq_addr->ifr_addr) - sizeof(ifreq_addr->ifr_addr);
+        cp += size;
         if (ifreq_addr->ifr_addr.sa_family != AF_INET) continue;
         if (ioctl(sock, SIOCGIFNETMASK, &ifreq_mask) < 0) {
             trace(LOG_ALWAYS, "error: ioctl(SIOCGIFNETMASK) returned %d: %s", errno, errno_to_str(errno));

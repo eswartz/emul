@@ -768,7 +768,7 @@ static void process_output_streams_callback(VirtualStream * stream, int event_co
         if (err) trace(LOG_ALWAYS, "Can't read process output stream: %d %s", err, errno_to_str(err));
 
         if (out->buf_pos < (size_t)buf_len || out->eos != eos) {
-            unsigned done = 0;
+            size_t done = 0;
             virtual_stream_add_data(stream, out->buf + out->buf_pos, buf_len - out->buf_pos, &done, eos);
             out->buf_pos += done;
             if (eos) out->eos = 1;
@@ -989,7 +989,7 @@ static void task_delete_hook(WIND_TCB * tcb) {
         close(ioTaskStdGet(prs->pid, 2));
         for (i = 0; i < 2; i++) {
             char pnm[32];
-            snprintf(pnm, sizeof(pnm), "/pty/tcf-%08x-%d", prs->pid, i);
+            snprintf(pnm, sizeof(pnm), "/pty/tcf-%0*lx-%d", sizeof(prs->pid) * 2, prs->pid, i);
             ptyDevRemove(pnm);
         }
     }
@@ -1016,7 +1016,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
             char pnm[32];
             char pnm_m[32];
             char pnm_s[32];
-            snprintf(pnm, sizeof(pnm), "/pty/tcf-%08x-%d", *pid, i);
+            snprintf(pnm, sizeof(pnm), "/pty/tcf-%0*lx-%d", sizeof(*pid) * 2, *pid, i);
             snprintf(pnm_m, sizeof(pnm_m), "%sM", pnm);
             snprintf(pnm_s, sizeof(pnm_m), "%sS", pnm);
             if (ptyDevCreate(pnm, PIPE_SIZE, PIPE_SIZE) == ERROR) {

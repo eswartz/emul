@@ -476,7 +476,7 @@ void usleep(useconds_t useconds) {
     Sleep(useconds / 1000);
 }
 
-int truncate(const char * path, int64 size) {
+int truncate(const char * path, int64_t size) {
     int res = 0;
     int f = _open(path, _O_RDWR | _O_BINARY);
     if (f < 0) return -1;
@@ -485,8 +485,8 @@ int truncate(const char * path, int64 size) {
     return res;
 }
 
-int ftruncate(int fd, int64 size) {
-    int64 cur, pos;
+int ftruncate(int fd, int64_t size) {
+    int64_t cur, pos;
     BOOL ret = FALSE;
     HANDLE handle = (HANDLE)_get_osfhandle(fd);
 
@@ -641,7 +641,7 @@ void usleep(useconds_t useconds) {
     nanosleep(&tv, NULL);
 }
 
-int truncate(char * path, int64 size) {
+int truncate(char * path, int64_t size) {
     int f = open(path, O_RDWR, 0);
     if (f < 0) return -1;
     if (ftruncate(f, size) < 0) {
@@ -737,7 +737,15 @@ void ini_mdep(void) {
 #include <sys/utsname.h>
 #include <asm/unistd.h>
 
+#if defined(__i386__) || defined(__x86_64__)
 unsigned char BREAK_INST[] = { 0xcc };
+#else
+#error "Unknown CPU"
+#endif
+
+size_t get_break_size(void) {
+    return sizeof(BREAK_INST);
+}
 
 char * get_os_name(void) {
     static char str[256];

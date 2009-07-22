@@ -67,7 +67,7 @@ void json_write_long(OutputStream * out, long n) {
     json_write_ulong(out, (unsigned long)n);
 }
 
-void json_write_int64(OutputStream * out, int64 n) {
+void json_write_int64(OutputStream * out, int64_t n) {
     if (n < 0) {
         write_stream(out, '-');
         n = -n;
@@ -277,8 +277,8 @@ unsigned long json_read_ulong(InputStream * inp) {
     return res;
 }
 
-int64 json_read_int64(InputStream * inp) {
-    int64 res = 0;
+int64_t json_read_int64(InputStream * inp) {
+    int64_t res = 0;
     int neg = 0;
     int ch = read_stream(inp);
     if (ch == '-') {

@@ -320,7 +320,7 @@ int get_symbol_name(const Symbol * sym, char ** name) {
 }
 
 int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
-    uns64 res = 0;
+    uint64_t res = 0;
     Symbol type = *sym;
     DWORD tag = 0;
 
