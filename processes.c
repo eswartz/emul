@@ -68,7 +68,6 @@ static const char * PROCESSES = "Processes";
 #  include <taskHookLib.h>
 #else
 #  include <sys/stat.h>
-#  include <fcntl.h>
 #  include <unistd.h>
 #  include <dirent.h>
 #endif

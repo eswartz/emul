@@ -108,7 +108,7 @@ static LINK subscriptions;
 static unsigned id_cnt = 0;
 
 static unsigned get_client_hash(unsigned id, Channel * c) {
-    return (id + (unsigned)(size_t)c) % HANDLE_HASH_SIZE;
+    return (id + (unsigned)(uintptr_t)c) % HANDLE_HASH_SIZE;
 }
 
 static int str2id(char * s, unsigned * id) {

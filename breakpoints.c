@@ -923,7 +923,7 @@ static void add_breakpoint(Channel * c, BreakpointInfo * bp) {
     }
     r = find_breakpoint_ref(p, inp);
     if (r == NULL) {
-        unsigned inp_hash = (unsigned)(size_t)inp / 16 % INP2BR_HASH_SIZE;
+        unsigned inp_hash = (unsigned)(uintptr_t)inp / 16 % INP2BR_HASH_SIZE;
         r = (BreakpointRef *)loc_alloc_zero(sizeof(BreakpointRef));
         list_add_last(&r->link_inp, inp2br + inp_hash);
         list_add_last(&r->link_bp, &p->refs);
@@ -963,7 +963,7 @@ static void remove_ref(Channel * c, BreakpointRef * br) {
 
 static void delete_breakpoint_refs(Channel * c) {
     InputStream * inp = &c->inp;
-    unsigned hash = (unsigned)(size_t)inp / 16 % INP2BR_HASH_SIZE;
+    unsigned hash = (unsigned)(uintptr_t)inp / 16 % INP2BR_HASH_SIZE;
     LINK * l = inp2br[hash].next;
     while (l != &inp2br[hash]) {
         BreakpointRef * br = link_inp2br(l);
