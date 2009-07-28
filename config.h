@@ -98,7 +98,7 @@
 #define ENABLE_ELF              ((TARGET_UNIX || TARGET_VXWORKS) && (SERVICE_Symbols || SERVICE_LineNumbers))
 #endif
 #if !defined(ENABLE_SSL)
-#define ENABLE_SSL              (TARGET_UNIX)
+#define ENABLE_SSL              ((TARGET_UNIX) && !defined(__APPLE__))
 #endif
 #if !defined(ENABLE_RCBP_TEST)
 #define ENABLE_RCBP_TEST        (SERVICE_RunControl && SERVICE_Breakpoints)

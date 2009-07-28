@@ -308,6 +308,7 @@ extern const char * loc_gai_strerror(int ecode);
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -370,6 +371,8 @@ typedef int clockid_t;
 extern int clock_gettime(clockid_t clock_id, struct timespec * tp);
 
 extern char **environ;
+
+#define MSG_MORE 0
 
 /* Mac OS X */
 #else
