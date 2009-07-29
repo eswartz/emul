@@ -10,7 +10,8 @@
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
- *     Michael Sills-Lavoie(École Polytechnique de Montréal) - tcf2 bloc support
+ *     Michael Sills-Lavoie(École Polytechnique de Montréal)  - ZeroCopy support
+ *              *                         *                 - json_splice_binary
  *******************************************************************************/
 
 /*
@@ -71,6 +72,7 @@ extern void write_service_error(OutputStream * out, int err, const char * servic
 
 extern char * json_read_alloc_binary(InputStream * inp, int * size);
 extern void json_write_binary(OutputStream * out, const char * data, size_t size);
+extern void json_splice_binary(OutputStream * out, int fd, size_t size);
 
 typedef struct JsonReadBinaryState {
     /* Private members */

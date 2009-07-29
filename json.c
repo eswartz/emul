@@ -10,7 +10,8 @@
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
- *     Michael Sills-Lavoie(École Polytechnique de Montréal) - tcf2 bloc support
+ *     Michael Sills-Lavoie(École Polytechnique de Montréal)  - ZeroCopy support
+ *              *                         *                 - json_splice_binary
  *******************************************************************************/
 
 /*
@@ -616,7 +617,7 @@ void json_write_binary_start(JsonWriteBinaryState * state, OutputStream * out, i
 void json_write_binary_data(JsonWriteBinaryState * state, const char * data, size_t len) {
     if (len <= 0) return;
     if (state->encoding == ENCODING_BINARY) {
-        write_bloc_stream(state->out, data, len);
+        write_block_stream(state->out, data, len);
     }
     else {
         size_t rem = state->rem;
@@ -666,6 +667,34 @@ void json_write_binary(OutputStream * out, const char * data, size_t size) {
         JsonWriteBinaryState state;
         json_write_binary_start(&state, out, size);
         json_write_binary_data(&state, data, size);
+        json_write_binary_end(&state);
+    }
+}
+
+void json_splice_binary(OutputStream * out, int fd, size_t size) {
+    if (out->supports_zero_copy && size > 0) {
+        write_stream(out, '(');
+        json_write_ulong(out, size);
+        write_stream(out, ')');
+        while (size > 0) {
+            int ret = splice_block_stream(out, fd, size);
+            if (ret < 0) exception(errno);
+            if (ret == 0) exception(ERR_EOF);
+            size -= ret;
+        }
+    }
+    else {
+        char buffer[0x1000];
+        JsonWriteBinaryState state;
+        json_write_binary_start(&state, out, size);
+        
+        while (size > 0) {
+            int ret = read(fd, buffer, size < sizeof(buffer) ? size : sizeof(buffer));
+            if (ret < 0) exception(errno);
+            if (ret == 0) exception(ERR_EOF);
+            json_write_binary_data(&state, buffer, ret);
+            size -= ret;
+        }
         json_write_binary_end(&state);
     }
 }

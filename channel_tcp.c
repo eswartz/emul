@@ -10,7 +10,8 @@
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
- *     Michael Sills-Lavoie(École Polytechnique de Montréal) - tcf2 bloc support
+ *     Michael Sills-Lavoie(École Polytechnique de Montréal)  - ZeroCopy support
+ *              *                         *            - tcp_splice_block_stream
  *******************************************************************************/
 
 /*
@@ -18,6 +19,7 @@
  */
 
 #include "config.h"
+#include <fcntl.h>
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
@@ -25,7 +27,6 @@
 #  include <openssl/ssl.h>
 #  include <openssl/rand.h>
 #  include <openssl/err.h>
-#  include <fcntl.h>
 #  ifndef _MSC_VER
 #    include <dirent.h>
 #  endif
@@ -67,6 +68,10 @@ struct ChannelTCP {
     unsigned char * read_buf;
     int read_buf_size;
     int read_done;
+
+#if ENABLE_Splice
+    int pipefd[2];     /* Pipe used to splice data between a fd and the channel */
+#endif /* ENABLE_Splice */
 
     /* Input stream buffer */
     InputBuf ibuf;
@@ -168,7 +173,11 @@ static void delete_channel(ChannelTCP * c) {
     c->magic = 0;
 #if ENABLE_SSL
     if (c->ssl) SSL_free(c->ssl);
-#endif
+#endif /* ENABLE_SSL */
+#if ENABLE_Splice
+    close(c->pipefd[0]);
+    close(c->pipefd[1]);
+#endif /* ENABLE_Splice */
     loc_free(c->chan.peer_name);
     loc_free(c);
 }
@@ -283,14 +292,14 @@ static void tcp_write_stream(OutputStream * out, int byte) {
     }
 }
 
-static void tcp_write_bloc_stream(OutputStream * out, const char * bytes, int size) {
-    int cnt = 0;
+static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_t size) {
+    size_t cnt = 0;
     ChannelTCP * c = channel2tcp(out2channel(out));
 
 #if ENABLE_ZeroCopy
     if (!c->ssl && out->supports_zero_copy && size > 32) {
         /* Send the binary data escape seq */
-        unsigned n = size;
+        size_t n = size;
         if (c->obuf_inp >= BUF_SIZE - 8) tcp_flush_with_flags(out, MSG_MORE);
         c->obuf[c->obuf_inp++] = ESC;
         c->obuf[c->obuf_inp++] = 3;
@@ -323,6 +332,58 @@ static void tcp_write_bloc_stream(OutputStream * out, const char * bytes, int si
 #endif /* ENABLE_ZeroCopy */
         
     while (cnt < size) tcp_write_stream(out, (unsigned char)bytes[cnt++]);
+}
+
+static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size) {
+    assert(is_dispatch_thread());
+    if (size == 0) return 0;
+#if ENABLE_Splice
+    {
+        ChannelTCP * c = channel2tcp(out2channel(out));
+        if (!c->ssl && out->supports_zero_copy) {
+            int rd = splice(fd, NULL, c->pipefd[1], NULL, size, SPLICE_F_MOVE);
+            if (rd > 0) {
+                /* Send the binary data escape seq */
+                int n = rd;
+                if (c->obuf_inp >= BUF_SIZE - 8) tcp_flush_with_flags(out, MSG_MORE);
+                c->obuf[c->obuf_inp++] = ESC;
+                c->obuf[c->obuf_inp++] = 3;
+                for (;;) {
+                    if (n <= 0x7fu) {
+                        c->obuf[c->obuf_inp++] = (char)n;
+                        break;
+                    }
+                    c->obuf[c->obuf_inp++] = (n & 0x7fu) | 0x80u;
+                    n = n >> 7;
+                }
+                /* We need to flush the buffer then send our data */
+                tcp_flush_with_flags(out, MSG_MORE);
+
+                if (c->socket < 0) return rd;
+                if (c->out_errno) return rd;
+                
+                n = rd;
+                while (n > 0) {
+                    int wr = splice(c->pipefd[0], NULL, c->socket, NULL, n, SPLICE_F_MORE);
+
+                    if (wr < 0) {
+                        c->out_errno = errno;
+                        trace(LOG_PROTOCOL, "Error in socket splice: %d %s", errno, errno_to_str(errno));
+                        break;
+                    }
+                    n -= wr;
+                }
+            }
+            return rd;
+        }
+    }
+#endif /* ENABLE_Splice */
+    {
+        char buffer[BUF_SIZE];
+        int rd = read(fd, buffer, size < BUF_SIZE ? size : BUF_SIZE);
+        if (rd > 0) tcp_write_block_stream(out, buffer, rd);
+        return rd;
+    }
 }
 
 static void tcp_post_read(InputBuf * ibuf, unsigned char * buf, int size) {
@@ -616,13 +677,23 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
     }
 
     c = loc_alloc_zero(sizeof *c);
+#if ENABLE_Splice
+    if (pipe(c->pipefd) == -1) {
+        int err = errno;
+        loc_free(c);
+        trace(LOG_ALWAYS, "Cannot create channel pipe : %s", strerror(err));
+        errno = err;
+        return NULL;
+    }  
+#endif /* ENABLE_Splice */
     c->magic = CHANNEL_MAGIC;
     c->ssl = ssl;
     c->chan.inp.read = tcp_read_stream;
     c->chan.inp.peek = tcp_peek_stream;
     c->chan.out.write = tcp_write_stream;
     c->chan.out.flush = tcp_flush_stream;
-    c->chan.out.write_bloc = tcp_write_bloc_stream;
+    c->chan.out.write_block = tcp_write_block_stream;
+    c->chan.out.splice_block = tcp_splice_block_stream;
     c->chan.start_comm = start_channel;
     c->chan.check_pending = channel_check_pending;
     c->chan.message_count = channel_get_message_count;

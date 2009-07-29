@@ -62,7 +62,7 @@ int write_base64(OutputStream * out, const char * buf0, int len) {
     const unsigned char * buf = (const unsigned char *)buf0;
 
     char obf[OBF_SIZE + 8];
-    int obf_len;
+    size_t obf_len;
 
     obf_len = 0;
     while (pos < len) {
@@ -87,12 +87,12 @@ int write_base64(OutputStream * out, const char * buf0, int len) {
             }
         }
         if (obf_len >= OBF_SIZE) {
-            write_bloc_stream(out, obf, obf_len);
+            write_block_stream(out, obf, obf_len);
             obf_len = 0;
         }
     }
     if (obf_len > 0) {
-        write_bloc_stream(out, obf, obf_len);
+        write_block_stream(out, obf, obf_len);
         obf_len = 0;
     }
     assert(pos == len);

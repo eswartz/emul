@@ -82,6 +82,9 @@
 #if !defined(ENABLE_ZeroCopy)
 #define ENABLE_ZeroCopy           1
 #endif
+#if !defined(ENABLE_Splice)
+#define ENABLE_Splice           ((ENABLE_ZeroCopy) && defined(SPLICE_F_MOVE))
+#endif
 #if !defined(ENABLE_Trace)
 #define ENABLE_Trace            1
 #endif

@@ -10,7 +10,7 @@
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
- *     Michael Sills-Lavoie(École Polytechnique de Montréal) - tcf2 bloc support
+ *     Michael Sills-Lavoie(École Polytechnique de Montréal)  - ZeroCopy support
  *******************************************************************************/
 
 /*
