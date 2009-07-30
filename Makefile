@@ -25,6 +25,12 @@ LIBS=-lpthread
 RANLIB=ranlib $@
 else
 LIBS=-lpthread -lssl -lrt
+
+ifdef PATH_Plugins
+CFLAGS += -rdynamic -DPATH_Plugins="$(PATH_Plugins)"
+LIBS += -ldl
+endif
+
 endif
 endif
 endif

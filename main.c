@@ -30,6 +30,7 @@
 #include "myalloc.h"
 #include "test.h"
 #include "cmdline.h"
+#include "plugins.h"
 #include "channel_tcp.h"
 
 static char * progname;
@@ -206,5 +207,10 @@ int main(int argc, char ** argv) {
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */
     run_event_loop();
+
+#if ENABLE_Plugins
+    plugins_destroy();
+#endif // ENABLE_Plugins
+
     return 0;
 }

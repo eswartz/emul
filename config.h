@@ -79,8 +79,11 @@
 #define SERVICE_Streams         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
 
+#ifndef ENABLE_Plugins
+#define ENABLE_Plugins          ((TARGET_UNIX) && defined(PATH_Plugins))
+#endif
 #if !defined(ENABLE_ZeroCopy)
-#define ENABLE_ZeroCopy           1
+#define ENABLE_ZeroCopy         1
 #endif
 #if !defined(ENABLE_Splice)
 #define ENABLE_Splice           ((ENABLE_ZeroCopy) && defined(SPLICE_F_MOVE))
@@ -130,6 +133,7 @@
 #include "streamsservice.h"
 #include "proxy.h"
 #include "tcf_elf.h"
+#include "plugins.h"
 
 static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
 #if SERVICE_Locator
@@ -180,9 +184,14 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
 #if ENABLE_ELF
     ini_elf();
 #endif
+#if ENABLE_Plugins
+    plugins_load(proto, bcg, spg);
+#endif
+
     ini_diagnostics_service(proto);
 }
 
 #endif /* CONFIG_MAIN */
 
 #endif /* D_config */
+
