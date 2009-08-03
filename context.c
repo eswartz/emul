@@ -782,7 +782,8 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 /* 1. according to the documentation, we should get only one CREATE_PROCESS_DEBUG_EVENT. */
                 /* 2. if second CREATE_PROCESS_DEBUG_EVENT is handled immediately, debugee crashes. */
                 memcpy(&fantom_process, &event_buffer, sizeof(event_buffer));
-//                CloseHandle(fantom_process.event.u.CreateProcessInfo.hFile);
+                CloseHandle(fantom_process.event.u.CreateProcessInfo.hFile);
+                fantom_process.event.u.CreateProcessInfo.hFile = NULL;
                 SuspendThread(fantom_process.event.u.CreateProcessInfo.hThread);
                 ResumeThread(create_process.event.u.CreateProcessInfo.hThread);
             }

@@ -62,7 +62,10 @@ static FARPROC GetProc(char * name) {
             }
             p++;
         }
-        if (dbghelp_dll == NULL) return NULL;
+        if (dbghelp_dll == NULL) {
+            assert(GetLastError() != 0);
+            return NULL;
+        }
     }
     return GetProcAddress(dbghelp_dll, name);
 }
