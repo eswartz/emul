@@ -378,6 +378,7 @@ public interface IFileSystem extends IService {
      * @param handle is an open file handle returned by open().
      * @param offset is the offset (in bytes) relative
      * to the beginning of the file from where to start reading.
+     * If offset < 0 then reading starts from current position in the file.
      * @param len is the maximum number of bytes to read.
      * @param done is call back object.
      * @return pending command handle.
@@ -398,6 +399,7 @@ public interface IFileSystem extends IService {
      * @param handle is an open file handle returned by open().
      * @param offset is the offset (in bytes) relative
      * to the beginning of the file from where to start writing.
+     * If offset < 0 then writing starts from current position in the file.
      * @param data is byte array that contains data for writing.
      * @param data_pos if offset in 'data' of first byte to write.
      * @param data_size is the number of bytes to write.

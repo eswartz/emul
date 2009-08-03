@@ -243,13 +243,15 @@ C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; read &bull; <i>&lt;string
 
 <p>The command reads bytes from an open file.
 In response to this request, the server will read as many bytes as it
-can from the file (up to `len'), and return them in a byte array.
+can from the file (up to `size'), and return them in a byte array.
 If an error occurs or EOF is encountered, the server may return
 fewer bytes then requested. Replay argument 'error report'
 will be not null in case of error, and argument 'eof' will be
 true in case of EOF. For normal disk files, it is guaranteed
 that this will read the specified number of bytes, or up to end of file
 or error. For e.g. device files this may return fewer bytes than requested.</p>
+
+<p>If 'offset' < 0 then reading will start from current position in the file.</p>
 
 <p>Reply:</p>
 
@@ -271,6 +273,8 @@ The write will extend the file if writing beyond the end of the file.
 It is legal to write way beyond the end of the file; the semantics
 are to write zeroes from the end of the file to the specified offset
 and then the data. <i>&lt;string: data&gt;</i> is Base64 encoded array of data bytes.</p>
+
+<p>If 'offset' < 0 then writing will start from current position in the file.</p>
 
 <p>Reply:</p>
 
