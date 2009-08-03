@@ -215,8 +215,10 @@ static void tcp_flush_with_flags(OutputStream * out, int flags) {
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->obuf_inp <= BUF_SIZE);
     if (c->obuf_inp == 0) return;
-    if (c->socket < 0) return;
-    if (c->out_errno) return;
+    if (c->socket < 0 || c->out_errno) {
+        c->obuf_inp = 0;
+        return;
+    }
     while (cnt < c->obuf_inp) {
         int wr = 0;
         if (c->ssl) {
@@ -239,9 +241,10 @@ static void tcp_flush_with_flags(OutputStream * out, int flags) {
                     tv.tv_usec = 0;
                     if (select(c->socket + 1, &readfds, &writefds, &errorfds, &tv) >= 0) continue;
                 }
-                trace(LOG_ALWAYS, "Can't SSL_write() on channel %#lx: %s", c,
+                trace(LOG_PROTOCOL, "Can't SSL_write() on channel %#lx: %s", c,
                     ERR_error_string(ERR_get_error(), NULL));
                 c->out_errno = EIO;
+                c->obuf_inp = 0;
                 return;
             }
 #else
@@ -254,6 +257,7 @@ static void tcp_flush_with_flags(OutputStream * out, int flags) {
                 int err = errno;
                 trace(LOG_PROTOCOL, "Can't send() on channel %#lx: %d %s", c, err, errno_to_str(err));
                 c->out_errno = err;
+                c->obuf_inp = 0;
                 return;
             }
         }
