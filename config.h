@@ -109,6 +109,9 @@
 #if !defined(ENABLE_RCBP_TEST)
 #define ENABLE_RCBP_TEST        (SERVICE_RunControl && SERVICE_Breakpoints)
 #endif
+#if !defined(ENABLE_AIO)
+#define ENABLE_AIO              defined(_POSIX_ASYNCHRONOUS_IO)
+#endif
 
 #ifdef CONFIG_MAIN
 /*

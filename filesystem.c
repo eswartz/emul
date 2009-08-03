@@ -102,7 +102,6 @@ struct IORequest {
     int req;
     char token[256];
     OpenFileInfo * handle;
-    int64_t offset;
     FileAttrs attrs;
     AsyncReqInfo info;
     LINK link_reqs;
@@ -536,16 +535,6 @@ static void post_io_requst(OpenFileInfo * handle) {
         LINK * link = handle->link_reqs.next;
         IORequest * req = reqs2req(link);
         switch (req->req) {
-        case REQ_READ:
-        case REQ_WRITE:
-            if (lseek(handle->file, req->offset, SEEK_SET) == -1) {
-                assert(errno != 0);
-                req->info.error = errno;
-                handle->posted_req = req;
-                post_event(done_io_request, &req->info);
-                return;
-            }
-            break;
         case REQ_FSTAT:
             {
                 int err = 0;
@@ -654,8 +643,13 @@ static void command_read(char * token, Channel * c) {
     }
     else {
         IORequest * req = create_io_request(token, h, REQ_READ);
-        req->offset = offset;
-        req->info.type = AsyncReqRead;
+        if (offset < 0) {
+            req->info.type = AsyncReqRead;
+        }
+        else {
+            req->info.type = AsyncReqSeekRead;
+            req->info.u.fio.offset = (off_t)offset;
+        }
         req->info.u.fio.fd = h->file;
         req->info.u.fio.bufp = loc_alloc(len);
         req->info.u.fio.bufsz = len;
@@ -700,8 +694,13 @@ static void command_write(char * token, Channel * c) {
     }
     else {
         IORequest * req = create_io_request(token, h, REQ_WRITE);
-        req->offset = offset;
-        req->info.type = AsyncReqWrite;
+        if (offset < 0) {
+            req->info.type = AsyncReqWrite;
+        }
+        else {
+            req->info.type = AsyncReqSeekWrite;
+            req->info.u.fio.offset = (off_t)offset;
+        }
         req->info.u.fio.fd = h->file;
         req->info.u.fio.bufp = loc_alloc(len);
         req->info.u.fio.bufsz = len;

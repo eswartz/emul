@@ -64,6 +64,36 @@ static void * worker_thread_handler(void * x) {
             }
             break;
 
+        case AsyncReqSeekRead:              /* File seek and read */
+            if (lseek(req->u.fio.fd, req->u.fio.offset, SEEK_SET) == (off_t)-1) {
+                req->u.fio.rval = -1;
+                req->error = errno;
+                assert(req->error);
+            }
+            else {
+                req->u.fio.rval = read(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz);
+                if (req->u.fio.rval == -1) {
+                    req->error = errno;
+                    assert(req->error);
+                }
+            }
+            break;
+
+        case AsyncReqSeekWrite:             /* File seek and write */
+            if (lseek(req->u.fio.fd, req->u.fio.offset, SEEK_SET) == (off_t)-1) {
+                req->u.fio.rval = -1;
+                req->error = errno;
+                assert(req->error);
+            }
+            else {
+                req->u.fio.rval = write(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz);
+                if (req->u.fio.rval == -1) {
+                    req->error = errno;
+                    assert(req->error);
+                }
+            }
+            break;
+
         case AsyncReqRecv:              /* Socket recv */
             req->u.sio.rval = recv(req->u.sio.sock, req->u.sio.bufp, req->u.sio.bufsz, req->u.sio.flags);
             if (req->u.sio.rval == -1) {
@@ -163,10 +193,46 @@ static void * worker_thread_handler(void * x) {
     }
 }
 
-void async_req_post(AsyncReqInfo *req) {
+#if ENABLE_AIO
+static void aio_done(sigval_t arg) {
+    AsyncReqInfo * req = arg.sival_ptr;
+    req->u.fio.rval = aio_return(&req->u.fio.aio);
+    if (req->u.fio.rval < 0) req->error = aio_error(&req->u.fio.aio);
+    post_event(req->done, req);
+}
+#endif
+
+void async_req_post(AsyncReqInfo * req) {
     WorkerThread * wt;
 
     trace(LOG_ASYNCREQ, "async_req_post: req %p, type %d", req, req->type);
+
+#if ENABLE_AIO
+    {
+        int res = 0;
+        switch (req->type) {
+        case AsyncReqSeekRead:
+        case AsyncReqSeekWrite:
+            memset(&req->u.fio.aio, 0, sizeof(req->u.fio.aio));
+            req->u.fio.aio.aio_fildes = req->u.fio.fd;
+            req->u.fio.aio.aio_offset = req->u.fio.offset;
+            req->u.fio.aio.aio_buf = req->u.fio.bufp;
+            req->u.fio.aio.aio_nbytes = req->u.fio.bufsz;
+            req->u.fio.aio.aio_sigevent.sigev_notify = SIGEV_THREAD;
+            req->u.fio.aio.aio_sigevent.sigev_notify_function = aio_done;
+            req->u.fio.aio.aio_sigevent.sigev_value.sival_ptr = req;
+            res = req->type == AsyncReqSeekWrite ?
+                aio_write(&req->u.fio.aio) :
+                aio_read(&req->u.fio.aio);
+            if (res < 0) {
+                req->u.fio.rval = -1;
+                req->error = errno;
+                post_event(req->done, req);
+            }
+            return;
+        }
+    }
+#endif
     check_error(pthread_mutex_lock(&wtlock));
     if (list_is_empty(&wtlist)) {
         int error;

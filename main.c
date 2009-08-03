@@ -210,7 +210,7 @@ int main(int argc, char ** argv) {
 
 #if ENABLE_Plugins
     plugins_destroy();
-#endif // ENABLE_Plugins
+#endif /* ENABLE_Plugins */
 
     return 0;
 }

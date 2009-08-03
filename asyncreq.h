@@ -19,12 +19,17 @@
 #ifndef D_asyncreq
 #define D_asyncreq
 
+#if ENABLE_AIO
+#  include <aio.h>
+#endif
 #include "link.h"
 #include "events.h"
 
 enum {
     AsyncReqRead,                       /* File read */
     AsyncReqWrite,                      /* File write */
+    AsyncReqSeekRead,                   /* File seek and read */
+    AsyncReqSeekWrite,                  /* File seek and write */
     AsyncReqRecv,                       /* Socket recv */
     AsyncReqSend,                       /* Socket send */
     AsyncReqRecvFrom,                   /* Socket recvfrom */
@@ -45,11 +50,17 @@ struct AsyncReqInfo {
         struct {
             /* In */
             int fd;
+            off_t offset;
             void * bufp;
             size_t bufsz;
 
             /* Out */
-            int rval;
+            ssize_t rval;
+
+#if ENABLE_AIO
+            /* Private */
+            struct aiocb aio;
+#endif
         } fio;
         struct {
             /* In */
@@ -65,7 +76,7 @@ struct AsyncReqInfo {
 #endif
 
             /* Out */
-            int rval;
+            ssize_t rval;
         } sio;
         struct {
             /* In */
@@ -111,10 +122,6 @@ struct AsyncReqInfo {
         } select;
     } u;
     int error;                  /* Readable by callback function */
-
-    /* Private - the following members should only be used by the
-     * asyncreq implementation */
-    LINK reqlink;               /* List of pending requests */
 };
 
 void async_req_post(AsyncReqInfo * req);
