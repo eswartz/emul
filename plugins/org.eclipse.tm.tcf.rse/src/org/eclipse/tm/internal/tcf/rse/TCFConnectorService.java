@@ -8,7 +8,8 @@
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *     Martin Oberhuber (Wind River) - [269682] Get port from RSE Property
- *     Uwe Stieber (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
+ *     Uwe Stieber      (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
+ *     Anna Dushistova  (MontaVista) - [285373] TCFConnectorService should send CommunicationsEvent.BEFORE_CONNECT and CommunicationsEvent.BEFORE_DISCONNECT
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse;
 
@@ -46,6 +47,8 @@ public class TCFConnectorService extends BasicConnectorService {
     protected void internalConnect(final IProgressMonitor monitor) throws Exception {
         assert !Protocol.isDispatchThread();
         final Exception[] res = new Exception[1];
+        // Fire comm event to signal state about to change
+        fireCommunicationsEvent(CommunicationsEvent.BEFORE_CONNECT);
         monitor.beginTask("Connecting " + getHostName(), 1); //$NON-NLS-1$
         synchronized (res) {
             Protocol.invokeLater(new Runnable() {
@@ -63,6 +66,8 @@ public class TCFConnectorService extends BasicConnectorService {
     protected void internalDisconnect(final IProgressMonitor monitor) throws Exception {
         assert !Protocol.isDispatchThread();
         final Exception[] res = new Exception[1];
+        // Fire comm event to signal state about to change
+        fireCommunicationsEvent(CommunicationsEvent.BEFORE_DISCONNECT);
         monitor.beginTask("Disconnecting " + getHostName(), 1); //$NON-NLS-1$
         synchronized (res) {
             Protocol.invokeLater(new Runnable() {
