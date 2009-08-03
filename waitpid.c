@@ -26,6 +26,7 @@
 #include "myalloc.h"
 #include "events.h"
 #include "trace.h"
+#include "asyncreq.h"
 #include "waitpid.h"
 
 typedef struct WaitPIDListenerInfo {
@@ -164,99 +165,84 @@ void add_waitpid_process(int pid) {
 
 #include <sys/wait.h>
 
-typedef struct EventInfo {
-    int pid;
-    int exited;
-    int exit_code;
-    int signal;
-    int event_code;
-    int syscall;
-} EventInfo;
+static unsigned long waitpid_poll_period = 100000;
+static AsyncReqInfo req;
+static int posted = 0;
 
-static int waitpid_poll_rate;
-static pthread_mutex_t waitpid_lock;
-static pthread_cond_t waitpid_cond;
-static pthread_t waitpid_thread;
-
-static void waitpid_event(void * args) {
-    int i;
-    EventInfo * info = (EventInfo *)args;
-    for (i = 0; i < listener_cnt; i++) {
-        listeners[i].listener(info->pid, info->exited, info->exit_code, info->signal, info->event_code, info->syscall, listeners[i].args);
-    }
-    loc_free(info);
-}
-
-static void * wpid_handler(void * x) {
-    for (;;) {
-        pid_t pid;
-        int err;
-        int status;
-        EventInfo * info;
-        /* TODO: use AsyncReqWaitpid instead of calling waitpid() directly */
+static void waitpid_post(void) {
+    assert(!posted);
+    req.error = 0;
+    req.u.wpid.pid = -1;
+    req.u.wpid.status = 0;
 #if defined(__APPLE__)
-        pid = waitpid(-1, &status, 0);
+    req.u.wpid.options = 0;
 #else
-        pid = waitpid(-1, &status, __WALL);
+    req.u.wpid.options = __WALL;
 #endif
-        if (pid == (pid_t)-1) {
-            if (errno == ECHILD) {
-                struct timespec timeout;
-                check_error(pthread_mutex_lock(&waitpid_lock));
-                if (waitpid_poll_rate < 60 * 1000) {
-                    waitpid_poll_rate = (waitpid_poll_rate * 3 + 1)/2;
-                }
-                clock_gettime(CLOCK_REALTIME, &timeout);
-                timeout.tv_sec += waitpid_poll_rate / 1000;
-                timeout.tv_nsec += (waitpid_poll_rate % 1000) * 1000 * 1000;
-                if (timeout.tv_nsec >= 1000 * 1000 * 1000) {
-                    timeout.tv_nsec -= 1000 * 1000 * 1000;
-                    timeout.tv_sec++;
-                }
-                err = pthread_cond_timedwait(&waitpid_cond, &waitpid_lock, &timeout);
-                if (err != ETIMEDOUT) check_error(err);
-                check_error(pthread_mutex_unlock(&waitpid_lock));
-                continue;
-            }
-            check_error(errno);
-        }
-        trace(LOG_WAITPID, "waitpid: pid %d status %#x", pid, status);
-        info = loc_alloc_zero(sizeof(EventInfo));
-        info->pid = pid;
-        if (WIFEXITED(status) || WIFSIGNALED(status)) {
-            info->exited = 1;
-            if (WIFEXITED(status)) info->exit_code = WEXITSTATUS(status);
-            else info->signal = WTERMSIG(status);
-            post_event(waitpid_event, info);
-        }
-        else if (WIFSTOPPED(status)) {
-            info->signal = WSTOPSIG(status) & 0x7f;
-            info->syscall = (WSTOPSIG(status) & 0x80) != 0;
-            info->event_code = status >> 16;
-            post_event(waitpid_event, info);
-        }
-        else {
-            trace(LOG_ALWAYS, "unexpected status (0x%x) from waitpid (pid %d)", status, pid);
-            loc_free(info);
-        }
-    }
-    return NULL;
+    posted = 1;
+    async_req_post(&req);
 }
 
-static void init(void) {
-    waitpid_poll_rate = 1;
-    check_error(pthread_mutex_init(&waitpid_lock, NULL));
-    check_error(pthread_cond_init(&waitpid_cond, NULL));
-    check_error(pthread_create(&waitpid_thread, &pthread_create_attr, wpid_handler, NULL));
+static void waitpid_poll_event(void * arg) {
+    if (!posted) waitpid_post();
+}
+
+static void waitpid_done(void * arg) {
+    int i;
+    pid_t pid = req.u.wpid.rval;
+    int status = req.u.wpid.status;
+    int error = req.error;
+
+    assert(arg == &req);
+    assert(posted);
+    posted = 0;
+
+    if (pid == (pid_t)-1) {
+        if (error == ECHILD) {
+            post_event_with_delay(waitpid_poll_event, NULL, waitpid_poll_period);
+            if (waitpid_poll_period < 30 * 1000000) waitpid_poll_period *= 2;
+            return;
+        }
+        check_error(error);
+    }
+
+    trace(LOG_WAITPID, "waitpid: pid %d status %#x", pid, status);
+    if (WIFEXITED(status)) {
+        for (i = 0; i < listener_cnt; i++) {
+            listeners[i].listener(pid, 1, WEXITSTATUS(status), 0, 0, 0, listeners[i].args);
+        }
+    }
+    else if (WIFSIGNALED(status)) {
+        for (i = 0; i < listener_cnt; i++) {
+            listeners[i].listener(pid, 1, 0, WTERMSIG(status), 0, 0, listeners[i].args);
+        }
+    }
+    else if (WIFSTOPPED(status)) {
+        for (i = 0; i < listener_cnt; i++) {
+            listeners[i].listener(pid, 0, 0, WSTOPSIG(status) & 0x7f, status >> 16, (WSTOPSIG(status) & 0x80) != 0, listeners[i].args);
+        }
+    }
+    else {
+        trace(LOG_ALWAYS, "unexpected status (0x%x) from waitpid (pid %d)", status, pid);
+    }
+    waitpid_post();
 }
 
 void add_waitpid_process(int pid) {
     assert(listener_cnt > 0);
-    check_error(pthread_mutex_lock(&waitpid_lock));
     trace(LOG_WAITPID, "waitpid: poll rate reset");
-    waitpid_poll_rate = 1;
-    check_error(pthread_cond_signal(&waitpid_cond));
-    check_error(pthread_mutex_unlock(&waitpid_lock));
+    waitpid_poll_period = 100000;
+    if (!posted) waitpid_post();
+}
+
+static void init(void) {
+    memset(&req, 0, sizeof(req));
+    req.done = waitpid_done;
+    req.client_data = NULL;
+    req.type = AsyncReqWaitpid;
+    posted = 0;
+    waitpid_poll_period = 100000;
+    waitpid_post();
 }
 
 #endif
