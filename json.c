@@ -672,15 +672,19 @@ void json_write_binary(OutputStream * out, const char * data, size_t size) {
 }
 
 void json_splice_binary(OutputStream * out, int fd, size_t size) {
+    json_splice_binary_offset(out, fd, size, NULL);
+}
+
+void json_splice_binary_offset(OutputStream * out, int fd, size_t size, off_t * offset) {
     if (out->supports_zero_copy && size > 0) {
         write_stream(out, '(');
         json_write_ulong(out, size);
         write_stream(out, ')');
         while (size > 0) {
-            int ret = splice_block_stream(out, fd, size);
-            if (ret < 0) exception(errno);
-            if (ret == 0) exception(ERR_EOF);
-            size -= ret;
+            ssize_t rd = splice_block_stream(out, fd, size, offset);
+            if (rd < 0) exception(errno);
+            if (rd == 0) exception(ERR_EOF);
+            size -= rd;
         }
     }
     else {
@@ -689,11 +693,18 @@ void json_splice_binary(OutputStream * out, int fd, size_t size) {
         json_write_binary_start(&state, out, size);
         
         while (size > 0) {
-            int ret = read(fd, buffer, size < sizeof(buffer) ? size : sizeof(buffer));
-            if (ret < 0) exception(errno);
-            if (ret == 0) exception(ERR_EOF);
-            json_write_binary_data(&state, buffer, ret);
-            size -= ret;
+            ssize_t rd = 0;
+            if (offset != NULL) {
+                rd = pread(fd, buffer, size < sizeof(buffer) ? size : sizeof(buffer), *offset);
+                if (rd > 0) *offset += rd;
+            }
+            else {
+                rd = read(fd, buffer, size < sizeof(buffer) ? size : sizeof(buffer));
+            }
+            if (rd < 0) exception(errno);
+            if (rd == 0) exception(ERR_EOF);
+            json_write_binary_data(&state, buffer, rd);
+            size -= rd;
         }
         json_write_binary_end(&state);
     }

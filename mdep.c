@@ -524,7 +524,28 @@ int getgid(void) {
 int getegid(void) {
     return 0;
 }
-#endif
+
+ssize_t pread(int fd, const void * buf, size_t size, off_t offset) {
+    off_t offs0;
+    ssize_t rd;
+    if ((offs0 = lseek(fd, 0, SEEK_CUR)) == (off_t)-1) return -1;
+    if (lseek(fd, offset, SEEK_SET) == (off_t)-1) return -1;
+    rd = read(fd, (void *)buf, size);
+    if (lseek(fd, offs0, SEEK_SET) == (off_t)-1) return -1;
+    return rd;
+}
+
+ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset) {
+    off_t offs0;
+    ssize_t wr;
+    if ((offs0 = lseek(fd, 0, SEEK_CUR)) == (off_t)-1) return -1;
+    if (lseek(fd, offset, SEEK_SET) == (off_t)-1) return -1;
+    wr = write(fd, (void *)buf, size);
+    if (lseek(fd, offs0, SEEK_SET) == (off_t)-1) return -1;
+    return wr;
+}
+
+#endif /* defined(_MSC_VER) || defined(__MINGW32__) */
 
 #if defined(_MSC_VER)
 DIR * opendir(const char *path) {
@@ -570,8 +591,8 @@ int closedir(DIR * d) {
     loc_free(d);
     return r;
 }
-#endif /* defined(_MSC_VER) */
 
+#endif /* defined(_MSC_VER) */
 
 #if defined(WIN32)
 

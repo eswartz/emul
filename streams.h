@@ -34,7 +34,7 @@ struct OutputStream {
     int supports_zero_copy; /* Stream supports block (zero copy) write */
     void (*write)(OutputStream * stream, int byte);
     void (*write_block)(OutputStream * stream, const char * bytes, size_t size);
-    int (*splice_block)(OutputStream * stream, int fd, size_t size);
+    int (*splice_block)(OutputStream * stream, int fd, size_t size, off_t * offset);
     void (*flush)(OutputStream * stream);
 };
 
@@ -52,7 +52,7 @@ struct InputStream {
 
 #define write_stream(out, b) (out)->write((out), (b))
 #define write_block_stream(out, b, size) (out)->write_block((out), (b), (size))
-#define splice_block_stream(out, fd, size) (out)->splice_block((out), (fd), (size))
+#define splice_block_stream(out, fd, size, offset) (out)->splice_block((out), (fd), (size), (offset))
 #define flush_stream(out) (out)->flush((out))
 
 extern int (read_stream)(InputStream * inp);

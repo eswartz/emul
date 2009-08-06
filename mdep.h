@@ -126,6 +126,7 @@ typedef int clockid_t;
 extern int clock_gettime(clockid_t clock_id, struct timespec * tp);
 extern void usleep(useconds_t useconds);
 
+#define off_t __int64
 #define lseek _lseeki64
 typedef struct _stati64 struct_stat;
 #define stat _stati64
@@ -145,6 +146,9 @@ extern int geteuid(void);
 extern int getgid(void);
 extern int getegid(void);
 
+extern ssize_t pread(int fd, const void * buf, size_t size, off_t offset);
+extern ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset);
+
 #endif /* __CYGWIN__ */
 
 #define MSG_MORE 0
@@ -152,10 +156,10 @@ extern int getegid(void);
 extern const char * inet_ntop(int af, const void * src, char * dst, socklen_t size);
 extern int inet_pton(int af, const char * src, void * dst);
 
+#if defined(_MSC_VER)
 /*
  * readdir() emulation
  */
-#if !defined(__GNUC__)
 struct DIR {
   long hdl;
   struct _finddatai64_t blk;
@@ -175,7 +179,8 @@ typedef struct DIR DIR;
 extern DIR * opendir(const char * path);
 extern int closedir(DIR * dir);
 extern struct dirent * readdir(DIR * dir);
-#endif /* !__GNUC__ */
+
+#endif /* _MSC_VER */
 
 /*
  * PThreads emulation.

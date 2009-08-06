@@ -64,33 +64,19 @@ static void * worker_thread_handler(void * x) {
             }
             break;
 
-        case AsyncReqSeekRead:              /* File seek and read */
-            if (lseek(req->u.fio.fd, req->u.fio.offset, SEEK_SET) == (off_t)-1) {
-                req->u.fio.rval = -1;
+        case AsyncReqSeekRead:              /* File read at offset */
+            req->u.fio.rval = pread(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz, req->u.fio.offset);
+            if (req->u.fio.rval == -1) {
                 req->error = errno;
                 assert(req->error);
-            }
-            else {
-                req->u.fio.rval = read(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz);
-                if (req->u.fio.rval == -1) {
-                    req->error = errno;
-                    assert(req->error);
-                }
             }
             break;
 
-        case AsyncReqSeekWrite:             /* File seek and write */
-            if (lseek(req->u.fio.fd, req->u.fio.offset, SEEK_SET) == (off_t)-1) {
-                req->u.fio.rval = -1;
+        case AsyncReqSeekWrite:             /* File write at offset */
+            req->u.fio.rval = pwrite(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz, req->u.fio.offset);
+            if (req->u.fio.rval == -1) {
                 req->error = errno;
                 assert(req->error);
-            }
-            else {
-                req->u.fio.rval = write(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz);
-                if (req->u.fio.rval == -1) {
-                    req->error = errno;
-                    assert(req->error);
-                }
             }
             break;
 

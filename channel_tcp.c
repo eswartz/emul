@@ -338,14 +338,14 @@ static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_
     while (cnt < size) tcp_write_stream(out, (unsigned char)bytes[cnt++]);
 }
 
-static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size) {
+static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_t * offset) {
     assert(is_dispatch_thread());
     if (size == 0) return 0;
 #if ENABLE_Splice
     {
         ChannelTCP * c = channel2tcp(out2channel(out));
         if (!c->ssl && out->supports_zero_copy) {
-            int rd = splice(fd, NULL, c->pipefd[1], NULL, size, SPLICE_F_MOVE);
+            int rd = splice(fd, offset, c->pipefd[1], NULL, size, SPLICE_F_MOVE);
             if (rd > 0) {
                 /* Send the binary data escape seq */
                 int n = rd;
@@ -383,8 +383,16 @@ static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size) {
     }
 #endif /* ENABLE_Splice */
     {
+        int rd = 0;
         char buffer[BUF_SIZE];
-        int rd = read(fd, buffer, size < BUF_SIZE ? size : BUF_SIZE);
+        if (size > BUF_SIZE) size = BUF_SIZE;
+        if (offset != NULL) {
+            rd = pread(fd, buffer, size, *offset);
+            if (rd > 0) *offset += rd;
+        }
+        else {
+            rd = read(fd, buffer, size);
+        }
         if (rd > 0) tcp_write_block_stream(out, buffer, rd);
         return rd;
     }
