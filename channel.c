@@ -49,7 +49,7 @@ static void flush_all(OutputStream * out) {
     assert(bcg->magic == BCAST_MAGIC);
     while (l != &bcg->channels) {
         Channel * c = bclink2channel(l);
-        c->out.flush(&c->out);
+        if (c->hello_received) c->out.flush(&c->out);
         l = l->next;
     }
 }
@@ -62,9 +62,41 @@ static void write_all(OutputStream * out, int byte) {
     assert(bcg->magic == BCAST_MAGIC);
     while (l != &bcg->channels) {
         Channel * c = bclink2channel(l);
-        c->out.write(&c->out, byte);
+        if (c->hello_received) c->out.write(&c->out, byte);
         l = l->next;
     }
+}
+
+static void write_block_all(OutputStream * out, const char * bytes, size_t size) {
+    TCFBroadcastGroup * bcg = out2bcast(out);
+    LINK * l = bcg->channels.next;
+
+    assert(is_dispatch_thread());
+    assert(bcg->magic == BCAST_MAGIC);
+    while (l != &bcg->channels) {
+        Channel * c = bclink2channel(l);
+        if (c->hello_received) c->out.write_block(&c->out, bytes, size);
+        l = l->next;
+    }
+}
+
+static int splice_block_all(OutputStream * out, int fd, size_t size, off_t * offset) {
+    TCFBroadcastGroup * bcg = out2bcast(out);
+    char buffer[0x400];
+    int rd = 0;
+
+    assert(is_dispatch_thread());
+    assert(bcg->magic == BCAST_MAGIC);
+    if (size > sizeof(buffer)) size = sizeof(buffer);
+    if (offset != NULL) {
+        rd = pread(fd, buffer, size, *offset);
+        if (rd > 0) *offset += rd;
+    }
+    else {
+        rd = read(fd, buffer, size);
+    }
+    if (rd > 0) write_block_all(out, buffer, rd);
+    return rd;
 }
 
 void channels_suspend(TCFSuspendGroup * p) {
@@ -155,12 +187,14 @@ void channel_clear_suspend_group(Channel * c) {
 }
 
 TCFBroadcastGroup * broadcast_group_alloc(void) {
-    TCFBroadcastGroup * p = loc_alloc(sizeof(TCFBroadcastGroup));
+    TCFBroadcastGroup * p = loc_alloc_zero(sizeof(TCFBroadcastGroup));
 
     list_init(&p->channels);
     p->magic = BCAST_MAGIC;
     p->out.write = write_all;
     p->out.flush = flush_all;
+    p->out.write_block = write_block_all;
+    p->out.splice_block = splice_block_all;
     return p;
 }
 
