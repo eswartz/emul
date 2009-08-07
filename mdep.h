@@ -91,8 +91,6 @@ extern unsigned char BREAK_INST[];  /* breakpoint instruction */
 
 #include <sys/unistd.h>
 
-typedef struct stat struct_stat;
-
 extern void __stdcall freeaddrinfo(struct addrinfo *);
 extern int __stdcall getaddrinfo(const char *, const char *,
                 const struct addrinfo *, struct addrinfo **);
@@ -128,15 +126,14 @@ extern void usleep(useconds_t useconds);
 
 #define off_t __int64
 #define lseek _lseeki64
-typedef struct _stati64 struct_stat;
-#define stat _stati64
+#define stat  _stati64
 #define lstat _stati64
 #define fstat _fstati64
 extern int truncate(const char * path, int64_t size);
 extern int ftruncate(int f, int64_t size);
 #define utimbuf _utimbuf
-#define utime _utime
-#define futime _futime
+#define utime   _utime
+#define futime  _futime
 #define snprintf _snprintf
 
 #define loc_gai_strerror gai_strerror
@@ -277,7 +274,6 @@ typedef unsigned long useconds_t;
 #define O_BINARY 0
 #define O_LARGEFILE 0
 #define lstat stat
-typedef struct stat struct_stat;
 #define ifr_netmask ifr_addr
 #define SA_LEN(addr) ((addr)->sa_len)
 #define MSG_MORE 0
@@ -335,8 +331,6 @@ typedef x86_thread_state32_t REG_SET;
 #define closesocket close
 #define ifr_netmask ifr_addr
 #define canonicalize_file_name(path)    realpath(path, NULL)
-
-typedef struct stat struct_stat;
 
 #define get_regs_SP(x) ((x).__esp)
 #define get_regs_BP(x) ((x).__ebp)
@@ -432,8 +426,6 @@ extern int tkill(pid_t pid, int signal);
 #define FILE_PATH_SIZE PATH_MAX
 
 #define closesocket close
-
-typedef struct stat struct_stat;
 
 extern unsigned char BREAK_INST[];  /* breakpoint instruction */
 #define BREAK_SIZE get_break_size() /* breakpoint instruction size */

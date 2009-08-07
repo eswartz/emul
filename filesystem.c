@@ -246,7 +246,7 @@ static void write_file_handle(OutputStream * out, OpenFileInfo * h) {
     write_stream(out, 0);
 }
 
-static void fill_attrs(FileAttrs * attrs, struct_stat * buf) {
+static void fill_attrs(FileAttrs * attrs, struct stat * buf) {
     memset(attrs, 0, sizeof(FileAttrs));
     attrs->flags |= ATTR_SIZE | ATTR_UIDGID | ATTR_PERMISSIONS | ATTR_ACMODTIME;
     attrs->size = buf->st_size;
@@ -429,7 +429,7 @@ static void reply_write(char * token, OutputStream * out, int err) {
     write_stream(out, MARKER_EOM);
 }
 
-static void reply_stat(char * token, OutputStream * out, int err, struct_stat * buf) {
+static void reply_stat(char * token, OutputStream * out, int err, struct stat * buf) {
     FileAttrs attrs;
 
     if (err == 0) fill_attrs(&attrs, buf);
@@ -538,7 +538,7 @@ static void post_io_requst(OpenFileInfo * handle) {
         case REQ_FSTAT:
             {
                 int err = 0;
-                struct_stat buf;
+                struct stat buf;
                 memset(&buf, 0, sizeof(buf));
                 if (fstat(handle->file, &buf) < 0) err = errno;
                 reply_stat(req->token, handle->out, err, &buf);
@@ -711,7 +711,7 @@ static void command_write(char * token, Channel * c) {
 
 static void command_stat(char * token, Channel * c) {
     char path[FILE_PATH_SIZE];
-    struct_stat buf;
+    struct stat buf;
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
@@ -726,7 +726,7 @@ static void command_stat(char * token, Channel * c) {
 
 static void command_lstat(char * token, Channel * c) {
     char path[FILE_PATH_SIZE];
-    struct_stat buf;
+    struct stat buf;
     int err = 0;
 
     read_path(&c->inp, path, sizeof(path));
@@ -862,7 +862,7 @@ static void command_readdir(char * token, Channel * c) {
         while (cnt < 64) {
             struct dirent * e;
             char path[FILE_PATH_SIZE];
-            struct_stat st;
+            struct stat st;
             FileAttrs attrs;
             errno = 0;
             e = readdir(h->dir);
@@ -1052,7 +1052,7 @@ static void command_copy(char * token, Channel * c) {
     char dst[FILE_PATH_SIZE];
     int copy_uidgid;
     int copy_perms;
-    struct_stat st;
+    struct stat st;
     int fi = -1;
     int fo = -1;
     int err = 0;
@@ -1132,7 +1132,7 @@ static void command_user(char * token, Channel * c) {
 }
 
 static void command_roots(char * token, Channel * c) {
-    struct_stat st;
+    struct stat st;
     int err = 0;
 
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);

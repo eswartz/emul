@@ -1035,7 +1035,7 @@ void generate_ssl_certificate(void) {
     ASN1_INTEGER * serial = NULL;
     X509_NAME * name = NULL;
     int err = 0;
-    struct_stat st;
+    struct stat st;
     FILE * fp;
 
     ini_ssl();

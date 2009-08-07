@@ -122,7 +122,7 @@ static void swap_bytes(void * buf, size_t size) {
 
 ELF_File * elf_open(char * file_name) {
     int error = 0;
-    struct_stat st;
+    struct stat st;
     ELF_File * prev = NULL;
     ELF_File * file = files;
     unsigned str_index = 0;

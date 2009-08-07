@@ -237,7 +237,7 @@ static void command_get_context(char * token, Channel * c) {
         if (TASK_ID_VERIFY(pid) == ERROR) err = ERR_INV_CONTEXT;
 #elif defined(__APPLE__)
 #else
-        struct_stat st;
+        struct stat st;
         char dir[FILE_PATH_SIZE];
         snprintf(dir, sizeof(dir), "/proc/%d", pid);
         if (lstat(dir, &st) < 0) err = errno;

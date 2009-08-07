@@ -1070,7 +1070,7 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
 
         f = open("stat", O_RDONLY);
         if (f >= 0) {
-            struct_stat st;
+            struct stat st;
             if (fstat(f, &st) == 0) {
                 struct passwd * pwd;
                 struct group * grp;
@@ -1440,7 +1440,7 @@ static void command_get_context(char * token, Channel * c) {
 
     pid = id2pid(id, &parent);
     if (pid != 0) {
-        struct_stat st;
+        struct stat st;
         if (parent != 0) {
             snprintf(dir, sizeof(dir), "/proc/%d/task/%d", parent, pid);
         }
@@ -1532,7 +1532,7 @@ static void command_get_command_line(char * token, Channel * c) {
 
     pid = id2pid(id, &parent);
     if (pid != 0 && parent == 0) {
-        struct_stat st;
+        struct stat st;
         snprintf(dir, sizeof(dir), "/proc/%d", pid);
         if (lstat(dir, &st) < 0) err = errno;
         else if (!S_ISDIR(st.st_mode)) err = ERR_INV_CONTEXT;
@@ -1575,7 +1575,7 @@ static void command_get_environment(char * token, Channel * c) {
 
     pid = id2pid(id, &parent);
     if (pid != 0 && parent == 0) {
-        struct_stat st;
+        struct stat st;
         snprintf(dir, sizeof(dir), "/proc/%d", pid);
         if (lstat(dir, &st) < 0) err = errno;
         else if (!S_ISDIR(st.st_mode)) err = ERR_INV_CONTEXT;
