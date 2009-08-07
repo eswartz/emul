@@ -444,7 +444,7 @@ static void udp_send_empty_packet(struct sockaddr_in * addr) {
             dst_addr = addr;
         }
 
-        trace(LOG_DISCOVERY, "ACK_SLAVES to %s:%d",
+        trace(LOG_DISCOVERY, "ACK_SLAVES (empty) to %s:%d",
             inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port));
 
         buf[i++] = 'T';
@@ -511,8 +511,8 @@ static void udp_send_ack_slaves_one(SlaveInfo * s) {
             SlaveInfo * s = slave_info + n++;
             if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) continue;
             if (s->last_req_slaves_time + PEER_DATA_RETENTION_PERIOD < timenow) continue;
-            trace(LOG_DISCOVERY, "ACK_SLAVES to %s:%d",
-                inet_ntoa(s->addr.sin_addr), ntohs(s->addr.sin_port));
+            trace(LOG_DISCOVERY, "ACK_SLAVES (%s) to %s:%d",
+                str, inet_ntoa(s->addr.sin_addr), ntohs(s->addr.sin_port));
             if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)&s->addr, sizeof(struct sockaddr_in)) < 0) {
                 trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
                       inet_ntoa(s->addr.sin_addr), ntohs(s->addr.sin_port), errno_to_str(errno));
@@ -547,9 +547,9 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr) {
             if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) continue;
             snprintf(str, sizeof(str), "%lld:%u:%s", (long long)s->last_packet_time,
                 ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
+            trace(LOG_DISCOVERY, "ACK_SLAVES (%s) to %s:%d",
+                str, inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
             if (i + strlen(str) >= PREF_PACKET_SIZE) {
-                trace(LOG_DISCOVERY, "ACK_SLAVES to %s:%d",
-                    inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
                 if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0) {
                     trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
                           inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno_to_str(errno));
@@ -561,8 +561,6 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr) {
         }
 
         if (i > 8) {
-            trace(LOG_DISCOVERY, "ACK_SLAVES to %s:%d",
-                inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
             if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0) {
                 trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
                       inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno_to_str(errno));
@@ -704,14 +702,13 @@ static void udp_receive_req_slaves(void) {
 static void udp_receive_ack_slaves(void) {
     int pos = 8;
     int len = recvreq.u.sio.rval;
-    trace(LOG_DISCOVERY, "ACK_SLAVES from %s:%d",
-        inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
     while (pos < len) {
         struct sockaddr_in addr;
         time_t timestamp;
         if (get_slave_addr(recvreq_buf, &pos, &addr, &timestamp)) {
-            trace(LOG_DISCOVERY, "  Slave at %s:%d",
-                inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+            trace(LOG_DISCOVERY, "ACK_SLAVES (%lld:%u:%s) from %s:%d",
+                (long long)timestamp, ntohs(addr.sin_port), inet_ntoa(addr.sin_addr),
+                inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
             add_slave(&addr, timestamp);
         }
     }
