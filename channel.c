@@ -81,12 +81,10 @@ static void write_block_all(OutputStream * out, const char * bytes, size_t size)
 }
 
 static int splice_block_all(OutputStream * out, int fd, size_t size, off_t * offset) {
-    TCFBroadcastGroup * bcg = out2bcast(out);
     char buffer[0x400];
     int rd = 0;
 
     assert(is_dispatch_thread());
-    assert(bcg->magic == BCAST_MAGIC);
     if (size > sizeof(buffer)) size = sizeof(buffer);
     if (offset != NULL) {
         rd = pread(fd, buffer, size, *offset);
