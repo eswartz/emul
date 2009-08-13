@@ -12,6 +12,8 @@
  *
  * Contributors:
  *     Philippe Proulx - initial plugins system
+ *     Michael Sills-Lavoie - deterministic plugins loading order
+ *     Michael Sills-Lavoie - plugin's shared functions
  *******************************************************************************/
 
 /*
@@ -28,48 +30,69 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <dlfcn.h>
+#include <errno.h>
 
 #include "trace.h"
+#include "myalloc.h"
 #include "plugins.h"
 
 static void ** plugins_handles = NULL;
 static size_t plugins_count = 0;
+static struct function_entry {
+    char * name;
+    void * function;
+} * function_entries = NULL;
+static size_t function_entry_count = 0;
 
 static inline int plugins_ext_is(const char * ext, const char * filename) {
     const char * real_ext = strrchr(filename, '.');
     return real_ext != NULL && !strcmp(real_ext + 1, ext);
 }
 
-int plugins_load(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
-    int ret = 0;
-    struct dirent * dirent;
-    DIR * dir;
+static int plugins_filter(const struct dirent * dirent) {
+    if (!strcmp(dirent->d_name, ".") || !strcmp(dirent->d_name, ".."))
+        return 0;
+    if (!plugins_ext_is(PLUGINS_DEF_EXT, dirent->d_name) || dirent->d_type == DT_DIR)
+        return 0;
+    return 1;
+}
 
-    dir = opendir(QUOTE(PATH_Plugins));
-    if (!dir) {
+static int plugins_ralphasort(const void *a, const void *b) {
+    return -alphasort(a,b);
+}
+
+int plugins_load(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
+    struct dirent ** files;
+    int file_count;
+    int ret = 0;
+
+    file_count = scandir(QUOTE(PATH_Plugins), &files, plugins_filter, plugins_ralphasort);
+    if (file_count < 0) {
         trace(LOG_ALWAYS, "plugins error: failed opening plugins directory \"" QUOTE(PATH_Plugins) "\"");
         return -1;
     }
-    while (dirent = readdir(dir)) {
+
+    while (file_count--) {
         char * cur_plugin_path = NULL;
-        if (!strcmp(dirent->d_name, ".") || !strcmp(dirent->d_name, "..")) {
-            continue;
-        }
-        if (!plugins_ext_is(PLUGINS_DEF_EXT, dirent->d_name) || dirent->d_type == DT_DIR) {
-            continue;
-        }
-        if (asprintf(&cur_plugin_path, QUOTE(PATH_Plugins) "/%s", dirent->d_name) == -1) {
-            trace(LOG_ALWAYS, "plugins error: `asprintf' failed for plugin \"%s\"", dirent->d_name);
-            return -1;
+
+        if (asprintf(&cur_plugin_path, QUOTE(PATH_Plugins) "/%s", files[file_count]->d_name) == -1) {
+            trace(LOG_ALWAYS, "plugins error: `asprintf' failed for plugin \"%s\"", files[file_count]->d_name);
+            ret = -1;
+            goto delete_cur_entry;
         }
         if (plugin_init(cur_plugin_path, proto, bcg, spg)) {
             trace(LOG_ALWAYS, "plugins error: unable to start plugin \"%s\"", cur_plugin_path);
             ret = -1;
             /* Continue to load the rest of plugins */
         }
+
+        /* cur_plugin_path and files were allocated by asprintf() and scandir(),
+         * and they should be released by free(), don't call loc_free() here. */
         free(cur_plugin_path);
+delete_cur_entry:
+        free(files[file_count]);
     }
-    closedir(dir);
+    free(files);
 
     return ret;
 }
@@ -97,23 +120,56 @@ int plugin_init(const char * name, Protocol * proto, TCFBroadcastGroup * bcg, TC
     init(proto, bcg, spg);
 
     /* Handles table update: */
-    plugins_handles = (void **) realloc(plugins_handles, ++plugins_count * sizeof(void *));
+    plugins_handles = (void **) loc_realloc(plugins_handles,
+            ++plugins_count * sizeof(void *));
     plugins_handles[plugins_count - 1] = handle;
 
     return 0;
 }
 
-int plugins_destroy(void) {
+int plugin_add_function(const char * name, void * function) {
     size_t i;
 
-    if (plugins_handles == NULL) return 0;
+    if (!name || !function) return -EINVAL;
+
+    /* Check if the function name already exists */
+    for (i = 0; i < function_entry_count; ++i)
+        if (!strcmp(name, function_entries[i].name))
+            return -EEXIST;
+
+    function_entries = (struct function_entry *) loc_realloc(function_entries,
+            ++function_entry_count * sizeof(struct function_entry));
+
+    function_entries[function_entry_count-1].function = function;
+    function_entries[function_entry_count-1].name = loc_strdup(name);
+    return 0;
+}
+
+void * plugin_get_function(const char * name) {
+    size_t i;
+
+    if (!name) return NULL;
+
+    for (i = 0; i < function_entry_count; ++i)
+        if (!strcmp(name, function_entries[i].name))
+            return function_entries[i].function;
+
+    return NULL;
+}
+
+int plugins_destroy(void) {
+    size_t i;
 
     for (i = 0; i < plugins_count; ++i) {
         if (dlclose(plugins_handles[i])) {
             trace(LOG_ALWAYS, "plugins error: \"%s\"", dlerror());
         }
     }
-    free(plugins_handles);
+    loc_free(plugins_handles);
+
+    for (i = 0; i < function_entry_count; ++i)
+        loc_free(function_entries[i].name);
+    loc_free(function_entries);
 
     return 0;
 }

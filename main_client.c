@@ -31,8 +31,10 @@
 #include "proxy.h"
 #include "discovery.h"
 #include "cmdline.h"
+#include "plugins.h"
 
 static char * progname;
+static Protocol * proto;
 
 /*
  * main entry point for TCF client
@@ -125,11 +127,18 @@ int main(int argc, char ** argv) {
 #endif
 
     discovery_start();
+
+    proto = protocol_alloc();
+
 #if ENABLE_Cmdline
     if (script_name != NULL) open_script_file(script_name);
-    ini_cmdline_handler(interactive);
+    ini_cmdline_handler(interactive, proto);
 #else
     if (script_name != NULL) fprintf(stderr, "Warning: This version does not support script file as input.\n");
+#endif
+
+#if ENABLE_Plugins
+    plugins_load(proto, NULL, NULL);
 #endif
 
     /* Process events - must run on the initial thread since ptrace()

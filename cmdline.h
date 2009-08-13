@@ -21,9 +21,11 @@
 
 #if ENABLE_Cmdline
 
+#include "protocol.h"
+
 extern void cmdline_suspend(void);
 extern void cmdline_resume(void);
-extern void ini_cmdline_handler(int interactive);
+extern void ini_cmdline_handler(int interactive, Protocol * proto);
 extern void open_script_file(char * script_name);
 
 #else /* ENABLE_Cmdline */

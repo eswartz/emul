@@ -12,6 +12,8 @@
  *
  * Contributors:
  *     Philippe Proulx - initial plugins system
+ *     Michael Sills-Lavoie - deterministic plugins loading order
+ *     Michael Sills-Lavoie - plugin's shared functions
  *******************************************************************************/
 
 /*
@@ -29,7 +31,8 @@
 #define PLUGINS_DEF_EXT     "so"        /* Default plugins' extension */
 
 /*
- * Loads ALL plugins from the directory PATH_Plugins (from `config.h').
+ * Loads ALL plugins from the directory PATH_Plugins (from `config.h') in
+ * alphabetical order.
  */
 int plugins_load(Protocol *, TCFBroadcastGroup *, TCFSuspendGroup *);
 
@@ -37,6 +40,16 @@ int plugins_load(Protocol *, TCFBroadcastGroup *, TCFSuspendGroup *);
  * Initializes a particular plugin according to its path.
  */
 int plugin_init(const char *, Protocol *, TCFBroadcastGroup *, TCFSuspendGroup *);
+
+/*
+ * Add a new public plugin function for the other plugins to see.
+ */
+int plugin_add_function(const char *, void *);
+
+/*
+ * Get a public function from its name.
+ */
+void * plugin_get_function(const char *);
 
 /*
  * Destroys loaded plugins.

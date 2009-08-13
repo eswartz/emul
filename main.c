@@ -182,6 +182,14 @@ int main(int argc, char ** argv) {
     bcg = broadcast_group_alloc();
     spg = suspend_group_alloc();
     proto = protocol_alloc();
+
+    /* The static services must be initialised before the plugins */
+#if ENABLE_Cmdline
+    if (interactive) ini_cmdline_handler(interactive, proto);
+#else
+    if (interactive) fprintf(stderr, "Warning: This version does not support interactive mode.\n");
+#endif
+
     ini_services(proto, bcg, spg);
 
     ps = channel_peer_from_url(url);
@@ -197,12 +205,6 @@ int main(int argc, char ** argv) {
     serv->new_conn = channel_new_connection;
 
     discovery_start();
-
-#if ENABLE_Cmdline
-    if (interactive) ini_cmdline_handler(interactive);
-#else
-    if (interactive) fprintf(stderr, "Warning: This version does not support interactive mode.\n");
-#endif
 
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */

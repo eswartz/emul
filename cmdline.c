@@ -10,6 +10,7 @@
  *  
  * Contributors:
  *     Wind River Systems - initial API and implementation
+ *     Michael Sills-Lavoie - client enhancement system
  *******************************************************************************/
 
 /*
@@ -33,8 +34,16 @@
 #include "protocol.h"
 #include "trace.h"
 #include "channel.h"
+#include "plugins.h"
+
+struct cmd {
+    char * cmd;
+    char * help;
+    int (*hnd)(char *);
+};
 
 static Channel * chan;
+static Protocol * proto;
 static FILE * infile;
 static int interactive_flag;
 static int cmdline_suspended;
@@ -43,6 +52,23 @@ static char * cmdline_string;
 static pthread_mutex_t cmdline_mutex;
 static pthread_cond_t cmdline_signal;
 static pthread_t interactive_thread;
+static struct cmd * cmds = NULL;
+static size_t cmd_count = 0;
+static void (**connect_hnds)(Channel *) = NULL;
+static size_t connect_hnd_count = 0;
+static void (**disconnect_hnds)(Channel *) = NULL;
+static size_t disconnect_hnd_count = 0;
+
+static void destroy_cmdline_handler() {
+    size_t i;
+    for (i = 0; i < cmd_count; ++i) {
+        loc_free(cmds[i].cmd);
+        loc_free(cmds[i].help);
+    }
+    loc_free(cmds);
+    loc_free(connect_hnds);
+    loc_free(disconnect_hnds);
+}
 
 static void channel_connecting(Channel * c) {
     send_hello_message(c->client_data, c);
@@ -57,10 +83,15 @@ static void channel_receive(Channel * c) {
 }
 
 static void channel_disconnected(Channel * c) {
+    size_t i = 0;
     if (chan == c) chan = NULL;
+    protocol_release(proto);
+    for (; i < disconnect_hnd_count; ++i)
+        disconnect_hnds[i](c);
 }
 
 static int cmd_exit(char * s) {
+    destroy_cmdline_handler();
     exit(0);
 }
 
@@ -81,6 +112,11 @@ static void display_tcf_reply(Channel * c, void * client_data, int error) {
         putchar(i);
     }
     putchar('\n');
+
+    /* We flush the stream to be able to connect to the client with pipes
+     * and receive the message when it's displayed */
+    fflush(0);
+
     cmd_done();
 }
 
@@ -136,7 +172,8 @@ static int print_peer_flags(PeerServer * ps) {
                 printf(", ");
             }
             cnt++;
-            printf(flagnames[i].name);
+            /* We add the "s" format string to get rid of a gcc warning */
+            printf("%s", flagnames[i].name);
             flags &= ~flagnames[i].flag;
         }
     }
@@ -188,13 +225,17 @@ static void connect_done(void * args, int error, Channel * c) {
         fprintf(stderr, "Error: Cannot connect: %s\n", errno_to_str(error));
     }
     else {
+        size_t i = 0;
         c->connecting = channel_connecting;
         c->connected = channel_connected;
         c->receive = channel_receive;
         c->disconnected = channel_disconnected;
-        c->client_data = protocol_alloc();
+        protocol_reference(proto);
+        c->client_data = proto;
         channel_start(c);
         chan = c;
+        for (; i < connect_hnd_count; ++i)
+            connect_hnds[i](c);
     }
     peer_server_free(ps);
     cmd_done();
@@ -217,18 +258,7 @@ static void event_cmd_line(void * arg) {
     char * s = (char *)arg;
     int len;
     int delayed = 0;
-    struct {
-        char * cmd;
-        char * help;
-        int (*hnd)(char *);
-    } cmds[] = {
-        { "exit",      "quit the program",          cmd_exit },
-        { "tcf",       "send TCF command",          cmd_tcf },
-        { "peers",     "show list of known peers",  cmd_peers },
-        { "peerinfo",  "show info about a peer",    cmd_peerinfo },
-        { "connect",   "connect a peer",            cmd_connect },
-        { 0 }
-    }, *cp;
+    size_t cp;
 
     if (cmdline_suspended) {
         cmdline_string = s;
@@ -237,20 +267,20 @@ static void event_cmd_line(void * arg) {
 
     while (*s && isspace(*s)) s++;
     if (*s) {
-        for (cp = cmds; cp->cmd != 0; cp++) {
-            len = strlen(cp->cmd);
-            if (strncmp(s, cp->cmd, len) == 0 && (s[len] == 0 || isspace(s[len]))) {
+        for (cp = 0; cp < cmd_count; ++cp) {
+            len = strlen(cmds[cp].cmd);
+            if (strncmp(s, cmds[cp].cmd, len) == 0 && (s[len] == 0 || isspace(s[len]))) {
                 s += len;
                 while (*s && isspace(*s)) s++;
-                delayed = cp->hnd(s);
+                delayed = cmds[cp].hnd(s);
                 break;
             }
         }
-        if (cp->cmd == 0) {
+        if (cp == cmd_count) {
             fprintf(stderr, "Unknown command: %s\n", s);
             fprintf(stderr, "Available commands:\n");
-            for (cp = cmds; cp->cmd != 0; cp++) {
-                fprintf(stderr, "  %-10s - %s\n", cp->cmd, cp->help);
+            for (cp = 0; cp < cmd_count; ++cp) {
+                fprintf(stderr, "  %-10s - %s\n", cmds[cp].cmd, cmds[cp].help);
             }
         }
     }
@@ -322,7 +352,83 @@ void open_script_file(char * script_name) {
     }
 }
 
-void ini_cmdline_handler(int interactive) {
+static int add_cmdline_cmd(const char * cmd_name, const char * cmd_desc,
+        int (*hnd)(char *)) {
+    size_t i;
+    assert(is_dispatch_thread());
+    if (!cmd_name || !cmd_desc || !hnd) return -EINVAL;
+
+    /* Check if the cmd name already exists */
+    for (i = 0; i < cmd_count; ++i)
+        if (!strcmp(cmd_name, cmds[i].cmd))
+            return -EEXIST;
+
+    cmds = (struct cmd *) loc_realloc(cmds, ++cmd_count * sizeof(struct cmd));
+
+    cmds[cmd_count-1].cmd = loc_strdup(cmd_name);
+    cmds[cmd_count-1].help = loc_strdup(cmd_desc);
+    cmds[cmd_count-1].hnd = hnd;
+
+    return 0;
+}
+
+#if ENABLE_Plugins
+static int add_connect_callback(void (*hnd)(Channel *)) {
+    size_t i;
+    assert(is_dispatch_thread());
+    if (!hnd) return -EINVAL;
+
+    /* Check if the handle already exists */
+    for (i = 0; i < connect_hnd_count; ++i)
+        if (hnd == connect_hnds[i])
+            return -EEXIST;
+
+    connect_hnds = loc_realloc(connect_hnds, ++connect_hnd_count * sizeof(void (*)(Channel *)));
+
+    connect_hnds[connect_hnd_count-1] = hnd;
+
+    return 0;
+}
+
+static int add_disconnect_callback(void (*hnd)(Channel *)) {
+    size_t i;
+    assert(is_dispatch_thread());
+    if (!hnd) return -EINVAL;
+
+    /* Check if the handle already exists */
+    for (i = 0; i < disconnect_hnd_count; ++i)
+        if (hnd == disconnect_hnds[i])
+            return -EEXIST;
+
+    disconnect_hnds = loc_realloc(disconnect_hnds, ++disconnect_hnd_count * sizeof(void (*)(Channel *)));
+
+    disconnect_hnds[disconnect_hnd_count-1] = hnd;
+
+    return 0;
+}
+#endif /* ENABLE_Plugins */
+
+void ini_cmdline_handler(int interactive, Protocol * protocol) {
+    proto = protocol;
+
+#if ENABLE_Plugins
+    if (plugin_add_function("Cmdline_add_cmd", (void *)add_cmdline_cmd)) {
+        fprintf(stderr, "Error: Cannot add add_cmd shared function\n");
+    }
+    if (plugin_add_function("Cmdline_add_connect_callback", (void *)add_connect_callback)) {
+        fprintf(stderr, "Error: Cannot add add_connect_callback shared function\n");
+    }
+    if (plugin_add_function("Cmdline_add_disconnect_callback", (void *)add_disconnect_callback)) {
+        fprintf(stderr, "Error: Cannot add add_disconnect_callback shared function\n");
+    }
+#endif
+
+    add_cmdline_cmd("exit",      "quit the program",          cmd_exit);
+    add_cmdline_cmd("tcf",       "send TCF command",          cmd_tcf);
+    add_cmdline_cmd("peers",     "show list of known peers",  cmd_peers);
+    add_cmdline_cmd("peerinfo",  "show info about a peer",    cmd_peerinfo);
+    add_cmdline_cmd("connect",   "connect a peer",            cmd_connect);
+
     interactive_flag = interactive;
     if (infile == NULL) infile = stdin;
     check_error(pthread_mutex_init(&cmdline_mutex, NULL));
