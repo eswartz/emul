@@ -270,15 +270,14 @@ static int create_server_socket(void) {
 static int udp_send_peer_info(PeerServer * ps, void * arg) {
     struct sockaddr_in * addr = arg;
     char * host = NULL;
-    struct in_addr src_addr;
+    struct in_addr peer_addr;
     int n;
 
     if ((ps->flags & PS_FLAG_PRIVATE) != 0) return 0;
-    if ((ps->flags & PS_FLAG_LOCAL) == 0) return 0;
     if ((ps->flags & PS_FLAG_DISCOVERABLE) == 0) return 0;
 
     host = peer_server_getprop(ps, "Host", NULL);
-    if (host == NULL || inet_pton(AF_INET, host, &src_addr) <= 0) return 0;
+    if (host == NULL || inet_pton(AF_INET, host, &peer_addr) <= 0) return 0;
     if (peer_server_getprop(ps, "Port", NULL) == NULL) return 0;
 
     for (n = 0; n < ifc_cnt; n++) {
@@ -291,13 +290,22 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
         char buf[MAX_PACKET_SIZE];
         ip_ifc_info * ifc = ifc_list + n;
 
-        if (src_addr.s_addr != INADDR_ANY &&
-            (ifc->addr & ifc->mask) != (src_addr.s_addr & ifc->mask)) {
-            /* Server address not matching this interface */
-            continue;
+        if ((ps->flags & PS_FLAG_LOCAL) == 0) {
+            /* Info about non-local peers is sent only by master */
+            if (udp_server_port != DISCOVERY_TCF_PORT) return 0;
+            if (ifc->addr != htonl(INADDR_LOOPBACK) && ifc->addr != peer_addr.s_addr) continue;
+        }
+
+        assert(peer_addr.s_addr != INADDR_ANY);
+        if (ifc->addr != htonl(INADDR_LOOPBACK)) {
+            if ((ifc->addr & ifc->mask) != (peer_addr.s_addr & ifc->mask)) {
+                /* Peer address does not belong to subnet of this interface */
+                continue;
+            }
         }
 
         if (addr == NULL) {
+            if (~ifc->mask == 0) continue;
             dst_addr = &dst_addr_buf;
             memset(&dst_addr_buf, 0, sizeof dst_addr_buf);
             dst_addr->sin_family = AF_INET;
@@ -326,7 +334,7 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
         app_str(buf, &pos, "ID=");
         app_strz(buf, &pos, ps->id);
         for (i = 0; i < ps->ind; i++) {
-            char *name = ps->list[i].name;
+            char * name = ps->list[i].name;
             assert(strcmp(name, "ID") != 0);
             app_str(buf, &pos, name);
             app_char(buf, &pos, '=');
@@ -355,7 +363,7 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
             while (n < slave_cnt) {
                 SlaveInfo * s = slave_info + n++;
                 if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) {
-                    /* Slave address does not match this interface */
+                    /* Slave address does not belong to subnet of this interface */
                     continue;
                 }
                 trace(LOG_DISCOVERY, "ACK_INFO to %s:%d, ID=%s",
@@ -522,6 +530,7 @@ static void udp_send_ack_slaves_one(SlaveInfo * s) {
 }
 
 static void udp_send_ack_slaves_all(struct sockaddr_in * addr) {
+    time_t timenow = time(NULL);
     char buf[MAX_PACKET_SIZE];
     int k;
 
@@ -544,7 +553,11 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr) {
         while (n < slave_cnt) {
             char str[256];
             SlaveInfo * s = slave_info + n++;
-            if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) continue;
+            if (s->last_packet_time + PEER_DATA_RETENTION_PERIOD < timenow) continue;
+            if (addr->sin_addr.s_addr == s->addr.sin_addr.s_addr && addr->sin_port == s->addr.sin_port) continue;
+            if (ifc->addr != htonl(INADDR_LOOPBACK)) {
+                if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) continue;
+            }
             snprintf(str, sizeof(str), "%lld:%u:%s", (long long)s->last_packet_time,
                 ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
             trace(LOG_DISCOVERY, "ACK_SLAVES (%s) to %s:%d",
@@ -759,14 +772,18 @@ static void udp_server_recv(void * x) {
             }
             for (n = 0; n < ifc_cnt; n++) {
                 ip_ifc_info * ifc = ifc_list + n;
-                if ((ifc->addr & ifc->mask) != (recvreq_addr.sin_addr.s_addr & ifc->mask)) continue;
-                if (timenow > last_req_slaves_time[n] + PEER_DATA_RETENTION_PERIOD / 3) {
-                    udp_send_req_slaves(&recvreq_addr);
-                    last_req_slaves_time[n] = timenow;
-                }
-                /* Remember time only if local host master */
-                if (ifc->addr == recvreq_addr.sin_addr.s_addr && ntohs(recvreq_addr.sin_port) == DISCOVERY_TCF_PORT) {
-                    last_master_packet_time = timenow;
+                if ((ifc->addr & ifc->mask) == (recvreq_addr.sin_addr.s_addr & ifc->mask)) {
+                    time_t delay = PEER_DATA_RETENTION_PERIOD / 3;
+                    if (ntohs(recvreq_addr.sin_port) != DISCOVERY_TCF_PORT) delay = PEER_DATA_RETENTION_PERIOD / 3 * 2;
+                    else if (recvreq_addr.sin_addr.s_addr != ifc->addr) delay = PEER_DATA_RETENTION_PERIOD / 2;
+                    if (last_req_slaves_time[n] + delay <= timenow) {
+                        udp_send_req_slaves(&recvreq_addr);
+                        last_req_slaves_time[n] = timenow;
+                    }
+                    /* Remember time only if local host master */
+                    if (ifc->addr == recvreq_addr.sin_addr.s_addr && ntohs(recvreq_addr.sin_port) == DISCOVERY_TCF_PORT) {
+                        last_master_packet_time = timenow;
+                    }
                 }
             }
         }
