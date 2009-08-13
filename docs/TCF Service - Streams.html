@@ -42,6 +42,10 @@
         <td>0.2
         <td>2009-05-18
         <td>Added connect command
+    <tr>
+        <td>0.3
+        <td>2009-08-13
+        <td>Added "context ID" argument in "created" event
 </table>
 
 <h2><a name='Overview'>Overview</a></h2>
@@ -213,9 +217,27 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 Clients can change their subscription with <b>subscribe</b> and <b>unsubscribe</b> commands.</p>
  
 <pre><b><font face="Courier New" size=2 color=#333399>
-E &bull; Streams &bull; created &bull; <i>&lt;string: stream type&gt;</i> &bull; <i>&lt;string: stream ID&gt;</i> &bull;
+E &bull; Streams &bull; created &bull; <i>&lt;string: stream type&gt;</i> &bull; <i>&lt;string: stream ID&gt;</i> &bull; <i>&lt;string: context ID&gt;</i> &bull;
+</font></b></pre>
+<p>
+Sent when a new stream is created.
+"stream type" - source type of the stream.
+"stream ID" - ID of the stream.
+"context ID" - a context ID that is associated with the stream, or null.
+</p>
+<p>
+Exact meaning of the context ID depends on stream type.
+Stream types and context IDs are defined by services that use Streams service to transmit data.
+</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
 E &bull; Streams &bull; disposed &bull; <i>&lt;string: stream type&gt;</i> &bull; <i>&lt;string: stream ID&gt;</i> &bull;
 </font></b></pre>
+<p>
+Sent when a stream is disposed. 
+"stream type" - source type of the stream.
+"stream ID" - ID of the stream.
+</p>
 
 <h2><a name='API'>API</a></h2>
  
@@ -238,11 +260,14 @@ E &bull; Streams &bull; disposed &bull; <i>&lt;string: stream type&gt;</i> &bull
     <font color=#7F0055>interface</font> StreamsListener {
         
         <font color=#3F5FBF>/**
-         * Called when a new stream is created. 
+         * Called when a new stream is created.
          * <font color=#7F9FBF>@param</font> stream_type - source type of the stream.
          * <font color=#7F9FBF>@param</font> stream_id - ID of the stream.
+         * <font color=#7F9FBF>@param</font> context_id - a context ID that is associated with the stream, or null.
+         * Exact meaning of the context ID depends on stream type.
+         * Stream types and context IDs are defined by services that use Streams service to transmit data.
          */</font>
-        <font color=#7F0055>void</font> created(String stream_type, String stream_id);
+        <font color=#7F0055>void</font> created(String stream_type, String stream_id, String context_id);
         
         <font color=#3F5FBF>/**
          * Called when a stream is disposed. 

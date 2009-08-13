@@ -85,16 +85,17 @@ public class TCFLaunch extends Launch {
     private final HashMap<String,LinkedList<Runnable>> context_action_queue =
         new HashMap<String,LinkedList<Runnable>>();
     
-    private HashSet<String> stream_ids = new HashSet<String>();
+    private HashMap<String,String> stream_ids = new HashMap<String,String>();
     
     private final IStreams.StreamsListener streams_listener = new IStreams.StreamsListener() {
 
-        public void created(String stream_type, String stream_id) {
+        public void created(String stream_type, String stream_id, String context_id) {
+            assert IProcesses.NAME.equals(stream_type);
             if (process_start_command == null) {
                 disconnectStream(stream_id);
             }
             else {
-                stream_ids.add(stream_id);
+                stream_ids.put(stream_id, context_id);
             }
         }
 
@@ -400,7 +401,7 @@ public class TCFLaunch extends Launch {
         final String inp_id = (String)process.getProperties().get(IProcesses.PROP_STDIN_ID);
         final String out_id = (String)process.getProperties().get(IProcesses.PROP_STDOUT_ID);
         final String err_id = (String)process.getProperties().get(IProcesses.PROP_STDERR_ID);
-        for (final String id : stream_ids.toArray(new String[stream_ids.size()])) {
+        for (final String id : stream_ids.keySet().toArray(new String[stream_ids.size()])) {
             if (id.equals(inp_id)) {
                 process_input_stream_id = id;
             }
@@ -528,7 +529,7 @@ public class TCFLaunch extends Launch {
         if (channel.getState() == IChannel.STATE_CLOSED) return;
         IStreams streams = getService(IStreams.class);
         final Set<IToken> cmds = new HashSet<IToken>();
-        for (String id : stream_ids) {
+        for (String id : stream_ids.keySet()) {
             cmds.add(streams.disconnect(id, new IStreams.DoneDisconnect() {
                 public void doneDisconnect(IToken token, Exception error) {
                     cmds.remove(token);

@@ -103,8 +103,13 @@ public class StreamsProxy implements IStreams {
                             try {
                                 Object[] args = JSON.parseSequence(data);
                                 if (name.equals("created")) {
-                                    assert args.length == 2;
-                                    listener.created((String)args[0], (String)args[1]);
+                                    if (args.length == 3) {
+                                        listener.created((String)args[0], (String)args[1], (String)args[2]);
+                                    }
+                                    else {
+                                        assert args.length == 2;
+                                        listener.created((String)args[0], (String)args[1], null);
+                                    }
                                 }
                                 else if (name.equals("disposed")) {
                                     assert args.length == 2;

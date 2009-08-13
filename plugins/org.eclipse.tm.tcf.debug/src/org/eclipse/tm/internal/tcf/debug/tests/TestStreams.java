@@ -217,7 +217,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
     
     /************************** StreamsListener **************************/
 
-    public void created(String stream_type, String stream_id) {
+    public void created(String stream_type, String stream_id, String context_id) {
         if (!IDiagnostics.NAME.equals(stream_type)) exit(new Exception("Invalid stream type in Streams.created event"));
         if (stream_ids.contains(stream_id)) exit(new Exception("Invalid stream ID in Streams.created event"));
         stream_ids.add(stream_id);

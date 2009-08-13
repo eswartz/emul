@@ -44,8 +44,11 @@ public interface IStreams extends IService {
          * Called when a new stream is created. 
          * @param stream_type - source type of the stream.
          * @param stream_id - ID of the stream.
+         * @param context_id - a context ID that is associated with the stream, or null.
+         * Exact meaning of the context ID depends on stream type.
+         * Stream types and context IDs are defined by services that use Streams service to transmit data.
          */
-        void created(String stream_type, String stream_id);
+        void created(String stream_type, String stream_id, String context_id);
 
         /**
          * Called when a stream is disposed. 
