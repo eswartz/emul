@@ -355,6 +355,7 @@ typedef struct DebugEvent {
     HANDLE event_semaphore;
     DEBUG_EVENT event;
     DWORD continue_status;
+    int early_event;  /* Event received before debugger is fully attached */
     struct DebugEvent * next;
 } DebugEvent;
 
@@ -627,6 +628,7 @@ static void debug_event_handler(void * x) {
         case EXCEPTION_DEBUG_EVENT:
             assert(prs != NULL);
             if (ctx == NULL) break;
+            if (args->early_event) break; /* Can anything be done about such exceptions? */
             assert(ctx->pending_event.ExceptionRecord.ExceptionCode == 0);
             switch (args->event.u.Exception.ExceptionRecord.ExceptionCode) {
             case EXCEPTION_SINGLE_STEP:
@@ -780,11 +782,12 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
             else {
                 /* This looks like a bug in Windows: */
                 /* 1. according to the documentation, we should get only one CREATE_PROCESS_DEBUG_EVENT. */
-                /* 2. if second CREATE_PROCESS_DEBUG_EVENT is handled immediately, debugee crashes. */
+                /* 2. if we don't suspend second process, debugee crashes. */
+                assert(fantom_process.event.u.CreateProcessInfo.hThread == NULL);
                 memcpy(&fantom_process, &event_buffer, sizeof(event_buffer));
+                SuspendThread(fantom_process.event.u.CreateProcessInfo.hThread);
                 CloseHandle(fantom_process.event.u.CreateProcessInfo.hFile);
                 fantom_process.event.u.CreateProcessInfo.hFile = NULL;
-                SuspendThread(fantom_process.event.u.CreateProcessInfo.hThread);
                 ResumeThread(create_process.event.u.CreateProcessInfo.hThread);
             }
             break;
@@ -801,35 +804,14 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 }
                 break;
             }
-            if (fantom_process.event.u.CreateProcessInfo.hThread != NULL) {
-                /* It seems that leaving this thread suspended is not right thing to do,
-                 * however, resuming the thread causes debugee to crash for unknown reason.
-                 */
-                /* ResumeThread(fantom_process.event.u.CreateProcessInfo.hThread); */
-                fantom_process.event.u.CreateProcessInfo.hThread = NULL;
-            }
             if (state == 0) {
                 if (debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
                     event_buffer.continue_status = DBG_EXCEPTION_NOT_HANDLED;
                 }
                 break;
             }
-            if (state < 2) {
-                /* Delay posting event to foreground thread until debuggee is fully initialized */
-                DebugEvent * e = (DebugEvent *)loc_alloc(sizeof(DebugEvent));
-                memcpy(e, &event_buffer, sizeof(DebugEvent));
-                e->next = create_process.next;
-                create_process.next = e;
-            }
-            if (state == 1 && debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
-                DebugEvent * list = NULL;
-                while (create_process.next != NULL) {
-                    DebugEvent * e = create_process.next;
-                    create_process.next = e->next;
-                    e->next = list;
-                    list = e;
-                }
-                create_process.next = list;
+            if (state == 1 && debug_event->dwDebugEventCode == EXCEPTION_DEBUG_EVENT &&
+                    debug_event->u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT) {
                 post_event(debug_event_handler, &create_process);
                 ReleaseSemaphore(args->debug_thread_semaphore, 1, 0);
                 WaitForSingleObject(event_semaphore, INFINITE);
@@ -839,11 +821,22 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                     loc_free(e);
                 }
                 state++;
-                break;
+                if (fantom_process.event.u.CreateProcessInfo.hThread != NULL) {
+                    ResumeThread(fantom_process.event.u.CreateProcessInfo.hThread);
+                }
             }
             if (state == 2) {
                 post_event(debug_event_handler, &event_buffer);
                 WaitForSingleObject(event_semaphore, INFINITE);
+            }
+            else {
+                /* Delay posting event to foreground thread until debugger is fully attached */
+                DebugEvent * e = (DebugEvent *)loc_alloc(sizeof(DebugEvent));
+                DebugEvent ** p = &create_process.next;
+                while (*p != NULL) p = &(*p)->next;
+                memcpy(e, &event_buffer, sizeof(DebugEvent));
+                e->early_event = 1;
+                *p = e;
             }
             break;
         }
