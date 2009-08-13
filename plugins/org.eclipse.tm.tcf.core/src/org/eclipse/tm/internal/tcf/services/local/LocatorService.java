@@ -64,6 +64,8 @@ public class LocatorService implements ILocator {
     private final byte[] inp_buf = new byte[MAX_PACKET_SIZE];
     private final byte[] out_buf = new byte[MAX_PACKET_SIZE];
     
+    private InetAddress loopback_addr;
+    
     private static class SubNet {
         final int prefix_length;
         final InetAddress address;
@@ -212,6 +214,7 @@ public class LocatorService implements ILocator {
     public LocatorService() {
         locator = this;
         try {
+            loopback_addr = InetAddress.getByName(null);
             out_buf[0] = 'T';
             out_buf[1] = 'C';
             out_buf[2] = 'F';
@@ -468,7 +471,6 @@ public class LocatorService implements ILocator {
     }
     
     private void sendPeerInfo(IPeer peer, InetAddress addr, int port) {
-        if (peer instanceof RemotePeer) return;
         Map<String,String> attrs = peer.getAttributes();
         if (attrs.get(IPeer.ATTR_IP_HOST) == null) return;
         if (attrs.get(IPeer.ATTR_IP_PORT) == null) return;
@@ -486,7 +488,13 @@ public class LocatorService implements ILocator {
             
             InetAddress peer_addr = InetAddress.getByName(attrs.get(IPeer.ATTR_IP_HOST));
             for (SubNet subnet : subnets) {
-                if (!subnet.contains(peer_addr)) continue;
+                if (peer instanceof RemotePeer) {
+                    if (socket.getLocalPort() != DISCOVEY_PORT) return;
+                    if (!subnet.address.equals(loopback_addr) && !subnet.address.equals(peer_addr)) continue;
+                }
+                if (!subnet.address.equals(loopback_addr)) {
+                    if (!subnet.contains(peer_addr)) continue;
+                }
                 if (addr == null) {
                     socket.send(new DatagramPacket(out_buf, i, subnet.broadcast, DISCOVEY_PORT));
                     for (Slave slave : slaves) {
@@ -579,7 +587,9 @@ public class LocatorService implements ILocator {
                 for (Slave x : slaves) {
                     if (x.last_packet_time + DATA_RETENTION_PERIOD < time) continue;
                     if (x.port == port && x.address.equals(addr)) continue;
-                    if (!n.contains(x.address)) continue;
+                    if (!n.address.equals(loopback_addr)) {
+                        if (!n.contains(x.address)) continue;
+                    }
                     n.send_all_ok = true;
                     String s = x.last_packet_time + ":" + x.port + ":" + x.address.getHostAddress();
                     byte[] bt = s.getBytes("UTF-8");
@@ -599,11 +609,10 @@ public class LocatorService implements ILocator {
         }
     }
     
-    private boolean isRemote(DatagramPacket p) {
-        if (p.getPort() != socket.getLocalPort()) return true;
-        InetAddress addr = p.getAddress();
+    private boolean isRemote(InetAddress address, int port) {
+        if (port != socket.getLocalPort()) return true;
         for (SubNet s : subnets) {
-            if (s.address.equals(addr)) return false;
+            if (s.address.equals(address)) return false;
         }
         return true;
     }
@@ -618,10 +627,12 @@ public class LocatorService implements ILocator {
             if (buf[1] != 'C') return;
             if (buf[2] != 'F') return;
             if (buf[3] != CONF_VERSION) return;
-            if (isRemote(p)) {
+            int remote_port = p.getPort();
+            InetAddress remote_address = p.getAddress(); 
+            if (isRemote(remote_address, remote_port)) {
                 Slave sl = null;
                 if (p.getPort() != DISCOVEY_PORT) {
-                    sl = addSlave(p.getAddress(), p.getPort(), time);
+                    sl = addSlave(remote_address, remote_port, time);
                 }
                 switch (buf[4]) {
                 case CONF_PEER_INFO:
@@ -638,12 +649,15 @@ public class LocatorService implements ILocator {
                     break;
                 }
                 for (SubNet s : subnets) {
-                    if (!s.contains(p.getAddress())) continue;
-                    if (s.last_slaves_req_time + DATA_RETENTION_PERIOD / 3 <= time) {
-                        sendSlavesRequest(p.getAddress(), p.getPort());
+                    if (!s.contains(remote_address)) continue;
+                    long delay = DATA_RETENTION_PERIOD / 3;
+                    if (remote_port != DISCOVEY_PORT) delay = DATA_RETENTION_PERIOD / 3 * 2;
+                    else if (!s.address.equals(remote_address)) delay = DATA_RETENTION_PERIOD / 2;
+                    if (s.last_slaves_req_time + delay <= time) {
+                        sendSlavesRequest(remote_address, remote_port);
                         s.last_slaves_req_time = time;
                     }
-                    if (s.address.equals(p.getAddress()) && p.getPort() == DISCOVEY_PORT) {
+                    if (s.address.equals(remote_address) && remote_port == DISCOVEY_PORT) {
                         last_master_packet_time = time;
                     }
                 }
