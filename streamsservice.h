@@ -31,7 +31,7 @@ typedef void VirtualStreamCallBack(VirtualStream * /* stream */, int /* event */
 #define VS_ENABLE_REMOTE_READ       0x01
 #define VS_ENABLE_REMOTE_WRITE      0x02
 
-extern void virtual_stream_create(const char * type, size_t buf_len, unsigned access,
+extern void virtual_stream_create(const char * type, const char * context_id, size_t buf_len, unsigned access,
     VirtualStreamCallBack * callback, void * callback_args, VirtualStream ** res);
 extern void virtual_stream_delete(VirtualStream * stream);
 

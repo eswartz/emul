@@ -138,7 +138,7 @@ static StreamClient * find_client(char * s, Channel * c) {
     return NULL;
 }
 
-static void send_event_stream_created(OutputStream * out, VirtualStream * stream) {
+static void send_event_stream_created(OutputStream * out, VirtualStream * stream, const char * context_id) {
     char id[256];
 
     virtual_stream_get_id(stream, id, sizeof(id));
@@ -149,6 +149,8 @@ static void send_event_stream_created(OutputStream * out, VirtualStream * stream
     json_write_string(out, stream->type);
     write_stream(out, 0);
     json_write_string(out, id);
+    write_stream(out, 0);
+    json_write_string(out, context_id);
     write_stream(out, 0);
     write_stream(out, MARKER_EOM);
     flush_stream(out);
@@ -389,7 +391,7 @@ static void send_read_reply(StreamClient * client, char * token, size_t size) {
     flush_stream(&c->out);
 }
 
-void virtual_stream_create(const char * type, size_t buf_len, unsigned access,
+void virtual_stream_create(const char * type, const char * context_id, size_t buf_len, unsigned access,
         VirtualStreamCallBack * callback, void * callback_args, VirtualStream ** res) {
     LINK * l;
     VirtualStream * stream = loc_alloc_zero(sizeof(VirtualStream));
@@ -411,7 +413,7 @@ void virtual_stream_create(const char * type, size_t buf_len, unsigned access,
             Trap trap;
             create_client(stream, h->channel);
             if (set_trap(&trap)) {
-                send_event_stream_created(&h->channel->out, stream);
+                send_event_stream_created(&h->channel->out, stream, context_id);
                 clear_trap(&trap);
             }
             else {

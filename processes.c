@@ -735,7 +735,8 @@ static void write_process_input(ChildProcess * prs) {
     inp->req.done = write_process_input_done;
     inp->req.type = AsyncReqWrite;
     inp->req.u.fio.fd = prs->inp;
-    virtual_stream_create(PROCESSES, 0x1000, VS_ENABLE_REMOTE_WRITE, process_input_streams_callback, inp, &inp->vstream);
+    virtual_stream_create(PROCESSES, pid2id(prs->pid, 0), 0x1000, VS_ENABLE_REMOTE_WRITE,
+        process_input_streams_callback, inp, &inp->vstream);
     virtual_stream_get_id(inp->vstream, prs->inp_id, sizeof(prs->inp_id));
 }
 
@@ -808,7 +809,8 @@ static ProcessOutput * read_process_output(ChildProcess * prs, int fd, char * id
     out->req.u.fio.bufp = out->buf;
     out->req.u.fio.bufsz = sizeof(out->buf);
     out->req.u.fio.fd = fd;
-    virtual_stream_create(PROCESSES, 0x1000, VS_ENABLE_REMOTE_READ, process_output_streams_callback, out, &out->vstream);
+    virtual_stream_create(PROCESSES, pid2id(prs->pid, 0), 0x1000, VS_ENABLE_REMOTE_READ,
+        process_output_streams_callback, out, &out->vstream);
     virtual_stream_get_id(out->vstream, id, id_size);
     out->req_posted = 1;
     async_req_post(&out->req);

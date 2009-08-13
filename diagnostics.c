@@ -264,9 +264,9 @@ static void command_create_test_streams(char * token, Channel * c) {
     if (buf_size0 <= 0 || buf_size1 <= 0) err = ERR_INV_NUMBER;
     if (!err) {
         StreamsTest * st = loc_alloc_zero(sizeof(StreamsTest));
-        virtual_stream_create(DIAGNOSTICS, (unsigned)buf_size0,
+        virtual_stream_create(DIAGNOSTICS, NULL, (unsigned)buf_size0,
             VS_ENABLE_REMOTE_WRITE, streams_test_callback, st, &st->inp);
-        virtual_stream_create(DIAGNOSTICS, (unsigned)buf_size1,
+        virtual_stream_create(DIAGNOSTICS, NULL, (unsigned)buf_size1,
             VS_ENABLE_REMOTE_READ, streams_test_callback, st, &st->out);
         virtual_stream_get_id(st->inp, id_inp, sizeof(id_inp));
         virtual_stream_get_id(st->out, id_out, sizeof(id_out));
