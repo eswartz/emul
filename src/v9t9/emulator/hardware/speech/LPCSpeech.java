@@ -67,9 +67,6 @@ final static int FL_last	= 8;		/* stop frame seen */
 	//#define KTRANS(x) ((((x) & 0x8000) ? (x) ^ 0x7fff : (x)) >> 6)
 	/** Convert 16-bit high-shifted K parameters to their 10-bit form, then up to the temp register form */
 	private final static int KTRANS(short x) { return ((x) >> 6) << 6; }
-	private final static int ZERO(int x) { return 0; }
-
-
 	//final static int ONE = (32768>>6);
 	private final static int ONE = (32768);
 	private final static int MD(int a, int b) { return (((a)*(b))/ONE); }
@@ -89,16 +86,16 @@ final static int FL_last	= 8;		/* stop frame seen */
 		env = 0;
 		Arrays.fill(knv, 0);
 
-		knv[0] = ZERO(KTRANS(RomTables.k1table[0]));
-		knv[1] = ZERO(KTRANS(RomTables.k2table[0]));
-		knv[2] = ZERO(KTRANS(RomTables.k3table[0]));
-		knv[3] = ZERO(KTRANS(RomTables.k4table[0]));
-		knv[4] = ZERO(KTRANS(RomTables.k5table[0]));
-		knv[5] = ZERO(KTRANS(RomTables.k6table[0]));
-		knv[6] = ZERO(KTRANS(RomTables.k7table[0]));
-		knv[7] = ZERO(KTRANS(RomTables.k8table[0]));
-		knv[8] = ZERO(KTRANS(RomTables.k9table[0]));
-		knv[9] = ZERO(KTRANS(RomTables.k10table[0]));
+		knv[0] = 0;
+		knv[1] = 0;
+		knv[2] = 0;
+		knv[3] = 0;
+		knv[4] = 0;
+		knv[5] = 0;
+		knv[6] = 0;
+		knv[7] = 0;
+		knv[8] = 0;
+		knv[9] = 0;
 		
 		// if the previous frame was unvoiced,
 		// it would sound bad to interpolate.
@@ -108,16 +105,16 @@ final static int FL_last	= 8;		/* stop frame seen */
 			ebf = 0;
 			Arrays.fill(kbf, 0);
 
-			kbf[0] = ZERO(KTRANS(RomTables.k1table[0]));
-			kbf[1] = ZERO(KTRANS(RomTables.k2table[0]));
-			kbf[2] = ZERO(KTRANS(RomTables.k3table[0]));
-			kbf[3] = ZERO(KTRANS(RomTables.k4table[0]));
-			kbf[4] = ZERO(KTRANS(RomTables.k5table[0]));
-			kbf[5] = ZERO(KTRANS(RomTables.k6table[0]));
-			kbf[6] = ZERO(KTRANS(RomTables.k7table[0]));
-			kbf[7] = ZERO(KTRANS(RomTables.k8table[0]));
-			kbf[8] = ZERO(KTRANS(RomTables.k9table[0]));
-			kbf[9] = ZERO(KTRANS(RomTables.k10table[0]));
+			kbf[0] = 0;
+			kbf[1] = 0;
+			kbf[2] = 0;
+			kbf[3] = 0;
+			kbf[4] = 0;
+			kbf[5] = 0;
+			kbf[6] = 0;
+			kbf[7] = 0;
+			kbf[8] = 0;
+			kbf[9] = 0;
 			
 			decode &= ~FL_unvoiced;
 		}
@@ -180,7 +177,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 
 			/* translate energy */
 			//env = KTRANS(energytable[env]);
-			env = RomTables.energytable[env] >> 6;
+			env = RomTables.energytable[env] >> 1;		// 15-bit to 14-bit
 
 			/*  Get K parameters  */
 
@@ -232,24 +229,24 @@ final static int FL_last	= 8;		/* stop frame seen */
 					knv[9] = KTRANS(RomTables.k10table[tmp]);
 					builder.append("K9: " + tmp + " [" + knv[9] + "] ");
 				} else {
-					knv[4] = ZERO(KTRANS(RomTables.k5table[0]));
-					knv[5] = ZERO(KTRANS(RomTables.k6table[0]));
-					knv[6] = ZERO(KTRANS(RomTables.k7table[0]));
-					knv[7] = ZERO(KTRANS(RomTables.k8table[0]));
-					knv[8] = ZERO(KTRANS(RomTables.k9table[0]));
-					knv[9] = ZERO(KTRANS(RomTables.k10table[0]));
+					knv[4] = 0;
+					knv[5] = 0;
+					knv[6] = 0;
+					knv[7] = 0;
+					knv[8] = 0;
+					knv[9] = 0;
 				}
 			}
 		}
 
 		if (forceUnvoiced) {
 			decode |= FL_unvoiced;
-			knv[4] = ZERO(KTRANS(RomTables.k5table[0]));
-			knv[5] = ZERO(KTRANS(RomTables.k6table[0]));
-			knv[6] = ZERO(KTRANS(RomTables.k7table[0]));
-			knv[7] = ZERO(KTRANS(RomTables.k8table[0]));
-			knv[8] = ZERO(KTRANS(RomTables.k9table[0]));
-			knv[9] = ZERO(KTRANS(RomTables.k10table[0]));
+			knv[4] = 0;
+			knv[5] = 0;
+			knv[6] = 0;
+			knv[7] = 0;
+			knv[8] = 0;
+			knv[9] = 0;
 		}
 
 		Logging.writeLogLine(2, TMS5220.settingLogSpeech,
@@ -278,12 +275,6 @@ final static int FL_last	= 8;		/* stop frame seen */
 	}
 
 
-	private final int B(int i) { return b[i]; }
-	private final int Y(int i) { return y[i]; }
-	private final int K(int i) { return kbf[i]; }
-	private final void B(int i, int v) { b[i] = v; }
-	private final void Y(int i, int v) { y[i] = v; }
-
 	/*
 	 *	Generate PCM data for one LPC frame.
 	 *
@@ -311,10 +302,11 @@ final static int FL_last	= 8;		/* stop frame seen */
 
 			/*  Update excitation data in U? */
 			if ((decode & FL_unvoiced) != 0) {
-				U = (ns1 & 1) != 0 ? ebf / 4 : -ebf / 4;
+				U = (ns1 & 1) != 0 ? ebf : -ebf ;
 
+				U >>= 1;
 				/* noise generator */
-				ns1 = (ns1 << 1) | (ns1 >> 31);
+				ns1 = (ns1 << 1) | (ns1 >>> 31);
 				ns1 ^= ns2;
 				if ((ns2 += ns1) == 0)
 					ns2++;
@@ -323,7 +315,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 				int cptr = ppctr; // % RomTables.chirptable.length;
 				//int cptr = ppctr * 200 / length;
 				U = cptr < RomTables.chirptable.length ? RomTables.chirptable[cptr] : 0;
-				U = (U * ebf + 128) / 256;
+				U = (U * ebf ) >> 7;
 
 				if (pbf != 0) 
 					ppctr = (ppctr + 1) % pbf;
@@ -355,24 +347,23 @@ final static int FL_last	= 8;		/* stop frame seen */
 
 				 */
 
-			Y(10, U);
+			y[10] = U;
 			for (stage = 9; stage >= 0; stage--) {
-				Y(stage, Y(stage + 1) - MD(K(stage), B(stage)));
+				y[stage] = y[(stage + 1)] - MD(kbf[stage], b[stage]);
 			}
 			for (stage = 9; stage >= 1; stage--) {
-				B(stage, B(stage - 1) + MD(K(stage - 1), Y(stage - 1)));
+				b[stage] = b[(stage - 1)] + MD(kbf[(stage - 1)], y[(stage - 1)]);
 			}
 
-			samp = Y(0);
-			B(0, samp);
+			samp = y[0];
+			b[0] = samp;
 
 			//if (samp > 511 || samp < -512)
 			//	logger(LOG_USER,"samp[%d]=%d\n", ptr-speech_data, samp);
 
-			sender.send((short) LPC_TO_PCM(samp), pos, length);
+			sender.send((short) LPC_TO_PCM(samp >> 4), pos, length);
 			pos++;
 		}
-
 	}
 	
 
