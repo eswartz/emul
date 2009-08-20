@@ -470,13 +470,13 @@ static void send_eof_and_close(Channel * channel, int err) {
     tcp_write_stream(&c->chan.out, MARKER_EOM);
     tcp_flush_stream(&c->chan.out);
     shutdown(c->socket, SHUT_RDWR);
-    closesocket(c->socket);
-    c->socket = -1;
     if (c->read_pending != 0) {
         /* shutdown should make sure the wait is minimal */
         cancel_event(tcp_channel_read_done, &c->rdreq, 1);
         c->read_pending = 0;
     }
+    closesocket(c->socket);
+    c->socket = -1;
     notify_channel_closed(channel);
     if (channel->disconnected) channel->disconnected(channel);
     tcp_unlock(channel);
@@ -512,7 +512,7 @@ static void handle_channel_msg(void * x) {
     else {
         trace(LOG_ALWAYS, "Exception in message handler: %d %s",
               trap.error, errno_to_str(trap.error));
-        channel_close(&c->chan);
+        send_eof_and_close(&c->chan, trap.error);
         return;
     }
     if (c->ibuf.handling_msg == HandleMsgIdle) {
