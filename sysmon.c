@@ -1490,7 +1490,16 @@ static void command_get_children(char * token, Channel * c) {
         else snprintf(dir, sizeof(dir), "/proc/%d/task", pid);
         proc = opendir(dir);
         if (proc == NULL) {
-            write_errno(&c->out, errno);
+            int err = errno;
+            if (pid != 0 && err == ENOENT) {
+                struct stat buf;
+                snprintf(dir, sizeof(dir), "/proc/%d", pid);
+                if (stat(dir, &buf) == 0) {
+                    /* Zombie */
+                    err = 0;
+                }
+            }
+            write_errno(&c->out, err);
             write_stringz(&c->out, "null");
         }
         else {
