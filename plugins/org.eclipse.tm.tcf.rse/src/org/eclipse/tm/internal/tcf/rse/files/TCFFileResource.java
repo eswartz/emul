@@ -143,6 +143,5 @@ public class TCFFileResource extends AbstractResource implements IHostFile, IHos
 
     public void setPermissions(IHostFilePermissions permissions) {
         this.permissions = permissions;
-
     }
 }

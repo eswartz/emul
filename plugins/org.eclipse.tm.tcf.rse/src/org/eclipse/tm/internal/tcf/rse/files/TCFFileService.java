@@ -326,7 +326,7 @@ public class TCFFileService extends AbstractFileService {
                                         // the entry is a broken symbolic link
                                     }
                                     else if (e.attrs.isDirectory()) {
-                                        //dont filter folder names if getting both folders and files
+                                        // dont filter folder names if getting both folders and files
                                         if (wantFolders && (matcher==null || fileType==FILE_TYPE_FILES_AND_FOLDERS || matcher.matches(e.filename))) {
                                             results.add(new TCFFileResource(TCFFileService.this,
                                                     path, e.filename, e.attrs, false));
@@ -368,8 +368,7 @@ public class TCFFileService extends AbstractFileService {
         final IFileHandle handle = new TCFRSETask<IFileHandle>() {
             public void run() {
                 IFileSystem fs = connector.getFileSystemService();
-                fs.open(path, IFileSystem.TCF_O_READ, null,
-                        new IFileSystem.DoneOpen() {
+                fs.open(path, IFileSystem.TCF_O_READ, null, new IFileSystem.DoneOpen() {
                     public void doneOpen(IToken token, FileSystemException error, IFileHandle handle) {
                         if (error != null) error(error);
                         else done(handle);
@@ -387,8 +386,7 @@ public class TCFFileService extends AbstractFileService {
         final IFileHandle handle = new TCFRSETask<IFileHandle>() {
             public void run() {
                 IFileSystem fs = connector.getFileSystemService();
-                int flags = IFileSystem.TCF_O_WRITE | IFileSystem.TCF_O_CREAT
-                        | IFileSystem.TCF_O_TRUNC;
+                int flags = IFileSystem.TCF_O_WRITE | IFileSystem.TCF_O_CREAT | IFileSystem.TCF_O_TRUNC;
                 fs.open(path, flags, null, new IFileSystem.DoneOpen() {
                     public void doneOpen(IToken token, FileSystemException error, IFileHandle handle) {
                         if (error != null) error(error);

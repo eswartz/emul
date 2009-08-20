@@ -60,7 +60,7 @@ public class ChannelTCP extends StreamChannel {
                     out = new BufferedOutputStream(socket.getOutputStream());
                     onSocketConnected(null);
                 }
-                catch (final Exception x) {
+                catch (Exception x) {
                     onSocketConnected(x);
                 }
             }
@@ -85,7 +85,10 @@ public class ChannelTCP extends StreamChannel {
     private void onSocketConnected(final Throwable x) {
         Protocol.invokeLater(new Runnable() {
             public void run() {
-                if (x != null) terminate(x);
+                if (x != null) {
+                    terminate(x);
+                    closed = true;
+                }
                 if (closed) {
                     try {
                         if (socket != null) {

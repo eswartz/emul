@@ -15,13 +15,11 @@ package org.eclipse.tm.internal.tcf.rse.processes;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.rse.core.model.IHost;
@@ -29,6 +27,7 @@ import org.eclipse.rse.services.clientserver.messages.SystemMessageException;
 import org.eclipse.rse.services.clientserver.processes.HostProcessFilterImpl;
 import org.eclipse.rse.services.clientserver.processes.IHostProcess;
 import org.eclipse.rse.services.clientserver.processes.IHostProcessFilter;
+import org.eclipse.rse.services.clientserver.processes.ISystemProcessRemoteConstants;
 import org.eclipse.rse.services.processes.AbstractProcessService;
 import org.eclipse.rse.services.processes.IProcessService;
 import org.eclipse.tm.internal.tcf.rse.ITCFSubSystem;
@@ -36,21 +35,25 @@ import org.eclipse.tm.internal.tcf.rse.TCFConnectorService;
 import org.eclipse.tm.internal.tcf.rse.TCFConnectorServiceManager;
 import org.eclipse.tm.internal.tcf.rse.TCFRSETask;
 import org.eclipse.tm.tcf.protocol.IToken;
-import org.eclipse.tm.tcf.services.ISysMonitor;
+import org.eclipse.tm.tcf.services.IProcesses;
 
 
-public class TCFProcessService extends AbstractProcessService implements
-        IProcessService {
+public class TCFProcessService extends AbstractProcessService implements IProcessService {
 
     private final TCFConnectorService connector;
     private final TCFProcessResource root;
-    private final Map<String,TCFProcessResource> id2res = new HashMap<String,TCFProcessResource>();
     private final Map<Long,TCFProcessResource> pid2res = new HashMap<Long,TCFProcessResource>();
+    private final Map<String,Long> signals = new HashMap<String,Long>();
+    private final List<Runnable> get_signals_wait_list = new ArrayList<Runnable>();
 
     public TCFProcessService(IHost host) {
         connector = (TCFConnectorService)TCFConnectorServiceManager
             .getInstance().getConnectorService(host, ITCFSubSystem.class);
         root = new TCFProcessResource(this, null, null, null);
+    }
+    
+    public TCFConnectorService getTCFConnectorService() {
+        return connector;
     }
 
     @Override
@@ -65,35 +68,91 @@ public class TCFProcessService extends AbstractProcessService implements
     }
 
     @Override
-    public IHostProcess getParentProcess(long PID, IProgressMonitor monitor)
-            throws SystemMessageException {
+    public IHostProcess getParentProcess(long PID, IProgressMonitor monitor) throws SystemMessageException {
         return getProcess(getProcess(PID, monitor).getPPid(), monitor);
     }
 
     @Override
-    public IHostProcess getProcess(final long PID, IProgressMonitor monitor)
-            throws SystemMessageException {
+    public IHostProcess getProcess(final long PID, IProgressMonitor monitor) throws SystemMessageException {
         return new TCFRSETask<IHostProcess>() {
             public void run() {
-                if (!loadProcesses(this, root)) return;
+                if (!root.loadChildren(this)) return;
                 if (root.getChildrenError() != null) {
                     error(root.getChildrenError());
                     return;
                 }
-                done(pid2res.get(Long.valueOf(PID)));
+                done(pid2res.get(PID));
             }
         }.getS(monitor, "Get process properties"); //$NON-NLS-1$
     }
 
     public String[] getSignalTypes() {
-        // TODO Auto-generated method stub
-        return null;
+        return new TCFRSETask<String[]>() {
+            public void run() {
+                if (signals.isEmpty()) {
+                    if (get_signals_wait_list.contains(this)) {
+                        done(signals.keySet().toArray(new String[signals.size()]));
+                    }
+                    else {
+                        if (get_signals_wait_list.isEmpty()) {
+                            connector.getService(IProcesses.class).getSignalList(null, new IProcesses.DoneGetSignalList() {
+                                public void doneGetSignalList(IToken token, Exception error, Collection<Map<String,Object>> list) {
+                                    if (list != null) {
+                                        for (Map<String,Object> m : list) {
+                                            String name = (String)m.get(IProcesses.SIG_NAME);
+                                            Number code = (Number)m.get(IProcesses.SIG_CODE);
+                                            if (name != null && code != null) signals.put(name, code.longValue());
+                                        }
+                                    }
+                                    for (Runnable r : get_signals_wait_list) r.run();
+                                    get_signals_wait_list.clear();
+                                }
+                            });
+                        }
+                        get_signals_wait_list.add(this);
+                    }
+                }
+                else {
+                    done(signals.keySet().toArray(new String[signals.size()]));
+                }
+            }
+        }.getE();
     }
 
-    public boolean kill(long PID, String signal, IProgressMonitor monitor)
-            throws SystemMessageException {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean kill(final long PID, final String signal, IProgressMonitor monitor) throws SystemMessageException {
+        return new TCFRSETask<Boolean>() {
+            public void run() {
+                if (!root.loadChildren(this)) return;
+                if (root.getChildrenError() != null) {
+                    error(root.getChildrenError());
+                    return;
+                }
+                TCFProcessResource prs = pid2res.get(PID);
+                if (prs == null) {
+                    done(false);
+                    return;
+                }
+                Long signo = signals.get(signal);
+                if (signal.equals(ISystemProcessRemoteConstants.PROCESS_SIGNAL_TYPE_DEFAULT)) {
+                    if (signo == null) signo = signals.get("SIGTERM");
+                    if (signo == null) signo = signals.get("SIGKILL");
+                }
+                if (signo == null) {
+                    error(new Exception("Unknown signal: " + signal));
+                    return;
+                }
+                connector.getService(IProcesses.class).signal(prs.getID(), signo.longValue(), new IProcesses.DoneCommand() {
+                    public void doneCommand(IToken token, Exception error) {
+                        if (error != null) {
+                            error(error);
+                        }
+                        else {
+                            done(true);
+                        }
+                    }
+                });
+            }
+        }.getS(monitor, "Sending signal to a process"); //$NON-NLS-1$
     }
 
     private void sort(IHostProcess[] arr) {
@@ -125,31 +184,25 @@ public class TCFProcessService extends AbstractProcessService implements
     }
 
     public IHostProcess[] listAllProcesses(final IHostProcessFilter filter, final IHostProcess up, IProgressMonitor monitor) throws SystemMessageException {
-        // TODO: figure out better way to flush the cache
-        final TCFProcessResource parent = new TCFRSETask<TCFProcessResource>() {
+        new TCFRSETask<Boolean>() {
+            public void run() {
+                TCFProcessResource parent = (TCFProcessResource)up;
+                if (parent != null) {
+                    if (filter.getPpid() == null || filter.getPpid().equals("*") || parent.getChildrenError() != null) { //$NON-NLS-1$
+                        parent.flushChildrenCache();
+                    }
+                }
+                done(true);
+            }
+        }.getE();
+        return new TCFRSETask<IHostProcess[]>() {
             public void run() {
                 TCFProcessResource parent = (TCFProcessResource)up;
                 if (parent == null) {
                     error(new IOException("Invalid parent")); //$NON-NLS-1$
                     return;
                 }
-                if (filter.getPpid() != null && filter.getPpid().equals("*") || parent.getChildrenError() != null) { //$NON-NLS-1$
-                    for (Iterator<TCFProcessResource> i = pid2res.values().iterator(); i.hasNext();) {
-                        TCFProcessResource r = i.next();
-                        if (eqaulIDs(parent.getID(), r.getParentID())) {
-                            i.remove();
-                            if (r.getChildrenLoaded()) r.cancelChildrenLoading();
-                        }
-                    }
-                    parent.setChildrenLoaded(false);
-                    parent.setChildrenError(null);
-                }
-                done(parent);
-            }
-        }.getS(monitor, "Flush processes cache"); //$NON-NLS-1$
-        return new TCFRSETask<IHostProcess[]>() {
-            public void run() {
-                if (!loadProcesses(this, parent)) return;
+                if (!parent.loadChildren(this)) return;
                 if (parent.getChildrenError() != null) {
                     error(parent.getChildrenError());
                     return;
@@ -157,8 +210,7 @@ public class TCFProcessService extends AbstractProcessService implements
                 List<IHostProcess> l = new ArrayList<IHostProcess>();
                 for (TCFProcessResource p : pid2res.values()) {
                     if (eqaulIDs(parent.getID(), p.getParentID())) {
-                        Throwable error = p.getError();
-                        if (error == null && filter.allows(p.getStatusLine())) l.add(p);
+                        if (p.getError() == null && filter.allows(p.getStatusLine())) l.add(p);
                     }
                 }
                 IHostProcess[] arr = new IHostProcess[l.size()];
@@ -193,82 +245,13 @@ public class TCFProcessService extends AbstractProcessService implements
     }
 
     @Override
-    public IHostProcess[] listRootProcesses(IProgressMonitor monitor)
-            throws SystemMessageException {
+    public IHostProcess[] listRootProcesses(IProgressMonitor monitor) throws SystemMessageException {
         IHostProcess[] roots = new IHostProcess[1];
         roots[0] = getProcess(1, monitor);
         return roots;
     }
-
-    private boolean loadProcesses(Runnable run, final TCFProcessResource parent) {
-        if (parent.getChildrenLoading()) {
-            parent.addChildrenWaitList(run);
-            return false;
-        }
-        if (parent.getChildrenLoaded()) {
-            return true;
-        }
-        parent.setChildrenLoading(true);
-        try {
-            final ISysMonitor m = connector.getSysMonitorService();
-            m.getChildren(parent.getID(), new ISysMonitor.DoneGetChildren() {
-                public void doneGetChildren(IToken token, Exception error, String[] ids) {
-                    try {
-                        if (error != null) {
-                            loadProcessesDone(parent, error, null);
-                        }
-                        else if (ids == null) {
-                            loadProcessesDone(parent, null, new TCFProcessResource[0]);
-                        }
-                        else {
-                            final TCFProcessResource[] arr = new TCFProcessResource[ids.length];
-                            final Set<IHostProcess> pending = new HashSet<IHostProcess>();
-                            for (int i = 0; i < ids.length; i++) {
-                                final TCFProcessResource r = new TCFProcessResource(
-                                        TCFProcessService.this, m, id2res.get(ids[i]), ids[i]);
-                                if (!r.validate(new Runnable() {
-                                    public void run() {
-                                        pending.remove(r);
-                                        if (pending.isEmpty()) loadProcessesDone(parent, null, arr);
-                                    }
-                                })) pending.add(r);
-                                arr[i] = r;
-                            }
-                            if (pending.isEmpty()) loadProcessesDone(parent, null, arr);
-                        }
-                    }
-                    catch (Throwable x) {
-                        loadProcessesDone(parent, x, null);
-                    }
-                }
-            });
-            parent.addChildrenWaitList(run);
-            return false;
-        }
-        catch (Throwable x) {
-            loadProcessesDone(parent, x, null);
-            return true;
-        }
-    }
-
-    private void loadProcessesDone(TCFProcessResource parent, Throwable error, TCFProcessResource[] arr) {
-        assert parent.getChildrenLoading();
-        parent.setChildrenLoading(false);
-        parent.setChildrenLoaded(true);
-        if (arr != null && error == null) {
-            for (TCFProcessResource r : arr) {
-                long pid = r.getPid();
-                if (pid > 0 && parent.getPid() != pid) {
-                    pid2res.put(new Long(pid), r);
-                    id2res.put(r.getID(), r);
-                }
-            }
-        }
-        for (Iterator<TCFProcessResource> i = id2res.values().iterator(); i.hasNext();) {
-            TCFProcessResource r = i.next();
-            if (pid2res.get(Long.valueOf(r.getPid())) == null) i.remove();
-        }
-        parent.setChildrenError(error);
-        parent.runChildrenWaitList();
+    
+    Map<Long,TCFProcessResource> getProcessCache() {
+        return pid2res;
     }
 }

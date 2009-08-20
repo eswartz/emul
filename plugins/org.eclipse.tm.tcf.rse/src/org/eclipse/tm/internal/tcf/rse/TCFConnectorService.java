@@ -25,6 +25,7 @@ import org.eclipse.rse.core.subsystems.CommunicationsEvent;
 import org.eclipse.tm.tcf.core.AbstractPeer;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
+import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
 import org.eclipse.tm.tcf.services.ILocator;
@@ -209,18 +210,19 @@ public class TCFConnectorService extends BasicConnectorService {
         if (channel.getState() == IChannel.STATE_OPEN) channel.close();
         return false;
     }
-
-    public ISysMonitor getSysMonitorService() {
+    
+    public <V extends IService> V getService(Class<V> service_interface) {
         if (channel == null || channel.getState() != IChannel.STATE_OPEN) throw new Error("Not connected"); //$NON-NLS-1$
-        ISysMonitor m = channel.getRemoteService(ISysMonitor.class);
-        if (m == null) throw new Error("Remote peer does not support SysMonitor service"); //$NON-NLS-1$
+        V m = channel.getRemoteService(service_interface);
+        if (m == null) throw new Error("Remote peer does not support " + service_interface.getName() + " service"); //$NON-NLS-1$  //$NON-NLS-2$
         return m;
     }
 
+    public ISysMonitor getSysMonitorService() {
+        return getService(ISysMonitor.class);
+    }
+
     public IFileSystem getFileSystemService() {
-        if (channel == null || channel.getState() != IChannel.STATE_OPEN) throw new Error("Not connected"); //$NON-NLS-1$
-        IFileSystem m = channel.getRemoteService(IFileSystem.class);
-        if (m == null) throw new Error("Remote peer does not support FileSystem service"); //$NON-NLS-1$
-        return m;
+        return getService(IFileSystem.class);
     }
 }

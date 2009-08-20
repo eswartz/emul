@@ -36,7 +36,7 @@ public class TCFProcessAdapter implements IHostProcessToRemoteProcessAdapter {
         List<IRemoteProcess> list = new ArrayList<IRemoteProcess>(nodes.length);
         for (int idx = 0; idx < nodes.length; idx++) {
             TCFProcessResource node = (TCFProcessResource)nodes[idx];
-            list.add(new TCFRemoteProcess(context, node));   
+            if (node != null) list.add(new TCFRemoteProcess(context, node));   
         }
         return list.toArray(new IRemoteProcess[list.size()]);
     }

@@ -13,11 +13,12 @@
 package org.eclipse.tm.internal.tcf.rse.processes;
 
 import java.math.BigInteger;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.rse.core.subsystems.AbstractResource;
 import org.eclipse.rse.services.clientserver.IServiceConstants;
@@ -28,60 +29,29 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ISysMonitor;
 import org.eclipse.tm.tcf.services.ISysMonitor.SysMonitorContext;
 
-public class TCFProcessResource extends AbstractResource implements
-        IHostProcess {
+public class TCFProcessResource extends AbstractResource implements IHostProcess {
+
+    public static final String PROP_PC_UTIME = "PCUTime"; //$NON-NLS-1$
+    public static final String PROP_PC_STIME = "PCSTime"; //$NON-NLS-1$
 
     private final TCFProcessService rse_service;
-
     private final ISysMonitor tcf_service;
-
     private final TCFProcessResource prev;
-
     private final String id;
 
     private Throwable error;
-
     private ISysMonitor.SysMonitorContext context;
 
     private final List<Runnable> children_wait_list = new ArrayList<Runnable>();
-
+    private final HashMap<String,TCFProcessResource> children = new HashMap<String,TCFProcessResource>();
     private boolean children_loading;
-
     private boolean children_loaded;
-
     private Throwable children_error;
-
     private boolean running_wait_list;
-
-    private long gid = -1;
-
-    private String name;
-
-    private long ppid = -1;
-
-    private long pid = -1;
-
-    private String state;
-
-    private long tgid = -1;
-
-    private long tracepid = -1;
-
-    private long uid;
-
-    private String username;
-
-    private long vm_rss_kb;
-
-    private long vm_size_kb;
-
-    private String utime_pc;
-
-    private String stime_pc;
 
     private long timestamp;
 
-    private String[] propertyKeys = new String[ISystemProcessRemoteConstants.PROCESS_ATTRIBUTES_COUNT+1];
+    private final String[] propertyKeys = new String[ISystemProcessRemoteConstants.PROCESS_ATTRIBUTES_COUNT];
     {
         propertyKeys[ISystemProcessRemoteConstants.PROCESS_ATTRIBUTES_INDEX_EXENAME] = ISysMonitor.PROP_FILE;
         propertyKeys[ISystemProcessRemoteConstants.PROCESS_ATTRIBUTES_INDEX_GID] = ISysMonitor.PROP_GROUPNAME;
@@ -94,17 +64,9 @@ public class TCFProcessResource extends AbstractResource implements
         propertyKeys[ISystemProcessRemoteConstants.PROCESS_ATTRIBUTES_INDEX_USERNAME] = ISysMonitor.PROP_USERNAME;
         propertyKeys[ISystemProcessRemoteConstants.PROCESS_ATTRIBUTES_INDEX_VMSIZE] = ISysMonitor.PROP_VSIZE;
         propertyKeys[ISystemProcessRemoteConstants.PROCESS_ATTRIBUTES_INDEX_VMRSS] = ISysMonitor.PROP_RSS;
-        propertyKeys[ISystemProcessRemoteConstants.PROCESS_ATTRIBUTES_COUNT] = " "; //set the label //$NON-NLS-1$
     }
 
     private Map<String, Object> properties = new HashMap<String, Object>();
-
-    private static final NumberFormat percent_format;
-
-    static {
-        percent_format = NumberFormat.getPercentInstance();
-        percent_format.setMaximumFractionDigits(3);
-    }
 
     TCFProcessResource(TCFProcessService rse_service, ISysMonitor service,
             TCFProcessResource prev, String id) {
@@ -119,7 +81,7 @@ public class TCFProcessResource extends AbstractResource implements
     }
 
     public String getParentID() {
-        return (String) properties.get(ISysMonitor.PROP_PARENTID);
+        return (String)properties.get(ISysMonitor.PROP_PARENTID);
     }
 
     public TCFProcessService getService() {
@@ -138,56 +100,68 @@ public class TCFProcessResource extends AbstractResource implements
         if (context != null) return true;
         tcf_service.getContext(id, new ISysMonitor.DoneGetContext() {
 
-            public void doneGetContext(IToken token, Exception error,
-                    SysMonitorContext context) {
+            public void doneGetContext(IToken token, Exception error, SysMonitorContext context) {
                 TCFProcessResource.this.error = error;
                 TCFProcessResource.this.context = context;
+                timestamp = System.currentTimeMillis();
                 if (error != null) {
-                    properties = new HashMap<String, Object>();
-                    gid = -1;
-                    name = null;
-                    ppid = -1;
-                    pid = -1;
-                    state = null;
-                    tgid = -1;
-                    tracepid = -1;
-                    uid = 0;
-                    username = null;
-                    vm_rss_kb = 0;
-                    vm_size_kb = 0;
+                    properties = new HashMap<String,Object>();
                 }
                 else {
-                    properties = new HashMap<String, Object>(context
-                            .getProperties());
-                    gid = context.getUGID();
-                    name = context.getFile();
-                    if (properties.containsKey(ISysMonitor.PROP_PPID)) {
-                        ppid = context.getPPID();
+                    properties = new HashMap<String,Object>(context.getProperties());
+                    if (prev != null &&  timestamp > prev.timestamp) {
+                        setPCProperty(PROP_PC_UTIME, ISysMonitor.PROP_UTIME);
+                        setPCProperty(PROP_PC_STIME, ISysMonitor.PROP_STIME);
                     }
-                    pid = context.getPID();
-                    state = context.getState();
-                    tgid = context.getTGID();
-                    if (properties.containsKey(ISysMonitor.PROP_TRACERPID)) {
-                        tracepid = context.getTracerPID();
-                    }
-                    uid = context.getUID();
-                    username = context.getUserName();
-                    vm_rss_kb = context.getRSS();
-                    long page_bytes = context.getPSize();
-                    if (page_bytes <= 0 || vm_rss_kb < 0) {
-                        vm_rss_kb = -1;
-                    }
-                    else {
-                        vm_rss_kb = (vm_rss_kb * page_bytes + 1023) / 1024;
-                    }
-                    vm_size_kb = (context.getVSize() + 1023) / 1024;
+                    // Conversions are necessary for sorting to work
+                    toLong(ISysMonitor.PROP_PID);
+                    toLong(ISysMonitor.PROP_PPID);
+                    toLong(ISysMonitor.PROP_UTIME);
+                    toLong(ISysMonitor.PROP_STIME);
+                    toLong(ISysMonitor.PROP_CUTIME);
+                    toLong(ISysMonitor.PROP_CSTIME);
+                    toLong(ISysMonitor.PROP_STARTTIME);
+                    toLong(ISysMonitor.PROP_ITREALVALUE);
+                    toBigInteger(ISysMonitor.PROP_CODESTART);
+                    toBigInteger(ISysMonitor.PROP_CODEEND);
+                    toBigInteger(ISysMonitor.PROP_STACKSTART);
+                    toBigInteger(ISysMonitor.PROP_WCHAN);
                 }
-                timestamp = System.currentTimeMillis();
                 Protocol.invokeLater(done);
             }
 
         });
         return false;
+    }
+    
+    private void toLong(String name) {
+        Number n = (Number)properties.get(name);
+        if (n == null || n instanceof Long) return;
+        properties.put(name, Long.valueOf(n.longValue()));
+    }
+    
+    private void toBigInteger(String name) {
+        Number n = (Number)properties.get(name);
+        if (n == null || n instanceof BigInteger) return;
+        properties.put(name, new BigInteger(n.toString()));
+    }
+    
+    private void setPCProperty(String property, String name) {
+        Object x = prev.properties.get(name);
+        Object y = properties.get(name);
+        if (x instanceof Number && y instanceof Number) {
+            BigInteger nx = x instanceof BigInteger ? (BigInteger) x
+                    : new BigInteger(x.toString());
+            BigInteger ny = y instanceof BigInteger ? (BigInteger) y
+                    : new BigInteger(y.toString());
+            double d = ny.subtract(nx).doubleValue()
+                    / (timestamp - prev.timestamp);
+            properties.put(property, d);
+        }
+    }
+    
+    public long getTimestamp() {
+        return timestamp;
     }
 
     public Throwable getError() {
@@ -213,51 +187,68 @@ public class TCFProcessResource extends AbstractResource implements
     }
 
     public long getGid() {
-        return gid;
+        Number n = (Number)properties.get(ISysMonitor.PROP_UGID);
+        if (n == null) return -1;
+        return n.longValue();
     }
 
     public String getLabel() {
-        return Long.toString(getPid()) + " " + name; //$NON-NLS-1$
+        return Long.toString(getPid()) + " " + getName(); //$NON-NLS-1$
     }
 
     public String getName() {
-        return name;
+        return (String)properties.get(ISysMonitor.PROP_FILE);
     }
 
     public long getPPid() {
-        return ppid;
+        Number n = (Number)properties.get(ISysMonitor.PROP_PPID);
+        if (n == null) return -1;
+        return n.longValue();
     }
 
     public long getPid() {
-        return pid;
+        Number n = (Number)properties.get(ISysMonitor.PROP_PID);
+        if (n == null) return -1;
+        return n.longValue();
     }
 
     public String getState() {
-        return state;
+        return (String)properties.get(ISysMonitor.PROP_STATE);
     }
 
     public long getTgid() {
-        return tgid;
+        Number n = (Number)properties.get(ISysMonitor.PROP_TGID);
+        if (n == null) return -1;
+        return n.longValue();
     }
 
     public long getTracerPid() {
-        return tracepid;
+        Number n = (Number)properties.get(ISysMonitor.PROP_TRACERPID);
+        if (n == null) return -1;
+        return n.longValue();
     }
 
     public long getUid() {
-        return uid;
+        Number n = (Number)properties.get(ISysMonitor.PROP_UID);
+        if (n == null) return -1;
+        return n.longValue();
     }
 
     public String getUsername() {
-        return username;
+        return (String)properties.get(ISysMonitor.PROP_USERNAME);
     }
 
     public long getVmRSSInKB() {
-        return vm_rss_kb;
+        Number rss = (Number)properties.get(ISysMonitor.PROP_RSS);
+        Number psz = (Number)properties.get(ISysMonitor.PROP_PSIZE);
+        if (rss == null || psz == null) return -1;
+        return (rss.longValue() * psz.longValue() + 1023) / 1024;
     }
 
     public long getVmSizeInKB() {
-        return vm_size_kb;
+        Number vsz = (Number)properties.get(ISysMonitor.PROP_VSIZE);
+        if (vsz == null) return -1;
+        return (vsz.longValue() + 1023) / 1024;
     }
 
     public boolean isRoot() {
@@ -268,7 +259,7 @@ public class TCFProcessResource extends AbstractResource implements
         final String STATUS_DELIMITER = "|"; //$NON-NLS-1$
         StringBuffer s = new StringBuffer();
         s.append(getPid()).append(STATUS_DELIMITER);
-        s.append(name).append(STATUS_DELIMITER);
+        s.append(getName()).append(STATUS_DELIMITER);
         s.append(getState()).append(STATUS_DELIMITER);
         s.append(getTgid()).append(STATUS_DELIMITER);
         s.append(getPPid()).append(STATUS_DELIMITER);
@@ -281,83 +272,99 @@ public class TCFProcessResource extends AbstractResource implements
         return s.toString();
     }
 
-    public Map<String, Object> getProperties() {
+    public Map<String,Object> getProperties() {
         return properties;
     }
 
-    private String getTimePC(String name) {
-        if (prev == null) return null;
-        Object x = prev.properties.get(name);
-        Object y = properties.get(name);
-        if (x instanceof Number && y instanceof Number) {
-            BigInteger nx = x instanceof BigInteger ? (BigInteger) x
-                    : new BigInteger(x.toString());
-            BigInteger ny = y instanceof BigInteger ? (BigInteger) y
-                    : new BigInteger(y.toString());
-            double d = ny.subtract(nx).doubleValue()
-                    / (timestamp - prev.timestamp);
-            return percent_format.format(d);
-        }
-        return null;
-    }
-
-    public String getUserTimePC() {
-        if (utime_pc != null) return utime_pc;
-        return utime_pc = getTimePC(ISysMonitor.PROP_UTIME);
-    }
-
-    public String getSysTimePC() {
-        if (stime_pc != null) return stime_pc;
-        return stime_pc = getTimePC(ISysMonitor.PROP_STIME);
-    }
-
-    public boolean getChildrenLoading() {
-        return children_loading;
-    }
-
-    public void setChildrenLoading(boolean b) {
-        children_loading = b;
-    }
-
-    public boolean getChildrenLoaded() {
-        return children_loaded;
-    }
-
-    public void setChildrenLoaded(boolean b) {
-        children_loaded = b;
-    }
-
-    public Throwable getChildrenError() {
-        return children_error;
-    }
-
-    public void setChildrenError(Throwable error) {
-        children_error = error;
-    }
-
-    public void addChildrenWaitList(Runnable run) {
-        assert !running_wait_list;
-        assert children_loading;
-        assert !children_loaded;
-        children_wait_list.add(run);
-    }
-
-    public void runChildrenWaitList() {
+    private void runChildrenWaitList() {
         assert !children_loading;
         assert children_loaded;
         try {
             running_wait_list = true;
-            for (Runnable r : children_wait_list)
-                r.run();
+            for (Runnable r : children_wait_list) r.run();
             children_wait_list.clear();
         }
         finally {
             running_wait_list = false;
         }
     }
+    
+    public Throwable getChildrenError() {
+        return children_error;
+    }
+    
+    public void flushChildrenCache() {
+        Map<Long,TCFProcessResource> pid2res = rse_service.getProcessCache();
+        for (TCFProcessResource r : children.values()) {
+            long pid = r.getPid();
+            if (pid > 0 && getPid() != pid) pid2res.remove(r.getPid());
+        }
+        children_loaded = false;
+        children_error = null;
+    }
 
-    public void cancelChildrenLoading() {
-        // TODO: cancelChildrenLoading
+    public boolean loadChildren(Runnable run) {
+        if (children_loaded) return true;
+        assert !running_wait_list;
+        children_wait_list.add(run);
+        if (children_loading) return false;
+        children_loading = true;
+        try {
+            final ISysMonitor m = rse_service.getTCFConnectorService().getSysMonitorService();
+            m.getChildren(getID(), new ISysMonitor.DoneGetChildren() {
+                public void doneGetChildren(IToken token, Exception error, String[] ids) {
+                    try {
+                        if (error != null) {
+                            loadProcessesDone(error, null);
+                        }
+                        else if (ids == null) {
+                            loadProcessesDone(null, new TCFProcessResource[0]);
+                        }
+                        else {
+                            final TCFProcessResource[] arr = new TCFProcessResource[ids.length];
+                            final Set<IHostProcess> pending = new HashSet<IHostProcess>();
+                            for (int i = 0; i < ids.length; i++) {
+                                final TCFProcessResource r = new TCFProcessResource(
+                                        rse_service, m, children.get(ids[i]), ids[i]);
+                                if (!r.validate(new Runnable() {
+                                    public void run() {
+                                        pending.remove(r);
+                                        if (pending.isEmpty()) loadProcessesDone(null, arr);
+                                    }
+                                })) pending.add(r);
+                                arr[i] = r;
+                            }
+                            if (pending.isEmpty()) loadProcessesDone(null, arr);
+                        }
+                    }
+                    catch (Throwable x) {
+                        loadProcessesDone(x, null);
+                    }
+                }
+            });
+            return false;
+        }
+        catch (Throwable x) {
+            loadProcessesDone(x, null);
+            return true;
+        }
+    }
+
+    private void loadProcessesDone(Throwable error, TCFProcessResource[] arr) {
+        assert children_loading;
+        children_loading = false;
+        children_loaded = true;
+        children.clear();
+        if (arr != null && error == null) {
+            Map<Long,TCFProcessResource> pid2res = rse_service.getProcessCache();
+            for (TCFProcessResource r : arr) {
+                long pid = r.getPid();
+                if (pid > 0 && getPid() != pid) pid2res.put(pid, r);
+                if (r.getError() == null) children.put(r.getID(), r);
+            }
+        }
+        children_error = error;
+        runChildrenWaitList();
     }
 
     @Override

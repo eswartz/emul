@@ -199,6 +199,7 @@ public interface IProcesses extends IService {
     
     /**
      * Get list of signals that can be send to the process.
+     * @param context_id - process context ID or null.
      * @param done - call back interface called when operation is completed.
      * @return pending command handle, can be used to cancel the command.
      */

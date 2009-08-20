@@ -32,12 +32,4 @@ public class TCFRemoteProcess extends RemoteProcessImpl {
     public Map<String,Object> getProperties() {
         return ((TCFProcessResource)_underlyingProcess).getProperties();
     }
-
-    public String getUserTimePC() {
-        return ((TCFProcessResource)_underlyingProcess).getUserTimePC();
-    }
-
-    public String getSysTimePC() {
-        return ((TCFProcessResource)_underlyingProcess).getSysTimePC();
-    }
 }

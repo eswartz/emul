@@ -12,6 +12,7 @@
 package org.eclipse.tm.internal.tcf.rse.processes;
 
 import java.math.BigInteger;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,12 +27,14 @@ import org.eclipse.rse.core.model.ISystemResourceSet;
 import org.eclipse.rse.core.model.SystemMessageObject;
 import org.eclipse.rse.core.model.SystemRemoteResourceSet;
 import org.eclipse.rse.core.subsystems.ISubSystem;
+import org.eclipse.rse.internal.processes.ui.actions.SystemKillProcessAction;
 import org.eclipse.rse.services.clientserver.processes.HostProcessFilterImpl;
 import org.eclipse.rse.services.clientserver.processes.IHostProcess;
 import org.eclipse.rse.services.clientserver.processes.IHostProcessFilter;
 import org.eclipse.rse.services.clientserver.processes.ISystemProcessRemoteTypes;
 import org.eclipse.rse.subsystems.processes.core.subsystem.IRemoteProcess;
 import org.eclipse.rse.subsystems.processes.core.subsystem.IRemoteProcessSubSystem;
+import org.eclipse.rse.ui.ISystemContextMenuConstants;
 import org.eclipse.rse.ui.ISystemMessages;
 import org.eclipse.rse.ui.RSEUIPlugin;
 import org.eclipse.rse.ui.SystemBasePlugin;
@@ -54,10 +57,14 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
     private SystemCopyToClipboardAction copyClipboardAction;
     private static final Object[] EMPTY_LIST = new Object[0];
     private static IPropertyDescriptor[] properties = null;
-    //private SystemKillProcessAction killProcessAction;
+    private SystemKillProcessAction killProcessAction;
 
-    private static final String PROP_PC_UTIME = "PCUTime"; //$NON-NLS-1$
-    private static final String PROP_PC_STIME = "PCSTime"; //$NON-NLS-1$
+    private static final NumberFormat percent_format;
+
+    static {
+        percent_format = NumberFormat.getPercentInstance();
+        percent_format.setMaximumFractionDigits(3);
+    }
 
     @Override
     public boolean canDrag(Object element) {
@@ -82,12 +89,10 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
     @Override
     public void addActions(SystemMenuManager menu,
                     IStructuredSelection selection, Shell parent, String menuGroup) {
-        /*
-            if (killProcessAction == null)
-                    killProcessAction = new SystemKillProcessAction(shell);
-            menu.add(ISystemContextMenuConstants.GROUP_CHANGE, killProcessAction);
-            */
-
+        if (killProcessAction == null) {
+            killProcessAction = new SystemKillProcessAction(getShell());
+        }
+        menu.add(ISystemContextMenuConstants.GROUP_CHANGE, killProcessAction);
         if (copyClipboardAction == null) {
             Clipboard clipboard = RSEUIPlugin.getTheSystemRegistryUI().getSystemClipboard();
             copyClipboardAction = new SystemCopyToClipboardAction(getShell(), clipboard);
@@ -227,8 +232,8 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_STIME, Messages.PROCESS_STIME_LABEL, Messages.PROCESS_STIME_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_CUTIME, Messages.PROCESS_CUTIME_LABEL, Messages.PROCESS_CUTIME_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_CSTIME, Messages.PROCESS_CSTIME_LABEL, Messages.PROCESS_CSTIME_TOOLTIP));
-        l.add(createSimplePropertyDescriptor(PROP_PC_UTIME, Messages.PROCESS_PC_UTIME_LABEL, Messages.PROCESS_PC_UTIME_TOOLTIP));
-        l.add(createSimplePropertyDescriptor(PROP_PC_STIME, Messages.PROCESS_PC_STIME_LABEL, Messages.PROCESS_PC_STIME_TOOLTIP));
+        l.add(createSimplePropertyDescriptor(TCFProcessResource.PROP_PC_UTIME, Messages.PROCESS_PC_UTIME_LABEL, Messages.PROCESS_PC_UTIME_TOOLTIP));
+        l.add(createSimplePropertyDescriptor(TCFProcessResource.PROP_PC_STIME, Messages.PROCESS_PC_STIME_LABEL, Messages.PROCESS_PC_STIME_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_PRIORITY, Messages.PROCESS_PRIORITY_LABEL, Messages.PROCESS_PRIORITY_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_NICE, Messages.PROCESS_NICE_LABEL, Messages.PROCESS_NICE_TOOLTIP));
         l.add(createSimplePropertyDescriptor(ISysMonitor.PROP_ITREALVALUE, Messages.PROCESS_ITREALVALUE_LABEL, Messages.PROCESS_ITREALVALUE_TOOLTIP));
@@ -258,8 +263,40 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
      * @return the current value of the given property
      */
     @Override
-    protected Object internalGetPropertyValue(Object key) {
-        return getPropertyValue(key, true);
+    protected Object internalGetPropertyValue(Object property) {
+        Object v = internalGetPropertyValueOrNull(property);
+        if (v == null) v = "";
+        return v;
+    }
+    
+    private Object internalGetPropertyValueOrNull(Object property) {
+        TCFRemoteProcess process = (TCFRemoteProcess)propertySourceInput;
+        Object p = process.getProperties().get(property);
+        if (property.equals(ISysMonitor.PROP_VSIZE)) {
+            return NLS.bind(Messages.PROCESS_VMSIZE_VALUE, Long.toString(process.getVmSizeInKB()));
+        }
+        if (property.equals(ISysMonitor.PROP_RSS)) {
+            return NLS.bind(Messages.PROCESS_VMRSS_VALUE, Long.toString(process.getVmRSSInKB()));
+        }
+        if (property.equals(ISysMonitor.PROP_SIGNALS)) return formatBitSet(p);
+        if (property.equals(ISysMonitor.PROP_SIGBLOCK)) return formatBitSet(p);
+        if (property.equals(ISysMonitor.PROP_SIGCATCH)) return formatBitSet(p);
+        if (property.equals(ISysMonitor.PROP_SIGIGNORE)) return formatBitSet(p);
+        if (property.equals(ISysMonitor.PROP_CODESTART)) return formatHex(p);
+        if (property.equals(ISysMonitor.PROP_CODEEND)) return formatHex(p);
+        if (property.equals(ISysMonitor.PROP_STACKSTART)) return formatHex(p);
+        if (property.equals(ISysMonitor.PROP_WCHAN)) return formatHex(p);
+        if (property.equals(ISysMonitor.PROP_FLAGS)) return formatBitSet(p);
+        if (property.equals(ISysMonitor.PROP_UTIME)) return formatTime(p);
+        if (property.equals(ISysMonitor.PROP_STIME)) return formatTime(p);
+        if (property.equals(ISysMonitor.PROP_CUTIME)) return formatTime(p);
+        if (property.equals(ISysMonitor.PROP_CSTIME)) return formatTime(p);
+        if (property.equals(ISysMonitor.PROP_STARTTIME)) return formatTime(p);
+        if (property.equals(ISysMonitor.PROP_ITREALVALUE)) return formatTime(p);
+        if (property.equals(TCFProcessResource.PROP_PC_UTIME)) return formatPercent(p);
+        if (property.equals(TCFProcessResource.PROP_PC_STIME)) return formatPercent(p);
+        if (p != null) return p.toString();
+        return null;
     }
 
     /**
@@ -271,41 +308,37 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
      */
     @Override
     public Object getPropertyValue(Object property, boolean formatted) {
-        String name = (String)property;
+        if (formatted) return getPropertyValue(property);
+        
         TCFRemoteProcess process = (TCFRemoteProcess)propertySourceInput;
         Object p = process.getProperties().get(property);
-
-        if (formatted) {
-            if (name.equals(ISysMonitor.PROP_VSIZE)) {
-                return NLS.bind(Messages.PROCESS_VMSIZE_VALUE, Long
-                        .toString(process.getVmSizeInKB()));
-            }
-            if (name.equals(ISysMonitor.PROP_RSS)) {
-                return NLS.bind(Messages.PROCESS_VMRSS_VALUE, Long
-                        .toString(process.getVmRSSInKB()));
-            }
-            if (name.equals(ISysMonitor.PROP_SIGNALS))return formatBitSet(p);
-            if (name.equals(ISysMonitor.PROP_SIGBLOCK)) return formatBitSet(p);
-            if (name.equals(ISysMonitor.PROP_SIGCATCH)) return formatBitSet(p);
-            if (name.equals(ISysMonitor.PROP_SIGIGNORE)) return formatBitSet(p);
-            if (name.equals(ISysMonitor.PROP_CODESTART)) return formatHex(p);
-            if (name.equals(ISysMonitor.PROP_CODEEND)) return formatHex(p);
-            if (name.equals(ISysMonitor.PROP_STACKSTART)) return formatHex(p);
-            if (name.equals(ISysMonitor.PROP_WCHAN)) return formatHex(p);
-            if (name.equals(ISysMonitor.PROP_FLAGS)) return formatBitSet(p);
-            if (name.equals(ISysMonitor.PROP_UTIME)) return formatTime(p);
-            if (name.equals(ISysMonitor.PROP_STIME)) return formatTime(p);
-            if (name.equals(ISysMonitor.PROP_CUTIME)) return formatTime(p);
-            if (name.equals(ISysMonitor.PROP_CSTIME)) return formatTime(p);
-            if (name.equals(ISysMonitor.PROP_STARTTIME)) return formatTime(p);
-            if (name.equals(ISysMonitor.PROP_ITREALVALUE)) return formatTime(p);
-            if (name.equals(PROP_PC_UTIME)) return process.getUserTimePC();
-            if (name.equals(PROP_PC_STIME)) return process.getSysTimePC();
+        if (p == null) {
+            if (property.equals(ISysMonitor.PROP_PID)) return Long.valueOf(0);
+            if (property.equals(ISysMonitor.PROP_PPID)) return Long.valueOf(0);
+            if (property.equals(ISysMonitor.PROP_CODESTART)) return BigInteger.ZERO;
+            if (property.equals(ISysMonitor.PROP_CODEEND)) return BigInteger.ZERO;
+            if (property.equals(ISysMonitor.PROP_STACKSTART)) return BigInteger.ZERO;
+            if (property.equals(ISysMonitor.PROP_WCHAN)) return BigInteger.ZERO;
+            if (property.equals(ISysMonitor.PROP_UTIME)) return Long.valueOf(0);
+            if (property.equals(ISysMonitor.PROP_STIME)) return Long.valueOf(0);
+            if (property.equals(ISysMonitor.PROP_CUTIME)) return Long.valueOf(0);
+            if (property.equals(ISysMonitor.PROP_CSTIME)) return Long.valueOf(0);
+            if (property.equals(ISysMonitor.PROP_STARTTIME)) return Long.valueOf(0);
+            if (property.equals(ISysMonitor.PROP_ITREALVALUE)) return Long.valueOf(0);
+            if (property.equals(TCFProcessResource.PROP_PC_UTIME)) return Double.valueOf(0);
+            if (property.equals(TCFProcessResource.PROP_PC_STIME)) return Double.valueOf(0);
+            if (property.equals(ISysMonitor.PROP_CWD)) return "";
+            if (property.equals(ISysMonitor.PROP_FILE)) return "";
         }
-
-        if (p == null) return null;
-        if (formatted) return p.toString();
         return p;
+    }
+    
+    private String formatPercent(Object o) {
+        if (o instanceof Number) {
+            Number n = (Number)o;
+            return percent_format.format(n.doubleValue());
+        }
+        return null;
     }
 
     private String formatTime(Object o) {
@@ -346,7 +379,8 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
 
     protected String formatHex(Object o) {
         if (o instanceof Number) {
-            BigInteger n = new BigInteger(o.toString());
+            BigInteger n = o instanceof BigInteger ?
+                    (BigInteger)o : new BigInteger(o.toString());
             StringBuffer buf = new StringBuffer();
             buf.append("0x"); //$NON-NLS-1$
             formatHex(buf, n, 0);
