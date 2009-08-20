@@ -469,8 +469,14 @@ static void send_eof_and_close(Channel * channel, int err) {
     write_errno(&c->chan.out, err);
     tcp_write_stream(&c->chan.out, MARKER_EOM);
     tcp_flush_stream(&c->chan.out);
+    shutdown(c->socket, SHUT_RDWR);
     closesocket(c->socket);
     c->socket = -1;
+    if (c->read_pending != 0) {
+        /* shutdown should make sure the wait is minimal */
+        cancel_event(tcp_channel_read_done, &c->rdreq, 1);
+        c->read_pending = 0;
+    }
     notify_channel_closed(channel);
     if (channel->disconnected) channel->disconnected(channel);
     tcp_unlock(channel);

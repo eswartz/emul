@@ -233,6 +233,10 @@ extern int wsa_send(int socket, const void * buf, size_t size, int flags);
 extern int wsa_sendto(int socket, const void * buf, size_t size, int flags,
                   const struct sockaddr * dest_addr, socklen_t dest_size);
 
+#ifndef SHUT_RDWR
+#define SHUT_RDWR SD_BOTH
+#endif SHUT_RDWR
+
 extern char * canonicalize_file_name(const char * path);
 
 #define O_LARGEFILE 0
