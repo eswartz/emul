@@ -575,9 +575,10 @@ static int write_unicode_string(OutputStream * out, HANDLE prs, UNICODE_STRING s
         wchar_t w_fnm[FILE_PATH_SIZE];
         SIZE_T buff_size = str.Length;
         SIZE_T read_size = 0;
+        memset(w_fnm, 0, sizeof(w_fnm));
         if (buff_size > sizeof(w_fnm)) buff_size = sizeof(w_fnm);
         if (ReadProcessMemory(prs, (LPCVOID)str.Buffer, w_fnm, buff_size, &read_size)) {
-            char a_fnm[FILE_PATH_SIZE * 2];
+            char a_fnm[FILE_PATH_SIZE * 4];
             DWORD k = wcslen(w_fnm);
             int n = WideCharToMultiByte(CP_UTF8, 0, w_fnm, k, a_fnm, sizeof(a_fnm), NULL, NULL);
             a_fnm[n] = 0;
@@ -592,11 +593,14 @@ static int write_unicode_string(OutputStream * out, HANDLE prs, UNICODE_STRING s
 }
 
 static void write_time(OutputStream * out, FILETIME tm, int64_t base, char * name) {
+    int64_t n = (((int64_t)tm.dwLowDateTime | ((int64_t)tm.dwHighDateTime << 32)) - base) / 10000;
+
     write_stream(out, ',');
 
     json_write_string(out, name);
     write_stream(out, ':');
-    json_write_int64(out, (((int64_t)tm.dwLowDateTime | ((int64_t)tm.dwHighDateTime << 32)) - base) / 10000);
+    if (n < 0) n = 0;
+    json_write_int64(out, n);
 }
 
 static void write_process_context(OutputStream * out, char * id, pid_t pid, HANDLE prs) {
@@ -657,7 +661,7 @@ static void write_process_context(OutputStream * out, char * id, pid_t pid, HAND
                     system_start_time -= (int64_t)GetTickCount() * 10000; /* Note: GetTickCount() is valid only first 49 days */
                 }
             }
-            if ((c_time.dwLowDateTime != 0 || c_time.dwHighDateTime != 0) && system_start_time != 0) {
+            if (system_start_time != 0) {
                 write_time(out, c_time, system_start_time, "StartTime");
             }
             write_time(out, k_time, 0, "STime");
