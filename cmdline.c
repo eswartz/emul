@@ -412,6 +412,9 @@ void ini_cmdline_handler(int interactive, Protocol * protocol) {
     proto = protocol;
 
 #if ENABLE_Plugins
+    if (plugin_add_function("Cmdline_cmd_done", (void *)cmd_done)) {
+        fprintf(stderr, "Error: Cannot add cmd_done shared function\n");
+    }
     if (plugin_add_function("Cmdline_add_cmd", (void *)add_cmdline_cmd)) {
         fprintf(stderr, "Error: Cannot add add_cmd shared function\n");
     }
