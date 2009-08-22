@@ -276,11 +276,6 @@ PeerServer * channel_peer_from_url(const char * url) {
         s++;
         url = s;
         while (*s && *s != ';') s++;
-        if (*s != ';') {
-            loc_free(name);
-            s = url - 1;
-            break;
-        }
         value = loc_strndup(url, s - url);
         peer_server_addprop(ps, name, value);
     }
