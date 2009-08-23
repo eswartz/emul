@@ -59,7 +59,7 @@ extern PeerServer * peer_server_alloc(void);
 extern void peer_server_addprop(PeerServer * ps, char * name, char * value);
 
 /* Add properties to peer server object */
-extern char * peer_server_getprop(PeerServer * ps, char * name, char * default_value);
+extern char * peer_server_getprop(PeerServer * ps, const char * name, char * default_value);
 
 /* Free peer server object */
 extern void peer_server_free(PeerServer * ps);

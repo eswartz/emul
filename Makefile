@@ -24,10 +24,11 @@ ifeq ($(OPSYS),Darwin)
 LIBS=-lpthread
 RANLIB=ranlib $@
 else
+EXPORT_DYNAMIC=-rdynamic
 LIBS=-lpthread -lssl -lrt
 
 ifdef PATH_Plugins
-CFLAGS += -rdynamic -DPATH_Plugins="$(PATH_Plugins)"
+CFLAGS += $(EXPORT_DYNAMIC) -DPATH_Plugins="$(PATH_Plugins)"
 LIBS += -ldl
 endif
 
@@ -66,7 +67,7 @@ $(BINDIR)/client: $(BINDIR)/main_client.o $(BINDIR)/libtcf.a
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_client.o $(BINDIR)/libtcf.a $(LIBS)
 
 $(BINDIR)/tcflua: $(BINDIR)/main_lua.o $(BINDIR)/libtcf.a
-	$(CC) $(CFLAGS) -Wl,-E -o $@ $(BINDIR)/main_lua.o $(BINDIR)/libtcf.a $(LIBS) $(LUADIR)/lib/liblua.a -lm -ldl
+	$(CC) $(CFLAGS) $(EXPORT_DYNAMIC) -o $@ $(BINDIR)/main_lua.o $(BINDIR)/libtcf.a $(LIBS) $(LUADIR)/lib/liblua.a -lm -ldl
 
 $(BINDIR)/tcfreg: $(BINDIR)/main_reg.o $(BINDIR)/libtcf.a
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_reg.o $(BINDIR)/libtcf.a $(LIBS)
