@@ -45,6 +45,9 @@ OFILES=$(addprefix $(BINDIR)/,$(filter-out main%.o,$(addsuffix .o,$(basename $(w
 HFILES=$(wildcard *.h)
 CFILES=$(wildcard *.c)
 EXECS=$(BINDIR)/agent $(BINDIR)/client $(BINDIR)/tcfreg $(BINDIR)/valueadd $(BINDIR)/tcflog
+ifdef LUADIR
+EXECS+=$(BINDIR)/tcflua
+endif
 
 ifdef SERVICES
 CFLAGS += $(shell ./services-to-cflags $(SERVICES))
@@ -62,6 +65,9 @@ $(BINDIR)/agent: $(BINDIR)/main.o $(BINDIR)/libtcf.a
 $(BINDIR)/client: $(BINDIR)/main_client.o $(BINDIR)/libtcf.a
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_client.o $(BINDIR)/libtcf.a $(LIBS)
 
+$(BINDIR)/tcflua: $(BINDIR)/main_lua.o $(BINDIR)/libtcf.a
+	$(CC) $(CFLAGS) -Wl,-E -o $@ $(BINDIR)/main_lua.o $(BINDIR)/libtcf.a $(LIBS) $(LUADIR)/lib/liblua.a -lm -ldl
+
 $(BINDIR)/tcfreg: $(BINDIR)/main_reg.o $(BINDIR)/libtcf.a
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_reg.o $(BINDIR)/libtcf.a $(LIBS)
 
@@ -70,6 +76,10 @@ $(BINDIR)/valueadd: $(BINDIR)/main_va.o $(BINDIR)/libtcf.a
 
 $(BINDIR)/tcflog: $(BINDIR)/main_log.o $(BINDIR)/libtcf.a
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_log.o $(BINDIR)/libtcf.a $(LIBS)
+
+$(BINDIR)/main_lua.o: main_lua.c $(HFILES) Makefile
+	@mkdir -p $(BINDIR)
+	$(CC) $(CFLAGS) -I$(LUADIR)/include -c -o $@ $<
 
 $(BINDIR)/%.o: %.c $(HFILES) Makefile
 	@mkdir -p $(BINDIR)
