@@ -16,6 +16,7 @@
     <li><a href='#Workspace'>Creating Eclipse Workspace</a>
     <li><a href='#Plugins'>TCF Plugins</a>
     <li><a href='#Agent'>Building TCF Agent</a>
+    <li><a href='#TcfLua'>TCF Integration with Lua</a>
     <li><a href='#Browsing'>Browsing Agent Source Code in CDT</a>
     <li><a href='#RSE'>Using TCF With Remote System Explorer</a>
     <li><a href='#Debugger'>Using TCF With Eclipse Debugger</a>
@@ -169,6 +170,166 @@ project out of source code in <code>&lt;TCF Root&gt;/agent</code> directory. Use
 commands to build and run the agent. To run the agent on VxWorks Simulator
 you will need to setup a simulated network - see Networking with the VxWorks Simulator chapter
 in Wind River VxWorks Simulator user's guide for details.</p>
+
+<h2><a name='TcfLua'>TCF Integration with Lua</a></h2>
+
+<p>The TCF integration with Lua allows writing TCF client and server programs in the Lua programming lanugage.  The integration is done so the main loop is the TCF event dispatch loop.  At startup a Lua program is invoked to allow an initial setup after which it should return to enter the TCF dispatch loop.</p>
+
+<p>TCF functions are accessible from the Lua table named "tcf".  Accessible functions are:</p>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Function
+        <th>Callback
+        <th>Description
+    <tr>
+        <td><code>read_command(read_command_callback)
+        <td><code>read_command_callback(string)
+        <td>Reads one line from stdin or if the -s command line option is specified from the specified file.
+    <tr>
+        <td><code>peer = peer_server_find(peer_name)
+        <td>NA
+        <td>Looks up peer object with the specified name.  Returns <code>nil</code> if not found.
+    <tr>
+        <td><code>peers = peer_server_list()
+        <td>NA
+        <td>Returns a table of discovered peer objects.
+    <tr>
+        <td><code>peer = peer_server_from_url(peer_url)
+        <td>NA
+        <td>Creates a peer object from the specified URL.
+    <tr>
+        <td><code>protocol = protocol_alloc()
+        <td>NA
+        <td>Created a new protocol object.
+    <tr>
+        <td><code>channel_connect(peer, protocol, connect_callback)
+        <td><code>connect_callback(channel, errorString)
+        <td>Creates connection to specified peer.
+    <tr>
+        <td><code>event = post_event(post_event_callback, micro_seconds)
+        <td><code>post_event_callback()
+        <td>The <code>micro_seconds</code> argument is optional.  Then not present the callback function will be invoked after currently pending event have been processed.
+</table>
+
+<p>Protocol object functions:</p>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Function
+        <th>Callback
+        <th>Description
+    <tr>
+        <td><code>command_handler(protocol, service, name, command_callback)
+        <td><code>command_callback(token, data)
+        <td>Register command handler for <code>service</code> and <code>name</code> with <code>protocol</code>.  The <code>command_callback</code> function will be called each time a command of the specified name and service is received on a channel associated with the protocol object.
+</table>
+
+<p>Channel object functions:</p>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Function
+        <th>Callback
+        <th>Description
+    <tr>
+        <td><code>close(channel)
+        <td>NA
+        <td>Disconnects the specified channel.
+    <tr>
+        <td><code>connecting_handler(channel, connecting_callback)
+        <td><code>connecting_callback()
+        <td>Register callback function which is called when the channel enters connecting state.
+    <tr>
+        <td><code>connected_handler(channel, connected_callback)
+        <td><code>connected_callback()
+        <td>Register callback function which is called when the channel enters connected state.
+    <tr>
+        <td><code>receive_handler(channel, receive_callback)
+        <td><code>receive_callback()
+        <td>Register callback function which is called when the channel receives a message.
+    <tr>
+        <td><code>disconnected_handler(channel, disconnected_callback)
+        <td><code>disconnected_callback()
+        <td>Register callback function which is called when the channel is disconnected.
+    <tr>
+        <td><code>event_handler(channel, service, name, event_callback)
+        <td><code>event_callback(data)
+        <td>Register callback function which is called when an event for <code>service</code> and <code>name</code> is received.
+    <tr>
+        <td><code>start(channel)
+        <td>NA
+        <td>Starts communication on channel.
+    <tr>
+        <td><code>send_command(channel, service, name, data, replay_callback)
+        <td><code>replay_callback(data, error)
+        <td>Send a command to channel and register callback when reply is received.
+    <tr>
+        <td><code>services = get_services(channel)
+        <td>NA
+        <td>Create a table of service names supported by remote peer.
+</table>
+
+<p>Peer object functions:</p>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Function
+        <th>Callback
+        <th>Description
+    <tr>
+        <td><code>id = getid(peer)
+        <td>NA
+        <td>Return ID of peer.
+    <tr>
+        <td><code>getnames(peer)
+        <td>NA
+        <td>Return table of peer propery names.
+    <tr>
+        <td><code>getvalue(peer, name)
+        <td>NA
+        <td>Return value of propery <code>name</code>.
+    <tr>
+        <td><code>setvalue(peer, name, value)
+        <td>NA
+        <td>Set value of propery <code>name</code>.
+    <tr>
+        <td><code>getflags(peer)
+        <td>NA
+        <td>Return table of flags for peer.
+    <tr>
+        <td><code>setflags(peer, flags)
+        <td>NA
+        <td>Set flags for peer.
+</table>
+
+<p>Event object functions:</p>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Function
+        <th>Callback
+        <th>Description
+    <tr>
+        <td><code>cancel(event)
+        <td>NA
+        <td>Cancel event created by <code>post_event()</code>.
+</table>
+
+<h3>Download and Build</h3>
+
+The integration has only been tested on Linux at this point.
+
+<p><code>cd &lt;<i>luadir</i>&gt;
+<br>curl -O http://www.lua.org/ftp/lua-5.1.4.tar.gz
+<br>tar zxf lua-5.1.4.tar.gz 
+<br>cd lua-5.1.4
+<br>make linux
+<br>make local
+<br>cd &lt;<i>tcfdir</i>&gt;/agent
+<br>make LUADIR=&lt;<i>luadir</i>&gt;/lua-5.1.4
+
+<p><code>./GNU/Linux/i686/Debug/tcflua tcf_example.lua
 
 <h2><a name='Browsing'>Browsing Agent Source Code in CDT</a></h2>
 On Linux, the default configuration from the CDT .project file included in TCF
