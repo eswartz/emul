@@ -126,9 +126,6 @@ extern void usleep(useconds_t useconds);
 
 #define off_t __int64
 #define lseek _lseeki64
-#define stat  _stati64
-#define lstat _stati64
-#define fstat _fstati64
 extern int truncate(const char * path, int64_t size);
 extern int ftruncate(int f, int64_t size);
 #define utimbuf _utimbuf
@@ -146,24 +143,48 @@ extern int getegid(void);
 extern ssize_t pread(int fd, const void * buf, size_t size, off_t offset);
 extern ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset);
 
-#endif /* __CYGWIN__ */
+/* UTF-8 support */
+struct utf8_stat {
+    dev_t      st_dev;
+    ino_t      st_ino;
+    unsigned short st_mode;
+    short      st_nlink;
+    short      st_uid;
+    short      st_gid;
+    dev_t      st_rdev;
+    int64_t    st_size;
+    int64_t    st_atime;
+    int64_t    st_mtime;
+    int64_t    st_ctime;
+};
+#define stat   utf8_stat
+#define lstat  utf8_stat
+#define fstat  utf8_fstat
+#define open   utf8_open
+#define chmod  utf8_chmod
+#define remove utf8_remove
+#define rmdir  utf8_rmdir
+#define mkdir  utf8_mkdir
+#define rename utf8_rename
+extern int utf8_stat(const char * name, struct utf8_stat * buf);
+extern int utf8_fstat(int fd, struct utf8_stat * buf);
+extern int utf8_open(const char * name, int flags, int perms);
+extern int utf8_chmod(const char * name, int mode);
+extern int utf8_remove(const char * path);
+extern int utf8_rmdir(const char * path);
+extern int utf8_mkdir(const char * path, int mode);
+extern int utf8_rename(const char * path1, const char * path2);
 
-#define MSG_MORE 0
-
-extern const char * inet_ntop(int af, const void * src, char * dst, socklen_t size);
-extern int inet_pton(int af, const char * src, void * dst);
-
-#if defined(_MSC_VER)
 /*
- * readdir() emulation
+ * readdir() emulation with UTF-8 support
  */
-struct DIR {
+struct UTF8_DIR {
   long hdl;
-  struct _finddatai64_t blk;
+  struct _wfinddatai64_t blk;
   char path[FILE_PATH_SIZE];
 };
 
-struct dirent {
+struct utf8_dirent {
   char d_name[FILE_PATH_SIZE];
   int64_t d_size;
   time_t d_atime;
@@ -171,13 +192,24 @@ struct dirent {
   time_t d_wtime;
 };
 
-typedef struct DIR DIR;
+typedef struct UTF8_DIR UTF8_DIR;
 
-extern DIR * opendir(const char * path);
-extern int closedir(DIR * dir);
-extern struct dirent * readdir(DIR * dir);
+#define DIR UTF8_DIR
+#define dirent   utf8_dirent
+#define opendir  utf8_opendir
+#define closedir utf8_closedir
+#define readdir  utf8_readdir
 
-#endif /* _MSC_VER */
+extern DIR * utf8_opendir(const char * path);
+extern int utf8_closedir(DIR * dir);
+extern struct utf8_dirent * readdir(DIR * dir);
+
+#endif /* __CYGWIN__ */
+
+#define MSG_MORE 0
+
+extern const char * inet_ntop(int af, const void * src, char * dst, socklen_t size);
+extern int inet_pton(int af, const char * src, void * dst);
 
 /*
  * PThreads emulation.
@@ -235,7 +267,7 @@ extern int wsa_sendto(int socket, const void * buf, size_t size, int flags,
 
 #ifndef SHUT_RDWR
 #define SHUT_RDWR SD_BOTH
-#endif SHUT_RDWR
+#endif
 
 extern char * canonicalize_file_name(const char * path);
 

@@ -445,7 +445,7 @@ int inet_pton(int af, const char * src, void * dst) {
 
 #endif /* WIN32 */
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(WIN32) && !defined(__CYGWIN__)
 
 static __int64 file_time_to_unix_time(const FILETIME * ft) {
     __int64 res = (__int64)ft->dwHighDateTime << 32;
@@ -478,7 +478,7 @@ void usleep(useconds_t useconds) {
 
 int truncate(const char * path, int64_t size) {
     int res = 0;
-    int f = _open(path, _O_RDWR | _O_BINARY);
+    int f = open(path, _O_RDWR | _O_BINARY, 0);
     if (f < 0) return -1;
     res = ftruncate(f, size);
     _close(f);
@@ -545,10 +545,105 @@ ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset) {
     return wr;
 }
 
-#endif /* defined(_MSC_VER) || defined(__MINGW32__) */
+int utf8_stat(const char * name, struct utf8_stat * buf) {
+    struct _stati64 tmp;
+    wchar_t path[FILE_PATH_SIZE];
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+        set_win32_errno(GetLastError());
+        return -1;
+    }
+    if (_wstati64(path, &tmp)) return -1;
+    buf->st_dev = tmp.st_dev;
+    buf->st_ino = tmp.st_ino;
+    buf->st_mode = tmp.st_mode;
+    buf->st_nlink = tmp.st_nlink;
+    buf->st_uid = tmp.st_uid;
+    buf->st_gid = tmp.st_gid;
+    buf->st_rdev = tmp.st_rdev;
+    buf->st_size = tmp.st_size;
+    buf->st_atime = tmp.st_atime;
+    buf->st_mtime = tmp.st_mtime;
+    buf->st_ctime = tmp.st_ctime;
+    return 0;
+}
 
-#if defined(_MSC_VER)
-DIR * opendir(const char *path) {
+int utf8_fstat(int fd, struct utf8_stat * buf) {
+    struct _stati64 tmp;
+    if (_fstati64(fd, &tmp)) return -1;
+    buf->st_dev = tmp.st_dev;
+    buf->st_ino = tmp.st_ino;
+    buf->st_mode = tmp.st_mode;
+    buf->st_nlink = tmp.st_nlink;
+    buf->st_uid = tmp.st_uid;
+    buf->st_gid = tmp.st_gid;
+    buf->st_rdev = tmp.st_rdev;
+    buf->st_size = tmp.st_size;
+    buf->st_atime = tmp.st_atime;
+    buf->st_mtime = tmp.st_mtime;
+    buf->st_ctime = tmp.st_ctime;
+    return 0;
+}
+
+int utf8_open(const char * name, int flags, int perms) {
+    wchar_t path[FILE_PATH_SIZE];
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+        set_win32_errno(GetLastError());
+        return -1;
+    }
+    return _wopen(path, flags, perms);
+}
+
+int utf8_chmod(const char * name, int mode) {
+    wchar_t path[FILE_PATH_SIZE];
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+        set_win32_errno(GetLastError());
+        return -1;
+    }
+    return _wchmod(path, mode);
+}
+
+int utf8_remove(const char * name) {
+    wchar_t path[FILE_PATH_SIZE];
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+        set_win32_errno(GetLastError());
+        return -1;
+    }
+    return _wremove(path);
+}
+
+int utf8_rmdir(const char * name) {
+    wchar_t path[FILE_PATH_SIZE];
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+        set_win32_errno(GetLastError());
+        return -1;
+    }
+    return _wrmdir(path);
+}
+
+int utf8_mkdir(const char * name, int mode) {
+    wchar_t path[FILE_PATH_SIZE];
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+        set_win32_errno(GetLastError());
+        return -1;
+    }
+    return _wmkdir(path);
+}
+
+int utf8_rename(const char * name1, const char * name2) {
+    wchar_t path1[FILE_PATH_SIZE];
+    wchar_t path2[FILE_PATH_SIZE];
+    if (!MultiByteToWideChar(CP_UTF8, 0, name1, -1, path1, sizeof(path1))) {
+        set_win32_errno(GetLastError());
+        return -1;
+    }
+    if (!MultiByteToWideChar(CP_UTF8, 0, name2, -1, path2, sizeof(path2))) {
+        set_win32_errno(GetLastError());
+        return -1;
+    }
+    return _wrename(path1, path2);
+}
+
+DIR * utf8_opendir(const char * path) {
     DIR * d = (DIR *)loc_alloc(sizeof(DIR));
     if (!d) { errno = ENOMEM; return 0; }
     strcpy(d->path, path);
@@ -557,23 +652,32 @@ DIR * opendir(const char *path) {
     return d;
 }
 
-struct dirent * readdir(DIR *d) {
+struct dirent * utf8_readdir(DIR * d) {
     static struct dirent de;
+
     if (d->hdl < 0) {
-        d->hdl = _findfirsti64(d->path, &d->blk);
+        wchar_t path[FILE_PATH_SIZE];
+        if (!MultiByteToWideChar(CP_UTF8, 0, d->path, -1, path, sizeof(path))) {
+            set_win32_errno(GetLastError());
+            return 0;
+        }
+        d->hdl = _wfindfirsti64(path, &d->blk);
         if (d->hdl < 0) {
             if (errno == ENOENT) errno = 0;
             return 0;
         }
     }
     else {
-        int r = _findnexti64(d->hdl, &d->blk);
+        int r = _wfindnexti64(d->hdl, &d->blk);
         if (r < 0) {
             if (errno == ENOENT) errno = 0;
             return 0;
         }
     }
-    strcpy(de.d_name, d->blk.name);
+    if (!WideCharToMultiByte(CP_UTF8, 0, d->blk.name, -1, de.d_name, sizeof(de.d_name), NULL, NULL)) {
+        set_win32_errno(GetLastError());
+        return 0;
+    }
     de.d_size = d->blk.size;
     de.d_atime = d->blk.time_access;
     de.d_ctime = d->blk.time_create;
@@ -581,7 +685,7 @@ struct dirent * readdir(DIR *d) {
     return &de;
 }
 
-int closedir(DIR * d) {
+int utf8_closedir(DIR * d) {
     int r = 0;
     if (!d) {
         errno = EBADF;
@@ -592,7 +696,7 @@ int closedir(DIR * d) {
     return r;
 }
 
-#endif /* defined(_MSC_VER) */
+#endif /* defined(WIN32) && !defined(__CYGWIN__) */
 
 #if defined(WIN32)
 
@@ -804,16 +908,23 @@ void ini_mdep(void) {
 
 #if defined(WIN32)
 
-char * canonicalize_file_name(const char * path) {
-    char buf[MAX_PATH];
-    char * basename;
+char * canonicalize_file_name(const char * name) {
+    DWORD len;
     int i = 0;
-    DWORD len = GetFullPathName(path, sizeof(buf), buf, &basename);
+    wchar_t buf[FILE_PATH_SIZE];
+    wchar_t * basename;
+    wchar_t path[FILE_PATH_SIZE];
+    char res[FILE_PATH_SIZE];
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+        set_win32_errno(GetLastError());
+        return NULL;
+    }
+    len = GetFullPathNameW(path, sizeof(buf), buf, &basename);
     if (len == 0) {
         errno = ENOENT;
         return NULL;
     }
-    if (len > MAX_PATH - 1) {
+    if (len > FILE_PATH_SIZE - 1) {
         errno = ENAMETOOLONG;
         return NULL;
     }
@@ -821,7 +932,11 @@ char * canonicalize_file_name(const char * path) {
         if (buf[i] == '\\') buf[i] = '/';
         i++;
     }
-    return strdup(buf);
+    if (!WideCharToMultiByte(CP_UTF8, 0, buf, -1, res, sizeof(res), NULL, NULL)) {
+        set_win32_errno(GetLastError());
+        return NULL;
+    }
+    return strdup(res);
 }
 
 #elif defined(_WRS_KERNEL)
