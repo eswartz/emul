@@ -244,7 +244,7 @@ public interface IFileSystem extends IService {
         S_IXGRP    = 00010,     // group has execute permission
         S_IRWXO    = 00007,     // mask for permissions for others (not in group)
         S_IROTH    = 00004,     // others have read permission
-        S_IWOTH    = 00002,     // others have write permisson
+        S_IWOTH    = 00002,     // others have write permission
         S_IXOTH    = 00001;     // others have execute permission
     
     final static class DirEntry {

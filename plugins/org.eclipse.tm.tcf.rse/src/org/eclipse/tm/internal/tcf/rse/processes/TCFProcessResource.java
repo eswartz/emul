@@ -193,11 +193,18 @@ public class TCFProcessResource extends AbstractResource implements IHostProcess
     }
 
     public String getLabel() {
-        return Long.toString(getPid()) + " " + getName(); //$NON-NLS-1$
+        return Long.toString(getPid()) + " " + notNull(getName()); //$NON-NLS-1$
     }
 
     public String getName() {
-        return (String)properties.get(ISysMonitor.PROP_FILE);
+        String s = (String)properties.get(ISysMonitor.PROP_FILE);
+        if (s != null) {
+            int i = s.lastIndexOf('/');
+            int j = s.lastIndexOf('\\');
+            if (j > i) i = j;
+            if (i > 0) s = s.substring(i + 1);
+        }
+        return s;
     }
 
     public long getPPid() {
@@ -241,31 +248,35 @@ public class TCFProcessResource extends AbstractResource implements IHostProcess
     public long getVmRSSInKB() {
         Number rss = (Number)properties.get(ISysMonitor.PROP_RSS);
         Number psz = (Number)properties.get(ISysMonitor.PROP_PSIZE);
-        if (rss == null || psz == null) return -1;
+        if (rss == null || psz == null) return 0;
         return (rss.longValue() * psz.longValue() + 1023) / 1024;
     }
 
     public long getVmSizeInKB() {
         Number vsz = (Number)properties.get(ISysMonitor.PROP_VSIZE);
-        if (vsz == null) return -1;
+        if (vsz == null) return 0;
         return (vsz.longValue() + 1023) / 1024;
     }
 
     public boolean isRoot() {
         return true;
     }
+    
+    private String notNull(String s) {
+        return s == null ? "" : s; 
+    }
 
     String getStatusLine() {
         final String STATUS_DELIMITER = "|"; //$NON-NLS-1$
         StringBuffer s = new StringBuffer();
         s.append(getPid()).append(STATUS_DELIMITER);
-        s.append(getName()).append(STATUS_DELIMITER);
-        s.append(getState()).append(STATUS_DELIMITER);
+        s.append(notNull(getName())).append(STATUS_DELIMITER);
+        s.append(notNull(getState())).append(STATUS_DELIMITER);
         s.append(getTgid()).append(STATUS_DELIMITER);
         s.append(getPPid()).append(STATUS_DELIMITER);
         s.append('0').append(STATUS_DELIMITER);
         s.append(getUid()).append(STATUS_DELIMITER);
-        s.append(getUsername()).append(STATUS_DELIMITER);
+        s.append(notNull(getUsername())).append(STATUS_DELIMITER);
         s.append(getGid()).append(STATUS_DELIMITER);
         s.append(getVmSizeInKB()).append(STATUS_DELIMITER);
         s.append(getVmRSSInKB()).append(STATUS_DELIMITER);
