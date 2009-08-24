@@ -548,7 +548,7 @@ ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset) {
 int utf8_stat(const char * name, struct utf8_stat * buf) {
     struct _stati64 tmp;
     wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
         set_win32_errno(GetLastError());
         return -1;
     }
@@ -586,7 +586,7 @@ int utf8_fstat(int fd, struct utf8_stat * buf) {
 
 int utf8_open(const char * name, int flags, int perms) {
     wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
         set_win32_errno(GetLastError());
         return -1;
     }
@@ -595,7 +595,7 @@ int utf8_open(const char * name, int flags, int perms) {
 
 int utf8_chmod(const char * name, int mode) {
     wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
         set_win32_errno(GetLastError());
         return -1;
     }
@@ -604,7 +604,7 @@ int utf8_chmod(const char * name, int mode) {
 
 int utf8_remove(const char * name) {
     wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
         set_win32_errno(GetLastError());
         return -1;
     }
@@ -613,7 +613,7 @@ int utf8_remove(const char * name) {
 
 int utf8_rmdir(const char * name) {
     wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
         set_win32_errno(GetLastError());
         return -1;
     }
@@ -622,7 +622,7 @@ int utf8_rmdir(const char * name) {
 
 int utf8_mkdir(const char * name, int mode) {
     wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
         set_win32_errno(GetLastError());
         return -1;
     }
@@ -632,11 +632,11 @@ int utf8_mkdir(const char * name, int mode) {
 int utf8_rename(const char * name1, const char * name2) {
     wchar_t path1[FILE_PATH_SIZE];
     wchar_t path2[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name1, -1, path1, sizeof(path1))) {
+    if (!MultiByteToWideChar(CP_UTF8, 0, name1, -1, path1, sizeof(path1) / sizeof(wchar_t))) {
         set_win32_errno(GetLastError());
         return -1;
     }
-    if (!MultiByteToWideChar(CP_UTF8, 0, name2, -1, path2, sizeof(path2))) {
+    if (!MultiByteToWideChar(CP_UTF8, 0, name2, -1, path2, sizeof(path2) / sizeof(wchar_t))) {
         set_win32_errno(GetLastError());
         return -1;
     }
@@ -657,7 +657,7 @@ struct dirent * utf8_readdir(DIR * d) {
 
     if (d->hdl < 0) {
         wchar_t path[FILE_PATH_SIZE];
-        if (!MultiByteToWideChar(CP_UTF8, 0, d->path, -1, path, sizeof(path))) {
+        if (!MultiByteToWideChar(CP_UTF8, 0, d->path, -1, path, sizeof(path) / sizeof(wchar_t))) {
             set_win32_errno(GetLastError());
             return 0;
         }
@@ -912,14 +912,16 @@ char * canonicalize_file_name(const char * name) {
     DWORD len;
     int i = 0;
     wchar_t buf[FILE_PATH_SIZE];
-    wchar_t * basename;
+    wchar_t * basename = NULL;
     wchar_t path[FILE_PATH_SIZE];
     char res[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path))) {
+
+    assert(name != NULL);
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
         set_win32_errno(GetLastError());
         return NULL;
     }
-    len = GetFullPathNameW(path, sizeof(buf), buf, &basename);
+    len = GetFullPathNameW(path, sizeof(buf) / sizeof(wchar_t), buf, &basename);
     if (len == 0) {
         errno = ENOENT;
         return NULL;
@@ -932,8 +934,13 @@ char * canonicalize_file_name(const char * name) {
         if (buf[i] == '\\') buf[i] = '/';
         i++;
     }
-    if (!WideCharToMultiByte(CP_UTF8, 0, buf, -1, res, sizeof(res), NULL, NULL)) {
+    len = WideCharToMultiByte(CP_UTF8, 0, buf, -1, res, sizeof(res), NULL, NULL);
+    if (len == 0) {
         set_win32_errno(GetLastError());
+        return NULL;
+    }
+    if (len > FILE_PATH_SIZE - 1) {
+        errno = ENAMETOOLONG;
         return NULL;
     }
     return strdup(res);
