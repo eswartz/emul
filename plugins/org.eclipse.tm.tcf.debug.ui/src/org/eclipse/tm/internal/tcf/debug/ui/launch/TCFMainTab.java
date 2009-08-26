@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
@@ -207,6 +207,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         });
     }
     
+    @Override
     protected void updateLaunchConfigurationDialog() {
         super.updateLaunchConfigurationDialog();
         working_dir_text.setEnabled(!default_dir_button.getSelection());

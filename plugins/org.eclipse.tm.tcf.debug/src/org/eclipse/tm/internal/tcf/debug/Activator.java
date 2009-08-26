@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
@@ -13,6 +13,7 @@ package org.eclipse.tm.internal.tcf.debug;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.tm.internal.tcf.debug.launch.TCFLocalAgent;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFUserDefPeer;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsModel;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -51,6 +52,7 @@ public class Activator extends Plugin {
     public void stop(BundleContext context) throws Exception {
         bp_model.dispose();
         bp_model = null;
+        TCFLocalAgent.destroy();
         plugin = null;
         super.stop(context);
     }
@@ -75,7 +77,8 @@ public class Activator extends Plugin {
      */
     public static void log(String msg, Throwable err) {
         if (plugin == null || plugin.getLog() == null) {
-            err.printStackTrace();
+            System.err.println(msg);
+            if (err != null) err.printStackTrace();
         }
         else {
             plugin.getLog().log(new Status(IStatus.ERROR,

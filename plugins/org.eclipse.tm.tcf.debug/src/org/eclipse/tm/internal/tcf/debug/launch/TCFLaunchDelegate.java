@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution, and is available at 
@@ -31,7 +31,9 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
         ATTR_COPY_TO_REMOTE_FILE = ITCFConstants.ID_TCF_DEBUG_MODEL + ".CopyToRemote",
         ATTR_PROGRAM_ARGUMENTS = ITCFConstants.ID_TCF_DEBUG_MODEL + ".ProgramArguments",
         ATTR_WORKING_DIRECTORY = ITCFConstants.ID_TCF_DEBUG_MODEL + ".WorkingDirectory",
-        ATTR_USE_TERMINAL = ITCFConstants.ID_TCF_DEBUG_MODEL + ".UseTerminal";
+        ATTR_USE_TERMINAL = ITCFConstants.ID_TCF_DEBUG_MODEL + ".UseTerminal",
+        ATTR_RUN_LOCAL_AGENT = ITCFConstants.ID_TCF_DEBUG_MODEL + ".RunLocalAgent",
+        ATTR_USE_LOCAL_AGENT = ITCFConstants.ID_TCF_DEBUG_MODEL + ".UseLocalAgent";
 
     public ILaunch getLaunch(final ILaunchConfiguration configuration, final String mode) throws CoreException {
         return new TCFTask<ILaunch>() {
@@ -48,8 +50,22 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
     
     public void launch(final ILaunchConfiguration configuration, final String mode,
             final ILaunch launch, final IProgressMonitor monitor) throws CoreException {
-        if (monitor != null) monitor.beginTask("Launching TCF debugger session", 1); //$NON-NLS-1$
-        final String id = configuration.getAttribute(ATTR_PEER_ID, "");
+        String local_id = null;
+        int task_cnt = 1;
+        if (configuration.getAttribute(TCFLaunchDelegate.ATTR_RUN_LOCAL_AGENT, true)) {
+            task_cnt++;
+            if (monitor != null) monitor.beginTask("Starting TCF Agent", task_cnt); //$NON-NLS-1$
+            local_id = TCFLocalAgent.runLocalAgent();
+        }
+        else if (configuration.getAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, true)) {
+            task_cnt++;
+            if (monitor != null) monitor.beginTask("Searching TCF Agent", task_cnt); //$NON-NLS-1$
+            local_id = TCFLocalAgent.getLocalAgentID();
+        }
+        if (monitor != null) monitor.beginTask("Launching TCF debugger session", task_cnt); //$NON-NLS-1$
+        final String id =
+            configuration.getAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, true) ?
+                    local_id : configuration.getAttribute(ATTR_PEER_ID, "");
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 ((TCFLaunch)launch).launchTCF(mode, id);
