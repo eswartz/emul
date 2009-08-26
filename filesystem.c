@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0 
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -360,11 +360,13 @@ static void read_path(InputStream * inp, char * path, int size) {
     if (strncmp(path, FS_ROOT, strlen(FS_ROOT)) == 0) return;
 #endif
     if (path[0] == 0) {
-        strcpy(path, get_user_home());
+        strncpy(path, get_user_home(), size - 1);
+        path[size - 1] = 0;
     }
     else if (path[0] != '/') {
         snprintf(buf, sizeof(buf), "%s/%s", get_user_home(), path);
-        strcpy(path, buf);
+        strncpy(path, buf, size - 1);
+        path[size - 1] = 0;
     }
 }
 

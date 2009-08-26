@@ -1,0 +1,109 @@
+#!/bin/bash
+
+# This script invokes Microsoft Visual Studio C compiler from CygWin shell.
+# The script command line parameters format is similar to GCC command line.
+# Command line options:
+#  -c   compile only
+#  -g   generate debug info
+#  -O   enable optimizations
+#  -o<file>  output file name
+#  -D<name>  macro definition
+#  -I<dir>   include directory
+#  -p<file>  PDB file name
+
+VSHOME="/cygdrive/c/Program Files/Microsoft Visual Studio 9.0"
+WINSDK="/cygdrive/c/Program Files/Microsoft SDKs/Windows/v6.1"
+
+if [ ! -d "$VSHOME" ]
+then
+    echo Invalid VSHOME - Microsoft Visual Studio directory name
+    exit 1
+fi
+
+if [ ! -d "$WINSDK" ]
+then
+    echo Invalid WINSDK - Microsoft SDK directory name
+    exit 1
+fi
+
+declare -a cmd
+cmdpos=0
+
+cflag=0
+gflag=0
+Oflag=0
+oval=
+
+while getopts co:D:I:gOp: name
+do
+    case $name in
+    c)
+        cmd[cmdpos]="/c"
+        cmdpos=`expr $cmdpos + 1`
+        cmd[cmdpos]="/TC"
+        cmdpos=`expr $cmdpos + 1`
+        cflag=1
+        ;;
+	g)
+		gflag=1
+		;;
+	O)
+		Oflag=1
+		;;
+    o)
+        oval="$OPTARG"
+        ;;
+    D)
+        cmd[cmdpos]="/D$OPTARG"
+        cmdpos=`expr $cmdpos + 1`
+        ;;
+    I)
+        cmd[cmdpos]="/I`cygpath -w "$OPTARG"`"
+        cmdpos=`expr $cmdpos + 1`
+        ;;
+	p)
+        cmd[cmdpos]="/Fd`cygpath -w "$OPTARG"`"
+        cmdpos=`expr $cmdpos + 1`
+		;;
+    *)
+        echo Invalid option $name
+        exit 2
+        ;;
+    esac
+done
+
+shift `expr $OPTIND - 1`
+
+if [ ! -z "$oval" ]
+then
+    if [ $cflag = 0 ]
+    then
+        cmd[cmdpos]="/Fe$oval"
+    else
+        cmd[cmdpos]="/Fo$oval"
+    fi
+    cmdpos=`expr $cmdpos + 1`
+fi
+
+if [ $gflag = 1 ]
+then
+    CFLAGS1="/D_DEBUG /Zi /EHsc /MTd"
+else
+    CFLAGS1="/DNDEBUG /GF /Gy /FD /EHsc /MT"
+fi
+if [ $Oflag = 0 ]
+then
+    CFLAGS2="/Od"
+else
+    CFLAGS2="/O2 /Ob1"
+fi
+CFLAGS3="/DWIN32 /D_CONSOLE /D_VC80_UPGRADE=0x0600 /D_MBCS /W4"
+
+export VS80COMNTOOLS=$(cygpath -aw "$VSHOME/Common7/Tools")
+export VSINSTALLDIR=$(cygpath -aw "$VSHOME")
+export VCINSTALLDIR=$(cygpath -aw "$VSHOME/VC")
+export LIB=$(cygpath -aw "$VSHOME/VC/lib")\;$(cygpath -aw "$WINSDK/Lib")
+export INCLUDE=$(cygpath -aw "$VSHOME/VC/include")\;$(cygpath -aw "$WINSDK/Include")
+export PATH="$VSHOME/Common7/IDE:$VSHOME/VC/bin:$VSHOME/Common7/Tools:$VSHOME/VC/VCPackages:$PATH"
+
+cl.exe /nologo $CFLAGS1 $CFLAGS2 $CFLAGS3 "${cmd[@]}" "$@" || exit 1

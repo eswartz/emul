@@ -1,88 +1,105 @@
-CONF=Debug
+CONF = Debug
+
+OPSYS = $(shell uname -o 2>/dev/null || uname -s)
+MACHINE = $(shell uname -m)
+
+ifeq ($(CONF),Debug)
+  CFLAGS += -g
+else
+  CFLAGS += -O -DNDEBUG
+endif
+
+ifeq ($(OPSYS),Windows)
+  CC = @./mcc -p $(OPSYS)/$(MACHINE)/$(CONF)/agent.pdb
+  EXTOBJ = .obj
+  EXTLIB = .lib
+  EXTEXE = .exe
+  LIBS = shell32.lib advapi32.lib Iphlpapi.lib WS2_32.lib
+  ifeq ($(MACHINE),i686)
+    MACHINE = i386
+  endif
+endif
+
+ifeq ($(OPSYS),Cygwin)
+  LIBS = -lws2_32 -liphlpapi
+endif
+
+ifeq ($(OPSYS),Msys)
+  CC = gcc
+  CFLAGS := -mwin32 $(CFLAGS)
+  LIBS = -lws2_32 -liphlpapi
+endif
+
+ifeq ($(OPSYS),Darwin)
+  LIBS = -lpthread
+  RANLIB = ranlib $@
+endif
+
+ifneq ($(OPSYS),Windows)
+  CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE
+  CFLAGS += -Wall -Wmissing-prototypes -Wno-parentheses
+endif
 
 CC ?= gcc
 AR ?= ar
-
-ifeq ($(CONF),Debug)
-CFLAGS += -g
-else
-CFLAGS += -O -DNDEBUG
-endif
-CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE
-CFLAGS += -Wall -Wmissing-prototypes -Wno-parentheses
-
-OPSYS=$(shell uname -o 2>/dev/null || uname -s)
-MACHINE=$(shell uname -m)
-ifeq ($(OPSYS),Cygwin)
-LIBS=-lws2_32 -liphlpapi
-else
-ifeq ($(OPSYS),Msys)
-CFLAGS:=-mwin32 $(CFLAGS)
-LIBS=-lws2_32 -liphlpapi
-else
-ifeq ($(OPSYS),Darwin)
-LIBS=-lpthread
-RANLIB=ranlib $@
-else
-EXPORT_DYNAMIC=-rdynamic
-LIBS=-lpthread -lssl -lrt
+EXTOBJ ?= .o
+EXTLIB ?= .a
+EXTEXE ?=
+EXPORT_DYNAMIC ?= -rdynamic
+LIBS ?= -lpthread -lssl -lrt
 
 ifdef PATH_Plugins
-CFLAGS += $(EXPORT_DYNAMIC) -DPATH_Plugins="$(PATH_Plugins)"
-LIBS += -ldl
+  CFLAGS += $(EXPORT_DYNAMIC) -DPATH_Plugins="$(PATH_Plugins)"
+  LIBS += -ldl
 endif
 
-endif
-endif
-endif
-
-VERSION=$(shell grep "%define version " tcf-agent.spec | sed -e "s/%define version //")
-BINDIR=$(OPSYS)/$(MACHINE)/$(CONF)
+VERSION = $(shell grep "%define version " tcf-agent.spec | sed -e "s/%define version //")
+BINDIR = $(OPSYS)/$(MACHINE)/$(CONF)
 INSTALLROOT ?= /tmp
-SBIN=/usr/sbin
-INIT=/etc/init.d
+SBIN = /usr/sbin
+INIT = /etc/init.d
 
-OFILES=$(addprefix $(BINDIR)/,$(filter-out main%.o,$(addsuffix .o,$(basename $(wildcard *.c)))))
-HFILES=$(wildcard *.h)
-CFILES=$(wildcard *.c)
-EXECS=$(BINDIR)/agent $(BINDIR)/client $(BINDIR)/tcfreg $(BINDIR)/valueadd $(BINDIR)/tcflog
+OFILES = $(addprefix $(BINDIR)/,$(filter-out main%$(EXTOBJ),$(addsuffix $(EXTOBJ),$(basename $(wildcard *.c)))))
+HFILES = $(wildcard *.h)
+CFILES = $(wildcard *.c)
+EXECS = $(BINDIR)/agent$(EXTEXE) $(BINDIR)/client$(EXTEXE) $(BINDIR)/tcfreg$(EXTEXE) $(BINDIR)/valueadd$(EXTEXE) $(BINDIR)/tcflog$(EXTEXE)
 ifdef LUADIR
-EXECS+=$(BINDIR)/tcflua
+  EXECS += $(BINDIR)/tcflua
 endif
 
 ifdef SERVICES
-CFLAGS += $(shell ./services-to-cflags $(SERVICES))
+  CFLAGS += $(shell ./services-to-cflags $(SERVICES))
 endif
 
 all:	$(EXECS)
 
-$(BINDIR)/libtcf.a : $(OFILES)
+$(BINDIR)/libtcf$(EXTLIB) : $(OFILES)
 	$(AR) -rc $@ $^
 	$(RANLIB)
 
-$(BINDIR)/agent: $(BINDIR)/main.o $(BINDIR)/libtcf.a
-	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main.o $(BINDIR)/libtcf.a $(LIBS)
+$(BINDIR)/agent$(EXTEXE): $(BINDIR)/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
+	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
-$(BINDIR)/client: $(BINDIR)/main_client.o $(BINDIR)/libtcf.a
-	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_client.o $(BINDIR)/libtcf.a $(LIBS)
+$(BINDIR)/client$(EXTEXE): $(BINDIR)/main_client$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
+	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_client$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
-$(BINDIR)/tcflua: $(BINDIR)/main_lua.o $(BINDIR)/libtcf.a
-	$(CC) $(CFLAGS) $(EXPORT_DYNAMIC) -o $@ $(BINDIR)/main_lua.o $(BINDIR)/libtcf.a $(LIBS) $(LUADIR)/lib/liblua.a -lm -ldl
+$(BINDIR)/tcflua$(EXTEXE): $(BINDIR)/main_lua$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
+	$(CC) $(CFLAGS) $(EXPORT_DYNAMIC) -o $@ $(BINDIR)/main_lua$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS) $(LUADIR)/lib/liblua$(EXTLIB) -lm -ldl
 
-$(BINDIR)/tcfreg: $(BINDIR)/main_reg.o $(BINDIR)/libtcf.a
-	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_reg.o $(BINDIR)/libtcf.a $(LIBS)
+$(BINDIR)/tcfreg$(EXTEXE): $(BINDIR)/main_reg$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
+	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_reg$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
-$(BINDIR)/valueadd: $(BINDIR)/main_va.o $(BINDIR)/libtcf.a
-	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_va.o $(BINDIR)/libtcf.a $(LIBS)
+$(BINDIR)/valueadd$(EXTEXE): $(BINDIR)/main_va$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
+	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_va$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
-$(BINDIR)/tcflog: $(BINDIR)/main_log.o $(BINDIR)/libtcf.a
-	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_log.o $(BINDIR)/libtcf.a $(LIBS)
+$(BINDIR)/tcflog$(EXTEXE): $(BINDIR)/main_log$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
+	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main_log$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
-$(BINDIR)/main_lua.o: main_lua.c $(HFILES) Makefile
+$(BINDIR)/main_lua$(EXTOBJ): main_lua.c $(HFILES) Makefile
 	@mkdir -p $(BINDIR)
 	$(CC) $(CFLAGS) -I$(LUADIR)/include -c -o $@ $<
 
-$(BINDIR)/%.o: %.c $(HFILES) Makefile
+$(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile
 	@mkdir -p $(BINDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
