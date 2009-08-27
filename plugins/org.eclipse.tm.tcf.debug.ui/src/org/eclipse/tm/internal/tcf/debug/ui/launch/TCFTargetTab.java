@@ -775,6 +775,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     
     private PeerInfo findPeerInfo(String path) {
         assert Thread.currentThread() == display.getThread();
+        if (path == null) return null;
         int i = path.lastIndexOf('/');
         String id = null;
         PeerInfo[] arr = null;
