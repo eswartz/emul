@@ -64,10 +64,8 @@ public class TCFFileService extends AbstractFileService {
     private UserInfo user_info;
 
     private static final class UserInfo {
-        @SuppressWarnings("unused")
         final int r_uid;
         final int e_uid;
-        @SuppressWarnings("unused")
         final int r_gid;
         final int e_gid;
         final String home;

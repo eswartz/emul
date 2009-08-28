@@ -51,6 +51,7 @@ import org.eclipse.tm.tcf.services.ISysMonitor;
 import org.eclipse.ui.views.properties.IPropertyDescriptor;
 
 
+@SuppressWarnings("restriction")
 public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         implements ISystemViewElementAdapter, ISystemRemoteElementAdapter{
 
