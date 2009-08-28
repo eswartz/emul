@@ -14,7 +14,7 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.rse.subsystems.files.core,
  org.eclipse.rse.subsystems.processes.core,
  org.eclipse.rse.processes.ui
-Import-package: org.eclipse.tm.tcf.core;version="0.2.0",
+Import-Package: org.eclipse.tm.tcf.core;version="0.2.0",
  org.eclipse.tm.tcf.protocol;version="0.2.0",
  org.eclipse.tm.tcf.services;version="0.2.0",
  org.eclipse.tm.tcf.util;version="0.2.0"
