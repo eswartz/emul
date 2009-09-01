@@ -54,13 +54,13 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
                     if (n instanceof TCFNodeExecContext) {
                         if (!n.validateNode(this)) return;
                         if (((TCFNodeExecContext)n).isSuspended()) {
-                            done(Boolean.TRUE);
+                            done(true);
                             return;
                         }
                     }
                     n = n.parent;
                 }
-                done(Boolean.FALSE);
+                done(false);
             }
         }.getE();
     }

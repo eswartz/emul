@@ -39,11 +39,25 @@ public interface ITCFLaunchContext {
     boolean isActive();
     
     /**
-     * Check if this context recognizes type of a project. 
-     * @param project
-     * @return true if the project is supported by this context.
+     * Check if this context recognizes type of a selection. 
+     * @param selection
+     * @return true if the selection is supported by this context.
      */
-    boolean isSupportedProject(IProject project);
+    boolean isSupportedSelection(Object selection);
+    
+    /**
+     * Get selection project.
+     * @param selection
+     * @return selection project or null if selection is not part of a project
+     */
+    IProject getProject(Object selection);
+    
+    /**
+     * Get selection file path.
+     * @param selection
+     * @return selection file path or null if selection is not a file
+     */
+    IPath getPath(Object selection);
     
     /**
      * Set launch configuration attributes to default values best suited for current context.  
@@ -71,7 +85,7 @@ public interface ITCFLaunchContext {
     /**
      * Check if a path represents an executable binary file.
      * @param project
-     * @param path
+     * @param path - full path to a file in the project
      * @return
      * @throws CoreException
      */

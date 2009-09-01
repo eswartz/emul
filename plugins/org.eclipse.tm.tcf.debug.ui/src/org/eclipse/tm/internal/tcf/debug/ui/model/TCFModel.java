@@ -45,8 +45,6 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactor
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.TreeModelViewer;
-import org.eclipse.debug.ui.AbstractDebugView;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.debug.ui.IDebugView;
 import org.eclipse.debug.ui.ISourcePresentation;
@@ -765,39 +763,30 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (initial_selection && debug_view_selection_set) return;
         debug_view_selection_set = true;
         final int cnt = ++debug_view_selection_cnt;
-        display.asyncExec(new Runnable() {
+        Protocol.invokeLater(200, new Runnable() {
             public void run() {
+                TCFNode node = getNode(node_id);
+                if (node == null) return;
+                if (node.disposed) return;
+                if (!node.validateNode(this)) return;
                 if (cnt != debug_view_selection_cnt) return;
-                final IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-                if (window == null) return;
-                final IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_DEBUG_VIEW);
-                if (view == null) return;
-                if (!((AbstractDebugView)view).isAvailable()) return;
-                Protocol.invokeLater(100, new Runnable() {
-                    public void run() {
-                        TCFNode node = getNode(node_id);
-                        if (node == null) return;
-                        if (node.disposed) return;
-                        if (!node.validateNode(this)) return;
-                        if (node instanceof TCFNodeExecContext) {
-                            TCFNode frame = ((TCFNodeExecContext)node).getTopFrame();
-                            if (frame != null && !frame.disposed) {
-                                if (!frame.validateNode(this)) return;
-                                node = frame;
-                            }
-                        }
-                        final TreeModelViewer viewer = (TreeModelViewer)view.getViewer();
-                        for (TCFModelProxy proxy : model_proxies.values()) {
-                            if (proxy.getProxyViewer() == viewer) {
-                                proxy.fireModelChanged();
-                                proxy.addDelta(node, IModelDelta.REVEAL);
-                                proxy.fireModelChanged();
-                                proxy.addDelta(node, IModelDelta.SELECT);
-                                proxy.fireModelChanged();
-                            }
-                        }
+                if (node instanceof TCFNodeExecContext) {
+                    if (!((TCFNodeExecContext)node).isSuspended()) return;
+                    TCFNode frame = ((TCFNodeExecContext)node).getTopFrame();
+                    if (frame != null && !frame.disposed) {
+                        if (!frame.validateNode(this)) return;
+                        node = frame;
                     }
-                });
+                }
+                for (TCFModelProxy proxy : model_proxies.values()) {
+                    if (proxy.getPresentationContext().getId().equals(IDebugUIConstants.ID_DEBUG_VIEW)) {
+                        proxy.fireModelChanged();
+                        proxy.addDelta(node, IModelDelta.REVEAL);
+                        proxy.fireModelChanged();
+                        proxy.addDelta(node, IModelDelta.SELECT);
+                        proxy.fireModelChanged();
+                    }
+                }
             }
         });
     }
@@ -807,85 +796,74 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
      * The method is part of ISourceDisplay interface.
      * The method is normally called from SourceLookupService.
      */
-    public void displaySource(Object element, final IWorkbenchPage page, boolean forceSourceLookup) {
+    public void displaySource(final Object element, final IWorkbenchPage page, boolean forceSourceLookup) {
         final int cnt = ++display_source_cnt;
-        if (element instanceof TCFNodeExecContext) {
-            final TCFNodeExecContext node = (TCFNodeExecContext)element;
-            element = new TCFTask<TCFNode>() {
-                public void run() {
-                    if (node.disposed) {
-                        done(null);
-                    }
-                    else {
-                        if (!node.validateNode(this)) return;
-                        if (!node.isSuspended()) {
-                            done(null);
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                if (cnt != display_source_cnt) return;
+                TCFNodeStackFrame stack_frame = null;
+                IChannel channel = getLaunch().getChannel();
+                if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
+                    if (element instanceof TCFNodeExecContext) {
+                        TCFNodeExecContext node = (TCFNodeExecContext)element;
+                        if (!node.disposed) {
+                            if (!node.validateNode(this)) return;
+                            if (node.isSuspended()) stack_frame = node.getTopFrame();
                         }
-                        else {
-                            TCFNodeStackFrame f = node.getTopFrame();
-                            done(f == null ? node : f);
+                    }
+                    else if (element instanceof TCFNodeStackFrame) {
+                        TCFNodeStackFrame node = (TCFNodeStackFrame)element;
+                        if (!node.disposed) {
+                            stack_frame = (TCFNodeStackFrame)element;
                         }
                     }
                 }
-            }.getE();
-        }
-        if (element instanceof TCFNodeStackFrame) {
-            final TCFNodeStackFrame stack_frame = (TCFNodeStackFrame)element;
-            Protocol.invokeLater(new Runnable() {
-                public void run() {
-                    if (cnt != display_source_cnt) return;
-                    IChannel channel = getLaunch().getChannel();
-                    if (!disposed && channel.getState() == IChannel.STATE_OPEN && !stack_frame.disposed) {
-                        TCFDataCache<TCFSourceRef> line_info = stack_frame.getLineInfo();
-                        if (!line_info.validate()) {
-                            line_info.wait(this);
+                if (stack_frame != null) {
+                    TCFDataCache<TCFSourceRef> line_info = stack_frame.getLineInfo();
+                    if (!line_info.validate()) {
+                        line_info.wait(this);
+                        return;
+                    }
+                    String editor_id = null;
+                    IEditorInput editor_input = null;
+                    Throwable error = line_info.getError();
+                    TCFSourceRef src_ref = line_info.getData();
+                    int line = 0;
+                    if (error == null && src_ref != null) error = src_ref.error;
+                    if (error != null) Activator.log("Error retrieving source mapping for a stack frame", error);
+                    if (src_ref != null && src_ref.area != null) {
+                        ISourceLocator locator = getLaunch().getSourceLocator();
+                        Object source_element = null;
+                        if (locator instanceof ISourceLookupDirector) {
+                            source_element = ((ISourceLookupDirector)locator).getSourceElement(src_ref.area);
                         }
-                        else {
-                            String editor_id = null;
-                            IEditorInput editor_input = null;
-                            Throwable error = line_info.getError();
-                            TCFSourceRef src_ref = line_info.getData();
-                            int line = 0;
-                            if (error == null && src_ref != null) error = src_ref.error;
-                            if (error != null) Activator.log("Error retrieving source mapping for a stack frame", error);
-                            if (src_ref != null && src_ref.area != null) {
-                                ISourceLocator locator = getLaunch().getSourceLocator();
-                                Object source_element = null;
-                                if (locator instanceof ISourceLookupDirector) {
-                                    source_element = ((ISourceLookupDirector)locator).getSourceElement(src_ref.area);
-                                }
-                                if (source_element == null) {
-                                    ILaunchConfiguration cfg = launch.getLaunchConfiguration();
-                                    editor_input = editor_not_found.get(cfg);
-                                    if (editor_input == null) {
-                                        editor_not_found.put(cfg, editor_input = new CommonSourceNotFoundEditorInput(cfg));
-                                    }
-                                    editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
-                                }
-                                else {
-                                    ISourcePresentation presentation = TCFModelPresentation.getDefault();
-                                    if (presentation != null) {
-                                        editor_input = presentation.getEditorInput(source_element);
-                                    }
-                                    if (editor_input != null) {
-                                        editor_id = presentation.getEditorId(editor_input, source_element);
-                                    }                               
-                                    line = src_ref.area.start_line;
-                                }
+                        if (source_element == null) {
+                            ILaunchConfiguration cfg = launch.getLaunchConfiguration();
+                            editor_input = editor_not_found.get(cfg);
+                            if (editor_input == null) {
+                                editor_not_found.put(cfg, editor_input = new CommonSourceNotFoundEditorInput(cfg));
                             }
-                            displaySource(cnt, editor_id, editor_input, page,
-                                    stack_frame.parent.id, stack_frame.getFrameNo() == 0, line);
+                            editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
+                        }
+                        else {
+                            ISourcePresentation presentation = TCFModelPresentation.getDefault();
+                            if (presentation != null) {
+                                editor_input = presentation.getEditorInput(source_element);
+                            }
+                            if (editor_input != null) {
+                                editor_id = presentation.getEditorId(editor_input, source_element);
+                            }                               
+                            line = src_ref.area.start_line;
                         }
                     }
-                    else {
-                        displaySource(cnt, null, null, page, null, false, 0);
-                    }
+                    displaySource(cnt, editor_id, editor_input, page,
+                            stack_frame.parent.id, stack_frame.getFrameNo() == 0, line);
                 }
-            });
-        }
-        else {
-            displaySource(cnt, null, null, page, null, false, 0);
-        }
+                else {
+                    displaySource(cnt, null, null, page, null, false, 0);
+                }
+            }
+        });
     }
     
     private void displaySource(final int cnt,

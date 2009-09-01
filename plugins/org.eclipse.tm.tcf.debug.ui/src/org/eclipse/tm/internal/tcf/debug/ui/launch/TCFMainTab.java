@@ -15,12 +15,8 @@ import java.io.File;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IExtension;
-import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
@@ -46,7 +42,6 @@ import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
-import org.osgi.framework.Bundle;
 
 public class TCFMainTab extends AbstractLaunchConfigurationTab {
 
@@ -213,40 +208,6 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         working_dir_text.setEnabled(!default_dir_button.getSelection());
     }
     
-    private ITCFLaunchContext getLaunchContext(IProject project) {
-        try {
-            IExtensionPoint point = Platform.getExtensionRegistry().getExtensionPoint(Activator.PLUGIN_ID, "launch_context");
-            IExtension[] extensions = point.getExtensions();
-            for (int i = 0; i < extensions.length; i++) {
-                try {
-                    Bundle bundle = Platform.getBundle(extensions[i].getNamespaceIdentifier());
-                    bundle.start();
-                    IConfigurationElement[] e = extensions[i].getConfigurationElements();
-                    for (int j = 0; j < e.length; j++) {
-                        String nm = e[j].getName();
-                        if (nm.equals("class")) { //$NON-NLS-1$
-                            Class<?> c = bundle.loadClass(e[j].getAttribute("name")); //$NON-NLS-1$
-                            ITCFLaunchContext launch_context = (ITCFLaunchContext)c.newInstance();
-                            if (project != null) {
-                                if (launch_context.isSupportedProject(project)) return launch_context;
-                            }
-                            else {
-                                if (launch_context.isActive()) return launch_context;
-                            }
-                        }
-                    }
-                }
-                catch (Throwable x) {
-                    Activator.log("Cannot access launch context extension points", x);
-                }
-            }
-        }
-        catch (Exception x) {
-            Activator.log("Cannot access launch context extension points", x);
-        }
-        return null;
-    }
-
     private void createTerminalOption(Composite parent, int colSpan) {
         Composite terminal_comp = new Composite(parent, SWT.NONE);
         GridLayout terminal_layout = new GridLayout();
@@ -316,7 +277,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
                     "Enter project before searching for program");
             return;
         }
-        ITCFLaunchContext launch_context = getLaunchContext(project);
+        ITCFLaunchContext launch_context = TCFLaunchContext.getLaunchContext(project);
         if (launch_context == null) return;
         String path = launch_context.chooseBinary(getShell(), project);
         if (path != null) local_program_text.setText(path);
@@ -449,7 +410,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             }
             if (project != null) {
                 try {
-                    ITCFLaunchContext launch_context = getLaunchContext(project);
+                    ITCFLaunchContext launch_context = TCFLaunchContext.getLaunchContext(project);
                     if (launch_context != null && !launch_context.isBinary(project, program_path)) {
                         setErrorMessage("Program is not a recongnized executable");
                         return false;
@@ -469,7 +430,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         config.setAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, "");
         config.setAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true);
         config.setAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, (String)null);
-        ITCFLaunchContext launch_context = getLaunchContext(null);
+        ITCFLaunchContext launch_context = TCFLaunchContext.getLaunchContext(null);
         if (launch_context != null) launch_context.setDefaults(getLaunchConfigurationDialog(), config);
     }
 

@@ -25,16 +25,14 @@
       </factory>
    </extension>
    
-   <extension
-        point="org.eclipse.debug.ui.debugModelPresentations">
+   <extension point="org.eclipse.debug.ui.debugModelPresentations">
       <debugModelPresentation 
          class = "org.eclipse.tm.internal.tcf.debug.ui.model.TCFModelPresentation"
          id = "org.eclipse.tm.tcf.debug">
       </debugModelPresentation>
    </extension>
    
-   <extension
-         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+   <extension point="org.eclipse.debug.ui.launchConfigurationTypeImages">
       <launchConfigurationTypeImage
             icon="icons/tcf.gif"
             configTypeID="org.eclipse.tm.tcf.debug.LaunchConfigurationType"
@@ -42,8 +40,7 @@
       </launchConfigurationTypeImage>
    </extension>
    
-   <extension
-         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+   <extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
       <launchConfigurationTabGroup
             type="org.eclipse.tm.tcf.debug.LaunchConfigurationType"
             description="Run or debug a program using Target Communication Framework"
@@ -52,6 +49,51 @@
       </launchConfigurationTabGroup>
    </extension>
    
+   <extension point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+      		namespace="org.eclipse.tm.tcf.launch"
+            properties="isExecutable"
+            type="org.eclipse.core.runtime.IAdaptable"
+            class="org.eclipse.tm.internal.tcf.debug.ui.launch.TCFPropertyTester"
+            id="org.eclipse.tm.tcf.launch.PropertyTester">
+      </propertyTester>
+   </extension>
+
+   <extension point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+         label="TCF Application"
+         icon="icons/tcf.gif"
+         helpContextId="org.eclipse.tm.tcf.debug.ui.shortcut_tcf_application"
+         modes="run, debug"
+         class="org.eclipse.tm.internal.tcf.debug.ui.launch.TCFLaunchShortcut"
+         description="Launch an application using Target Communication Framework (TCF)"
+         id="org.eclipse.tm.tcf.debug.ui.TCFShortcut">
+         <description
+            description="Runs an application using Target Communication Framework (TCF)"
+            mode="run">
+         </description>
+         <description
+            description="Debugs an application using Target Communication Framework (TCF)"
+            mode="debug">
+         </description>
+         <contextualLaunch>
+            <enablement>
+               <with variable="selection">
+                  <count value="1"/>
+                  <iterate>
+                     <test
+                        forcePluginActivation="true"
+                        property="org.eclipse.tm.tcf.launch.isExecutable"/>
+                  </iterate>
+               </with>
+            </enablement>
+         </contextualLaunch>
+         <configurationType
+            id="org.eclipse.tm.tcf.debug.LaunchConfigurationType">
+         </configurationType>
+      </shortcut>
+   </extension>
+
    <extension
          point="org.eclipse.ui.contexts">
       <context

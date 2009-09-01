@@ -19,11 +19,12 @@ Require-Bundle: org.eclipse.ui,
  com.jcraft.jsch;bundle-version="0.1.37",
  org.eclipse.jsch.core;bundle-version="1.1.100",
  org.eclipse.jsch.ui;bundle-version="1.1.100"
-Import-Package: org.eclipse.tm.tcf.core;version="0.2.0",
+Import-Package: org.eclipse.core.expressions,
+ org.eclipse.tm.tcf.core;version="0.2.0",
  org.eclipse.tm.tcf.protocol;version="0.2.0",
  org.eclipse.tm.tcf.services;version="0.2.0",
- org.eclipse.tm.tcf.util;version="0.2.0",
- org.eclipse.tm.tcf.ssl;version="0.2.0"
+ org.eclipse.tm.tcf.ssl;version="0.2.0",
+ org.eclipse.tm.tcf.util;version="0.2.0"
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Eclipse-LazyStart: true

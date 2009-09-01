@@ -13,7 +13,6 @@ package org.eclipse.tm.internal.tcf.cdt.ui;
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.IBinaryParser;
 import org.eclipse.cdt.core.ICExtensionReference;
-import org.eclipse.cdt.core.IBinaryParser.IBinaryObject;
 import org.eclipse.cdt.core.model.CModelException;
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.model.ICElement;
@@ -48,19 +47,38 @@ import org.eclipse.ui.dialogs.TwoPaneElementSelector;
 
 public class TCFLaunchContext implements ITCFLaunchContext {
 
-        public boolean isActive() {
-                return getContext(null) != null;
-        }
+    public boolean isActive() {
+        return getContext(null) != null;
+    }
 
-        public boolean isSupportedProject(IProject project) {
-                return CoreModel.getDefault().getCModel().getCProject(project.getName()) != null;
+    public boolean isSupportedSelection(Object selection) {
+        if (selection instanceof IProject) {
+            return CoreModel.getDefault().getCModel().getCProject(((IProject)selection).getName()) != null;
         }
+        return selection instanceof ICElement;
+    }
 
-        public void setDefaults(ILaunchConfigurationDialog dlg, ILaunchConfigurationWorkingCopy config) {
-        ICElement cElement = getContext(config);
-        if (cElement != null) {
-            initializeCProject(cElement, config);
-            initializeProgramName(cElement, dlg, config);
+    public IPath getPath(Object selection) {
+        if (selection instanceof IResource) {
+            return ((IResource)selection).getLocation();
+        }
+        if (selection instanceof ICElement) {
+            return ((ICElement)selection).getResource().getLocation();
+        }
+        return null;
+    }
+
+    public IProject getProject(Object selection) {
+        if (selection instanceof IProject) return (IProject)selection;
+        if (selection instanceof ICElement) return ((ICElement)selection).getCProject().getProject();
+        return null;
+    }
+
+    public void setDefaults(ILaunchConfigurationDialog dlg, ILaunchConfigurationWorkingCopy config) {
+        ICElement element = getContext(config);
+        if (element != null) {
+            initializeCProject(element, config);
+            initializeProgramName(element, dlg, config);
         }
     }
 
@@ -76,13 +94,13 @@ public class TCFLaunchContext implements ITCFLaunchContext {
         String projectName = null;
         String programName = null;
         if (config != null) {
-                try {
-                    projectName = config.getAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, (String)null);
-                    programName = config.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, (String)null);
-                }
-                catch (CoreException e) {
-                    Activator.log(e);
-                }
+            try {
+                projectName = config.getAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, (String)null);
+                programName = config.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, (String)null);
+            }
+            catch (CoreException e) {
+                Activator.log(e);
+            }
         }
         Object obj = null;
         IWorkbenchPage page = Activator.getActivePage();
@@ -230,23 +248,23 @@ public class TCFLaunchContext implements ITCFLaunchContext {
     /**
      * Return true if given file path names a binary file.
      * @param project
-     * @param exePath
+     * @param path
      * @return true if binary file.
      * @throws CoreException
      */
-    public boolean isBinary(IProject project, IPath exePath) throws CoreException {
+    public boolean isBinary(IProject project, IPath path) throws CoreException {
         ICExtensionReference[] parserRef = CCorePlugin.getDefault().getBinaryParserExtensions(project);
         for (int i = 0; i < parserRef.length; i++) {
             try {
                 IBinaryParser parser = (IBinaryParser)parserRef[i].createExtension();
-                if ((IBinaryObject)parser.getBinary(exePath) != null) return true;
+                if (parser.getBinary(path) != null) return true;
             }
             catch (Exception e) {
             }
         }
         IBinaryParser parser = CCorePlugin.getDefault().getDefaultBinaryParser();
         try {
-            return (IBinaryObject)parser.getBinary(exePath) != null;
+            return parser.getBinary(path) != null;
         }
         catch (Exception e) {
         }
