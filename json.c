@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *     Michael Sills-Lavoie(École Polytechnique de Montréal)  - ZeroCopy support
@@ -17,7 +17,7 @@
 /*
  * This module provides support for JSON - a computer data interchange format.
  * It is a text-based, human-readable format for representing simple data structures and
- * associative arrays (called objects). The JSON format is specified in RFC 4627 by Douglas Crockford. 
+ * associative arrays (called objects). The JSON format is specified in RFC 4627 by Douglas Crockford.
  * JSON is TCF preffered marshaling format.
  */
 
@@ -465,7 +465,7 @@ char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
 /*
 * json_read_array - generic read array function
 *
-* This function will call the call_back with inp and arg as 
+* This function will call the call_back with inp and arg as
 *       arguments for each element of the list.
 * Return 0 if null, 1 otherwise
 */
@@ -591,7 +591,7 @@ char * json_read_alloc_binary(InputStream * inp, int * size) {
             if (rd == 0) break;
             *size += rd;
         }
-        
+
         assert(state.size_start <= 0 || *size == state.size_start);
         json_read_binary_end(&state);
     }
@@ -691,7 +691,7 @@ void json_splice_binary_offset(OutputStream * out, int fd, size_t size, off_t * 
         char buffer[0x1000];
         JsonWriteBinaryState state;
         json_write_binary_start(&state, out, size);
-        
+
         while (size > 0) {
             ssize_t rd = 0;
             if (offset != NULL) {

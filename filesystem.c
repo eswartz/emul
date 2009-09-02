@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -49,7 +49,7 @@ static const char * FILE_SYSTEM = "FileSystem";
 static const int
     TCF_O_READ              = 0x00000001,
     TCF_O_WRITE             = 0x00000002,
-    TCF_O_APPEND            = 0x00000004, 
+    TCF_O_APPEND            = 0x00000004,
     TCF_O_CREAT             = 0x00000008,
     TCF_O_TRUNC             = 0x00000010,
     TCF_O_EXCL              = 0x00000020;
@@ -118,7 +118,7 @@ static LINK handle_hash[HANDLE_HASH_SIZE];
 static LINK file_info_ring = { NULL, NULL };
 
 #if defined(_WRS_KERNEL)
-#  define FS_ROOT "host:c:/"    
+#  define FS_ROOT "host:c:/"
 #endif
 
 static OpenFileInfo * create_open_file_info(Channel * ch, char * path, int file, DIR * dir) {
@@ -390,7 +390,7 @@ static void command_open(char * token, Channel * c) {
     if ((attrs.flags & ATTR_PERMISSIONS) == 0) {
         attrs.permissions = 0775;
     }
-    file = open(path, to_local_open_flags(flags), attrs.permissions); 
+    file = open(path, to_local_open_flags(flags), attrs.permissions);
 
     if (file < 0) {
         err = errno;
@@ -825,7 +825,7 @@ static void command_opendir(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    dir = opendir(path); 
+    dir = opendir(path);
     if (dir == NULL) {
         err = errno;
     }

@@ -335,7 +335,7 @@ static void dio_ReadFormRefAddr(void) {
     U4_T Size = sUnit->mAddressSize;
     if (sUnit->mVersion >= 3) Size = sUnit->m64bit ? 8 : 4;
     dio_gFormRef = dio_ReadUX(Size);
-}    
+}
 
 static void dio_ReadFormString(void) {
     dio_gFormDataAddr = sData + sDataPos;

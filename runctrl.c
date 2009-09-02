@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -121,7 +121,7 @@ static void write_context(OutputStream * out, Context * ctx, int is_thread) {
     write_stream(out, ':');
     json_write_string(out, pid2id(ctx->mem, 0));
 #endif
-    
+
 #if !defined(WIN32) && !defined(_WRS_KERNEL)
     if (!ctx->exiting && !is_thread) {
         write_stream(out, ',');
@@ -156,7 +156,7 @@ static void write_context(OutputStream * out, Context * ctx, int is_thread) {
         json_write_string(out, "CanTerminate");
         write_stream(out, ':');
         json_write_boolean(out, 1);
-    }    
+    }
 
     write_stream(out, '}');
 }
@@ -208,7 +208,7 @@ static void event_get_context(void * arg) {
 
         if (ctx->exited) err = ERR_ALREADY_EXITED;
         write_errno(&c->out, err);
-    
+
         if (err == 0) {
             write_context(&c->out, ctx, s->parent != 0);
             write_stream(&c->out, 0);
@@ -235,10 +235,10 @@ static void command_get_context(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     ctx = id2ctx(id);
-    
+
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
-    
+
     if (err) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, token);
@@ -686,7 +686,7 @@ static void run_safe_events(void * arg) {
                      * Not an error. */
                     error = 0;
                 }
-#endif                
+#endif
                 if (error) {
                     trace(LOG_ALWAYS, "error: can't temporary stop pid %d; error %d: %s",
                         ctx->pid, error, errno_to_str(error));

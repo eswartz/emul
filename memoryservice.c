@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -87,7 +87,7 @@ static void write_context(OutputStream * out, Context * ctx) {
     json_write_string(out, "AddressSize");
     write_stream(out, ':');
     json_write_ulong(out, sizeof(char *));
-    
+
     write_stream(out, ',');
     json_write_string(out, "AccessTypes");
     write_stream(out, ':');
@@ -164,10 +164,10 @@ static void command_get_context(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     ctx = id2ctx(id);
-    
+
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
-    
+
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
@@ -253,11 +253,10 @@ static MemoryCommandArgs * read_command_args(char * token, Channel * c, int cmd)
         return NULL;
     }
     else {
-        MemoryCommandArgs * args = (MemoryCommandArgs *)
-            loc_alloc(sizeof(MemoryCommandArgs));
+        MemoryCommandArgs * args = (MemoryCommandArgs *)loc_alloc(sizeof(MemoryCommandArgs));
         *args = buf;
         args->c = c;
-        strncpy(args->token, token, sizeof(args->token));
+        strncpy(args->token, token, sizeof(args->token) - 1);
         stream_lock(c);
         context_lock(buf.ctx);
         return args;
@@ -281,13 +280,13 @@ static void send_event_memory_changed(OutputStream * out, Context * ctx, Context
     json_write_string(out, "addr");
     write_stream(out, ':');
     json_write_ulong(out, addr);
-    
+
     write_stream(out, ',');
 
     json_write_string(out, "size");
     write_stream(out, ':');
     json_write_ulong(out, size);
-    
+
     write_stream(out, '}');
     write_stream(out, ']');
     write_stream(out, 0);

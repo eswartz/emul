@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -580,7 +580,7 @@ static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddre
                     if (file->byte_swap) SWAP(dyn->d_tag);
                     if (dyn->d_tag == DT_NULL) break;
                     if (dyn->d_tag == tag) {
-                        if (addr != NULL) { 
+                        if (addr != NULL) {
                             char buf[sizeof(dyn->d_un.d_ptr)];
                             ContextAddress sec_addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sec->addr);
                             ContextAddress entry_addr = sec_addr + j * sizeof(Elf64_Dyn) + offsetof(Elf64_Dyn, d_un.d_ptr);
@@ -599,7 +599,7 @@ static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddre
                     if (file->byte_swap) SWAP(dyn->d_tag);
                     if (dyn->d_tag == DT_NULL) break;
                     if (dyn->d_tag == tag) {
-                        if (addr != NULL) { 
+                        if (addr != NULL) {
                             char buf1[sizeof(dyn->d_tag)];
                             char buf2[sizeof(dyn->d_un.d_ptr)];
                             ContextAddress sec_addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sec->addr);

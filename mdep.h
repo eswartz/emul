@@ -303,7 +303,7 @@ extern char * canonicalize_file_name(const char * path);
 
 #define closesocket close
 
-typedef unsigned long uintptr_t; 
+typedef unsigned long uintptr_t;
 typedef unsigned long useconds_t;
 
 #define FILE_PATH_SIZE PATH_MAX

@@ -162,7 +162,7 @@ typedef BOOL (CALLBACK *PSYM_ENUMERATESYMBOLS_CALLBACK)(PSYMBOL_INFO pSymInfo, U
 
 #endif /* defined(__GNUC__) */
 
-enum BasicType { 
+enum BasicType {
    btNoType   = 0,
    btVoid     = 1,
    btChar     = 2,
@@ -183,7 +183,7 @@ enum BasicType {
    btHresult  = 31
 };
 
-enum DataKind { 
+enum DataKind {
    DataIsUnknown,
    DataIsLocal,
    DataIsStaticLocal,

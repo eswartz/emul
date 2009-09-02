@@ -160,7 +160,7 @@ static int find_in_sym_table(DWARFCache * cache, Context * ctx, char * name, Sym
         SymbolSection * tbl = cache->mSymSections[m];
         unsigned n = tbl->mSymbolHash[h];
         while (n) {
-            U8_T st_name = cache->mFile->elf64 ? 
+            U8_T st_name = cache->mFile->elf64 ?
                 ((Elf64_Sym *)tbl->mSymPool + n)->st_name :
                 ((Elf32_Sym *)tbl->mSymPool + n)->st_name;
             if (strcmp(name, tbl->mStrPool + st_name) == 0) {

@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007-2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -30,7 +30,7 @@ static void command_get_context(char * token, Channel * c) {
     int err = 0;
     char id[256];
     Symbol sym;
- 
+
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
@@ -40,7 +40,7 @@ static void command_get_context(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
-    
+
     if (err == 0) {
         char * name = NULL;
         int type_class = TYPE_CLASS_UNKNOWN;
@@ -157,7 +157,7 @@ static void command_get_children(char * token, Channel * c) {
     Symbol sym;
     Symbol * list = NULL;
     int cnt = 0;
- 
+
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
@@ -168,7 +168,7 @@ static void command_get_children(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
-    
+
     if (err == 0) {
         int i;
         write_stream(&c->out, '[');

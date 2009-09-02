@@ -184,7 +184,7 @@ static int create_server_socket(void) {
 #else
     socklen_t local_addr_size = sizeof(local_addr);
 #endif
-    
+
     memset(&local_addr, 0, sizeof(local_addr));
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;

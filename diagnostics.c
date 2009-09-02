@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -146,7 +146,7 @@ static void command_cancel_test(char * token, Channel * c) {
 #else
     err = ERR_UNSUPPORTED;
 #endif
-    
+
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
@@ -162,13 +162,13 @@ static void command_get_symbol(char * token, Channel * c) {
     json_read_string(&c->inp, name, sizeof(name));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    
+
 #if SERVICE_Symbols
     {
         Context * ctx;
         int error = 0;
         Symbol sym;
-        
+
         memset(&sym, 0, sizeof(sym));
         ctx = id2ctx(id);
         if (ctx == NULL || ctx->exited) {
@@ -259,7 +259,7 @@ static void command_create_test_streams(char * token, Channel * c) {
     buf_size1 = json_read_long(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    
+
 #if SERVICE_Streams
     if (buf_size0 <= 0 || buf_size1 <= 0) err = ERR_INV_NUMBER;
     if (!err) {
@@ -297,7 +297,7 @@ static void command_dispose_test_stream(char * token, Channel * c) {
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    
+
 #if SERVICE_Streams
     if (!err) {
         VirtualStream * stream = virtual_stream_find(id);

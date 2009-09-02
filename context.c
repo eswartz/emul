@@ -1440,7 +1440,7 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
         if (stopped_ctx != NULL) {
             /* TODO: need call back for vxdbgCont()
              * assert(!stopped_ctx->stopped) can fail if a task is resumed outside TCF agent.
-             */ 
+             */
             assert(!stopped_ctx->stopped);
             assert(!stopped_ctx->intercepted);
             assert(!stopped_ctx->exited);

@@ -320,7 +320,7 @@ static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_
 
         if (c->socket < 0) return;
         if (c->out_errno) return;
-        
+
         while (cnt < size) {
             int wr = send(c->socket, bytes + cnt, size - cnt, MSG_MORE);
             if (wr < 0) {
@@ -334,7 +334,7 @@ static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_
         return;
     }
 #endif /* ENABLE_ZeroCopy */
-        
+
     while (cnt < size) tcp_write_stream(out, (unsigned char)bytes[cnt++]);
 }
 
@@ -365,7 +365,7 @@ static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_
 
                 if (c->socket < 0) return rd;
                 if (c->out_errno) return rd;
-                
+
                 n = rd;
                 while (n > 0) {
                     int wr = splice(c->pipefd[0], NULL, c->socket, NULL, n, SPLICE_F_MORE);
@@ -702,7 +702,7 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
         trace(LOG_ALWAYS, "Cannot create channel pipe : %s", strerror(err));
         errno = err;
         return NULL;
-    }  
+    }
 #endif /* ENABLE_Splice */
     c->magic = CHANNEL_MAGIC;
     c->ssl = ssl;
@@ -984,7 +984,7 @@ void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void 
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;
     ChannelConnectInfo * info = NULL;
-    
+
     if (port == NULL) port = "1534";
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;

@@ -79,7 +79,7 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
 
         /* Data available */
         ch = *out;
-        
+
 #if ENABLE_ZeroCopy
         if (ibuf->out_size_mode) {
             /* Reading the size of the bin data */
@@ -107,7 +107,7 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
             return ch;
         }
 #endif
-        
+
         if (ibuf->out_esc) {
             switch (ch) {
             case 0:
@@ -176,7 +176,7 @@ void ibuf_flush(InputBuf * ibuf, InputStream * inp) {
 
 void ibuf_read_done(InputBuf * ibuf, int len) {
     unsigned char * inp;
-    
+
     assert(len >= 0);
     if (len == 0) {
         ibuf_eof(ibuf);
@@ -189,7 +189,7 @@ void ibuf_read_done(InputBuf * ibuf, int len) {
     while (len-- > 0) {
         unsigned char ch = *inp++;
         if (inp == ibuf->buf + BUF_SIZE) inp = ibuf->buf;
-        
+
 #if ENABLE_ZeroCopy
         if (ibuf->inp_size_mode) {
             /* Reading the size of the bin data */

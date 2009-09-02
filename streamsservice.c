@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
  * The Eclipse Public License is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at 
+ * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
- *  
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -398,7 +398,7 @@ void virtual_stream_create(const char * type, const char * context_id, size_t bu
 
     buf_len++;
     list_init(&stream->clients);
-    strncpy(stream->type, type, sizeof(stream->type));
+    strncpy(stream->type, type, sizeof(stream->type) - 1);
     stream->magic = STREAM_MAGIC;
     stream->id = id_cnt++;
     stream->access = access;
@@ -490,7 +490,7 @@ int virtual_stream_add_data(VirtualStream * stream, char * buf, size_t buf_size,
 
 int virtual_stream_get_data(VirtualStream * stream, char * buf, size_t buf_size, size_t * data_size, int * eos) {
     size_t len;
-    
+
     assert(stream->magic == STREAM_MAGIC);
     len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
 
@@ -576,7 +576,7 @@ static void command_subscribe(char * token, Channel * c) {
         Subscription * s = loc_alloc_zero(sizeof(Subscription));
         list_init(&s->link_all);
         list_add_first(&s->link_all, &subscriptions);
-        strncpy(s->type, type, sizeof(s->type));
+        strncpy(s->type, type, sizeof(s->type) - 1);
         s->channel = c;
     }
 
@@ -636,7 +636,7 @@ static void command_read(char * token, Channel * c) {
             list_init(&r->link_client);
             r->client = client;
             r->size = size;
-            strncpy(r->token, token, sizeof(r->token));
+            strncpy(r->token, token, sizeof(r->token) - 1);
             list_add_last(&r->link_client, &client->read_requests);
         }
         else {
@@ -718,7 +718,7 @@ static void command_write(char * token, Channel * c) {
         r->client = client;
         r->data = data;
         r->size = size - offs;
-        strncpy(r->token, token, sizeof(r->token));
+        strncpy(r->token, token, sizeof(r->token) - 1);
         list_add_last(&r->link_client, &client->write_requests);
     }
     else {
@@ -750,7 +750,7 @@ static void command_eos(char * token, Channel * c) {
         list_init(&r->link_client);
         r->client = client;
         r->eos = 1;
-        strncpy(r->token, token, sizeof(r->token));
+        strncpy(r->token, token, sizeof(r->token) - 1);
         list_add_last(&r->link_client, &client->write_requests);
     }
     else {
