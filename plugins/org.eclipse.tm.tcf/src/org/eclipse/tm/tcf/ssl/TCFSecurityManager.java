@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -38,10 +38,10 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 
 
 /**
- * This class implements keys and certificates management for secure TCF channels.   
+ * This class implements keys and certificates management for secure TCF channels.
  */
 public class TCFSecurityManager {
-    
+
     public static File getCertificatesDirectory() {
         File certs = Activator.getDefault().getStateLocation().append("certificates").toFile(); //$NON-NLS-1$
         if (!certs.exists()) certs.mkdirs();
@@ -54,7 +54,7 @@ public class TCFSecurityManager {
             if (!certs.exists()) certs.mkdirs();
             final CertificateFactory cf = CertificateFactory.getInstance("X.509"); //$NON-NLS-1$
             SSLContext context = SSLContext.getInstance("TLS"); //$NON-NLS-1$
-            
+
             X509ExtendedKeyManager km = new X509ExtendedKeyManager() {
 
                 public X509Certificate[] getCertificateChain(String alias) {
@@ -70,7 +70,7 @@ public class TCFSecurityManager {
                         return null;
                     }
                 }
-                
+
                 public PrivateKey getPrivateKey(String alias) {
                     File f = new File(certs, "Local.priv"); //$NON-NLS-1$
                     try {
@@ -82,7 +82,7 @@ public class TCFSecurityManager {
                             if (s == null) new Exception("Invalid format"); //$NON-NLS-1$
                             else if (s.indexOf("-----BEGIN ") == 0) app = true; //$NON-NLS-1$
                             else if (s.indexOf("-----END ") == 0) break; //$NON-NLS-1$
-                            else if (app) bf.append(s); 
+                            else if (app) bf.append(s);
                         }
                         r.close();
                         KeyFactory kf = KeyFactory.getInstance("RSA"); //$NON-NLS-1$
@@ -94,26 +94,26 @@ public class TCFSecurityManager {
                         return null;
                     }
                 }
-                
+
                 public String[] getClientAliases(String keyType, Principal[] issuers) {
                     return new String[] { "TCF" }; //$NON-NLS-1$
                 }
-                
+
                 public String chooseClientAlias(String[] keyType, Principal[] issuers, Socket socket) {
                     return "TCF"; //$NON-NLS-1$
                 }
-                
+
                 public String[] getServerAliases(String keyType, Principal[] issuers) {
                     return new String[] { "TCF" }; //$NON-NLS-1$
                 }
-                
+
                 public String chooseServerAlias(String keyType, Principal[] issuers, Socket socket) {
                     return "TCF"; //$NON-NLS-1$
                 }
             };
-            
+
             X509TrustManager tm = new X509TrustManager() {
-                
+
                 public void checkClientTrusted(X509Certificate[] chain, String auth_type) throws CertificateException {
                     if ("RSA".equals(auth_type) && chain != null && chain.length == 1) { //$NON-NLS-1$
                         for (X509Certificate cert : getAcceptedIssuers()) {
@@ -122,7 +122,7 @@ public class TCFSecurityManager {
                     }
                     throw new CertificateException("Client certificate validation failed"); //$NON-NLS-1$
                 }
-                
+
                 public void checkServerTrusted(X509Certificate[] chain, String auth_type) throws CertificateException {
                     if ("RSA".equals(auth_type) && chain != null && chain.length == 1) { //$NON-NLS-1$
                         for (X509Certificate cert : getAcceptedIssuers()) {
@@ -131,7 +131,7 @@ public class TCFSecurityManager {
                     }
                     throw new CertificateException("Server certificate validation failed"); //$NON-NLS-1$
                 }
-                
+
                 public X509Certificate[] getAcceptedIssuers() {
                     ArrayList<X509Certificate> list = new ArrayList<X509Certificate>();
                     for (String fnm : certs.list()) {
@@ -149,7 +149,7 @@ public class TCFSecurityManager {
                     return list.toArray(new X509Certificate[list.size()]);
                 }
             };
-            
+
             context.init(new KeyManager[] { km }, new TrustManager[] { tm }, null);
             return context;
         }

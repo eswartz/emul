@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -36,7 +36,7 @@ public class TCFProcessAdapter implements IHostProcessToRemoteProcessAdapter {
         List<IRemoteProcess> list = new ArrayList<IRemoteProcess>(nodes.length);
         for (int idx = 0; idx < nodes.length; idx++) {
             TCFProcessResource node = (TCFProcessResource)nodes[idx];
-            if (node != null) list.add(new TCFRemoteProcess(context, node));   
+            if (node != null) list.add(new TCFRemoteProcess(context, node));
         }
         return list.toArray(new IRemoteProcess[list.size()]);
     }

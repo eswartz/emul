@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -30,11 +30,11 @@ import org.eclipse.ui.IWorkbenchPartSite;
  * selection.
  */
 public class TCFDetailPane implements IDetailPane {
-    
+
     public static final String ID = "org.eclipse.tm.tcf.debug.DetailPaneFactory";
     public static final String NAME = "TCF Detail Pane";
     public static final String DESC = "TCF Detail Pane";
-    
+
     private SourceViewer source_viewer;
     private Display display;
     private int generation;
@@ -49,7 +49,7 @@ public class TCFDetailPane implements IDetailPane {
         source_viewer.setEditable(false);
         Control control = source_viewer.getControl();
         GridData gd = new GridData(GridData.FILL_BOTH);
-        control.setLayoutData(gd); 
+        control.setLayoutData(gd);
         display = control.getDisplay();
         return control;
     }
@@ -81,7 +81,7 @@ public class TCFDetailPane implements IDetailPane {
             }
         });
     }
-    
+
     private String getDetailText(ArrayList<TCFNode> nodes, Runnable done) {
         if (!TCFNode.validateNodes(nodes, done)) return null;
         StringBuffer bf = new StringBuffer();
@@ -94,7 +94,7 @@ public class TCFDetailPane implements IDetailPane {
         }
         return bf.toString();
     }
-    
+
     public void dispose() {
         if (source_viewer == null) return;
         generation++;

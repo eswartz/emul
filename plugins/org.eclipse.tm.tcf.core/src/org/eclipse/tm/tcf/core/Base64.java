@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -16,7 +16,7 @@ package org.eclipse.tm.tcf.core;
  * @noinstantiate This class is not intended to be instantiated by clients.
  */
 public final class Base64 {
-    
+
     public static char[] toBase64(byte[] buf, int pos, int len) {
         char[] out_buf = new char[4 * ((len + 2) / 3)];
         int end = pos + len;
@@ -46,7 +46,7 @@ public final class Base64 {
         assert out_pos == out_buf.length;
         return out_buf;
     }
-    
+
     public static void toByteArray(byte[] buf, int offs, int size, char[] inp) {
         int out_pos = offs;
         if (inp != null) {
@@ -109,7 +109,7 @@ public final class Base64 {
         toByteArray(buf, 0, buf.length, inp);
         return buf;
     }
-    
+
     /*
      * See RFC 2045.
      */

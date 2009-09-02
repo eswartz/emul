@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -13,16 +13,16 @@ package org.eclipse.tm.internal.tcf.rse;
 import org.eclipse.osgi.util.NLS;
 
 public class Messages extends NLS {
-    
+
     public static String SysMonitor_AllProcesses;
     public static String SysMonitor_Process;
-    
+
     // PROCESS PROPERTIES
     public static String PROCESS_ID_LABEL;
     public static String PROCESS_PID_LABEL;
-    public static String PROCESS_NAME_LABEL; 
-    public static String PROCESS_CWD_LABEL; 
-    public static String PROCESS_ROOT_LABEL; 
+    public static String PROCESS_NAME_LABEL;
+    public static String PROCESS_CWD_LABEL;
+    public static String PROCESS_ROOT_LABEL;
     public static String PROCESS_UID_LABEL;
     public static String PROCESS_USERNAME_LABEL;
     public static String PROCESS_GID_LABEL;
@@ -66,12 +66,12 @@ public class Messages extends NLS {
     public static String PROCESS_PROCESSOR_LABEL;
     public static String PROCESS_RTPRIORITY_LABEL;
     public static String PROCESS_POLICY_LABEL;
-    
+
     public static String PROCESS_ID_TOOLTIP;
     public static String PROCESS_PID_TOOLTIP;
-    public static String PROCESS_NAME_TOOLTIP; 
-    public static String PROCESS_CWD_TOOLTIP; 
-    public static String PROCESS_ROOT_TOOLTIP; 
+    public static String PROCESS_NAME_TOOLTIP;
+    public static String PROCESS_CWD_TOOLTIP;
+    public static String PROCESS_ROOT_TOOLTIP;
     public static String PROCESS_UID_TOOLTIP;
     public static String PROCESS_USERNAME_TOOLTIP;
     public static String PROCESS_GID_TOOLTIP;
@@ -115,10 +115,10 @@ public class Messages extends NLS {
     public static String PROCESS_PROCESSOR_TOOLTIP;
     public static String PROCESS_RTPRIORITY_TOOLTIP;
     public static String PROCESS_POLICY_TOOLTIP;
-    
+
     public static String PROCESS_VMSIZE_VALUE;
     public static String PROCESS_VMRSS_VALUE;
-    
+
     static {
         // initialize resource bundle
         NLS.initializeMessages(Messages.class.getName(), Messages.class);

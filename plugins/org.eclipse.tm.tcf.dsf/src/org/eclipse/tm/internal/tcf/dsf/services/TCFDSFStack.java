@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -41,23 +41,23 @@ import org.osgi.framework.BundleContext;
 
 
 public class TCFDSFStack extends AbstractDsfService implements IStack {
-    
+
     public class TCFFrameDMC extends AbstractDMContext implements IFrameDMContext, Comparable<TCFFrameDMC> {
-        
+
         public final String id;
         public final TCFDSFExecutionDMC exe_dmc;
         public final TCFDataCache<IStackTrace.StackTraceContext> context_cache;
         public final TCFDataCache<TCFSourceRef> source_cache;
-        
+
         int level;
         TCFSourceRef prev_data;
-        
+
         public TCFFrameDMC(final TCFDSFExecutionDMC exe_dmc, final String id) {
             super(TCFDSFStack.this.getSession().getId(), new IDMContext[] { exe_dmc });
             this.id = id;
             this.exe_dmc = exe_dmc;
             context_cache = new TCFDataCache<IStackTrace.StackTraceContext>(channel) {
-                
+
                 @Override
                 public boolean startDataRetrieval() {
                     assert command == null;
@@ -76,7 +76,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
                     return false;
                 }
             };
-            
+
             source_cache = new TCFDataCache<TCFSourceRef>(channel) {
 
                 @Override
@@ -102,7 +102,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
                     set(null, null, prev_data = data);
                     return true;
                 }
-                
+
                 private boolean getSourcePos(final TCFSourceRef data) {
                     if (tcf_lns_service == null) return true;
                     if (data.address == null) return true;
@@ -125,23 +125,23 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
                 }
             };
         }
-        
+
         public int getLevel() {
             return level;
         }
-        
+
         @Override
         public boolean equals(Object other) {
             return super.baseEquals(other) && ((TCFFrameDMC)other).id.equals(id);
         }
-        
+
         @Override
         public int hashCode() {
             return id.hashCode();
         }
-        
+
         @Override
-        public String toString() { 
+        public String toString() {
             return baseToString() + ".frame[" + id + "]";  //$NON-NLS-1$ //$NON-NLS-2$
         }
 
@@ -149,17 +149,17 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
             if (level < f.level) return -1;
             if (level > f.level) return +1;
             return 0;
-        }    
+        }
     }
-    
+
     public static class TCFFrameData implements IFrameDMData {
-        
+
         public final IStackTrace.StackTraceContext context;
         public final IAddress address;
         public final int level;
         public final String function;
         public final ILineNumbers.CodeArea code_area;
-        
+
         TCFFrameData(TCFFrameDMC dmc) {
             context = dmc.context_cache.getData();
             TCFSourceRef ref = dmc.source_cache.getData();
@@ -172,7 +172,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
         public IAddress getAddress() {
             return address;
         }
-        
+
         public String getFunction() {
             return function;
         }
@@ -196,20 +196,20 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
             return code_area.start_column;
         }
     }
-    
+
     private class FramesCache extends TCFDataCache<Map<String,TCFFrameDMC>> {
-        
+
         private final TCFDSFExecutionDMC dmc;
         private final Map<String,TCFFrameDMC> frame_pool;
-        
+
         private String top_frame_id;
-        
+
         FramesCache(IChannel channel, TCFDSFExecutionDMC dmc) {
             super(channel);
             this.dmc = dmc;
             frame_pool = new HashMap<String,TCFFrameDMC>();
         }
-        
+
         @Override
         public boolean startDataRetrieval() {
             assert command == null;
@@ -249,7 +249,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
             });
             return false;
         }
-        
+
         TCFFrameDMC createFrameDMC(String id, int level) {
             TCFFrameDMC n = frame_pool.get(id);
             if (n == null) frame_pool.put(id, n = new TCFFrameDMC(dmc, id));
@@ -265,7 +265,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
                 dmc.source_cache.reset();
             }
         }
-        
+
         void dispose() {
         }
     }
@@ -279,7 +279,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
         this.channel = channel;
         tcf_stk_service = channel.getRemoteService(IStackTrace.class);
         tcf_lns_service = channel.getRemoteService(ILineNumbers.class);
-        initialize(new RequestMonitor(getExecutor(), monitor) { 
+        initialize(new RequestMonitor(getExecutor(), monitor) {
             @Override
             protected void handleSuccess() {
                 String[] class_names = {
@@ -293,7 +293,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
         });
     }
 
-    @Override 
+    @Override
     public void shutdown(RequestMonitor monitor) {
         getSession().removeServiceEventListener(this);
         unregister();
@@ -358,7 +358,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
             rm.done();
         }
     }
-    
+
     public TCFDataCache<?> getFramesCache(TCFDSFExecutionDMC exe, DataRequestMonitor<?> rm) {
         if (tcf_stk_service == null) {
             if (rm != null) {
@@ -379,7 +379,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
         if (exe.stack_frames_cache == null) exe.stack_frames_cache = new FramesCache(channel, exe);
         return (FramesCache)exe.stack_frames_cache;
     }
-    
+
     public void getFrames(final IDMContext dmc, final DataRequestMonitor<IFrameDMContext[]> rm) {
         if (dmc instanceof TCFDSFExecutionDMC) {
             TCFDSFExecutionDMC exe = (TCFDSFExecutionDMC)dmc;
@@ -482,7 +482,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
             rm.done();
         }
     }
-    
+
     public TCFFrameDMC getTopFrame(TCFDSFExecutionDMC exe) {
         FramesCache cache = (FramesCache)getFramesCache(exe, null);
         assert cache != null;
@@ -521,7 +521,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
             if (cache != null) cache.invalidateFrames();
         }
     }
-    
+
     @DsfServiceEventHandler
     public void eventDispatched(IRunControl.ISuspendedDMEvent e) {
         FramesCache cache = (FramesCache)((TCFDSFExecutionDMC)e.getDMContext()).stack_frames_cache;

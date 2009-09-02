@@ -5,12 +5,12 @@
 </head>
 
 <body lang='EN-US'>
-  
+
 <h1>Target Communication Framework Services</h1>
- 
+
 <p>Copyright (c) 2007 Wind River Systems, Inc. Made available under the EPL v1.0
 <p>Direct comments, questions to the <a href="mailto:dsdp-tcf-dev@eclipse.org">dsdp-tcf-dev@eclipse.org</a> mailing list
- 
+
 <h2>Table of Contents</h2>
 <ul>
     <li><a href='#VersionHistory'>Version History</a>
@@ -48,13 +48,13 @@ For example, <a href='TCF Service - Memory.html'>Memory Service</a> defines grou
 reading and writing target memory.
 Service definitions are not part of the <a href='TCF Specification.html'>framework specification</a>, and new services
 are expected to be defined by developers of tools and target agents.
-Defenitions of standard services are provided to achieve certain level of compatibility between tools and targets. 
- 
+Defenitions of standard services are provided to achieve certain level of compatibility between tools and targets.
+
 <h2><a name='Syntax'>Syntax Rules Notation</a></h2>
- 
+
 <p>Format of the protocol messages is defined by syntax rules. Syntax is described
 using a simple variant of Backus-Naur Form. In particular:</p>
- 
+
 <ul type='disc'>
     <li>Italic lower case words in a courier font, enclosed into angular brackets, are
     used to denote syntactic categories, for example:&nbsp;<b><i><font face="Courier New" size=2 color=#333399>&lt;token&gt;.
@@ -62,12 +62,12 @@ using a simple variant of Backus-Naur Form. In particular:</p>
     of the category, for example: <b><i><font face="Courier New" size=2 color=#333399>&lt;int:
     error code&gt;</font></i></b> has same meaning as <b><i><font face="Courier New" size=2 color=#333399>&lt;int&gt;</font></i></b>,
     but denotes that the integer number used to indicate an "error code".
- 
+
     <li>A syntax rule consists of a category designation followed by one or more syntax
     definitions for the category. The category name and each definition are placed on
     separate lines, bullets are used to denote definitions, for example:
 </ul>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;chars&gt;</i>
     &rArr; <i>&lt;char&gt;</i>
@@ -76,17 +76,17 @@ using a simple variant of Backus-Naur Form. In particular:</p>
 
 <ul type='disc'>
     <li>Spaces are added for readability only and they are not part of the syntax.
- 
+
     <li>All text in the category definition, other than categories and spaces, is UTF-8
     based representation of a message bytes.
- 
-    <li>The symbol &lsquo;&bull;&rsquo; designates a zero byte. 
+
+    <li>The symbol &lsquo;&bull;&rsquo; designates a zero byte.
 </ul>
 
 <h2><a name='ErrorFormat'>Error Report Format</a></h2>
 
 <p>Most of TCF standard services use same format for error reporting:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;error report&gt;</i>
     &rArr;
@@ -205,4 +205,4 @@ same way as "OTHER".</p>
 
 </body>
 </html>
- 
+

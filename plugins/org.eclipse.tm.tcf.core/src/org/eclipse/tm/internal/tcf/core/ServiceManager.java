@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Anyware Technologies and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Anyware Technologies  - initial API and implementation
  *******************************************************************************/
@@ -27,9 +27,9 @@ public class ServiceManager {
 
     static {
         addServiceProvider(new IServiceProvider() {
-            
+
             private final String package_name = LocatorProxy.class.getPackage().getName();
-            
+
             public IService[] getLocalService(IChannel channel) {
                 return new IService[]{ new DiagnosticsService(channel) };
             }
@@ -56,7 +56,7 @@ public class ServiceManager {
     public static void removeServiceProvider(IServiceProvider provider) {
         providers.remove(provider);
     }
-    
+
     public static void onChannelCreated(IChannel channel, Map<String,IService> services) {
         IService zero_copy = new IService() {
             public String getName() {
@@ -73,7 +73,7 @@ public class ServiceManager {
             }
         }
     }
-    
+
     public static void onChannelOpened(IChannel channel, Collection<String> service_names, Map<String,IService> services) {
         for (String name : service_names) {
             for (IServiceProvider provider : providers) {

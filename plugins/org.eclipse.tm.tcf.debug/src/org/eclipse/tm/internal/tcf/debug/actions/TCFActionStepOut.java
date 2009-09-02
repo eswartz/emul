@@ -16,27 +16,27 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 public abstract class TCFActionStepOut extends TCFAction implements IRunControl.RunControlListener {
 
     private static final long TIMEOUT = 10000;
-    
+
     private final IRunControl rc = launch.getService(IRunControl.class);
     private final IBreakpoints bps = launch.getService(IBreakpoints.class);
-    
+
     private IRunControl.RunControlContext ctx;
     private TCFDataCache<TCFContextState> state;
     private int step_cnt;
     private Map<String,Object> bp;
-    
+
     protected boolean exited;
 
     public TCFActionStepOut(TCFLaunch launch, IRunControl.RunControlContext ctx) {
         super(launch, ctx.getID());
         this.ctx = ctx;
     }
-    
+
     protected abstract TCFDataCache<TCFContextState> getContextState();
     protected abstract TCFDataCache<?> getStackTrace();
     protected abstract TCFDataCache<IStackTrace.StackTraceContext> getStackFrame();
     protected abstract int getStackFrameIndex();
-    
+
     public void run() {
         if (exited) return;
         if (state == null) {
@@ -114,7 +114,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
             exit(new Exception("Step out is not supported"));
         }
     }
-    
+
     protected void exit(Throwable error) {
         if (exited) return;
         if (bp != null) {

@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -15,9 +15,9 @@ import java.math.BigInteger;
 import org.eclipse.cdt.core.IAddress;
 
 public final class TCFAddress implements IAddress {
-    
+
     private final BigInteger addr;
-    
+
     // TODO: TCFAddress should include memory space ID
     public TCFAddress(Number addr) {
         if (addr instanceof BigInteger) this.addr = (BigInteger)addr;
@@ -79,7 +79,7 @@ public final class TCFAddress implements IAddress {
     public int compareTo(Object o) {
         return addr.compareTo(((TCFAddress)o).addr);
     }
-    
+
     public String toString() {
         return "[" + toHexAddressString() + "]";
     }

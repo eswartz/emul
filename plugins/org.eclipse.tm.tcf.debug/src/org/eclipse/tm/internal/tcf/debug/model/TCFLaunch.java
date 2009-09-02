@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -52,17 +52,17 @@ import org.eclipse.tm.tcf.services.IProcesses.ProcessContext;
 public class TCFLaunch extends Launch {
 
     public interface Listener {
-        
+
         public void onCreated(TCFLaunch launch);
 
-        public void onConnected(TCFLaunch launch);      
+        public void onConnected(TCFLaunch launch);
 
         public void onDisconnected(TCFLaunch launch);
 
         public void onContextActionsStart(TCFLaunch launch);
-        
+
         public void onContextActionsDone(TCFLaunch launch);
-        
+
         public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data);
     }
 
@@ -84,9 +84,9 @@ public class TCFLaunch extends Launch {
     private int context_action_cnt;
     private final HashMap<String,LinkedList<Runnable>> context_action_queue =
         new HashMap<String,LinkedList<Runnable>>();
-    
+
     private HashMap<String,String> stream_ids = new HashMap<String,String>();
-    
+
     private final IStreams.StreamsListener streams_listener = new IStreams.StreamsListener() {
 
         public void created(String stream_type, String stream_id, String context_id) {
@@ -102,14 +102,14 @@ public class TCFLaunch extends Launch {
         public void disposed(String stream_type, String stream_id) {
         }
     };
-    
+
     private final IProcesses.ProcessesListener prs_listener = new IProcesses.ProcessesListener() {
 
         public void exited(String process_id, int exit_code) {
             if (process_id.equals(process.getID())) process_exit_code = exit_code;
         }
     };
-    
+
     public TCFLaunch(ILaunchConfiguration launchConfiguration, String mode) {
         super(launchConfiguration, mode, null);
         for (Listener l : listeners) l.onCreated(TCFLaunch.this);
@@ -119,7 +119,7 @@ public class TCFLaunch extends Launch {
         // The method is called when TCF channel is successfully connected.
         subscribeStreamsService();
     }
-    
+
     private void onDisconnected(Throwable error) {
         // The method is called when TCF channel is closed.
         assert !disconnected;
@@ -139,7 +139,7 @@ public class TCFLaunch extends Launch {
             }
         });
     }
-    
+
     private void subscribeStreamsService() {
         try {
             IStreams streams = getService(IStreams.class);
@@ -194,7 +194,7 @@ public class TCFLaunch extends Launch {
             }
         });
     }
-    
+
     private String[] toArgsArray(String file, String cmd) {
         // Create arguments list from a command line.
         int i = 0;
@@ -225,7 +225,7 @@ public class TCFLaunch extends Launch {
         }
         return arr.toArray(new String[arr.size()]);
     }
-    
+
     @SuppressWarnings("unchecked")
     protected void runLaunchSequence(final Runnable done) {
         try {
@@ -295,7 +295,7 @@ public class TCFLaunch extends Launch {
             channel.terminate(x);
         }
     }
-    
+
     private void copyFileToRemoteTarget(String local_file, String remote_file, final Runnable done) {
         if (local_file == null) {
             channel.terminate(new Exception("Program does not exist"));
@@ -311,12 +311,12 @@ public class TCFLaunch extends Launch {
             final InputStream inp = new FileInputStream(local_file);
             int flags = IFileSystem.TCF_O_WRITE | IFileSystem.TCF_O_CREAT | IFileSystem.TCF_O_TRUNC;
             fs.open(remote_file, flags, null, new IFileSystem.DoneOpen() {
-                
+
                 IFileHandle handle;
                 long offset = 0;
                 final Set<IToken> cmds = new HashSet<IToken>();
                 final byte[] buf = new byte[0x1000];
-    
+
                 public void doneOpen(IToken token, FileSystemException error, IFileHandle handle) {
                     this.handle = handle;
                     if (error != null) {
@@ -328,7 +328,7 @@ public class TCFLaunch extends Launch {
                         write_next();
                     }
                 }
-                
+
                 private void write_next() {
                     try {
                         while (cmds.size() < 8) {
@@ -338,7 +338,7 @@ public class TCFLaunch extends Launch {
                                 break;
                             }
                             cmds.add(fs.write(handle, offset, buf, 0, rd, new IFileSystem.DoneWrite() {
-        
+
                                 public void doneWrite(IToken token, FileSystemException error) {
                                     cmds.remove(token);
                                     if (error != null) channel.terminate(error);
@@ -352,13 +352,13 @@ public class TCFLaunch extends Launch {
                         channel.terminate(x);
                     }
                 }
-                
+
                 private void close() {
                     if (cmds.size() > 0) return;
                     try {
                         inp.close();
                         fs.close(handle, new IFileSystem.DoneClose() {
-    
+
                             public void doneClose(IToken token, FileSystemException error) {
                                 if (error != null) channel.terminate(error);
                                 else done.run();
@@ -375,7 +375,7 @@ public class TCFLaunch extends Launch {
             channel.terminate(x);
         }
     }
-    
+
     private String getProgramPath(String project_name, String local_file) {
         if (project_name == null || project_name.length() == 0) {
             File f = new File(local_file);
@@ -393,7 +393,7 @@ public class TCFLaunch extends Launch {
         }
         return program_path.toOSString();
     }
-    
+
     private void connectProcessStreams() {
         assert process_start_command == null;
         final IStreams streams = getService(IStreams.class);
@@ -416,7 +416,7 @@ public class TCFLaunch extends Launch {
             }
         }
     }
-    
+
     private void connectStream(final String id, final int no) {
         final String peocess_id = process.getID();
         final IStreams streams = getService(IStreams.class);
@@ -442,7 +442,7 @@ public class TCFLaunch extends Launch {
         streams.read(id, 0x1000, done);
         streams.read(id, 0x1000, done);
     }
-    
+
     private void disconnectStream(String id) {
         stream_ids.remove(id);
         if (channel.getState() != IChannel.STATE_OPEN) return;
@@ -454,17 +454,17 @@ public class TCFLaunch extends Launch {
             }
         });
     }
-    
+
     protected void runShutdownSequence(final Runnable done) {
         done.run();
     }
-    
+
     /*--------------------------------------------------------------------------------------------*/
 
     public Throwable getError() {
         return error;
     }
-    
+
     public void setError(Throwable x) {
         error = x;
         if (x != null) {
@@ -477,7 +477,7 @@ public class TCFLaunch extends Launch {
         }
         fireChanged();
     }
-    
+
     public TCFBreakpointsStatus getBreakpointsStatus() {
         return breakpoints_status;
     }
@@ -496,11 +496,11 @@ public class TCFLaunch extends Launch {
         assert Protocol.isDispatchThread();
         return channel;
     }
-    
+
     public IProcesses.ProcessContext getProcessContext() {
         return process;
     }
-    
+
     public void writeProcessInputStream(byte[] buf, int pos, int len) {
         assert Protocol.isDispatchThread();
         if (channel.getState() != IChannel.STATE_OPEN) return;
@@ -513,16 +513,16 @@ public class TCFLaunch extends Launch {
             }
         });
     }
-    
+
     public boolean isConnecting() {
         return connecting;
     }
-    
+
     public void onLastContextRemoved() {
         last_context_exited = true;
         closeChannel();
     }
-    
+
     public void closeChannel() {
         assert Protocol.isDispatchThread();
         if (channel == null) return;
@@ -561,7 +561,7 @@ public class TCFLaunch extends Launch {
     public boolean isDisconnected() {
         return disconnected;
     }
-    
+
     public void disconnect() throws DebugException {
         try {
             Protocol.invokeLater(new Runnable() {
@@ -574,7 +574,7 @@ public class TCFLaunch extends Launch {
             disconnected = true;
         }
     }
-    
+
     public boolean canTerminate() {
         return false;
     }
@@ -589,11 +589,11 @@ public class TCFLaunch extends Launch {
     public boolean isExited() {
         return last_context_exited;
     }
-    
+
     public int getExitCode() {
         return process_exit_code;
     }
-    
+
     public void launchTCF(String mode, String id) {
         assert Protocol.isDispatchThread();
         this.mode = mode;
@@ -615,28 +615,28 @@ public class TCFLaunch extends Launch {
             channel = peer.openChannel();
             while (path.size() > 0) channel.redirect(path.removeFirst());
             channel.addChannelListener(new IChannel.IChannelListener() {
-    
+
                 public void onChannelOpened() {
                     onConnected();
                 }
-    
+
                 public void congestionLevel(int level) {
                 }
-    
+
                 public void onChannelClosed(Throwable error) {
                     channel.removeChannelListener(this);
                     onDisconnected(error);
                 }
-    
+
             });
-            assert channel.getState() == IChannel.STATE_OPENNING; 
+            assert channel.getState() == IChannel.STATE_OPENNING;
             connecting = true;
         }
         catch (Throwable e) {
             onDisconnected(e);
         }
     }
-    
+
     public void addContextAction(TCFAction action, String context_id) {
         assert Protocol.isDispatchThread();
         LinkedList<Runnable> list = context_action_queue.get(context_id);
@@ -651,7 +651,7 @@ public class TCFLaunch extends Launch {
         }
         if (list.getFirst() == action) Protocol.invokeLater(action);
     }
-    
+
     public void removeContextAction(TCFAction action, String context_id) {
         assert Protocol.isDispatchThread();
         LinkedList<Runnable> list = context_action_queue.get(context_id);
@@ -667,7 +667,7 @@ public class TCFLaunch extends Launch {
             for (Listener l : listeners) l.onContextActionsDone(this);
         }
     }
-    
+
     public void removeContextActions(String context_id) {
         assert Protocol.isDispatchThread();
         LinkedList<Runnable> list = context_action_queue.remove(context_id);
@@ -677,7 +677,7 @@ public class TCFLaunch extends Launch {
             for (Listener l : listeners) l.onContextActionsDone(this);
         }
     }
-    
+
     public boolean hasPendingContextActions() {
         return context_action_cnt > 0;
     }

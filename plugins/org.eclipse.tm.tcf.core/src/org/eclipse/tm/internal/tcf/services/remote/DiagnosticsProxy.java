@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -21,13 +21,13 @@ import org.eclipse.tm.tcf.services.IDiagnostics;
 
 
 public class DiagnosticsProxy implements IDiagnostics {
-    
+
     private final IChannel channel;
-    
+
     private static class Symbol implements ISymbol {
-        
+
         private final Map<String,Object> props;
-        
+
         Symbol(Map<String,Object> props) {
             this.props = props;
         }
@@ -65,7 +65,7 @@ public class DiagnosticsProxy implements IDiagnostics {
             return s != null && s.equals("UNDEF");
         }
     }
-    
+
     public DiagnosticsProxy(IChannel channel) {
         this.channel = channel;
     }
@@ -211,7 +211,7 @@ public class DiagnosticsProxy implements IDiagnostics {
         Collection<String> c = (Collection<String>)o;
         return (String[])c.toArray(new String[c.size()]);
     }
-    
+
     @SuppressWarnings("unchecked")
     private ISymbol toSymbol(Object o) {
         if (o == null) return null;

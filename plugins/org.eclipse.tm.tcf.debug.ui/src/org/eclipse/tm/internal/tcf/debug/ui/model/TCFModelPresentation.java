@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -34,15 +34,15 @@ import org.eclipse.ui.part.FileEditorInput;
 
 
 public class TCFModelPresentation implements IDebugModelPresentation {
-    
+
     private final Collection<ILabelProviderListener> listeners = new HashSet<ILabelProviderListener>();
-    
+
     private static final TCFModelPresentation default_instance = new TCFModelPresentation();
-    
+
     public static TCFModelPresentation getDefault() {
         return default_instance;
     }
-    
+
     public void addListener(ILabelProviderListener listener) {
         listeners.add(listener);
     }

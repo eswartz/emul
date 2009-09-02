@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -30,15 +30,15 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public abstract class TCFDSFExecutionDMC extends AbstractDMContext
         implements IExecutionDMContext, IContainerDMContext, IMemoryDMContext, IBreakpointsTargetDMContext {
-    
+
     public final TCFDataCache<IMemory.MemoryContext> memory_context_cache;
-    public final TCFDataCache<RunControlContext> run_control_context_cache; 
-    public final TCFDataCache<Map<String,TCFDSFExecutionDMC>> run_control_children_cache; 
-    public final TCFDataCache<TCFContextState> run_control_state_cache; 
-    
+    public final TCFDataCache<RunControlContext> run_control_context_cache;
+    public final TCFDataCache<Map<String,TCFDSFExecutionDMC>> run_control_children_cache;
+    public final TCFDataCache<TCFContextState> run_control_state_cache;
+
     TCFDataCache<?> stack_frames_cache;
     TCFDataCache<?> registers_cache;
-    
+
     TCFDSFExecutionDMC(IChannel channel, IDsfService service, IDMContext[] parents) {
         super(service, parents);
         final IMemory tcf_mem_service = channel.getRemoteService(IMemory.class);
@@ -135,20 +135,20 @@ public abstract class TCFDSFExecutionDMC extends AbstractDMContext
             }
         };
     }
-    
+
     public abstract void dispose();
-    
+
     /**
      * Get TCF ID of execution context.
      * @return TCF ID.
      */
     public abstract String getTcfContextId();
-    
+
     /**
      * Check if this context object is disposed, because, for example, a thread has exited.
      * @return true if context object is disposed.
      */
     public abstract boolean isDisposed();
-    
+
     protected abstract TCFDSFExecutionDMC addChild(String id);
 }

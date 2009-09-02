@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -33,30 +33,30 @@ import org.eclipse.tm.tcf.services.ILocator;
 
 /**
  * Abstract implementation of IChannel interface.
- *  
+ *
  * AbstractChannel implements communication link connecting two end points (peers).
  * The channel asynchronously transmits messages: commands, results and events.
- * 
+ *
  * Clients can subclass AbstractChannel to support particular transport (wire) protocol.
  * Also, see StreamChannel for stream oriented transport protocols.
  */
 public abstract class AbstractChannel implements IChannel {
 
     public interface TraceListener {
-        
+
         public void onMessageReceived(char type, String token,
                 String service, String name, byte[] data);
-        
+
         public void onMessageSent(char type, String token,
                 String service, String name, byte[] data);
-        
+
         public void onChannelClosed(Throwable error);
     }
-    
+
     public interface Proxy {
-        
+
         public void onCommand(IToken token, String service, String name, byte[] data);
-        
+
         public void onEvent(String service, String name, byte[] data);
 
         public void onChannelClosed(Throwable error);
@@ -73,7 +73,7 @@ public abstract class AbstractChannel implements IChannel {
         boolean is_canceled;
 
         Collection<TraceListener> trace;
-        
+
         Message(char type) {
             this.type = type;
         }
@@ -146,11 +146,11 @@ public abstract class AbstractChannel implements IChannel {
     private long local_congestion_time;
     private int local_congestion_cnt;
     private Collection<TraceListener> trace_listeners;
-    
+
     public static final int
         EOS = -1, // End Of Stream
         EOM = -2; // End Of Message
-    
+
     protected AbstractChannel(IPeer remote_peer) {
         this(LocatorService.getLocalPeer(), remote_peer);
     }
@@ -372,7 +372,7 @@ public abstract class AbstractChannel implements IChannel {
                     if (state == STATE_CLOSED) return;
                     ServiceManager.onChannelCreated(AbstractChannel.this, local_service_by_name);
                     makeServiceByClassMap(local_service_by_name, local_service_by_class);
-                    Object[] args = new Object[]{ local_service_by_name.keySet() };  
+                    Object[] args = new Object[]{ local_service_by_name.keySet() };
                     sendEvent(Protocol.getLocator(), "Hello", JSON.toJSONSequence(args));
                 }
                 catch (IOException x) {
@@ -475,7 +475,7 @@ public abstract class AbstractChannel implements IChannel {
         assert Protocol.isDispatchThread();
         channel_listeners.remove(listener);
     }
-    
+
     public void addTraceListener(TraceListener listener) {
         if (trace_listeners == null) {
             trace_listeners = new ArrayList<TraceListener>();
@@ -485,7 +485,7 @@ public abstract class AbstractChannel implements IChannel {
         }
         trace_listeners.add(listener);
     }
-    
+
     public void removeTraceListener(TraceListener listener) {
         trace_listeners = new ArrayList<TraceListener>(trace_listeners);
         trace_listeners.remove(listener);
@@ -543,7 +543,7 @@ public abstract class AbstractChannel implements IChannel {
             out_queue.notify();
         }
     }
-    
+
     public void close() {
         assert Protocol.isDispatchThread();
         try {
@@ -645,7 +645,7 @@ public abstract class AbstractChannel implements IChannel {
         assert Protocol.isDispatchThread();
         return remote_peer;
     }
-    
+
     public Collection<String> getLocalServices() {
         assert Protocol.isDispatchThread();
         assert state != STATE_OPENNING;
@@ -657,7 +657,7 @@ public abstract class AbstractChannel implements IChannel {
         assert state != STATE_OPENNING;
         return remote_service_by_name.keySet();
     }
-    
+
     @SuppressWarnings("unchecked")
     public <V extends IService> V getLocalService(Class<V> cls) {
         assert Protocol.isDispatchThread();
@@ -671,15 +671,15 @@ public abstract class AbstractChannel implements IChannel {
         assert state != STATE_OPENNING;
         return (V)remote_service_by_class.get(cls);
     }
-    
+
     public <V extends IService> void setServiceProxy(Class<V> service_interface, IService service_proxy) {
         if (!notifying_channel_opened) new Error("setServiceProxe() can be called only from channel open call-back");
-        if (!(remote_service_by_name.get(service_proxy.getName()) instanceof GenericProxy)) throw new Error("Proxy already set"); 
+        if (!(remote_service_by_name.get(service_proxy.getName()) instanceof GenericProxy)) throw new Error("Proxy already set");
         if (remote_service_by_class.get(service_interface) != null) throw new Error("Proxy already set");
         remote_service_by_class.put(service_interface, service_proxy);
         remote_service_by_name.put(service_proxy.getName(), service_proxy);
     }
-    
+
     public IService getLocalService(String service_name) {
         assert Protocol.isDispatchThread();
         assert state != STATE_OPENNING;
@@ -691,14 +691,14 @@ public abstract class AbstractChannel implements IChannel {
         assert state != STATE_OPENNING;
         return remote_service_by_name.get(service_name);
     }
-    
+
     public void setProxy(Proxy proxy, Collection<String> services) throws IOException {
         this.proxy = proxy;
         sendEvent(Protocol.getLocator(), "Hello", JSON.toJSONSequence(new Object[]{ services }));
         local_service_by_class.clear();
         local_service_by_name.clear();
     }
-    
+
     private void addToOutQueue(Message msg) {
         msg.trace = trace_listeners;
         synchronized (out_queue) {
@@ -771,11 +771,11 @@ public abstract class AbstractChannel implements IChannel {
         msg.data = args;
         addToOutQueue(msg);
     }
-    
+
     public boolean isZeroCopySupported() {
         return zero_copy;
     }
-    
+
     @SuppressWarnings("unchecked")
     private void handleInput(Message msg) {
         assert Protocol.isDispatchThread();
@@ -848,7 +848,7 @@ public abstract class AbstractChannel implements IChannel {
                     proxy.onEvent(msg.service, msg.name, msg.data);
                 }
                 else if (hello) {
-                    assert state == STATE_OPENNING;                    
+                    assert state == STATE_OPENNING;
                     state = STATE_OPEN;
                     assert redirect_command == null;
                     if (redirect_queue.size() > 0) {
@@ -938,7 +938,7 @@ public abstract class AbstractChannel implements IChannel {
      * Write one byte into the channel output stream.
      * The method argument can be one of two special values:
      *   EOS (-1) end of stream marker;
-     *   EOM (-2) end of message marker. 
+     *   EOM (-2) end of message marker.
      * The stream can put the byte into a buffer instead of transmitting it right away.
      * @param n - the data byte.
      * @throws IOException
@@ -955,7 +955,7 @@ public abstract class AbstractChannel implements IChannel {
     /**
      * Stop (close) channel underlying streams.
      * If a thread is blocked by read() or write(), it should be
-     * resumed (or interrupted).  
+     * resumed (or interrupted).
      * @throws IOException
      */
     protected abstract void stop() throws IOException;

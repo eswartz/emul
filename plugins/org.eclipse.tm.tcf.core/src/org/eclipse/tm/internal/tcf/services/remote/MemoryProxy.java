@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -31,26 +31,26 @@ public class MemoryProxy implements IMemory {
     private final IChannel channel;
     private final Map<MemoryListener,IChannel.IEventListener> listeners =
         new HashMap<MemoryListener,IChannel.IEventListener>();
-    
+
     private static class Range implements Comparable<Range> {
         int offs;
         int size;
         int stat;
         String msg;
-        
+
         public int compareTo(Range o) {
             if (offs < o.offs) return -1;
             if (offs > o.offs) return +1;
             return 0;
         }
     }
-    
+
     private class MemoryErrorReport extends MemoryError implements ErrorOffset, IErrorReport {
-        
+
         private static final long serialVersionUID = 796525409870265390L;
         private final Map<String,Object> attrs;
         private final Range[] ranges;
-        
+
         @SuppressWarnings("unchecked")
         MemoryErrorReport(String msg, Map<String,Object> attrs, Number addr, Object ranges) {
             super(msg);
@@ -250,7 +250,7 @@ public class MemoryProxy implements IMemory {
                     }
                 }.token;
         }
-        
+
         public String toString() {
             return "[Memory Context " + props.toString() + "]";
         }
@@ -316,7 +316,7 @@ public class MemoryProxy implements IMemory {
             }
         }.token;
     }
-    
+
     public IToken getChildren(String parent_context_id, final DoneGetChildren done) {
         return new Command(channel, this, "getChildren", new Object[]{ parent_context_id }) {
             @Override
@@ -335,9 +335,9 @@ public class MemoryProxy implements IMemory {
     public String getName() {
         return NAME;
     }
-    
+
     private abstract class MemoryCommand extends Command {
-        
+
         MemoryCommand(String cmd, Object[] args) {
             super(channel, MemoryProxy.this, cmd, args);
         }

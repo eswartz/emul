@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -56,8 +56,8 @@ class TestRCBP1 implements ITCFTest,
     private final Map<IToken,String> get_state_cmds = new HashMap<IToken,String>();
     private final Map<String,Map<String,IRegisters.RegistersContext>> regs =
         new HashMap<String,Map<String,IRegisters.RegistersContext>>();
-    private final Map<String,Map<String,Object>> bp_list = new HashMap<String,Map<String,Object>>(); 
-    
+    private final Map<String,Map<String,Object>> bp_list = new HashMap<String,Map<String,Object>>();
+
     private String context_id; // Test process context ID
     private IRunControl.RunControlContext context;
     private String main_thread_id;
@@ -70,8 +70,8 @@ class TestRCBP1 implements ITCFTest,
     private boolean done_starting_test_process;
     private int resume_cnt = 0;
     private IToken cancel_test_cmd;
-    private boolean bp_set_done; 
-    private boolean bp_change_done; 
+    private boolean bp_set_done;
+    private boolean bp_change_done;
 
     private class SuspendedContext {
         final String id;
@@ -79,7 +79,7 @@ class TestRCBP1 implements ITCFTest,
         final String reason;
         final Map<String,Object> params;
         boolean resumed;
-        
+
         SuspendedContext(String id, String pc, String reason, Map<String,Object> params) {
             this.id = id;
             this.pc = pc;
@@ -87,7 +87,7 @@ class TestRCBP1 implements ITCFTest,
             this.params = params;
         }
     }
-    
+
     private final IBreakpoints.BreakpointsListener bp_listener = new IBreakpoints.BreakpointsListener() {
 
         public void breakpointStatusChanged(String id, Map<String,Object> status) {
@@ -111,7 +111,7 @@ class TestRCBP1 implements ITCFTest,
 
         public void contextRemoved(String[] ids) {
         }
-        
+
         private boolean checkBPData(Map<String,Object> m0, Map<String,Object> m1) {
             if (m1 == null) return true;
             m0 = new HashMap<String,Object>(m0);
@@ -135,7 +135,7 @@ class TestRCBP1 implements ITCFTest,
         bp = channel.getRemoteService(IBreakpoints.class);
         ln = channel.getRemoteService(ILineNumbers.class);
     }
-    
+
     public void start() {
         if (diag == null || rc == null) {
             test_suite.done(this, null);
@@ -148,7 +148,7 @@ class TestRCBP1 implements ITCFTest,
         }
         if (bp != null) bp.addListener(bp_listener);
     }
-    
+
     public void doneGetTestList(IToken token, Throwable error, String[] list) {
         assert test_suite.isActive(this);
         if (error != null) {
@@ -164,7 +164,7 @@ class TestRCBP1 implements ITCFTest,
         }
         exit(null);
     }
-    
+
     public void doneRunTest(IToken token, Throwable error, String context_id) {
         if (error != null) {
             exit(error);
@@ -223,7 +223,7 @@ class TestRCBP1 implements ITCFTest,
             });
         }
     }
-    
+
     @SuppressWarnings("unchecked")
     private void iniBreakpoints() {
         assert !bp_set_done;
@@ -359,7 +359,7 @@ class TestRCBP1 implements ITCFTest,
             doneStartingTestProcess();
         }
     }
-    
+
     private void doneStartingTestProcess() {
         assert !done_starting_test_process;
         assert get_state_cmds.isEmpty();
@@ -451,7 +451,7 @@ class TestRCBP1 implements ITCFTest,
             }
         });
     }
-    
+
     public void containerResumed(String[] context_ids) {
         for (String id : context_ids) contextResumed(id);
     }
@@ -516,7 +516,7 @@ class TestRCBP1 implements ITCFTest,
                     exit(new Exception("Test main thread breakpoint count = " + bp_cnt + ", expected 30"));
                 }
                 rc.removeListener(this);
-                // Flush communication channel of pending commands 
+                // Flush communication channel of pending commands
                 Protocol.sync(new Runnable() {
                     public void run() {
                         exit(null);
@@ -532,14 +532,14 @@ class TestRCBP1 implements ITCFTest,
         if (!isAlienBreakpoint(sc)) suspended_prev.put(id, sc);
         running.add(id);
     }
-    
+
     private String toSymName(long addr) {
         if (func0.getValue().longValue() == addr) return "tcf_test_func0";
         if (func1.getValue().longValue() == addr) return "tcf_test_func1";
         if (func2.getValue().longValue() == addr) return "tcf_test_func2";
         return "0x" + Long.toHexString(addr);
     }
-    
+
     private void checkSuspendedContext(SuspendedContext sp, ISymbol sym) {
         long pc =  Long.parseLong(sp.pc);
         if (pc != sym.getValue().longValue() || !"Breakpoint".equals(sp.reason)) {
@@ -547,7 +547,7 @@ class TestRCBP1 implements ITCFTest,
                     ", expected breakpoint at '" + toSymName(sym.getValue().longValue()) + "' " + sym.getValue()));
         }
     }
-    
+
     private boolean isAlienBreakpoint(SuspendedContext sc) {
         // Check if context suspended by a breakpoint from another debug session
         // Test should ignore such breakpoints.
@@ -624,7 +624,7 @@ class TestRCBP1 implements ITCFTest,
             ln_done.doneMapToSource(null, null, null);
         }
     }
-    
+
     private void resume(final SuspendedContext sc) {
         assert done_starting_test_process || resume_cnt == 0;
         if (!done_starting_test_process) return;
@@ -642,7 +642,7 @@ class TestRCBP1 implements ITCFTest,
             });
         }
     }
-    
+
     private void runMemoryTest(final SuspendedContext sc) {
         if (test_suite.target_lock) {
             resume(sc);
@@ -699,7 +699,7 @@ class TestRCBP1 implements ITCFTest,
             }
         });
     }
-    
+
     private void testSetMemoryCommand(final SuspendedContext sc,
             final IMemory.MemoryContext mem_ctx,
             final Number addr, final byte[] buf) {
@@ -739,7 +739,7 @@ class TestRCBP1 implements ITCFTest,
             }
         });
     }
-    
+
     private void testFillMemoryCommand(final SuspendedContext sc,
             final IMemory.MemoryContext mem_ctx,
             final Number addr, final byte[] buf) {
@@ -781,7 +781,7 @@ class TestRCBP1 implements ITCFTest,
             }
         });
     }
-    
+
     private void runRegistersTest(final SuspendedContext sc) {
         if (regs.get(sc.id) == null) {
             final Map<String,IRegisters.RegistersContext> reg_map =
@@ -830,7 +830,7 @@ class TestRCBP1 implements ITCFTest,
             testGetSetRegisterCommands(sc);
         }
     }
-    
+
     private void testGetSetRegisterCommands(final SuspendedContext sc) {
         final Set<IToken> cmds = new HashSet<IToken>();
         Map<String,IRegisters.RegistersContext> reg_map = regs.get(sc.id);
@@ -907,7 +907,7 @@ class TestRCBP1 implements ITCFTest,
             resume(sc);
         }
     }
-    
+
     void cancel(final Runnable done) {
         if (rc != null) rc.removeListener(this);
         if (context_id == null) {

@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -39,18 +39,18 @@ import org.eclipse.tm.tcf.services.IBreakpoints;
 
 /**
  * TCFBreakpointsModel class handles breakpoints for all active TCF launches.
- * It downloads initial set of breakpoint data when launch is activated, 
+ * It downloads initial set of breakpoint data when launch is activated,
  * listens for Eclipse breakpoint manager events and propagates breakpoint changes to TCF targets.
  */
 public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointManagerListener {
 
     private final IBreakpointManager bp_manager = DebugPlugin.getDefault().getBreakpointManager();
-    
+
     public TCFBreakpointsModel() {
         bp_manager.addBreakpointListener(this);
         bp_manager.addBreakpointManagerListener(this);
     }
-    
+
     public static TCFBreakpointsModel getBreakpointsModel() {
         return Activator.getBreakpointsModel();
     }
@@ -59,12 +59,12 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         bp_manager.removeBreakpointListener(this);
         bp_manager.removeBreakpointManagerListener(this);
     }
-    
+
     public boolean isSupported(IChannel channel, IBreakpoint bp) {
         // TODO: implement per-channel breakpoint filtering
         return true;
     }
-    
+
     public String getBreakpointID(IBreakpoint bp) throws CoreException {
         IMarker marker = bp.getMarker();
         String id = (String)marker.getAttributes().get(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID);
@@ -73,7 +73,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         if (id == null) return null;
         return id + ':' + marker.getId();
     }
-    
+
     @SuppressWarnings("unchecked")
     public void downloadBreakpoints(final IChannel channel, final Runnable done)
             throws IOException, CoreException {
@@ -165,15 +165,15 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             Activator.log("Unhandled exception in breakpoint listener", x);
         }
     }
-    
+
     private abstract class BreakpointUpdate implements Runnable {
-        
+
         private final IBreakpoint breakpoint;
         private final ILaunch[] launches;
         private final Map<String,Object> marker_attrs;
         private final String marker_file;
         private final String marker_id;
-        
+
         IBreakpoints service;
         IBreakpoints.DoneCommand done;
         Map<String,Object> tcf_attrs;
@@ -186,13 +186,13 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             marker_id = getBreakpointID(breakpoint);
             launches = DebugPlugin.getDefault().getLaunchManager().getLaunches();
         }
-        
+
         synchronized void exec() throws InterruptedException {
             assert !Protocol.isDispatchThread();
             Protocol.invokeLater(this);
             wait();
         }
-        
+
         public void run() {
             if (marker_id != null) {
                 tcf_attrs = toBreakpointAttributes(marker_id, marker_file, marker_attrs);
@@ -222,7 +222,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                 }
             });
         };
-        
+
         abstract void update();
     }
 
@@ -246,7 +246,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             Activator.log("Unhandled exception in breakpoint listener", x);
         }
     }
-    
+
     @SuppressWarnings("unchecked")
     private Set<String> calcMarkerDeltaKeys(IMarker marker, IMarkerDelta delta) throws CoreException {
         assert delta.getKind() == IResourceDelta.CHANGED;
@@ -310,7 +310,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             Activator.log("Unhandled exception in breakpoint listener", x);
         }
     }
-    
+
     public Map<String,Object> toMarkerAttributes(Map<String,Object> p) {
         assert Protocol.isDispatchThread();
         Map<String,Object> m = new HashMap<String,Object>();
@@ -331,7 +331,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         m.put(IBreakpoint.PERSISTED, Boolean.TRUE);
         m.put(IBreakpoint.ID, ITCFConstants.ID_TCF_DEBUG_MODEL);
         String msg = "";
-        if (p.get(IBreakpoints.PROP_LOCATION) != null) msg += p.get(IBreakpoints.PROP_LOCATION); 
+        if (p.get(IBreakpoints.PROP_LOCATION) != null) msg += p.get(IBreakpoints.PROP_LOCATION);
         m.put(IMarker.MESSAGE, "Breakpoint: " + msg);
         Number line = (Number)p.get(IBreakpoints.PROP_LINE);
         if (line != null) {
@@ -344,7 +344,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         }
         return m;
     }
-    
+
     public Map<String,Object> toBreakpointAttributes(String id, String file, Map<String,Object> p) {
         assert Protocol.isDispatchThread();
         Map<String,Object> m = new HashMap<String,Object>();

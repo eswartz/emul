@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -32,9 +32,9 @@ public class AbstractPeer implements IPeer {
 
     private final Map<String, String> ro_attrs;
     private final Map<String, String> rw_attrs;
-    
+
     private long last_heart_beat_time;
-    
+
     public AbstractPeer(Map<String,String> attrs) {
         assert Protocol.isDispatchThread();
         if (attrs != null) {
@@ -47,10 +47,10 @@ public class AbstractPeer implements IPeer {
         assert getID() != null;
         LocatorService.addPeer(this);
     }
-    
+
     void onChannelTerminated() {
         // A channel to this peer was terminated:
-        // not delaying next heart beat helps client to recover much faster. 
+        // not delaying next heart beat helps client to recover much faster.
         last_heart_beat_time = 0;
     }
 
@@ -111,7 +111,7 @@ public class AbstractPeer implements IPeer {
             last_heart_beat_time = time;
         }
     }
-    
+
     public void sendPeerAddedEvent() {
         for (LocatorListener l : LocatorService.getListeners()) {
             try {
@@ -179,7 +179,7 @@ public class AbstractPeer implements IPeer {
         assert Protocol.isDispatchThread();
         return ro_attrs.get(ATTR_TRANSPORT_NAME);
     }
-    
+
     public IChannel openChannel() {
         return TransportManager.openChannel(this);
     }

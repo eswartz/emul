@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -23,10 +23,10 @@ import org.eclipse.tm.tcf.services.IFileSystem;
 
 
 public class FileSystemProxy implements IFileSystem {
-    
+
     private final class FileHandle implements IFileHandle {
         final String id;
-        
+
         FileHandle(String id) {
             this.id = id;
         }
@@ -34,31 +34,31 @@ public class FileSystemProxy implements IFileSystem {
         public IFileSystem getService() {
             return FileSystemProxy.this;
         }
-        
+
         public String toString() {
             return "[File Handle '" + id + "']";
         }
     }
-    
+
     private static final class Status extends FileSystemException implements IErrorReport {
-        
+
         private static final long serialVersionUID = -1636567076145085980L;
-        
+
         private final int status;
         private final Map<String,Object> attrs;
-        
+
         Status(int status, String message, Map<String,Object> attrs) {
             super(message);
             this.status = status;
             this.attrs = attrs;
         }
-        
+
         Status(Exception x) {
             super(x);
             this.status = IErrorReport.TCF_ERROR_OTHER;
             this.attrs = new HashMap<String,Object>();
         }
-        
+
         public int getStatus() {
             return status;
         }
@@ -83,13 +83,13 @@ public class FileSystemProxy implements IFileSystem {
             return attrs;
         }
     }
-    
+
     private abstract class FileSystemCommand extends Command {
-        
+
         FileSystemCommand(String command, Object[] args) {
             super(channel, FileSystemProxy.this, command, args);
         }
-        
+
         @SuppressWarnings("unchecked")
         public Status toFSError(Object data) {
             if (data == null) return null;
@@ -107,9 +107,9 @@ public class FileSystemProxy implements IFileSystem {
             return s;
         }
     }
-    
+
     private final IChannel channel;
-    
+
     public FileSystemProxy(IChannel channel) {
         this.channel = channel;
     }
@@ -513,7 +513,7 @@ public class FileSystemProxy implements IFileSystem {
     public String getName() {
         return NAME;
     }
-    
+
     private Object toObject(FileAttrs attrs) {
         if (attrs == null) return null;
         Map<String,Object> m = new HashMap<String,Object>();
@@ -534,7 +534,7 @@ public class FileSystemProxy implements IFileSystem {
         }
         return m;
     }
-    
+
     @SuppressWarnings("unchecked")
     private FileAttrs toFileAttrs(Object o) {
         if (o == null) return null;
@@ -572,12 +572,12 @@ public class FileSystemProxy implements IFileSystem {
         }
         return new FileAttrs(flags, size, uid, gid, permissions, atime, mtime, m);
     }
-    
+
     private FileHandle toFileHandle(Object o) {
         if (o == null) return null;
         return new FileHandle(o.toString());
     }
-    
+
     @SuppressWarnings("unchecked")
     private DirEntry[] toDirEntryArray(Object o) {
         if (o == null) return null;

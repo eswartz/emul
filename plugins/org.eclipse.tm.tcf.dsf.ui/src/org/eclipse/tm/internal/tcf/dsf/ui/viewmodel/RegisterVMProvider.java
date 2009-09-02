@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -36,7 +36,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
  */
 @SuppressWarnings("restriction")
 public class RegisterVMProvider extends AbstractDMVMProvider implements IPropertyChangeListener {
-    
+
     /*
      *  Current default for register formatting.
      */
@@ -44,17 +44,17 @@ public class RegisterVMProvider extends AbstractDMVMProvider implements IPropert
         super(adapter, context, session);
 
         context.addPropertyChangeListener(this);
-        
+
         /*
          *  Create the register data access routines.
          */
         SyncRegisterDataAccess regAccess = new SyncRegisterDataAccess(session) ;
-        
+
         /*
          *  Create the top level node to deal with the root selection.
          */
         IRootVMNode rootNode = new RootDMVMNode(this);
-        
+
         IVMNode registerGroupNode = new RegisterGroupVMNode(this, getSession(), regAccess);
         IVMNode registerNode = new RegisterVMNode(FormattedValuePreferenceStore.getDefault(), this, getSession(), regAccess);
         IVMNode bitFieldNode = new RegisterBitFieldVMNode(FormattedValuePreferenceStore.getDefault(), this, getSession(), regAccess);
@@ -64,17 +64,17 @@ public class RegisterVMProvider extends AbstractDMVMProvider implements IPropert
          */
 
         addChildNodes(rootNode, new IVMNode[] { registerGroupNode, registerNode });
-        
+
         /*
          * Create the next level which is the registers themselves.
          */
         addChildNodes(registerGroupNode, new IVMNode[] { registerNode, bitFieldNode });
-        
+
         /*
          * Create the next level which is the bitfield level.
          */
         addChildNodes(registerNode, new IVMNode[] { bitFieldNode });
-        
+
         /*
          *  Now set this schema set as the layout set.
          */
@@ -85,7 +85,7 @@ public class RegisterVMProvider extends AbstractDMVMProvider implements IPropert
     protected IVMUpdatePolicy[] createUpdateModes() {
         return new IVMUpdatePolicy[] { new AutomaticUpdatePolicy(), new ManualUpdatePolicy(), new BreakpointHitUpdatePolicy() };
     }
-    
+
     @Override
     public void dispose() {
         getPresentationContext().removePropertyChangeListener(this);
@@ -96,12 +96,12 @@ public class RegisterVMProvider extends AbstractDMVMProvider implements IPropert
     public IColumnPresentation createColumnPresentation(IPresentationContext context, Object element) {
         return new RegisterColumnPresentation();
     }
-    
+
     @Override
     public String getColumnPresentationId(IPresentationContext context, Object element) {
         return RegisterColumnPresentation.ID;
     }
-    
+
     public void propertyChange(PropertyChangeEvent event) {
         handleEvent(event);
     }

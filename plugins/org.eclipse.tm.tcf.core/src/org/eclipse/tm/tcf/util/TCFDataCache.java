@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -30,57 +30,57 @@ public abstract class TCFDataCache<V> implements Runnable {
     private boolean valid;
     private boolean posted;
     private V data;
-    
+
     protected final IChannel channel;
     protected IToken command;
 
     private final HashSet<Runnable> waiting_list = new HashSet<Runnable>();
-    
+
     public TCFDataCache(IChannel channel) {
         assert channel != null;
         this.channel = channel;
     }
-    
+
     private void post() {
         if (posted) return;
         if (waiting_list.isEmpty()) return;
         Protocol.invokeLater(this);
         posted = true;
     }
-    
+
     /**
      * @return true if cache contains up-to-date data (or data retrieval error).
      */
     public boolean isValid() {
         return valid;
     }
-    
+
     /**
      * @return true if data retrieval command is in progress.
      */
     public boolean isPending() {
         return command != null;
     }
-    
+
     /**
      * @return error object if data retrieval ended with an error, or null if retrieval was successful.
-     * Note: It is prohibited to call this method when cache is not valid. 
+     * Note: It is prohibited to call this method when cache is not valid.
      */
     public Throwable getError() {
         assert valid;
         return error;
     }
-    
+
     /**
      * @return cached data object.
-     * Note: It is prohibited to call this method when cache is not valid. 
+     * Note: It is prohibited to call this method when cache is not valid.
      */
     public V getData() {
         assert Protocol.isDispatchThread();
         assert valid;
         return data;
     }
-    
+
     /**
      * Notify waiting clients about cache state change and remove them from wait list.
      * It is responsibility of clients to check if the state change was one they are waiting for.
@@ -95,7 +95,7 @@ public abstract class TCFDataCache<V> implements Runnable {
             r.run();
         }
     }
-    
+
     /**
      * Add a client call-back to cache wait list.
      * Client call-backs are activated when cache state changes.
@@ -108,7 +108,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         assert !valid;
         if (cb != null) waiting_list.add(cb);
     }
-    
+
     /**
      * Initiate data retrieval if the cache is not valid.
      * @return true if the cache is already valid
@@ -130,7 +130,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         post();
         return true;
     }
-    
+
     /**
      * End cache pending state.
      * @param token - pending command handle.
@@ -163,7 +163,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         valid = true;
         post();
     }
-    
+
     /**
      * Invalidate the cache. If retrieval is in progress - let it continue.
      */
@@ -174,7 +174,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         data = null;
         post();
     }
-    
+
     /**
      * Force cache to invalid state, cancel pending data retrieval if any.
      */
@@ -189,7 +189,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         data = null;
         post();
     }
-    
+
     @Override
     public String toString() {
         StringBuffer bf = new StringBuffer();
@@ -202,7 +202,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         bf.append(']');
         return bf.toString();
     }
-    
+
     /**
      * Sub-classes should override this method to implement actual data retrieval logic.
      * @return true is all done, false if retrieval is in progress.

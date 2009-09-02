@@ -59,7 +59,7 @@ class TestSysMonitor implements ITCFTest {
             });
         }
     }
-    
+
     private void getEnvironment() {
         final HashSet<IToken> cmds = new HashSet<IToken>();
         for (final String id : procs.keySet()) {
@@ -78,7 +78,7 @@ class TestSysMonitor implements ITCFTest {
             }));
         }
     }
-    
+
     private void getCommandLine() {
         final HashSet<IToken> cmds = new HashSet<IToken>();
         for (final String id : procs.keySet()) {

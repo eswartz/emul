@@ -15,10 +15,10 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
     private final IStreams streams;
     private final Random rnd = new Random();
     private final HashSet<String> stream_ids = new HashSet<String>();
-    
+
     private String inp_id;
     private String out_id;
-    
+
     private int test_count;
 
     TestStreams(TCFTestSuite test_suite, IChannel channel) {
@@ -26,7 +26,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
         diag = channel.getRemoteService(IDiagnostics.class);
         streams = channel.getRemoteService(IStreams.class);
     }
-    
+
     public void start() {
         if (diag == null ||streams == null) {
             test_suite.done(this, null);
@@ -35,7 +35,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
             subsrcibe();
         }
     }
-    
+
     private void subsrcibe() {
         streams.subscribe(IDiagnostics.NAME, this, new IStreams.DoneSubscribe() {
 
@@ -49,7 +49,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
             }
         });
     }
-    
+
     private void createStream() {
         diag.createTestStreams(1153, 947, new IDiagnostics.DoneCreateTestStreams() {
 
@@ -64,7 +64,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
                         if (id.equals(inp_id)) continue;
                         if (id.equals(out_id)) continue;
                         streams.disconnect(id, new IStreams.DoneDisconnect() {
-    
+
                             public void doneDisconnect(IToken token, Exception error) {
                                 if (error != null) {
                                     exit(error);
@@ -77,13 +77,13 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
             }
         });
     }
-    
+
     private void testReadWrite() {
         final byte[] data_out = new byte[rnd.nextInt(10000) + 1000];
         new Random().nextBytes(data_out);
         final HashSet<IToken> cmds = new HashSet<IToken>();
         IStreams.DoneRead done_read = new IStreams.DoneRead() {
-            
+
             private int offs = 0;
             private boolean eos;
 
@@ -138,7 +138,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
         cmds.add(streams.read(out_id, 227, done_read));
         cmds.add(streams.read(out_id, 229, done_read));
         cmds.add(streams.read(out_id, 233, done_read));
-        
+
         IStreams.DoneWrite done_write = new IStreams.DoneWrite() {
 
             public void doneWrite(IToken token, Exception error) {
@@ -159,7 +159,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
             }
         });
     }
-    
+
     private void disposeStreams() {
         final HashSet<IToken> cmds = new HashSet<IToken>();
         IStreams.DoneDisconnect done_disconnect = new IStreams.DoneDisconnect() {
@@ -191,7 +191,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
         cmds.add(diag.disposeTestStream(out_id, done_dispose));
         cmds.add(streams.disconnect(out_id, done_disconnect));
     }
-    
+
     private void unsubscribe() {
         streams.unsubscribe(IDiagnostics.NAME, this, new IStreams.DoneUnsubscribe() {
 
@@ -214,7 +214,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
         if (!test_suite.isActive(this)) return;
         test_suite.done(this, x);
     }
-    
+
     /************************** StreamsListener **************************/
 
     public void created(String stream_type, String stream_id, String context_id) {
@@ -225,7 +225,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
             if (inp_id.equals(stream_id)) exit(new Exception("Invalid stream ID in Streams.created event"));
             if (out_id.equals(stream_id)) exit(new Exception("Invalid stream ID in Streams.created event"));
             streams.disconnect(stream_id, new IStreams.DoneDisconnect() {
-                
+
                 public void doneDisconnect(IToken token, Exception error) {
                     if (error != null) {
                         exit(error);

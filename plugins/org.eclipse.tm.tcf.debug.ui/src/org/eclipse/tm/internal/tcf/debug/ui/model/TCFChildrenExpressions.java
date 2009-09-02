@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -24,11 +24,11 @@ public class TCFChildrenExpressions extends TCFChildren {
 
     private final TCFNodeStackFrame node;
     private final IExpressionManager exp_manager;
-    
+
     private final IExpressionsListener listener = new IExpressionsListener() {
-        
+
         int generation;
-        
+
         public void expressionsAdded(IExpression[] expressions) {
             expressionsRemoved(expressions);
         }
@@ -62,11 +62,11 @@ public class TCFChildrenExpressions extends TCFChildren {
         exp_manager.removeExpressionListener(listener);
         super.dispose();
     }
-    
+
     void onSuspended() {
         for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onSuspended();
     }
-    
+
     private TCFNodeExpression findScript(String text) {
         for (TCFNode n : getNodes()) {
             TCFNodeExpression e = (TCFNodeExpression)n;

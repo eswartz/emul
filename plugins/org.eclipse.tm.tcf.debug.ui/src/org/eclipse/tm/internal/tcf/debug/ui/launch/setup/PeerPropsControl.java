@@ -35,13 +35,13 @@ import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IPeer;
 
 public class PeerPropsControl {
-    
-    private static final int 
+
+    private static final int
         SIZING_TABLE_WIDTH = 400,
         SIZING_TABLE_HEIGHT = 200;
 
     private static final String[] column_names = { "Name", "Value" };
-    
+
     private final Map<String,String> attrs;
     private final ArrayList<Attribute> attr_table_data;
     private final boolean create_new;
@@ -53,12 +53,12 @@ public class PeerPropsControl {
     private Table attr_table;
     private TableViewer table_viewer;
     private Image attr_image;
-    
+
     private class Attribute {
         String name;
         String value;
     }
-    
+
     private class AttributeLabelProvider extends LabelProvider implements ITableLabelProvider {
 
         public Image getColumnImage(Object element, int column) {
@@ -70,7 +70,7 @@ public class PeerPropsControl {
             Attribute a = (Attribute)element;
             return column == 0 ? a.name : a.value;
         }
-        
+
         public String getText(Object element) {
             TableColumn column = attr_table.getSortColumn();
             if (column == null) return "";
@@ -84,7 +84,7 @@ public class PeerPropsControl {
         this.listener = listener;
         create_new = attrs.isEmpty();
         attr_table_data = new ArrayList<Attribute>();
-        
+
         createTextFields(parent);
         createAttrTable(parent);
     }
@@ -96,7 +96,7 @@ public class PeerPropsControl {
         composite.setFont(font);
         composite.setLayout(layout);
         composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-        
+
         Label id_label = new Label(composite, SWT.WRAP);
         id_label.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
         id_label.setFont(font);
@@ -122,36 +122,36 @@ public class PeerPropsControl {
             }
         });
     }
-    
+
     private void createAttrTable(Composite parent) {
         Font font = parent.getFont();
         Label props_label = new Label(parent, SWT.WRAP);
         props_label.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         props_label.setFont(font);
         props_label.setText("Peer &properties:");
-        
+
         Composite composite = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(2, false);
         composite.setFont(font);
         composite.setLayout(layout);
         composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
-        
+
         attr_table = new Table(composite, SWT.SINGLE | SWT.BORDER |
-                SWT.H_SCROLL | SWT.V_SCROLL | 
+                SWT.H_SCROLL | SWT.V_SCROLL |
                 SWT.FULL_SELECTION | SWT.HIDE_SELECTION);
         attr_table.setFont(font);
         GridData data = new GridData(GridData.FILL_BOTH);
         data.widthHint = SIZING_TABLE_WIDTH;
         data.heightHint = SIZING_TABLE_HEIGHT;
         attr_table.setLayoutData(data);
-        
+
         for (int i = 0; i < column_names.length; i++) {
             final TableColumn column = new TableColumn(attr_table, SWT.LEAD, i);
             column.setMoveable(false);
             column.setText(column_names[i]);
             column.setWidth(SIZING_TABLE_WIDTH / column_names.length);
             column.addSelectionListener(new SelectionAdapter() {
-                
+
                 public void widgetSelected(SelectionEvent e) {
                     if (column == attr_table.getSortColumn()) {
                         switch (attr_table.getSortDirection()) {
@@ -176,13 +176,13 @@ public class PeerPropsControl {
         }
         attr_table.setHeaderVisible(true);
         attr_table.setLinesVisible(true);
-        
+
         attr_image = ImageCache.getImage(ImageCache.IMG_ATTRIBUTE);
 
-        table_viewer = new TableViewer(attr_table);    
+        table_viewer = new TableViewer(attr_table);
         table_viewer.setUseHashlookup(true);
         table_viewer.setColumnProperties(column_names);
-   
+
         CellEditor[] editors = new CellEditor[column_names.length];
         for (int i = 0; i < column_names.length; i++) {
             TextCellEditor editor = new TextCellEditor(attr_table);
@@ -190,7 +190,7 @@ public class PeerPropsControl {
             editors[i] = editor;
         }
         table_viewer.setCellEditors(editors);
-        
+
         table_viewer.setCellModifier(new ICellModifier() {
 
             public boolean canModify(Object element, String property) {
@@ -215,7 +215,7 @@ public class PeerPropsControl {
                 table_viewer.update(element, new String[] { property });
             }
         });
-        
+
         String[] keys = attrs.keySet().toArray(new String[attrs.size()]);
         Arrays.sort(keys);
         for (String key : keys) {
@@ -233,7 +233,7 @@ public class PeerPropsControl {
             }
         }
         if (create_new) id_text.setText("USR:" + System.currentTimeMillis());
-        
+
         table_viewer.setContentProvider(new IStructuredContentProvider() {
 
             public Object[] getElements(Object input) {
@@ -247,7 +247,7 @@ public class PeerPropsControl {
             public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
             }
         });
-        
+
         table_viewer.setLabelProvider(new AttributeLabelProvider());
         table_viewer.setInput(attr_table_data);
         table_viewer.setComparator(new ViewerComparator() {
@@ -260,10 +260,10 @@ public class PeerPropsControl {
                 return 0;
             }
         });
-        
+
         createTableButtons(composite);
     }
-    
+
     private void createTableButtons(Composite parent) {
         Font font = parent.getFont();
         Composite composite = new Composite(parent, SWT.NONE);
@@ -271,7 +271,7 @@ public class PeerPropsControl {
         composite.setFont(font);
         composite.setLayout(layout);
         composite.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.VERTICAL_ALIGN_FILL));
-        
+
         final Button button_new = new Button(composite, SWT.PUSH);
         button_new.setText("&Add");
         button_new.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
@@ -296,7 +296,7 @@ public class PeerPropsControl {
         button_remove.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                Attribute a = (Attribute) ((IStructuredSelection) 
+                Attribute a = (Attribute) ((IStructuredSelection)
                         table_viewer.getSelection()).getFirstElement();
                 if (a == null) return;
                 attr_table_data.remove(a);
@@ -304,7 +304,7 @@ public class PeerPropsControl {
             }
         });
     }
-    
+
     public boolean isComplete() {
         return name_text.getText().length() > 0;
     }

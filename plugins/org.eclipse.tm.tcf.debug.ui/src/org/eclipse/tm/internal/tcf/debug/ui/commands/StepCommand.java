@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -33,12 +33,12 @@ abstract class StepCommand implements IDebugCommandHandler {
     public StepCommand(TCFModel model) {
         this.model = model;
     }
-    
+
     protected abstract boolean canExecute(IRunControl.RunControlContext ctx);
-    
+
     protected abstract void execute(IDebugCommandRequest monitor,
             IRunControl.RunControlContext ctx, boolean src_step, Runnable done);
-    
+
     public final void canExecute(final IEnabledStateRequest monitor) {
         new TCFRunnable(model.getDisplay(), monitor) {
             public void run() {
@@ -99,7 +99,7 @@ abstract class StepCommand implements IDebugCommandHandler {
         };
         return true;
     }
-    
+
     private void execute(final IDebugCommandRequest monitor, final TCFRunnable request,
             final Set<IRunControl.RunControlContext> set) {
         int i = 0;

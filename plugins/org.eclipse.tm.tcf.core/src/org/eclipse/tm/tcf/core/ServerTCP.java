@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -28,27 +28,27 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 /**
  * ServerTCP is a TCP server that is listening for incoming connection requests
  * and creates TCF communication channels over TCP sockets for such requests.
- * 
+ *
  * Clients may create objects of this class to become a TCF server.
  */
 public class ServerTCP extends ServerSocket {
-    
+
     private static class ServerPeer extends AbstractPeer {
         ServerPeer(Map<String,String> attrs) {
             super(attrs);
         }
     }
-    
+
     private static class RemotePeer extends AbstractPeer {
         RemotePeer(Map<String,String> attrs) {
             super(attrs);
         }
     }
-    
+
     private final String name;
     private List<ServerPeer> peers;
     private Thread thread;
-    
+
     public ServerTCP(String name, int port) throws IOException {
         super(port);
         this.name = name;
@@ -93,7 +93,7 @@ public class ServerTCP extends ServerSocket {
         thread.setDaemon(true);
         thread.start();
     }
-    
+
     private ServerPeer getLocalPeer(String addr) {
         for (ServerPeer p : peers) {
             if (addr.equals(p.getAttributes().get(IPeer.ATTR_IP_HOST))) return p;
@@ -106,15 +106,15 @@ public class ServerTCP extends ServerSocket {
         attrs.put(IPeer.ATTR_IP_HOST, addr);
         attrs.put(IPeer.ATTR_IP_PORT, Integer.toString(getLocalPort()));
         attrs.put(IPeer.ATTR_PROXY, "");
-        ServerPeer p = new ServerPeer(attrs); 
+        ServerPeer p = new ServerPeer(attrs);
         peers.add(p);
         return p;
     }
-    
+
     private IPeer getLocalPeer(Socket socket) {
         return getLocalPeer(socket.getLocalAddress().getHostAddress());
     }
-    
+
     private IPeer getRemotePeer(Socket socket) {
         String addr = socket.getInetAddress().getHostAddress();
         for (IPeer p : Protocol.getLocator().getPeers().values()) {
@@ -126,7 +126,7 @@ public class ServerTCP extends ServerSocket {
         attrs.put(IPeer.ATTR_IP_HOST, addr);
         return new RemotePeer(attrs);
     }
-    
+
     @Override
     public void close() throws IOException {
         if (peers != null) {

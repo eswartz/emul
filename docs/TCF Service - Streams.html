@@ -5,9 +5,9 @@
 </head>
 
 <body lang='EN-US'>
-  
+
 <h1>Target Communication Framework Services - Streams</h1>
- 
+
 <ul>
     <li><a href='#VersionHistory'>Version History</a>
     <li><a href='#Overview'>Overview</a>
@@ -58,18 +58,18 @@
          can continue data processing concurrently with data transmission.
     <li> Multicast: multiple clients can receive data from same stream.
     <li> Subscription model: clients are required to expressed interest in particular streams by subscribing for the service.
-    <li> Flow control: peers can throttle data flow of individual streams by delaying 'read' and 'write' commands.   
+    <li> Flow control: peers can throttle data flow of individual streams by delaying 'read' and 'write' commands.
 </ul>
 
 <p> Command and event parameters are encoded as zero terminated <a href='TCF Specification.html#JSON'>JSON</a> strings.</p>
 
 <p>The service uses standard format for error reports,
 see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
- 
+
 <h2><a name='Cmds'>Commands</a></h2>
 
 <h3><a name='CmdSubscribe'>Subscribe</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Streams &bull; subscribe &bull; <i>&lt;string: stream source type&gt;</i> &bull;
 </font></b></pre>
@@ -80,7 +80,7 @@ For example, <a href='TCF Service - Processes.html'>Processes Service</a> define
 "Processes" strem source that represents standard input/output streams.
 Subscribers receive notifications when a stream of given type is created or disposed.
 Subscribers are required to respond with 'read' or 'disconnect' commands as necessary.</p>
- 
+
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
@@ -95,13 +95,13 @@ If not disconnected, subscriber is required to send 'read' commands as necessary
 </p>
 
 <h3><a name='CmdUnsubscribe'>Unsubscribe</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Streams &bull; unsubscribe &bull; <i>&lt;string: stream source type&gt;</i> &bull;
 </font></b></pre>
 
 <p>Unsubscribe the client from given stream source type.</p>
- 
+
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
@@ -109,7 +109,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdRead'>Read</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Streams &bull; read &bull; <i>&lt;string: stream ID&gt;</i> &bull; <i>&lt;int: size&gt;</i> &bull;
 </font></b></pre>
@@ -127,7 +127,7 @@ Pending 'read' commands will be executed in same order as issued.
 Client can delay sending of 'read' command if it is not ready to receive more data,
 however, delaying for too long can cause stream buffer overflow and lost of data.
 .</p>
- 
+
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
@@ -138,12 +138,12 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;string: data&gt;</i> &bull; <i>&lt;e
     <li><dt><code><b>data</b></code> <dd>BASE64 encoded bytes that were read from the stream.
     <li><dt><code><b>lost size</b></code> <dd>Number of bytes that were lost because of buffer overflow.
              -1 means unknown number of bytes were lost. if both 'lost_size' and 'data.length' are non-zero then lost bytes are considered
-         located right before read bytes. 
+         located right before read bytes.
     <li><dt><code><b>EOS</b></code> <dd>true if end of stream was reached.
 </ul>
 
 <h3><a name='CmdWrite'>Write</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Streams &bull; write &bull; <i>&lt;string: stream ID&gt;</i> &bull; <i>&lt;int: size&gt;</i> &bull; <i>&lt;string: data&gt;</i> &bull;
 </font></b></pre>
@@ -159,7 +159,7 @@ Remote peer will continue to process other commands while 'write' command is pen
 Client can send more 'write' commands without waiting for the first command to complete.
 Doing that improves communication channel bandwidth utilization.
 Pending 'write' commands will be executed in same order as issued.</p>
- 
+
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
@@ -167,13 +167,13 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdEOS'>End of Stream</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Streams &bull; eos &bull; <i>&lt;string: stream ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command sends End Of Stream marker to a stream. No more writing to the stream is allowed after that.</p>
- 
+
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
@@ -181,7 +181,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdConnect'>Connect</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Streams &bull; connect &bull; <i>&lt;string: stream ID&gt;</i> &bull;
 </font></b></pre>
@@ -189,7 +189,7 @@ C &bull; <i>&lt;token&gt;</i> &bull; Streams &bull; connect &bull; <i>&lt;string
 <p>The command connects client to a stream. Some data might be dropped from the stream by the time "connect" command is executed.
 Client should be able to re-sync with stream data if it wants to read from such stream.
 If a client wants to read a stream from the beginning it should use "subscribe" command instead of "connect"</p>
- 
+
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
@@ -197,14 +197,14 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdDisconnect'>Disconnect</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Streams &bull; disconnect &bull; <i>&lt;string: stream ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command disconnects client from a stream. Note that disconnect does not destroy the stream, client on other channels can
 continue reading or writing the stream.</p>
- 
+
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
@@ -212,10 +212,10 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h2><a name='Events'>Events</a></h2>
- 
+
 <p>Streams service sends events when a stream is created or disposed. Only clients with active subscribtion will recceive the events.
 Clients can change their subscription with <b>subscribe</b> and <b>unsubscribe</b> commands.</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 E &bull; Streams &bull; created &bull; <i>&lt;string: stream type&gt;</i> &bull; <i>&lt;string: stream ID&gt;</i> &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
@@ -234,16 +234,16 @@ Stream types and context IDs are defined by services that use Streams service to
 E &bull; Streams &bull; disposed &bull; <i>&lt;string: stream type&gt;</i> &bull; <i>&lt;string: stream ID&gt;</i> &bull;
 </font></b></pre>
 <p>
-Sent when a stream is disposed. 
+Sent when a stream is disposed.
 "stream type" - source type of the stream.
 "stream ID" - ID of the stream.
 </p>
 
 <h2><a name='API'>API</a></h2>
- 
+
 <pre>
 <font color=#7F0055>public interface</font> IStreams extends IService {
-    
+
     <font color=#3F5FBF>/**
      * Service name.
      */</font>
@@ -251,14 +251,14 @@ Sent when a stream is disposed.
 
     <font color=#3F5FBF>/**
      * Clients can implement StreamsListener interface to be notified
-     * when a stream is created or disposed. The interface is registered with 'subscribe' command. 
-     * 
+     * when a stream is created or disposed. The interface is registered with 'subscribe' command.
+     *
      * When new stream is created, client must decide if it is interested in that particular stream instance.
      * If not interested, client should send 'disconnect' command to allow remote peer to free resources and bandwidth.
      * If not disconnected, client is required to send 'read' commands as necessary to prevent stream buffer overflow.
      */</font>
     <font color=#7F0055>interface</font> StreamsListener {
-        
+
         <font color=#3F5FBF>/**
          * Called when a new stream is created.
          * <font color=#7F9FBF>@param</font> stream_type - source type of the stream.
@@ -268,15 +268,15 @@ Sent when a stream is disposed.
          * Stream types and context IDs are defined by services that use Streams service to transmit data.
          */</font>
         <font color=#7F0055>void</font> created(String stream_type, String stream_id, String context_id);
-        
+
         <font color=#3F5FBF>/**
-         * Called when a stream is disposed. 
+         * Called when a stream is disposed.
          * <font color=#7F9FBF>@param</font> stream_type - source type of the stream.
          * <font color=#7F9FBF>@param</font> stream_id - ID of the stream.
          */</font>
         <font color=#7F0055>void</font> disposed(String stream_type, String stream_id);
     }
-    
+
     <font color=#3F5FBF>/**
      * Clients must subscribe for one or more stream types to be able to send or receive stream data.
      * Subscribers receive notifications when a stream of given type is created or disposed.
@@ -287,7 +287,7 @@ Sent when a stream is disposed.
      * <font color=#7F9FBF>@return</font> - pending command handle.
      */</font>
     IToken subscribe(String stream_type, StreamsListener listener, DoneSubscribe done);
-    
+
     <font color=#3F5FBF>/**
      * Call back interface for 'subscribe' command.
      */</font>
@@ -303,7 +303,7 @@ Sent when a stream is disposed.
      * <font color=#7F9FBF>@return</font> - pending command handle.
      */</font>
     IToken unsubscribe(String stream_type, StreamsListener listener, DoneUnsubscribe done);
-    
+
     <font color=#3F5FBF>/**
      * Call back interface for 'unsubscribe' command.
      */</font>
@@ -325,7 +325,7 @@ Sent when a stream is disposed.
      * <font color=#7F9FBF>@return</font> - pending command handle.
      */</font>
     IToken read(String stream_id, <font color=#7F0055>int</font> size, DoneRead done);
-    
+
     <font color=#3F5FBF>/**
      * Call back interface for 'read' command.
      */</font>
@@ -337,7 +337,7 @@ Sent when a stream is disposed.
          * <font color=#7F9FBF>@param</font> lost_size - number of bytes that were lost because of buffer overflow.
          * 'lost_size' -1 means unknown number of bytes were lost.
          * if both 'lost_size' and 'data.length' are non-zero then lost bytes are considered
-         * located right before read bytes. 
+         * located right before read bytes.
          * <font color=#7F9FBF>@param</font> data - bytes read from the stream.
          * <font color=#7F9FBF>@param</font> eos - true if end of stream was reached.
          */</font>
@@ -358,7 +358,7 @@ Sent when a stream is disposed.
      * <font color=#7F9FBF>@return</font> - pending command handle.
      */</font>
     IToken write(String stream_id, <font color=#7F0055>byte</font>[] buf, <font color=#7F0055>int</font> offset, <font color=#7F0055>int</font> size, DoneWrite done);
-    
+
     <font color=#3F5FBF>/**
      * Call back interface for 'write' command.
      */</font>
@@ -370,15 +370,15 @@ Sent when a stream is disposed.
          */</font>
         <font color=#7F0055>void</font> doneWrite(IToken token, Exception error);
     }
-    
+
     <font color=#3F5FBF>/**
-     * Send End Of Stream marker to a stream. No more writing to the stream is allowed after that. 
+     * Send End Of Stream marker to a stream. No more writing to the stream is allowed after that.
      * <font color=#7F9FBF>@param</font> stream_id - ID of the stream.
      * <font color=#7F9FBF>@param</font> done - command result call back object.
      * <font color=#7F9FBF>@return</font> - pending command handle.
      */</font>
     IToken eos(String stream_id, DoneEOS done);
-    
+
     <font color=#3F5FBF>/**
      * Call back interface for 'eos' command.
      */</font>
@@ -398,7 +398,7 @@ Sent when a stream is disposed.
      * <font color=#7F9FBF>@return</font> - pending command handle.
      */</font>
     IToken disconnect(String stream_id, DoneDisconnect done);
-    
+
     <font color=#3F5FBF>/**
      * Call back interface for 'disconnect' command.
      */</font>

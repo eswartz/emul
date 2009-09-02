@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -23,9 +23,9 @@ import org.eclipse.tm.tcf.services.IDiagnostics;
 public class DiagnosticsService implements IDiagnostics {
 
     private final IChannel channel;
-    
+
     private class CommandServer implements IChannel.ICommandServer {
-        
+
         public void command(IToken token, String name, byte[] data) {
             try {
                 command(token, name, JSON.parseSequence(data));
@@ -34,7 +34,7 @@ public class DiagnosticsService implements IDiagnostics {
                 channel.terminate(x);
             }
         }
-        
+
         private void command(IToken token, String name, Object[] args) throws Exception {
             if (name.equals("echo")) {
                 if (args.length != 1) throw new Exception("Invalid number of arguments");

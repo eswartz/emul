@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -59,7 +59,7 @@ implements IViewActionDelegate, IActionDelegate2, IWorkbenchWindowActionDelegate
         if (part instanceof IViewPart) view = (IViewPart)part;
         window = part.getSite().getWorkbenchWindow();
     }
-    
+
     public void run(IAction action) {
         IAction action0 = this.action;
         try {
@@ -74,7 +74,7 @@ implements IViewActionDelegate, IActionDelegate2, IWorkbenchWindowActionDelegate
     public void runWithEvent(IAction action, Event event) {
         run(action);
     }
-    
+
     public void selectionChanged(IAction action, ISelection selection) {
         this.selection = selection;
         IAction action0 = this.action;
@@ -86,25 +86,25 @@ implements IViewActionDelegate, IActionDelegate2, IWorkbenchWindowActionDelegate
             this.action = action0;
         }
     }
-    
+
     public IAction getAction() {
         return action;
     }
-    
+
     public IViewPart getView() {
         return view;
     }
-    
+
     public IWorkbenchWindow getWindow() {
         if (view != null) return view.getSite().getWorkbenchWindow();
         if (window != null) return window;
         return null;
     }
-    
+
     public ISelection getSelection() {
         return selection;
     }
-    
+
     public TCFNode getSelectedNode() {
         if (selection instanceof IStructuredSelection) {
             final Object o = ((IStructuredSelection)selection).getFirstElement();
@@ -126,8 +126,8 @@ implements IViewActionDelegate, IActionDelegate2, IWorkbenchWindowActionDelegate
         }
         return null;
     }
-    
+
     protected abstract void selectionChanged();
-    
+
     protected abstract void run();
 }

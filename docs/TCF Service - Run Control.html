@@ -5,9 +5,9 @@
 </head>
 
 <body lang='EN-US'>
-  
+
 <h1>Target Communication Framework Services - Run Control</h1>
- 
+
 <ul>
     <li><a href='#VersionHistory'>Version History</a>
     <li><a href='#Overview'>Overview</a>
@@ -50,9 +50,9 @@ Command and event parameters are encoded as zero terminated <a href='TCF Specifi
 
 <p>The service uses standard format for error reports,
 see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
- 
+
 <h2><a name='Cmds'>Commands</a></h2>
- 
+
 <p>All run control commands are fully asynchronous, which means they never wait until
 context is in a particular state. For example, if single step command arrives when
 context is running, it does not wait until it stops, but returns an error. If a command
@@ -66,13 +66,13 @@ to the command and intended destination was not reached. Client can know when an
 why a context is suspended by listening to events.</p>
 
 <h3><a name='CmdGetContext'>Get Context</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; RunControl &bull; getContext &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command retrieves context properties for given context ID.
-Exact meaning of context depends on the target. 
+Exact meaning of context depends on the target.
 A context can represent an execution thread, a process, an address space, etc.
 A context can belong to a parent context. Contexts hierarchy can be simple
 plain list or it can form a tree. It is up to target agent developers to choose
@@ -82,7 +82,7 @@ with same IDs, however, each service accesses its own subset of context's
 attributes and functionality, which is relevant to that service.</p>
 
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;context data&gt;</i> &bull;
 
@@ -134,7 +134,7 @@ contextChanged event to notify changes in context data.</p>
 </ul>
 
 <h3><a name='CmdGetChildren'>Get Children</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; RunControl &bull; getChildren &bull; <i>&lt;string: parent context ID&gt;</i> &bull;
 </font></b></pre>
@@ -145,23 +145,23 @@ C &bull; <i>&lt;token&gt;</i> &bull; RunControl &bull; getChildren &bull; <i>&lt
 of context IDs retrieved by previous getChildren commands, or it can be obtained from another service.
 Contexts hierarchy can be simple plain list or it can form a tree. It is up to target agent developers to
 choose layout that is most descriptive for a given target.</p>
- 
+
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of context IDs&gt;</i> &bull;
 
 <i>&lt;array of context IDs&gt;</i>
     &rArr; null
     &rArr; [ <i>&lt;context ID list&gt;</i> ]
-  
+
 <i>&lt;context ID list&gt;</i>
     &rArr; <i>&lt;string: context ID&gt;</i>
     &rArr; <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
 </font></b></pre>
 
 <h3><a name='CmdSuspend'>Suspend</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; RunControl &bull; suspend &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
@@ -169,9 +169,9 @@ C &bull; <i>&lt;token&gt;</i> &bull; RunControl &bull; suspend &bull; <i>&lt;str
 <p>The command suspends execution of given context. The command should fail if CanSuspend property of the context is false.
 If context's IsContainer = true, the command is propagated to context's children. Only contexts with HasState = true
 can be suspended.</p>
- 
+
 <p>Result message:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
@@ -272,24 +272,24 @@ to context's children. Only contexts with HasState = true can be resumed.</p>
             <code>RM_REVERSE_STEP_INTO_RANGE = 15</code> - reverse of <code>RM_STEP_INTO_RANGE</code>.
         </li>
     </ul>
-  
+
 <p>Result message:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdGetState'>Get State</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; RunControl &bull; getState &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command retrieves current state of the context. The command should fail if HasState property of
 the context is false.</p>
- 
+
 <p>Result message:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;boolean: suspended&gt;</i> &bull;
     <i>&lt;int: PC&gt;</i> &bull; <i>&lt;string: last state change reason&gt;</i> &bull; <i>&lt;state data&gt;</i> &bull;
@@ -315,24 +315,24 @@ a generic client might be able to handle it better. Predefined reasons are:</p>
 
 <p>Context state properties can contain any data relevant to context state.
 Definition of state properties depends on a target.</p>
-     
+
 <h3><a name='CmdTerminate'>Terminate</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; RunControl &bull; terminate &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command terminates execution of given context. The command should fail if CanTerminate
 property of the context is false.</p>
- 
+
 <p>Result message:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h2><a name='Events'>Events</a></h2>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 E &bull; RunControl &bull; contextAdded &bull; <i>&lt;array of context data&gt;</i> &bull;
 
@@ -355,7 +355,7 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
 <i>&lt;array of context data&gt;</i>
     &rArr; null
     &rArr; [ <i>&lt;context data list&gt;</i> ]
-  
+
 <i>&lt;context data list&gt;</i>
     &rArr; <i>&lt;object: context data&gt;</i>
     &rArr; <i>&lt;context data list&gt;</i> , <i>&lt;object: context data&gt;</i>
@@ -411,7 +411,7 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
         PROP_CAN_TERMINATE = "CanTerminate";
 
     <font color=#3F5FBF>/**
-     * Context resume modes.  
+     * Context resume modes.
      */</font>
     <font color=#7F0055>static final int</font>
         RM_RESUME = 0,
@@ -430,7 +430,7 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
     <font color=#3F5FBF>/**
      * State change reason of a context.
      * Reason can be any text, but if it is one of predefined strings,
-     * a generic client might be able to handle it better. 
+     * a generic client might be able to handle it better.
      */</font>
     <font color=#7F0055>static final</font> String
         REASON_USER_REQUEST = "Suspended",
@@ -445,8 +445,8 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
 
     <font color=#3F5FBF>/**
      * Retrieve context info for given context ID.
-     *   
-     * <font color=#7F9FBF>@param</font> id &ndash; context ID. 
+     *
+     * <font color=#7F9FBF>@param</font> id &ndash; context ID.
      * <font color=#7F9FBF>@param</font> done - callback interface called when operation is completed.
      */</font>
     IToken getContext(String id, DoneGetContext done);
@@ -465,14 +465,14 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
 
     <font color=#3F5FBF>/**
      * Retrieve children of given context.
-     *   
+     *
      * <font color=#7F9FBF>@param</font> parent_context_id &ndash; parent context ID. Can be null &ndash;
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
-     * by previous getContext or getChildren commands. 
+     * by previous getContext or getChildren commands.
      * <font color=#7F9FBF>@param</font> done - callback interface called when operation is completed.
      */</font>
     IToken getChildren(String parent_context_id, DoneGetChildren done);
- 
+
     <font color=#3F5FBF>/**
      * Client callback interface for getContexts().
      */</font>
@@ -484,7 +484,7 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
          */</font>
         <font color=#7F0055>void</font> doneGetChildren(IToken token, RunControlError error, Context[] contexts);
     }
- 
+
     <font color=#3F5FBF>/**
      * A context corresponds to an execution thread, process, address space, etc.
      * A context can belong to a parent context. Contexts hierarchy can be simple
@@ -492,17 +492,17 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
      * layout that is most descriptive for a given target. Context IDs are valid across
      * all services. In other words, all services access same hierarchy of contexts,
      * with same IDs, however, each service accesses its own subset of context's
-     * attributes and functionality, which is relevant to that service. 
+     * attributes and functionality, which is relevant to that service.
      */</font>
     <font color=#7F0055>interface</font> RunControlContext {
- 
-        <font color=#3F5FBF>/** 
+
+        <font color=#3F5FBF>/**
          * Retrieve context ID.
          * Same as getProperties().get("ID")
          */</font>
         String getID();
- 
-        <font color=#3F5FBF>/** 
+
+        <font color=#3F5FBF>/**
          * Retrieve parent context ID.
          * Same as getProperties().get("ParentID")
          */</font>
@@ -514,21 +514,21 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
          * <font color=#7F9FBF>@return</font> Map of context properties.
          */</font>
         Map&lt;String,Object&gt; getProperties();
- 
+
         <font color=#3F5FBF>/**
          * Utility method to read context property PROP_IS_CONTAINER.
          * Executing resume or suspend command on a container causes all its children to resume or suspend.
          * <font color=#7F9FBF>@return</font> value of PROP_IS_CONTAINER.
          */</font>
         <font color=#7F0055>boolean</font> isContainer();
-        
+
         <font color=#3F5FBF>/**
          * Utility method to read context property PROP_HAS_STATE.
-         * Only context that has a state can be resumed or suspended. 
+         * Only context that has a state can be resumed or suspended.
          * <font color=#7F9FBF>@return</font> value of PROP_HAS_STATE.
          */</font>
         <font color=#7F0055>boolean</font> hasState();
-        
+
         <font color=#3F5FBF>/**
          * Utility method to read context property PROP_CAN_SUSPEND.
          * Value 'true' means suspend command is supported by the context,
@@ -538,29 +538,29 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
          * <font color=#7F9FBF>@return</font> value of PROP_CAN_SUSPEND.
          */</font>
         <font color=#7F0055>boolean</font> canSuspend();
-        
+
         <font color=#3F5FBF>/**
          * Utility method to read a 'mode' bit in context property PROP_CAN_RESUME.
          * Value 'true' means resume command is supported by the context,
          * however the method does not check that the command can be executed successfully in
          * the current state of the context. For example, the command still can fail if context is
          * already resumed.
-         * <font color=#7F9FBF>@param</font> mode - resume mode, see RM_*. 
-         * <font color=#7F9FBF>@return</font> value of requested bit of PROP_CAN_RESUME. 
+         * <font color=#7F9FBF>@param</font> mode - resume mode, see RM_*.
+         * <font color=#7F9FBF>@return</font> value of requested bit of PROP_CAN_RESUME.
          */</font>
         <font color=#7F0055>boolean</font> canResume(<font color=#7F0055>int</font> mode);
-        
+
         <font color=#3F5FBF>/**
          * Utility method to read a 'mode' bit in context property PROP_CAN_COUNT.
          * Value 'true' means resume command with count other then 1 is supported by the context,
          * however the method does not check that the command can be executed successfully in
          * the current state of the context. For example, the command still can fail if context is
          * already resumed.
-         * <font color=#7F9FBF>@param</font> mode - resume mode, see RM_*. 
-         * <font color=#7F9FBF>@return</font> value of requested bit of PROP_CAN_COUNT. 
+         * <font color=#7F9FBF>@param</font> mode - resume mode, see RM_*.
+         * <font color=#7F9FBF>@return</font> value of requested bit of PROP_CAN_COUNT.
          */</font>
         <font color=#7F0055>boolean</font> canCount(<font color=#7F0055>int</font> mode);
-        
+
         <font color=#3F5FBF>/**
          * Utility method to read context property PROP_CAN_TERMINATE.
          * Value 'true' means terminate command is supported by the context,
@@ -585,7 +585,7 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
          * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
          */</font>
         IToken suspend(DoneCommand done);
-        
+
         <font color=#3F5FBF>/**
          * Send a command to resume a context.
          * Also resumes children if context is a container.
@@ -595,7 +595,7 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
          * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
          */</font>
         IToken resume(<font color=#7F0055>int</font> mode, <font color=#7F0055>int</font> count, DoneCommand done);
-        
+
         <font color=#3F5FBF>/**
          * Send a command to terminate a context.
          * <font color=#7F9FBF>@param</font> done - command result call back object.
@@ -603,10 +603,10 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
          */</font>
         IToken terminate(DoneCommand done);
     }
- 
+
     <font color=#7F0055>class</font> RunControlError <font color=#7F0055>extends</font> Exception {
     }
- 
+
     <font color=#7F0055>interface</font> DoneGetState {
         <font color=#7F0055>void</font> doneGetState(IToken token, Exception error, <font color=#7F0055>boolean</font> suspended, String pc,
                 String reason, Map&lt;String,Object&gt; params);
@@ -626,7 +626,7 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
      * <font color=#7F9FBF>@param</font> listener - run control event listener to add.
      */</font>
     <font color=#7F0055>void</font> addListener(RunControlListener listener);
-    
+
     <font color=#3F5FBF>/**
      * Remove run control event listener.
      * <font color=#7F9FBF>@param</font> listener - run control event listener to remove.
@@ -675,14 +675,14 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
         <font color=#3F5FBF>/**
          * Called when target simultaneously suspends multiple threads in a container
          * (process, core, etc.).
-         * 
+         *
          * <font color=#7F9FBF>@param</font> context - ID of a context responsible for the event. It can be container ID or
          * any one of container children, for example, it can be thread that hit "suspend all" breakpoint.
          * Client expected to move focus (selection) to this context.
          * <font color=#7F9FBF>@param</font> pc - program counter of the context.
          * <font color=#7F9FBF>@param</font> reason - human readable description of suspend reason.
          * <font color=#7F9FBF>@param</font> params - additional target specific data about suspended context.
-         * <font color=#7F9FBF>@param</font> suspended_ids - full list of all contexts that were suspended. 
+         * <font color=#7F9FBF>@param</font> suspended_ids - full list of all contexts that were suspended.
          */</font>
         <font color=#7F0055>void</font> containerSuspended(String context, String pc,
                 String reason, Map&lt;String,Object&gt; params, String[] suspended_ids);
@@ -690,8 +690,8 @@ E &bull; RunControl &bull; containerResumed &bull; <i>&lt;array of context IDs&g
         <font color=#3F5FBF>/**
          * Called when target simultaneously resumes multiple threads in a container (process,
          * core, etc.).
-         * 
-         * <font color=#7F9FBF>@param</font> context_ids - full list of all contexts that were resumed. 
+         *
+         * <font color=#7F9FBF>@param</font> context_ids - full list of all contexts that were resumed.
          */</font>
         <font color=#7F0055>void</font> containerResumed(String[] context_ids);
 

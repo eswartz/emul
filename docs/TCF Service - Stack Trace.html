@@ -5,9 +5,9 @@
 </head>
 
 <body lang='EN-US'>
-  
+
 <h1>Target Communication Framework Services - Stack Trace</h1>
- 
+
 <ul>
     <li><a href='#VersionHistory'>Version History</a>
     <li><a href='#Overview'>Overview</a>
@@ -42,11 +42,11 @@ and event parameters are encoded as zero terminated <a href='TCF Specification.h
 
 <p>The service uses standard format for error reports,
 see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
- 
+
 <h2><a name='Cmds'>Commands</a></h2>
 
 <h3><a name='CmdGetContext'>Get Context</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; StackTrace &bull; getContext &bull; <i>&lt;array of context IDs&gt;</i> &bull;
 
@@ -54,7 +54,7 @@ C &bull; <i>&lt;token&gt;</i> &bull; StackTrace &bull; getContext &bull; <i>&lt;
     &rArr; null
     &rArr; [ ]
     &rArr; [ <i>&lt;context ID list&gt;</i> ]
-  
+
 <i>&lt;context ID list&gt;</i>
     &rArr; <i>&lt;string: context ID&gt;</i>
     &rArr; <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
@@ -65,17 +65,17 @@ Command allows to query multiple contexts at once.
 Stack Trace context represents single stack frame.
 If target supports more then one stack per thread,
 each stack is also represented by a separate context.</p>
- 
+
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
-R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;array of context data&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; 
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;array of context data&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 
 <i>&lt;array of context data&gt;</i>
     &rArr; null
     &rArr; [ ]
     &rArr; [ <i>&lt;context data list&gt;</i> ]
-  
+
 <i>&lt;context data list&gt;</i>
     &rArr; <i>&lt;context data&gt;</i>
     &rArr; <i>&lt;context data list&gt;</i> , <i>&lt;context data&gt;</i>
@@ -121,7 +121,7 @@ Cached context data should by flushed when parent thread is resumed.</p>
 </ul>
 
 <h3><a name='CmdGetChildren'>Get Children</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; StackTrace &bull; getChildren &bull; <i>&lt;string: parent context ID&gt;</i> &bull;
 </font></b></pre>
@@ -131,12 +131,12 @@ Parent context usually corresponds to an execution thread.
 Some targets have more then one stack. In such case children of a thread
 are stacks, and stack frames are deeper in the hierarchy - they can be
 retrieved with additional getChildren commands.</p>
- 
+
 <p>The command will fail if parent thread is not suspended.
 Client can use Run Control service to suspend a thread.</p>
- 
+
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of context IDs&gt;</i> &bull;<i></i>
 
@@ -144,7 +144,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;a
     &rArr; null
     &rArr; [ ]
     &rArr; [ <i>&lt;context ID list&gt;</i> ]
-  
+
 <i>&lt;context ID list&gt;</i>
     &rArr; <i>&lt;string: context ID&gt;</i>
     &rArr; <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
@@ -153,11 +153,11 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;a
 
 
 <h2><a name='Events'>Events</a></h2>
- 
+
 <p>No events are currently defined for Stack Trace service.</p>
- 
+
 <h2><a name='API'>API</a></h2>
- 
+
 <pre>
 <font color=#7F0055>public interface</font> IStackTrace <font color=#7F0055>extends</font> IService {
 
@@ -179,11 +179,11 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;a
 
     <font color=#3F5FBF>/**
      * Retrieve context info for given context IDs.
-     * 
+     *
      * The command will fail if parent thread is not suspended.
      * Client can use Run Control service to suspend a thread.
-     *   
-     * <font color=#7F9FBF>@param</font> id &ndash; array of context IDs. 
+     *
+     * <font color=#7F9FBF>@param</font> id &ndash; array of context IDs.
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
      */</font>
     IToken getContext(String[] id, DoneGetContext done);
@@ -206,10 +206,10 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;a
      * Some targets have more then one stack. In such case children of a thread
      * are stacks, and stack frames are deeper in the hierarchy - they can be
      * retrieved with additional getChildren commands.
-     * 
+     *
      * The command will fail if parent thread is not suspended.
      * Client can use Run Control service to suspend a thread.
-     *  
+     *
      * <font color=#7F9FBF>@param</font> parent_context_id &ndash; parent context ID.
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
      */</font>
@@ -227,55 +227,55 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;a
          */</font>
         <font color=#7F0055>void</font> doneGetChildren(IToken token, Exception error, String[] context_ids);
     }
-    
+
     <font color=#3F5FBF>/**
-     * StackTraceContext represents stack trace objects - stacks and stack frames. 
+     * StackTraceContext represents stack trace objects - stacks and stack frames.
      */</font>
     <font color=#7F0055>interface</font> StackTraceContext {
-        
+
         <font color=#3F5FBF>/**
          * Get Context ID.
          * <font color=#7F9FBF>@return</font> context ID.
          */</font>
         String getID();
-        
+
         <font color=#3F5FBF>/**
          * Get parent context ID.
          * <font color=#7F9FBF>@return</font> parent context ID.
          */</font>
         String getParentID();
-        
+
         <font color=#3F5FBF>/**
          * Get context name - if context represents a stack.
          * <font color=#7F9FBF>@return</font> context name or null.
          */</font>
         String getName();
-        
+
         <font color=#3F5FBF>/**
          * Get memory address of this frame.
          * <font color=#7F9FBF>@return</font> address or null if not a stack frame.
          */</font>
         Number getFrameAddress();
-        
+
         <font color=#3F5FBF>/**
          * Get program counter saved in this stack frame -
          * it is address of instruction to be executed when the function returns.
          * <font color=#7F9FBF>@return</font> program counter or null if not a stack frame.
          */</font>
         Number getProgramCounter();
-        
+
         <font color=#3F5FBF>/**
          * Get number of function arguments for this frame.
          * <font color=#7F9FBF>@return</font> function arguments count.
          */</font>
         <font color=#7F0055>int</font> getArgumentsCount();
-        
+
         <font color=#3F5FBF>/**
          * Get address of function arguments area in memory.
          * <font color=#7F9FBF>@return</font> function arguments address or null if not available.
          */</font>
         Number getArgumentsAddress();
-        
+
         <font color=#3F5FBF>/**
          * Get stack frame level.
          * <font color=#7F9FBF>@return</font> frame level or 0 if not a stack frame.

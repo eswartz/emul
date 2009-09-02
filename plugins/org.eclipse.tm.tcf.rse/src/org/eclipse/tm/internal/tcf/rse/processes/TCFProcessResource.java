@@ -133,19 +133,19 @@ public class TCFProcessResource extends AbstractResource implements IHostProcess
         });
         return false;
     }
-    
+
     private void toLong(String name) {
         Number n = (Number)properties.get(name);
         if (n == null || n instanceof Long) return;
         properties.put(name, Long.valueOf(n.longValue()));
     }
-    
+
     private void toBigInteger(String name) {
         Number n = (Number)properties.get(name);
         if (n == null || n instanceof BigInteger) return;
         properties.put(name, new BigInteger(n.toString()));
     }
-    
+
     private void setPCProperty(String property, String name) {
         Object x = prev.properties.get(name);
         Object y = properties.get(name);
@@ -159,7 +159,7 @@ public class TCFProcessResource extends AbstractResource implements IHostProcess
             properties.put(property, d);
         }
     }
-    
+
     public long getTimestamp() {
         return timestamp;
     }
@@ -261,9 +261,9 @@ public class TCFProcessResource extends AbstractResource implements IHostProcess
     public boolean isRoot() {
         return true;
     }
-    
+
     private String notNull(String s) {
-        return s == null ? "" : s; 
+        return s == null ? "" : s;
     }
 
     String getStatusLine() {
@@ -299,11 +299,11 @@ public class TCFProcessResource extends AbstractResource implements IHostProcess
             running_wait_list = false;
         }
     }
-    
+
     public Throwable getChildrenError() {
         return children_error;
     }
-    
+
     public void flushChildrenCache() {
         Map<Long,TCFProcessResource> pid2res = rse_service.getProcessCache();
         for (TCFProcessResource r : children.values()) {

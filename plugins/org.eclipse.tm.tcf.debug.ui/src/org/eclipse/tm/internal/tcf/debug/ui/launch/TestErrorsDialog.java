@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -28,15 +28,15 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 class TestErrorsDialog extends Dialog {
-    
-    private static final int 
+
+    private static final int
         SIZING_TEXT_WIDTH = 600,
         SIZING_TEXT_HEIGHT = 400;
-    
+
     private Collection<Throwable> errors;
     private Image image;
     private Text text;
-    
+
     TestErrorsDialog(Shell parent, Image image, Collection<Throwable> errors) {
         super(parent);
         this.image = image;
@@ -48,7 +48,7 @@ class TestErrorsDialog extends Dialog {
         super.configureShell(shell);
         shell.setText("Connection Diagnostic errors");
         shell.setImage(image);
-    }       
+    }
 
     @Override
     protected void createButtonsForButtonBar(Composite parent) {
@@ -59,11 +59,11 @@ class TestErrorsDialog extends Dialog {
     protected Control createDialogArea(Composite parent) {
         Composite composite = (Composite)super.createDialogArea(parent);
         composite.setSize(composite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
-        
+
         Label label = new Label(composite, SWT.WRAP);
         label.setFont(JFaceResources.getFontRegistry().get(JFaceResources.BANNER_FONT));
         label.setText("Connection diagnostics ended with errors:");
-        
+
         text = new Text(composite, SWT.MULTI | SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
         text.setFont(JFaceResources.getFontRegistry().get(JFaceResources.TEXT_FONT));
         text.setEditable(false);
@@ -72,10 +72,10 @@ class TestErrorsDialog extends Dialog {
         data.widthHint = SIZING_TEXT_WIDTH;
         data.heightHint = SIZING_TEXT_HEIGHT;
         text.setLayoutData(data);
-        
+
         return composite;
     }
-    
+
     private String createText() {
         StringWriter buf = new StringWriter();
         PrintWriter pwr = new PrintWriter(buf);

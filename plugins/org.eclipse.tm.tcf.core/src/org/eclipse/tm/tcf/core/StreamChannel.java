@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -19,16 +19,16 @@ import org.eclipse.tm.tcf.protocol.IPeer;
  *
  * StreamChannel implements communication link connecting two end points (peers).
  * The channel asynchronously transmits messages: commands, results and events.
- * 
+ *
  * StreamChannel uses escape sequences to represent End-Of-Message and End-Of-Stream markers.
- * 
+ *
  * Clients can subclass StreamChannel to support particular stream oriented transport (wire) protocol.
  * Also, see ChannelTCP for a concrete IChannel implementation that works on top of TCP sockets as a transport.
  */
 public abstract class StreamChannel extends AbstractChannel {
 
     public static final int ESC = 3;
-    
+
     private int bin_data_size;
 
     public StreamChannel(IPeer remote_peer) {
@@ -41,7 +41,7 @@ public abstract class StreamChannel extends AbstractChannel {
 
     protected abstract int get() throws IOException;
     protected abstract void put(int n) throws IOException;
-    
+
     protected void put(byte[] buf) throws IOException {
         for (byte b : buf) put(b & 0xff);
     }

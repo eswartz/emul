@@ -33,7 +33,7 @@ class TCFDSFShutdownSequence extends Sequence {
                         tracker = new DsfServicesTracker(Activator.getBundleContext(), session_id);
                         monitor.done();
                     }
-            
+
                     @Override
                     public void rollBack(RequestMonitor monitor) {
                         // In case the shutdown sequence aborts,
@@ -42,7 +42,7 @@ class TCFDSFShutdownSequence extends Sequence {
                         tracker = null;
                         monitor.done();
                     }
-                }, 
+                },
                 new Step() {
                     @Override
                     public void execute(RequestMonitor monitor) {
@@ -86,7 +86,7 @@ class TCFDSFShutdownSequence extends Sequence {
                         tracker = null;
                         monitor.done();
                     }
-                } 
+                }
         };
     }
 

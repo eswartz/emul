@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -46,18 +46,18 @@ import org.eclipse.tm.tcf.ssl.TCFSecurityManager;
 import org.osgi.framework.Bundle;
 
 class WizardLogPage extends WizardPage implements Runnable {
-    
+
     private final SetupWizardDialog wizard;
-    
+
     private Thread thread;
     private String protocol;
     private String host;
     private String user;
     private String user_password;
     private String root_password;
-    
+
     private Text log_text;
-    
+
     private Display display;
     private Shell parent;
     private IRemoteShell shell;
@@ -86,14 +86,14 @@ class WizardLogPage extends WizardPage implements Runnable {
         composite.setLayout(gl);
 
         new Label(composite, SWT.WRAP).setText("Agent installation log:");
-        
+
         log_text = new Text(composite, SWT.BORDER | SWT.MULTI | SWT.READ_ONLY | SWT.H_SCROLL | SWT.V_SCROLL);
         GridData gd = new GridData(GridData.FILL_BOTH);
         log_text.setLayoutData(gd);
-        
+
         setControl(composite);
     }
-    
+
     private void runSetupJob(WizardLoginPage login) {
         assert display != null;
         assert display.getThread() == Thread.currentThread();
@@ -108,7 +108,7 @@ class WizardLogPage extends WizardPage implements Runnable {
         thread = new Thread(this);
         thread.start();
     }
-    
+
     public void run() {
         Throwable error = null;
         try {
@@ -121,9 +121,9 @@ class WizardLogPage extends WizardPage implements Runnable {
             else {
                 throw new Exception("Invalid protocol name: " + protocol);
             }
-            
+
             String s;
-            
+
             if (!user.equals("root")) {
                 send("su", true);
                 expect("Password: ", true);
@@ -138,7 +138,7 @@ class WizardLogPage extends WizardPage implements Runnable {
             String machine = waitPrompt().replace('\n', ' ').trim();
             String version = "0.0.1";
             Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
-            
+
             URL url = FileLocator.find(bundle, new Path("agent/get-os-tag"), null);
             if (url == null) throw new Exception("Cannot find get-os-tag script");
             send("cat >get-os-tag", true);
@@ -158,12 +158,12 @@ class WizardLogPage extends WizardPage implements Runnable {
             if (s.length() > 0) throw new Exception(s);
 
             exec("chmod u+x get-os-tag");
-            
+
             send("./get-os-tag", true);
             String os_tag = waitPrompt().replace('\n', ' ').trim();
-            
+
             exec("rm -f get-os-tag");
-            
+
             url = null;
             String fnm = null;
             String machine0 = machine;
@@ -192,7 +192,7 @@ class WizardLogPage extends WizardPage implements Runnable {
                 }
             }
             if (url == null) throw new Exception("Unsupported target OS or CPU");
-            
+
             inp = url.openStream();
             send("which base64", true);
             s = waitPrompt();
@@ -219,27 +219,27 @@ class WizardLogPage extends WizardPage implements Runnable {
                 }
             }
             inp.close();
-            
+
             send("rpm -e --quiet tcf-agent", true);
             waitPrompt();
             exec("rm -f /etc/init.d/tcf-agent*");
             exec("rpm -i --quiet " + fnm);
             exec("rm -f " + fnm);
-            
+
             File certs = TCFSecurityManager.getCertificatesDirectory();
 
             File local_cert = new File(certs, "local.cert");
             File local_priv = new File(certs, "local.priv");
-            
+
             if (!local_cert.exists() || !local_priv.exists()) {
                 copyRemoteSecret("local.cert", local_cert);
                 copyRemoteSecret("local.priv", local_priv);
                 exec("/usr/sbin/tcf-agent -c");
             }
-            
+
             copyRemoteSecret("local.cert", new File(certs, host + ".cert"));
             copyLocalSecret(local_cert, InetAddress.getLocalHost().getHostName() + ".cert");
-            
+
             if (!user.equals("root")) {
                 send("exit", true);
                 waitPrompt();
@@ -259,7 +259,7 @@ class WizardLogPage extends WizardPage implements Runnable {
         }
         done(error);
     }
-    
+
     private void sendBase64(InputStream inp) throws Exception {
         byte[] buf = new byte[0x100 * 3];
         for (;;) {
@@ -273,7 +273,7 @@ class WizardLogPage extends WizardPage implements Runnable {
             send(new String(Base64.toBase64(buf, 0, len)), false);
         }
     }
-    
+
     private void copyRemoteSecret(String from, File to) throws Exception {
         send("cat /etc/tcf/ssl/" + from, true);
         String s = waitPrompt();
@@ -283,7 +283,7 @@ class WizardLogPage extends WizardPage implements Runnable {
         wr.write(s);
         wr.close();
     }
-    
+
     private void copyLocalSecret(File from, String to) throws Exception {
         send("cat >/etc/tcf/ssl/" + to, true);
         BufferedReader rd = new BufferedReader(new InputStreamReader(
@@ -297,7 +297,7 @@ class WizardLogPage extends WizardPage implements Runnable {
         String s = waitPrompt();
         if (s.length() > 0) throw new Exception(s);
     }
-    
+
     private void send(final String s, boolean log) throws IOException {
         if (log) {
             display.asyncExec(new Runnable() {
@@ -314,7 +314,7 @@ class WizardLogPage extends WizardPage implements Runnable {
         if (log) shell.expect(s);
         shell.expect("\n");
     }
-    
+
     private void expect(final String s, boolean log) throws IOException {
         if (log) {
             display.asyncExec(new Runnable() {
@@ -328,7 +328,7 @@ class WizardLogPage extends WizardPage implements Runnable {
         }
         shell.expect(s);
     }
-    
+
     private String waitPrompt() throws IOException {
         display.asyncExec(new Runnable() {
             public void run() {
@@ -349,13 +349,13 @@ class WizardLogPage extends WizardPage implements Runnable {
         }
         return s;
     }
-    
+
     private void exec(String cmd) throws Exception {
         send(cmd, true);
         String s = waitPrompt();
         if (s.length() > 0) throw new Exception(s);
     }
-    
+
     private void done(final Throwable error) {
         display.asyncExec(new Runnable() {
             public void run() {
@@ -382,13 +382,13 @@ class WizardLogPage extends WizardPage implements Runnable {
             }
         });
     }
-    
+
     @Override
     public IWizardPage getPreviousPage() {
         if (thread != null) return null;
         return wizard.getPage("LoginPage");
     }
-    
+
     @Override
     public IWizardPage getNextPage() {
         return null;

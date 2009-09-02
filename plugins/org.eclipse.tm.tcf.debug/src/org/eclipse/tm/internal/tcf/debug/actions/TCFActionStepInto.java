@@ -20,7 +20,7 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
 
     private final boolean src_step;
     private final IRunControl rc = launch.getService(IRunControl.class);
-    
+
     private IRunControl.RunControlContext ctx;
     private TCFDataCache<TCFContextState> state;
     private TCFDataCache<TCFSourceRef> line_info;
@@ -28,15 +28,15 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
     private BigInteger pc0;
     private BigInteger pc1;
     private int step_cnt;
-    
+
     protected boolean exited;
-    
+
     public TCFActionStepInto(TCFLaunch launch, IRunControl.RunControlContext ctx, boolean src_step) {
         super(launch, ctx.getID());
         this.ctx = ctx;
         this.src_step = src_step;
     }
-    
+
     protected abstract TCFDataCache<TCFContextState> getContextState();
     protected abstract TCFDataCache<TCFSourceRef> getLineInfo();
     protected abstract TCFDataCache<?> getStackTrace();
@@ -161,7 +161,7 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
             exit(new Exception("Step into is not supported"));
         }
     }
-    
+
     private boolean isSameLine(ILineNumbers.CodeArea x, ILineNumbers.CodeArea y) {
         if (x == null || y == null) return false;
         if (x.start_line != y.start_line) return false;
@@ -169,7 +169,7 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
         if (x.file != y.file && (x.file == null || !x.file.equals(y.file))) return false;
         return true;
     }
-    
+
     protected void exit(Throwable error) {
         if (exited) return;
         rc.removeListener(this);

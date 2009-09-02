@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -28,20 +28,20 @@ import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.Session;
 
 class SSHClient extends AbstractRemoteShell {
-    
+
     private final Session session;
     private final Channel channel;
-    
+
     private static class Pipe {
-        
+
         final PipedOutputStream out = new PipedOutputStream();
         final PipedInputStream inp = new PipedInputStream();
-        
+
         Pipe() throws IOException {
             inp.connect(out);
         }
     }
-    
+
     SSHClient(final Shell parent, String host, String user, final String password) throws Exception {
         BundleContext ctx = Activator.getDefault().getBundle().getBundleContext();
         ServiceReference ref = ctx.getServiceReference(IJSchService.class.getName());

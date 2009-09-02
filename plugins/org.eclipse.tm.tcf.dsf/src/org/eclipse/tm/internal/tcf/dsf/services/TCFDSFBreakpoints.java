@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -49,14 +49,14 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.osgi.framework.BundleContext;
 
 public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse.dd.dsf.debug.service.IBreakpoints {
-    
+
     private class BreakpointDMC extends AbstractDMContext implements IBreakpointDMContext {
-        
+
         final String id;
         final IBreakpoint bp;
         final TCFDataCache<Map<String,Object>> status;
         final Set<IBreakpointsTargetDMContext> targets;
-        
+
         boolean disposed;
 
         public BreakpointDMC(IDsfService service, final String id, IBreakpoint bp) {
@@ -93,7 +93,7 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
         public int hashCode() {
             return id.hashCode();
         }
-        
+
         void dispose() {
             assert !disposed;
             cache.remove(id);
@@ -102,7 +102,7 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
             assert targets.isEmpty();
             disposed = true;
         }
-        
+
         void onAdded(final IBreakpointsTargetDMContext t) {
             targets.add(t);
             IBreakpointsAddedEvent e = new IBreakpointsAddedEvent() {
@@ -115,7 +115,7 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
             };
             getSession().dispatchEvent(e, getProperties());
         }
-        
+
         void onUpdated(final IBreakpointsTargetDMContext t) {
             assert targets.contains(t);
             IBreakpointsUpdatedEvent e = new IBreakpointsUpdatedEvent() {
@@ -128,7 +128,7 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
             };
             getSession().dispatchEvent(e, getProperties());
         }
-        
+
         void onRemoved(final IBreakpointsTargetDMContext t) {
             targets.remove(t);
             IBreakpointsRemovedEvent e = new IBreakpointsRemovedEvent() {
@@ -142,14 +142,14 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
             getSession().dispatchEvent(e, getProperties());
         }
     }
-    
+
     private class BreakpointData implements IBreakpointDMData {
-        
+
         final IBreakpoint bp;
         final Map<String,Object> attrs;
         final Map<String,Object> status;
         final String file;
-        
+
         @SuppressWarnings("unchecked")
         BreakpointData(IBreakpoint bp, Map<String,Object> status) throws CoreException, IOException {
             this.bp = bp;
@@ -181,7 +181,7 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
             if (arr == null) return null;
             int cnt = 0;
             for (Map<String,Object> m : arr) {
-                if (m.get(IBreakpoints.INSTANCE_ADDRESS) != null) cnt++; 
+                if (m.get(IBreakpoints.INSTANCE_ADDRESS) != null) cnt++;
             }
             IAddress[] res = new IAddress[cnt];
             int pos = 0;
@@ -232,7 +232,7 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
             return enabled != null && enabled.booleanValue() && bp_manager.isEnabled();
         }
     }
-    
+
     private final ITCFBreakpointListener bp_listener = new ITCFBreakpointListener() {
 
         @SuppressWarnings("unchecked")
@@ -272,20 +272,20 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
             if (dmc != null) dmc.dispose();
         }
     };
-    
+
     private final TCFLaunch launch;
     private final IChannel channel;
     private final org.eclipse.tm.tcf.services.IBreakpoints tcf_bpt_service;
     private final Map<String,BreakpointDMC> cache = new HashMap<String,BreakpointDMC>();
     private final IBreakpointManager bp_manager = DebugPlugin.getDefault().getBreakpointManager();
-    
+
     public TCFDSFBreakpoints(DsfSession session, TCFLaunch launch, final RequestMonitor monitor) {
         super(session);
-        this.launch = launch; 
+        this.launch = launch;
         channel = launch.getChannel();
         launch.getBreakpointsStatus().addListener(bp_listener);
         tcf_bpt_service = channel.getRemoteService(org.eclipse.tm.tcf.services.IBreakpoints.class);
-        initialize(new RequestMonitor(getExecutor(), monitor) { 
+        initialize(new RequestMonitor(getExecutor(), monitor) {
             @Override
             protected void handleSuccess() {
                 String[] class_names = {
@@ -298,7 +298,7 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
         });
     }
 
-    @Override 
+    @Override
     public void shutdown(RequestMonitor monitor) {
         unregister();
         super.shutdown(monitor);
@@ -354,7 +354,7 @@ public class TCFDSFBreakpoints extends AbstractDsfService implements org.eclipse
             catch (Exception x) {
                 rm.setStatus(new Status(IStatus.ERROR, Activator.PLUGIN_ID,
                         REQUEST_FAILED, "Data error", x)); //$NON-NLS-1$
-                
+
             }
         }
         else {

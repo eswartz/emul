@@ -21,7 +21,7 @@ public class TestEchoFP  implements ITCFTest, IDiagnostics.DoneEchoFP {
         this.test_suite = test_suite;
         diag = channel.getRemoteService(IDiagnostics.class);
     }
-    
+
     public void start() {
         if (diag == null) {
             test_suite.done(this, null);
@@ -30,18 +30,18 @@ public class TestEchoFP  implements ITCFTest, IDiagnostics.DoneEchoFP {
             for (int i = 0; i < 32; i++) sendMessage();
         }
     }
-    
+
     private void sendMessage() {
         BigDecimal n = BigDecimal.valueOf(rnd.nextInt(), rnd.nextInt(61) - 30);
         msgs.add(n);
         diag.echoFP(n, this);
         count++;
     }
-    
+
     private boolean cmp(double x, double y) {
         return (float)x == (float)y;
     }
-    
+
     public void doneEchoFP(IToken token, Throwable error, BigDecimal b) {
         BigDecimal s = msgs.removeFirst();
         if (!test_suite.isActive(this)) return;

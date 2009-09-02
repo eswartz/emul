@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -35,7 +35,6 @@ import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
-import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWindowListener;
@@ -47,25 +46,27 @@ import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 public class TCFAnnotationManager {
-    
+
     class TCFAnnotation extends Annotation {
-        
+
         final TCFModel model;
         final String exe_id;
         final ITextEditor editor;
         final Image image;
-        
-        TCFAnnotation(TCFModel model, String exe_id, ITextEditor editor, Image image) {
+        final Position position;
+
+        TCFAnnotation(TCFModel model, String exe_id, ITextEditor editor, Image image, Position position) {
             this.model = model;
             this.exe_id = exe_id;
             this.editor = editor;
             this.image = image;
+            this.position = position;
         }
-        
+
         protected Image getImage() {
             return image;
         }
-        
+
         void dispose() {
             assert Thread.currentThread() == display.getThread();
             IDocumentProvider doc_provider = editor.getDocumentProvider();
@@ -76,22 +77,22 @@ public class TCFAnnotationManager {
             }
         }
     }
-    
+
     private class WorkbenchWindowInfo {
         final ArrayList<TCFAnnotation> annotations = new ArrayList<TCFAnnotation>();
-        
+
         void dispose() {
             for (TCFAnnotation a : annotations) a.dispose();
             annotations.clear();
         }
     }
-    
+
     private TCFLaunch active_launch;
     private final HashMap<IWorkbenchWindow,WorkbenchWindowInfo> windows =
         new HashMap<IWorkbenchWindow,WorkbenchWindowInfo>();
-    
+
     private final TCFLaunch.Listener launch_listener = new TCFLaunch.Listener() {
-        
+
         public void onCreated(TCFLaunch launch) {
         }
 
@@ -150,14 +151,14 @@ public class TCFAnnotationManager {
         public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data) {
         }
     };
-    
+
     private final ISelectionListener selection_listener = new ISelectionListener() {
-        
+
         public void selectionChanged(IWorkbenchPart part, ISelection selection) {
             updateActiveLaunch();
         }
     };
-    
+
     private final IWindowListener window_listener = new IWindowListener() {
 
         public void windowActivated(IWorkbenchWindow window) {
@@ -184,12 +185,12 @@ public class TCFAnnotationManager {
             updateActiveLaunch();
         }
     };
-    
+
     private final Display display = PlatformUI.getWorkbench().getDisplay();
     private int refresh_breakpoint_view_cnt = 0;
     private int update_active_launch_cnt = 0;
     private boolean disposed;
-    
+
     public TCFAnnotationManager() {
         assert Protocol.isDispatchThread();
         TCFLaunch.addListener(launch_listener);
@@ -206,7 +207,7 @@ public class TCFAnnotationManager {
             }
         });
     }
-    
+
     public void dispose() {
         if (disposed) return;
         assert Protocol.isDispatchThread();
@@ -224,7 +225,7 @@ public class TCFAnnotationManager {
             }
         });
     }
-    
+
     private void displayExec(Runnable r) {
         synchronized (Device.class) {
             if (!display.isDisposed()) {
@@ -232,7 +233,7 @@ public class TCFAnnotationManager {
             }
         }
     }
-    
+
     private void updateActiveLaunch() {
         assert !disposed;
         final int cnt = ++update_active_launch_cnt;
@@ -262,10 +263,10 @@ public class TCFAnnotationManager {
             }
         });
     }
-    
+
     private void refreshBreakpointView() {
         assert !disposed;
-        final int cnt = ++refresh_breakpoint_view_cnt; 
+        final int cnt = ++refresh_breakpoint_view_cnt;
         displayExec(new Runnable() {
             public void run() {
                 if (cnt != refresh_breakpoint_view_cnt) return;
@@ -276,7 +277,7 @@ public class TCFAnnotationManager {
             }
         });
     }
-    
+
     String getBreakpointStatus(final TCFBreakpoint breakpoint) {
         if (disposed) return "";
         assert Thread.currentThread() == display.getThread();
@@ -303,14 +304,14 @@ public class TCFAnnotationManager {
         }
         return text[0];
     }
-    
+
     void addStackFrameAnnotation(TCFModel model, String exe_id, boolean top_frame,
             IWorkbenchPage page, ITextEditor editor, IRegion region) {
         if (disposed) return;
         assert Thread.currentThread() == display.getThread();
         TCFAnnotation annotation = null;
         IAnnotationModel ann_model = null;
-        
+
         if (editor != null && region != null) {
             IDocumentProvider doc_provider = editor.getDocumentProvider();
             IEditorInput editor_input = editor.getEditorInput();
@@ -329,23 +330,36 @@ public class TCFAnnotationManager {
                     text = "Debug Stack Frame"; //$NON-NLS-1$
                     image = DebugUITools.getImage(IDebugUIConstants.IMG_OBJS_INSTRUCTION_POINTER);
                 }
-                annotation = new TCFAnnotation(model, exe_id, editor, image);
+                annotation = new TCFAnnotation(model, exe_id, editor, image,
+                        new Position(region.getOffset(), region.getLength()));
                 annotation.setType(type);
                 annotation.setText(text);
             }
         }
-        
+
         if (page != null) {
             WorkbenchWindowInfo info = windows.get(page.getWorkbenchWindow());
+            if (annotation != null && info.annotations.size() == 1) {
+                for (TCFAnnotation a : info.annotations) {
+                    if (a.model != annotation.model) continue;
+                    if (a.editor != annotation.editor) continue;
+                    if (a.image != annotation.image) continue;
+                    if (!a.exe_id.equals(annotation.exe_id)) continue;
+                    if (!a.position.equals(annotation.position)) continue;
+                    if (!a.getType().equals(annotation.getType())) continue;
+                    if (!a.getText().equals(annotation.getText())) continue;
+                    return;
+                }
+            }
             for (TCFAnnotation a : info.annotations) a.dispose();
             info.annotations.clear();
             if (annotation != null) {
-                ann_model.addAnnotation(annotation, new Position(region.getOffset(), region.getLength()));   
+                ann_model.addAnnotation(annotation, annotation.position);
                 info.annotations.add(annotation);
             }
         }
     }
-    
+
     public Annotation findAnnotation(TCFModel model, String id) {
         if (disposed) return null;
         assert Thread.currentThread() == display.getThread();
@@ -359,7 +373,7 @@ public class TCFAnnotationManager {
         }
         return null;
     }
-    
+
     void onContextResumed(TCFModel model, String id) {
         if (disposed) return;
         assert Thread.currentThread() == display.getThread();
@@ -371,38 +385,6 @@ public class TCFAnnotationManager {
                     a.dispose();
                 }
             }
-        }
-    }
-
-    void onContextSuspended(final TCFModel model, final String id) {
-        if (disposed) return;
-        assert Thread.currentThread() == display.getThread();
-        final IAdaptable adaptable = DebugUITools.getDebugContext();
-        if (adaptable instanceof TCFNode) {
-            Protocol.invokeLater(new Runnable() {
-                public void run() {
-                    IRunControl.RunControlContext x = null;
-                    TCFNode n = (TCFNode)adaptable;
-                    while (x == null && n != null && !n.isDisposed()) {
-                        if (n instanceof TCFNodeExecContext) {
-                            if (!n.validateNode(this)) return;
-                            x = ((TCFNodeExecContext)n).getRunContext().getData(); 
-                        }
-                        n = n.parent;
-                    }
-                    if (x != null && id.equals(x.getID())) {
-                        displayExec(new Runnable() {
-                            public void run() {
-                                IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-                                if (w != null) {
-                                    IWorkbenchPage page = w.getActivePage();
-                                    if (page != null) model.displaySource(adaptable, page, true);
-                                }
-                            }
-                        });
-                    }
-                }
-            });
         }
     }
 

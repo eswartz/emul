@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -43,14 +43,14 @@ public interface IRegisters extends IService {
         PROP_FLOAT = "Float",                   /** Boolean, true if the register value is a floating-point value */
         PROP_BIG_ENDIAN = "BigEndian",          /** Boolean, true if big endian */
         PROP_LEFT_TO_RIGHT = "LeftToRight",     /** Boolean, true if the lowest numbered bit should be shown to user as the left-most bit */
-        PROP_FIST_BIT = "FirstBit",             /** Number, bit numbering base (0 or 1) to use when showing bits to user */ 
+        PROP_FIST_BIT = "FirstBit",             /** Number, bit numbering base (0 or 1) to use when showing bits to user */
         PROP_BITS = "Bits",                     /** Number, if context is a bit field, contains the field bit numbers in the parent context */
         PROP_VALUES = "Values",                 /** Array of Map, predefined names (mnemonics) for some of context values */
         PROP_MEMORY_ADDRESS = "MemoryAddress",  /** Number, the address of a memory mapped register */
         PROP_MEMORY_CONTEXT = "MemoryContext",  /** String, the context ID of a memory context in which a memory mapped register is located */
         PROP_CAN_SEARCH = "CanSearch",          /** Array of String, a list of attribute names which can be searched for starting on this context */
         PROP_ROLE = "Role";                     /** String, the role the register plays in a program execution */
-    
+
     /**
      * Values of context property "Role".
      */
@@ -60,18 +60,18 @@ public interface IRegisters extends IService {
         ROLE_FP = "FP",                         /** Register defining the current frame pointer location */
         ROLE_RET = "RET",                       /** Register used to store the return address for calls */
         ROLE_CORE = "CORE";                     /** Indicates register or register groups which belong to the core state */
-    
+
     /**
      * Search filter properties.
      */
     static final String
         SEARCH_NAME = "Name",                   /** The name of the property this filter applies too */
         SEARCH_EQUAL_VALUE = "EqualValue";      /** The value which is searched for */
-        
+
     /**
      * Retrieve context info for given context ID.
-     *   
-     * @param id – context ID. 
+     *
+     * @param id – context ID.
      * @param done - call back interface called when operation is completed.
      */
     IToken getContext(String id, DoneGetContext done);
@@ -98,7 +98,7 @@ public interface IRegisters extends IService {
      * all services. In other words, all services access same hierarchy of contexts,
      * with same IDs, however, each service accesses its own subset of context's
      * attributes and functionality, which is relevant to that service.
-     *  
+     *
      * @param parent_context_id – parent context ID. Can be null –
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
      * by previous getChildren commands.
@@ -118,9 +118,9 @@ public interface IRegisters extends IService {
          */
         void doneGetChildren(IToken token, Exception error, String[] context_ids);
     }
-    
+
     /**
-     * RegistersContext objects represent register groups, registers and bit fields. 
+     * RegistersContext objects represent register groups, registers and bit fields.
      */
     interface RegistersContext {
         /**
@@ -128,31 +128,31 @@ public interface IRegisters extends IService {
          * @return context ID.
          */
         String getID();
-        
+
         /**
          * Get parent context ID.
          * @return parent context ID.
          */
         String getParentID();
-        
+
         /**
          * Get process ID, if applicable.
          * @return process ID.
          */
         String getProcessID();
-        
+
         /**
          * Get context (register, register group, bit field) name.
          * @return context name.
          */
         String getName();
-        
+
         /**
          * Get context description.
          * @return context description.
          */
         String getDescription();
-        
+
         /**
          * Get context size in bytes.
          * Byte arrays in get()/set() methods should be same size.
@@ -162,58 +162,58 @@ public interface IRegisters extends IService {
          * @return context size in bytes.
          */
         int getSize();
-        
+
         /**
          * Check if context value can be read.
          * @return true if can read value of the context.
          */
         boolean isReadable();
-        
+
         /**
          * Check if reading the context (register) destroys its current value -
          * it can be read only once.
          * @return true if read-once register.
          */
         boolean isReadOnce();
-        
+
         /**
          * Check if context value can be written.
          * @return true if can write value of the context.
          */
         boolean isWriteable();
-        
+
         /**
          * Check if register value can not be overwritten - every write counts.
          * @return true if write-once register.
          */
         boolean isWriteOnce();
-        
+
         /**
-         * Check if writing the context can change values of other registers. 
+         * Check if writing the context can change values of other registers.
          * @return true if has side effects.
          */
         boolean hasSideEffects();
-        
+
         /**
          * Check if the register value can change even when target is stopped.
          * @return true if the register value can change at any time.
          */
         boolean isVolatile();
-        
+
         /**
          * Check if the register value is a floating-point value.
          * @return true if a floating-point register.
          */
         boolean isFloat();
-        
+
         /**
          * Check endianess of the context.
-         * Big endian means decreasing numeric significance with increasing bit number. 
+         * Big endian means decreasing numeric significance with increasing bit number.
          * The endianess is used to encode and decode values of get, getm, set and setm commands.
          * @return true if big endian.
          */
         boolean isBigEndian();
-        
+
         /**
          * Check if the lowest numbered bit (i.e. bit #0 or bit #1 depending on
          * getFirstBitNumber() value) should be shown to user as the left-most bit or
@@ -221,45 +221,45 @@ public interface IRegisters extends IService {
          * @return true if the first bit is left-most bit.
          */
         boolean isLeftToRight();
-        
+
         /**
          * If the context has bit field children, bit positions of the fields
          * can be zero-based or 1-based.
          * @return first bit position - 0 or 1.
          */
         int getFirstBitNumber();
-        
+
         /**
-         * If context is a bit field, get the field bit numbers in parent context. 
+         * If context is a bit field, get the field bit numbers in parent context.
          * @return array of bit numbers.
          */
         int[] getBitNumbers();
-        
+
         /**
          * A context can have predefined names (mnemonics) for some its values.
          * This method returns a list of such named values.
          * @return array of named values or null.
          */
         NamedValue[] getNamedValues();
-        
+
         /**
          * Get the address of a memory mapped register.
          * @return address.
          */
         Number getMemoryAddress();
-        
+
         /**
-         * Get the context ID of a memory context in which a memory mapped register is located. 
+         * Get the context ID of a memory context in which a memory mapped register is located.
          * @return memory context ID.
          */
         String getMemoryContext();
-        
+
         /**
          * Get a list of property names which can be searched for starting on this context
          * @return collection of property names.
          */
         Collection<String> canSearch();
-        
+
         /**
          * Get the role the register plays in a program execution.
          * @return role name.
@@ -271,14 +271,14 @@ public interface IRegisters extends IService {
          * @return map of all available context properties.
          */
         Map<String,Object> getProperties();
-        
+
         /**
          * Read value of the context.
          * @param done - call back object.
          * @return - pending command handle.
          */
         IToken get(DoneGet done);
-        
+
         /**
          * Set value of the context.
          * @param value - value to write into the context.
@@ -286,7 +286,7 @@ public interface IRegisters extends IService {
          * @return - pending command handle.
          */
         IToken set(byte[] value, DoneSet done);
-        
+
         /**
          * Search register contexts that passes given search filter.
          * Search is only supported for properties listed in the "CanSearch" property.
@@ -296,10 +296,10 @@ public interface IRegisters extends IService {
          */
         IToken search(Map<String,Object> filter, DoneSearch done);
     }
-    
+
     /**
      * A register context can have predefined names (mnemonics) for some its values.
-     * NamedValue objects represent such values. 
+     * NamedValue objects represent such values.
      */
     interface NamedValue {
         /**
@@ -307,20 +307,20 @@ public interface IRegisters extends IService {
          * @return the value as an array of bytes.
          */
         byte[] getValue();
-        
+
         /**
          * Get name (mnemonic) of the value.
          * @return value name.
          */
         String getName();
-        
+
         /**
          * Get human readable description of the value.
          * @return value description.
          */
         String getDescription();
     }
-    
+
     /**
      * Read values of multiple locations in registers.
      * @param locs - array of data locations.
@@ -328,7 +328,7 @@ public interface IRegisters extends IService {
      * @return - pending command handle.
      */
     IToken getm(Location[] locs, DoneGet done);
-    
+
     /**
      * Set values of multiple locations in registers.
      * @param locs - array of data locations.
@@ -343,7 +343,7 @@ public interface IRegisters extends IService {
      */
     final class Location {
         /** Register context ID */
-        public final String id; 
+        public final String id;
 
         /** offset in the context, in bytes */
         public final int offs;
@@ -370,7 +370,7 @@ public interface IRegisters extends IService {
          */
         void doneGet(IToken token, Exception error, byte[] value);
     }
-    
+
     /**
      * 'set' command call back interface.
      */
@@ -382,7 +382,7 @@ public interface IRegisters extends IService {
          */
         void doneSet(IToken token, Exception error);
     }
-    
+
     /**
      * 'search' command call back interface.
      */
@@ -410,7 +410,7 @@ public interface IRegisters extends IService {
 
     /**
      * Registers event listener is notified when registers context hierarchy
-     * changes, and when a register is modified by the service commands. 
+     * changes, and when a register is modified by the service commands.
      */
     interface RegistersListener {
 
@@ -419,12 +419,12 @@ public interface IRegisters extends IService {
          * Most targets have static set of registers and register properties.
          * Such targets never generate this event. However, some targets,
          * for example, JTAG probes, allow user to modify register definitions.
-         * Clients should flush all cached register context data. 
+         * Clients should flush all cached register context data.
          */
         void contextChanged();
 
         /**
-         * Called when register content was changed and clients 
+         * Called when register content was changed and clients
          * need to update themselves. Clients, at least, should invalidate
          * corresponding cached registers data.
          * Not every change is notified - it is not possible,

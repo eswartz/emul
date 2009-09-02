@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -28,13 +28,13 @@ class ChannelProxy {
 
     private final AbstractChannel ch_x;
     private final AbstractChannel ch_y;
-    
+
     private boolean closed_x;
     private boolean closed_y;
-    
+
     private final Map<IToken,IToken> tokens_x = new HashMap<IToken,IToken>();
     private final Map<IToken,IToken> tokens_y = new HashMap<IToken,IToken>();
-    
+
     private final AbstractChannel.Proxy proxy_x = new AbstractChannel.Proxy() {
 
         public void onChannelClosed(Throwable error) {
@@ -51,14 +51,14 @@ class ChannelProxy {
             if (s == null) ch_x.terminate(new IOException("Invalid service name"));
             else tokens_x.put(ch_y.sendCommand(s, name, data, cmd_listener_x), token);
         }
-        
+
         public void onEvent(String service, String name, byte[] data) {
             IService s = ch_x.getRemoteService(service);
             if (s == null) ch_x.terminate(new IOException("Invalid service name"));
             else if (!closed_y) ch_y.sendEvent(s, name, data);
         }
     };
-    
+
     private final AbstractChannel.Proxy proxy_y = new AbstractChannel.Proxy() {
 
         public void onChannelClosed(Throwable error) {
@@ -75,14 +75,14 @@ class ChannelProxy {
             if (s == null) ch_y.terminate(new IOException("Invalid service name"));
             else tokens_y.put(ch_x.sendCommand(s, name, data, cmd_listener_y), token);
         }
-        
+
         public void onEvent(String service, String name, byte[] data) {
             IService s = ch_y.getRemoteService(service);
             if (s == null) ch_y.terminate(new IOException("Invalid service name"));
             else if (!closed_x) ch_x.sendEvent(s, name, data);
         }
     };
-    
+
     private final IChannel.ICommandListener cmd_listener_x = new IChannel.ICommandListener() {
 
         public void progress(IToken token, byte[] data) {
@@ -98,7 +98,7 @@ class ChannelProxy {
             tokens_x.remove(token);
         }
     };
-    
+
     private final IChannel.ICommandListener cmd_listener_y = new IChannel.ICommandListener() {
 
         public void progress(IToken token, byte[] data) {
@@ -114,7 +114,7 @@ class ChannelProxy {
             tokens_y.remove(token);
         }
     };
-    
+
     ChannelProxy(IChannel x, IChannel y) {
         assert !(x instanceof ChannelLoop);
         assert !(y instanceof ChannelLoop);

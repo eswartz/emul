@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -26,25 +26,25 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  * communication over TCF framework.  Methods are provided to check if the communication is
  * complete, to wait for its completion, and to retrieve the result of
  * the communication.
- * 
+ *
  * TCFTask is useful when communication is requested by a thread other then TCF dispatch thread.
  * If client has a global state, for example, cached remote data, multithreading should be avoided,
  * because it is extremely difficult to ensure absence of racing conditions or deadlocks in such environment.
- * Such clients should consider message driven design, see TCFDataCache and its usage as an example.    
- * 
+ * Such clients should consider message driven design, see TCFDataCache and its usage as an example.
+ *
  * If a client is extending TCFTask it should implement run() method to perform actual communications.
  * The run() method will be execute by TCF dispatch thread, and client code should then call either done() or
- * error() to indicate that task computations are complete.  
+ * error() to indicate that task computations are complete.
  */
 public abstract class TCFTask<V> implements Runnable, Future<V> {
-    
+
     private V result;
     private boolean done;
     private Throwable error;
     private boolean canceled;
     private IChannel channel;
     private IChannel.IChannelListener channel_listener;
-    
+
     /**
      * Construct a TCF task object and schedule it for execution.
      */
@@ -60,7 +60,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
             }
         });
     }
-    
+
     /**
      * Construct a TCF task object and schedule it for execution.
      * The task will be canceled if it is not completed after given timeout.
@@ -83,7 +83,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
             }
         });
     }
-    
+
     /**
      * Construct a TCF task object and schedule it for execution.
      * The task will be canceled if the given channel is closed or
@@ -117,11 +117,11 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
             }
         });
     }
-    
+
     /**
      * Set a result of this task and notify all threads waiting for the task to complete.
      * The method is supposed to be called in response to executing of run() method of this task.
-     * 
+     *
      * @param result - the computed result
      */
     public synchronized void done(V result) {
@@ -135,11 +135,11 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         if (channel != null) channel.removeChannelListener(channel_listener);
         notifyAll();
     }
-    
+
     /**
      * Set a error and notify all threads waiting for the task to complete.
      * The method is supposed to be called in response to executing of run() method of this task.
-     * 
+     *
      * @param error - computation error.
      */
     public synchronized void error(Throwable error) {
@@ -202,7 +202,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
         }
         return result;
     }
-    
+
     /**
      * Waits if necessary for the computation to complete, and then
      * retrieves its result.
@@ -293,18 +293,18 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
     }
 
     /**
-     * Returns <tt>true</tt> if this task completed.  
+     * Returns <tt>true</tt> if this task completed.
      *
      * Completion may be due to normal termination, an exception, or
      * cancellation -- in all of these cases, this method will return
      * <tt>true</tt>.
-     * 
+     *
      * @return <tt>true</tt> if this task completed.
      */
     public synchronized boolean isDone() {
         return error != null || done;
     }
-    
+
     /**
      * Return task execution error if any.
      * @return Throwable object or null
@@ -312,7 +312,7 @@ public abstract class TCFTask<V> implements Runnable, Future<V> {
     protected Throwable getError() {
         return error;
     }
-    
+
     /**
      * Return task execution result if any.
      * @return result object

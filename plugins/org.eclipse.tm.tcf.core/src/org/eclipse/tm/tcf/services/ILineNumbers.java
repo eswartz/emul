@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -22,15 +22,15 @@ import org.eclipse.tm.tcf.protocol.IToken;
 public interface ILineNumbers extends IService {
 
     static final String NAME = "LineNumbers";
-    
+
     /**
      * TextArea represent a continues area in source text mapped to
      * continues range of code addresses.
      * Line and columns are counted starting from 1.
-     * File name can be relative path, in such case client should 
+     * File name can be relative path, in such case client should
      * use TextArea directory name as origin for the path.
      * File and directory names are valid on a host where code was compiled.
-     * It is client responsibility to map names to this host file system.    
+     * It is client responsibility to map names to this host file system.
      */
     final class CodeArea {
         public final String directory;
@@ -46,7 +46,7 @@ public interface ILineNumbers extends IService {
         public final boolean basic_block;
         public final boolean prologue_end;
         public final boolean epilogue_begin;
-        
+
         public CodeArea(String directory, String file, int start_line, int start_column,
                 int end_line, int end_column, Number start_address, Number end_address, int isa,
                 boolean is_statement, boolean basic_block,
@@ -65,7 +65,7 @@ public interface ILineNumbers extends IService {
             this.prologue_end = prologue_end;
             this.epilogue_begin = epilogue_begin;
         }
-        
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -90,14 +90,14 @@ public interface ILineNumbers extends IService {
             if (directory == null && a.directory != null) return false;
             return true;
         }
-        
+
         @Override
         public int hashCode() {
             int h = 0;
             if (file != null) h += file.hashCode();
             return h + start_line + start_column + end_line + end_column;
         }
-        
+
         @Override
         public String toString() {
             StringBuffer bf = new StringBuffer();
@@ -157,9 +157,9 @@ public interface ILineNumbers extends IService {
             return bf.toString();
         }
     }
-    
+
     IToken mapToSource(String context_id, Number start_address, Number end_address, DoneMapToSource done);
-    
+
     interface DoneMapToSource {
         void doneMapToSource(IToken token, Exception error, CodeArea[] areas);
     }

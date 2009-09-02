@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -33,9 +33,9 @@ import org.eclipse.tm.tcf.services.IBreakpoints;
 public class TCFBreakpoint extends Breakpoint {
 
     public static final String MARKER_TYPE = "org.eclipse.tm.tcf.debug.breakpoint.marker";
-    
+
     private static long last_id = 0;
-    
+
     private static String createNewID() {
         assert Protocol.isDispatchThread();
         long id = System.currentTimeMillis();
@@ -43,9 +43,9 @@ public class TCFBreakpoint extends Breakpoint {
         last_id = id;
         return Long.toHexString(id);
     }
-    
+
     private String text;
-    
+
     public TCFBreakpoint() {
     }
 
@@ -79,7 +79,7 @@ public class TCFBreakpoint extends Breakpoint {
     public String getModelIdentifier() {
         return ITCFConstants.ID_TCF_DEBUG_MODEL;
     }
-    
+
     public String getText() {
         if (text == null) {
             IMarker marker = getMarker();

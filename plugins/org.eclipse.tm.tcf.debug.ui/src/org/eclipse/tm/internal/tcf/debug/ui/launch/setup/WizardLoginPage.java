@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -39,16 +39,16 @@ import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.osgi.framework.Bundle;
 
 class WizardLoginPage extends WizardPage implements Listener {
-    
+
     private static final String
         PREF_PROTOCOL = "setup.login.protocol",
         PREF_HOST     = "setup.login.host",
         PREF_USER     = "setup.login.user";
-    
+
     private final SetupWizardDialog wizard;
 
     final String[] protocols = { "Telnet", "SSH" };
-    
+
     Combo protocol;
     Button prefs;
     Text host;
@@ -65,12 +65,12 @@ class WizardLoginPage extends WizardPage implements Listener {
 
     public void handleEvent(Event event) {
         getContainer().updateButtons();
-        
+
         Preferences p = Activator.getDefault().getPluginPreferences();
         p.setValue(PREF_PROTOCOL, protocol.getText());
         p.setValue(PREF_HOST, host.getText());
         p.setValue(PREF_USER, user.getText());
-        
+
         root_password.setEnabled(!user.getText().equals("root"));
         prefs.setEnabled(protocol.getText().equals(protocols[1]));
     }
@@ -139,7 +139,7 @@ class WizardLoginPage extends WizardPage implements Listener {
         gd.widthHint = 200;
         root_password.setLayoutData(gd);
         root_password.addListener(SWT.KeyUp, this);
-        
+
         Preferences p = Activator.getDefault().getPluginPreferences();
         p.setDefault(PREF_PROTOCOL, protocols[0]);
         protocol.setText(p.getString(PREF_PROTOCOL));

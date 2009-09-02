@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -23,17 +23,17 @@ import org.eclipse.tm.tcf.services.IBreakpoints;
 
 
 public class TCFBreakpointsStatus {
-    
+
     private final IBreakpoints service;
     private final Map<String,Map<String,Object>> status = new HashMap<String,Map<String,Object>>();
     private final Set<ITCFBreakpointListener> listeners = new HashSet<ITCFBreakpointListener>();
-    
+
     private static final Map<String,Object> status_not_supported = new HashMap<String,Object>();
-    
+
     static {
         status_not_supported.put(IBreakpoints.STATUS_ERROR, "Not supported");
     }
-    
+
     TCFBreakpointsStatus(TCFLaunch launch) {
         assert Protocol.isDispatchThread();
         service = launch.getChannel().getRemoteService(IBreakpoints.class);
@@ -74,7 +74,7 @@ public class TCFBreakpointsStatus {
             });
         }
     }
-    
+
     public Map<String,Object> getStatus(String id) {
         assert id != null;
         assert Protocol.isDispatchThread();
@@ -92,12 +92,12 @@ public class TCFBreakpointsStatus {
             return status_not_supported;
         }
     }
-    
+
     public void addListener(ITCFBreakpointListener listener) {
         assert Protocol.isDispatchThread();
         listeners.add(listener);
     }
-    
+
     public void removeListener(ITCFBreakpointListener listener) {
         assert Protocol.isDispatchThread();
         listeners.remove(listener);

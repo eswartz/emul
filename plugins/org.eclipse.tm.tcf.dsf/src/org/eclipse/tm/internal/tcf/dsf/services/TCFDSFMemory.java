@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -33,21 +33,21 @@ import org.osgi.framework.BundleContext;
 
 
 public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.dsf.debug.service.IMemory {
-    
+
     private static class MemoryChangedEvent extends AbstractDMEvent<IMemoryDMContext> implements IMemoryChangedEvent {
         IAddress[] fAddresses;
         IDMContext fContext;
-        
+
         public MemoryChangedEvent(IMemoryDMContext context, IAddress[] addresses) {
             super(context);
             fAddresses = addresses;
         }
-    
+
         public IAddress[] getAddresses() {
             return fAddresses;
         }
     }
-    
+
     private final org.eclipse.tm.tcf.services.IMemory.MemoryListener mem_listener =
         new org.eclipse.tm.tcf.services.IMemory.MemoryListener() {
 
@@ -76,14 +76,14 @@ public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.d
                 }
             }
     };
-    
+
     private final org.eclipse.tm.tcf.services.IMemory tcf_mem_service;
 
     public TCFDSFMemory(DsfSession session, IChannel channel, final RequestMonitor monitor) {
         super(session);
         tcf_mem_service = channel.getRemoteService(org.eclipse.tm.tcf.services.IMemory.class);
         if (tcf_mem_service != null) tcf_mem_service.addListener(mem_listener);
-        initialize(new RequestMonitor(getExecutor(), monitor) { 
+        initialize(new RequestMonitor(getExecutor(), monitor) {
             @Override
             protected void handleSuccess() {
                 String[] class_names = {
@@ -96,7 +96,7 @@ public class TCFDSFMemory extends AbstractDsfService implements org.eclipse.dd.d
         });
     }
 
-    @Override 
+    @Override
     public void shutdown(RequestMonitor monitor) {
         unregister();
         super.shutdown(monitor);

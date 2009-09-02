@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -17,7 +17,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 public class TCFColumnPresentationExpression implements IColumnPresentation {
 
     public static final String PRESENTATION_ID = "Expressions";
-    
+
     /**
      * Presentation column IDs.
      */
@@ -33,7 +33,7 @@ public class TCFColumnPresentationExpression implements IColumnPresentation {
         COL_DEC_VALUE,
         COL_HEX_VALUE,
     };
-    
+
     private static String[] headers  = {
         "Name",
         "Type",
@@ -46,7 +46,7 @@ public class TCFColumnPresentationExpression implements IColumnPresentation {
         COL_DEC_VALUE,
         COL_HEX_VALUE,
     };
-    
+
     public void dispose() {
     }
 

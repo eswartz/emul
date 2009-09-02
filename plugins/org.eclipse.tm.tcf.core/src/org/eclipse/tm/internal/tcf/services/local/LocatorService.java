@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -50,7 +50,7 @@ import org.eclipse.tm.tcf.services.ILocator;
  */
 // TODO: research usage of DNS-SD (DNS Service Discovery) to discover TCF peers
 public class LocatorService implements ILocator {
-    
+
     private static final int DISCOVEY_PORT = 1534;
     private static final int MAX_PACKET_SIZE = 9000 - 40 - 8;
     private static final int PREF_PACKET_SIZE = 1500 - 40 - 8;
@@ -58,28 +58,28 @@ public class LocatorService implements ILocator {
     private static LocatorService locator;
     private static final Map<String,IPeer> peers = new HashMap<String,IPeer>();
     private static final ArrayList<LocatorListener> listeners = new ArrayList<LocatorListener>();
-    
+
     private final HashSet<SubNet> subnets = new HashSet<SubNet>();
     private final ArrayList<Slave> slaves = new ArrayList<Slave>();
     private final byte[] inp_buf = new byte[MAX_PACKET_SIZE];
     private final byte[] out_buf = new byte[MAX_PACKET_SIZE];
-    
+
     private InetAddress loopback_addr;
-    
+
     private static class SubNet {
         final int prefix_length;
         final InetAddress address;
         final InetAddress broadcast;
-        
+
         long last_slaves_req_time;
         boolean send_all_ok;
-        
+
         SubNet(int prefix_length, InetAddress address, InetAddress broadcast) {
             this.prefix_length = prefix_length;
             this.address = address;
             this.broadcast = broadcast;
         }
-        
+
         boolean contains(InetAddress addr) {
             if (addr == null) return false;
             byte[] a1 = addr.getAddress();
@@ -98,7 +98,7 @@ public class LocatorService implements ILocator {
             }
             return true;
         }
-        
+
         @Override
         public boolean equals(Object o) {
             if (!(o instanceof SubNet)) return false;
@@ -108,44 +108,44 @@ public class LocatorService implements ILocator {
                 broadcast.equals(x.broadcast) &&
                 address.equals(x.address);
         }
-        
+
         @Override
         public int hashCode() {
             return broadcast.hashCode();
         }
-        
+
         @Override
         public String toString() {
             return broadcast.getHostAddress() + "/" + prefix_length;
         }
     }
-    
+
     private static class Slave {
         final InetAddress address;
         final int port;
-        
+
         /* Time of last packet receiver from this slave */
-        long last_packet_time;          
-        
+        long last_packet_time;
+
         /* Time of last REQ_SLAVES packet received from this slave */
         long last_req_slaves_time;
-        
+
         Slave(InetAddress address, int port) {
             this.address = address;
             this.port = port;
         }
-        
+
         @Override
         public String toString() {
             return address.getHostAddress() + ":" + port;
         }
     }
-    
+
     private static LocalPeer local_peer;
-    
+
     private DatagramSocket socket;
     private long last_master_packet_time;
-    
+
     private Thread timer_thread = new Thread() {
         public void run() {
             while (true) {
@@ -167,7 +167,7 @@ public class LocatorService implements ILocator {
             }
         }
     };
-    
+
     private Thread input_thread = new Thread() {
         public void run() {
             for (;;) {
@@ -192,10 +192,10 @@ public class LocatorService implements ILocator {
             }
         }
     };
-    
+
     static {
         ServiceManager.addServiceProvider(new IServiceProvider() {
-            
+
             public IService[] getLocalService(final IChannel channel) {
                 channel.addCommandServer(locator, new IChannel.ICommandServer() {
                     public void command(IToken token, String name, byte[] data) {
@@ -210,7 +210,7 @@ public class LocatorService implements ILocator {
             }
         });
     }
-    
+
     public LocatorService() {
         locator = this;
         try {
@@ -264,7 +264,7 @@ public class LocatorService implements ILocator {
     public static LocalPeer getLocalPeer() {
         return local_peer;
     }
-    
+
     public static LocatorListener[] getListeners() {
         return listeners.toArray(new LocatorListener[listeners.size()]);
     }
@@ -315,7 +315,7 @@ public class LocatorService implements ILocator {
             else if (name.equals("getPeers")) {
                 int i = 0;
                 Object[] arr = new Object[peers.size()];
-                for (IPeer p : peers.values()) arr[i++] = p.getAttributes(); 
+                for (IPeer p : peers.values()) arr[i++] = p.getAttributes();
                 channel.sendResult(token, JSON.toJSONSequence(new Object[]{ null, arr }));
             }
             else {
@@ -326,7 +326,7 @@ public class LocatorService implements ILocator {
             channel.terminate(x);
         }
     }
-    
+
     private void refresh_timer() {
         long time = System.currentTimeMillis();
         /* Cleanup slave table */
@@ -377,7 +377,7 @@ public class LocatorService implements ILocator {
         refreshSubNetList();
         sendAll(null, 0, null, time);
     }
-    
+
     private Slave addSlave(InetAddress addr, int port, long timestamp) {
         for (Slave s : slaves) {
             if (s.port == port && s.address.equals(addr)) {
@@ -394,9 +394,9 @@ public class LocatorService implements ILocator {
         sendSlaveInfo(s, time);
         return s;
     }
-    
+
     private void refreshSubNetList() {
-        HashSet<SubNet> set = new HashSet<SubNet>(); 
+        HashSet<SubNet> set = new HashSet<SubNet>();
         try {
             for (Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces(); e.hasMoreElements();) {
                 NetworkInterface f = e.nextElement();
@@ -418,7 +418,7 @@ public class LocatorService implements ILocator {
                 }
                 catch (Exception x) {
                     // Java 1.5 or older
-                    // TODO: need a better way to get broadcast addresses on Java 1.5 VM 
+                    // TODO: need a better way to get broadcast addresses on Java 1.5 VM
                     Enumeration<InetAddress> n = f.getInetAddresses();
                     while (n.hasMoreElements()) {
                         InetAddress addr = n.nextElement();
@@ -448,7 +448,7 @@ public class LocatorService implements ILocator {
             subnets.add(s);
         }
     }
-    
+
     private void sendPeersRequest(InetAddress addr, int port) {
         out_buf[4] = CONF_REQ_INFO;
         for (SubNet n : subnets) {
@@ -469,7 +469,7 @@ public class LocatorService implements ILocator {
             }
         }
     }
-    
+
     private void sendPeerInfo(IPeer peer, InetAddress addr, int port) {
         Map<String,String> attrs = peer.getAttributes();
         if (attrs.get(IPeer.ATTR_IP_HOST) == null) return;
@@ -480,12 +480,12 @@ public class LocatorService implements ILocator {
             for (String key : attrs.keySet()) {
                 String s = key + "=" + attrs.get(key);
                 byte[] bt = s.getBytes("UTF-8");
-                if (i + bt.length >= out_buf.length) break; 
+                if (i + bt.length >= out_buf.length) break;
                 System.arraycopy(bt, 0, out_buf, i, bt.length);
                 i += bt.length;
                 out_buf[i++] = 0;
             }
-            
+
             InetAddress peer_addr = InetAddress.getByName(attrs.get(IPeer.ATTR_IP_HOST));
             for (SubNet subnet : subnets) {
                 if (peer instanceof RemotePeer) {
@@ -513,7 +513,7 @@ public class LocatorService implements ILocator {
             Protocol.log("Cannot send datagram packet", x);
         }
     }
-    
+
     private void sendEmptyPacket(InetAddress addr, int port) {
         out_buf[4] = CONF_SLAVES_INFO;
         for (SubNet n : subnets) {
@@ -535,7 +535,7 @@ public class LocatorService implements ILocator {
             }
         }
     }
-    
+
     private void sendAll(InetAddress addr, int port, Slave sl, long time) {
         for (SubNet n : subnets) n.send_all_ok = false;
         for (IPeer peer : peers.values()) sendPeerInfo(peer, addr, port);
@@ -544,7 +544,7 @@ public class LocatorService implements ILocator {
         }
         sendEmptyPacket(addr, port);
     }
-    
+
     private void sendSlavesRequest(InetAddress addr, int port) {
         try {
             out_buf[4] = CONF_REQ_SLAVES;
@@ -554,7 +554,7 @@ public class LocatorService implements ILocator {
             Protocol.log("Cannot send datagram packet", x);
         }
     }
-    
+
     private void sendSlaveInfo(Slave x, long time) {
         out_buf[4] = CONF_SLAVES_INFO;
         for (SubNet n : subnets) {
@@ -577,7 +577,7 @@ public class LocatorService implements ILocator {
             }
         }
     }
-    
+
     private void sendSlavesInfo(InetAddress addr, int port, long time) {
         out_buf[4] = CONF_SLAVES_INFO;
         for (SubNet n : subnets) {
@@ -608,7 +608,7 @@ public class LocatorService implements ILocator {
             }
         }
     }
-    
+
     private boolean isRemote(InetAddress address, int port) {
         if (port != socket.getLocalPort()) return true;
         for (SubNet s : subnets) {
@@ -616,7 +616,7 @@ public class LocatorService implements ILocator {
         }
         return true;
     }
-    
+
     private void handleDatagramPacket(DatagramPacket p) {
         try {
             long time = System.currentTimeMillis();
@@ -628,7 +628,7 @@ public class LocatorService implements ILocator {
             if (buf[2] != 'F') return;
             if (buf[3] != CONF_VERSION) return;
             int remote_port = p.getPort();
-            InetAddress remote_address = p.getAddress(); 
+            InetAddress remote_address = p.getAddress();
             if (isRemote(remote_address, remote_port)) {
                 Slave sl = null;
                 if (p.getPort() != DISCOVEY_PORT) {
@@ -667,7 +667,7 @@ public class LocatorService implements ILocator {
             Protocol.log("Invalid datagram packet received", x);
         }
     }
-    
+
     private void handlePeerInfoPacket(DatagramPacket p) {
         try {
             Map<String,String> map = new HashMap<String,String>();
@@ -743,12 +743,12 @@ public class LocatorService implements ILocator {
             Protocol.log("Invalid datagram packet received", x);
         }
     }
-    
+
     private void handleReqSlavesPacket(DatagramPacket p, Slave sl, long time) {
         if (sl != null) sl.last_req_slaves_time = time;
         sendSlavesInfo(p.getAddress(), p.getPort(),  time);
     }
-    
+
     /*----------------------------------------------------------------------------------*/
 
     public static LocatorService getLocator() {
@@ -758,7 +758,7 @@ public class LocatorService implements ILocator {
     public String getName() {
         return NAME;
     }
-        
+
     public Map<String,IPeer> getPeers() {
         assert Protocol.isDispatchThread();
         return peers;

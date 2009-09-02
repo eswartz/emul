@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -27,11 +27,11 @@ public class ExpressionsProxy implements IExpressions {
     private final IChannel channel;
     private final Map<ExpressionsListener,IChannel.IEventListener> listeners =
         new HashMap<ExpressionsListener,IChannel.IEventListener>();
-    
+
     private class Context implements Expression {
-        
+
         private final Map<String,Object> props;
-        
+
         Context(Map<String,Object> props) {
             this.props = props;
         }
@@ -78,18 +78,18 @@ public class ExpressionsProxy implements IExpressions {
             return (String)props.get(PROP_TYPE);
         }
     }
-    
+
     private class ContextValue implements Value {
 
         private final byte[] value;
         private final Map<String,Object> props;
-        
+
         ContextValue(byte[] value, Map<String,Object> props) {
             if (props == null) props = new HashMap<String,Object>();
             this.value = value;
             this.props = props;
         }
-        
+
         public Map<String, Object> getProperties() {
             return props;
         }
@@ -129,7 +129,7 @@ public class ExpressionsProxy implements IExpressions {
             return n.booleanValue();
         }
     }
-    
+
     public ExpressionsProxy(IChannel channel) {
         this.channel = channel;
     }

@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -29,12 +29,12 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
 
     private static class StepStateMachine extends TCFActionStepInto {
-        
+
         private final IDebugCommandRequest monitor;
         private final Runnable done;
         private final TCFNodeExecContext node;
         private TCFNodeStackFrame frame;
-        
+
         StepStateMachine(TCFModel model, IDebugCommandRequest monitor,
                 IRunControl.RunControlContext ctx, boolean src_step, Runnable done) {
             super(model.getLaunch(), ctx, src_step);
@@ -42,7 +42,7 @@ public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
             this.done = done;
             node = (TCFNodeExecContext)model.getNode(context_id);
         }
-        
+
         @Override
         protected TCFDataCache<TCFContextState> getContextState() {
             if (node == null) return null;
@@ -74,7 +74,7 @@ public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
         protected TCFDataCache<?> getStackTrace() {
             return node.getStackTrace();
         }
-        
+
         @Override
         protected void exit(Throwable error) {
             if (exited) return;

@@ -20,14 +20,14 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  * The class represents manually configured (user defined) TCF peers (targets).
  * Unlike auto-discovered peers, manually configured ones are persistent -
  * they exist until explicitly deleted by user.
- * Eclipse plug-in state storage is used to keep the configuration data.    
+ * Eclipse plug-in state storage is used to keep the configuration data.
  */
 public class TCFUserDefPeer extends AbstractPeer {
 
     public TCFUserDefPeer(Map<String, String> attrs) {
         super(attrs);
     }
-    
+
     /**
      * Load manually configured peers from persistent storage.
      */
@@ -57,7 +57,7 @@ public class TCFUserDefPeer extends AbstractPeer {
             Activator.log("Cannot read peer list", x);
         }
     }
-    
+
     /**
      * Save manually configured peers to persistent storage.
      */

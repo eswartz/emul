@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -22,24 +22,24 @@ import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
 
 class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
-    
+
     private final TCFTestSuite test_suite;
     private final IDiagnostics diag;
     private final IRunControl rc;
-    
+
     private final HashMap<String,IRunControl.RunControlContext> map =
         new HashMap<String,IRunControl.RunControlContext>();
     private final HashSet<String> process_ids = new HashSet<String>();
-    
+
     private int cnt;
     private int wait_cnt;
-    
+
     TestAttachTerminate(TCFTestSuite test_suite, IChannel channel) {
         this.test_suite = test_suite;
         diag = channel.getRemoteService(IDiagnostics.class);
         rc = channel.getRemoteService(IRunControl.class);
     }
-    
+
     public void start() {
         if (diag == null) {
             test_suite.done(this, null);
@@ -65,7 +65,7 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
             });
         }
     }
-    
+
     private void startProcess() {
         if (test_suite.cancel || cnt == 4) {
             if (!process_ids.isEmpty()) {
@@ -127,7 +127,7 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
             }
         });
     }
-    
+
     private void exit(Throwable x) {
         if (!test_suite.isActive(this)) return;
         if (rc != null) rc.removeListener(this);
@@ -161,7 +161,7 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
     }
 
     public void contextException(String context, String msg) {
-        IRunControl.RunControlContext ctx = map.get(context);  
+        IRunControl.RunControlContext ctx = map.get(context);
         if (ctx == null) return;
         if (process_ids.contains(ctx.getParentID())) {
             exit(new Error("Unexpected 'contextException' event for " + context + ": " + msg));
@@ -181,7 +181,7 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
     public void contextSuspended(String context, String pc, String reason,
             Map<String, Object> params) {
         assert context != null;
-        IRunControl.RunControlContext ctx = map.get(context);  
+        IRunControl.RunControlContext ctx = map.get(context);
         if (ctx == null) return;
         if (process_ids.contains(ctx.getParentID())) {
             ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {

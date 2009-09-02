@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -37,7 +37,7 @@ public interface IMemory extends IService {
         PROP_START_BOUND = "StartBound",        /** Number, lowest address (inclusive) which is valid for the context */
         PROP_END_BOUND = "EndBound",            /** Number, highest address (inclusive) which is valid for the context */
         PROP_ACCESS_TYPES = "AccessTypes";      /** Array of String, the access types allowed for this context */
-    
+
     /**
      * Values of "AccessTypes".
      * Target system can support multiple different memory access types, like instruction and data access.
@@ -58,11 +58,11 @@ public interface IMemory extends IService {
         ACCESS_PHYSICAL = "physical",           /** Context uses physical addresses */
         ACCESS_CACHE = "cache",                 /** Context is a cache */
         ACCESS_TLB = "tlb";                     /** Context is a TLB memory */
-    
+
     /**
      * Retrieve context info for given context ID.
-     *   
-     * @param id – context ID. 
+     *
+     * @param id – context ID.
      * @param done - call back interface called when operation is completed.
      * @return - pending command handle.
      */
@@ -89,7 +89,7 @@ public interface IMemory extends IService {
      * all services. In other words, all services access same hierarchy of contexts,
      * with same IDs, however, each service accesses its own subset of context's
      * attributes and functionality, which is relevant to that service.
-     *  
+     *
      * @param parent_context_id – parent context ID. Can be null –
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
      * by previous getChildren commands.
@@ -126,62 +126,62 @@ public interface IMemory extends IService {
 
     interface MemoryContext {
 
-        /** 
+        /**
          * Get context ID.
          * @return context ID.
          */
         String getID();
 
-        /** 
+        /**
          * Get parent context ID.
          * @return parent ID.
          */
         String getParentID();
-        
+
         /**
          * Get process ID, if applicable.
          * @return process ID.
          */
         String getProcessID();
-        
+
         /**
          * Get memory endianess.
          * @return true if memory id big-endian.
          */
         boolean isBigEndian();
-        
+
         /**
          * Get memory address size.
          * @return number of bytes used to store memory address value.
          */
         int getAddressSize();
-        
+
         /**
          * Get memory context name.
          * The name can be used for UI purposes.
          * @return context name.
          */
         String getName();
-        
+
         /**
          * Get lowest address (inclusive) which is valid for the context.
          * @return lowest address.
          */
         Number getStartBound();
-        
+
         /**
          * Get highest address (inclusive) which is valid for the context.
          * @return highest address.
          */
         Number getEndBound();
-        
+
         /**
          * Get the access types allowed for this context.
          * @return collection of access type names.
          */
         Collection<String> getAccessTypes();
 
-        /** 
+        /**
          * Get context properties.
          * @return all available context properties.
          */
@@ -218,7 +218,7 @@ public interface IMemory extends IService {
     class MemoryError extends Exception {
 
         private static final long serialVersionUID = 1L;
-        
+
         public MemoryError(String msg) {
             super(msg);
         }
@@ -238,7 +238,7 @@ public interface IMemory extends IService {
     interface ErrorOffset {
 
         // Error may have per byte information
-        final static int 
+        final static int
             BYTE_VALID        = 0x00,
             BYTE_UNKNOWN      = 0x01, // e.g. out of range
             BYTE_INVALID      = 0x02,
@@ -270,7 +270,7 @@ public interface IMemory extends IService {
 
     /**
      * Memory event listener is notified when memory context hierarchy
-     * changes, and when memory is modified by memory service commands. 
+     * changes, and when memory is modified by memory service commands.
      */
     interface MemoryListener {
 
@@ -290,7 +290,7 @@ public interface IMemory extends IService {
         void contextRemoved(String[] context_ids);
 
         /**
-         * Called when target memory content was changed and clients 
+         * Called when target memory content was changed and clients
          * need to update themselves. Clients, at least, should invalidate
          * corresponding cached memory data.
          * Not every change is notified - it is not possible,

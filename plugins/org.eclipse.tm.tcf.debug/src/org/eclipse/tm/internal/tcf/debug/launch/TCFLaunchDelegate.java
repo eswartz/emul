@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -40,14 +40,14 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
             int cnt;
             public void run() {
                 // Need to delay at least one dispatch cycle to work around
-                // a possible racing between thread that calls getLaunch() and 
-                // the process of activation of other TCF plug-ins. 
+                // a possible racing between thread that calls getLaunch() and
+                // the process of activation of other TCF plug-ins.
                 if (cnt++ < 2) Protocol.invokeLater(this);
                 else done(new TCFLaunch(configuration, mode));
             }
         }.getE();
     }
-    
+
     public void launch(final ILaunchConfiguration configuration, final String mode,
             final ILaunch launch, final IProgressMonitor monitor) throws CoreException {
         String local_id = null;

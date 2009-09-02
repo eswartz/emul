@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -26,7 +26,7 @@ public class TCFModelManager {
     private final Map<TCFLaunch,TCFModel> models = new HashMap<TCFLaunch,TCFModel>();
 
     private final TCFLaunch.Listener tcf_launch_listener = new TCFLaunch.Listener() {
-        
+
         public void onCreated(TCFLaunch launch) {
             assert Protocol.isDispatchThread();
             assert models.get(launch) == null;
@@ -66,7 +66,7 @@ public class TCFModelManager {
     };
 
     private final ILaunchesListener debug_launch_listener = new ILaunchesListener() {
-        
+
         public void launchesAdded(final ILaunch[] launches) {
         }
 

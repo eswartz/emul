@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008, 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -20,15 +20,15 @@ import org.osgi.framework.Bundle;
 /**
  * TCF clients can implement ITCFLaunchContext to provide information about
  * workspace projects to TCF Launch Configuration.
- * 
+ *
  * The information includes default values for launch configuration attributes,
  * list of executable binary files, etc.
- * 
+ *
  * Since each project type can have its own methods to retrieve relevant information,
  * there should be implementation of this interface for each project type that support TCF.
- * 
+ *
  * Implementation should be able to examine current IDE state (like active editor input source,
- * project explorer selection, etc.) and figure out an "active project". 
+ * project explorer selection, etc.) and figure out an "active project".
  */
 public class TCFLaunchContext {
 

@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -23,15 +23,15 @@ import org.eclipse.tm.tcf.services.IProcesses;
 
 
 public class ProcessesProxy implements IProcesses {
-    
+
     private final IChannel channel;
     private final Map<ProcessesListener,IChannel.IEventListener> listeners =
         new HashMap<ProcessesListener,IChannel.IEventListener>();
-    
+
     private class ProcessContext implements IProcesses.ProcessContext {
 
         private final Map<String,Object> props;
-        
+
         ProcessContext(Map<String,Object> props) {
             this.props = props;
         }
@@ -108,7 +108,7 @@ public class ProcessesProxy implements IProcesses {
             return "[Processes Context " + props.toString() + "]";
         }
     }
-    
+
     public ProcessesProxy(IChannel channel) {
         this.channel = channel;
     }
@@ -293,7 +293,7 @@ public class ProcessesProxy implements IProcesses {
         }
         return arr;
     }
-    
+
     @SuppressWarnings("unchecked")
     private static Map<String,String> toEnvMap(Object o) {
         Map<String,String> m = new HashMap<String,String>();
@@ -306,7 +306,7 @@ public class ProcessesProxy implements IProcesses {
         }
         return m;
     }
-    
+
     @SuppressWarnings("unchecked")
     private static Collection<Map<String,Object>> toSignalList(Object o) {
         if (o == null) return null;

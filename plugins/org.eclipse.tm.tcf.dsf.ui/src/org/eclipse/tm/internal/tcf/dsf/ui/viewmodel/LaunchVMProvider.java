@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -30,12 +30,12 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationCont
 
 
 @SuppressWarnings("restriction")
-public class LaunchVMProvider extends AbstractDMVMProvider 
+public class LaunchVMProvider extends AbstractDMVMProvider
 implements IDebugEventSetListener, ILaunchesListener2 {
 
     @ThreadSafe
     public LaunchVMProvider(AbstractVMAdapter adapter,
-            IPresentationContext presentationContext, 
+            IPresentationContext presentationContext,
             DsfSession session, ILaunch launch) {
         super(adapter, presentationContext, session);
 
@@ -44,7 +44,7 @@ implements IDebugEventSetListener, ILaunchesListener2 {
 
         IVMNode threads_node = new ExecutableContextLayoutNode(this, getSession());
         addChildNodes(launch_node, new IVMNode[] { threads_node });
-        
+
         IVMNode stack_frames_node = new StackFramesVMNode(this, getSession());
         addChildNodes(threads_node, new IVMNode[] { stack_frames_node, threads_node });
 
@@ -55,14 +55,14 @@ implements IDebugEventSetListener, ILaunchesListener2 {
 
     public void handleDebugEvents(final DebugEvent[] events) {
         if (isDisposed()) return;
-        
-        // We're in session's executor thread.  Re-dispatch to VM Adapter 
+
+        // We're in session's executor thread.  Re-dispatch to VM Adapter
         // executor thread and then call root layout node.
         try {
             getExecutor().execute(new Runnable() {
                 public void run() {
                     if (isDisposed()) return;
-    
+
                     for (final DebugEvent event : events) {
                         handleEvent(event);
                     }
@@ -70,8 +70,8 @@ implements IDebugEventSetListener, ILaunchesListener2 {
             });
         }
         catch (RejectedExecutionException e) {
-            // Ignore.  This exception could be thrown if the provider is being 
-            // shut down.  
+            // Ignore.  This exception could be thrown if the provider is being
+            // shut down.
         }
     }
 
@@ -83,31 +83,31 @@ implements IDebugEventSetListener, ILaunchesListener2 {
     }
 
     public void launchesAdded(ILaunch[] launches) {
-        handleLaunchesEvent(new LaunchesEvent(launches, LaunchesEvent.Type.ADDED)); 
+        handleLaunchesEvent(new LaunchesEvent(launches, LaunchesEvent.Type.ADDED));
     }
 
     public void launchesRemoved(ILaunch[] launches) {
-        handleLaunchesEvent(new LaunchesEvent(launches, LaunchesEvent.Type.REMOVED)); 
+        handleLaunchesEvent(new LaunchesEvent(launches, LaunchesEvent.Type.REMOVED));
     }
 
     public void launchesChanged(ILaunch[] launches) {
-        handleLaunchesEvent(new LaunchesEvent(launches, LaunchesEvent.Type.CHANGED)); 
+        handleLaunchesEvent(new LaunchesEvent(launches, LaunchesEvent.Type.CHANGED));
     }
 
     public void launchesTerminated(ILaunch[] launches) {
-        handleLaunchesEvent(new LaunchesEvent(launches, LaunchesEvent.Type.TERMINATED)); 
+        handleLaunchesEvent(new LaunchesEvent(launches, LaunchesEvent.Type.TERMINATED));
     }
 
     private void handleLaunchesEvent(final LaunchesEvent event) {
         if (isDisposed()) return;
-        
-        // We're in session's executor thread.  Re-dispach to VM Adapter 
+
+        // We're in session's executor thread.  Re-dispach to VM Adapter
         // executor thread and then call root layout node.
         try {
             getExecutor().execute(new Runnable() {
                 public void run() {
                     if (isDisposed()) return;
-    
+
                     IRootVMNode rootLayoutNode = getRootVMNode();
                     if (rootLayoutNode != null && rootLayoutNode.getDeltaFlags(event) != 0) {
                         handleEvent(event);
@@ -115,8 +115,8 @@ implements IDebugEventSetListener, ILaunchesListener2 {
                 }});
         }
         catch (RejectedExecutionException e) {
-            // Ignore.  This exception could be thrown if the provider is being 
-            // shut down.  
+            // Ignore.  This exception could be thrown if the provider is being
+            // shut down.
         }
     }
 }

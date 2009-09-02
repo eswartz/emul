@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -73,7 +73,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             }
         };
     }
-    
+
     @Override
     public void dispose() {
         context.reset(null);
@@ -141,7 +141,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             result.setLabel(id, 0);
         }
     }
-    
+
     private void setLabel(ILabelUpdate result, int col, int radix) {
         IRegisters.RegistersContext ctx = context.getData();
         Throwable error = value.getError();
@@ -165,7 +165,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             }
         }
     }
-    
+
     private String toNumberString(int radix) {
         IRegisters.RegistersContext ctx = context.getData();
         byte[] data = value.getData();
@@ -227,7 +227,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         value.reset();
         addModelDelta(IModelDelta.STATE);
     }
-    
+
     void onRegistersChanged() {
         context.reset();
         value.reset();
@@ -255,10 +255,10 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         assert element == this;
         if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(column_id)) {
             return new TextCellEditor(parent);
-        } 
+        }
         if (TCFColumnPresentationRegister.COL_DEC_VALUE.equals(column_id)) {
             return new TextCellEditor(parent);
-        } 
+        }
         return null;
     }
 
@@ -356,7 +356,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             }.getE();
         }
     };
-    
+
     public ICellModifier getCellModifier(IPresentationContext context, Object element) {
         assert element == this;
         return cell_modifier;

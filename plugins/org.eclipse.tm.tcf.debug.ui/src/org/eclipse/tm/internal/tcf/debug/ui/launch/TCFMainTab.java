@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008, 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -102,14 +102,14 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             }
         });
     }
-    
+
     private void createApplicationGroup(Composite parent) {
         Group group = new Group(parent, SWT.NONE);
         GridLayout layout = new GridLayout();
         group.setLayout(layout);
         group.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         group.setText("Application");
-        
+
         createLocalExeFileGroup(group);
         createRemoteExeFileGroup(group);
     }
@@ -123,13 +123,13 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         comp.setLayout(layout);
         GridData gd = new GridData(GridData.FILL_HORIZONTAL);
         comp.setLayoutData(gd);
-        
+
         Label program_label = new Label(comp, SWT.NONE);
         program_label.setText("Local File Path:");
         gd = new GridData();
         gd.horizontalSpan = 3;
         program_label.setLayoutData(gd);
-        
+
         local_program_text = new Text(comp, SWT.SINGLE | SWT.BORDER);
         local_program_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         local_program_text.addModifyListener(new ModifyListener() {
@@ -165,13 +165,13 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         comp.setLayout(layout);
         GridData gd = new GridData(GridData.FILL_HORIZONTAL);
         comp.setLayoutData(gd);
-        
+
         Label program_label = new Label(comp, SWT.NONE);
         program_label.setText("Remote File Path:");
         gd = new GridData();
         gd.horizontalSpan = 3;
         program_label.setLayoutData(gd);
-        
+
         remote_program_text = new Text(comp, SWT.SINGLE | SWT.BORDER);
         remote_program_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         remote_program_text.addModifyListener(new ModifyListener() {
@@ -201,13 +201,13 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             }
         });
     }
-    
+
     @Override
     protected void updateLaunchConfigurationDialog() {
         super.updateLaunchConfigurationDialog();
         working_dir_text.setEnabled(!default_dir_button.getSelection());
     }
-    
+
     private void createTerminalOption(Composite parent, int colSpan) {
         Composite terminal_comp = new Composite(parent, SWT.NONE);
         GridLayout terminal_layout = new GridLayout();
@@ -318,7 +318,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         try {
             IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
             ILabelProvider label_provider = new LabelProvider() {
-                
+
                 @Override
                 public String getText(Object element) {
                     if (element == null) return "";
@@ -349,7 +349,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             setErrorMessage("Cannot read launch configuration: " + init_error);
             return false;
         }
-        
+
         String project_name = project_text.getText().trim();
         if (project_name.length() != 0) {
             IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(project_name);

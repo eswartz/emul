@@ -6,18 +6,18 @@ import org.eclipse.debug.core.commands.IEnabledStateRequest;
 import org.eclipse.debug.core.commands.ITerminateHandler;
 
 public class TcfTerminateCommand implements ITerminateHandler {
-    
+
     public TcfTerminateCommand(DsfSession session) {
-        
+
     }
-    
+
     public void dispose() {
-        
+
     }
 
     public void canExecute(IEnabledStateRequest request) {
         // TODO Auto-generated method stub
-        
+
     }
 
     public boolean execute(IDebugCommandRequest request) {

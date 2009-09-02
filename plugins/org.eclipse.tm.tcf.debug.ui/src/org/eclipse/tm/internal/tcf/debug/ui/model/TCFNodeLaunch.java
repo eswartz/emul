@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -23,8 +23,8 @@ import org.eclipse.tm.tcf.services.IRunControl;
 
 
 public class TCFNodeLaunch extends TCFNode {
-    
-    private final TCFChildrenExecContext children; 
+
+    private final TCFChildrenExecContext children;
 
     TCFNodeLaunch(final TCFModel model) {
         super(model);
@@ -52,7 +52,7 @@ public class TCFNodeLaunch extends TCFNode {
             }
         });
     }
-    
+
     private boolean searchTopFrame(TCFNodeExecContext e, ArrayList<TCFNodeStackFrame> frames, Runnable r) {
         if (!e.validateNode(r)) return false;
         TCFNodeStackFrame f = e.getTopFrame();
@@ -90,7 +90,7 @@ public class TCFNodeLaunch extends TCFNode {
         if (!children.isValid()) return -1;
         return children.getIndexOf(n);
     }
-    
+
     @Override
     public int getChildrenCount(IPresentationContext p) {
         if (!children.isValid()) return -1;
@@ -101,13 +101,13 @@ public class TCFNodeLaunch extends TCFNode {
     protected void getData(IChildrenCountUpdate result) {
         result.setChildCount(children.size());
     }
-    
+
     @Override
     protected void getData(IChildrenUpdate result) {
         TCFNode[] arr = children.toArray();
         int offset = 0;
-        int r_offset = result.getOffset(); 
-        int r_length = result.getLength(); 
+        int r_offset = result.getOffset();
+        int r_length = result.getLength();
         for (TCFNode n : arr) {
             if (offset >= r_offset && offset < r_offset + r_length) {
                 result.setChild(n, offset);
@@ -115,12 +115,12 @@ public class TCFNodeLaunch extends TCFNode {
             offset++;
         }
     }
-    
+
     @Override
     protected void getData(IHasChildrenUpdate result) {
         result.setHasChilren(children.size() > 0);
     }
-        
+
     void onContextAdded(IRunControl.RunControlContext context) {
         children.onContextAdded(context);
     }
@@ -128,7 +128,7 @@ public class TCFNodeLaunch extends TCFNode {
     void onContextAdded(IMemory.MemoryContext context) {
         children.onContextAdded(context);
     }
-    
+
     int getContextCount() {
         assert children.isValid();
         return children.size();

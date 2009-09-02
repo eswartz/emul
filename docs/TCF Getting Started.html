@@ -5,9 +5,9 @@
 </head>
 
 <body lang='EN-US'>
-  
+
 <h1>Target Communication Framework: Getting Started</h1>
- 
+
 <p>Copyright (c) 2007, 2008 Wind River Systems, Inc. Made available under the EPL v1.0
 <p>Direct comments, questions to the <a href="mailto:dsdp-tcf-dev@eclipse.org">dsdp-tcf-dev@eclipse.org</a> mailing list
 
@@ -24,7 +24,7 @@
 
 <h2><a name='Workspace'>Creating Eclipse Workspace</a></h2>
 
-<p>Eclipse can be used for developing clients for TCF in Java. 
+<p>Eclipse can be used for developing clients for TCF in Java.
 TCF host side code is organized into several Eclipse plug-in projects,
 below are steps to create and populate Eclipse workspace with TCF projects:</p>
 
@@ -98,7 +98,7 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
     <dt><b>org.eclipse.tm.tcf</b>
     <dd>This is the main TCF plugin. It contains Eclipse integration code for the framework.
     It is the only TCF plugin, which (together with its fragments) should be required by a TCF client. The rest of TCF plugins are
-    clients developed as a reference implementation or for demonstration purposes. 
+    clients developed as a reference implementation or for demonstration purposes.
     <p>
     <dt><b>org.eclipse.tm.tcf.core</b>
         <dd>This is a fragment of <b>org.eclipse.tm.tcf</b> plugin. It contains the framework itself and interfaces for standard services.
@@ -160,7 +160,7 @@ following changes in settings may be necessary:<ul>
        add <tt>_CRT_SECURE_NO_DEPRECATE</tt></li>
   <li>Project &gt; Properties &gt; Linker &gt; Input &gt; Additional Dependencies :
        add <tt>shell32.lib</tt></li>
-</ul></li> 
+</ul></li>
 </ul></p>
 
 <p>On <b>VxWorks</b>, line number mapping and the SysMonitor service (needed for RSE Processes
@@ -322,7 +322,7 @@ The integration has only been tested on Linux at this point.
 
 <p><code>cd &lt;<i>luadir</i>&gt;
 <br>curl -O http://www.lua.org/ftp/lua-5.1.4.tar.gz
-<br>tar zxf lua-5.1.4.tar.gz 
+<br>tar zxf lua-5.1.4.tar.gz
 <br>cd lua-5.1.4
 <br>make linux
 <br>make local

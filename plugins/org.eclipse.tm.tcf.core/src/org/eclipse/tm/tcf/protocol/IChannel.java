@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -18,7 +18,7 @@ import java.util.Collection;
  * A single channel may be used to communicate with multiple services.
  * Multiple channels may be used to connect the same peers, however no command or event
  * ordering is guaranteed across channels.
- * 
+ *
  * @noimplement This interface is not intended to be implemented by clients.
  * Clients can extend abstract implementations of IChannel: AbstractChannel or StreamChannel.
  */
@@ -47,13 +47,13 @@ public interface IChannel {
      * @param name - command name
      * @param args - command arguments encoded into array of bytes
      * @param done - call back object
-     * @return pending command handle 
+     * @return pending command handle
      */
     IToken sendCommand(IService service, String name, byte[] args, ICommandListener done);
 
     /**
      * Command listener interface. Clients implement this interface to
-     * receive command results.  
+     * receive command results.
      */
     interface ICommandListener {
 
@@ -105,11 +105,11 @@ public interface IChannel {
 
     /**
      * Get current level of out-bound traffic congestion.
-     * 
+     *
      * @return integer value in range –100..100, where –100 means no pending
      *         messages (no traffic), 0 means optimal load, and positive numbers
      *         indicate level of congestion.
-     * 
+     *
      * Note: in-bound traffic congestion is detected by framework and reported to
      * remote peer without client needed to be involved. Clients willing to provide
      * additional data about local congestion should register itself using
@@ -175,14 +175,14 @@ public interface IChannel {
      * Subscribe a command server. The server will be notified about command
      * messages received through this channel for given service.
      * @param service - local service implementation
-     * @param server - implementation of service commands listener 
+     * @param server - implementation of service commands listener
      */
     void addCommandServer(IService service, ICommandServer server);
 
     /**
      * Remove a command server.
      * @param service - local service implementation
-     * @param server - implementation of service commands listener 
+     * @param server - implementation of service commands listener
      */
     void removeCommandServer(IService service, ICommandServer server);
 
@@ -191,7 +191,7 @@ public interface IChannel {
      * Services usually define a service specific event listener interface,
      * which is implemented using this generic listener.
      * Clients should user service specific listener interface,
-     * unless no such interface is defined. 
+     * unless no such interface is defined.
      */
     interface IEventListener {
         /**
@@ -205,14 +205,14 @@ public interface IChannel {
     /**
      * Subscribe an event listener for given service.
      * @param service - remote service proxy
-     * @param server - implementation of service event listener 
+     * @param server - implementation of service event listener
      */
     void addEventListener(IService service, IEventListener listener);
 
     /**
      * Unsubscribe an event listener for given service.
      * @param service - remote service proxy
-     * @param server - implementation of service event listener 
+     * @param server - implementation of service event listener
      */
     void removeEventListener(IService service, IEventListener listener);
 
@@ -266,7 +266,7 @@ public interface IChannel {
      * Return null if implementation of the interface is not available.
      */
     <V extends IService> V getRemoteService(Class<V> service_interface);
-    
+
     /**
      * Install a service proxy object on this channel.
      * This method can be called only from channel open call-back.
@@ -276,10 +276,10 @@ public interface IChannel {
      * It is not allowed to install more then one proxy for a given service interface on
      * a particular channel.
      * @param service_interface - service interface class
-     * @param service_proxy - service proxy object    
+     * @param service_proxy - service proxy object
      */
     <V extends IService> void setServiceProxy(Class<V> service_interface, IService service_proxy);
-    
+
     /**
      * Close communication channel.
      */
@@ -290,7 +290,7 @@ public interface IChannel {
      * @param error - cause of channel termination
      */
     void terminate(Throwable error);
-    
+
     /**
      * Redirect this channel to given peer using this channel remote peer locator service as a proxy.
      * @param peer_id - peer that will become new remote communication endpoint of this channel

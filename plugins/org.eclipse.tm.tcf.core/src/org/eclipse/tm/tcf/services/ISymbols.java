@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -21,7 +21,7 @@ public interface ISymbols extends IService {
      * Service name.
      */
     static final String NAME = "Symbols";
-    
+
     enum SymbolClass {
         unknown,                // unknown symbol class
         value,                  // constant value
@@ -29,7 +29,7 @@ public interface ISymbols extends IService {
         function,               // function body
         type                    // a type
     }
-    
+
     enum TypeClass {
         unknown,                // unknown type class
         cardinal,               // unsigned integer
@@ -41,7 +41,7 @@ public interface ISymbols extends IService {
         enumeration,            // enumeration type.
         function                // function type.
     }
-    
+
     /**
      * Symbol context interface.
      */
@@ -51,38 +51,38 @@ public interface ISymbols extends IService {
          * @return symbol ID.
          */
         String getID();
-        
+
         /**
          * Get execution context ID (thread or process) that owns this instance of a symbol.
          * @return execution context ID.
          */
         String getExeContextID();
-        
+
         /**
          * Get symbol name.
          * @return symbol name or null.
          */
         String getName();
-        
+
         /**
          * Get symbol class.
          * @return symbol class.
          */
         SymbolClass getSymbolClass();
-        
+
         /**
          * Get symbol type class.
          * @return type class.
          */
         TypeClass getTypeClass();
-        
+
         /**
          * Get type ID.
-         * If the symbol is a type and not a 'typedef', return same as getID(). 
+         * If the symbol is a type and not a 'typedef', return same as getID().
          * @return type ID.
          */
         String getTypeID();
-        
+
         /**
          * Get base type ID.
          * If this symbol is a
@@ -90,46 +90,46 @@ public interface ISymbols extends IService {
          *   array type - return element type;
          *   function type - return function result type;
          *   class type - return base class;
-         * otherwise return null.  
+         * otherwise return null.
          * @return type ID.
          */
         String getBaseTypeID();
-        
+
         /**
          * Get index type ID.
          * If this symbol is a
          *   array type - return array index type;
-         * otherwise return null.  
+         * otherwise return null.
          * @return type ID.
          */
         String getIndexTypeID();
-        
+
         /**
          * Return value size of the symbol (or type).
          * @return size in bytes.
          */
         int getSize();
-        
+
         /**
-         * If symbol is an array type - return number of elements. 
+         * If symbol is an array type - return number of elements.
          * @return number of elements.
          */
         int getLength();
-        
+
         /**
          * Return offset from 'this' for member of class, struct or union.
          * @return offset in bytes.
          */
         int getOffset();
-        
+
         /**
          * Return address of the symbol.
          * @return address or null.
          */
         Number getAddress();
-        
+
         /**
-         * If symbol is a constant object, return its value. 
+         * If symbol is a constant object, return its value.
          * @return symbol value as array of bytes.
          */
         byte[] getValue();
@@ -162,8 +162,8 @@ public interface ISymbols extends IService {
     /**
      * Retrieve symbol context info for given symbol ID.
      * @see Symbol
-     *   
-     * @param id – symbol context ID. 
+     *
+     * @param id – symbol context ID.
      * @param done - call back interface called when operation is completed.
      * @return - pending command handle.
      */
@@ -185,9 +185,9 @@ public interface ISymbols extends IService {
     /**
      * Retrieve children IDs for given parent ID.
      * Meaning of the operation depends on parent kind:
-     * 1. struct, union, or class type - get fields; 
+     * 1. struct, union, or class type - get fields;
      * 2. enumeration type - get enumerators;
-     * 
+     *
      * @param parent_context_id – parent symbol context ID.
      * @param done - call back interface called when operation is completed.
      * @return - pending command handle.

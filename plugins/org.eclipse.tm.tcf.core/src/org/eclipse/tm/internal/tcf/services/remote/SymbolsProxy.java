@@ -12,12 +12,12 @@ import org.eclipse.tm.tcf.services.ISymbols;
 public class SymbolsProxy implements ISymbols {
 
     private final IChannel channel;
-    
+
     private class Context implements Symbol {
-        
+
         private final byte[] value;
         private final Map<String,Object> props;
-        
+
         Context(Map<String,Object> props) {
             this.props = props;
             value = JSON.toByteArray(props.get(PROP_VALUE));
@@ -111,7 +111,7 @@ public class SymbolsProxy implements ISymbols {
     public SymbolsProxy(IChannel channel) {
         this.channel = channel;
     }
-    
+
     public String getName() {
         return NAME;
     }

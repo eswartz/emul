@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -27,11 +27,11 @@ public class RegistersProxy implements IRegisters {
     private final IChannel channel;
     private final Map<RegistersListener,IChannel.IEventListener> listeners =
         new HashMap<RegistersListener,IChannel.IEventListener>();
-    
+
     private class Context implements RegistersContext {
-        
+
         private final Map<String,Object> props;
-        
+
         Context(Map<String,Object> props) {
             this.props = props;
         }
@@ -65,7 +65,7 @@ public class RegistersProxy implements IRegisters {
         public String getParentID() {
             return (String)props.get(PROP_PARENT_ID);
         }
-        
+
         public int getSize() {
             Number n = (Number)props.get(PROP_SIZE);
             if (n == null) return 0;
@@ -197,16 +197,16 @@ public class RegistersProxy implements IRegisters {
                 }
             }.token;
         }
-        
+
         public String toString() {
             return "[Registers Context " + props.toString() + "]";
         }
     }
-    
+
     public RegistersProxy(IChannel channel) {
         this.channel = channel;
     }
-    
+
     public String getName() {
         return NAME;
     }
@@ -270,7 +270,7 @@ public class RegistersProxy implements IRegisters {
             }
         }.token;
     }
-    
+
     public void addListener(final RegistersListener listener) {
         IChannel.IEventListener l = new IChannel.IEventListener() {
 
@@ -308,7 +308,7 @@ public class RegistersProxy implements IRegisters {
         Collection<String> c = (Collection<String>)o;
         return (String[])c.toArray(new String[c.size()]);
     }
-    
+
     @SuppressWarnings("unchecked")
     private int[] toIntArray(Object o) {
         if (o == null) return null;
@@ -318,7 +318,7 @@ public class RegistersProxy implements IRegisters {
         for (Number n : c) arr[i++] = n.intValue();
         return arr;
     }
-    
+
     @SuppressWarnings("unchecked")
     private String[][] toPathArray(Object o) {
         if (o == null) return null;
@@ -330,13 +330,13 @@ public class RegistersProxy implements IRegisters {
         }
         return r;
     }
-    
+
     private static class NamedValueInfo implements NamedValue {
-        
+
         private final String desc;
         private final String name;
         private final byte[] value;
-        
+
         NamedValueInfo(Map<String,Object> m) {
             desc = (String)m.get("Description");
             name = (String)m.get("Name");
@@ -355,7 +355,7 @@ public class RegistersProxy implements IRegisters {
             return value;
         }
     }
-    
+
     @SuppressWarnings("unchecked")
     private NamedValue[] toValuesArray(Object o) {
         Collection<Map<String,Object>> c = (Collection<Map<String,Object>>)o;
@@ -367,7 +367,7 @@ public class RegistersProxy implements IRegisters {
         }
         return arr;
     }
-    
+
     static {
         JSON.addObjectWriter(Location.class, new JSON.ObjectWriter() {
             public void write(Object o) throws IOException {

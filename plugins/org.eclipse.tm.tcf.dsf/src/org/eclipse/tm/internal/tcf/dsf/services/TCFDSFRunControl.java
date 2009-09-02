@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -214,7 +214,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             if (n != null) n.onContextSuspended(pc, reason, params);
         }
     };
-    
+
     private class ExecutionDMC extends TCFDSFExecutionDMC {
 
         final String id;
@@ -224,7 +224,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         boolean disposed;
         int is_stepping;
         int is_resuming;
-        
+
         public ExecutionDMC(ExecutionDMC parent, final String id) {
             super(channel, TCFDSFRunControl.this, parent == null ?
                     new IDMContext[0] : new IDMContext[] { parent });
@@ -249,7 +249,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             }
             return n;
         }
-        
+
         @Override
         public String toString() {
             return baseToString() + ".context[" + id + "]"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -288,7 +288,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         public boolean isDisposed() {
             return disposed;
         }
-        
+
         @Override
         public void dispose() {
             assert !disposed;
@@ -304,7 +304,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             cache.remove(id);
             disposed = true;
         }
-        
+
         /*--------------------------------------------------------------------------------------*/
         /* Events                                                                               */
 
@@ -386,7 +386,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             return true;
         }
 
-        public StateChangeReason getStateChangeReason() { 
+        public StateChangeReason getStateChangeReason() {
             return reason;
         }
     }
@@ -422,7 +422,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         if (tcf_run_service != null) tcf_run_service.addListener(run_listener);
         root_dmc = new ExecutionDMC(null, null);
         cache.put(null, root_dmc);
-        initialize(new RequestMonitor(getExecutor(), monitor) { 
+        initialize(new RequestMonitor(getExecutor(), monitor) {
             @Override
             protected void handleSuccess() {
                 String[] class_names = {
@@ -435,7 +435,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         });
     }
 
-    @Override 
+    @Override
     public void shutdown(RequestMonitor monitor) {
         if (tcf_run_service != null) tcf_run_service.removeListener(run_listener);
         unregister();
@@ -680,13 +680,13 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             rm.done();
         }
     }
-    
+
     public Collection<TCFDSFExecutionDMC> getCachedContexts() {
         ArrayList<TCFDSFExecutionDMC> l = new ArrayList<TCFDSFExecutionDMC>();
         for (ExecutionDMC dmc : cache.values()) l.add(dmc);
         return l;
     }
-    
+
     public int toTCFStepType(StepType step_type) {
         switch (step_type) {
         case STEP_OVER:
@@ -704,14 +704,14 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
         }
         return -1;
     }
-    
+
     private class StepIntoAction extends TCFActionStepInto {
-        
+
         private final ExecutionDMC ctx;
         private final RequestMonitor monitor;
-        
+
         private TCFDSFStack.TCFFrameDMC frame;
-        
+
         StepIntoAction(TCFLaunch launch, ExecutionDMC ctx, RequestMonitor monitor, boolean src_step) {
             super(launch, ctx.run_control_context_cache.getData(), src_step);
             this.ctx = ctx;
@@ -763,7 +763,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             if (service == null) return null;
             return service.getFramesCache(ctx, null);
         }
-        
+
         @Override
         protected void exit(Throwable error) {
             if (exited) return;
@@ -778,12 +778,12 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
     }
 
     private class StepOverAction extends TCFActionStepOver {
-        
+
         private final ExecutionDMC ctx;
         private final RequestMonitor monitor;
-        
+
         private TCFDSFStack.TCFFrameDMC frame;
-        
+
         StepOverAction(TCFLaunch launch, ExecutionDMC ctx, RequestMonitor monitor, boolean src_step) {
             super(launch, ctx.run_control_context_cache.getData(), src_step);
             this.ctx = ctx;
@@ -835,7 +835,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             if (service == null) return null;
             return service.getFramesCache(ctx, null);
         }
-        
+
         @Override
         protected void exit(Throwable error) {
             if (exited) return;
@@ -850,12 +850,12 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
     }
 
     private class StepOutAction extends TCFActionStepOut {
-        
+
         private final ExecutionDMC ctx;
         private final RequestMonitor monitor;
-        
+
         private TCFDSFStack.TCFFrameDMC frame;
-        
+
         StepOutAction(TCFLaunch launch, ExecutionDMC ctx, RequestMonitor monitor) {
             super(launch, ctx.run_control_context_cache.getData());
             this.ctx = ctx;
@@ -896,7 +896,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             if (service == null) return null;
             return service.getFramesCache(ctx, null);
         }
-        
+
         @Override
         protected void exit(Throwable error) {
             if (exited) return;
@@ -1077,7 +1077,7 @@ public class TCFDSFRunControl extends AbstractDsfService implements org.eclipse.
             if (ctx.run_control_state_cache.isValid()) {
                 TCFContextState st = ctx.run_control_state_cache.getData();
                 if (st != null && st.suspend_reason != null) {
-                    r = toStateChangeReason(st.suspend_reason); 
+                    r = toStateChangeReason(st.suspend_reason);
                 }
             }
             rm.setData(new ExecutionData(r));

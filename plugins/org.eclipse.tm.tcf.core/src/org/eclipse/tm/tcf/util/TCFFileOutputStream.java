@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -25,11 +25,11 @@ import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
 /**
  * TCFFileOutputStream is high performance OutputStream implementation over TCF FileSystem service.
  * The class uses write-back buffers to achieve maximum throughput.
- * 
+ *
  * @noextend This class is not intended to be subclassed by clients.
  */
 public final class TCFFileOutputStream extends OutputStream {
-    
+
     private static final int MAX_WRITE_BACK = 8;
 
     private final IFileHandle handle;
@@ -46,7 +46,7 @@ public final class TCFFileOutputStream extends OutputStream {
     public TCFFileOutputStream(IFileHandle handle) {
         this(handle, 0x1000);
     }
-    
+
     public TCFFileOutputStream(IFileHandle handle, int buf_size) {
         this.handle = handle;
         this.fs = handle.getService();
@@ -89,7 +89,7 @@ public final class TCFFileOutputStream extends OutputStream {
         flush(buf, 0, buf_pos);
         buf_pos = 0;
     }
-    
+
     private void flush(final byte[] buf, final int off, final int len) throws IOException {
         synchronized (dirty) {
             if (flush_error != null) throw flush_error;
@@ -126,7 +126,7 @@ public final class TCFFileOutputStream extends OutputStream {
                 done(this);
             }
         }.getIO();
-        offset += len; 
+        offset += len;
     }
 
     @Override

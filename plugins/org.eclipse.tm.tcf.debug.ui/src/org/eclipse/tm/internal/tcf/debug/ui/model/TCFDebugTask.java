@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -39,7 +39,7 @@ public abstract class TCFDebugTask<V> extends TCFTask<V> {
                 "Debugger requiest failed", x));
         return getResult();
     }
-    
+
     public void error(String msg) {
         error(new DebugException(new Status(
                 IStatus.ERROR, Activator.PLUGIN_ID, DebugException.REQUEST_FAILED,

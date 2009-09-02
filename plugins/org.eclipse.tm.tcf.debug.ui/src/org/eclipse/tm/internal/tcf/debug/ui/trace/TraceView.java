@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -28,23 +28,23 @@ import org.eclipse.ui.part.ViewPart;
 
 
 public class TraceView extends ViewPart implements Protocol.ChannelOpenListener {
-    
+
     private Composite parent;
     private TabFolder tabs;
     private Label no_data;
     private final Map<TabItem,Page> tab2page = new HashMap<TabItem,Page>();
-    
+
     private class Page implements AbstractChannel.TraceListener {
 
         final AbstractChannel channel;
-        
+
         private TabItem tab;
         private Text text;
-        
+
         private final StringBuffer bf = new StringBuffer();
         private int bf_line_cnt = 0;
         private boolean closed;
-        
+
         private final Thread update_thread = new Thread() {
             public void run() {
                 synchronized (Page.this) {
@@ -90,12 +90,12 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
                 }
             }
         };
-        
+
         Page(AbstractChannel channel) {
             this.channel = channel;
             update_thread.start();
         }
-        
+
         public void dispose() {
             synchronized (this) {
                 closed = true;
@@ -221,10 +221,10 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
     public void setFocus() {
         if (tabs != null) tabs.setFocus();
     }
-    
+
     @Override
     public void dispose() {
-        final Page[] pages = tab2page.values().toArray(new Page[tab2page.size()]); 
+        final Page[] pages = tab2page.values().toArray(new Page[tab2page.size()]);
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
                 Protocol.removeChannelOpenListener(TraceView.this);
@@ -243,12 +243,12 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
         }
         super.dispose();
     }
-    
+
     public void onChannelOpen(final IChannel channel) {
         if (!(channel instanceof AbstractChannel)) return;
         AbstractChannel c = (AbstractChannel)channel;
         IPeer rp = c.getRemotePeer();
-        final String name = rp.getName(); 
+        final String name = rp.getName();
         final String host = rp.getAttributes().get(IPeer.ATTR_IP_HOST);
         final String port = rp.getAttributes().get(IPeer.ATTR_IP_PORT);
         final Page p = new Page(c);
@@ -273,7 +273,7 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
             }
         });
     }
-    
+
     private void showTabs() {
         boolean b = false;
         if (no_data != null) {
@@ -287,7 +287,7 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
         }
         if (b) parent.layout();
     }
-    
+
     private void hideTabs() {
         boolean b = false;
         if (tabs != null) {

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Ericsson                 - Initial API and implementation
  *     Wind River Systems       - reused for TCF connection type
@@ -57,7 +57,7 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
     public ExecutableContextLayoutNode(AbstractDMVMProvider provider, DsfSession session) {
         super(provider, session, IRunControl.IExecutionDMContext.class);
     }
-    
+
     private void doneViewerUpdate(final IViewerUpdate req) {
         PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
             public void run() {
@@ -71,7 +71,7 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
         TCFDSFRunControl service = getServicesTracker().getService(TCFDSFRunControl.class);
         if (service == null) {
             update.setStatus(new Status(IStatus.ERROR,
-                    Activator.PLUGIN_ID, IDsfStatusConstants.INVALID_STATE, 
+                    Activator.PLUGIN_ID, IDsfStatusConstants.INVALID_STATE,
                     "Run Control service not available.", null)); //$NON-NLS-1$
             handleFailedUpdate(update);
             return;
@@ -107,19 +107,19 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
         catch (RejectedExecutionException e) {
             for (ILabelUpdate update : updates) {
                 update.setStatus(new Status(IStatus.ERROR,
-                        Activator.PLUGIN_ID, IDsfStatusConstants.INTERNAL_ERROR, 
+                        Activator.PLUGIN_ID, IDsfStatusConstants.INTERNAL_ERROR,
                         "Cannot execute update request.", e)); //$NON-NLS-1$
                 handleFailedUpdate(update);
             }
         }
     }
-        
+
     private void updateLabelInSessionThread(final ILabelUpdate[] updates) {
         TCFDSFRunControl service = getServicesTracker().getService(TCFDSFRunControl.class);
         if (service == null) {
             for (final ILabelUpdate update : updates) {
                 update.setStatus(new Status(IStatus.ERROR,
-                        Activator.PLUGIN_ID, IDsfStatusConstants.INVALID_STATE, 
+                        Activator.PLUGIN_ID, IDsfStatusConstants.INVALID_STATE,
                         "Run Control service not available.", null)); //$NON-NLS-1$
                 handleFailedUpdate(update);
             }
@@ -140,7 +140,7 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
             });
             return;
         }
-        
+
         for (final ILabelUpdate update : updates) {
             TCFDSFExecutionDMC dmc = (TCFDSFExecutionDMC)findDmcInPath(update.getViewerInput(),
                     update.getElementPath(), IContainerDMContext.class);
@@ -175,10 +175,10 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
         }
         if (e instanceof IRunControl.IResumedDMEvent || e instanceof IRunControl.ISuspendedDMEvent) {
             return IModelDelta.STATE;
-        } 
+        }
         return IModelDelta.NO_CHANGE;
     }
-    
+
     private List<TCFDSFExecutionDMC> getPath(TCFDSFExecutionDMC dmc) {
         List<TCFDSFExecutionDMC> list = new ArrayList<TCFDSFExecutionDMC>();
         while (dmc != null) {
@@ -234,7 +234,7 @@ public class ExecutableContextLayoutNode extends AbstractDMVMNode implements IEl
         }
         else if (e instanceof IStartedDMEvent || e instanceof IExitedDMEvent) {
             parentDelta.setFlags(parentDelta.getFlags() | IModelDelta.CONTENT);
-        }            
+        }
         rm.done();
     }
 }

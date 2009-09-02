@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -28,7 +28,7 @@ class TestEcho implements ITCFTest, IDiagnostics.DoneEcho {
         this.test_suite = test_suite;
         diag = channel.getRemoteService(IDiagnostics.class);
     }
-    
+
     public void start() {
         if (diag == null) {
             test_suite.done(this, null);
@@ -50,7 +50,7 @@ class TestEcho implements ITCFTest, IDiagnostics.DoneEcho {
             });
         }
     }
-    
+
     private void sendMessage() {
         StringBuffer buf = new StringBuffer();
         buf.append(Integer.toHexString(count));
@@ -63,7 +63,7 @@ class TestEcho implements ITCFTest, IDiagnostics.DoneEcho {
         diag.echo(s, this);
         count++;
     }
-    
+
     public void doneEcho(IToken token, Throwable error, String b) {
         String s = msgs.removeFirst();
         if (!test_suite.isActive(this)) return;

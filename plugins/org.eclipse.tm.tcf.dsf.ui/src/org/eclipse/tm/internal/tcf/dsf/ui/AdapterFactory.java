@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -68,7 +68,7 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
         final TcfTerminateCommand terminate_command;
         final IDebugModelProvider debug_model_provider;
         final TCFDSFLaunch lunch;
-        //final BreakpointCommand breakpoint_command; 
+        //final BreakpointCommand breakpoint_command;
         //final DsfMemoryBlockRetrieval memory_retrieval;
 
         SessionAdapterSet(DsfSession session, TCFDSFLaunch launch) {
@@ -115,10 +115,10 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
             lunch = launch;
 
             /*
-             * Registering the launch as an adapter, ensures that this launch, 
-             * and debug model ID will be associated with all DMContexts from this 
-             * session.  
-             */  
+             * Registering the launch as an adapter, ensures that this launch,
+             * and debug model ID will be associated with all DMContexts from this
+             * session.
+             */
             session.registerModelAdapter(ILaunch.class, lunch);
         }
 
@@ -133,14 +133,14 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
             session.unregisterModelAdapter(IStepReturnHandler.class);
             session.unregisterModelAdapter(ISuspendHandler.class);
             session.unregisterModelAdapter(IResumeHandler.class);
-            session.unregisterModelAdapter(ITerminateHandler.class);            
+            session.unregisterModelAdapter(ITerminateHandler.class);
             step_into_command.dispose();
             step_over_command.dispose();
             step_return_command.dispose();
             suspend_command.dispose();
             resume_command.dispose();
             terminate_command.dispose();
-        }        
+        }
     }
 
     private static final Class<?>[] adapter_list = {
@@ -150,7 +150,7 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
         ITerminateHandler.class
     };
 
-    private static final Map<String,SessionAdapterSet> session_adapter_set_map = 
+    private static final Map<String,SessionAdapterSet> session_adapter_set_map =
         Collections.synchronizedMap(new HashMap<String,SessionAdapterSet>());
 
     public AdapterFactory() {
@@ -178,13 +178,13 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
 
     @SuppressWarnings("unchecked")
     public Object getAdapter(Object adaptableObject, Class adapterType) {
-        if (!(adaptableObject instanceof TCFDSFLaunch)) return null; 
+        if (!(adaptableObject instanceof TCFDSFLaunch)) return null;
 
         TCFDSFLaunch launch = (TCFDSFLaunch)adaptableObject;
 
         // Find the correct set of adapters based on the launch session-ID.  If not found
-        // it means that we have a new launch and new session, and we have to create a 
-        // new set of adapters. 
+        // it means that we have a new launch and new session, and we have to create a
+        // new set of adapters.
         DsfSession session = launch.getSession();
         if (session == null) return null;
 
@@ -232,7 +232,7 @@ public class AdapterFactory implements IAdapterFactory, DsfSession.SessionEndedL
                         session_adapter_set_map.remove(id).dispose();
                     }
                 }
-            }                
+            }
         }
     }
 }

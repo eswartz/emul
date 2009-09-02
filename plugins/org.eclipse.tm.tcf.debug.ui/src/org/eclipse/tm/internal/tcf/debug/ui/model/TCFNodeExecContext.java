@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -38,7 +38,7 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 public class TCFNodeExecContext extends TCFNode {
 
     private final int seq_no;
-    
+
     private final TCFChildrenExecContext children_exec;
     private final TCFChildrenStackTrace children_stack;
 
@@ -50,7 +50,7 @@ public class TCFNodeExecContext extends TCFNode {
     private final Map<BigInteger,TCFSourceRef> line_info_cache;
 
     private int resumed_cnt;
-    
+
     private static int seq_cnt;
 
     TCFNodeExecContext(TCFNode parent, final String id) {
@@ -172,7 +172,7 @@ public class TCFNodeExecContext extends TCFNode {
     void setMemoryContext(IMemory.MemoryContext ctx) {
         mem_context.reset(ctx);
     }
-    
+
     Map<BigInteger,TCFSourceRef> getLineInfoCache() {
         return line_info_cache;
     }
@@ -221,21 +221,21 @@ public class TCFNodeExecContext extends TCFNode {
         if (s.suspend_pc == null) return null;
         return new BigInteger(s.suspend_pc);
     }
-    
+
     public TCFNodeStackFrame getTopFrame() {
         assert Protocol.isDispatchThread();
         if (!children_stack.isValid()) return null;
         return children_stack.getTopFrame();
     }
-    
+
     public TCFDataCache<TCFContextState> getState() {
         return state;
     }
-    
+
     public TCFChildrenStackTrace getStackTrace() {
         return children_stack;
     }
-    
+
     public TCFChildrenExecContext getChildren() {
         return children_exec;
     }
@@ -256,7 +256,7 @@ public class TCFNodeExecContext extends TCFNode {
         if (!children_exec.isValid()) return -1;
         return children_exec.getIndexOf(n);
     }
-    
+
     @Override
     public int getChildrenCount(IPresentationContext p) {
         if (!run_context.isValid()) return -1;
@@ -315,8 +315,8 @@ public class TCFNodeExecContext extends TCFNode {
             arr = children_exec.toArray();
         }
         int offset = 0;
-        int r_offset = result.getOffset(); 
-        int r_length = result.getLength(); 
+        int r_offset = result.getOffset();
+        int r_length = result.getLength();
         for (TCFNode n : arr) {
             if (offset >= r_offset && offset < r_offset + r_length) {
                 result.setChild(n, offset);
@@ -457,7 +457,7 @@ public class TCFNodeExecContext extends TCFNode {
             }
         });
     }
-    
+
     void onChildResumedOrSuspended() {
         IRunControl.RunControlContext ctx = run_context.getData();
         if (ctx != null && ctx.isContainer()) addModelDelta(IModelDelta.STATE);
@@ -480,7 +480,7 @@ public class TCFNodeExecContext extends TCFNode {
     public boolean validateNode(Runnable done) {
         assert !disposed;
         TCFDataCache<?> pending = null;
-        
+
         if (!mem_context.validate()) pending = mem_context;
         if (!run_context.validate()) pending = run_context;
         if (!prs_context.validate()) pending = prs_context;
@@ -503,13 +503,13 @@ public class TCFNodeExecContext extends TCFNode {
             pending.wait(done);
             return false;
         }
-        
+
         TCFNodeStackFrame frame = children_stack.getTopFrame();
         if (frame != null && !frame.validateNode(done)) return false;
-        
+
         return true;
     }
-    
+
     // Validate children state for hasSuspendedChildren()
     // Return TCFDataCache to wait for if validation is pending.
     private TCFDataCache<?> validateChildrenState() {
@@ -564,7 +564,7 @@ public class TCFNodeExecContext extends TCFNode {
         }
         return super.getImageName();
     }
-    
+
     @Override
     public int compareTo(TCFNode n) {
         if (n instanceof TCFNodeExecContext) {

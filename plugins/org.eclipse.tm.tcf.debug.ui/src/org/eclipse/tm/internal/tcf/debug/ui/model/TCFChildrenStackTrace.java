@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -22,14 +22,14 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 public class TCFChildrenStackTrace extends TCFChildren {
 
     private final TCFNodeExecContext node;
-    
+
     private String top_frame_id;
 
     TCFChildrenStackTrace(TCFNodeExecContext node) {
         super(node.model.getLaunch().getChannel(), 16);
         this.node = node;
     }
-    
+
     void onSourceMappingChange() {
         for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onSourceMappingChange();
     }
@@ -38,7 +38,7 @@ public class TCFChildrenStackTrace extends TCFChildren {
         for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onSuspended();
         reset();
     }
-    
+
     void onRegistersChanged() {
         for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onRegistersChanged();
     }
@@ -46,7 +46,7 @@ public class TCFChildrenStackTrace extends TCFChildren {
     void onResumed() {
         reset(null);
     }
-    
+
     TCFNodeStackFrame getTopFrame() {
         assert isValid();
         return (TCFNodeStackFrame)node.model.getNode(top_frame_id);
@@ -59,7 +59,7 @@ public class TCFChildrenStackTrace extends TCFChildren {
         }
         super.set(token, error, data);
     }
-    
+
     @Override
     protected boolean startDataRetrieval() {
         final HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();

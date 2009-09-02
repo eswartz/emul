@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -23,7 +23,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
 public class TCFModelProxy extends AbstractModelProxy implements IModelProxy {
-    
+
     private static final int CONTENT_FLAGS =
         IModelDelta.ADDED | IModelDelta.REMOVED |
         IModelDelta.REPLACED | IModelDelta.INSERTED |
@@ -31,7 +31,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy {
 
     private final TCFModel model;
     private final Map<TCFNode,Integer> deltas = new HashMap<TCFNode,Integer>();
-    
+
     TCFModelProxy(TCFModel model) {
         this.model = model;
     }
@@ -47,7 +47,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy {
         if (p != null) model.onProxyDisposed(p);
         super.dispose();
     }
-    
+
     void addDelta(TCFNode node, int flags) {
         if (flags != 0) {
             Integer delta = deltas.get(node);
@@ -59,11 +59,11 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy {
             }
         }
     }
-    
+
     Viewer getProxyViewer() {
         return getViewer();
     }
-    
+
     private ModelDelta makeDelta(ModelDelta root, Map<TCFNode,ModelDelta> map, TCFNode node, int flags) {
         boolean content_only = (flags & ~CONTENT_FLAGS) == 0;
         ModelDelta delta = map.get(node);

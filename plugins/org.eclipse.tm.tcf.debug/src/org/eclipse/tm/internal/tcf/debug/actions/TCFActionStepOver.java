@@ -23,7 +23,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
     private final boolean src_step;
     private final IRunControl rc = launch.getService(IRunControl.class);
     private final IBreakpoints bps = launch.getService(IBreakpoints.class);
-    
+
     private IRunControl.RunControlContext ctx;
     private TCFDataCache<TCFContextState> state;
     private TCFDataCache<TCFSourceRef> line_info;
@@ -32,21 +32,21 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
     private BigInteger pc1;
     private int step_cnt;
     private Map<String,Object> bp;
-    
+
     protected boolean exited;
-    
+
     public TCFActionStepOver(TCFLaunch launch, IRunControl.RunControlContext ctx, boolean src_step) {
         super(launch, ctx.getID());
         this.ctx = ctx;
         this.src_step = src_step;
     }
-    
+
     protected abstract TCFDataCache<TCFContextState> getContextState();
     protected abstract TCFDataCache<TCFSourceRef> getLineInfo();
     protected abstract TCFDataCache<?> getStackTrace();
     protected abstract TCFDataCache<IStackTrace.StackTraceContext> getStackFrame();
     protected abstract int getStackFrameIndex();
-    
+
     public void run() {
         if (exited) return;
         if (state == null) {
@@ -212,7 +212,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             exit(new Exception("Step over is not supported"));
         }
     }
-    
+
     protected void exit(Throwable error) {
         if (exited) return;
         if (bp != null) {
@@ -270,7 +270,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             exit(null);
         }
     }
-    
+
     private boolean isSameLine(ILineNumbers.CodeArea x, ILineNumbers.CodeArea y) {
         if (x == null || y == null) return false;
         if (x.start_line != y.start_line) return false;
@@ -278,7 +278,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
         if (x.file != y.file && (x.file == null || !x.file.equals(y.file))) return false;
         return true;
     }
-    
+
     private boolean isMyBreakpoint(String pc, String reason) {
         if (bp == null) return false;
         if (pc == null) return false;

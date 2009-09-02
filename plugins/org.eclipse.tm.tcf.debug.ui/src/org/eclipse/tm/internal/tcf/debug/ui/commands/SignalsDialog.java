@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -48,37 +48,37 @@ import org.eclipse.tm.tcf.util.TCFTask;
 
 class SignalsDialog extends Dialog {
 
-    private static final int 
+    private static final int
         SIZING_TABLE_WIDTH = 800,
         SIZING_TABLE_HEIGHT = 300;
 
     private static final String[] column_names = { "Code", "Name", "Description", "Don't stop", "Don't pass", "Pending" };
-    
+
     private Table signal_table;
     private TableViewer table_viewer;
     private Map<Number,Signal> org_signals;
-    
+
     private final TCFModel model;
     private final IChannel channel;
     private final TCFDataCache<SignalList> signal_list;
     private final TCFDataCache<SignalState> signal_state;
-    
+
     private static class SignalList {
         String context_id;
         Collection<Map<String,Object>> list;
     }
-    
+
     private static class SignalState {
         String context_id;
         Signal[] list;
     }
-    
+
     private class Signal implements Cloneable {
         Map<String,Object> attrs;
         boolean dont_stop;
         boolean dont_pass;
         boolean pending;
-        
+
         public Signal copy() {
             try {
                 return (Signal)clone();
@@ -87,7 +87,7 @@ class SignalsDialog extends Dialog {
                 throw new Error(e);
             }
         }
-        
+
         @Override
         public String toString() {
             StringBuffer bf = new StringBuffer();
@@ -100,7 +100,7 @@ class SignalsDialog extends Dialog {
             return bf.toString();
         }
     }
-    
+
     private final IStructuredContentProvider content_provider = new IStructuredContentProvider() {
 
         public Object[] getElements(Object input) {
@@ -154,13 +154,13 @@ class SignalsDialog extends Dialog {
                 if (q.length() < 8) q = "00000000".substring(q.length()) + q;
                 return "0x" + q;
             case 1:
-                return (String)s.attrs.get(IProcesses.SIG_NAME); 
+                return (String)s.attrs.get(IProcesses.SIG_NAME);
             case 2:
                 return (String)s.attrs.get(IProcesses.SIG_DESCRIPTION);
             }
             return "";
         }
-        
+
         public String getText(Object element) {
             return element.toString();
         }
@@ -246,7 +246,7 @@ class SignalsDialog extends Dialog {
             }
         }.getE();
     }
-    
+
     @Override
     public boolean close() {
         new TCFTask<Boolean>() {
@@ -264,7 +264,7 @@ class SignalsDialog extends Dialog {
         super.configureShell(shell);
         shell.setText("Signals");
         shell.setImage(ImageCache.getImage(ImageCache.IMG_SIGNALS));
-    }       
+    }
 
     @Override
     protected void createButtonsForButtonBar(Composite parent) {
@@ -274,26 +274,26 @@ class SignalsDialog extends Dialog {
     @Override
     protected Control createDialogArea(Composite parent) {
         Composite composite = (Composite)super.createDialogArea(parent);
-        
+
         createSignalTable(composite);
 
         composite.setSize(composite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         return composite;
     }
-    
+
     private void createSignalTable(Composite parent) {
         Font font = parent.getFont();
         Label props_label = new Label(parent, SWT.WRAP);
         props_label.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         props_label.setFont(font);
         props_label.setText("&Signals:");
-        
+
         Composite composite = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(2, false);
         composite.setFont(font);
         composite.setLayout(layout);
         composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
-        
+
         signal_table = new Table(composite, SWT.SINGLE | SWT.BORDER |
                 SWT.H_SCROLL | SWT.V_SCROLL);
         signal_table.setFont(font);
@@ -301,7 +301,7 @@ class SignalsDialog extends Dialog {
         data.widthHint = SIZING_TABLE_WIDTH;
         data.heightHint = SIZING_TABLE_HEIGHT;
         signal_table.setLayoutData(data);
-        
+
         int w = SIZING_TABLE_WIDTH / (column_names.length + 5);
         for (int i = 0; i < column_names.length; i++) {
             final TableColumn column = new TableColumn(signal_table, SWT.LEAD, i);
@@ -363,16 +363,16 @@ class SignalsDialog extends Dialog {
             public void mouseUp(MouseEvent e) {
             }
         });
-        
-        table_viewer = new TableViewer(signal_table);    
+
+        table_viewer = new TableViewer(signal_table);
         table_viewer.setUseHashlookup(true);
         table_viewer.setColumnProperties(column_names);
-   
+
         table_viewer.setContentProvider(content_provider);
-        
+
         table_viewer.setLabelProvider(new SignalLabelProvider());
         table_viewer.setInput(this);
-        
+
         org_signals = new HashMap<Number,Signal>();
         for (Signal s : (Signal[])content_provider.getElements(null)) {
             org_signals.put((Number)s.attrs.get(IProcesses.SIG_INDEX), s.copy());
@@ -392,7 +392,7 @@ class SignalsDialog extends Dialog {
                     else done(signal_state.getData());
                 }
             }.getE();
-            
+
             if (state != null && state.list != null) {
                 boolean set_mask = false;
                 int dont_stop_set = 0;

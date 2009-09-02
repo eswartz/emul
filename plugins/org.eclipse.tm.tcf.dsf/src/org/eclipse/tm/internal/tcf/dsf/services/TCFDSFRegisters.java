@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -46,14 +46,14 @@ import org.osgi.framework.BundleContext;
 
 
 public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.dd.dsf.debug.service.IRegisters {
-    
+
     private class ObjectDMC extends AbstractDMContext implements IFormattedDataDMContext {
 
         final String id;
         final RegisterChildrenCache children;
         final Map<String,ValueDMC> values;
-        
-        org.eclipse.tm.tcf.services.IRegisters.RegistersContext context;  
+
+        org.eclipse.tm.tcf.services.IRegisters.RegistersContext context;
         boolean disposed;
 
         ObjectDMC(String session_id, IDMContext[] parents, String id) {
@@ -84,7 +84,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         public String getName() {
             return context.getName();
         }
-        
+
         void dispose() {
             assert !disposed;
             children.dispose();
@@ -94,13 +94,13 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             disposed = true;
         }
     }
-    
+
     private class RegisterGroupDMC extends ObjectDMC implements IRegisterGroupDMContext {
-        
+
         RegisterGroupDMC(String session_id, IDMContext[] parents, String id) {
             super(session_id, parents, id);
         }
-        
+
         /* Constructor for a fake register group - DSF requires at least one group object */
         RegisterGroupDMC(String session_id, IDMContext[] parents, final String id, RegisterChildrenCache children) {
             super(session_id, parents, id, children);
@@ -186,43 +186,43 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             };
         }
     }
-    
+
     private class RegisterDMC extends ObjectDMC implements IRegisterDMContext {
-        
+
         RegisterDMC(String session_id, IDMContext[] parents, String id) {
             super(session_id, parents, id);
         }
     }
-    
+
     private class BitFieldDMC extends ObjectDMC implements IBitFieldDMContext {
 
         BitFieldDMC(String session_id, IDMContext[] parents, String id) {
             super(session_id, parents, id);
         }
     }
-    
+
     private class ValueDMC extends FormattedValueDMContext {
-        
+
         final RegisterValueCache cache;
-        
+
         boolean disposed;
 
         ValueDMC(ObjectDMC parent, String fmt) {
             super(TCFDSFRegisters.this, parent, fmt);
             cache = new RegisterValueCache(channel, parent.context, fmt);
         }
-        
+
         void dispose() {
             assert !disposed;
             cache.dispose();
             disposed = true;
         }
     }
-    
+
     private class RegisterGroupData implements IRegisterGroupDMData {
-        
+
         final org.eclipse.tm.tcf.services.IRegisters.RegistersContext context;
-        
+
         RegisterGroupData(org.eclipse.tm.tcf.services.IRegisters.RegistersContext context) {
             this.context = context;
         }
@@ -235,11 +235,11 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             return context.getName();
         }
     }
-    
+
     private class RegisterData implements IRegisterDMData {
 
         final org.eclipse.tm.tcf.services.IRegisters.RegistersContext context;
-        
+
         RegisterData(org.eclipse.tm.tcf.services.IRegisters.RegistersContext context) {
             this.context = context;
         }
@@ -280,14 +280,14 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             return context.isWriteable();
         }
     }
-    
+
     private class BitFieldData implements IBitFieldDMData {
 
         final org.eclipse.tm.tcf.services.IRegisters.RegistersContext context;
-        
+
         IMnemonic[] mnemonics;
         IBitGroup[] bit_groups;
-        
+
         BitFieldData(org.eclipse.tm.tcf.services.IRegisters.RegistersContext context) {
             this.context = context;
         }
@@ -388,15 +388,15 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             return context.isLeftToRight();
         }
     }
-    
+
     private class RegisterChildrenCache extends TCFDataCache<Map<String,ObjectDMC>> {
-        
+
         final String id;
         final IDMContext[] parents;
-        
+
         Map<String,ObjectDMC> dmc_pool = new HashMap<String,ObjectDMC>();;
         boolean disposed;
-        
+
         public RegisterChildrenCache(IChannel channel, String id, IDMContext[] parents) {
             super(channel);
             this.id = id;
@@ -409,7 +409,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                 dmc.children.invalidateRegContents();
             }
         }
-        
+
         void dispose() {
             assert !disposed;
             reset();
@@ -478,12 +478,12 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             return false;
         }
     }
-    
+
     private class RegisterValueCache extends TCFDataCache<FormattedValueDMData> {
-        
+
         final org.eclipse.tm.tcf.services.IRegisters.RegistersContext context;
         final String fmt;
-        
+
         boolean disposed;
 
         public RegisterValueCache(IChannel channel,
@@ -505,8 +505,8 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                     FormattedValueDMData data = null;
                     if (value != null) {
                         int radix = 10;
-                        if (fmt.equals(HEX_FORMAT)) radix = 16; 
-                        else if (fmt.equals(OCTAL_FORMAT)) radix = 8; 
+                        if (fmt.equals(HEX_FORMAT)) radix = 16;
+                        else if (fmt.equals(OCTAL_FORMAT)) radix = 8;
                         byte[] temp = new byte[value.length + 1];
                         temp[0] = 0; // Extra byte to avoid sign extension by BigInteger
                         if (context.isBigEndian()) {
@@ -536,14 +536,14 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             });
             return false;
         }
-        
+
         void dispose() {
             assert !disposed;
             reset();
             disposed = true;
         }
     }
-    
+
     private static class RegisterGroupChangedEvent extends AbstractDMEvent<IRegisterGroupDMContext>
             implements IGroupChangedDMEvent {
 
@@ -551,7 +551,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             super(context);
         }
     }
-    
+
     private static class RegisterChangedEvent extends AbstractDMEvent<IRegisterDMContext>
             implements IRegisterChangedDMEvent {
 
@@ -562,12 +562,12 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
 
     private static class BitFieldChangedEvent extends AbstractDMEvent<IBitFieldDMContext>
             implements IBitFieldChangedDMEvent {
-        
+
         public BitFieldChangedEvent(IBitFieldDMContext context) {
             super(context);
         }
     }
-    
+
     private static class GroupsChangedEvent extends AbstractDMEvent<IDMContext> implements IGroupsChangedDMEvent {
 
         public GroupsChangedEvent(IExecutionDMContext context) {
@@ -607,11 +607,11 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                 }
             }
     };
-    
+
     private final IChannel channel;
     private final org.eclipse.tm.tcf.services.IRegisters tcf_reg_service;
     private final Map<String,ObjectDMC> model;
-    
+
     private final String[] available_formats = {
             HEX_FORMAT,
             DECIMAL_FORMAT,
@@ -624,7 +624,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         model = new HashMap<String,ObjectDMC>();
         tcf_reg_service = channel.getRemoteService(org.eclipse.tm.tcf.services.IRegisters.class);
         if (tcf_reg_service != null) tcf_reg_service.addListener(listener);
-        initialize(new RequestMonitor(getExecutor(), monitor) { 
+        initialize(new RequestMonitor(getExecutor(), monitor) {
             @Override
             protected void handleSuccess() {
                 String[] class_names = {
@@ -638,7 +638,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         });
     }
 
-    @Override 
+    @Override
     public void shutdown(RequestMonitor monitor) {
         getSession().removeServiceEventListener(this);
         unregister();
@@ -712,12 +712,12 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         }
         rm.done();
     }
-    
+
     private RegisterChildrenCache getRegisterChildrenCache(IDMContext dmc, DataRequestMonitor<?> rm) {
         RegisterChildrenCache cache = null;
         if (dmc instanceof CompositeDMContext) {
             for (IDMContext ctx : dmc.getParents()) {
-                if (ctx instanceof TCFDSFExecutionDMC || ctx instanceof TCFDSFStack.TCFFrameDMC || 
+                if (ctx instanceof TCFDSFExecutionDMC || ctx instanceof TCFDSFStack.TCFFrameDMC ||
                         ctx instanceof RegisterGroupDMC || ctx instanceof RegisterDMC) {
                     dmc = ctx;
                     break;
@@ -978,8 +978,8 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                 return;
             }
             int radix = 10;
-            if (fmt.equals(HEX_FORMAT)) radix = 16; 
-            else if (fmt.equals(OCTAL_FORMAT)) radix = 8; 
+            if (fmt.equals(HEX_FORMAT)) radix = 16;
+            else if (fmt.equals(OCTAL_FORMAT)) radix = 8;
             byte[] data = new BigInteger(val, radix).toByteArray();
             if (!((ObjectDMC)dmc).context.isBigEndian()) {
                 byte[] temp = new byte[data.length];
@@ -1061,8 +1061,8 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                 return;
             }
             int radix = 10;
-            if (fmt.equals(HEX_FORMAT)) radix = 16; 
-            else if (fmt.equals(OCTAL_FORMAT)) radix = 8; 
+            if (fmt.equals(HEX_FORMAT)) radix = 16;
+            else if (fmt.equals(OCTAL_FORMAT)) radix = 8;
             byte[] data = new BigInteger(val, radix).toByteArray();
             if (!((ObjectDMC)dmc).context.isBigEndian()) {
                 byte[] temp = new byte[data.length];
@@ -1168,7 +1168,7 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             if (cache != null) cache.invalidateRegContents();
         }
     }
-    
+
     @DsfServiceEventHandler
     public void eventDispatched(org.eclipse.dd.dsf.debug.service.IRunControl.ISuspendedDMEvent e) {
         RegisterChildrenCache cache = (RegisterChildrenCache)((TCFDSFExecutionDMC)e.getDMContext()).registers_cache;

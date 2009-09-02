@@ -5,9 +5,9 @@
 </head>
 
 <body lang='EN-US'>
-  
+
 <h1>Target Communication Framework Services - Processes</h1>
- 
+
 <ul>
     <li><a href='#VersionHistory'>Version History</a>
     <li><a href='#Overview'>Overview</a>
@@ -45,18 +45,18 @@
     <tr>
         <td>0.2
         <td>2009-02-26
-        <td>Added signal and environment commands, and properties for standard I/O redirection 
+        <td>Added signal and environment commands, and properties for standard I/O redirection
 </table>
 
 <h2><a name='Overview'>Overview</a></h2>
 
-<p>Processes service provides access to the target OS's process 
+<p>Processes service provides access to the target OS's process
 information, allows to start and terminate a process, and allows
 to attach and detach a process for debugging. Debug services,
 like Memory and Run Control, require a process to be attached
 before they can access it.</p>
 
-<p>If a process is started by this service, its standard input/output streams are 
+<p>If a process is started by this service, its standard input/output streams are
 available for client to read/write using <a href='TCF Service - Streams.html'>Streams Service</a>. Stream type of such
 streams is set to "Processes".</p>
 
@@ -65,11 +65,11 @@ as zero terminated <a href='TCF Specification.html#JSON'>JSON</a> strings.</p>
 
 <p>The service uses standard format for error reports,
 see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
- 
+
 <h2><a name='Cmds'>Commands</a></h2>
 
 <h3><a name='CmdGetContext'>Get Context</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getContext &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
@@ -82,7 +82,7 @@ However, 'Processes.getContext' is supposed to return only process specific data
 If the ID is not a process ID, 'Processes.getContext' may not return any
 useful information.
 </p>
- 
+
 <p>Reply:</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
@@ -104,42 +104,42 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;c
 
     <li><code><b><font face="Courier New" size=2 color=#333399>"ParentID" : <i>&lt;string&gt;</i></font></b></code>
     - parent context ID.
-        
+
     <li><code><b><font face="Courier New" size=2 color=#333399>"Name" : <i>&lt;string&gt;</i></font></b></code>
     - process name. Client UI can show this name to a user.
 
     <li><code><b><font face="Courier New" size=2 color=#333399>"Attached" : <i>&lt;boolean&gt;</i></font></b></code>
     - true if the context is attached to debugger.
-        
+
     <li><code><b><font face="Courier New" size=2 color=#333399>"CanTerminate" : <i>&lt;boolean&gt;</i></font></b></code>
     - true if the service can terminate the process.
 
     <li><code><b><font face="Courier New" size=2 color=#333399>"StdInID" : <i>&lt;string&gt;</i></font></b></code>
     - process standard input stream ID.
-        
+
     <li><code><b><font face="Courier New" size=2 color=#333399>"StdOutID" : <i>&lt;string&gt;</i></font></b></code>
     - process standard output stream ID.
-        
+
     <li><code><b><font face="Courier New" size=2 color=#333399>"StdErrID" : <i>&lt;string&gt;</i></font></b></code>
     - process standard error stream ID.
 </ul>
 
 <h3><a name='CmdGetChildren'>Get Children</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getChildren &bull; <i>&lt;string: parent context ID&gt;</i> &bull; <i>&lt;boolean: attached only&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command requests a list of contexts available for process control commands.</p>
- 
+
 <p>Parent context ID can be null &ndash; to retrieve top level of the hierarchy, can be one
 of context IDs retrieved by previous getChildren commands, or it can be obtained from another service.
 Contexts hierarchy can be simple plain list or it can form a tree. It is up to target agent developers to
 choose layout that is most descriptive for a given target.</p>
 <p>If <i>&lt;boolean: attached only&gt;</i> is true, the command returns only those processes that are attached for debugging.</p>
- 
+
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of context IDs&gt;</i> &bull;
 
@@ -147,65 +147,65 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;a
     &rArr; null
     &rArr; [ ]
     &rArr; [ <i>&lt;context ID list&gt;</i> ]
-  
+
 <i>&lt;context ID list&gt;</i>
     &rArr; <i>&lt;string: context ID&gt;</i>
     &rArr; <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
 </font></b></pre>
 
 <h3><a name='CmdAttach'>Attach</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; attach &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command attaches debugger to a process.
 Services like Run Control, Memory, Breakpoints work only with attached processes.</p>
- 
+
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdDetach'>Detach</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; detach &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command detaches debugger from a process.</p>
- 
+
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdTerminate'>Terminate</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; terminate &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command terminates a process.</p>
- 
+
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdGetSignalList'>Get Signal List</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getSignalList &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command returns a complete list of available signals. The list containg all signals that can be sent to a given context.</p>
- 
+
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of signal descriptions&gt;</i> &bull;
 
@@ -213,7 +213,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;a
     &rArr; null
     &rArr; [ ]
     &rArr; [ <i>&lt;signal description list&gt;</i> ]
-  
+
 <i>&lt;signal description list&gt;</i>
     &rArr; <i>&lt;object: signal description&gt;</i>
     &rArr; <i>&lt;signal description list&gt;</i> , <i>&lt;object: signal description&gt;</i>
@@ -233,7 +233,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;a
 
 
 <h3><a name='CmdGetSignalMask'>Get Signal Mask</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getSignalMask &bull; <i>&lt;string: context ID&gt;</i> &bull;
 </font></b></pre>
@@ -244,7 +244,7 @@ When new context is created it inherits the mask from its parent.
 If context is not attached the command will return an error.</p>
 
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;int: don't stop bitset&gt;</i> &bull; <i>&lt;int: don't pass bitset&gt;</i> &bull; <i>&lt;int: pending bitset&gt;</i> &bull;
 </font></b></pre>
@@ -256,7 +256,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;i
 Note: "pending bitset" is meaningful only if the context is suspended.
 
 <h3><a name='CmdSetSignalMask'>Set Signal Mask</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; setSignalMask &bull; <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;int: don't stop bitset&gt;</i> &bull; <i>&lt;int: don't pass bitset&gt;</i> &bull;
 </font></b></pre>
@@ -266,46 +266,46 @@ Bits in the mask control how signals should be handled by debug agent.
 If context is not attached the command will return an error.</p>
 <ul>
     <li>don't stop bitset - signals that should not suspend execution of the context.
-    By default, debugger suspends a process before it receives a signal.  
+    By default, debugger suspends a process before it receives a signal.
     <li>don't pass bitset - signals that should not be delivered to the context.
 </ul>
- 
+
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdSignal'>Signal</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; signal &bull; <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;int: signal&gt;</i> &bull;
 </font></b></pre>
 
 <p>The command sends a signal to a context.</p>
- 
+
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdGetEnvironment'>Get Environment</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; getEnvironment &bull;
 </font></b></pre>
 
 <p>The command returns default set of environment variables used to start a new process.</p>
- 
+
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;object: environment variables&gt;</i> &bull;
 </font></b></pre>
 
 <h3><a name='CmdStart'>Start</a></h3>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; start &bull; <i>&lt;string: working directory&gt;</i> &bull; <i>&lt;string: program image file&gt;</i> &bull;
     <i>&lt;string array: command line&gt;</i> &bull; <i>&lt;object: environment variables&gt;</i> &bull; <i>&lt;boolean: attach&gt;</i> &bull;
@@ -314,7 +314,7 @@ C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; start &bull; <i>&lt;string
     &rArr; null
     &rArr; [ ]
     &rArr; [ <i>&lt;string list&gt;</i> ]
-  
+
 <i>&lt;string list&gt;</i>
     &rArr; <i>&lt;string&gt;</i>
     &rArr; <i>&lt;string list&gt;</i> , <i>&lt;string&gt;</i>
@@ -326,12 +326,12 @@ C &bull; <i>&lt;token&gt;</i> &bull; Processes &bull; start &bull; <i>&lt;string
         <li><i>&lt;string: program image file&gt;</i> - image file to start process with.
         <li><i>&lt;string array: command line&gt;</i> - command line arguments for the process.
         <li><i>&lt;object: environment variables&gt;</i> - list of environment variables for the process,
-        they will be added to default process environment. 
+        they will be added to default process environment.
         <li><i>&lt;boolean: attach&gt;</i> - if true debugger should be attached to the process.</p>
 </ul>
- 
+
 <p>Reply:</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;context data&gt;</i> &bull;
 </font></b></pre>
@@ -342,18 +342,18 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;c
 
 <p>Processes service broadcasts notification event when a proceess exits.
 Only processes that were started by the service will generate exit event.</p>
- 
+
 <pre><b><font face="Courier New" size=2 color=#333399>
 E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull; <i>&lt;int: exit code&gt;</i> &bull;
 </font></b></pre>
 
 <h2><a name='API'>API</a></h2>
- 
+
 <pre>
 <font color=#7F0055>public interface</font> IProcesses <font color=#7F0055>extends</font> IService {
 
     <font color=#7F0055>static final</font> String NAME = "Processes";
-    
+
     <font color=#3F5FBF>/**
      * Retrieve context info for given context ID.
      * A context corresponds to an execution thread, process, address space, etc.
@@ -363,8 +363,8 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
      * However, 'Processes.getContext' is supposed to return only process specific data,
      * If the ID is not a process ID, 'IProcesses.getContext' may not return any
      * useful information
-     *    
-     * <font color=#7F9FBF>@param</font> id &ndash; context ID. 
+     *
+     * <font color=#7F9FBF>@param</font> id &ndash; context ID.
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
      */</font>
     IToken getContext(String id, DoneGetContext done);
@@ -383,10 +383,10 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
 
     <font color=#3F5FBF>/**
      * Retrieve children of given context.
-     *   
+     *
      * <font color=#7F9FBF>@param</font> parent_context_id &ndash; parent context ID. Can be null &ndash;
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
-     * by previous getContext or getChildren commands. 
+     * by previous getContext or getChildren commands.
      * <font color=#7F9FBF>@param</font> attached_only - if true return only attached process IDs.
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
      */</font>
@@ -403,38 +403,38 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
          */</font>
         <font color=#7F0055>void</font> doneGetChildren(IToken token, Exception error, String[] context_ids);
     }
-    
+
     <font color=#3F5FBF>/**
      * Context property names.
      */</font>
     <font color=#7F0055>static final</font> String
         <font color=#3F5FBF>/** The TCF context ID */</font>
         PROP_ID = "ID",
-        
+
         <font color=#3F5FBF>/** The TCF parent context ID */</font>
         PROP_PARENTID = "ParentID",
-        
+
         <font color=#3F5FBF>/** Is the context attached */</font>
         PROP_ATTACHED = "Attached",
-        
+
         <font color=#3F5FBF>/** Can terminate the context */</font>
         PROP_CAN_TERMINATE = "CanTerminate",
-        
+
         <font color=#3F5FBF>/** Process name. Client UI can show this name to a user */</font>
         PROP_NAME = "Name",
 
         <font color=#3F5FBF>/** Process standard input stream ID */</font>
         PROP_STDIN_ID = "StdInID",
-        
+
         <font color=#3F5FBF>/** Process standard output stream ID */</font>
         PROP_STDOUT_ID = "StdOutID",
-        
+
         <font color=#3F5FBF>/** Process standard error stream ID */</font>
         PROP_STDERR_ID = "StdErrID";
-   
+
     <font color=#7F0055>interface</font> ProcessContext {
-        
-        <font color=#3F5FBF>/** 
+
+        <font color=#3F5FBF>/**
          * Get context ID.
          * Same as getProperties().get(&ldquo;ID&rdquo;)
          */</font>
@@ -471,7 +471,7 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
          * <font color=#7F9FBF>@return</font> Map 'property name' -> 'property value'
          */</font>
         Map&lt;String, Object&gt; getProperties();
-        
+
         <font color=#3F5FBF>/**
          * Attach debugger to a process.
          * Services like IRunControl, IMemory, IBreakpoints work only with attached processes.
@@ -487,15 +487,15 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
          * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
          */</font>
         IToken detach(DoneCommand done);
-        
+
         <font color=#3F5FBF>/**
-         * Terminate a process. 
+         * Terminate a process.
          * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
          * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
          */</font>
         IToken terminate(DoneCommand done);
     }
-    
+
     <font color=#7F0055>interface</font> DoneCommand {
         <font color=#7F0055>void</font> doneCommand(IToken token, Exception error);
     }
@@ -506,16 +506,16 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
     <font color=#7F0055>static final</font> String
         <font color=#3F5FBF>/** Number, bit position in the signal mask */</font>
         SIG_INDEX = "Index",
-        
+
         <font color=#3F5FBF>/** String, signal name, for example "SIGHUP" */</font>
         SIG_NAME = "Name",
-        
+
         <font color=#3F5FBF>/** Number, signal code, as defined by OS */</font>
         SIG_CODE = "Code",
-        
+
         <font color=#3F5FBF>/** String, human readable description of the signal */</font>
         SIG_DESCRIPTION = "Description";
-    
+
     <font color=#3F5FBF>/**
      * Get list of signals that can be send to the context.
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
@@ -529,17 +529,17 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
     <font color=#7F0055>interface</font> DoneGetSignalList {
         <font color=#7F0055>void</font> doneGetSignalList(IToken token, Exception error, Collection<Map<String,Object>> list);
     }
-    
+
     <font color=#3F5FBF>/**
      * Get process or thread signal mask.
      * Bits in the mask control how signals should be handled by debug agent.
      * When new context is created it inherits the mask from its parent.
-     * If context is not attached the command will return an error. 
+     * If context is not attached the command will return an error.
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
      * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
      */</font>
     IToken getSignalMask(String context_id, DoneGetSignalMask done);
-    
+
     <font color=#3F5FBF>/**
      * Call-back interface to be called when "getSignalMask" command is complete.
      */</font>
@@ -553,13 +553,13 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
          */</font>
         <font color=#7F0055>void</font> doneGetSignalMask(IToken token, Exception error, <font color=#7F0055>int</font> dont_stop, <font color=#7F0055>int</font> dont_pass, <font color=#7F0055>int</font> pending);
     }
-    
+
     <font color=#3F5FBF>/**
-     * Set process or thread signal mask. 
+     * Set process or thread signal mask.
      * Bits in the mask control how signals should be handled by debug agent.
-     * If context is not attached the command will return an error. 
+     * If context is not attached the command will return an error.
      * <font color=#7F9FBF>@param</font> dont_stop - bit-set of signals that should not suspend execution of the context.
-     * By default, debugger suspends a context before it receives a signal.  
+     * By default, debugger suspends a context before it receives a signal.
      * <font color=#7F9FBF>@param</font> dont_pass - bit-set of signals that should not be delivered to the context.
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
      * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
@@ -581,7 +581,7 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
      * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
      */</font>
     IToken getEnvironment(DoneGetEnvironment done);
-    
+
     <font color=#3F5FBF>/**
      * Call-back interface to be called when "getEnvironment" command is complete.
      */</font>
@@ -594,15 +594,15 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
      * <font color=#7F9FBF>@param</font> directory - initial value of working directory for the process.
      * <font color=#7F9FBF>@param</font> file - process image file.
      * <font color=#7F9FBF>@param</font> command_line - command line arguments for the process.
-     * <font color=#7F9FBF>@param</font> environment - list of environment variables for the process. 
-     * if null then default set of environment variables will be used. 
+     * <font color=#7F9FBF>@param</font> environment - list of environment variables for the process.
+     * if null then default set of environment variables will be used.
      * <font color=#7F9FBF>@param</font> attach - if true debugger should be attached to the process.
      * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
      * <font color=#7F9FBF>@return</font> pending command handle, can be used to cancel the command.
      */</font>
     IToken start(String directory, String file,
             String[] command_line, String[] environment, <font color=#7F0055>boolean</font> attach, DoneStart done);
-    
+
     <font color=#3F5FBF>/**
      * Call-back interface to be called when "start" command is complete.
      */</font>
@@ -624,10 +624,10 @@ E &bull; Processes &bull; exited &bull; <i>&lt;string: process ID&gt;</i> &bull;
 
     <font color=#3F5FBF>/**
      * Process event listener is notified when a process exits.
-     * Event are reported only for processes that were started by 'start' command. 
+     * Event are reported only for processes that were started by 'start' command.
      */</font>
     <font color=#7F0055>interface</font> ProcessesListener {
-        
+
         <font color=#3F5FBF>/**
          * Called when a process exits.
          * <font color=#7F9FBF>@param</font> process_id - process context ID

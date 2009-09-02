@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -25,13 +25,13 @@ import org.eclipse.tm.tcf.services.ILocator;
  * 1. the framework event queue and dispatch thread;
  * 2. local instance of Locator service, which maintains a list of available targets;
  * 3. list of open communication channels.
- * 
+ *
  * It also provides utility methods for posting asynchronous events,
  * including delayed events (timers).
- * 
+ *
  * Before TCF can be used, it should be given an object implementing IEventQueue interface:
  * @see #setEventQueue
- * 
+ *
  * @noextend This class is not intended to be subclassed by clients.
  * @noinstantiate This class is not intended to be instantiated by clients.
  */
@@ -41,7 +41,7 @@ public final class Protocol {
     private static ILogger logger;
     private static final TreeSet<Timer> timer_queue = new TreeSet<Timer>();
     private static int timer_cnt;
-    
+
     private static class Timer implements Comparable<Timer>{
         final int id;
         final long time;
@@ -103,12 +103,12 @@ public final class Protocol {
      * executes <code>run</code> methods of that objects in a sequence by a single thread.
      * The thread in referred as TCF event dispatch thread. Objects in the queue are called TCF events.
      * Executing <code>run</code> method of an event is also called dispatching of the event.
-     * 
+     *
      * Only few methods in TCF APIs are thread safe - can be invoked from any thread.
-     * If a method description does not say "can be invoked from any thread" explicitly -  
+     * If a method description does not say "can be invoked from any thread" explicitly -
      * the method must be invoked from TCF event dispatch thread. All TCF listeners are
      * invoked from the dispatch thread.
-     * 
+     *
      * @param event_queue - IEventQueue implementation.
      */
     public static void setEventQueue(IEventQueue event_queue) {
@@ -185,7 +185,7 @@ public final class Protocol {
             }
         }
     }
-    
+
     /**
      * Causes <code>runnable</code> to have its <code>run</code>
      * method called in the dispatch thread of the framework.
@@ -226,17 +226,17 @@ public final class Protocol {
             }
         }
     }
-    
+
     /**
      * Set framework logger.
      * By default Eclipse logger is used, or System.err if TCF is used stand-alone.
-     * 
+     *
      * @param logger - an object implementing ILogger interface.
      */
     public static synchronized void setLogger(ILogger logger) {
         Protocol.logger = logger;
     }
-    
+
     /**
      * Logs the given message.
      * @see #setLogger
@@ -256,13 +256,13 @@ public final class Protocol {
     /**
      * Get instance of the framework locator service.
      * The service can be used to discover available remote peers.
-     * 
+     *
      * @return instance of ILocator.
      */
     public static ILocator getLocator() {
         return LocatorService.getLocator();
     }
-    
+
     /**
      * Return an array of all open channels.
      * @return an array of IChannel
@@ -271,11 +271,11 @@ public final class Protocol {
         assert isDispatchThread();
         return TransportManager.getOpenChannels();
     }
-    
+
     /**
      * Interface to be implemented by clients willing to be notified when
      * new TCF communication channel is opened.
-     * 
+     *
      * The interface allows a client to get pointers to channel objects
      * that were opened by somebody else. If a client open a channel itself, it already has
      * the pointer and does not need Protocol.ChannelOpenListener. If a channel is created,
@@ -285,7 +285,7 @@ public final class Protocol {
     public interface ChannelOpenListener {
         public void onChannelOpen(IChannel channel);
     }
-    
+
     /**
      * Add a listener that will be notified when new channel is opened.
      * @param listener
@@ -312,28 +312,28 @@ public final class Protocol {
         assert isDispatchThread();
         TransportManager.sendEvent(service_name, event_name, data);
     }
-    
+
     /**
      * Call back after all TCF messages sent by this host up to this moment are delivered
      * to their intended target. This method is intended for synchronization of messages
      * across multiple channels.
-     * 
+     *
      * Note: Cross channel synchronization can reduce performance and throughput.
-     * Most clients don't need cross channel synchronization and should not call this method. 
-     *  
-     * @param done will be executed by dispatch thread after pending communication 
+     * Most clients don't need cross channel synchronization and should not call this method.
+     *
+     * @param done will be executed by dispatch thread after pending communication
      * messages are delivered to corresponding targets.
      */
     public static void sync(Runnable done) {
         assert isDispatchThread();
         TransportManager.sync(done);
     }
-    
+
     /**
      * Clients implement CongestionMonitor interface to monitor usage of local resources,
      * like, for example, display queue size - if the queue becomes too big, UI response time
      * can become too high, or it can crash all together because of OutOfMemory errors.
-     * TCF flow control logic prevents such conditions by throttling traffic coming from remote peers.   
+     * TCF flow control logic prevents such conditions by throttling traffic coming from remote peers.
      * Note: Local (in-bound traffic) congestion is detected by framework and reported to
      * remote peer without client needed to be involved. Only clients willing to provide
      * additional data about local congestion should implement CongestionMonitor and
@@ -341,13 +341,13 @@ public final class Protocol {
      */
     public interface CongestionMonitor {
         /**
-         * Get current level of client resource utilization. 
+         * Get current level of client resource utilization.
          * @return integer value in range –100..100, where –100 means all resources are free,
          *         0 means optimal load, and positive numbers indicate level of congestion.
          */
         int getCongestionLevel();
     }
-    
+
     /**
      * Register a congestion monitor.
      * @param monitor - client implementation of CongestionMonitor interface
@@ -357,7 +357,7 @@ public final class Protocol {
         assert isDispatchThread();
         congestion_monitors.add(monitor);
     }
-    
+
     /**
      * Unregister a congestion monitor.
      * @param monitor - client implementation of CongestionMonitor interface
@@ -366,10 +366,10 @@ public final class Protocol {
         assert isDispatchThread();
         congestion_monitors.remove(monitor);
     }
-    
+
     /**
      * Get current level of local traffic congestion.
-     * 
+     *
      * @return integer value in range –100..100, where –100 means no pending
      *         messages (no traffic), 0 means optimal load, and positive numbers
      *         indicate level of congestion.
@@ -390,15 +390,15 @@ public final class Protocol {
     }
 
     /**
-     * Register s service provider. 
+     * Register s service provider.
      * @param provider - IServiceProvider implementation
      */
     public static void addServiceProvider(IServiceProvider provider){
         ServiceManager.addServiceProvider(provider);
     }
-    
+
     /**
-     * Unregister s service provider. 
+     * Unregister s service provider.
      * @param provider - IServiceProvider implementation
      */
     public static void removeServiceProvider(IServiceProvider provider){
@@ -406,16 +406,16 @@ public final class Protocol {
     }
 
     /**
-     * Register s transport provider. 
+     * Register s transport provider.
      * @param provider - ITransportProvider implementation
      */
     public static void addTransportProvider(ITransportProvider provider){
         assert isDispatchThread();
         TransportManager.addTransportProvider(provider);
     }
-    
+
     /**
-     * Unregister s transport provider. 
+     * Unregister s transport provider.
      * @param provider - ITransportProvider implementation
      */
     public static void removeTransportProvider(ITransportProvider provider){

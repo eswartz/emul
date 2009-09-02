@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -52,7 +52,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     private final TCFDataCache<ISymbols.Symbol> type;
     private final TCFChildrenSubExpressions children;
     private int sort_pos;
-    
+
     private static int expr_cnt;
 
     TCFNodeExpression(final TCFNode parent, final String script, final String field_id, final String var_id, final int index) {
@@ -98,7 +98,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                     String e = expression.getData().getExpression();
                     if (e == null) {
                         set(null, new Exception("Missing 'Expression' property"), null);
-                        return true; 
+                        return true;
                     }
                     set(null, null, e);
                     return true;
@@ -240,7 +240,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         };
         children = new TCFChildrenSubExpressions(this, 0, 0, 0);
     }
-    
+
     @Override
     void dispose() {
         value.reset(null);
@@ -261,12 +261,12 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
             }
         });
     }
-    
+
     @Override
     void dispose(String id) {
         children.dispose(id);
     }
-    
+
     void onSuspended() {
         value.reset();
         type.reset();
@@ -274,35 +274,35 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         children.onSuspended();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
-    
+
     String getScript() {
         return script;
     }
-    
+
     String getFieldID() {
         return field_id;
     }
-    
+
     int getIndex() {
         return index;
     }
-    
+
     void setSortPosition(int sort_pos) {
         this.sort_pos = sort_pos;
     }
-    
+
     TCFDataCache<String> getExpressionText() {
         return text;
     }
-    
+
     TCFDataCache<IExpressions.Value> getValue() {
         return value;
     }
-    
+
     TCFDataCache<ISymbols.Symbol> getType() {
         return type;
     }
-    
+
     private BigInteger toBigInteger(byte[] data, int offs, int size, boolean big_endian, boolean sign_extension) {
         assert offs + size <= data.length;
         byte[] temp = null;
@@ -323,7 +323,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         }
         return new BigInteger(temp);
     }
-    
+
     private String toNumberString(int radix, ISymbols.Symbol t, byte[] data, int offs, int size, boolean big_endian) {
         String s = null;
         if (data == null) s = "N/A";
@@ -366,7 +366,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         if (s == null) s = "N/A";
         return s;
     }
-    
+
     private String toNumberString(int radix) {
         String s = null;
         IExpressions.Value val = value.getData();
@@ -377,7 +377,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         if (s == null) s = "...";
         return s;
     }
-    
+
     private void setLabel(ILabelUpdate result, String name, int col, int radix) {
         String s = toNumberString(radix);
         if (name == null) {
@@ -423,7 +423,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         if (s == null) s = "N/A";
         result.setLabel(s, col);
     }
-    
+
     @Override
     protected void getData(ILabelUpdate result) {
         result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
@@ -480,7 +480,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
             }
         }
     }
-    
+
     private void appendErrorText(StringBuffer bf, Throwable error) {
         if (error == null) return;
         bf.append("Exception: ");
@@ -495,7 +495,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
             error = cause;
         }
     }
-    
+
     private boolean appendArrayValueText(StringBuffer bf, int level, ISymbols.Symbol t,
             byte[] data, int offs, int size, boolean big_endian, Runnable done) {
         assert offs + size <= data.length;
@@ -547,7 +547,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         if (level == 0) bf.append('\n');
         return true;
     }
-    
+
     private boolean appendCompositeValueText(StringBuffer bf, int level, ISymbols.Symbol t,
             byte[] data, int offs, int size, boolean big_endian, Runnable done) {
         TCFDataCache<String[]> c = model.getSymbolChildrenCache(t.getExeContextID(), t.getID());
@@ -577,7 +577,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         bf.append('}');
         return true;
     }
-    
+
     private boolean appendValueText(StringBuffer bf, int level, ISymbols.Symbol t,
             byte[] data, int offs, int size, boolean big_endian, Runnable done) {
         if (data == null) return true;
@@ -636,7 +636,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         }
         return true;
     }
-    
+
     String getDetailText(Runnable done) {
         StringBuffer bf = new StringBuffer();
         appendErrorText(bf, expression.getError());
@@ -671,8 +671,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     protected void getData(IChildrenUpdate result) {
         TCFNode[] arr = children.toArray();
         int offset = 0;
-        int r_offset = result.getOffset(); 
-        int r_length = result.getLength(); 
+        int r_offset = result.getOffset();
+        int r_length = result.getLength();
         for (TCFNode n : arr) {
             if (offset >= r_offset && offset < r_offset + r_length) {
                 result.setChild(n, offset);
@@ -694,7 +694,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         }
         return 0;
     }
-    
+
     @Override
     public boolean validateNode(Runnable done) {
         TCFDataCache<?> pending = null;
@@ -720,18 +720,18 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         if (sort_pos > e.sort_pos) return +1;
         return 0;
     }
-    
+
     public CellEditor getCellEditor(IPresentationContext context, String column_id, Object element, Composite parent) {
         assert element == this;
         if (TCFColumnPresentationExpression.COL_NAME.equals(column_id) && script != null) {
             return new TextCellEditor(parent);
-        } 
+        }
         if (TCFColumnPresentationExpression.COL_HEX_VALUE.equals(column_id)) {
             return new TextCellEditor(parent);
-        } 
+        }
         if (TCFColumnPresentationExpression.COL_DEC_VALUE.equals(column_id)) {
             return new TextCellEditor(parent);
-        } 
+        }
         return null;
     }
 
@@ -865,7 +865,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
             }.getE();
         }
     };
-    
+
     public ICellModifier getCellModifier(IPresentationContext context, Object element) {
         assert element == this;
         return cell_modifier;

@@ -61,7 +61,7 @@
         Single threaded event driven design provides good level of concurrency (equivalent to cooperative multithreading), while greatly reduces need for synchronization -
         each event dispatch cycle can be viewed as fully synchronized atomic operation.
     </p>
-    
+
     <p>
         Event driven code should avoid long running or potentially blocking operations in event handlers since they can stop all event processing for indefinite time.
         Such operations should use asynchronous APIs (like POSIX Asynchronous I/O), or should be performed by background threads.
@@ -69,7 +69,7 @@
         Background thread scope should be limited to a single module and it should not call agent public APIs.
         Instead they should communicate with the rest of the code by posting events.
     </p>
-    
+
     <p>
         An event is essentially a function pointer (a call-back) that points to event handler, plus a data pointer.
         Call-backs are also used throughout the agent code to subscribe listeners for various state change notifications.
@@ -91,7 +91,7 @@
         Also, macro values can be overwritten by using -D option in C compiler command line.
         Agent <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent/Makefile'>Makefile</a> contains additional logic that makes it even more convenient to build different agent configurations.
     </p>
-    
+
     <p>
         It should be much easier to port the agent if you don't need all TCF services.
         For example, for RSE integration you only need File System, System Monitor and Processes services,
@@ -130,7 +130,7 @@
         When it is not possible or not feasible to use portable POSIX APIs, the agent code contains conditional compilation statements that
         use well known macros like WIN32, __CYGWIN__, __MINGW32__, etc. Such places might require editing when porting to a new OS.
     </p>
-    
+
     <h2>
         <a name='NewCPU'>Porting TCF Agent to a New CPU Type</a>
     </h2>
@@ -138,7 +138,7 @@
     <p>
                 Searching TCF agent source code for __i386__ is a good way to find all places where the source code depends on CPU type.
         </p>
-    
+
         <p>
                 There are several files in the code that might need changes in order to support a new CPU type:
         </p>

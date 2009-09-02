@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -23,14 +23,14 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 /**
  * This class is used to maintain a dynamic list of both executable contexts and memory spaces
  * that are children of a given parent context. The job is slightly complicated by necessity
- * to merge results from two independent services. 
+ * to merge results from two independent services.
  */
 public class TCFChildrenExecContext extends TCFChildren {
-    
+
     private final TCFNode node;
     private final TCFChildren mem_children;
     private final TCFChildren run_children;
-    
+
     TCFChildrenExecContext(final TCFNode node) {
         super(node.model.getLaunch().getChannel());
         this.node = node;
@@ -88,7 +88,7 @@ public class TCFChildrenExecContext extends TCFChildren {
             }
         };
     }
-    
+
     @Override
     protected void dispose() {
         super.dispose();
@@ -102,11 +102,11 @@ public class TCFChildrenExecContext extends TCFChildren {
         mem_children.dispose(id);
         run_children.dispose(id);
     }
-    
+
     @Override
     protected boolean startDataRetrieval() {
         TCFDataCache<?> pending = null;
-        if (!mem_children.validate()) pending = mem_children; 
+        if (!mem_children.validate()) pending = mem_children;
         if (!run_children.validate()) pending = run_children;
         if (pending != null) {
             pending.wait(this);
@@ -121,7 +121,7 @@ public class TCFChildrenExecContext extends TCFChildren {
         set(null, error, data);
         return true;
     }
-    
+
     void onContextAdded(IRunControl.RunControlContext context) {
         String id = context.getID();
         TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);

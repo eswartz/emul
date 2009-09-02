@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -24,21 +24,21 @@ public class TCFNodeArrayPartition extends TCFNode {
     private final int offs;
     private final int size;
     private final TCFChildrenSubExpressions children;
-    
+
     TCFNodeArrayPartition(TCFNode parent, int level, int offs, int size) {
         super(parent, "AP" + level + "." + offs + "." + parent.id);
         this.offs = offs;
         this.size = size;
         children = new TCFChildrenSubExpressions(this, level, offs, size);
     }
-    
+
     @Override
     void dispose() {
         children.reset(null);
         children.dispose();
         super.dispose();
     }
-    
+
     @Override
     void dispose(String id) {
         children.dispose(id);
@@ -47,7 +47,7 @@ public class TCFNodeArrayPartition extends TCFNode {
     int getOffset() {
         return offs;
     }
-    
+
     int getSize() {
         return size;
     }
@@ -61,8 +61,8 @@ public class TCFNodeArrayPartition extends TCFNode {
     protected void getData(IChildrenUpdate result) {
         TCFNode[] arr = children.toArray();
         int offset = 0;
-        int r_offset = result.getOffset(); 
-        int r_length = result.getLength(); 
+        int r_offset = result.getOffset();
+        int r_length = result.getLength();
         for (TCFNode n : arr) {
             if (offset >= r_offset && offset < r_offset + r_length) {
                 result.setChild(n, offset);
@@ -96,7 +96,7 @@ public class TCFNodeArrayPartition extends TCFNode {
             }
         }
     }
-    
+
     @Override
     int getRelevantModelDeltaFlags(IPresentationContext p) {
         if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(p.getId()) ||
@@ -105,7 +105,7 @@ public class TCFNodeArrayPartition extends TCFNode {
         }
         return 0;
     }
-    
+
     @Override
     public boolean validateNode(Runnable done) {
         TCFDataCache<?> pending = null;

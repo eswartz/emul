@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -21,10 +21,10 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
 /**
- * TCFChildren is a concrete type of TCF data cache that is used to cache a list of children. 
+ * TCFChildren is a concrete type of TCF data cache that is used to cache a list of children.
  */
 public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
-    
+
     private final int pool_margin;
     private final Map<String,TCFNode> node_pool = new LinkedHashMap<String,TCFNode>(32, 0.75f, true);
     private boolean disposed;
@@ -33,12 +33,12 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         super(channel);
         pool_margin = 0;
     }
-    
+
     TCFChildren(IChannel channel, int pool_margin) {
         super(channel);
         this.pool_margin = pool_margin;
     }
-    
+
     /**
      * Dispose the cache and all nodes in the nodes pool.
      */
@@ -52,7 +52,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         disposed = true;
         super.reset(null);
     }
-    
+
     /**
      * Remove a node from cache.
      * The method is called every time a node is disposed.
@@ -65,7 +65,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
             if (data != null) data.remove(id);
         }
     }
-    
+
     /**
      * Check if the cache is disposed.
      * @return true if disposed.
@@ -73,7 +73,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     boolean isDisposed() {
         return disposed;
     }
-    
+
     private void addToPool(Map<String,TCFNode> data) {
         assert !disposed;
         for (TCFNode n : data.values()) {
@@ -90,7 +90,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
             }
         }
     }
-    
+
     /**
      * End cache pending state.
      * @param token - pending command handle.
@@ -113,7 +113,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
             super.set(token, error, new HashMap<String,TCFNode>());
         }
     }
-    
+
     /**
      * Set given data to the cache, mark cache as valid, cancel any pending data retrieval.
      * @param data - up-to-date data to store in the cache, null means empty collection of nodes.
@@ -129,7 +129,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
             super.reset(new HashMap<String,TCFNode>());
         }
     }
-    
+
     /**
      * Add a node to collection of children.
      * @param n - a node.
@@ -143,7 +143,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
             if (data != null) data.put(n.id, n);
         }
     }
-    
+
     /**
      * Return collection of all nodes, including current children as well as
      * currently unused nodes from the pool.
@@ -153,7 +153,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     Collection<TCFNode> getNodes() {
         return node_pool.values();
     }
-    
+
     /**
      * Return current number of children.
      * The cache must be valid for the method to work.
@@ -164,7 +164,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         Map<String,TCFNode> data = getData();
         return data == null ? 0 : data.size();
     }
-    
+
     /**
      * Return index of given child node.
      * @param n - a child node
@@ -177,7 +177,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         }
         return -1;
     }
-    
+
     /**
      * Return current children nodes as an array.
      * @return array of nodes.

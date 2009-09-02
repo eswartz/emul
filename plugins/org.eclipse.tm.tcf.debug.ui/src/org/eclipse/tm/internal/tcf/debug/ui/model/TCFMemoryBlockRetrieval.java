@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -39,22 +39,22 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
  * TCF memory block retrieval is based on TCF Memory service.
  */
 class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
-    
+
     private final TCFNodeExecContext exec_ctx;
-    
+
     private class MemoryBlock extends PlatformObject implements IMemoryBlockExtension {
-        
+
         private final String expression;
         private final Set<Object> connections = new HashSet<Object>();
         private final TCFDataCache<IExpressions.Expression> remote_expression;
         private final TCFDataCache<IExpressions.Value> expression_value;
         private final TCFDataCache<ISymbols.Symbol> expression_type;
-        
+
         private boolean disposed;
-        
+
         MemoryBlock(final String expression) {
             this.expression = expression;
-            final TCFLaunch launch = exec_ctx.getModel().getLaunch(); 
+            final TCFLaunch launch = exec_ctx.getModel().getLaunch();
             final IChannel channel = launch.getChannel();
             remote_expression = new TCFDataCache<IExpressions.Expression>(channel) {
                 @Override
@@ -364,7 +364,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
             return super.getAdapter(adapter);
         }
     }
-    
+
     TCFMemoryBlockRetrieval(TCFNodeExecContext exec_ctx) {
         this.exec_ctx = exec_ctx;
     }

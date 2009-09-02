@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.commands.IDisconnectHandler;
@@ -45,6 +46,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxyFactor
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelSelectionPolicyFactory;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
+import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.debug.ui.IDebugView;
 import org.eclipse.debug.ui.ISourcePresentation;
@@ -63,6 +65,8 @@ import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
@@ -110,27 +114,27 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private final TCFLaunch launch;
     private final Display display;
-    
+
     private final List<ISuspendTriggerListener> suspend_trigger_listeners =
         new LinkedList<ISuspendTriggerListener>();
-    
+
     private int suspend_trigger_generation;
-    
+
     private final Map<IPresentationContext,TCFModelProxy> model_proxies =
         new HashMap<IPresentationContext,TCFModelProxy>();
-    
+
     private final Map<String,TCFNode> id2node = new HashMap<String,TCFNode>();
-    
+
     @SuppressWarnings("unchecked")
     private final Map<Class,Object> commands = new HashMap<Class,Object>();
-    
+
     private final Map<String,IMemoryBlockRetrievalExtension> mem_retrieval =
         new HashMap<String,IMemoryBlockRetrievalExtension>();
-    
+
     private class Console {
         final IOConsole console;
         final Map<Integer,IOConsoleOutputStream> out;
-        
+
         Console(final IOConsole console) {
             this.console = console;
             out = new HashMap<Integer,IOConsoleOutputStream>();
@@ -157,7 +161,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             t.setName("TCF Launch Console Input");
             t.start();
         }
-        
+
         void close() {
             for (IOConsoleOutputStream stream : out.values()) {
                 try {
@@ -178,15 +182,15 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private Console console;
 
-    private static final Map<ILaunchConfiguration,IEditorInput> editor_not_found = 
+    private static final Map<ILaunchConfiguration,IEditorInput> editor_not_found =
         new HashMap<ILaunchConfiguration,IEditorInput>();
-    
+
     private final Map<String,Map<String,TCFDataCache<ISymbols.Symbol>>> symbols =
         new HashMap<String,Map<String,TCFDataCache<ISymbols.Symbol>>>();
-    
+
     private final Map<String,Map<String,TCFDataCache<String[]>>> symbol_children =
         new HashMap<String,Map<String,TCFDataCache<String[]>>>();
-    
+
     private final IModelSelectionPolicyFactory model_selection_factory = new IModelSelectionPolicyFactory() {
 
         public IModelSelectionPolicy createModelSelectionPolicyAdapter(
@@ -250,7 +254,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     };
 
     private final IRunControl.RunControlListener run_listener = new IRunControl.RunControlListener() {
-        
+
         public void containerResumed(String[] context_ids) {
             for (int i = 0; i < context_ids.length; i++) {
                 TCFNode node = getNode(context_ids[i]);
@@ -274,7 +278,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 ((TCFNodeExecContext)node).onContextSuspended(pc, reason, params);
             }
             fireModelChanged();
-            runSuspendTrigger();
+            runSuspendTrigger(node);
         }
 
         public void contextAdded(IRunControl.RunControlContext[] contexts) {
@@ -336,12 +340,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 setDebugViewSelection(context, false);
             }
             fireModelChanged();
-            runSuspendTrigger();
-            display.asyncExec(new Runnable() {
-                public void run() {
-                    Activator.getAnnotationManager().onContextSuspended(TCFModel.this, context);
-                }
-            });
+            runSuspendTrigger(node);
         }
     };
 
@@ -364,7 +363,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             fireModelChanged();
         }
     };
-    
+
     private final IProcesses.ProcessesListener prs_listener = new IProcesses.ProcessesListener() {
 
         public void exited(String process_id, int exit_code) {
@@ -372,7 +371,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (prs != null && process_id.equals(prs.getID())) onLastContextRemoved();
         }
     };
-    
+
     TCFModel(TCFLaunch launch) {
         this.launch = launch;
         display = PlatformUI.getWorkbench().getDisplay();
@@ -444,7 +443,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         refreshLaunchView();
         assert id2node.size() == 0;
     }
-    
+
     void onProcessOutput(String process_id, final int stream_id, byte[] data) {
         try {
             IProcesses.ProcessContext prs = launch.getProcessContext();
@@ -498,7 +497,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             Activator.log("Cannot write to console", x);
         }
     }
-    
+
     void onContextActionsStart() {
     }
 
@@ -522,7 +521,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             }
         });
     }
-    
+
     private void onContextRemoved(final String[] context_ids) {
         boolean close_channel = false;
         for (String id : context_ids) {
@@ -546,7 +545,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             }
         });
     }
-    
+
     private void onLastContextRemoved() {
         Protocol.invokeLater(1000, new Runnable() {
             public void run() {
@@ -572,7 +571,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             refreshLaunchView();
         }
     }
-    
+
     void dispose() {
         if (console != null) {
             display.asyncExec(new Runnable() {
@@ -599,7 +598,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         id2node.remove(id);
         mem_retrieval.remove(id);
     }
-    
+
     void fireModelChanged() {
         assert Protocol.isDispatchThread();
         if (launch.hasPendingContextActions()) return;
@@ -624,7 +623,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         assert Protocol.isDispatchThread();
         return id2node.get(id);
     }
-    
+
     public TCFDataCache<ISymbols.Symbol> getSymbolInfoCache(String mem_id, final String sym_id) {
         Map<String,TCFDataCache<ISymbols.Symbol>> m = symbols.get(mem_id);
         if (m == null) symbols.put(mem_id, m = new HashMap<String,TCFDataCache<ISymbols.Symbol>>());
@@ -710,7 +709,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         for (int i = 0; i < updates.length; i++) {
             Object o = updates[i].getElement();
             if (o instanceof TCFLaunch) {
-                if (launch_node != null) { 
+                if (launch_node != null) {
                     launch_node.update(updates[i]);
                 }
                 else {
@@ -747,23 +746,23 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     public String getColumnPresentationId(IPresentationContext context, Object element) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(context.getId())) {
-            return TCFColumnPresentationRegister.PRESENTATION_ID; 
+            return TCFColumnPresentationRegister.PRESENTATION_ID;
         }
         if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(context.getId())) {
-            return TCFColumnPresentationExpression.PRESENTATION_ID; 
+            return TCFColumnPresentationExpression.PRESENTATION_ID;
         }
         if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(context.getId())) {
-            return TCFColumnPresentationExpression.PRESENTATION_ID; 
+            return TCFColumnPresentationExpression.PRESENTATION_ID;
         }
         return null;
     }
-    
+
     public void setDebugViewSelection(final String node_id, boolean initial_selection) {
         assert Protocol.isDispatchThread();
         if (initial_selection && debug_view_selection_set) return;
         debug_view_selection_set = true;
         final int cnt = ++debug_view_selection_cnt;
-        Protocol.invokeLater(200, new Runnable() {
+        Protocol.invokeLater(100, new Runnable() {
             public void run() {
                 TCFNode node = getNode(node_id);
                 if (node == null) return;
@@ -790,14 +789,25 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             }
         });
     }
-    
+
     /**
      * Reveal source code associated with given model element.
      * The method is part of ISourceDisplay interface.
      * The method is normally called from SourceLookupService.
      */
-    public void displaySource(final Object element, final IWorkbenchPage page, boolean forceSourceLookup) {
+    public void displaySource(Object model_element, final IWorkbenchPage page, boolean forceSourceLookup) {
         final int cnt = ++display_source_cnt;
+        /* Because of racing in Eclipse Debug infrastructure, 'model_element' value can be invalid.
+         * As a workaround, get current debug view selection.
+         */
+        if (page != null) {
+            ISelection context = DebugUITools.getDebugContextManager().getContextService(page.getWorkbenchWindow()).getActiveContext();
+            if (context instanceof IStructuredSelection) {
+                IStructuredSelection selection = (IStructuredSelection)context;
+                if (!selection.isEmpty()) model_element = selection.getFirstElement();
+            }
+        }
+        final Object element = model_element;
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 if (cnt != display_source_cnt) return;
@@ -852,7 +862,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                             }
                             if (editor_input != null) {
                                 editor_id = presentation.getEditorId(editor_input, source_element);
-                            }                               
+                            }
                             line = src_ref.area.start_line;
                         }
                     }
@@ -865,7 +875,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             }
         });
     }
-    
+
     private void displaySource(final int cnt,
             final String id, final IEditorInput input, final IWorkbenchPage page,
             final String exe_id, final boolean top_frame, final int line) {
@@ -876,7 +886,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 IRegion region = null;
                 if (input != null && id != null && page != null) {
                     IEditorPart editor = openEditor(input, id, page);
-                    if (editor instanceof ITextEditor) {                                    
+                    if (editor instanceof ITextEditor) {
                         text_editor = (ITextEditor)editor;
                     }
                     else {
@@ -892,7 +902,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             }
         });
     }
-    
+
     private void refreshLaunchView() {
         final Throwable error = launch.getError();
         if (error != null) launch.setError(null);
@@ -911,9 +921,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (error != null) showMessageBox("TCF Launch Error", error);
         }
     }
-    
+
     /*
-     * Show error message box in active workbench window. 
+     * Show error message box in active workbench window.
      * @param title - message box title.
      * @param error - error to be shown.
      */
@@ -949,10 +959,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             }
         });
     }
-    
+
     /*
      * Open an editor for given editor input.
-     * @param input - IEditorInput representing a source file to be shown in the editor 
+     * @param input - IEditorInput representing a source file to be shown in the editor
      * @param id - editor type ID
      * @param page - workbench page that will contain the editor
      * @return - IEditorPart if the editor was opened successfully, or null otherwise.
@@ -970,10 +980,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     }
                 }
             }
-        }; 
+        };
         BusyIndicator.showWhile(display, r);
         return editor[0];
-    }   
+    }
 
     /*
      * Returns the line information for the given line in the given editor
@@ -1006,9 +1016,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     public synchronized void removeSuspendTriggerListener(ISuspendTriggerListener listener) {
         suspend_trigger_listeners.remove(listener);
-    }       
-    
-    private synchronized void runSuspendTrigger() {
+    }
+
+    private synchronized void runSuspendTrigger(final TCFNode node) {
         final int generation = ++suspend_trigger_generation;
         final ISuspendTriggerListener[] listeners = suspend_trigger_listeners.toArray(
                 new ISuspendTriggerListener[suspend_trigger_listeners.size()]);
@@ -1020,12 +1030,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 }
                 for (final ISuspendTriggerListener listener : listeners) {
                     try {
-                        listener.suspended(launch, null);
+                        listener.suspended(launch, node);
                     }
                     catch (Throwable x) {
                         Activator.log(x);
-                    };             
-                }        
+                    }
+                }
             }
         });
     }

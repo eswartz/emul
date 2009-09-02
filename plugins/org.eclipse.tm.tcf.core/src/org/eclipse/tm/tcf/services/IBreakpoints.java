@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -19,11 +19,11 @@ import org.eclipse.tm.tcf.protocol.IToken;
 /**
  * Breakpoint is represented by unique identifier and set of properties.
  * Breakpoint identifier (String id) needs to be unique across all hosts and targets.
- * 
+ *
  * Breakpoint properties (Map<String,Object>) is extendible collection of named attributes,
  * which define breakpoint location and behavior. This module defines some common
  * attribute names (see PROP_*), host tools and target agents may support additional attributes.
- * 
+ *
  * For each breakpoint a target agent maintains another extendible collection of named attributes:
  * breakpoint status (Map<String,Object>, see STATUS_*). While breakpoint properties are
  * persistent and represent user input, breakpoint status reflects dynamic target agent reports
@@ -39,7 +39,7 @@ public interface IBreakpoints extends IService {
     /**
      * Breakpoint property names.
      */
-    static final String   
+    static final String
         PROP_ID = "ID",                           // String
         PROP_ENABLED = "Enabled",                 // Boolean
         PROP_TYPE = "BreakpointType",             // String
@@ -63,31 +63,31 @@ public interface IBreakpoints extends IService {
         PROP_TEMPORARY = "Temporary";             // Boolean
 
     /**
-     * BreakpointType values 
+     * BreakpointType values
      */
     static final String
         TYPE_RELATIVE = "Software",
         TYPE_ABSOLUTE = "Hardware",
         TYPE_AUTO = "Auto";
 
-    /** 
-     * AccessMode values 
-     */ 
-    static final int 
+    /**
+     * AccessMode values
+     */
+    static final int
         ACCESSMODE_READ    = 0x01,
-        ACCESSMODE_WRITE   = 0x02, 
+        ACCESSMODE_WRITE   = 0x02,
         ACCESSMODE_EXECUTE = 0x04,
         ACCESSMODE_CHANGE  = 0x08;
 
     /**
-     * TimeScale values 
+     * TimeScale values
      */
-    static final String 
+    static final String
         TIMESCALE_RELATIVE = "Relative",
         TIMESCALE_ABSOLUTE = "Absolute";
-    
+
     /**
-     * TimeUnits values 
+     * TimeUnits values
      */
     static final String
         TIMEUNIT_NSECS = "Nanoseconds",
@@ -103,7 +103,7 @@ public interface IBreakpoints extends IService {
         STATUS_FILE = "File",           // String
         STATUS_LINE = "Line",           // Number
         STATUS_COLUMN = "Column";       // Number
-    
+
     /**
      * Breakpoint instance field names.
      */
@@ -111,7 +111,7 @@ public interface IBreakpoints extends IService {
         INSTANCE_ERROR = "Error",       // String
         INSTANCE_CONTEXT = "LocationContext", // String
         INSTANCE_ADDRESS = "Address";   // Number
-    
+
     /**
      * Breakpoint service capabilities.
      */
@@ -136,11 +136,11 @@ public interface IBreakpoints extends IService {
 
     /**
      * Download breakpoints data to target agent.
-     * The command is intended to be used only to initialize target breakpoints table 
-     * when communication channel is open. After that, host should 
+     * The command is intended to be used only to initialize target breakpoints table
+     * when communication channel is open. After that, host should
      * notify target about (incremental) changes in breakpoint data by sending
      * add, change and remove commands.
-     * 
+     *
      * @param properties - array of breakpoints.
      * @param done - command result call back object.
      * @return - pending command handle.
@@ -186,7 +186,7 @@ public interface IBreakpoints extends IService {
      * @return - pending command handle.
      */
     IToken remove(String[] ids, DoneCommand done);
-    
+
     /**
      * Upload IDs of breakpoints known to target agent.
      * @param done - command result call back object.
@@ -199,7 +199,7 @@ public interface IBreakpoints extends IService {
      */
     interface DoneGetIDs {
         /**
-         * Called when 'getIDs' command is done. 
+         * Called when 'getIDs' command is done.
          * @param token - command handle.
          * @param error - error object or null.
          * @param ids - IDs of breakpoints known to target agent.
@@ -219,7 +219,7 @@ public interface IBreakpoints extends IService {
      */
     interface DoneGetProperties {
         /**
-         * Called when 'getProperties' command is done. 
+         * Called when 'getProperties' command is done.
          * @param token - command handle.
          * @param error - error object or null.
          * @param properties - properties of the breakpoint.
@@ -240,7 +240,7 @@ public interface IBreakpoints extends IService {
      */
     interface DoneGetStatus {
         /**
-         * Called when 'getStatus' command is done. 
+         * Called when 'getStatus' command is done.
          * @param token - command handle.
          * @param error - error object or null.
          * @param status - status of the breakpoint.
@@ -266,7 +266,7 @@ public interface IBreakpoints extends IService {
      */
     interface DoneGetCapabilities {
         /**
-         * Called when 'getCapabilities' command is done. 
+         * Called when 'getCapabilities' command is done.
          * @param token - command handle.
          * @param error - error object or null.
          * @param capabilities - breakpoints service capabilities description.

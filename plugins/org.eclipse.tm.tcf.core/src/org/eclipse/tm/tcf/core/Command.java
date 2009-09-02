@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -30,17 +30,17 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  * This is utility class that helps to implement sending a command and receiving
  * command result over TCF communication channel. The class uses JSON to encode
  * command arguments and to decode result data.
- * 
+ *
  * The class also provides support for TCF standard error report encoding.
- * 
+ *
  * Clients are expected to subclass <code>Command</code> and override <code>done</code> method.
- * 
+ *
  * Note: most clients don't need to handle protocol commands directly and
  * can use service APIs instead. Service API does all command encoding/decoding
  * for a client.
- * 
+ *
  * Typical usage example:
- * 
+ *
  *  public IToken getContext(String id, final DoneGetContext done) {
  *      return new Command(channel, IService.this, "getContext", new Object[]{ id }) {
  *          @Override
@@ -57,17 +57,17 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  *  }
  */
 public abstract class Command implements IChannel.ICommandListener {
-    
+
     private final IService service;
     private final String command;
     private final Object[] args;
-    
+
     public final IToken token;
-    
+
     private boolean done;
-    
+
     private static final SimpleDateFormat timestamp_format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-    
+
     public Command(IChannel channel, IService service, String command, Object[] args) {
         this.service = service;
         this.command = command;
@@ -116,9 +116,9 @@ public abstract class Command implements IChannel.ICommandListener {
         done = true;
         done(error, null);
     }
-    
+
     public abstract void done(Exception error, Object[] args);
-    
+
     public String getCommandString() {
         StringBuffer buf = new StringBuffer();
         buf.append(service.getName());
@@ -139,7 +139,7 @@ public abstract class Command implements IChannel.ICommandListener {
         }
         return buf.toString();
     }
-    
+
     @SuppressWarnings({ "unchecked" })
     public static String toErrorString(Object data) {
         if (data == null) return null;
@@ -163,7 +163,7 @@ public abstract class Command implements IChannel.ICommandListener {
         }
         return "Invalid error report format";
     }
-    
+
     static void appendErrorProps(StringBuffer bf, Map<String,Object> map) {
         Number time = (Number)map.get(IErrorReport.ERROR_TIME);
         Number code = (Number)map.get(IErrorReport.ERROR_CODE);
@@ -209,11 +209,11 @@ public abstract class Command implements IChannel.ICommandListener {
             }
         }
     }
-    
+
     public Exception toError(Object data) {
         return toError(data, true);
     }
-    
+
     @SuppressWarnings("unchecked")
     public Exception toError(Object data, boolean include_command_text) {
         if (data == null) return null;

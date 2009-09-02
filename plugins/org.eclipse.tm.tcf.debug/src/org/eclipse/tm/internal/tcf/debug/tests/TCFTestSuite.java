@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -25,21 +25,21 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 /**
  * TCF Test Suite implements stress testing of communication channels and capabilities of remote peer.
  * It is intended to be used before starting a debug session for a first time to make sure the selected
- * target is stable and reliable.  
+ * target is stable and reliable.
  */
 public class TCFTestSuite {
-    
+
     private final static int NUM_CHANNELS = 4;
-    
+
     private final TestListener listener;
     private final IChannel[] channels;
-    private final LinkedList<Runnable> pending_tests = new LinkedList<Runnable>(); 
+    private final LinkedList<Runnable> pending_tests = new LinkedList<Runnable>();
     private final Collection<Throwable> errors = new ArrayList<Throwable>();
     private final Map<ITCFTest,IChannel> active_tests = new HashMap<ITCFTest,IChannel>();
-    
+
     private int count_total;
     private int count_done;
-    
+
     boolean cancel;
     boolean canceled;
     boolean target_lock;
@@ -48,7 +48,7 @@ public class TCFTestSuite {
         public void progress(String label, int done, int total);
         public void done(Collection<Throwable> errors);
     }
-        
+
     public TCFTestSuite(final IPeer peer, final TestListener listener) throws IOException {
         this.listener = listener;
         pending_tests.add(new Runnable() {
@@ -152,7 +152,7 @@ public class TCFTestSuite {
             }
         });
     }
-    
+
     private void openChannels(IPeer peer) {
         listener.progress("Openning communication channels...", count_done, count_total);
         for (int i = 0; i < channels.length; i++) {
@@ -194,7 +194,7 @@ public class TCFTestSuite {
             });
         }
     }
-    
+
     public void cancel() {
         cancel = true;
         if (canceled) return;
@@ -214,15 +214,15 @@ public class TCFTestSuite {
             if (c != null && c.getState() != IChannel.STATE_CLOSED) c.close();
         }
     }
-    
+
     public boolean isCanceled() {
         return canceled;
     }
-    
+
     boolean isActive(ITCFTest test) {
         return active_tests.get(test) != null;
     }
-    
+
     void done(ITCFTest test, Throwable error) {
         assert active_tests.get(test) != null;
         if (error != null && !canceled) errors.add(error);

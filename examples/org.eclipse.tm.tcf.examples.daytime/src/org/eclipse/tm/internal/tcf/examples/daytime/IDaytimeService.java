@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -33,13 +33,13 @@ public interface IDaytimeService extends IService {
      * @param tz - time zone name.
      * @param done - a call-back object.
      * @return a handle for the pending command. The handle can be used to cancel the command,
-     * and to match responses to requests - if same call-back object is used for 
-     * multiple requests. 
+     * and to match responses to requests - if same call-back object is used for
+     * multiple requests.
      */
     IToken getTimeOfDay(String tz, DoneGetTimeOfDay done);
 
     /**
-     * Call-back interface for getTimeOfDay() command.  
+     * Call-back interface for getTimeOfDay() command.
      */
     interface DoneGetTimeOfDay {
         /**

@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -19,7 +19,7 @@ import org.eclipse.tm.tcf.protocol.IToken;
 public interface IRunControl extends IService {
 
     static final String NAME = "RunControl";
-    
+
     /**
      * Context property names.
      */
@@ -33,70 +33,70 @@ public interface IRunControl extends IService {
         PROP_CAN_COUNT = "CanCount",
         PROP_CAN_SUSPEND = "CanSuspend",
         PROP_CAN_TERMINATE = "CanTerminate";
-    
+
     /**
-     * Context resume modes.  
+     * Context resume modes.
      */
     static final int
-        
+
         RM_RESUME = 0,
-        
+
         /**
          * Step over a single instruction.
          * If the instruction is a function call then don't stop until the function returns.
          */
         RM_STEP_OVER = 1,
-        
+
         /**
          * Step a single instruction.
          * If the instruction is a function call then stop at first instruction of the function.
          */
         RM_STEP_INTO = 2,
-        
+
         /**
          * Step over a single source code line.
          * If the line contains a function call then don't stop until the function returns.
          */
         RM_STEP_OVER_LINE = 3,
-        
+
         /**
          * Step a single source code line.
          * If the line contains a function call then stop at first line of the function.
          */
         RM_STEP_INTO_LINE = 4,
-        
+
         /**
          * Run until control returns from current function.
          */
         RM_STEP_OUT = 5,
-        
+
         /**
          * Start running backwards.
          * Execution will continue until suspended by command or breakpoint.
          */
         RM_REVERSE_RESUME = 6,
-        
+
         /**
          * Reverse of RM_STEP_OVER - run backwards over a single instruction.
          * If the instruction is a function call then don't stop until get out of the function.
          */
         RM_REVERSE_STEP_OVER = 7,
-        
+
         /**
          * Reverse of RM_STEP_INTO.
          * This effectively "un-executes" the previous instruction
          */
         RM_REVERSE_STEP_INTO = 8,
-        
+
         /**
          * Reverse of RM_STEP_OVER_LINE.
          * Resume backward execution of given context until control reaches an instruction that belongs
-         * to a different source line. 
+         * to a different source line.
          * If the line contains a function call then don't stop until get out of the function.
          * Error is returned if line number information not available.
          */
         RM_REVERSE_STEP_OVER_LINE = 9,
-        
+
         /**
          * Reverse of RM_STEP_INTO_LINE,
          * Resume backward execution of given context until control reaches an instruction that belongs
@@ -105,38 +105,38 @@ public interface IRunControl extends IService {
          * Error is returned if line number information not available.
          */
         RM_REVERSE_STEP_INTO_LINE = 10,
-        
+
         /**
          * Reverse of RM_STEP_OUT.
          * Resume backward execution of the given context until control reaches the point where the current function was called.
          */
         RM_REVERSE_STEP_OUT = 11,
-        
+
         /**
          * Step over instructions until PC is outside the specified range.
          * If any function call within the range is considered to be in range.
          */
         RM_STEP_OVER_RANGE = 12,
-        
+
         /**
          * Step instruction until PC is outside the specified range for any reason.
          */
         RM_STEP_INTO_RANGE = 13,
-        
+
         /**
          * Reverse of RM_STEP_OVER_RANGE
          */
         RM_REVERSE_STEP_OVER_RANGE = 14,
-        
+
         /**
          * Reverse of RM_STEP_INTO_RANGE
          */
         RM_REVERSE_STEP_INTO_RANGE = 15;
-    
+
     /**
      * State change reason of a context.
      * Reason can be any text, but if it is one of predefined strings,
-     * a generic client might be able to handle it better. 
+     * a generic client might be able to handle it better.
      */
     static final String
         REASON_USER_REQUEST = "Suspended",
@@ -148,11 +148,11 @@ public interface IRunControl extends IService {
         REASON_SIGNAL = "Signal",
         REASON_SHAREDLIB = "Shared Library",
         REASON_ERROR = "Error";
-    
+
     /**
      * Retrieve context properties for given context ID.
-     *   
-     * @param id – context ID. 
+     *
+     * @param id – context ID.
      * @param done - callback interface called when operation is completed.
      */
     IToken getContext(String id, DoneGetContext done);
@@ -171,10 +171,10 @@ public interface IRunControl extends IService {
 
     /**
      * Retrieve children of given context.
-     *   
+     *
      * @param parent_context_id – parent context ID. Can be null –
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
-     * by previous getContext or getChildren commands. 
+     * by previous getContext or getChildren commands.
      * @param done - callback interface called when operation is completed.
      */
     IToken getChildren(String parent_context_id, DoneGetChildren done);
@@ -190,7 +190,7 @@ public interface IRunControl extends IService {
          */
         void doneGetChildren(IToken token, Exception error, String[] context_ids);
     }
-    
+
     /**
      * A context corresponds to an execution thread, process, address space, etc.
      * A context can belong to a parent context. Contexts hierarchy can be simple
@@ -198,17 +198,17 @@ public interface IRunControl extends IService {
      * layout that is most descriptive for a given target. Context IDs are valid across
      * all services. In other words, all services access same hierarchy of contexts,
      * with same IDs, however, each service accesses its own subset of context's
-     * attributes and functionality, which is relevant to that service. 
+     * attributes and functionality, which is relevant to that service.
      */
     interface RunControlContext {
 
-        /** 
+        /**
          * Retrieve context ID.
          * Same as getProperties().get(“ID”)
          */
         String getID();
 
-        /** 
+        /**
          * Retrieve parent context ID.
          * Same as getProperties().get(“ParentID”)
          */
@@ -227,14 +227,14 @@ public interface IRunControl extends IService {
          * @return value of PROP_IS_CONTAINER.
          */
         boolean isContainer();
-        
+
         /**
          * Utility method to read context property PROP_HAS_STATE.
-         * Only context that has a state can be resumed or suspended. 
+         * Only context that has a state can be resumed or suspended.
          * @return value of PROP_HAS_STATE.
          */
         boolean hasState();
-        
+
         /**
          * Utility method to read context property PROP_CAN_SUSPEND.
          * Value 'true' means suspend command is supported by the context,
@@ -244,29 +244,29 @@ public interface IRunControl extends IService {
          * @return value of PROP_CAN_SUSPEND.
          */
         boolean canSuspend();
-        
+
         /**
          * Utility method to read a 'mode' bit in context property PROP_CAN_RESUME.
          * Value 'true' means resume command is supported by the context,
          * however the method does not check that the command can be executed successfully in
          * the current state of the context. For example, the command still can fail if context is
          * already resumed.
-         * @param mode - resume mode, see RM_*. 
-         * @return value of requested bit of PROP_CAN_RESUME. 
+         * @param mode - resume mode, see RM_*.
+         * @return value of requested bit of PROP_CAN_RESUME.
          */
         boolean canResume(int mode);
-        
+
         /**
          * Utility method to read a 'mode' bit in context property PROP_CAN_COUNT.
          * Value 'true' means resume command with count other then 1 is supported by the context,
          * however the method does not check that the command can be executed successfully in
          * the current state of the context. For example, the command still can fail if context is
          * already resumed.
-         * @param mode - resume mode, see RM_*. 
-         * @return value of requested bit of PROP_CAN_COUNT. 
+         * @param mode - resume mode, see RM_*.
+         * @return value of requested bit of PROP_CAN_COUNT.
          */
         boolean canCount(int mode);
-        
+
         /**
          * Utility method to read context property PROP_CAN_TERMINATE.
          * Value 'true' means terminate command is supported by the context,
@@ -291,7 +291,7 @@ public interface IRunControl extends IService {
          * @return pending command handle, can be used to cancel the command.
          */
         IToken suspend(DoneCommand done);
-        
+
         /**
          * Send a command to resume a context.
          * Also resumes children if context is a container.
@@ -301,7 +301,7 @@ public interface IRunControl extends IService {
          * @return pending command handle, can be used to cancel the command.
          */
         IToken resume(int mode, int count, DoneCommand done);
-        
+
         /**
          * Send a command to resume a context.
          * Also resumes children if context is a container.
@@ -312,7 +312,7 @@ public interface IRunControl extends IService {
          * @return pending command handle, can be used to cancel the command.
          */
         IToken resume(int mode, int count, Map<String,Object> params, DoneCommand done);
-        
+
         /**
          * Send a command to terminate a context.
          * @param done - command result call back object.
@@ -345,7 +345,7 @@ public interface IRunControl extends IService {
      * @param listener - run control event listener to add.
      */
     void addListener(RunControlListener listener);
-    
+
     /**
      * Remove run control event listener.
      * @param listener - run control event listener to remove.
@@ -394,14 +394,14 @@ public interface IRunControl extends IService {
         /**
          * Called when target simultaneously suspends multiple threads in a container
          * (process, core, etc.).
-         * 
+         *
          * @param context - ID of a context responsible for the event. It can be container ID or
          * any one of container children, for example, it can be thread that hit "suspend all" breakpoint.
          * Client expected to move focus (selection) to this context.
          * @param pc - program counter of the context.
          * @param reason - human readable description of suspend reason.
          * @param params - additional target specific data about suspended context.
-         * @param suspended_ids - full list of all contexts that were suspended. 
+         * @param suspended_ids - full list of all contexts that were suspended.
          */
         void containerSuspended(String context, String pc,
                 String reason, Map<String,Object> params, String[] suspended_ids);
@@ -409,8 +409,8 @@ public interface IRunControl extends IService {
         /**
          * Called when target simultaneously resumes multiple threads in a container (process,
          * core, etc.).
-         * 
-         * @param context_ids - full list of all contexts that were resumed. 
+         *
+         * @param context_ids - full list of all contexts that were resumed.
          */
         void containerResumed(String[] context_ids);
 

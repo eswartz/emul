@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -25,14 +25,14 @@ import org.eclipse.tm.tcf.services.IStackTrace;
 
 class TestExpressions implements ITCFTest,
     IRunControl.RunControlListener, IExpressions.ExpressionsListener, IBreakpoints.BreakpointsListener {
-    
+
     private final TCFTestSuite test_suite;
     private final IDiagnostics diag;
     private final IExpressions expr;
     private final IStackTrace stk;
     private final IRunControl rc;
     private final IBreakpoints bp;
-    
+
     private String bp_id;
     private boolean bp_ok;
     private IDiagnostics.ISymbol sym_func3;
@@ -49,7 +49,7 @@ class TestExpressions implements ITCFTest,
         new HashMap<String,IExpressions.Expression>();
     private final Map<String,IExpressions.Value> expr_val =
         new HashMap<String,IExpressions.Value>();
-    
+
     private static String[] test_expressions = {
         "func2_local1 == func2_local1",
         "func2_local1 != func2_local2",
@@ -83,7 +83,7 @@ class TestExpressions implements ITCFTest,
         "((func2_local1 + func2_local2) * 2 - 2) / 2 == 2",
         "func2_local3.f_struct->f_struct->f_struct == &func2_local3"
     };
-    
+
     TestExpressions(TCFTestSuite test_suite, IChannel channel) {
         this.test_suite = test_suite;
         diag = channel.getRemoteService(IDiagnostics.class);
@@ -362,7 +362,7 @@ class TestExpressions implements ITCFTest,
             }
         });
     }
-    
+
     private void exit(Throwable x) {
         if (!test_suite.isActive(this)) return;
         expr.removeListener(this);
@@ -372,7 +372,7 @@ class TestExpressions implements ITCFTest,
     }
 
     //--------------------------- Run Control listener ---------------------------//
-    
+
     public void containerResumed(String[] context_ids) {
     }
 

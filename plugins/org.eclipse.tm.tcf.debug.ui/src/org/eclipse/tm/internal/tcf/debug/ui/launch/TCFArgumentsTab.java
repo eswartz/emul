@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -65,7 +65,7 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
         gd = new GridData();
         gd.horizontalSpan = 2;
         label.setLayoutData(gd);
-        
+
         text_arguments = new Text(comp, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
         gd = new GridData(GridData.FILL_BOTH);
         gd.heightHint = 40;
@@ -85,7 +85,7 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
             }
         });
     }
-    
+
     /**
      * A variable entry button has been pressed for the given text
      * field. Prompt the user for a variable and enter the result
@@ -139,7 +139,7 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
     public String getName() {
         return "Arguments";
     }
-    
+
     @Override
     public Image getImage() {
         return ImageCache.getImageDescriptor(ImageCache.IMG_ARGUMENTS_TAB).createImage();

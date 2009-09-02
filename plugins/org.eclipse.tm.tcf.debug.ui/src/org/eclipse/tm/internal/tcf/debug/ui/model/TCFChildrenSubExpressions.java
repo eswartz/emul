@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -19,7 +19,7 @@ import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public class TCFChildrenSubExpressions extends TCFChildren {
-    
+
     private final TCFNode node;
     private final int par_level;
     private final int par_offs;
@@ -38,7 +38,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             if (n instanceof TCFNodeExpression) ((TCFNodeExpression)n).onSuspended();
         }
     }
-    
+
     private TCFNodeExpression findField(String id) {
         assert id != null;
         for (TCFNode n : getNodes()) {
@@ -47,7 +47,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         }
         return null;
     }
-    
+
     private TCFNodeExpression findIndex(int index) {
         assert index >= 0;
         for (TCFNode n : getNodes()) {
@@ -164,7 +164,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         set(null, null, new HashMap<String,TCFNode>());
         return true;
     }
-    
+
     private boolean isNull(byte[] data) {
         if (data == null) return true;
         for (byte b : data) {

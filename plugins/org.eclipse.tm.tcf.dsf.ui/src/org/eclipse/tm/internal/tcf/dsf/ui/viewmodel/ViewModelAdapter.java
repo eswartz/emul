@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -44,7 +44,7 @@ public class ViewModelAdapter extends AbstractDMVMAdapter {
     @Override
     protected IVMProvider createViewModelProvider(IPresentationContext context) {
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(context.getId()) ) {
-            return new LaunchVMProvider(this, context, getSession(), launch); 
+            return new LaunchVMProvider(this, context, getSession(), launch);
         }
         if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(context.getId()) ) {
             return new VariableVMProvider(this, context, getSession());

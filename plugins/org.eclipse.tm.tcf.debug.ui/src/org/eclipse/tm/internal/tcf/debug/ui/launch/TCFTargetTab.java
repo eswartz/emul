@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -65,7 +65,7 @@ import org.eclipse.tm.tcf.services.ILocator;
  * configuration.
  */
 public class TCFTargetTab extends AbstractLaunchConfigurationTab {
-    
+
     private Button run_local_agent_button;
     private Button use_local_agent_button;
     private Text peer_id_text;
@@ -87,11 +87,11 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         ILocator locator;
         LocatorListener listener;
     }
-    
+
     private class LocatorListener implements ILocator.LocatorListener {
-        
+
         private final PeerInfo parent;
-        
+
         LocatorListener(PeerInfo parent) {
             this.parent = parent;
         }
@@ -185,7 +185,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             });
         }
     }
-    
+
     public void createControl(Composite parent) {
         display = parent.getDisplay();
         assert display != null;
@@ -236,7 +236,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
 
     private void createTargetGroup(Composite parent) {
         Font font = parent.getFont();
-        
+
         Group group = new Group(parent, SWT.NONE);
         GridLayout top_layout = new GridLayout();
         top_layout.verticalSpacing = 0;
@@ -245,14 +245,14 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         group.setLayoutData(new GridData(GridData.FILL_BOTH));
         group.setFont(font);
         group.setText("Target");
-        
+
         createVerticalSpacer(group, top_layout.numColumns);
-        
+
         Label host_label = new Label(group, SWT.NONE);
         host_label.setText("Target ID:");
         host_label.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
         host_label.setFont(font);
-        
+
         peer_id_text = new Text(group, SWT.SINGLE | SWT.BORDER);
         peer_id_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         peer_id_text.setFont(font);
@@ -264,11 +264,11 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         peer_label.setText("&Available targets:");
         peer_label.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING));
         peer_label.setFont(font);
-                
+
         loadChildren(peer_info);
         createPeerListArea(group);
     }
-    
+
     private void createPeerListArea(Composite parent) {
         Font font = parent.getFont();
         Composite composite = new Composite(parent, SWT.NONE);
@@ -276,13 +276,13 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         composite.setFont(font);
         composite.setLayout(layout);
         composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
-        
+
         peer_tree = new Tree(composite, SWT.VIRTUAL | SWT.BORDER | SWT.SINGLE);
         GridData gd = new GridData(GridData.FILL_BOTH);
         gd.minimumHeight = 150;
         gd.minimumWidth = 470;
         peer_tree.setLayoutData(gd);
-        
+
         for (int i = 0; i < 5; i++) {
             TreeColumn column = new TreeColumn(peer_tree, SWT.LEAD, i);
             column.setMoveable(true);
@@ -309,7 +309,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 break;
             }
         }
-                
+
         peer_tree.setHeaderVisible(true);
         peer_tree.setFont(font);
         peer_tree.addListener(SWT.SetData, new Listener() {
@@ -382,10 +382,10 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             public void treeExpanded(TreeEvent e) {
             }
         });
-        
+
         createPeerButtons(composite);
     }
-    
+
     private void createPeerButtons(Composite parent) {
         Font font = parent.getFont();
         Composite composite = new Composite(parent, SWT.NONE);
@@ -395,7 +395,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         composite.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.VERTICAL_ALIGN_FILL));
         Menu menu = new Menu(peer_tree);
         SelectionAdapter sel_adapter = null;
-        
+
         final Button button_new = new Button(composite, SWT.PUSH);
         button_new.setText("N&ew...");
         button_new.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
@@ -463,7 +463,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         final MenuItem item_remove = new MenuItem(menu, SWT.PUSH);
         item_remove.setText("&Remove");
         item_remove.addSelectionListener(sel_adapter);
-        
+
         createVerticalSpacer(composite, 20);
         new MenuItem(menu, SWT.SEPARATOR);
 
@@ -492,9 +492,9 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         final MenuItem item_loop = new MenuItem(menu, SWT.PUSH);
         item_loop.setText("Tests &Loop");
         item_loop.addSelectionListener(sel_adapter);
-        
+
         peer_tree.setMenu(menu);
-        
+
         update_peer_buttons = new Runnable() {
 
             public void run() {
@@ -531,7 +531,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         }
         update_peer_buttons.run();
     }
-    
+
     @Override
     public void dispose() {
         Protocol.invokeAndWait(new Runnable() {
@@ -546,7 +546,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     public String getName() {
         return "Target";
     }
-    
+
     @Override
     public Image getImage() {
         return ImageCache.getImage(ImageCache.IMG_TARGET_TAB);
@@ -576,7 +576,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
 
     public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
     }
-    
+
     private void disconnectPeer(final PeerInfo info) {
         assert Protocol.isDispatchThread();
         if (info.children != null) {
@@ -593,11 +593,11 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             info.channel = null;
         }
     }
-    
+
     private boolean canHaveChildren(PeerInfo parent) {
         return parent == peer_info || parent.attrs.get(IPeer.ATTR_PROXY) != null;
     }
-    
+
     private void loadChildren(final PeerInfo parent) {
         assert Thread.currentThread() == display.getThread();
         if (parent.children_pending) return;
@@ -618,7 +618,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                     createLocatorListener(peer_info);
                 }
                 else {
-                    final IChannel channel = parent.peer.openChannel(); 
+                    final IChannel channel = parent.peer.openChannel();
                     parent.channel = channel;
                     parent.channel.addChannelListener(new IChannelListener() {
                         boolean opened = false;
@@ -666,7 +666,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             }
         });
     }
-    
+
     private void createLocatorListener(PeerInfo peer) {
         assert Protocol.isDispatchThread();
         Map<String,IPeer> map = peer.locator.getPeers();
@@ -685,7 +685,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         peer.locator.addListener(peer.listener);
         doneLoadChildren(peer, null, buf);
     }
-    
+
     private void doneLoadChildren(final PeerInfo parent, final Throwable error, final PeerInfo[] children) {
         assert Protocol.isDispatchThread();
         assert error == null || children == null;
@@ -701,7 +701,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             }
         });
     }
-    
+
     private void updateItems(PeerInfo parent) {
         if (display == null) return;
         assert Thread.currentThread() == display.getThread();
@@ -772,7 +772,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         assert info.children[i].index == i;
         return info.children[i];
     }
-    
+
     private PeerInfo findPeerInfo(String path) {
         assert Thread.currentThread() == display.getThread();
         if (path == null) return null;
@@ -800,7 +800,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         }
         return null;
     }
-    
+
     private TreeItem findItem(PeerInfo info) {
         if (info == null) return null;
         assert info.parent != null;
@@ -811,7 +811,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         if (i == null) return null;
         return i.getItem(info.index);
     }
-    
+
     private void runDiagnostics(String path, boolean loop) {
         PeerInfo info = findPeerInfo(path);
         if (info == null) return;
@@ -850,7 +850,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         shell.setVisible(true);
         runDiagnostics(info, loop, test, shell, label, bar);
     }
-    
+
     private void runDiagnostics(final PeerInfo info, final boolean loop, final TCFTestSuite[] test,
             final Shell shell, final CLabel label, final ProgressBar bar) {
         final TCFTestSuite.TestListener done = new TCFTestSuite.TestListener() {
@@ -908,7 +908,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             }
         });
     }
-    
+
     private void fillItem(TreeItem item, PeerInfo info) {
         assert Thread.currentThread() == display.getThread();
         Object data = item.getData("TCFPeerInfo");
@@ -930,13 +930,13 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         else if (info.children == null || info.children_error != null) item.setItemCount(1);
         else item.setItemCount(info.children.length);
     }
-    
+
     private String getPath(PeerInfo info) {
         if (info == peer_info) return "";
         if (info.parent == peer_info) return info.id;
         return getPath(info.parent) + "/" + info.id;
     }
-    
+
     private String getImageName(PeerInfo info) {
         return ImageCache.IMG_TARGET_TAB;
     }

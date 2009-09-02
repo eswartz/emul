@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -15,14 +15,14 @@ import java.net.*;
 import java.util.ArrayList;
 
 class TelnetInputStream extends FilterInputStream {
-    
+
     public interface TelnetTraceListener {
         void command(String s);
     }
 
     private final boolean echo;
     private final String prompt;
-    
+
     private final InputStream inp;
     private final OutputStream out;
     private final boolean mode_rem[] = new boolean[256];
@@ -34,7 +34,7 @@ class TelnetInputStream extends FilterInputStream {
     private boolean eof;
     private IOException err;
     private boolean closed;
-    
+
     private final ArrayList<TelnetTraceListener> trace_listeners = new ArrayList<TelnetTraceListener>();
 
     private static final int
@@ -58,14 +58,14 @@ class TelnetInputStream extends FilterInputStream {
         co_X_DISPLAY_LOCATION   = 35,
         co_ENVIRON              = 36,
         co_NEW_ENVIRON          = 39;
-    
+
     @SuppressWarnings("unused")
     private static final int
         sp_VAR                  = 0,
         sp_VALUE                = 1,
         sp_ESC                  = 2,
         sp_USERVAR              = 3;
-    
+
     @SuppressWarnings("unused")
     private static final int
         ac_IS                   = 0,
@@ -147,7 +147,7 @@ class TelnetInputStream extends FilterInputStream {
         public void run() {
             try {
                 synchronized (out) {
-                    out.write(cm_IAC); 
+                    out.write(cm_IAC);
                     out.write(echo ? cm_DO : cm_DONT);
                     out.write(co_ECHO);
                     out.flush();
@@ -174,7 +174,7 @@ class TelnetInputStream extends FilterInputStream {
                                     break;
                                 case cm_DO:
                                     out.write(cm_IAC);
-                                    if (co == co_SUPPRESS_GO_AHEAD) { 
+                                    if (co == co_SUPPRESS_GO_AHEAD) {
                                         out.write(cm_WILL);
                                     }
                                     else if (co == co_NEW_ENVIRON && prompt != null) {

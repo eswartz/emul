@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -77,7 +77,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         }
         disposed = true;
     }
-    
+
     /**
      * A child node is being disposed.
      * The child should be removed from this node children lists.
@@ -95,7 +95,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     public final boolean isDisposed() {
         return disposed;
     }
-    
+
     /**
      * Get TCFModel that owns this node.
      * @return TCFModel object
@@ -103,7 +103,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     public TCFModel getModel() {
         return model;
     }
-    
+
     /**
      * Get TCF ID of the node.
      * @return TCF ID
@@ -138,7 +138,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         assert Protocol.isDispatchThread();
         return parent;
     }
-    
+
     /**
      * Get index of a node in this node children list
      * @param p - presentation context
@@ -147,7 +147,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     public int getNodeIndex(IPresentationContext p, TCFNode n) {
         return -1;
     }
-    
+
     /**
      * Get children count of the node.
      * @param p - presentation context
@@ -165,7 +165,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     public BigInteger getAddress() {
         return null;
     }
-    
+
     /**
      * Retrieve children count for a presentation context.
      * @param result - children count update request.
@@ -254,7 +254,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
             }
         };
     }
-    
+
     /**
      * Retrieve children count for a presentation context.
      * The node is validated before calling this method,
@@ -265,7 +265,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     protected void getData(IChildrenCountUpdate result) {
         result.setChildCount(0);
     }
-    
+
     /**
      * Retrieve children for a presentation context.
      * The node is validated before calling this method,
@@ -275,7 +275,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      */
     protected void getData(IChildrenUpdate result) {
     }
-    
+
     /**
      * Check if the node has children in a presentation context.
      * The node is validated before calling this method,
@@ -286,7 +286,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     protected void getData(IHasChildrenUpdate result) {
         result.setHasChilren(false);
     }
-    
+
     /**
      * Retrieve node label for a presentation context.
      * The node is validated before calling this method,
@@ -298,7 +298,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
         result.setLabel(id, 0);
     }
-    
+
     /**
      * Create and post ModelDelta for changes in this node.
      * @param flags - description of what has changed: IModelDelta.ADDED, IModelDelta.REMOVED, etc.
@@ -309,7 +309,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
             if (f != 0) p.addDelta(this, f);
         }
     }
-    
+
     /**
      * Return bit set of model delta flags relevant for this node in given presentation context.
      * Sub-classes are supposed to override this method.
@@ -322,7 +322,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
 
     /*--------------------------------------------------------------------------------------*/
     /* Node data retrieval state machine                                                    */
-    
+
     /**
      * Validate node - retrieve and put into a cache missing data from remote peer.
      * The method should initiate retrieval of all data needed by TCFNode.update() methods.
@@ -332,19 +332,19 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * Note: activation of call-back does not mean all data is retrieved,
      * it only means that node state changed, client should call validateNode() again,
      * until the method returns true.
-     * @param done - call-back object to call when node state changes. 
+     * @param done - call-back object to call when node state changes.
      * @return true if the node is already valid, false if validation is started.
      */
     public abstract boolean validateNode(Runnable done);
-    
+
     /**
      * Clients can use this method to validate a collection of nodes.
      * Validation of multiple nodes is expensive and should be avoided
      * when possible.
-     * 
+     *
      * Validation is performed in background, and 'done' call-back is
      * activated when nodes state changes.
-     *  
+     *
      * @param nodes
      * @return true if all nodes are already valid, false if validation is started.
      */
@@ -356,7 +356,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         if (pending != null && !pending.validateNode(done)) return false;
         return true;
     }
-        
+
     /*--------------------------------------------------------------------------------------*/
     /* Misc                                                                                 */
 

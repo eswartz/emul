@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -18,13 +18,13 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.tm.tcf.util.TCFTask;
 
 class TCFModelSelectionPolicy implements IModelSelectionPolicy {
-    
+
     private final TCFModel model;
-    
+
     TCFModelSelectionPolicy(TCFModel model) {
         this.model = model;
     }
-    
+
     public boolean contains(ISelection selection, IPresentationContext context) {
         if (selection instanceof IStructuredSelection) {
             IStructuredSelection ss = (IStructuredSelection)selection;
@@ -45,7 +45,7 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
         }
         return false;
     }
-    
+
     private boolean isSuspended(final TCFNode node) {
         return new TCFTask<Boolean>() {
             public void run() {
@@ -66,7 +66,7 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
     }
 
     public boolean overrides(ISelection existing, ISelection candidate, IPresentationContext context) {
-        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(context.getId())) {  
+        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(context.getId())) {
             if (existing instanceof IStructuredSelection && candidate instanceof IStructuredSelection) {
                 Object el_existing = ((IStructuredSelection)existing).getFirstElement();
                 Object el_candidate = ((IStructuredSelection)candidate).getFirstElement();

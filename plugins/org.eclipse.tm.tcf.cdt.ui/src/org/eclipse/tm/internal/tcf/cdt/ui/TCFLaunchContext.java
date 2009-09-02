@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -87,7 +87,7 @@ public class TCFLaunchContext implements ITCFLaunchContext {
      * settings, or <code>null</code> if none. Note, if possible we will
      * return the IBinary based on configuration entry as this may be more useful then
      * just the project.
-     * 
+     *
      * @return C element context.
      */
     private ICElement getContext(ILaunchConfiguration config) {
@@ -208,7 +208,7 @@ public class TCFLaunchContext implements ITCFLaunchContext {
                 }
                 name = dlg.generateName(name);
                 config.rename(name);
-                renamed = true;                         
+                renamed = true;
             }
         }
 

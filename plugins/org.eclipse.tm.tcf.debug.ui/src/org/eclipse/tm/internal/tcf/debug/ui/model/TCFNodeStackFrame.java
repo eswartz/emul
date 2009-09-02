@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -40,7 +40,7 @@ public class TCFNodeStackFrame extends TCFNode {
     private final TCFChildrenExpressions children_exps;
     private final TCFDataCache<IStackTrace.StackTraceContext> stack_trace_context;
     private final TCFDataCache<TCFSourceRef> line_info;
-    
+
     TCFNodeStackFrame(final TCFNodeExecContext parent, final String id) {
         super(parent, id);
         children_regs = new TCFChildrenRegisters(this);
@@ -139,11 +139,11 @@ public class TCFNodeStackFrame extends TCFNode {
         assert Protocol.isDispatchThread();
         return frame_no;
     }
-    
+
     void setFrameNo(int frame_no) {
         this.frame_no = frame_no;
     }
-    
+
     public TCFDataCache<TCFSourceRef> getLineInfo() {
         return line_info;
     }
@@ -164,7 +164,7 @@ public class TCFNodeStackFrame extends TCFNode {
         children_vars.dispose(id);
         children_exps.dispose(id);
     }
-    
+
     public TCFDataCache<IStackTrace.StackTraceContext> getStackTraceContext() {
         return stack_trace_context;
     }
@@ -182,7 +182,7 @@ public class TCFNodeStackFrame extends TCFNode {
         if (frame_no == 0) return parent.getAddress();
         return null;
     }
-    
+
     public BigInteger getReturnAddress() {
         assert Protocol.isDispatchThread();
         if (!stack_trace_context.isValid()) return null;
@@ -194,7 +194,7 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         return null;
     }
-    
+
     @Override
     public int getNodeIndex(IPresentationContext p, TCFNode n) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId())) {
@@ -211,7 +211,7 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         return 0;
     }
-    
+
     @Override
     public int getChildrenCount(IPresentationContext p) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId())) {
@@ -261,8 +261,8 @@ public class TCFNodeStackFrame extends TCFNode {
             arr = new TCFNode[0];
         }
         int offset = 0;
-        int r_offset = result.getOffset(); 
-        int r_length = result.getLength(); 
+        int r_offset = result.getOffset();
+        int r_length = result.getLength();
         for (TCFNode n : arr) {
             if (offset >= r_offset && offset < r_offset + r_length) {
                 result.setChild(n, offset);
@@ -342,7 +342,7 @@ public class TCFNodeStackFrame extends TCFNode {
         children_exps.onSuspended();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
-    
+
     void onRegistersChanged() {
         children_regs.onRegistersChanged();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);

@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -21,7 +21,7 @@ import org.eclipse.tm.tcf.protocol.IToken;
  * File System service provides file transfer (and more generally file
  * system access) functionality in TCF. The service design is
  * derived from SSH File Transfer Protocol specifications.
- *  
+ *
  *      Request Synchronization and Reordering
  *
  * The protocol and implementations MUST process requests relating to
@@ -49,7 +49,7 @@ import org.eclipse.tm.tcf.protocol.IToken;
  * performed by the server.  If the server's queues are full, it should
  * not read any more data from the stream, and flow control will prevent
  * the client from sending more requests.
- * 
+ *
  *      File Names
  *
  * This protocol represents file names as strings.  File names are
@@ -77,7 +77,7 @@ import org.eclipse.tm.tcf.protocol.IToken;
  * using a slash ('/') as the separator, and that will work as expected.
  */
 public interface IFileSystem extends IService {
-    
+
     /**
      * Service name.
      */
@@ -86,8 +86,8 @@ public interface IFileSystem extends IService {
     /**
      * Flags to be used with open() method.
      */
-    static final int 
-    
+    static final int
+
         /**
          * Open the file for reading.
          */
@@ -102,7 +102,7 @@ public interface IFileSystem extends IService {
         /**
          * Force all writes to append data at the end of the file.
          */
-        TCF_O_APPEND            = 0x00000004, 
+        TCF_O_APPEND            = 0x00000004,
 
         /**
          * If this flag is specified, then a new file will be created if one
@@ -147,30 +147,30 @@ public interface IFileSystem extends IService {
      * server normally returns all attributes it knows about.
      */
     final static class FileAttrs {
-        
+
         /**
          * The `flags' specify which of the fields are present.
          */
         public final int flags;
-        
+
         /**
          * The `size' field specifies the size of the file in bytes.
          */
         public final long size;
-        
+
         /**
          * The `uid' and `gid' fields contain numeric Unix-like user and group
          * identifiers, respectively.
          */
         public final int uid;
         public final int gid;
-        
+
         /**
          * The `permissions' field contains a bit mask of file permissions as
          * defined by posix [1].
          */
         public final int permissions;
-        
+
         /**
          * The `atime' and `mtime' contain the access and modification times of
          * the files, respectively. They are represented as milliseconds from
@@ -183,7 +183,7 @@ public interface IFileSystem extends IService {
          * Additional (non-standard) attributes.
          */
         public final Map<String,Object> attributes;
-        
+
         public FileAttrs(int flags, long size, int uid, int gid,
                 int permissions, long atime, long mtime, Map<String,Object> attributes) {
             this.flags = flags;
@@ -195,10 +195,10 @@ public interface IFileSystem extends IService {
             this.mtime = mtime;
             this.attributes = attributes;
         }
-        
+
         /**
          * Determines if the file system object is a file on the remote file system.
-         * 
+         *
          * @return true if and only if the object on the remote system can be considered to have "contents" that
          * have the potential to be read and written as a byte stream.
          */
@@ -209,7 +209,7 @@ public interface IFileSystem extends IService {
 
         /**
          * Determines if the file system object is a directory on the remote file system.
-         * 
+         *
          * @return true if and only if the object on the remote system is a directory.
          * That is, it contains entries that can be interpreted as other files.
          */
@@ -218,7 +218,7 @@ public interface IFileSystem extends IService {
             return (permissions & S_IFMT) == S_IFDIR;
         }
     }
-    
+
     /**
      * The following flags are defined for the 'permissions' field:
      */
@@ -246,14 +246,14 @@ public interface IFileSystem extends IService {
         S_IROTH    = 00004,     // others have read permission
         S_IWOTH    = 00002,     // others have write permission
         S_IXOTH    = 00001;     // others have execute permission
-    
+
     final static class DirEntry {
         /**
          * `filename' is a file name being returned. It is a relative name within
          * the directory, without any path components;
          */
         public final String filename;
-        
+
         /**
          * `longname' is an expanded format for the file name, similar to what
          * is returned by "ls -l" on Unix systems.
@@ -265,33 +265,33 @@ public interface IFileSystem extends IService {
          * use the attrs field instead.
          */
         public final String longname;
-        
+
         /**
          * `attrs' is the attributes of the file.
          */
         public final FileAttrs attrs;
-        
+
         public DirEntry(String filename, String longname, FileAttrs attrs) {
             this.filename = filename;
             this.longname = longname;
             this.attrs = attrs;
         }
     }
-    
+
     /**
      * Opaque representation of open file handle.
-     * Note: open file handle can be used only with service instance that 
+     * Note: open file handle can be used only with service instance that
      * created the handle.
      */
     interface IFileHandle {
         IFileSystem getService();
     }
-    
+
     /**
      * Service specific error codes.
      */
     static final int
-    
+
         /**
          * Indicates end-of-file condition; for read() it means that no
          * more data is available in the file, and for readdir() it
@@ -310,25 +310,25 @@ public interface IFileSystem extends IService {
          * permissions to perform the operation.
          */
         STATUS_PERMISSION_DENIED = 0x10003;
-    
+
     /**
-     * The class to represent File System error reports. 
+     * The class to represent File System error reports.
      */
     @SuppressWarnings("serial")
     abstract static class FileSystemException extends IOException {
-        
+
         protected FileSystemException(String message) {
             super(message);
         }
-        
+
         protected FileSystemException(Exception x) {
             super(x.getMessage());
             initCause(x);
         }
-        
+
         /**
          * Get error code. The code can be standard TCF error code or
-         * one of service specific codes, see STATUS_*. 
+         * one of service specific codes, see STATUS_*.
          * @return error code.
          */
         public abstract int getStatus();
@@ -336,7 +336,7 @@ public interface IFileSystem extends IService {
 
     /**
      * Open or create a file on a remote system.
-     * 
+     *
      * @param file_name specifies the file name.  See 'File Names' for more information.
      * @param flags is a bit mask of TCF_O_* flags.
      * @param attrs specifies the initial attributes for the file.
@@ -345,25 +345,25 @@ public interface IFileSystem extends IService {
      * @return pending command handle.
      */
     IToken open(String file_name, int flags, FileAttrs attrs, DoneOpen done);
-    
+
     interface DoneOpen {
         void doneOpen(IToken token, FileSystemException error, IFileHandle handle);
     }
-    
+
     /**
      * Close a file on a remote system.
-     * 
+     *
      * @param handle is a handle previously returned in the response to
      * open() or opendir().
      * @param done is call back object.
      * @return pending command handle.
      */
     IToken close(IFileHandle handle, DoneClose done);
-    
+
     interface DoneClose {
         void doneClose(IToken token, FileSystemException error);
     }
-    
+
     /**
      * Read bytes from an open file.
      * In response to this request, the server will read as many bytes as it
@@ -374,7 +374,7 @@ public interface IFileSystem extends IService {
      * true in case of EOF. For normal disk files, it is guaranteed
      * that this will read the specified number of bytes, or up to end of file
      * or error. For e.g. device files this may return fewer bytes than requested.
-     * 
+     *
      * @param handle is an open file handle returned by open().
      * @param offset is the offset (in bytes) relative
      * to the beginning of the file from where to start reading.
@@ -384,7 +384,7 @@ public interface IFileSystem extends IService {
      * @return pending command handle.
      */
     IToken read(IFileHandle handle, long offset, int len, DoneRead done);
-    
+
     interface DoneRead {
         void doneRead(IToken token, FileSystemException error, byte[] data, boolean eof);
     }
@@ -395,7 +395,7 @@ public interface IFileSystem extends IService {
      * It is legal to write way beyond the end of the file; the semantics
      * are to write zeroes from the end of the file to the specified offset
      * and then the data.
-     * 
+     *
      * @param handle is an open file handle returned by open().
      * @param offset is the offset (in bytes) relative
      * to the beginning of the file from where to start writing.
@@ -412,10 +412,10 @@ public interface IFileSystem extends IService {
     interface DoneWrite {
         void doneWrite(IToken token, FileSystemException error);
     }
-    
+
     /**
      * Retrieve file attributes.
-     * 
+     *
      * @param path - specifies the file system object for which
      * status is to be returned.
      * @param done is call back object.
@@ -426,27 +426,27 @@ public interface IFileSystem extends IService {
     /**
      * Retrieve file attributes.
      * Unlike 'stat()', 'lstat()' does not follow symbolic links.
-     * 
+     *
      * @param path - specifies the file system object for which
      * status is to be returned.
      * @param done is call back object.
      * @return pending command handle.
      */
     IToken lstat(String path, DoneStat done);
-    
+
     /**
      * Retrieve file attributes for an open file (identified by the file handle).
-     * 
+     *
      * @param handle is a file handle returned by 'open()'.
      * @param done is call back object.
      * @return pending command handle.
      */
     IToken fstat(IFileHandle handle, DoneStat done);
-    
+
     interface DoneStat {
         void doneStat(IToken token, FileSystemException error, FileAttrs attrs);
     }
-    
+
     /**
      * Set file attributes.
      * This request is used for operations such as changing the ownership,
@@ -454,7 +454,7 @@ public interface IFileSystem extends IService {
      * An error will be returned if the specified file system object does
      * not exist or the user does not have sufficient rights to modify the
      * specified attributes.
-     * 
+     *
      * @param path specifies the file system object (e.g. file or directory)
      * whose attributes are to be modified.
      * @param attrs specifies the modifications to be made to file attributes.
@@ -462,23 +462,23 @@ public interface IFileSystem extends IService {
      * @return pending command handle.
      */
     IToken setstat(String path, FileAttrs attrs, DoneSetStat done);
-    
+
     /**
      * Set file attributes for an open file (identified by the file handle).
      * This request is used for operations such as changing the ownership,
      * permissions or access times, as well as for truncating a file.
-     * 
+     *
      * @param handle is a file handle returned by 'open()'.
      * @param attrs specifies the modifications to be made to file attributes.
      * @param done is call back object.
      * @return pending command handle.
      */
     IToken fsetstat(IFileHandle handle, FileAttrs attrs, DoneSetStat done);
-    
+
     interface DoneSetStat {
         void doneSetStat(IToken token, FileSystemException error);
     }
-    
+
     /**
      * The opendir() command opens a directory for reading.
      * Once the directory has been successfully opened, files (and
@@ -492,7 +492,7 @@ public interface IFileSystem extends IService {
      * @return pending command handle.
      */
     IToken opendir(String path, DoneOpen done);
-    
+
     /**
      * The files in a directory can be listed using the opendir() and
      * readdir() requests.  Each readdir() request returns one
@@ -508,21 +508,21 @@ public interface IFileSystem extends IService {
      * @return pending command handle.
      */
     IToken readdir(IFileHandle handle, DoneReadDir done);
-    
+
     interface DoneReadDir {
         void doneReadDir(IToken token, FileSystemException error, DirEntry[] entries, boolean eof);
     }
-    
+
     /**
      * Create a directory on the server.
-     * 
+     *
      * @param path - specifies the directory to be created.
      * @param attrs - new directory attributes.
      * @param done - result call back object.
      * @return pending command handle.
      */
     IToken mkdir(String path, FileAttrs attrs, DoneMkDir done);
-    
+
     interface DoneMkDir {
         void doneMkDir(IToken token, FileSystemException error);
     }
@@ -533,13 +533,13 @@ public interface IFileSystem extends IService {
      * with the specified path exists, or if the specified directory is not
      * empty, or if the path specified a file system object other than a
      * directory.
-     * 
+     *
      * @param path - specifies the directory to be removed.
      * @param done - result call back object.
      * @return pending command handle.
      */
     IToken rmdir(String path, DoneRemove done);
-    
+
     interface DoneRemove {
         void doneRemove(IToken token, FileSystemException error);
     }
@@ -549,15 +549,15 @@ public interface IFileSystem extends IService {
      * UNIX file system can report just one root with path "/". Other types of systems
      * can have more the one root. For example, Windows server can return multiple roots:
      * one per disc (e.g. "/C:/", "/D:/", etc.). Note: even Windows implementation of
-     * the service must use forward slash as directory separator, and must start 
+     * the service must use forward slash as directory separator, and must start
      * absolute path with "/". Server should implement proper translation of
-     * protocol file names to OS native names and back. 
-     * 
+     * protocol file names to OS native names and back.
+     *
      * @param done - result call back object.
      * @return pending command handle.
      */
     IToken roots(DoneRoots done);
-    
+
     interface DoneRoots {
         void doneRoots(IToken token, FileSystemException error, DirEntry[] entries);
     }
@@ -565,24 +565,24 @@ public interface IFileSystem extends IService {
     /**
      * Remove a file or symbolic link.
      * This request cannot be used to remove directories.
-     * 
+     *
      * @param file_name is the name of the file to be removed.
      * @param done - result call back object.
      * @return pending command handle.
      */
     IToken remove(String file_name, DoneRemove done);
-    
+
     /**
      * Canonicalize any given path name to an absolute path.
      * This is useful for converting path names containing ".." components or
      * relative pathnames without a leading slash into absolute paths.
-     * 
+     *
      * @param path specifies the path name to be canonicalized.
      * @param done - result call back object.
      * @return pending command handle.
      */
     IToken realpath(String path, DoneRealPath done);
-    
+
     interface DoneRealPath {
         void doneRealPath(IToken token, FileSystemException error, String path);
     }
@@ -593,48 +593,48 @@ public interface IFileSystem extends IService {
      * with the name specified by 'new_path'.  The server may also fail rename
      * requests in other situations, for example if `old_path' and `new_path'
      * point to different file systems on the server.
-     * 
+     *
      * @param old_path is the name of an existing file or directory.
      * @param new_path is the new name for the file or directory.
      * @param done - result call back object.
      * @return pending command handle.
      */
     IToken rename(String old_path, String new_path, DoneRename done);
-    
+
     interface DoneRename {
         void doneRename(IToken token, FileSystemException error);
     }
 
     /**
      * Read the target of a symbolic link.
-     * 
+     *
      * @param path specifies the path name of the symbolic link to be read.
      * @param done - result call back object.
      * @return pending command handle.
      */
     IToken readlink(String path, DoneReadLink done);
-    
+
     interface DoneReadLink {
         void doneReadLink(IToken token, FileSystemException error, String path);
     }
 
     /**
      * Create a symbolic link on the server.
-     * 
+     *
      * @param link_path specifies the path name of the symbolic link to be created.
      * @param target_path specifies the target of the symbolic link.
      * @param done - result call back object.
      * @return pending command handle.
      */
     IToken symlink(String link_path, String target_path, DoneSymLink done);
-    
+
     interface DoneSymLink {
         void doneSymLink(IToken token, FileSystemException error);
     }
 
     /**
      * Copy a file on remote system.
-     * 
+     *
      * @param src_path specifies the path name of the file to be copied.
      * @param dst_path specifies destination file name.
      * @param copy_permissions - if true then copy source file permissions.
@@ -644,20 +644,20 @@ public interface IFileSystem extends IService {
      */
     IToken copy(String src_path, String dst_path,
             boolean copy_permissions, boolean copy_ownership, DoneCopy done);
-    
+
     interface DoneCopy {
         void doneCopy(IToken token, FileSystemException error);
     }
-    
+
     /**
-     * Retrieve information about user account, which is used by server 
+     * Retrieve information about user account, which is used by server
      * to access file system on behalf of the client.
-     *   
+     *
      * @param done - result call back object.
      * @return pending command handle.
      */
     IToken user(DoneUser done);
-    
+
     interface DoneUser {
         void doneUser(IToken token, FileSystemException error,
                 int real_uid, int effective_uid, int real_gid, int effective_gid,

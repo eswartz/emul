@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -28,9 +28,9 @@ public class TCFSystemViewProcessAdapterFactory implements IAdapterFactory {
     @SuppressWarnings("unchecked")
     public Object getAdapter(Object adaptableObject, Class adapterType) {
         assert adaptableObject instanceof TCFRemoteProcess;
-        if (adapterType == IPropertySource.class) {   
+        if (adapterType == IPropertySource.class) {
             ((ISystemViewElementAdapter)adapter).setPropertySourceInput(adaptableObject);
-        }           
+        }
         return adapter;
     }
 
@@ -39,12 +39,12 @@ public class TCFSystemViewProcessAdapterFactory implements IAdapterFactory {
         return new Class[] {
             ISystemViewElementAdapter.class,
             ISystemDragDropAdapter.class,
-            ISystemRemoteElementAdapter.class, 
+            ISystemRemoteElementAdapter.class,
             IPropertySource.class,
             IWorkbenchAdapter.class,
             IActionFilter.class,
             IDeferredWorkbenchAdapter.class,
             IRemoteObjectIdentifier.class,
-        };         
+        };
     }
 }

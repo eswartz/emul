@@ -5,9 +5,9 @@
 </head>
 
 <body lang='EN-US'>
-  
+
 <h1>Target Communication Framework Services - File System</h1>
- 
+
 <ul>
     <li><a href='#VersionHistory'>Version History</a>
     <li><a href='#Overview'>Overview</a>
@@ -63,7 +63,7 @@
 <p>File System service provides file transfer (and more generally file
 system access) functionality in TCF. The service design is
 derived from SSH File Transfer Protocol specifications.</p>
- 
+
 <h2><a name='ReqSync'>Request Synchronization and Reordering</a></h2>
 
 <p>The protocol and implementations MUST process requests relating to
@@ -142,7 +142,7 @@ using a slash ('/') as the separator, and that will work as expected.</p>
     <dd>Forces an existing file with the same name to be truncated to zero
     length when creating a file by specifying TCF_O_CREAT.
     TCF_O_CREAT MUST also be specified if this flag is used.
-    
+
     <dt><code>TCF_O_EXCL = 0x00000020</code>
     <dd>Causes the request to fail if the named file already exists.
     TCF_O_CREAT MUST also be specified if this flag is used.
@@ -403,7 +403,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;array of directory entries&gt;</i> &
     &rArr; null
     &rArr; [ ]
     &rArr; [ <i>&lt;directory entry list&gt;</i> ]
-  
+
 <i>&lt;directory entry list&gt;</i>
     &rArr; <i>&lt;directory entry&gt;</i>
     &rArr; <i>&ltdirectory entry list&gt;</i> , <i>&lt;directory entry&gt;</i>
@@ -468,7 +468,7 @@ C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; roots &bull;
 UNIX file system can report just one root with path "/". Other types of systems
 can have more the one root. For example, Windows server can return multiple roots:
 one per disc (e.g. "/C:/", "/D:/", etc.). Note: even Windows implementation of
-the service must use forward slash as directory separator, and must start 
+the service must use forward slash as directory separator, and must start
 absolute path with "/". Server should implement proper translation of
 protocol file names to OS native names and back.</p>
 
@@ -583,7 +583,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 C &bull; <i>&lt;token&gt;</i> &bull; FileSystem &bull; user &bull;
 </font></b></pre>
 
-<p>The command retrieves information about user account, which is used by server 
+<p>The command retrieves information about user account, which is used by server
 to access file system on behalf of the client.</p>
 
 <p>Reply:</p>
@@ -594,7 +594,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
 </font></b></pre>
 
 <h2><a name='API'>API</a></h2>
- 
+
 <pre>
 <font color=#3F5FBF>/**
  * File System service provides file transfer (and more generally file
@@ -602,7 +602,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
  * derived from SSH File Transfer Protocol specifications.
  */</font>
 <font color=#7F0055>public interface</font> IFileSystem <font color=#7F0055>extends</font> IService {
-    
+
     <font color=#3F5FBF>/**
      * Service name.
      */</font>
@@ -612,7 +612,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * Flags to be used with open() method.
      */</font>
     <font color=#7F0055>static final int</font>
-    
+
         <font color=#3F5FBF>/**
          * Open the file for reading.
          */</font>
@@ -627,7 +627,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
         <font color=#3F5FBF>/**
          * Force all writes to append data at the end of the file.
          */</font>
-        TCF_O_APPEND            = 0x00000004, 
+        TCF_O_APPEND            = 0x00000004,
 
         <font color=#3F5FBF>/**
          * If this flag is specified, then a new file will be created if one
@@ -672,30 +672,30 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * server normally returns all attributes it knows about.
      */</font>
     <font color=#7F0055>final static class</font> FileAttrs {
-        
+
         <font color=#3F5FBF>/**
          * The `flags' specify which of the fields are present.
          */</font>
         <font color=#7F0055>public final int</font> flags;
-        
+
         <font color=#3F5FBF>/**
          * The `size' field specifies the size of the file in bytes.
          */</font>
         <font color=#7F0055>public final long</font> size;
-        
+
         <font color=#3F5FBF>/**
          * The `uid' and `gid' fields contain numeric Unix-like user and group
          * identifiers, respectively.
          */</font>
         <font color=#7F0055>public final int</font> uid;
         <font color=#7F0055>public final int</font> gid;
-        
+
         <font color=#3F5FBF>/**
          * The `permissions' field contains a bit mask of file permissions as
          * defined by posix [1].
          */</font>
         <font color=#7F0055>public final int</font> permissions;
-        
+
         <font color=#3F5FBF>/**
          * The `atime' and `mtime' contain the access and modification times of
          * the files, respectively. They are represented as milliseconds from
@@ -708,13 +708,13 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
          * Additional (non-standard) attributes.
          */</font>
         <font color=#7F0055>public final</font> Map&lt;String,Object&gt; attributes;
-        
+
         <font color=#7F0055>public</font> FileAttrs(<font color=#7F0055>int</font> flags, <font color=#7F0055>long</font> size, <font color=#7F0055>int</font> uid, <font color=#7F0055>int</font> gid,
                 <font color=#7F0055>int</font> permissions, <font color=#7F0055>long</font> atime, <font color=#7F0055>long</font> mtime, Map&lt;String,Object&gt; attributes);
-        
+
         <font color=#3F5FBF>/**
          * Determines if the file system object is a file on the remote file system.
-         * 
+         *
          * @return true if and only if the object on the remote system can be considered to have "contents" that
          * have the potential to be read and written as a byte stream.
          */</font>
@@ -722,13 +722,13 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
 
         <font color=#3F5FBF>/**
          * Determines if the file system object is a directory on the remote file system.
-         * 
+         *
          * @return true if and only if the object on the remote system is a directory.
          * That is, it contains entries that can be interpreted as other files.
          */</font>
         <font color=#7F0055>public boolean</font> isDirectory();
     }
-    
+
     <font color=#3F5FBF>/**
      * The following flags are defined for the 'permissions' field:
      */</font>
@@ -756,14 +756,14 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
         S_IROTH    = 00004,     // others have read permission
         S_IWOTH    = 00002,     // others have write permisson
         S_IXOTH    = 00001;     // others have execute permission
-    
+
     <font color=#7F0055>final static class</font> DirEntry {
         <font color=#3F5FBF>/**
          * `filename' is a file name being returned. It is a relative name within
          * the directory, without any path components;
          */</font>
         <font color=#7F0055>public final</font> String filename;
-        
+
         <font color=#3F5FBF>/**
          * `longname' is an expanded format for the file name, similar to what
          * is returned by "ls -l" on Unix systems.
@@ -775,29 +775,29 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
          * use the attrs field instead.
          */</font>
         <font color=#7F0055>public final</font> String longname;
-        
+
         <font color=#3F5FBF>/**
          * `attrs' is the attributes of the file.
          */</font>
         <font color=#7F0055>public final</font> FileAttrs attrs;
-        
+
         <font color=#7F0055>public</font> DirEntry(String filename, String longname, FileAttrs attrs);
     }
-    
+
     <font color=#3F5FBF>/**
      * Opaque representation of open file handle.
-     * Note: open file handle can be used only with service instance that 
+     * Note: open file handle can be used only with service instance that
      * created the handle.
      */</font>
     <font color=#7F0055>interface</font> IFileHandle {
         IFileSystem getService();
     }
-    
+
     <font color=#3F5FBF>/**
      * Service specific error codes.
      */</font>
     <font color=#7F0055>static final int</font>
-    
+
         <font color=#3F5FBF>/**
          * Indicates end-of-file condition; for read() it means that no
          * more data is available in the file, and for readdir() it
@@ -817,19 +817,19 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
          */</font>
         STATUS_PERMISSION_DENIED = 0x10003;
 
-    
+
     <font color=#3F5FBF>/**
-     * The class to represent File System error reports. 
+     * The class to represent File System error reports.
      */</font>
     <font color=#7F0055>abstract static class</font> FileSystemException extends IOException {
-        
+
         <font color=#7F0055>protected</font> FileSystemException(String message);
-        
+
         <font color=#7F0055>protected</font> FileSystemException(Exception x)
-        
+
         <font color=#3F5FBF>/**
          * Get error code. The code can be standard TCF error code or
-         * one of service specific codes, see STATUS_*. 
+         * one of service specific codes, see STATUS_*.
          * @return error code.
          */</font>
         <font color=#7F0055>public abstract int</font> getStatus();
@@ -837,7 +837,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
 
     <font color=#3F5FBF>/**
      * Open or create a file on a remote system.
-     * 
+     *
      * @param file_name specifies the file name.  See 'File Names' for more information.
      * @param flags is a bit mask of TCF_O_* flags.
      * @param attrs specifies the initial attributes for the file.
@@ -846,25 +846,25 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * @return pending command handle.
      */</font>
     IToken open(String file_name, <font color=#7F0055>int</font> flags, FileAttrs attrs, DoneOpen done);
-    
+
     <font color=#7F0055>interface</font> DoneOpen {
         <font color=#7F0055>void</font> doneOpen(IToken token, FileSystemException error, IFileHandle handle);
     }
-    
+
     <font color=#3F5FBF>/**
      * Close a file on a remote system.
-     * 
+     *
      * @param handle is a handle previously returned in the response to
      * open() or opendir().
      * @param done is call back object.
      * @return pending command handle.
      */</font>
     IToken close(IFileHandle handle, DoneClose done);
-    
+
     <font color=#7F0055>interface</font> DoneClose {
         <font color=#7F0055>void</font> doneClose(IToken token, FileSystemException error);
     }
-    
+
     <font color=#3F5FBF>/**
      * Read bytes from an open file.
      * In response to this request, the server will read as many bytes as it
@@ -875,7 +875,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * true in case of EOF. For normal disk files, it is guaranteed
      * that this will read the specified number of bytes, or up to end of file
      * or error. For e.g. device files this may return fewer bytes than requested.
-     * 
+     *
      * @param handle is an open file handle returned by open().
      * @param offset is the offset (in bytes) relative
      * to the beginning of the file from where to start reading.
@@ -884,7 +884,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * @return pending command handle.
      */</font>
     IToken read(IFileHandle handle, long offset, <font color=#7F0055>int</font> len, DoneRead done);
-    
+
     <font color=#7F0055>interface</font> DoneRead {
         <font color=#7F0055>void</font> doneRead(IToken token, FileSystemException error, byte[] data, boolean eof);
     }
@@ -895,7 +895,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * It is legal to write way beyond the end of the file; the semantics
      * are to write zeroes from the end of the file to the specified offset
      * and then the data.
-     * 
+     *
      * @param handle is an open file handle returned by open().
      * @param offset is the offset (in bytes) relative
      * to the beginning of the file from where to start writing.
@@ -911,10 +911,10 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
     <font color=#7F0055>interface</font> DoneWrite {
         <font color=#7F0055>void</font> doneWrite(IToken token, FileSystemException error);
     }
-    
+
     <font color=#3F5FBF>/**
      * Retrieve file attributes.
-     * 
+     *
      * @param path - specifies the file system object for which
      * status is to be returned.
      * @param done is call back object.
@@ -925,27 +925,27 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
     <font color=#3F5FBF>/**
      * Retrieve file attributes.
      * Unlike 'stat()', 'lstat()' does not follow symbolic links.
-     * 
+     *
      * @param path - specifies the file system object for which
      * status is to be returned.
      * @param done is call back object.
      * @return pending command handle.
      */</font>
     IToken lstat(String path, DoneStat done);
-    
+
     <font color=#3F5FBF>/**
      * Retrieve file attributes for an open file (identified by the file handle).
-     * 
+     *
      * @param handle is a file handle returned by 'open()'.
      * @param done is call back object.
      * @return pending command handle.
      */</font>
     IToken fstat(IFileHandle handle, DoneStat done);
-    
+
     <font color=#7F0055>interface</font> DoneStat {
         <font color=#7F0055>void</font> doneStat(IToken token, FileSystemException error, FileAttrs attrs);
     }
-    
+
     <font color=#3F5FBF>/**
      * Set file attributes.
      * This request is used for operations such as changing the ownership,
@@ -953,7 +953,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * An error will be returned if the specified file system object does
      * not exist or the user does not have sufficient rights to modify the
      * specified attributes.
-     * 
+     *
      * @param path specifies the file system object (e.g. file or directory)
      * whose attributes are to be modified.
      * @param attrs specifies the modifications to be made to file attributes.
@@ -961,23 +961,23 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * @return pending command handle.
      */</font>
     IToken setstat(String path, FileAttrs attrs, DoneSetStat done);
-    
+
     <font color=#3F5FBF>/**
      * Set file attributes for an open file (identified by the file handle).
      * This request is used for operations such as changing the ownership,
      * permissions or access times, as well as for truncating a file.
-     * 
+     *
      * @param handle is a file handle returned by 'open()'.
      * @param attrs specifies the modifications to be made to file attributes.
      * @param done is call back object.
      * @return pending command handle.
      */</font>
     IToken fsetstat(IFileHandle handle, FileAttrs attrs, DoneSetStat done);
-    
+
     <font color=#7F0055>interface</font> DoneSetStat {
         <font color=#7F0055>void</font> doneSetStat(IToken token, FileSystemException error);
     }
-    
+
     <font color=#3F5FBF>/**
      * The opendir() command opens a directory for reading.
      * Once the directory has been successfully opened, files (and
@@ -991,7 +991,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * @return pending command handle.
      */</font>
     IToken opendir(String path, DoneOpen done);
-    
+
     <font color=#3F5FBF>/**
      * The files in a directory can be listed using the opendir() and
      * readdir() requests.  Each readdir() request returns one
@@ -1007,21 +1007,21 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * @return pending command handle.
      */</font>
     IToken readdir(IFileHandle handle, DoneReadDir done);
-    
+
     <font color=#7F0055>interface</font> DoneReadDir {
         <font color=#7F0055>void</font> doneReadDir(IToken token, FileSystemException error, DirEntry[] entries, boolean eof);
     }
-    
+
     <font color=#3F5FBF>/**
      * Create a directory on the server.
-     * 
+     *
      * @param path - specifies the directory to be created.
      * @param attrs - new directory attributes.
      * @param done - result call back object.
      * @return pending command handle.
      */</font>
     IToken mkdir(String path, FileAttrs attrs, DoneMkDir done);
-    
+
     <font color=#7F0055>interface</font> DoneMkDir {
         <font color=#7F0055>void</font> doneMkDir(IToken token, FileSystemException error);
     }
@@ -1032,13 +1032,13 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * with the specified path exists, or if the specified directory is not
      * empty, or if the path specified a file system object other than a
      * directory.
-     * 
+     *
      * @param path - specifies the directory to be removed.
      * @param done - result call back object.
      * @return pending command handle.
      */</font>
     IToken rmdir(String path, DoneRemove done);
-    
+
     <font color=#7F0055>interface</font> DoneRemove {
         <font color=#7F0055>void</font> doneRemove(IToken token, FileSystemException error);
     }
@@ -1048,15 +1048,15 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * UNIX file system can report just one root with path "/". Other types of systems
      * can have more the one root. For example, Windows server can return multiple roots:
      * one per disc (e.g. "/C:/", "/D:/", etc.). Note: even Windows implementation of
-     * the service must use forward slash as directory separator, and must start 
+     * the service must use forward slash as directory separator, and must start
      * absolute path with "/". Server should implement proper translation of
-     * protocol file names to OS native names and back. 
-     * 
+     * protocol file names to OS native names and back.
+     *
      * @param done - result call back object.
      * @return pending command handle.
      */</font>
     IToken roots(DoneRoots done);
-    
+
     <font color=#7F0055>interface</font> DoneRoots {
         <font color=#7F0055>void</font> doneRoots(IToken token, FileSystemException error, DirEntry[] entries);
     }
@@ -1064,24 +1064,24 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
     <font color=#3F5FBF>/**
      * Remove a file or symbolic link.
      * This request cannot be used to remove directories.
-     * 
+     *
      * @param file_name is the name of the file to be removed.
      * @param done - result call back object.
      * @return pending command handle.
      */</font>
     IToken remove(String file_name, DoneRemove done);
-    
+
     <font color=#3F5FBF>/**
      * Canonicalize any given path name to an absolute path.
      * This is useful for converting path names containing ".." components or
      * relative pathnames without a leading slash into absolute paths.
-     * 
+     *
      * @param path specifies the path name to be canonicalized.
      * @param done - result call back object.
      * @return pending command handle.
      */</font>
     IToken realpath(String path, DoneRealPath done);
-    
+
     <font color=#7F0055>interface</font> DoneRealPath {
         <font color=#7F0055>void</font> doneRealPath(IToken token, FileSystemException error, String path);
     }
@@ -1092,48 +1092,48 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      * with the name specified by 'new_path'.  The server may also fail rename
      * requests in other situations, for example if `old_path' and `new_path'
      * point to different file systems on the server.
-     * 
+     *
      * @param old_path is the name of an existing file or directory.
      * @param new_path is the new name for the file or directory.
      * @param done - result call back object.
      * @return pending command handle.
      */</font>
     IToken rename(String old_path, String new_path, DoneRename done);
-    
+
     <font color=#7F0055>interface</font> DoneRename {
         <font color=#7F0055>void</font> doneRename(IToken token, FileSystemException error);
     }
 
     <font color=#3F5FBF>/**
      * Read the target of a symbolic link.
-     * 
+     *
      * @param path specifies the path name of the symbolic link to be read.
      * @param done - result call back object.
      * @return pending command handle.
      */</font>
     IToken readlink(String path, DoneReadLink done);
-    
+
     <font color=#7F0055>interface</font> DoneReadLink {
         <font color=#7F0055>void</font> doneReadLink(IToken token, FileSystemException error, String path);
     }
 
     <font color=#3F5FBF>/**
      * Create a symbolic link on the server.
-     * 
+     *
      * @param link_path specifies the path name of the symbolic link to be created.
      * @param target_path specifies the target of the symbolic link.
      * @param done - result call back object.
      * @return pending command handle.
      */</font>
     IToken symlink(String link_path, String target_path, DoneSymLink done);
-    
+
     <font color=#7F0055>interface</font> DoneSymLink {
         <font color=#7F0055>void</font> doneSymLink(IToken token, FileSystemException error);
     }
 
     <font color=#3F5FBF>/**
      * Copy a file on remote system.
-     * 
+     *
      * @param src_path specifies the path name of the file to be copied.
      * @param dst_path specifies destination file name.
      * @param copy_permissions - if true then copy source file permissions.
@@ -1143,20 +1143,20 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;int: real UID&gt;</i> &bull; <i>&lt;
      */</font>
     IToken copy(String src_path, String dst_path,
             boolean copy_permissions, boolean copy_ownership, DoneCopy done);
-    
+
     <font color=#7F0055>interface</font> DoneCopy {
         <font color=#7F0055>void</font> doneCopy(IToken token, FileSystemException error);
     }
-    
+
     <font color=#3F5FBF>/**
-     * Retrieve information about user account, which is used by server 
+     * Retrieve information about user account, which is used by server
      * to access file system on behalf of the client.
-     *   
+     *
      * @param done - result call back object.
      * @return pending command handle.
      */</font>
     IToken user(DoneUser done);
-    
+
     <font color=#7F0055>interface</font> DoneUser {
         <font color=#7F0055>void</font> doneUser(IToken token, FileSystemException error,
                 <font color=#7F0055>int</font> real_uid, <font color=#7F0055>int</font> effective_uid, <font color=#7F0055>int</font> real_gid, <font color=#7F0055>int</font> effective_gid,

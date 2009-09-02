@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -29,14 +29,14 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 // TODO: drop to frame command
 
 public class StepOverCommand extends StepCommand implements IStepOverHandler {
-    
+
     private static class StepStateMachine extends TCFActionStepOver {
-        
+
         private final IDebugCommandRequest monitor;
         private final Runnable done;
         private final TCFNodeExecContext node;
         private TCFNodeStackFrame frame;
-        
+
         StepStateMachine(TCFModel model, IDebugCommandRequest monitor,
                 IRunControl.RunControlContext ctx,
                 boolean src_step, Runnable done) {
@@ -77,7 +77,7 @@ public class StepOverCommand extends StepCommand implements IStepOverHandler {
         protected TCFDataCache<?> getStackTrace() {
             return node.getStackTrace();
         }
-        
+
         @Override
         protected void exit(Throwable error) {
             if (exited) return;
@@ -93,7 +93,7 @@ public class StepOverCommand extends StepCommand implements IStepOverHandler {
     public StepOverCommand(TCFModel model) {
         super(model);
     }
-    
+
     @Override
     protected boolean canExecute(IRunControl.RunControlContext ctx) {
         if (ctx == null) return false;

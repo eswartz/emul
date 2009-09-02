@@ -37,7 +37,7 @@ public class TCFConnectorService extends BasicConnectorService {
     private IChannel channel;
     private Throwable channel_error;
     private final List<Runnable> wait_list = new ArrayList<Runnable>();
-    
+
     private boolean poll_timer_started;
 
     public TCFConnectorService(IHost host, int port) {
@@ -91,7 +91,7 @@ public class TCFConnectorService extends BasicConnectorService {
         });
         return res[0];
     }
-    
+
     private void add_to_wait_list(Runnable cb) {
         wait_list.add(cb);
         if (poll_timer_started) return;
@@ -103,14 +103,14 @@ public class TCFConnectorService extends BasicConnectorService {
         });
         poll_timer_started = true;
     }
-    
+
     private void run_wait_list() {
         if (wait_list.isEmpty()) return;
         Runnable[] r = wait_list.toArray(new Runnable[wait_list.size()]);
         wait_list.clear();
         for (int i = 0; i < r.length; i++) r[i].run();
     }
-    
+
     private boolean connectTCFChannel(Exception[] res, IProgressMonitor monitor) {
         if (channel != null) {
             switch (channel.getState()) {
@@ -210,7 +210,7 @@ public class TCFConnectorService extends BasicConnectorService {
         if (channel.getState() == IChannel.STATE_OPEN) channel.close();
         return false;
     }
-    
+
     public <V extends IService> V getService(Class<V> service_interface) {
         if (channel == null || channel.getState() != IChannel.STATE_OPEN) throw new Error("Not connected"); //$NON-NLS-1$
         V m = channel.getRemoteService(service_interface);

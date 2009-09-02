@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -30,18 +30,18 @@ import org.eclipse.tm.tcf.core.Base64;
  *
  * Reading of JSON produces data structure that consists of objects of these classes:
  * Boolean, Number, String, Collection, Map.
- * 
+ *
  * Writing of JSON is supported for:
  * Boolean, Number, String, char[], byte[], Object[], Collection, Map
- * 
+ *
  * Clients can enable writing support for objects of a other classes by
  * registering ObjectWriter interface implementation.
- * 
+ *
  * @noextend This class is not intended to be subclassed by clients.
  * @noinstantiate This class is not intended to be instantiated by clients.
  */
 public final class JSON {
-    
+
     /**
      * Clients implement ObjectWriter interface when they want to enable marshaling of
      * object classes that are not directly supported by JSON library.
@@ -49,38 +49,38 @@ public final class JSON {
     public interface ObjectWriter {
         void write(Object o) throws IOException;
     }
-    
-    private static final Map<Class<?>,ObjectWriter> object_writers = new HashMap<Class<?>,ObjectWriter>(); 
-    
+
+    private static final Map<Class<?>,ObjectWriter> object_writers = new HashMap<Class<?>,ObjectWriter>();
+
     /** Wrapper class for binary byte blocs */
     public final static class Binary {
         public final byte[] bytes;
         public final int offs;
         public final int size;
-        
+
         public Binary(byte[] bytes, int offs, int size) {
             this.bytes = bytes;
             this.offs = offs;
             this.size = size;
         }
     }
-    
+
     private static char[] tmp_buf = new char[0x1000];
     private static byte[] tmp_bbf = new byte[0x1000];
     private static int tmp_buf_pos;
     private static boolean zero_copy;
     private static Binary[] bin_buf = new Binary[0x10];
     private static int bin_buf_pos;
-    
+
     private static byte[] inp;
     private static int inp_pos;
     private static int cur_ch;
-    
-    // This buffer is used to create nice error reports 
+
+    // This buffer is used to create nice error reports
     private static final char[] err_buf = new char[100];
     private static int err_buf_pos;
     private static int err_buf_cnt;
-    
+
     /**
      * Add a handler for converting objects of a particular class into JSON.
      * @param cls - a class
@@ -103,7 +103,7 @@ public final class JSON {
         }
         tmp_buf[tmp_buf_pos++] = ch;
     }
-    
+
     /**
      * Write a string into JSON output buffer.
      * The string is written "as-is". Call writeObject() to convert a String into JSON string.
@@ -118,7 +118,7 @@ public final class JSON {
             else tmp_buf[tmp_buf_pos++] = ch;
         }
     }
-    
+
     /**
      * Write a non-negative integer number into JSON output buffer.
      * Clients should not call this method directly, except from ObjectWriter implementation.
@@ -129,7 +129,7 @@ public final class JSON {
         if (n >= 10) writeUInt(n / 10);
         write((char)('0' + n % 10));
     }
-    
+
     private static int readUTF8Char() {
         if (inp_pos >= inp.length) return -1;
         int ch = inp[inp_pos++];
@@ -165,7 +165,7 @@ public final class JSON {
             err_buf_cnt++;
         }
     }
-    
+
     private static void error() throws IOException {
         error("syntax error");
     }
@@ -215,7 +215,7 @@ public final class JSON {
         read();
         return n;
     }
-    
+
     private static Object readFloat(boolean sign, BigInteger val) throws IOException {
         int scale = 0;
         int fraction = 0;
@@ -241,7 +241,7 @@ public final class JSON {
         if (sign) val = val.negate();
         return new BigDecimal(val, fraction - scale);
     }
-    
+
     private static Object readNestedObject() throws IOException {
         switch (cur_ch) {
         case '(':
@@ -435,7 +435,7 @@ public final class JSON {
         }
         return l.toArray();
     }
-    
+
     /**
      * Write an object into JSON output buffer.
      * Clients should not call this method directly, except from ObjectWriter implementation.
@@ -588,22 +588,22 @@ public final class JSON {
                 out_pos += b.size;
             }
             else if (ch < 0x80) {
-                tmp_bbf[out_pos++] = (byte)ch; 
+                tmp_bbf[out_pos++] = (byte)ch;
             }
             else if (ch < 0x800) {
-                tmp_bbf[out_pos++] = (byte)((ch >> 6) | 0xc0); 
-                tmp_bbf[out_pos++] = (byte)(ch & 0x3f | 0x80); 
+                tmp_bbf[out_pos++] = (byte)((ch >> 6) | 0xc0);
+                tmp_bbf[out_pos++] = (byte)(ch & 0x3f | 0x80);
             }
             else if (ch < 0x10000) {
-                tmp_bbf[out_pos++] = (byte)((ch >> 12) | 0xe0); 
-                tmp_bbf[out_pos++] = (byte)((ch >> 6) & 0x3f | 0x80); 
-                tmp_bbf[out_pos++] = (byte)(ch & 0x3f | 0x80); 
+                tmp_bbf[out_pos++] = (byte)((ch >> 12) | 0xe0);
+                tmp_bbf[out_pos++] = (byte)((ch >> 6) & 0x3f | 0x80);
+                tmp_bbf[out_pos++] = (byte)(ch & 0x3f | 0x80);
             }
             else {
-                tmp_bbf[out_pos++] = (byte)((ch >> 18) | 0xf0); 
-                tmp_bbf[out_pos++] = (byte)((ch >> 12) & 0x3f | 0x80); 
-                tmp_bbf[out_pos++] = (byte)((ch >> 6) & 0x3f | 0x80); 
-                tmp_bbf[out_pos++] = (byte)(ch & 0x3f | 0x80); 
+                tmp_bbf[out_pos++] = (byte)((ch >> 18) | 0xf0);
+                tmp_bbf[out_pos++] = (byte)((ch >> 12) & 0x3f | 0x80);
+                tmp_bbf[out_pos++] = (byte)((ch >> 6) & 0x3f | 0x80);
+                tmp_bbf[out_pos++] = (byte)(ch & 0x3f | 0x80);
             }
         }
         byte[] res = new byte[out_pos];
@@ -675,7 +675,7 @@ public final class JSON {
         read();
         return readSequence();
     }
-    
+
     public static byte[] toByteArray(Object o) {
         if (o == null) return null;
         if (o instanceof byte[]) return (byte[])o;
@@ -683,7 +683,7 @@ public final class JSON {
         if (o instanceof String) return Base64.toByteArray(((String)o).toCharArray());
         throw new Error();
     }
-    
+
     public static void toByteArray(byte[] buf, int offs, int size, Object o) {
         if (o instanceof char[]) Base64.toByteArray(buf, offs, size, (char[])o);
         else if (o instanceof String) Base64.toByteArray(buf, offs, size, ((String)o).toCharArray());

@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -20,9 +20,9 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 
 class WizardFirstPage extends WizardPage implements Listener {
-    
+
     private final SetupWizardDialog wizard;
-    
+
     private Button button_props;
     private Button button_local;
     private Button button_login;
@@ -39,11 +39,11 @@ class WizardFirstPage extends WizardPage implements Listener {
         GridLayout gl = new GridLayout();
         gl.numColumns = 1;
         composite.setLayout(gl);
-        
+
         button_props = new Button(composite, SWT.RADIO | SWT.WRAP | SWT.MULTI);
         button_props.addListener(SWT.Selection, this);
         button_props.setText("Manual setup of TCF connection properties.");
-        
+
         button_local = new Button(composite, SWT.RADIO | SWT.WRAP | SWT.MULTI);
         button_local.addListener(SWT.Selection, this);
         button_local.setText("Setup TCF agent on local host.");

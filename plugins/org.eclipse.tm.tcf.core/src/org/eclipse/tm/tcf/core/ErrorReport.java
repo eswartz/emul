@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007-2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -16,10 +16,10 @@ import java.util.Map;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 
 class ErrorReport extends Exception implements IErrorReport {
-    
+
     private static final long serialVersionUID = 3687543884858739977L;
     private final Map<String,Object> attrs;
-    
+
     @SuppressWarnings("unchecked")
     ErrorReport(String msg, Map<String,Object> attrs) {
         super(msg);
@@ -34,7 +34,7 @@ class ErrorReport extends Exception implements IErrorReport {
             initCause(new ErrorReport(bf.toString(), map));
         }
     }
-    
+
     ErrorReport(String msg, int code) {
         super(msg);
         attrs = new HashMap<String,Object>();

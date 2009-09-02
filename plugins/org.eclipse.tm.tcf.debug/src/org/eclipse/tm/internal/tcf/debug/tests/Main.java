@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -21,14 +21,14 @@ import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
 /**
- * This class is user to run TCF test suite from command line. 
+ * This class is user to run TCF test suite from command line.
  */
 public class Main {
-    
+
     private static class EventQueue extends Thread implements IEventQueue {
-        
+
         private final LinkedList<Runnable> queue = new LinkedList<Runnable>();
-        
+
         EventQueue() {
             setName("TCF Event Dispatch");
             start();
@@ -56,7 +56,7 @@ public class Main {
                 System.exit(1);
             }
         }
-        
+
         public synchronized int getCongestion() {
             int n = queue.size() - 100;
             if (n > 100) n = 100;
@@ -72,9 +72,9 @@ public class Main {
             return Thread.currentThread() == this;
         }
     }
-    
+
     private static class RemotePeer extends AbstractPeer {
-        
+
         public RemotePeer(Map<String,String> attrs) {
             super(attrs);
         }
@@ -108,7 +108,7 @@ public class Main {
         }
         return peer;
     }
-    
+
     private static void runTestSuite(IPeer peer) {
         TCFTestSuite.TestListener listenr = new TCFTestSuite.TestListener() {
 
@@ -126,7 +126,7 @@ public class Main {
             public void progress(String label, int done, int total) {
                 if (label != null) System.out.println(label);
             }
-            
+
         };
         try {
             new TCFTestSuite(peer, listenr);
@@ -140,7 +140,7 @@ public class Main {
 
     /**
      * Command line should contain peer description string, for example:
-     * "ID=Test:TransportName=TCP:Host=127.0.0.1:Port=1534" 
+     * "ID=Test:TransportName=TCP:Host=127.0.0.1:Port=1534"
      */
     public static void main(final String[] args) {
         if (args.length != 1) {

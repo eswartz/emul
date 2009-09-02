@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -24,15 +24,15 @@ import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
 /**
  * TCFFileInputStream is high performance InputStream implementation over TCF FileSystem service.
  * The class uses read-ahead buffers to achieve maximum throughput.
- * 
+ *
  * @noextend This class is not intended to be subclassed by clients.
  */
 public final class TCFFileInputStream extends InputStream {
-    
+
     private static final int MAX_READ_AHEAD = 8;
-    
+
     private static class Buffer {
-        
+
         final long offset;
 
         IToken token;
@@ -42,13 +42,13 @@ public final class TCFFileInputStream extends InputStream {
         Buffer(long offset) {
             this.offset = offset;
         }
-        
+
         @Override
         public String toString() {
             return "[" + offset + ":" + (buf == null ? "null" : Integer.toString(buf.length)) + "]";
         }
     }
-    
+
     private final IFileHandle handle;
     private final IFileSystem fs;
     private final int buf_size;
@@ -56,11 +56,11 @@ public final class TCFFileInputStream extends InputStream {
     private long offset = 0;
     private Buffer buf;
     private boolean closed = false;
-    
+
     private boolean suspend_read_ahead;
     private Runnable waiting_client;
     private final LinkedList<Buffer> read_ahead_buffers = new LinkedList<Buffer>();
-    
+
     public TCFFileInputStream(IFileHandle handle) {
         this(handle, 0x1000);
     }
@@ -70,7 +70,7 @@ public final class TCFFileInputStream extends InputStream {
         this.fs = handle.getService();
         this.buf_size = buf_size;
     }
-    
+
     private void startReadAhead(Buffer prv) {
         if (suspend_read_ahead) return;
         if (read_ahead_buffers.size() > 0) {
@@ -110,7 +110,7 @@ public final class TCFFileInputStream extends InputStream {
             pos += buf_size;
         }
     }
-    
+
     private boolean stopReadAhead(Runnable done) {
         suspend_read_ahead = true;
         for (Iterator<Buffer> i = read_ahead_buffers.iterator(); i.hasNext();) {
@@ -206,7 +206,7 @@ public final class TCFFileInputStream extends InputStream {
         }
         return pos;
     }
-    
+
     @Override
     public boolean markSupported() {
         return true;

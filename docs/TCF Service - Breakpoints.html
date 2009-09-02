@@ -5,9 +5,9 @@
 </head>
 
 <body lang='EN-US'>
-  
+
 <h1>Target Communication Framework Services - Breakpoints</h1>
- 
+
 <ul>
     <li><a href='#VersionHistory'>Version History</a>
     <li><a href='#Overview'>Overview</a>
@@ -55,16 +55,16 @@
 
 <p>A breakpoint is represented by a unique identifier and set of properties.
 A breakpoint identifier (String id) needs to be unique across all hosts and targets.</p>
- 
+
 <p>A breakpoint's property set is an extensible collection of named attributes,
-which define the breakpoint's location, the conditions that trigger the breakpoint, and the actions 
+which define the breakpoint's location, the conditions that trigger the breakpoint, and the actions
 executed as a result. As such, breakpoint properties are separated into three broad categories:
 <ul><b>
     <li>Location properties
     <li>Condition properties
     <li>Action properties
 </b></ul>
-<p>The Location and Condition properties dictate how a breakpoint is installed and whether it should be triggered. 
+<p>The Location and Condition properties dictate how a breakpoint is installed and whether it should be triggered.
 The Action properties dictate the effect of the breakpoint if it is triggered.
 
 <p>The split of Location and Condition properties is subjective and is
@@ -83,19 +83,19 @@ change in any of the attached contexts.  Adding properties reduces the
 (sub)set of state changes that triggers the breakpoint.
 
 <p>The <b>Location properties category</b> contains the following properties:
-<p>Context defining properties specifying which context a breakpoint applies to are provided through the <a href='#propContextIds'>ContextIds</a>, 
-<a href='#propContextNames'>ContextNames </a> or the <a href='#propExecPaths'>ExecutablePaths</a> properties. 
+<p>Context defining properties specifying which context a breakpoint applies to are provided through the <a href='#propContextIds'>ContextIds</a>,
+<a href='#propContextNames'>ContextNames </a> or the <a href='#propExecPaths'>ExecutablePaths</a> properties.
 
 <p>The presence of certain properties defines what kind of breakpoint is installed.
 <ul>
-<li>Line Breakpoints, which are configured using the <a href='#propFile'>File</a>, 
+<li>Line Breakpoints, which are configured using the <a href='#propFile'>File</a>,
 <a href='#propLine'>Line</a> and <a href='#propColumn'>Column</a> properties
 
-<li>Address breakpoints and watchpoints are configured using the <a href='#propLocation'>Location</a>, 
-<a href='#propAccessMode'>AccessMode</a>, <a href='#propSize'>Size</a>, 
+<li>Address breakpoints and watchpoints are configured using the <a href='#propLocation'>Location</a>,
+<a href='#propAccessMode'>AccessMode</a>, <a href='#propSize'>Size</a>,
 <a href='#propMaskValue'>MaskValue </a>and <a href='#propMask'>Mask</a> properties.
 
-<li>Temporal breakpoints which are located on a time scale are configured using the <a href='#propTime'>Time</a>, 
+<li>Temporal breakpoints which are located on a time scale are configured using the <a href='#propTime'>Time</a>,
 <a href='#propTimeScale'>TimeScale</a>, and <a href='#propTimeUnits'> TimeUnits</a> properties.
 </ul>
 
@@ -112,14 +112,14 @@ like actual addresses where breakpoint is installed or installation errors.
 
 <p>Every breakpoint is associated with a communication channel and when the channel is closed
 the target agent removes all corresponding breakpoints.
-Target agent should maintain separate breakpoint tables for each communication channel. 
+Target agent should maintain separate breakpoint tables for each communication channel.
 It is allowed to set the same breakpoint (same ID) through multiple
 channels, target agent should treat it as single breakpoint with multiple references. Such a breakpoint
 is removed when all referring channels are closed.
 
 <p>The service uses standard format for error reports,
 see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
- 
+
 <h2><a name='Cmds'>Commands</a></h2>
 
 <h3><a name='CmdSet'>Set</a></h3>
@@ -141,8 +141,8 @@ C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; set &bull; <i>&lt;array 
 </font></b></pre>
 
 <p> The command downloads breakpoint data to a target agent.
-The command is intended to be used only to initialize the target's breakpoint table 
-when communication channel is open. After that, host should 
+The command is intended to be used only to initialize the target's breakpoint table
+when communication channel is open. After that, host should
 notify the target about (incremental) changes in breakpoints data by sending
 Add, Change and Remove commands.<p>
 
@@ -157,7 +157,7 @@ A breakpoint service implementation may not change the properties set by the cli
     <dd>Breakpoint ID. This is the only required property.
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propeEnabled'>"Enabled"</a> : <i>&lt;boolean&gt;</i></font></b></code>
-    <dd>If true, the breakpoint is enabled. 
+    <dd>If true, the breakpoint is enabled.
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propType'>"Type"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>The breakpoint type
@@ -177,10 +177,10 @@ A breakpoint service implementation may not change the properties set by the cli
     <dd>This property contains an array of contexts names (such as a process/thread name) for which this breakpoint should be installed.
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propExecPaths'>"ExecutablePaths"</a> : <i>&lt;string&gt;</i></font></b></code>
-    <dd>This property contains all the target executable paths for which this breakpoint should be installed.   
+    <dd>This property contains all the target executable paths for which this breakpoint should be installed.
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propLocation'> "Location" </a> : <i>&lt;string&gt;</i></font></b></code>
-    <dd>If preset, defines location of the breakpoint. The expression evaluates either to a memory address 
+    <dd>If preset, defines location of the breakpoint. The expression evaluates either to a memory address
     or a register location.
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propAccessMode'>"AccessMode"</a> : <i>&lt;int&gt;</i></font></b></code>
@@ -195,7 +195,7 @@ A breakpoint service implementation may not change the properties set by the cli
     </dl>
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propSize'>"Size"</a> : <i>&lt;int&gt;</i></font></b></code>
     <dd>The number of bytes starting at the location expression to which the AccessMode triggers applies
-    
+
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propFile'>"File"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>Source code file name of breakpoint location.
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propLine'>"Line"</a> : <i>&lt;int&gt;</i></font></b></code>
@@ -204,7 +204,7 @@ A breakpoint service implementation may not change the properties set by the cli
     <dd>Source code column number of breakpoint location.
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propMaskValue'>"MaskValue"</a> : <i>&lt;int&gt;</i></font></b></code>
-    <dd>A breakpoint can be qualified with a mask value which may be further refined with a mask.       
+    <dd>A breakpoint can be qualified with a mask value which may be further refined with a mask.
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propMask'>"Mask"</a> : <i>&lt;int&gt;</i></font></b></code>
     <dd>A mask which is bitwise ANDed with the value accessed.
 
@@ -234,7 +234,7 @@ A breakpoint service implementation may not change the properties set by the cli
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propIgnoreCount'>"IgnoreCount"</a>: <i>&lt;int&gt;</i></font></b></code>
     <dd>The number of times this breakpoint is to be ignored before it is triggered. The ignore count is tested after all other Location and Condition properties are validated.
-   
+
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name = 'propStopGroup'>"StopGroup"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>An array of TCF Context identifiers representing contexts to be stopped when this breakpoint is triggered.
     This is an "Action" property that is used to stop contexts in addition to the one that triggered the breakpoint.
@@ -427,8 +427,8 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;b
 </font></b></pre>
 
 <p>Breakpoint status consists of a list of status properties. All properties are optional.
-Tools and targets can define additional properties. 
-Setting any properties that are not supported by or unknown to the service implementation will yield an error, 
+Tools and targets can define additional properties.
+Setting any properties that are not supported by or unknown to the service implementation will yield an error,
 which is reported in the Error property of the breakpoint status object.</p>
 
 <p>Predefined properties are:</p>
@@ -455,7 +455,7 @@ in a list of instance status data objects
 <i>&lt;Instance status data list&gt;</i>
     &rArr; <i>&lt;Instance status data&gt;</i>
     &rArr; <i>&lt;Instance staus data list&gt;</i>, <i>&lt;Instance status data&gt;</i>
-  
+
 <i>&lt;Instance status data&gt;</i>
     &rArr; <i>&lt;object&gt;</i>
 </font></b></pre>
@@ -534,16 +534,16 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
 </dl>
 
 <h2><a name='API'>API</a></h2>
- 
+
 <pre>
 <font color=#3F5FBF>/**
  * Breakpoint is represented by unique identifier and set of properties.
  * Breakpoint identifier (String id) needs to be unique across all hosts and targets.
- * 
+ *
  * Breakpoint properties (Map&lt;String,Object>) is extensible collection of named attributes,
  * which define breakpoint location and behavior. This module defines some common
  * attribute names (see PROP_*), host tools and target agents may support additional attributes.
- * 
+ *
  * For each breakpoint a target agent maintains another extensible collection of named attributes:
  * breakpoint status (Map&lt;String,Object>, see STATUS_*). While breakpoint properties are
  * persistent and represent user input, breakpoint status reflects dynamic target agent reports
@@ -583,31 +583,31 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
         PROP_TEMPORARY = "Temporary";             // Boolean
 
     <font color=#3F5FBF>/**
-     * BreakpointType values 
+     * BreakpointType values
      */</font>
     <font color=#7F0055>static final</font> String
         TYPE_RELATIVE = "Software",
         TYPE_ABSOLUTE = "Hardware",
         TYPE_AUTO = "Auto";
 
-    <font color=#3F5FBF>/** 
-     * AccessMode values 
+    <font color=#3F5FBF>/**
+     * AccessMode values
      */ </font>
-    <font color=#7F0055>static final</font> int 
+    <font color=#7F0055>static final</font> int
         ACCESSMODE_READ    = 0x01,
-        ACCESSMODE_WRITE   = 0x02, 
+        ACCESSMODE_WRITE   = 0x02,
         ACCESSMODE_EXECUTE = 0x04,
         ACCESSMODE_CHANGE  = 0x08;
 
     <font color=#3F5FBF>/**
-     * TimeScale values 
+     * TimeScale values
      */</font>
-    <font color=#7F0055>static final</font> String 
+    <font color=#7F0055>static final</font> String
         TIMESCALE_RELATIVE = "Relative",
         TIMESCALE_ABSOLUTE = "Absolute";
-    
+
     <font color=#3F5FBF>/**
-     * TimeUnits values 
+     * TimeUnits values
      */</font>
     <font color=#7F0055>static final</font> String
         TIMEUNIT_NSECS = "Nanoseconds",
@@ -623,7 +623,7 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
         STATUS_FILE = "File",           // String
         STATUS_LINE = "Line",           // Number
         STATUS_COLUMN = "Column";       // Number
-    
+
     <font color=#3F5FBF>/**
      * Breakpoint service capabilities.
      */</font>
@@ -643,11 +643,11 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
 
     <font color=#3F5FBF>/**
      * Download breakpoints data to target agent.
-     * The command is intended to be used only to initialize target breakpoints table 
-     * when communication channel is open. After that, host should 
+     * The command is intended to be used only to initialize target breakpoints table
+     * when communication channel is open. After that, host should
      * notify target about (incremental) changes in breakpoint data by sending
      * add, change and remove commands.
-     * 
+     *
      * @param properties - array of breakpoints.
      * @param done - command result call back object.
      */</font>
@@ -687,7 +687,7 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
      * @param done - command result call back object.
      */</font>
     IToken remove(String[] ids, DoneCommand done);
-    
+
     <font color=#3F5FBF>/**
      * Upload IDs of breakpoints known to target agent.
      * @param done - command result call back object.

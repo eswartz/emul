@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -41,7 +41,7 @@ import org.eclipse.ui.dialogs.ElementListSelectionDialog;
  * the workbench selection or active editor.
  */
 public class TCFLaunchShortcut implements ILaunchShortcut {
-    
+
     private static final String LAUNCH_CONFIGURATION_TYPE_ID = "org.eclipse.tm.tcf.debug.LaunchConfigurationType"; //$NON-NLS-1$
 
     public void launch(ISelection selection, String mode) {
@@ -96,13 +96,13 @@ public class TCFLaunchShortcut implements ILaunchShortcut {
         IDebugModelPresentation labelProvider = DebugUITools.newDebugModelPresentation();
         ElementListSelectionDialog dialog= new ElementListSelectionDialog(getShell(), labelProvider);
         dialog.setElements(list.toArray());
-        dialog.setTitle("TCF Launch Configuration");  
+        dialog.setTitle("TCF Launch Configuration");
         dialog.setMessage("&Select existing configuration:");
         dialog.setMultipleSelection(false);
         int result = dialog.open();
         labelProvider.dispose();
         if (result == Window.OK) return (ILaunchConfiguration) dialog.getFirstResult();
-        return null;            
+        return null;
     }
 
     private ILaunchConfiguration createConfiguration(IProject project, IPath path) {
@@ -118,11 +118,11 @@ public class TCFLaunchShortcut implements ILaunchShortcut {
             config = wc.doSave();
         }
         catch (CoreException x) {
-            MessageDialog.openError(getShell(), "Cannot create launch configuration", x.getStatus().getMessage()); 
-        } 
+            MessageDialog.openError(getShell(), "Cannot create launch configuration", x.getStatus().getMessage());
+        }
         return config;
     }
-    
+
     private Shell getShell() {
         Shell shell = null;
         IWorkbenchWindow window = Activator.getDefault().getWorkbench().getActiveWorkbenchWindow();

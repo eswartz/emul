@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2009 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -32,17 +32,17 @@ import org.osgi.framework.Bundle;
 
 /**
  * This class checks that TCF Agent is running on the local host,
- * and starts a new instance of the agent if it cannot be located. 
+ * and starts a new instance of the agent if it cannot be located.
  */
 public class TCFLocalAgent {
-    
+
     private static final String
         AGENT_HOST = "127.0.0.1",
         AGENT_PORT = "1534";
-    
+
     private static Process agent;
     private static boolean destroed;
-    
+
     private static String getAgentFileName() {
         String os = System.getProperty("os.name");
         String arch = System.getProperty("os.arch");
@@ -56,7 +56,7 @@ public class TCFLocalAgent {
         if (os.equals("Linux")) os = "GNU/Linux";
         return "agent/" + os + "/" + arch + "/" + fnm;
     }
-    
+
     static synchronized String runLocalAgent() throws CoreException {
         if (destroed) return null;
         String id = getLocalAgentID();
@@ -129,13 +129,13 @@ public class TCFLocalAgent {
                 "Cannot start local agent: file not available: " + fnm,
                 null));
     }
-    
+
     private static boolean isLocalAgent(IPeer p) {
         String host = p.getAttributes().get(IPeer.ATTR_IP_HOST);
         String port = p.getAttributes().get(IPeer.ATTR_IP_PORT);
         return AGENT_HOST.equals(host) && AGENT_PORT.equals(port);
     }
-    
+
     public static synchronized String getLocalAgentID() {
         return new TCFTask<String>() {
             public void run() {
@@ -150,7 +150,7 @@ public class TCFLocalAgent {
             }
         }.getE();
     }
-    
+
     private static String waitAgentReady() {
         return new TCFTask<String>() {
             public void run() {
@@ -187,7 +187,7 @@ public class TCFLocalAgent {
             }
         }.getE();
     }
-    
+
     public static synchronized void destroy() {
         if (agent != null) {
             destroed = true;

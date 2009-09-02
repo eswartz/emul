@@ -269,7 +269,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         if (v == null) v = "";
         return v;
     }
-    
+
     private Object internalGetPropertyValueOrNull(Object property) {
         TCFRemoteProcess process = (TCFRemoteProcess)propertySourceInput;
         Object p = process.getProperties().get(property);
@@ -310,7 +310,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
     @Override
     public Object getPropertyValue(Object property, boolean formatted) {
         if (formatted) return getPropertyValue(property);
-        
+
         TCFRemoteProcess process = (TCFRemoteProcess)propertySourceInput;
         Object p = process.getProperties().get(property);
         if (p == null) {
@@ -333,7 +333,7 @@ public class TCFSystemViewRemoteProcessAdapter extends AbstractSystemViewAdapter
         }
         return p;
     }
-    
+
     private String formatPercent(Object o) {
         if (o instanceof Number) {
             Number n = (Number)o;

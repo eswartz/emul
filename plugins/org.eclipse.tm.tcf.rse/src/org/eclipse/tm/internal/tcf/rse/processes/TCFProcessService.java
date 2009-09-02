@@ -51,7 +51,7 @@ public class TCFProcessService extends AbstractProcessService implements IProces
             .getInstance().getConnectorService(host, ITCFSubSystem.class);
         root = new TCFProcessResource(this, null, null, null);
     }
-    
+
     public TCFConnectorService getTCFConnectorService() {
         return connector;
     }
@@ -250,7 +250,7 @@ public class TCFProcessService extends AbstractProcessService implements IProces
         roots[0] = getProcess(1, monitor);
         return roots;
     }
-    
+
     Map<Long,TCFProcessResource> getProcessCache() {
         return pid2res;
     }

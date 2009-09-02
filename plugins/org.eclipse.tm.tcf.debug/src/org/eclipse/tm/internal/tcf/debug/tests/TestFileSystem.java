@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -31,7 +31,7 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
         IFileSystem.DoneRename, IFileSystem.DoneRealPath,
         IFileSystem.DoneRemove, IFileSystem.DoneRoots,
         IFileSystem.DoneReadDir {
-    
+
     private final TCFTestSuite test_suite;
     private final int channel_id;
 
@@ -42,7 +42,7 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
         STATE_OUT = 3,
         STATE_INP = 4,
         STATE_EXIT = 5;
-    
+
     private final IFileSystem files;
     private final byte[] data = new byte[0x1000];
     private String root;
@@ -50,13 +50,13 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
     private String file_name;
     private IFileHandle handle;
     private int state = STATE_PRE;
-    
+
     TestFileSystem(TCFTestSuite test_suite, IChannel channel, int channel_id) {
         this.test_suite = test_suite;
         this.channel_id = channel_id;
         files = channel.getRemoteService(IFileSystem.class);
     }
-    
+
     public void start() {
         if (files == null) {
             test_suite.done(this, null);

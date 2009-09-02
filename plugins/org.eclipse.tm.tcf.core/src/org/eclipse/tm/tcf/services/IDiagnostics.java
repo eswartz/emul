@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Eclipse Public License v1.0 
- * which accompanies this distribution, and is available at 
- * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -16,7 +16,7 @@ import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
 
 /**
- * This is optional service that can be implemented by a peer. 
+ * This is optional service that can be implemented by a peer.
  * If implemented, the service can be used for testing of the peer and
  * communication channel functionality and reliability.
  */
@@ -24,17 +24,17 @@ import org.eclipse.tm.tcf.protocol.IToken;
 public interface IDiagnostics extends IService {
 
     static final String NAME = "Diagnostics";
-    
+
     /**
      * 'echo' command result returns same string that was given as command argument.
      * The command is used to test communication channel ability to transmit arbitrary strings in
-     * both directions.  
+     * both directions.
      * @param s - any string.
      * @param done - command result call back object.
      * @return - pending command handle.
      */
     IToken echo(String s, DoneEcho done);
-    
+
     /**
      * Call back interface for 'echo' command.
      */
@@ -51,13 +51,13 @@ public interface IDiagnostics extends IService {
     /**
      * 'echoFP' command result returns same floating point number that was given as command argument.
      * The command is used to test communication channel ability to transmit arbitrary floating point numbers in
-     * both directions.  
+     * both directions.
      * @param n - any floating point number.
      * @param done - command result call back object.
      * @return - pending command handle.
      */
     IToken echoFP(BigDecimal n, DoneEchoFP done);
-    
+
     /**
      * Call back interface for 'echoFP' command.
      */
@@ -83,7 +83,7 @@ public interface IDiagnostics extends IService {
      * @return - pending command handle.
      */
     IToken getTestList(DoneGetTestList done);
-    
+
     /**
      * Call back interface for 'getTestList' command.
      */
@@ -92,11 +92,11 @@ public interface IDiagnostics extends IService {
          * Called when 'getTestList' command is done.
          * @param token - command handle.
          * @param error - error object or null.
-         * @param list - names of tests that are supported by the peer. 
+         * @param list - names of tests that are supported by the peer.
          */
         void doneGetTestList(IToken token, Throwable error, String[] list);
     }
-    
+
     /**
      * Run a test. When started, a test performs a predefined set actions.
      * Nature of test actions is uniquely identified by test name.
@@ -108,7 +108,7 @@ public interface IDiagnostics extends IService {
      * @return - pending command handle.
      */
     IToken runTest(String name, DoneRunTest done);
-    
+
     /**
      * Call back interface for 'runTest' command.
      */
@@ -129,7 +129,7 @@ public interface IDiagnostics extends IService {
      * @return - pending command handle.
      */
     IToken cancelTest(String context_id, DoneCancelTest done);
-    
+
     /**
      * Call back interface for 'cancelTest' command.
      */
@@ -141,7 +141,7 @@ public interface IDiagnostics extends IService {
          */
         void doneCancelTest(IToken token, Throwable error);
     }
-    
+
     /**
      * Get information about a symbol in text execution context.
      * @param context_id
@@ -150,7 +150,7 @@ public interface IDiagnostics extends IService {
      * @return
      */
     IToken getSymbol(String context_id, String symbol_name, DoneGetSymbol done);
-    
+
     /**
      * Call back interface for 'getSymbol' command.
      */
@@ -163,7 +163,7 @@ public interface IDiagnostics extends IService {
          */
         void doneGetSymbol(IToken token, Throwable error, ISymbol symbol);
     }
-    
+
     /**
      * Interface to access result value of 'getSymbol' command.
      */
@@ -176,7 +176,7 @@ public interface IDiagnostics extends IService {
         boolean isLocal();
         boolean isAbs();
     }
-    
+
     /**
      * Create a pair of virtual streams, @see IStreams service.
      * Remote ends of the streams are connected, so any data sent into 'inp' stream
@@ -188,12 +188,12 @@ public interface IDiagnostics extends IService {
      * @return - pending command handle.
      */
     IToken createTestStreams(int inp_buf_size, int out_buf_size, DoneCreateTestStreams done);
-    
+
     /**
      * Call back interface for 'createTestStreams' command.
      */
     interface DoneCreateTestStreams {
-        
+
         /**
          * Called when 'createTestStreams' command is done.
          * @param token - command handle.
@@ -203,7 +203,7 @@ public interface IDiagnostics extends IService {
          */
         void doneCreateTestStreams(IToken token, Throwable error, String inp_id, String out_id);
     }
-    
+
     /**
      * Dispose a virtual stream that was created by 'createTestStreams' command.
      * @param id - the stream ID.
@@ -211,12 +211,12 @@ public interface IDiagnostics extends IService {
      * @return - pending command handle.
      */
     IToken disposeTestStream(String id, DoneDisposeTestStream done);
-    
+
     /**
      * Call back interface for 'disposeTestStream' command.
      */
     interface DoneDisposeTestStream {
-        
+
         /**
          * Called when 'createTestStreams' command is done.
          * @param token - command handle.
@@ -224,7 +224,7 @@ public interface IDiagnostics extends IService {
          */
         void doneDisposeTestStream(IToken token, Throwable error);
     }
-    
+
     /**
      * Send a command that is not implemented by peer.
      * Used to test handling of 'N' messages by communication channel.
@@ -232,9 +232,9 @@ public interface IDiagnostics extends IService {
      * @return - pending command handle.
      */
     IToken not_implemented_command(DoneNotImplementedCommand done);
-    
+
     interface DoneNotImplementedCommand {
-        
+
         /**
          * Called when 'not_implemented_command' command is done.
          * @param token - command handle.

@@ -10,7 +10,7 @@ import org.eclipse.tm.tcf.services.ILineNumbers;
 
 
 public class LineNumbersProxy implements ILineNumbers {
-    
+
     private final IChannel channel;
 
     public LineNumbersProxy(IChannel channel) {
@@ -37,25 +37,25 @@ public class LineNumbersProxy implements ILineNumbers {
             }
         }.token;
     }
-    
+
     private static int getInteger(Map<String,Object> map, String name, int def) {
         Number n = (Number)map.get(name);
         if (n == null) return def;
         return n.intValue();
     }
-    
+
     private static String getString(Map<String,Object> map, String name, String def) {
         String s = (String)map.get(name);
         if (s == null) return def;
         return s;
     }
-    
+
     private static boolean getBoolean(Map<String,Object> map, String name) {
         Boolean b = (Boolean)map.get(name);
         if (b == null) return false;
         return b.booleanValue();
     }
-    
+
     @SuppressWarnings("unchecked")
     private CodeArea[] toTextAreaArray(Object o) {
         if (o == null) return null;
