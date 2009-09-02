@@ -92,6 +92,7 @@ typedef struct ChildProcess {
     char inp_id[256];
     char out_id[256];
     char err_id[256];
+    char name[256];
     long exit_code;
 } ChildProcess;
 
@@ -141,32 +142,15 @@ static void write_context(OutputStream * out, int pid) {
 
     write_stream(out, '{');
 
-#if defined(WIN32)
-#elif defined(_WRS_KERNEL)
-#elif defined(__APPLE__)
-#else
-    {
-        char dir[FILE_PATH_SIZE];
-        snprintf(dir, sizeof(dir), "/proc/%d", pid);
-        if (chdir(dir) >= 0) {
-            int sz;
-            char fnm[FILE_PATH_SIZE + 1];
+    json_write_string(out, "Name");
+    write_stream(out, ':');
+    json_write_string(out, prs ? prs->name : pid2id(pid, 0));
+    write_stream(out, ',');
 
-            json_write_string(out, "CanTerminate");
-            write_stream(out, ':');
-            json_write_boolean(out, 1);
-            write_stream(out, ',');
-
-            if ((sz = readlink("exe", fnm, FILE_PATH_SIZE)) > 0) {
-                fnm[sz] = 0;
-                json_write_string(out, "Name");
-                write_stream(out, ':');
-                json_write_string(out, fnm);
-                write_stream(out, ',');
-            }
-        }
-    }
-#endif
+    json_write_string(out, "CanTerminate");
+    write_stream(out, ':');
+    json_write_boolean(out, 1);
+    write_stream(out, ',');
 
     if (ctx != NULL) {
         json_write_string(out, "Attached");
@@ -445,10 +429,6 @@ static void command_terminate(char * token, Channel * c) {
             TerminateProcess(h, 1);
             CloseHandle(h);
         }
-#elif defined(_WRS_KERNEL)
-        if (kill(pid, SIGTERM) < 0) err = errno;
-#elif defined(__APPLE__)
-        if (kill(pid, SIGTERM) < 0) err = errno;
 #else
         if (kill(pid, SIGTERM) < 0) err = errno;
 #endif
@@ -1229,6 +1209,7 @@ static void command_start(char * token, Channel * c) {
             write_process_input(prs);
             prs->out_struct = read_process_output(prs, prs->out, prs->out_id, sizeof(prs->out_id));
             if (prs->out != prs->err) prs->err_struct = read_process_output(prs, prs->err, prs->err_id, sizeof(prs->err_id));
+            strncpy(prs->name, exe, sizeof(prs->name) - 1);
         }
         if (!err) {
             if (attach) {
