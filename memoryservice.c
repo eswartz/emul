@@ -105,6 +105,7 @@ static void write_context(OutputStream * out, Context * ctx) {
 }
 
 static void write_ranges(OutputStream * out, ContextAddress addr, int size, int offs, int status, int err) {
+    int cnt = 0;
     write_stream(out, '[');
     if (offs > 0) {
         write_stream(out, '{');
@@ -124,9 +125,10 @@ static void write_ranges(OutputStream * out, ContextAddress addr, int size, int 
         json_write_ulong(out, 0);
 
         write_stream(out, '}');
-        write_stream(out, ',');
+        cnt++;
     }
     if (offs < size) {
+        if (cnt > 0) write_stream(out, ',');
         write_stream(out, '{');
 
         json_write_string(out, "addr");
