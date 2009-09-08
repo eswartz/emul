@@ -52,12 +52,15 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
    <li>Select "General/Existing Projects into Workspace" and click "Next".
    <li>Select root directory: &lt;TCF Root&gt;\plugins, and click "Next".
        <ul>
-       <li>If DD-DSF and/or CDT are not installed, don't import the following two plugins
-       into your workspace:
-               <ul>
+       <li>If DD-DSF and/or CDT are not installed, don't import the following plugins into your workspace:
+           <ul>
            <li>org.eclipse.tm.tcf.dsf
            <li>org.eclipse.tm.tcf.dsf.ui
            <li>org.eclipse.tm.tcf.cdt.ui
+           </ul>
+       <li>If RSE is not installed, don't import the following plugins into your workspace:
+           <ul>
+           <li>org.eclipse.tm.tcf.rse
            </ul>
        </ul>
    <!--
@@ -328,8 +331,10 @@ The integration has only been tested on Linux at this point.
 <br>make local
 <br>cd &lt;<i>tcfdir</i>&gt;/agent
 <br>make LUADIR=&lt;<i>luadir</i>&gt;/lua-5.1.4
+</code>
 
 <p><code>./GNU/Linux/i686/Debug/tcflua tcf_example.lua
+</code>
 
 <h2><a name='Browsing'>Browsing Agent Source Code in CDT</a></h2>
 On Linux, the default configuration from the CDT .project file included in TCF
