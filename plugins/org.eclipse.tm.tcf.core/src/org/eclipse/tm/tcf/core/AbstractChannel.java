@@ -277,11 +277,16 @@ public abstract class AbstractChannel implements IChannel {
                     });
                 }
                 catch (final Throwable x) {
-                    Protocol.invokeLater(new Runnable() {
-                        public void run() {
-                            terminate(x);
-                        }
-                    });
+                    try {
+                        Protocol.invokeLater(new Runnable() {
+                            public void run() {
+                                terminate(x);
+                            }
+                        });
+                    }
+                    catch (IllegalStateException y) {
+                        // TCF event dispatcher has shut down
+                    }
                 }
             }
         };
@@ -351,11 +356,16 @@ public abstract class AbstractChannel implements IChannel {
                     flush();
                 }
                 catch (final Throwable x) {
-                    Protocol.invokeLater(new Runnable() {
-                        public void run() {
-                            terminate(x);
-                        }
-                    });
+                    try {
+                        Protocol.invokeLater(new Runnable() {
+                            public void run() {
+                                terminate(x);
+                            }
+                        });
+                    }
+                    catch (IllegalStateException y) {
+                        // TCF event dispatcher has shut down
+                    }
                 }
             }
         };

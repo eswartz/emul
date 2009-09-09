@@ -107,7 +107,7 @@ class EventQueue implements IEventQueue, Runnable {
 
     public synchronized void invokeLater(final Runnable r) {
         assert r != null;
-        if (shutdown) throw new IllegalStateException("TCF event dispatch is shutdown"); //$NON-NLS-1$
+        if (shutdown) throw new IllegalStateException("TCF event dispatcher has shut down"); //$NON-NLS-1$
         queue.add(r);
         if (waiting) {
             waiting = false;
