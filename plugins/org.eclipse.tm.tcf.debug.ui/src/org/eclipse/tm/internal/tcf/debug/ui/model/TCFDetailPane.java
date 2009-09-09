@@ -83,7 +83,6 @@ public class TCFDetailPane implements IDetailPane {
     }
 
     private String getDetailText(ArrayList<TCFNode> nodes, Runnable done) {
-        if (!TCFNode.validateNodes(nodes, done)) return null;
         StringBuffer bf = new StringBuffer();
         for (TCFNode n : nodes) {
             if (n instanceof TCFNodeExpression) {

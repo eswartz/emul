@@ -15,6 +15,8 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationCont
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
 class TCFModelSelectionPolicy implements IModelSelectionPolicy {
@@ -52,8 +54,10 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
                 TCFNode n = node;
                 while (n != null && !n.isDisposed()) {
                     if (n instanceof TCFNodeExecContext) {
-                        if (!n.validateNode(this)) return;
-                        if (((TCFNodeExecContext)n).isSuspended()) {
+                        TCFDataCache<TCFContextState> cache = ((TCFNodeExecContext)n).getState();
+                        if (!cache.validate(this)) return;
+                        TCFContextState state = cache.getData();
+                        if (state != null && state.is_suspended) {
                             done(true);
                             return;
                         }

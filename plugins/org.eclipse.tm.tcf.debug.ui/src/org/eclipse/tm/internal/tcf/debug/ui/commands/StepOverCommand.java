@@ -54,21 +54,21 @@ public class StepOverCommand extends StepCommand implements IStepOverHandler {
 
         @Override
         protected TCFDataCache<TCFSourceRef> getLineInfo() {
-            if (frame == null) frame = node.getTopFrame();
+            if (frame == null) frame = node.getStackTrace().getTopFrame();
             if (frame == null) return null;
             return frame.getLineInfo();
         }
 
         @Override
         protected TCFDataCache<StackTraceContext> getStackFrame() {
-            if (frame == null) frame = node.getTopFrame();
+            if (frame == null) frame = node.getStackTrace().getTopFrame();
             if (frame == null) return null;
             return frame.getStackTraceContext();
         }
 
         @Override
         protected int getStackFrameIndex() {
-            if (frame == null) frame = node.getTopFrame();
+            if (frame == null) frame = node.getStackTrace().getTopFrame();
             if (frame == null) return 0;
             return frame.getFrameNo();
         }

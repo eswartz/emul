@@ -107,10 +107,7 @@ class SignalsDialog extends Dialog {
             return new TCFTask<Signal[]>(channel) {
 
                 public void run() {
-                    if (!signal_state.validate()) {
-                        signal_state.wait(this);
-                        return;
-                    }
+                    if (!signal_state.validate(this)) return;
                     if (signal_state.getError() != null) error(signal_state.getError());
                     else done(signal_state.getData().list);
                 }
@@ -212,10 +209,7 @@ class SignalsDialog extends Dialog {
 
                     @Override
                     protected boolean startDataRetrieval() {
-                        if (!signal_list.validate()) {
-                            signal_list.wait(this);
-                            return false;
-                        }
+                        if (!signal_list.validate(this)) return false;
                         IProcesses prs = channel.getRemoteService(IProcesses.class);
                         final SignalList sigs = signal_list.getData();
                         if (prs == null || sigs == null) {
@@ -384,10 +378,7 @@ class SignalsDialog extends Dialog {
         try {
             final SignalState state = new TCFTask<SignalState>(channel) {
                 public void run() {
-                    if (!signal_state.validate()) {
-                        signal_state.wait(this);
-                        return;
-                    }
+                    if (!signal_state.validate(this)) return;
                     if (signal_state.getError() != null) error(signal_state.getError());
                     else done(signal_state.getData());
                 }

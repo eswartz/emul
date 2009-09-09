@@ -31,15 +31,22 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IExpressions;
+import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.ISymbols;
+import org.eclipse.tm.tcf.services.IMemory.MemoryError;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
 public class TCFNodeExpression extends TCFNode implements IElementEditor {
+
+    // TODO: User commands: Display As Array, Cast To Type, Restore Original Type, Add Global Variables, Remove Global Variables
+    // TODO: enable Change Value user command
 
     private final String script;
     private final String field_id;
@@ -51,34 +58,22 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     private final TCFDataCache<IExpressions.Value> value;
     private final TCFDataCache<ISymbols.Symbol> type;
     private final TCFChildrenSubExpressions children;
+    private final TCFDataCache<String> type_name;
+    private final TCFDataCache<String> string;
     private int sort_pos;
 
     private static int expr_cnt;
 
-    TCFNodeExpression(final TCFNode parent, final String script, final String field_id, final String var_id, final int index) {
+    TCFNodeExpression(final TCFNode parent, final String script,
+            String field_id, final String var_id, final int index, final ISymbols.Symbol parent_type) {
         super(parent, var_id != null ? var_id : "Expr" + expr_cnt++);
         assert script != null || field_id != null || var_id != null || index >= 0;
         this.script = script;
         this.field_id = field_id;
         this.var_id = var_id;
+        this.field = field_id == null ? null : model.getSymbolInfoCache(parent_type.getExeContextID(), field_id);
         this.index = index;
         IChannel channel = model.getLaunch().getChannel();
-        field = new TCFDataCache<ISymbols.Symbol>(channel) {
-            @Override
-            protected boolean startDataRetrieval() {
-                ISymbols syms = model.getLaunch().getService(ISymbols.class);
-                if (field_id == null || syms == null) {
-                    set(null, null, null);
-                    return true;
-                }
-                command = syms.getContext(field_id, new ISymbols.DoneGetContext() {
-                    public void doneGetContext(IToken token, Exception error, ISymbols.Symbol sym) {
-                        set(token, error, sym);
-                    }
-                });
-                return false;
-            }
-        };
         text = new TCFDataCache<String>(channel) {
             @Override
             protected boolean startDataRetrieval() {
@@ -87,10 +82,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                     return true;
                 }
                 if (var_id != null) {
-                    if (!expression.validate()) {
-                        expression.wait(this);
-                        return false;
-                    }
+                    if (!expression.validate(this)) return false;
                     if (expression.getData() == null) {
                         set(null, expression.getError(), null);
                         return true;
@@ -106,20 +98,14 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                 TCFNode n = parent;
                 while (n instanceof TCFNodeArrayPartition) n = n.parent;
                 TCFDataCache<String> t = ((TCFNodeExpression)n).getExpressionText();
-                if (!t.validate()) {
-                    t.wait(this);
-                    return false;
-                }
+                if (!t.validate(this)) return false;
                 String e = t.getData();
                 if (e == null) {
                     set(null, t.getError(), null);
                     return true;
                 }
-                if (field_id != null) {
-                    if (!field.validate()) {
-                        field.wait(this);
-                        return false;
-                    }
+                if (field != null) {
+                    if (!field.validate(this)) return false;
                     if (field.getData() == null) {
                         set(null, field.getError(), null);
                         return true;
@@ -129,7 +115,12 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                         set(null, new Exception("Field nas no name"), null);
                         return true;
                     }
-                    e = "(" + e + ")." + name;
+                    if (parent_type.getTypeClass() == ISymbols.TypeClass.pointer) {
+                        e = "(" + e + ")->" + name;
+                    }
+                    else {
+                        e = "(" + e + ")." + name;
+                    }
                 }
                 else if (index == 0) {
                     e = "*(" + e + ")";
@@ -157,10 +148,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                     });
                 }
                 else {
-                    if (!text.validate()) {
-                        text.wait(this);
-                        return false;
-                    }
+                    if (!text.validate(this)) return false;
                     String e = text.getData();
                     if (e == null) {
                         set(null, text.getError(), null);
@@ -193,10 +181,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         value = new TCFDataCache<IExpressions.Value>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                if (!expression.validate()) {
-                    expression.wait(this);
-                    return false;
-                }
+                if (!expression.validate(this)) return false;
                 final IExpressions.Expression ctx = expression.getData();
                 if (ctx == null) {
                     set(null, null, null);
@@ -214,28 +199,253 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         type = new TCFDataCache<ISymbols.Symbol>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                if (!value.validate()) {
-                    value.wait(this);
-                    return false;
+                if (!value.validate(this)) return false;
+                IExpressions.Value val = value.getData();
+                if (val == null) {
+                    set(null, value.getError(), null);
+                    return true;
                 }
-                IExpressions.Value v = value.getData();
-                if (v == null) {
+                TCFDataCache<ISymbols.Symbol> type_cache = model.getSymbolInfoCache(
+                        val.getExeContextID(), val.getTypeID());
+                if (type_cache == null) {
                     set(null, null, null);
                     return true;
                 }
-                String ctx_id = v.getExeContextID();
-                String type_id = v.getTypeID();
-                if (ctx_id == null || type_id == null) {
-                    set(null, null, null);
-                    return true;
-                }
-                TCFDataCache<ISymbols.Symbol> s = model.getSymbolInfoCache(ctx_id, type_id);
-                if (!s.validate()) {
-                    s.wait(this);
-                    return false;
-                }
-                set(null, s.getError(), s.getData());
+                if (!type_cache.validate(this)) return false;
+                set(null, type_cache.getError(), type_cache.getData());
                 return true;
+            }
+        };
+        string = new TCFDataCache<String>(channel) {
+            IMemory.MemoryContext mem;
+            ISymbols.Symbol base_type_data;
+            boolean big_endian;
+            BigInteger addr;
+            byte[] buf;
+            int size;
+            int offs;
+            @Override
+            protected boolean startDataRetrieval() {
+                if (addr != null && size == 0) {
+                    // data is ASCII string
+                    if (buf == null) buf = new byte[256];
+                    if (offs >= buf.length) {
+                        byte[] tmp = new byte[buf.length * 2];
+                        System.arraycopy(buf, 0, tmp, 0, buf.length);
+                        buf = tmp;
+                    }
+                    command = mem.get(addr.add(BigInteger.valueOf(offs)), 1, buf, offs, 1, 0, new IMemory.DoneMemory() {
+                        public void doneMemory(IToken token, MemoryError error) {
+                            if (error != null) {
+                                String msg = "Cannot read string value: ";
+                                if (error instanceof IErrorReport) {
+                                    msg += Command.toErrorString(((IErrorReport)error).getAttributes());
+                                }
+                                else {
+                                    msg += error.getLocalizedMessage();
+                                }
+                                set(command, null, msg);
+                            }
+                            else if (buf[offs] == 0 || offs >= 2048) {
+                                StringBuffer bf = new StringBuffer();
+                                bf.append('"');
+                                for (int i = 0; i < offs; i++) {
+                                    int ch = buf[i] & 0xff;
+                                    if (ch >= ' ' && ch < 0x7f) {
+                                        bf.append((char)ch);
+                                    }
+                                    else {
+                                        switch (ch) {
+                                        case '\r': bf.append("\\r"); break;
+                                        case '\n': bf.append("\\n"); break;
+                                        case '\b': bf.append("\\b"); break;
+                                        case '\t': bf.append("\\t"); break;
+                                        case '\f': bf.append("\\f"); break;
+                                        default:
+                                            bf.append('\\');
+                                            bf.append((char)('0' + ch / 64));
+                                            bf.append((char)('0' + ch / 8 % 8));
+                                            bf.append((char)('0' + ch % 8));
+                                        }
+                                    }
+                                }
+                                if (buf[offs] == 0) bf.append('"');
+                                else bf.append("...");
+                                set(command, null, bf.toString());
+                            }
+                            else if (command == token) {
+                                command = null;
+                                offs++;
+                                run();
+                            }
+                        }
+                    });
+                    return false;
+                }
+                if (addr != null) {
+                    // data is a struct
+                    if (offs != size) {
+                        if (buf == null || buf.length < size) buf = new byte[size];
+                        command = mem.get(addr, 1, buf, 0, size, 0, new IMemory.DoneMemory() {
+                            public void doneMemory(IToken token, MemoryError error) {
+                                if (error != null) {
+                                    set(command, error, null);
+                                }
+                                else if (command == token) {
+                                    command = null;
+                                    offs = size;
+                                    run();
+                                }
+                            }
+                        });
+                        return false;
+                    }
+                    StringBuffer bf = new StringBuffer();
+                    if (!appendCompositeValueText(bf, 1, base_type_data, buf, 0, size, big_endian, this)) return false;
+                    set(null, null, bf.toString());
+                    return true;
+                }
+                TCFNode n = parent;
+                while (n != null) {
+                    if (n instanceof TCFNodeExecContext) {
+                        TCFDataCache<IMemory.MemoryContext> mem_cache = ((TCFNodeExecContext)n).getMemoryContext();
+                        if (!mem_cache.validate(this)) return false;
+                        mem = mem_cache.getData();
+                        if (mem != null) break;
+                    }
+                    n = n.parent;
+                }
+                if (mem != null) {
+                    if (!type.validate(this)) return false;
+                    ISymbols.Symbol type_data = type.getData();
+                    if (type_data != null) {
+                        switch (type_data.getTypeClass()) {
+                        case pointer:
+                            TCFDataCache<ISymbols.Symbol> base_type_cahce = model.getSymbolInfoCache(
+                                    type_data.getExeContextID(), type_data.getBaseTypeID());
+                            if (base_type_cahce != null) {
+                                if (!base_type_cahce.validate(this)) return false;
+                                base_type_data = base_type_cahce.getData();
+                                if (base_type_data != null) {
+                                    switch (base_type_data.getTypeClass()) {
+                                    case integer:
+                                    case cardinal:
+                                        if (base_type_data.getSize() != 1) break;
+                                    case composite:
+                                        if (base_type_data.getSize() == 0) break;
+                                        if (!value.validate(this)) return false;
+                                        IExpressions.Value v = value.getData();
+                                        if (v != null) {
+                                            byte[] data = v.getValue();
+                                            big_endian = v.isBigEndian();
+                                            BigInteger a = toBigInteger(data, 0, data.length, big_endian, false);
+                                            if (!a.equals(BigInteger.valueOf(0))) {
+                                                addr = a;
+                                                offs = 0;
+                                                size = 0;
+                                                if (base_type_data.getTypeClass() == ISymbols.TypeClass.composite) {
+                                                    size = base_type_data.getSize();
+                                                }
+                                                Protocol.invokeLater(this);
+                                                return false;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                set(null, null, null);
+                return true;
+            }
+            @Override
+            public void reset() {
+                super.reset();
+                addr = null;
+            }
+        };
+        type_name = new TCFDataCache<String>(channel) {
+            String name;
+            TCFDataCache<ISymbols.Symbol> type_cache;
+            @Override
+            protected boolean startDataRetrieval() {
+                if (name == null) type_cache = type;
+                if (!type_cache.validate(this)) return false;
+                String s = null;
+                boolean get_base_type = false;
+                ISymbols.Symbol t = type_cache.getData();
+                if (t != null) {
+                    s = t.getName();
+                    if (s != null && t.getTypeClass() == ISymbols.TypeClass.composite) {
+                        s = "struct " + s;
+                    }
+                    if (s == null && t.getSize() == 0) s = "void";
+                    if (s == null) {
+                        switch (t.getTypeClass()) {
+                        case integer:
+                            switch (t.getSize()) {
+                            case 1: s = "char"; break;
+                            case 2: s = "short"; break;
+                            case 4: s = "int"; break;
+                            case 8: s = "long long"; break;
+                            default: s = "<Integer>"; break;
+                            }
+                            break;
+                        case cardinal:
+                            switch (t.getSize()) {
+                            case 1: s = "unsigned char"; break;
+                            case 2: s = "unsigned short"; break;
+                            case 4: s = "unsigned"; break;
+                            case 8: s = "unsigned long long"; break;
+                            default: s = "<Unsigned>"; break;
+                            }
+                            break;
+                        case real:
+                            switch (t.getSize()) {
+                            case 4: s = "float"; break;
+                            case 8: s = "double"; break;
+                            default: s = "<Float>"; break;
+                            }
+                            break;
+                        case pointer:
+                            s = "*";
+                            get_base_type = true;
+                            break;
+                        case array:
+                            s = "[]";
+                            get_base_type = true;
+                            break;
+                        case composite:
+                            s = "<Structure>";
+                            break;
+                        case function:
+                            s = "<Function>";
+                            break;
+                        }
+                    }
+                }
+                if (s == null) name = "N/A";
+                else if (name == null) name = s;
+                else if (!get_base_type) name = s + " " + name;
+                else name = s + name;
+                if (get_base_type) {
+                    type_cache = model.getSymbolInfoCache(t.getExeContextID(), t.getBaseTypeID());
+                    if (type_cache == null) {
+                        name = "N/A";
+                    }
+                    else {
+                        Protocol.invokeLater(this);
+                        return false;
+                    }
+                }
+                set(null, null, name);
+                return true;
+            }
+            @Override
+            public void reset() {
+                super.reset();
+                name = null;
             }
         };
         children = new TCFChildrenSubExpressions(this, 0, 0, 0);
@@ -245,6 +455,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     void dispose() {
         value.reset(null);
         type.reset(null);
+        type_name.reset(null);
+        string.reset(null);
         children.reset(null);
         children.dispose();
         super.dispose();
@@ -270,6 +482,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     void onSuspended() {
         value.reset();
         type.reset();
+        type_name.reset();
+        string.reset();
         children.reset();
         children.onSuspended();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
@@ -297,10 +511,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
 
     TCFDataCache<IExpressions.Value> getValue() {
         return value;
-    }
-
-    TCFDataCache<ISymbols.Symbol> getType() {
-        return type;
     }
 
     private BigInteger toBigInteger(byte[] data, int offs, int size, boolean big_endian, boolean sign_extension) {
@@ -389,52 +599,29 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     }
 
     private void setTypeLabel(ILabelUpdate result, int col) {
-        String s = null;
-        ISymbols.Symbol t = type.getData();
-        if (t != null) {
-            s = t.getName();
-            if (s == null && t.getSize() == 0) s = "<Void>";
-            if (s == null) {
-                switch (t.getTypeClass()) {
-                case integer:
-                    s = "<Integer>";
-                    break;
-                case cardinal:
-                    s = "<Unsigned>";
-                    break;
-                case real:
-                    s = "<Float>";
-                    break;
-                case pointer:
-                    s = "<Pointer>";
-                    break;
-                case array:
-                    s = "<Array>";
-                    break;
-                case composite:
-                    s = "<Structure>";
-                    break;
-                case function:
-                    s = "<Function>";
-                    break;
-                }
-            }
-        }
-        if (s == null) s = "N/A";
-        result.setLabel(s, col);
+        result.setLabel(type_name.getData(), col);
     }
 
     @Override
-    protected void getData(ILabelUpdate result) {
-        result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
+    protected boolean getData(ILabelUpdate result, Runnable done) {
+        TCFDataCache<?> pending = null;
+        if (field != null && !field.validate()) pending = field;
+        if (!expression.validate()) pending = expression;
+        if (!value.validate()) pending = value;
+        if (!type.validate()) pending = type;
+        if (!type_name.validate()) pending = type_name;
+        if (!children.validate()) pending = children;
+        if (pending != null) {
+            pending.wait(done);
+            return false;
+        }
         String name = null;
         if (script != null) name = script;
         if (name == null && index >= 0) name = "[" + index + "]";
-        if (name == null && field_id != null && field.getData() != null) name = field.getData().getName();
+        if (name == null && field != null && field.getData() != null) name = field.getData().getName();
         if (name == null && var_id != null && expression.getData() != null) name = expression.getData().getExpression();
         Throwable error = expression.getError();
         if (error == null) error = value.getError();
-        if (error == null) error = type.getError();
         String[] cols = result.getColumnIds();
         if (error != null) {
             if (cols == null || cols.length <= 1) {
@@ -447,7 +634,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                     if (c.equals(TCFColumnPresentationExpression.COL_NAME)) {
                         result.setLabel(name, i);
                     }
-                    else if (c.equals(TCFColumnPresentationExpression.COL_TYPE) && type.getError() == null) {
+                    else if (c.equals(TCFColumnPresentationExpression.COL_TYPE)) {
                         setTypeLabel(result, i);
                     }
                     else {
@@ -479,6 +666,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                 }
             }
         }
+        result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_VARIABLE), 0);
+        return true;
     }
 
     private void appendErrorText(StringBuffer bf, Throwable error) {
@@ -496,16 +685,10 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         }
     }
 
-    private boolean appendArrayValueText(StringBuffer bf, int level, ISymbols.Symbol t,
+    private boolean appendArrayValueText(StringBuffer bf, int level, ISymbols.Symbol type,
             byte[] data, int offs, int size, boolean big_endian, Runnable done) {
         assert offs + size <= data.length;
-        TCFDataCache<ISymbols.Symbol> c = model.getSymbolInfoCache(t.getExeContextID(), t.getBaseTypeID());
-        if (!c.validate()) {
-            c.wait(done);
-            return false;
-        }
-        ISymbols.Symbol b = c.getData();
-        int length = t.getLength();
+        int length = type.getLength();
         if (level == 0) {
             if (size == length) {
                 try {
@@ -530,7 +713,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                 bf.append('\n');
             }
         }
-        if (b == null) return true;
         bf.append('[');
         if (length > 0) {
             int elem_size = size / length;
@@ -540,7 +722,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                     break;
                 }
                 if (n > 0) bf.append(", ");
-                if (!appendValueText(bf, level + 1, b, data, offs + n * elem_size, elem_size, big_endian, done)) return false;
+                if (!appendValueText(bf, level + 1, type.getExeContextID(), type.getBaseTypeID(),
+                        data, offs + n * elem_size, elem_size, big_endian, done)) return false;
             }
         }
         bf.append(']');
@@ -548,87 +731,112 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         return true;
     }
 
-    private boolean appendCompositeValueText(StringBuffer bf, int level, ISymbols.Symbol t,
+    private boolean appendCompositeValueText(StringBuffer bf, int level, ISymbols.Symbol type,
             byte[] data, int offs, int size, boolean big_endian, Runnable done) {
-        TCFDataCache<String[]> c = model.getSymbolChildrenCache(t.getExeContextID(), t.getID());
-        if (!c.validate()) {
-            c.wait(done);
-            return false;
+        TCFDataCache<String[]> children_cache = model.getSymbolChildrenCache(type.getExeContextID(), type.getID());
+        if (children_cache == null) {
+            bf.append("{...}");
+            return true;
         }
-        String[] ids = c.getData();
-        if (ids == null) return true;
+        if (!children_cache.validate(done)) return false;
+        String[] children_data = children_cache.getData();
+        if (children_data == null) {
+            bf.append("{...}");
+            return true;
+        }
         bf.append('{');
-        for (String id : ids) {
-            if (id != ids[0]) bf.append(", ");
-            TCFDataCache<ISymbols.Symbol> s = model.getSymbolInfoCache(t.getExeContextID(), id);
-            if (!s.validate()) {
-                s.wait(done);
-                return false;
-            }
-            ISymbols.Symbol f = s.getData();
-            if (f == null || offs + f.getOffset() + f.getSize() > data.length) {
+        for (String id : children_data) {
+            if (id != children_data[0]) bf.append(", ");
+            TCFDataCache<ISymbols.Symbol> field_cache = model.getSymbolInfoCache(type.getExeContextID(), id);
+            if (!field_cache.validate(done)) return false;
+            ISymbols.Symbol field_data = field_cache.getData();
+            if (field_data == null || offs + field_data.getOffset() + field_data.getSize() > data.length) {
                 bf.append('?');
                 continue;
             }
-            bf.append(f.getName());
+            bf.append(field_data.getName());
             bf.append('=');
-            if (!appendValueText(bf, level + 1, f, data, offs + f.getOffset(), f.getSize(), big_endian, done)) return false;
+            if (!appendValueText(bf, level + 1, field_data.getExeContextID(), field_data.getTypeID(),
+                    data, offs + field_data.getOffset(), field_data.getSize(), big_endian, done)) return false;
         }
         bf.append('}');
         return true;
     }
 
-    private boolean appendValueText(StringBuffer bf, int level, ISymbols.Symbol t,
+    private boolean appendValueText(StringBuffer bf, int level, String ctx_id, String type_id,
             byte[] data, int offs, int size, boolean big_endian, Runnable done) {
         if (data == null) return true;
-        switch (t.getTypeClass()) {
+        TCFDataCache<ISymbols.Symbol> type_cahce = model.getSymbolInfoCache(ctx_id, type_id);
+        if (!type_cahce.validate(done)) return false;
+        ISymbols.Symbol type_data = type_cahce.getData();
+        if (type_data == null) {
+            if (level == 0) {
+                bf.append("Hex: ");
+                bf.append(toNumberString(16, type_data, data, 0, data.length, big_endian));
+                bf.append("\n");
+                bf.append("Value type is not available\n");
+            }
+            else {
+                bf.append(toNumberString(16, type_data, data, 0, data.length, big_endian));
+            }
+            return true;
+        }
+        if (level == 0) {
+            if (!string.validate(done)) return false;
+            String s = string.getData();
+            if (s != null) {
+                bf.append(s);
+                bf.append("\n");
+            }
+        }
+        switch (type_data.getTypeClass()) {
         case enumeration:
         case integer:
         case cardinal:
         case real:
             if (level == 0) {
                 bf.append("Size: ");
-                bf.append(t.getSize());
-                bf.append(t.getSize() == 1 ? " byte\n" : " bytes\n");
-                if (t.getSize() == 0) break;
+                bf.append(type_data.getSize());
+                bf.append(type_data.getSize() == 1 ? " byte\n" : " bytes\n");
+                if (type_data.getSize() == 0) break;
                 bf.append("Dec: ");
-                bf.append(toNumberString(10, t, data, offs, size, big_endian));
+                bf.append(toNumberString(10, type_data, data, offs, size, big_endian));
                 bf.append("\n");
                 bf.append("Oct: ");
-                bf.append(toNumberString(8, t, data, offs, size, big_endian));
+                bf.append(toNumberString(8, type_data, data, offs, size, big_endian));
                 bf.append("\n");
                 bf.append("Hex: ");
-                bf.append(toNumberString(16, t, data, offs, size, big_endian));
+                bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
                 bf.append("\n");
             }
-            else if (t.getTypeClass() == ISymbols.TypeClass.cardinal) {
+            else if (type_data.getTypeClass() == ISymbols.TypeClass.cardinal) {
                 bf.append("0x");
-                bf.append(toNumberString(16, t, data, offs, size, big_endian));
+                bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
             }
             else {
-                bf.append(toNumberString(10, t, data, offs, size, big_endian));
+                bf.append(toNumberString(10, type_data, data, offs, size, big_endian));
             }
             break;
         case pointer:
         case function:
             if (level == 0) {
                 bf.append("Oct: ");
-                bf.append(toNumberString(8, t, data, offs, size, big_endian));
+                bf.append(toNumberString(8, type_data, data, offs, size, big_endian));
                 bf.append("\n");
                 bf.append("Hex: ");
-                bf.append(toNumberString(16, t, data, offs, size, big_endian));
+                bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
                 bf.append("\n");
             }
             else {
                 bf.append("0x");
-                bf.append(toNumberString(16, t, data, offs, size, big_endian));
+                bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
             }
             break;
         case array:
-            if (!appendArrayValueText(bf, level, t, data, offs, size, big_endian, done)) return false;
+            if (!appendArrayValueText(bf, level, type_data, data, offs, size, big_endian, done)) return false;
             break;
         case composite:
-            if (!appendCompositeValueText(bf, level, t, data, offs, size, big_endian, done)) return false;
+            if (!appendCompositeValueText(bf, level, type_data, data, offs, size, big_endian, done)) return false;
             break;
         default:
             bf.append('?');
@@ -638,37 +846,33 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     }
 
     String getDetailText(Runnable done) {
+        if (!expression.validate(done)) return null;
+        if (!value.validate(done)) return null;
         StringBuffer bf = new StringBuffer();
         appendErrorText(bf, expression.getError());
         appendErrorText(bf, value.getError());
-        appendErrorText(bf, type.getError());
         if (bf.length() == 0) {
             IExpressions.Value v = value.getData();
             if (v != null) {
                 byte[] data = v.getValue();
                 boolean big_endian = v.isBigEndian();
-                ISymbols.Symbol t = type.getData();
-                if (t != null) {
-                    if (!appendValueText(bf, 0, t, data, 0, data.length, big_endian, done)) return null;
-                }
-                else {
-                    bf.append("Hex: ");
-                    bf.append(toNumberString(16, t, data, 0, data.length, big_endian));
-                    bf.append("\n");
-                    bf.append("Value type is not available\n");
-                }
+                if (!appendValueText(bf, 0, v.getExeContextID(), v.getTypeID(),
+                        data, 0, data.length, big_endian, done)) return null;
             }
         }
         return bf.toString();
     }
 
     @Override
-    protected void getData(IChildrenCountUpdate result) {
+    protected boolean getData(IChildrenCountUpdate result, Runnable done) {
+        if (!children.validate(done)) return false;
         result.setChildCount(children.size());
+        return true;
     }
 
     @Override
-    protected void getData(IChildrenUpdate result) {
+    protected boolean getData(IChildrenUpdate result, Runnable done) {
+        if (!children.validate(done)) return false;
         TCFNode[] arr = children.toArray();
         int offset = 0;
         int r_offset = result.getOffset();
@@ -679,11 +883,14 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
             }
             offset++;
         }
+        return true;
     }
 
     @Override
-    protected void getData(IHasChildrenUpdate result) {
+    protected boolean getData(IHasChildrenUpdate result, Runnable done) {
+        if (!children.validate(done)) return false;
         result.setHasChilren(children.size() > 0);
+        return true;
     }
 
     @Override
@@ -693,24 +900,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
             return super.getRelevantModelDeltaFlags(p);
         }
         return 0;
-    }
-
-    @Override
-    public boolean validateNode(Runnable done) {
-        TCFDataCache<?> pending = null;
-        if (!field.validate()) pending = field;
-        if (!expression.validate()) pending = expression;
-        if (!value.validate()) pending = value;
-        if (!type.validate()) pending = type;
-        if (!children.validate()) pending = children;
-        if (pending == null) return true;
-        pending.wait(done);
-        return false;
-    }
-
-    @Override
-    protected String getImageName() {
-        return ImageCache.IMG_VARIABLE;
     }
 
     @Override
@@ -745,7 +934,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                         done(node.script != null);
                         return;
                     }
-                    if (!node.validateNode(this)) return;
+                    if (!node.expression.validate(this)) return;
                     if (node.expression.getData() != null && node.expression.getData().canAssign()) {
                         if (TCFColumnPresentationExpression.COL_HEX_VALUE.equals(property)) {
                             done(TCFNumberFormat.isValidHexNumber(node.toNumberString(16)) == null);
@@ -769,7 +958,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                         done(node.script);
                         return;
                     }
-                    if (!node.validateNode(this)) return;
+                    if (!node.value.validate(this)) return;
                     if (node.value.getData() != null) {
                         if (TCFColumnPresentationExpression.COL_HEX_VALUE.equals(property)) {
                             done(node.toNumberString(16));
@@ -803,13 +992,14 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                             done(Boolean.TRUE);
                             return;
                         }
-                        if (!node.validateNode(this)) return;
+                        if (!node.expression.validate(this)) return;
                         if (node.expression.getData() != null && node.expression.getData().canAssign()) {
                             byte[] bf = null;
                             int size = node.expression.getData().getSize();
                             boolean is_float = false;
                             boolean big_endian = false;
                             boolean signed = false;
+                            if (!node.value.validate(this)) return;
                             IExpressions.Value eval = node.value.getData();
                             if (eval != null) {
                                 switch(eval.getTypeClass()) {
@@ -847,7 +1037,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                                         else {
                                             node.value.reset();
                                             node.addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-                                            node.model.fireModelChanged();
                                             done(Boolean.TRUE);
                                         }
                                     }

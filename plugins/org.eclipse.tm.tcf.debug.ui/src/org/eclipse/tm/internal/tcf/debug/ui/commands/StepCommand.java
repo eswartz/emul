@@ -18,6 +18,7 @@ import org.eclipse.debug.core.commands.IDebugCommandHandler;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
 import org.eclipse.debug.core.commands.IEnabledStateRequest;
 import org.eclipse.jface.text.source.Annotation;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
@@ -25,6 +26,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFRunnable;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
 abstract class StepCommand implements IDebugCommandHandler {
 
@@ -51,14 +53,18 @@ abstract class StepCommand implements IDebugCommandHandler {
                     while (node != null && !node.isDisposed()) {
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            if (!node.validateNode(this)) return;
-                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
+                            TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
+                            if (!cache.validate(this)) return;
+                            ctx = cache.getData();
                         }
                         if (ctx == null || !canExecute(ctx)) {
                             node = node.getParent();
                         }
                         else {
-                            if (((TCFNodeExecContext)node).isSuspended()) res = true;
+                            TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
+                            if (!state_cache.validate(this)) return;
+                            TCFContextState state_data = state_cache.getData();
+                            if (state_data != null && state_data.is_suspended) res = true;
                             break;
                         }
                     }
@@ -82,8 +88,9 @@ abstract class StepCommand implements IDebugCommandHandler {
                     while (node != null && !node.isDisposed()) {
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            if (!node.validateNode(this)) return;
-                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
+                            TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
+                            if (!cache.validate(this)) return;
+                            ctx = cache.getData();
                         }
                         if (ctx == null || !canExecute(ctx)) {
                             node = node.getParent();

@@ -55,10 +55,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         value = new TCFDataCache<byte[]>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                if (!context.validate()) {
-                    context.wait(this);
-                    return false;
-                }
+                if (!context.validate(this)) return false;
                 IRegisters.RegistersContext ctx = context.getData();
                 if (ctx == null) {
                     set(null, null, null);
@@ -82,8 +79,14 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     }
 
     @Override
-    protected void getData(ILabelUpdate result) {
-        result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
+    protected boolean getData(ILabelUpdate result, Runnable done) {
+        TCFDataCache<?> pending = null;
+        if (!context.validate()) pending = context;
+        if (!value.validate()) pending = value;
+        if (pending != null) {
+            pending.wait(done);
+            return false;
+        }
         IRegisters.RegistersContext ctx = context.getData();
         Throwable error = context.getError();
         if (error != null) {
@@ -140,6 +143,8 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         else {
             result.setLabel(id, 0);
         }
+        result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_REGISTER), 0);
+        return true;
     }
 
     private void setLabel(ILabelUpdate result, int col, int radix) {
@@ -234,23 +239,6 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
-    @Override
-    public boolean validateNode(Runnable done) {
-        TCFDataCache<?> pending = null;
-        if (!context.validate()) pending = context;
-        if (!value.validate()) pending = value;
-        if (pending != null) {
-            pending.wait(done);
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    protected String getImageName() {
-        return ImageCache.IMG_REGISTER;
-    }
-
     public CellEditor getCellEditor(IPresentationContext context, String column_id, Object element, Composite parent) {
         assert element == this;
         if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(column_id)) {
@@ -268,7 +256,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             final TCFNodeRegister node = (TCFNodeRegister)element;
             return new TCFTask<Boolean>() {
                 public void run() {
-                    if (!node.validateNode(this)) return;
+                    if (!node.context.validate(this)) return;
                     if (node.context.getData() != null && node.context.getData().isWriteable()) {
                         if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(property)) {
                             done(TCFNumberFormat.isValidHexNumber(node.toNumberString(16)) == null);
@@ -288,7 +276,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             final TCFNodeRegister node = (TCFNodeRegister)element;
             return new TCFTask<String>() {
                 public void run() {
-                    if (!node.validateNode(this)) return;
+                    if (!node.value.validate(this)) return;
                     if (node.value.getData() != null) {
                         if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(property)) {
                             done(node.toNumberString(16));
@@ -310,7 +298,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             new TCFTask<Boolean>() {
                 public void run() {
                     try {
-                        if (!node.validateNode(this)) return;
+                        if (!node.context.validate(this)) return;
                         IRegisters.RegistersContext ctx = node.context.getData();
                         if (ctx != null && ctx.isWriteable()) {
                             byte[] bf = null;
@@ -338,7 +326,6 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
                                         else {
                                             node.value.reset();
                                             node.addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-                                            node.model.fireModelChanged();
                                             done(Boolean.TRUE);
                                         }
                                     }

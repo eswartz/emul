@@ -26,6 +26,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFRunnable;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
 public class TerminateCommand implements ITerminateHandler {
@@ -47,8 +48,9 @@ public class TerminateCommand implements ITerminateHandler {
                     while (node != null && !node.isDisposed()) {
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            if (!node.validateNode(this)) return;
-                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
+                            TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
+                            if (!cache.validate(this)) return;
+                            ctx = cache.getData();
                         }
                         if (ctx != null && ctx.canTerminate()) {
                             res = true;
@@ -75,8 +77,9 @@ public class TerminateCommand implements ITerminateHandler {
                     while (node != null && !node.isDisposed()) {
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            if (!node.validateNode(this)) return;
-                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
+                            TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
+                            if (!cache.validate(this)) return;
+                            ctx = cache.getData();
                         }
                         if (ctx != null && ctx.canTerminate()) {
                             set.add(ctx);

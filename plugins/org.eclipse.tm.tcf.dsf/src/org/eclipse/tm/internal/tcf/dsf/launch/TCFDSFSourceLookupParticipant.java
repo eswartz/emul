@@ -30,14 +30,8 @@ public class TCFDSFSourceLookupParticipant extends TCFSourceLookupParticipant {
                 Protocol.invokeLater(new Runnable() {
                     public void run() {
                         TCFFrameDMC dmc = (TCFFrameDMC)object;
-                        if (!dmc.context_cache.validate()) {
-                            dmc.context_cache.wait(this);
-                            return;
-                        }
-                        if (!dmc.source_cache.validate()) {
-                            dmc.source_cache.wait(this);
-                            return;
-                        }
+                        if (!dmc.context_cache.validate(this)) return;
+                        if (!dmc.source_cache.validate(this)) return;
                         synchronized (res) {
                             TCFSourceRef ref = dmc.source_cache.getData();
                             if (ref != null) res[0] = ref.area;

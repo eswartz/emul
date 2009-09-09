@@ -109,10 +109,7 @@ public abstract class TCFDSFExecutionDMC extends AbstractDMContext
             @Override
             public boolean startDataRetrieval() {
                 assert command == null;
-                if (!run_control_context_cache.validate()) {
-                    run_control_state_cache.wait(this);
-                    return false;
-                }
+                if (!run_control_context_cache.validate(this)) return false;
                 RunControlContext c = run_control_context_cache.getData();
                 if (c == null || !c.hasState()) {
                     reset(null);

@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.commands.IDisconnectHandler;
@@ -74,6 +73,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.graphics.Device;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
@@ -223,7 +223,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     }
                 }
             }
-            fireModelChanged();
         }
 
         public void contextChanged(IMemory.MemoryContext[] contexts) {
@@ -237,7 +236,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     for (TCFDataCache<ISymbols.Symbol> s : m.values()) s.cancel();
                 }
             }
-            fireModelChanged();
         }
 
         public void contextRemoved(final String[] context_ids) {
@@ -249,7 +247,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onMemoryChanged(addr, size);
             }
-            fireModelChanged();
         }
     };
 
@@ -262,7 +259,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     ((TCFNodeExecContext)node).onContainerResumed();
                 }
             }
-            fireModelChanged();
         }
 
         public void containerSuspended(String context, String pc, String reason,
@@ -277,7 +273,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onContextSuspended(pc, reason, params);
             }
-            fireModelChanged();
             runSuspendTrigger(node);
         }
 
@@ -294,7 +289,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     }
                 }
             }
-            fireModelChanged();
         }
 
         public void contextChanged(IRunControl.RunControlContext[] contexts) {
@@ -304,7 +298,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     ((TCFNodeExecContext)node).onContextChanged(contexts[i]);
                 }
             }
-            fireModelChanged();
         }
 
         public void contextException(String context, String msg) {
@@ -312,7 +305,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onContextException(msg);
             }
-            fireModelChanged();
         }
 
         public void contextRemoved(final String[] context_ids) {
@@ -324,7 +316,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onContextResumed();
             }
-            fireModelChanged();
             display.asyncExec(new Runnable() {
                 public void run() {
                     Activator.getAnnotationManager().onContextResumed(TCFModel.this, context);
@@ -339,7 +330,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 exe.onContextSuspended(pc, reason, params);
                 setDebugViewSelection(context, false);
             }
-            fireModelChanged();
             runSuspendTrigger(node);
         }
     };
@@ -352,7 +342,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     ((TCFNodeExecContext)node).onRegistersChanged();
                 }
             }
-            fireModelChanged();
         }
 
         public void registerChanged(String context) {
@@ -360,7 +349,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (node instanceof TCFNodeRegister) {
                 ((TCFNodeRegister)node).onValueChanged();
             }
-            fireModelChanged();
         }
     };
 
@@ -398,8 +386,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     while (n != null && !n.isDisposed()) {
                         if (n instanceof TCFNodeExecContext) {
                             TCFNodeExecContext e = (TCFNodeExecContext)n;
-                            if (!e.validateNode(this)) return;
-                            if (e.getMemoryContext() != null) {
+                            TCFDataCache<IMemory.MemoryContext> cache = e.getMemoryContext();
+                            if (!cache.validate(this)) return;
+                            if (cache.getData() != null) {
                                 o = mem_retrieval.get(e.id);
                                 if (o == null) {
                                     TCFMemoryBlockRetrieval m = new TCFMemoryBlockRetrieval(e);
@@ -502,24 +491,15 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     void onContextActionsDone() {
-        fireModelChanged();
     }
 
     void onProxyInstalled(final IPresentationContext p, final TCFModelProxy mp) {
-        Protocol.invokeLater(new Runnable() {
-            public void run() {
-                model_proxies.put(p, mp);
-            }
-        });
+        model_proxies.put(p, mp);
     }
 
     void onProxyDisposed(final IPresentationContext p) {
-        Protocol.invokeAndWait(new Runnable() {
-            public void run() {
-                assert model_proxies.containsKey(p);
-                model_proxies.remove(p);
-            }
-        });
+        assert model_proxies.containsKey(p);
+        model_proxies.remove(p);
     }
 
     private void onContextRemoved(final String[] context_ids) {
@@ -532,7 +512,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (node.parent == launch_node) close_channel = true;
             }
         }
-        fireModelChanged();
         if (close_channel) {
             // Close debug session if the last context is removed:
             onLastContextRemoved();
@@ -551,8 +530,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             public void run() {
                 if (launch_node == null) return;
                 if (launch_node.isDisposed()) return;
-                if (!launch_node.validateNode(this)) return;
-                if (launch_node.getContextCount() != 0) return;
+                TCFChildrenExecContext children = launch_node.getChildren();
+                if (!children.validate(this)) return;
+                if (children.size() != 0) return;
                 launch.onLastContextRemoved();
             }
         });
@@ -565,7 +545,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     void launchChanged() {
         if (launch_node != null) {
             launch_node.addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-            fireModelChanged();
         }
         else {
             refreshLaunchView();
@@ -599,12 +578,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         mem_retrieval.remove(id);
     }
 
-    void fireModelChanged() {
-        assert Protocol.isDispatchThread();
-        if (launch.hasPendingContextActions()) return;
-        for (TCFModelProxy p : model_proxies.values()) p.fireModelChanged();
-    }
-
     public Display getDisplay() {
         return display;
     }
@@ -625,6 +598,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     public TCFDataCache<ISymbols.Symbol> getSymbolInfoCache(String mem_id, final String sym_id) {
+        if (mem_id == null || sym_id == null) return null;
         Map<String,TCFDataCache<ISymbols.Symbol>> m = symbols.get(mem_id);
         if (m == null) symbols.put(mem_id, m = new HashMap<String,TCFDataCache<ISymbols.Symbol>>());
         TCFDataCache<ISymbols.Symbol> s = m.get(sym_id);
@@ -648,6 +622,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     public TCFDataCache<String[]> getSymbolChildrenCache(String mem_id, final String sym_id) {
+        if (mem_id == null || sym_id == null) return null;
         Map<String,TCFDataCache<String[]>> m = symbol_children.get(mem_id);
         if (m == null) symbol_children.put(mem_id, m = new HashMap<String,TCFDataCache<String[]>>());
         TCFDataCache<String[]> s = m.get(sym_id);
@@ -767,23 +742,20 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 TCFNode node = getNode(node_id);
                 if (node == null) return;
                 if (node.disposed) return;
-                if (!node.validateNode(this)) return;
                 if (cnt != debug_view_selection_cnt) return;
                 if (node instanceof TCFNodeExecContext) {
-                    if (!((TCFNodeExecContext)node).isSuspended()) return;
-                    TCFNode frame = ((TCFNodeExecContext)node).getTopFrame();
-                    if (frame != null && !frame.disposed) {
-                        if (!frame.validateNode(this)) return;
-                        node = frame;
-                    }
+                    TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
+                    if (!state_cache.validate(this)) return;
+                    TCFContextState state_data = state_cache.getData();
+                    if (state_data == null || !state_data.is_suspended) return;
+                    TCFChildrenStackTrace stack_trace = ((TCFNodeExecContext)node).getStackTrace();
+                    if (!stack_trace.validate(this)) return;
+                    TCFNode frame = stack_trace.getTopFrame();
+                    if (frame != null && !frame.disposed) node = frame;
                 }
                 for (TCFModelProxy proxy : model_proxies.values()) {
                     if (proxy.getPresentationContext().getId().equals(IDebugUIConstants.ID_DEBUG_VIEW)) {
-                        proxy.fireModelChanged();
-                        proxy.addDelta(node, IModelDelta.REVEAL);
-                        proxy.fireModelChanged();
-                        proxy.addDelta(node, IModelDelta.SELECT);
-                        proxy.fireModelChanged();
+                        proxy.setSelection(node);
                     }
                 }
             }
@@ -817,23 +789,24 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     if (element instanceof TCFNodeExecContext) {
                         TCFNodeExecContext node = (TCFNodeExecContext)element;
                         if (!node.disposed) {
-                            if (!node.validateNode(this)) return;
-                            if (node.isSuspended()) stack_frame = node.getTopFrame();
+                            TCFDataCache<TCFContextState> state_cache = node.getState();
+                            if (!state_cache.validate(this)) return;
+                            TCFContextState state_data = state_cache.getData();
+                            if (state_data != null && state_data.is_suspended) {
+                                TCFChildrenStackTrace stack_trace = ((TCFNodeExecContext)node).getStackTrace();
+                                if (!stack_trace.validate(this)) return;
+                                stack_frame = stack_trace.getTopFrame();
+                            }
                         }
                     }
                     else if (element instanceof TCFNodeStackFrame) {
                         TCFNodeStackFrame node = (TCFNodeStackFrame)element;
-                        if (!node.disposed) {
-                            stack_frame = (TCFNodeStackFrame)element;
-                        }
+                        if (!node.disposed) stack_frame = (TCFNodeStackFrame)element;
                     }
                 }
                 if (stack_frame != null) {
                     TCFDataCache<TCFSourceRef> line_info = stack_frame.getLineInfo();
-                    if (!line_info.validate()) {
-                        line_info.wait(this);
-                        return;
-                    }
+                    if (!line_info.validate(this)) return;
                     String editor_id = null;
                     IEditorInput editor_input = null;
                     Throwable error = line_info.getError();
@@ -903,7 +876,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         });
     }
 
+    /*
+     * Refresh Launch View.
+     * Normally the view is updated by sending deltas through model proxy.
+     * This method is used only when launch is not yet connected or already disconnected.
+     */
     private void refreshLaunchView() {
+        // TODO: there should be a better way to refresh Launch View
         final Throwable error = launch.getError();
         if (error != null) launch.setError(null);
         synchronized (Device.class) {

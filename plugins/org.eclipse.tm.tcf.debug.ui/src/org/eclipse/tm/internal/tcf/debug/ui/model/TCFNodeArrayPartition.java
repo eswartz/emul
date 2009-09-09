@@ -17,7 +17,6 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
-import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public class TCFNodeArrayPartition extends TCFNode {
 
@@ -53,12 +52,15 @@ public class TCFNodeArrayPartition extends TCFNode {
     }
 
     @Override
-    protected void getData(IChildrenCountUpdate result) {
+    protected boolean getData(IChildrenCountUpdate result, Runnable done) {
+        if (!children.validate(done)) return false;
         result.setChildCount(children.size());
+        return true;
     }
 
     @Override
-    protected void getData(IChildrenUpdate result) {
+    protected boolean getData(IChildrenUpdate result, Runnable done) {
+        if (!children.validate(done)) return false;
         TCFNode[] arr = children.toArray();
         int offset = 0;
         int r_offset = result.getOffset();
@@ -69,16 +71,18 @@ public class TCFNodeArrayPartition extends TCFNode {
             }
             offset++;
         }
+        return true;
     }
 
     @Override
-    protected void getData(IHasChildrenUpdate result) {
-        result.setHasChilren(children.size() > 0);
+    protected boolean getData(IHasChildrenUpdate result, Runnable done) {
+        result.setHasChilren(true);
+        return true;
     }
 
     @Override
-    protected void getData(ILabelUpdate result) {
-        result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
+    protected boolean getData(ILabelUpdate result, Runnable done) {
+        result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_ARRAY_PARTITION), 0);
         String[] cols = result.getColumnIds();
         String name = "[" + offs + ".." + (offs + size - 1) + "]";
         if (cols == null || cols.length <= 1) {
@@ -95,6 +99,7 @@ public class TCFNodeArrayPartition extends TCFNode {
                 }
             }
         }
+        return true;
     }
 
     @Override
@@ -104,20 +109,6 @@ public class TCFNodeArrayPartition extends TCFNode {
             return super.getRelevantModelDeltaFlags(p);
         }
         return 0;
-    }
-
-    @Override
-    public boolean validateNode(Runnable done) {
-        TCFDataCache<?> pending = null;
-        if (!children.validate()) pending = children;
-        if (pending == null) return true;
-        pending.wait(done);
-        return false;
-    }
-
-    @Override
-    protected String getImageName() {
-        return ImageCache.IMG_ARRAY_PARTITION;
     }
 
     @Override

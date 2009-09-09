@@ -82,8 +82,8 @@ public class TCFLaunch extends Launch {
     private int process_exit_code;
 
     private int context_action_cnt;
-    private final HashMap<String,LinkedList<Runnable>> context_action_queue =
-        new HashMap<String,LinkedList<Runnable>>();
+    private final HashMap<String,LinkedList<Runnable>> context_action_queue = new HashMap<String,LinkedList<Runnable>>();
+    private final HashMap<String,String> context_action_bps = new HashMap<String,String>();
 
     private HashMap<String,String> stream_ids = new HashMap<String,String>();
 
@@ -678,7 +678,11 @@ public class TCFLaunch extends Launch {
         }
     }
 
-    public boolean hasPendingContextActions() {
-        return context_action_cnt > 0;
+    public void addContextActionBreakpoint(String id, String type) {
+        context_action_bps.put(id, type);
+    }
+
+    public String getContextActionBreakpoint(String id) {
+        return context_action_bps.get(id);
     }
 }

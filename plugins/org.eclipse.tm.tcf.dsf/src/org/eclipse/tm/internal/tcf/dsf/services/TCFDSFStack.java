@@ -81,10 +81,7 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
 
                 @Override
                 protected boolean startDataRetrieval() {
-                    if (!context_cache.validate()) {
-                        context_cache.wait(this);
-                        return false;
-                    }
+                    if (!context_cache.validate(this)) return false;
                     IStackTrace.StackTraceContext ctx = context_cache.getData();
                     Number n = ctx.getInstructionAddress();
                     BigInteger a = null;

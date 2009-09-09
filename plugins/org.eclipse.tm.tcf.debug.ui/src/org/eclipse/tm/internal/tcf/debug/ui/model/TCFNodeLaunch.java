@@ -16,7 +16,6 @@ import java.util.Arrays;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
@@ -32,10 +31,7 @@ public class TCFNodeLaunch extends TCFNode {
         // Set initial selection in Debug View
         Protocol.invokeLater(new Runnable() {
             public void run() {
-                if (!children.validate()) {
-                    children.wait(this);
-                    return;
-                }
+                if (!children.validate(this)) return;
                 ArrayList<TCFNodeStackFrame> frames = new ArrayList<TCFNodeStackFrame>();
                 TCFNode[] arr = children.toArray();
                 Arrays.sort(arr);
@@ -54,20 +50,16 @@ public class TCFNodeLaunch extends TCFNode {
     }
 
     private boolean searchTopFrame(TCFNodeExecContext e, ArrayList<TCFNodeStackFrame> frames, Runnable r) {
-        if (!e.validateNode(r)) return false;
-        TCFNodeStackFrame f = e.getTopFrame();
+        TCFChildrenStackTrace stack_trace = e.getStackTrace();
+        if (!stack_trace.validate(r)) return false;
+        TCFNodeStackFrame f = stack_trace.getTopFrame();
         if (f != null && !f.disposed) {
             frames.add(f);
             return true;
         }
         TCFChildrenExecContext c = e.getChildren();
-        if (!c.validate()) {
-            c.wait(r);
-            return false;
-        }
-        TCFNode[] arr = c.toArray();
-        Arrays.sort(arr);
-        for (TCFNode n : arr) {
+        if (!c.validate(r)) return false;
+        for (TCFNode n : c.toArray()) {
             if (!searchTopFrame((TCFNodeExecContext)n, frames, r)) return false;
             if (frames.size() > 0) break;
         }
@@ -86,24 +78,15 @@ public class TCFNodeLaunch extends TCFNode {
     }
 
     @Override
-    public int getNodeIndex(IPresentationContext p, TCFNode n) {
-        if (!children.isValid()) return -1;
-        return children.getIndexOf(n);
-    }
-
-    @Override
-    public int getChildrenCount(IPresentationContext p) {
-        if (!children.isValid()) return -1;
-        return children.size();
-    }
-
-    @Override
-    protected void getData(IChildrenCountUpdate result) {
+    protected boolean getData(IChildrenCountUpdate result, Runnable done) {
+        if (!children.validate(done)) return false;
         result.setChildCount(children.size());
+        return true;
     }
 
     @Override
-    protected void getData(IChildrenUpdate result) {
+    protected boolean getData(IChildrenUpdate result, Runnable done) {
+        if (!children.validate(done)) return false;
         TCFNode[] arr = children.toArray();
         int offset = 0;
         int r_offset = result.getOffset();
@@ -114,11 +97,14 @@ public class TCFNodeLaunch extends TCFNode {
             }
             offset++;
         }
+        return true;
     }
 
     @Override
-    protected void getData(IHasChildrenUpdate result) {
+    protected boolean getData(IHasChildrenUpdate result, Runnable done) {
+        if (!children.validate(done)) return false;
         result.setHasChilren(children.size() > 0);
+        return true;
     }
 
     void onContextAdded(IRunControl.RunControlContext context) {
@@ -129,17 +115,7 @@ public class TCFNodeLaunch extends TCFNode {
         children.onContextAdded(context);
     }
 
-    int getContextCount() {
-        assert children.isValid();
-        return children.size();
-    }
-
-    @Override
-    public boolean validateNode(Runnable done) {
-        if (!children.validate()) {
-            children.wait(done);
-            return false;
-        }
-        return true;
+    TCFChildrenExecContext getChildren() {
+        return children;
     }
 }

@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
 import org.eclipse.debug.core.commands.IEnabledStateRequest;
 import org.eclipse.debug.core.commands.ISuspendHandler;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
@@ -26,6 +27,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFRunnable;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
 public class SuspendCommand implements ISuspendHandler {
@@ -48,8 +50,9 @@ public class SuspendCommand implements ISuspendHandler {
                     while (node != null && !node.isDisposed()) {
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            if (!node.validateNode(this)) return;
-                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
+                            TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
+                            if (!cache.validate(this)) return;
+                            ctx = cache.getData();
                         }
                         if (ctx == null) {
                             node = node.getParent();
@@ -59,8 +62,10 @@ public class SuspendCommand implements ISuspendHandler {
                             break;
                         }
                         else {
-                            if (((TCFNodeExecContext)node).isRunning() &&
-                                    ctx.canSuspend()) res = true;
+                            TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
+                            if (!state_cache.validate(this)) return;
+                            TCFContextState state_data = state_cache.getData();
+                            if (state_data != null && !state_data.is_suspended && ctx.canSuspend()) res = true;
                             break;
                         }
                     }
@@ -84,8 +89,9 @@ public class SuspendCommand implements ISuspendHandler {
                     while (node != null && !node.isDisposed()) {
                         IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
-                            if (!node.validateNode(this)) return;
-                            ctx = ((TCFNodeExecContext)node).getRunContext().getData();
+                            TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
+                            if (!cache.validate(this)) return;
+                            ctx = cache.getData();
                         }
                         if (ctx == null) {
                             node = node.getParent();

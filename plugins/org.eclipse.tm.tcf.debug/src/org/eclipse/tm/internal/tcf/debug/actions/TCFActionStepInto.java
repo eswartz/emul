@@ -16,8 +16,6 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public abstract class TCFActionStepInto extends TCFAction implements IRunControl.RunControlListener {
 
-    private static final long TIMEOUT = 10000;
-
     private final boolean src_step;
     private final IRunControl rc = launch.getService(IRunControl.class);
 
@@ -52,18 +50,8 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
                 exit(new Exception("Invalid context ID"));
                 return;
             }
-            if (!ctx.canResume(src_step ? IRunControl.RM_STEP_INTO_LINE : IRunControl.RM_STEP_INTO)) {
-                Protocol.invokeLater(TIMEOUT, new Runnable() {
-                    public void run() {
-                        exit(new Exception("Time out"));
-                    }
-                });
-            }
         }
-        if (!state.validate()) {
-            state.wait(this);
-            return;
-        }
+        if (!state.validate(this)) return;
         if (!state.getData().is_suspended) {
             exit(new Exception("Context is not suspended"));
             return;
@@ -83,16 +71,14 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
             return;
         }
         TCFDataCache<?> stack_trace = getStackTrace();
-        if (!stack_trace.validate()) {
-            stack_trace.wait(this);
+        if (!stack_trace.validate(this)) return;
+        if (stack_trace.getData() == null) {
+            exit(stack_trace.getError());
             return;
         }
         if (source_ref == null) {
             line_info = getLineInfo();
-            if (!line_info.validate()) {
-                line_info.wait(this);
-                return;
-            }
+            if (!line_info.validate(this)) return;
             source_ref = line_info.getData();
             if (source_ref == null) {
                 exit(new Exception("Line info not available"));
@@ -117,10 +103,7 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
         }
         if (step_cnt > 0) {
             TCFDataCache<IStackTrace.StackTraceContext> frame = getStackFrame();
-            if (!frame.validate()) {
-                frame.wait(this);
-                return;
-            }
+            if (!frame.validate(this)) return;
             Number addr = frame.getData().getInstructionAddress();
             BigInteger pc = addr instanceof BigInteger ? (BigInteger)addr : new BigInteger(addr.toString());
             if (pc == null || pc0 == null || pc1 == null) {
@@ -128,10 +111,7 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
                 return;
             }
             if (pc.compareTo(pc0) < 0 || pc.compareTo(pc1) >= 0) {
-                if (!line_info.validate()) {
-                    line_info.wait(this);
-                    return;
-                }
+                if (!line_info.validate(this)) return;
                 TCFSourceRef ref = line_info.getData();
                 if (ref != null && ref.area != null) {
                     if (isSameLine(source_ref.area, ref.area)) {

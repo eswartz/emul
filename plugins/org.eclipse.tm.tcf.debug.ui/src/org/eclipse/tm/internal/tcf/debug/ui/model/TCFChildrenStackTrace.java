@@ -47,7 +47,7 @@ public class TCFChildrenStackTrace extends TCFChildren {
         reset(null);
     }
 
-    TCFNodeStackFrame getTopFrame() {
+    public TCFNodeStackFrame getTopFrame() {
         assert isValid();
         return (TCFNodeStackFrame)node.model.getNode(top_frame_id);
     }
@@ -64,10 +64,7 @@ public class TCFChildrenStackTrace extends TCFChildren {
     protected boolean startDataRetrieval() {
         final HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
         TCFDataCache<TCFContextState> state = node.getState();
-        if (!state.validate()) {
-            state.wait(this);
-            return false;
-        }
+        if (!state.validate(this)) return false;
         Throwable state_error = state.getError();
         TCFContextState state_data = state.getData();
         if (state_error != null || state_data == null || !state_data.is_suspended) {

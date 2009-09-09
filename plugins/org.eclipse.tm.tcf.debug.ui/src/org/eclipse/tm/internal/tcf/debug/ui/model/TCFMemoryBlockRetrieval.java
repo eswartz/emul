@@ -86,10 +86,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
             expression_value = new TCFDataCache<IExpressions.Value>(channel) {
                 @Override
                 protected boolean startDataRetrieval() {
-                    if (!remote_expression.validate()) {
-                        remote_expression.wait(this);
-                        return false;
-                    }
+                    if (!remote_expression.validate(this)) return false;
                     final IExpressions.Expression ctx = remote_expression.getData();
                     if (ctx == null) {
                         set(null, null, null);
@@ -107,23 +104,21 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
             expression_type = new TCFDataCache<ISymbols.Symbol>(channel) {
                 @Override
                 protected boolean startDataRetrieval() {
-                    if (!expression_value.validate()) {
-                        expression_value.wait(this);
-                        return false;
+                    if (!expression_value.validate(this)) return false;
+                    IExpressions.Value val = expression_value.getData();
+                    if (val == null) {
+                        set(null, expression_value.getError(), null);
+                        return true;
                     }
-                    String id = null;
-                    if (expression_value.getData() != null) id = expression_value.getData().getTypeID();
-                    ISymbols syms = launch.getService(ISymbols.class);
-                    if (id == null || syms == null) {
+                    TCFDataCache<ISymbols.Symbol> type_cache = exec_ctx.getModel().getSymbolInfoCache(
+                            val.getExeContextID(), val.getTypeID());
+                    if (type_cache == null) {
                         set(null, null, null);
                         return true;
                     }
-                    command = syms.getContext(id, new ISymbols.DoneGetContext() {
-                        public void doneGetContext(IToken token, Exception error, ISymbols.Symbol sym) {
-                            set(token, error, sym);
-                        }
-                    });
-                    return false;
+                    if (!type_cache.validate(this)) return false;
+                    set(null, type_cache.getError(), type_cache.getData());
+                    return true;
                 }
             };
         }
@@ -170,8 +165,10 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                     if (exec_ctx.isDisposed()) {
                         error("Context is disposed");
                     }
-                    else if (exec_ctx.validateNode(this)) {
-                        IMemory.MemoryContext mem = exec_ctx.getMemoryContext().getData();
+                    else  {
+                        TCFDataCache<IMemory.MemoryContext> cache = exec_ctx.getMemoryContext();
+                        if (!cache.validate(this)) return;
+                        IMemory.MemoryContext mem = cache.getData();
                         if (mem == null) {
                             error("Context does not provide memory access");
                         }
@@ -248,8 +245,10 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                     if (exec_ctx.isDisposed()) {
                         error("Context is disposed");
                     }
-                    else if (exec_ctx.validateNode(this)) {
-                        final IMemory.MemoryContext mem = exec_ctx.getMemoryContext().getData();
+                    else {
+                        TCFDataCache<IMemory.MemoryContext> cache = exec_ctx.getMemoryContext();
+                        if (!cache.validate(this)) return;
+                        final IMemory.MemoryContext mem = cache.getData();
                         if (mem == null) {
                             error("Context does not provide memory access");
                         }

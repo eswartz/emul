@@ -46,7 +46,7 @@ public class TCFChildrenLocalVariables extends TCFChildren {
                     data = new HashMap<String,TCFNode>();
                     for (String id : contexts) {
                         TCFNodeExpression n = (TCFNodeExpression)node.model.getNode(id);
-                        if (n == null) n = new TCFNodeExpression(node, null, null, id, -1);
+                        if (n == null) n = new TCFNodeExpression(node, null, null, id, -1, null);
                         assert n.id.equals(id);
                         assert n.parent == node;
                         n.setSortPosition(cnt++);

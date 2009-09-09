@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
-import java.math.BigInteger;
-import java.util.Collection;
-
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.Status;
@@ -22,7 +19,6 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdat
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
-import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
@@ -140,33 +136,6 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     }
 
     /**
-     * Get index of a node in this node children list
-     * @param p - presentation context
-     * @return node index or -1 if unknown
-     */
-    public int getNodeIndex(IPresentationContext p, TCFNode n) {
-        return -1;
-    }
-
-    /**
-     * Get children count of the node.
-     * @param p - presentation context
-     * @return children count or -1 if unknown
-     */
-    public int getChildrenCount(IPresentationContext p) {
-        return -1;
-    }
-
-    /**
-     * Return address of this node.
-     * For executable contexts and stack frames address is current PC.
-     * @return BigInteger - remote memory address that is associated with this node
-     */
-    public BigInteger getAddress() {
-        return null;
-    }
-
-    /**
      * Retrieve children count for a presentation context.
      * @param result - children count update request.
      */
@@ -176,8 +145,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
                 if (!result.isCanceled()) {
                     IChannel channel = model.getLaunch().getChannel();
                     if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                        if (!validateNode(this)) return;
-                        getData(result);
+                        if (!getData(result, this)) return;
                     }
                     else {
                         result.setChildCount(0);
@@ -199,8 +167,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
                 if (!result.isCanceled()) {
                     IChannel channel = model.getLaunch().getChannel();
                     if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                        if (!validateNode(this)) return;
-                        getData(result);
+                        if (!getData(result, this)) return;
                     }
                     result.setStatus(Status.OK_STATUS);
                 }
@@ -219,8 +186,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
                 if (!result.isCanceled()) {
                     IChannel channel = model.getLaunch().getChannel();
                     if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                        if (!validateNode(this)) return;
-                        getData(result);
+                        if (!getData(result, this)) return;
                     }
                     else {
                         result.setHasChilren(false);
@@ -242,8 +208,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
                 if (!result.isCanceled()) {
                     IChannel channel = model.getLaunch().getChannel();
                     if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                        if (!validateNode(this)) return;
-                        getData(result);
+                        if (!getData(result, this)) return;
                     }
                     else {
                         result.setLabel("...", 0);
@@ -257,46 +222,53 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
 
     /**
      * Retrieve children count for a presentation context.
-     * The node is validated before calling this method,
-     * so the method should return cached data.
      * The method is always called on TCF dispatch thread.
      * @param result - children count update request.
+     * @param done - client call back interface, during data waiting it is
+     * called every time new portion of data becomes available.
+     * @return false if waiting data retrieval, true if all done.
      */
-    protected void getData(IChildrenCountUpdate result) {
+    protected boolean getData(IChildrenCountUpdate result, Runnable done) {
         result.setChildCount(0);
+        return true;
     }
 
     /**
      * Retrieve children for a presentation context.
-     * The node is validated before calling this method,
-     * so the method should return cached data.
      * The method is always called on TCF dispatch thread.
      * @param result - children update request.
+     * @param done - client call back interface, during data waiting it is
+     * called every time new portion of data becomes available.
+     * @return false if waiting data retrieval, true if all done.
      */
-    protected void getData(IChildrenUpdate result) {
+    protected boolean getData(IChildrenUpdate result, Runnable done) {
+        return true;
     }
 
     /**
      * Check if the node has children in a presentation context.
-     * The node is validated before calling this method,
-     * so the method should return cached data.
      * The method is always called on TCF dispatch thread.
      * @param result - "has children" update request.
+     * @param done - client call back interface, during data waiting it is
+     * called every time new portion of data becomes available.
+     * @return false if waiting data retrieval, true if all done.
      */
-    protected void getData(IHasChildrenUpdate result) {
+    protected boolean getData(IHasChildrenUpdate result, Runnable done) {
         result.setHasChilren(false);
+        return true;
     }
 
     /**
      * Retrieve node label for a presentation context.
-     * The node is validated before calling this method,
-     * so the method should return cached data.
      * The method is always called on TCF dispatch thread.
      * @param result - label update request.
+     * @param done - client call back interface, during data waiting it is
+     * called every time new portion of data becomes available.
+     * @return false if waiting data retrieval, true if all done.
      */
-    protected void getData(ILabelUpdate result) {
-        result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
+    protected boolean getData(ILabelUpdate result, Runnable done) {
         result.setLabel(id, 0);
+        return true;
     }
 
     /**
@@ -321,48 +293,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     }
 
     /*--------------------------------------------------------------------------------------*/
-    /* Node data retrieval state machine                                                    */
-
-    /**
-     * Validate node - retrieve and put into a cache missing data from remote peer.
-     * The method should initiate retrieval of all data needed by TCFNode.update() methods.
-     * Validation is done asynchronously. If the node is already valid,
-     * the method should return true. Otherwise, it returns false,
-     * adds 'done' into 'wait_list', and later call-backs from 'wait_list' are invoked.
-     * Note: activation of call-back does not mean all data is retrieved,
-     * it only means that node state changed, client should call validateNode() again,
-     * until the method returns true.
-     * @param done - call-back object to call when node state changes.
-     * @return true if the node is already valid, false if validation is started.
-     */
-    public abstract boolean validateNode(Runnable done);
-
-    /**
-     * Clients can use this method to validate a collection of nodes.
-     * Validation of multiple nodes is expensive and should be avoided
-     * when possible.
-     *
-     * Validation is performed in background, and 'done' call-back is
-     * activated when nodes state changes.
-     *
-     * @param nodes
-     * @return true if all nodes are already valid, false if validation is started.
-     */
-    public static boolean validateNodes(Collection<TCFNode> nodes, Runnable done) {
-        TCFNode pending = null;
-        for (TCFNode n : nodes) {
-            if (!n.validateNode(null)) pending = n;
-        }
-        if (pending != null && !pending.validateNode(done)) return false;
-        return true;
-    }
-
-    /*--------------------------------------------------------------------------------------*/
     /* Misc                                                                                 */
-
-    protected String getImageName() {
-        return null;
-    }
 
     public int compareTo(TCFNode n) {
         return id.compareTo(n.id);

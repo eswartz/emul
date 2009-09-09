@@ -132,6 +132,24 @@ public abstract class TCFDataCache<V> implements Runnable {
     }
 
     /**
+     * If the cache is not valid, initiate data retrieval and
+     * add a client call-back to cache wait list.
+     * Client call-backs are activated when cache state changes.
+     * Call-backs are removed from waiting list after that.
+     * It is responsibility of clients to check if the state change was one they are waiting for.
+     * If the cache is valid do nothing and return true.
+     * @param cb - a call-back object
+     * @return true if the cache is already valid
+     */
+    public boolean validate(Runnable cb) {
+        if (!validate()) {
+            wait(cb);
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * End cache pending state.
      * @param token - pending command handle.
      * @param error - data retrieval error or null

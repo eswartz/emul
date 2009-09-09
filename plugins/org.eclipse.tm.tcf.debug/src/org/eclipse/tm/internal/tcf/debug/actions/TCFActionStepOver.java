@@ -18,8 +18,6 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public abstract class TCFActionStepOver extends TCFAction implements IRunControl.RunControlListener {
 
-    private static final long TIMEOUT = 10000;
-
     private final boolean src_step;
     private final IRunControl rc = launch.getService(IRunControl.class);
     private final IBreakpoints bps = launch.getService(IBreakpoints.class);
@@ -56,18 +54,8 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
                 exit(new Exception("Invalid context ID"));
                 return;
             }
-            if (!ctx.canResume(src_step ? IRunControl.RM_STEP_OVER_LINE : IRunControl.RM_STEP_OVER)) {
-                Protocol.invokeLater(TIMEOUT, new Runnable() {
-                    public void run() {
-                        exit(new Exception("Time out"));
-                    }
-                });
-            }
         }
-        if (!state.validate()) {
-            state.wait(this);
-            return;
-        }
+        if (!state.validate(this)) return;
         if (!state.getData().is_suspended) {
             exit(new Exception("Context is not suspended"));
             return;
@@ -83,16 +71,10 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             return;
         }
         TCFDataCache<?> stack_trace = getStackTrace();
-        if (!stack_trace.validate()) {
-            stack_trace.wait(this);
-            return;
-        }
+        if (!stack_trace.validate(this)) return;
         if (src_step && source_ref == null) {
             line_info = getLineInfo();
-            if (!line_info.validate()) {
-                line_info.wait(this);
-                return;
-            }
+            if (!line_info.validate(this)) return;
             source_ref = line_info.getData();
             if (source_ref == null) {
                 exit(new Exception("Line info not available"));
@@ -125,17 +107,16 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             else if (bps != null && ctx.canResume(IRunControl.RM_RESUME)) {
                 if (bp == null) {
                     TCFDataCache<IStackTrace.StackTraceContext> frame = getStackFrame();
-                    if (!frame.validate()) {
-                        frame.wait(this);
-                        return;
-                    }
+                    if (!frame.validate(this)) return;
                     Number addr = frame.getData().getInstructionAddress();
                     if (addr == null) {
                         exit(new Exception("Unknown PC address"));
                         return;
                     }
+                    String id = "Step." + ctx.getID();
+                    launch.addContextActionBreakpoint(id, "Step");
                     bp = new HashMap<String,Object>();
-                    bp.put(IBreakpoints.PROP_ID, "Step" + System.currentTimeMillis());
+                    bp.put(IBreakpoints.PROP_ID, id);
                     bp.put(IBreakpoints.PROP_LOCATION, addr.toString());
                     bp.put(IBreakpoints.PROP_CONDITION, "$thread==\"" + ctx.getID() + "\"");
                     bp.put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
@@ -172,10 +153,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             assert src_step;
             BigInteger pc = new BigInteger(state.getData().suspend_pc);
             if (pc.compareTo(pc0) < 0 || pc.compareTo(pc1) >= 0) {
-                if (!line_info.validate()) {
-                    line_info.wait(this);
-                    return;
-                }
+                if (!line_info.validate(this)) return;
                 TCFSourceRef ref = line_info.getData();
                 if (ref != null && ref.area != null) {
                     if (isSameLine(source_ref.area, ref.area)) {

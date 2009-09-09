@@ -18,9 +18,9 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.graphics.RGB;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -40,6 +40,7 @@ public class TCFNodeStackFrame extends TCFNode {
     private final TCFChildrenExpressions children_exps;
     private final TCFDataCache<IStackTrace.StackTraceContext> stack_trace_context;
     private final TCFDataCache<TCFSourceRef> line_info;
+    private final TCFDataCache<BigInteger> address;
 
     TCFNodeStackFrame(final TCFNodeExecContext parent, final String id) {
         super(parent, id);
@@ -51,7 +52,10 @@ public class TCFNodeStackFrame extends TCFNode {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
-                if (!parent.isSuspended()) {
+                TCFDataCache<TCFContextState> parent_state_cache = parent.getState();
+                if (!parent_state_cache.validate(this)) return false;
+                TCFContextState parent_state_data = parent_state_cache.getData();
+                if (parent_state_data == null || !parent_state_data.is_suspended) {
                     set(null, null, null);
                     return true;
                 }
@@ -73,13 +77,11 @@ public class TCFNodeStackFrame extends TCFNode {
         line_info = new TCFDataCache<TCFSourceRef>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                if (!stack_trace_context.validate()) {
-                    stack_trace_context.wait(this);
-                    return false;
-                }
-                BigInteger n = getAddress();
+                if (!stack_trace_context.validate(this)) return false;
+                if (!address.validate(this)) return false;
+                BigInteger n = address.getData();
                 if (n == null) {
-                    set(null, null, null);
+                    set(null, address.getError(), null);
                     return true;
                 }
                 IMemory.MemoryContext mem_ctx = null;
@@ -87,10 +89,7 @@ public class TCFNodeStackFrame extends TCFNode {
                 while (p != null) {
                     if (p instanceof TCFNodeExecContext) {
                         TCFDataCache<IMemory.MemoryContext> cache = ((TCFNodeExecContext)p).getMemoryContext();
-                        if (!cache.validate()) {
-                            cache.wait(this);
-                            return false;
-                        }
+                        if (!cache.validate(this)) return false;
                         mem_ctx = cache.getData();
                         if (mem_ctx != null) break;
                     }
@@ -133,6 +132,32 @@ public class TCFNodeStackFrame extends TCFNode {
                 return false;
             }
         };
+        address = new TCFDataCache<BigInteger>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                if (!stack_trace_context.validate(this)) return false;
+                IStackTrace.StackTraceContext ctx = stack_trace_context.getData();
+                if (ctx != null) {
+                    Number n = ctx.getInstructionAddress();
+                    if (n instanceof BigInteger) {
+                        set(null, null, (BigInteger)n);
+                        return true;
+                    }
+                    if (n != null) {
+                        set(null, null, new BigInteger(n.toString()));
+                        return true;
+                    }
+                }
+                if (frame_no == 0) {
+                    TCFDataCache<BigInteger> addr_cache = parent.getAddress();
+                    if (!addr_cache.validate(this)) return false;
+                    set(null, addr_cache.getError(), addr_cache.getData());
+                    return true;
+                }
+                set(null, stack_trace_context.getError(), null);
+                return true;
+            }
+        };
     }
 
     public int getFrameNo() {
@@ -152,6 +177,7 @@ public class TCFNodeStackFrame extends TCFNode {
     void dispose() {
         stack_trace_context.reset(null);
         line_info.reset(null);
+        address.reset(null);
         children_regs.dispose();
         children_vars.dispose();
         children_exps.dispose();
@@ -169,18 +195,8 @@ public class TCFNodeStackFrame extends TCFNode {
         return stack_trace_context;
     }
 
-    @Override
-    public BigInteger getAddress() {
-        assert Protocol.isDispatchThread();
-        if (!stack_trace_context.isValid()) return null;
-        IStackTrace.StackTraceContext ctx = stack_trace_context.getData();
-        if (ctx != null) {
-            Number n = ctx.getInstructionAddress();
-            if (n instanceof BigInteger) return (BigInteger)n;
-            if (n != null) return new BigInteger(n.toString());
-        }
-        if (frame_no == 0) return parent.getAddress();
-        return null;
+    public TCFDataCache<BigInteger> getAddress() {
+        return address;
     }
 
     public BigInteger getReturnAddress() {
@@ -196,65 +212,38 @@ public class TCFNodeStackFrame extends TCFNode {
     }
 
     @Override
-    public int getNodeIndex(IPresentationContext p, TCFNode n) {
-        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId())) {
-            if (!children_regs.isValid()) return -1;
-            return children_regs.getIndexOf(n);
-        }
-        if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
-            if (!children_vars.isValid()) return -1;
-            return children_vars.getIndexOf(n);
-        }
-        if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(p.getId())) {
-            if (!children_exps.isValid()) return -1;
-            return children_exps.getIndexOf(n);
-        }
-        return 0;
-    }
-
-    @Override
-    public int getChildrenCount(IPresentationContext p) {
-        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId())) {
-            if (!children_regs.isValid()) return -1;
-            return children_regs.size();
-        }
-        if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
-            if (!children_vars.isValid()) return -1;
-            return children_vars.size();
-        }
-        if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(p.getId())) {
-            if (!children_exps.isValid()) return -1;
-            return children_exps.size();
-        }
-        return 0;
-    }
-
-    @Override
-    protected void getData(IChildrenCountUpdate result) {
+    protected boolean getData(IChildrenCountUpdate result, Runnable done) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children_regs.validate(done)) return false;
             result.setChildCount(children_regs.size());
         }
         else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children_vars.validate(done)) return false;
             result.setChildCount(children_vars.size());
         }
         else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children_exps.validate(done)) return false;
             result.setChildCount(children_exps.size());
         }
         else {
             result.setChildCount(0);
         }
+        return true;
     }
 
     @Override
-    protected void getData(IChildrenUpdate result) {
+    protected boolean getData(IChildrenUpdate result, Runnable done) {
         TCFNode[] arr = null;
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children_regs.validate(done)) return false;
             arr = children_regs.toArray();
         }
         else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children_vars.validate(done)) return false;
             arr = children_vars.toArray();
         }
         else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children_exps.validate(done)) return false;
             arr = children_exps.toArray();
         }
         else {
@@ -269,35 +258,48 @@ public class TCFNodeStackFrame extends TCFNode {
             }
             offset++;
         }
+        return true;
     }
 
     @Override
-    protected void getData(IHasChildrenUpdate result) {
+    protected boolean getData(IHasChildrenUpdate result, Runnable done) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children_regs.validate(done)) return false;
             result.setHasChilren(children_regs.size() > 0);
         }
         else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children_vars.validate(done)) return false;
             result.setHasChilren(children_vars.size() > 0);
         }
         else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!children_exps.validate(done)) return false;
             result.setHasChilren(children_exps.size() > 0);
         }
         else {
             result.setHasChilren(false);
         }
+        return true;
     }
 
     @Override
-    protected void getData(ILabelUpdate result) {
-        result.setImageDescriptor(ImageCache.getImageDescriptor(getImageName()), 0);
-        TCFChildrenStackTrace st = ((TCFNodeExecContext)parent).getStackTrace();
-        if (st.getData().get(id) == null) {
+    protected boolean getData(ILabelUpdate result, Runnable done) {
+        String image_name = null;
+        TCFChildrenStackTrace stack_trace_cache = ((TCFNodeExecContext)parent).getStackTrace();
+        if (!stack_trace_cache.validate(done)) return false;
+        if (stack_trace_cache.getData().get(id) == null) {
             result.setLabel("", 0);
         }
         else {
+            TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)parent).getState();
+            if (!state_cache.validate(done)) return false;
+            TCFContextState state_data = state_cache.getData();
+            if (state_data != null && state_data.is_suspended) image_name = ImageCache.IMG_STACK_FRAME_SUSPENDED;
+            else image_name = ImageCache.IMG_STACK_FRAME_RUNNING;
+            if (!stack_trace_context.validate(done)) return false;
+            if (!line_info.validate(done)) return false;
             Throwable error = stack_trace_context.getError();
             if (error == null) error = line_info.getError();
-            if (error != null && ((TCFNodeExecContext)parent).isSuspended()) {
+            if (error != null && state_data != null && state_data.is_suspended) {
                 result.setForeground(new RGB(255, 0, 0), 0);
                 result.setLabel(error.getClass().getName() + ": " + error.getMessage(), 0);
             }
@@ -315,6 +317,8 @@ public class TCFNodeStackFrame extends TCFNode {
                 }
             }
         }
+        result.setImageDescriptor(ImageCache.getImageDescriptor(image_name), 0);
+        return true;
     }
 
     private String makeHexAddrString(IMemory.MemoryContext m, Number n) {
@@ -337,6 +341,7 @@ public class TCFNodeStackFrame extends TCFNode {
     void onSuspended() {
         stack_trace_context.reset();
         line_info.reset();
+        address.reset();
         children_regs.onSuspended();
         children_vars.onSuspended();
         children_exps.onSuspended();
@@ -346,27 +351,6 @@ public class TCFNodeStackFrame extends TCFNode {
     void onRegistersChanged() {
         children_regs.onRegistersChanged();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
-    }
-
-    @Override
-    public boolean validateNode(Runnable done) {
-        TCFDataCache<?> pending = null;
-        TCFChildrenStackTrace stack_trace = ((TCFNodeExecContext)parent).getStackTrace();
-        if (!stack_trace.validate()) pending = stack_trace;
-        if (!stack_trace_context.validate()) pending = stack_trace_context;
-        if (!children_regs.validate()) pending = children_regs;
-        if (!children_vars.validate()) pending = children_vars;
-        if (!children_exps.validate()) pending = children_exps;
-        if (!line_info.validate()) pending = line_info;
-        if (pending == null) return true;
-        pending.wait(done);
-        return false;
-    }
-
-    @Override
-    protected String getImageName() {
-        if (((TCFNodeExecContext)parent).isRunning()) return ImageCache.IMG_STACK_FRAME_RUNNING;
-        return ImageCache.IMG_STACK_FRAME_SUSPENDED;
     }
 
     @Override

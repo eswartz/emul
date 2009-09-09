@@ -13,7 +13,6 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -74,49 +73,61 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             if (exp instanceof TCFNodeExpression) break;
             exp = exp.parent;
         }
-        final TCFDataCache<ISymbols.Symbol> type = ((TCFNodeExpression)exp).getType();
-        if (!type.validate()) {
-            type.wait(this);
-            return false;
-        }
+        final TCFDataCache<IExpressions.Value> value_cache = ((TCFNodeExpression)exp).getValue();
+        if (!value_cache.validate(this)) return false;
+        final IExpressions.Value value_data = value_cache.getData();
         final ISymbols syms = node.model.getLaunch().getService(ISymbols.class);
-        final ISymbols.Symbol type_sym = type.getData();
-        if (syms == null || type_sym == null) {
+        if (value_data == null || syms == null) {
             set(null, null, new HashMap<String,TCFNode>());
             return true;
         }
-        ISymbols.TypeClass type_class = type_sym.getTypeClass();
+        final TCFDataCache<ISymbols.Symbol> type_cache = node.model.getSymbolInfoCache(
+                value_data.getExeContextID(), value_data.getTypeID());
+        if (type_cache == null) {
+            set(null, null, new HashMap<String,TCFNode>());
+            return true;
+        }
+        if (!type_cache.validate(this)) return false;
+        final ISymbols.Symbol type_data = type_cache.getData();
+        if (type_data == null) {
+            set(null, null, new HashMap<String,TCFNode>());
+            return true;
+        }
+        ISymbols.TypeClass type_class = type_data.getTypeClass();
         if (par_level > 0 && type_class != ISymbols.TypeClass.array) {
             set(null, null, new HashMap<String,TCFNode>());
             return true;
         }
         if (type_class == ISymbols.TypeClass.composite) {
-            command = syms.getChildren(type_sym.getID(), new ISymbols.DoneGetChildren() {
-                public void doneGetChildren(IToken token, Exception error, String[] contexts) {
-                    Map<String,TCFNode> data = null;
-                    if (command == token && error == null) {
-                        int cnt = 0;
-                        data = new HashMap<String,TCFNode>();
-                        for (String id : contexts) {
-                            TCFNodeExpression n = findField(id);
-                            if (n == null) n = new TCFNodeExpression(node, null, id, null, -1);
-                            n.setSortPosition(cnt++);
-                            data.put(n.id, n);
-                        }
-                    }
-                    set(token, error, data);
+            TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(type_data.getExeContextID(), type_data.getID());
+            if (children_cache == null) {
+                set(null, null, new HashMap<String,TCFNode>());
+                return true;
+            }
+            if (!children_cache.validate(this)) return false;
+            String[] children_data = children_cache.getData();
+            Map<String,TCFNode> data = null;
+            if (children_data != null) {
+                int cnt = 0;
+                data = new HashMap<String,TCFNode>();
+                for (String id : children_data) {
+                    TCFNodeExpression n = findField(id);
+                    if (n == null) n = new TCFNodeExpression(node, null, id, null, -1, type_data);
+                    n.setSortPosition(cnt++);
+                    data.put(n.id, n);
                 }
-            });
-            return false;
+            }
+            set(null, children_cache.getError(), data);
+            return true;
         }
         if (type_class == ISymbols.TypeClass.array) {
             Map<String,TCFNode> data = new HashMap<String,TCFNode>();
             int offs = par_level > 0 ? par_offs : 0;
-            int size = par_level > 0 ? par_size : type_sym.getLength();
+            int size = par_level > 0 ? par_size : type_data.getLength();
             if (size <= 100) {
                 for (int i = offs; i < offs + size; i++) {
                     TCFNodeExpression n = findIndex(i);
-                    if (n == null) n = new TCFNodeExpression(node, null, null, null, i);
+                    if (n == null) n = new TCFNodeExpression(node, null, null, null, i, type_data);
                     n.setSortPosition(i);
                     data.put(n.id, n);
                 }
@@ -138,24 +149,40 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         if (type_class == ISymbols.TypeClass.pointer) {
             Map<String,TCFNode> data = new HashMap<String,TCFNode>();
             TCFDataCache<IExpressions.Value> value = ((TCFNodeExpression)exp).getValue();
-            if (!value.validate()) {
-                value.wait(this);
-                return false;
-            }
+            if (!value.validate(this)) return false;
             IExpressions.Value v = value.getData();
             if (v != null && !isNull(v.getValue())) {
-                TCFDataCache<ISymbols.Symbol> base_type = node.model.getSymbolInfoCache(
-                        type_sym.getExeContextID(), type_sym.getBaseTypeID());
-                if (!base_type.validate()) {
-                    base_type.wait(this);
-                    return false;
-                }
-                ISymbols.Symbol base_type_sym = base_type.getData();
-                if (base_type_sym == null || base_type_sym.getSize() != 0) {
-                    TCFNodeExpression n = findIndex(0);
-                    if (n == null) n = new TCFNodeExpression(node, null, null, null, 0);
-                    n.setSortPosition(0);
-                    data.put(n.id, n);
+                TCFDataCache<ISymbols.Symbol> base_type_cache = node.model.getSymbolInfoCache(
+                        type_data.getExeContextID(), type_data.getBaseTypeID());
+                if (base_type_cache != null) {
+                    if (!base_type_cache.validate(this)) return false;
+                    ISymbols.Symbol base_type_data = base_type_cache.getData();
+                    if (base_type_data == null || base_type_data.getSize() != 0) {
+                        if (base_type_data.getTypeClass() == ISymbols.TypeClass.composite) {
+                            TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(
+                                    base_type_data.getExeContextID(), base_type_data.getID());
+                            if (children_cache != null) {
+                                if (!children_cache.validate(this)) return false;
+                                String[] children_data = children_cache.getData();
+                                if (children_data != null) {
+                                    int cnt = 0;
+                                    data = new HashMap<String,TCFNode>();
+                                    for (String id : children_data) {
+                                        TCFNodeExpression n = findField(id);
+                                        if (n == null) n = new TCFNodeExpression(node, null, id, null, -1, type_data);
+                                        n.setSortPosition(cnt++);
+                                        data.put(n.id, n);
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            TCFNodeExpression n = findIndex(0);
+                            if (n == null) n = new TCFNodeExpression(node, null, null, null, 0, type_data);
+                            n.setSortPosition(0);
+                            data.put(n.id, n);
+                        }
+                    }
                 }
             }
             set(null, null, data);

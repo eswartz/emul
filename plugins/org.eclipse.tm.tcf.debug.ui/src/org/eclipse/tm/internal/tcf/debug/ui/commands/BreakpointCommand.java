@@ -20,9 +20,11 @@ import org.eclipse.debug.ui.actions.IToggleBreakpointsTargetExtension;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpoint;
-import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
-import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
 import org.eclipse.tm.tcf.services.IBreakpoints;
+import org.eclipse.tm.tcf.util.TCFDataCache;
+import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IWorkbenchPart;
 
 
@@ -30,47 +32,50 @@ public class BreakpointCommand implements IToggleBreakpointsTargetExtension {
 
     public boolean canToggleBreakpoints(IWorkbenchPart part, ISelection selection) {
         if (selection.isEmpty()) return false;
-        Object obj = ((IStructuredSelection)selection).getFirstElement();
-        if (obj instanceof TCFNode) {
-            final TCFNode node = (TCFNode)obj;
-            if (node == null) return false;
-            final boolean[] res = new boolean[1];
-            Protocol.invokeAndWait(new Runnable() {
-                public void run() {
-                    res[0] = node.getAddress() != null;
+        final Object obj = ((IStructuredSelection)selection).getFirstElement();
+        return new TCFTask<Boolean>() {
+            public void run() {
+                TCFDataCache<BigInteger> addr_cache = null;
+                if (obj instanceof TCFNodeExecContext) addr_cache = ((TCFNodeExecContext)obj).getAddress();
+                if (obj instanceof TCFNodeStackFrame) addr_cache = ((TCFNodeStackFrame)obj).getAddress();
+                if (addr_cache != null) {
+                    if (!addr_cache.validate(this)) return;
+                    done(addr_cache.getData() != null);
                 }
-            });
-            return res[0];
-        }
-        else {
-            return false;
-        }
+                else {
+                    done(false);
+                }
+            }
+        }.getE();
     }
 
     public void toggleBreakpoints(IWorkbenchPart part, ISelection selection) throws CoreException {
         if (selection.isEmpty()) return;
-        Object obj = ((IStructuredSelection)selection).getFirstElement();
-        if (obj instanceof TCFNode) {
-            final TCFNode node = (TCFNode)obj;
-            if (node == null) return;
-            final CoreException[] res = new CoreException[1];
-            Protocol.invokeAndWait(new Runnable() {
-                public void run() {
-                    try {
-                        BigInteger addr = node.getAddress();
-                        if (addr == null) return;
-                        Map<String,Object> m = new HashMap<String,Object>();
-                        m.put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
-                        m.put(IBreakpoints.PROP_LOCATION, addr.toString());
-                        new TCFBreakpoint(ResourcesPlugin.getWorkspace().getRoot(), m);
+        final Object obj = ((IStructuredSelection)selection).getFirstElement();
+        CoreException x = new TCFTask<CoreException>() {
+            public void run() {
+                try {
+                    TCFDataCache<BigInteger> addr_cache = null;
+                    if (obj instanceof TCFNodeExecContext) addr_cache = ((TCFNodeExecContext)obj).getAddress();
+                    if (obj instanceof TCFNodeStackFrame) addr_cache = ((TCFNodeStackFrame)obj).getAddress();
+                    if (addr_cache != null) {
+                        if (!addr_cache.validate(this)) return;
+                        BigInteger addr = addr_cache.getData();
+                        if (addr != null) {
+                            Map<String,Object> m = new HashMap<String,Object>();
+                            m.put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
+                            m.put(IBreakpoints.PROP_LOCATION, addr.toString());
+                            new TCFBreakpoint(ResourcesPlugin.getWorkspace().getRoot(), m);
+                        }
                     }
-                    catch (CoreException x) {
-                        res[0] = x;
-                    }
+                    done(null);
                 }
-            });
-            if (res[0] != null) throw res[0];
-        }
+                catch (CoreException x) {
+                   done(x);
+                }
+            }
+        }.getE();
+        if (x != null) throw x;
     }
 
     public boolean canToggleLineBreakpoints(IWorkbenchPart part, ISelection selection) {
