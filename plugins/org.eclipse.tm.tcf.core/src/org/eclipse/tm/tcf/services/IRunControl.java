@@ -150,6 +150,14 @@ public interface IRunControl extends IService {
         REASON_ERROR = "Error";
 
     /**
+     * Optional parameters of context state.
+     */
+    static final String
+        STATE_SIGNAL = "Signal",
+        STATE_SIGNAL_NAME = "SignalName",
+        STATE_BREAKPOINT_IDS = "BPs";
+
+    /**
      * Retrieve context properties for given context ID.
      *
      * @param id – context ID.
@@ -327,6 +335,15 @@ public interface IRunControl extends IService {
     }
 
     interface DoneGetState {
+        /**
+         * Called when getState command execution is complete.
+         * @param token - pending command handle.
+         * @param error - command execution error or null.
+         * @param suspended - true if the context is suspended
+         * @param pc - program counter of the context (if suspended).
+         * @param reason - suspend reason (if suspended), see REASON_*.
+         * @param params - additional target specific data about context state, see STATE_*.
+         */
         void doneGetState(IToken token, Exception error, boolean suspended, String pc,
                 String reason, Map<String,Object> params);
     }
@@ -399,8 +416,8 @@ public interface IRunControl extends IService {
          * any one of container children, for example, it can be thread that hit "suspend all" breakpoint.
          * Client expected to move focus (selection) to this context.
          * @param pc - program counter of the context.
-         * @param reason - human readable description of suspend reason.
-         * @param params - additional target specific data about suspended context.
+         * @param reason - suspend reason, see REASON_*.
+         * @param params - additional target specific data about context state, see STATE_*.
          * @param suspended_ids - full list of all contexts that were suspended.
          */
         void containerSuspended(String context, String pc,
