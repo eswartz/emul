@@ -18,14 +18,14 @@ Target Communication Framework is universal, extensible, simple,
 lightweight, vendor agnostic framework for tools and targets to
 communicate for purpose of debugging, profiling, code patching and
 other device software development needs. tcf-agent is a daemon,
-which provides TCF services that can be used by local and remote clients. 
+which provides TCF services that can be used by local and remote clients.
 
-%prep 
+%prep
 rm -rf $RPM_BUILD_ROOT
 %setup
 
 %build
-make all CONF=Release 
+make all CONF=Release
 
 %install
 make install CONF=Release INSTALLROOT=$RPM_BUILD_ROOT SBIN=%{_sbindir}

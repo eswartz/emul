@@ -85,6 +85,7 @@ struct BreakpointInfo {
     int ignore_count;
     int hit_count;
     BreakpointAttribute * unsupported;
+    int triggered;
 
     EventPointCallBack * event_callback;
     void * event_callback_args;
@@ -1303,9 +1304,19 @@ int is_breakpoint_address(Context * ctx, ContextAddress address) {
 
 void evaluate_breakpoint_condition(Context * ctx) {
     int i;
+    size_t size = 0;
     BreakInstruction * bi = find_instruction(ctx, get_regs_PC(ctx->regs));
-    if (bi == NULL) return;
+
     assert(ctx->stopped);
+    assert(ctx->stopped_by_bp);
+    loc_free(ctx->bp_ids);
+    ctx->bp_ids = NULL;
+    if (bi == NULL) return;
+
+    for (i = 0; i < bi->ref_cnt; i++) {
+        bi->refs[i]->triggered = 0;
+    }
+
     for (i = 0; i < bi->ref_cnt; i++) {
         BreakpointInfo * bp = bi->refs[i];
         assert(bp->planted);
@@ -1330,7 +1341,27 @@ void evaluate_breakpoint_condition(Context * ctx) {
         }
         else {
             ctx->pending_intercept = 1;
+            bp->triggered = 1;
+            size += sizeof(char *) + strlen(bp->id) + 1;
         }
+    }
+
+    if (size > 0) {
+        size_t mem_size = size + sizeof(char *);
+        char ** list = loc_alloc(mem_size);
+        char * pool = (char *)list + mem_size;
+        ctx->bp_ids = list;
+        for (i = 0; i < bi->ref_cnt; i++) {
+            BreakpointInfo * bp = bi->refs[i];
+            if (bp->triggered) {
+                size_t n = strlen(bp->id) + 1;
+                pool -= n;
+                memcpy(pool, bp->id, n);
+                *list++ = pool;
+            }
+        }
+        *list++ = NULL;
+        assert((char *)list == pool);
     }
 }
 

@@ -29,8 +29,20 @@ typedef struct BreakpointInfo BreakpointInfo;
 
 #if SERVICE_Breakpoints
 
+/*
+ * The function is called from context.c every time a context is stopped by breakpoint.
+ * The function evaluates breakpoint condition and sets ctx->intercepted = 1 if the condition is true.
+ */
 extern void evaluate_breakpoint_condition(Context * ctx);
 
+/*
+ * When a context is stopped by breakpoint, it is necessary to disable
+ * the breakpoint temporarily before the context can be resumed.
+ * This function function removes break instruction, then does single step
+ * over breakpoint location, then restores break intruction.
+ * Return: 0 if it is OK to resume context from current state,
+ * return 1 if context needs to step over a breakpoint.
+ */
 extern int skip_breakpoint(Context * ctx, int single_step);
 
 /* Return 1 if break instruction is planted at given address in the context memory */

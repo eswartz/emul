@@ -105,9 +105,7 @@ struct timespec {
     long    tv_nsec;        /* nanoseconds */
 };
 
-#define SIGTRAP 5
-#define SIGKILL 9
-#define SIGSTOP 19
+#define SIGKILL 1
 
 #define ETIMEDOUT 100
 

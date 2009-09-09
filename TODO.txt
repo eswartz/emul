@@ -46,7 +46,7 @@
 
           o   What is the inside this used for?
 
--        streams.h: 
+-        streams.h:
 
           o   It would be good if the InputStream and OutputStream was designed so characters could be read/written without
                causing a function call in the normal case.  Something similar to stdio getc/putc.

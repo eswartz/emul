@@ -46,6 +46,7 @@ struct Context {
     int                 stopped;            /* OS kernel has stopped this context */
     int                 stopped_by_bp;      /* stopped by breakpoint */
     void *              stepping_over_bp;   /* if not NULL context is stepping over a breakpoint */
+    char **             bp_ids;             /* if stopped by breakpoint, contains NULL-terminated list of breakpoint IDs */
     int                 exiting;            /* context is about to exit */
     int                 exited;             /* context exited */
     int                 intercepted;        /* context is reported to a host as suspended */

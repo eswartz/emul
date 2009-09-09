@@ -248,6 +248,7 @@ void context_unlock(Context * ctx) {
         assert(ctx->parent == NULL);
         list_remove(&ctx->ctxl);
         list_remove(&ctx->pidl);
+        loc_free(ctx->bp_ids);
         loc_free(ctx);
     }
 }
@@ -462,7 +463,8 @@ static void event_win32_context_stopped(Context * ctx) {
             ctx, ctx->pid, get_regs_PC(ctx->regs));
     }
 
-    ctx->signal = SIGTRAP;
+    ctx->signal = get_signal_index(ctx);
+    ctx->pending_signals = 0;
     ctx->stopped = 1;
     ctx->stopped_by_bp = 0;
     switch (exception_code) {
@@ -486,10 +488,8 @@ static void event_win32_context_stopped(Context * ctx) {
             ctx->suspend_reason.ExceptionRecord.ExceptionInformation[0]);
         break;
     default:
-        {
-            int signal = get_signal_index(ctx);
-            if (signal != 0 && (ctx->sig_dont_stop & (1 << signal)) != 0) break;
-        }
+        ctx->pending_signals |= 1 << ctx->signal;
+        if (ctx->signal != 0 && (ctx->sig_dont_stop & (1 << ctx->signal)) != 0) break;
         ctx->pending_intercept = 1;
         break;
     }

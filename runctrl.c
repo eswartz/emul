@@ -162,7 +162,7 @@ static void write_context(OutputStream * out, Context * ctx, int is_thread) {
 }
 
 static void write_context_state(OutputStream * out, Context * ctx) {
-
+    int fst = 1;
     assert(!ctx->exited);
 
     if (!ctx->intercepted) {
@@ -180,16 +180,32 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     json_write_string(out, context_suspend_reason(ctx));
     write_stream(out, 0);
 
-    /* Object: Aditional info */
+    /* Object: Additional context state info */
     write_stream(out, '{');
-    json_write_string(out, "Signal");
-    write_stream(out, ':');
-    json_write_long(out, ctx->signal);
-    if (signal_name(ctx->signal)) {
-        write_stream(out, ',');
-        json_write_string(out, "SignalName");
+    if (ctx->signal) {
+        json_write_string(out, "Signal");
         write_stream(out, ':');
-        json_write_string(out, signal_name(ctx->signal));
+        json_write_long(out, ctx->signal);
+        if (signal_name(ctx->signal)) {
+            write_stream(out, ',');
+            json_write_string(out, "SignalName");
+            write_stream(out, ':');
+            json_write_string(out, signal_name(ctx->signal));
+        }
+        fst = 0;
+    }
+    if (ctx->stopped_by_bp && ctx->bp_ids != NULL && ctx->bp_ids[0] != NULL) {
+        int i = 0;
+        if (!fst) write_stream(out, ',');
+        json_write_string(out, "BPs");
+        write_stream(out, ':');
+        write_stream(out, '[');
+        while (ctx->bp_ids[i] != NULL) {
+            if (i > 0) write_stream(out, ',');
+            json_write_string(out, ctx->bp_ids[i++]);
+        }
+        write_stream(out, ']');
+        fst = 0;
     }
     write_stream(out, '}');
     write_stream(out, 0);
@@ -790,7 +806,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     assert(!ctx->intercepted);
     assert(!ctx->exited);
     if (ctx->pending_safe_event) check_safe_events(ctx);
-    if (ctx->signal != SIGSTOP && ctx->signal != SIGTRAP) {
+    if (ctx->pending_signals != 0) {
         send_event_context_exception(&bcg->out, ctx);
     }
     if (ctx->pending_intercept) {
