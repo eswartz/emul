@@ -26,7 +26,7 @@ BINDIR=$(OPSYS)/$(MACHINE)/$(CONF)
 CFILES=$(basename $(wildcard *.c)) $(basename $(notdir $(wildcard $(TCF_AGENT_DIR)/*.c)))
 OFILES=$(addprefix $(BINDIR)/,$(filter-out main%.o, $(addsuffix .o, $(CFILES))))
 HFILES=$(wildcard *.h) $(wildcard $(TCF_AGENT_DIR)/*.h) Makefile
-  
+
 EXECS=$(BINDIR)/agent
 
 all:	$(EXECS)

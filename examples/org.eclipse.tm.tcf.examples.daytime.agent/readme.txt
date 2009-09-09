@@ -14,4 +14,4 @@ The example includes:
 3. Agent configuration header file: config.h
 
 CDT can be used to edit and build the example project.
-Supported agent execution environments: CygWin, Linux. 
+Supported agent execution environments: CygWin, Linux.
