@@ -11,7 +11,6 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -303,7 +302,6 @@ public class TCFNodeExecContext extends TCFNode {
         return true;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected boolean getData(ILabelUpdate result, Runnable done) {
         if (!run_context.validate(done)) return false;
@@ -337,15 +335,7 @@ public class TCFNodeExecContext extends TCFNode {
                 }
                 else if (state_data != null && state_data.is_suspended) {
                     String r = state_data.suspend_reason;
-                    if (state_data.suspend_params != null) {
-                        Collection<String> ids = (Collection<String>)state_data.suspend_params.get(IRunControl.STATE_BREAKPOINT_IDS);
-                        if (ids != null) {
-                            for (String id : ids) {
-                                String s = model.getLaunch().getContextActionBreakpoint(id);
-                                if (s != null) r = s;
-                            }
-                        }
-                    }
+                    if (model.isContextActionResultAvailable(id)) r = model.getContextActionResult(id);
                     if (r != null) {
                         label += " (" + r + ")";
                     }
@@ -416,15 +406,27 @@ public class TCFNodeExecContext extends TCFNode {
 
     void onContextSuspended(String pc, String reason, Map<String,Object> params) {
         assert !disposed;
-        TCFContextState s = new TCFContextState();
-        s.is_suspended = true;
-        s.suspend_pc = pc;
-        s.suspend_reason = reason;
-        s.suspend_params = params;
-        state.reset(s);
-        children_stack.onSuspended();
+        if (pc != null) {
+            TCFContextState s = new TCFContextState();
+            s.is_suspended = true;
+            s.suspend_pc = pc;
+            s.suspend_reason = reason;
+            s.suspend_params = params;
+            state.reset(s);
+        }
+        else {
+            state.reset();
+        }
         address.reset();
         resumed_cnt++;
+        children_stack.onSuspended();
+        if (!model.isContextActionRunning(id)) {
+            addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        }
+    }
+
+    void onContextActionDone() {
+        children_stack.onContextActionDone();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 

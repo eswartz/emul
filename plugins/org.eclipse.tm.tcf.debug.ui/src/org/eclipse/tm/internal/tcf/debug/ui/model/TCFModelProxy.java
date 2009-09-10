@@ -33,11 +33,6 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  */
 public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Runnable {
 
-    private static final int CONTENT_FLAGS =
-        IModelDelta.ADDED | IModelDelta.REMOVED |
-        IModelDelta.REPLACED | IModelDelta.INSERTED |
-        IModelDelta.CONTENT | IModelDelta.STATE;
-
     private static final TCFNode[] EMPTY_NODE_ARRAY = new TCFNode[0];
 
     private final TCFModel model;
@@ -226,7 +221,6 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 int parent_flags = 0;
                 Integer parent_flags_obj = node2flags.get(node.parent);
                 if (parent_flags_obj != null) parent_flags = parent_flags_obj;
-                if ((flags & ~CONTENT_FLAGS) == 0 && (parent_flags & IModelDelta.CONTENT) != 0) return null;
                 ModelDelta parent = makeDelta(root, node.parent, parent_flags);
                 if (parent == null) return null;
                 delta = parent.addNode(node, getNodeIndex(node), flags, getNodeChildren(node).length);

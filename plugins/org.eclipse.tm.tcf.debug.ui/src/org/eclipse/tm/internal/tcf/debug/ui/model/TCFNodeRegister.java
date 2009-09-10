@@ -37,6 +37,9 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     private final TCFDataCache<IRegisters.RegistersContext> context;
     private final TCFDataCache<byte[]> value;
 
+    private byte[] prev_value;
+    private byte[] next_value;
+
     TCFNodeRegister(TCFNode parent, final String id) {
         super(parent, id);
         IChannel channel = parent.model.getLaunch().getChannel();
@@ -89,12 +92,12 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         }
         IRegisters.RegistersContext ctx = context.getData();
         Throwable error = context.getError();
+        String[] cols = result.getColumnIds();
         if (error != null) {
             result.setForeground(new RGB(255, 0, 0), 0);
             result.setLabel(id + ": " + error.getClass().getName() + ": " + error.getMessage(), 0);
         }
         else if (ctx != null) {
-            String[] cols = result.getColumnIds();
             if (cols == null) {
                 setLabel(result, -1, 16);
             }
@@ -142,6 +145,27 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         }
         else {
             result.setLabel(id, 0);
+        }
+        boolean changed = false;
+        next_value = value.getData();
+        if (prev_value != null && next_value != null) {
+            if (prev_value.length != next_value.length) {
+                changed = true;
+            }
+            else {
+                for (int i = 0; i < prev_value.length; i++) {
+                    if (prev_value[i] != next_value[i]) changed = true;
+                }
+            }
+        }
+        if (changed) {
+            RGB c = new RGB(255, 255, 0);
+            result.setBackground(c, 0);
+            if (cols != null) {
+                for (int i = 1; i < cols.length; i++) {
+                    result.setBackground(c, i);
+                }
+            }
         }
         result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_REGISTER), 0);
         return true;
@@ -219,6 +243,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     @Override
     int getRelevantModelDeltaFlags(IPresentationContext p) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(p.getId())) {
+            if (model.isContextActionRunning(parent.id)) return 0;
             return super.getRelevantModelDeltaFlags(p);
         }
         return 0;
@@ -229,14 +254,19 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     }
 
     void onSuspended() {
+        prev_value = next_value;
         value.reset();
+        addModelDelta(IModelDelta.STATE);
+    }
+
+    void onContextActionDone() {
         addModelDelta(IModelDelta.STATE);
     }
 
     void onRegistersChanged() {
         context.reset();
         value.reset();
-        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+        addModelDelta(IModelDelta.STATE);
     }
 
     public CellEditor getCellEditor(IPresentationContext context, String column_id, Object element, Composite parent) {
@@ -325,7 +355,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
                                         }
                                         else {
                                             node.value.reset();
-                                            node.addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+                                            node.addModelDelta(IModelDelta.STATE);
                                             done(Boolean.TRUE);
                                         }
                                     }

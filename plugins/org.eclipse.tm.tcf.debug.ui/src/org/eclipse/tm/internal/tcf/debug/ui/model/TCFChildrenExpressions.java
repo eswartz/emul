@@ -50,7 +50,7 @@ public class TCFChildrenExpressions extends TCFChildren {
     };
 
     TCFChildrenExpressions(TCFNodeStackFrame node) {
-        super(node.model.getLaunch().getChannel(), 32);
+        super(node.model.getLaunch().getChannel(), 128);
         this.node = node;
         exp_manager = DebugPlugin.getDefault().getExpressionManager();
         exp_manager.addExpressionListener(listener);
@@ -64,6 +64,10 @@ public class TCFChildrenExpressions extends TCFChildren {
 
     void onSuspended() {
         for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onSuspended();
+    }
+
+    void onContextActionDone() {
+        for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onContextActionDone();
     }
 
     private TCFNodeExpression findScript(String text) {

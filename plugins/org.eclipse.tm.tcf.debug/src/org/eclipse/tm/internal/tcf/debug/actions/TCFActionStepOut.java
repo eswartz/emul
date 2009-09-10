@@ -75,7 +75,6 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
                     return;
                 }
                 String id = "Step." + ctx.getID();
-                launch.addContextActionBreakpoint(id, "Step");
                 bp = new HashMap<String,Object>();
                 bp.put(IBreakpoints.PROP_ID, id);
                 bp.put(IBreakpoints.PROP_LOCATION, addr.toString());
@@ -108,7 +107,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
         }
         rc.removeListener(this);
         exited = true;
-        done();
+        done("Step");
     }
 
     public void containerResumed(String[] context_ids) {

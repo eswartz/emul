@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 
 import org.eclipse.debug.core.DebugPlugin;
@@ -61,6 +60,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     private final TCFDataCache<String> type_name;
     private final TCFDataCache<String> string;
     private int sort_pos;
+    private IExpressions.Value prev_value;
+    private IExpressions.Value next_value;
 
     private static int expr_cnt;
 
@@ -195,6 +196,9 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                 });
                 return false;
             }
+            public void reset() {
+                super.reset();
+            }
         };
         type = new TCFDataCache<ISymbols.Symbol>(channel) {
             @Override
@@ -237,41 +241,10 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                     command = mem.get(addr.add(BigInteger.valueOf(offs)), 1, buf, offs, 1, 0, new IMemory.DoneMemory() {
                         public void doneMemory(IToken token, MemoryError error) {
                             if (error != null) {
-                                String msg = "Cannot read string value: ";
-                                if (error instanceof IErrorReport) {
-                                    msg += Command.toErrorString(((IErrorReport)error).getAttributes());
-                                }
-                                else {
-                                    msg += error.getLocalizedMessage();
-                                }
-                                set(command, null, msg);
+                                set(command, error, null);
                             }
                             else if (buf[offs] == 0 || offs >= 2048) {
-                                StringBuffer bf = new StringBuffer();
-                                bf.append('"');
-                                for (int i = 0; i < offs; i++) {
-                                    int ch = buf[i] & 0xff;
-                                    if (ch >= ' ' && ch < 0x7f) {
-                                        bf.append((char)ch);
-                                    }
-                                    else {
-                                        switch (ch) {
-                                        case '\r': bf.append("\\r"); break;
-                                        case '\n': bf.append("\\n"); break;
-                                        case '\b': bf.append("\\b"); break;
-                                        case '\t': bf.append("\\t"); break;
-                                        case '\f': bf.append("\\f"); break;
-                                        default:
-                                            bf.append('\\');
-                                            bf.append((char)('0' + ch / 64));
-                                            bf.append((char)('0' + ch / 8 % 8));
-                                            bf.append((char)('0' + ch % 8));
-                                        }
-                                    }
-                                }
-                                if (buf[offs] == 0) bf.append('"');
-                                else bf.append("...");
-                                set(command, null, bf.toString());
+                                set(command, null, toASCIIString(buf, 0, offs));
                             }
                             else if (command == token) {
                                 command = null;
@@ -321,31 +294,36 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                     if (type_data != null) {
                         switch (type_data.getTypeClass()) {
                         case pointer:
+                        case array:
                             TCFDataCache<ISymbols.Symbol> base_type_cahce = model.getSymbolInfoCache(
                                     type_data.getExeContextID(), type_data.getBaseTypeID());
                             if (base_type_cahce != null) {
                                 if (!base_type_cahce.validate(this)) return false;
                                 base_type_data = base_type_cahce.getData();
                                 if (base_type_data != null) {
+                                    offs = 0;
+                                    size = base_type_data.getSize();
                                     switch (base_type_data.getTypeClass()) {
                                     case integer:
                                     case cardinal:
                                         if (base_type_data.getSize() != 1) break;
+                                        size = 0; // read until character = 0
                                     case composite:
                                         if (base_type_data.getSize() == 0) break;
+                                        if (type_data.getTypeClass() == ISymbols.TypeClass.array &&
+                                                base_type_data.getTypeClass() == ISymbols.TypeClass.composite) break;
                                         if (!value.validate(this)) return false;
                                         IExpressions.Value v = value.getData();
                                         if (v != null) {
                                             byte[] data = v.getValue();
+                                            if (type_data.getTypeClass() == ISymbols.TypeClass.array) {
+                                                set(null, null, toASCIIString(data, 0, data.length));
+                                                return true;
+                                            }
                                             big_endian = v.isBigEndian();
                                             BigInteger a = toBigInteger(data, 0, data.length, big_endian, false);
                                             if (!a.equals(BigInteger.valueOf(0))) {
                                                 addr = a;
-                                                offs = 0;
-                                                size = 0;
-                                                if (base_type_data.getTypeClass() == ISymbols.TypeClass.composite) {
-                                                    size = base_type_data.getSize();
-                                                }
                                                 Protocol.invokeLater(this);
                                                 return false;
                                             }
@@ -480,12 +458,17 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     }
 
     void onSuspended() {
+        prev_value = next_value;
         value.reset();
         type.reset();
         type_name.reset();
         string.reset();
         children.reset();
         children.onSuspended();
+        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+    }
+
+    void onContextActionDone() {
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 
@@ -511,6 +494,34 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
 
     TCFDataCache<IExpressions.Value> getValue() {
         return value;
+    }
+
+    private String toASCIIString(byte[] data, int offs, int size) {
+        StringBuffer bf = new StringBuffer();
+        bf.append('"');
+        for (int i = 0; i < size; i++) {
+            int ch = data[offs + i] & 0xff;
+            if (ch >= ' ' && ch < 0x7f) {
+                bf.append((char)ch);
+            }
+            else {
+                switch (ch) {
+                case '\r': bf.append("\\r"); break;
+                case '\n': bf.append("\\n"); break;
+                case '\b': bf.append("\\b"); break;
+                case '\t': bf.append("\\t"); break;
+                case '\f': bf.append("\\f"); break;
+                default:
+                    bf.append('\\');
+                    bf.append((char)('0' + ch / 64));
+                    bf.append((char)('0' + ch / 8 % 8));
+                    bf.append((char)('0' + ch % 8));
+                }
+            }
+        }
+        if (data.length <= offs + size || data[offs + size] == 0) bf.append('"');
+        else bf.append("...");
+        return bf.toString();
     }
 
     private BigInteger toBigInteger(byte[] data, int offs, int size, boolean big_endian, boolean sign_extension) {
@@ -598,8 +609,22 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         }
     }
 
-    private void setTypeLabel(ILabelUpdate result, int col) {
+    private boolean setTypeLabel(ILabelUpdate result, int col, Runnable done) {
+        if (!type_name.validate(done)) return false;
         result.setLabel(type_name.getData(), col);
+        return true;
+    }
+
+    private boolean isValueChanged(IExpressions.Value x, IExpressions.Value y) {
+        if (x == null || y == null) return false;
+        byte[] xb = x.getValue();
+        byte[] yb = y.getValue();
+        if (xb == null || yb == null) return false;
+        if (xb.length != yb.length) return true;
+        for (int i = 0; i < xb.length; i++) {
+            if (xb[i] != yb[i]) return true;
+        }
+        return false;
     }
 
     @Override
@@ -610,7 +635,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         if (!value.validate()) pending = value;
         if (!type.validate()) pending = type;
         if (!type_name.validate()) pending = type_name;
-        if (!children.validate()) pending = children;
         if (pending != null) {
             pending.wait(done);
             return false;
@@ -635,7 +659,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                         result.setLabel(name, i);
                     }
                     else if (c.equals(TCFColumnPresentationExpression.COL_TYPE)) {
-                        setTypeLabel(result, i);
+                        if (!setTypeLabel(result, i, done)) return false;
                     }
                     else {
                         result.setForeground(new RGB(255, 0, 0), i);
@@ -655,7 +679,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                         result.setLabel(name, i);
                     }
                     else if (c.equals(TCFColumnPresentationExpression.COL_TYPE)) {
-                        setTypeLabel(result, i);
+                        if (!setTypeLabel(result, i, done)) return false;
                     }
                     else if (c.equals(TCFColumnPresentationExpression.COL_HEX_VALUE)) {
                         setLabel(result, null, i, 16);
@@ -663,6 +687,16 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
                     else if (c.equals(TCFColumnPresentationExpression.COL_DEC_VALUE)) {
                         setLabel(result, null, i, 10);
                     }
+                }
+            }
+        }
+        next_value = value.getData();
+        if (isValueChanged(prev_value, next_value)) {
+            RGB c = new RGB(255, 255, 0);
+            result.setBackground(c, 0);
+            if (cols != null) {
+                for (int i = 1; i < cols.length; i++) {
+                    result.setBackground(c, i);
                 }
             }
         }
@@ -689,29 +723,9 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
             byte[] data, int offs, int size, boolean big_endian, Runnable done) {
         assert offs + size <= data.length;
         int length = type.getLength();
-        if (level == 0) {
-            if (size == length) {
-                try {
-                    bf.append('"');
-                    String s = new String(data, offs, size, "ASCII");
-                    int l = s.length();
-                    String end_q = "\"";
-                    if (l > 300) {
-                        l = 300;
-                        end_q = "...";
-                    }
-                    for (int i = 0; i < l; i++) {
-                        char ch = s.charAt(i);
-                        if (ch < ' ') ch = ' ';
-                        bf.append(ch);
-                    }
-                    bf.append(end_q);
-                }
-                catch (UnsupportedEncodingException e) {
-                    Protocol.log("ASCII", e);
-                }
-                bf.append('\n');
-            }
+        if (level == 0 && size == length) {
+            bf.append(toASCIIString(data, offs, size));
+            bf.append('\n');
         }
         bf.append('[');
         if (length > 0) {
@@ -783,9 +797,21 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
         }
         if (level == 0) {
             if (!string.validate(done)) return false;
+            Throwable e = string.getError();
             String s = string.getData();
             if (s != null) {
                 bf.append(s);
+                bf.append("\n");
+            }
+            else if (e != null) {
+                String msg = "Cannot read pointed value: ";
+                if (e instanceof IErrorReport) {
+                    msg += Command.toErrorString(((IErrorReport)e).getAttributes());
+                }
+                else {
+                    msg += e.getLocalizedMessage();
+                }
+                bf.append(msg);
                 bf.append("\n");
             }
         }
@@ -897,6 +923,11 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor {
     int getRelevantModelDeltaFlags(IPresentationContext p) {
         if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(p.getId()) ||
                 IDebugUIConstants.ID_VARIABLE_VIEW.equals(p.getId())) {
+            TCFNode n = parent;
+            while (n != null) {
+                if (n instanceof TCFNodeExecContext && model.isContextActionRunning(n.id)) return 0;
+                n = n.parent;
+            }
             return super.getRelevantModelDeltaFlags(p);
         }
         return 0;

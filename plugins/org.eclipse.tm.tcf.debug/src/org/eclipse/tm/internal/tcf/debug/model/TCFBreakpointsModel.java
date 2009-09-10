@@ -249,10 +249,11 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
 
     @SuppressWarnings("unchecked")
     private Set<String> calcMarkerDeltaKeys(IMarker marker, IMarkerDelta delta) throws CoreException {
+        Set<String> keys = new HashSet<String>();
+        if (delta == null) return keys;
         assert delta.getKind() == IResourceDelta.CHANGED;
         Map<String,Object> m0 = delta.getAttributes();
         Map<String,Object> m1 = marker.getAttributes();
-        Set<String> keys = new HashSet<String>();
         if (m0 != null) keys.addAll(m0.keySet());
         if (m1 != null) keys.addAll(m1.keySet());
         for (Iterator<String> i = keys.iterator(); i.hasNext();) {

@@ -13,9 +13,11 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunch;
@@ -119,6 +121,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         new LinkedList<ISuspendTriggerListener>();
 
     private int suspend_trigger_generation;
+
+    private final Set<String> running_actions = new HashSet<String>();
+    private final Map<String,String> finished_actions = new HashMap<String,String>();
 
     private final Map<IPresentationContext,TCFModelProxy> model_proxies =
         new HashMap<IPresentationContext,TCFModelProxy>();
@@ -274,6 +279,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 ((TCFNodeExecContext)node).onContextSuspended(pc, reason, params);
             }
             runSuspendTrigger(node);
+            finished_actions.remove(context);
         }
 
         public void contextAdded(IRunControl.RunControlContext[] contexts) {
@@ -328,9 +334,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (node instanceof TCFNodeExecContext) {
                 final TCFNodeExecContext exe = (TCFNodeExecContext)node;
                 exe.onContextSuspended(pc, reason, params);
+            }
+            if (!isContextActionRunning(context)) {
                 setDebugViewSelection(context, false);
             }
             runSuspendTrigger(node);
+            finished_actions.remove(context);
         }
     };
 
@@ -487,10 +496,30 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     }
 
-    void onContextActionsStart() {
+    void onContextActionsStart(String id) {
+        running_actions.add(id);
     }
 
-    void onContextActionsDone() {
+    void onContextActionsDone(String id, String result) {
+        running_actions.remove(id);
+        finished_actions.put(id, result);
+        TCFNode n = id2node.get(id);
+        if (n instanceof TCFNodeExecContext) {
+            ((TCFNodeExecContext)n).onContextActionDone();
+        }
+        setDebugViewSelection(id, false);
+    }
+
+    String getContextActionResult(String id) {
+        return finished_actions.get(id);
+    }
+
+    boolean isContextActionRunning(String id) {
+        return running_actions.contains(id);
+    }
+
+    boolean isContextActionResultAvailable(String id) {
+        return finished_actions.containsKey(id);
     }
 
     void onProxyInstalled(final IPresentationContext p, final TCFModelProxy mp) {
@@ -505,12 +534,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private void onContextRemoved(final String[] context_ids) {
         boolean close_channel = false;
         for (String id : context_ids) {
-            launch.removeContextActions(id);
+            launch.removeContextActions(id, null);
             TCFNode node = getNode(id);
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onContextRemoved();
                 if (node.parent == launch_node) close_channel = true;
             }
+            finished_actions.remove(id);
         }
         if (close_channel) {
             // Close debug session if the last context is removed:

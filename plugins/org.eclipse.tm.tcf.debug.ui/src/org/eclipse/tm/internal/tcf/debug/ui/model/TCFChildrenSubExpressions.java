@@ -25,7 +25,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
     private final int par_size;
 
     TCFChildrenSubExpressions(TCFNode node, int par_level, int par_offs, int par_size) {
-        super(node.model.getLaunch().getChannel(), 64);
+        super(node.model.getLaunch().getChannel(), 128);
         this.node = node;
         this.par_level = par_level;
         this.par_offs = par_offs;

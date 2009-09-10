@@ -154,7 +154,7 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
         if (exited) return;
         rc.removeListener(this);
         exited = true;
-        done();
+        done("Step");
     }
 
     public void containerResumed(String[] context_ids) {

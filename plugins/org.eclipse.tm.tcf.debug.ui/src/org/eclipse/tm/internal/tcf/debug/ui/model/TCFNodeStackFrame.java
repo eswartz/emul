@@ -18,6 +18,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
@@ -212,6 +213,12 @@ public class TCFNodeStackFrame extends TCFNode {
     }
 
     @Override
+    int getRelevantModelDeltaFlags(IPresentationContext p) {
+        if (model.isContextActionRunning(parent.id)) return 0;
+        return super.getRelevantModelDeltaFlags(p);
+    }
+
+    @Override
     protected boolean getData(IChildrenCountUpdate result, Runnable done) {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
             if (!children_regs.validate(done)) return false;
@@ -345,6 +352,13 @@ public class TCFNodeStackFrame extends TCFNode {
         children_regs.onSuspended();
         children_vars.onSuspended();
         children_exps.onSuspended();
+        addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
+    }
+
+    void onContextActionDone() {
+        children_regs.onContextActionDone();
+        children_vars.onContextActionDone();
+        children_exps.onContextActionDone();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
 

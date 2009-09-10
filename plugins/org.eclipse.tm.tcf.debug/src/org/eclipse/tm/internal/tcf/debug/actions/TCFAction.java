@@ -38,8 +38,8 @@ public abstract class TCFAction implements Runnable {
         launch.addContextAction(this, context_id);
     }
 
-    protected void done() {
+    protected void done(String reason) {
         assert Protocol.isDispatchThread();
-        launch.removeContextAction(this, context_id);
+        launch.removeContextAction(this, context_id, reason);
     }
 }

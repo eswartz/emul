@@ -59,9 +59,9 @@ public class TCFLaunch extends Launch {
 
         public void onDisconnected(TCFLaunch launch);
 
-        public void onContextActionsStart(TCFLaunch launch);
+        public void onContextActionsStart(TCFLaunch launch, String ctx_id);
 
-        public void onContextActionsDone(TCFLaunch launch);
+        public void onContextActionsDone(TCFLaunch launch, String ctx_id, String result);
 
         public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data);
     }
@@ -81,9 +81,7 @@ public class TCFLaunch extends Launch {
     private String process_input_stream_id;
     private int process_exit_code;
 
-    private int context_action_cnt;
     private final HashMap<String,LinkedList<Runnable>> context_action_queue = new HashMap<String,LinkedList<Runnable>>();
-    private final HashMap<String,String> context_action_bps = new HashMap<String,String>();
 
     private HashMap<String,String> stream_ids = new HashMap<String,String>();
 
@@ -645,44 +643,31 @@ public class TCFLaunch extends Launch {
             context_action_queue.put(context_id, list);
         }
         list.add(action);
-        context_action_cnt++;
-        if (context_action_cnt == 1) {
-            for (Listener l : listeners) l.onContextActionsStart(this);
+        if (list.getFirst() == action) {
+            Protocol.invokeLater(action);
+            for (Listener l : listeners) l.onContextActionsStart(this, context_id);
         }
-        if (list.getFirst() == action) Protocol.invokeLater(action);
     }
 
-    public void removeContextAction(TCFAction action, String context_id) {
+    public void removeContextAction(TCFAction action, String context_id, String result) {
         assert Protocol.isDispatchThread();
         LinkedList<Runnable> list = context_action_queue.get(context_id);
         if (list == null) return;
         assert list.getFirst() == action;
         list.removeFirst();
-        context_action_cnt--;
         if (!list.isEmpty()) {
-            assert context_action_cnt > 0;
             Protocol.invokeLater(list.getFirst());
         }
-        else if (context_action_cnt == 0) {
-            for (Listener l : listeners) l.onContextActionsDone(this);
+        else {
+            for (Listener l : listeners) l.onContextActionsDone(this, context_id, result);
         }
     }
 
-    public void removeContextActions(String context_id) {
+    public void removeContextActions(String context_id, String result) {
         assert Protocol.isDispatchThread();
         LinkedList<Runnable> list = context_action_queue.remove(context_id);
-        if (list == null) return;
-        context_action_cnt -= list.size();
-        if (context_action_cnt == 0) {
-            for (Listener l : listeners) l.onContextActionsDone(this);
+        if (list != null && list.size() > 0) {
+            for (Listener l : listeners) l.onContextActionsDone(this, context_id, result);
         }
-    }
-
-    public void addContextActionBreakpoint(String id, String type) {
-        context_action_bps.put(id, type);
-    }
-
-    public String getContextActionBreakpoint(String id) {
-        return context_action_bps.get(id);
     }
 }
