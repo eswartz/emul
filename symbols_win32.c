@@ -292,6 +292,7 @@ int get_symbol_name(const Symbol * sym, char ** name) {
         return 0;
     }
     if (get_type_info(sym, TI_GET_SYMNAME, &ptr) < 0) return -1;
+    if (ptr != NULL && wcscmp(ptr, L"<unnamed-tag>") == 0) ptr = NULL;
     if (ptr != NULL) {
         int len = 0;
         int err = 0;
