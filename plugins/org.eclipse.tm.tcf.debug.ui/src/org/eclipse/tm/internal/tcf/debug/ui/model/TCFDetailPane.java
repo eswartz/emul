@@ -90,6 +90,11 @@ public class TCFDetailPane implements IDetailPane {
                 if (s == null) return null;
                 bf.append(s);
             }
+            else if (n instanceof TCFNodeRegister) {
+                String s = ((TCFNodeRegister)n).getDetailText(done);
+                if (s == null) return null;
+                bf.append(s);
+            }
         }
         return bf.toString();
     }

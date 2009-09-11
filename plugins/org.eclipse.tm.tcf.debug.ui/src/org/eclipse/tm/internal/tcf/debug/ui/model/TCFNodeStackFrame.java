@@ -60,6 +60,12 @@ public class TCFNodeStackFrame extends TCFNode {
                     set(null, null, null);
                     return true;
                 }
+                TCFChildrenStackTrace stack_trace_cache = parent.getStackTrace();
+                if (!stack_trace_cache.validate(this)) return false;
+                if (frame_no < 0) {
+                    set(null, null, null);
+                    return true;
+                }
                 IStackTrace st = model.getLaunch().getService(IStackTrace.class);
                 if (st == null) {
                     assert frame_no == 0;

@@ -36,6 +36,15 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
 
     public void run() {
         if (exited) return;
+        try {
+            runAction();
+        }
+        catch (Throwable x) {
+            exit(x);
+        }
+    }
+
+    private void runAction() {
         if (state == null) {
             rc.addListener(this);
             state = getContextState();

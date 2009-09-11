@@ -40,6 +40,11 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     private byte[] prev_value;
     private byte[] next_value;
 
+    private static final RGB
+        rgb_error = new RGB(255, 0, 0),
+        rgb_highlight = new RGB(255, 255, 0);
+
+
     TCFNodeRegister(TCFNode parent, final String id) {
         super(parent, id);
         IChannel channel = parent.model.getLaunch().getChannel();
@@ -81,6 +86,74 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         super.dispose();
     }
 
+    private void appendErrorText(StringBuffer bf, Throwable error) {
+        if (error == null) return;
+        bf.append("Exception: ");
+        for (;;) {
+            String s = error.getLocalizedMessage();
+            if (s == null || s.length() == 0) s = error.getClass().getName();
+            bf.append(s);
+            if (!s.endsWith("\n")) bf.append('\n');
+            Throwable cause = error.getCause();
+            if (cause == null) return;
+            bf.append("Caused by: ");
+            error = cause;
+        }
+    }
+
+    String getDetailText(Runnable done) {
+        if (!context.validate(done)) return null;
+        if (!value.validate(done)) return null;
+        StringBuffer bf = new StringBuffer();
+        appendErrorText(bf, context.getError());
+        if (bf.length() == 0) {
+            appendErrorText(bf, value.getError());
+        }
+        if (bf.length() == 0) {
+            IRegisters.RegistersContext ctx = context.getData();
+            if (ctx != null) {
+                if (ctx.getDescription() != null) {
+                    bf.append(ctx.getDescription());
+                    bf.append('\n');
+                }
+                int l = bf.length();
+                if (ctx.isReadable()) {
+                    bf.append("readable");
+                }
+                if (ctx.isReadOnce()) {
+                    if (l < bf.length()) bf.append(", ");
+                    bf.append("read once");
+                }
+                if (ctx.isWriteable()) {
+                    if (l < bf.length()) bf.append(", ");
+                    bf.append("writable");
+                }
+                if (ctx.isWriteOnce()) {
+                    if (l < bf.length()) bf.append(", ");
+                    bf.append("write once");
+                }
+                if (ctx.hasSideEffects()) {
+                    if (l < bf.length()) bf.append(", ");
+                    bf.append("side effects");
+                }
+                if (l < bf.length()) bf.append('\n');
+            }
+            byte[] v = value.getData();
+            if (v != null) {
+                bf.append("Hex: ");
+                bf.append(toNumberString(16));
+                bf.append(", ");
+                bf.append("Dec: ");
+                bf.append(toNumberString(10));
+                bf.append(", ");
+                bf.append("Oct: ");
+                bf.append(toNumberString(8));
+                bf.append('\n');
+            }
+        }
+        return bf.toString();
+    }
+
     @Override
     protected boolean getData(ILabelUpdate result, Runnable done) {
         TCFDataCache<?> pending = null;
@@ -90,61 +163,55 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             pending.wait(done);
             return false;
         }
-        IRegisters.RegistersContext ctx = context.getData();
-        Throwable error = context.getError();
         String[] cols = result.getColumnIds();
-        if (error != null) {
-            result.setForeground(new RGB(255, 0, 0), 0);
-            result.setLabel(id + ": " + error.getClass().getName() + ": " + error.getMessage(), 0);
-        }
-        else if (ctx != null) {
-            if (cols == null) {
-                setLabel(result, -1, 16);
-            }
-            else {
-                for (int i = 0; i < cols.length; i++) {
-                    String c = cols[i];
-                    if (c.equals(TCFColumnPresentationRegister.COL_NAME)) {
-                        result.setLabel(ctx.getName(), i);
-                    }
-                    else if (c.equals(TCFColumnPresentationRegister.COL_HEX_VALUE)) {
-                        setLabel(result, i, 16);
-                    }
-                    else if (c.equals(TCFColumnPresentationRegister.COL_DEC_VALUE)) {
-                        setLabel(result, i, 10);
-                    }
-                    else if (c.equals(TCFColumnPresentationRegister.COL_DESCRIPTION)) {
-                        result.setLabel(ctx.getDescription(), i);
-                    }
-                    else if (c.equals(TCFColumnPresentationRegister.COL_READBLE)) {
-                        result.setLabel(bool(ctx.isReadable()), i);
-                    }
-                    else if (c.equals(TCFColumnPresentationRegister.COL_READ_ONCE)) {
-                        result.setLabel(bool(ctx.isReadOnce()), i);
-                    }
-                    else if (c.equals(TCFColumnPresentationRegister.COL_WRITEABLE)) {
-                        result.setLabel(bool(ctx.isWriteable()), i);
-                    }
-                    else if (c.equals(TCFColumnPresentationRegister.COL_WRITE_ONCE)) {
-                        result.setLabel(bool(ctx.isWriteOnce()), i);
-                    }
-                    else if (c.equals(TCFColumnPresentationRegister.COL_SIDE_EFFECTS)) {
-                        result.setLabel(bool(ctx.hasSideEffects()), i);
-                    }
-                    else if (c.equals(TCFColumnPresentationRegister.COL_VOLATILE)) {
-                        result.setLabel(bool(ctx.isVolatile()), i);
-                    }
-                    else if (c.equals(TCFColumnPresentationRegister.COL_FLOAT)) {
-                        result.setLabel(bool(ctx.isFloat()), i);
-                    }
-                    else if (c.equals(TCFColumnPresentationRegister.COL_MNEMONIC)) {
-                        result.setLabel(getMnemonic(ctx), i);
-                    }
-                }
-            }
+        if (cols == null) {
+            setLabel(result, -1, 16);
         }
         else {
-            result.setLabel(id, 0);
+            IRegisters.RegistersContext ctx = context.getData();
+            for (int i = 0; i < cols.length; i++) {
+                String c = cols[i];
+                if (ctx == null) {
+                    result.setForeground(rgb_error, i);
+                    result.setLabel("N/A", i);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_NAME)) {
+                    result.setLabel(ctx.getName(), i);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_HEX_VALUE)) {
+                    setLabel(result, i, 16);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_DEC_VALUE)) {
+                    setLabel(result, i, 10);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_DESCRIPTION)) {
+                    result.setLabel(ctx.getDescription(), i);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_READBLE)) {
+                    result.setLabel(bool(ctx.isReadable()), i);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_READ_ONCE)) {
+                    result.setLabel(bool(ctx.isReadOnce()), i);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_WRITEABLE)) {
+                    result.setLabel(bool(ctx.isWriteable()), i);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_WRITE_ONCE)) {
+                    result.setLabel(bool(ctx.isWriteOnce()), i);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_SIDE_EFFECTS)) {
+                    result.setLabel(bool(ctx.hasSideEffects()), i);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_VOLATILE)) {
+                    result.setLabel(bool(ctx.isVolatile()), i);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_FLOAT)) {
+                    result.setLabel(bool(ctx.isFloat()), i);
+                }
+                else if (c.equals(TCFColumnPresentationRegister.COL_MNEMONIC)) {
+                    result.setLabel(getMnemonic(ctx), i);
+                }
+            }
         }
         boolean changed = false;
         next_value = value.getData();
@@ -159,11 +226,10 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             }
         }
         if (changed) {
-            RGB c = new RGB(255, 255, 0);
-            result.setBackground(c, 0);
+            result.setBackground(rgb_highlight, 0);
             if (cols != null) {
                 for (int i = 1; i < cols.length; i++) {
-                    result.setBackground(c, i);
+                    result.setBackground(rgb_highlight, i);
                 }
             }
         }
@@ -173,16 +239,12 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
     private void setLabel(ILabelUpdate result, int col, int radix) {
         IRegisters.RegistersContext ctx = context.getData();
-        Throwable error = value.getError();
+        Throwable error = context.getError();
+        if (error == null) error = value.getError();
         byte[] data = value.getData();
-        if (error != null) {
-            if (col >= 0) {
-                result.setForeground(new RGB(255, 0, 0), col);
-                result.setLabel(error.getMessage(), col);
-            }
-            else {
-                result.setLabel(ctx.getName() + ": " + error.getMessage(), 0);
-            }
+        if (error != null || ctx == null || data == null) {
+            result.setForeground(rgb_error, col);
+            result.setLabel("N/A", col);
         }
         else if (data != null) {
             String s = toNumberString(radix);

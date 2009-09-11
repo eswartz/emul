@@ -28,6 +28,7 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
+// TODO: implement Instruction Stepping Mode user action
 abstract class StepCommand implements IDebugCommandHandler {
 
     protected final TCFModel model;
