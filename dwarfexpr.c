@@ -54,7 +54,8 @@ static ObjectInfo * get_parent_function(ObjectInfo * Info) {
 }
 
 static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
-#if defined(__linux__) && defined(__i386__) || \
+#if !ENABLE_DebugContext
+#elif defined(__linux__) && defined(__i386__) || \
     defined(_WRS_KERNEL) && (CPU_FAMILY==SIMNT || CPU_FAMILY==I80X86)
     ContextAddress IP, FP;
     if (is_top_frame(Ctx, Frame)) {
@@ -225,7 +226,8 @@ static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
 }
 
 static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
-#if defined(__linux__) && defined(__i386__) || \
+#if !ENABLE_DebugContext
+#elif defined(__linux__) && defined(__i386__) || \
    defined(_WRS_KERNEL) && (CPU_FAMILY==SIMNT || CPU_FAMILY==I80X86)
     if (is_top_frame(Ctx, Frame)) {
         switch (rg) {

@@ -216,6 +216,7 @@ unsigned signal_code(int signal) {
 
 #if ENABLE_DebugContext
 
+#define pidl2ctxp(A) ((Context *)((char *)(A) - offsetof(Context, pidl)))
 #define CONTEXT_PID_ROOT_SIZE 1024
 #define CONTEXT_PID_HASH(PID) ((unsigned)(PID) % CONTEXT_PID_ROOT_SIZE)
 static LINK context_pid_root[CONTEXT_PID_ROOT_SIZE];

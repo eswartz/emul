@@ -22,13 +22,53 @@
 #include "config.h"
 #include "link.h"
 
+typedef uintptr_t ContextAddress; /* Type to represent byted address inside context memory */
+
+#if ENABLE_DebugContext
+#if defined(WIN32) || defined(__CYGWIN__)
+
+typedef CONTEXT REG_SET;
+#define get_regs_SP(x) ((x).Esp)
+#define get_regs_BP(x) ((x).Ebp)
+#define get_regs_PC(x) ((x).Eip)
+#define set_regs_PC(x,y) (x).Eip = (y)
+
+#elif defined(_WRS_KERNEL)
+
+#include <regs.h>
+
+#elif defined(__APPLE__)
+
+#include <mach/thread_status.h>
+typedef x86_thread_state32_t REG_SET;
+#define get_regs_SP(x) ((x).__esp)
+#define get_regs_BP(x) ((x).__ebp)
+#define get_regs_PC(x) ((x).__eip)
+#define set_regs_PC(x,y) (x).__eip = (unsigned long)(y)
+
+#else
+
+#include <sys/user.h>
+typedef struct user_regs_struct REG_SET;
+#if __WORDSIZE == 64
+#  define get_regs_SP(x) ((x).rsp)
+#  define get_regs_BP(x) ((x).rbp)
+#  define get_regs_PC(x) ((x).rip)
+#  define set_regs_PC(x,y) (x).rip = (unsigned long)(y)
+#else
+#  define get_regs_SP(x) ((x).esp)
+#  define get_regs_BP(x) ((x).ebp)
+#  define get_regs_PC(x) ((x).eip)
+#  define set_regs_PC(x,y) (x).eip = (unsigned long)(y)
+#endif
+
+#endif
+#endif /* ENABLE_DebugContext */
+
 extern LINK context_root;
 
 #define ctxl2ctxp(A)    ((Context *)((char *)(A) - offsetof(Context, ctxl)))
-#define pidl2ctxp(A)    ((Context *)((char *)(A) - offsetof(Context, pidl)))
 #define cldl2ctxp(A)    ((Context *)((char *)(A) - offsetof(Context, cldl)))
-
-typedef uintptr_t ContextAddress; /* Type to represent byted address inside context memory */
 
 typedef struct Context Context;
 
@@ -57,9 +97,11 @@ struct Context {
     unsigned long       sig_dont_stop;      /* bitset of signals that should not be intercepted by the debugger */
     unsigned long       sig_dont_pass;      /* bitset of signals that should not be delivered to the context */
     int                 signal;             /* signal that stopped this context */
+#if ENABLE_DebugContext
     REG_SET             regs;               /* copy of context registers, updated when context stops */
     int                 regs_error;         /* if not 0, 'regs' is invalid */
     int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
+#endif
     void *              stack_trace;        /* pointer to StackTrace service data cache */
     void *              memory_map;         /* pointer to MemoryMap service data cache */
 #if ENABLE_RCBP_TEST

@@ -70,12 +70,6 @@ typedef int ssize_t;
 
 typedef int socklen_t;
 
-typedef CONTEXT REG_SET;
-#define get_regs_SP(x) ((x).Esp)
-#define get_regs_BP(x) ((x).Ebp)
-#define get_regs_PC(x) ((x).Eip)
-#define set_regs_PC(x,y) (x).Eip = (y)
-
 extern unsigned char BREAK_INST[];  /* breakpoint instruction */
 #define BREAK_SIZE 1                /* breakpoint instruction size */
 
@@ -281,7 +275,6 @@ extern char * canonicalize_file_name(const char * path);
 
 #include <vxWorks.h>
 #include <inetLib.h>
-#include <regs.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
 #include <netinet/tcp.h>
@@ -352,9 +345,6 @@ extern const char * loc_gai_strerror(int ecode);
 #include <limits.h>
 #include <stdint.h>
 
-#include <mach/thread_status.h>
-typedef x86_thread_state32_t REG_SET;
-
 #define loc_freeaddrinfo freeaddrinfo
 #define loc_getaddrinfo getaddrinfo
 #define loc_gai_strerror gai_strerror
@@ -365,11 +355,6 @@ typedef x86_thread_state32_t REG_SET;
 #define closesocket close
 #define ifr_netmask ifr_addr
 #define canonicalize_file_name(path)    realpath(path, NULL)
-
-#define get_regs_SP(x) ((x).__esp)
-#define get_regs_BP(x) ((x).__ebp)
-#define get_regs_PC(x) ((x).__eip)
-#define set_regs_PC(x,y) (x).__eip = (unsigned long)(y)
 
 #ifndef SA_LEN
 # ifdef HAVE_SOCKADDR_SA_LEN
@@ -434,20 +419,6 @@ extern char **environ;
 #include <net/if.h>
 #include <limits.h>
 #include <stdint.h>
-
-#include <sys/user.h>
-typedef struct user_regs_struct REG_SET;
-#if __WORDSIZE == 64
-#  define get_regs_SP(x) ((x).rsp)
-#  define get_regs_BP(x) ((x).rbp)
-#  define get_regs_PC(x) ((x).rip)
-#  define set_regs_PC(x,y) (x).rip = (unsigned long)(y)
-#else
-#  define get_regs_SP(x) ((x).esp)
-#  define get_regs_BP(x) ((x).ebp)
-#  define get_regs_PC(x) ((x).eip)
-#  define set_regs_PC(x,y) (x).eip = (unsigned long)(y)
-#endif
 
 #define loc_freeaddrinfo freeaddrinfo
 #define loc_getaddrinfo getaddrinfo
