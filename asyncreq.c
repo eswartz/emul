@@ -121,7 +121,7 @@ static void * worker_thread_handler(void * x) {
             break;
 
         case AsyncReqConnect:           /* Connect to socket */
-            req->u.acc.rval = connect(req->u.con.sock, req->u.con.addr, req->u.con.addrlen);
+            req->u.con.rval = connect(req->u.con.sock, req->u.con.addr, req->u.con.addrlen);
             if (req->u.con.rval == -1) {
                 req->error = errno;
                 assert(req->error);
@@ -134,7 +134,7 @@ static void * worker_thread_handler(void * x) {
 #else
         case AsyncReqWaitpid:           /* Wait for process change */
             req->u.wpid.rval = waitpid(req->u.wpid.pid, &req->u.wpid.status, req->u.wpid.options);
-            if (req->u.con.rval == -1) {
+            if (req->u.wpid.rval == -1) {
                 req->error = errno;
                 assert(req->error);
             }
@@ -147,7 +147,7 @@ static void * worker_thread_handler(void * x) {
             tv.tv_usec = req->u.select.timeout.tv_nsec / 1000;
             req->u.select.rval = select(req->u.select.nfds, &req->u.select.readfds,
                         &req->u.select.writefds, &req->u.select.errorfds, &tv);
-            if (req->u.con.rval == -1) {
+            if (req->u.select.rval == -1) {
                 req->error = errno;
                 assert(req->error);
             }
