@@ -32,27 +32,83 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
             test_suite.done(this, null);
         }
         else {
-            subsrcibe();
+            connect();
         }
     }
 
-    private void subsrcibe() {
-        streams.subscribe(IDiagnostics.NAME, this, new IStreams.DoneSubscribe() {
-
-            public void doneSubscribe(IToken token, Exception error) {
+    private void connect() {
+        diag.createTestStreams(1001, 771, new IDiagnostics.DoneCreateTestStreams() {
+            public void doneCreateTestStreams(IToken token, Throwable error, final String inp_id, final String out_id) {
                 if (error != null) {
                     exit(error);
                 }
                 else {
-                    createStream();
+                    TestStreams.this.inp_id = inp_id;
+                    TestStreams.this.out_id = out_id;
+                    if (stream_ids.size() != 0) {
+                        exit(new Exception("Stream events without subscription"));
+                        return;
+                    }
+                    streams.connect(inp_id, new IStreams.DoneConnect() {
+                        public void doneConnect(IToken token, Exception error) {
+                            if (error != null) {
+                                exit(error);
+                            }
+                            else {
+                                // write some data (zeros)
+                                // this data can be dropped by Streams since we are not connected yet
+                                final byte[] data_out = new byte[rnd.nextInt(10000) + 1000];
+                                IStreams.DoneWrite done_write = new IStreams.DoneWrite() {
+                                    public void doneWrite(IToken token, Exception error) {
+                                        if (error != null) exit(error);
+                                    }
+                                };
+                                int offs = 0;
+                                while (offs < data_out.length) {
+                                    int size = rnd.nextInt(400);
+                                    if (size > data_out.length - offs) size = data_out.length - offs;
+                                    streams.write(inp_id, data_out, offs, size, done_write);
+                                    offs += size;
+                                }
+                                streams.connect(out_id, new IStreams.DoneConnect() {
+                                    public void doneConnect(IToken token, Exception error) {
+                                        if (error != null) {
+                                            exit(error);
+                                        }
+                                        else {
+                                            testReadWrite(true, new Runnable() {
+                                                public void run() {
+                                                    TestStreams.this.inp_id = null;
+                                                    TestStreams.this.out_id = null;
+                                                    subscribe();
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
                 }
             }
         });
     }
 
-    private void createStream() {
-        diag.createTestStreams(1153, 947, new IDiagnostics.DoneCreateTestStreams() {
+    private void subscribe() {
+        streams.subscribe(IDiagnostics.NAME, this, new IStreams.DoneSubscribe() {
+            public void doneSubscribe(IToken token, Exception error) {
+                if (error != null) {
+                    exit(error);
+                }
+                else {
+                    createStreams();
+                }
+            }
+        });
+    }
 
+    private void createStreams() {
+        diag.createTestStreams(1153, 947, new IDiagnostics.DoneCreateTestStreams() {
             public void doneCreateTestStreams(IToken token, Throwable error, String inp_id, String out_id) {
                 if (error != null) {
                     exit(error);
@@ -64,23 +120,25 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
                         if (id.equals(inp_id)) continue;
                         if (id.equals(out_id)) continue;
                         streams.disconnect(id, new IStreams.DoneDisconnect() {
-
                             public void doneDisconnect(IToken token, Exception error) {
-                                if (error != null) {
-                                    exit(error);
-                                }
+                                if (error != null) exit(error);
                             }
                         });
                     }
-                    testReadWrite();
+                    testReadWrite(false, new Runnable() {
+                        public void run() {
+                            unsubscribe();
+                        }
+                    });
                 }
             }
         });
     }
 
-    private void testReadWrite() {
+    private void testReadWrite(final boolean skip_zeros, final Runnable done) {
         final byte[] data_out = new byte[rnd.nextInt(10000) + 1000];
         new Random().nextBytes(data_out);
+        if (skip_zeros) data_out[0] = 1;
         final HashSet<IToken> cmds = new HashSet<IToken>();
         IStreams.DoneRead done_read = new IStreams.DoneRead() {
 
@@ -90,28 +148,24 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
             public void doneRead(IToken token, Exception error, int lost_size, byte[] data, boolean eos) {
                 cmds.remove(token);
                 if (error != null) {
-                    if (!this.eos) {
-                        exit(error);
-                        return;
-                    }
+                    if (!this.eos) exit(error);
                 }
                 else if (lost_size != 0) {
                     exit(new Exception("Streams service: unexpected data loss"));
-                    return;
+                }
+                else if (this.eos) {
+                    if (!eos || data != null && data.length > 0) {
+                        exit(new Exception("Streams service: unexpected successful read after EOS"));
+                    }
                 }
                 else {
-                    if (this.eos) {
-                        if (!eos || data != null && data.length > 0) {
-                            exit(new Exception("Streams service: unexpected successful read after EOS"));
+                    if (data != null) {
+                        if (offs + data.length > data_out.length) {
+                            exit(new Exception("Streams service: read returns more data then expected"));
+                            return;
                         }
-                    }
-                    else {
-                        if (data != null) {
-                            if (offs + data.length > data_out.length) {
-                                exit(new Exception("Streams service: read returns more data then expected"));
-                                return;
-                            }
-                            for (int n = 0; n < data.length; n++) {
+                        for (int n = 0; n < data.length; n++) {
+                            if (!skip_zeros || offs > 0 || data[n] != 0) {
                                 if (data[n] != data_out[offs]) {
                                     exit(new Exception("Streams service: data error: " + data[n] + " != " + data_out[offs]));
                                     return;
@@ -119,19 +173,18 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
                                 offs++;
                             }
                         }
-                        if (eos) {
-                            if (offs != data_out.length) {
-                                exit(new Exception("Streams service: unexpected EOS"));
-                                return;
-                            }
-                            this.eos = true;
+                    }
+                    if (eos) {
+                        if (offs != data_out.length) {
+                            exit(new Exception("Streams service: unexpected EOS"));
                         }
-                        if (!this.eos && cmds.size() < 8) {
-                            cmds.add(streams.read(out_id, 241, this));
-                        }
+                        this.eos = true;
+                    }
+                    else if (cmds.size() < 8) {
+                        cmds.add(streams.read(out_id, 241, this));
                     }
                 }
-                if (cmds.isEmpty()) disposeStreams();
+                if (cmds.isEmpty()) disposeStreams(done);
             }
         };
         cmds.add(streams.read(out_id, 223, done_read));
@@ -140,7 +193,6 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
         cmds.add(streams.read(out_id, 233, done_read));
 
         IStreams.DoneWrite done_write = new IStreams.DoneWrite() {
-
             public void doneWrite(IToken token, Exception error) {
                 if (error != null) exit(error);
             }
@@ -153,36 +205,33 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
             offs += size;
         }
         streams.eos(inp_id, new IStreams.DoneEOS() {
-
             public void doneEOS(IToken token, Exception error) {
                 if (error != null) exit(error);
             }
         });
     }
 
-    private void disposeStreams() {
+    private void disposeStreams(final Runnable done) {
         final HashSet<IToken> cmds = new HashSet<IToken>();
         IStreams.DoneDisconnect done_disconnect = new IStreams.DoneDisconnect() {
-
             public void doneDisconnect(IToken token, Exception error) {
                 if (error != null) {
                     exit(error);
                 }
                 else {
                     cmds.remove(token);
-                    if (cmds.isEmpty()) unsubscribe();
+                    if (cmds.isEmpty() && test_suite.isActive(TestStreams.this)) done.run();
                 }
             }
         };
         IDiagnostics.DoneDisposeTestStream done_dispose = new IDiagnostics.DoneDisposeTestStream() {
-
             public void doneDisposeTestStream(IToken token, Throwable error) {
                 if (error != null) {
                     exit(error);
                 }
                 else {
                     cmds.remove(token);
-                    if (cmds.isEmpty()) unsubscribe();
+                    if (cmds.isEmpty() && test_suite.isActive(TestStreams.this)) done.run();
                 }
             }
         };
@@ -194,7 +243,6 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
 
     private void unsubscribe() {
         streams.unsubscribe(IDiagnostics.NAME, this, new IStreams.DoneUnsubscribe() {
-
             public void doneUnsubscribe(IToken token, Exception error) {
                 if (error != null || test_count >= 10) {
                     exit(error);
@@ -204,7 +252,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
                     stream_ids.clear();
                     inp_id = null;
                     out_id = null;
-                    subsrcibe();
+                    connect();
                 }
             }
         });
@@ -225,7 +273,6 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
             if (inp_id.equals(stream_id)) exit(new Exception("Invalid stream ID in Streams.created event"));
             if (out_id.equals(stream_id)) exit(new Exception("Invalid stream ID in Streams.created event"));
             streams.disconnect(stream_id, new IStreams.DoneDisconnect() {
-
                 public void doneDisconnect(IToken token, Exception error) {
                     if (error != null) {
                         exit(error);
