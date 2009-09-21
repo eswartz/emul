@@ -74,6 +74,7 @@ static void elf_dispose(ELF_File * file) {
         }
         loc_free(file->sections);
     }
+    loc_free(file->pheaders);
     loc_free(file->str_pool);
     loc_free(file->name);
     loc_free(file);

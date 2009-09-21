@@ -665,6 +665,7 @@ static void free_dwarf_cache(ELF_File * File) {
         }
         loc_free(Cache->mObjectHash);
         loc_free(Cache->mSymbolHash);
+        loc_free(Cache->mSymSections);
         loc_free(Cache);
         File->dwarf_dt_cache = NULL;
     }
