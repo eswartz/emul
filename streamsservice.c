@@ -273,6 +273,7 @@ static void advance_stream_buffer(VirtualStream * stream) {
 }
 
 static StreamClient * create_client(VirtualStream * stream, Channel * channel) {
+    unsigned len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
     StreamClient * client = loc_alloc_zero(sizeof(StreamClient));
     list_init(&client->link_hash);
     list_init(&client->link_stream);
@@ -281,6 +282,7 @@ static StreamClient * create_client(VirtualStream * stream, Channel * channel) {
     list_init(&client->write_requests);
     client->stream = stream;
     client->channel = channel;
+    client->pos = stream->pos - len;
     list_add_first(&client->link_hash, &handle_hash[get_client_hash(stream->id, channel)]);
     list_add_first(&client->link_stream, &stream->clients);
     list_add_first(&client->link_all, &clients);
