@@ -31,7 +31,7 @@
 typedef struct Symbol {
     Context * ctx;
     int sym_class;
-    char location[64];
+    int location[16];
 } Symbol;
 
 #define SYM_CLASS_UNKNOWN       0
@@ -123,7 +123,10 @@ extern int get_symbol_value(const Symbol * sym, void ** value, size_t * size);
 extern int get_symbol_address(const Symbol * sym, int frame, ContextAddress * address);
 
 /* Get a type that represents a pointer to given base type */
-extern int get_symbol_pointer(const Symbol * sym, Symbol * ptr);
+extern int get_pointer_symbol(const Symbol * sym, Symbol * ptr);
+
+/* Get a type that represents an array of elements of given base type */
+extern int get_array_symbol(const Symbol * sym, size_t length, Symbol * ptr);
 
 /*************************************************************************************************/
 

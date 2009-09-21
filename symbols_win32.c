@@ -24,7 +24,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <wchar.h>
 #include "errors.h"
+#include "events.h"
 #include "tcf_elf.h"
 #include "myalloc.h"
 #include "symbols.h"
@@ -46,12 +48,73 @@
 typedef struct SymLocation {
     ULONG64 module;
     ULONG index;
-    unsigned pointer;
+    size_t size;
+    size_t pointer;
+    unsigned char sign;
+    unsigned char real;
     void * address;
 } SymLocation;
 
+#define LOC(sym) ((SymLocation *)(sym)->location)
+
+struct TypeInfo {
+    char * name;
+    unsigned char size;
+    unsigned char sign;
+    unsigned char real;
+};
+
+static const struct TypeInfo basic_type_info[] = {
+    { "char",               sizeof(char), 1, 0 },
+    { "unsigned char",      sizeof(char), 0, 0 },
+    { "signed char",        sizeof(char), 1, 0 },
+    { "short",              sizeof(short), 1, 0 },
+    { "unsigned short",     sizeof(short), 0, 0 },
+    { "signed short",       sizeof(short), 1, 0 },
+    { "int",                sizeof(int), 1, 0 },
+    { "unsigned",           sizeof(int), 0, 0 },
+    { "unsigned int",       sizeof(int), 0, 0 },
+    { "signed int",         sizeof(int), 1, 0 },
+    { "long",               sizeof(long), 1, 0 },
+    { "unsigned long",      sizeof(long), 0, 0 },
+    { "signed long",        sizeof(long), 1, 0 },
+    { "long int",           sizeof(long), 1, 0 },
+    { "unsigned long int",  sizeof(long), 0, 0 },
+    { "signed long int",    sizeof(long), 1, 0 },
+    { "long long",          sizeof(int64_t), 1, 0 },
+    { "unsigned long long", sizeof(int64_t), 0, 0 },
+    { "signed long long",   sizeof(int64_t), 1, 0 },
+    { "float",              sizeof(float), 1, 1 },
+    { "double",             sizeof(double), 1, 1 },
+    { "long double",        sizeof(long double), 1, 1 },
+    { NULL }
+};
+
 static char * tmp_buf = NULL;
 static int tmp_buf_size = 0;
+
+static Symbol * sym_buf = NULL;
+static size_t sym_buf_pos = 0;
+static size_t sym_buf_len = 0;
+static int sym_buf_event_posted = 0;
+
+static void sym_buf_event(void * arg) {
+    sym_buf_pos = 0;
+    sym_buf_event_posted = 0;
+}
+
+static size_t add_to_sym_buf(Symbol * sym) {
+    if (sym_buf_pos >= sym_buf_len) {
+        sym_buf_len = sym_buf_len == 0 ? 16 : sym_buf_len * 2;
+        sym_buf = loc_realloc(sym_buf, sym_buf_len * sizeof(Symbol));
+    }
+    sym_buf[sym_buf_pos++] = *sym;
+    if (!sym_buf_event_posted) {
+        post_event(sym_buf_event, NULL);
+        sym_buf_event_posted = 1;
+    }
+    return sym_buf_pos;
+}
 
 static int get_stack_frame(Context * ctx, int frame, IMAGEHLP_STACK_FRAME * stack_frame) {
     memset(stack_frame, 0, sizeof(IMAGEHLP_STACK_FRAME));
@@ -70,7 +133,7 @@ static int get_sym_info(const Symbol * sym, DWORD index, SYMBOL_INFO ** res) {
 
     info->SizeOfStruct = sizeof(SYMBOL_INFO);
     info->MaxNameLen = MAX_SYM_NAME;
-    if (!SymFromIndex(process, ((SymLocation *)sym->location)->module, index, info)) {
+    if (!SymFromIndex(process, LOC(sym)->module, index, info)) {
         set_win32_errno(GetLastError());
         return -1;
     }
@@ -124,11 +187,10 @@ static void tag2symclass(Symbol * sym, int tag) {
 }
 
 static void syminfo2symbol(Context * ctx, SYMBOL_INFO * info, Symbol * sym) {
-    SymLocation * loc = (SymLocation *)sym->location;
     memset(sym, 0, sizeof(Symbol));
     sym->ctx = ctx;
-    loc->module = info->ModBase;
-    loc->index = info->Index;
+    LOC(sym)->module = info->ModBase;
+    LOC(sym)->index = info->Index;
     tag2symclass(sym, info->Tag);
 }
 
@@ -138,7 +200,7 @@ static int get_type_tag(Symbol * type, DWORD * tag) {
         if (get_type_info(type, TI_GET_SYMTAG, &dword) < 0) return -1;
         if (dword != SymTagTypedef && dword != SymTagFunction && dword != SymTagData) break;
         if (get_type_info(type, TI_GET_TYPE, &dword) < 0) return -1;
-        ((SymLocation *)type->location)->index = dword;
+        LOC(type)->index = dword;
     }
     type->sym_class = SYM_CLASS_TYPE;
     *tag = dword;
@@ -148,63 +210,118 @@ static int get_type_tag(Symbol * type, DWORD * tag) {
 char * symbol2id(const Symbol * sym) {
     static char buf[256];
     const SymLocation * loc = (const SymLocation *)sym->location;
-    snprintf(buf, sizeof(buf), "SYM%llX.%lX.%X.%s",
-        loc->module, loc->index, loc->pointer, container_id(sym->ctx));
+    if (loc->pointer) {
+        char base[256];
+        assert(loc->pointer <= sym_buf_pos);
+        assert(sym->ctx == sym_buf[loc->pointer - 1].ctx);
+        assert(sym->sym_class == SYM_CLASS_TYPE);
+        strcpy(base, symbol2id(sym_buf + (loc->pointer - 1)));
+        snprintf(buf, sizeof(buf), "PTR%X.%s", loc->size, base);
+    }
+    else {
+        snprintf(buf, sizeof(buf), "SYM%llX.%lX.%X.%d.%d.%s",
+            loc->module, loc->index, loc->size,
+            loc->sign, loc->real, container_id(sym->ctx));
+    }
     return buf;
 }
 
 int id2symbol(char * id, Symbol * sym) {
     ULONG64 module = 0;
     ULONG index = 0;
-    unsigned pointer = 0;
-    SymLocation * loc = (SymLocation *)sym->location;
+    size_t pointer = 0;
+    size_t size = 0;
+    unsigned char sign = 0;
+    unsigned char real = 0;
     char * p;
 
-    if (id == NULL || id[0] != 'S' || id[1] != 'Y' || id[2] != 'M') {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    p = id + 3;
-    for (;;) {
-        if (*p >= '0' && *p <= '9') module = (module << 4) | (*p - '0');
-        else if (*p >= 'A' && *p <= 'F') module = (module << 4) | (*p - 'A' + 10);
-        else break;
-        p++;
-    }
-    if (*p++ != '.') {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    for (;;) {
-        if (*p >= '0' && *p <= '9') index = (index << 4) | (*p - '0');
-        else if (*p >= 'A' && *p <= 'F') index = (index << 4) | (*p - 'A' + 10);
-        else break;
-        p++;
-    }
-    if (*p++ != '.') {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    for (;;) {
-        if (*p >= '0' && *p <= '9') pointer = (pointer << 4) | (*p - '0');
-        else if (*p >= 'A' && *p <= 'F') pointer = (pointer << 4) | (*p - 'A' + 10);
-        else break;
-        p++;
-    }
-    if (*p++ != '.') {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
     memset(sym, 0, sizeof(Symbol));
-    sym->ctx = id2ctx(p);
-    loc->module = module;
-    loc->index = index;
-    loc->pointer = pointer;
+    if (id != NULL && id[0] == 'P' && id[1] == 'T' && id[2] == 'R') {
+        p = id + 3;
+        for (;;) {
+            if (*p >= '0' && *p <= '9') size = (size << 4) | (*p - '0');
+            else if (*p >= 'A' && *p <= 'F') size = (size << 4) | (*p - 'A' + 10);
+            else break;
+            p++;
+        }
+        if (*p++ != '.') {
+            errno = ERR_INV_CONTEXT;
+            return -1;
+        }
+        if (id2symbol(p, sym)) return -1;
+        pointer = add_to_sym_buf(sym);
+    }
+    else if (id != NULL && id[0] == 'S' && id[1] == 'Y' && id[2] == 'M') {
+        p = id + 3;
+        for (;;) {
+            if (*p >= '0' && *p <= '9') module = (module << 4) | (*p - '0');
+            else if (*p >= 'A' && *p <= 'F') module = (module << 4) | (*p - 'A' + 10);
+            else break;
+            p++;
+        }
+        if (*p++ != '.') {
+            errno = ERR_INV_CONTEXT;
+            return -1;
+        }
+        for (;;) {
+            if (*p >= '0' && *p <= '9') index = (index << 4) | (*p - '0');
+            else if (*p >= 'A' && *p <= 'F') index = (index << 4) | (*p - 'A' + 10);
+            else break;
+            p++;
+        }
+        if (*p++ != '.') {
+            errno = ERR_INV_CONTEXT;
+            return -1;
+        }
+        for (;;) {
+            if (*p >= '0' && *p <= '9') size = (size << 4) | (*p - '0');
+            else if (*p >= 'A' && *p <= 'F') size = (size << 4) | (*p - 'A' + 10);
+            else break;
+            p++;
+        }
+        if (*p++ != '.') {
+            errno = ERR_INV_CONTEXT;
+            return -1;
+        }
+        if (*p == '1') {
+            sign = 1;
+        }
+        else if (*p != '0') {
+            errno = ERR_INV_CONTEXT; return -1;
+        }
+        p++;
+        if (*p++ != '.') {
+            errno = ERR_INV_CONTEXT;
+            return -1;
+        }
+        if (*p == '1') {
+            real = 1;
+        }
+        else if (*p != '0') {
+            errno = ERR_INV_CONTEXT; return -1;
+        }
+        p++;
+        if (*p++ != '.') {
+            errno = ERR_INV_CONTEXT;
+            return -1;
+        }
+        sym->ctx = id2ctx(p);
+    }
+    else {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    LOC(sym)->module = module;
+    LOC(sym)->index = index;
+    LOC(sym)->pointer = pointer;
+    LOC(sym)->size = size;
+    LOC(sym)->sign = sign;
+    LOC(sym)->real = real;
     if (sym->ctx == NULL) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
-    if (loc->pointer) {
+    if (LOC(sym)->pointer || LOC(sym)->size) {
         sym->sym_class = SYM_CLASS_TYPE;
     }
     else {
@@ -221,8 +338,20 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
     DWORD tag = 0;
     DWORD base = 0;
 
-    if (((SymLocation *)sym->location)->pointer) {
-        *type_class = TYPE_CLASS_POINTER;
+    if (LOC(sym)->pointer) {
+        *type_class = LOC(sym)->size == 0 ? TYPE_CLASS_POINTER : TYPE_CLASS_ARRAY;
+        return 0;
+    }
+    if (LOC(sym)->size) {
+        if (LOC(sym)->real) {
+            *type_class = TYPE_CLASS_REAL;
+        }
+        else if (LOC(sym)->sign) {
+            *type_class = TYPE_CLASS_INTEGER;
+        }
+        else {
+            *type_class = TYPE_CLASS_CARDINAL;
+        }
         return 0;
     }
     if (get_type_tag(&type, &tag)) return -1;
@@ -287,11 +416,23 @@ int get_symbol_name(const Symbol * sym, char ** name) {
     WCHAR * ptr = NULL;
     char * res = NULL;
 
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer) {
         *name = NULL;
         return 0;
     }
-    if (get_type_info(sym, TI_GET_SYMNAME, &ptr) < 0) return -1;
+    if (LOC(sym)->size) {
+        const struct TypeInfo * p = basic_type_info;
+        while (p->name != NULL) {
+            if (p->size == LOC(sym)->size && p->sign == LOC(sym)->sign && p->real == LOC(sym)->real) {
+                res = loc_strdup(p->name);
+                break;
+            }
+            p++;
+        }
+        *name = res;
+        return 0;
+    }
+    if (get_type_info(sym, TI_GET_SYMNAME, &ptr) < 0) ptr = NULL;
     if (ptr != NULL && wcscmp(ptr, L"<unnamed-tag>") == 0) ptr = NULL;
     if (ptr != NULL) {
         int len = 0;
@@ -316,6 +457,29 @@ int get_symbol_name(const Symbol * sym, char ** name) {
         memcpy(res, tmp_buf, len);
         res[len] = 0;
     }
+    else {
+        DWORD tag = 0;
+        Symbol type = *sym;
+        if (get_type_tag(&type, &tag)) return -1;
+        if (tag == SymTagBaseType) {
+            size_t size = 0;
+            int type_class = 0;
+            unsigned char sign = 0;
+            unsigned char real = 0;
+            const struct TypeInfo * p = basic_type_info;
+            if (get_symbol_size(&type, STACK_NO_FRAME, &size)) return -1;
+            if (get_symbol_type_class(&type, &type_class)) return -1;
+            if (type_class == TYPE_CLASS_INTEGER) sign = 1;
+            else if (type_class == TYPE_CLASS_INTEGER) real = sign = 1;
+            while (p->name != NULL) {
+                if (p->size == size && p->sign == sign && p->real == real) {
+                    res = loc_strdup(p->name);
+                    break;
+                }
+                p++;
+            }
+        }
+    }
     *name = res;
     return 0;
 }
@@ -325,8 +489,18 @@ int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
     Symbol type = *sym;
     DWORD tag = 0;
 
-    if (((SymLocation *)sym->location)->pointer) {
-        *size = sizeof(void *);
+    if (LOC(sym)->pointer) {
+        if (LOC(sym)->size > 0) {
+            if (get_symbol_size(sym_buf + (LOC(sym)->pointer - 1), frame, size)) return -1;
+            *size *= LOC(sym)->size;
+        }
+        else {
+            *size = sizeof(void *);
+        }
+        return 0;
+    }
+    if (LOC(sym)->size) {
+        *size = LOC(sym)->size;
         return 0;
     }
     if (get_type_tag(&type, &tag)) return -1;
@@ -340,7 +514,7 @@ int get_symbol_type(const Symbol * sym, Symbol * type) {
     DWORD tag = 0;
 
     *type = *sym;
-    if (!((SymLocation *)type->location)->pointer) {
+    if (!LOC(type)->pointer && !LOC(type)->size) {
         if (get_type_tag(type, &tag)) return -1;
     }
     assert(type->sym_class == SYM_CLASS_TYPE);
@@ -352,13 +526,17 @@ int get_symbol_base_type(const Symbol * sym, Symbol * type) {
     DWORD index = 0;
 
     *type = *sym;
-    if (((SymLocation *)type->location)->pointer) {
-        ((SymLocation *)type->location)->pointer--;
+    if (LOC(type)->pointer) {
+        *type = sym_buf[LOC(type)->pointer - 1];
         return 0;
+    }
+    if (LOC(type)->size) {
+        errno = ERR_INV_CONTEXT;
+        return 1;
     }
     if (get_type_tag(type, &tag)) return -1;
     if (get_type_info(type, TI_GET_TYPE, &index) < 0) return -1;
-    ((SymLocation *)type->location)->index = index;
+    LOC(type)->index = index;
 
     return 0;
 }
@@ -367,14 +545,21 @@ int get_symbol_index_type(const Symbol * sym, Symbol * type) {
     DWORD tag = 0;
     DWORD index = 0;
 
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer) {
+        memset(type, 0, sizeof(Symbol));
+        type->ctx = sym->ctx;
+        type->sym_class = SYM_CLASS_TYPE;
+        LOC(type)->size = sizeof(size_t);
+        return 0;
+    }
+    if (LOC(sym)->size) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
     *type = *sym;
     if (get_type_tag(type, &tag)) return -1;
     if (get_type_info(type, TI_GET_ARRAYINDEXTYPEID, &index) < 0) return -1;
-    ((SymLocation *)type->location)->index = index;
+    LOC(type)->index = index;
 
     return 0;
 }
@@ -384,9 +569,13 @@ int get_symbol_length(const Symbol * sym, int frame, unsigned long * length) {
     Symbol type = *sym;
     DWORD tag = 0;
 
-    if (((SymLocation *)sym->location)->pointer) {
-        *length = 1;
+    if (LOC(sym)->pointer) {
+        *length = LOC(sym)->size == 0 ? 1 : LOC(sym)->size;
         return 0;
+    }
+    if (LOC(sym)->size) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
     }
     if (get_type_tag(&type, &tag)) return -1;
     if (get_type_info(&type, TI_GET_COUNT, &res) < 0) return -1;
@@ -405,7 +594,7 @@ int get_symbol_children(const Symbol * sym, Symbol ** children, int * count) {
     Symbol type = *sym;
     DWORD tag = 0;
 
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer || LOC(sym)->size) {
         *children = NULL;
         *count = 0;
         return 0;
@@ -424,7 +613,7 @@ int get_symbol_children(const Symbol * sym, Symbol ** children, int * count) {
             DWORD dword = 0;
             Symbol * x = res + params->Start++;
             *x = *sym;
-            ((SymLocation *)x->location)->index = params->ChildId[i];
+            LOC(x)->index = params->ChildId[i];
             if (get_type_info(x, TI_GET_SYMTAG, &dword) < 0) return -1;
             tag2symclass(x, dword);
         }
@@ -438,7 +627,7 @@ int get_symbol_children(const Symbol * sym, Symbol ** children, int * count) {
 int get_symbol_offset(const Symbol * sym, unsigned long * offset) {
     DWORD dword = 0;
 
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer || LOC(sym)->size) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -453,7 +642,7 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
     void * data_addr = &data.bVal;
     size_t data_size = 0;
 
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer || LOC(sym)->size) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -502,15 +691,15 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
 int get_symbol_address(const Symbol * sym, int frame, ContextAddress * addr) {
     SYMBOL_INFO * info = NULL;
 
-    if (((SymLocation *)sym->location)->address != NULL) {
-        *addr = (ContextAddress)((SymLocation *)sym->location)->address;
+    if (LOC(sym)->address != NULL) {
+        *addr = (ContextAddress)LOC(sym)->address;
         return 0;
     }
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer || LOC(sym)->size) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
-    if (get_sym_info(sym, ((SymLocation *)sym->location)->index, &info) < 0) return -1;
+    if (get_sym_info(sym, LOC(sym)->index, &info) < 0) return -1;
     *addr = (ContextAddress)info->Address;
 
     if ((info->Flags & SYMFLAG_FRAMEREL) || (info->Flags & SYMFLAG_REGREL)) {
@@ -522,15 +711,22 @@ int get_symbol_address(const Symbol * sym, int frame, ContextAddress * addr) {
     return 0;
 }
 
-int get_symbol_pointer(const Symbol * sym, Symbol * ptr) {
-    DWORD tag = 0;
+int get_pointer_symbol(const Symbol * sym, Symbol * ptr) {
+    return get_array_symbol(sym, 0, ptr);
+}
 
-    *ptr = *sym;
-    if (!((SymLocation *)ptr->location)->pointer) {
-        if (get_type_tag(ptr, &tag)) return -1;
+int get_array_symbol(const Symbol * sym, size_t length, Symbol * ptr) {
+    Symbol type = *sym;
+    if (!LOC(&type)->pointer && !LOC(&type)->size) {
+        DWORD tag = 0;
+        if (get_type_tag(&type, &tag)) return -1;
     }
-    assert(ptr->sym_class == SYM_CLASS_TYPE);
-    ((SymLocation *)ptr->location)->pointer++;
+    assert(type.sym_class == SYM_CLASS_TYPE);
+    memset(ptr, 0, sizeof(Symbol));
+    ptr->ctx = type.ctx;
+    ptr->sym_class = SYM_CLASS_TYPE;
+    LOC(ptr)->pointer = add_to_sym_buf(&type);
+    LOC(ptr)->size = length;
     return 0;
 }
 
@@ -588,15 +784,31 @@ static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     return -1;
 }
 
-int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
-    if (find_pe_symbol(ctx, frame, name, sym) < 0) {
-        int err = errno;
-        SymLocation * loc = (SymLocation *)sym->location;
-        if (find_test_symbol(ctx, name, sym, &loc->address) >= 0) return 0;
-        errno = err;
-        return -1;
+static int find_basic_type_symbol(Context * ctx, char * name, Symbol * sym) {
+    const struct TypeInfo * p = basic_type_info;
+    while (p->name != NULL) {
+        if (strcmp(p->name, name) == 0) break;
+        p++;
     }
-    return 0;
+    if (p->name != NULL) {
+        memset(sym, 0, sizeof(*sym));
+        sym->ctx = ctx;
+        sym->sym_class = SYM_CLASS_TYPE;
+        LOC(sym)->size = p->size;
+        LOC(sym)->sign = p->sign;
+        LOC(sym)->real = p->real;
+        return 0;
+    }
+    errno = ERR_SYM_NOT_FOUND;
+    return -1;
+}
+
+int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
+    if (find_pe_symbol(ctx, frame, name, sym) >= 0) return 0;
+    if (errno != ERR_SYM_NOT_FOUND) return -1;
+    if (find_test_symbol(ctx, name, sym, &LOC(sym)->address) >= 0) return 0;
+    if (find_basic_type_symbol(ctx, name, sym) >= 0) return 0;
+    return -1;
 }
 
 typedef struct EnumerateSymbolsContext {

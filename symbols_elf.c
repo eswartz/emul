@@ -50,14 +50,39 @@ typedef struct SymLocation {
     void * address;
     unsigned index;
     unsigned dimension;
-    unsigned pointer;
+    size_t pointer;
+    size_t size;
 } SymLocation;
 
+#define LOC(sym) ((SymLocation *)(sym)->location)
+
+static Symbol * sym_buf = NULL;
+static size_t sym_buf_pos = 0;
+static size_t sym_buf_len = 0;
+static int sym_buf_event_posted = 0;
+
+static void sym_buf_event(void * arg) {
+    sym_buf_pos = 0;
+    sym_buf_event_posted = 0;
+}
+
+static size_t add_to_sym_buf(Symbol * sym) {
+    if (sym_buf_pos >= sym_buf_len) {
+        sym_buf_len = sym_buf_len == 0 ? 16 : sym_buf_len * 2;
+        sym_buf = loc_realloc(sym_buf, sym_buf_len * sizeof(Symbol));
+    }
+    sym_buf[sym_buf_pos++] = *sym;
+    if (!sym_buf_event_posted) {
+        post_event(sym_buf_event, NULL);
+        sym_buf_event_posted = 1;
+    }
+    return sym_buf_pos;
+}
+
 static void object2symbol(Context * ctx, ObjectInfo * obj, Symbol * sym) {
-    SymLocation * loc = (SymLocation *)sym->location;
     memset(sym, 0, sizeof(Symbol));
     sym->ctx = ctx;
-    loc->obj = obj;
+    LOC(sym)->obj = obj;
     switch (obj->mTag) {
     case TAG_global_subroutine:
     case TAG_subroutine:
@@ -155,7 +180,6 @@ static int find_in_dwarf(DWARFCache * cache, Context * ctx, char * name, Context
 static int find_in_sym_table(DWARFCache * cache, Context * ctx, char * name, Symbol * sym) {
     unsigned m = 0;
     unsigned h = calc_symbol_name_hash(name);
-    SymLocation * loc = (SymLocation *)sym->location;
     while (m < cache->mSymSectionsCnt) {
         SymbolSection * tbl = cache->mSymSections[m];
         unsigned n = tbl->mSymbolHash[h];
@@ -177,8 +201,8 @@ static int find_in_sym_table(DWARFCache * cache, Context * ctx, char * name, Sym
                     sym->sym_class = SYM_CLASS_REFERENCE;
                     break;
                 }
-                loc->tbl = tbl;
-                loc->index = n;
+                LOC(sym)->tbl = tbl;
+                LOC(sym)->index = n;
                 return 1;
             }
             n = tbl->mHashNext[n];
@@ -205,7 +229,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     else {
         memset(sym, 0, sizeof(Symbol));
         sym->ctx = ctx;
-        ((SymLocation *)sym->location)->addr = ptr;
+        LOC(sym)->addr = ptr;
 
         if (SYM_IS_TEXT(type)) {
             sym->sym_class = SYM_CLASS_FUNCTION;
@@ -251,8 +275,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     }
 
     if (!found) {
-        SymLocation * loc = (SymLocation *)sym->location;
-        found = find_test_symbol(ctx, name, sym, &loc->address) >= 0;
+        found = find_test_symbol(ctx, name, sym, &LOC(sym)->address) >= 0;
     }
 
     if (error == 0 && !found) error = ERR_SYM_NOT_FOUND;
@@ -342,25 +365,34 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
 
 char * symbol2id(const Symbol * sym) {
     static char id[256];
-    const SymLocation * loc = (SymLocation *)sym->location;
-    ELF_File * file = NULL;
-    unsigned long long obj_index = 0;
-    unsigned tbl_index = 0;
 
-    if (loc->obj != NULL) file = loc->obj->mCompUnit->mFile;
-    if (loc->tbl != NULL) file = loc->tbl->mFile;
-    if (file == NULL) return "SYM";
-    if (loc->obj != NULL) obj_index = loc->obj->mID;
-    if (loc->tbl != NULL) tbl_index = loc->tbl->mIndex + 1;
-    snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%X.%llX.%X.%X.%X.%X.%s",
-        sym->sym_class, (unsigned long)file->dev, (unsigned long)file->ino,
-        (unsigned)file->mtime & 0xffff, obj_index, tbl_index,
-        loc->index, loc->dimension, loc->pointer, container_id(sym->ctx));
+    if (LOC(sym)->pointer) {
+        char base[256];
+        assert(LOC(sym)->pointer <= sym_buf_pos);
+        assert(sym->ctx == sym_buf[LOC(sym)->pointer - 1].ctx);
+        assert(sym->sym_class == SYM_CLASS_TYPE);
+        strcpy(base, symbol2id(sym_buf + (LOC(sym)->pointer - 1)));
+        snprintf(id, sizeof(id), "PTR%zX.%s", LOC(sym)->size, base);
+    }
+    else {
+        ELF_File * file = NULL;
+        unsigned long long obj_index = 0;
+        unsigned tbl_index = 0;
+        if (LOC(sym)->obj != NULL) file = LOC(sym)->obj->mCompUnit->mFile;
+        if (LOC(sym)->tbl != NULL) file = LOC(sym)->tbl->mFile;
+        if (file == NULL) return "SYM";
+        if (LOC(sym)->obj != NULL) obj_index = LOC(sym)->obj->mID;
+        if (LOC(sym)->tbl != NULL) tbl_index = LOC(sym)->tbl->mIndex + 1;
+        snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%X.%llX.%X.%X.%X.%zX.%s",
+            sym->sym_class, (unsigned long)file->dev, (unsigned long)file->ino,
+            (unsigned)file->mtime & 0xffff, obj_index, tbl_index,
+            LOC(sym)->index, LOC(sym)->dimension, LOC(sym)->size, container_id(sym->ctx));
+    }
     return id;
 }
 
-static unsigned read_hex(char ** s) {
-    unsigned res = 0;
+static unsigned long read_hex(char ** s) {
+    unsigned long res = 0;
     char * p = *s;
     for (;;) {
         if (*p >= '0' && *p <= '9') res = (res << 4) | (*p - '0');
@@ -391,64 +423,75 @@ int id2symbol(char * id, Symbol * sym) {
     unsigned mtime = 0;
     unsigned long long obj_index = 0;
     unsigned tbl_index = 0;
-    SymLocation * loc = (SymLocation *)sym->location;
     ELF_File * file = NULL;
     char * p;
     Trap trap;
 
     memset(sym, 0, sizeof(Symbol));
-    if (id == NULL || id[0] != 'S' || id[1] != 'Y' || id[2] != 'M') {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    p = id + 3;
-    if (*p == 0) return 0;
-    sym->sym_class = read_hex(&p);
-    if (*p == '.') p++;
-    dev = read_hex(&p);
-    if (*p == '.') p++;
-    ino = read_hex(&p);
-    if (*p == '.') p++;
-    mtime = read_hex(&p);
-    if (*p == '.') p++;
-    obj_index = read_hex_ll(&p);
-    if (*p == '.') p++;
-    tbl_index = read_hex(&p);
-    if (*p == '.') p++;
-    loc->index = read_hex(&p);
-    if (*p == '.') p++;
-    loc->dimension = read_hex(&p);
-    if (*p == '.') p++;
-    loc->pointer = read_hex(&p);
-    if (*p == '.') p++;
-    sym->ctx = id2ctx(p);
-    if (sym->ctx == NULL) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    file = elf_list_first(sym->ctx, 0, ~(ContextAddress)0);
-    if (file == NULL) return -1;
-    while (file->dev != dev || file->ino != ino || ((unsigned)file->mtime & 0xffff) != mtime) {
-        file = elf_list_next(sym->ctx);
-        if (file == NULL) break;
-    }
-    elf_list_done(sym->ctx);
-    if (file == NULL) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    if (set_trap(&trap)) {
-        DWARFCache * cache = get_dwarf_cache(file);
-        if (obj_index) {
-            loc->obj = find_object(cache, obj_index);
-            if (loc->obj == NULL) exception(ERR_INV_CONTEXT);
-        }
-        if (tbl_index) {
-            if (tbl_index > cache->mSymSectionsCnt) exception(ERR_INV_CONTEXT);
-            loc->tbl = cache->mSymSections[tbl_index - 1];
-        }
-        clear_trap(&trap);
+    if (id != NULL && id[0] == 'P' && id[1] == 'T' && id[2] == 'R') {
+        Symbol base;
+        p = id + 3;
+        LOC(sym)->size = read_hex(&p);
+        if (*p == '.') p++;
+        if (id2symbol(p, &base)) return -1;
+        LOC(sym)->pointer = add_to_sym_buf(&base);
+        sym->ctx = base.ctx;
+        sym->sym_class = SYM_CLASS_TYPE;
         return 0;
+    }
+    else if (id != NULL && id[0] == 'S' && id[1] == 'Y' && id[2] == 'M') {
+        p = id + 3;
+        if (*p == 0) return 0;
+        sym->sym_class = read_hex(&p);
+        if (*p == '.') p++;
+        dev = read_hex(&p);
+        if (*p == '.') p++;
+        ino = read_hex(&p);
+        if (*p == '.') p++;
+        mtime = read_hex(&p);
+        if (*p == '.') p++;
+        obj_index = read_hex_ll(&p);
+        if (*p == '.') p++;
+        tbl_index = read_hex(&p);
+        if (*p == '.') p++;
+        LOC(sym)->index = read_hex(&p);
+        if (*p == '.') p++;
+        LOC(sym)->dimension = read_hex(&p);
+        if (*p == '.') p++;
+        LOC(sym)->size = read_hex(&p);
+        if (*p == '.') p++;
+        sym->ctx = id2ctx(p);
+        if (sym->ctx == NULL) {
+            errno = ERR_INV_CONTEXT;
+            return -1;
+        }
+        file = elf_list_first(sym->ctx, 0, ~(ContextAddress)0);
+        if (file == NULL) return -1;
+        while (file->dev != dev || file->ino != ino || ((unsigned)file->mtime & 0xffff) != mtime) {
+            file = elf_list_next(sym->ctx);
+            if (file == NULL) break;
+        }
+        elf_list_done(sym->ctx);
+        if (file == NULL) {
+            errno = ERR_INV_CONTEXT;
+            return -1;
+        }
+        if (set_trap(&trap)) {
+            DWARFCache * cache = get_dwarf_cache(file);
+            if (obj_index) {
+                LOC(sym)->obj = find_object(cache, obj_index);
+                if (LOC(sym)->obj == NULL) exception(ERR_INV_CONTEXT);
+            }
+            if (tbl_index) {
+                if (tbl_index > cache->mSymSectionsCnt) exception(ERR_INV_CONTEXT);
+                LOC(sym)->tbl = cache->mSymSections[tbl_index - 1];
+            }
+            clear_trap(&trap);
+            return 0;
+        }
+    }
+    else {
+        errno = ERR_INV_CONTEXT;
     }
     return -1;
 }
@@ -492,13 +535,14 @@ static Elf32_Sym * sym32;
 static Elf64_Sym * sym64;
 
 static int unpack(const Symbol * sym) {
-    const SymLocation * loc = (const SymLocation *)sym->location;
+    assert(LOC(sym)->pointer == 0);
+    assert(LOC(sym)->size == 0);
     file = NULL;
     cache = NULL;
-    obj = loc->obj;
-    tbl = loc->tbl;
-    sym_index = loc->index;
-    dimension = loc->dimension;
+    obj = LOC(sym)->obj;
+    tbl = LOC(sym)->tbl;
+    sym_index = LOC(sym)->index;
+    dimension = LOC(sym)->dimension;
     sym32 = NULL;
     sym64 = NULL;
     if (obj != NULL) file = obj->mCompUnit->mFile;
@@ -577,7 +621,7 @@ static U8_T get_object_length(Context * ctx, int frame, ObjectInfo * obj) {
 }
 
 int get_symbol_type(const Symbol * sym, Symbol * type) {
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer || LOC(sym)->size) {
         *type = *sym;
         return 0;
     }
@@ -589,8 +633,12 @@ int get_symbol_type(const Symbol * sym, Symbol * type) {
 }
 
 int get_symbol_type_class(const Symbol * sym, int * type_class) {
-    if (((SymLocation *)sym->location)->pointer) {
-        *type_class = TYPE_CLASS_POINTER;
+    if (LOC(sym)->pointer) {
+        *type_class = LOC(sym)->size == 0 ? TYPE_CLASS_POINTER : TYPE_CLASS_ARRAY;
+        return 0;
+    }
+    if (LOC(sym)->size) {
+        *type_class = TYPE_CLASS_CARDINAL;
         return 0;
     }
     if (unpack(sym) < 0) return -1;
@@ -665,7 +713,7 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
 }
 
 int get_symbol_name(const Symbol * sym, char ** name) {
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer || LOC(sym)->size) {
         *name = NULL;
         return 0;
     }
@@ -686,8 +734,18 @@ int get_symbol_name(const Symbol * sym, char ** name) {
 }
 
 int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
-    if (((SymLocation *)sym->location)->pointer) {
-        *size = sizeof(void *);
+    if (LOC(sym)->pointer) {
+        if (LOC(sym)->size > 0) {
+            if (get_symbol_size(sym_buf + (LOC(sym)->pointer - 1), frame, size)) return -1;
+            *size *= LOC(sym)->size;
+        }
+        else {
+            *size = sizeof(void *);
+        }
+        return 0;
+    }
+    if (LOC(sym)->size) {
+        *size = LOC(sym)->size;
         return 0;
     }
     if (unpack(sym) < 0) return -1;
@@ -744,10 +802,13 @@ int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
 }
 
 int get_symbol_base_type(const Symbol * sym, Symbol * base_type) {
-    if (((SymLocation *)sym->location)->pointer) {
-        *base_type = *sym;
-        ((SymLocation *)base_type->location)->pointer--;
+    if (LOC(sym)->pointer) {
+        *base_type = sym_buf[LOC(sym)->pointer - 1];
         return 0;
+    }
+    if (LOC(sym)->size) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
     }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL) {
@@ -761,7 +822,7 @@ int get_symbol_base_type(const Symbol * sym, Symbol * base_type) {
             }
             if (idx != NULL && idx->mSibling != NULL) {
                 *base_type = *sym;
-                ((SymLocation *)base_type->location)->dimension++;
+                LOC(base_type)->dimension++;
                 return 0;
             }
         }
@@ -777,7 +838,14 @@ int get_symbol_base_type(const Symbol * sym, Symbol * base_type) {
 }
 
 int get_symbol_index_type(const Symbol * sym, Symbol * index_type) {
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer) {
+        memset(index_type, 0, sizeof(Symbol));
+        index_type->ctx = sym->ctx;
+        index_type->sym_class = SYM_CLASS_TYPE;
+        LOC(index_type)->size = sizeof(size_t);
+        return 0;
+    }
+    if (LOC(sym)->size) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -802,9 +870,13 @@ int get_symbol_index_type(const Symbol * sym, Symbol * index_type) {
 }
 
 int get_symbol_length(const Symbol * sym, int frame, unsigned long * length) {
-    if (((SymLocation *)sym->location)->pointer) {
-        *length = 1;
+    if (LOC(sym)->pointer) {
+        *length = LOC(sym)->size == 0 ? 1 : LOC(sym)->size;
         return 0;
+    }
+    if (LOC(sym)->size) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
     }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL) {
@@ -831,7 +903,7 @@ int get_symbol_length(const Symbol * sym, int frame, unsigned long * length) {
 
 int get_symbol_children(const Symbol * sym, Symbol ** children, int * count) {
     int n = 0;
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer || LOC(sym)->size) {
         *children = NULL;
         *count = 0;
         return 0;
@@ -858,7 +930,7 @@ int get_symbol_children(const Symbol * sym, Symbol ** children, int * count) {
 }
 
 int get_symbol_offset(const Symbol * sym, unsigned long * offset) {
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer || LOC(sym)->size) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -874,7 +946,7 @@ int get_symbol_offset(const Symbol * sym, unsigned long * offset) {
 }
 
 int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer || LOC(sym)->size) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -906,12 +978,12 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
 }
 
 int get_symbol_address(const Symbol * sym, int frame, ContextAddress * address) {
-    if (((SymLocation *)sym->location)->pointer) {
+    if (LOC(sym)->pointer || LOC(sym)->size) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
-    if (((SymLocation *)sym->location)->address != NULL) {
-        *address = (ContextAddress)((SymLocation *)sym->location)->address;
+    if (LOC(sym)->address != NULL) {
+        *address = (ContextAddress)LOC(sym)->address;
         return 0;
     }
     if (unpack(sym) < 0) return -1;
@@ -938,15 +1010,19 @@ int get_symbol_address(const Symbol * sym, int frame, ContextAddress * address) 
         }
     }
 #if defined(_WRS_KERNEL)
-    if ((*address = (ContextAddress)((SymLocation *)sym->location)->addr) != 0) return 0;
+    if ((*address = (ContextAddress)LOC(sym)->addr) != 0) return 0;
 #endif
     errno = ERR_INV_CONTEXT;
     return -1;
 }
 
-int get_symbol_pointer(const Symbol * sym, Symbol * ptr) {
-    *ptr = *sym;
-    if (!((SymLocation *)ptr->location)->pointer) {
+int get_pointer_symbol(const Symbol * sym, Symbol * ptr) {
+    return get_array_symbol(sym, 0, ptr);
+}
+
+int get_array_symbol(const Symbol * sym, size_t length, Symbol * ptr) {
+    Symbol type = *sym;
+    if (!LOC(&type)->pointer && !LOC(sym)->size) {
         if (unpack(ptr) < 0) return -1;
         obj = get_object_type(obj);
         if (obj != NULL) {
@@ -957,8 +1033,12 @@ int get_symbol_pointer(const Symbol * sym, Symbol * ptr) {
             ptr->sym_class = SYM_CLASS_TYPE;
         }
     }
-    assert(ptr->sym_class == SYM_CLASS_TYPE);
-    ((SymLocation *)ptr->location)->pointer++;
+    assert(type.sym_class == SYM_CLASS_TYPE);
+    memset(ptr, 0, sizeof(Symbol));
+    ptr->ctx = type.ctx;
+    ptr->sym_class = SYM_CLASS_TYPE;
+    LOC(ptr)->pointer = add_to_sym_buf(&type);
+    LOC(ptr)->size = length;
     return 0;
 }
 

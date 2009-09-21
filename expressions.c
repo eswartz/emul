@@ -542,7 +542,7 @@ static int identifier(char * name, Value * v) {
     {
         Symbol sym;
         if (find_symbol(expression_context, expression_frame, name, &sym) < 0) {
-            error(errno, "Invalid identifier");
+            if (errno != ERR_SYM_NOT_FOUND) error(errno, "Cannot read symbol data");
         }
         else {
             if (get_symbol_type(&sym, &v->type) < 0) {
@@ -594,31 +594,88 @@ static int identifier(char * name, Value * v) {
             return sym.sym_class;
         }
     }
-#else
-    error(ERR_UNSUPPORTED, "Symbols service not available");
 #endif
     return SYM_CLASS_UNKNOWN;
 }
 
-static int type_name(int mode, Symbol * type) {
-    Value v;
-    char * name = text_val.value;
-    int sym_class;
+static int64_t to_int(int mode, Value * v);
+#define TYPE_EXPR_LENGTH 64
 
-    if (text_sy != SY_ID) return 0;
-    next_sy();
-    sym_class = identifier(name, &v);
-    if (sym_class != SYM_CLASS_TYPE) return 0;
+static int type_expression(int mode, int * buf) {
+    int i = 0;
+    int pos = 0;
+    int expr_buf[TYPE_EXPR_LENGTH];
+    int expr_len = 0;
     while (text_sy == '*') {
         next_sy();
-        if (mode == MODE_SKIP) continue;
-#if SERVICE_Symbols
-        if (get_symbol_pointer(&v.type, &v.type)) {
-            error(errno, "Cannot get pointer type");
+        if (pos >= TYPE_EXPR_LENGTH) error(ERR_BUFFER_OVERFLOW, "Type expression is too long");
+        buf[pos++] = 1;
+    }
+    if (text_sy == '(') {
+        next_sy();
+        expr_len = type_expression(mode, expr_buf);
+        if (text_sy != ')') error(ERR_INV_EXPRESSION, "')' expected");
+        next_sy();
+    }
+    while (text_sy == '[') {
+        next_sy();
+        if (text_sy != SY_VAL) error(ERR_INV_EXPRESSION, "Number expected");
+        if (pos >= TYPE_EXPR_LENGTH) error(ERR_BUFFER_OVERFLOW, "Type expression is too long");
+        buf[pos] = (int)to_int(mode, &text_val);
+        if (mode == MODE_NORMAL && buf[pos] < 1) error(ERR_INV_EXPRESSION, "Positive number expected");
+        pos++;
+        next_sy();
+        if (text_sy != ']') error(ERR_INV_EXPRESSION, "']' expected");
+        next_sy();
+    }
+    for (i = 0; i < expr_len; i++) {
+        if (pos >= TYPE_EXPR_LENGTH) error(ERR_BUFFER_OVERFLOW, "Type expression is too long");
+        buf[pos++] = expr_buf[i];
+    }
+    return pos;
+}
+
+static int type_name(int mode, Symbol * type) {
+    Value v;
+    int expr_buf[TYPE_EXPR_LENGTH];
+    int expr_len = 0;
+    char name[256];
+    int sym_class;
+    int name_cnt = 0;
+
+    if (text_sy != SY_ID) return 0;
+    name[0] = 0;
+    do {
+        if (strlen(text_val.value) + strlen(name) >= sizeof(name) - 1) {
+            error(ERR_BUFFER_OVERFLOW, "Type name is too long");
         }
+        if (name[0]) strcat(name, " ");
+        strcat(name, text_val.value);
+        name_cnt++;
+        next_sy();
+    }
+    while (text_sy == SY_ID);
+    sym_class = identifier(name, &v);
+    if (sym_class != SYM_CLASS_TYPE) return 0;
+    expr_len = type_expression(mode, expr_buf);
+    if (mode != MODE_SKIP) {
+        int i;
+        for (i = 0; i < expr_len; i++) {
+#if SERVICE_Symbols
+            if (expr_buf[i] == 1) {
+                if (get_pointer_symbol(&v.type, &v.type)) {
+                    error(errno, "Cannot get pointer type");
+                }
+            }
+            else {
+                if (get_array_symbol(&v.type, expr_buf[i], &v.type)) {
+                    error(errno, "Cannot get array type");
+                }
+            }
 #else
-        memset(&v.type, 0, sizeof(v.type));
+            memset(&v.type, 0, sizeof(v.type));
 #endif
+        }
     }
     *type = v.type;
     return 1;
@@ -820,6 +877,7 @@ static void primary_expression(int mode, Value * v) {
     else if (text_sy == SY_ID) {
         if (mode != MODE_SKIP) {
             int sym_class = identifier((char *)text_val.value, v);
+            if (sym_class == SYM_CLASS_UNKNOWN) error(ERR_INV_EXPRESSION, "Invalid identifier");
             if (sym_class == SYM_CLASS_TYPE) error(ERR_INV_EXPRESSION, "Illegal usage of type name");
         }
         next_sy();
@@ -836,18 +894,10 @@ static void op_deref(int mode, Value * v) {
         error(ERR_INV_EXPRESSION, "Array or pointer type expected");
     }
     if (v->type_class == TYPE_CLASS_POINTER) {
-        if (mode == MODE_TYPE) {
-            v->address = 0;
-        }
-        else {
-            load_value(v);
-            switch (v->size)  {
-            case 2: v->address = (ContextAddress)*(uint16_t *)v->value; break;
-            case 4: v->address = (ContextAddress)*(uint32_t *)v->value; break;
-            case 8: v->address = (ContextAddress)*(uint64_t *)v->value; break;
-            default: error(ERR_INV_EXPRESSION, "Invalid value size");
-            }
-        }
+        v->address = (ContextAddress)to_uns(mode, v);
+        v->remote = 1;
+        v->constant = 0;
+        v->value = NULL;
     }
     if (get_symbol_base_type(&v->type, &v->type) < 0) {
         error(errno, "Cannot retrieve symbol type");
@@ -858,9 +908,6 @@ static void op_deref(int mode, Value * v) {
     if (get_symbol_size(&v->type, expression_frame, &v->size) < 0) {
         error(errno, "Cannot retrieve symbol size");
     }
-    v->value = NULL;
-    v->remote = 1;
-    v->constant = 0;
 #else
     error(ERR_UNSUPPORTED, "Symbols service not available");
 #endif
@@ -949,18 +996,10 @@ static void op_index(int mode, Value * v) {
         error(ERR_INV_EXPRESSION, "Array or pointer expected");
     }
     if (v->type_class == TYPE_CLASS_POINTER) {
-        if (mode == MODE_TYPE) {
-            v->address = 0;
-        }
-        else {
-            load_value(v);
-            switch (v->size)  {
-            case 2: v->address = (ContextAddress)*(uint16_t *)v->value; break;
-            case 4: v->address = (ContextAddress)*(uint32_t *)v->value; break;
-            case 8: v->address = (ContextAddress)*(uint64_t *)v->value; break;
-            default: error(ERR_INV_EXPRESSION, "Invalid value size");
-            }
-        }
+        v->address = (ContextAddress)to_uns(mode, v);
+        v->remote = 1;
+        v->constant = 0;
+        v->value = NULL;
     }
     if (get_symbol_base_type(&v->type, &type) < 0) {
         error(errno, "Cannot get array element type");
@@ -996,7 +1035,7 @@ static void op_addr(int mode, Value * v) {
     set_ctx_word_value(v, v->address);
     v->type_class = TYPE_CLASS_POINTER;
 #if SERVICE_Symbols
-    if (get_symbol_pointer(&v->type, &v->type)) {
+    if (get_pointer_symbol(&v->type, &v->type)) {
         error(errno, "Cannot get pointer type");
     }
 #else
@@ -1266,6 +1305,20 @@ static void cast_expression(int mode, Value * v) {
                 case 8: *(double *)v->value = value; break;
                 default: assert(0);
                 }
+            }
+            break;
+        case TYPE_CLASS_ARRAY:
+            if (v->type_class == TYPE_CLASS_POINTER) {
+                v->address = (ContextAddress)to_uns(mode, v);
+                v->type = type;
+                v->type_class = type_class;
+                v->size = type_size;
+                v->remote = 1;
+                v->constant = 0;
+                v->value = NULL;
+            }
+            else {
+                error(ERR_INV_EXPRESSION, "Invalid type cast: illegal source type");
             }
             break;
         default:
