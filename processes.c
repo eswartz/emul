@@ -1123,10 +1123,13 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
     char * tty_slave_name = NULL;
 
     fd_tty_master = posix_openpt(O_RDWR|O_NOCTTY);
-    if (fd_tty_master < 0 || grantpt(fd_tty_master) < 0 ||
-        unlockpt(fd_tty_master) < 0 || (tty_slave_name = ptsname(fd_tty_master)) == NULL) err = errno;
+    if (fd_tty_master < 0 || grantpt(fd_tty_master) < 0 || unlockpt(fd_tty_master) < 0) err = errno;
+    if (!err) {
+         tty_slave_name = ptsname(fd_tty_master);
+         if (tty_slave_name == NULL) err = EINVAL;
+    }
 
-    if (err == 0 && fd_tty_master < 3) {
+    if (!err && fd_tty_master < 3) {
         int fd0 = fd_tty_master;
         if ((fd_tty_master = dup(fd_tty_master)) < 0 || close(fd0)) err = errno;
     }

@@ -1536,6 +1536,7 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
         errno = err;
         return -1;
     }
+    add_waitpid_process(pid);
     ctx = create_context(pid);
     list_add_first(&ctx->ctxl, &pending_list);
     ctx->mem = pid;
@@ -1543,7 +1544,6 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
     ctx->attach_data = data;
     ctx->pending_intercept = 1;
     /* TODO: context_attach works only for main task in a process */
-    add_waitpid_process(pid);
     return 0;
 }
 
@@ -1851,7 +1851,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     unsigned long msg = 0;
     Context * ctx = NULL;
     Context * ctx2 = NULL;
-    Context * pending_eap = NULL;
 
     trace(LOG_EVENTS, "event: pid %d stopped, signal %d", pid, signal);
 
@@ -1860,16 +1859,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     if (ctx == NULL) {
         ctx = find_pending(pid);
         if (ctx != NULL) {
-            if (ctx->pending_events != NULL) {
-                PendingEvent * e = loc_alloc_zero(sizeof(PendingEvent));
-                PendingEvent ** p = (PendingEvent **)&ctx->pending_events;
-                while (*p != NULL) p = &(*p)->next;
-                e->signal = signal;
-                e->event = event;
-                e->syscall = syscall;
-                *p = e;
-                return;
-            }
             link_context(ctx);
             event_context_created(ctx);
             if (ctx->attach_callback) {
@@ -1880,21 +1869,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         }
     }
 
-    if (ctx == NULL) {
-        /* Clone & fork notifications can arrive after child
-         * notification because the clone/fork notification comes from
-         * the parent while the stop notification comes from the child
-         * and Linux does not seem to order between them. */
-        PendingEvent * e = loc_alloc_zero(sizeof(PendingEvent));
-        trace(LOG_EVENTS, "event: pid %d is not traced - expecting OOO clone, fork or vfork event for pid", pid);
-        ctx = create_context(pid);
-        list_add_first(&ctx->ctxl, &pending_list);
-        e->signal = signal;
-        e->event = event;
-        e->syscall = syscall;
-        ctx->pending_events = e;
-        return;
-    }
+    if (ctx == NULL) return;
 
     assert(!ctx->exited);
     if (signal != SIGSTOP && signal != SIGTRAP) {
@@ -1945,15 +1920,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                 ctx->regs_dirty = 1;
             }
             event_context_stopped(ctx);
-        }
-    }
-
-    if (pending_eap != NULL) {
-        while (pending_eap->pending_events != NULL) {
-            PendingEvent * e = pending_eap->pending_events;
-            pending_eap->pending_events = e->next;
-            event_pid_stopped(pending_eap->pid, e->signal, e->event, e->syscall);
-            loc_free(e);
         }
     }
 }
@@ -2085,6 +2051,7 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
     Context * ctx = NULL;
 
     assert(done != NULL);
+    trace(LOG_CONTEXT, "context: attaching pid %d", pid);
     if (!selfattach && ptrace(PTRACE_ATTACH, pid, 0, 0) < 0) {
         int err = errno;
         trace(LOG_ALWAYS, "error: ptrace(PTRACE_ATTACH) failed: pid %d, error %d %s",
@@ -2092,6 +2059,7 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
         errno = err;
         return -1;
     }
+    add_waitpid_process(pid);
     ctx = create_context(pid);
     list_add_first(&ctx->ctxl, &pending_list);
     ctx->mem = pid;
@@ -2099,7 +2067,6 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
     ctx->attach_data = data;
     ctx->pending_intercept = 1;
     /* TODO: context_attach works only for main task in a process */
-    add_waitpid_process(pid);
     return 0;
 }
 
@@ -2430,7 +2397,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     unsigned long msg = 0;
     Context * ctx = NULL;
     Context * ctx2 = NULL;
-    Context * pending_eap = NULL;
 
     trace(LOG_EVENTS, "event: pid %d stopped, signal %d, event %s", pid, signal, event_name(event));
 
@@ -2439,16 +2405,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     if (ctx == NULL) {
         ctx = find_pending(pid);
         if (ctx != NULL) {
-            if (ctx->pending_events != NULL) {
-                PendingEvent * e = loc_alloc_zero(sizeof(PendingEvent));
-                PendingEvent ** p = (PendingEvent **)&ctx->pending_events;
-                while (*p != NULL) p = &(*p)->next;
-                e->signal = signal;
-                e->event = event;
-                e->syscall = syscall;
-                *p = e;
-                return;
-            }
             link_context(ctx);
             event_context_created(ctx);
             if (ctx->attach_callback) {
@@ -2459,21 +2415,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         }
     }
 
-    if (ctx == NULL) {
-        /* Clone & fork notifications can arrive after child
-         * notification because the clone/fork notification comes from
-         * the parent while the stop notification comes from the child
-         * and Linux does not seem to order between them. */
-        PendingEvent * e = loc_alloc_zero(sizeof(PendingEvent));
-        trace(LOG_EVENTS, "event: pid %d is not traced - expecting OOO clone, fork or vfork event for pid", pid);
-        ctx = create_context(pid);
-        list_add_first(&ctx->ctxl, &pending_list);
-        e->signal = signal;
-        e->event = event;
-        e->syscall = syscall;
-        ctx->pending_events = e;
-        return;
-    }
+    if (ctx == NULL) return;
 
     assert(!ctx->exited);
     assert(!ctx->stopped || event == 0 || event == PTRACE_EVENT_EXIT);
@@ -2499,14 +2441,8 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             break;
         }
         assert(msg != 0);
-        ctx2 = find_pending(msg);
-        if (ctx2) {
-            assert(ctx2->pending_events != NULL);
-            pending_eap = ctx2;
-        }
-        else {
-            ctx2 = create_context(msg);
-        }
+        add_waitpid_process(msg);
+        ctx2 = create_context(msg);
         link_context(ctx2);
         assert(ctx2->parent == NULL);
         trace(LOG_EVENTS, "event: new context 0x%x, pid %d", ctx2, ctx2->pid);
@@ -2628,15 +2564,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                 ctx->regs_dirty = 1;
             }
             event_context_stopped(ctx);
-        }
-    }
-
-    if (pending_eap != NULL) {
-        while (pending_eap->pending_events != NULL) {
-            PendingEvent * e = pending_eap->pending_events;
-            pending_eap->pending_events = e->next;
-            event_pid_stopped(pending_eap->pid, e->signal, e->event, e->syscall);
-            loc_free(e);
         }
     }
 }

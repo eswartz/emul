@@ -165,84 +165,75 @@ void add_waitpid_process(int pid) {
 
 #include <sys/wait.h>
 
-static unsigned long waitpid_poll_period = 100000;
-static AsyncReqInfo req;
-static int posted = 0;
-
-static void waitpid_post(void) {
-    assert(!posted);
-    req.error = 0;
-    req.u.wpid.pid = -1;
-    req.u.wpid.status = 0;
-#if defined(__APPLE__)
-    req.u.wpid.options = 0;
-#else
-    req.u.wpid.options = __WALL;
-#endif
-    posted = 1;
-    async_req_post(&req);
-}
-
-static void waitpid_poll_event(void * arg) {
-    if (!posted) waitpid_post();
-}
-
 static void waitpid_done(void * arg) {
     int i;
-    pid_t pid = req.u.wpid.rval;
-    int status = req.u.wpid.status;
-    int error = req.error;
+    AsyncReqInfo * req = (AsyncReqInfo *)arg;
+    pid_t pid = req->u.wpid.pid;
+    int status = req->u.wpid.status;
+    int error = req->error;
+    int exited = 0;
+    int exit_code = 0;
+    int signal = 0;
+    int event_code = 0;
+    int syscall = 0;
 
-    assert(arg == &req);
-    assert(posted);
-    posted = 0;
+    trace(LOG_WAITPID, "waitpid: pid %d status %#x, error %d", pid, status, error);
+    assert(req->u.wpid.rval == -1 || req->u.wpid.rval == pid);
 
-    if (pid == (pid_t)-1) {
-        if (error == ECHILD) {
-            post_event_with_delay(waitpid_poll_event, NULL, waitpid_poll_period);
-            if (waitpid_poll_period < 30 * 1000000) waitpid_poll_period *= 2;
-            return;
-        }
-        check_error(error);
+    if (req->u.wpid.rval == -1) {
+        assert(error);
+        trace(LOG_ALWAYS, "waitpid error (pid %d): %d %d", pid, error, errno_to_str(error));
+        exited = 1;
+        exit_code = error;
     }
-
-    trace(LOG_WAITPID, "waitpid: pid %d status %#x", pid, status);
-    if (WIFEXITED(status)) {
-        for (i = 0; i < listener_cnt; i++) {
-            listeners[i].listener(pid, 1, WEXITSTATUS(status), 0, 0, 0, listeners[i].args);
-        }
+    else if (WIFEXITED(status)) {
+        exited = 1;
+        exit_code = WEXITSTATUS(status);
+        trace(LOG_WAITPID, "waitpid: pid %d exited, exit code %d", pid, exit_code);
     }
     else if (WIFSIGNALED(status)) {
-        for (i = 0; i < listener_cnt; i++) {
-            listeners[i].listener(pid, 1, 0, WTERMSIG(status), 0, 0, listeners[i].args);
-        }
+        exited = 1;
+        signal = WTERMSIG(status);
+        trace(LOG_WAITPID, "waitpid: pid %d terminated, signal %d", pid, signal);
     }
     else if (WIFSTOPPED(status)) {
-        for (i = 0; i < listener_cnt; i++) {
-            listeners[i].listener(pid, 0, 0, WSTOPSIG(status) & 0x7f, status >> 16, (WSTOPSIG(status) & 0x80) != 0, listeners[i].args);
-        }
+        signal = WSTOPSIG(status) & 0x7f;
+        event_code = status >> 16;
+        syscall = (WSTOPSIG(status) & 0x80) != 0;
+        trace(LOG_WAITPID, "waitpid: pid %d suspended, signal %d, event code %d", pid, signal, event_code);
     }
     else {
         trace(LOG_ALWAYS, "unexpected status (0x%x) from waitpid (pid %d)", status, pid);
+        exited = 1;
     }
-    waitpid_post();
+    for (i = 0; i < listener_cnt; i++) {
+        listeners[i].listener(pid, exited, exit_code, signal, event_code, syscall, listeners[i].args);
+    }
+    if (exited) {
+        loc_free(req);
+    }
+    else {
+        req->error = 0;
+        req->u.wpid.status = 0;
+        async_req_post(req);
+    }
 }
 
 void add_waitpid_process(int pid) {
+    AsyncReqInfo * req = loc_alloc_zero(sizeof(AsyncReqInfo));
     assert(listener_cnt > 0);
-    trace(LOG_WAITPID, "waitpid: poll rate reset");
-    waitpid_poll_period = 100000;
-    if (!posted) waitpid_post();
+    req->done = waitpid_done;
+    req->type = AsyncReqWaitpid;
+    req->u.wpid.pid = pid;
+#if defined(__APPLE__)
+    req->u.wpid.options = 0;
+#else
+    req->u.wpid.options = __WALL;
+#endif
+    async_req_post(req);
 }
 
 static void init(void) {
-    memset(&req, 0, sizeof(req));
-    req.done = waitpid_done;
-    req.client_data = NULL;
-    req.type = AsyncReqWaitpid;
-    posted = 0;
-    waitpid_poll_period = 100000;
-    waitpid_post();
 }
 
 #endif
