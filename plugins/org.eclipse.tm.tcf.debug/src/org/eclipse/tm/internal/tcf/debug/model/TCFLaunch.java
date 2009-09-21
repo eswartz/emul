@@ -268,16 +268,22 @@ public class TCFLaunch extends Launch {
                             boolean attach = mode.equals(ILaunchManager.DEBUG_MODE);
                             process_start_command = ps.start(dir, file, toArgsArray(file, args),
                                     vars, attach, new IProcesses.DoneStart() {
-                                public void doneStart(IToken token, Exception error, final ProcessContext process) {
+                                public void doneStart(IToken token, final Exception error, ProcessContext process) {
                                     process_start_command = null;
                                     if (error != null) {
-                                        channel.terminate(error);
-                                        return;
+                                        for (String id : new HashSet<String>(stream_ids.keySet())) disconnectStream(id);
+                                        Protocol.sync(new Runnable() {
+                                            public void run() {
+                                                channel.terminate(error);
+                                            }
+                                        });
                                     }
-                                    TCFLaunch.this.process = process;
-                                    ps.addListener(prs_listener);
-                                    connectProcessStreams();
-                                    done.run();
+                                    else {
+                                        TCFLaunch.this.process = process;
+                                        ps.addListener(prs_listener);
+                                        connectProcessStreams();
+                                        done.run();
+                                    }
                                 }
                             });
                         }

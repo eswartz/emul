@@ -136,6 +136,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Map<String,IMemoryBlockRetrievalExtension> mem_retrieval =
         new HashMap<String,IMemoryBlockRetrievalExtension>();
 
+    private final Map<String,String> cast_to_type_map =
+        new HashMap<String,String>();
+
     private class Console {
         final IOConsole console;
         final Map<Integer,IOConsoleOutputStream> out;
@@ -627,6 +630,20 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return id2node.get(id);
     }
 
+    public String getCastToType(String id) {
+        return cast_to_type_map.get(id);
+    }
+
+    public void setCastToType(String id, String type) {
+        if (type != null && type.trim().length() == 0) type = null;
+        if (type == null) cast_to_type_map.remove(id);
+        else cast_to_type_map.put(id, type);
+        TCFNode node = id2node.get(id);
+        if (node instanceof ICastToType) {
+            ((ICastToType)node).onCastToTypeChanged();
+        }
+    }
+
     public TCFDataCache<ISymbols.Symbol> getSymbolInfoCache(String mem_id, final String sym_id) {
         if (mem_id == null || sym_id == null) return null;
         Map<String,TCFDataCache<ISymbols.Symbol>> m = symbols.get(mem_id);
@@ -813,25 +830,34 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 if (cnt != display_source_cnt) return;
+                TCFNodeExecContext exec_ctx = null;
                 TCFNodeStackFrame stack_frame = null;
                 IChannel channel = getLaunch().getChannel();
                 if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                     if (element instanceof TCFNodeExecContext) {
-                        TCFNodeExecContext node = (TCFNodeExecContext)element;
-                        if (!node.disposed) {
-                            TCFDataCache<TCFContextState> state_cache = node.getState();
+                        exec_ctx = (TCFNodeExecContext)element;
+                        if (!exec_ctx.disposed) {
+                            TCFDataCache<TCFContextState> state_cache = exec_ctx.getState();
                             if (!state_cache.validate(this)) return;
                             TCFContextState state_data = state_cache.getData();
                             if (state_data != null && state_data.is_suspended) {
-                                TCFChildrenStackTrace stack_trace = ((TCFNodeExecContext)node).getStackTrace();
+                                TCFChildrenStackTrace stack_trace = exec_ctx.getStackTrace();
                                 if (!stack_trace.validate(this)) return;
                                 stack_frame = stack_trace.getTopFrame();
                             }
                         }
                     }
                     else if (element instanceof TCFNodeStackFrame) {
-                        TCFNodeStackFrame node = (TCFNodeStackFrame)element;
-                        if (!node.disposed) stack_frame = (TCFNodeStackFrame)element;
+                        TCFNodeStackFrame f = (TCFNodeStackFrame)element;
+                        exec_ctx = (TCFNodeExecContext)f.parent;
+                        if (!f.disposed && !exec_ctx.disposed) {
+                            TCFDataCache<TCFContextState> state_cache = exec_ctx.getState();
+                            if (!state_cache.validate(this)) return;
+                            TCFContextState state_data = state_cache.getData();
+                            if (state_data != null && state_data.is_suspended) {
+                                stack_frame = f;
+                            }
+                        }
                     }
                 }
                 if (stack_frame != null) {

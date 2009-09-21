@@ -90,7 +90,7 @@ public class TCFChildrenExpressions extends TCFChildren {
         for (final IExpression e : exp_manager.getExpressions()) {
             String text = e.getExpressionText();
             TCFNodeExpression n = findScript(text);
-            if (n == null) add(n = new TCFNodeExpression(node, text, null, null, -1, null));
+            if (n == null) add(n = new TCFNodeExpression(node, text, null, null, -1, false));
             n.setSortPosition(cnt++);
             data.put(n.id, n);
         }

@@ -514,7 +514,6 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
 
     @Override
     protected void updateLaunchConfigurationDialog() {
-        super.updateLaunchConfigurationDialog();
         if (use_local_agent_button.getSelection()) {
             peer_tree.setEnabled(false);
             String id = TCFLocalAgent.getLocalAgentID();
@@ -530,6 +529,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             }
         }
         update_peer_buttons.run();
+        super.updateLaunchConfigurationDialog();
     }
 
     @Override

@@ -33,25 +33,45 @@ public class TCFChildrenSubExpressions extends TCFChildren {
     }
 
     void onSuspended() {
+        reset();
         for (TCFNode n : getNodes()) {
             if (n instanceof TCFNodeExpression) ((TCFNodeExpression)n).onSuspended();
         }
     }
 
-    private TCFNodeExpression findField(String id) {
-        assert id != null;
+    void onCastToTypeChanged() {
+        reset();
+        TCFNode a[] = getNodes().toArray(new TCFNode[getNodes().size()]);
+        for (int i = 0; i < a.length; i++) a[i].dispose();
+    }
+
+    private TCFNodeExpression findField(TCFDataCache<ISymbols.Symbol> field, boolean deref) {
+        assert field != null;
         for (TCFNode n : getNodes()) {
             TCFNodeExpression e = (TCFNodeExpression)n;
-            if (id.equals(e.getFieldID())) return e;
+            if (field == e.getField() && e.isDeref() == deref) return e;
         }
         return null;
     }
 
-    private TCFNodeExpression findIndex(int index) {
+    private HashMap<String,TCFNode> findFields(ISymbols.Symbol type, String[] children, boolean deref) {
+        int cnt = 0;
+        HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
+        for (String id : children) {
+            TCFDataCache<ISymbols.Symbol> field = node.getModel().getSymbolInfoCache(type.getExeContextID(), id);
+            TCFNodeExpression n = findField(field, deref);
+            if (n == null) n = new TCFNodeExpression(node, null, field, null, -1, deref);
+            n.setSortPosition(cnt++);
+            data.put(n.id, n);
+        }
+        return data;
+    }
+
+    private TCFNodeExpression findIndex(int index, boolean deref) {
         assert index >= 0;
         for (TCFNode n : getNodes()) {
             TCFNodeExpression e = (TCFNodeExpression)n;
-            if (e.getIndex() == index) return e;
+            if (e.getIndex() == index && e.isDeref() == deref) return e;
         }
         return null;
     }
@@ -99,7 +119,8 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             return true;
         }
         if (type_class == ISymbols.TypeClass.composite) {
-            TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(type_data.getExeContextID(), type_data.getID());
+            TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(
+                    type_data.getExeContextID(), type_data.getID());
             if (children_cache == null) {
                 set(null, null, new HashMap<String,TCFNode>());
                 return true;
@@ -107,16 +128,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             if (!children_cache.validate(this)) return false;
             String[] children_data = children_cache.getData();
             Map<String,TCFNode> data = null;
-            if (children_data != null) {
-                int cnt = 0;
-                data = new HashMap<String,TCFNode>();
-                for (String id : children_data) {
-                    TCFNodeExpression n = findField(id);
-                    if (n == null) n = new TCFNodeExpression(node, null, id, null, -1, type_data);
-                    n.setSortPosition(cnt++);
-                    data.put(n.id, n);
-                }
-            }
+            if (children_data != null) data = findFields(type_data, children_data, false);
             set(null, children_cache.getError(), data);
             return true;
         }
@@ -126,8 +138,8 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             int size = par_level > 0 ? par_size : type_data.getLength();
             if (size <= 100) {
                 for (int i = offs; i < offs + size; i++) {
-                    TCFNodeExpression n = findIndex(i);
-                    if (n == null) n = new TCFNodeExpression(node, null, null, null, i, type_data);
+                    TCFNodeExpression n = findIndex(i, false);
+                    if (n == null) n = new TCFNodeExpression(node, null, null, null, i, false);
                     n.setSortPosition(i);
                     data.put(n.id, n);
                 }
@@ -164,21 +176,12 @@ public class TCFChildrenSubExpressions extends TCFChildren {
                             if (children_cache != null) {
                                 if (!children_cache.validate(this)) return false;
                                 String[] children_data = children_cache.getData();
-                                if (children_data != null) {
-                                    int cnt = 0;
-                                    data = new HashMap<String,TCFNode>();
-                                    for (String id : children_data) {
-                                        TCFNodeExpression n = findField(id);
-                                        if (n == null) n = new TCFNodeExpression(node, null, id, null, -1, type_data);
-                                        n.setSortPosition(cnt++);
-                                        data.put(n.id, n);
-                                    }
-                                }
+                                if (children_data != null) data = findFields(type_data, children_data, true);
                             }
                         }
                         else {
-                            TCFNodeExpression n = findIndex(0);
-                            if (n == null) n = new TCFNodeExpression(node, null, null, null, 0, type_data);
+                            TCFNodeExpression n = findIndex(0, true);
+                            if (n == null) n = new TCFNodeExpression(node, null, null, null, 0, true);
                             n.setSortPosition(0);
                             data.put(n.id, n);
                         }

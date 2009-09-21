@@ -10,22 +10,12 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.text.source.Annotation;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.ui.texteditor.IAnnotationImageProvider;
+import org.eclipse.tm.tcf.services.ISymbols;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
-public class TCFAnnotationImageProvider implements IAnnotationImageProvider {
+public interface ICastToType {
 
-    public Image getManagedImage(Annotation annotation) {
-        return ((TCFAnnotationManager.TCFAnnotation)annotation).image;
-    }
+    void onCastToTypeChanged();
 
-    public String getImageDescriptorId(Annotation annotation) {
-        return null;
-    }
-
-    public ImageDescriptor getImageDescriptor(String imageDescritporId) {
-        return null;
-    }
+    TCFDataCache<ISymbols.Symbol> getType();
 }

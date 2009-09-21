@@ -216,6 +216,58 @@
             menubarPath="additions">
          </action>
       </objectContribution>
+      
+      <objectContribution
+            objectClass="org.eclipse.tm.internal.tcf.debug.ui.model.ICastToType"
+            id="org.eclipse.tm.tcf.debug.ui.CastToType">
+         <action
+               label="%RestoreDefaultTypeAction.label"
+               helpContextId="restore_default_type_action_context"
+               tooltip="%RestoreDefaultTypeAction.tooltip"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.RestoreDefaultTypeCommand"
+               menubarPath="variableGroup"
+               enablesFor="1"
+               id="org.eclipse.tm.tcf.debug.ui.commands.RestoreDefaultType">
+            <enablement>
+               <pluginState
+                     value="activated"
+                     id="org.eclipse.tm.tcf.debug.ui">
+               </pluginState>
+            </enablement>
+         </action>
+         <action
+               label="%CastToTypeAction.label"
+               icon="icons/casttotype_co.gif"
+               helpContextId="cast_to_type_action_context"
+               tooltip="%CastToTypeAction.tooltip"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.CastToTypeCommand"
+               menubarPath="variableGroup"
+               enablesFor="1"
+               id="org.eclipse.tm.tcf.debug.ui.commands.CastToType">
+            <enablement>
+               <pluginState
+                     value="activated"
+                     id="org.eclipse.tm.tcf.debug.ui">
+               </pluginState>
+            </enablement>
+         </action>
+         <action
+               label="%CastToArrayAction.label"
+               icon="icons/showasarray_co.gif"
+               helpContextId="cast_to_array_action_context"
+               tooltip="%CastToArrayAction.tooltip"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.CastToArrayCommand"
+               menubarPath="variableGroup"
+               enablesFor="1"
+               id="org.eclipse.tm.tcf.debug.ui.commands.CastToArray">
+            <enablement>
+               <pluginState
+                     value="activated"
+                     id="org.eclipse.tm.tcf.debug.ui">
+               </pluginState>
+            </enablement>
+         </action>
+      </objectContribution>
    </extension>
    
 </plugin>
