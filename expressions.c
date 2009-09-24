@@ -111,7 +111,8 @@ void set_value(Value * v, void * data, size_t size) {
     v->address = 0;
     v->size = size;
     v->value = alloc_str(v->size);
-    memcpy(v->value, data, v->size);
+    if (data == NULL) memset(v->value, 0, v->size);
+    else memcpy(v->value, data, v->size);
 }
 
 static void set_ctx_word_value(Value * v, ContextAddress data) {
@@ -877,7 +878,7 @@ static void primary_expression(int mode, Value * v) {
     else if (text_sy == SY_ID) {
         if (mode != MODE_SKIP) {
             int sym_class = identifier((char *)text_val.value, v);
-            if (sym_class == SYM_CLASS_UNKNOWN) error(ERR_INV_EXPRESSION, "Invalid identifier");
+            if (sym_class == SYM_CLASS_UNKNOWN) error(ERR_INV_EXPRESSION, "Undefined identifier");
             if (sym_class == SYM_CLASS_TYPE) error(ERR_INV_EXPRESSION, "Illegal usage of type name");
         }
         next_sy();

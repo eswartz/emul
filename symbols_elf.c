@@ -139,7 +139,7 @@ static int find_in_object_tree(Context * ctx, ObjectInfo * list, ContextAddress 
         }
         switch (obj->mTag) {
         case TAG_enumeration_type:
-            found = find_in_object_tree(ctx, obj->mChildren, ip, name, sym);
+            if (find_in_object_tree(ctx, obj->mChildren, ip, name, sym)) found = 1;
             break;
         case TAG_global_subroutine:
         case TAG_subroutine:
@@ -260,6 +260,25 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
                     DWARFCache * cache = get_dwarf_cache(file);
                     if (ip != 0) found = find_in_dwarf(cache, ctx, name, ip, sym);
                     if (!found) found = find_in_sym_table(cache, ctx, name, sym);
+                    if (!found && ip != 0) {
+                        char * s = NULL;
+                        if (strcmp(name, "signed") == 0) s = "int";
+                        else if (strcmp(name, "signed int") == 0) s = "int";
+                        else if (strcmp(name, "unsigned") == 0) s = "unsigned int";
+                        else if (strcmp(name, "short") == 0) s = "short int";
+                        else if (strcmp(name, "signed short") == 0) s = "short int";
+                        else if (strcmp(name, "signed short int") == 0) s = "short int";
+                        else if (strcmp(name, "unsigned short") == 0) s = "unsigned short int";
+                        else if (strcmp(name, "long") == 0) s = "long int";
+                        else if (strcmp(name, "signed long") == 0) s = "long int";
+                        else if (strcmp(name, "signed long int") == 0) s = "long int";
+                        else if (strcmp(name, "unsigned long") == 0) s = "unsigned long int";
+                        else if (strcmp(name, "long long") == 0) s = "long long int";
+                        else if (strcmp(name, "signed long long") == 0) s = "long long int";
+                        else if (strcmp(name, "signed long long int") == 0) s = "long long int";
+                        else if (strcmp(name, "unsigned long long") == 0) s = "unsigned long long int";
+                        if (s != NULL) found = find_in_dwarf(cache, ctx, s, ip, sym);
+                    }
                     clear_trap(&trap);
                 }
                 else {

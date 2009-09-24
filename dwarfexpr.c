@@ -61,38 +61,38 @@ static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
     if (is_top_frame(Ctx, Frame)) {
         switch (rg) {
         case 0:
-            *value = Ctx->regs.eax;
+            *value = (ContextAddress)Ctx->regs.eax;
             return 0;
         case 1:
-            *value = Ctx->regs.ecx;
+            *value = (ContextAddress)Ctx->regs.ecx;
             return 0;
         case 2:
-            *value = Ctx->regs.edx;
+            *value = (ContextAddress)Ctx->regs.edx;
             return 0;
         case 3:
-            *value = Ctx->regs.ebx;
+            *value = (ContextAddress)Ctx->regs.ebx;
             return 0;
         case 4:
-            *value = Ctx->regs.esp;
+            *value = (ContextAddress)Ctx->regs.esp;
             return 0;
         case 5:
-            *value = Ctx->regs.ebp;
+            *value = (ContextAddress)Ctx->regs.ebp;
             return 0;
         case 6:
-            *value = Ctx->regs.esi;
+            *value = (ContextAddress)Ctx->regs.esi;
             return 0;
         case 7:
-            *value = Ctx->regs.edi;
+            *value = (ContextAddress)Ctx->regs.edi;
             return 0;
         case 8:
 #ifdef _WRS_KERNEL
-            *value = (unsigned)Ctx->regs.pc;
+            *value = (ContextAddress)Ctx->regs.pc;
 #else
-            *value = Ctx->regs.eip;
+            *value = (ContextAddress)Ctx->regs.eip;
 #endif
             return 0;
         case 9:
-            *value = Ctx->regs.eflags;
+            *value = (ContextAddress)Ctx->regs.eflags;
             return 0;
         }
     }
@@ -177,34 +177,34 @@ static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
     if (is_top_frame(Ctx, Frame)) {
         switch (rg) {
         case 0:
-            *value = Ctx->regs.__eax;
+            *value = (ContextAddress)Ctx->regs.__eax;
             return 0;
         case 1:
-            *value = Ctx->regs.__ecx;
+            *value = (ContextAddress)Ctx->regs.__ecx;
             return 0;
         case 2:
-            *value = Ctx->regs.__edx;
+            *value = (ContextAddress)Ctx->regs.__edx;
             return 0;
         case 3:
-            *value = Ctx->regs.__ebx;
+            *value = (ContextAddress)Ctx->regs.__ebx;
             return 0;
         case 4:
-            *value = Ctx->regs.__esp;
+            *value = (ContextAddress)Ctx->regs.__esp;
             return 0;
         case 5:
-            *value = Ctx->regs.__ebp;
+            *value = (ContextAddress)Ctx->regs.__ebp;
             return 0;
         case 6:
-            *value = Ctx->regs.__esi;
+            *value = (ContextAddress)Ctx->regs.__esi;
             return 0;
         case 7:
-            *value = Ctx->regs.__edi;
+            *value = (ContextAddress)Ctx->regs.__edi;
             return 0;
         case 8:
-            *value = Ctx->regs.__eip;
+            *value = (ContextAddress)Ctx->regs.__eip;
             return 0;
         case 9:
-            *value = Ctx->regs.__eflags;
+            *value = (ContextAddress)Ctx->regs.__eflags;
             return 0;
         }
     }
@@ -232,38 +232,38 @@ static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
     if (is_top_frame(Ctx, Frame)) {
         switch (rg) {
         case 0:
-            Ctx->regs.eax = (unsigned long)value;
+            Ctx->regs.eax = (ContextAddress)value;
             return 0;
         case 1:
-            Ctx->regs.ecx = (unsigned long)value;
+            Ctx->regs.ecx = (ContextAddress)value;
             return 0;
         case 2:
-            Ctx->regs.edx = (unsigned long)value;
+            Ctx->regs.edx = (ContextAddress)value;
             return 0;
         case 3:
-            Ctx->regs.ebx = (unsigned long)value;
+            Ctx->regs.ebx = (ContextAddress)value;
             return 0;
         case 4:
-            Ctx->regs.esp = (unsigned long)value;
+            Ctx->regs.esp = (ContextAddress)value;
             return 0;
         case 5:
-            Ctx->regs.ebp = (unsigned long)value;
+            Ctx->regs.ebp = (ContextAddress)value;
             return 0;
         case 6:
-            Ctx->regs.esi = (unsigned long)value;
+            Ctx->regs.esi = (ContextAddress)value;
             return 0;
         case 7:
-            Ctx->regs.edi = (unsigned long)value;
+            Ctx->regs.edi = (ContextAddress)value;
             return 0;
         case 8:
 #ifdef _WRS_KERNEL
-            Ctx->regs.pc = (void *)(unsigned long)value;
+            Ctx->regs.pc = (void *)(ContextAddress)value;
 #else
-            Ctx->regs.eip = (unsigned long)value;
+            Ctx->regs.eip = (ContextAddress)value;
 #endif
             return 0;
         case 9:
-            Ctx->regs.eflags = (unsigned long)value;
+            Ctx->regs.eflags = (ContextAddress)value;
             return 0;
         }
     }
@@ -271,52 +271,52 @@ static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
     if (is_top_frame(Ctx, Frame)) {
         switch (rg) {
         case 0:
-            Ctx->regs.rax = (unsigned long)value;
+            Ctx->regs.rax = (ContextAddress)value;
             return 0;
         case 1:
-            Ctx->regs.rbx = (unsigned long)value;
+            Ctx->regs.rbx = (ContextAddress)value;
             return 0;
         case 2:
-            Ctx->regs.rcx = (unsigned long)value;
+            Ctx->regs.rcx = (ContextAddress)value;
             return 0;
         case 3:
-            Ctx->regs.rdx = (unsigned long)value;
+            Ctx->regs.rdx = (ContextAddress)value;
             return 0;
         case 4:
-            Ctx->regs.rsi = (unsigned long)value;
+            Ctx->regs.rsi = (ContextAddress)value;
             return 0;
         case 5:
-            Ctx->regs.rdi = (unsigned long)value;
+            Ctx->regs.rdi = (ContextAddress)value;
             return 0;
         case 6:
-            Ctx->regs.rbp = (unsigned long)value;
+            Ctx->regs.rbp = (ContextAddress)value;
             return 0;
         case 7:
-            Ctx->regs.rsp = (unsigned long)value;
+            Ctx->regs.rsp = (ContextAddress)value;
             return 0;
         case 8:
-            Ctx->regs.r8 = (unsigned long)value;
+            Ctx->regs.r8 = (ContextAddress)value;
             return 0;
         case 9:
-            Ctx->regs.r9 = (unsigned long)value;
+            Ctx->regs.r9 = (ContextAddress)value;
             return 0;
         case 10:
-            Ctx->regs.r10 = (unsigned long)value;
+            Ctx->regs.r10 = (ContextAddress)value;
             return 0;
         case 11:
-            Ctx->regs.r11 = (unsigned long)value;
+            Ctx->regs.r11 = (ContextAddress)value;
             return 0;
         case 12:
-            Ctx->regs.r12 = (unsigned long)value;
+            Ctx->regs.r12 = (ContextAddress)value;
             return 0;
         case 13:
-            Ctx->regs.r13 = (unsigned long)value;
+            Ctx->regs.r13 = (ContextAddress)value;
             return 0;
         case 14:
-            Ctx->regs.r14 = (unsigned long)value;
+            Ctx->regs.r14 = (ContextAddress)value;
             return 0;
         case 15:
-            Ctx->regs.r15 = (unsigned long)value;
+            Ctx->regs.r15 = (ContextAddress)value;
             return 0;
         }
     }
@@ -324,34 +324,34 @@ static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
     if (is_top_frame(Ctx, Frame)) {
         switch (rg) {
         case 0:
-            Ctx->regs.__eax = (unsigned long)value;
+            Ctx->regs.__eax = (ContextAddress)value;
             return 0;
         case 1:
-            Ctx->regs.__ecx = (unsigned long)value;
+            Ctx->regs.__ecx = (ContextAddress)value;
             return 0;
         case 2:
-            Ctx->regs.__edx = (unsigned long)value;
+            Ctx->regs.__edx = (ContextAddress)value;
             return 0;
         case 3:
-            Ctx->regs.__ebx = (unsigned long)value;
+            Ctx->regs.__ebx = (ContextAddress)value;
             return 0;
         case 4:
-            Ctx->regs.__esp = (unsigned long)value;
+            Ctx->regs.__esp = (ContextAddress)value;
             return 0;
         case 5:
-            Ctx->regs.__ebp = (unsigned long)value;
+            Ctx->regs.__ebp = (ContextAddress)value;
             return 0;
         case 6:
-            Ctx->regs.__esi = (unsigned long)value;
+            Ctx->regs.__esi = (ContextAddress)value;
             return 0;
         case 7:
-            Ctx->regs.__edi = (unsigned long)value;
+            Ctx->regs.__edi = (ContextAddress)value;
             return 0;
         case 8:
-            Ctx->regs.__eip = (unsigned long)value;
+            Ctx->regs.__eip = (ContextAddress)value;
             return 0;
         case 9:
-            Ctx->regs.__eflags = (unsigned long)value;
+            Ctx->regs.__eflags = (ContextAddress)value;
             return 0;
         }
     }
