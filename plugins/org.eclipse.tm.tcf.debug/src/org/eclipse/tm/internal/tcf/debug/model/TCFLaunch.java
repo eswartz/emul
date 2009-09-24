@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.model;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,10 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -260,7 +255,7 @@ public class TCFLaunch extends Launch {
                             if (append) vars.putAll(def);
                             if (env != null) vars.putAll(env);
                             String file = remote_file;
-                            if (file == null || file.length() == 0) file = getProgramPath(project, local_file);
+                            if (file == null || file.length() == 0) file = TCFLaunchDelegate.getProgramPath(project, local_file);
                             if (file == null || file.length() == 0) {
                                 channel.terminate(new Exception("Program does not exist"));
                                 return;
@@ -293,7 +288,7 @@ public class TCFLaunch extends Launch {
                 }
             };
             if (local_file.length() == 0 || remote_file.length() == 0) r.run();
-            else copyFileToRemoteTarget(getProgramPath(project, local_file), remote_file, r);
+            else copyFileToRemoteTarget(TCFLaunchDelegate.getProgramPath(project, local_file), remote_file, r);
         }
         catch (Exception x) {
             channel.terminate(x);
@@ -378,24 +373,6 @@ public class TCFLaunch extends Launch {
         catch (Throwable x) {
             channel.terminate(x);
         }
-    }
-
-    private String getProgramPath(String project_name, String local_file) {
-        if (project_name == null || project_name.length() == 0) {
-            File f = new File(local_file);
-            if (!f.isAbsolute()) {
-                File ws = ResourcesPlugin.getWorkspace().getRoot().getLocation().toFile();
-                f = new File(ws, local_file);
-            }
-            return f.getAbsolutePath();
-        }
-        IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(project_name);
-        IPath program_path = new Path(local_file);
-        if (!program_path.isAbsolute()) {
-            if (project == null || !project.getFile(local_file).exists()) return null;
-            program_path = project.getFile(local_file).getLocation();
-        }
-        return program_path.toOSString();
     }
 
     private void connectProcessStreams() {

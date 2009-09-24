@@ -10,9 +10,10 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.launch;
 
-import org.eclipse.core.resources.IContainer;
+import java.util.HashSet;
+
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -20,7 +21,6 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.sourcelookup.ISourceContainer;
 import org.eclipse.debug.core.sourcelookup.ISourcePathComputerDelegate;
-import org.eclipse.debug.core.sourcelookup.containers.FolderSourceContainer;
 import org.eclipse.debug.core.sourcelookup.containers.ProjectSourceContainer;
 import org.eclipse.debug.core.sourcelookup.containers.WorkspaceSourceContainer;
 
@@ -36,19 +36,18 @@ public class TCFSourcePathComputerDelegate implements ISourcePathComputerDelegat
             ILaunchConfiguration configuration, IProgressMonitor monitor)
             throws CoreException {
         ISourceContainer sourceContainer = null;
-        String path = configuration.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, (String)null);
+        String path = TCFLaunchDelegate.getProgramPath(
+                configuration.getAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, (String)null),
+                configuration.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, (String)null));
         if (path != null) {
-            IResource resource = ResourcesPlugin.getWorkspace().getRoot().findMember(new Path(path));
-            if (resource != null) {
-                IContainer container = resource.getParent();
-                if (container != null) {
-                    if (container.getType() == IResource.PROJECT) {
-                        sourceContainer = new ProjectSourceContainer((IProject)container, false);
-                    }
-                    else if (container.getType() == IResource.FOLDER) {
-                        sourceContainer = new FolderSourceContainer(container, false);
-                    }
-                }
+            IFile[] files = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocation(new Path(path));
+            if (files != null && files.length > 0) {
+                HashSet<IProject> projects = new HashSet<IProject>();
+                for (IFile file : files) projects.add(file.getProject());
+                ISourceContainer[] res = new ISourceContainer[projects.size()];
+                int i = 0;
+                for (IProject project : projects) res[i++] = new ProjectSourceContainer(project, false);
+                return res;
             }
         }
         if (sourceContainer == null) {

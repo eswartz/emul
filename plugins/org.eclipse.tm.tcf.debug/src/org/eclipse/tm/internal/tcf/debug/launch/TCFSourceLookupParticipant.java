@@ -34,7 +34,11 @@ public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant 
             ILineNumbers.CodeArea area = (ILineNumbers.CodeArea)object;
             // TODO: map file path from remote file system to local
             if (area.directory != null && area.file != null) {
-                return new File(area.directory, area.file).getAbsolutePath();
+                String d = area.directory;
+                if (d.startsWith("/cygdrive/")) {
+                    d = d.substring(10, 11) + ":" + d.substring(11);
+                }
+                return new File(d, area.file).getAbsolutePath();
             }
             return area.file;
         }

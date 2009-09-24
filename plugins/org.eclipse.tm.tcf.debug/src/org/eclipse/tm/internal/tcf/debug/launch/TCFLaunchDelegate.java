@@ -10,8 +10,14 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.launch;
 
+import java.io.File;
+
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
@@ -35,6 +41,35 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
         ATTR_RUN_LOCAL_AGENT = ITCFConstants.ID_TCF_DEBUG_MODEL + ".RunLocalAgent",
         ATTR_USE_LOCAL_AGENT = ITCFConstants.ID_TCF_DEBUG_MODEL + ".UseLocalAgent";
 
+    /**
+     * Given project name and program name returns absolute path of the program.
+     * @param project_name - workspace project name.
+     * @param program_name - launch program name.
+     * @return program path or null if both project name and program name are null.
+     */
+    public static String getProgramPath(String project_name, String program_name) {
+        if (project_name == null || project_name.length() == 0) {
+            if (program_name == null || program_name.length() == 0) return null;
+            File file = new File(program_name);
+            if (!file.isAbsolute()) {
+                File ws = ResourcesPlugin.getWorkspace().getRoot().getLocation().toFile();
+                file = new File(ws, program_name);
+            }
+            return file.getAbsolutePath();
+        }
+        IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(project_name);
+        IPath program_path = new Path(program_name);
+        if (!program_path.isAbsolute()) {
+            if (project == null || !project.getFile(program_name).exists()) return null;
+            program_path = project.getFile(program_name).getLocation();
+        }
+        return program_path.toOSString();
+    }
+
+    /**
+     * Create new TCF launch object.
+     * @return new TCFLaunch object
+     */
     public ILaunch getLaunch(final ILaunchConfiguration configuration, final String mode) throws CoreException {
         return new TCFTask<ILaunch>() {
             int cnt;
@@ -48,6 +83,9 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
         }.getE();
     }
 
+    /**
+     * Launch TCF session.
+     */
     public void launch(final ILaunchConfiguration configuration, final String mode,
             final ILaunch launch, final IProgressMonitor monitor) throws CoreException {
         String local_id = null;
