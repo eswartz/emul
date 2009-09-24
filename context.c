@@ -1708,7 +1708,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
             word = ptrace(PT_PEEKDATA, ctx->pid, word_addr, 0);
             if (errno != 0) {
                 int err = errno;
-                trace(LOG_ALWAYS, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, error %d %s",
+                trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, error %d %s",
                     ctx, ctx->pid, err, errno_to_str(err));
                 errno = err;
                 return -1;
@@ -1748,7 +1748,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
         word = ptrace(PT_PEEKDATA, ctx->pid, word_addr, 0);
         if (errno != 0) {
             int err = errno;
-            trace(LOG_ALWAYS, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, error %d %s",
+            trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, error %d %s",
                 ctx, ctx->pid, err, errno_to_str(err));
             errno = err;
             return -1;
@@ -2248,7 +2248,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
             word = ptrace(PTRACE_PEEKDATA, ctx->pid, word_addr, 0);
             if (errno != 0) {
                 int err = errno;
-                trace(LOG_ALWAYS, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, addr %#lx, error %d %s",
+                trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, addr %#lx, error %d %s",
                     ctx, ctx->pid, word_addr, err, errno_to_str(err));
                 errno = err;
                 return -1;
@@ -2287,7 +2287,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
         word = ptrace(PTRACE_PEEKDATA, ctx->pid, word_addr, 0);
         if (errno != 0) {
             int err = errno;
-            trace(LOG_ALWAYS, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, addr %#lx, error %d %s",
+            trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, addr %#lx, error %d %s",
                 ctx, ctx->pid, word_addr, err, errno_to_str(err));
             errno = err;
             return -1;
