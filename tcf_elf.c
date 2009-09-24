@@ -577,12 +577,12 @@ static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddre
             if (file->elf64) {
                 unsigned cnt = (unsigned)(sec->size / sizeof(Elf64_Dyn));
                 for (j = 0; j < cnt; j++) {
-                    Elf64_Dyn * dyn = (Elf64_Dyn *)sec->data + j;
-                    if (file->byte_swap) SWAP(dyn->d_tag);
-                    if (dyn->d_tag == DT_NULL) break;
-                    if (dyn->d_tag == tag) {
+                    Elf64_Dyn dyn = *((Elf64_Dyn *)sec->data + j);
+                    if (file->byte_swap) SWAP(dyn.d_tag);
+                    if (dyn.d_tag == DT_NULL) break;
+                    if (dyn.d_tag == tag) {
                         if (addr != NULL) {
-                            char buf[sizeof(dyn->d_un.d_ptr)];
+                            char buf[sizeof(dyn.d_un.d_ptr)];
                             ContextAddress sec_addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sec->addr);
                             ContextAddress entry_addr = sec_addr + j * sizeof(Elf64_Dyn) + offsetof(Elf64_Dyn, d_un.d_ptr);
                             if (context_read_mem(ctx, entry_addr, buf, sizeof(buf)) < 0) return -1;
@@ -596,13 +596,13 @@ static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddre
             else {
                 unsigned cnt = (unsigned)(sec->size / sizeof(Elf32_Dyn));
                 for (j = 0; j < cnt; j++) {
-                    Elf32_Dyn * dyn = (Elf32_Dyn *)sec->data + j;
-                    if (file->byte_swap) SWAP(dyn->d_tag);
-                    if (dyn->d_tag == DT_NULL) break;
-                    if (dyn->d_tag == tag) {
+                    Elf32_Dyn dyn = *((Elf32_Dyn *)sec->data + j);
+                    if (file->byte_swap) SWAP(dyn.d_tag);
+                    if (dyn.d_tag == DT_NULL) break;
+                    if (dyn.d_tag == tag) {
                         if (addr != NULL) {
-                            char buf1[sizeof(dyn->d_tag)];
-                            char buf2[sizeof(dyn->d_un.d_ptr)];
+                            char buf1[sizeof(dyn.d_tag)];
+                            char buf2[sizeof(dyn.d_un.d_ptr)];
                             ContextAddress sec_addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sec->addr);
                             ContextAddress entry_addr = sec_addr + j * sizeof(Elf32_Dyn);
                             if (context_read_mem(ctx, entry_addr, buf1, sizeof(buf1)) < 0) return -1;
@@ -652,15 +652,15 @@ static int get_global_symbol_address(Context * ctx, ELF_File * file, char * name
             if (file->elf64) {
                 unsigned cnt = (unsigned)(sec->size / sizeof(Elf64_Sym));
                 for (j = 0; j < cnt; j++) {
-                    Elf64_Sym * sym = (Elf64_Sym *)sec->data + j;
-                    if (ELF64_ST_BIND(sym->st_info) != STB_GLOBAL) continue;
-                    if (file->byte_swap) SWAP(sym->st_name);
-                    if (sym_name_cmp((char *)str->data + sym->st_name, name) != 0) continue;
-                    switch (ELF64_ST_TYPE(sym->st_info)) {
+                    Elf64_Sym sym = *((Elf64_Sym *)sec->data + j);
+                    if (ELF64_ST_BIND(sym.st_info) != STB_GLOBAL) continue;
+                    if (file->byte_swap) SWAP(sym.st_name);
+                    if (sym_name_cmp((char *)str->data + sym.st_name, name) != 0) continue;
+                    switch (ELF64_ST_TYPE(sym.st_info)) {
                     case STT_OBJECT:
                     case STT_FUNC:
-                        if (file->byte_swap) SWAP(sym->st_value);
-                        *addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sym->st_value);
+                        if (file->byte_swap) SWAP(sym.st_value);
+                        *addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sym.st_value);
                         if (*addr != 0) return 0;
                     }
                 }
@@ -668,15 +668,15 @@ static int get_global_symbol_address(Context * ctx, ELF_File * file, char * name
             else {
                 unsigned cnt = (unsigned)(sec->size / sizeof(Elf32_Sym));
                 for (j = 0; j < cnt; j++) {
-                    Elf32_Sym * sym = (Elf32_Sym *)sec->data + j;
-                    if (ELF32_ST_BIND(sym->st_info) != STB_GLOBAL) continue;
-                    if (file->byte_swap) SWAP(sym->st_name);
-                    if (sym_name_cmp((char *)str->data + sym->st_name, name) != 0) continue;
-                    switch (ELF32_ST_TYPE(sym->st_info)) {
+                    Elf32_Sym sym = *((Elf32_Sym *)sec->data + j);
+                    if (ELF32_ST_BIND(sym.st_info) != STB_GLOBAL) continue;
+                    if (file->byte_swap) SWAP(sym.st_name);
+                    if (sym_name_cmp((char *)str->data + sym.st_name, name) != 0) continue;
+                    switch (ELF32_ST_TYPE(sym.st_info)) {
                     case STT_OBJECT:
                     case STT_FUNC:
-                        if (file->byte_swap) SWAP(sym->st_value);
-                        *addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sym->st_value);
+                        if (file->byte_swap) SWAP(sym.st_value);
+                        *addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sym.st_value);
                         if (*addr != 0) return 0;
                     }
                 }
@@ -721,7 +721,6 @@ static ContextAddress elf_get_debug_structure_address(Context * ctx) {
     if (ctx->parent != NULL) ctx = ctx->parent;
     if (ctx->debug_structure_searched) return ctx->debug_structure_address;
     ctx->debug_structure_address = 0;
-    ctx->debug_structure_searched = 1;
 
     for (file = elf_list_first(ctx, 0, ~(ContextAddress)0); file != NULL; file = elf_list_next(ctx)) {
         if (file->pic) continue;
@@ -734,6 +733,7 @@ static ContextAddress elf_get_debug_structure_address(Context * ctx) {
     }
     elf_list_done(ctx);
     ctx->debug_structure_address = addr;
+    ctx->debug_structure_searched = addr != 0;
     return addr;
 }
 
@@ -741,31 +741,34 @@ static int expression_identifier_callback(Context * ctx, int frame, char * name,
     if (ctx == NULL) return 0;
     if (strcmp(name, "$loader_brk") == 0) {
         v->address = elf_get_debug_structure_address(ctx);
+        v->type_class = TYPE_CLASS_POINTER;
+        v->size = context_word_size(ctx);
         if (v->address != 0) {
-            v->type_class = TYPE_CLASS_POINTER;
-            v->size = context_word_size(ctx);
             switch (v->size) {
             case 4: v->address += 8; break;
             case 8: v->address += 16; break;
             default: assert(0);
             }
             v->remote = 1;
-            return 1;
         }
+        else {
+            set_value(v, NULL, v->size);
+        }
+        return 1;
     }
     if (strcmp(name, "$loader_state") == 0) {
         v->address = elf_get_debug_structure_address(ctx);
+        v->type_class = TYPE_CLASS_CARDINAL;
+        v->size = context_word_size(ctx);
         if (v->address != 0) {
-            v->type_class = TYPE_CLASS_CARDINAL;
-            v->size = context_word_size(ctx);
             switch (v->size) {
             case 4: v->address += 12; break;
             case 8: v->address += 24; break;
             default: assert(0);
             }
-            v->remote = 1;
-            return 1;
         }
+        v->remote = 1;
+        return 1;
     }
     return 0;
 }
