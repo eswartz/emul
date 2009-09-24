@@ -525,26 +525,6 @@ int getegid(void) {
     return 0;
 }
 
-ssize_t pread(int fd, const void * buf, size_t size, off_t offset) {
-    off_t offs0;
-    ssize_t rd;
-    if ((offs0 = lseek(fd, 0, SEEK_CUR)) == (off_t)-1) return -1;
-    if (lseek(fd, offset, SEEK_SET) == (off_t)-1) return -1;
-    rd = read(fd, (void *)buf, size);
-    if (lseek(fd, offs0, SEEK_SET) == (off_t)-1) return -1;
-    return rd;
-}
-
-ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset) {
-    off_t offs0;
-    ssize_t wr;
-    if ((offs0 = lseek(fd, 0, SEEK_CUR)) == (off_t)-1) return -1;
-    if (lseek(fd, offset, SEEK_SET) == (off_t)-1) return -1;
-    wr = write(fd, (void *)buf, size);
-    if (lseek(fd, offs0, SEEK_SET) == (off_t)-1) return -1;
-    return wr;
-}
-
 int utf8_stat(const char * name, struct utf8_stat * buf) {
     struct _stati64 tmp;
     wchar_t path[FILE_PATH_SIZE];
@@ -697,6 +677,30 @@ int utf8_closedir(DIR * d) {
 }
 
 #endif /* defined(WIN32) && !defined(__CYGWIN__) */
+
+#if defined(WIN32) && !defined(__CYGWIN__) || defined(_WRS_KERNEL)
+
+ssize_t pread(int fd, const void * buf, size_t size, off_t offset) {
+    off_t offs0;
+    ssize_t rd;
+    if ((offs0 = lseek(fd, 0, SEEK_CUR)) == (off_t)-1) return -1;
+    if (lseek(fd, offset, SEEK_SET) == (off_t)-1) return -1;
+    rd = read(fd, (void *)buf, size);
+    if (lseek(fd, offs0, SEEK_SET) == (off_t)-1) return -1;
+    return rd;
+}
+
+ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset) {
+    off_t offs0;
+    ssize_t wr;
+    if ((offs0 = lseek(fd, 0, SEEK_CUR)) == (off_t)-1) return -1;
+    if (lseek(fd, offset, SEEK_SET) == (off_t)-1) return -1;
+    wr = write(fd, (void *)buf, size);
+    if (lseek(fd, offs0, SEEK_SET) == (off_t)-1) return -1;
+    return wr;
+}
+
+#endif /* defined(WIN32) && !defined(__CYGWIN__) || defined(_WRS_KERNEL) */
 
 #if defined(WIN32)
 

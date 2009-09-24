@@ -20,6 +20,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#if ENABLE_LUA
+
 #include <errno.h>
 #include <assert.h>
 #include <signal.h>
@@ -1343,7 +1346,7 @@ static const luaL_Reg posteventfuncs[] = {
  */
 
 #if defined(_WRS_KERNEL)
-int tcf_client(void) {
+int tcf_lua(void) {
 #else
 int main(int argc, char ** argv) {
 #endif
@@ -1525,3 +1528,16 @@ int main(int argc, char ** argv) {
     lua_close(L);
     return 0;
 }
+
+#else /* ENABLE_LUA */
+
+#if defined(_WRS_KERNEL)
+int tcf_lua(void) {
+#else
+int main(int argc, char ** argv) {
+#endif
+    fprintf(stderr, "Agent was built without LUA support\n");
+    return 1;
+}
+
+#endif /* ENABLE_LUA */

@@ -63,8 +63,10 @@ OFILES = $(addprefix $(BINDIR)/,$(filter-out main%$(EXTOBJ),$(addsuffix $(EXTOBJ
 HFILES = $(wildcard *.h)
 CFILES = $(wildcard *.c)
 EXECS = $(BINDIR)/agent$(EXTEXE) $(BINDIR)/client$(EXTEXE) $(BINDIR)/tcfreg$(EXTEXE) $(BINDIR)/valueadd$(EXTEXE) $(BINDIR)/tcflog$(EXTEXE)
+
 ifdef LUADIR
   EXECS += $(BINDIR)/tcflua
+  CFLAGS += -DPATH_LUA="$(LUADIR)"
 endif
 
 ifdef SERVICES

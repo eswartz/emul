@@ -307,6 +307,8 @@ typedef unsigned long useconds_t;
 
 extern int truncate(char * path, int64_t size);
 extern char * canonicalize_file_name(const char * path);
+extern ssize_t pread(int fd, const void * buf, size_t size, off_t offset);
+extern ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset);
 
 extern void usleep(useconds_t useconds);
 

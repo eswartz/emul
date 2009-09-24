@@ -112,6 +112,9 @@
 #if !defined(ENABLE_AIO)
 #define ENABLE_AIO              defined(_POSIX_ASYNCHRONOUS_IO)
 #endif
+#if !defined(ENABLE_LUA)
+#define ENABLE_LUA              defined(PATH_LUA)
+#endif
 
 #ifdef CONFIG_MAIN
 /*
