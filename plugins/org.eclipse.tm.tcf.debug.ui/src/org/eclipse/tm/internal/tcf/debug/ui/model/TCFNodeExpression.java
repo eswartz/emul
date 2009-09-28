@@ -938,7 +938,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         if (!value.validate(done)) return null;
         StringBuffer bf = new StringBuffer();
         appendErrorText(bf, expression.getError());
-        appendErrorText(bf, value.getError());
+        if (bf.length() == 0) appendErrorText(bf, value.getError());
         if (bf.length() == 0) {
             IExpressions.Value v = value.getData();
             if (v != null) {
