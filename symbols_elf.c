@@ -536,8 +536,6 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     return res;
 }
 
-extern void ini_symbols_lib(void);
-
 void ini_symbols_lib(void) {
     assert(sizeof(SymLocation) <= sizeof(((Symbol *)0)->location));
 }

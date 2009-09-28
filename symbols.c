@@ -187,8 +187,6 @@ static void command_get_children(char * token, Channel * c) {
     loc_free(list);
 }
 
-extern void ini_symbols_lib(void);
-
 void ini_symbols_service(Protocol * proto) {
     ini_symbols_lib();
     add_command_handler(proto, SYMBOLS, "getContext", command_get_context);

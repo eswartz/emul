@@ -84,7 +84,7 @@ extern int id2symbol(char * id, Symbol * sym);
 
 /*************** Functions for retrieving symbol properties ***************************************/
 /*
- * Each function retireves one particular attribute of an object or type
+ * Each function retireves one particular attribute of an object or type.
  * On error returns -1 and sets errno.
  * On success returns 0.
  */
@@ -95,7 +95,7 @@ extern int get_symbol_type(const Symbol * sym, Symbol * type);
 /* Get type class, see TYPE_CLASS_* */
 extern int get_symbol_type_class(const Symbol * sym, int * type_class);
 
-/* Get type name, clients should call loc_free to dispose result */
+/* Get type name, clients should call loc_free to dispose the result */
 extern int get_symbol_name(const Symbol * sym, char ** name);
 
 /* Get value size of the type, in bytes */
@@ -110,13 +110,14 @@ extern int get_symbol_index_type(const Symbol * sym, Symbol * index_type);
 /* Get array length (number of elements) */
 extern int get_symbol_length(const Symbol * sym, int frame, unsigned long * length);
 
-/* Get children type IDs (struct, union, class, function and enum), clients should call loc_free to dispose resul */
+/* Get children type IDs (struct, union, class, function and enum),
+ * clients should call loc_free to dispose the resul */
 extern int get_symbol_children(const Symbol * sym, Symbol ** children, int * count);
 
 /* Get offset in parent type (fields) */
 extern int get_symbol_offset(const Symbol * sym, unsigned long * offset);
 
-/* Get value (constant objects and enums), clients should call loc_free to dispose result */
+/* Get value (constant objects and enums), clients should call loc_free to dispose the result */
 extern int get_symbol_value(const Symbol * sym, void ** value, size_t * size);
 
 /* Get address (variables) */
@@ -141,5 +142,6 @@ extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
  * Initialize symbol service.
  */
 extern void ini_symbols_service(Protocol * proto);
+extern void ini_symbols_lib(void);
 
 #endif /* D_symbols */
