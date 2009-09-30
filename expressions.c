@@ -1783,7 +1783,7 @@ int evaluate_expression(Context * ctx, int frame, char * s, int load, Value * v)
 }
 
 int value_to_boolean(Value * v) {
-    /* TODO: error handling */
+    /* TODO: error handling in value_to_boolean() */
     int r = 0;
     Trap trap;
     if (set_trap(&trap)) {
@@ -1794,7 +1794,7 @@ int value_to_boolean(Value * v) {
 }
 
 ContextAddress value_to_address(Value * v) {
-    /* TODO: error handling */
+    /* TODO: error handling in value_to_address() */
     ContextAddress r = 0;
     Trap trap;
     if (set_trap(&trap)) {

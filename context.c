@@ -1014,7 +1014,7 @@ static void init(void) {
 
 #elif defined(_WRS_KERNEL)
 
-/* TODO: RTP support */
+/* TODO: VxWorks RTP support */
 
 #include <taskHookLib.h>
 #include <private/vxdbgLibP.h>
