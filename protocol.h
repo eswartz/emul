@@ -109,6 +109,11 @@ extern ReplyHandlerInfo * protocol_send_command(Protocol * p, Channel * c,
 extern int protocol_cancel_command(Protocol * p, ReplyHandlerInfo * rh);
 
 /*
+ * Send redirect command.
+ */
+extern ReplyHandlerInfo * send_redirect_command(Protocol * p, Channel * c, const char * peerId, ReplyHandlerCB handler, void * client_data);
+
+/*
  * Create protocol instance
  */
 extern Protocol * protocol_alloc(void);

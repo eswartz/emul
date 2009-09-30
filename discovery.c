@@ -71,13 +71,18 @@ typedef struct RedirectInfo {
     char token[256];
 } RedirectInfo;
 
-static void channel_connected(void * args, int error, Channel * c2) {
+static void connect_done(void * args, int error, Channel * c2) {
     RedirectInfo * info = (RedirectInfo *)args;
     Channel * c1 = info->channel;
 
     if (!is_stream_closed(c1)) {
-        if (!error) proxy_create(c1, c2);
-
+        assert(c1->state == ChannelStateRedirectReceived);
+        if (!error) {
+            proxy_create(c1, c2);
+        }
+        else {
+            c1->state = ChannelStateConnected;
+        }
         write_stringz(&c1->out, "R");
         write_stringz(&c1->out, info->token);
         write_errno(&c1->out, error);
@@ -94,6 +99,7 @@ static void command_redirect(char * token, Channel * c) {
     char id[256];
     PeerServer * ps = NULL;
 
+    assert(c->state == ChannelStateConnected);
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
@@ -102,9 +108,10 @@ static void command_redirect(char * token, Channel * c) {
     if (ps != NULL) {
         RedirectInfo * info = loc_alloc_zero(sizeof(RedirectInfo));
         stream_lock(c);
+        c->state = ChannelStateRedirectReceived;
         info->channel = c;
         strncpy(info->token, token, sizeof(info->token) - 1);
-        channel_connect(ps, channel_connected, info);
+        channel_connect(ps, connect_done, info);
     }
     else {
         write_stringz(&c->out, "R");

@@ -39,7 +39,7 @@
 #include "errors.h"
 
 static char * progname;
-static char * dest_url = "TCF::1534";
+static char * dest_url = "TCP::1534";
 
 typedef struct ConnectInfo {
     PeerServer * ps;
@@ -51,6 +51,7 @@ static void connect_done(void * args, int error, Channel * c2) {
     Channel * c1 = info->c1;
 
     if (!is_stream_closed(c1)) {
+        assert(c1->state == ChannelStateRedirectReceived);
         if (error) {
             fprintf(stderr, "cannot connect to peer: %s\n", dest_url);
             channel_close(c1);
@@ -67,11 +68,10 @@ static void connect_done(void * args, int error, Channel * c2) {
     loc_free(info);
 }
 
-static void channel_server_connecting(Channel * c1) {
+static void connect_dest(void * x) {
+    Channel * c1 = x;
     PeerServer * ps = NULL;
     ConnectInfo * info = NULL;
-
-    trace(LOG_ALWAYS, "channel server connecting");
 
     ps = channel_peer_from_url(dest_url);
     if (ps == NULL) {
@@ -80,14 +80,45 @@ static void channel_server_connecting(Channel * c1) {
         return;
     }
     stream_lock(c1);
+    c1->state = ChannelStateRedirectReceived;
     info = loc_alloc_zero(sizeof(ConnectInfo));
     info->ps = ps;
     info->c1 = c1;
     channel_connect(ps, connect_done, info);
 }
 
+static void channel_server_connecting(Channel * c1) {
+    trace(LOG_ALWAYS, "channel server connecting");
+
+    assert(c1->state == ChannelStateStarted);
+    c1->state = ChannelStateHelloSent;  /* Fake that we sent hello message. */
+}
+
+static void channel_server_connected(Channel * c1) {
+    trace(LOG_ALWAYS, "channel server connected");
+
+    assert(c1->state == ChannelStateConnected);
+
+    /* Connect to destination on next dispatch since we are limited in
+     * what we can do in a callback, e.g. cannot close channel. */
+    post_event(connect_dest, c1);
+}
+
+static void channel_server_receive(Channel * c1) {
+    handle_protocol_message(c1->client_data, c1);
+}
+
+static void channel_server_disconnected(Channel * c1) {
+    trace(LOG_ALWAYS, "channel server disconnected");
+    protocol_release(c1->client_data);
+}
+
 static void channel_new_connection(ChannelServer * serv, Channel * c) {
+    c->client_data = protocol_alloc();
     c->connecting = channel_server_connecting;
+    c->connected = channel_server_connected;
+    c->receive = channel_server_receive;
+    c->disconnected = channel_server_disconnected;
     channel_start(c);
 }
 

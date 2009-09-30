@@ -330,6 +330,19 @@ int wsa_socket(int af, int type, int protocol) {
     return res;
 }
 
+#undef connect
+int wsa_connect(int socket, const struct sockaddr * addr, int addr_size) {
+    int res = 0;
+    SetLastError(0);
+    WSASetLastError(0);
+    res = connect(socket, addr, addr_size);
+    if (res != 0) {
+        set_win32_errno(WSAGetLastError());
+        return -1;
+    }
+    return 0;
+}
+
 #undef bind
 int wsa_bind(int socket, const struct sockaddr * addr, int addr_size) {
     int res = 0;

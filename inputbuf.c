@@ -42,7 +42,7 @@ void ibuf_trigger_read(InputBuf * ibuf) {
     int size;
 
     if (ibuf->full || ibuf->eof) return;
-    if (ibuf->out <= ibuf->inp) size = ibuf->buf + BUF_SIZE - ibuf->inp;
+    if (ibuf->out <= ibuf->inp) size = ibuf->buf + INPUT_BUF_SIZE - ibuf->inp;
     else size = ibuf->out - ibuf->inp;
     ibuf->post_read(ibuf, ibuf->inp, size);
 }
@@ -54,9 +54,9 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
 
     assert(ibuf->message_count > 0);
     assert(ibuf->handling_msg == HandleMsgActive);
-    assert(out >= ibuf->buf && out <= ibuf->buf + BUF_SIZE);
+    assert(out >= ibuf->buf && out <= ibuf->buf + INPUT_BUF_SIZE);
     assert(out == inp->end);
-    if (out == ibuf->buf + BUF_SIZE) {
+    if (out == ibuf->buf + INPUT_BUF_SIZE) {
         inp->end = inp->cur = out = ibuf->buf;
     }
     if (out != ibuf->out) {
@@ -66,7 +66,7 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
         ibuf_trigger_read(ibuf);
     }
     for (;;) {
-        if (out == ibuf->buf + BUF_SIZE) out = ibuf->buf;
+        if (out == ibuf->buf + INPUT_BUF_SIZE) out = ibuf->buf;
         if (out == ibuf->inp && !ibuf->full) {
             /* No data available */
             assert(ibuf->long_msg || ibuf->eof);
@@ -93,7 +93,7 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
             /* Reading the bin data */
             assert(!ibuf->out_esc);
             inp->cur = out;
-            max = out <= ibuf->inp ? ibuf->inp : ibuf->buf + BUF_SIZE;
+            max = out <= ibuf->inp ? ibuf->inp : ibuf->buf + INPUT_BUF_SIZE;
             if (max - out < ibuf->out_data_size) {
                 ibuf->out_data_size -= max - out;
                 out = max;
@@ -145,7 +145,7 @@ int ibuf_get_more(InputBuf * ibuf, InputStream * inp, int peeking) {
         if (ch != ESC) {
             /* Plain data - fast path */
             inp->cur = out;
-            max = out <= ibuf->inp ? ibuf->inp : ibuf->buf + BUF_SIZE;
+            max = out <= ibuf->inp ? ibuf->inp : ibuf->buf + INPUT_BUF_SIZE;
             while (out != max && *out != ESC) out++;
             inp->end = out;
             if (!peeking) inp->cur++;
@@ -188,7 +188,7 @@ void ibuf_read_done(InputBuf * ibuf, int len) {
     inp = ibuf->inp;
     while (len-- > 0) {
         unsigned char ch = *inp++;
-        if (inp == ibuf->buf + BUF_SIZE) inp = ibuf->buf;
+        if (inp == ibuf->buf + INPUT_BUF_SIZE) inp = ibuf->buf;
 
 #if ENABLE_ZeroCopy
         if (ibuf->inp_size_mode) {

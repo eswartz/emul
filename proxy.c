@@ -27,18 +27,10 @@
 #include "exceptions.h"
 #include "myalloc.h"
 
-enum {
-    ProxyStateInitial,
-    ProxyStateConnecting,
-    ProxyStateConnected,
-    ProxyStateDisconnected
-};
-
 typedef struct Proxy {
     Channel * c;
     Protocol * proto;
     int other;
-    int state;
     int instance;
 } Proxy;
 
@@ -47,11 +39,10 @@ static void proxy_connecting(Channel * c) {
 
     assert(c == target->c);
     assert(target->other == -1);
-    assert(target->state == ProxyStateInitial);
-    assert((target + target->other)->state == ProxyStateConnected);
+    assert(c->state == ChannelStateStarted);
+    assert((target + target->other)->c->state == ChannelStateHelloReceived);
 
     trace(LOG_PROXY, "Proxy waiting Hello from target");
-    target->state = ProxyStateConnecting;
 
     send_hello_message(target->proto, target->c);
     flush_stream(&target->c->out);
@@ -63,11 +54,12 @@ static void proxy_connected(Channel * c) {
     int i;
 
     assert(target->c == c);
-    assert(target->other == -1);
-    assert(target->state == ProxyStateConnecting);
-    assert(host->state == ProxyStateConnected);
-
-    target->state = ProxyStateConnected;
+    if (target->other == 1) {
+        /* We get here after sending hello to host */
+        return;
+    }
+    assert(c->state == ChannelStateConnected);
+    assert(host->c->state == ChannelStateHelloReceived);
 
     trace(LOG_PROXY, "Proxy connected, target services:");
     for (i = 0; i < target->c->peer_service_cnt; i++) {
@@ -89,9 +81,7 @@ static void proxy_disconnected(Channel * c) {
     Proxy * proxy = c->client_data;
 
     assert(c == proxy->c);
-    assert(proxy->state == ProxyStateConnecting || proxy->state == ProxyStateConnected);
-    proxy->state = ProxyStateDisconnected;
-    if (proxy[proxy->other].state == ProxyStateDisconnected) {
+    if (proxy[proxy->other].c->state == ChannelStateDisconnected) {
         trace(LOG_PROXY, "Proxy disconnected");
         if (proxy->other == -1) proxy--;
         assert(proxy[0].c->spg == proxy[1].c->spg);
@@ -100,6 +90,8 @@ static void proxy_disconnected(Channel * c) {
         proxy[0].c->client_data = proxy[1].c->client_data = NULL;
         protocol_release(proxy[0].proto);
         protocol_release(proxy[1].proto);
+        stream_unlock(proxy[0].c);
+        stream_unlock(proxy[1].c);
         loc_free(proxy);
     }
     else {
@@ -134,7 +126,7 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
 
     assert(c == proxy->c);
     assert(argc > 0 && strlen(argv[0]) == 1);
-    if (proxy[proxy->other].state == ProxyStateDisconnected) return;
+    if (proxy[proxy->other].c->state == ChannelStateDisconnected) return;
     if (argv[0][0] == 'C') {
         write_stringz(&otherc->out, argv[0]);
         /* Prefix token with 'R'emote to distinguish from locally
@@ -201,23 +193,25 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
 
 void proxy_create(Channel * c1, Channel * c2) {
     TCFSuspendGroup * spg = suspend_group_alloc();
+    TCFBroadcastGroup * bcg = broadcast_group_alloc();
     Proxy * proxy = loc_alloc_zero(2 * sizeof *proxy);
     int i;
 
     static int instance;
 
-    assert(c1->hello_received);
+    assert(c1->state == ChannelStateRedirectReceived);
+    assert(c2->state == ChannelStateStartWait);
 
+    stream_lock(c1);
     proxy[0].c = c1;
     proxy[0].proto = protocol_alloc();
     proxy[0].other = 1;
-    proxy[0].state = ProxyStateConnected;
     proxy[0].instance = instance;
 
+    stream_lock(c2);
     proxy[1].c = c2;
     proxy[1].proto = protocol_alloc();
     proxy[1].other = -1;
-    proxy[1].state = ProxyStateInitial;
     proxy[1].instance = instance++;
 
     trace(LOG_PROXY, "Proxy created, host services:");
@@ -225,10 +219,10 @@ void proxy_create(Channel * c1, Channel * c2) {
         trace(LOG_PROXY, "    %s", c1->peer_service_list[i]);
         protocol_get_service(proxy[1].proto, c1->peer_service_list[i]);
     }
+    c1->state = ChannelStateHelloReceived;
     notify_channel_closed(c1);
     protocol_release(c1->client_data);
     c1->client_data = NULL;
-    c1->hello_received = 1;
 
     c1->connecting = proxy_connecting;
     c1->connected = proxy_connected;
@@ -246,5 +240,7 @@ void proxy_create(Channel * c1, Channel * c2) {
 
     channel_set_suspend_group(c1, spg);
     channel_set_suspend_group(c2, spg);
+    channel_set_broadcast_group(c1, bcg);
+    channel_set_broadcast_group(c2, bcg);
     channel_start(c2);
  }

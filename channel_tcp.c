@@ -163,11 +163,7 @@ static void delete_channel(ChannelTCP * c) {
     assert(c->lock_cnt == 0);
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->read_pending == 0);
-    if (c->ibuf.handling_msg == HandleMsgTriggered) {
-        /* Cancel pending message handling since channel object is gone. */
-        c->ibuf.handling_msg = HandleMsgIdle;
-        cancel_event(handle_channel_msg, c, 0);
-    }
+    assert(c->ibuf.handling_msg != HandleMsgTriggered);
     channel_clear_broadcast_group(&c->chan);
     channel_clear_suspend_group(&c->chan);
     c->magic = 0;
@@ -195,7 +191,8 @@ static void tcp_unlock(Channel * channel) {
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->lock_cnt > 0);
     c->lock_cnt--;
-    if (c->lock_cnt == 0 && !c->read_pending) {
+    if (c->lock_cnt == 0) {
+        assert(!c->read_pending);
         delete_channel(c);
     }
 }
@@ -205,7 +202,7 @@ static int tcp_is_closed(Channel * channel) {
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->lock_cnt > 0);
-    return c->socket < 0;
+    return c->chan.state == ChannelStateDisconnected;
 }
 
 static void tcp_flush_with_flags(OutputStream * out, int flags) {
@@ -215,7 +212,7 @@ static void tcp_flush_with_flags(OutputStream * out, int flags) {
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->obuf_inp <= BUF_SIZE);
     if (c->obuf_inp == 0) return;
-    if (c->socket < 0 || c->out_errno) {
+    if (c->chan.state == ChannelStateDisconnected || c->out_errno) {
         c->obuf_inp = 0;
         return;
     }
@@ -275,7 +272,7 @@ static void tcp_write_stream(OutputStream * out, int byte) {
     ChannelTCP * c = channel2tcp(out2channel(out));
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
-    if (c->socket < 0) return;
+    if (c->chan.state == ChannelStateDisconnected) return;
     if (c->out_errno) return;
     if (c->obuf_inp == BUF_SIZE) tcp_flush_with_flags(out, MSG_MORE);
     c->obuf[c->obuf_inp++] = (char)(byte < 0 ? ESC : byte);
@@ -285,7 +282,7 @@ static void tcp_write_stream(OutputStream * out, int byte) {
         else if (byte == MARKER_EOM) esc = 1;
         else if (byte == MARKER_EOS) esc = 2;
         else assert(0);
-        if (c->socket < 0) return;
+        if (c->chan.state == ChannelStateDisconnected) return;
         if (c->out_errno) return;
         if (c->obuf_inp == BUF_SIZE) tcp_flush_with_flags(out, MSG_MORE);
         c->obuf[c->obuf_inp++] = esc;
@@ -318,7 +315,7 @@ static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_
         /* We need to flush the buffer then send our data */
         tcp_flush_with_flags(out, MSG_MORE);
 
-        if (c->socket < 0) return;
+        if (c->chan.state == ChannelStateDisconnected) return;
         if (c->out_errno) return;
 
         while (cnt < size) {
@@ -363,7 +360,7 @@ static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_
                 /* We need to flush the buffer then send our data */
                 tcp_flush_with_flags(out, MSG_MORE);
 
-                if (c->socket < 0) return rd;
+                if (c->chan.state == ChannelStateDisconnected) return rd;
                 if (c->out_errno) return rd;
 
                 n = rd;
@@ -401,7 +398,7 @@ static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_
 static void tcp_post_read(InputBuf * ibuf, unsigned char * buf, int size) {
     ChannelTCP * c = ibuf2tcp(ibuf);
 
-    if (c->read_pending || c->socket < 0) return;
+    if (c->read_pending) return;
     c->read_pending = 1;
     c->read_buf = buf;
     c->read_buf_size = size;
@@ -462,24 +459,22 @@ static void send_eof_and_close(Channel * channel, int err) {
     ChannelTCP * c = channel2tcp(channel);
 
     assert(c->magic == CHANNEL_MAGIC);
-    if (c->socket < 0) return;
+    if (channel->state == ChannelStateDisconnected) return;
     ibuf_flush(&c->ibuf, &c->chan.inp);
-    ibuf_read_done(&c->ibuf, 0);      /* EOF */
+    if (c->ibuf.handling_msg == HandleMsgTriggered) {
+        /* Cancel pending message handling */
+        cancel_event(handle_channel_msg, c, 0);
+        c->ibuf.handling_msg = HandleMsgIdle;
+    }
     tcp_write_stream(&c->chan.out, MARKER_EOS);
     write_errno(&c->chan.out, err);
     tcp_write_stream(&c->chan.out, MARKER_EOM);
     tcp_flush_stream(&c->chan.out);
-    shutdown(c->socket, SHUT_RDWR);
-    if (c->read_pending != 0) {
-        /* shutdown should make sure the wait is minimal */
-        cancel_event(tcp_channel_read_done, &c->rdreq, 1);
-        c->read_pending = 0;
-    }
-    closesocket(c->socket);
-    c->socket = -1;
+    shutdown(c->socket, SHUT_WR);
+    c->chan.state = ChannelStateDisconnected;
+    tcp_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
     notify_channel_closed(channel);
     if (channel->disconnected) channel->disconnected(channel);
-    tcp_unlock(channel);
 }
 
 static void handle_channel_msg(void * x) {
@@ -499,7 +494,7 @@ static void handle_channel_msg(void * x) {
     }
     has_msg = ibuf_start_message(&c->ibuf);
     if (has_msg <= 0) {
-        if (has_msg < 0) {
+        if (has_msg < 0 && c->chan.state != ChannelStateDisconnected) {
             trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel %#lx %s", c, c->chan.peer_name);
             channel_close(&c->chan);
         }
@@ -564,14 +559,8 @@ static void tcp_channel_read_done(void * x) {
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->read_pending != 0);
-    assert(c->lock_cnt != 0 || c->socket < 0);
+    assert(c->lock_cnt > 0);
     c->read_pending = 0;
-    if (c->socket < 0) {
-        if (c->lock_cnt == 0) {
-            delete_channel(c);
-        }
-        return;
-    }
     if (c->ssl) {
 #if ENABLE_SSL
         if (c->read_done > 0) {
@@ -603,7 +592,17 @@ static void tcp_channel_read_done(void * x) {
             len = 0; /* Treat error as eof */
         }
     }
-    ibuf_read_done(&c->ibuf, len);
+    if (c->chan.state != ChannelStateDisconnected) {
+        ibuf_read_done(&c->ibuf, len);
+    }
+    else if (len > 0) {
+        tcp_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
+    }
+    else {
+        closesocket(c->socket);
+        c->socket = -1;
+        tcp_unlock(&c->chan);
+    }
 }
 
 static void start_channel(Channel * channel) {
@@ -712,6 +711,7 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
     c->chan.out.flush = tcp_flush_stream;
     c->chan.out.write_block = tcp_write_block_stream;
     c->chan.out.splice_block = tcp_splice_block_stream;
+    c->chan.state = ChannelStateStartWait;
     c->chan.start_comm = start_channel;
     c->chan.check_pending = channel_check_pending;
     c->chan.message_count = channel_get_message_count;
@@ -839,6 +839,14 @@ static void server_close(ChannelServer * serv) {
     s->sock = -1;
 }
 
+static void set_socket_buffer_sizes(int sock) {
+    /* Buffer sizes need to be large enough to avoid deadlocking when agent connects to itself */
+    int snd_buf = 4 * BUF_SIZE;
+    int rcv_buf = 8 * BUF_SIZE;
+    setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&snd_buf, sizeof(snd_buf));
+    setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&rcv_buf, sizeof(rcv_buf));
+}
+
 ChannelServer * channel_tcp_server(PeerServer * ps) {
     int sock;
     int error;
@@ -884,6 +892,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
             }
         }
 #endif
+        set_socket_buffer_sizes(sock);
         if (res->ai_addr->sa_family == AF_INET) {
             struct sockaddr_in addr;
             assert(sizeof(addr) >= res->ai_addrlen);
@@ -1003,6 +1012,7 @@ void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void 
                 error = errno;
             }
             else {
+                set_socket_buffer_sizes(info->sock);
                 error = 0;
                 break;
             }

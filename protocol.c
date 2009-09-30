@@ -215,7 +215,14 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         read_stringz(&c->inp, service, sizeof(service));
         read_stringz(&c->inp, name, sizeof(name));
         trace(LOG_PROTOCOL, "Peer %s: Command: C %s %s %s ...", c->peer_name, token, service, name);
-        if (set_trap(&trap)) {
+        if (c->state != ChannelStateConnected) {
+            trace(LOG_PROTOCOL, "Wrong channel state for commands");
+            skip_until_EOM(c);
+            write_stringz(&c->out, "N");
+            write_stringz(&c->out, token);
+            write_stream(&c->out, MARKER_EOM);
+        }
+        else if (set_trap(&trap)) {
             MessageHandlerInfo * mh = find_message_handler(p, service, name);
             if (mh == NULL) {
                 if (p->default_handler != NULL) {
@@ -289,9 +296,9 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         read_stringz(&c->inp, name, sizeof(name));
         trace(LOG_PROTOCOL, "Peer %s: Event: E %s %s ...", c->peer_name, service, name);
         if (set_trap(&trap)) {
-            if (!c->hello_received && strcmp(service, LOCATOR) == 0 && strcmp(name, "Hello") == 0) {
+            if ((c->state == ChannelStateStarted || c->state == ChannelStateHelloSent) &&
+                strcmp(service, LOCATOR) == 0 && strcmp(name, "Hello") == 0) {
                 event_locator_hello(c);
-                c->hello_received = 1;
             }
             else {
                 EventHandlerInfo * eh = find_event_handler(c, service, name);
@@ -429,10 +436,54 @@ ReplyHandlerInfo * protocol_send_command(Protocol * p, Channel * c, const char *
     return rh;
 }
 
+struct sendRedirectInfo {
+    ReplyHandlerCB handler;
+    void * client_data;
+};
+
+static void redirect_done(Channel * c, void * client_data, int error) {
+    struct sendRedirectInfo * info = client_data;
+
+    if (!error) {
+        assert(c->state == ChannelStateRedirectSent);
+        error = read_errno(&c->inp);
+        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+        if (!error) {
+            c->state = ChannelStateHelloSent;
+        }
+        else {
+            c->state = ChannelStateConnected;
+        }
+    }
+    else if (c->state == ChannelStateRedirectSent) {
+        c->state = ChannelStateConnected;
+    }
+    else {
+        assert(c->state == ChannelStateDisconnected);
+    }
+    info->handler(c, info->client_data, error);
+}
+
+ReplyHandlerInfo * send_redirect_command(Protocol * p, Channel * c, const char * peerId, ReplyHandlerCB handler, void * client_data) {
+    struct sendRedirectInfo * info = loc_alloc_zero(sizeof *info);
+    ReplyHandlerInfo * rh;
+
+    assert(c->state == ChannelStateConnected);
+    c->state = ChannelStateRedirectSent;
+    info->handler = handler;
+    info->client_data = client_data;
+    rh = protocol_send_command(p, c, LOCATOR, "redirect", redirect_done, info);
+    json_write_string(&c->out, peerId);
+    write_stream(&c->out, 0);
+    write_stream(&c->out, MARKER_EOM);
+    return rh;
+}
+
 void send_hello_message(Protocol * p, Channel * c) {
     ServiceInfo * s = services;
     int cnt = 0;
 
+    assert(c->state == ChannelStateStarted || c->state == ChannelStateHelloReceived);
     write_stringz(&c->out, "E");
     write_stringz(&c->out, LOCATOR);
     write_stringz(&c->out, "Hello");
@@ -452,6 +503,18 @@ void send_hello_message(Protocol * p, Channel * c) {
     write_stream(&c->out, ']');
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
+    if (c->state == ChannelStateStarted) {
+        c->state = ChannelStateHelloSent;
+    }
+    else {
+        c->state = ChannelStateConnected;
+        c->connected(c);
+    }
+}
+
+static void free_string_list(int cnt, char **list) {
+    while (cnt > 0) loc_free(list[--cnt]);
+    loc_free(list);
 }
 
 static void event_locator_hello(Channel * c) {
@@ -478,34 +541,40 @@ static void event_locator_hello(Channel * c) {
             ch = read_stream(&c->inp);
             if (ch == ',') continue;
             if (ch == ']') break;
-            while (cnt > 0) loc_free(list[--cnt]);
-            loc_free(list);
+            free_string_list(cnt, list);
             exception(ERR_JSON_SYNTAX);
         }
     }
     if (read_stream(&c->inp) != 0 || read_stream(&c->inp) != MARKER_EOM) {
-        while (cnt > 0) loc_free(list[--cnt]);
-        loc_free(list);
+        free_string_list(cnt, list);
         exception(ERR_JSON_SYNTAX);
     }
+    if (c->state != ChannelStateStarted && c->state != ChannelStateHelloSent) {
+        free_string_list(cnt, list);
+        /* TODO: should this be a protocol error? */
+        return;
+    }
     if (c->peer_service_list != NULL) {
-        int i = 0;
-        while (i < c->peer_service_cnt) loc_free(c->peer_service_list[i++]);
-        loc_free(c->peer_service_list);
+        free_string_list(c->peer_service_cnt, c->peer_service_list);
     }
     c->peer_service_cnt = cnt;
     c->peer_service_list = list;
-    c->connected(c);
+    if (c->state == ChannelStateStarted) {
+        c->state = ChannelStateHelloReceived;
+    }
+    else {
+        c->state = ChannelStateConnected;
+        c->connected(c);
+    }
 }
 
 int protocol_cancel_command(Protocol * p, ReplyHandlerInfo * rh) {
+    /* TODO: protocol_cancel_command() */
     return 0;
 }
 
 static void channel_closed(Channel * c) {
     int i;
-    int cnt;
-    char ** list;
 
     assert(is_dispatch_thread());
     for (i = 0; i < EVENT_HASH_SIZE; i++) {
@@ -547,15 +616,11 @@ static void channel_closed(Channel * c) {
             }
         }
     }
-    cnt = c->peer_service_cnt;
-    list = c->peer_service_list;
-    if (list) {
+    if (c->peer_service_list) {
+        free_string_list(c->peer_service_cnt, c->peer_service_list);
         c->peer_service_cnt = 0;
         c->peer_service_list = NULL;
-        while (cnt > 0) loc_free(list[--cnt]);
-        loc_free(list);
     }
-    c->hello_received = 0;
 }
 
 Protocol * protocol_alloc(void) {

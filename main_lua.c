@@ -814,6 +814,22 @@ static const luaL_Reg protocolfuncs[] = {
 };
 
 
+static const char *channel_state_string(Channel * c)
+{
+    if (c == NULL) return "Disconnected";
+    switch(c->state) {
+    case ChannelStateStartWait: return "StartWait";
+    case ChannelStateStarted: return "Started";
+    case ChannelStateHelloSent: return "HelloSent";
+    case ChannelStateHelloReceived: return "HelloReceived";
+    case ChannelStateConnected: return "Connected";
+    case ChannelStateRedirectSent: return "RedirectSent";
+    case ChannelStateRedirectReceived: return "RedirectReceived";
+    case ChannelStateDisconnected: return "Disconnected";
+    default: return "Unknown";
+    }
+}
+
 static int lua_channel_tostring(lua_State *L)
 {
     struct channel_extra *ce;
@@ -824,10 +840,24 @@ static int lua_channel_tostring(lua_State *L)
     }
     trace(LOG_LUA, "lua_channel_tostring %p", ce->c);
     if(ce->c != NULL) {
-        lua_pushfstring(L, "tcf_channel (%s, %p)", ce->c->peer_name, ce);
+        lua_pushfstring(L, "tcf_channel (%s, %p, %s)", ce->c->peer_name, ce,
+                        channel_state_string(ce->c));
     } else {
         lua_pushfstring(L, "tcf_channel (<disconnected>, %p)", ce);
     }
+    return 1;
+}
+
+static int lua_channel_state(lua_State *L)
+{
+    struct channel_extra *ce;
+
+    assert(L == luastate);
+    if(lua_gettop(L) != 1 || (ce = lua2channel(L, 1)) == NULL) {
+        luaL_error(L, "wrong number or type of arguments");
+    }
+    trace(LOG_LUA, "lua_channel_state %p", ce->c);
+    lua_pushstring(L, channel_state_string(ce->c));
     return 1;
 }
 
@@ -1016,11 +1046,11 @@ static void channel_send_command_cb(Channel * c, void * client_data, int error)
         }
         luaL_pushresult(&msg);
         lua_pushnil(L);
-        trace(LOG_LUA, "lua_channel_reply %p %d %s", c, cmd->result_cbrefp->ref, lua_tostring(L, -2));
+        trace(LOG_LUA, "lua_channel_send_command_reply %p %d %s", c, cmd->result_cbrefp->ref, lua_tostring(L, -2));
     } else {
         lua_pushnil(L);
         lua_pushstring(L, errno_to_str(error));
-        trace(LOG_LUA, "lua_channel_reply %p %d error %d", c, cmd->result_cbrefp->ref, error);
+        trace(LOG_LUA, "lua_channel_send_command_reply %p %d error %d", c, cmd->result_cbrefp->ref, error);
     }
     if(lua_pcall(L, 2, 0, 0) != 0) {
         fprintf(stderr, "%s\n", lua_tostring(L,1));
@@ -1083,6 +1113,62 @@ static int lua_channel_cancel_command(lua_State *L)
     return 0;
 }
 
+static void channel_redirect_cb(Channel * c, void * client_data, int error)
+{
+    struct channel_extra *ce = c->client_data;
+    struct command_extra *cmd = client_data;
+    lua_State *L = ce->L;
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, cmd->result_cbrefp->ref);
+    if(!error) {
+        lua_pushnil(L);
+        trace(LOG_LUA, "lua_channel_redirect_reply %p %d %s", c, cmd->result_cbrefp->ref, lua_tostring(L, -2));
+    } else {
+        lua_pushstring(L, errno_to_str(error));
+        trace(LOG_LUA, "lua_channel_redirect_reply %p %d error %d", c, cmd->result_cbrefp->ref, error);
+    }
+    if(lua_pcall(L, 1, 0, 0) != 0) {
+        fprintf(stderr, "%s\n", lua_tostring(L,1));
+        exit(1);
+    }
+    luaref_owner_free(L, cmd);
+}
+
+static int lua_channel_redirect(lua_State *L)
+{
+    struct channel_extra *ce;
+    struct command_extra *cmd;
+
+    assert(L == luastate);
+    if(lua_gettop(L) != 3 ||
+       (ce = lua2channel(L, 1)) == NULL ||
+       !lua_isstring(L, 2) ||
+       !lua_isfunction(L, 3)) {
+        luaL_error(L, "wrong number or type of arguments");
+    }
+    if(ce->c == NULL) luaL_error(L, "disconnected channel");
+
+    /* Object to track outstanding command */
+    cmd = lua_newuserdata(L, sizeof *cmd);
+    memset(cmd, 0, sizeof *cmd);
+    luaL_getmetatable(L, "tcf_command");
+    lua_setmetatable(L, -2);
+
+    /* Make sure GC don't free until reply is received */
+    lua_pushvalue(L, -1);
+    cmd->self_refp = luaref_new(L, cmd);
+    lua_pushvalue(L, 3);
+    cmd->result_cbrefp = luaref_new(L, cmd);
+
+    /* Send command header */
+    cmd->replyinfo = send_redirect_command(ce->pe->p, ce->c,
+                                           lua_tostring(L, 2),
+                                           channel_redirect_cb, cmd);
+    flush_stream(&ce->c->out);
+    trace(LOG_LUA, "lua_channel_redirect %p %d %s", ce->c, cmd->result_cbrefp->ref, lua_tostring(L, 2));
+    return 1;
+}
+
 static int lua_channel_get_services(lua_State *L)
 {
     struct channel_extra *ce;
@@ -1105,6 +1191,7 @@ static int lua_channel_get_services(lua_State *L)
 
 static const luaL_Reg channelfuncs[] = {
     { "__tostring",         lua_channel_tostring },
+    { "state",              lua_channel_state },
     { "close",              lua_channel_close },
     { "connecting_handler", lua_channel_connecting_handler },
     { "connected_handler",  lua_channel_connected_handler },
@@ -1115,6 +1202,7 @@ static const luaL_Reg channelfuncs[] = {
     { "send_message",       lua_channel_send_message },
     { "send_command",       lua_channel_send_command },
     { "cancel_command",     lua_channel_cancel_command },
+    { "redirect",           lua_channel_redirect },
     { "get_services",       lua_channel_get_services },
     { 0 }
 };

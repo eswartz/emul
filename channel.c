@@ -41,6 +41,10 @@
 static ChannelCloseListener close_listeners[16];
 static int close_listeners_cnt = 0;
 
+#define isBoardcastOkay(c) ((c)->state == ChannelStateConnected || \
+                            (c)->state == ChannelStateRedirectSent || \
+                            (c)->state == ChannelStateRedirectReceived)
+
 static void flush_all(OutputStream * out) {
     TCFBroadcastGroup * bcg = out2bcast(out);
     LINK * l = bcg->channels.next;
@@ -49,7 +53,7 @@ static void flush_all(OutputStream * out) {
     assert(bcg->magic == BCAST_MAGIC);
     while (l != &bcg->channels) {
         Channel * c = bclink2channel(l);
-        if (c->hello_received) c->out.flush(&c->out);
+        if (isBoardcastOkay(c)) c->out.flush(&c->out);
         l = l->next;
     }
 }
@@ -62,7 +66,7 @@ static void write_all(OutputStream * out, int byte) {
     assert(bcg->magic == BCAST_MAGIC);
     while (l != &bcg->channels) {
         Channel * c = bclink2channel(l);
-        if (c->hello_received) c->out.write(&c->out, byte);
+        if (isBoardcastOkay(c)) c->out.write(&c->out, byte);
         l = l->next;
     }
 }
@@ -75,7 +79,7 @@ static void write_block_all(OutputStream * out, const char * bytes, size_t size)
     assert(bcg->magic == BCAST_MAGIC);
     while (l != &bcg->channels) {
         Channel * c = bclink2channel(l);
-        if (c->hello_received) c->out.write_block(&c->out, bytes, size);
+        if (isBoardcastOkay(c)) c->out.write_block(&c->out, bytes, size);
         l = l->next;
     }
 }
@@ -242,6 +246,9 @@ PeerServer * channel_peer_from_url(const char * url) {
     char transport[16];
     PeerServer * ps = peer_server_alloc();
 
+    peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Agent"));
+    peer_server_addprop(ps, loc_strdup("OSName"), loc_strdup(get_os_name()));
+
     s = url;
     i = 0;
     while (*s && isalpha(*s) && i < sizeof transport) transport[i++] = (char)toupper(*s++);
@@ -320,6 +327,8 @@ void channel_connect(PeerServer * ps, ChannelConnectCallBack callback, void * ca
  */
 void channel_start(Channel * c) {
     trace(LOG_PROTOCOL, "Starting channel %#lx %s", c, c->peer_name);
+    assert(c->state == ChannelStateStartWait);
+    c->state = ChannelStateStarted;
     c->start_comm(c);
 }
 

@@ -787,6 +787,36 @@ char * json_skip_object(InputStream * inp) {
     return str;
 }
 
+int read_errno(InputStream * inp) {
+    int err = 0;
+    int ch = read_stream(inp);
+    if (ch == 0) return 0;
+    if (ch != '{') exception(ERR_JSON_SYNTAX);
+    if (peek_stream(inp) == '}') {
+        read_stream(inp);
+    }
+    else {
+        for (;;) {
+            char name[256];
+            json_read_string(inp, name, sizeof(name));
+            if (read_stream(inp) != ':') exception(ERR_JSON_SYNTAX);
+            if (strcmp(name, "Code") == 0) {
+                err = json_read_long(inp) + STD_ERR_BASE;
+            }
+            else {
+                buf_pos = 0;
+                skip_object(inp);
+            }
+            ch = read_stream(inp);
+            if (ch == ',') continue;
+            if (ch == '}') break;
+            exception(ERR_JSON_SYNTAX);
+        }
+    }
+    if (read_stream(inp) != 0) exception(ERR_JSON_SYNTAX);
+    return err;
+}
+
 static void write_error_code(OutputStream * out, int err, int code) {
     /* code - TCF error code */
     /* err - errno value*/

@@ -283,8 +283,6 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
     for (n = 0; n < ifc_cnt; n++) {
         int i;
         int pos = 0;
-        int seenName = 0;
-        int seenOSName = 0;
         struct sockaddr_in * dst_addr;
         struct sockaddr_in dst_addr_buf;
         char buf[MAX_PACKET_SIZE];
@@ -338,20 +336,7 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
             assert(strcmp(name, "ID") != 0);
             app_str(buf, &pos, name);
             app_char(buf, &pos, '=');
-            if (strcmp(name, "Name") == 0) {
-                seenName = 1;
-            }
-            if (strcmp(name, "OSName") == 0) {
-                seenOSName = 1;
-            }
             app_strz(buf, &pos, ps->list[i].value);
-        }
-        if (!seenName) {
-            app_strz(buf, &pos, "Name=TCF Agent");
-        }
-        if (!seenOSName) {
-            app_str(buf, &pos, "OSName=");
-            app_strz(buf, &pos, get_os_name());
         }
         if (sendto(udp_server_socket, buf, pos, 0, (struct sockaddr *)dst_addr, sizeof *dst_addr) < 0) {
             trace(LOG_ALWAYS, "Can't send UDP discovery reply packet to %s: %s",

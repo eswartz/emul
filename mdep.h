@@ -240,6 +240,7 @@ extern int pthread_join(pthread_t thread, void **value_ptr);
  * TODO: more socket function wrappers are needed for better error reports on Windows
  */
 #define socket(af, type, protocol) wsa_socket(af, type, protocol)
+#define connect(socket, addr, addr_size) wsa_connect(socket, addr, addr_size)
 #define bind(socket, addr, addr_size) wsa_bind(socket, addr, addr_size)
 #define listen(socket, size) wsa_listen(socket, size)
 #define recv(socket, buf, size, flags) wsa_recv(socket, buf, size, flags)
@@ -248,6 +249,7 @@ extern int pthread_join(pthread_t thread, void **value_ptr);
 #define sendto(socket, buf, size, flags, dest_addr, dest_size) wsa_sendto(socket, buf, size, flags, dest_addr, dest_size)
 
 extern int wsa_socket(int af, int type, int protocol);
+extern int wsa_connect(int socket, const struct sockaddr * addr, int addr_size);
 extern int wsa_bind(int socket, const struct sockaddr * addr, int addr_size);
 extern int wsa_listen(int socket, int size);
 extern int wsa_recv(int socket, void * buf, size_t size, int flags);
@@ -257,8 +259,8 @@ extern int wsa_send(int socket, const void * buf, size_t size, int flags);
 extern int wsa_sendto(int socket, const void * buf, size_t size, int flags,
                   const struct sockaddr * dest_addr, socklen_t dest_size);
 
-#ifndef SHUT_RDWR
-#define SHUT_RDWR SD_BOTH
+#ifndef SHUT_WR
+#define SHUT_WR SD_SEND
 #endif
 
 extern char * canonicalize_file_name(const char * path);

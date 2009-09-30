@@ -24,12 +24,12 @@
 #include "streams.h"
 
 #define ESC 3
-#define BUF_SIZE 0x1000
+#define INPUT_BUF_SIZE 0x1000
 
 typedef struct InputBuf InputBuf;
 
 struct InputBuf {
-    unsigned char buf[BUF_SIZE];
+    unsigned char buf[INPUT_BUF_SIZE];
     unsigned char * inp;
     unsigned char * out;
     int full;
