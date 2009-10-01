@@ -588,7 +588,9 @@ static void tcp_channel_read_done(void * x) {
         assert((size_t)c->read_buf_size == c->rdreq.u.sio.bufsz);
         len = c->rdreq.u.sio.rval;
         if (req->error) {
-            trace(LOG_ALWAYS, "Can't read from socket: %s", errno_to_str(req->error));
+            if (c->chan.state != ChannelStateDisconnected) {
+                trace(LOG_ALWAYS, "Can't read from socket: %s", errno_to_str(req->error));
+            }
             len = 0; /* Treat error as eof */
         }
     }
