@@ -2606,7 +2606,9 @@ void ini_contexts(void) {
         list_init(&context_pid_root[i]);
     }
     init();
+#if !defined(_WRS_KERNEL)
     create_eventpoint("main", eventpoint_at_main, NULL);
+#endif
 }
 
 #endif  /* if ENABLE_DebugContext */
