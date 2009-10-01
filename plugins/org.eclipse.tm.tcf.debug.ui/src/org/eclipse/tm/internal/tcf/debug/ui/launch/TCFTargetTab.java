@@ -317,21 +317,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 TreeItem item = (TreeItem)event.item;
                 PeerInfo info = findPeerInfo(item);
                 if (info == null) {
-                    final PeerInfo parent = findPeerInfo(item.getParentItem());
-                    if (parent == null) {
-                        item.setText("Invalid");
-                    }
-                    else {
-                        item.setText("Loading...");
-                        display.asyncExec(new Runnable() {
-                            public void run() {
-                                if (parent.children == null) {
-                                    loadChildren(parent);
-                                }
-                                updateItems(parent);
-                            }
-                        });
-                    }
+                    updateItems(item.getParentItem(), false);
                 }
                 else {
                     fillItem(item, info);
@@ -361,25 +347,11 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         peer_tree.addTreeListener(new TreeListener() {
 
             public void treeCollapsed(TreeEvent e) {
-                final TreeItem item = (TreeItem)e.item;
-                final PeerInfo info = findPeerInfo(item);
-                if (info == null) return;
-                display.asyncExec(new Runnable() {
-                    public void run() {
-                        if (item.isDisposed()) return;
-                        if (item.getExpanded()) return;
-                        Protocol.invokeAndWait(new Runnable() {
-                            public void run() {
-                                disconnectPeer(info);
-                            }
-                        });
-                        item.removeAll();
-                        fillItem(item, info);
-                    }
-                });
+                updateItems((TreeItem)e.item, false);
             }
 
             public void treeExpanded(TreeEvent e) {
+                updateItems((TreeItem)e.item, true);
             }
         });
 
@@ -590,7 +562,6 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         }
         if (info.channel != null) {
             info.channel.close();
-            info.channel = null;
         }
     }
 
@@ -604,16 +575,14 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         assert parent.children == null;
         assert parent.listener == null;
         assert parent.channel == null;
-        if (!canHaveChildren(parent)) {
-            parent.children = new PeerInfo[0];
-            parent.children_error = null;
-            updateItems(parent);
-            return;
-        }
         parent.children_pending = true;
+        parent.children_error = null;
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
-                if (parent == peer_info) {
+                if (!canHaveChildren(parent)) {
+                    doneLoadChildren(parent, null, new PeerInfo[0]);
+                }
+                else if (parent == peer_info) {
                     peer_info.locator = Protocol.getLocator();
                     createLocatorListener(peer_info);
                 }
@@ -628,20 +597,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                         public void onChannelClosed(final Throwable error) {
                             assert !closed;
                             if (parent.channel != channel) return;
-                            if (!opened) {
-                                doneLoadChildren(parent, error, null);
-                            }
-                            else if (error != null && display != null) {
-                                display.asyncExec(new Runnable() {
-                                    public void run() {
-                                        assert !parent.children_pending;
-                                        assert parent.children != null;
-                                        parent.children = null;
-                                        parent.children_error = error;
-                                        updateItems(parent);
-                                    }
-                                });
-                            }
+                            doneLoadChildren(parent, error, null);
                             closed = true;
                             parent.channel = null;
                             parent.locator = null;
@@ -702,10 +658,28 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         });
     }
 
-    private void updateItems(PeerInfo parent) {
+    private void updateItems(TreeItem parent_item, boolean reload) {
+        final PeerInfo parent_info = findPeerInfo(parent_item);
+        if (parent_info == null) {
+            parent_item.setText("Invalid");
+        }
+        else {
+            if (reload && parent_info.children_error != null) {
+                loadChildren(parent_info);
+            }
+            display.asyncExec(new Runnable() {
+                public void run() {
+                    updateItems(parent_info);
+                }
+            });
+        }
+    }
+
+    private void updateItems(final PeerInfo parent) {
         if (display == null) return;
         assert Thread.currentThread() == display.getThread();
         TreeItem[] items = null;
+        boolean expanded = true;
         if (parent.children == null || parent.children_error != null) {
             if (parent == peer_info) {
                 peer_tree.setItemCount(1);
@@ -714,13 +688,15 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             else {
                 TreeItem item = findItem(parent);
                 if (item == null) return;
+                expanded = item.getExpanded();
                 item.setItemCount(1);
                 items = item.getItems();
             }
+            assert items.length == 1;
             items[0].removeAll();
             if (parent.children_pending) {
                 items[0].setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
-                items[0].setText("Loading...");
+                items[0].setText("Connecting...");
             }
             else if (parent.children_error != null) {
                 String msg = parent.children_error.getMessage();
@@ -729,9 +705,18 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 items[0].setForeground(display.getSystemColor(SWT.COLOR_RED));
                 items[0].setText(msg);
             }
+            else if (expanded) {
+                loadChildren(parent);
+                items[0].setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
+                items[0].setText("Connecting...");
+            }
             else {
-                items[0].setForeground(display.getSystemColor(SWT.COLOR_RED));
-                items[0].setText("Invalid children list");
+                Protocol.invokeAndWait(new Runnable() {
+                    public void run() {
+                        disconnectPeer(parent);
+                    }
+                });
+                items[0].setText("");
             }
             int n = peer_tree.getColumnCount();
             for (int i = 1; i < n; i++) items[0].setText(i, "");
@@ -745,16 +730,29 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             else {
                 TreeItem item = findItem(parent);
                 if (item == null) return;
-                item.setItemCount(arr.length);
+                expanded = item.getExpanded();
+                item.setItemCount(expanded ? arr.length : 1);
                 items = item.getItems();
             }
-            assert items.length == arr.length;
-            for (int i = 0; i < items.length; i++) fillItem(items[i], arr[i]);
-            String id = peer_id_text.getText();
-            TreeItem item = findItem(findPeerInfo(id));
-            if (item != null) {
-                peer_tree.setSelection(item);
-                update_peer_buttons.run();
+            if (expanded) {
+                assert items.length == arr.length;
+                for (int i = 0; i < items.length; i++) fillItem(items[i], arr[i]);
+                String id = peer_id_text.getText();
+                TreeItem item = findItem(findPeerInfo(id));
+                if (item != null) {
+                    peer_tree.setSelection(item);
+                    update_peer_buttons.run();
+                }
+            }
+            else {
+                Protocol.invokeAndWait(new Runnable() {
+                    public void run() {
+                        disconnectPeer(parent);
+                    }
+                });
+                items[0].setText("");
+                int n = peer_tree.getColumnCount();
+                for (int i = 1; i < n; i++) items[0].setText(i, "");
             }
         }
     }
