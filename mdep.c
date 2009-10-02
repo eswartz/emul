@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>
+#include <signal.h>
 #include "myalloc.h"
 #include "errors.h"
 
@@ -752,12 +753,13 @@ char * get_user_home(void) {
 }
 
 void ini_mdep(void) {
-    WORD wVersionRequested;
+    WORD wVersionRequested = MAKEWORD(1, 1);
     WSADATA wsaData;
     int err;
-    wVersionRequested = MAKEWORD( 1, 1 );
-    err = WSAStartup( wVersionRequested, &wsaData );
-    if ( err != 0 ) {
+
+    SetErrorMode(SEM_FAILCRITICALERRORS);
+    err = WSAStartup(wVersionRequested, &wsaData);
+    if (err != 0) {
         fprintf(stderr, "Couldn't access winsock.dll.\n");
         exit(1);
     }
@@ -766,7 +768,7 @@ void ini_mdep(void) {
     /* than 1.1 in addition to 1.1, it will still return */
     /* 1.1 in wVersion since that is the version we */
     /* requested.     */
-    if (LOBYTE( wsaData.wVersion ) != 1 || HIBYTE( wsaData.wVersion ) != 1) {
+    if (LOBYTE(wsaData.wVersion) != 1 || HIBYTE(wsaData.wVersion) != 1) {
         fprintf(stderr, "Unacceptable version of winsock.dll.\n");
         WSACleanup();
         exit(1);
@@ -870,9 +872,11 @@ char * get_user_home(void) {
 }
 
 void ini_mdep(void) {
+    signal(SIGPIPE, SIG_IGN);
     pthread_attr_init(&pthread_create_attr);
     pthread_attr_setstacksize(&pthread_create_attr, 0x8000);
 }
+
 #else
 
 #include <pwd.h>
@@ -914,6 +918,7 @@ int tkill(pid_t pid, int signal) {
 }
 
 void ini_mdep(void) {
+    signal(SIGPIPE, SIG_IGN);
     pthread_attr_init(&pthread_create_attr);
     pthread_attr_setstacksize(&pthread_create_attr, 0x8000);
 }

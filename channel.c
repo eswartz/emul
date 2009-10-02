@@ -20,7 +20,6 @@
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
-#include <signal.h>
 #include <ctype.h>
 #include "tcf.h"
 #include "channel.h"

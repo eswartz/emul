@@ -308,6 +308,7 @@ static void event_context_changed(Context * ctx) {
 static void event_context_stopped(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     assert(ctx->ref_count > 0);
+    assert(ctx->stopped != 0);
     if (ctx->stopped_by_bp) {
         evaluate_breakpoint_condition(ctx);
     }
@@ -322,6 +323,7 @@ static void event_context_stopped(Context * ctx) {
 static void event_context_started(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     assert(ctx->ref_count > 0);
+    assert(ctx->stopped == 0);
     while (listener != NULL) {
         if (listener->context_started != NULL) {
             listener->context_started(ctx, listener->client_data);
@@ -468,6 +470,7 @@ static void event_win32_context_stopped(Context * ctx) {
     ctx->pending_signals = 0;
     ctx->stopped = 1;
     ctx->stopped_by_bp = 0;
+    ctx->stopped_by_exception = 0;
     switch (exception_code) {
     case 0:
         break;
@@ -491,6 +494,7 @@ static void event_win32_context_stopped(Context * ctx) {
     default:
         ctx->pending_signals |= 1 << ctx->signal;
         if (ctx->signal != 0 && (ctx->sig_dont_stop & (1 << ctx->signal)) != 0) break;
+        ctx->stopped_by_exception = 1;
         ctx->pending_intercept = 1;
         break;
     }
@@ -1315,6 +1319,7 @@ static void event_handler(void * arg) {
         stopped_ctx->pending_step = 0;
         stopped_ctx->stopped = 1;
         stopped_ctx->stopped_by_bp = info->bp_info_ok;
+        stopped_ctx->stopped_by_exception = 0;
         if (stopped_ctx->stopped_by_bp && !is_breakpoint_address(stopped_ctx, get_regs_PC(stopped_ctx->regs))) {
             /* Break instruction that is not planted by us */
             stopped_ctx->stopped_by_bp = 0;
@@ -1337,6 +1342,7 @@ static void event_handler(void * arg) {
         current_ctx->pending_step = 0;
         current_ctx->stopped = 1;
         current_ctx->stopped_by_bp = 0;
+        current_ctx->stopped_by_exception = 0;
         assert(taskIsStopped(current_ctx->pid));
         event_context_stopped(current_ctx);
         break;
@@ -1353,6 +1359,7 @@ static void event_handler(void * arg) {
         stopped_ctx->pending_step = 0;
         stopped_ctx->stopped = 1;
         stopped_ctx->stopped_by_bp = 0;
+        stopped_ctx->stopped_by_exception = 0;
         assert(taskIsStopped(stopped_ctx->pid));
         event_context_stopped(stopped_ctx);
         break;
@@ -1848,6 +1855,7 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
 }
 
 static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
+    int stopped_by_exception = 0;
     unsigned long msg = 0;
     Context * ctx = NULL;
     Context * ctx2 = NULL;
@@ -1875,7 +1883,10 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     if (signal != SIGSTOP && signal != SIGTRAP) {
         assert(signal < 32);
         ctx->pending_signals |= 1 << signal;
-        if ((ctx->sig_dont_stop & (1 << signal)) == 0) ctx->pending_intercept = 1;
+        if ((ctx->sig_dont_stop & (1 << signal)) == 0) {
+            ctx->pending_intercept = 1;
+            stopped_by_exception = 1;
+        }
     }
     if (!ctx->stopped) {
         thread_state_t state;
@@ -1908,8 +1919,9 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             ctx->ptrace_event = event;
             ctx->stopped = 1;
             ctx->stopped_by_bp = 0;
+            ctx->stopped_by_exception = stopped_by_exception;
             ctx->end_of_step = 0;
-            if (ctx->signal == SIGTRAP && ctx->ptrace_event == 0 && !syscall) {
+            if (signal == SIGTRAP && event == 0 && !syscall) {
                 ctx->stopped_by_bp = !ctx->regs_error &&
                     is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE);
                 ctx->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;
@@ -2394,6 +2406,7 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
 #endif
 
 static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
+    int stopped_by_exception = 0;
     unsigned long msg = 0;
     Context * ctx = NULL;
     Context * ctx2 = NULL;
@@ -2418,7 +2431,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     if (ctx == NULL) return;
 
     assert(!ctx->exited);
-    assert(!ctx->stopped || event == 0 || event == PTRACE_EVENT_EXIT);
+    assert(!ctx->attach_callback);
     if (ctx->ptrace_flags != PTRACE_FLAGS) {
         if (ptrace(PTRACE_SETOPTIONS, ctx->pid, 0, PTRACE_FLAGS) < 0) {
             int err = errno;
@@ -2434,7 +2447,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     case PTRACE_EVENT_FORK:
     case PTRACE_EVENT_VFORK:
     case PTRACE_EVENT_CLONE:
-        assert(!ctx->attach_callback);
         if (ptrace(PTRACE_GETEVENTMSG, pid, 0, &msg) < 0) {
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETEVENTMSG) failed; pid %d, error %d %s",
                 pid, errno, errno_to_str(errno));
@@ -2462,16 +2474,17 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         break;
 
     case PTRACE_EVENT_EXEC:
-        if (!ctx->attach_callback) {
-            event_context_changed(ctx);
-        }
+        event_context_changed(ctx);
         break;
     }
 
     if (signal != SIGSTOP && signal != SIGTRAP) {
         assert(signal < 32);
         ctx->pending_signals |= 1 << signal;
-        if ((ctx->sig_dont_stop & (1 << signal)) == 0) ctx->pending_intercept = 1;
+        if ((ctx->sig_dont_stop & (1 << signal)) == 0) {
+            ctx->pending_intercept = 1;
+            stopped_by_exception = 1;
+        }
     }
     if (event == PTRACE_EVENT_EXIT) {
         ctx->exiting = 1;
@@ -2552,8 +2565,9 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             ctx->ptrace_event = event;
             ctx->stopped = 1;
             ctx->stopped_by_bp = 0;
+            ctx->stopped_by_exception = stopped_by_exception;
             ctx->end_of_step = 0;
-            if (ctx->signal == SIGTRAP && ctx->ptrace_event == 0 && !syscall) {
+            if (signal == SIGTRAP && event == 0 && !syscall) {
                 ctx->stopped_by_bp = !ctx->regs_error &&
                     is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE);
                 ctx->end_of_step = !ctx->stopped_by_bp && ctx->pending_step;

@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <assert.h>
-#include <signal.h>
 #include "asyncreq.h"
 #include "events.h"
 #include "trace.h"
@@ -135,9 +134,6 @@ int main(int argc, char ** argv) {
     PeerServer * ps;
     ChannelServer * serv;
 
-#ifndef WIN32
-    signal(SIGPIPE, SIG_IGN);
-#endif
     ini_mdep();
     ini_trace();
     ini_asyncreq();

@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <assert.h>
-#include <signal.h>
 #include "asyncreq.h"
 #include "events.h"
 #include "trace.h"

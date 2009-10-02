@@ -25,7 +25,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <assert.h>
 #include "breakpoints.h"
 #include "expressions.h"

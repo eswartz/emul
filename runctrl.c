@@ -806,7 +806,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     assert(!ctx->intercepted);
     assert(!ctx->exited);
     if (ctx->pending_safe_event) check_safe_events(ctx);
-    if (ctx->pending_signals != 0) {
+    if (ctx->stopped_by_exception) {
         send_event_context_exception(&bcg->out, ctx);
     }
     if (ctx->pending_intercept) {

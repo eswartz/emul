@@ -1148,9 +1148,15 @@ static void command_roots(char * token, Channel * c) {
         int disk = 0;
         for (disk = 'A'; disk <= 'Z'; disk++) {
             char path[32];
+            ULARGE_INTEGER freeBytesAvailable;
+            ULARGE_INTEGER totalNumberOfBytes;
+            ULARGE_INTEGER totalNumberOfFreeBytes;
+            BOOL hasSize;
+
             snprintf(path, sizeof(path), "%c:/", disk);
+            hasSize = GetDiskFreeSpaceEx(path, &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes);
             memset(&st, 0, sizeof(st));
-            if (stat(path, &st) == 0) {
+            if (hasSize && stat(path, &st) == 0) {
                 FileAttrs attrs;
                 if (cnt > 0) write_stream(&c->out, ',');
                 write_stream(&c->out, '{');
