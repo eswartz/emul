@@ -23,6 +23,7 @@ class TestEcho implements ITCFTest, IDiagnostics.DoneEcho {
     private final IDiagnostics diag;
     private final LinkedList<String> msgs = new LinkedList<String>();
     private int count = 0;
+    private long start_time;
 
     TestEcho(TCFTestSuite test_suite, IChannel channel) {
         this.test_suite = test_suite;
@@ -45,6 +46,7 @@ class TestEcho implements ITCFTest, IDiagnostics.DoneEcho {
                         test_suite.done(TestEcho.this, new Exception("Invalid error code in responce to unimplemented command"));
                         return;
                     }
+                    start_time = System.currentTimeMillis();
                     for (int i = 0; i < 32; i++) sendMessage();
                 }
             });
@@ -75,6 +77,10 @@ class TestEcho implements ITCFTest, IDiagnostics.DoneEcho {
         }
         else if (count < 0x400) {
             sendMessage();
+            // Don't run the test much longer then 4 seconds
+            if (count % 0x10 == 0 && System.currentTimeMillis() - start_time >= 4000) {
+                count = 0x400;
+            }
         }
         else if (msgs.isEmpty()){
             test_suite.done(this, null);

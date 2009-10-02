@@ -20,6 +20,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
     private String out_id;
 
     private int test_count;
+    private long start_time;
 
     TestStreams(TCFTestSuite test_suite, IChannel channel) {
         this.test_suite = test_suite;
@@ -32,6 +33,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
             test_suite.done(this, null);
         }
         else {
+            start_time = System.currentTimeMillis();
             connect();
         }
     }
@@ -244,7 +246,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
     private void unsubscribe() {
         streams.unsubscribe(IDiagnostics.NAME, this, new IStreams.DoneUnsubscribe() {
             public void doneUnsubscribe(IToken token, Exception error) {
-                if (error != null || test_count >= 10) {
+                if (error != null || test_count >= 10 || System.currentTimeMillis() - start_time >= 4000) {
                     exit(error);
                 }
                 else {

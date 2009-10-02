@@ -16,6 +16,7 @@ public class TestEchoFP  implements ITCFTest, IDiagnostics.DoneEchoFP {
     private final Random rnd = new Random();
 
     private int count = 0;
+    private long start_time;
 
     TestEchoFP(TCFTestSuite test_suite, IChannel channel) {
         this.test_suite = test_suite;
@@ -27,6 +28,7 @@ public class TestEchoFP  implements ITCFTest, IDiagnostics.DoneEchoFP {
             test_suite.done(this, null);
         }
         else {
+            start_time = System.currentTimeMillis();
             for (int i = 0; i < 32; i++) sendMessage();
         }
     }
@@ -53,6 +55,10 @@ public class TestEchoFP  implements ITCFTest, IDiagnostics.DoneEchoFP {
         }
         else if (count < 0x800) {
             sendMessage();
+            // Don't run the test much longer then 4 seconds
+            if (count % 0x10 == 0 && System.currentTimeMillis() - start_time >= 4000) {
+                count = 0x800;
+            }
         }
         else if (msgs.isEmpty()){
             test_suite.done(this, null);
