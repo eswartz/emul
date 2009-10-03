@@ -22,7 +22,7 @@
    </url>
 
    <requires>
-      <import plugin="org.eclipse.tm.tcf" version="0.2.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.osgi"/>
       <import plugin="org.eclipse.core.runtime"/>
       <import plugin="org.eclipse.debug.core"/>
       <import plugin="org.eclipse.core.resources"/>
@@ -36,6 +36,7 @@
       <import plugin="com.jcraft.jsch" version="0.1.37" match="greaterOrEqual"/>
       <import plugin="org.eclipse.jsch.core" version="1.1.100" match="greaterOrEqual"/>
       <import plugin="org.eclipse.jsch.ui" version="1.1.100" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.core.expressions"/>
       <import plugin="org.eclipse.rse.core"/>
       <import plugin="org.eclipse.rse.ui"/>
       <import plugin="org.eclipse.rse.services"/>
@@ -44,6 +45,10 @@
       <import plugin="org.eclipse.rse.subsystems.processes.core"/>
       <import plugin="org.eclipse.rse.processes.ui"/>
       <import feature="org.eclipse.rse" version="3.0.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.cdt" version="5.0.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.cdt.core"/>
+      <import plugin="org.eclipse.cdt.debug.core"/>
+      <import plugin="org.eclipse.cdt.ui"/>
    </requires>
 
    <plugin
@@ -76,6 +81,13 @@
 
    <plugin
          id="org.eclipse.tm.tcf.rse"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tm.tcf.cdt.ui"
          download-size="0"
          install-size="0"
          version="0.0.0"
