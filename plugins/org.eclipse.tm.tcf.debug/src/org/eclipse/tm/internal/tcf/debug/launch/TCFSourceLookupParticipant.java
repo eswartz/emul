@@ -11,6 +11,7 @@
 package org.eclipse.tm.internal.tcf.debug.launch;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -18,6 +19,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.sourcelookup.AbstractSourceLookupParticipant;
+import org.eclipse.debug.core.sourcelookup.containers.LocalFileStorage;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 
 /**
@@ -65,6 +67,18 @@ public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant 
             if (j > i) base = name.substring(j + 1);
             res = super.findSourceElements(base);
         }
-        return res;
+        ArrayList<Object> list = new ArrayList<Object>();
+        for (Object o : res) {
+            if (o instanceof LocalFileStorage) {
+                IPath path = ((LocalFileStorage)o).getFullPath();
+                IFile[] arr = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocation(path);
+                if (arr != null && arr.length > 0) {
+                    for (Object x : arr) list.add(x);
+                    continue;
+                }
+            }
+            list.add(o);
+        }
+        return list.toArray(new Object[list.size()]);
     }
 }

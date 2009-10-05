@@ -48,8 +48,8 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
      * @return program path or null if both project name and program name are null.
      */
     public static String getProgramPath(String project_name, String program_name) {
+        if (program_name == null || program_name.length() == 0) return null;
         if (project_name == null || project_name.length() == 0) {
-            if (program_name == null || program_name.length() == 0) return null;
             File file = new File(program_name);
             if (!file.isAbsolute()) {
                 File ws = ResourcesPlugin.getWorkspace().getRoot().getLocation().toFile();

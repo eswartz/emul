@@ -90,6 +90,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.TerminateCommand;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRegisters;
@@ -863,58 +864,58 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (stack_frame != null) {
                     TCFDataCache<TCFSourceRef> line_info = stack_frame.getLineInfo();
                     if (!line_info.validate(this)) return;
-                    String editor_id = null;
-                    IEditorInput editor_input = null;
                     Throwable error = line_info.getError();
                     TCFSourceRef src_ref = line_info.getData();
-                    int line = 0;
                     if (error == null && src_ref != null) error = src_ref.error;
                     if (error != null) Activator.log("Error retrieving source mapping for a stack frame", error);
-                    if (src_ref != null && src_ref.area != null) {
-                        ISourceLocator locator = getLaunch().getSourceLocator();
-                        Object source_element = null;
-                        if (locator instanceof ISourceLookupDirector) {
-                            source_element = ((ISourceLookupDirector)locator).getSourceElement(src_ref.area);
-                        }
-                        if (source_element == null) {
-                            ILaunchConfiguration cfg = launch.getLaunchConfiguration();
-                            editor_input = editor_not_found.get(cfg);
-                            if (editor_input == null) {
-                                editor_not_found.put(cfg, editor_input = new CommonSourceNotFoundEditorInput(cfg));
-                            }
-                            editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
-                        }
-                        else {
-                            ISourcePresentation presentation = TCFModelPresentation.getDefault();
-                            if (presentation != null) {
-                                editor_input = presentation.getEditorInput(source_element);
-                            }
-                            if (editor_input != null) {
-                                editor_id = presentation.getEditorId(editor_input, source_element);
-                            }
-                            line = src_ref.area.start_line;
-                        }
-                    }
-                    displaySource(cnt, editor_id, editor_input, page,
-                            stack_frame.parent.id, stack_frame.getFrameNo() == 0, line);
+                    ILineNumbers.CodeArea area = src_ref == null ? null : src_ref.area;
+                    displaySource(cnt, page, stack_frame.parent.id, stack_frame.getFrameNo() == 0, area);
                 }
                 else {
-                    displaySource(cnt, null, null, page, null, false, 0);
+                    displaySource(cnt, page, null, false, null);
                 }
             }
         });
     }
 
-    private void displaySource(final int cnt,
-            final String id, final IEditorInput input, final IWorkbenchPage page,
-            final String exe_id, final boolean top_frame, final int line) {
+    private void displaySource(final int cnt, final IWorkbenchPage page,
+            final String exe_id, final boolean top_frame, final ILineNumbers.CodeArea area) {
         display.asyncExec(new Runnable() {
             public void run() {
                 if (cnt != display_source_cnt) return;
+                String editor_id = null;
+                IEditorInput editor_input = null;
+                int line = 0;
+                if (area != null) {
+                    ISourceLocator locator = getLaunch().getSourceLocator();
+                    Object source_element = null;
+                    if (locator instanceof ISourceLookupDirector) {
+                        source_element = ((ISourceLookupDirector)locator).getSourceElement(area);
+                    }
+                    if (source_element == null) {
+                        ILaunchConfiguration cfg = launch.getLaunchConfiguration();
+                        editor_input = editor_not_found.get(cfg);
+                        if (editor_input == null) {
+                            editor_not_found.put(cfg, editor_input = new CommonSourceNotFoundEditorInput(cfg));
+                        }
+                        editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
+                    }
+                    else {
+                        ISourcePresentation presentation = TCFModelPresentation.getDefault();
+                        if (presentation != null) {
+                            editor_input = presentation.getEditorInput(source_element);
+                        }
+                        if (editor_input != null) {
+                            editor_id = presentation.getEditorId(editor_input, source_element);
+                        }
+                        line = area.start_line;
+                    }
+                    if (cnt != display_source_cnt) return;
+                }
                 ITextEditor text_editor = null;
                 IRegion region = null;
-                if (input != null && id != null && page != null) {
-                    IEditorPart editor = openEditor(input, id, page);
+                if (editor_input != null && editor_id != null && page != null) {
+                    IEditorPart editor = openEditor(editor_input, editor_id, page);
                     if (editor instanceof ITextEditor) {
                         text_editor = (ITextEditor)editor;
                     }

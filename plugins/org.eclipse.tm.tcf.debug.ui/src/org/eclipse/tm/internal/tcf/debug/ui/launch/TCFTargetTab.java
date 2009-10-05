@@ -540,8 +540,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
 
     public void performApply(ILaunchConfigurationWorkingCopy configuration) {
         String id = peer_id_text.getText().trim();
-        if (id.length() == 0) id = null;
-        configuration.setAttribute(TCFLaunchDelegate.ATTR_PEER_ID, id);
+        if (id.length() > 0) configuration.setAttribute(TCFLaunchDelegate.ATTR_PEER_ID, id);
         configuration.setAttribute(TCFLaunchDelegate.ATTR_RUN_LOCAL_AGENT, run_local_agent_button.getSelection());
         configuration.setAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, use_local_agent_button.getSelection());
     }
