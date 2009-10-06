@@ -61,6 +61,7 @@ struct Channel {
     LINK susplink;                      /* Suspend list */
     int congestion_level;               /* Congestion level */
     int state;                          /* Current state */
+    int disable_zero_copy;              /* Don't send ZeroCopy in Hello message even if we support it */
 
     /* Populated by channel implementation */
     void (*start_comm)(Channel *);      /* Start communication */

@@ -36,14 +36,16 @@ typedef struct Proxy {
 
 static void proxy_connecting(Channel * c) {
     Proxy * target = c->client_data;
+    Proxy * host = target + target->other;
 
     assert(c == target->c);
     assert(target->other == -1);
     assert(c->state == ChannelStateStarted);
-    assert((target + target->other)->c->state == ChannelStateHelloReceived);
+    assert(host->c->state == ChannelStateHelloReceived);
 
     trace(LOG_PROXY, "Proxy waiting Hello from target");
 
+    target->c->disable_zero_copy = !host->c->out.supports_zero_copy;
     send_hello_message(target->proto, target->c);
     flush_stream(&target->c->out);
 }
@@ -67,6 +69,7 @@ static void proxy_connected(Channel * c) {
         protocol_get_service(host->proto, target->c->peer_service_list[i]);
     }
 
+    host->c->disable_zero_copy = !target->c->out.supports_zero_copy;
     send_hello_message(host->proto, host->c);
     flush_stream(&host->c->out);
 }

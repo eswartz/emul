@@ -489,8 +489,10 @@ void send_hello_message(Protocol * p, Channel * c) {
     write_stringz(&c->out, "Hello");
     write_stream(&c->out, '[');
 #if ENABLE_ZeroCopy
-    json_write_string(&c->out, "ZeroCopy");
-    cnt++;
+    if (!c->disable_zero_copy) {
+        json_write_string(&c->out, "ZeroCopy");
+        cnt++;
+    }
 #endif
     while (s) {
         if (s->owner == p) {
