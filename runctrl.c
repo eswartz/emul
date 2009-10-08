@@ -131,22 +131,36 @@ static void write_context(OutputStream * out, Context * ctx, int is_thread) {
     }
 #endif
 
+    write_stream(out, ',');
+    json_write_string(out, "CanSuspend");
+    write_stream(out, ':');
+    json_write_boolean(out, 1);
+
+    write_stream(out, ',');
+    json_write_string(out, "CanResume");
+    write_stream(out, ':');
     if (is_thread) {
-        write_stream(out, ',');
-        json_write_string(out, "CanSuspend");
-        write_stream(out, ':');
-        json_write_boolean(out, 1);
-
-        write_stream(out, ',');
-        json_write_string(out, "CanResume");
-        write_stream(out, ':');
         json_write_long(out, (1 << RM_RESUME) | (1 << RM_STEP_INTO));
+    }
+    else {
+        json_write_long(out, 1 << RM_RESUME);
+    }
 
+    if (is_thread) {
         write_stream(out, ',');
         json_write_string(out, "HasState");
         write_stream(out, ':');
         json_write_boolean(out, 1);
     }
+
+#if !defined(_WRS_KERNEL)
+    if (!is_thread) {
+        write_stream(out, ',');
+        json_write_string(out, "IsContainer");
+        write_stream(out, ':');
+        json_write_boolean(out, 1);
+    }
+#endif
 
 #ifdef WIN32
     if (!is_thread)
@@ -378,6 +392,20 @@ static void resume_params_callback(InputStream * inp, char * name, void * args) 
     *err = ERR_UNSUPPORTED;
 }
 
+static int context_continue_recursive(OutputStream * out, Context * ctx) {
+    LINK * qp;
+    if (context_has_state(ctx)) {
+        send_event_context_resumed(out, ctx);
+        return context_continue(ctx);
+    }
+    for (qp = ctx->children.next; qp != &ctx->children; qp = qp->next) {
+        Context * cld = cldl2ctxp(qp);
+        if (cld->exited || context_has_state(cld) && !cld->intercepted) continue;
+        context_continue_recursive(out, cld);
+    }
+    return 0;
+}
+
 static void command_resume(char * token, Channel * c) {
     char id[256];
     long mode;
@@ -406,7 +434,7 @@ static void command_resume(char * token, Channel * c) {
         else if (ctx->exited) {
             err = ERR_ALREADY_EXITED;
         }
-        else if (!ctx->intercepted) {
+        else if (context_has_state(ctx) && !ctx->intercepted) {
             err = ERR_ALREADY_RUNNING;
         }
         else if (ctx->regs_error) {
@@ -415,19 +443,17 @@ static void command_resume(char * token, Channel * c) {
         else if (count != 1) {
             err = EINVAL;
         }
-        else if (mode == RM_RESUME || mode == RM_STEP_INTO) {
+        else if (context_has_state(ctx) && mode == RM_STEP_INTO) {
             send_event_context_resumed(&c->bcg->out, ctx);
-            if (mode == RM_STEP_INTO) {
-                if (context_single_step(ctx) < 0) {
-                    err = errno;
-                }
-                else {
-                    ctx->pending_intercept = 1;
-                }
-            }
-            else if (context_continue(ctx) < 0) {
+            if (context_single_step(ctx) < 0) {
                 err = errno;
             }
+            else {
+                ctx->pending_intercept = 1;
+            }
+        }
+        else if (mode == RM_RESUME) {
+            if (context_continue_recursive(&c->bcg->out, ctx) < 0) err = errno;
         }
         else {
             err = EINVAL;
@@ -437,6 +463,25 @@ static void command_resume(char * token, Channel * c) {
 }
 
 static void send_event_context_suspended(OutputStream * out, Context * ctx);
+
+static int context_stop_recursive(OutputStream * out, Context * ctx) {
+    LINK * qp;
+    if (context_has_state(ctx)) {
+        ctx->pending_intercept = 1;
+        return context_stop(ctx);
+    }
+    for (qp = ctx->children.next; qp != &ctx->children; qp = qp->next) {
+        Context * cld = cldl2ctxp(qp);
+        if (cld->exited || cld->intercepted) continue;
+        if (cld->stopped) {
+            send_event_context_suspended(out, cld);
+        }
+        else {
+            context_stop_recursive(out, cld);
+        }
+    }
+    return 0;
+}
 
 static void command_suspend(char * token, Channel * c) {
     char id[256];
@@ -460,9 +505,8 @@ static void command_suspend(char * token, Channel * c) {
     else if (ctx->stopped) {
         send_event_context_suspended(&c->bcg->out, ctx);
     }
-    else {
-        ctx->pending_intercept = 1;
-        if (context_stop(ctx) < 0) err = errno;
+    else if (context_stop_recursive(&c->bcg->out, ctx) < 0) {
+        err = errno;
     }
 
     send_simple_result(c, token, err);
