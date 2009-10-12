@@ -374,6 +374,9 @@ class TestRCBP1 implements ITCFTest,
         m.put(IBreakpoints.PROP_ID, bp_id);
         m.put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
         m.put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
+        ArrayList<String> l = new ArrayList<String>();
+        l.add(context_id);
+        m.put(IBreakpoints.PROP_CONTEXTIDS, l);
         StringBuffer bf = new StringBuffer();
         for (String id : threads.keySet()) {
             if (bf.length() > 0) bf.append(" || ");
@@ -606,6 +609,7 @@ class TestRCBP1 implements ITCFTest,
                 }
             }
         }
+        if (!test_suite.isActive(this)) return;
         final SuspendedContext sc0 = sc;
         ILineNumbers.DoneMapToSource ln_done = new ILineNumbers.DoneMapToSource() {
             public void doneMapToSource(IToken token, Exception error, CodeArea[] areas) {
