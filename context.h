@@ -87,6 +87,7 @@ struct Context {
     int                 stopped_by_bp;      /* stopped by breakpoint */
     int                 stopped_by_exception;/* stopped by runtime exception (like SIGSEGV, etc.) */
     void *              stepping_over_bp;   /* if not NULL context is stepping over a breakpoint */
+    int                 event_notification; /* set to 1 when calling one of ContextEventListener call-backs for this context */
     char **             bp_ids;             /* if stopped by breakpoint, contains NULL-terminated list of breakpoint IDs */
     int                 exiting;            /* context is about to exit */
     int                 exited;             /* context exited */

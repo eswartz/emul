@@ -49,8 +49,18 @@ extern int is_all_stopped(pid_t mem);
 /*
  * Terminate debug context - thread or process.
  * Returns 0 if no errors, otherwise returns -1 and sets errno.
+ * Note: this function is asynchronous, it returns before context is terminated.
  */
 extern int terminate_debug_context(TCFBroadcastGroup * bcg, Context * ctx);
+
+/*
+ * Suspend (stop and intercept) debug context - thread or process.
+ * If "ctx" is a process, suspend all children.
+ * RunControl.suspended event is sent if it was not sent berore.
+ * Returns 0 if no errors, otherwise returns -1 and sets errno.
+ * Note: this function is asynchronous, it returns before contexts are suspended.
+ */
+extern int suspend_debug_context(TCFBroadcastGroup * bcg, Context * ctx);
 
 /*
  * Initialize run control service.

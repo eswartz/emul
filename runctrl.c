@@ -208,7 +208,7 @@ static void write_context_state(OutputStream * out, Context * ctx) {
         }
         fst = 0;
     }
-    if (ctx->stopped_by_bp && ctx->bp_ids != NULL && ctx->bp_ids[0] != NULL) {
+    if (ctx->bp_ids != NULL && ctx->bp_ids[0] != NULL) {
         int i = 0;
         if (!fst) write_stream(out, ',');
         json_write_string(out, "BPs");
@@ -464,21 +464,25 @@ static void command_resume(char * token, Channel * c) {
 
 static void send_event_context_suspended(OutputStream * out, Context * ctx);
 
-static int context_stop_recursive(OutputStream * out, Context * ctx) {
+int suspend_debug_context(TCFBroadcastGroup * bcg, Context * ctx) {
     LINK * qp;
-    if (context_has_state(ctx)) {
-        ctx->pending_intercept = 1;
-        return context_stop(ctx);
+    if (context_has_state(ctx) && !ctx->exited && !ctx->exiting) {
+        if (!ctx->stopped) {
+            ctx->pending_intercept = 1;
+            if (context_stop(ctx) < 0) return -1;
+        }
+        else if (!ctx->intercepted) {
+            if (ctx->event_notification || ctx->stepping_over_bp != NULL) {
+                ctx->pending_intercept = 1;
+            }
+            else {
+                send_event_context_suspended(&bcg->out, ctx);
+                flush_stream(&bcg->out);
+            }
+        }
     }
     for (qp = ctx->children.next; qp != &ctx->children; qp = qp->next) {
-        Context * cld = cldl2ctxp(qp);
-        if (cld->exited || cld->intercepted) continue;
-        if (cld->stopped) {
-            send_event_context_suspended(out, cld);
-        }
-        else {
-            context_stop_recursive(out, cld);
-        }
+        suspend_debug_context(bcg, cldl2ctxp(qp));
     }
     return 0;
 }
@@ -505,7 +509,7 @@ static void command_suspend(char * token, Channel * c) {
     else if (ctx->stopped) {
         send_event_context_suspended(&c->bcg->out, ctx);
     }
-    else if (context_stop_recursive(&c->bcg->out, ctx) < 0) {
+    else if (suspend_debug_context(c->bcg, ctx) < 0) {
         err = errno;
     }
 

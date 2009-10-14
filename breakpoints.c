@@ -77,6 +77,7 @@ struct BreakpointInfo {
     char * address;
     char * condition;
     char ** context_ids;
+    char ** stop_group;
 #if SERVICE_LineNumbers
     char * file;
     int line;
@@ -598,17 +599,25 @@ static void plant_breakpoint(BreakpointInfo * bp, pid_t mem) {
         char ** ids = bp->context_ids;
         while (*ids != NULL) {
             Context * ctx = id2ctx(*ids++);
-            if (ctx != NULL && (mem == 0 || ctx->mem == mem)) plant_breakpoint_in_container(bp, ctx, bp_addr);
+            if (ctx == NULL) continue;
+            if (mem == 0 || ctx->mem == mem) {
+                plant_breakpoint_in_container(bp, ctx, bp_addr);
+                if (mem) break;
+            }
         }
     }
     else {
-        LINK * qp;
-        for (qp = context_root.next; qp != &context_root; qp = qp->next) {
+        LINK * qp = context_root.next;
+        while (qp != &context_root) {
             Context * ctx = ctxl2ctxp(qp);
+            qp = qp->next;
 #if !defined(_WRS_KERNEL)
             if (ctx->pid != ctx->mem) continue;
 #endif
-            if (mem == 0 || ctx->mem == mem) plant_breakpoint_in_container(bp, ctx, bp_addr);
+            if (mem == 0 || ctx->mem == mem) {
+                plant_breakpoint_in_container(bp, ctx, bp_addr);
+                if (mem) break;
+            }
         }
     }
 
@@ -622,6 +631,7 @@ static void free_bp(BreakpointInfo * bp) {
     loc_free(bp->err_msg);
     loc_free(bp->address);
     loc_free(bp->context_ids);
+    loc_free(bp->stop_group);
 #if SERVICE_LineNumbers
     loc_free(bp->file);
 #endif
@@ -798,6 +808,16 @@ static int copy_breakpoint_info(BreakpointInfo * dst, BreakpointInfo * src) {
     }
     src->context_ids = NULL;
 
+    if (!str_arr_equ(dst->stop_group, src->stop_group)) {
+        loc_free(dst->stop_group);
+        dst->stop_group = src->stop_group;
+        res = 1;
+    }
+    else {
+        loc_free(src->stop_group);
+    }
+    src->stop_group = NULL;
+
 #if SERVICE_LineNumbers
     if (!str_equ(dst->file, src->file)) {
         loc_free(dst->file);
@@ -892,8 +912,10 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
                 bp->condition = json_read_alloc_string(inp);
             }
             else if (strcmp(name, "ContextIds") == 0) {
-                int len;
-                bp->context_ids = json_read_alloc_string_array(inp, &len);
+                bp->context_ids = json_read_alloc_string_array(inp, NULL);
+            }
+            else if (strcmp(name, "StopGroup") == 0) {
+                bp->stop_group = json_read_alloc_string_array(inp, NULL);
             }
 #if SERVICE_LineNumbers
             else if (strcmp(name, "File") == 0) {
@@ -959,6 +981,19 @@ static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp)
         write_stream(out, '[');
         while (*ids != NULL) {
             if (ids != bp->context_ids) write_stream(out, ',');
+            json_write_string(out, *ids++);
+        }
+        write_stream(out, ']');
+    }
+
+    if (bp->stop_group != NULL) {
+        char ** ids = bp->stop_group;
+        write_stream(out, ',');
+        json_write_string(out, "StopGroup");
+        write_stream(out, ':');
+        write_stream(out, '[');
+        while (*ids != NULL) {
+            if (ids != bp->stop_group) write_stream(out, ',');
             json_write_string(out, *ids++);
         }
         write_stream(out, ']');
@@ -1423,15 +1458,7 @@ static void command_get_capabilities(char * token, Channel * c) {
     json_write_boolean(&c->out, 1);
 #if SERVICE_LineNumbers
     write_stream(&c->out, ',');
-    json_write_string(&c->out, "File");
-    write_stream(&c->out, ':');
-    json_write_boolean(&c->out, 1);
-    write_stream(&c->out, ',');
-    json_write_string(&c->out, "Line");
-    write_stream(&c->out, ':');
-    json_write_boolean(&c->out, 1);
-    write_stream(&c->out, ',');
-    json_write_string(&c->out, "Column");
+    json_write_string(&c->out, "FileLine");
     write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
 #endif
@@ -1441,6 +1468,14 @@ static void command_get_capabilities(char * token, Channel * c) {
     json_write_boolean(&c->out, 1);
     write_stream(&c->out, ',');
     json_write_string(&c->out, "Condition");
+    write_stream(&c->out, ':');
+    json_write_boolean(&c->out, 1);
+    write_stream(&c->out, ',');
+    json_write_string(&c->out, "ContextIds");
+    write_stream(&c->out, ':');
+    json_write_boolean(&c->out, 1);
+    write_stream(&c->out, ',');
+    json_write_string(&c->out, "StopGroup");
     write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
     write_stream(&c->out, '}');
@@ -1459,12 +1494,15 @@ void evaluate_breakpoint_condition(Context * ctx) {
     size_t size = 0;
     BreakInstruction * bi = find_instruction(ctx, get_regs_PC(ctx->regs));
 
+    assert(context_has_state(ctx));
     assert(ctx->stopped);
     assert(ctx->stopped_by_bp);
-    assert(bi->planted);
-    loc_free(ctx->bp_ids);
-    ctx->bp_ids = NULL;
+    assert(!ctx->intercepted);
+    assert(ctx->bp_ids == NULL);
+
     if (bi == NULL) return;
+
+    assert(bi->planted);
 
     for (i = 0; i < bi->ref_cnt; i++) {
         bi->refs[i]->triggered = 0;
@@ -1498,13 +1536,20 @@ void evaluate_breakpoint_condition(Context * ctx) {
         bp->hit_count++;
         if (bp->hit_count <= bp->ignore_count) continue;
         bp->hit_count = 0;
+        bp->triggered = 1;
         if (bp->event_callback != NULL) {
             bp->event_callback(ctx, bp->event_callback_args);
         }
         else {
             ctx->pending_intercept = 1;
-            bp->triggered = 1;
             size += sizeof(char *) + strlen(bp->id) + 1;
+            if (bp->stop_group != NULL) {
+                char ** ids = bp->stop_group;
+                while (*ids) {
+                    Context * c = id2ctx(*ids++);
+                    if (c != NULL) suspend_debug_context(broadcast_group, c);
+                }
+            }
         }
     }
 
@@ -1548,11 +1593,12 @@ static void safe_skip_breakpoint(void * arg) {
     BreakInstruction * bi = (BreakInstruction *)ctx->stepping_over_bp;
     int error = 0;
 
+    assert(bi != NULL);
     assert(bi->skip_cnt > 0);
-    if (ctx->exited) {
-        safe_restore_breakpoint(ctx);
-        return;
-    }
+
+    post_safe_event(ctx->mem, safe_restore_breakpoint, ctx);
+
+    if (ctx->exited) return;
 
     assert(ctx->stopped);
     assert(!ctx->intercepted);
@@ -1562,18 +1608,8 @@ static void safe_skip_breakpoint(void * arg) {
 
     if (bi->planted) remove_instruction(bi);
     if (bi->error) error = bi->error;
-
-    if (error == 0) {
-        post_safe_event(ctx->mem, safe_restore_breakpoint, ctx);
-        if (context_single_step(ctx) < 0) error = errno;
-    }
-    else {
-        safe_restore_breakpoint(ctx);
-    }
-
-    if (error) {
-        trace(LOG_ALWAYS, "Skip breakpoint error: %d %s", error, errno_to_str(error));
-    }
+    if (error == 0 && context_single_step(ctx) < 0) error = errno;
+    if (error) trace(LOG_ALWAYS, "Skip breakpoint error: %d %s", error, errno_to_str(error));
 }
 
 #endif /* ifndef _WRS_KERNEL */
@@ -1591,6 +1627,7 @@ int skip_breakpoint(Context * ctx, int single_step) {
 
     assert(!ctx->exited);
     assert(ctx->stopped);
+    assert(!ctx->intercepted);
     assert(single_step || ctx->stepping_over_bp == NULL);
 
     if (ctx->stepping_over_bp != NULL) return 0;

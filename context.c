@@ -286,29 +286,41 @@ char * context_state_name(Context * ctx) {
 static void event_context_created(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     assert(ctx->ref_count > 0);
+    assert(!ctx->event_notification);
+    ctx->event_notification = 1;
     while (listener != NULL) {
         if (listener->context_created != NULL) {
             listener->context_created(ctx, listener->client_data);
         }
         listener = listener->next;
     }
+    ctx->event_notification = 0;
 }
 
 static void event_context_changed(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     assert(ctx->ref_count > 0);
+    assert(!ctx->event_notification);
+    ctx->event_notification = 1;
     while (listener != NULL) {
         if (listener->context_changed != NULL) {
             listener->context_changed(ctx, listener->client_data);
         }
         listener = listener->next;
     }
+    ctx->event_notification = 0;
 }
 
 static void event_context_stopped(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     assert(ctx->ref_count > 0);
     assert(ctx->stopped != 0);
+    assert(!ctx->event_notification);
+    ctx->event_notification = 1;
+    if (ctx->bp_ids != NULL) {
+        loc_free(ctx->bp_ids);
+        ctx->bp_ids = NULL;
+    }
     if (ctx->stopped_by_bp) {
         evaluate_breakpoint_condition(ctx);
     }
@@ -318,28 +330,34 @@ static void event_context_stopped(Context * ctx) {
         }
         listener = listener->next;
     }
+    ctx->event_notification = 0;
 }
 
 static void event_context_started(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     assert(ctx->ref_count > 0);
     assert(ctx->stopped == 0);
+    ctx->event_notification++;
     while (listener != NULL) {
         if (listener->context_started != NULL) {
             listener->context_started(ctx, listener->client_data);
         }
         listener = listener->next;
     }
+    ctx->event_notification--;
 }
 
 static void event_context_exited(Context * ctx) {
     ContextEventListener * listener = event_listeners;
+    assert(!ctx->event_notification);
+    ctx->event_notification = 1;
     while (listener != NULL) {
         if (listener->context_exited != NULL) {
             listener->context_exited(ctx, listener->client_data);
         }
         listener = listener->next;
     }
+    ctx->event_notification = 0;
 }
 
 #if defined(WIN32)
@@ -370,7 +388,7 @@ char * context_suspend_reason(Context * ctx) {
     static char buf[64];
     int n = 0;
 
-    if (ctx->stopped_by_bp) return "Breakpoint";
+    if (ctx->stopped_by_bp && ctx->bp_ids != NULL) return "Breakpoint";
     if (exception_code == 0) return "Suspended";
     if (ctx->debug_started && exception_code == EXCEPTION_BREAKPOINT) return "Suspended";
     if (exception_code == EXCEPTION_SINGLE_STEP) return "Step";
@@ -1054,7 +1072,7 @@ static SEM_ID events_signal;
 static pthread_t events_thread;
 
 char * context_suspend_reason(Context * ctx) {
-    if (ctx->stopped_by_bp) return "Breakpoint";
+    if (ctx->stopped_by_bp && ctx->bp_ids != NULL) return "Breakpoint";
     if (ctx->event == TRACE_EVENT_STEP) return "Step";
     return "Suspended";
 }
@@ -1503,7 +1521,7 @@ static LINK pending_list;
 char * context_suspend_reason(Context * ctx) {
     static char reason[128];
 
-    if (ctx->stopped_by_bp) return "Breakpoint";
+    if (ctx->stopped_by_bp && ctx->bp_ids != NULL) return "Breakpoint";
     if (ctx->end_of_step) return "Step";
     if (ctx->syscall_enter) return "System Call";
     if (ctx->syscall_exit) return "System Return";
@@ -2025,7 +2043,7 @@ static char * event_name(int event) {
 char * context_suspend_reason(Context * ctx) {
     static char reason[128];
 
-    if (ctx->stopped_by_bp) return "Breakpoint";
+    if (ctx->stopped_by_bp && ctx->bp_ids != NULL) return "Breakpoint";
     if (ctx->end_of_step) return "Step";
     if (ctx->ptrace_event != 0) {
         assert(ctx->signal == SIGTRAP);
@@ -2609,7 +2627,6 @@ static void eventpoint_at_main(Context * ctx, void * args) {
     ctx->debug_structure_address = 0;
 #endif
     ctx->pending_intercept = 1;
-    event_context_changed(ctx);
 }
 
 void ini_contexts(void) {
