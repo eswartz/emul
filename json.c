@@ -389,13 +389,13 @@ int json_read_struct(InputStream * inp, JsonStructCallBack * call_back, void * a
     return 0;
 }
 
-char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
+char ** json_read_alloc_string_array(InputStream * inp, int * cnt) {
     int ch = read_stream(inp);
-    *pos = 0;
     if (ch == 'n') {
         if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);
         if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
         if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (cnt) *cnt = 0;
         return NULL;
     }
     else if (ch != '[') {
@@ -457,7 +457,7 @@ char ** json_read_alloc_string_array(InputStream * inp, int * pos) {
             j += len_buf[i] + 1;
         }
         arr[len_pos] = NULL;
-        *pos = len_pos;
+        if (cnt) *cnt = len_pos;
         return arr;
     }
 }
