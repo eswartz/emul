@@ -189,7 +189,8 @@ A breakpoint service implementation may not change the properties set by the cli
     <ul>
         <li><dt><code><b>READ = 0x01</b></code> <dd>Triggered by a read from the breakpoint location
         <li><dt><code><b>WRITE = 0x02</b></code> <dd>Triggered by a write to the breakpoint location
-        <li><dt><code><b>EXECUTE = 0x04</b></code> <dd>Triggered by an instruction execution at the breakpoint location. Whether the breakpoint is triggered before the instruction execution or after depends on the target support for this mode. This is the default for Line and Address breakpoints.
+        <li><dt><code><b>EXECUTE = 0x04</b></code> <dd>Triggered by an instruction execution at the breakpoint location. Whether the breakpoint is
+                  triggered before the instruction execution or after depends on the target support for this mode. This is the default for Line and Address breakpoints.
         <li><dt><code><b>CHANGE = 0x08</b></code> <dd>Triggered by a data change (not an explicit write) at the breakpoint location
     </ul>
     </dl>
@@ -500,12 +501,18 @@ Tools and targets can define additional properties. Predefined properties are:</
     - ID of a context that was used to query capabilities
     <li><code><b><font face="Courier New" size=2 color=#333399>"HasChildren" : <i>&lt;boolean&gt;</i></font></b></code>
     - if true, children of the context can have different capabilities
-    <li><code><b><font face="Courier New" size=2 color=#333399>"Address" : <i>&lt;boolean&gt;</i></font></b></code>
-    - if true, "Address" breakpoint property is supported
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Location" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "Location" breakpoint property is supported
     <li><code><b><font face="Courier New" size=2 color=#333399>"Condition" : <i>&lt;boolean&gt;</i></font></b></code>
     - if true, "Condition" breakpoint property is supported
     <li><code><b><font face="Courier New" size=2 color=#333399>"FileLine" : <i>&lt;boolean&gt;</i></font></b></code>
     - if true, "File", "Line" and "Column" breakpoint properties are supported
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ContextIds" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "ContextIds" breakpoint property is supported
+    <li><code><b><font face="Courier New" size=2 color=#333399>"StopGroup" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "StopGroup" breakpoint property is supported
+    <li><code><b><font face="Courier New" size=2 color=#333399>"IgnoreCount" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "IgnoreCount" breakpoint property is supported
 </ul>
 
 <h2><a name='Events'>Events</a></h2>
@@ -618,11 +625,19 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
      * Breakpoint status field names.
      */</font>
     <font color=#7F0055>static final</font> String
-        STATUS_INSTALLED = "Installed", // Array of addresses
+        STATUS_INSTANCES = "Instances", // Array of Map&lt;String,Object>
         STATUS_ERROR = "Error",         // String
         STATUS_FILE = "File",           // String
         STATUS_LINE = "Line",           // Number
         STATUS_COLUMN = "Column";       // Number
+
+    <font color=#3F5FBF>/**
+     * Breakpoint instance field names.
+     */</font>
+    static final String
+        INSTANCE_ERROR = "Error",       // String
+        INSTANCE_CONTEXT = "LocationContext", // String
+        INSTANCE_ADDRESS = "Address";   // Number
 
     <font color=#3F5FBF>/**
      * Breakpoint service capabilities.
@@ -630,14 +645,22 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
     <font color=#7F0055>static final</font> String
         CAPABILITY_CONTEXT_ID = "ID",                   // String
         CAPABILITY_HAS_CHILDREN = "HasChildren",        // Boolean
-        CAPABILITY_ADDRESS = "Address",                 // Boolean
+        CAPABILITY_LOCATION = "Location",               // Boolean
         CAPABILITY_CONDITION = "Condition",             // Boolean
-        CAPABILITY_FILE_LINE = "FileLine";              // Boolean
+        CAPABILITY_FILE_LINE = "FileLine",              // Boolean
+        CAPABILITY_CONTEXTIDS = "ContextIds",           // Boolean
+        CAPABILITY_STOP_GROUP = "StopGroup",            // Boolean
+        CAPABILITY_IGNORECOUNT = "IgnoreCount";         // Boolean
 
     <font color=#3F5FBF>/**
      * Call back interface for breakpoint service commands.
      */</font>
     <font color=#7F0055>interface</font> DoneCommand {
+        <font color=#3F5FBF>/**
+         * Called when command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         */</font>
         <font color=#7F0055>void</font> doneCommand(IToken token, Exception error);
     }
 
@@ -650,6 +673,7 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
      *
      * @param properties - array of breakpoints.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */</font>
     IToken set(Map&lt;String,Object&gt;[] properties, DoneCommand done);
 
@@ -657,6 +681,7 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
      * Called when breakpoint is added into breakpoints table.
      * @param properties - breakpoint properties.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */</font>
     IToken add(Map&lt;String,Object&gt; properties, DoneCommand done);
 
@@ -664,6 +689,7 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
      * Called when breakpoint properties are changed.
      * @param properties - breakpoint properties.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */</font>
     IToken change(Map&lt;String,Object&gt; properties, DoneCommand done);
 
@@ -671,6 +697,7 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
      * Tell target to change (only) PROP_ENABLED breakpoint property 'true'.
      * @param ids - array of enabled breakpoint identifiers.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */</font>
     IToken enable(String[] ids, DoneCommand done);
 
@@ -678,6 +705,7 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
      * Tell target to change (only) PROP_ENABLED breakpoint property to 'false'.
      * @param ids - array of disabled breakpoint identifiers.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */</font>
     IToken disable(String[] ids, DoneCommand done);
 
@@ -685,16 +713,27 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
      * Tell target to remove breakpoint.
      * @param id - unique breakpoint identifier.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */</font>
     IToken remove(String[] ids, DoneCommand done);
 
     <font color=#3F5FBF>/**
      * Upload IDs of breakpoints known to target agent.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */</font>
     IToken getIDs(DoneGetIDs done);
 
+    <font color=#3F5FBF>/**
+     * Call back interface for 'getIDs' command.
+     */</font>
     <font color=#7F0055>interface</font> DoneGetIDs {
+        <font color=#3F5FBF>/**
+         * Called when 'getIDs' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param ids - IDs of breakpoints known to target agent.
+         */</font>
         <font color=#7F0055>void</font> doneGetIDs(IToken token, Exception error, String[] ids);
     }
 
@@ -702,10 +741,20 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
      * Upload properties of given breakpoint from target agent breakpoint table.
      * @param id - unique breakpoint identifier.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */</font>
     IToken getProperties(String id, DoneGetProperties done);
 
+    <font color=#3F5FBF>/**
+     * Call back interface for 'getProperties' command.
+     */</font>
     <font color=#7F0055>interface</font> DoneGetProperties {
+        <font color=#3F5FBF>/**
+         * Called when 'getProperties' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param properties - properties of the breakpoint.
+         */</font>
         <font color=#7F0055>void</font> doneGetProperties(IToken token, Exception error, Map&lt;String,Object&gt; properties);
     }
 
@@ -713,10 +762,20 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
      * Upload status of given breakpoint from target agent.
      * @param id - unique breakpoint identifier.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */</font>
     IToken getStatus(String id, DoneGetStatus done);
 
+    <font color=#3F5FBF>/**
+     * Call back interface for 'getStatus' command.
+     */</font>
     <font color=#7F0055>interface</font> DoneGetStatus {
+        <font color=#3F5FBF>/**
+         * Called when 'getStatus' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param status - status of the breakpoint.
+         */</font>
         <font color=#7F0055>void</font> doneGetStatus(IToken token, Exception error, Map&lt;String,Object&gt; status);
     }
 
@@ -729,10 +788,20 @@ E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs
      * capabilities.
      * @param id - a context ID or null.
      * @param done - command result call back object.
+     * @return - pending command handle.
      */</font>
     IToken getCapabilities(String id, DoneGetCapabilities done);
 
+    <font color=#3F5FBF>/**
+     * Call back interface for 'getCapabilities' command.
+     */</font>
     <font color=#7F0055>interface</font> DoneGetCapabilities {
+        <font color=#3F5FBF>/**
+         * Called when 'getCapabilities' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param capabilities - breakpoints service capabilities description.
+         */</font>
         void</font> doneGetCapabilities(IToken token, Exception error, Map&lt;String,Object&gt; capabilities);
     }
 

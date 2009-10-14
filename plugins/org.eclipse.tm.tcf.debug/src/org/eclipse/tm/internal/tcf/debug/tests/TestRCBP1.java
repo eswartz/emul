@@ -377,6 +377,7 @@ class TestRCBP1 implements ITCFTest,
         ArrayList<String> l = new ArrayList<String>();
         l.add(context_id);
         m.put(IBreakpoints.PROP_CONTEXTIDS, l);
+        m.put(IBreakpoints.PROP_STOP_GROUP, l);
         StringBuffer bf = new StringBuffer();
         for (String id : threads.keySet()) {
             if (bf.length() > 0) bf.append(" || ");
@@ -532,7 +533,7 @@ class TestRCBP1 implements ITCFTest,
     public void contextResumed(String id) {
         if (threads.get(id) == null) return;
         SuspendedContext sc = suspended.remove(id);
-        if (!isAlienBreakpoint(sc)) suspended_prev.put(id, sc);
+        if (isMyBreakpoint(sc)) suspended_prev.put(id, sc);
         running.add(id);
     }
 
@@ -551,15 +552,14 @@ class TestRCBP1 implements ITCFTest,
         }
     }
 
-    private boolean isAlienBreakpoint(SuspendedContext sc) {
-        // Check if context suspended by a breakpoint from another debug session
-        // Test should ignore such breakpoints.
+    private boolean isMyBreakpoint(SuspendedContext sc) {
+        // Check if context suspended by a one of our breakpoint
         if (!"Breakpoint".equals(sc.reason)) return false;
         long pc =  Long.parseLong(sc.pc);
-        if (pc == func0.getValue().longValue()) return false;
-        if (pc == func1.getValue().longValue()) return false;
-        if (pc == func2.getValue().longValue()) return false;
-        return true;
+        if (pc == func0.getValue().longValue()) return true;
+        if (pc == func1.getValue().longValue()) return true;
+        if (pc == func2.getValue().longValue()) return true;
+        return false;
     }
 
     public void contextSuspended(String id, String pc, String reason, Map<String, Object> params) {
@@ -575,7 +575,7 @@ class TestRCBP1 implements ITCFTest,
             sc = new SuspendedContext(id, pc, reason, params);
             suspended.put(id, sc);
         }
-        if (main_thread_id == null && "Breakpoint".equals(reason) && !isAlienBreakpoint(sc)) {
+        if (main_thread_id == null && "Breakpoint".equals(reason) && isMyBreakpoint(sc)) {
             // Process main thread should be the first to hit a breakpoint in the test
             if (!done_starting_test_process) {
                 exit(new Exception("Unexpeceted breakpoint hit"));
@@ -587,7 +587,7 @@ class TestRCBP1 implements ITCFTest,
             resume(sc);
             return;
         }
-        if (!isAlienBreakpoint(sc)) {
+        if (isMyBreakpoint(sc)) {
             if ("Breakpoint".equals(reason) && id.equals(main_thread_id)) bp_cnt++;
             SuspendedContext sp = suspended_prev.get(id);
             if (sp != null) {
