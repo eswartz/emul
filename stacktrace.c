@@ -98,21 +98,18 @@ static int trace_stack(Context * ctx) {
     StackTrace * s;
     client_ctx = ctx;
     trcStack(&ctx->regs, (FUNCPTR)vxworks_stack_trace_callback, ctx->pid);
-    /* VxWorks stack trace is in reverse order - from bottom to top */
     s = (StackTrace *)ctx->stack_trace;
+    if (s->frame_cnt == 0) {
+        vxworks_stack_trace_callback(NULL, 0, 0, NULL, ctx->pid, 1);
+    }
+    /* VxWorks stack trace is in reverse order - from bottom to top */
     for (i = 0; i < s->frame_cnt / 2; i++) {
         StackFrame f = s->frames[i];
         s->frames[i] = s->frames[s->frame_cnt - i - 1];
         s->frames[s->frame_cnt - i - 1] = f;
     }
-    for (i =0; i < s->frame_cnt; i++) {
-        StackFrame f = s->frames[i];
-        if (i == 0) {
-            f.ip = get_regs_PC(ctx->regs);
-        }
-        else {
-            f.ip = s->frames[i - 1].rp;
-        }
+    for (i = 0; i < s->frame_cnt; i++) {
+        s->frames[i].ip = i == 0 ? get_regs_PC(ctx->regs) : s->frames[i - 1].rp;
     }
     return 0;
 }
