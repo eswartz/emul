@@ -1341,6 +1341,7 @@ E &bull; Locator &bull; Hello &bull; <i>&lt;array: service names&gt;</i> &bull;
 E &bull; Locator &bull; peerAdded &bull; <i>&lt;object: peer data&gt;</i> &bull;
 E &bull; Locator &bull; peerChanged &bull; <i>&lt;object: peer data&gt;</i> &bull;
 E &bull; Locator &bull; peerRemoved &bull; <i>&lt;string: peer ID&gt;</i> &bull;
+E &bull; Locator &bull; peerHeartBeat &bull; <i>&lt;string: peer ID&gt;</i> &bull;
 </font></b></pre>
 
 <dl>
@@ -1358,6 +1359,9 @@ E &bull; Locator &bull; peerRemoved &bull; <i>&lt;string: peer ID&gt;</i> &bull;
         <dd>is sent when peer attributes change.
     <dt><b>peerRemoved</b>
         <dd>is sent when the service deletes information about a peer.
+    <dt><b>peerHeartBeat</b>
+        <dd>is sent periodically when the service receives a communication from the peer
+                that confirms that the peer is still alive.
 </dl>
 
 <h2><a name='LocatorAPI'>Locator Service API</a></h2>
@@ -1436,14 +1440,13 @@ E &bull; Locator &bull; peerRemoved &bull; <i>&lt;string: peer ID&gt;</i> &bull;
 
 <font color=#3F5FBF>/**
  * ILocator service uses transport layer to search for peers and to collect data about
- * peer's attributes and capabilities (services). Discovery mechanism depends on
- * transport protocol and is part of that protocol handler. Targets, known by other
- * hosts, are added to local list of peers.
- * Automatically discovered targets require no further configuration. Additional targets
- * can be configured manually.
+ * peer’s attributes and capabilities (services). Discovery mechanism depends on transport protocol
+ * and is part of that protocol handler. Targets, known to other hosts, can be found through
+ * remote instances of ILocator service. Automatically discovered targets require no further
+ * configuration. Additional targets can be configured manually.
  *
  * Clients should use Protocol.getLocator() to obtain local instance of ILocator,
- * then ILocator.getPeers() can be used to get of available peers (hosts and targets).
+ * then ILocator.getPeers() can be used to get list of available peers (hosts and targets).
  */</font>
 <font color=#7F0055>public interface</font> ILocator <font color=#7F0055>extends</font> IService {
 
@@ -1454,7 +1457,9 @@ E &bull; Locator &bull; peerRemoved &bull; <i>&lt;string: peer ID&gt;</i> &bull;
      */</font>
     <font color=#7F0055>static final int</font>
         <i><font color=#0000C0>CONF_REQ_INFO</font></i> = 1,
-        <i><font color=#0000C0>CONF_PEER_INFO</font></i> = 2;
+        <i><font color=#0000C0>CONF_PEER_INFO</font></i> = 2,
+        <i><font color=#0000C0>CONF_REQ_SLAVES</font></i> = 3,
+        <i><font color=#0000C0>CONF_SLAVES_INFO</font></i> = 4;
 
     <font color=#3F5FBF>/**
      * <font color=#7F9FBF>@return</font> Locator service name: "Locator"
@@ -1470,6 +1475,7 @@ E &bull; Locator &bull; peerRemoved &bull; <i>&lt;string: peer ID&gt;</i> &bull;
 
     <font color=#3F5FBF>/**
      * Redirect this service channel to given peer using this service as a proxy.
+     * @param peer_id - Peer ID.
      */</font>
     IToken redirect(String peer_id, DoneRedirect done);
 
@@ -1507,11 +1513,29 @@ E &bull; Locator &bull; peerRemoved &bull; <i>&lt;string: peer ID&gt;</i> &bull;
     <font color=#7F0055>void</font> removeListener(Listener listener);
 
     <font color=#7F0055>interface</font> Listener {
+        <font color=#3F5FBF>/**
+         * A new peer is added into locator peer table.
+         * @param peer
+         */</font>
         <font color=#7F0055>void</font> peerAdded(IPeer peer);
 
-        <font color=#7F0055>void</font> peerRemoved(IPeer peer);
-
+        <font color=#3F5FBF>/**
+         * Peer attributes have changed.
+         * @param peer
+         */</font>
         <font color=#7F0055>void</font> peerChanged(IPeer peer);
+
+        <font color=#3F5FBF>/**
+         * A peer is removed from locator peer table.
+         * @param id - peer ID
+         */</font>
+        <font color=#7F0055>void</font> peerRemoved(String id);
+
+        <font color=#3F5FBF>/**
+         * Peer heart beat detected.
+         * @param id - peer ID
+         */</font>
+        <font color=#7F0055>void</font> peerHeartBeat(String id);
     }
 }
 </pre>
