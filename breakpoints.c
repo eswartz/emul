@@ -101,7 +101,6 @@ struct BreakInstruction {
     LINK link_all;
     LINK link_adr;
     Context * ctx;
-    int ctx_cnt;
     ContextAddress address;
 #if defined(_WRS_KERNEL)
     VXDBG_CTX vxdbg_ctx;
@@ -181,7 +180,6 @@ static void plant_instruction(BreakInstruction * bi) {
     bi->error = 0;
     select_instruction_context(bi);
 #if defined(_WRS_KERNEL)
-    bi->vxdbg_ctx.ctxId = bi->ctx_cnt == 1 ? bi->ctx->pid : 0;
     bi->vxdbg_ctx.ctxId = 0;
     bi->vxdbg_ctx.ctxType = VXDBG_CTX_TASK;
     if (vxdbgBpAdd(vxdbg_clnt_id,
@@ -208,20 +206,11 @@ static void plant_instruction(BreakInstruction * bi) {
     }
 }
 
-static int verify_instruction(BreakInstruction * bi) {
-    assert(bi->planted);
-#if defined(_WRS_KERNEL)
-    return bi->vxdbg_ctx.ctxId == (bi->ctx_cnt == 1 ? bi->ctx->pid : 0) &&
-           bi->vxdbg_ctx.ctxType == VXDBG_CTX_TASK;
-#else
-    return 1;
-#endif
-}
-
 static void remove_instruction(BreakInstruction * bi) {
     int i;
     assert(bi->planted);
     assert(!bi->error);
+    assert(is_all_stopped(bi->ctx->mem));
     select_instruction_context(bi);
 #if defined(_WRS_KERNEL)
     {
@@ -236,7 +225,6 @@ static void remove_instruction(BreakInstruction * bi) {
         }
     }
 #else
-    assert(is_all_stopped(bi->ctx->mem));
     if (!bi->ctx->exited && !is_running(bi->ctx)) {
         if (context_write_mem(bi->ctx, bi->address, bi->saved_code, BREAK_SIZE) < 0) {
             bi->error = errno;
@@ -271,7 +259,6 @@ static void clear_instruction_refs(pid_t mem) {
                     bi->refs[i]->planted--;
                 }
             }
-            bi->ctx_cnt = 1;
             bi->ref_cnt = 0;
         }
         l = l->next;
@@ -294,10 +281,6 @@ static void delete_unused_instructions(pid_t mem) {
             loc_free(bi);
         }
         else if (!bi->planted) {
-            plant_instruction(bi);
-        }
-        else if (!verify_instruction(bi)) {
-            remove_instruction(bi);
             plant_instruction(bi);
         }
     }
@@ -472,7 +455,6 @@ static void plant_breakpoint_at_address(BreakpointInfo * bp, Context * ctx, Cont
         bi->refs = (BreakpointInfo **)loc_realloc(bi->refs, sizeof(BreakpointInfo *) * bi->ref_size);
     }
     bi->refs[bi->ref_cnt++] = bp;
-    if (bi->ctx != ctx) bi->ctx_cnt++;
     if (bi->planted) bp->planted++;
     if (bi->error && !bp->error) bp->error = bi->error;
 }
@@ -489,9 +471,7 @@ static void plant_breakpoint_address_iterator(void * x, ContextAddress address) 
 
 static void plant_breakpoint_in_container(BreakpointInfo * bp, Context * ctx, ContextAddress bp_addr) {
 
-    if (ctx->exited) return;
-
-    if (ctx->exiting || is_running(ctx)) {
+    if (ctx->exited || ctx->exiting || is_running(ctx)) {
         /* If container main thread cannot be stopped, try to use some other thread to set the breakpoint */
         LINK * qp = ctx->children.next;
         while (qp != &ctx->children) {
@@ -504,7 +484,7 @@ static void plant_breakpoint_in_container(BreakpointInfo * bp, Context * ctx, Co
         }
     }
 
-    if (ctx->exiting || is_running(ctx)) return;
+    if (ctx->exited || ctx->exiting || is_running(ctx)) return;
 
 #if 0
     /* TODO: breakpoint condition otimization is broken */
@@ -601,8 +581,8 @@ static void plant_breakpoint(BreakpointInfo * bp, pid_t mem) {
             Context * ctx = id2ctx(*ids++);
             if (ctx == NULL) continue;
             if (mem == 0 || ctx->mem == mem) {
+                if (ctx->parent != NULL) ctx = ctx->parent;
                 plant_breakpoint_in_container(bp, ctx, bp_addr);
-                if (mem) break;
             }
         }
     }
@@ -611,12 +591,8 @@ static void plant_breakpoint(BreakpointInfo * bp, pid_t mem) {
         while (qp != &context_root) {
             Context * ctx = ctxl2ctxp(qp);
             qp = qp->next;
-#if !defined(_WRS_KERNEL)
-            if (ctx->pid != ctx->mem) continue;
-#endif
-            if (mem == 0 || ctx->mem == mem) {
+            if (ctx->parent == NULL && (mem == 0 || ctx->mem == mem)) {
                 plant_breakpoint_in_container(bp, ctx, bp_addr);
-                if (mem) break;
             }
         }
     }
@@ -1118,10 +1094,8 @@ static void add_breakpoint(Channel * c, BreakpointInfo * bp) {
         r->inp = inp;
         r->bp = p;
     }
-    else {
-        assert(r->bp == p);
-        assert(!list_is_empty(&p->refs));
-    }
+    assert(r->bp == p);
+    assert(!list_is_empty(&p->refs));
     if (chng || added) {
         if (p->planted || p->enabled && p->unsupported == NULL) replant_breakpoint(p);
     }
@@ -1162,12 +1136,13 @@ static void delete_breakpoint_refs(Channel * c) {
 
 static void command_ini_bps(char * token, Channel * c) {
     int ch;
-    LINK * l = breakpoints.next;
+    LINK * l = NULL;
 
     /* Delete all breakpoints of this channel */
     delete_breakpoint_refs(c);
 
     /* Report breakpoints from other channels */
+    l = breakpoints.next;
     while (l != &breakpoints) {
         BreakpointInfo * bp = link_all2bp(l);
         l = l->next;

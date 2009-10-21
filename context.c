@@ -1043,7 +1043,6 @@ static void init(void) {
 
 #define TRACE_EVENT_STEP        2
 
-#define EVENT_HOOK_IGNORE       1
 #define EVENT_HOOK_BREAKPOINT   2
 #define EVENT_HOOK_STEP_DONE    3
 #define EVENT_HOOK_STOP         4
@@ -1113,19 +1112,25 @@ typedef struct AttachDoneArgs {
 
 static void event_attach_done(void * x) {
     AttachDoneArgs * args = (AttachDoneArgs *)x;
-    Context * ctx = create_context(args->pid);
-
-    ctx->mem = taskIdSelf();
-    link_context(ctx);
-    event_context_created(ctx);
-    args->done(0, ctx, args->data);
-    if (taskIsStopped(args->pid)) {
-        struct event_info * info;
-        ctx->pending_intercept = 1;
-        info = event_info_alloc(EVENT_HOOK_STOP);
-        if (info != NULL) {
-            info->stopped_ctx.ctxId = args->pid;
-            event_info_post(info);
+    if (context_find_from_pid(args->pid) != NULL) {
+        args->done(ERR_ALREADY_ATTACHED, NULL, args->data);
+    }
+    else {
+        Context * ctx = create_context(args->pid);
+        ctx->mem = taskIdSelf();
+        link_context(ctx);
+        trace(LOG_CONTEXT, "context: attached: ctx %#lx, id %#x",
+                ctx, ctx->pid);
+        event_context_created(ctx);
+        args->done(0, ctx, args->data);
+        if (taskIsStopped(args->pid)) {
+            struct event_info * info;
+            ctx->pending_intercept = 1;
+            info = event_info_alloc(EVENT_HOOK_STOP);
+            if (info != NULL) {
+                info->stopped_ctx.ctxId = args->pid;
+                event_info_post(info);
+            }
         }
     }
     loc_free(x);
@@ -1167,6 +1172,7 @@ int context_stop(Context * ctx) {
     taskLock();
     if (taskIsStopped(ctx->pid)) {
         taskUnlock();
+        trace(LOG_CONTEXT, "context: already stopped ctx %#lx, id %#x", ctx, ctx->pid);
         return 0;
     }
     vxdbg_ctx.ctxId = ctx->pid;
@@ -1201,6 +1207,7 @@ static int kill_context(Context * ctx) {
     event_context_started(ctx);
     ctx->exiting = 0;
     ctx->exited = 1;
+    trace(LOG_CONTEXT, "context: killed ctx %#lx, id %#x", ctx, ctx->pid);
     event_context_exited(ctx);
     if (ctx->parent != NULL) {
         list_remove(&ctx->cldl);
@@ -1346,6 +1353,8 @@ static void event_handler(void * arg) {
         stopped_ctx->bp_info = info->bp_info;
         if (current_ctx != NULL) stopped_ctx->bp_pid = current_ctx->pid;
         assert(taskIsStopped(stopped_ctx->pid));
+        trace(LOG_CONTEXT, "context: stopped by breakpoint: ctx %#lx, id %#x",
+                stopped_ctx, stopped_ctx->pid);
         event_context_stopped(stopped_ctx);
         break;
     case EVENT_HOOK_STEP_DONE:
@@ -1362,6 +1371,8 @@ static void event_handler(void * arg) {
         current_ctx->stopped_by_bp = 0;
         current_ctx->stopped_by_exception = 0;
         assert(taskIsStopped(current_ctx->pid));
+        trace(LOG_CONTEXT, "context: stopped by end of step: ctx %#lx, id %#x",
+                current_ctx, current_ctx->pid);
         event_context_stopped(current_ctx);
         break;
     case EVENT_HOOK_STOP:
@@ -1379,6 +1390,8 @@ static void event_handler(void * arg) {
         stopped_ctx->stopped_by_bp = 0;
         stopped_ctx->stopped_by_exception = 0;
         assert(taskIsStopped(stopped_ctx->pid));
+        trace(LOG_CONTEXT, "context: stopped by sofware request: ctx %#lx, id %#x",
+                stopped_ctx, stopped_ctx->pid);
         event_context_stopped(stopped_ctx);
         break;
     case EVENT_HOOK_TASK_ADD:
@@ -1388,8 +1401,11 @@ static void event_handler(void * arg) {
         stopped_ctx->mem = current_ctx->mem;
         stopped_ctx->parent = current_ctx->parent != NULL ? current_ctx->parent : current_ctx;
         stopped_ctx->parent->ref_count++;
+        assert(stopped_ctx->mem == stopped_ctx->parent->mem);
         list_add_first(&stopped_ctx->cldl, &stopped_ctx->parent->children);
         link_context(stopped_ctx);
+        trace(LOG_CONTEXT, "context: created: ctx %#lx, id %#x",
+                stopped_ctx, stopped_ctx->pid);
         event_context_created(stopped_ctx);
         break;
     default:
@@ -1405,16 +1421,15 @@ static void event_error(void * arg) {
 }
 
 static void * event_thread_func(void * arg) {
-    struct event_info * info;
-
     taskPrioritySet(0, VX_TASK_PRIORITY_MIN);
     for (;;) {
+        struct event_info * info = loc_alloc(sizeof(struct event_info));
         semTake(events_signal, WAIT_FOREVER);
-        info = (struct event_info *)loc_alloc(sizeof(struct event_info));
 
         SPIN_LOCK_ISR_TAKE(&events_lock);
         if (events_buf_overflow && events_inp == events_out) {
             SPIN_LOCK_ISR_GIVE(&events_lock);
+            loc_free(info);
             break;
         }
         assert(events_inp != events_out);
@@ -1422,9 +1437,7 @@ static void * event_thread_func(void * arg) {
         events_out = (events_out + 1) % MAX_EVENTS;
         SPIN_LOCK_ISR_GIVE(&events_lock);
 
-        if (info->event != EVENT_HOOK_IGNORE) {
-            post_event(event_handler, info);
-        }
+        post_event(event_handler, info);
     }
     post_event(event_error, NULL);
 }
@@ -1473,6 +1486,7 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
             stopped_ctx->pending_step = 0;
             stopped_ctx->exiting = 0;
             stopped_ctx->exited = 1;
+            trace(LOG_CONTEXT, "context: exited ctx %#lx, id %#x", stopped_ctx, stopped_ctx->pid);
             event_context_exited(stopped_ctx);
             if (stopped_ctx->parent != NULL) {
                 list_remove(&stopped_ctx->cldl);
