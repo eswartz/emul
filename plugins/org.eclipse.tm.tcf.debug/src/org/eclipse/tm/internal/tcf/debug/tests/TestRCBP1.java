@@ -242,10 +242,12 @@ class TestRCBP1 implements ITCFTest,
                 m[i].put(IBreakpoints.PROP_CONDITION, "tcf_test_func0!=tcf_test_func1");
                 break;
             case 2:
+                // Disabled breakpoint
                 m[i].put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
                 m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
                 break;
             case 3:
+                // Breakpoint that will be enabled with "enable" command
                 m[i].put(IBreakpoints.PROP_ID, "TcfTestBP3" + channel_id);
                 m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
                 m[i].put(IBreakpoints.PROP_LOCATION, "tcf_test_func2");
@@ -405,6 +407,10 @@ class TestRCBP1 implements ITCFTest,
                 }
                 HashSet<String> s = new HashSet<String>();
                 for (String id : ids) s.add(id);
+                if (ids.length != s.size()) {
+                    exit(new Exception("Invalis BP list: " + ids));
+                    return;
+                }
                 for (String id : bp_list.keySet()) {
                     if (!s.contains(id)) {
                         exit(new Exception("BP is not listed by Breakpoints.getIDs: " + id));
@@ -441,6 +447,7 @@ class TestRCBP1 implements ITCFTest,
         }
         Protocol.sync(new Runnable() {
             public void run() {
+                if (!test_suite.isActive(TestRCBP1.this)) return;
                 if (!bp_change_done) {
                     exit(new Exception("Protocol.sync() test failed"));
                     return;
@@ -544,10 +551,10 @@ class TestRCBP1 implements ITCFTest,
         return "0x" + Long.toHexString(addr);
     }
 
-    private void checkSuspendedContext(SuspendedContext sp, ISymbol sym) {
-        long pc =  Long.parseLong(sp.pc);
-        if (pc != sym.getValue().longValue() || !"Breakpoint".equals(sp.reason)) {
-            exit(new Exception("Invalid contextSuspended event: " + sp.id + " '" + toSymName(pc) + "' " + sp.pc + " " + sp.reason +
+    private void checkSuspendedContext(SuspendedContext sc, ISymbol sym) {
+        long pc =  Long.parseLong(sc.pc);
+        if (pc != sym.getValue().longValue() || !"Breakpoint".equals(sc.reason)) {
+            exit(new Exception("Invalid contextSuspended event: " + sc.id + " '" + toSymName(pc) + "' " + sc.pc + " " + sc.reason +
                     ", expected breakpoint at '" + toSymName(sym.getValue().longValue()) + "' " + sym.getValue()));
         }
     }
@@ -590,23 +597,22 @@ class TestRCBP1 implements ITCFTest,
         if (isMyBreakpoint(sc)) {
             if ("Breakpoint".equals(reason) && id.equals(main_thread_id)) bp_cnt++;
             SuspendedContext sp = suspended_prev.get(id);
-            if (sp != null) {
-                if (Long.parseLong(sc.pc) == func2.getValue().longValue()) {
-                    checkSuspendedContext(sp, func1);
+            if (sp == null) {
+                checkSuspendedContext(sc, func0);
+            }
+            else if (Long.parseLong(sp.pc) == func2.getValue().longValue()) {
+                checkSuspendedContext(sc, func0);
+            }
+            else if (Long.parseLong(sp.pc) == func1.getValue().longValue()) {
+                if (id.equals(main_thread_id)) {
+                    checkSuspendedContext(sc, func2);
                 }
-                else if (Long.parseLong(sc.pc) == func1.getValue().longValue()) {
-                    checkSuspendedContext(sp, func0);
+                else {
+                    checkSuspendedContext(sc, func0);
                 }
-                else if (Long.parseLong(sc.pc) == func0.getValue().longValue()) {
-                    if (id.equals(main_thread_id)) {
-                        if ("Breakpoint".equals(sp.reason)) {
-                            checkSuspendedContext(sp, func2);
-                        }
-                    }
-                    else {
-                        checkSuspendedContext(sp, func1);
-                    }
-                }
+            }
+            else if (Long.parseLong(sp.pc) == func0.getValue().longValue()) {
+                checkSuspendedContext(sc, func1);
             }
         }
         if (!test_suite.isActive(this)) return;
