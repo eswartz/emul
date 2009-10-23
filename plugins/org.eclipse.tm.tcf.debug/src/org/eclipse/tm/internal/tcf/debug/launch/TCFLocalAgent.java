@@ -12,6 +12,7 @@ package org.eclipse.tm.internal.tcf.debug.launch;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
@@ -87,6 +88,14 @@ public class TCFLocalAgent {
                     }
                     out.close();
                     inp.close();
+                    if (!"exe".equals(fnm.getFileExtension())) {
+                        String[] cmd = {
+                                "chmod",
+                                "a+x",
+                                f.getAbsolutePath()
+                        };
+                        Runtime.getRuntime().exec(cmd).waitFor();
+                    }
                     f.setLastModified(mtime);
                 }
                 String[] cmd = {
@@ -94,16 +103,27 @@ public class TCFLocalAgent {
                         "-s",
                         "TCP:" + AGENT_HOST + ":" + AGENT_PORT
                 };
-                final Process prs = Runtime.getRuntime().exec(cmd);
+                final Process prs = agent = Runtime.getRuntime().exec(cmd);
+                final TCFTask<String> waiting = waitAgentReady();
                 Thread t = new Thread() {
                     public void run() {
                         try {
-                            int n = prs.waitFor();
+                            final int n = prs.waitFor();
+                            if (n != 0) {
+                                Protocol.invokeLater(new Runnable() {
+                                    public void run() {
+                                        if (waiting.isDone()) return;
+                                        waiting.error(new IOException("TCF Agent exited with code " + n));
+                                    }
+                                });
+                            }
                             synchronized (TCFLocalAgent.class) {
-                                if (n != 0 && !destroed) {
-                                    Activator.log("TCF Agent exited with code " + n, null);
+                                if (agent == prs) {
+                                    if (n != 0 && !destroed) {
+                                        Activator.log("TCF Agent exited with code " + n, null);
+                                    }
+                                    agent = null;
                                 }
-                                if (agent == prs) agent = null;
                             }
                         }
                         catch (InterruptedException x) {
@@ -114,19 +134,19 @@ public class TCFLocalAgent {
                 t.setDaemon(true);
                 t.setName("TCF Agent Monitor");
                 t.start();
-                agent = prs;
-                return waitAgentReady();
+                return waiting.getIO();
             }
         }
         catch (Throwable x) {
+            agent = null;
             throw new CoreException(new Status(IStatus.ERROR,
                     Activator.PLUGIN_ID, 0,
-                    "Cannot start local agent: unhandled exception",
+                    "Cannot start local TCF agent.",
                     x));
         }
         throw new CoreException(new Status(IStatus.ERROR,
                 Activator.PLUGIN_ID, 0,
-                "Cannot start local agent: file not available: " + fnm,
+                "Cannot start local TCF agent: file not available:\n" + fnm,
                 null));
     }
 
@@ -151,7 +171,7 @@ public class TCFLocalAgent {
         }.getE();
     }
 
-    private static String waitAgentReady() {
+    private static TCFTask<String> waitAgentReady() {
         return new TCFTask<String>() {
             public void run() {
                 final ILocator locator = Protocol.getLocator();
@@ -185,7 +205,7 @@ public class TCFLocalAgent {
                     }
                 });
             }
-        }.getE();
+        };
     }
 
     public static synchronized void destroy() {
