@@ -285,12 +285,12 @@ typedef struct {
 #define DT_MIPS_RLD_MAP 0x70000016
 #endif
 
-typedef struct Elf_Sym {
+typedef struct ElfX_Sym {
     union {
         Elf32_Sym Elf32;
         Elf64_Sym Elf64;
     } u;
-} Elf_Sym;
+} ElfX_Sym;
 
 typedef uint8_t  U1_T;
 typedef int8_t   I1_T;

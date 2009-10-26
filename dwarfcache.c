@@ -58,7 +58,7 @@ unsigned calc_symbol_name_hash(char * s) {
     return h % SYM_HASH_SIZE;
 }
 
-static U8_T get_elf_symbol_address(Elf_Sym * x) {
+static U8_T get_elf_symbol_address(ElfX_Sym * x) {
     if (sCache->mFile->elf64) {
         Elf64_Sym * s = (Elf64_Sym *)x;
         switch (ELF64_ST_TYPE(s->st_info)) {
@@ -314,8 +314,8 @@ static void entry_callback(U2_T Tag, U2_T Attr, U2_T Form) {
 }
 
 static int symbol_sort_func(const void * X, const void * Y) {
-    U8_T AddrX = get_elf_symbol_address(*(Elf_Sym **)X);
-    U8_T AddrY = get_elf_symbol_address(*(Elf_Sym **)Y);
+    U8_T AddrX = get_elf_symbol_address(*(ElfX_Sym **)X);
+    U8_T AddrY = get_elf_symbol_address(*(ElfX_Sym **)Y);
     if (AddrX < AddrY) return -1;
     if (AddrX > AddrY) return +1;
     return 0;
@@ -355,7 +355,7 @@ static void load_symbol_tables(void) {
             tbl->mFile = File;
             tbl->mStrPool = (char *)str_data;
             tbl->mStrPoolSize = (size_t)str_sec->size;
-            tbl->mSymPool = (Elf_Sym *)sym_data;
+            tbl->mSymPool = (ElfX_Sym *)sym_data;
             tbl->mSymPoolSize = (size_t)sym_sec->size;
             tbl->sym_cnt = (unsigned)(sym_sec->size / sym_size);
             tbl->mHashNext = (unsigned *)loc_alloc(tbl->sym_cnt * sizeof(unsigned));
@@ -363,12 +363,12 @@ static void load_symbol_tables(void) {
                 U8_T Name = 0;
                 if (File->elf64) {
                     Elf64_Sym * s = (Elf64_Sym *)tbl->mSymPool + i;
-                    if (get_elf_symbol_address((Elf_Sym *)s) != 0) cnt++;
+                    if (get_elf_symbol_address((ElfX_Sym *)s) != 0) cnt++;
                     Name = s->st_name;
                 }
                 else {
                     Elf32_Sym * s = (Elf32_Sym *)tbl->mSymPool + i;
-                    if (get_elf_symbol_address((Elf_Sym *)s) != 0) cnt++;
+                    if (get_elf_symbol_address((ElfX_Sym *)s) != 0) cnt++;
                     Name = s->st_name;
                 }
                 assert(Name < tbl->mStrPoolSize);
@@ -391,17 +391,17 @@ static void load_symbol_tables(void) {
         unsigned i;
         for (i = 0; i < tbl->sym_cnt; i++) {
             if (File->elf64) {
-                Elf_Sym * s = (Elf_Sym *)((Elf64_Sym *)tbl->mSymPool + i);
+                ElfX_Sym * s = (ElfX_Sym *)((Elf64_Sym *)tbl->mSymPool + i);
                 if (get_elf_symbol_address(s) != 0) sCache->mSymbolHash[cnt++] = s;
             }
             else {
-                Elf_Sym * s = (Elf_Sym *)((Elf32_Sym *)tbl->mSymPool + i);
+                ElfX_Sym * s = (ElfX_Sym *)((Elf32_Sym *)tbl->mSymPool + i);
                 if (get_elf_symbol_address(s) != 0) sCache->mSymbolHash[cnt++] = s;
             }
         }
     }
     assert(sCache->mSymbolTableLen == cnt);
-    qsort(sCache->mSymbolHash, sCache->mSymbolTableLen, sizeof(Elf_Sym *), symbol_sort_func);
+    qsort(sCache->mSymbolHash, sCache->mSymbolTableLen, sizeof(ElfX_Sym *), symbol_sort_func);
 }
 
 static void load_debug_sections(void) {

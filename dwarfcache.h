@@ -56,7 +56,7 @@ struct SymbolSection {
     char * mStrPool;
     size_t mStrPoolSize;
     unsigned sym_cnt;
-    Elf_Sym * mSymPool;    /* pointer to ELF section data: array of Elf32_Sym or Elf64_Sym */
+    ElfX_Sym * mSymPool;    /* pointer to ELF section data: array of Elf32_Sym or Elf64_Sym */
     size_t mSymPoolSize;
     unsigned mSymbolHash[SYM_HASH_SIZE];
     unsigned * mHashNext;
@@ -158,7 +158,7 @@ struct DWARFCache {
     unsigned mSymSectionsLen;
     ObjectInfo ** mObjectHash;
     ObjectInfo * mObjectList;
-    Elf_Sym ** mSymbolHash;
+    ElfX_Sym ** mSymbolHash;
     unsigned mSymbolTableLen;
     DWARFCache * mLineInfoNext;
 };
