@@ -219,7 +219,7 @@ static void command_get_context(char * token, Channel * c) {
 #if defined(WIN32)
 #elif defined(_WRS_KERNEL)
         if (TASK_ID_VERIFY(pid) == ERROR) err = ERR_INV_CONTEXT;
-#elif defined(__APPLE__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 #else
         struct stat st;
         char dir[FILE_PATH_SIZE];
@@ -316,7 +316,7 @@ static void command_get_children(char * token, Channel * c) {
         }
         write_stream(&c->out, ']');
         write_stream(&c->out, 0);
-#elif defined(__APPLE__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 #else
         DIR * proc = opendir("/proc");
         if (proc == NULL) {
@@ -458,7 +458,7 @@ static void command_signal(char * token, Channel * c) {
     err = ENOSYS;
 #elif defined(_WRS_KERNEL)
     if (kill(pid, signal) < 0) err = errno;
-#elif defined(__APPLE__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
     if (kill(pid, signal) < 0) err = errno;
 #else
     if (parent == 0) {

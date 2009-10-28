@@ -22,11 +22,8 @@
 
 #include <assert.h>
 #include <errno.h>
-#if defined(_WRS_KERNEL)
-#elif defined(WIN32)
-#elif defined(__APPLE__)
-#else
-#  include <stdio.h>
+#include <stdio.h>
+#if defined(__linux__)
 #  include <linux/kdev_t.h>
 #endif
 #include "memorymap.h"
@@ -60,7 +57,14 @@ static void event_memory_map_changed(Context * ctx, void * client_data) {
     ctx->memory_map = NULL;
 }
 
-#if defined(_WRS_KERNEL) || defined(WIN32) || defined(__APPLE__)
+#if defined(_WRS_KERNEL) || defined(WIN32)
+
+static MemoryMap * get_memory_map(Context * ctx) {
+    errno = 0;
+    return NULL;
+}
+
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
 
 static MemoryMap * get_memory_map(Context * ctx) {
     errno = 0;

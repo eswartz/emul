@@ -180,7 +180,7 @@ static void * worker_thread_handler(void * x) {
 }
 
 #if ENABLE_AIO
-static void aio_done(sigval_t arg) {
+static void aio_done(union sigval arg) {
     AsyncReqInfo * req = arg.sival_ptr;
     req->u.fio.rval = aio_return(&req->u.fio.aio);
     if (req->u.fio.rval < 0) req->error = aio_error(&req->u.fio.aio);

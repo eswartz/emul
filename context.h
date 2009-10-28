@@ -46,6 +46,15 @@ typedef x86_thread_state32_t REG_SET;
 #define get_regs_PC(x) ((x).__eip)
 #define set_regs_PC(x,y) (x).__eip = (unsigned long)(y)
 
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+
+#include <machine/reg.h>
+typedef struct reg REG_SET;
+#define get_regs_SP(x) ((x).r_esp)
+#define get_regs_BP(x) ((x).r_ebp)
+#define get_regs_PC(x) ((x).r_eip)
+#define set_regs_PC(x,y) (x).r_eip = (unsigned int)(y)
+
 #else
 
 #include <sys/user.h>

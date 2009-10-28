@@ -23,6 +23,7 @@
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
+#include <sys/stat.h>
 #if ENABLE_SSL
 #  include <openssl/ssl.h>
 #  include <openssl/rand.h>
@@ -48,6 +49,10 @@
 #include "ip_ifc.h"
 #include "asyncreq.h"
 #include "inputbuf.h"
+
+#ifndef MSG_MORE
+#define MSG_MORE 0
+#endif
 
 #define BUF_SIZE 0x1000
 #define CHANNEL_MAGIC 0x87208956
@@ -858,11 +863,18 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     struct addrinfo * res = NULL;
     ServerTCP * si;
     char * host = peer_server_getprop(ps, "Host", NULL);
-    char * port = peer_server_getprop(ps, "Port", "");
+    char * port = peer_server_getprop(ps, "Port", NULL);
+    int def_port = 0;
+    char port_str[16];
 
     assert(is_dispatch_thread());
+    if (port == NULL) {
+        sprintf(port_str, "%d", DISCOVERY_TCF_PORT);
+        port = port_str;
+        def_port = 1;
+    }
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET;
+    hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_flags = AI_PASSIVE;
@@ -875,7 +887,6 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     sock = -1;
     reason = NULL;
     for (res = reslist; res != NULL; res = res->ai_next) {
-        int def_port = 0;
         sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (sock < 0) {
             error = errno;
@@ -895,28 +906,27 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
         }
 #endif
         set_socket_buffer_sizes(sock);
-        if (res->ai_addr->sa_family == AF_INET) {
-            struct sockaddr_in addr;
-            assert(sizeof(addr) >= res->ai_addrlen);
-            memset(&addr, 0, sizeof(addr));
-            memcpy(&addr, res->ai_addr, res->ai_addrlen);
-            if (addr.sin_port == 0) {
+        if (bind(sock, res->ai_addr, res->ai_addrlen)) {
+            error = errno;
+            if (def_port && res->ai_addr->sa_family == AF_INET) {
+                struct sockaddr_in addr;
+                trace(LOG_ALWAYS, "Cannot bind to default TCP port %d: %s",
+                    DISCOVERY_TCF_PORT, errno_to_str(error));
+                assert(sizeof(addr) >= res->ai_addrlen);
+                memset(&addr, 0, sizeof(addr));
+                memcpy(&addr, res->ai_addr, res->ai_addrlen);
                 addr.sin_port = htons(DISCOVERY_TCF_PORT);
-                if (!bind(sock, (struct sockaddr *)&addr, sizeof(addr))) {
-                    def_port = 1;
-                }
-                else {
-                    trace(LOG_ALWAYS, "Cannot bind to default TCP port %d: %s",
-                        DISCOVERY_TCF_PORT, errno_to_str(errno));
+                error = 0;
+                if (bind(sock, (struct sockaddr *)&addr, sizeof(addr))) {
+                    error = errno;
                 }
             }
-        }
-        if (!def_port && bind(sock, res->ai_addr, res->ai_addrlen)) {
-            error = errno;
-            reason = "bind";
-            closesocket(sock);
-            sock = -1;
-            continue;
+            if (error) {
+                reason = "bind";
+                closesocket(sock);
+                sock = -1;
+                continue;
+            }
         }
         if (listen(sock, 16)) {
             error = errno;
@@ -995,10 +1005,14 @@ void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void 
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;
     ChannelConnectInfo * info = NULL;
+    char port_str[16];
 
-    if (port == NULL) port = "1534";
+    if (port == NULL) {
+        sprintf(port_str, "%d", DISCOVERY_TCF_PORT);
+        port = port_str;
+    }
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET;
+    hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     error = loc_getaddrinfo(host, port, &hints, &reslist);

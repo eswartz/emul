@@ -118,7 +118,7 @@ struct BreakInstruction {
 
 static const char * BREAKPOINTS = "Breakpoints";
 
-#define is_running(ctx) (!(ctx)->stopped && context_has_state(ctx))
+#define is_readable(ctx) (!(ctx)->exited && !(ctx)->exiting && ((ctx)->stopped || !context_has_state(ctx)))
 
 #define ADDR2INSTR_HASH_SIZE 1023
 #define addr2instr_hash(addr) ((unsigned)((addr) + ((addr) >> 8)) % ADDR2INSTR_HASH_SIZE)
@@ -157,12 +157,12 @@ static unsigned id2bp_hash(char * id) {
 }
 
 static void select_instruction_context(BreakInstruction * bi) {
-    if (bi->ctx->exited || is_running(bi->ctx)) {
+    if (!is_readable(bi->ctx)) {
         LINK * qp = context_root.next;
         while (qp != &context_root) {
             Context * ctx = ctxl2ctxp(qp);
             qp = qp->next;
-            if (ctx->mem == bi->ctx->mem && !ctx->exited && !is_running(ctx)) {
+            if (ctx->mem == bi->ctx->mem && is_readable(ctx)) {
                 assert(bi->ctx != ctx);
                 context_unlock(bi->ctx);
                 context_lock(ctx);
@@ -225,7 +225,7 @@ static void remove_instruction(BreakInstruction * bi) {
         }
     }
 #else
-    if (!bi->ctx->exited && !is_running(bi->ctx)) {
+    if (is_readable(bi->ctx)) {
         if (context_write_mem(bi->ctx, bi->address, bi->saved_code, BREAK_SIZE) < 0) {
             bi->error = errno;
         }
@@ -471,20 +471,20 @@ static void plant_breakpoint_address_iterator(void * x, ContextAddress address) 
 
 static void plant_breakpoint_in_container(BreakpointInfo * bp, Context * ctx, ContextAddress bp_addr) {
 
-    if (ctx->exited || ctx->exiting || is_running(ctx)) {
+    if (!is_readable(ctx)) {
         /* If container main thread cannot be stopped, try to use some other thread to set the breakpoint */
         LINK * qp = ctx->children.next;
         while (qp != &ctx->children) {
             Context * c = cldl2ctxp(qp);
-            if (!c->exited && !c->exiting && !is_running(c)) {
+            if (is_readable(c)) {
                 ctx = c;
                 break;
             }
             qp = qp->next;
         }
+        if (!is_readable(ctx)) return;
     }
 
-    if (ctx->exited || ctx->exiting || is_running(ctx)) return;
 
 #if 0
     /* TODO: breakpoint condition otimization is broken */

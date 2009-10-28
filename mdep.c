@@ -829,12 +829,25 @@ void ini_mdep(void) {
     pthread_attr_setname(&pthread_create_attr, "tTcf");
 }
 
-#elif defined(__APPLE__)
+#else
+
 #include <pwd.h>
 #include <sys/utsname.h>
+#if defined(__linux__)
+#  include <asm/unistd.h>
+#endif
 
+#if defined(__i386__) || defined(__x86_64__)
 unsigned char BREAK_INST[] = { 0xcc };
+#else
+#error "Unknown CPU"
+#endif
 
+size_t get_break_size(void) {
+    return sizeof(BREAK_INST);
+}
+
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 int clock_gettime(clockid_t clock_id, struct timespec * tp) {
     struct timeval tv;
 
@@ -850,48 +863,7 @@ int clock_gettime(clockid_t clock_id, struct timespec * tp) {
     tp->tv_nsec = tv.tv_usec * 1000;
     return 0;
 }
-
-char * get_os_name(void) {
-    static char str[256];
-    struct utsname info;
-    memset(&info, 0, sizeof(info));
-    uname(&info);
-    assert(strlen(info.sysname) + strlen(info.release) < sizeof(str));
-    snprintf(str, sizeof(str), "%s %s", info.sysname, info.release);
-    return str;
-}
-
-char * get_user_home(void) {
-    static char buf[PATH_MAX];
-    if (buf[0] == 0) {
-        struct passwd * pwd = getpwuid(getuid());
-        if (pwd == NULL) return NULL;
-        strcpy(buf, pwd->pw_dir);
-    }
-    return buf;
-}
-
-void ini_mdep(void) {
-    signal(SIGPIPE, SIG_IGN);
-    pthread_attr_init(&pthread_create_attr);
-    pthread_attr_setstacksize(&pthread_create_attr, 0x8000);
-}
-
-#else
-
-#include <pwd.h>
-#include <sys/utsname.h>
-#include <asm/unistd.h>
-
-#if defined(__i386__) || defined(__x86_64__)
-unsigned char BREAK_INST[] = { 0xcc };
-#else
-#error "Unknown CPU"
 #endif
-
-size_t get_break_size(void) {
-    return sizeof(BREAK_INST);
-}
 
 char * get_os_name(void) {
     static char str[256];
@@ -914,7 +886,11 @@ char * get_user_home(void) {
 }
 
 int tkill(pid_t pid, int signal) {
+#if defined(__linux__)
     return syscall(__NR_tkill, pid, signal);
+#else
+    return kill(pid, signal);
+#endif
 }
 
 void ini_mdep(void) {

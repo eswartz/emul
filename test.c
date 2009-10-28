@@ -203,11 +203,7 @@ int run_test_process(ContextAttachCallBack * done, void * data) {
         if (context_attach_self() < 0) exit(1);
         fd = sysconf(_SC_OPEN_MAX);
         while (fd-- > 2) close(fd);
-#if defined(__APPLE__)
-        if (kill(getpid(), SIGSTOP) < 0) exit(1);
-#else
         if (tkill(getpid(), SIGSTOP) < 0) exit(1);
-#endif
         test_proc();
         exit(0);
     }

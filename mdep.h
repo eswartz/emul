@@ -324,7 +324,9 @@ extern int loc_getaddrinfo(const char * nodename, const char * servname,
        const struct addrinfo * hints, struct addrinfo ** res);
 extern const char * loc_gai_strerror(int ecode);
 
-#elif defined(__APPLE__)
+#else
+/* Linux, BSD, MacOS, UNIX */
+
 #ifndef _LARGEFILE_SOURCE
 #error "Need CC command line option: -D_LARGEFILE_SOURCE"
 #endif
@@ -341,7 +343,6 @@ extern const char * loc_gai_strerror(int ecode);
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
-#include <sys/stat.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -354,81 +355,22 @@ extern const char * loc_gai_strerror(int ecode);
 #define loc_gai_strerror gai_strerror
 
 #define O_BINARY 0
-#define O_LARGEFILE 0
-#define FILE_PATH_SIZE PATH_MAX
-#define closesocket close
-#define ifr_netmask ifr_addr
-#define canonicalize_file_name(path)    realpath(path, NULL)
 
-#ifndef SA_LEN
-# ifdef HAVE_SOCKADDR_SA_LEN
-#  define SA_LEN(addr) ((addr)->sa_len)
-# else /* HAVE_SOCKADDR_SA_LEN */
-#  ifdef HAVE_STRUCT_SOCKADDR_STORAGE
-static size_t get_sa_len(const struct sockaddr *addr) {
-    switch (addr->sa_family) {
-#   ifdef AF_UNIX
-        case AF_UNIX: return sizeof(struct sockaddr_un);
-#   endif
-#   ifdef AF_INET
-        case AF_INET: return (sizeof (struct sockaddr_in));
-#   endif
-#   ifdef AF_INET6
-        case AF_INET6: return (sizeof (struct sockaddr_in6));
-#   endif
-        default: return (sizeof (struct sockaddr));
-    }
-}
-#   define SA_LEN(addr)   (get_sa_len(addr))
-#  else /* HAVE_SOCKADDR_STORAGE */
-#   define SA_LEN(addr)   (sizeof (struct sockaddr))
-#  endif /* HAVE_SOCKADDR_STORAGE */
-# endif /* HAVE_SOCKADDR_SA_LEN */
-#endif /* SA_LEN */
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 
-extern unsigned char BREAK_INST[];  /* breakpoint instruction */
-#define BREAK_SIZE 1                /* breakpoint instruction size */
-
-#define CLOCK_REALTIME 1
+#  define O_LARGEFILE 0
+#  define canonicalize_file_name(path) realpath(path, NULL)
+#  define CLOCK_REALTIME 1
+extern char ** environ;
 typedef int clockid_t;
 extern int clock_gettime(clockid_t clock_id, struct timespec * tp);
+#  define SA_LEN(addr) ((addr)->sa_len)
 
-extern char **environ;
+#else /* not BSD */
 
-#define MSG_MORE 0
+#  define SA_LEN(addr) (sizeof(struct sockaddr))
 
-/* Mac OS X */
-#else
-/* Linux, UNIX */
-
-#ifndef _LARGEFILE_SOURCE
-#error "Need CC command line option: -D_LARGEFILE_SOURCE"
-#endif
-
-#ifndef _GNU_SOURCE
-#error "Need CC command line option: -D_GNU_SOURCE"
-#endif
-
-#include <unistd.h>
-#include <memory.h>
-#include <pthread.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <sys/time.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <limits.h>
-#include <stdint.h>
-
-#define loc_freeaddrinfo freeaddrinfo
-#define loc_getaddrinfo getaddrinfo
-#define loc_gai_strerror gai_strerror
-
-#define O_BINARY 0
+#endif /* BSD */
 
 extern int tkill(pid_t pid, int signal);
 
@@ -439,32 +381,6 @@ extern int tkill(pid_t pid, int signal);
 extern unsigned char BREAK_INST[];  /* breakpoint instruction */
 #define BREAK_SIZE get_break_size() /* breakpoint instruction size */
 extern size_t get_break_size(void);
-
-#ifndef SA_LEN
-# ifdef HAVE_SOCKADDR_SA_LEN
-#  define SA_LEN(addr) ((addr)->sa_len)
-# else /* HAVE_SOCKADDR_SA_LEN */
-#  ifdef HAVE_STRUCT_SOCKADDR_STORAGE
-static size_t get_sa_len(const struct sockaddr * addr) {
-    switch (addr->sa_family) {
-#   ifdef AF_UNIX
-        case AF_UNIX: return sizeof(struct sockaddr_un);
-#   endif
-#   ifdef AF_INET
-        case AF_INET: return (sizeof (struct sockaddr_in));
-#   endif
-#   ifdef AF_INET6
-        case AF_INET6: return (sizeof (struct sockaddr_in6));
-#   endif
-        default: return (sizeof (struct sockaddr));
-    }
-}
-#   define SA_LEN(addr)   (get_sa_len(addr))
-#  else /* HAVE_SOCKADDR_STORAGE */
-#   define SA_LEN(addr)   (sizeof (struct sockaddr))
-#  endif /* HAVE_SOCKADDR_STORAGE */
-# endif /* HAVE_SOCKADDR_SA_LEN */
-#endif /* SA_LEN */
 
 #endif
 

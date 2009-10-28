@@ -79,6 +79,17 @@ static REG_INDEX regs_index[] = {
     { "eax",    REG_OFFSET(__eax),    4},
     { "eflags", REG_OFFSET(__eflags), 4},
     { "eip",    REG_OFFSET(__eip),    4},
+#elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(__i386__)
+    { "edi",    REG_OFFSET(r_edi),    4},
+    { "esi",    REG_OFFSET(r_esi),    4},
+    { "ebp",    REG_OFFSET(r_ebp),    4},
+    { "esp",    REG_OFFSET(r_esp),    4},
+    { "ebx",    REG_OFFSET(r_ebx),    4},
+    { "edx",    REG_OFFSET(r_edx),    4},
+    { "ecx",    REG_OFFSET(r_ecx),    4},
+    { "eax",    REG_OFFSET(r_eax),    4},
+    { "eflags", REG_OFFSET(r_eflags), 4},
+    { "eip",    REG_OFFSET(r_eip),    4},
 #elif defined(__x86_64__)
     { "rax",    REG_OFFSET(rax),    8},
     { "rbx",    REG_OFFSET(rbx),    8},

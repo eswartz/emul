@@ -225,10 +225,8 @@ void add_waitpid_process(int pid) {
     req->done = waitpid_done;
     req->type = AsyncReqWaitpid;
     req->u.wpid.pid = pid;
-#if defined(__APPLE__)
-    req->u.wpid.options = 0;
-#else
-    req->u.wpid.options = __WALL;
+#if defined(__linux__)
+    req->u.wpid.options |= __WALL;
 #endif
     async_req_post(req);
 }

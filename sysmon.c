@@ -34,10 +34,14 @@
 static const char SYS_MON[] = "SysMonitor";
 
 #if defined(_WRS_KERNEL)
-#  error "SysMonitor service is not supported for VxWorks"
-#endif
 
-#if defined(__APPLE__)
+#  error "SysMonitor service is not supported for VxWorks"
+
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+
+#  error "SysMonitor service is not supported for BSD"
+
+#elif defined(__APPLE__)
 
 #include <unistd.h>
 #include <dirent.h>

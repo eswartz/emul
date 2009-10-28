@@ -217,6 +217,51 @@ static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
         *value = IP;
         return 0;
     }
+#elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(__i386__)
+    ContextAddress IP, FP;
+    if (is_top_frame(Ctx, Frame)) {
+        switch (rg) {
+        case 0:
+            *value = (ContextAddress)Ctx->regs.r_eax;
+            return 0;
+        case 1:
+            *value = (ContextAddress)Ctx->regs.r_ecx;
+            return 0;
+        case 2:
+            *value = (ContextAddress)Ctx->regs.r_edx;
+            return 0;
+        case 3:
+            *value = (ContextAddress)Ctx->regs.r_ebx;
+            return 0;
+        case 4:
+            *value = (ContextAddress)Ctx->regs.r_esp;
+            return 0;
+        case 5:
+            *value = (ContextAddress)Ctx->regs.r_ebp;
+            return 0;
+        case 6:
+            *value = (ContextAddress)Ctx->regs.r_esi;
+            return 0;
+        case 7:
+            *value = (ContextAddress)Ctx->regs.r_edi;
+            return 0;
+        case 8:
+            *value = (ContextAddress)Ctx->regs.r_eip;
+            return 0;
+        case 9:
+            *value = (ContextAddress)Ctx->regs.r_eflags;
+            return 0;
+        }
+    }
+    if (get_frame_info(Ctx, Frame, &IP, NULL, &FP) < 0) return -1;
+    switch (rg) {
+    case 5:
+        *value = FP;
+        return 0;
+    case 8:
+        *value = IP;
+        return 0;
+    }
 #else
 #error "Unknown DWARF registers mapping"
 #endif
@@ -352,6 +397,41 @@ static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
             return 0;
         case 9:
             Ctx->regs.__eflags = (ContextAddress)value;
+            return 0;
+        }
+    }
+#elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(__i386__)
+    if (is_top_frame(Ctx, Frame)) {
+        switch (rg) {
+        case 0:
+            Ctx->regs.r_eax = (ContextAddress)value;
+            return 0;
+        case 1:
+            Ctx->regs.r_ecx = (ContextAddress)value;
+            return 0;
+        case 2:
+            Ctx->regs.r_edx = (ContextAddress)value;
+            return 0;
+        case 3:
+            Ctx->regs.r_ebx = (ContextAddress)value;
+            return 0;
+        case 4:
+            Ctx->regs.r_esp = (ContextAddress)value;
+            return 0;
+        case 5:
+            Ctx->regs.r_ebp = (ContextAddress)value;
+            return 0;
+        case 6:
+            Ctx->regs.r_esi = (ContextAddress)value;
+            return 0;
+        case 7:
+            Ctx->regs.r_edi = (ContextAddress)value;
+            return 0;
+        case 8:
+            Ctx->regs.r_eip = (ContextAddress)value;
+            return 0;
+        case 9:
+            Ctx->regs.r_eflags = (ContextAddress)value;
             return 0;
         }
     }

@@ -70,7 +70,7 @@
 #define SERVICE_FileSystem      (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
 #if !defined(SERVICE_SysMonitor)
-#define SERVICE_SysMonitor      (TARGET_UNIX || TARGET_WINDOWS)
+#define SERVICE_SysMonitor      ((TARGET_UNIX || TARGET_WINDOWS) && !defined(__FreeBSD__) && !defined(__NetBSD__))
 #endif
 #if !defined(SERVICE_Expressions)
 #define SERVICE_Expressions     (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)

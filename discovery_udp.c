@@ -184,20 +184,21 @@ static int create_server_socket(void) {
 #else
     socklen_t local_addr_size = sizeof(local_addr);
 #endif
+    char port_str[16];
 
+    sprintf(port_str, "%d", DISCOVERY_TCF_PORT);
     memset(&local_addr, 0, sizeof(local_addr));
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET;
+    hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
     hints.ai_flags = AI_PASSIVE;
-    error = loc_getaddrinfo(NULL, "", &hints, &reslist);
+    error = loc_getaddrinfo(NULL, port_str, &hints, &reslist);
     if (error) {
         trace(LOG_ALWAYS, "getaddrinfo error: %s", loc_gai_strerror(error));
         return set_gai_errno(error);
     }
     for (res = reslist; res != NULL; res = res->ai_next) {
-        int def_port = 0;
         sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (sock < 0) {
             error = errno;
@@ -211,33 +212,33 @@ static int create_server_socket(void) {
             sock = -1;
             continue;
         }
-        if (res->ai_addr->sa_family == AF_INET) {
-            struct sockaddr_in addr;
-            assert(sizeof(addr) >= res->ai_addrlen);
-            memset(&addr, 0, sizeof(addr));
-            memcpy(&addr, res->ai_addr, res->ai_addrlen);
-            if (addr.sin_port == 0) {
-                addr.sin_port = htons(DISCOVERY_TCF_PORT);
-                if (!bind(sock, (struct sockaddr *)&addr, sizeof(addr))) {
-                    def_port = 1;
-                }
-                else {
-                    trace(LOG_DISCOVERY, "Cannot bind to default UDP port %d: %s",
-                        DISCOVERY_TCF_PORT, errno_to_str(errno));
-                    if (udp_server_socket >= 0 && recvreq_error_cnt < MAX_RECV_ERRORS) {
+        if (bind(sock, res->ai_addr, res->ai_addrlen)) {
+            error = errno;
+            if (res->ai_addr->sa_family == AF_INET) {
+                struct sockaddr_in addr;
+                trace(LOG_DISCOVERY, "Cannot bind to default UDP port %d: %s",
+                    DISCOVERY_TCF_PORT, errno_to_str(error));
+                assert(sizeof(addr) >= res->ai_addrlen);
+                memset(&addr, 0, sizeof(addr));
+                memcpy(&addr, res->ai_addr, res->ai_addrlen);
+                addr.sin_port = 0;
+                error = 0;
+                if (bind(sock, (struct sockaddr *)&addr, sizeof(addr))) {
+                    error = errno;
+                    if (udp_server_socket >= 0 &&
+                            recvreq_error_cnt < MAX_RECV_ERRORS) {
                         loc_freeaddrinfo(reslist);
                         closesocket(sock);
                         return 0;
                     }
                 }
             }
-        }
-        if (!def_port && bind(sock, res->ai_addr, res->ai_addrlen)) {
-            error = errno;
-            reason = "bind";
-            closesocket(sock);
-            sock = -1;
-            continue;
+            if (error) {
+                reason = "bind";
+                closesocket(sock);
+                sock = -1;
+                continue;
+            }
         }
         if (getsockname(sock, (struct sockaddr *)&local_addr, &local_addr_size)) {
             error = errno;
@@ -252,8 +253,12 @@ static int create_server_socket(void) {
     }
     if (sock < 0) {
         assert(error);
-        trace(LOG_ALWAYS, "Socket %s error: %s", reason, errno_to_str(error));
         loc_freeaddrinfo(reslist);
+        if (udp_server_socket >= 0 && recvreq_error_cnt < MAX_RECV_ERRORS) {
+            return 0;
+        }
+        trace(LOG_ALWAYS, "Discovery service socket %s error: %s",
+            reason, errno_to_str(error));
         return error;
     }
 

@@ -1523,13 +1523,6 @@ static void init(void) {
 
 #define WORD_SIZE   4
 
-typedef struct PendingEvent {
-    int event;
-    int syscall;
-    int signal;
-    struct PendingEvent * next;
-} PendingEvent;
-
 static LINK pending_list;
 
 char * context_suspend_reason(Context * ctx) {
@@ -1556,7 +1549,7 @@ int context_attach_self(void) {
 
     if (ptrace(PT_TRACE_ME, 0, 0, 0) < 0) {
         int err = errno;
-        trace(LOG_ALWAYS, "error: ptrace(PTRACE_TRACEME) failed: pid %d, error %d %s",
+        trace(LOG_ALWAYS, "error: ptrace(PT_TRACE_ME) failed: pid %d, error %d %s",
               pid, err, errno_to_str(err));
         errno = err;
         return -1;
@@ -1570,7 +1563,7 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
     assert(done != NULL);
     if (!selfattach && ptrace(PT_ATTACH, pid, 0, 0) < 0) {
         int err = errno;
-        trace(LOG_ALWAYS, "error: ptrace(PTRACE_ATTACH) failed: pid %d, error %d %s",
+        trace(LOG_ALWAYS, "error: ptrace(PT_ATTACH) failed: pid %d, error %d %s",
             pid, err, errno_to_str(err));
         errno = err;
         return -1;
@@ -1673,7 +1666,7 @@ int context_continue(Context * ctx) {
             return 0;
         }
 #endif
-        trace(LOG_ALWAYS, "error: ptrace(PTRACE_CONT, ...) failed: ctx %#lx, pid %d, error %d %s",
+        trace(LOG_ALWAYS, "error: ptrace(PT_CONTINUE, ...) failed: ctx %#lx, pid %d, error %d %s",
             ctx, ctx->pid, err, errno_to_str(err));
         errno = err;
         return -1;
@@ -1720,7 +1713,7 @@ int context_single_step(Context * ctx) {
             return 0;
         }
 #endif
-        trace(LOG_ALWAYS, "error: ptrace(PTRACE_SINGLESTEP, ...) failed: ctx %#lx, pid %d, error %d %s",
+        trace(LOG_ALWAYS, "error: ptrace(PT_STEP, ...) failed: ctx %#lx, pid %d, error %d %s",
             ctx, ctx->pid, err, errno_to_str(err));
         errno = err;
         return -1;
@@ -1747,7 +1740,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
             word = ptrace(PT_PEEKDATA, ctx->pid, word_addr, 0);
             if (errno != 0) {
                 int err = errno;
-                trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, error %d %s",
+                trace(LOG_CONTEXT, "error: ptrace(PT_PEEKDATA, ...) failed: ctx %#lx, pid %d, error %d %s",
                     ctx, ctx->pid, err, errno_to_str(err));
                 errno = err;
                 return -1;
@@ -1763,7 +1756,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
         }
         if (ptrace(PT_POKEDATA, ctx->pid, word_addr, word) < 0) {
             int err = errno;
-            trace(LOG_ALWAYS, "error: ptrace(PTRACE_POKEDATA, ...) failed: ctx %#lx, pid %d, error %d %s",
+            trace(LOG_ALWAYS, "error: ptrace(PT_POKEDATA, ...) failed: ctx %#lx, pid %d, error %d %s",
                 ctx, ctx->pid, err, errno_to_str(err));
             errno = err;
             return -1;
@@ -1787,7 +1780,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
         word = ptrace(PT_PEEKDATA, ctx->pid, word_addr, 0);
         if (errno != 0) {
             int err = errno;
-            trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, error %d %s",
+            trace(LOG_CONTEXT, "error: ptrace(PT_PEEKDATA, ...) failed: ctx %#lx, pid %d, error %d %s",
                 ctx, ctx->pid, err, errno_to_str(err));
             errno = err;
             return -1;
@@ -1984,10 +1977,24 @@ static void init(void) {
 
 #else
 
+#if defined(__linux__)
+#  include <asm/unistd.h>
+#endif
 #include <sys/ptrace.h>
-#include <asm/unistd.h>
 #include <sched.h>
 
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+#  define PTRACE_TRACEME    PT_TRACE_ME
+#  define PTRACE_ATTACH     PT_ATTACH
+#  define PTRACE_GETREGS    PT_GETREGS
+#  define PTRACE_SETREGS    PT_SETREGS
+#  define PTRACE_PEEKDATA   PT_READ_D
+#  define PTRACE_POKEDATA   PT_WRITE_D
+#  define PTRACE_CONT       PT_CONTINUE
+#  define PTRACE_SINGLESTEP PT_STEP
+#endif
+
+#if defined(__linux__) && !defined(PTRACE_SETOPTIONS)
 #define PTRACE_SETOPTIONS       0x4200
 #define PTRACE_GETEVENTMSG      0x4201
 #define PTRACE_GETSIGINFO       0x4202
@@ -2007,39 +2014,36 @@ static void init(void) {
 #define PTRACE_EVENT_EXEC       4
 #define PTRACE_EVENT_VFORK_DONE 5
 #define PTRACE_EVENT_EXIT       6
+#endif
 
 #define USE_ESRCH_WORKAROUND    1
 #define USE_PTRACE_SYSCALL      0
 
-#if USE_PTRACE_SYSCALL
-#define PTRACE_FLAGS ( \
-    PTRACE_O_TRACESYSGOOD | \
-    PTRACE_O_TRACEFORK | \
-    PTRACE_O_TRACEVFORK | \
-    PTRACE_O_TRACECLONE | \
-    PTRACE_O_TRACEEXEC | \
-    PTRACE_O_TRACEVFORKDONE | \
-    PTRACE_O_TRACEEXIT)
-#else
-#define PTRACE_FLAGS ( \
-    PTRACE_O_TRACEFORK | \
-    PTRACE_O_TRACEVFORK | \
-    PTRACE_O_TRACECLONE | \
-    PTRACE_O_TRACEEXEC | \
-    PTRACE_O_TRACEVFORKDONE | \
-    PTRACE_O_TRACEEXIT)
+#if defined(__linux__)
+#  if USE_PTRACE_SYSCALL
+#    define PTRACE_FLAGS ( \
+      PTRACE_O_TRACESYSGOOD | \
+      PTRACE_O_TRACEFORK | \
+      PTRACE_O_TRACEVFORK | \
+      PTRACE_O_TRACECLONE | \
+      PTRACE_O_TRACEEXEC | \
+      PTRACE_O_TRACEVFORKDONE | \
+      PTRACE_O_TRACEEXIT)
+#  else
+#    define PTRACE_FLAGS ( \
+      PTRACE_O_TRACEFORK | \
+      PTRACE_O_TRACEVFORK | \
+      PTRACE_O_TRACECLONE | \
+      PTRACE_O_TRACEEXEC | \
+      PTRACE_O_TRACEVFORKDONE | \
+      PTRACE_O_TRACEEXIT)
+#  endif
 #endif
-
-typedef struct PendingEvent {
-    int event;
-    int syscall;
-    int signal;
-    struct PendingEvent * next;
-} PendingEvent;
 
 static LINK pending_list;
 
 static char * event_name(int event) {
+#if defined(__linux__)
     switch (event) {
     case 0: return "none";
     case PTRACE_EVENT_FORK: return "fork";
@@ -2048,10 +2052,10 @@ static char * event_name(int event) {
     case PTRACE_EVENT_EXEC: return "exec";
     case PTRACE_EVENT_VFORK_DONE: return "vfork-done";
     case PTRACE_EVENT_EXIT: return "exit";
-    default:
-        trace(LOG_ALWAYS, "event_name() called with unexpected event code %d", event);
-        return "unknown";
     }
+#endif
+    trace(LOG_ALWAYS, "event_name(): unexpected event code %d", event);
+    return "unknown";
 }
 
 char * context_suspend_reason(Context * ctx) {
@@ -2161,7 +2165,7 @@ int context_continue(Context * ctx) {
 
     if (skip_breakpoint(ctx, 0)) return 0;
 
-    if (!ctx->syscall_enter) {
+    if (!ctx->syscall_enter && !ctx->ptrace_event) {
         while (ctx->pending_signals != 0) {
             while ((ctx->pending_signals & (1 << signal)) == 0) signal++;
             if (ctx->sig_dont_pass & (1 << signal)) {
@@ -2178,10 +2182,12 @@ int context_continue(Context * ctx) {
 
     trace(LOG_CONTEXT, "context: resuming ctx %#lx, pid %d, with signal %d", ctx, ctx->pid, signal);
 #if defined(__i386__) || defined(__x86_64__)
+#  if defined(__linux__)
     if (ctx->regs.eflags & 0x100) {
         ctx->regs.eflags &= ~0x100;
         ctx->regs_dirty = 1;
     }
+#  endif
 #endif
     if (ctx->regs_dirty) {
         if (ptrace(PTRACE_SETREGS, ctx->pid, 0, &ctx->regs) < 0) {
@@ -2201,7 +2207,11 @@ int context_continue(Context * ctx) {
         }
         ctx->regs_dirty = 0;
     }
-    if (ptrace((ctx->ptrace_flags & PTRACE_O_TRACESYSGOOD) != 0 ? PTRACE_SYSCALL : PTRACE_CONT, ctx->pid, 0, signal) < 0) {
+#if defined(__linux__) && USE_PTRACE_SYSCALL
+    if (ptrace(PTRACE_SYSCALL, ctx->pid, 0, signal) < 0) {
+#else
+    if (ptrace(PTRACE_CONT, ctx->pid, 0, signal) < 0) {
+#endif
         int err = errno;
 #if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
@@ -2289,7 +2299,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
         if (word_addr < address || word_addr + word_size > address + size) {
             int i;
             errno = 0;
-            word = ptrace(PTRACE_PEEKDATA, ctx->pid, word_addr, 0);
+            word = ptrace(PTRACE_PEEKDATA, ctx->pid, (void *)word_addr, 0);
             if (errno != 0) {
                 int err = errno;
                 trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, addr %#lx, error %d %s",
@@ -2306,7 +2316,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
         else {
             memcpy(&word, (char *)buf + (word_addr - address), word_size);
         }
-        if (ptrace(PTRACE_POKEDATA, ctx->pid, word_addr, word) < 0) {
+        if (ptrace(PTRACE_POKEDATA, ctx->pid, (void *)word_addr, word) < 0) {
             int err = errno;
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_POKEDATA, ...) failed: ctx %#lx, pid %d, addr %#lx, error %d %s",
                 ctx, ctx->pid, word_addr, err, errno_to_str(err));
@@ -2328,7 +2338,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     for (word_addr = address & ~((ContextAddress)word_size - 1); word_addr < address + size; word_addr += word_size) {
         unsigned long word = 0;
         errno = 0;
-        word = ptrace(PTRACE_PEEKDATA, ctx->pid, word_addr, 0);
+        word = ptrace(PTRACE_PEEKDATA, ctx->pid, (void *)word_addr, 0);
         if (errno != 0) {
             int err = errno;
             trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, pid %d, addr %#lx, error %d %s",
@@ -2415,7 +2425,7 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
             }
         }
         /* Note: ctx->exiting should be 1 here. However, PTRACE_EVENT_EXIT can be lost by PTRACE because of racing
-         * between PTRACE_SYSCALL and SIGTRAP/PTRACE_EVENT_EXIT. So, ctx->exiting can be 0.
+         * between PTRACE_CONT (or PTRACE_SYSCALL) and SIGTRAP/PTRACE_EVENT_EXIT. So, ctx->exiting can be 0.
          */
         ctx->exiting = 0;
         ctx->exited = 1;
@@ -2429,7 +2439,9 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
     }
 }
 
-#if defined(__x86_64__)
+#if !defined(__linux__) || !USE_PTRACE_SYSCALL
+#   define get_syscall_id(ctx) 0
+#elif defined(__x86_64__)
 #   define get_syscall_id(ctx) (ctx->regs.orig_rax)
 #elif defined(__i386__)
 #   define get_syscall_id(ctx) (ctx->regs.orig_eax)
@@ -2464,6 +2476,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
 
     assert(!ctx->exited);
     assert(!ctx->attach_callback);
+#if defined(__linux__)
     if (ctx->ptrace_flags != PTRACE_FLAGS) {
         if (ptrace(PTRACE_SETOPTIONS, ctx->pid, 0, PTRACE_FLAGS) < 0) {
             int err = errno;
@@ -2509,6 +2522,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         event_context_changed(ctx);
         break;
     }
+#endif
 
     if (signal != SIGSTOP && signal != SIGTRAP) {
         assert(signal < 32);
@@ -2518,10 +2532,12 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             stopped_by_exception = 1;
         }
     }
+#if defined(__linux__)
     if (event == PTRACE_EVENT_EXIT) {
         ctx->exiting = 1;
         ctx->regs_dirty = 0;
     }
+#endif
     if (!ctx->stopped) {
         ContextAddress pc0 = ctx->regs_error ? 0 : get_regs_PC(ctx->regs);
         assert(!ctx->regs_dirty);
@@ -2564,6 +2580,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                 trace(LOG_EVENTS, "event: pid %d exit sys call %d, PC = %#lx",
                     ctx->pid, ctx->syscall_id, get_regs_PC(ctx->regs));
                 switch (ctx->syscall_id) {
+#if defined(__linux__)
                 case __NR_mmap:
                 case __NR_munmap:
 #ifdef __NR_mmap2
@@ -2573,6 +2590,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                 case __NR_remap_file_pages:
                     event_context_changed(ctx);
                     break;
+#endif
                 }
                 ctx->syscall_enter = 0;
                 ctx->syscall_exit = 1;
