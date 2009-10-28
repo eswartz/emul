@@ -719,6 +719,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             }
             int n = peer_tree.getColumnCount();
             for (int i = 1; i < n; i++) items[0].setText(i, "");
+            items[0].setImage((Image)null);
         }
         else {
             PeerInfo[] arr = parent.children;
