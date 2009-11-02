@@ -46,6 +46,7 @@
  * which is executed during agent startup.
  */
 
+#include "discovery.h"
 #include "filesystem.h"
 #include "sysmon.h"
 #include "diagnostics.h"

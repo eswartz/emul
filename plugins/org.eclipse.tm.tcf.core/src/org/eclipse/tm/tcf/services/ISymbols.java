@@ -159,6 +159,8 @@ public interface ISymbols extends IService {
         PROP_ADDRESS = "Address",
         PROP_VALUE = "Value";
 
+    // TODO: BigEndian property
+
     /**
      * Retrieve symbol context info for given symbol ID.
      * @see Symbol

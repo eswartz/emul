@@ -1,49 +1,30 @@
-CONF=Debug
 TCF_AGENT_DIR=../../agent
-CC=gcc
-ifeq ($(CONF),Debug)
-CFLAGS=-g
-else
-CFLAGS=-O
-endif
-CFLAGS:=$(CFLAGS) -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -Wmissing-prototypes  -I. -I$(TCF_AGENT_DIR) -I-
 
-OPSYS=$(shell uname -o)
-MACHINE=$(shell uname -m)
-ifeq ($(OPSYS),Cygwin)
-LIBS=-lws2_32 -liphlpapi
-else
-ifeq ($(OPSYS),Msys)
-CFLAGS:=-mwin32 $(CFLAGS)
-LIBS=-lws2_32 -liphlpapi
-else
-LIBS=-lpthread -lrt
-endif
-endif
+include $(TCF_AGENT_DIR)/Makefile.inc
 
-BINDIR=$(OPSYS)/$(MACHINE)/$(CONF)
+CFLAGS := $(foreach dir,$(SRCDIRS),-I$(dir)) $(CFLAGS)
+HFILES := $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.h)) $(HFILES)
+CFILES := $(sort $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.c)) $(CFILES))
 
-CFILES=$(basename $(wildcard *.c)) $(basename $(notdir $(wildcard $(TCF_AGENT_DIR)/*.c)))
-OFILES=$(addprefix $(BINDIR)/,$(filter-out main%.o, $(addsuffix .o, $(CFILES))))
-HFILES=$(wildcard *.h) $(wildcard $(TCF_AGENT_DIR)/*.h) Makefile
-
-EXECS=$(BINDIR)/agent
+EXECS = $(BINDIR)/agent$(EXTEXE)
 
 all:	$(EXECS)
 
-$(BINDIR)/libtcf.a : $(OFILES)
-	ar -rc $@ $(OFILES)
+$(BINDIR)/libtcf$(EXTLIB) : $(OFILES)
+	$(AR) -rc $@ $^
+	$(RANLIB)
 
-$(BINDIR)/agent: $(BINDIR)/main.o $(BINDIR)/libtcf.a
-	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main.o $(BINDIR)/libtcf.a $(LIBS)
+$(BINDIR)/agent$(EXTEXE): $(BINDIR)/main/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
+	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
-$(BINDIR)/%.o: %.c $(HFILES) $(HFILES)
-	@mkdir -p $(BINDIR)
+$(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BINDIR)/%.o: $(TCF_AGENT_DIR)/%.c $(HFILES)
-	@mkdir -p $(BINDIR)
+$(BINDIR)/%$(EXTOBJ): $(TCF_AGENT_DIR)/%.c $(HFILES) Makefile
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -rf $(BINDIR)
+

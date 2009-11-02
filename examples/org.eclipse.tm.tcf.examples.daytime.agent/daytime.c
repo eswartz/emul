@@ -21,6 +21,7 @@
 #include "daytime.h"
 #include "json.h"
 #include "errors.h"
+#include "exceptions.h"
 
 static const char * DAYTIME = "Daytime";
 
