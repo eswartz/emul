@@ -464,10 +464,12 @@ typedef struct PlantBreakpointArgs {
     Context * ctx;
 } PlantBreakpointArgs;
 
+#if SERVICE_LineNumbers
 static void plant_breakpoint_address_iterator(void * x, ContextAddress address) {
     PlantBreakpointArgs * args = (PlantBreakpointArgs *)x;
     plant_breakpoint_at_address(args->bp, args->ctx, address);
 }
+#endif
 
 static void plant_breakpoint_in_container(BreakpointInfo * bp, Context * ctx, ContextAddress bp_addr) {
 

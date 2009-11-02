@@ -300,9 +300,10 @@ static void tcp_write_stream(OutputStream * out, int byte) {
 
 static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_t size) {
     size_t cnt = 0;
-    ChannelTCP * c = channel2tcp(out2channel(out));
 
 #if ENABLE_ZeroCopy
+    ChannelTCP * c = channel2tcp(out2channel(out));
+
     if (!c->ssl && out->supports_zero_copy && size > 32) {
         /* Send the binary data escape seq */
         size_t n = size;
@@ -915,7 +916,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
                 assert(sizeof(addr) >= res->ai_addrlen);
                 memset(&addr, 0, sizeof(addr));
                 memcpy(&addr, res->ai_addr, res->ai_addrlen);
-                addr.sin_port = htons(DISCOVERY_TCF_PORT);
+                addr.sin_port = 0;
                 error = 0;
                 if (bind(sock, (struct sockaddr *)&addr, sizeof(addr))) {
                     error = errno;

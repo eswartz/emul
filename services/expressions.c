@@ -915,6 +915,7 @@ static void op_deref(int mode, Value * v) {
 }
 
 static void op_field(int mode, Value * v) {
+#if SERVICE_Symbols
     char * name = text_val.value;
     if (text_sy != SY_ID) error(ERR_INV_EXPRESSION, "Field name expected");
     next_sy();
@@ -922,8 +923,7 @@ static void op_field(int mode, Value * v) {
     if (v->type_class != TYPE_CLASS_COMPOSITE) {
         error(ERR_INV_EXPRESSION, "Composite type expected");
     }
-#if SERVICE_Symbols
-    {
+    else {
         Symbol sym;
         size_t size = 0;
         unsigned long offs = 0;
@@ -1947,39 +1947,43 @@ static void write_context(OutputStream * out, char * id, char * parent, int fram
         json_write_long(out, expr->size);
     }
     else if (sym) {
-        Symbol type;
-        int type_class;
-        size_t size;
-
         write_stream(out, ',');
 
         json_write_string(out, "CanAssign");
         write_stream(out, ':');
         json_write_boolean(out, sym->sym_class == SYM_CLASS_REFERENCE);
 
-        if (get_symbol_type_class(sym, &type_class) == 0 && type_class != TYPE_CLASS_UNKNOWN) {
-            write_stream(out, ',');
+#if SERVICE_Symbols
+        {
+            Symbol type;
+            int type_class;
+            size_t size;
 
-            json_write_string(out, "Class");
-            write_stream(out, ':');
-            json_write_long(out, type_class);
+            if (get_symbol_type_class(sym, &type_class) == 0 && type_class != TYPE_CLASS_UNKNOWN) {
+                write_stream(out, ',');
+
+                json_write_string(out, "Class");
+                write_stream(out, ':');
+                json_write_long(out, type_class);
+            }
+
+            if (get_symbol_type(sym, &type) == 0) {
+                write_stream(out, ',');
+
+                json_write_string(out, "Type");
+                write_stream(out, ':');
+                json_write_string(out, symbol2id(&type));
+            }
+
+            if (get_symbol_size(sym, frame, &size) == 0) {
+                write_stream(out, ',');
+
+                json_write_string(out, "Size");
+                write_stream(out, ':');
+                json_write_long(out, size);
+            }
         }
-
-        if (get_symbol_type(sym, &type) == 0) {
-            write_stream(out, ',');
-
-            json_write_string(out, "Type");
-            write_stream(out, ':');
-            json_write_string(out, symbol2id(&type));
-        }
-
-        if (get_symbol_size(sym, frame, &size) == 0) {
-            write_stream(out, ',');
-
-            json_write_string(out, "Size");
-            write_stream(out, ':');
-            json_write_long(out, size);
-        }
+#endif
     }
 
     write_stream(out, '}');
@@ -2164,7 +2168,9 @@ static void command_create(char * token, Channel * c) {
             e->can_assign = value.remote;
             e->type_class = value.type_class;
             e->size = value.size;
+#if SERVICE_Symbols
             if (value.type.ctx != NULL) strncpy(e->type, symbol2id(&value.type), sizeof(e->type) - 1);
+#endif
         }
     }
 
@@ -2253,10 +2259,12 @@ static void command_evaluate(char * token, Channel * c) {
 
         if (value.type.ctx != NULL) {
             if (cnt > 0) write_stream(&c->out, ',');
+#if SERVICE_Symbols
             json_write_string(&c->out, "Type");
             write_stream(&c->out, ':');
             json_write_string(&c->out, symbol2id(&value.type));
             write_stream(&c->out, ',');
+#endif
             json_write_string(&c->out, "ExeID");
             write_stream(&c->out, ':');
             json_write_string(&c->out, container_id(value.type.ctx));

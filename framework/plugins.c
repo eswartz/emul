@@ -57,8 +57,8 @@ static int plugins_filter(const struct dirent * dirent) {
     return 1;
 }
 
-static int plugins_ralphasort(const void *a, const void *b) {
-    return -alphasort(a,b);
+static int plugins_ralphasort(const struct dirent ** a, const struct dirent ** b) {
+    return -alphasort(a, b);
 }
 
 int plugins_load(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {

@@ -26,14 +26,28 @@
 #  define TARGET_WINDOWS    1
 #  define TARGET_VXWORKS    0
 #  define TARGET_UNIX       0
+#  if defined(_MSC_VER)
+#    define TARGET_MSVC     1
+#  else
+#    define TARGET_MSVC     0
+#  endif
+#  define TARGET_BSD        0
 #elif defined(_WRS_KERNEL)
 #  define TARGET_WINDOWS    0
 #  define TARGET_VXWORKS    1
 #  define TARGET_UNIX       0
+#  define TARGET_MSVC       0
+#  define TARGET_BSD        0
 #else
 #  define TARGET_WINDOWS    0
 #  define TARGET_VXWORKS    0
 #  define TARGET_UNIX       1
+#  define TARGET_MSVC       0
+#  if defined(__FreeBSD__) || defined(__NetBSD__)
+#    define TARGET_BSD      1
+#  else
+#    define TARGET_BSD      0
+#  endif
 #endif
 
 #if !defined(SERVICE_Locator)
@@ -58,10 +72,10 @@
 #define SERVICE_StackTrace      (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
 #if !defined(SERVICE_Symbols)
-#define SERVICE_Symbols         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#define SERVICE_Symbols         (TARGET_UNIX || TARGET_VXWORKS || TARGET_MSVC)
 #endif
 #if !defined(SERVICE_LineNumbers)
-#define SERVICE_LineNumbers     (TARGET_UNIX || TARGET_WINDOWS)
+#define SERVICE_LineNumbers     (TARGET_UNIX || TARGET_MSVC)
 #endif
 #if !defined(SERVICE_Processes)
 #define SERVICE_Processes       (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
@@ -70,7 +84,7 @@
 #define SERVICE_FileSystem      (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
 #if !defined(SERVICE_SysMonitor)
-#define SERVICE_SysMonitor      ((TARGET_UNIX || TARGET_WINDOWS) && !defined(__FreeBSD__) && !defined(__NetBSD__))
+#define SERVICE_SysMonitor      ((TARGET_UNIX && !TARGET_BSD) || TARGET_WINDOWS)
 #endif
 #if !defined(SERVICE_Expressions)
 #define SERVICE_Expressions     (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
@@ -80,40 +94,71 @@
 #endif
 
 #ifndef ENABLE_Plugins
-#define ENABLE_Plugins          ((TARGET_UNIX) && defined(PATH_Plugins))
+#  if TARGET_UNIX && defined(PATH_Plugins)
+#    define ENABLE_Plugins      1
+#  else
+#    define ENABLE_Plugins      0
+#  endif
 #endif
+
 #if !defined(ENABLE_ZeroCopy)
 #define ENABLE_ZeroCopy         1
 #endif
+
 #if !defined(ENABLE_Splice)
-#define ENABLE_Splice           ((ENABLE_ZeroCopy) && defined(SPLICE_F_MOVE))
+#  if (ENABLE_ZeroCopy) && defined(SPLICE_F_MOVE)
+#    define ENABLE_Splice       1
+#  else
+#    define ENABLE_Splice       0
+#  endif
 #endif
+
 #if !defined(ENABLE_Trace)
-#define ENABLE_Trace            1
+#  define ENABLE_Trace          1
 #endif
+
 #if !defined(ENABLE_Discovery)
-#define ENABLE_Discovery        1
+#  define ENABLE_Discovery      1
 #endif
+
 #if !defined(ENABLE_Cmdline)
-#define ENABLE_Cmdline          1
+#  define ENABLE_Cmdline        1
 #endif
+
 #if !defined(ENABLE_DebugContext)
-#define ENABLE_DebugContext     (SERVICE_RunControl || SERVICE_Breakpoints || SERVICE_Memory || SERVICE_Registers || SERVICE_StackTrace)
+#  define ENABLE_DebugContext   (SERVICE_RunControl || SERVICE_Breakpoints || SERVICE_Memory || SERVICE_Registers || SERVICE_StackTrace)
 #endif
+
 #if !defined(ENABLE_ELF)
-#define ENABLE_ELF              ((TARGET_UNIX || TARGET_VXWORKS) && (SERVICE_Symbols || SERVICE_LineNumbers))
+#  define ENABLE_ELF            ((TARGET_UNIX || TARGET_VXWORKS) && (SERVICE_Symbols || SERVICE_LineNumbers))
 #endif
+
 #if !defined(ENABLE_SSL)
-#define ENABLE_SSL              ((TARGET_UNIX) && !defined(__APPLE__))
+#  if (TARGET_UNIX) && !defined(__APPLE__)
+#    define ENABLE_SSL          1
+#  else
+#    define ENABLE_SSL          0
+#  endif
 #endif
+
 #if !defined(ENABLE_RCBP_TEST)
-#define ENABLE_RCBP_TEST        (SERVICE_RunControl && SERVICE_Breakpoints)
+#  define ENABLE_RCBP_TEST      (SERVICE_RunControl && SERVICE_Breakpoints)
 #endif
+
 #if !defined(ENABLE_AIO)
-#define ENABLE_AIO              defined(_POSIX_ASYNCHRONOUS_IO)
+#  if defined(_POSIX_ASYNCHRONOUS_IO)
+#    define ENABLE_AIO          1
+#  else
+#    define ENABLE_AIO          0
+#  endif
 #endif
+
 #if !defined(ENABLE_LUA)
-#define ENABLE_LUA              defined(PATH_LUA)
+#  if defined(PATH_LUA)
+#    define ENABLE_LUA          1
+#  else
+#    define ENABLE_LUA          0
+#  endif
 #endif
 
 #ifdef CONFIG_MAIN

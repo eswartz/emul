@@ -136,7 +136,11 @@ extern int get_array_symbol(const Symbol * sym, size_t length, Symbol * ptr);
  * Check if given address is inside a PLT section, then return address of the section.
  * If not a PLT address return 0;
  */
+#if SERVICE_Symbols
 extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
+#else
+#define is_plt_section(ctx, addr) 0
+#endif
 
 /*
  * Initialize symbol service.

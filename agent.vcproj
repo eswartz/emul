@@ -16,8 +16,8 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\obj\MSVC\Release"
+			IntermediateDirectory=".\obj\MSVC\Release"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -38,21 +38,22 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/agent.tlb"
+				TypeLibraryName=".\obj\MSVC\Release/agent.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
+				AdditionalIncludeDirectories=".,framework,services,system/Windows,main"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/agent.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile=".\obj\MSVC\Release/agent.pch"
+				AssemblerListingLocation=".\obj\MSVC\Release/"
+				ObjectFile=".\obj\MSVC\Release/"
+				ProgramDataBaseFileName=".\obj\MSVC\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -70,10 +71,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib WS2_32.lib Iphlpapi.lib"
-				OutputFile=".\Release/agent.exe"
+				OutputFile=".\obj\MSVC\Release/agent.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/agent.pdb"
+				ProgramDatabaseFile=".\obj\MSVC\Release/agent.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -91,7 +92,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/agent.bsc"
+				OutputFile=".\obj\MSVC\Release/agent.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -105,8 +106,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\obj\MSVC\Debug"
+			IntermediateDirectory=".\obj\MSVC\Debug"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -127,19 +128,20 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/agent.tlb"
+				TypeLibraryName=".\obj\MSVC\Debug/agent.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories=".,framework,services,system/Windows,main"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/agent.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile=".\obj\MSVC\Debug/agent.pch"
+				AssemblerListingLocation=".\obj\MSVC\Debug/"
+				ObjectFile=".\obj\MSVC\Debug/"
+				ProgramDataBaseFileName=".\obj\MSVC\Debug/"
 				WarningLevel="4"
 				SuppressStartupBanner="true"
 				Detect64BitPortabilityProblems="false"
@@ -159,11 +161,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib WS2_32.lib Iphlpapi.lib"
-				OutputFile=".\Debug/agent.exe"
+				OutputFile=".\obj\MSVC\Debug/agent.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/agent.pdb"
+				ProgramDatabaseFile=".\obj\MSVC\Debug/agent.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -181,7 +183,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/agent.bsc"
+				OutputFile=".\obj\MSVC\Debug/agent.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -198,587 +200,203 @@
 	</References>
 	<Files>
 		<File
-			RelativePath="asyncreq.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="asyncreq.h"
+			RelativePath=".\framework\asyncreq.c"
 			>
 		</File>
 		<File
-			RelativePath="base64.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="base64.h"
+			RelativePath=".\framework\asyncreq.h"
 			>
 		</File>
 		<File
-			RelativePath="breakpoints.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="breakpoints.h"
+			RelativePath=".\framework\base64.c"
 			>
 		</File>
 		<File
-			RelativePath="channel.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="channel.h"
+			RelativePath=".\framework\base64.h"
 			>
 		</File>
 		<File
-			RelativePath="channel_tcp.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="channel_tcp.h"
+			RelativePath=".\services\breakpoints.c"
 			>
 		</File>
 		<File
-			RelativePath="cmdline.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="cmdline.h"
+			RelativePath=".\services\breakpoints.h"
 			>
 		</File>
 		<File
-			RelativePath="config.h"
+			RelativePath=".\framework\channel.c"
 			>
 		</File>
 		<File
-			RelativePath="context.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="context.h"
+			RelativePath=".\framework\channel.h"
 			>
 		</File>
 		<File
-			RelativePath="diagnostics.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="diagnostics.h"
+			RelativePath=".\framework\channel_tcp.c"
 			>
 		</File>
 		<File
-			RelativePath="discovery.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath=".\discovery.h"
+			RelativePath=".\framework\channel_tcp.h"
 			>
 		</File>
 		<File
-			RelativePath="discovery_udp.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="discovery_udp.h"
+			RelativePath=".\main\cmdline.c"
 			>
 		</File>
 		<File
-			RelativePath="dwarf.h"
+			RelativePath=".\main\cmdline.h"
 			>
 		</File>
 		<File
-			RelativePath="dwarfcache.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="dwarfcache.h"
+			RelativePath=".\config.h"
 			>
 		</File>
 		<File
-			RelativePath="dwarfexpr.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="dwarfexpr.h"
+			RelativePath=".\framework\context.c"
 			>
 		</File>
 		<File
-			RelativePath="dwarfio.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="dwarfio.h"
+			RelativePath=".\framework\context.h"
 			>
 		</File>
 		<File
-			RelativePath="errors.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="errors.h"
+			RelativePath=".\services\diagnostics.c"
 			>
 		</File>
 		<File
-			RelativePath="events.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="events.h"
+			RelativePath=".\services\diagnostics.h"
 			>
 		</File>
 		<File
-			RelativePath="exceptions.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="exceptions.h"
+			RelativePath=".\services\discovery.c"
 			>
 		</File>
 		<File
-			RelativePath="expressions.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="expressions.h"
+			RelativePath=".\services\discovery.h"
 			>
 		</File>
 		<File
-			RelativePath="filesystem.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="filesystem.h"
+			RelativePath=".\services\discovery_udp.c"
 			>
 		</File>
 		<File
-			RelativePath="inputbuf.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="inputbuf.h"
+			RelativePath=".\services\discovery_udp.h"
 			>
 		</File>
 		<File
-			RelativePath="ip_ifc.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="ip_ifc.h"
+			RelativePath=".\services\dwarf.h"
 			>
 		</File>
 		<File
-			RelativePath="json.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="json.h"
+			RelativePath=".\services\dwarfcache.c"
 			>
 		</File>
 		<File
-			RelativePath="linenumbers.h"
+			RelativePath=".\services\dwarfcache.h"
 			>
 		</File>
 		<File
-			RelativePath="linenumbers_elf.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="linenumbers_win32.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="link.h"
+			RelativePath=".\services\dwarfexpr.c"
 			>
 		</File>
 		<File
-			RelativePath="main.c"
+			RelativePath=".\services\dwarfexpr.h"
 			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
 		</File>
 		<File
-			RelativePath=".\main_client.c"
+			RelativePath=".\services\dwarfio.c"
+			>
+		</File>
+		<File
+			RelativePath=".\services\dwarfio.h"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\errors.c"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\errors.h"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\events.c"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\events.h"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\exceptions.c"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\exceptions.h"
+			>
+		</File>
+		<File
+			RelativePath=".\services\expressions.c"
+			>
+		</File>
+		<File
+			RelativePath=".\services\expressions.h"
+			>
+		</File>
+		<File
+			RelativePath=".\services\filesystem.c"
+			>
+		</File>
+		<File
+			RelativePath=".\services\filesystem.h"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\inputbuf.c"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\inputbuf.h"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\ip_ifc.c"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\ip_ifc.h"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\json.c"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\json.h"
+			>
+		</File>
+		<File
+			RelativePath=".\services\linenumbers.h"
+			>
+		</File>
+		<File
+			RelativePath=".\services\linenumbers_elf.c"
+			>
+		</File>
+		<File
+			RelativePath=".\services\linenumbers_win32.c"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\link.h"
+			>
+		</File>
+		<File
+			RelativePath=".\main\main.c"
+			>
+		</File>
+		<File
+			RelativePath=".\main\main_client.c"
 			>
 			<FileConfiguration
 				Name="Release|Win32"
@@ -798,7 +416,7 @@
 			</FileConfiguration>
 		</File>
 		<File
-			RelativePath=".\main_log.c"
+			RelativePath=".\main\main_log.c"
 			>
 			<FileConfiguration
 				Name="Release|Win32"
@@ -818,7 +436,7 @@
 			</FileConfiguration>
 		</File>
 		<File
-			RelativePath=".\main_reg.c"
+			RelativePath=".\main\main_lua.c"
 			>
 			<FileConfiguration
 				Name="Release|Win32"
@@ -838,7 +456,7 @@
 			</FileConfiguration>
 		</File>
 		<File
-			RelativePath=".\main_va.c"
+			RelativePath=".\main\main_reg.c"
 			>
 			<FileConfiguration
 				Name="Release|Win32"
@@ -858,459 +476,203 @@
 			</FileConfiguration>
 		</File>
 		<File
-			RelativePath="mdep.c"
+			RelativePath=".\main\main_va.c"
 			>
 			<FileConfiguration
 				Name="Release|Win32"
+				ExcludedFromBuild="true"
 				>
 				<Tool
 					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
 				/>
 			</FileConfiguration>
 			<FileConfiguration
 				Name="Debug|Win32"
+				ExcludedFromBuild="true"
 				>
 				<Tool
 					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
 				/>
 			</FileConfiguration>
 		</File>
 		<File
-			RelativePath="mdep.h"
+			RelativePath=".\framework\mdep.c"
 			>
 		</File>
 		<File
-			RelativePath=".\memorymap.c"
+			RelativePath=".\framework\mdep.h"
 			>
 		</File>
 		<File
-			RelativePath=".\memorymap.h"
+			RelativePath=".\services\memorymap.c"
 			>
 		</File>
 		<File
-			RelativePath="memoryservice.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="memoryservice.h"
+			RelativePath=".\services\memorymap.h"
 			>
 		</File>
 		<File
-			RelativePath="myalloc.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="myalloc.h"
+			RelativePath=".\services\memoryservice.c"
 			>
 		</File>
 		<File
-			RelativePath="peer.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="peer.h"
+			RelativePath=".\services\memoryservice.h"
 			>
 		</File>
 		<File
-			RelativePath=".\plugins.c"
+			RelativePath=".\framework\myalloc.c"
 			>
 		</File>
 		<File
-			RelativePath=".\plugins.h"
+			RelativePath=".\framework\myalloc.h"
 			>
 		</File>
 		<File
-			RelativePath="processes.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="processes.h"
+			RelativePath=".\framework\peer.c"
 			>
 		</File>
 		<File
-			RelativePath="protocol.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="protocol.h"
+			RelativePath=".\framework\peer.h"
 			>
 		</File>
 		<File
-			RelativePath="proxy.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="proxy.h"
+			RelativePath=".\framework\plugins.c"
 			>
 		</File>
 		<File
-			RelativePath="registers.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="registers.h"
+			RelativePath=".\framework\plugins.h"
 			>
 		</File>
 		<File
-			RelativePath="runctrl.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="runctrl.h"
+			RelativePath=".\services\processes.c"
 			>
 		</File>
 		<File
-			RelativePath="stacktrace.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="stacktrace.h"
+			RelativePath=".\services\processes.h"
 			>
 		</File>
 		<File
-			RelativePath="streams.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="streams.h"
+			RelativePath=".\framework\protocol.c"
 			>
 		</File>
 		<File
-			RelativePath=".\streamsservice.c"
+			RelativePath=".\framework\protocol.h"
 			>
 		</File>
 		<File
-			RelativePath=".\streamsservice.h"
+			RelativePath=".\framework\proxy.c"
 			>
 		</File>
 		<File
-			RelativePath=".\symbols.c"
+			RelativePath=".\framework\proxy.h"
 			>
 		</File>
 		<File
-			RelativePath="symbols.h"
+			RelativePath=".\services\registers.c"
 			>
 		</File>
 		<File
-			RelativePath="symbols_elf.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="symbols_win32.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="sysmon.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="sysmon.h"
+			RelativePath=".\services\registers.h"
 			>
 		</File>
 		<File
-			RelativePath="tcf.h"
+			RelativePath=".\services\runctrl.c"
 			>
 		</File>
 		<File
-			RelativePath=".\tcf_elf.c"
+			RelativePath=".\services\runctrl.h"
 			>
 		</File>
 		<File
-			RelativePath=".\tcf_elf.h"
+			RelativePath=".\services\stacktrace.c"
 			>
 		</File>
 		<File
-			RelativePath="test.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="test.h"
+			RelativePath=".\services\stacktrace.h"
 			>
 		</File>
 		<File
-			RelativePath="TODO.txt"
+			RelativePath=".\framework\streams.c"
 			>
 		</File>
 		<File
-			RelativePath="trace.c"
-			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="trace.h"
+			RelativePath=".\framework\streams.h"
 			>
 		</File>
 		<File
-			RelativePath=".\waitpid.c"
+			RelativePath=".\services\streamsservice.c"
 			>
 		</File>
 		<File
-			RelativePath=".\waitpid.h"
+			RelativePath=".\services\streamsservice.h"
 			>
 		</File>
 		<File
-			RelativePath="windbgcache.c"
+			RelativePath=".\services\symbols.c"
 			>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					PreprocessorDefinitions=""
-				/>
-			</FileConfiguration>
 		</File>
 		<File
-			RelativePath="windbgcache.h"
+			RelativePath=".\services\symbols.h"
+			>
+		</File>
+		<File
+			RelativePath=".\services\symbols_elf.c"
+			>
+		</File>
+		<File
+			RelativePath=".\services\symbols_win32.c"
+			>
+		</File>
+		<File
+			RelativePath=".\services\sysmon.c"
+			>
+		</File>
+		<File
+			RelativePath=".\services\sysmon.h"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\tcf.h"
+			>
+		</File>
+		<File
+			RelativePath=".\services\tcf_elf.c"
+			>
+		</File>
+		<File
+			RelativePath=".\services\tcf_elf.h"
+			>
+		</File>
+		<File
+			RelativePath=".\main\test.c"
+			>
+		</File>
+		<File
+			RelativePath=".\main\test.h"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\trace.c"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\trace.h"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\waitpid.c"
+			>
+		</File>
+		<File
+			RelativePath=".\framework\waitpid.h"
+			>
+		</File>
+		<File
+			RelativePath=".\system\Windows\windbgcache.c"
+			>
+		</File>
+		<File
+			RelativePath=".\system\Windows\windbgcache.h"
 			>
 		</File>
 	</Files>

@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#if SERVICE_LineNumbers && defined(WIN32)
+#if SERVICE_LineNumbers && defined(_MSC_VER)
 
 #include <errno.h>
 #include <assert.h>
@@ -207,5 +207,5 @@ void ini_line_numbers_service(Protocol * proto) {
     add_command_handler(proto, LINENUMBERS, "mapToSource", command_map_to_source);
 }
 
-#endif /* SERVICE_LineNumbers && defined(WIN32) */
+#endif /* SERVICE_LineNumbers && defined(_MSC_VER) */
 

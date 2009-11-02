@@ -1,14 +1,5 @@
           o   Shouldn't we separate command parsing from a service implementation?
 
-          o   we should use a typedef for addresses
-
--        breakpoints.[ch]
-
-          o   We don’t have any way to specify context specific breakpoints yet, right?  I think breakpoint
-              should always be associated with a context and since contexts can be execution contexts or containers
-              on different levels it is possible to describe thread specific breakpoints, process specific breakpoints,
-              system global breakpoint and any levels in-between.
-
 -        context.c
 
           o   event_pid_stopped() using the PTRACE_EVENT_CLONE to determine if the new context is a thread is not correct.  The only
@@ -19,8 +10,6 @@
           o   command_resume() and command_step_into() share so much code that they could be unified.
 
           o   Sometimes you flush “broadcast_stream.flush(&broadcast_stream);”.  What is the logic/rules?
-
-          o   After prototype stage, the safe event mechanism needs to have finer granularity so it does not stop more than the process.
 
           o   VxWorks: Need Component Description File for the agent: C:\WindRiver-2.6\vxworks-6.5\target\config\comps\vxWorks
 
@@ -42,20 +31,10 @@
           o   Similar problem if context_write_mem() results in error then we clear the planted flag even though we haven’t
                really unplanted it.
 
--        breakpoints.c, line 231: if (bi->ctx->exited || !bi->ctx->stopped) {
-
-          o   What is the inside this used for?
-
 -        streams.h:
 
           o   It would be good if the InputStream and OutputStream was designed so characters could be read/written without
                causing a function call in the normal case.  Something similar to stdio getc/putc.
-
--        registers.c:
-
-          o   Get/set commands does not handle reading multiple registers.  Should it?
-
-          o   Why are register values returned as strings?
 
 -        runctrl.c, line 326
 

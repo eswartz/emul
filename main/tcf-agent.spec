@@ -1,6 +1,6 @@
 %define name tcf-agent
 %define version 0.0.1
-%define release 1.%(./get-os-tag)
+%define release 1.%(bin/get-os-tag)
 
 Name: %{name}
 Summary: Target Communication Framework agent

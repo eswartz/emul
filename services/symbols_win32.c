@@ -18,7 +18,7 @@
 
 #include "config.h"
 
-#if SERVICE_Symbols && defined(WIN32)
+#if SERVICE_Symbols && defined(_MSC_VER)
 
 #include <errno.h>
 #include <assert.h>
@@ -968,5 +968,5 @@ void ini_symbols_lib(void) {
 }
 
 
-#endif /* SERVICE_Symbols && defined(WIN32) */
+#endif /* SERVICE_Symbols && defined(_MSC_VER) */
 
