@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -69,9 +69,6 @@ typedef int ssize_t;
 #define FILE_PATH_SIZE MAX_PATH
 
 typedef int socklen_t;
-
-extern unsigned char BREAK_INST[];  /* breakpoint instruction */
-#define BREAK_SIZE 1                /* breakpoint instruction size */
 
 #if defined(__CYGWIN__)
 
@@ -291,9 +288,6 @@ extern char * canonicalize_file_name(const char * path);
 
 #define environ taskIdCurrent->ppEnviron
 
-#define get_regs_PC(x) (*(int *)((int)&(x) + PC_OFFSET))
-#define set_regs_PC(x,y) *(int *)((int)&(x) + PC_OFFSET) = (int)(y)
-
 #define closesocket close
 
 typedef unsigned long uintptr_t;
@@ -377,10 +371,6 @@ extern int tkill(pid_t pid, int signal);
 #define FILE_PATH_SIZE PATH_MAX
 
 #define closesocket close
-
-extern unsigned char BREAK_INST[];  /* breakpoint instruction */
-#define BREAK_SIZE get_break_size() /* breakpoint instruction size */
-extern size_t get_break_size(void);
 
 #endif
 

@@ -34,29 +34,20 @@
 #include "stacktrace.h"
 #include "breakpoints.h"
 #include "symbols.h"
+#include "dwarfframe.h"
+
+#define MAX_FRAMES  1000
 
 static const char * STACKTRACE = "StackTrace";
-
-struct StackFrame {
-    ContextAddress fp;  /* frame address */
-    ContextAddress ip;  /* istruction pointer */
-    ContextAddress rp;  /* return address */
-    ContextAddress fn;  /* address of function */
-    int arg_cnt;        /* number of function arguments */
-    ContextAddress args;/* address of function arguments */
-};
 
 struct StackTrace {
     int error;
     int frame_cnt;
     int frame_max;
-    struct StackFrame frames[1];
+    struct StackFrame frames[1]; /* ordered bottom to top */
 };
 
-typedef struct StackFrame StackFrame;
 typedef struct StackTrace StackTrace;
-
-static Context dump_stack_ctx;
 
 static void add_frame(Context * ctx, StackFrame * frame) {
     StackTrace * stack_trace = (StackTrace *)ctx->stack_trace;
@@ -74,6 +65,8 @@ static void add_frame(Context * ctx, StackFrame * frame) {
 #include <trcLib.h>
 
 static Context * client_ctx;
+static int frame_cnt;
+static ContextAddress frame_rp;
 
 static void vxworks_stack_trace_callback(
     void *     callAdrs,       /* address from which function was called */
@@ -86,212 +79,90 @@ static void vxworks_stack_trace_callback(
 {
     StackFrame f;
     memset(&f, 0, sizeof(f));
-    f.rp = (ContextAddress)callAdrs;
-    f.fn = (ContextAddress)funcAdrs;
-    f.arg_cnt = nargs;
-    f.args = (ContextAddress)args;
+    if (frame_cnt == 0) {
+        f.is_top_frame = 1;
+        f.regs = client_ctx->regs;
+        memset(&f.mask, 0xff, sizeof(f.mask));
+    }
+    else {
+        write_reg_value(get_PC_definition(), &f, frame_rp);
+    }
+    f.fp = (ContextAddress)args;
+    frame_rp = (ContextAddress)callAdrs;
     add_frame(client_ctx, &f);
+    frame_cnt++;
+}
+
+static int trace_stack(Context * ctx) {
+    client_ctx = ctx;
+    frame_cnt = 0;
+    trcStack(&ctx->regs, (FUNCPTR)vxworks_stack_trace_callback, ctx->pid);
+    if (frame_cnt == 0) vxworks_stack_trace_callback(NULL, 0, 0, NULL, ctx->pid, 1);
+    return 0;
+}
+
+#else
+
+static int walk_frames(Context * ctx) {
+    unsigned cnt = 0;
+    StackFrame frame;
+    StackFrame down;
+
+    memset(&frame, 0, sizeof(frame));
+    frame.is_top_frame = 1;
+    frame.regs = ctx->regs;
+    memset(&frame.mask, 0xff, sizeof(frame.mask));
+    while (cnt < MAX_FRAMES) {
+        memset(&down, 0, sizeof(down));
+#if ENABLE_ELF
+        {
+            int error = 0;
+            int found = 0;
+            ContextAddress ip = get_regs_PC(frame.regs);
+            ELF_File * file = elf_list_first(ctx, ip, ip + 1);
+            while (error == 0 && file != NULL) {
+                Trap trap;
+                if (set_trap(&trap)) {
+                    get_dwarf_stack_frame_info(ctx, file, &frame, &down);
+                    if (frame.fp != 0) found = 1;
+                    clear_trap(&trap);
+                }
+                else {
+                    error = trap.error;
+                }
+                if (error || found) break;
+                file = elf_list_next(ctx);
+                if (file == NULL) error = errno;
+            }
+            elf_list_done(ctx);
+            if (error) {
+                errno = error;
+                return -1;
+            }
+        }
+#endif
+        if (frame.fp == 0 && crawl_stack_frame(ctx, &frame, &down) < 0) return -1;
+        if (cnt > 0 && frame.fp == 0) break;
+        add_frame(ctx, &frame);
+        cnt++;
+        frame = down;
+    }
+
+    return 0;
 }
 
 static int trace_stack(Context * ctx) {
     int i;
     StackTrace * s;
-    client_ctx = ctx;
-    trcStack(&ctx->regs, (FUNCPTR)vxworks_stack_trace_callback, ctx->pid);
+    if (walk_frames(ctx) < 0) return -1;
     s = (StackTrace *)ctx->stack_trace;
-    if (s->frame_cnt == 0) {
-        vxworks_stack_trace_callback(NULL, 0, 0, NULL, ctx->pid, 1);
-    }
-    /* VxWorks stack trace is in reverse order - from bottom to top */
     for (i = 0; i < s->frame_cnt / 2; i++) {
         StackFrame f = s->frames[i];
         s->frames[i] = s->frames[s->frame_cnt - i - 1];
         s->frames[s->frame_cnt - i - 1] = f;
     }
-    for (i = 0; i < s->frame_cnt; i++) {
-        s->frames[i].ip = i == 0 ? get_regs_PC(ctx->regs) : s->frames[i - 1].rp;
-    }
     return 0;
 }
-
-#else
-
-static int read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
-    if (ctx == &dump_stack_ctx) {
-        /* Tracing current thread stack */
-        memmove(buf, (void *)address, size);
-    }
-    else {
-        if (context_read_mem(ctx, address, buf, size) < 0) return -1;
-        check_breakpoints_on_memory_read(ctx, address, buf, size);
-    }
-    return 0;
-}
-
-#if defined(__i386__) || defined(__x86_64__)
-
-#define MAX_FRAMES  1000
-
-#define JMPD08      0xeb
-#define JMPD32      0xe9
-#define GRP5        0xff
-#define JMPN        0x25
-#define PUSH_EBP    0x55
-#define MOV_ESP00   0x89
-#define MOV_ESP01   0xe5
-#define MOV_ESP10   0x8b
-#define MOV_ESP11   0xec
-#define ENTER       0xc8
-#define RET         0xc3
-#define RETADD      0xc2
-#define REXW        0x48
-
-/*
- * trace_jump - resolve any JMP instructions to final destination
- *
- * This routine returns a pointer to the next non-JMP instruction to be
- * executed if the pc were at the specified <adrs>.  That is, if the instruction
- * at <adrs> is not a JMP, then <adrs> is returned.  Otherwise, if the
- * instruction at <adrs> is a JMP, then the destination of the JMP is
- * computed, which then becomes the new <adrs> which is tested as before.
- * Thus we will eventually return the address of the first non-JMP instruction
- * to be executed.
- *
- * The need for this arises because compilers may put JMPs to instructions
- * that we are interested in, instead of the instruction itself.  For example,
- * optimizers may replace a stack pop with a JMP to a stack pop.  Or in very
- * UNoptimized code, the first instruction of a subroutine may be a JMP to
- * a PUSH %EBP MOV %ESP %EBP, instead of a PUSH %EBP MOV %ESP %EBP (compiler
- * may omit routine "post-amble" at end of parsing the routine!).  We call
- * this routine anytime we are looking for a specific kind of instruction,
- * to help handle such cases.
- *
- * RETURNS: The address that a chain of branches points to.
- */
-static ContextAddress trace_jump(Context * ctx, ContextAddress addr) {
-    int cnt = 0;
-    /* while instruction is a JMP, get destination adrs */
-    while (cnt < 100) {
-        unsigned char instr;    /* instruction opcode at <addr> */
-        ContextAddress dest;    /* Jump destination address */
-        if (read_mem(ctx, addr, &instr, 1) < 0) break;
-
-        /* If instruction is a JMP, get destination adrs */
-        if (instr == JMPD08) {
-            signed char disp08;
-            if (read_mem(ctx, addr + 1, &disp08, 1) < 0) break;
-            dest = addr + 2 + disp08;
-        }
-        else if (instr == JMPD32) {
-            int disp32;
-            assert(sizeof(disp32) == 4);
-            if (read_mem(ctx, addr + 1, &disp32, 4) < 0) break;
-            dest = addr + 5 + disp32;
-        }
-        else if (instr == GRP5) {
-            ContextAddress ptr;
-            if (read_mem(ctx, addr + 1, &instr, 1) < 0) break;
-            if (instr != JMPN) break;
-            if (read_mem(ctx, addr + 2, &ptr, sizeof(ptr)) < 0) break;
-            if (read_mem(ctx, ptr, &dest, sizeof(dest)) < 0) break;
-        }
-        else {
-            break;
-        }
-        if (dest == addr) break;
-        addr = dest;
-        cnt++;
-    }
-    return addr;
-}
-
-static int func_entry(unsigned char * code) {
-    if (*code != PUSH_EBP) return 0;
-    code++;
-    if (*code == REXW) code++;
-    if (code[0] == MOV_ESP00 && code[1] == MOV_ESP01) return 1;
-    if (code[0] == MOV_ESP10 && code[1] == MOV_ESP11) return 1;
-    return 0;
-}
-
-static int trace_stack(Context * ctx) {
-    ContextAddress pc = get_regs_PC(ctx->regs);
-    ContextAddress fp = get_regs_BP(ctx->regs);
-    ContextAddress fp_prev = 0;
-
-    ContextAddress addr = trace_jump(ctx, pc);
-    ContextAddress plt = is_plt_section(ctx, addr);
-    unsigned char code[5];
-    unsigned cnt = 0;
-
-    /*
-     * we don't have a stack frame in a few restricted but useful cases:
-     *  1) we are at a PUSH %EBP MOV %ESP %EBP or RET or ENTER instruction,
-     *  2) we are the first instruction of a subroutine (this may NOT be
-     *     a PUSH %EBP MOV %ESP %EBP instruction with some compilers)
-     *  3) we are inside PLT entry
-     */
-
-    if (plt) {
-        fp_prev = fp;
-        if (addr - plt == 0) {
-            fp = get_regs_SP(ctx->regs);
-        }
-        else if (addr - plt < sizeof(ContextAddress) * 4) {
-            fp = get_regs_SP(ctx->regs) + sizeof(ContextAddress);
-        }
-        else if ((addr - plt) % (sizeof(ContextAddress) * 4) < sizeof(ContextAddress) * 2) {
-            fp = get_regs_SP(ctx->regs) - sizeof(ContextAddress);
-        }
-        else {
-            fp = get_regs_SP(ctx->regs);
-        }
-    }
-    else {
-        if (read_mem(ctx, addr - 1, code, sizeof(code)) < 0) return -1;
-
-        if (func_entry(code + 1) || code[1] == ENTER || code[1] == RET || code[1] == RETADD) {
-            fp_prev = fp;
-            fp = get_regs_SP(ctx->regs) - sizeof(ContextAddress);
-        }
-        else if (func_entry(code)) {
-            fp_prev = fp;
-            fp = get_regs_SP(ctx->regs);
-        }
-    }
-
-    while (cnt < MAX_FRAMES) {
-        ContextAddress frame[2];
-        ContextAddress fp_next;
-        StackFrame f;
-        memset(&f, 0, sizeof(f));
-        f.ip = pc;
-        if (fp == 0) {
-            add_frame(ctx, &f);
-            break;
-        }
-        if (read_mem(ctx, fp, frame, sizeof(frame)) < 0) {
-            memset(frame, 0, sizeof(frame));
-        }
-        f.fp = fp;
-        f.rp = frame[1];
-        add_frame(ctx, &f);
-        cnt++;
-        fp_next = fp_prev != 0 ? fp_prev : frame[0];
-        fp_prev = 0;
-        if (fp_next <= fp) break;
-        fp = fp_next;
-        pc = f.rp;
-    }
-
-    return 0;
-}
-
-#else
-
-#error "Unknown CPU"
-
-#endif
 
 #endif
 
@@ -308,6 +179,7 @@ static StackTrace * create_stack_trace(Context * ctx) {
     else if (trace_stack(ctx) < 0) {
         stack_trace = (StackTrace *)ctx->stack_trace;
         stack_trace->error = errno;
+        /* TODO: need to save error message text in stack_trace */
     }
     else {
         stack_trace = (StackTrace *)ctx->stack_trace;
@@ -348,31 +220,10 @@ static int id2frame(char * id, Context ** ctx, int * frame) {
     return 0;
 }
 
-static int id2frame_index(char * id, Context ** ctx, int * idx) {
-    int frame = 0;
-    StackTrace * s = NULL;
+static void write_context(OutputStream * out, char * id, Context * ctx, int level, StackFrame * frame, StackFrame * down) {
+    uint64_t v;
+    RegisterDefinition * reg_def = get_PC_definition();
 
-    if (id2frame(id, ctx, &frame) < 0) return -1;
-
-    if (!(*ctx)->stopped) {
-        errno = ERR_IS_RUNNING;
-        return -1;
-    }
-    s = create_stack_trace(*ctx);
-    if (s->error != 0) {
-        errno = s->error;
-        return -1;
-    }
-    if (frame < 0 || frame >= s->frame_cnt) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-
-    *idx = s->frame_cnt - frame - 1;
-    return 0;
-}
-
-static void write_context(OutputStream * out, char * id, Context * ctx, int level, StackFrame * frame) {
     write_stream(out, '{');
 
     json_write_string(out, "ID");
@@ -398,32 +249,18 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int leve
         json_write_ulong(out, frame->fp);
     }
 
-    if (frame->rp) {
-        write_stream(out, ',');
-        json_write_string(out, "RP");
-        write_stream(out, ':');
-        json_write_ulong(out, frame->rp);
-    }
-
-    if (frame->ip) {
+    if (read_reg_value(reg_def, frame, &v) == 0) {
         write_stream(out, ',');
         json_write_string(out, "IP");
         write_stream(out, ':');
-        json_write_ulong(out, frame->ip);
+        json_write_ulong(out, (ContextAddress)v);
     }
 
-    if (frame->arg_cnt) {
+    if (down != NULL && read_reg_value(reg_def, down, &v) == 0) {
         write_stream(out, ',');
-        json_write_string(out, "ArgsCnt");
+        json_write_string(out, "RP");
         write_stream(out, ':');
-        json_write_ulong(out, frame->arg_cnt);
-    }
-
-    if (frame->args) {
-        write_stream(out, ',');
-        json_write_string(out, "ArgsAddr");
-        write_stream(out, ':');
-        json_write_ulong(out, frame->args);
+        json_write_ulong(out, (ContextAddress)v);
     }
 
     write_stream(out, '}');
@@ -445,9 +282,9 @@ static void command_get_context(char * token, Channel * c) {
     for (i = 0; i < id_cnt; i++) {
         StackTrace * s = NULL;
         Context * ctx = NULL;
-        int idx = 0;
+        int frame = 0;
         if (i > 0) write_stream(&c->out, ',');
-        if (id2frame_index(ids[i], &ctx, &idx) < 0) {
+        if (id2frame(ids[i], &ctx, &frame) < 0) {
             err = errno;
         }
         else if (!ctx->intercepted) {
@@ -456,12 +293,13 @@ static void command_get_context(char * token, Channel * c) {
         else {
             s = create_stack_trace(ctx);
         }
-        if (s == NULL || idx < 0 || idx >= s->frame_cnt) {
+        if (s == NULL || frame < 0 || frame >= s->frame_cnt) {
             write_string(&c->out, "null");
         }
         else {
-            int level = s->frame_cnt - idx - 1;
-            write_context(&c->out, ids[i], ctx, level, s->frames + idx);
+            StackFrame * f = s->frames + frame;
+            StackFrame * d = frame > 0 ? f - 1 : NULL;
+            write_context(&c->out, ids[i], ctx, frame, f, d);
         }
     }
     write_stream(&c->out, ']');
@@ -526,32 +364,6 @@ static void delete_stack_trace(Context * ctx, void * client_data) {
     }
 }
 
-void dump_stack_trace(void) {
-#ifdef WIN32
-    dump_stack_ctx.handle = OpenThread(THREAD_GET_CONTEXT, FALSE, GetCurrentThreadId());
-    memset(&dump_stack_ctx.regs, 0, sizeof(dump_stack_ctx.regs));
-    dump_stack_ctx.regs.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
-    if (GetThreadContext(dump_stack_ctx.handle, &dump_stack_ctx.regs) == 0) {
-        set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "dump_stack_trace: Can't read thread registers: %d: %s",
-            errno, errno_to_str(errno));
-    }
-    else {
-        int i;
-        StackTrace * s;
-        trace(LOG_ALWAYS, "Stack trace:");
-        s = create_stack_trace(&dump_stack_ctx);
-        for (i = 0; i < s->frame_cnt; i++) {
-            StackFrame * f = s->frames + i;
-            trace(LOG_ALWAYS, "  0x%0*lx 0x%0*lx", sizeof(f->ip) * 2, f->ip, sizeof(f->fp) * 2, f->fp);
-        }
-    }
-    CloseHandle(dump_stack_ctx.handle);
-#else
-    trace(LOG_ALWAYS, "dump_stack_trace: not implemented");
-#endif
-}
-
 int is_stack_frame_id(char * id, Context ** ctx, int * frame) {
     return id2frame(id, ctx, frame) == 0;
 }
@@ -582,10 +394,10 @@ char * get_stack_frame_id(Context * ctx, int frame) {
     return id;
 }
 
-int get_frame_info(Context * ctx, int frame, ContextAddress * ip, ContextAddress * rp, ContextAddress * fp) {
-    StackFrame * f;
-    StackTrace * s;
+int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
+    StackTrace * stack;
 
+    *info = NULL;
     if (ctx == NULL || !context_has_state(ctx)) {
         errno = ERR_INV_CONTEXT;
         return -1;
@@ -595,42 +407,33 @@ int get_frame_info(Context * ctx, int frame, ContextAddress * ip, ContextAddress
         return -1;
     }
 
-    if (frame == STACK_TOP_FRAME && !rp && !fp && !ctx->regs_error) {
-        /* Optimization: no need to perform stack trace */
-        if (ip) *ip = get_regs_PC(ctx->regs);
-        return 0;
-    }
-
-    s = create_stack_trace(ctx);
-    if (s->error != 0) {
-        errno = s->error;
+    stack = create_stack_trace(ctx);
+    if (stack->error != 0) {
+        errno = stack->error;
         return -1;
     }
 
     if (frame == STACK_TOP_FRAME) {
-        frame = s->frame_cnt - 1;
+        frame = stack->frame_cnt - 1;
     }
-    else if (frame < 0 || frame >= s->frame_cnt) {
+    else if (frame < 0 || frame >= stack->frame_cnt) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
 
-    f = s->frames + (s->frame_cnt - frame - 1);
-    if (ip) *ip = f->ip;
-    if (rp) *rp = f->rp;
-    if (fp) *fp = f->fp;
+    *info = stack->frames + frame;
     return 0;
 }
 
 int is_top_frame(Context * ctx, int frame) {
-    StackTrace * s;
+    StackTrace * stack;
 
     if (ctx == NULL || !context_has_state(ctx)) return 0;
     if (!ctx->stopped) return 0;
     if (frame == STACK_TOP_FRAME) return 1;
-    s = create_stack_trace(ctx);
-    if (s->error != 0) return 0;
-    return frame == s->frame_cnt - 1;
+    stack = create_stack_trace(ctx);
+    if (stack->error != 0) return 0;
+    return frame == stack->frame_cnt - 1;
 }
 
 void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup * bcg) {
@@ -644,7 +447,6 @@ void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     add_context_event_listener(&listener, bcg);
     add_command_handler(proto, STACKTRACE, "getContext", command_get_context);
     add_command_handler(proto, STACKTRACE, "getChildren", command_get_children);
-    memset(&dump_stack_ctx, 0, sizeof(dump_stack_ctx));
 }
 
 #endif

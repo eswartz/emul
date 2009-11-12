@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -720,8 +720,6 @@ ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset) {
 
 #include <shlobj.h>
 
-unsigned char BREAK_INST[] = { 0xcc };
-
 char * get_os_name(void) {
     static char str[256];
     OSVERSIONINFOEX info;
@@ -836,16 +834,6 @@ void ini_mdep(void) {
 #if defined(__linux__)
 #  include <asm/unistd.h>
 #endif
-
-#if defined(__i386__) || defined(__x86_64__)
-unsigned char BREAK_INST[] = { 0xcc };
-#else
-#error "Unknown CPU"
-#endif
-
-size_t get_break_size(void) {
-    return sizeof(BREAK_INST);
-}
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 int clock_gettime(clockid_t clock_id, struct timespec * tp) {

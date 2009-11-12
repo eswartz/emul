@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -69,7 +69,7 @@ void exception(int error) {
             error, errno_to_str(error));
         exit(error);
     }
-    set_exception_errno(error, NULL);
+    error = set_exception_errno(error, NULL);
     longjmp(chain->env, error);
 }
 
@@ -83,7 +83,7 @@ void str_exception(int error, char * msg) {
     }
     strncpy(chain->msg, msg, sizeof(chain->msg) - 1);
     chain->msg[sizeof(chain->msg) - 1] = 0;
-    set_exception_errno(error, msg);
+    error = set_exception_errno(error, msg);
     longjmp(chain->env, error);
 }
 

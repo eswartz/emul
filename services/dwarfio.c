@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2006, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -59,13 +59,13 @@ typedef struct DIO_Cache DIO_Cache;
 
 U8_T dio_gEntryPos = 0;
 
-U8_T dio_gFormRef = 0;
 U8_T dio_gFormData = 0;
 size_t dio_gFormDataSize = 0;
 void * dio_gFormDataAddr = NULL;
 
 static ELF_Section * sSection;
-static U1_T sBigEndian;
+static int sBigEndian;
+static int sAddressSize;
 static U1_T * sData;
 static U8_T sDataPos;
 static U8_T sDataLen;
@@ -116,6 +116,9 @@ void dio_EnterDebugSection(DIO_UnitDescriptor * Unit, ELF_Section * Section, U8_
     sDataPos = Offset;
     sDataLen = Section->size;
     sBigEndian = Section->file->big_endian;
+    if (Unit != NULL) sAddressSize = Unit->mAddressSize;
+    else if (Section->file->elf64) sAddressSize = 8;
+    else sAddressSize = 4;
     sUnit = Unit;
     dio_gEntryPos = 0;
     assert(sData != NULL);
@@ -127,6 +130,7 @@ void dio_EnterDataSection(DIO_UnitDescriptor * Unit, U1_T * Data, U8_T Offset, U
     sDataPos = Offset;
     sDataLen = Size;
     sBigEndian = Unit->mFile->big_endian;
+    sAddressSize = Unit->mAddressSize;
     sUnit = Unit;
     dio_gEntryPos = 0;
     assert(sData != NULL);
@@ -142,6 +146,10 @@ void dio_ExitSection() {
 
 U8_T dio_GetPos() {
     return sDataPos;
+}
+
+U1_T * dio_GetDataPtr(void) {
+    return sData + sDataPos;
 }
 
 void dio_Skip(I8_T Bytes) {
@@ -249,7 +257,7 @@ U8_T dio_ReadUX(int Size) {
 }
 
 U8_T dio_ReadAddress(void) {
-    switch (sUnit->mAddressSize) {
+    switch (sAddressSize) {
     case 2:
         return dio_ReadU2();
     case 4:
@@ -304,7 +312,8 @@ static U1_T * dio_LoadStringTable(U4_T * StringTableSize) {
 }
 
 static void dio_ReadFormAddr(void) {
-    dio_gFormRef = dio_ReadAddress();
+    dio_gFormData = dio_ReadAddress();
+    dio_gFormDataSize = sAddressSize;
 }
 
 static void dio_ReadFormBlock(U4_T Size) {
@@ -321,20 +330,23 @@ static void dio_ReadFormData(U1_T Size, U8_T Data) {
 }
 
 static void dio_ReadFormRef(void) {
-    dio_gFormRef = dio_ReadU4();
+    dio_gFormData = dio_ReadU4();
+    dio_gFormDataSize = 4;
 }
 
 static void dio_ReadFormRelRef(U8_T Offset) {
     if (sUnit->mUnitSize > 0 && Offset >= sUnit->mUnitSize) {
         str_exception(ERR_INV_DWARF, "invalid REF attribute value");
     }
-    dio_gFormRef = sSection->addr + sUnit->mUnitOffs + Offset;
+    dio_gFormData = sSection->addr + sUnit->mUnitOffs + Offset;
+    dio_gFormDataSize = sAddressSize;
 }
 
 static void dio_ReadFormRefAddr(void) {
     U4_T Size = sUnit->mAddressSize;
     if (sUnit->mVersion >= 3) Size = sUnit->m64bit ? 8 : 4;
-    dio_gFormRef = dio_ReadUX(Size);
+    dio_gFormData = dio_ReadUX(Size);
+    dio_gFormDataSize = Size;
 }
 
 static void dio_ReadFormString(void) {
@@ -362,7 +374,6 @@ static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
     dio_gFormDataAddr = NULL;
     dio_gFormDataSize = 0;
     dio_gFormData = 0;
-    dio_gFormRef = 0;
     switch (Form) {
     case FORM_ADDR      : dio_ReadFormAddr(); break;
     case FORM_REF       : dio_ReadFormRef(); break;
@@ -443,7 +454,7 @@ void dio_ReadEntry(DIO_EntryCallBack CallBack) {
             if (Attr == AT_sibling && sUnit->mUnitSize == 0) {
                 dio_ChkRef(Form);
                 assert(sUnit->mVersion == 1);
-                sUnit->mUnitSize = (U4_T)(dio_gFormRef - sSection->addr - sUnit->mUnitOffs);
+                sUnit->mUnitSize = (U4_T)(dio_gFormData - sSection->addr - sUnit->mUnitOffs);
                 assert(sUnit->mUnitOffs < dio_GetPos());
                 assert(sUnit->mUnitOffs + sUnit->mUnitSize >= dio_GetPos());
             }

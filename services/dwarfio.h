@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2006, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -37,7 +37,6 @@ typedef struct DIO_UnitDescriptor {
 
 extern U8_T dio_gEntryPos;
 
-extern U8_T dio_gFormRef;   /* Absolute address */
 extern U8_T dio_gFormData;
 extern size_t dio_gFormDataSize;
 extern void * dio_gFormDataAddr;
@@ -49,6 +48,7 @@ extern void dio_ExitSection(void);
 extern void dio_Skip(I8_T Bytes);
 extern void dio_Read(U1_T * Buf, U4_T Size);
 extern U8_T dio_GetPos(void); /* Offset in the section */
+extern U1_T * dio_GetDataPtr(void);
 
 extern U1_T dio_ReadU1(void);
 extern U2_T dio_ReadU2(void);

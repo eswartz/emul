@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -27,7 +27,7 @@
 #define ERR_SYSTEM  (ERR_EXCEPTION + 1)
 #define ERR_GAI     (ERR_EXCEPTION + 2)
 
-static char * exception_msg;
+static char exception_msg[256];
 static int exception_no;
 
 static int errno_gai;
@@ -141,7 +141,7 @@ const char * errno_to_str(int err) {
     case ERR_INV_TRANSPORT:
         return "Invalid transport name";
     case ERR_EXCEPTION:
-        snprintf(buf, sizeof(buf), "%s: %s", exception_msg, errno_to_str(exception_no));
+        snprintf(buf, sizeof(buf), "%s: %s", errno_to_str(exception_no), exception_msg);
         return buf;
 #ifdef WIN32
     case ERR_SYSTEM:
@@ -154,16 +154,18 @@ const char * errno_to_str(int err) {
     }
 }
 
-void set_exception_errno(int no, char * msg) {
+int set_exception_errno(int no, char * msg) {
     assert(is_dispatch_thread());
     if (msg == NULL) {
         errno = no;
     }
     else {
         errno = ERR_EXCEPTION;
-        exception_no = no;
-        exception_msg = msg;
+        if (no != ERR_EXCEPTION) exception_no = no;
+        strncpy(exception_msg, msg, sizeof(exception_msg) - 1);
+        exception_msg[sizeof(exception_msg) - 1] = 0;
     }
+    return errno;
 }
 
 int get_exception_errno(int no) {

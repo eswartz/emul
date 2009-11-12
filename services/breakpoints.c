@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -309,7 +309,7 @@ void check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, voi
         if (bi->ctx->mem != ctx->mem) continue;
         if (bi->address + BREAK_SIZE <= address) continue;
         if (bi->address >= address + size) continue;
-        for (i = 0; i < BREAK_SIZE; i++) {
+        for (i = 0; i < (int)BREAK_SIZE; i++) {
             if (bi->address + i < address) continue;
             if (bi->address + i >= address + size) continue;
             buf[bi->address + i - address] = bi->saved_code[i];
@@ -330,7 +330,7 @@ void check_breakpoints_on_memory_write(Context * ctx, ContextAddress address, vo
         if (bi->ctx->mem != ctx->mem) continue;
         if (bi->address + BREAK_SIZE <= address) continue;
         if (bi->address >= address + size) continue;
-        for (i = 0; i < BREAK_SIZE; i++) {
+        for (i = 0; i < (int)BREAK_SIZE; i++) {
             if (bi->address + i < address) continue;
             if (bi->address + i >= address + size) continue;
             bi->saved_code[i] = buf[bi->address + i - address];

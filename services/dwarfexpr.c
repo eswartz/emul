@@ -37,7 +37,7 @@ static unsigned sExprStackLen = 0;
 static unsigned sExprStackMax = 0;
 static int sKeepStack = 0;
 
-#define check_e_stack(n) if (sExprStackLen < n) { errno = ERR_INV_DWARF; return -1; }
+#define check_e_stack(n) if (sExprStackLen < n) { errno = set_exception_errno(ERR_INV_DWARF, "invalid DWARF expression stack"); return -1; }
 
 static ObjectInfo * get_parent_function(ObjectInfo * Info) {
     while (Info != NULL) {
@@ -54,391 +54,36 @@ static ObjectInfo * get_parent_function(ObjectInfo * Info) {
 }
 
 static int get_register(Context * Ctx, int Frame, unsigned rg, U8_T * value) {
-#if !ENABLE_DebugContext
-#elif defined(__linux__) && defined(__i386__) || \
-    defined(_WRS_KERNEL) && (CPU_FAMILY==SIMNT || CPU_FAMILY==I80X86)
-    ContextAddress IP, FP;
-    if (is_top_frame(Ctx, Frame)) {
-        switch (rg) {
-        case 0:
-            *value = (ContextAddress)Ctx->regs.eax;
-            return 0;
-        case 1:
-            *value = (ContextAddress)Ctx->regs.ecx;
-            return 0;
-        case 2:
-            *value = (ContextAddress)Ctx->regs.edx;
-            return 0;
-        case 3:
-            *value = (ContextAddress)Ctx->regs.ebx;
-            return 0;
-        case 4:
-            *value = (ContextAddress)Ctx->regs.esp;
-            return 0;
-        case 5:
-            *value = (ContextAddress)Ctx->regs.ebp;
-            return 0;
-        case 6:
-            *value = (ContextAddress)Ctx->regs.esi;
-            return 0;
-        case 7:
-            *value = (ContextAddress)Ctx->regs.edi;
-            return 0;
-        case 8:
-#ifdef _WRS_KERNEL
-            *value = (ContextAddress)Ctx->regs.pc;
-#else
-            *value = (ContextAddress)Ctx->regs.eip;
+#if ENABLE_DebugContext
+    RegisterDefinition * reg_def = get_reg_by_dwarf_id(rg);
+    if (reg_def != NULL) {
+        StackFrame * info;
+        if (get_frame_info(Ctx, Frame, &info) < 0) return -1;
+        if (read_reg_value(reg_def, info, value) >= 0) return 0;
+    }
 #endif
-            return 0;
-        case 9:
-            *value = (ContextAddress)Ctx->regs.eflags;
-            return 0;
-        }
-    }
-    if (get_frame_info(Ctx, Frame, &IP, NULL, &FP) < 0) return -1;
-    switch (rg) {
-    case 5:
-        *value = FP;
-        return 0;
-    case 8:
-        *value = IP;
-        return 0;
-    }
-#elif defined(__linux__) && defined(__x86_64__)
-    ContextAddress RA, FP;
-    if (is_top_frame(Ctx, Frame)) {
-        switch (rg) {
-        case 0:
-            *value = Ctx->regs.rax;
-            return 0;
-        case 1:
-            *value = Ctx->regs.rbx;
-            return 0;
-        case 2:
-            *value = Ctx->regs.rcx;
-            return 0;
-        case 3:
-            *value = Ctx->regs.rdx;
-            return 0;
-        case 4:
-            *value = Ctx->regs.rsi;
-            return 0;
-        case 5:
-            *value = Ctx->regs.rdi;
-            return 0;
-        case 6:
-            *value = Ctx->regs.rbp;
-            return 0;
-        case 7:
-            *value = Ctx->regs.rsp;
-            return 0;
-        case 8:
-            *value = Ctx->regs.r8;
-            return 0;
-        case 9:
-            *value = Ctx->regs.r9;
-            return 0;
-        case 10:
-            *value = Ctx->regs.r10;
-            return 0;
-        case 11:
-            *value = Ctx->regs.r11;
-            return 0;
-        case 12:
-            *value = Ctx->regs.r11;
-            return 0;
-        case 13:
-            *value = Ctx->regs.r13;
-            return 0;
-        case 14:
-            *value = Ctx->regs.r14;
-            return 0;
-        case 15:
-            *value = Ctx->regs.r15;
-            return 0;
-        case 16:
-            if (get_frame_info(Ctx, Frame, NULL, &RA, NULL) < 0) return -1;
-            *value = RA;
-            return 0;
-        }
-    }
-    if (get_frame_info(Ctx, Frame, NULL, &RA, &FP) < 0) return -1;
-    switch (rg) {
-    case 6:
-        *value = FP;
-        return 0;
-    case 16:
-        *value = RA;
-        return 0;
-    }
-#elif defined(__APPLE__) && defined(__i386__)
-    ContextAddress IP, FP;
-    if (is_top_frame(Ctx, Frame)) {
-        switch (rg) {
-        case 0:
-            *value = (ContextAddress)Ctx->regs.__eax;
-            return 0;
-        case 1:
-            *value = (ContextAddress)Ctx->regs.__ecx;
-            return 0;
-        case 2:
-            *value = (ContextAddress)Ctx->regs.__edx;
-            return 0;
-        case 3:
-            *value = (ContextAddress)Ctx->regs.__ebx;
-            return 0;
-        case 4:
-            *value = (ContextAddress)Ctx->regs.__esp;
-            return 0;
-        case 5:
-            *value = (ContextAddress)Ctx->regs.__ebp;
-            return 0;
-        case 6:
-            *value = (ContextAddress)Ctx->regs.__esi;
-            return 0;
-        case 7:
-            *value = (ContextAddress)Ctx->regs.__edi;
-            return 0;
-        case 8:
-            *value = (ContextAddress)Ctx->regs.__eip;
-            return 0;
-        case 9:
-            *value = (ContextAddress)Ctx->regs.__eflags;
-            return 0;
-        }
-    }
-    if (get_frame_info(Ctx, Frame, &IP, NULL, &FP) < 0) return -1;
-    switch (rg) {
-    case 5:
-        *value = FP;
-        return 0;
-    case 8:
-        *value = IP;
-        return 0;
-    }
-#elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(__i386__)
-    ContextAddress IP, FP;
-    if (is_top_frame(Ctx, Frame)) {
-        switch (rg) {
-        case 0:
-            *value = (ContextAddress)Ctx->regs.r_eax;
-            return 0;
-        case 1:
-            *value = (ContextAddress)Ctx->regs.r_ecx;
-            return 0;
-        case 2:
-            *value = (ContextAddress)Ctx->regs.r_edx;
-            return 0;
-        case 3:
-            *value = (ContextAddress)Ctx->regs.r_ebx;
-            return 0;
-        case 4:
-            *value = (ContextAddress)Ctx->regs.r_esp;
-            return 0;
-        case 5:
-            *value = (ContextAddress)Ctx->regs.r_ebp;
-            return 0;
-        case 6:
-            *value = (ContextAddress)Ctx->regs.r_esi;
-            return 0;
-        case 7:
-            *value = (ContextAddress)Ctx->regs.r_edi;
-            return 0;
-        case 8:
-            *value = (ContextAddress)Ctx->regs.r_eip;
-            return 0;
-        case 9:
-            *value = (ContextAddress)Ctx->regs.r_eflags;
-            return 0;
-        }
-    }
-    if (get_frame_info(Ctx, Frame, &IP, NULL, &FP) < 0) return -1;
-    switch (rg) {
-    case 5:
-        *value = FP;
-        return 0;
-    case 8:
-        *value = IP;
-        return 0;
-    }
-#else
-#error "Unknown DWARF registers mapping"
-#endif
-    trace(LOG_ALWAYS, "get_register: Unsupported DWARF register number %d", rg);
     errno = ERR_UNSUPPORTED;
     return -1;
 }
 
 static int set_register(Context * Ctx, int Frame, unsigned rg, U8_T value) {
-#if !ENABLE_DebugContext
-#elif defined(__linux__) && defined(__i386__) || \
-   defined(_WRS_KERNEL) && (CPU_FAMILY==SIMNT || CPU_FAMILY==I80X86)
-    if (is_top_frame(Ctx, Frame)) {
-        switch (rg) {
-        case 0:
-            Ctx->regs.eax = (ContextAddress)value;
+#if ENABLE_DebugContext
+    RegisterDefinition * reg_def = get_reg_by_dwarf_id(rg);
+    if (reg_def != NULL) {
+        size_t size = reg_def->size;
+        if (size <= 8 && Ctx->stopped && is_top_frame(Ctx, Frame)) {
+            U1_T * addr = (U1_T *)&Ctx->regs + reg_def->offset;
+            switch (size) {
+            case 1: *(U1_T *)addr = (U1_T)value; break;
+            case 2: *(U2_T *)addr = (U2_T)value; break;
+            case 4: *(U4_T *)addr = (U4_T)value; break;
+            case 8: *(U8_T *)addr = (U8_T)value; break;
+            }
+            Ctx->regs_dirty = 1;
             return 0;
-        case 1:
-            Ctx->regs.ecx = (ContextAddress)value;
-            return 0;
-        case 2:
-            Ctx->regs.edx = (ContextAddress)value;
-            return 0;
-        case 3:
-            Ctx->regs.ebx = (ContextAddress)value;
-            return 0;
-        case 4:
-            Ctx->regs.esp = (ContextAddress)value;
-            return 0;
-        case 5:
-            Ctx->regs.ebp = (ContextAddress)value;
-            return 0;
-        case 6:
-            Ctx->regs.esi = (ContextAddress)value;
-            return 0;
-        case 7:
-            Ctx->regs.edi = (ContextAddress)value;
-            return 0;
-        case 8:
-#ifdef _WRS_KERNEL
-            Ctx->regs.pc = (void *)(ContextAddress)value;
-#else
-            Ctx->regs.eip = (ContextAddress)value;
+        }
+    }
 #endif
-            return 0;
-        case 9:
-            Ctx->regs.eflags = (ContextAddress)value;
-            return 0;
-        }
-    }
-#elif defined(__linux__) && defined(__x86_64__)
-    if (is_top_frame(Ctx, Frame)) {
-        switch (rg) {
-        case 0:
-            Ctx->regs.rax = (ContextAddress)value;
-            return 0;
-        case 1:
-            Ctx->regs.rbx = (ContextAddress)value;
-            return 0;
-        case 2:
-            Ctx->regs.rcx = (ContextAddress)value;
-            return 0;
-        case 3:
-            Ctx->regs.rdx = (ContextAddress)value;
-            return 0;
-        case 4:
-            Ctx->regs.rsi = (ContextAddress)value;
-            return 0;
-        case 5:
-            Ctx->regs.rdi = (ContextAddress)value;
-            return 0;
-        case 6:
-            Ctx->regs.rbp = (ContextAddress)value;
-            return 0;
-        case 7:
-            Ctx->regs.rsp = (ContextAddress)value;
-            return 0;
-        case 8:
-            Ctx->regs.r8 = (ContextAddress)value;
-            return 0;
-        case 9:
-            Ctx->regs.r9 = (ContextAddress)value;
-            return 0;
-        case 10:
-            Ctx->regs.r10 = (ContextAddress)value;
-            return 0;
-        case 11:
-            Ctx->regs.r11 = (ContextAddress)value;
-            return 0;
-        case 12:
-            Ctx->regs.r12 = (ContextAddress)value;
-            return 0;
-        case 13:
-            Ctx->regs.r13 = (ContextAddress)value;
-            return 0;
-        case 14:
-            Ctx->regs.r14 = (ContextAddress)value;
-            return 0;
-        case 15:
-            Ctx->regs.r15 = (ContextAddress)value;
-            return 0;
-        }
-    }
-#elif defined(__APPLE__) && defined(__i386__)
-    if (is_top_frame(Ctx, Frame)) {
-        switch (rg) {
-        case 0:
-            Ctx->regs.__eax = (ContextAddress)value;
-            return 0;
-        case 1:
-            Ctx->regs.__ecx = (ContextAddress)value;
-            return 0;
-        case 2:
-            Ctx->regs.__edx = (ContextAddress)value;
-            return 0;
-        case 3:
-            Ctx->regs.__ebx = (ContextAddress)value;
-            return 0;
-        case 4:
-            Ctx->regs.__esp = (ContextAddress)value;
-            return 0;
-        case 5:
-            Ctx->regs.__ebp = (ContextAddress)value;
-            return 0;
-        case 6:
-            Ctx->regs.__esi = (ContextAddress)value;
-            return 0;
-        case 7:
-            Ctx->regs.__edi = (ContextAddress)value;
-            return 0;
-        case 8:
-            Ctx->regs.__eip = (ContextAddress)value;
-            return 0;
-        case 9:
-            Ctx->regs.__eflags = (ContextAddress)value;
-            return 0;
-        }
-    }
-#elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(__i386__)
-    if (is_top_frame(Ctx, Frame)) {
-        switch (rg) {
-        case 0:
-            Ctx->regs.r_eax = (ContextAddress)value;
-            return 0;
-        case 1:
-            Ctx->regs.r_ecx = (ContextAddress)value;
-            return 0;
-        case 2:
-            Ctx->regs.r_edx = (ContextAddress)value;
-            return 0;
-        case 3:
-            Ctx->regs.r_ebx = (ContextAddress)value;
-            return 0;
-        case 4:
-            Ctx->regs.r_esp = (ContextAddress)value;
-            return 0;
-        case 5:
-            Ctx->regs.r_ebp = (ContextAddress)value;
-            return 0;
-        case 6:
-            Ctx->regs.r_esi = (ContextAddress)value;
-            return 0;
-        case 7:
-            Ctx->regs.r_edi = (ContextAddress)value;
-            return 0;
-        case 8:
-            Ctx->regs.r_eip = (ContextAddress)value;
-            return 0;
-        case 9:
-            Ctx->regs.r_eflags = (ContextAddress)value;
-            return 0;
-        }
-    }
-#else
-#error "Unknown DWARF registers mapping"
-#endif
-    trace(LOG_ALWAYS, "set_register: Unsupported DWARF register number %d", rg);
     errno = ERR_UNSUPPORTED;
     return -1;
 }
@@ -450,7 +95,7 @@ static int register_access_func(PropertyValue * Value, int write, U8_T * Data) {
 
 static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * Buf, size_t Size) {
     if (Size == 0) {
-        errno = ERR_INV_DWARF;
+        errno = set_exception_errno(ERR_INV_DWARF, "DWARF expression size = 0");
         return -1;
     }
     dio_EnterDataSection(&Value->mObject->mCompUnit->mDesc, Buf, 0, Size);
@@ -465,8 +110,8 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
         switch (Op) {
         case OP_addr:
             if ((sExprStack[sExprStackLen++] = elf_map_to_run_time_address(
-                    Value->mContext, Value->mObject->mCompUnit->mFile, dio_ReadAddress())) == 0) {
-                errno = ERR_INV_DWARF;
+                    Value->mContext, Value->mObject->mCompUnit->mFile, (ContextAddress)dio_ReadAddress())) == 0) {
+                errno = set_exception_errno(ERR_INV_DWARF, "object has no RT address");
                 return -1;
             }
             break;
@@ -803,7 +448,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
             {
                 unsigned n = Op - OP_reg0;
                 if (dio_GetPos() < Size) {
-                    errno = ERR_INV_DWARF;
+                    errno = set_exception_errno(ERR_INV_DWARF, "OP_reg must be last instruction");
                     return -1;
                 }
                 Value->mValue = n;
@@ -814,7 +459,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
             {
                 unsigned n = dio_ReadULEB128();
                 if (dio_GetPos() < Size) {
-                    errno = ERR_INV_DWARF;
+                    errno = set_exception_errno(ERR_INV_DWARF, "OP_regx must be last instruction");
                     return -1;
                 }
                 Value->mValue = n;
@@ -863,8 +508,9 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
                 ObjectInfo * Parent = get_parent_function(Value->mObject);
                 int error = 0;
 
+                memset(&FP, 0, sizeof(FP));
                 sKeepStack++;
-                if (Parent == NULL) error = ERR_INV_DWARF;
+                if (Parent == NULL) error = set_exception_errno(ERR_INV_DWARF, "OP_fbreg: no parent function");
                 if (!error && read_and_evaluate_dwarf_object_property(Value->mContext, Value->mFrame, 0, Parent, AT_frame_base, &FP) < 0) error = errno;
                 sKeepStack--;
 
@@ -913,20 +559,21 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
 }
 
 static int evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
-    U1_T * Addr = NULL;
+    U8_T IP = 0;
     U8_T Offset = 0;
     U8_T Base = 0;
     U8_T BaseMark = 0;
-    ContextAddress IP = 0;
+    StackFrame * Frame = NULL;
     DWARFCache * Cache = (DWARFCache *)Value->mObject->mCompUnit->mFile->dwarf_dt_cache;
 
     assert(Cache->magic == SYM_CACHE_MAGIC);
     if (Cache->mDebugLoc == NULL) {
-        errno = ERR_INV_DWARF;
+        errno = set_exception_errno(ERR_INV_DWARF, "missing .debug_loc section");
         return -1;
     }
     if (elf_load(Cache->mDebugLoc) < 0) return -1;
-    if (get_frame_info(Value->mContext, Value->mFrame, &IP, NULL, NULL) < 0) return -1;
+    if (get_frame_info(Value->mContext, Value->mFrame, &Frame) < 0) return -1;
+    if (read_reg_value(get_PC_definition(), Frame, &IP) < 0) return -1;
     dio_EnterDataSection(&Value->mObject->mCompUnit->mDesc, Value->mAddr, 0, Value->mSize);
     switch (Value->mSize) {
     case 4:
@@ -938,12 +585,11 @@ static int evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
         BaseMark = ~(U8_T)0;
         break;
     default:
-        errno = ERR_INV_DWARF;
+        errno = set_exception_errno(ERR_INV_DWARF, "invalid .debug_loc pointer size");
         return -1;
     }
-    Addr = Cache->mDebugLoc->data;
     Base = Value->mObject->mCompUnit->mLowPC;
-    dio_EnterDataSection(&Value->mObject->mCompUnit->mDesc, Addr, Offset, Cache->mDebugLoc->size);
+    dio_EnterDataSection(&Value->mObject->mCompUnit->mDesc, Cache->mDebugLoc->data, Offset, Cache->mDebugLoc->size);
     for (;;) {
         U8_T Addr0 = dio_ReadAddress();
         U8_T Addr1 = dio_ReadAddress();
@@ -955,10 +601,10 @@ static int evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
         }
         else {
             U2_T Size = dio_ReadU2();
-            ContextAddress RTAddr0 = elf_map_to_run_time_address(Value->mContext, Cache->mFile, Base + Addr0);
-            ContextAddress RTAddr1 = Addr1 - Addr0 + RTAddr0;
+            ContextAddress RTAddr0 = elf_map_to_run_time_address(Value->mContext, Cache->mFile, (ContextAddress)(Base + Addr0));
+            ContextAddress RTAddr1 = (ContextAddress)(Addr1 - Addr0) + RTAddr0;
             if (RTAddr0 != 0 && IP >= RTAddr0 && IP < RTAddr1) {
-                return evaluate_expression(BaseAddresss, Value, Addr + dio_GetPos(), Size);
+                return evaluate_expression(BaseAddresss, Value, dio_GetDataPtr(), Size);
             }
             dio_Skip(Size);
         }
@@ -984,7 +630,7 @@ int dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
     }
     if (set_trap(&trap)) {
         if (Value->mAccessFunc != NULL || Value->mAddr == NULL || Value->mSize == 0) {
-            error = ERR_INV_DWARF;
+            error = set_exception_errno(ERR_INV_DWARF, "invalid DWARF expression reference");
         }
         else if (Value->mForm == FORM_DATA4 || Value->mForm == FORM_DATA8) {
             if (evaluate_location(BaseAddress, Value) < 0) error = errno;
@@ -998,7 +644,9 @@ int dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
         error = trap.error;
     }
 
-    if (!error && !sKeepStack && sExprStackLen != (Value->mAccessFunc == NULL ? 1 : 0)) error = ERR_INV_DWARF;
+    if (!error && !sKeepStack && sExprStackLen != (Value->mAccessFunc == NULL ? 1u : 0u)) {
+        error = set_exception_errno(ERR_INV_DWARF, "invalid DWARF expression stack");
+    }
 
     if (!error) {
         if (Value->mAccessFunc == NULL) {

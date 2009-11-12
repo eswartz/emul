@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -57,7 +57,7 @@
  */
 extern const char * errno_to_str(int no);
 
-extern void set_exception_errno(int no, char * msg);
+extern int set_exception_errno(int no, char * msg);
 extern int get_exception_errno(int no);
 
 extern int set_gai_errno(int gai_error_code);

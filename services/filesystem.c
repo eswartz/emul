@@ -1174,6 +1174,7 @@ static void command_roots(char * token, Channel * c) {
         }
     }
 #elif defined(_WRS_KERNEL)
+    /* TODO: iosDvList */
     write_stream(&c->out, '{');
     json_write_string(&c->out, "FileName");
     write_stream(&c->out, ':');

@@ -18,7 +18,7 @@
 
 #include "config.h"
 
-#if SERVICE_Symbols && defined(_MSC_VER)
+#if SERVICE_Symbols && defined(_MSC_VER) && !ENABLE_ELF
 
 #include <errno.h>
 #include <assert.h>
@@ -106,7 +106,7 @@ typedef struct SymbolCacheEntry {
     int error;
 } SymbolCacheEntry;
 
-#define SYMBOL_CACHE_SIZE 101
+#define SYMBOL_CACHE_SIZE 153
 static SymbolCacheEntry symbol_cache[SYMBOL_CACHE_SIZE];
 
 static char * tmp_buf = NULL;
@@ -138,9 +138,11 @@ static size_t add_to_sym_buf(Symbol * sym) {
 static int get_stack_frame(Context * ctx, int frame, IMAGEHLP_STACK_FRAME * stack_frame) {
     memset(stack_frame, 0, sizeof(IMAGEHLP_STACK_FRAME));
     if (frame != STACK_NO_FRAME && ctx->parent != NULL) {
-        ContextAddress ip = 0;
-        if (get_frame_info(ctx, frame, &ip, NULL, NULL) < 0) return -1;
-        stack_frame->InstructionOffset = ip;
+        uint64_t v = 0;
+        StackFrame * frame_info;
+        if (get_frame_info(ctx, frame, &frame_info) < 0) return -1;
+        if (read_reg_value(get_PC_definition(), frame_info, &v) < 0) return -1;
+        stack_frame->InstructionOffset = v;
     }
     return 0;
 }
@@ -694,9 +696,9 @@ int get_symbol_address(const Symbol * sym, int frame, ContextAddress * addr) {
     *addr = (ContextAddress)info->Address;
 
     if ((info->Flags & SYMFLAG_FRAMEREL) || (info->Flags & SYMFLAG_REGREL)) {
-        ContextAddress fp = 0;
-        if (get_frame_info(sym->ctx, frame, NULL, NULL, &fp) < 0) return -1;
-        *addr += fp;
+        StackFrame * frame_info;
+        if (get_frame_info(sym->ctx, frame, &frame_info) < 0) return -1;
+        *addr += frame_info->fp - sizeof(ContextAddress) * 2;
     }
 
     return 0;

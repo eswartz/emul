@@ -2209,6 +2209,7 @@ static void command_evaluate(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
+    if (!err && frame != STACK_NO_FRAME && !ctx->intercepted) err = ERR_IS_RUNNING;
     if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 0, &value) < 0) err = errno;
     if (value.size >= 0x100000) err = ERR_BUFFER_OVERFLOW;
 

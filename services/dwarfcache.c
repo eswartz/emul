@@ -23,7 +23,6 @@
 #if ENABLE_ELF
 
 #include <assert.h>
-#include <stdio.h>
 #include "dwarf.h"
 #include "dwarfio.h"
 #include "dwarfcache.h"
@@ -52,7 +51,8 @@ unsigned calc_symbol_name_hash(char * s) {
     while (*s) {
         unsigned g;
         h = (h << 4) + *s++;
-        if (g = h & 0xf0000000) h ^= g >> 24;
+        g = h & 0xf0000000;
+        if (g) h ^= g >> 24;
         h &= ~g;
     }
     return h % SYM_HASH_SIZE;
@@ -119,9 +119,9 @@ static void read_mod_fund_type(U2_T Form, ObjectInfo ** Type) {
     size_t BufPos;
     dio_ChkBlock(Form, &Buf, &BufSize);
     *Type = find_object_info(sDebugSection->addr + dio_GetPos() - 1);
-    (*Type)->mTag = TAG_lo_user;
+    (*Type)->mTag = TAG_fund_type;
     (*Type)->mCompUnit = sCompUnit;
-    (*Type)->mEncoding = Buf[BufSize - 1];
+    (*Type)->mFundType = Buf[BufSize - 1];
     BufPos = BufSize - 1;
     while (BufPos > 0) {
         U2_T Tag = 0;
@@ -198,11 +198,11 @@ static void read_tag_com_unit(U2_T Attr, U2_T Form) {
         break;
     case AT_low_pc:
         dio_ChkAddr(Form);
-        Unit->mLowPC = (ContextAddress)dio_gFormRef;
+        Unit->mLowPC = (ContextAddress)dio_gFormData;
         break;
     case AT_high_pc:
         dio_ChkAddr(Form);
-        Unit->mHighPC = (ContextAddress)dio_gFormRef;
+        Unit->mHighPC = (ContextAddress)dio_gFormData;
         break;
     case AT_ranges:
         dio_ChkData(Form);
@@ -221,7 +221,7 @@ static void read_tag_com_unit(U2_T Attr, U2_T Form) {
         Unit->mLineInfoOffs = dio_gFormData;
         break;
     case AT_base_types:
-        Unit->mBaseTypes = find_comp_unit(dio_gFormRef);
+        Unit->mBaseTypes = find_comp_unit(dio_gFormData);
         break;
     }
 }
@@ -260,40 +260,28 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
         break;
     case AT_sibling:
         dio_ChkRef(Form);
-        Sibling = dio_gFormRef - sDebugSection->addr;
+        Sibling = dio_gFormData - sDebugSection->addr;
         break;
     case AT_type:
         dio_ChkRef(Form);
-        Info->mType = find_object_info(dio_gFormRef);
+        Info->mType = find_object_info(dio_gFormData);
         break;
     case AT_fund_type:
         dio_ChkData(Form);
         Info->mType = find_object_info(sDebugSection->addr + dio_GetPos() - dio_gFormDataSize);
-        Info->mType->mTag = TAG_lo_user;
+        Info->mType->mTag = TAG_fund_type;
         Info->mCompUnit = sCompUnit;
-        Info->mType->mEncoding = (U2_T)dio_gFormData;
+        Info->mType->mFundType = (U2_T)dio_gFormData;
         break;
     case AT_user_def_type:
         dio_ChkRef(Form);
-        Info->mType = find_object_info(dio_gFormRef);
+        Info->mType = find_object_info(dio_gFormData);
         break;
     case AT_mod_fund_type:
         read_mod_fund_type(Form, &Info->mType);
         break;
     case AT_mod_u_d_type:
         read_mod_user_def_type(Form, &Info->mType);
-        break;
-    case AT_encoding:
-        dio_ChkData(Form);
-        Info->mEncoding = (U2_T)dio_gFormData;
-        break;
-    case AT_low_pc:
-        dio_ChkAddr(Form);
-        Info->mLowPC = (ContextAddress)dio_gFormRef;
-        break;
-    case AT_high_pc:
-        dio_ChkAddr(Form);
-        Info->mHighPC = (ContextAddress)dio_gFormRef;
         break;
     case AT_name:
         dio_ChkString(Form);
@@ -450,6 +438,12 @@ static void load_debug_sections(void) {
         else if (strcmp(sec->name, ".debug_loc") == 0) {
             sCache->mDebugLoc = sec;
         }
+        else if (strcmp(sec->name, ".debug_frame") == 0) {
+            sCache->mDebugFrame = sec;
+        }
+        else if (strcmp(sec->name, ".eh_frame") == 0) {
+            sCache->mEHFrame = sec;
+        }
     }
 
     if (sObjectList == NULL) {
@@ -466,7 +460,6 @@ static void load_debug_sections(void) {
 
 static U2_T gop_gAttr = 0;
 static U2_T gop_gForm = 0;
-static U8_T gop_gFormRef = 0;   /* Absolute address */
 static U8_T gop_gFormData = 0;
 static size_t gop_gFormDataSize = 0;
 static void * gop_gFormDataAddr = NULL;
@@ -474,7 +467,6 @@ static void * gop_gFormDataAddr = NULL;
 static void get_object_property_callback(U2_T Tag, U2_T Attr, U2_T Form) {
     if (Attr != gop_gAttr) return;
     gop_gForm = Form;
-    gop_gFormRef = dio_gFormRef;
     gop_gFormData = dio_gFormData;
     gop_gFormDataSize = dio_gFormDataSize;
     gop_gFormDataAddr = dio_gFormDataAddr;
@@ -499,24 +491,25 @@ U8_T get_numeric_property_value(PropertyValue * Value) {
 int read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, int Attr, PropertyValue * Value) {
     Trap trap;
 
+    if (Obj->mTag == TAG_fund_type) {
+        /* TAG_fund_type is virtual DWARF object that is created by DWARF reader. It has no properties. */
+        errno = ERR_SYM_NOT_FOUND;
+        return -1;
+    }
+
     memset(Value, 0, sizeof(PropertyValue));
     Value->mContext = Ctx;
     Value->mFrame = Frame;
     Value->mObject = Obj;
-    Value->mAttr = Attr;
+    Value->mAttr = (U2_T)Attr;
     Value->mBigEndian = Obj->mCompUnit->mFile->big_endian;
-
-    if (Attr == AT_location && Obj->mLowPC != 0) {
-        Value->mValue = Obj->mLowPC;
-        return 0;
-    }
 
     sCompUnit = Obj->mCompUnit;
     sCache = (DWARFCache *)sCompUnit->mFile->dwarf_dt_cache;
     sDebugSection = sCompUnit->mSection;
     dio_EnterDebugSection(&sCompUnit->mDesc, sDebugSection, Obj->mID - sDebugSection->addr);
     if (set_trap(&trap)) {
-        gop_gAttr = Attr;
+        gop_gAttr = (U2_T)Attr;
         gop_gForm = 0;
         dio_ReadEntry(get_object_property_callback);
         clear_trap(&trap);
@@ -536,7 +529,7 @@ int read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, int A
     case FORM_REF8      :
     case FORM_REF_UDATA :
         {
-            ObjectInfo * RefObj = find_object(sCache, gop_gFormRef);
+            ObjectInfo * RefObj = find_object(sCache, gop_gFormData);
             PropertyValue ValueAddr;
 
             if (read_and_evaluate_dwarf_object_property(Ctx, Frame, 0, RefObj, AT_location, &ValueAddr) < 0) return -1;
@@ -577,10 +570,11 @@ int read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, int A
         break;
     case FORM_SDATA     :
     case FORM_UDATA     :
+    case FORM_ADDR:
         Value->mValue = gop_gFormData;
         break;
     default:
-        errno = ENOENT;
+        errno = ERR_SYM_NOT_FOUND;
         return -1;
     }
     return 0;
@@ -850,7 +844,7 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
                     state.mFile = dio_ReadULEB128();
                     break;
                 case DW_LNS_set_column:
-                    state.mColumn = dio_ReadULEB128();
+                    state.mColumn = (U2_T)dio_ReadULEB128();
                     break;
                 case DW_LNS_negate_stmt:
                     state.mFlags ^= LINE_IsStmt;

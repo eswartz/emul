@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -20,59 +20,8 @@
 #define D_context
 
 #include "config.h"
+#include "cpudefs.h"
 #include "link.h"
-
-typedef uintptr_t ContextAddress; /* Type to represent byted address inside context memory */
-
-#if ENABLE_DebugContext
-#if defined(WIN32) || defined(__CYGWIN__)
-
-typedef CONTEXT REG_SET;
-#define get_regs_SP(x) ((x).Esp)
-#define get_regs_BP(x) ((x).Ebp)
-#define get_regs_PC(x) ((x).Eip)
-#define set_regs_PC(x,y) (x).Eip = (y)
-
-#elif defined(_WRS_KERNEL)
-
-#include <regs.h>
-
-#elif defined(__APPLE__)
-
-#include <mach/thread_status.h>
-typedef x86_thread_state32_t REG_SET;
-#define get_regs_SP(x) ((x).__esp)
-#define get_regs_BP(x) ((x).__ebp)
-#define get_regs_PC(x) ((x).__eip)
-#define set_regs_PC(x,y) (x).__eip = (unsigned long)(y)
-
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
-
-#include <machine/reg.h>
-typedef struct reg REG_SET;
-#define get_regs_SP(x) ((x).r_esp)
-#define get_regs_BP(x) ((x).r_ebp)
-#define get_regs_PC(x) ((x).r_eip)
-#define set_regs_PC(x,y) (x).r_eip = (unsigned int)(y)
-
-#else
-
-#include <sys/user.h>
-typedef struct user_regs_struct REG_SET;
-#if __WORDSIZE == 64
-#  define get_regs_SP(x) ((x).rsp)
-#  define get_regs_BP(x) ((x).rbp)
-#  define get_regs_PC(x) ((x).rip)
-#  define set_regs_PC(x,y) (x).rip = (unsigned long)(y)
-#else
-#  define get_regs_SP(x) ((x).esp)
-#  define get_regs_BP(x) ((x).ebp)
-#  define get_regs_PC(x) ((x).eip)
-#  define set_regs_PC(x,y) (x).eip = (unsigned long)(y)
-#endif
-
-#endif
-#endif /* ENABLE_DebugContext */
 
 extern LINK context_root;
 

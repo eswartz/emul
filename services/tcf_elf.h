@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -171,6 +171,8 @@ typedef struct Elf32_Shdr {
     Elf32_Word sh_addralign;
     Elf32_Word sh_entsize;
 } Elf32_Shdr;
+
+#define SHF_ALLOC           0x00000002
 
 typedef struct Elf32_Phdr {
     Elf32_Word p_type;
@@ -397,6 +399,12 @@ extern void elf_list_done(Context * ctx);
  * Returns zero on success. If error, returns -1 and sets errno.
  */
 extern int elf_load(ELF_Section * section);
+
+/*
+ * Read a binary value of given size from ELF section, adjust endianness if necessary
+.
+ */
+extern U8_T elf_read_section(ELF_Section * section, uintptr_t offset, size_t size);
 
 /*
  * Register ELF file close callback.

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2009 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -66,12 +66,12 @@ static void elf_dispose(ELF_File * file) {
     }
     if (file->fd >= 0) close(file->fd);
     if (file->sections != NULL) {
+#ifdef USE_MMAP
         for (n = 0; n < file->section_cnt; n++) {
             ELF_Section * s = file->sections + n;
-#ifdef USE_MMAP
             if (s->mmap_addr != NULL) munmap(s->mmap_addr, s->mmap_size);
-#endif
         }
+#endif
         loc_free(file->sections);
     }
     loc_free(file->pheaders);
@@ -331,7 +331,7 @@ ELF_File * elf_open(char * file_name) {
                         sec->type = shdr.sh_type;
                         sec->offset = shdr.sh_offset;
                         sec->size = shdr.sh_size;
-                        sec->flags = shdr.sh_flags;
+                        sec->flags = (U4_T)shdr.sh_flags;
                         sec->addr = shdr.sh_addr;
                         sec->link = shdr.sh_link;
                         sec->info = shdr.sh_info;
@@ -366,7 +366,7 @@ ELF_File * elf_open(char * file_name) {
                         p->file_size = phdr.p_filesz;
                         p->mem_size = phdr.p_memsz;
                         p->flags = phdr.p_flags;
-                        p->align = phdr.p_align;
+                        p->align = (U4_T)phdr.p_align;
                         cnt++;
                     }
                 }
@@ -423,6 +423,21 @@ int elf_load(ELF_Section * s) {
     errno = ERR_UNSUPPORTED;
     return -1;
 #endif
+}
+
+U8_T elf_read_section(ELF_Section * section, uintptr_t offset, size_t size) {
+    U1_T buf[8];
+    if (section->data == NULL && elf_load(section) < 0) exception(errno);
+    memcpy(buf, (U1_T *)section->data + offset, size);
+    if (section->file->byte_swap) swap_bytes(buf, size);
+    switch (size) {
+    case 1: return *(U1_T *)buf;
+    case 2: return *(U2_T *)buf;
+    case 4: return *(U4_T *)buf;
+    case 8: return *(U8_T *)buf;
+    }
+    exception(ERR_INV_DATA_SIZE);
+    return 0;
 }
 
 void elf_close(ELF_File * file) {

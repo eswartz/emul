@@ -30,6 +30,7 @@
 #include "context.h"
 #include "tcf_elf.h"
 #include "dwarfio.h"
+#include "stacktrace.h"
 
 typedef struct FileInfo FileInfo;
 typedef struct LocationInfo LocationInfo;
@@ -62,6 +63,8 @@ struct SymbolSection {
     unsigned * mHashNext;
 };
 
+#define TAG_fund_type 0x2000
+
 struct ObjectInfo {
     ObjectInfo * mHashNext;
     ObjectInfo * mListNext;
@@ -69,13 +72,10 @@ struct ObjectInfo {
     ObjectInfo * mChildren;
     ObjectInfo * mParent;
 
-    U2_T mTag;
     U8_T mID;
+    U2_T mTag;
 
-    ContextAddress mLowPC;
-    ContextAddress mHighPC;
-
-    U2_T mEncoding;
+    U2_T mFundType;
     ObjectInfo * mType;
     CompUnit * mCompUnit;
     char * mName;
@@ -153,6 +153,8 @@ struct DWARFCache {
     ELF_Section * mDebugARanges;
     ELF_Section * mDebugLine;
     ELF_Section * mDebugLoc;
+    ELF_Section * mDebugFrame;
+    ELF_Section * mEHFrame;
     SymbolSection ** mSymSections;
     unsigned mSymSectionsCnt;
     unsigned mSymSectionsLen;

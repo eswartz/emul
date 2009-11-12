@@ -29,13 +29,6 @@
 #if SERVICE_StackTrace
 
 /*
- * Dump current stack trace into log.
- * The function can be used to debug the agent itself.
- */
-extern void dump_stack_trace(void);
-
-
-/*
  * Check if given context ID is stack frame ID.
  * Return 1 if frame ID, 0 otherwise.
  */
@@ -48,11 +41,8 @@ extern char * get_stack_frame_id(Context * ctx, int frame);
 
 /*
  * Get information about given stack frame.
- * ip - instruction pointer (in this frame)
- * rp - return pointer (parent frame instruction pointer)
- * fp - frame pointer (frame address on the thread stack)
  */
-extern int get_frame_info(Context * ctx, int frame, ContextAddress * ip, ContextAddress * rp, ContextAddress * fp);
+extern int get_frame_info(Context * ctx, int frame, StackFrame ** info);
 
 /*
  * Return 1 if 'frame' is the top frame of the context.
@@ -66,7 +56,7 @@ extern void ini_stack_trace_service(Protocol *, TCFBroadcastGroup *);
 
 #else /* SERVICE_StackTrace */
 
-#define get_frame_info(ctx, frame, ip, rp, fp) (errno = ERR_UNSUPPORTED, -1)
+#define get_frame_info(ctx, frame, info) (errno = ERR_UNSUPPORTED, -1)
 #define is_stack_frame_id(id, ctx, frame) 0
 #define get_stack_frame_id(ctx, frame) NULL
 #define is_top_frame(ctx, frame) (frame == STACK_TOP_FRAME)
