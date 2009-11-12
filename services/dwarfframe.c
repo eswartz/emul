@@ -171,7 +171,6 @@ static U8_T read_frame_data_pointer(U1_T encoding, int abs) {
             v = (I8_T)dio_ReadU8();
             break;
         default:
-            printf("cie at 0x%08x\n", (U4_T)rules.cie_pos);
             str_exception(ERR_INV_DWARF, "Unknown encoding of .eh_frame section pointers");
             break;
         }
