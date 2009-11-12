@@ -65,11 +65,14 @@ static int udp_server_socket = -1;
 static int udp_server_generation = 0;
 
 static AsyncReqInfo recvreq;
+static int recvreq_pending = 0;
 static int recvreq_error_cnt = 0;
 static int recvreq_generation = 0;
 static struct sockaddr_in recvreq_addr;
-static char recvreq_buf[MAX_PACKET_SIZE];
-static int recvreq_pending = 0;
+
+static char recv_buf[MAX_PACKET_SIZE];
+static char send_buf[MAX_PACKET_SIZE];
+static int send_size;
 
 static time_t last_master_packet_time = 0;
 
@@ -83,31 +86,28 @@ static SlaveInfo * slave_info = NULL;
 static int slave_cnt = 0;
 static int slave_max = 0;
 
-#define MAX(x,y) ((x) > (y) ? (x) : (y))
-
-static void app_char(char * buf, int * pos, char ch) {
-    if (*pos < MAX_PACKET_SIZE) buf[*pos] = ch;
-    (*pos)++;
-}
-
-static void app_str(char * buf, int * pos, char * str) {
-    while (*str) {
-        if (*pos < MAX_PACKET_SIZE) buf[*pos] = *str;
-        (*pos)++;
-        str++;
+static void app_char(char ch) {
+    if (send_size < sizeof(send_buf)) {
+        send_buf[send_size++] = ch;
     }
 }
 
-static void app_strz(char * buf, int * pos, char * str) {
-    app_str(buf, pos, str);
-    app_char(buf, pos, 0);
+static void app_str(char * str) {
+    while (*str && send_size < sizeof(send_buf)) {
+        send_buf[send_size++] = *str++;
+    }
 }
 
-static int get_slave_addr(char * buf, int * pos, struct sockaddr_in * addr, time_t * timestamp) {
-    char * port = buf + *pos;
-    char * stmp = buf + *pos;
-    char * host = buf + *pos;
-    int len = strlen(buf + *pos);
+static void app_strz(char * str) {
+    app_str(str);
+    app_char(0);
+}
+
+static int get_slave_addr(char * send_buf, int * pos, struct sockaddr_in * addr, time_t * timestamp) {
+    char * port = send_buf + *pos;
+    char * stmp = send_buf + *pos;
+    char * host = send_buf + *pos;
+    int len = strlen(send_buf + *pos);
     int n = 0;
 
     while (*port && *port != ':') port++;
@@ -156,8 +156,8 @@ static void trigger_recv(void) {
     recvreq.type = AsyncReqRecvFrom;
     recvreq.u.sio.sock = udp_server_socket;
     recvreq.u.sio.flags = 0;
-    recvreq.u.sio.bufp = recvreq_buf;
-    recvreq.u.sio.bufsz = sizeof recvreq_buf;
+    recvreq.u.sio.bufp = recv_buf;
+    recvreq.u.sio.bufsz = sizeof recv_buf;
     recvreq.u.sio.addr = (struct sockaddr *)&recvreq_addr;
     recvreq.u.sio.addrlen = sizeof recvreq_addr;
     memset(&recvreq_addr, 0, sizeof recvreq_addr);
@@ -287,10 +287,8 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
 
     for (n = 0; n < ifc_cnt; n++) {
         int i;
-        int pos = 0;
         struct sockaddr_in * dst_addr;
         struct sockaddr_in dst_addr_buf;
-        char buf[MAX_PACKET_SIZE];
         ip_ifc_info * ifc = ifc_list + n;
 
         if ((ps->flags & PS_FLAG_LOCAL) == 0) {
@@ -326,24 +324,18 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
             inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port), ps->id);
         send_all_ok[n] = 1;
 
-        buf[pos++] = 'T';
-        buf[pos++] = 'C';
-        buf[pos++] = 'F';
-        buf[pos++] = UDP_VERSION;
-        buf[pos++] = UDP_ACK_INFO;
-        buf[pos++] = 0;
-        buf[pos++] = 0;
-        buf[pos++] = 0;
-        app_str(buf, &pos, "ID=");
-        app_strz(buf, &pos, ps->id);
+        send_size = 8;
+        send_buf[4] = UDP_ACK_INFO;
+        app_str("ID=");
+        app_strz(ps->id);
         for (i = 0; i < ps->ind; i++) {
             char * name = ps->list[i].name;
             assert(strcmp(name, "ID") != 0);
-            app_str(buf, &pos, name);
-            app_char(buf, &pos, '=');
-            app_strz(buf, &pos, ps->list[i].value);
+            app_str(name);
+            app_char('=');
+            app_strz(ps->list[i].value);
         }
-        if (sendto(udp_server_socket, buf, pos, 0, (struct sockaddr *)dst_addr, sizeof *dst_addr) < 0) {
+        if (sendto(udp_server_socket, send_buf, send_size, 0, (struct sockaddr *)dst_addr, sizeof *dst_addr) < 0) {
             trace(LOG_ALWAYS, "Can't send UDP discovery reply packet to %s: %s",
                   inet_ntoa(dst_addr->sin_addr), errno_to_str(errno));
         }
@@ -358,7 +350,7 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
                 }
                 trace(LOG_DISCOVERY, "ACK_INFO to %s:%d, ID=%s",
                     inet_ntoa(s->addr.sin_addr), ntohs(s->addr.sin_port), ps->id);
-                if (sendto(udp_server_socket, buf, pos, 0, (struct sockaddr *)&s->addr, sizeof s->addr) < 0) {
+                if (sendto(udp_server_socket, send_buf, send_size, 0, (struct sockaddr *)&s->addr, sizeof s->addr) < 0) {
                     trace(LOG_ALWAYS, "Can't send UDP discovery reply packet to %s:%d: %s",
                           inet_ntoa(s->addr.sin_addr), ntohs(s->addr.sin_port), errno_to_str(errno));
                 }
@@ -376,8 +368,6 @@ static void udp_send_ack_info(struct sockaddr_in * addr) {
 static void udp_send_req_info(struct sockaddr_in * addr) {
     int n;
     for (n = 0; n < ifc_cnt; n++) {
-        int i = 0;
-        char buf[MAX_PACKET_SIZE];
         ip_ifc_info * ifc = ifc_list + n;
         struct sockaddr_in * dst_addr;
         struct sockaddr_in dst_addr_buf;
@@ -400,16 +390,10 @@ static void udp_send_req_info(struct sockaddr_in * addr) {
         trace(LOG_DISCOVERY, "REQ_INFO to %s:%d",
             inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port));
 
-        buf[i++] = 'T';
-        buf[i++] = 'C';
-        buf[i++] = 'F';
-        buf[i++] = UDP_VERSION;
-        buf[i++] = UDP_REQ_INFO;
-        buf[i++] = 0;
-        buf[i++] = 0;
-        buf[i++] = 0;
+        send_size = 8;
+        send_buf[4] = UDP_REQ_INFO;
 
-        if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)dst_addr, sizeof(struct sockaddr_in)) < 0) {
+        if (sendto(udp_server_socket, send_buf, send_size, 0, (struct sockaddr *)dst_addr, sizeof(struct sockaddr_in)) < 0) {
             trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
                   inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port), errno_to_str(errno));
         }
@@ -419,8 +403,6 @@ static void udp_send_req_info(struct sockaddr_in * addr) {
 static void udp_send_empty_packet(struct sockaddr_in * addr) {
     int n;
     for (n = 0; n < ifc_cnt; n++) {
-        int i = 0;
-        char buf[MAX_PACKET_SIZE];
         ip_ifc_info * ifc = ifc_list + n;
         struct sockaddr_in * dst_addr;
         struct sockaddr_in dst_addr_buf;
@@ -445,16 +427,10 @@ static void udp_send_empty_packet(struct sockaddr_in * addr) {
         trace(LOG_DISCOVERY, "ACK_SLAVES (empty) to %s:%d",
             inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port));
 
-        buf[i++] = 'T';
-        buf[i++] = 'C';
-        buf[i++] = 'F';
-        buf[i++] = UDP_VERSION;
-        buf[i++] = UDP_ACK_SLAVES;
-        buf[i++] = 0;
-        buf[i++] = 0;
-        buf[i++] = 0;
+        send_size = 8;
+        send_buf[4] = UDP_ACK_SLAVES;
 
-        if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)dst_addr, sizeof(struct sockaddr_in)) < 0) {
+        if (sendto(udp_server_socket, send_buf, send_size, 0, (struct sockaddr *)dst_addr, sizeof(struct sockaddr_in)) < 0) {
             trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
                   inet_ntoa(dst_addr->sin_addr), ntohs(dst_addr->sin_port), errno_to_str(errno));
         }
@@ -462,48 +438,32 @@ static void udp_send_empty_packet(struct sockaddr_in * addr) {
 }
 
 static void udp_send_req_slaves(struct sockaddr_in * addr) {
-    int i = 0;
-    char buf[MAX_PACKET_SIZE];
-
     trace(LOG_DISCOVERY, "REQ_SLAVES to %s:%d",
         inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
 
-    buf[i++] = 'T';
-    buf[i++] = 'C';
-    buf[i++] = 'F';
-    buf[i++] = UDP_VERSION;
-    buf[i++] = UDP_REQ_SLAVES;
-    buf[i++] = 0;
-    buf[i++] = 0;
-    buf[i++] = 0;
+    send_size = 8;
+    send_buf[4] = UDP_REQ_SLAVES;
 
-    if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof *addr) < 0) {
+    if (sendto(udp_server_socket, send_buf, send_size, 0, (struct sockaddr *)addr, sizeof *addr) < 0) {
         trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
               inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno_to_str(errno));
     }
 }
 
 static void udp_send_ack_slaves_one(SlaveInfo * s) {
-    char buf[MAX_PACKET_SIZE];
     ip_ifc_info * ifc;
     time_t timenow = time(NULL);
 
     for (ifc = ifc_list; ifc < &ifc_list[ifc_cnt]; ifc++) {
         int n = 0;
-        int i = 0;
         char str[256];
         if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) continue;
-        buf[i++] = 'T';
-        buf[i++] = 'C';
-        buf[i++] = 'F';
-        buf[i++] = UDP_VERSION;
-        buf[i++] = UDP_ACK_SLAVES;
-        buf[i++] = 0;
-        buf[i++] = 0;
-        buf[i++] = 0;
+
+        send_size = 8;
+        send_buf[4] = UDP_ACK_SLAVES;
         snprintf(str, sizeof(str), "%lld:%u:%s", (long long)s->last_packet_time,
             ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
-        app_strz(buf, &i, str);
+        app_strz(str);
 
         while (n < slave_cnt) {
             SlaveInfo * s = slave_info + n++;
@@ -511,7 +471,7 @@ static void udp_send_ack_slaves_one(SlaveInfo * s) {
             if (s->last_req_slaves_time + PEER_DATA_RETENTION_PERIOD < timenow) continue;
             trace(LOG_DISCOVERY, "ACK_SLAVES (%s) to %s:%d",
                 str, inet_ntoa(s->addr.sin_addr), ntohs(s->addr.sin_port));
-            if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)&s->addr, sizeof(struct sockaddr_in)) < 0) {
+            if (sendto(udp_server_socket, send_buf, send_size, 0, (struct sockaddr *)&s->addr, sizeof(struct sockaddr_in)) < 0) {
                 trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
                       inet_ntoa(s->addr.sin_addr), ntohs(s->addr.sin_port), errno_to_str(errno));
             }
@@ -521,24 +481,16 @@ static void udp_send_ack_slaves_one(SlaveInfo * s) {
 
 static void udp_send_ack_slaves_all(struct sockaddr_in * addr) {
     time_t timenow = time(NULL);
-    char buf[MAX_PACKET_SIZE];
     int k;
 
     for (k = 0; k < ifc_cnt; k++) {
         int n = 0;
-        int i = 0;
         ip_ifc_info * ifc = ifc_list + k;
 
         if ((ifc->addr & ifc->mask) != (addr->sin_addr.s_addr & ifc->mask)) continue;
 
-        buf[i++] = 'T';
-        buf[i++] = 'C';
-        buf[i++] = 'F';
-        buf[i++] = UDP_VERSION;
-        buf[i++] = UDP_ACK_SLAVES;
-        buf[i++] = 0;
-        buf[i++] = 0;
-        buf[i++] = 0;
+        send_size = 8;
+        send_buf[4] = UDP_ACK_SLAVES;
 
         while (n < slave_cnt) {
             char str[256];
@@ -552,19 +504,19 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr) {
                 ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
             trace(LOG_DISCOVERY, "ACK_SLAVES (%s) to %s:%d",
                 str, inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
-            if (i + strlen(str) >= PREF_PACKET_SIZE) {
-                if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0) {
+            if (send_size + strlen(str) >= PREF_PACKET_SIZE) {
+                if (sendto(udp_server_socket, send_buf, send_size, 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0) {
                     trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
                           inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno_to_str(errno));
                 }
-                i = 8;
+                send_size = 8;
             }
-            app_strz(buf, &i, str);
+            app_strz(str);
             send_all_ok[k] = 1;
         }
 
-        if (i > 8) {
-            if (sendto(udp_server_socket, buf, i, 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0) {
+        if (send_size > 8) {
+            if (sendto(udp_server_socket, send_buf, send_size, 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in)) < 0) {
                 trace(LOG_ALWAYS, "Can't send UDP discovery packet to %s:%d: %s",
                       inet_ntoa(addr->sin_addr), ntohs(addr->sin_port), errno_to_str(errno));
             }
@@ -660,8 +612,8 @@ static void udp_receive_req_info(SlaveInfo * s) {
 
 static void udp_receive_ack_info(void) {
     PeerServer * ps = peer_server_alloc();
-    char * p = recvreq_buf + 8;
-    char * e = recvreq_buf + recvreq.u.sio.rval;
+    char * p = recv_buf + 8;
+    char * e = recv_buf + recvreq.u.sio.rval;
 
     assert(is_dispatch_thread());
     while (p < e) {
@@ -708,7 +660,7 @@ static void udp_receive_ack_slaves(void) {
     while (pos < len) {
         struct sockaddr_in addr;
         time_t timestamp;
-        if (get_slave_addr(recvreq_buf, &pos, &addr, &timestamp)) {
+        if (get_slave_addr(recv_buf, &pos, &addr, &timestamp)) {
             trace(LOG_DISCOVERY, "ACK_SLAVES (%lld:%u:%s) from %s:%d",
                 (long long)timestamp, ntohs(addr.sin_port), inet_ntoa(addr.sin_addr),
                 inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
@@ -733,10 +685,10 @@ static void udp_server_recv(void * x) {
     else {
         recvreq_error_cnt = 0;
         if (recvreq.u.sio.rval >= 8 &&
-                recvreq_buf[0] == 'T' &&
-                recvreq_buf[1] == 'C' &&
-                recvreq_buf[2] == 'F' &&
-                recvreq_buf[3] == UDP_VERSION &&
+                recv_buf[0] == 'T' &&
+                recv_buf[1] == 'C' &&
+                recv_buf[2] == 'F' &&
+                recv_buf[3] == UDP_VERSION &&
                 is_remote(&recvreq_addr)) {
             int n = 0;
             time_t timenow = time(NULL);
@@ -745,7 +697,7 @@ static void udp_server_recv(void * x) {
                 /* Packet from a slave, save its address */
                 s = add_slave(&recvreq_addr, timenow);
             }
-            switch (recvreq_buf[4]) {
+            switch (recv_buf[4]) {
             case UDP_REQ_INFO:
                 udp_receive_req_info(s);
                 break;
@@ -797,6 +749,11 @@ int discovery_start_udp(void) {
     peer_server_add_listener(local_peer_changed, NULL);
     post_event_with_delay(udp_refresh_timer, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
     ifc_cnt = build_ifclist(udp_server_socket, MAX_IFC, ifc_list);
+    memset(send_buf, 0, sizeof(send_buf));
+    send_buf[0] = 'T';
+    send_buf[1] = 'C';
+    send_buf[2] = 'F';
+    send_buf[3] = UDP_VERSION;
     udp_send_req_info(NULL);
     udp_send_all(NULL, NULL);
     return 0;
