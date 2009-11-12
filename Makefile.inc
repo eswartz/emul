@@ -41,7 +41,6 @@ endif
 ifneq ($(OPSYS),Windows)
   CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE
   CFLAGS += -Wall -Wmissing-prototypes -Wno-parentheses
-  CFLAGS += -fno-omit-frame-pointer
 endif
 
 CC ?= gcc
