@@ -37,6 +37,7 @@ public class TCFChildrenRegisters extends TCFChildren {
 
     void onRegistersChanged() {
         for (TCFNode n : getNodes()) ((TCFNodeRegister)n).onRegistersChanged();
+        reset();
     }
 
     @Override
@@ -55,11 +56,13 @@ public class TCFChildrenRegisters extends TCFChildren {
             public void doneGetChildren(IToken token, Exception error, String[] contexts) {
                 Map<String,TCFNode> data = null;
                 if (command == token && error == null) {
+                    int index = 0;
                     data = new HashMap<String,TCFNode>();
                     for (String id : contexts) {
                         TCFNode n = node.model.getNode(id);
                         if (n == null) n = new TCFNodeRegister(parent, id);
                         assert n.parent == parent;
+                        ((TCFNodeRegister)n).setIndex(index++);
                         data.put(id, n);
                     }
                 }

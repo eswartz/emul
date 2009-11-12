@@ -235,7 +235,8 @@ public class TCFTestSuite {
             if (cancel || errors.size() > 0 || pending_tests.size() == 0) {
                 for (IChannel channel : channels) {
                     if (channel != null && channel.getState() != IChannel.STATE_CLOSED) {
-                        channel.close();
+                        if (errors.size() > 0) channel.terminate(new Exception("Test failed"));
+                        else channel.close();
                     }
                 }
                 return;

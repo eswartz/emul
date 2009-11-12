@@ -65,7 +65,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             }
         }
         if (!state.validate(this)) return;
-        if (!state.getData().is_suspended) {
+        if (state.getData() == null || !state.getData().is_suspended) {
             exit(new Exception("Context is not suspended"));
             return;
         }
@@ -101,12 +101,8 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
                 else if (area.end_address != null) pc1 = new BigInteger(area.end_address.toString());
             }
         }
-        if (getStackFrameIndex() != 0) {
-            if (getStackFrameIndex() < 0) {
-                // Stepped out of selected function
-                exit(null);
-            }
-            else if (ctx.canResume(IRunControl.RM_STEP_OUT)) {
+        if (getStackFrameIndex() > 0) {
+            if (ctx.canResume(IRunControl.RM_STEP_OUT)) {
                 ctx.resume(IRunControl.RM_STEP_OUT, 1, new IRunControl.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
                         if (error != null) exit(error);
@@ -139,6 +135,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
                         if (error != null) exit(error);
                     }
                 });
+                step_cnt++;
             }
             else {
                 exit(new Exception("Step over is not supported"));
@@ -163,19 +160,21 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             if (pc.compareTo(pc0) < 0 || pc.compareTo(pc1) >= 0) {
                 if (!line_info.validate(this)) return;
                 TCFSourceRef ref = line_info.getData();
-                if (ref != null && ref.area != null) {
-                    if (isSameLine(source_ref.area, ref.area)) {
-                        source_ref = ref;
-                        ILineNumbers.CodeArea area = source_ref.area;
-                        if (area.start_address instanceof BigInteger) pc0 = (BigInteger)area.start_address;
-                        else if (area.start_address != null) pc0 = new BigInteger(area.start_address.toString());
-                        if (area.end_address instanceof BigInteger) pc1 = (BigInteger)area.end_address;
-                        else if (area.end_address != null) pc1 = new BigInteger(area.end_address.toString());
-                    }
-                    else {
-                        exit(null);
-                        return;
-                    }
+                if (ref == null || ref.area == null) {
+                    exit(null);
+                    return;
+                }
+                else if (isSameLine(source_ref.area, ref.area)) {
+                    source_ref = ref;
+                    ILineNumbers.CodeArea area = source_ref.area;
+                    if (area.start_address instanceof BigInteger) pc0 = (BigInteger)area.start_address;
+                    else if (area.start_address != null) pc0 = new BigInteger(area.start_address.toString());
+                    if (area.end_address instanceof BigInteger) pc1 = (BigInteger)area.end_address;
+                    else if (area.end_address != null) pc1 = new BigInteger(area.end_address.toString());
+                }
+                else {
+                    exit(null);
+                    return;
                 }
             }
         }
@@ -200,6 +199,10 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
     }
 
     protected void exit(Throwable error) {
+        exit(error, "Step Over");
+    }
+
+    protected void exit(Throwable error, String reason) {
         if (exited) return;
         if (bp != null) {
             bps.remove(new String[]{ (String)bp.get(IBreakpoints.PROP_ID) }, new IBreakpoints.DoneCommand() {
@@ -209,7 +212,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
         }
         rc.removeListener(this);
         exited = true;
-        done("Step");
+        done(reason);
     }
 
     public void containerResumed(String[] context_ids) {
@@ -246,15 +249,20 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
     public void contextResumed(String context) {
     }
 
-    public void contextSuspended(String context, String pc, String reason,
-            Map<String, Object> params) {
+    public void contextSuspended(String context, String pc, String reason, Map<String, Object> params) {
         if (!context.equals(ctx.getID())) return;
         if (IRunControl.REASON_STEP.equals(reason) || isMyBreakpoint(pc, reason)) {
             Protocol.invokeLater(this);
+            return;
         }
-        else {
-            exit(null);
+        if (IRunControl.REASON_BREAKPOINT.equals(reason) && pc0 != null && pc1 != null) {
+            BigInteger x = new BigInteger(pc);
+            if (x.compareTo(pc0) >= 0 && x.compareTo(pc1) < 0) {
+                Protocol.invokeLater(this);
+                return;
+            }
         }
+        exit(null, reason);
     }
 
     private boolean isSameLine(ILineNumbers.CodeArea x, ILineNumbers.CodeArea y) {

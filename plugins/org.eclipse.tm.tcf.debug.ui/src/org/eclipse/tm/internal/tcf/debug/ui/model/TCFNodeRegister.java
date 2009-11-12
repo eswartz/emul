@@ -44,6 +44,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         rgb_error = new RGB(255, 0, 0),
         rgb_highlight = new RGB(255, 255, 0);
 
+    private int index;
 
     TCFNodeRegister(TCFNode parent, final String id) {
         super(parent, id);
@@ -84,6 +85,10 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         context.reset(null);
         value.reset(null);
         super.dispose();
+    }
+
+    void setIndex(int index) {
+        this.index = index;
     }
 
     private void appendErrorText(StringBuffer bf, Throwable error) {
@@ -439,5 +444,15 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     public ICellModifier getCellModifier(IPresentationContext context, Object element) {
         assert element == this;
         return cell_modifier;
+    }
+
+    @Override
+    public int compareTo(TCFNode n) {
+        if (n instanceof TCFNodeRegister) {
+            TCFNodeRegister r = (TCFNodeRegister)n;
+            if (index < r.index) return -1;
+            if (index > r.index) return +1;
+        }
+        return id.compareTo(n.id);
     }
 }

@@ -1,5 +1,6 @@
 package org.eclipse.tm.internal.tcf.debug.actions;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,7 +55,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
             }
         }
         if (!state.validate(this)) return;
-        if (!state.getData().is_suspended) {
+        if (state.getData() == null || !state.getData().is_suspended) {
             exit(new Exception("Context is not suspended"));
             return;
         }
@@ -107,6 +108,10 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
     }
 
     protected void exit(Throwable error) {
+        exit(error, "Step Out");
+    }
+
+    protected void exit(Throwable error, String reason) {
         if (exited) return;
         if (bp != null) {
             bps.remove(new String[]{ (String)bp.get(IBreakpoints.PROP_ID) }, new IBreakpoints.DoneCommand() {
@@ -116,7 +121,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
         }
         rc.removeListener(this);
         exited = true;
-        done("Step");
+        done(reason);
     }
 
     public void containerResumed(String[] context_ids) {
@@ -155,6 +160,20 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
 
     public void contextSuspended(String context, String pc, String reason, Map<String,Object> params) {
         if (!context.equals(ctx.getID())) return;
-        exit(null);
+        if (isMyBreakpoint(pc, reason)) {
+            exit(null);
+        }
+        else {
+            exit(null, reason);
+        }
+    }
+
+    private boolean isMyBreakpoint(String pc, String reason) {
+        if (bp == null) return false;
+        if (pc == null) return false;
+        if (!IRunControl.REASON_BREAKPOINT.equals(reason)) return false;
+        BigInteger x = new BigInteger(pc);
+        BigInteger y = new BigInteger((String)bp.get(IBreakpoints.PROP_LOCATION));
+        return x.equals(y);
     }
 }

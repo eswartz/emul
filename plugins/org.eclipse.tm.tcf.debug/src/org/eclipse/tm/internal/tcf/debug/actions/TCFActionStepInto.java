@@ -61,7 +61,7 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
             }
         }
         if (!state.validate(this)) return;
-        if (!state.getData().is_suspended) {
+        if (state.getData() == null || !state.getData().is_suspended) {
             exit(new Exception("Context is not suspended"));
             return;
         }
@@ -160,10 +160,14 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
     }
 
     protected void exit(Throwable error) {
+        exit(error, "Step Into");
+    }
+
+    protected void exit(Throwable error, String reason) {
         if (exited) return;
         rc.removeListener(this);
         exited = true;
-        done("Step");
+        done(reason);
     }
 
     public void containerResumed(String[] context_ids) {
@@ -200,14 +204,13 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
     public void contextResumed(String context) {
     }
 
-    public void contextSuspended(String context, String pc, String reason,
-            Map<String, Object> params) {
+    public void contextSuspended(String context, String pc, String reason, Map<String,Object> params) {
         if (!context.equals(ctx.getID())) return;
         if (IRunControl.REASON_STEP.equals(reason)) {
             Protocol.invokeLater(this);
         }
         else {
-            exit(null);
+            exit(null, reason);
         }
     }
 }
