@@ -620,21 +620,6 @@ static void start_channel(Channel * channel) {
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->socket >= 0);
     c->chan.connecting(&c->chan);
-    c->rdreq.done = tcp_channel_read_done;
-    c->rdreq.client_data = c;
-    if (c->ssl) {
-#if ENABLE_SSL
-        c->rdreq.type = AsyncReqSelect;
-        c->rdreq.u.select.nfds = c->socket + 1;
-#else
-        assert(0);
-#endif
-    }
-    else {
-        c->rdreq.type = AsyncReqRecv;
-        c->rdreq.u.sio.sock = c->socket;
-        c->rdreq.u.sio.flags = 0;
-    }
     ibuf_trigger_read(&c->ibuf);
 }
 
@@ -733,6 +718,21 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
     c->ibuf.trigger_message = tcp_trigger_message;
     c->socket = sock;
     c->lock_cnt = 1;
+    c->rdreq.done = tcp_channel_read_done;
+    c->rdreq.client_data = c;
+    if (c->ssl) {
+#if ENABLE_SSL
+        c->rdreq.type = AsyncReqSelect;
+        c->rdreq.u.select.nfds = c->socket + 1;
+#else
+        assert(0);
+#endif
+    }
+    else {
+        c->rdreq.type = AsyncReqRecv;
+        c->rdreq.u.sio.sock = c->socket;
+        c->rdreq.u.sio.flags = 0;
+    }
     return c;
 }
 

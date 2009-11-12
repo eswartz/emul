@@ -203,6 +203,7 @@ void async_req_post(AsyncReqInfo * req) {
     WorkerThread * wt;
 
     trace(LOG_ASYNCREQ, "async_req_post: req %p, type %d", req, req->type);
+    assert(req->done != NULL);
 
 #if ENABLE_AIO
     {

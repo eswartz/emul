@@ -79,6 +79,7 @@ static void time_add_usec(struct timespec * tv, unsigned long usec) {
 
 static event_node * alloc_node(void (*handler)(void *), void * arg) {
     event_node * node;
+    assert(handler != NULL);
     if (free_queue != NULL) {
         node = free_queue;
         free_queue = node->next;

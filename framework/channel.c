@@ -334,7 +334,7 @@ void channel_start(Channel * c) {
 /*
  * Close communication channel
  */
-void channel_close(Channel *c) {
+void channel_close(Channel * c) {
     trace(LOG_PROTOCOL, "Closing channel %#lx %s", c, c->peer_name);
     c->close(c, 0);
 }
