@@ -117,10 +117,6 @@ static unsigned long handle_cnt = 0;
 static LINK handle_hash[HANDLE_HASH_SIZE];
 static LINK file_info_ring = { NULL, NULL };
 
-#if defined(_WRS_KERNEL)
-#  define FS_ROOT "host:c:/"
-#endif
-
 static OpenFileInfo * create_open_file_info(Channel * ch, char * path, int file, DIR * dir) {
     LINK * list_head = NULL;
 
@@ -357,7 +353,13 @@ static void read_path(InputStream * inp, char * path, int size) {
 #ifdef WIN32
     if (path[0] != 0 && path[1] == ':' && path[2] == '/') return;
 #elif defined(_WRS_KERNEL)
-    if (strncmp(path, FS_ROOT, strlen(FS_ROOT)) == 0) return;
+    {
+        extern DL_LIST iosDvList;
+        DEV_HDR * dev;
+        for (dev = (DEV_HDR *)DLL_FIRST(&iosDvList); dev != NULL; dev = (DEV_HDR *)DLL_NEXT(&dev->node)) {
+            if (strncmp(path, dev->name, strlen(dev->name)) == 0) return;
+        }
+    }
 #endif
     if (path[0] == 0) {
         strncpy(path, get_user_home(), size - 1);
@@ -1174,21 +1176,51 @@ static void command_roots(char * token, Channel * c) {
         }
     }
 #elif defined(_WRS_KERNEL)
-    /* TODO: iosDvList */
-    write_stream(&c->out, '{');
-    json_write_string(&c->out, "FileName");
-    write_stream(&c->out, ':');
-    json_write_string(&c->out, FS_ROOT);
-    memset(&st, 0, sizeof(st));
-    if (stat("/", &st) == 0) {
-        FileAttrs attrs;
-        fill_attrs(&attrs, &st);
-        write_stream(&c->out, ',');
-        json_write_string(&c->out, "Attrs");
-        write_stream(&c->out, ':');
-        write_file_attrs(&c->out, &attrs);
+    {
+        extern DL_LIST iosDvList;
+        DEV_HDR * dev;
+        int cnt = 0;
+        for (dev = (DEV_HDR *)DLL_FIRST(&iosDvList); dev != NULL; dev = (DEV_HDR *)DLL_NEXT(&dev->node)) {
+            FileAttrs attrs;
+            char path[FILE_PATH_SIZE];
+            if (strcmp(dev->name, "host:") == 0) {
+                /* Windows host is special case */
+                int d;
+                for (d = 'a'; d < 'z'; d++) {
+                    snprintf(path, sizeof(path), "%s%c:/", dev->name, d);
+                    if (stat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
+                        fill_attrs(&attrs, &st);
+                        if (cnt > 0) write_stream(&c->out, ',');
+                        write_stream(&c->out, '{');
+                        json_write_string(&c->out, "FileName");
+                        write_stream(&c->out, ':');
+                        json_write_string(&c->out, path);
+                        write_stream(&c->out, ',');
+                        json_write_string(&c->out, "Attrs");
+                        write_stream(&c->out, ':');
+                        write_file_attrs(&c->out, &attrs);
+                        write_stream(&c->out, '}');
+                        cnt++;
+                    }
+                }
+            }
+            snprintf(path, sizeof(path), "%s/", dev->name);
+            if (stat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
+                fill_attrs(&attrs, &st);
+                if (cnt > 0) write_stream(&c->out, ',');
+                write_stream(&c->out, '{');
+                json_write_string(&c->out, "FileName");
+                write_stream(&c->out, ':');
+                json_write_string(&c->out, path);
+                write_stream(&c->out, ',');
+                json_write_string(&c->out, "Attrs");
+                write_stream(&c->out, ':');
+                write_file_attrs(&c->out, &attrs);
+                write_stream(&c->out, '}');
+                cnt++;
+            }
+        }
     }
-    write_stream(&c->out, '}');
 #else
     write_stream(&c->out, '{');
     json_write_string(&c->out, "FileName");
