@@ -104,6 +104,7 @@ struct Context {
 };
 
 extern void ini_contexts(void);
+extern void init_contexts_sys_dep(void);
 
 extern char * signal_name(int signal);
 extern char * signal_description(int signal);
@@ -211,6 +212,24 @@ extern int context_read_mem(Context * ctx, ContextAddress address, void * buf, s
  * Return context memory word size in bytes.
  */
 extern unsigned context_word_size(Context * ctx);
+
+
+/*
+ * Functions that notify listeners of various context event.
+ * They are not supposed to be called by clients.
+ */
+extern void send_context_created_event(Context * ctx);
+extern void send_context_changed_event(Context * ctx);
+extern void send_context_stopped_event(Context * ctx);
+extern void send_context_started_event(Context * ctx);
+extern void send_context_exited_event(Context * ctx);
+
+/*
+ * Functions that are used to create a Context.
+ * They are not supposed to be called by clients.
+ */
+extern Context * create_context(pid_t pid);
+extern void link_context(Context * ctx);
 
 #else /* ENABLE_DebugContext */
 

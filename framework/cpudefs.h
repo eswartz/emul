@@ -25,20 +25,7 @@ typedef uintptr_t ContextAddress; /* Type to represent byte address inside conte
 
 #if ENABLE_DebugContext
 
-#if defined(WIN32) || defined(__CYGWIN__)
-   typedef CONTEXT REG_SET;
-#elif defined(_WRS_KERNEL)
-#  include <regs.h>
-#elif defined(__APPLE__)
-#  include <mach/thread_status.h>
-   typedef x86_thread_state32_t REG_SET;
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
-#  include <machine/reg.h>
-   typedef struct reg REG_SET;
-#else
-#  include <sys/user.h>
-   typedef struct user_regs_struct REG_SET;
-#endif
+#include <regset.h>
 
 typedef struct RegisterDefinition {
     char *      name;           /* pointer to register name */

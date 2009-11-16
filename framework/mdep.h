@@ -354,11 +354,8 @@ extern const char * loc_gai_strerror(int ecode);
 
 #  define O_LARGEFILE 0
 #  define canonicalize_file_name(path) realpath(path, NULL)
-#  define CLOCK_REALTIME 1
-extern char ** environ;
-typedef int clockid_t;
-extern int clock_gettime(clockid_t clock_id, struct timespec * tp);
 #  define SA_LEN(addr) ((addr)->sa_len)
+extern char ** environ;
 
 #else /* not BSD */
 

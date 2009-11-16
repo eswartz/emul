@@ -698,6 +698,14 @@
 				Name="Windows"
 				>
 				<File
+					RelativePath=".\system\Windows\context-win32.c"
+					>
+				</File>
+				<File
+					RelativePath=".\system\Windows\regset.h"
+					>
+				</File>
+				<File
 					RelativePath=".\system\Windows\windbgcache.c"
 					>
 				</File>

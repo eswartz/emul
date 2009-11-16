@@ -878,7 +878,7 @@ static void write_error_code(OutputStream * out, int err, int code) {
     json_write_string(out, "VxWorks");
 #elif defined(__CYGWIN__)
     json_write_string(out, "CygWin");
-#elif defined(__linux)
+#elif defined(__linux__)
     json_write_string(out, "Linux");
 #else
     json_write_string(out, "POSIX");

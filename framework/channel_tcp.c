@@ -894,7 +894,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
             reason = "create";
             continue;
         }
-#ifdef __linux
+#ifdef __linux__
         {
             const int i = 1;
             if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&i, sizeof(i)) < 0) {
