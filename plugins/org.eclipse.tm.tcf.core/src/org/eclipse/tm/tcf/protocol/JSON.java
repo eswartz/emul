@@ -611,6 +611,12 @@ public final class JSON {
         return res;
     }
 
+    /**
+     * Convert Java object to JSON string.
+     * @param o - a Java object
+     * @return JASON string
+     * @throws IOException
+     */
     public static String toJSON(Object o) throws IOException {
         assert Protocol.isDispatchThread();
         tmp_buf_pos = 0;
@@ -620,6 +626,12 @@ public final class JSON {
         return new String(tmp_buf, 0, tmp_buf_pos);
     }
 
+    /**
+     * Convert Java object to array of bytes that contains UTF-8 encoded JSON string.
+     * @param o - a Java object
+     * @return array of bytes
+     * @throws IOException
+     */
     public static byte[] toJASONBytes(Object o) throws IOException {
         assert Protocol.isDispatchThread();
         tmp_buf_pos = 0;
@@ -629,6 +641,13 @@ public final class JSON {
         return toBytes();
     }
 
+    /**
+     * Convert multiple Java object to array of bytes that contains
+     * a sequence of zero terminate UTF-8 encoded JSON strings.
+     * @param o - array of Java objects
+     * @return array of bytes
+     * @throws IOException
+     */
     public static byte[] toJSONSequence(Object[] o) throws IOException {
         assert Protocol.isDispatchThread();
         if (o == null || o.length == 0) return null;
@@ -642,6 +661,16 @@ public final class JSON {
         return toBytes();
     }
 
+    /**
+     * Convert multiple Java object to array of bytes that contains
+     * a sequence of zero terminate UTF-8 encoded JSON strings.
+     * @param o - array of Java objects
+     * @param zero_copy - true to enable "zero copy" JSON extension.
+     * "zero copy" extension allows insertion of binary data arrays into JSON string.
+     * The extension allows more efficient transfer of large binary blocs.
+     * @return array of bytes
+     * @throws IOException
+     */
     public static byte[] toJSONSequence(Object[] o, boolean zero_copy) throws IOException {
         assert Protocol.isDispatchThread();
         if (o == null || o.length == 0) return null;
@@ -655,6 +684,12 @@ public final class JSON {
         return toBytes();
     }
 
+    /**
+     * Convert byte array that contains UTF-8 encoded JSON string to Java object.
+     * @param b - array of bytes with UTF-8 encoded JSON string
+     * @return Java object that represents data in the JSON string
+     * @throws IOException
+     */
     public static Object parseOne(byte[] b) throws IOException {
         assert Protocol.isDispatchThread();
         if (b.length == 0) return null;
@@ -666,6 +701,13 @@ public final class JSON {
         return readObject();
     }
 
+    /**
+     * Convert byte array that contains sequence of zero terminated UTF-8 encoded JSON string
+     * to array of Java objects.
+     * @param b - array of bytes with sequence of zero terminated UTF-8 encoded JSON string
+     * @return array of Java objects that represents data in the sequence of JSON strings
+     * @throws IOException
+     */
     public static Object[] parseSequence(byte[] b) throws IOException {
         assert Protocol.isDispatchThread();
         inp = b;
@@ -676,6 +718,13 @@ public final class JSON {
         return readSequence();
     }
 
+    /**
+     * Converts a Java object to array of bytes.
+     * The object is expected to be created from a JSON string by using one of methods in this class.
+     * If the object is not one of supported representations of binary data, the method throws Error.
+     * @param o - a Java object representing JSON binary data
+     * @return array of bytes
+     */
     public static byte[] toByteArray(Object o) {
         if (o == null) return null;
         if (o instanceof byte[]) return (byte[])o;
@@ -684,6 +733,15 @@ public final class JSON {
         throw new Error();
     }
 
+    /**
+     * Converts a Java object to bytes in a given array of bytes.
+     * The object is expected to be created from a JSON string by using one of methods in this class.
+     * If the object is not one of supported representations of binary data, the method throws Error.
+     * @param buf - destination array of bytes
+     * @param offs - starting position in the destination array
+     * @param size - the number of bytes to be copied into the destination array
+     * @param o - a Java object representing JSON binary data
+     */
     public static void toByteArray(byte[] buf, int offs, int size, Object o) {
         if (o instanceof char[]) Base64.toByteArray(buf, offs, size, (char[])o);
         else if (o instanceof String) Base64.toByteArray(buf, offs, size, ((String)o).toCharArray());
