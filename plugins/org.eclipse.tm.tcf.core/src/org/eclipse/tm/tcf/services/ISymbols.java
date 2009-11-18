@@ -117,6 +117,18 @@ public interface ISymbols extends IService {
         int getLength();
 
         /**
+         * If symbol is an array type - return array index lower bound.
+         * @return lower bound.
+         */
+        Number getLowerBound();
+
+        /**
+         * If symbol is an array type - return array index upper bound.
+         * @return upper bound.
+         */
+        Number getUpperBound();
+
+        /**
          * Return offset from 'this' for member of class, struct or union.
          * @return offset in bytes.
          */
@@ -155,6 +167,8 @@ public interface ISymbols extends IService {
         PROP_INDEX_TYPE_ID = "IndexTypeID",
         PROP_SIZE = "Size",
         PROP_LENGTH = "Length",
+        PROP_LOWER_BOUND = "LowerBound",
+        PROP_UPPER_BOUND = "UpperBound",
         PROP_OFFSET = "Offset",
         PROP_ADDRESS = "Address",
         PROP_VALUE = "Value";

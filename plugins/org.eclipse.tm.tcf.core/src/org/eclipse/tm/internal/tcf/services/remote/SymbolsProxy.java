@@ -49,6 +49,14 @@ public class SymbolsProxy implements ISymbols {
             return n.intValue();
         }
 
+        public Number getLowerBound() {
+            return (Number)props.get(PROP_LOWER_BOUND);
+        }
+
+        public Number getUpperBound() {
+            return (Number)props.get(PROP_UPPER_BOUND);
+        }
+
         public String getName() {
             return (String)props.get(PROP_NAME);
         }
