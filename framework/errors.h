@@ -50,17 +50,39 @@
 #define ERR_INV_COMMAND         (STD_ERR_BASE + 25)
 #define ERR_INV_TRANSPORT       (STD_ERR_BASE + 26)
 
-#define ERR_EXCEPTION           (STD_ERR_BASE + 100)
-
 /*
  * Convert error code to human readable string
  */
 extern const char * errno_to_str(int no);
 
-extern int set_exception_errno(int no, char * msg);
-extern int get_exception_errno(int no);
+/*
+ * Set errno to indicate given error code and additional error message.
+ * The message will be concatenated with normal error text by errno_to_str().
+ * Return new error code that designates both original code and the message.
+ */
+extern int set_errno(int no, char * msg);
 
+/*
+ * If 'no' is an error code with a message,
+ * return original error code - without the message,
+ * otherwise return 'no'.
+ */
+extern int get_errno(int no);
+
+/*
+ * Set errno to indicate getaddrinfo() error code.
+ * Return new value of errno.
+ */
 extern int set_gai_errno(int gai_error_code);
+
+#ifdef WIN32
+/*
+ * Set errno to indicate WIN32 error code.
+ * Return new value of errno.
+ */
+extern int set_win32_errno(DWORD win32_error_code);
+extern DWORD get_win32_errno(int no);
+#endif
 
 /*
  * check_error(): Check error code.
@@ -72,14 +94,5 @@ extern void check_error(int error);
 extern void check_error_debug(char * file, int line, int error);
 #define check_error(error) check_error_debug(__FILE__, __LINE__, error)
 #endif
-
-#ifdef WIN32
-/*
- * Set errno to WIN32 error code.
- */
-extern int set_win32_errno(DWORD win32_error_code);
-extern DWORD get_win32_errno(int no);
-#endif
-
 
 #endif /* D_errors */

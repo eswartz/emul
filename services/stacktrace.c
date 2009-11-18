@@ -178,8 +178,7 @@ static StackTrace * create_stack_trace(Context * ctx) {
     }
     else if (trace_stack(ctx) < 0) {
         stack_trace = (StackTrace *)ctx->stack_trace;
-        stack_trace->error = errno;
-        /* TODO: need to save error message text in stack_trace */
+        stack_trace->error = get_errno(errno);
     }
     else {
         stack_trace = (StackTrace *)ctx->stack_trace;

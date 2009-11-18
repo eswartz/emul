@@ -897,7 +897,7 @@ void write_error_object(OutputStream * out, int err) {
 
         write_stream(out, '{');
 
-        err = get_exception_errno(err);
+        err = get_errno(err);
         if (err > STD_ERR_BASE) code = err - STD_ERR_BASE;
         write_error_code(out, err, code);
 
@@ -920,7 +920,7 @@ void write_service_error(OutputStream * out, int err, const char * service_name,
 
         write_stream(out, '{');
 
-        err = get_exception_errno(err);
+        err = get_errno(err);
         write_error_code(out, err, service_error);
 
         json_write_string(out, "Service");

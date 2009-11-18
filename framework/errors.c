@@ -24,19 +24,37 @@
 #include "events.h"
 #include "trace.h"
 
-#define ERR_SYSTEM  (ERR_EXCEPTION + 1)
-#define ERR_GAI     (ERR_EXCEPTION + 2)
+#define ERR_MESSAGE_MIN         (STD_ERR_BASE + 100)
+#define ERR_MESSAGE_MAX         (STD_ERR_BASE + 107)
 
-static char exception_msg[256];
-static int exception_no;
+#define MESSAGE_CNT             (ERR_MESSAGE_MAX - ERR_MESSAGE_MIN + 1)
 
-static int errno_gai;
+#define SRC_SYSTEM  1
+#define SRC_GAI     2
+#define SRC_MESSAGE 3
+
+typedef struct ErrorMessage {
+    int source;
+    int error;
+    char text[128];
+} ErrorMessage;
+
+static ErrorMessage msgs[MESSAGE_CNT];
+static int msgs_pos = 0;
+
+static ErrorMessage * alloc_msg(int source) {
+    ErrorMessage * m;
+    assert(is_dispatch_thread());
+    m = msgs + msgs_pos;
+    errno = ERR_MESSAGE_MIN + msgs_pos++;
+    if (msgs_pos >= MESSAGE_CNT) msgs_pos = 0;
+    m->source = source;
+    return m;
+}
 
 #ifdef WIN32
 
-static DWORD errno_win32 = 0;
-
-static char * system_strerror(void) {
+static char * system_strerror(DWORD errno_win32) {
     static char msg[256];
     LPVOID msg_buf;
     assert(is_dispatch_thread());
@@ -66,14 +84,9 @@ static char * system_strerror(void) {
 }
 
 int set_win32_errno(DWORD win32_error_code) {
-    assert(is_dispatch_thread());
-    /* For WIN32 errors we always set errno to ERR_SYSTEM and
-     * store actual error code in errno_win32, which is used later
-     * when anyone calls errno_to_str() to get actual error message string.
-     */
     if (win32_error_code) {
-        errno = ERR_SYSTEM;
-        errno_win32 = win32_error_code;
+        ErrorMessage * m = alloc_msg(SRC_SYSTEM);
+        m->error = win32_error_code;
     }
     else {
         errno = 0;
@@ -82,7 +95,11 @@ int set_win32_errno(DWORD win32_error_code) {
 }
 
 DWORD get_win32_errno(int no) {
-    return no == ERR_SYSTEM ? errno_win32 : 0;
+    if (no >= ERR_MESSAGE_MIN && no <= ERR_MESSAGE_MAX) {
+        ErrorMessage * m = msgs + (no - ERR_MESSAGE_MIN);
+        if (m->source == SRC_SYSTEM) return m->error;
+    }
+    return 0;
 }
 
 #endif
@@ -140,42 +157,51 @@ const char * errno_to_str(int err) {
         return "Command is not recognized";
     case ERR_INV_TRANSPORT:
         return "Invalid transport name";
-    case ERR_EXCEPTION:
-        snprintf(buf, sizeof(buf), "%s: %s", errno_to_str(exception_no), exception_msg);
-        return buf;
-#ifdef WIN32
-    case ERR_SYSTEM:
-        return system_strerror();
-#endif
-    case ERR_GAI:
-        return loc_gai_strerror(errno_gai);
     default:
+        if (err >= ERR_MESSAGE_MIN && err <= ERR_MESSAGE_MAX) {
+            ErrorMessage * m = msgs + (err - ERR_MESSAGE_MIN);
+            switch (m->source) {
+#ifdef WIN32
+            case SRC_SYSTEM:
+                return system_strerror(m->error);
+#endif
+            case SRC_GAI:
+                return loc_gai_strerror(m->error);
+            case SRC_MESSAGE:
+                snprintf(buf, sizeof(buf), "%s: %s", errno_to_str(m->error), m->text);
+                return buf;
+            }
+        }
         return strerror(err);
     }
 }
 
-int set_exception_errno(int no, char * msg) {
-    assert(is_dispatch_thread());
-    if (msg == NULL) {
-        errno = no;
-    }
-    else {
-        errno = ERR_EXCEPTION;
-        if (no != ERR_EXCEPTION) exception_no = no;
-        strncpy(exception_msg, msg, sizeof(exception_msg) - 1);
-        exception_msg[sizeof(exception_msg) - 1] = 0;
+int set_errno(int no, char * msg) {
+    errno = no;
+    if (no != 0 && msg != NULL) {
+        ErrorMessage * m = alloc_msg(SRC_MESSAGE);
+        m->error = get_errno(no);
+        memset(m->text, 0, sizeof(m->text));
+        strncpy(m->text, msg, sizeof(m->text) - 1);
     }
     return errno;
 }
 
-int get_exception_errno(int no) {
-    return no == ERR_EXCEPTION ? exception_no : no;
+int get_errno(int no) {
+    if (no >= ERR_MESSAGE_MIN && no <= ERR_MESSAGE_MAX) {
+        ErrorMessage * m = msgs + (no - ERR_MESSAGE_MIN);
+        if (m->source == SRC_MESSAGE) return m->error;
+        return ERR_OTHER;
+    }
+    return no;
 }
 
-int set_gai_errno(int n) {
-    assert(is_dispatch_thread());
-    errno = ERR_GAI;
-    errno_gai = n;
+int set_gai_errno(int no) {
+    errno = no;
+    if (no != 0) {
+        ErrorMessage * m = alloc_msg(SRC_GAI);
+        m->error = no;
+    }
     return errno;
 }
 

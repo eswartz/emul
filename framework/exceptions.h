@@ -40,7 +40,7 @@ typedef struct Trap Trap;
 
 struct Trap {
     int error;
-    char msg[256];
+    char msg[128];
     jmp_buf env;
     Trap * next;
 };

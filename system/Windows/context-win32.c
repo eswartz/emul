@@ -207,7 +207,7 @@ static void event_win32_context_stopped(Context * ctx) {
     memset(&ctx->regs, 0, sizeof(ctx->regs));
     ctx->regs.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
     if (GetThreadContext(ctx->handle, &ctx->regs) == 0) {
-        ctx->regs_error = log_error("GetThreadContext", 0);
+        ctx->regs_error = get_errno(log_error("GetThreadContext", 0));
     }
     else {
         trace(LOG_CONTEXT, "context: get regs OK: ctx %#lx, pid %d, PC %#lx",

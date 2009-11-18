@@ -37,7 +37,7 @@ static unsigned sExprStackLen = 0;
 static unsigned sExprStackMax = 0;
 static int sKeepStack = 0;
 
-#define check_e_stack(n) if (sExprStackLen < n) { errno = set_exception_errno(ERR_INV_DWARF, "invalid DWARF expression stack"); return -1; }
+#define check_e_stack(n) if (sExprStackLen < n) { set_errno(ERR_INV_DWARF, "invalid DWARF expression stack"); return -1; }
 
 static ObjectInfo * get_parent_function(ObjectInfo * Info) {
     while (Info != NULL) {
@@ -95,7 +95,7 @@ static int register_access_func(PropertyValue * Value, int write, U8_T * Data) {
 
 static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * Buf, size_t Size) {
     if (Size == 0) {
-        errno = set_exception_errno(ERR_INV_DWARF, "DWARF expression size = 0");
+        set_errno(ERR_INV_DWARF, "DWARF expression size = 0");
         return -1;
     }
     dio_EnterDataSection(&Value->mObject->mCompUnit->mDesc, Buf, 0, Size);
@@ -111,7 +111,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
         case OP_addr:
             if ((sExprStack[sExprStackLen++] = elf_map_to_run_time_address(
                     Value->mContext, Value->mObject->mCompUnit->mFile, (ContextAddress)dio_ReadAddress())) == 0) {
-                errno = set_exception_errno(ERR_INV_DWARF, "object has no RT address");
+                set_errno(ERR_INV_DWARF, "object has no RT address");
                 return -1;
             }
             break;
@@ -448,7 +448,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
             {
                 unsigned n = Op - OP_reg0;
                 if (dio_GetPos() < Size) {
-                    errno = set_exception_errno(ERR_INV_DWARF, "OP_reg must be last instruction");
+                    set_errno(ERR_INV_DWARF, "OP_reg must be last instruction");
                     return -1;
                 }
                 Value->mValue = n;
@@ -459,7 +459,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
             {
                 unsigned n = dio_ReadULEB128();
                 if (dio_GetPos() < Size) {
-                    errno = set_exception_errno(ERR_INV_DWARF, "OP_regx must be last instruction");
+                    set_errno(ERR_INV_DWARF, "OP_regx must be last instruction");
                     return -1;
                 }
                 Value->mValue = n;
@@ -510,7 +510,7 @@ static int evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * B
 
                 memset(&FP, 0, sizeof(FP));
                 sKeepStack++;
-                if (Parent == NULL) error = set_exception_errno(ERR_INV_DWARF, "OP_fbreg: no parent function");
+                if (Parent == NULL) error = set_errno(ERR_INV_DWARF, "OP_fbreg: no parent function");
                 if (!error && read_and_evaluate_dwarf_object_property(Value->mContext, Value->mFrame, 0, Parent, AT_frame_base, &FP) < 0) error = errno;
                 sKeepStack--;
 
@@ -568,7 +568,7 @@ static int evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
 
     assert(Cache->magic == SYM_CACHE_MAGIC);
     if (Cache->mDebugLoc == NULL) {
-        errno = set_exception_errno(ERR_INV_DWARF, "missing .debug_loc section");
+        set_errno(ERR_INV_DWARF, "missing .debug_loc section");
         return -1;
     }
     if (elf_load(Cache->mDebugLoc) < 0) return -1;
@@ -585,7 +585,7 @@ static int evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
         BaseMark = ~(U8_T)0;
         break;
     default:
-        errno = set_exception_errno(ERR_INV_DWARF, "invalid .debug_loc pointer size");
+        set_errno(ERR_INV_DWARF, "invalid .debug_loc pointer size");
         return -1;
     }
     Base = Value->mObject->mCompUnit->mLowPC;
@@ -630,7 +630,7 @@ int dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
     }
     if (set_trap(&trap)) {
         if (Value->mAccessFunc != NULL || Value->mAddr == NULL || Value->mSize == 0) {
-            error = set_exception_errno(ERR_INV_DWARF, "invalid DWARF expression reference");
+            error = set_errno(ERR_INV_DWARF, "invalid DWARF expression reference");
         }
         else if (Value->mForm == FORM_DATA4 || Value->mForm == FORM_DATA8) {
             if (evaluate_location(BaseAddress, Value) < 0) error = errno;
@@ -645,7 +645,7 @@ int dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
     }
 
     if (!error && !sKeepStack && sExprStackLen != (Value->mAccessFunc == NULL ? 1u : 0u)) {
-        error = set_exception_errno(ERR_INV_DWARF, "invalid DWARF expression stack");
+        error = set_errno(ERR_INV_DWARF, "invalid DWARF expression stack");
     }
 
     if (!error) {
