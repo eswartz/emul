@@ -577,6 +577,28 @@ int get_symbol_length(const Symbol * sym, int frame, unsigned long * length) {
     return 0;
 }
 
+int get_symbol_lower_bound(const Symbol * sym, int frame, unsigned long * value) {
+    Symbol type = *sym;
+    DWORD tag = 0;
+
+    if (LOC(sym)->ptr_index) {
+        *value = 0;
+        return 0;
+    }
+    if (LOC(sym)->bst_index) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    if (get_type_tag(&type, &tag)) return -1;
+    switch (tag) {
+    case SymTagArrayType:
+        *value = 0;
+        return 0;
+    }
+    errno = ERR_INV_CONTEXT;
+    return -1;
+}
+
 int get_symbol_children(const Symbol * sym, Symbol ** children, int * count) {
 
     static const DWORD FINDCHILDREN_BUF_SIZE = 64;

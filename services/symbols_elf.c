@@ -980,6 +980,41 @@ int get_symbol_length(const Symbol * sym, int frame, unsigned long * length) {
     return -1;
 }
 
+int get_symbol_lower_bound(const Symbol * sym, int frame, unsigned long * value) {
+    if (LOC(sym)->pointer) {
+        *value = 0;
+        return 0;
+    }
+    if (LOC(sym)->size) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    if (unpack(sym) < 0) return -1;
+    if (obj != NULL) {
+        obj = get_object_type(obj);
+        if (obj->mTag == TAG_array_type) {
+            int i = dimension;
+            ObjectInfo * idx = obj->mChildren;
+            while (i > 0 && idx != NULL) {
+                idx = idx->mSibling;
+                i--;
+            }
+            if (idx != NULL) {
+                Trap trap;
+                U8_T x;
+                int y;
+                if (!set_trap(&trap)) return -1;
+                y = get_num_prop(sym->ctx, frame, obj, AT_lower_bound, &x);
+                clear_trap(&trap);
+                *value = y ? (unsigned long)x : 0;
+                return 0;
+            }
+        }
+    }
+    errno = ERR_UNSUPPORTED;
+    return -1;
+}
+
 int get_symbol_children(const Symbol * sym, Symbol ** children, int * count) {
     int n = 0;
     if (LOC(sym)->pointer || LOC(sym)->size) {

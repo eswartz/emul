@@ -110,6 +110,9 @@ extern int get_symbol_index_type(const Symbol * sym, Symbol * index_type);
 /* Get array length (number of elements) */
 extern int get_symbol_length(const Symbol * sym, int frame, unsigned long * length);
 
+/* Get array index lower bound (index of first element) */
+extern int get_symbol_lower_bound(const Symbol * sym, int frame, unsigned long * value);
+
 /* Get children type IDs (struct, union, class, function and enum),
  * clients should call loc_free to dispose the resul */
 extern int get_symbol_children(const Symbol * sym, Symbol ** children, int * count);

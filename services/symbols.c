@@ -50,7 +50,8 @@ static void command_get_context(char * token, Channel * c) {
         unsigned long length = 0;
         unsigned long offset = 0;
         ContextAddress address = 0;
-        int frame = STACK_NO_FRAME; /* TODO: symbol frame */
+        /* Symbols service only provides static data - without stack frame */
+        int frame = STACK_NO_FRAME;
 
         write_stream(&c->out, '{');
 
@@ -112,6 +113,18 @@ static void command_get_context(char * token, Channel * c) {
             write_stream(&c->out, ':');
             json_write_long(&c->out, length);
             write_stream(&c->out, ',');
+
+            if (get_symbol_lower_bound(&sym, frame, &offset) == 0) {
+                json_write_string(&c->out, "LowerBound");
+                write_stream(&c->out, ':');
+                json_write_long(&c->out, offset);
+                write_stream(&c->out, ',');
+
+                json_write_string(&c->out, "UpperBound");
+                write_stream(&c->out, ':');
+                json_write_long(&c->out, offset + length - 1);
+                write_stream(&c->out, ',');
+            }
         }
 
         if (sym.sym_class == SYM_CLASS_REFERENCE) {

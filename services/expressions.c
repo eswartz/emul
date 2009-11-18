@@ -1008,8 +1008,10 @@ static void op_index(int mode, Value * v) {
     if (get_symbol_size(&type, expression_frame, &size) < 0) {
         error(errno, "Cannot get array element type");
     }
-    /* TODO: array lowest bound */
-    offs = (unsigned long)to_uns(mode, &i) * size;
+    if (get_symbol_lower_bound(&v->type, expression_frame, &offs) < 0) {
+        error(errno, "Cannot get array lower bound");
+    }
+    offs = ((unsigned long)to_uns(mode, &i) - offs) * size;
     if (v->type_class == TYPE_CLASS_ARRAY && offs + size > v->size) {
         error(ERR_INV_EXPRESSION, "Invalid index");
     }
