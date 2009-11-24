@@ -37,7 +37,7 @@ struct Value {
 typedef struct Value Value;
 
 /*
- * ExpressionIdentifierCallBack is called for every identifier founf in an expression during evaluation,
+ * ExpressionIdentifierCallBack is called for every identifier found in an expression during evaluation,
  * If callback knows value of the idenfifier it should fill Value struct and return 1,
  * otherwise it should return 0.
  */
