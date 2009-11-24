@@ -547,6 +547,7 @@ static void post_io_requst(OpenFileInfo * handle) {
                 if (fstat(handle->file, &buf) < 0) err = errno;
                 reply_stat(req->token, handle->out, err, &buf);
                 list_remove(link);
+                loc_free(req);
             }
             continue;
         case REQ_FSETSTAT:
@@ -576,6 +577,7 @@ static void post_io_requst(OpenFileInfo * handle) {
                 }
                 reply_setstat(req->token, handle->out, err);
                 list_remove(link);
+                loc_free(req);
             }
             continue;
         }
