@@ -55,7 +55,10 @@ struct VirtualStream {
     unsigned buf_len;
     unsigned buf_inp;
     unsigned buf_out;
-    unsigned eos;
+    unsigned eos_inp;
+    unsigned eos_out;
+    unsigned data_available_posted;
+    unsigned space_available_posted;
 };
 
 struct StreamClient {
@@ -233,14 +236,16 @@ static void delete_stream(void * args) {
 static void notify_data_available(void * args) {
     VirtualStream * stream = (VirtualStream *)args;
     assert(stream->magic == STREAM_MAGIC);
-    if (stream->deleted) return;
+    stream->data_available_posted = 0;
+    if (stream->deleted || stream->eos_out) return;
     stream->callback(stream, VS_EVENT_DATA_AVAILABLE, stream->callback_args);
 }
 
 static void notify_space_available(void * args) {
     VirtualStream * stream = (VirtualStream *)args;
     assert(stream->magic == STREAM_MAGIC);
-    if (stream->deleted) return;
+    stream->space_available_posted = 0;
+    if (stream->deleted || stream->eos_inp) return;
     stream->callback(stream, VS_EVENT_SPACE_AVAILABLE, stream->callback_args);
 }
 
@@ -267,8 +272,10 @@ static void advance_stream_buffer(VirtualStream * stream) {
         /* TODO: drop stream data */
         assert(0);
     }
-    if (len != (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len) {
+    if (len != (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len &&
+        !stream->space_available_posted) {
         post_event(notify_space_available, stream);
+        stream->space_available_posted = 1;
     }
 }
 
@@ -345,7 +352,7 @@ static void send_read_reply(StreamClient * client, char * token, size_t size) {
     unsigned pos = 0;
     unsigned len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
 
-    assert(len > 0 || stream->eos);
+    assert(len > 0 || stream->eos_inp);
     assert(client->pos <= stream->pos);
     if ((uint64_t)len < stream->pos - client->pos) {
         lost = (long)(stream->pos - client->pos - len);
@@ -367,7 +374,7 @@ static void send_read_reply(StreamClient * client, char * token, size_t size) {
     assert(read1 + read2 == len);
     client->pos += lost + read1 + read2;
     assert(client->pos <= stream->pos);
-    if (client->pos == stream->pos && stream->eos) eos = 1;
+    if (client->pos == stream->pos && stream->eos_inp) eos = 1;
     assert(eos || lost + read1 + read2 > 0);
 
     write_stringz(&c->out, "R");
@@ -446,7 +453,7 @@ int virtual_stream_add_data(VirtualStream * stream, char * buf, size_t buf_size,
     int err = 0;
 
     assert(stream->magic == STREAM_MAGIC);
-    if (stream->eos) err = ERR_EOF;
+    if (stream->eos_inp) err = ERR_EOF;
 
     if (!err) {
         unsigned len = (stream->buf_out + stream->buf_len - stream->buf_inp - 1) % stream->buf_len;
@@ -464,15 +471,15 @@ int virtual_stream_add_data(VirtualStream * stream, char * buf, size_t buf_size,
         stream->buf_inp = (stream->buf_inp + len) % stream->buf_len;
         stream->pos += len;
         *data_size = len;
-        if (eos && buf_size == len) stream->eos = 1;
+        if (eos && buf_size == len) stream->eos_inp = 1;
     }
 
     if (stream->access & VS_ENABLE_REMOTE_READ) {
-        if (!err && (stream->eos || *data_size > 0)) {
+        if (!err && (stream->eos_inp || *data_size > 0)) {
             LINK * l;
             for (l = stream->clients.next; l != &stream->clients; l = l->next) {
                 StreamClient * client = stream2client(l);
-                while (!list_is_empty(&client->read_requests) && (client->pos < stream->pos || stream->eos)) {
+                while (!list_is_empty(&client->read_requests) && (client->pos < stream->pos || stream->eos_inp)) {
                     ReadRequest * r = client2read_request(client->read_requests.next);
                     list_remove(&r->link_client);
                     send_read_reply(client, r->token, r->size);
@@ -482,8 +489,9 @@ int virtual_stream_add_data(VirtualStream * stream, char * buf, size_t buf_size,
             advance_stream_buffer(stream);
         }
     }
-    else {
+    else if (!stream->data_available_posted) {
         post_event(notify_data_available, stream);
+        stream->data_available_posted = 1;
     }
 
     errno = err;
@@ -501,9 +509,10 @@ int virtual_stream_get_data(VirtualStream * stream, char * buf, size_t buf_size,
         *eos = 0;
     }
     else {
-        *eos = stream->eos;
+        *eos = stream->eos_inp;
     }
     *data_size = len;
+    if (*eos) stream->eos_out = 1;
     if (stream->buf_out + len <= stream->buf_len) {
         memcpy(buf, stream->buf + stream->buf_out, len);
     }
@@ -537,7 +546,10 @@ int virtual_stream_get_data(VirtualStream * stream, char * buf, size_t buf_size,
     if ((stream->access & VS_ENABLE_REMOTE_READ) == 0 && len > 0) {
         stream->buf_out = (stream->buf_out + len) % stream->buf_len;
         assert(!*eos || stream->buf_out == stream->buf_inp);
-        post_event(notify_space_available, stream);
+        if (!stream->space_available_posted) {
+            post_event(notify_space_available, stream);
+            stream->space_available_posted = 1;
+        }
     }
     return 0;
 }
@@ -633,7 +645,7 @@ static void command_read(char * token, Channel * c) {
 
     if (err == 0) {
         VirtualStream * stream = client->stream;
-        if (client->pos == stream->pos && !stream->eos) {
+        if (client->pos == stream->pos && !stream->eos_inp) {
             ReadRequest * r = loc_alloc_zero(sizeof(ReadRequest));
             list_init(&r->link_client);
             r->client = client;

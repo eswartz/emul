@@ -243,6 +243,8 @@ static void streams_test_callback(VirtualStream * stream, int event_code, void *
         st->buf_pos += done;
         if (st->buf_pos == st->buf_len && st->inp_eos) st->out_eos = 1;
     }
+
+    if (st->inp_eos && st->out_eos) loc_free(st);
 }
 
 #endif /* SERVICE_Streams */
