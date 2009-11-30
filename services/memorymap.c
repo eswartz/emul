@@ -110,25 +110,25 @@ static MemoryMap * get_memory_map(Context * ctx) {
         }
         file_name[i++] = 0;
 
-        if (map->region_cnt >= map->region_max) {
-            map->region_max += 8;
-            map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
-        }
-        r = map->regions + map->region_cnt++;
-        memset(r, 0, sizeof(MemoryRegion));
-        r->addr = addr0;
-        r->size = addr1 - addr0;
-        r->file_offs = offset;
-        r->dev = MKDEV(dev_ma, dev_mi);
-        r->ino = (ino_t)inode;
         if (inode != 0 && file_name[0]) {
+            if (map->region_cnt >= map->region_max) {
+                map->region_max += 8;
+                map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+            }
+            r = map->regions + map->region_cnt++;
+            memset(r, 0, sizeof(MemoryRegion));
+            r->addr = addr0;
+            r->size = addr1 - addr0;
+            r->file_offs = offset;
+            r->dev = MKDEV(dev_ma, dev_mi);
+            r->ino = (ino_t)inode;
             r->file_name = loc_strdup(file_name);
-        }
-        for (i = 0; permissions[i]; i++) {
-            switch (permissions[i]) {
-            case 'r': r->flags |= MM_FLAG_R; break;
-            case 'w': r->flags |= MM_FLAG_W; break;
-            case 'x': r->flags |= MM_FLAG_X; break;
+            for (i = 0; permissions[i]; i++) {
+                switch (permissions[i]) {
+                case 'r': r->flags |= MM_FLAG_R; break;
+                case 'w': r->flags |= MM_FLAG_W; break;
+                case 'x': r->flags |= MM_FLAG_X; break;
+                }
             }
         }
     }
