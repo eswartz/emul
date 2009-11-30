@@ -477,8 +477,6 @@ int id2symbol(char * id, Symbol * sym) {
     char * p;
     Trap trap;
 
-    if (get_sym_context(sym->ctx, STACK_NO_FRAME) < 0) return -1;
-
     memset(sym, 0, sizeof(Symbol));
     if (id != NULL && id[0] == 'P' && id[1] == 'T' && id[2] == 'R') {
         Symbol base;
@@ -517,6 +515,7 @@ int id2symbol(char * id, Symbol * sym) {
             errno = ERR_INV_CONTEXT;
             return -1;
         }
+        if (get_sym_context(sym->ctx, STACK_NO_FRAME) < 0) return -1;
         file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
         if (file == NULL) return -1;
         while (file->dev != dev || file->ino != ino || ((unsigned)file->mtime & 0xffff) != mtime) {
