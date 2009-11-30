@@ -27,7 +27,7 @@
 #include "asyncreq.h"
 #include "errors.h"
 
-#define MAX_WORKER_THREADS 8
+#define MAX_WORKER_THREADS 32
 
 static LINK wtlist;
 static int wtlist_size = 0;
@@ -233,19 +233,11 @@ void async_req_post(AsyncReqInfo * req) {
 #endif
     check_error(pthread_mutex_lock(&wtlock));
     if (list_is_empty(&wtlist)) {
-        int error;
-
         assert(wtlist_size == 0);
         wt = loc_alloc_zero(sizeof *wt);
-        check_error(pthread_cond_init(&wt->cond, NULL));
         wt->req = req;
-        error = pthread_create(&wt->thread, &pthread_create_attr, worker_thread_handler, wt);
-        if (error) {
-            trace(LOG_ALWAYS, "Can't create a worker thread: %d %s", error, errno_to_str(error));
-            loc_free(wt);
-            req->error = error;
-            post_event(req->done, req);
-        }
+        check_error(pthread_cond_init(&wt->cond, NULL));
+        check_error(pthread_create(&wt->thread, &pthread_create_attr, worker_thread_handler, wt));
     }
     else {
         wt = wtlink2wt(wtlist.next);
