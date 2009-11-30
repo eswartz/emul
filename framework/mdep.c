@@ -272,27 +272,19 @@ int pthread_create(pthread_t * thread, const pthread_attr_t * attr,
     a = (ThreadArgs *)loc_alloc(sizeof(ThreadArgs));
     a->start = start;
     a->args = args;
-#ifdef __CYGWIN__
-    r = CreateThread (0, 0, (LPTHREAD_START_ROUTINE)start_thread, a, 0, 0);
+    r = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)start_thread, a, 0, 0);
     if (r == NULL) {
+        int err = set_win32_errno(GetLastError());
         loc_free(a);
-        return errno = EINVAL;
+        return errno = err;
     }
-#else
-    r = (HANDLE)_beginthread(start_thread, 0, a);
-    if (r == (HANDLE)-1) {
-        int error = errno;
-        loc_free(a);
-        return errno = error;
-    }
-#endif
     *thread = r;
     return 0;
 }
 
 int pthread_join(pthread_t thread, void ** value_ptr) {
     if (WaitForSingleObject(thread, INFINITE) == WAIT_FAILED) return set_win32_errno(GetLastError());
-    if (value_ptr != NULL && !GetExitCodeThread(thread, (LPDWORD)value_ptr)) return EINVAL;
+    if (value_ptr != NULL && !GetExitCodeThread(thread, (LPDWORD)value_ptr)) return set_win32_errno(GetLastError());
     if (!CloseHandle(thread)) return set_win32_errno(GetLastError());
     return 0;
 }
