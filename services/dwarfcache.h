@@ -27,10 +27,8 @@
 
 #if ENABLE_ELF
 
-#include "context.h"
 #include "tcf_elf.h"
 #include "dwarfio.h"
-#include "stacktrace.h"
 
 typedef struct FileInfo FileInfo;
 typedef struct LocationInfo LocationInfo;
@@ -40,7 +38,6 @@ typedef struct LineNumbersState LineNumbersState;
 typedef struct CompUnit CompUnit;
 typedef struct SymbolSection SymbolSection;
 typedef struct DWARFCache DWARFCache;
-
 
 struct FileInfo {
     char * mName;
@@ -176,11 +173,8 @@ extern void load_line_numbers(DWARFCache * cache, CompUnit * unit);
 /* Find ObjectInfo by ID */
 extern ObjectInfo * find_object(DWARFCache * cache, U8_T ID);
 
-/* Read a property of a DWARF object, on error set errno and return -1 */
-extern int read_dwarf_object_property(Context * ctx, int frame, ObjectInfo * obj, int attr_tag, PropertyValue * value);
-
-/* Read and evaluate a property of a DWARF object, on error set errno and return -1 */
-extern int read_and_evaluate_dwarf_object_property(Context * ctx, int frame, U8_T base, ObjectInfo * obj, int attr_tag, PropertyValue * value);
+/* Read and evaluate a property of a DWARF object */
+extern void read_and_evaluate_dwarf_object_property(Context * ctx, int frame, U8_T base, ObjectInfo * obj, int attr_tag, PropertyValue * value);
 
 extern U8_T get_numeric_property_value(PropertyValue * Value);
 

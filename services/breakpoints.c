@@ -147,6 +147,7 @@ static LINK inp2br[INP2BR_HASH_SIZE];
 #define MAX_REPLANTING_MEM_SPACES 4
 static pid_t replanting_mem_spaces[MAX_REPLANTING_MEM_SPACES];
 static int replanting_cnt = 0;
+static int planting_instruction = 0;
 
 static TCFBroadcastGroup * broadcast_group = NULL;
 
@@ -191,12 +192,14 @@ static void plant_instruction(BreakInstruction * bi) {
 #else
     assert(is_all_stopped(bi->ctx->mem));
     assert(sizeof(bi->saved_code) >= BREAK_SIZE);
+    planting_instruction = 1;
     if (context_read_mem(bi->ctx, bi->address, bi->saved_code, BREAK_SIZE) < 0) {
         bi->error = errno;
     }
     else if (context_write_mem(bi->ctx, bi->address, &BREAK_INST, BREAK_SIZE) < 0) {
         bi->error = errno;
     }
+    planting_instruction = 0;
 #endif
     bi->planted = bi->error == 0;
     if (bi->planted) {
@@ -226,9 +229,11 @@ static void remove_instruction(BreakInstruction * bi) {
     }
 #else
     if (is_readable(bi->ctx)) {
+        planting_instruction = 1;
         if (context_write_mem(bi->ctx, bi->address, bi->saved_code, BREAK_SIZE) < 0) {
             bi->error = errno;
         }
+        planting_instruction = 0;
     }
 #endif
     bi->planted = 0;
@@ -299,20 +304,22 @@ static BreakInstruction * find_instruction(Context * ctx, ContextAddress address
 
 void check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, void * p, size_t size) {
 #if !defined(_WRS_KERNEL)
-    int i;
-    char * buf = (char *)p;
-    LINK * l = instructions.next;
-    while (l != &instructions) {
-        BreakInstruction * bi = link_all2bi(l);
-        l = l->next;
-        if (!bi->planted) continue;
-        if (bi->ctx->mem != ctx->mem) continue;
-        if (bi->address + BREAK_SIZE <= address) continue;
-        if (bi->address >= address + size) continue;
-        for (i = 0; i < (int)BREAK_SIZE; i++) {
-            if (bi->address + i < address) continue;
-            if (bi->address + i >= address + size) continue;
-            buf[bi->address + i - address] = bi->saved_code[i];
+    if (!planting_instruction) {
+        int i;
+        char * buf = (char *)p;
+        LINK * l = instructions.next;
+        while (l != &instructions) {
+            BreakInstruction * bi = link_all2bi(l);
+            l = l->next;
+            if (!bi->planted) continue;
+            if (bi->ctx->mem != ctx->mem) continue;
+            if (bi->address + BREAK_SIZE <= address) continue;
+            if (bi->address >= address + size) continue;
+            for (i = 0; i < (int)BREAK_SIZE; i++) {
+                if (bi->address + i < address) continue;
+                if (bi->address + i >= address + size) continue;
+                buf[bi->address + i - address] = bi->saved_code[i];
+            }
         }
     }
 #endif
@@ -320,21 +327,23 @@ void check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, voi
 
 void check_breakpoints_on_memory_write(Context * ctx, ContextAddress address, void * p, size_t size) {
 #if !defined(_WRS_KERNEL)
-    int i;
-    char * buf = (char *)p;
-    LINK * l = instructions.next;
-    while (l != &instructions) {
-        BreakInstruction * bi = link_all2bi(l);
-        l = l->next;
-        if (!bi->planted) continue;
-        if (bi->ctx->mem != ctx->mem) continue;
-        if (bi->address + BREAK_SIZE <= address) continue;
-        if (bi->address >= address + size) continue;
-        for (i = 0; i < (int)BREAK_SIZE; i++) {
-            if (bi->address + i < address) continue;
-            if (bi->address + i >= address + size) continue;
-            bi->saved_code[i] = buf[bi->address + i - address];
-            buf[bi->address + i - address] = BREAK_INST[i];
+    if (!planting_instruction) {
+        int i;
+        char * buf = (char *)p;
+        LINK * l = instructions.next;
+        while (l != &instructions) {
+            BreakInstruction * bi = link_all2bi(l);
+            l = l->next;
+            if (!bi->planted) continue;
+            if (bi->ctx->mem != ctx->mem) continue;
+            if (bi->address + BREAK_SIZE <= address) continue;
+            if (bi->address >= address + size) continue;
+            for (i = 0; i < (int)BREAK_SIZE; i++) {
+                if (bi->address + i < address) continue;
+                if (bi->address + i >= address + size) continue;
+                bi->saved_code[i] = buf[bi->address + i - address];
+                buf[bi->address + i - address] = BREAK_INST[i];
+            }
         }
     }
 #endif

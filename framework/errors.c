@@ -168,7 +168,7 @@ const char * errno_to_str(int err) {
             case SRC_GAI:
                 return loc_gai_strerror(m->error);
             case SRC_MESSAGE:
-                snprintf(buf, sizeof(buf), "%s: %s", errno_to_str(m->error), m->text);
+                snprintf(buf, sizeof(buf), "%s: %s", m->text, errno_to_str(m->error));
                 return buf;
             }
         }

@@ -14,13 +14,14 @@
 
 /*
  * This module implements DWARF expressions evaluation.
+ *
+ * Functions in this module use exceptions to report errors, see exceptions.h
  */
 #ifndef D_dwarfexpr
 #define D_dwarfexpr
 
-#include "context.h"
 #include "dwarfcache.h"
 
-extern int dwarf_evaluate_expression(U8_T base, PropertyValue * value);
+extern void dwarf_evaluate_expression(U8_T base, PropertyValue * value);
 
 #endif /* D_dwarfexpr */

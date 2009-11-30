@@ -31,6 +31,7 @@
 #include "myalloc.h"
 #include "breakpoints.h"
 #include "waitpid.h"
+#include "regset.h"
 
 typedef struct ExceptionName {
     DWORD code;
@@ -204,9 +205,9 @@ static void event_win32_context_stopped(Context * ctx) {
     }
 
     ctx->regs_error = 0;
-    memset(&ctx->regs, 0, sizeof(ctx->regs));
-    ctx->regs.ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
-    if (GetThreadContext(ctx->handle, &ctx->regs) == 0) {
+    memset(ctx->regs, 0, ctx->regs_size);
+    ((REG_SET *)ctx->regs)->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+    if (GetThreadContext(ctx->handle, (REG_SET *)ctx->regs) == 0) {
         ctx->regs_error = get_errno(log_error("GetThreadContext", 0));
     }
     else {
@@ -297,7 +298,7 @@ static void event_win32_context_exited(Context * ctx) {
 }
 
 static int win32_resume(Context * ctx) {
-    if (ctx->regs_dirty && SetThreadContext(ctx->handle, &ctx->regs) == 0) {
+    if (ctx->regs_dirty && SetThreadContext(ctx->handle, (REG_SET *)ctx->regs) == 0) {
         errno = log_error("SetThreadContext", 0);
         return -1;
     }
@@ -344,7 +345,7 @@ static void debug_event_handler(void * x) {
         case CREATE_PROCESS_DEBUG_EVENT:
             assert(prs == NULL);
             assert(ctx == NULL);
-            prs = create_context(debug_event->dwProcessId);
+            prs = create_context(debug_event->dwProcessId, sizeof(REG_SET));
             prs->mem = debug_event->dwProcessId;
             prs->handle = debug_event->u.CreateProcessInfo.hProcess;
             prs->file_handle = debug_event->u.CreateProcessInfo.hFile;
@@ -355,7 +356,7 @@ static void debug_event_handler(void * x) {
             args->debug_thread_args->attach_callback(0, prs, args->debug_thread_args->attach_data);
             args->debug_thread_args->attach_callback = NULL;
             args->debug_thread_args->attach_data = NULL;
-            ctx = create_context(debug_event->dwThreadId);
+            ctx = create_context(debug_event->dwThreadId, sizeof(REG_SET));
             ctx->mem = debug_event->dwProcessId;
             ctx->handle = debug_event->u.CreateProcessInfo.hThread;
             ctx->debug_started = 1;
@@ -368,7 +369,7 @@ static void debug_event_handler(void * x) {
         case CREATE_THREAD_DEBUG_EVENT:
             assert(prs != NULL);
             assert(ctx == NULL);
-            ctx = create_context(debug_event->dwThreadId);
+            ctx = create_context(debug_event->dwThreadId, sizeof(REG_SET));
             ctx->mem = debug_event->dwProcessId;
             ctx->handle = debug_event->u.CreateThread.hThread;
             ctx->parent = prs;
@@ -688,8 +689,8 @@ int context_continue(Context * ctx) {
 
     trace(LOG_CONTEXT, "context: resuming ctx %#lx, pid %d", ctx, ctx->pid);
 #if defined(__i386__) || defined(__x86_64__)
-    if (!ctx->pending_step && (ctx->regs.EFlags & 0x100) != 0) {
-        ctx->regs.EFlags &= ~0x100;
+    if (!ctx->pending_step && (((REG_SET *)ctx->regs)->EFlags & 0x100) != 0) {
+        ((REG_SET *)ctx->regs)->EFlags &= ~0x100;
         ctx->regs_dirty = 1;
     }
 #endif
@@ -718,7 +719,7 @@ int context_single_step(Context * ctx) {
         return -1;
     }
 #if defined(__i386__) || defined(__x86_64__)
-    ctx->regs.EFlags |= 0x100;
+    ((REG_SET *)ctx->regs)->EFlags |= 0x100;
     ctx->regs_dirty = 1;
 #endif
     ctx->pending_step = 1;
@@ -736,6 +737,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
         errno = log_error("ReadProcessMemory", 0);
         return -1;
     }
+    check_breakpoints_on_memory_read(ctx, address, buf, size);
     return 0;
 }
 
@@ -746,6 +748,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     assert(is_dispatch_thread());
     if (ctx->parent != NULL) ctx = ctx->parent;
     assert(ctx->pid == ctx->mem);
+    check_breakpoints_on_memory_write(ctx, address, buf, size);
     if (WriteProcessMemory(ctx->handle, (LPVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
         DWORD err = GetLastError();
         if (err == ERROR_ACCESS_DENIED) errno = set_win32_errno(err);

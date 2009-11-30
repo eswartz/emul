@@ -33,12 +33,18 @@
 #include "exceptions.h"
 #include "stacktrace.h"
 #include "breakpoints.h"
+#include "memorymap.h"
 #include "symbols.h"
 #include "dwarfframe.h"
 
 #define MAX_FRAMES  1000
 
 static const char * STACKTRACE = "StackTrace";
+
+struct ContextInterfaceData {
+    Context * ctx;
+    int frame;
+};
 
 struct StackTrace {
     int error;
@@ -47,7 +53,10 @@ struct StackTrace {
     struct StackFrame frames[1]; /* ordered bottom to top */
 };
 
+typedef struct ContextInterfaceData ContextInterfaceData;
 typedef struct StackTrace StackTrace;
+
+#define CTX_DATA(x) ((ContextInterfaceData *)&(x)->private_data)
 
 static void add_frame(Context * ctx, StackFrame * frame) {
     StackTrace * stack_trace = (StackTrace *)ctx->stack_trace;
@@ -79,12 +88,16 @@ static void vxworks_stack_trace_callback(
 {
     StackFrame f;
     memset(&f, 0, sizeof(f));
+    f.regs_size = client_ctx->regs_size;
     if (frame_cnt == 0) {
         f.is_top_frame = 1;
         f.regs = client_ctx->regs;
-        memset(&f.mask, 0xff, sizeof(f.mask));
+        f.mask = loc_alloc(f.regs_size);
+        memset(f.mask, 0xff, f.regs_size);
     }
     else {
+        f.regs = loc_alloc_zero(f.regs_size);
+        f.mask = loc_alloc_zero(f.regs_size);
         write_reg_value(get_PC_definition(), &f, frame_rp);
     }
     f.fp = (ContextAddress)args;
@@ -96,7 +109,7 @@ static void vxworks_stack_trace_callback(
 static int trace_stack(Context * ctx) {
     client_ctx = ctx;
     frame_cnt = 0;
-    trcStack(&ctx->regs, (FUNCPTR)vxworks_stack_trace_callback, ctx->pid);
+    trcStack((REG_SET *)ctx->regs, (FUNCPTR)vxworks_stack_trace_callback, ctx->pid);
     if (frame_cnt == 0) vxworks_stack_trace_callback(NULL, 0, 0, NULL, ctx->pid, 1);
     return 0;
 }
@@ -104,19 +117,24 @@ static int trace_stack(Context * ctx) {
 #else
 
 static int walk_frames(Context * ctx) {
+    int error = 0;
     unsigned cnt = 0;
     StackFrame frame;
-    StackFrame down;
 
     memset(&frame, 0, sizeof(frame));
     frame.is_top_frame = 1;
+    frame.regs_size = ctx->regs_size;
     frame.regs = ctx->regs;
-    memset(&frame.mask, 0xff, sizeof(frame.mask));
+    frame.mask = loc_alloc(frame.regs_size);
+    memset(frame.mask, 0xff, frame.regs_size);
     while (cnt < MAX_FRAMES) {
+        StackFrame down;
         memset(&down, 0, sizeof(down));
+        down.regs_size = ctx->regs_size;
+        down.regs = loc_alloc_zero(down.regs_size);
+        down.mask = loc_alloc_zero(down.regs_size);
 #if ENABLE_ELF
         {
-            int error = 0;
             int found = 0;
             ContextAddress ip = get_regs_PC(frame.regs);
             ELF_File * file = elf_list_first(ctx, ip, ip + 1);
@@ -136,19 +154,33 @@ static int walk_frames(Context * ctx) {
             }
             elf_list_done(ctx);
             if (error) {
-                errno = error;
-                return -1;
+                loc_free(down.regs);
+                loc_free(down.mask);
+                break;
             }
         }
 #endif
-        if (frame.fp == 0 && crawl_stack_frame(ctx, &frame, &down) < 0) return -1;
-        if (cnt > 0 && frame.fp == 0) break;
+        if (frame.fp == 0 && crawl_stack_frame(ctx, &frame, &down) < 0) {
+            error = errno;
+            loc_free(down.regs);
+            loc_free(down.mask);
+            break;
+        }
+        if (cnt > 0 && frame.fp == 0) {
+            loc_free(down.regs);
+            loc_free(down.mask);
+            break;
+        }
         add_frame(ctx, &frame);
-        cnt++;
         frame = down;
+        cnt++;
     }
 
-    return 0;
+    if (!frame.is_top_frame) loc_free(frame.regs);
+    loc_free(frame.mask);
+
+    errno = error;
+    return error == 0 ? 0 : -1;
 }
 
 static int trace_stack(Context * ctx) {
@@ -357,8 +389,14 @@ static void command_get_children(char * token, Channel * c) {
 }
 
 static void delete_stack_trace(Context * ctx, void * client_data) {
-    if (ctx->stack_trace != NULL) {
-        loc_free(ctx->stack_trace);
+    StackTrace * stack_trace = (StackTrace *)ctx->stack_trace;
+    if (stack_trace != NULL) {
+        int i;
+        for (i = 0; i < stack_trace->frame_cnt; i++) {
+            if (!stack_trace->frames[i].is_top_frame) loc_free(stack_trace->frames[i].regs);
+            loc_free(stack_trace->frames[i].mask);
+        }
+        loc_free(stack_trace);
         ctx->stack_trace = NULL;
     }
 }

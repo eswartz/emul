@@ -27,7 +27,6 @@
 #include "dwarfio.h"
 #include "dwarfframe.h"
 #include "exceptions.h"
-#include "breakpoints.h"
 #include "myalloc.h"
 
 #define EH_PE_omit              0xff
@@ -109,9 +108,7 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
     while (regs->regs_cnt <= reg) {
         int n = regs->regs_cnt++;
         memset(regs->regs + n, 0, sizeof(RegisterRules));
-        reg_def = rules.eh_frame ?
-            get_reg_by_eh_frame_id(n) :
-            get_reg_by_dwarf_id(n);
+        reg_def = get_reg_by_id(n, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
         if (reg_def != NULL && reg_def->traceable) {
             /* It looks like GCC assumes that an unspecified register implies "same value" */
             regs->regs[n].rule = RULE_SAME_VALUE;
@@ -193,13 +190,20 @@ static U8_T read_frame_data_pointer(U1_T encoding, int abs) {
             }
             if (encoding & EH_PE_indirect) {
                 unsigned idx;
-                U8_T res = 0;
                 ELF_File * file = rules.section->file;
+                size_t size = file->elf64 ? 8 : 4;
+                U8_T res = 0;
                 for (idx = 1; idx < file->section_cnt; idx++) {
                     ELF_Section * sec = file->sections + idx;
                     if ((sec->flags & SHF_ALLOC) == 0) continue;
-                    if (sec->addr <= v && sec->addr + sec->size > v) {
-                        res = elf_read_section(sec, (uintptr_t)(v - sec->addr), file->elf64 ? 8 : 4);
+                    if (sec->addr <= v && sec->addr + sec->size >= v + size) {
+                        U1_T * p;
+                        size_t i;
+                        if (sec->data == NULL && elf_load(sec) < 0) exception(errno);
+                        p = (U1_T *)sec->data + (uintptr_t)(v - sec->addr);
+                        for (i = 0; i < size; i++) {
+                            res = (res << 8) | p[file->big_endian ? i : size - i - 1];
+                        }
                         break;
                     }
                 }
@@ -340,15 +344,14 @@ static void exec_stack_frame_instruction(void) {
     }
 }
 
-static int fill_frame_register(RegisterRules * reg, RegisterDefinition * reg_def, StackFrame * frame, StackFrame * down) {
+static void fill_frame_register(RegisterRules * reg, RegisterDefinition * reg_def, StackFrame * frame, StackFrame * down) {
     switch (reg->rule) {
     case RULE_OFFSET:
         if (frame->fp != 0 && reg_def != NULL) {
             size_t size = reg_def->size;
             if (size <= 8) {
                 U1_T v[8];
-                if (context_read_mem(rules.ctx, frame->fp + reg->offset, v, size) < 0) return -1;
-                check_breakpoints_on_memory_read(rules.ctx, frame->fp + reg->offset, v, size);
+                if (context_read_mem(rules.ctx, frame->fp + reg->offset, v, size) < 0) exception(errno);
                 switch (size) {
                 case 1: write_reg_value(reg_def, down, *(U1_T *)v); break;
                 case 2: write_reg_value(reg_def, down, *(U2_T *)v); break;
@@ -368,12 +371,10 @@ static int fill_frame_register(RegisterRules * reg, RegisterDefinition * reg_def
         break;
     case RULE_REGISTER:
         if (reg_def != NULL) {
-            RegisterDefinition * src_index = rules.eh_frame ?
-                get_reg_by_eh_frame_id(reg->offset) :
-                get_reg_by_dwarf_id(reg->offset);
-            if (src_index != NULL) {
+            RegisterDefinition * src_sef = get_reg_by_id(reg->offset, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+            if (src_sef != NULL) {
                 U8_T v = 0;
-                if (read_reg_value(src_index, frame, &v) >= 0) {
+                if (read_reg_value(src_sef, frame, &v) >= 0) {
                     write_reg_value(reg_def, down, v);
                 }
             }
@@ -390,7 +391,6 @@ static int fill_frame_register(RegisterRules * reg, RegisterDefinition * reg_def
         /* TODO: RULE_EXPRESSION */
         break;
     }
-    return 0;
 }
 
 static int fill_stack_frame(StackFrame * frame, StackFrame * down) {
@@ -401,9 +401,7 @@ static int fill_stack_frame(StackFrame * frame, StackFrame * down) {
 
     switch (rules.cfa_rule) {
     case RULE_OFFSET:
-        reg_def = rules.eh_frame ?
-            get_reg_by_eh_frame_id(rules.cfa_register) :
-            get_reg_by_dwarf_id(rules.cfa_register);
+        reg_def = get_reg_by_id(rules.cfa_register, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
         if (reg_def != NULL) {
             if (read_reg_value(reg_def, frame, &v) >= 0) {
                 frame->fp = (ContextAddress)(v + rules.cfa_offset);
@@ -414,15 +412,13 @@ static int fill_stack_frame(StackFrame * frame, StackFrame * down) {
     }
 
     reg = get_reg(&frame_regs, rules.return_address_register);
-    if (reg->rule != 0 && fill_frame_register(reg, get_PC_definition(), frame, down) < 0) return -1;
+    if (reg->rule != 0) fill_frame_register(reg, get_PC_definition(), frame, down);
     for (i = 0; i < frame_regs.regs_cnt; i++) {
         if (i == rules.return_address_register) continue;
         reg = get_reg(&frame_regs, i);
         if (reg->rule == 0) continue;
-        reg_def = rules.eh_frame ?
-            get_reg_by_eh_frame_id(i) :
-            get_reg_by_dwarf_id(i);
-        if (fill_frame_register(reg, reg_def, frame, down) < 0) return -1;
+        reg_def = get_reg_by_id(i, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+        fill_frame_register(reg, reg_def, frame, down);
     }
     return 0;
 }

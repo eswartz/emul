@@ -322,13 +322,8 @@ static void safe_memory_set(void * parm) {
                 if (rd == 0) break;
                 if (err == 0) {
                     /* TODO: word size, mode */
-                    check_breakpoints_on_memory_write(ctx, addr, buf, rd);
-                    if (context_write_mem(ctx, addr, buf, rd) < 0) {
-                        err = errno;
-                    }
-                    else {
-                        addr += rd;
-                    }
+                    if (context_write_mem(ctx, addr, buf, rd) < 0) err = errno;
+                    else addr += rd;
                 }
                 size += rd;
             }
@@ -380,6 +375,7 @@ static void safe_memory_get(void * parm) {
             ContextAddress addr0 = args->addr;
             ContextAddress addr = args->addr;
             unsigned long size = args->size;
+            unsigned long pos = 0;
             char buf[BUF_SIZE];
             int err = 0;
             JsonWriteBinaryState state;
@@ -390,16 +386,19 @@ static void safe_memory_get(void * parm) {
             write_stringz(out, token);
 
             json_write_binary_start(&state, out, size);
-            while (addr < addr0 + size) {
-                int rd = addr0 + size - addr;
+            while (pos < size) {
+                int rd = size - pos;
                 if (rd > BUF_SIZE) rd = BUF_SIZE;
                 /* TODO: word size, mode */
                 if (err == 0) {
                     if (context_read_mem(ctx, addr, buf, rd) < 0) err = errno;
-                    else check_breakpoints_on_memory_read(ctx, addr, buf, rd);
+                    else addr += rd;
+                }
+                else {
+                    memset(buf, 0, rd);
                 }
                 json_write_binary_data(&state, buf, rd);
-                addr += rd;
+                pos += rd;
             }
             json_write_binary_end(&state);
             write_stream(out, 0);
@@ -490,13 +489,8 @@ static void safe_memory_fill(void * parm) {
                 if (wr > buf_pos) wr = buf_pos;
                 /* TODO: word size, mode */
                 memcpy(tmp, buf, wr);
-                check_breakpoints_on_memory_write(ctx, addr, tmp, wr);
-                if (context_write_mem(ctx, addr, tmp, wr) < 0) {
-                    err = errno;
-                }
-                else {
-                    addr += wr;
-                }
+                if (context_write_mem(ctx, addr, tmp, wr) < 0) err = errno;
+                else addr += wr;
             }
 
             send_event_memory_changed(&c->bcg->out, ctx, addr0, size);

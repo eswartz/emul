@@ -29,6 +29,7 @@
 #include <sched.h>
 #include <mach/thread_status.h>
 #include "context.h"
+#include "regset.h"
 #include "events.h"
 #include "errors.h"
 #include "trace.h"
@@ -86,7 +87,7 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
         return -1;
     }
     add_waitpid_process(pid);
-    ctx = create_context(pid);
+    ctx = create_context(pid, sizeof(REG_SET));
     list_add_first(&ctx->ctxl, &pending_list);
     ctx->mem = pid;
     ctx->attach_callback = done;
@@ -158,14 +159,14 @@ int context_continue(Context * ctx) {
 
     trace(LOG_CONTEXT, "context: resuming ctx %#lx, pid %d, with signal %d", ctx, ctx->pid, signal);
 #if defined(__i386__) || defined(__x86_64__)
-    if (ctx->regs.__eflags & 0x100) {
-        ctx->regs.__eflags &= ~0x100;
+    if (((REG_SET *)ctx->regs)->__eflags & 0x100) {
+        ((REG_SET *)ctx->regs)->__eflags &= ~0x100;
         ctx->regs_dirty = 1;
     }
 #endif
     if (ctx->regs_dirty) {
         unsigned int state_count;
-        if (thread_set_state(ctx->pid, x86_THREAD_STATE32, &ctx->regs, &state_count) != KERN_SUCCESS) {
+        if (thread_set_state(ctx->pid, x86_THREAD_STATE32, ctx->regs, &state_count) != KERN_SUCCESS) {
             int err = errno;
             trace(LOG_ALWAYS, "error: thread_set_state failed: ctx %#lx, pid %d, error %d %s",
                 ctx, ctx->pid, err, errno_to_str(err));
@@ -211,7 +212,7 @@ int context_single_step(Context * ctx) {
     trace(LOG_CONTEXT, "context: single step ctx %#lx, pid %d", ctx, ctx->pid);
     if (ctx->regs_dirty) {
         unsigned int state_count;
-        if (thread_set_state(ctx->pid, x86_THREAD_STATE32, &ctx->regs, &state_count) != KERN_SUCCESS) {
+        if (thread_set_state(ctx->pid, x86_THREAD_STATE32, ctx->regs, &state_count) != KERN_SUCCESS) {
             int err = errno;
             trace(LOG_ALWAYS, "error: thread_set_state failed: ctx %#lx, pid %d, error %d %s",
                 ctx, ctx->pid, err, errno_to_str(err));
@@ -249,6 +250,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     trace(LOG_CONTEXT, "context: write memory ctx %#lx, pid %d, address %#lx, size %zd",
         ctx, ctx->pid, address, size);
     assert(WORD_SIZE == sizeof(unsigned));
+    check_breakpoints_on_memory_write(ctx, address, buf, size);
     for (word_addr = address & ~(WORD_SIZE - 1); word_addr < address + size; word_addr += WORD_SIZE) {
         unsigned word = 0;
         if (word_addr < address || word_addr + WORD_SIZE > address + size) {
@@ -314,6 +316,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
             *(unsigned *)((char *)buf + (word_addr - address)) = word;
         }
     }
+    check_breakpoints_on_memory_read(ctx, address, buf, size);
     */
     return 0;
 }
@@ -347,8 +350,8 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
             }
             assert(list_is_empty(&ctx->children));
             assert(ctx->parent == NULL);
-            list_remove(&ctx->ctxl);
-            loc_free(ctx);
+            ctx->ref_count = 1;
+            context_unlock(ctx);
         }
     }
     else {
@@ -437,7 +440,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         assert(!ctx->regs_dirty);
         assert(!ctx->intercepted);
         ctx->regs_error = 0;
-        if (thread_get_state(ctx->pid, x86_THREAD_STATE32, &ctx->regs, &state_count) != KERN_SUCCESS) {
+        if (thread_get_state(ctx->pid, x86_THREAD_STATE32, ctx->regs, &state_count) != KERN_SUCCESS) {
             assert(errno != 0);
             ctx->regs_error = errno;
             trace(LOG_ALWAYS, "error: thread_get_state failed; pid %d, error %d %s",

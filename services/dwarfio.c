@@ -251,23 +251,13 @@ U8_T dio_ReadUX(int Size) {
     case 8:
         return dio_ReadU8();
     default:
-        assert(0);
+        str_exception(ERR_INV_DWARF, "invalid data size");;
         return 0;
     }
 }
 
 U8_T dio_ReadAddress(void) {
-    switch (sAddressSize) {
-    case 2:
-        return dio_ReadU2();
-    case 4:
-        return dio_ReadU4();
-    case 8:
-        return dio_ReadU8();
-    default:
-        assert(0);
-        return 0;
-    }
+    return dio_ReadUX(sAddressSize);
 }
 
 char * dio_ReadString(void) {

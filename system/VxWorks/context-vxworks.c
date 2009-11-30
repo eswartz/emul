@@ -114,7 +114,7 @@ static void event_attach_done(void * x) {
         args->done(ERR_ALREADY_ATTACHED, NULL, args->data);
     }
     else {
-        Context * ctx = create_context(args->pid);
+        Context * ctx = create_context(args->pid, sizeof(REG_SET));
         ctx->mem = taskIdSelf();
         link_context(ctx);
         trace(LOG_CONTEXT, "context: attached: ctx %#lx, id %#x",
@@ -231,7 +231,7 @@ int context_continue(Context * ctx) {
     trace(LOG_CONTEXT, "context: continue ctx %#lx, id %#x", ctx, ctx->pid);
 
     if (ctx->regs_dirty) {
-        if (taskRegsSet(ctx->pid, &ctx->regs) != OK) {
+        if (taskRegsSet(ctx->pid, (REG_SET *)ctx->regs) != OK) {
             int error = errno;
             trace(LOG_ALWAYS, "context: can't set regs ctx %#lx, id %#x: %s",
                     ctx, ctx->pid, errno_to_str(error));
@@ -275,7 +275,7 @@ int context_single_step(Context * ctx) {
     trace(LOG_CONTEXT, "context: single step ctx %#lx, id %#x", ctx, ctx->pid);
 
     if (ctx->regs_dirty) {
-        if (taskRegsSet(ctx->pid, &ctx->regs) != OK) {
+        if (taskRegsSet(ctx->pid, (REG_SET *)ctx->regs) != OK) {
             int error = errno;
             trace(LOG_ALWAYS, "context: can't set regs ctx %#lx, id %#x: %s",
                     ctx, ctx->pid, errno_to_str(error));
@@ -335,7 +335,7 @@ static void event_handler(void * arg) {
         assert(!stopped_ctx->regs_dirty);
         assert(!stopped_ctx->intercepted);
         stopped_ctx->regs_error = 0;
-        stopped_ctx->regs = info->regs;
+        memcpy(stopped_ctx->regs, &info->regs, stopped_ctx->regs_size);
         stopped_ctx->signal = SIGTRAP;
         assert(get_regs_PC(stopped_ctx->regs) == info->addr);
         stopped_ctx->event = 0;
@@ -361,7 +361,7 @@ static void event_handler(void * arg) {
         assert(!current_ctx->regs_dirty);
         assert(!current_ctx->intercepted);
         current_ctx->regs_error = 0;
-        current_ctx->regs = info->regs;
+        memcpy(current_ctx->regs, &info->regs, current_ctx->regs_size);
         current_ctx->signal = SIGTRAP;
         current_ctx->event = TRACE_EVENT_STEP;
         current_ctx->pending_step = 0;
@@ -377,7 +377,7 @@ static void event_handler(void * arg) {
         if (stopped_ctx == NULL) break;
         assert(!stopped_ctx->stopped);
         stopped_ctx->regs_error = 0;
-        if (taskRegsGet(stopped_ctx->pid, &stopped_ctx->regs) != OK) {
+        if (taskRegsGet(stopped_ctx->pid, (REG_SET *)stopped_ctx->regs) != OK) {
             stopped_ctx->regs_error = errno;
             assert(stopped_ctx->regs_error != 0);
         }
@@ -395,7 +395,7 @@ static void event_handler(void * arg) {
     case EVENT_HOOK_TASK_ADD:
         if (current_ctx == NULL) break;
         assert(stopped_ctx == NULL);
-        stopped_ctx = create_context((pid_t)info->stopped_ctx.ctxId);
+        stopped_ctx = create_context((pid_t)info->stopped_ctx.ctxId, sizeof(REG_SET));
         stopped_ctx->mem = current_ctx->mem;
         stopped_ctx->parent = current_ctx->parent != NULL ? current_ctx->parent : current_ctx;
         stopped_ctx->parent->ref_count++;

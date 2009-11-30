@@ -74,12 +74,12 @@ RegisterDefinition * get_PC_definition(void) {
 }
 
 
-ContextAddress get_regs_PC_func(REG_SET * regs) {
-    return (ContextAddress)regs->reg_pc;
+ContextAddress get_regs_PC(RegisterData * regs) {
+    return (ContextAddress)((REG_SET *)regs)->reg_pc;
 }
 
-void set_regs_PC_func(REG_SET * regs, ContextAddress pc) {
-    regs->reg_pc = (void *)pc;
+void set_regs_PC(RegisterData * regs, ContextAddress pc) {
+    ((REG_SET *)regs)->reg_pc = (void *)pc;
 }
 
 #else /* _WRS_KERNEL */
@@ -92,55 +92,56 @@ RegisterDefinition * get_reg_definitions(void) {
 
 #endif /* _WRS_KERNEL */
 
-RegisterDefinition * get_reg_by_dwarf_id(int id) {
-#if !ENABLE_ELF
-    return NULL;
-#else
+static RegisterDefinition * get_reg_by_dwarf_id(unsigned id) {
     static RegisterDefinition ** map = NULL;
-    static int map_length = 0;
+    static unsigned map_length = 0;
 
     if (map == NULL) {
         RegisterDefinition * r;
         for (r = get_reg_definitions(); r->name != NULL; r++) {
-            if (r->dwarf_id >= map_length) map_length = r->dwarf_id + 1;
+            if (r->dwarf_id >= (int)map_length) map_length = r->dwarf_id + 1;
         }
         map = loc_alloc_zero(sizeof(RegisterDefinition *) * map_length);
         for (r = get_reg_definitions(); r->name != NULL; r++) {
             if (r->dwarf_id >= 0) map[r->dwarf_id] = r;
         }
     }
-    return id >= 0 && id < map_length ? map[id] : NULL;
-#endif
+    return id < map_length ? map[id] : NULL;
 }
 
-RegisterDefinition * get_reg_by_eh_frame_id(int id) {
-#if !ENABLE_ELF
-    return NULL;
-#else
+static RegisterDefinition * get_reg_by_eh_frame_id(unsigned id) {
     static RegisterDefinition ** map = NULL;
-    static int map_length = 0;
+    static unsigned map_length = 0;
 
     if (map == NULL) {
         RegisterDefinition * r;
         for (r = get_reg_definitions(); r->name != NULL; r++) {
-            if (r->eh_frame_id >= map_length) map_length = r->eh_frame_id + 1;
+            if (r->eh_frame_id >= (int)map_length) map_length = r->eh_frame_id + 1;
         }
         map = loc_alloc_zero(sizeof(RegisterDefinition *) * map_length);
         for (r = get_reg_definitions(); r->name != NULL; r++) {
             if (r->eh_frame_id >= 0) map[r->eh_frame_id] = r;
         }
     }
-    return id >= 0 && id < map_length ? map[id] : NULL;
-#endif
+    return id < map_length ? map[id] : NULL;
+}
+
+RegisterDefinition * get_reg_by_id(unsigned id, unsigned munbering_convention) {
+    switch (munbering_convention) {
+    case REGNUM_DWARF: return get_reg_by_dwarf_id(id);
+    case REGNUM_EH_FRAME: return get_reg_by_eh_frame_id(id);
+    }
+    return NULL;
 }
 
 int read_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t * value) {
-    if (reg_def != NULL) {
+    if (reg_def != NULL && frame != NULL) {
         size_t size = reg_def->size;
         if (size <= 8) {
             static uint8_t ones[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-            uint8_t * r_addr = (uint8_t *)&frame->regs + reg_def->offset;
-            uint8_t * m_addr = (uint8_t *)&frame->mask + reg_def->offset;
+            uint8_t * r_addr = (uint8_t *)frame->regs + reg_def->offset;
+            uint8_t * m_addr = (uint8_t *)frame->mask + reg_def->offset;
+            assert(reg_def->offset + size <= frame->regs_size);
             if (memcmp(m_addr, ones, size) == 0) {
                 if (value != NULL) {
                     switch (size) {
@@ -163,11 +164,12 @@ int read_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t * 
 }
 
 int write_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t value) {
-    if (reg_def != NULL) {
+    if (reg_def != NULL && frame != NULL) {
         size_t size = reg_def->size;
         if (size <= 8) {
-            uint8_t * r_addr = (uint8_t *)&frame->regs + reg_def->offset;
-            uint8_t * m_addr = (uint8_t *)&frame->mask + reg_def->offset;
+            uint8_t * r_addr = (uint8_t *)frame->regs + reg_def->offset;
+            uint8_t * m_addr = (uint8_t *)frame->mask + reg_def->offset;
+            assert(reg_def->offset + size <= frame->regs_size);
             memset(m_addr, 0xff, size);
             switch (size) {
             case 1: *(uint8_t *)r_addr = (uint8_t)value; break;

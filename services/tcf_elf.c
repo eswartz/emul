@@ -20,6 +20,7 @@
 
 #if ENABLE_ELF
 
+#include <stddef.h>
 #include <assert.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -29,8 +30,6 @@
 #include "tcf_elf.h"
 #include "myalloc.h"
 #include "exceptions.h"
-#include "expressions.h"
-#include "breakpoints.h"
 #include "memorymap.h"
 #include "events.h"
 #include "trace.h"
@@ -425,21 +424,6 @@ int elf_load(ELF_Section * s) {
 #endif
 }
 
-U8_T elf_read_section(ELF_Section * section, uintptr_t offset, size_t size) {
-    U1_T buf[8];
-    if (section->data == NULL && elf_load(section) < 0) exception(errno);
-    memcpy(buf, (U1_T *)section->data + offset, size);
-    if (section->file->byte_swap) swap_bytes(buf, size);
-    switch (size) {
-    case 1: return *(U1_T *)buf;
-    case 2: return *(U2_T *)buf;
-    case 4: return *(U4_T *)buf;
-    case 8: return *(U8_T *)buf;
-    }
-    exception(ERR_INV_DATA_SIZE);
-    return 0;
-}
-
 void elf_close(ELF_File * file) {
     assert(file != NULL);
     assert(file->ref_cnt > 0);
@@ -578,8 +562,6 @@ ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, Conte
     return 0;
 }
 
-#if SERVICE_Expressions && ENABLE_DebugContext
-
 static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddress * addr) {
     unsigned i, j;
 
@@ -588,6 +570,7 @@ static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddre
         if (sec->size == 0) continue;
         if (sec->name == NULL) continue;
         if (strcmp(sec->name, ".dynamic") == 0) {
+            ContextAddress sec_addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sec->addr);
             if (elf_load(sec) < 0) return -1;
             if (file->elf64) {
                 unsigned cnt = (unsigned)(sec->size / sizeof(Elf64_Dyn));
@@ -596,14 +579,13 @@ static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddre
                     if (file->byte_swap) SWAP(dyn.d_tag);
                     if (dyn.d_tag == DT_NULL) break;
                     if (dyn.d_tag == tag) {
-                        if (addr != NULL) {
-                            char buf[sizeof(dyn.d_un.d_ptr)];
-                            ContextAddress sec_addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sec->addr);
-                            ContextAddress entry_addr = sec_addr + j * sizeof(Elf64_Dyn) + offsetof(Elf64_Dyn, d_un.d_ptr);
-                            if (context_read_mem(ctx, entry_addr, buf, sizeof(buf)) < 0) return -1;
-                            if (file->byte_swap) SWAP(buf);
-                            *addr = (ContextAddress)*(Elf64_Addr *)buf;
+                        if (context_read_mem(ctx, sec_addr + j * sizeof(dyn), &dyn, sizeof(dyn)) < 0) return -1;
+                        if (file->byte_swap) {
+                            SWAP(dyn.d_tag);
+                            SWAP(dyn.d_un.d_ptr);
                         }
+                        if (dyn.d_tag != tag) continue;
+                        if (addr != NULL) *addr = (ContextAddress)dyn.d_un.d_ptr;
                         return 0;
                     }
                 }
@@ -615,18 +597,13 @@ static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddre
                     if (file->byte_swap) SWAP(dyn.d_tag);
                     if (dyn.d_tag == DT_NULL) break;
                     if (dyn.d_tag == tag) {
-                        if (addr != NULL) {
-                            char buf1[sizeof(dyn.d_tag)];
-                            char buf2[sizeof(dyn.d_un.d_ptr)];
-                            ContextAddress sec_addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sec->addr);
-                            ContextAddress entry_addr = sec_addr + j * sizeof(Elf32_Dyn);
-                            if (context_read_mem(ctx, entry_addr, buf1, sizeof(buf1)) < 0) return -1;
-                            if (file->byte_swap) SWAP(buf1);
-                            if (*(Elf32_Sword *)buf1 != tag) break;
-                            if (context_read_mem(ctx, entry_addr + offsetof(Elf32_Dyn, d_un.d_ptr), buf2, sizeof(buf2)) < 0) return -1;
-                            if (file->byte_swap) SWAP(buf2);
-                            *addr = (ContextAddress)*(Elf32_Addr *)buf2;
+                        if (context_read_mem(ctx, sec_addr + j * sizeof(dyn), &dyn, sizeof(dyn)) < 0) return -1;
+                        if (file->byte_swap) {
+                            SWAP(dyn.d_tag);
+                            SWAP(dyn.d_un.d_ptr);
                         }
+                        if (dyn.d_tag != tag) continue;
+                        if (addr != NULL) *addr = (ContextAddress)dyn.d_un.d_ptr;
                         return 0;
                     }
                 }
@@ -702,137 +679,42 @@ static int get_global_symbol_address(Context * ctx, ELF_File * file, char * name
     return -1;
 }
 
-static int read_memory_word(Context * ctx, ContextAddress addr, ContextAddress * word) {
-    switch (context_word_size(ctx)) {
-    case 8:
-        {
-            char buf[8];
-            if (context_read_mem(ctx, addr, buf, sizeof(buf)) < 0) return -1;
-            *word = (ContextAddress)*(uint64_t *)buf;
-            return 0;
-        }
-    case 4:
-        {
-            char buf[4];
-            if (context_read_mem(ctx, addr, buf, sizeof(buf)) < 0) return -1;
-            *word = (ContextAddress)*(uint32_t *)buf;
-            return 0;
-        }
-    default:
-        assert(0);
+int elf_read_memory_word(Context * ctx, ELF_File * file, ContextAddress addr, ContextAddress * word) {
+    U1_T buf[8];
+    size_t size = file->elf64 ? 8 : 4;
+    size_t i = 0;
+    U8_T n = 0;
+
+    if (context_read_mem(ctx, addr, buf, size) < 0) return -1;
+    for (i = 0; i < size; i++) {
+        n = (n << 8) | buf[file->big_endian ? i : size - i - 1];
     }
-    errno = ERR_UNSUPPORTED;
-    return -1;
+    *word = (ContextAddress)n;
+    return 0;
 }
 
-/*
- * Return run-time address of the debug structrure that is normally pointed by DT_DEBUG entry in ".dynamic" section.
- * Return 0 if the structure could not be found.
- */
-static ContextAddress elf_get_debug_structure_address(Context * ctx) {
+ContextAddress elf_get_debug_structure_address(Context * ctx, ELF_File ** file_ptr) {
     ELF_File * file = NULL;
     ContextAddress addr = 0;
 
-    if (ctx->parent != NULL) ctx = ctx->parent;
-    if (ctx->debug_structure_searched) return ctx->debug_structure_address;
-    ctx->debug_structure_address = 0;
-
     for (file = elf_list_first(ctx, 0, ~(ContextAddress)0); file != NULL; file = elf_list_next(ctx)) {
         if (file->pic) continue;
+        if (file_ptr != NULL) *file_ptr = file;
+#ifdef DT_MIPS_RLD_MAP
         if (get_dynamic_tag(ctx, file, DT_MIPS_RLD_MAP, &addr) == 0) {
-            if (read_memory_word(ctx, addr, &addr) < 0) continue;
+            if (elf_read_memory_word(ctx, file, addr, &addr) < 0) continue;
             break;
         }
+#endif
         if (get_dynamic_tag(ctx, file, DT_DEBUG, &addr) == 0) break;
         if (get_global_symbol_address(ctx, file, "_r_debug", &addr) == 0) break;
     }
     elf_list_done(ctx);
-    ctx->debug_structure_address = addr;
-    ctx->debug_structure_searched = addr != 0;
+
     return addr;
 }
 
-static int expression_identifier_callback(Context * ctx, int frame, char * name, Value * v) {
-    if (ctx == NULL) return 0;
-    if (strcmp(name, "$loader_brk") == 0) {
-        v->address = elf_get_debug_structure_address(ctx);
-        v->type_class = TYPE_CLASS_POINTER;
-        v->size = context_word_size(ctx);
-        if (v->address != 0) {
-            switch (v->size) {
-            case 4: v->address += 8; break;
-            case 8: v->address += 16; break;
-            default: assert(0);
-            }
-            v->remote = 1;
-        }
-        else {
-            set_value(v, NULL, v->size);
-        }
-        return 1;
-    }
-    if (strcmp(name, "$loader_state") == 0) {
-        v->address = elf_get_debug_structure_address(ctx);
-        v->type_class = TYPE_CLASS_CARDINAL;
-        v->size = context_word_size(ctx);
-        if (v->address != 0) {
-            switch (v->size) {
-            case 4: v->address += 12; break;
-            case 8: v->address += 24; break;
-            default: assert(0);
-            }
-        }
-        v->remote = 1;
-        return 1;
-    }
-    return 0;
-}
-
-static void eventpoint_at_loader(Context * ctx, void * args) {
-    typedef enum { RT_CONSISTENT, RT_ADD, RT_DELETE } r_state;
-    ContextAddress addr = elf_get_debug_structure_address(ctx);
-    unsigned size = context_word_size(ctx);
-    ContextAddress state = 0;
-
-    if (ctx->parent != NULL) ctx = ctx->parent;
-
-    switch (size) {
-    case 4: addr += 12; break;
-    case 8: addr += 24; break;
-    default: assert(0);
-    }
-    if (read_memory_word(ctx, addr, &state) < 0) {
-        int error = errno;
-        trace(LOG_ALWAYS, "Can't read loader state flag: %d %s", error, errno_to_str(error));
-        ctx->pending_intercept = 1;
-        ctx->loader_state = 0;
-        return;
-    }
-    switch (state) {
-    case RT_CONSISTENT:
-        if (ctx->loader_state == RT_ADD) {
-            memory_map_event_module_loaded(ctx);
-        }
-        else if (ctx->loader_state == RT_DELETE) {
-            memory_map_event_module_unloaded(ctx);
-        }
-        break;
-    case RT_ADD:
-        break;
-    case RT_DELETE:
-        /* TODO: need to call memory_map_event_code_section_ummapped() */
-        break;
-    }
-    ctx->loader_state = state;
-}
-
-#endif /* SERVICE_Expressions && ENABLE_DebugContext */
-
 void ini_elf(void) {
-#if SERVICE_Expressions && ENABLE_DebugContext
-    add_identifier_callback(expression_identifier_callback);
-    create_eventpoint("$loader_brk", eventpoint_at_loader, NULL);
-#endif /* SERVICE_Expressions && ENABLE_DebugContext */
 }
 
 #endif /* ENABLE_ELF */

@@ -28,8 +28,6 @@ extern LINK context_root;
 #define ctxl2ctxp(A)    ((Context *)((char *)(A) - offsetof(Context, ctxl)))
 #define cldl2ctxp(A)    ((Context *)((char *)(A) - offsetof(Context, cldl)))
 
-typedef struct Context Context;
-
 typedef void ContextAttachCallBack(int, Context *, void *);
 
 struct Context {
@@ -58,7 +56,8 @@ struct Context {
     unsigned long       sig_dont_pass;      /* bitset of signals that should not be delivered to the context */
     int                 signal;             /* signal that stopped this context */
 #if ENABLE_DebugContext
-    REG_SET             regs;               /* copy of context registers, updated when context stops */
+    RegisterData *      regs;               /* copy of context registers, updated when context stops */
+    size_t              regs_size;          /* size of data pointed by "regs" */
     int                 regs_error;         /* if not 0, 'regs' is invalid */
     int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
 #endif
@@ -97,8 +96,6 @@ struct Context {
     int                 end_of_step;
 #endif
 #if ENABLE_ELF
-    int                 debug_structure_searched;
-    ContextAddress      debug_structure_address;
     ContextAddress      loader_state;
 #endif
 };
@@ -196,14 +193,15 @@ extern int context_single_step(Context * ctx);
 
 /*
  * Write context memory.
- * Make sure check_breakpoints_on_memory_write() has been called before writing to context memory.
+ * Implementation calls check_breakpoints_on_memory_write() before writing to context memory,
+ * which can change contents of the buffer.
  * Return -1 and set errno if the context memory cannot be written.
  */
 extern int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size);
 
 /*
  * Read context memory.
- * Make sure check_breakpoints_on_memory_read() will be called after reading context memory.
+ * Implementation calls check_breakpoints_on_memory_read() after reading context memory.
  * Return -1 and set errno if the context cannot be read.
  */
 extern int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size);
@@ -212,7 +210,6 @@ extern int context_read_mem(Context * ctx, ContextAddress address, void * buf, s
  * Return context memory word size in bytes.
  */
 extern unsigned context_word_size(Context * ctx);
-
 
 /*
  * Functions that notify listeners of various context event.
@@ -228,7 +225,7 @@ extern void send_context_exited_event(Context * ctx);
  * Functions that are used to create a Context.
  * They are not supposed to be called by clients.
  */
-extern Context * create_context(pid_t pid);
+extern Context * create_context(pid_t pid, size_t regs_size);
 extern void link_context(Context * ctx);
 
 #else /* ENABLE_DebugContext */

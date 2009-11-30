@@ -190,6 +190,7 @@ void context_unlock(Context * ctx) {
         list_remove(&ctx->ctxl);
         list_remove(&ctx->pidl);
         loc_free(ctx->bp_ids);
+        loc_free(ctx->regs);
         loc_free(ctx);
     }
 }
@@ -205,10 +206,12 @@ void link_context(Context * ctx) {
     ctx->ref_count++;
 }
 
-Context * create_context(pid_t pid) {
+Context * create_context(pid_t pid, size_t regs_size) {
     Context * ctx = (Context *)loc_alloc_zero(sizeof(Context));
 
     ctx->pid = pid;
+    ctx->regs_size = regs_size;
+    ctx->regs = loc_alloc_zero(regs_size);
     list_init(&ctx->children);
     list_init(&ctx->ctxl);
     list_init(&ctx->pidl);
@@ -306,10 +309,6 @@ unsigned context_word_size(Context * ctx) {
 }
 
 static void eventpoint_at_main(Context * ctx, void * args) {
-#if ENABLE_ELF
-    ctx->debug_structure_searched = 0;
-    ctx->debug_structure_address = 0;
-#endif
     ctx->pending_intercept = 1;
 }
 

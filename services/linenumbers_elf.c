@@ -36,6 +36,7 @@
 #include "dwarfio.h"
 #include "dwarf.h"
 #include "dwarfcache.h"
+#include "stacktrace.h"
 #include "trace.h"
 
 static const char * LINENUMBERS = "LineNumbers";

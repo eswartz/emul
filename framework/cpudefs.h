@@ -21,36 +21,42 @@
 
 #include "config.h"
 
-typedef uintptr_t ContextAddress; /* Type to represent byte address inside context memory */
-
 #if ENABLE_DebugContext
 
-#include <regset.h>
+typedef uintptr_t ContextAddress; /* Type to represent byte address inside context memory */
 
-typedef struct RegisterDefinition {
+#define REGNUM_DWARF    1
+#define REGNUM_EH_FRAME 2
+
+typedef struct Context Context;
+typedef struct RegisterData RegisterData;
+
+typedef struct RegisterDefinition RegisterDefinition;
+
+struct RegisterDefinition {
     char *      name;           /* pointer to register name */
     int         offset;         /* offset to entry in REG_SET */
     int         size;           /* register size in bytes */
     int         dwarf_id;       /* ID of the register in DWARF sections */
     int         eh_frame_id;    /* ID of the register in .eh_frame section */
     int         traceable;      /* register value can be traced using .eh_frame of .debug_frame */
-} RegisterDefinition;
+};
 
-typedef struct StackFrame {
+typedef struct StackFrame StackFrame;
+
+struct StackFrame {
     int is_top_frame;
-    ContextAddress fp;  /* frame address */
-    REG_SET regs;       /* registers */
-    REG_SET mask;       /* registers valid bits mask */
-} StackFrame;
+    ContextAddress fp;      /* frame address */
+    size_t regs_size;       /* size of "regs" and "mask" */
+    RegisterData * regs;    /* register values */
+    RegisterData * mask;    /* registers valid bits mask */
+};
 
 /* Return array of CPU regiter definitions. LAst item in the array has name == NULL */
 extern RegisterDefinition * get_reg_definitions(void);
 
-/* Search register definition for given DWARF register ID, return NULL if not found */
-extern RegisterDefinition * get_reg_by_dwarf_id(int id);
-
-/* Search register definition for given .eh_frame section register ID, return NULL if not found */
-extern RegisterDefinition * get_reg_by_eh_frame_id(int id);
+/* Search register definition for given register ID, return NULL if not found */
+extern RegisterDefinition * get_reg_by_id(unsigned id, unsigned numbering_convention);
 
 /* Return register definition of instruction pointer */
 extern RegisterDefinition * get_PC_definition(void);
@@ -62,21 +68,16 @@ extern int read_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint
 extern int write_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t value);
 
 /* Get instruction pointer (PC) value */
-#define get_regs_PC(x) get_regs_PC_func(&(x))
+extern ContextAddress get_regs_PC(RegisterData * regs);
 
 /* Set instruction pointer (PC) value */
-#define set_regs_PC(x,y) set_regs_PC_func(&(x), (ContextAddress)(y))
-
-extern ContextAddress get_regs_PC_func(REG_SET * regs);
-extern void set_regs_PC_func(REG_SET * regs, ContextAddress pc);
+extern void set_regs_PC(RegisterData * x, ContextAddress y);
 
 #if !defined(_WRS_KERNEL)
 extern unsigned char BREAK_INST[];  /* breakpoint instruction */
 #define BREAK_SIZE get_break_size() /* breakpoint instruction size */
 extern size_t get_break_size(void);
 #endif
-
-struct Context;
 
 /*
  * Retrieve stack frame information by examining stack data in memory.

@@ -240,7 +240,7 @@ static void command_get(char * token, Channel * c) {
     int frame = 0;
     Context * ctx = NULL;
     RegisterDefinition * reg_def = NULL;
-    char * data = NULL;
+    uint8_t * data = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -251,13 +251,13 @@ static void command_get(char * token, Channel * c) {
 
     if (!err) {
         if (is_top_frame(ctx, frame)) {
-            data = (char *)&ctx->regs + reg_def->offset;
+            data = (uint8_t *)ctx->regs + reg_def->offset;
         }
         else {
             StackFrame * info = NULL;
             if (get_frame_info(ctx, frame, &info)) err = errno;
             else if (read_reg_value(reg_def, info, NULL) < 0) err = errno;
-            else data = (char *)&info->regs + reg_def->offset;
+            else data = (uint8_t *)info->regs + reg_def->offset;
         }
     }
 
@@ -301,7 +301,7 @@ static void command_set(char * token, Channel * c) {
     else if (!ctx->intercepted) err = ERR_IS_RUNNING;
 
     if (err == 0) {
-        char * data = (char *)&ctx->regs + reg_def->offset;
+        uint8_t * data = (uint8_t *)ctx->regs + reg_def->offset;
         int size = reg_def->size;
         if (val_len != size) {
             err = ERR_INV_DATA_SIZE;
@@ -406,9 +406,9 @@ static void command_getm(char * token, Channel * c) {
         json_write_binary_start(&state, &c->out, -1);
         for (i = 0; i < buf_pos; i++) {
             Location * l = buf + i;
-            char * data = l->frame_info == NULL ?
-                (char *)&l->ctx->regs + l->reg_def->offset + l->offs :
-                (char *)&l->frame_info->regs + l->reg_def->offset + l->offs;
+            uint8_t * data = l->frame_info == NULL ?
+                (uint8_t *)l->ctx->regs + l->reg_def->offset + l->offs :
+                (uint8_t *)l->frame_info->regs + l->reg_def->offset + l->offs;
             json_write_binary_data(&state, data, l->size);
         }
         json_write_binary_end(&state);
@@ -422,7 +422,7 @@ static void command_getm(char * token, Channel * c) {
 
 static void command_setm(char * token, Channel * c) {
     int i = 0;
-    char tmp[256];
+    uint8_t tmp[256];
     JsonReadBinaryState state;
     int err = read_location_list(&c->inp, 1);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -430,9 +430,9 @@ static void command_setm(char * token, Channel * c) {
     for (i = 0; i < buf_pos; i++) {
         unsigned rd_done = 0;
         Location * l = buf + i;
-        char * data = l->frame_info == NULL ?
-            (char *)&l->ctx->regs + l->reg_def->offset + l->offs :
-            (char *)&l->frame_info->regs + l->reg_def->offset + l->offs;
+        uint8_t * data = l->frame_info == NULL ?
+            (uint8_t *)l->ctx->regs + l->reg_def->offset + l->offs :
+            (uint8_t *)l->frame_info->regs + l->reg_def->offset + l->offs;
         while (rd_done < l->size) {
             int rd = json_read_binary_data(&state, err ? tmp : (data + rd_done), l->size - rd_done);
             if (rd == 0) break;

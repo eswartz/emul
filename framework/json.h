@@ -72,7 +72,7 @@ extern void write_service_error(OutputStream * out, int err, const char * servic
  */
 
 extern char * json_read_alloc_binary(InputStream * inp, int * size);
-extern void json_write_binary(OutputStream * out, const char * data, size_t size);
+extern void json_write_binary(OutputStream * out, const void * data, size_t size);
 extern void json_splice_binary(OutputStream * out, int fd, size_t size);
 extern void json_splice_binary_offset(OutputStream * out, int fd, size_t size, off_t * offset);
 
@@ -87,7 +87,7 @@ typedef struct JsonReadBinaryState {
 } JsonReadBinaryState;
 
 extern void json_read_binary_start(JsonReadBinaryState * state, InputStream * inp);
-extern size_t json_read_binary_data(JsonReadBinaryState * state, char * buf, size_t buf_size);
+extern size_t json_read_binary_data(JsonReadBinaryState * state, void * buf, size_t buf_size);
 extern void json_read_binary_end(JsonReadBinaryState * state);
 
 typedef struct JsonWriteBinaryState {
@@ -102,7 +102,7 @@ typedef struct JsonWriteBinaryState {
 
 /* json_write_binary_start() argument 'size' can be 0 if client does not know the size upfront */
 extern void json_write_binary_start(JsonWriteBinaryState * state, OutputStream * out, int size);
-extern void json_write_binary_data(JsonWriteBinaryState * state, const char * data, size_t size);
+extern void json_write_binary_data(JsonWriteBinaryState * state, const void * data, size_t size);
 extern void json_write_binary_end(JsonWriteBinaryState * state);
 
 #endif /* D_json */

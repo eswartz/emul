@@ -18,6 +18,8 @@
 
 #if defined(__i386__) || defined(__x86_64__)
 
+#include "regset.h"
+
 #define REG_OFFSET(name) offsetof(REG_SET, name)
 
 RegisterDefinition regs_index[] = {
@@ -100,12 +102,6 @@ RegisterDefinition regs_index[] = {
     { NULL,     0,                    0,  0,  0,  0},
 };
 
-static int read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
-    if (context_read_mem(ctx, address, buf, size) < 0) return -1;
-    check_breakpoints_on_memory_read(ctx, address, buf, size);
-    return 0;
-}
-
 #if defined(WIN32) || defined(__CYGWIN__)
 #  define REG_SP Esp
 #  define REG_BP Ebp
@@ -170,26 +166,26 @@ static ContextAddress trace_jump(Context * ctx, ContextAddress addr) {
     while (cnt < 100) {
         unsigned char instr;    /* instruction opcode at <addr> */
         ContextAddress dest;    /* Jump destination address */
-        if (read_mem(ctx, addr, &instr, 1) < 0) break;
+        if (context_read_mem(ctx, addr, &instr, 1) < 0) break;
 
         /* If instruction is a JMP, get destination adrs */
         if (instr == JMPD08) {
             signed char disp08;
-            if (read_mem(ctx, addr + 1, &disp08, 1) < 0) break;
+            if (context_read_mem(ctx, addr + 1, &disp08, 1) < 0) break;
             dest = addr + 2 + disp08;
         }
         else if (instr == JMPD32) {
             int disp32;
             assert(sizeof(disp32) == 4);
-            if (read_mem(ctx, addr + 1, &disp32, 4) < 0) break;
+            if (context_read_mem(ctx, addr + 1, &disp32, 4) < 0) break;
             dest = addr + 5 + disp32;
         }
         else if (instr == GRP5) {
             ContextAddress ptr;
-            if (read_mem(ctx, addr + 1, &instr, 1) < 0) break;
+            if (context_read_mem(ctx, addr + 1, &instr, 1) < 0) break;
             if (instr != JMPN) break;
-            if (read_mem(ctx, addr + 2, &ptr, sizeof(ptr)) < 0) break;
-            if (read_mem(ctx, ptr, &dest, sizeof(dest)) < 0) break;
+            if (context_read_mem(ctx, addr + 2, &ptr, sizeof(ptr)) < 0) break;
+            if (context_read_mem(ctx, ptr, &dest, sizeof(dest)) < 0) break;
         }
         else {
             break;
@@ -210,18 +206,23 @@ static int func_entry(unsigned char * code) {
     return 0;
 }
 
+#define REGS(x) (*(REG_SET *)(x))
+
 int crawl_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
-    ContextAddress reg_ip = frame->regs.REG_IP;
-    ContextAddress reg_sp = frame->regs.REG_SP;
-    ContextAddress reg_bp = frame->regs.REG_BP;
+    ContextAddress reg_ip = REGS(frame->regs).REG_IP;
+    ContextAddress reg_sp = REGS(frame->regs).REG_SP;
+    ContextAddress reg_bp = REGS(frame->regs).REG_BP;
 
     ContextAddress dwn_ip = 0;
     ContextAddress dwn_sp = 0;
     ContextAddress dwn_bp = 0;
 
-    if (frame->mask.REG_IP != ~(ContextAddress)0) return 0;
-    if (frame->mask.REG_SP != ~(ContextAddress)0) return 0;
-    if (frame->mask.REG_BP != ~(ContextAddress)0) return 0;
+    assert(frame->regs_size == sizeof(REG_SET));
+    assert(down->regs_size == sizeof(REG_SET));
+
+    if (REGS(frame->mask).REG_IP != ~(ContextAddress)0) return 0;
+    if (REGS(frame->mask).REG_SP != ~(ContextAddress)0) return 0;
+    if (REGS(frame->mask).REG_BP != ~(ContextAddress)0) return 0;
 
     if (frame->is_top_frame) {
         /* Top frame */
@@ -254,7 +255,7 @@ int crawl_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
         else {
             unsigned char code[5];
 
-            if (read_mem(ctx, addr - 1, code, sizeof(code)) < 0) return -1;
+            if (context_read_mem(ctx, addr - 1, code, sizeof(code)) < 0) return -1;
 
             if (func_entry(code + 1) || code[1] == ENTER || code[1] == RET || code[1] == RETADD) {
                 dwn_sp = reg_sp + sizeof(ContextAddress);
@@ -266,30 +267,30 @@ int crawl_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
             }
             else {
                 dwn_sp = reg_bp + sizeof(ContextAddress) * 2;
-                if (read_mem(ctx, reg_bp, &dwn_bp, sizeof(ContextAddress)) < 0) dwn_bp = 0;
+                if (context_read_mem(ctx, reg_bp, &dwn_bp, sizeof(ContextAddress)) < 0) dwn_bp = 0;
             }
         }
     }
     else {
         dwn_sp = reg_bp + sizeof(ContextAddress) * 2;
-        if (read_mem(ctx, reg_bp, &dwn_bp, sizeof(ContextAddress)) < 0) dwn_bp = 0;
+        if (context_read_mem(ctx, reg_bp, &dwn_bp, sizeof(ContextAddress)) < 0) dwn_bp = 0;
     }
 
-    if (read_mem(ctx, dwn_sp - sizeof(ContextAddress), &dwn_ip, sizeof(ContextAddress)) < 0) dwn_ip = 0;
+    if (context_read_mem(ctx, dwn_sp - sizeof(ContextAddress), &dwn_ip, sizeof(ContextAddress)) < 0) dwn_ip = 0;
 
     if (dwn_bp < reg_sp) dwn_bp = 0;
 
     if (dwn_sp != 0) {
-        down->regs.REG_SP = dwn_sp;
-        down->mask.REG_SP = ~(ContextAddress)0;
+        REGS(down->regs).REG_SP = dwn_sp;
+        REGS(down->mask).REG_SP = ~(ContextAddress)0;
     }
     if (dwn_bp != 0) {
-        down->regs.REG_BP = dwn_bp;
-        down->mask.REG_BP = ~(ContextAddress)0;
+        REGS(down->regs).REG_BP = dwn_bp;
+        REGS(down->mask).REG_BP = ~(ContextAddress)0;
     }
     if (dwn_ip != 0) {
-        down->regs.REG_IP = dwn_ip;
-        down->mask.REG_IP = ~(ContextAddress)0;
+        REGS(down->regs).REG_IP = dwn_ip;
+        REGS(down->mask).REG_IP = ~(ContextAddress)0;
     }
 
     frame->fp = dwn_sp;
@@ -311,12 +312,12 @@ RegisterDefinition * get_PC_definition(void) {
     return reg_def;
 }
 
-ContextAddress get_regs_PC_func(REG_SET * regs) {
-    return regs->REG_IP;
+ContextAddress get_regs_PC(RegisterData * regs) {
+    return REGS(regs).REG_IP;
 }
 
-void set_regs_PC_func(REG_SET * regs, ContextAddress pc) {
-    regs->REG_IP = pc;
+void set_regs_PC(RegisterData * regs, ContextAddress pc) {
+    REGS(regs).REG_IP = pc;
 }
 
 unsigned char BREAK_INST[] = { 0xcc };

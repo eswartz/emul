@@ -283,10 +283,6 @@ typedef struct {
 
 #endif
 
-#ifndef DT_MIPS_RLD_MAP
-#define DT_MIPS_RLD_MAP 0x70000016
-#endif
-
 typedef struct ElfX_Sym {
     union {
         Elf32_Sym Elf32;
@@ -401,12 +397,6 @@ extern void elf_list_done(Context * ctx);
 extern int elf_load(ELF_Section * section);
 
 /*
- * Read a binary value of given size from ELF section, adjust endianness if necessary
-.
- */
-extern U8_T elf_read_section(ELF_Section * section, uintptr_t offset, size_t size);
-
-/*
  * Register ELF file close callback.
  * The callback is called each time an ELF file data is about to be disposed.
  * Service implementation can use the callback to deallocate
@@ -420,6 +410,18 @@ extern void elf_add_close_listener(ELFCloseListener listener);
  * Return 0 if the address is not currently mapped.
  */
 extern ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ContextAddress addr);
+
+/*
+ * Read a word from context memory. Word size and endianess are determened by ELF file.
+ */
+extern int elf_read_memory_word(Context * ctx, ELF_File * file, ContextAddress addr, ContextAddress * word);
+
+/*
+ * Return run-time address of the debug structrure that is normally pointed by DT_DEBUG entry in ".dynamic" section.
+ * "file" is assigned a file that contains DT_DEBUG entry.
+ * Return 0 if the structure could not be found.
+ */
+extern ContextAddress elf_get_debug_structure_address(Context * ctx, ELF_File ** file);
 
 /*
  * Initialize ELF support module.

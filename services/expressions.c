@@ -691,7 +691,6 @@ static void load_value(Value * v) {
     if (context_read_mem(expression_context, v->address, value, v->size) < 0) {
         error(errno, "Can't read variable value");
     }
-    check_breakpoints_on_memory_read(expression_context, v->address, value, v->size);
     v->value = value;
     v->remote = 0;
 }
@@ -1738,24 +1737,22 @@ static int evaluate_type(Context * ctx, int frame, char * s, Value * v) {
 
     expression_context = ctx;
     expression_frame = frame;
-    if (set_trap(&trap)) {
-        str_pool_cnt = 0;
-        while (str_alloc_list != NULL) {
-            StringValue * str = str_alloc_list;
-            str_alloc_list = str->next;
-            loc_free(str);
-        }
-        text = s;
-        text_pos = 0;
-        text_len = strlen(s) + 1;
-        next_ch();
-        next_sy();
-        expression(MODE_TYPE, v);
-        if (text_sy != 0) error(ERR_INV_EXPRESSION, "Illegal characters at the end of expression");
-        clear_trap(&trap);
-        return 0;
+    if (!set_trap(&trap)) return -1;
+    str_pool_cnt = 0;
+    while (str_alloc_list != NULL) {
+        StringValue * str = str_alloc_list;
+        str_alloc_list = str->next;
+        loc_free(str);
     }
-    return -1;
+    text = s;
+    text_pos = 0;
+    text_len = strlen(s) + 1;
+    next_ch();
+    next_sy();
+    expression(MODE_TYPE, v);
+    if (text_sy != 0) error(ERR_INV_EXPRESSION, "Illegal characters at the end of expression");
+    clear_trap(&trap);
+    return 0;
 }
 
 int evaluate_expression(Context * ctx, int frame, char * s, int load, Value * v) {
@@ -1763,35 +1760,32 @@ int evaluate_expression(Context * ctx, int frame, char * s, int load, Value * v)
 
     expression_context = ctx;
     expression_frame = frame;
-    if (set_trap(&trap)) {
-        str_pool_cnt = 0;
-        while (str_alloc_list != NULL) {
-            StringValue * str = str_alloc_list;
-            str_alloc_list = str->next;
-            loc_free(str);
-        }
-        text = s;
-        text_pos = 0;
-        text_len = strlen(s) + 1;
-        next_ch();
-        next_sy();
-        expression(MODE_NORMAL, v);
-        if (text_sy != 0) error(ERR_INV_EXPRESSION, "Illegal characters at the end of expression");
-        if (load) load_value(v);
-        clear_trap(&trap);
-        return 0;
+    if (!set_trap(&trap)) return -1;
+    str_pool_cnt = 0;
+    while (str_alloc_list != NULL) {
+        StringValue * str = str_alloc_list;
+        str_alloc_list = str->next;
+        loc_free(str);
     }
-    return -1;
+    text = s;
+    text_pos = 0;
+    text_len = strlen(s) + 1;
+    next_ch();
+    next_sy();
+    expression(MODE_NORMAL, v);
+    if (text_sy != 0) error(ERR_INV_EXPRESSION, "Illegal characters at the end of expression");
+    if (load) load_value(v);
+    clear_trap(&trap);
+    return 0;
 }
 
 int value_to_boolean(Value * v) {
     /* TODO: error handling in value_to_boolean() */
     int r = 0;
     Trap trap;
-    if (set_trap(&trap)) {
-        r = to_boolean(MODE_NORMAL, v);
-        clear_trap(&trap);
-    }
+    if (!set_trap(&trap)) return 0;
+    r = to_boolean(MODE_NORMAL, v);
+    clear_trap(&trap);
     return r;
 }
 
@@ -1799,10 +1793,9 @@ ContextAddress value_to_address(Value * v) {
     /* TODO: error handling in value_to_address() */
     ContextAddress r = 0;
     Trap trap;
-    if (set_trap(&trap)) {
-        r = (ContextAddress)to_uns(MODE_NORMAL, v);
-        clear_trap(&trap);
-    }
+    if (!set_trap(&trap)) return 0;
+    r = (ContextAddress)to_uns(MODE_NORMAL, v);
+    clear_trap(&trap);
     return r;
 }
 
@@ -2234,10 +2227,7 @@ static void command_evaluate(char * token, Channel * c) {
             while (offs < value.size) {
                 int size = value.size - offs;
                 if (size > sizeof(buf)) size = sizeof(buf);
-                if (!err) {
-                    if (context_read_mem(ctx, value.address + offs, buf, size) < 0) err = errno;
-                    else check_breakpoints_on_memory_read(ctx, value.address + offs, buf, size);
-                }
+                if (!err && context_read_mem(ctx, value.address + offs, buf, size) < 0) err = errno;
                 json_write_binary_data(&state, buf, size);
                 offs += size;
             }
@@ -2313,13 +2303,8 @@ static void command_assign(char * token, Channel * c) {
         if (rd == 0) break;
         if (err == 0) {
             if (value.remote) {
-                check_breakpoints_on_memory_write(ctx, addr, buf, rd);
-                if (context_write_mem(ctx, addr, buf, rd) < 0) {
-                    err = errno;
-                }
-                else {
-                    addr += rd;
-                }
+                if (context_write_mem(ctx, addr, buf, rd) < 0) err = errno;
+                addr += rd;
             }
             else {
                 err = ERR_UNSUPPORTED;

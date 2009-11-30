@@ -39,14 +39,11 @@ static unsigned buf_size = 0;
 static void realloc_buf(void) {
     if (buf == NULL) {
         buf_size = 0x1000;
-        buf = (char *)loc_alloc(buf_size);
+        buf = loc_alloc(buf_size);
     }
     else {
-        char * tmp = (char *)loc_alloc(buf_size * 2);
-        memcpy(tmp, buf, buf_pos);
-        loc_free(buf);
-        buf = tmp;
         buf_size *= 2;
+        buf = loc_realloc(buf, buf_size);
     }
 }
 
@@ -514,17 +511,18 @@ void json_read_binary_start(JsonReadBinaryState * state, InputStream * inp) {
     }
 }
 
-size_t json_read_binary_data(JsonReadBinaryState * state, char * buf, size_t len) {
+size_t json_read_binary_data(JsonReadBinaryState * state, void * buf, size_t len) {
     size_t res = 0;
+    uint8_t * ptr = buf;
     if (state->encoding == ENCODING_BINARY) {
         if (len > (size_t)(state->size_start - state->size_done)) len = state->size_start - state->size_done;
-        while (res < len) buf[res++] = (char)read_stream(state->inp);
+        while (res < len) ptr[res++] = (uint8_t)read_stream(state->inp);
     }
     else {
         while (len > 0) {
             if (state->rem > 0) {
                 unsigned i = 0;
-                while (i < state->rem && i < len) *buf++ = state->buf[i++];
+                while (i < state->rem && i < len) *ptr++ = state->buf[i++];
                 len -= i;
                 res += i;
                 if (i < state->rem) {
@@ -536,9 +534,9 @@ size_t json_read_binary_data(JsonReadBinaryState * state, char * buf, size_t len
                 state->rem = 0;
             }
             if (len >= 3) {
-                int i = read_base64(state->inp, buf, len);
+                int i = read_base64(state->inp, (char *)ptr, len);
                 if (i == 0) break;
-                buf += i;
+                ptr += i;
                 len -= i;
                 res += i;
             }
@@ -614,17 +612,18 @@ void json_write_binary_start(JsonWriteBinaryState * state, OutputStream * out, i
     }
 }
 
-void json_write_binary_data(JsonWriteBinaryState * state, const char * data, size_t len) {
+void json_write_binary_data(JsonWriteBinaryState * state, const void * data, size_t len) {
     if (len <= 0) return;
     if (state->encoding == ENCODING_BINARY) {
         write_block_stream(state->out, data, len);
     }
     else {
+        const uint8_t * ptr = data;
         size_t rem = state->rem;
 
         if (rem > 0) {
             while (rem < 3 && len > 0) {
-                state->buf[rem++] = *data++;
+                state->buf[rem++] = *ptr++;
                 len--;
             }
             assert(rem <= 3);
@@ -637,8 +636,8 @@ void json_write_binary_data(JsonWriteBinaryState * state, const char * data, siz
             assert(rem == 0);
             rem = len % 3;
             len -= rem;
-            write_base64(state->out, data, len);
-            if (rem > 0) memcpy(state->buf, data + len, rem);
+            write_base64(state->out, (char *)ptr, len);
+            if (rem > 0) memcpy(state->buf, ptr + len, rem);
         }
         state->rem = rem;
     }
@@ -659,7 +658,7 @@ void json_write_binary_end(JsonWriteBinaryState * state) {
     }
 }
 
-void json_write_binary(OutputStream * out, const char * data, size_t size) {
+void json_write_binary(OutputStream * out, const void * data, size_t size) {
     if (data == NULL) {
         write_string(out, "null");
     }

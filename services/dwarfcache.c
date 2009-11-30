@@ -28,7 +28,6 @@
 #include "dwarfcache.h"
 #include "dwarfexpr.h"
 #include "exceptions.h"
-#include "breakpoints.h"
 #include "myalloc.h"
 
 #define OBJ_HASH_SIZE          (0x10000-1)
@@ -473,11 +472,13 @@ static void get_object_property_callback(U2_T Tag, U2_T Attr, U2_T Form) {
 }
 
 U8_T get_numeric_property_value(PropertyValue * Value) {
-    unsigned i;
     U8_T Res = 0;
 
-    assert(Value->mAccessFunc == NULL);
-    if (Value->mAddr != NULL) {
+    if (Value->mAccessFunc != NULL) {
+        if (Value->mAccessFunc(Value, 0, &Res) < 0) exception(errno);
+    }
+    else if (Value->mAddr != NULL) {
+        size_t i;
         for (i = 0; i < Value->mSize; i++) {
             Res = (Res << 8) | Value->mAddr[Value->mBigEndian ? i : Value->mSize - i - 1];
         }
@@ -488,13 +489,11 @@ U8_T get_numeric_property_value(PropertyValue * Value) {
     return Res;
 }
 
-int read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, int Attr, PropertyValue * Value) {
-    Trap trap;
+static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, int Attr, PropertyValue * Value) {
 
     if (Obj->mTag == TAG_fund_type) {
         /* TAG_fund_type is virtual DWARF object that is created by DWARF reader. It has no properties. */
-        errno = ERR_SYM_NOT_FOUND;
-        return -1;
+        exception(ERR_SYM_NOT_FOUND);
     }
 
     memset(Value, 0, sizeof(PropertyValue));
@@ -508,17 +507,13 @@ int read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, int A
     sCache = (DWARFCache *)sCompUnit->mFile->dwarf_dt_cache;
     sDebugSection = sCompUnit->mSection;
     dio_EnterDebugSection(&sCompUnit->mDesc, sDebugSection, Obj->mID - sDebugSection->addr);
-    if (set_trap(&trap)) {
-        gop_gAttr = (U2_T)Attr;
-        gop_gForm = 0;
-        dio_ReadEntry(get_object_property_callback);
-        clear_trap(&trap);
-    }
+    gop_gAttr = (U2_T)Attr;
+    gop_gForm = 0;
+    dio_ReadEntry(get_object_property_callback);
     dio_ExitSection();
     sCompUnit = NULL;
     sCache = NULL;
     sDebugSection = NULL;
-    if (trap.error) return -1;
 
     switch (Value->mForm = gop_gForm) {
     case FORM_REF       :
@@ -532,7 +527,7 @@ int read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, int A
             ObjectInfo * RefObj = find_object(sCache, gop_gFormData);
             PropertyValue ValueAddr;
 
-            if (read_and_evaluate_dwarf_object_property(Ctx, Frame, 0, RefObj, AT_location, &ValueAddr) < 0) return -1;
+            read_and_evaluate_dwarf_object_property(Ctx, Frame, 0, RefObj, AT_location, &ValueAddr);
             if (ValueAddr.mAccessFunc != NULL) {
                 ValueAddr.mAccessFunc(&ValueAddr, 0, &Value->mValue);
             }
@@ -543,14 +538,10 @@ int read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, int A
                 size_t Size;
 
                 Addr = (ContextAddress)get_numeric_property_value(&ValueAddr);
-                if (read_and_evaluate_dwarf_object_property(Ctx, Frame, Addr, RefObj, AT_byte_size, &ValueSize) < 0) return -1;
+                read_and_evaluate_dwarf_object_property(Ctx, Frame, Addr, RefObj, AT_byte_size, &ValueSize);
                 Size = (size_t)get_numeric_property_value(&ValueSize);
-                if (Size < 1 || Size > sizeof(Buf)) {
-                    errno = ERR_INV_DATA_TYPE;
-                    return -1;
-                }
-                if (context_read_mem(Ctx, Addr, Buf, Size) < 0) return -1;
-                check_breakpoints_on_memory_read(Ctx, Addr, Buf, Size);
+                if (Size < 1 || Size > sizeof(Buf)) exception(ERR_INV_DATA_TYPE);
+                if (context_read_mem(Ctx, Addr, Buf, Size) < 0) exception(errno);
                 Value->mAddr = Buf;
                 Value->mSize = Size;
             }
@@ -574,20 +565,17 @@ int read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, int A
         Value->mValue = gop_gFormData;
         break;
     default:
-        errno = ERR_SYM_NOT_FOUND;
-        return -1;
+        if (Attr == AT_data_member_location && Obj->mTag == TAG_member && Obj->mParent->mTag == TAG_union_type) {
+            Value->mForm = FORM_UDATA;
+            Value->mValue = 0;
+            break;
+        }
+        exception(ERR_SYM_NOT_FOUND);
     }
-    return 0;
 }
 
-int read_and_evaluate_dwarf_object_property(Context * Ctx, int Frame, U8_T Base, ObjectInfo * Obj, int Attr, PropertyValue * Value) {
-    if (read_dwarf_object_property(Ctx, Frame, Obj, Attr, Value) < 0) {
-        if (errno == ENOENT && Attr == AT_data_member_location && Obj->mTag == TAG_member && Obj->mParent->mTag == TAG_union_type) {
-            Value->mValue = 0;
-            return 0;
-        }
-        return -1;
-    }
+void read_and_evaluate_dwarf_object_property(Context * Ctx, int Frame, U8_T Base, ObjectInfo * Obj, int Attr, PropertyValue * Value) {
+    read_dwarf_object_property(Ctx, Frame, Obj, Attr, Value);
     assert(Value->mContext == Ctx);
     assert(Value->mFrame == Frame);
     assert(Value->mObject == Obj);
@@ -600,7 +588,7 @@ int read_and_evaluate_dwarf_object_property(Context * Ctx, int Frame, U8_T Base,
         case FORM_BLOCK2    :
         case FORM_BLOCK4    :
         case FORM_BLOCK     :
-            if (dwarf_evaluate_expression(Base, Value) < 0) return -1;
+            dwarf_evaluate_expression(Base, Value);
             break;
         }
     }
@@ -610,11 +598,10 @@ int read_and_evaluate_dwarf_object_property(Context * Ctx, int Frame, U8_T Base,
         case FORM_BLOCK2    :
         case FORM_BLOCK4    :
         case FORM_BLOCK     :
-            if (dwarf_evaluate_expression(Base, Value) < 0) return -1;
+            dwarf_evaluate_expression(Base, Value);
             break;
         }
     }
-    return 0;
 }
 
 
@@ -684,7 +671,7 @@ DWARFCache * get_dwarf_cache(ELF_File * File) {
             clear_trap(&trap);
         }
         else {
-            sCache->mErrorCode = trap.error;
+            sCache->mErrorCode = get_errno(trap.error);
             strncpy(sCache->mErrorMsg, trap.msg, sizeof(sCache->mErrorMsg) - 1);
         }
         sCache = NULL;
@@ -879,7 +866,7 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
     else {
         dio_ExitSection();
         free_unit_cache(Unit);
-        str_exception(trap.error, trap.msg);
+        exception(trap.error);
     }
 }
 

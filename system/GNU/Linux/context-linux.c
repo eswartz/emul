@@ -28,12 +28,16 @@
 #include <sys/ptrace.h>
 #include <sched.h>
 #include "context.h"
+#include "regset.h"
 #include "events.h"
 #include "errors.h"
 #include "trace.h"
 #include "myalloc.h"
 #include "breakpoints.h"
+#include "expressions.h"
+#include "memorymap.h"
 #include "waitpid.h"
+#include "tcf_elf.h"
 
 #if ENABLE_DebugContext
 
@@ -122,12 +126,10 @@ char * context_suspend_reason(Context * ctx) {
 }
 
 int context_attach_self(void) {
-    pid_t pid = getpid();
-
     if (ptrace(PTRACE_TRACEME, 0, 0, 0) < 0) {
         int err = errno;
         trace(LOG_ALWAYS, "error: ptrace(PTRACE_TRACEME) failed: pid %d, error %d %s",
-              pid, err, errno_to_str(err));
+              getpid(), err, errno_to_str(err));
         errno = err;
         return -1;
     }
@@ -147,7 +149,7 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
         return -1;
     }
     add_waitpid_process(pid);
-    ctx = create_context(pid);
+    ctx = create_context(pid, sizeof(REG_SET));
     list_add_first(&ctx->ctxl, &pending_list);
     ctx->mem = pid;
     ctx->attach_callback = done;
@@ -221,13 +223,13 @@ int context_continue(Context * ctx) {
 
     trace(LOG_CONTEXT, "context: resuming ctx %#lx, pid %d, with signal %d", ctx, ctx->pid, signal);
 #if defined(__i386__) || defined(__x86_64__)
-    if (ctx->regs.eflags & 0x100) {
-        ctx->regs.eflags &= ~0x100;
+    if (((REG_SET *)ctx->regs)->eflags & 0x100) {
+        ((REG_SET *)ctx->regs)->eflags &= ~0x100;
         ctx->regs_dirty = 1;
     }
 #endif
     if (ctx->regs_dirty) {
-        if (ptrace(PTRACE_SETREGS, ctx->pid, 0, &ctx->regs) < 0) {
+        if (ptrace(PTRACE_SETREGS, ctx->pid, 0, ctx->regs) < 0) {
             int err = errno;
 #if USE_ESRCH_WORKAROUND
             if (err == ESRCH) {
@@ -284,7 +286,7 @@ int context_single_step(Context * ctx) {
     if (syscall_never_returns(ctx)) return context_continue(ctx);
     trace(LOG_CONTEXT, "context: single step ctx %#lx, pid %d", ctx, ctx->pid);
     if (ctx->regs_dirty) {
-        if (ptrace(PTRACE_SETREGS, ctx->pid, 0, &ctx->regs) < 0) {
+        if (ptrace(PTRACE_SETREGS, ctx->pid, 0, ctx->regs) < 0) {
             int err = errno;
 #if USE_ESRCH_WORKAROUND
             if (err == ESRCH) {
@@ -331,6 +333,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     trace(LOG_CONTEXT, "context: write memory ctx %#lx, pid %d, address %#lx, size %zd",
         ctx, ctx->pid, address, size);
     assert(word_size <= sizeof(unsigned long));
+    check_breakpoints_on_memory_write(ctx, address, buf, size);
     for (word_addr = address & ~((ContextAddress)word_size - 1); word_addr < address + size; word_addr += word_size) {
         unsigned long word = 0;
         if (word_addr < address || word_addr + word_size > address + size) {
@@ -395,6 +398,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
             memcpy((char *)buf + (word_addr - address), &word, word_size);
         }
     }
+    check_breakpoints_on_memory_read(ctx, address, buf, size);
     return 0;
 }
 
@@ -427,8 +431,8 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
             }
             assert(list_is_empty(&ctx->children));
             assert(ctx->parent == NULL);
-            list_remove(&ctx->ctxl);
-            loc_free(ctx);
+            ctx->ref_count = 1;
+            context_unlock(ctx);
         }
     }
     else {
@@ -452,6 +456,10 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
                 Context * c = cldl2ctxp(ctx->children.next);
                 assert(!c->exited);
                 assert(c->parent == ctx);
+                if (ctx->stopped) {
+                    ctx->stopped = 0;
+                    send_context_started_event(ctx);
+                }
                 c->exiting = 0;
                 c->exited = 1;
                 send_context_exited_event(c);
@@ -479,9 +487,9 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
 #if !USE_PTRACE_SYSCALL
 #   define get_syscall_id(ctx) 0
 #elif defined(__x86_64__)
-#   define get_syscall_id(ctx) (ctx->regs.orig_rax)
+#   define get_syscall_id(ctx) (((REG_SET *)ctx->regs)->orig_rax)
 #elif defined(__i386__)
-#   define get_syscall_id(ctx) (ctx->regs.orig_eax)
+#   define get_syscall_id(ctx) (((REG_SET *)ctx->regs)->orig_eax)
 #else
 #   error "get_syscall_id() is not implemented for CPU other then X86"
 #endif
@@ -535,7 +543,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         }
         assert(msg != 0);
         add_waitpid_process(msg);
-        ctx2 = create_context(msg);
+        ctx2 = create_context(msg, sizeof(REG_SET));
         link_context(ctx2);
         assert(ctx2->parent == NULL);
         trace(LOG_EVENTS, "event: new context 0x%x, pid %d", ctx2, ctx2->pid);
@@ -576,7 +584,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         assert(!ctx->regs_dirty);
         assert(!ctx->intercepted);
         ctx->regs_error = 0;
-        if (ptrace(PTRACE_GETREGS, ctx->pid, 0, &ctx->regs) < 0) {
+        if (ptrace(PTRACE_GETREGS, ctx->pid, 0, ctx->regs) < 0) {
             assert(errno != 0);
 #if USE_ESRCH_WORKAROUND
             if (errno == ESRCH) {
@@ -672,9 +680,95 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
     }
 }
 
+#if SERVICE_Expressions
+
+static int expression_identifier_callback(Context * ctx, int frame, char * name, Value * v) {
+    if (ctx == NULL) return 0;
+    if (strcmp(name, "$loader_brk") == 0) {
+        v->address = elf_get_debug_structure_address(ctx, NULL);
+        v->type_class = TYPE_CLASS_POINTER;
+        v->size = context_word_size(ctx);
+        if (v->address != 0) {
+            switch (v->size) {
+            case 4: v->address += 8; break;
+            case 8: v->address += 16; break;
+            default: assert(0);
+            }
+            v->remote = 1;
+        }
+        else {
+            set_value(v, NULL, v->size);
+        }
+        return 1;
+    }
+    if (strcmp(name, "$loader_state") == 0) {
+        v->address = elf_get_debug_structure_address(ctx, NULL);
+        v->type_class = TYPE_CLASS_CARDINAL;
+        v->size = context_word_size(ctx);
+        if (v->address != 0) {
+            switch (v->size) {
+            case 4: v->address += 12; break;
+            case 8: v->address += 24; break;
+            default: assert(0);
+            }
+        }
+        v->remote = 1;
+        return 1;
+    }
+    return 0;
+}
+
+static void eventpoint_at_loader(Context * ctx, void * args) {
+    typedef enum { RT_CONSISTENT, RT_ADD, RT_DELETE } r_state;
+    ELF_File * file = NULL;
+    ContextAddress addr = elf_get_debug_structure_address(ctx, &file);
+    unsigned size = context_word_size(ctx);
+    ContextAddress state = 0;
+
+    if (ctx->parent != NULL) ctx = ctx->parent;
+
+    if (addr != 0) {
+        switch (size) {
+        case 4: addr += 12; break;
+        case 8: addr += 24; break;
+        default: assert(0);
+        }
+        if (elf_read_memory_word(ctx, file, addr, &state) < 0) {
+            int error = errno;
+            trace(LOG_ALWAYS, "Can't read loader state flag: %d %s", error, errno_to_str(error));
+            ctx->pending_intercept = 1;
+            ctx->loader_state = 0;
+            return;
+        }
+    }
+
+    switch (state) {
+    case RT_CONSISTENT:
+        if (ctx->loader_state == RT_ADD) {
+            memory_map_event_module_loaded(ctx);
+        }
+        else if (ctx->loader_state == RT_DELETE) {
+            memory_map_event_module_unloaded(ctx);
+        }
+        break;
+    case RT_ADD:
+        break;
+    case RT_DELETE:
+        /* TODO: need to call memory_map_event_code_section_ummapped() */
+        break;
+    }
+    ctx->loader_state = state;
+}
+
+#endif /* SERVICE_Expressions */
+
 void init_contexts_sys_dep(void) {
     list_init(&pending_list);
     add_waitpid_listener(waitpid_listener, NULL);
+#if SERVICE_Expressions
+    add_identifier_callback(expression_identifier_callback);
+    create_eventpoint("$loader_brk", eventpoint_at_loader, NULL);
+#endif /* SERVICE_Expressions */
 }
 
 #endif  /* if ENABLE_DebugContext */
