@@ -85,7 +85,6 @@ typedef int socklen_t;
 extern void __stdcall freeaddrinfo(struct addrinfo *);
 extern int __stdcall getaddrinfo(const char *, const char *,
                 const struct addrinfo *, struct addrinfo **);
-extern const char * loc_gai_strerror(int ecode);
 
 #else /* not __CYGWIN__ */
 
@@ -121,8 +120,6 @@ extern int ftruncate(int f, int64_t size);
 #define utime   _utime
 #define futime  _futime
 #define snprintf _snprintf
-
-#define loc_gai_strerror gai_strerror
 
 extern int getuid(void);
 extern int geteuid(void);
@@ -194,6 +191,8 @@ extern int utf8_closedir(DIR * dir);
 extern struct utf8_dirent * readdir(DIR * dir);
 
 #endif /* __CYGWIN__ */
+
+extern const char * loc_gai_strerror(int ecode);
 
 #define MSG_MORE 0
 

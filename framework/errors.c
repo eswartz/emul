@@ -55,31 +55,23 @@ static ErrorMessage * alloc_msg(int source) {
 #ifdef WIN32
 
 static char * system_strerror(DWORD errno_win32) {
-    static char msg[256];
-    LPVOID msg_buf;
+    static char msg[512];
+    WCHAR * buf = NULL;
     assert(is_dispatch_thread());
-    if (!FormatMessage(
+    if (!FormatMessageW(
         FORMAT_MESSAGE_ALLOCATE_BUFFER |
         FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
+        FORMAT_MESSAGE_IGNORE_INSERTS |
+        FORMAT_MESSAGE_MAX_WIDTH_MASK,
         NULL,
         errno_win32,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language */
-        (LPTSTR) &msg_buf,
-        0,
-        NULL))
+        (LPWSTR)&buf, 0, NULL) ||
+        !WideCharToMultiByte(CP_UTF8, 0, buf, -1, msg, sizeof(msg), NULL, NULL))
     {
         snprintf(msg, sizeof(msg), "System Error Code %lu", (unsigned long)errno_win32);
     }
-    else {
-        int l;
-        strncpy(msg, msg_buf, sizeof(msg) - 1);
-        msg[sizeof(msg) - 1] = 0;
-        LocalFree(msg_buf);
-        l = strlen(msg);
-        while (l > 0 && (msg[l - 1] == '\n' || msg[l - 1] == '\r')) l--;
-        msg[l] = 0;
-    }
+    if (buf != NULL) LocalFree(buf);
     return msg;
 }
 

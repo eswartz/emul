@@ -736,10 +736,18 @@ char * get_os_name(void) {
 }
 
 char * get_user_home(void) {
-    static char buf[MAX_PATH];
-    if (buf[0] != 0) return buf;
-    if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, SHGFP_TYPE_CURRENT, buf))) return buf;
-    return NULL;
+    WCHAR w_buf[MAX_PATH];
+    static char a_buf[MAX_PATH];
+    if (a_buf[0] != 0) return a_buf;
+    if (!SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, SHGFP_TYPE_CURRENT, w_buf))) {
+        errno = ERR_OTHER;
+        return NULL;
+    }
+    if (!WideCharToMultiByte(CP_UTF8, 0, w_buf, -1, a_buf, sizeof(a_buf), NULL, NULL)) {
+        set_win32_errno(GetLastError());
+        return 0;
+    }
+    return a_buf;
 }
 
 void ini_mdep(void) {
@@ -1149,22 +1157,27 @@ const char * loc_gai_strerror(int ecode) {
     return buf;
 }
 
-#elif defined(WIN32) && defined(__CYGWIN__)
+#elif defined(WIN32)
 
 const char * loc_gai_strerror(int ecode) {
-    static char buf[128];
+    WCHAR * buf = NULL;
+    static char msg[512];
     if (ecode == 0) return "Success";
-    FormatMessage(
+    if (!FormatMessageW(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
         FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS |
         FORMAT_MESSAGE_MAX_WIDTH_MASK,
         NULL,
         ecode,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        buf,
-        sizeof(buf),
-        NULL);
-    return buf;
+        (LPWSTR)&buf, 0, NULL) ||
+        !WideCharToMultiByte(CP_UTF8, 0, buf, -1, msg, sizeof(msg), NULL, NULL))
+    {
+        snprintf(msg, sizeof(msg), "GAI Error Code %d", ecode);
+    }
+    if (buf != NULL) LocalFree(buf);
+    return msg;
 }
 
 #endif
