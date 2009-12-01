@@ -126,6 +126,7 @@ static void object2symbol(ObjectInfo * obj, Symbol * sym) {
     case TAG_file_type:
     case TAG_packed_type:
     case TAG_thrown_type:
+    case TAG_const_type:
     case TAG_volatile_type:
     case TAG_restrict_type:
     case TAG_interface_type:
@@ -616,7 +617,7 @@ static int unpack(const Symbol * sym, int frame) {
 }
 
 static ObjectInfo * get_object_type(ObjectInfo * obj) {
-    while (obj != NULL) {
+    if (obj != NULL) {
         switch (obj->mTag) {
         case TAG_global_subroutine:
         case TAG_subroutine:
@@ -631,15 +632,33 @@ static ObjectInfo * get_object_type(ObjectInfo * obj) {
         case TAG_constant:
             obj = obj->mType;
             break;
-        case TAG_typedef:
-            if (obj->mType == NULL) return obj;
-            obj = obj->mType;
-            break;
-        default:
-            return obj;
         }
     }
-    return NULL;
+    return obj;
+}
+
+static int is_modified_type(ObjectInfo * obj) {
+    if (obj != NULL && obj->mType != NULL) {
+        switch (obj->mTag) {
+        case TAG_subrange_type:
+        case TAG_packed_type:
+        case TAG_const_type:
+        case TAG_volatile_type:
+        case TAG_restrict_type:
+        case TAG_shared_type:
+        case TAG_typedef:
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static ObjectInfo * get_original_type(ObjectInfo * obj) {
+    obj = get_object_type(obj);
+    while (is_modified_type(obj)) {
+        obj = obj->mType;
+    }
+    return obj;
 }
 
 static U8_T get_object_length(ObjectInfo * obj) {
@@ -782,6 +801,8 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
         case TAG_packed_type:
         case TAG_volatile_type:
         case TAG_restrict_type:
+        case TAG_shared_type:
+        case TAG_const_type:
         case TAG_typedef:
         case TAG_formal_parameter:
         case TAG_global_variable:
@@ -850,7 +871,7 @@ int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
             if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
         }
         while (!ok && obj->mType != NULL) {
-            if (obj->mTag != TAG_typedef && obj->mTag != TAG_enumeration_type) break;
+            if (!is_modified_type(obj) && obj->mTag != TAG_enumeration_type) break;
             obj = obj->mType;
             if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
         }
@@ -871,7 +892,7 @@ int get_symbol_size(const Symbol * sym, int frame, size_t * size) {
             obj = obj->mType;
             ok = get_num_prop(obj, AT_byte_size, &sz);
             while (!ok && obj->mType != NULL) {
-                if (obj->mTag != TAG_typedef && obj->mTag != TAG_enumeration_type) break;
+                if (!is_modified_type(obj) && obj->mTag != TAG_enumeration_type) break;
                 obj = obj->mType;
                 ok = get_num_prop(obj, AT_byte_size, &sz);
             }
@@ -900,7 +921,7 @@ int get_symbol_base_type(const Symbol * sym, Symbol * base_type) {
     }
     if (unpack(sym, STACK_NO_FRAME) < 0) return -1;
     if (obj != NULL) {
-        obj = get_object_type(obj);
+        obj = get_original_type(obj);
         if (obj->mTag == TAG_array_type) {
             int i = dimension;
             ObjectInfo * idx = obj->mChildren;
@@ -916,7 +937,6 @@ int get_symbol_base_type(const Symbol * sym, Symbol * base_type) {
         }
         obj = obj->mType;
         if (obj != NULL) {
-            obj = get_object_type(obj);
             object2symbol(obj, base_type);
             return 0;
         }
@@ -939,7 +959,7 @@ int get_symbol_index_type(const Symbol * sym, Symbol * index_type) {
     }
     if (unpack(sym, STACK_NO_FRAME) < 0) return -1;
     if (obj != NULL) {
-        obj = get_object_type(obj);
+        obj = get_original_type(obj);
         if (obj->mTag == TAG_array_type) {
             int i = dimension;
             ObjectInfo * idx = obj->mChildren;
@@ -968,7 +988,7 @@ int get_symbol_length(const Symbol * sym, int frame, unsigned long * length) {
     }
     if (unpack(sym, frame) < 0) return -1;
     if (obj != NULL) {
-        obj = get_object_type(obj);
+        obj = get_original_type(obj);
         if (obj->mTag == TAG_array_type) {
             int i = dimension;
             ObjectInfo * idx = obj->mChildren;
@@ -1000,7 +1020,7 @@ int get_symbol_lower_bound(const Symbol * sym, int frame, unsigned long * value)
     }
     if (unpack(sym, frame) < 0) return -1;
     if (obj != NULL) {
-        obj = get_object_type(obj);
+        obj = get_original_type(obj);
         if (obj->mTag == TAG_array_type) {
             int i = dimension;
             ObjectInfo * idx = obj->mChildren;
@@ -1033,6 +1053,7 @@ int get_symbol_children(const Symbol * sym, Symbol ** children, int * count) {
     }
     if (unpack(sym, STACK_NO_FRAME) < 0) return -1;
     *children = NULL;
+    obj = get_original_type(obj);
     if (obj != NULL) {
         ObjectInfo * i = obj->mChildren;
         while (i != NULL) {
