@@ -343,7 +343,6 @@ static void command_get_context(char * token, Channel * c) {
 static void command_get_children(char * token, Channel * c) {
     char id[256];
     int err = 0;
-    pid_t pid, parent;
     Context * ctx = NULL;
     StackTrace * s = NULL;
 
@@ -351,17 +350,15 @@ static void command_get_children(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    pid = id2pid(id, &parent);
-    if (pid != 0 && parent != 0) {
-        ctx = context_find_from_pid(pid);
-        if (ctx != NULL) {
-            if (!ctx->intercepted) {
-                err = ERR_IS_RUNNING;
-            }
-            else {
-                s = create_stack_trace(ctx);
-            }
-        }
+    ctx = id2ctx(id);
+    if (ctx == NULL || !context_has_state(ctx)) {
+        /* no children */
+    }
+    else if (!ctx->intercepted) {
+        err = ERR_IS_RUNNING;
+    }
+    else {
+        s = create_stack_trace(ctx);
     }
 
     write_stringz(&c->out, "R");

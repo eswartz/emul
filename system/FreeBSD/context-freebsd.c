@@ -20,6 +20,8 @@
 
 #if defined(__FreeBSD__)
 
+#if ENABLE_DebugContext && !ENABLE_ContextProxy
+
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
@@ -34,8 +36,6 @@
 #include "myalloc.h"
 #include "breakpoints.h"
 #include "waitpid.h"
-
-#if ENABLE_DebugContext
 
 #define PTRACE_TRACEME    PT_TRACE_ME
 #define PTRACE_ATTACH     PT_ATTACH

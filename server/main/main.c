@@ -13,7 +13,9 @@
  *******************************************************************************/
 
 /*
- * Agent main module.
+ * TCF Server main module.
+ *
+ * TCF Server is a value-add that provides StackTrace, Symbols, LineNumbers and Expressions services.
  */
 
 #define CONFIG_MAIN
@@ -27,10 +29,12 @@
 #include "events.h"
 #include "trace.h"
 #include "myalloc.h"
-#include "test.h"
-#include "cmdline.h"
-#include "plugins.h"
-#include "channel_tcp.h"
+#include "json.h"
+#include "channel.h"
+#include "protocol.h"
+#include "proxy.h"
+#include "discovery.h"
+#include "errors.h"
 
 static char * progname;
 static Protocol * proto;
@@ -75,22 +79,21 @@ static void channel_new_connection(ChannelServer * serv, Channel * c) {
 }
 
 #if defined(_WRS_KERNEL)
-int tcf(void) {
+int tcf_va(void) {
 #else
 int main(int argc, char ** argv) {
 #endif
     int c;
     int ind;
-    int daemon = 0;
-    int interactive = 0;
     char * s;
     char * log_name = 0;
     char * url = "TCP:";
-    PeerServer * ps = NULL;
+    PeerServer * ps;
 
     ini_mdep();
     ini_trace();
     ini_asyncreq();
+    ini_events_queue();
 
 #if defined(_WRS_KERNEL)
 
@@ -111,26 +114,6 @@ int main(int argc, char ** argv) {
         s++;
         while ((c = *s++) != '\0') {
             switch (c) {
-            case 'i':
-                interactive = 1;
-                break;
-
-            case 't':
-#if ENABLE_RCBP_TEST
-                test_proc();
-#endif
-                exit(0);
-                break;
-
-            case 'd':
-                daemon = 1;
-                break;
-
-            case 'c':
-                generate_ssl_certificate();
-                exit(0);
-                break;
-
             case 'l':
             case 'L':
             case 's':
@@ -168,24 +151,13 @@ int main(int argc, char ** argv) {
         }
     }
 
-    if (daemon) become_daemon();
     open_log_file(log_name);
 
 #endif
 
-    ini_events_queue();
-
     bcg = broadcast_group_alloc();
     spg = suspend_group_alloc();
     proto = protocol_alloc();
-
-    /* The static services must be initialised before the plugins */
-#if ENABLE_Cmdline
-    if (interactive) ini_cmdline_handler(interactive, proto);
-#else
-    if (interactive) fprintf(stderr, "Warning: This version does not support interactive mode.\n");
-#endif
-
     ini_services(proto, bcg, spg);
 
     ps = channel_peer_from_url(url);
@@ -193,6 +165,8 @@ int main(int argc, char ** argv) {
         fprintf(stderr, "invalid server URL (-s option value): %s\n", url);
         exit(1);
     }
+    peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Proxy"));
+    peer_server_addprop(ps, loc_strdup("Proxy"), loc_strdup(""));
     serv = channel_server(ps);
     if (serv == NULL) {
         fprintf(stderr, "cannot create TCF server\n");
@@ -205,10 +179,5 @@ int main(int argc, char ** argv) {
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */
     run_event_loop();
-
-#if ENABLE_Plugins
-    plugins_destroy();
-#endif /* ENABLE_Plugins */
-
     return 0;
 }

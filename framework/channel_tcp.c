@@ -75,7 +75,7 @@ struct ChannelTCP {
     int read_done;
 
 #if ENABLE_Splice
-    int pipefd[2];     /* Pipe used to splice data between a fd and the channel */
+    int pipefd[2];          /* Pipe used to splice data between a fd and the channel */
 #endif /* ENABLE_Splice */
 
     /* Input stream buffer */

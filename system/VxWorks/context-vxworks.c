@@ -20,6 +20,8 @@
 
 #if defined(_WRS_KERNEL)
 
+#if ENABLE_DebugContext && !ENABLE_ContextProxy
+
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
@@ -31,8 +33,6 @@
 #include "myalloc.h"
 #include "breakpoints.h"
 #include "waitpid.h"
-
-#if ENABLE_DebugContext
 
 /* TODO: VxWorks RTP support */
 

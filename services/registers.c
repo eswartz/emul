@@ -183,9 +183,7 @@ static void command_get_children(char * token, Channel * c) {
         if (get_frame_info(ctx, frame, &frame_info) < 0) err = errno;
     }
     else {
-        pid_t pid, parent;
-        pid = id2pid(id, &parent);
-        if (pid != 0 && parent != 0) ctx = context_find_from_pid(pid);
+        ctx = id2ctx(id);
         frame = STACK_TOP_FRAME;
     }
 
@@ -196,24 +194,22 @@ static void command_get_children(char * token, Channel * c) {
 
     write_stream(&c->out, '[');
     if (err == 0 && ctx != NULL && context_has_state(ctx)) {
-        if (ctx != NULL) {
-            int cnt = 0;
-            char t_id[128];
-            RegisterDefinition * reg_def;
-            strcpy(t_id, thread_id(ctx));
-            for (reg_def = get_reg_definitions(); reg_def->name != NULL; reg_def++) {
-                if (frame == STACK_TOP_FRAME || read_reg_value(reg_def, frame_info, NULL) == 0) {
-                    char r_id[128];
-                    if (cnt > 0) write_stream(&c->out, ',');
-                    if (frame == STACK_TOP_FRAME) {
-                        snprintf(r_id, sizeof(r_id), "R%s.%s", reg_def->name, t_id);
-                    }
-                    else {
-                        snprintf(r_id, sizeof(r_id), "R%s@%d.%s", reg_def->name, frame, t_id);
-                    }
-                    json_write_string(&c->out, r_id);
-                    cnt++;
+        int cnt = 0;
+        char t_id[128];
+        RegisterDefinition * reg_def;
+        strcpy(t_id, thread_id(ctx));
+        for (reg_def = get_reg_definitions(); reg_def->name != NULL; reg_def++) {
+            if (frame == STACK_TOP_FRAME || read_reg_value(reg_def, frame_info, NULL) == 0) {
+                char r_id[128];
+                if (cnt > 0) write_stream(&c->out, ',');
+                if (frame == STACK_TOP_FRAME) {
+                    snprintf(r_id, sizeof(r_id), "R%s.%s", reg_def->name, t_id);
                 }
+                else {
+                    snprintf(r_id, sizeof(r_id), "R%s@%d.%s", reg_def->name, frame, t_id);
+                }
+                json_write_string(&c->out, r_id);
+                cnt++;
             }
         }
     }

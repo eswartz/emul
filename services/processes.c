@@ -214,7 +214,6 @@ static void command_get_context(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
 
-    pid = id2pid(id, &parent);
     if (pid != 0 && parent == 0) {
 #if defined(WIN32)
 #elif defined(_WRS_KERNEL)
@@ -534,15 +533,13 @@ static void command_get_signal_list(char * token, Channel * c) {
 static void command_get_signal_mask(char * token, Channel * c) {
     int err = 0;
     char id[256];
-    pid_t pid;
     Context * ctx = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    pid = id2pid(id, NULL);
-    ctx = context_find_from_pid(pid);
+    ctx = id2ctx(id);
     if (ctx == NULL) err = ERR_INV_CONTEXT;
 
     write_stringz(&c->out, "R");
@@ -569,7 +566,6 @@ static void command_get_signal_mask(char * token, Channel * c) {
 static void command_set_signal_mask(char * token, Channel * c) {
     int err = 0;
     char id[256];
-    pid_t pid;
     Context * ctx = NULL;
     int dont_stop;
     int dont_pass;
@@ -582,8 +578,7 @@ static void command_set_signal_mask(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    pid = id2pid(id, NULL);
-    ctx = context_find_from_pid(pid);
+    ctx = id2ctx(id);
     if (ctx == NULL) {
         err = ERR_INV_CONTEXT;
     }

@@ -95,7 +95,7 @@ void add_context_event_listener(ContextEventListener * listener, void * client_d
     event_listeners = listener;
 }
 
-#ifndef WIN32
+#if !defined(WIN32) && !ENABLE_ContextProxy
 
 #define CASE(var) case var: return ""#var;
 char * signal_name(int signal) {

@@ -20,6 +20,8 @@
 
 #if defined(__linux__)
 
+#if ENABLE_DebugContext && !ENABLE_ContextProxy
+
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
@@ -38,8 +40,6 @@
 #include "memorymap.h"
 #include "waitpid.h"
 #include "tcf_elf.h"
-
-#if ENABLE_DebugContext
 
 #if !defined(PTRACE_SETOPTIONS)
 #define PTRACE_SETOPTIONS       0x4200

@@ -20,6 +20,8 @@
 
 #if defined(WIN32)
 
+#if ENABLE_DebugContext && !ENABLE_ContextProxy
+
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>
@@ -90,8 +92,6 @@ unsigned signal_code(int signal) {
     if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].code;
     return 0;
 }
-
-#if ENABLE_DebugContext
 
 typedef struct DebugThreadArgs {
     int error;

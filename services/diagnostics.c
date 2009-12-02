@@ -25,12 +25,19 @@
 #include "protocol.h"
 #include "json.h"
 #include "exceptions.h"
-#include "runctrl.h"
-#include "symbols.h"
-#include "stacktrace.h"
-#include "streamsservice.h"
-#include "test.h"
+#include "context.h"
 #include "myalloc.h"
+#if SERVICE_Symbols
+#  include "symbols.h"
+#  include "stacktrace.h"
+#endif
+#if SERVICE_Streams
+#  include "streamsservice.h"
+#endif
+#if ENABLE_RCBP_TEST
+#  include "test.h"
+#  include "runctrl.h"
+#endif
 
 static const char * DIAGNOSTICS = "Diagnostics";
 
@@ -73,7 +80,7 @@ static void command_get_test_list(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
 #if ENABLE_RCBP_TEST
-    if (context_root.next != NULL) arr = "[\"RCBP1\"]";
+    arr = "[\"RCBP1\"]";
 #endif
     write_stringz(&c->out, arr);
     write_stream(&c->out, MARKER_EOM);

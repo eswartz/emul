@@ -62,11 +62,14 @@
 #if !defined(SERVICE_Memory)
 #define SERVICE_Memory          (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
-#if !defined(SERVICE_MemoryMap)
-#define SERVICE_MemoryMap       (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
-#endif
 #if !defined(SERVICE_Registers)
 #define SERVICE_Registers       (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_Processes)
+#define SERVICE_Processes       (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
+#if !defined(SERVICE_MemoryMap)
+#define SERVICE_MemoryMap       (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
 #if !defined(SERVICE_StackTrace)
 #define SERVICE_StackTrace      (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
@@ -75,10 +78,7 @@
 #define SERVICE_Symbols         (TARGET_UNIX || TARGET_VXWORKS || TARGET_MSVC)
 #endif
 #if !defined(SERVICE_LineNumbers)
-#define SERVICE_LineNumbers     (TARGET_UNIX || TARGET_MSVC)
-#endif
-#if !defined(SERVICE_Processes)
-#define SERVICE_Processes       (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#define SERVICE_LineNumbers     (TARGET_UNIX || TARGET_VXWORKS  || TARGET_MSVC)
 #endif
 #if !defined(SERVICE_FileSystem)
 #define SERVICE_FileSystem      (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
@@ -125,8 +125,12 @@
 #  define ENABLE_Cmdline        1
 #endif
 
+#if !defined(ENABLE_ContextProxy)
+#  define ENABLE_ContextProxy   0
+#endif
+
 #if !defined(ENABLE_DebugContext)
-#  define ENABLE_DebugContext   (SERVICE_RunControl || SERVICE_Breakpoints || SERVICE_Memory || SERVICE_Registers || SERVICE_StackTrace)
+#  define ENABLE_DebugContext   (ENABLE_ContextProxy || SERVICE_RunControl || SERVICE_Breakpoints || SERVICE_Memory || SERVICE_Registers || SERVICE_StackTrace)
 #endif
 
 #if !defined(ENABLE_ELF)
@@ -142,7 +146,7 @@
 #endif
 
 #if !defined(ENABLE_RCBP_TEST)
-#  define ENABLE_RCBP_TEST      (SERVICE_RunControl && SERVICE_Breakpoints)
+#  define ENABLE_RCBP_TEST      (!ENABLE_ContextProxy && (SERVICE_RunControl && SERVICE_Breakpoints))
 #endif
 
 #if !defined(ENABLE_AIO)

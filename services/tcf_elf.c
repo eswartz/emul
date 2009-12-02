@@ -54,6 +54,8 @@ static Context *      elf_list_ctx;
 static int            elf_list_pos;
 static ContextAddress elf_list_addr0;
 static ContextAddress elf_list_addr1;
+static MemoryRegion * elf_list_regions;
+static unsigned       elf_list_region_cnt;
 
 
 static void elf_dispose(ELF_File * file) {
@@ -461,15 +463,13 @@ static ELF_File * open_memory_region_file(MemoryRegion * r) {
 
 ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress addr1) {
     unsigned i;
-    MemoryRegion * regions;
-    unsigned region_cnt;
 
     elf_list_ctx = ctx;
     elf_list_addr0 = addr0;
     elf_list_addr1 = addr1;
-    memory_map_get_regions(ctx, &regions, &region_cnt);
-    for (i = 0; i < region_cnt; i++) {
-        MemoryRegion * r = regions + i;
+    memory_map_get_regions(ctx, &elf_list_regions, &elf_list_region_cnt);
+    for (i = 0; i < elf_list_region_cnt; i++) {
+        MemoryRegion * r = elf_list_regions + i;
         if (r->addr <= addr1 && r->addr + r->size >= addr0) {
             assert(r->file == NULL);
             if (r->ino != 0) {
@@ -489,13 +489,10 @@ ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress ad
 
 ELF_File * elf_list_next(Context * ctx) {
     unsigned i;
-    MemoryRegion * regions;
-    unsigned region_cnt;
 
     assert(ctx == elf_list_ctx);
-    memory_map_get_regions(ctx, &regions, &region_cnt);
-    for (i = elf_list_pos; i < region_cnt; i++) {
-        MemoryRegion * r = regions + i;
+    for (i = elf_list_pos; i < elf_list_region_cnt; i++) {
+        MemoryRegion * r = elf_list_regions + i;
         if (r->addr <= elf_list_addr1 && r->addr + r->size >= elf_list_addr0) {
             assert(r->file == NULL);
             if (r->ino != 0) {
@@ -514,14 +511,10 @@ ELF_File * elf_list_next(Context * ctx) {
 
 void elf_list_done(Context * ctx) {
     unsigned i;
-    MemoryRegion * regions;
-    unsigned region_cnt;
 
     assert(ctx == elf_list_ctx);
-    elf_list_ctx = NULL;
-    memory_map_get_regions(ctx, &regions, &region_cnt);
-    for (i = 0; i < region_cnt; i++) {
-        MemoryRegion * r = regions + i;
+    for (i = 0; i < elf_list_region_cnt; i++) {
+        MemoryRegion * r = elf_list_regions + i;
         ELF_File * file = (ELF_File *)r->file;
         if (file != NULL) {
             file->listed = 0;
@@ -529,6 +522,9 @@ void elf_list_done(Context * ctx) {
             r->file = NULL;
         }
     }
+    elf_list_ctx = NULL;
+    elf_list_regions = NULL;
+    elf_list_region_cnt = 0;
 }
 
 void elf_add_close_listener(ELFCloseListener listener) {
