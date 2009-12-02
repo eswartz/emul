@@ -596,7 +596,9 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                         public void onChannelClosed(final Throwable error) {
                             assert !closed;
                             if (parent.channel != channel) return;
-                            doneLoadChildren(parent, error, null);
+                            if (parent.children_error == null) {
+                                doneLoadChildren(parent, error, null);
+                            }
                             closed = true;
                             parent.channel = null;
                             parent.locator = null;
@@ -609,7 +611,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                             opened = true;
                             parent.locator = parent.channel.getRemoteService(ILocator.class);
                             if (parent.locator == null) {
-                                doneLoadChildren(parent, null, new PeerInfo[0]);
+                                doneLoadChildren(parent, new Exception("Service not supported: " + ILocator.NAME), null);
                                 parent.channel.close();
                             }
                             else {
