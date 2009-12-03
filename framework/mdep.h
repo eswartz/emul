@@ -243,6 +243,8 @@ extern int pthread_join(pthread_t thread, void **value_ptr);
 #define recvfrom(socket, buf, size, flags, addr, addr_size) wsa_recvfrom(socket, buf, size, flags, addr, addr_size)
 #define send(socket, buf, size, flags) wsa_send(socket, buf, size, flags)
 #define sendto(socket, buf, size, flags, dest_addr, dest_size) wsa_sendto(socket, buf, size, flags, dest_addr, dest_size)
+#define setsockopt(socket, level, opt, value, size) wsa_setsockopt(socket, level, opt, value, size)
+#define getsockname(socket, name, size) wsa_getsockname(socket, name, size)
 
 extern int wsa_socket(int af, int type, int protocol);
 extern int wsa_connect(int socket, const struct sockaddr * addr, int addr_size);
@@ -254,6 +256,8 @@ extern int wsa_recvfrom(int socket, void * buf, size_t size, int flags,
 extern int wsa_send(int socket, const void * buf, size_t size, int flags);
 extern int wsa_sendto(int socket, const void * buf, size_t size, int flags,
                   const struct sockaddr * dest_addr, socklen_t dest_size);
+extern int wsa_setsockopt(int socket, int level, int opt, const char * value, int size);
+extern int wsa_getsockname(int socket, struct sockaddr * name, int * size);
 
 #ifndef SHUT_WR
 #define SHUT_WR SD_SEND

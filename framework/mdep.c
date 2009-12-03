@@ -416,6 +416,32 @@ int wsa_sendto(int socket, const void * buf, size_t size, int flags,
     return res;
 }
 
+#undef setsockopt
+int wsa_setsockopt(int socket, int level, int opt, const char * value, int size) {
+    int res = 0;
+    SetLastError(0);
+    WSASetLastError(0);
+    res = setsockopt(socket, level, opt, value, size);
+    if (res != 0) {
+        set_win32_errno(WSAGetLastError());
+        return -1;
+    }
+    return 0;
+}
+
+#undef getsockname
+int wsa_getsockname(int socket, struct sockaddr * name, int * size) {
+    int res = 0;
+    SetLastError(0);
+    WSASetLastError(0);
+    res = getsockname(socket, name, size);
+    if (res != 0) {
+        set_win32_errno(WSAGetLastError());
+        return -1;
+    }
+    return 0;
+}
+
 /* inet_ntop()/inet_pton() are not available before Windows Vista */
 const char * inet_ntop(int af, const void * src, char * dst, socklen_t size) {
     char * str = NULL;
