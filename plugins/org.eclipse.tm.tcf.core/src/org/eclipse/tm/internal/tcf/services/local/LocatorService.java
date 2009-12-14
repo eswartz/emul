@@ -141,12 +141,26 @@ public class LocatorService implements ILocator {
         }
     }
 
+    private static class AddressCacheItem {
+        final String host;
+        InetAddress address;
+        long time_stamp;
+        boolean used;
+
+        AddressCacheItem(String host) {
+            this.host = host;
+        }
+    }
+
+    private static final HashMap<String,AddressCacheItem> addr_cache = new HashMap<String,AddressCacheItem>();
+    private static boolean addr_request;
+
     private static LocalPeer local_peer;
 
     private DatagramSocket socket;
     private long last_master_packet_time;
 
-    private Thread timer_thread = new Thread() {
+    private final Thread timer_thread = new Thread() {
         public void run() {
             while (true) {
                 try {
@@ -162,13 +176,59 @@ public class LocatorService implements ILocator {
                     return;
                 }
                 catch (Throwable x) {
-                    Protocol.log("Unhandled exception in TCF discovery listening thread", x);
+                    Protocol.log("Unhandled exception in TCF discovery timer thread", x);
                 }
             }
         }
     };
 
-    private Thread input_thread = new Thread() {
+    private Thread dns_lookup_thread = new Thread() {
+        public void run() {
+            while (true) {
+                try {
+                    long time;
+                    HashSet<AddressCacheItem> set = null;
+                    synchronized (addr_cache) {
+                        if (!addr_request) addr_cache.wait(DATA_RETENTION_PERIOD);
+                        time = System.currentTimeMillis();
+                        for (Iterator<AddressCacheItem> i = addr_cache.values().iterator(); i.hasNext();) {
+                            AddressCacheItem a = i.next();
+                            if (a.time_stamp + DATA_RETENTION_PERIOD * 10 < time) {
+                                if (a.used) {
+                                    if (set == null) set = new HashSet<AddressCacheItem>();
+                                    set.add(a);
+                                }
+                                else {
+                                    i.remove();
+                                }
+                            }
+                        }
+                        addr_request = false;
+                    }
+                    if (set != null) {
+                        for (AddressCacheItem a : set) {
+                            InetAddress addr = null;
+                            try {
+                                addr = InetAddress.getByName(a.host);
+                            }
+                            catch (UnknownHostException x) {
+                            }
+                            synchronized (addr_cache) {
+                                a.address = addr;
+                                a.time_stamp = time;
+                                a.used = false;
+                            }
+                        }
+                    }
+                }
+                catch (Throwable x) {
+                    Protocol.log("Unhandled exception in TCF discovery DNS lookup thread", x);
+                }
+            }
+        }
+    };
+
+    private final Thread input_thread = new Thread() {
         public void run() {
             for (;;) {
                 DatagramSocket socket = LocatorService.this.socket;
@@ -232,10 +292,13 @@ public class LocatorService implements ILocator {
             socket.setBroadcast(true);
             input_thread.setName("TCF Locator Receiver");
             timer_thread.setName("TCF Locator Timer");
+            dns_lookup_thread.setName("TCF Locator DNS Lookup");
             input_thread.setDaemon(true);
             timer_thread.setDaemon(true);
+            dns_lookup_thread.setDaemon(true);
             input_thread.start();
             timer_thread.start();
+            dns_lookup_thread.start();
             listeners.add(new LocatorListener() {
 
                 public void peerAdded(IPeer peer) {
@@ -324,6 +387,33 @@ public class LocatorService implements ILocator {
         }
         catch (Throwable x) {
             channel.terminate(x);
+        }
+    }
+
+    private InetAddress getInetAddress(String host) {
+        if (host == null || host.length() == 0) return null;
+        synchronized (addr_cache) {
+            AddressCacheItem i = addr_cache.get(host);
+            if (i == null) {
+                i = new AddressCacheItem(host);
+                char ch = host.charAt(0);
+                if (ch == '[' || ch == ':' || ch >= '0' && ch <= '9') {
+                    try {
+                        i.address = InetAddress.getByName(host);
+                    }
+                    catch (UnknownHostException e) {
+                    }
+                    i.time_stamp = System.currentTimeMillis();
+                }
+                else {
+                    /* InetAddress.getByName() can cause long delay - delegate to background thread */
+                    addr_request = true;
+                    addr_cache.notify();
+                }
+                addr_cache.put(host, i);
+            }
+            i.used = true;
+            return i.address;
         }
     }
 
@@ -472,7 +562,8 @@ public class LocatorService implements ILocator {
 
     private void sendPeerInfo(IPeer peer, InetAddress addr, int port) {
         Map<String,String> attrs = peer.getAttributes();
-        if (attrs.get(IPeer.ATTR_IP_HOST) == null) return;
+        InetAddress peer_addr = getInetAddress(attrs.get(IPeer.ATTR_IP_HOST));
+        if (peer_addr == null) return;
         if (attrs.get(IPeer.ATTR_IP_PORT) == null) return;
         try {
             out_buf[4] = CONF_PEER_INFO;
@@ -486,7 +577,6 @@ public class LocatorService implements ILocator {
                 out_buf[i++] = 0;
             }
 
-            InetAddress peer_addr = InetAddress.getByName(attrs.get(IPeer.ATTR_IP_HOST));
             for (SubNet subnet : subnets) {
                 if (peer instanceof RemotePeer) {
                     if (socket.getLocalPort() != DISCOVEY_PORT) return;
@@ -567,7 +657,7 @@ public class LocatorService implements ILocator {
                 i += bt.length;
                 out_buf[i++] = 0;
                 for (Slave y : slaves) {
-                if (!n.contains(y.address)) continue;
+                    if (!n.contains(y.address)) continue;
                     if (y.last_req_slaves_time + DATA_RETENTION_PERIOD < time) continue;
                     socket.send(new DatagramPacket(out_buf, i, y.address, y.port));
                 }
@@ -689,9 +779,8 @@ public class LocatorService implements ILocator {
             }
             String id = map.get(IPeer.ATTR_ID);
             if (id == null) throw new Exception("Invalid peer info: no ID");
-            String peer_host = map.get(IPeer.ATTR_IP_HOST);
-            if (peer_host == null) return;
-            InetAddress peer_addr = InetAddress.getByName(peer_host);
+            InetAddress peer_addr = getInetAddress(map.get(IPeer.ATTR_IP_HOST));
+            if (peer_addr == null) return;
             for (SubNet subnet : subnets) {
                 if (!subnet.contains(peer_addr)) continue;
                 IPeer peer = peers.get(id);
@@ -734,8 +823,11 @@ public class LocatorService implements ILocator {
                 int port = Integer.parseInt(s.substring(port0, port1));
                 if (port != DISCOVEY_PORT) {
                     String host = s.substring(host0, host1);
-                    long time = time0 != time1 ? Long.parseLong(s.substring(time0, time1)) : System.currentTimeMillis();
-                    addSlave(InetAddress.getByName(host), port, time);
+                    InetAddress addr = getInetAddress(host);
+                    if (addr != null) {
+                        long time = time0 != time1 ? Long.parseLong(s.substring(time0, time1)) : System.currentTimeMillis();
+                        addSlave(addr, port, time);
+                    }
                 }
             }
         }
