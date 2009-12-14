@@ -21,6 +21,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace.StackTraceContext;
@@ -82,7 +83,7 @@ public class StepOverCommand extends StepCommand implements IStepOverHandler {
         protected void exit(Throwable error) {
             if (exited) return;
             super.exit(error);
-            if (error != null) {
+            if (error != null && node.getModel().getLaunch().getChannel().getState() == IChannel.STATE_OPEN) {
                 monitor.setStatus(new Status(IStatus.ERROR,
                         Activator.PLUGIN_ID, IStatus.OK, "Cannot step", error));
             }

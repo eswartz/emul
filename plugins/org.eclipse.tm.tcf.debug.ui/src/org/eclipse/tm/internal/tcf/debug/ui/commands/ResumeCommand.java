@@ -25,6 +25,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFRunnable;
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -109,7 +110,7 @@ public class ResumeCommand implements IResumeHandler {
                         public void doneCommand(IToken token, Exception error) {
                             assert cmds.contains(token);
                             cmds.remove(token);
-                            if (error != null) {
+                            if (error != null && model.getLaunch().getChannel().getState() == IChannel.STATE_OPEN) {
                                 monitor.setStatus(new Status(IStatus.ERROR,
                                         Activator.PLUGIN_ID, IStatus.OK, "Cannot resume", error));
                             }

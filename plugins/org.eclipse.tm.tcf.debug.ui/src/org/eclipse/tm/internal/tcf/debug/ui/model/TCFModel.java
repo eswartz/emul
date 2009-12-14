@@ -29,6 +29,7 @@ import org.eclipse.debug.core.commands.IStepOverHandler;
 import org.eclipse.debug.core.commands.IStepReturnHandler;
 import org.eclipse.debug.core.commands.ISuspendHandler;
 import org.eclipse.debug.core.commands.ITerminateHandler;
+import org.eclipse.debug.core.model.IDebugModelProvider;
 import org.eclipse.debug.core.model.IMemoryBlockRetrieval;
 import org.eclipse.debug.core.model.IMemoryBlockRetrievalExtension;
 import org.eclipse.debug.core.model.ISourceLocator;
@@ -75,6 +76,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.graphics.Device;
+import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
@@ -132,7 +134,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Map<String,TCFNode> id2node = new HashMap<String,TCFNode>();
 
     @SuppressWarnings("unchecked")
-    private final Map<Class,Object> commands = new HashMap<Class,Object>();
+    private final Map<Class,Object> adapters = new HashMap<Class,Object>();
 
     private final Map<String,IMemoryBlockRetrievalExtension> mem_retrieval =
         new HashMap<String,IMemoryBlockRetrievalExtension>();
@@ -373,28 +375,39 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     };
 
+    private final IDebugModelProvider debug_model_provider = new IDebugModelProvider() {
+        public String[] getModelIdentifiers() {
+            return new String[] { ITCFConstants.ID_TCF_DEBUG_MODEL };
+        }
+    };
+
     TCFModel(TCFLaunch launch) {
         this.launch = launch;
         display = PlatformUI.getWorkbench().getDisplay();
         selection_policy = new TCFModelSelectionPolicy(this);
-        commands.put(ISuspendHandler.class, new SuspendCommand(this));
-        commands.put(IResumeHandler.class, new ResumeCommand(this));
-        commands.put(ITerminateHandler.class, new TerminateCommand(this));
-        commands.put(IDisconnectHandler.class, new DisconnectCommand(this));
-        commands.put(IStepIntoHandler.class, new StepIntoCommand(this));
-        commands.put(IStepOverHandler.class, new StepOverCommand(this));
-        commands.put(IStepReturnHandler.class, new StepReturnCommand(this));
+        adapters.put(ILaunch.class, launch);
+        adapters.put(IModelSelectionPolicy.class, selection_policy);
+        adapters.put(IModelSelectionPolicyFactory.class, model_selection_factory);
+        adapters.put(IDebugModelProvider.class, debug_model_provider);
+        adapters.put(ISuspendHandler.class, new SuspendCommand(this));
+        adapters.put(IResumeHandler.class, new ResumeCommand(this));
+        adapters.put(ITerminateHandler.class, new TerminateCommand(this));
+        adapters.put(IDisconnectHandler.class, new DisconnectCommand(this));
+        adapters.put(IStepIntoHandler.class, new StepIntoCommand(this));
+        adapters.put(IStepOverHandler.class, new StepOverCommand(this));
+        adapters.put(IStepReturnHandler.class, new StepReturnCommand(this));
     }
 
     @SuppressWarnings("unchecked")
     public Object getAdapter(final Class adapter, final TCFNode node) {
-        if (adapter == ILaunch.class) return launch;
-        if (adapter == IModelSelectionPolicy.class) return selection_policy;
-        if (adapter == IModelSelectionPolicyFactory.class) return model_selection_factory;
-        return new TCFTask<Object>() {
-            public void run() {
-                Object o = null;
-                if (adapter == IMemoryBlockRetrieval.class || adapter == IMemoryBlockRetrievalExtension.class) {
+        synchronized (adapters) {
+            Object o = adapters.get(adapter);
+            if (o != null) return o;
+        }
+        if (adapter == IMemoryBlockRetrieval.class || adapter == IMemoryBlockRetrievalExtension.class) {
+            return new TCFTask<Object>() {
+                public void run() {
+                    Object o = null;
                     TCFNode n = node;
                     while (n != null && !n.isDisposed()) {
                         if (n instanceof TCFNodeExecContext) {
@@ -413,12 +426,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         }
                         n = n.parent;
                     }
+                    assert o == null || adapter.isInstance(o);
+                    done(o);
                 }
-                if (o == null) o = commands.get(adapter);
-                assert o == null || adapter.isInstance(o);
-                done(o);
-            }
-        }.getE();
+            }.getE();
+        }
+        return null;
     }
 
     void onConnected() {
