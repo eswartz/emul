@@ -24,9 +24,8 @@
 #include "peer.h"
 #include "myalloc.h"
 #include "events.h"
+#include "protocol.h"
 #include "trace.h"
-
-#define STALE_CHECK_TIME 20
 
 typedef struct PeersListener {
     peer_server_listener fnp;
@@ -80,10 +79,7 @@ static void clear_stale_peers(void * x) {
 
     assert(is_dispatch_thread());
     while ((s = *sp) != NULL) {
-        if (s->flags & PS_FLAG_LOCAL) {
-            sp = &s->next;
-        }
-        else if (s->expiration_time <= timenow) {
+        if (s->expiration_time <= timenow) {
             /* Delete stale entry */
             *sp = s->next;
             notify_listeners(s, PS_EVENT_REMOVED);
@@ -95,7 +91,7 @@ static void clear_stale_peers(void * x) {
         }
     }
     if (keep_timer) {
-        post_event_with_delay(clear_stale_peers, NULL, STALE_CHECK_TIME * 1000000);
+        post_event_with_delay(clear_stale_peers, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
     }
     else {
         stale_timer_active = 0;
@@ -167,8 +163,7 @@ PeerServer * peer_server_add(PeerServer * n, unsigned int stale_delta) {
         if (strcmp(s->id, n->id) == 0) {
             if ((s->flags & PS_FLAG_LOCAL) && !(n->flags & PS_FLAG_LOCAL) || is_same(s, n)) {
                 /* Never replace local entries with discovered ones */
-                s->creation_time = time(NULL);
-                s->expiration_time = s->creation_time + stale_delta;
+                s->expiration_time = time(NULL) + stale_delta;
                 if (!(s->flags & PS_FLAG_LOCAL)) s->flags = n->flags;
                 peer_server_free(n);
                 notify_listeners(s, PS_EVENT_HEART_BEAT);
@@ -188,7 +183,7 @@ PeerServer * peer_server_add(PeerServer * n, unsigned int stale_delta) {
     notify_listeners(n, type);
     if (!stale_timer_active) {
         stale_timer_active = 1;
-        post_event_with_delay(clear_stale_peers, NULL, STALE_CHECK_TIME*1000*1000);
+        post_event_with_delay(clear_stale_peers, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
     }
     return n;
 }
