@@ -182,20 +182,21 @@ static void channel_close_listener(Channel * c) {
                 h->dir = NULL;
             }
             if (h->file >= 0) {
-                close(h->file);
-                h->file = -1;
+                int posted = 0;
                 while (!list_is_empty(&h->link_reqs)) {
                     LINK * link = h->link_reqs.next;
                     IORequest * req = reqs2req(link);
                     list_remove(link);
                     if (h->posted_req == req) {
                         req->handle = NULL;
+                        posted = 1;
                     }
                     else {
                         loc_free(req->info.u.fio.bufp);
                         loc_free(req);
                     }
                 }
+                if (!posted) close(h->file);
             }
             list_add_last(&h->link_hash, &list);
         }
@@ -462,6 +463,17 @@ static void done_io_request(void * arg) {
     OpenFileInfo * handle = req->handle;
 
     if (handle == NULL) {
+        /* Abandoned I/O request, channel is already closed */
+        switch (req->req) {
+        case REQ_READ:
+        case REQ_WRITE:
+            close(req->info.u.fio.fd);
+            break;
+        case REQ_CLOSE:
+            break;
+        default:
+            assert(0);
+        }
         loc_free(req->info.u.fio.bufp);
         loc_free(req);
         return;
@@ -1158,7 +1170,7 @@ static void command_roots(char * token, Channel * c) {
             BOOL hasSize;
 
             snprintf(path, sizeof(path), "%c:/", disk);
-            hasSize = GetDiskFreeSpaceEx(path, &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes);
+            hasSize = GetDiskFreeSpaceExA(path, &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes);
             memset(&st, 0, sizeof(st));
             if (hasSize && stat(path, &st) == 0) {
                 FileAttrs attrs;
