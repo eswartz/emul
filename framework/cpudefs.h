@@ -21,14 +21,14 @@
 
 #include "config.h"
 
-#if ENABLE_DebugContext
-
+typedef struct Context Context;
 typedef uintptr_t ContextAddress; /* Type to represent byte address inside context memory */
+
+#if ENABLE_DebugContext
 
 #define REGNUM_DWARF    1
 #define REGNUM_EH_FRAME 2
 
-typedef struct Context Context;
 typedef struct RegisterData RegisterData;
 
 typedef struct RegisterDefinition RegisterDefinition;
