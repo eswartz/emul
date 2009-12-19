@@ -177,6 +177,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\services\context-proxy.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\diagnostics.c"
 				>
 			</File>
@@ -186,6 +190,34 @@
 			</File>
 			<File
 				RelativePath="..\agent\services\discovery_udp.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\dwarfcache.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\dwarfexpr.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\dwarfframe.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\dwarfio.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\filesystem.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\linenumbers_elf.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\tcf_elf.c"
 				>
 			</File>
 		</Filter>
@@ -209,6 +241,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\cache.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\cache.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\channel.c"
 				>
 			</File>
@@ -218,6 +258,10 @@
 			</File>
 			<File
 				RelativePath="..\agent\framework\context.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\cpudefs.c"
 				>
 			</File>
 			<File

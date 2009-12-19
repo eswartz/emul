@@ -204,7 +204,7 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
     ini_memory_service(proto, bcg);
 #endif
 #if SERVICE_MemoryMap
-    ini_memory_map_service();
+    ini_memory_map_service(proto, bcg);
 #endif
 #if SERVICE_Registers
     ini_registers_service(proto);

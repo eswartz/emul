@@ -49,7 +49,7 @@ static void connect_done(void * args, int error, Channel * c2) {
     ConnectInfo * info = (ConnectInfo *)args;
     Channel * c1 = info->c1;
 
-    if (!is_stream_closed(c1)) {
+    if (!is_channel_closed(c1)) {
         assert(c1->state == ChannelStateRedirectReceived);
         if (error) {
             fprintf(stderr, "cannot connect to peer: %s\n", dest_url);
@@ -62,7 +62,7 @@ static void connect_done(void * args, int error, Channel * c2) {
     else if (!error) {
         channel_close(c2);
     }
-    stream_unlock(c1);
+    channel_unlock(c1);
     peer_server_free(info->ps);
     loc_free(info);
 }
@@ -78,7 +78,7 @@ static void connect_dest(void * x) {
         channel_close(c1);
         return;
     }
-    stream_lock(c1);
+    channel_lock(c1);
     c1->state = ChannelStateRedirectReceived;
     info = loc_alloc_zero(sizeof(ConnectInfo));
     info->ps = ps;
@@ -103,20 +103,15 @@ static void channel_server_connected(Channel * c1) {
     post_event(connect_dest, c1);
 }
 
-static void channel_server_receive(Channel * c1) {
-    handle_protocol_message(c1->client_data, c1);
-}
-
 static void channel_server_disconnected(Channel * c1) {
     trace(LOG_ALWAYS, "channel server disconnected");
-    protocol_release(c1->client_data);
+    protocol_release(c1->protocol);
 }
 
 static void channel_new_connection(ChannelServer * serv, Channel * c) {
-    c->client_data = protocol_alloc();
+    c->protocol = protocol_alloc();
     c->connecting = channel_server_connecting;
     c->connected = channel_server_connected;
-    c->receive = channel_server_receive;
     c->disconnected = channel_server_disconnected;
     channel_start(c);
 }
@@ -204,14 +199,14 @@ int main(int argc, char ** argv) {
 
     ps = channel_peer_from_url(url);
     if (ps == NULL) {
-        fprintf(stderr, "invalid server URL (-s option value): %s\n", url);
+        fprintf(stderr, "%s: invalid server URL (-s option value): %s\n", progname, url);
         exit(1);
     }
     peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Protocol Logger"));
     peer_server_addprop(ps, loc_strdup("Proxy"), loc_strdup(""));
     serv = channel_server(ps);
     if (serv == NULL) {
-        fprintf(stderr, "cannot create TCF server\n");
+        fprintf(stderr, "%s: cannot create TCF server: %s\n", progname, errno_to_str(errno));
         exit(1);
     }
     serv->new_conn = channel_new_connection;

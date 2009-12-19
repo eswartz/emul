@@ -75,7 +75,7 @@ static void connect_done(void * args, int error, Channel * c2) {
     RedirectInfo * info = (RedirectInfo *)args;
     Channel * c1 = info->channel;
 
-    if (!is_stream_closed(c1)) {
+    if (!is_channel_closed(c1)) {
         assert(c1->state == ChannelStateRedirectReceived);
         if (!error) {
             proxy_create(c1, c2);
@@ -91,7 +91,7 @@ static void connect_done(void * args, int error, Channel * c2) {
     else if (!error) {
         channel_close(c2);
     }
-    stream_unlock(c1);
+    channel_unlock(c1);
     loc_free(info);
 }
 
@@ -107,7 +107,7 @@ static void command_redirect(char * token, Channel * c) {
     ps = peer_server_find(id);
     if (ps != NULL) {
         RedirectInfo * info = loc_alloc_zero(sizeof(RedirectInfo));
-        stream_lock(c);
+        channel_lock(c);
         c->state = ChannelStateRedirectReceived;
         info->channel = c;
         strncpy(info->token, token, sizeof(info->token) - 1);

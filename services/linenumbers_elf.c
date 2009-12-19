@@ -30,6 +30,7 @@
 #include "context.h"
 #include "myalloc.h"
 #include "exceptions.h"
+#include "cache.h"
 #include "json.h"
 #include "protocol.h"
 #include "tcf_elf.h"
@@ -280,24 +281,27 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineT
     return 0;
 }
 
-static void command_map_to_source(char * token, Channel * c) {
-    int err = 0;
+/***** Commands *****/
+
+typedef struct MapToSourceArgs {
+    Channel * channel;
+    char token[256];
     char id[256];
     ContextAddress addr0;
     ContextAddress addr1;
+} MapToSourceArgs;
+
+static void map_to_source_cache_client(void * x) {
+    int err = 0;
     Context * ctx = NULL;
     DWARFCache * cache_first = NULL;
     DWARFCache * cache_last = NULL;
+    MapToSourceArgs * args = (MapToSourceArgs *)x;
+    ContextAddress addr0 = args->addr0;
+    ContextAddress addr1 = args->addr1;
+    Channel * c = args->channel;
 
-    json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    addr0 = json_read_ulong(&c->inp);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    addr1 = json_read_ulong(&c->inp);
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-
-    ctx = id2ctx(id);
+    ctx = id2ctx(args->id);
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
@@ -317,6 +321,7 @@ static void command_map_to_source(char * token, Channel * c) {
                     cache_last->mLineInfoNext = cache;
                 }
                 cache_last = cache;
+                cache->mLineInfoNext = NULL;
             }
             else {
                 err = trap.error;
@@ -328,8 +333,12 @@ static void command_map_to_source(char * token, Channel * c) {
         elf_list_done(ctx);
     }
 
+    if (err == ERR_CACHE_MISS) exception(ERR_CACHE_MISS);
+
+    cache_exit();
+
     write_stringz(&c->out, "R");
-    write_stringz(&c->out, token);
+    write_stringz(&c->out, args->token);
     write_errno(&c->out, err);
     if (err != 0) {
         write_stringz(&c->out, "null");
@@ -354,7 +363,6 @@ static void command_map_to_source(char * token, Channel * c) {
             else {
                 err = trap.error;
             }
-            if (cache == cache_last) break;
             cache = cache->mLineInfoNext;
         }
         write_stream(&c->out, ']');
@@ -362,6 +370,24 @@ static void command_map_to_source(char * token, Channel * c) {
         if (err != 0) trace(LOG_ALWAYS, "Line numbers info error %d: %d", err, errno_to_str(err));
     }
     write_stream(&c->out, MARKER_EOM);
+    channel_unlock(c);
+    loc_free(args);
+}
+
+static void command_map_to_source(char * token, Channel * c) {
+    MapToSourceArgs * args = loc_alloc_zero(sizeof(MapToSourceArgs));
+
+    json_read_string(&c->inp, args->id, sizeof(args->id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    args->addr0 = json_read_ulong(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    args->addr1 = json_read_ulong(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    strncpy(args->token, token, sizeof(args->token) - 1);
+    channel_lock(args->channel = c);
+    cache_enter(map_to_source_cache_client, args);
 }
 
 void ini_line_numbers_service(Protocol * proto) {

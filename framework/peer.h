@@ -68,17 +68,17 @@ extern void peer_server_free(PeerServer * ps);
 extern PeerServer * peer_server_add(PeerServer * ps, unsigned int stale_delta);
 
 /* Find peer server based on ID */
-extern PeerServer * peer_server_find(const char *id);
+extern PeerServer * peer_server_find(const char * id);
 
 /* Remove peer server information */
-extern void peer_server_remove(const char *id);
+extern void peer_server_remove(const char * id);
 
 typedef int (*peer_server_iter_fnp)(PeerServer * ps, void * client_data);
 
 /* Iterate over all peer servers */
 extern int peer_server_iter(peer_server_iter_fnp fnp, void * client_data);
 
-typedef void (*peer_server_listener)(PeerServer *ps, int changeType, void * client_data);
+typedef void (*peer_server_listener)(PeerServer * ps, int changeType, void * client_data);
 
 /* Peer server list change listener */
 extern void peer_server_add_listener(peer_server_listener listener, void * client_data);

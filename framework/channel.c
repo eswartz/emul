@@ -227,15 +227,15 @@ void channel_clear_broadcast_group(Channel * c) {
     c->bcg = NULL;
 }
 
-void stream_lock(Channel * c) {
+void channel_lock(Channel * c) {
     c->lock(c);
 }
 
-void stream_unlock(Channel * c) {
+void channel_unlock(Channel * c) {
     c->unlock(c);
 }
 
-int is_stream_closed(Channel * c) {
+int is_channel_closed(Channel * c) {
     return c->is_closed(c);
 }
 
@@ -326,6 +326,7 @@ void channel_connect(PeerServer * ps, ChannelConnectCallBack callback, void * ca
  */
 void channel_start(Channel * c) {
     trace(LOG_PROTOCOL, "Starting channel %#lx %s", c, c->peer_name);
+    assert(c->protocol != NULL);
     assert(c->state == ChannelStateStartWait);
     c->state = ChannelStateStarted;
     c->start_comm(c);

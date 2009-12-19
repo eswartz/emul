@@ -60,4 +60,21 @@ extern int (peek_stream)(InputStream * inp);
 extern void write_string(OutputStream * out, const char * str);
 extern void write_stringz(OutputStream * out, const char * str);
 
+/*
+ * Implementation of an output stream in which the data is written into a byte array.
+ * The buffer automatically grows as data is written to it.
+ * The data can be retrieved using get_byte_array_output_stream_data().
+ * Clients should dispose the data using loc_free().
+ */
+typedef struct ByteArrayOutputStream {
+    OutputStream out;
+    char buf[256];
+    char * mem;
+    size_t pos;
+    size_t max;
+} ByteArrayOutputStream;
+
+extern OutputStream * create_byte_array_output_stream(ByteArrayOutputStream * buf);
+extern void get_byte_array_output_stream_data(ByteArrayOutputStream * buf, char ** data, size_t * size);
+
 #endif /* D_streams */

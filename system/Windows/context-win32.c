@@ -120,6 +120,7 @@ char * context_suspend_reason(Context * ctx) {
     int n = 0;
 
     if (ctx->stopped_by_bp && ctx->bp_ids != NULL) return "Breakpoint";
+    if (ctx->stopped_by_bp) return "Eventpoint";
     if (exception_code == 0) return "Suspended";
     if (ctx->debug_started && exception_code == EXCEPTION_BREAKPOINT) return "Suspended";
     if (exception_code == EXCEPTION_SINGLE_STEP) return "Step";
@@ -204,11 +205,14 @@ static void event_win32_context_stopped(Context * ctx) {
         return;
     }
 
-    ctx->regs_error = 0;
+    if (ctx->regs_error) {
+        release_error_report(ctx->regs_error);
+        ctx->regs_error = NULL;
+    }
     memset(ctx->regs, 0, ctx->regs_size);
     ((REG_SET *)ctx->regs)->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
     if (GetThreadContext(ctx->handle, (REG_SET *)ctx->regs) == 0) {
-        ctx->regs_error = get_errno(log_error("GetThreadContext", 0));
+        ctx->regs_error = get_error_report(log_error("GetThreadContext", 0));
     }
     else {
         trace(LOG_CONTEXT, "context: get regs OK: ctx %#lx, pid %d, PC %#lx",
@@ -695,9 +699,8 @@ int context_continue(Context * ctx) {
     }
 #endif
     if (ctx->regs_dirty && ctx->regs_error) {
-        trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#lx, pid %d, error %d",
-            ctx, ctx->pid, ctx->regs_error);
-        errno = ctx->regs_error;
+        trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#lx, pid %d", ctx, ctx->pid);
+        errno = set_error_report_errno(ctx->regs_error);
         return -1;
     }
     return win32_resume(ctx);
@@ -713,9 +716,8 @@ int context_single_step(Context * ctx) {
 
     trace(LOG_CONTEXT, "context: single step ctx %#lx, pid %d", ctx, ctx->pid);
     if (ctx->regs_error) {
-        trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#lx, pid %d, error %d",
-            ctx, ctx->pid, ctx->regs_error);
-        errno = ctx->regs_error;
+        trace(LOG_ALWAYS, "Can't resume thread, registers copy is invalid: ctx %#lx, pid %d", ctx, ctx->pid);
+        errno = set_error_report_errno(ctx->regs_error);
         return -1;
     }
 #if defined(__i386__) || defined(__x86_64__)

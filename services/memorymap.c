@@ -28,6 +28,8 @@
 #endif
 #include "memorymap.h"
 #include "myalloc.h"
+#include "json.h"
+#include "exceptions.h"
 
 typedef struct MemoryMap MemoryMap;
 
@@ -37,14 +39,15 @@ struct MemoryMap {
     MemoryRegion * regions;
 };
 
+static const char * MEMORYMAP = "MemoryMap";
 static MemoryMapEventListener * event_listeners = NULL;
+static TCFBroadcastGroup * broadcast_group = NULL;
 
 static void dispose_memory_map(MemoryMap * map) {
     unsigned i;
 
     for (i = 0; i < map->region_cnt; i++) {
         MemoryRegion * r = map->regions + i;
-        assert(r->file == NULL);
         loc_free(r->file_name);
     }
     loc_free(map->regions);
@@ -52,9 +55,19 @@ static void dispose_memory_map(MemoryMap * map) {
 }
 
 static void event_memory_map_changed(Context * ctx, void * client_data) {
+    OutputStream * out;
     if (ctx->memory_map == NULL) return;
     dispose_memory_map((MemoryMap *)ctx->memory_map);
     ctx->memory_map = NULL;
+    out = &broadcast_group->out;
+
+    write_stringz(out, "E");
+    write_stringz(out, MEMORYMAP);
+    write_stringz(out, "changed");
+
+    json_write_string(out, container_id(ctx));
+    write_stream(out, 0);
+    write_stream(out, MARKER_EOM);
 }
 
 #if defined(_WRS_KERNEL) || defined(WIN32)
@@ -192,7 +205,64 @@ void add_memory_map_event_listener(MemoryMapEventListener * listener, void * cli
     event_listeners = listener;
 }
 
-void ini_memory_map_service(void) {
+static void command_get(char * token, Channel * c) {
+    char id[256];
+    int err = 0;
+    Context * ctx = NULL;
+    MemoryMap * map = NULL;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    ctx = id2ctx(id);
+    if (ctx == NULL) err = ERR_INV_COMMAND;
+    else map = get_memory_map(ctx);
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    if (map == NULL) {
+        write_stringz(&c->out, "null");
+    }
+    else {
+        unsigned n;
+        write_stream(&c->out, '[');
+        for (n = 0; n < map->region_cnt; n++) {
+            MemoryRegion * m = map->regions + n;
+            if (n > 0) write_stream(&c->out, ',');
+            write_stream(&c->out, '{');
+            json_write_string(&c->out, "Addr");
+            write_stream(&c->out, ':');
+            json_write_int64(&c->out, m->addr);
+            write_stream(&c->out, ',');
+            json_write_string(&c->out, "Size");
+            write_stream(&c->out, ':');
+            json_write_ulong(&c->out, m->size);
+            write_stream(&c->out, ',');
+            json_write_string(&c->out, "Offs");
+            write_stream(&c->out, ':');
+            json_write_ulong(&c->out, m->file_offs);
+            write_stream(&c->out, ',');
+            json_write_string(&c->out, "Flags");
+            write_stream(&c->out, ':');
+            json_write_ulong(&c->out, m->flags);
+            if (m->file_name != NULL) {
+                write_stream(&c->out, ',');
+                json_write_string(&c->out, "FileName");
+                write_stream(&c->out, ':');
+                json_write_string(&c->out, m->file_name);
+            }
+            write_stream(&c->out, '}');
+        }
+        write_stream(&c->out, ']');
+        write_stream(&c->out, 0);
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+}
+
+void ini_memory_map_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     static ContextEventListener listener = {
         NULL,
         event_memory_map_changed,
@@ -200,7 +270,9 @@ void ini_memory_map_service(void) {
         NULL,
         event_memory_map_changed
     };
+    broadcast_group = bcg;
     add_context_event_listener(&listener, NULL);
+    add_command_handler(proto, MEMORYMAP, "get", command_get);
 }
 
 

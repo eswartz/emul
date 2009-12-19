@@ -29,6 +29,7 @@
 
 #include "tcf_elf.h"
 #include "dwarfio.h"
+#include "errors.h"
 
 typedef struct FileInfo FileInfo;
 typedef struct LocationInfo LocationInfo;
@@ -142,8 +143,7 @@ struct CompUnit {
 struct DWARFCache {
     int magic;
     ELF_File * mFile;
-    int mErrorCode;
-    char mErrorMsg[256];
+    ErrorReport * mErrorReport;
     CompUnit ** mCompUnits;
     unsigned mCompUnitsCnt;
     ELF_Section * mDebugRanges;

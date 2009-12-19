@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#if defined(WIN32)
+#if defined(WIN32) && !ENABLE_ELF
 
 #include <assert.h>
 #include <stdio.h>

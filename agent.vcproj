@@ -217,6 +217,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\framework\cache.c"
+				>
+			</File>
+			<File
+				RelativePath=".\framework\cache.h"
+				>
+			</File>
+			<File
 				RelativePath=".\framework\channel.c"
 				>
 			</File>
@@ -692,6 +700,10 @@
 		<Filter
 			Name="system"
 			>
+			<File
+				RelativePath=".\system\signames.h"
+				>
+			</File>
 			<Filter
 				Name="Windows"
 				>

@@ -13,7 +13,7 @@
  *******************************************************************************/
 
 /*
- * Transport agnostic channel interface
+ * Transport agnostic TCF communication channel interface.
  */
 
 #ifndef D_channel
@@ -47,13 +47,16 @@ enum {
     ChannelStateDisconnected
 };
 
+struct Protocol;
 typedef struct Channel Channel;
+
 struct Channel {
     InputStream inp;                    /* Input stream */
     OutputStream out;                   /* Output stream */
     TCFSuspendGroup * spg;              /* Suspend group */
     TCFBroadcastGroup * bcg;            /* Broadcast group */
     void * client_data;                 /* Client data */
+    struct Protocol * protocol;         /* Channel protocol */
     char * peer_name;                   /* A human readable remote peer name */
     int peer_service_cnt;               /* Number of remote peer service names */
     char ** peer_service_list;          /* List of remote peer service names */
@@ -72,10 +75,11 @@ struct Channel {
     int (*is_closed)(Channel *);        /* Return true if channel is closed */
     void (*close)(Channel *, int);      /* Closed channel */
 
-    /* Populated by channel client */
+    /* Populated by channel client, NULL values mean default handling */
     void (*connecting)(Channel *);      /* Called when channel is ready for transmit */
     void (*connected)(Channel *);       /* Called when channel negotiation is complete */
     void (*receive)(Channel *);         /* Called when messages has been received */
+    void (*redirected)(Channel *, Channel *);/* Called when channel is redirected */
     void (*disconnected)(Channel *);    /* Called when channel is disconnected */
 };
 
@@ -116,33 +120,106 @@ typedef void (*ChannelConnectCallBack)(void * /* callback_args */, int /* error 
 extern void channel_connect(PeerServer * server, ChannelConnectCallBack callback, void * callback_args);
 
 /*
- * Start communication of a newly created channel
+ * Start communication of a newly created channel.
  */
 extern void channel_start(Channel *);
 
 /*
- * Close communication channel
+ * Close communication channel.
  */
 extern void channel_close(Channel *);
 
+/*
+ * Allocate and return new "Suspend Group" object.
+ * Suspend Group is collection of channels that can be suspended together.
+ */
 extern TCFSuspendGroup * suspend_group_alloc(void);
+
+/*
+ * Remove channels from Suspend Group and deallocate the group object.
+ */
 extern void suspend_group_free(TCFSuspendGroup *);
+
+/*
+ * Add a channel to a Suspend Group.
+ * If the channel is already in a group, it is removed from it first.
+ */
 extern void channel_set_suspend_group(Channel *, TCFSuspendGroup *);
+
+/*
+ * Remove channel from Suspend Group. Does nothing if the channel is not a member of a group.
+ */
 extern void channel_clear_suspend_group(Channel *);
 
+/*
+ * Allocate and return new "Broadcast Group" object.
+ * Broadcast Group is collection of channels that participate together in broadcasting a message.
+ */
 extern TCFBroadcastGroup * broadcast_group_alloc(void);
+
+/*
+ * Remove channels from Broadcast Group and deallocate the group object.
+ */
 extern void broadcast_group_free(TCFBroadcastGroup *);
+
+/*
+ * Add a channel to a Broadcast Group.
+ * If the channel is already in a group, it is removed from it first.
+ */
 extern void channel_set_broadcast_group(Channel *, TCFBroadcastGroup *);
+
+/*
+ * Remove channel from Suspend Group. Does nothing if the channel is not a member of a group.
+ */
 extern void channel_clear_broadcast_group(Channel *);
 
-extern void stream_lock(Channel *);
-extern void stream_unlock(Channel *);
-extern int is_stream_closed(Channel *);
+/*
+ * Lock a channel. A closed channel will not be deallocated until it is unlocked.
+ * Each call of this function incremnets the channel reference counter.
+ */
+extern void channel_lock(Channel *);
+
+/*
+ * Unlock a channel.
+ * Each call of this function decremnets the channel reference counter.
+ * If channel is closed and reference count is zero, then the channel object is deallocated.
+ */
+extern void channel_unlock(Channel *);
+
+/*
+ * Return 1 if channel is closed, otherwise return 0.
+ */
+extern int is_channel_closed(Channel *);
+
+/* Depricated function names are kept for backward compatibility */
+#define stream_lock(channel) channel_lock(channel)
+#define stream_unlock(channel) channel_lock(channel)
+#define is_stream_closed(channel) is_channel_closed(channel)
+
+/*
+ * Create and return PeerServer object with attribute values taken fron given URL.
+ */
 extern PeerServer * channel_peer_from_url(const char *);
 
+/*
+ * Suspend reading and handling of messages for channels in given Suspend Group.
+ */
 extern void channels_suspend(TCFSuspendGroup * p);
+
+/*
+ * Return 1 if channels in given Suspend Group are suspended, othewise return 0.
+ */
 extern int are_channels_suspended(TCFSuspendGroup * p);
+
+/*
+ * Resume reading and handling of messages for channels in given Suspend Group,
+ * which was suspended by channels_suspend().
+ */
 extern void channels_resume(TCFSuspendGroup * p);
+
+/*
+ * Return number of messages in channel input buffers in given Suspend Group.
+ */
 extern int channels_get_message_count(TCFSuspendGroup * p);
 
 #endif /* D_channel */

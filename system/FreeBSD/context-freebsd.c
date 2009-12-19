@@ -36,6 +36,7 @@
 #include "myalloc.h"
 #include "breakpoints.h"
 #include "waitpid.h"
+#include "system/signames.h"
 
 #define PTRACE_TRACEME    PT_TRACE_ME
 #define PTRACE_ATTACH     PT_ATTACH
@@ -444,7 +445,10 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         ContextAddress pc0 = ctx->regs_error ? 0 : get_regs_PC(ctx->regs);
         assert(!ctx->regs_dirty);
         assert(!ctx->intercepted);
-        ctx->regs_error = 0;
+        if (ctx->regs_error) {
+            release_error_report(ctx->regs_error);
+            ctx->regs_error = NULL;
+        }
         if (ptrace(PTRACE_GETREGS, ctx->pid, 0, (int)ctx->regs) < 0) {
             assert(errno != 0);
 #if USE_ESRCH_WORKAROUND
@@ -460,7 +464,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                 return;
             }
 #endif
-            ctx->regs_error = errno;
+            ctx->regs_error = get_error_report(errno);
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETREGS) failed; pid %d, error %d %s",
                 ctx->pid, errno, errno_to_str(errno));
         }

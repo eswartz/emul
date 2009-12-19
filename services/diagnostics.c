@@ -92,7 +92,7 @@ static void run_test_done(int error, Context * ctx, void * arg) {
     Channel * c = data->c;
 
     ctx->test_process = 1;
-    if (!is_stream_closed(c)) {
+    if (!is_channel_closed(c)) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, data->token);
         write_errno(&c->out, error);
@@ -101,7 +101,7 @@ static void run_test_done(int error, Context * ctx, void * arg) {
         write_stream(&c->out, MARKER_EOM);
         flush_stream(&c->out);
     }
-    stream_unlock(c);
+    channel_unlock(c);
     loc_free(data);
 }
 #endif
@@ -120,7 +120,7 @@ static void command_run_test(char * token, Channel * c) {
         data->c = c;
         strcpy(data->token, token);
         if (run_test_process(run_test_done, data) == 0) {
-            stream_lock(c);
+            channel_lock(c);
             return;
         }
         err = errno;

@@ -259,7 +259,7 @@ static MemoryCommandArgs * read_command_args(char * token, Channel * c, int cmd)
         *args = buf;
         args->c = c;
         strncpy(args->token, token, sizeof(args->token) - 1);
-        stream_lock(c);
+        channel_lock(c);
         context_lock(buf.ctx);
         return args;
     }
@@ -301,7 +301,7 @@ static void safe_memory_set(void * parm) {
     Channel * c = args->c;
     Context * ctx = args->ctx;
 
-    if (!is_stream_closed(c)) {
+    if (!is_channel_closed(c)) {
         Trap trap;
         if (set_trap(&trap)) {
             InputStream * inp = &c->inp;
@@ -352,7 +352,7 @@ static void safe_memory_set(void * parm) {
             channel_close(c);
         }
     }
-    stream_unlock(c);
+    channel_unlock(c);
     context_unlock(ctx);
     loc_free(args);
 }
@@ -367,7 +367,7 @@ static void safe_memory_get(void * parm) {
     Channel * c = args->c;
     Context * ctx = args->ctx;
 
-    if (!is_stream_closed(c)) {
+    if (!is_channel_closed(c)) {
         Trap trap;
         if (set_trap(&trap)) {
             OutputStream * out = &args->c->out;
@@ -420,7 +420,7 @@ static void safe_memory_get(void * parm) {
             channel_close(c);
         }
     }
-    stream_unlock(c);
+    channel_unlock(c);
     context_unlock(ctx);
     loc_free(args);
 }
@@ -435,7 +435,7 @@ static void safe_memory_fill(void * parm) {
     Channel * c = args->c;
     Context * ctx = args->ctx;
 
-    if (!is_stream_closed(c)) {
+    if (!is_channel_closed(c)) {
         Trap trap;
         if (set_trap(&trap)) {
             InputStream * inp = &c->inp;
@@ -514,7 +514,7 @@ static void safe_memory_fill(void * parm) {
             channel_close(c);
         }
     }
-    stream_unlock(c);
+    channel_unlock(c);
     context_unlock(ctx);
     loc_free(args);
 }

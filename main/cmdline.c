@@ -70,22 +70,10 @@ static void destroy_cmdline_handler() {
     loc_free(disconnect_hnds);
 }
 
-static void channel_connecting(Channel * c) {
-    send_hello_message(c->client_data, c);
-    flush_stream(&c->out);
-}
-
-static void channel_connected(Channel * c) {
-}
-
-static void channel_receive(Channel * c) {
-    handle_protocol_message(c->client_data, c);
-}
-
 static void channel_disconnected(Channel * c) {
     size_t i = 0;
     if (chan == c) chan = NULL;
-    protocol_release(proto);
+    protocol_release(c->protocol);
     for (; i < disconnect_hnd_count; ++i)
         disconnect_hnds[i](c);
 }
@@ -141,7 +129,7 @@ static int cmd_tcf(char *s) {
         printf("Error: Expected at least service and command name arguments\n");
         return 0;
     }
-    protocol_send_command(c->client_data, c, args[0], args[1], display_tcf_reply, c);
+    protocol_send_command(c, args[0], args[1], display_tcf_reply, c);
     for (i = 2; i < ind; i++) {
         write_stringz(&c->out, args[i]);
     }
@@ -226,12 +214,9 @@ static void connect_done(void * args, int error, Channel * c) {
     }
     else {
         size_t i = 0;
-        c->connecting = channel_connecting;
-        c->connected = channel_connected;
-        c->receive = channel_receive;
         c->disconnected = channel_disconnected;
+        c->protocol = proto;
         protocol_reference(proto);
-        c->client_data = proto;
         channel_start(c);
         chan = c;
         for (; i < connect_hnd_count; ++i)

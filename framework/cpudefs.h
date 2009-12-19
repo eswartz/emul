@@ -53,13 +53,13 @@ struct StackFrame {
 };
 
 /* Return array of CPU regiter definitions. LAst item in the array has name == NULL */
-extern RegisterDefinition * get_reg_definitions(void);
+extern RegisterDefinition * get_reg_definitions(Context * ctx);
 
 /* Search register definition for given register ID, return NULL if not found */
-extern RegisterDefinition * get_reg_by_id(unsigned id, unsigned numbering_convention);
+extern RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned numbering_convention);
 
 /* Return register definition of instruction pointer */
-extern RegisterDefinition * get_PC_definition(void);
+extern RegisterDefinition * get_PC_definition(Context * ctx);
 
 /* Read register value from stack frame data, return 0 on success, return -1 and set errno if register is not available  */
 extern int read_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t * value);

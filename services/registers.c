@@ -90,7 +90,7 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
 static int id2register(char * id, Context ** ctx, int * frame, RegisterDefinition ** reg_def) {
     int i;
     char name[64];
-    RegisterDefinition * reg_defs = get_reg_definitions();
+    RegisterDefinition * reg_defs = NULL;
 
     *ctx = NULL;
     *frame = STACK_TOP_FRAME;
@@ -123,15 +123,7 @@ static int id2register(char * id, Context ** ctx, int * frame, RegisterDefinitio
         *frame = n;
     }
     id++;
-    for (i = 0; reg_defs[i].name != NULL; i++) {
-        if (strcmp(reg_defs[i].name, name) == 0) break;
-    }
-    if (reg_defs[i].name == NULL) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
     *ctx = id2ctx(id);
-    *reg_def = reg_defs + i;
     if (*ctx == NULL) {
         errno = ERR_INV_CONTEXT;
         return -1;
@@ -140,6 +132,15 @@ static int id2register(char * id, Context ** ctx, int * frame, RegisterDefinitio
         errno = ERR_ALREADY_EXITED;
         return -1;
     }
+    reg_defs = get_reg_definitions(*ctx);
+    for (i = 0; reg_defs[i].name != NULL; i++) {
+        if (strcmp(reg_defs[i].name, name) == 0) break;
+    }
+    if (reg_defs[i].name == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    *reg_def = reg_defs + i;
     return 0;
 }
 
@@ -198,7 +199,7 @@ static void command_get_children(char * token, Channel * c) {
         char t_id[128];
         RegisterDefinition * reg_def;
         strcpy(t_id, thread_id(ctx));
-        for (reg_def = get_reg_definitions(); reg_def->name != NULL; reg_def++) {
+        for (reg_def = get_reg_definitions(ctx); reg_def->name != NULL; reg_def++) {
             if (frame == STACK_TOP_FRAME || read_reg_value(reg_def, frame_info, NULL) == 0) {
                 char r_id[128];
                 if (cnt > 0) write_stream(&c->out, ',');
@@ -330,8 +331,9 @@ static Location * buf = NULL;
 static int buf_pos = 0;
 static int buf_len = 0;
 
-static int read_location_list(InputStream * inp, int setm) {
+static int read_location_list(Channel * c, int setm) {
     int err = 0;
+    InputStream * inp = &c->inp;
     int ch = read_stream(inp);
 
     buf_pos = 0;
@@ -389,7 +391,7 @@ static int read_location_list(InputStream * inp, int setm) {
 }
 
 static void command_getm(char * token, Channel * c) {
-    int err = read_location_list(&c->inp, 0);
+    int err = read_location_list(c, 0);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
@@ -420,7 +422,7 @@ static void command_setm(char * token, Channel * c) {
     int i = 0;
     uint8_t tmp[256];
     JsonReadBinaryState state;
-    int err = read_location_list(&c->inp, 1);
+    int err = read_location_list(c, 1);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     json_read_binary_start(&state, &c->inp);
     for (i = 0; i < buf_pos; i++) {

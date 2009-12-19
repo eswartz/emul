@@ -298,11 +298,11 @@ int crawl_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
     return 0;
 }
 
-RegisterDefinition * get_PC_definition(void) {
+RegisterDefinition * get_PC_definition(Context * ctx) {
     static RegisterDefinition * reg_def = NULL;
     if (reg_def == NULL) {
         RegisterDefinition * r;
-        for (r = get_reg_definitions(); r->name != NULL; r++) {
+        for (r = get_reg_definitions(ctx); r->name != NULL; r++) {
             if (r->offset == offsetof(REG_SET, REG_IP)) {
                 reg_def = r;
                 break;

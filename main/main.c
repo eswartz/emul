@@ -25,11 +25,10 @@
 #include <assert.h>
 #include "asyncreq.h"
 #include "events.h"
+#include "errors.h"
 #include "trace.h"
-#include "myalloc.h"
 #include "test.h"
 #include "cmdline.h"
-#include "plugins.h"
 #include "channel_tcp.h"
 
 static char * progname;
@@ -38,37 +37,9 @@ static ChannelServer * serv;
 static TCFBroadcastGroup * bcg;
 static TCFSuspendGroup * spg;
 
-static void channel_server_connecting(Channel * c) {
-    trace(LOG_PROTOCOL, "channel server connecting");
-
-    send_hello_message(c->client_data, c);
-    flush_stream(&c->out);
-}
-
-static void channel_server_connected(Channel * c) {
-    int i;
-
-    trace(LOG_PROTOCOL, "channel server connected, peer services:");
-    for (i = 0; i < c->peer_service_cnt; i++) {
-        trace(LOG_PROTOCOL, "  %s", c->peer_service_list[i]);
-    }
-}
-
-static void channel_server_receive(Channel * c) {
-    handle_protocol_message(c->client_data, c);
-}
-
-static void channel_server_disconnected(Channel * c) {
-    trace(LOG_PROTOCOL, "channel server disconnected");
-}
-
 static void channel_new_connection(ChannelServer * serv, Channel * c) {
     protocol_reference(proto);
-    c->client_data = proto;
-    c->connecting = channel_server_connecting;
-    c->connected = channel_server_connected;
-    c->receive = channel_server_receive;
-    c->disconnected = channel_server_disconnected;
+    c->protocol = proto;
     channel_set_suspend_group(c, spg);
     channel_set_broadcast_group(c, bcg);
     channel_start(c);
@@ -190,12 +161,12 @@ int main(int argc, char ** argv) {
 
     ps = channel_peer_from_url(url);
     if (ps == NULL) {
-        fprintf(stderr, "invalid server URL (-s option value): %s\n", url);
+        fprintf(stderr, "%s: invalid server URL (-s option value): %s\n", progname, url);
         exit(1);
     }
     serv = channel_server(ps);
     if (serv == NULL) {
-        fprintf(stderr, "cannot create TCF server\n");
+        fprintf(stderr, "%s: cannot create TCF server: %s\n", progname, errno_to_str(errno));
         exit(1);
     }
     serv->new_conn = channel_new_connection;

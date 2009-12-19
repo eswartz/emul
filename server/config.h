@@ -20,6 +20,12 @@
 #if !defined(SERVICE_Locator)
 #define SERVICE_Locator         1
 #endif
+#if !defined(SERVICE_FileSystem)
+#define SERVICE_FileSystem      1
+#endif
+#if !defined(SERVICE_LineNumbers)
+#define SERVICE_LineNumbers     1
+#endif
 
 #if !defined(ENABLE_ZeroCopy)
 #define ENABLE_ZeroCopy         1
@@ -54,7 +60,7 @@
 #endif
 
 #if !defined(ENABLE_SSL)
-#  if (TARGET_UNIX) && !defined(__APPLE__)
+#  if defined(__linux__)
 #    define ENABLE_SSL          1
 #  else
 #    define ENABLE_SSL          0
@@ -68,11 +74,19 @@
  */
 
 #include "discovery.h"
+#include "filesystem.h"
+#include "linenumbers.h"
 #include "diagnostics.h"
 
 static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
 #if SERVICE_Locator
     ini_locator_service(proto, bcg);
+#endif
+#if SERVICE_FileSystem
+    ini_file_system_service(proto);
+#endif
+#if SERVICE_LineNumbers
+    ini_line_numbers_service(proto);
 #endif
 
     ini_diagnostics_service(proto);

@@ -21,6 +21,7 @@
 
 #include "config.h"
 #include "cpudefs.h"
+#include "errors.h"
 #include "link.h"
 
 extern LINK context_root;
@@ -58,7 +59,7 @@ struct Context {
 #if ENABLE_DebugContext
     RegisterData *      regs;               /* copy of context registers, updated when context stops */
     size_t              regs_size;          /* size of data pointed by "regs" */
-    int                 regs_error;         /* if not 0, 'regs' is invalid */
+    ErrorReport *       regs_error;         /* if not NULL, 'regs' is invalid */
     int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
 #endif
     void *              stack_trace;        /* pointer to StackTrace service data cache */
@@ -66,7 +67,9 @@ struct Context {
 #if ENABLE_RCBP_TEST
     int                 test_process;       /* if not 0, the process is test process started by Diagnostics service */
 #endif
-
+#if ENABLE_ContextProxy
+    void *              proxy;
+#else
 /* OS dependant context attributes */
 #if defined(_WRS_KERNEL)
     VXDBG_BP_INFO       bp_info;            /* breakpoint information */
@@ -93,10 +96,9 @@ struct Context {
     int                 syscall_exit;
     int                 syscall_id;
     ContextAddress      syscall_pc;
+    ContextAddress      loader_state;
     int                 end_of_step;
 #endif
-#if ENABLE_ELF
-    ContextAddress      loader_state;
 #endif
 };
 

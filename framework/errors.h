@@ -49,6 +49,20 @@
 #define ERR_INV_DATA_TYPE       (STD_ERR_BASE + 24)
 #define ERR_INV_COMMAND         (STD_ERR_BASE + 25)
 #define ERR_INV_TRANSPORT       (STD_ERR_BASE + 26)
+#define ERR_CACHE_MISS          (STD_ERR_BASE + 27)
+
+typedef struct ErrorReportItem {
+    char * name;
+    char * value;
+    struct ErrorReportItem * next;
+} ErrorReportItem;
+
+typedef struct ErrorReport {
+    uint64_t time_stamp;
+    int code;
+    int refs;
+    ErrorReportItem * props;
+} ErrorReport;
 
 /*
  * Convert error code to human readable string
@@ -58,16 +72,12 @@ extern const char * errno_to_str(int no);
 /*
  * Set errno to indicate given error code and additional error message.
  * The message will be concatenated with normal error text by errno_to_str().
+ * The function created a copy of the message and puts it into a queue of limited size.
+ * Clients should not rely on messages being kept in the queue longer then one dispatch cycle.
+ * Persistent error report can be obtained by calling get_error_report().
  * Return new error code that designates both original code and the message.
  */
 extern int set_errno(int no, char * msg);
-
-/*
- * If 'no' is an error code with a message,
- * return original error code - without the message,
- * otherwise return 'no'.
- */
-extern int get_errno(int no);
 
 /*
  * Set errno to indicate getaddrinfo() error code.
@@ -81,8 +91,30 @@ extern int set_gai_errno(int gai_error_code);
  * Return new value of errno.
  */
 extern int set_win32_errno(DWORD win32_error_code);
-extern DWORD get_win32_errno(int no);
 #endif
+
+/*
+ * Set errno to indicate TCF standard error report.
+ * Report objects are kept in a queue of limited size, and old reports are
+ * disposed by calling release_error_report().
+ * Clients should not rely on reports being kept in the queue longer then one dispatch cycle.
+ * Persistent error report can be obtained by calling get_error_report().
+ * Return new value of errno.
+ */
+extern int set_error_report_errno(ErrorReport * report);
+
+/*
+ * Return TCF error report that describes given error code 'no'.
+ * Clients should call release_error_report() when done using it.
+ * Return NULL if 'no' = 0, or if 'no' was not creted by
+ * set_error_report_errno() and 'create' = 0.
+ */
+extern ErrorReport * get_error_report(int no);
+
+/*
+ * Release error report that was obtained by get_error_report().
+ */
+extern void release_error_report(ErrorReport * report);
 
 /*
  * check_error(): Check error code.

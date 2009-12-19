@@ -83,85 +83,33 @@ pid_t id2pid(char * id, pid_t * parent) {
     return pid;
 }
 
-Context * id2ctx(char * id) {
-    pid_t pid = id2pid(id, NULL);
-    if (pid == 0) return NULL;
-    return context_find_from_pid(pid);
-}
-
 void add_context_event_listener(ContextEventListener * listener, void * client_data) {
     listener->client_data = client_data;
     listener->next = event_listeners;
     event_listeners = listener;
 }
 
-#if !defined(WIN32) && !ENABLE_ContextProxy
-
-#define CASE(var) case var: return ""#var;
-char * signal_name(int signal) {
-    switch (signal) {
-    CASE(SIGHUP)
-    CASE(SIGINT)
-    CASE(SIGQUIT)
-    CASE(SIGILL)
-    CASE(SIGTRAP)
-    CASE(SIGABRT)
-    CASE(SIGBUS)
-    CASE(SIGFPE)
-    CASE(SIGKILL)
-    CASE(SIGUSR1)
-    CASE(SIGSEGV)
-    CASE(SIGUSR2)
-    CASE(SIGPIPE)
-    CASE(SIGALRM)
-    CASE(SIGTERM)
-#ifdef SIGSTKFLT
-    CASE(SIGSTKFLT)
-#endif
-    CASE(SIGCHLD)
-    CASE(SIGCONT)
-    CASE(SIGSTOP)
-    CASE(SIGTSTP)
-    CASE(SIGTTIN)
-    CASE(SIGTTOU)
-    CASE(SIGURG)
-    CASE(SIGXCPU)
-    CASE(SIGXFSZ)
-    CASE(SIGVTALRM)
-    CASE(SIGPROF)
-#ifdef SIGWINCH
-    CASE(SIGWINCH)
-#endif
-#ifdef SIGIO
-    CASE(SIGIO)
-#endif
-#ifdef SIGPWR
-    CASE(SIGPWR)
-#endif
-    CASE(SIGSYS)
-    }
-    return NULL;
-}
-#undef CASE
-
-char * signal_description(int signal) {
-    return NULL;
-}
-
-unsigned signal_code(int signal) {
-    return signal;
-}
-
-#endif
-
 #if ENABLE_DebugContext
 
-#define pidl2ctxp(A) ((Context *)((char *)(A) - offsetof(Context, pidl)))
-#define CONTEXT_PID_ROOT_SIZE 1024
-#define CONTEXT_PID_HASH(PID) ((unsigned)(PID) % CONTEXT_PID_ROOT_SIZE)
-static LINK context_pid_root[CONTEXT_PID_ROOT_SIZE];
-
 LINK context_root = { NULL, NULL };
+
+#if !ENABLE_ContextProxy
+
+#define CONTEXT_PID_HASH_SIZE 1024
+#define CONTEXT_PID_HASH(PID) ((unsigned)(PID) % CONTEXT_PID_HASH_SIZE)
+#define pidl2ctxp(A) ((Context *)((char *)(A) - offsetof(Context, pidl)))
+static LINK context_pid_root[CONTEXT_PID_HASH_SIZE];
+
+void link_context(Context * ctx) {
+    LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(ctx->pid)];
+
+    assert(context_find_from_pid(ctx->pid) == NULL);
+    list_remove(&ctx->ctxl);
+    list_remove(&ctx->pidl);
+    list_add_first(&ctx->ctxl, &context_root);
+    list_add_first(&ctx->pidl, qhp);
+    ctx->ref_count++;
+}
 
 Context * context_find_from_pid(pid_t pid) {
     LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(pid)];
@@ -177,6 +125,12 @@ Context * context_find_from_pid(pid_t pid) {
     return NULL;
 }
 
+Context * id2ctx(char * id) {
+    pid_t pid = id2pid(id, NULL);
+    if (pid == 0) return NULL;
+    return context_find_from_pid(pid);
+}
+
 void context_lock(Context * ctx) {
     assert(ctx->ref_count > 0);
     ctx->ref_count++;
@@ -189,22 +143,14 @@ void context_unlock(Context * ctx) {
         assert(ctx->parent == NULL);
         list_remove(&ctx->ctxl);
         list_remove(&ctx->pidl);
+        release_error_report(ctx->regs_error);
         loc_free(ctx->bp_ids);
         loc_free(ctx->regs);
         loc_free(ctx);
     }
 }
 
-void link_context(Context * ctx) {
-    LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(ctx->pid)];
-
-    assert(context_find_from_pid(ctx->pid) == NULL);
-    list_remove(&ctx->ctxl);
-    list_remove(&ctx->pidl);
-    list_add_first(&ctx->ctxl, &context_root);
-    list_add_first(&ctx->pidl, qhp);
-    ctx->ref_count++;
-}
+#endif /* !ENABLE_ContextProxy */
 
 Context * create_context(pid_t pid, size_t regs_size) {
     Context * ctx = (Context *)loc_alloc_zero(sizeof(Context));
@@ -308,21 +254,17 @@ unsigned context_word_size(Context * ctx) {
     return sizeof(ContextAddress);
 }
 
-static void eventpoint_at_main(Context * ctx, void * args) {
-    ctx->pending_intercept = 1;
-}
-
 void ini_contexts(void) {
-    int i;
-
     list_init(&context_root);
-    for (i = 0; i < CONTEXT_PID_ROOT_SIZE; i++) {
-        list_init(&context_pid_root[i]);
+#if !ENABLE_ContextProxy
+    {
+        int i;
+        for (i = 0; i < CONTEXT_PID_HASH_SIZE; i++) {
+            list_init(&context_pid_root[i]);
+        }
     }
-    init_contexts_sys_dep();
-#if !defined(_WRS_KERNEL)
-    create_eventpoint("main", eventpoint_at_main, NULL);
 #endif
+    init_contexts_sys_dep();
 }
 
 #endif  /* if ENABLE_DebugContext */

@@ -108,7 +108,7 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
     while (regs->regs_cnt <= reg) {
         int n = regs->regs_cnt++;
         memset(regs->regs + n, 0, sizeof(RegisterRules));
-        reg_def = get_reg_by_id(n, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+        reg_def = get_reg_by_id(rules.ctx, n, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
         if (reg_def != NULL && reg_def->traceable) {
             /* It looks like GCC assumes that an unspecified register implies "same value" */
             regs->regs[n].rule = RULE_SAME_VALUE;
@@ -371,7 +371,7 @@ static void fill_frame_register(RegisterRules * reg, RegisterDefinition * reg_de
         break;
     case RULE_REGISTER:
         if (reg_def != NULL) {
-            RegisterDefinition * src_sef = get_reg_by_id(reg->offset, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+            RegisterDefinition * src_sef = get_reg_by_id(rules.ctx, reg->offset, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
             if (src_sef != NULL) {
                 U8_T v = 0;
                 if (read_reg_value(src_sef, frame, &v) >= 0) {
@@ -401,7 +401,7 @@ static int fill_stack_frame(StackFrame * frame, StackFrame * down) {
 
     switch (rules.cfa_rule) {
     case RULE_OFFSET:
-        reg_def = get_reg_by_id(rules.cfa_register, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+        reg_def = get_reg_by_id(rules.ctx, rules.cfa_register, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
         if (reg_def != NULL) {
             if (read_reg_value(reg_def, frame, &v) >= 0) {
                 frame->fp = (ContextAddress)(v + rules.cfa_offset);
@@ -412,12 +412,12 @@ static int fill_stack_frame(StackFrame * frame, StackFrame * down) {
     }
 
     reg = get_reg(&frame_regs, rules.return_address_register);
-    if (reg->rule != 0) fill_frame_register(reg, get_PC_definition(), frame, down);
+    if (reg->rule != 0) fill_frame_register(reg, get_PC_definition(rules.ctx), frame, down);
     for (i = 0; i < frame_regs.regs_cnt; i++) {
         if (i == rules.return_address_register) continue;
         reg = get_reg(&frame_regs, i);
         if (reg->rule == 0) continue;
-        reg_def = get_reg_by_id(i, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+        reg_def = get_reg_by_id(rules.ctx, i, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
         fill_frame_register(reg, reg_def, frame, down);
     }
     return 0;
@@ -490,7 +490,7 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, StackFrame * fra
     if (section == NULL) section = cache->mEHFrame;
     if (section == NULL) return;
 
-    if (read_reg_value(get_PC_definition(), frame, &IP) < 0) exception(errno);
+    if (read_reg_value(get_PC_definition(rules.ctx), frame, &IP) < 0) exception(errno);
     memset(&rules, 0, sizeof(StackFrameRules));
     rules.ctx = ctx;
     rules.section = section;

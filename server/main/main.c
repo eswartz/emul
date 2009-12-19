@@ -29,12 +29,8 @@
 #include "events.h"
 #include "trace.h"
 #include "myalloc.h"
-#include "json.h"
-#include "channel.h"
-#include "protocol.h"
-#include "proxy.h"
-#include "discovery.h"
 #include "errors.h"
+#include "context-proxy.h"
 
 static char * progname;
 static Protocol * proto;
@@ -42,37 +38,25 @@ static ChannelServer * serv;
 static TCFBroadcastGroup * bcg;
 static TCFSuspendGroup * spg;
 
-static void channel_server_connecting(Channel * c) {
-    trace(LOG_PROTOCOL, "channel server connecting");
-
-    send_hello_message(c->client_data, c);
-    flush_stream(&c->out);
-}
-
-static void channel_server_connected(Channel * c) {
+static void channel_redirected(Channel * host, Channel * target) {
     int i;
-
-    trace(LOG_PROTOCOL, "channel server connected, peer services:");
-    for (i = 0; i < c->peer_service_cnt; i++) {
-        trace(LOG_PROTOCOL, "  %s", c->peer_service_list[i]);
+    int service_ln = 0;
+    int service_mm = 0;
+    for (i = 0; i < target->peer_service_cnt; i++) {
+        protocol_get_service(host->protocol, target->peer_service_list[i]);
+        if (strcmp(target->peer_service_list[i], "LineNumbers") == 0) service_ln = 1;
+        if (strcmp(target->peer_service_list[i], "MemoryMap") == 0) service_mm = 1;
     }
-}
-
-static void channel_server_receive(Channel * c) {
-    handle_protocol_message(c->client_data, c);
-}
-
-static void channel_server_disconnected(Channel * c) {
-    trace(LOG_PROTOCOL, "channel server disconnected");
+    if (!service_ln && service_mm) {
+        ini_line_numbers_service(host->protocol);
+        create_context_proxy(host, target);
+    }
 }
 
 static void channel_new_connection(ChannelServer * serv, Channel * c) {
     protocol_reference(proto);
-    c->client_data = proto;
-    c->connecting = channel_server_connecting;
-    c->connected = channel_server_connected;
-    c->receive = channel_server_receive;
-    c->disconnected = channel_server_disconnected;
+    c->protocol = proto;
+    c->redirected = channel_redirected;
     channel_set_suspend_group(c, spg);
     channel_set_broadcast_group(c, bcg);
     channel_start(c);
@@ -162,22 +146,20 @@ int main(int argc, char ** argv) {
 
     ps = channel_peer_from_url(url);
     if (ps == NULL) {
-        fprintf(stderr, "invalid server URL (-s option value): %s\n", url);
+        fprintf(stderr, "%s: invalid server URL (-s option value): %s\n", progname, url);
         exit(1);
     }
     peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Proxy"));
     peer_server_addprop(ps, loc_strdup("Proxy"), loc_strdup(""));
     serv = channel_server(ps);
     if (serv == NULL) {
-        fprintf(stderr, "cannot create TCF server\n");
+        fprintf(stderr, "%s: cannot create TCF server: %s\n", progname, errno_to_str(errno));
         exit(1);
     }
     serv->new_conn = channel_new_connection;
 
     discovery_start();
 
-    /* Process events - must run on the initial thread since ptrace()
-     * returns ECHILD otherwise, thinking we are not the owner. */
     run_event_loop();
     return 0;
 }

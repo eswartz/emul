@@ -57,7 +57,7 @@ static int register_access_func(PropertyValue * Value, int write, U8_T * Data) {
     RegisterDefinition * def;
     StackFrame * frame;
     if (get_frame_info(Value->mContext, Value->mFrame, &frame) < 0) return -1;
-    def = get_reg_by_id((unsigned)Value->mValue, REGNUM_DWARF);
+    def = get_reg_by_id(Value->mContext, (unsigned)Value->mValue, REGNUM_DWARF);
     if (write) return write_reg_value(def, frame, *Data);
     return read_reg_value(def, frame, Data);
 }
@@ -454,7 +454,7 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * 
         case OP_breg30:
         case OP_breg31:
             {
-                RegisterDefinition * def = get_reg_by_id(Op - OP_breg0, REGNUM_DWARF);
+                RegisterDefinition * def = get_reg_by_id(Value->mContext, Op - OP_breg0, REGNUM_DWARF);
                 if (read_reg_value(def, sStackFrame, sExprStack + sExprStackLen) < 0) exception(errno);
                 sExprStack[sExprStackLen++] += dio_ReadS8LEB128();
             }
@@ -479,7 +479,7 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * 
             break;
         case OP_bregx:
             {
-                RegisterDefinition * def = get_reg_by_id(dio_ReadULEB128(), REGNUM_DWARF);
+                RegisterDefinition * def = get_reg_by_id(Value->mContext, dio_ReadULEB128(), REGNUM_DWARF);
                 if (read_reg_value(def, sStackFrame, sExprStack + sExprStackLen) < 0) exception(errno);
                 sExprStack[sExprStackLen++] += dio_ReadS8LEB128();
             }
@@ -519,7 +519,7 @@ static void evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
     Offset = dio_ReadUX(Value->mSize);
     dio_ExitSection();
     Base = Value->mObject->mCompUnit->mLowPC;
-    if (read_reg_value(get_PC_definition(), sStackFrame, &IP) < 0) exception(errno);
+    if (read_reg_value(get_PC_definition(Value->mContext), sStackFrame, &IP) < 0) exception(errno);
     dio_EnterDebugSection(&Value->mObject->mCompUnit->mDesc, Cache->mDebugLoc, Offset);
     for (;;) {
         U8_T Addr0 = dio_ReadAddress();

@@ -480,7 +480,14 @@ static void send_eof_and_close(Channel * channel, int err) {
     c->chan.state = ChannelStateDisconnected;
     tcp_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
     notify_channel_closed(channel);
-    if (channel->disconnected) channel->disconnected(channel);
+    if (channel->disconnected) {
+        channel->disconnected(channel);
+    }
+    else {
+        trace(LOG_PROTOCOL, "channel %#lx disconnected", c);
+        protocol_release(channel->protocol);
+    }
+    channel->protocol = NULL;
 }
 
 static void handle_channel_msg(void * x) {
@@ -507,7 +514,12 @@ static void handle_channel_msg(void * x) {
         return;
     }
     if (set_trap(&trap)) {
-        c->chan.receive(&c->chan);
+        if (c->chan.receive) {
+            c->chan.receive(&c->chan);
+        }
+        else {
+            handle_protocol_message(&c->chan);
+        }
         clear_trap(&trap);
     }
     else {
@@ -619,7 +631,13 @@ static void start_channel(Channel * channel) {
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->socket >= 0);
-    c->chan.connecting(&c->chan);
+    if (c->chan.connecting) {
+        c->chan.connecting(&c->chan);
+    }
+    else {
+        trace(LOG_PROTOCOL, "channel server connecting");
+        send_hello_message(&c->chan);
+    }
     ibuf_trigger_read(&c->ibuf);
 }
 
@@ -786,9 +804,7 @@ static void refresh_peer_server(int sock, PeerServer * ps) {
 static void refresh_all_peer_server(void * x) {
     LINK * l;
 
-    if (list_is_empty(&server_list)) {
-        return;
-    }
+    if (list_is_empty(&server_list)) return;
     l = server_list.next;
     while (l != &server_list) {
         ServerTCP * si = servlink2tcp(l);

@@ -38,6 +38,7 @@
 #include "myalloc.h"
 #include "breakpoints.h"
 #include "waitpid.h"
+#include "system/signames.h"
 
 #define WORD_SIZE   4
 
@@ -439,10 +440,13 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         ContextAddress pc0 = ctx->regs_error ? 0 : get_regs_PC(ctx->regs);
         assert(!ctx->regs_dirty);
         assert(!ctx->intercepted);
-        ctx->regs_error = 0;
+        if (ctx->regs_error) {
+            release_error_report(ctx->regs_error);
+            ctx->regs_error = NULL;
+        }
         if (thread_get_state(ctx->pid, x86_THREAD_STATE32, ctx->regs, &state_count) != KERN_SUCCESS) {
             assert(errno != 0);
-            ctx->regs_error = errno;
+            ctx->regs_error = get_error_report(errno);
             trace(LOG_ALWAYS, "error: thread_get_state failed; pid %d, error %d %s",
                 ctx->pid, errno, errno_to_str(errno));
         }

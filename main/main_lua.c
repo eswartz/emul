@@ -563,8 +563,7 @@ static void channel_connecting(Channel * c) {
         }
     }
     trace(LOG_LUA, "lua_channel_connecting %p", c);
-    send_hello_message(ce->pe->p, c);
-    flush_stream(&c->out);
+    send_hello_message(c);
 }
 
 static void channel_connected(Channel * c) {
@@ -593,7 +592,7 @@ static void channel_receive(Channel * c) {
             exit(1);
         }
     }
-    handle_protocol_message(ce->pe->p, c);
+    handle_protocol_message(c);
 }
 
 static void channel_disconnected(Channel * c) {
@@ -627,6 +626,7 @@ static void lua_channel_connect_cb(void * client_data, int error, Channel * c)
         assert(c != NULL);
         ce->c = c;
         c->client_data = ce;
+        c->protocol = ce->pe->p;
         c->connecting = channel_connecting;
         c->connected = channel_connected;
         c->receive = channel_receive;
@@ -1091,7 +1091,7 @@ static int lua_channel_send_command(lua_State *L)
     cmd->result_cbrefp = luaref_new(L, cmd);
 
     /* Send command header */
-    cmd->replyinfo = protocol_send_command(ce->pe->p, ce->c,
+    cmd->replyinfo = protocol_send_command(ce->c,
                                            lua_tostring(L, 2),
                                            lua_tostring(L, 3),
                                            channel_send_command_cb, cmd);
@@ -1161,7 +1161,7 @@ static int lua_channel_redirect(lua_State *L)
     cmd->result_cbrefp = luaref_new(L, cmd);
 
     /* Send command header */
-    cmd->replyinfo = send_redirect_command(ce->pe->p, ce->c,
+    cmd->replyinfo = send_redirect_command(ce->c,
                                            lua_tostring(L, 2),
                                            channel_redirect_cb, cmd);
     flush_stream(&ce->c->out);

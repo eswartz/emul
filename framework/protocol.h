@@ -25,10 +25,10 @@
 
 #include "channel.h"
 
-/* Time in second to keep remote peer data */
+/* Time in seconds to keep remote peer data */
 #define PEER_DATA_RETENTION_PERIOD 60
 
-/* Peer data polling period in second */
+/* Peer data polling period in seconds */
 #define PEER_DATA_REFRESH_PERIOD (PEER_DATA_RETENTION_PERIOD / 4)
 
 typedef struct Protocol Protocol;
@@ -53,14 +53,14 @@ typedef void (*ReplyHandlerCB)(Channel *, void * client_data, int error);
  * Read and dispatch one protocol message.
  * This function is by channel manager when a message is available for handling.
  */
-extern void handle_protocol_message(Protocol *, Channel *);
+extern void handle_protocol_message(Channel *);
 
 /*
  * Send "Hello" message to host.
  * This function is typically called from the channel callback function "connecting".
  * All message and event handlers must be registered prior to calling this function.
  */
-extern void send_hello_message(Protocol *, Channel *);
+extern void send_hello_message(Channel *);
 
 /*
  * Lookup or allocate service handle for protocol or channel
@@ -96,22 +96,22 @@ extern void set_default_message_handler2(Protocol *, ProtocolMessageHandler2 han
  * Send command header and register reply handler and associated client data.
  * The handler will be called when the reply message is received.
  */
-extern ReplyHandlerInfo * protocol_send_command(Protocol * p, Channel * c,
+extern ReplyHandlerInfo * protocol_send_command(Channel * c,
      const char * service, const char * name, ReplyHandlerCB handler, void * client_data);
 
 /*
  * Cancel pending command.  Returns true if the commands was cancelled
  * before any side effects of the command took place and therefore the
  * reply handler will not be invoked.  Otherwise returns false,
- * indicating that the reply handler will be invoke with the result of
+ * indicating that the reply handler will be invoked with the result of
  * the command.
  */
-extern int protocol_cancel_command(Protocol * p, ReplyHandlerInfo * rh);
+extern int protocol_cancel_command(ReplyHandlerInfo * rh);
 
 /*
  * Send redirect command.
  */
-extern ReplyHandlerInfo * send_redirect_command(Protocol * p, Channel * c, const char * peerId, ReplyHandlerCB handler, void * client_data);
+extern ReplyHandlerInfo * send_redirect_command(Channel * c, const char * peerId, ReplyHandlerCB handler, void * client_data);
 
 /*
  * Create protocol instance

@@ -195,19 +195,21 @@ static void skip_until_EOM(Channel * c) {
 
 static void event_locator_hello(Channel * c);
 
-void handle_protocol_message(Protocol * p, Channel * c) {
+void handle_protocol_message(Channel * c) {
     char type[8];
     char token[256];
     char service[256];
     char name[256];
     char * args[4];
+    int error = 0;
+    Protocol * p = c->protocol;
 
     assert(is_dispatch_thread());
 
     read_stringz(&c->inp, type, sizeof(type));
     if (strlen(type) != 1) {
         trace(LOG_ALWAYS, "Invalid TCF message: %s ...", type);
-        exception(ERR_PROTOCOL);
+        error = ERR_PROTOCOL;
     }
     else if (type[0] == 'C') {
         Trap trap;
@@ -224,31 +226,29 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         }
         else if (set_trap(&trap)) {
             MessageHandlerInfo * mh = find_message_handler(p, service, name);
-            if (mh == NULL) {
-                if (p->default_handler != NULL) {
-                    args[0] = type;
-                    args[1] = token;
-                    args[2] = service;
-                    args[3] = name;
-                    p->default_handler(c, args, 4, p->client_data);
-                }
-                else {
-                    trace(LOG_PROTOCOL, "Command is not recognized: %s %s ...", service, name);
-                    skip_until_EOM(c);
-                    write_stringz(&c->out, "N");
-                    write_stringz(&c->out, token);
-                    write_stream(&c->out, MARKER_EOM);
-                }
+            if (mh != NULL) {
+                mh->handler(token, c, mh->client_data);
+            }
+            else if (p->default_handler != NULL) {
+                args[0] = type;
+                args[1] = token;
+                args[2] = service;
+                args[3] = name;
+                p->default_handler(c, args, 4, p->client_data);
             }
             else {
-                mh->handler(token, c, mh->client_data);
+                trace(LOG_PROTOCOL, "Command is not recognized: %s %s ...", service, name);
+                skip_until_EOM(c);
+                write_stringz(&c->out, "N");
+                write_stringz(&c->out, token);
+                write_stream(&c->out, MARKER_EOM);
             }
             clear_trap(&trap);
         }
         else {
             trace(LOG_ALWAYS, "Exception handling command %s.%s: %d %s",
                 service, name, trap.error, errno_to_str(trap.error));
-            exception(trap.error);
+            error = trap.error;
         }
     }
     else if (type[0] == 'R' || type[0] == 'P' || type[0] == 'N') {
@@ -274,12 +274,12 @@ void handle_protocol_message(Protocol * p, Channel * c) {
                 }
             }
             else {
-                int error = 0;
+                int n = 0;
                 if (type[0] == 'N') {
                     skip_until_EOM(c);
-                    error = ERR_INV_COMMAND;
+                    n = ERR_INV_COMMAND;
                 }
-                rh->handler(c, rh->client_data, error);
+                rh->handler(c, rh->client_data, n);
                 if (type[0] != 'P') loc_free(rh);
             }
             clear_trap(&trap);
@@ -287,7 +287,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         else {
             trace(LOG_ALWAYS, "Exception handling reply %s: %d %s",
                   token, trap.error, errno_to_str(trap.error));
-            exception(trap.error);
+            error = trap.error;
         }
     }
     else if (type[0] == 'E') {
@@ -302,14 +302,14 @@ void handle_protocol_message(Protocol * p, Channel * c) {
             }
             else {
                 EventHandlerInfo * eh = find_event_handler(c, service, name);
-                if (eh == NULL && p->default_handler != NULL) {
+                if (eh != NULL) {
+                    eh->handler(c, eh->client_data);
+                }
+                else if (p->default_handler != NULL) {
                     args[0] = type;
                     args[1] = service;
                     args[2] = name;
                     p->default_handler(c, args, 3, p->client_data);
-                }
-                else if (eh != NULL) {
-                    eh->handler(c, eh->client_data);
                 }
                 else {
                     skip_until_EOM(c);
@@ -320,7 +320,7 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         else {
             trace(LOG_ALWAYS, "Exception handling event %s.%s: %d %s",
                 service, name, trap.error, errno_to_str(trap.error));
-            exception(trap.error);
+            error = trap.error;
         }
     }
     else if (type[0] == 'F') {
@@ -341,18 +341,18 @@ void handle_protocol_message(Protocol * p, Channel * c) {
         else {
             trace(LOG_ALWAYS, "Received F with no zero termination.");
         }
-        if (ch != MARKER_EOM) exception(ERR_PROTOCOL);
-        c->congestion_level = s ? -n : n;
+        if (ch != MARKER_EOM) error = ERR_PROTOCOL;
+        else c->congestion_level = s ? -n : n;
+    }
+    else if (p->default_handler != NULL) {
+        args[0] = type;
+        p->default_handler(c, args, 1, p->client_data);
     }
     else {
-        if (p->default_handler != NULL) {
-            args[0] = type;
-            p->default_handler(c, args, 1, p->client_data);
-            return;
-        }
         trace(LOG_ALWAYS, "Invalid TCF message: %s ...", type);
-        exception(ERR_PROTOCOL);
+        error = ERR_PROTOCOL;
     }
+    if (error != 0) exception(error);
 }
 
 static void message_handler_old(Channel * c, char ** args, int nargs, void * client_data) {
@@ -360,11 +360,11 @@ static void message_handler_old(Channel * c, char ** args, int nargs, void * cli
     handler(c, args, nargs);
 }
 
-void set_default_message_handler(Protocol *p, ProtocolMessageHandler handler) {
+void set_default_message_handler(Protocol * p, ProtocolMessageHandler handler) {
     set_default_message_handler2(p, message_handler_old, handler);
 }
 
-void set_default_message_handler2(Protocol *p, ProtocolMessageHandler2 handler, void * client_data) {
+void set_default_message_handler2(Protocol * p, ProtocolMessageHandler2 handler, void * client_data) {
     p->default_handler = handler;
     p->client_data = client_data;
 }
@@ -412,8 +412,9 @@ void add_event_handler2(Channel * c, const char * service, const char * name, Pr
     event_handlers[h] = eh;
 }
 
-ReplyHandlerInfo * protocol_send_command(Protocol * p, Channel * c, const char * service, const char * name, ReplyHandlerCB handler, void * client_data) {
-    ReplyHandlerInfo *rh;
+ReplyHandlerInfo * protocol_send_command(Channel * c, const char * service, const char * name, ReplyHandlerCB handler, void * client_data) {
+    Protocol * p = c->protocol;
+    ReplyHandlerInfo * rh;
     int h;
     unsigned long tokenid;
     char token[256];
@@ -464,7 +465,7 @@ static void redirect_done(Channel * c, void * client_data, int error) {
     info->handler(c, info->client_data, error);
 }
 
-ReplyHandlerInfo * send_redirect_command(Protocol * p, Channel * c, const char * peerId, ReplyHandlerCB handler, void * client_data) {
+ReplyHandlerInfo * send_redirect_command(Channel * c, const char * peerId, ReplyHandlerCB handler, void * client_data) {
     struct sendRedirectInfo * info = loc_alloc_zero(sizeof *info);
     ReplyHandlerInfo * rh;
 
@@ -472,14 +473,29 @@ ReplyHandlerInfo * send_redirect_command(Protocol * p, Channel * c, const char *
     c->state = ChannelStateRedirectSent;
     info->handler = handler;
     info->client_data = client_data;
-    rh = protocol_send_command(p, c, LOCATOR, "redirect", redirect_done, info);
+    rh = protocol_send_command(c, LOCATOR, "redirect", redirect_done, info);
     json_write_string(&c->out, peerId);
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
     return rh;
 }
 
-void send_hello_message(Protocol * p, Channel * c) {
+static void connect_done(Channel * c) {
+    assert(c->state == ChannelStateConnected);
+    if (c->connected) {
+        c->connected(c);
+    }
+    else {
+        int i;
+        trace(LOG_PROTOCOL, "channel server connected, remote services:");
+        for (i = 0; i < c->peer_service_cnt; i++) {
+            trace(LOG_PROTOCOL, "  %s", c->peer_service_list[i]);
+        }
+    }
+}
+
+void send_hello_message(Channel * c) {
+    Protocol * p = c->protocol;
     ServiceInfo * s = services;
     int cnt = 0;
 
@@ -505,12 +521,13 @@ void send_hello_message(Protocol * p, Channel * c) {
     write_stream(&c->out, ']');
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
+    flush_stream(&c->out);
     if (c->state == ChannelStateStarted) {
         c->state = ChannelStateHelloSent;
     }
     else {
         c->state = ChannelStateConnected;
-        c->connected(c);
+        connect_done(c);
     }
 }
 
@@ -566,11 +583,11 @@ static void event_locator_hello(Channel * c) {
     }
     else {
         c->state = ChannelStateConnected;
-        c->connected(c);
+        connect_done(c);
     }
 }
 
-int protocol_cancel_command(Protocol * p, ReplyHandlerInfo * rh) {
+int protocol_cancel_command(ReplyHandlerInfo * rh) {
     /* TODO: protocol_cancel_command() */
     return 0;
 }

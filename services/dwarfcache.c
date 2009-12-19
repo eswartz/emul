@@ -671,12 +671,11 @@ DWARFCache * get_dwarf_cache(ELF_File * File) {
             clear_trap(&trap);
         }
         else {
-            sCache->mErrorCode = get_errno(trap.error);
-            strncpy(sCache->mErrorMsg, trap.msg, sizeof(sCache->mErrorMsg) - 1);
+            sCache->mErrorReport = get_error_report(trap.error);
         }
         sCache = NULL;
     }
-    if (Cache->mErrorCode) str_exception(Cache->mErrorCode, Cache->mErrorMsg);
+    if (Cache->mErrorReport) exception(set_error_report_errno(Cache->mErrorReport));
     return Cache;
 }
 

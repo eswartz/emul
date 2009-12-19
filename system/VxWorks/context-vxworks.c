@@ -33,6 +33,7 @@
 #include "myalloc.h"
 #include "breakpoints.h"
 #include "waitpid.h"
+#include "system/signames.h"
 
 /* TODO: VxWorks RTP support */
 
@@ -334,7 +335,10 @@ static void event_handler(void * arg) {
         assert(!stopped_ctx->stopped);
         assert(!stopped_ctx->regs_dirty);
         assert(!stopped_ctx->intercepted);
-        stopped_ctx->regs_error = 0;
+        if (stopped_ctx->regs_error) {
+            release_error_report(stopped_ctx->regs_error);
+            stopped_ctx->regs_error = NULL;
+        }
         memcpy(stopped_ctx->regs, &info->regs, stopped_ctx->regs_size);
         stopped_ctx->signal = SIGTRAP;
         assert(get_regs_PC(stopped_ctx->regs) == info->addr);
@@ -360,7 +364,10 @@ static void event_handler(void * arg) {
         assert(!current_ctx->stopped);
         assert(!current_ctx->regs_dirty);
         assert(!current_ctx->intercepted);
-        current_ctx->regs_error = 0;
+        if (current_ctx->regs_error) {
+            release_error_report(current_ctx->regs_error);
+            current_ctx->regs_error = NULL;
+        }
         memcpy(current_ctx->regs, &info->regs, current_ctx->regs_size);
         current_ctx->signal = SIGTRAP;
         current_ctx->event = TRACE_EVENT_STEP;
@@ -376,10 +383,13 @@ static void event_handler(void * arg) {
     case EVENT_HOOK_STOP:
         if (stopped_ctx == NULL) break;
         assert(!stopped_ctx->stopped);
-        stopped_ctx->regs_error = 0;
+        if (stopped_ctx->regs_error) {
+            release_error_report(stopped_ctx->regs_error);
+            stopped_ctx->regs_error = NULL;
+        }
         if (taskRegsGet(stopped_ctx->pid, (REG_SET *)stopped_ctx->regs) != OK) {
-            stopped_ctx->regs_error = errno;
-            assert(stopped_ctx->regs_error != 0);
+            stopped_ctx->regs_error = get_error_report(errno);
+            assert(stopped_ctx->regs_error != NULL);
         }
         stopped_ctx->signal = SIGSTOP;
         stopped_ctx->event = 0;

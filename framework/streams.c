@@ -17,6 +17,8 @@
  */
 
 #include "config.h"
+#include "stddef.h"
+#include "myalloc.h"
 #include "streams.h"
 
 int (read_stream)(InputStream * inp) {
@@ -37,3 +39,50 @@ void write_stringz(OutputStream * out, const char * str) {
     while (*str) out->write(out, (*str++) & 0xff);
     out->write(out, 0);
 }
+
+static void write_byte_array_output_stream(OutputStream * out, int byte) {
+    ByteArrayOutputStream * buf = (ByteArrayOutputStream *)((char *)out - offsetof(ByteArrayOutputStream, out));
+    if (buf->pos < sizeof(buf->buf)) {
+        buf->buf[buf->pos++] = (char)byte;
+    }
+    else {
+        if (buf->mem == NULL) {
+            buf->mem = loc_alloc(buf->max = buf->pos * 2);
+            memcpy(buf->mem, buf->buf, buf->pos);
+        }
+        else if (buf->pos >= buf->max) {
+            buf->mem = loc_realloc(buf->mem, buf->max *= 2);
+        }
+        buf->mem[buf->pos++] = (char)byte;
+    }
+}
+
+static void write_block_byte_array_output_stream(OutputStream * out, const char * bytes, size_t size) {
+    size_t pos = 0;
+    while (pos < size) write_byte_array_output_stream(out, ((const uint8_t *)bytes)[pos++]);
+}
+
+static void flush_byte_array_output_stream(OutputStream * stream) {
+}
+
+OutputStream * create_byte_array_output_stream(ByteArrayOutputStream * buf) {
+    memset(buf, 0, sizeof(ByteArrayOutputStream));
+    buf->out.write_block = write_block_byte_array_output_stream;
+    buf->out.write = write_byte_array_output_stream;
+    buf->out.flush = flush_byte_array_output_stream;
+    return &buf->out;
+}
+
+void get_byte_array_output_stream_data(ByteArrayOutputStream * buf, char ** data, size_t * size) {
+    if (buf->mem == NULL) {
+        buf->max = buf->pos;
+        buf->mem = loc_alloc(buf->max);
+        memcpy(buf->mem, buf->buf, buf->pos);
+    }
+    if (data != NULL) *data = buf->mem;
+    if (size != NULL) *size = buf->pos;
+    buf->mem = NULL;
+    buf->max = 0;
+    buf->pos = 0;
+}
+

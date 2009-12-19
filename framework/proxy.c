@@ -46,14 +46,12 @@ static void proxy_connecting(Channel * c) {
     trace(LOG_PROXY, "Proxy waiting Hello from target");
 
     target->c->disable_zero_copy = !host->c->out.supports_zero_copy;
-    send_hello_message(target->proto, target->c);
-    flush_stream(&target->c->out);
+    send_hello_message(target->c);
 }
 
 static void proxy_connected(Channel * c) {
     Proxy * target = c->client_data;
     Proxy * host = target + target->other;
-    int i;
 
     assert(target->c == c);
     if (target->other == 1) {
@@ -63,21 +61,21 @@ static void proxy_connected(Channel * c) {
     assert(c->state == ChannelStateConnected);
     assert(host->c->state == ChannelStateHelloReceived);
 
-    trace(LOG_PROXY, "Proxy connected, target services:");
-    for (i = 0; i < target->c->peer_service_cnt; i++) {
-        trace(LOG_PROXY, "    %s", target->c->peer_service_list[i]);
-        protocol_get_service(host->proto, target->c->peer_service_list[i]);
+    host->c->disable_zero_copy = !target->c->out.supports_zero_copy;
+
+    if (host->c->redirected) {
+        host->c->redirected(host->c, target->c);
+    }
+    else {
+        int i;
+        trace(LOG_PROXY, "Proxy connected, target services:");
+        for (i = 0; i < target->c->peer_service_cnt; i++) {
+            trace(LOG_PROXY, "    %s", target->c->peer_service_list[i]);
+            protocol_get_service(host->proto, target->c->peer_service_list[i]);
+        }
     }
 
-    host->c->disable_zero_copy = !target->c->out.supports_zero_copy;
-    send_hello_message(host->proto, host->c);
-    flush_stream(&host->c->out);
-}
-
-static void proxy_receive(Channel * c) {
-    Proxy * proxy = c->client_data;
-
-    handle_protocol_message(proxy->proto, c);
+    send_hello_message(host->c);
 }
 
 static void proxy_disconnected(Channel * c) {
@@ -88,13 +86,18 @@ static void proxy_disconnected(Channel * c) {
         trace(LOG_PROXY, "Proxy disconnected");
         if (proxy->other == -1) proxy--;
         assert(proxy[0].c->spg == proxy[1].c->spg);
-        suspend_group_free(proxy[0].c->spg);
-        proxy[0].c->spg = proxy[1].c->spg = NULL;
-        proxy[0].c->client_data = proxy[1].c->client_data = NULL;
+        suspend_group_free(c->spg);
+        broadcast_group_free(c->bcg);
+        assert(proxy[0].c->spg == NULL);
+        assert(proxy[1].c->spg == NULL);
+        assert(proxy[0].c->bcg == NULL);
+        assert(proxy[1].c->bcg == NULL);
+        proxy[0].c->client_data = NULL;
+        proxy[1].c->client_data = NULL;
         protocol_release(proxy[0].proto);
         protocol_release(proxy[1].proto);
-        stream_unlock(proxy[0].c);
-        stream_unlock(proxy[1].c);
+        channel_unlock(proxy[0].c);
+        channel_unlock(proxy[1].c);
         loc_free(proxy);
     }
     else {
@@ -205,13 +208,15 @@ void proxy_create(Channel * c1, Channel * c2) {
     assert(c1->state == ChannelStateRedirectReceived);
     assert(c2->state == ChannelStateStartWait);
 
-    stream_lock(c1);
+    /* Host */
+    channel_lock(c1);
     proxy[0].c = c1;
     proxy[0].proto = protocol_alloc();
     proxy[0].other = 1;
     proxy[0].instance = instance;
 
-    stream_lock(c2);
+    /* Target */
+    channel_lock(c2);
     proxy[1].c = c2;
     proxy[1].proto = protocol_alloc();
     proxy[1].other = -1;
@@ -224,21 +229,22 @@ void proxy_create(Channel * c1, Channel * c2) {
     }
     c1->state = ChannelStateHelloReceived;
     notify_channel_closed(c1);
-    protocol_release(c1->client_data);
+    protocol_release(c1->protocol);
     c1->client_data = NULL;
+    assert(c2->protocol == NULL);
 
     c1->connecting = proxy_connecting;
     c1->connected = proxy_connected;
-    c1->receive = proxy_receive;
     c1->disconnected = proxy_disconnected;
     c1->client_data = proxy;
+    c1->protocol = proxy[0].proto;
     set_default_message_handler(proxy[0].proto, proxy_default_message_handler);
 
     c2->connecting = proxy_connecting;
     c2->connected = proxy_connected;
-    c2->receive = proxy_receive;
     c2->disconnected = proxy_disconnected;
     c2->client_data = proxy + 1;
+    c2->protocol = proxy[1].proto;
     set_default_message_handler(proxy[1].proto, proxy_default_message_handler);
 
     channel_set_suspend_group(c1, spg);

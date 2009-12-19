@@ -787,7 +787,7 @@ char * json_skip_object(InputStream * inp) {
 }
 
 int read_errno(InputStream * inp) {
-    int err = 0;
+    ErrorReport * err = NULL;
     int ch = read_stream(inp);
     if (ch == 0) return 0;
     if (ch != '{') exception(ERR_JSON_SYNTAX);
@@ -799,12 +799,19 @@ int read_errno(InputStream * inp) {
             char name[256];
             json_read_string(inp, name, sizeof(name));
             if (read_stream(inp) != ':') exception(ERR_JSON_SYNTAX);
+            if (err == NULL) err = loc_alloc_zero(sizeof(ErrorReport));
             if (strcmp(name, "Code") == 0) {
-                err = json_read_long(inp) + STD_ERR_BASE;
+                err->code = json_read_long(inp);
+            }
+            else if (strcmp(name, "Time") == 0) {
+                err->time_stamp = json_read_int64(inp);
             }
             else {
-                buf_pos = 0;
-                skip_object(inp);
+                ErrorReportItem * i = loc_alloc_zero(sizeof(ErrorReportItem));
+                i->name = loc_strdup(name);
+                i->value = json_skip_object(inp);
+                i->next = err->props;
+                err->props = i;
             }
             ch = read_stream(inp);
             if (ch == ',') continue;
@@ -813,96 +820,54 @@ int read_errno(InputStream * inp) {
         }
     }
     if (read_stream(inp) != 0) exception(ERR_JSON_SYNTAX);
-    return err;
+    if (err == NULL) return 0;
+    if (err->code == 0) {
+        while (err->props != NULL) {
+            ErrorReportItem * i = err->props;
+            err->props = i->next;
+            loc_free(i->name);
+            loc_free(i->value);
+            loc_free(i);
+        }
+        loc_free(err);
+        return 0;
+    }
+    return set_error_report_errno(err);
 }
 
-static void write_error_code(OutputStream * out, int err, int code) {
-    /* code - TCF error code */
-    /* err - errno value*/
-    struct timespec timenow;
+static void write_error_props(OutputStream * out, ErrorReport * rep) {
+    ErrorReportItem * i = rep->props;
 
-    if (clock_gettime(CLOCK_REALTIME, &timenow) == 0) {
+    if (rep->time_stamp != 0) {
+        write_stream(out, ',');
         json_write_string(out, "Time");
         write_stream(out, ':');
-        json_write_ulong(out, (unsigned long)timenow.tv_sec);
-        write_stream(out, timenow.tv_nsec / 100000000 % 10 + '0');
-        write_stream(out, timenow.tv_nsec / 10000000 % 10 + '0');
-        write_stream(out, timenow.tv_nsec / 1000000 % 10 + '0');
-
-        write_stream(out, ',');
+        json_write_int64(out, rep->time_stamp);
     }
 
-#ifdef WIN32
-    if (get_win32_errno(err)) {
-        json_write_string(out, "Code");
-        write_stream(out, ':');
-        json_write_long(out, ERR_OTHER - STD_ERR_BASE);
-
+    while (i != NULL) {
         write_stream(out, ',');
-
-        json_write_string(out, "AltCode");
+        json_write_string(out, i->name);
         write_stream(out, ':');
-        json_write_long(out, get_win32_errno(err));
-
-        write_stream(out, ',');
-
-        json_write_string(out, "AltOrg");
-        write_stream(out, ':');
-        json_write_string(out, "WIN32");
-
-        write_stream(out, ',');
-        return;
+        write_string(out, i->value);
+        i = i->next;
     }
-#endif
-
-    json_write_string(out, "Code");
-    write_stream(out, ':');
-    json_write_long(out, code);
-
-    write_stream(out, ',');
-
-    if (err >= STD_ERR_BASE) return;
-
-    json_write_string(out, "AltCode");
-    write_stream(out, ':');
-    json_write_long(out, err);
-
-    write_stream(out, ',');
-
-    json_write_string(out, "AltOrg");
-    write_stream(out, ':');
-#if defined(_MSC_VER)
-    json_write_string(out, "MSC");
-#elif defined(_WRS_KERNEL)
-    json_write_string(out, "VxWorks");
-#elif defined(__CYGWIN__)
-    json_write_string(out, "CygWin");
-#elif defined(__linux__)
-    json_write_string(out, "Linux");
-#else
-    json_write_string(out, "POSIX");
-#endif
-
-    write_stream(out, ',');
 }
 
 void write_error_object(OutputStream * out, int err) {
-    if (err == 0) {
+    ErrorReport * rep = get_error_report(err);
+    if (rep == NULL) {
         write_string(out, "null");
     }
     else {
-        int code = ERR_OTHER - STD_ERR_BASE;
-        const char * msg = errno_to_str(err);
-
         write_stream(out, '{');
 
-        err = get_errno(err);
-        if (err > STD_ERR_BASE) code = err - STD_ERR_BASE;
-        write_error_code(out, err, code);
-
-        json_write_string(out, "Format");
+        json_write_string(out, "Code");
         write_stream(out, ':');
-        json_write_string(out, msg);
+        json_write_long(out, rep->code);
+
+        write_error_props(out, rep);
+        release_error_report(rep);
 
         write_stream(out, '}');
     }
@@ -914,13 +879,9 @@ void write_errno(OutputStream * out, int err) {
 }
 
 void write_service_error(OutputStream * out, int err, const char * service_name, int service_error) {
-    if (err != 0) {
-        const char * msg = errno_to_str(err);
-
+    ErrorReport * rep = get_error_report(err);
+    if (rep != NULL) {
         write_stream(out, '{');
-
-        err = get_errno(err);
-        write_error_code(out, err, service_error);
 
         json_write_string(out, "Service");
         write_stream(out, ':');
@@ -928,9 +889,12 @@ void write_service_error(OutputStream * out, int err, const char * service_name,
 
         write_stream(out, ',');
 
-        json_write_string(out, "Format");
+        json_write_string(out, "Code");
         write_stream(out, ':');
-        json_write_string(out, msg);
+        json_write_long(out, service_error);
+
+        write_error_props(out, rep);
+        release_error_report(rep);
 
         write_stream(out, '}');
     }

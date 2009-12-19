@@ -22,33 +22,61 @@
 #include <assert.h>
 #include "errors.h"
 #include "events.h"
+#include "streams.h"
+#include "myalloc.h"
+#include "json.h"
 #include "trace.h"
 
 #define ERR_MESSAGE_MIN         (STD_ERR_BASE + 100)
-#define ERR_MESSAGE_MAX         (STD_ERR_BASE + 107)
+#define ERR_MESSAGE_MAX         (STD_ERR_BASE + 149)
 
 #define MESSAGE_CNT             (ERR_MESSAGE_MAX - ERR_MESSAGE_MIN + 1)
 
 #define SRC_SYSTEM  1
 #define SRC_GAI     2
 #define SRC_MESSAGE 3
+#define SRC_REPORT  4
 
 typedef struct ErrorMessage {
     int source;
     int error;
-    char text[128];
+    char * text;
+    ErrorReport * report;
 } ErrorMessage;
 
 static ErrorMessage msgs[MESSAGE_CNT];
 static int msgs_pos = 0;
 
+void release_error_report(ErrorReport * report) {
+    if (report == NULL) return;
+    assert(report->refs > 0);
+    report->refs--;
+    if (report->refs == 0) {
+        while (report->props != NULL) {
+            ErrorReportItem * i = report->props;
+            report->props = i->next;
+            loc_free(i->name);
+            loc_free(i->value);
+            loc_free(i);
+        }
+        loc_free(report);
+    }
+}
+
 static ErrorMessage * alloc_msg(int source) {
-    ErrorMessage * m;
+    ErrorMessage * m = msgs + msgs_pos;
     assert(is_dispatch_thread());
-    m = msgs + msgs_pos;
     errno = ERR_MESSAGE_MIN + msgs_pos++;
     if (msgs_pos >= MESSAGE_CNT) msgs_pos = 0;
     m->source = source;
+    if (m->report != NULL) {
+        release_error_report(m->report);
+        m->report = NULL;
+    }
+    if (m->text != NULL) {
+        loc_free(m->text);
+        m->text = NULL;
+    }
     return m;
 }
 
@@ -84,14 +112,6 @@ int set_win32_errno(DWORD win32_error_code) {
         errno = 0;
     }
     return errno;
-}
-
-DWORD get_win32_errno(int no) {
-    if (no >= ERR_MESSAGE_MIN && no <= ERR_MESSAGE_MAX) {
-        ErrorMessage * m = msgs + (no - ERR_MESSAGE_MIN);
-        if (m->source == SRC_SYSTEM) return m->error;
-    }
-    return 0;
 }
 
 #endif
@@ -149,6 +169,8 @@ const char * errno_to_str(int err) {
         return "Command is not recognized";
     case ERR_INV_TRANSPORT:
         return "Invalid transport name";
+    case ERR_CACHE_MISS:
+        return "Invalid data cache state";
     default:
         if (err >= ERR_MESSAGE_MIN && err <= ERR_MESSAGE_MAX) {
             ErrorMessage * m = msgs + (err - ERR_MESSAGE_MIN);
@@ -162,6 +184,8 @@ const char * errno_to_str(int err) {
             case SRC_MESSAGE:
                 snprintf(buf, sizeof(buf), "%s: %s", m->text, errno_to_str(m->error));
                 return buf;
+            case SRC_REPORT:
+                return errno_to_str(m->error);
             }
         }
         return strerror(err);
@@ -172,20 +196,16 @@ int set_errno(int no, char * msg) {
     errno = no;
     if (no != 0 && msg != NULL) {
         ErrorMessage * m = alloc_msg(SRC_MESSAGE);
-        m->error = get_errno(no);
-        memset(m->text, 0, sizeof(m->text));
-        strncpy(m->text, msg, sizeof(m->text) - 1);
+        if (no >= ERR_MESSAGE_MIN && no <= ERR_MESSAGE_MAX) {
+            ErrorMessage * m = msgs + (no - ERR_MESSAGE_MIN);
+            if (m->source == SRC_MESSAGE) no = m->error;
+            else if (m->source == SRC_REPORT) no = m->error;
+            else no = ERR_OTHER;
+        }
+        m->error = no;
+        m->text = loc_strdup(msg);
     }
     return errno;
-}
-
-int get_errno(int no) {
-    if (no >= ERR_MESSAGE_MIN && no <= ERR_MESSAGE_MAX) {
-        ErrorMessage * m = msgs + (no - ERR_MESSAGE_MIN);
-        if (m->source == SRC_MESSAGE) return m->error;
-        return ERR_OTHER;
-    }
-    return no;
 }
 
 int set_gai_errno(int no) {
@@ -195,6 +215,107 @@ int set_gai_errno(int no) {
         m->error = no;
     }
     return errno;
+}
+
+int set_error_report_errno(ErrorReport * report) {
+    errno = 0;
+    if (report != NULL) {
+        ErrorMessage * m = alloc_msg(SRC_REPORT);
+        m->error = report->code + STD_ERR_BASE;
+        m->report = report;
+        report->refs++;
+    }
+    return errno;
+}
+
+static void add_report_prop(ErrorReport * report, const char * name, ByteArrayOutputStream * buf) {
+    ErrorReportItem * i = loc_alloc(sizeof(ErrorReportItem));
+    i->name = loc_strdup(name);
+    get_byte_array_output_stream_data(buf, &i->value, NULL);
+    i->next = report->props;
+    report->props = i;
+}
+
+static void add_report_prop_int(ErrorReport * report, const char * name, uint64_t n) {
+    ByteArrayOutputStream buf;
+    OutputStream * out = create_byte_array_output_stream(&buf);
+    json_write_int64(out, n);
+    write_stream(out, 0);
+    add_report_prop(report, name, &buf);
+}
+
+static void add_report_prop_str(ErrorReport * report, const char * name, const char * str) {
+    ByteArrayOutputStream buf;
+    OutputStream * out = create_byte_array_output_stream(&buf);
+    json_write_string(out, str);
+    write_stream(out, 0);
+    add_report_prop(report, name, &buf);
+}
+
+ErrorReport * get_error_report(int err) {
+    ErrorMessage * m = NULL;
+    if (err >= ERR_MESSAGE_MIN && err <= ERR_MESSAGE_MAX) {
+        m = msgs + (err - ERR_MESSAGE_MIN);
+        if (m->report != NULL) {
+            m->report->refs++;
+            return m->report;
+        }
+    }
+    if (err != 0) {
+        ErrorReport * report = loc_alloc_zero(sizeof(ErrorReport));
+        struct timespec timenow;
+
+        if (clock_gettime(CLOCK_REALTIME, &timenow) == 0) {
+            report->time_stamp = (uint64_t)timenow.tv_sec * 1000 + timenow.tv_nsec / 1000000;
+        }
+
+        add_report_prop_str(report, "Format", errno_to_str(err));
+
+        if (m != NULL) {
+            if (m->source == SRC_MESSAGE) {
+                err = m->error;
+            }
+#ifdef WIN32
+            else if (m->source == SRC_SYSTEM) {
+                add_report_prop_int(report, "AltCode", m->error);
+                add_report_prop_str(report, "AltOrg", "WIN32");
+                err = ERR_OTHER;
+            }
+#endif
+            else {
+                err = ERR_OTHER;
+            }
+        }
+
+        if (err < STD_ERR_BASE) {
+            add_report_prop_int(report, "AltCode", err);
+#if defined(_MSC_VER)
+            add_report_prop_str(report, "AltOrg", "MSC");
+#elif defined(_WRS_KERNEL)
+            add_report_prop_str(report, "AltOrg", "VxWorks");
+#elif defined(__CYGWIN__)
+            add_report_prop_str(report, "AltOrg", "CygWin");
+#elif defined(__linux__)
+            add_report_prop_str(report, "AltOrg", "Linux");
+#else
+            add_report_prop_str(report, "AltOrg", "POSIX");
+#endif
+            err = ERR_OTHER;
+        }
+
+        assert(err >= STD_ERR_BASE);
+        assert(err < ERR_MESSAGE_MIN);
+
+        report->code = err - STD_ERR_BASE;
+        report->refs = 1;
+        if (m != NULL) {
+            assert(m->report == NULL);
+            m->report = report;
+            report->refs++;
+        }
+        return report;
+    }
+    return NULL;
 }
 
 #ifdef NDEBUG

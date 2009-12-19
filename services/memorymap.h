@@ -20,30 +20,39 @@
 
 #include "config.h"
 #include "context.h"
+#include "protocol.h"
 
 typedef struct MemoryRegion MemoryRegion;
 
 struct MemoryRegion {
-    ContextAddress addr;
-    unsigned long size;
-    unsigned long file_offs;
-    dev_t dev;
-    ino_t ino;
-    char * file_name;
-    unsigned flags;
-    void * file;
+    ContextAddress addr;        /* Region address in context memory */
+    unsigned long size;         /* Region size */
+    unsigned long file_offs;    /* File offset of the region */
+    dev_t dev;                  /* Region file device ID */
+    ino_t ino;                  /* Region file inode */
+    char * file_name;           /* Region file name */
+    unsigned flags;             /* Region flags, see MM_FLAG* */
 };
 
 #define MM_FLAG_R   1
 #define MM_FLAG_W   2
 #define MM_FLAG_X   4
 
+/*
+ * Get array of memory regions for given context.
+ */
 extern void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * cnt);
 
+/*
+ * Functions that are used by context implementation to notify memory map services about map changes.
+ */
 extern void memory_map_event_module_loaded(Context * ctx);
 extern void memory_map_event_code_section_ummapped(Context * ctx, ContextAddress addr, ContextAddress size);
 extern void memory_map_event_module_unloaded(Context * ctx);
 
+/*
+ * Memory map listener.
+ */
 typedef struct MemoryMapEventListener {
     void (*module_loaded)(Context * ctx, void * client_data);
     void (*code_section_ummapped)(Context * ctx, ContextAddress addr, ContextAddress size, void * client_data);
@@ -53,8 +62,11 @@ typedef struct MemoryMapEventListener {
     struct MemoryMapEventListener * next;
 } MemoryMapEventListener;
 
+/*
+ * Add memory map listener.
+ */
 extern void add_memory_map_event_listener(MemoryMapEventListener * listener, void * client_data);
 
-extern void ini_memory_map_service(void);
+extern void ini_memory_map_service(Protocol * proto, TCFBroadcastGroup * bcg);
 
 #endif

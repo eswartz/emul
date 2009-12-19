@@ -141,7 +141,7 @@ static int get_stack_frame(Context * ctx, int frame, IMAGEHLP_STACK_FRAME * stac
         uint64_t v = 0;
         StackFrame * frame_info;
         if (get_frame_info(ctx, frame, &frame_info) < 0) return -1;
-        if (read_reg_value(get_PC_definition(), frame_info, &v) < 0) return -1;
+        if (read_reg_value(get_PC_definition(ctx), frame_info, &v) < 0) return -1;
         stack_frame->InstructionOffset = v;
     }
     return 0;

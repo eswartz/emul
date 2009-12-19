@@ -352,14 +352,14 @@ static void attach_done(int error, Context * ctx, void * arg) {
     AttachDoneArgs * data = arg;
     Channel * c = data->c;
 
-    if (!is_stream_closed(c)) {
+    if (!is_channel_closed(c)) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, data->token);
         write_errno(&c->out, error);
         write_stream(&c->out, MARKER_EOM);
         flush_stream(&c->out);
     }
-    stream_unlock(c);
+    channel_unlock(c);
     loc_free(data);
 }
 
@@ -385,7 +385,7 @@ static void command_attach(char * token, Channel * c) {
         data->c = c;
         strcpy(data->token, token);
         if (context_attach(pid, attach_done, data, 0) == 0) {
-            stream_lock(c);
+            channel_lock(c);
             return;
         }
         err = errno;
@@ -422,11 +422,11 @@ static void command_terminate(char * token, Channel * c) {
 #if defined(WIN32)
         HANDLE h = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
         if (h == NULL) {
-            err = ERR_INV_CONTEXT;
+            err = set_win32_errno(GetLastError());
         }
         else {
-            TerminateProcess(h, 1);
-            CloseHandle(h);
+            if (!TerminateProcess(h, 1)) err = set_win32_errno(GetLastError());
+            if (!CloseHandle(h) && !err) err = set_win32_errno(GetLastError());
         }
 #else
         if (kill(pid, SIGTERM) < 0) err = errno;
@@ -617,7 +617,7 @@ static void start_done(int error, Context * ctx, void * arg) {
     AttachDoneArgs * data = arg;
     Channel * c = data->c;
 
-    if (!is_stream_closed(c)) {
+    if (!is_channel_closed(c)) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, data->token);
         write_errno(&c->out, error);
@@ -627,7 +627,7 @@ static void start_done(int error, Context * ctx, void * arg) {
         write_stream(&c->out, MARKER_EOM);
         flush_stream(&c->out);
     }
-    stream_unlock(c);
+    channel_unlock(c);
     loc_free(data);
 }
 
@@ -915,13 +915,13 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
         }
         else {
             *pid = prs_info.dwProcessId;
-            CloseHandle(prs_info.hThread);
-            CloseHandle(prs_info.hProcess);
+            if (!CloseHandle(prs_info.hThread)) err = set_win32_errno(GetLastError());
+            if (!CloseHandle(prs_info.hProcess)) err = set_win32_errno(GetLastError());
         }
     }
-    close(fpipes[0][0]);
-    close(fpipes[1][1]);
-    close(fpipes[2][1]);
+    if (close(fpipes[0][0]) < 0 && !err) err = errno;
+    if (close(fpipes[1][1]) < 0 && !err) err = errno;
+    if (close(fpipes[2][1]) < 0 && !err) err = errno;
     if (!err) {
         *prs = loc_alloc_zero(sizeof(ChildProcess));
         (*prs)->inp = fpipes[0][1];
@@ -1216,7 +1216,7 @@ static void command_start(char * token, Channel * c) {
                 strcpy(data->token, token);
                 pending = context_attach(pid, start_done, data, selfattach) == 0;
                 if (pending) {
-                    stream_lock(c);
+                    channel_lock(c);
                 }
                 else {
                     err = errno;

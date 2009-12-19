@@ -56,6 +56,7 @@ static ContextAddress elf_list_addr0;
 static ContextAddress elf_list_addr1;
 static MemoryRegion * elf_list_regions;
 static unsigned       elf_list_region_cnt;
+static ELF_File **    elf_list_files;
 
 
 static void elf_dispose(ELF_File * file) {
@@ -432,11 +433,13 @@ void elf_close(ELF_File * file) {
     file->ref_cnt--;
 }
 
-static ELF_File * open_memory_region_file(MemoryRegion * r) {
+static ELF_File * open_memory_region_file(unsigned n) {
     ELF_File * prev = NULL;
     ELF_File * file = files;
+    MemoryRegion * r = elf_list_regions + n;
 
-    r->file = NULL;
+    assert(n < elf_list_region_cnt);
+    elf_list_files[n] = NULL;
 
     if (r->ino == 0) return NULL;
     while (file != NULL) {
@@ -448,8 +451,7 @@ static ELF_File * open_memory_region_file(MemoryRegion * r) {
             }
             file->ref_cnt++;
             file->age = 0;
-            r->file= file;
-            return file;
+            return elf_list_files[n] = file;
         }
         prev = file;
         file = file->next;
@@ -457,28 +459,33 @@ static ELF_File * open_memory_region_file(MemoryRegion * r) {
 
     if (r->file_name == NULL) return NULL;
     file = elf_open(r->file_name);
-    r->file = file;
-    return file;
+    return elf_list_files[n] = file;
 }
 
 ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress addr1) {
     unsigned i;
 
+    if (elf_list_files != NULL) {
+        loc_free(elf_list_files);
+        elf_list_files = NULL;
+    }
     elf_list_ctx = ctx;
     elf_list_addr0 = addr0;
     elf_list_addr1 = addr1;
     memory_map_get_regions(ctx, &elf_list_regions, &elf_list_region_cnt);
-    for (i = 0; i < elf_list_region_cnt; i++) {
-        MemoryRegion * r = elf_list_regions + i;
-        if (r->addr <= addr1 && r->addr + r->size >= addr0) {
-            assert(r->file == NULL);
-            if (r->ino != 0) {
-                ELF_File * file = open_memory_region_file(r);
-                if (file != NULL) {
-                    assert(!file->listed);
-                    file->listed = 1;
-                    elf_list_pos = i + 1;
-                    return file;
+    if (elf_list_region_cnt > 0) {
+        elf_list_files = loc_alloc_zero(sizeof(ELF_File *) * elf_list_region_cnt);
+        for (i = 0; i < elf_list_region_cnt; i++) {
+            MemoryRegion * r = elf_list_regions + i;
+            if (r->addr <= addr1 && r->addr + r->size >= addr0) {
+                if (r->ino != 0) {
+                    ELF_File * file = open_memory_region_file(i);
+                    if (file != NULL) {
+                        assert(!file->listed);
+                        file->listed = 1;
+                        elf_list_pos = i + 1;
+                        return file;
+                    }
                 }
             }
         }
@@ -491,12 +498,15 @@ ELF_File * elf_list_next(Context * ctx) {
     unsigned i;
 
     assert(ctx == elf_list_ctx);
+    assert(elf_list_region_cnt > 0);
+    assert(elf_list_files != NULL);
+
     for (i = elf_list_pos; i < elf_list_region_cnt; i++) {
         MemoryRegion * r = elf_list_regions + i;
         if (r->addr <= elf_list_addr1 && r->addr + r->size >= elf_list_addr0) {
-            assert(r->file == NULL);
+            assert(elf_list_files[i] == NULL);
             if (r->ino != 0) {
-                ELF_File * file = open_memory_region_file(r);
+                ELF_File * file = open_memory_region_file(i);
                 if (file != NULL && !file->listed) {
                     file->listed = 1;
                     elf_list_pos = i + 1;
@@ -514,17 +524,19 @@ void elf_list_done(Context * ctx) {
 
     assert(ctx == elf_list_ctx);
     for (i = 0; i < elf_list_region_cnt; i++) {
-        MemoryRegion * r = elf_list_regions + i;
-        ELF_File * file = (ELF_File *)r->file;
+        ELF_File * file = elf_list_files[i];
         if (file != NULL) {
             file->listed = 0;
             elf_close(file);
-            r->file = NULL;
         }
     }
     elf_list_ctx = NULL;
     elf_list_regions = NULL;
     elf_list_region_cnt = 0;
+    if (elf_list_files != NULL) {
+        loc_free(elf_list_files);
+        elf_list_files = NULL;
+    }
 }
 
 void elf_add_close_listener(ELFCloseListener listener) {

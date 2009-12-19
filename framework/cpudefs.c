@@ -30,13 +30,17 @@
 #include "breakpoints.h"
 #include "symbols.h"
 
-#if defined(_WRS_KERNEL)
+#if ENABLE_ContextProxy
+
+/* Register definitions are provided by context proxy */
+
+#elif defined(_WRS_KERNEL)
 
 /* VxWork has its own register definitions and stack crawling function */
 
 static RegisterDefinition * regs_index = NULL;
 
-RegisterDefinition * get_reg_definitions(void) {
+RegisterDefinition * get_reg_definitions(Context * ctx) {
     if (regs_index == NULL) {
         int cnt = 0;
         REG_INDEX * r;
@@ -59,11 +63,11 @@ RegisterDefinition * get_reg_definitions(void) {
     return regs_index;
 }
 
-RegisterDefinition * get_PC_definition(void) {
+RegisterDefinition * get_PC_definition(Context * ctx) {
     static RegisterDefinition * reg_def = NULL;
     if (reg_def == NULL) {
         RegisterDefinition * r;
-        for (r = get_reg_definitions(); r->name != NULL; r++) {
+        for (r = get_reg_definitions(ctx); r->name != NULL; r++) {
             if (r->offset == offsetof(REG_SET, reg_pc)) {
                 reg_def = r;
                 break;
@@ -82,15 +86,25 @@ void set_regs_PC(RegisterData * regs, ContextAddress pc) {
     ((REG_SET *)regs)->reg_pc = (void *)pc;
 }
 
+size_t get_break_size(void) {
+    return sizeof(BREAK_INST);
+}
+
 #else /* _WRS_KERNEL */
 
 #include "cpudefs-mdep.h"
 
-RegisterDefinition * get_reg_definitions(void) {
+RegisterDefinition * get_reg_definitions(Context * ctx) {
     return regs_index;
 }
 
+size_t get_break_size(void) {
+    return sizeof(BREAK_INST);
+}
+
 #endif /* _WRS_KERNEL */
+
+#if !ENABLE_ContextProxy
 
 static RegisterDefinition * get_reg_by_dwarf_id(unsigned id) {
     static RegisterDefinition ** map = NULL;
@@ -98,11 +112,11 @@ static RegisterDefinition * get_reg_by_dwarf_id(unsigned id) {
 
     if (map == NULL) {
         RegisterDefinition * r;
-        for (r = get_reg_definitions(); r->name != NULL; r++) {
+        for (r = get_reg_definitions(NULL); r->name != NULL; r++) {
             if (r->dwarf_id >= (int)map_length) map_length = r->dwarf_id + 1;
         }
         map = loc_alloc_zero(sizeof(RegisterDefinition *) * map_length);
-        for (r = get_reg_definitions(); r->name != NULL; r++) {
+        for (r = get_reg_definitions(NULL); r->name != NULL; r++) {
             if (r->dwarf_id >= 0) map[r->dwarf_id] = r;
         }
     }
@@ -115,24 +129,26 @@ static RegisterDefinition * get_reg_by_eh_frame_id(unsigned id) {
 
     if (map == NULL) {
         RegisterDefinition * r;
-        for (r = get_reg_definitions(); r->name != NULL; r++) {
+        for (r = get_reg_definitions(NULL); r->name != NULL; r++) {
             if (r->eh_frame_id >= (int)map_length) map_length = r->eh_frame_id + 1;
         }
         map = loc_alloc_zero(sizeof(RegisterDefinition *) * map_length);
-        for (r = get_reg_definitions(); r->name != NULL; r++) {
+        for (r = get_reg_definitions(NULL); r->name != NULL; r++) {
             if (r->eh_frame_id >= 0) map[r->eh_frame_id] = r;
         }
     }
     return id < map_length ? map[id] : NULL;
 }
 
-RegisterDefinition * get_reg_by_id(unsigned id, unsigned munbering_convention) {
+RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned munbering_convention) {
     switch (munbering_convention) {
     case REGNUM_DWARF: return get_reg_by_dwarf_id(id);
     case REGNUM_EH_FRAME: return get_reg_by_eh_frame_id(id);
     }
     return NULL;
 }
+
+#endif /* !ENABLE_ContextProxy */
 
 int read_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t * value) {
     if (reg_def != NULL && frame != NULL) {
@@ -186,10 +202,6 @@ int write_reg_value(RegisterDefinition * reg_def, StackFrame * frame, uint64_t v
     }
     errno = ERR_INV_CONTEXT;
     return -1;
-}
-
-size_t get_break_size(void) {
-    return sizeof(BREAK_INST);
 }
 
 #endif /* ENABLE_DebugContext */

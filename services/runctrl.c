@@ -230,7 +230,7 @@ static void event_get_context(void * arg) {
     Channel * c = s->c;
     Context * ctx = s->ctx;
 
-    if (!is_stream_closed(c)) {
+    if (!is_channel_closed(c)) {
         int err = 0;
 
         write_stringz(&c->out, "R");
@@ -250,7 +250,7 @@ static void event_get_context(void * arg) {
         write_stream(&c->out, MARKER_EOM);
         flush_stream(&c->out);
     }
-    stream_unlock(c);
+    channel_unlock(c);
     context_unlock(ctx);
     loc_free(s);
 }
@@ -282,7 +282,7 @@ static void command_get_context(char * token, Channel * c) {
          */
         GetContextArgs * s = loc_alloc_zero(sizeof(GetContextArgs));
         s->c = c;
-        stream_lock(c);
+        channel_lock(c);
         strcpy(s->token, token);
         s->ctx = ctx;
         context_lock(ctx);
@@ -438,7 +438,7 @@ static void command_resume(char * token, Channel * c) {
             err = ERR_ALREADY_RUNNING;
         }
         else if (ctx->regs_error) {
-            err = ctx->regs_error;
+            err = set_error_report_errno(ctx->regs_error);
         }
         else if (count != 1) {
             err = EINVAL;
