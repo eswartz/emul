@@ -86,3 +86,24 @@ void get_byte_array_output_stream_data(ByteArrayOutputStream * buf, char ** data
     buf->pos = 0;
 }
 
+static int read_forwarding_input_stream(InputStream * inp) {
+    ForwardingInputStream * buf = (ForwardingInputStream *)((char *)inp - offsetof(ForwardingInputStream, fwd));
+    int ch = read_stream(buf->inp);
+    if (ch != MARKER_EOS) write_stream(buf->out, ch);
+    return ch;
+}
+
+static int peek_forwarding_input_stream(InputStream * inp) {
+    ForwardingInputStream * buf = (ForwardingInputStream *)((char *)inp - offsetof(ForwardingInputStream, fwd));
+    return peek_stream(buf->inp);
+}
+
+InputStream * create_forwarding_input_stream(ForwardingInputStream * buf, InputStream * inp, OutputStream * out) {
+    memset(buf, 0, sizeof(ForwardingInputStream));
+    buf->fwd.read = read_forwarding_input_stream;
+    buf->fwd.peek = peek_forwarding_input_stream;
+    buf->inp = inp;
+    buf->out = out;
+    return &buf->fwd;
+}
+

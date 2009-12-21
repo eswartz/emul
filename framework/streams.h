@@ -77,4 +77,17 @@ typedef struct ByteArrayOutputStream {
 extern OutputStream * create_byte_array_output_stream(ByteArrayOutputStream * buf);
 extern void get_byte_array_output_stream_data(ByteArrayOutputStream * buf, char ** data, size_t * size);
 
+/*
+ * Implementation of an input stream that forwards all data being read
+ * into an output stream.
+ */
+typedef struct ForwardingInputStream {
+    InputStream fwd;
+    InputStream * inp;
+    OutputStream * out;
+} ForwardingInputStream;
+
+extern InputStream * create_forwarding_input_stream(ForwardingInputStream * buf,
+                                                    InputStream * inp, OutputStream * out);
+
 #endif /* D_streams */
