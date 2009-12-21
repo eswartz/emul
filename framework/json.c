@@ -723,6 +723,19 @@ static void skip_object(InputStream * inp) {
         if (skip_char(inp) != 'l') exception(ERR_JSON_SYNTAX);
         return;
     }
+    if (ch == 'f') {
+        if (skip_char(inp) != 'a') exception(ERR_JSON_SYNTAX);
+        if (skip_char(inp) != 'l') exception(ERR_JSON_SYNTAX);
+        if (skip_char(inp) != 's') exception(ERR_JSON_SYNTAX);
+        if (skip_char(inp) != 'e') exception(ERR_JSON_SYNTAX);
+        return;
+    }
+    if (ch == 't') {
+        if (skip_char(inp) != 'r') exception(ERR_JSON_SYNTAX);
+        if (skip_char(inp) != 'u') exception(ERR_JSON_SYNTAX);
+        if (skip_char(inp) != 'e') exception(ERR_JSON_SYNTAX);
+        return;
+    }
     if (ch == '"') {
         for (;;) {
             ch = skip_char(inp);
