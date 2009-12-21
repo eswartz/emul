@@ -77,6 +77,7 @@
 #include "filesystem.h"
 #include "linenumbers.h"
 #include "diagnostics.h"
+#include "tcf_elf.h"
 
 static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
 #if SERVICE_Locator
@@ -87,6 +88,12 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
 #endif
 #if SERVICE_LineNumbers
     ini_line_numbers_service(proto);
+#endif
+#if ENABLE_DebugContext
+    ini_contexts();
+#endif
+#if ENABLE_ELF
+    ini_elf();
 #endif
 
     ini_diagnostics_service(proto);

@@ -22,6 +22,7 @@
 
 #include <errno.h>
 #include <assert.h>
+#include "stdio.h"
 #include "context.h"
 #include "myalloc.h"
 #include "exceptions.h"
@@ -36,6 +37,8 @@ typedef struct MemoryCache MemoryCache;
 typedef struct PeerCache PeerCache;
 
 struct ContextCache {
+    char id[256];
+    char parent_id[256];
     Context * ctx;
     PeerCache * peer;
     AbstractCache cache;
@@ -55,8 +58,20 @@ struct ContextCache {
     RegisterDefinition * pc_def;
     ReplyHandlerInfo * pending_get_regs;
 
-    /* Run Control */
+    /* Run Control Properties */
     int has_state;
+    int is_container;
+    int can_suspend;
+    long can_resume;
+    long can_count;
+    int can_terminate;
+    
+    /* Run Control State */
+    int state_valid;
+    int is_suspended;
+    int pc_valid;
+    int64_t suspend_pc;
+    char suspend_reason[256];
 
     /* Memory */
     LINK mem_cache;
@@ -77,6 +92,8 @@ struct PeerCache {
     LINK link_all;
     Channel * host;
     Channel * target;
+    ForwardingInputStream fwd;
+    InputStream * fwd_inp;
 };
 
 #define peers2peer(A)    ((PeerCache *)((char *)(A) - offsetof(PeerCache, link_all)))
@@ -96,11 +113,13 @@ static char * str_buf = NULL;
 static unsigned str_buf_max = 0;
 static unsigned str_buf_pos = 0;
 
+static const char RUN_CONTROL[] = "RunControl";
+
 static char * map_to_local_file(char * file_name) {
     return file_name;
 }
 
-static void read_memory_map_struct(InputStream * inp, char * name, void * args) {
+static void read_memory_region_property(InputStream * inp, char * name, void * args) {
     MemoryRegion * m = (MemoryRegion *)args;
     if (strcmp(name, "Addr") == 0) m->addr = (ContextAddress)json_read_int64(inp);
     else if (strcmp(name, "Size") == 0) m->size = json_read_ulong(inp);
@@ -118,7 +137,7 @@ static void read_memory_map_item(InputStream * inp, void * args) {
     }
     m = mem_buf + mem_buf_pos;
     memset(m, 0, sizeof(MemoryRegion));
-    if (json_read_struct(inp, read_memory_map_struct, m) && m->file_name != NULL) {
+    if (json_read_struct(inp, read_memory_region_property, m) && m->file_name != NULL) {
         struct stat buf;
         char * fnm = map_to_local_file(m->file_name);
         if (fnm != m->file_name) {
@@ -221,12 +240,149 @@ static int validate_context_cache(Channel * c, void * args, int error) {
     return 1;
 }
 
+static void read_run_control_context_property(InputStream * inp, char * name, void * args) {
+    ContextCache * ctx = (ContextCache *)args;
+    if (strcmp(name, "ID") == 0) json_read_string(inp, ctx->id, sizeof(ctx->id));
+    else if (strcmp(name, "ParentID") == 0) json_read_string(inp, ctx->parent_id, sizeof(ctx->parent_id));
+    else if (strcmp(name, "HasState") == 0) ctx->has_state = json_read_boolean(inp);
+    else if (strcmp(name, "IsContainer") == 0) ctx->is_container = json_read_boolean(inp);
+    else if (strcmp(name, "CanSuspend") == 0) ctx->can_suspend = json_read_boolean(inp);
+    else if (strcmp(name, "CanResume") == 0) ctx->can_resume = json_read_long(inp);
+    else if (strcmp(name, "CanCount") == 0) ctx->can_count = json_read_long(inp);
+    else if (strcmp(name, "CanTerminate") == 0) ctx->can_terminate = json_read_boolean(inp);
+    else loc_free(json_skip_object(inp));
+}
+
+static void read_context_suspended_data(InputStream * inp, char * name, void * args) {
+    ContextCache * ctx = (ContextCache *)args;
+    loc_free(json_skip_object(inp));
+}
+
+static void read_context_added_item(InputStream * inp, void * args) {
+    ContextCache ctx;
+    memset(&ctx, 0, sizeof(ctx));
+    json_read_struct(inp, read_run_control_context_property, &ctx);
+    printf("added %s\n", ctx.id);
+}
+
+static void read_context_changed_item(InputStream * inp, void * args) {
+    ContextCache ctx;
+    memset(&ctx, 0, sizeof(ctx));
+    json_read_struct(inp, read_run_control_context_property, &ctx);
+    printf("changed %s\n", ctx.id);
+}
+
+static void read_context_removed_item(InputStream * inp, void * args) {
+    char id[256];
+    json_read_string(inp, id, sizeof(id));
+    printf("removed %s\n", id);
+}
+
+static void read_container_suspended_item(InputStream * inp, void * args) {
+    PeerCache * p = (PeerCache *)args;
+    char id[256];
+    json_read_string(inp, id, sizeof(id));
+    printf("suspended %s\n", id);
+}
+
+static void read_container_resumed_item(InputStream * inp, void * args) {
+    PeerCache * p = (PeerCache *)args;
+    char id[256];
+    json_read_string(inp, id, sizeof(id));
+    printf("resumed %s\n", id);
+}
+
 static void event_context_added(Channel * c, void * args) {
     PeerCache * p = (PeerCache *)args;
+    write_stringz(&p->host->out, "E");
+    write_stringz(&p->host->out, RUN_CONTROL);
+    write_stringz(&p->host->out, "contextAdded");
+    json_read_array(p->fwd_inp, read_context_added_item, NULL);
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+}
+
+static void event_context_changed(Channel * c, void * args) {
+    PeerCache * p = (PeerCache *)args;
+    write_stringz(&p->host->out, "E");
+    write_stringz(&p->host->out, RUN_CONTROL);
+    write_stringz(&p->host->out, "contextChanged");
+    json_read_array(p->fwd_inp, read_context_changed_item, NULL);
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 }
 
 static void event_context_removed(Channel * c, void * args) {
     PeerCache * p = (PeerCache *)args;
+    write_stringz(&p->host->out, "E");
+    write_stringz(&p->host->out, RUN_CONTROL);
+    write_stringz(&p->host->out, "contextRemoved");
+    json_read_array(p->fwd_inp, read_context_removed_item, NULL);
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+}
+
+static void event_context_suspended(Channel * c, void * args) {
+    PeerCache * p = (PeerCache *)args;
+    char id[256];
+    char reason[256];
+    int64_t pc;
+    ContextCache ctx;
+    write_stringz(&p->host->out, "E");
+    write_stringz(&p->host->out, RUN_CONTROL);
+    write_stringz(&p->host->out, "contextSuspended");
+    json_read_string(p->fwd_inp, id, sizeof(id));
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    pc = json_read_int64(p->fwd_inp);
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_string(p->fwd_inp, reason, sizeof(reason));
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_struct(p->fwd_inp, read_context_suspended_data, &ctx);
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+}
+
+static void event_context_resumed(Channel * c, void * args) {
+    PeerCache * p = (PeerCache *)args;
+    char id[256];
+    write_stringz(&p->host->out, "E");
+    write_stringz(&p->host->out, RUN_CONTROL);
+    write_stringz(&p->host->out, "contextResumed");
+    json_read_string(p->fwd_inp, id, sizeof(id));
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+}
+
+static void event_container_suspended(Channel * c, void * args) {
+    PeerCache * p = (PeerCache *)args;
+    char id[256];
+    char reason[256];
+    int64_t pc;
+    ContextCache ctx;
+    write_stringz(&p->host->out, "E");
+    write_stringz(&p->host->out, RUN_CONTROL);
+    write_stringz(&p->host->out, "containerSuspended");
+    json_read_string(p->fwd_inp, id, sizeof(id));
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    pc = json_read_int64(p->fwd_inp);
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_string(p->fwd_inp, reason, sizeof(reason));
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_struct(p->fwd_inp, read_context_suspended_data, &ctx);
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_array(p->fwd_inp, read_container_suspended_item, p);
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+}
+
+static void event_container_resumed(Channel * c, void * args) {
+    PeerCache * p = (PeerCache *)args;
+    write_stringz(&p->host->out, "E");
+    write_stringz(&p->host->out, RUN_CONTROL);
+    write_stringz(&p->host->out, "containerResumed");
+    json_read_array(p->fwd_inp, read_container_resumed_item, p);
+    if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 }
 
 static ContextCache * alloc_context_cache(void) {
@@ -244,13 +400,17 @@ void create_context_proxy(Channel * host, Channel * target) {
     p = loc_alloc_zero(sizeof(PeerCache));
     p->host = host;
     p->target = target;
+    p->fwd_inp = create_forwarding_input_stream(&p->fwd, &target->inp, &host->out);
     list_add_first(&p->link_all, &peers);
     channel_lock(host);
-#if 0
-    /* TODO: need to read and forward event message at same time */
-    add_event_handler2(target, "RunControl", "contextAdded", event_context_added, p);
-    add_event_handler2(target, "RunControl", "contextRemoved", event_context_removed, p);
-#endif
+    channel_lock(target);
+    add_event_handler2(target, RUN_CONTROL, "contextAdded", event_context_added, p);
+    add_event_handler2(target, RUN_CONTROL, "contextChanged", event_context_changed, p);
+    add_event_handler2(target, RUN_CONTROL, "contextRemoved", event_context_removed, p);
+    add_event_handler2(target, RUN_CONTROL, "contextSuspended", event_context_suspended, p);
+    add_event_handler2(target, RUN_CONTROL, "contextResumed", event_context_resumed, p);
+    add_event_handler2(target, RUN_CONTROL, "containerSuspended", event_container_suspended, p);
+    add_event_handler2(target, RUN_CONTROL, "containerResumed", event_container_resumed, p);
 }
 
 void context_lock(Context * ctx) {
@@ -408,6 +568,7 @@ static void channel_close_listener(Channel * c) {
         PeerCache * p = peers2peer(l);
         if (p->target == c) {
             channel_unlock(p->host);
+            channel_unlock(p->target);
             list_remove(&p->link_all);
             loc_free(p);
             return;
