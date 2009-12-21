@@ -454,7 +454,7 @@ static void load_debug_sections(void) {
     sObjectList = NULL;
     sObjectListTail = NULL;
     sCompUnitsMax = 0;
-    if (trap.error) str_exception(trap.error, trap.msg);
+    if (trap.error) exception(trap.error);
 }
 
 static U2_T gop_gAttr = 0;

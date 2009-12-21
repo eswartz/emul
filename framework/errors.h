@@ -72,7 +72,7 @@ extern const char * errno_to_str(int no);
 /*
  * Set errno to indicate given error code and additional error message.
  * The message will be concatenated with normal error text by errno_to_str().
- * The function created a copy of the message and puts it into a queue of limited size.
+ * The function creates a copy of the message and puts it into a queue of limited size.
  * Clients should not rely on messages being kept in the queue longer then one dispatch cycle.
  * Persistent error report can be obtained by calling get_error_report().
  * Return new error code that designates both original code and the message.
