@@ -91,13 +91,14 @@ void add_context_event_listener(ContextEventListener * listener, void * client_d
 
 #if ENABLE_DebugContext
 
-LINK context_root = { NULL, NULL };
-
 #if !ENABLE_ContextProxy
 
 #define CONTEXT_PID_HASH_SIZE 1024
 #define CONTEXT_PID_HASH(PID) ((unsigned)(PID) % CONTEXT_PID_HASH_SIZE)
 #define pidl2ctxp(A) ((Context *)((char *)(A) - offsetof(Context, pidl)))
+
+LINK context_root = { NULL, NULL };
+
 static LINK context_pid_root[CONTEXT_PID_HASH_SIZE];
 
 void link_context(Context * ctx) {
@@ -150,8 +151,6 @@ void context_unlock(Context * ctx) {
     }
 }
 
-#endif /* !ENABLE_ContextProxy */
-
 Context * create_context(pid_t pid, size_t regs_size) {
     Context * ctx = (Context *)loc_alloc_zero(sizeof(Context));
 
@@ -164,6 +163,8 @@ Context * create_context(pid_t pid, size_t regs_size) {
     list_init(&ctx->cldl);
     return ctx;
 }
+
+#endif /* !ENABLE_ContextProxy */
 
 char * context_state_name(Context * ctx) {
     if (ctx->exited) return "exited";
@@ -206,6 +207,7 @@ void send_context_stopped_event(Context * ctx) {
     assert(ctx->stopped != 0);
     assert(!ctx->event_notification);
     ctx->event_notification = 1;
+#if !ENABLE_ContextProxy
     if (ctx->bp_ids != NULL) {
         loc_free(ctx->bp_ids);
         ctx->bp_ids = NULL;
@@ -213,6 +215,7 @@ void send_context_stopped_event(Context * ctx) {
     if (ctx->stopped_by_bp) {
         evaluate_breakpoint_condition(ctx);
     }
+#endif
     while (listener != NULL) {
         if (listener->context_stopped != NULL) {
             listener->context_stopped(ctx, listener->client_data);
@@ -255,14 +258,12 @@ unsigned context_word_size(Context * ctx) {
 }
 
 void ini_contexts(void) {
-    list_init(&context_root);
 #if !ENABLE_ContextProxy
-    {
-        int i;
-        for (i = 0; i < CONTEXT_PID_HASH_SIZE; i++) {
-            list_init(&context_pid_root[i]);
-        }
+    int i;
+    for (i = 0; i < CONTEXT_PID_HASH_SIZE; i++) {
+        list_init(&context_pid_root[i]);
     }
+    list_init(&context_root);
 #endif
     init_contexts_sys_dep();
 }

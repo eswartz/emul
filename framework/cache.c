@@ -36,13 +36,14 @@ static void cache_event(void * x) {
     unsigned cnt = cache->wait_list_cnt;
     unsigned i;
 
+    assert(cache->posted);
     cache->posted = 0;
     cache->wait_list_cnt = 0;
     if (wait_list_max < cnt) {
         wait_list_max = cnt;
-        wait_list_buf = loc_realloc(wait_list_buf, cnt * sizeof(WaitingCacheClient *));
+        wait_list_buf = loc_realloc(wait_list_buf, cnt * sizeof(WaitingCacheClient));
     }
-    memcpy(wait_list_buf, cache->wait_list_buf, cnt * sizeof(WaitingCacheClient *));
+    memcpy(wait_list_buf, cache->wait_list_buf, cnt * sizeof(WaitingCacheClient));
     for (i = 0; i < cnt; i++) {
         cache_enter(wait_list_buf[i].client, wait_list_buf[i].args);
     }
@@ -94,4 +95,3 @@ extern void cache_notify(AbstractCache * cache) {
         cache->posted = 1;
     }
 }
-

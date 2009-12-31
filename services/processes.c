@@ -348,6 +348,8 @@ static void command_get_children(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
+#if ENABLE_DebugContext
+
 static void attach_done(int error, Context * ctx, void * arg) {
     AttachDoneArgs * data = arg;
     Channel * c = data->c;
@@ -401,6 +403,8 @@ static void command_detach(char * token, Channel * c) {
     /* TODO: implement command_detach() */
     exception(ERR_PROTOCOL);
 }
+
+#endif
 
 static void command_terminate(char * token, Channel * c) {
     int err = 0;
@@ -530,6 +534,9 @@ static void command_get_signal_list(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
+
+#if ENABLE_DebugContext
+
 static void command_get_signal_mask(char * token, Channel * c) {
     int err = 0;
     char id[256];
@@ -592,6 +599,8 @@ static void command_set_signal_mask(char * token, Channel * c) {
     write_errno(&c->out, err);
     write_stream(&c->out, MARKER_EOM);
 }
+
+#endif /* ENABLE_DebugContext */
 
 static void command_get_environment(char * token, Channel * c) {
     char ** p = environ;
@@ -1271,13 +1280,15 @@ void ini_processes_service(Protocol * proto) {
     add_waitpid_listener(waitpid_listener, NULL);
     add_command_handler(proto, PROCESSES, "getContext", command_get_context);
     add_command_handler(proto, PROCESSES, "getChildren", command_get_children);
-    add_command_handler(proto, PROCESSES, "attach", command_attach);
-    add_command_handler(proto, PROCESSES, "detach", command_detach);
     add_command_handler(proto, PROCESSES, "terminate", command_terminate);
     add_command_handler(proto, PROCESSES, "signal", command_signal);
     add_command_handler(proto, PROCESSES, "getSignalList", command_get_signal_list);
+#if ENABLE_DebugContext
+    add_command_handler(proto, PROCESSES, "attach", command_attach);
+    add_command_handler(proto, PROCESSES, "detach", command_detach);
     add_command_handler(proto, PROCESSES, "getSignalMask", command_get_signal_mask);
     add_command_handler(proto, PROCESSES, "setSignalMask", command_set_signal_mask);
+#endif
     add_command_handler(proto, PROCESSES, "getEnvironment", command_get_environment);
     add_command_handler(proto, PROCESSES, "start", command_start);
 }
