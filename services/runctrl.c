@@ -346,19 +346,22 @@ static void command_get_children(char * token, Channel * c) {
 
 static void command_get_state(char * token, Channel * c) {
     char id[256];
-    Context * ctx;
+    pid_t pid, ppd;
+    Context * ctx = NULL;
     int err = 0;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
-    ctx = id2ctx(id);
+
+    pid = id2pid(id, &ppd);
+    if (pid != 0 && ppd != 0) ctx = context_find_from_pid(pid);
+    if (ctx == NULL || !context_has_state(ctx)) err = ERR_INV_CONTEXT;
+    else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
 
-    if (ctx == NULL) err = ERR_INV_CONTEXT;
-    else if (ctx->exited) err = ERR_ALREADY_EXITED;
     write_errno(&c->out, err);
 
     json_write_boolean(&c->out, ctx != NULL && ctx->intercepted);
