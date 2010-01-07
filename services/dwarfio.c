@@ -506,7 +506,6 @@ void dio_LoadAbbrevTable(ELF_File * File) {
     if (Cache->mAbbrevTable != NULL) return;
     Cache->mAbbrevTable = (DIO_AbbrevSet **)loc_alloc_zero(sizeof(DIO_AbbrevSet *) * ABBREV_TABLE_SIZE);
 
-    assert(sSection == NULL);
     for (ID = 1; ID < File->section_cnt; ID++) {
         if (strcmp(File->sections[ID].name, ".debug_abbrev") == 0) {
             if (Section != NULL) {
