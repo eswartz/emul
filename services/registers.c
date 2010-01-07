@@ -372,8 +372,11 @@ static int read_location_list(Channel * c, int setm) {
                     if (read_stream(inp) != ',') exception(ERR_JSON_SYNTAX);
                     loc->size = (unsigned)json_read_ulong(inp);
                     if (read_stream(inp) != ']') exception(ERR_JSON_SYNTAX);
-                    if (id2register(loc->id, &loc->ctx, &loc->frame, &loc->reg_def) < 0) err = errno;
-                    else if (!loc->ctx->intercepted) err = ERR_IS_RUNNING;
+                    if (!err) {
+                        if (id2register(loc->id, &loc->ctx, &loc->frame, &loc->reg_def) < 0) err = errno;
+                        else if (!loc->ctx->intercepted) err = ERR_IS_RUNNING;
+                        else if (loc->offs + loc->size > (unsigned)loc->reg_def->size) err = ERR_INV_DATA_SIZE;
+                    }
                     if (!err && !is_top_frame(loc->ctx, loc->frame)) {
                         if (setm) err = ERR_INV_CONTEXT;
                         else if (get_frame_info(loc->ctx, loc->frame, &loc->frame_info) < 0) err = errno;
@@ -427,16 +430,29 @@ static void command_setm(char * token, Channel * c) {
     json_read_binary_start(&state, &c->inp);
     for (i = 0; i < buf_pos; i++) {
         unsigned rd_done = 0;
-        Location * l = buf + i;
-        uint8_t * data = l->frame_info == NULL ?
-            (uint8_t *)l->ctx->regs + l->reg_def->offset + l->offs :
-            (uint8_t *)l->frame_info->regs + l->reg_def->offset + l->offs;
-        while (rd_done < l->size) {
-            int rd = json_read_binary_data(&state, err ? tmp : (data + rd_done), l->size - rd_done);
-            if (rd == 0) break;
-            rd_done += rd;
+        if (err) {
+            for (;;) {
+                int rd = json_read_binary_data(&state, tmp, sizeof(tmp));
+                if (rd == 0) break;
+                rd_done += rd;
+            }
         }
-        if (!err) send_event_register_changed(c, l->id);
+        else {
+            Location * l = buf + i;
+            uint8_t * data = (uint8_t *)(l->frame_info ? l->frame_info->regs : l->ctx->regs) + l->reg_def->offset + l->offs;
+            for (;;) {
+                int rd = 0;
+                if (rd_done < l->size) {
+                    rd = json_read_binary_data(&state, data + rd_done, l->size - rd_done);
+                }
+                else {
+                    rd = json_read_binary_data(&state, tmp, sizeof(tmp));
+                }
+                if (rd == 0) break;
+                rd_done += rd;
+            }
+            send_event_register_changed(c, l->id);
+        }
     }
     json_read_binary_end(&state);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
