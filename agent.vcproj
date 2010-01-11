@@ -503,6 +503,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\services\pathmap.c"
+				>
+			</File>
+			<File
+				RelativePath=".\services\pathmap.h"
+				>
+			</File>
+			<File
 				RelativePath=".\services\processes.c"
 				>
 			</File>

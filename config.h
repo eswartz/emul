@@ -92,6 +92,9 @@
 #if !defined(SERVICE_Streams)
 #define SERVICE_Streams         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
+#if !defined(SERVICE_PathMap)
+#define SERVICE_PathMap         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#endif
 
 #ifndef ENABLE_Plugins
 #  if TARGET_UNIX && defined(PATH_Plugins)
@@ -186,6 +189,7 @@
 #include "diagnostics.h"
 #include "expressions.h"
 #include "streamsservice.h"
+#include "pathmap.h"
 #include "proxy.h"
 #include "tcf_elf.h"
 #include "plugins.h"
@@ -232,6 +236,9 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
 #endif
 #if SERVICE_Streams
     ini_streams_service(proto);
+#endif
+#if SERVICE_PathMap
+    ini_path_map_service(proto, bcg);
 #endif
 #if ENABLE_DebugContext
     ini_contexts();
