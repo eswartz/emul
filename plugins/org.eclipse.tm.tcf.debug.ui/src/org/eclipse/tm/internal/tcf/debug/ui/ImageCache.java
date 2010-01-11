@@ -29,6 +29,7 @@ public class ImageCache {
         IMG_TARGET_WIZARD = "icons/full/wizban/debug_wiz.png",
         IMG_ARGUMENTS_TAB = "icons/arguments_tab.gif",
         IMG_ATTRIBUTE = "icons/attribute.gif",
+        IMG_PATH = "icons/path.gif",
 
         IMG_THREAD_TERMINATED = "icons/full/obj16/threadt_obj.gif",
         IMG_THREAD_SUSPENDED = "icons/full/obj16/threads_obj.gif",

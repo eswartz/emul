@@ -46,11 +46,12 @@ public final class JSON {
      * Clients implement ObjectWriter interface when they want to enable marshaling of
      * object classes that are not directly supported by JSON library.
      */
-    public interface ObjectWriter {
-        void write(Object o) throws IOException;
+    public interface ObjectWriter<V> {
+        void write(V o) throws IOException;
     }
 
-    private static final Map<Class<?>,ObjectWriter> object_writers = new HashMap<Class<?>,ObjectWriter>();
+    private static final Map<Class<?>,ObjectWriter<?>> object_writers =
+        new HashMap<Class<?>,ObjectWriter<?>>();
 
     /** Wrapper class for binary byte blocs */
     public final static class Binary {
@@ -86,7 +87,7 @@ public final class JSON {
      * @param cls - a class
      * @param writer - ObjectWriter implementation that provides generation of JSON for a given class.
      */
-    public static void addObjectWriter(Class<?> cls, ObjectWriter writer) {
+    public static <X> void addObjectWriter(Class<X> cls, ObjectWriter<X> writer) {
         object_writers.put(cls, writer);
     }
 
@@ -557,11 +558,19 @@ public final class JSON {
         }
         else {
             ObjectWriter writer = object_writers.get(o.getClass());
+            if (writer == null) {
+                for (Class<?> c : object_writers.keySet()) {
+                    if (c.isInstance(o)) {
+                        writer = object_writers.get(c);
+                        break;
+                    }
+                }
+            }
             if (writer != null) {
                 writer.write(o);
             }
             else {
-                throw new IOException("JSON: unsupported object type");
+                throw new IOException("JSON: unsupported object type:" + o.getClass());
             }
         }
     }

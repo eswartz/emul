@@ -51,6 +51,7 @@ import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLocalAgent;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFUserDefPeer;
 import org.eclipse.tm.internal.tcf.debug.tests.TCFTestSuite;
+import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.internal.tcf.debug.ui.launch.setup.SetupWizardDialog;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -73,6 +74,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     private Runnable update_peer_buttons;
     private final PeerInfo peer_info = new PeerInfo();
     private Display display;
+    private Exception init_error;
 
     private static class PeerInfo {
         PeerInfo parent;
@@ -525,6 +527,8 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     }
 
     public void initializeFrom(ILaunchConfiguration configuration) {
+        setErrorMessage(null);
+        setMessage(null);
         try {
             String id = configuration.getAttribute(TCFLaunchDelegate.ATTR_PEER_ID, (String)null);
             TreeItem item = findItem(findPeerInfo(id));
@@ -533,7 +537,9 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             use_local_agent_button.setSelection(configuration.getAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, true));
         }
         catch (CoreException e) {
-            setErrorMessage(e.getMessage());
+            init_error = e;
+            setErrorMessage("Cannot read launch configuration: " + e);
+            Activator.log(e);
         }
         updateLaunchConfigurationDialog();
     }
@@ -546,6 +552,19 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     }
 
     public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
+    }
+
+    @Override
+    public boolean isValid(ILaunchConfiguration config) {
+        setErrorMessage(null);
+        setMessage(null);
+
+        if (init_error != null) {
+            setErrorMessage("Cannot read launch configuration: " + init_error);
+            return false;
+        }
+
+        return true;
     }
 
     private void disconnectPeer(final PeerInfo info) {

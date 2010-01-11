@@ -119,6 +119,14 @@ public class TCFTestSuite {
         });
         pending_tests.add(new Runnable() {
             public void run() {
+                listener.progress("Running Path Map Test...", ++count_done, count_total);
+                for (IChannel channel : channels) {
+                    active_tests.put(new TestPathMap(TCFTestSuite.this, channel), channel);
+                }
+            }
+        });
+        pending_tests.add(new Runnable() {
+            public void run() {
                 listener.progress("Running Interability Test...", ++count_done, count_total);
                 for (int i = 0; i < channels.length; i++) {
                     ITCFTest test = null;

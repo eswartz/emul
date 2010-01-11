@@ -369,9 +369,8 @@ public class RegistersProxy implements IRegisters {
     }
 
     static {
-        JSON.addObjectWriter(Location.class, new JSON.ObjectWriter() {
-            public void write(Object o) throws IOException {
-                Location l = (Location)o;
+        JSON.addObjectWriter(Location.class, new JSON.ObjectWriter<Location>() {
+            public void write(Location l) throws IOException {
                 JSON.write('[');
                 JSON.writeObject(l.id);
                 JSON.write(',');

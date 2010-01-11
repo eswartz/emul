@@ -231,6 +231,8 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
     }
 
     public void initializeFrom(ILaunchConfiguration config) {
+        setErrorMessage(null);
+        setMessage(null);
         try {
             project_text.setText(config.getAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, ""));
             local_program_text.setText(config.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, ""));
@@ -238,13 +240,13 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             working_dir_text.setText(config.getAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, ""));
             default_dir_button.setSelection(!config.hasAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY));
             terminal_button.setSelection(config.getAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true));
+            working_dir_text.setEnabled(!default_dir_button.getSelection());
         }
         catch (Exception e) {
             init_error = e;
-            setErrorMessage("Cannot read launch configuration: " + init_error);
+            setErrorMessage("Cannot read launch configuration: " + e);
             Activator.log(e);
         }
-        updateLaunchConfigurationDialog();
     }
 
     private IProject getProject() {

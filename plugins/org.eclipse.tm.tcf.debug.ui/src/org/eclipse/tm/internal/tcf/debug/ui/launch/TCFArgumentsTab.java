@@ -29,6 +29,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
+import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 
 
@@ -36,6 +37,7 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
 
     private Text text_arguments;
     private Button button_variables;
+    private Exception init_error;
 
     public void createControl(Composite parent) {
         Font font = parent.getFont();
@@ -76,7 +78,7 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
                 updateLaunchConfigurationDialog();
             }
         });
-        button_variables= createPushButton(comp, "Variables", null);
+        button_variables = createPushButton(comp, "Variables", null);
         gd = new GridData(GridData.HORIZONTAL_ALIGN_END);
         button_variables.setLayoutData(gd);
         button_variables.addSelectionListener(new SelectionAdapter() {
@@ -106,20 +108,20 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
         return dialog.getVariableExpression();
     }
 
-    public boolean isValid(ILaunchConfiguration config) {
-        return true;
-    }
-
     public void setDefaults(ILaunchConfigurationWorkingCopy config) {
         config.setAttribute(TCFLaunchDelegate.ATTR_PROGRAM_ARGUMENTS, (String)null);
     }
 
     public void initializeFrom(ILaunchConfiguration configuration) {
+        setErrorMessage(null);
+        setMessage(null);
         try {
             text_arguments.setText(configuration.getAttribute(TCFLaunchDelegate.ATTR_PROGRAM_ARGUMENTS, "")); //$NON-NLS-1$
         }
         catch (CoreException e) {
+            init_error = e;
             setErrorMessage("Cannot read launch configuration: " + e);
+            Activator.log(e);
         }
     }
 
@@ -127,6 +129,19 @@ public class TCFArgumentsTab extends AbstractLaunchConfigurationTab {
         configuration.setAttribute(
                 TCFLaunchDelegate.ATTR_PROGRAM_ARGUMENTS,
                 getAttributeValueFrom(text_arguments));
+    }
+
+    @Override
+    public boolean isValid(ILaunchConfiguration config) {
+        setErrorMessage(null);
+        setMessage(null);
+
+        if (init_error != null) {
+            setErrorMessage("Cannot read launch configuration: " + init_error);
+            return false;
+        }
+
+        return true;
     }
 
     protected String getAttributeValueFrom(Text text) {

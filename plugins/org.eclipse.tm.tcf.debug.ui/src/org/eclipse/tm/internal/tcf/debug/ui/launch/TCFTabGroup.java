@@ -28,6 +28,7 @@ public class TCFTabGroup extends AbstractLaunchConfigurationTabGroup {
             new TCFTargetTab(),
             new TCFArgumentsTab(),
             new EnvironmentTab(),
+            new TCFPathMapTab(),
             new SourceLookupTab(),
             new CommonTab()
         });

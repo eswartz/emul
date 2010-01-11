@@ -107,7 +107,6 @@ public class Activator extends Plugin {
         super.stop(context);
     }
 
-    @SuppressWarnings("unchecked")
     private void runTCFStartup() {
         try {
             IExtensionPoint point = Platform.getExtensionRegistry().getExtensionPoint(PLUGIN_ID, "startup"); //$NON-NLS-1$
@@ -120,7 +119,7 @@ public class Activator extends Plugin {
                     for (int j = 0; j < e.length; j++) {
                         String nm = e[j].getName();
                         if (nm.equals("class")) { //$NON-NLS-1$
-                            Class c = bundle.loadClass(e[j].getAttribute("name")); //$NON-NLS-1$
+                            Class<?> c = bundle.loadClass(e[j].getAttribute("name")); //$NON-NLS-1$
                             Class.forName(c.getName(), true, c.getClassLoader());
                         }
                     }

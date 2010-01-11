@@ -11,6 +11,9 @@
 package org.eclipse.tm.internal.tcf.debug.launch;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -24,6 +27,7 @@ import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.IPathMap;
 import org.eclipse.tm.tcf.util.TCFTask;
 
 
@@ -39,7 +43,117 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
         ATTR_WORKING_DIRECTORY = ITCFConstants.ID_TCF_DEBUG_MODEL + ".WorkingDirectory",
         ATTR_USE_TERMINAL = ITCFConstants.ID_TCF_DEBUG_MODEL + ".UseTerminal",
         ATTR_RUN_LOCAL_AGENT = ITCFConstants.ID_TCF_DEBUG_MODEL + ".RunLocalAgent",
-        ATTR_USE_LOCAL_AGENT = ITCFConstants.ID_TCF_DEBUG_MODEL + ".UseLocalAgent";
+        ATTR_USE_LOCAL_AGENT = ITCFConstants.ID_TCF_DEBUG_MODEL + ".UseLocalAgent",
+        ATTR_PATH_MAP = ITCFConstants.ID_TCF_DEBUG_MODEL + ".PathMap";
+
+    public static class PathMapRule implements IPathMap.PathMapRule {
+
+        private final Map<String,Object> props;
+
+        public PathMapRule(Map<String,Object> props) {
+            this.props = props;
+        }
+
+        public Map<String,Object> getProperties() {
+            return props;
+        }
+
+        public String getID() {
+            return (String)props.get(IPathMap.PROP_ID);
+        }
+
+        public String getSource() {
+            return (String)props.get(IPathMap.PROP_SOURCE);
+        }
+
+        public String getDestination() {
+            return (String)props.get(IPathMap.PROP_DESTINATION);
+        }
+
+        public String getHost() {
+            return (String)props.get(IPathMap.PROP_HOST);
+        }
+
+        public String getProtocol() {
+            return (String)props.get(IPathMap.PROP_PROTOCOL);
+        }
+
+        public String toString() {
+            StringBuffer bf = new StringBuffer();
+            for (String nm : props.keySet()) {
+                Object o = props.get(nm);
+                if (o != null) {
+                    bf.append(nm);
+                    bf.append('=');
+                    String s = o.toString();
+                    for (int i = 0; i < s.length(); i++) {
+                        char ch = s.charAt(i);
+                        if (ch >= ' ' && ch != '|' && ch != '\\') {
+                            bf.append(ch);
+                        }
+                        else {
+                            bf.append('\\');
+                            bf.append((int)ch);
+                            bf.append(';');
+                        }
+                    }
+                    bf.append('|');
+                }
+            }
+            bf.append('|');
+            return bf.toString();
+        }
+    }
+
+    /**
+     * Given value of ATTR_PATH_MAP, return array of PathMapRule objects.
+     * @param s - value of ATTR_PATH_MAP.
+     * @return array of PathMapRule objects.
+     */
+    public static ArrayList<PathMapRule> parsePathMapAttribute(String s) {
+        ArrayList<PathMapRule> map = new ArrayList<PathMapRule>();
+        StringBuffer bf = new StringBuffer();
+        int i = 0;
+        while (i < s.length()) {
+            PathMapRule e = new PathMapRule(new HashMap<String,Object>());
+            while (i < s.length()) {
+                char ch = s.charAt(i++);
+                if (ch == '|') {
+                    map.add(e);
+                    break;
+                }
+                bf.setLength(0);
+                bf.append(ch);
+                while (i < s.length()) {
+                    ch = s.charAt(i++);
+                    if (ch == '=') break;
+                    bf.append(ch);
+                }
+                String nm = bf.toString();
+                bf.setLength(0);
+                while (i < s.length()) {
+                    ch = s.charAt(i++);
+                    if (ch == '|') {
+                        e.props.put(nm, bf.toString());
+                        break;
+                    }
+                    else if (ch == '\\') {
+                        int n = 0;
+                        while (i < s.length()) {
+                            char d = s.charAt(i++);
+                            if (d == ';') break;
+                            n = n * 10 + (d - '0');
+                        }
+                        bf.append((char)n);
+                    }
+                    else {
+                        bf.append(ch);
+                    }
+                }
+            }
+        }
+        return map;
+    }
 
     /**
      * Given project name and program name returns absolute path of the program.
