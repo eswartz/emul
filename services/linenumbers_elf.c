@@ -284,7 +284,6 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineT
 /***** Commands *****/
 
 typedef struct MapToSourceArgs {
-    Channel * channel;
     char token[256];
     char id[256];
     ContextAddress addr0;
@@ -299,7 +298,7 @@ static void map_to_source_cache_client(void * x) {
     MapToSourceArgs * args = (MapToSourceArgs *)x;
     ContextAddress addr0 = args->addr0;
     ContextAddress addr1 = args->addr1;
-    Channel * c = args->channel;
+    Channel * c = cache_channel();
 
     ctx = id2ctx(args->id);
     if (ctx == NULL) err = ERR_INV_CONTEXT;
@@ -370,7 +369,6 @@ static void map_to_source_cache_client(void * x) {
         if (err != 0) trace(LOG_ALWAYS, "Line numbers info error %d: %d", err, errno_to_str(err));
     }
     write_stream(&c->out, MARKER_EOM);
-    channel_unlock(c);
     loc_free(args);
 }
 
@@ -386,8 +384,7 @@ static void command_map_to_source(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     strncpy(args->token, token, sizeof(args->token) - 1);
-    channel_lock(args->channel = c);
-    cache_enter(map_to_source_cache_client, args);
+    cache_enter(map_to_source_cache_client, c, args);
 }
 
 void ini_line_numbers_service(Protocol * proto) {

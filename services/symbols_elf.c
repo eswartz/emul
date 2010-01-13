@@ -434,9 +434,8 @@ char * symbol2id(const Symbol * sym) {
         if (file == NULL) return "SYM";
         if (LOC(sym)->obj != NULL) obj_index = LOC(sym)->obj->mID;
         if (LOC(sym)->tbl != NULL) tbl_index = LOC(sym)->tbl->mIndex + 1;
-        snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%X.%llX.%X.%X.%X.%zX.%s",
-            sym->sym_class, (unsigned long)file->dev, (unsigned long)file->ino,
-            (unsigned)file->mtime & 0xffff, obj_index, tbl_index,
+        snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%llX.%X.%X.%X.%zX.%s",
+            sym->sym_class, (unsigned long)file->dev, (unsigned long)file->ino, obj_index, tbl_index,
             LOC(sym)->index, LOC(sym)->dimension, LOC(sym)->size, container_id(sym->ctx));
     }
     return id;
@@ -519,7 +518,7 @@ int id2symbol(char * id, Symbol * sym) {
         if (get_sym_context(sym->ctx, STACK_NO_FRAME) < 0) return -1;
         file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
         if (file == NULL) return -1;
-        while (file->dev != dev || file->ino != ino || ((unsigned)file->mtime & 0xffff) != mtime) {
+        while (file->dev != dev || file->ino != ino) {
             file = elf_list_next(sym_ctx);
             if (file == NULL) break;
         }

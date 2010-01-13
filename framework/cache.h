@@ -106,10 +106,13 @@
 #ifndef D_cache
 #define D_cache
 
+#include "channel.h"
+
 typedef void CacheClient(void *);
 
 typedef struct WaitingCacheClient {
     CacheClient * client;
+    Channel * channel;
     void * args;
 } WaitingCacheClient;
 
@@ -120,9 +123,10 @@ typedef struct AbstractCache {
     int posted;
 } AbstractCache;
 
-extern void cache_enter(CacheClient * client, void * args);
+extern void cache_enter(CacheClient * client, Channel * channel, void * args);
 extern void cache_exit(void);
 extern void cache_wait(AbstractCache * cache);
 extern void cache_notify(AbstractCache * cache);
+extern Channel * cache_channel(void);
 
 #endif /* D_cache */

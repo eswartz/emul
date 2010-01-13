@@ -30,6 +30,7 @@
 #include "protocol.h"
 #include "json.h"
 #include "cache.h"
+#include "pathmap.h"
 #include "memorymap.h"
 #include "context-proxy.h"
 
@@ -121,10 +122,6 @@ static unsigned str_buf_pos = 0;
 
 static const char RUN_CONTROL[] = "RunControl";
 
-static char * map_to_local_file(char * file_name) {
-    return file_name;
-}
-
 static void read_memory_region_property(InputStream * inp, char * name, void * args) {
     MemoryRegion * m = (MemoryRegion *)args;
     if (strcmp(name, "Addr") == 0) m->addr = (ContextAddress)json_read_int64(inp);
@@ -136,6 +133,7 @@ static void read_memory_region_property(InputStream * inp, char * name, void * a
 }
 
 static void read_memory_map_item(InputStream * inp, void * args) {
+    Channel * c = args;
     MemoryRegion * m;
     if (mem_buf_pos >= mem_buf_max) {
         mem_buf_max = mem_buf_max == 0 ? 16 : mem_buf_max * 2;
@@ -145,10 +143,10 @@ static void read_memory_map_item(InputStream * inp, void * args) {
     memset(m, 0, sizeof(MemoryRegion));
     if (json_read_struct(inp, read_memory_region_property, m) && m->file_name != NULL) {
         struct stat buf;
-        char * fnm = map_to_local_file(m->file_name);
-        if (fnm != m->file_name) {
+        char * fnm = path_map_to_local(c, m->file_name);
+        if (fnm != NULL) {
             loc_free(m->file_name);
-            m->file_name = fnm == NULL ? NULL : loc_strdup(fnm);
+            m->file_name = loc_strdup(fnm);
         }
         if (fnm == NULL || stat(fnm, &buf) < 0) {
             loc_free(m->file_name);
@@ -526,6 +524,15 @@ void context_unlock(Context * ctx) {
 }
 
 Context * id2ctx(char * id) {
+    LINK * l;
+    Channel * c = cache_channel();
+    for (l = peers.next; l != &peers; l = l->next) {
+        PeerCache * p = peers2peer(l);
+        if (p->host == c) {
+            ContextCache * h = find_context_cache(p, id);
+            return h ? h->ctx : NULL;
+        }
+    }
     return NULL;
 }
 
@@ -615,7 +622,7 @@ static void validate_memory_map_cache(Channel * c, void * args, int error) {
     if (!error) {
         cache->mmap_error = get_error_report(read_errno(&c->inp));
         mem_buf_pos = 0;
-        json_read_array(&c->inp, read_memory_map_item, NULL);
+        json_read_array(&c->inp, read_memory_map_item, cache->peer->host);
         cache->mmap_size = mem_buf_pos;
         cache->mmap_regions = loc_alloc(sizeof(MemoryRegion) * mem_buf_pos);
         memcpy(cache->mmap_regions, mem_buf, sizeof(MemoryRegion) * mem_buf_pos);
@@ -756,8 +763,9 @@ static void mmap_cache_client(void * x) {
 }
 
 static void evt_context_created(Context * ctx, void * args) {
+    ContextCache * cache = (ContextCache *)ctx->proxy;
     context_lock(ctx);
-    cache_enter(mmap_cache_client, ctx);
+    cache_enter(mmap_cache_client, cache->peer->host, ctx);
 }
 
 static void evt_context_exited(Context * ctx, void * args) {
@@ -770,8 +778,9 @@ static void evt_context_started(Context * ctx, void * args) {
 }
 
 static void evt_context_changed(Context * ctx, void * args) {
+    ContextCache * cache = (ContextCache *)ctx->proxy;
     context_lock(ctx);
-    cache_enter(mmap_cache_client, ctx);
+    cache_enter(mmap_cache_client, cache->peer->host, ctx);
 }
 
 static ContextEventListener context_listener = {

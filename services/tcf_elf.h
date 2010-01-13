@@ -310,7 +310,6 @@ struct ELF_File {
     char * name;
     dev_t dev;
     ino_t ino;
-    time_t mtime;
     int fd;
 
     int big_endian; /* 0 - least significant first, 1 - most significat first */

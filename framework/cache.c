@@ -26,6 +26,7 @@
 #include "cache.h"
 
 static CacheClient * cache_client;
+static Channel * client_channel;
 static void * client_args;
 
 static WaitingCacheClient * wait_list_buf;
@@ -45,15 +46,17 @@ static void cache_event(void * x) {
     }
     memcpy(wait_list_buf, cache->wait_list_buf, cnt * sizeof(WaitingCacheClient));
     for (i = 0; i < cnt; i++) {
-        cache_enter(wait_list_buf[i].client, wait_list_buf[i].args);
+        channel_unlock(wait_list_buf[i].channel);
+        cache_enter(wait_list_buf[i].client, wait_list_buf[i].channel, wait_list_buf[i].args);
     }
 }
 
-extern void cache_enter(CacheClient * client, void * args) {
+void cache_enter(CacheClient * client, Channel * channel, void * args) {
     Trap trap;
 
     assert(is_dispatch_thread());
     assert(cache_client == NULL);
+    client_channel = channel;
     cache_client = client;
     client_args = args;
     if (set_trap(&trap)) {
@@ -67,31 +70,38 @@ extern void cache_enter(CacheClient * client, void * args) {
     client_args = NULL;
 }
 
-extern void cache_exit(void) {
+void cache_exit(void) {
     assert(is_dispatch_thread());
     assert(cache_client != NULL);
     cache_client = NULL;
+    client_channel = NULL;
     client_args = NULL;
 }
 
-extern void cache_wait(AbstractCache * cache) {
+void cache_wait(AbstractCache * cache) {
     assert(is_dispatch_thread());
     if (cache_client != NULL) {
         if (cache->wait_list_cnt >= cache->wait_list_max) {
             cache->wait_list_max = cache->wait_list_max == 0 ? 8 : cache->wait_list_max + 8;
             cache->wait_list_buf = loc_realloc(cache->wait_list_buf, cache->wait_list_max * sizeof(WaitingCacheClient *));
         }
+        channel_lock(client_channel);
         cache->wait_list_buf[cache->wait_list_cnt].client = cache_client;
+        cache->wait_list_buf[cache->wait_list_cnt].channel = client_channel;
         cache->wait_list_buf[cache->wait_list_cnt].args = client_args;
         cache->wait_list_cnt++;
     }
     exception(ERR_CACHE_MISS);
 }
 
-extern void cache_notify(AbstractCache * cache) {
+void cache_notify(AbstractCache * cache) {
     assert(is_dispatch_thread());
     if (!cache->posted) {
         post_event(cache_event, cache);
         cache->posted = 1;
     }
+}
+
+Channel * cache_channel(void) {
+    return client_channel;
 }

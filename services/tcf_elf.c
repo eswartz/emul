@@ -44,11 +44,19 @@
 #define MAX_CACHED_FILES 32
 #define MAX_FILE_AGE 60
 
+typedef struct FileINode {
+    struct FileINode * next;
+    char * name;
+    ino_t ino;
+} FileINode;
+
 static ELF_File * files = NULL;
+static FileINode * inodes = NULL;
 static ELFCloseListener * listeners = NULL;
 static U4_T listeners_cnt = 0;
 static U4_T listeners_max = 0;
 static int elf_cleanup_posted = 0;
+static ino_t elf_ino_cnt = 0;
 
 static Context *      elf_list_ctx;
 static int            elf_list_pos;
@@ -68,12 +76,14 @@ static void elf_dispose(ELF_File * file) {
     }
     if (file->fd >= 0) close(file->fd);
     if (file->sections != NULL) {
-#ifdef USE_MMAP
         for (n = 0; n < file->section_cnt; n++) {
             ELF_Section * s = file->sections + n;
+#ifdef USE_MMAP
             if (s->mmap_addr != NULL) munmap(s->mmap_addr, s->mmap_size);
-        }
+#else
+            loc_free(s->data);
 #endif
+        }
         loc_free(file->sections);
     }
     loc_free(file->pheaders);
@@ -108,6 +118,35 @@ static void elf_cleanup_event(void * arg) {
         post_event_with_delay(elf_cleanup_event, NULL, 1000000);
         elf_cleanup_posted = 1;
     }
+    else {
+        while (inodes != NULL) {
+            FileINode * n = inodes;
+            inodes = n->next;
+            loc_free(n->name);
+            loc_free(n);
+        }
+    }
+}
+
+static ino_t elf_ino(char * fnm) {
+    /* Number of the information node (the inode) for the file is used as file ID.
+     * Since some file systems don't support inodes, this function is used in such cases
+     * to generate virtual inode numbers to be used as file IDs.
+     */
+    FileINode * n = inodes;
+    fnm = canonicalize_file_name(fnm);
+    if (fnm == NULL) return 0;
+    while (n != NULL) {
+        if (strcmp(n->name, fnm) == 0) return n->ino;
+        n = n->next;
+    }
+    if (elf_ino_cnt == 0) elf_ino_cnt++;
+    n = loc_alloc_zero(sizeof(*n));
+    n->next = inodes;
+    n->name = loc_strdup(fnm);
+    n->ino = elf_ino_cnt++;
+    inodes = n;
+    return n->ino;
 }
 
 /* Swap bytes if ELF file endianness mismatch agent endianness */
@@ -135,16 +174,11 @@ ELF_File * elf_open(char * file_name) {
         elf_cleanup_posted = 1;
     }
 
-    if (stat(file_name, &st) < 0) {
-        errno = error;
-        return NULL;
-    }
+    if (stat(file_name, &st) < 0) return NULL;
+    if (st.st_ino == 0 && (st.st_ino = elf_ino(file_name)) == 0) return NULL;
 
     while (file != NULL) {
-        if (strcmp(file->name, file_name) == 0 &&
-                file->dev == st.st_dev &&
-                file->ino == st.st_ino &&
-                file->mtime == st.st_mtime) {
+        if (file->dev == st.st_dev && file->ino == st.st_ino) {
             if (prev != NULL) {
                 prev->next = file->next;
                 file->next = files;
@@ -164,7 +198,6 @@ ELF_File * elf_open(char * file_name) {
     file->name = loc_strdup(file_name);
     file->dev = st.st_dev;
     file->ino = st.st_ino;
-    file->mtime = st.st_mtime;
     if ((file->fd = open(file->name, O_RDONLY, 0)) < 0) error = errno;
 
     if (error == 0) {
@@ -420,11 +453,22 @@ int elf_load(ELF_Section * s) {
         s->data = (char *)s->mmap_addr + (size_t)(s->offset - offs);
     }
     trace(LOG_ELF, "Section %s in ELF file %s is mapped to %#lx", s->name, s->file->name, s->data);
-    return 0;
 #else
-    errno = ERR_UNSUPPORTED;
-    return -1;
+    {
+        ELF_File * file = s->file;
+        if (lseek(file->fd, s->offset, SEEK_SET) == (off_t)-1) return -1;
+        s->data = loc_alloc((size_t)s->size);
+        if (read(file->fd, s->data, (size_t)s->size) < 0) {
+            int err = errno;
+            loc_free(s->data);
+            s->data = NULL;
+            errno = err;
+            return -1;
+        }
+    }
+    trace(LOG_ELF, "Section %s in ELF file %s is loaded", s->name, s->file->name);
 #endif
+    return 0;
 }
 
 void elf_close(ELF_File * file) {
@@ -437,13 +481,16 @@ static ELF_File * open_memory_region_file(unsigned n) {
     ELF_File * prev = NULL;
     ELF_File * file = files;
     MemoryRegion * r = elf_list_regions + n;
+    ino_t ino = r->ino;
 
     assert(n < elf_list_region_cnt);
     elf_list_files[n] = NULL;
 
-    if (r->ino == 0) return NULL;
+    if (r->file_name == NULL) return NULL;
+    if (ino == 0 && (ino = elf_ino(r->file_name)) == 0) return NULL;
+
     while (file != NULL) {
-        if (file->dev == r->dev && file->ino == r->ino) {
+        if (file->dev == r->dev && file->ino == ino) {
             if (prev != NULL) {
                 prev->next = file->next;
                 file->next = files;
@@ -457,8 +504,10 @@ static ELF_File * open_memory_region_file(unsigned n) {
         file = file->next;
     }
 
-    if (r->file_name == NULL) return NULL;
     file = elf_open(r->file_name);
+    if (file == NULL) return NULL;
+    if (file->dev != r->dev) return NULL;
+    if (r->ino != 0 && file->ino != r->ino) return NULL;
     return elf_list_files[n] = file;
 }
 
@@ -478,7 +527,7 @@ ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress ad
         for (i = 0; i < elf_list_region_cnt; i++) {
             MemoryRegion * r = elf_list_regions + i;
             if (r->addr <= addr1 && r->addr + r->size >= addr0) {
-                if (r->ino != 0) {
+                if (r->file_name != NULL) {
                     ELF_File * file = open_memory_region_file(i);
                     if (file != NULL) {
                         assert(!file->listed);
@@ -505,7 +554,7 @@ ELF_File * elf_list_next(Context * ctx) {
         MemoryRegion * r = elf_list_regions + i;
         if (r->addr <= elf_list_addr1 && r->addr + r->size >= elf_list_addr0) {
             assert(elf_list_files[i] == NULL);
-            if (r->ino != 0) {
+            if (r->file_name != NULL) {
                 ELF_File * file = open_memory_region_file(i);
                 if (file != NULL && !file->listed) {
                     file->listed = 1;
@@ -556,7 +605,10 @@ ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, Conte
     memory_map_get_regions(ctx, &regions, &region_cnt);
     for (i = 0; i < region_cnt; i++) {
         MemoryRegion * r = regions + i;
-        if (r->dev == file->dev && r->ino == file->ino) {
+        ino_t ino = r->ino;
+        if (r->file_name == NULL) continue;
+        if (ino == 0 && (ino = elf_ino(r->file_name)) == 0) continue;
+        if (file->dev == r->dev && file->ino == ino) {
             for (j = 0; j < file->pheader_cnt; j++) {
                 ELF_PHeader * p = file->pheaders + j;
                 if (p->type != PT_LOAD) continue;

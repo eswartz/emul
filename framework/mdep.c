@@ -564,6 +564,7 @@ int utf8_stat(const char * name, struct utf8_stat * buf) {
         set_win32_errno(GetLastError());
         return -1;
     }
+    memset(&tmp, 0, sizeof(tmp));
     if (_wstati64(path, &tmp)) return -1;
     buf->st_dev = tmp.st_dev;
     buf->st_ino = tmp.st_ino;
@@ -581,6 +582,7 @@ int utf8_stat(const char * name, struct utf8_stat * buf) {
 
 int utf8_fstat(int fd, struct utf8_stat * buf) {
     struct _stati64 tmp;
+    memset(&tmp, 0, sizeof(tmp));
     if (_fstati64(fd, &tmp)) return -1;
     buf->st_dev = tmp.st_dev;
     buf->st_ino = tmp.st_ino;

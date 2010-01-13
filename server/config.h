@@ -26,6 +26,9 @@
 #if !defined(SERVICE_LineNumbers)
 #define SERVICE_LineNumbers     1
 #endif
+#if !defined(SERVICE_PathMap)
+#define SERVICE_PathMap         1
+#endif
 
 #if !defined(ENABLE_ZeroCopy)
 #define ENABLE_ZeroCopy         1
@@ -77,6 +80,7 @@
 #include "filesystem.h"
 #include "linenumbers.h"
 #include "diagnostics.h"
+#include "pathmap.h"
 #include "tcf_elf.h"
 
 static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
@@ -88,6 +92,9 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
 #endif
 #if SERVICE_LineNumbers
     ini_line_numbers_service(proto);
+#endif
+#if SERVICE_PathMap
+    ini_path_map_service(proto, bcg);
 #endif
 #if ENABLE_DebugContext
     ini_contexts();

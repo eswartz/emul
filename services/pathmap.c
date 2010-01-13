@@ -21,7 +21,9 @@
 
 #if SERVICE_PathMap
 
+#include <stdio.h>
 #include "json.h"
+#include "events.h"
 #include "exceptions.h"
 #include "myalloc.h"
 #include "pathmap.h"
@@ -49,6 +51,7 @@ typedef struct PathMap {
 static const char PATH_MAP[] = "PathMap";
 
 static LINK maps;
+static char host_name[256];
 
 static PathMap * find_map(Channel * c) {
     LINK * l;
@@ -56,6 +59,52 @@ static PathMap * find_map(Channel * c) {
         PathMap * m = maps2map(l);
         if (m->channel == c) return m;
     }
+    return NULL;
+}
+
+static void flush_host_name(void * args) {
+    memset(host_name, 0, sizeof(host_name));
+}
+
+static int is_my_host(char * host) {
+    if (host == NULL) return 1;
+    if (host_name[0] == 0) {
+        gethostname(host_name, sizeof(host_name));
+        if (host_name[0] != 0) post_event_with_delay(flush_host_name, NULL, 1000000);
+    }
+    return strcasecmp(host, host_name) == 0;
+}
+
+char * path_map_to_local(Channel * c, char * fnm) {
+    unsigned i, j, k;
+    PathMap * m = find_map(c);
+    static char buf[FILE_PATH_SIZE];
+
+    if (m == NULL) return NULL;
+
+    for (i = 0; i < m->rules_cnt; i++) {
+        PathMapRule * r = m->rules + i;
+        char * src = NULL;
+        char * dst = NULL;
+        char * host = NULL;
+        char * prot = NULL;
+        for (j = 0; j < r->attrs_cnt; j++) {
+            char * nm = r->attrs[j].name;
+            if (strcmp(nm, "Source") == 0) src = r->attrs[j].value;
+            else if (strcmp(nm, "Destination") == 0) dst = r->attrs[j].value;
+            else if (strcmp(nm, "Protocol") == 0) prot = r->attrs[j].value;
+            else if (strcmp(nm, "Host") == 0) host = r->attrs[j].value;
+        }
+        if (src == NULL || dst == NULL) continue;
+        if (prot != NULL && strcasecmp(prot, "file")) continue;
+        if (!is_my_host(host)) continue;
+        k = strlen(src);
+        if (strncmp(src, fnm, k)) continue;
+        if (fnm[k] != 0 && fnm[k] != '/' && fnm[k] != '\\') continue;
+        snprintf(buf, sizeof(buf), "%s%s", dst, fnm + k);
+        return buf;
+    }
+
     return NULL;
 }
 
@@ -164,7 +213,10 @@ static void command_set(char * token, Channel * c) {
 
 static void channel_close_listener(Channel * c) {
     unsigned i, j;
-    PathMap * m = find_map(c);
+    PathMap * m = NULL;
+    /* Keep path map over channel redirection */
+    if (c->state == ChannelStateHelloReceived) return;
+    m = find_map(c);
     if (m == NULL) return;
     list_remove(&m->maps);
     for (i = 0; i < m->rules_cnt; i++) {

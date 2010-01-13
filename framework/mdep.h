@@ -103,6 +103,7 @@ struct timespec {
 typedef unsigned int useconds_t;
 #elif defined(_MSC_VER)
 #define __i386__
+#define strcasecmp(x,y) stricmp(x,y)
 typedef unsigned long pid_t;
 typedef unsigned long useconds_t;
 #endif

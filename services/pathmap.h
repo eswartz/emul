@@ -23,6 +23,13 @@
 #include "config.h"
 #include "protocol.h"
 
+/*
+ * Translate debug file name to local name using file path mapping table of given channel.
+ * Return pointer to static buffer that contains translated file name,
+ * or null if mapping not found.
+ */
+extern char * path_map_to_local(Channel * channel, char * file_name);
+
 extern void ini_path_map_service(Protocol * proto, TCFBroadcastGroup * bcg);
 
 #endif /* D_pathmap */
