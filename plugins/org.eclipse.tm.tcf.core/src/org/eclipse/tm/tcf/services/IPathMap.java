@@ -38,8 +38,21 @@ public interface IPathMap extends IService {
         /** String, */
         PROP_HOST = "Host",
 
-        /** String, file access protocol (e.g. FTP, HTTP, TCF), default is regular file */
+        /** String, file access protocol, see PROTOCOL_*, default is regular file */
         PROP_PROTOCOL = "Protocol";
+
+    /**
+     * PROP_PROTOCOL values.
+     */
+    static final String
+        /** Regular file access using system calls */
+        PROTOCOL_FILE = "file",
+
+        /** File should be accessed using File System service on host */
+        PROTOCOL_HOST = "host",
+
+        /** File should be accessed using File System service on target */
+        PROTOCOL_TARGET = "target";
 
     /**
      * PathMapRule interface represents a single file path mapping rule.

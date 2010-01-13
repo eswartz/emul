@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -106,6 +105,7 @@ public class TCFLaunch extends Launch {
     private final HashMap<String,LinkedList<Runnable>> context_action_queue = new HashMap<String,LinkedList<Runnable>>();
     private final HashMap<String,String> stream_ids = new HashMap<String,String>();
     private final LinkedList<LaunchStep> launch_steps = new LinkedList<LaunchStep>();
+    private final LinkedList<String> redirection_path = new LinkedList<String>();
 
     private final IStreams.StreamsListener streams_listener = new IStreams.StreamsListener() {
 
@@ -135,35 +135,20 @@ public class TCFLaunch extends Launch {
         for (Listener l : listeners) l.onCreated(TCFLaunch.this);
     }
 
-    @SuppressWarnings("unchecked")
     private void onConnected() throws Exception {
         // The method is called when TCF channel is successfully connected.
 
-        final IStreams streams = getService(IStreams.class);
-        if (streams != null) {
-            // Subscribe Streams service
-            new LaunchStep() {
-                void start() {
-                    streams.subscribe(IProcesses.NAME, streams_listener, new IStreams.DoneSubscribe() {
-                        public void doneSubscribe(IToken token, Exception error) {
-                            if (error != null) channel.terminate(error);
-                            else done();
-                        }
-                    });
-                }
-            };
-        }
-
         final ILaunchConfiguration cfg = getLaunchConfiguration();
         if (cfg != null) {
-            // Download file path map
+            // Send file path map:
             final String path_map = cfg.getAttribute(TCFLaunchDelegate.ATTR_PATH_MAP, "");
-            final IPathMap pm = getService(IPathMap.class);
-            if (path_map.length() != 0 && pm != null) {
+            final IPathMap path_map_service = getService(IPathMap.class);
+            if (path_map.length() != 0 && path_map_service != null) {
                 new LaunchStep() {
+                    @Override
                     void start() throws Exception {
                         ArrayList<PathMapRule> map = TCFLaunchDelegate.parsePathMapAttribute(path_map);
-                        pm.set(map.toArray(new IPathMap.PathMapRule[map.size()]), new IPathMap.DoneSet() {
+                        path_map_service.set(map.toArray(new IPathMap.PathMapRule[map.size()]), new IPathMap.DoneSet() {
                             public void doneSet(IToken token, Exception error) {
                                 if (error != null) channel.terminate(error);
                                 else done();
@@ -174,106 +159,65 @@ public class TCFLaunch extends Launch {
             }
         }
 
-        if (mode.equals(ILaunchManager.DEBUG_MODE)) {
-            // Download breakpoints
+        if (redirection_path.size() > 0) {
+            // Connected to intermediate peer (value-add).
+            // Redirect to next peer:
             new LaunchStep() {
+                @Override
                 void start() throws Exception {
-                    breakpoints_status = new TCFBreakpointsStatus(TCFLaunch.this);
-                    Activator.getBreakpointsModel().downloadBreakpoints(channel, this);
+                    channel.redirect(redirection_path.removeFirst());
                 }
             };
         }
-
-        // Call client launch sequence
-        new LaunchStep() {
-            void start() {
-                runLaunchSequence(this);
-            }
-        };
-
-        if (cfg != null) {
-            final String project = cfg.getAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, "");
-            final String local_file = cfg.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, "");
-            final String remote_file = cfg.getAttribute(TCFLaunchDelegate.ATTR_REMOTE_PROGRAM_FILE, "");
-            if (local_file.length() != 0 && remote_file.length() != 0) {
-                // Download executable file
+        else {
+            final IStreams streams = getService(IStreams.class);
+            if (streams != null) {
+                // Subscribe Streams service:
                 new LaunchStep() {
-                    void start() throws Exception {
-                        copyFileToRemoteTarget(TCFLaunchDelegate.getProgramPath(project, local_file), remote_file, this);
-                    }
-                };
-            }
-            if (local_file.length() != 0 || remote_file.length() != 0) {
-                final IProcesses ps = channel.getRemoteService(IProcesses.class);
-                if (ps == null) {
-                    channel.terminate(new Exception("Target does not provide Processes service"));
-                    return;
-                }
-                final boolean append = cfg.getAttribute(ILaunchManager.ATTR_APPEND_ENVIRONMENT_VARIABLES, true);
-                if (append) {
-                    // Get system environment variables
-                    new LaunchStep() {
-                        void start() throws Exception {
-                            ps.getEnvironment(new IProcesses.DoneGetEnvironment() {
-                                public void doneGetEnvironment(IToken token, Exception error, Map<String,String> env) {
-                                    if (error != null) {
-                                        channel.terminate(error);
-                                    }
-                                    else {
-                                        if (env != null) process_env.putAll(env);
-                                        done();
-                                    }
-                                }
-                            });
-                        }
-                    };
-                }
-                final String dir = cfg.getAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, "");
-                final String args = cfg.getAttribute(TCFLaunchDelegate.ATTR_PROGRAM_ARGUMENTS, "");
-                final Map<String,String> env = cfg.getAttribute(ILaunchManager.ATTR_ENVIRONMENT_VARIABLES, (Map)null);
-                // Start inferior process
-                new LaunchStep() {
+                    @Override
                     void start() {
-                        if (env != null) process_env.putAll(env);
-                        String file = remote_file;
-                        if (file == null || file.length() == 0) file = TCFLaunchDelegate.getProgramPath(project, local_file);
-                        if (file == null || file.length() == 0) {
-                            channel.terminate(new Exception("Program file does not exist"));
-                            return;
-                        }
-                        boolean attach = mode.equals(ILaunchManager.DEBUG_MODE);
-                        process_start_command = ps.start(dir, file, toArgsArray(file, args),
-                                process_env, attach, new IProcesses.DoneStart() {
-                            public void doneStart(IToken token, final Exception error, ProcessContext process) {
-                                process_start_command = null;
-                                if (error != null) {
-                                    for (String id : new HashSet<String>(stream_ids.keySet())) disconnectStream(id);
-                                    Protocol.sync(new Runnable() {
-                                        public void run() {
-                                            channel.terminate(error);
-                                        }
-                                    });
-                                }
-                                else {
-                                    TCFLaunch.this.process = process;
-                                    ps.addListener(prs_listener);
-                                    connectProcessStreams();
-                                    done();
-                                }
+                        streams.subscribe(IProcesses.NAME, streams_listener, new IStreams.DoneSubscribe() {
+                            public void doneSubscribe(IToken token, Exception error) {
+                                if (error != null) channel.terminate(error);
+                                else done();
                             }
                         });
                     }
                 };
             }
-        }
 
-        new LaunchStep() {
-            void start() {
-                connecting = false;
-                for (Listener l : listeners) l.onConnected(TCFLaunch.this);
-                fireChanged();
+            if (mode.equals(ILaunchManager.DEBUG_MODE)) {
+                // Send breakpoints:
+                new LaunchStep() {
+                    @Override
+                    void start() throws Exception {
+                        breakpoints_status = new TCFBreakpointsStatus(TCFLaunch.this);
+                        Activator.getBreakpointsModel().downloadBreakpoints(channel, this);
+                    }
+                };
             }
-        };
+
+            // Call client launch sequence:
+            new LaunchStep() {
+                @Override
+                void start() {
+                    runLaunchSequence(this);
+                }
+            };
+
+            if (cfg != null) startRemoteProcess(cfg);
+
+            // Final launch step.
+            // Notify clients:
+            new LaunchStep() {
+                @Override
+                void start() {
+                    connecting = false;
+                    for (Listener l : listeners) l.onConnected(TCFLaunch.this);
+                    fireChanged();
+                }
+            };
+        }
 
         launch_steps.removeFirst().start();
     }
@@ -286,9 +230,7 @@ public class TCFLaunch extends Launch {
         breakpoints_status = null;
         connecting = false;
         disconnected = true;
-        for (Iterator<Listener> i = listeners.iterator(); i.hasNext();) {
-            i.next().onDisconnected(this);
-        }
+        for (Listener l : listeners) l.onDisconnected(this);
         if (DebugPlugin.getDefault() != null) fireChanged();
         runShutdownSequence(new Runnable() {
             public void run() {
@@ -296,6 +238,10 @@ public class TCFLaunch extends Launch {
                 if (DebugPlugin.getDefault() != null) fireTerminate();
             }
         });
+    }
+
+    protected void runLaunchSequence(final Runnable done) {
+        done.run();
     }
 
     private String[] toArgsArray(String file, String cmd) {
@@ -327,10 +273,6 @@ public class TCFLaunch extends Launch {
             arr.add(s);
         }
         return arr.toArray(new String[arr.size()]);
-    }
-
-    protected void runLaunchSequence(final Runnable done) {
-        done.run();
     }
 
     private void copyFileToRemoteTarget(String local_file, String remote_file, final Runnable done) {
@@ -410,6 +352,83 @@ public class TCFLaunch extends Launch {
         }
         catch (Throwable x) {
             channel.terminate(x);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void startRemoteProcess(final ILaunchConfiguration cfg) throws Exception {
+        final String project = cfg.getAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, "");
+        final String local_file = cfg.getAttribute(TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, "");
+        final String remote_file = cfg.getAttribute(TCFLaunchDelegate.ATTR_REMOTE_PROGRAM_FILE, "");
+        if (local_file.length() != 0 && remote_file.length() != 0) {
+            // Download executable file
+            new LaunchStep() {
+                @Override
+                void start() throws Exception {
+                    copyFileToRemoteTarget(TCFLaunchDelegate.getProgramPath(project, local_file), remote_file, this);
+                }
+            };
+        }
+        if (local_file.length() != 0 || remote_file.length() != 0) {
+            final IProcesses ps = channel.getRemoteService(IProcesses.class);
+            if (ps == null) throw new Exception("Target does not provide Processes service");
+            final boolean append = cfg.getAttribute(ILaunchManager.ATTR_APPEND_ENVIRONMENT_VARIABLES, true);
+            if (append) {
+                // Get system environment variables
+                new LaunchStep() {
+                    @Override
+                    void start() throws Exception {
+                        ps.getEnvironment(new IProcesses.DoneGetEnvironment() {
+                            public void doneGetEnvironment(IToken token, Exception error, Map<String,String> env) {
+                                if (error != null) {
+                                    channel.terminate(error);
+                                }
+                                else {
+                                    if (env != null) process_env.putAll(env);
+                                    done();
+                                }
+                            }
+                        });
+                    }
+                };
+            }
+            final String dir = cfg.getAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, "");
+            final String args = cfg.getAttribute(TCFLaunchDelegate.ATTR_PROGRAM_ARGUMENTS, "");
+            final Map<String,String> env = cfg.getAttribute(ILaunchManager.ATTR_ENVIRONMENT_VARIABLES, (Map)null);
+            // Start the process
+            new LaunchStep() {
+                @Override
+                void start() {
+                    if (env != null) process_env.putAll(env);
+                    String file = remote_file;
+                    if (file == null || file.length() == 0) file = TCFLaunchDelegate.getProgramPath(project, local_file);
+                    if (file == null || file.length() == 0) {
+                        channel.terminate(new Exception("Program file does not exist"));
+                        return;
+                    }
+                    boolean attach = mode.equals(ILaunchManager.DEBUG_MODE);
+                    process_start_command = ps.start(dir, file, toArgsArray(file, args),
+                            process_env, attach, new IProcesses.DoneStart() {
+                        public void doneStart(IToken token, final Exception error, ProcessContext process) {
+                            process_start_command = null;
+                            if (error != null) {
+                                for (String id : new HashSet<String>(stream_ids.keySet())) disconnectStream(id);
+                                Protocol.sync(new Runnable() {
+                                    public void run() {
+                                        channel.terminate(error);
+                                    }
+                                });
+                            }
+                            else {
+                                TCFLaunch.this.process = process;
+                                ps.addListener(prs_listener);
+                                connectProcessStreams();
+                                done();
+                            }
+                        }
+                    });
+                }
+            };
         }
     }
 
@@ -618,21 +637,20 @@ public class TCFLaunch extends Launch {
         this.mode = mode;
         try {
             if (id == null || id.length() == 0) throw new IOException("Invalid peer ID");
-            final LinkedList<String> path = new LinkedList<String>();
+            redirection_path.clear();
             for (;;) {
                 int i = id.indexOf('/');
                 if (i <= 0) {
-                    path.add(id);
+                    redirection_path.add(id);
                     break;
                 }
-                path.add(id.substring(0, i));
+                redirection_path.add(id.substring(0, i));
                 id = id.substring(i + 1);
             }
-            String id0 = path.removeFirst();
+            String id0 = redirection_path.removeFirst();
             IPeer peer = Protocol.getLocator().getPeers().get(id0);
             if (peer == null) throw new Exception("Cannot locate peer " + id0);
             channel = peer.openChannel();
-            while (path.size() > 0) channel.redirect(path.removeFirst());
             channel.addChannelListener(new IChannel.IChannelListener() {
 
                 public void onChannelOpened() {
