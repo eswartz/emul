@@ -34,8 +34,6 @@
 #include "memorymap.h"
 #include "context-proxy.h"
 
-#define ENABLE_CACHE_PRELOAD 1
-
 typedef struct ContextCache ContextCache;
 typedef struct MemoryCache MemoryCache;
 typedef struct PeerCache PeerCache;
@@ -84,8 +82,8 @@ struct ContextCache {
 
 struct MemoryCache {
     LINK link_ctx;
+    Context * ctx;
     AbstractCache cache;
-    int canceled;
     ErrorReport * error;
     ContextAddress addr;
     void * buf;
@@ -210,11 +208,11 @@ static void read_context_added_item(InputStream * inp, void * args) {
     PeerCache * p = (PeerCache *)args;
     ContextCache * c = loc_alloc_zero(sizeof(ContextCache));
 
+    json_read_struct(inp, read_run_control_context_property, c);
+
     list_init(&c->mem_cache);
     list_add_first(&c->link_peer, &p->ctx_cache);
     c->peer = p;
-    json_read_struct(inp, read_run_control_context_property, c);
-
     c->ctx = (Context *)loc_alloc_zero(sizeof(Context));
     list_init(&c->ctx->children);
     list_init(&c->ctx->cldl);
@@ -487,8 +485,8 @@ void context_lock(Context * ctx) {
 static void free_context_cache(ContextCache * c) {
     assert(c->pending_get_mmap == NULL);
     assert(c->pending_get_regs == NULL);
-    assert(!c->mmap_cache.posted);
-    assert(!c->regs_cache.posted);
+    cache_dispose(&c->mmap_cache);
+    cache_dispose(&c->regs_cache);
     if (c->peer != NULL) list_remove(&c->link_peer);
     release_error_report(c->mmap_error);
     release_error_report(c->reg_error);
@@ -498,15 +496,12 @@ static void free_context_cache(ContextCache * c) {
     loc_free(c->reg_defs);
     while (!list_is_empty(&c->mem_cache)) {
         MemoryCache * m = ctx2mem(c->mem_cache.next);
+        assert(m->pending_command == NULL);
         list_remove(&m->link_ctx);
-        if (!m->pending_command || protocol_cancel_command(m->pending_command)) {
-            release_error_report(m->error);
-            loc_free(m->buf);
-            loc_free(m);
-        }
-        else {
-            m->canceled = 1;
-        }
+        release_error_report(m->error);
+        cache_dispose(&m->cache);
+        loc_free(m->buf);
+        loc_free(m);
     }
     loc_free(c);
 }
@@ -543,7 +538,9 @@ int context_has_state(Context * ctx) {
 
 static void validate_memory_cache(Channel * c, void * args, int error) {
     MemoryCache * m = (MemoryCache *)args;
+
     assert(m->pending_command != NULL);
+    assert(m->error == NULL);
     m->pending_command = NULL;
     m->error = get_error_report(error);
     if (!error) {
@@ -562,11 +559,7 @@ static void validate_memory_cache(Channel * c, void * args, int error) {
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     }
     cache_notify(&m->cache);
-    if (m->canceled) {
-        release_error_report(m->error);
-        loc_free(m->buf);
-        loc_free(m);
-    }
+    context_unlock(m->ctx);
 }
 
 int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
@@ -591,6 +584,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     }
 
     m = loc_alloc_zero(sizeof(MemoryCache));
+    m->ctx = ctx;
     m->addr = address;
     m->buf = loc_alloc(size);
     m->size = size;
@@ -606,6 +600,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
     flush_stream(&c->out);
+    context_lock(ctx);
     cache_wait(&m->cache);
     return -1;
 }
@@ -613,7 +608,6 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
 static void validate_memory_map_cache(Channel * c, void * args, int error) {
     ContextCache * cache = (ContextCache *)args;
 
-    assert(cache->peer->target == c);
     assert(cache->ctx->parent == NULL);
     assert(cache->mmap_regions == NULL);
     assert(cache->pending_get_mmap != NULL);
@@ -630,12 +624,14 @@ static void validate_memory_map_cache(Channel * c, void * args, int error) {
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     }
     cache_notify(&cache->mmap_cache);
+    context_unlock(cache->ctx);
 }
 
 void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * cnt) {
     ContextCache * cache = NULL;
     while (ctx->parent != NULL) ctx = ctx->parent;
     cache = (ContextCache *)ctx->proxy;
+    assert(cache->ctx == ctx);
     if (cache->pending_get_mmap != NULL) cache_wait(&cache->mmap_cache);
     if (cache->mmap_regions == NULL && cache->mmap_error == NULL && cache->peer != NULL) {
         Channel * c = cache->peer->target;
@@ -644,6 +640,7 @@ void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * c
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
         flush_stream(&c->out);
+        context_lock(ctx);
         cache_wait(&cache->mmap_cache);
     }
     *regions = cache->mmap_regions;
@@ -659,6 +656,7 @@ static int validate_context_cache(Channel * c, void * args, int error) {
         if (cache->pending_get_regs != NULL) {
             assert(cache->reg_ids == NULL);
             assert(cache->reg_ids_str == NULL);
+            cache->pending_get_regs = NULL;
             cache->reg_error = get_error_report(error);
             if (!error) {
                 unsigned i;
@@ -676,12 +674,14 @@ static int validate_context_cache(Channel * c, void * args, int error) {
                 if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
                 if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
             }
+            context_unlock(cache->ctx);
         }
         else if (cache->reg_ids == NULL && cache->reg_error == 0) {
             cache->pending_get_regs = protocol_send_command(c, "Registers", "getChildren", validate_context_cache, args);
             write_stringz(&c->out, thread_id(cache->ctx));
             write_stream(&c->out, MARKER_EOM);
             flush_stream(&c->out);
+            context_lock(cache->ctx);
             return 0;
         }
     }
@@ -733,17 +733,12 @@ static void channel_close_listener(Channel * c) {
                 ContextCache * c = peer2ctx(p->ctx_cache.next);
                 c->peer = NULL;
                 list_remove(&c->link_peer);
-                if (c->ctx != NULL) {
-                    if (c->ctx->parent != NULL) {
-                        list_remove(&c->ctx->cldl);
-                        context_unlock(c->ctx->parent);
-                        c->ctx->parent = NULL;
-                    }
-                    context_unlock(c->ctx);
+                if (c->ctx->parent != NULL) {
+                    list_remove(&c->ctx->cldl);
+                    context_unlock(c->ctx->parent);
+                    c->ctx->parent = NULL;
                 }
-                else {
-                    free_context_cache(c);
-                }
+                context_unlock(c->ctx);
             }
             loc_free(p);
             return;
@@ -751,53 +746,9 @@ static void channel_close_listener(Channel * c) {
     }
 }
 
-#if ENABLE_CACHE_PRELOAD
-
-static void mmap_cache_client(void * x) {
-    Context * ctx = (Context *)x;
-    MemoryRegion * regions = NULL;
-    unsigned cnt = 0;
-    memory_map_get_regions(ctx, &regions, &cnt);
-    cache_exit();
-    context_unlock(ctx);
-}
-
-static void evt_context_created(Context * ctx, void * args) {
-    ContextCache * cache = (ContextCache *)ctx->proxy;
-    context_lock(ctx);
-    cache_enter(mmap_cache_client, cache->peer->host, ctx);
-}
-
-static void evt_context_exited(Context * ctx, void * args) {
-}
-
-static void evt_context_stopped(Context * ctx, void * args) {
-}
-
-static void evt_context_started(Context * ctx, void * args) {
-}
-
-static void evt_context_changed(Context * ctx, void * args) {
-    ContextCache * cache = (ContextCache *)ctx->proxy;
-    context_lock(ctx);
-    cache_enter(mmap_cache_client, cache->peer->host, ctx);
-}
-
-static ContextEventListener context_listener = {
-    evt_context_created,
-    evt_context_exited,
-    evt_context_stopped,
-    evt_context_started,
-    evt_context_changed
-};
-#endif
-
 void init_contexts_sys_dep(void) {
     list_init(&peers);
     add_channel_close_listener(channel_close_listener);
-#if ENABLE_CACHE_PRELOAD
-    add_context_event_listener(&context_listener, NULL);
-#endif
 }
 
 #endif /* ENABLE_DebugContext && ENABLE_ContextProxy */

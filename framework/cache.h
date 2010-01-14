@@ -30,6 +30,7 @@
     static AbstractCache cache;
 
     Context * id2ctx(char * id) {
+        Channel * c = cache_channel();
         if (!cache_valid) {
             // Send data request.
             ...
@@ -53,7 +54,7 @@
         // Make sure the code is re-entrant.
 
         CommandArgs * args = (CommandArgs *)x;
-        Channel * c = args->channel;
+        Channel * c = cache_channel();
         Context ctx = id2ctx(args->id);
         int result = context_has_state(ctx);
 
@@ -75,7 +76,6 @@
 
         // Cleanup:
 
-        channel_unlock(c);
         loc_free(args);
     }
 
@@ -88,13 +88,9 @@
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
         strncpy(args->token, token, sizeof(args->token) - 1);
 
-        // Lock the channel until command handling is done:
-
-        channel_lock(args->channel = c);
-
         // Start cache client state machine:
 
-        cache_enter(cache_client, args);
+        cache_enter(cache_client, c, args);
     }
 
     add_command_handler(proto, "Service Name", "Command Name", command_handler);
@@ -110,23 +106,46 @@
 
 typedef void CacheClient(void *);
 
-typedef struct WaitingCacheClient {
-    CacheClient * client;
-    Channel * channel;
-    void * args;
-} WaitingCacheClient;
-
 typedef struct AbstractCache {
-    WaitingCacheClient * wait_list_buf;
+    struct WaitingCacheClient * wait_list_buf;
     unsigned wait_list_cnt;
     unsigned wait_list_max;
-    int posted;
 } AbstractCache;
 
+/*
+ * Start cache client state machine.
+ * Note that each channel has its own instance of cache.
+ * The channel will be locked during periods of time when the client
+ * waits for the cached data.
+ */
 extern void cache_enter(CacheClient * client, Channel * channel, void * args);
+
+/*
+ * Cache clients call cache_exit() to indicate end of cache access.
+ */
 extern void cache_exit(void);
+
+/*
+ * Cache data handling code call cache_wait() to suspend current client
+ * until cache validation is done.
+ */
 extern void cache_wait(AbstractCache * cache);
+
+/*
+ * Cache data handling code call cache_wait() to resume clients
+ * that are waiting for cached data.
+ */
 extern void cache_notify(AbstractCache * cache);
+
+/*
+ * Return TCF channel of current cache client,
+ * or NULL if there is no current client.
+ */
 extern Channel * cache_channel(void);
+
+/*
+ * Dispose a cache.
+ */
+extern void cache_dispose(AbstractCache * cache);
 
 #endif /* D_cache */

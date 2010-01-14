@@ -67,7 +67,7 @@ static void flush_host_name(void * args) {
 }
 
 static int is_my_host(char * host) {
-    if (host == NULL) return 1;
+    if (host == NULL || host[0] == 0) return 1;
     if (host_name[0] == 0) {
         gethostname(host_name, sizeof(host_name));
         if (host_name[0] != 0) post_event_with_delay(flush_host_name, NULL, 1000000);
@@ -95,8 +95,9 @@ char * path_map_to_local(Channel * c, char * fnm) {
             else if (strcmp(nm, "Protocol") == 0) prot = r->attrs[j].value;
             else if (strcmp(nm, "Host") == 0) host = r->attrs[j].value;
         }
-        if (src == NULL || dst == NULL) continue;
-        if (prot != NULL && strcasecmp(prot, "file")) continue;
+        if (src == NULL || src[0] == 0) continue;
+        if (dst == NULL || dst[0] == 0) continue;
+        if (prot != NULL && prot[0] != 0 && strcasecmp(prot, "file")) continue;
         if (!is_my_host(host)) continue;
         k = strlen(src);
         if (strncmp(src, fnm, k)) continue;

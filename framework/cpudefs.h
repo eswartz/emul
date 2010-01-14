@@ -22,7 +22,13 @@
 #include "config.h"
 
 typedef struct Context Context;
-typedef uintptr_t ContextAddress; /* Type to represent byte address inside context memory */
+
+/* Type to represent byte address inside context memory */
+#if ENABLE_ContextProxy
+typedef uint64_t ContextAddress;
+#else
+typedef uintptr_t ContextAddress;
+#endif
 
 #if ENABLE_DebugContext
 

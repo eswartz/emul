@@ -164,11 +164,11 @@ static void write_line_info(Context * ctx, OutputStream * out, CompUnit * unit,
             write_stream(out, ',');
             json_write_string(out, "SAddr");
             write_stream(out, ':');
-            json_write_ulong(out, state_addr);
+            json_write_int64(out, state_addr);
             write_stream(out, ',');
             json_write_string(out, "EAddr");
             write_stream(out, ':');
-            json_write_ulong(out, next_addr);
+            json_write_int64(out, next_addr);
             if (state->mISA != 0) {
                 write_stream(out, ',');
                 json_write_string(out, "ISA");

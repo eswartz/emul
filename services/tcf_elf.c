@@ -198,7 +198,7 @@ ELF_File * elf_open(char * file_name) {
     file->name = loc_strdup(file_name);
     file->dev = st.st_dev;
     file->ino = st.st_ino;
-    if ((file->fd = open(file->name, O_RDONLY, 0)) < 0) error = errno;
+    if ((file->fd = open(file->name, O_RDONLY | O_BINARY, 0)) < 0) error = errno;
 
     if (error == 0) {
         Elf32_Ehdr hdr;
@@ -247,9 +247,12 @@ ELF_File * elf_open(char * file_name) {
                 file->sections = loc_alloc_zero(sizeof(ELF_Section) * hdr.e_shnum);
                 file->section_cnt = hdr.e_shnum;
                 while (error == 0 && cnt < hdr.e_shnum) {
+                    int rd = 0;
                     Elf32_Shdr shdr;
                     memset(&shdr, 0, sizeof(shdr));
-                    if (error == 0 && read(file->fd, (char *)&shdr, hdr.e_shentsize) < 0) error = errno;
+                    if (error == 0 && sizeof(shdr) < hdr.e_shentsize) error = ERR_INV_FORMAT;
+                    if (error == 0 && (rd = read(file->fd, (char *)&shdr, hdr.e_shentsize)) < 0) error = errno;
+                    if (error == 0 && rd != hdr.e_shentsize) error = ERR_INV_FORMAT;
                     if (error == 0) {
                         ELF_Section * sec = file->sections + cnt;
                         if (file->byte_swap) {
@@ -284,9 +287,12 @@ ELF_File * elf_open(char * file_name) {
                 file->pheaders = loc_alloc_zero(sizeof(ELF_PHeader) * hdr.e_phnum);
                 file->pheader_cnt = hdr.e_phnum;
                 while (error == 0 && cnt < hdr.e_phnum) {
+                    int rd = 0;
                     Elf32_Phdr phdr;
                     memset(&phdr, 0, sizeof(phdr));
-                    if (error == 0 && read(file->fd, (char *)&phdr, hdr.e_phentsize) < 0) error = errno;
+                    if (error == 0 && sizeof(phdr) < hdr.e_phentsize) error = ERR_INV_FORMAT;
+                    if (error == 0 && (rd = read(file->fd, (char *)&phdr, hdr.e_phentsize)) < 0) error = errno;
+                    if (error == 0 && rd != hdr.e_phentsize) error = ERR_INV_FORMAT;
                     if (error == 0) {
                         ELF_PHeader * p = file->pheaders + cnt;
                         if (file->byte_swap) {
@@ -343,9 +349,12 @@ ELF_File * elf_open(char * file_name) {
                 file->sections = loc_alloc_zero(sizeof(ELF_Section) * hdr.e_shnum);
                 file->section_cnt = hdr.e_shnum;
                 while (error == 0 && cnt < hdr.e_shnum) {
+                    int rd = 0;
                     Elf64_Shdr shdr;
                     memset(&shdr, 0, sizeof(shdr));
-                    if (error == 0 && read(file->fd, (char *)&shdr, hdr.e_shentsize) < 0) error = errno;
+                    if (error == 0 && sizeof(shdr) < hdr.e_shentsize) error = ERR_INV_FORMAT;
+                    if (error == 0 && (rd = read(file->fd, (char *)&shdr, hdr.e_shentsize)) < 0) error = errno;
+                    if (error == 0 && rd != hdr.e_shentsize) error = ERR_INV_FORMAT;
                     if (error == 0) {
                         ELF_Section * sec = file->sections + cnt;
                         if (file->byte_swap) {
@@ -380,9 +389,12 @@ ELF_File * elf_open(char * file_name) {
                 file->pheaders = loc_alloc_zero(sizeof(ELF_PHeader) * hdr.e_phnum);
                 file->pheader_cnt = hdr.e_phnum;
                 while (error == 0 && cnt < hdr.e_phnum) {
+                    int rd = 0;
                     Elf64_Phdr phdr;
                     memset(&phdr, 0, sizeof(phdr));
-                    if (error == 0 && read(file->fd, (char *)&phdr, hdr.e_phentsize) < 0) error = errno;
+                    if (error == 0 && sizeof(phdr) < hdr.e_phentsize) error = ERR_INV_FORMAT;
+                    if (error == 0 && (rd = read(file->fd, (char *)&phdr, hdr.e_phentsize)) < 0) error = errno;
+                    if (error == 0 && rd != hdr.e_phentsize) error = ERR_INV_FORMAT;
                     if (error == 0) {
                         ELF_PHeader * p = file->pheaders + cnt;
                         if (file->byte_swap) {
@@ -412,10 +424,13 @@ ELF_File * elf_open(char * file_name) {
             error = ERR_INV_FORMAT;
         }
         if (error == 0 && str_index != 0 && str_index < file->section_cnt) {
+            int rd = 0;
             ELF_Section * str = file->sections + str_index;
             file->str_pool = loc_alloc((size_t)str->size);
-            if (lseek(file->fd, str->offset, SEEK_SET) == (off_t)-1) error = errno;
-            if (error == 0 && read(file->fd, file->str_pool, (size_t)str->size) < 0) error = errno;
+            if (str->offset == 0 || str->size == 0) error = ERR_INV_FORMAT;
+            if (error == 0 && lseek(file->fd, str->offset, SEEK_SET) == (off_t)-1) error = errno;
+            if (error == 0 && (rd = read(file->fd, file->str_pool, (size_t)str->size)) < 0) error = errno;
+            if (error == 0 && rd != str->size) error = ERR_INV_FORMAT;
             if (error == 0) {
                 unsigned i;
                 for (i = 1; i < file->section_cnt; i++) {
