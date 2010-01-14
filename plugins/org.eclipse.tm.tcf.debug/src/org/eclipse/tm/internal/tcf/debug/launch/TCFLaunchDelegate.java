@@ -134,7 +134,7 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
                 while (i < s.length()) {
                     ch = s.charAt(i++);
                     if (ch == '|') {
-                        e.props.put(nm, bf.toString());
+                        if (bf.length() > 0) e.props.put(nm, bf.toString());
                         break;
                     }
                     else if (ch == '\\') {

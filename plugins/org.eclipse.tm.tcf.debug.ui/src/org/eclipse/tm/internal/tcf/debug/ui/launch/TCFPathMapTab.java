@@ -109,7 +109,8 @@ public class TCFPathMapTab extends AbstractLaunchConfigurationTab {
         public void modify(Object element, String property, Object value) {
             if (element instanceof Item) element = ((Item)element).getData();
             PathMapRule a = (PathMapRule)element;
-            a.getProperties().put(property, value);
+            if ("".equals(value)) a.getProperties().remove(property);
+            else a.getProperties().put(property, value);
             viewer.update(element, new String[] { property });
             updateLaunchConfigurationDialog();
         }
