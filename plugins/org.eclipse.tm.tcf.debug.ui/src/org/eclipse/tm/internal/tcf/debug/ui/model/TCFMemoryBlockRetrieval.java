@@ -110,8 +110,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                         set(null, expression_value.getError(), null);
                         return true;
                     }
-                    TCFDataCache<ISymbols.Symbol> type_cache = exec_ctx.getModel().getSymbolInfoCache(
-                            val.getExeContextID(), val.getTypeID());
+                    TCFDataCache<ISymbols.Symbol> type_cache = exec_ctx.getModel().getSymbolInfoCache(val.getTypeID());
                     if (type_cache == null) {
                         set(null, null, null);
                         return true;

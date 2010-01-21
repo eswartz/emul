@@ -53,12 +53,6 @@ public interface ISymbols extends IService {
         String getID();
 
         /**
-         * Get execution context ID (thread or process) that owns this instance of a symbol.
-         * @return execution context ID.
-         */
-        String getExeContextID();
-
-        /**
          * Get symbol name.
          * @return symbol name or null.
          */
@@ -158,7 +152,6 @@ public interface ISymbols extends IService {
      */
     static final String
         PROP_ID = "ID",
-        PROP_EXE_ID = "ExeID",
         PROP_NAME = "Name",
         PROP_SYMBOL_CLASS = "Class",
         PROP_TYPE_CLASS = "TypeClass",

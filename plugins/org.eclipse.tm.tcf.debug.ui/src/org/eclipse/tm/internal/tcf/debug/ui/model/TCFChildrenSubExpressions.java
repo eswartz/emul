@@ -58,7 +58,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         int cnt = 0;
         HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
         for (String id : children) {
-            TCFDataCache<ISymbols.Symbol> field = node.getModel().getSymbolInfoCache(type.getExeContextID(), id);
+            TCFDataCache<ISymbols.Symbol> field = node.getModel().getSymbolInfoCache(id);
             TCFNodeExpression n = findField(field, deref);
             if (n == null) n = new TCFNodeExpression(node, null, field, null, -1, deref);
             n.setSortPosition(cnt++);
@@ -101,8 +101,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             set(null, null, new HashMap<String,TCFNode>());
             return true;
         }
-        final TCFDataCache<ISymbols.Symbol> type_cache = node.model.getSymbolInfoCache(
-                value_data.getExeContextID(), value_data.getTypeID());
+        final TCFDataCache<ISymbols.Symbol> type_cache = node.model.getSymbolInfoCache(value_data.getTypeID());
         if (type_cache == null) {
             set(null, null, new HashMap<String,TCFNode>());
             return true;
@@ -119,8 +118,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             return true;
         }
         if (type_class == ISymbols.TypeClass.composite) {
-            TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(
-                    type_data.getExeContextID(), type_data.getID());
+            TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(type_data.getID());
             if (children_cache == null) {
                 set(null, null, new HashMap<String,TCFNode>());
                 return true;
@@ -164,15 +162,13 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             if (!value.validate(this)) return false;
             IExpressions.Value v = value.getData();
             if (v != null && !isNull(v.getValue())) {
-                TCFDataCache<ISymbols.Symbol> base_type_cache = node.model.getSymbolInfoCache(
-                        type_data.getExeContextID(), type_data.getBaseTypeID());
+                TCFDataCache<ISymbols.Symbol> base_type_cache = node.model.getSymbolInfoCache(type_data.getBaseTypeID());
                 if (base_type_cache != null) {
                     if (!base_type_cache.validate(this)) return false;
                     ISymbols.Symbol base_type_data = base_type_cache.getData();
                     if (base_type_data == null || base_type_data.getSize() != 0) {
                         if (base_type_data.getTypeClass() == ISymbols.TypeClass.composite) {
-                            TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(
-                                    base_type_data.getExeContextID(), base_type_data.getID());
+                            TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(base_type_data.getID());
                             if (children_cache != null) {
                                 if (!children_cache.validate(this)) return false;
                                 String[] children_data = children_cache.getData();

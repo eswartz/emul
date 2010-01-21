@@ -196,11 +196,11 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private static final Map<ILaunchConfiguration,IEditorInput> editor_not_found =
         new HashMap<ILaunchConfiguration,IEditorInput>();
 
-    private final Map<String,Map<String,TCFDataCache<ISymbols.Symbol>>> symbols =
-        new HashMap<String,Map<String,TCFDataCache<ISymbols.Symbol>>>();
+    private final Map<String,TCFDataCache<ISymbols.Symbol>> symbols =
+        new HashMap<String,TCFDataCache<ISymbols.Symbol>>();
 
-    private final Map<String,Map<String,TCFDataCache<String[]>>> symbol_children =
-        new HashMap<String,Map<String,TCFDataCache<String[]>>>();
+    private final Map<String,TCFDataCache<String[]>> symbol_children =
+        new HashMap<String,TCFDataCache<String[]>>();
 
     private final IModelSelectionPolicyFactory model_selection_factory = new IModelSelectionPolicyFactory() {
 
@@ -241,10 +241,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 TCFNode node = getNode(contexts[i].getID());
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContextChanged(contexts[i]);
-                }
-                Map<String,TCFDataCache<ISymbols.Symbol>> m = symbols.remove(contexts[i].getID());
-                if (m != null) {
-                    for (TCFDataCache<ISymbols.Symbol> s : m.values()) s.cancel();
                 }
             }
         }
@@ -658,12 +654,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     }
 
-    public TCFDataCache<ISymbols.Symbol> getSymbolInfoCache(String mem_id, final String sym_id) {
-        if (mem_id == null || sym_id == null) return null;
-        Map<String,TCFDataCache<ISymbols.Symbol>> m = symbols.get(mem_id);
-        if (m == null) symbols.put(mem_id, m = new HashMap<String,TCFDataCache<ISymbols.Symbol>>());
-        TCFDataCache<ISymbols.Symbol> s = m.get(sym_id);
-        if (s == null) m.put(sym_id, s = new TCFDataCache<ISymbols.Symbol>(launch.getChannel()) {
+    public TCFDataCache<ISymbols.Symbol> getSymbolInfoCache(final String sym_id) {
+        if (sym_id == null) return null;
+        TCFDataCache<ISymbols.Symbol> s = symbols.get(sym_id);
+        if (s == null) symbols.put(sym_id, s = new TCFDataCache<ISymbols.Symbol>(launch.getChannel()) {
             @Override
             protected boolean startDataRetrieval() {
                 ISymbols syms = getLaunch().getService(ISymbols.class);
@@ -682,12 +676,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return s;
     }
 
-    public TCFDataCache<String[]> getSymbolChildrenCache(String mem_id, final String sym_id) {
-        if (mem_id == null || sym_id == null) return null;
-        Map<String,TCFDataCache<String[]>> m = symbol_children.get(mem_id);
-        if (m == null) symbol_children.put(mem_id, m = new HashMap<String,TCFDataCache<String[]>>());
-        TCFDataCache<String[]> s = m.get(sym_id);
-        if (s == null) m.put(sym_id, s = new TCFDataCache<String[]>(launch.getChannel()) {
+    public TCFDataCache<String[]> getSymbolChildrenCache(final String sym_id) {
+        if (sym_id == null) return null;
+        TCFDataCache<String[]> s = symbol_children.get(sym_id);
+        if (s == null) symbol_children.put(sym_id, s = new TCFDataCache<String[]>(launch.getChannel()) {
             @Override
             protected boolean startDataRetrieval() {
                 ISymbols syms = getLaunch().getService(ISymbols.class);

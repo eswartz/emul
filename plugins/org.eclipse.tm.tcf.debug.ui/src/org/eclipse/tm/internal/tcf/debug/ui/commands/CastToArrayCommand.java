@@ -85,8 +85,7 @@ public class CastToArrayCommand extends AbstractActionDelegate {
                 else {
                     String ptrs = "****";
                     for (int i = 0; i <= ptrs.length(); i++) {
-                        TCFDataCache<ISymbols.Symbol> base_type_cache = node.getModel().getSymbolInfoCache(
-                                type_data.getExeContextID(), type_data.getBaseTypeID());
+                        TCFDataCache<ISymbols.Symbol> base_type_cache = node.getModel().getSymbolInfoCache(type_data.getBaseTypeID());
                         if (!base_type_cache.validate(this)) return;
                         ISymbols.Symbol base_type_data = base_type_cache.getData();
                         if (base_type_data == null) {

@@ -31,10 +31,6 @@ public class SymbolsProxy implements ISymbols {
             return (String)props.get(PROP_BASE_TYPE_ID);
         }
 
-        public String getExeContextID() {
-            return (String)props.get(PROP_EXE_ID);
-        }
-
         public String getID() {
             return (String)props.get(PROP_ID);
         }

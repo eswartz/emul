@@ -22,6 +22,7 @@ import org.eclipse.tm.tcf.services.IDiagnostics;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace;
+import org.eclipse.tm.tcf.services.ISymbols;
 
 class TestExpressions implements ITCFTest,
     IRunControl.RunControlListener, IExpressions.ExpressionsListener, IBreakpoints.BreakpointsListener {
@@ -29,6 +30,7 @@ class TestExpressions implements ITCFTest,
     private final TCFTestSuite test_suite;
     private final IDiagnostics diag;
     private final IExpressions expr;
+    private final ISymbols syms;
     private final IStackTrace stk;
     private final IRunControl rc;
     private final IBreakpoints bp;
@@ -45,12 +47,15 @@ class TestExpressions implements ITCFTest,
     private boolean waiting_suspend;
     private String[] stack_trace;
     private String[] local_vars;
-    private final Map<String,IExpressions.Expression> expr_ctx =
-        new HashMap<String,IExpressions.Expression>();
-    private final Map<String,IExpressions.Value> expr_val =
-        new HashMap<String,IExpressions.Value>();
+    private final Map<String,IExpressions.Expression> expr_ctx = new HashMap<String,IExpressions.Expression>();
+    private final Map<String,IExpressions.Value> expr_val = new HashMap<String,IExpressions.Value>();
+    private final Map<String,ISymbols.Symbol> expr_sym = new HashMap<String,ISymbols.Symbol>();
+    private final Map<String,String[]> expr_chld = new HashMap<String,String[]>();
 
     private static String[] test_expressions = {
+        "func2_local1",
+        "func2_local2",
+        "func2_local3",
         "func2_local1 == func2_local1",
         "func2_local1 != func2_local2",
         "1.34 == 1.34",
@@ -88,6 +93,7 @@ class TestExpressions implements ITCFTest,
         this.test_suite = test_suite;
         diag = channel.getRemoteService(IDiagnostics.class);
         expr = channel.getRemoteService(IExpressions.class);
+        syms = channel.getRemoteService(ISymbols.class);
         stk = channel.getRemoteService(IStackTrace.class);
         rc = channel.getRemoteService(IRunControl.class);
         bp = channel.getRemoteService(IBreakpoints.class);
@@ -353,6 +359,49 @@ class TestExpressions implements ITCFTest,
                     }
                 });
                 return;
+            }
+        }
+        if (syms != null) {
+            for (final String id : expr_val.keySet()) {
+                if (expr_sym.get(id) == null) {
+                    IExpressions.Value v = expr_val.get(id);
+                    String type_id = v.getTypeID();
+                    if (type_id != null) {
+                        syms.getContext(type_id, new ISymbols.DoneGetContext() {
+                            public void doneGetContext(IToken token, Exception error, ISymbols.Symbol ctx) {
+                                if (error != null) {
+                                    exit(error);
+                                }
+                                else if (ctx == null) {
+                                    exit(new Exception("Symbol.getContext returned null"));
+                                }
+                                else {
+                                    expr_sym.put(id, ctx);
+                                    runTest();
+                                }
+                            }
+                        });
+                        return;
+                    }
+                }
+            }
+            for (final String id : expr_sym.keySet()) {
+                if (expr_chld.get(id) == null) {
+                    ISymbols.Symbol sym = expr_sym.get(id);
+                    syms.getChildren(sym.getID(), new ISymbols.DoneGetChildren() {
+                        public void doneGetChildren(IToken token, Exception error, String[] context_ids) {
+                            if (error != null) {
+                                exit(error);
+                            }
+                            else {
+                                if (context_ids == null) context_ids = new String[0];
+                                expr_chld.put(id, context_ids);
+                                runTest();
+                            }
+                        }
+                    });
+                    return;
+                }
             }
         }
         test_done = true;
