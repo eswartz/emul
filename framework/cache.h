@@ -126,13 +126,15 @@ extern void cache_enter(CacheClient * client, Channel * channel, void * args);
 extern void cache_exit(void);
 
 /*
+ * Add current cache client to the cache wait list and throw ERR_CACHE_MISS exception.
  * Cache data handling code call cache_wait() to suspend current client
  * until cache validation is done.
  */
 extern void cache_wait(AbstractCache * cache);
 
 /*
- * Cache data handling code call cache_wait() to resume clients
+ * Invoke all items in the cache wait list.
+ * Cache data handling code call cache_notify() to resume clients
  * that are waiting for cached data.
  */
 extern void cache_notify(AbstractCache * cache);

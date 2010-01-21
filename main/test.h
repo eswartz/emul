@@ -28,13 +28,13 @@
 
 extern void test_proc(void);
 extern int run_test_process(ContextAttachCallBack * done, void * data);
-extern int find_test_symbol(Context * ctx, char * name, Symbol * sym, void ** addr);
+extern int find_test_symbol(Context * ctx, char * name, void ** addr, int * sym_class);
 
 #else /* ENABLE_RCBP_TEST */
 
 #include "errors.h"
 
-#define find_test_symbol(ctx, name, sym, addr) (errno = ERR_SYM_NOT_FOUND, -1)
+#define find_test_symbol(ctx, name, addr, sym_class) (errno = ERR_SYM_NOT_FOUND, -1)
 
 #endif /* ENABLE_RCBP_TEST */
 

@@ -541,38 +541,46 @@ static int identifier(char * name, Value * v) {
     }
 #if SERVICE_Symbols
     {
-        Symbol sym;
+        Symbol * sym = NULL;
         if (find_symbol(expression_context, expression_frame, name, &sym) < 0) {
-            if (errno != ERR_SYM_NOT_FOUND) error(errno, "Cannot read symbol data");
+            if (get_error_code(errno) != ERR_SYM_NOT_FOUND) error(errno, "Cannot read symbol data");
         }
         else {
-            if (get_symbol_type(&sym, &v->type) < 0) {
+            int sym_class = 0;
+            if (get_symbol_class(sym, &sym_class) < 0) {
+                error(errno, "Cannot retrieve symbol class");
+            }
+            if (get_symbol_type(sym, &v->type) < 0) {
                 error(errno, "Cannot retrieve symbol type");
             }
-            if (get_symbol_type_class(&sym, &v->type_class) < 0) {
+            if (get_symbol_type_class(sym, &v->type_class) < 0) {
                 error(errno, "Cannot retrieve symbol type class");
             }
-            switch (sym.sym_class) {
+            switch (sym_class) {
             case SYM_CLASS_VALUE:
                 {
                     size_t size = 0;
                     void * value = NULL;
-                    if (get_symbol_value(&sym, &value, &size) < 0) {
+                    if (get_symbol_value(sym, &value, &size) < 0) {
                         error(errno, "Cannot retrieve symbol value");
                     }
-                    v->size = size;
-                    v->value = alloc_str(v->size);
                     v->constant = 1;
-                    memcpy(v->value, value, size);
-                    loc_free(value);
+                    v->size = size;
+                    if (value != NULL) {
+                        v->value = alloc_str(v->size);
+                        memcpy(v->value, value, size);
+                    }
+                    else {
+                        v->value = NULL;
+                    }
                 }
                 break;
             case SYM_CLASS_REFERENCE:
                 v->remote = 1;
-                if (get_symbol_size(&sym, expression_frame, &v->size) < 0) {
+                if (get_symbol_size(sym, &v->size) < 0) {
                     error(errno, "Cannot retrieve symbol size");
                 }
-                if (get_symbol_address(&sym, expression_frame, &v->address) < 0) {
+                if (get_symbol_address(sym, &v->address) < 0) {
                     error(errno, "Cannot retrieve symbol address");
                 }
                 break;
@@ -580,7 +588,7 @@ static int identifier(char * name, Value * v) {
                 {
                     ContextAddress word = 0;
                     v->type_class = TYPE_CLASS_CARDINAL;
-                    if (get_symbol_address(&sym, expression_frame, &word) < 0) {
+                    if (get_symbol_address(sym, &word) < 0) {
                         error(errno, "Cannot retrieve symbol address");
                     }
                     set_ctx_word_value(v, word);
@@ -592,7 +600,7 @@ static int identifier(char * name, Value * v) {
             default:
                 error(ERR_UNSUPPORTED, "Invalid symbol class");
             }
-            return sym.sym_class;
+            return sym_class;
         }
     }
 #endif
@@ -636,7 +644,7 @@ static int type_expression(int mode, int * buf) {
     return pos;
 }
 
-static int type_name(int mode, Symbol * type) {
+static int type_name(int mode, Symbol ** type) {
     Value v;
     int expr_buf[TYPE_EXPR_LENGTH];
     int expr_len = 0;
@@ -664,17 +672,17 @@ static int type_name(int mode, Symbol * type) {
         for (i = 0; i < expr_len; i++) {
 #if SERVICE_Symbols
             if (expr_buf[i] == 1) {
-                if (get_pointer_symbol(&v.type, &v.type)) {
+                if (get_array_symbol(v.type, 0, &v.type)) {
                     error(errno, "Cannot get pointer type");
                 }
             }
             else {
-                if (get_array_symbol(&v.type, expr_buf[i], &v.type)) {
+                if (get_array_symbol(v.type, expr_buf[i], &v.type)) {
                     error(errno, "Cannot get array type");
                 }
             }
 #else
-            memset(&v.type, 0, sizeof(v.type));
+            v.type = NULL;
 #endif
         }
     }
@@ -899,13 +907,13 @@ static void op_deref(int mode, Value * v) {
         v->constant = 0;
         v->value = NULL;
     }
-    if (get_symbol_base_type(&v->type, &v->type) < 0) {
+    if (get_symbol_base_type(v->type, &v->type) < 0) {
         error(errno, "Cannot retrieve symbol type");
     }
-    if (get_symbol_type_class(&v->type, &v->type_class) < 0) {
+    if (get_symbol_type_class(v->type, &v->type_class) < 0) {
         error(errno, "Cannot retrieve symbol type class");
     }
-    if (get_symbol_size(&v->type, expression_frame, &v->size) < 0) {
+    if (get_symbol_size(v->type, &v->size) < 0) {
         error(errno, "Cannot retrieve symbol size");
     }
 #else
@@ -923,41 +931,40 @@ static void op_field(int mode, Value * v) {
         error(ERR_INV_EXPRESSION, "Composite type expected");
     }
     else {
-        Symbol sym;
-        size_t size = 0;
-        unsigned long offs = 0;
-        Symbol * children = NULL;
+        Symbol * sym = NULL;
+        int sym_class = 0;
+        ContextAddress size = 0;
+        ContextAddress offs = 0;
+        Symbol ** children = NULL;
         int count = 0;
         int i;
 
-        if (get_symbol_children(&v->type, &children, &count) < 0) {
+        if (get_symbol_children(v->type, &children, &count) < 0) {
             error(errno, "Cannot retrieve field list");
         }
-        memset(&sym, 0, sizeof(sym));
         for (i = 0; i < count; i++) {
             char * s = NULL;
-            if (get_symbol_name(children + i, &s) < 0) {
+            if (get_symbol_name(children[i], &s) < 0) {
                 error(errno, "Cannot retrieve field name");
             }
-            if (s == NULL) continue;
-            if (strcmp(s, name) == 0) {
-                loc_free(s);
+            if (s != NULL && strcmp(s, name) == 0) {
                 sym = children[i];
                 break;
             }
-            loc_free(s);
         }
-        loc_free(children);
-        if (i == count) {
+        if (sym == NULL) {
             error(ERR_SYM_NOT_FOUND, "Symbol not found");
         }
-        if (sym.sym_class != SYM_CLASS_REFERENCE) {
+        if (get_symbol_class(sym, &sym_class) < 0) {
+            error(errno, "Cannot retrieve symbol class");
+        }
+        if (sym_class != SYM_CLASS_REFERENCE) {
             error(ERR_UNSUPPORTED, "Invalid symbol class");
         }
-        if (get_symbol_size(&sym, expression_frame, &size) < 0) {
+        if (get_symbol_size(sym, &size) < 0) {
             error(errno, "Cannot retrieve field size");
         }
-        if (get_symbol_offset(&sym, &offs) < 0) {
+        if (get_symbol_offset(sym, &offs) < 0) {
             error(errno, "Cannot retrieve field offset");
         }
         if (offs + size > v->size) {
@@ -970,10 +977,10 @@ static void op_field(int mode, Value * v) {
             v->value = (char *)v->value + offs;
         }
         v->size = size;
-        if (get_symbol_type(&sym, &v->type) < 0) {
+        if (get_symbol_type(sym, &v->type) < 0) {
             error(errno, "Cannot retrieve symbol type");
         }
-        if (get_symbol_type_class(&sym, &v->type_class) < 0) {
+        if (get_symbol_type_class(sym, &v->type_class) < 0) {
             error(errno, "Cannot retrieve symbol type class");
         }
     }
@@ -985,9 +992,9 @@ static void op_field(int mode, Value * v) {
 static void op_index(int mode, Value * v) {
 #if SERVICE_Symbols
     Value i;
-    unsigned long offs = 0;
-    size_t size = 0;
-    Symbol type;
+    ContextAddress offs = 0;
+    ContextAddress size = 0;
+    Symbol * type = NULL;
 
     expression(mode, &i);
     if (mode == MODE_SKIP) return;
@@ -1001,16 +1008,16 @@ static void op_index(int mode, Value * v) {
         v->constant = 0;
         v->value = NULL;
     }
-    if (get_symbol_base_type(&v->type, &type) < 0) {
+    if (get_symbol_base_type(v->type, &type) < 0) {
         error(errno, "Cannot get array element type");
     }
-    if (get_symbol_size(&type, expression_frame, &size) < 0) {
+    if (get_symbol_size(type, &size) < 0) {
         error(errno, "Cannot get array element type");
     }
-    if (get_symbol_lower_bound(&v->type, expression_frame, &offs) < 0) {
+    if (get_symbol_lower_bound(v->type, &offs) < 0) {
         error(errno, "Cannot get array lower bound");
     }
-    offs = ((unsigned long)to_uns(mode, &i) - offs) * size;
+    offs = ((ContextAddress)to_uns(mode, &i) - offs) * size;
     if (v->type_class == TYPE_CLASS_ARRAY && offs + size > v->size) {
         error(ERR_INV_EXPRESSION, "Invalid index");
     }
@@ -1022,7 +1029,7 @@ static void op_index(int mode, Value * v) {
     }
     v->size = size;
     v->type = type;
-    if (get_symbol_type_class(&type, &v->type_class) < 0) {
+    if (get_symbol_type_class(type, &v->type_class) < 0) {
         error(errno, "Cannot retrieve symbol type class");
     }
 #else
@@ -1037,33 +1044,33 @@ static void op_addr(int mode, Value * v) {
     set_ctx_word_value(v, v->address);
     v->type_class = TYPE_CLASS_POINTER;
 #if SERVICE_Symbols
-    if (get_pointer_symbol(&v->type, &v->type)) {
+    if (get_array_symbol(v->type, 0, &v->type)) {
         error(errno, "Cannot get pointer type");
     }
 #else
-    memset(&v->type, 0, sizeof(v->type));
+    v->type = NULL;
 #endif
 }
 
 static void unary_expression(int mode, Value * v);
 
 static void op_sizeof(int mode, Value * v) {
-    Symbol type;
-    int pos;
+    Symbol * type = NULL;
+    int pos = 0;
     int p = text_sy == '(';
 
     if (p) next_sy();
     pos = text_pos - 2;
     if (type_name(mode, &type)) {
         if (mode != MODE_SKIP) {
-            size_t type_size = 0;
+            ContextAddress type_size = 0;
 #if SERVICE_Symbols
-            if (get_symbol_size(&type, expression_frame, &type_size) < 0) {
+            if (get_symbol_size(type, &type_size) < 0) {
                 error(errno, "Cannot retrieve symbol size");
             }
 #endif
             set_ctx_word_value(v, type_size);
-            memset(&v->type, 0, sizeof(v->type));
+            v->type = NULL;
             v->type_class = TYPE_CLASS_CARDINAL;
             v->constant = 1;
         }
@@ -1075,7 +1082,7 @@ static void op_sizeof(int mode, Value * v) {
         unary_expression(mode == MODE_NORMAL ? MODE_TYPE : mode, v);
         if (mode != MODE_SKIP) {
             set_ctx_word_value(v, v->size);
-            memset(&v->type, 0, sizeof(v->type));
+            v->type = NULL;
             v->type_class = TYPE_CLASS_CARDINAL;
             v->constant = 1;
         }
@@ -1155,7 +1162,7 @@ static void unary_expression(int mode, Value * v) {
                 v->value = value;
             }
             assert(!v->remote);
-            memset(&v->type, 0, sizeof(Symbol));
+            v->type = NULL;
         }
         break;
     case '!':
@@ -1173,7 +1180,7 @@ static void unary_expression(int mode, Value * v) {
                 v->value = value;
             }
             assert(!v->remote);
-            memset(&v->type, 0, sizeof(Symbol));
+            v->type = NULL;
         }
         break;
     case '~':
@@ -1190,7 +1197,7 @@ static void unary_expression(int mode, Value * v) {
                 v->value = value;
             }
             assert(!v->remote);
-            memset(&v->type, 0, sizeof(Symbol));
+            v->type = NULL;
         }
         break;
     default:
@@ -1202,9 +1209,9 @@ static void unary_expression(int mode, Value * v) {
 static void cast_expression(int mode, Value * v) {
     if (text_sy == '(') {
 #if SERVICE_Symbols
-        Symbol type;
+        Symbol * type = NULL;
         int type_class = TYPE_CLASS_UNKNOWN;
-        size_t type_size = 0;
+        ContextAddress type_size = 0;
         int pos = text_pos - 2;
 
         assert(text[pos] == '(');
@@ -1221,10 +1228,10 @@ static void cast_expression(int mode, Value * v) {
         next_sy();
         cast_expression(mode, v);
         if (mode == MODE_SKIP) return;
-        if (get_symbol_type_class(&type, &type_class) < 0) {
+        if (get_symbol_type_class(type, &type_class) < 0) {
             error(errno, "Cannot retrieve symbol type class");
         }
-        if (get_symbol_size(&type, expression_frame, &type_size) < 0) {
+        if (get_symbol_size(type, &type_size) < 0) {
             error(errno, "Cannot retrieve symbol size");
         }
         if (v->remote && v->size == type_size) {
@@ -1391,7 +1398,7 @@ static void multiplicative_expression(int mode, Value * v) {
             }
             v->remote = 0;
             v->constant = v->constant && x.constant;
-            memset(&v->type, 0, sizeof(Symbol));
+            v->type = NULL;
         }
     }
 }
@@ -1455,7 +1462,7 @@ static void additive_expression(int mode, Value * v) {
             }
             v->remote = 0;
             v->constant = v->constant && x.constant;
-            memset(&v->type, 0, sizeof(Symbol));
+            v->type = NULL;
         }
     }
 }
@@ -1506,7 +1513,7 @@ static void shift_expression(int mode, Value * v) {
             v->size = sizeof(uint64_t);
             v->remote = 0;
             v->constant = v->constant && x.constant;
-            memset(&v->type, 0, sizeof(Symbol));
+            v->type = NULL;
         }
     }
 }
@@ -1562,7 +1569,7 @@ static void relational_expression(int mode, Value * v) {
             v->size = sizeof(int);
             v->remote = 0;
             v->constant = v->constant && x.constant;
-            memset(&v->type, 0, sizeof(Symbol));
+            v->type = NULL;
         }
     }
 }
@@ -1594,7 +1601,7 @@ static void equality_expression(int mode, Value * v) {
             v->size = sizeof(int);
             v->remote = 0;
             v->constant = v->constant && x.constant;
-            memset(&v->type, 0, sizeof(Symbol));
+            v->type = NULL;
         }
     }
 }
@@ -1622,7 +1629,7 @@ static void and_expression(int mode, Value * v) {
             v->size = sizeof(int64_t);
             v->remote = 0;
             v->constant = v->constant && x.constant;
-            memset(&v->type, 0, sizeof(Symbol));
+            v->type = NULL;
         }
     }
 }
@@ -1650,7 +1657,7 @@ static void exclusive_or_expression(int mode, Value * v) {
             v->size = sizeof(int64_t);
             v->remote = 0;
             v->constant = v->constant && x.constant;
-            memset(&v->type, 0, sizeof(Symbol));
+            v->type = NULL;
         }
     }
 }
@@ -1678,7 +1685,7 @@ static void inclusive_or_expression(int mode, Value * v) {
             v->size = sizeof(int64_t);
             v->remote = 0;
             v->constant = v->constant && x.constant;
-            memset(&v->type, 0, sizeof(Symbol));
+            v->type = NULL;
         }
     }
 }
@@ -1942,17 +1949,20 @@ static void write_context(OutputStream * out, char * id, char * parent, int fram
         json_write_long(out, expr->size);
     }
     else if (sym) {
-        write_stream(out, ',');
-
-        json_write_string(out, "CanAssign");
-        write_stream(out, ':');
-        json_write_boolean(out, sym->sym_class == SYM_CLASS_REFERENCE);
-
 #if SERVICE_Symbols
         {
-            Symbol type;
-            int type_class;
-            size_t size;
+            Symbol * type = NULL;
+            int sym_class = 0;
+            int type_class = 0;
+            ContextAddress size = 0;
+
+            if (get_symbol_class(sym, &sym_class) == 0) {
+                write_stream(out, ',');
+
+                json_write_string(out, "CanAssign");
+                write_stream(out, ':');
+                json_write_boolean(out, sym_class == SYM_CLASS_REFERENCE);
+            }
 
             if (get_symbol_type_class(sym, &type_class) == 0 && type_class != TYPE_CLASS_UNKNOWN) {
                 write_stream(out, ',');
@@ -1962,15 +1972,15 @@ static void write_context(OutputStream * out, char * id, char * parent, int fram
                 json_write_long(out, type_class);
             }
 
-            if (get_symbol_type(sym, &type) == 0) {
+            if (get_symbol_type(sym, &type) == 0 && type != NULL) {
                 write_stream(out, ',');
 
                 json_write_string(out, "Type");
                 write_stream(out, ':');
-                json_write_string(out, symbol2id(&type));
+                json_write_string(out, symbol2id(type));
             }
 
-            if (get_symbol_size(sym, frame, &size) == 0) {
+            if (get_symbol_size(sym, &size) == 0) {
                 write_stream(out, ',');
 
                 json_write_string(out, "Size");
@@ -1992,7 +2002,7 @@ static void command_get_context(char * token, Channel * c) {
     Context * ctx = NULL;
     int frame = STACK_NO_FRAME;
     Expression * expr = NULL;
-    Symbol sym;
+    Symbol * sym = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -2000,7 +2010,6 @@ static void command_get_context(char * token, Channel * c) {
 
     if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
 
-    memset(&sym, 0, sizeof(Symbol));
     if (!err && expr == NULL) {
 #if SERVICE_Symbols
         if (find_symbol(ctx, frame, name, &sym) < 0) err = errno;
@@ -2017,7 +2026,7 @@ static void command_get_context(char * token, Channel * c) {
         write_stringz(&c->out, "null");
     }
     else {
-        write_context(&c->out, id, parent, frame, name, &sym, expr);
+        write_context(&c->out, id, parent, frame, name, sym, expr);
         write_stream(&c->out, 0);
     }
 
@@ -2164,7 +2173,7 @@ static void command_create(char * token, Channel * c) {
             e->type_class = value.type_class;
             e->size = value.size;
 #if SERVICE_Symbols
-            if (value.type.ctx != NULL) strncpy(e->type, symbol2id(&value.type), sizeof(e->type) - 1);
+            if (value.type != NULL) strncpy(e->type, symbol2id(value.type), sizeof(e->type) - 1);
 #endif
         }
     }
@@ -2250,19 +2259,15 @@ static void command_evaluate(char * token, Channel * c) {
             cnt++;
         }
 
-        if (value.type.ctx != NULL) {
-            if (cnt > 0) write_stream(&c->out, ',');
 #if SERVICE_Symbols
+        if (value.type != NULL) {
+            if (cnt > 0) write_stream(&c->out, ',');
             json_write_string(&c->out, "Type");
             write_stream(&c->out, ':');
-            json_write_string(&c->out, symbol2id(&value.type));
-            write_stream(&c->out, ',');
-#endif
-            json_write_string(&c->out, "ExeID");
-            write_stream(&c->out, ':');
-            json_write_string(&c->out, container_id(value.type.ctx));
+            json_write_string(&c->out, symbol2id(value.type));
             cnt++;
         }
+#endif
 
         write_stream(&c->out, '}');
         write_stream(&c->out, 0);
@@ -2281,10 +2286,10 @@ static void command_assign(char * token, Channel * c) {
     Value value;
     JsonReadBinaryState state;
     char buf[BUF_SIZE];
-    unsigned long size = 0;
+    ContextAddress size = 0;
     ContextAddress addr;
     ContextAddress addr0;
-    unsigned long size0;
+    ContextAddress size0;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);

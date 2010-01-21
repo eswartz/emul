@@ -101,7 +101,7 @@ static void clear_stale_peers(void * x) {
 PeerServer * peer_server_alloc(void) {
     PeerServer * s = loc_alloc_zero(sizeof *s);
 
-    s->max = 4;
+    s->max = 8;
     s->list = loc_alloc(s->max * sizeof *s->list);
     return s;
 }

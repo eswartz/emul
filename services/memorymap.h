@@ -26,7 +26,7 @@ typedef struct MemoryRegion MemoryRegion;
 
 struct MemoryRegion {
     ContextAddress addr;        /* Region address in context memory */
-    unsigned long size;         /* Region size */
+    ContextAddress size;        /* Region size */
     unsigned long file_offs;    /* File offset of the region */
     dev_t dev;                  /* Region file device ID */
     ino_t ino;                  /* Region file inode */

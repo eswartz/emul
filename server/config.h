@@ -26,6 +26,9 @@
 #if !defined(SERVICE_LineNumbers)
 #define SERVICE_LineNumbers     1
 #endif
+#if !defined(SERVICE_Symbols)
+#define SERVICE_Symbols         1
+#endif
 #if !defined(SERVICE_PathMap)
 #define SERVICE_PathMap         1
 #endif
@@ -54,6 +57,10 @@
 #  define ENABLE_ContextProxy   1
 #endif
 
+#if !defined(ENABLE_SymbolsProxy)
+#  define ENABLE_SymbolsProxy   0
+#endif
+
 #if !defined(ENABLE_DebugContext)
 #  define ENABLE_DebugContext   1
 #endif
@@ -80,6 +87,7 @@
 #include "filesystem.h"
 #include "linenumbers.h"
 #include "diagnostics.h"
+#include "symbols.h"
 #include "pathmap.h"
 #include "tcf_elf.h"
 
@@ -92,6 +100,9 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
 #endif
 #if SERVICE_LineNumbers
     ini_line_numbers_service(proto);
+#endif
+#if SERVICE_Symbols
+    ini_symbols_service(proto);
 #endif
 #if SERVICE_PathMap
     ini_path_map_service(proto, bcg);

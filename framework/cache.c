@@ -65,7 +65,7 @@ void cache_wait(AbstractCache * cache) {
     assert(is_dispatch_thread());
     if (current_client.client != NULL) {
         if (cache->wait_list_cnt >= cache->wait_list_max) {
-            cache->wait_list_max = cache->wait_list_max == 0 ? 8 : cache->wait_list_max + 8;
+            cache->wait_list_max += 8;
             cache->wait_list_buf = loc_realloc(cache->wait_list_buf, cache->wait_list_max * sizeof(WaitingCacheClient));
         }
         cache->wait_list_buf[cache->wait_list_cnt++] = current_client;

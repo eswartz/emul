@@ -174,9 +174,8 @@ static void command_get_symbol(char * token, Channel * c) {
     {
         Context * ctx;
         int error = 0;
-        Symbol sym;
+        Symbol * sym = NULL;
 
-        memset(&sym, 0, sizeof(sym));
         ctx = id2ctx(id);
         if (ctx == NULL || ctx->exited) {
             error = ERR_INV_CONTEXT;
@@ -193,14 +192,14 @@ static void command_get_symbol(char * token, Channel * c) {
         else {
             ContextAddress addr = 0;
             write_stream(&c->out, '{');
-            if (get_symbol_address(&sym, STACK_NO_FRAME, &addr) >= 0) {
+            if (get_symbol_address(sym, &addr) >= 0) {
                 json_write_string(&c->out, "Abs");
                 write_stream(&c->out, ':');
                 json_write_boolean(&c->out, 1);
                 write_stream(&c->out, ',');
                 json_write_string(&c->out, "Value");
                 write_stream(&c->out, ':');
-                json_write_ulong(&c->out, addr);
+                json_write_int64(&c->out, addr);
             }
             write_stream(&c->out, '}');
             write_stream(&c->out, 0);

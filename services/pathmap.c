@@ -127,7 +127,7 @@ static void read_rule_attrs(InputStream * inp, char * name, void * args) {
     PathMapRule * r = args;
 
     if (r->attrs_cnt >= r->attrs_max) {
-        r->attrs_max = r->attrs_max ? r->attrs_max * 2 : 8;
+        r->attrs_max = r->attrs_max ? r->attrs_max * 2 : 4;
         r->attrs = loc_realloc(r->attrs, r->attrs_max * sizeof(*r->attrs));
     }
 
@@ -197,7 +197,9 @@ static void command_set(char * token, Channel * c) {
                 loc_free(r->attrs[j].value);
                 loc_free(r->attrs[j].json);
             }
+            loc_free(r->attrs);
             r->attrs_cnt = 0;
+            r->attrs_max = 0;
         }
         m->rules_cnt = 0;
     }

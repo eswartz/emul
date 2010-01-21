@@ -800,6 +800,9 @@ void ini_mdep(void) {
         exit(1);
     }
     pthread_attr_init(&pthread_create_attr);
+#if defined(_DEBUG) && defined(_MSC_VER)
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
 }
 
 #elif defined(_WRS_KERNEL)

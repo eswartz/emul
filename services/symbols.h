@@ -28,11 +28,7 @@
  * longer then one dispatch cycle.
  */
 
-typedef struct Symbol {
-    Context * ctx;
-    int sym_class;
-    int location[16];
-} Symbol;
+typedef struct Symbol Symbol;
 
 #define SYM_CLASS_UNKNOWN       0
 #define SYM_CLASS_VALUE         1   /* Symbol represents a constant value */
@@ -58,7 +54,7 @@ typedef void EnumerateSymbolsCallBack(void *, char * name, Symbol *);
  * On error, returns -1 and sets errno.
  * On success returns 0.
  */
-extern int find_symbol(Context * ctx, int frame, char * name, Symbol * sym);
+extern int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym);
 
 /*
  * Enumerate symbols in given context.
@@ -79,7 +75,7 @@ extern char * symbol2id(const Symbol * sym);
  * On error, returns -1 and sets errno.
  * On success returns 0.
  */
-extern int id2symbol(char * id, Symbol * sym);
+extern int id2symbol(char * id, Symbol ** sym);
 
 
 /*************** Functions for retrieving symbol properties ***************************************/
@@ -89,48 +85,54 @@ extern int id2symbol(char * id, Symbol * sym);
  * On success returns 0.
  */
 
+/* Get symbol class */
+extern int get_symbol_class(const Symbol * sym, int * symbol_class);
+
 /* Get symbol type */
-extern int get_symbol_type(const Symbol * sym, Symbol * type);
+extern int get_symbol_type(const Symbol * sym, Symbol ** type);
 
 /* Get type class, see TYPE_CLASS_* */
 extern int get_symbol_type_class(const Symbol * sym, int * type_class);
 
-/* Get type name, clients should call loc_free to dispose the result */
+/* Get symbol name.
+ * The string returned shall not be modified by the client,
+ * and it may be overwritten by a subsequent calls to symbol functions */
 extern int get_symbol_name(const Symbol * sym, char ** name);
 
 /* Get value size of the type, in bytes */
-extern int get_symbol_size(const Symbol * sym, int frame, size_t * size);
+extern int get_symbol_size(const Symbol * sym, ContextAddress * size);
 
 /* Get base type ID */
-extern int get_symbol_base_type(const Symbol * sym, Symbol * base_type);
+extern int get_symbol_base_type(const Symbol * sym, Symbol ** base_type);
 
 /* Get array index type ID */
-extern int get_symbol_index_type(const Symbol * sym, Symbol * index_type);
+extern int get_symbol_index_type(const Symbol * sym, Symbol ** index_type);
 
 /* Get array length (number of elements) */
-extern int get_symbol_length(const Symbol * sym, int frame, unsigned long * length);
+extern int get_symbol_length(const Symbol * sym, ContextAddress * length);
 
 /* Get array index lower bound (index of first element) */
-extern int get_symbol_lower_bound(const Symbol * sym, int frame, unsigned long * value);
+extern int get_symbol_lower_bound(const Symbol * sym, ContextAddress * value);
 
-/* Get children type IDs (struct, union, class, function and enum),
- * clients should call loc_free to dispose the resul */
-extern int get_symbol_children(const Symbol * sym, Symbol ** children, int * count);
+/* Get children type IDs (struct, union, class, function and enum).
+ * The array returned shall not be modified by the client,
+ * and it may be overwritten by a subsequent calls to symbol functions */
+extern int get_symbol_children(const Symbol * sym, Symbol *** children, int * count);
 
 /* Get offset in parent type (fields) */
-extern int get_symbol_offset(const Symbol * sym, unsigned long * offset);
+extern int get_symbol_offset(const Symbol * sym, ContextAddress * offset);
 
-/* Get value (constant objects and enums), clients should call loc_free to dispose the result */
+/* Get value (constant objects and enums).
+ * The array returned shall not be modified by the client,
+ * and it may be overwritten by a subsequent calls to symbol functions */
 extern int get_symbol_value(const Symbol * sym, void ** value, size_t * size);
 
 /* Get address (variables) */
-extern int get_symbol_address(const Symbol * sym, int frame, ContextAddress * address);
+extern int get_symbol_address(const Symbol * sym, ContextAddress * address);
 
-/* Get a type that represents a pointer to given base type */
-extern int get_pointer_symbol(const Symbol * sym, Symbol * ptr);
-
-/* Get a type that represents an array of elements of given base type */
-extern int get_array_symbol(const Symbol * sym, size_t length, Symbol * ptr);
+/* Get a type that represents an array of elements of given base type.
+ * If 'length' is zero, returned type represents pointer to given type */
+extern int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr);
 
 /*************************************************************************************************/
 

@@ -223,6 +223,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\services\symbols.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\symbols_elf.c"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\tcf_elf.c"
 				>
 			</File>

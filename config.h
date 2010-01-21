@@ -132,6 +132,10 @@
 #  define ENABLE_ContextProxy   0
 #endif
 
+#if !defined(ENABLE_SymbolsProxy)
+#  define ENABLE_SymbolsProxy   0
+#endif
+
 #if !defined(ENABLE_DebugContext)
 #  define ENABLE_DebugContext   (ENABLE_ContextProxy || SERVICE_RunControl || SERVICE_Breakpoints || SERVICE_Memory || SERVICE_Registers || SERVICE_StackTrace)
 #endif

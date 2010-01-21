@@ -104,6 +104,11 @@ extern int set_win32_errno(DWORD win32_error_code);
 extern int set_error_report_errno(ErrorReport * report);
 
 /*
+ * Return POSIX error code or one of ERR_* values for given errno value.
+ */
+extern int get_error_code(int no);
+
+/*
  * Return TCF error report that describes given error code 'no'.
  * Clients should call release_error_report() when done using it.
  * Return NULL if 'no' = 0, or if 'no' was not creted by

@@ -559,7 +559,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\services\symbols_alloc.h"
+				>
+			</File>
+			<File
 				RelativePath=".\services\symbols_elf.c"
+				>
+			</File>
+			<File
+				RelativePath=".\services\symbols_proxy.c"
 				>
 			</File>
 			<File

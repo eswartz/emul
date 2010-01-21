@@ -589,7 +589,8 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     m->buf = loc_alloc(size);
     m->size = size;
     m->pending_command = protocol_send_command(c, "Memory", "get", validate_memory_cache, m);
-    write_stringz(&c->out, container_id(cache->ctx));
+    json_write_string(&c->out, container_id(cache->ctx));
+    write_stream(&c->out, 0);
     json_write_int64(&c->out, m->addr);
     write_stream(&c->out, 0);
     json_write_long(&c->out, 1);

@@ -547,7 +547,7 @@ static void plant_breakpoint(BreakpointInfo * bp, pid_t mem) {
     if (bp->address != NULL) {
         Value v;
         if (evaluate_expression(NULL, STACK_NO_FRAME, bp->address, 1, &v) < 0) {
-            if (errno != ERR_INV_CONTEXT) {
+            if (get_error_code(errno) != ERR_INV_CONTEXT) {
                 address_expression_error(bp);
                 return;
             }

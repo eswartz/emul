@@ -47,8 +47,11 @@ static void channel_redirected(Channel * host, Channel * target) {
         if (strcmp(target->peer_service_list[i], "LineNumbers") == 0) service_ln = 1;
         if (strcmp(target->peer_service_list[i], "MemoryMap") == 0) service_mm = 1;
     }
-    if (/*!service_ln &&*/ service_mm) {
+    if (service_mm) {
         ini_line_numbers_service(host->protocol);
+        ini_line_numbers_service(target->protocol);
+        ini_symbols_service(host->protocol);
+        ini_symbols_service(target->protocol);
         create_context_proxy(host, target);
     }
 }
