@@ -20,6 +20,7 @@ import org.eclipse.tm.internal.tcf.services.remote.LocatorProxy;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IServiceProvider;
+import org.eclipse.tm.tcf.protocol.Protocol;
 
 public class ServiceManager {
 
@@ -64,11 +65,16 @@ public class ServiceManager {
         };
         services.put(zero_copy.getName(), zero_copy);
         for (IServiceProvider provider : providers) {
-            IService[] arr = provider.getLocalService(channel);
-            if (arr == null) continue;
-            for (IService service : arr) {
-                if (services.containsKey(service.getName())) continue;
-                services.put(service.getName(), service);
+            try {
+                IService[] arr = provider.getLocalService(channel);
+                if (arr == null) continue;
+                for (IService service : arr) {
+                    if (services.containsKey(service.getName())) continue;
+                    services.put(service.getName(), service);
+                }
+            }
+            catch (Throwable x) {
+                Protocol.log("Error calling TCF service provider", x);
             }
         }
     }
@@ -76,10 +82,15 @@ public class ServiceManager {
     public static synchronized void onChannelOpened(IChannel channel, Collection<String> service_names, Map<String,IService> services) {
         for (String name : service_names) {
             for (IServiceProvider provider : providers) {
-                IService service = provider.getServiceProxy(channel, name);
-                if (service == null) continue;
-                services.put(name, service);
-                break;
+                try {
+                    IService service = provider.getServiceProxy(channel, name);
+                    if (service == null) continue;
+                    services.put(name, service);
+                    break;
+                }
+                catch (Throwable x) {
+                    Protocol.log("Error calling TCF service provider", x);
+                }
             }
             if (services.containsKey(name)) continue;
             services.put(name, new GenericProxy(channel, name));
