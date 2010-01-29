@@ -240,6 +240,7 @@ public final class Protocol {
     /**
      * Logs the given message.
      * @see #setLogger
+     * This method can be invoked from any thread.
      * @param msg - log entry text
      * @param x - a Java exception associated with the log entry or null.
      */
@@ -391,6 +392,7 @@ public final class Protocol {
 
     /**
      * Register s service provider.
+     * This method can be invoked from any thread.
      * @param provider - IServiceProvider implementation
      */
     public static void addServiceProvider(IServiceProvider provider){
@@ -399,6 +401,7 @@ public final class Protocol {
 
     /**
      * Unregister s service provider.
+     * This method can be invoked from any thread.
      * @param provider - IServiceProvider implementation
      */
     public static void removeServiceProvider(IServiceProvider provider){
@@ -407,19 +410,19 @@ public final class Protocol {
 
     /**
      * Register s transport provider.
+     * This method can be invoked from any thread.
      * @param provider - ITransportProvider implementation
      */
     public static void addTransportProvider(ITransportProvider provider){
-        assert isDispatchThread();
         TransportManager.addTransportProvider(provider);
     }
 
     /**
      * Unregister s transport provider.
+     * This method can be invoked from any thread.
      * @param provider - ITransportProvider implementation
      */
     public static void removeTransportProvider(ITransportProvider provider){
-        assert isDispatchThread();
         TransportManager.removeTransportProvider(provider);
     }
 }

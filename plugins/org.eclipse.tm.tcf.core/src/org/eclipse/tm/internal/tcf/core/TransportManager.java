@@ -91,21 +91,28 @@ public class TransportManager {
     public static void addTransportProvider(ITransportProvider transport) {
         String name = transport.getName();
         assert name != null;
-        if (transports.get(name) != null) throw new Error("Already registered: " + name);
-        transports.put(name, transport);
+        synchronized (transports) {
+            if (transports.get(name) != null) throw new Error("Already registered: " + name);
+            transports.put(name, transport);
+        }
     }
 
     public static void removeTransportProvider(ITransportProvider transport) {
         String name = transport.getName();
         assert name != null;
-        if (transports.get(name) == transport) transports.remove(name);
+        synchronized (transports) {
+            if (transports.get(name) == transport) transports.remove(name);
+        }
     }
 
     public static IChannel openChannel(IPeer peer) {
         String name = peer.getTransportName();
         if (name == null) throw new Error("No transport name");
-        ITransportProvider transport = transports.get(name);
-        if (transport == null) throw new Error("Unknown transport name: " + name);
+        ITransportProvider transport = null;
+        synchronized (transports) {
+            transport = transports.get(name);
+            if (transport == null) throw new Error("Unknown transport name: " + name);
+        }
         return transport.openChannel(peer);
     }
 

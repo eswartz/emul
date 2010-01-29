@@ -46,18 +46,17 @@ public class ServiceManager {
                 return service;
             }
         });
-
     }
 
-    public static void addServiceProvider(IServiceProvider provider) {
+    public static synchronized void addServiceProvider(IServiceProvider provider) {
         providers.add(provider);
     }
 
-    public static void removeServiceProvider(IServiceProvider provider) {
+    public static synchronized void removeServiceProvider(IServiceProvider provider) {
         providers.remove(provider);
     }
 
-    public static void onChannelCreated(IChannel channel, Map<String,IService> services) {
+    public static synchronized void onChannelCreated(IChannel channel, Map<String,IService> services) {
         IService zero_copy = new IService() {
             public String getName() {
                 return "ZeroCopy";
@@ -74,7 +73,7 @@ public class ServiceManager {
         }
     }
 
-    public static void onChannelOpened(IChannel channel, Collection<String> service_names, Map<String,IService> services) {
+    public static synchronized void onChannelOpened(IChannel channel, Collection<String> service_names, Map<String,IService> services) {
         for (String name : service_names) {
             for (IServiceProvider provider : providers) {
                 IService service = provider.getServiceProxy(channel, name);
@@ -82,9 +81,8 @@ public class ServiceManager {
                 services.put(name, service);
                 break;
             }
-            if (!services.containsKey(name)) {
-                services.put(name, new GenericProxy(channel, name));
-            }
+            if (services.containsKey(name)) continue;
+            services.put(name, new GenericProxy(channel, name));
         }
     }
 }
