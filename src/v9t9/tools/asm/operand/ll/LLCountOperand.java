@@ -3,9 +3,10 @@
  */
 package v9t9.tools.asm.operand.ll;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.tools.asm.ResolveException;
-import v9t9.utils.Utils;
 
 /**
  * A shift count
@@ -23,7 +24,7 @@ public class LLCountOperand extends LLNonImmediateOperand {
 	
 	@Override
 	public String toString() {
-		return ">" + Utils.toHex4(count);
+		return ">" + HexUtils.toHex4(count);
 	}
 
 	@Override

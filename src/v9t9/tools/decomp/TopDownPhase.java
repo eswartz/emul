@@ -40,7 +40,6 @@ import v9t9.tools.llinst.Phase;
 import v9t9.tools.llinst.Routine;
 import v9t9.tools.llinst.RoutineOperand;
 import v9t9.tools.llinst.UnknownRoutine;
-import v9t9.utils.Check;
 
 /**
  * Top-down phase.  This looks at a known set of entry points
@@ -213,7 +212,7 @@ public class TopDownPhase extends Phase {
 								unresolvedBlocks.add(label.getBlock());
 							}
 						} else {
-							Check.checkState(false);
+							org.ejs.emul.core.utils.Check.checkState(false);
 						}
 					}
 				} else {
@@ -762,7 +761,7 @@ public class TopDownPhase extends Phase {
 					new AstRegisterExpression(inst.getWp(), mop1.val));
 
 		default:
-			Check.checkState(false);
+			org.ejs.emul.core.utils.Check.checkState(false);
 		}
 		return null;
 	}

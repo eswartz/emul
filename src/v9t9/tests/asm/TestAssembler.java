@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.Operand;
@@ -41,7 +43,6 @@ import v9t9.tools.asm.operand.hl.UnaryOperand;
 import v9t9.tools.asm.operand.ll.LLCountOperand;
 import v9t9.tools.asm.operand.ll.LLOperand;
 import v9t9.tools.llinst.ParseException;
-import v9t9.utils.Utils;
 
 public class TestAssembler extends BaseTest {
 
@@ -181,7 +182,7 @@ public class TestAssembler extends BaseTest {
 		
 		RawInstruction minst = InstructionTable.decodeInstruction(CPU.readWord(0), 0, CPU);
 		InstructionTable.coerceOperandTypes(minst);
-		System.out.println(minst + " = " + Utils.toHex4(minst.opcode));
+		System.out.println(minst + " = " + HexUtils.toHex4(minst.opcode));
 		
 		RawInstruction stdinst = createInstruction(0, minst.toString());
 		

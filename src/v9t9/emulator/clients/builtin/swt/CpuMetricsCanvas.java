@@ -3,10 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-
-import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;

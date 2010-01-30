@@ -17,7 +17,6 @@ import v9t9.tools.llinst.HighLevelInstruction;
 import v9t9.tools.llinst.Label;
 import v9t9.tools.llinst.MemoryRanges;
 import v9t9.tools.llinst.Routine;
-import v9t9.utils.Check;
 
 /**
  * An instance of this class stores all the known information 
@@ -233,7 +232,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 			inst = new HighLevelInstruction(0, getInstruction(addr));
 			llInstructions.put(addr, inst);
 		}
-		Check.checkState(inst != null);
+		org.ejs.emul.core.utils.Check.checkState((inst != null));
 		Block block = inst.getBlock();
 		if (block != null) {
 			Label label = labelMap.get(block);
@@ -250,7 +249,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 			inst = new HighLevelInstruction(0, getInstruction(addr));
 			llInstructions.put(addr, inst);
 		}
-		Check.checkState(inst != null);
+		org.ejs.emul.core.utils.Check.checkState((inst != null));
 		inst.flags |= HighLevelInstruction.fStartsBlock;
 		
 		Block block = inst.getBlock();

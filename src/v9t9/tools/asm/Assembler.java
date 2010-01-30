@@ -17,6 +17,8 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.DiskMemoryEntry;
@@ -30,7 +32,6 @@ import v9t9.tools.asm.transform.JumpFixer;
 import v9t9.tools.asm.transform.Simplifier;
 import v9t9.tools.llinst.MemoryRanges;
 import v9t9.tools.llinst.ParseException;
-import v9t9.utils.Utils;
 
 /**
  * @author ejs
@@ -385,8 +386,8 @@ public class Assembler {
 						if (inst instanceof LLInstruction) {
 							constPool.injectInstruction((LLInstruction) inst);
 						}
-						if (DEBUG>0) log.println(Utils.toHex4(inst.getPc()) + "\t\t" + 
-								Utils.padString(inst.toString(), 20) +"\t\t; " + asminst);
+						if (DEBUG>0) log.println(HexUtils.toHex4(inst.getPc()) + "\t\t" + 
+								HexUtils.padString(inst.toString(),20) +"\t\t; " + asminst);
 					}
 				} catch (ResolveException e) {
 					reportError(e, prevDescr, asminst.toString(), e.getMessage());
@@ -439,8 +440,8 @@ public class Assembler {
 			for (Map.Entry<IInstruction, IInstruction> entry : resolvedToAsmInstMap.entrySet()) {
 				IInstruction inst = entry.getKey();
 				IInstruction asmInst = entry.getValue();
-				log.println(Utils.toHex4(inst.getPc()) + "\t\t" + 
-						Utils.padString(inst.toString(), 20) +"\t\t; " + asmInst);
+				log.println(HexUtils.toHex4(inst.getPc()) + "\t\t" + 
+						HexUtils.padString(inst.toString(),20) +"\t\t; " + asmInst);
 			}
 		}
 		return insts;
@@ -538,14 +539,14 @@ public class Assembler {
 				if (prev == null || !prev.getFilename().equals(cur.getFilename())) {
 					curLines.append("*** " + cur.getFilename() + "\n");
 				}
-				curLines.append(Utils.padString("" + cur.getLine(), 5) + " ");
+				curLines.append(HexUtils.padString(("" + cur.getLine()),5) + " ");
 			} else {
-				curLines.append(Utils.padString("", 6));
+				curLines.append(HexUtils.padString("",6));
 			}
 			
 			if (pc >= 0) {
 				curLines.append('>');
-				curLines.append(Utils.toHex4(pc + offs));
+				curLines.append(HexUtils.toHex4((pc + offs)));
 				
 				curLines.append(offs < mem.length ? '=' : ' ');
 			} else {
@@ -558,14 +559,14 @@ public class Assembler {
 					// eat a word if we're aligned on a word
 					if (((pc + offs) & 1) == 0 && offs + 1 < mem.length) {
 						curLines.append('>');
-						curLines.append(Utils.toHex4(((mem[offs] & 0xff) << 8) | (mem[offs + 1] & 0xff)));
+						curLines.append(HexUtils.toHex4((((mem[offs] & 0xff) << 8) | (mem[offs + 1] & 0xff))));
 						offs += 2;
 						cnt -= 2;
 					} else {
 						if (offs + 1 < mem.length)
 							curLines.append("  ");
 						curLines.append('>');
-						curLines.append(Utils.toHex2(mem[offs] & 0xff));
+						curLines.append(HexUtils.toHex2((mem[offs] & 0xff)));
 							
 						offs++;
 						cnt--;
@@ -622,7 +623,7 @@ public class Assembler {
 		FileOutputStream fos = new FileOutputStream(entry.getSymbolFilepath());
 		PrintStream ps = new PrintStream(fos);
 		for (Symbol symbol : getSymbolTable().getSymbols()) {
-			ps.println(Utils.toHex4(symbol.getAddr()) + " " + symbol.getName());
+			ps.println(HexUtils.toHex4(symbol.getAddr()) + " " + symbol.getName());
 		}
 		ps.close();
 	}

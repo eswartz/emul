@@ -10,7 +10,6 @@ import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.Symbol;
-import v9t9.utils.Check;
 
 /**
  * A machine operand, as parsed from the instruction.
@@ -371,7 +370,7 @@ public class MachineOperand implements Operand {
 	public void convertToImmedate() {
 		if (type == OP_IMMED || type == OP_ADDR)	// hack
 			return;
-		Check.checkState(type == MachineOperand.OP_REG);
+		org.ejs.emul.core.utils.Check.checkState((type == MachineOperand.OP_REG));
 		type = OP_IMMED;
 		immed = (short) val;
 	}

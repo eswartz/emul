@@ -101,9 +101,12 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		//frame.setLayout(new FlowLayout());
 		awtContainer.setLayout(new Layout() {
 
+			Point lastSize;
+			
 			@Override
 			protected Point computeSize(Composite composite, int whint,
 					int hhint, boolean flushCache) {
+					
 				Component awtCanvas = getAwtCanvas();
 				
 				Point canvasSize = new Point(awtCanvas.getWidth(), awtCanvas.getHeight());
@@ -113,7 +116,9 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 				
 				// hmm, the window manager seems to do weird things now
 				
-				return new Point(width - (trim.width - width), height - (trim.height - height));
+				lastSize = new Point(width - (trim.width - width), height - (trim.height - height));
+				
+				return lastSize;
 				
 /*
 				Rectangle parentBounds = composite.getParent().getBounds();

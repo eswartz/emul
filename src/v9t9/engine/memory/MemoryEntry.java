@@ -13,8 +13,7 @@ import java.io.InputStreamReader;
 import java.util.TreeMap;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.HexUtils;
 
 /**
  * These enums and struct define a higher-level organization of the memory map,
@@ -143,7 +142,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
         if (name != null) {
 			return name;
 		}
-        return "[memory entry >" + Utils.toHex4(addr) + "..." + Utils.toHex4(addr+size) + "]";
+        return "[memory entry >" + HexUtils.toHex4(addr) + "..." + HexUtils.toHex4((addr+size)) + "]";
     }
 
     public void setArea(MemoryArea area) {

@@ -10,11 +10,11 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
-import v9t9.utils.Check;
-import v9t9.utils.Utils;
 
 /**
  * Instruction augmented with decompiler info
@@ -104,13 +104,13 @@ public class HighLevelInstruction extends Instruction {
     
      @Override
     public String toString() {
-        return Utils.toHex4(pc) + " " + super.toString();
+        return HexUtils.toHex4(pc) + " " + super.toString();
     }
     
     public String format(boolean showOpcodeAddr, boolean showComments) {
         String str = super.toString();
         if (showOpcodeAddr) {
-			str = ">" + Utils.toHex4(pc) + " " + str;
+			str = ">" + HexUtils.toHex4(pc) + " " + str;
 		}
         if (showComments) {
             String flagStr = getFlagString();
@@ -206,7 +206,7 @@ public class HighLevelInstruction extends Instruction {
 		} else if (op1 instanceof DataWordListOperand) {
 			
 		} else {
-			Check.checkState(false);
+			org.ejs.emul.core.utils.Check.checkState(false);
 		}
 		return blocks;
 	}

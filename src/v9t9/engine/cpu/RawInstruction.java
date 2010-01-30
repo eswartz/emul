@@ -6,8 +6,10 @@ import static v9t9.engine.cpu.InstructionTable.Imovb;
 import static v9t9.engine.cpu.InstructionTable.Isb;
 import static v9t9.engine.cpu.InstructionTable.Isocb;
 import static v9t9.engine.cpu.InstructionTable.Iszcb;
+
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.tools.asm.BaseInstruction;
-import v9t9.utils.Utils;
 public class RawInstruction extends BaseInstruction implements Comparable<RawInstruction> {
 
 	private String name;
@@ -161,7 +163,7 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 	}
 
 	public String toInfoString() {
-		return ">" + Utils.toHex4(pc) + " " + toString() + " @" + size;
+		return ">" + HexUtils.toHex4(pc) + " " + toString() + " @" + size;
 	}
 	
 	public boolean isByteOp() {

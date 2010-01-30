@@ -6,8 +6,7 @@
  */
 package v9t9.tools.llinst;
 
-import v9t9.utils.Check;
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.HexUtils;
 
 public class Label implements Comparable<Label> {
     private Block block;   // block owning label
@@ -16,7 +15,7 @@ public class Label implements Comparable<Label> {
     boolean named; // actually a real name
     
     public Label(Block block, String name) {
-    	Check.checkArg(block);
+    	org.ejs.emul.core.utils.Check.checkArg(block);
         this.block = block;
         setName(name);
     }
@@ -27,12 +26,12 @@ public class Label implements Comparable<Label> {
     }
 
     static private String uniqueName(Block block) {
-        return "L" + Utils.toHex4(block.getFirst().pc);
+        return "L" + HexUtils.toHex4(block.getFirst().pc);
     }
     
     @Override
     public String toString() {
-        return getName() + (!named ? " @>" + Utils.toHex4(block.getFirst().pc) : "");
+        return getName() + (!named ? " @>" + HexUtils.toHex4(block.getFirst().pc) : "");
     }
 
 	public int compareTo(Label o) {

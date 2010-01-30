@@ -153,7 +153,7 @@ public class V9t9 {
 	        		console.writeWord(a, memory[(a - 0x2000) / 2]);
 	        	}
 
-	    	} else if (false) {
+	    	} else if (true) {
 		    	
 		    	//loadBankedModuleRom("Jungle", "junglec.bin", "jungled.bin");
 	    		loadModuleRom("Alpiner", "alpinerc.bin");
@@ -163,10 +163,10 @@ public class V9t9 {
 	    		
 	    		loadModuleGrom("Parsec", "parsecg.bin");
 	    		loadModuleRom("Parsec", "parsecc.bin");
-	    		loadModuleGrom("TEII", "teiig.bin");
-	    		loadModuleRom("TEII", "teiic.bin");
 	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
 	    		loadModuleGrom("ExtBasic", "tiextg.bin");
+	    		loadModuleGrom("TEII", "teiig.bin");
+	    		loadModuleRom("TEII", "teiic.bin");
 	    	} else {
 		    	loadModuleRom("Logo", "logoc.bin");
 		    	loadModuleGrom("Logo", "logog.bin");

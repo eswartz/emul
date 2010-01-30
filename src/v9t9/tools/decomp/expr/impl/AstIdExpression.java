@@ -7,7 +7,6 @@ import v9t9.tools.decomp.expr.IAstExpression;
 import v9t9.tools.decomp.expr.IAstIdExpression;
 import v9t9.tools.decomp.expr.IAstName;
 import v9t9.tools.decomp.expr.IAstNode;
-import v9t9.utils.Check;
 
 /**
  * @author eswartz
@@ -59,7 +58,7 @@ public class AstIdExpression extends AstExpression implements IAstIdExpression {
      * @see v9t9.tools.decomp.expr.IAstIdExpression#setName(v9t9.tools.decomp.expr.IAstName)
      */
     public void setName(IAstName name) {
-        Check.checkArg(name);
+        org.ejs.emul.core.utils.Check.checkArg(name);
         if (this.name == null || !this.name.getName().equals(name.getName())) {
         	dirty = true;
         }

@@ -3,8 +3,9 @@
  */
 package v9t9.tools.asm;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.IInstruction;
-import v9t9.utils.Utils;
 
 /**
  * @author Ed
@@ -26,7 +27,7 @@ public abstract class BaseAssemblerInstruction extends BaseInstruction {
 	}
 
 	public String toInfoString() {
-		return ">" + Utils.toHex4(pc) + " " + toString();
+		return ">" + HexUtils.toHex4(pc) + " " + toString();
 	}
 
 	protected static final byte[] NO_BYTES = new byte[0];

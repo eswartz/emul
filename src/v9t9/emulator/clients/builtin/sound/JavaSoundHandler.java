@@ -208,7 +208,7 @@ public class JavaSoundHandler implements SoundHandler {
 
 		soundFormat = new AudioFormat(55930, 8, 2, true, false);
 		Line.Info slInfo = new DataLine.Info(SourceDataLine.class, soundFormat);
-		if (!AudioSystem.isLineSupported(slInfo)) {
+		if (true || !AudioSystem.isLineSupported(slInfo)) {
 			System.err.println("Line not supported: " + soundFormat);
 
 			soundFormat = new AudioFormat(44100, 8, 2, true, false);

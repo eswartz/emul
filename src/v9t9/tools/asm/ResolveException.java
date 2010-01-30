@@ -3,10 +3,11 @@
  */
 package v9t9.tools.asm;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.operand.ll.LLOperand;
-import v9t9.utils.Utils;
 
 /**
  * @author ejs
@@ -33,7 +34,7 @@ public class ResolveException extends Exception {
 	public ResolveException(IInstruction inst, LLOperand op1,
 			String string) {
 		this.op = op1;
-		this.string = string + ": >" + Utils.toHex4(inst.getPc()) + "=" + inst.toString();
+		this.string = string + ": >" + HexUtils.toHex4(inst.getPc()) + "=" + inst.toString();
 	}
 	@Override
 	public String toString() {

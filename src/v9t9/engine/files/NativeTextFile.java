@@ -11,15 +11,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import v9t9.utils.Check;
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.CompatUtils;
 
 public class NativeTextFile implements NativeFile {
 
     private File file;
 
     public NativeTextFile(File file) {
-        Check.checkArg(file);
+        org.ejs.emul.core.utils.Check.checkArg(file);
         this.file = file;
     }
 
@@ -44,8 +43,8 @@ public class NativeTextFile implements NativeFile {
         int size = (int) file.length() - offset;
         size = Math.min(size, length);
         
-        Check.checkArg(size < (long)Integer.MAX_VALUE);
-        Utils.skipFully(fis, offset);
+        org.ejs.emul.core.utils.Check.checkArg((size < (long)Integer.MAX_VALUE));
+        CompatUtils.skipFully(fis, offset);
         int ret = fis.read(contents, contentOffset, size);
         fis.close();
         return ret;

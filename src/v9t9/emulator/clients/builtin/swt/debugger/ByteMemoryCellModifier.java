@@ -6,8 +6,7 @@ package v9t9.emulator.clients.builtin.swt.debugger;
 import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.widgets.Item;
-
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.HexUtils;
 
 class ByteMemoryCellModifier implements ICellModifier {
 	private StructuredViewer viewer;
@@ -49,7 +48,7 @@ class ByteMemoryCellModifier implements ICellModifier {
 		
 		try {
 			int offset = Integer.parseInt(property, 16);
-			return Utils.toHex2(row.getByte(offset));
+			return HexUtils.toHex2(row.getByte(offset));
 		} catch (NumberFormatException e) {
 			return null;
 		}

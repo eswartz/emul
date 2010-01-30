@@ -6,10 +6,8 @@ package v9t9.emulator.clients.builtin.swt.debugger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.TreeSet;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.FontDescriptor;
@@ -31,7 +29,6 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseTrackAdapter;
-import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
@@ -51,13 +48,14 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.ejs.emul.core.utils.CompatUtils;
+import org.ejs.emul.core.utils.HexUtils;
 
 import v9t9.emulator.hardware.V9t9;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryListener;
-import v9t9.utils.Utils;
 
 /**
  * @author Ed
@@ -171,7 +169,7 @@ public class MemoryViewer extends Composite {
 		public String getText(Object element) {
 			MemoryEntry entry = (MemoryEntry) element;
 			return entry.getName() + " (" 
-				+ entry.getDomain().getName() + " >" + Utils.toHex4(entry.addr + entry.addrOffset) + ")";
+				+ entry.getDomain().getName() + " >" + HexUtils.toHex4((entry.addr + entry.addrOffset)) + ")";
 		}
 	}
 	protected void createTable() {
@@ -280,7 +278,7 @@ public class MemoryViewer extends Composite {
 		props[17] = "0123456789ABCDEF";
 		new TableColumn(table, SWT.CENTER).setText(props[17]);
 		
-		FontDescriptor fontDescriptor = Utils.getFontDescriptor(JFaceResources.getTextFont());
+		FontDescriptor fontDescriptor = CompatUtils.getFontDescriptor(JFaceResources.getTextFont());
 		fontDescriptor = fontDescriptor.increaseHeight(-2);
 		tableFont = fontDescriptor.createFont(getDisplay());
 		table.setFont(tableFont);
@@ -327,7 +325,7 @@ public class MemoryViewer extends Composite {
 							int addr = row.getAddress() + i;
 							
 							// see if the address's symbol is known
-							String descr = ">" + Utils.toHex4(addr);
+							String descr = ">" + HexUtils.toHex4(addr);
 							String symbol = getSymbolFor(range, addr);
 							if (symbol != null) {
 								descr += " = " + symbol;
@@ -344,7 +342,7 @@ public class MemoryViewer extends Composite {
 							addr = range.getEntry().flatReadWord(addr);
 							symbol = getSymbolFor(range, addr);
 							if (symbol != null) {
-								descr += "\n= >" + Utils.toHex4(addr) + " = " + symbol;
+								descr += "\n= >" + HexUtils.toHex4(addr) + " = " + symbol;
 							}
 							
 							table.setToolTipText(descr);

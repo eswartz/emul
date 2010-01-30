@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.CompatUtils;
 
 
 /**
@@ -91,7 +91,7 @@ public class DataFiles {
      
         /* read the chunk */
         FileInputStream stream = new FileInputStream(file);
-        Utils.skipFully(stream, offset);
+        CompatUtils.skipFully(stream, offset);
         stream.read(result, 0, Math.min(size, result.length));
         stream.close();
         

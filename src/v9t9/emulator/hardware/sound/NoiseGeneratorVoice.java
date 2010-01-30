@@ -4,8 +4,7 @@
 package v9t9.emulator.hardware.sound;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.PrefUtils;
 
 public class NoiseGeneratorVoice extends ClockedSoundVoice
 {
@@ -102,6 +101,6 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 	@Override
 	public void loadState(IDialogSettings settings) {
 		super.loadState(settings);
-		ns1 = Utils.readSavedInt(settings, "Shifter");
+		ns1 = PrefUtils.readSavedInt(settings, "Shifter");
 	}
 }

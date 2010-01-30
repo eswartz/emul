@@ -9,7 +9,6 @@ package v9t9.engine.memory;
 import java.io.IOException;
 
 import v9t9.engine.files.NativeFile;
-import v9t9.utils.Check;
 
 public class NativeFileMemoryEntry extends MemoryEntry {
 
@@ -24,7 +23,7 @@ public class NativeFileMemoryEntry extends MemoryEntry {
             MemoryDomain domain, 
             NativeFile file, int fileoffs, int filesize) {
         super(name, domain, addr, size, area);
-        Check.checkArg(file);
+        org.ejs.emul.core.utils.Check.checkArg(file);
         this.file = file;
         this.fileoffs = fileoffs;
         this.filesize = filesize;

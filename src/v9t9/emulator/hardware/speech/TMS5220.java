@@ -6,6 +6,9 @@ package v9t9.emulator.hardware.speech;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import org.ejs.emul.core.utils.BinaryUtils;
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.speech.LPCSpeech.Fetcher;
 import v9t9.emulator.hardware.speech.LPCSpeech.Sender;
@@ -15,7 +18,6 @@ import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.settings.Setting;
 import v9t9.engine.timer.FastTimer;
 import v9t9.engine.timer.FastTimerTask;
-import v9t9.utils.Utils;
 
 /**
  * @author ejs
@@ -110,7 +112,7 @@ public class TMS5220 implements Fetcher, Sender {
 	}
 
 	public void write(byte val) {
-		Logging.writeLogLine(2, settingLogSpeech, "speech write: " + Utils.toHex2(val&0xff));
+		Logging.writeLogLine(2, settingLogSpeech, "speech write: " + HexUtils.toHex2((val&0xff)));
 		if ((gate & GT_WCMD) != 0)
 			command(val);
 		else
@@ -127,7 +129,7 @@ public class TMS5220 implements Fetcher, Sender {
 			gate = (gate & ~GT_RDAT) | GT_RSTAT;
 			ret = data;
 		}
-		Logging.writeLogLine(3, settingLogSpeech, "Speech read: " + Utils.toHex2(ret));
+		Logging.writeLogLine(3, settingLogSpeech, "Speech read: " + HexUtils.toHex2(ret));
 		return ret;
 	}
 
@@ -135,8 +137,8 @@ public class TMS5220 implements Fetcher, Sender {
 		command = (byte) (cmd & 0x70);
 		if (Logging.getLog(3, settingLogSpeech) != null) {
 			Logging.writeLogLine(3, settingLogSpeech,
-				"Cmd="+Utils.toHex2(cmd)+"  Status: " + 
-				Utils.toHex2(status));
+				"Cmd="+HexUtils.toHex2(cmd)+"  Status: " + 
+				HexUtils.toHex2(status));
 		}
 		switch (command) {
 		case 0x00:
@@ -176,7 +178,7 @@ public class TMS5220 implements Fetcher, Sender {
 		addr++;
 		//
 		Logging.writeLogLine(2, settingLogSpeech,
-				"Speech memory "+Utils.toHex4(addr)+" = " + Utils.toHex2(data));
+				"Speech memory "+HexUtils.toHex4(addr)+" = " + HexUtils.toHex2(data));
 		return data;
 	}
 
@@ -196,7 +198,7 @@ public class TMS5220 implements Fetcher, Sender {
 		addr_pos = (addr_pos + 1) % 5;
 		addr = (addr >> 4) | (nybble << 16);
 		Logging.writeLogLine(3, settingLogSpeech,
-				"Speech addr: "+Utils.toHex4(addr));
+				"Speech addr: "+HexUtils.toHex4(addr));
 	}
 
 	private void readAndBranch()
@@ -222,7 +224,7 @@ public class TMS5220 implements Fetcher, Sender {
 	private void speak()
 	{
 		Logging.writeLogLine(1, settingLogSpeech,
-				"Speaking phrase at "+Utils.toHex4(addr));
+				"Speaking phrase at "+HexUtils.toHex4(addr));
 
 		//demo_record_event(demo_type_speech, demo_speech_starting);
 
@@ -260,10 +262,10 @@ public class TMS5220 implements Fetcher, Sender {
 
 	
 	private void writeFIFO(byte val) {
-		fifo[in] = Utils.swapbits(val);
+		fifo[in] = BinaryUtils.swapbits(val);
 		in = (byte) ((in + 1) & 15);
 		Logging.writeLogLine(3, settingLogSpeech,
-				"FIFO write: "+Utils.toHex2(val)+"; len = " +len);
+				"FIFO write: "+HexUtils.toHex2(val)+"; len = " +len);
 
 		//logger(_L | L_3, _("FIFO write: %02X  len=%d\n"), val, len);
 		if (len < 16)
@@ -282,7 +284,7 @@ public class TMS5220 implements Fetcher, Sender {
 		int         ret = fifo[out] & 0xff;
 
 		Logging.writeLogLine(3, settingLogSpeech,
-				"FIFO read: "+Utils.toHex2(ret)+"; len = " + len);
+				"FIFO read: "+HexUtils.toHex2(ret)+"; len = " + len);
 
 		if (len == 0) {
 			status |= SS_BE;

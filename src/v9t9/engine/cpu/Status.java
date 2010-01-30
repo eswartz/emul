@@ -6,7 +6,7 @@
  */
 package v9t9.engine.cpu;
 
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.HexUtils;
 
 
 /**
@@ -67,7 +67,7 @@ public class Status {
     		+ ((bits & Status.ST_O) != 0 ? "O" : " ")
     		+ ((bits & Status.ST_P) != 0 ? "P" : " ")
     		+ ((bits & Status.ST_X) != 0 ? "X" : " ")
-    		+ (Utils.toHex2(bits & 0xf));
+    		+ (HexUtils.toHex2((bits & 0xf)));
     }
     public void copyTo(Status copy) {
         copy.lastval = lastval;

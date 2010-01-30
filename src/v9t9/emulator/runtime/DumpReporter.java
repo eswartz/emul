@@ -5,10 +5,11 @@ package v9t9.emulator.runtime;
 
 import java.io.PrintWriter;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.emulator.hardware.TI994A;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionWorkBlock;
-import v9t9.utils.Utils;
 
 /**
  * @author ejs
@@ -33,19 +34,19 @@ public class DumpReporter implements InstructionListener {
 		Instruction ins = before.inst;
 		if (cpu.getMachine() instanceof TI994A) {
 		    TI994A ti = (TI994A) cpu.getMachine();
-		    dump.println(Utils.toHex4(ins.pc) 
+		    dump.println(HexUtils.toHex4(ins.pc) 
 		            + " "
 		            //+ Utils.toHex4(cpu.getWP())
 		            //+ " "
-		            + Utils.toHex4(cpu.getStatus().flatten())
+		            + HexUtils.toHex4(cpu.getStatus().flatten())
 		            + " "
-		            + Utils.toHex4(ti.getVdpMmio().getAddr())
+		            + HexUtils.toHex4(ti.getVdpMmio().getAddr())
 		            + " "
-		            + Utils.toHex4(ti.getGplMmio().getAddr()));
+		            + HexUtils.toHex4(ti.getGplMmio().getAddr()));
 		} else {
-		    dump.println(Utils.toHex4(ins.pc) 
+		    dump.println(HexUtils.toHex4(ins.pc) 
 		            + " "
-		            + Utils.toHex4(cpu.getStatus().flatten())
+		            + HexUtils.toHex4(cpu.getStatus().flatten())
 		    );
 		    
 		}

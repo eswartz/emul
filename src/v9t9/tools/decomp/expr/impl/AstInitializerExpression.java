@@ -6,7 +6,6 @@ package v9t9.tools.decomp.expr.impl;
 import v9t9.tools.decomp.expr.IAstExpression;
 import v9t9.tools.decomp.expr.IAstInitializerExpression;
 import v9t9.tools.decomp.expr.IAstNode;
-import v9t9.utils.Check;
 
 /**
  * @author eswartz
@@ -36,7 +35,7 @@ public class AstInitializerExpression extends AstInitializer implements
      * @see v9t9.tools.decomp.expr.IAstInitializerExpression#setExpression(v9t9.tools.decomp.expr.IAstExpression)
      */
     public void setExpression(IAstExpression expr) {
-        Check.checkArg(expr);
+        org.ejs.emul.core.utils.Check.checkArg(expr);
         if (this.expr != null) {
 			this.expr.setParent(null);
 		}

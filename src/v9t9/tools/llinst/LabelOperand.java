@@ -11,14 +11,13 @@ import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
-import v9t9.utils.Check;
 
 public class LabelOperand implements Operand {
 
     public Label label;
 
     public LabelOperand(Label label) {
-    	Check.checkArg(label);
+    	org.ejs.emul.core.utils.Check.checkArg(label);
         this.label = label;
     }
     

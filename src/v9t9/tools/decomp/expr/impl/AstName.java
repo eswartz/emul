@@ -6,7 +6,6 @@ package v9t9.tools.decomp.expr.impl;
 import v9t9.tools.decomp.expr.IAstName;
 import v9t9.tools.decomp.expr.IAstNode;
 import v9t9.tools.decomp.expr.IScope;
-import v9t9.utils.Check;
 
 /**
  * @author eswartz
@@ -80,7 +79,7 @@ public class AstName extends AstNode implements IAstName {
      * @see v9t9.tools.decomp.expr.IAstName#setName(java.lang.String)
      */
     public void setName(String name) {
-        Check.checkArg(name);
+        org.ejs.emul.core.utils.Check.checkArg(name);
         this.name = name;
         this.dirty = true;
     }

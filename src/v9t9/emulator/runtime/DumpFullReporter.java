@@ -5,12 +5,13 @@ package v9t9.emulator.runtime;
 
 import java.io.PrintWriter;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.utils.Utils;
 
 /**
  * @author ejs
@@ -45,7 +46,7 @@ public class DumpFullReporter implements InstructionListener {
 			name = entry.lookupSymbol((short) ins.pc);
 		if (name != null)
 			dumpfull.println('"' + name + "\" ");
-		dumpfull.print(Utils.toHex4(ins.pc) + ": "
+		dumpfull.print(HexUtils.toHex4(ins.pc) + ": "
 		        + ins.toString() + " ==> ");
 	}
 	private void dumpFullMid(InstructionWorkBlock iinstructionWorkBlock,

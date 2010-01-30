@@ -3,12 +3,13 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.utils.Utils;
 
 /**
  * V9938 video chip support.  This functions as a superset of the TMS9918A.
@@ -861,10 +862,10 @@ public class VdpV9938 extends VdpTMS9918A {
 		statusvec[2] = 0;
 		
 		if (vdplog != null)
-			log("MSX command " + Utils.toHex2(cmdState.cmd)
-					+ " arg=" + Utils.toHex2(cmdState.arg) 
-					+ " op=" + Utils.toHex2(cmdState.op)
-				+ " clr=" + Utils.toHex2(cmdState.clr)
+			log("MSX command " + HexUtils.toHex2(cmdState.cmd)
+					+ " arg=" + HexUtils.toHex2(cmdState.arg) 
+					+ " op=" + HexUtils.toHex2(cmdState.op)
+				+ " clr=" + HexUtils.toHex2(cmdState.clr)
 				+ " DX,DY= " + cmdState.dx + "," + cmdState.dy +"; NX,NY=" + cmdState.nx +","+ cmdState.ny);
 	}
 	/**

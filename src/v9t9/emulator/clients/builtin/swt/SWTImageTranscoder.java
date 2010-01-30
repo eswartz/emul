@@ -1,11 +1,15 @@
 package v9t9.emulator.clients.builtin.swt;
 
-import org.apache.batik.transcoder.*;
+import java.awt.image.BufferedImage;
+
+import org.apache.batik.transcoder.TranscoderException;
+import org.apache.batik.transcoder.TranscoderOutput;
+import org.apache.batik.transcoder.TranscodingHints;
 import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.batik.transcoder.keys.BooleanKey;
-import org.eclipse.swt.graphics.*;
-
-import java.awt.image.BufferedImage;
+import org.eclipse.swt.graphics.Device;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
 
 /**
  * This class transcodes the output from the transcoder 

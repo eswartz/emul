@@ -3,7 +3,6 @@
  */
 package v9t9.tests.video.speed;
 
-import com.trolltech.qt.gui.QApplication;
 
 
 

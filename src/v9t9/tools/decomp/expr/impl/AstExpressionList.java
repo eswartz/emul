@@ -9,7 +9,6 @@ import java.util.List;
 import v9t9.tools.decomp.expr.IAstExpression;
 import v9t9.tools.decomp.expr.IAstExpressionList;
 import v9t9.tools.decomp.expr.IAstNode;
-import v9t9.utils.Check;
 
 /**
  * @author eswartz
@@ -38,8 +37,8 @@ public class AstExpressionList extends AstNode implements IAstExpressionList {
      * @see v9t9.tools.decomp.expr.IAstExpressionList#addExpression(v9t9.tools.decomp.expr.IAstExpression)
      */
     public void addExpression(IAstExpression expr) {
-        Check.checkArg(expr);
-        Check.checkArg(!nodes.contains(expr));
+        org.ejs.emul.core.utils.Check.checkArg(expr);
+        org.ejs.emul.core.utils.Check.checkArg((!nodes.contains(expr)));
         nodes.add(expr);
         expr.setParent(this);
         dirty = true;

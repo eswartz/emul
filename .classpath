@@ -2,12 +2,6 @@
 <classpath>
 	<classpathentry kind="lib" path="/sdljava/lib/sdljava.jar"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry excluding="api/" kind="src" path="Base64-2.2.2"/>
-	<classpathentry kind="src" path="HRTimer/src">
-		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="V9t9j/HRTimer"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/getopt"/>

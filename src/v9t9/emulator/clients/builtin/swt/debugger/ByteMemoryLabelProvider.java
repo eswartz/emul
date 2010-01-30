@@ -8,8 +8,7 @@ import org.eclipse.jface.viewers.ITableColorProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
-
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.HexUtils;
 
 class ByteMemoryLabelProvider extends BaseLabelProvider implements ITableLabelProvider, ITableColorProvider {
 	private Color changedMemoryBackground;
@@ -26,9 +25,9 @@ class ByteMemoryLabelProvider extends BaseLabelProvider implements ITableLabelPr
 	public String getColumnText(Object element, int columnIndex) {
 		MemoryRow row = (MemoryRow)element;
 		if (columnIndex == 0)
-			return Utils.toHex4(row.getAddress());
+			return HexUtils.toHex4(row.getAddress());
 		else if (columnIndex <= 16)
-			return Utils.toHex2(row.getByte(columnIndex - 1));
+			return HexUtils.toHex2(row.getByte(columnIndex - 1));
 		else {
 			StringBuilder builder = new StringBuilder();
 			for (int i = 0; i < 16; i++) {

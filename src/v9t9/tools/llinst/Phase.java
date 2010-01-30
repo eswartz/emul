@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.decomp.IDecompileInfo;
-import v9t9.utils.Check;
-import v9t9.utils.Utils;
 
 public abstract class Phase {
 	protected Map<Integer, Block> blocks;
@@ -201,7 +201,7 @@ public abstract class Phase {
 	 * @return same incoming routine, updated with a label and added to the routines
 	 */
 	public Routine addRoutine(int addr, String name, Routine routine) {
-		Check.checkState(validCodeAddress(addr));
+		org.ejs.emul.core.utils.Check.checkState(validCodeAddress(addr));
 		
 		Label label = decompileInfo.findOrCreateLabel(addr);
 		if (name != null && label.getName() == null) {
@@ -224,7 +224,7 @@ public abstract class Phase {
 			MemoryRange range = decompileInfo.getMemoryRanges().getRangeContaining(addr - 1);
 			if (range == null) {
 				System.err.println("!!! Can't find range containing >"
-						+ Utils.toHex4(addr - 1));
+						+ HexUtils.toHex4((addr - 1)));
 				continue;
 			}
 
@@ -251,7 +251,7 @@ public abstract class Phase {
 				addr = CPU.readWord(addr + 2);
 				if (validCodeAddress(addr)) {
 					System.out.println("Adding label " + name + " at >"
-							+ Utils.toHex4(addr));
+							+ HexUtils.toHex4(addr));
 					addRoutine(addr, name, new ContextSwitchRoutine(wp));
 				}
 			}
@@ -263,7 +263,7 @@ public abstract class Phase {
 		for (int addr = 0; addr < 0x10000; addr += 0x2000) {
 			if (CPU.readByte(addr) == (byte) 0xaa) {
 				System.out.println("Scanning standard header at >"
-						+ Utils.toHex4(addr));
+						+ HexUtils.toHex4(addr));
 				int paddr = CPU.readWord(addr + 4);
 				addProgramList(paddr);
 				paddr = CPU.readWord(addr + 6);
@@ -302,7 +302,7 @@ public abstract class Phase {
 				&& (addr & 1) == 0
 				&& validCodeAddress(addr)) {
 			System.out.println("Adding " + name + " vector at >"
-					+ Utils.toHex4(addr));
+					+ HexUtils.toHex4(addr));
 			Routine routine = addRoutine(addr, name, new ContextSwitchRoutine(
 					wp));
 			return routine;

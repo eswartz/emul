@@ -3,11 +3,12 @@
  */
 package v9t9.tools.asm.operand.ll;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.operand.hl.AssemblerOperand;
-import v9t9.utils.Utils;
 
 /**
  * @author Ed
@@ -24,7 +25,7 @@ public class LLAddrOperand extends LLOperand implements Operand {
 	
 	@Override
 	public String toString() {
-		return "@>" + Utils.toHex4(address);
+		return "@>" + HexUtils.toHex4(address);
 	}
 
 	@Override

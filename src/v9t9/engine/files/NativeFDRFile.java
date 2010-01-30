@@ -11,8 +11,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import v9t9.utils.Check;
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.CompatUtils;
 
 public class NativeFDRFile implements NativeFile {
 
@@ -21,8 +20,8 @@ public class NativeFDRFile implements NativeFile {
     private String filename;
     
     public NativeFDRFile(File file, FDR fdr) {
-        Check.checkArg(file);
-        Check.checkArg(fdr);
+        org.ejs.emul.core.utils.Check.checkArg(file);
+        org.ejs.emul.core.utils.Check.checkArg(fdr);
         this.file = file;
         this.fdr = fdr;
         this.filename = fdr.getFileName();
@@ -42,7 +41,7 @@ public class NativeFDRFile implements NativeFile {
 
     public int readContents(byte[] contents, int contentOffset, int offset, int length) throws IOException {
         FileInputStream fis = new FileInputStream(file);
-        Utils.skipFully(fis, fdr.getFDRSize() + offset);
+        CompatUtils.skipFully(fis, (fdr.getFDRSize() + offset));
         int size = Math.min(fdr.getFileSize(), length);
         int read = fis.read(contents, contentOffset, size);
         fis.close();

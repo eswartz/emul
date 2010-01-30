@@ -45,6 +45,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.emul.core.utils.PrefUtils;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
@@ -58,7 +59,6 @@ import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
-import v9t9.utils.Utils;
 
 /**
  * Provide the emulator in an SWT window
@@ -179,7 +179,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			public void run() {
 				DialogSettings applicationSettings = EmulatorSettings.getInstance().getApplicationSettings();
 				
-				int zoom = Utils.readSavedInt(applicationSettings, "ZoomLevel");
+				int zoom = PrefUtils.readSavedInt(applicationSettings, "ZoomLevel");
 				if (zoom > 0) {
 					videoRenderer.setZoom(zoom);
 				}
@@ -449,20 +449,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		String boundsStr = EmulatorSettings.getInstance().getApplicationSettings().get(boundsPref);
 		if (boundsStr != null) {
-			String[] parts = boundsStr.split("\\|");
-			try {
-				Rectangle savedBounds = new Rectangle(
-						Integer.parseInt(parts[0]),
-						Integer.parseInt(parts[1]),
-						Integer.parseInt(parts[2]),
-						Integer.parseInt(parts[3]));
-				
+			Rectangle savedBounds = PrefUtils.readBoundsString(boundsStr);
+			if (savedBounds != null)
 				shell.setBounds(savedBounds);
-			} catch (ArrayIndexOutOfBoundsException e) {
-				
-			} catch (NumberFormatException e) {
-				
-			}
 		}
 		
 		shell.addControlListener(new ControlAdapter() {
@@ -477,7 +466,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
 				Rectangle bounds = shell.getBounds();
-				String boundsStr = bounds.x + "|" + bounds.y + "|" + bounds.width + "|" + bounds.height;
+				String boundsStr = PrefUtils.writeBoundsString(bounds);
 				EmulatorSettings.getInstance().getApplicationSettings().put(boundsPref, boundsStr);
 			}
 		});
@@ -923,4 +912,5 @@ public class SwtWindow extends BaseEmulatorWindow {
 		String dirname = dialog.open();
 		return dirname;
 	}
+
 }

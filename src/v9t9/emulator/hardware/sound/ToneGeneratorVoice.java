@@ -4,8 +4,7 @@
 package v9t9.emulator.hardware.sound;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.PrefUtils;
 
 public class ToneGeneratorVoice extends ClockedSoundVoice
 {
@@ -105,7 +104,7 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 	@Override
 	public void loadState(IDialogSettings settings) {
 		super.loadState(settings);
-		out = Utils.readSavedBoolean(settings, "Out");
+		out = PrefUtils.readSavedBoolean(settings, "Out");
 	}
 	
 	@Override

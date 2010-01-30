@@ -38,6 +38,7 @@ import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.TABLESWITCH;
 import org.apache.bcel.generic.Type;
+import org.ejs.emul.core.utils.HexUtils;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
@@ -50,7 +51,6 @@ import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.settings.Setting;
-import v9t9.utils.Utils;
 
 /**
  * This class compiles 9900 code into Java bytecode. 
@@ -362,7 +362,7 @@ public class Compiler {
         Integer instInt = new Integer(ins.inst);
         if (!instSet.contains(instInt)) {
             System.out.println("first use of " + ins.getName() + " at "
-                    + v9t9.utils.Utils.toHex4(ins.pc));
+                    + HexUtils.toHex4(ins.pc));
             instSet.add(instInt);
         }
 
@@ -398,7 +398,7 @@ public class Compiler {
         */
         
         // TODO debug
-        ilist.append(new PUSH(info.pgen, Utils.toHex4(ins.pc) + " "
+        ilist.append(new PUSH(info.pgen, HexUtils.toHex4(ins.pc) + " "
                 + ins.toString()));
         ilist.append(InstructionConstants.POP);
 

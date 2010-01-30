@@ -7,7 +7,6 @@ import v9t9.tools.decomp.expr.IAstBinaryExpression;
 import v9t9.tools.decomp.expr.IAstExpression;
 import v9t9.tools.decomp.expr.IAstIntegralExpression;
 import v9t9.tools.decomp.expr.IAstNode;
-import v9t9.utils.Check;
 
 /**
  * @author eswartz
@@ -86,7 +85,7 @@ public class AstBinaryExpression extends AstExpression implements
             opText = '^';
             break;
         default:
-            Check.checkState(false);
+            org.ejs.emul.core.utils.Check.checkState(false);
         }
         return Character.toString(opText);
     }
@@ -102,7 +101,7 @@ public class AstBinaryExpression extends AstExpression implements
      * @see v9t9.tools.decomp.expr.IAstBinaryExpression#setOperator(int)
      */
     public void setOperator(int operator) {
-        Check.checkArg(operator >= 0 && operator <= K_LAST);
+        org.ejs.emul.core.utils.Check.checkArg((operator >= 0 && operator <= K_LAST));
         this.operator = operator;
         dirty = true;
     }
@@ -118,7 +117,7 @@ public class AstBinaryExpression extends AstExpression implements
      * @see v9t9.tools.decomp.expr.IAstBinaryExpression#setLeftOperand(v9t9.tools.decomp.expr.IAstExpression)
      */
     public void setLeftOperand(IAstExpression expr) {
-        Check.checkArg(expr);
+        org.ejs.emul.core.utils.Check.checkArg(expr);
         if (this.left != null) {
 			this.left.setParent(null);
 		}
@@ -138,7 +137,7 @@ public class AstBinaryExpression extends AstExpression implements
      * @see v9t9.tools.decomp.expr.IAstBinaryExpression#setRightOperand(v9t9.tools.decomp.expr.IAstExpression)
      */
     public void setRightOperand(IAstExpression expr) {
-        Check.checkArg(expr);
+        org.ejs.emul.core.utils.Check.checkArg(expr);
         if (this.right != null) {
 			this.right.setParent(null);
 		}

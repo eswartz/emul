@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.emul.core.utils.HexUtils;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
@@ -28,7 +29,6 @@ import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
-import v9t9.utils.Utils;
 
 /**
  * This is the 99/4A VDP chip.
@@ -199,7 +199,7 @@ public class VdpTMS9918A implements VdpHandler {
     	byte old = vdpregs[reg];
     	vdpregs[reg] = val;
     	
-   		log("register " + reg + " " + Utils.toHex2(old) + " -> " + Utils.toHex2(val));
+   		log("register " + reg + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(val));
     	
     	int         redraw = doWriteVdpReg(reg, old, val);
 
@@ -684,7 +684,7 @@ public class VdpTMS9918A implements VdpHandler {
 	public void saveState(IDialogSettings section) {
 		String[] regState = new String[vdpregs.length];
 		for (int i = 0; i < vdpregs.length; i++) {
-			regState[i] = Utils.toHex2(vdpregs[i]);
+			regState[i] = HexUtils.toHex2(vdpregs[i]);
 		}
 		section.put("Registers", regState);
 		settingDumpVdpAccess.saveState(section);

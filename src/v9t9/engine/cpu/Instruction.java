@@ -7,8 +7,9 @@
 package v9t9.engine.cpu;
 
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.utils.Check;
 
 /**
  * Implementation of a 9900 instruction which handles most details except executing it.
@@ -202,12 +203,12 @@ public class Instruction extends RawInstruction implements IInstruction {
 	    // the operand, making this.op?.val and this.op?.ea valid.
 	
 	    if (inst == InstructionTable.Idata) {
-	        Check.checkArg(mop1.type == MachineOperand.OP_IMMED);
-	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_IMMED));
+	        org.ejs.emul.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        Pc -= 2;
 	        this.cycles += 6;
 	    } else if (inst >= InstructionTable.Ili && inst <= InstructionTable.Ici) {
-	        Check.checkArg(mop1.type == MachineOperand.OP_REG);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_REG));
 	        mop2.convertToImmedate();
 	        mop1.dest = MachineOperand.OP_DEST_TRUE;
 	        switch (inst) {
@@ -236,33 +237,33 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        }
 	
 	    } else if (inst == InstructionTable.Istwp) {
-	        Check.checkArg(mop1.type == MachineOperand.OP_REG);
-	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_REG));
+	        org.ejs.emul.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        mop1.dest = MachineOperand.OP_DEST_KILLED;
 	        this.reads |= INST_RSRC_WP;
 	        this.cycles += 8;
 	    } else if (inst == InstructionTable.Istst) {
-	        Check.checkArg(mop1.type == MachineOperand.OP_REG);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_REG));
 	        this.reads |= INST_RSRC_ST;
 	        this.stReads = 0xffff;
 	        mop1.dest = MachineOperand.OP_DEST_KILLED;
 	        
-	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
+	        org.ejs.emul.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        mop2.type = MachineOperand.OP_STATUS;
 	        this.cycles += 8;
 	    } else if (inst == InstructionTable.Ilwpi) {
-	        Check.checkArg(mop1.type == MachineOperand.OP_IMMED);
-	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_IMMED));
+	        org.ejs.emul.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        this.writes |= INST_RSRC_WP;
 	        this.cycles += 10;
 	    } else if (inst == InstructionTable.Ilimi) {
-	        Check.checkArg(mop1.type == MachineOperand.OP_IMMED);
-	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_IMMED));
+	        org.ejs.emul.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        this.stsetAfter = Instruction.st_INT;
 	        this.cycles += 16;
 	    } else if (inst >= InstructionTable.Iidle && inst <= InstructionTable.Ilrex) {
-	        Check.checkArg(mop1.type == MachineOperand.OP_NONE);
-	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_NONE));
+	        org.ejs.emul.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        switch (inst) {
 	        case InstructionTable.Iidle:
 	            this.writes |= INST_RSRC_IO;
@@ -296,9 +297,9 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        }
 	
 	    } else if (inst >= InstructionTable.Iblwp && inst <= InstructionTable.Iabs) {
-	        Check.checkArg(mop1.type != MachineOperand.OP_NONE
-	                && mop1.type != MachineOperand.OP_IMMED);
-	        Check.checkArg(mop2.type == MachineOperand.OP_NONE);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type != MachineOperand.OP_NONE
+			&& mop1.type != MachineOperand.OP_IMMED));
+	        org.ejs.emul.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        mop1.dest = MachineOperand.OP_DEST_TRUE;
 	
 	        switch (inst) {
@@ -388,8 +389,8 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        }
 	
 	    } else if (inst >= InstructionTable.Isra && inst <= InstructionTable.Isrc) {
-	        Check.checkArg(mop1.type == MachineOperand.OP_REG);
-	        Check.checkArg(mop2.type == MachineOperand.OP_IMMED || mop2.type == MachineOperand.OP_CNT);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type == MachineOperand.OP_REG));
+	        org.ejs.emul.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_IMMED || mop2.type == MachineOperand.OP_CNT));
 	        mop1.dest = MachineOperand.OP_DEST_TRUE;
 	        mop2.type = MachineOperand.OP_CNT;
 	
@@ -424,12 +425,12 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        // TODO: extended instructions
 	    } else if (inst >= InstructionTable.Ijmp && inst <= InstructionTable.Itb) {
 	        if (inst < InstructionTable.Isbo) {
-	        	Check.checkArg(mop2.type == MachineOperand.OP_NONE);
+	        	org.ejs.emul.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_NONE));
 	        	if (mop1.type == MachineOperand.OP_IMMED) {
 	                mop1.type = MachineOperand.OP_JUMP;
 	                mop1.val = mop1.val - pc;
 	        	} else if (mop1.type != MachineOperand.OP_JUMP){
-	        		Check.checkArg(false);
+	        		org.ejs.emul.core.utils.Check.checkArg(false);
 	        	}
 	            mop1.bIsCodeDest = true;
 	            //this.stsetBefore = Instruction.st_ALL;
@@ -499,9 +500,9 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        }
 	
 	    } else if (inst < InstructionTable.Iszc && inst != InstructionTable.Ildcr && inst != InstructionTable.Istcr) {
-	        Check.checkArg(mop1.type != MachineOperand.OP_NONE
-	                && mop1.type != MachineOperand.OP_IMMED);
-	        Check.checkArg(mop2.type == MachineOperand.OP_REG);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type != MachineOperand.OP_NONE
+			&& mop1.type != MachineOperand.OP_IMMED));
+	        org.ejs.emul.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_REG));
 	        mop1.dest = MachineOperand.OP_DEST_FALSE;
 	        mop2.dest = MachineOperand.OP_DEST_TRUE;
 	
@@ -543,9 +544,9 @@ public class Instruction extends RawInstruction implements IInstruction {
 	        }
 	
 	    } else if (inst == InstructionTable.Ildcr || inst == InstructionTable.Istcr) {
-	        Check.checkArg(mop1.type != MachineOperand.OP_NONE
-	                && mop1.type != MachineOperand.OP_IMMED);
-	        Check.checkArg(mop2.type == MachineOperand.OP_IMMED || mop2.type == MachineOperand.OP_CNT);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type != MachineOperand.OP_NONE
+			&& mop1.type != MachineOperand.OP_IMMED));
+	        org.ejs.emul.core.utils.Check.checkArg((mop2.type == MachineOperand.OP_IMMED || mop2.type == MachineOperand.OP_CNT));
 	        mop2.type = MachineOperand.OP_CNT;
 	        if (mop2.val == 0) {
 				mop2.val = 16;
@@ -574,10 +575,10 @@ public class Instruction extends RawInstruction implements IInstruction {
 	    	this.reads |= INST_RSRC_IO;
 	    	this.cycles += 6;
 	    } else {
-	        Check.checkArg(mop1.type != MachineOperand.OP_NONE
-	                && mop1.type != MachineOperand.OP_IMMED);
-	        Check.checkArg(mop1.type != MachineOperand.OP_NONE
-	                && mop1.type != MachineOperand.OP_IMMED);
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type != MachineOperand.OP_NONE
+			&& mop1.type != MachineOperand.OP_IMMED));
+	        org.ejs.emul.core.utils.Check.checkArg((mop1.type != MachineOperand.OP_NONE
+			&& mop1.type != MachineOperand.OP_IMMED));
 	        mop2.dest = MachineOperand.OP_DEST_TRUE;
 	        mop1.byteop = mop2.byteop = (inst - InstructionTable.Iszc & 1) != 0;
 	
@@ -701,7 +702,7 @@ public class Instruction extends RawInstruction implements IInstruction {
         	return this;
         }
         
-        System.out.println("need to regenerate instruction: >" + v9t9.utils.Utils.toHex4(thePc) + " "+ this);
+        System.out.println("need to regenerate instruction: >" + HexUtils.toHex4(thePc) + " "+ this);
         return new Instruction(InstructionTable.decodeInstruction(op, thePc, domain));
 
     }

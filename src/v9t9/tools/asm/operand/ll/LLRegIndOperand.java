@@ -3,11 +3,12 @@
  */
 package v9t9.tools.asm.operand.ll;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.operand.hl.RegOffsOperand;
-import v9t9.utils.Utils;
 
 /**
  * @author Ed
@@ -33,7 +34,7 @@ public class LLRegIndOperand extends LLOperand implements Operand {
 	public String toString() {
 		if (offset == 0)
 			return "*R" + register;
-		return "@>" + Utils.toHex4(offset) + "(R" + register + ")";
+		return "@>" + HexUtils.toHex4(offset) + "(R" + register + ")";
 	}
 
 	

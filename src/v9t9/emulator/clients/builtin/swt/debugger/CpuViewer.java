@@ -27,6 +27,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
+import org.ejs.emul.core.utils.CompatUtils;
+import org.ejs.emul.core.utils.HexUtils;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.V9t9;
@@ -36,7 +38,6 @@ import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.settings.ISettingListener;
 import v9t9.engine.settings.Setting;
-import v9t9.utils.Utils;
 
 /**
  * @author ejs
@@ -202,7 +203,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(table);
 		
 
-		FontDescriptor fontDescriptor = Utils.getFontDescriptor(JFaceResources.getTextFont());
+		FontDescriptor fontDescriptor = CompatUtils.getFontDescriptor(JFaceResources.getTextFont());
 		//fontDescriptor = fontDescriptor.increaseHeight(-2);
 		tableFont = fontDescriptor.createFont(getDisplay());
 		FontDescriptor smallerFontDescriptor = fontDescriptor.increaseHeight(-2);
@@ -395,10 +396,10 @@ public class CpuViewer extends Composite implements InstructionListener {
 						String instString = inst.toString();
 						instString += "                        ".substring(0, 24 - instString.length());
 						nextInstructionText.setText(
-								">" + Utils.toHex4(inst.pc) + "\t\t" 
+								">" + HexUtils.toHex4(inst.pc) + "\t\t" 
 								+ instString
 								+"\tWP=>" 
-								+ Utils.toHex4(machine.getCpu().getWP())
+								+ HexUtils.toHex4(machine.getCpu().getWP())
 								+ "\t\tST=" + machine.getCpu().getStatus());
 					} else {
 						nextInstructionText.setText("");

@@ -7,7 +7,6 @@ import v9t9.tools.decomp.expr.IAstExpression;
 import v9t9.tools.decomp.expr.IAstIntegralExpression;
 import v9t9.tools.decomp.expr.IAstNode;
 import v9t9.tools.decomp.expr.IAstUnaryExpression;
-import v9t9.utils.Check;
 
 /**
  * @author eswartz
@@ -74,7 +73,7 @@ public class AstUnaryExpression extends AstExpression implements
              opString = "*"; //$NON-NLS-1$
              break;
          default:
-             Check.checkState(false);
+             org.ejs.emul.core.utils.Check.checkState(false);
          }
          return opString;
      
@@ -91,7 +90,7 @@ public class AstUnaryExpression extends AstExpression implements
      * @see v9t9.tools.decomp.expr.IAstUnaryExpression#setOperator(int)
      */
     public void setOperator(int oper) {
-        Check.checkArg(oper >= 0 && oper <= K_LAST);
+        org.ejs.emul.core.utils.Check.checkArg((oper >= 0 && oper <= K_LAST));
         this.operator = oper;
         dirty = true;
     }
@@ -107,7 +106,7 @@ public class AstUnaryExpression extends AstExpression implements
      * @see v9t9.tools.decomp.expr.IAstUnaryExpression#setOperand(v9t9.tools.decomp.expr.IAstExpression)
      */
     public void setOperand(IAstExpression expr) {
-        Check.checkArg(expr);
+        org.ejs.emul.core.utils.Check.checkArg(expr);
         if (this.operand != null) {
 			this.operand.setParent(null);
 		}

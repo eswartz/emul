@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.HexUtils;
 
 public class Decompile {
 
@@ -44,7 +44,7 @@ public class Decompile {
                 dc.forceNonBinary = true;
                 break;
             case 'b':
-                baseAddr = Utils.parseInt(getopt.getOptarg()) & 0xfffe;
+                baseAddr = HexUtils.parseInt(getopt.getOptarg()) & 0xfffe;
                 break;
             case 'a':
                 dc.addFile(getopt.getOptarg(), baseAddr);
@@ -68,7 +68,7 @@ public class Decompile {
                 dc.nativeFile = true;
                 break;
             case 's': {
-                int addr = Utils.parseInt(getopt.getOptarg());
+                int addr = HexUtils.parseInt(getopt.getOptarg());
                 refDefTables.add(new Integer(addr));
             }
             default:

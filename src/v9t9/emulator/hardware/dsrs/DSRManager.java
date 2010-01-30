@@ -7,10 +7,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.CruWriter;
 import v9t9.engine.cpu.InstructionWorkBlock;
-import v9t9.utils.Utils;
 
 /**
  * @author ejs
@@ -67,7 +68,7 @@ public class DSRManager {
 			/*  Only respond if we have an active module whose
 			   base matches that which DSRLNK is currently scanning. */
 			if (activeDsr != null && activeDsr.getCruBase() == crubase) {
-				System.out.println("handling DSR: pc = "+Utils.toHex4(callpc)+" " + Utils.toHex4(opcode));
+				System.out.println("handling DSR: pc = "+HexUtils.toHex4(callpc)+" " + HexUtils.toHex4(opcode));
 
 				// on success, return to DSR handler, to return an
 				// error or otherwise terminate instead of continuing

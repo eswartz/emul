@@ -4,7 +4,6 @@
 package v9t9.tests.video;
 
 import java.awt.Frame;
-import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -14,23 +13,14 @@ import java.awt.Rectangle;
 import java.awt.color.ColorSpace;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.ComponentSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
-import java.awt.image.DirectColorModel;
-import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
-import java.nio.ByteBuffer;
-
-import org.eclipse.swt.awt.SWT_AWT;
-import org.eclipse.swt.graphics.ImageData;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.jni.v9t9render.utils.V9t9RenderUtils;

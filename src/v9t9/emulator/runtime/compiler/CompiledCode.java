@@ -8,6 +8,8 @@ package v9t9.emulator.runtime.compiler;
 
 import java.io.PrintWriter;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
@@ -17,7 +19,6 @@ import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.utils.Utils;
 
 /** This is the interface to the runtime-generated class. */
 abstract public class CompiledCode {
@@ -52,15 +53,15 @@ abstract public class CompiledCode {
     public void dump(short pc, short wp, Status status, int vdpaddr, int gromaddr) {
         PrintWriter dump = Executor.getDump();
         if (dump != null) {
-            dump.println(Utils.toHex4(pc)
+            dump.println(HexUtils.toHex4(pc)
                     + " "
-                    + Utils.toHex4(wp)
+                    + HexUtils.toHex4(wp)
                     + " "
-                    + Utils.toHex4(status.flatten() & 0xffff)
+                    + HexUtils.toHex4((status.flatten() & 0xffff))
                     + " "
-                    + Utils.toHex4(vdpaddr)
+                    + HexUtils.toHex4(vdpaddr)
                     + " "
-                    + Utils.toHex4(gromaddr));
+                    + HexUtils.toHex4(gromaddr));
             dump.flush();
         }
     }
@@ -72,16 +73,16 @@ abstract public class CompiledCode {
         PrintWriter dumpfull = Executor.getDumpfull();
         
         if (dumpfull != null) {
-            dumpfull.print("*" + Utils.toHex4(pc) + ": "
+            dumpfull.print("*" + HexUtils.toHex4(pc) + ": "
                     + ins + " ==> ");
             if (op1type != MachineOperand.OP_NONE
                     && op1dest != Operand.OP_DEST_KILLED) {
-                String str = Utils.toHex4(val1) +"(@"+Utils.toHex4(ea1) + ")";
+                String str = HexUtils.toHex4(val1) +"(@"+HexUtils.toHex4(ea1) + ")";
                 dumpfull.print("op1=" + str + " ");
             }
             if (op2type != MachineOperand.OP_NONE
                     && op2dest != Operand.OP_DEST_KILLED) {
-                String str = Utils.toHex4(val2) +"(@"+Utils.toHex4(ea2) + ")";
+                String str = HexUtils.toHex4(val2) +"(@"+HexUtils.toHex4(ea2) + ")";
                 dumpfull.print("op2=" + str);
             }
             dumpfull.print(" || ");
@@ -97,12 +98,12 @@ abstract public class CompiledCode {
         if (dumpfull != null) {
             if (op1type != MachineOperand.OP_NONE
                     && op1dest != Operand.OP_DEST_FALSE) {
-                String str = Utils.toHex4(val1) +"(@"+Utils.toHex4(ea1) + ")";
+                String str = HexUtils.toHex4(val1) +"(@"+HexUtils.toHex4(ea1) + ")";
                 dumpfull.print("op1=" + str + " ");
             }
             if (op2type != MachineOperand.OP_NONE
                     && op2dest != Operand.OP_DEST_FALSE) {
-                String str = Utils.toHex4(val2) +"(@"+Utils.toHex4(ea2) + ")";
+                String str = HexUtils.toHex4(val2) +"(@"+HexUtils.toHex4(ea2) + ")";
                 dumpfull.print("op2=" + str + " ");
             }
             dumpfull.print("st="

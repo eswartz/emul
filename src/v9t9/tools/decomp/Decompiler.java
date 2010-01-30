@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
@@ -20,7 +22,6 @@ import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.NativeFileMemoryEntry;
 import v9t9.engine.memory.StockMemoryModel;
-import v9t9.utils.Utils;
 
 public class Decompiler implements ICodeProvider {
     static final String DEFAULT_EXT = ".dump";
@@ -53,10 +54,10 @@ public class Decompiler implements ICodeProvider {
 			throw new IllegalArgumentException("invalid range: " + string);
 		}
         
-        int baseAddr = Utils.parseInt(matcher.group(1));
+        int baseAddr = HexUtils.parseInt(matcher.group(1));
         int size = 0;
         if (matcher.group(2) != null) {
-			size = Utils.parseInt(matcher.group(3));
+			size = HexUtils.parseInt(matcher.group(3));
 		}
         highLevel.getMemoryRanges().addRange(baseAddr, size, isCode);
     }

@@ -4,8 +4,7 @@
 package v9t9.emulator.hardware.sound;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.PrefUtils;
 
 public class AudioGateVoice extends SoundVoice {
 
@@ -38,7 +37,7 @@ public class AudioGateVoice extends SoundVoice {
 	@Override
 	public void loadState(IDialogSettings settings) {
 		super.loadState(settings);
-		setVolume((byte) (Utils.readSavedBoolean(settings, "State") ? 15 : 0));
+		setVolume((byte) (PrefUtils.readSavedBoolean(settings, "State") ? 15 : 0));
 	}
 	
 	@Override

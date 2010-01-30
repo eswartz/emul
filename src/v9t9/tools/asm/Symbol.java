@@ -3,7 +3,7 @@
  */
 package v9t9.tools.asm;
 
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.HexUtils;
 
 /**
  * @author ejs
@@ -35,7 +35,7 @@ public class Symbol {
 	
 	@Override
 	public String toString() {
-		return name + (isDefined() ? "{>"+Utils.toHex4(addr)+"}" : "");
+		return name + (isDefined() ? "{>"+HexUtils.toHex4(addr)+"}" : "");
 	}
 
 	@Override

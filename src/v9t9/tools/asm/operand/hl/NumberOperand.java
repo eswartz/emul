@@ -3,12 +3,13 @@
  */
 package v9t9.tools.asm.operand.hl;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.ResolveException;
 import v9t9.tools.asm.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.operand.ll.LLOperand;
-import v9t9.utils.Utils;
 
 /**
  * @author ejs
@@ -27,7 +28,7 @@ public class NumberOperand implements AssemblerOperand {
 	}
 	@Override
 	public String toString() {
-		return ">" + Utils.toHex4(i);
+		return ">" + HexUtils.toHex4(i);
 	}
 
 	@Override

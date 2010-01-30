@@ -6,6 +6,8 @@
  */
 package v9t9.emulator.hardware.memory.mmio;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.VdpRamArea;
 import v9t9.emulator.runtime.Logging;
@@ -13,7 +15,6 @@ import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.utils.Utils;
 
 
 
@@ -125,7 +126,7 @@ public class Vdp9918AMmio extends VdpMmio {
 		}
 		if ((vdpaddrflag = !vdpaddrflag) == false) {
 			if (VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
-				Logging.writeLogLine(VdpTMS9918A.settingDumpVdpAccess, "VDP address: " + Utils.toHex4(vdpaddr));
+				Logging.writeLogLine(VdpTMS9918A.settingDumpVdpAccess, "VDP address: " + HexUtils.toHex4(vdpaddr));
 			}
 			if ((vdpaddr & 0x8000) != 0) {
 				writeRegAddr(vdpaddr);

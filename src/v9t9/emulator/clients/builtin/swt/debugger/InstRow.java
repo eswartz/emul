@@ -3,11 +3,12 @@
  */
 package v9t9.emulator.clients.builtin.swt.debugger;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.utils.Utils;
 
 /**
  * @author ejs
@@ -32,7 +33,7 @@ public class InstRow {
 	 * @return
 	 */
 	public String getAddress() {
-		String addr = ">" + Utils.toHex4(before.pc);
+		String addr = ">" + HexUtils.toHex4(before.pc);
 		
 		MemoryEntry entry = before.domain.getEntryAt(before.pc);
 		if (entry != null) { 

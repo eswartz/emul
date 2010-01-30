@@ -8,11 +8,11 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.emul.core.utils.HexUtils;
 
 import v9t9.emulator.Machine;
 import v9t9.engine.KeyboardHandler;
 import v9t9.keyboard.KeyboardState;
-import v9t9.utils.Utils;
 
 /**
  * @author ejs
@@ -55,7 +55,7 @@ public abstract class BaseKeyboardHandler implements KeyboardHandler {
 		display.addFilter(SWT.KeyUp, new Listener() {
 
 			public void handleEvent(Event e) {
-				System.out.println("RELEASE " + Utils.toHex4(e.keyCode) + " / " + Utils.toHex4(e.stateMask));
+				System.out.println("RELEASE " + HexUtils.toHex4(e.keyCode) + " / " + HexUtils.toHex4(e.stateMask));
 				e.doit = false;
 			}
 			
@@ -63,7 +63,7 @@ public abstract class BaseKeyboardHandler implements KeyboardHandler {
 		display.addFilter(SWT.KeyDown, new Listener() {
 
 			public void handleEvent(Event e) {
-				System.out.println("PRESSED " + Utils.toHex4(e.keyCode) + " / " + Utils.toHex4(e.stateMask));
+				System.out.println("PRESSED " + HexUtils.toHex4(e.keyCode) + " / " + HexUtils.toHex4(e.stateMask));
 				e.doit = false;
 			}
 			

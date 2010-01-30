@@ -5,6 +5,8 @@ package v9t9.emulator.hardware.dsrs;
 
 import java.io.IOException;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.emulator.Machine;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.VdpHandler;
@@ -16,7 +18,6 @@ import v9t9.engine.files.NativeFileFactory;
 import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.utils.Utils;
 
 /**
  * This is a device which allows accessing files on the local filesystem.
@@ -207,7 +208,7 @@ public class EmuDiskDSR implements DsrHandler {
 			addr2 = console.readWord(rambase+0x50);
 	
 			System.out.println("doing operation "+code+" on DSK"+dev+" ["+opt+", "
-					+Utils.toHex4(addr1)+",  "+ Utils.toHex4(addr2)+"]\n");
+					+HexUtils.toHex4(addr1)+",  "+ HexUtils.toHex4(addr2)+"]\n");
 	
 			if (dev <= MAXDRIVE) {
 				if (code == D_DINPUT) {
@@ -470,7 +471,7 @@ public class EmuDiskDSR implements DsrHandler {
 			short	secnum = console.readWord(parms + 2);
 
 			System.out.println("reading "+secs+" sectors from sector #"+secnum+
-					" in " + file + ", storing to >"+Utils.toHex4(vaddr));
+					" in " + file + ", storing to >"+HexUtils.toHex4(vaddr));
 
 			ByteMemoryAccess access = getVdpMemory(vaddr);
 			try {
@@ -541,7 +542,7 @@ public class EmuDiskDSR implements DsrHandler {
 			short	secnum = console.readWord(parms + 2);
 
 			System.out.println("writing "+secs+" sectors to sector #"+secnum+
-					" in " + file + ", reading from >"+Utils.toHex4(vaddr));
+					" in " + file + ", reading from >"+HexUtils.toHex4(vaddr));
 
 			ByteMemoryAccess access = getVdpMemory(vaddr);
 			try {

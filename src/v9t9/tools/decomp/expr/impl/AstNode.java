@@ -5,7 +5,6 @@ package v9t9.tools.decomp.expr.impl;
 
 import v9t9.tools.decomp.expr.AstVisitor;
 import v9t9.tools.decomp.expr.IAstNode;
-import v9t9.utils.Check;
 
 /**
  * @author eswartz
@@ -72,7 +71,7 @@ abstract public class AstNode implements IAstNode {
      */
     public void setParent(IAstNode node) {
         if (node != null) {
-			Check.checkArg(parent == null);
+			org.ejs.emul.core.utils.Check.checkArg((parent == null));
 		}
         parent = node;
     }

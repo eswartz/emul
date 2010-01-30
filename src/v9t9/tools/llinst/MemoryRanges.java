@@ -10,8 +10,6 @@ import java.util.Iterator;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import v9t9.utils.Check;
-
 /**
  * Management of ranges of memory partitioned into types
  * @author ejs
@@ -45,7 +43,7 @@ public class MemoryRanges {
     }
 
     public void addRange(int baseAddr, int size, boolean isCode) {
-        Check.checkArg(size > 0);
+        org.ejs.emul.core.utils.Check.checkArg((size > 0));
         /*
         MemoryRange startRange = getRangeContaining(baseAddr);
         MemoryRange endRange = getRangeContaining(baseAddr + size);

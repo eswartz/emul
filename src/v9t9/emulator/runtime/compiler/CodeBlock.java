@@ -3,6 +3,8 @@ package v9t9.emulator.runtime.compiler;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.HighLevelCodeInfo;
@@ -52,7 +54,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
     
     String createBaseIdentifier(String entName) {
         if (entName == null) {
-            return v9t9.utils.Utils.toHex4(addr);
+            return HexUtils.toHex4(addr);
         }
         String copy = new String();
         for (int i = 0; i < entName.length(); i++) {
@@ -63,7 +65,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
 				copy += '_';
 			}
         }
-        return copy + v9t9.utils.Utils.toHex4(addr);
+        return copy + HexUtils.toHex4(addr);
     }
 
     public boolean matches(MemoryEntry ent_) {
@@ -111,8 +113,8 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
             try {
                 clear();
                 System.out.println("compiling code block at >"
-                        + v9t9.utils.Utils.toHex4(addr) + ":"
-                        + v9t9.utils.Utils.toHex4(size) + "/" + ent.getUniqueName());
+                        + HexUtils.toHex4(addr) + ":"
+                        + HexUtils.toHex4(size) + "/" + ent.getUniqueName());
 
                 highLevel.analyze();
                 

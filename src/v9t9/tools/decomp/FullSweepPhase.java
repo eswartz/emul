@@ -8,6 +8,8 @@ package v9t9.tools.decomp;
 
 import java.util.Iterator;
 
+import org.ejs.emul.core.utils.HexUtils;
+
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
@@ -21,7 +23,6 @@ import v9t9.tools.llinst.LinkedRoutine;
 import v9t9.tools.llinst.MemoryRange;
 import v9t9.tools.llinst.Phase;
 import v9t9.tools.llinst.Routine;
-import v9t9.utils.Utils;
 
 /**
  * Full sweep phase.  Assume everything in memory is potential
@@ -298,8 +299,8 @@ public class FullSweepPhase extends Phase {
         if ((block.getFlags() & Block.fVisited) != 0) {
             if (wp != block.getFirst().getWp()) {
                 System.out.println("!!! mismatched WP at " + block.getFirst() + 
-                        " (stored: " + Utils.toHex4(block.getFirst().getWp()) +", new: " 
-                        + Utils.toHex4(wp));
+                        " (stored: " + HexUtils.toHex4(block.getFirst().getWp()) +", new: " 
+                        + HexUtils.toHex4(wp));
             }
             return false;
         }

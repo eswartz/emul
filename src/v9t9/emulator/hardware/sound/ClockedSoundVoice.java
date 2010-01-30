@@ -6,8 +6,8 @@ package v9t9.emulator.hardware.sound;
 import java.text.MessageFormat;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-
-import v9t9.utils.Utils;
+import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.emul.core.utils.PrefUtils;
 
 public abstract class ClockedSoundVoice extends SoundVoice
 {
@@ -63,9 +63,9 @@ public abstract class ClockedSoundVoice extends SoundVoice
 			else
 				System.out.println(MessageFormat.format(
 					"voice_cache_values[{5}]: lo=>{0}, hi=>{1}, period=>{2}, hertz={3}, volume={4}",
-				   Utils.toHex4(operation[SoundTMS9919.OPERATION_FREQUENCY_LO]), 
-				   Utils.toHex4(operation[SoundTMS9919.OPERATION_FREQUENCY_HI]),
-				   Utils.toHex4(period16 / 65536),
+				   HexUtils.toHex4(operation[SoundTMS9919.OPERATION_FREQUENCY_LO]), 
+				   HexUtils.toHex4(operation[SoundTMS9919.OPERATION_FREQUENCY_HI]),
+				   HexUtils.toHex4((period16 / 65536)),
 				   hertz,
 				   getVolume(),
 				   getName()));
@@ -86,11 +86,11 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	@Override
 	public void loadState(IDialogSettings settings) {
 		super.loadState(settings);
-		operation[0] = (byte) Utils.readSavedInt(settings, "Op1");
-		operation[1] = (byte) Utils.readSavedInt(settings, "Op2");
-		operation[2] = (byte) Utils.readSavedInt(settings, "Op3");
-		accum = Utils.readSavedInt(settings, "Accumulator");
-		clock = Utils.readSavedInt(settings, "Clock");
+		operation[0] = (byte) PrefUtils.readSavedInt(settings, "Op1");
+		operation[1] = (byte) PrefUtils.readSavedInt(settings, "Op2");
+		operation[2] = (byte) PrefUtils.readSavedInt(settings, "Op3");
+		accum = PrefUtils.readSavedInt(settings, "Accumulator");
+		clock = PrefUtils.readSavedInt(settings, "Clock");
 	}
 	
 	@Override

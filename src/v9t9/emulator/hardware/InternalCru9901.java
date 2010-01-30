@@ -7,11 +7,11 @@
 package v9t9.emulator.hardware;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.emul.core.utils.PrefUtils;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.keyboard.KeyboardState;
-import v9t9.utils.Utils;
 
 /**
  * CRU handlers for the TMS9901 (as attached to a TI-99/4A).
@@ -450,17 +450,17 @@ public class InternalCru9901 implements CruAccess {
 			reset();
 			return;
 		}
-		int9901 = Utils.readSavedInt(section, "EnabledInterrupts");
-		currentints = Utils.readSavedInt(section, "CurrentInterrupts");
-		crukeyboardcol = Utils.readSavedInt(section, "KeyboardColumn");
-		clockmode = Utils.readSavedBoolean(section, "ClockMode");
-		clockReadRegister = Utils.readSavedInt(section, "ClockReadRegister");
-		clockDecrementerRegister = Utils.readSavedInt(section, "ClockDecrementerRegister");
-		clockRegister = Utils.readSavedInt(section, "ClockRegister");
-		suppressClockInterrupts = Utils.readSavedBoolean(section, "SuppressClockInterrupts");
-		alphaLockMask = Utils.readSavedBoolean(section, "AlphaLockMask");
-		intreq = Utils.readSavedBoolean(section, "IntReq");
-		ic = (byte) Utils.readSavedInt(section, "IC");
+		int9901 = PrefUtils.readSavedInt(section, "EnabledInterrupts");
+		currentints = PrefUtils.readSavedInt(section, "CurrentInterrupts");
+		crukeyboardcol = PrefUtils.readSavedInt(section, "KeyboardColumn");
+		clockmode = PrefUtils.readSavedBoolean(section, "ClockMode");
+		clockReadRegister = PrefUtils.readSavedInt(section, "ClockReadRegister");
+		clockDecrementerRegister = PrefUtils.readSavedInt(section, "ClockDecrementerRegister");
+		clockRegister = PrefUtils.readSavedInt(section, "ClockRegister");
+		suppressClockInterrupts = PrefUtils.readSavedBoolean(section, "SuppressClockInterrupts");
+		alphaLockMask = PrefUtils.readSavedBoolean(section, "AlphaLockMask");
+		intreq = PrefUtils.readSavedBoolean(section, "IntReq");
+		ic = (byte) PrefUtils.readSavedInt(section, "IC");
 	}
 	
 }
