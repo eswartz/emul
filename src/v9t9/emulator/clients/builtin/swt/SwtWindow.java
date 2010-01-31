@@ -11,6 +11,7 @@ import java.util.Timer;
 import org.eclipse.jface.dialogs.DialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.RTFTransfer;
@@ -34,7 +35,6 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -53,9 +53,7 @@ import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
-import v9t9.emulator.clients.builtin.swt.debugger.CpuViewer;
 import v9t9.emulator.clients.builtin.swt.debugger.DebuggerWindow;
-import v9t9.emulator.clients.builtin.swt.debugger.MemoryViewer;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
@@ -70,7 +68,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 	protected Shell shell;
 	protected Control videoControl;
 	private ButtonBar buttonBar;
-	private Composite controlsComposite;
 	private List<Shell> toolShells;
 	private Timer toolUiTimer;
 	private Image mainIcons;
@@ -83,7 +80,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		toolShells = new ArrayList<Shell>();
 		toolUiTimer = new Timer(true);
 		
-		shell = new Shell(display, SWT.SHELL_TRIM & ~SWT.RESIZE);
+		shell = new Shell(display, SWT.SHELL_TRIM | SWT.RESIZE);
 		shell.setText("V9t9");
 		
 		File iconFile = V9t9.getDataFile("icons/v9t9.png");
@@ -106,14 +103,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 		}
 		
 		Composite mainComposite = shell;
-		GridLayout layout = new GridLayout(1, false);
-		layout.marginHeight = layout.marginWidth = 2;
-		mainComposite.setLayout(layout);
+		GridLayoutFactory.fillDefaults().margins(2, 2).applyTo(mainComposite);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainComposite);
 		
 		Composite topComposite = new Composite(mainComposite, SWT.NONE);
-		layout = new GridLayout(2, false);
-		topComposite.setLayout(layout);
-		topComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
+		GridLayoutFactory.fillDefaults().applyTo(topComposite);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(topComposite);
 		
 		this.videoControl = renderer.createControl(topComposite, SWT.BORDER);
 		
@@ -123,8 +118,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 			.grab(true, true)
 			.create();
 		videoControl.setLayoutData(rendererLayoutData);
-		
-		//createExpandableControlsComposite(topComposite);
 		
 		((ISwtVideoRenderer) videoRenderer).addMouseEventListener(new MouseAdapter() {
 			
@@ -155,11 +148,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 			
 		});
 		
-		/*
-		Composite controlBar = new Composite(mainComposite, SWT.NONE);
-		GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, true).applyTo(controlBar);
-		GridLayoutFactory.fillDefaults().margins(2, 2).applyTo(controlBar);
-		*/
 		createButtons(mainComposite);
 		
 		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar, SWT.BORDER, machine.getCpuMetrics());
@@ -171,6 +159,18 @@ public class SwtWindow extends BaseEmulatorWindow {
 				JavaSoundHandler.settingPlaySound.saveState(EmulatorSettings.getInstance().getApplicationSettings());
 			}
 			
+		});
+		
+		shell.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlResized(ControlEvent e) {
+				Display.getDefault().asyncExec(new Runnable() {
+					public void run() {
+						shell.layout(true);
+						//shell.pack();
+;					}
+				});
+			}
 		});
 		
 		shell.open();
@@ -241,6 +241,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		mainLayout.marginHeight = mainLayout.marginWidth = 0;
 		buttonBar.setLayout(mainLayout);
 
+		GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BOTTOM).applyTo(buttonBar);
 
 		createButton(buttonBar, 1,
 				"Send a NMI interrupt", new SelectionAdapter() {
@@ -274,24 +275,20 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		);
 		
-		/*BasicButton basicButton =*/ /*createButton(
-				icons, new Rectangle(0, 128, 64, 64),
+		/*
+		createButton(buttonBar,
+				0, 
 				"Branch to Condensed BASIC",
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						SwtWindow.this.machine.getExecutor().controlCpu(new Executor.ICpuController() {
-
-							public void act(Cpu cpu) {
-								cpu.setPC((short)0xa000);								
-								cpu.setWP((short)0x83e0);								
-							}
-							
-						}) ;
+						Cpu cpu = SwtWindow.this.machine.getExecutor().cpu;
+						cpu.setPC((short)0xa000);								
+						cpu.setWP((short)0x83e0);								
 					}
-				});*/
+				});
+		*/
 		
-		/*
 		createButton(buttonBar, 3,
 				"Paste into keyboard", new SelectionAdapter() {
 					@Override
@@ -299,7 +296,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 						pasteClipboardToKeyboard();
 					}
 			});
-		*/
 		
 		createButton(buttonBar, 6,
 				"Load or save machine state", new SelectionAdapter() {
@@ -328,6 +324,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					}
 			});
 
+		/*
 		createButton(buttonBar, 11,
 				"Zoom the screen", new SelectionAdapter() {
 					@Override
@@ -337,7 +334,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 						showMenu(createZoomMenu(button), button, size.x / 2, size.y / 2);
 					}
 				});
-		
+		*/
 		createButton(buttonBar, 12,
 				"Accelerate execution", new SelectionAdapter() {
 					@Override
@@ -378,41 +375,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 	}
 
-	private void createExpandableControlsComposite(Composite parent) {
-		final Composite controlsExpanderComposite = new Composite(parent, SWT.NONE);
-		controlsExpanderComposite.setLayout(new GridLayout(2, false));
-		GridDataFactory.swtDefaults().applyTo(controlsExpanderComposite);
-		
-		Button controlsExpander;
-		controlsExpander = new Button(controlsExpanderComposite, SWT.ARROW | SWT.RIGHT | SWT.NO_FOCUS);
-		GridDataFactory.swtDefaults().applyTo(controlsExpander);
-		
-		controlsComposite = new Composite(controlsExpanderComposite, SWT.NONE);
-		GridDataFactory.swtDefaults().hint(0, 0).applyTo(controlsComposite);
-		
-		controlsComposite.setVisible(false);
-		
-		controlsComposite.setLayout(new GridLayout(1, false));
-		
-		controlsExpander.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if (controlsComposite.isVisible()) {
-					controlsComposite.setVisible(false);
-					GridDataFactory.swtDefaults().hint(0, 0).applyTo(controlsComposite);
-				} else {
-					controlsComposite.setVisible(true);
-					Rectangle bounds = getShell().getClientArea();
-					GridDataFactory.swtDefaults().hint(-1, bounds.height).applyTo(controlsComposite);
-				}
-				getShell().pack();
-				videoControl.forceFocus();
-			}
-		});
-		
-		createControls();
-	}
-
+	/*
 	private void createControls() {
 		Button spawnMemoryViewButton = new Button(controlsComposite, SWT.PUSH | SWT.NO_FOCUS);
 		spawnMemoryViewButton.setText("View Memory...");
@@ -437,7 +400,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		});
 	}
-
+	 */
+	
 	protected void createToolShell(final Shell shell, final Composite tool, final String boundsPref) {
 		shell.setImage(getShell().getImage());
 		shell.setLayout(new GridLayout(1, false));
@@ -535,13 +499,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 			viewMenuHeader.setMenu(viewMenu);
 		}
 		
+		/*
 		MenuItem zoom = new MenuItem(viewMenu, SWT.CASCADE);
 		zoom.setText("&Zoom");
 		
 		Menu zoomMenu = new Menu(zoom);
 		populateZoomMenu(zoomMenu);
 		zoom.setMenu(zoomMenu);
-		
+		*/
 		
 		Menu emuMenu = appMenu;
 		if (!isPopup) {
@@ -599,6 +564,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 	}
 
+	/*
 	private Menu createZoomMenu(final Control parent) {
 		final Menu menu = new Menu(parent);
 		return populateZoomMenu(menu);
@@ -628,7 +594,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		System.out.println("Set zoom to " + zoom);
 		videoRenderer.setZoom(zoom);
 	}
-
+	 */
 	private Menu createFilePopupMenu(final Control parent) {
 		final Menu menu = new Menu(parent);
 		return populateFileMenu(menu, false);

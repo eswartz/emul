@@ -6,6 +6,7 @@ package v9t9.emulator.clients.builtin.swt;
 import java.io.File;
 
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.RTFTransfer;
@@ -66,6 +67,13 @@ public class SwtWindowSVG extends BaseEmulatorWindow {
 		screenComposite.setLayoutData(screenLayoutData);
 		
 		this.videoControl = renderer.createControl(screenComposite, SWT.BORDER);
+
+		final GridData rendererLayoutData = GridDataFactory.swtDefaults()
+			.indent(0, 0)
+			.align(SWT.CENTER, SWT.CENTER)
+			.grab(true, true)
+			.create();
+		videoControl.setLayoutData(rendererLayoutData);
 		
 		File iconsFile = V9t9.getDataFile("icons/icons.svg");
 		SVGLoader icons = new SVGLoader(iconsFile);

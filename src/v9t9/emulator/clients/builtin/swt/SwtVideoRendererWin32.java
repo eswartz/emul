@@ -45,6 +45,8 @@ public class SwtVideoRendererWin32 extends SwtVideoRenderer {
 		if (imageData != null) {
 			
 			// the actual canvas size might not match our wishes
+			double zoomx = fixedAspectLayout.getZoomX();
+			double zoomy = fixedAspectLayout.getZoomY();
 			Point canvasSize = new Point((int)(vdpCanvas.getVisibleWidth() * zoomx), 
 					(int)(vdpCanvas.getVisibleHeight() * zoomy));
 

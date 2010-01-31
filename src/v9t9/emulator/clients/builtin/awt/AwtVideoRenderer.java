@@ -94,7 +94,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			public void ancestorResized(HierarchyEvent e) {
 				int width = canvas.getWidth();
 				int height = canvas.getHeight();
-				//System.out.println("Resized to: " + width + "/" + height);
+				System.out.println("Resized to: " + width + "/" + height);
 
 				updateWidgetOnResize(width, height);
 			}
@@ -277,8 +277,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		float oldzoomx = zoomx;
 		float oldzoomy = zoomy;
 		
-		Point curSize = new Point(width, height);
-		zoom = (int) (curSize.y + 64) / vdpCanvas.getHeight();
+		zoom = (int) (height + 64) / vdpCanvas.getHeight();
 		//zoom = (int) (curSize.y ) / vdpCanvas.getHeight();
 		
 		if (zoom == 0)
@@ -317,6 +316,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		// resize to fit the required physical space -- but avoid oscillating if the zoom
 		// is simply too large for the screen (where the WM might again resize it smaller)
 		if (desiredWidth != size.x || desiredHeight != size.y) {
+			System.out.println("Desired size: " + desiredWidth + " x " + desiredHeight);
 			desiredWidth = size.x;
 			desiredHeight = size.y;
 			

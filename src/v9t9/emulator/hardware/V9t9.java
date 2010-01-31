@@ -131,7 +131,7 @@ public class V9t9 {
 	    	loadConsoleRom("994arom.bin");
 	    	loadConsoleGrom("994agrom.bin");
 	
-	    	if (true) {
+	    	if (false) {
 	    		ExpRamArea.settingExpRam.setBoolean(true);
 	    		loadModuleGrom("E/A", "eag.bin");
 	    		DiskMemoryEntry entry = DiskMemoryEntry.newWordMemoryFromFile(0xA000, 0x6000, "Ed's BASIC",

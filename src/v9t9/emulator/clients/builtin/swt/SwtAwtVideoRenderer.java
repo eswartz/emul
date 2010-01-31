@@ -4,7 +4,6 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Frame;
 import java.awt.Panel;
 import java.awt.event.MouseEvent;
@@ -17,13 +16,11 @@ import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.clients.builtin.awt.AwtVideoRenderer;
@@ -39,6 +36,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private Canvas awtContainer;
 
 	private List<org.eclipse.swt.events.MouseListener> mouseListeners = new ArrayList<org.eclipse.swt.events.MouseListener>();
+	private FixedAspectLayout fixedAspectLayout;
 	
 	public SwtAwtVideoRenderer(Display display) {
 		super();
@@ -96,68 +94,15 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		};
 		getAwtCanvas().addMouseListener(l);
 		
-		
-		// no layout -- let canvas size drive it
-		//frame.setLayout(new FlowLayout());
-		awtContainer.setLayout(new Layout() {
-
-			Point lastSize;
-			
-			@Override
-			protected Point computeSize(Composite composite, int whint,
-					int hhint, boolean flushCache) {
-					
-				Component awtCanvas = getAwtCanvas();
-				
-				Point canvasSize = new Point(awtCanvas.getWidth(), awtCanvas.getHeight());
-				int width = canvasSize.x;
-				int height = canvasSize.y;
-				Rectangle trim = composite.computeTrim(0, 0, width, height);
-				
-				// hmm, the window manager seems to do weird things now
-				
-				lastSize = new Point(width - (trim.width - width), height - (trim.height - height));
-				
-				return lastSize;
-				
-/*
-				Rectangle parentBounds = composite.getParent().getBounds();
-				
-				int width = getCanvas().getWidth();
-				int height = getCanvas().getHeight();
-				int zoom = 1;
-				while (width * (zoom + 1) <= parentBounds.width && height * (zoom + 1) <= parentBounds.height) {
-					zoom++;
-				}
-				width *= zoom;
-				height *= zoom;
-				
-				if (width == 0 || height == 0)
-					return canvasSize;
-				
-				return new Point(width, height);
-				*/
-				//Rectangle area = composite.computeTrim(0, 0, awtCanvas.getWidth(), awtCanvas.getHeight());
-				//System.out.println("Area is " + area + " for " +awtCanvas.getWidth() + " x " + awtCanvas.getHeight());
-				//return new Point(area.width, area.height);
-				
-			}
-
-			@Override
-			protected void layout(Composite composite, boolean flushCache) {
-				//Rectangle myBounds = composite.getClientArea();
-				//Point mySize = composite.getSize();
-				//Point mySize = new Point(myBounds.width, myBounds.height);
-				//Component awtCanvas = getAwtCanvas();
-				//awtCanvas.setSize(mySize.x, mySize.y);
-			}
-			
-		});
+		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0);
+		awtContainer.setLayout(fixedAspectLayout);
 		
 		awtContainer.addControlListener(new ControlAdapter() {
 			@Override
 			public void controlResized(ControlEvent e) {
 				Point size = ((Control)e.widget).getSize();
+				//System.out.println("Control resized to: " + size.x + "/" + size.y);
+
 				updateWidgetOnResize(size.x, size.y);
 			}
 		});
@@ -203,15 +148,50 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		
 	}
 
+	/**
+	 * Apply the current mode's X or Y resolutions to the aspect ratio.
+	 */
+	protected boolean updateWidgetSizeForMode() {
+		boolean changed = false;
+		
+		int visibleWidth = getCanvas().getVisibleWidth();
+		int visibleHeight = getCanvas().getVisibleHeight();
+		if (visibleWidth != fixedAspectLayout.getWidth()) {
+			changed = true;
+		}
+		if (visibleHeight != fixedAspectLayout.getHeight()) {
+			changed = true;
+		}
+		if (changed) {
+			fixedAspectLayout.setSize(visibleWidth, visibleHeight);
+			if (visibleWidth > 256)
+				visibleWidth /= 2;
+			if (getCanvas().isInterlacedEvenOdd())
+				visibleHeight /= 2;
+			fixedAspectLayout.setAspect((double) visibleWidth / visibleHeight);
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					awtContainer.getParent().layout(true);
+					
+				}
+			});
+		}
+		return changed;
+		
+	}
+
+	
 	@Override
 	protected void resizeTopLevel() {
 		Display.getDefault().asyncExec(new Runnable() {
 
 			public void run() {
+				
 				if (shell != null && !shell.isDisposed()) {
 					//System.out.println("Packing");
+					
 					awtContainer.pack();
-					shell.pack();				
+					shell.layout(true);				
 				}
 			}
 			

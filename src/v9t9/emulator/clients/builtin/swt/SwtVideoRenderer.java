@@ -18,10 +18,7 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -54,12 +51,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	protected boolean busy;
 	private Shell shell;
 	
-	// global zoom
-	protected int zoom = 3;
-	// zoom based on the resolution
-	protected float zoomx = 3, zoomy = 3;
-	protected boolean sizedToZoom = false;
-	private GridData canvasLayoutData;
+	protected FixedAspectLayout fixedAspectLayout;
 	
 	public SwtVideoRenderer() {
 	}
@@ -72,13 +64,9 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	public Control createControl(Composite parent, int flags) {
 		this.shell = parent.getShell();
 		this.canvas = new Canvas(parent, flags | getStyleBits());
-		this.canvas.setLayout(new FillLayout());
-		canvasLayoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		canvasLayoutData.minimumHeight = 256;
-		canvasLayoutData.minimumWidth = 192;
-		canvasLayoutData.widthHint = 256 * 3;
-		canvasLayoutData.heightHint = 192 * 3;
-		canvas.setLayoutData(canvasLayoutData);
+		
+		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0);
+		canvas.setLayout(fixedAspectLayout);	
 		
 		setCanvas(createCanvas());
 		this.updateRect = new Rectangle(0, 0, 0, 0);
@@ -108,10 +96,11 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 			
 		});
 		
+		
 		this.canvas.addControlListener(new ControlAdapter() {
 			@Override
 			public void controlResized(ControlEvent e) {
-				updateWidgetOnResize();
+				resizeWidgets();
 			}
 		});
 		
@@ -139,10 +128,15 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	}
 	
 	protected Rectangle logicalToPhysical(int x, int y, int w, int h) {
-		return new Rectangle((int)(x * zoomx), (int)(y * zoomy), Math.round(w * zoomx), Math.round(h * zoomy));
+		double zoomx = fixedAspectLayout.getZoomX();
+		double zoomy = fixedAspectLayout.getZoomY();
+		return new Rectangle((int)(x * zoomx), (int)(y * zoomy), 
+				(int) Math.round(w * zoomx), (int) Math.round(h * zoomy));
 	}
 	
 	protected Rectangle physicalToLogical(Rectangle physical) {
+		double zoomx = fixedAspectLayout.getZoomX();
+		double zoomy = fixedAspectLayout.getZoomY();
 		return new Rectangle((int)(physical.x / zoomx) /*+ vdpCanvas.getXOffset()*/, 
 				(int)(physical.y / zoomy), 
 				(int)((physical.width + zoomx - 1) / zoomx), 
@@ -191,76 +185,11 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		}
 	}
 	
-	/**
-	 * On a resize event (presumed to be user-driven), ensure that the 
-	 * resolution preserves the aspect ratio and has a close-to-integral zoom 
-	 * factor in each axis (we tolerate 0.5 for cases of 512-x or 384/424-y).
-	 * The size the user sees depends on the current X and Y resolutions; 
-	 * factor that in when determining the nearest zoom.
-	 */
-	protected void updateWidgetOnResize() {
-		float oldzoomx = zoomx;
-		float oldzoomy = zoomy;
-		
-		if (sizedToZoom) {
-			Point curSize = canvas.getSize();
-			zoom = (int) (curSize.y + 64) / vdpCanvas.getHeight();
-			
-			if (zoom == 0)
-				zoom = 1;
-			
-			if (vdpCanvas.isInterlacedEvenOdd())
-				zoomy = zoom / 2.0f;
-			else
-				zoomy = zoom;
-			if (vdpCanvas.getVisibleWidth() == 512)
-				zoomx = zoom / 2.0f;
-			else
-				zoomx = zoom;
-		} else {
-			sizedToZoom = true;
-		}
-		
-		if (zoomx != oldzoomx && zoomy != oldzoomy) {
-			getShell().getDisplay().asyncExec(new Runnable() {
-	
-				public void run() {
-					resizeWidgets();
-				}
-			
-			});
-		}
-		
-	}
 	protected void resizeWidgets() {
 		if (canvas.isDisposed())
 			return;
-		
-		Rectangle targetRect = logicalToPhysical(0, 0, vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight());
-		Point size = new Point(targetRect.width, targetRect.height);
-		Point curSize = canvas.getSize();
-		if (curSize.x == size.x && curSize.y == size.y)
-			return;
-		
-		//manualResize = true;
-		
-		// resize to fit the required physical space -- but avoid oscillating if the zoom
-		// is simply too large for the screen (where the WM might again resize it smaller)
-		if (canvasLayoutData.widthHint != size.x || canvasLayoutData.heightHint != size.y) {
-		//Rectangle screenSize = shell.getDisplay().getClientArea();
-		//Rectangle trim = canvas.getParent().computeTrim(0, 0, size.x, size.y);
-		//if (trim.width - trim.x <= screenSize.width  && trim.height - trim.y <= screenSize.height) { 
-			//autoResize = true;
-			canvasLayoutData.widthHint = size.x;
-			canvasLayoutData.heightHint = size.y;
-			
-			canvas.setSize(size);
-			canvas.getShell().pack();
-			//canvas.getParent().setSize(trim.width, trim.height);
-		}			
-		//sizedToZoom = false;
 	}
-
+	
 	/**
 	 * If the X or Y resolutions changed, ensure the widget can show it correctly.
 	 * Pretending that the window's size is the real physical monitor's size,
@@ -269,44 +198,23 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	 * window.
 	 */
 	protected void updateWidgetSizeForMode() {
-		// update size if needed
-		if (vdpCanvas.getVisibleWidth() == 512) {
-			zoomx = zoom / 2.f;
-		} else {
-			zoomx = zoom;
-		}
-		if (vdpCanvas.isInterlacedEvenOdd()) {
-			zoomy = zoom / 2.f;
-		} else {
-			zoomy = zoom;
-		}
+		int visibleWidth = getCanvas().getVisibleWidth();
+		int visibleHeight = getCanvas().getVisibleHeight();
+		fixedAspectLayout.setSize(visibleWidth, visibleHeight);
+		if (visibleWidth > 256)
+			visibleWidth /= 2;
+		if (vdpCanvas.isInterlacedEvenOdd())
+			visibleHeight /= 2;
+		fixedAspectLayout.setAspect((double) visibleWidth / visibleHeight);
+		canvas.getParent().layout(true);
 		
-		resizeWidgets();
 	}
 
 	protected boolean zoomWithin(int physsize, float zoom, int logSize) {
 		return Math.abs(physsize / zoom - logSize) < 64;
 	}
-	protected void resizeToProportions(Point curSize, Rectangle targetRect) {
-		if (sizedToZoom) {
-			// avoid strangely growing or shrinking the window when y-res goes 192 <--> 212
-			if (zoomWithin(curSize.y, zoomy, vdpCanvas.getVisibleHeight())) {
-				zoomx = Math.round((zoom * 256) / vdpCanvas.getVisibleWidth());
-				zoomy = Math.round((curSize.y + 64) / vdpCanvas.getVisibleHeight());
-			} else {
-				zoomx = Math.round((curSize.x + 255) / vdpCanvas.getVisibleWidth());
-				zoomy = Math.round((curSize.y + vdpCanvas.getVisibleHeight()-1) / vdpCanvas.getVisibleHeight());
-			}
-			zoom = (int) zoomy;
-		} else {
-			sizedToZoom = true;
-		}
-		
-		resizeWidgets();
-	}
-
+	
 	public void canvasResized(VdpCanvas canvas) {
-		//needResize = true;
 	}
 	public void sync() {
 		Display.getDefault().syncExec(new Runnable() {
@@ -323,43 +231,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		return shell;
 	}
 
-	/*
-	public void updateList(RedrawBlock[] blocks, int count) {
-		//final Region region = new Region(shell.getDisplay());
-		Rectangle redrawRect_ = null;
-		int nblocks = 0;
-		for (int idx = 0; idx < count; idx++) {
-			final RedrawBlock block = blocks[idx];
-			//region.add(new Rectangle(block.c, block.r, block.w, block.h));
-			Rectangle blockRect = new Rectangle(block.c, block.r, block.w, block.h);
-			if (redrawRect_ == null)
-				redrawRect_ = blockRect;
-			else
-				redrawRect_ = redrawRect_.union(blockRect);
-			nblocks++;
-		}
-		
-		// queue redraw
-		if (redrawRect_ != null) {
-			//final Rectangle redrawRect = region.getBounds();
-			final Rectangle redrawRect = redrawRect_;
-			//region.dispose();
-			
-			//if (nblocks > 0) 
-			//	System.out.println("Redrew " + nblocks + " blocks to " + redrawRect);
-			
-			Display.getDefault().asyncExec(new Runnable() {
-	
-				public void run() {
-					if (canvas.isDisposed())
-						return;
-					canvas.redraw(redrawRect.x * zoom, redrawRect.y * zoom, 
-							redrawRect.width * zoom, redrawRect.height * zoom, true);
-				}
-				
-			});
-		}
-	}*/
 
 	protected void repaint(GC gc, Rectangle updateRect) {
 		if (canvas.isDisposed())
@@ -432,7 +303,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 
 	public synchronized void setZoom(int zoom) {
 		synchronized (vdpCanvas) {
-			this.zoom = zoom;
+			fixedAspectLayout.setZoomX(zoom);
+			fixedAspectLayout.setZoomY(zoom);
 			isDirty = true;
 			updateWidgetSizeForMode();
 			redraw();
@@ -440,7 +312,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	}
 	
 	public int getZoom() {
-		return zoom;
+		return (int) fixedAspectLayout.getZoomX();
 	}
 
 	public void canvasDirtied(VdpCanvas canvas) {
