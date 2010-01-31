@@ -8,8 +8,8 @@ package v9t9.tests;
 
 import junit.framework.TestCase;
 
-import org.ejs.emul.core.utils.Setting;
-import org.ejs.emul.core.utils.SettingsCollection;
+import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.utils.SettingsCollection;
 
 /**
  * @author ejs

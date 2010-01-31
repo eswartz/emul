@@ -13,9 +13,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.emul.core.utils.ISettingListener;
-import org.ejs.emul.core.utils.Setting;
-import org.ejs.emul.core.utils.SettingsCollection;
+import org.ejs.coffee.core.utils.ISettingListener;
+import org.ejs.coffee.core.utils.Setting;
+import org.ejs.coffee.core.utils.SettingsCollection;
 
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;

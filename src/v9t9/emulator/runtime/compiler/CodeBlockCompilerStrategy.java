@@ -6,7 +6,7 @@ package v9t9.emulator.runtime.compiler;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.ejs.emul.core.utils.Pair;
+import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.memory.MemoryArea;

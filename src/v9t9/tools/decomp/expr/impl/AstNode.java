@@ -71,7 +71,7 @@ abstract public class AstNode implements IAstNode {
      */
     public void setParent(IAstNode node) {
         if (node != null) {
-			org.ejs.emul.core.utils.Check.checkArg((parent == null));
+			org.ejs.coffee.core.utils.Check.checkArg((parent == null));
 		}
         parent = node;
     }

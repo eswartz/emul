@@ -45,9 +45,9 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
-import org.ejs.emul.core.utils.ISettingListener;
-import org.ejs.emul.core.utils.PrefUtils;
-import org.ejs.emul.core.utils.Setting;
+import org.ejs.coffee.core.utils.ISettingListener;
+import org.ejs.coffee.core.utils.PrefUtils;
+import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;

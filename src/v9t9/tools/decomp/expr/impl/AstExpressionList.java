@@ -37,8 +37,8 @@ public class AstExpressionList extends AstNode implements IAstExpressionList {
      * @see v9t9.tools.decomp.expr.IAstExpressionList#addExpression(v9t9.tools.decomp.expr.IAstExpression)
      */
     public void addExpression(IAstExpression expr) {
-        org.ejs.emul.core.utils.Check.checkArg(expr);
-        org.ejs.emul.core.utils.Check.checkArg((!nodes.contains(expr)));
+        org.ejs.coffee.core.utils.Check.checkArg(expr);
+        org.ejs.coffee.core.utils.Check.checkArg((!nodes.contains(expr)));
         nodes.add(expr);
         expr.setParent(this);
         dirty = true;

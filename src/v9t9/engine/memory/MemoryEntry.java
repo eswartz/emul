@@ -13,7 +13,7 @@ import java.io.InputStreamReader;
 import java.util.TreeMap;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 /**
  * These enums and struct define a higher-level organization of the memory map,

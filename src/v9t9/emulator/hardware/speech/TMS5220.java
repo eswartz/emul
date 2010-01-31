@@ -6,9 +6,9 @@ package v9t9.emulator.hardware.speech;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import org.ejs.emul.core.utils.BinaryUtils;
-import org.ejs.emul.core.utils.HexUtils;
-import org.ejs.emul.core.utils.Setting;
+import org.ejs.coffee.core.utils.BinaryUtils;
+import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.speech.LPCSpeech.Fetcher;

@@ -370,7 +370,7 @@ public class MachineOperand implements Operand {
 	public void convertToImmedate() {
 		if (type == OP_IMMED || type == OP_ADDR)	// hack
 			return;
-		org.ejs.emul.core.utils.Check.checkState((type == MachineOperand.OP_REG));
+		org.ejs.coffee.core.utils.Check.checkState((type == MachineOperand.OP_REG));
 		type = OP_IMMED;
 		immed = (short) val;
 	}

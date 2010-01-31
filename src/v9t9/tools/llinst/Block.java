@@ -37,7 +37,7 @@ public class Block implements Comparable<Block> {
      * @param inst
      */
     public Block(HighLevelInstruction inst) {
-    	org.ejs.emul.core.utils.Check.checkArg((inst.getBlock() == null));
+    	org.ejs.coffee.core.utils.Check.checkArg((inst.getBlock() == null));
     	this.id = nextId++;
         succ = new ArrayList<Block>(2);
         pred = new ArrayList<Block>(2);
@@ -146,7 +146,7 @@ public class Block implements Comparable<Block> {
 	public void setLast(HighLevelInstruction last) {
 		
 		if (last != null) {
-			org.ejs.emul.core.utils.Check.checkArg((last.getBlock() == null || last.getBlock() == this));
+			org.ejs.coffee.core.utils.Check.checkArg((last.getBlock() == null || last.getBlock() == this));
 			
 			boolean hitOldLast = false;
 			boolean hitNewLast = false;
@@ -166,7 +166,7 @@ public class Block implements Comparable<Block> {
 				}
 				inst = inst.getNext();
 			}
-			org.ejs.emul.core.utils.Check.checkState(hitNewLast);
+			org.ejs.coffee.core.utils.Check.checkState(hitNewLast);
 	
 			// reset blocks for insts no longer in block
 			if (!hitOldLast && this.last != null) {
@@ -181,7 +181,7 @@ public class Block implements Comparable<Block> {
 				}
 				
 				if (!hitOldLast) {
-					org.ejs.emul.core.utils.Check.checkState(false);
+					org.ejs.coffee.core.utils.Check.checkState(false);
 				}
 			}
 		} else {
@@ -207,7 +207,7 @@ public class Block implements Comparable<Block> {
 		if (first == this.first)
 			return this;
 		HighLevelInstruction oldLast = this.last;
-		org.ejs.emul.core.utils.Check.checkArg(oldLast);	// can't split unbounded block
+		org.ejs.coffee.core.utils.Check.checkArg(oldLast);	// can't split unbounded block
 		first.setBlock(null);
 		setLast(first.getPrev());
 		Block split = new Block(first);
@@ -225,7 +225,7 @@ public class Block implements Comparable<Block> {
     }
 
     public void addSucc(Block block) {
-    	org.ejs.emul.core.utils.Check.checkArg(block.getFirst());
+    	org.ejs.coffee.core.utils.Check.checkArg(block.getFirst());
     	
         if (!succ.contains(block)) {
 			succ.add(block);

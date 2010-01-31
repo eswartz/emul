@@ -8,7 +8,7 @@ import org.eclipse.jface.viewers.ITableColorProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 class ByteMemoryLabelProvider extends BaseLabelProvider implements ITableLabelProvider, ITableColorProvider {
 	private Color changedMemoryBackground;

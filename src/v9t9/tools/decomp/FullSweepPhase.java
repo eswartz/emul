@@ -8,7 +8,7 @@ package v9t9.tools.decomp;
 
 import java.util.Iterator;
 
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;

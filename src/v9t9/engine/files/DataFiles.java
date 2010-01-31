@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ejs.emul.core.utils.CompatUtils;
+import org.ejs.coffee.core.utils.CompatUtils;
 
 
 /**

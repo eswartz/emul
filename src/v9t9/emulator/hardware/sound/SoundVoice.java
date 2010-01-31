@@ -4,7 +4,7 @@
 package v9t9.emulator.hardware.sound;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.emul.core.sound.ISoundVoice;
+import org.ejs.coffee.core.sound.ISoundVoice;
 
 public abstract class SoundVoice implements ISoundVoice
 {

@@ -23,7 +23,7 @@ public class NativeFileMemoryEntry extends MemoryEntry {
             MemoryDomain domain, 
             NativeFile file, int fileoffs, int filesize) {
         super(name, domain, addr, size, area);
-        org.ejs.emul.core.utils.Check.checkArg(file);
+        org.ejs.coffee.core.utils.Check.checkArg(file);
         this.file = file;
         this.fileoffs = fileoffs;
         this.filesize = filesize;

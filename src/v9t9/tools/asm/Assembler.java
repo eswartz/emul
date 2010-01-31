@@ -17,7 +17,7 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.RawInstruction;

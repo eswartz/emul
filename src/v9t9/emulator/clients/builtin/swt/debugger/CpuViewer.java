@@ -27,10 +27,10 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
-import org.ejs.emul.core.utils.CompatUtils;
-import org.ejs.emul.core.utils.HexUtils;
-import org.ejs.emul.core.utils.ISettingListener;
-import org.ejs.emul.core.utils.Setting;
+import org.ejs.coffee.core.utils.CompatUtils;
+import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.ISettingListener;
+import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.V9t9;

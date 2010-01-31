@@ -5,13 +5,13 @@ package v9t9.emulator.clients.builtin.sound;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.ejs.emul.core.sound.ISoundListener;
-import org.ejs.emul.core.sound.ISoundOutput;
-import org.ejs.emul.core.sound.ISoundVoice;
-import org.ejs.emul.core.sound.SoundFactory;
-import org.ejs.emul.core.sound.ui.SoundRecordingHelper;
-import org.ejs.emul.core.utils.ISettingListener;
-import org.ejs.emul.core.utils.Setting;
+import org.ejs.coffee.core.sound.ISoundListener;
+import org.ejs.coffee.core.sound.ISoundOutput;
+import org.ejs.coffee.core.sound.ISoundVoice;
+import org.ejs.coffee.core.sound.SoundFactory;
+import org.ejs.coffee.core.sound.ui.SoundRecordingHelper;
+import org.ejs.coffee.core.utils.ISettingListener;
+import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;

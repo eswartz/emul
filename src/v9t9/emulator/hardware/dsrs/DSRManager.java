@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.CruWriter;

@@ -3,7 +3,7 @@
  */
 package v9t9.tools.asm.operand.hl;
 
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.Assembler;

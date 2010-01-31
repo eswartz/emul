@@ -232,7 +232,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 			inst = new HighLevelInstruction(0, getInstruction(addr));
 			llInstructions.put(addr, inst);
 		}
-		org.ejs.emul.core.utils.Check.checkState((inst != null));
+		org.ejs.coffee.core.utils.Check.checkState((inst != null));
 		Block block = inst.getBlock();
 		if (block != null) {
 			Label label = labelMap.get(block);
@@ -249,7 +249,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 			inst = new HighLevelInstruction(0, getInstruction(addr));
 			llInstructions.put(addr, inst);
 		}
-		org.ejs.emul.core.utils.Check.checkState((inst != null));
+		org.ejs.coffee.core.utils.Check.checkState((inst != null));
 		inst.flags |= HighLevelInstruction.fStartsBlock;
 		
 		Block block = inst.getBlock();

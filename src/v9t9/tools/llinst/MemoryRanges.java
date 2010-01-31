@@ -43,7 +43,7 @@ public class MemoryRanges {
     }
 
     public void addRange(int baseAddr, int size, boolean isCode) {
-        org.ejs.emul.core.utils.Check.checkArg((size > 0));
+        org.ejs.coffee.core.utils.Check.checkArg((size > 0));
         /*
         MemoryRange startRange = getRangeContaining(baseAddr);
         MemoryRange endRange = getRangeContaining(baseAddr + size);

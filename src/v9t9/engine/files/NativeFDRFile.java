@@ -11,7 +11,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import org.ejs.emul.core.utils.CompatUtils;
+import org.ejs.coffee.core.utils.CompatUtils;
 
 public class NativeFDRFile implements NativeFile {
 
@@ -20,8 +20,8 @@ public class NativeFDRFile implements NativeFile {
     private String filename;
     
     public NativeFDRFile(File file, FDR fdr) {
-        org.ejs.emul.core.utils.Check.checkArg(file);
-        org.ejs.emul.core.utils.Check.checkArg(fdr);
+        org.ejs.coffee.core.utils.Check.checkArg(file);
+        org.ejs.coffee.core.utils.Check.checkArg(fdr);
         this.file = file;
         this.fdr = fdr;
         this.filename = fdr.getFileName();

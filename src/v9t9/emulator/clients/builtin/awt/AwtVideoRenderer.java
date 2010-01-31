@@ -20,8 +20,8 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import org.ejs.emul.core.utils.ISettingListener;
-import org.ejs.emul.core.utils.Setting;
+import org.ejs.coffee.core.utils.ISettingListener;
+import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;

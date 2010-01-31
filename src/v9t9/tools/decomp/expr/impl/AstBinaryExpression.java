@@ -85,7 +85,7 @@ public class AstBinaryExpression extends AstExpression implements
             opText = '^';
             break;
         default:
-            org.ejs.emul.core.utils.Check.checkState(false);
+            org.ejs.coffee.core.utils.Check.checkState(false);
         }
         return Character.toString(opText);
     }
@@ -101,7 +101,7 @@ public class AstBinaryExpression extends AstExpression implements
      * @see v9t9.tools.decomp.expr.IAstBinaryExpression#setOperator(int)
      */
     public void setOperator(int operator) {
-        org.ejs.emul.core.utils.Check.checkArg((operator >= 0 && operator <= K_LAST));
+        org.ejs.coffee.core.utils.Check.checkArg((operator >= 0 && operator <= K_LAST));
         this.operator = operator;
         dirty = true;
     }
@@ -117,7 +117,7 @@ public class AstBinaryExpression extends AstExpression implements
      * @see v9t9.tools.decomp.expr.IAstBinaryExpression#setLeftOperand(v9t9.tools.decomp.expr.IAstExpression)
      */
     public void setLeftOperand(IAstExpression expr) {
-        org.ejs.emul.core.utils.Check.checkArg(expr);
+        org.ejs.coffee.core.utils.Check.checkArg(expr);
         if (this.left != null) {
 			this.left.setParent(null);
 		}
@@ -137,7 +137,7 @@ public class AstBinaryExpression extends AstExpression implements
      * @see v9t9.tools.decomp.expr.IAstBinaryExpression#setRightOperand(v9t9.tools.decomp.expr.IAstExpression)
      */
     public void setRightOperand(IAstExpression expr) {
-        org.ejs.emul.core.utils.Check.checkArg(expr);
+        org.ejs.coffee.core.utils.Check.checkArg(expr);
         if (this.right != null) {
 			this.right.setParent(null);
 		}

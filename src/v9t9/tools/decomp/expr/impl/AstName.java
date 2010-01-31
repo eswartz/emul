@@ -79,7 +79,7 @@ public class AstName extends AstNode implements IAstName {
      * @see v9t9.tools.decomp.expr.IAstName#setName(java.lang.String)
      */
     public void setName(String name) {
-        org.ejs.emul.core.utils.Check.checkArg(name);
+        org.ejs.coffee.core.utils.Check.checkArg(name);
         this.name = name;
         this.dirty = true;
     }

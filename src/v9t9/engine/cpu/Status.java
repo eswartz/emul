@@ -6,7 +6,7 @@
  */
 package v9t9.engine.cpu;
 
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 
 /**

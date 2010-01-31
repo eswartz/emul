@@ -48,8 +48,8 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
-import org.ejs.emul.core.utils.CompatUtils;
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.CompatUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.hardware.V9t9;
 import v9t9.engine.memory.Memory;

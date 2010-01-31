@@ -6,7 +6,7 @@ package v9t9.emulator.clients.builtin.swt.debugger;
 import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.widgets.Item;
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 class ByteMemoryCellModifier implements ICellModifier {
 	private StructuredViewer viewer;

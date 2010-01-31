@@ -8,7 +8,7 @@ package v9t9.emulator.runtime.compiler;
 
 import java.io.PrintWriter;
 
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.hardware.TI994A;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;

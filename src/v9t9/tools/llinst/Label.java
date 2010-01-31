@@ -6,7 +6,7 @@
  */
 package v9t9.tools.llinst;
 
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 public class Label implements Comparable<Label> {
     private Block block;   // block owning label
@@ -15,7 +15,7 @@ public class Label implements Comparable<Label> {
     boolean named; // actually a real name
     
     public Label(Block block, String name) {
-    	org.ejs.emul.core.utils.Check.checkArg(block);
+    	org.ejs.coffee.core.utils.Check.checkArg(block);
         this.block = block;
         setName(name);
     }

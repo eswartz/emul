@@ -4,7 +4,7 @@
 package v9t9.emulator.hardware.sound;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.emul.core.utils.PrefUtils;
+import org.ejs.coffee.core.utils.PrefUtils;
 
 public class AudioGateVoice extends SoundVoice {
 

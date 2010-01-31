@@ -212,7 +212,7 @@ public class TopDownPhase extends Phase {
 								unresolvedBlocks.add(label.getBlock());
 							}
 						} else {
-							org.ejs.emul.core.utils.Check.checkState(false);
+							org.ejs.coffee.core.utils.Check.checkState(false);
 						}
 					}
 				} else {
@@ -761,7 +761,7 @@ public class TopDownPhase extends Phase {
 					new AstRegisterExpression(inst.getWp(), mop1.val));
 
 		default:
-			org.ejs.emul.core.utils.Check.checkState(false);
+			org.ejs.coffee.core.utils.Check.checkState(false);
 		}
 		return null;
 	}

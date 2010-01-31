@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
@@ -206,7 +206,7 @@ public class HighLevelInstruction extends Instruction {
 		} else if (op1 instanceof DataWordListOperand) {
 			
 		} else {
-			org.ejs.emul.core.utils.Check.checkState(false);
+			org.ejs.coffee.core.utils.Check.checkState(false);
 		}
 		return blocks;
 	}

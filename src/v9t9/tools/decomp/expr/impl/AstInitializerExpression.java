@@ -35,7 +35,7 @@ public class AstInitializerExpression extends AstInitializer implements
      * @see v9t9.tools.decomp.expr.IAstInitializerExpression#setExpression(v9t9.tools.decomp.expr.IAstExpression)
      */
     public void setExpression(IAstExpression expr) {
-        org.ejs.emul.core.utils.Check.checkArg(expr);
+        org.ejs.coffee.core.utils.Check.checkArg(expr);
         if (this.expr != null) {
 			this.expr.setParent(null);
 		}

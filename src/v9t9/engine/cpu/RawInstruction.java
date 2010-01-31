@@ -7,7 +7,7 @@ import static v9t9.engine.cpu.InstructionTable.Isb;
 import static v9t9.engine.cpu.InstructionTable.Isocb;
 import static v9t9.engine.cpu.InstructionTable.Iszcb;
 
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.tools.asm.BaseInstruction;
 public class RawInstruction extends BaseInstruction implements Comparable<RawInstruction> {

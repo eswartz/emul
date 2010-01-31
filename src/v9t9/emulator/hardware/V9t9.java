@@ -12,7 +12,7 @@ import java.io.IOException;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
-import org.ejs.emul.core.utils.Setting;
+import org.ejs.coffee.core.utils.Setting;
 
 import sdljava.SDLException;
 import v9t9.emulator.Machine;

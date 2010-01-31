@@ -6,8 +6,8 @@ package v9t9.emulator.hardware.sound;
 import java.text.MessageFormat;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.emul.core.utils.HexUtils;
-import org.ejs.emul.core.utils.PrefUtils;
+import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.PrefUtils;
 
 public abstract class ClockedSoundVoice extends SoundVoice
 {

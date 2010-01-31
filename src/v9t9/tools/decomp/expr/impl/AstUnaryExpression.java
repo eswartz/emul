@@ -73,7 +73,7 @@ public class AstUnaryExpression extends AstExpression implements
              opString = "*"; //$NON-NLS-1$
              break;
          default:
-             org.ejs.emul.core.utils.Check.checkState(false);
+             org.ejs.coffee.core.utils.Check.checkState(false);
          }
          return opString;
      
@@ -90,7 +90,7 @@ public class AstUnaryExpression extends AstExpression implements
      * @see v9t9.tools.decomp.expr.IAstUnaryExpression#setOperator(int)
      */
     public void setOperator(int oper) {
-        org.ejs.emul.core.utils.Check.checkArg((oper >= 0 && oper <= K_LAST));
+        org.ejs.coffee.core.utils.Check.checkArg((oper >= 0 && oper <= K_LAST));
         this.operator = oper;
         dirty = true;
     }
@@ -106,7 +106,7 @@ public class AstUnaryExpression extends AstExpression implements
      * @see v9t9.tools.decomp.expr.IAstUnaryExpression#setOperand(v9t9.tools.decomp.expr.IAstExpression)
      */
     public void setOperand(IAstExpression expr) {
-        org.ejs.emul.core.utils.Check.checkArg(expr);
+        org.ejs.coffee.core.utils.Check.checkArg(expr);
         if (this.operand != null) {
 			this.operand.setParent(null);
 		}

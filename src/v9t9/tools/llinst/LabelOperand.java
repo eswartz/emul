@@ -17,7 +17,7 @@ public class LabelOperand implements Operand {
     public Label label;
 
     public LabelOperand(Label label) {
-    	org.ejs.emul.core.utils.Check.checkArg(label);
+    	org.ejs.coffee.core.utils.Check.checkArg(label);
         this.label = label;
     }
     

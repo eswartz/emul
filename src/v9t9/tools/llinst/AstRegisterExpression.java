@@ -27,7 +27,7 @@ public class AstRegisterExpression extends AstExpression implements
     }
 
     public void setRegister(int value) {
-        org.ejs.emul.core.utils.Check.checkArg((value >= 0 && value < 16));
+        org.ejs.coffee.core.utils.Check.checkArg((value >= 0 && value < 16));
         this.reg = value;
     }
 
@@ -36,7 +36,7 @@ public class AstRegisterExpression extends AstExpression implements
     }
     
     public void setWorkspacePointer(int wp) {
-        org.ejs.emul.core.utils.Check.checkArg((wp >= 0 && wp < 0x10000));
+        org.ejs.coffee.core.utils.Check.checkArg((wp >= 0 && wp < 0x10000));
         if (this.wp != wp) {
 			dirty = true;
 		}

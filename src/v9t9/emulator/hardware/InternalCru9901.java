@@ -7,7 +7,7 @@
 package v9t9.emulator.hardware;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.ejs.emul.core.utils.PrefUtils;
+import org.ejs.coffee.core.utils.PrefUtils;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.runtime.Cpu;

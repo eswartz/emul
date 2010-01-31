@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.hardware.memory;
 
-import org.ejs.emul.core.utils.Setting;
+import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.engine.memory.MemoryEntry;
 

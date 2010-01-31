@@ -3,7 +3,7 @@ package v9t9.emulator.runtime.compiler;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Executor;

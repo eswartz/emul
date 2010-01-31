@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
@@ -201,7 +201,7 @@ public abstract class Phase {
 	 * @return same incoming routine, updated with a label and added to the routines
 	 */
 	public Routine addRoutine(int addr, String name, Routine routine) {
-		org.ejs.emul.core.utils.Check.checkState(validCodeAddress(addr));
+		org.ejs.coffee.core.utils.Check.checkState(validCodeAddress(addr));
 		
 		Label label = decompileInfo.findOrCreateLabel(addr);
 		if (name != null && label.getName() == null) {

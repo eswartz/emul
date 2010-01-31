@@ -13,7 +13,7 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
-import org.ejs.emul.core.utils.Setting;
+import org.ejs.coffee.core.utils.Setting;
 
 import sdljava.SDLException;
 import sdljava.event.SDLEvent;
