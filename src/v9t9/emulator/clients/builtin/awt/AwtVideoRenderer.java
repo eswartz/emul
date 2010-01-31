@@ -20,14 +20,15 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import org.ejs.emul.core.utils.ISettingListener;
+import org.ejs.emul.core.utils.Setting;
+
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 import v9t9.emulator.hardware.V9t9;
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
 import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
 
 /**

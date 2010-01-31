@@ -11,6 +11,8 @@ import java.util.Arrays;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.emul.core.utils.ISettingListener;
+import org.ejs.emul.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
@@ -27,8 +29,6 @@ import v9t9.emulator.runtime.Logging;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
 
 /**
  * This is the 99/4A VDP chip.

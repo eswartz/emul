@@ -410,12 +410,12 @@ public class EffectsController {
 			sweepCounter += sweepRate;
 			if (sweepRate > 0) {
 				while (sweepCounter >= 65536) {
-					voice.clock += voice.CLOCKSTEP;
+					voice.clock += ClockedSoundVoice.CLOCKSTEP;
 					sweepCounter -= 65536;
 				}
 			} else if (sweepRate < 0) {
 				while (sweepCounter < 0) {
-					voice.clock -= voice.CLOCKSTEP;
+					voice.clock -= ClockedSoundVoice.CLOCKSTEP;
 					sweepCounter += 65536;
 				}
 			}

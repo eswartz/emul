@@ -8,11 +8,11 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.internal.gtk.OS;
+import org.ejs.emul.core.utils.ISettingListener;
+import org.ejs.emul.core.utils.Setting;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.hardware.V9t9;
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
 import v9t9.jni.v9t9render.SWIGTYPE_p_AnalogTV;
 import v9t9.jni.v9t9render.V9t9Render;
 

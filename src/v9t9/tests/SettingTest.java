@@ -7,8 +7,9 @@
 package v9t9.tests;
 
 import junit.framework.TestCase;
-import v9t9.engine.settings.Setting;
-import v9t9.engine.settings.SettingsCollection;
+
+import org.ejs.emul.core.utils.Setting;
+import org.ejs.emul.core.utils.SettingsCollection;
 
 /**
  * @author ejs

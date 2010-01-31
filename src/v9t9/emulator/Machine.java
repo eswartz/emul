@@ -13,6 +13,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.emul.core.utils.ISettingListener;
+import org.ejs.emul.core.utils.Setting;
+import org.ejs.emul.core.utils.SettingsCollection;
 
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
@@ -31,9 +34,6 @@ import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
-import v9t9.engine.settings.SettingsCollection;
 import v9t9.engine.timer.FastTimer;
 import v9t9.engine.timer.FastTimerTask;
 import v9t9.keyboard.KeyboardState;

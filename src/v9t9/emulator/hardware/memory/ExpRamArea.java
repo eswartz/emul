@@ -3,8 +3,8 @@
  */
 package v9t9.emulator.hardware.memory;
 
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
+import org.ejs.emul.core.utils.ISettingListener;
+import org.ejs.emul.core.utils.Setting;
 
 /** 99/4A expansion RAM, accessed over the peripheral bus */
 public class ExpRamArea extends ConsoleMemoryArea {

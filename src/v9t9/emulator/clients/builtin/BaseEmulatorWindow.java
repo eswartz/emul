@@ -47,7 +47,11 @@ public abstract class BaseEmulatorWindow {
 			return configPath;
 		}
 		
-		String filename = openFileSelectionDialog(title, new File(configPath).getParent(), fileName, 
+		File dir = new File(configPath);
+		if (!dir.isDirectory())
+			dir = dir.getParentFile();
+		
+		String filename = openFileSelectionDialog(title, dir.getAbsolutePath(), fileName, 
 				isSave, extensions);
 		if (filename != null && isUndefined) {
 			settings.put(configVar, filename);

@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 
 import org.ejs.emul.core.utils.BinaryUtils;
 import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.emul.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.speech.LPCSpeech.Fetcher;
@@ -15,7 +16,6 @@ import v9t9.emulator.hardware.speech.LPCSpeech.Sender;
 import v9t9.emulator.runtime.Logging;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.settings.Setting;
 import v9t9.engine.timer.FastTimer;
 import v9t9.engine.timer.FastTimerTask;
 

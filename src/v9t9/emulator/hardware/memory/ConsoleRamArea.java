@@ -3,8 +3,9 @@
  */
 package v9t9.emulator.hardware.memory;
 
+import org.ejs.emul.core.utils.Setting;
+
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.settings.Setting;
 
 /** Builtin console RAM: 256 bytes */
 public class ConsoleRamArea extends ConsoleMemoryArea {

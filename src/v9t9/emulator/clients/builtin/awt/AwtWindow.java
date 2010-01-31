@@ -34,13 +34,14 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFileChooser;
 
+import org.ejs.emul.core.utils.ISettingListener;
+import org.ejs.emul.core.utils.Setting;
+
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.ButtonPressHandler;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
 
 /**
  * Provide the emulator in an SWT window

@@ -42,20 +42,19 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 		dump();
 	}
 
-	@Override
-	public void generate(int[] soundGeneratorWorkBuffer, int from,
+	public void generate(float[] soundGeneratorWorkBuffer, int from,
 			int to) {
 		int ratio = 128 + balance;
 		while (from < to) {
 			updateEffect();
 			
-			int sampleMagnitude;
-			int sampleL = 0;
-			int sampleR = 0;
+			float sampleMagnitude;
+			float sampleL = 0;
+			float sampleR = 0;
 			
 			sampleMagnitude = getCurrentMagnitude();
-			sampleL = ((256 - ratio) * sampleMagnitude) >> 8;
-			sampleR = (ratio * sampleMagnitude) >> 8;
+			sampleL = ((256 - ratio) * sampleMagnitude) / 256.f;
+			sampleR = (ratio * sampleMagnitude) / 256.f;
 			updateAccumulator();
 			
 			if (isWhite) {

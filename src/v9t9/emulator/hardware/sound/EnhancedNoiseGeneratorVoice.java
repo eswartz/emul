@@ -33,8 +33,8 @@ public class EnhancedNoiseGeneratorVoice extends NoiseGeneratorVoice implements 
 		effectsController.updateDivisor();
 	}
 	@Override
-	public int getCurrentMagnitude() {
-		return effectsController.getCurrentSample();
+	public float getCurrentMagnitude() {
+		return (float) effectsController.getCurrentSample() / 0x007FFFFF;
 	}
 	@Override
 	protected void updateEffect() {

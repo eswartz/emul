@@ -25,13 +25,13 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.emul.core.utils.ISettingListener;
+import org.ejs.emul.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
 
 /**
  * Provide the emulator in an SWT window

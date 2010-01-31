@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.emul.core.utils.Setting;
 
 import sdljava.SDLException;
 import sdljava.event.SDLEvent;
@@ -31,7 +32,6 @@ import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.ButtonPressHandler;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Executor;
-import v9t9.engine.settings.Setting;
 
 /**
  * @author Ed

@@ -45,7 +45,9 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.emul.core.utils.ISettingListener;
 import org.ejs.emul.core.utils.PrefUtils;
+import org.ejs.emul.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
@@ -57,8 +59,6 @@ import v9t9.emulator.clients.builtin.swt.debugger.MemoryViewer;
 import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.Executor;
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
 
 /**
  * Provide the emulator in an SWT window
@@ -367,7 +367,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 			public void menuDetected(MenuDetectEvent e) {
 				Control button = (Control) e.widget;
-				showMenu(createSoundMenu(button), button, e.x, e.y);
+				Menu menu = new Menu(button);
+				if (machine.getSound().getSoundHandler() instanceof JavaSoundHandler) {
+					JavaSoundHandler javaSoundHandler = (JavaSoundHandler) machine.getSound().getSoundHandler();
+					javaSoundHandler.getSoundRecordingHelper().populateSoundMenu(menu);
+					javaSoundHandler.getSpeechRecordingHelper().populateSoundMenu(menu);
+				}
+				showMenu(menu, button, e.x, e.y);
 			}
 		});
 	}
@@ -728,50 +734,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 	}
 	
-	
-	private Menu createSoundMenu(final Control parent) {
-		final Menu menu = new Menu(parent);
-		return populateSoundMenu(menu);
-	}
-
-	private Menu populateSoundMenu(final Menu menu) {
-		MenuItem item = new MenuItem(menu, SWT.CHECK);
-		String filename = JavaSoundHandler.settingRecordSoundOutputFile.getString();
-		if (filename != null) {
-			item.setText("Stop recording to " + filename);
-			item.setSelection(true);
-			item.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					JavaSoundHandler.settingRecordSoundOutputFile.setString(null);
-				}
-
-			});
-		} else {
-			item.setText("Record sound...");
-			item.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					String filenameBase = openFileSelectionDialog("Record sound to...", 
-							EmulatorSettings.getInstance().getBaseConfigurationPath(), 
-							"sound", true,
-							JavaSoundHandler.getSoundFileExtensions());
-					File saveFile = null;
-					if (filenameBase != null) {
-						saveFile = getUniqueFile(filenameBase);
-						if (saveFile == null) {
-							showErrorMessage("Save error", 
-									"Too many sound files here!");
-							return;
-						}
-					}
-					JavaSoundHandler.settingRecordSoundOutputFile.setString(saveFile != null ? saveFile.getAbsolutePath() : null);
-				}
-
-			});
-		}
-		return menu;
-	}
 	
 	private BasicButton createButton(ButtonBar buttonBar, int iconIndex, String tooltip, SelectionListener selectionListener) {
 		Rectangle bounds = mainIconIndexToBounds(iconIndex);

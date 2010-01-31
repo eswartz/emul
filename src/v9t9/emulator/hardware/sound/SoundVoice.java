@@ -4,8 +4,9 @@
 package v9t9.emulator.hardware.sound;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.emul.core.sound.ISoundVoice;
 
-public abstract class SoundVoice
+public abstract class SoundVoice implements ISoundVoice
 {
 	/** volume, 0 == off, 0xf == loudest */
 	private byte	volume;			
@@ -51,17 +52,12 @@ public abstract class SoundVoice
 	public void setVolume(byte volume) {
 		this.volume = volume;
 	}
-	public int getSampleSize(int volume) {
-		return volumeToMagntiude24[volume & 0xf];
-	}
-	public int getCurrentMagnitude() {
-		return getSampleSize(volume);
+	public float getCurrentMagnitude() {
+		return (float) volumeToMagntiude24[volume & 0xf] / 0x007FFFFF;
 	}
 	public byte getVolume() {
 		return volume;
 	}
-	public abstract void generate(int[] soundGeneratorWorkBuffer, int from,
-			int to);
 	public boolean isActive() {
 		return volume > 0;
 	}

@@ -29,6 +29,8 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 import org.ejs.emul.core.utils.CompatUtils;
 import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.emul.core.utils.ISettingListener;
+import org.ejs.emul.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.V9t9;
@@ -36,8 +38,6 @@ import v9t9.emulator.runtime.Executor;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionWorkBlock;
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
 
 /**
  * @author ejs

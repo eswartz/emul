@@ -28,6 +28,14 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		this.soundClock = 55930;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.ejs.emul.core.sound.ISoundVoice#reset()
+	 */
+	public void reset() {
+		clock = 0;
+		accum = 0;
+	}
+	
 	public void setSoundClock(int clock) {
 		this.soundClock = clock;
 	}

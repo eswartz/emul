@@ -39,6 +39,7 @@ import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.TABLESWITCH;
 import org.apache.bcel.generic.Type;
 import org.ejs.emul.core.utils.HexUtils;
+import org.ejs.emul.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
@@ -50,7 +51,6 @@ import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.settings.Setting;
 
 /**
  * This class compiles 9900 code into Java bytecode. 

@@ -10,8 +10,8 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
+import org.ejs.emul.core.utils.ISettingListener;
+import org.ejs.emul.core.utils.Setting;
 
 /**
  * Help for dumping logs.

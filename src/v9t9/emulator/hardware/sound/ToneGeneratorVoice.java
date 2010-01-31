@@ -59,8 +59,7 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 		return sample;
 	}*/
 	
-	@Override
-	public void generate(int[] soundGeneratorWorkBuffer, int from,
+	public void generate(float[] soundGeneratorWorkBuffer, int from,
 			int to) {
 		int ratio = 128 + balance;
 		while (from < to) {
@@ -73,10 +72,10 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 				accum -= soundClock;
 			}
 			
-			int sampleMagnitude = getCurrentMagnitude();
+			float sampleMagnitude = getCurrentMagnitude();
 			
-			int sampleL = ((256 - ratio) * sampleMagnitude) >> 8;
-			int sampleR = (ratio * sampleMagnitude) >> 8;
+			float sampleL = ((256 - ratio) * sampleMagnitude) / 256.f;
+			float sampleR = (ratio * sampleMagnitude) / 256.f;
 			
 			soundGeneratorWorkBuffer[from++] += sampleL;
 			soundGeneratorWorkBuffer[from++] += sampleR;
@@ -96,8 +95,8 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 	}
 	
 	@Override
-	public int getCurrentMagnitude() {
-		int mag = super.getCurrentMagnitude();
+	public float getCurrentMagnitude() {
+		float mag = super.getCurrentMagnitude();
 		return out ? mag : -mag;
 	}
 	

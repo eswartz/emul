@@ -12,6 +12,7 @@ import java.io.IOException;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
+import org.ejs.emul.core.utils.Setting;
 
 import sdljava.SDLException;
 import v9t9.emulator.Machine;
@@ -40,7 +41,6 @@ import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.WordMemoryArea;
-import v9t9.engine.settings.Setting;
 
 public class V9t9 {
 
@@ -131,7 +131,8 @@ public class V9t9 {
 	    	loadConsoleRom("994arom.bin");
 	    	loadConsoleGrom("994agrom.bin");
 	
-	    	if (false) {
+	    	if (true) {
+	    		ExpRamArea.settingExpRam.setBoolean(true);
 	    		loadModuleGrom("E/A", "eag.bin");
 	    		DiskMemoryEntry entry = DiskMemoryEntry.newWordMemoryFromFile(0xA000, 0x6000, "Ed's BASIC",
 	            		console,
@@ -161,10 +162,10 @@ public class V9t9 {
 	    		loadModuleGrom("Mash", "mashg.bin");
 	    		loadModuleRom("Mash", "mashc.bin");
 	    		
-	    		loadModuleGrom("Parsec", "parsecg.bin");
-	    		loadModuleRom("Parsec", "parsecc.bin");
 	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
 	    		loadModuleGrom("ExtBasic", "tiextg.bin");
+	    		loadModuleGrom("Parsec", "parsecg.bin");
+	    		loadModuleRom("Parsec", "parsecc.bin");
 	    		loadModuleGrom("TEII", "teiig.bin");
 	    		loadModuleRom("TEII", "teiic.bin");
 	    	} else {

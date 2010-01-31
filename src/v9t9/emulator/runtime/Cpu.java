@@ -9,6 +9,8 @@ package v9t9.emulator.runtime;
 import java.io.PrintWriter;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.emul.core.utils.ISettingListener;
+import org.ejs.emul.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.CruAccess;
@@ -18,8 +20,6 @@ import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryDomain.MemoryAccessListener;
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
 
 /**
  * The 9900 engine.

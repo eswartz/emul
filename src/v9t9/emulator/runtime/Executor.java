@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.ejs.emul.core.utils.ISettingListener;
+import org.ejs.emul.core.utils.Setting;
+
 import v9t9.emulator.Machine;
 import v9t9.emulator.runtime.CpuMetrics.MetricEntry;
 import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
@@ -23,8 +26,6 @@ import v9t9.emulator.runtime.interpreter.Interpreter;
 import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.settings.ISettingListener;
-import v9t9.engine.settings.Setting;
 
 
 /**

@@ -20,15 +20,29 @@ public class AudioGateVoice extends SoundVoice {
 		setVolume((byte) (state ? 15 : 0));
 	}
 
+	/* (non-Javadoc)
+	 * @see org.ejs.emul.core.sound.ISoundVoice#setSoundClock(int)
+	 */
+	public void setSoundClock(int soundClock) {
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.emul.core.sound.ISoundVoice#reset()
+	 */
+	public void reset() {
+		
+	}
+	
 	/*
 	public int generate(int soundClock, int sample) {
 		sample += volumeToMagntiude24[0xf];
 		return sample;
 	}*/
 	
-	public void generate(int[] soundGeneratorWorkBuffer, int from,
+	public void generate(float[] soundGeneratorWorkBuffer, int from,
 			int to) {
-		int sampleDelta = volumeToMagntiude24[getVolume()];
+		float sampleDelta = getCurrentMagnitude();
 		while (from < to) {
 			soundGeneratorWorkBuffer[from++] += sampleDelta;
 		}
