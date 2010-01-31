@@ -1,19 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="lib" path="/sdljava/lib/sdljava.jar"/>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry excluding="v9t9/emulator/clients/builtin/sdl/" kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/getopt"/>
-	<classpathentry kind="lib" path="gnu-getopt-1.0.11.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/bcel"/>
-	<classpathentry kind="lib" path="/sdljava/lib/bsh.jar"/>
-	<classpathentry kind="lib" path="/sdljava/lib/jdom.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/sdljava">
-		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="sdljava/lib"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="/libv9t9render/libv9t9renderutils.jar">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="libv9t9render"/>
@@ -24,5 +13,7 @@
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="libv9t9render"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="libs/bcel-5.2.jar"/>
+	<classpathentry kind="lib" path="libs/gnu-getopt-1.0.11.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

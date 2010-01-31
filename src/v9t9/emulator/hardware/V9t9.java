@@ -14,17 +14,13 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.ejs.coffee.core.utils.Setting;
 
-import sdljava.SDLException;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
 import v9t9.emulator.clients.builtin.awt.AwtKeyboardHandler;
-import v9t9.emulator.clients.builtin.sdl.SdlJavaClient;
-import v9t9.emulator.clients.builtin.sdl.SdlKeyboardHandler;
 import v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer;
 import v9t9.emulator.clients.builtin.swt.SwtAwtVideoRenderer;
 import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtKeyboardHandler;
-import v9t9.emulator.clients.builtin.swt.SwtSdlVideoRenderer;
 import v9t9.emulator.clients.builtin.swt.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.clients.demo.HybridDemoClient;
@@ -292,9 +288,11 @@ public class V9t9 {
             		
         	client = new SwtJavaClient(machine, machine.getVdp(), videoRenderer, keyboardHandler, display);
         }
+		/*
         else if (findArgument(args, "--sdl")) {
 			client = new SdlJavaClient(machine, machine.getVdp()); 
         }
+        */
         else if (findArgument(args, "--awt")) {
 			client = new AwtJavaClient(machine, machine.getVdp());
 		} 
@@ -307,6 +305,7 @@ public class V9t9 {
 			        		machine.getKeyboardState(), machine),
 					display);
 		} 
+		/*
         else if (findArgument(args, "--swtsdl")) {
         	SwtSdlVideoRenderer videoRenderer;
 			try {
@@ -320,6 +319,7 @@ public class V9t9 {
 			        		machine.getKeyboardState(), machine),
 					display);
 		} 
+		*/
         else {
 			client = new HybridDemoClient(machine, machine.getVdp(), display);
 		}

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.emulator.clients.builtin.swt;
+package v9t9.emulator.clients.builtin.sdl;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
@@ -13,7 +13,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
 
 import sdljava.SDLException;
-import v9t9.emulator.clients.builtin.sdl.SdlVideoRenderer;
+import v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer;
 
 /**
  * @author Ed
