@@ -7,6 +7,7 @@
 package v9t9.emulator;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
@@ -34,6 +35,7 @@ import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
+import v9t9.engine.modules.IModule;
 import v9t9.engine.timer.FastTimer;
 import v9t9.engine.timer.FastTimerTask;
 import v9t9.keyboard.KeyboardState;
@@ -89,6 +91,8 @@ abstract public class Machine {
 	static public final String sThrottleInterrupts = "ThrottleVDPInterrupts";
 	static public final Setting settingThrottleInterrupts = new Setting(sThrottleInterrupts, new Boolean(false));
 	
+	private List<IModule> modules = new ArrayList<IModule>();
+	
     public Machine(MachineModel machineModel) {
     	runnableList = new LinkedList<Runnable>();
     	this.memoryModel = machineModel.getMemoryModel();
@@ -100,6 +104,8 @@ abstract public class Machine {
     	sound = machineModel.createSoundProvider(this);
     	this.vdp = machineModel.createVdp(this);
     	memoryModel.initMemory(this);
+    	
+    	modules = memoryModel.getModules();
     	
     	settings = new SettingsCollection();
     	cpu = new Cpu(this, 1000 / cpuTicksPerSec, vdp);
@@ -494,6 +500,13 @@ abstract public class Machine {
 
 	public CpuMetrics getCpuMetrics() {
 		return cpuMetrics;
+	}
+
+	/**
+	 * @return
+	 */
+	public IModule[] getModules() {
+		return (IModule[]) modules.toArray(new IModule[modules.size()]);
 	}
 
 }

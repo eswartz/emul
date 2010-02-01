@@ -3,11 +3,14 @@
  */
 package v9t9.engine.memory;
 
+import java.util.List;
+
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SoundMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
+import v9t9.engine.modules.IModule;
 
 /**
  * This defines the model for memory in the emulator.
@@ -50,5 +53,9 @@ public interface MemoryModel {
 	 */
 	SpeechMmio getSpeechMmio();
 	
+	/**
+	 * Get the modules
+	 */
+	List<IModule> getModules();
 	
 }

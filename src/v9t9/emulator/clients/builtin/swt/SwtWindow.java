@@ -275,6 +275,18 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		);
 		
+		createButton(buttonBar,
+				16, "Switch module", 
+				new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
+						final ModuleSelector window = new ModuleSelector(shell, machine);
+						createToolShell(shell, window, "ModuleWindowBounds");
+						shell.setSize(400, 500);
+					}
+			}
+		);
 		/*
 		createButton(buttonBar,
 				0, 

@@ -9,12 +9,12 @@ package v9t9.engine.memory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 
-import v9t9.emulator.runtime.Executor;
-import v9t9.emulator.runtime.Logging;
 import v9t9.engine.files.DataFiles;
 
 /**
@@ -256,6 +256,46 @@ public class DiskMemoryEntry extends MemoryEntry {
 
     /**
      * Create a memory entry for banked (ROM) memory.
+     * @param klass
+     * @param addr
+     * @param size
+     * @param memory
+     * @param name
+     * @param domain
+     * @param filepath
+     * @param fileoffs
+     * @param filepath2
+     * @param fileoffs2
+     * @return
+     * @throws IOException
+     */
+	static public BankedMemoryEntry newBankedWordMemoryFromFile(
+			Class<? extends BankedMemoryEntry> klass,
+			int addr,
+	        int size, 
+	        Memory memory, 
+	        String name, MemoryDomain domain,
+	        String filepath, int fileoffs,
+	        String filepath2, int fileoffs2) throws IOException {
+		DiskMemoryEntry bank0 = newWordMemoryFromFile(
+				addr, size, name + " (bank 0)", domain, filepath, fileoffs, false);
+		DiskMemoryEntry bank1 = newWordMemoryFromFile(
+				addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
+		
+		MemoryEntry[] entries = new MemoryEntry[] { bank0, bank1 };
+		BankedMemoryEntry bankedMemoryEntry;
+		try {
+			bankedMemoryEntry = klass.getConstructor(
+					Memory.class, String.class, entries.getClass()).newInstance(
+							memory, name, entries);
+		} catch (Exception e) {
+			throw new IOException(e);
+		}
+		return bankedMemoryEntry;
+	}
+
+    /**
+     * Create a memory entry for banked (ROM) memory.
      * @param addr
      * @param size
      * @param memory
@@ -312,34 +352,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 		DiskMemoryEntry bank1 = newWordMemoryFromFile(
 				addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
 		
-		BankedMemoryEntry bankedMemoryEntry = new MultiBankedMemoryEntry(
-				memory, name, new MemoryEntry[] { bank0, bank1 }) {
-			@Override
-			public void writeByte(int addr, byte val) {
-				int bank = (addr & 2) >> 1;
-				if (selectBank(bank)) {
-					
-					PrintWriter log = Logging.getLog(Executor.settingDumpFullInstructions);
-					if (log != null) {
-						log.println("=== Switched to bank " + bank);
-					}
-				}
-				super.writeByte(addr, val);
-			}
-			
-			@Override
-			public void writeWord(int addr, short val) {
-				int bank = (addr & 2) >> 1;
-				if (selectBank(bank)) {
-					PrintWriter log = Logging.getLog(Executor.settingDumpFullInstructions);
-					if (log != null) {
-						log.println("=== Switched to bank " + bank);
-					}
-				}
-				super.writeWord(addr, val);
-			}
-
-		};
+		BankedMemoryEntry bankedMemoryEntry = new StdMultiBankedMemoryEntry(memory, name, new MemoryEntry[] { bank0, bank1 });
 		
 		return bankedMemoryEntry;
 	}

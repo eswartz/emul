@@ -3,12 +3,16 @@
  */
 package v9t9.engine.memory;
 
+import java.util.Collections;
+import java.util.List;
+
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SoundMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.Client;
+import v9t9.engine.modules.IModule;
 
 /**
  * @author ejs
@@ -72,5 +76,12 @@ public class StockMemoryModel implements MemoryModel {
 	public VdpMmio getVdpMmio() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.MemoryModel#getModules()
+	 */
+	public List<IModule> getModules() {
+		return Collections.emptyList();
 	}
 }

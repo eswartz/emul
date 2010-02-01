@@ -55,6 +55,9 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 
 	public int addrOffset = 0;
 
+	/** Tell if this came from a module */
+	public boolean moduleLoaded;
+	
     public MemoryEntry(String name, MemoryDomain domain, int addr,
             int size, MemoryArea area) {
         if (size < 0 || addr < 0 /*|| addr + size > MemoryDomain.PHYSMEMORYSIZE*/) {

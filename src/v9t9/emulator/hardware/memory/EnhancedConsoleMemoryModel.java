@@ -6,9 +6,12 @@
  */
 package v9t9.emulator.hardware.memory;
 
+import java.util.List;
+
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.TI994A;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.modules.IModule;
 
 
 /**
@@ -38,23 +41,13 @@ public class EnhancedConsoleMemoryModel extends StandardConsoleMemoryModel {
 	protected void defineMmioMemory(TI994A machine) {
 		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0xFC00, 0x0400,
                 new EnhancedConsoleMmioArea(machine)));
-		
-		/*
-		// TODO: remove
-        this.memory.addAndMap(new MemoryEntry("Sound MMIO", CPU, 0x8400, 0x0400,
-                new ConsoleSoundArea(soundMmio)));
-        this.memory.addAndMap(new MemoryEntry("VDP Read MMIO", CPU, 0x8800, 0x0400,
-                new ConsoleVdpReadArea(machine.getVdpMmio())));
-        this.memory.addAndMap(new MemoryEntry("VDP Write MMIO", CPU, 0x8C00, 0x0400,
-                new ConsoleVdpWriteArea(machine.getVdpMmio())));
-        //this.memory.addAndMap(new MemoryEntry("Speech Read MMIO", CPU, 0x9000, 0x0400,
-                //new ConsoleSpeechReadArea(speechMmio)));
-        //this.memory.addAndMap(new MemoryEntry("Speech Write MMIO", CPU, 0x9400, 0x0400,
-                //new ConsoleSpeechWriteArea(speechMmio)));
-        this.memory.addAndMap(new MemoryEntry("GROM Read MMIO", CPU, 0x9800, 0x0400,
-                new ConsoleGromReadArea(gplMmio)));
-        this.memory.addAndMap(new MemoryEntry("GRAM Write MMIO", CPU, 0x9C00, 0x0400,
-                new ConsoleGramWriteArea(gplMmio)));
-		*/
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.memory.StandardConsoleMemoryModel#getModules()
+	 */
+	@Override
+	public List<IModule> getModules() {
+		return super.getModules();
 	}
 }
