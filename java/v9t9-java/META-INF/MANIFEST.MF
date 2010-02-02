@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: V9t9j
-Bundle-SymbolicName: V9t9j
+Bundle-Name: V9t9
+Bundle-SymbolicName: v9t9-java
 Bundle-Version: 1.0.0
 Bundle-ClassPath: V9t9j.jar,
  /usr/share/java/regexp.jar,

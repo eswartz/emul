@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>V9t9j</name>
+	<name>v9t9-java</name>
 	<comment></comment>
 	<projects>
 		<project>libanalogtv</project>
 		<project>libv9t9render</project>
-		<project>V9t9</project>
+		<project>v9t9-java</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
