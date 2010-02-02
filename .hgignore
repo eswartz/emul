@@ -1,0 +1,12 @@
+syntax: glob
+*.o
+syntax: glob
+*.d
+syntax: glob
+*.so
+syntax: glob
+*.lo
+syntax: glob
+*.pyc
+java/*/bin
+
