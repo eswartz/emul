@@ -1,0 +1,42 @@
+/**
+ * 
+ */
+package v9t9.emulator.hardware.memory;
+
+import v9t9.engine.VdpHandler;
+import v9t9.engine.memory.ByteMemoryArea;
+import v9t9.engine.memory.MemoryEntry;
+
+public class VdpRamArea extends ByteMemoryArea {
+    private VdpHandler handler;
+
+	public VdpRamArea(int size) {
+    	// latency is counted in the CPU side;
+    	// side effects are handled on the MMIO side
+    	super(0);
+        memory = new byte[size];
+        read = memory;
+        write = memory;
+    }
+	
+	public void setHandler(VdpHandler handler) {
+		this.handler = handler;
+	}
+    
+    @Override
+    public void writeByte(MemoryEntry entry, int addr, byte val) {
+    	byte old = readByte(entry, addr);
+    	if (old != val) {
+    		super.writeByte(entry, addr, val);
+    		if (handler != null) {
+    			handler.touchAbsoluteVdpMemory(addr, val);
+    		}
+
+    	}
+    }
+    
+    @Override
+    public byte readByte(MemoryEntry entry, int addr) {
+    	return super.readByte(entry, addr);
+    }
+}

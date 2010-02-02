@@ -1,0 +1,110 @@
+/**
+ * 
+ */
+package v9t9.emulator.clients.builtin.swt.debugger;
+
+import org.ejs.coffee.core.utils.HexUtils;
+
+import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.Operand;
+import v9t9.engine.memory.MemoryEntry;
+
+/**
+ * @author ejs
+ *
+ */
+public class InstRow {
+
+	private static int gCounter;
+	private final int count = gCounter++;
+	private final InstructionWorkBlock before;
+	private final InstructionWorkBlock after;
+	/**
+	 * @param before
+	 * @param after
+	 */
+	public InstRow(InstructionWorkBlock before, InstructionWorkBlock after) {
+		this.before = before;
+		this.after = after;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getAddress() {
+		String addr = ">" + HexUtils.toHex4(before.pc);
+		
+		MemoryEntry entry = before.domain.getEntryAt(before.pc);
+		if (entry != null) { 
+			String name = entry.lookupSymbol((short) (before.pc & 0xfffe));
+			if (name != null) {
+				return name + " " + addr;
+			}
+		}
+		return addr;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getInst() {
+		return before.inst.toString();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		InstRow other = (InstRow) obj;
+		if (count != other.count) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getOp1() {
+		MachineOperand mop1 = (MachineOperand) before.inst.op1;
+		if (mop1.type == MachineOperand.OP_NONE) {
+			return "";
+		}
+		StringBuilder builder = new StringBuilder();
+		if (mop1.dest != Operand.OP_DEST_KILLED) {
+			builder.append(mop1.valueString(before.ea1, before.val1));
+		}
+		if (mop1.dest != Operand.OP_DEST_FALSE) {
+			if (builder.length() > 0)
+				builder.append(" => ");
+			builder.append(mop1.valueString(after.ea1, after.val1));
+		}
+		return builder.toString();
+	}
+
+	public String getOp2() {
+		MachineOperand mop2 = (MachineOperand) before.inst.op2;
+		if (mop2.type == MachineOperand.OP_NONE) {
+			return "";
+		}
+		StringBuilder builder = new StringBuilder();
+		if (mop2.dest != Operand.OP_DEST_KILLED) {
+			builder.append(mop2.valueString(before.ea2, before.val2));
+		}
+		if (mop2.dest != Operand.OP_DEST_FALSE) {
+			if (builder.length() > 0)
+				builder.append(" => ");
+			builder.append(mop2.valueString(after.ea2, after.val2));
+		}
+		return builder.toString();
+	}
+	
+}

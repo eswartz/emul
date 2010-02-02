@@ -1,0 +1,69 @@
+
+Enhanced memory model
+=======================
+
+Finally tired of dealing with arcane bank-switching and jumping around the memory map to find
+pockets of ROM and RAM, I decided to start over and treat this system like an actual custom-assembled
+computer using the 9900 CPU, 9938 VDP, four 9919 sound chips, and speech chip.
+
+1) We want consecutive ROM and RAM blocks
+2) We want ROM at >0000 still so we can have interrupt vectors and XOP vectors safe from overwriting
+3) We want more RAM space!  
+4) We can still allow DSRs to swap into >4000 for compatibility.  Well-written ROMs also allow for
+the CPU RAM block (& workspace) to move, so we don't have to adhere to the standard addresses as
+long as we provide a space for them.
+5) A possible problem -- DSRs use R15 to find all the other addresses, but expect to find some 
+addresses >400 apart from each other.  We don't want to waste that much space, though.  If we ever
+support a "real" DSR with this, we'll probably need to patch it.
+
+>0000
+    CPU ROM, part 1     | FORTH ROM, part 1
+>2000
+    CPU ROM, part 2     | FORTH ROM, part 2
+>4000
+    RAM                 | DSR ROM
+>6000
+    RAM
+>8000
+    RAM                 | standard MMIO (?)
+>A000           
+    RAM                 | or VDP RAM
+>C000
+    RAM                 | or VDP RAM
+>E000
+    RAM
+>FF80
+    MMIO
+        >FF80=VDPRD
+        >FF82=VDPST
+        >FF88=VDPWD
+        >FF8A=VDPWA
+        >FF8C=VDPCL
+        >FF8E=VDPWI
+        
+        >FF90=GPLRD
+        >FF92=GPLRA
+        >FF94=GPLWD
+        >FF96=GPLWA
+        >FF98=SPCHWT
+        >FF9A=SPCHRD
+        
+        >FFA0->FFBF=sound               | 5 chips
+        
+    >FFC0=ROM bank A (CPU ROM) select               
+    >FFC2=ROM bank B (FORTH ROM) select     
+            
+    // >FFC4=>8400->9FFF is RAM            TODO
+    // >FFC6=>8400->9FFF is MMIO (old-style)   TODO
+    
+    >FFFC=NMI interrupt vector
+
+There is also support for memory-mapped VDP memory.  If the bit at CRU >1402 is set,
+then >A000 - >E000 is replaced with VDP RAM.  The three bits in CRU >1404, >1406, >1408 
+select which bank to show.
+  
+There are enhanced sound chips.  At >FFA2, each 6 bytes contains a chip supporting the
+standard TMS9919 behavior, and two additional addresses for a command port and a data 
+port for advanced effects.  See MultiSoundTMS9919B and SoundTMS9919B for details.
+
+an effects port.  The command port 
