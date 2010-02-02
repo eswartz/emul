@@ -15,14 +15,18 @@ import v9t9.engine.SoundHandler;
  * each with four addresses, after the traditional TMS9919 sound chip.
  * <p>
  * BASE = console chip
- * BASE + 4 = #1 std
- * BASE + 6 = #1 effects
+ * BASE + 2 = #1 std
+ * BASE + 4 = #1 effects command
+ * BASE + 6 = #1 effects data
  * BASE + 8 = #2 std
- * BASE + 10 = #2 effects
- * BASE + 12 = #3 std
- * BASE + 14 = #3 effects
- * BASE + 16 = #4 std
- * BASE + 18 = #4 effects
+ * BASE + 10 = #2 effects command
+ * BASE + 12 = #2 effects data
+ * BASE + 14 = #3 std
+ * BASE + 16 = #3 effects command
+ * BASE + 18 = #3 effects data
+ * BASE + 20 = #4 std
+ * BASE + 22 = #4 effects
+ * BASE + 24 = #4 effects data
  * @author ejs
  *
  */
