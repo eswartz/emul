@@ -5,6 +5,7 @@ package v9t9.emulator.clients.builtin.sound;
 
 import javax.sound.sampled.AudioFormat;
 
+import org.ejs.coffee.core.sound.AlsaSoundListener;
 import org.ejs.coffee.core.sound.ISoundListener;
 import org.ejs.coffee.core.sound.ISoundOutput;
 import org.ejs.coffee.core.sound.ISoundVoice;
@@ -75,6 +76,8 @@ public class JavaSoundHandler implements SoundHandler {
 		speechOutput = SoundFactory.createSoundOutput(speechFormat, machine.getCpuTicksPerSec());
 		
 		audio = SoundFactory.createAudioListener();
+		if (audio instanceof AlsaSoundListener)
+			((AlsaSoundListener) audio).setBlockMode(false);
 		speechAudio = SoundFactory.createAudioListener();
 		output.addListener(audio);
 		speechOutput.addListener(speechAudio);
