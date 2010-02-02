@@ -3,23 +3,15 @@
  */
 package v9t9.engine.modules;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.core.runtime.CoreException;
-import org.ejs.coffee.core.utils.BinaryUtils;
-import org.ejs.coffee.core.utils.FileXMLStorage;
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.coffee.core.utils.PrefUtils;
 import org.ejs.coffee.core.utils.XMLUtils;
 import org.w3c.dom.Element;
 
 import v9t9.engine.memory.BankedMemoryEntry;
-import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StdMultiBankedMemoryEntry;
 

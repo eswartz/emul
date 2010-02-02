@@ -133,7 +133,7 @@ public class ModuleSelector extends Composite {
 	protected void switchModule() {
 		for (MemoryDomain domain : machine.getMemory().getDomains())
 			for (MemoryEntry entry : domain.getMemoryEntries())
-				if (entry.moduleLoaded)
+				if (entry.moduleLoaded != null)
 					domain.unmapEntry(entry);
 		
 		try {
@@ -144,7 +144,7 @@ public class ModuleSelector extends Composite {
 			}
 			for (MemoryEntry entry : entries) {
 				machine.getMemory().addAndMap(entry);
-				entry.moduleLoaded = true;
+				entry.moduleLoaded = selectedModule;
 			}
 			machine.getCpu().contextSwitch(0);
 		} catch (IOException e) {

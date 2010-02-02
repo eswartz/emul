@@ -7,11 +7,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.StdMultiBankedMemoryEntry;
 
 /**
  * @author ejs

@@ -15,6 +15,8 @@ import java.util.TreeMap;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.utils.HexUtils;
 
+import v9t9.engine.modules.IModule;
+
 /**
  * These enums and struct define a higher-level organization of the memory map,
  * used to allow large-scale customization of the emulated computer's architecture.
@@ -56,7 +58,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry> {
 	public int addrOffset = 0;
 
 	/** Tell if this came from a module */
-	public boolean moduleLoaded;
+	public IModule moduleLoaded;
 	
     public MemoryEntry(String name, MemoryDomain domain, int addr,
             int size, MemoryArea area) {
