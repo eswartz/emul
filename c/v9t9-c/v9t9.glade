@@ -1,0 +1,5276 @@
+<?xml version="1.0"?>
+<GTK-Interface>
+
+<project>
+  <name>V9t9</name>
+  <program_name>v9t9</program_name>
+  <directory></directory>
+  <source_directory>source</source_directory>
+  <pixmaps_directory>pixmaps</pixmaps_directory>
+  <language>C</language>
+  <gnome_support>False</gnome_support>
+  <gettext_support>True</gettext_support>
+  <output_main_file>False</output_main_file>
+  <output_build_files>False</output_build_files>
+  <main_source_file>gtkinterface.c</main_source_file>
+  <main_header_file>gtkinterface.h</main_header_file>
+  <handler_source_file>gtkcallbacks.c</handler_source_file>
+  <handler_header_file>gtkcallbacks.h</handler_header_file>
+  <support_source_file>gtksupport.c</support_source_file>
+  <support_header_file>gtksupport.h</support_header_file>
+</project>
+
+<widget>
+  <class>GtkWindow</class>
+  <name>v9t9_window</name>
+  <can_default>True</can_default>
+  <events>GDK_KEY_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK</events>
+  <signal>
+    <name>configure_event</name>
+    <handler>on_v9t9_window_configure_event</handler>
+    <last_modification_time>Sun, 23 Apr 2000 17:01:13 GMT</last_modification_time>
+  </signal>
+  <signal>
+    <name>enter_notify_event</name>
+    <handler>on_v9t9_window_enter_notify_event</handler>
+    <after>True</after>
+    <last_modification_time>Sun, 30 Apr 2000 19:01:57 GMT</last_modification_time>
+  </signal>
+  <signal>
+    <name>destroy</name>
+    <handler>on_v9t9_window_destroy</handler>
+    <last_modification_time>Wed, 05 Jul 2000 00:18:25 GMT</last_modification_time>
+  </signal>
+  <title>V9t9</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <allow_shrink>True</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+  <wmclass_name>v9t9</wmclass_name>
+  <wmclass_class>V9t9</wmclass_class>
+
+  <widget>
+    <class>GtkDrawingArea</class>
+    <name>v9t9_drawing_area</name>
+    <can_default>True</can_default>
+    <has_default>True</has_default>
+    <can_focus>True</can_focus>
+    <has_focus>True</has_focus>
+    <events>GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK</events>
+    <signal>
+      <name>configure_event</name>
+      <handler>on_v9t9_draw_area_configure_event</handler>
+      <data>GTK_WIDGET(v9t9_window)</data>
+      <last_modification_time>Sat, 22 Apr 2000 16:17:11 GMT</last_modification_time>
+    </signal>
+    <signal>
+      <name>expose_event</name>
+      <handler>on_v9t9_draw_area_expose_event</handler>
+      <last_modification_time>Sun, 23 Apr 2000 18:06:18 GMT</last_modification_time>
+    </signal>
+    <signal>
+      <name>key_press_event</name>
+      <handler>on_v9t9_key_press_event</handler>
+      <after>True</after>
+      <last_modification_time>Sat, 22 Apr 2000 16:18:50 GMT</last_modification_time>
+    </signal>
+    <signal>
+      <name>key_release_event</name>
+      <handler>on_v9t9_key_release_event</handler>
+      <after>True</after>
+      <last_modification_time>Sat, 22 Apr 2000 16:19:04 GMT</last_modification_time>
+    </signal>
+    <signal>
+      <name>size_request</name>
+      <handler>on_v9t9_draw_area_size_request</handler>
+      <last_modification_time>Sun, 25 Jun 2000 20:57:46 GMT</last_modification_time>
+    </signal>
+    <signal>
+      <name>enter_notify_event</name>
+      <handler>on_v9t9_draw_area_enter_notify_event</handler>
+      <last_modification_time>Sun, 30 Apr 2000 19:03:58 GMT</last_modification_time>
+    </signal>
+    <signal>
+      <name>button_press_event</name>
+      <handler>on_v9t9_drawing_area_button_press_event</handler>
+      <last_modification_time>Sun, 17 Dec 2000 21:25:57 GMT</last_modification_time>
+    </signal>
+    <signal>
+      <name>realize</name>
+      <handler>on_v9t9_draw_area_realize</handler>
+      <data>GTK_WIDGET(v9t9_window)</data>
+      <last_modification_time>Tue, 09 Jan 2001 21:45:46 GMT</last_modification_time>
+    </signal>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkDialog</class>
+  <name>quit_dialog</name>
+  <title>Quit V9t9</title>
+  <type>GTK_WINDOW_DIALOG</type>
+  <position>GTK_WIN_POS_CENTER</position>
+  <modal>True</modal>
+  <allow_shrink>True</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <child_name>Dialog:vbox</child_name>
+    <name>dialog-vbox1</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkHBox</class>
+      <child_name>Dialog:action_area</child_name>
+      <name>dialog-action_area1</name>
+      <border_width>10</border_width>
+      <homogeneous>True</homogeneous>
+      <spacing>5</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+	<pack>GTK_PACK_END</pack>
+      </child>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>save_button</name>
+	<can_default>True</can_default>
+	<has_default>True</has_default>
+	<can_focus>True</can_focus>
+	<has_focus>True</has_focus>
+	<accelerator>
+	  <modifiers>0</modifiers>
+	  <key>GDK_y</key>
+	  <signal>clicked</signal>
+	</accelerator>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_button_clicked</handler>
+	  <data>(gpointer *)&quot;Quit\n&quot;</data>
+	  <last_modification_time>Sun, 21 May 2000 20:31:13 GMT</last_modification_time>
+	</signal>
+	<label>_Yes, Save</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>die_button</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<accelerator>
+	  <modifiers>0</modifiers>
+	  <key>GDK_Escape</key>
+	  <signal>clicked</signal>
+	</accelerator>
+	<accelerator>
+	  <modifiers>0</modifiers>
+	  <key>GDK_n</key>
+	  <signal>clicked</signal>
+	</accelerator>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_button_clicked</handler>
+	  <data>(gpointer *)&quot;Die\n&quot;</data>
+	  <last_modification_time>Sun, 21 May 2000 20:37:19 GMT</last_modification_time>
+	</signal>
+	<label>_No, Don't Save</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>cancel_button</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<accelerator>
+	  <modifiers>0</modifiers>
+	  <key>GDK_Escape</key>
+	  <signal>clicked</signal>
+	</accelerator>
+	<accelerator>
+	  <modifiers>0</modifiers>
+	  <key>GDK_d</key>
+	  <signal>clicked</signal>
+	</accelerator>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_button_cancel</handler>
+	  <data>quit_dialog</data>
+	  <last_modification_time>Sun, 21 May 2000 20:42:20 GMT</last_modification_time>
+	</signal>
+	<label>_Don't Quit</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkLabel</class>
+      <name>quit_message_text</name>
+      <label>Save current session before quitting?
+</label>
+      <justify>GTK_JUSTIFY_CENTER</justify>
+      <wrap>False</wrap>
+      <xalign>0.5</xalign>
+      <yalign>0.5</yalign>
+      <xpad>16</xpad>
+      <ypad>16</ypad>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+    </widget>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkFontSelectionDialog</class>
+  <name>command_log_font_selector</name>
+  <border_width>4</border_width>
+  <title>Select Font</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <allow_shrink>False</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>True</auto_shrink>
+
+  <widget>
+    <class>GtkButton</class>
+    <child_name>FontSel:ok_button</child_name>
+    <name>ok_button1</name>
+    <can_default>True</can_default>
+    <can_focus>True</can_focus>
+    <accelerator>
+      <modifiers>0</modifiers>
+      <key>GDK_Return</key>
+      <signal>clicked</signal>
+    </accelerator>
+    <signal>
+      <name>clicked</name>
+      <handler>on_command_log_font_selector_ok_button1_clicked</handler>
+      <last_modification_time>Sun, 23 Apr 2000 20:54:39 GMT</last_modification_time>
+    </signal>
+    <label>OK</label>
+    <relief>GTK_RELIEF_NORMAL</relief>
+  </widget>
+
+  <widget>
+    <class>GtkButton</class>
+    <child_name>FontSel:apply_button</child_name>
+    <name>apply_button1</name>
+    <can_default>True</can_default>
+    <can_focus>True</can_focus>
+    <accelerator>
+      <modifiers>0</modifiers>
+      <key>GDK_space</key>
+      <signal>clicked</signal>
+    </accelerator>
+    <signal>
+      <name>clicked</name>
+      <handler>on_command_log_font_selector_apply_button1_clicked</handler>
+      <last_modification_time>Sun, 23 Apr 2000 20:54:23 GMT</last_modification_time>
+    </signal>
+    <label>Apply</label>
+    <relief>GTK_RELIEF_NORMAL</relief>
+  </widget>
+
+  <widget>
+    <class>GtkButton</class>
+    <child_name>FontSel:cancel_button</child_name>
+    <name>cancel_button1</name>
+    <can_default>True</can_default>
+    <can_focus>True</can_focus>
+    <accelerator>
+      <modifiers>0</modifiers>
+      <key>GDK_Escape</key>
+      <signal>clicked</signal>
+    </accelerator>
+    <signal>
+      <name>clicked</name>
+      <handler>on_command_log_font_cancel1_button_clicked</handler>
+      <last_modification_time>Sun, 23 Apr 2000 21:10:34 GMT</last_modification_time>
+    </signal>
+    <label>Cancel</label>
+    <relief>GTK_RELIEF_NORMAL</relief>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkDialog</class>
+  <name>disks_dialog</name>
+  <title>Disks</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <allow_shrink>False</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <child_name>Dialog:vbox</child_name>
+    <name>dialog-vbox3</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkHBox</class>
+      <child_name>Dialog:action_area</child_name>
+      <name>dialog-action_area3</name>
+      <border_width>10</border_width>
+      <homogeneous>True</homogeneous>
+      <spacing>5</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+	<pack>GTK_PACK_END</pack>
+      </child>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>close_button</name>
+	<border_width>4</border_width>
+	<can_focus>True</can_focus>
+	<accelerator>
+	  <modifiers>0</modifiers>
+	  <key>GDK_Escape</key>
+	  <signal>clicked</signal>
+	</accelerator>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_disk_dialog_close_button_clicked</handler>
+	  <last_modification_time>Sun, 30 Apr 2000 21:30:04 GMT</last_modification_time>
+	</signal>
+	<label>Close</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>4</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkNotebook</class>
+      <name>disk_options_notebook</name>
+      <border_width>4</border_width>
+      <can_focus>True</can_focus>
+      <show_tabs>True</show_tabs>
+      <show_border>False</show_border>
+      <tab_pos>GTK_POS_TOP</tab_pos>
+      <scrollable>False</scrollable>
+      <tab_hborder>2</tab_hborder>
+      <tab_vborder>2</tab_vborder>
+      <popup_enable>False</popup_enable>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkTable</class>
+	<name>disk_info_table</name>
+	<border_width>8</border_width>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_disk_info_table_realize</handler>
+	  <last_modification_time>Sun, 30 Apr 2000 22:28:58 GMT</last_modification_time>
+	</signal>
+	<rows>5</rows>
+	<columns>3</columns>
+	<homogeneous>False</homogeneous>
+	<row_spacing>0</row_spacing>
+	<column_spacing>0</column_spacing>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label18</name>
+	  <label>DSK_1</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <focus_target>dsk1_entry</focus_target>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>0</top_attach>
+	    <bottom_attach>1</bottom_attach>
+	    <xpad>16</xpad>
+	    <ypad>8</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label19</name>
+	  <label>DSK_2</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <focus_target>dsk2_entry</focus_target>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>1</top_attach>
+	    <bottom_attach>2</bottom_attach>
+	    <xpad>16</xpad>
+	    <ypad>8</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label20</name>
+	  <label>DSK_3</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <focus_target>dsk3_entry</focus_target>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>16</xpad>
+	    <ypad>8</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label21</name>
+	  <label>DSK_4</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <focus_target>dsk4_entry</focus_target>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>3</top_attach>
+	    <bottom_attach>4</bottom_attach>
+	    <xpad>16</xpad>
+	    <ypad>8</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label22</name>
+	  <label>DSK_5</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <focus_target>dsk5_entry</focus_target>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>4</top_attach>
+	    <bottom_attach>5</bottom_attach>
+	    <xpad>16</xpad>
+	    <ypad>8</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button25</name>
+	  <border_width>4</border_width>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_disk_choose_button_clicked</handler>
+	    <data>(gpointer)2</data>
+	    <last_modification_time>Sun, 30 Apr 2000 22:30:49 GMT</last_modification_time>
+	  </signal>
+	  <label>Choose...</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <left_attach>2</left_attach>
+	    <right_attach>3</right_attach>
+	    <top_attach>1</top_attach>
+	    <bottom_attach>2</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button27</name>
+	  <border_width>4</border_width>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_disk_choose_button_clicked</handler>
+	    <data>(gpointer)4</data>
+	    <last_modification_time>Sun, 30 Apr 2000 22:31:02 GMT</last_modification_time>
+	  </signal>
+	  <label>Choose...</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <left_attach>2</left_attach>
+	    <right_attach>3</right_attach>
+	    <top_attach>3</top_attach>
+	    <bottom_attach>4</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button28</name>
+	  <border_width>4</border_width>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_disk_choose_button_clicked</handler>
+	    <data>(gpointer)5</data>
+	    <last_modification_time>Sun, 30 Apr 2000 22:31:10 GMT</last_modification_time>
+	  </signal>
+	  <label>Choose...</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <left_attach>2</left_attach>
+	    <right_attach>3</right_attach>
+	    <top_attach>4</top_attach>
+	    <bottom_attach>5</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button29</name>
+	  <border_width>4</border_width>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_disk_choose_button_clicked</handler>
+	    <data>(gpointer)1</data>
+	    <last_modification_time>Sun, 30 Apr 2000 22:30:43 GMT</last_modification_time>
+	  </signal>
+	  <label>Choose...</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <left_attach>2</left_attach>
+	    <right_attach>3</right_attach>
+	    <top_attach>0</top_attach>
+	    <bottom_attach>1</bottom_attach>
+	    <xpad>16</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkEntry</class>
+	  <name>dsk1_entry</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>activate</name>
+	    <handler>on_disk_combo_entry_activate</handler>
+	    <data>(gpointer)1</data>
+	    <last_modification_time>Sat, 03 Jun 2000 20:00:49 GMT</last_modification_time>
+	  </signal>
+	  <editable>True</editable>
+	  <text_visible>True</text_visible>
+	  <text_max_length>0</text_max_length>
+	  <text></text>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>2</right_attach>
+	    <top_attach>0</top_attach>
+	    <bottom_attach>1</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkEntry</class>
+	  <name>dsk2_entry</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>activate</name>
+	    <handler>on_disk_combo_entry_activate</handler>
+	    <data>(gpointer)2</data>
+	    <last_modification_time>Sun, 30 Apr 2000 23:28:49 GMT</last_modification_time>
+	  </signal>
+	  <editable>True</editable>
+	  <text_visible>True</text_visible>
+	  <text_max_length>0</text_max_length>
+	  <text></text>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>2</right_attach>
+	    <top_attach>1</top_attach>
+	    <bottom_attach>2</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkEntry</class>
+	  <name>dsk3_entry</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>activate</name>
+	    <handler>on_disk_combo_entry_activate</handler>
+	    <data>(gpointer)3</data>
+	    <last_modification_time>Sun, 30 Apr 2000 23:28:43 GMT</last_modification_time>
+	  </signal>
+	  <editable>True</editable>
+	  <text_visible>True</text_visible>
+	  <text_max_length>0</text_max_length>
+	  <text></text>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>2</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkEntry</class>
+	  <name>dsk4_entry</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>activate</name>
+	    <handler>on_disk_combo_entry_activate</handler>
+	    <data>(gpointer)4</data>
+	    <last_modification_time>Sun, 30 Apr 2000 23:29:15 GMT</last_modification_time>
+	  </signal>
+	  <editable>True</editable>
+	  <text_visible>True</text_visible>
+	  <text_max_length>0</text_max_length>
+	  <text></text>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>2</right_attach>
+	    <top_attach>3</top_attach>
+	    <bottom_attach>4</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkEntry</class>
+	  <name>dsk5_entry</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>activate</name>
+	    <handler>on_disk_combo_entry_activate</handler>
+	    <data>(gpointer)5</data>
+	    <last_modification_time>Sun, 30 Apr 2000 23:29:28 GMT</last_modification_time>
+	  </signal>
+	  <editable>True</editable>
+	  <text_visible>True</text_visible>
+	  <text_max_length>0</text_max_length>
+	  <text></text>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>2</right_attach>
+	    <top_attach>4</top_attach>
+	    <bottom_attach>5</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button32</name>
+	  <border_width>4</border_width>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_disk_choose_button_clicked</handler>
+	    <data>(gpointer)3</data>
+	    <last_modification_time>Sat, 03 Jun 2000 21:27:15 GMT</last_modification_time>
+	  </signal>
+	  <label>Choose...</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <left_attach>2</left_attach>
+	    <right_attach>3</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<child_name>Notebook:tab</child_name>
+	<name>label23</name>
+	<label>DSKx Mappings</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+      </widget>
+
+      <widget>
+	<class>GtkVBox</class>
+	<name>fiad_options_vbox</name>
+	<homogeneous>False</homogeneous>
+	<spacing>0</spacing>
+
+	<widget>
+	  <class>GtkHBox</class>
+	  <name>hbox6</name>
+	  <homogeneous>False</homogeneous>
+	  <spacing>0</spacing>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+
+	  <widget>
+	    <class>GtkCheckButton</class>
+	    <name>checkbutton2</name>
+	    <can_focus>True</can_focus>
+	    <signal>
+	      <name>toggled</name>
+	      <handler>on_v9t9_togglebutton_toggled_command_toggle_not</handler>
+	      <data>(gpointer *)&quot;KeepFileFormat&quot;</data>
+	      <last_modification_time>Sat, 03 Jun 2000 18:40:15 GMT</last_modification_time>
+	    </signal>
+	    <signal>
+	      <name>realize</name>
+	      <handler>on_v9t9_togglebutton_realize_inactive</handler>
+	      <data>(gpointer *)&quot;KeepFileFormat&quot;</data>
+	      <last_modification_time>Sat, 03 Jun 2000 18:39:47 GMT</last_modification_time>
+	    </signal>
+	    <signal>
+	      <name>toggled</name>
+	      <handler>on_v9t9_togglebutton_toggled_widget_enable</handler>
+	      <data>(gpointer)fiad_file_format_hbox</data>
+	      <last_modification_time>Sat, 03 Jun 2000 18:29:38 GMT</last_modification_time>
+	    </signal>
+	    <signal>
+	      <name>realize</name>
+	      <handler>on_v9t9_togglebutton_realize_widget_enable</handler>
+	      <data>(gpointer *)fiad_file_format_hbox</data>
+	      <last_modification_time>Sat, 03 Jun 2000 18:29:43 GMT</last_modification_time>
+	    </signal>
+	    <label>_Convert file headers to:</label>
+	    <active>False</active>
+	    <draw_indicator>True</draw_indicator>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>False</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkHBox</class>
+	    <name>fiad_file_format_hbox</name>
+	    <homogeneous>False</homogeneous>
+	    <spacing>0</spacing>
+	    <child>
+	      <padding>0</padding>
+	      <expand>True</expand>
+	      <fill>True</fill>
+	    </child>
+
+	    <widget>
+	      <class>GtkRadioButton</class>
+	      <name>radiobutton2</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>clicked</name>
+		<handler>on_v9t9_togglebutton_clicked</handler>
+		<data>(gpointer *)&quot;NewFileFormat V9t9\n&quot;</data>
+		<last_modification_time>Fri, 19 Jan 2001 07:30:19 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>realize</name>
+		<handler>on_v9t9_togglebutton_realize_active</handler>
+		<data>(gpointer *)&quot;NewFileFormat&quot;</data>
+		<last_modification_time>Sat, 03 Jun 2000 18:29:14 GMT</last_modification_time>
+	      </signal>
+	      <label>_V9t9</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <group>fiad_format_radio_buttons</group>
+	      <child>
+		<padding>0</padding>
+		<expand>True</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkRadioButton</class>
+	      <name>radiobutton3</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>clicked</name>
+		<handler>on_v9t9_togglebutton_clicked</handler>
+		<data>(gpointer *)&quot;NewFileFormat TIFILES\n&quot;</data>
+		<last_modification_time>Fri, 19 Jan 2001 07:30:28 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>realize</name>
+		<handler>on_v9t9_togglebutton_realize_active</handler>
+		<data>(gpointer *)&quot;NewFileFormat&quot;</data>
+		<last_modification_time>Sat, 03 Jun 2000 18:29:02 GMT</last_modification_time>
+	      </signal>
+	      <label>_TIFILES</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <group>fiad_format_radio_buttons</group>
+	      <child>
+		<padding>0</padding>
+		<expand>True</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkCheckButton</class>
+	  <name>checkbutton5</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_v9t9_togglebutton_toggled_command_toggle</handler>
+	    <data>(gpointer *)&quot;UnknownFileIsText&quot;</data>
+	    <last_modification_time>Sat, 03 Jun 2000 19:33:38 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_v9t9_togglebutton_realize_active</handler>
+	    <data>(gpointer *)&quot;UnknownFileIsText&quot;</data>
+	    <last_modification_time>Sat, 03 Jun 2000 19:34:08 GMT</last_modification_time>
+	  </signal>
+	  <label>Treat _unknown files as DIS/VAR 80</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkCheckButton</class>
+	  <name>checkbutton6</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_v9t9_togglebutton_toggled_command_toggle</handler>
+	    <data>(gpointer *)&quot;AllowLongCatalogs&quot;</data>
+	    <last_modification_time>Sat, 03 Jun 2000 19:35:18 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_v9t9_togglebutton_realize_active</handler>
+	    <data>(gpointer *)&quot;AllowLongCatalogs&quot;</data>
+	    <last_modification_time>Sat, 03 Jun 2000 19:35:43 GMT</last_modification_time>
+	  </signal>
+	  <label>Allow &quot;DSKx.&quot; catalogs _longer than 127 filenames</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkCheckButton</class>
+	  <name>checkbutton7</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_v9t9_togglebutton_toggled_command_toggle</handler>
+	    <data>(gpointer *)&quot;RepairDamagedFiles&quot;</data>
+	    <last_modification_time>Sat, 03 Jun 2000 19:36:37 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_v9t9_togglebutton_realize_active</handler>
+	    <data>(gpointer *)&quot;RepairDamagedFiles&quot;</data>
+	    <last_modification_time>Sat, 03 Jun 2000 19:36:59 GMT</last_modification_time>
+	  </signal>
+	  <label>_Repair damaged V9t9 files</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkCheckButton</class>
+	  <name>checkbutton8</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_v9t9_togglebutton_toggled_command_toggle</handler>
+	    <data>(gpointer *)&quot;FixupOldV9t9Filenames&quot;</data>
+	    <last_modification_time>Sat, 03 Jun 2000 19:42:35 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_v9t9_togglebutton_realize_active</handler>
+	    <data>(gpointer *)&quot;FixupOldV9t9Filenames&quot;</data>
+	    <last_modification_time>Sat, 03 Jun 2000 19:42:28 GMT</last_modification_time>
+	  </signal>
+	  <label>_Fixup filenames for files created with V9t9 for DOS</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkCheckButton</class>
+	  <name>checkbutton9</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_v9t9_togglebutton_toggled_command_toggle</handler>
+	    <data>(gpointer *)&quot;GenerateOldV9t9Filenames&quot;</data>
+	    <last_modification_time>Sat, 03 Jun 2000 19:39:26 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_v9t9_togglebutton_realize_active</handler>
+	    <data>(gpointer *)&quot;GenerateOldV9t9Filenames&quot;</data>
+	    <last_modification_time>Sat, 03 Jun 2000 19:39:47 GMT</last_modification_time>
+	  </signal>
+	  <label>_Generate filenames compatible with V9t9 for DOS</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkFrame</class>
+	  <name>frame8</name>
+	  <border_width>4</border_width>
+	  <label>DSR ROM Selection</label>
+	  <label_xalign>0</label_xalign>
+	  <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	  <child>
+	    <padding>0</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+
+	  <widget>
+	    <class>GtkTable</class>
+	    <name>table1</name>
+	    <rows>2</rows>
+	    <columns>3</columns>
+	    <homogeneous>False</homogeneous>
+	    <row_spacing>0</row_spacing>
+	    <column_spacing>0</column_spacing>
+
+	    <widget>
+	      <class>GtkEntry</class>
+	      <name>emu_lone_dsr_entry</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>on_v9t9_rom_entry_activate</handler>
+		<data>(gpointer *)&quot;EmuDiskDSRFilename&quot;</data>
+		<last_modification_time>Sat, 03 Jun 2000 21:48:59 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>realize</name>
+		<handler>on_v9t9_rom_entry_realize</handler>
+		<data>(gpointer *)&quot;EmuDiskDSRFilename&quot;</data>
+		<last_modification_time>Sat, 03 Jun 2000 20:06:41 GMT</last_modification_time>
+	      </signal>
+	      <editable>True</editable>
+	      <text_visible>True</text_visible>
+	      <text_max_length>0</text_max_length>
+	      <text></text>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>0</top_attach>
+		<bottom_attach>1</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkEntry</class>
+	      <name>emu_shared_dsr_entry</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>on_v9t9_rom_entry_activate</handler>
+		<data>(gpointer *)&quot;EmuDiskSharedDSRFilename&quot;</data>
+		<last_modification_time>Sat, 03 Jun 2000 20:06:26 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>realize</name>
+		<handler>on_v9t9_rom_entry_realize</handler>
+		<data>(gpointer *)&quot;EmuDiskSharedDSRFilename&quot;</data>
+		<last_modification_time>Sat, 03 Jun 2000 20:06:17 GMT</last_modification_time>
+	      </signal>
+	      <editable>True</editable>
+	      <text_visible>True</text_visible>
+	      <text_max_length>0</text_max_length>
+	      <text></text>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>1</top_attach>
+		<bottom_attach>2</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label26</name>
+	      <label>_Lone</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <default_focus_target>emu_lone_dsr_entry</default_focus_target>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>0</top_attach>
+		<bottom_attach>1</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label27</name>
+	      <label>_Shared</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <default_focus_target>emu_shared_dsr_entry</default_focus_target>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>1</top_attach>
+		<bottom_attach>2</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkButton</class>
+	      <name>button30</name>
+	      <border_width>4</border_width>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>clicked</name>
+		<handler>on_v9t9_rom_button_clicked</handler>
+		<data>emu_lone_dsr_entry</data>
+		<last_modification_time>Sat, 03 Jun 2000 21:59:50 GMT</last_modification_time>
+	      </signal>
+	      <label>Choose...</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
+	      <child>
+		<left_attach>2</left_attach>
+		<right_attach>3</right_attach>
+		<top_attach>0</top_attach>
+		<bottom_attach>1</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkButton</class>
+	      <name>button31</name>
+	      <border_width>4</border_width>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>clicked</name>
+		<handler>on_v9t9_rom_button_clicked</handler>
+		<data>emu_shared_dsr_entry</data>
+		<last_modification_time>Sat, 03 Jun 2000 21:59:54 GMT</last_modification_time>
+	      </signal>
+	      <label>Choose...</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
+	      <child>
+		<left_attach>2</left_attach>
+		<right_attach>3</right_attach>
+		<top_attach>1</top_attach>
+		<bottom_attach>2</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>Placeholder</class>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<child_name>Notebook:tab</child_name>
+	<name>label24</name>
+	<label>File Directory Options</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+      </widget>
+
+      <widget>
+	<class>GtkVBox</class>
+	<name>doad_options_vbox</name>
+	<homogeneous>False</homogeneous>
+	<spacing>0</spacing>
+
+	<widget>
+	  <class>GtkFrame</class>
+	  <name>frame9</name>
+	  <border_width>4</border_width>
+	  <label>DSR ROM Selection</label>
+	  <label_xalign>0</label_xalign>
+	  <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+
+	  <widget>
+	    <class>GtkTable</class>
+	    <name>table2</name>
+	    <rows>1</rows>
+	    <columns>3</columns>
+	    <homogeneous>False</homogeneous>
+	    <row_spacing>0</row_spacing>
+	    <column_spacing>0</column_spacing>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label29</name>
+	      <label>S_hared</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <default_focus_target>real_disk_dsr_entry</default_focus_target>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>0</top_attach>
+		<bottom_attach>1</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkButton</class>
+	      <name>button34</name>
+	      <border_width>4</border_width>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>clicked</name>
+		<handler>on_v9t9_rom_button_clicked</handler>
+		<data>real_disk_dsr_entry</data>
+		<last_modification_time>Sat, 03 Jun 2000 21:58:32 GMT</last_modification_time>
+	      </signal>
+	      <label>Choose...</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
+	      <child>
+		<left_attach>2</left_attach>
+		<right_attach>3</right_attach>
+		<top_attach>0</top_attach>
+		<bottom_attach>1</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkEntry</class>
+	      <name>real_disk_dsr_entry</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>on_v9t9_rom_entry_activate</handler>
+		<data>(gpointer *)&quot;DiskDSRFilename&quot;</data>
+		<last_modification_time>Sat, 03 Jun 2000 22:00:58 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>realize</name>
+		<handler>on_v9t9_rom_entry_realize</handler>
+		<data>(gpointer *)&quot;DiskDSRFilename&quot;</data>
+		<last_modification_time>Sat, 03 Jun 2000 22:01:04 GMT</last_modification_time>
+	      </signal>
+	      <editable>True</editable>
+	      <text_visible>True</text_visible>
+	      <text_max_length>0</text_max_length>
+	      <text></text>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>0</top_attach>
+		<bottom_attach>1</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>Placeholder</class>
+	</widget>
+
+	<widget>
+	  <class>Placeholder</class>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<child_name>Notebook:tab</child_name>
+	<name>label25</name>
+	<label>Disk Image Options</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHBox</class>
+      <name>hbox8</name>
+      <border_width>4</border_width>
+      <homogeneous>True</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkCheckButton</class>
+	<name>checkbutton3</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_emu_disk_cb_toggled</handler>
+	  <data>(gpointer *)disk_info_table</data>
+	  <last_modification_time>Sat, 06 May 2000 16:53:29 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_emu_disk_cb_realize</handler>
+	  <data>(gpointer *)disk_info_table</data>
+	  <last_modification_time>Sat, 06 May 2000 16:53:36 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_v9t9_togglebutton_toggled_widget_enable</handler>
+	  <data>(gpointer)fiad_options_vbox</data>
+	  <last_modification_time>Tue, 06 Jun 2000 01:50:10 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_v9t9_togglebutton_realize_widget_enable</handler>
+	  <data>(gpointer )fiad_options_vbox</data>
+	  <last_modification_time>Tue, 06 Jun 2000 02:54:45 GMT</last_modification_time>
+	</signal>
+	<label>Use file directories (FIAD)</label>
+	<active>False</active>
+	<draw_indicator>True</draw_indicator>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkCheckButton</class>
+	<name>checkbutton4</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_real_disk_cb_toggled</handler>
+	  <data>(gpointer *)disk_info_table</data>
+	  <last_modification_time>Sat, 06 May 2000 16:53:13 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_real_disk_cb_realize</handler>
+	  <data>(gpointer *)disk_info_table</data>
+	  <last_modification_time>Sat, 06 May 2000 16:53:18 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_v9t9_togglebutton_toggled_widget_enable</handler>
+	  <data>(gpointer)doad_options_vbox</data>
+	  <last_modification_time>Sat, 03 Jun 2000 22:03:11 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_v9t9_togglebutton_realize_widget_enable</handler>
+	  <data>(gpointer)doad_options_vbox</data>
+	  <last_modification_time>Sat, 03 Jun 2000 22:03:49 GMT</last_modification_time>
+	</signal>
+	<label>Use disk images (DOAD)</label>
+	<active>False</active>
+	<draw_indicator>True</draw_indicator>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+    </widget>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkDialog</class>
+  <name>modules_dialog</name>
+  <title>Modules</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <default_width>400</default_width>
+  <default_height>400</default_height>
+  <allow_shrink>False</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <child_name>Dialog:vbox</child_name>
+    <name>dialog-vbox2</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkHBox</class>
+      <child_name>Dialog:action_area</child_name>
+      <name>dialog-action_area2</name>
+      <border_width>10</border_width>
+      <homogeneous>True</homogeneous>
+      <spacing>5</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>True</fill>
+	<pack>GTK_PACK_END</pack>
+      </child>
+
+      <widget>
+	<class>GtkVBox</class>
+	<name>vbox2</name>
+	<homogeneous>True</homogeneous>
+	<spacing>0</spacing>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkHBox</class>
+	  <name>hbox2</name>
+	  <homogeneous>False</homogeneous>
+	  <spacing>0</spacing>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+
+	  <widget>
+	    <class>GtkCheckButton</class>
+	    <name>show_commands_cb</name>
+	    <can_focus>True</can_focus>
+	    <signal>
+	      <name>toggled</name>
+	      <handler>on_show_commands_cb_toggled</handler>
+	      <data>module_clist</data>
+	      <last_modification_time>Sun, 30 Apr 2000 20:46:07 GMT</last_modification_time>
+	    </signal>
+	    <label>Show _setup commands</label>
+	    <active>True</active>
+	    <draw_indicator>True</draw_indicator>
+	    <child>
+	      <padding>0</padding>
+	      <expand>True</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkCheckButton</class>
+	    <name>reset_computer_cb</name>
+	    <can_focus>True</can_focus>
+	    <signal>
+	      <name>toggled</name>
+	      <handler>on_reset_computer_cb_toggled</handler>
+	      <last_modification_time>Mon, 01 May 2000 04:38:28 GMT</last_modification_time>
+	    </signal>
+	    <label>_Reset computer after load</label>
+	    <active>True</active>
+	    <draw_indicator>True</draw_indicator>
+	    <child>
+	      <padding>0</padding>
+	      <expand>True</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkHBox</class>
+	  <name>hbox1</name>
+	  <homogeneous>True</homogeneous>
+	  <spacing>4</spacing>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+
+	  <widget>
+	    <class>GtkButton</class>
+	    <name>unload_current_button</name>
+	    <border_width>4</border_width>
+	    <tooltip>Pull out the module while V9t9 is running</tooltip>
+	    <can_focus>True</can_focus>
+	    <accelerator>
+	      <modifiers>GDK_MOD1_MASK</modifiers>
+	      <key>GDK_u</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_unload_current_button_clicked</handler>
+	      <last_modification_time>Sun, 30 Apr 2000 17:53:13 GMT</last_modification_time>
+	    </signal>
+	    <label>_Unload</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkVSeparator</class>
+	    <name>vseparator2</name>
+	    <child>
+	      <padding>0</padding>
+	      <expand>True</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkButton</class>
+	    <name>close_button</name>
+	    <border_width>4</border_width>
+	    <can_focus>True</can_focus>
+	    <accelerator>
+	      <modifiers>0</modifiers>
+	      <key>GDK_Escape</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_module_clist_close_button_clicked</handler>
+	      <data>module_clist</data>
+	      <last_modification_time>Sun, 30 Apr 2000 20:33:53 GMT</last_modification_time>
+	    </signal>
+	    <label>Close</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	      <pack>GTK_PACK_END</pack>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkButton</class>
+	    <name>load_button</name>
+	    <border_width>4</border_width>
+	    <tooltip>Insert module</tooltip>
+	    <can_focus>True</can_focus>
+	    <accelerator>
+	      <modifiers>GDK_MOD1_MASK</modifiers>
+	      <key>GDK_l</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <accelerator>
+	      <modifiers>0</modifiers>
+	      <key>GDK_Return</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_module_clist_load_button_clicked</handler>
+	      <data>module_clist</data>
+	      <last_modification_time>Sun, 30 Apr 2000 16:53:42 GMT</last_modification_time>
+	    </signal>
+	    <label>_Load</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	      <pack>GTK_PACK_END</pack>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkButton</class>
+	    <name>refresh_button</name>
+	    <border_width>4</border_width>
+	    <tooltip>Reload module database from &quot;modules.inf&quot;</tooltip>
+	    <can_focus>True</can_focus>
+	    <accelerator>
+	      <modifiers>GDK_MOD1_MASK</modifiers>
+	      <key>GDK_f</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_modules_refresh_button_clicked</handler>
+	      <data>module_clist</data>
+	      <last_modification_time>Thu, 01 Jun 2000 05:04:07 GMT</last_modification_time>
+	    </signal>
+	    <label>Re_fresh</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	      <pack>GTK_PACK_END</pack>
+	    </child>
+	  </widget>
+	</widget>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkScrolledWindow</class>
+      <name>scrolledwindow2</name>
+      <hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
+      <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
+      <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+      <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkCList</class>
+	<name>module_clist</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<has_focus>True</has_focus>
+	<signal>
+	  <name>click_column</name>
+	  <handler>on_module_clist_click_column</handler>
+	  <last_modification_time>Sun, 30 Apr 2000 16:15:36 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_module_clist_realize</handler>
+	  <last_modification_time>Sun, 30 Apr 2000 22:29:17 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>event</name>
+	  <handler>on_module_clist_event</handler>
+	  <data>module_clist</data>
+	  <last_modification_time>Sun, 30 Apr 2000 17:52:49 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>key_press_event</name>
+	  <handler>on_clist_key_press_event</handler>
+	  <after>True</after>
+	  <data>(gpointer)0</data>
+	  <last_modification_time>Sat, 03 Jun 2000 23:11:14 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>key_press_event</name>
+	  <handler>on_clist_key_press_event</handler>
+	  <after>True</after>
+	  <data>(gpointer)1</data>
+	  <last_modification_time>Sun, 04 Jun 2000 07:02:37 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>key_release_event</name>
+	  <handler>on_clist_key_release_event</handler>
+	  <last_modification_time>Sun, 04 Jun 2000 23:51:39 GMT</last_modification_time>
+	</signal>
+	<columns>3</columns>
+	<column_widths>216,71,512</column_widths>
+	<selection_mode>GTK_SELECTION_BROWSE</selection_mode>
+	<show_titles>True</show_titles>
+	<shadow_type>GTK_SHADOW_IN</shadow_type>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <child_name>CList:title</child_name>
+	  <name>label_text_name</name>
+	  <label>Name</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <child_name>CList:title</child_name>
+	  <name>label_tag</name>
+	  <label>Tag</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <child_name>CList:title</child_name>
+	  <name>label_commands</name>
+	  <label>Commands</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	</widget>
+      </widget>
+    </widget>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkWindow</class>
+  <name>debugger_window</name>
+  <signal>
+    <name>delete_event</name>
+    <handler>on_debugger_close_button_clicked</handler>
+    <last_modification_time>Tue, 22 Feb 2005 02:31:54 GMT</last_modification_time>
+  </signal>
+  <title>V9t9 Debugger</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <default_width>800</default_width>
+  <allow_shrink>True</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <name>vbox7</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkHBox</class>
+      <name>hbox4</name>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkFrame</class>
+	<name>registers_frame</name>
+	<border_width>2</border_width>
+	<label>Registers</label>
+	<label_xalign>0</label_xalign>
+	<shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkVBox</class>
+	  <name>vbox8</name>
+	  <homogeneous>False</homogeneous>
+	  <spacing>0</spacing>
+
+	  <widget>
+	    <class>GtkTable</class>
+	    <name>debugger_registers_table</name>
+	    <border_width>2</border_width>
+	    <rows>1</rows>
+	    <columns>2</columns>
+	    <homogeneous>True</homogeneous>
+	    <row_spacing>0</row_spacing>
+	    <column_spacing>2</column_spacing>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkHBox</class>
+	    <name>wp_edit_hbox</name>
+	    <border_width>2</border_width>
+	    <homogeneous>True</homogeneous>
+	    <spacing>0</spacing>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label6</name>
+	      <label>WP</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <focus_target>debugger_wp_entry</focus_target>
+	      <child>
+		<padding>4</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkEntry</class>
+	      <name>debugger_wp_entry</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>on_debugger_editable_activate</handler>
+		<data>(gpointer)&quot;WorkspacePointer&quot;</data>
+		<last_modification_time>Thu, 10 May 2001 04:26:04 GMT</last_modification_time>
+	      </signal>
+	      <editable>True</editable>
+	      <text_visible>True</text_visible>
+	      <text_max_length>6</text_max_length>
+	      <text></text>
+	      <child>
+		<padding>2</padding>
+		<expand>True</expand>
+		<fill>True</fill>
+	      </child>
+	    </widget>
+	  </widget>
+
+	  <widget>
+	    <class>GtkHBox</class>
+	    <name>pc_edit_hbox</name>
+	    <border_width>2</border_width>
+	    <homogeneous>True</homogeneous>
+	    <spacing>0</spacing>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label7</name>
+	      <label>PC</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <focus_target>debugger_pc_entry</focus_target>
+	      <child>
+		<padding>4</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkEntry</class>
+	      <name>debugger_pc_entry</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>on_debugger_editable_activate</handler>
+		<data>(gpointer)&quot;ProgramCounter&quot;</data>
+		<last_modification_time>Thu, 10 May 2001 04:25:51 GMT</last_modification_time>
+	      </signal>
+	      <editable>True</editable>
+	      <text_visible>True</text_visible>
+	      <text_max_length>6</text_max_length>
+	      <text></text>
+	      <child>
+		<padding>2</padding>
+		<expand>True</expand>
+		<fill>True</fill>
+	      </child>
+	    </widget>
+	  </widget>
+
+	  <widget>
+	    <class>GtkHBox</class>
+	    <name>st_edit_hbox</name>
+	    <border_width>2</border_width>
+	    <homogeneous>True</homogeneous>
+	    <spacing>0</spacing>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label8</name>
+	      <label>Status</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkEntry</class>
+	      <name>debugger_st_entry</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>on_debugger_editable_activate</handler>
+		<data>(gpointer)&quot;StatusRegister&quot;</data>
+		<last_modification_time>Thu, 10 May 2001 04:26:21 GMT</last_modification_time>
+	      </signal>
+	      <editable>True</editable>
+	      <text_visible>True</text_visible>
+	      <text_max_length>6</text_max_length>
+	      <text></text>
+	      <child>
+		<padding>2</padding>
+		<expand>True</expand>
+		<fill>True</fill>
+	      </child>
+	    </widget>
+	  </widget>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkHPaned</class>
+	<name>hpaned1</name>
+	<border_width>1</border_width>
+	<handle_size>8</handle_size>
+	<gutter_size>8</gutter_size>
+	<position>0</position>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkFrame</class>
+	  <name>instructions_frame</name>
+	  <label>Instructions</label>
+	  <label_xalign>0</label_xalign>
+	  <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	  <child>
+	    <shrink>False</shrink>
+	    <resize>True</resize>
+	  </child>
+
+	  <widget>
+	    <class>GtkScrolledWindow</class>
+	    <name>instructions_scrolledwindow</name>
+	    <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+	    <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
+	    <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+	    <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+
+	    <widget>
+	      <class>GtkText</class>
+	      <name>debugger_instruction_box</name>
+	      <editable>False</editable>
+	      <text></text>
+	    </widget>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkVPaned</class>
+	  <name>vpaned1</name>
+	  <handle_size>10</handle_size>
+	  <gutter_size>10</gutter_size>
+	  <position>0</position>
+	  <child>
+	    <shrink>True</shrink>
+	    <resize>True</resize>
+	  </child>
+
+	  <widget>
+	    <class>GtkFrame</class>
+	    <name>cpu_1_memory_frame</name>
+	    <border_width>2</border_width>
+	    <height>64</height>
+	    <label>CPU Memory 1</label>
+	    <label_xalign>0</label_xalign>
+	    <shadow_type>GTK_SHADOW_NONE</shadow_type>
+	    <child>
+	      <shrink>False</shrink>
+	      <resize>True</resize>
+	    </child>
+
+	    <widget>
+	      <class>GtkScrolledWindow</class>
+	      <name>scrolledwindow15</name>
+	      <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+	      <vscrollbar_policy>GTK_POLICY_NEVER</vscrollbar_policy>
+	      <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+	      <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+
+	      <widget>
+		<class>GtkViewport</class>
+		<name>viewport1</name>
+		<shadow_type>GTK_SHADOW_IN</shadow_type>
+
+		<widget>
+		  <class>GtkText</class>
+		  <name>text18</name>
+		  <can_focus>True</can_focus>
+		  <editable>False</editable>
+		  <text></text>
+		</widget>
+	      </widget>
+	    </widget>
+	  </widget>
+
+	  <widget>
+	    <class>GtkVPaned</class>
+	    <name>vpaned2</name>
+	    <handle_size>10</handle_size>
+	    <gutter_size>10</gutter_size>
+	    <position>1</position>
+	    <child>
+	      <shrink>True</shrink>
+	      <resize>True</resize>
+	    </child>
+
+	    <widget>
+	      <class>GtkFrame</class>
+	      <name>cpu_2_memory_frame</name>
+	      <border_width>2</border_width>
+	      <height>64</height>
+	      <label>CPU Memory 2</label>
+	      <label_xalign>0</label_xalign>
+	      <shadow_type>GTK_SHADOW_NONE</shadow_type>
+	      <child>
+		<shrink>False</shrink>
+		<resize>True</resize>
+	      </child>
+
+	      <widget>
+		<class>GtkScrolledWindow</class>
+		<name>scrolledwindow17</name>
+		<hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+		<vscrollbar_policy>GTK_POLICY_NEVER</vscrollbar_policy>
+		<hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+		<vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+
+		<widget>
+		  <class>GtkViewport</class>
+		  <name>viewport2</name>
+		  <shadow_type>GTK_SHADOW_IN</shadow_type>
+
+		  <widget>
+		    <class>GtkText</class>
+		    <name>text19</name>
+		    <can_focus>True</can_focus>
+		    <editable>False</editable>
+		    <text></text>
+		  </widget>
+		</widget>
+	      </widget>
+	    </widget>
+
+	    <widget>
+	      <class>GtkVPaned</class>
+	      <name>vpaned3</name>
+	      <handle_size>10</handle_size>
+	      <gutter_size>10</gutter_size>
+	      <position>0</position>
+	      <child>
+		<shrink>True</shrink>
+		<resize>True</resize>
+	      </child>
+
+	      <widget>
+		<class>GtkFrame</class>
+		<name>video_memory_frame</name>
+		<border_width>2</border_width>
+		<height>64</height>
+		<label>VDP Memory</label>
+		<label_xalign>0</label_xalign>
+		<shadow_type>GTK_SHADOW_NONE</shadow_type>
+		<child>
+		  <shrink>False</shrink>
+		  <resize>True</resize>
+		</child>
+
+		<widget>
+		  <class>GtkScrolledWindow</class>
+		  <name>scrolledwindow19</name>
+		  <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+		  <vscrollbar_policy>GTK_POLICY_NEVER</vscrollbar_policy>
+		  <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+		  <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+
+		  <widget>
+		    <class>GtkViewport</class>
+		    <name>viewport3</name>
+		    <shadow_type>GTK_SHADOW_IN</shadow_type>
+
+		    <widget>
+		      <class>GtkText</class>
+		      <name>text20</name>
+		      <can_focus>True</can_focus>
+		      <editable>False</editable>
+		      <text></text>
+		    </widget>
+		  </widget>
+		</widget>
+	      </widget>
+
+	      <widget>
+		<class>GtkVPaned</class>
+		<name>vpaned4</name>
+		<handle_size>10</handle_size>
+		<gutter_size>10</gutter_size>
+		<position>0</position>
+		<child>
+		  <shrink>True</shrink>
+		  <resize>True</resize>
+		</child>
+
+		<widget>
+		  <class>GtkFrame</class>
+		  <name>graphics_memory_frame</name>
+		  <border_width>2</border_width>
+		  <height>64</height>
+		  <label>GROM/GRAM Memory</label>
+		  <label_xalign>0</label_xalign>
+		  <shadow_type>GTK_SHADOW_NONE</shadow_type>
+		  <child>
+		    <shrink>False</shrink>
+		    <resize>True</resize>
+		  </child>
+
+		  <widget>
+		    <class>GtkScrolledWindow</class>
+		    <name>scrolledwindow21</name>
+		    <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+		    <vscrollbar_policy>GTK_POLICY_NEVER</vscrollbar_policy>
+		    <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+		    <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+
+		    <widget>
+		      <class>GtkViewport</class>
+		      <name>viewport4</name>
+		      <shadow_type>GTK_SHADOW_IN</shadow_type>
+
+		      <widget>
+			<class>GtkText</class>
+			<name>text21</name>
+			<can_focus>True</can_focus>
+			<editable>False</editable>
+			<text></text>
+		      </widget>
+		    </widget>
+		  </widget>
+		</widget>
+
+		<widget>
+		  <class>GtkFrame</class>
+		  <name>speech_memory_frame</name>
+		  <border_width>2</border_width>
+		  <height>64</height>
+		  <label>Speech Memory</label>
+		  <label_xalign>0</label_xalign>
+		  <shadow_type>GTK_SHADOW_NONE</shadow_type>
+		  <child>
+		    <shrink>False</shrink>
+		    <resize>True</resize>
+		  </child>
+
+		  <widget>
+		    <class>GtkScrolledWindow</class>
+		    <name>scrolledwindow23</name>
+		    <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+		    <vscrollbar_policy>GTK_POLICY_NEVER</vscrollbar_policy>
+		    <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+		    <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+
+		    <widget>
+		      <class>GtkViewport</class>
+		      <name>viewport5</name>
+		      <shadow_type>GTK_SHADOW_IN</shadow_type>
+
+		      <widget>
+			<class>GtkText</class>
+			<name>text22</name>
+			<can_focus>True</can_focus>
+			<editable>False</editable>
+			<text></text>
+		      </widget>
+		    </widget>
+		  </widget>
+		</widget>
+	      </widget>
+	    </widget>
+	  </widget>
+	</widget>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHBox</class>
+      <name>hbox15</name>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+      </child>
+
+      <widget>
+	<class>GtkVBox</class>
+	<name>vbox15</name>
+	<homogeneous>False</homogeneous>
+	<spacing>0</spacing>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkHBox</class>
+	  <name>hbox10</name>
+	  <homogeneous>True</homogeneous>
+	  <spacing>0</spacing>
+	  <child>
+	    <padding>0</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+
+	  <widget>
+	    <class>GtkButton</class>
+	    <name>button44</name>
+	    <can_default>True</can_default>
+	    <can_focus>True</can_focus>
+	    <accelerator>
+	      <modifiers>0</modifiers>
+	      <key>GDK_Escape</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_debugger_close_button_clicked</handler>
+	      <last_modification_time>Mon, 29 May 2000 01:03:41 GMT</last_modification_time>
+	    </signal>
+	    <label>Close</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkButton</class>
+	    <name>button41</name>
+	    <tooltip>Execute emulator with minimal debugger refresh</tooltip>
+	    <can_default>True</can_default>
+	    <can_focus>True</can_focus>
+	    <accelerator>
+	      <modifiers>0</modifiers>
+	      <key>GDK_r</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <accelerator>
+	      <modifiers>GDK_MOD1_MASK</modifiers>
+	      <key>GDK_r</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_debugger_run_button_clicked</handler>
+	      <last_modification_time>Mon, 29 May 2000 21:06:33 GMT</last_modification_time>
+	    </signal>
+	    <label>_Run</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkButton</class>
+	    <name>button96</name>
+	    <tooltip>Step one instruction (even into calls) and break</tooltip>
+	    <can_default>True</can_default>
+	    <can_focus>True</can_focus>
+	    <accelerator>
+	      <modifiers>GDK_MOD1_MASK</modifiers>
+	      <key>GDK_s</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <accelerator>
+	      <modifiers>0</modifiers>
+	      <key>GDK_s</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_debugger_step_button_clicked</handler>
+	      <last_modification_time>Sat, 09 Feb 2002 18:25:36 GMT</last_modification_time>
+	    </signal>
+	    <label>_Step</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkButton</class>
+	    <name>button97</name>
+	    <tooltip>Execute until the PC reaches the next instruction (ignore conditional jumps)</tooltip>
+	    <can_default>True</can_default>
+	    <can_focus>True</can_focus>
+	    <accelerator>
+	      <modifiers>0</modifiers>
+	      <key>GDK_a</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <accelerator>
+	      <modifiers>GDK_MOD1_MASK</modifiers>
+	      <key>GDK_a</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_debugger_after_button_clicked</handler>
+	      <last_modification_time>Sat, 09 Feb 2002 18:38:52 GMT</last_modification_time>
+	    </signal>
+	    <label>_After</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>Placeholder</class>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkHBox</class>
+	  <name>hbox14</name>
+	  <homogeneous>True</homogeneous>
+	  <spacing>0</spacing>
+	  <child>
+	    <padding>0</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+
+	  <widget>
+	    <class>GtkButton</class>
+	    <name>button89</name>
+	    <tooltip>Break execution</tooltip>
+	    <can_default>True</can_default>
+	    <can_focus>True</can_focus>
+	    <accelerator>
+	      <modifiers>GDK_MOD1_MASK</modifiers>
+	      <key>GDK_b</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <accelerator>
+	      <modifiers>0</modifiers>
+	      <key>GDK_b</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_debugger_break_button_clicked</handler>
+	      <last_modification_time>Sat, 09 Feb 2002 18:25:45 GMT</last_modification_time>
+	    </signal>
+	    <label>_Break</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkButton</class>
+	    <name>button88</name>
+	    <tooltip>Execute emulator with maximum debugger refresh</tooltip>
+	    <can_default>True</can_default>
+	    <can_focus>True</can_focus>
+	    <accelerator>
+	      <modifiers>GDK_MOD1_MASK</modifiers>
+	      <key>GDK_w</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <accelerator>
+	      <modifiers>0</modifiers>
+	      <key>GDK_w</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_debugger_walk_button_clicked</handler>
+	      <last_modification_time>Mon, 29 May 2000 21:06:48 GMT</last_modification_time>
+	    </signal>
+	    <label>_Walk</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkButton</class>
+	    <name>button40</name>
+	    <tooltip>Execute until the PC reaches the next instruction (skip over calls)</tooltip>
+	    <can_default>True</can_default>
+	    <can_focus>True</can_focus>
+	    <accelerator>
+	      <modifiers>0</modifiers>
+	      <key>GDK_n</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <accelerator>
+	      <modifiers>GDK_MOD1_MASK</modifiers>
+	      <key>GDK_n</key>
+	      <signal>clicked</signal>
+	    </accelerator>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_debugger_next_button_clicked</handler>
+	      <last_modification_time>Sun, 04 Jun 2000 18:00:43 GMT</last_modification_time>
+	    </signal>
+	    <label>_Next</label>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkLabel</class>
+	    <name>label48</name>
+	    <label></label>
+	    <justify>GTK_JUSTIFY_CENTER</justify>
+	    <wrap>False</wrap>
+	    <xalign>0.5</xalign>
+	    <yalign>0.5</yalign>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <child>
+	      <padding>0</padding>
+	      <expand>False</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>Placeholder</class>
+	  </widget>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>Placeholder</class>
+      </widget>
+
+      <widget>
+	<class>GtkTable</class>
+	<name>table5</name>
+	<rows>3</rows>
+	<columns>2</columns>
+	<homogeneous>False</homogeneous>
+	<row_spacing>0</row_spacing>
+	<column_spacing>0</column_spacing>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label43</name>
+	  <label>Updates per second</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>4</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkSpinButton</class>
+	  <name>spinbutton1</name>
+	  <tooltip>Number of times debugger refreshes in &quot;Run&quot; mode</tooltip>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_v9t9_spin_button_realize_value</handler>
+	    <data>(gpointer)&quot;GTKDebuggerUpdateRate&quot;</data>
+	    <last_modification_time>Sun, 21 Jan 2001 00:17:44 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>changed</name>
+	    <handler>on_v9t9_spin_button_changed_value</handler>
+	    <data>(gpointer)&quot;GTKDebuggerUpdateRate&quot;</data>
+	    <last_modification_time>Sun, 21 Jan 2001 00:17:38 GMT</last_modification_time>
+	  </signal>
+	  <climb_rate>1</climb_rate>
+	  <digits>0</digits>
+	  <numeric>False</numeric>
+	  <update_policy>GTK_UPDATE_ALWAYS</update_policy>
+	  <snap>False</snap>
+	  <wrap>False</wrap>
+	  <value>1</value>
+	  <lower>0</lower>
+	  <upper>100</upper>
+	  <step>1</step>
+	  <page>10</page>
+	  <page_size>10</page_size>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>2</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>4</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>Placeholder</class>
+    </widget>
+
+    <widget>
+      <class>GtkStatusbar</class>
+      <name>debugger_status_bar</name>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+      </child>
+    </widget>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkWindow</class>
+  <name>memory_dialog</name>
+  <title>Memory Configuration</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <default_width>400</default_width>
+  <default_height>400</default_height>
+  <allow_shrink>False</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <name>vbox9</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkTable</class>
+      <name>rom_entries_table</name>
+      <rows>4</rows>
+      <columns>3</columns>
+      <homogeneous>False</homogeneous>
+      <row_spacing>0</row_spacing>
+      <column_spacing>0</column_spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkEntry</class>
+	<name>console_rom_entry</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>activate</name>
+	  <handler>on_v9t9_rom_entry_activate</handler>
+	  <data>(gpointer *)&quot;ConsoleROMFilename&quot;</data>
+	  <last_modification_time>Sun, 04 Jun 2000 05:43:17 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_v9t9_rom_entry_realize</handler>
+	  <data>(gpointer *)&quot;ConsoleROMFilename&quot;</data>
+	  <last_modification_time>Sun, 04 Jun 2000 05:43:23 GMT</last_modification_time>
+	</signal>
+	<editable>True</editable>
+	<text_visible>True</text_visible>
+	<text_max_length>0</text_max_length>
+	<text></text>
+	<child>
+	  <left_attach>1</left_attach>
+	  <right_attach>2</right_attach>
+	  <top_attach>0</top_attach>
+	  <bottom_attach>1</bottom_attach>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <xexpand>True</xexpand>
+	  <yexpand>False</yexpand>
+	  <xshrink>False</xshrink>
+	  <yshrink>False</yshrink>
+	  <xfill>True</xfill>
+	  <yfill>False</yfill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<name>label30</name>
+	<label>Console _ROM</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+	<focus_target>console_rom_entry</focus_target>
+	<child>
+	  <left_attach>0</left_attach>
+	  <right_attach>1</right_attach>
+	  <top_attach>0</top_attach>
+	  <bottom_attach>1</bottom_attach>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <xexpand>True</xexpand>
+	  <yexpand>False</yexpand>
+	  <xshrink>False</xshrink>
+	  <yshrink>False</yshrink>
+	  <xfill>False</xfill>
+	  <yfill>False</yfill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button35</name>
+	<border_width>4</border_width>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_rom_button_clicked</handler>
+	  <data>console_rom_entry</data>
+	  <last_modification_time>Sun, 04 Jun 2000 05:43:29 GMT</last_modification_time>
+	</signal>
+	<label>Choose...</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <left_attach>2</left_attach>
+	  <right_attach>3</right_attach>
+	  <top_attach>0</top_attach>
+	  <bottom_attach>1</bottom_attach>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <xexpand>True</xexpand>
+	  <yexpand>False</yexpand>
+	  <xshrink>False</xshrink>
+	  <yshrink>False</yshrink>
+	  <xfill>False</xfill>
+	  <yfill>False</yfill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<name>label31</name>
+	<label>Console _GROM</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+	<focus_target>console_grom_entry</focus_target>
+	<child>
+	  <left_attach>0</left_attach>
+	  <right_attach>1</right_attach>
+	  <top_attach>1</top_attach>
+	  <bottom_attach>2</bottom_attach>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <xexpand>False</xexpand>
+	  <yexpand>False</yexpand>
+	  <xshrink>False</xshrink>
+	  <yshrink>False</yshrink>
+	  <xfill>False</xfill>
+	  <yfill>False</yfill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkEntry</class>
+	<name>console_grom_entry</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>activate</name>
+	  <handler>on_v9t9_rom_entry_activate</handler>
+	  <data>(gpointer *)&quot;ConsoleGROMFilename&quot;</data>
+	  <last_modification_time>Sun, 04 Jun 2000 05:43:36 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_v9t9_rom_entry_realize</handler>
+	  <data>(gpointer *)&quot;ConsoleGROMFilename&quot;</data>
+	  <last_modification_time>Sun, 04 Jun 2000 05:43:42 GMT</last_modification_time>
+	</signal>
+	<editable>True</editable>
+	<text_visible>True</text_visible>
+	<text_max_length>0</text_max_length>
+	<text></text>
+	<child>
+	  <left_attach>1</left_attach>
+	  <right_attach>2</right_attach>
+	  <top_attach>1</top_attach>
+	  <bottom_attach>2</bottom_attach>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <xexpand>True</xexpand>
+	  <yexpand>False</yexpand>
+	  <xshrink>False</xshrink>
+	  <yshrink>False</yshrink>
+	  <xfill>True</xfill>
+	  <yfill>False</yfill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button36</name>
+	<border_width>4</border_width>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_rom_button_clicked</handler>
+	  <data>console_grom_entry</data>
+	  <last_modification_time>Sun, 04 Jun 2000 05:43:47 GMT</last_modification_time>
+	</signal>
+	<label>Choose...</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <left_attach>2</left_attach>
+	  <right_attach>3</right_attach>
+	  <top_attach>1</top_attach>
+	  <bottom_attach>2</bottom_attach>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <xexpand>False</xexpand>
+	  <yexpand>False</yexpand>
+	  <xshrink>False</xshrink>
+	  <yshrink>False</yshrink>
+	  <xfill>False</xfill>
+	  <yfill>False</yfill>
+	</child>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkVBox</class>
+      <name>vbox10</name>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkCheckButton</class>
+	<name>checkbutton11</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_v9t9_togglebutton_toggled_command_toggle</handler>
+	  <data>(gpointer)&quot;MemoryExpansion32K&quot;</data>
+	  <last_modification_time>Tue, 06 Jun 2000 01:34:11 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_v9t9_togglebutton_realize_active</handler>
+	  <data>(gpointer)&quot;MemoryExpansion32K&quot;</data>
+	  <last_modification_time>Tue, 06 Jun 2000 01:34:18 GMT</last_modification_time>
+	</signal>
+	<label>Use 32K _extended memory</label>
+	<active>False</active>
+	<draw_indicator>True</draw_indicator>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkCheckButton</class>
+	<name>checkbutton10</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_v9t9_togglebutton_toggled_command_toggle</handler>
+	  <data>(gpointer)&quot;ExtraConsoleRAM&quot;</data>
+	  <last_modification_time>Mon, 05 Jun 2000 00:58:28 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_v9t9_togglebutton_realize_active</handler>
+	  <data>(gpointer)&quot;ExtraConsoleRAM&quot;</data>
+	  <last_modification_time>Mon, 05 Jun 2000 00:58:46 GMT</last_modification_time>
+	</signal>
+	<label>Enable Gene_ve-style RAM in &gt;8000-&gt;82FF range</label>
+	<active>False</active>
+	<draw_indicator>True</draw_indicator>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkVBox</class>
+	<name>vbox11</name>
+	<homogeneous>False</homogeneous>
+	<spacing>0</spacing>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkCheckButton</class>
+	  <name>checkbutton13</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_v9t9_togglebutton_toggled_widget_enable</handler>
+	    <data>(gpointer)module_roms_table</data>
+	    <last_modification_time>Tue, 06 Jun 2000 02:55:18 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_memory_config_module_rom_button_realize</handler>
+	    <data>(gpointer)module_roms_table</data>
+	    <last_modification_time>Tue, 06 Jun 2000 03:06:05 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_memory_config_module_rom_button_clicked</handler>
+	    <last_modification_time>Tue, 06 Jun 2000 03:02:19 GMT</last_modification_time>
+	  </signal>
+	  <label>Load custom module ROMs</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkFrame</class>
+	  <name>frame11</name>
+	  <border_width>2</border_width>
+	  <label_xalign>0</label_xalign>
+	  <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	  <child>
+	    <padding>0</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+
+	  <widget>
+	    <class>GtkTable</class>
+	    <name>module_roms_table</name>
+	    <rows>4</rows>
+	    <columns>3</columns>
+	    <homogeneous>False</homogeneous>
+	    <row_spacing>0</row_spacing>
+	    <column_spacing>0</column_spacing>
+
+	    <widget>
+	      <class>GtkEntry</class>
+	      <name>module_rom_entry</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>on_memory_config_banked_module_deactivate</handler>
+		<data>module_rom1_entry</data>
+		<last_modification_time>Tue, 06 Jun 2000 04:02:48 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>realize</name>
+		<handler>on_v9t9_rom_entry_realize</handler>
+		<data>(gpointer)&quot;ModuleROMFilename&quot;</data>
+		<last_modification_time>Tue, 06 Jun 2000 03:17:57 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>activate</name>
+		<handler>on_memory_config_banked_module_deactivate</handler>
+		<data>(gpointer)module_rom2_entry</data>
+		<last_modification_time>Tue, 06 Jun 2000 04:03:32 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>activate</name>
+		<handler>on_v9t9_rom_entry_activate</handler>
+		<data>(gpointer)&quot;ModuleROMFilename&quot;</data>
+		<last_modification_time>Tue, 06 Jun 2000 04:03:07 GMT</last_modification_time>
+	      </signal>
+	      <editable>True</editable>
+	      <text_visible>True</text_visible>
+	      <text_max_length>0</text_max_length>
+	      <text></text>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>0</top_attach>
+		<bottom_attach>1</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkEntry</class>
+	      <name>module_grom_entry</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>on_v9t9_rom_entry_activate</handler>
+		<data>(gpointer)&quot;ModuleGROMFilename&quot;</data>
+		<last_modification_time>Tue, 06 Jun 2000 03:17:49 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>realize</name>
+		<handler>on_v9t9_rom_entry_realize</handler>
+		<data>(gpointer)&quot;ModuleGROMFilename&quot;</data>
+		<last_modification_time>Tue, 06 Jun 2000 03:17:45 GMT</last_modification_time>
+	      </signal>
+	      <editable>True</editable>
+	      <text_visible>True</text_visible>
+	      <text_max_length>0</text_max_length>
+	      <text></text>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>1</top_attach>
+		<bottom_attach>2</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkButton</class>
+	      <name>button53</name>
+	      <border_width>4</border_width>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>clicked</name>
+		<handler>on_v9t9_rom_button_clicked</handler>
+		<data>module_rom_entry</data>
+		<last_modification_time>Tue, 06 Jun 2000 01:48:27 GMT</last_modification_time>
+	      </signal>
+	      <label>Choose...</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
+	      <child>
+		<left_attach>2</left_attach>
+		<right_attach>3</right_attach>
+		<top_attach>0</top_attach>
+		<bottom_attach>1</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkButton</class>
+	      <name>button54</name>
+	      <border_width>4</border_width>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>clicked</name>
+		<handler>on_v9t9_rom_button_clicked</handler>
+		<data>module_grom_entry</data>
+		<last_modification_time>Tue, 06 Jun 2000 02:45:45 GMT</last_modification_time>
+	      </signal>
+	      <label>Choose...</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
+	      <child>
+		<left_attach>2</left_attach>
+		<right_attach>3</right_attach>
+		<top_attach>1</top_attach>
+		<bottom_attach>2</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label33</name>
+	      <label>_Module ROM</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <focus_target>module_rom_entry</focus_target>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>0</top_attach>
+		<bottom_attach>1</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label34</name>
+	      <label>M_odule GROM</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <focus_target>module_grom_entry</focus_target>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>1</top_attach>
+		<bottom_attach>2</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label35</name>
+	      <label>Module ROM (bank _1)</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <focus_target>module_rom1_entry</focus_target>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>2</top_attach>
+		<bottom_attach>3</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkEntry</class>
+	      <name>module_rom1_entry</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>on_module_config_banked_module_activate</handler>
+		<data>module_rom_entry</data>
+		<last_modification_time>Tue, 06 Jun 2000 04:01:09 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>realize</name>
+		<handler>on_v9t9_rom_entry_realize</handler>
+		<data>(gpointer)&quot;ModuleROM1Filename&quot;</data>
+		<last_modification_time>Tue, 06 Jun 2000 03:58:34 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>activate</name>
+		<handler>on_v9t9_rom_entry_activate</handler>
+		<data>(gpointer)&quot;ModuleROM1Filename&quot;</data>
+		<last_modification_time>Tue, 06 Jun 2000 03:58:37 GMT</last_modification_time>
+	      </signal>
+	      <editable>True</editable>
+	      <text_visible>True</text_visible>
+	      <text_max_length>0</text_max_length>
+	      <text></text>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>2</top_attach>
+		<bottom_attach>3</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkButton</class>
+	      <name>button55</name>
+	      <border_width>4</border_width>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>clicked</name>
+		<handler>on_v9t9_rom_button_clicked</handler>
+		<data>module_rom1_entry</data>
+		<last_modification_time>Tue, 06 Jun 2000 03:57:21 GMT</last_modification_time>
+	      </signal>
+	      <label>Choose...</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
+	      <child>
+		<left_attach>2</left_attach>
+		<right_attach>3</right_attach>
+		<top_attach>2</top_attach>
+		<bottom_attach>3</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label36</name>
+	      <label>Module ROM (bank _2)</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <focus_target>module_rom2_entry</focus_target>
+	      <child>
+		<left_attach>0</left_attach>
+		<right_attach>1</right_attach>
+		<top_attach>3</top_attach>
+		<bottom_attach>4</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkEntry</class>
+	      <name>module_rom2_entry</name>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>activate</name>
+		<handler>on_module_config_banked_module_activate</handler>
+		<data>(gpointer)module_rom_entry</data>
+		<last_modification_time>Tue, 06 Jun 2000 04:01:44 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>realize</name>
+		<handler>on_v9t9_rom_entry_realize</handler>
+		<data>(gpointer)&quot;ModuleROM2Filename&quot;</data>
+		<last_modification_time>Tue, 06 Jun 2000 03:58:47 GMT</last_modification_time>
+	      </signal>
+	      <signal>
+		<name>activate</name>
+		<handler>on_v9t9_rom_entry_activate</handler>
+		<data>(gpointer)&quot;ModuleROM2Filename&quot;</data>
+		<last_modification_time>Tue, 06 Jun 2000 04:01:25 GMT</last_modification_time>
+	      </signal>
+	      <editable>True</editable>
+	      <text_visible>True</text_visible>
+	      <text_max_length>0</text_max_length>
+	      <text></text>
+	      <child>
+		<left_attach>1</left_attach>
+		<right_attach>2</right_attach>
+		<top_attach>3</top_attach>
+		<bottom_attach>4</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>True</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>True</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkButton</class>
+	      <name>button56</name>
+	      <border_width>4</border_width>
+	      <can_focus>True</can_focus>
+	      <signal>
+		<name>clicked</name>
+		<handler>on_v9t9_rom_button_clicked</handler>
+		<data>module_rom2_entry</data>
+		<last_modification_time>Tue, 06 Jun 2000 03:11:47 GMT</last_modification_time>
+	      </signal>
+	      <label>Choose...</label>
+	      <relief>GTK_RELIEF_NORMAL</relief>
+	      <child>
+		<left_attach>2</left_attach>
+		<right_attach>3</right_attach>
+		<top_attach>3</top_attach>
+		<bottom_attach>4</bottom_attach>
+		<xpad>0</xpad>
+		<ypad>0</ypad>
+		<xexpand>False</xexpand>
+		<yexpand>False</yexpand>
+		<xshrink>False</xshrink>
+		<yshrink>False</yshrink>
+		<xfill>False</xfill>
+		<yfill>False</yfill>
+	      </child>
+	    </widget>
+	  </widget>
+	</widget>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHBox</class>
+      <name>hbox9</name>
+      <homogeneous>True</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>4</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+	<pack>GTK_PACK_END</pack>
+      </child>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button58</name>
+	<border_width>4</border_width>
+	<tooltip>Continue emulation</tooltip>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_button_clicked</handler>
+	  <data>(gpointer)&quot;PauseComputer off\n&quot;</data>
+	  <last_modification_time>Tue, 06 Jun 2000 05:10:45 GMT</last_modification_time>
+	</signal>
+	<label>Resume</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button59</name>
+	<border_width>4</border_width>
+	<tooltip>Close window and reset computer</tooltip>
+	<can_focus>True</can_focus>
+	<accelerator>
+	  <modifiers>0</modifiers>
+	  <key>GDK_Return</key>
+	  <signal>clicked</signal>
+	</accelerator>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_button_clicked</handler>
+	  <data>(gpointer)&quot;ResetComputer\n&quot;</data>
+	  <last_modification_time>Tue, 06 Jun 2000 05:05:33 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_button_clicked</handler>
+	  <data>(gpointer)&quot;PauseComputer off\n&quot;</data>
+	  <last_modification_time>Tue, 06 Jun 2000 05:05:41 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_memory_dialog_close_button_clicked</handler>
+	  <last_modification_time>Tue, 06 Jun 2000 05:10:18 GMT</last_modification_time>
+	</signal>
+	<label>Boot and Run</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>4</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button38</name>
+	<border_width>4</border_width>
+	<tooltip>Close window and continue emulation</tooltip>
+	<can_focus>True</can_focus>
+	<accelerator>
+	  <modifiers>0</modifiers>
+	  <key>GDK_Escape</key>
+	  <signal>clicked</signal>
+	</accelerator>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_memory_dialog_close_button_clicked</handler>
+	  <last_modification_time>Sun, 04 Jun 2000 05:49:34 GMT</last_modification_time>
+	</signal>
+	<label>Close</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkFrame</class>
+      <name>frame10</name>
+      <border_width>4</border_width>
+      <label>Advanced options</label>
+      <label_xalign>0</label_xalign>
+      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkTable</class>
+	<name>table4</name>
+	<rows>3</rows>
+	<columns>3</columns>
+	<homogeneous>True</homogeneous>
+	<row_spacing>0</row_spacing>
+	<column_spacing>0</column_spacing>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button48</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_change_memory_map_button_clicked</handler>
+	    <last_modification_time>Sat, 24 Mar 2001 18:58:43 GMT</last_modification_time>
+	  </signal>
+	  <label>Explore memory map</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>0</top_attach>
+	    <bottom_attach>1</bottom_attach>
+	    <xpad>8</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button57</name>
+	  <border_width>4</border_width>
+	  <tooltip>Unload all ROMs and RAMs associated with a module</tooltip>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked</handler>
+	    <data>(gpointer)&quot;UnloadModule\n&quot;</data>
+	    <last_modification_time>Tue, 06 Jun 2000 04:57:54 GMT</last_modification_time>
+	  </signal>
+	  <label>Unload module</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>2</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>8</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button47</name>
+	  <border_width>4</border_width>
+	  <tooltip>These RAMs are saved automatically at certain points</tooltip>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked</handler>
+	    <data>(gpointer)&quot;SaveMemory\n&quot;</data>
+	    <last_modification_time>Tue, 06 Jun 2000 01:21:07 GMT</last_modification_time>
+	  </signal>
+	  <label>Save volatile RAM</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <left_attach>2</left_attach>
+	    <right_attach>3</right_attach>
+	    <top_attach>0</top_attach>
+	    <bottom_attach>1</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button95</name>
+	  <border_width>4</border_width>
+	  <tooltip>These RAMs are loaded automatically at certain points</tooltip>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked</handler>
+	    <data>(gpointer)&quot;LoadMemory\n&quot;</data>
+	    <last_modification_time>Sun, 25 Mar 2001 00:08:12 GMT</last_modification_time>
+	  </signal>
+	  <label>Load volatile RAM</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <left_attach>2</left_attach>
+	    <right_attach>3</right_attach>
+	    <top_attach>1</top_attach>
+	    <bottom_attach>2</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button45</name>
+	  <tooltip>Sets up RAM and memory-mapped areas to standard 99/4A settings in case there was a mishap with DefineMemory</tooltip>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked</handler>
+	    <data>(gpointer)&quot;DefaultMemoryMap\n&quot;</data>
+	    <last_modification_time>Tue, 06 Jun 2000 01:20:28 GMT</last_modification_time>
+	  </signal>
+	  <label>Default memory map</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>1</top_attach>
+	    <bottom_attach>2</bottom_attach>
+	    <xpad>8</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+      </widget>
+    </widget>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkWindow</class>
+  <name>options_dialog</name>
+  <title>Basic Options</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <allow_shrink>False</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <name>vbox12</name>
+    <border_width>4</border_width>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>Placeholder</class>
+    </widget>
+
+    <widget>
+      <class>GtkVBox</class>
+      <name>vbox13</name>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkCheckButton</class>
+	<name>checkbutton15</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_v9t9_togglebutton_toggled_command_toggle</handler>
+	  <data>(gpointer)&quot;PlaySound&quot;</data>
+	  <last_modification_time>Sun, 25 Jun 2000 21:38:24 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_v9t9_togglebutton_realize_active</handler>
+	  <data>(gpointer)&quot;PlaySound&quot;</data>
+	  <last_modification_time>Mon, 26 Jun 2000 01:34:31 GMT</last_modification_time>
+	</signal>
+	<label>Enable _sound</label>
+	<active>False</active>
+	<draw_indicator>True</draw_indicator>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkCheckButton</class>
+	<name>checkbutton17</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_v9t9_togglebutton_toggled_command_toggle</handler>
+	  <data>(gpointer)&quot;PlaySpeech&quot;</data>
+	  <last_modification_time>Sun, 25 Jun 2000 21:39:04 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_v9t9_togglebutton_realize_active</handler>
+	  <data>(gpointer)&quot;PlaySpeech&quot;</data>
+	  <last_modification_time>Sun, 25 Jun 2000 21:39:08 GMT</last_modification_time>
+	</signal>
+	<label>Enable s_peech</label>
+	<active>False</active>
+	<draw_indicator>True</draw_indicator>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkHSeparator</class>
+	<name>hseparator4</name>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkCheckButton</class>
+	<name>checkbutton14</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_v9t9_togglebutton_toggled_command_toggle</handler>
+	  <data>(gpointer)&quot;RealTimeEmulation&quot;</data>
+	  <last_modification_time>Sun, 25 Jun 2000 22:00:14 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_v9t9_togglebutton_realize_active</handler>
+	  <data>(gpointer)&quot;RealTimeEmulation&quot;</data>
+	  <last_modification_time>Sun, 25 Jun 2000 22:00:17 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_v9t9_togglebutton_toggled_widget_enable_not</handler>
+	  <data>(gpointer)delay_hbox</data>
+	  <last_modification_time>Sun, 25 Jun 2000 22:00:22 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_v9t9_togglebutton_realize_widget_enable_not</handler>
+	  <data>(gpointer)delay_hbox</data>
+	  <last_modification_time>Sun, 25 Jun 2000 22:00:26 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_v9t9_togglebutton_toggled_widget_enable</handler>
+	  <data>(gpointer)clock_speed_hbox</data>
+	  <last_modification_time>Tue, 04 Jul 2000 17:59:52 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>realize</name>
+	  <handler>on_v9t9_togglebutton_realize_widget_enable</handler>
+	  <data>(gpointer)clock_speed_hbox</data>
+	  <last_modification_time>Tue, 04 Jul 2000 18:00:01 GMT</last_modification_time>
+	</signal>
+	<label>_Real-time emulation</label>
+	<active>False</active>
+	<draw_indicator>True</draw_indicator>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkHBox</class>
+	<name>clock_speed_hbox</name>
+	<homogeneous>True</homogeneous>
+	<spacing>0</spacing>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label42</name>
+	  <label>_9900 Clock Speed</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>1</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <default_focus_target>clock_speed_spin_button</default_focus_target>
+	  <child>
+	    <padding>0</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkSpinButton</class>
+	  <name>clock_speed_spin_button</name>
+	  <tooltip>This affects the maximum execution speed when real-time emulation is enavbled</tooltip>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>activate</name>
+	    <handler>on_v9t9_spin_button_changed_value</handler>
+	    <after>True</after>
+	    <data>(gpointer)&quot;BaseClockHZ&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 23:50:50 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_v9t9_spin_button_realize_value</handler>
+	    <data>(gpointer)&quot;BaseClockHZ&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:03:54 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>show</name>
+	    <handler>on_v9t9_spin_button_realize_value</handler>
+	    <data>(gpointer)&quot;BaseClockHZ&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:50:36 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>changed</name>
+	    <handler>on_v9t9_spin_button_changed_value</handler>
+	    <after>True</after>
+	    <data>(gpointer)&quot;BaseClockHZ&quot;</data>
+	    <last_modification_time>Mon, 30 Oct 2000 00:27:11 GMT</last_modification_time>
+	  </signal>
+	  <climb_rate>1</climb_rate>
+	  <digits>0</digits>
+	  <numeric>False</numeric>
+	  <update_policy>GTK_UPDATE_ALWAYS</update_policy>
+	  <snap>False</snap>
+	  <wrap>False</wrap>
+	  <value>3.3e+06</value>
+	  <lower>1</lower>
+	  <upper>1e+09</upper>
+	  <step>10000</step>
+	  <page>1e+06</page>
+	  <page_size>1e+06</page_size>
+	  <child>
+	    <padding>4</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button70</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked</handler>
+	    <data>(gpointer)&quot;BaseClockHZ 3300000&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 23:52:07 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked_realize_widget</handler>
+	    <data>(gpointer)clock_speed_spin_button</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:41:29 GMT</last_modification_time>
+	  </signal>
+	  <label>Default</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkHBox</class>
+	<name>delay_hbox</name>
+	<homogeneous>True</homogeneous>
+	<spacing>0</spacing>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label39</name>
+	  <label>Instruction _delay</label>
+	  <justify>GTK_JUSTIFY_LEFT</justify>
+	  <wrap>False</wrap>
+	  <xalign>1</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <default_focus_target>delay_spin_button</default_focus_target>
+	  <child>
+	    <padding>0</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkSpinButton</class>
+	  <name>delay_spin_button</name>
+	  <tooltip>This value is highly CPU-dependent</tooltip>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>activate</name>
+	    <handler>on_v9t9_spin_button_changed_value</handler>
+	    <after>True</after>
+	    <data>(gpointer)&quot;DelayBetweenInstructions&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 23:50:55 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_v9t9_spin_button_realize_value</handler>
+	    <data>(gpointer)&quot;DelayBetweenInstructions&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 17:11:40 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>show</name>
+	    <handler>on_v9t9_spin_button_realize_value</handler>
+	    <data>(gpointer)&quot;DelayBetweenInstructions&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:50:41 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>changed</name>
+	    <handler>on_v9t9_spin_button_changed_value</handler>
+	    <after>True</after>
+	    <data>(gpointer)&quot;DelayBetweenInstructions&quot;</data>
+	    <last_modification_time>Mon, 30 Oct 2000 00:27:17 GMT</last_modification_time>
+	  </signal>
+	  <climb_rate>1</climb_rate>
+	  <digits>0</digits>
+	  <numeric>False</numeric>
+	  <update_policy>GTK_UPDATE_ALWAYS</update_policy>
+	  <snap>False</snap>
+	  <wrap>False</wrap>
+	  <value>0</value>
+	  <lower>0</lower>
+	  <upper>1e+09</upper>
+	  <step>100</step>
+	  <page>1000</page>
+	  <page_size>1000</page_size>
+	  <child>
+	    <padding>4</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button71</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked</handler>
+	    <data>(gpointer)&quot;DelayBetweenInstructions 0&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:42:06 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked_realize_widget</handler>
+	    <data>(gpointer)delay_spin_button</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:42:17 GMT</last_modification_time>
+	  </signal>
+	  <label>Default</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkHBox</class>
+	<name>video_refresh_hbox</name>
+	<homogeneous>True</homogeneous>
+	<spacing>0</spacing>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label40</name>
+	  <label>_Video refresh rate</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <default_focus_target>video_refresh_spin_button</default_focus_target>
+	  <child>
+	    <padding>0</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkSpinButton</class>
+	  <name>video_refresh_spin_button</name>
+	  <tooltip>This controls how often the changed parts of the 99/4A screen are redrawn</tooltip>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>activate</name>
+	    <handler>on_v9t9_spin_button_changed_value</handler>
+	    <after>True</after>
+	    <data>(gpointer)&quot;VideoUpdateSpeed&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 23:51:14 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_v9t9_spin_button_realize_value</handler>
+	    <data>(gpointer)&quot;VideoUpdateSpeed&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:02:17 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>show</name>
+	    <handler>on_v9t9_spin_button_realize_value</handler>
+	    <data>(gpointer)&quot;VideoUpdateSpeed&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:50:46 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>changed</name>
+	    <handler>on_v9t9_spin_button_changed_value</handler>
+	    <after>True</after>
+	    <data>(gpointer)&quot;VideoUpdateSpeed&quot;</data>
+	    <last_modification_time>Mon, 30 Oct 2000 00:27:25 GMT</last_modification_time>
+	  </signal>
+	  <climb_rate>1</climb_rate>
+	  <digits>0</digits>
+	  <numeric>False</numeric>
+	  <update_policy>GTK_UPDATE_ALWAYS</update_policy>
+	  <snap>False</snap>
+	  <wrap>False</wrap>
+	  <value>30</value>
+	  <lower>0</lower>
+	  <upper>100</upper>
+	  <step>1</step>
+	  <page>10</page>
+	  <page_size>10</page_size>
+	  <child>
+	    <padding>4</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button72</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked</handler>
+	    <data>(gpointer)&quot;VideoUpdateSpeed 30&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:42:31 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked_realize_widget</handler>
+	    <data>(gpointer)video_refresh_spin_button</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:42:39 GMT</last_modification_time>
+	  </signal>
+	  <label>Default</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkHBox</class>
+	<name>vdp_interrupt_hbox</name>
+	<homogeneous>True</homogeneous>
+	<spacing>0</spacing>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label41</name>
+	  <label>VDP _interrupt rate</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>7.45058e-09</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <default_focus_target>vdp_interrupt_spin_button</default_focus_target>
+	  <child>
+	    <padding>0</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkSpinButton</class>
+	  <name>vdp_interrupt_spin_button</name>
+	  <tooltip>This affects sprite motion and timing</tooltip>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>activate</name>
+	    <handler>on_v9t9_spin_button_changed_value</handler>
+	    <after>True</after>
+	    <data>(gpointer)&quot;VDPInterruptRate&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 23:51:06 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_v9t9_spin_button_realize_value</handler>
+	    <data>(gpointer)&quot;VDPInterruptRate&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:02:24 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>show</name>
+	    <handler>on_v9t9_spin_button_realize_value</handler>
+	    <data>(gpointer)&quot;VDPInterruptRate&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:50:51 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>changed</name>
+	    <handler>on_v9t9_spin_button_changed_value</handler>
+	    <after>True</after>
+	    <data>(gpointer)&quot;VDPInterruptRate&quot;</data>
+	    <last_modification_time>Mon, 30 Oct 2000 00:27:30 GMT</last_modification_time>
+	  </signal>
+	  <climb_rate>1</climb_rate>
+	  <digits>0</digits>
+	  <numeric>False</numeric>
+	  <update_policy>GTK_UPDATE_ALWAYS</update_policy>
+	  <snap>False</snap>
+	  <wrap>False</wrap>
+	  <value>60</value>
+	  <lower>0</lower>
+	  <upper>100</upper>
+	  <step>1</step>
+	  <page>10</page>
+	  <page_size>10</page_size>
+	  <child>
+	    <padding>4</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>button73</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked</handler>
+	    <data>(gpointer)&quot;VDPInterruptRate 60&quot;</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:42:53 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_v9t9_button_clicked_realize_widget</handler>
+	    <data>(gpointer)vdp_interrupt_spin_button</data>
+	    <last_modification_time>Tue, 04 Jul 2000 18:43:25 GMT</last_modification_time>
+	  </signal>
+	  <label>Default</label>
+	  <relief>GTK_RELIEF_NORMAL</relief>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHBox</class>
+      <name>hbox12</name>
+      <homogeneous>True</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>4</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+	<pack>GTK_PACK_END</pack>
+      </child>
+
+      <widget>
+	<class>Placeholder</class>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button69</name>
+	<border_width>4</border_width>
+	<tooltip>Close window and continue emulation</tooltip>
+	<can_focus>True</can_focus>
+	<accelerator>
+	  <modifiers>0</modifiers>
+	  <key>GDK_Escape</key>
+	  <signal>clicked</signal>
+	</accelerator>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_option_dialog_close_button_clicked</handler>
+	  <last_modification_time>Sun, 25 Jun 2000 21:53:12 GMT</last_modification_time>
+	</signal>
+	<label>Close</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>Placeholder</class>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHSeparator</class>
+      <name>hseparator5</name>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+    </widget>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkWindow</class>
+  <name>logging_dialog</name>
+  <title>Logging Configuration</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <default_width>400</default_width>
+  <default_height>400</default_height>
+  <allow_shrink>False</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <name>vbox14</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkTable</class>
+      <name>log_table</name>
+      <signal>
+	<name>realize</name>
+	<handler>on_logging_log_table_realize</handler>
+	<last_modification_time>Sun, 29 Oct 2000 21:46:51 GMT</last_modification_time>
+      </signal>
+      <rows>1</rows>
+      <columns>1</columns>
+      <homogeneous>False</homogeneous>
+      <row_spacing>0</row_spacing>
+      <column_spacing>0</column_spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+    </widget>
+
+    <widget>
+      <class>GtkHSeparator</class>
+      <name>hseparator6</name>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>True</fill>
+      </child>
+    </widget>
+
+    <widget>
+      <class>GtkHBox</class>
+      <name>hbox13</name>
+      <homogeneous>True</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>reset_all</name>
+	<border_width>4</border_width>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_logging_reset_all_clicked</handler>
+	  <last_modification_time>Sun, 29 Oct 2000 21:40:49 GMT</last_modification_time>
+	</signal>
+	<label>Reset All</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>Placeholder</class>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button83</name>
+	<border_width>4</border_width>
+	<tooltip>Close window and continue emulation</tooltip>
+	<can_focus>True</can_focus>
+	<accelerator>
+	  <modifiers>0</modifiers>
+	  <key>GDK_Escape</key>
+	  <signal>clicked</signal>
+	</accelerator>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_logging_dialog_close_button_clicked</handler>
+	  <last_modification_time>Sun, 29 Oct 2000 21:40:33 GMT</last_modification_time>
+	</signal>
+	<label>Close</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+    </widget>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkDialog</class>
+  <name>fatal_dialog</name>
+  <title>Fatal error</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_CENTER</position>
+  <modal>True</modal>
+  <allow_shrink>True</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <child_name>Dialog:vbox</child_name>
+    <name>dialog-vbox4</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkHBox</class>
+      <child_name>Dialog:action_area</child_name>
+      <name>dialog-action_area4</name>
+      <border_width>10</border_width>
+      <homogeneous>True</homogeneous>
+      <spacing>5</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>True</fill>
+	<pack>GTK_PACK_END</pack>
+      </child>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button84</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_fatal_dialog_ok_button_clicked</handler>
+	  <last_modification_time>Tue, 09 Jan 2001 21:25:34 GMT</last_modification_time>
+	</signal>
+	<label>OK</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>4</padding>
+	  <expand>False</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkLabel</class>
+      <name>message_label</name>
+      <label></label>
+      <justify>GTK_JUSTIFY_CENTER</justify>
+      <wrap>False</wrap>
+      <xalign>0.5</xalign>
+      <yalign>0.5</yalign>
+      <xpad>8</xpad>
+      <ypad>8</ypad>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+      </child>
+    </widget>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkWindow</class>
+  <name>completion_popup</name>
+  <events>GDK_KEY_PRESS_MASK</events>
+  <accelerator>
+    <modifiers>0</modifiers>
+    <key>GDK_Escape</key>
+    <signal>destroy</signal>
+  </accelerator>
+  <title></title>
+  <type>GTK_WINDOW_POPUP</type>
+  <position>GTK_WIN_POS_MOUSE</position>
+  <modal>True</modal>
+  <allow_shrink>True</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>True</auto_shrink>
+
+  <widget>
+    <class>GtkCList</class>
+    <name>completions</name>
+    <can_focus>True</can_focus>
+    <has_focus>True</has_focus>
+    <events>GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK</events>
+    <signal>
+      <name>event</name>
+      <handler>on_completions_event</handler>
+      <after>True</after>
+      <last_modification_time>Sun, 04 Feb 2001 18:36:07 GMT</last_modification_time>
+    </signal>
+    <columns>1</columns>
+    <column_widths>80</column_widths>
+    <selection_mode>GTK_SELECTION_BROWSE</selection_mode>
+    <show_titles>False</show_titles>
+    <shadow_type>GTK_SHADOW_ETCHED_OUT</shadow_type>
+
+    <widget>
+      <class>Placeholder</class>
+      <child_name>CList:title</child_name>
+    </widget>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkWindow</class>
+  <name>memory_map_dialog</name>
+  <width>640</width>
+  <height>320</height>
+  <signal>
+    <name>realize</name>
+    <handler>on_memory_map_dialog_realize</handler>
+    <last_modification_time>Sat, 24 Mar 2001 22:14:21 GMT</last_modification_time>
+  </signal>
+  <signal>
+    <name>destroy</name>
+    <handler>on_memory_map_dialog_destroy</handler>
+    <last_modification_time>Sat, 14 Apr 2001 03:35:25 GMT</last_modification_time>
+  </signal>
+  <title>Memory Map</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <allow_shrink>False</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <name>vbox16</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkNotebook</class>
+      <name>notebook</name>
+      <can_focus>True</can_focus>
+      <show_tabs>True</show_tabs>
+      <show_border>True</show_border>
+      <tab_pos>GTK_POS_TOP</tab_pos>
+      <scrollable>False</scrollable>
+      <tab_hborder>2</tab_hborder>
+      <tab_vborder>2</tab_vborder>
+      <popup_enable>False</popup_enable>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>Placeholder</class>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<child_name>Notebook:tab</child_name>
+	<name>label44</name>
+	<label>Console / CPU</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+      </widget>
+
+      <widget>
+	<class>Placeholder</class>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<child_name>Notebook:tab</child_name>
+	<name>label45</name>
+	<label>GROM/GRAM</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+      </widget>
+
+      <widget>
+	<class>Placeholder</class>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<child_name>Notebook:tab</child_name>
+	<name>label46</name>
+	<label>VDP</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+      </widget>
+
+      <widget>
+	<class>Placeholder</class>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<child_name>Notebook:tab</child_name>
+	<name>label47</name>
+	<label>Speech</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHSeparator</class>
+      <name>hseparator7</name>
+      <child>
+	<padding>4</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+      </child>
+    </widget>
+
+    <widget>
+      <class>GtkHBox</class>
+      <name>hbox16</name>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>4</padding>
+	<expand>False</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button94</name>
+	<border_width>4</border_width>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_memory_map_dialog_refresh_clicked</handler>
+	  <last_modification_time>Sat, 24 Mar 2001 23:14:03 GMT</last_modification_time>
+	</signal>
+	<label>Refresh</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>Placeholder</class>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button93</name>
+	<border_width>4</border_width>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>gtk_widget_destroy</handler>
+	  <object>memory_map_dialog</object>
+	  <last_modification_time>Sat, 24 Mar 2001 19:13:51 GMT</last_modification_time>
+	</signal>
+	<label>Close</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+      </widget>
+    </widget>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkWindow</class>
+  <name>command_dialog</name>
+  <signal>
+    <name>key_press_event</name>
+    <handler>on_command_dialog_key_press_event</handler>
+    <data>command_text_entry</data>
+    <last_modification_time>Sun, 23 Apr 2000 23:56:38 GMT</last_modification_time>
+  </signal>
+  <signal>
+    <name>destroy</name>
+    <handler>on_command_dialog_destroy</handler>
+    <last_modification_time>Fri, 29 Dec 2000 02:11:16 GMT</last_modification_time>
+  </signal>
+  <title>Command Central</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <allow_shrink>False</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkHBox</class>
+    <name>hbox17</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkVBox</class>
+      <name>vbox6</name>
+      <width>400</width>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkMenuBar</class>
+	<name>menubar1</name>
+	<shadow_type>GTK_SHADOW_OUT</shadow_type>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+
+	<widget>
+	  <class>GtkMenuItem</class>
+	  <name>menuitem2</name>
+	  <label>_Options</label>
+	  <right_justify>False</right_justify>
+
+	  <widget>
+	    <class>GtkMenu</class>
+	    <name>menu1</name>
+
+	    <widget>
+	      <class>GtkMenuItem</class>
+	      <name>menuitem3</name>
+	      <signal>
+		<name>activate</name>
+		<handler>on_flush_item_activate</handler>
+		<last_modification_time>Sun, 23 Apr 2000 20:48:02 GMT</last_modification_time>
+	      </signal>
+	      <label>_Flush Log</label>
+	      <right_justify>False</right_justify>
+	    </widget>
+
+	    <widget>
+	      <class>GtkMenuItem</class>
+	      <name>menuitem4</name>
+	      <signal>
+		<name>activate</name>
+		<handler>on_font_item_activate</handler>
+		<last_modification_time>Sun, 23 Apr 2000 20:48:20 GMT</last_modification_time>
+	      </signal>
+	      <label>_Select Font...</label>
+	      <right_justify>False</right_justify>
+	    </widget>
+	  </widget>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkScrolledWindow</class>
+	<name>log_text_window</name>
+	<hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+	<vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
+	<hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+	<vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkText</class>
+	  <name>log_text_box</name>
+	  <signal>
+	    <name>realize</name>
+	    <handler>on_log_text_box_realize_event</handler>
+	    <last_modification_time>Sun, 23 Apr 2000 18:09:34 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>button_press_event</name>
+	    <handler>on_command_dialog_button_press_event</handler>
+	    <last_modification_time>Fri, 25 May 2001 17:48:50 GMT</last_modification_time>
+	  </signal>
+	  <editable>False</editable>
+	  <text>
+</text>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkEntry</class>
+	<name>command_text_entry</name>
+	<can_default>True</can_default>
+	<has_default>True</has_default>
+	<can_focus>True</can_focus>
+	<has_focus>True</has_focus>
+	<signal>
+	  <name>activate</name>
+	  <handler>on_command_text_entry_activate</handler>
+	  <data>log_text_box</data>
+	  <last_modification_time>Sun, 23 Apr 2000 17:33:54 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>key_press_event</name>
+	  <handler>on_command_text_entry_key_press_event</handler>
+	  <after>True</after>
+	  <last_modification_time>Sun, 23 Apr 2000 21:59:16 GMT</last_modification_time>
+	</signal>
+	<editable>True</editable>
+	<text_visible>True</text_visible>
+	<text_max_length>0</text_max_length>
+	<text></text>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<name>progress_label</name>
+	<label>Welcome to V9t9!</label>
+	<justify>GTK_JUSTIFY_LEFT</justify>
+	<wrap>False</wrap>
+	<xalign>0</xalign>
+	<yalign>0.5</yalign>
+	<xpad>4</xpad>
+	<ypad>0</ypad>
+	<child>
+	  <padding>2</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkVBox</class>
+      <name>v9t9_button_vbox</name>
+      <border_width>4</border_width>
+      <width>80</width>
+      <homogeneous>False</homogeneous>
+      <spacing>2</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>reboot_button</name>
+	<tooltip>Reset emulated 99/4A</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_button_clicked</handler>
+	  <data>(gpointer *)&quot;ResetComputer\n&quot;</data>
+	  <last_modification_time>Sat, 06 May 2000 16:24:56 GMT</last_modification_time>
+	</signal>
+	<label>Reboot</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkHSeparator</class>
+	<name>hseparator3</name>
+	<child>
+	  <padding>2</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>pause_button</name>
+	<tooltip>Pause execution of V9t9</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_pause_button_clicked</handler>
+	  <last_modification_time>Sun, 21 May 2000 20:46:39 GMT</last_modification_time>
+	</signal>
+	<label>Pause</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkHSeparator</class>
+	<name>hseparator1</name>
+	<child>
+	  <padding>2</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>quick_save_button</name>
+	<tooltip>Save machine state</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_quick_load_save_button_clicked</handler>
+	  <data>(gpointer)GTK_QUICK_SAVE</data>
+	  <last_modification_time>Sun, 09 Jul 2000 19:37:45 GMT</last_modification_time>
+	</signal>
+	<label>Save...</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>quick_load_button</name>
+	<tooltip>Load machine state</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_quick_load_save_button_clicked</handler>
+	  <data>(gpointer)GTK_QUICK_LOAD</data>
+	  <last_modification_time>Sun, 09 Jul 2000 19:35:58 GMT</last_modification_time>
+	</signal>
+	<label>Load...</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkHSeparator</class>
+	<name>hseparator2</name>
+	<child>
+	  <padding>2</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button60</name>
+	<tooltip>Set basic configuration options</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_window_options_button_clicked</handler>
+	  <last_modification_time>Sun, 25 Jun 2000 21:34:30 GMT</last_modification_time>
+	</signal>
+	<label>Options...</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button16</name>
+	<tooltip>Control emulated 99/4A and trace execution</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_debug_button_clicked</handler>
+	  <last_modification_time>Sun, 21 May 2000 20:55:06 GMT</last_modification_time>
+	</signal>
+	<label>Debugger...</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>module_button</name>
+	<tooltip>Load or unload modules</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_window_module_button_clicked</handler>
+	  <last_modification_time>Sun, 30 Apr 2000 17:06:55 GMT</last_modification_time>
+	</signal>
+	<label>Modules...</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>disks_button</name>
+	<tooltip>Assign drives to local directories or files</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_window_disks_button_clicked</handler>
+	  <last_modification_time>Sun, 30 Apr 2000 21:27:54 GMT</last_modification_time>
+	</signal>
+	<label>Disks...</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button37</name>
+	<tooltip>Assign files to ROM or RAM segments of the memory map</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_window_memory_button_clicked</handler>
+	  <last_modification_time>Sun, 04 Jun 2000 05:47:40 GMT</last_modification_time>
+	</signal>
+	<label>Memory...</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>quit_button</name>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_quit_button_clicked</handler>
+	  <last_modification_time>Sat, 06 May 2000 16:30:40 GMT</last_modification_time>
+	</signal>
+	<label>Quit</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	  <pack>GTK_PACK_END</pack>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>button74</name>
+	<tooltip>Modify log levels for debugging</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_v9t9_window_logging_button_clicked</handler>
+	  <last_modification_time>Sun, 29 Oct 2000 21:33:10 GMT</last_modification_time>
+	</signal>
+	<label>Logging...</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkFrame</class>
+	<name>frame12</name>
+	<label_xalign>0</label_xalign>
+	<shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	  <pack>GTK_PACK_END</pack>
+	</child>
+
+	<widget>
+	  <class>GtkHBox</class>
+	  <name>hbox11</name>
+	  <homogeneous>False</homogeneous>
+	  <spacing>0</spacing>
+
+	  <widget>
+	    <class>GtkDrawingArea</class>
+	    <name>disk_access_drawing_area</name>
+	    <height>4</height>
+	    <child>
+	      <padding>2</padding>
+	      <expand>True</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkDrawingArea</class>
+	    <name>rs232_access_drawing_area</name>
+	    <height>4</height>
+	    <child>
+	      <padding>2</padding>
+	      <expand>True</expand>
+	      <fill>True</fill>
+	    </child>
+	  </widget>
+	</widget>
+      </widget>
+    </widget>
+  </widget>
+</widget>
+
+</GTK-Interface>

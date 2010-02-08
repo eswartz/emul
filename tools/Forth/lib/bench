@@ -1,0 +1,359 @@
+
+[ifundef] socb
+s" dsk1.asm99" included
+[endif]
+
+\ Test stack ops where there is no cached TOS
+code: trad
+	rT3 li 30000 ,
+	rT2 clr
+1 $:
+   	\ pretend lit lit swap rot + neg 
+
+	\ lit
+	rT2 *r+ rT1 mov
+	rSP dect
+	rT1 rSP *r mov
+
+ 	\ lit
+	rT2 *r+ rT1 mov
+	rSP dect
+	rT1 rSP *r mov
+
+	\ swap
+	rSP *r rT1 mov
+	rSP @>(R) rSP *r mov 2 ,
+	rT1 rSP *r mov
+
+	\ rot
+	rSP @>(R) rT1 mov 4 ,
+	rSP *r rSP @>(R) mov 2 ,
+	rSP @>(R) rSP @>(R) mov 2 , 4 ,
+	rT1 rSP *r mov
+
+	\ +
+	rSP *r+ rSP *r a
+
+	\ neg
+	rSP *r neg
+
+	rSP inct
+
+	rT3 dec
+	1 $- jne 
+
+	NEXT
+end-code
+
+\ Test stack ops where TOS is cached
+code: cached
+	rT3 li 30000 ,
+	rT2 clr
+1 $:
+   	\ pretend lit lit swap rot + neg 
+
+	\ lit
+	rSP dect
+	rTOS rSP *r mov
+	rT2 *r+ rTOS mov
+
+	\ lit
+	rSP dect
+	rTOS rSP *r mov
+	rT2 *r+ rTOS mov
+
+	\ swap
+	rTOS rT1 mov
+	rSP *r rTOS mov
+	rT1 rSP *r mov
+
+	\ rot
+	rSP @>(R) rT1 mov 2 ,
+	rSP *r rSP @>(R) mov 2 ,
+	rTOS rSP *r mov
+	rT1 rTOS mov
+
+	\ +
+	rSP *R+ rTOS a
+ 
+	\ neg
+	rTOS neg
+
+	rSP *r+ rTOS mov
+
+	rT3 dec
+	1 $- jne 
+	NEXT
+end-code
+
+\ findings: cached is indeed faster (605 vs 635 ticks)
+\ and it uses 33% less memory
+
+
+\ ------------------------------------
+
+\ An extended experiment to sort video memory.  Somehow, vquicksort, which
+\ uses $8C02/$8C00 based moves, is faster vcquicksort, with VDP memory directly mapped
+\ into the CPU (?!)
+
+: vswap ( i j -- )
+    over vc@    ( i j [i] )
+    over vc@    ( i j [i] [j] )
+    swap rot    ( i [j] [i] j )
+    vc!
+    swap vc!
+;
+
+: vp ( left right pivot -- storeindex )
+    over >r         \ save right
+    vc@ >r           \ get pivotValue
+    2dup vswap      \ swap pivot and right value
+    \ .s              ( left right )
+    over             \ storeindex
+    rot rot swap do  \ left ... right-1
+        i vc@ j <= if
+            dup i vswap
+            1+
+        then
+    loop
+    rdrop           \ pivotValue
+    dup             \ storeIndex
+    r> vswap        \ swap storeIndex and right           
+;
+
+\ speedups for work within a vbank
+
+\ Read char from VDP (current bank, T3 = >8c02)
+Code vc@' ( addr -- val )
+    andi TOS , $3fff #
+    swpb TOS
+    movb TOS , *T3
+    swpb TOS
+    movb TOS , *T3
+    movb $8800 @> , TOS
+    NEXT
+end-code
+
+\ Write char to VDP (current bank, T3 = >8c02)
+Code vc!' ( addr val -- )
+    mov *SP+ , T1
+    andi TOS , $3fff #
+    ori  TOS , $4000 #
+    swpb TOS
+    movb TOS , *T3
+    swpb TOS
+    movb TOS , *T3
+    movb T1 , $8c00 @>
+    POP
+    NEXT
+end-code
+
+\ Swap VDP bytes at the given addresses
+Code vswap' ( i j -- )
+    andi TOS , $3fff #
+    swpb TOS
+    movb TOS , *T3
+    swpb TOS
+    movb TOS , *T3
+    movb $8800 @> , T4
+    mov *SP , T1
+    andi T1 , $3fff #
+    swpb T1
+    movb T1 , *T3
+    swpb T1
+    movb T1 , *T3
+    movb $8800 @> , T2
+    ori T1 , $4000 #
+    swpb T1
+    movb T1 , *T3
+    swpb T1
+    movb T1 , *T3
+    movb T4 , $8c00 @>
+    ori TOS , $4000 #
+    swpb TOS
+    movb TOS , *T3
+    swpb TOS
+    movb TOS , *T3
+    movb T2 , $8c00 @>
+    inct SP
+    POP
+    NEXT
+end-code
+
+: vp' ( left right pivot -- storeindex )
+    over >r         \ save right
+    vc@' >r           \ get pivotValue
+    2dup vswap'      \ swap pivot and right value
+    \ .s              ( left right )
+    over             \ storeindex
+    rot rot swap do  \ left ... right-1
+        i vc@' j <= if
+            dup i vswap'
+            1+
+        then
+    loop
+    rdrop           \ pivotValue
+    dup             \ storeIndex
+    r> vswap'        \ swap storeIndex and right           
+;
+
+
+: (vq) ( left right -- )
+    \ depth $100 > if abort then
+    2dup u< if           ( l r )
+        \ select pivot
+        2dup            ( l r )
+        
+        \ 2dup + 1- 2/       ( l r left right pivot )
+        
+        over 
+        
+        2dup $c000 and swap $c000 and = if
+            dup vbank
+            vp'       ( l r storeindex )
+        else
+            vp     ( l r storeindex )
+        then
+        rot             ( r storeindex l )
+        over 1- recurse ( r storeindex )
+        1+ swap recurse
+    else
+        2drop
+    then
+;
+
+: vquicksort ( left right -- )
+    limi0
+    (vq)
+    limi1
+;
+
+Code cvbank ( addr -- )
+    li r12 , $1400 #
+    sbo 0 #
+    inct r12
+    srl TOS , &6 #
+    ldcr TOS , 2 #
+    POP
+    NEXT
+end-code
+
+Code cv@    ( vaddr -- val )
+    mov TOS , T1
+    srl TOS , &6 #
+    ldcr TOS , 2 #
+    andi T1 , $3fff # 
+    movb $c000 @>(T1) , TOS
+    srl TOS , 8 #
+    NEXT
+end-code
+
+Code cv!    ( val vaddr -- )
+    mov TOS , T1
+    srl TOS , &6 #
+    ldcr TOS , 2 #
+    POP
+    swpb TOS
+    andi T1 , $3fff # 
+    movb TOS , $c000 @>(T1)
+    POP
+    NEXT
+end-code
+
+: vcswap ( i j -- )
+    over  cv@    ( i j [i] )
+    over  cv@    ( i j [i] [j] )
+    swap rot    ( i [j] [i] j )
+    cv!
+    swap cv!
+;
+
+: vcp ( left right pivot -- storeindex )
+    over >r         \ save right
+    cv@ >r           \ get pivotValue
+    2dup vcswap      \ swap pivot and right value
+    \ .s              ( left right )
+    over             \ storeindex
+    rot rot swap do  \ left ... right-1
+        i cv@ j <= if
+            dup i vcswap
+            1+
+        then
+    loop
+    rdrop           \ pivotValue
+    dup             \ storeIndex
+    r> vcswap        \ swap storeIndex and right           
+;
+
+Code: mc@
+    movb $c000 @>(TOS) , TOS
+    srl TOS , 8 #
+    NEXT
+end-code
+
+Code: mswap ( i j -- )
+    movb $c000 @>(TOS) , T2
+    mov *SP , T1
+    movb $c000 @>(T1) , $c000 @>(TOS)
+    movb T2 , $c000 @>(T1)
+    POP2
+    NEXT
+end-code
+
+: vcp' ( left right pivot -- storeindex )
+    over >r         \ save right
+    mc@ >r           \ get pivotValue
+    2dup mswap      \ swap pivot and right value
+    \ .s              ( left right )
+    over             \ storeindex
+    rot rot swap do  \ left ... right-1
+        i mc@ j <= if
+            dup i mswap
+            1+
+        then
+    loop
+    rdrop           \ pivotValue
+    dup             \ storeIndex
+    r> mswap        \ swap storeIndex and right           
+;
+
+
+: (vcq) ( left right -- )
+    2dup u< if           ( l r )
+        \ select pivot
+        2dup            ( l r )
+        
+        \ 2dup + 1- 2/       ( l r left right pivot )
+        over 
+        
+        2dup $c000 and swap $c000 and = if
+            dup cvbank
+            $3fff and swap $3fff and swap
+            vcp'       ( l r storeindex )
+        else
+            vcp     ( l r storeindex )
+        then
+        rot             ( r storeindex l )
+        over 1- recurse ( r storeindex )
+        1+ swap recurse
+    else
+        2drop
+    then
+;
+
+: vcquicksort ( left right -- )
+    limi0
+    over cvbank
+    (vcq)
+    limi1
+;
+
+: (sort) ( sortxt -- )
+    >r
+    9 mode!
+    0 $1000 rndmem
+    ticks
+    0 $1000 r> execute
+    ticks d- d. ." ticks"
+;
+

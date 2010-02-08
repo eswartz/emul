@@ -1,0 +1,1050 @@
+
+This is REALLY PRELIMINARY DOCUMENTATION.
+
+2000/08/26
+
+QUICK SETUP
+-----------
+
+This archive has a lot of junk in it.  It's actually my development
+directory.  The important files in the top-level directory are "v9t9",
+"v9t9.cnf", "modules.inf".
+
+You'll need to edit v9t9.cnf to point to your own directories.  Be
+sure the ROMSPath is set up, and that the ROM filenames actually
+exist, or else you may end up in a situation where it looks like you
+properly loaded a session file (i.e., the screen looks okay), but the
+emulated computer will immediately lock up since the ROMS are missing.
+
+Modules.inf can have missing modules in it.  This v9t9 doesn't care.
+So don't worry about removing the modules you don't have from the list.
+
+UPDATING FROM V9t9 V6.0
+------------------------
+
+This release is mostly backward-compatible with V9t9.  It is not
+forward compatible by default, since by default ALL FIAD FILENAMES ARE
+TRANSLATED into a new format.  For instance, in v6.0 the file
+"myfile/lst" would be represented as "MYFILE<<L.ST" (where '<<' is
+actually one character, which I can't type right now) so it would be
+compatible with the 8.3 filenames on the MSDOS filesystem.
+
+In the new release, the filenames are expanded to take advantage of
+long filenames, and borrowing an idea from HTML, illegal DOS characters
+are translated into &xx; (where xx is the hex code for the character).
+V9t9 v6.0 obviously won't understand this (it will see something like
+"MYFILE~1.x;" ???).  
+
+To prevent V9t9 from changing your files if you want to still run V9t9
+v6.0 (why? ;), edit v9t9.cnf to say this:
+
+FixupOldV9t9Filenames off
+GenerateOldV9t9Filenames on
+
+(NOTE!!!  Due to an oversight these commands are saved in session
+files; if you run any of the session files I included, the opposite
+commands from above are activated (advising V9t9 to fixup the old
+filenames and generate new format names), overriding the settings in
+v9t9.cnf.  I advise backing up your v9t9 FIAD files first in
+case. !!!)
+
+Also, the command "RepairDamagedFiles off" should be run if you want to
+preserve some bugs that v6.0 has regarding the structure of TI files...
+
+ABOUT THIS V9t9
+---------------
+
+NEW FEATURES:
+
+-- Ports to Linux and Win32
+-- Real-speed 9900 emulation
+-- Runtime command/config language
+-- Ability to save/load machine state
+-- Direct reading of GRAM Kracker files
+-- Direct support of TIFILES files
+-- Much better speech synthesis
+-- GUI interface using GTK
+-- Runtime module database manipulation
+-- Support for saving/loading Mini Memory RAM to disk
+-- Real five-sprites-on-a-line "feature" support
+-- Digitized sound emulation, running in separate thread
+-- User-configurable memory map and semantics
+-- Support for binding commands to keys
+
+MISSING FEATURES from V6.0:
+---------------------------
+
+-- Joystick support (the mouse works a little under Linux SVGAlib;
+   the numeric keypad is used for the joystick #1)
+-- Demo support (I may later support playback, but not recording)
+-- Decent debugger (the GTK interface kinda works though)
+
+Here's the basic model: the emulator is primarily controlled through a
+command language, which you can use directly, or which the GTK
+frontend uses when you use menus or dialogs.  This is the primary
+interface to the emulator.
+
+This command language is very simple, and is designed in a "verb-noun"
+syntax, or "command-argument" syntax.  The first word on a line is the
+command, and the arguments follow.  Basically like the v6.0 v9t9.cnf
+format.  You can say either "command=value,value,..." or
+"command(value,value,value)".  To get the value of a command which
+you executed earlier, use "(command)" (i.e., "print (Home)").  Most
+string values can go unquoted, but if they have spaces or weird
+punctuation, "quote them".
+
+v9t9 supports entering commands at any time.  Unless you're using the GTK
+GUI (the default for X11 and Win32), you have to pause v9t9 to get
+to the command window first -- the 'pause' key does this.  Enter
+commands there.  See the sample config file for syntax.  Use the command
+"exit" to go back to V9t9.  In the SVGAlib GUI, you can use Tab to
+autocomplete command names.  Also, in any GUI, you can abbreviate commands
+to a unique 5-letter prefix ("AllowDebuggingInterrupts" could be "allowd").
+
+There is a command "help" which does just that, but it scrolls by, so
+do this first to generate a help file:
+
+        ./v9t9 -e "help;quit"
+
+While this still writes everything to the screen, a log file has been
+generated (log.unix.txt or log.win.txt) which has the help text copied
+into it (somewhere).  In Linux, if your config file is broken or
+missing, you'll probably get blue text after running this from the
+console ;).  Just change consoles and it should be fixed...
+
+(NOTE: I've already put this help text at the end of this file.)
+
+V9t9 will let you do almost anything wrong -- i.e., try to load files
+that don't exist, try to point to bad directories, etc., and all this
+information appears in the log, which shares the same interface as the
+command shell.  When running in fullscreen mode, you'll have to
+inconveniently switch back and forth to read these messages (if
+necessary).
+
+As you may have guessed, this command language is used to
+store configuration files.  In fact, a config file is just a command
+script.  Something new here is that you can save the v9t9 machine
+state into a command script / config file at any time.  (It basically
+consists of adding a lot of commands like "set memory to this value".  ;)
+The "SaveConfigFile" and "SaveSessionFile" commands handle this.
+(Likewise, the LoadConfigFile/LoadSessionFile commands do the opposite.)
+Sessions files can be located anywhere in the path "SessionsPath" (like
+ROMSPath, etc., from v6.0).
+
+You may notice there are references to "config files" and "session
+files".  These are both stored in the same format, except that "config
+files" remember settings that are specific to an OS or interface,
+which won't necessarily work on another computer.  "Session files" remember
+the state of the machine, and all the stuff that's independent of the
+machine.
+
+When you start v9t9, it tries to load "v9t9.cnf" and "session.cnf".
+The first is a config file, and session.cnf is the session file, saved
+automatically when you "quit" (but don't "die") from a previous run of
+v9t9.  (The ctrl-break key from the console is "die", not "quit", so this
+won't overwrite the session.)  You can specify alternate config and/or
+session files on the command line.
+
+This emulator engine is surrounded by "modules", which are the
+specific drivers for video, sound, keyboard, et cetera.  Since these
+modules are selected at runtime, you can basically run the emulator
+from any OS or GUI (as long as someone writes a module ;).  The
+modules you use do not affect what commands are available (except when
+modules have their own commands), so the same commands will work in
+X11 and Win32, from a console or from a window, et cetera.
+
+Currently it supports:
+
+video:
+        Linux SVGAlib (console) w/text command shell
+        X11 plain window w/text command shell
+        X11 GTK with GTK command shell
+        Win32 plain window w/text command shell
+        Win32 GTK with GTK command shell
+
+sound:
+        Linux OSS
+        Linux ALSA
+        Win32 wave driver (standard)
+
+There are other modules, for keyboards and such, but basically they're
+tied to the video modules, in terms of how they can be combined.  Also,
+TI DSRs are implemented as modules, making it easier to add new ones.  As
+it is right now, though, all this stuff has to be compiled into one big
+program, so it's not easily extensible.
+
+What does this mean for you?  Essentially, you don't have to do
+anything special; the modules are detected automatically and the
+"right thing" should happen.  But you may want to avoid using the GTK
+stuff in Windows, since the GTK port is not very good at the moment
+(also, I've included an executable so you don't have to find all the
+GTK stuff and build it yourself, especially since I've only tested the
+Win32 build with Codewarrior).
+
+In Win32, there's a "-fe xxx" option to control the video settings
+upon startup.  Use "-fe gtk" to use GTK (the default), "-fe ddraw" for
+the full-screen version (DirectDraw), or "-fe drawdib" for the window
++ text console version.
+
+In Linux, these are "-fe gtk" for GTK (default, and damn nice), "-fe xlib"
+for the X11 window + text console, and "-fe svga" for the SVGAlib version
+(not recommended when running from X11!).
+
+If you want, the "ToggleV9t9Module" command can be used to
+disable/enable modules at runtime (use "ListV9t9Module" to see what
+their names are).  Note that if you disable all the video and keyboard
+modules, the emulator will not show any output, but be assured, it's
+running.  ;)
+
+-------------------------
+
+Here's a dump of the "help" command.  I realize that some of these
+descriptions are wrong.  For instance, in the "DefineModule" command,
+the last argument is a sum of BANKED, ROM, GROM, or MINIMEM; also, the
+SetupV9t9Modules command is not needed (ToggleV9t9Modules does run it
+automatically).
+
+==============================================================================
+V9t9 Options
+==============================================================================
+This is the complete list of options and commands you may specify in a
+configuration file or command prompt.
+------------------------------------------------------------------------------
+
+   ===========================================================================
+   Logging Commands
+   ===========================================================================
+   These options control sources and verbosity of logging
+   ---------------------------------------------------------------------------
+   Log: Toggle logging for given subsystem
+
+      Arguments:
+         system (string): one of the subsystems from ListLogSystems
+         log level (number): level of verbosity (0=off...9=max); a negative
+         value sends output only to file, else output is copied to console or
+         log window
+
+      Returns first argument
+
+   ListLogSystems: List targets for logging
+
+      Not saved to configuration file
+
+   ===========================================================================
+   Video Options
+   ===========================================================================
+   These are generic commands for controlling video emulation
+   ---------------------------------------------------------------------------
+   ShowVideo: Control whether the screen is displayed
+
+      Arguments:
+         on|off (boolean): toggle video on or off
+
+      Returns first argument
+
+   VideoUpdateSpeed: Control how often the screen is updated
+
+      Arguments:
+         hertz (number): number of times per second
+
+      Returns first argument
+
+   VDPInterruptRate: Control how often the VDP interrupts the CPU
+
+      Arguments:
+         hertz (number): number of times per second
+
+      Returns first argument
+
+   DrawSprites: Control whether sprites are displayed
+
+      Arguments:
+         on|off (number): toggle sprites on or off
+
+      Returns first argument
+
+   FiveSpritesOnLine: Obey five-sprites-on-a-line limit of TMS9918A
+
+      Arguments:
+         on|off (number): on: fifth sprite on a line not drawn (default); off:
+         all sprites always drawn
+
+      Returns first argument
+
+   ===========================================================================
+   Sound Options
+   ===========================================================================
+   These are generic commands for controlling sound emulation
+   ---------------------------------------------------------------------------
+   PlaySound: Control whether music/noise sound is played.
+   (Note: to turn off all sound, disable the sound module.)
+
+      Arguments:
+         on|off (boolean): toggle sound on or off
+
+      Returns first argument
+
+   EnableSound: Control whether any sound is emitted.
+
+      Arguments:
+         on|off (boolean): toggle sound on or off
+
+      Returns first argument
+
+   DigitalSoundHertz: Set playback rate for digitized sound; interpretation is
+   dependent on sound module in effect
+
+      Arguments:
+         Hz (number): set rate for playback
+
+      Returns first argument
+
+   DigitalSoundBits: Set word size for digitized sound; interpretation is
+   dependent on sound module in effect
+
+      Arguments:
+         8|16 (number): set word size for playback
+
+      Returns first argument
+
+   ===========================================================================
+   Memory Map / ROM / RAM / Module Options
+   ===========================================================================
+   These are commands for dealing with the layout of memory in the virtual
+   99/4A
+   ---------------------------------------------------------------------------
+   ModulesPath: Set initial directory list to search for module ROM images
+
+      Only saved to session files
+      Arguments:
+         path (string): list of directories separated by one of these
+         characters: ':;'
+
+      Returns first argument
+
+   SystemModulesPath: Set secondary directory list to search for module ROM
+   images
+
+      Only saved to config files
+      Arguments:
+         path (string): list of directories separated by one of these
+         characters: ':;'
+
+      Returns first argument
+
+   ROMSPath: Set initial directory list to search for console ROM and GROM
+   images
+
+      Only saved to session files
+      Arguments:
+         path (string): list of directories separated by one of these
+         characters: ':;'
+
+      Returns first argument
+
+   SystemROMSPath: Set secondary directory list to search for console ROM and
+   GROM images
+
+      Only saved to config files
+      Arguments:
+         path (string): list of directories separated by one of these
+         characters: ':;'
+
+      Returns first argument
+
+   RAMSPath: Set initial directory list to search for nonvolatile RAM images
+
+      Only saved to session files
+      Arguments:
+         path (string): list of directories separated by one of these
+         characters: ':;'
+
+      Returns first argument
+
+   SystemRAMSPath: Set secondary directory list to search for nonvolatile RAM
+   images
+
+      Only saved to config files
+      Arguments:
+         path (string): list of directories separated by one of these
+         characters: ':;'
+
+      Returns first argument
+
+   DefineMemory: Specify existence of a memory area
+
+      Only saved to session files
+      Arguments:
+         flags (string): string of characters defining memory characteristics:
+         first, 'R' for ROM, 'W' for RAM, and 'S' for stored RAM;
+         then, 'M' for a module, or nothing;
+         then, '1' or '2' for banks of a banked module;
+         then, one of 'C'onsole, 'G'raphics, 'V'ideo, 'S'peech, 'D'SR
+         address (number): starting address of image, should start on a >2000
+         boundary
+         size (number): size of ROM, should be a multiple of >2000; except for
+         0, which indicates an unknown size, and a negative number, which
+         indicates the magnitude of the maximum size allowed
+         file (string): name of binary image to load and/or store, searched in
+         the ROMSPath or ModulesPath; if blank, memory is read as zeroes
+         offset (number): byte offset of image, if stored in larger file
+         name (string): text name of memory area
+
+
+   DefaultMemoryMap: Setup defaults for a 99/4A memory map
+
+      Not saved to configuration file
+
+   MemoryExpansion32K: Use 32K expansion memory (may be overridden by a
+   DefineRAM command)
+
+      Arguments:
+         on|off (number): toggle
+
+      Returns first argument
+
+   ExtraConsoleRAM: Set up >8000->82FF range as real RAM (like in the Geneve)
+   instead of mirroring >8300->83FF (the default)
+
+      Arguments:
+         on|off (number): toggle
+
+      Returns first argument
+
+   ConsoleROMFileName: Name of console ROM which starts at address >0000
+
+      Only saved to session files
+      Arguments:
+         file (string): name of binary image
+
+      Returns first argument
+
+   ConsoleGROMFileName: Name of console GROM which starts at address G>0000
+
+      Only saved to session files
+      Arguments:
+         file (string): name of binary image
+
+      Returns first argument
+
+   ModuleGROMFileName: Name of module GROM which starts at address G>6000
+
+      Only saved to session files
+      Arguments:
+         file (string): name of binary image
+
+      Returns first argument
+
+   ModuleROMFileName: Name of module ROM (non-banked) which starts at CPU
+   address >6000
+
+      Only saved to session files
+      Arguments:
+         file (string): name of binary image
+
+      Returns first argument
+
+   ModuleROM1FileName: Name of module ROM (first bank) which starts at CPU
+   address >6000
+
+      Only saved to session files
+      Arguments:
+         file (string): name of binary image
+
+      Returns first argument
+
+   ModuleROMBank2FileName: Name of module ROM (second bank) which starts at CPU
+   address >6000
+
+      Only saved to session files
+      Arguments:
+         file (string): name of binary image
+
+      Returns first argument
+
+   LoadAllMemory: Load all memory images (ROMs and RAMs) into the emulator
+
+      Not saved to configuration file
+
+   LoadMemory: Load the volatile memory images (RAMs) into the emulator
+
+      Not saved to configuration file
+
+   SaveMemory: Save the volatile memory images (RAMs) to disk
+
+      Not saved to configuration file
+
+   ListMemory: List memory map
+
+      Not saved to configuration file
+
+   DefineModule: Define or redefine a standard module/cartridge in the database
+
+      Not saved to configuration file
+      Arguments:
+         tag (string): short tag for easy reference
+         name (string): full name of module
+         base (string): base of module file name
+         parts (number): sections present (one or more of GROM, ROM, BANKED)
+
+
+   DefineModuleMemory: Define or redefine a module/cartridge in the database,
+   giving commands to define its memory configuration
+
+      Not saved to configuration file
+      Arguments:
+         tag (string): short tag for easy reference
+         name (string): full name of module
+         base (string): base of module file name
+         commands (string): commands used to define module memory map, e.g.,
+         'DefineMemory "RWMC" 0x6000 0x2000 "module_rom.bin" 0x0 "Module ROM
+         file"; DefineMemory "RMG" 0x6000 0x6000 "module_grom.bin" 0x0 "Module
+         GRAM file"'
+
+
+   ListModules: List modules in database
+
+      Not saved to configuration file
+
+   InitModuleDatabase: Initialize module database to empty (use
+   'LoadConfigFile' with a modules.inf file to add entries)
+
+      Not saved to configuration file
+
+   UnloadModule: Unload currently loaded module(s) and reset
+
+      Not saved to configuration file
+
+   UnloadModuleOnly: Unload currently loaded module(s) but do not reset
+
+      Not saved to configuration file
+
+   LoadModule: Load a module by tag or name
+
+      Not saved to configuration file
+      Arguments:
+         tag|name (string): tag or title substring
+
+
+   ReplaceModule: Replace current module but do not reset computer
+
+      Only saved to session files
+      Arguments:
+         tag|name (string): tag or title substring
+
+
+   ===========================================================================
+   V9t9 Module Commands
+   ===========================================================================
+   These options affect the modules used to emulate V9t9
+   ---------------------------------------------------------------------------
+   ListV9t9Modules: List available modules and current status
+
+      Not saved to configuration file
+
+   ToggleV9t9Module: Turn use of a module on or off; does not take effect until
+   SetupV9t9Modules is called
+
+      Arguments:
+         tag (string): tag name for module
+         on|off (number): whether to use or not use module
+
+
+   SetupV9t9Modules: Setup module gestalt
+
+      Not saved to configuration file
+
+   ===========================================================================
+   Major Emulator Commands
+   ===========================================================================
+   These are general commands to control the emulator
+   ---------------------------------------------------------------------------
+   Help: Display command help
+
+      Not saved to configuration file
+
+   Interactive: Control whether emulator waits for user commands
+
+      Not saved to configuration file
+      Arguments:
+         on|off (boolean): if 'on', emulation will halt; if 'off', emulation
+         continues at end of command list
+
+      Returns first argument
+
+   Exit: Exit from interactive mode (same as 'Interactive=off')
+
+      Not saved to configuration file
+
+   Die: Exit V9t9 without saving session
+
+      Not saved to configuration file
+
+   Quit: Exit V9t9 and save session
+
+      Not saved to configuration file
+
+   HomeDirectory: Directory where V9t9 started
+
+      Not saved to configuration file
+      Returns:
+      dir (directory): directory
+
+   ConfigsPath: Set directory list for searching and saving configuration
+   files; when saving, new files written to first directory and old files are
+   overwritten where found
+
+      Only saved to config files
+      Arguments:
+         path (string): list of directories separated by one of these
+         characters: ':;'
+
+      Returns first argument
+
+   SessionsPath: Set directory list for searching and saving session files;
+   when saving, new files written to first directory and old files are
+   overwritten where found
+
+      Only saved to config files
+      Arguments:
+         path (string): list of directories separated by one of these
+         characters: ':;'
+
+      Returns first argument
+
+   SaveConfigFile: Save current configuration settings to 'file'
+
+      Not saved to configuration file
+      Arguments:
+         file (string): name of config file
+
+
+   LoadConfigFile: Load configuration settings from 'file'
+
+      Not saved to configuration file
+      Arguments:
+         file (string): name of config file
+
+
+   SaveSessionFile: Save current configuration settings and machine state to
+   'file'
+
+      Not saved to configuration file
+      Arguments:
+         file (string): name of config file
+
+
+   LoadSessionFile: Load configuration settings and machine state from 'file'
+
+      Not saved to configuration file
+      Arguments:
+         file (string): name of config file
+
+
+   SaveScreenShot: Take a screenshot and save to 'file' or an autogenerated
+   name
+
+      Not saved to configuration file
+      Arguments:
+         file (string): name of file to write, or "" to use an automatic name
+         in the current directory
+
+
+   ===========================================================================
+   Keyboard / Joystick Options
+   ===========================================================================
+   These are generic commands for controlling the keyboard and joystick
+   emulation
+   ---------------------------------------------------------------------------
+   AlphaLock: Enable or disable ALPHA LOCK state (i.e., upon startup; CAPS
+   performs this function at runtime)
+
+      Arguments:
+         on|off (number): state
+
+      Returns first argument
+
+   BindKey: Bind a non-TI key to a command
+
+      Arguments:
+         key (string): symbolic name of key (see ListKeys); bare key name means
+         'perform command when key is pressed'; +key means 'perform command
+         when key is pressed' and 'perform command bound to -key when key is
+         released'
+         command (string): text of command to execute
+
+
+   ListKeys: List symbolic names of bindable keys
+
+      Not saved to configuration file
+
+   ListBindings: List current key bindings
+
+      Not saved to configuration file
+
+   DumpKeyMap: Display map of current TI keys held down
+
+      Not saved to configuration file
+
+   ===========================================================================
+   Speech Options
+   ===========================================================================
+   These are commands for controlling speech synthesis
+   ---------------------------------------------------------------------------
+   PlaySpeech: Control whether speech is played
+
+      Arguments:
+         on|off (boolean): toggle speech on or off
+
+      Returns first argument
+
+   SpeechROMFileName: Name of speech ROM
+
+      Arguments:
+         file (string): name of binary image
+
+      Returns first argument
+
+   SpeechHertz: Set sample rate for speech
+
+      Arguments:
+         hertz (number): normal value is 8000
+
+      Returns first argument
+
+   SpeechSampleLength: Set sample length for a unit of speech
+
+      Arguments:
+         length (number): in bytes, normal value is 200
+
+      Returns first argument
+
+   ===========================================================================
+   Internal Emulator Commands
+   ===========================================================================
+   These options affect the mechanics of 99/4A emulation
+   ---------------------------------------------------------------------------
+   RealTimeEmulation: Toggle real-time emulation mode (attempts to operate at
+   the same speed of the original 9900)
+
+      Arguments:
+         on|off (number): on:  execute at 9900 speed; off:  execute with
+         DelayBetweenInstructions
+
+      Returns first argument
+
+   DelayBetweenInstructions: Sets a constant delay between instructions (when
+   not in real-time mode)
+
+      Arguments:
+         cycles (number): number of cycles to count
+
+      Returns first argument
+
+   ResetComputer: Resets the 99/4A via RESET
+
+      Not saved to configuration file
+
+   PauseComputer: Pauses emulation of the 99/4A
+
+      Not saved to configuration file
+      Arguments:
+         on|off (number): a number
+
+      Returns first argument
+
+   Debugger: Enable the debugger/tracer
+
+      Arguments:
+         on|off (number): a number
+
+      Returns first argument
+
+   AllowDebuggingInterrupts: Allow interrupts to occur while debugging
+
+      Arguments:
+         on|off (number): a number
+
+      Returns first argument
+
+   SingleStep: Execute one instruction and stop
+
+      Not saved to configuration file
+
+   BaseClockHZ: Set HZ speed base clock (usually 3.0 MHz)
+
+      Arguments:
+         hertz (number): number of times per second
+
+      Returns first argument
+
+   ===========================================================================
+   Memory / Debugging Commands
+   ===========================================================================
+   These options allow you to change the running state of the virtual machine
+   ---------------------------------------------------------------------------
+   ProgramCounter: Set the program counter
+
+      Only saved to session files
+      Arguments:
+         address (number): illegal addresses will be ignored
+
+      Returns first argument
+
+   WorkspacePointer: Set the workspace pointer
+
+      Only saved to session files
+      Arguments:
+         address (number): illegal addresses will be ignored
+
+      Returns first argument
+
+   StatusRegister: Set the status register
+
+      Only saved to session files
+      Arguments:
+         address (number): illegal addresses will be ignored
+
+      Returns first argument
+
+   VDPAddress: Set the VDP address register
+
+      Only saved to session files
+      Arguments:
+         address (number): 0->3FFF sets read address, >4000->7FFF sets write
+         address, >8000->87FF sets VDP write register
+
+      Returns first argument
+
+   VDPRegister: Set a VDP register
+
+      Only saved to session files
+      Arguments:
+         register (number): register number, 0-7
+         value (number): value for register
+
+
+   GROMAddress: Set the GROM address register
+
+      Only saved to session files
+      Arguments:
+         address (number): a number
+
+      Returns first argument
+
+   SetRAM: Change contents of RAM
+
+      Only saved to session files
+      Arguments:
+         type (string): memory type: C/V/G/S
+         address (number): illegal addresses will be ignored
+         string (string): hexadecimal string
+
+
+   ===========================================================================
+   TI Disk DSR Options
+   ===========================================================================
+   These commands control the TI 'real' disk-on-a-disk (DOAD) emulation
+   ---------------------------------------------------------------------------
+   DiskImagePath: Set directory list to search for DOAD disk images
+
+      Arguments:
+         path (string): list of directories separated by one of these
+         characters: ':;'
+
+      Returns first argument
+
+   DiskImage1: DOAD image in drive 1
+
+      Arguments:
+         file (string): name of DOAD image
+
+      Returns first argument
+
+   DiskImage2: DOAD image in drive 2
+
+      Arguments:
+         file (string): name of DOAD image
+
+      Returns first argument
+
+   DiskImage3: DOAD image in drive 3
+
+      Arguments:
+         file (string): name of DOAD image
+
+      Returns first argument
+
+   DiskDSRFileName: Name of DSR ROM image which fits in the CPU address space
+   >4000...>5FFF
+
+      Arguments:
+         file (string): name of binary image
+
+      Returns first argument
+
+   ===========================================================================
+   Emulated Disk DSR Options
+   ===========================================================================
+   These commands control the emulated files-in-a-directory (FIAD) emulation
+   ---------------------------------------------------------------------------
+   DSK1Path: Set DSK1 directory
+
+      Arguments:
+         dir (directory): directory containing V9t9 files
+
+      Returns first argument
+
+   DSK2Path: Set DSK2 directory
+
+      Arguments:
+         dir (directory): directory containing V9t9 files
+
+      Returns first argument
+
+   DSK3Path: Set DSK3 directory
+
+      Arguments:
+         dir (directory): directory containing V9t9 files
+
+      Returns first argument
+
+   DSK4Path: Set DSK4 directory
+
+      Arguments:
+         dir (directory): directory containing V9t9 files
+
+      Returns first argument
+
+   DSK5Path: Set DSK5 directory
+
+      Arguments:
+         dir (directory): directory containing V9t9 files
+
+      Returns first argument
+
+   EmuDiskDSRFileName: Name of emulated DSR ROM image which fits in the CPU
+   address space >4000...>5FFF; this DSR defines DSK1 through DSK5
+
+      Arguments:
+         file (string): name of binary image
+
+      Returns first argument
+
+   EmuDiskSharedDSRFileName: Name of emulated DSR ROM image which fits in the
+   CPU address space >4000...>5FFF; this DSR defines DSK3 through DSK5 and can
+   share space with the real (DOAD) disk DSR
+
+      Arguments:
+         file (string): name of binary image
+
+      Returns first argument
+
+   KeepFileFormat: Toggle preservation of original file type (V9t9 or TIFILES)
+
+      Arguments:
+         on|off (number): on: don't change existing file's type; off: change
+         type to NewFileFormat
+
+      Returns first argument
+
+   NewFileFormat: Select type for new files or converted files
+
+      Arguments:
+         F_V9t9|F_TIFILES (number): v9t9: original V9t9 file type; tifiles:
+         TIFILES (XMODEM) format
+
+      Returns first argument
+
+   UnknownFileIsText: Toggle treatment of unknown (non-V9t9 and non-TIFILES)
+   files as DOS/Unix/Mac text files
+
+      Arguments:
+         on|off (number): on:  read unknown file as text; off:  generate error
+
+      Returns first argument
+
+   AllowLongCatalogs: Allow catalogs read through DSKx. to return more than 127
+   records; some programs may depend on this limit
+
+      Arguments:
+         on|off (number): on: allow up to 32767 entries, off: restrict to 127
+         entries
+
+      Returns first argument
+
+   RepairDamagedFiles: Repair files with bad file sizes, even when opened
+   read-only.  This is a bit dangerous if you try to open a non-V9t9 file,
+   which will (obviously) appear damaged.  V9t9 will try to rule out files that
+   don't pass enough sanity checks, though.
+
+      Arguments:
+         on|off (number): on: repair damaged files, off: leave them alone
+
+      Returns first argument
+
+   FixupOldV9t9Filenames: Rename older V9t9 files which were mangled to fit in
+   the DOS 8.3 filename format.  These files were split at the 8th character
+   with a '.' and all illegal DOS characters (<>=,;:*?[]/\) were biased by 128
+   to make them representable on that filesystem.
+   New V9t9 file mangling rules assume filesystems that allow long filenames,
+   so there is no splitting at the 8th character, and illegal characters are
+   translated HTML-like into '&#xx;' where 'xx' is the hexadecimal ASCII code
+   for the characters.
+   Files renamed to the new format will not be compatible with older versions
+   of V9t9, unless, under Windows, you refer to the files with the short format
+   (i.e., 'longfilenm' --> 'longfi~1').
+
+      Arguments:
+         on|off (number): on: rename old V9t9 files, off: leave them alone
+
+      Returns first argument
+
+   GenerateOldV9t9Filenames: Generate filenames that conform to the old V9t9
+   DOS-mangled format (see above) instead of the new format. Not recommended
+   unless you actively use the DOS version.
+
+      Arguments:
+         on|off (number): on: generate old V9t9 filenames, off: generate
+         current V9t9 filenames
+
+      Returns first argument
+
+   dsrEmuDiskTopOfRam: Top address used in VDP RAM
+
+      Arguments:
+         address (number): VDP RAM address, minus one
+
+      Returns first argument
+
+   ===========================================================================
+   TI RS232 DSR Options
+   ===========================================================================
+   These commands control the TI RS232 emulation
+   ---------------------------------------------------------------------------
+   RS232_1: Give local name for first RS232 port
+
+      Not saved to configuration file
+      Arguments:
+         filename (string): filename or device for current operating system
+
+      Returns first argument
+
+   RS232_2: Give local name for second RS232 port
+
+      Not saved to configuration file
+      Arguments:
+         filename (string): filename or device for current operating system
+
+      Returns first argument
+
+   RS232DSRFileName: Name of RS232 DSR ROM image which fits in the CPU address
+   space >4000...>5FFF
+
+      Arguments:
+         file (string): name of binary image
+
+      Returns first argument
+
+--------------------
+

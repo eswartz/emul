@@ -1,0 +1,783 @@
+
+: GOTO ( pfa --- ) CFA R> DROP EXECUTE ;
+ .The following definition is based on
+ a message that Barry Boland left from
+ an article in the Jan. 85 Dr. Dobb's
+ Journal.
+
+ .This is a method for creating a
+ "GOTO" word in TI FORTH.  In addition
+ to the definition & an example, I have
+ included an explanation of the various
+ parts of the definition.
+
+ . : GOTO ( pfa --- ) CFA R> DROP
+ EXECUTE ;
+
+ . The word expects the PARAMITER FIELD
+ ADDRESS of the WORD you wish to GOTO.
+
+ . This is easily obtained by using the
+ ' (TICK) word.
+
+ . This word leaves the PARAMITER FIELD
+ ADDRESS on the STACK & the CFA word
+ translates the PFA to a CONTROL FIELD
+ ADDRESS & leaves it on the STACK.
+
+ . I am not sure what the function of
+ the next word (R>) is, but it removes
+ the TOP value from the RETURN STACK &
+ places it on the STACK.
+
+ . The next word removes the top value
+ from the STACK.
+
+ . The EXECUTE word will execute the
+ word defined by the CFA on the top of
+ the STACK.
+
+ . If you do not include the R> DROP in
+ the definition, then it will just
+ execute the word at the CFA & then
+ continue processing.
+
+ . The following is an example of the
+ coding for using GOTO.
+
+ .: W5 5 0 DO CR I . LOOP ; .
+
+ : W4 CR 75 EMIT ; .
+
+ : W3 IF ' W4 GOTO ELSE CR 80 EMIT
+ ENDIF ; .
+
+ : W2 ." Press a 1 to execute the GOTO
+ or any other key to bypass " KEY 49 =
+ ; .
+
+ : W1 ." This is a test of GOTO " CR ;
+)UUUUUUUUUU
+
+
+
+--------------------------------------------------------------------------------
+SCR #N (N=Whatever Screen you put it on)
+  0 ( Moire Pattern ---- 22 Feb. 84 J. Volk )
+  1 ( Load These Options First -GRAPH -VDPMODES ) GRAPHICS2
+  2 ( X LOAD TO RUN >>> THEN 'GO' )
+  3 HEX : DC D RND 2+ 10 * 1+ DCOLOR ! ;
+  4 DECIMAL 128 CONSTANT YPOS 128 CONSTANT XPOS 132 VARIABLE X4
+  5 : QUAD1 128 0 DO DC YPOS DUP XPOS DUP ROT DOT SWAP I DUP -4 X4
+  6 +! X4 @ DUP ROT DOT SWAP LINE 4 +LOOP ;
+  7 : QUAD2 190 128 DO DC YPOS DUP XPOS DUP ROT DOT SWAP I DUP 4 X4
+  8 +! X4 @ DUP ROT DOT SWAP LINE 4 +LOOP ;
+  9 : QUAD3 128 190 DO DC YPOS DUP XPOS DUP ROT DOT SWAP I DUP 4 X4
+ 10 +! X4 @ DUP ROT DOT SWAP LINE -4 +LOOP ;
+ 11 : QUAD4 0 128 DO DC YPOS DUP XPOS DUP ROT DOT SWAP I DUP -4 X4 +
+ 12 ! X4 @ DUP ROT DOT SWAP LINE -4 +LOOP ;
+ 13 : DESTRUCT ." TYPE 'FORGET DC' TO CONSERVE MEMORY " ;
+ 14 : GO BEGIN 129 X4 ! QUAD1 0 X4 ! QUAD2 190 X4 ! QUAD3 255 X4 ! Q
+ 15 UAD4 ?KEY UNTIL TEXT DESTRUCT ;
+
+----------------------------------------
+
+SCR #N1 (N=Whatever screen you put it on)
+  0 ( MY MOST USED WORDS )
+  1 ( LOAD -SYNONYMS FIRST )
+  2 : MYLOAD -GRAPH -VDPMODES ; ( Will load these options )
+  3 : AT GOTOXY ; (same as 'Display at' )
+  4 : TOP CLS 0 0 AT ; ( same as Brodie's 'PAGE' )
+  5 : RANDOM RND 1+ . ; ( n RANDOM >>> gives random number )
+  6 : PICK ( Leave copy of n1-th number on top of stack )
+  7        ( n1 --- n2 )
+  8     2 * SP@ + @ ;
+  9 : ROLL ( rotate nth number to top of stack ) ( n --- n )
+ 10     DUP 1 = IF DROP ELSE DUP 1 DO SWAP R> R> ROT >R >R >R LOOP
+ 11     1 DO R> R> R> ROT ROT >R >R SWAP LOOP THEN ;
+ 12 : TEST BEGIN ." HELLO THERE" 2 SPACES ?TERMINAL UNTIL ; ( FCTN 4
+ 13 TO END )
+ 14 : SGN DUP IF DUP 0< IF -1 ELSE 1 ENDIF ELSE 0 ENDIF ;
+ 15 : WORK BLOCK DROP UPDATE ; ( My word to update a FORTH screen )
+
+-----------------------------------------
+
+SCR #N2 (N=Whatever Screen you put it on)
+  0 ( A Word to copy FORTH disks-Single Drive 5/16/84 J. Volk)
+  1 ( Load Screen #N1 and -COPY then RUN )
+  2 0 VARIABLE COPYSCR  0 DISK_LO !
+  3 : MES1 COPYSCR @ 88 > IF CLS ABORT ENDIF TOP 2 11 AT ." INSERT M
+  4 ASTER DISK         " KEY DROP ; (PRINT MESSAGE AND KEY PRESS )
+  5 : COPY1 5 0 DO COPYSCR @ WORK 2 20 AT ." SCR# " COPYSCR ? 1 COP
+  6 YSCR +! LOOP ; ( DO THE WORK AND LET US KNOW-GET NEXT SCREEN )
+  7 : COPY2 2 11 AT ." INSERT COPY DISK-ANY KEY     " KEY DROP ;
+  8 ( COPY 5 SCREENS AND PRINT MESSAGE )
+  9 : GETIT BEGIN MES1 COPY1 COPY2 FLUSH COPYSCR @ 89 = UNTIL ;
+ 10 ( RUNS ABOVE WORDS )
+ 11 : MES0 TOP 2 11 AT ." INITIALIZE FORTH DISK ? (Y/N) " ;
+ 12 : MSG TOP 2 11 AT ." INSERT COPY DISK " KEY DROP ;
+ 13 : RUN MES0 KEY 89 = IF MSG 0 FORMAT-DISK DISK-HEAD ENDIF GETIT ;
+ 14   ( ROUTINE TO INITIALIZE DISK )    
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+ The following definition is based on
+ information supplied by Barry Boland
+ from the Jan 85 issue of Dr. Dobb's
+ Journal.
+ This is the definition of an ARITHMETIC
+ IF word in TI FORTH.  This word uses
+ the GOTO word previously uploaded.
+ The ARITHMETIC IF word will transfer
+ control to one of 3 WORDS depending on
+ the sign of the number on the top of
+ the stack.  If the number is NEGATIVE,
+ control will transfer to POINT_A, ZERO
+ will transfer to POINT_B and POSITIVE
+ will transfer to POINT_C.
+ : AIF ( pfa_c pfa_b pfa_a n --- )
+ -DUP 0= IF   ROT
+         ELSE 0>
+              IF   ROT ROT
+              THEN
+         THEN DROP DROP GOTO ;
+ .Now for an explanation:
+ . The AIF word expects 4 values on the
+ stack:
+ .1 The PFA of the word to execute if
+ the number being tested is NEGATIVE.
+ .2 The PFA of the word to execute if
+ the number being tested is ZERO.
+ .3 The PFA of the word to execute if
+ the number being tested is POSITIVE.
+ .4 The number being tested.
+
+ . The -DUP word will duplicate the
+ number on the top of the stack *if* it
+ is *NOT* 0.  This will provide the
+ value to be tested in the second IF
+ word when needed.
+ . The next two words compare the value
+ on top of the stack to ZERO.  If equal,
+ the next word (ROT) is executed.  If
+ not, control passes to the ELSE word.
+ .  When the value is ZERO, the ROT word
+ will shift the 3rd value on the stack
+ up to the top of the stack.  Thus the
+ stack will *now* read pfa_B pfa_C
+ pfa_A.  At this point, control will
+ pass to the *second* THEN statement.
+ .  When the value is *not* ZERO, the
+ next word after the ELSE is executed.
+ This tests if the value is POSITIVE.
+ If it is positive, the next two words
+ are executed.  These words (ROT ROT)
+ will cause the stack to be changed as
+ follows:
+ . Before the ROT -  pfa_A pfa_B pfa_C.
+ . After  the ROT -  pfa_B pfa_C pfa_A.
+ . After the next ROT - pfa_C pfa_A
+ pfa_B.
+ . Control now passes to the *first*
+ THEN statement as this is associated
+ with the IF that was executed.
+ . *Note* if the IF statement was *not*
+ executed (value was NEGATIVE), control
+ *still* passes to this THEN statement,
+ *but* the stack is *not* changed!
+ . The next THEN statement is *always*
+ executed and will cause the *top* two
+ items on the stack to be removed.  This
+ leaves only *one* pfa to be passed to
+ the GOTO word.
+
+ Now for an example of how to use this
+ word:
+ : POINT_A  >R ." IS A NEGATIVE NUMBER"
+ : POINT_B  >R ." IS EQUAL TO ZERO" ;
+ : POINT_C  >R ." IS A POSITIVE NUMBER"
+ ;
+ : EXAMPLE ( n --- ) >R ( SAVE THE
+ NUMBER )
+            ' POINT_A ( NEGATIVE BRANCH
+ ADDRESS )
+            ' POINT_B ( ZERO BRANCH
+ ADDRESS )
+            ' POINT_C ( POSITIVE BRANCH
+ ADDRESS )
+            R  ( RESTORE THE NUMBER TO
+ TEST )
+            AIF ;
+
+ 
+ 
+ 
+ 
+ 
+
+( ROADER          - EXECUTION REQUIREMENTS             Page 1 )
+: NOTICE CLS CR ."  IMPORTANT -- YOU MUST HAVE THE" CR
+ ."  FOLLOWING SUPPORT ROUTINES LOADED"          CR
+ ."  BEFORE CONTINUING:"                      CR CR
+ ."  -TEXT -GRAPH -GRAPH1 -FLOAT  "             CR CR
+ ."  IF THEY ARE *NOT* LOADED, YOU"              CR
+ ."  WILL GET AN ERROR ON TRYING TO"             CR
+ ."  LOAD THE ROADER PROGRAM.         "          CR
+ CR CR CR ."  PRESS FCTN 4 KEY IF YOU"           CR
+ ."  WANT TO STOP NOW & LOAD THE NEEDED"         CR
+ ."  SUPPORT ROUTINES.  ANY OTHER KEY"           CR
+ ."  TO CONTINUE" CR  CR CR BEGIN ?KEY DUP  2 =
+ IF DROP CR CR ." ok" CR QUIT  ELSE 0 > ENDIF UNTIL ;
+
+
+
+( ROADER                                              Page 2 )
+BASE->R ( SAVE ORIG BASE ) DECIMAL
+  164 CLOAD NOTICE  NOTICE  CLS  : INSTR  CLS
+3 10 GOTOXY ." Do you want instructions? (Y/N) " KEY DUP 89 =
+SWAP 121 = + IF CLS
+ 18 3 GOTOXY ." ROADER"
+ 18 4 GOTOXY ." ======"
+CR ."  The object of this game is to drive    " ."  your car aro
+nd the track without   " CR ."  crashing into the sides. " CR CR
+ ."  Use your joystick to move around." CR
+ ."  Make sure the <ALPHA LOCK> key is UP!!" CR
+ ."  Press any key to start." CR KEY DROP ENDIF ;
+   FORGET NOTICE
+ CR CR CR ."  LOADING PROGRAM -- PLEASE BE PATIENT " CR CR
+--> ( CONTINUED ON NEXT SCREEN)
+
+( ROADER                                              Page 3 )
+: DCL 0 VARIABLE ; ( WORD TO DEFINE VARIABLES USED)
+DCL OLDN                      DCL IX 8 ALLOT  DCL WRK 8 ALLOT
+DCL N         DCL JX       DCL FX DCL F1   DCL F2  DCL F3
+DCL FSTART 8 ALLOT  DCL FEND 8 ALLOT DCL FINCR 8 ALLOT
+DCL SKILL ( CURRENT SKILL LEVEL) DCL OSKILL ( LAST SKILL LVL)
+: FDO  FSTART F!  FEND F!  FINCR F! ;
+: FLOOP FSTART F@ FINCR F@ F+ FDUP FEND F@ F< IF FSTART F! 0
+ELSE FDROP 1 ENDIF ; ( FLOATING POINT 'DO ... LOOP' WORDS)
+: <> = 0= ; ( SET COLORS FOR SCREEN BORDER) : AT 0 23 GOTOXY ;
+: COLSET 32 0 DO 1 0 I COLOR LOOP ; : DELAY 0 DO ?KEY DROP LOOP
+; : DELAY2  300 DELAY ;      ( BEGIN GAME DEFINITIONS)
+: RDSR 30 0 DO I S->F >F 2.5 F/ F->S SCREEN 19 FX @ - FX !
+FX @ 1- 0 12 COLOR 10 +LOOP 6 0 12 COLOR ;
+--> ( CONTINUED ON NEXT SCREEN)
+
+( ROADER                                              Page 4 )
+HEX ( DEFINE DATA FOR CHARACTER PATTERNS)
+: CHARS ( 128) 00FF 00FF 00FF 00FF  ( 120) FFFF FFFF FFFF FFFF
+        ( 104) 0018 1818 183C 3C00  ( 101) 0008 0C1E 1E3E 3F7F
+        ( 100) 447C 5410 0A2E 3F7F  (  99) 223E 2A08 082A 3E2A ;
+ DECIMAL ( START GAME DEFINITION)  : TAB SPACES ;
+: RD1 CHARS 99 CHAR 100 CHAR 101 CHAR 104 CHAR 120 CHAR 128 CHAR
+ 4 0 12 COLOR 15 0 13 COLOR 8 0 14 COLOR 1 0 15 COLOR 8 1 16 COL
+OR CLS 14 SCREEN CR 8 TAB ." c R O A D E R c" CR 6 0 DO CR LOOP
+5 TAB ." STEER WITH JOYSTICK 1" CR 5 0 DO CR LOOP RDSR 14 SCREEN
+ 4 0 12 COLOR 800 DELAY ;
+( SELECT SKILL LEVEL )
+: RD2 CLS 7 1 12 COLOR 1 OSKILL ! 2 SPACES ." ENTER YOUR SKILL L
+EVEL..." CR CR CR CR 4 SPACES ." ENTER :" CR CR CR
+8 TAB ." 1 FOR NOVICE" CR CR  8 TAB ." 2 FOR PRO" CR CR
+--> ( CONTINUED ON NEXT SCREEN)
+( ROADER                                              Page 5 )
+8 TAB ." 3 FOR EXPERT" CR CR  8 TAB ." 4 FOR PERFECT" CR CR CR
+CR RANDOMIZE  BEGIN 1 JOYST DROP DROP 18 = IF ( FIRE KEY IS SAME
+ LEVEL AS LAST) OSKILL @ SKILL ! 1 ( END LOOP) ELSE ?KEY >R
+R 49 = R 50 = 2 * + R 51 = 3 * + R> 52 = 4 * + DUP SKILL ! ENDIF
+ UNTIL SKILL @ OSKILL ! ( SAVE SKILL LVL) CR 8 TAB
+ ." HERE WE GO !!!" CR CR 400 DELAY ;
+( MOVE CAR & CHECK FOR CRASH)
+: RD3 WRK !" xxxxxxxx"  CLS 2 SCREEN >F .1 IX F! SKILL @ DUP
+2 <> SWAP 4 <> * 0= IF >F .2 IX F! ENDIF 24 N ! 0 JX !
+ 24 OLDN ! AT 4 0 DO 18 TAB ." hxxxxxxxxh" CR LOOP
+4 0 DO 5 9 DO IX F@ >F 6.25 >F 0 FDO BEGIN FSTART F@ COS 1 JX +!
+ AT >F 8 F* F->S 10 + TAB ." h" I    1- 0 DO WRK I + C@
+EMIT LOOP ." h" CR FRND >F .5 F> SKILL @ DUP 1 = SWAP 2 = + + 0=
+ IF JX  @ 25 < 0= IF 28 RND 1+ 22 1 128 HCHAR ENDIF ENDIF N @
+19 GCHAR OLDN --> ( CONTINUED ON NEXT SCREEN )
+( ROADER                                              Page 6 )
+@  18 1 120 HCHAR DUP DUP 104 = SWAP 128 = + SWAP 32 = + 0= IF
+ N @  19 1 99 HCHAR N @ OLDN ! DELAY2 1 JOYST SWAP DUP 252 = IF
+DROP -4 ENDIF 4 / N +! DROP DROP FLOOP DUP 1 = IF DROP
+ 0 F1 ! 0 F2 ! 1 F3 ! 1 ENDIF ELSE 1 F1 ! 1 ENDIF UNTIL F1 @
+ IF 1 F2 ! LEAVE ENDIF -1 +LOOP F2 @ IF 0 F3 ! LEAVE ENDIF LOOP
+ F3 @ IF CLS ." YOU MADE IT, MARIO !!" CR
+ 10 0 DO CR LOOP 0 ELSE 1 ENDIF ;
+               ( SORRY, YOU CRASHED )
+: RD4 IF N @ 1- 18 1 101 HCHAR N @ 1- 19 1 100 HCHAR RDSR
+2 SCREEN 300 DELAY CLS 7 1 12 COLOR  ELSE CLS  ENDIF ;
+( SHOW SCORE)
+: RD5 14 SCREEN CR 5 TAB ." YOUR SCORE IS " JX @ 10 * SKILL @ *
+. 5 0 DO CR LOOP 7 TAB ." ? PLAY AGAIN ?" CR CR CR
+--> ( CONTINUED ON NEXT SCREEN)
+
+( ROADER                                              Page 7 )
+3 TAB ." <FIRE BUTTON> FOR SAME LEVEL" CR CR
+3 TAB ." <C> - TO CHANGE LEVELS" CR CR
+3 TAB ." <E> - TO END PROGRAM" CR
+BEGIN 1 JOYST DROP DROP 18 = IF 0 1 ELSE ?KEY DUP
+67 = IF 1 1 ELSE 69 = IF ." GOODBYE" CR 100 DELAY TEXT QUIT
+ELSE 0 ENDIF ENDIF ENDIF UNTIL ;
+( LOOP TO REPLAY GAME )
+: RD6 IF RD2 ENDIF RD3 RD4 RD5 0 ;
+( DEFINE GAME )
+: RDR GRAPHICS COLSET RD1 RD2 RD3 RD4 RD5 BEGIN RD6 UNTIL ;
+
+  RDR   ( EXECUTE GAME )
+R->BASE
+
+ 
+ 
+ 
+ 
+ 
+
+
+ The following 3 FORTH words come to us
+ from DON PLORDE who found them in a TI
+ Newsletter by Briad Sanderson.
+
+ All three of the words listed below are
+ used to manipulate the stack to access
+ a value at a variable displacement from
+ the TOP of the stack.  Currently, TI
+ FORTH only allows us to access items up
+ to the 3rd item on the stack.
+
+ The first word is PICK.  This word will
+ permit you to COPY the Nth item on the
+ STACK to the TOP of the STACK.
+ : PICK  ( n1 --- )  2 * SP@ + @ ;
+ Now for an explanation of how this word
+ works.
+ The displacement of the item from the
+ TOP of the STACK is INPUT to this
+ definition.  This value is multiplied
+ by 2 (since all addresses are 2 bytes
+ long) and placed on the TOP of the
+ stack.
+ The NEXT word (SP@) will leave the
+ ADDRESS in memory of the TOP item in
+ the STACK. Thus, at this time, the
+ STACK will have the NUMBER of the item
+ on the STACK to be accessed, & the
+ ADDRESS of the TOP of the STACK.  Data
+ on the STACK is stored in consecutive
+ *decending* memory locations starting
+ with the TOP of the STACK.
+
+ The next word (+) ADDS the TOP OF STACK
+ ADDRESS to the NUMBER OF THE STACK ITEM
+ to be copied.  The result of this is
+ the MEMORY ADDRESS of the STACK ITEM to
+ be copied.
+ Tne next & last word in the definition
+ (@) places the CONTENTS of the MEMORY
+ ADDRESS preceeding it ON THE TOP OF THE
+ STACK.
+ Now for an example:
+ Suppose that you had the following on
+ the STACK....
+ 3 9 25 8 30
+ and you want to place a copy of the 4th
+ item on the STACK on TOP.
+ To do this, enter 4 PICK.  The STACK
+ will look like this after....
+ 3 9 25 8 30 9.
+
+
+ The second word that we have is ROLL.
+ ROLL will enable you to MOVE the Nth
+ item on the STACK to the TOP of the
+ STACK.  This word can be VERY useful
+ when you have placed a value on the
+ stack for later use, & then place
+ additional data on the stack.
+ Previously, you would have had to go to
+ extreme measures to retreive this
+ data.
+ Now, with the help of the ROLL word, it
+ becomes very easy.
+ : ROLL ( n1 --- ) 2 * SP@ + DUP @ >R SP@ 2+ SWAP DO I 2- @ I !
+ -2 +LOOP DROP R> ;
+ Now to explain how this word works.
+
+ As in the PICK word defined previously,
+ this word will determin the ADDRESS of
+ the STACK ITEM to be moved.  This is
+ done by the first four items (2 * SP@
+ +)
+ After the ADDRESS of the STACK ITEM has
+ been determined, it is DUPLICATED (DUP)
+ and then the next word (@) will extract
+ the DATA stored in the memory location
+ and place it on the STACK.  This data
+ is then saved for later use by placing
+ it on the RETURN STACK (R>).  The
+ RETURN STACK is a separate STACK in
+ memory that is used both INTERNALLY by
+ FORTH for storing things, & also may be
+ used by the programmer to save data
+ items.  REMEMBER, anything placed on
+ the RETURN STACK, *must* be REMOVED
+ from it before completing the current
+ definition.
+ Now that we have the data item that is
+ to be moved to the TOP of the STACK
+ safely stored on the RETURN STACK, we
+ must remove it from its CURRENT
+ location on the STACK, without altering
+ the data stored in the other STACK
+ ITEMS.  This in done by the following
+ words:
+ SP@ will get the address of the CURRENT
+ TOP OF STACK (which is the number
+ representing the MEMORY ADDRESS of the
+ item to be moved) & leave it as the NEW
+ TOP ITEM on the STACK.  The 2+ will ADD
+ 2 to this address, thus pointing it to
+ the first *real* item on the STACK.
+ Remember, since data is stored on the
+ STACK in *decreasing* memory locations,
+ by *adding* to a memory address, we are
+ pointing to a *lower* item in the
+ stack. For example, if the address
+ pointed to the 6th item on the STACK,
+ by adding 2 to in, we point to the 7th
+ item on the STACK.
+ When this is completed, we have the
+ following values on the STACK in
+ addition to whatever data was there
+ before we started: ADDRESS OF FIRST
+ *REAL* STACK ITEM  &  ADDRESS OF STACK
+ ITEM TO BE MOVED.
+ These addresses are then switched in
+ position on the STACK using the SWAP
+ word so that we can set up a loop
+ between them in *decending* sequence.
+ The DO word starts the loop which will
+ move each of the items on the STACK
+ down by 1 position starting at the item
+ *before* the one to be moved & ending
+ at the TOP OF STACK data item.
+ The loop index is the MEMORY ADDRESS of
+ the item whcih will receive the data
+ of the item preceeding it on the STACK.
+ This is placed on the STACK using the I
+ word.  This address is then decremented
+ by 2 to point to the MEMORY ADDRESS of
+ the item to be shifted.
+ The actual data contents of the item
+ being shifted is placed on the STACK
+ using the @ word.
+ After this operation, the only *new*
+ DATA item remaining on the STACK is the
+ DATA item that is going to be shifted
+ UPWARD in the STACK.  This item is then
+ placed in the ADDRESS of the DATA ITEM
+ that is *next* on the stack by using
+ the I word to place the ADDRESS of the
+ next item in the STACK at the TOP of
+ the STACK & then using the ! (STORE)
+ word to place the data item in this
+ address.
+ The shift routine ends by placing a 2-
+ (negative 2) on the STACK & issuing a
+ +LOOP command.  This has the effect of
+ decreasing the LOOP index value by 2 so
+ that the NEXT pass thru the loop will
+ process the previous DATA ITEM on the
+ STACK.  Remember, the LOOP is
+ processing a DESCENDING series of
+ values so that if we dont decrease the
+ loop value, it will continue for ever.
+ Once the loop has finished shifting the
+ data items in the STACK *down* by 1 to
+ fill the space left by the item being
+ ROLLed, the STACK will contain 2 copies
+ of the FIRST data element prior to the
+ ROLL.  This is because the LOOP routine
+ does not have any replacement value for
+ this item.  Being the TOP item in the
+ STACK, the LOOP routine stops
+ processing when it reaches this point.
+ In order to remove this *extra* data
+ item, we use the DROP word.
+ When this is complete, the STACK now
+ has ALL of the original data items
+ MINUS the one being ROLLed.  To place
+ the item being ROLLed at the TOP of the
+ STACK, we use the R> word.  This takes
+ the TOP ITEM ON THE *RETURN* STACK
+ (where we *saved* the item to be
+ ROLLed) & places it on the TOP of the
+ DATA STACK.
+ This is the end of the definition of
+ the ROLL word.
+ Now for an example of its use:
+ One of the best uses for the ROLL word
+ is in the example of the AIFO word that
+ I uploaded previously.
+ In this definition, we branched to one
+ of 3 different words depending on the
+ SIGN of the data item on the TOP of the
+ STACK.
+ : T_ROLL  n --- ) ' WORD_A  ' WORD_B  '
+ WORD_C  4 ROLL AIF ;
+
+ In this example, we input a DATA ITEM
+  for the T_ROLL word.  In this word we
+ place the PFA of WORD_A, WORD_B &
+ WORD_C on the stack.  In order to
+ execute the AIF word, we need the DATA
+ ITEM that was *input* to T_ROLL to be
+ on the TOP of the STACK.  Before
+ executing the ROLL word, the stack had
+ the following values:
+ N PFA(WORD_A) PFA(WORD_B) PFA(WORD_C).
+ The number 4 tells the ROLL word to
+ remove the 4th DATA ITEM on the STACK,
+ shift the first 3 down by one & place
+ the DATA ITEM removed at the TOP of the
+ STACK.
+ After executing the 4 ROLL, the STACK
+ would look like this:
+ PFA(WORD_A), PFA(WORD_B), PFA(WORD_C) N
+ .
+ Then the AIF word would take control &
+ branch to the appropiate address based
+ on the SIGN of N.
+
+ The last of the 3 STACK manipulation
+ words is a word to REVERSE the ROLL
+ function.  That is, it will move an
+ item from the TOP of the STACK to the
+ Nth position in the STACK & adjust the
+ other items accordingly.
+
+ : REV ( n --- ) 1+ 1 DO I ROLL LOOP ;
+ Thus 3 REV on a STACK containing the
+ numbers 9 8 7 would result in 7 8 9.
+
+ 
+ 
+ 
+ 
+ 
+
+
+ ( STRUCTURE TREE UTILITY       831 BYTES )
+ ( To load:  90 LOAD )
+ ( TREE Usage: To list Structure Tree of word XYZ: )
+ ( TREE XYZ )
+ 0 VARIABLE LEVEL              ( Current level of TREE branch )
+ 10 VARIABLE MAX-LEVEL         ( Maximum TREE branch level )
+ : NULL ;                      ( Dummy def to get : cfa value )
+ ' NULL CFA @ CONSTANT COLON   ( Pointer to code of : word )
+ ' ;S   CFA CONSTANT SEMICOLON ( Terminating CFA of : word )
+ ' 0BRANCH CFA CONSTANT '0BRANCH ( Words compiling arguments )
+ ' BRANCH  CFA CONSTANT 'BRANCH
+ ' LIT     CFA CONSTANT 'LIT
+ ' (LOOP)  CFA CONSTANT 'LOOP
+ ' (+LOOP) CFA CONSTANT '+LOOP
+ ' (.")    CFA CONSTANT '"
+ -->
+ ( STRUCTURE TREE UTILITY cont.  PAGE-2 )
+ ( DRAW BAR FOR CURRENT LEVEL )
+ : BAR  -DUP IF 0 DO 95 EMIT LOOP ENDIF ;
+ ( CASE STATEMENT BY DR. C. E. EAKER )
+ : DOCASE  ?COMP CSP @ !CSP 4 ; IMMEDIATE
+ : <<  4 ?PAIRS COMPILE OVER COMPILE = COMPILE 0BRANCH
+       HERE 0 , COMPILE DROP 5 ; IMMEDIATE
+ : >>  5 ?PAIRS COMPILE BRANCH HERE 0 ,
+       SWAP 2 [COMPILE] ENDIF 4 ; IMMEDIATE
+ : ENDCASES  4 ?PAIRS COMPILE DROP
+             BEGIN SP@ CSP @ = 0= WHILE
+               2 [COMPILE] ENDIF REPEAT CSP ! ; IMMEDIATE
+ -->
+ ( STRUCTURE TREE UTILITY cont.  PAGE-3 )
+ ( PRINT THE ARGUMENT )
+ : PRINT-ARG  DOCASE
+     1 << 2 + DUP C@ . 1 + >>       ( Skip/print 1 byte )
+     2 << 2 + DUP  @ . 2 + >>       ( Skip/print 2 bytes )
+     3 << 2 + DUP C@ SWAP 1+ SWAP   ( Skip/print n bytes )
+       0 DO DUP C@ EMIT 1+ LOOP >>  ( Print string )
+     ENDCASES ;
+ ( MOVE PFA ON STACK TO NEXT WORD,  addr --- addr+offset )
+ : MOVE-WORD  DUP @ DOCASE  ( Get cfa compiled at ptr, check: )
+     '0BRANCH << 2 PRINT-ARG >>    'BRANCH << 2 PRINT-ARG >>
+     'LIT     << 2 PRINT-ARG >>
+     'LOOP    << 2 PRINT-ARG >>    '+LOOP  << 2 PRINT-ARG >>
+     '"       << 3 PRINT-ARG >>    ( Skip string till " )
+        SWAP 2 + SWAP  ENDCASES ;  ( Skip only the ptr itself )
+ -->
+ ( STRUCTURE TREE UTILITY cont.  PAGE-4 )
+ ( PRINT THE NAME WHOSE CFA IS POINTED TO BY STACK ADDR )
+ : PRINT-NAME         ( addr--- )
+     CR  LEVEL @ 3 .R  LEVEL @ 3 * BAR ( Print level # & bar )
+     @ 2 + NFA ID.            ( get cfa>pfa>nfa & print name )
+   ?KEY IF KEY DROP ENDIF ;
+ ( PRINT WORD TREE )
+ : DO-TREE            ( pfa--- )
+     1 LEVEL !  BEGIN       ( Init level, do till stack empty )
+     ?TERMINAL IF ABORT ENDIF    ( Abort if key is pressed )
+     DUP @ SEMICOLON = 0= IF     ( If not at an ;S word )
+     DUP PRINT-NAME DUP @ @ COLON = ( Print if lower word is )
+     LEVEL @ MAX-LEVEL @ < AND   ( a : def & < MAX-LEVEL )
+     OVER @ FENCE @ > AND IF     ( & > fence )
+      1 LEVEL +! DUP @ 2 +       ( Get pfa of next level down )
+ -->
+ ( STRUCTURE TREE UTILITY cont.  PAGE-5 )
+ ( PRINT WORD TREE cont. )
+       ELSE MOVE-WORD ENDIF   ( Not a colon, move to next )
+       ELSE -1 LEVEL +!  ( End of colon def, pop up next lvl )
+       DROP MOVE-WORD ENDIF   ( Drop addr pointer & move over )
+     LEVEL @ 0= UNTIL ;       ( Until stack is empty )
+ ( USER ENTRY FOR TREE )
+ : TREE  CR [COMPILE] '       ( Get pfa of next input word )
+     DUP NFA ID.              ( Print word to be TREEd )
+     DO-TREE CR ;             ( Print Structure Tree of pfa )
+ ;S
+
+ 
+ 
+ 
+ 
+ 
+ 
+
+( ANDIF  Multiple IF Statment  SCR #120           WCG  7-7-84 )
+: ANDIF
+  ?COMP  DUP  2 ?PAIRS                    ( Compiler security )
+  COMPILE DUP  COMPILE 0BRANCH ( duplicate flag, 0branch back )
+                            ( to IF, then out to ELSE or THEN )
+  OVER   2- ,      ( address of first 0BRANCH is second stack )
+                    ( entry, under compiler security, minus 2 )
+  COMPILE DROP ;               ( if flag true, drop duplicate )
+  IMMEDIATE    -->
+
+
+  0BRANCH (addr) <next test, leave flag> DUP 0BRANCH (addr) DROP
+
+ ( This code directs the false exit(s) back through the frist
+   0BRANCH (compiled by IF); therefore, the ELSE...THEN part of
+   the conditional branching still work as usual. )
+( ANDWHILE   Multiple WHILE Statment  SCR #121    WCG  7-7-84 )
+: ANDWHILE
+  ?COMP  DUP  4 ?PAIRS                    ( Compiler security )
+  COMPILE DUP  COMPILE 0BRANCH ( duplicate flag, 0branch back )
+                             ( to WHILE, then out pass REPEAT )
+  OVER   2- ,      ( address of first 0BRANCH is second stack )
+                    ( entry, under compiler security, minus 2 )
+  COMPILE DROP ;               ( if flag true, drop duplicate )
+  IMMEDIATE    ;S
+
+
+ 0BRANCH (addr) <next test, leave flag> DUP 0BRANCH (addr) DROP
+
+(This code directs the false exit(s) back through the frist
+ 0BRANCH (compiled by WHILE); therefore, the REPEAT part of the
+ conditional branch structure still works as usual. )  
+ 
+ 
+
+
+
+                            ANDIF    and    ANDWHILE
+
+                            Wendall C. Gates, PE
+                            Santa Cruz, California
+
+
+   Anyone who works in real-time, control-oriented programming frequently
+encounters the need to implement decisions based on several input conditions.
+Forth implements single-condition branching as IF ELSE THEN and BEGIN WHILE
+REPEAT statements, but multiple condition branching is absent in most Forth
+implementations.
+
+   One extremely simple approach , which solves both the multiple IF and
+multiple WHILE applications, is presented on screens 120 and 121 (fig-FORTH).
+ANDIF is used in the form:
+
+         ...IF...ANDIF...ANDIF...ANDIF...ELSE...THEN
+
+where ELSE is optional and the number of ANDIF's is not constrained. The
+compile-time action of ANDIF is to compile first DUP and 0BRANCH. Then the
+second entry on the computation stack (the address of the word following the
+0BRANCH compiledd by IF) is copied over the first entry (the compiler security
+digit) and is decremented by two, becoming the address of the first 0BRANCH .
+This address is then compiled. The finial action is to compile DROP. In other
+words, each ANDIF compiles a 0BRANCH which points back to the 0BRANCH compiled
+by IF; thus, only one forward branch needs to be compiled, and it is handled
+by ELSE or THEN as usual.
+
+   At run time, the flag being tested is duplicated. If the duplicated copy of
+the flag is true, the original flag is dropped and execution continues inline.
+If the flag is false (zero), ANDIF's 0BRANCH branches back to IF's 0BRANCH;
+the original flag then directs IF's 0BRANCH to skip forward to ELSE or THEN.
+
+   ANDWHILE is similarly constructed (screen 121); in fact, the only
+differance is the compiler security digit. usage is identical to ANDIF; no
+matching closeout words (ENDWHILE in Ref. 1) are needed to resolve the
+branching.
+
+   ANDIF and ANDWHILE also permit buliding complex control structures in a
+simple, strightforward fashion. Here, for example, is a muli-condition, muli-
+step structure using ANDIF:
+
+
+test 1
+IF task1 test2
+ANDIF task2 test3
+ANDIF...
+ELSE...
+THEN
+
+   In this sequence, each test leaves a flag. The sequence of tasks will be
+executed until a test leaves a false flag, at which point execution will jump
+to the code following ELSE (if used) or following THEN. Note that the code
+following ELSE will not be executed at all if all conditions test true, but
+will be executed if any condition tests false. Tasks must leavethe stacks
+unaltered.
+
+   A multi-conditional, multi-step loop can be programmed as:
+
+BEGIN
+test1
+WHILE task1 test2
+ANDWHILE task2 test3
+ANDWHILE...
+REPEAT
+
+This code will loop through the sequence of tasks until a test leaves a false
+flag; execution then jumps immediately out of the loop to the code following
+REPEAT.
+
+   This technique of directing all unsuccessful exits out through the original
+0BRANCH imposes both a speed penalty over methods which compute and store back
+the exit address. The extra words are all primitives, so the speed penalty is
+small. The size penalty is four bytes per branch, balanced by savings in the
+code needed to implement ANDIF and ANDWHILE versus a heavier-duty solution
+(for example, the IT ENDIT code presented by Luoto in Ref. 3).
+
+
+
+References
+
+1.Hayden,Julian. "Multiple WHILE Solu-
+tion," Forth Dimensions III/3.p.72.
+
+2.Harris,Kim. "transportable Control Struc-
+tures," 1981 Forth Standards Conference,
+pp.97-107.
+
+3.Luoto, kurt. "parnas' it...ti Structure,"
+Forth Dimendions VI/1,pp.26-31.
+
+

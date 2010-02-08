@@ -1,0 +1,44 @@
+
+	incl	opcodes.inc
+
+	aorg	>4000
+
+;**************************
+;** PIO DSR
+;**************************
+	
+	even
+piodsr:	dw	>0aa02
+	dw	0
+	dw	pioinit
+	dw	0
+	dw	pionames
+	dw	0		
+	dw	0
+	dw	0
+
+pionames:	dw	pionx1
+	dw	pioex
+	db	>3,"PIO"
+pionx1:	dw	pionx2
+	dw	pioex
+	db	>5,"PIO/1"
+pionx2:	dw	pionx3
+	dw	pioex
+	db	>3,"pio"
+pionx3:	dw	0
+	dw	pioex
+	db	>5,"pio/1"
+
+pioex	dw	DSROP D_PIO +
+
+pioinit	dw	0
+	dw	pioinit0
+
+pioinit0
+	sbo 7	; turn on light
+	sbz 1	; set PIO as output
+	sbo 2	; set HANDSHAKEOUT
+	sbz 7	; turn off light
+	rt
+

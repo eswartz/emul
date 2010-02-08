@@ -1,0 +1,164 @@
+*** nforth0.tsm
+39                                incl    general.i
+*** general.i
+25                                #if ENHANCED_MEMORY
+26    >FF80                   VDPRD   equ >FF80
+27    >FF82                   VDPST   equ >FF82
+28    >FF88                   VDPWD   equ >FF88
+29    >FF8A                   VDPWA   equ >FF8A
+30    >FF8C                   VDPCL   equ >FF8C
+31    >FF8E                   VDPWI   equ >FF8E
+32    >FF90                   GPLRD   equ >FF90
+33    >FF92                   GPLRA   equ >FF92
+34    >FF94                   GPLWD   equ >FF94
+35    >FF96                   GPLWA   equ >FF96
+36    >FF98                   SPCHRD  equ >FF98
+37    >FF9A                   SPCHWT  equ >FF9A
+38    >FFA0                   SOUND   equ >FFA0   ; 0x20!
+39    >FFC0                   ROMBANK equ >FFC0
+40    >FFC2                   FTHBANK equ >FFC2
+41                                #else
+61    >0001                   SR0	equ	1
+62    >0002                   SR1	equ	2
+63    >0004                   SR2	equ	4
+64    >0008                   SR3	equ	8
+65    >0010                   SR4	equ	16
+66    >0020                   SR5	equ	32
+67    >0040                   SR6	equ	64
+68    >0080                   SR7	equ	128
+69    >0100                   SR8	equ	256
+70    >0200                   SR9	equ	512
+71    >0400                   SR10	equ	1024
+72    >0800                   SR11	equ	2048
+73    >1000                   SR12	equ	4096
+74    >2000                   SR13	equ	8192
+75    >4000                   SR14	equ	16384
+76    >8000                   SR15	equ	32768
+82    >0001                   ST_L	equ	1
+83    >0002                   ST_A	equ	2
+84    >0004                   ST_E	equ	4
+85    >0008                   ST_C	equ	8
+86    >0010                   ST_OV	equ	16
+87    >0020                   ST_OP	equ	32
+88    >0040                   ST_X	equ	64
+95    >0000                   grom_kbdlist		equ	>0000
+96    >0130                   grom_font8x8		equ	>0130
+97    >0930                   grom_font5x6		equ >0930
+100   >000A                   SP	equ		10
+102                            define Push SP, ... [
+108                            define Pop SP, ... [
+114                            define Vector label, ws [
+*** nforth0.tsm
+40                            	incl	cpuram.i
+*** cpuram.i
+28                             #if ENHANCED_MEMORY
+30    >FC00                   mainws  equ >FC00       ; main FORTH/system workspace
+31    >FC20                   dskws   equ >FC20       ; disk workspace
+32    >FC40                   intws   equ >FC40       ; interrupt workspace
+33    >FC40                   xopws   equ >FC40       ; XOP workspace (shared, ints off)
+34    >FC60                   vidws   equ >FC60       ; video & term workspace   ; shared by interrupts!
+36    >FB00                   cpurambase equ >FB00    ; CPU RAM base for DSRs
+37    >FF60                   sharedvarbase equ >FF60 ; where vars shared with FORTH are seen
+38    >F700                   privvarbase equ >F700   ; where ROM private vars are stored
+40                             #else
+60    >FB70                       aorg    cpurambase + >70
+61    >FB70                   vdplimit    bss 2       ; VDP memory size (this points to a location offset from V9938 bank 3 (>C000))
+66    >FB40                       aorg    cpurambase + >40
+68    >0001                   int1flag    equ >1
+69    >0002                   int2flag    equ >2
+70    >0004                   xop1flag    equ >4
+72    >FB40                   intsfromA   bss 2
+77    >FF60                       aorg    sharedvarbase
+78                             
+81    >FF60                   vintflags   bss 1       ; VDP interrupt flags
+82    >0080                   nvblnk      equ >80     ;       1: suppress blink cursor and blank screen
+83    >0040                   nvkeyscan   equ >40     ;       1: suppress scan keyboard
+84    >0020                   nvsprmot    equ >20     ;       1: suppress sprite motion
+85    >0010                   nsoundlist  equ >10     ;       1: suppress sound list
+87    >FF61                   vstatus     bss 1       ; VDP status last read during interrupt
+89    >FF62                   userint     bss 2       ; user VDP interrupt handler (called when VDP interrupts)
+90    >FF64                   timerisr    bss 2       ; user timer handler (called when clock ticks)
+92    >FF66                   nsprmot     bss 1       ; number of sprites in motion (00 = none)
+94    >FF67                   sndflags    bss 1       ; sound list flags
+95                                                    ;       $00: CPU RAM, $80: VDP 
+96                                                    ;       $0f: tempo adjust (signed: -4 to 3) 
+97    >FF68                   sndlist     bss 2       ; address of classic sound list (0 = none), incremented on tick
+98    >FF6A                   snddur      bss 1       ; duration of current group
+100   >FF6C                           even
+101                                   
+103   >FF6C                   _CPURAMSTART equ $
+105   >FF6C                   vpob        bss 1       ; VDP "page offset" bank (added to V9938 bank to select the page outside 64k)
+106   >FF6D                   vblinkflag  bss 1       ; flag to set blink bit in text2 
+107   >FF6E                   vpgrow      bss 2       ; VDP "page row offset" (added to V9938 commands to select the page)
+108   >FF70                   vtextpage   bss 2       ; VDP text-ish page offset (screen, patterns, colors) (in addition to vpob)
+110   >FF72                   vidvarstart bss 2       ; start addr of important video variables
+111   >FF74                   vidvarsize  bss 2       ; size of important video variables
+113   >000A                   _CPURAMSIZE  equ $ - _CPURAMSTART
+*** nforth0.tsm
+42    >0000                   	aorg	>0
+44    >0000                   resetv	dw	mainws,INT0PC
+      >0000=>FC00 >000E       
+45    >0004                   int1v	dw	intws,INT1PC
+      >0004=>FC40 >0018       
+47    >000C                   	aorg	>c
+49    >000C=>30AA             	db		>30,>AA
+51    >000E                   INT0PC:
+52    >000E=>06A0 >004A       	bl		@BANK
+53    >0012=>0000             	dw		0
+54                             	; notreached
+55    >0014=>1000             	nop
+56    >0016=>1000             	nop
+58    >0018                   INT1PC:
+59    >0018=>0300 >0000       	limi	0
+60    >001C=>06A0 >004A       	bl		@BANK
+61    >0020=>0001             	dw		int1flag
+62                             	; notreached
+63    >0022=>1000             	nop
+64    >0024=>1000             	nop
+66    >0026                   XOP1PC:
+67    >0026=>0300 >0000       	limi	0
+68    >002A=>C07E             	mov		*14+,1		; code
+69    >002C=>C00B             	mov		11,0
+70    >002E=>06A0 >004A       	bl		@BANK
+71    >0032=>0004             	dw		xop1flag
+72                             	; notreached
+73    >0034=>1000             	nop
+74    >0036=>1000             	nop
+75    >0038=>1000             	nop
+77    >0040                   	aorg	>40
+79    >0040                   xop0v	dw	0,0
+      >0040=>0000 >0000       
+80    >0044                   xop1v	dw 	xopws,XOP1PC
+      >0044=>FC40 >0026       
+82    >0048                   forth_start dw COMMON_END
+      >0048=>007E             
+84                            	;	in other bank, this branches to real ROM
+86    >004A                   BANK:
+88    >004A                   bankA:
+89    >004A=>483B >FB40       	szc		*11+,@intsfromA
+90    >004E=>0720 >FFC0       	seto	@ROMBANK
+91    >0052=>045B             	rt
+92    >0054                   bankB:
+93    >0054=>0720 >FFC2       	seto	@FTHBANK
+94    >0058=>045B             	rt
+96    >005A                   bankBrtwp:
+97    >005A=>1000             	nop
+98    >005C=>1000             	nop
+99    >005E=>0380             	rtwp
+101   >0060                   FORTH_COLD:
+102                           	; boot FORTH
+103   >0060=>1000             	nop
+104   >0062=>1000             	nop
+105   >0064=>0460 >007E       	b		@COMMON_END
+106   >0068                   FORTH_QUIT:
+107                           	; abort
+108   >0068=>1000             	nop
+109   >006A=>1000             	nop
+110   >006C=>0460 >0082       	b		@COMMON_END + 4
+113   >0070                   ABORT:
+114   >0070=>0300 >0000           limi    0
+115   >0074=>0720 >FB40           seto    @intsfromA
+116   >0078=>02E0 >FC00           lwpi    mainws
+117   >007C=>10F5                 jmp     FORTH_QUIT         ; ctrl+fctn+shift+space breaks
+118                               
+119   >007E                   COMMON_END:

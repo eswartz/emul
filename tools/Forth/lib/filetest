@@ -1,0 +1,95 @@
+: readfile
+	s" dsk1.forth0" R/O $50 RECLEN VAR OPEN-FILE
+	?dup 0= IF
+		begin
+			dup $c000 &80 rot read-file
+			?dup 0= if
+				?dup if
+					$c000 swap type cr
+				else
+					." eof" close-file drop exit
+				then
+			else
+				." error:" . drop
+				close-file exit
+			then
+		again
+	ELSE
+		." could not open: " . drop
+	THEN
+;
+
+: readfilelines
+	s" dsk1.forth0" R/O $50 RECLEN VAR OPEN-FILE
+	?dup 0= IF
+		begin
+			dup $c000 &80 rot read-line  ( file flag ior )
+			?dup 0= if
+				if
+					$c000 swap type cr
+				else
+					." eof" close-file drop exit
+				then
+			else
+				." error:" . drop
+				close-file drop exit
+			then
+		again
+	ELSE
+		." could not open: " . drop
+	THEN
+;
+
+: writefile
+	s" dsk1.forth0" R/W $50 RECLEN VAR open-file
+	?dup 0= if
+		dup s" : test1 2 3 ; "  rot write-file drop
+		dup s" : test2 key * test1 * * . ;  " rot write-file drop
+		dup tib 0 rot write-file drop
+		dup s" : test3 10 0 do i test2 loop ; " rot write-file drop
+		dup s" cr [char] > emit test3 " rot write-file drop
+		close-file drop
+	else
+		." could not open: " . drop
+	then
+;
+
+
+: readall
+	s" dsk1.dum" r/o open-file 0= if
+	>r
+	begin
+		here 7 r@ read-file	( -- ur ior )
+		0= over and
+	while
+		here swap type
+	repeat
+	rdrop
+	else
+	." could not open: "  . drop
+	then
+;
+
+: writeall
+	s" dsk1.dum" w/o open-file 0= if
+		10 0 do
+			dup s" hi there, guacamole hater! " rot write-file . .
+		loop
+		close-file
+		drop
+	else
+	." could not create: " . drop
+	then
+;
+
+: rdfile
+s" dsk1.file" r/o open-file 0= if
+	include-file
+then
+;
+
+: rdfile2
+s" dsk1.forth0" r/o var $50 reclen open-file 0= if
+	include-file
+then
+;

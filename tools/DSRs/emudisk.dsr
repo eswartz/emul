@@ -1,0 +1,121 @@
+;	To be compiled with tiasm
+
+	incl	opcodes.inc
+
+	aorg	>4000
+
+dskdsr:	dw	>aa99				; id
+	dw	0
+	dw	dskinit				; ptr to init code
+	dw	0
+	dw	ddevtab				; ptr to device table
+	dw	dsubtab				; ptr to subprograms
+	dw	0
+	dw	0
+
+	even
+dsubtab: dw	dst1
+	dw	dst10ex
+	dw	>110
+dst1:	dw	dst2
+	dw	dst11ex
+	dw	>111
+dst2:	dw	dst3
+	dw	dst12ex
+	dw	>112
+dst3:	dw	dst4
+	dw	dst13ex
+	dw	>113
+dst4:	dw	dst5
+	dw	dst14ex
+	dw	>114
+dst5:	dw	dst6
+	dw	dst15ex
+	dw	>115
+dst6:	dw	dst7
+	dw	dst16ex
+	dw	>116
+dst7:	dw	0
+	dw	ddtfiles
+	db	5,"FILES"
+	even
+
+ddevtab: dw	ddt1
+	dw	ddtdsk
+	db	3,"DSK"
+	even
+ddt1:	dw	ddt2
+	dw	ddtdsk1
+	db	4,"DSK1"
+	even
+ddt2:	dw	ddt3
+	dw	ddtdsk2
+	db	4,"DSK2"
+	even
+ddt3:	dw	ddt32
+	dw	ddtdsk3
+	db	4,"DSK3"
+	even
+
+ddt32:	dw	ddt33
+	dw	ddtdsk4
+	db	4,"DSK4"
+	even
+ddt33:	dw	ddt4
+	dw	ddtdsk5
+	db	4,"DSK5"
+	even
+
+ddt4:	dw	ddt5
+	dw	ddtdsk
+	db	3,"dsk"
+	even
+ddt5:	dw	ddt6
+	dw	ddtdsk1
+	db	4,"dsk1"
+	even
+ddt6:	dw	ddt7
+	dw	ddtdsk2
+	db	4,"dsk2"
+	even
+ddt7:	dw	ddt72
+	dw	ddtdsk3
+	db	4,"dsk3"
+	even
+
+ddt72:	dw	ddt73
+	dw	ddtdsk4
+	db	4,"dsk4"
+	even
+ddt73:	dw	0
+	dw	ddtdsk5
+	db	4,"dsk5"
+
+	EVEN
+
+;	Note that D_INIT, D_xxx can be recycled for a different CRU base.
+
+dskinit: dw	0
+	dw	dskinitcode
+	dw	0
+
+dskinitcode: dw	DSROP D_INIT +
+
+dst10ex:	dw	DSROP D_SECRW +
+dst11ex:	dw	DSROP D_FMTDISK +
+dst12ex:	dw	DSROP D_PROT +
+dst13ex:	dw	DSROP D_RENAME +
+dst14ex:	dw	DSROP D_DINPUT +
+dst15ex:	dw	DSROP D_DOUTPUT +
+dst16ex:	dw	DSROP D_16 +
+
+
+ddtdsk:		dw	DSROP D_DSK +
+ddtdsk1:	dw	DSROP D_DSK1 +
+ddtdsk2:	dw	DSROP D_DSK2 +
+ddtdsk3:	dw	DSROP D_DSK3 +
+ddtdsk4:	dw	DSROP D_DSK4 +
+ddtdsk5:	dw	DSROP D_DSK5 +
+
+ddtfiles:	dw	DSROP D_FILES +
+

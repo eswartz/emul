@@ -1,0 +1,625 @@
+
+;	nforth.tsm					-- main FORTH ROM controller
+;
+;	(c) 1996-2008 Edward Swartz
+;
+;	This program is free software; you can redistribute it and/or modify
+;	it under the terms of the GNU General Public License as
+;	published by the Free Software Foundation; either version 2 of
+;	the License, or (at your option) any later version.
+; 
+;	This program is distributed in the hope that it will be useful,
+;	but WITHOUT ANY WARRANTY; without even the implied warranty of
+;	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+;	GNU General Public License for more details.
+; 
+;	You should have received a copy of the GNU General Public
+;	License along with this library; if not, write to the Free Software
+;	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;	02111-1307, USA.
+;
+;	$Id: nforth.tsm,v 1.40 2009-07-26 01:09:41 ejs Exp $
+
+;===========================================================================
+;	V9T9 ROM!
+;
+;   This ROM is designed for use by FORTH.  Thus it consists mainly of
+;   primitive routines upon which more complex behavior can be implemented
+;   in FORTH.  
+;
+;   Also, this ROM is *banked* with FORTH.  Thus, the >0000->2000 range may
+;   either be this assembly ROM or the first part of the FORTH ROM based
+;   on the address last written to in the ROM area.  (Div by 4 = bank 0 =
+;   this ROM, not div by 4 = bank 1 = FORTH ROM.)  (This method of switching
+;   banks is a quite easy way to catch stray pointer accesses!)
+;
+;   The two ROMs communicate with each other only through XOP 1.
+;   Interrupts may also be triggered in either ROM.  Thus, the workspaces
+;   that XOP and FORTH use must be different, as must the interrupt 
+;   workspace.  
+;
+;   The general style of the ROM is to use a small number of workspaces
+;   and a set of stacks for register management (sysstack and vidstack). 
+;
+;   "mainws" is used for startup and for FORTH operation thereafter.
+;   This ROM does not use that workspace again.
+;
+;   "xopws" is used by XOP handlers when invoked from FORTH.  This ROM
+;   may not invoke XOP.  The tree of routines called from XOP use "sysstack" 
+;   to manage their registers.  In truth, they only must preserve R12-R15
+;   (the latter three to return, and R12 to send information back to
+;   FORTH through the XOP operand 1).
+;
+;   Video handling routines, which may be invoked from XOP, from startup,
+;   or from interrupts, use a different workspace and stack in "vidws" and 
+;   "vidstack".  These all operate under IM 0, for obvious reasons.
+;
+;   "vidws" also overlaps the traditional GPLWS (>83E0) because its use
+;   is transient.  Interrupts also use GPLWS (= vidws) for compatibility
+;   with device ISRs.
+;
+;   "intws" is used for the interrupt handlers, and is distinct because it 
+;   may be entered from either ROM.  It may safely call the video routines, 
+;   though, because all video routines must have LIMI 0 active.  
+;
+;   "xopws" and "intws" are the same, because interrupts do not invoke XOP
+;   nor do XOPs have interrupts active.
+;
+;   This ROM was first written with a "callee saves everything" strategy,
+;   where almost every modified register was diligently saved to the stack.
+;   Once I ran out of space, though, it seemed necessary to define some
+;   calling conventions:
+;
+;   For "(Called from XOP)" (either directly called or indirectly called
+;   from a known place)
+;
+;       Preserve R12-R15
+;
+;       Other conventions defined by interface and documented.
+;
+;   For "(Internal routine)" (unknown caller):
+;
+;       Preserve R4-R9, R12-R15
+;
+;       R0-R3, R10 are scratch
+;
+;   Routines must, of course, preserve R11 if they invoke BL themselves.
+;
+;===========================================================================
+
+	incl	general.i
+	incl	ram.i
+
+;==========================================================================
+;	ROM start
+;==========================================================================
+
+	aorg	>0
+
+resetv	dw	mainws,INT0PC		; vector for RESET
+int1v	dw	intws,INT1PC		; vector for INTERRUPTS
+
+;------------------------------
+
+	aorg	>c
+
+	db		>30,>AA				; flag bytes for normal ROM
+
+INT0PC:
+	bl		@bankA
+	data	0
+	b		@reset
+
+INT1PC:	
+	limi	0
+	bl		@bankA
+	data	int1flag
+	b		@int1
+
+XOP1PC:
+	limi	0
+	mov		*14+,1				; code
+	mov		11,0
+	bl		@bankA
+	data	xop1flag
+	mov		0,11
+	b		@xop1_real
+
+	aorg 	>40
+
+xop0v	dw 0,0
+xop1v	dw	xopws,XOP1PC			; vector for XOP 1
+
+	data	0					; forth_start
+
+
+BANK:
+
+bankA:
+	soc		*11+,@intsfromA
+	seto	@ROMBANK
+	rt
+bankB:
+	seto	@FTHBANK
+	rt
+
+bankBrtwp:
+	bl		@bankB
+	rtwp
+
+FORTH_COLD:
+	bl		@bankB
+	nop
+	nop
+
+FORTH_QUIT:
+	bl		@bankB
+	nop
+	nop
+
+;   default for LOAD* interrupt NMI
+ABORT:
+    limi    0
+    seto    @intsfromA
+
+    lwpi    mainws
+    jmp     FORTH_QUIT         ; ctrl+fctn+shift+space breaks
+    
+COMMON_END:
+
+bankrtwp:
+	mov		@intsfromA,0
+	coc		*11+,0
+	jne		bankBrtwp
+	rtwp
+
+;   XOP 1 
+;
+;   0:  restore video registers ( -- )
+;   1:  key available? ( -- t|f )
+;   2:  read key ( -- 0|ch )
+;   3:  emit char (interpreted) ( 0|ch -- )
+;   4:  emit char (raw) ( 0|ch -- )
+;   5:  cursor to (X | Y -- )
+;   6:  clear window
+;   7:  set text window ( offs X/Y, size X/Y -- )
+;   8:  get text window ( -- offs X/Y, size X/Y )
+;   9:  set graphics mode registers (mode -- )
+;   10: set fg/bg colors ( fg|bg -- )
+;   11: get fg/bg colors ( -- fg|bg )
+;   12: draw line (op|c y2 x2 y1 x1 -- )
+;   13: draw pixel (op|c y1 x1 -- )
+;   14: reset video ( -- )
+;   15: set video interrupt flags ( vintflags -- )
+;   16: set font  (0 = 8x8, 1 = 6x8, 2 = 5x6 -- )
+;   17: fill rectangle ( op|c h w y x -- )
+;   18: generate pseudorandom number
+;   19: DSRLNK ( code -- status )
+;   20: get video table address ( table# -- addr )
+;   21: set video register ( newval index -- )
+;   22: get video register ( index -- newval )
+;   23: set video r/w page ( index -- )
+;   24: set video visible page ( index -- )
+;   25: reset video palette ( -- )
+;   26: save/restore/query video state   ( ... req -- ... )
+;   27: get text X/Y address in window ( X|Y -- addr shift )
+;   28: get text X/Y coordinates ( -- X|Y )
+;   29: type (interpreted) ( caddr u -- )
+;   30: read/write disk block ( block# addr r/w -- err )
+;   31: queue sound track ( ptr -- )
+
+xop1list dw	xop1_restore_mode,xop1_key_avail,xop1_read_key,xop1_emit,xop1_emit_raw
+	dw		xop1_gotoxy,xop1_clear_window,xop1_set_window,xop1_get_window,xop1_set_mode
+	dw		xop1_set_fgbg,xop1_get_fgbg,xop1_draw_line,xop1_draw_pixel,xop1_reset_screen
+	dw		xop1_set_vintflags,xop1_set_font,xop1_fill_rect,xop1_random,xop1_dsrlnk
+	dw      xop1_get_vtab,xop1_set_vdpreg,xop1_get_vdpreg,xop1_set_vrwpage,xop1_set_vpage
+	dw      xop1_reset_palette,xop1_video_state,xop1_get_text_addr,xop1_get_xy,xop1_type
+	dw      xop1_rw_block,xop1_qtrack
+xop1last equ $
+
+;	xop <arg> , #
+;	data <op>
+;
+;   Comes in with LIMI 0 and R1=code
+xop1_real:
+	mov @SP+SP(13), SP			; stack ptr
+	dect SP
+	mov 12 , *SP
+	mov 11 , 12				; copy op ptr
+
+	ci	1,(xop1last - xop1list) / 2
+	jle	xop1_pick
+xop1_out
+	mov *SP+, 12
+	bl	@bankrtwp
+	data	xop1flag
+
+xop1_pick
+	a	1,1
+	mov	@xop1list(1),1
+	b	*1
+
+    ;   0 = restore video mode (minimal)
+xop1_restore_mode
+	bl @vrestoremode
+	jmp xop1_out
+	
+	;	1 = keyavail?
+xop1_key_avail 
+    lwpi    vidws
+    bl  @scankbd
+    lwpi    xopws
+	bl	@kbdavail
+	clr	*12
+	jeq xop1_1_out
+	seto *12
+xop1_1_out
+	jmp xop1_out
+
+	;	2 = readkey
+xop1_read_key	
+	bl	@kbdread
+;	swpb 1
+	mov	0,*12
+	jmp xop1_out
+
+	;	3 = emit (interpreted)
+xop1_emit
+	movb   @1(12),1
+	bl     @emit
+	jmp    xop1_out
+
+	;	4 = emit, not interpreted
+xop1_emit_raw
+	mov    *12,1
+	bl	    @printchar
+	jmp    xop1_out
+
+	; 	5 = gotoxy
+xop1_gotoxy
+	mov *12,0		; hi=x, lo=y
+	bl @gotoxy
+	jmp xop1_out
+
+	;	6 = cls (window)
+xop1_clear_window
+    bl @termclear
+	jmp xop1_out
+
+	;	7 = text window
+	;	
+xop1_set_window
+	mov *12, 0
+	mov @2(12), 1
+	bl @window
+	jmp xop1_out
+
+	;	8 = report text window
+xop1_get_window
+	mov @vwx, *12+
+	mov @vwxs, *12+
+	jmp xop1_out
+
+	;	9 = graphics mode (ONLY)
+xop1_set_mode
+	mov *12, 1
+	blwp @vsetmode
+	jmp xop1_out
+
+	;	10 = set colors
+xop1_set_fgbg:
+	mov *12, 0
+	bl @vsetcolor
+	jmp xop1_out
+
+	;	11 = get colors
+xop1_get_fgbg:
+	mov @vfgbg, *12
+	jmp xop1_out
+
+	;	12 = draw line
+xop1_draw_line:
+	blwp @line
+	jmp xop1_out
+
+	;	13 = draw pixel
+xop1_draw_pixel:
+	blwp @pixel
+	jmp xop1_out
+
+	;	14 = reset video screen
+xop1_reset_screen:
+    bl  @vreset
+    bl  @vscreenon
+	jmp xop1_out
+
+	;	15 = set video int flags (see vintflags)
+xop1_set_vintflags:
+    ; ensure cursor is erased (usually indicates we're drawing)
+    bl     @vcursoroff
+	movb   @1(12), @vintflags
+	jmp    xop1_out
+
+	;	16 = set font
+xop1_set_font:
+	mov *12, 1
+	bl @vsetfont
+	jmp xop1_out
+
+	;	17 = draw filled rect
+xop1_fill_rect:
+	blwp @fillrect
+	jmp	xop1_out
+
+	;	18 = generate pseudorandom number
+xop1_random:
+	bl @random
+	mov 0, *12
+	jmp xop1_out
+
+	;	19 = DSRLNK
+xop1_dsrlnk:
+	mov *12, 1
+	blwp @dsrlnk
+	mov 0, *12
+	jmp xop1_out
+
+    ;   20 = get video table ( # -- addr )
+xop1_get_vtab:
+    mov *12, 1
+    bl @vgettab
+    mov 0, *12
+    jmp xop1_out2
+
+    ;   21 = set VDP reg ( newval index -- )
+xop1_set_vdpreg:
+    mov *12+, 0
+    sla 0, 8
+    soc *12, 0
+    bl @vwreg
+    jmp xop1_out2
+
+    ;   22 = get VDP reg ( index -- val )
+xop1_get_vdpreg:
+    mov *12, 1
+    bl @vrreg    
+    mov 1, *12
+    jmp xop1_out2
+
+    ;   23 = set r/w video page ( 0|1|2|3 -- val )
+xop1_set_vrwpage:
+    mov *12, 1
+    bl @vrwpage
+    jmp xop1_out2
+    
+    ;   24 = set visible video page ( 0|1|2|3 -- val )
+xop1_set_vpage:
+    mov *12, 1
+    bl @vpage
+    jmp xop1_out2
+
+    ;   25 = reset palette
+xop1_reset_palette:
+    bl      @vsetpalette
+    jmp     xop1_out2
+   
+    ;   26 = save/restore/query video state   ( ... req -- ... )
+xop1_video_state:
+    mov     *12, 1
+    mov     @2(12), 2  ; if used
+    bl      @vsaverestore
+    mov     1, *12
+    jmp     xop1_out2
+
+    ;   27 = get address of X/Y in window   ( x|y -- addr shift )
+xop1_get_text_addr:
+    mov     *12, 0
+    mov     @vcoordaddr, 1
+    bl      *1
+    mov     0, *12
+    mov     1, @2(12)
+    jmp     xop1_out2
+   
+   ;    28 = get X/Y coords ( -- x|y )
+xop1_get_xy:
+    mov     @vx, *12
+    jmp     xop1_out2
+   
+   ;    29 = type (interpreted) ( caddr u -- )
+xop1_type:
+    mov     *12+, 2
+    mov     *12, 3
+    bl      @type
+    jmp     xop1_out2
+       
+    ;   30 = read/write disk block ( block# addr r/w -- err )
+xop1_rw_block:
+    blwp @rwblock
+    jmp xop1_out2
+
+    ;   31 = queue sound track ( track -- )
+xop1_qtrack:
+    mov     *12, 2
+    bl      @xsnd_queue_track
+    ;jmp     xop1_out2
+    
+xop1_out2:
+    b   @xop1_out
+random:
+	mov    @randseed1, 0
+	mov    0, 1
+	srl    0, 1
+	andi   1, 1
+	neg    1
+	andi   1, >B400
+	xor    1, 0
+	mov    0, @randseed1
+
+	li     2, >6fe5
+	mpy    @randseed2, 2
+	ai     5, >7ab9
+	mov    5, @randseed2
+
+	a	   @uptime, 0
+	src    5, 0
+	xor    5, 0
+	xor    @randnoise, 0
+	rt
+
+;------------------------------
+
+;   Clear memory from the two following words
+;   Does not preserve registers
+clr mov     *11+, 0
+    mov     *11+, 1
+$1: clr     *0+
+    dect    1
+    jgt     $1-
+    rt
+    
+sinit	
+	li SP,sysstack + sysstacksize
+	
+	; setup NMI interrupt
+	mov    #intws, @>fffc
+	mov    #abort, @>fffe
+
+	li     0, >ACE1
+	mov    0,@randseed1
+	
+    ;   reset clears all memory
+	;clr	   @uptime
+	;clr	   @uptime + 2
+	;clr	   @timeout
+	;clr	   @userint
+	;clr    @randseed2
+	;clr    @randnoise
+
+	rt
+
+
+	incl	int.i
+
+	incl	video.i
+	incl	video_text.i
+	incl	video_bit.i
+	incl	video_bit4.i
+	incl	kbd.i
+	
+	incl	term.i
+
+	incl	dev.i
+    incl    sound.i
+
+reset:   limi	0
+    ;   clear memory
+    bl      @clr
+    data    _RAMSTART, _RAMEND - _RAMSTART
+ #if ENHANCED_MEMORY
+ #else    
+    bl      @clr
+    data    >8300, >80
+ #fi    
+
+	bl	@sinit			; system init
+    bl  @sndinit        ; sound init
+	bl	@vinit			; video init
+	bl	@kinit			; keyboard init
+	bl	@dinit			; device init
+
+	bl	@diskinit		; disk init
+
+boot:	clr	12
+	sbz	0			; Interrupt mode
+	sbo	1			; Enable external interrupts
+	sbo	2			; Enable VDP interrupts
+	sbz	3			; Disable clock interrupts
+
+ #if ENHANCED_MEMORY
+ 
+ #else
+	c	@>6000,#>aa55		; rom loaded?
+	jeq	boot0
+	
+booterr:
+    li  2,noromerr
+    li  3,noromerrlength
+    b   @dieerr
+
+noromerr db "No FORTH ROM found!",>0
+noromerrlength equ $ - noromerr
+    even
+	
+ #fi
+
+boot0:
+	; see if we have GROM extension
+	li 0, >6000
+	bl @gwaddr
+
+	bl @copyram
+
+boot1:
+	b	@FORTH_COLD
+
+;	Copy memory from GROM into RAM
+;
+;	GROM addr should be set
+;
+;	If memory block exists, it is in the form:
+;	<aa55> <start RAM addr> <end RAM addr> <data...>
+;
+copyram 
+    limi 0
+    li  3, GPLRD
+cr0:    
+	movb *3, 0
+	swpb 0
+	movb *3, 0
+	swpb 0			; R1 = start addr in RAM
+	ci 0, >aa55
+	jne cr1			; no GROM block
+
+	movb *3, 1
+	swpb 1
+	movb *3, 1
+	swpb 1			; R1 = start addr in RAM
+
+	movb *3, 2
+	swpb 2
+	movb *3, 2
+	swpb 2			; R2 = end addr in RAM
+
+	ai 1, 6
+	jmp cr3
+
+	;	copy data into RAM
+cr2:
+	movb *3, *1+
+	movb *3, *1+
+cr3:
+	c 1, 2
+	jl cr2
+
+	jmp cr0
+
+cr1:
+    limi 1
+	rt
+
+
+;	Print an error message and die
+;	
+;	R2 = message
+;   R3 = length
+dieerr:	bl	@type
+	jmp	$
+
+	consttable
+
+the_end equ $
+
+
+
+
+

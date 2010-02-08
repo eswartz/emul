@@ -1,0 +1,20 @@
+#define WIN32_LEAN_AND_MEAN
+
+#if __MWERKS__
+#pragma precompile_target "winheaders.mch"
+//#define __WCHAR_TYPE__ unsigned short 
+//typedef unsigned short wchar_t;
+#include "x86_prefix.h"
+#define __extension__
+#endif
+#include <sys/time.h>
+#include <windows.h>
+#include <windowsx.h>
+#include <mmsystem.h>
+#include <ddraw.h>
+#include <dsound.h>
+#include <vfw.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>

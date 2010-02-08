@@ -1,0 +1,112 @@
+
+V9t9, a TI-99/4A Emulator
+=========================
+
+This program and its associated utilities provide an emulation environment 
+for a pretty basic 1984-era TI-99/4A development system.  These subsystems
+are supported:
+
+-- TMS9900 processor, running realtime or as fast as possible
+
+-- TMS9901 I/O controller, with CRU keyboard emulation and timer
+interrupt support
+
+-- TMS9918A VDP controller, supporting standard modes and undocumented
+bitmap modes
+
+-- TMS9919 sound controller, with digitized streaming output
+
+-- TMS5220 speech synthesizer, with full LPC decoding
+
+-- 32K expansion RAM (of course)
+
+-- support for 5 disk drives (DSKx), either as disk images (max DS/DD 360K)
+or "files in a directory" on host filesystem
+
+-- RS232 support 
+
+
+At the user level ("outside the box"), these features are available:
+
+-- support for standard ROM / GROM cartridges
+
+-- support for cartridges containing RAM, i.e. Mini Memory
+
+-- support for loading "old style" (DOS) V9t9 cartridges as well as many
+forms of GRAM Kracker file sets
+
+-- user-configurable memory map (to a limit; standard VDP/GROM/etc
+ports probably shouldn't be mapped as RAM... ;)
+
+-- support for storing "files in a directory" in "old style" (DOS) V9t9
+format or TIFILES format; support for updating old V9t9 files on-the-fly;
+support for reading unrecognized files as DIS/VAR 80 text files
+
+-- rawkin' configuration/command language, used to change configuration
+or machine state at runtime, as well as to save machine state for later
+use
+
+-- modular hardware support allowing new display drivers, keyboards,
+sound APIs, and DSRs (99/4A hardware) to be added in source with a
+minimum (?) of programmer effort
+
+-- nice GTK+ interface for Linux and Win32
+
+-- a 9900 assembler (tiasm) useful for small projects
+
+-- an in-progress ANS FORTH implementation (v9t9 forth) useful for
+FORTH geeks
+
+
+GETTING STARTED
+---------------
+
+Probably the biggest obstacle to getting started is finding 99/4A ROMs
+to plug in to v9t9.  Texas Instruments has copyrighted its ROMs into
+perpetuity (or 2075 or so), so don't ask me to give you any.  
+
+At the current state (when I am first making these project available),
+running v9t9 will give you a blank screen of emulator death -- executing
+a long series of >0000 instructions in the empty ROMs.  About the only
+runnable code distributed with V9t9 is V9t9 FORTH (see docs/FORTH.txt),
+which you can run with "v9t9 -c nforth.cnf".
+
+
+FILE CONVENTIONS
+----------------
+
+V9t9 can load and save many types of files, so to keep them organized,
+it groups files into several categories with independent search paths.
+
+For instance, the "ROMSPath" variable defines a list of directories
+where console ROMs, console GROMs, and DSR ROMs may be stored;
+"ModulesPath" defines a list of directories for cartridge (module) ROM
+images; "DemosPath" defines a list of directories where demo files are
+stored, etc.
+
+These path lists are separated with the conventional separator for your
+operating system (':' for Unix, ';' for Win32, ',' for MacOS).
+
+When searching for a file, the first match found in the search paths is
+used.  The current directory is never implicitly searched, so add "." to
+the path list if necessary.
+
+When saving a file, the first writeable directory in the search paths
+is used.  The current directory is never used explicitly unless "." is
+in the path list.  Since existing files will be overwritten as well
+(unless they are read-only or stored in unwritable directories), be
+sure to order the paths in the list accordingly.
+
+If the appropriate path list has never been defined, then the fallback
+path list in "DataPath" will be used for searching or storing files.
+Finally, if that path is not defined, the current directory is used.
+
+This search order applies for most commands, except for the
+command-line options "-c" and "-m" (defining alternate config files
+and module databases), which are searched with the exact given path
+only.  Session files and demo files are searched in the "SessionsPath" /
+"DemosPath" lists.  (Once configuration files are loaded, the path list
+variables are expected to be valid, which is why they are used there
+on after.)
+
+

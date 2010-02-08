@@ -1,0 +1,68 @@
+
+	incl	opcodes.inc
+
+	aorg	>4000
+
+;**************************
+;** RS232 DSR
+;**************************
+	
+	even
+rs232dsr:	dw	>0aa02
+	dw	0
+	dw	rsinit
+	dw	0
+	dw	rsnames
+	dw	0		
+	dw	rsint		
+	dw	0
+
+rsnames:	dw	rsnx1
+	dw	rs232ex
+	db	>5,"RS232"
+rsnx1:	dw	rsnx2
+	dw	rs2321ex
+	db	>7,"RS232/1"
+rsnx2:	dw	rsnx6
+	dw	rs2322ex
+	db	>7,"RS232/2"
+;rsnx5:	dw	rsnx6
+;	dw	pioex
+;	db	>3,"PIO"
+rsnx6:	dw	rsnx7
+	dw	rs232ex
+	db	>5,"rs232"
+rsnx7:	dw	rsnx8
+	dw	rs2321ex
+	db	>7,"rs232/1"
+rsnx8:	dw	0
+	dw	rs2322ex
+	db	>7,"rs232/2"
+;rsnx11:	dw	0
+;	dw	pioex
+;	db	>3,"pio"
+
+
+rs232ex	dw	DSROP D_RS232 +
+rs2321ex dw	DSROP D_RS2321 +
+rs2322ex dw	DSROP D_RS2322 +
+;pioex	dw	DSROP D_PIO +
+
+
+rsinit	dw	0
+	dw	rsinit0
+
+rsinit0
+	mov	12,6
+	ai	12,>80
+	sbo	>1f
+	si	12,>40
+	sbo	>1f
+	mov	6,12
+	rt
+
+rsint	dw	0
+	dw	rsint0
+
+rsint0	dw	DSROP >60 +			; interrupt
+

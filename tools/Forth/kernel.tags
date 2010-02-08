@@ -1,0 +1,21 @@
+#load-file#	T	/^: T ; immediate$/
+#load-file#	H	/^: H ; immediate$/
+user.fs	(rp0)	/^StartRAM (#rp) +			constant (rp0)		\ grows down$/
+user.fs	(sp0)	/^(rp0) (#sp) +				constant (sp0)		\ grows down$/
+user.fs	(pad0)	/^(sp0) 		 				constant (pad0)		\ grows up$/
+user.fs	(#-pad0)	/^(pad0) (#pad) (##-pad) + + 	constant (#-pad0)		\ grows down$/
+user.fs	(slit-pad0)	/^(#-pad0) 					constant (slit-pad0)	\ grows up$/
+user.fs	(tib0)	/^(slit-pad0) (#slit-pad) + 	constant (tib0)			\ grows up$/
+user.fs	StartUser	/^(tib0) (#tib) +				constant StartUser		\ grows up$/
+user.fs	rp0	/^User rp0$/
+user.fs	sp0	/^User sp0$/
+user.fs	(pad)	/^User (pad)$/
+user.fs	(#-pad)	/^User (#-pad)$/
+user.fs	(slit-pad)	/^User (slit-pad)$/
+99prims.fs	#cell	/^2 constant #cell$/
+99prims.fs	#char	/^1 constant #char$/
+99prims.fs	bksp	/^&211 constant bksp$/
+99prims.fs	noop	/^Code noop$/
+99prims.fs	(dbg)	/^Code (dbg)$/
+99prims.fs	lit	/^code lit$/
+99prims.fs	(S")	/^Code (s")$/

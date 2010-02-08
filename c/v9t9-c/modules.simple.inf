@@ -1,0 +1,84 @@
+#
+#	template for module database
+#
+#	this file is in the same format as v9t9.cnf, but usually
+#	contains only definitions for modules or cartridges
+#
+
+#
+#	An example for a GRAM Kracker-format file:
+#  
+#   /-- command that adds an entry to the list
+#   |         /-- tag name for module, i.e. an abbreviation
+#   |         |      /-- title of module
+#   |         |      |         /-- base filename or file list
+#   |         |      |         |     /- indicates GRAM Kracker file chain
+#   |         |      |         |     |
+DefineModule "PARS" "Parsec" "pars" GRAMKRACKER
+#
+#	GRAM Kracker files are usually stored in TIFILES format
+#	(this is a 128-byte header), or if you used V9t9 v6.0, you
+#	may have converted these to the V9t9 file format (another
+#	128-byte header).  V9t9 can interpret both types of header,
+#	and can even deal with an altogether missing header.
+#	
+#	The filename, when used as a base filename, is used to find the 
+#	first file in the series.
+#	I.e., one would typically have files "pars", "pars1", "pars2", 
+#	"pars3", ... 
+#	
+#	The filename may also contain "%d" to substitute for "", "1", "2", "3", 
+#	etc, i.e., "pars%d.bin". (The first file may or may not have a number:
+#	"pars.bin" can match the first part.)
+#
+#	The "filename" may also be a list of exact filenames, if you have
+#	special needs: "cart_0,cart_1.bin,cart_last"
+#
+
+#
+#	An example of a module in the old-school V9t9 (<= v6.0) format:
+#
+#   /-- command that adds an entry to the list
+#   |         /-- tag name for module, i.e. an abbreviation
+#   |         |      /-- title of module
+#   |         |      |            /-- base filename 
+#   |         |      |            |     /- memory banks present
+#   |         |      |            |     |
+DefineModule "LOGO" "TI Logo II" "logo" ROM+GROM
+#
+#	for this example, the files logoc.bin and logog.bin should
+#	exist (ROM --> "<base>c.bin", GROM --> "<base>g.bin").
+#
+#	Also, ROM+ROM2 or BANKED defines a ROM-banked module,
+#	which requires the files "<base>c.bin" and "<base>d.bin".
+#
+#	The MINIMEM flag specifies that the module has RAM at >7000...>7FFF.
+#	This is obviously very special-purpose.  The file "<base>r.bin" is
+#	maintained to store the contents of this RAM -- it is stored not
+#	in [System]ROMSPath but in SystemRAMSPath or RAMSPath instead.
+#
+
+#	Completely custom module definition (this is how V9t9 stores
+#	the above types of entry):
+#
+#   /-- command that defines a set of commands that represent a module
+#   |               /-- tag name for module
+#   |               |      /-- name of module
+#   |               |      |                /-- base name of module
+#   |               |      |                |         /-- commands for module
+DefineModuleMemory "test" "My Test Module" "basename" "
+	DefineMemory \"RMG\" 0x6000 0x2000 \"grompart.bin\" 0x0 \"GROM portion\";
+	DefineMemory \"RMG\" 0x8000 0x6000 \"binjunk.bin\" 0x1280 \"extracted binjunk\"; 
+	DefineMemory \"RMC\" 0x6000 0x1000 \"rom_lower.bin\" 0x0 \"lower ROM portion\"; 
+	DefineMemory \"RMC\" 0x7000 0x1000 \"rom_upper.bin\" 0x0 \"upper ROM portion\";
+	"
+#   |              |     |      |        |               |     \-- comment
+#   |              |     |      |        |               \-- file offset
+#   |              |     |      |        \-- filename containing memory
+#   |              |     |      \-- length of memory (mult of 0x400)
+#   |              |     \-- start address in memory (mult of 0x400)
+#   |              \-- memory parts: 'R'=ROM (vs 'S' for saved RAM)
+#   |                  'M'=module (unloaded with UnloadModuleOnly command)
+#   |                  'C'=CPU part, 'G'=GROM part, 'S'=speech,  'V'=VDP
+#   \-- command that defines an area of memory
+#

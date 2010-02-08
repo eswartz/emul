@@ -1,0 +1,35 @@
+2002/06/21
+
+-- passing -r params for demo doesn't init screen
+
+2001/01/18
+
+-- a lot of memory is being leaked since i changed the command file
+	subsystem (300k per session loaded)
+
+2001/01/17
+
+-- RS232 support is not well-tested and is known to be flakey under both
+Linux and Win32.
+
+-- disk image (disk-on-a-disk or DOAD) support is not correct for double-
+sided images imported from outside programs (I think the track ordering
+is wrong for the second side).
+
+-- the GTK interface for the DSR ROMs does not indicate when DSR ROMs
+are missing entirely
+
+-- the GTK memory interface is incomplete (the set of buttons at the
+bottom of the dialog all send text to command central)
+
+-- saving sessions can be broken depending on a complex combination
+of replacing module ROMs via direct commands like "DefineMemory" and
+wrapper commands like "ModuleROMFileName", as well as remembering 
+whether an entry in the module database is active ("LoadModule").
+
+All of these eventually use "DefineMemory", but the session file needs
+to have a command for "LoadModule" instead of the raw memory mappings,
+in order for the GTK modules database dialog to have a starting 
+selection.
+
+-- v9t9 forth:  the FILES wordset is implemented inefficiently

@@ -1,0 +1,19 @@
+[ifundef] video
+s" dsk1.video" included
+[endif]
+
+<video
+
+bitmap
+: random (rnd) 8 rshift ;
+: foo 
+begin 
+	key? 0= 
+while 
+	(rnd) fg!
+	(rnd) dup 192 mod swap 8 rshift pixel 
+repeat ;
+foo
+
+: fillscr
+192 0 do 256 0 do j i pixel loop loop ;

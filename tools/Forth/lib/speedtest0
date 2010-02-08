@@ -1,0 +1,181 @@
+: word_a
+1
+2
+3
+;
+: word_b
+word_a
+word_a
+word_a
+;
+: word_d
+word_a
+word_a
+word_b
+;
+: d
+word_a
+word_b
+word_d
+;
+: e
+word_a
+word_b
+word_d
+d
+;
+: f
+100
+0
+word_a
+if
+word_b
+else
+word_d
+then
+;
+: g
+begin
+d
+word_d
+word_b
+word_a
+again
+;
+
+: xord_a
+1
+2
+3
+;
+: xord_b
+xord_a
+xord_a
+xord_a
+;
+: xord_d
+xord_a
+xord_a
+xord_b
+;
+: d
+xord_a
+xord_b
+xord_d
+;
+: e
+xord_a
+xord_b
+xord_d
+d
+;
+: f
+100
+0
+xord_a
+if
+xord_b
+else
+xord_d
+then
+;
+: g 
+xord_a begin
+d
+xord_d
+xord_b
+xord_a
+again
+;
+
+: yord_a
+1
+2
+3
+;
+: yord_b
+yord_a
+yord_a
+yord_a
+;
+: yord_d
+yord_a
+yord_a
+yord_b
+;
+: d
+yord_a
+yord_b
+yord_d
+;
+: e
+yord_a
+yord_b
+yord_d
+d
+;
+: f
+100
+0
+yord_a
+if
+yord_b
+else
+yord_d
+then
+;
+: g
+yord_a begin
+d
+yord_d
+yord_b
+yord_a
+again
+;
+
+: zord_a
+1
+2
+3
+;
+: zord_b
+zord_a
+zord_a
+zord_a
+;
+: zord_d
+zord_a
+zord_a
+zord_b
+;
+: d
+zord_a
+zord_b
+zord_d
+;
+: e
+zord_a
+zord_b
+zord_d
+d
+;
+: f
+100
+0
+zord_a
+if
+zord_b
+else
+zord_d
+then
+;
+: g
+zord_a begin
+d
+zord_d
+zord_b
+zord_a
+again
+;
+
+

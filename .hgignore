@@ -9,4 +9,5 @@ syntax: glob
 syntax: glob
 *.pyc
 java/*/bin
+c/v9t9-c/log.unix.txt
 
