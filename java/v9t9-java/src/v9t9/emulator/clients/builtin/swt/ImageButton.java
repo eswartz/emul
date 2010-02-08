@@ -52,6 +52,9 @@ public class ImageButton extends Canvas {
 	public ImageButton(ButtonParentDrawer parentDrawer, int style, Image icon_, Rectangle bounds_, String tooltip) {
 		super(parentDrawer.getComposite(),  style /*| SWT.NO_BACKGROUND*/);
 		
+		if (icon_ == null)
+			throw new NullPointerException();
+		
 		this.parentDrawer = parentDrawer;
 		parentDrawer.addedButton();
 		
@@ -177,17 +180,20 @@ public class ImageButton extends Canvas {
 		} else {
 		}
 		offset = pressed ? 2 : 0;
-		e.gc.drawImage(icon, bounds.x, bounds.y, bounds.width, bounds.height, 
-				offset, offset, size.x, size.y);
-		if (overlayBounds != null)
-			e.gc.drawImage(icon, overlayBounds.x, overlayBounds.y, overlayBounds.width, overlayBounds.height, 
-					0, 0, size.y, size.y);
-		
-		if (menuOverlayBounds != null && isMenuHovering) {
-			e.gc.drawImage(icon, menuOverlayBounds.x, menuOverlayBounds.y, menuOverlayBounds.width, menuOverlayBounds.height, 
-					0, 0, size.y, size.y);
+		try {
+			e.gc.drawImage(icon, bounds.x, bounds.y, bounds.width, bounds.height, 
+					offset, offset, size.x, size.y);
+			if (overlayBounds != null)
+				e.gc.drawImage(icon, overlayBounds.x, overlayBounds.y, overlayBounds.width, overlayBounds.height, 
+						0, 0, size.y, size.y);
+			
+			if (menuOverlayBounds != null && isMenuHovering) {
+				e.gc.drawImage(icon, menuOverlayBounds.x, menuOverlayBounds.y, menuOverlayBounds.width, menuOverlayBounds.height, 
+						0, 0, size.y, size.y);
+			}
+		} catch (IllegalArgumentException e2) {
+			e2.printStackTrace();
 		}
-		
 		//e.gc.setAntialias(SWT.OFF);
 		if (isHighlighted) {
 			e.gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_BLACK));

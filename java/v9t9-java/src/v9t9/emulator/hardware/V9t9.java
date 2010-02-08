@@ -23,7 +23,6 @@ import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtKeyboardHandler;
 import v9t9.emulator.clients.builtin.swt.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
-import v9t9.emulator.clients.demo.HybridDemoClient;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.runtime.Cpu;
@@ -298,7 +297,7 @@ public class V9t9 {
         else if (findArgument(args, "--awt")) {
 			client = new AwtJavaClient(machine, machine.getVdp());
 		} 
-        else if (findArgument(args, "--swtawt")) {
+        else /*if (findArgument(args, "--swtawt"))*/ {
         	SwtAwtVideoRenderer videoRenderer = new SwtAwtVideoRenderer(display);
 			client = new SwtJavaClient(machine, machine.getVdp(), 
 					videoRenderer, 
@@ -321,10 +320,10 @@ public class V9t9 {
 			        		machine.getKeyboardState(), machine),
 					display);
 		} 
-		*/
         else {
 			client = new HybridDemoClient(machine, machine.getVdp(), display);
 		}
+		 */
         
         final V9t9 app = new V9t9(machine, client);
         
