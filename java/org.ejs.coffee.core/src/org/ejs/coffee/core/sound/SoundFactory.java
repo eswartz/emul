@@ -3,6 +3,8 @@
  */
 package org.ejs.coffee.core.sound;
 
+import java.io.File;
+
 import javax.sound.sampled.AudioFormat;
 
 import org.ejs.coffee.internal.core.sound.SoundOutput;
@@ -17,6 +19,9 @@ public class SoundFactory {
 	}
 	
 	public static ISoundListener createAudioListener() {
-		return new AlsaSoundListener(null);
+		if (File.separatorChar == '/')
+			return new AlsaSoundListener(null);
+		else
+			return new JavaSoundListener(100);
 	}
 }

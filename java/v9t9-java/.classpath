@@ -8,11 +8,6 @@
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="libv9t9render"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/libv9t9render/libv9t9render.jar">
-		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="libv9t9render"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="libs/bcel-5.2.jar"/>
 	<classpathentry kind="lib" path="libs/gnu-getopt-1.0.11.jar"/>
 	<classpathentry kind="output" path="bin"/>

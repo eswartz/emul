@@ -5,10 +5,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="HRTimer"/>
 	<classpathentry excluding="api/" kind="src" path="Base64-2.2.2"/>
-	<classpathentry kind="lib" path="libs/jna-3.1.0.jar">
-		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="org.ejs.coffee.core/libs"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="libs/jna.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

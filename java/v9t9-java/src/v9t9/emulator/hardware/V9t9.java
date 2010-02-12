@@ -51,6 +51,8 @@ public class V9t9 {
 		DataFiles.addSearchPath("/tmp");
 		DataFiles.addSearchPath("M:/fun/tidisk/eddie18");
 		DataFiles.addSearchPath("/media/M/fun/tidisk/eddie18");
+		DataFiles.addSearchPath("c:/devel/tistuff/v9t9-data/modules");
+		DataFiles.addSearchPath("c:/devel/tistuff/v9t9-data/roms");
 	}
 
 	private Memory memory;

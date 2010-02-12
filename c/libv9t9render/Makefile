@@ -7,28 +7,30 @@ PACKAGEDIR_G=v9t9/jni/v9t9render
 
 ifeq "$(OS)" "Cygwin"
 
-GCCPATH=c:/cygwin/bin
-JAVAPATH=c:/program files/java/jdk1.6.0_11/
+JAVAPATH=c:/program files/java/jdk1.6.0_18/
 JAVAC="$(JAVAPATH)/bin/javac.exe"
 JAR="$(JAVAPATH)/bin/jar.exe"
 JAVAINC=-I"$(JAVAPATH)/include" -I"$(JAVAPATH)/include/win32"
-CFLAGS=-g  -I. $(JAVAINC) -O6 
-LIBS=
+#GCCPATH=c:/cygwin/bin
+GCCPATH=c:/mingw_w64/bin
+CC=$(GCCPATH)/x86_64-w64-mingw32-gcc
+CFLAGS=-g  -I. $(JAVAINC) -O6 #-mno-cygwin 
+LDFLAGS= -shared #-mno-cygwin -Wl,--no-allow-shlib-undefined -Wl,--kill-at -shared 
+ 
+all: v9t9renderutils.dll libv9t9renderutils.jar  
 
-all: v9t9renderutils.dll libv9t9renderutils.jar
-
-SRCS=render.c v9t9render_utils_wrap.c renderRGBA.c
-OBJS=$(SRCS:.c=.obj)
+SRCS_R=render.c v9t9render_utils_wrap.c renderRGBA.c
+OBJS_R=$(SRCS_R:.c=.obj)
 OBJEXT=.obj
 
 clean:
-	rm -f v9t9renderutils.dll $(OBJS) v9t9render_utils_wrap.c
+	rm -f v9t9renderutils.dll $(OBJS_G) $(OBJS_R) v9t9render_utils_wrap.c
 
-v9t9renderutils.dll: $(OBJS)
-	$(GCCPATH)/gcc -mno-cygwin -Wl,--no-allow-shlib-undefined -Wl,--kill-at -shared -o $@ $^ $(LIBS) -lm 
+v9t9renderutils.dll: $(OBJS_R)
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS) 
 
 %.obj: %.c $(wildcard *.h)
-	$(GCCPATH)/gcc -mno-cygwin -c -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 	
 else 	# Linux/OS X/etc
@@ -44,7 +46,7 @@ SRCS_R=render.c v9t9render_utils_wrap.c  renderRGBA.c
 OBJS_R=$(SRCS_R:.c=.o)
 OBJEXT=.o
 
-all: libv9t9renderutils.so libv9t9renderutils.jar libv9t9render.so libv9t9render.jar
+all: libv9t9renderutils.so libv9t9renderutils.jar libv9t9render.so libv9t9render.jar v9t9render_wrap.c
 
 CFLAGS_G=$(shell pkg-config gtk+-2.0 --cflags) \
         	-I../libanalogtv -I/usr/lib/jvm/java-6-openjdk/include/ \

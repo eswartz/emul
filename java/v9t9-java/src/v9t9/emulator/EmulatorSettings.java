@@ -35,7 +35,10 @@ public class EmulatorSettings {
 	}
 	public void save() {
 		try {
-			settings.save(EmulatorSettings.getInstance().getSettingsConfigurationPath());
+			String path = EmulatorSettings.getInstance().getSettingsConfigurationPath();
+			File file = new File(path);
+			file.getParentFile().mkdirs();
+			settings.save(path);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

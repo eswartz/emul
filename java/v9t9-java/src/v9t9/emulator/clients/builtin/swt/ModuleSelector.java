@@ -76,11 +76,9 @@ public class ModuleSelector extends Composite {
 		nameColumn = new TableColumn(table, SWT.LEFT);
 		nameColumn.setText("Name");
 
-		nameColumn.pack();
-		
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ModuleTableLabelProvider());
-
+		
 		selectedModule = null;
 		
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
@@ -125,6 +123,8 @@ public class ModuleSelector extends Composite {
 		switchButton.setEnabled(false);
 		
 		viewer.setInput(machine.getModules());
+
+		nameColumn.pack();
 	}
 
 	/**

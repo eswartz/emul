@@ -61,6 +61,12 @@ public class JavaSoundListener implements ISoundListener {
 	 * @see org.ejs.chiprocksynth.SoundListener#started(javax.sound.sampled.AudioFormat)
 	 */
 	public void started(AudioFormat format) {
+		if (soundGeneratorLine != null) {
+			if (soundFormat.equals(format))
+				return;
+			stopped();
+		}
+		
 		soundQueue = new LinkedBlockingQueue<AudioChunk>(20);
 
 		soundFormat = format;
@@ -128,6 +134,8 @@ public class JavaSoundListener implements ISoundListener {
 
 	public void dispose() {
 		waitUntilSilent();
+		if (soundWritingThread != null)
+			soundWritingThread.interrupt();
 	}
 	
 	/* (non-Javadoc)
