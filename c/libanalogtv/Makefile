@@ -22,7 +22,7 @@ JAR=jar
 JAVAINC=-I/usr/lib/jvm/java-6-sun/include/ \
 	-I/usr/lib/jvm/java-6-sun/include/linux
 LDFLAGS=-fPIC  -Wl,-zdefs 
-CFLAGS=-fPIC
+CFLAGS=-fPIC -DGETTIMEOFDAY_TWO_ARGS
 SOEXT=so
 
 endif
@@ -34,7 +34,7 @@ all: swig libanalogtv.$(SOEXT) libanalogtv.jar
 clean:
 	rm -f libanalogtv.jar libanalogtv.so analogtv.o yarandom.o analogtv_wrap.o analogtv_wrap.c
 
-analogtv_wrap.c: analogtv.i $(wildcard *.h)
+analogtv_wrap.c swig: analogtv.i $(wildcard *.h)
 	rm -rf swig; mkdir -p swig/org/xorg/analogtv
 	swig -I. -java -outdir swig/org/xorg/analogtv -package org.xorg.analogtv analogtv.i
 	
@@ -44,10 +44,7 @@ libanalogtv.$(SOEXT): analogtv.o yarandom.o analogtv_wrap.o
 %.o: %.c  $(wildcard *.h)
 	gcc -c -o $@ $< $(CFLAGS)
 
-swig:
-	mkdir -p swig
-	
-libanalogtv.jar: analogtv.i
+libanalogtv.jar: analogtv_wrap.c
 	( cd swig && \
 	$(JAVAC) -target 1.5 org/xorg/analogtv/*.java \
 	&& $(JAR) cvf ../libanalogtv.jar org/xorg/analogtv/*.class )

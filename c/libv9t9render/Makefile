@@ -74,11 +74,11 @@ libv9t9render.so: $(OBJS_G)
 
 endif	# linux
 
-v9t9render_utils_wrap.c: v9t9render_utils.i
+v9t9render_utils_wrap.c swig/$(PACKAGEDIR_R): v9t9render_utils.i
 	rm -rf swig; mkdir -p swig/$(PACKAGEDIR_R)
 	$(SWIG) -I. -java -outdir swig/$(PACKAGEDIR_R) -package v9t9.jni.v9t9render.utils v9t9render_utils.i
 
-v9t9render_wrap.c: v9t9render.i
+v9t9render_wrap.c swig/$(PACKAGEDIR_G): v9t9render.i
 	rm -rf swig; mkdir -p swig/$(PACKAGEDIR_G)
 	$(SWIG) -I. -java -outdir swig/$(PACKAGEDIR_G) -package v9t9.jni.v9t9render v9t9render.i
 
