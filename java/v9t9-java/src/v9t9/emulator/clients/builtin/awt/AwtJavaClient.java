@@ -33,23 +33,6 @@ public class AwtJavaClient implements Client {
     	this.machine = machine;
         video = vdp;
         
-        /*
-    	awtThreadGroup = new ThreadGroup("AWT threads");
-    	awtThreadGroup.setDaemon(true);
-    	
-    	Thread thread = new Thread(awtThreadGroup, new Runnable() {
-
-			public void run() {
-				init();
-			}
-    		
-    	});
-    	
-    	thread.start();
-    	try {
-			thread.join();
-		} catch (InterruptedException e) {
-		}*/
         init();
     }
     
@@ -68,26 +51,13 @@ public class AwtJavaClient implements Client {
         
         video.setCanvas(videoRenderer.getCanvas());
 
-        
-        
-        /*Shell shell = window.getShell();
-		shell.addShellListener(new ShellAdapter() {
-			@Override
-			public void shellClosed(ShellEvent e) {
-		        if (machine.isRunning()) {
-		        	machine.setNotRunning();
-		        }
-			}
-		});*/
-
         cruHandler = machine.getCru(); 
         machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
         
-        //keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getWidget(),
-        //		machine.getKeyboardState(), machine);
         keyboardHandler = new AwtKeyboardHandler(
         		videoRenderer.getAwtCanvas(),
         		machine.getKeyboardState(), machine);
+        keyboardHandler.setEventNotifier(window.getEventNotifier());
     }
     /*
      * (non-Javadoc)
@@ -139,12 +109,10 @@ public class AwtJavaClient implements Client {
      * @see v9t9.Client#timerTick()
      */
     public void timerInterrupt() {
-    	//System.out.print('.');
     	keyboardHandler.scan(machine.getKeyboardState());
     }
     
     public void updateVideo() {
-    	//long start = System.currentTimeMillis();
     	if (videoRenderer.isIdle()) { 
 			try {
 				if (!video.update())
@@ -159,50 +127,11 @@ public class AwtJavaClient implements Client {
     public KeyboardHandler getKeyboardHandler() {
     	return keyboardHandler;
     }
-    
-    /*
-    public void handleEvents() {
-    	SDLEvent event;
-		try {
-			while ( (event = SDLEvent.pollEvent()) != null ) {
-				if ( event.getType() == SDLEvent.SDL_QUIT ) {
-					close();
-					continue;
-				}
-				if (event.getType() == SDLEvent.SDL_KEYUP ||
-						event.getType() == SDLEvent.SDL_KEYDOWN) {
-					keyboardHandler.handleEvent((SDLKeyboardEvent) event);
-					continue;
-				}
-				if (event.getType() == SDLEvent.SDL_VIDEORESIZE) {
-					window.handleResize((SDLResizeEvent) event);
-					continue;
-				}
-				if (event.getType() == SDLEvent.SDL_VIDEOEXPOSE) {
-					window.handleExpose((SDLExposeEvent) event);
-					continue;
-				}
-				if (event.getType() == SDLEvent.SDL_MOUSEBUTTONDOWN) {
-					window.handleMouse((SDLMouseButtonEvent) event);
-					continue;
-				}
-				if (event.getType() == SDLEvent.SDL_MOUSEMOTION) {
-					window.handleMouse((SDLMouseMotionEvent) event);
-					continue;
-				}
-			}
-		} catch (SDLException e) {
-			close();
-		}
-		
-    }
-    */
 
     public void handleEvents() {
     	
     }
     public boolean isAlive() {
-    	//return !display.isDisposed();
     	return true;
     }
 }

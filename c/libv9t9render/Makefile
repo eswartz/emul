@@ -82,9 +82,9 @@ v9t9render_wrap.c swig/$(PACKAGEDIR_G): v9t9render.i
 	rm -rf swig; mkdir -p swig/$(PACKAGEDIR_G)
 	$(SWIG) -I. -java -outdir swig/$(PACKAGEDIR_G) -package v9t9.jni.v9t9render v9t9render.i
 
-libv9t9renderutils.jar: v9t9render_utils_wrap.c
+libv9t9renderutils.jar: swig/$(PACKAGEDIR_R) v9t9render_utils_wrap.c
 	( cd swig && $(JAVAC) -target 1.5 $(PACKAGEDIR_R)/*.java && $(JAR) cvf ../$@ $(PACKAGEDIR_R)/*.class )
-libv9t9render.jar: v9t9render_wrap.c
+libv9t9render.jar: swig/$(PACKAGEDIR_G) v9t9render_wrap.c
 	( cd swig && $(JAVAC) -target 1.5 $(PACKAGEDIR_G)/*.java && $(JAR) cvf ../$@ $(PACKAGEDIR_G)/*.class )
 	
 ifeq "0" "1"

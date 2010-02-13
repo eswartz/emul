@@ -41,6 +41,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Decorations;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
@@ -53,6 +54,7 @@ import org.ejs.coffee.core.utils.Setting;
 import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
+import v9t9.emulator.clients.builtin.IEventNotifier;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.clients.builtin.swt.debugger.DebuggerWindow;
 import v9t9.emulator.hardware.V9t9;
@@ -76,11 +78,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private Image mainIcons;
 	private Canvas cpuMetricsCanvas;
 	private IFocusRestorer focusRestorer;
+	private final IEventNotifier eventNotifier;
+	private Composite topComposite;
 	
-	public SwtWindow(Display display, final ISwtVideoRenderer renderer, final Machine machine) {
+	public SwtWindow(Display display, final Machine machine) {
 		super(machine);
-		setVideoRenderer(renderer);
-		
+				
 		toolShells = new HashMap<String, Shell>();
 		toolUiTimer = new Timer(true);
 		
@@ -91,7 +94,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		Image icon = new Image(shell.getDisplay(), iconFile.getAbsolutePath());
 		
 		shell.setImage(icon);
-
+		
 		shell.addDisposeListener(new DisposeListener() {
 
 			public void widgetDisposed(DisposeEvent e) {
@@ -110,9 +113,62 @@ public class SwtWindow extends BaseEmulatorWindow {
 		GridLayoutFactory.fillDefaults().margins(2, 2).applyTo(mainComposite);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainComposite);
 		
-		Composite topComposite = new Composite(mainComposite, SWT.NONE);
+		topComposite = new Composite(mainComposite, SWT.NONE);
 		GridLayoutFactory.fillDefaults().applyTo(topComposite);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(topComposite);
+		
+		createButtons(mainComposite);
+		
+		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar, SWT.BORDER, machine.getCpuMetrics());
+		
+
+		eventNotifier = new IEventNotifier() {
+
+			ToolTip lastTooltip = null;
+			
+			public void notifyEvent(final Object context, final String message) {
+				Display.getDefault().syncExec(new Runnable() {
+					public void run() {
+						if (lastTooltip != null)
+							lastTooltip.dispose();
+						
+						ToolTip tip = new ToolTip(shell, SWT.BALLOON | SWT.ICON_INFORMATION);
+						tip.setText(message);
+						tip.setAutoHide(true);
+						if (context instanceof Event) {
+							Event e = (Event)context;
+							Control b = (Control) e.widget;
+							tip.setLocation(b.toDisplay(e.x, e.y + b.getSize().y));
+						} else {
+							//Point pt = Display.getDefault().getCursorLocation();
+							Point pt = buttonBar.getParent().toDisplay(buttonBar.getLocation());
+							System.out.println(pt);
+							pt.y += buttonBar.getSize().y;
+							pt.x += buttonBar.getSize().x * 3 / 4;
+							tip.setLocation(pt);
+						}
+						tip.setVisible(true);
+						
+						lastTooltip = tip;
+					}
+				});
+			}
+			
+		};
+		
+		JavaSoundHandler.settingPlaySound.addListener(new ISettingListener() {
+
+			public void changed(Setting setting, Object oldValue) {
+				JavaSoundHandler.settingPlaySound.saveState(EmulatorSettings.getInstance().getApplicationSettings());
+			}
+			
+		});
+		
+		
+	}
+
+	public void setSwtVideoRenderer(final ISwtVideoRenderer renderer) {
+		setVideoRenderer(renderer);
 		
 		this.videoControl = renderer.createControl(topComposite, SWT.BORDER);
 		
@@ -123,7 +179,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			.create();
 		videoControl.setLayoutData(rendererLayoutData);
 		
-		((ISwtVideoRenderer) videoRenderer).addMouseEventListener(new MouseAdapter() {
+		renderer.addMouseEventListener(new MouseAdapter() {
 			
 			@Override
 			public void mouseDown(final MouseEvent e) {
@@ -157,18 +213,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 				videoRenderer.setFocus();
 			}
 		};
-		createButtons(mainComposite);
-		
-		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar, SWT.BORDER, machine.getCpuMetrics());
-		
-		
-		JavaSoundHandler.settingPlaySound.addListener(new ISettingListener() {
-
-			public void changed(Setting setting, Object oldValue) {
-				JavaSoundHandler.settingPlaySound.saveState(EmulatorSettings.getInstance().getApplicationSettings());
-			}
-			
-		});
 		
 		shell.addControlListener(new ControlAdapter() {
 			@Override
@@ -181,6 +225,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				});
 			}
 		});
+		
 		
 		shell.open();
 		
@@ -202,13 +247,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusGained(FocusEvent e) {
-				renderer.setFocus();
+				focusRestorer.restoreFocus();
 			}
 		});
-		
 		renderer.setFocus();
 	}
-
 	/**
 	 * 
 	 */
@@ -358,12 +401,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					public void widgetSelected(SelectionEvent e) {
 						File file = screenshot();
 						if (file != null) {
-							ToolTip tip = new ToolTip(getShell(), SWT.ICON_INFORMATION);
-							tip.setText("Recorded screenshot to " + file);
-							tip.setAutoHide(true);
-							ImageButton b = ((ImageButton) e.widget);
-							tip.setLocation(b.toDisplay(e.x, e.y + b.getSize().y));
-							tip.setVisible(true);
+							eventNotifier.notifyEvent(e, "Recorded screenshot to " + file);
 						}
 					}
 			});
@@ -918,5 +956,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 		String dirname = dialog.open();
 		return dirname;
 	}
+
+	/**
+	 * @return
+	 */
+	public IEventNotifier getEventNotifier() {
+		return eventNotifier;
+	}
+
 
 }

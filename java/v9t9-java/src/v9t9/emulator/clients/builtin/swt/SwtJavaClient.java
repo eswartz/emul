@@ -6,12 +6,15 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.clients.builtin.IEventNotifier;
+import v9t9.emulator.clients.builtin.awt.AwtKeyboardHandler;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.runtime.TerminatedException;
@@ -36,18 +39,36 @@ public class SwtJavaClient implements Client {
 	private int displaySkips;
 
 	private final int QUANTUM = 1000 / 60;
+	private IEventNotifier eventNotifier;
 	
-    public SwtJavaClient(final Machine machine, VdpHandler vdp, ISwtVideoRenderer renderer, KeyboardHandler keyboardHandler, Display display) {
-    	this.display = display;
+    public SwtJavaClient(final Machine machine, VdpHandler vdp, boolean awtRenderer) {
+    	this.display = new Display();
+    	this.video = vdp;
+    	
+    	if (awtRenderer) {
+    		videoRenderer = new SwtAwtVideoRenderer(display);
+    	
+    		keyboardHandler = new AwtKeyboardHandler(
+        		((SwtAwtVideoRenderer)videoRenderer).getAwtCanvas(),
+        		machine.getKeyboardState(), machine);
+    	} else {
+    		videoRenderer = createSwtVideoRenderer(display);
+    		keyboardHandler = new SwtKeyboardHandler(((SwtVideoRenderer) videoRenderer).getShell(),
+    				machine.getKeyboardState(), machine);
+    	}
+
+        SwtWindow window = new SwtWindow(display, machine);
+        eventNotifier = window.getEventNotifier();
+        
+        if (keyboardHandler instanceof AwtKeyboardHandler)
+        	((AwtKeyboardHandler) keyboardHandler).setEventNotifier(eventNotifier);
+        
+        window.setSwtVideoRenderer((ISwtVideoRenderer) videoRenderer);
+
         this.machine = machine;
         
         expectedUpdateTime = QUANTUM;
         
-        videoRenderer = renderer;
-        video = vdp;
-        
-        SwtWindow window = new SwtWindow(display, (ISwtVideoRenderer) videoRenderer, machine);
-
         video.setCanvas(videoRenderer.getCanvas());
 
         Shell shell = window.getShell();
@@ -63,11 +84,51 @@ public class SwtJavaClient implements Client {
         cruHandler = machine.getCru(); 
         machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
         
-        this.keyboardHandler = keyboardHandler;
         if (keyboardHandler instanceof SwtKeyboardHandler)
         	((SwtKeyboardHandler) keyboardHandler).init(((SwtVideoRenderer) videoRenderer).getWidget());
     }
-    /*
+    /**
+	 * @param display2
+	 * @return
+	 */
+	private VideoRenderer createSwtVideoRenderer(Display display2) {
+	   	ISwtVideoRenderer videoRenderer = null;
+    	if (false && videoRenderer == null && SWT.getPlatform().equals("gtk")) {
+        	// try OpenGL first ?
+        	try {
+        		Class<?> klass = Class.forName(
+        				SwtVideoRenderer.class.getName() + "OGL");
+        		videoRenderer = (ISwtVideoRenderer) klass.getConstructor().newInstance();
+        	} catch (Exception e) {
+        		System.err.println("Cannot load OpenGL/GTK-specific support: " +e.getMessage());
+        	}
+        }
+
+        if (false && videoRenderer == null) {
+        	// try J3D first ?
+        	try {
+        		Class<?> klass = Class.forName(
+        				SwtVideoRenderer.class.getName() + "J3D");
+        		videoRenderer = (ISwtVideoRenderer) klass.getConstructor().newInstance();
+        	} catch (Exception e) {
+        		System.err.println("Cannot load J3D support: " +e.getMessage());
+        	}
+        }
+
+        if (videoRenderer == null && SWT.getPlatform().equals("gtk")) {
+        	try {
+	        	Class<?> klass = Class.forName(
+	        			SwtVideoRenderer.class.getName() + "GTK");
+	        	videoRenderer = (ISwtVideoRenderer) klass.getConstructor().newInstance();
+        	} catch (Exception e) {
+        		System.err.println("Cannot load GTK-specific support: " +e.getMessage());
+        	}
+        }
+        if (videoRenderer == null)
+        	videoRenderer = new SwtVideoRenderer();
+        return videoRenderer;
+	}
+	/*
      * (non-Javadoc)
      * 
      * @see v9t9.Client#close()
@@ -171,5 +232,6 @@ public class SwtJavaClient implements Client {
     public boolean isAlive() {
     	return !display.isDisposed();
     }
+    
 }
 

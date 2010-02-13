@@ -22,7 +22,7 @@ import v9t9.emulator.clients.builtin.BaseKeyboardHandler;
 import v9t9.keyboard.KeyboardState;
 
 /**
- * SWT keyboard control.
+ * SWT keyboard control. 
  * 
  * We establish a display-level filter because SWT doesn't route keyboard events
  * predictably to the widgets you'd expect.

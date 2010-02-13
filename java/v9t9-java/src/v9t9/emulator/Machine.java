@@ -318,7 +318,7 @@ abstract public class Machine {
     	            try {
     	            	// synchronize on events like debugging, loading/saving, etc
 	            		synchronized (executionLock) {
-	            			if (!bExecuting && isAlive()) {
+	            			if (!bExecuting && bAlive) {
 	            				executionLock.wait(100);
 	            			}
 	            			if (bExecuting) {
@@ -355,11 +355,11 @@ abstract public class Machine {
     }
 
 	public void setNotRunning() {
+		bAlive = false;
 		synchronized (executionLock) {
 			bExecuting = false;
 			executionLock.notifyAll();
 		}
-		bAlive = false;
 		machineRunner.interrupt();
 		videoRunner.interrupt();
 		timer.cancel();

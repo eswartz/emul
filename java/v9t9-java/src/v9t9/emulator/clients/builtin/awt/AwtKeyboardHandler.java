@@ -10,6 +10,7 @@ import java.awt.event.KeyListener;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.BaseKeyboardHandler;
+import v9t9.emulator.clients.builtin.IEventNotifier;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.keyboard.KeyboardState;
 
@@ -20,6 +21,7 @@ import v9t9.keyboard.KeyboardState;
 public class AwtKeyboardHandler extends BaseKeyboardHandler {
 
 	private long lastKeystrokeTime;
+	private IEventNotifier eventNotifier;
 
 	public AwtKeyboardHandler(Component component, final KeyboardState keyboardState, Machine machine) {
 		super(keyboardState, machine);
@@ -169,12 +171,16 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				if (pressed) {
 					boolean speedy;
 					try {
-						speedy = !Toolkit.getDefaultToolkit().getLockingKeyState(keyCode);
+						speedy = Toolkit.getDefaultToolkit().getLockingKeyState(keyCode);
 					} catch (UnsupportedOperationException e) {
 						// hmm
-						speedy = !Cpu.settingRealTime.getBoolean();
+						speedy = Cpu.settingRealTime.getBoolean();
 					}
-					Cpu.settingRealTime.setBoolean(speedy);
+					Cpu.settingRealTime.setBoolean(!speedy);
+					if(eventNotifier != null)
+						eventNotifier.notifyEvent(null, 
+								speedy ? "Scroll Lock: Executing at maximum speed" : 
+									"Scroll Lock: Executing at fixed rate");
 					//VdpTMS9918A.settingCpuSynchedVdpInterrupt.setBoolean(speedy);
 				}
 				break;
@@ -195,4 +201,10 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		}
 	}
 
+	/**
+	 * @param eventNotifier the eventNotifier to set
+	 */
+	public void setEventNotifier(IEventNotifier eventNotifier) {
+		this.eventNotifier = eventNotifier;
+	}
 }
