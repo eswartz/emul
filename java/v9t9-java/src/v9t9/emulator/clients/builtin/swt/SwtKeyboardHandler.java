@@ -141,6 +141,8 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		//byte realshift = keyboardState.getRealShift();
 		//byte realshift = shift;
 		
+		int joy = (shift & KeyboardState.SHIFT) != 0 ? 2 : 1;
+		
 		if (keyCode > 128 || !keyboardState.postCharacter(pressed, false, shift, (char) keyCode)) {
 			if (keyCode == 0)
 				keyCode = shift;
@@ -219,6 +221,57 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			case SWT.END:
 				keyboardState.setKey(pressed, false, fctnShifted, '0');		// Fctn-0
 				break;
+				
+
+			case SWT.KEYPAD_8:
+				keyboardState.setJoystick(joy,
+						KeyboardState.JOY_Y,
+						0, pressed ? -1 : 0, false);
+				break;
+			case SWT.KEYPAD_2:
+				keyboardState.setJoystick(joy,
+						KeyboardState.JOY_Y,
+						 0, pressed ? 1 : 0, false);
+				break;
+			case SWT.KEYPAD_4:
+				keyboardState.setJoystick(joy,
+						KeyboardState.JOY_X,
+						pressed ? -1 : 0, 0, false);
+				break;
+			case SWT.KEYPAD_6:
+				keyboardState.setJoystick(joy,
+						KeyboardState.JOY_X,
+						pressed ? 1 : 0, 0, false);
+				break;
+				
+			case SWT.KEYPAD_7:
+				keyboardState.setJoystick(joy,
+						KeyboardState.JOY_Y | KeyboardState.JOY_X,
+						pressed ? -1 : 0, pressed ? -1 : 0, false);
+				break;
+				
+			case SWT.KEYPAD_0:
+				keyboardState.setJoystick(joy,
+						KeyboardState.JOY_B,
+						0, 0, pressed);
+				break;
+				
+			case SWT.KEYPAD_9:
+				keyboardState.setJoystick(joy,
+						KeyboardState.JOY_Y | KeyboardState.JOY_X,
+						pressed ? 1 : 0, pressed ? -1 : 0, false);
+				break;
+			case SWT.KEYPAD_3:
+				keyboardState.setJoystick(joy,
+						KeyboardState.JOY_Y | KeyboardState.JOY_X,
+						pressed ? 1 : 0, pressed ? 1 : 0, false);
+				break;
+			case SWT.KEYPAD_1:
+				keyboardState.setJoystick(joy,
+						KeyboardState.JOY_Y | KeyboardState.JOY_X,
+						pressed ? -1 : 0, pressed ? 1 : 0, false);
+				break;
+				
 
 			default:
 				if (keyCode != shift) {

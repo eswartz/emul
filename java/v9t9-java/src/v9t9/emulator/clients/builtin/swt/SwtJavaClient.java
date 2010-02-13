@@ -115,6 +115,7 @@ public class SwtJavaClient implements Client {
         	}
         }
 
+        /*
         if (videoRenderer == null && SWT.getPlatform().equals("gtk")) {
         	try {
 	        	Class<?> klass = Class.forName(
@@ -123,7 +124,7 @@ public class SwtJavaClient implements Client {
         	} catch (Exception e) {
         		System.err.println("Cannot load GTK-specific support: " +e.getMessage());
         	}
-        }
+        }*/
         if (videoRenderer == null)
         	videoRenderer = new SwtVideoRenderer();
         return videoRenderer;

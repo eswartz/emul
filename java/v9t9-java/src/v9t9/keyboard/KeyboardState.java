@@ -24,8 +24,8 @@ public class KeyboardState {
     private static final byte FCTN_C = 0;
     private static final byte CTRL_R = 1;
     private static final byte CTRL_C = 0;
-    static final byte JOY1_C = 6;
-    static final byte JOY1_R = 7;
+    private static final byte JOY1_C = 6;
+    private static final byte JOY1_R = 7;
 
     /* Map of keys whose shifted/ctrled/fctned versions are being tracked */
     private byte fakemap[] = new byte[256];
@@ -331,7 +331,7 @@ public class KeyboardState {
 		    }
 		    */
 		    
-		    CHANGEKBDCRU(r, c, onoff ? 1 : 0);
+		    CHANGEKBDCRU(r, c, onoff);
 		    
 		}
 	}
@@ -365,14 +365,14 @@ public class KeyboardState {
                     shiftmap[key] = 1;
                     cshift++;
                 }
-                CHANGEKBDCRU(SHIFT_R, SHIFT_C, 1);
+                CHANGEKBDCRU(SHIFT_R, SHIFT_C, true);
             } else {
                 if (shiftmap[key] != 0) {
                     shiftmap[key] = 0;
                     cshift--;
                 }
                 if (cshift == 0)
-                    CHANGEKBDCRU(SHIFT_R, SHIFT_C, 0);
+                    CHANGEKBDCRU(SHIFT_R, SHIFT_C, false);
             }
         }
         if ((shift & FCTN) != 0) {
@@ -381,14 +381,14 @@ public class KeyboardState {
                     fctnmap[key] = 1;
                     cfctn++;
                 }
-                CHANGEKBDCRU(FCTN_R, FCTN_C, 1);
+                CHANGEKBDCRU(FCTN_R, FCTN_C, true);
             } else {
                 if (fctnmap[key] != 0) {
                     fctnmap[key] = 0;
                     cfctn--;
                 }
                 if (cfctn == 0)
-                    CHANGEKBDCRU(FCTN_R, FCTN_C, 0);
+                    CHANGEKBDCRU(FCTN_R, FCTN_C, false);
             }
         }
         if ((shift & CTRL) != 0) {
@@ -397,21 +397,21 @@ public class KeyboardState {
                     ctrlmap[key] = 1;
                     cctrl++;
                 }
-                CHANGEKBDCRU(CTRL_R, CTRL_C, 1);
+                CHANGEKBDCRU(CTRL_R, CTRL_C, true);
             } else {
                 if (ctrlmap[key] != 0) {
                     ctrlmap[key] = 0;
                     cctrl--;
                 }
                 if (cctrl == 0)
-                    CHANGEKBDCRU(CTRL_R, CTRL_C, 0);
+                    CHANGEKBDCRU(CTRL_R, CTRL_C, false);
             }
         }
 		return shift;
 	}
     
-    private void CHANGEKBDCRU(byte r, byte c, int v) {
-        if (v != 0)
+    private void CHANGEKBDCRU(byte r, byte c, boolean v) {
+        if (v)
             SETKBDCRU(r, c);
         else
             RESETKBDCRU(r, c);
@@ -451,6 +451,54 @@ public class KeyboardState {
             return res && TESTKBDCRU(r, c);
         } else
             return res;
+    }
+
+
+    public static final int JOY_X = 1,	// set X-axis
+		JOY_Y = 2,	// set Y-axis
+		JOY_B = 4	// set buttons
+	;
+    
+	public static final int JOY_FIRE_R = 7;
+	public static final int JOY_LEFT_R = 6;
+	public static final int JOY_RIGHT_R = 5;
+	public static final int JOY_DOWN_R = 4;
+	public static final int JOY_UP_R = 3;
+
+
+	//	j=1 or 2
+	final private void CHANGEJOYCRU(int j,int r, boolean v) {
+		CHANGEKBDCRU((byte) r, (byte)(JOY1_C+(j)-1), v);
+	}
+	
+	/**
+	 * 
+	 * @param joy 1 or 2
+	 * @param mask JOY_X, JOY_Y, JOY_B
+	 * @param x neg or pos or 0
+	 * @param y neg or pos or 0
+	 * @param fire boolean
+	 */
+    public synchronized void setJoystick(int joy, int mask, int x, int y, boolean fire) {
+    	if ((mask & JOY_X) != 0) {
+    		//logger(_L | L_1, _("changing JOY_X (%d)\n\n"), x);
+    		CHANGEJOYCRU(joy, JOY_LEFT_R, x < 0);
+    		CHANGEJOYCRU(joy, JOY_RIGHT_R, x > 0);
+    	}
+    	if ((mask & JOY_Y) != 0) {
+    		//logger(_L | L_1, _("changing JOY_Y (%d)\n\n"), y);
+    		CHANGEJOYCRU(joy, JOY_UP_R, y < 0);
+    		CHANGEJOYCRU(joy, JOY_DOWN_R, y > 0);
+    	}
+    	if ((mask & JOY_B) != 0) {
+    		//logger(_L | L_1, _("changing JOY_B (%d)\n\n"), fire);
+    		CHANGEJOYCRU(joy, JOY_FIRE_R, fire);
+    	}
+
+    	/*  clear unused bits  */
+    	CHANGEJOYCRU(joy, 0, false);
+    	CHANGEJOYCRU(joy, 1, false);
+    	CHANGEJOYCRU(joy, 2, false);
     }
     
 	public synchronized void setAlpha(boolean on) {

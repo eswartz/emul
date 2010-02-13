@@ -491,7 +491,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
-					return;
 				}
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
