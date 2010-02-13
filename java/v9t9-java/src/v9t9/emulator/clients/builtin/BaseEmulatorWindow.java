@@ -140,7 +140,7 @@ public abstract class BaseEmulatorWindow {
 		}
 	}
 
-	protected void screenshot() {
+	protected File screenshot() {
 		
 		//String dirname = selectDirectory(
 		//		"Select screenshot directory", "ScreenShotsPath", "screenshots", true);
@@ -153,16 +153,19 @@ public abstract class BaseEmulatorWindow {
 				showErrorMessage("Save error", 
 						"Too many screenshots here!");
 				EmulatorSettings.getInstance().clearConfigVar("ScreenShotsBase");
-				screenshot();
+				return screenshot();
 			} else {
 				try {
 					videoRenderer.saveScreenShot(saveFile);
+					return saveFile;
 				} catch (IOException e) {
 					showErrorMessage("Save error", 
 						"Failed to write file:\n\n" + e.getMessage());
+					return null;
 				}
 			}
 		}
+		return null;
 	}
 	
 	protected File getUniqueFile(String filenameBase) {

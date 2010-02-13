@@ -22,6 +22,7 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 	ButtonBarLayout layout;
 	private boolean isHorizontal;
 	private Composite buttonComposite;
+	private final IFocusRestorer focusRestorer;
 
 	/**
 	 * Create a button bar with the given orientation.  This must be in a parent with a GridLayout.
@@ -29,9 +30,10 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 	 * @param style
 	 * @param videoRenderer
 	 */
-	public ButtonBar(Composite parent, int style) {
+	public ButtonBar(Composite parent, int style, IFocusRestorer focusRestorer) {
 		// the bar itself is the full width of the parent
 		super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS);
+		this.focusRestorer = focusRestorer;
 		this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
 		
 		//setLayoutData(new GridData(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL, false, false));
@@ -69,6 +71,9 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 		});
 	}
 	
+	public IFocusRestorer getFocusRestorer() {
+		return focusRestorer;
+	}
 	class ButtonBarLayout extends Layout {
 
 		@Override

@@ -22,6 +22,6 @@ public class SoundFactory {
 		if (File.separatorChar == '/')
 			return new AlsaSoundListener(null);
 		else
-			return new JavaSoundListener(100);
+			return new Win32SoundListener();
 	}
 }

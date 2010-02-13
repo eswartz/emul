@@ -4,8 +4,8 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 
 import org.eclipse.jface.dialogs.DialogSettings;
@@ -45,6 +45,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.ToolTip;
 import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.PrefUtils;
 import org.ejs.coffee.core.utils.Setting;
@@ -65,19 +66,22 @@ import v9t9.emulator.runtime.Executor;
  */
 public class SwtWindow extends BaseEmulatorWindow {
 	
+	protected static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
+	protected static final String DEBUGGER_TOOL_ID = "debugger";
 	protected Shell shell;
 	protected Control videoControl;
 	private ButtonBar buttonBar;
-	private List<Shell> toolShells;
+	private Map<String, Shell> toolShells;
 	private Timer toolUiTimer;
 	private Image mainIcons;
 	private Canvas cpuMetricsCanvas;
+	private IFocusRestorer focusRestorer;
 	
 	public SwtWindow(Display display, final ISwtVideoRenderer renderer, final Machine machine) {
 		super(machine);
 		setVideoRenderer(renderer);
 		
-		toolShells = new ArrayList<Shell>();
+		toolShells = new HashMap<String, Shell>();
 		toolUiTimer = new Timer(true);
 		
 		shell = new Shell(display, SWT.SHELL_TRIM | SWT.RESIZE);
@@ -148,6 +152,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 			
 		});
 		
+		focusRestorer = new IFocusRestorer() {
+			public void restoreFocus() {
+				videoRenderer.setFocus();
+			}
+		};
 		createButtons(mainComposite);
 		
 		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar, SWT.BORDER, machine.getCpuMetrics());
@@ -236,7 +245,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		File iconsFile = V9t9.getDataFile("icons/icons.png");
 		mainIcons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
 		
-		buttonBar = new ButtonBar(parent, SWT.HORIZONTAL);
+		buttonBar = new ButtonBar(parent, SWT.HORIZONTAL, focusRestorer);
 		GridLayout mainLayout = new GridLayout(1, false);
 		mainLayout.marginHeight = mainLayout.marginWidth = 0;
 		buttonBar.setLayout(mainLayout);
@@ -268,9 +277,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
-						final DebuggerWindow window = new DebuggerWindow(shell, SWT.NONE, machine, toolUiTimer);
-						createToolShell(shell, window, "DebuggerWindowBounds");	
+						if (!restoreToolShell(DEBUGGER_TOOL_ID)) {
+							final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
+							final DebuggerWindow window = new DebuggerWindow(shell, SWT.NONE, machine, toolUiTimer);
+							createToolShell(DEBUGGER_TOOL_ID, shell, window, "DebuggerWindowBounds");
+						}
 					}
 			}
 		);
@@ -280,10 +291,23 @@ public class SwtWindow extends BaseEmulatorWindow {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
-						final ModuleSelector window = new ModuleSelector(shell, machine);
-						createToolShell(shell, window, "ModuleWindowBounds");
-						shell.setSize(400, 500);
+						if (!restoreToolShell(MODULE_SELECTOR_TOOL_ID)) {
+							final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
+							IFocusRestorer moduleRestorer = new IFocusRestorer() {
+								
+								public void restoreFocus() {
+									Display.getDefault().asyncExec(new Runnable() {
+										public void run() {
+											focusRestorer.restoreFocus();
+											hideShell(shell);
+										}
+									});
+								}
+							};
+							final ModuleSelector window = new ModuleSelector(shell, machine, moduleRestorer);
+							createToolShell(MODULE_SELECTOR_TOOL_ID, shell, window, "ModuleWindowBounds");
+							shell.setSize(400, 500);
+						}
 					}
 			}
 		);
@@ -332,7 +356,15 @@ public class SwtWindow extends BaseEmulatorWindow {
 				"Take screenshot", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						screenshot();
+						File file = screenshot();
+						if (file != null) {
+							ToolTip tip = new ToolTip(getShell(), SWT.ICON_INFORMATION);
+							tip.setText("Recorded screenshot to " + file);
+							tip.setAutoHide(true);
+							ImageButton b = ((ImageButton) e.widget);
+							tip.setLocation(b.toDisplay(e.x, e.y + b.getSize().y));
+							tip.setVisible(true);
+						}
 					}
 			});
 
@@ -414,7 +446,34 @@ public class SwtWindow extends BaseEmulatorWindow {
 	}
 	 */
 	
-	protected void createToolShell(final Shell shell, final Composite tool, final String boundsPref) {
+	protected void hideShell(final Shell shell) {
+		Thread hider = new Thread() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					return;
+				}
+				Display.getDefault().asyncExec(new Runnable() {
+					public void run() {
+						shell.setVisible(false);
+					}
+				});
+			}
+		};
+		hider.start();
+	}
+	protected boolean restoreToolShell(String toolId) {
+		Shell old = toolShells.get(toolId);
+		if (old != null) {
+			old.setVisible(true);
+			old.setFocus();
+			return true;
+		}
+		return false;
+	}
+	protected void createToolShell(final String toolId, final Shell shell, final Composite tool, final String boundsPref) {
 		shell.setImage(getShell().getImage());
 		shell.setLayout(new GridLayout(1, false));
 		
@@ -452,15 +511,18 @@ public class SwtWindow extends BaseEmulatorWindow {
 				EmulatorSettings.getInstance().getApplicationSettings().put(boundsPref, boundsStr);
 			}
 		});
-		addToolShell(shell);
+		addToolShell(toolId, shell);
 		
 	}
 
-	protected void addToolShell(final Shell toolShell) {
-		toolShells.add(toolShell);
+	protected void addToolShell(final String toolId, final Shell toolShell) {
+		Shell old = toolShells.get(toolId);
+		if (old != null)
+			old.dispose();
+		toolShells.put(toolId, toolShell);
 		toolShell.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
-				toolShells.remove(toolShell);
+				toolShells.remove(toolId);
 			}
 		});
 	}
@@ -544,9 +606,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 		cpuMetricsCanvas.dispose();
 		
 		toolUiTimer.cancel();
-		for (Object shell : toolShells.toArray()) {
-			((Shell)shell).dispose();
+		
+		Shell[] shellArray = (Shell[]) toolShells.values().toArray(new Shell[toolShells.values().size()]);
+		for (Shell shell : shellArray) {
+			shell.dispose();
 		}
+		toolShells.clear();
+		
 		super.dispose();
 	}
 

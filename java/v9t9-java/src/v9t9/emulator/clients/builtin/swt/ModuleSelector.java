@@ -33,6 +33,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
 import v9t9.emulator.Machine;
+import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.modules.IModule;
@@ -50,13 +51,15 @@ public class ModuleSelector extends Composite {
 	private Composite buttonBar;
 	private final Machine machine;
 	private Button switchButton;
+	private final IFocusRestorer focusRestorer;
 
 	/**
 	 * 
 	 */
-	public ModuleSelector(Composite parent, Machine machine) {
+	public ModuleSelector(Composite parent, Machine machine, IFocusRestorer restorer) {
 		super(parent, SWT.NONE);
 		this.machine = machine;
+		this.focusRestorer = restorer;
 		
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
@@ -127,7 +130,7 @@ public class ModuleSelector extends Composite {
 		nameColumn.pack();
 	}
 
-	/**
+	/** 
 	 * 
 	 */
 	protected void switchModule() {
@@ -146,7 +149,11 @@ public class ModuleSelector extends Composite {
 				machine.getMemory().addAndMap(entry);
 				entry.moduleLoaded = selectedModule;
 			}
-			machine.getCpu().contextSwitch(0);
+			machine.getCpu().setPin(Cpu.PIN_RESET);
+			
+			if (focusRestorer != null) {
+				focusRestorer.restoreFocus();
+			}
 		} catch (IOException e) {
 			ErrorDialog.openError(getShell(), "Failed to load", 
 					"Failed to load all the entries from the module",

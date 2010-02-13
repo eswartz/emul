@@ -115,7 +115,6 @@ public class JavaSoundListener implements ISoundListener {
 						return;
 					
 					if (chunk.soundData != null) {
-						//System.out.println("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
 						soundGeneratorLine.write(chunk.soundData, 0,
 								chunk.soundData.length);
 					}
@@ -128,8 +127,6 @@ public class JavaSoundListener implements ISoundListener {
 		soundWritingThread.start();
 
 		soundGeneratorLine.start();
-		
-		//soundSamplesPerTick = soundFormat.getFrameSize() * soundFramesPerTick / 2;
 	}
 
 	public void dispose() {

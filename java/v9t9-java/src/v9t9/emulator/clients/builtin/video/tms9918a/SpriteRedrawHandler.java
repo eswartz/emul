@@ -144,6 +144,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 			int y = access.memory[access.offset++] & 0xff;
 			int x = access.memory[access.offset++] & 0xff;
 			int ch = access.memory[access.offset++] & 0xff;
+			ch &= ~(numchars - 1);
 			int color = access.memory[access.offset++] & 0xff;
 			int shift = (color & 0x80) != 0 ? -32 : 0;
 			color &= 0xf;
@@ -163,7 +164,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 				sprite.move(x, y);
 				sprite.setColor(color);
 				sprite.setShift(shift);
-				sprite.setPattern(vdp.getByteReadMemoryAccess(sprpatbase + ((ch & 0xfc) << 3)));
+				sprite.setPattern(vdp.getByteReadMemoryAccess(sprpatbase + (ch << 3)));
 				sprite.setSize(size);
 				sprite.setNumchars(numchars);
 				

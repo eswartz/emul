@@ -48,6 +48,7 @@ public class ImageButton extends Canvas {
 	private boolean isHighlighted;
 	private boolean pressed;
 	private boolean isMenuHovering;
+	private IFocusRestorer focusRestorer;
 	
 	public ImageButton(ButtonParentDrawer parentDrawer, int style, Image icon_, Rectangle bounds_, String tooltip) {
 		super(parentDrawer.getComposite(),  style /*| SWT.NO_BACKGROUND*/);
@@ -105,6 +106,8 @@ public class ImageButton extends Canvas {
 			public void mouseUp(MouseEvent e) {
 				if (e.button == 1)
 					doClickStop(e);
+				if (focusRestorer != null)
+					focusRestorer.restoreFocus();
 			}
 		});
 		
@@ -133,6 +136,10 @@ public class ImageButton extends Canvas {
 		});
 	}
 
+
+	public void setFocusRestorer(IFocusRestorer focusRestorer) {
+		this.focusRestorer = focusRestorer;
+	}
 	public void setOverlayBounds(Rectangle overlayBounds) {
 		if (overlayBounds == null)
 			this.overlayBounds = null;
@@ -228,7 +235,6 @@ public class ImageButton extends Canvas {
 		for (SelectionListener listener : array) {
 			listener.widgetSelected(selEvent);
 		}
-		getShell().setFocus();
 		//this.buttonBar.videoRenderer.setFocus();
 		
 	}
