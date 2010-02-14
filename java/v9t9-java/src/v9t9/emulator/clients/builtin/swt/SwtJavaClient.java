@@ -32,7 +32,7 @@ public class SwtJavaClient implements Client {
     CruHandler cruHandler;
     private Machine machine;
 	private KeyboardHandler keyboardHandler;
-	private VideoRenderer videoRenderer;
+	private ISwtVideoRenderer videoRenderer;
 	private Display display;
 	private long avgUpdateTime;
 	private long expectedUpdateTime;
@@ -40,6 +40,7 @@ public class SwtJavaClient implements Client {
 
 	private final int QUANTUM = 1000 / 60;
 	private IEventNotifier eventNotifier;
+	private MouseJoystickHandler mouseJoystickHandler;
 	
     public SwtJavaClient(final Machine machine, VdpHandler vdp, boolean awtRenderer) {
     	this.display = new Display();
@@ -65,6 +66,9 @@ public class SwtJavaClient implements Client {
         
         window.setSwtVideoRenderer((ISwtVideoRenderer) videoRenderer);
 
+        mouseJoystickHandler = new MouseJoystickHandler(videoRenderer, machine.getKeyboardState());
+        window.setMouseJoystickHandler(mouseJoystickHandler);
+        
         this.machine = machine;
         
         expectedUpdateTime = QUANTUM;
@@ -91,7 +95,7 @@ public class SwtJavaClient implements Client {
 	 * @param display2
 	 * @return
 	 */
-	private VideoRenderer createSwtVideoRenderer(Display display2) {
+	private ISwtVideoRenderer createSwtVideoRenderer(Display display2) {
 	   	ISwtVideoRenderer videoRenderer = null;
     	if (false && videoRenderer == null && SWT.getPlatform().equals("gtk")) {
         	// try OpenGL first ?

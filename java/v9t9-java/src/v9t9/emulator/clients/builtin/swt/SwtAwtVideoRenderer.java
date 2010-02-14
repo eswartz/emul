@@ -8,6 +8,7 @@ import java.awt.Frame;
 import java.awt.Panel;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.internal.gtk.OS;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -36,6 +38,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private Canvas awtContainer;
 
 	private List<org.eclipse.swt.events.MouseListener> mouseListeners = new ArrayList<org.eclipse.swt.events.MouseListener>();
+	private List<org.eclipse.swt.events.MouseMoveListener> mouseMoveListeners = new ArrayList<org.eclipse.swt.events.MouseMoveListener>();
 	private FixedAspectLayout fixedAspectLayout;
 	
 	public SwtAwtVideoRenderer(Display display) {
@@ -66,10 +69,11 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 
 		MouseListener l = new MouseListener() {
 			public void mousePressed(MouseEvent e) {
-				//convertMouseEvent(SWT.MouseDown, e);
+				convertMouseEvent(SWT.MouseDown, e);
 			}
 
 			public void mouseReleased(MouseEvent e) {
+				convertMouseMoveEvent(SWT.MouseUp, e);
 				convertMouseEvent(SWT.MouseUp, e);
 				
 			}
@@ -78,14 +82,14 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 			}
 
 			public void mouseExited(MouseEvent e) {
-				//convertMouseEvent(SWT.MouseExit, e);
+				///convertMouseMoveEvent(SWT.MouseUp, e);
 			}
 
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 2) 
 					convertMouseEvent(SWT.MouseDoubleClick, e);
 				else {
-					convertMouseEvent(SWT.MouseDown, e);
+					//convertMouseEvent(SWT.MouseDown, e);
 					//convertMouseEvent(SWT.MouseUp, e);
 				}
 			}
@@ -93,6 +97,23 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 			
 		};
 		getAwtCanvas().addMouseListener(l);
+		
+		MouseMotionListener ml = new MouseMotionListener() {
+			/* (non-Javadoc)
+			 * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
+			 */
+			public void mouseMoved(MouseEvent e) {
+				convertMouseMoveEvent(SWT.MouseMove, e);
+			}
+			/* (non-Javadoc)
+			 * @see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
+			 */
+			public void mouseDragged(MouseEvent e) {
+				convertMouseMoveEvent(SWT.MouseMove, e);
+			}
+		};
+		
+		getAwtCanvas().addMouseMotionListener(ml);
 		
 		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0);
 		awtContainer.setLayout(fixedAspectLayout);
@@ -110,9 +131,18 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		return awtContainer;
 	}
 	
+	public Control getControl() {
+		return awtContainer;
+	}
 	public void addMouseEventListener(
 			org.eclipse.swt.events.MouseListener listener) {
-		mouseListeners.add(listener);		
+		if (!mouseListeners.contains(listener))
+			mouseListeners.add(listener);		
+	}
+	public void addMouseMotionListener(
+			org.eclipse.swt.events.MouseMoveListener listener) {
+		if (!mouseMoveListeners.contains(listener))
+			mouseMoveListeners.add(listener);		
 	}
 	protected void convertMouseEvent(int type, MouseEvent e) {
 		//System.out.println("Converting " + e);
@@ -120,7 +150,17 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		
 		final Event event = new Event(); 
 		event.type = type;
-		event.button = e.getButton() - MouseEvent.BUTTON1 + 1;
+		if (e.getButton() != MouseEvent.NOBUTTON) {
+			event.button = e.getButton() - MouseEvent.BUTTON1 + 1;
+		} else {
+			int mask = e.getModifiersEx();
+			if ((mask & MouseEvent.BUTTON1_DOWN_MASK) != 0)
+				event.button = 1;
+			else if ((mask & MouseEvent.BUTTON2_DOWN_MASK) != 0)
+				event.button = 2;
+			else if ((mask & MouseEvent.BUTTON3_DOWN_MASK) != 0)
+				event.button = 3;
+		}
 		event.x = e.getX();
 		event.y = e.getY();
 		event.item = shell;
@@ -148,6 +188,43 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		
 	}
 
+	protected void convertMouseMoveEvent(int type, MouseEvent e) {
+		//System.out.println("Converting " + e);
+		e.consume();
+		
+		final Event event = new Event(); 
+		event.type = type;
+		if (e.getButton() != MouseEvent.NOBUTTON) {
+			event.button = e.getButton() - MouseEvent.BUTTON1 + 1;
+		} else {
+			int mask = e.getModifiersEx();
+			if ((mask & MouseEvent.BUTTON1_DOWN_MASK) != 0)
+				event.button = 1;
+			else if ((mask & MouseEvent.BUTTON2_DOWN_MASK) != 0)
+				event.button = 2;
+			else if ((mask & MouseEvent.BUTTON3_DOWN_MASK) != 0)
+				event.button = 3;
+		}
+		event.x = e.getX();
+		event.y = e.getY();
+		event.item = shell;
+		event.widget = shell;
+		
+		final org.eclipse.swt.events.MouseEvent mouseEvent = new org.eclipse.swt.events.MouseEvent(event);
+		
+		shell.getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				for (org.eclipse.swt.events.MouseMoveListener listener : mouseMoveListeners) {
+					switch (event.type) {
+					case SWT.MouseMove:
+						listener.mouseMove(mouseEvent);
+						break;
+					}
+				}
+			}
+		});
+		
+	}
 	/**
 	 * Apply the current mode's X or Y resolutions to the aspect ratio.
 	 */

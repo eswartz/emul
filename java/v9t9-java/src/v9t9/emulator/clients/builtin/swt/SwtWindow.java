@@ -80,6 +80,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private IFocusRestorer focusRestorer;
 	private final IEventNotifier eventNotifier;
 	private Composite topComposite;
+	private MouseJoystickHandler mouseJoystickHandler;
 	
 	public SwtWindow(Display display, final Machine machine) {
 		super(machine);
@@ -181,31 +182,22 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		renderer.addMouseEventListener(new MouseAdapter() {
 			
-			@Override
 			public void mouseDown(final MouseEvent e) {
-				
 				//System.out.println("Mouse detected " + e);
-				if (e.button == 1) {
-					videoControl.forceFocus();
-					return;
-				}
 				if (!SWT.getPlatform().equals("win32") && e.button == 3) {
 					showAppMenu(e);
-					
-					
 				}
 			}
 			
-			/* (non-Javadoc)
-			 * @see org.eclipse.swt.events.MouseAdapter#mouseUp(org.eclipse.swt.events.MouseEvent)
-			 */
-			@Override
 			public void mouseUp(MouseEvent e) {
+				if (e.button == 1) {
+					focusRestorer.restoreFocus();
+				}
 				if (SWT.getPlatform().equals("win32") && e.button == 3) {
 					showAppMenu(e);
 				}
 			}
-			
+
 		});
 		
 		focusRestorer = new IFocusRestorer() {
@@ -252,6 +244,17 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 		renderer.setFocus();
 	}
+	
+	public void setMouseJoystickHandler(MouseJoystickHandler handler) {
+		//mouseJoystickHandler = new MouseJoystickHandler(videoControl, key);
+		this.mouseJoystickHandler = handler; 
+		((ISwtVideoRenderer)videoRenderer).addMouseEventListener(new MouseAdapter() {
+			public void mouseDoubleClick(MouseEvent e) {
+				mouseJoystickHandler.toggle();
+			}
+		});
+	}
+	
 	/**
 	 * 
 	 */
@@ -263,7 +266,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 		menuShell.setSize(16, 16);
 		Point shellLoc = (((Control)e.widget).toDisplay(e.x, e.y));
 		menuShell.setLocation(shellLoc);
+		
 		final Menu menu = createAppMenu(menuShell, menuShell, true);
+		
 		menuShell.open();
 		menuShell.setVisible(false);
 		menuShell.addFocusListener(new FocusListener() {
@@ -634,6 +639,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 		Menu accelMenu = new Menu(accel);
 		populateAccelMenu(accelMenu);
 		accel.setMenu(accelMenu);
+		
+		if (mouseJoystickHandler != null) {
+			MenuItem mouseJoystickItem = new MenuItem(appMenu, SWT.CHECK);
+			mouseJoystickItem.setText("Use mouse as joystick");
+			mouseJoystickItem.setAccelerator(SWT.CTRL | SWT.ALT | ' ');
+			mouseJoystickItem.setSelection(mouseJoystickHandler.isEnabled());
+		}
 		
 		return appMenu;
 	}

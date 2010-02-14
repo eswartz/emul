@@ -11,6 +11,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
@@ -108,6 +109,9 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		return canvas;
 	}
 
+	public Control getControl() {
+		return canvas;
+	}
 	protected void setupCanvas() {
 		
 	}
@@ -361,6 +365,12 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 
 	public void addMouseEventListener(MouseListener listener) {
 		canvas.addMouseListener(listener);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer#addMouseMotionListener(org.eclipse.swt.events.MouseMoveListener)
+	 */
+	public void addMouseMotionListener(MouseMoveListener listener) {
+		canvas.addMouseMoveListener(listener);
 	}
 	
 }

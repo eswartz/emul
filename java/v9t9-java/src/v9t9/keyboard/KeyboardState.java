@@ -100,11 +100,17 @@ public class KeyboardState {
     }
     
     public synchronized void resetKeyboard() {
-        Arrays.fill(crukeyboardmap, 0, 8, (byte)0);
-        Arrays.fill(lastcrukeyboardmap, 0, 8, (byte)0);
+        Arrays.fill(crukeyboardmap, 0, 6, (byte)0);
+        Arrays.fill(lastcrukeyboardmap, 0, 6, (byte)0);
         Arrays.fill(fakemap, 0, fakemap.length, (byte)0);
         realshift = 0;
         probedColumns = 0;
+    }
+    
+
+    public synchronized void resetJoystick() {
+        Arrays.fill(crukeyboardmap, 6, 8, (byte)0);
+        Arrays.fill(lastcrukeyboardmap, 6, 8, (byte)0);
     }
     
     /**

@@ -457,6 +457,7 @@ abstract public class Machine {
 		vdp.loadState(settings.getSection("VDP"));
 		sound.loadState(settings.getSection("Sound"));
 		keyboardState.resetKeyboard();
+		keyboardState.resetJoystick();
 		
 		//Executor.settingDumpFullInstructions.setBoolean(true);
 		
