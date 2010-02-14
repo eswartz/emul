@@ -25,7 +25,6 @@ public class KeyboardState {
     private static final byte CTRL_R = 1;
     private static final byte CTRL_C = 0;
     private static final byte JOY1_C = 6;
-    private static final byte JOY1_R = 7;
 
     /* Map of keys whose shifted/ctrled/fctned versions are being tracked */
     private byte fakemap[] = new byte[256];

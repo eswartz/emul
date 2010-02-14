@@ -10,19 +10,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Display;
 import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
-import v9t9.emulator.clients.builtin.awt.AwtKeyboardHandler;
-import v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer;
-import v9t9.emulator.clients.builtin.swt.SwtAwtVideoRenderer;
 import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
-import v9t9.emulator.clients.builtin.swt.SwtKeyboardHandler;
-import v9t9.emulator.clients.builtin.swt.SwtVideoRenderer;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.ExpRamArea;

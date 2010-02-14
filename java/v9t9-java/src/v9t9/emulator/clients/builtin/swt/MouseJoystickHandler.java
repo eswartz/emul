@@ -8,8 +8,6 @@ import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 
 import v9t9.keyboard.KeyboardState;
 
@@ -19,7 +17,6 @@ import v9t9.keyboard.KeyboardState;
  */
 public class MouseJoystickHandler {
 
-	private static final int DELTA = 64;
 	private final ISwtVideoRenderer renderer;
 	private boolean enabled;
 	private MouseAdapter mouseButtonListener;
@@ -84,8 +81,8 @@ public class MouseJoystickHandler {
 	/**
 	 * 
 	 */
-	public void toggle() {
-		enabled = !enabled;
+	public void setEnabled(boolean en) {
+		enabled = en;
 		
 		//renderer.getControl().setCapture(enabled);
 		

@@ -250,7 +250,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 		this.mouseJoystickHandler = handler; 
 		((ISwtVideoRenderer)videoRenderer).addMouseEventListener(new MouseAdapter() {
 			public void mouseDoubleClick(MouseEvent e) {
-				mouseJoystickHandler.toggle();
+				mouseJoystickHandler.setEnabled(!mouseJoystickHandler.isEnabled());
+				if (eventNotifier != null)
+					if (mouseJoystickHandler.isEnabled())
+						eventNotifier.notifyEvent(null, "Using mouse as joystick");
+					else
+						eventNotifier.notifyEvent(null, "Releasing mouse as joystick");
 			}
 		});
 	}
@@ -645,6 +650,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 			mouseJoystickItem.setText("Use mouse as joystick");
 			mouseJoystickItem.setAccelerator(SWT.CTRL | SWT.ALT | ' ');
 			mouseJoystickItem.setSelection(mouseJoystickHandler.isEnabled());
+			mouseJoystickItem.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					mouseJoystickHandler.setEnabled(!mouseJoystickHandler.isEnabled());
+				}
+			});
 		}
 		
 		return appMenu;
