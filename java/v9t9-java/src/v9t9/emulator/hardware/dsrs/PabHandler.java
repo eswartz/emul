@@ -36,6 +36,7 @@ public abstract class PabHandler {
 		devname = readFilename((short) (fnaddr - devlen - 1), devlen);
 	
 		pab = new PabStruct();
+		pab.path = devname + "." + fname;
 		
 		pab.fetch(xfer, pabaddr);
 	}
@@ -70,8 +71,8 @@ public abstract class PabHandler {
 		int current = pab.pflags;
 		current = (current & ~0xe0) | (e.getErrorCode());
 		pab.pflags = current;
-		e.printStackTrace();
 		
+		System.out.println(e.getMessage());
 	}
 	
 	public void store() {

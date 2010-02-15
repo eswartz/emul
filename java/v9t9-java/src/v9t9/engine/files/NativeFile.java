@@ -45,9 +45,10 @@ public interface NativeFile {
 	void flush() throws IOException;
 
 	/**
+	 * Get the FDR flags
 	 * @return
 	 */
-	public boolean isProtected();
+	public int getFDRFlags();
 	
 	
 }

@@ -47,5 +47,19 @@ public interface PabConstants {
 	static final int op_write = 3;
 	static final int op_read = 2;
 	static final int op_close = 1;
+	static final int op_restore = 4;
+	static final int op_scratch = 8;
+	static final int op_status = 9;
+	static final int op_delete = 7;
 	
+	final int 
+		st_noexist = 0x80,
+		st_protected = 0x40,
+		st_reserved20 = 0x20,
+		st_internal = 0x10,
+		st_program = 0x08,
+		st_variable = 0x04,
+		st_endofspace = 0x02,
+		st_endoffile = 0x01
+		;
 }

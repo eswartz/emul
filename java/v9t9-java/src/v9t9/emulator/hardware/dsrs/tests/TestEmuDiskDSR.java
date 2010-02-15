@@ -28,6 +28,7 @@ import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.emulator.hardware.dsrs.PabStruct;
 import v9t9.emulator.hardware.dsrs.EmuDiskDsr.EmuDiskPabHandler;
 import v9t9.emulator.hardware.dsrs.EmuDiskDsr.IFileMapper;
+import v9t9.emulator.hardware.dsrs.EmuDiskDsr.OpenFile;
 import v9t9.emulator.hardware.dsrs.EmuDiskDsr.EmuDiskPabHandler.PabInfoBlock;
 import v9t9.engine.files.FDR;
 import v9t9.engine.files.FDRFactory;
@@ -247,6 +248,8 @@ public class TestEmuDiskDSR {
 		assertEquals(0x2000, pab.recnum);
 		assertFDRFile(pab);
 		xfer.assertTouched(0x1000, getNativeFile(pab.path).getFileSize(), 0x2000);
+		
+		assertNull("Should not register open file", getOpenFile(pab));
 	}
 	
 	@Test
@@ -260,7 +263,17 @@ public class TestEmuDiskDSR {
 		xfer.assertTouched(0x1000, 0x20, getNativeFile(pab.path).getFileSize());
 	}
 	
-
+	@Test
+	public void testOpenBinaryFail() throws Exception {
+		// DIS/VAR 254 
+		PabStruct pab = createBinaryPab(PabConstants.op_load, 0x1000, 0x2000, "DSK1.XBPRGBIG");
+		try {
+			runCase(pab);
+			fail("Should have failed");
+		} catch (DsrException e) {
+			assertEquals(PabConstants.e_badfiletype, e.getErrorCode());
+		}
+	}
 	@Test
 	public void testSaveBinaryNotExisting() throws Exception {
 		String devName = "DSK1.TMP0";
@@ -286,7 +299,7 @@ public class TestEmuDiskDSR {
 			doTestSaveBinary(devName);
 			fail("Should not have overwritten protected file");
 		} catch (DsrException e) {
-			assertEquals(PabConstants.e_illegal, e.getErrorCode());
+			assertEquals(PabConstants.e_readonly, e.getErrorCode());
 		}
 	}
 
@@ -318,6 +331,15 @@ public class TestEmuDiskDSR {
 		}
 	}
 	
+	protected PabStruct createPab(int opcode, int pflags, int addr, int reclen, String path) {
+		PabStruct pab = new PabStruct();
+		pab.opcode = opcode;
+		pab.bufaddr = addr;
+		pab.preclen = reclen;
+		pab.pflags = pflags;
+		pab.path = path;
+		return pab;
+	}
 
 	protected PabStruct createOpenPab(int mode, int access, int addr, int reclen, String path) {
 		PabStruct pab = new PabStruct();
@@ -373,6 +395,8 @@ public class TestEmuDiskDSR {
 		
 		PabStruct pab = createOpenPab(PabConstants.m_input, PabConstants.fp_variable, 0x1000, 80, "DSK1.TEXTFILE");
 		runCase(pab);
+		assertNotNull("Should register open file", getOpenFile(pab));
+		
 		assertEquals(0x14, pab.pflags);
 		assertEquals(0x0, pab.recnum);
 		assertEquals(80, pab.preclen);
@@ -692,6 +716,8 @@ public class TestEmuDiskDSR {
 		pab.opcode = PabConstants.op_close;
 		runCase(pab);
 		
+		assertNull("Should close file", getOpenFile(pab));
+		
 		doTest1("DSK1.TMP1");
 		
 	}
@@ -720,6 +746,7 @@ public class TestEmuDiskDSR {
 					fail("#"+i+" -> " + e.toString());
 				}
 			}
+			assertEquals(5, pab.recnum);
 		try {
 			pab.opcode = PabConstants.op_read;
 			runCase(pab);
@@ -728,5 +755,205 @@ public class TestEmuDiskDSR {
 			assertEquals(PabConstants.e_endoffile, e.getErrorCode());
 		}
 				
+	}
+	
+	@Test
+	public void testRestoreRewind() throws Exception {
+		PabStruct pab;
+		
+		// relative file
+		pab = createOpenPab(PabConstants.m_input, PabConstants.fp_relative, 0x1000, 80, "DSK1.DF80");
+		runCase(pab);
+		assertEquals(0, pab.recnum);
+		assertFDRFile(pab);
+		
+		pab.opcode = PabConstants.op_read;
+		runCase(pab);
+		assertEquals(80, pab.charcount);
+		assertEquals(1, pab.recnum);
+		
+		pab.opcode = PabConstants.op_read;
+		runCase(pab);
+		assertEquals(80, pab.charcount);
+		assertEquals(2, pab.recnum);
+		
+		pab.opcode = PabConstants.op_restore;
+		pab.recnum = 3;
+		runCase(pab);
+		assertEquals(3, pab.recnum);
+		
+		pab.opcode = PabConstants.op_read;
+		runCase(pab);
+		assertEquals(80, pab.charcount);
+		assertEquals(4, pab.recnum);
+	
+		pab.opcode = PabConstants.op_close;
+		runCase(pab);
+		
+		
+		// relative file
+		pab = createOpenPab(PabConstants.m_input, 0, 0x1000, 80, "DSK1.DF80");
+		runCase(pab);
+		assertEquals(0, pab.recnum);
+		assertFDRFile(pab);
+		
+		pab.opcode = PabConstants.op_read;
+		runCase(pab);
+		assertEquals(80, pab.charcount);
+		assertEquals(1, pab.recnum);
+		
+		pab.opcode = PabConstants.op_read;
+		runCase(pab);
+		assertEquals(80, pab.charcount);
+		assertEquals(2, pab.recnum);
+		
+		// ignored here
+		pab.opcode = PabConstants.op_restore;
+		pab.recnum = 3;
+		runCase(pab);
+		assertEquals(0, pab.recnum);
+		
+		pab.opcode = PabConstants.op_read;
+		runCase(pab);
+		assertEquals(80, pab.charcount);
+		assertEquals(1, pab.recnum);
+	
+		pab.opcode = PabConstants.op_close;
+		runCase(pab);
+	}
+	
+	@Test
+	public void testStatus() throws Exception {
+		PabStruct pab;
+		
+		int pflags = PabConstants.m_output | PabConstants.fp_relative; // meaningless
+		
+		// closed file
+		pab = createPab(PabConstants.op_status, pflags, 0x1000, 80, "DSK1.DF80");
+		runCase(pab);
+		// better not overwrite
+		assertFDRFile(pab);	
+		
+		assertEquals(0, pab.scrnoffs);
+		
+		pab = createPab(PabConstants.op_status, pflags, 0x1000, 80, "DSK1.DV80");
+		assertEquals(PabConstants.st_variable, readStatus(pab));
+		
+		pab = createPab(PabConstants.op_status, pflags, 0x1000, 80, "DSK1.ROFILE");
+		assertEquals(PabConstants.st_protected | PabConstants.st_program, readStatus(pab));
+		
+		pab = createPab(PabConstants.op_status, pflags, 0x1000, 80, "DSK1.XBPRG");
+		assertEquals(PabConstants.st_program, readStatus(pab));
+		
+		pab = createPab(PabConstants.op_status, pflags, 0x1000, 80, "DSK1.XBPRGBIG");
+		assertEquals(PabConstants.st_variable | PabConstants.st_internal, readStatus(pab));
+
+		///////
+		
+		pab = createOpenPab(PabConstants.m_input, PabConstants.fp_variable, 0x1000, 80, "DSK1.DV80");
+		runCase(pab);
+		assertFDRFile(pab);
+		
+		assertEquals(PabConstants.st_variable, readStatus(pab));
+		
+		// read up to end
+		for (int i = 0; i < test1_lines.length; i++) {
+			assertEquals(PabConstants.st_variable, readStatus(pab));
+			
+			readString(pab);
+		}
+		
+		assertEquals(PabConstants.st_endoffile | PabConstants.st_variable, readStatus(pab));
+	}
+	
+	protected int readStatus(PabStruct pab) throws DsrException {
+		pab.opcode = PabConstants.op_status;
+		runCase(pab);
+		return pab.scrnoffs;
+	}
+
+	@Test
+	public void testDelete() throws Exception {
+		String devName = "DSK1.TMP0";
+		copyFile(devName, "DSK1.ROFILE");
+		
+		PabStruct pab;
+		pab = createPab(PabConstants.op_delete, 0, 0x1000, 80, devName);
+		try {
+			runCase(pab);
+			fail("Should not have deleted protected file");
+		} catch (DsrException e) {
+			assertEquals(PabConstants.e_readonly, e.getErrorCode());
+			assertFDRFile(pab);
+		}
+
+		copyFile(devName, "DSK1.XBPRG");
+		
+		pab = createPab(PabConstants.op_delete, 0, 0x1000, 80, devName);
+		runCase(pab);
+		try {
+			getNativeFile(devName);
+			fail("Should have deleted");
+		} catch (IOException e) {
+			
+		}
+		
+		// delete open file
+
+		pab = createOpenPab(PabConstants.m_output, PabConstants.fp_variable, 0x1000, 0, "DSK1.TMP1");
+		runCase(pab);
+		assertFDRFile(pab);
+		
+		for (int i =0; i < test1_lines.length; i++) {
+			writeString(pab, test1_lines[i]);
+		}
+		
+		pab.opcode = PabConstants.op_delete;
+		runCase(pab);
+		
+		assertNull("Should close deleted file", getOpenFile(pab));
+	}
+
+	/**
+	 * @param pab
+	 * @return
+	 */
+	private OpenFile getOpenFile(PabStruct pab) {
+		return EmuDiskDsr.EmuDiskPabHandler.getPabInfoBlock(dsr.getCruBase()).findOpenFile(pab.pabaddr);
+	}
+	
+	@Test
+	public void testFileCount() throws Exception {
+		xfer.writeParamWord(0x4c, (short) 1);
+		dsr.handleDSR(xfer, (short) EmuDiskDsr.D_FILES);
+		assertEquals(0, xfer.readParamByte(0x50));
+		
+		PabStruct pab1 = createOpenPab(PabConstants.m_input, PabConstants.fp_variable, 0x1000, 0, "DSK1.DV80");
+		runCase(pab1);
+		assertFDRFile(pab1);
+
+		// fine to make a new file on top of an old one
+		PabStruct pab2 = createOpenPab(PabConstants.m_output, 0, 0x1000, 0, "DSK1.TMP1");
+		runCase(pab2);
+		assertFDRFile(pab2);
+
+		pab2.opcode = PabConstants.op_close;
+		runCase(pab2);
+		
+		////////
+		
+		pab1 = createOpenPab(PabConstants.m_input, PabConstants.fp_variable, 0x1000, 0, "DSK1.DV80");
+		runCase(pab1);
+		assertFDRFile(pab1);
+
+		pab2 = createOpenPab(PabConstants.m_output, 0, 0x1000, 0, "DSK1.TMP1");
+		pab2.pabaddr = 0x80;
+		try {
+			runCase(pab2);
+			fail("Should have failed to open extra file");
+		} catch (DsrException e) {
+			assertEquals(PabConstants.e_outofspace, e.getErrorCode());
+		}
+
 	}
 }

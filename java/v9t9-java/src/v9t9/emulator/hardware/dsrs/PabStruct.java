@@ -166,7 +166,8 @@ public class PabStruct implements PabConstants
 	 * @return
 	 */
 	public boolean isReading() {
-		return (pflags & PabConstants.m_mode_mask) != PabConstants.m_output;
+		int mode = (pflags & PabConstants.m_mode_mask);
+		return mode != PabConstants.m_output && mode != PabConstants.m_append;
 	}
 
 

@@ -101,6 +101,7 @@ public class EmuDiskDsr implements DsrHandler {
 		case D_DSK5:
 		{
 			EmuDiskPabHandler handler = new EmuDiskPabHandler(getCruBase(), xfer, mapper);
+			System.out.println(handler);
 			try {
 				handler.run();
 			} catch (DsrException e) {
@@ -357,7 +358,10 @@ public class EmuDiskDsr implements DsrHandler {
 		}
 
 		public int getRecordLength() {
-			return nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDR().getRecordLength() : 80;
+			int len = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDR().getRecordLength() : 80;
+			if (len == 0)
+				len = 256;
+			return len;
 		}
 
 		protected void ensureSector() throws DsrException {
@@ -454,8 +458,33 @@ public class EmuDiskDsr implements DsrHandler {
 		 */
 		public void seekToRecord(int recnum) throws DsrException {
 			if (!isVariable()) {
-				seekToPosition(recnum * getRecordLength());
+				int reclen = getRecordLength();
+				int numrecs = 256 / reclen;
+				int secpos = (recnum / numrecs) * 256;
+				int pos = secpos + reclen * (recnum % numrecs);
+				seekToPosition(pos);
 			}
+		}
+
+		/**
+		 * @return
+		 */
+		public boolean isProgram() {
+			return nativefile != null && (nativefile.getFDRFlags() & IFDRFlags.ff_program) != 0;
+		}
+
+		/**
+		 * @return
+		 */
+		public int getPosition() {
+			return position;
+		}
+
+		/**
+		 * @return
+		 */
+		public boolean isProtected() {
+			return nativefile != null && (nativefile.getFDRFlags() & IFDRFlags.ff_protected) != 0;
 		}
 	}
 	
@@ -487,10 +516,11 @@ public class EmuDiskDsr implements DsrHandler {
 				OpenFile pabfile = openFiles.get(pabaddr);
 				if (pabfile != null) {
 					pabfile.close();
+				} else {
+					if (openFiles.size() >= maxOpenFiles)
+						throw new DsrException(PabConstants.e_outofspace, null, "Too many open files");
 				}
 				pabfile = new OpenFile(file, devName, fileName);
-				if (openFiles.size() > maxOpenFiles)
-					throw new DsrException(PabConstants.e_outofspace, null, "Too many open files");
 				openFiles.put(pabaddr, pabfile);
 				return pabfile;
 			}
@@ -500,11 +530,10 @@ public class EmuDiskDsr implements DsrHandler {
 			}
 
 			/**
-			 * @param file
+			 * @param pabaddr
 			 */
-			public void removeOpenFile(File file) {
-				if (openFiles.remove(file) != null)
-					maxOpenFiles--;
+			public void removeOpenFile(short pabaddr) {
+				openFiles.remove(pabaddr);
 			}
 
 
@@ -534,6 +563,55 @@ public class EmuDiskDsr implements DsrHandler {
 			super(xfer, pab);
 			this.block = getPabInfoBlock(cruaddr);
 			this.mapper = mapper;
+		}
+		
+		/* (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append(pab.path + ": ");
+			
+			switch (pab.opcode) {
+			case PabConstants.op_close:
+				builder.append("CLOSE");
+				break;
+			case PabConstants.op_open:
+				builder.append("OPEN");
+				break;
+			case PabConstants.op_read:
+				builder.append("READ");
+				break;
+			case PabConstants.op_write:
+				builder.append("WRITE");
+				break;
+			case PabConstants.op_restore:
+				builder.append("RESTORE");
+				break;
+			case PabConstants.op_load:
+				builder.append("LOAD");
+				break;
+			case PabConstants.op_save:
+				builder.append("SAVE");
+				break;
+			case PabConstants.op_delete:
+				builder.append("DELETE");
+				break;
+			case PabConstants.op_scratch:
+				builder.append("SCRATCH");
+				break;
+			case PabConstants.op_status:
+				builder.append("STATUS");
+				break;
+			}
+			builder.append(" @>" + HexUtils.toHex4(pab.bufaddr));
+			if (pab.opcode == PabConstants.op_save || pab.opcode == PabConstants.op_load)
+				builder.append(", " + pab.recnum);
+			else if (pab.opcode == PabConstants.op_read || pab.opcode == PabConstants.op_write) {
+				builder.append(", " + pab.charcount + " #" + pab.recnum);
+			}
+			return builder.toString();
 		}
 		/**
 		 * 
@@ -566,11 +644,22 @@ public class EmuDiskDsr implements DsrHandler {
 			case PabConstants.op_write:
 				DSKWrite(file);
 				break;
+			case PabConstants.op_restore:
+				DSKRestore(file);
+				break;
 			case PabConstants.op_load:
 				DSKLoad(file);
 				break;
 			case PabConstants.op_save:
 				DSKSave(file);
+				break;
+			case PabConstants.op_delete:
+				DSKDelete(file);
+				break;
+			case PabConstants.op_scratch:
+				throw new DsrException(PabConstants.e_illegal, "Scratch record not implemented on "+devname);
+			case PabConstants.op_status:
+				DSKStatus(file);
 				break;
 			default:
 				throw new DsrException(PabConstants.e_illegal, "[not] doing operation "+pab.opcode+" on "+devname);
@@ -604,8 +693,8 @@ public class EmuDiskDsr implements DsrHandler {
 			// make sure our native file works
 			if (pab.getOpenMode() != PabConstants.m_input) {
 				if (openFile.getNativeFile() != null) {
-					if (openFile.getNativeFile().isProtected()) {
-						throw new DsrException(PabConstants.e_illegal, null, "File is protected: " + file);
+					if (openFile.isProtected()) {
+						throw new DsrException(PabConstants.e_readonly, null, "File is protected: " + file);
 					}
 					
 					// can only use text files as DIS/VAR
@@ -670,7 +759,7 @@ public class EmuDiskDsr implements DsrHandler {
 				throw new DsrException(PabConstants.e_badfiletype, "File not open: " + file);
 			
 			openFile.close();
-			block.removeOpenFile(file);
+			block.removeOpenFile(pab.pabaddr);
 			
 		}
 		private void DSKRead(File file) throws DsrException {
@@ -681,15 +770,45 @@ public class EmuDiskDsr implements DsrHandler {
 			if (openFile == null)
 				throw new DsrException(PabConstants.e_badfiletype, "File not open: " + file);
 			
-			pab.recnum &= 0x7fff;
-			if (pab.isRelative())
+			if (!pab.isVariable()) {
+				// always use record number 
+				pab.recnum &= 0x7fff;
 				openFile.seekToRecord(pab.recnum);
+				pab.recnum++;
+			}
 			
 			ByteMemoryAccess access = xfer.getVdpMemory(pab.bufaddr);
-			pab.charcount = openFile.readRecord(access, pab.preclen);
 			
-			if (pab.isRelative())
-				pab.recnum++;
+			try {
+				pab.charcount = openFile.readRecord(access, pab.preclen);
+				
+				if (true) {
+					StringBuilder builder = new StringBuilder();
+					for (int i = 0; i < pab.charcount; i++)
+						builder.append((char) xfer.readVdpByte(pab.bufaddr + i));
+					System.out.println("Read: " + builder);
+				}
+			} catch (DsrException e) {
+				if (e.getErrorCode() == PabConstants.e_endoffile) {
+					DSKClose(file);
+				}
+				throw e;
+			}
+		}
+		
+		private void DSKRestore(File file) throws DsrException {
+			if (!pab.isReading())
+				throw new DsrException(PabConstants.e_illegal, "File not open for reading: " + file);
+				
+			OpenFile openFile = block.findOpenFile(pab.pabaddr);
+			if (openFile == null)
+				throw new DsrException(PabConstants.e_badfiletype, "File not open: " + file);
+			
+			pab.recnum &= 0x7fff;
+			if (!pab.isRelative())
+				pab.recnum = 0;
+			
+			openFile.seekToRecord(pab.recnum);
 		}
 		
 		private void DSKWrite(File file) throws DsrException {
@@ -700,15 +819,14 @@ public class EmuDiskDsr implements DsrHandler {
 			if (openFile == null)
 				throw new DsrException(PabConstants.e_badfiletype, "File not open: " + file);
 			
-			pab.recnum &= 0x7fff;
-			if (pab.isRelative())
+			if (!pab.isVariable()) {
+				pab.recnum &= 0x7fff;
 				openFile.seekToRecord(pab.recnum);
+				pab.recnum++;
+			}
 			
 			ByteMemoryAccess access = xfer.getVdpMemory(pab.bufaddr);
 			openFile.writeRecord(access, pab.charcount);
-			
-			if (pab.isRelative())
-				pab.recnum++;
 		}
 		
 		private void DSKLoad(File file) throws DsrException {
@@ -720,6 +838,10 @@ public class EmuDiskDsr implements DsrHandler {
 			OpenFile openFile = new OpenFile(file, devname, fname);
 			if (openFile.getNativeFile() == null)
 				throw new DsrException(PabConstants.e_badfiletype, "File not found: " + file);
+			
+			if (!openFile.isProgram()) {
+				throw new DsrException(PabConstants.e_badfiletype, "Cannot load a non-PROGRAM file: " + file);
+			}
 			
 			ByteMemoryAccess access = xfer.getVdpMemory(pab.bufaddr);
 			try {
@@ -743,6 +865,27 @@ public class EmuDiskDsr implements DsrHandler {
 			}
 		}
 
+		private void DSKDelete(File file) throws DsrException {
+
+			if (file.isDirectory()) {
+				throw new DsrException(PabConstants.e_illegal, null, "Can't delete catalog");
+			}
+			
+			OpenFile openFile = block.findOpenFile(pab.pabaddr);
+			if (openFile != null) {
+				openFile.close();
+				block.removeOpenFile(pab.pabaddr);
+			} else {
+				openFile = new OpenFile(file, devname, fname);
+			}
+			if (openFile.isProtected()) {
+				throw new DsrException(PabConstants.e_readonly, null, "File is protected: " + file);
+			}
+		
+			if (!openFile.getNativeFile().getFile().delete())
+				throw new DsrException(PabConstants.e_hardwarefailure, null, "File not deleted: " + file);
+		}
+
 
 		private void DSKSave(File file) throws DsrException {
 
@@ -752,8 +895,8 @@ public class EmuDiskDsr implements DsrHandler {
 			
 			OpenFile openFile = new OpenFile(file, devname, fname);
 			if (openFile.getNativeFile() != null) {
-				if (openFile.getNativeFile().isProtected()) {
-					throw new DsrException(PabConstants.e_illegal, null, "File is protected: " + file);
+				if (openFile.isProtected()) {
+					throw new DsrException(PabConstants.e_readonly, null, "File is protected: " + file);
 				}
 				
 				file.delete();
@@ -793,6 +936,50 @@ public class EmuDiskDsr implements DsrHandler {
 			}
 		}
 
+		private void DSKStatus(File file) throws DsrException {
+			
+			int status = 0;
+
+			if (file.isDirectory()) {
+				status |= PabConstants.st_noexist;
+			} else {
+				OpenFile openFile = block.findOpenFile(pab.pabaddr);
+				NativeFile nativeFile = null;
+				
+				if (openFile != null) {
+					nativeFile = openFile.getNativeFile();
+					int size = openFile.getNativeFile().getFileSize();
+					if (openFile.getPosition() >= size) {
+						status |= PabConstants.st_endoffile;
+					}
+					if (size >= 256 * 65536) {
+						status |= PabConstants.st_endofspace;
+					}
+				} else {
+					try {
+						nativeFile = NativeFileFactory.createNativeFile(file);
+					} catch (IOException e) {
+						status |= PabConstants.st_noexist;
+					}
+				}
+				
+				if (nativeFile != null) {
+					int fdrflags = nativeFile.getFDRFlags();
+					if ((fdrflags & IFDRFlags.ff_internal) != 0)
+						status |= PabConstants.st_internal;
+					if ((fdrflags & IFDRFlags.ff_program) != 0)
+						status |= PabConstants.st_program;
+					if ((fdrflags & IFDRFlags.ff_variable) != 0)
+						status |= PabConstants.st_variable;
+					if ((fdrflags & IFDRFlags.ff_protected) != 0)
+						status |= PabConstants.st_protected;
+				}
+				
+			}
+			
+			pab.scrnoffs = status;
+		}
+		
 	}
 	
 	public static class DirectDiskHandler {
