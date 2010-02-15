@@ -17,34 +17,36 @@ import v9t9.engine.cpu.InstructionWorkBlock;
  * @author ejs
  *
  */
-public class DSRManager {
+public class DsrManager {
 
 	private final Machine machine;
 	private List<DsrHandler> dsrs;
 	private DsrHandler activeDsr;
 
-	public DSRManager(Machine machine) {
+	public DsrManager(Machine machine) {
 		this.machine = machine;
 		dsrs = new ArrayList<DsrHandler>();
 	}
 	
 	public void registerDsr(DsrHandler dsr) {
-		addDeviceCRU(machine, dsr.getCruBase(), dsr);
+		addDeviceCRU(dsr.getCruBase(), dsr);
 		this.dsrs.add(dsr);
 	}
 
-	private void addDeviceCRU(Machine machine, int addr, final DsrHandler dsr) {
+	private void addDeviceCRU(int addr, final DsrHandler dsr) {
 		machine.getCruManager().add(addr, 1, new CruWriter() {
 
 			public int write(int addr, int data, int num) {
 				if (data == 1) {
 					try {
-						dsr.activate();
+						dsr.activate(machine.getConsole());
+						activeDsr = dsr;
 					} catch (IOException e) {
 						System.err.println("Could not active DSR " + dsr.getName() + ": " + e.getMessage());
 					}
 				} else {
-					dsr.deactivate();
+					dsr.deactivate(machine.getConsole());
+					activeDsr = null;
 				}
 				return 0;
 			}
@@ -61,7 +63,8 @@ public class DSRManager {
 	public void handleDSR(InstructionWorkBlock instructionWorkBlock) {
 		short callpc = (short) (instructionWorkBlock.pc - 2);
 		short opcode = instructionWorkBlock.domain.readWord(callpc);
-		short crubase = instructionWorkBlock.domain.readWord((instructionWorkBlock.wp & ~0xff) | 0x00D0);
+		short rambase = (short) (instructionWorkBlock.wp - 0xe0);
+		short crubase = instructionWorkBlock.domain.readWord(rambase+ 0xD0);
 
 		if (callpc >= 0x4000 && callpc < 0x6000) {
 			
@@ -73,19 +76,20 @@ public class DSRManager {
 				// on success, return to DSR handler, to return an
 				// error or otherwise terminate instead of continuing
 				// to scan CRU bases
-				if (activeDsr.handleDSR(machine.getCpu(), (short) (opcode  & 0x3f))) {
-					instructionWorkBlock.pc = instructionWorkBlock.domain.readWord(instructionWorkBlock.wp + 11 * 2);
+				
+				MemoryTransfer xfer = new ConsoleMemoryTransfer(
+						instructionWorkBlock.domain,
+						machine.getVdp(), rambase);
+				
+				int retreg = instructionWorkBlock.wp + 11 * 2;
+				short ret = instructionWorkBlock.domain.readWord(retreg);
+				if (activeDsr.handleDSR(xfer, (short) (opcode  & 0x3f))) {
+					// success: skip next word (handling error)
+					ret += 2;
 				}
+				instructionWorkBlock.domain.writeWord(retreg, ret);
+				instructionWorkBlock.pc = ret;
 			}
 		}
 	}
-
-	public void activate(DsrHandler dsr) {
-		activeDsr = dsr;
-	}
-
-	public void deactivate(DsrHandler dsr) {
-		activeDsr = null;
-	}
-
 }

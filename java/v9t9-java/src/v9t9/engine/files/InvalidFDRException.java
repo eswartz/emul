@@ -9,6 +9,13 @@ package v9t9.engine.files;
 public class InvalidFDRException extends Exception {
 
     /**
+	 * @param string
+	 */
+	public InvalidFDRException(String string) {
+		super(string);
+	}
+
+	/**
      * 
      */
     private static final long serialVersionUID = 9209915805846915658L;

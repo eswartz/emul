@@ -12,10 +12,12 @@ import java.io.IOException;
 
 import org.ejs.coffee.core.utils.Setting;
 
+import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
+import v9t9.emulator.hardware.dsrs.DiskDirectoryMapper;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.runtime.Cpu;
@@ -42,8 +44,6 @@ public class V9t9 {
 		DataFiles.addSearchPath("l:/src/v9t9-data/roms");
 		DataFiles.addSearchPath("l:/src/v9t9-data/modules");
 		DataFiles.addSearchPath("/tmp");
-		DataFiles.addSearchPath("M:/fun/tidisk/eddie18");
-		DataFiles.addSearchPath("/media/M/fun/tidisk/eddie18");
 		DataFiles.addSearchPath("c:/devel/tistuff/v9t9-data/modules");
 		DataFiles.addSearchPath("c:/devel/tistuff/v9t9-data/roms");
 	}
@@ -152,13 +152,14 @@ public class V9t9 {
 	    		loadModuleGrom("Mash", "mashg.bin");
 	    		loadModuleRom("Mash", "mashc.bin");
 	    		
-	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
-	    		loadModuleGrom("ExtBasic", "tiextg.bin");
 	    		loadModuleGrom("Parsec", "parsecg.bin");
 	    		loadModuleRom("Parsec", "parsecc.bin");
 	    		loadModuleGrom("TEII", "teiig.bin");
 	    		loadModuleRom("TEII", "teiic.bin");
 	    		loadModuleGrom("Music", "musicmg.bin");
+	    		
+	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
+	    		loadModuleGrom("ExtBasic", "tiextg.bin");
 	    		
 	    	} else {
 		    	loadModuleRom("Logo", "logoc.bin");
@@ -228,6 +229,14 @@ public class V9t9 {
         }
         
     	Machine.settingExpRam.setBoolean(true);
+    	
+    	String diskRootPath = EmulatorSettings.getInstance().getBaseConfigurationPath() + "disks";
+    	File diskRootDir = new File(diskRootPath);
+    	File dskdefault = new File(diskRootDir, "default");
+    	dskdefault.mkdirs();
+    	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", dskdefault); 
+    	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK2", dskdefault); 
+    	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK3", dskdefault); 
     }
     
     public static void main(String args[]) throws IOException {

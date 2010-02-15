@@ -13,6 +13,9 @@ import java.io.RandomAccessFile;
 
 import org.ejs.coffee.core.utils.CompatUtils;
 
+import v9t9.emulator.hardware.dsrs.DsrException;
+import v9t9.emulator.hardware.dsrs.PabConstants;
+
 public class NativeTextFile implements NativeFile {
 
     private File file;
@@ -58,5 +61,34 @@ public class NativeTextFile implements NativeFile {
         raf.close();
         return length;
     }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.files.NativeFile#setLength(int)
+     */
+    public void setFileSize(int size) throws IOException {
+    	RandomAccessFile raf = new RandomAccessFile(file, "rw");
+        raf.setLength(size);
+        raf.close();
+    }
 
+    /* (non-Javadoc)
+     * @see v9t9.engine.files.NativeFile#flush()
+     */
+    public void flush() throws IOException {
+    	
+    }
+
+    /* (non-Javadoc)
+     * @see v9t9.engine.files.NativeFile#validate()
+     */
+    public void validate() throws InvalidFDRException {
+    	
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.files.NativeFile#isProtected()
+     */
+    public boolean isProtected() {
+    	return !file.canWrite();
+    }
 }

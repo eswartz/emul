@@ -17,26 +17,17 @@ public class NativeFDRFile implements NativeFile {
 
     private File file;
     private FDR fdr;
-    private String filename;
     
     public NativeFDRFile(File file, FDR fdr) {
         org.ejs.coffee.core.utils.Check.checkArg(file);
         org.ejs.coffee.core.utils.Check.checkArg(fdr);
         this.file = file;
         this.fdr = fdr;
-        this.filename = fdr.getFileName();
-        if (this.filename == null) {
-            this.filename = file.getName();
-        }
     }
     
     @Override
     public String toString() {
     	return file + " (FDR)";
-    }
-
-    public String getFileName() {
-        return filename;
     }
 
     public int readContents(byte[] contents, int contentOffset, int offset, int length) throws IOException {
@@ -66,8 +57,39 @@ public class NativeFDRFile implements NativeFile {
         return file;
     }
 
+    /* (non-Javadoc)
+     * @see v9t9.engine.files.NativeFile#setLength(int)
+     */
+    public void setFileSize(int size) throws IOException {
+    	RandomAccessFile raf = new RandomAccessFile(file, "rw");
+    	fdr.setFileSize(size);
+        raf.setLength(fdr.getFDRSize() + fdr.getFileSize());
+        raf.close();
+    }
+    
 	public FDR getFDR() {
 		return fdr;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.files.NativeFile#validate()
+	 */
+	public void validate() throws InvalidFDRException {
+		fdr.validate(file);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.files.NativeFile#flush()
+	 */
+	public void flush() throws IOException {
+		fdr.writeFDR(file);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.files.NativeFile#isProtected()
+	 */
+	public boolean isProtected() {
+		return !file.canWrite() || (fdr.getFlags() & IFDRFlags.ff_protected) != 0; 
+		
+	}
 }

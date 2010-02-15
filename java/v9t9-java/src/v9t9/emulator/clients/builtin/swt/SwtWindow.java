@@ -143,7 +143,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 						} else {
 							//Point pt = Display.getDefault().getCursorLocation();
 							Point pt = buttonBar.getParent().toDisplay(buttonBar.getLocation());
-							System.out.println(pt);
+							//System.out.println(pt);
 							pt.y += buttonBar.getSize().y;
 							pt.x += buttonBar.getSize().x * 3 / 4;
 							tip.setLocation(pt);

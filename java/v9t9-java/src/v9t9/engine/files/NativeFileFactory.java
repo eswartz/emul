@@ -11,26 +11,17 @@ import java.io.IOException;
 
 public class NativeFileFactory {
 	/**
-	 * Create a NativeFile accessor for a native file on disk
+	 * Create a NativeFile accessor for a native file on disk.  This does not
+	 * validate the FDR for an FDR-based file.
 	 * @param file
 	 * @return new NativeFile
 	 * @throws IOException if cannot read file
 	 */
     public static NativeFile createNativeFile(File file) throws IOException {
-        FDR fdr;
+        FDR fdr = FDRFactory.createFDR(file);
         
-        // try TIFILES first, since it has a signature
-        try {
-            fdr = TIFILESFDR.readFDR(file);
+        if (fdr != null) {
             return new NativeFDRFile(file, fdr);
-        } catch (InvalidFDRException e) {
-        }
-        
-        // try V9t9 FDR
-        try {
-            fdr = V9t9FDR.readFDR(file);
-            return new NativeFDRFile(file, fdr);
-        } catch (InvalidFDRException e) {
         }
         
         return new NativeTextFile(file);

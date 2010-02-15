@@ -6,7 +6,8 @@ package v9t9.emulator.hardware;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
-import v9t9.emulator.hardware.dsrs.EmuDiskDSR;
+import v9t9.emulator.hardware.dsrs.DiskDirectoryMapper;
+import v9t9.emulator.hardware.dsrs.EmuDiskDsr;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.emulator.hardware.sound.SoundTMS9919;
@@ -55,8 +56,8 @@ public class EnhancedCompatibleMachineModel implements MachineModel {
 	public void defineDevices(final Machine machine) {
 		machine.getCpu().setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
 		
-		EmuDiskDSR dsr = new EmuDiskDSR(machine);
-		machine.getDSRManager().registerDsr(dsr);
+		EmuDiskDsr dsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
+		machine.getDsrManager().registerDsr(dsr);
 		
 		defineCpuVdpBanks(machine);
 	}

@@ -669,7 +669,7 @@ public class Interpreter {
             break;
 
         case InstructionTable.Idsr:
-        	machine.getDSRManager().handleDSR(iblock);
+        	machine.getDsrManager().handleDSR(iblock);
         	break;
         	
         case InstructionTable.Iticks: {

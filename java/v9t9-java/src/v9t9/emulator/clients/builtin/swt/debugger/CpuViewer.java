@@ -394,7 +394,8 @@ public class CpuViewer extends Composite implements InstructionListener {
 					if (isWatching || Machine.settingPauseMachine.getBoolean()) {
 						Instruction inst = machine.getExecutor().interp.getInstruction(machine.getCpu());
 						String instString = inst.toString();
-						instString += "                        ".substring(0, 24 - instString.length());
+						if (instString.length() < 24)
+							instString += "                        ".substring(0, 24 - instString.length());
 						nextInstructionText.setText(
 								">" + HexUtils.toHex4(inst.pc) + "\t\t" 
 								+ instString

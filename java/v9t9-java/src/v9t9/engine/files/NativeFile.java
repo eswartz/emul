@@ -14,18 +14,40 @@ import java.io.IOException;
  * @author ejs
  */
 public interface NativeFile {
-    /** Get the file name, as seen on the TI (base) */
-    public String getFileName();
-
     /** Get the host file */
     public File getFile();
 
     /** Read contents, excluding headers  */
     public int readContents(byte[] contents, int contentOffset, int offset, int length) throws IOException;
 
-    /** Get the file size */
+    /** Get the represented file content size */
     public int getFileSize();
 
     /** Write file contents, excluding headers */
  	public int writeContents(byte[] contents, int contentOffset, int offset, int length) throws IOException;
+
+	/**
+	 * Set absolute file length
+	 * @param size
+	 * @throws IOException 
+	 */
+	public void setFileSize(int size) throws IOException;
+	
+	/**
+	 * Validate state.
+	 * @throws InvalidFDRException 
+	 */
+	void validate() throws InvalidFDRException;
+	
+	/**
+	 * Flush to disk.
+	 */
+	void flush() throws IOException;
+
+	/**
+	 * @return
+	 */
+	public boolean isProtected();
+	
+	
 }

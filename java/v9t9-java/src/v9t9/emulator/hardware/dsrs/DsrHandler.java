@@ -5,7 +5,7 @@ package v9t9.emulator.hardware.dsrs;
 
 import java.io.IOException;
 
-import v9t9.emulator.runtime.Cpu;
+import v9t9.engine.memory.MemoryDomain;
 
 /**
  * Java code that handles the work of a DSR through the Idsr instruction.
@@ -18,18 +18,19 @@ public interface DsrHandler {
 	short getCruBase();
 
 	/** Handle the DSR call
-	 * @param cpu 
-	 * 
+	 * @param xfer method of moving memory around
 	 * @param code the operand of the Idsr instruction
 	 * @return true if handled the operand, false if the device doesn't match
 	 */
-	boolean handleDSR(Cpu cpu, short code);
+	boolean handleDSR(MemoryTransfer xfer, short code);
 
 	/** Activate the DSR (should be called when the ROM memory entry is mapped) 
+	 * @param console TODO
 	 * @throws IOException */
-	void activate() throws IOException;
-	/** Dectivate the DSR (should be called when the ROM memory entry is unmapped) */
-	void deactivate();
+	void activate(MemoryDomain console) throws IOException;
+	/** Dectivate the DSR (should be called when the ROM memory entry is unmapped) 
+	 * @param console TODO*/
+	void deactivate(MemoryDomain console);
 
 	String getName();
 }

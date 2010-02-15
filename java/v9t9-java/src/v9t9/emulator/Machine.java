@@ -23,7 +23,7 @@ import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.InternalCru9901;
 import v9t9.emulator.hardware.MachineModel;
-import v9t9.emulator.hardware.dsrs.DSRManager;
+import v9t9.emulator.hardware.dsrs.DsrManager;
 import v9t9.emulator.runtime.AbortedException;
 import v9t9.emulator.runtime.Cpu;
 import v9t9.emulator.runtime.CpuMetrics;
@@ -72,7 +72,7 @@ abstract public class Machine {
 	protected MemoryModel memoryModel;
 	private VdpHandler vdp;
 	private CruManager cruManager;
-	private DSRManager dsrManager;
+	private DsrManager dsrManager;
 	private TimerTask videoUpdateTask;
 	private Thread machineRunner;
 	private Thread videoRunner;
@@ -99,7 +99,7 @@ abstract public class Machine {
     	this.memory = memoryModel.createMemory();
     	this.console = memoryModel.getConsole();
     	cruManager = new CruManager();
-    	dsrManager = new DSRManager(this);
+    	dsrManager = new DsrManager(this);
     	
     	sound = machineModel.createSoundProvider(this);
     	this.vdp = machineModel.createVdp(this);
@@ -410,7 +410,7 @@ abstract public class Machine {
 		return cruManager;
 	}
 
-	public DSRManager getDSRManager() {
+	public DsrManager getDsrManager() {
 		return dsrManager;
 	}
 

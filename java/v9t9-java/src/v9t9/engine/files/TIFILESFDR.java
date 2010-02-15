@@ -9,6 +9,7 @@ package v9t9.engine.files;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 public class TIFILESFDR extends FDR {
@@ -34,28 +35,54 @@ public class TIFILESFDR extends FDR {
     u8          unused[112];    // zero 
      */
 
+    /**
+	 * 
+	 */
+	public TIFILESFDR() {
+		super(128);
+	}
+	
     public static final byte[] SIGNATURE = { 7, 'T', 'I', 'F', 'I', 'L', 'E', 'S' };
     
     public static FDR readFDR(File file) throws IOException, InvalidFDRException {
         TIFILESFDR fdr = new TIFILESFDR();
-        // TODO: translate
-        fdr.filename = file.getName();
-        fdr.size = 128;
+      
         FileInputStream stream = new FileInputStream(file);
-        fdr.sig = new byte[8];
-        stream.read(fdr.sig, 0, 8);
-        if (!Arrays.equals(fdr.sig, SIGNATURE)) {
-			throw new InvalidFDRException();
-		}
-        fdr.secsused = (short) (stream.read() << 8 | stream.read());
-        fdr.flags = (byte) stream.read();
-        fdr.recspersec = (byte) stream.read();
-        fdr.byteoffs = (byte) stream.read();
-        fdr.reclen = (byte) stream.read();
-        fdr.numrecs = (short) (stream.read() | stream.read() << 8);
-        fdr.unused = new byte[112];
-        stream.read(fdr.unused, 0, 112);
+        try {
+	        fdr.sig = new byte[8];
+	        stream.read(fdr.sig, 0, 8);
+	        if (!Arrays.equals(fdr.sig, SIGNATURE)) {
+				throw new InvalidFDRException("No TIFILES signature found");
+			}
+	        fdr.secsused = (short) (stream.read() << 8 | stream.read());
+	        fdr.flags = (byte) stream.read();
+	        fdr.recspersec = (byte) stream.read();
+	        fdr.byteoffs = (byte) stream.read();
+	        fdr.reclen = (byte) stream.read();
+	        fdr.numrecs = (short) (stream.read() | stream.read() << 8);
+	        fdr.unused = new byte[112];
+	        stream.read(fdr.unused, 0, 112);
+        } finally {
+        	stream.close();
+        }
         return fdr;
     }
-
+    
+    public void writeFDR(File file) throws IOException {
+    	RandomAccessFile raf = new RandomAccessFile(file, "rw");
+    	raf.seek(0);
+    	
+    	raf.write(SIGNATURE);
+    	raf.write(secsused >> 8);
+    	raf.write(secsused & 0xff);
+    	raf.write(flags);
+    	raf.write(recspersec);
+    	raf.write(byteoffs);
+    	raf.write(reclen);
+    	raf.write(numrecs & 0xff);
+    	raf.write(numrecs >> 8);
+        raf.write(unused);
+        
+        raf.close();
+    }
 }

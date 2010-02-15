@@ -135,8 +135,8 @@ public abstract class Phase {
 	 * The label is created with the given parameters,
 	 * and a routine is realized by setting its label to this.
 	 * If a label already exists, an exception is emitted.
-	 * @param addr
-	 * @param name
+	 * @param bufaddr
+	 * @param path
 	 * @param routine
 	 * @return
 	 */

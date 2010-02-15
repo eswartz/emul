@@ -25,9 +25,14 @@ public class DataFiles {
 	private static List<String> searchPaths = new ArrayList<String>();
 	
 	public static void addSearchPath(String filepath) {
-		searchPaths.add(filepath);
+		if (!searchPaths.contains(filepath))
+			searchPaths.add(filepath);
 	}
-	
+
+	public static void addSearchPath(int index, String filepath) {
+		searchPaths.remove(filepath);
+		searchPaths.add(index, filepath);
+	}
 	/**
 	 * Look for a file along the search paths with the given name
 	 * @param filepath file name or relative path

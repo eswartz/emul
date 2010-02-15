@@ -62,7 +62,7 @@ public class FixedAspectLayout extends Layout {
 			boolean flushCache) {
 		Rectangle area = composite.getClientArea();
 		Rectangle bounds = composite.getParent().getClientArea();
-		System.out.println("cursize: " + area + " vs " +bounds);
+		//System.out.println("cursize: " + area + " vs " +bounds);
 		
 		int neww, newh;
 		if (wHint == SWT.DEFAULT) {
@@ -85,7 +85,7 @@ public class FixedAspectLayout extends Layout {
 		
 		Point desired = new Point(neww, newh);
 		
-		System.out.println("desired at " + desired);
+		//System.out.println("desired at " + desired);
 		
 		return desired;
 	}
@@ -102,7 +102,7 @@ public class FixedAspectLayout extends Layout {
 	@Override
 	protected void layout(Composite composite, boolean flushCache) {
 		Rectangle area = composite.getClientArea();
-		System.out.println("layout at " + area);
+		//System.out.println("layout at " + area);
 		zoomx = (double) area.width / w;
 		if (zoomx < 1)
 			zoomx = 0.5;

@@ -94,7 +94,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			public void ancestorResized(HierarchyEvent e) {
 				int width = canvas.getWidth();
 				int height = canvas.getHeight();
-				System.out.println("Resized to: " + width + "/" + height);
+				//System.out.println("Resized to: " + width + "/" + height);
 
 				updateWidgetOnResize(width, height);
 			}

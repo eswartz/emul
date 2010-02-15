@@ -9,15 +9,18 @@ package v9t9.engine.files;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 public class V9t9FDR extends FDR {
 
     public static final int FDRSIZE = 128;
     
-    protected byte[] filenam;
-    private byte[] res10;
-    private byte[] dcpb;
-    private byte[] rec20;
+    /** 10 bytes, padded with spaces */
+    private final byte[] filename = new byte[10];
+    
+    private final byte[] res10 = new byte[2];
+    private final byte[] dcpb = new byte[100];
+    private final byte[] rec20 = new byte[8];
 
     /**
     char        filenam[10];// filename, padded with spaces
@@ -38,110 +41,76 @@ public class V9t9FDR extends FDR {
     u8          dcpb[100];  // sector layout of file, ignored for v9t9 
      */
 
+    public V9t9FDR() {
+    	super(FDRSIZE);
+    }
     public static FDR readFDR(File file) throws IOException, InvalidFDRException {
         V9t9FDR fdr = new V9t9FDR();
-        fdr.size = FDRSIZE;
         FileInputStream stream = new FileInputStream(file);
-
-        fdr.filenam = new byte[10];
-        stream.read(fdr.filenam, 0, 10);
-        
-        StringBuffer buffer = new StringBuffer();
-        for (int i = 0; i < fdr.filenam.length; i++) {
-            if (i == ' ') {
-				break;
-			}
-            buffer.append((char)fdr.filenam[i]);
+        try {
+	        stream.read(fdr.filename);
+	        stream.read(fdr.res10);
+	        fdr.flags = stream.read();
+	        fdr.recspersec = stream.read();
+	        fdr.secsused = stream.read() << 8 | stream.read();
+	        fdr.byteoffs = stream.read();
+	        fdr.reclen = stream.read();
+	        fdr.numrecs = (stream.read() | stream.read() << 8);
+	        stream.read(fdr.rec20);
+	        stream.read(fdr.dcpb);
+        } finally { 
+        	stream.close();
         }
-        fdr.filename = buffer.toString();
-        
-        fdr.res10 = new byte[2];
-        stream.read(fdr.res10, 0, 2);
-        fdr.flags = (byte) stream.read();
-        fdr.recspersec = (byte) stream.read();
-        fdr.secsused = (short) (stream.read() << 8 | stream.read());
-        fdr.byteoffs = (byte) stream.read();
-        fdr.reclen = (byte) stream.read();
-        fdr.numrecs = (short) (stream.read() | stream.read() << 8);
-        fdr.rec20 = new byte[8];
-        stream.read(fdr.rec20, 0, 8);
-        fdr.dcpb = new byte[100];
-        stream.read(fdr.dcpb, 0, 100);
-        
         fdr.validate(file);
         
         return fdr;
     }
+    
 
-    private void validate(File file) throws InvalidFDRException {
-        // check for invalid filetype flags
-        if ((flags & ~FF_VALID_FLAGS) != 0) {
-            throw new InvalidFDRException();
-                    /*"FIAD server:  invalid flags %02x "
-                            "for file '%s'\n"),
-                            flags,
-                            filename);*/
-        }
-
-        long filesize = file.length();
-        
-        // check for invalid file size:
-        // do not allow file to be more than one sector larger than FDR says,
-        // but allow it to be up to 64 sectors smaller:  
-        // this is a concession for files copied with "direct output to file", 
-        // which must write FDR changes before writing data.
-        if (secsused < (filesize - FDRSIZE) / 256 - 1
-                 || secsused > (filesize - FDRSIZE) / 256 + 64) {
-                throw new InvalidFDRException();
-                        /*_("FIAD server:  invalid number of sectors %d "
-                            "for data size %d in file '%s'\n"),
-                            TI2HOST(secsused), 
-                            filesize - FDRSIZE,
-                            filename);*/
-        }
-
-        // fixed files have 256/reclen records per sector
-        if ((flags & ff_program) == 0
-            && (flags & ff_variable) == 0) {
-            if (reclen == 0 ||
-                256 / reclen != recspersec) 
-            {
-                /*fiad_logger(_L | LOG_ERROR, _("FIAD server:  record length %d / records per sector %d invalid\n"
-                            "for FIXED file '%s'\n"),
-                            reclen,
-                            recspersec,
-                            filename);*/
-                throw new InvalidFDRException();
-            }
-        }
-        
-        // variable files have 255/(reclen+1) records per sector
-        if ((flags & ff_program) == 0) {
-            if (reclen == 0 || 
-                255 / (reclen + 1) != recspersec 
-                 // known problem that older v9t9s used this calculation
-                && 256 / reclen != recspersec)
-            {
-                /*fiad_logger(_L | LOG_ERROR, _("FIAD server:  record length %d / records per sector %d invalid\n"
-                            "for VARIABLE file '%s'\n"),
-                            reclen,
-                            recspersec,
-                            filename);*/
-                throw new InvalidFDRException();
-            }
-        }
-
-        // program files have 0
-        if (reclen != 0 && recspersec != 0) {
-            /*fiad_logger(_LL | LOG_ERROR, _("FIAD server:  record length %d / records per sector %d invalid\n"
-                        "for PROGRAM file '%s'\n"),
-                        reclen,
-                        recspersec,
-                        filename);
-            return false;*/
-            throw new InvalidFDRException();
-        }
-
+    /**
+     * Set the filename
+     */
+    public void setFileName(String name) throws IOException {
+    	if (name.length() > 10)
+    		throw new IOException("Name too long: " + name);
+    	for (int i = 0; i < filename.length; i++) {
+    		char ch = ' ';
+    		if (i < name.length())
+    			ch = name.charAt(i);
+    		filename[i] = (byte) ch;
+    	}
     }
 
+    public void writeFDR(File file) throws IOException {
+    	RandomAccessFile raf = new RandomAccessFile(file, "rw");
+    	raf.seek(0);
+    	
+    	raf.write(filename);
+    	raf.write(res10);
+    	raf.write(flags);
+    	raf.write(recspersec);
+    	raf.write(secsused >> 8);
+    	raf.write(secsused & 0xff);
+    	raf.write(byteoffs);
+    	raf.write(reclen);
+    	raf.write(numrecs >> 8);
+    	raf.write(numrecs & 0xff);
+    	raf.write(rec20);
+        raf.write(dcpb);
+        
+        raf.close();
+    }
+    
+	public String getFileName() {
+		StringBuilder builder = new StringBuilder();
+		int len = 0;
+    	for (int i = 0; i < filename.length; i++) {
+    		char ch = (char) filename[i];
+    		if (ch != ' ')
+    			len = i;
+    		builder.append(ch);
+    	}
+    	builder.setLength(len);
+		return builder.toString();
+	}
 }
