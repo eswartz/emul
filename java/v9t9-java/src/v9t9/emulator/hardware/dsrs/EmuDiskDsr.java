@@ -10,7 +10,9 @@ import java.util.Map;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.dsrs.EmuDiskDsr.EmuDiskPabHandler.PabInfoBlock;
+import v9t9.emulator.runtime.Executor;
 import v9t9.engine.files.FDR;
 import v9t9.engine.files.IFDRFlags;
 import v9t9.engine.files.InvalidFDRException;
@@ -101,7 +103,7 @@ public class EmuDiskDsr implements DsrHandler {
 		case D_DSK5:
 		{
 			EmuDiskPabHandler handler = new EmuDiskPabHandler(getCruBase(), xfer, mapper);
-			System.out.println(handler);
+			info(handler.toString());
 			try {
 				handler.run();
 			} catch (DsrException e) {
@@ -189,9 +191,19 @@ public class EmuDiskDsr implements DsrHandler {
 		}
 	
 		default:
-			System.out.println("EmuDiskDSR: ignoring code = " + code);
+			info("EmuDiskDSR: ignoring code = " + code);
 			return false;
 		}
+	}
+
+	/**
+	 * @param string
+	 */
+	private static void info(String string) {
+		if (Executor.settingDumpFullInstructions.getBoolean())
+			Executor.getDumpfull().println(string);
+		System.out.println(string);
+		
 	}
 
 	/**
@@ -363,7 +375,10 @@ public class EmuDiskDsr implements DsrHandler {
 				len = 256;
 			return len;
 		}
-
+		public int getNumberRecords() {
+			int num = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDR().getNumberRecords() : 0;
+			return num;
+		}
 		protected void ensureSector() throws DsrException {
 			if (currentSecNum != secnum) {
 				currentSecNum = secnum;
@@ -664,10 +679,13 @@ public class EmuDiskDsr implements DsrHandler {
 			default:
 				throw new DsrException(PabConstants.e_illegal, "[not] doing operation "+pab.opcode+" on "+devname);
 			}
-			
+		
 		}
 
 		private void DSKOpen(File file) throws DsrException {
+			
+			// clear error
+			pab.pflags &= ~PabConstants.e_pab_mask;
 			
 			// sanity checks 
 			if (pab.preclen == 255 && (pab.pflags & PabConstants.fp_variable) != 0) {
@@ -747,10 +765,12 @@ public class EmuDiskDsr implements DsrHandler {
 				}
 			}
 			
+			if (pab.getOpenMode() == PabConstants.m_output && pab.recnum != 0) {
+				// TODO: generate this many records (A514C)
+			}
 			if (pab.getOpenMode() == PabConstants.m_append) {
 				openFile.seekToEOF();
 			}
-			
 		}
 
 		private void DSKClose(File file) throws DsrException {
@@ -770,6 +790,9 @@ public class EmuDiskDsr implements DsrHandler {
 			if (openFile == null)
 				throw new DsrException(PabConstants.e_badfiletype, "File not open: " + file);
 			
+			if (pab.preclen == 0)
+				pab.preclen = openFile.getRecordLength();
+			
 			if (!pab.isVariable()) {
 				// always use record number 
 				pab.recnum &= 0x7fff;
@@ -781,12 +804,10 @@ public class EmuDiskDsr implements DsrHandler {
 			
 			try {
 				pab.charcount = openFile.readRecord(access, pab.preclen);
+				xfer.dirtyVdpMemory(pab.bufaddr, pab.charcount);
 				
 				if (true) {
-					StringBuilder builder = new StringBuilder();
-					for (int i = 0; i < pab.charcount; i++)
-						builder.append((char) xfer.readVdpByte(pab.bufaddr + i));
-					System.out.println("Read: " + builder);
+					dump(pab.bufaddr, pab.charcount);
 				}
 			} catch (DsrException e) {
 				if (e.getErrorCode() == PabConstants.e_endoffile) {
@@ -796,6 +817,26 @@ public class EmuDiskDsr implements DsrHandler {
 			}
 		}
 		
+		/**
+		 * @param bufaddr
+		 * @param charcount
+		 */
+		private void dump(int bufaddr, int charcount) {
+			StringBuilder builder = new StringBuilder();
+			StringBuilder hexbuilder = new StringBuilder();
+			for (int i = 0; i < charcount; i++) {
+				byte b = xfer.readVdpByte(bufaddr + i);
+				builder.append(b >= 32 && b < 127 ? (char)b : '.');
+				hexbuilder.append(HexUtils.toHex2(b));
+				if (i % 4 == 1)
+					hexbuilder.append('.');
+				else if (i % 4 == 3)
+					hexbuilder.append(' ');
+			}
+			info("Read: " + builder + "\n | " + hexbuilder);
+			
+		}
+
 		private void DSKRestore(File file) throws DsrException {
 			if (!pab.isReading())
 				throw new DsrException(PabConstants.e_illegal, "File not open for reading: " + file);
@@ -819,6 +860,10 @@ public class EmuDiskDsr implements DsrHandler {
 			if (openFile == null)
 				throw new DsrException(PabConstants.e_badfiletype, "File not open: " + file);
 			
+			if (pab.preclen == 0)
+				pab.preclen = openFile.getRecordLength();
+			
+
 			if (!pab.isVariable()) {
 				pab.recnum &= 0x7fff;
 				openFile.seekToRecord(pab.recnum);
@@ -848,6 +893,8 @@ public class EmuDiskDsr implements DsrHandler {
 				int read = openFile.getNativeFile().readContents(access.memory, access.offset, 
 						0, pab.recnum);
 				xfer.dirtyVdpMemory(pab.bufaddr, read);
+				
+				dump(pab.bufaddr, Math.min(read, 32));
 				
 				if (read >= 0) {
 					// no error or EOF (which is okay for DSKLoad)
@@ -1029,7 +1076,7 @@ public class EmuDiskDsr implements DsrHandler {
 		public void error(DsrException e) {
 			xfer.writeParamByte(0x50, (byte) e.getErrorCode());
 			if (e != null)
-				System.err.println(e.getMessage());
+				info(e.getMessage());
 		}
 
 
@@ -1085,7 +1132,7 @@ public class EmuDiskDsr implements DsrHandler {
 				short   vaddr = xfer.readParamWord(parms);
 				short	secnum = xfer.readParamWord(parms + 2);
 
-				System.out.println("reading "+secs+" sectors from sector #"+secnum+
+				info("reading "+secs+" sectors from sector #"+secnum+
 						" in " + file + ", storing to >"+HexUtils.toHex4(vaddr));
 
 				ByteMemoryAccess access = xfer.getVdpMemory(vaddr);
@@ -1169,13 +1216,13 @@ public class EmuDiskDsr implements DsrHandler {
 				short   vaddr = xfer.readParamWord(parms);
 				short	secnum = xfer.readParamWord(parms + 2);
 
-				System.out.println("writing "+secs+" sectors to sector #"+secnum+
+				info("writing "+secs+" sectors to sector #"+secnum+
 						" in " + file + ", reading from >"+HexUtils.toHex4(vaddr));
 
 				ByteMemoryAccess access = xfer.getVdpMemory(vaddr);
 				try {
-					String contents = new String(access.memory, access.offset, secs * 256);
-					System.out.println(contents);
+					//String contents = new String(access.memory, access.offset, secs * 256);
+					//System.out.println(contents);
 					int wrote = file.writeContents(access.memory, access.offset, secnum * 256, secs * 256);
 					// error will be set if sector write failed
 					xfer.writeParamByte(0x4D, (byte) ((wrote + 255) >> 8));

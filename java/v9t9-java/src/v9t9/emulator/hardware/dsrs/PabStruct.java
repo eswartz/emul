@@ -38,34 +38,13 @@ public class PabStruct implements PabConstants
 		this.pabaddr = pabaddr;
 		
 		this.opcode = xfer.readVdpByte(pabaddr) & 0xff;
+		this.pflags = xfer.readVdpByte(pabaddr + 1) & 0xff;
 		this.bufaddr = xfer.readVdpShort(pabaddr + 2) & 0xffff;
+		this.preclen = xfer.readVdpByte(pabaddr + 4) & 0xff;
 		this.charcount = xfer.readVdpByte(pabaddr + 5) & 0xff;
 		this.recnum = xfer.readVdpShort(pabaddr + 6) & 0xffff;
 		this.scrnoffs = xfer.readVdpByte(pabaddr + 8) & 0xff;
 		this.namelen = xfer.readVdpByte(pabaddr + 9) & 0xff;
-
-		/* 
-		   TI BASIC appears to trash these bytes after
-		   opening the file.  We stubbornly continue to
-		   use them, however, so don't reread from the
-		   real PAB after opening. 
-		*/
-		if (opcode == 0 || opcode == 5)
-		{
-			this.pflags = xfer.readVdpByte(pabaddr + 1) & 0xff;
-			this.preclen = xfer.readVdpByte(pabaddr + 4) & 0xff;
-
-			//module_logger(&emuDiskDSR, _L | L_3, _("PAB contents: flags=>%02X, reclen=%d, addr=>%04X, charcount=%d, recnum=%d\n"),
-			//	   pf->this.pflags, pf->this.preclen,
-			//	   pf->this.addr, pf->this.charcount, pf->this.recnum);
-		}
-		else
-		{
-			//module_logger(&emuDiskDSR, _L | L_3, _("PAB contents: addr=>%04X, charcount=%d, recnum=%d\n"),
-			//	   pf->this.addr, pf->this.charcount, pf->this.recnum);
-
-		}
-		
 	}
 	
 
@@ -77,8 +56,8 @@ public class PabStruct implements PabConstants
 		xfer.writeVdpByte(pabaddr + 1, (byte) this.pflags);
 		xfer.writeVdpByte(pabaddr + 2, (byte) (this.bufaddr >> 8));
 		xfer.writeVdpByte(pabaddr + 3, (byte) (this.bufaddr & 0xff));
-		xfer.writeVdpByte(pabaddr + 4, (byte) this.charcount);
-		xfer.writeVdpByte(pabaddr + 5, (byte) this.preclen);
+		xfer.writeVdpByte(pabaddr + 4, (byte) this.preclen);
+		xfer.writeVdpByte(pabaddr + 5, (byte) this.charcount);
 		xfer.writeVdpByte(pabaddr + 6, (byte) (this.recnum >> 8));
 		xfer.writeVdpByte(pabaddr + 7, (byte) (this.recnum & 0xff));
 		xfer.writeVdpByte(pabaddr + 8, (byte) this.scrnoffs);

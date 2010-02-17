@@ -42,7 +42,8 @@ public class DiskDirectoryMapper implements IFileMapper {
 		In this version, we still have illegal chars, but
 		they are replaced with the escape sequence '&#xx;' as
 		in HTML. */
-	private final String DOS_illegalchars = "<>=,;:*?[]/\\";
+	private final String DOS_illegalchars       = "<>=,;:*?[]/\\";
+	private final String DOS_illegalchars_linux = "<>=,;:*?[]\u00BB\\";
 
 	private char FIAD_esc = '&';
 	private final String FIAD_illegalchars = "<>,:*?/\\";
@@ -72,6 +73,51 @@ public class DiskDirectoryMapper implements IFileMapper {
 			/* offset illegal chars */
 			if (DOS_illegalchars.indexOf(cur) >= 0)
 				cur |= 0x80;
+
+			/* force uppercase */
+			if (cur >= 'a' && cur <= 'z')
+				cur -= 0x20;
+
+			dosname.append(cur);
+			ptr++;
+		}
+
+		// fiad_logger(_L | L_2,
+		// _("fiad_filename_ti2dos:  incoming = '%.*s', outgoing = '%s'\n"),
+		// 10 - max, tiname,dosname);
+		return dosname.toString();
+	}
+
+
+	/**	Convert a TI filename to a DOS 8.3 filename.
+	 *
+	 * We replace illegal chars with high-ASCII characters,
+	 * and then replace those with what Linux sees (UTF-8
+	 * charmapped variants)
+	 */
+	public String dsrToDOSLinux(String tiname) {
+		StringBuilder dosname = new StringBuilder();
+
+		int max = 10;
+		int ptr = 0;
+
+		while (ptr < tiname.length() && max-- > 0) {
+			char cur;
+
+			cur = tiname.charAt(ptr);
+
+			/* forced end-of-filename? */
+			if (cur == ' ' || cur == 0)
+				break;
+
+			if (ptr == 8)
+				dosname.append('.');
+
+			/* offset illegal chars */
+			int illidx = DOS_illegalchars.indexOf(cur); 
+			if (illidx >= 0) {
+				cur = DOS_illegalchars_linux.charAt(illidx);
+			}
 
 			/* force uppercase */
 			if (cur >= 'a' && cur <= 'z')
@@ -157,7 +203,16 @@ public class DiskDirectoryMapper implements IFileMapper {
 			return null;
 		if (filename == null || filename.length() == 0)
 			return dir;
-		return new File(dir, getLocalFileName(filename));
+		File cand = new File(dir, getLocalFileName(filename));
+		if (!cand.exists()) {
+			File alt = new File(dir, dsrToDOS(filename));
+			if (alt.exists())
+				return alt;
+			alt = new File(dir, dsrToDOSLinux(filename));
+			if (alt.exists())
+				return alt;
+		}
+		return cand;
 	}
 	
 	protected boolean isxdigit(char ch) {

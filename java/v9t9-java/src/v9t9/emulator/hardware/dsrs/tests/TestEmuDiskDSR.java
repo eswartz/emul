@@ -680,6 +680,7 @@ public class TestEmuDiskDSR {
 	private String readString(PabStruct pab) throws DsrException {
 		pab.opcode = PabConstants.op_read;
 		runCase(pab);
+		xfer.assertTouched(pab.bufaddr, pab.charcount, pab.preclen);
 		String str = getPabString(pab);
 		return str;
 	}
@@ -741,6 +742,8 @@ public class TestEmuDiskDSR {
 			for (int i = 0; i < 5; i++) {
 				try {
 					String str1 = readString(pab);
+					assertEquals(80, pab.charcount); 
+					assertEquals(80, pab.preclen); 
 					assertEquals(80, str1.length());
 				} catch (DsrException e) {
 					fail("#"+i+" -> " + e.toString());
