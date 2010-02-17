@@ -178,8 +178,8 @@ public abstract class FDR implements IFDRFlags {
     	if ((flags & IFDRFlags.ff_variable + IFDRFlags.ff_program) != 0) {
     		byteoffs = (size & 0xff);
     	} else {
-    		if (recspersec > 0) {
-    			numrecs = (size / 256) * recspersec + (size & 0xff) / recspersec;
+    		if (recspersec > 0 && reclen > 0) {
+    			numrecs = (size / 256) * recspersec + (size & 0xff) / reclen;
     		}
     	}
     }

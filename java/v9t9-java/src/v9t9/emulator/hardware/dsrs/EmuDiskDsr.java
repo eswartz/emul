@@ -10,7 +10,6 @@ import java.util.Map;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.dsrs.EmuDiskDsr.EmuDiskPabHandler.PabInfoBlock;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.files.FDR;
@@ -765,9 +764,26 @@ public class EmuDiskDsr implements DsrHandler {
 				}
 			}
 			
-			if (pab.getOpenMode() == PabConstants.m_output && pab.recnum != 0) {
-				// TODO: generate this many records (A514C)
+			if (pab.getOpenMode() == PabConstants.m_output
+					&& !pab.isVariable()
+					&& pab.recnum != 0) {
+				// initialize with allocated records
+				if (pab.recnum > 0x7fff) {
+					throw new DsrException(PabConstants.e_badopenmode, "Too many records: " + pab.recnum);
+				}
+				
+				// instead of just setting the file size, 
+				// simulate behavior of allocating sectors
+				byte[] zeroes = new byte[pab.preclen];
+				ByteMemoryAccess access = new ByteMemoryAccess(zeroes, 0);
+				for (int i = 0; i < pab.recnum; i++) {
+					openFile.writeRecord(access, pab.preclen);
+				}
 			}
+			
+			pab.recnum = 0;
+			openFile.seekToPosition(0);
+			
 			if (pab.getOpenMode() == PabConstants.m_append) {
 				openFile.seekToEOF();
 			}
@@ -794,8 +810,10 @@ public class EmuDiskDsr implements DsrHandler {
 				pab.preclen = openFile.getRecordLength();
 			
 			if (!pab.isVariable()) {
-				// always use record number 
-				pab.recnum &= 0x7fff;
+				// always use record number
+				if (pab.recnum > 0x7fff) {
+					throw new DsrException(PabConstants.e_badopenmode, "Too many records: " + pab.recnum);
+				}
 				openFile.seekToRecord(pab.recnum);
 				pab.recnum++;
 			}
@@ -844,8 +862,11 @@ public class EmuDiskDsr implements DsrHandler {
 			OpenFile openFile = block.findOpenFile(pab.pabaddr);
 			if (openFile == null)
 				throw new DsrException(PabConstants.e_badfiletype, "File not open: " + file);
-			
-			pab.recnum &= 0x7fff;
+
+			if (pab.recnum > 0x7fff) {
+				throw new DsrException(PabConstants.e_badopenmode, "Too many records: " + pab.recnum);
+			}
+
 			if (!pab.isRelative())
 				pab.recnum = 0;
 			
@@ -865,7 +886,9 @@ public class EmuDiskDsr implements DsrHandler {
 			
 
 			if (!pab.isVariable()) {
-				pab.recnum &= 0x7fff;
+				if (pab.recnum > 0x7fff) {
+					throw new DsrException(PabConstants.e_badopenmode, "Too many records: " + pab.recnum);
+				}
 				openFile.seekToRecord(pab.recnum);
 				pab.recnum++;
 			}

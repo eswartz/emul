@@ -15,6 +15,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.apache.bcel.generic.GETSTATIC;
 import org.ejs.coffee.core.utils.HexUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -551,7 +552,29 @@ public class TestEmuDiskDSR {
 		assertFDRFile(pab);
 	}
 	
-
+	@Test
+	public void testCreateIntFixPreAlloced() throws Exception {
+		// ensure we use default record length
+		PabStruct pab = createOpenPab(PabConstants.m_output, PabConstants.fp_internal, 0x1000, 128, "DSK1.TMP2");
+		pab.recnum = 0x8000;
+		try {
+			runCase(pab);
+		} catch (DsrException e) {
+			assertEquals(PabConstants.e_badopenmode, e.getErrorCode());
+		}
+		
+		pab.recnum = 0x7fff;
+		runCase(pab);
+		assertFDRFile(pab);
+		
+		assertEquals(0, pab.recnum);
+		
+		int status = readStatus(pab);
+		assertEquals(PabConstants.st_internal, status);
+		
+		
+	}
+	
 	String test1_exp = " DEF SECRET\n" + 
 	" REF VMBW,KSCAN\n" + 
 	"SECRET LI R0,300\n" + 
