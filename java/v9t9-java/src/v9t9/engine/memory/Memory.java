@@ -90,5 +90,14 @@ public class Memory {
 		return (MemoryDomain[]) domains.values().toArray(new MemoryDomain[domains.values().size()]);
 	}
 
+	/**
+	 * 
+	 */
+	public void save() {
+		for (MemoryDomain domain : domains.values()) {
+			domain.save();
+		}
+	}
+
 }
 

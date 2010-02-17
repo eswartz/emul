@@ -92,6 +92,7 @@ abstract public class Machine {
 	static public final Setting settingThrottleInterrupts = new Setting(sThrottleInterrupts, new Boolean(false));
 	
 	private List<IModule> modules = new ArrayList<IModule>();
+	private TimerTask memorySaverTask;
 	
     public Machine(MachineModel machineModel) {
     	runnableList = new LinkedList<Runnable>();
@@ -286,6 +287,16 @@ abstract public class Machine {
         };
         timer.scheduleAtFixedRate(clientTask, 0, clientTick);
         
+        memorySaverTask = new TimerTask() {
+        	@Override
+        	public void run() {
+        		synchronized (executionLock) {
+        			memory.save();
+        		}
+        	}
+        };
+        timer.scheduleAtFixedRate(memorySaverTask, 0, 5000);
+        
         bAlive = true;
         
       	// the machine (well, actually, 9900) runner
@@ -370,7 +381,7 @@ abstract public class Machine {
 		} catch (InterruptedException e) {
 		}
 		
-        
+		memory.save();        
         getSound().getSoundHandler().dispose();
 	}
     

@@ -39,8 +39,11 @@ public class DataFiles {
 	 * @return File where it exists or a default location
 	 */
 	public static File resolveFile(String filepath) {
+		File file = new File(filepath);
+		if (file.isAbsolute())
+			return file;
 		for (String path : searchPaths) {
-			File file = new File(path, filepath);
+			file = new File(path, filepath);
 			if (file.exists())
 				return file;
 			file = new File(path, filepath.toLowerCase());

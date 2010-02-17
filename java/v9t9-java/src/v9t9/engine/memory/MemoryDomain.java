@@ -6,6 +6,7 @@
  */
 package v9t9.engine.memory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -425,6 +426,20 @@ public class MemoryDomain implements MemoryAccess {
 
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * @throws IOException 
+	 * 
+	 */
+	public void save() {
+		for (MemoryEntry entry : mappedEntries) {
+			try {
+				entry.save();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 }

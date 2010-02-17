@@ -3,10 +3,13 @@
  */
 package v9t9.engine.modules;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.emulator.EmulatorSettings;
+import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryEntry;
@@ -68,9 +71,9 @@ public class MemoryEntryInfo {
 					memory,
 					getString(FILENAME),
 					memory.getDomain(getString(DOMAIN)),
-					getString(FILENAME),
+					getFilePath(getString(FILENAME), getBool(STORED)),
 					getInt(OFFSET),
-					getString(FILENAME2),
+					getFilePath(getString(FILENAME2), getBool(STORED)),
 					getInt(OFFSET2));
 		} else if ("CPU".equals(properties.get(DOMAIN))) {
 			entry = DiskMemoryEntry.newWordMemoryFromFile(
@@ -78,7 +81,7 @@ public class MemoryEntryInfo {
 					getInt(SIZE),
 					getString(FILENAME),
 					memory.getDomain(getString(DOMAIN)),
-					getString(FILENAME),
+					getFilePath(getString(FILENAME), getBool(STORED)),
 					getInt(OFFSET),
 					getBool(STORED));
 		} else {
@@ -87,11 +90,30 @@ public class MemoryEntryInfo {
 					getInt(SIZE),
 					getString(FILENAME),
 					memory.getDomain(getString(DOMAIN)),
-					getString(FILENAME),
+					getFilePath(getString(FILENAME), getBool(STORED)),
 					getInt(OFFSET),
 					getBool(STORED));
 		}
 		return entry;
+	}
+
+	/**
+	 * @param filename
+	 * @return
+	 */
+	private String getFilePath(String filename, boolean isStored) {
+		if (isStored) {
+			File existing = DataFiles.resolveFile(filename);
+			if (existing != null && existing.exists())
+				return existing.getAbsolutePath();
+			
+			String base = EmulatorSettings.getInstance().getBaseConfigurationPath();
+			File storedMemory = new File(new File(base), "module_ram");
+			storedMemory.mkdirs();
+		
+			return new File(storedMemory, filename).getAbsolutePath();
+		}
+		return filename;
 	}
 
 	private int getInt(String name) {

@@ -235,8 +235,9 @@ public class V9t9 {
     	File dskdefault = new File(diskRootDir, "default");
     	dskdefault.mkdirs();
     	
-    	//DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("/media/M/fun/tidisk/tibase/")); 
-    	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("/media/M/fun/tidisk/micropal.sp/")); 
+    	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("/media/M/fun/tidisk/tibase/")); 
+    	//DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("/media/M/fun/tidisk/micropal.sp/")); 
+    	//DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("/media/M/fun/tidisk/timp/")); 
     	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK2", dskdefault); 
     	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK3", dskdefault); 
     	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK4", dskdefault); 
