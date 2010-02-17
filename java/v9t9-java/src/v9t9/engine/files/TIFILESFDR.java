@@ -54,12 +54,12 @@ public class TIFILESFDR extends FDR {
 	        if (!Arrays.equals(fdr.sig, SIGNATURE)) {
 				throw new InvalidFDRException("No TIFILES signature found");
 			}
-	        fdr.secsused = (short) (stream.read() << 8 | stream.read());
-	        fdr.flags = (byte) stream.read();
-	        fdr.recspersec = (byte) stream.read();
-	        fdr.byteoffs = (byte) stream.read();
-	        fdr.reclen = (byte) stream.read();
-	        fdr.numrecs = (short) (stream.read() | stream.read() << 8);
+	        fdr.secsused = (stream.read() << 8 | stream.read());
+	        fdr.flags = stream.read();
+	        fdr.recspersec = stream.read();
+	        fdr.byteoffs = stream.read();
+	        fdr.reclen = stream.read();
+	        fdr.numrecs = (stream.read() | stream.read() << 8);
 	        fdr.unused = new byte[112];
 	        stream.read(fdr.unused, 0, 112);
         } finally {
