@@ -36,6 +36,7 @@ public abstract class PabHandler {
 		devname = readFilename((short) (fnaddr - devlen - 1), devlen);
 	
 		pab = new PabStruct();
+		
 		pab.path = devname + "." + fname;
 		
 		pab.fetch(xfer, pabaddr);

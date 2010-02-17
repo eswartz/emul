@@ -59,6 +59,10 @@ public class TestEmuDiskDSR {
 		assertTrue(dir+"", dir.exists());
 		dsk1Path = dir;
 		mymapper.setDiskPath("DSK1", dir);
+		
+		dir = new File(dir.getParentFile(), mymapper.getLocalFileName("EXTRA/LALA"));
+		mymapper.setDiskPath("DSK2", dir);
+
 	}
 	
 	static class FakeMemory implements MemoryTransfer {
@@ -235,11 +239,22 @@ public class TestEmuDiskDSR {
 		assertEquals("FOO/S", mapper.getDsrFileName("foo&#2f;s"));
 		assertEquals(new File(dsk1Path, "monkey"), mapper.getLocalDottedFile("DSK1.Monkey"));
 		assertEquals(new File(dsk1Path, "monkey"), mapper.getLocalFile("DSK1", "MONKEY"));
+		assertEquals(new File(dsk1Path, "monkey"), mapper.getLocalFile("DSK", "DATA.MONKEY"));
 		assertEquals(dsk1Path, mapper.getLocalFile("DSK1", ""));
 		assertEquals(dsk1Path, mapper.getLocalFile("DSK1", null));
-		assertNull(mapper.getLocalFile("DSK2", "MONKEY"));
+		assertNull(mapper.getLocalFile("DSK3", "MONKEY"));
 
 	}
+	
+	@Test
+	public void testDeviceMapping() throws Exception {
+		IFileMapper mapper = mymapper;
+		assertEquals("DSK1", mapper.getDeviceNamed("DATA"));
+		assertEquals("DSK2", mapper.getDeviceNamed("EXTRA/LALA"));
+		assertNull(mapper.getDeviceNamed("MONKEY"));
+
+	}
+	
 	@Test
 	public void testOpenBinary() throws Exception {
 		// read whole thing
@@ -256,7 +271,7 @@ public class TestEmuDiskDSR {
 	@Test
 	public void testOpenBinarySmallBuffer() throws Exception {
 		// read portion of the thing
-		PabStruct pab = createBinaryPab(PabConstants.op_load, 0x1000, 0x20, "DSK1.XBPRG");
+		PabStruct pab = createBinaryPab(PabConstants.op_load, 0x1000, 0x20, "DSK.DATA.XBPRG");
 		runCase(pab);
 		assertEquals(0x00, pab.pflags);
 		assertEquals(0x20, pab.recnum);

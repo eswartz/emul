@@ -36,6 +36,18 @@ public class DiskDirectoryMapper implements IFileMapper {
 		return null;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.EmuDiskDsr.IFileMapper#getLocalDevice(java.lang.String)
+	 */
+	public String getDeviceNamed(String dsrName) {
+		String localName = getLocalFileName(dsrName);
+		for (Map.Entry<String, File> entry : diskMap.entrySet()) {
+			if (entry.getValue().getName().equals(localName)) {
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
 
 	/*	In V9t9 6.0, we used 8.3 filenames, and these chars
 		were converted by adding 0x80 to the name on disk. 
@@ -198,21 +210,32 @@ public class DiskDirectoryMapper implements IFileMapper {
 	}
 	
 	public File getLocalFile(String device, String filename) {
-		File dir = diskMap.get(device);
-		if (dir == null)
-			return null;
-		if (filename == null || filename.length() == 0)
-			return dir;
-		File cand = new File(dir, getLocalFileName(filename));
-		if (!cand.exists()) {
-			File alt = new File(dir, dsrToDOS(filename));
-			if (alt.exists())
-				return alt;
-			alt = new File(dir, dsrToDOSLinux(filename));
-			if (alt.exists())
-				return alt;
+		if (!device.equals("DSK")) {
+			File dir = diskMap.get(device);
+			if (dir == null) {
+				return null;
+			}
+			if (filename == null || filename.length() == 0)
+				return dir;
+			File cand = new File(dir, getLocalFileName(filename));
+			if (!cand.exists()) {
+				File alt = new File(dir, dsrToDOS(filename));
+				if (alt.exists())
+					return alt;
+				alt = new File(dir, dsrToDOSLinux(filename));
+				if (alt.exists())
+					return alt;
+			}
+			return cand;
+		} else {
+			int idx = filename.indexOf('.');
+			String diskName = filename.substring(0, idx >= 0 ? idx : filename.length());
+			device = getDeviceNamed(diskName);
+			if (device == null)
+				return null;
+			filename = filename.substring(diskName.length() + 1);
+			return getLocalFile(device, filename);
 		}
-		return cand;
 	}
 	
 	protected boolean isxdigit(char ch) {

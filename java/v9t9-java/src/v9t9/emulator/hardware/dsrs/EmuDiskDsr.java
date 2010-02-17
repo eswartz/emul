@@ -5,6 +5,7 @@ package v9t9.emulator.hardware.dsrs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,6 +95,12 @@ public class EmuDiskDsr implements DsrHandler {
 
 	public boolean handleDSR(MemoryTransfer xfer, short code) {
 		switch (code) {
+		case D_DSK:
+			// find disk
+		{
+			
+		
+		}
 			// PAB file operation on DSKx 
 		case D_DSK1:
 		case D_DSK2:
@@ -239,6 +246,11 @@ public class EmuDiskDsr implements DsrHandler {
 		File getLocalRoot(File file);
 		
 		/**
+		 * Get the root device with this DSR name (e.g. FOO in DSK.FOO) 
+		 */
+		String getDeviceNamed(String name);
+		
+		/**
 		 * Get the DSR filename for the given filename
 		 * @param filename the file segment (or dotted path)
 		 * @return DSR-formatted filename
@@ -303,7 +315,7 @@ public class EmuDiskDsr implements DsrHandler {
 			if ((fdrflags & IFDRFlags.ff_variable) != 0)
 				fdr.setRecordsPerSector(255 / (reclen + 1));
 			else
-				fdr.setRecordsPerSector(256 / reclen);
+				fdr.setRecordsPerSector(Math.min(255, 256 / reclen));
 			
 			nativefile = new NativeFDRFile(file, fdr);
 			try {
@@ -382,8 +394,12 @@ public class EmuDiskDsr implements DsrHandler {
 			if (currentSecNum != secnum) {
 				currentSecNum = secnum;
 				try {
-					if (nativefile != null)
-						nativefile.readContents(sector, 0, secnum * 256, sector.length);
+					if (nativefile != null) {
+						int read = nativefile.readContents(sector, 0, secnum * 256, sector.length);
+						// if short, clear sector (when seeking past EOF to write data, don't repeat other records)
+						if (read <= sector.length)
+							Arrays.fill(sector, Math.max(0, read), sector.length, (byte) 0);
+					}
 				} catch (IOException e) {
 					throw new DsrException(PabConstants.e_hardwarefailure, e);
 				}
@@ -622,9 +638,10 @@ public class EmuDiskDsr implements DsrHandler {
 			builder.append(" @>" + HexUtils.toHex4(pab.bufaddr));
 			if (pab.opcode == PabConstants.op_save || pab.opcode == PabConstants.op_load)
 				builder.append(", " + pab.recnum);
-			else if (pab.opcode == PabConstants.op_read || pab.opcode == PabConstants.op_write) {
+			else if (pab.opcode == PabConstants.op_read || pab.opcode == PabConstants.op_write)
 				builder.append(", " + pab.charcount + " #" + pab.recnum);
-			}
+			else if (pab.opcode == PabConstants.op_open) 
+				builder.append(", " + pab.preclen + ", >" + HexUtils.toHex2(pab.pflags));
 			return builder.toString();
 		}
 		/**
@@ -636,10 +653,6 @@ public class EmuDiskDsr implements DsrHandler {
 			if (pab.opcode > 9) {
 				throw new DsrException(PabConstants.e_illegal, "Bad opcode: " + pab.opcode);
 			} 
-			
-			if (fname.indexOf('.') >= 0) {
-				throw new DsrException(PabConstants.e_badfiletype, "Bad filename: " + fname);
-			}
 			
 			File file = mapper.getLocalFile(devname, fname);
 			if (file == null)
@@ -679,6 +692,26 @@ public class EmuDiskDsr implements DsrHandler {
 				throw new DsrException(PabConstants.e_illegal, "[not] doing operation "+pab.opcode+" on "+devname);
 			}
 		
+		}
+
+		/**
+		 * @param bufaddr
+		 * @param charcount
+		 */
+		private void dump(int bufaddr, int charcount) {
+			StringBuilder builder = new StringBuilder();
+			StringBuilder hexbuilder = new StringBuilder();
+			for (int i = 0; i < charcount; i++) {
+				byte b = xfer.readVdpByte(bufaddr + i);
+				builder.append(b >= 32 && b < 127 ? (char)b : '.');
+				hexbuilder.append(HexUtils.toHex2(b));
+				if (i % 4 == 1)
+					hexbuilder.append('.');
+				else if (i % 4 == 3)
+					hexbuilder.append(' ');
+			}
+			info("Read: " + builder + "\n | " + hexbuilder);
+			
 		}
 
 		private void DSKOpen(File file) throws DsrException {
@@ -824,7 +857,7 @@ public class EmuDiskDsr implements DsrHandler {
 				pab.charcount = openFile.readRecord(access, pab.preclen);
 				xfer.dirtyVdpMemory(pab.bufaddr, pab.charcount);
 				
-				if (true) {
+				if (false) {
 					dump(pab.bufaddr, pab.charcount);
 				}
 			} catch (DsrException e) {
@@ -835,26 +868,6 @@ public class EmuDiskDsr implements DsrHandler {
 			}
 		}
 		
-		/**
-		 * @param bufaddr
-		 * @param charcount
-		 */
-		private void dump(int bufaddr, int charcount) {
-			StringBuilder builder = new StringBuilder();
-			StringBuilder hexbuilder = new StringBuilder();
-			for (int i = 0; i < charcount; i++) {
-				byte b = xfer.readVdpByte(bufaddr + i);
-				builder.append(b >= 32 && b < 127 ? (char)b : '.');
-				hexbuilder.append(HexUtils.toHex2(b));
-				if (i % 4 == 1)
-					hexbuilder.append('.');
-				else if (i % 4 == 3)
-					hexbuilder.append(' ');
-			}
-			info("Read: " + builder + "\n | " + hexbuilder);
-			
-		}
-
 		private void DSKRestore(File file) throws DsrException {
 			if (!pab.isReading())
 				throw new DsrException(PabConstants.e_illegal, "File not open for reading: " + file);
@@ -952,7 +965,7 @@ public class EmuDiskDsr implements DsrHandler {
 				throw new DsrException(PabConstants.e_readonly, null, "File is protected: " + file);
 			}
 		
-			if (!openFile.getNativeFile().getFile().delete())
+			if (openFile.getNativeFile() != null && !openFile.getNativeFile().getFile().delete())
 				throw new DsrException(PabConstants.e_hardwarefailure, null, "File not deleted: " + file);
 		}
 
