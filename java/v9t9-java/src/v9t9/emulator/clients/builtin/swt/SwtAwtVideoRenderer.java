@@ -27,6 +27,8 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.emulator.clients.builtin.awt.AwtVideoRenderer;
 
 /**
+ * AWT blitting is much faster than SWT's. 
+ * Host the V9t9 screen inside an AWT control inside a SWT_AWT control inside an SWT canvas.
  * @author ejs
  *
  */

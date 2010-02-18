@@ -23,23 +23,25 @@ import javax.imageio.ImageIO;
 import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.Setting;
 
+import v9t9.emulator.clients.builtin.jna.V9t9Render;
+import v9t9.emulator.clients.builtin.jna.V9t9Render.AnalogTV;
+import v9t9.emulator.clients.builtin.jna.V9t9Render.AnalogTVData;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
 import v9t9.emulator.hardware.V9t9;
-import v9t9.jni.v9t9render.utils.V9t9RenderUtils;
 
 /**
+ * AWT has nice accelerated blit routines, which are superior to SWT on Linux/GTK and Windows.
  * @author Ed
  *
  */
 public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
-	static {
-		System.loadLibrary("v9t9renderutils");
-	}
+	private static final boolean USE_ANALOGTV = false;
+
 	private ImageDataCanvas vdpCanvas;
 
 	// global zoom
@@ -60,6 +62,9 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	private Canvas canvas;
 
 	private Rectangle updateRect;
+	
+
+	private AnalogTV analog;
 	
 	public AwtVideoRenderer() {
 		updateRect = new Rectangle(0, 0, 0, 0);
@@ -392,6 +397,11 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				return;
 			System.out.println("New BufferedImage");
 			surface = new BufferedImage(desiredWidth, desiredHeight, BufferedImage.TYPE_INT_BGR);
+			if (USE_ANALOGTV && analog != null) {
+				V9t9Render.INSTANCE.freeAnalogTv(analog);
+				analog = V9t9Render.INSTANCE.allocateAnalogTv(desiredWidth, desiredHeight);
+			}
+			
 		}
 
 		int destWidth = surface.getWidth();
@@ -437,27 +447,56 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			//System.out.println("logRect = " + logRect + " x/y="+x+","+y+"; width/height="+width+","+height+"; srcoffset="+srcoffset);
 			//System.out.println("srcoffset="+srcoffset+"; mod="+(srcoffset%3));
 			
-			synchronized (vdpCanvas) {
-				V9t9RenderUtils.scaleImageToRGBA(
-						data,
-						vdpCanvas.getImageData().data, 
-						srcoffset,
-						logRect.width, logRect.height, vdpCanvas.getLineStride(),
-						width, height, destWidth * 4,
-						x, y, width, height);
-			}
-			//System.out.println("scaled");
-			if (V9t9.settingMonitorDrawing.getBoolean()) {
-				// modify a slightly larger area
-				//if (logRect.x > 0) { logRect.x--; logRect.width++; }
-				if (logRect.y > 0) { logRect.y--; logRect.height++; }
-				if (logRect.y + logRect.height + 2 <= logMax.height) logRect.height++;
-				Rectangle nphys = logicalToPhysical(logRect);
+
+			if (USE_ANALOGTV) {
+				if (analog == null) {
+					analog = V9t9Render.INSTANCE.allocateAnalogTv(vdpCanvas.getWidth(), vdpCanvas.getHeight());
+				}
+				synchronized (vdpCanvas) {
+					try {
+						V9t9Render.INSTANCE.analogizeImageData(
+								analog,
+								vdpCanvas.getImageData().data, srcoffset,
+								vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight(), vdpCanvas.getLineStride());
+						
+						AnalogTVData adata = V9t9Render.INSTANCE.getAnalogTvData(analog);
+						V9t9Render.INSTANCE.scaleImageToRGBA(
+								data,
+								adata.image, 
+								0,
+								adata.width, adata.height, 
+								adata.bytes_per_line,
+								width, height, destWidth * 4,
+								x, y, width, height);
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
+				}				
+			} else {
 				
-				V9t9RenderUtils.addNoiseRGBA(data,
-						destWidth * 4 * nphys.y + 4 * nphys.x,
-						nphys.width, nphys.height, destWidth * 4,
-						logRect.width, logRect.height);
+				synchronized (vdpCanvas) {
+					V9t9Render.INSTANCE.scaleImageToRGBA(
+							data,
+							vdpCanvas.getImageData().data, 
+							srcoffset,
+							logRect.width, logRect.height, vdpCanvas.getLineStride(),
+							width, height, destWidth * 4,
+							x, y, width, height);
+				}
+				
+				//System.out.println("scaled");
+				if (V9t9.settingMonitorDrawing.getBoolean()) {
+					// modify a slightly larger area
+					//if (logRect.x > 0) { logRect.x--; logRect.width++; }
+					if (logRect.y > 0) { logRect.y--; logRect.height++; }
+					if (logRect.y + logRect.height + 2 <= logMax.height) logRect.height++;
+					Rectangle nphys = logicalToPhysical(logRect);
+					
+					V9t9Render.INSTANCE.addNoiseRGBA(data,
+							destWidth * 4 * nphys.y + 4 * nphys.x,
+							nphys.width, nphys.height, destWidth * 4,
+							logRect.width, logRect.height);
+				}
 			}
 			
 			//width = destWidth - x;	height = destHeight - y;
@@ -470,7 +509,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 					canvas);
 		} else {
 			synchronized (vdpCanvas) {
-				V9t9RenderUtils.scaleImageToRGBA(
+				V9t9Render.INSTANCE.scaleImageToRGBA(
 						data,
 						vdpCanvas.getImageData().data, vdpCanvas.getDisplayAdjustOffset(),
 						vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
@@ -478,7 +517,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 						0, 0, destWidth, destHeight);
 			}
 			if (V9t9.settingMonitorDrawing.getBoolean()) {
-				V9t9RenderUtils.addNoiseRGBA(data, 0,
+				V9t9Render.INSTANCE.addNoiseRGBA(data, 0,
 						destWidth, destHeight, destWidth * 4,
 						vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
 			}

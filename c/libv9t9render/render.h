@@ -32,42 +32,10 @@ typedef struct AnalogTV AnalogTV;
 struct AnalogTV* allocateAnalogTv(int width, int height);
 void freeAnalogTv(struct AnalogTV* );
 
-void 		renderGdkPixbufFromImageData(
-		char *byteArray, int width, int height, int rowstride,
-		int destWidth, int destHeight,
-		int upx, int upy, int upwidth, int upehight,
-		long long gdkWindow_);
-
-void 		renderNoisyGdkPixbufFromImageData(
-		char* byteArray, int width, int height, int rowstride,
-		int destWidth, int destHeight,
-		int upx, int upy, int upwidth, int upehight,
-		long long gdkWindow_);
-
-void 		renderAnalogGdkPixbufFromImageData(
-		struct AnalogTV* analog,
-		char* byteArray, int width, int height, int rowstride,
-		int destWidth, int destHeight,
-		long long gdkWindow_);
-
-
-struct OpenGL* allocateOpenGL(int nblocks);
-void realizeOpenGL(struct OpenGL *, long long gtkWidget_);
-void freeOpenGL(struct OpenGL *);
-
-void        renderOpenGLFromImageData(struct OpenGL* ogl,
-        char* BYTE, int width, int height, int rowstride,
-        int destWidth, int destHeight,
-        int upx, int upy, int upwidth, int upheight);
-
-///
-
-void    updateBlockTexture(struct OpenGL* ogl, int blockidx, int width, int height, char *BYTE, int offset);
-
-void        renderOpenGLFromBlocks(struct OpenGL* ogl,
-		int width, int height,
-        int destWidth, int destHeight,
-        int upx, int upy, int upwidth, int upheight);
+struct analogtv_s* getAnalogTvData(AnalogTV *analog);
+void 		analogizeImageData(
+		AnalogTV* analog,
+		char* byteArray, int srcoffset, int width, int height, int rowstride);
 
 #ifdef _WIN32
 __declspec(dllexport) __stdcall

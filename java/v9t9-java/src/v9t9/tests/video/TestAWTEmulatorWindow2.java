@@ -85,12 +85,12 @@ public class TestAWTEmulatorWindow2 {
 		vdpCanvas.clear(new byte[] { (byte) (ctr*11),(byte) (ctr*15),(byte) (ctr*7) });
 		
 		byte[] scaledData = new byte[bounds.width * bounds.height * 3];
-		V9t9RenderUtils.scaleImage(scaledData, 
+		V9t9Render.scaleImage(scaledData, 
 				vdpCanvas.getImageData().data, 0,
 				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
 				bounds.width, bounds.height, bounds.width * 4,
 				0, 0, bounds.width, bounds.height);
-		V9t9RenderUtils.addNoise(scaledData, 0,
+		V9t9Render.addNoise(scaledData, 0,
 				bounds.width, bounds.height, bounds.width * 3,
 				vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
 		

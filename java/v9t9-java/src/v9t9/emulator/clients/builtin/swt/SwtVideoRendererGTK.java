@@ -11,10 +11,10 @@ import org.eclipse.swt.internal.gtk.OS;
 import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.Setting;
 
+import v9t9.emulator.clients.builtin.jna.V9t9Render;
+import v9t9.emulator.clients.builtin.jna.V9t9Render.AnalogTV;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.hardware.V9t9;
-import v9t9.jni.v9t9render.SWIGTYPE_p_AnalogTV;
-import v9t9.jni.v9t9render.V9t9Render;
 
 /**
  * Render video into an SWT window
@@ -23,16 +23,16 @@ import v9t9.jni.v9t9render.V9t9Render;
  */
 @SuppressWarnings("restriction")
 public class SwtVideoRendererGTK extends SwtVideoRenderer {
-	private static final boolean USE_ANALOGTV = false;
+	private static final boolean USE_ANALOGTV = true;
 	private static final boolean USE_GDKONLY = false;
 	private static final boolean USE_SWTONLY = false;
-	private static final boolean USE_NOISY = true;
+	private static final boolean USE_NOISY = false;
 	
 	static {
 		System.loadLibrary("v9t9render");
 	}
 
-	private SWIGTYPE_p_AnalogTV analog;
+	private AnalogTV analog;
 	
 	public SwtVideoRendererGTK() {
 		super();
@@ -60,7 +60,7 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 	protected void resizeWidgets() {
 		super.resizeWidgets();
 		if (USE_ANALOGTV && analog != null) {
-			V9t9Render.freeAnalogTv(analog);
+			V9t9Render.INSTANCE.freeAnalogTv(analog);
 			analog = null;
 		}
 	}
@@ -92,29 +92,12 @@ public class SwtVideoRendererGTK extends SwtVideoRenderer {
 				int lineStride = vdpCanvas.getLineStride();
 				if (vdpCanvas.isInterlacedEvenOdd())
 					lineStride /= 2;
-				if (USE_GDKONLY) {
-					synchronized (vdpCanvas) {
-						V9t9Render.renderGdkPixbufFromImageData(imageData.data,
-								vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight(), lineStride,
-								canvasSize.x, canvasSize.y,
-								updateRect.x, updateRect.y, updateRect.width, updateRect.height,
-								OS.GTK_WIDGET_WINDOW(canvas.handle));
-					}
-				} else if (USE_NOISY) {
-					synchronized (vdpCanvas) {
-						//System.out.println("repaint: " + updateRect);
-						V9t9Render.renderNoisyGdkPixbufFromImageData(imageData.data,
-								vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight(), lineStride,
-								canvasSize.x, canvasSize.y,
-								updateRect.x, updateRect.y, updateRect.width, updateRect.height,
-								OS.GTK_WIDGET_WINDOW(canvas.handle));
-					}
-				} else if (USE_ANALOGTV) {
+				if (USE_ANALOGTV) {
 					if (analog == null) {
-						analog = V9t9Render.allocateAnalogTv(canvasSize.x, canvasSize.y);
+						analog = V9t9Render.INSTANCE.allocateAnalogTv(canvasSize.x, canvasSize.y);
 					}
 					synchronized (vdpCanvas) {
-						V9t9Render.renderAnalogGdkPixbufFromImageData(
+						V9t9Render.INSTANCE.renderAnalogGdkPixbufFromImageData(
 								analog,
 								imageData.data,
 								vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight(), lineStride,

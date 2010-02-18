@@ -64,6 +64,8 @@ static void darken_pixels(unsigned char *row, int width, int realWidth, int mulf
 
 void addNoiseRGBA(unsigned int *idata, int offset, int width, int height, int rowstride,
 		int realWidth, int realHeight) {
+	//printf("%p %d %dx%d %d ...\n", idata, offset, width, height, rowstride);
+
 	idata += offset / 4;
 	int rr, c, ir;
 

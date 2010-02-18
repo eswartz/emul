@@ -460,6 +460,7 @@ void        scaleImage(
         int destWidth, int destHeight, int destRowstride,
         int upx, int upy, int upwidth, int upheight) {
 
+	//printf("%p %p %d %dx%d %d ...\n", dest, src, offset, width, height, rowstride);
 	src += offset;
 
 	//printf("width=%d, destWidth=%d; height=%d, destHeight=%d\n", width, destWidth, height, destHeight);

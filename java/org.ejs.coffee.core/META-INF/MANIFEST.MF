@@ -3,7 +3,10 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Coffee Core Library
 Bundle-SymbolicName: org.ejs.coffee.core;singleton:=true
 Bundle-Version: 1.0.0
-Export-Package: com.vladium.utils.timing,
+Export-Package: com.sun.jna,
+ com.sun.jna.ptr,
+ com.sun.jna.win32,
+ com.vladium.utils.timing,
  net.iHarder,
  org.ejs.coffee.core.jface,
  org.ejs.coffee.core.model,
