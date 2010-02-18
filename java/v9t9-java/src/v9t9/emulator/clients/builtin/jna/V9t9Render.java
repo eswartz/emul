@@ -3,16 +3,16 @@
  */
 package v9t9.emulator.clients.builtin.jna;
 
+import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.PointerType;
 import com.sun.jna.Structure;
-import com.sun.jna.win32.StdCallLibrary;
 
 /**
  * @author ejs
  *
  */
-public interface V9t9Render extends StdCallLibrary {
+public interface V9t9Render extends Library {
 	V9t9Render INSTANCE = (V9t9Render) Native.loadLibrary("v9t9render", V9t9Render.class);
 	
 	void        scaleImage(
