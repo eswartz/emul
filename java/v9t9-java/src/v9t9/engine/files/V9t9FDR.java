@@ -82,6 +82,8 @@ public class V9t9FDR extends FDR {
     }
 
     public void writeFDR(File file) throws IOException {
+    	file.setWritable(true);
+    	
     	RandomAccessFile raf = new RandomAccessFile(file, "rw");
     	raf.seek(0);
     	
@@ -99,6 +101,8 @@ public class V9t9FDR extends FDR {
         raf.write(dcpb);
         
         raf.close();
+        
+        file.setWritable(!isReadOnly());
     }
     
 	public String getFileName() {

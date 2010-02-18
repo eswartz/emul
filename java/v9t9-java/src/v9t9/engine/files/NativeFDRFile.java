@@ -41,11 +41,13 @@ public class NativeFDRFile implements NativeFile {
 
     public int writeContents(byte[] contents, int contentOffset, int offset,
 			int length) throws IOException {
+    	file.setWritable(true);
     	RandomAccessFile raf = new RandomAccessFile(file, "rw");
         
     	raf.seek(offset + fdr.getFDRSize());
         raf.write(contents, contentOffset, length);
         raf.close();
+        file.setWritable(!fdr.isReadOnly());
         return length;
 	}
 
@@ -61,10 +63,12 @@ public class NativeFDRFile implements NativeFile {
      * @see v9t9.engine.files.NativeFile#setLength(int)
      */
     public void setFileSize(int size) throws IOException {
+    	file.setWritable(true);
     	RandomAccessFile raf = new RandomAccessFile(file, "rw");
     	fdr.setFileSize(size);
         raf.setLength(fdr.getFDRSize() + fdr.getFileSize());
         raf.close();
+        file.setWritable(!fdr.isReadOnly());
     }
     
 	public FDR getFDR() {

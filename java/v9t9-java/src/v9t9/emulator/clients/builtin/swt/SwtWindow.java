@@ -69,6 +69,7 @@ import v9t9.emulator.runtime.Executor;
 public class SwtWindow extends BaseEmulatorWindow {
 	
 	protected static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
+	protected static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
 	protected static final String DEBUGGER_TOOL_ID = "debugger";
 	protected Shell shell;
 	protected Control videoControl;
@@ -364,6 +365,32 @@ public class SwtWindow extends BaseEmulatorWindow {
 					}
 			}
 		);
+		
+		createButton(buttonBar,
+				5, "Setup disks", 
+				new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						if (!restoreToolShell(DISK_SELECTOR_TOOL_ID)) {
+							final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
+							IFocusRestorer diskRestorer = new IFocusRestorer() {
+								
+								public void restoreFocus() {
+									Display.getDefault().asyncExec(new Runnable() {
+										public void run() {
+											focusRestorer.restoreFocus();
+											hideShell(shell);
+										}
+									});
+								}
+							};
+							final DiskSelector window = new DiskSelector(shell, machine.getDsrManager(), diskRestorer);
+							createToolShell(DISK_SELECTOR_TOOL_ID, shell, window, "DiskWindowBounds");
+							shell.setSize(400, 300);
+						}
+					}
+			}
+		);
 		/*
 		createButton(buttonBar,
 				0, 
@@ -514,12 +541,18 @@ public class SwtWindow extends BaseEmulatorWindow {
 	protected boolean restoreToolShell(String toolId) {
 		Shell old = toolShells.get(toolId);
 		if (old != null) {
-			old.setVisible(true);
-			old.setFocus();
+			if (old.isVisible()) {
+				old.setVisible(false);
+				focusRestorer.restoreFocus();
+			} else {
+				old.setVisible(true);
+				old.setFocus();
+			}
 			return true;
-		}
+		} 
 		return false;
 	}
+	
 	protected void createToolShell(final String toolId, final Shell shell, final Composite tool, final String boundsPref) {
 		shell.setImage(getShell().getImage());
 		shell.setLayout(new GridLayout(1, false));

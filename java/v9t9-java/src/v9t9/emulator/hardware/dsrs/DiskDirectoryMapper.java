@@ -4,24 +4,75 @@
 package v9t9.emulator.hardware.dsrs;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.utils.ISettingListener;
+import org.ejs.coffee.core.utils.Setting;
+
+import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.hardware.dsrs.EmuDiskDsr.IFileMapper;
 
 
 public class DiskDirectoryMapper implements IFileMapper {
 	private Map<String, File> diskMap = new HashMap<String, File>();
+	private Map<String, Setting> diskSettingsMap = new HashMap<String, Setting>();
 	
 	public static final DiskDirectoryMapper INSTANCE = new DiskDirectoryMapper();
 	
 	public DiskDirectoryMapper() {
 	}
 	
+
+	public void registerDiskPath(String device, File dskdefault) {
+		Setting diskSetting = new Setting(device, dskdefault.getAbsolutePath());
+		diskSetting.loadState(EmulatorSettings.getInstance().getApplicationSettings());
+		diskMap.put(device, new File(diskSetting.getString()));
+
+		diskSettingsMap.put(device, diskSetting); 
+		diskSetting.addListener(new ISettingListener() {
+			
+			public void changed(Setting setting, Object oldValue) {
+				diskMap.put(setting.getName(), new File(setting.getString()));
+				setting.saveState(EmulatorSettings.getInstance().getApplicationSettings());
+			}
+		});
+	}
 	public void setDiskPath(String device, File dir) {
 		diskMap.put(device, dir);
+		Setting diskSetting = diskSettingsMap.get(device);
+		if (diskSetting != null)
+			diskSetting.setString(dir.getAbsolutePath());
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.EmuDiskDsr.IFileMapper#getSetting()
+	 */
+	public Setting[] getSettings() {
+		ArrayList<? extends Setting> list = new ArrayList<Setting>(diskSettingsMap.values());
+		Collections.sort(list);
+		return (Setting[]) list.toArray(new Setting[list.size()]);
 	}
 	
+
+	public synchronized void saveState(IDialogSettings settings) {
+		for (Map.Entry<String, Setting> entry : diskSettingsMap.entrySet()) {
+			entry.getValue().saveState(settings);
+		}
+	}
+
+	public synchronized void loadState(IDialogSettings settings) {
+		if (settings == null) return;
+		for (Map.Entry<String, Setting> entry : diskSettingsMap.entrySet()) {
+			entry.getValue().loadState(settings);
+		}
+	}
+
 
 	public File getLocalRoot(File file) {
 		while (file != null) {
@@ -302,4 +353,6 @@ public class DiskDirectoryMapper implements IFileMapper {
 		}
 		return null;
 	}
+
+
 }

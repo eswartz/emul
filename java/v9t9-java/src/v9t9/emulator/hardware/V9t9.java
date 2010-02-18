@@ -12,12 +12,10 @@ import java.io.IOException;
 
 import org.ejs.coffee.core.utils.Setting;
 
-import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
-import v9t9.emulator.hardware.dsrs.DiskDirectoryMapper;
 import v9t9.emulator.hardware.memory.EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.runtime.Cpu;
@@ -229,19 +227,6 @@ public class V9t9 {
         }
         
     	Machine.settingExpRam.setBoolean(true);
-    	
-    	String diskRootPath = EmulatorSettings.getInstance().getBaseConfigurationPath() + "disks";
-    	File diskRootDir = new File(diskRootPath);
-    	File dskdefault = new File(diskRootDir, "default");
-    	dskdefault.mkdirs();
-    	
-    	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("/media/M/fun/tidisk/tibase/")); 
-    	//DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("/media/M/fun/tidisk/micropal.sp/")); 
-    	//DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("/media/M/fun/tidisk/timp/")); 
-    	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK2", dskdefault); 
-    	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK3", dskdefault); 
-    	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK4", dskdefault); 
-    	DiskDirectoryMapper.INSTANCE.setDiskPath("DSK5", dskdefault); 
     }
     
     public static void main(String args[]) throws IOException {

@@ -9,8 +9,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.Setting;
 
+import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.hardware.dsrs.EmuDiskDsr.EmuDiskPabHandler.PabInfoBlock;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.files.FDR;
@@ -71,6 +74,15 @@ public class EmuDiskDsr implements DsrHandler {
 	
 	public EmuDiskDsr(IFileMapper mapper) {
 		this.mapper = mapper;
+		
+    	String diskRootPath = EmulatorSettings.getInstance().getBaseConfigurationPath() + "disks";
+    	File diskRootDir = new File(diskRootPath);
+    	File dskdefault = new File(diskRootDir, "default");
+    	dskdefault.mkdirs();
+    	
+    	for (String dev : new String[] { "DSK1", "DSK2", "DSK3", "DSK4", "DSK5" }) {
+    		DiskDirectoryMapper.INSTANCE.registerDiskPath(dev, dskdefault); 
+    	}
 	}
 	
 	public String getName() {
@@ -218,6 +230,14 @@ public class EmuDiskDsr implements DsrHandler {
 	 *
 	 */
 	public interface IFileMapper {
+		/**
+		 * Get all the registered settings (String)
+		 */
+		Setting[] getSettings();
+		
+		void saveState(IDialogSettings section);
+		void loadState(IDialogSettings section);
+		
 		/**
 		 * Get the candidate file for the given device.filename
 		 * @param deviceFilename name like DSK1.FOO
@@ -1201,11 +1221,9 @@ public class EmuDiskDsr implements DsrHandler {
 				try {
 					file = NativeFileFactory.createNativeFile(localFile);
 				} catch (IOException e) {
-					try {
-						localFile.createNewFile();
-					} catch (IOException e1) {
-						throw new DsrException(es_hardware, e1, "Failed to create file: " + localFile);
-					}
+				}
+				if (file == null || file.getFileSize() == 0) {
+					file = new NativeFDRFile(localFile, new V9t9FDR());
 				}
 				
 				if (file instanceof NativeFDRFile) {
@@ -1217,6 +1235,12 @@ public class EmuDiskDsr implements DsrHandler {
 					fdr.setByteOffset(xfer.readParamByte(parms + 6) & 0xff);
 					fdr.setRecordLength(xfer.readParamByte(parms + 7) & 0xff);
 					fdr.setNumberRecords(xfer.readParamWord(parms + 8) & 0xffff);
+					if (fdr instanceof V9t9FDR) {
+						try {
+							((V9t9FDR)fdr).setFileName(filename);
+						} catch (IOException e) {
+						}
+					}
 					try {
 						fdr.writeFDR(file.getFile());
 					} catch (IOException e) {
@@ -1230,7 +1254,7 @@ public class EmuDiskDsr implements DsrHandler {
 				if (byteoffs != 0)
 					numsecs++;
 				int size = numsecs * 256 + byteoffs;
-				int oldsize = file.getFileSize();
+				int oldsize = file != null ? file.getFileSize() : 0;
 				try {
 					file.setFileSize(size);
 				} catch (IOException e) {
@@ -1262,6 +1286,7 @@ public class EmuDiskDsr implements DsrHandler {
 					int wrote = file.writeContents(access.memory, access.offset, secnum * 256, secs * 256);
 					// error will be set if sector write failed
 					xfer.writeParamByte(0x4D, (byte) ((wrote + 255) >> 8));
+					xfer.writeParamByte(0x50, (byte) 0);
 				} catch (IOException e) {
 					throw new DsrException(es_outofspace, e);
 				}
@@ -1283,5 +1308,20 @@ public class EmuDiskDsr implements DsrHandler {
 			throw new DsrException(PabConstants.e_badfiletype, e2);
 		}
 		return fdr;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getSettings()
+	 */
+	public Setting[] getSettings() {
+		return mapper.getSettings();
+	}
+	public void saveState(IDialogSettings section) {
+		mapper.saveState(section.addNewSection("Mappings"));
+	}
+	
+	public void loadState(IDialogSettings section) {
+		if (section == null) return;
+		mapper.loadState(section.addNewSection("Mappings"));
 	}
 }

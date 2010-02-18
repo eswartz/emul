@@ -69,6 +69,8 @@ public class TIFILESFDR extends FDR {
     }
     
     public void writeFDR(File file) throws IOException {
+    	file.setWritable(true);
+    	
     	RandomAccessFile raf = new RandomAccessFile(file, "rw");
     	raf.seek(0);
     	
@@ -84,5 +86,7 @@ public class TIFILESFDR extends FDR {
         raf.write(unused);
         
         raf.close();
+        
+        file.setWritable(!isReadOnly());
     }
 }

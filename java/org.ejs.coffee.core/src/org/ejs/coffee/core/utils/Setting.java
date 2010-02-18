@@ -8,6 +8,7 @@ package org.ejs.coffee.core.utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -16,7 +17,7 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 /** A single configurable setting.
  * @author ejs
  */
-public class Setting {
+public class Setting implements Comparable<Setting>, Comparator<Setting> {
     private Object storage;
     private String name;
     private List<ISettingListener> listeners;
@@ -95,5 +96,19 @@ public class Setting {
 			else
 				setValue(value);
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+	 */
+	public int compare(Setting o1, Setting o2) {
+		return o1.getName().compareTo(o2.getName());
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	public int compareTo(Setting o) {
+		return getName().compareTo(o.getName());
 	}
 }

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.Machine;
@@ -26,6 +27,25 @@ public class DsrManager {
 	public DsrManager(Machine machine) {
 		this.machine = machine;
 		dsrs = new ArrayList<DsrHandler>();
+	}
+	
+
+	public void saveState(IDialogSettings section) {
+		for (DsrHandler handler : dsrs) {
+			handler.saveState(section.addNewSection(handler.getName()));
+		}
+	}
+	public void loadState(IDialogSettings section) {
+		if (section == null) return;
+		for (DsrHandler handler : dsrs) {
+			handler.loadState(section.getSection(handler.getName()));
+		}
+	}
+	/**
+	 * @return the dsrs
+	 */
+	public List<DsrHandler> getDsrs() {
+		return dsrs;
 	}
 	
 	public void registerDsr(DsrHandler dsr) {

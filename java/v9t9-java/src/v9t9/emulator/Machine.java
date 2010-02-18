@@ -443,6 +443,7 @@ abstract public class Machine {
 		memory.saveState(settings.addNewSection("Memory"));
 		vdp.saveState(settings.addNewSection("VDP"));
 		sound.saveState(settings.addNewSection("Sound"));
+		dsrManager.saveState(settings.addNewSection("DSRs"));
 		synchronized (executionLock) {
 			bExecuting = true;
 			executionLock.notifyAll();
@@ -467,6 +468,7 @@ abstract public class Machine {
 		cpu.loadState(settings.getSection("CPU"));
 		vdp.loadState(settings.getSection("VDP"));
 		sound.loadState(settings.getSection("Sound"));
+		dsrManager.loadState(settings.addNewSection("DSRs"));
 		keyboardState.resetKeyboard();
 		keyboardState.resetJoystick();
 		

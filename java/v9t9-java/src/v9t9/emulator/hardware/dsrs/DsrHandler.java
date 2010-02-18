@@ -5,6 +5,9 @@ package v9t9.emulator.hardware.dsrs;
 
 import java.io.IOException;
 
+import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.utils.Setting;
+
 import v9t9.engine.memory.MemoryDomain;
 
 /**
@@ -33,4 +36,12 @@ public interface DsrHandler {
 	void deactivate(MemoryDomain console);
 
 	String getName();
+	
+	void saveState(IDialogSettings section);
+	void loadState(IDialogSettings section);
+
+	/**
+	 * @return
+	 */
+	Setting[] getSettings();
 }
