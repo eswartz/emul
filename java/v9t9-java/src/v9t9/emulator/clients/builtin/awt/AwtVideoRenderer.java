@@ -40,6 +40,7 @@ import v9t9.emulator.hardware.V9t9;
  */
 public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
+	/** buggy... */
 	private static final boolean USE_ANALOGTV = false;
 
 	private ImageDataCanvas vdpCanvas;
@@ -450,22 +451,25 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 			if (USE_ANALOGTV) {
 				if (analog == null) {
-					analog = V9t9Render.INSTANCE.allocateAnalogTv(vdpCanvas.getWidth(), vdpCanvas.getHeight());
+					analog = V9t9Render.INSTANCE.allocateAnalogTv(desiredWidth, desiredHeight);
 				}
 				synchronized (vdpCanvas) {
 					try {
 						V9t9Render.INSTANCE.analogizeImageData(
 								analog,
 								vdpCanvas.getImageData().data, srcoffset,
-								vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight(), vdpCanvas.getLineStride());
+								logRect.width, logRect.height, 
+								//vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight(), 
+								vdpCanvas.getLineStride());
 						
 						AnalogTVData adata = V9t9Render.INSTANCE.getAnalogTvData(analog);
 						V9t9Render.INSTANCE.scaleImageToRGBA(
 								data,
 								adata.image, 
-								0,
-								adata.width, adata.height, 
+								srcoffset, //vdpCanvas.getLineStride()* logRect.y + logRect.x * 4,
+								logRect.width, logRect.height, 
 								adata.bytes_per_line,
+								//vdpCanvas.getLineStride() + 30,
 								width, height, destWidth * 4,
 								x, y, width, height);
 					} catch (Throwable t) {

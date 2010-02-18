@@ -5,6 +5,7 @@ package v9t9.emulator.clients.builtin.jna;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
 import com.sun.jna.Structure;
 
@@ -28,6 +29,12 @@ public interface V9t9Render extends Library {
 	        int width, int height, int rowstride,
 	        int destWidth, int destHeight, int destRowstride,
 	        int upx, int upy, int upwidth, int upheight);
+	void        scaleImageToRGBA(
+			int[] out,
+			Pointer in, int offset,
+			int width, int height, int rowstride,
+			int destWidth, int destHeight, int destRowstride,
+			int upx, int upy, int upwidth, int upheight);
 
 	void addNoise(byte[] data, int offset, int destWidth, int destHeight, int destrowstride,
 			int width, int height);
@@ -36,7 +43,7 @@ public interface V9t9Render extends Library {
 			int width, int height);
 	
 	public static class AnalogTVData extends Structure implements Structure.ByReference {
-		public byte[] image = null;
+		public Pointer image = null;
 		public int width = 0, height = 0, bytes_per_line = 0;
 	}
 	public static class AnalogTV extends PointerType {
