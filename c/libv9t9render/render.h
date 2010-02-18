@@ -29,10 +29,26 @@ struct AnalogTV {
 
 typedef struct AnalogTV AnalogTV;
 
+
+#ifdef _WIN32
+__declspec(dllexport) __stdcall
+#endif
 struct AnalogTV* allocateAnalogTv(int width, int height);
+
+#ifdef _WIN32
+__declspec(dllexport) __stdcall
+#endif
 void freeAnalogTv(struct AnalogTV* );
 
+
+#ifdef _WIN32
+__declspec(dllexport) __stdcall
+#endif
 struct analogtv_s* getAnalogTvData(AnalogTV *analog);
+
+#ifdef _WIN32
+__declspec(dllexport) __stdcall
+#endif
 void 		analogizeImageData(
 		AnalogTV* analog,
 		char* byteArray, int srcoffset, int width, int height, int rowstride);

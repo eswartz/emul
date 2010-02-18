@@ -475,13 +475,17 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			} else {
 				
 				synchronized (vdpCanvas) {
-					V9t9Render.INSTANCE.scaleImageToRGBA(
-							data,
-							vdpCanvas.getImageData().data, 
-							srcoffset,
-							logRect.width, logRect.height, vdpCanvas.getLineStride(),
-							width, height, destWidth * 4,
-							x, y, width, height);
+					try {
+						V9t9Render.INSTANCE.scaleImageToRGBA(
+								data,
+								vdpCanvas.getImageData().data, 
+								srcoffset,
+								logRect.width, logRect.height, vdpCanvas.getLineStride(),
+								width, height, destWidth * 4,
+								x, y, width, height);
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
 				}
 				
 				//System.out.println("scaled");
@@ -492,10 +496,14 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 					if (logRect.y + logRect.height + 2 <= logMax.height) logRect.height++;
 					Rectangle nphys = logicalToPhysical(logRect);
 					
-					V9t9Render.INSTANCE.addNoiseRGBA(data,
-							destWidth * 4 * nphys.y + 4 * nphys.x,
-							nphys.width, nphys.height, destWidth * 4,
-							logRect.width, logRect.height);
+					try {
+						V9t9Render.INSTANCE.addNoiseRGBA(data,
+								destWidth * 4 * nphys.y + 4 * nphys.x,
+								nphys.width, nphys.height, destWidth * 4,
+								logRect.width, logRect.height);
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
 				}
 			}
 			
