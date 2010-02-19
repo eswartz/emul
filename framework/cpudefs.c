@@ -115,7 +115,7 @@ static RegisterDefinition * get_reg_by_dwarf_id(unsigned id) {
         for (r = get_reg_definitions(NULL); r->name != NULL; r++) {
             if (r->dwarf_id >= (int)map_length) map_length = r->dwarf_id + 1;
         }
-        map = loc_alloc_zero(sizeof(RegisterDefinition *) * map_length);
+        map = (RegisterDefinition **)loc_alloc_zero(sizeof(RegisterDefinition *) * map_length);
         for (r = get_reg_definitions(NULL); r->name != NULL; r++) {
             if (r->dwarf_id >= 0) map[r->dwarf_id] = r;
         }
@@ -132,7 +132,7 @@ static RegisterDefinition * get_reg_by_eh_frame_id(unsigned id) {
         for (r = get_reg_definitions(NULL); r->name != NULL; r++) {
             if (r->eh_frame_id >= (int)map_length) map_length = r->eh_frame_id + 1;
         }
-        map = loc_alloc_zero(sizeof(RegisterDefinition *) * map_length);
+        map = (RegisterDefinition **)loc_alloc_zero(sizeof(RegisterDefinition *) * map_length);
         for (r = get_reg_definitions(NULL); r->name != NULL; r++) {
             if (r->eh_frame_id >= 0) map[r->eh_frame_id] = r;
         }

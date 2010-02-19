@@ -97,7 +97,7 @@ static MemoryMap * get_memory_map(Context * ctx) {
 
     snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", ctx->pid);
     if ((file = fopen(maps_file_name, "r")) == NULL) return NULL;
-    map = loc_alloc_zero(sizeof(MemoryMap));
+    map = (MemoryMap *)loc_alloc_zero(sizeof(MemoryMap));
     for (;;) {
         unsigned long addr0 = 0;
         unsigned long addr1 = 0;

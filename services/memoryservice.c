@@ -458,7 +458,7 @@ static void safe_memory_fill(void * parm) {
                 for (;;) {
                     int ch;
                     if (err == 0) {
-                        if (buf_pos >= sizeof(buf)) err = ERR_BUFFER_OVERFLOW;
+                        if (buf_pos >= (int)sizeof(buf)) err = ERR_BUFFER_OVERFLOW;
                         else buf[buf_pos++] = (char)json_read_ulong(inp);
                     }
                     else {
@@ -473,7 +473,7 @@ static void safe_memory_fill(void * parm) {
             if (read_stream(inp) != 0) exception(ERR_JSON_SYNTAX);
             if (read_stream(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-            while (err == 0 && buf_pos < (int)size && buf_pos <= sizeof(buf) / 2) {
+            while (err == 0 && buf_pos < (int)size && buf_pos <= (int)(sizeof(buf) / 2)) {
                 if (buf_pos == 0) {
                     buf[buf_pos++] = 0;
                 }
@@ -567,7 +567,7 @@ static void send_event_context_removed(OutputStream * out, Context * ctx) {
 }
 
 static void event_context_created(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = client_data;
+    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
 
     if (ctx->parent != NULL) return;
     send_event_context_added(&bcg->out, ctx);
@@ -575,7 +575,7 @@ static void event_context_created(Context * ctx, void * client_data) {
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = client_data;
+    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
 
     if (ctx->parent != NULL) return;
     send_event_context_changed(&bcg->out, ctx);
@@ -583,7 +583,7 @@ static void event_context_changed(Context * ctx, void * client_data) {
 }
 
 static void event_context_exited(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = client_data;
+    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
 
     if (ctx->parent != NULL) return;
     send_event_context_removed(&bcg->out, ctx);

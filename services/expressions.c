@@ -510,7 +510,7 @@ static void next_sy(void) {
                 }
                 assert(cnt == len);
                 ((char *)text_val.value)[cnt] = 0;
-                if (strcmp(text_val.value, "sizeof") == 0) text_sy = SY_SIZEOF;
+                if (strcmp((const char *)text_val.value, "sizeof") == 0) text_sy = (int)SY_SIZEOF;
                 else text_sy = SY_ID;
                 return;
             }
@@ -655,11 +655,11 @@ static int type_name(int mode, Symbol ** type) {
     if (text_sy != SY_ID) return 0;
     name[0] = 0;
     do {
-        if (strlen(text_val.value) + strlen(name) >= sizeof(name) - 1) {
+        if (strlen((const char *)(text_val.value)) + strlen(name) >= sizeof(name) - 1) {
             error(ERR_BUFFER_OVERFLOW, "Type name is too long");
         }
         if (name[0]) strcat(name, " ");
-        strcat(name, text_val.value);
+        strcat(name, (const char *)(text_val.value));
         name_cnt++;
         next_sy();
     }
@@ -923,7 +923,7 @@ static void op_deref(int mode, Value * v) {
 
 static void op_field(int mode, Value * v) {
 #if SERVICE_Symbols
-    char * name = text_val.value;
+    char * name = (char *)text_val.value;
     if (text_sy != SY_ID) error(ERR_INV_EXPRESSION, "Field name expected");
     next_sy();
     if (mode == MODE_SKIP) return;
@@ -1148,14 +1148,14 @@ static void unary_expression(int mode, Value * v) {
                 error(ERR_INV_EXPRESSION, "Numeric types expected");
             }
             else if (v->type_class == TYPE_CLASS_REAL) {
-                double * value = alloc_str(sizeof(double));
+                double * value = (double *)alloc_str(sizeof(double));
                 *value = -to_double(mode, v);
                 v->type_class = TYPE_CLASS_REAL;
                 v->size = sizeof(double);
                 v->value = value;
             }
             else if (v->type_class != TYPE_CLASS_CARDINAL) {
-                int64_t * value = alloc_str(sizeof(int64_t));
+                int64_t * value = (int64_t *)alloc_str(sizeof(int64_t));
                 *value = -to_int(mode, v);
                 v->type_class = TYPE_CLASS_INTEGER;
                 v->size = sizeof(int64_t);
@@ -1173,7 +1173,7 @@ static void unary_expression(int mode, Value * v) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
             else {
-                int * value = alloc_str(sizeof(int));
+                int * value = (int *)alloc_str(sizeof(int));
                 *value = !to_int(mode, v);
                 v->type_class = TYPE_CLASS_INTEGER;
                 v->size = sizeof(int);
@@ -1191,7 +1191,7 @@ static void unary_expression(int mode, Value * v) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
             else {
-                int64_t * value = alloc_str(sizeof(int64_t));
+                int64_t * value = (int64_t *)alloc_str(sizeof(int64_t));
                 *value = ~to_int(mode, v);
                 v->size = sizeof(int64_t);
                 v->value = value;
@@ -1358,7 +1358,7 @@ static void multiplicative_expression(int mode, Value * v) {
                 error(ERR_INV_EXPRESSION, "Dividing by zero");
             }
             if (v->type_class == TYPE_CLASS_REAL || x.type_class == TYPE_CLASS_REAL) {
-                double * value = alloc_str(sizeof(double));
+                double * value = (double *)alloc_str(sizeof(double));
                 if (mode == MODE_NORMAL) {
                     switch (sy) {
                     case '*': *value = to_double(mode, v) * to_double(mode, &x); break;
@@ -1371,7 +1371,7 @@ static void multiplicative_expression(int mode, Value * v) {
                 v->value = value;
             }
             else if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
-                uint64_t * value = alloc_str(sizeof(uint64_t));
+                uint64_t * value = (uint64_t *)alloc_str(sizeof(uint64_t));
                 if (mode == MODE_NORMAL) {
                     switch (sy) {
                     case '*': *value = to_uns(mode, v) * to_uns(mode, &x); break;
@@ -1384,7 +1384,7 @@ static void multiplicative_expression(int mode, Value * v) {
                 v->value = value;
             }
             else {
-                int64_t * value = alloc_str(sizeof(int64_t));
+                int64_t * value = (int64_t *)alloc_str(sizeof(int64_t));
                 if (mode == MODE_NORMAL) {
                     switch (sy) {
                     case '*': *value = to_int(mode, v) * to_int(mode, &x); break;
@@ -1421,9 +1421,9 @@ static void additive_expression(int mode, Value * v) {
                     load_value(v);
                     load_value(&x);
                     v->size = strlen((char *)v->value) + strlen((char *)x.value) + 1;
-                    value = alloc_str(v->size);
-                    strcpy(value, v->value);
-                    strcat(value, x.value);
+                    value = (char *)alloc_str(v->size);
+                    strcpy(value, (const char *)(v->value));
+                    strcat(value, (const char *)(x.value));
                     v->value = value;
                 }
             }
@@ -1431,7 +1431,7 @@ static void additive_expression(int mode, Value * v) {
                 error(ERR_INV_EXPRESSION, "Numeric types expected");
             }
             else if (v->type_class == TYPE_CLASS_REAL || x.type_class == TYPE_CLASS_REAL) {
-                double * value = alloc_str(sizeof(double));
+                double * value = (double *)alloc_str(sizeof(double));
                 switch (sy) {
                 case '+': *value = to_double(mode, v) + to_double(mode, &x); break;
                 case '-': *value = to_double(mode, v) - to_double(mode, &x); break;
@@ -1441,7 +1441,7 @@ static void additive_expression(int mode, Value * v) {
                 v->value = value;
             }
             else if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
-                uint64_t * value = alloc_str(sizeof(uint64_t));
+                uint64_t * value = (uint64_t *)alloc_str(sizeof(uint64_t));
                 switch (sy) {
                 case '+': *value = to_uns(mode, v) + to_uns(mode, &x); break;
                 case '-': *value = to_uns(mode, v) - to_uns(mode, &x); break;
@@ -1451,7 +1451,7 @@ static void additive_expression(int mode, Value * v) {
                 v->value = value;
             }
             else {
-                int64_t * value = alloc_str(sizeof(int64_t));
+                int64_t * value = (int64_t *)alloc_str(sizeof(int64_t));
                 switch (sy) {
                 case '+': *value = to_int(mode, v) + to_int(mode, &x); break;
                 case '-': *value = to_int(mode, v) - to_int(mode, &x); break;
@@ -1475,7 +1475,7 @@ static void shift_expression(int mode, Value * v) {
         next_sy();
         additive_expression(mode, &x);
         if (mode != MODE_SKIP) {
-            uint64_t * value = alloc_str(sizeof(uint64_t));
+            uint64_t * value = (uint64_t *)alloc_str(sizeof(uint64_t));
             if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
@@ -1526,7 +1526,7 @@ static void relational_expression(int mode, Value * v) {
         next_sy();
         shift_expression(mode, &x);
         if (mode != MODE_SKIP) {
-            int * value = alloc_str(sizeof(int));
+            int * value = (int *)alloc_str(sizeof(int));
             if (v->type_class == TYPE_CLASS_ARRAY && x.type_class == TYPE_CLASS_ARRAY) {
                 int n = 0;
                 load_value(v);
@@ -1582,7 +1582,7 @@ static void equality_expression(int mode, Value * v) {
         next_sy();
         relational_expression(mode, &x);
         if (mode != MODE_SKIP) {
-            int * value = alloc_str(sizeof(int));
+            int * value = (int *)alloc_str(sizeof(int));
             if (v->type_class == TYPE_CLASS_ARRAY && x.type_class == TYPE_CLASS_ARRAY) {
                 load_value(v);
                 load_value(&x);
@@ -1613,7 +1613,7 @@ static void and_expression(int mode, Value * v) {
         next_sy();
         equality_expression(mode, &x);
         if (mode != MODE_SKIP) {
-            int64_t * value = alloc_str(sizeof(int64_t));
+            int64_t * value = (int64_t *)alloc_str(sizeof(int64_t));
             if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
@@ -1641,7 +1641,7 @@ static void exclusive_or_expression(int mode, Value * v) {
         next_sy();
         and_expression(mode, &x);
         if (mode != MODE_SKIP) {
-            int64_t * value = alloc_str(sizeof(int64_t));
+            int64_t * value = (int64_t *)alloc_str(sizeof(int64_t));
             if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
@@ -1669,7 +1669,7 @@ static void inclusive_or_expression(int mode, Value * v) {
         next_sy();
         exclusive_or_expression(mode, &x);
         if (mode != MODE_SKIP) {
-            int64_t * value = alloc_str(sizeof(int64_t));
+            int64_t * value = (int64_t *)alloc_str(sizeof(int64_t));
             if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
@@ -2235,7 +2235,7 @@ static void command_evaluate(char * token, Channel * c) {
             size_t offs = 0;
             while (offs < value.size) {
                 int size = value.size - offs;
-                if (size > sizeof(buf)) size = sizeof(buf);
+                if (size > (int)sizeof(buf)) size = (int)sizeof(buf);
                 if (!err && context_read_mem(ctx, value.address + offs, buf, size) < 0) err = errno;
                 json_write_binary_data(&state, buf, size);
                 offs += size;

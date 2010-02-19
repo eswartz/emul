@@ -25,11 +25,6 @@
 
 #include "protocol.h"
 
-#define _QUOTEME(x)     #x
-#define QUOTE(x)      _QUOTEME(x)
-
-#define PLUGINS_DEF_EXT     "so"        /* Default plugins' extension */
-
 /*
  * Loads ALL plugins from the directory PATH_Plugins (from `config.h') in
  * alphabetical order.

@@ -592,7 +592,7 @@ static int unpack(const Symbol * sym) {
     if (tbl != NULL) file = tbl->mFile;
     if (file != NULL) {
         cache = (DWARFCache *)file->dwarf_dt_cache;
-        if (cache == NULL || cache->magic != SYM_CACHE_MAGIC) {
+        if (cache == NULL || cache->magic != DWARF_CACHE_MAGIC) {
             errno = ERR_INV_CONTEXT;
             return -1;
         }
@@ -1077,7 +1077,7 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
             n++;
         }
         if (buf_len < n) {
-            buf = loc_realloc(buf, sizeof(Symbol *) * n);
+            buf = (Symbol **)loc_realloc(buf, sizeof(Symbol *) * n);
             buf_len = n;
         }
         n = 0;
@@ -1199,4 +1199,3 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
 }
 
 #endif /* SERVICE_Symbols && ENABLE_ELF */
-

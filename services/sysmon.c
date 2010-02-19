@@ -1179,7 +1179,7 @@ static void write_context(OutputStream * out, char * id, char * parent_id, char 
                 unsigned long rt_priority=0;/* Real-time scheduling priority (see sched_setscheduler(2)). */
                 unsigned long policy = 0;   /* Scheduling policy (see sched_setscheduler(2)). */
 
-                assert(sz < sizeof(buf));
+                assert(sz < (int)sizeof(buf));
                 buf[sz] = 0;
 
                 pid = (int)strtol(str, &str, 10);

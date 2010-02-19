@@ -54,9 +54,12 @@ static pthread_cond_t cmdline_signal;
 static pthread_t interactive_thread;
 static struct cmd * cmds = NULL;
 static size_t cmd_count = 0;
-static void (**connect_hnds)(Channel *) = NULL;
+
+typedef void (*PluginCallBack)(Channel *);
+
+static PluginCallBack * connect_hnds = NULL;
 static size_t connect_hnd_count = 0;
-static void (**disconnect_hnds)(Channel *) = NULL;
+static PluginCallBack * disconnect_hnds = NULL;
 static size_t disconnect_hnd_count = 0;
 
 static void destroy_cmdline_handler() {
@@ -348,7 +351,7 @@ static int add_cmdline_cmd(const char * cmd_name, const char * cmd_desc,
         if (!strcmp(cmd_name, cmds[i].cmd))
             return -EEXIST;
 
-    cmds = (struct cmd *) loc_realloc(cmds, ++cmd_count * sizeof(struct cmd));
+    cmds = (struct cmd *)loc_realloc(cmds, ++cmd_count * sizeof(struct cmd));
 
     cmds[cmd_count-1].cmd = loc_strdup(cmd_name);
     cmds[cmd_count-1].help = loc_strdup(cmd_desc);
@@ -358,7 +361,7 @@ static int add_cmdline_cmd(const char * cmd_name, const char * cmd_desc,
 }
 
 #if ENABLE_Plugins
-static int add_connect_callback(void (*hnd)(Channel *)) {
+static int add_connect_callback(PluginCallBack hnd){
     size_t i;
     assert(is_dispatch_thread());
     if (!hnd) return -EINVAL;
@@ -368,14 +371,13 @@ static int add_connect_callback(void (*hnd)(Channel *)) {
         if (hnd == connect_hnds[i])
             return -EEXIST;
 
-    connect_hnds = loc_realloc(connect_hnds, ++connect_hnd_count * sizeof(void (*)(Channel *)));
-
-    connect_hnds[connect_hnd_count-1] = hnd;
+    connect_hnds = (PluginCallBack *)loc_realloc(connect_hnds, ++connect_hnd_count * sizeof(PluginCallBack));
+    connect_hnds[connect_hnd_count - 1] = hnd;
 
     return 0;
 }
 
-static int add_disconnect_callback(void (*hnd)(Channel *)) {
+static int add_disconnect_callback(PluginCallBack hnd) {
     size_t i;
     assert(is_dispatch_thread());
     if (!hnd) return -EINVAL;
@@ -385,9 +387,8 @@ static int add_disconnect_callback(void (*hnd)(Channel *)) {
         if (hnd == disconnect_hnds[i])
             return -EEXIST;
 
-    disconnect_hnds = loc_realloc(disconnect_hnds, ++disconnect_hnd_count * sizeof(void (*)(Channel *)));
-
-    disconnect_hnds[disconnect_hnd_count-1] = hnd;
+    disconnect_hnds = (PluginCallBack *)loc_realloc(disconnect_hnds, ++disconnect_hnd_count * sizeof(PluginCallBack));
+    disconnect_hnds[disconnect_hnd_count - 1] = hnd;
 
     return 0;
 }

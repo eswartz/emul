@@ -39,11 +39,11 @@ static unsigned buf_size = 0;
 static void realloc_buf(void) {
     if (buf == NULL) {
         buf_size = 0x1000;
-        buf = loc_alloc(buf_size);
+        buf = (char*)loc_alloc(buf_size);
     }
     else {
         buf_size *= 2;
-        buf = loc_realloc(buf, buf_size);
+        buf = (char *)loc_realloc(buf, buf_size);
     }
 }
 
@@ -319,7 +319,7 @@ double json_read_double(InputStream * inp) {
         case 'e':
         case 'E':
         case '.':
-            if (pos >= sizeof(buf) - 1) exception(ERR_BUFFER_OVERFLOW);
+            if (pos >= (int)sizeof(buf) - 1) exception(ERR_BUFFER_OVERFLOW);
             buf[pos++] = (char)read_stream(inp);
             continue;
         }
@@ -365,7 +365,7 @@ int json_read_struct(InputStream * inp, JsonStructCallBack * call_back, void * a
                         default: exception(ERR_JSON_SYNTAX);
                         }
                     }
-                    if (nm_len < sizeof(nm) - 1) {
+                    if (nm_len < (int)sizeof(nm) - 1) {
                         nm[nm_len] = (char)ch;
                         nm_len++;
                     }
@@ -513,7 +513,7 @@ void json_read_binary_start(JsonReadBinaryState * state, InputStream * inp) {
 
 size_t json_read_binary_data(JsonReadBinaryState * state, void * buf, size_t len) {
     size_t res = 0;
-    uint8_t * ptr = buf;
+    uint8_t * ptr = (uint8_t *)buf;
     if (state->encoding == ENCODING_BINARY) {
         if (len > (size_t)(state->size_start - state->size_done)) len = state->size_start - state->size_done;
         while (res < len) ptr[res++] = (uint8_t)read_stream(state->inp);
@@ -577,13 +577,13 @@ char * json_read_alloc_binary(InputStream * inp, int * size) {
 
         json_read_binary_start(&state, inp);
         if (state.size_start > 0) buf_size = state.size_start;
-        data = loc_alloc(buf_size);
+        data = (char *)loc_alloc(buf_size);
 
         for (;;) {
             int rd;
             if (state.size_start <= 0 && buf_size < *size + BUF_SIZE) {
                 buf_size *= 2;
-                data = loc_realloc(data, buf_size);
+                data = (char *)loc_realloc(data, buf_size);
             }
             rd = json_read_binary_data(&state, data + *size, buf_size - *size);
             if (rd == 0) break;
@@ -614,11 +614,11 @@ void json_write_binary_start(JsonWriteBinaryState * state, OutputStream * out, i
 
 void json_write_binary_data(JsonWriteBinaryState * state, const void * data, size_t len) {
     if (len <= 0) return;
-    if (state->encoding == ENCODING_BINARY) {
-        write_block_stream(state->out, data, len);
+    if (state->encoding == (int)ENCODING_BINARY) {
+        write_block_stream(state->out, (const char *)data, len);
     }
     else {
-        const uint8_t * ptr = data;
+        const uint8_t * ptr = (uint8_t *)data;
         size_t rem = state->rem;
 
         if (rem > 0) {
@@ -812,7 +812,7 @@ int read_errno(InputStream * inp) {
             char name[256];
             json_read_string(inp, name, sizeof(name));
             if (read_stream(inp) != ':') exception(ERR_JSON_SYNTAX);
-            if (err == NULL) err = loc_alloc_zero(sizeof(ErrorReport));
+            if (err == NULL) err = (ErrorReport *)loc_alloc_zero(sizeof(ErrorReport));
             if (strcmp(name, "Code") == 0) {
                 err->code = json_read_long(inp);
             }
@@ -820,7 +820,7 @@ int read_errno(InputStream * inp) {
                 err->time_stamp = json_read_int64(inp);
             }
             else {
-                ErrorReportItem * i = loc_alloc_zero(sizeof(ErrorReportItem));
+                ErrorReportItem * i = (ErrorReportItem *)loc_alloc_zero(sizeof(ErrorReportItem));
                 i->name = loc_strdup(name);
                 i->value = json_skip_object(inp);
                 i->next = err->props;

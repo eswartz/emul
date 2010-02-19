@@ -356,12 +356,12 @@ void handle_protocol_message(Channel * c) {
 }
 
 static void message_handler_old(Channel * c, char ** args, int nargs, void * client_data) {
-    ProtocolMessageHandler handler = client_data;
+    ProtocolMessageHandler handler = (ProtocolMessageHandler)client_data;
     handler(c, args, nargs);
 }
 
 void set_default_message_handler(Protocol * p, ProtocolMessageHandler handler) {
-    set_default_message_handler2(p, message_handler_old, handler);
+    set_default_message_handler2(p, (ProtocolMessageHandler2)message_handler_old, (void*)handler);
 }
 
 void set_default_message_handler2(Protocol * p, ProtocolMessageHandler2 handler, void * client_data) {
@@ -371,12 +371,12 @@ void set_default_message_handler2(Protocol * p, ProtocolMessageHandler2 handler,
 
 static void command_handler_old(char * token, Channel * c, void * client_data)
 {
-    ProtocolCommandHandler handler = client_data;
+    ProtocolCommandHandler handler = (ProtocolCommandHandler)client_data;
     handler(token, c);
 }
 
 void add_command_handler(Protocol * p, const char * service, const char * name, ProtocolCommandHandler handler) {
-    add_command_handler2(p, service, name, command_handler_old, handler);
+    add_command_handler2(p, service, name, (ProtocolCommandHandler2)command_handler_old, (void *)handler);
 }
 
 void add_command_handler2(Protocol * p, const char * service, const char * name, ProtocolCommandHandler2 handler, void * client_data) {
@@ -392,12 +392,12 @@ void add_command_handler2(Protocol * p, const char * service, const char * name,
 }
 
 static void event_handler_old(Channel * c, void * client_data) {
-    ProtocolEventHandler handler = client_data;
+    ProtocolEventHandler handler = (ProtocolEventHandler)client_data;
     handler(c);
 }
 
 void add_event_handler(Channel * c, const char * service, const char * name, ProtocolEventHandler handler) {
-    add_event_handler2(c, service, name, event_handler_old, handler);
+    add_event_handler2(c, service, name, (ProtocolEventHandler2)event_handler_old, (void*)handler);
 }
 
 void add_event_handler2(Channel * c, const char * service, const char * name, ProtocolEventHandler2 handler, void * client_data) {
@@ -426,7 +426,7 @@ ReplyHandlerInfo * protocol_send_command(Channel * c, const char * service, cons
     write_stringz(&c->out, token);
     write_stringz(&c->out, service);
     write_stringz(&c->out, name);
-    rh = loc_alloc(sizeof *rh);
+    rh = (ReplyHandlerInfo *)loc_alloc(sizeof *rh);
     rh->tokenid = tokenid;
     rh->c = c;
     rh->handler = handler;
@@ -443,7 +443,7 @@ struct sendRedirectInfo {
 };
 
 static void redirect_done(Channel * c, void * client_data, int error) {
-    struct sendRedirectInfo * info = client_data;
+    struct sendRedirectInfo * info = (struct sendRedirectInfo *)client_data;
 
     if (!error) {
         assert(c->state == ChannelStateRedirectSent);
@@ -466,7 +466,7 @@ static void redirect_done(Channel * c, void * client_data, int error) {
 }
 
 ReplyHandlerInfo * send_redirect_command(Channel * c, const char * peerId, ReplyHandlerCB handler, void * client_data) {
-    struct sendRedirectInfo * info = loc_alloc_zero(sizeof *info);
+    struct sendRedirectInfo * info = (struct sendRedirectInfo *)loc_alloc_zero(sizeof *info);
     ReplyHandlerInfo * rh;
 
     assert(c->state == ChannelStateConnected);
@@ -547,14 +547,14 @@ static void event_locator_hello(Channel * c) {
     }
     else {
         int max = 4;
-        list = loc_alloc(max * sizeof *list);
+        list = (char **)loc_alloc(max * sizeof *list);
         for (;;) {
             int ch;
             char * service = json_read_alloc_string(&c->inp);
             if (strcmp(service, "ZeroCopy") == 0) c->out.supports_zero_copy = 1;
             if (cnt == max) {
                 max *= 2;
-                list = loc_realloc(list, max * sizeof *list);
+                list = (char **)loc_realloc(list, max * sizeof *list);
             }
             list[cnt++] = service;
             ch = read_stream(&c->inp);
@@ -643,7 +643,7 @@ static void channel_closed(Channel * c) {
 }
 
 Protocol * protocol_alloc(void) {
-    Protocol * p = loc_alloc_zero(sizeof *p);
+    Protocol * p = (Protocol *)loc_alloc_zero(sizeof *p);
 
     assert(is_dispatch_thread());
     if (!ini_done) {

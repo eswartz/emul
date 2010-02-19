@@ -47,11 +47,11 @@ static void write_byte_array_output_stream(OutputStream * out, int byte) {
     }
     else {
         if (buf->mem == NULL) {
-            buf->mem = loc_alloc(buf->max = buf->pos * 2);
+            buf->mem = (char *)loc_alloc(buf->max = buf->pos * 2);
             memcpy(buf->mem, buf->buf, buf->pos);
         }
         else if (buf->pos >= buf->max) {
-            buf->mem = loc_realloc(buf->mem, buf->max *= 2);
+            buf->mem = (char *)loc_realloc(buf->mem, buf->max *= 2);
         }
         buf->mem[buf->pos++] = (char)byte;
     }
@@ -76,7 +76,7 @@ OutputStream * create_byte_array_output_stream(ByteArrayOutputStream * buf) {
 void get_byte_array_output_stream_data(ByteArrayOutputStream * buf, char ** data, size_t * size) {
     if (buf->mem == NULL) {
         buf->max = buf->pos;
-        buf->mem = loc_alloc(buf->max);
+        buf->mem = (char *)loc_alloc(buf->max);
         memcpy(buf->mem, buf->buf, buf->pos);
     }
     if (data != NULL) *data = buf->mem;

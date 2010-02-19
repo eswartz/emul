@@ -56,7 +56,7 @@ static Symbol * alloc_symbol(void) {
             syms_free = b->next;
         }
         else {
-            b = loc_alloc_zero(sizeof(SymbolBlock));
+            b = (SymbolBlock *)loc_alloc_zero(sizeof(SymbolBlock));
             syms_cnt++;
         }
         b->next = syms_busy;

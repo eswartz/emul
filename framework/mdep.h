@@ -33,9 +33,11 @@
 #elif defined(__MINGW32__)
 #  define _WIN32_IE 0x0501
 #elif defined(_MSC_VER)
+#  pragma warning(disable:4054) /* 'type cast' : from function pointer '...' to data pointer 'void *' */
+#  pragma warning(disable:4055) /* 'type cast' : from data pointer 'void *' to function pointer '...' */
+#  pragma warning(disable:4152) /* nonstandard extension, function/data pointer conversion in expression */
 #  pragma warning(disable:4100) /* unreferenced formal parameter */
 #  pragma warning(disable:4996) /* 'strcpy': This function or variable may be unsafe */
-#  pragma warning(disable:4152) /* nonstandard extension, function/data pointer conversion in expression */
 #  ifdef _DEBUG
 #    define _CRTDBG_MAP_ALLOC
 #    include <stdlib.h>

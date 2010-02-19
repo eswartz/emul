@@ -16,7 +16,14 @@
  * This header file provides definition of REG_SET - a structure that can
  * hold values of target CPU registers.
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if defined(__CYGWIN__)
    typedef CONTEXT REG_SET;
+#endif
+
+#ifdef __cplusplus
+}
 #endif

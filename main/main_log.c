@@ -68,7 +68,7 @@ static void connect_done(void * args, int error, Channel * c2) {
 }
 
 static void connect_dest(void * x) {
-    Channel * c1 = x;
+    Channel * c1 = (Channel *)x;
     PeerServer * ps = NULL;
     ConnectInfo * info = NULL;
 
@@ -80,7 +80,7 @@ static void connect_dest(void * x) {
     }
     channel_lock(c1);
     c1->state = ChannelStateRedirectReceived;
-    info = loc_alloc_zero(sizeof(ConnectInfo));
+    info = (ConnectInfo *)loc_alloc_zero(sizeof(ConnectInfo));
     info->ps = ps;
     info->c1 = c1;
     channel_connect(ps, connect_done, info);

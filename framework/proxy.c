@@ -35,7 +35,7 @@ typedef struct Proxy {
 } Proxy;
 
 static void proxy_connecting(Channel * c) {
-    Proxy * target = c->client_data;
+    Proxy * target = (Proxy *)c->client_data;
     Proxy * host = target + target->other;
 
     assert(c == target->c);
@@ -50,7 +50,7 @@ static void proxy_connecting(Channel * c) {
 }
 
 static void proxy_connected(Channel * c) {
-    Proxy * target = c->client_data;
+    Proxy * target = (Proxy *)c->client_data;
     Proxy * host = target + target->other;
 
     assert(target->c == c);
@@ -79,7 +79,7 @@ static void proxy_connected(Channel * c) {
 }
 
 static void proxy_disconnected(Channel * c) {
-    Proxy * proxy = c->client_data;
+    Proxy * proxy = (Proxy *)c->client_data;
 
     assert(c == proxy->c);
     if (proxy[proxy->other].c->state == ChannelStateDisconnected) {
@@ -125,7 +125,7 @@ static void logstr(char ** pp, char * s) {
 }
 
 static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
-    Proxy * proxy = c->client_data;
+    Proxy * proxy = (Proxy *)c->client_data;
     Channel * otherc = proxy[proxy->other].c;
     char * p;
     int i = 0;
@@ -154,7 +154,7 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
 
     p = logbuf;
     if (log_mode & LOG_TCFLOG) {
-        logstr(&p, proxy->other > 0 ? "---> " : "<--- ");
+        logstr(&p, (char *)(proxy->other > 0 ? "---> " : "<--- "));
         for (i = 0; i < argc; i++) {
             logstr(&p, argv[i]);
             logchr(&p, ' ');
@@ -200,7 +200,7 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
 void proxy_create(Channel * c1, Channel * c2) {
     TCFSuspendGroup * spg = suspend_group_alloc();
     TCFBroadcastGroup * bcg = broadcast_group_alloc();
-    Proxy * proxy = loc_alloc_zero(2 * sizeof *proxy);
+    Proxy * proxy = (Proxy *)loc_alloc_zero(2 * sizeof *proxy);
     int i;
 
     static int instance;

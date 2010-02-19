@@ -87,9 +87,9 @@ static CompUnit * find_comp_unit(U8_T ID) {
     }
     if (sCache->mCompUnitsCnt >= sCompUnitsMax) {
         sCompUnitsMax = sCompUnitsMax == 0 ? 16 : sCompUnitsMax * 2;
-        sCache->mCompUnits = loc_realloc(sCache->mCompUnits, sizeof(CompUnit *) * sCompUnitsMax);
+        sCache->mCompUnits = (CompUnit **)loc_realloc(sCache->mCompUnits, sizeof(CompUnit *) * sCompUnitsMax);
     }
-    Unit = loc_alloc_zero(sizeof(CompUnit));
+    Unit = (CompUnit *)loc_alloc_zero(sizeof(CompUnit));
     Unit->mID = ID;
     sCache->mCompUnits[sCache->mCompUnitsCnt++] = Unit;
     return Unit;
@@ -209,11 +209,11 @@ static void read_tag_com_unit(U2_T Attr, U2_T Form) {
         break;
     case AT_name:
         dio_ChkString(Form);
-        Unit->mName = dio_gFormDataAddr;
+        Unit->mName = (char *)dio_gFormDataAddr;
         break;
     case AT_comp_dir:
         dio_ChkString(Form);
-        Unit->mDir = dio_gFormDataAddr;
+        Unit->mDir = (char *)dio_gFormDataAddr;
         break;
     case AT_stmt_list:
         dio_ChkData(Form);
@@ -284,7 +284,7 @@ static void read_object_attributes(U2_T Tag, U2_T Attr, U2_T Form) {
         break;
     case AT_name:
         dio_ChkString(Form);
-        Info->mName = dio_gFormDataAddr;
+        Info->mName = (char *)dio_gFormDataAddr;
         break;
     }
 }
@@ -325,11 +325,11 @@ static void load_symbol_tables(void) {
             SymbolSection * tbl = (SymbolSection *)loc_alloc_zero(sizeof(SymbolSection));
             if (sCache->mSymSections == NULL) {
                 sCache->mSymSectionsLen = 8;
-                sCache->mSymSections = loc_alloc(sizeof(SymbolSection *) * sCache->mSymSectionsLen);
+                sCache->mSymSections = (SymbolSection **)loc_alloc(sizeof(SymbolSection *) * sCache->mSymSectionsLen);
             }
             else if (sCache->mSymSectionsCnt >= sCache->mSymSectionsLen) {
                 sCache->mSymSectionsLen *= 8;
-                sCache->mSymSections = loc_realloc(sCache->mSymSections, sizeof(SymbolSection *) * sCache->mSymSectionsLen);
+                sCache->mSymSections = (SymbolSection **)loc_realloc(sCache->mSymSections, sizeof(SymbolSection *) * sCache->mSymSectionsLen);
             }
             tbl->mIndex = sCache->mSymSectionsCnt++;
             sCache->mSymSections[tbl->mIndex] = tbl;
@@ -337,8 +337,8 @@ static void load_symbol_tables(void) {
             str_sec = File->sections + sym_sec->link;
             if (elf_load(sym_sec) < 0) exception(errno);
             if (elf_load(str_sec) < 0) exception(errno);
-            sym_data = sym_sec->data;
-            str_data = str_sec->data;
+            sym_data = (U1_T *)sym_sec->data;
+            str_data = (U1_T *)str_sec->data;
             tbl->mFile = File;
             tbl->mStrPool = (char *)str_data;
             tbl->mStrPoolSize = (size_t)str_sec->size;
@@ -370,7 +370,7 @@ static void load_symbol_tables(void) {
             }
         }
     }
-    sCache->mSymbolHash = loc_alloc(sizeof(void *) * cnt);
+    sCache->mSymbolHash = (ElfX_Sym **)loc_alloc(sizeof(void *) * cnt);
     sCache->mSymbolTableLen = cnt;
     cnt = 0;
     for (idx = 0; idx < sCache->mSymSectionsCnt; idx++) {
@@ -556,7 +556,7 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
     case FORM_BLOCK2    :
     case FORM_BLOCK4    :
     case FORM_BLOCK     :
-        Value->mAddr = gop_gFormDataAddr;
+        Value->mAddr = (U1_T *)gop_gFormDataAddr;
         Value->mSize = gop_gFormDataSize;
         break;
     case FORM_SDATA     :
@@ -626,7 +626,7 @@ static void free_dwarf_cache(ELF_File * File) {
     DWARFCache * Cache = (DWARFCache *)File->dwarf_dt_cache;
     if (Cache != NULL) {
         unsigned i;
-        assert(Cache->magic == SYM_CACHE_MAGIC);
+        assert(Cache->magic == DWARF_CACHE_MAGIC);
         Cache->magic = 0;
         for (i = 0; i < Cache->mCompUnitsCnt; i++) {
             CompUnit * Unit = Cache->mCompUnits[i];
@@ -661,9 +661,9 @@ DWARFCache * get_dwarf_cache(ELF_File * File) {
             sCloseListenerOK = 1;
         }
         sCache = Cache = (DWARFCache *)(File->dwarf_dt_cache = loc_alloc_zero(sizeof(DWARFCache)));
-        sCache->magic = SYM_CACHE_MAGIC;
+        sCache->magic = DWARF_CACHE_MAGIC;
         sCache->mFile = File;
-        sCache->mObjectHash = loc_alloc_zero(sizeof(ObjectInfo *) * OBJ_HASH_SIZE);
+        sCache->mObjectHash = (ObjectInfo **)loc_alloc_zero(sizeof(ObjectInfo *) * OBJ_HASH_SIZE);
         if (set_trap(&trap)) {
             dio_LoadAbbrevTable(File);
             load_symbol_tables();
@@ -708,7 +708,7 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
     Trap trap;
     if (Unit->mFiles != NULL && Unit->mDirs != NULL) return;
     if (elf_load(Cache->mDebugLine)) exception(errno);
-    dio_EnterDataSection(&Unit->mDesc, Cache->mDebugLine->data, Unit->mLineInfoOffs, Cache->mDebugLine->size);
+    dio_EnterDataSection(&Unit->mDesc, (U1_T *)(Cache->mDebugLine->data), Unit->mLineInfoOffs, Cache->mDebugLine->size);
     if (set_trap(&trap)) {
         U8_T header_pos = 0;
         U1_T opcode_base = 0;

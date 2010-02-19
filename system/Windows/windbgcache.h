@@ -15,6 +15,11 @@
 /*
  * This module provides access to Windows Portable Executable debug information.
  */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef D_windbgcache
 #define D_windbgcache
 
@@ -230,3 +235,8 @@ extern BOOL SymCleanup(HANDLE hProcess);
 
 #endif /* defined(WIN32) */
 #endif /* D_windbgcache */
+
+#ifdef __cplusplus
+}
+#endif
+

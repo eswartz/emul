@@ -599,7 +599,7 @@ static void post_io_requst(OpenFileInfo * handle) {
 }
 
 static IORequest * create_io_request(char * token, OpenFileInfo * handle, int type) {
-    IORequest * req = loc_alloc_zero(sizeof(IORequest));
+    IORequest * req = (IORequest *)loc_alloc_zero(sizeof(IORequest));
     req->req = type;
     req->handle = handle;
     req->info.done = done_io_request;
@@ -697,7 +697,7 @@ static void command_write(char * token, Channel * c) {
         int rd;
         if (buf_size < len + BUF_SIZE) {
             buf_size += BUF_SIZE;
-            buf = loc_realloc(buf, buf_size);
+            buf = (char *)loc_realloc(buf, buf_size);
         }
         rd = json_read_binary_data(&state, buf + len, buf_size - len);
         if (rd == 0) break;

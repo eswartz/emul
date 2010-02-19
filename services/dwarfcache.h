@@ -138,7 +138,7 @@ struct CompUnit {
     ObjectInfo * mChildren;
 };
 
-#define SYM_CACHE_MAGIC         0x84625490
+#define DWARF_CACHE_MAGIC 0x34625490
 
 struct DWARFCache {
     int magic;

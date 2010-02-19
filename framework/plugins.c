@@ -36,6 +36,17 @@
 #include "myalloc.h"
 #include "plugins.h"
 
+#define _QUOTEME(x)     #x
+#define QUOTE(x)      _QUOTEME(x)
+
+#if defined(WIN32)
+#define PLUGINS_DEF_EXT     "dll"       /* Default plugins' extension */
+#else
+#define PLUGINS_DEF_EXT     "so"        /* Default plugins' extension */
+#endif
+
+typedef void (*InitFunc)(Protocol *, TCFBroadcastGroup *, TCFSuspendGroup *);
+
 static void ** plugins_handles = NULL;
 static size_t plugins_count = 0;
 static struct function_entry {
@@ -57,13 +68,17 @@ static int plugins_filter(const struct dirent * dirent) {
     return 1;
 }
 
+#if defined(__GLIBC__) && (__GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 10))
+static int plugins_ralphasort(const void * a, const void * b) {
+#else
 static int plugins_ralphasort(const struct dirent ** a, const struct dirent ** b) {
+#endif
     return -alphasort(a, b);
 }
 
 int plugins_load(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
     struct dirent ** files;
-    int file_count;
+    int file_count = -1;
     int ret = 0;
 
     file_count = scandir(QUOTE(PATH_Plugins), &files, plugins_filter, plugins_ralphasort);
@@ -99,8 +114,8 @@ delete_cur_entry:
 
 int plugin_init(const char * name, Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
     void * handle;
-    void (* init)(Protocol *, TCFBroadcastGroup *, TCFSuspendGroup *);
     char * error;
+    InitFunc init;
 
     /* Plugin loading: */
     trace(LOG_ALWAYS, "loading plugin \"%s\"", name);
@@ -111,7 +126,7 @@ int plugin_init(const char * name, Protocol * proto, TCFBroadcastGroup * bcg, TC
     }
 
     /* Plugin initialization: */
-    init = dlsym(handle, "tcf_init_plugin");
+    init = (InitFunc)dlsym(handle, "tcf_init_plugin");
     if ((error = dlerror()) != NULL) {
         trace(LOG_ALWAYS, "plugins error: \"%s\"", error);
         return -1;

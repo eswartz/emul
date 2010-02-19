@@ -125,14 +125,14 @@ static int walk_frames(Context * ctx) {
     frame.is_top_frame = 1;
     frame.regs_size = ctx->regs_size;
     frame.regs = ctx->regs;
-    frame.mask = loc_alloc(frame.regs_size);
+    frame.mask = (RegisterData *)loc_alloc(frame.regs_size);
     memset(frame.mask, 0xff, frame.regs_size);
     while (cnt < MAX_FRAMES) {
         StackFrame down;
         memset(&down, 0, sizeof(down));
         down.regs_size = ctx->regs_size;
-        down.regs = loc_alloc_zero(down.regs_size);
-        down.mask = loc_alloc_zero(down.regs_size);
+        down.regs = (RegisterData *)loc_alloc_zero(down.regs_size);
+        down.mask = (RegisterData *)loc_alloc_zero(down.regs_size);
 #if ENABLE_ELF
         {
             int found = 0;

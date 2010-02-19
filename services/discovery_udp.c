@@ -87,13 +87,13 @@ static int slave_cnt = 0;
 static int slave_max = 0;
 
 static void app_char(char ch) {
-    if (send_size < sizeof(send_buf)) {
+    if (send_size < (int)sizeof(send_buf)) {
         send_buf[send_size++] = ch;
     }
 }
 
 static void app_str(char * str) {
-    while (*str && send_size < sizeof(send_buf)) {
+    while (*str && send_size < (int)sizeof(send_buf)) {
         send_buf[send_size++] = *str++;
     }
 }
@@ -273,7 +273,7 @@ static int create_server_socket(void) {
 }
 
 static int udp_send_peer_info(PeerServer * ps, void * arg) {
-    struct sockaddr_in * addr = arg;
+    struct sockaddr_in * addr = (struct sockaddr_in *)arg;
     char * host = NULL;
     struct in_addr peer_addr;
     int n;
@@ -587,12 +587,12 @@ static SlaveInfo * add_slave(struct sockaddr_in * addr, time_t timestamp) {
     if (slave_max == 0) {
         assert(slave_cnt == 0);
         slave_max = 16;
-        slave_info = loc_alloc(sizeof(SlaveInfo) * slave_max);
+        slave_info = (SlaveInfo *)loc_alloc(sizeof(SlaveInfo) * slave_max);
     }
     else if (slave_cnt >= slave_max) {
         assert(slave_cnt == slave_max);
         slave_max *= 2;
-        slave_info = loc_realloc(slave_info, sizeof(SlaveInfo) * slave_max);
+        slave_info = (SlaveInfo *)loc_realloc(slave_info, sizeof(SlaveInfo) * slave_max);
     }
     s = slave_info + slave_cnt++;
     s->addr = *addr;

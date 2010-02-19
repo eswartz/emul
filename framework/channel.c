@@ -31,7 +31,7 @@
 #include "link.h"
 #include "json.h"
 
-#define BCAST_MAGIC 0x8463e328
+#define BCAST_MAGIC 0x1463e328
 
 #define out2bcast(A)    ((TCFBroadcastGroup *)((char *)(A) - offsetof(TCFBroadcastGroup, out)))
 #define bclink2channel(A) ((Channel *)((char *)(A) - offsetof(Channel, bclink)))
@@ -140,7 +140,7 @@ int channels_get_message_count(TCFSuspendGroup * p) {
 }
 
 void add_channel_close_listener(ChannelCloseListener listener) {
-    assert(close_listeners_cnt < sizeof(close_listeners) / sizeof(ChannelCloseListener));
+    assert(close_listeners_cnt < (int)(sizeof(close_listeners) / sizeof(ChannelCloseListener)));
     close_listeners[close_listeners_cnt++] = listener;
 }
 
@@ -152,7 +152,7 @@ void notify_channel_closed(Channel * c) {
 }
 
 TCFSuspendGroup * suspend_group_alloc(void) {
-    TCFSuspendGroup * p = loc_alloc(sizeof(TCFSuspendGroup));
+    TCFSuspendGroup * p = (TCFSuspendGroup *)loc_alloc(sizeof(TCFSuspendGroup));
 
     list_init(&p->channels);
     p->suspended = 0;
@@ -188,7 +188,7 @@ void channel_clear_suspend_group(Channel * c) {
 }
 
 TCFBroadcastGroup * broadcast_group_alloc(void) {
-    TCFBroadcastGroup * p = loc_alloc_zero(sizeof(TCFBroadcastGroup));
+    TCFBroadcastGroup * p = (TCFBroadcastGroup*)loc_alloc_zero(sizeof(TCFBroadcastGroup));
 
     list_init(&p->channels);
     p->magic = BCAST_MAGIC;
@@ -250,8 +250,8 @@ PeerServer * channel_peer_from_url(const char * url) {
 
     s = url;
     i = 0;
-    while (*s && isalpha(*s) && i < sizeof transport) transport[i++] = (char)toupper(*s++);
-    if (*s == ':' && i < sizeof transport) {
+    while (*s && isalpha(*s) && i < (int)sizeof transport) transport[i++] = (char)toupper(*s++);
+    if (*s == ':' && i < (int)sizeof transport) {
         s++;
         peer_server_addprop(ps, loc_strdup("TransportName"), loc_strndup(transport, i));
         url = s;

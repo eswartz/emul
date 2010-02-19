@@ -280,7 +280,7 @@ static void command_get_context(char * token, Channel * c) {
         /* Need to stop everything to access context properties.
          * In particular, proc FS access can fail when process is running.
          */
-        GetContextArgs * s = loc_alloc_zero(sizeof(GetContextArgs));
+        GetContextArgs * s = (GetContextArgs *)loc_alloc_zero(sizeof(GetContextArgs));
         s->c = c;
         channel_lock(c);
         strcpy(s->token, token);
@@ -835,7 +835,7 @@ void post_safe_event(int mem, EventCallBack * done, void * arg) {
 }
 
 static void event_context_created(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = client_data;
+    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
     assert(!ctx->exited);
     assert(!ctx->intercepted);
     assert(!ctx->stopped);
@@ -844,14 +844,14 @@ static void event_context_created(Context * ctx, void * client_data) {
 }
 
 static void event_context_changed(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = client_data;
+    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
 
     send_event_context_changed(&bcg->out, ctx);
     flush_stream(&bcg->out);
 }
 
 static void event_context_stopped(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = client_data;
+    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
 
     assert(ctx->stopped);
     assert(!ctx->intercepted);
@@ -870,7 +870,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
 }
 
 static void event_context_started(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = client_data;
+    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
 
     assert(!ctx->stopped);
     if (ctx->intercepted) {
@@ -888,7 +888,7 @@ static void event_context_started(Context * ctx, void * client_data) {
 }
 
 static void event_context_exited(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = client_data;
+    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
 
     assert(!ctx->stopped);
     assert(!ctx->intercepted);

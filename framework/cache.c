@@ -66,7 +66,7 @@ void cache_wait(AbstractCache * cache) {
     if (current_client.client != NULL) {
         if (cache->wait_list_cnt >= cache->wait_list_max) {
             cache->wait_list_max += 8;
-            cache->wait_list_buf = loc_realloc(cache->wait_list_buf, cache->wait_list_max * sizeof(WaitingCacheClient));
+            cache->wait_list_buf = (WaitingCacheClient *)loc_realloc(cache->wait_list_buf, cache->wait_list_max * sizeof(WaitingCacheClient));
         }
         cache->wait_list_buf[cache->wait_list_cnt++] = current_client;
         channel_lock(current_client.channel);
@@ -82,7 +82,7 @@ void cache_notify(AbstractCache * cache) {
     cache->wait_list_cnt = 0;
     if (wait_list_max < cnt) {
         wait_list_max = cnt;
-        wait_list_buf = loc_realloc(wait_list_buf, cnt * sizeof(WaitingCacheClient));
+        wait_list_buf = (WaitingCacheClient *)loc_realloc(wait_list_buf, cnt * sizeof(WaitingCacheClient));
     }
     memcpy(wait_list_buf, cache->wait_list_buf, cnt * sizeof(WaitingCacheClient));
     for (i = 0; i < cnt; i++) {

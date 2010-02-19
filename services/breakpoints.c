@@ -1528,7 +1528,7 @@ void evaluate_breakpoint_condition(Context * ctx) {
 
     if (size > 0) {
         size_t mem_size = size + sizeof(char *);
-        char ** list = loc_alloc(mem_size);
+        char ** list = (char **)loc_alloc(mem_size);
         char * pool = (char *)list + mem_size;
         ctx->bp_ids = list;
         for (i = 0; i < bi->ref_cnt; i++) {

@@ -220,7 +220,7 @@ static void waitpid_done(void * arg) {
 }
 
 void add_waitpid_process(int pid) {
-    AsyncReqInfo * req = loc_alloc_zero(sizeof(AsyncReqInfo));
+    AsyncReqInfo * req = (AsyncReqInfo *)loc_alloc_zero(sizeof(AsyncReqInfo));
     assert(listener_cnt > 0);
     req->done = waitpid_done;
     req->type = AsyncReqWaitpid;

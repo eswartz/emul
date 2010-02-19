@@ -351,7 +351,7 @@ static void command_get_children(char * token, Channel * c) {
 #if ENABLE_DebugContext
 
 static void attach_done(int error, Context * ctx, void * arg) {
-    AttachDoneArgs * data = arg;
+    AttachDoneArgs * data = (AttachDoneArgs *)arg;
     Channel * c = data->c;
 
     if (!is_channel_closed(c)) {
@@ -383,7 +383,7 @@ static void command_attach(char * token, Channel * c) {
         err = ERR_ALREADY_ATTACHED;
     }
     else {
-        AttachDoneArgs * data = loc_alloc_zero(sizeof *data);
+        AttachDoneArgs * data = (AttachDoneArgs *)loc_alloc_zero(sizeof *data);
         data->c = c;
         strcpy(data->token, token);
         if (context_attach(pid, attach_done, data, 0) == 0) {
@@ -623,7 +623,7 @@ static void command_get_environment(char * token, Channel * c) {
 }
 
 static void start_done(int error, Context * ctx, void * arg) {
-    AttachDoneArgs * data = arg;
+    AttachDoneArgs * data = (AttachDoneArgs *)arg;
     Channel * c = data->c;
 
     if (!is_channel_closed(c)) {
@@ -687,7 +687,7 @@ static void process_input_streams_callback(VirtualStream * stream, int event_cod
 }
 
 static void write_process_input_done(void * x) {
-    AsyncReqInfo * req = x;
+    AsyncReqInfo * req = (AsyncReqInfo *)x;
     ProcessInput * inp = (ProcessInput *)req->client_data;
 
     inp->req_posted = 0;
@@ -713,7 +713,7 @@ static void write_process_input_done(void * x) {
 }
 
 static void write_process_input(ChildProcess * prs) {
-    ProcessInput * inp = prs->inp_struct = loc_alloc_zero(sizeof(ProcessInput));
+    ProcessInput * inp = prs->inp_struct = (ProcessInput *)loc_alloc_zero(sizeof(ProcessInput));
     inp->prs = prs;
     inp->req.client_data = inp;
     inp->req.done = write_process_input_done;
@@ -743,7 +743,7 @@ static void process_output_streams_callback(VirtualStream * stream, int event_co
             err = 0;
         }
 
-        assert(buf_len <= sizeof(out->buf));
+        assert(buf_len <= (int)sizeof(out->buf));
         assert(out->buf_pos <= (size_t)buf_len);
         assert(out->req.u.fio.bufp == out->buf);
 #ifdef __linux__
@@ -776,7 +776,7 @@ static void process_output_streams_callback(VirtualStream * stream, int event_co
 }
 
 static void read_process_output_done(void * x) {
-    AsyncReqInfo * req = x;
+    AsyncReqInfo * req = (AsyncReqInfo *)x;
     ProcessOutput * out = (ProcessOutput *)req->client_data;
 
     out->buf_pos = 0;
@@ -785,7 +785,7 @@ static void read_process_output_done(void * x) {
 }
 
 static ProcessOutput * read_process_output(ChildProcess * prs, int fd, char * id, size_t id_size) {
-    ProcessOutput * out = loc_alloc_zero(sizeof(ProcessOutput));
+    ProcessOutput * out = (ProcessOutput *)loc_alloc_zero(sizeof(ProcessOutput));
     out->prs = prs;
     out->req.client_data = out;
     out->req.done = read_process_output_done;
@@ -1164,7 +1164,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
         }
     }
     if (!err) {
-        *prs = loc_alloc_zero(sizeof(ChildProcess));
+        *prs = (ChildProcess *)loc_alloc_zero(sizeof(ChildProcess));
         (*prs)->inp = fd_tty_master;
         (*prs)->out = fd_tty_master;
         (*prs)->err = fd_tty_master;
@@ -1220,7 +1220,7 @@ static void command_start(char * token, Channel * c) {
         }
         if (!err) {
             if (attach) {
-                AttachDoneArgs * data = loc_alloc_zero(sizeof *data);
+                AttachDoneArgs * data = (AttachDoneArgs *)loc_alloc_zero(sizeof *data);
                 data->c = c;
                 strcpy(data->token, token);
                 pending = context_attach(pid, start_done, data, selfattach) == 0;

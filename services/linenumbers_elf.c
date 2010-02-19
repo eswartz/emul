@@ -54,7 +54,7 @@ static CompUnit * find_unit(Context * ctx, DWARFCache * cache, ContextAddress ad
         if (base == 0 || size == 0) continue;
         if (u->mDebugRangesOffs != ~(U8_T)0 && cache->mDebugRanges != NULL) {
             if (elf_load(cache->mDebugRanges)) exception(errno);
-            dio_EnterDataSection(&u->mDesc, cache->mDebugRanges->data, u->mDebugRangesOffs, cache->mDebugRanges->size);
+            dio_EnterDataSection(&u->mDesc, (U1_T *)(cache->mDebugRanges->data), u->mDebugRangesOffs, cache->mDebugRanges->size);
             for (;;) {
                 U8_T x = dio_ReadAddress();
                 U8_T y = dio_ReadAddress();
@@ -373,7 +373,7 @@ static void map_to_source_cache_client(void * x) {
 }
 
 static void command_map_to_source(char * token, Channel * c) {
-    MapToSourceArgs * args = loc_alloc_zero(sizeof(MapToSourceArgs));
+    MapToSourceArgs * args = (MapToSourceArgs *)loc_alloc_zero(sizeof(MapToSourceArgs));
 
     json_read_string(&c->inp, args->id, sizeof(args->id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);

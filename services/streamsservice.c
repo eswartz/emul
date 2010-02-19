@@ -281,7 +281,7 @@ static void advance_stream_buffer(VirtualStream * stream) {
 
 static StreamClient * create_client(VirtualStream * stream, Channel * channel) {
     unsigned len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
-    StreamClient * client = loc_alloc_zero(sizeof(StreamClient));
+    StreamClient * client = (StreamClient *)loc_alloc_zero(sizeof(StreamClient));
     list_init(&client->link_hash);
     list_init(&client->link_stream);
     list_init(&client->link_all);
@@ -403,7 +403,7 @@ static void send_read_reply(StreamClient * client, char * token, size_t size) {
 void virtual_stream_create(const char * type, const char * context_id, size_t buf_len, unsigned access,
         VirtualStreamCallBack * callback, void * callback_args, VirtualStream ** res) {
     LINK * l;
-    VirtualStream * stream = loc_alloc_zero(sizeof(VirtualStream));
+    VirtualStream * stream = (VirtualStream *)loc_alloc_zero(sizeof(VirtualStream));
 
     buf_len++;
     list_init(&stream->clients);
@@ -414,7 +414,7 @@ void virtual_stream_create(const char * type, const char * context_id, size_t bu
     stream->callback = callback;
     stream->callback_args = callback_args;
     stream->ref_cnt = 1;
-    stream->buf = loc_alloc(buf_len);
+    stream->buf = (char *)loc_alloc(buf_len);
     stream->buf_len = buf_len;
     for (l = subscriptions.next; l != &subscriptions; l = l->next) {
         Subscription * h = all2subscription(l);
@@ -587,7 +587,7 @@ static void command_subscribe(char * token, Channel * c) {
         }
     }
     if (err == 0) {
-        Subscription * s = loc_alloc_zero(sizeof(Subscription));
+        Subscription * s = (Subscription *)loc_alloc_zero(sizeof(Subscription));
         list_init(&s->link_all);
         list_add_first(&s->link_all, &subscriptions);
         strncpy(s->type, type, sizeof(s->type) - 1);
@@ -646,7 +646,7 @@ static void command_read(char * token, Channel * c) {
     if (err == 0) {
         VirtualStream * stream = client->stream;
         if (client->pos == stream->pos && !stream->eos_inp) {
-            ReadRequest * r = loc_alloc_zero(sizeof(ReadRequest));
+            ReadRequest * r = (ReadRequest *)loc_alloc_zero(sizeof(ReadRequest));
             list_init(&r->link_client);
             r->client = client;
             r->size = size;
@@ -694,7 +694,7 @@ static void command_write(char * token, Channel * c) {
         JsonReadBinaryState state;
         unsigned data_pos = 0;
 
-        if (!err && !list_is_empty(&client->write_requests)) data = loc_alloc(size);
+        if (!err && !list_is_empty(&client->write_requests)) data = (char *)loc_alloc(size);
 
         json_read_binary_start(&state, &c->inp);
         for (;;) {
@@ -713,7 +713,7 @@ static void command_write(char * token, Channel * c) {
                     assert(done <= rd);
                     offs += done;
                     if (!err && done < rd) {
-                        data = loc_alloc(size - offs);
+                        data = (char *)loc_alloc(size - offs);
                         memcpy(data, buf + done, rd - done);
                         data_pos = rd - done;
                     }
@@ -727,7 +727,7 @@ static void command_write(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (data != NULL) {
-        WriteRequest * r = loc_alloc_zero(sizeof(WriteRequest));
+        WriteRequest * r = (WriteRequest *)loc_alloc_zero(sizeof(WriteRequest));
         list_init(&r->link_client);
         r->client = client;
         r->data = data;
@@ -757,7 +757,7 @@ static void command_eos(char * token, Channel * c) {
     client = find_client(id, c);
     if (client == NULL) err = errno;
     if (!err && (client->stream->access & VS_ENABLE_REMOTE_WRITE) == 0) err = ERR_UNSUPPORTED;
-    if (!err && !list_is_empty(&client->write_requests)) r = loc_alloc_zero(sizeof(WriteRequest));
+    if (!err && !list_is_empty(&client->write_requests)) r = (WriteRequest *)loc_alloc_zero(sizeof(WriteRequest));
     if (!err && r == NULL && virtual_stream_add_data(client->stream, NULL, 0, &done, 1) < 0) err = errno;
 
     if (r != NULL) {

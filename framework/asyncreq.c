@@ -43,7 +43,7 @@ typedef struct WorkerThread {
 #define wtlink2wt(A)  ((WorkerThread *)((char *)(A) - offsetof(WorkerThread, wtlink)))
 
 static void * worker_thread_handler(void * x) {
-    WorkerThread * wt = x;
+    WorkerThread * wt = (WorkerThread *)x;
 
     for (;;) {
         AsyncReqInfo * req = wt->req;
@@ -192,7 +192,7 @@ static void * worker_thread_handler(void * x) {
 
 #if ENABLE_AIO
 static void aio_done(union sigval arg) {
-    AsyncReqInfo * req = arg.sival_ptr;
+    AsyncReqInfo * req = (AsyncReqInfo *)arg.sival_ptr;
     req->u.fio.rval = aio_return(&req->u.fio.aio);
     if (req->u.fio.rval < 0) req->error = aio_error(&req->u.fio.aio);
     post_event(req->done, req);
@@ -234,7 +234,7 @@ void async_req_post(AsyncReqInfo * req) {
     check_error(pthread_mutex_lock(&wtlock));
     if (list_is_empty(&wtlist)) {
         assert(wtlist_size == 0);
-        wt = loc_alloc_zero(sizeof *wt);
+        wt = (WorkerThread *)loc_alloc_zero(sizeof *wt);
         wt->req = req;
         check_error(pthread_cond_init(&wt->cond, NULL));
         check_error(pthread_create(&wt->thread, &pthread_create_attr, worker_thread_handler, wt));

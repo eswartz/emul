@@ -55,7 +55,7 @@
 #endif
 
 #define BUF_SIZE 0x1000
-#define CHANNEL_MAGIC 0x87208956
+#define CHANNEL_MAGIC 0x27208956
 #define MAX_IFC 10
 
 #define is_suspended(CH) ((CH)->chan.spg && (CH)->chan.spg->suspended)
@@ -570,8 +570,8 @@ static int channel_get_message_count(Channel * channel) {
 }
 
 static void tcp_channel_read_done(void * x) {
-    AsyncReqInfo * req = x;
-    ChannelTCP * c = req->client_data;
+    AsyncReqInfo * req = (AsyncReqInfo *)x;
+    ChannelTCP * c = (ChannelTCP *)req->client_data;
     int len = 0;
 
     assert(is_dispatch_thread());
@@ -704,7 +704,7 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
 #endif
     }
 
-    c = loc_alloc_zero(sizeof *c);
+    c = (ChannelTCP *)loc_alloc_zero(sizeof *c);
 #if ENABLE_Splice
     if (pipe(c->pipefd) == -1) {
         int err = errno;
@@ -817,7 +817,7 @@ static void refresh_all_peer_server(void * x) {
 static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr) {
     /* Create a human readable channel name that uniquely identifies remote peer */
     char name[128];
-    char * fmt = c->ssl != NULL ? "SSL:%s:%d" : "TCP:%s:%d";
+    char * fmt = (char *)(c->ssl != NULL ? "SSL:%s:%d" : "TCP:%s:%d");
     char nbuf[128];
     c->addr = *addr;
     snprintf(name, sizeof(name), fmt,
@@ -827,8 +827,8 @@ static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr) {
 }
 
 static void tcp_server_accept_done(void * x) {
-    AsyncReqInfo * req = x;
-    ServerTCP * si = req->client_data;
+    AsyncReqInfo * req = (AsyncReqInfo *)x;
+    ServerTCP * si = (ServerTCP *)req->client_data;
     ChannelTCP * c = NULL;
     int sock;
     struct sockaddr peer_addr;
@@ -963,7 +963,7 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
         errno = error;
         return NULL;
     }
-    si = loc_alloc_zero(sizeof *si);
+    si = (ServerTCP *)loc_alloc_zero(sizeof *si);
     si->serv.close = server_close;
     si->sock = sock;
     si->ps = ps;
@@ -1035,7 +1035,7 @@ void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void 
     error = loc_getaddrinfo(host, port, &hints, &reslist);
     if (error) error = set_gai_errno(error);
     if (!error) {
-        info = loc_alloc_zero(sizeof(ChannelConnectInfo));
+        info = (ChannelConnectInfo *)loc_alloc_zero(sizeof(ChannelConnectInfo));
         for (res = reslist; res != NULL; res = res->ai_next) {
             assert(sizeof(info->peer_addr) >= res->ai_addrlen);
             memcpy(&info->peer_addr, res->ai_addr, res->ai_addrlen);
@@ -1085,10 +1085,11 @@ void generate_ssl_certificate(void) {
     X509_NAME * name = NULL;
     int err = 0;
     struct stat st;
-    FILE * fp;
+    FILE * fp = NULL;
 
     ini_ssl();
-    if (!err && (rsa = RSA_generate_key(2048, 3, NULL, "RSA")) == NULL) err = ERR_SSL;
+    /* TODO: Cleanup void* cast to "RSA."  The cast was required for g++ to compile */
+    if (!err && (rsa = RSA_generate_key(2048, 3, NULL, (void*)"RSA")) == NULL) err = (int)ERR_SSL;
     if (!err && !RSA_check_key(rsa)) err = ERR_SSL;
     if (!err && gethostname(subject_name, sizeof(subject_name)) != 0) err = errno;
     if (!err) {

@@ -112,7 +112,7 @@ static DIO_Cache * dio_GetCache(ELF_File * File) {
 void dio_EnterDebugSection(DIO_UnitDescriptor * Unit, ELF_Section * Section, U8_T Offset) {
     if (elf_load(Section)) exception(errno);
     sSection = Section;
-    sData = Section->data;
+    sData = (U1_T *)Section->data;
     sDataPos = Offset;
     sDataLen = Section->size;
     sBigEndian = Section->file->big_endian;
@@ -294,7 +294,7 @@ static U1_T * dio_LoadStringTable(U4_T * StringTableSize) {
         if (elf_load(Section) < 0) {
             str_exception(ERR_INV_DWARF, "invalid .debug_str section");
         }
-        Cache->mStringTable = Section->data;
+        Cache->mStringTable = (U1_T *)Section->data;
     }
 
     *StringTableSize = Cache->mStringTableSize;
@@ -550,7 +550,7 @@ void dio_LoadAbbrevTable(ELF_File * File) {
             U4_T Form = dio_ReadULEB128();
             if (Attr >= 0x10000 || Form >= 0x10000) str_exception(ERR_INV_DWARF, "invalid abbreviation table");
             if (Attr == 0 && Form == 0) {
-                DIO_Abbreviation * Abbr = loc_alloc_zero(sizeof(DIO_Abbreviation) - sizeof(U2_T) * 2 + sizeof(U2_T) * AttrPos);
+                DIO_Abbreviation * Abbr = (DIO_Abbreviation *)loc_alloc_zero(sizeof(DIO_Abbreviation) - sizeof(U2_T) * 2 + sizeof(U2_T) * AttrPos);
                 Abbr->mTag = Tag;
                 Abbr->mChildren = Children;
                 Abbr->mAttrLen = AttrPos;
@@ -647,7 +647,7 @@ void dio_ChkBlock(U2_T Form, U1_T ** Buf, size_t * Size) {
     case FORM_STRING    :
     case FORM_STRP      :
         *Size = dio_gFormDataSize;
-        *Buf = dio_gFormDataAddr;
+        *Buf = (U1_T *)dio_gFormDataAddr;
         break;
     default:
         str_exception(ERR_INV_DWARF, "FORM_BLOCK expected");

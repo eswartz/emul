@@ -81,7 +81,7 @@ void loc_free(void *p) {
  * strdup() with end-of-memory checking.
  */
 char * loc_strdup(const char * s) {
-    char * rval = loc_alloc(strlen(s) + 1);
+    char * rval = (char *)loc_alloc(strlen(s) + 1);
     strcpy(rval, s);
     return rval;
 }
@@ -91,7 +91,7 @@ char * loc_strdup(const char * s) {
  * strdup2() with concatenation and  end-of-memory checking.
  */
 char * loc_strdup2(const char * s1, const char * s2) {
-    char * rval = loc_alloc(strlen(s1) + strlen(s2) + 1);
+    char * rval = (char *)loc_alloc(strlen(s1) + strlen(s2) + 1);
     strcpy(rval, s1);
     strcat(rval, s2);
     return rval;
@@ -102,7 +102,7 @@ char * loc_strdup2(const char * s1, const char * s2) {
  * strndup() with end-of-memory checking.
  */
 char * loc_strndup(const char * s, size_t len) {
-    char * rval = loc_alloc(len + 1);
+    char * rval = (char *)loc_alloc(len + 1);
     strncpy(rval, s, len);
     rval[len] = '\0';
     return rval;

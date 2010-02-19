@@ -141,7 +141,7 @@ static ino_t elf_ino(char * fnm) {
         n = n->next;
     }
     if (elf_ino_cnt == 0) elf_ino_cnt++;
-    n = loc_alloc_zero(sizeof(*n));
+    n = (FileINode *)loc_alloc_zero(sizeof(*n));
     n->next = inodes;
     n->name = loc_strdup(fnm);
     n->ino = elf_ino_cnt++;
@@ -244,7 +244,7 @@ ELF_File * elf_open(char * file_name) {
             if (error == 0 && lseek(file->fd, hdr.e_shoff, SEEK_SET) == (off_t)-1) error = errno;
             if (error == 0) {
                 unsigned cnt = 0;
-                file->sections = loc_alloc_zero(sizeof(ELF_Section) * hdr.e_shnum);
+                file->sections = (ELF_Section *)loc_alloc_zero(sizeof(ELF_Section) * hdr.e_shnum);
                 file->section_cnt = hdr.e_shnum;
                 while (error == 0 && cnt < hdr.e_shnum) {
                     int rd = 0;
@@ -284,7 +284,7 @@ ELF_File * elf_open(char * file_name) {
             if (error == 0 && lseek(file->fd, hdr.e_phoff, SEEK_SET) == (off_t)-1) error = errno;
             if (error == 0) {
                 unsigned cnt = 0;
-                file->pheaders = loc_alloc_zero(sizeof(ELF_PHeader) * hdr.e_phnum);
+                file->pheaders = (ELF_PHeader *)loc_alloc_zero(sizeof(ELF_PHeader) * hdr.e_phnum);
                 file->pheader_cnt = hdr.e_phnum;
                 while (error == 0 && cnt < hdr.e_phnum) {
                     int rd = 0;
@@ -346,7 +346,7 @@ ELF_File * elf_open(char * file_name) {
             if (error == 0 && lseek(file->fd, hdr.e_shoff, SEEK_SET) == (off_t)-1) error = errno;
             if (error == 0) {
                 unsigned cnt = 0;
-                file->sections = loc_alloc_zero(sizeof(ELF_Section) * hdr.e_shnum);
+                file->sections = (ELF_Section *)loc_alloc_zero(sizeof(ELF_Section) * hdr.e_shnum);
                 file->section_cnt = hdr.e_shnum;
                 while (error == 0 && cnt < hdr.e_shnum) {
                     int rd = 0;
@@ -386,7 +386,7 @@ ELF_File * elf_open(char * file_name) {
             if (error == 0 && lseek(file->fd, hdr.e_phoff, SEEK_SET) == (off_t)-1) error = errno;
             if (error == 0) {
                 unsigned cnt = 0;
-                file->pheaders = loc_alloc_zero(sizeof(ELF_PHeader) * hdr.e_phnum);
+                file->pheaders = (ELF_PHeader *)loc_alloc_zero(sizeof(ELF_PHeader) * hdr.e_phnum);
                 file->pheader_cnt = hdr.e_phnum;
                 while (error == 0 && cnt < hdr.e_phnum) {
                     int rd = 0;
@@ -426,11 +426,11 @@ ELF_File * elf_open(char * file_name) {
         if (error == 0 && str_index != 0 && str_index < file->section_cnt) {
             int rd = 0;
             ELF_Section * str = file->sections + str_index;
-            file->str_pool = loc_alloc((size_t)str->size);
+            file->str_pool = (char *)loc_alloc((size_t)str->size);
             if (str->offset == 0 || str->size == 0) error = ERR_INV_FORMAT;
             if (error == 0 && lseek(file->fd, str->offset, SEEK_SET) == (off_t)-1) error = errno;
             if (error == 0 && (rd = read(file->fd, file->str_pool, (size_t)str->size)) < 0) error = errno;
-            if (error == 0 && rd != str->size) error = ERR_INV_FORMAT;
+            if (error == 0 && rd != (int)str->size) error = ERR_INV_FORMAT;
             if (error == 0) {
                 unsigned i;
                 for (i = 1; i < file->section_cnt; i++) {
@@ -538,7 +538,7 @@ ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress ad
     elf_list_addr1 = addr1;
     memory_map_get_regions(ctx, &elf_list_regions, &elf_list_region_cnt);
     if (elf_list_region_cnt > 0) {
-        elf_list_files = loc_alloc_zero(sizeof(ELF_File *) * elf_list_region_cnt);
+        elf_list_files = (ELF_File **)loc_alloc_zero(sizeof(ELF_File *) * elf_list_region_cnt);
         for (i = 0; i < elf_list_region_cnt; i++) {
             MemoryRegion * r = elf_list_regions + i;
             if (r->addr <= addr1 && r->addr + r->size >= addr0) {

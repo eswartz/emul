@@ -338,7 +338,7 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     for (word_addr = address & ~((ContextAddress)word_size - 1); word_addr < address + size; word_addr += word_size) {
         unsigned long word = 0;
         if (word_addr < address || word_addr + word_size > address + size) {
-            int i;
+            unsigned i = 0;
             errno = 0;
             word = ptrace(PTRACE_PEEKDATA, ctx->pid, (void *)word_addr, 0);
             if (errno != 0) {
@@ -388,7 +388,7 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
             return -1;
         }
         if (word_addr < address || word_addr + word_size > address + size) {
-            int i;
+            unsigned i = 0;
             for (i = 0; i < word_size; i++) {
                 if (word_addr + i >= address && word_addr + i < address + size) {
                     ((char *)buf)[word_addr + i - address] = ((char *)&word)[i];
@@ -523,8 +523,8 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     assert(!ctx->exited);
     assert(!ctx->attach_callback);
     if (ctx->ptrace_flags != PTRACE_FLAGS) {
-        if (ptrace(PTRACE_SETOPTIONS, ctx->pid, 0, PTRACE_FLAGS) < 0) {
-            int err = errno;
+        if (ptrace((enum __ptrace_request)PTRACE_SETOPTIONS, ctx->pid, 0, PTRACE_FLAGS) < 0) {
+                int err = errno;
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_SETOPTIONS) failed: pid %d, error %d %s",
                 ctx->pid, err, errno_to_str(err));
         }
@@ -537,8 +537,8 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     case PTRACE_EVENT_FORK:
     case PTRACE_EVENT_VFORK:
     case PTRACE_EVENT_CLONE:
-        if (ptrace(PTRACE_GETEVENTMSG, pid, 0, &msg) < 0) {
-            trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETEVENTMSG) failed; pid %d, error %d %s",
+        if (ptrace((enum __ptrace_request)PTRACE_GETEVENTMSG, pid, 0, &msg) < 0) {
+                trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETEVENTMSG) failed; pid %d, error %d %s",
                 pid, errno, errno_to_str(errno));
             break;
         }

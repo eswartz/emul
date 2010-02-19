@@ -106,7 +106,7 @@ static void command_redirect(char * token, Channel * c) {
 
     ps = peer_server_find(id);
     if (ps != NULL) {
-        RedirectInfo * info = loc_alloc_zero(sizeof(RedirectInfo));
+        RedirectInfo * info = (RedirectInfo *)loc_alloc_zero(sizeof(RedirectInfo));
         channel_lock(c);
         c->state = ChannelStateRedirectReceived;
         info->channel = c;

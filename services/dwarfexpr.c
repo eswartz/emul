@@ -71,7 +71,7 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, U1_T * 
 
         if (sExprStackLen >= sExprStackMax) {
             sExprStackMax *= 2;
-            sExprStack = loc_realloc(sExprStack, sizeof(U8_T) * sExprStackMax);
+            sExprStack = (U8_T *)loc_realloc(sExprStack, sizeof(U8_T) * sExprStackMax);
         }
         switch (Op) {
         case OP_addr:
@@ -513,7 +513,7 @@ static void evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
     U8_T Base = 0;
     DWARFCache * Cache = (DWARFCache *)Value->mObject->mCompUnit->mFile->dwarf_dt_cache;
 
-    assert(Cache->magic == SYM_CACHE_MAGIC);
+    assert(Cache->magic == DWARF_CACHE_MAGIC);
     if (Cache->mDebugLoc == NULL) str_exception(ERR_INV_DWARF, "missing .debug_loc section");
     dio_EnterDataSection(&Value->mObject->mCompUnit->mDesc, Value->mAddr, 0, Value->mSize);
     Offset = dio_ReadUX(Value->mSize);
@@ -561,7 +561,7 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
 
     if (sExprStack == NULL) {
         sExprStackMax = 8;
-        sExprStack = loc_alloc(sizeof(U8_T) * sExprStackMax);
+        sExprStack = (U8_T *)loc_alloc(sizeof(U8_T) * sExprStackMax);
     }
     if (Value->mAttr == AT_data_member_location) {
         sExprStack[sExprStackLen++] = BaseAddress;

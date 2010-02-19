@@ -156,7 +156,7 @@ Context * create_context(pid_t pid, size_t regs_size) {
 
     ctx->pid = pid;
     ctx->regs_size = regs_size;
-    ctx->regs = loc_alloc_zero(regs_size);
+    ctx->regs = (RegisterData *)loc_alloc_zero(regs_size);
     list_init(&ctx->children);
     list_init(&ctx->ctxl);
     list_init(&ctx->pidl);

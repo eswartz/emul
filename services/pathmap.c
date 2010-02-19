@@ -28,12 +28,14 @@
 #include "myalloc.h"
 #include "pathmap.h"
 
+typedef struct PathMapRuleAttr {
+    char * name;
+    char * value;
+    char * json;
+} PathMapRuleAttr;
+
 typedef struct PathMapRule {
-    struct {
-        char * name;
-        char * value;
-        char * json;
-    } * attrs;
+    PathMapRuleAttr * attrs;
     unsigned attrs_cnt;
     unsigned attrs_max;
 } PathMapRule;
@@ -124,11 +126,11 @@ static void write_rule(OutputStream * out, PathMapRule * r) {
 }
 
 static void read_rule_attrs(InputStream * inp, char * name, void * args) {
-    PathMapRule * r = args;
+    PathMapRule * r = (PathMapRule *)args;
 
     if (r->attrs_cnt >= r->attrs_max) {
         r->attrs_max = r->attrs_max ? r->attrs_max * 2 : 4;
-        r->attrs = loc_realloc(r->attrs, r->attrs_max * sizeof(*r->attrs));
+        r->attrs = (PathMapRuleAttr *)loc_realloc(r->attrs, r->attrs_max * sizeof(*r->attrs));
     }
 
     memset(r->attrs + r->attrs_cnt, 0, sizeof(*r->attrs));
@@ -142,12 +144,12 @@ static void read_rule_attrs(InputStream * inp, char * name, void * args) {
 }
 
 static void read_rule(InputStream * inp, void * args) {
-    PathMap * m = args;
+    PathMap * m = (PathMap *)args;
     PathMapRule * r = NULL;
 
     if (m->rules_cnt >= m->rules_max) {
         m->rules_max = m->rules_max ? m->rules_max * 2 : 8;
-        m->rules = loc_realloc(m->rules, m->rules_max * sizeof(*m->rules));
+        m->rules = (PathMapRule *)loc_realloc(m->rules, m->rules_max * sizeof(*m->rules));
     }
 
     r = m->rules + m->rules_cnt;
@@ -156,7 +158,7 @@ static void read_rule(InputStream * inp, void * args) {
 }
 
 static void command_get(char * token, Channel * c) {
-    PathMap * m = find_map(c);
+    PathMap * m = (PathMap *)find_map(c);
 
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
@@ -184,7 +186,7 @@ static void command_set(char * token, Channel * c) {
     PathMap * m = find_map(c);
 
     if (m == NULL) {
-        m = loc_alloc_zero(sizeof(PathMap));
+        m = (PathMap *)loc_alloc_zero(sizeof(PathMap));
         m->channel = c;
         list_add_first(&m->maps, &maps);
     }

@@ -23,15 +23,18 @@
 #include <time.h>
 
 typedef struct PeerServer PeerServer;
+typedef struct PeerServerList PeerServerList;
+
+struct PeerServerList {
+    char * name;
+    char * value;
+};
 
 struct PeerServer {
     char * id;
     int max;
     int ind;
-    struct {
-        char * name;
-        char * value;
-    } * list;
+    PeerServerList * list;
     unsigned int flags;
     time_t creation_time;
     time_t expiration_time;

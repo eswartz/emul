@@ -103,7 +103,7 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
     RegisterDefinition * reg_def;
     while (reg >= regs->regs_max) {
         regs->regs_max = regs->regs_max == 0 ? 32 : regs->regs_max * 2;
-        regs->regs = loc_realloc(regs->regs, sizeof(RegisterRules) * regs->regs_max);
+        regs->regs = (RegisterRules *)loc_realloc(regs->regs, sizeof(RegisterRules) * regs->regs_max);
     }
     while (regs->regs_cnt <= reg) {
         int n = regs->regs_cnt++;
@@ -129,7 +129,7 @@ static StackFrameRegisters * get_regs_stack_item(int n) {
     while (n >= regs_stack_max) {
         int max = regs_stack_max;
         regs_stack_max = regs_stack_max == 0 ? 8 : regs_stack_max * 2;
-        regs_stack = loc_realloc(regs_stack, sizeof(StackFrameRegisters) * regs_stack_max);
+        regs_stack = (StackFrameRegisters *)loc_realloc(regs_stack, sizeof(StackFrameRegisters) * regs_stack_max);
         memset(regs_stack + max, 0, sizeof(StackFrameRegisters) * (regs_stack_max - max));
     }
     return regs_stack + n;

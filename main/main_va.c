@@ -37,6 +37,7 @@
 #include "proxy.h"
 #include "discovery.h"
 #include "errors.h"
+#include "plugins.h"
 
 static char * progname;
 static Protocol * proto;
@@ -150,10 +151,22 @@ int main(int argc, char ** argv) {
     }
     serv->new_conn = channel_new_connection;
 
+#if ENABLE_Plugins
+
+    /* Load dynamic libraries */
+    plugins_load(proto, NULL, NULL);
+#endif
+
     discovery_start();
 
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */
     run_event_loop();
+
+#if ENABLE_Plugins
+    /* Cleanup any loaded libraries */
+    plugins_destroy();
+#endif
+
     return 0;
 }

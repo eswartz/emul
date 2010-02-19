@@ -52,7 +52,7 @@ struct RunTestDoneArgs {
 static void command_echo(char * token, Channel * c) {
     char str[0x1000];
     int len = json_read_string(&c->inp, str, sizeof(str));
-    if (len >= sizeof(str)) exception(ERR_JSON_SYNTAX);
+    if (len >= (int)sizeof(str)) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");
@@ -88,7 +88,7 @@ static void command_get_test_list(char * token, Channel * c) {
 
 #if ENABLE_RCBP_TEST
 static void run_test_done(int error, Context * ctx, void * arg) {
-    RunTestDoneArgs * data = arg;
+    RunTestDoneArgs * data = (RunTestDoneArgs *)arg;
     Channel * c = data->c;
 
     ctx->test_process = 1;
@@ -116,7 +116,7 @@ static void command_run_test(char * token, Channel * c) {
 
     if (strcmp(id, "RCBP1") == 0) {
 #if ENABLE_RCBP_TEST
-        RunTestDoneArgs * data = loc_alloc_zero(sizeof(RunTestDoneArgs));
+        RunTestDoneArgs * data = (RunTestDoneArgs *)loc_alloc_zero(sizeof(RunTestDoneArgs));
         data->c = c;
         strcpy(data->token, token);
         if (run_test_process(run_test_done, data) == 0) {
@@ -271,7 +271,7 @@ static void command_create_test_streams(char * token, Channel * c) {
 #if SERVICE_Streams
     if (buf_size0 <= 0 || buf_size1 <= 0) err = ERR_INV_NUMBER;
     if (!err) {
-        StreamsTest * st = loc_alloc_zero(sizeof(StreamsTest));
+        StreamsTest * st = (StreamsTest *)loc_alloc_zero(sizeof(StreamsTest));
         virtual_stream_create(DIAGNOSTICS, NULL, (unsigned)buf_size0,
             VS_ENABLE_REMOTE_WRITE, streams_test_callback, st, &st->inp);
         virtual_stream_create(DIAGNOSTICS, NULL, (unsigned)buf_size1,

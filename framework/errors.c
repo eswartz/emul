@@ -243,7 +243,7 @@ int get_error_code(int no) {
 }
 
 static void add_report_prop(ErrorReport * report, const char * name, ByteArrayOutputStream * buf) {
-    ErrorReportItem * i = loc_alloc(sizeof(ErrorReportItem));
+    ErrorReportItem * i = (ErrorReportItem *)loc_alloc(sizeof(ErrorReportItem));
     i->name = loc_strdup(name);
     get_byte_array_output_stream_data(buf, &i->value, NULL);
     i->next = report->props;
@@ -276,7 +276,7 @@ ErrorReport * get_error_report(int err) {
         }
     }
     if (err != 0) {
-        ErrorReport * report = loc_alloc_zero(sizeof(ErrorReport));
+        ErrorReport * report = (ErrorReport *)loc_alloc_zero(sizeof(ErrorReport));
         struct timespec timenow;
 
         if (clock_gettime(CLOCK_REALTIME, &timenow) == 0) {
