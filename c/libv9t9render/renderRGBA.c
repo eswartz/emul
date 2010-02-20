@@ -259,6 +259,14 @@ static void blendRows(unsigned char *mid, int cnt, int offset) {
 		mid++;
 	}
 }
+
+static void blendRows2(unsigned char *mid, int cnt, int offsetup, int offsetdown) {
+	while (cnt--) {
+		mid[0] = (mid[offsetup] + mid[offsetdown]) >> 1;
+		mid++;
+	}
+}
+
 static void blendRowsL(unsigned char *mid, int cnt, int offsetup, int offsetdown) {
 	while (cnt--) {
 		mid[0] = (mid[offsetup] * 3 + mid[offsetdown]) >> 2;
@@ -371,7 +379,13 @@ static void iterRow_7_2(unsigned char *destptr, const unsigned char* srcptr, int
 		void (*scaleRow)(unsigned char*, const unsigned char *, int), int width, int destWidth, int cnt) {
 	// scale 3.5x:  emit seven dest rows for every two src rows
 
-	// we cheat a little here
+	// 0 A
+	// 1 A
+	// 2 A/B
+	// 3 A/B
+	// 4 A/B
+	// 5 B
+	// 6 B
 	while (cnt >= 2) {
 		// draw first/second row
 		(*scaleRow)(destptr, srcptr, width);
@@ -380,12 +394,12 @@ static void iterRow_7_2(unsigned char *destptr, const unsigned char* srcptr, int
 		(*scaleRow)(destptr + destrowstride * 5, srcptr + rowstride, width);
 		memcpy(destptr + destrowstride * 6, destptr + destrowstride * 5, destWidth * 4);
 		// blend them
-		blendRowsL(destptr + destrowstride * 2, destWidth * 4, -destrowstride, destrowstride * 3);
-			// 2=(1+5)/2
-		blendRows(destptr + destrowstride * 3, destWidth * 4, destrowstride * 3);
-			// 3=(0+6)/2
-		blendRowsR(destptr + destrowstride * 4, destWidth * 4, -destrowstride * 3, destrowstride);
-			// 4=(1+5)/2
+		blendRows2(destptr + destrowstride * 3, destWidth * 4, -destrowstride * 2, destrowstride * 2);
+			// 3=(1+5)/2
+		blendRows2(destptr + destrowstride * 2, destWidth * 4, -destrowstride, destrowstride);
+			// 2=(1+3)/2
+		blendRows2(destptr + destrowstride * 4, destWidth * 4, -destrowstride, destrowstride);
+			// 4=(3+5)/2
 
 		destptr += destrowstride * 7;
 		srcptr += rowstride * 2;
@@ -436,12 +450,12 @@ static void iterRow_9_2(unsigned char *destptr, const unsigned char* srcptr, int
 		memcpy(destptr + destrowstride * 7, destptr + destrowstride * 6, destWidth * 4);
 		memcpy(destptr + destrowstride * 8, destptr + destrowstride * 6, destWidth * 4);
 		// blend them
-		blendRowsL(destptr + destrowstride * 3, destWidth * 4, -destrowstride, destrowstride * 3);
-			// 2=(1+5)/2
-		blendRows(destptr + destrowstride * 4, destWidth * 4, destrowstride * 3);
-			// 3=(0+6)/2
-		blendRowsR(destptr + destrowstride * 5, destWidth * 4, -destrowstride * 3, destrowstride);
-			// 4=(1+5)/2
+		blendRows2(destptr + destrowstride * 4, destWidth * 4, -destrowstride * 2, destrowstride * 2);
+			// 4=(2+6)/2
+		blendRows2(destptr + destrowstride * 3, destWidth * 4, -destrowstride, destrowstride);
+			// 3=(2+4)/2
+		blendRows2(destptr + destrowstride * 5, destWidth * 4, -destrowstride, destrowstride);
+			// 5=(1+5)/2
 
 		destptr += destrowstride * 9;
 		srcptr += rowstride * 2;
