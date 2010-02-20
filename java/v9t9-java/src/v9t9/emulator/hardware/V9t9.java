@@ -154,10 +154,10 @@ public class V9t9 {
 	    		loadModuleRom("Parsec", "parsecc.bin");
 	    		loadModuleGrom("TEII", "teiig.bin");
 	    		loadModuleRom("TEII", "teiic.bin");
-	    		loadModuleGrom("Music", "musicmg.bin");
 	    		
 	    		loadBankedModuleRom("ExtBasic", "tiextc.bin", "tiextd.bin");
 	    		loadModuleGrom("ExtBasic", "tiextg.bin");
+	    		loadModuleGrom("Music", "musicmg.bin");
 	    		
 	    	} else {
 		    	loadModuleRom("Logo", "logoc.bin");

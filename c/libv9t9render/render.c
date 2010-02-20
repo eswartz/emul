@@ -13,8 +13,6 @@
 #include <math.h>
 #include "render.h"
 
-#include "noisy.h"
-
 #define SWAPPED_RGB 0
 #if SWAPPED_RGB
 

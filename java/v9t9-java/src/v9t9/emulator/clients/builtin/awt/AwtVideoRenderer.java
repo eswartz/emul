@@ -46,7 +46,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	private ImageDataCanvas vdpCanvas;
 
 	// global zoom
-	protected int zoom = 3;
+	protected float zoom = 3;
 	// zoom based on the resolution
 	protected float zoomx = 3, zoomy = 3;
 
@@ -60,6 +60,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 
 	private BufferedImage surface;
+	private BufferedImage noisySurface;
 	private Canvas canvas;
 
 	private Rectangle updateRect;
@@ -283,11 +284,15 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		float oldzoomx = zoomx;
 		float oldzoomy = zoomy;
 		
-		zoom = (int) (height + 64) / vdpCanvas.getHeight();
+		zoom = (float) (height + 64) / vdpCanvas.getHeight();
 		//zoom = (int) (curSize.y ) / vdpCanvas.getHeight();
 		
-		if (zoom == 0)
+		if (zoom < 1f)
+			zoom = 0.5f;
+		else if (zoom < 1)
 			zoom = 1;
+		else 
+			zoom = (int) zoom;
 		
 		if (vdpCanvas.isInterlacedEvenOdd())
 			zoomy = zoom / 2.0f;
@@ -381,7 +386,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 	
 	public int getZoom() {
-		return zoom;
+		return (int) zoom;
 	}
 
 	/* (non-Javadoc)
@@ -392,19 +397,25 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 	
 	protected synchronized void doRedraw(Graphics g, int x, int y, int width, int height) {
-		if (surface == null || surface.getWidth() != desiredWidth || surface.getHeight() != desiredHeight) {
-			// ignore redraw request before we've decided our size
-			if (desiredWidth == 0 || desiredHeight == 0)
-				return;
-			System.out.println("New BufferedImage");
-			surface = new BufferedImage(desiredWidth, desiredHeight, BufferedImage.TYPE_INT_BGR);
-			if (USE_ANALOGTV && analog != null) {
-				V9t9Render.INSTANCE.freeAnalogTv(analog);
-				analog = V9t9Render.INSTANCE.allocateAnalogTv(desiredWidth, desiredHeight);
+		synchronized (vdpCanvas) {
+			if (surface == null || surface.getWidth() != desiredWidth || surface.getHeight() != desiredHeight) {
+				// ignore redraw request before we've decided our size
+				if (desiredWidth == 0 || desiredHeight == 0)
+					return;
+				System.out.println("New BufferedImage");
+				surface = new BufferedImage(desiredWidth, desiredHeight, BufferedImage.TYPE_INT_BGR);
+				if (USE_ANALOGTV && analog != null) {
+					V9t9Render.INSTANCE.freeAnalogTv(analog);
+					analog = V9t9Render.INSTANCE.allocateAnalogTv(desiredWidth, desiredHeight);
+				}
+				
 			}
-			
+			if (V9t9.settingMonitorDrawing.getBoolean() && 
+					(noisySurface == null || noisySurface.getWidth() != desiredWidth || noisySurface.getHeight() != desiredHeight)) {
+				noisySurface = new BufferedImage(desiredWidth, desiredHeight, BufferedImage.TYPE_INT_BGR);
+			}
 		}
-
+		
 		int destWidth = surface.getWidth();
 		int destHeight = surface.getHeight();
 		
@@ -427,6 +438,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			
 			Rectangle logRect = physicalToLogical(new Rectangle(x, y, width, height));
 			
+			/*
 			if (V9t9.settingMonitorDrawing.getBoolean()) {
 				// modify a slightly larger area due to blending 
 				if (logRect.x > 0) { logRect.x--; logRect.width++; }
@@ -434,21 +446,25 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				if (logRect.x + logRect.width + 2 <= logMax.width) logRect.width++;
 				if (logRect.y + logRect.height + 2 <= logMax.height) logRect.height++;
 			}
+			*/
 			
 			Rectangle physRect = logicalToPhysical(logRect);
-			x = physRect.x; y = physRect.y; width = physRect.width; height = physRect.height;
+			//x = physRect.x; y = physRect.y; width = physRect.width; height = physRect.height;
 			/*
 			if (logRect.x + logRect.width > vdpCanvas.getVisibleWidth())
 				logRect.width = vdpCanvas.getVisibleWidth() - logRect.x;
 			if (logRect.y + logRect.height > vdpCanvas.getHeight())
 				logRect.height = vdpCanvas.getVisibleHeight() - logRect.y;
 				*/
+			//System.out.println("logrect="+ logRect+", physrec="+physRect);
+
 			int srcoffset = vdpCanvas.getDisplayAdjustOffset() 
 			+ (logRect.y * vdpCanvas.getLineStride() + logRect.x * vdpCanvas.getPixelStride());
 			//System.out.println("logRect = " + logRect + " x/y="+x+","+y+"; width/height="+width+","+height+"; srcoffset="+srcoffset);
 			//System.out.println("srcoffset="+srcoffset+"; mod="+(srcoffset%3));
 			
-
+			BufferedImage toRender = surface;
+			
 			if (USE_ANALOGTV) {
 				if (analog == null) {
 					analog = V9t9Render.INSTANCE.allocateAnalogTv(desiredWidth, desiredHeight);
@@ -470,8 +486,8 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 								logRect.width, logRect.height, 
 								adata.bytes_per_line,
 								//vdpCanvas.getLineStride() + 30,
-								width, height, destWidth * 4,
-								x, y, width, height);
+								physRect.width, physRect.height, destWidth * 4,
+								physRect.x, physRect.y, physRect.width, physRect.height);
 					} catch (Throwable t) {
 						t.printStackTrace();
 					}
@@ -485,63 +501,54 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 								vdpCanvas.getImageData().data, 
 								srcoffset,
 								logRect.width, logRect.height, vdpCanvas.getLineStride(),
-								width, height, destWidth * 4,
-								x, y, width, height);
+								physRect.width, physRect.height, destWidth * 4,
+								physRect.x, physRect.y, physRect.width, physRect.height);
 					} catch (Throwable t) {
 						t.printStackTrace();
 					}
-				}
-				
-				//System.out.println("scaled");
-				if (V9t9.settingMonitorDrawing.getBoolean()) {
-					// modify a slightly larger area
-					//if (logRect.x > 0) { logRect.x--; logRect.width++; }
-					if (logRect.y > 0) { logRect.y--; logRect.height++; }
-					if (logRect.y + logRect.height + 2 <= logMax.height) logRect.height++;
-					Rectangle nphys = logicalToPhysical(logRect);
 					
-					try {
-						V9t9Render.INSTANCE.addNoiseRGBA(data,
-								destWidth * 4 * nphys.y + 4 * nphys.x,
-								nphys.width, nphys.height, destWidth * 4,
-								logRect.width, logRect.height);
-					} catch (Throwable t) {
-						t.printStackTrace();
+					
+					//System.out.println("scaled");
+					if (V9t9.settingMonitorDrawing.getBoolean() && zoom > 1) {
+						// modify the original area
+						//if (logRect.x > 0) { logRect.x--; logRect.width++; }
+						//if (logRect.y > 0) { logRect.y--; logRect.height++; }
+						//if (logRect.y + logRect.height + 2 <= logMax.height) logRect.height++;
+	
+						//logRect = physicalToLogical(new Rectangle(x, y, width, height));
+						//Rectangle physRect = logicalToPhysical(logRect);
+						
+						DataBufferInt noisyBuffer = (DataBufferInt) noisySurface.getRaster().getDataBuffer();
+						int[] noisyData = noisyBuffer.getData();
+						
+						try {
+							V9t9Render.INSTANCE.addNoiseRGBA(noisyData, data,
+									destWidth * 4 * physRect.y + 4 * physRect.x,
+									physRect.width, physRect.height, destWidth * 4,
+									logRect.width, logRect.height, destHeight);
+						} catch (Throwable t) {
+							t.printStackTrace();
+						}
+						
+						toRender = noisySurface;
 					}
 				}
 			}
 			
 			//width = destWidth - x;	height = destHeight - y;
 			//g.setClip(x, y, width, height);
-			//g.drawImage(surface, 0, 0, destWidth, destHeight, canvas);
-			g.drawImage(
-					surface,
-					x, y, x + width, y + height,
-					x, y, x + width, y + height,
-					canvas);
-		} else {
-			synchronized (vdpCanvas) {
-				V9t9Render.INSTANCE.scaleImageToRGBA(
-						data,
-						vdpCanvas.getImageData().data, vdpCanvas.getDisplayAdjustOffset(),
-						vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight(), vdpCanvas.getLineStride(),
-						destWidth, destHeight, destWidth * 4,
-						0, 0, destWidth, destHeight);
-			}
-			if (V9t9.settingMonitorDrawing.getBoolean()) {
-				V9t9Render.INSTANCE.addNoiseRGBA(data, 0,
-						destWidth, destHeight, destWidth * 4,
-						vdpCanvas.getVisibleWidth(), vdpCanvas.getHeight());
-			}
-			g.drawImage(
-					surface,
-					x, y, x + width, y + height,
-					x, y, x + width, y + height,
+			if (true)
+				g.drawImage(
+						toRender,
+						0, 0, destWidth, destHeight,
+						canvas);
+			else
+				g.drawImage(
+					toRender,
+					physRect.x, physRect.y, physRect.x + physRect.width, physRect.y + physRect.height,
+					physRect.x, physRect.y, physRect.x + physRect.width, physRect.y + physRect.height,
 					canvas);
 		}
-		
-		//window.getBufferStrategy().show();
-		//while (canvas.imageUpdate(surface, ImageObserver.ALLBITS, x, y, width, height)) ;
 	}
 
 	public Component getAwtCanvas() {

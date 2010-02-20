@@ -13,7 +13,6 @@
 #include <math.h>
 #include "render.h"
 
-#include "noisyRGBA.h"
 #define SWAPPED_RGB 0
 #if SWAPPED_RGB
 
@@ -263,7 +262,7 @@ static void iterRow_1_2(unsigned char *destptr, const unsigned char* srcptr, int
 		(*scaleRow)(tmp + destrowstride, srcptr + rowstride, width);
 		// blend them
 		int x;
-		for (x = 0; x < destWidth; x++) {
+		for (x = 0; x < width * 2; x++) {
 			destptr[x] = (tmp[x] + tmp[x + destrowstride]) >> 1;
 		}
 		destptr += destrowstride;

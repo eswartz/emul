@@ -26,7 +26,7 @@ JAR=jar
 
 CC=gcc
 CFLAGS=-g -O6 -fPIC  
-LDFLAGS=-fPIC -Wl,-zdefs -shared --kill-at		
+LDFLAGS=-fPIC -Wl,-zdefs -shared
 LIBS=-lm
 OBJEXT=.o
 SOEXT=.so
@@ -38,7 +38,7 @@ CFLAGS += -DGETTIMEOFDAY_TWO_ARGS
 
 all: $(LIB)v9t9render$(SOEXT) 
 
-SRCS=render.c renderRGBA.c analogtv.c yarandom.c v9t9-analogtv.c
+SRCS=render.c renderRGBA.c analogtv.c yarandom.c v9t9-analogtv.c noisy.c
 OBJS=$(SRCS:.c=$(OBJEXT))
 
 clean:

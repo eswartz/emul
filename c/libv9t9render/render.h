@@ -73,18 +73,15 @@ void        scaleImageToRGBA(
         int destWidth, int destHeight, int destRowstride,
         int upx, int upy, int upwidth, int upheight);
 
-
 #ifdef _WIN32
 __declspec(dllexport) __stdcall
 #endif
-void add_noise(unsigned char *data, int offset,
-		int width, int height, int rowstride,
-		int realWidth, int realHeight);
+void        scaleImageAndAddNoiseToRGBA(
+		int* dest,
+        const char* from, int offset,
+        int width, int height, int rowstride,
+        int destWidth, int destHeight, int destRowstride,
+        int upx, int upy, int upwidth, int upheight);
 
-#ifdef _WIN32
-__declspec(dllexport) __stdcall
-#endif
-void add_noise_rgba(unsigned int *data, int offset,
-			int width, int height, int rowstride,
-		int realWidth, int realHeight);
+
 #endif /* RENDER_H_ */
