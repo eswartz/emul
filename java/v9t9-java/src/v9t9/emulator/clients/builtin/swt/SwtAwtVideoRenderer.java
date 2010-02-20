@@ -116,7 +116,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		
 		getAwtCanvas().addMouseMotionListener(ml);
 		
-		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 0.5);
+		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 0.5, 5);
 		awtContainer.setLayout(fixedAspectLayout);
 		
 		awtContainer.addControlListener(new ControlAdapter() {

@@ -66,7 +66,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		this.shell = parent.getShell();
 		this.canvas = new Canvas(parent, flags | getStyleBits());
 		
-		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 0.5);
+		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 0.5, 5);
 		canvas.setLayout(fixedAspectLayout);	
 		
 		setCanvas(createCanvas());
