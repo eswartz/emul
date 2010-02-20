@@ -22,10 +22,12 @@ public class FixedAspectLayout extends Layout {
 	private double zoomx;
 	private double zoomy;
 	private double aspect;
+	private final double quantum;
 
-	public FixedAspectLayout(int w, int h, double zoomx, double zoomy) {
+	public FixedAspectLayout(int w, int h, double zoomx, double zoomy, double quantum) {
 		this.w = w;
 		this.h = h;
+		this.quantum = quantum;
 		this.zoomx = 1.0;
 		this.zoomy = 1.0;
 		this.aspect = (double) w / h;
@@ -92,11 +94,12 @@ public class FixedAspectLayout extends Layout {
 
 	private int fixup(int hint, int max, int base) {
 		// get the hint close to a multiple of base
-		int val = base >> 1;
+		int q = (int) (base * quantum);
+		int val = q >> 1;
 		if (val * 2 > max)
 			return val;
 		
-		return (max / base) * base;
+		return (max / q) * q;
 	}
 	
 	@Override
@@ -107,12 +110,12 @@ public class FixedAspectLayout extends Layout {
 		if (zoomx < 1)
 			zoomx = 0.5;
 		else
-			zoomx = (int) Math.round(zoomx);
+			zoomx = (int) (Math.round(zoomx / quantum) * quantum);
 		zoomy = (double) area.height / h;
 		if (zoomy < 1)
 			zoomy = 0.5;
 		else
-			zoomy = (int)  Math.round(zoomy);
+			zoomy = (int) (Math.round(zoomy / quantum) * quantum);
 	}
 
 	/**

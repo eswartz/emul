@@ -195,8 +195,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		int y = (int)(physical.y / zoomy);
 		int ex = (int)((physical.x + physical.width + zoomx - .5) / zoomx);
 		int ey = (int)((physical.y + physical.height + zoomy - .5) / zoomy);
-		return new Rectangle(x + vdpCanvas.getXOffset(), y, 
-				ex -x, ey -y ); 
+		return new Rectangle(x + vdpCanvas.getXOffset(), y, ex - x, ey - y ); 
 	}
 
 	/**
@@ -248,14 +247,6 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				
 				//System.out.println("Redrawing " + updateRect);
 				
-				
-				//BufferStrategy bufferStrategy = getBufferStrategy();
-				
-				//BufferStrategy bufferStrategy = canvas.getBufferStrategy();
-				//doRedraw(bufferStrategy.getDrawGraphics(), updateRect.x, updateRect.y, 
-				//		updateRect.width, updateRect.height);
-				
-				//bufferStrategy.show();
 				canvas.repaint(updateRect.x, updateRect.y, 
 						updateRect.width, updateRect.height);
 				
@@ -285,14 +276,13 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		float oldzoomy = zoomy;
 		
 		zoom = (float) (height + 64) / vdpCanvas.getHeight();
-		//zoom = (int) (curSize.y ) / vdpCanvas.getHeight();
 		
-		if (zoom < 1f)
+		zoom = ((int)(zoom * 2)) / 2.0f;
+
+		if (zoom < 0.5f)
 			zoom = 0.5f;
-		else if (zoom < 1)
-			zoom = 1;
-		else 
-			zoom = (int) zoom;
+		
+		System.out.println("Height = " + height + "; Zoom = " + zoom);
 		
 		if (vdpCanvas.isInterlacedEvenOdd())
 			zoomy = zoom / 2.0f;
@@ -423,7 +413,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		DataBufferInt buffer = (DataBufferInt) surface.getRaster().getDataBuffer();
 		int[] data = buffer.getData();
 		if (true) {
-			Rectangle logMax = physicalToLogical(new Rectangle(0, 0, destWidth, destHeight));
+			//Rectangle logMax = physicalToLogical(new Rectangle(0, 0, destWidth, destHeight));
 			//width += x; x= 0; 
 			//height += y; y = 0;
 			

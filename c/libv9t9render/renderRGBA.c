@@ -175,6 +175,29 @@ static void scaleRow_4(unsigned char* dest, const unsigned char* src, int cnt) {
 }
 
 
+static void scaleRow_9_2(unsigned char* dest, const unsigned char* src, int cnt) {
+	// 4.5x scaling: fill 9 dest pixels with 2 src pixels
+	while (cnt >= 2) {
+		// direct copy from src
+		COPY(0, 0);
+		COPY(1, 0);
+		COPY(2, 0);
+		// blend between two src
+		BLENDL(3, 0);
+		BLEND(4, 0);
+		BLENDR(5, 0);
+		// direct copy from src
+		COPY(6, 1);
+		COPY(7, 1);
+		COPY(8, 1);
+
+		dest += 36;
+		src += 6;
+		cnt -= 2;
+	}
+	if (cnt > 0)
+		COPY(0, 0);
+}
 static void scaleRow_5(unsigned char* dest, const unsigned char* src, int cnt) {
 	while (cnt--) {
 		COPY(0, 0);
@@ -289,7 +312,7 @@ static void iterRow_3_2(unsigned char *destptr, const unsigned char* srcptr, int
 		// draw third row
 		(*scaleRow)(destptr + destrowstride * 2, srcptr + rowstride, width);
 		// blend them
-		blendRows(destptr + destrowstride, destWidth, destrowstride);
+		blendRows(destptr + destrowstride, destWidth * 4, destrowstride);
 
 		destptr += destrowstride * 3;
 		srcptr += rowstride * 2;
@@ -317,9 +340,9 @@ static void iterRow_5_2(unsigned char *destptr, const unsigned char* srcptr, int
 		// draw fifth row
 		(*scaleRow)(destptr + destrowstride * 4, srcptr + rowstride, width);
 		// blend them
-		blendRows(destptr + destrowstride * 2, destWidth, destrowstride * 2);		// 2=(0+4)/2
-		blendRowsL(destptr + destrowstride, destWidth, -destrowstride, destrowstride);	// 1=(0+2)/2
-		blendRowsR(destptr + destrowstride * 3, destWidth, -destrowstride, destrowstride);	// 3=(2+4)/2
+		blendRows(destptr + destrowstride * 2, destWidth * 4, destrowstride * 2);		// 2=(0+4)/2
+		blendRowsL(destptr + destrowstride, destWidth * 4, -destrowstride, destrowstride);	// 1=(0+2)/2
+		blendRowsR(destptr + destrowstride * 3, destWidth * 4, -destrowstride, destrowstride);	// 3=(2+4)/2
 
 		destptr += destrowstride * 5;
 		srcptr += rowstride * 2;
@@ -357,11 +380,11 @@ static void iterRow_7_2(unsigned char *destptr, const unsigned char* srcptr, int
 		(*scaleRow)(destptr + destrowstride * 5, srcptr + rowstride, width);
 		memcpy(destptr + destrowstride * 6, destptr + destrowstride * 5, destWidth * 4);
 		// blend them
-		blendRowsL(destptr + destrowstride * 2, destWidth, -destrowstride, destrowstride * 3);
+		blendRowsL(destptr + destrowstride * 2, destWidth * 4, -destrowstride, destrowstride * 3);
 			// 2=(1+5)/2
-		blendRows(destptr + destrowstride * 3, destWidth, destrowstride * 3);
+		blendRows(destptr + destrowstride * 3, destWidth * 4, destrowstride * 3);
 			// 3=(0+6)/2
-		blendRowsR(destptr + destrowstride * 4, destWidth, -destrowstride * 3, destrowstride);
+		blendRowsR(destptr + destrowstride * 4, destWidth * 4, -destrowstride * 3, destrowstride);
 			// 4=(1+5)/2
 
 		destptr += destrowstride * 7;
@@ -383,6 +406,46 @@ static void iterRow_4(unsigned char *destptr, const unsigned char* srcptr, int d
 		destptr += destrowstride;
 
 		srcptr += rowstride;
+	}
+}
+
+
+static void iterRow_9_2(unsigned char *destptr, const unsigned char* srcptr, int destrowstride, int rowstride,
+		void (*scaleRow)(unsigned char*, const unsigned char *, int), int width, int destWidth, int cnt) {
+	// scale 4.5x:  emit nine dest rows for every two src rows
+
+
+	// 0 A
+	// 1 A
+	// 2 A
+	// 3 A/B
+	// 4 A/B
+	// 5 A/B
+	// 6 B
+	// 7 B
+	// 8 B
+
+	// we cheat a little here
+	while (cnt >= 2) {
+		// draw first/second/third row
+		(*scaleRow)(destptr, srcptr, width);
+		memcpy(destptr + destrowstride, destptr, destWidth * 4);
+		memcpy(destptr + destrowstride * 2, destptr, destWidth * 4);
+		// draw fifth/sixth row
+		(*scaleRow)(destptr + destrowstride * 6, srcptr + rowstride, width);
+		memcpy(destptr + destrowstride * 7, destptr + destrowstride * 6, destWidth * 4);
+		memcpy(destptr + destrowstride * 8, destptr + destrowstride * 6, destWidth * 4);
+		// blend them
+		blendRowsL(destptr + destrowstride * 3, destWidth * 4, -destrowstride, destrowstride * 3);
+			// 2=(1+5)/2
+		blendRows(destptr + destrowstride * 4, destWidth * 4, destrowstride * 3);
+			// 3=(0+6)/2
+		blendRowsR(destptr + destrowstride * 5, destWidth * 4, -destrowstride * 3, destrowstride);
+			// 4=(1+5)/2
+
+		destptr += destrowstride * 9;
+		srcptr += rowstride * 2;
+		cnt -= 2;
 	}
 }
 
@@ -474,6 +537,8 @@ void        scaleImageToRGBA(
 		scaleRow = scaleRow_6;
 	} else if (width * 5 <= destWidth) {
 		scaleRow = scaleRow_5;
+	} else if (width * 9 / 2 <= destWidth) {
+		scaleRow = scaleRow_9_2;
 	} else if (width * 4 <= destWidth) {
 		scaleRow = scaleRow_4;
 	} else if (width * 7 / 2 <= destWidth) {
@@ -505,6 +570,8 @@ void        scaleImageToRGBA(
 		iterRow = iterRow_6;
 	} else if (height * 5 <= destHeight) {
 		iterRow = iterRow_5;
+	} else if (height * 9 / 2 <= destHeight) {
+		iterRow = iterRow_9_2;
 	} else if (height * 4 <= destHeight) {
 		iterRow = iterRow_4;
 	} else if (height * 7 / 2 <= destHeight) {
