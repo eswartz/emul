@@ -208,8 +208,8 @@ public class V9t9 {
     		Cpu.settingRealTime.setBoolean(false);
 	    	Executor.settingCompile.setBoolean(true);
 	    	//Compiler.settingDebugInstructions.setBoolean(true);
-	    	Compiler.settingOptimize.setBoolean(true);
-	        //Compiler.settingOptimizeRegAccess.setBoolean(true);
+	    	//Compiler.settingOptimize.setBoolean(true);
+	        Compiler.settingOptimizeRegAccess.setBoolean(true);
 	        Compiler.settingOptimizeStatus.setBoolean(true);
 	        //Compiler.settingCompileOptimizeCallsWithData.setBoolean(true);
 	        //Compiler.settingCompileFunctions.setBoolean(true);

@@ -21,6 +21,7 @@ import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.Type;
 
+import v9t9.emulator.runtime.Cpu;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
@@ -94,13 +95,11 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(info.ifact.createInvoke(Status.class.getName(), "setIntMask",
 	                Type.VOID, new Type[] { Type.INT }, Constants.INVOKEVIRTUAL));
-	        /*
 	        ilist.append(InstructionConstants.THIS);
 	        ilist.append(info.ifact.createGetField(CompiledCode.class.getName(), "cpu",
 	                new ObjectType(Cpu.class.getName())));
-	        ilist.append(info.ifact.createInvoke(Cpu.class.getName(), "abortIfInterrupted",
+	        ilist.append(info.ifact.createInvoke(Cpu.class.getName(), "checkInterrupts",
 	                Type.VOID, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
-	    	 */
 	        break;
 	        //return null;
 	    /*

@@ -24,6 +24,7 @@ import org.apache.bcel.generic.NOP;
 import org.apache.bcel.generic.POP;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.Type;
+import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
@@ -53,7 +54,8 @@ public class OperandCompiler {
                     && !(ins.inst == InstructionTable.Idiv /*&& ins.op2 == this*/)
                     && Compiler.settingOptimize.getBoolean()
                     && Compiler.settingOptimizeRegAccess.getBoolean()
-                    && !Compiler.settingDebugInstructions.getBoolean()) {
+                    && !new Setting(
+					        "DebugInstructions", new Boolean(false)).getBoolean()) {
 				return false;
 			}
             // slow mode: treat this as normal memory access

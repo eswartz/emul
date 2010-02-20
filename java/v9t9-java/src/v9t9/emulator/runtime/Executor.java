@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.Setting;
 
@@ -200,7 +201,7 @@ public class Executor {
 			    	// Returns false if an instruction couldn't be executed
 			    	// because it did not look like real code (or was not expected to be directly invoked).
 			    	// Returns true if fell out of the code block.
-			    	//System.out.println("Switch  branching to >" + Utils.toHex4(cpu.getPC()));
+			    	System.out.println("Switch  branching to >" + HexUtils.toHex4(cpu.getPC()));
 			    	interpreting = true;
 			    	nSwitches++;
 				}

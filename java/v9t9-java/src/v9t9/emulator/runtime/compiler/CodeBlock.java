@@ -171,6 +171,7 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         boolean ret = true;
         AbortedException abort = null;
         try {
+        	//System.out.println(code.getClass());
             ret = code.run();
         }
         catch (AbortedException e) {
@@ -182,6 +183,9 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         	// throws due to AbortedException usually 
 	        running = false;
 	        if (code != null) {
+	        	if (code.nInstructions == 0 && abort == null) {
+	        		ret = false;
+	        	}
 		        exec.nInstructions += code.nInstructions;
 		        exec.nCompiledInstructions += code.nInstructions;
 		        exec.cpu.addCycles(code.nCycles);

@@ -21,6 +21,7 @@ import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.GETFIELD;
 import org.apache.bcel.generic.GOTO;
+import org.apache.bcel.generic.IAND;
 import org.apache.bcel.generic.ICONST;
 import org.apache.bcel.generic.IF_ICMPEQ;
 import org.apache.bcel.generic.IF_ICMPLE;
@@ -41,6 +42,7 @@ import org.apache.bcel.generic.Type;
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.coffee.core.utils.Setting;
 
+import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.Machine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
@@ -49,6 +51,7 @@ import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.Instruction;
 import v9t9.engine.cpu.InstructionTable;
 import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 
@@ -69,40 +72,26 @@ public class Compiler {
 
     MemoryDomain memory;
 
-    static public final String sOptimize = "CompilerOptimize";
-
-    static public final Setting settingOptimize = new Setting(sOptimize,
+    static public final Setting settingOptimize = new Setting("CompilerOptimize",
             new Boolean(false));
 
-    static public final String sOptimizeRegAccess = "CompilerOptimizeRegAccess";
-
     static public final Setting settingOptimizeRegAccess = new Setting(
-            sOptimizeRegAccess, new Boolean(false));
-
-    static public final String sOptimizeStatus = "CompilerOptimizeStatus";
+            "CompilerOptimizeRegAccess", new Boolean(false));
 
     static public final Setting settingOptimizeStatus = new Setting(
-            sOptimizeStatus, new Boolean(false));
-
-    static public final String sCompileOptimizeCallsWithData = "CompilerOptmizeCallsWithData";
+            "CompilerOptimizeStatus", new Boolean(false));
 
     static public final Setting settingCompileOptimizeCallsWithData = new Setting(
-            sCompileOptimizeCallsWithData, new Boolean(false));
-
-    static public final String sDebugInstructions = "DebugInstructions";
+            "CompilerOptmizeCallsWithData", new Boolean(false));
 
     static public final Setting settingDebugInstructions = new Setting(
-            sDebugInstructions, new Boolean(false));
-
-    static public final String sDumpModuleRomInstructions = "CompilerDumpModuleRomInstructions";
+            "DebugInstructions", new Boolean(false));
 
     static public final Setting settingDumpModuleRomInstructions = new Setting(
-    		sDumpModuleRomInstructions, new Boolean(false));
-
-    static public final String sCompileFunctions = "CompilerCompileFunctions";
+    		"CompilerDumpModuleRomInstructions", new Boolean(false));
 
     static public final Setting settingCompileFunctions = new Setting(
-    		sCompileFunctions, new Boolean(false));
+    		"CompilerCompileFunctions", new Boolean(false));
 
     public Compiler(Cpu cpu) {
         this.cpu = cpu;
@@ -117,224 +106,215 @@ public class Compiler {
         machine.getSettings().register(settingCompileOptimizeCallsWithData);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#finalize()
-     */
-    protected void finalize() throws Throwable {
-        super.finalize();
-    }
-
     /**
      */
-    private void updateStatus(int handler, CompileInfo info) {
-        InstructionList ilist = info.ilist;
-        InstructionList labellist = null, skiplist = null;
-        switch (handler) {
-        case Instruction.st_NONE:
-            return;
-        case Instruction.st_ALL:
-            // just a note that Status should be up to date, for future work
-            return;
-        case Instruction.st_INT:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "setIntMask", Type.VOID,
-                    new Type[] { Type.INT }, Constants.INVOKEVIRTUAL));
-            break;
-        case Instruction.st_ADD_BYTE_LAECOP:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(InstructionConstants.I2B);
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(InstructionConstants.I2B);
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_ADD_BYTE_LAECOP", Type.VOID, new Type[] {
-                    Type.BYTE, Type.BYTE }, Constants.INVOKEVIRTUAL));
-            break;
-        case Instruction.st_ADD_LAECO:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_ADD_LAECO", Type.VOID, new Type[] {
-                    Type.SHORT, Type.SHORT }, Constants.INVOKEVIRTUAL));
-            break;
-        case Instruction.st_ADD_LAECO_REV:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_ADD_LAECO", Type.VOID, new Type[] {
-                    Type.SHORT, Type.SHORT }, Constants.INVOKEVIRTUAL));
-            break;
-        case Instruction.st_SUB_BYTE_LAECOP:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(InstructionConstants.I2B);
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(InstructionConstants.I2B);
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_SUB_BYTE_LAECOP", Type.VOID, new Type[] {
-                    Type.BYTE, Type.BYTE }, Constants.INVOKEVIRTUAL));
-            break;
-        case Instruction.st_SUB_LAECO:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_SUB_LAECO", Type.VOID, new Type[] {
-                    Type.SHORT, Type.SHORT }, Constants.INVOKEVIRTUAL));
-            break;
+	private void updateStatus(int handler, CompileInfo info) {
+		InstructionList ilist = info.ilist;
+		InstructionList labellist = null, skiplist = null;
+		switch (handler) {
+		case Instruction.st_NONE:
+			return;
+		case Instruction.st_ALL:
+			// just a note that Status should be up to date, for future work
+			return;
+		case Instruction.st_INT:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"setIntMask", Type.VOID, new Type[] { Type.INT },
+					Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_ADD_BYTE_LAECOP:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(InstructionConstants.I2B);
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(InstructionConstants.I2B);
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_ADD_BYTE_LAECOP", Type.VOID, new Type[] { Type.BYTE,
+							Type.BYTE }, Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_ADD_LAECO:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_ADD_LAECO", Type.VOID, new Type[] { Type.SHORT,
+							Type.SHORT }, Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_ADD_LAECO_REV:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_ADD_LAECO", Type.VOID, new Type[] { Type.SHORT,
+							Type.SHORT }, Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_SUB_BYTE_LAECOP:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(InstructionConstants.I2B);
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(InstructionConstants.I2B);
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_SUB_BYTE_LAECOP", Type.VOID, new Type[] { Type.BYTE,
+							Type.BYTE }, Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_SUB_LAECO:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_SUB_LAECO", Type.VOID, new Type[] { Type.SHORT,
+							Type.SHORT }, Constants.INVOKEVIRTUAL));
+			break;
 
-        case Instruction.st_BYTE_CMP:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(InstructionConstants.I2B);
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(InstructionConstants.I2B);
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_BYTE_CMP", Type.VOID, new Type[] {
-                    Type.BYTE, Type.BYTE }, Constants.INVOKEVIRTUAL));
-            break;
+		case Instruction.st_BYTE_CMP:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(InstructionConstants.I2B);
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(InstructionConstants.I2B);
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_BYTE_CMP", Type.VOID, new Type[] { Type.BYTE,
+							Type.BYTE }, Constants.INVOKEVIRTUAL));
+			break;
 
-        case Instruction.st_CMP:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_CMP", Type.VOID, new Type[] { Type.SHORT,
-                    Type.SHORT }, Constants.INVOKEVIRTUAL));
-            break;
-        case Instruction.st_DIV_O:
-            skiplist = new InstructionList();
-            skiplist.append(InstructionConstants.NOP);
-            labellist = new InstructionList();
-            labellist.append(new PUSH(info.pgen, 1));
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(new PUSH(info.pgen, 0xffff));
-            ilist.append(InstructionConstants.IAND);
-            // ilist.append(InstructionConstants.I2S);
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(new PUSH(info.pgen, 0xffff));
-            ilist.append(InstructionConstants.IAND);
-            // ilist.append(InstructionConstants.I2S);
-            ilist.append(new IF_ICMPLE(labellist.getStart()));
-            ilist.append(InstructionConstants.ICONST_0);
-            ilist.append(new GOTO(skiplist.getStart()));
-            ilist.append(labellist);
-            ilist.append(skiplist);
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_O", Type.VOID,
-                    new Type[] { Type.BOOLEAN }, Constants.INVOKEVIRTUAL));
-            break;
-        case Instruction.st_E:
-            skiplist = new InstructionList();
-            skiplist.append(InstructionConstants.NOP);
-            labellist = new InstructionList();
-            labellist.append(new PUSH(info.pgen, 1));
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(new IF_ICMPEQ(labellist.getStart()));
-            ilist.append(InstructionConstants.ICONST_0);
-            ilist.append(new GOTO(skiplist.getStart()));
-            ilist.append(labellist);
-            ilist.append(skiplist);
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_E", Type.VOID,
-                    new Type[] { Type.BOOLEAN }, Constants.INVOKEVIRTUAL));
-            break;
-        case Instruction.st_LAE:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_LAE", Type.VOID,
-                    new Type[] { Type.SHORT }, Constants.INVOKEVIRTUAL));
-            break;
-        case Instruction.st_LAE_1:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_LAE", Type.VOID,
-                    new Type[] { Type.SHORT }, Constants.INVOKEVIRTUAL));
-            break;
+		case Instruction.st_CMP:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_CMP", Type.VOID,
+					new Type[] { Type.SHORT, Type.SHORT },
+					Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_DIV_O:
+			skiplist = new InstructionList();
+			skiplist.append(InstructionConstants.NOP);
+			labellist = new InstructionList();
+			labellist.append(new PUSH(info.pgen, 1));
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(new PUSH(info.pgen, 0xffff));
+			ilist.append(InstructionConstants.IAND);
+			// ilist.append(InstructionConstants.I2S);
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(new PUSH(info.pgen, 0xffff));
+			ilist.append(InstructionConstants.IAND);
+			// ilist.append(InstructionConstants.I2S);
+			ilist.append(new IF_ICMPLE(labellist.getStart()));
+			ilist.append(InstructionConstants.ICONST_0);
+			ilist.append(new GOTO(skiplist.getStart()));
+			ilist.append(labellist);
+			ilist.append(skiplist);
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_O", Type.VOID, new Type[] { Type.BOOLEAN },
+					Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_E:
+			skiplist = new InstructionList();
+			skiplist.append(InstructionConstants.NOP);
+			labellist = new InstructionList();
+			labellist.append(new PUSH(info.pgen, 1));
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(new IF_ICMPEQ(labellist.getStart()));
+			ilist.append(InstructionConstants.ICONST_0);
+			ilist.append(new GOTO(skiplist.getStart()));
+			ilist.append(labellist);
+			ilist.append(skiplist);
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_E", Type.VOID, new Type[] { Type.BOOLEAN },
+					Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_LAE:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_LAE", Type.VOID, new Type[] { Type.SHORT },
+					Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_LAE_1:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_LAE", Type.VOID, new Type[] { Type.SHORT },
+					Constants.INVOKEVIRTUAL));
+			break;
 
-        case Instruction.st_BYTE_LAEP:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(InstructionConstants.I2B);
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_BYTE_LAEP", Type.VOID,
-                    new Type[] { Type.BYTE }, Constants.INVOKEVIRTUAL));
-            break;
-        case Instruction.st_BYTE_LAEP_1:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(InstructionConstants.I2B);
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_BYTE_LAEP", Type.VOID,
-                    new Type[] { Type.BYTE }, Constants.INVOKEVIRTUAL));
-            break;
+		case Instruction.st_BYTE_LAEP:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(InstructionConstants.I2B);
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_BYTE_LAEP", Type.VOID, new Type[] { Type.BYTE },
+					Constants.INVOKEVIRTUAL));
+			break;
+		case Instruction.st_BYTE_LAEP_1:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(InstructionConstants.I2B);
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_BYTE_LAEP", Type.VOID, new Type[] { Type.BYTE },
+					Constants.INVOKEVIRTUAL));
+			break;
 
-        case Instruction.st_LAEO:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_LAEO", Type.VOID,
-                    new Type[] { Type.SHORT }, Constants.INVOKEVIRTUAL));
-            break;
+		case Instruction.st_LAEO:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_LAEO", Type.VOID, new Type[] { Type.SHORT },
+					Constants.INVOKEVIRTUAL));
+			break;
 
-        case Instruction.st_O:
-            skiplist = new InstructionList();
-            skiplist.append(InstructionConstants.NOP);
-            labellist = new InstructionList();
-            labellist.append(new PUSH(info.pgen, 1));
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(new PUSH(info.pgen, 0x8000));
-            ilist.append(new IF_ICMPEQ(labellist.getStart()));
-            ilist.append(InstructionConstants.ICONST_0);
-            ilist.append(new GOTO(skiplist.getStart()));
-            ilist.append(labellist);
-            ilist.append(skiplist);
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_O", Type.VOID,
-                    new Type[] { Type.BOOLEAN }, Constants.INVOKEVIRTUAL));
-            break;
+		case Instruction.st_O:
+			skiplist = new InstructionList();
+			skiplist.append(InstructionConstants.NOP);
+			labellist = new InstructionList();
+			labellist.append(new PUSH(info.pgen, 1));
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(new PUSH(info.pgen, 0x8000));
+			ilist.append(new IF_ICMPEQ(labellist.getStart()));
+			ilist.append(InstructionConstants.ICONST_0);
+			ilist.append(new GOTO(skiplist.getStart()));
+			ilist.append(labellist);
+			ilist.append(skiplist);
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_O", Type.VOID, new Type[] { Type.BOOLEAN },
+					Constants.INVOKEVIRTUAL));
+			break;
 
-        case Instruction.st_SHIFT_LEFT_CO:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_SHIFT_LEFT_CO", Type.VOID, new Type[] {
-                    Type.SHORT, Type.SHORT }, Constants.INVOKEVIRTUAL));
+		case Instruction.st_SHIFT_LEFT_CO:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_SHIFT_LEFT_CO", Type.VOID, new Type[] { Type.SHORT,
+							Type.SHORT }, Constants.INVOKEVIRTUAL));
 
-            break;
-        case Instruction.st_SHIFT_RIGHT_C:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(new ILOAD(info.localVal1));
-            ilist.append(new ILOAD(info.localVal2));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_SHIFT_RIGHT_C", Type.VOID, new Type[] {
-                    Type.SHORT, Type.SHORT }, Constants.INVOKEVIRTUAL));
-            break;
+			break;
+		case Instruction.st_SHIFT_RIGHT_C:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(new ILOAD(info.localVal1));
+			ilist.append(new ILOAD(info.localVal2));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_SHIFT_RIGHT_C", Type.VOID, new Type[] { Type.SHORT,
+							Type.SHORT }, Constants.INVOKEVIRTUAL));
+			break;
 
-        case Instruction.st_XOP:
-            ilist.append(new ALOAD(info.localStatus));
-            ilist.append(info.ifact.createInvoke(v9t9.engine.cpu.Status.class
-                    .getName(), "set_X", Type.VOID, Type.NO_ARGS,
-                    Constants.INVOKEVIRTUAL));
-            break;
+		case Instruction.st_XOP:
+			ilist.append(new ALOAD(info.localStatus));
+			ilist.append(info.ifact.createInvoke(Status.class.getName(),
+					"set_X", Type.VOID, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+			break;
 
-        default:
-            throw new AssertionError("unhandled status handler " + handler);
-        }
-    }
+		default:
+			throw new AssertionError("unhandled status handler " + handler);
+		}
+	}
 
     Set<Integer> instSet;
 
@@ -384,19 +364,6 @@ public class Compiler {
         /* generate code for the specific opcode */
         InstructionList actlist = Convert9900ToByteCode.getCompileAction(ins, info);
         
-        /*
-        // If jumping, there is the potential for an infinite loop,
-        // so this is a good time to see if we need to stop to handle
-        // interrupts, etc.
-        if (ins.jump != Instruction.INST_JUMP_FALSE) {
-            ilist.append(InstructionConstants.THIS);
-            ilist.append(new GETFIELD(info.cpuIndex));
-            ilist.append(info.ifact.createInvoke(v9t9.cpu.Cpu.class.getName(),
-                    "abortIfInterrupted", Type.VOID, Type.NO_ARGS,
-                    Constants.INVOKEVIRTUAL));
-        }
-        */
-        
         // TODO debug
         ilist.append(new PUSH(info.pgen, HexUtils.toHex4(ins.pc) + " "
                 + ins.toString()));
@@ -420,7 +387,7 @@ public class Compiler {
             ilist.append(info.ifact.createInvoke(CompiledCode.class
                     .getName(), "dump", Type.VOID, new Type[] { Type.SHORT,
                     Type.SHORT,
-                    new ObjectType(v9t9.engine.cpu.Status.class.getName()),
+                    new ObjectType(Status.class.getName()),
                     Type.INT, Type.INT}, Constants.INVOKEVIRTUAL));
         }
 
@@ -506,13 +473,13 @@ public class Compiler {
             ilist.append(new PUSH(info.pgen, insString));
             types = new Type[] { new ObjectType(String.class.getName()),
                     Type.SHORT, Type.SHORT,
-                    new ObjectType(v9t9.engine.cpu.Status.class.getName()),
+                    new ObjectType(Status.class.getName()),
                     Type.SHORT, Type.SHORT, Type.SHORT, Type.SHORT, Type.INT,
                     Type.INT, Type.INT, Type.INT };
 
         } else {
 			types = new Type[] { Type.SHORT, Type.SHORT,
-                    new ObjectType(v9t9.engine.cpu.Status.class.getName()),
+                    new ObjectType(Status.class.getName()),
                     Type.SHORT, Type.SHORT, Type.SHORT, Type.SHORT, Type.INT,
                     Type.INT, Type.INT, Type.INT };
 		}
@@ -620,7 +587,7 @@ public class Compiler {
             ilist.append(new ALOAD(info.localStatus));
             ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
                     "setStatus", Type.VOID, new Type[] { new ObjectType(
-                            v9t9.engine.cpu.Status.class.getName()) },
+                            Status.class.getName()) },
                     Constants.INVOKEVIRTUAL));
 
             /* update PC first */
@@ -684,7 +651,7 @@ public class Compiler {
         byte[] bytecode = cgen.getJavaClass().getBytes();
 
         if (true) {
-            File dir = new File("tmp");
+            File dir = new File(new File(EmulatorSettings.getInstance().getBaseConfigurationPath()), "compilertmp"); 
             dir.mkdirs();
             File test = new File(dir, baseName + ".class");
             try {
@@ -783,8 +750,10 @@ public class Compiler {
         ilist.append(new ISTORE(info.localCycles));
 
         ilist.append(new ILOAD(info.localPc));
+        ilist.append(new PUSH(info.pgen, 0xffff));
+        ilist.append(new IAND());
         ilist.append(InstructionConstants.ICONST_1);
-        ilist.append(InstructionConstants.ISHR);
+        ilist.append(InstructionConstants.IUSHR);
         ilist.append(info.sw);
 
         InstructionRangeCompiler instructionRangeCompiler = null;
@@ -871,7 +840,7 @@ public class Compiler {
         info.localVal2 = lg.getIndex();
         lg = mgen.addLocalVariable("val3", Type.SHORT, null, null);
         info.localVal3 = lg.getIndex();
-        lg = mgen.addLocalVariable("status", new ObjectType(v9t9.engine.cpu.Status.class.getName()), null, null);
+        lg = mgen.addLocalVariable("status", new ObjectType(Status.class.getName()), null, null);
         info.localStatus = lg.getIndex();
         lg = mgen.addLocalVariable("memory", new ObjectType(v9t9.engine.memory.MemoryDomain.class.getName()), null, null);
         info.localMemory = lg.getIndex();
@@ -930,7 +899,7 @@ public class Compiler {
 	    ilist.append(InstructionConstants.DUP);
 	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
 	            "getStatus",
-	            new ObjectType(v9t9.engine.cpu.Status.class.getName()),
+	            new ObjectType(Status.class.getName()),
 	            Type.NO_ARGS, Constants.INVOKEVIRTUAL));
 	    ilist.append(new ASTORE(info.localStatus));
 	
@@ -990,7 +959,7 @@ public class Compiler {
 	    ilist.append(new ALOAD(info.localStatus));
 	    ilist.append(ifact.createInvoke(v9t9.emulator.runtime.Cpu.class.getName(),
 	            "setStatus", Type.VOID, new Type[] { new ObjectType(
-	                    v9t9.engine.cpu.Status.class.getName()) },
+	                    Status.class.getName()) },
 	            Constants.INVOKEVIRTUAL));
 	
 	    ilist.append(InstructionConstants.POP); // cpu
