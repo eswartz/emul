@@ -19,9 +19,10 @@ public class SoundFactory {
 	}
 	
 	public static ISoundListener createAudioListener() {
-		if (File.separatorChar == '/')
+		if (System.getProperty("os.name").equals("Linux")) 
 			return new AlsaSoundListener(null);
-		else
+		else if (File.separatorChar == '\\')
 			return new Win32SoundListener();
+		return new JavaSoundListener(100);
 	}
 }
