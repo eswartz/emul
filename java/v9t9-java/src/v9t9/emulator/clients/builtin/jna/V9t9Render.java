@@ -39,7 +39,8 @@ public interface V9t9Render extends Library {
 	void addNoise(byte[] data, int offset, int destWidth, int destHeight, int destrowstride,
 			int width, int height);
 			
-	void addNoiseRGBA(int [] target, int[] src, int offset, int destWidth, int destHeight, int destrowstride,
+	void addNoiseRGBA(int [] target, int[] src, int offset, int end,
+			int destWidth, int destHeight, int destrowstride,
 			int width, int height, int fullHeight);
 	
 	public static class AnalogTVData extends Structure implements Structure.ByReference {

@@ -392,7 +392,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				// ignore redraw request before we've decided our size
 				if (desiredWidth == 0 || desiredHeight == 0)
 					return;
-				System.out.println("New BufferedImage");
+				System.out.println("New BufferedImage " + desiredWidth + "x" + desiredHeight);
 				surface = new BufferedImage(desiredWidth, desiredHeight, BufferedImage.TYPE_INT_BGR);
 				if (USE_ANALOGTV && analog != null) {
 					V9t9Render.INSTANCE.freeAnalogTv(analog);
@@ -427,7 +427,10 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 				return;
 			
 			Rectangle logRect = physicalToLogical(new Rectangle(x, y, width, height));
-			
+			//if (logRect.x + logRect.width > desiredWidth)
+			//	logRect.width = desiredWidth - logRect.x;
+			//if (logRect.y + logRect.height > desiredHeight)
+			//	logRect.height = desiredHeight - logRect.y;
 			/*
 			if (V9t9.settingMonitorDrawing.getBoolean()) {
 				// modify a slightly larger area due to blending 
@@ -514,6 +517,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 						try {
 							V9t9Render.INSTANCE.addNoiseRGBA(noisyData, data,
 									destWidth * 4 * physRect.y + 4 * physRect.x,
+									Math.min(noisyData.length, data.length) * 4,
 									physRect.width, physRect.height, destWidth * 4,
 									logRect.width, logRect.height, destHeight);
 						} catch (Throwable t) {
