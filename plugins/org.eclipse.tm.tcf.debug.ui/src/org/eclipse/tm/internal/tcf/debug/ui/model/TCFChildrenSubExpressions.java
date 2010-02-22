@@ -40,7 +40,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
     }
 
     void onCastToTypeChanged() {
-        reset();
+        cancel();
         TCFNode a[] = getNodes().toArray(new TCFNode[getNodes().size()]);
         for (int i = 0; i < a.length; i++) a[i].dispose();
     }

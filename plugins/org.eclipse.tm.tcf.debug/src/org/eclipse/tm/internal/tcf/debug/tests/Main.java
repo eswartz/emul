@@ -110,7 +110,7 @@ public class Main {
     }
 
     private static void runTestSuite(IPeer peer) {
-        TCFTestSuite.TestListener listenr = new TCFTestSuite.TestListener() {
+        TCFTestSuite.TestListener listener = new TCFTestSuite.TestListener() {
 
             public void done(Collection<Throwable> errors) {
                 if (errors == null || errors.isEmpty()) {
@@ -129,7 +129,7 @@ public class Main {
 
         };
         try {
-            new TCFTestSuite(peer, listenr);
+            new TCFTestSuite(peer, listener, null);
         }
         catch (Throwable x) {
             System.err.println("Cannot start test suite:");

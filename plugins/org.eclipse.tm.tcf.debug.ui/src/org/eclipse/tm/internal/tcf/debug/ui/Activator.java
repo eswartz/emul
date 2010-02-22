@@ -35,7 +35,9 @@ public class Activator extends AbstractUIPlugin {
 
     private static final BundleListener bundle_listener = new BundleListener() {
         public void bundleChanged(BundleEvent event) {
-            if (plugin != null && event.getBundle() == plugin.getBundle() &&
+            if (plugin != null && event != null &&
+                    plugin.getBundle() != null &&
+                    event.getBundle() == plugin.getBundle() &&
                     plugin.getBundle().getState() != Bundle.ACTIVE) {
                 Protocol.invokeAndWait(new Runnable() {
                     public void run() {

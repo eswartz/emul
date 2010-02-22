@@ -11,18 +11,24 @@
 package org.eclipse.tm.internal.tcf.debug.ui.trace;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.tcf.core.AbstractChannel;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.ui.part.ViewPart;
 
@@ -93,10 +99,17 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
 
         Page(AbstractChannel channel) {
             this.channel = channel;
+            update_thread.setName("TCF Trace View");
             update_thread.start();
         }
 
         public void dispose() {
+            if (closed) return;
+            Protocol.invokeAndWait(new Runnable() {
+                public void run() {
+                    channel.removeTraceListener(Page.this);
+                }
+            });
             synchronized (this) {
                 closed = true;
                 update_thread.interrupt();
@@ -116,7 +129,6 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
 
         public synchronized void onChannelClosed(Throwable error) {
             if (error == null) {
-                channel.removeTraceListener(this);
                 getSite().getShell().getDisplay().asyncExec(new Runnable() {
                     public void run() {
                         dispose();
@@ -148,15 +160,7 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
                     bf.append(name);
                 }
                 if (data != null) {
-                    int i = 0;
-                    while (i < data.length) {
-                        int j = i;
-                        while (j < data.length && data[j] != 0) j++;
-                        bf.append(' ');
-                        bf.append(new String(data, i, j - i, "UTF8"));
-                        if (j < data.length && data[j] == 0) j++;
-                        i = j;
-                    }
+                    appendData(bf, data);
                 }
                 bf.append('\n');
                 bf_line_cnt++;
@@ -185,15 +189,7 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
                     bf.append(name);
                 }
                 if (data != null) {
-                    int i = 0;
-                    while (i < data.length) {
-                        int j = i;
-                        while (j < data.length && data[j] != 0) j++;
-                        bf.append(' ');
-                        bf.append(new String(data, i, j - i, "UTF8"));
-                        if (j < data.length && data[j] == 0) j++;
-                        i = j;
-                    }
+                    appendData(bf, data);
                 }
                 bf.append('\n');
                 bf_line_cnt++;
@@ -228,7 +224,6 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
                 Protocol.removeChannelOpenListener(TraceView.this);
-                for (Page p : pages) p.channel.removeTraceListener(p);
             }
         });
         for (Page p : pages) p.dispose();
@@ -274,6 +269,81 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
         });
     }
 
+    private void appendData(StringBuffer bf, byte[] data) throws UnsupportedEncodingException {
+        int pos = bf.length();
+        try {
+            Object[] o = JSON.parseSequence(data);
+            for (int i = 0; i < o.length; i++) {
+                bf.append(' ');
+                appendJSON(bf, o[i]);
+            }
+        }
+        catch (Throwable z) {
+            bf.setLength(pos);
+            for (int i = 0; i < data.length; i++) {
+                bf.append(' ');
+                int x = (data[i] >> 4) & 0xf;
+                int y = data[i] & 0xf;
+                bf.append((char)(x < 10 ? '0' + x : 'a' + x - 10));
+                bf.append((char)(y < 10 ? '0' + y : 'a' + y - 10));
+            }
+        }
+    }
+
+    private void appendJSON(StringBuffer bf, Object o) {
+        if (o instanceof byte[]) {
+            int l = ((byte[])o).length;
+            bf.append('(');
+            bf.append(l);
+            bf.append(')');
+        }
+        else if (o instanceof Collection) {
+            int cnt = 0;
+            bf.append('[');
+            for (Object i : (Collection<?>)o) {
+                if (cnt > 0) bf.append(',');
+                appendJSON(bf, i);
+                cnt++;
+            }
+            bf.append(']');
+        }
+        else if (o instanceof Map) {
+            int cnt = 0;
+            bf.append('{');
+            for (Object k : ((Map<?,?>)o).keySet()) {
+                if (cnt > 0) bf.append(',');
+                bf.append(k.toString());
+                bf.append(':');
+                appendJSON(bf, ((Map<?,?>)o).get(k));
+                cnt++;
+            }
+            bf.append('}');
+        }
+        else if (o instanceof String) {
+            bf.append('"');
+            String s = (String)o;
+            int l = s.length();
+            for (int i = 0; i < l; i++) {
+                char ch = s.charAt(i);
+                if (ch < ' ') {
+                    bf.append('\\');
+                    bf.append('u');
+                    for (int j = 0; j < 4; j++) {
+                        int x = (ch >> (4 * (3 - j))) & 0xf;
+                        bf.append((char)(x < 10 ? '0' + x : 'a' + x - 10));
+                    }
+                }
+                else {
+                    bf.append(ch);
+                }
+            }
+            bf.append('"');
+        }
+        else {
+            bf.append(o);
+        }
+    }
+
     private void showTabs() {
         boolean b = false;
         if (no_data != null) {
@@ -283,6 +353,38 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
         }
         if (tabs == null) {
             tabs = new TabFolder(parent, SWT.NONE);
+            Menu menu = new Menu(tabs);
+            MenuItem mi_close = new MenuItem(menu, SWT.NONE);
+            mi_close.setText("Close");
+            mi_close.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent e) {
+                }
+                public void widgetSelected(SelectionEvent e) {
+                    if (tabs == null) return;
+                    TabItem[] s = tabs.getSelection();
+                    for (TabItem i : s) {
+                        Page p = tab2page.get(i);
+                        if (p != null) p.dispose();
+                        else i.dispose();
+                    }
+                }
+            });
+            MenuItem mi_close_all = new MenuItem(menu, SWT.NONE);
+            mi_close_all.setText("Close All");
+            mi_close_all.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent e) {
+                }
+                public void widgetSelected(SelectionEvent e) {
+                    if (tabs == null) return;
+                    TabItem[] s = tabs.getItems();
+                    for (TabItem i : s) {
+                        Page p = tab2page.get(i);
+                        if (p != null) p.dispose();
+                        else i.dispose();
+                    }
+                }
+            });
+            tabs.setMenu(menu);
             b = true;
         }
         if (b) parent.layout();

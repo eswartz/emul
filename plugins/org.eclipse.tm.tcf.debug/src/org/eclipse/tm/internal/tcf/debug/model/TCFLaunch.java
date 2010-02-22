@@ -530,8 +530,8 @@ public class TCFLaunch extends Launch {
         listeners.remove(listener);
     }
 
+    /** Thread safe method */
     public IChannel getChannel() {
-        assert Protocol.isDispatchThread();
         return channel;
     }
 

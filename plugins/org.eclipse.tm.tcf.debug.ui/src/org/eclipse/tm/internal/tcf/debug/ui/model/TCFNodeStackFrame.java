@@ -176,15 +176,11 @@ public class TCFNodeStackFrame extends TCFNode {
         this.frame_no = frame_no;
     }
 
-    public TCFDataCache<TCFSourceRef> getLineInfo() {
-        return line_info;
-    }
-
     @Override
     void dispose() {
-        stack_trace_context.reset(null);
-        line_info.reset(null);
-        address.reset(null);
+        stack_trace_context.dispose();
+        line_info.dispose();
+        address.dispose();
         children_regs.dispose();
         children_vars.dispose();
         children_exps.dispose();
@@ -196,6 +192,10 @@ public class TCFNodeStackFrame extends TCFNode {
         children_regs.dispose(id);
         children_vars.dispose(id);
         children_exps.dispose(id);
+    }
+
+    public TCFDataCache<TCFSourceRef> getLineInfo() {
+        return line_info;
     }
 
     public TCFDataCache<IStackTrace.StackTraceContext> getStackTraceContext() {
@@ -224,19 +224,33 @@ public class TCFNodeStackFrame extends TCFNode {
         return super.getRelevantModelDeltaFlags(p);
     }
 
+    private TCFChildren getChildren(IPresentationContext ctx) {
+        String id = ctx.getId();
+        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(id)) return children_regs;
+        if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(id)) return children_vars;
+        if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id)) return children_exps;
+        return null;
+    }
+
+    @Override
+    protected boolean getData(IHasChildrenUpdate result, Runnable done) {
+        TCFChildren c = getChildren(result.getPresentationContext());
+        if (c != null) {
+            if (!c.validate(done)) return false;
+            result.setHasChilren(c.size() > 0);
+        }
+        else {
+            result.setHasChilren(false);
+        }
+        return true;
+    }
+
     @Override
     protected boolean getData(IChildrenCountUpdate result, Runnable done) {
-        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!children_regs.validate(done)) return false;
-            result.setChildCount(children_regs.size());
-        }
-        else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!children_vars.validate(done)) return false;
-            result.setChildCount(children_vars.size());
-        }
-        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!children_exps.validate(done)) return false;
-            result.setChildCount(children_exps.size());
+        TCFChildren c = getChildren(result.getPresentationContext());
+        if (c != null) {
+            if (!c.validate(done)) return false;
+            result.setChildCount(c.size());
         }
         else {
             result.setChildCount(0);
@@ -247,20 +261,13 @@ public class TCFNodeStackFrame extends TCFNode {
     @Override
     protected boolean getData(IChildrenUpdate result, Runnable done) {
         TCFNode[] arr = null;
-        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!children_regs.validate(done)) return false;
-            arr = children_regs.toArray();
-        }
-        else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!children_vars.validate(done)) return false;
-            arr = children_vars.toArray();
-        }
-        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!children_exps.validate(done)) return false;
-            arr = children_exps.toArray();
+        TCFChildren c = getChildren(result.getPresentationContext());
+        if (c != null) {
+            if (!c.validate(done)) return false;
+            arr = c.toArray();
         }
         else {
-            arr = new TCFNode[0];
+            return true;
         }
         int offset = 0;
         int r_offset = result.getOffset();
@@ -275,28 +282,7 @@ public class TCFNodeStackFrame extends TCFNode {
     }
 
     @Override
-    protected boolean getData(IHasChildrenUpdate result, Runnable done) {
-        if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!children_regs.validate(done)) return false;
-            result.setHasChilren(children_regs.size() > 0);
-        }
-        else if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!children_vars.validate(done)) return false;
-            result.setHasChilren(children_vars.size() > 0);
-        }
-        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!children_exps.validate(done)) return false;
-            result.setHasChilren(children_exps.size() > 0);
-        }
-        else {
-            result.setHasChilren(false);
-        }
-        return true;
-    }
-
-    @Override
     protected boolean getData(ILabelUpdate result, Runnable done) {
-        String image_name = null;
         TCFChildrenStackTrace stack_trace_cache = ((TCFNodeExecContext)parent).getStackTrace();
         if (!stack_trace_cache.validate(done)) return false;
         if (stack_trace_cache.getData().get(id) == null) {
@@ -304,14 +290,21 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         else {
             TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)parent).getState();
-            if (!state_cache.validate(done)) return false;
-            TCFContextState state_data = state_cache.getData();
-            if (state_data != null && state_data.is_suspended) image_name = ImageCache.IMG_STACK_FRAME_SUSPENDED;
-            else image_name = ImageCache.IMG_STACK_FRAME_RUNNING;
-            if (!stack_trace_context.validate(done)) return false;
-            if (!line_info.validate(done)) return false;
-            Throwable error = stack_trace_context.getError();
+            TCFDataCache<?> pending = null;
+            if (!state_cache.validate()) pending = state_cache;
+            if (!stack_trace_context.validate()) pending = stack_trace_context;
+            if (!line_info.validate()) pending = line_info;
+            if (pending != null) {
+                pending.wait(done);
+                return false;
+            }
+            Throwable error = state_cache.getError();
+            if (error == null) error = stack_trace_context.getError();
             if (error == null) error = line_info.getError();
+            TCFContextState state_data = state_cache.getData();
+            String image_name =  state_data != null && state_data.is_suspended ?
+                    ImageCache.IMG_STACK_FRAME_SUSPENDED :
+                    ImageCache.IMG_STACK_FRAME_RUNNING;
             if (error != null && state_data != null && state_data.is_suspended) {
                 result.setForeground(new RGB(255, 0, 0), 0);
                 result.setLabel(error.getClass().getName() + ": " + error.getMessage(), 0);
@@ -329,8 +322,8 @@ public class TCFNodeStackFrame extends TCFNode {
                     result.setLabel(label, 0);
                 }
             }
+            result.setImageDescriptor(ImageCache.getImageDescriptor(image_name), 0);
         }
-        result.setImageDescriptor(ImageCache.getImageDescriptor(image_name), 0);
         return true;
     }
 
@@ -352,9 +345,9 @@ public class TCFNodeStackFrame extends TCFNode {
     }
 
     void onSuspended() {
-        stack_trace_context.reset();
-        line_info.reset();
-        address.reset();
+        stack_trace_context.cancel();
+        line_info.cancel();
+        address.cancel();
         children_regs.onSuspended();
         children_vars.onSuspended();
         children_exps.onSuspended();

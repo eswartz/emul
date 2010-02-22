@@ -40,6 +40,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     private final Map<TCFNode,TCFNode[]> node2children = new HashMap<TCFNode,TCFNode[]>();
     private final Map<TCFNode,ModelDelta> node2delta = new HashMap<TCFNode,ModelDelta>();
 
+    private int all_flags;
     private TCFNode selection;
     private boolean posted;
     private boolean disposed;
@@ -157,16 +158,18 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             else {
                 node2flags.put(node, flags);
             }
+            all_flags |= flags;
             post();
         }
     }
 
     void setSelection(TCFNode node) {
         selection = node;
-        addDelta(node, IModelDelta.REVEAL);
+        post();
     }
 
     void post() {
+        assert Protocol.isDispatchThread();
         if (!posted) {
             Protocol.invokeLater(this);
             posted = true;
@@ -223,7 +226,13 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 if (parent_flags_obj != null) parent_flags = parent_flags_obj;
                 ModelDelta parent = makeDelta(root, node.parent, parent_flags);
                 if (parent == null) return null;
-                delta = parent.addNode(node, getNodeIndex(node), flags, getNodeChildren(node).length);
+                int index = -1;
+                int children = 0;
+                if ((all_flags & ~(IModelDelta.STATE | IModelDelta.CONTENT)) != 0) {
+                    index = getNodeIndex(node);
+                    children = getNodeChildren(node).length;
+                }
+                delta = parent.addNode(node, index, flags, children);
             }
             node2delta.put(node, delta);
         }
@@ -235,25 +244,39 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         posted = false;
         assert Protocol.isDispatchThread();
         if (disposed) return;
-        if (node2flags.isEmpty()) return;
+        if (node2flags.isEmpty() && selection == null) return;
         pending_node = null;
         node2children.clear();
         node2delta.clear();
         ModelDelta root = new ModelDelta(DebugPlugin.getDefault().getLaunchManager(), IModelDelta.NO_CHANGE);
         for (TCFNode node : node2flags.keySet()) makeDelta(root, node, node2flags.get(node));
         if (pending_node == null) {
+            all_flags = 0;
             node2flags.clear();
             if (!node2delta.isEmpty()) {
                 fireModelChanged(root);
                 node2delta.clear();
             }
             if (selection != null) {
-                root = new ModelDelta(DebugPlugin.getDefault().getLaunchManager(), IModelDelta.NO_CHANGE);
-                makeDelta(root, selection, IModelDelta.SELECT);
-                fireModelChanged(root);
+                all_flags = IModelDelta.REVEAL;
+                ModelDelta root1 = new ModelDelta(DebugPlugin.getDefault().getLaunchManager(), IModelDelta.NO_CHANGE);
+                makeDelta(root1, selection, IModelDelta.REVEAL);
                 node2delta.clear();
-                selection = null;
+                all_flags = IModelDelta.SELECT;
+                ModelDelta root2 = new ModelDelta(DebugPlugin.getDefault().getLaunchManager(), IModelDelta.NO_CHANGE);
+                makeDelta(root2, selection, IModelDelta.SELECT);
+                node2delta.clear();
+                if (pending_node == null) {
+                    fireModelChanged(root1);
+                    fireModelChanged(root2);
+                    selection = null;
+                }
+                all_flags = 0;
             }
+        }
+
+        if (pending_node == null) {
+            // OK
         }
         else if (pending_node.getData(children_count_update, this)) {
             assert false;

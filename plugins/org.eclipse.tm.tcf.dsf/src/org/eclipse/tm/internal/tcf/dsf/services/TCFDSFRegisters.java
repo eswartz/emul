@@ -395,7 +395,6 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         final IDMContext[] parents;
 
         Map<String,ObjectDMC> dmc_pool = new HashMap<String,ObjectDMC>();;
-        boolean disposed;
 
         public RegisterChildrenCache(IChannel channel, String id, IDMContext[] parents) {
             super(channel);
@@ -410,18 +409,16 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             }
         }
 
-        void dispose() {
-            assert !disposed;
-            reset();
+        @Override
+        public void dispose() {
+            super.dispose();
             for (ObjectDMC dmc : dmc_pool.values()) dmc.dispose();
             dmc_pool.clear();
-            disposed = true;
         }
 
         @Override
         public boolean startDataRetrieval() {
             assert command == null;
-            assert !disposed;
             if (tcf_reg_service == null) {
                 reset(null);
                 return true;
@@ -484,8 +481,6 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
         final org.eclipse.tm.tcf.services.IRegisters.RegistersContext context;
         final String fmt;
 
-        boolean disposed;
-
         public RegisterValueCache(IChannel channel,
                 org.eclipse.tm.tcf.services.IRegisters.RegistersContext context, String fmt) {
             super(channel);
@@ -498,7 +493,6 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
             assert command == null;
             assert tcf_reg_service != null;
             assert context != null;
-            assert !disposed;
             command = context.get(new org.eclipse.tm.tcf.services.IRegisters.DoneGet() {
                 public void doneGet(IToken token, Exception err, byte[] value) {
                     if (command != token) return;
@@ -535,12 +529,6 @@ public class TCFDSFRegisters extends AbstractDsfService implements org.eclipse.d
                 }
             });
             return false;
-        }
-
-        void dispose() {
-            assert !disposed;
-            reset();
-            disposed = true;
         }
     }
 

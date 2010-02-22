@@ -138,8 +138,8 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
             new TCFDebugTask<Boolean>() {
                 public void run() {
                     disposed = true;
-                    expression_value.reset(null);
-                    expression_type.reset(null);
+                    expression_value.dispose();
+                    expression_type.dispose();
                     if (remote_expression.isValid() && remote_expression.getData() != null) {
                         final IChannel channel = exec_ctx.getModel().getLaunch().getChannel();
                         if (channel.getState() == IChannel.STATE_OPEN) {

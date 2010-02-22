@@ -82,8 +82,8 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
     @Override
     public void dispose() {
-        context.reset(null);
-        value.reset(null);
+        context.dispose();
+        value.dispose();
         super.dispose();
     }
 

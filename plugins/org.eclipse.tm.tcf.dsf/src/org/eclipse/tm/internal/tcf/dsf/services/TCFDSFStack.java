@@ -262,9 +262,6 @@ public class TCFDSFStack extends AbstractDsfService implements IStack {
                 dmc.source_cache.reset();
             }
         }
-
-        void dispose() {
-        }
     }
 
     private final IChannel channel;

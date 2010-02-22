@@ -22,6 +22,27 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  *  1. Valid - cache is in sync with remote data, use getError() and getData() to get cached data;
  *  2. Invalid - cache is out of sync, start data retrieval by calling validate();
  *  3. Pending - cache is waiting result of a command that was sent to remote peer.
+ *
+ * A cache instance can be created on any data type that needs to be caches.
+ * Examples might be context children list, context properties, context state, memory data,
+ * register data, symbol, variable, etc.
+ * Clients of cache items can register for cache changes, but don’t need to think about any particular events
+ * since that is handled by the cache item itself.
+ *
+ * A typical cache client should implement Runnable interface.
+ * The implementation of run() method should:
+ *
+ * Validate all cache items required for client task.
+ * If anything is invalid then client should not alter any shared data structures,
+ * should discard any intermediate results and register (wait) for changes of invalid cache instance(s) state.
+ * When cache item state changes, client is invoked again and full validation is restarted.
+ * Once everything is valid, client completes its task in a single dispatch cycle.
+ *
+ * Note: clients should never retain copies of remote data across dispatch cycles!
+ * Such data would get out of sync and compromise data consistency.
+ * All remote data and everything derived from remote data should be kept in cache items
+ * that implement proper event handling and can keep data consistent across dispatch cycles.
+ *
  * @param <V> - type of data to be stored in the cache.
  */
 public abstract class TCFDataCache<V> implements Runnable {
@@ -29,6 +50,7 @@ public abstract class TCFDataCache<V> implements Runnable {
     private Throwable error;
     private boolean valid;
     private boolean posted;
+    private boolean disposed;
     private V data;
 
     protected final IChannel channel;
@@ -49,7 +71,7 @@ public abstract class TCFDataCache<V> implements Runnable {
     }
 
     /**
-     * @return true if cache contains up-to-date data (or data retrieval error).
+     * @return true if cache contains up-to-date data or error.
      */
     public boolean isValid() {
         return valid;
@@ -60,6 +82,13 @@ public abstract class TCFDataCache<V> implements Runnable {
      */
     public boolean isPending() {
         return command != null;
+    }
+
+    /**
+     * @return true if cache is disposed.
+     */
+    public boolean isDisposed() {
+        return disposed;
     }
 
     /**
@@ -105,6 +134,7 @@ public abstract class TCFDataCache<V> implements Runnable {
      */
     public void wait(Runnable cb) {
         assert Protocol.isDispatchThread();
+        assert !disposed;
         assert !valid;
         if (cb != null) waiting_list.add(cb);
     }
@@ -116,9 +146,9 @@ public abstract class TCFDataCache<V> implements Runnable {
     public boolean validate() {
         assert Protocol.isDispatchThread();
         if (channel.getState() != IChannel.STATE_OPEN) {
-            error = null;
             command = null;
             valid = true;
+            error = null;
             data = null;
         }
         else {
@@ -159,11 +189,16 @@ public abstract class TCFDataCache<V> implements Runnable {
         assert Protocol.isDispatchThread();
         if (command != token) return;
         command = null;
-        if (channel.getState() != IChannel.STATE_OPEN) data = null;
-        this.error = error;
-        this.data = data;
-        valid = true;
-        post();
+        if (!disposed) {
+            if (channel.getState() != IChannel.STATE_OPEN) {
+                error = null;
+                data = null;
+            }
+            this.error = error;
+            this.data = data;
+            valid = true;
+            post();
+        }
     }
 
     /**
@@ -176,36 +211,48 @@ public abstract class TCFDataCache<V> implements Runnable {
             command.cancel();
             command = null;
         }
-        this.data = data;
-        error = null;
-        valid = true;
-        post();
+        if (!disposed) {
+            this.data = data;
+            error = null;
+            valid = true;
+            post();
+        }
     }
 
     /**
-     * Invalidate the cache. If retrieval is in progress - let it continue.
+     * Invalidate the cache.
+     * If retrieval is in progress - let it continue.
      */
     public void reset() {
         assert Protocol.isDispatchThread();
-        error = null;
-        valid = false;
-        data = null;
-        post();
+        if (!disposed) {
+            error = null;
+            valid = false;
+            data = null;
+            post();
+        }
     }
 
     /**
-     * Force cache to invalid state, cancel pending data retrieval if any.
+     * Invalidate the cache.
+     * Cancel pending data retrieval if any.
      */
     public void cancel() {
-        assert Protocol.isDispatchThread();
+        reset();
         if (command != null) {
             command.cancel();
             command = null;
         }
-        error = null;
-        valid = false;
-        data = null;
-        post();
+    }
+
+    /**
+     * Dispose the cache.
+     * Cancel pending data retrieval if any.
+     */
+    public void dispose() {
+        cancel();
+        valid = true;
+        disposed = true;
     }
 
     @Override
@@ -213,6 +260,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         StringBuffer bf = new StringBuffer();
         bf.append('[');
         if (valid) bf.append("valid,");
+        if (disposed) bf.append("disposed,");
         if (posted) bf.append("posted,");
         if (error != null) bf.append("error,");
         bf.append("data=");

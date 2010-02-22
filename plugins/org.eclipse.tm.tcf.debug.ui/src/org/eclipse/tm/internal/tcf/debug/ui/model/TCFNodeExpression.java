@@ -210,11 +210,21 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                             e = new Expression(context);
                             e.must_be_disposed = true;
                         }
-                        set(token, error, e);
-                        if (isDisposed()) disposeExpression();
+                        if (!isDisposed()) set(token, error, e);
+                        else if (e != null) e.dispose();
                     }
                 });
                 return false;
+            }
+            @Override
+            public void cancel() {
+                if (isValid() && getData() != null) getData().dispose();
+                super.cancel();
+            }
+            @Override
+            public void dispose() {
+                if (isValid() && getData() != null) getData().dispose();
+                super.dispose();
             }
         };
         value = new TCFDataCache<IExpressions.Value>(channel) {
@@ -380,108 +390,95 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             }
         };
         type_name = new TCFDataCache<String>(channel) {
-            String name;
-            TCFDataCache<ISymbols.Symbol> type_cache;
             @Override
             protected boolean startDataRetrieval() {
-                if (name == null) type_cache = type;
-                if (!type_cache.validate(this)) return false;
-                String s = null;
-                boolean get_base_type = false;
-                ISymbols.Symbol t = type_cache.getData();
-                if (t != null) {
-                    s = t.getName();
-                    if (s != null && t.getTypeClass() == ISymbols.TypeClass.composite) {
-                        s = "struct " + s;
-                    }
-                    if (s == null && t.getSize() == 0) s = "void";
-                    if (s == null) {
-                        switch (t.getTypeClass()) {
-                        case integer:
-                            switch (t.getSize()) {
-                            case 1: s = "char"; break;
-                            case 2: s = "short"; break;
-                            case 4: s = "int"; break;
-                            case 8: s = "long long"; break;
-                            default: s = "<Integer>"; break;
+                String name = null;
+                TCFDataCache<ISymbols.Symbol> type_cache = type;
+                for (;;) {
+                    String s = null;
+                    boolean get_base_type = false;
+                    if (!type_cache.validate(this)) return false;
+                    ISymbols.Symbol type_symbol = type_cache.getData();
+                    if (type_symbol != null) {
+                        s = type_symbol.getName();
+                        if (s != null && type_symbol.getTypeClass() == ISymbols.TypeClass.composite) s = "struct " + s;
+                        if (s == null && type_symbol.getSize() == 0) s = "void";
+                        if (s == null) {
+                            switch (type_symbol.getTypeClass()) {
+                            case integer:
+                                switch (type_symbol.getSize()) {
+                                case 1: s = "char"; break;
+                                case 2: s = "short"; break;
+                                case 4: s = "int"; break;
+                                case 8: s = "long long"; break;
+                                default: s = "<Integer>"; break;
+                                }
+                                break;
+                            case cardinal:
+                                switch (type_symbol.getSize()) {
+                                case 1: s = "unsigned char"; break;
+                                case 2: s = "unsigned short"; break;
+                                case 4: s = "unsigned"; break;
+                                case 8: s = "unsigned long long"; break;
+                                default: s = "<Unsigned>"; break;
+                                }
+                                break;
+                            case real:
+                                switch (type_symbol.getSize()) {
+                                case 4: s = "float"; break;
+                                case 8: s = "double"; break;
+                                default: s = "<Float>"; break;
+                                }
+                                break;
+                            case pointer:
+                                s = "*";
+                                get_base_type = true;
+                                break;
+                            case array:
+                                s = "[]";
+                                get_base_type = true;
+                                break;
+                            case composite:
+                                s = "<Structure>";
+                                break;
+                            case function:
+                                s = "<Function>";
+                                break;
                             }
-                            break;
-                        case cardinal:
-                            switch (t.getSize()) {
-                            case 1: s = "unsigned char"; break;
-                            case 2: s = "unsigned short"; break;
-                            case 4: s = "unsigned"; break;
-                            case 8: s = "unsigned long long"; break;
-                            default: s = "<Unsigned>"; break;
-                            }
-                            break;
-                        case real:
-                            switch (t.getSize()) {
-                            case 4: s = "float"; break;
-                            case 8: s = "double"; break;
-                            default: s = "<Float>"; break;
-                            }
-                            break;
-                        case pointer:
-                            s = "*";
-                            get_base_type = true;
-                            break;
-                        case array:
-                            s = "[]";
-                            get_base_type = true;
-                            break;
-                        case composite:
-                            s = "<Structure>";
-                            break;
-                        case function:
-                            s = "<Function>";
-                            break;
                         }
                     }
-                }
-                if (s == null) name = "N/A";
-                else if (name == null) name = s;
-                else if (!get_base_type) name = s + " " + name;
-                else name = s + name;
-                if (get_base_type) {
-                    type_cache = model.getSymbolInfoCache(t.getBaseTypeID());
+                    if (s == null) {
+                        name = "N/A";
+                        break;
+                    }
+                    if (name == null) name = s;
+                    else if (!get_base_type) name = s + " " + name;
+                    else name = s + name;
+
+                    if (!get_base_type) break;
+
+                    type_cache = model.getSymbolInfoCache(type_symbol.getBaseTypeID());
                     if (type_cache == null) {
                         name = "N/A";
-                    }
-                    else {
-                        Protocol.invokeLater(this);
-                        return false;
+                        break;
                     }
                 }
                 set(null, null, name);
                 return true;
             }
-            @Override
-            public void reset() {
-                super.reset();
-                name = null;
-            }
         };
         children = new TCFChildrenSubExpressions(this, 0, 0, 0);
     }
 
-    private void disposeExpression() {
-        if (expression.isValid() && expression.getData() != null) {
-            expression.getData().dispose();
-        }
-        expression.cancel();
-    }
-
     @Override
     void dispose() {
-        var_expression.reset(null);
-        value.reset(null);
-        type.reset(null);
-        type_name.reset(null);
-        string.reset(null);
-        children.reset(null);
+        var_expression.dispose();
+        value.dispose();
+        type.dispose();
+        type_name.dispose();
+        string.dispose();
         children.dispose();
-        disposeExpression();
+        expression.dispose();
         super.dispose();
     }
 
@@ -506,11 +503,11 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
 
 
     public void onCastToTypeChanged() {
-        disposeExpression();
-        value.reset();
-        type.reset();
-        type_name.reset();
-        string.reset();
+        expression.cancel();
+        value.cancel();
+        type.cancel();
+        type_name.cancel();
+        string.cancel();
         children.onCastToTypeChanged();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }

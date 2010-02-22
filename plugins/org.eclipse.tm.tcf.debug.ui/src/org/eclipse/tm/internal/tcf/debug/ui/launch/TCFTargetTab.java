@@ -13,12 +13,14 @@ package org.eclipse.tm.internal.tcf.debug.ui.launch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
+import org.eclipse.debug.ui.ILaunchConfigurationTab;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
@@ -59,6 +61,7 @@ import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.protocol.IChannel.IChannelListener;
 import org.eclipse.tm.tcf.services.ILocator;
+import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
 
 
 /**
@@ -602,7 +605,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                 }
                 else if (parent == peer_info) {
                     peer_info.locator = Protocol.getLocator();
-                    createLocatorListener(peer_info);
+                    doneLoadChildren(parent, null, createLocatorListener(peer_info));
                 }
                 else {
                     final IChannel channel = parent.peer.openChannel();
@@ -615,8 +618,20 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                         public void onChannelClosed(final Throwable error) {
                             assert !closed;
                             if (parent.channel != channel) return;
-                            if (parent.children_error == null) {
+                            if (!opened) {
                                 doneLoadChildren(parent, error, null);
+                            }
+                            else {
+                                if (display != null) {
+                                    display.asyncExec(new Runnable() {
+                                        public void run() {
+                                            if (parent.children_pending) return;
+                                            parent.children = null;
+                                            parent.children_error = error;
+                                            updateItems(parent);
+                                        }
+                                    });
+                                }
                             }
                             closed = true;
                             parent.channel = null;
@@ -634,7 +649,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                                 parent.channel.close();
                             }
                             else {
-                                createLocatorListener(parent);
+                                doneLoadChildren(parent, null, createLocatorListener(parent));
                             }
                         }
                     });
@@ -643,7 +658,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         });
     }
 
-    private void createLocatorListener(PeerInfo peer) {
+    private PeerInfo[] createLocatorListener(PeerInfo peer) {
         assert Protocol.isDispatchThread();
         Map<String,IPeer> map = peer.locator.getPeers();
         PeerInfo[] buf = new PeerInfo[map.size()];
@@ -659,7 +674,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         }
         peer.listener = new LocatorListener(peer);
         peer.locator.addListener(peer.listener);
-        doneLoadChildren(peer, null, buf);
+        return buf;
     }
 
     private void doneLoadChildren(final PeerInfo parent, final Throwable error, final PeerInfo[] children) {
@@ -917,7 +932,11 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    test[0] = new TCFTestSuite(info.peer, done);
+                    List<PathMapRule> map = null;
+                    for (ILaunchConfigurationTab t : getLaunchConfigurationDialog().getTabs()) {
+                        if (t instanceof TCFPathMapTab) map = ((TCFPathMapTab)t).getPathMap();
+                    }
+                    test[0] = new TCFTestSuite(info.peer, done, map);
                 }
                 catch (Throwable x) {
                     ArrayList<Throwable> errors = new ArrayList<Throwable>();

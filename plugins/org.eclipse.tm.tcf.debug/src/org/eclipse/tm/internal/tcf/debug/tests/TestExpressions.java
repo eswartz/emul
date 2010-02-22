@@ -16,13 +16,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.services.IDiagnostics;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace;
 import org.eclipse.tm.tcf.services.ISymbols;
+import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
 
 class TestExpressions implements ITCFTest,
     IRunControl.RunControlListener, IExpressions.ExpressionsListener, IBreakpoints.BreakpointsListener {
@@ -40,13 +43,13 @@ class TestExpressions implements ITCFTest,
     private IDiagnostics.ISymbol sym_func3;
     private String process_id;
     private String thread_id;
-    private boolean process_exited;
     private boolean test_done;
     private IRunControl.RunControlContext thread_ctx;
     private String suspended_pc;
     private boolean waiting_suspend;
     private String[] stack_trace;
     private String[] local_vars;
+    private final HashMap<String,IRunControl.RunControlContext> ctx_map = new HashMap<String,IRunControl.RunControlContext>();
     private final Map<String,IExpressions.Expression> expr_ctx = new HashMap<String,IExpressions.Expression>();
     private final Map<String,IExpressions.Value> expr_val = new HashMap<String,IExpressions.Value>();
     private final Map<String,ISymbols.Symbol> expr_sym = new HashMap<String,ISymbols.Symbol>();
@@ -85,6 +88,7 @@ class TestExpressions implements ITCFTest,
         "(func2_local2 >> 1) == 1",
         "+func2_local2 == 2",
         "-func2_local2 == -2",
+        "(short)(int)(long)((char *)func2_local2 + 1) == 3",
         "((func2_local1 + func2_local2) * 2 - 2) / 2 == 2",
         "func2_local3.f_struct->f_struct->f_struct == &func2_local3"
     };
@@ -117,6 +121,22 @@ class TestExpressions implements ITCFTest,
                         for (int i = 0; i < list.length; i++) {
                             if (list[i].equals("RCBP1")) {
                                 runTest();
+                                Protocol.invokeLater(1000, new Runnable() {
+                                    int cnt = 0;
+                                    public void run() {
+                                        if (!test_suite.isActive(TestExpressions.this)) return;
+                                        cnt++;
+                                        if (cnt < 10) {
+                                            Protocol.invokeLater(1000, this);
+                                        }
+                                        else if (test_suite.cancel) {
+                                            exit(null);
+                                        }
+                                        else {
+                                            exit(new Error("Missing 'contextRemoved' event for " + process_id));
+                                        }
+                                    }
+                                });
                                 return;
                             }
                         }
@@ -407,7 +427,7 @@ class TestExpressions implements ITCFTest,
         test_done = true;
         diag.cancelTest(process_id, new IDiagnostics.DoneCancelTest() {
             public void doneCancelTest(IToken token, Throwable error) {
-                exit(error);
+                if (error != null) exit(error);
             }
         });
     }
@@ -434,9 +454,17 @@ class TestExpressions implements ITCFTest,
     }
 
     public void contextAdded(IRunControl.RunControlContext[] contexts) {
+        for (RunControlContext ctx : contexts) {
+            if (ctx_map.get(ctx.getID()) != null) exit(new Error("Invalid 'contextAdded' event"));
+            ctx_map.put(ctx.getID(), ctx);
+        }
     }
 
     public void contextChanged(IRunControl.RunControlContext[] contexts) {
+        for (RunControlContext ctx : contexts) {
+            if (ctx_map.get(ctx.getID()) == null) return;
+            ctx_map.put(ctx.getID(), ctx);
+        }
     }
 
     public void contextException(String context, String msg) {
@@ -444,9 +472,11 @@ class TestExpressions implements ITCFTest,
 
     public void contextRemoved(String[] context_ids) {
         for (String id : context_ids) {
+            ctx_map.remove(id);
             if (id.equals(process_id)) {
-                process_exited = true;
-                if (!test_done) exit(new Exception("Test process exited too soon"));
+                if (test_done) exit(null);
+                else exit(new Exception("Test process exited too soon"));
+                return;
             }
         }
     }
@@ -462,6 +492,21 @@ class TestExpressions implements ITCFTest,
                 runTest();
             }
         }
+        if (test_done) {
+            IRunControl.RunControlContext ctx = ctx_map.get(context);
+            if (ctx != null && process_id != null && process_id.equals(ctx.getParentID())) {
+                ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+                    public void doneCommand(IToken token, Exception error) {
+                        if (error instanceof IErrorReport) {
+                            int code = ((IErrorReport)error).getErrorCode();
+                            if (code == IErrorReport.TCF_ERROR_ALREADY_RUNNING) return;
+                            if (code == IErrorReport.TCF_ERROR_INV_CONTEXT) return;
+                        }
+                        if (error != null) exit(error);
+                    }
+                });
+            }
+        }
     }
 
     //--------------------------- Expressions listener ---------------------------//
@@ -473,7 +518,7 @@ class TestExpressions implements ITCFTest,
 
     @SuppressWarnings("unchecked")
     public void breakpointStatusChanged(String id, Map<String,Object> status) {
-        if (id.equals(bp_id) && process_id != null && !process_exited) {
+        if (id.equals(bp_id) && process_id != null) {
             String s = (String)status.get(IBreakpoints.STATUS_ERROR);
             if (s != null) exit(new Exception("Invalid BP status: " + s));
             Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)status.get(IBreakpoints.STATUS_INSTANCES);

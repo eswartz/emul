@@ -1,6 +1,7 @@
 package org.eclipse.tm.internal.tcf.debug.tests;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -12,6 +13,7 @@ import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
 class TestPathMap implements ITCFTest {
 
     private final TCFTestSuite test_suite;
+    private final List<PathMapRule> map;
     private final IPathMap service;
 
     private final Random rnd = new Random();
@@ -62,8 +64,9 @@ class TestPathMap implements ITCFTest {
         }
     }
 
-    TestPathMap(TCFTestSuite test_suite, IChannel channel) {
+    TestPathMap(TCFTestSuite test_suite, IChannel channel, List<PathMapRule> map) {
         this.test_suite = test_suite;
+        this.map = map;
         service = channel.getRemoteService(IPathMap.class);
     }
 
@@ -78,7 +81,16 @@ class TestPathMap implements ITCFTest {
 
     private void test_map() {
         if (cnt >= 40) {
-            exit(null);
+            if (map == null) {
+                exit(null);
+            }
+            else {
+                service.set(map.toArray(new PathMapRule[map.size()]), new IPathMap.DoneSet() {
+                    public void doneSet(IToken token, Exception error) {
+                        exit(error);
+                    }
+                });
+            }
         }
         else {
             cnt++;

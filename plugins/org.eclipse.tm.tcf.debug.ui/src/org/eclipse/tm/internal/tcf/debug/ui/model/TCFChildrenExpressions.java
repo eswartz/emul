@@ -57,7 +57,7 @@ public class TCFChildrenExpressions extends TCFChildren {
     }
 
     @Override
-    void dispose() {
+    public void dispose() {
         exp_manager.removeExpressionListener(listener);
         super.dispose();
     }

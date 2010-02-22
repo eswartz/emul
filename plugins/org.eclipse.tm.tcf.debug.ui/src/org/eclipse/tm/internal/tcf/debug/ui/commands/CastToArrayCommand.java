@@ -18,6 +18,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.internal.tcf.debug.ui.model.ICastToType;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
@@ -63,12 +64,16 @@ public class CastToArrayCommand extends AbstractActionDelegate {
         if (node == null) return;
         IWorkbenchWindow window = Activator.getDefault().getWorkbench().getActiveWorkbenchWindow();
         if (window == null) return;
-        String base_type_name = getBaseTypeName();
+        final String base_type_name = getBaseTypeName();
         if (base_type_name == null) return;
         CastToTypeDialog dialog = new CastToTypeDialog(window.getShell(), node.getModel().getCastToType(node.getID()));
         if (dialog.open() != Window.OK) return;
-        String new_type = dialog.getValue().trim();
-        node.getModel().setCastToType(node.getID(), base_type_name + "[" + new_type + "]");
+        final String new_type = dialog.getValue().trim();
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                node.getModel().setCastToType(node.getID(), base_type_name + "[" + new_type + "]");
+            }
+        });
     }
 
     private String getBaseTypeName() {

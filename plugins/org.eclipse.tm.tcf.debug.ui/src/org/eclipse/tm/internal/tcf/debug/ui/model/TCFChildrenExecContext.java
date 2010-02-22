@@ -90,7 +90,7 @@ public class TCFChildrenExecContext extends TCFChildren {
     }
 
     @Override
-    protected void dispose() {
+    public void dispose() {
         super.dispose();
         mem_children.dispose();
         run_children.dispose();

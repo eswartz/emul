@@ -27,7 +27,6 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
 
     private final int pool_margin;
     private final Map<String,TCFNode> node_pool = new LinkedHashMap<String,TCFNode>(32, 0.75f, true);
-    private boolean disposed;
 
     private static final TCFNode[] EMPTY_NODE_ARRAY = new TCFNode[0];
 
@@ -46,15 +45,15 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     /**
      * Dispose the cache and all nodes in the nodes pool.
      */
-    void dispose() {
-        assert !disposed;
+    @Override
+    public void dispose() {
+        assert !isDisposed();
         if (!node_pool.isEmpty()) {
             TCFNode a[] = node_pool.values().toArray(new TCFNode[node_pool.size()]);
             for (int i = 0; i < a.length; i++) a[i].dispose();
             assert node_pool.isEmpty();
         }
-        disposed = true;
-        super.reset(null);
+        super.dispose();
     }
 
     /**
@@ -71,16 +70,8 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         }
     }
 
-    /**
-     * Check if the cache is disposed.
-     * @return true if disposed.
-     */
-    boolean isDisposed() {
-        return disposed;
-    }
-
     private void addToPool(Map<String,TCFNode> data) {
-        assert !disposed;
+        assert !isDisposed();
         for (TCFNode n : data.values()) {
             assert data.get(n.id) == n;
             node_pool.put(n.id, n);
@@ -105,7 +96,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     @Override
     public void set(IToken token, Throwable error, Map<String,TCFNode> data) {
         array = null;
-        if (disposed) {
+        if (isDisposed()) {
             // A command can return data after the cache element has been disposed.
             // Just ignore the data in such case.
             super.set(token, null, null);
@@ -126,7 +117,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
      */
     @Override
     public void reset(Map<String,TCFNode> data) {
-        assert !disposed;
+        assert !isDisposed();
         array = null;
         if (data != null) {
             super.reset(data);
@@ -160,7 +151,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
      * @param n - a node.
      */
     void add(TCFNode n) {
-        assert !disposed;
+        assert !isDisposed();
         assert node_pool.get(n.id) == null;
         node_pool.put(n.id, n);
         if (isValid()) {

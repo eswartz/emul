@@ -18,6 +18,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.internal.tcf.debug.ui.model.ICastToType;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.ui.IWorkbenchWindow;
 
 public class CastToTypeCommand extends AbstractActionDelegate {
@@ -48,14 +49,18 @@ public class CastToTypeCommand extends AbstractActionDelegate {
 
     @Override
     protected void run() {
-        TCFNode node = getCastToTypeNode();
+        final TCFNode node = getCastToTypeNode();
         if (node == null) return;
         IWorkbenchWindow window = Activator.getDefault().getWorkbench().getActiveWorkbenchWindow();
         if (window == null) return;
         CastToTypeDialog dialog = new CastToTypeDialog(window.getShell(), node.getModel().getCastToType(node.getID()));
         if (dialog.open() != Window.OK) return;
-        String new_type = dialog.getValue().trim();
-        node.getModel().setCastToType(node.getID(), new_type);
+        final String new_type = dialog.getValue().trim();
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                node.getModel().setCastToType(node.getID(), new_type);
+            }
+        });
     }
 
     @Override

@@ -12,14 +12,19 @@ package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
 import org.eclipse.tm.internal.tcf.debug.ui.model.ICastToType;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
+import org.eclipse.tm.tcf.protocol.Protocol;
 
 public class RestoreDefaultTypeCommand extends AbstractActionDelegate {
 
     @Override
     protected void run() {
-        TCFNode node = getCastToTypeNode();
+        final TCFNode node = getCastToTypeNode();
         if (node == null) return;
-        node.getModel().setCastToType(node.getID(), null);
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                node.getModel().setCastToType(node.getID(), null);
+            }
+        });
     }
 
     @Override

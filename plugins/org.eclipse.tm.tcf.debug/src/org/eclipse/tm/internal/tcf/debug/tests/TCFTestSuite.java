@@ -16,11 +16,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
 
 /**
  * TCF Test Suite implements stress testing of communication channels and capabilities of remote peer.
@@ -49,7 +51,7 @@ public class TCFTestSuite {
         public void done(Collection<Throwable> errors);
     }
 
-    public TCFTestSuite(final IPeer peer, final TestListener listener) throws IOException {
+    public TCFTestSuite(final IPeer peer, final TestListener listener, final List<PathMapRule> path_map) throws IOException {
         this.listener = listener;
         pending_tests.add(new Runnable() {
             public void run() {
@@ -72,6 +74,14 @@ public class TCFTestSuite {
                 listener.progress("Running Debugger Attach/Terminate Test...", ++count_done, count_total);
                 for (IChannel channel : channels) {
                     active_tests.put(new TestAttachTerminate(TCFTestSuite.this, channel), channel);
+                }
+            }
+        });
+        pending_tests.add(new Runnable() {
+            public void run() {
+                listener.progress("Running Path Map Test...", ++count_done, count_total);
+                for (IChannel channel : channels) {
+                    active_tests.put(new TestPathMap(TCFTestSuite.this, channel, path_map), channel);
                 }
             }
         });
@@ -114,14 +124,6 @@ public class TCFTestSuite {
                 listener.progress("Running File System Test...", ++count_done, count_total);
                 for (IChannel channel : channels) {
                     active_tests.put(new TestFileSystem(TCFTestSuite.this, channel, i++), channel);
-                }
-            }
-        });
-        pending_tests.add(new Runnable() {
-            public void run() {
-                listener.progress("Running Path Map Test...", ++count_done, count_total);
-                for (IChannel channel : channels) {
-                    active_tests.put(new TestPathMap(TCFTestSuite.this, channel), channel);
                 }
             }
         });

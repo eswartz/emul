@@ -33,7 +33,6 @@ public class TCFNodeArrayPartition extends TCFNode {
 
     @Override
     void dispose() {
-        children.reset(null);
         children.dispose();
         super.dispose();
     }

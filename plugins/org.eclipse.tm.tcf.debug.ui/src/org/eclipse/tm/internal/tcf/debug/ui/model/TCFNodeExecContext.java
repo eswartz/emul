@@ -45,7 +45,7 @@ public class TCFNodeExecContext extends TCFNode {
     private final TCFDataCache<IRunControl.RunControlContext> run_context;
     private final TCFDataCache<IProcesses.ProcessContext> prs_context;
     private final TCFDataCache<TCFContextState> state;
-    private final TCFDataCache<BigInteger> address;
+    private final TCFDataCache<BigInteger> address; // Current PC as BigInteger
 
     private final Map<BigInteger,TCFSourceRef> line_info_cache;
 
@@ -166,11 +166,11 @@ public class TCFNodeExecContext extends TCFNode {
 
     @Override
     void dispose() {
-        run_context.reset(null);
-        prs_context.reset(null);
-        mem_context.reset(null);
-        state.reset(null);
-        address.reset(null);
+        run_context.dispose();
+        prs_context.dispose();
+        mem_context.dispose();
+        state.dispose();
+        address.dispose();
         children_exec.dispose();
         children_stack.dispose();
         super.dispose();
@@ -359,6 +359,8 @@ public class TCFNodeExecContext extends TCFNode {
     void onContextChanged(IRunControl.RunControlContext context) {
         assert !disposed;
         run_context.reset(context);
+        state.reset();
+        children_stack.reset();
         children_stack.onSourceMappingChange();
         addModelDelta(IModelDelta.STATE | IModelDelta.CONTENT);
     }
@@ -466,8 +468,8 @@ public class TCFNodeExecContext extends TCFNode {
         addModelDelta(IModelDelta.CONTENT);
     }
 
-    // Return true if at least one child is suspended
-    // The method will fail if node is not validated, see validateChildrenState()
+    // Return true if at least one child is suspended.
+    // Return null if waiting for a cache element.
     private Boolean hasSuspendedChildren(Runnable done) {
         if (!children_exec.validate(done)) return null;
         Map<String,TCFNode> m = children_exec.getData();

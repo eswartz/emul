@@ -246,7 +246,7 @@ class SignalsDialog extends Dialog {
         new TCFTask<Boolean>() {
 
             public void run() {
-                signal_list.reset(null);
+                signal_list.dispose();
                 done(Boolean.TRUE);
             }
         }.getE();

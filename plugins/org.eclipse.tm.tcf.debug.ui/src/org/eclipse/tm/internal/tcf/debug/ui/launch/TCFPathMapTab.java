@@ -11,8 +11,10 @@
 package org.eclipse.tm.internal.tcf.debug.ui.launch;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
@@ -217,6 +219,12 @@ public class TCFPathMapTab extends AbstractLaunchConfigurationTab {
                 updateLaunchConfigurationDialog();
             }
         });
+    }
+
+    List<IPathMap.PathMapRule> getPathMap() {
+        List<IPathMap.PathMapRule> l = new ArrayList<IPathMap.PathMapRule>();
+        for (PathMapRule r : map) l.add(r);
+        return Collections.unmodifiableList(l);
     }
 
     public void initializeFrom(ILaunchConfiguration config) {
