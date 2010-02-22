@@ -75,10 +75,10 @@
 #define SERVICE_StackTrace      (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
 #if !defined(SERVICE_Symbols)
-#define SERVICE_Symbols         (TARGET_UNIX || TARGET_VXWORKS || TARGET_MSVC)
+#define SERVICE_Symbols         (TARGET_UNIX || TARGET_MSVC)
 #endif
 #if !defined(SERVICE_LineNumbers)
-#define SERVICE_LineNumbers     (TARGET_UNIX || TARGET_VXWORKS  || TARGET_MSVC)
+#define SERVICE_LineNumbers     (TARGET_UNIX || TARGET_MSVC)
 #endif
 #if !defined(SERVICE_FileSystem)
 #define SERVICE_FileSystem      (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
@@ -93,7 +93,7 @@
 #define SERVICE_Streams         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
 #endif
 #if !defined(SERVICE_PathMap)
-#define SERVICE_PathMap         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS)
+#define SERVICE_PathMap         ENABLE_ELF
 #endif
 
 #ifndef ENABLE_Plugins
@@ -133,7 +133,11 @@
 #endif
 
 #if !defined(ENABLE_SymbolsProxy)
-#  define ENABLE_SymbolsProxy   0
+#  define ENABLE_SymbolsProxy   TARGET_VXWORKS
+#endif
+
+#if !defined(ENABLE_Symbols)
+#  define ENABLE_Symbols        (ENABLE_SymbolsProxy || SERVICE_Symbols)
 #endif
 
 #if !defined(ENABLE_DebugContext)
@@ -141,7 +145,7 @@
 #endif
 
 #if !defined(ENABLE_ELF)
-#  define ENABLE_ELF            ((TARGET_UNIX || TARGET_VXWORKS) && (SERVICE_Symbols || SERVICE_LineNumbers))
+#  define ENABLE_ELF            (TARGET_UNIX && (SERVICE_Symbols || SERVICE_LineNumbers))
 #endif
 
 #if !defined(ENABLE_SSL)
@@ -157,7 +161,8 @@
 #endif
 
 #if !defined(ENABLE_AIO)
-#  if defined(_POSIX_ASYNCHRONOUS_IO)
+/* Linux implementation of POSIX AIO found to be inefficient */
+#  if !defined(__linux__) && defined(_POSIX_ASYNCHRONOUS_IO)
 #    define ENABLE_AIO          1
 #  else
 #    define ENABLE_AIO          0
@@ -222,6 +227,8 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
 #endif
 #if SERVICE_Symbols
     ini_symbols_service(proto);
+#elif ENABLE_SymbolsProxy
+    ini_symbols_lib();
 #endif
 #if SERVICE_LineNumbers
     ini_line_numbers_service(proto);
@@ -242,7 +249,7 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
     ini_streams_service(proto);
 #endif
 #if SERVICE_PathMap
-    ini_path_map_service(proto, bcg);
+    ini_path_map_service(proto);
 #endif
 #if ENABLE_DebugContext
     ini_contexts();

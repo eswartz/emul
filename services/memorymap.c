@@ -26,9 +26,13 @@
 #if defined(__linux__)
 #  include <linux/kdev_t.h>
 #endif
+#if defined(_WRS_KERNEL)
+#  include <moduleLib.h>
+#endif
 #include "memorymap.h"
 #include "myalloc.h"
 #include "json.h"
+#include "events.h"
 #include "exceptions.h"
 
 typedef struct MemoryMap MemoryMap;
@@ -49,14 +53,18 @@ static void dispose_memory_map(MemoryMap * map) {
     for (i = 0; i < map->region_cnt; i++) {
         MemoryRegion * r = map->regions + i;
         loc_free(r->file_name);
+        loc_free(r->sect_name);
     }
     loc_free(map->regions);
     loc_free(map);
 }
 
-static void event_memory_map_changed(Context * ctx, void * client_data) {
+static void event_memory_map_changed(Context * ctx, void * args) {
     OutputStream * out;
+
     if (ctx->memory_map == NULL) return;
+    if (ctx->parent == NULL) return;
+
     dispose_memory_map((MemoryMap *)ctx->memory_map);
     ctx->memory_map = NULL;
     out = &broadcast_group->out;
@@ -65,12 +73,78 @@ static void event_memory_map_changed(Context * ctx, void * client_data) {
     write_stringz(out, MEMORYMAP);
     write_stringz(out, "changed");
 
-    json_write_string(out, container_id(ctx));
+    json_write_string(out, ctx2id(ctx));
     write_stream(out, 0);
     write_stream(out, MARKER_EOM);
 }
 
-#if defined(_WRS_KERNEL) || defined(WIN32)
+#if defined(_WRS_KERNEL)
+
+static int hooks_done = 0;
+static MemoryMap * map = NULL;
+
+static void add_map_region(void * addr, int size, unsigned flags, char * file, char * sect) {
+    MemoryRegion * r = NULL;
+    if (map->region_cnt >= map->region_max) {
+        map->region_max += 8;
+        map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+    }
+    r = map->regions + map->region_cnt++;
+    memset(r, 0, sizeof(MemoryRegion));
+    r->addr = (ContextAddress)addr;
+    r->size = (ContextAddress)size;
+    r->flags = flags;
+    if (file != NULL) r->file_name = loc_strdup(file);
+    if (sect != NULL) r->sect_name = loc_strdup(sect);
+}
+
+static int module_list_proc(MODULE_ID id, int args) {
+    MODULE_INFO info;
+    memset(&info, 0, sizeof(info));
+    if (moduleInfoGet(id, &info) == OK) {
+        char * file = id->nameWithPath;
+        if (info.segInfo.textAddr != NULL && info.segInfo.textSize > 0) {
+            add_map_region(info.segInfo.textAddr, info.segInfo.textSize, MM_FLAG_R | MM_FLAG_X, file, ".text");
+        }
+        if (info.segInfo.dataAddr != NULL && info.segInfo.dataSize > 0) {
+            add_map_region(info.segInfo.dataAddr, info.segInfo.dataSize, MM_FLAG_R | MM_FLAG_W, file, ".data");
+        }
+        if (info.segInfo.bssAddr != NULL && info.segInfo.bssSize > 0) {
+            add_map_region(info.segInfo.bssAddr, info.segInfo.bssSize, MM_FLAG_R | MM_FLAG_W, file, ".bss");
+        }
+    }
+    return 0;
+}
+
+static void module_create_event(void * args) {
+    LINK * l;
+    for (l = context_root.next; l != &context_root; l = l->next) {
+        Context * ctx = ctxl2ctxp(l);
+        if (ctx->parent == NULL) event_memory_map_changed(ctx, NULL);
+    }
+}
+
+static int module_create_func(MODULE_ID  id) {
+    post_event(module_create_event, NULL);
+    return 0;
+}
+
+static MemoryMap * get_memory_map(Context * ctx) {
+    if (!hooks_done) {
+        hooks_done = 1;
+        moduleCreateHookAdd(module_create_func);
+    }
+    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+    if (ctx->memory_map == NULL) {
+        map = loc_alloc_zero(sizeof(MemoryMap));
+        moduleEach(module_list_proc, 0);
+        ctx->memory_map = map;
+        map = NULL;
+    }
+    return (MemoryMap *)ctx->memory_map;
+}
+
+#elif defined(WIN32)
 
 static MemoryMap * get_memory_map(Context * ctx) {
     errno = 0;
@@ -91,8 +165,7 @@ static MemoryMap * get_memory_map(Context * ctx) {
     MemoryMap * map = NULL;
     FILE * file;
 
-    if (ctx->pid != ctx->mem) ctx = ctx->parent;
-    assert(ctx->pid == ctx->mem);
+    while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
     if (ctx->memory_map != NULL) return (MemoryMap *)ctx->memory_map;
 
     snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", ctx->pid);
@@ -167,6 +240,7 @@ void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * c
 void memory_map_event_module_loaded(Context * ctx) {
     MemoryMapEventListener * listener = event_listeners;
     assert(ctx->ref_count > 0);
+    assert(ctx->parent == NULL);
     event_memory_map_changed(ctx, NULL);
     while (listener != NULL) {
         if (listener->module_loaded != NULL) {
@@ -179,6 +253,7 @@ void memory_map_event_module_loaded(Context * ctx) {
 void memory_map_event_code_section_ummapped(Context * ctx, ContextAddress addr, ContextAddress size) {
     MemoryMapEventListener * listener = event_listeners;
     assert(ctx->ref_count > 0);
+    assert(ctx->parent == NULL);
     while (listener != NULL) {
         if (listener->code_section_ummapped != NULL) {
             listener->code_section_ummapped(ctx, addr, size, listener->client_data);
@@ -240,10 +315,6 @@ static void command_get(char * token, Channel * c) {
             write_stream(&c->out, ':');
             json_write_ulong(&c->out, m->size);
             write_stream(&c->out, ',');
-            json_write_string(&c->out, "Offs");
-            write_stream(&c->out, ':');
-            json_write_ulong(&c->out, m->file_offs);
-            write_stream(&c->out, ',');
             json_write_string(&c->out, "Flags");
             write_stream(&c->out, ':');
             json_write_ulong(&c->out, m->flags);
@@ -252,6 +323,17 @@ static void command_get(char * token, Channel * c) {
                 json_write_string(&c->out, "FileName");
                 write_stream(&c->out, ':');
                 json_write_string(&c->out, m->file_name);
+                write_stream(&c->out, ',');
+                if (m->sect_name != NULL) {
+                    json_write_string(&c->out, "SectionName");
+                    write_stream(&c->out, ':');
+                    json_write_string(&c->out, m->sect_name);
+                }
+                else {
+                    json_write_string(&c->out, "Offs");
+                    write_stream(&c->out, ':');
+                    json_write_ulong(&c->out, m->file_offs);
+                }
             }
             write_stream(&c->out, '}');
         }

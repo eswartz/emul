@@ -49,16 +49,18 @@ static CompUnit * find_unit(Context * ctx, DWARFCache * cache, ContextAddress ad
     /* TODO: faster unit search */
     for (i = 0; i < cache->mCompUnitsCnt; i++) {
         CompUnit * u = cache->mCompUnits[i];
-        ContextAddress base = elf_map_to_run_time_address(ctx, cache->mFile, u->mLowPC);
+        ContextAddress base = elf_map_to_run_time_address(ctx, cache->mFile, u->mTextSection, u->mLowPC);
         ContextAddress size = u->mHighPC - u->mLowPC;
         if (base == 0 || size == 0) continue;
         if (u->mDebugRangesOffs != ~(U8_T)0 && cache->mDebugRanges != NULL) {
             if (elf_load(cache->mDebugRanges)) exception(errno);
-            dio_EnterDataSection(&u->mDesc, (U1_T *)(cache->mDebugRanges->data), u->mDebugRangesOffs, cache->mDebugRanges->size);
+            dio_EnterSection(&u->mDesc, cache->mDebugRanges, u->mDebugRangesOffs);
             for (;;) {
-                U8_T x = dio_ReadAddress();
-                U8_T y = dio_ReadAddress();
+                ELF_Section * s = NULL;
+                U8_T x = dio_ReadAddress(&s);
+                U8_T y = dio_ReadAddress(&s);
                 if (x == 0 && y == 0) break;
+                if (s != u->mTextSection) exception(ERR_INV_DWARF);
                 if (x == ((U8_T)1 << u->mDesc.mAddressSize * 8) - 1) {
                     base = (ContextAddress)y;
                 }
@@ -121,8 +123,8 @@ static void write_line_info(Context * ctx, OutputStream * out, CompUnit * unit,
     for (i = 0; i < unit->mStatesCnt - 1; i++) {
         LineNumbersState * state = unit->mStates + i;
         LineNumbersState * next = unit->mStates + i + 1;
-        ContextAddress state_addr = elf_map_to_run_time_address(ctx, unit->mFile, state->mAddress);
-        ContextAddress next_addr = elf_map_to_run_time_address(ctx, unit->mFile, next->mAddress);
+        ContextAddress state_addr = elf_map_to_run_time_address(ctx, unit->mFile, unit->mTextSection, state->mAddress);
+        ContextAddress next_addr = elf_map_to_run_time_address(ctx, unit->mFile, unit->mTextSection, next->mAddress);
         if (state->mFlags & LINE_EndSequence) continue;
         if (next_addr > addr0 && state_addr < addr1) {
             if (*cnt > 0) write_stream(out, ',');
@@ -255,7 +257,7 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineT
                                     state_name = f->mName;
                                 }
                                 if (!cmp_file(file_name, state_dir, state_name)) continue;
-                                addr = elf_map_to_run_time_address(ctx, file, state->mAddress);
+                                addr = elf_map_to_run_time_address(ctx, file, unit->mTextSection, state->mAddress);
                                 if (addr == 0) continue;
                                 callback(user_args, addr);
                             }
@@ -331,8 +333,6 @@ static void map_to_source_cache_client(void * x) {
         }
         elf_list_done(ctx);
     }
-
-    if (err == ERR_CACHE_MISS) exception(ERR_CACHE_MISS);
 
     cache_exit();
 

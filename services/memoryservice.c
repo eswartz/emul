@@ -64,7 +64,7 @@ static void write_context(OutputStream * out, Context * ctx) {
 
     json_write_string(out, "ID");
     write_stream(out, ':');
-    json_write_string(out, container_id(ctx));
+    json_write_string(out, ctx2id(ctx));
 
 #if !defined(_WRS_KERNEL)
     write_stream(out, ',');
@@ -204,7 +204,7 @@ static void command_get_children(char * token, Channel * c) {
             if (ctx->exited) continue;
             if (ctx->parent != NULL) continue;
             if (cnt > 0) write_stream(&c->out, ',');
-            json_write_string(&c->out, container_id(ctx));
+            json_write_string(&c->out, ctx2id(ctx));
             cnt++;
         }
     }
@@ -272,7 +272,7 @@ static void send_event_memory_changed(OutputStream * out, Context * ctx, Context
     write_stringz(out, MEMORY);
     write_stringz(out, "memoryChanged");
 
-    json_write_string(out, container_id(ctx));
+    json_write_string(out, ctx2id(ctx));
     write_stream(out, 0);
 
     /* <array of addres ranges> */
@@ -343,7 +343,7 @@ static void safe_memory_set(void * parm) {
                 write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
             }
             write_stream(out, MARKER_EOM);
-            flush_stream(out);
+            flush_stream(&c->bcg->out);
             clear_trap(&trap);
         }
         else {
@@ -505,7 +505,7 @@ static void safe_memory_fill(void * parm) {
                 write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
             }
             write_stream(out, MARKER_EOM);
-            flush_stream(out);
+            flush_stream(&c->bcg->out);
             clear_trap(&trap);
         }
         else {
@@ -559,7 +559,7 @@ static void send_event_context_removed(OutputStream * out, Context * ctx) {
 
     /* <array of context IDs> */
     write_stream(out, '[');
-    json_write_string(out, container_id(ctx));
+    json_write_string(out, ctx2id(ctx));
     write_stream(out, ']');
     write_stream(out, 0);
 

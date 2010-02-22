@@ -20,6 +20,10 @@
 #ifndef D_dwarfio
 #define D_dwarfio
 
+#include "config.h"
+
+#if ENABLE_ELF
+
 #include "tcf_elf.h"
 
 typedef struct DIO_UnitDescriptor {
@@ -40,9 +44,9 @@ extern U8_T dio_gEntryPos;
 extern U8_T dio_gFormData;
 extern size_t dio_gFormDataSize;
 extern void * dio_gFormDataAddr;
+extern ELF_Section * dio_gFormSection;
 
-extern void dio_EnterDebugSection(DIO_UnitDescriptor * Unit, ELF_Section * Section, U8_T Offset);
-extern void dio_EnterDataSection(DIO_UnitDescriptor * Unit, U1_T * Data, U8_T Offset, U8_T Size);
+extern void dio_EnterSection(DIO_UnitDescriptor * Unit, ELF_Section * Section, U8_T Offset);
 extern void dio_ExitSection(void);
 
 extern void dio_Skip(I8_T Bytes);
@@ -61,7 +65,8 @@ extern U8_T dio_ReadU8LEB128(void);
 extern I8_T dio_ReadS8LEB128(void);
 
 extern U8_T dio_ReadUX(int Size);
-extern U8_T dio_ReadAddress(void);
+extern U8_T dio_ReadAddressX(ELF_Section ** s, int Size);
+extern U8_T dio_ReadAddress(ELF_Section ** s);
 
 extern char * dio_ReadString(void);
 
@@ -83,6 +88,8 @@ extern void dio_ChkAddr(U2_T Form);
 extern void dio_ChkData(U2_T Form);
 extern void dio_ChkBlock(U2_T Form, U1_T ** Buf, size_t * Size);
 extern void dio_ChkString(U2_T Form);
+
+#endif /* ENABLE_ELF */
 
 #endif /* D_dwarfio */
 

@@ -32,7 +32,7 @@ struct LINK {
             (list)->next = (list)->prev = (list); \
         }
 
-#define list_is_empty(list) ((list)->next == (list) && (list)->prev == (list))
+#define list_is_empty(list) ((list)->next == (list) || (list)->next == NULL)
 
 #define list_remove(item) { \
             (item)->prev->next = (item)->next; \

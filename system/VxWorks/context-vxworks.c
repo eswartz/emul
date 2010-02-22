@@ -111,17 +111,22 @@ typedef struct AttachDoneArgs {
 
 static void event_attach_done(void * x) {
     AttachDoneArgs * args = (AttachDoneArgs *)x;
-    if (context_find_from_pid(args->pid) != NULL) {
+    if (context_find_from_pid(args->pid, 0) != NULL) {
         args->done(ERR_ALREADY_ATTACHED, NULL, args->data);
     }
     else {
+        Context * prs = create_context(args->pid, 0);
         Context * ctx = create_context(args->pid, sizeof(REG_SET));
-        ctx->mem = taskIdSelf();
+        prs->mem = ctx->mem = taskIdSelf();
+        ctx->parent = prs;
+        prs->ref_count++;
+        list_add_first(&ctx->cldl, &prs->children);
+        link_context(prs);
         link_context(ctx);
-        trace(LOG_CONTEXT, "context: attached: ctx %#lx, id %#x",
-                ctx, ctx->pid);
+        trace(LOG_CONTEXT, "context: attached: ctx %#lx, id %#x", prs, prs->pid);
+        send_context_created_event(prs);
         send_context_created_event(ctx);
-        args->done(0, ctx, args->data);
+        args->done(0, prs, args->data);
         if (taskIsStopped(args->pid)) {
             struct event_info * info;
             ctx->pending_intercept = 1;
@@ -149,7 +154,7 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
 }
 
 int context_has_state(Context * ctx) {
-    return 1;
+    return ctx != NULL && ctx->parent != NULL;
 }
 
 int context_stop(Context * ctx) {
@@ -195,6 +200,12 @@ int context_stop(Context * ctx) {
 }
 
 static int kill_context(Context * ctx) {
+    Context * prs = ctx->parent;
+
+    assert(ctx->stopped);
+    assert(ctx->parent != NULL);
+    assert(ctx->pending_signals & (1 << SIGKILL));
+
     ctx->pending_signals &= ~(1 << SIGKILL);
     if (taskDelete(ctx->pid) != OK) {
         int error = errno;
@@ -202,18 +213,21 @@ static int kill_context(Context * ctx) {
                 ctx, ctx->pid, errno_to_str(error));
         return -1;
     }
-    ctx->stopped = 0;
     send_context_started_event(ctx);
     ctx->exiting = 0;
     ctx->exited = 1;
     trace(LOG_CONTEXT, "context: killed ctx %#lx, id %#x", ctx, ctx->pid);
     send_context_exited_event(ctx);
-    if (ctx->parent != NULL) {
-        list_remove(&ctx->cldl);
-        context_unlock(ctx->parent);
-        ctx->parent = NULL;
-    }
+    list_remove(&ctx->cldl);
+    context_unlock(ctx->parent);
+    ctx->parent = NULL;
     context_unlock(ctx);
+    if (list_is_empty(&prs->children)) {
+        prs->exiting = 0;
+        prs->exited = 1;
+        send_context_exited_event(prs);
+        context_unlock(prs);
+    }
     return 0;
 }
 
@@ -256,7 +270,6 @@ int context_continue(Context * ctx) {
         return -1;
     }
     assert(!taskIsStopped(ctx->pid));
-    ctx->stopped = 0;
     taskUnlock();
     send_context_started_event(ctx);
     return 0;
@@ -300,7 +313,6 @@ int context_single_step(Context * ctx) {
         return -1;
     }
     ctx->pending_step = 1;
-    ctx->stopped = 0;
     taskUnlock();
     send_context_started_event(ctx);
     return 0;
@@ -326,8 +338,8 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
 
 static void event_handler(void * arg) {
     struct event_info * info = (struct event_info *)arg;
-    Context * current_ctx = context_find_from_pid(info->current_ctx.ctxId);
-    Context * stopped_ctx = context_find_from_pid(info->stopped_ctx.ctxId);
+    Context * current_ctx = context_find_from_pid(info->current_ctx.ctxId, 1);
+    Context * stopped_ctx = context_find_from_pid(info->stopped_ctx.ctxId, 1);
 
     switch (info->event) {
     case EVENT_HOOK_BREAKPOINT:
@@ -483,8 +495,9 @@ static void task_create_hook(WIND_TCB * tcb) {
 
 static void waitpid_listener(int pid, int exited, int exit_code, int signal, int event_code, int syscall, void * args) {
     if (exited) {
-        Context * stopped_ctx = context_find_from_pid(pid);
+        Context * stopped_ctx = context_find_from_pid(pid, 1);
         if (stopped_ctx != NULL) {
+            Context * prs = stopped_ctx->parent;
             /* TODO: need call back for vxdbgCont()
              * assert(!stopped_ctx->stopped) can fail if a task is resumed outside TCF agent.
              */
@@ -496,12 +509,16 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
             stopped_ctx->exited = 1;
             trace(LOG_CONTEXT, "context: exited ctx %#lx, id %#x", stopped_ctx, stopped_ctx->pid);
             send_context_exited_event(stopped_ctx);
-            if (stopped_ctx->parent != NULL) {
-                list_remove(&stopped_ctx->cldl);
-                context_unlock(stopped_ctx->parent);
-                stopped_ctx->parent = NULL;
-            }
+            list_remove(&stopped_ctx->cldl);
+            context_unlock(prs);
+            stopped_ctx->parent = NULL;
             context_unlock(stopped_ctx);
+            if (list_is_empty(&prs->children)) {
+                prs->exiting = 0;
+                prs->exited = 1;
+                send_context_exited_event(prs);
+                context_unlock(prs);
+            }
         }
     }
 }

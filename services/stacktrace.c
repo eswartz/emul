@@ -239,7 +239,7 @@ static int id2frame(char * id, Context ** ctx, int * frame) {
     }
     pid[i++] = 0;
     id++;
-    *ctx = context_find_from_pid(strtol(pid, NULL, 10));
+    *ctx = context_find_from_pid(strtol(pid, NULL, 10), 1);
     if (*ctx == NULL) {
         errno = ERR_INV_CONTEXT;
         return -1;
@@ -261,7 +261,7 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int leve
     write_stream(out, ',');
     json_write_string(out, "ParentID");
     write_stream(out, ':');
-    json_write_string(out, thread_id(ctx));
+    json_write_string(out, ctx2id(ctx));
 
 #if !defined(_WRS_KERNEL)
     write_stream(out, ',');

@@ -55,16 +55,10 @@ char * pid2id(pid_t pid, pid_t parent) {
     return p;
 }
 
-char * thread_id(Context * ctx) {
-    if (ctx->parent == NULL) return pid2id(ctx->pid, ctx->pid);
+char * ctx2id(Context * ctx) {
+    if (ctx->parent == NULL) return pid2id(ctx->pid, 0);
     assert(ctx->parent->parent == NULL);
     return pid2id(ctx->pid, ctx->parent->pid);
-}
-
-char * container_id(Context * ctx) {
-    if (ctx->parent != NULL) ctx = ctx->parent;
-    assert(ctx->parent == NULL);
-    return pid2id(ctx->pid, 0);
 }
 
 pid_t id2pid(char * id, pid_t * parent) {
@@ -104,7 +98,9 @@ static LINK context_pid_root[CONTEXT_PID_HASH_SIZE];
 void link_context(Context * ctx) {
     LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(ctx->pid)];
 
-    assert(context_find_from_pid(ctx->pid) == NULL);
+    assert(ctx->pid != 0);
+    assert(ctx->mem != 0);
+    assert(context_find_from_pid(ctx->pid, ctx->parent != NULL) == NULL);
     list_remove(&ctx->ctxl);
     list_remove(&ctx->pidl);
     list_add_first(&ctx->ctxl, &context_root);
@@ -112,7 +108,7 @@ void link_context(Context * ctx) {
     ctx->ref_count++;
 }
 
-Context * context_find_from_pid(pid_t pid) {
+Context * context_find_from_pid(pid_t pid, int thread) {
     LINK * qhp = &context_pid_root[CONTEXT_PID_HASH(pid)];
     LINK * qp = qhp->next;
 
@@ -120,16 +116,18 @@ Context * context_find_from_pid(pid_t pid) {
     if (qp == NULL) return NULL;
     while (qp != qhp) {
         Context * ctx = pidl2ctxp(qp);
-        if (ctx->pid == pid && !ctx->exited) return ctx;
+        if (ctx->pid == pid && !ctx->exited &&
+            (ctx->parent != NULL) == (thread != 0)) return ctx;
         qp = qp->next;
     }
     return NULL;
 }
 
 Context * id2ctx(char * id) {
-    pid_t pid = id2pid(id, NULL);
+    pid_t parent = 0;
+    pid_t pid = id2pid(id, &parent);
     if (pid == 0) return NULL;
-    return context_find_from_pid(pid);
+    return context_find_from_pid(pid, parent != 0);
 }
 
 void context_lock(Context * ctx) {
@@ -228,7 +226,11 @@ void send_context_stopped_event(Context * ctx) {
 void send_context_started_event(Context * ctx) {
     ContextEventListener * listener = event_listeners;
     assert(ctx->ref_count > 0);
-    assert(ctx->stopped == 0);
+    ctx->stopped = 0;
+#if !ENABLE_ContextProxy
+    ctx->stopped_by_bp = 0;
+    ctx->stopped_by_exception = 0;
+#endif
     ctx->event_notification++;
     while (listener != NULL) {
         if (listener->context_started != NULL) {

@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server", "server.vcproj", "{4EBA43E4-98C0-4F00-ADA7-21758F1BAE77}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "agent", "..\agent\agent.vcproj", "{A1341B90-F807-4D1F-A48E-C42BE62D9C57}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -15,10 +13,6 @@ Global
 		{4EBA43E4-98C0-4F00-ADA7-21758F1BAE77}.Debug|Win32.Build.0 = Debug|Win32
 		{4EBA43E4-98C0-4F00-ADA7-21758F1BAE77}.Release|Win32.ActiveCfg = Release|Win32
 		{4EBA43E4-98C0-4F00-ADA7-21758F1BAE77}.Release|Win32.Build.0 = Release|Win32
-		{A1341B90-F807-4D1F-A48E-C42BE62D9C57}.Debug|Win32.ActiveCfg = Debug|Win32
-		{A1341B90-F807-4D1F-A48E-C42BE62D9C57}.Debug|Win32.Build.0 = Debug|Win32
-		{A1341B90-F807-4D1F-A48E-C42BE62D9C57}.Release|Win32.ActiveCfg = Release|Win32
-		{A1341B90-F807-4D1F-A48E-C42BE62D9C57}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

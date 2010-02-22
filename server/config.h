@@ -105,7 +105,7 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
     ini_symbols_service(proto);
 #endif
 #if SERVICE_PathMap
-    ini_path_map_service(proto, bcg);
+    ini_path_map_service(proto);
 #endif
 #if ENABLE_DebugContext
     ini_contexts();

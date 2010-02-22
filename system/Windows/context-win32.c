@@ -226,25 +226,31 @@ static void event_win32_context_stopped(Context * ctx) {
     ctx->stopped_by_exception = 0;
     switch (exception_code) {
     case 0:
+        ctx->pending_step = 0;
         break;
     case EXCEPTION_SINGLE_STEP:
+        assert(ctx->pending_step);
         ctx->pending_step = 0;
         break;
     case EXCEPTION_BREAKPOINT:
         if (!ctx->regs_error && is_breakpoint_address(ctx, get_regs_PC(ctx->regs) - BREAK_SIZE)) {
+            assert(!ctx->pending_step);
             set_regs_PC(ctx->regs, get_regs_PC(ctx->regs) - BREAK_SIZE);
             ctx->regs_dirty = 1;
             ctx->stopped_by_bp = 1;
         }
         else {
+            ctx->pending_step = 0;
             ctx->pending_intercept = 1;
         }
         break;
     case EXCEPTION_DEBUGGER_IO:
+        ctx->pending_step = 0;
         trace(LOG_ALWAYS, "Debugger IO request %#lx",
             ctx->suspend_reason.ExceptionRecord.ExceptionInformation[0]);
         break;
     default:
+        ctx->pending_step = 0;
         ctx->pending_signals |= 1 << ctx->signal;
         if (ctx->signal != 0 && (ctx->sig_dont_stop & (1 << ctx->signal)) != 0) break;
         ctx->stopped_by_exception = 1;
@@ -265,7 +271,6 @@ static void event_win32_context_started(Context * ctx) {
     DWORD exception_code = ctx->suspend_reason.ExceptionRecord.ExceptionCode;
     trace(LOG_CONTEXT, "context: started: ctx %#lx, pid %d", ctx, ctx->pid);
     assert(ctx->stopped);
-    ctx->stopped = 0;
     if (ctx->debug_started && exception_code == EXCEPTION_BREAKPOINT) ctx->debug_started = 0;
     send_context_started_event(ctx);
 }
@@ -340,8 +345,8 @@ static void debug_event_handler(void * x) {
     while (args != NULL) {
 
         DEBUG_EVENT * debug_event = &args->event;
-        Context * prs = context_find_from_pid(debug_event->dwProcessId);
-        Context * ctx = context_find_from_pid(debug_event->dwThreadId);
+        Context * prs = context_find_from_pid(debug_event->dwProcessId, 0);
+        Context * ctx = context_find_from_pid(debug_event->dwThreadId, 1);
 
         assert(ctx == NULL || ctx->parent == prs);
 
@@ -459,7 +464,7 @@ static void debug_event_handler(void * x) {
 
 static void debugger_exit_handler(void * x) {
     DebugThreadArgs * args = (DebugThreadArgs *)x;
-    Context * prs = context_find_from_pid(args->context_id);
+    Context * prs = context_find_from_pid(args->context_id, 0);
 
     trace(LOG_WAITPID, "debugger thread %d exited, debuggee pid %d",
         args->debug_thread_id, args->context_id);
@@ -659,7 +664,7 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
 }
 
 int context_has_state(Context * ctx) {
-    return ctx != NULL && ctx->pid != ctx->mem;
+    return ctx != NULL && ctx->parent != NULL;
 }
 
 int context_stop(Context * ctx) {
@@ -688,12 +693,13 @@ int context_continue(Context * ctx) {
     assert(ctx->stopped);
     assert(!ctx->intercepted);
     assert(!ctx->exited);
+    assert(!ctx->pending_step);
 
     if (skip_breakpoint(ctx, 0)) return 0;
 
     trace(LOG_CONTEXT, "context: resuming ctx %#lx, pid %d", ctx, ctx->pid);
 #if defined(__i386__) || defined(__x86_64__)
-    if (!ctx->pending_step && (((REG_SET *)ctx->regs)->EFlags & 0x100) != 0) {
+    if ((((REG_SET *)ctx->regs)->EFlags & 0x100) != 0) {
         ((REG_SET *)ctx->regs)->EFlags &= ~0x100;
         ctx->regs_dirty = 1;
     }
@@ -711,6 +717,7 @@ int context_single_step(Context * ctx) {
     assert(context_has_state(ctx));
     assert(ctx->stopped);
     assert(!ctx->exited);
+    assert(!ctx->pending_step);
 
     if (skip_breakpoint(ctx, 1)) return 0;
 
@@ -721,8 +728,10 @@ int context_single_step(Context * ctx) {
         return -1;
     }
 #if defined(__i386__) || defined(__x86_64__)
-    ((REG_SET *)ctx->regs)->EFlags |= 0x100;
-    ctx->regs_dirty = 1;
+    if ((((REG_SET *)ctx->regs)->EFlags & 0x100) == 0) {
+        ((REG_SET *)ctx->regs)->EFlags |= 0x100;
+        ctx->regs_dirty = 1;
+    }
 #endif
     ctx->pending_step = 1;
     return win32_resume(ctx);

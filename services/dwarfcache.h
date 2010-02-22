@@ -110,6 +110,7 @@ struct LineNumbersState {
 struct CompUnit {
     ELF_File * mFile;
     ELF_Section * mSection;
+    ELF_Section * mTextSection;
 
     U8_T mID;
     ContextAddress mLowPC;
@@ -173,9 +174,13 @@ extern void load_line_numbers(DWARFCache * cache, CompUnit * unit);
 /* Find ObjectInfo by ID */
 extern ObjectInfo * find_object(DWARFCache * cache, U8_T ID);
 
-/* Read and evaluate a property of a DWARF object */
+/*
+ * Read and evaluate a property of a DWARF object, perform ELF relocations if any.
+ * FORM_ADDR values are mapped to run-time address space.
+ */
 extern void read_and_evaluate_dwarf_object_property(Context * ctx, int frame, U8_T base, ObjectInfo * obj, int attr_tag, PropertyValue * value);
 
+/* Convert PropertyValue to a number */
 extern U8_T get_numeric_property_value(PropertyValue * Value);
 
 #endif /* ENABLE_ELF */

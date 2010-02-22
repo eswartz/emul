@@ -996,7 +996,7 @@ static void command_realpath(char * token, Channel * c) {
     json_write_string(&c->out, real);
     write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
-    if (real != NULL) free(real);
+    free(real);
 }
 
 static void command_rename(char * token, Channel * c) {

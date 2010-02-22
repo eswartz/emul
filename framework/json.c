@@ -819,6 +819,9 @@ int read_errno(InputStream * inp) {
             else if (strcmp(name, "Time") == 0) {
                 err->time_stamp = json_read_int64(inp);
             }
+            else if (strcmp(name, "Format") == 0) {
+                err->format = json_read_alloc_string(inp);
+            }
             else {
                 ErrorReportItem * i = (ErrorReportItem *)loc_alloc_zero(sizeof(ErrorReportItem));
                 i->name = loc_strdup(name);
@@ -856,6 +859,13 @@ static void write_error_props(OutputStream * out, ErrorReport * rep) {
         json_write_string(out, "Time");
         write_stream(out, ':');
         json_write_int64(out, rep->time_stamp);
+    }
+
+    if (rep->format != NULL) {
+        write_stream(out, ',');
+        json_write_string(out, "Format");
+        write_stream(out, ':');
+        json_write_string(out, rep->format);
     }
 
     while (i != NULL) {

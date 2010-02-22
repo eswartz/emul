@@ -283,14 +283,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\services\expressions.c"
-				>
-			</File>
-			<File
-				RelativePath=".\services\expressions.h"
-				>
-			</File>
-			<File
 				RelativePath=".\framework\inputbuf.c"
 				>
 			</File>
@@ -464,6 +456,22 @@
 			</File>
 			<File
 				RelativePath=".\services\dwarfio.h"
+				>
+			</File>
+			<File
+				RelativePath=".\services\dwarfreloc.c"
+				>
+			</File>
+			<File
+				RelativePath=".\services\dwarfreloc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\services\expressions.c"
+				>
+			</File>
+			<File
+				RelativePath=".\services\expressions.h"
 				>
 			</File>
 			<File

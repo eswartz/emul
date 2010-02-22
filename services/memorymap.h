@@ -31,6 +31,7 @@ struct MemoryRegion {
     dev_t dev;                  /* Region file device ID */
     ino_t ino;                  /* Region file inode */
     char * file_name;           /* Region file name */
+    char * sect_name;           /* Region file section name, can be NULL */
     unsigned flags;             /* Region flags, see MM_FLAG* */
 };
 

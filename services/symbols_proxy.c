@@ -21,23 +21,29 @@
 #if ENABLE_SymbolsProxy
 
 #include <assert.h>
+#include <stdio.h>
 #include "context.h"
 #include "cache.h"
 #include "json.h"
 #include "events.h"
 #include "myalloc.h"
 #include "exceptions.h"
+#include "stacktrace.h"
 #include "symbols.h"
 
 #define HASH_SIZE 511
 
-typedef struct SymTable {
-    LINK hash[HASH_SIZE];
-} SymTable;
+typedef struct SymbolsCache {
+    Channel * channel;
+    LINK link_root;
+    LINK link_sym[HASH_SIZE];
+    LINK link_find[HASH_SIZE];
+    LINK link_list[HASH_SIZE];
+} SymbolsCache;
 
-typedef struct SymCache {
+typedef struct SymInfoCache {
     unsigned magic;
-    LINK link_hash;
+    LINK link_syms;
     AbstractCache cache;
     char * id;
     char * type_id;
@@ -70,7 +76,7 @@ typedef struct SymCache {
     int done_context;
     int done_children;
     LINK array_syms;
-} SymCache;
+} SymInfoCache;
 
 typedef struct ArraySymCache {
     LINK link_sym;
@@ -81,19 +87,47 @@ typedef struct ArraySymCache {
     char * id;
 } ArraySymCache;
 
+typedef struct FindSymCache {
+    LINK link_syms;
+    AbstractCache cache;
+    ReplyHandlerInfo * pending;
+    ErrorReport * error;
+    pid_t mem;
+    uint64_t ip;
+    char * name;
+    char * id;
+} FindSymCache;
+
+typedef struct ListSymCache {
+    LINK link_syms;
+    AbstractCache cache;
+    ReplyHandlerInfo * pending;
+    ErrorReport * error;
+    pid_t mem;
+    uint64_t ip;
+    char ** list;
+    unsigned list_size;
+    unsigned list_max;
+} ListSymCache;
+
 #define SYM_CACHE_MAGIC 0x38254865
 
-#define hash2sym(A) ((SymCache *)((char *)(A) - offsetof(SymCache, link_hash)))
-#define sym2arr(A)  ((ArraySymCache *)((char *)(A) - offsetof(ArraySymCache, link_sym)))
+#define root2syms(A) ((SymbolsCache *)((char *)(A) - offsetof(SymbolsCache, link_root)))
+#define syms2sym(A)  ((SymInfoCache *)((char *)(A) - offsetof(SymInfoCache, link_syms)))
+#define syms2find(A) ((FindSymCache *)((char *)(A) - offsetof(FindSymCache, link_syms)))
+#define syms2list(A) ((ListSymCache *)((char *)(A) - offsetof(ListSymCache, link_syms)))
+#define sym2arr(A)   ((ArraySymCache *)((char *)(A) - offsetof(ArraySymCache, link_sym)))
 
 struct Symbol {
     unsigned magic;
-    SymCache * cache;
+    SymInfoCache * cache;
 };
 
 #include "symbols_alloc.h"
 
-static unsigned sym_hash(char * id) {
+static LINK root;
+
+static unsigned hash_sym_id(char * id) {
     int i;
     unsigned h = 0;
     for (i = 0; id[i]; i++) h += id[i];
@@ -101,15 +135,51 @@ static unsigned sym_hash(char * id) {
     return h % HASH_SIZE;
 }
 
-static SymTable * get_sym_table(void) {
+static unsigned hash_find(char * name, uint64_t ip, pid_t mem) {
+    int i;
+    unsigned h = 0;
+    for (i = 0; name[i]; i++) h += name[i];
+    h = h + h / HASH_SIZE;
+    return (h + (unsigned)ip + (unsigned)mem) % HASH_SIZE;
 }
 
-static void free_sym_cache(SymCache * c) {
+static unsigned hash_list(uint64_t ip, pid_t mem) {
+    return ((unsigned)ip + (unsigned)mem) % HASH_SIZE;
+}
+
+static SymbolsCache * get_symbols_cache(void) {
+    LINK * l = NULL;
+    SymbolsCache * syms = NULL;
+    Channel * c = cache_channel();
+    if (c == NULL) exception(ERR_SYM_NOT_FOUND);
+    for (l = root.next; l != &root; l = l->next) {
+        SymbolsCache * x = root2syms(l);
+        if (x->channel == c) {
+            syms = x;
+            break;
+        }
+    }
+    if (syms == NULL) {
+        int i = 0;
+        syms = loc_alloc_zero(sizeof(SymbolsCache));
+        syms->channel = c;
+        list_add_first(&syms->link_root, &root);
+        for (i = 0; i < HASH_SIZE; i++) {
+            list_init(syms->link_sym + i);
+            list_init(syms->link_find + i);
+            list_init(syms->link_list + i);
+        }
+        channel_lock(c);
+    }
+    return syms;
+}
+
+static void free_sym_info_cache(SymInfoCache * c) {
     int i;
     assert(c->magic == SYM_CACHE_MAGIC);
     assert(c->pending_get_context == NULL);
     assert(c->error_get_children == NULL);
-    list_remove(&c->link_hash);
+    list_remove(&c->link_syms);
     cache_dispose(&c->cache);
     loc_free(c->id);
     loc_free(c->type_id);
@@ -134,9 +204,42 @@ static void free_sym_cache(SymCache * c) {
     loc_free(c);
 }
 
+static void free_symbols_cache(SymbolsCache * syms) {
+    int i;
+    for (i = 0; i < HASH_SIZE; i++) {
+        while (!list_is_empty(syms->link_sym + i)) {
+            free_sym_info_cache(syms2sym(syms->link_sym[i].next));
+        }
+        while (!list_is_empty(syms->link_find + i)) {
+            FindSymCache * c = syms2find(syms->link_find[i].next);
+            assert(c->pending == NULL);
+            list_remove(&c->link_syms);
+            cache_dispose(&c->cache);
+            release_error_report(c->error);
+            loc_free(c->name);
+            loc_free(c->id);
+            loc_free(c);
+        }
+        while (!list_is_empty(syms->link_list + i)) {
+            unsigned j;
+            ListSymCache * c = syms2list(syms->link_list[i].next);
+            assert(c->pending == NULL);
+            list_remove(&c->link_syms);
+            cache_dispose(&c->cache);
+            release_error_report(c->error);
+            for (j = 0; j < c->list_size; j++) loc_free(c->list[j]);
+            loc_free(c->list);
+            loc_free(c);
+        }
+    }
+    channel_unlock(syms->channel);
+    list_remove(&syms->link_root);
+    loc_free(syms);
+}
+
 static void read_context_data(InputStream * inp, char * name, void * args) {
     char id[256];
-    SymCache * s = args;
+    SymInfoCache * s = args;
     if (strcmp(name, "ID") == 0) { json_read_string(inp, id, sizeof(id)); assert(strcmp(id, s->id) == 0); }
     else if (strcmp(name, "Name") == 0) s->name = json_read_alloc_string(inp);
     else if (strcmp(name, "Class") == 0) s->sym_class = json_read_long(inp);
@@ -155,7 +258,7 @@ static void read_context_data(InputStream * inp, char * name, void * args) {
 }
 
 static void validate_context(Channel * c, void * args, int error) {
-    SymCache * s = args;
+    SymInfoCache * s = args;
     assert(s->pending_get_context != NULL);
     assert(s->error_get_context == NULL);
     assert(!s->done_context);
@@ -171,9 +274,9 @@ static void validate_context(Channel * c, void * args, int error) {
     cache_notify(&s->cache);
 }
 
-static SymCache * get_sym_cache(const Symbol * sym) {
+static SymInfoCache * get_sym_info_cache(const Symbol * sym) {
     Trap trap;
-    SymCache * s = sym->cache;
+    SymInfoCache * s = sym->cache;
     assert(sym->magic == SYMBOL_MAGIC);
     assert(s->magic == SYM_CACHE_MAGIC);
     assert(s->id != NULL);
@@ -186,7 +289,7 @@ static SymCache * get_sym_cache(const Symbol * sym) {
     }
     else if (!s->done_context) {
         Channel * c = cache_channel();
-        if (c == NULL) exception(ERR_CACHE_MISS);
+        if (c == NULL) exception(ERR_SYM_NOT_FOUND);
         s->pending_get_context = protocol_send_command(c, "Symbols", "getContext", validate_context, s);
         json_write_string(&c->out, s->id);
         write_stream(&c->out, 0);
@@ -198,14 +301,177 @@ static SymCache * get_sym_cache(const Symbol * sym) {
     return s;
 }
 
+static void validate_find(Channel * c, void * args, int error) {
+    FindSymCache * f = args;
+    assert(f->pending != NULL);
+    assert(f->error == NULL);
+    f->pending = NULL;
+    f->error = get_error_report(error);
+    if (!error) {
+        f->error = get_error_report(read_errno(&c->inp));
+        f->id = json_read_alloc_string(&c->inp);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    }
+    assert(f->error != NULL || f->id != NULL);
+    cache_notify(&f->cache);
+}
+
 int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
+    uint64_t ip = 0;
+    LINK * l = NULL;
+    SymbolsCache * syms = NULL;
+    FindSymCache * f = NULL;
+    unsigned h;
+    Trap trap;
+
+    if (!set_trap(&trap)) return -1;
+
+    if (frame != STACK_NO_FRAME) {
+        StackFrame * info = NULL;
+        if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
+        if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) exception(errno);
+    }
+
+    h = hash_find(name, ip, ctx->mem);
+    syms = get_symbols_cache();
+    for (l = syms->link_find[h].next; l != syms->link_find + h; l = l->next) {
+        FindSymCache * c = syms2find(syms->link_find[h].next);
+        if (c->mem == ctx->mem && c->ip == ip && strcmp(c->name, name) == 0) {
+            f = c;
+            break;
+        }
+    }
+
+    if (f == NULL) {
+        Channel * c = cache_channel();
+        if (c == NULL) exception(ERR_SYM_NOT_FOUND);
+        f = loc_alloc_zero(sizeof(FindSymCache));
+        list_add_first(&f->link_syms, syms->link_find + h);
+        f->mem = ctx->mem;
+        f->ip = ip;
+        f->name = loc_strdup(name);
+        f->pending = protocol_send_command(c, "Symbols", "find", validate_find, f);
+        if (frame != STACK_NO_FRAME) {
+            json_write_string(&c->out, get_stack_frame_id(ctx, frame));
+        }
+        else {
+            while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+            json_write_string(&c->out, ctx2id(ctx));
+        }
+        write_stream(&c->out, 0);
+        json_write_string(&c->out, name);
+        write_stream(&c->out, 0);
+        write_stream(&c->out, MARKER_EOM);
+        flush_stream(&c->out);
+        cache_wait(&f->cache);
+    }
+    else if (f->pending != NULL) {
+        cache_wait(&f->cache);
+    }
+    else if (f->error != NULL) {
+        char msg[256];
+        snprintf(msg, sizeof(msg), "Symbol '%s' not found", name);
+        exception(set_errno(set_error_report_errno(f->error), msg));
+    }
+    else if (id2symbol(f->id, sym) < 0) {
+        exception(errno);
+    }
+    clear_trap(&trap);
+    return 0;
+}
+
+static void read_sym_list_item(InputStream * inp, void * args) {
+    ListSymCache * f = args;
+    char * id = json_read_alloc_string(inp);
+    if (f->list_size >= f->list_max) {
+        f->list_max += 16;
+        f->list = loc_realloc(f->list, f->list_max * sizeof(char *));
+    }
+    f->list[f->list_size++] = id;
+}
+
+static void validate_list(Channel * c, void * args, int error) {
+    ListSymCache * f = args;
+    assert(f->pending != NULL);
+    assert(f->error == NULL);
+    f->pending = NULL;
+    f->error = get_error_report(error);
+    if (!error) {
+        f->error = get_error_report(read_errno(&c->inp));
+        json_read_array(&c->inp, read_sym_list_item, f);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+        if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+    }
+    cache_notify(&f->cache);
 }
 
 int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func, void * args) {
+    uint64_t ip = 0;
+    unsigned h;
+    LINK * l;
+    Trap trap;
+    SymbolsCache * syms = NULL;
+    ListSymCache * f = NULL;
+
+    if (!set_trap(&trap)) return -1;
+
+    if (frame != STACK_NO_FRAME) {
+        StackFrame * info = NULL;
+        if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
+        if (read_reg_value(get_PC_definition(ctx), info, &ip) < 0) exception(errno);
+    }
+
+    h = hash_list(ip, ctx->mem);
+    syms = get_symbols_cache();
+    for (l = syms->link_list[h].next; l != syms->link_list + h; l = l->next) {
+        ListSymCache * c = syms2list(syms->link_list[h].next);
+        if (c->mem == ctx->mem && c->ip == ip) {
+            f = c;
+            break;
+        }
+    }
+
+    if (f == NULL) {
+        Channel * c = cache_channel();
+        if (c == NULL) exception(ERR_SYM_NOT_FOUND);
+        f = loc_alloc_zero(sizeof(ListSymCache));
+        list_add_first(&f->link_syms, syms->link_list + h);
+        f->mem = ctx->mem;
+        f->ip = ip;
+        f->pending = protocol_send_command(c, "Symbols", "list", validate_list, f);
+        if (frame != STACK_NO_FRAME) {
+            json_write_string(&c->out, get_stack_frame_id(ctx, frame));
+        }
+        else {
+            while (ctx->parent != NULL && ctx->parent->mem == ctx->mem) ctx = ctx->parent;
+            json_write_string(&c->out, ctx2id(ctx));
+        }
+        write_stream(&c->out, 0);
+        write_stream(&c->out, MARKER_EOM);
+        flush_stream(&c->out);
+        cache_wait(&f->cache);
+    }
+    else if (f->pending != NULL) {
+        cache_wait(&f->cache);
+    }
+    else if (f->error != NULL) {
+        exception(set_error_report_errno(f->error));
+    }
+    else {
+        unsigned i;
+        for (i = 0; i < f->list_size; i++) {
+            Symbol * sym = NULL;
+            if (id2symbol(f->list[i], &sym) < 0) exception(errno);
+            func(args, sym);
+        }
+    }
+    clear_trap(&trap);
+    return 0;
 }
 
 char * symbol2id(const Symbol * sym) {
-    SymCache * s = sym->cache;
+    SymInfoCache * s = sym->cache;
     assert(s->magic == SYM_CACHE_MAGIC);
     assert(s->id != NULL);
     return s->id;
@@ -213,11 +479,11 @@ char * symbol2id(const Symbol * sym) {
 
 int id2symbol(char * id, Symbol ** sym) {
     LINK * l;
-    SymCache * s = NULL;
-    unsigned h = sym_hash(id);
-    SymTable * t = get_sym_table();
-    for (l = t->hash[h].next; l != t->hash + h; l = l->next) {
-        SymCache * x = hash2sym(l);
+    SymInfoCache * s = NULL;
+    unsigned h = hash_sym_id(id);
+    SymbolsCache * t = get_symbols_cache();
+    for (l = t->link_sym[h].next; l != t->link_sym + h; l = l->next) {
+        SymInfoCache * x = syms2sym(l);
         if (strcmp(x->id, id) == 0) {
             s = x;
             break;
@@ -227,7 +493,7 @@ int id2symbol(char * id, Symbol ** sym) {
         s = loc_alloc_zero(sizeof(*s));
         s->magic = SYM_CACHE_MAGIC;
         s->id = loc_strdup(id);
-        list_add_first(&s->link_hash, t->hash + h);
+        list_add_first(&s->link_syms, t->link_sym + h);
         list_init(&s->array_syms);
     }
     *sym = alloc_symbol();
@@ -238,49 +504,49 @@ int id2symbol(char * id, Symbol ** sym) {
 /*************** Functions for retrieving symbol properties ***************************************/
 
 int get_symbol_class(const Symbol * sym, int * symbol_class) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     *symbol_class = c->sym_class;
     return 0;
 }
 
 int get_symbol_type(const Symbol * sym, Symbol ** type) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (c->type_id) return id2symbol(c->type_id, type);
     return 0;
 }
 
 int get_symbol_type_class(const Symbol * sym, int * type_class) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     *type_class = c->type_class;
     return 0;
 }
 
 int get_symbol_name(const Symbol * sym, char ** name) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     *name = c->name;
     return 0;
 }
 
 int get_symbol_base_type(const Symbol * sym, Symbol ** type) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (c->base_type_id) return id2symbol(c->base_type_id, type);
     return 0;
 }
 
 int get_symbol_index_type(const Symbol * sym, Symbol ** type) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (c->index_type_id) return id2symbol(c->index_type_id, type);
     return 0;
 }
 
 int get_symbol_size(const Symbol * sym, ContextAddress * size) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (!c->has_size) {
         errno = ERR_INV_CONTEXT;
@@ -291,7 +557,7 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
 }
 
 int get_symbol_length(const Symbol * sym, ContextAddress * length) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (!c->has_length) {
         errno = ERR_INV_CONTEXT;
@@ -302,7 +568,7 @@ int get_symbol_length(const Symbol * sym, ContextAddress * length) {
 }
 
 int get_symbol_lower_bound(const Symbol * sym, ContextAddress * lower_bound) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (!c->has_lower_bound) {
         errno = ERR_INV_CONTEXT;
@@ -313,7 +579,7 @@ int get_symbol_lower_bound(const Symbol * sym, ContextAddress * lower_bound) {
 }
 
 int get_symbol_offset(const Symbol * sym, ContextAddress * offset) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (!c->has_offset) {
         errno = ERR_INV_CONTEXT;
@@ -324,7 +590,7 @@ int get_symbol_offset(const Symbol * sym, ContextAddress * offset) {
 }
 
 int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (c->sym_class != SYM_CLASS_VALUE) {
         errno = ERR_INV_CONTEXT;
@@ -336,10 +602,10 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
 }
 
 int get_symbol_address(const Symbol * sym, ContextAddress * address) {
-    SymCache * c = get_sym_cache(sym);
+    SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (!c->has_address) {
-        errno = ERR_INV_CONTEXT;
+        errno = ERR_INV_ADDRESS;
         return -1;
     }
     *address = c->address;
@@ -347,7 +613,7 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
 }
 
 static void validate_children(Channel * c, void * args, int error) {
-    SymCache * s = args;
+    SymInfoCache * s = args;
     assert(s->pending_get_children != NULL);
     assert(s->error_get_children == NULL);
     assert(!s->done_children);
@@ -365,7 +631,7 @@ static void validate_children(Channel * c, void * args, int error) {
 
 int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
     Trap trap;
-    SymCache * s = get_sym_cache(sym);
+    SymInfoCache * s = get_sym_info_cache(sym);
     *children = NULL;
     *count = 0;
     if (s == NULL) return -1;
@@ -378,7 +644,7 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
     }
     else if (!s->done_children) {
         Channel * c = cache_channel();
-        if (c == NULL) exception(ERR_CACHE_MISS);
+        if (c == NULL) exception(ERR_SYM_NOT_FOUND);
         s->pending_get_children = protocol_send_command(c, "Symbols", "getChildren", validate_children, s);
         json_write_string(&c->out, s->id);
         write_stream(&c->out, 0);
@@ -424,7 +690,7 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
     LINK * l;
     Trap trap;
     ArraySymCache * a = NULL;
-    SymCache * s = get_sym_cache(sym);
+    SymInfoCache * s = get_sym_info_cache(sym);
     if (s == NULL) return -1;
     if (!set_trap(&trap)) return -1;
     for (l = s->array_syms.next; l != &s->array_syms; l = l->next) {
@@ -447,7 +713,7 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
     }
     else if (!a->id) {
         Channel * c = cache_channel();
-        if (c == NULL) exception(ERR_CACHE_MISS);
+        if (c == NULL) exception(ERR_SYM_NOT_FOUND);
         a->pending = protocol_send_command(c, "Symbols", "getArrayType", validate_type_id, a);
         json_write_string(&c->out, s->id);
         write_stream(&c->out, 0);
@@ -466,7 +732,21 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
 ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
 }
 
+static void channel_close_listener(Channel * c) {
+    LINK * l = NULL;
+
+    for (l = root.next; l != &root; l = l->next) {
+        SymbolsCache * s = root2syms(l);
+        if (s->channel == c) {
+            free_symbols_cache(s);
+            return;
+        }
+    }
+}
+
 void ini_symbols_lib(void) {
+    list_init(&root);
+    add_channel_close_listener(channel_close_listener);
 }
 
 #endif

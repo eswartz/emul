@@ -175,9 +175,7 @@ static ReplyHandlerInfo * find_reply_handler(Channel * c, unsigned long tokenid,
     ReplyHandlerInfo * rh;
     while ((rh = *rhp) != NULL) {
         if (rh->c == c && rh->tokenid == tokenid) {
-            if (take) {
-                *rhp = rh->next;
-            }
+            if (take) *rhp = rh->next;
             return rh;
         }
         rhp = &rh->next;
@@ -369,8 +367,7 @@ void set_default_message_handler2(Protocol * p, ProtocolMessageHandler2 handler,
     p->client_data = client_data;
 }
 
-static void command_handler_old(char * token, Channel * c, void * client_data)
-{
+static void command_handler_old(char * token, Channel * c, void * client_data) {
     ProtocolCommandHandler handler = (ProtocolCommandHandler)client_data;
     handler(token, c);
 }
@@ -621,14 +618,13 @@ static void channel_closed(Channel * c) {
                 *rhp = rh->next;
                 if (set_trap(&trap)) {
                     rh->handler(c, rh->client_data, ERR_CHANNEL_CLOSED);
-                    loc_free(rh);
                     clear_trap(&trap);
                 }
                 else {
                     trace(LOG_ALWAYS, "Exception handling reply %ul: %d %s",
                           rh->tokenid, trap.error, errno_to_str(trap.error));
-                    loc_free(rh);
                 }
+                loc_free(rh);
             }
             else {
                 rhp = &rh->next;

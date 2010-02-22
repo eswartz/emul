@@ -42,10 +42,15 @@ static void channel_redirected(Channel * host, Channel * target) {
     int i;
     int service_ln = 0;
     int service_mm = 0;
+    int service_pm = 0;
     for (i = 0; i < target->peer_service_cnt; i++) {
         protocol_get_service(host->protocol, target->peer_service_list[i]);
         if (strcmp(target->peer_service_list[i], "LineNumbers") == 0) service_ln = 1;
         if (strcmp(target->peer_service_list[i], "MemoryMap") == 0) service_mm = 1;
+        if (strcmp(target->peer_service_list[i], "PathMap") == 0) service_pm = 1;
+    }
+    if (!service_pm) {
+        ini_path_map_service(host->protocol);
     }
     if (service_mm) {
         ini_line_numbers_service(host->protocol);

@@ -13,23 +13,22 @@
  *******************************************************************************/
 
 /*
- * Path Map service.
- * The service manages file path mapping rules.
+ * This module implements ELF relocation records handling for reading DWARF debug information.
+ *
+ * Functions in this module use exceptions to report errors, see exceptions.h
  */
 
-#ifndef D_pathmap
-#define D_pathmap
+#ifndef D_dwarfreloc
+#define D_dwarfreloc
 
 #include "config.h"
-#include "protocol.h"
 
-/*
- * Translate debug file name to local name using file path mapping table of given channel.
- * Return pointer to static buffer that contains translated file name,
- * or null if mapping not found.
- */
-extern char * path_map_to_local(Channel * channel, char * file_name);
+#if ENABLE_ELF
 
-extern void ini_path_map_service(Protocol * proto);
+#include "tcf_elf.h"
 
-#endif /* D_pathmap */
+extern void drl_relocate(ELF_Section * s, U8_T offset, void * buf, size_t size, ELF_Section ** dst);
+
+#endif /* ENABLE_ELF */
+
+#endif /* D_dwarfreloc */

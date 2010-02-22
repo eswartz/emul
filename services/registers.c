@@ -49,7 +49,7 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
     write_stream(out, ',');
     json_write_string(out, "ParentID");
     write_stream(out, ':');
-    json_write_string(out, thread_id(ctx));
+    json_write_string(out, ctx2id(ctx));
 
     write_stream(out, ',');
     json_write_string(out, "Name");
@@ -87,10 +87,19 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int fram
     write_stream(out, 0);
 }
 
+static char * register2id(char * ctx_id, int frame, int reg) {
+    static char id[256];
+    if (frame == STACK_TOP_FRAME || frame == STACK_NO_FRAME) {
+        snprintf(id, sizeof(id), "R%d.%s", reg, ctx_id);
+    }
+    else {
+        snprintf(id, sizeof(id), "R%d@%d.%s", reg, frame, ctx_id);
+    }
+    return id;
+}
+
 static int id2register(char * id, Context ** ctx, int * frame, RegisterDefinition ** reg_def) {
-    int i;
-    char name[64];
-    RegisterDefinition * reg_defs = NULL;
+    int r = 0;
 
     *ctx = NULL;
     *frame = STACK_TOP_FRAME;
@@ -99,15 +108,15 @@ static int id2register(char * id, Context ** ctx, int * frame, RegisterDefinitio
         errno = ERR_INV_CONTEXT;
         return -1;
     }
-    i = 0;
     while (*id != '.' && *id != '@') {
-        if (*id == 0) {
+        if (*id >= '0' && *id <= '9') {
+            r = r * 10 + (*id++ - '0');
+        }
+        else {
             errno = ERR_INV_CONTEXT;
             return -1;
         }
-        name[i++] = *id++;
     }
-    name[i++] = 0;
     if (*id == '@') {
         int n = 0;
         id++;
@@ -132,15 +141,7 @@ static int id2register(char * id, Context ** ctx, int * frame, RegisterDefinitio
         errno = ERR_ALREADY_EXITED;
         return -1;
     }
-    reg_defs = get_reg_definitions(*ctx);
-    for (i = 0; reg_defs[i].name != NULL; i++) {
-        if (strcmp(reg_defs[i].name, name) == 0) break;
-    }
-    if (reg_defs[i].name == NULL) {
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    *reg_def = reg_defs + i;
+    *reg_def = get_reg_definitions(*ctx) + r;
     return 0;
 }
 
@@ -172,7 +173,7 @@ static void command_get_context(char * token, Channel * c) {
 static void command_get_children(char * token, Channel * c) {
     char id[256];
     Context * ctx = NULL;
-    int frame = 0;
+    int frame = STACK_NO_FRAME;
     StackFrame * frame_info = NULL;
     int err = 0;
 
@@ -196,20 +197,13 @@ static void command_get_children(char * token, Channel * c) {
     write_stream(&c->out, '[');
     if (err == 0 && ctx != NULL && context_has_state(ctx)) {
         int cnt = 0;
-        char t_id[128];
+        char * ctx_id = ctx2id(ctx);
+        RegisterDefinition * defs = get_reg_definitions(ctx);
         RegisterDefinition * reg_def;
-        strcpy(t_id, thread_id(ctx));
-        for (reg_def = get_reg_definitions(ctx); reg_def->name != NULL; reg_def++) {
+        for (reg_def = defs; reg_def->name != NULL; reg_def++) {
             if (frame == STACK_TOP_FRAME || read_reg_value(reg_def, frame_info, NULL) == 0) {
-                char r_id[128];
                 if (cnt > 0) write_stream(&c->out, ',');
-                if (frame == STACK_TOP_FRAME) {
-                    snprintf(r_id, sizeof(r_id), "R%s.%s", reg_def->name, t_id);
-                }
-                else {
-                    snprintf(r_id, sizeof(r_id), "R%s@%d.%s", reg_def->name, frame, t_id);
-                }
-                json_write_string(&c->out, r_id);
+                json_write_string(&c->out, register2id(ctx_id, frame, reg_def - defs));
                 cnt++;
             }
         }

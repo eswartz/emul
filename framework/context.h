@@ -120,14 +120,9 @@ extern char * context_suspend_reason(Context * ctx);
 extern char * pid2id(pid_t pid, pid_t parent);
 
 /*
- * Get context thread ID
+ * Get context ID
  */
-extern char * thread_id(Context * ctx);
-
-/*
- * Get context container ID
- */
-extern char * container_id(Context * ctx);
+extern char * ctx2id(Context * ctx);
 
 /*
  * Convert TCF Context ID to PID
@@ -143,8 +138,10 @@ extern Context * id2ctx(char * id);
 
 /*
  * Find a context by PID
+ * Both process and main thread can have same PID.
+ * 'thread' = 0: search for process, otherwise search for a thread.
  */
-extern Context * context_find_from_pid(pid_t pid);
+extern Context * context_find_from_pid(pid_t pid, int thread);
 
 /*
  * Trigger self attachment e.g. of forked child
@@ -234,7 +231,7 @@ extern void link_context(Context * ctx);
 
 #else /* ENABLE_DebugContext */
 
-#define context_find_from_pid(pid) NULL
+#define context_find_from_pid(pid, thread) NULL
 #define context_attach(pid, done, client_data, selfattach) (errno = ERR_UNSUPPORTED, -1)
 #define context_attach_self() (errno = ERR_UNSUPPORTED, -1)
 #define context_has_state(ctx) 0

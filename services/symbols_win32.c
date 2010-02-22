@@ -225,7 +225,7 @@ char * symbol2id(const Symbol * sym) {
     else {
         int i = sym->info ? sym->info - basic_type_info + 1 : 0;
         snprintf(buf, sizeof(buf), "SYM%llX.%lX.%X.%X.%s",
-            sym->module, sym->index, sym->frame, i, container_id(sym->ctx));
+            sym->module, sym->index, sym->frame, i, ctx2id(sym->ctx));
     }
     return buf;
 }
@@ -775,7 +775,7 @@ static int find_cache_symbol(HANDLE process, ULONG64 pc, PCSTR name, Symbol * sy
     if (entry->process != process) return 0;
     if (entry->pc != pc) return 0;
     if (strcmp(entry->name, name)) return 0;
-    *sym = entry->sym;
+    if (entry->error == NULL) *sym = entry->sym;
     set_error_report_errno(entry->error);
     return 1;
 }
@@ -884,7 +884,7 @@ static BOOL CALLBACK enumerate_symbols_proc(SYMBOL_INFO * info, ULONG symbol_siz
     EnumerateSymbolsContext * enum_context = (EnumerateSymbolsContext *)user_context;
     Symbol * sym = alloc_symbol();
     syminfo2symbol(enum_context->ctx, enum_context->frame, info, sym);
-    enum_context->call_back(enum_context->args, info->Name, sym);
+    enum_context->call_back(enum_context->args, sym);
     return TRUE;
 }
 

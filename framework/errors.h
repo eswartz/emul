@@ -59,6 +59,7 @@ typedef struct ErrorReportItem {
 
 typedef struct ErrorReport {
     uint64_t time_stamp;
+    char * format;
     int code;
     int refs;
     ErrorReportItem * props;

@@ -220,9 +220,9 @@ int crawl_stack_frame(Context * ctx, StackFrame * frame, StackFrame * down) {
     assert(frame->regs_size == sizeof(REG_SET));
     assert(down->regs_size == sizeof(REG_SET));
 
-    if (REGS(frame->mask).REG_IP != ~(ContextAddress)0) return 0;
-    if (REGS(frame->mask).REG_SP != ~(ContextAddress)0) return 0;
-    if (REGS(frame->mask).REG_BP != ~(ContextAddress)0) return 0;
+    if ((ContextAddress)REGS(frame->mask).REG_IP != ~(ContextAddress)0) return 0;
+    if ((ContextAddress)REGS(frame->mask).REG_SP != ~(ContextAddress)0) return 0;
+    if ((ContextAddress)REGS(frame->mask).REG_BP != ~(ContextAddress)0) return 0;
 
     if (frame->is_top_frame) {
         /* Top frame */

@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".,services,main,../agent/framework,../agent/services"
+				AdditionalIncludeDirectories=".;services;main;../agent;../agent/framework;../agent/services"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -208,6 +208,10 @@
 			</File>
 			<File
 				RelativePath="..\agent\services\dwarfio.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\dwarfreloc.c"
 				>
 			</File>
 			<File

@@ -20,8 +20,14 @@
 #ifndef D_dwarfexpr
 #define D_dwarfexpr
 
+#include "config.h"
+
+#if ENABLE_ELF
+
 #include "dwarfcache.h"
 
 extern void dwarf_evaluate_expression(U8_T base, PropertyValue * value);
+
+#endif /* ENABLE_ELF */
 
 #endif /* D_dwarfexpr */

@@ -198,6 +198,7 @@ static void read_tag_com_unit(U2_T Attr, U2_T Form) {
     case AT_low_pc:
         dio_ChkAddr(Form);
         Unit->mLowPC = (ContextAddress)dio_gFormData;
+        Unit->mTextSection = dio_gFormSection;
         break;
     case AT_high_pc:
         dio_ChkAddr(Form);
@@ -410,7 +411,7 @@ static void load_debug_sections(void) {
             sDebugSection = sec;
             sParentObject = NULL;
             sPrevSibling = NULL;
-            dio_EnterDebugSection(NULL, sec, 0);
+            dio_EnterSection(NULL, sec, 0);
             if (set_trap(&trap)) {
                 while (dio_GetPos() < sec->size) {
                     dio_ReadUnit(&sUnitDesc, entry_callback);
@@ -462,6 +463,7 @@ static U2_T gop_gForm = 0;
 static U8_T gop_gFormData = 0;
 static size_t gop_gFormDataSize = 0;
 static void * gop_gFormDataAddr = NULL;
+static ELF_Section * gop_gFormSection = NULL;
 
 static void get_object_property_callback(U2_T Tag, U2_T Attr, U2_T Form) {
     if (Attr != gop_gAttr) return;
@@ -469,6 +471,7 @@ static void get_object_property_callback(U2_T Tag, U2_T Attr, U2_T Form) {
     gop_gFormData = dio_gFormData;
     gop_gFormDataSize = dio_gFormDataSize;
     gop_gFormDataAddr = dio_gFormDataAddr;
+    gop_gFormSection = dio_gFormSection;
 }
 
 U8_T get_numeric_property_value(PropertyValue * Value) {
@@ -506,7 +509,7 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
     sCompUnit = Obj->mCompUnit;
     sCache = (DWARFCache *)sCompUnit->mFile->dwarf_dt_cache;
     sDebugSection = sCompUnit->mSection;
-    dio_EnterDebugSection(&sCompUnit->mDesc, sDebugSection, Obj->mID - sDebugSection->addr);
+    dio_EnterSection(&sCompUnit->mDesc, sDebugSection, Obj->mID - sDebugSection->addr);
     gop_gAttr = (U2_T)Attr;
     gop_gForm = 0;
     dio_ReadEntry(get_object_property_callback);
@@ -524,9 +527,10 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
     case FORM_REF8      :
     case FORM_REF_UDATA :
         {
-            ObjectInfo * RefObj = find_object(sCache, gop_gFormData);
             PropertyValue ValueAddr;
+            ObjectInfo * RefObj = find_object(sCache, gop_gFormData);
 
+            if (RefObj == NULL) exception(ERR_INV_DWARF);
             read_and_evaluate_dwarf_object_property(Ctx, Frame, 0, RefObj, AT_location, &ValueAddr);
             if (ValueAddr.mAccessFunc != NULL) {
                 ValueAddr.mAccessFunc(&ValueAddr, 0, &Value->mValue);
@@ -561,8 +565,10 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
         break;
     case FORM_SDATA     :
     case FORM_UDATA     :
-    case FORM_ADDR:
         Value->mValue = gop_gFormData;
+        break;
+    case FORM_ADDR:
+        Value->mValue = elf_map_to_run_time_address(Ctx, Obj->mCompUnit->mFile, gop_gFormSection, (ContextAddress)gop_gFormData);
         break;
     default:
         if (Attr == AT_data_member_location && Obj->mTag == TAG_member && Obj->mParent->mTag == TAG_union_type) {
@@ -706,9 +712,9 @@ static void add_state(CompUnit * Unit, LineNumbersState * state) {
 
 void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
     Trap trap;
-    if (Unit->mFiles != NULL && Unit->mDirs != NULL) return;
+    if (Unit->mFiles != NULL || Unit->mDirs != NULL) return;
     if (elf_load(Cache->mDebugLine)) exception(errno);
-    dio_EnterDataSection(&Unit->mDesc, (U1_T *)(Cache->mDebugLine->data), Unit->mLineInfoOffs, Cache->mDebugLine->size);
+    dio_EnterSection(&Unit->mDesc, Cache->mDebugLine, Unit->mLineInfoOffs);
     if (set_trap(&trap)) {
         U8_T header_pos = 0;
         U1_T opcode_base = 0;
@@ -805,7 +811,11 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
                     else state.mFlags &= ~LINE_IsStmt;
                     break;
                 case DW_LNE_set_address:
-                    state.mAddress = (ContextAddress)dio_ReadAddress();
+                    {
+                        ELF_Section * s = NULL;
+                        state.mAddress = (ContextAddress)dio_ReadAddress(&s);
+                        if (s != Unit->mTextSection) str_exception(ERR_INV_DWARF, "Invalid line info relocations");
+                    }
                     break;
                 default:
                     dio_Skip(op_size - 1);

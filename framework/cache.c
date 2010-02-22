@@ -32,6 +32,7 @@ typedef struct WaitingCacheClient {
 } WaitingCacheClient;
 
 static WaitingCacheClient current_client = {0, 0, 0};
+static int cache_miss_cnt = 0;
 static WaitingCacheClient * wait_list_buf;
 static unsigned wait_list_max;
 
@@ -45,11 +46,12 @@ void cache_enter(CacheClient * client, Channel * channel, void * args) {
     current_client.client = client;
     current_client.channel = channel;
     current_client.args = args;
+    cache_miss_cnt = 0;
     if (set_trap(&trap)) {
         client(args);
         clear_trap(&trap);
     }
-    else if (trap.error != ERR_CACHE_MISS || current_client.client == NULL) {
+    else if (get_error_code(trap.error) != ERR_CACHE_MISS || current_client.client == NULL) {
         trace(LOG_ALWAYS, "Unhandled exception in data cache client: %d %s", trap.error, errno_to_str(trap.error));
     }
     memset(&current_client, 0, sizeof(current_client));
@@ -58,12 +60,13 @@ void cache_enter(CacheClient * client, Channel * channel, void * args) {
 void cache_exit(void) {
     assert(is_dispatch_thread());
     assert(current_client.client != NULL);
+    if (cache_miss_cnt > 0) exception(ERR_CACHE_MISS);
     memset(&current_client, 0, sizeof(current_client));
 }
 
 void cache_wait(AbstractCache * cache) {
     assert(is_dispatch_thread());
-    if (current_client.client != NULL) {
+    if (current_client.client != NULL && cache_miss_cnt == 0) {
         if (cache->wait_list_cnt >= cache->wait_list_max) {
             cache->wait_list_max += 8;
             cache->wait_list_buf = (WaitingCacheClient *)loc_realloc(cache->wait_list_buf, cache->wait_list_max * sizeof(WaitingCacheClient));
@@ -71,6 +74,7 @@ void cache_wait(AbstractCache * cache) {
         cache->wait_list_buf[cache->wait_list_cnt++] = current_client;
         channel_lock(current_client.channel);
     }
+    cache_miss_cnt++;
     exception(ERR_CACHE_MISS);
 }
 

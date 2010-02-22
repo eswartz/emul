@@ -27,9 +27,10 @@
 #include "exceptions.h"
 #include "context.h"
 #include "myalloc.h"
-#if SERVICE_Symbols
+#if ENABLE_Symbols
 #  include "symbols.h"
 #  include "stacktrace.h"
+#  include "cache.h"
 #endif
 #if SERVICE_Streams
 #  include "streamsservice.h"
@@ -91,12 +92,12 @@ static void run_test_done(int error, Context * ctx, void * arg) {
     RunTestDoneArgs * data = (RunTestDoneArgs *)arg;
     Channel * c = data->c;
 
-    ctx->test_process = 1;
+    if (ctx != NULL) ctx->test_process = 1;
     if (!is_channel_closed(c)) {
         write_stringz(&c->out, "R");
         write_stringz(&c->out, data->token);
         write_errno(&c->out, error);
-        json_write_string(&c->out, ctx ? container_id(ctx) : NULL);
+        json_write_string(&c->out, ctx ? ctx2id(ctx) : NULL);
         write_stream(&c->out, 0);
         write_stream(&c->out, MARKER_EOM);
         flush_stream(&c->out);
@@ -149,7 +150,7 @@ static void command_cancel_test(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
 #if ENABLE_RCBP_TEST
-    if (terminate_debug_context(c->bcg, id2ctx(id)) != 0) err = errno;
+    if (terminate_debug_context(c, id2ctx(id)) != 0) err = errno;
 #else
     err = ERR_UNSUPPORTED;
 #endif
@@ -160,58 +161,98 @@ static void command_cancel_test(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
-static void command_get_symbol(char * token, Channel * c) {
-    char id[256];
-    char name[0x1000];
+#if ENABLE_Symbols
 
-    json_read_string(&c->inp, id, sizeof(id));
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    json_read_string(&c->inp, name, sizeof(name));
-    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+typedef struct GetSymbolArgs {
+    char token[256];
+    Context * ctx;
+    char * name;
+} GetSymbolArgs;
 
-#if SERVICE_Symbols
-    {
-        Context * ctx;
-        int error = 0;
+static void get_symbol_cache_client(void * x) {
+    GetSymbolArgs * args = (GetSymbolArgs *)x;
+    Channel * c = cache_channel();
+    Context * ctx = args->ctx;
+
+    if (!is_channel_closed(c)) {
         Symbol * sym = NULL;
+        ContextAddress addr = 0;
+        int error = 0;
 
-        ctx = id2ctx(id);
         if (ctx == NULL || ctx->exited) {
             error = ERR_INV_CONTEXT;
         }
-        else if (find_symbol(ctx, STACK_NO_FRAME, name, &sym) < 0) {
+        else if (find_symbol(ctx, STACK_NO_FRAME, args->name, &sym) < 0) {
             error = errno;
         }
+        else if (get_symbol_address(sym, &addr) < 0) {
+            error = errno;
+        }
+        cache_exit();
+
         write_stringz(&c->out, "R");
-        write_stringz(&c->out, token);
+        write_stringz(&c->out, args->token);
         write_errno(&c->out, error);
         if (error != 0) {
             write_stringz(&c->out, "null");
         }
         else {
-            ContextAddress addr = 0;
             write_stream(&c->out, '{');
-            if (get_symbol_address(sym, &addr) >= 0) {
-                json_write_string(&c->out, "Abs");
-                write_stream(&c->out, ':');
-                json_write_boolean(&c->out, 1);
-                write_stream(&c->out, ',');
-                json_write_string(&c->out, "Value");
-                write_stream(&c->out, ':');
-                json_write_int64(&c->out, addr);
-            }
+            json_write_string(&c->out, "Abs");
+            write_stream(&c->out, ':');
+            json_write_boolean(&c->out, 1);
+            write_stream(&c->out, ',');
+            json_write_string(&c->out, "Value");
+            write_stream(&c->out, ':');
+            json_write_int64(&c->out, addr);
             write_stream(&c->out, '}');
             write_stream(&c->out, 0);
         }
+        write_stream(&c->out, MARKER_EOM);
+    }
+    context_unlock(ctx);
+    loc_free(args->name);
+    loc_free(args);
+}
+
+#endif /* ENABLE_Symbols */
+
+static void command_get_symbol(char * token, Channel * c) {
+    char id[256];
+    char * name = NULL;
+    int error = 0;
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    name = json_read_alloc_string(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+#if ENABLE_Symbols
+    {
+        Context * ctx = id2ctx(id);
+        if (ctx == NULL || ctx->exited) {
+            error = ERR_INV_CONTEXT;
+        }
+        else {
+            GetSymbolArgs * args = (GetSymbolArgs *)loc_alloc_zero(sizeof(GetSymbolArgs));
+            strncpy(args->token, token, sizeof(args->token) - 1);
+            context_lock(ctx);
+            args->ctx = ctx;
+            args->name = name;
+            cache_enter(get_symbol_cache_client, c, args);
+            return;
+        }
     }
 #else
+    error = ERR_UNSUPPORTED;
+#endif
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
-    write_errno(&c->out, ERR_UNSUPPORTED);
+    write_errno(&c->out, error);
     write_stringz(&c->out, "null");
-#endif
     write_stream(&c->out, MARKER_EOM);
+    loc_free(name);
 }
 
 #if SERVICE_Streams

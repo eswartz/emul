@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <string.h>
 #include "dwarfio.h"
+#include "dwarfreloc.h"
 #include "dwarf.h"
 #include "myalloc.h"
 #include "exceptions.h"
@@ -62,6 +63,7 @@ U8_T dio_gEntryPos = 0;
 U8_T dio_gFormData = 0;
 size_t dio_gFormDataSize = 0;
 void * dio_gFormDataAddr = NULL;
+ELF_Section * dio_gFormSection = NULL;
 
 static ELF_Section * sSection;
 static int sBigEndian;
@@ -109,7 +111,7 @@ static DIO_Cache * dio_GetCache(ELF_File * File) {
     return Cache;
 }
 
-void dio_EnterDebugSection(DIO_UnitDescriptor * Unit, ELF_Section * Section, U8_T Offset) {
+void dio_EnterSection(DIO_UnitDescriptor * Unit, ELF_Section * Section, U8_T Offset) {
     if (elf_load(Section)) exception(errno);
     sSection = Section;
     sData = (U1_T *)Section->data;
@@ -122,18 +124,7 @@ void dio_EnterDebugSection(DIO_UnitDescriptor * Unit, ELF_Section * Section, U8_
     sUnit = Unit;
     dio_gEntryPos = 0;
     assert(sData != NULL);
-}
-
-void dio_EnterDataSection(DIO_UnitDescriptor * Unit, U1_T * Data, U8_T Offset, U8_T Size) {
-    sSection = NULL;
-    sData = Data;
-    sDataPos = Offset;
-    sDataLen = Size;
-    sBigEndian = Unit->mFile->big_endian;
-    sAddressSize = Unit->mAddressSize;
-    sUnit = Unit;
-    dio_gEntryPos = 0;
-    assert(sData != NULL);
+    assert(sDataPos < sDataLen);
 }
 
 void dio_ExitSection() {
@@ -256,8 +247,32 @@ U8_T dio_ReadUX(int Size) {
     }
 }
 
-U8_T dio_ReadAddress(void) {
-    return dio_ReadUX(sAddressSize);
+U8_T dio_ReadAddressX(ELF_Section ** s, int size) {
+    U8_T pos = sDataPos;
+    switch (size) {
+    case 2: {
+        U2_T x = dio_ReadU2();
+        drl_relocate(sSection, pos, &x, sizeof(x), s);
+        return x;
+    }
+    case 4: {
+        U4_T x = dio_ReadU4();
+        drl_relocate(sSection, pos, &x, sizeof(x), s);
+        return x;
+    }
+    case 8: {
+        U8_T x = dio_ReadU8();
+        drl_relocate(sSection, pos, &x, sizeof(x), s);
+        return x;
+    }
+    default:
+        str_exception(ERR_INV_DWARF, "invalid data size");;
+        return 0;
+    }
+}
+
+U8_T dio_ReadAddress(ELF_Section ** s) {
+    return dio_ReadAddressX(s, sAddressSize);
 }
 
 char * dio_ReadString(void) {
@@ -302,7 +317,7 @@ static U1_T * dio_LoadStringTable(U4_T * StringTableSize) {
 }
 
 static void dio_ReadFormAddr(void) {
-    dio_gFormData = dio_ReadAddress();
+    dio_gFormData = dio_ReadAddress(&dio_gFormSection);
     dio_gFormDataSize = sAddressSize;
 }
 
@@ -361,6 +376,7 @@ static void dio_ReadFormStringRef(void) {
 }
 
 static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
+    dio_gFormSection = NULL;
     dio_gFormDataAddr = NULL;
     dio_gFormDataSize = 0;
     dio_gFormData = 0;
@@ -402,7 +418,7 @@ void dio_ReadEntry(DIO_EntryCallBack CallBack) {
         U4_T AbbrCode = dio_ReadULEB128();
         if (AbbrCode == 0) return;
         if (AbbrCode >= sUnit->mAbbrevTableSize || sUnit->mAbbrevTable[AbbrCode] == NULL) {
-            str_exception(ERR_INV_DWARF, "invalid abbreviation table");
+            str_exception(ERR_INV_DWARF, "invalid abbreviation code");
         }
         Abbr =  sUnit->mAbbrevTable[AbbrCode];
         Tag = Abbr->mTag;
@@ -467,6 +483,7 @@ void dio_ReadUnit(DIO_UnitDescriptor * Unit, DIO_EntryCallBack CallBack) {
     sUnit->mUnitOffs = dio_GetPos();
     sUnit->m64bit = 0;
     if (strcmp(sSection->name, ".debug") != 0) {
+        ELF_Section * Sect = NULL;
         sUnit->mUnitSize = dio_ReadU4();
         if (sUnit->mUnitSize == 0xffffffffu) {
             sUnit->m64bit = 1;
@@ -477,7 +494,7 @@ void dio_ReadUnit(DIO_UnitDescriptor * Unit, DIO_EntryCallBack CallBack) {
             sUnit->mUnitSize += 4;
         }
         sUnit->mVersion = dio_ReadU2();
-        sUnit->mAbbrevTableOffs = dio_ReadU4();
+        sUnit->mAbbrevTableOffs = (U4_T)dio_ReadAddressX(&Sect, 4);
         sUnit->mAddressSize = dio_ReadU1();
         dio_FindAbbrevTable();
     }
@@ -499,8 +516,9 @@ void dio_LoadAbbrevTable(ELF_File * File) {
     ELF_Section * Section = NULL;
     static U2_T * AttrBuf = NULL;
     static U4_T AttrBufSize = 0;
-    DIO_Abbreviation ** AbbrevTable = NULL;
-    U4_T AbbrevTableSize = 0;
+    static DIO_Abbreviation ** AbbrevBuf = NULL;
+    static U4_T AbbrevBufSize = 0;
+    U4_T AbbrevBufPos = 0;
     DIO_Cache * Cache = dio_GetCache(File);
 
     if (Cache->mAbbrevTable != NULL) return;
@@ -515,7 +533,7 @@ void dio_LoadAbbrevTable(ELF_File * File) {
         }
     }
     if (Section == NULL) return;
-    dio_EnterDebugSection(NULL, Section, 0);
+    dio_EnterSection(NULL, Section, 0);
     for (;;) {
         U4_T AttrPos = 0;
         U2_T Tag = 0;
@@ -526,22 +544,32 @@ void dio_LoadAbbrevTable(ELF_File * File) {
             U4_T Hash = dio_AbbrevTableHash(TableOffset);
             DIO_AbbrevSet * AbbrevSet = (DIO_AbbrevSet *)loc_alloc_zero(sizeof(DIO_AbbrevSet));
             AbbrevSet->mOffset = TableOffset;
-            AbbrevSet->mTable = AbbrevTable;
-            AbbrevSet->mSize = AbbrevTableSize;
+            AbbrevSet->mTable = (DIO_Abbreviation **)loc_alloc(sizeof(DIO_Abbreviation *) * AbbrevBufPos);
+            AbbrevSet->mSize = AbbrevBufPos;
             AbbrevSet->mNext = Cache->mAbbrevTable[Hash];
             Cache->mAbbrevTable[Hash] = AbbrevSet;
-            AbbrevTable = NULL;
-            AbbrevTableSize = 0;
+            memcpy(AbbrevSet->mTable, AbbrevBuf, sizeof(DIO_Abbreviation *) * AbbrevBufPos);
+            memset(AbbrevBuf, 0, sizeof(DIO_Abbreviation *) * AbbrevBufPos);
+            AbbrevBufPos = 0;
             if (dio_GetPos() >= Section->size) break;
             TableOffset = dio_GetPos();
             continue;
         }
         if (ID >= 0x1000000) str_exception(ERR_INV_DWARF, "invalid abbreviation table");
-        if (ID >= AbbrevTableSize) {
-            U4_T Size = AbbrevTableSize;
-            AbbrevTableSize = ID + 1024u;
-            AbbrevTable = (DIO_Abbreviation **)loc_realloc(AbbrevTable, sizeof(DIO_Abbreviation *) * AbbrevTableSize);
-            memset(AbbrevTable + Size, 0, sizeof(DIO_Abbreviation *) * (AbbrevTableSize - Size));
+        if (ID >= AbbrevBufPos) {
+            U4_T Pos = AbbrevBufPos;
+            AbbrevBufPos = ID + 1;
+            if (AbbrevBufPos > AbbrevBufSize) {
+                U4_T Size = AbbrevBufSize;
+                AbbrevBufSize = AbbrevBufPos + 128;
+                AbbrevBuf = (DIO_Abbreviation **)loc_realloc(AbbrevBuf, sizeof(DIO_Abbreviation *) * AbbrevBufSize);
+                memset(AbbrevBuf + Size, 0, sizeof(DIO_Abbreviation *) * (AbbrevBufSize - Size));
+            }
+            while (Pos < AbbrevBufPos) {
+                loc_free(AbbrevBuf[Pos]);
+                AbbrevBuf[Pos] = NULL;
+                Pos++;
+            }
         }
         Tag = (U2_T)dio_ReadULEB128();
         Children = (U2_T)dio_ReadU1() != 0;
@@ -550,13 +578,14 @@ void dio_LoadAbbrevTable(ELF_File * File) {
             U4_T Form = dio_ReadULEB128();
             if (Attr >= 0x10000 || Form >= 0x10000) str_exception(ERR_INV_DWARF, "invalid abbreviation table");
             if (Attr == 0 && Form == 0) {
-                DIO_Abbreviation * Abbr = (DIO_Abbreviation *)loc_alloc_zero(sizeof(DIO_Abbreviation) - sizeof(U2_T) * 2 + sizeof(U2_T) * AttrPos);
+                DIO_Abbreviation * Abbr;
+                if (AbbrevBuf[ID] != NULL) str_exception(ERR_INV_DWARF, "invalid abbreviation table");
+                Abbr = (DIO_Abbreviation *)loc_alloc_zero(sizeof(DIO_Abbreviation) - sizeof(U2_T) * 2 + sizeof(U2_T) * AttrPos);
                 Abbr->mTag = Tag;
                 Abbr->mChildren = Children;
                 Abbr->mAttrLen = AttrPos;
                 memcpy(Abbr->mAttrs, AttrBuf, sizeof(U2_T) * AttrPos);
-                assert(AbbrevTable[ID] == NULL);
-                AbbrevTable[ID] = Abbr;
+                AbbrevBuf[ID] = Abbr;
                 break;
             }
             if (AttrBufSize < AttrPos + 2) {
@@ -567,8 +596,7 @@ void dio_LoadAbbrevTable(ELF_File * File) {
             AttrBuf[AttrPos++] = (U2_T)Form;
         }
     }
-    assert(AbbrevTable == NULL);
-    assert(AbbrevTableSize == 0);
+    assert(AbbrevBufPos == 0);
     dio_ExitSection();
 }
 

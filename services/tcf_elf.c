@@ -79,10 +79,12 @@ static void elf_dispose(ELF_File * file) {
         for (n = 0; n < file->section_cnt; n++) {
             ELF_Section * s = file->sections + n;
 #ifdef USE_MMAP
-            if (s->mmap_addr != NULL) munmap(s->mmap_addr, s->mmap_size);
-#else
-            loc_free(s->data);
+            if (s->mmap_addr != NULL) {
+                s->data = NULL;
+                munmap(s->mmap_addr, s->mmap_size);
+            }
 #endif
+            loc_free(s->data);
         }
         loc_free(file->sections);
     }
@@ -128,30 +130,45 @@ static void elf_cleanup_event(void * arg) {
     }
 }
 
+static ino_t add_ino(char * fnm, ino_t ino) {
+    FileINode * n = (FileINode *)loc_alloc_zero(sizeof(*n));
+    n->next = inodes;
+    n->name = loc_strdup(fnm);
+    n->ino = ino;
+    inodes = n;
+    return ino;
+}
+
 static ino_t elf_ino(char * fnm) {
-    /* Number of the information node (the inode) for the file is used as file ID.
+    /*
+     * Number of the information node (the inode) for the file is used as file ID.
      * Since some file systems don't support inodes, this function is used in such cases
      * to generate virtual inode numbers to be used as file IDs.
      */
+    char * abs = NULL;
     FileINode * n = inodes;
-    fnm = canonicalize_file_name(fnm);
-    if (fnm == NULL) return 0;
     while (n != NULL) {
         if (strcmp(n->name, fnm) == 0) return n->ino;
         n = n->next;
     }
+    abs = canonicalize_file_name(fnm);
+    if (abs == NULL) return add_ino(fnm, 0);
+    n = inodes;
+    while (n != NULL) {
+        if (strcmp(n->name, abs) == 0) {
+            free(abs);
+            return add_ino(fnm, n->ino);
+        }
+        n = n->next;
+    }
     if (elf_ino_cnt == 0) elf_ino_cnt++;
-    n = (FileINode *)loc_alloc_zero(sizeof(*n));
-    n->next = inodes;
-    n->name = loc_strdup(fnm);
-    n->ino = elf_ino_cnt++;
-    inodes = n;
-    return n->ino;
+    add_ino(fnm, elf_ino_cnt);
+    if (strcmp(abs, fnm) != 0) add_ino(abs, elf_ino_cnt);
+    free(abs);
+    return elf_ino_cnt++;
 }
 
-/* Swap bytes if ELF file endianness mismatch agent endianness */
-#define SWAP(x) swap_bytes(&(x), sizeof(x))
-static void swap_bytes(void * buf, size_t size) {
+void swap_bytes(void * buf, size_t size) {
     size_t i, j, n;
     char * p = (char *)buf;
     n = size >> 1;
@@ -237,8 +254,9 @@ ELF_File * elf_open(char * file_name) {
                 SWAP(hdr.e_shnum);
                 SWAP(hdr.e_shstrndx);
             }
-            if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN) error = ERR_INV_FORMAT;
-            if (hdr.e_type != ET_EXEC) file->pic = 1;
+            file->type = hdr.e_type;
+            file->machine = hdr.e_machine;
+            if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN && hdr.e_type != ET_REL) error = ERR_INV_FORMAT;
             if (error == 0 && hdr.e_version != EV_CURRENT) error = ERR_INV_FORMAT;
             if (error == 0 && hdr.e_shoff == 0) error = ERR_INV_FORMAT;
             if (error == 0 && lseek(file->fd, hdr.e_shoff, SEEK_SET) == (off_t)-1) error = errno;
@@ -277,6 +295,7 @@ ELF_File * elf_open(char * file_name) {
                         sec->addr = shdr.sh_addr;
                         sec->link = shdr.sh_link;
                         sec->info = shdr.sh_info;
+                        sec->entsize = shdr.sh_entsize;
                         cnt++;
                     }
                 }
@@ -339,8 +358,9 @@ ELF_File * elf_open(char * file_name) {
                 SWAP(hdr.e_shnum);
                 SWAP(hdr.e_shstrndx);
             }
-            if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN) error = ERR_INV_FORMAT;
-            if (hdr.e_type != ET_EXEC) file->pic = 1;
+            file->type = hdr.e_type;
+            file->machine = hdr.e_machine;
+            if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN && hdr.e_type != ET_REL) error = ERR_INV_FORMAT;
             if (error == 0 && hdr.e_version != EV_CURRENT) error = ERR_INV_FORMAT;
             if (error == 0 && hdr.e_shoff == 0) error = ERR_INV_FORMAT;
             if (error == 0 && lseek(file->fd, hdr.e_shoff, SEEK_SET) == (off_t)-1) error = errno;
@@ -379,6 +399,7 @@ ELF_File * elf_open(char * file_name) {
                         sec->addr = shdr.sh_addr;
                         sec->link = shdr.sh_link;
                         sec->info = shdr.sh_info;
+                        sec->entsize = (U4_T)shdr.sh_entsize;
                         cnt++;
                     }
                 }
@@ -452,8 +473,24 @@ ELF_File * elf_open(char * file_name) {
 }
 
 int elf_load(ELF_Section * s) {
+
     if (s->data != NULL) return 0;
     if (s->size == 0) return 0;
+
+    s->relocate = 0;
+    if (s->type != SHT_REL && s->type != SHT_REL && s->type != SHT_RELA) {
+        unsigned i;
+        for (i = 1; i < s->file->section_cnt; i++) {
+            ELF_Section * r = s->file->sections + i;
+            if (r->entsize == 0 || r->size == 0) continue;
+            if (r->type != SHT_REL && r->type != SHT_RELA) continue;
+            if (r->info == s->index) {
+                s->relocate = 1;
+                break;
+            }
+        }
+    }
+
 #ifdef USE_MMAP
     {
         long page = sysconf(_SC_PAGE_SIZE);
@@ -463,13 +500,16 @@ int elf_load(ELF_Section * s) {
         s->mmap_addr = mmap(0, s->mmap_size, PROT_READ, MAP_PRIVATE, s->file->fd, offs);
         if (s->mmap_addr == MAP_FAILED) {
             s->mmap_addr = NULL;
-            return -1;
+            trace(LOG_ALWAYS, "Cannot mmap section %s in ELF file %s", s->name, s->file->name);
         }
-        s->data = (char *)s->mmap_addr + (size_t)(s->offset - offs);
+        else {
+            s->data = (char *)s->mmap_addr + (size_t)(s->offset - offs);
+            trace(LOG_ELF, "Section %s in ELF file %s is mapped to %#lx", s->name, s->file->name, s->data);
+        }
     }
-    trace(LOG_ELF, "Section %s in ELF file %s is mapped to %#lx", s->name, s->file->name, s->data);
-#else
-    {
+#endif
+
+    if (s->data == NULL) {
         ELF_File * file = s->file;
         if (lseek(file->fd, s->offset, SEEK_SET) == (off_t)-1) return -1;
         s->data = loc_alloc((size_t)s->size);
@@ -480,9 +520,8 @@ int elf_load(ELF_Section * s) {
             errno = err;
             return -1;
         }
+        trace(LOG_ELF, "Section %s in ELF file %s is loaded", s->name, s->file->name);
     }
-    trace(LOG_ELF, "Section %s in ELF file %s is loaded", s->name, s->file->name);
-#endif
     return 0;
 }
 
@@ -492,7 +531,7 @@ void elf_close(ELF_File * file) {
     file->ref_cnt--;
 }
 
-static ELF_File * open_memory_region_file(unsigned n) {
+static ELF_File * open_memory_region_file(unsigned n, int * error) {
     ELF_File * prev = NULL;
     ELF_File * file = files;
     MemoryRegion * r = elf_list_regions + n;
@@ -520,6 +559,7 @@ static ELF_File * open_memory_region_file(unsigned n) {
     }
 
     file = elf_open(r->file_name);
+    if (file == NULL && *error == 0) *error = errno;
     if (file == NULL) return NULL;
     if (file->dev != r->dev) return NULL;
     if (r->ino != 0 && file->ino != r->ino) return NULL;
@@ -528,6 +568,7 @@ static ELF_File * open_memory_region_file(unsigned n) {
 
 ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress addr1) {
     unsigned i;
+    int error = 0;
 
     if (elf_list_files != NULL) {
         loc_free(elf_list_files);
@@ -543,7 +584,7 @@ ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress ad
             MemoryRegion * r = elf_list_regions + i;
             if (r->addr <= addr1 && r->addr + r->size >= addr0) {
                 if (r->file_name != NULL) {
-                    ELF_File * file = open_memory_region_file(i);
+                    ELF_File * file = open_memory_region_file(i, &error);
                     if (file != NULL) {
                         assert(!file->listed);
                         file->listed = 1;
@@ -554,12 +595,13 @@ ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress ad
             }
         }
     }
-    errno = 0;
+    errno = error;
     return NULL;
 }
 
 ELF_File * elf_list_next(Context * ctx) {
     unsigned i;
+    int error = 0;
 
     assert(ctx == elf_list_ctx);
     assert(elf_list_region_cnt > 0);
@@ -570,7 +612,7 @@ ELF_File * elf_list_next(Context * ctx) {
         if (r->addr <= elf_list_addr1 && r->addr + r->size >= elf_list_addr0) {
             assert(elf_list_files[i] == NULL);
             if (r->file_name != NULL) {
-                ELF_File * file = open_memory_region_file(i);
+                ELF_File * file = open_memory_region_file(i, &error);
                 if (file != NULL && !file->listed) {
                     file->listed = 1;
                     elf_list_pos = i + 1;
@@ -579,7 +621,7 @@ ELF_File * elf_list_next(Context * ctx) {
             }
         }
     }
-    errno = 0;
+    errno = error;
     return NULL;
 }
 
@@ -611,12 +653,12 @@ void elf_add_close_listener(ELFCloseListener listener) {
     listeners[listeners_cnt++] = listener;
 }
 
-ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ContextAddress addr) {
+ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_Section * sec, ContextAddress addr) {
     unsigned i, j;
     MemoryRegion * regions;
     unsigned region_cnt;
 
-    if (!file->pic) return addr;
+    if (file->type == ET_EXEC) return addr;
     memory_map_get_regions(ctx, &regions, &region_cnt);
     for (i = 0; i < region_cnt; i++) {
         MemoryRegion * r = regions + i;
@@ -624,13 +666,18 @@ ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, Conte
         if (r->file_name == NULL) continue;
         if (ino == 0 && (ino = elf_ino(r->file_name)) == 0) continue;
         if (file->dev == r->dev && file->ino == ino) {
-            for (j = 0; j < file->pheader_cnt; j++) {
-                ELF_PHeader * p = file->pheaders + j;
-                if (p->type != PT_LOAD) continue;
-                if (p->offset < r->file_offs || p->offset + p->mem_size > r->file_offs + r->size) continue;
-                if (addr < p->address || addr >= p->address + p->mem_size) continue;
-                if (!(p->flags & PF_W) != !(r->flags & MM_FLAG_W)) continue;
-                return (ContextAddress)(addr - p->address + p->offset - r->file_offs + r->addr);
+            if (r->sect_name == NULL) {
+                for (j = 0; j < file->pheader_cnt; j++) {
+                    ELF_PHeader * p = file->pheaders + j;
+                    if (p->type != PT_LOAD) continue;
+                    if (p->offset < r->file_offs || p->offset + p->mem_size > r->file_offs + r->size) continue;
+                    if (addr < p->address || addr >= p->address + p->mem_size) continue;
+                    if (!(p->flags & PF_W) != !(r->flags & MM_FLAG_W)) continue;
+                    return (ContextAddress)(addr - p->address + p->offset - r->file_offs + r->addr);
+                }
+            }
+            else if (sec != NULL && strcmp(sec->name, r->sect_name) == 0) {
+                return (ContextAddress)(addr - sec->addr + r->addr);
             }
         }
     }
@@ -645,7 +692,7 @@ static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddre
         if (sec->size == 0) continue;
         if (sec->name == NULL) continue;
         if (strcmp(sec->name, ".dynamic") == 0) {
-            ContextAddress sec_addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sec->addr);
+            ContextAddress sec_addr = elf_map_to_run_time_address(ctx, file, sec, (ContextAddress)sec->addr);
             if (elf_load(sec) < 0) return -1;
             if (file->elf64) {
                 unsigned cnt = (unsigned)(sec->size / sizeof(Elf64_Dyn));
@@ -727,7 +774,7 @@ static int get_global_symbol_address(Context * ctx, ELF_File * file, char * name
                     case STT_OBJECT:
                     case STT_FUNC:
                         if (file->byte_swap) SWAP(sym.st_value);
-                        *addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sym.st_value);
+                        *addr = elf_map_to_run_time_address(ctx, file, NULL, (ContextAddress)sym.st_value);
                         if (*addr != 0) return 0;
                     }
                 }
@@ -743,7 +790,7 @@ static int get_global_symbol_address(Context * ctx, ELF_File * file, char * name
                     case STT_OBJECT:
                     case STT_FUNC:
                         if (file->byte_swap) SWAP(sym.st_value);
-                        *addr = elf_map_to_run_time_address(ctx, file, (ContextAddress)sym.st_value);
+                        *addr = elf_map_to_run_time_address(ctx, file, NULL, (ContextAddress)sym.st_value);
                         if (*addr != 0) return 0;
                     }
                 }
@@ -773,7 +820,7 @@ ContextAddress elf_get_debug_structure_address(Context * ctx, ELF_File ** file_p
     ContextAddress addr = 0;
 
     for (file = elf_list_first(ctx, 0, ~(ContextAddress)0); file != NULL; file = elf_list_next(ctx)) {
-        if (file->pic) continue;
+        if (file->type != ET_EXEC) continue;
         if (file_ptr != NULL) *file_ptr = file;
 #ifdef DT_MIPS_RLD_MAP
         if (get_dynamic_tag(ctx, file, DT_MIPS_RLD_MAP, &addr) == 0) {

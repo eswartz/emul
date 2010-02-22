@@ -25,18 +25,29 @@
 #include "protocol.h"
 
 /*
+ * Lock run control:
+ * temporary suspends handling of incoming messages and stops all debuggee threads.
+ * Each call to run_ctrl_lock() increments lock counter.
+ */
+extern void run_ctrl_lock(void);
+
+/*
+ * Unlock run control:
+ * resume message handling and debuggee threads that are not intercepted.
+ * Each call to run_ctrl_unlock() decrements lock counter, debuggee resumed when the counter reaches zero.
+ */
+extern void run_ctrl_unlock(void);
+
+/*
  * Add "safe" event.
  * Temporary suspends handling of incoming messages and stops all debuggee threads.
  * Callback function 'done' will be called when everything is stopped and
  * it is safe to access debuggee memory, plant breakpoints, etc.
  * 'mem' is memory ID, only threads that belong to that memory are stopped.
- * if 'mem' = 0, stopp all threads.
+ * if 'mem' = 0, stop all threads.
+ * post_safe_event() uses run_ctrl_lock()/run_ctrl_unlock() to suspend/resume debuggee.
  */
-#if SERVICE_RunControl
 extern void post_safe_event(int mem, EventCallBack * done, void * arg);
-#else
-#define post_safe_event post_event
-#endif
 
 /*
  * Return 1 if all threads in debuggee are stopped and handling of incoming messages
@@ -51,7 +62,7 @@ extern int is_all_stopped(pid_t mem);
  * Returns 0 if no errors, otherwise returns -1 and sets errno.
  * Note: this function is asynchronous, it returns before context is terminated.
  */
-extern int terminate_debug_context(TCFBroadcastGroup * bcg, Context * ctx);
+extern int terminate_debug_context(Channel * c, Context * ctx);
 
 /*
  * Suspend (stop and intercept) debug context - thread or process.

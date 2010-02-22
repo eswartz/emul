@@ -115,18 +115,22 @@ void set_value(Value * v, void * data, size_t size) {
     else memcpy(v->value, data, v->size);
 }
 
-static void set_ctx_word_value(Value * v, ContextAddress data) {
+static void set_int_value(Value * v, uint64_t n) {
     v->remote = 0;
-    v->address = 0;
-    v->size = context_word_size(expression_context);
     v->value = alloc_str(v->size);
     switch (v->size) {
-    case 1: *(uint8_t *)v->value = (uint8_t)data; break;
-    case 2: *(uint16_t *)v->value = (uint16_t)data; break;
-    case 4: *(uint32_t *)v->value = (uint32_t)data; break;
-    case 8: *(uint64_t *)v->value = data; break;
+    case 1: *(uint8_t *)v->value = (uint8_t)n; break;
+    case 2: *(uint16_t *)v->value = (uint16_t)n; break;
+    case 4: *(uint32_t *)v->value = (uint32_t)n; break;
+    case 8: *(uint64_t *)v->value = n; break;
     default: assert(0);
     }
+}
+
+static void set_ctx_word_value(Value * v, ContextAddress data) {
+    v->address = 0;
+    v->size = context_word_size(expression_context);
+    set_int_value(v, data);
 }
 
 static void string_value(Value * v, char * str) {
@@ -530,16 +534,11 @@ static int identifier(char * name, Value * v) {
         exception(ERR_INV_CONTEXT);
     }
     if (strcmp(name, "$thread") == 0) {
-        if (context_has_state(expression_context)) {
-            string_value(v, thread_id(expression_context));
-        }
-        else {
-            string_value(v, container_id(expression_context));
-        }
+        string_value(v, ctx2id(expression_context));
         v->constant = 1;
         return SYM_CLASS_VALUE;
     }
-#if SERVICE_Symbols
+#if ENABLE_Symbols
     {
         Symbol * sym = NULL;
         if (find_symbol(expression_context, expression_frame, name, &sym) < 0) {
@@ -670,7 +669,7 @@ static int type_name(int mode, Symbol ** type) {
     if (mode != MODE_SKIP) {
         int i;
         for (i = 0; i < expr_len; i++) {
-#if SERVICE_Symbols
+#if ENABLE_Symbols
             if (expr_buf[i] == 1) {
                 if (get_array_symbol(v.type, 0, &v.type)) {
                     error(errno, "Cannot get pointer type");
@@ -897,7 +896,7 @@ static void primary_expression(int mode, Value * v) {
 
 static void op_deref(int mode, Value * v) {
     if (mode == MODE_SKIP) return;
-#if SERVICE_Symbols
+#if ENABLE_Symbols
     if (v->type_class != TYPE_CLASS_ARRAY && v->type_class != TYPE_CLASS_POINTER) {
         error(ERR_INV_EXPRESSION, "Array or pointer type expected");
     }
@@ -922,7 +921,7 @@ static void op_deref(int mode, Value * v) {
 }
 
 static void op_field(int mode, Value * v) {
-#if SERVICE_Symbols
+#if ENABLE_Symbols
     char * name = (char *)text_val.value;
     if (text_sy != SY_ID) error(ERR_INV_EXPRESSION, "Field name expected");
     next_sy();
@@ -990,7 +989,7 @@ static void op_field(int mode, Value * v) {
 }
 
 static void op_index(int mode, Value * v) {
-#if SERVICE_Symbols
+#if ENABLE_Symbols
     Value i;
     ContextAddress offs = 0;
     ContextAddress size = 0;
@@ -1043,7 +1042,7 @@ static void op_addr(int mode, Value * v) {
     assert(!v->constant);
     set_ctx_word_value(v, v->address);
     v->type_class = TYPE_CLASS_POINTER;
-#if SERVICE_Symbols
+#if ENABLE_Symbols
     if (get_array_symbol(v->type, 0, &v->type)) {
         error(errno, "Cannot get pointer type");
     }
@@ -1064,7 +1063,7 @@ static void op_sizeof(int mode, Value * v) {
     if (type_name(mode, &type)) {
         if (mode != MODE_SKIP) {
             ContextAddress type_size = 0;
-#if SERVICE_Symbols
+#if ENABLE_Symbols
             if (get_symbol_size(type, &type_size) < 0) {
                 error(errno, "Cannot retrieve symbol size");
             }
@@ -1208,7 +1207,7 @@ static void unary_expression(int mode, Value * v) {
 
 static void cast_expression(int mode, Value * v) {
     if (text_sy == '(') {
-#if SERVICE_Symbols
+#if ENABLE_Symbols
         Symbol * type = NULL;
         int type_class = TYPE_CLASS_UNKNOWN;
         ContextAddress type_size = 0;
@@ -1272,15 +1271,7 @@ static void cast_expression(int mode, Value * v) {
                 v->type = type;
                 v->type_class = type_class;
                 v->size = type_size;
-                v->remote = 0;
-                v->value = alloc_str(v->size);
-                switch (v->size) {
-                case 1: *(uint8_t *)v->value = (uint8_t)value; break;
-                case 2: *(uint16_t *)v->value = (uint16_t)value; break;
-                case 4: *(uint32_t *)v->value = (uint32_t)value; break;
-                case 8: *(uint64_t *)v->value = value; break;
-                default: assert(0);
-                }
+                set_int_value(v, value);
             }
             break;
         case TYPE_CLASS_INTEGER:
@@ -1290,15 +1281,7 @@ static void cast_expression(int mode, Value * v) {
                 v->type = type;
                 v->type_class = type_class;
                 v->size = type_size;
-                v->remote = 0;
-                v->value = alloc_str(v->size);
-                switch (v->size) {
-                case 1: *(int8_t *)v->value = (int8_t)value; break;
-                case 2: *(int16_t *)v->value = (int16_t)value; break;
-                case 4: *(int32_t *)v->value = (int32_t)value; break;
-                case 8: *(int64_t *)v->value = value; break;
-                default: assert(0);
-                }
+                set_int_value(v, value);
             }
             break;
         case TYPE_CLASS_REAL:
@@ -1426,7 +1409,24 @@ static void additive_expression(int mode, Value * v) {
                     strcat(value, (const char *)(x.value));
                     v->value = value;
                 }
+                v->type = NULL;
             }
+#if SERVICE_Symbols
+            else if (v->type_class == TYPE_CLASS_POINTER && is_number(&x)) {
+                uint64_t value = 0;
+                Symbol * base = NULL;
+                ContextAddress size = 0;
+                if (v->type == NULL || get_symbol_base_type(v->type, &base) < 0 ||
+                    base == 0 || get_symbol_size(base, &size) < 0 || size == 0) {
+                    error(ERR_INV_EXPRESSION, "Unknown pointer base type size");
+                }
+                switch (sy) {
+                case '+': value = to_uns(mode, v) + to_uns(mode, &x) * size; break;
+                case '-': value = to_uns(mode, v) - to_uns(mode, &x) * size; break;
+                }
+                set_int_value(v, value);
+            }
+#endif
             else if (!is_number(v) || !is_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Numeric types expected");
             }
@@ -1439,6 +1439,7 @@ static void additive_expression(int mode, Value * v) {
                 v->type_class = TYPE_CLASS_REAL;
                 v->size = sizeof(double);
                 v->value = value;
+                v->type = NULL;
             }
             else if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
                 uint64_t * value = (uint64_t *)alloc_str(sizeof(uint64_t));
@@ -1449,6 +1450,7 @@ static void additive_expression(int mode, Value * v) {
                 v->type_class = TYPE_CLASS_CARDINAL;
                 v->size = sizeof(uint64_t);
                 v->value = value;
+                v->type = NULL;
             }
             else {
                 int64_t * value = (int64_t *)alloc_str(sizeof(int64_t));
@@ -1459,10 +1461,10 @@ static void additive_expression(int mode, Value * v) {
                 v->type_class = TYPE_CLASS_INTEGER;
                 v->size = sizeof(int64_t);
                 v->value = value;
+                v->type = NULL;
             }
             v->remote = 0;
             v->constant = v->constant && x.constant;
-            v->type = NULL;
         }
     }
 }
@@ -1851,30 +1853,30 @@ static Expression * find_expression(char * id) {
     return NULL;
 }
 
-static int expression_context_id(char * id, char * parent, Context ** ctx, int * frame, char * name, Expression ** expr) {
+static int expression_context_id(char * id, char * parent, Context ** ctx, int * frame, char * sym_id, Expression ** expr) {
     int err = 0;
     Expression * e = NULL;
 
     if (id[0] == 'S') {
         char * s = id + 1;
         int i = 0;
-        while (*s && i < MAX_SYM_NAME - 1) {
+        while (*s && i < 256 - 1) {
             char ch = *s++;
             if (ch == '.') {
                 if (*s == '.') {
-                    name[i++] = '.';
+                    sym_id[i++] = *s++;
                     continue;
                 }
                 break;
             }
-            name[i++] = ch;
+            sym_id[i++] = ch;
         }
-        name[i] = 0;
+        sym_id[i] = 0;
         strcpy(parent, s);
         *expr = NULL;
     }
     else if ((e = find_expression(id)) != NULL) {
-        name[0] = 0;
+        sym_id[0] = 0;
         strcpy(parent, e->parent);
         *expr = e;
     }
@@ -1883,7 +1885,7 @@ static int expression_context_id(char * id, char * parent, Context ** ctx, int *
     }
     if (!err) {
         if ((*ctx = id2ctx(parent)) != NULL) {
-            *frame = STACK_TOP_FRAME;
+            *frame = context_has_state(*ctx) ? STACK_TOP_FRAME : STACK_NO_FRAME;
         }
         else if (is_stack_frame_id(parent, ctx, frame)) {
             /* OK */
@@ -1899,7 +1901,7 @@ static int expression_context_id(char * id, char * parent, Context ** ctx, int *
     return 0;
 }
 
-static void write_context(OutputStream * out, char * id, char * parent, int frame, char * name, Symbol * sym, Expression * expr) {
+static void write_context(OutputStream * out, char * id, char * parent, int frame, Symbol * sym, Expression * expr) {
     write_stream(out, '{');
     json_write_string(out, "ID");
     write_stream(out, ':');
@@ -1911,15 +1913,13 @@ static void write_context(OutputStream * out, char * id, char * parent, int fram
     write_stream(out, ':');
     json_write_string(out, parent);
 
-    if (expr || name) {
+    if (expr) {
         write_stream(out, ',');
 
         json_write_string(out, "Expression");
         write_stream(out, ':');
-        json_write_string(out, expr ? expr->script : name);
-    }
+        json_write_string(out, expr->script);
 
-    if (expr) {
         write_stream(out, ',');
 
         json_write_string(out, "CanAssign");
@@ -1948,48 +1948,55 @@ static void write_context(OutputStream * out, char * id, char * parent, int fram
         write_stream(out, ':');
         json_write_long(out, expr->size);
     }
+#if ENABLE_Symbols
     else if (sym) {
-#if SERVICE_Symbols
-        {
-            Symbol * type = NULL;
-            int sym_class = 0;
-            int type_class = 0;
-            ContextAddress size = 0;
+        char * name = NULL;
+        Symbol * type = NULL;
+        int sym_class = 0;
+        int type_class = 0;
+        ContextAddress size = 0;
 
-            if (get_symbol_class(sym, &sym_class) == 0) {
-                write_stream(out, ',');
+        if (get_symbol_name(sym, &name) >= 0 && name != NULL) {
+            write_stream(out, ',');
 
-                json_write_string(out, "CanAssign");
-                write_stream(out, ':');
-                json_write_boolean(out, sym_class == SYM_CLASS_REFERENCE);
-            }
-
-            if (get_symbol_type_class(sym, &type_class) == 0 && type_class != TYPE_CLASS_UNKNOWN) {
-                write_stream(out, ',');
-
-                json_write_string(out, "Class");
-                write_stream(out, ':');
-                json_write_long(out, type_class);
-            }
-
-            if (get_symbol_type(sym, &type) == 0 && type != NULL) {
-                write_stream(out, ',');
-
-                json_write_string(out, "Type");
-                write_stream(out, ':');
-                json_write_string(out, symbol2id(type));
-            }
-
-            if (get_symbol_size(sym, &size) == 0) {
-                write_stream(out, ',');
-
-                json_write_string(out, "Size");
-                write_stream(out, ':');
-                json_write_long(out, size);
-            }
+            json_write_string(out, "Expression");
+            write_stream(out, ':');
+            json_write_string(out, name);
         }
-#endif
+
+        if (get_symbol_class(sym, &sym_class) == 0) {
+            write_stream(out, ',');
+
+            json_write_string(out, "CanAssign");
+            write_stream(out, ':');
+            json_write_boolean(out, sym_class == SYM_CLASS_REFERENCE);
+        }
+
+        if (get_symbol_type_class(sym, &type_class) == 0 && type_class != TYPE_CLASS_UNKNOWN) {
+            write_stream(out, ',');
+
+            json_write_string(out, "Class");
+            write_stream(out, ':');
+            json_write_long(out, type_class);
+        }
+
+        if (get_symbol_type(sym, &type) == 0 && type != NULL) {
+            write_stream(out, ',');
+
+            json_write_string(out, "Type");
+            write_stream(out, ':');
+            json_write_string(out, symbol2id(type));
+        }
+
+        if (get_symbol_size(sym, &size) == 0) {
+            write_stream(out, ',');
+
+            json_write_string(out, "Size");
+            write_stream(out, ':');
+            json_write_long(out, size);
+        }
     }
+#endif
 
     write_stream(out, '}');
 }
@@ -1998,7 +2005,7 @@ static void command_get_context(char * token, Channel * c) {
     int err = 0;
     char id[256];
     char parent[256];
-    char name[MAX_SYM_NAME];
+    char sym_id[256];
     Context * ctx = NULL;
     int frame = STACK_NO_FRAME;
     Expression * expr = NULL;
@@ -2008,11 +2015,11 @@ static void command_get_context(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
+    if (expression_context_id(id, parent, &ctx, &frame, sym_id, &expr) < 0) err = errno;
 
     if (!err && expr == NULL) {
-#if SERVICE_Symbols
-        if (find_symbol(ctx, frame, name, &sym) < 0) err = errno;
+#if ENABLE_Symbols
+        if (id2symbol(sym_id, &sym) < 0) err = errno;
 #else
         err = ERR_INV_CONTEXT;
 #endif
@@ -2026,14 +2033,14 @@ static void command_get_context(char * token, Channel * c) {
         write_stringz(&c->out, "null");
     }
     else {
-        write_context(&c->out, id, parent, frame, name, sym, expr);
+        write_context(&c->out, id, parent, frame, sym, expr);
         write_stream(&c->out, 0);
     }
 
     write_stream(&c->out, MARKER_EOM);
 }
 
-#if SERVICE_Symbols
+#if ENABLE_Symbols
 
 typedef struct GetChildrenContext {
     Channel * channel;
@@ -2041,7 +2048,7 @@ typedef struct GetChildrenContext {
     int cnt;
 } GetChildrenContext;
 
-static void get_children_callback(void * x, char * name, Symbol * symbol) {
+static void get_children_callback(void * x, Symbol * symbol) {
     GetChildrenContext * args = (GetChildrenContext *)x;
     Channel * c = args->channel;
     char * s;
@@ -2055,7 +2062,7 @@ static void get_children_callback(void * x, char * name, Symbol * symbol) {
     }
     write_stream(&c->out, '"');
     write_stream(&c->out, 'S');
-    s = name;
+    s = symbol2id(symbol);
     while (*s) {
         if (*s == '.') write_stream(&c->out, '.');
         json_write_char(&c->out, *s++);
@@ -2080,7 +2087,7 @@ static void command_get_children(char * token, Channel * c) {
     write_stringz(&c->out, token);
 
     /* TODO: Expressions.getChildren - structures */
-#if SERVICE_Symbols
+#if ENABLE_Symbols
     {
         Context * ctx;
         int frame = STACK_NO_FRAME;
@@ -2092,17 +2099,15 @@ static void command_get_children(char * token, Channel * c) {
         strncpy(args.id, id, sizeof(args.id) - 1);
         args.id[sizeof(args.id) - 1] = 0;
 
-        if ((ctx = id2ctx(id)) != NULL) {
-            if (context_has_state(ctx)) {
-                char * frame_id = get_stack_frame_id(ctx, STACK_TOP_FRAME);
-                if (frame_id == NULL) {
-                    err = errno;
-                }
-                else {
-                    frame = STACK_TOP_FRAME;
-                    strncpy(args.id, frame_id, sizeof(args.id) - 1);
-                    args.id[sizeof(args.id) - 1] = 0;
-                }
+        if ((ctx = id2ctx(id)) != NULL && context_has_state(ctx)) {
+            char * frame_id = get_stack_frame_id(ctx, STACK_TOP_FRAME);
+            if (frame_id == NULL) {
+                err = errno;
+            }
+            else {
+                frame = STACK_TOP_FRAME;
+                strncpy(args.id, frame_id, sizeof(args.id) - 1);
+                args.id[sizeof(args.id) - 1] = 0;
             }
         }
         else if (is_stack_frame_id(id, &ctx, &frame)) {
@@ -2159,7 +2164,7 @@ static void command_create(char * token, Channel * c) {
         Value value;
         memset(&value, 0, sizeof(value));
         if ((ctx = id2ctx(parent)) != NULL) {
-            frame = STACK_TOP_FRAME;
+            frame = context_has_state(ctx) ? STACK_TOP_FRAME : STACK_NO_FRAME;
         }
         else if (is_stack_frame_id(parent, &ctx, &frame)) {
             /* OK */
@@ -2172,7 +2177,7 @@ static void command_create(char * token, Channel * c) {
             e->can_assign = value.remote;
             e->type_class = value.type_class;
             e->size = value.size;
-#if SERVICE_Symbols
+#if ENABLE_Symbols
             if (value.type != NULL) strncpy(e->type, symbol2id(value.type), sizeof(e->type) - 1);
 #endif
         }
@@ -2189,7 +2194,7 @@ static void command_create(char * token, Channel * c) {
     else {
         list_add_last(&e->link_all, &expressions);
         list_add_last(&e->link_id, id2exp + expression_hash(e->id));
-        write_context(&c->out, e->id, parent, frame, NULL, NULL, e);
+        write_context(&c->out, e->id, parent, frame, NULL, e);
         write_stream(&c->out, 0);
     }
 
@@ -2201,10 +2206,11 @@ static void command_evaluate(char * token, Channel * c) {
     int value_ok = 0;
     char id[256];
     char parent[256];
-    char name[MAX_SYM_NAME];
+    char sym_id[256];
     Context * ctx;
     int frame;
     Expression * expr = NULL;
+    char * name = NULL;
     Value value;
 
     memset(&value, 0, sizeof(value));
@@ -2212,8 +2218,16 @@ static void command_evaluate(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
+    if (expression_context_id(id, parent, &ctx, &frame, sym_id, &expr) < 0) err = errno;
     if (!err && frame != STACK_NO_FRAME && !ctx->intercepted) err = ERR_IS_RUNNING;
+#if ENABLE_Symbols
+    {
+        Symbol * sym = NULL;
+        if (!err && sym_id[0] && id2symbol(sym_id, &sym) < 0) err = errno;
+        if (!err && sym != NULL && get_symbol_name(sym, &name) < 0) err = errno;
+        if (name != NULL) name = loc_strdup(name);
+    }
+#endif
     if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 0, &value) < 0) err = errno;
     if (value.size >= 0x100000) err = ERR_BUFFER_OVERFLOW;
 
@@ -2259,7 +2273,7 @@ static void command_evaluate(char * token, Channel * c) {
             cnt++;
         }
 
-#if SERVICE_Symbols
+#if ENABLE_Symbols
         if (value.type != NULL) {
             if (cnt > 0) write_stream(&c->out, ',');
             json_write_string(&c->out, "Type");
@@ -2273,16 +2287,18 @@ static void command_evaluate(char * token, Channel * c) {
         write_stream(&c->out, 0);
     }
     write_stream(&c->out, MARKER_EOM);
+    loc_free(name);
 }
 
 static void command_assign(char * token, Channel * c) {
     char id[256];
     int err = 0;
     char parent[256];
-    char name[MAX_SYM_NAME];
+    char sym_id[256];
     Context * ctx;
     int frame;
     Expression * expr = NULL;
+    char * name = NULL;
     Value value;
     JsonReadBinaryState state;
     char buf[BUF_SIZE];
@@ -2295,7 +2311,16 @@ static void command_assign(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
 
     memset(&value, 0, sizeof(value));
-    if (expression_context_id(id, parent, &ctx, &frame, name, &expr) < 0) err = errno;
+    if (expression_context_id(id, parent, &ctx, &frame, sym_id, &expr) < 0) err = errno;
+    if (!err && frame != STACK_NO_FRAME && !ctx->intercepted) err = ERR_IS_RUNNING;
+#if ENABLE_Symbols
+    {
+        Symbol * sym = NULL;
+        if (!err && sym_id[0] && id2symbol(sym_id, &sym) < 0) err = errno;
+        if (!err && sym != NULL && get_symbol_name(sym, &name) < 0) err = errno;
+        if (name != NULL) name = loc_strdup(name);
+    }
+#endif
     if (!err && evaluate_expression(ctx, frame, expr ? expr->script : name, 0, &value) < 0) err = errno;
 
     addr0 = value.address;
@@ -2326,6 +2351,7 @@ static void command_assign(char * token, Channel * c) {
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
     write_stream(&c->out, MARKER_EOM);
+    loc_free(name);
 }
 
 static void command_dispose(char * token, Channel * c) {

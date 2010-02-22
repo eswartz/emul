@@ -150,18 +150,17 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
         return -1;
     }
     add_waitpid_process(pid);
-    ctx = create_context(pid, sizeof(REG_SET));
-    list_add_first(&ctx->ctxl, &pending_list);
+    ctx = create_context(pid, 0);
     ctx->mem = pid;
     ctx->attach_callback = done;
     ctx->attach_data = data;
-    ctx->pending_intercept = 1;
+    list_add_first(&ctx->ctxl, &pending_list);
     /* TODO: context_attach works only for main task in a process */
     return 0;
 }
 
 int context_has_state(Context * ctx) {
-    return 1;
+    return ctx != NULL && ctx->parent != NULL;
 }
 
 int context_stop(Context * ctx) {
@@ -235,7 +234,6 @@ int context_continue(Context * ctx) {
 #if USE_ESRCH_WORKAROUND
             if (err == ESRCH) {
                 ctx->regs_dirty = 0;
-                ctx->stopped = 0;
                 send_context_started_event(ctx);
                 return 0;
             }
@@ -255,7 +253,6 @@ int context_continue(Context * ctx) {
         int err = errno;
 #if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
-            ctx->stopped = 0;
             send_context_started_event(ctx);
             return 0;
         }
@@ -271,7 +268,6 @@ int context_continue(Context * ctx) {
         ctx->syscall_exit = 0;
         ctx->syscall_id = 0;
     }
-    ctx->stopped = 0;
     send_context_started_event(ctx);
     return 0;
 }
@@ -293,7 +289,6 @@ int context_single_step(Context * ctx) {
             if (err == ESRCH) {
                 ctx->regs_dirty = 0;
                 ctx->pending_step = 1;
-                ctx->stopped = 0;
                 send_context_started_event(ctx);
                 return 0;
             }
@@ -309,7 +304,6 @@ int context_single_step(Context * ctx) {
         int err = errno;
 #if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
-            ctx->stopped = 0;
             ctx->pending_step = 1;
             send_context_started_event(ctx);
             return 0;
@@ -321,7 +315,6 @@ int context_single_step(Context * ctx) {
         return -1;
     }
     ctx->pending_step = 1;
-    ctx->stopped = 0;
     send_context_started_event(ctx);
     return 0;
 }
@@ -416,7 +409,7 @@ static Context * find_pending(pid_t pid) {
 static void event_pid_exited(pid_t pid, int status, int signal) {
     Context * ctx;
 
-    ctx = context_find_from_pid(pid);
+    ctx = context_find_from_pid(pid, 1);
     if (ctx == NULL) {
         ctx = find_pending(pid);
         if (ctx == NULL) {
@@ -427,8 +420,6 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
             if (ctx->attach_callback != NULL) {
                 if (status == 0) status = EINVAL;
                 ctx->attach_callback(status, ctx, ctx->attach_data);
-                ctx->attach_callback = NULL;
-                ctx->attach_data = NULL;
             }
             assert(list_is_empty(&ctx->children));
             assert(ctx->parent == NULL);
@@ -437,30 +428,22 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
         }
     }
     else {
+        if (ctx->parent->pid == ctx->pid) ctx = ctx->parent;
         assert(ctx->attach_callback == NULL);
         if (ctx->stopped || ctx->intercepted || ctx->exited) {
             trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d unexpected, stopped %d, intercepted %d, exited %d",
                 ctx, pid, status, ctx->stopped, ctx->intercepted, ctx->exited);
-            if (ctx->stopped) {
-                ctx->stopped = 0;
-                send_context_started_event(ctx);
-            }
+            if (ctx->stopped) send_context_started_event(ctx);
         }
         else {
             trace(LOG_EVENTS, "event: ctx %#lx, pid %d, exit status %d, term signal %d", ctx, pid, status, signal);
         }
         if (!list_is_empty(&ctx->children)) {
-            /* Linux kernel 2.4 does not notify waitpid() when thread exits if the thread is not main thread.
-             * As workaround, assume all non-main thread have exited and remove them from ctx->children list.
-             */
             while (!list_is_empty(&ctx->children)) {
                 Context * c = cldl2ctxp(ctx->children.next);
                 assert(!c->exited);
                 assert(c->parent == ctx);
-                if (ctx->stopped) {
-                    ctx->stopped = 0;
-                    send_context_started_event(ctx);
-                }
+                if (c->stopped) send_context_started_event(c);
                 c->exiting = 0;
                 c->exited = 1;
                 send_context_exited_event(c);
@@ -503,17 +486,27 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
 
     trace(LOG_EVENTS, "event: pid %d stopped, signal %d, event %s", pid, signal, event_name(event));
 
-    ctx = context_find_from_pid(pid);
+    ctx = context_find_from_pid(pid, 1);
 
     if (ctx == NULL) {
         ctx = find_pending(pid);
         if (ctx != NULL) {
+            Context * prs = ctx;
+            assert(prs->ref_count == 0);
+            ctx = create_context(pid, sizeof(REG_SET));
+            ctx->pending_intercept = 1;
+            ctx->mem = prs->mem;
+            ctx->parent = prs;
+            prs->ref_count++;
+            list_add_first(&ctx->cldl, &prs->children);
+            link_context(prs);
             link_context(ctx);
+            send_context_created_event(prs);
             send_context_created_event(ctx);
-            if (ctx->attach_callback) {
-                ctx->attach_callback(0, ctx, ctx->attach_data);
-                ctx->attach_callback = NULL;
-                ctx->attach_data = NULL;
+            if (prs->attach_callback) {
+                prs->attach_callback(0, prs, prs->attach_data);
+                prs->attach_callback = NULL;
+                prs->attach_data = NULL;
             }
         }
     }
@@ -545,26 +538,33 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         assert(msg != 0);
         add_waitpid_process(msg);
         ctx2 = create_context(msg, sizeof(REG_SET));
-        link_context(ctx2);
-        assert(ctx2->parent == NULL);
-        trace(LOG_EVENTS, "event: new context 0x%x, pid %d", ctx2, ctx2->pid);
         ctx2->sig_dont_stop = ctx->sig_dont_stop;
         ctx2->sig_dont_pass = ctx->sig_dont_pass;
         if (event == PTRACE_EVENT_CLONE) {
-            ctx2->mem = ctx->mem;
-            ctx2->parent = ctx->parent != NULL ? ctx->parent : ctx;
-            ctx2->parent->ref_count++;
-            list_add_first(&ctx2->cldl, &ctx2->parent->children);
+            ctx2->parent = ctx->parent;
         }
         else {
-            ctx2->mem = ctx2->pid;
+            Context * prs = create_context(msg, 0);
+            prs->mem = prs->pid;
+            prs->sig_dont_stop = ctx->sig_dont_stop;
+            prs->sig_dont_pass = ctx->sig_dont_pass;
+            link_context(prs);
+            send_context_created_event(prs);
+            ctx2->parent = prs;
         }
-        assert(ctx2->mem != 0);
+        ctx2->mem = ctx2->parent->mem;
+        ctx2->parent->ref_count++;
+        list_add_first(&ctx2->cldl, &ctx2->parent->children);
+        link_context(ctx2);
+        trace(LOG_EVENTS, "event: new context 0x%x, pid %d", ctx2, ctx2->pid);
         send_context_created_event(ctx2);
         break;
-
     case PTRACE_EVENT_EXEC:
         send_context_changed_event(ctx);
+        break;
+    case PTRACE_EVENT_EXIT:
+        ctx->exiting = 1;
+        ctx->regs_dirty = 0;
         break;
     }
 
@@ -572,15 +572,15 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         assert(signal < 32);
         ctx->pending_signals |= 1 << signal;
         if ((ctx->sig_dont_stop & (1 << signal)) == 0) {
-            ctx->pending_intercept = 1;
+            if (!ctx->intercepted) ctx->pending_intercept = 1;
             stopped_by_exception = 1;
         }
     }
-    if (event == PTRACE_EVENT_EXIT) {
-        ctx->exiting = 1;
-        ctx->regs_dirty = 0;
+
+    if (ctx->stopped) {
+        if (event != PTRACE_EVENT_EXEC) send_context_changed_event(ctx);
     }
-    if (!ctx->stopped) {
+    else {
         ContextAddress pc0 = ctx->regs_error ? 0 : get_regs_PC(ctx->regs);
         assert(!ctx->regs_dirty);
         assert(!ctx->intercepted);

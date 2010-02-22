@@ -215,7 +215,7 @@ static void tcp_flush_with_flags(OutputStream * out, int flags) {
     ChannelTCP * c = channel2tcp(out2channel(out));
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
-    assert(c->obuf_inp <= BUF_SIZE);
+    assert(c->obuf_inp >= 0 && c->obuf_inp <= BUF_SIZE);
     if (c->obuf_inp == 0) return;
     if (c->chan.state == ChannelStateDisconnected || c->out_errno) {
         c->obuf_inp = 0;
@@ -528,7 +528,7 @@ static void handle_channel_msg(void * x) {
         send_eof_and_close(&c->chan, trap.error);
         return;
     }
-    if (c->ibuf.handling_msg == HandleMsgIdle) {
+    if (c->ibuf.message_count <= 3) {
         /* Completed processing of current message and there are no
          * messages pending - flush output */
         if (c->chan.bcg) {

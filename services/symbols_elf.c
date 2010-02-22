@@ -165,9 +165,7 @@ static int find_in_object_tree(ObjectInfo * list, char * name, Symbol ** sym) {
             {
                 U8_T LowPC, HighPC;
                 if (get_num_prop(obj, AT_low_pc, &LowPC) && get_num_prop(obj, AT_high_pc, &HighPC)) {
-                    ContextAddress addr0 = elf_map_to_run_time_address(sym_ctx, obj->mCompUnit->mFile, (ContextAddress)LowPC);
-                    ContextAddress addr1 = (ContextAddress)(HighPC - LowPC) + addr0;
-                    if (addr0 != 0 && addr0 <= sym_ip && addr1 > sym_ip) {
+                    if (LowPC <= sym_ip && HighPC > sym_ip) {
                         if (find_in_object_tree(obj->mChildren, name, sym)) return 1;
                     }
                 }
@@ -183,7 +181,7 @@ static int find_in_dwarf(DWARFCache * cache, char * name, Symbol ** sym) {
     unsigned i;
     for (i = 0; i < cache->mCompUnitsCnt; i++) {
         CompUnit * unit = cache->mCompUnits[i];
-        ContextAddress addr0 = elf_map_to_run_time_address(sym_ctx, unit->mFile, unit->mLowPC);
+        ContextAddress addr0 = elf_map_to_run_time_address(sym_ctx, unit->mFile, unit->mTextSection, unit->mLowPC);
         ContextAddress addr1 = unit->mHighPC - unit->mLowPC + addr0;
         if (addr0 != 0 && addr0 <= sym_ip && addr1 > sym_ip) {
             if (find_in_object_tree(unit->mChildren, name, sym)) return 1;
@@ -345,9 +343,7 @@ static void enumerate_local_vars(ObjectInfo * obj, int level,
             {
                 U8_T LowPC, HighPC;
                 if (get_num_prop(obj, AT_low_pc, &LowPC) && get_num_prop(obj, AT_high_pc, &HighPC)) {
-                    ContextAddress addr0 = elf_map_to_run_time_address(sym_ctx, obj->mCompUnit->mFile, (ContextAddress)LowPC);
-                    ContextAddress addr1 = (ContextAddress)(HighPC - LowPC) + addr0;
-                    if (addr0 != 0 && addr0 <= sym_ip && addr1 > sym_ip) {
+                    if (LowPC <= sym_ip && HighPC > sym_ip) {
                         enumerate_local_vars(obj->mChildren, level + 1, call_back, args);
                     }
                 }
@@ -359,7 +355,7 @@ static void enumerate_local_vars(ObjectInfo * obj, int level,
             if (level > 0 && obj->mName != NULL) {
                 Symbol * sym = NULL;
                 object2symbol(obj, &sym);
-                call_back(args, obj->mName, sym);
+                call_back(args, sym);
             }
             break;
         }
@@ -383,7 +379,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
                     unsigned i;
                     for (i = 0; i < cache->mCompUnitsCnt; i++) {
                         CompUnit * unit = cache->mCompUnits[i];
-                        ContextAddress addr0 = elf_map_to_run_time_address(sym_ctx, unit->mFile, unit->mLowPC);
+                        ContextAddress addr0 = elf_map_to_run_time_address(sym_ctx, unit->mFile, unit->mTextSection, unit->mLowPC);
                         ContextAddress addr1 = unit->mHighPC - unit->mLowPC + addr0;
                         if (addr0 != 0 && addr0 <= sym_ip && addr1 > sym_ip) {
                             enumerate_local_vars(unit->mChildren, 0, call_back, args);
@@ -432,7 +428,7 @@ char * symbol2id(const Symbol * sym) {
         if (sym->tbl != NULL) tbl_index = sym->tbl->mIndex + 1;
         snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%llX.%X.%X.%X.%X.%llX.%s",
             sym->sym_class, (unsigned long)file->dev, (unsigned long)file->ino, obj_index, tbl_index,
-            sym->frame, sym->index, sym->dimension, (unsigned long long)sym->size, container_id(sym->ctx));
+            sym->frame, sym->index, sym->dimension, (unsigned long long)sym->size, ctx2id(sym->ctx));
     }
     return id;
 }
@@ -1171,16 +1167,60 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
         switch (ELF32_ST_TYPE(sym32->st_info)) {
         case STT_OBJECT:
         case STT_FUNC:
-            *address = elf_map_to_run_time_address(sym_ctx, file, (ContextAddress)sym32->st_value);
-            return 0;
+            {
+                U4_T x = sym32->st_value;
+                ELF_Section * sec = NULL;
+                if (file->type != ET_EXEC) {
+                    switch (sym32->st_shndx) {
+                    case SHN_ABS:
+                        break;
+                    case SHN_COMMON:
+                    case SHN_UNDEF:
+                        errno = ERR_INV_ADDRESS;
+                        return -1;
+                    default:
+                        if (sym32->st_shndx >= file->section_cnt) {
+                            errno = ERR_INV_ADDRESS;
+                            return -1;
+                        }
+                        sec = file->sections + sym32->st_shndx;
+                        x += (U4_T)sec->addr;
+                        break;
+                    }
+                }
+                *address = elf_map_to_run_time_address(sym_ctx, file, sec, (ContextAddress)x);
+                return 0;
+            }
         }
     }
     if (sym64 != NULL) {
         switch (ELF64_ST_TYPE(sym64->st_info)) {
         case STT_OBJECT:
         case STT_FUNC:
-            *address = elf_map_to_run_time_address(sym_ctx, file, (ContextAddress)sym64->st_value);
-            return 0;
+            {
+                U8_T x = sym64->st_value;
+                ELF_Section * sec = NULL;
+                if (file->type != ET_EXEC) {
+                    switch (sym64->st_shndx) {
+                    case SHN_ABS:
+                        break;
+                    case SHN_COMMON:
+                    case SHN_UNDEF:
+                        errno = ERR_INV_ADDRESS;
+                        return -1;
+                    default:
+                        if (sym64->st_shndx >= file->section_cnt) {
+                            errno = ERR_INV_ADDRESS;
+                            return -1;
+                        }
+                        sec = file->sections + sym64->st_shndx;
+                        x += (U4_T)sec->addr;
+                        break;
+                    }
+                }
+                *address = elf_map_to_run_time_address(sym_ctx, file, sec, (ContextAddress)x);
+                return 0;
+            }
         }
     }
 

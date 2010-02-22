@@ -78,6 +78,7 @@ typedef struct StackFrameRules {
     U8_T cie_pos;
     char * cie_aug;
     U8_T cie_eh_data;
+    ELF_Section * cie_eh_data_section;
     U4_T fde_aug_length;
     U1_T * fde_aug_data;
     U1_T lsda_encoding;
@@ -135,13 +136,13 @@ static StackFrameRegisters * get_regs_stack_item(int n) {
     return regs_stack + n;
 }
 
-static U8_T read_frame_data_pointer(U1_T encoding, int abs) {
+static U8_T read_frame_data_pointer(U1_T encoding, ELF_Section ** sec) {
     U8_T v = 0;
     if (encoding != EH_PE_omit) {
         U8_T pos = dio_GetPos();
         switch (encoding & 0xf) {
         case EH_PE_absptr:
-            v = dio_ReadAddress();
+            v = dio_ReadAddress(sec);
             break;
         case EH_PE_uleb128:
             v = dio_ReadU8LEB128();
@@ -171,14 +172,16 @@ static U8_T read_frame_data_pointer(U1_T encoding, int abs) {
             str_exception(ERR_INV_DWARF, "Unknown encoding of .eh_frame section pointers");
             break;
         }
-        if (v != 0 && !abs) {
+        if (v != 0 && sec != NULL) {
             switch ((encoding >> 4) & 0x7) {
             case 0:
                 break;
             case EH_PB_pcrel:
+                *sec = rules.section;
                 v += rules.section->addr + pos;
                 break;
             case EH_PB_datarel:
+                *sec = rules.section;
                 v += rules.section->addr;
                 break;
             case EH_PB_textrel:
@@ -444,7 +447,7 @@ static void read_frame_cie(U8_T pos) {
     }
     rules.cie_aug = dio_ReadString();
     if (rules.cie_aug != NULL && strcmp(rules.cie_aug, "eh") == 0) {
-        rules.cie_eh_data = dio_ReadAddress();
+        rules.cie_eh_data = dio_ReadAddress(&rules.cie_eh_data_section);
     }
     rules.code_alignment = dio_ReadULEB128();
     rules.data_alignment = dio_ReadSLEB128();
@@ -496,7 +499,7 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, StackFrame * fra
     rules.section = section;
     rules.eh_frame = section == cache->mEHFrame;
     rules.cie_pos = ~(U8_T)0;
-    dio_EnterDebugSection(NULL, section, 0);
+    dio_EnterSection(NULL, section, 0);
     while (dio_GetPos() < section->size) {
         int fde_dwarf64 = 0;
         U8_T fde_length = 0;
@@ -519,11 +522,12 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, StackFrame * fra
         else fde_flag = cie_ref != ~(U4_T)0;
         if (fde_flag) {
             U8_T Addr, Range, AddrRT;
+            ELF_Section * sec = NULL;
             if (rules.eh_frame) cie_ref = fde_pos - cie_ref;
             if (cie_ref != rules.cie_pos) read_frame_cie(cie_ref);
-            Addr = read_frame_data_pointer(rules.addr_encoding, 0);
-            Range = read_frame_data_pointer(rules.addr_encoding, 1);
-            AddrRT = elf_map_to_run_time_address(ctx, file, (ContextAddress)Addr);
+            Addr = read_frame_data_pointer(rules.addr_encoding, &sec);
+            Range = read_frame_data_pointer(rules.addr_encoding, NULL);
+            AddrRT = elf_map_to_run_time_address(ctx, file, sec, (ContextAddress)Addr);
             if (AddrRT != 0 && AddrRT <= IP && AddrRT + Range > IP) {
                 if (rules.cie_aug != NULL && rules.cie_aug[0] == 'z') {
                     rules.fde_aug_length = dio_ReadULEB128();

@@ -56,22 +56,46 @@
 #define ELFDATA2LSB    1
 #define ELFDATA2MSB    2
 
-#define ET_NONE        0
-#define ET_REL         1
-#define ET_EXEC        2
-#define ET_DYN         3
-#define ET_CORE        4
-#define ET_LOOS   0xFE00
-#define ET_HIOS   0xFEFF
-#define ET_LOPROC 0xFF00
-#define ET_HIPROC 0xFFFF
+#define EM_NONE         0
+#define EM_M32          1 /* AT&T WE 32100 */
+#define EM_SPARC        2 /* SPARC */
+#define EM_386          3 /* Intel Architecture */
+#define EM_68K          4 /* Motorola 68000 */
+#define EM_88K          5 /* Motorola 88000 */
+#define EM_860          7 /* Intel 80860 */
+#define EM_MIPS         8 /* MIPS RS3000 Big-Endian */
+#define EM_MIPS_RS4_BE 10 /* MIPS RS4000 Big-Endian */
 
-#define EV_CURRENT     1
+#define ET_NONE         0
+#define ET_REL          1
+#define ET_EXEC         2
+#define ET_DYN          3
+#define ET_CORE         4
+#define ET_LOOS    0xFE00
+#define ET_HIOS    0xFEFF
+#define ET_LOPROC  0xFF00
+#define ET_HIPROC  0xFFFF
+
+#define EV_CURRENT      1
+
+#define SHN_UNDEF       0
+#define SHN_ABS    0xfff1
+#define SHN_COMMON 0xfff2
 
 #define SHT_NULL        0
 #define SHT_PROGBITS    1
 #define SHT_SYMTAB      2
 #define SHT_STRTAB      3
+#define SHT_RELA        4
+#define SHT_HASH        5
+#define SHT_DYNAMIC     6
+#define SHT_NOTE        7
+#define SHT_NOBITS      8
+#define SHT_REL         9
+#define SHT_SHLIB      10
+#define SHT_DYNSYM     11
+
+#define STN_UNDEF       0
 
 #define STB_LOCAL       0
 #define STB_GLOBAL      1
@@ -198,6 +222,20 @@ typedef struct Elf32_Sym {
 #define ELF32_ST_TYPE(i)   ((i)&0xf)
 
 typedef struct {
+    Elf32_Addr r_offset;
+    Elf32_Word r_info;
+} Elf32_Rel;
+
+typedef struct {
+    Elf32_Addr r_offset;
+    Elf32_Word r_info;
+    Elf32_Sword r_addend;
+} Elf32_Rela;
+
+#define ELF32_R_SYM(i)  ((i)>>8)
+#define ELF32_R_TYPE(i) ((unsigned char)(i))
+
+typedef struct {
     Elf32_Sword d_tag;
     union {
         Elf32_Word d_val;
@@ -314,8 +352,9 @@ struct ELF_File {
 
     int big_endian; /* 0 - least significant first, 1 - most significat first */
     int byte_swap;  /* > 0 if file endianness not same as the agent endianness */
-    int pic;        /* > 0 if position independend code, e.g. shared object file */
     int elf64;
+    int type;
+    int machine;
 
     unsigned section_cnt;
     ELF_Section * sections;
@@ -344,9 +383,12 @@ struct ELF_Section {
     U8_T addr;
     U4_T link;
     U4_T info;
+    U4_T entsize;
 
     void * mmap_addr;
     size_t mmap_size;
+
+    int relocate;
 };
 
 struct ELF_PHeader {
@@ -358,6 +400,13 @@ struct ELF_PHeader {
     U4_T flags;
     U4_T align;
 };
+
+/*
+ * Swap bytes in a buffer.
+ * The function is used when ELF file endianness mismatch agent endianness.
+ */
+extern void swap_bytes(void * buf, size_t size);
+#define SWAP(x) swap_bytes(&(x), sizeof(x))
 
 /*
  * Open ELF file for reading.
@@ -408,7 +457,7 @@ extern void elf_add_close_listener(ELFCloseListener listener);
  * Map link-time address in an ELF file to run-time address in a context.
  * Return 0 if the address is not currently mapped.
  */
-extern ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ContextAddress addr);
+extern ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_Section * section, ContextAddress addr);
 
 /*
  * Read a word from context memory. Word size and endianess are determened by ELF file.

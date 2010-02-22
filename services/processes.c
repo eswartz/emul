@@ -137,7 +137,7 @@ static ChildProcess * find_process(int pid) {
 }
 
 static void write_context(OutputStream * out, int pid) {
-    Context * ctx = context_find_from_pid(pid);
+    Context * ctx = context_find_from_pid(pid, 0);
     ChildProcess * prs = find_process(pid);
 
     write_stream(out, '{');
@@ -280,7 +280,7 @@ static void command_get_children(char * token, Channel * c) {
         int cnt = 0;
         write_stream(&c->out, '[');
         do {
-            if (!attached_only || context_find_from_pid(pe32.th32ProcessID) != NULL) {
+            if (!attached_only || context_find_from_pid(pe32.th32ProcessID, 0) != NULL) {
                 if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, pid2id(pe32.th32ProcessID, 0));
                 cnt++;
@@ -307,7 +307,7 @@ static void command_get_children(char * token, Channel * c) {
         write_errno(&c->out, 0);
         write_stream(&c->out, '[');
         for (i = 0; i < ids_cnt; i++) {
-            if (!attached_only || context_find_from_pid(ids[i]) != NULL) {
+            if (!attached_only || context_find_from_pid(ids[i], 0) != NULL) {
                 if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, pid2id(ids[i], 0));
                 cnt++;
@@ -331,7 +331,7 @@ static void command_get_children(char * token, Channel * c) {
                 if (ent == NULL) break;
                 if (ent->d_name[0] >= '1' && ent->d_name[0] <= '9') {
                     pid_t pid = atol(ent->d_name);
-                    if (!attached_only || context_find_from_pid(pid) != NULL) {
+                    if (!attached_only || context_find_from_pid(pid, 0) != NULL) {
                         if (cnt > 0) write_stream(&c->out, ',');
                         json_write_string(&c->out, pid2id(pid, 0));
                         cnt++;
@@ -379,7 +379,7 @@ static void command_attach(char * token, Channel * c) {
     if (parent != 0) {
         err = ERR_INV_CONTEXT;
     }
-    else if (context_find_from_pid(pid) != NULL) {
+    else if (context_find_from_pid(pid, 0) != NULL) {
         err = ERR_ALREADY_ATTACHED;
     }
     else {
