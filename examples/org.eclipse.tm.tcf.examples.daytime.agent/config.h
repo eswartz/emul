@@ -52,7 +52,7 @@
 #include "diagnostics.h"
 #include "daytime.h"
 
-static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
+static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg) {
 #if SERVICE_FileSystem
     ini_file_system_service(proto);
 #endif
