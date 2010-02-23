@@ -127,7 +127,7 @@ struct Symbol {
 
 static LINK root;
 
-static unsigned hash_sym_id(char * id) {
+static unsigned hash_sym_id(const char * id) {
     int i;
     unsigned h = 0;
     for (i = 0; id[i]; i++) h += id[i];
@@ -135,7 +135,7 @@ static unsigned hash_sym_id(char * id) {
     return h % HASH_SIZE;
 }
 
-static unsigned hash_find(char * name, uint64_t ip, pid_t mem) {
+static unsigned hash_find(const char * name, uint64_t ip, pid_t mem) {
     int i;
     unsigned h = 0;
     for (i = 0; name[i]; i++) h += name[i];

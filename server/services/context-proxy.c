@@ -126,7 +126,7 @@ static unsigned str_buf_pos = 0;
 
 static const char RUN_CONTROL[] = "RunControl";
 
-static ContextCache * find_context_cache(PeerCache * p, char * id) {
+static ContextCache * find_context_cache(PeerCache * p, const char * id) {
     LINK * l;
     for (l = p->ctx_cache.next; l != &p->ctx_cache; l = l->next) {
         ContextCache * c = peer2ctx(l);
@@ -614,7 +614,7 @@ static void validate_peer_cache_state(Channel * c, void * args, int error) {
     set_rc_done(p);
 }
 
-Context * id2ctx(char * id) {
+Context * id2ctx(const char * id) {
     LINK * l;
     Channel * c = cache_channel();
     for (l = peers.next; l != &peers; l = l->next) {
