@@ -23,12 +23,6 @@
 #include "link.h"
 #include "peer.h"
 
-typedef struct TCFSuspendGroup TCFSuspendGroup;
-struct TCFSuspendGroup {
-    LINK channels;                      /* Channels in group */
-    int suspended;                      /* Receive suspended when true */
-};
-
 typedef struct TCFBroadcastGroup TCFBroadcastGroup;
 struct TCFBroadcastGroup {
     int magic;
@@ -53,7 +47,6 @@ typedef struct Channel Channel;
 struct Channel {
     InputStream inp;                    /* Input stream */
     OutputStream out;                   /* Output stream */
-    TCFSuspendGroup * spg;              /* Suspend group */
     TCFBroadcastGroup * bcg;            /* Broadcast group */
     void * client_data;                 /* Client data */
     struct Protocol * protocol;         /* Channel protocol */
@@ -130,28 +123,6 @@ extern void channel_start(Channel *);
 extern void channel_close(Channel *);
 
 /*
- * Allocate and return new "Suspend Group" object.
- * Suspend Group is collection of channels that can be suspended together.
- */
-extern TCFSuspendGroup * suspend_group_alloc(void);
-
-/*
- * Remove channels from Suspend Group and deallocate the group object.
- */
-extern void suspend_group_free(TCFSuspendGroup *);
-
-/*
- * Add a channel to a Suspend Group.
- * If the channel is already in a group, it is removed from it first.
- */
-extern void channel_set_suspend_group(Channel *, TCFSuspendGroup *);
-
-/*
- * Remove channel from Suspend Group. Does nothing if the channel is not a member of a group.
- */
-extern void channel_clear_suspend_group(Channel *);
-
-/*
  * Allocate and return new "Broadcast Group" object.
  * Broadcast Group is collection of channels that participate together in broadcasting a message.
  */
@@ -200,26 +171,5 @@ extern int is_channel_closed(Channel *);
  * Create and return PeerServer object with attribute values taken fron given URL.
  */
 extern PeerServer * channel_peer_from_url(const char *);
-
-/*
- * Suspend reading and handling of messages for channels in given Suspend Group.
- */
-extern void channels_suspend(TCFSuspendGroup * p);
-
-/*
- * Return 1 if channels in given Suspend Group are suspended, othewise return 0.
- */
-extern int are_channels_suspended(TCFSuspendGroup * p);
-
-/*
- * Resume reading and handling of messages for channels in given Suspend Group,
- * which was suspended by channels_suspend().
- */
-extern void channels_resume(TCFSuspendGroup * p);
-
-/*
- * Return number of messages in channel input buffers in given Suspend Group.
- */
-extern int channels_get_message_count(TCFSuspendGroup * p);
 
 #endif /* D_channel */

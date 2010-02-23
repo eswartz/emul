@@ -143,7 +143,7 @@ static void string_value(Value * v, char * str) {
     }
 }
 
-static void error(int no, char * msg) {
+static void error(int no, const char * msg) {
     char buf[256];
     snprintf(buf, sizeof(buf), "%s, text pos %d", msg, text_pos);
     str_exception(no, buf);
@@ -2051,7 +2051,7 @@ typedef struct GetChildrenContext {
 static void get_children_callback(void * x, Symbol * symbol) {
     GetChildrenContext * args = (GetChildrenContext *)x;
     Channel * c = args->channel;
-    char * s;
+    const char * s;
 
     if (args->cnt == 0) {
         write_errno(&c->out, 0);

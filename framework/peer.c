@@ -106,7 +106,7 @@ PeerServer * peer_server_alloc(void) {
     return s;
 }
 
-void peer_server_addprop(PeerServer * s, char * name, char * value) {
+void peer_server_addprop(PeerServer * s, const char * name, const char * value) {
     int i;
 
     if (strcmp(name, "ID") == 0) {
@@ -131,7 +131,7 @@ void peer_server_addprop(PeerServer * s, char * name, char * value) {
     s->ind++;
 }
 
-char * peer_server_getprop(PeerServer * s, const char * name, char * default_value) {
+const char * peer_server_getprop(PeerServer * s, const char * name, const char * default_value) {
     int i;
 
     for (i = 0; i < s->ind; i++) {

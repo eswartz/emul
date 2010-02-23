@@ -73,7 +73,7 @@ void exception(int error) {
     longjmp(chain->env, error);
 }
 
-void str_exception(int error, char * msg) {
+void str_exception(int error, const char * msg) {
     exception(set_errno(error, msg));
 }
 

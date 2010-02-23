@@ -203,12 +203,12 @@
 #include "tcf_elf.h"
 #include "plugins.h"
 
-static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
+static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg) {
 #if SERVICE_Locator
     ini_locator_service(proto, bcg);
 #endif
 #if SERVICE_RunControl
-    ini_run_ctrl_service(proto, bcg, spg);
+    ini_run_ctrl_service(proto, bcg);
 #endif
 #if SERVICE_Breakpoints
     ini_breakpoints_service(proto, bcg);
@@ -258,7 +258,7 @@ static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGr
     ini_elf();
 #endif
 #if ENABLE_Plugins
-    plugins_load(proto, bcg, spg);
+    plugins_load(proto, bcg);
 #endif
 
     ini_diagnostics_service(proto);

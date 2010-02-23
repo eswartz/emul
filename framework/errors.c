@@ -195,7 +195,7 @@ const char * errno_to_str(int err) {
     }
 }
 
-int set_errno(int no, char * msg) {
+int set_errno(int no, const char * msg) {
     errno = no;
     if (no != 0 && msg != NULL) {
         const char * text0 = errno_to_str(no);
@@ -350,7 +350,7 @@ void check_error(int error) {
 
 #else /* NDEBUG */
 
-void check_error_debug(char * file, int line, int error) {
+void check_error_debug(const char * file, int line, int error) {
     if (error == 0) return;
 #if ENABLE_Trace
     trace(LOG_ALWAYS, "Fatal error %d: %s", error, errno_to_str(error));

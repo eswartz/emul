@@ -17,7 +17,7 @@
  */
 
 #define CASE(var) case var: return ""#var;
-char * signal_name(int signal) {
+const char * signal_name(int signal) {
     switch (signal) {
     CASE(SIGHUP)
     CASE(SIGINT)
@@ -63,7 +63,7 @@ char * signal_name(int signal) {
 }
 #undef CASE
 
-char * signal_description(int signal) {
+const char * signal_description(int signal) {
     /* TODO: signal description */
     return NULL;
 }

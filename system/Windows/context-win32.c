@@ -73,15 +73,15 @@ static ExceptionName exception_names[] = {
     { 0xe06d7363, NULL, "Microsoft C++ Exception" },
 };
 
-#define EXCEPTION_NAMES_CNT (sizeof(exception_names) / sizeof(ExceptionName))
+#define EXCEPTION_NAMES_CNT ((int)(sizeof(exception_names) / sizeof(ExceptionName)))
 
-char * signal_name(int signal) {
+const char * signal_name(int signal) {
     int n = signal - 1;
     if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].name;
     return NULL;
 }
 
-char * signal_description(int signal) {
+const char * signal_description(int signal) {
     int n = signal - 1;
     if (n >= 0 && n < EXCEPTION_NAMES_CNT) return exception_names[n].desc;
     return NULL;
@@ -114,7 +114,7 @@ typedef struct DebugEvent {
 
 #define EXCEPTION_DEBUGGER_IO 0x406D1388
 
-char * context_suspend_reason(Context * ctx) {
+const char * context_suspend_reason(Context * ctx) {
     DWORD exception_code = ctx->suspend_reason.ExceptionRecord.ExceptionCode;
     static char buf[64];
     int n = 0;

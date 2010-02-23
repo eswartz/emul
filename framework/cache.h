@@ -29,7 +29,7 @@
 
     static AbstractCache cache;
 
-    Context * id2ctx(char * id) {
+    Context * id2ctx(const char * id) {
         Channel * c = cache_channel();
         if (!cache_valid) {
             // Send data request.

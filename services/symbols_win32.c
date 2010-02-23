@@ -212,7 +212,7 @@ static int get_type_tag(Symbol * type, DWORD * tag) {
     return 0;
 }
 
-char * symbol2id(const Symbol * sym) {
+const char * symbol2id(const Symbol * sym) {
     static char buf[256];
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
@@ -230,7 +230,7 @@ char * symbol2id(const Symbol * sym) {
     return buf;
 }
 
-int id2symbol(char * id, Symbol ** res) {
+int id2symbol(const char * id, Symbol ** res) {
     Symbol * sym = NULL;
     Context * ctx = NULL;
     ULONG64 module = 0;
@@ -239,7 +239,7 @@ int id2symbol(char * id, Symbol ** res) {
     const Symbol * base = NULL;
     const TypeInfo * info = NULL;
     size_t length = 0;
-    char * p;
+    const char * p;
 
     if (id != NULL && id[0] == 'P' && id[1] == 'T' && id[2] == 'R') {
         p = id + 3;

@@ -499,8 +499,8 @@ static void command_get_signal_list(char * token, Channel * c) {
         int n = 0;
         write_stream(&c->out, '[');
         for (i = 0; i < 32; i++) {
-            char * name = signal_name(i);
-            char * desc = signal_description(i);
+            const char * name = signal_name(i);
+            const char * desc = signal_description(i);
             if (name != NULL || desc != NULL) {
                 if (n > 0) write_stream(&c->out, ',');
                 write_stream(&c->out, '{');
@@ -817,7 +817,9 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
             ACCESS_MASK GrantedAccess;
         } Handles[1];
     } SYSTEM_HANDLE_INFORMATION;
-    FARPROC QuerySystemInformationProc = GetProcAddress(GetModuleHandle("NTDLL.DLL"), "NtQuerySystemInformation");
+    typedef NTSTATUS (FAR WINAPI * QuerySystemInformationTypedef)(int, PVOID, ULONG, PULONG);
+    QuerySystemInformationTypedef QuerySystemInformationProc = (QuerySystemInformationTypedef)GetProcAddress(
+        GetModuleHandle("NTDLL.DLL"), "NtQuerySystemInformation");
     DWORD size;
     NTSTATUS status;
     SYSTEM_HANDLE_INFORMATION * hi = NULL;
@@ -861,11 +863,11 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
     }
 
     size = sizeof(SYSTEM_HANDLE_INFORMATION) * 16;
-    hi = loc_alloc(size);
+    hi = (SYSTEM_HANDLE_INFORMATION *)loc_alloc(size);
     for (;;) {
         status = QuerySystemInformationProc(SystemHandleInformation, hi, size, &size);
         if (status != STATUS_INFO_LENGTH_MISMATCH) break;
-        hi = loc_realloc(hi, size);
+        hi = (SYSTEM_HANDLE_INFORMATION *)loc_realloc(hi, size);
     }
     if (status == 0) {
         ULONG i;
@@ -932,7 +934,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
     if (close(fpipes[1][1]) < 0 && !err) err = errno;
     if (close(fpipes[2][1]) < 0 && !err) err = errno;
     if (!err) {
-        *prs = loc_alloc_zero(sizeof(ChildProcess));
+        *prs = (ChildProcess *)loc_alloc_zero(sizeof(ChildProcess));
         (*prs)->inp = fpipes[0][1];
         (*prs)->out = fpipes[1][0];
         (*prs)->err = fpipes[2][0];

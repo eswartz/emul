@@ -370,7 +370,7 @@ static void write_breakpoint_status(OutputStream * out, BreakpointInfo * bp) {
     write_stream(out, '{');
 
     if (u != NULL) {
-        char * msg = "Unsupported breakpoint properties: ";
+        const char * msg = "Unsupported breakpoint properties: ";
         json_write_string(out, "Error");
         write_stream(out, ':');
         write_stream(out, '"');
@@ -1197,8 +1197,8 @@ static void remove_ref(Channel * c, BreakpointClient * br) {
     list_remove(&br->link_inp);
     list_remove(&br->link_bp);
     loc_free(br);
-    remove_breakpoint(bp);
     if (list_is_empty(&bp->link_clients)) send_event_context_removed(bp);
+    remove_breakpoint(bp);
 }
 
 static void delete_breakpoint_refs(Channel * c) {
@@ -1704,7 +1704,7 @@ int skip_breakpoint(Context * ctx, int single_step) {
 #endif
 }
 
-BreakpointInfo * create_eventpoint(char * location, EventPointCallBack * callback, void * callback_args) {
+BreakpointInfo * create_eventpoint(const char * location, EventPointCallBack * callback, void * callback_args) {
     BreakpointInfo * p = (BreakpointInfo *)loc_alloc_zero(sizeof(BreakpointInfo));
     p->client_cnt = 1;
     p->enabled = 1;

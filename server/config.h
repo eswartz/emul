@@ -91,7 +91,7 @@
 #include "pathmap.h"
 #include "tcf_elf.h"
 
-static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
+static void ini_services(Protocol * proto, TCFBroadcastGroup * bcg) {
 #if SERVICE_Locator
     ini_locator_service(proto, bcg);
 #endif

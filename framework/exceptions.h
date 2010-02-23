@@ -51,6 +51,6 @@ extern int set_trap_b(Trap * trap);
 
 extern void clear_trap(Trap * trap);
 extern void exception(int error);
-extern void str_exception(int error, char * msg);
+extern void str_exception(int error, const char * msg);
 
 #endif /* D_exceptions */

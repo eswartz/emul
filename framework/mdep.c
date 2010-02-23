@@ -56,7 +56,7 @@ typedef struct {
 
 int pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr) {
     assert(attr == NULL);
-    *mutex = CreateMutex(NULL, FALSE, NULL);
+    *mutex = (pthread_mutex_t)CreateMutex(NULL, FALSE, NULL);
     if (*mutex == NULL) return set_win32_errno(GetLastError());
     return 0;
 }
@@ -76,7 +76,7 @@ int pthread_mutex_unlock(pthread_mutex_t * mutex) {
 }
 
 int pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * attr) {
-    PThreadCond * p = loc_alloc_zero(sizeof(PThreadCond));
+    PThreadCond * p = (PThreadCond *)loc_alloc_zero(sizeof(PThreadCond));
     assert(attr == NULL);
     p->waiters_count = 0;
     p->was_broadcast = 0;
@@ -278,7 +278,7 @@ int pthread_create(pthread_t * thread, const pthread_attr_t * attr,
         loc_free(a);
         return errno = err;
     }
-    *thread = r;
+    *thread = (pthread_t)r;
     return 0;
 }
 
@@ -290,7 +290,7 @@ int pthread_join(pthread_t thread, void ** value_ptr) {
 }
 
 pthread_t pthread_self(void) {
-    return GetCurrentThread();
+    return (pthread_t)GetCurrentThread();
 }
 
 int pthread_attr_init(pthread_attr_t * attr) {
@@ -367,7 +367,7 @@ int wsa_recv(int socket, void * buf, size_t size, int flags) {
     int res = 0;
     SetLastError(0);
     WSASetLastError(0);
-    res = recv(socket, buf, size, flags);
+    res = recv(socket, (char *)buf, size, flags);
     if (res < 0) {
         set_win32_errno(WSAGetLastError());
         return -1;
@@ -381,7 +381,7 @@ int wsa_recvfrom(int socket, void * buf, size_t size, int flags,
     int res = 0;
     SetLastError(0);
     WSASetLastError(0);
-    res = recvfrom(socket, buf, size, flags, addr, addr_size);
+    res = recvfrom(socket, (char *)buf, size, flags, addr, addr_size);
     if (res < 0) {
         set_win32_errno(WSAGetLastError());
         return -1;
@@ -394,7 +394,7 @@ int wsa_send(int socket, const void * buf, size_t size, int flags) {
     int res = 0;
     SetLastError(0);
     WSASetLastError(0);
-    res = send(socket, buf, size, flags);
+    res = send(socket, (char *)buf, size, flags);
     if (res < 0) {
         set_win32_errno(WSAGetLastError());
         return -1;
@@ -408,7 +408,7 @@ int wsa_sendto(int socket, const void * buf, size_t size, int flags,
     int res = 0;
     SetLastError(0);
     WSASetLastError(0);
-    res = sendto(socket, buf, size, flags, dest_addr, dest_size);
+    res = sendto(socket, (char *)buf, size, flags, dest_addr, dest_size);
     if (res < 0) {
         set_win32_errno(WSAGetLastError());
         return -1;

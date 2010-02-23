@@ -58,7 +58,6 @@
 #define STOP_ALL_MAX_CNT 20
 
 static const char RUN_CONTROL[] = "RunControl";
-static TCFSuspendGroup * suspend_group = NULL;
 
 typedef struct SafeEvent SafeEvent;
 
@@ -697,10 +696,7 @@ static void run_safe_events(void * arg) {
         assert(safe_event_list == NULL);
         assert(safe_event_pid_count == 0);
 
-        if (channels_get_message_count(suspend_group) > 0) {
-            post_event(run_safe_events, (void *)++safe_event_generation);
-            return;
-        }
+
 
         for (qp = context_root.next; qp != &context_root; qp = qp->next) {
             Context * ctx = ctxl2ctxp(qp);
@@ -891,7 +887,7 @@ static void event_context_exited(Context * ctx, void * client_data) {
     flush_stream(&bcg->out);
 }
 
-void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
+void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     static ContextEventListener listener = {
         event_context_created,
         event_context_exited,
@@ -899,7 +895,6 @@ void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendG
         event_context_started,
         event_context_changed
     };
-    suspend_group = spg;
     add_context_event_listener(&listener, bcg);
     add_command_handler(proto, RUN_CONTROL, "getContext", command_get_context);
     add_command_handler(proto, RUN_CONTROL, "getChildren", command_get_children);

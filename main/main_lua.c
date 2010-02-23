@@ -20,14 +20,23 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 #if ENABLE_LUA
 
 #include <errno.h>
 #include <assert.h>
 #include <signal.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <lualib.h>
 #include <lauxlib.h>
+#ifdef __cplusplus
+}
+#endif
+
 #include "asyncreq.h"
 #include "events.h"
 #include "trace.h"
@@ -38,7 +47,7 @@
 #include "myalloc.h"
 #include "errors.h"
 
-static char * progname;
+static const char * progname;
 static lua_State *luastate;
 
 struct luaref {
@@ -117,7 +126,7 @@ static void lua_read_command_fillbuf(struct lua_read_command_state *state);
 
 static struct luaref *luaref_new(lua_State *L, void * owner)
 {
-    struct luaref *refp = loc_alloc(sizeof *refp);
+    struct luaref *refp = (struct luaref *)loc_alloc(sizeof *refp);
 
     refp->ref = luaL_ref(L, LUA_REGISTRYINDEX);
     refp->owner = owner;
@@ -161,6 +170,7 @@ static void luaref_owner_free(lua_State *L, void * owner)
     }
 }
 
+#ifndef NDEBUG
 static int lua_isclass(lua_State *L, int index, const char *name)
 {
     int rval;
@@ -171,13 +181,14 @@ static int lua_isclass(lua_State *L, int index, const char *name)
     lua_pop(L, 2);
     return rval;
 }
+#endif
 
 static struct peer_extra *lua2peer(lua_State *L, int index)
 {
     if(luaL_checkudata(L, index, "tcf_peer") == NULL) {
         return NULL;
     }
-    return lua_touserdata(L, index);
+    return (struct peer_extra *)lua_touserdata(L, index);
 }
 
 static struct protocol_extra *lua2protocol(lua_State *L, int index)
@@ -185,7 +196,7 @@ static struct protocol_extra *lua2protocol(lua_State *L, int index)
     if(luaL_checkudata(L, index, "tcf_protocol") == NULL) {
         return NULL;
     }
-    return lua_touserdata(L, index);
+    return (struct protocol_extra *)lua_touserdata(L, index);
 }
 
 static struct channel_extra *lua2channel(lua_State *L, int index)
@@ -193,7 +204,7 @@ static struct channel_extra *lua2channel(lua_State *L, int index)
     if(luaL_checkudata(L, index, "tcf_channel") == NULL) {
         return NULL;
     }
-    return lua_touserdata(L, index);
+    return (struct channel_extra *)lua_touserdata(L, index);
 }
 
 static struct post_event_extra *lua2postevent(lua_State *L, int index)
@@ -201,14 +212,14 @@ static struct post_event_extra *lua2postevent(lua_State *L, int index)
     if(luaL_checkudata(L, index, "tcf_post_event") == NULL) {
         return NULL;
     }
-    return lua_touserdata(L, index);
+    return (struct post_event_extra *)lua_touserdata(L, index);
 }
 
 static void lua_read_command_getline(void *client_data)
 {
     int c;
     lua_State *L = luastate;
-    struct lua_read_command_state *state = client_data;
+    struct lua_read_command_state *state = (struct lua_read_command_state *)client_data;
 
     assert(state->reqline != 0);
     assert(state->reqdata == 0);
@@ -272,10 +283,10 @@ static void lua_read_command_getline(void *client_data)
         if(state->lineind == state->linemax) {
             if(state->linemax == 0) {
                 state->linemax = 1024;
-                state->line = loc_alloc(state->linemax);
+                state->line = (char *)loc_alloc(state->linemax);
             } else {
                 state->linemax *= 2;
-                state->line = loc_realloc(state->line, state->linemax);
+                state->line = (char *)loc_realloc(state->line, state->linemax);
             }
         }
         state->line[state->lineind++] = c;
@@ -308,8 +319,8 @@ eol:
 
 static void lua_read_command_done(void *client_data)
 {
-    AsyncReqInfo *req = client_data;
-    struct lua_read_command_state *state = req->client_data;
+    AsyncReqInfo *req = (AsyncReqInfo *)client_data;
+    struct lua_read_command_state *state = (struct lua_read_command_state *)req->client_data;
 
     assert(state->reqdata != 0);
     state->reqdata = 0;
@@ -365,7 +376,7 @@ static struct peer_extra *lookup_pse(lua_State *L, PeerServer *ps)
     lua_rawgeti(L, LUA_REGISTRYINDEX, peers_refp->ref);
     lua_pushstring(L, ps->id);          /* Key */
     lua_rawget(L, -2);
-    if((pse = lua_touserdata(L, -1)) == NULL) {
+    if((pse = (struct peer_extra *)lua_touserdata(L, -1)) == NULL) {
         assert(lua_isnil(L, -1));
         lua_pop(L, 2);
         return NULL;
@@ -380,7 +391,7 @@ static struct peer_extra *lua_alloc_pse(lua_State *L, PeerServer *ps)
     struct peer_extra *pse;
 
     /* Allocate new LUA object for peer */
-    pse = lua_newuserdata(L, sizeof *pse);
+    pse = (struct peer_extra *)lua_newuserdata(L, sizeof *pse);
     memset(pse, 0, sizeof *pse);
     pse->L = L;
     pse->ps = ps;
@@ -397,7 +408,7 @@ static struct peer_extra *lua_push_pse(lua_State *L, PeerServer *ps)
     lua_rawgeti(L, LUA_REGISTRYINDEX, peers_refp->ref);
     lua_pushstring(L, ps->id);          /* Key */
     lua_rawget(L, -2);
-    if((pse = lua_touserdata(L, -1)) != NULL) {
+    if((pse = (struct peer_extra *)lua_touserdata(L, -1)) != NULL) {
         assert(lua_isclass(L, -1, "tcf_peer"));
         assert(pse->managed);
     } else {
@@ -419,7 +430,7 @@ static struct peer_extra *lua_push_pse(lua_State *L, PeerServer *ps)
 
 static void peer_server_changes(PeerServer *ps, int changeType, void * client_data)
 {
-    lua_State *L = client_data;
+    lua_State *L = (lua_State *)client_data;
     struct peer_extra *pse = lookup_pse(L, ps);
 
     switch(changeType) {
@@ -465,7 +476,7 @@ static int lua_peer_server_find(lua_State *L)
 
 static int lua_peer_server_list_entry(PeerServer * ps, void * client_data)
 {
-    lua_State *L = client_data;
+    lua_State *L = (lua_State *)client_data;
     lua_push_pse(L, ps);
     lua_rawseti(L, -2, lua_objlen(L, -2) + 1);
     return 0;
@@ -534,7 +545,7 @@ static int lua_protocol_alloc(lua_State *L)
         luaL_error(L, "wrong number or type of arguments");
     }
     trace(LOG_LUA, "lua_protocol_alloc");
-    pe = lua_newuserdata(L, sizeof *pe);
+    pe = (struct protocol_extra *)lua_newuserdata(L, sizeof *pe);
     memset(pe, 0, sizeof *pe);
     pe->L = L;
     pe->p = protocol_alloc();
@@ -552,7 +563,7 @@ static int lua_channel_server(lua_State *L)
 
 
 static void channel_connecting(Channel * c) {
-    struct channel_extra *ce = c->client_data;
+    struct channel_extra *ce = (struct channel_extra *)c->client_data;
     lua_State *L = ce->L;
 
     if(ce->connecting_cbrefp != NULL) {
@@ -567,7 +578,7 @@ static void channel_connecting(Channel * c) {
 }
 
 static void channel_connected(Channel * c) {
-    struct channel_extra *ce = c->client_data;
+    struct channel_extra *ce = (struct channel_extra *)c->client_data;
     lua_State *L = ce->L;
 
     trace(LOG_LUA, "lua_channel_connected %p", c);
@@ -581,7 +592,7 @@ static void channel_connected(Channel * c) {
 }
 
 static void channel_receive(Channel * c) {
-    struct channel_extra *ce = c->client_data;
+    struct channel_extra *ce = (struct channel_extra *)c->client_data;
     lua_State *L = ce->L;
 
     trace(LOG_LUA, "lua_channel_receive %p", c);
@@ -596,7 +607,7 @@ static void channel_receive(Channel * c) {
 }
 
 static void channel_disconnected(Channel * c) {
-    struct channel_extra *ce = c->client_data;
+    struct channel_extra *ce = (struct channel_extra *)c->client_data;
     lua_State *L = ce->L;
 
     trace(LOG_LUA, "lua_channel_disconnected %p", c);
@@ -616,7 +627,7 @@ static void channel_disconnected(Channel * c) {
 
 static void lua_channel_connect_cb(void * client_data, int error, Channel * c)
 {
-    struct channel_extra *ce = client_data;
+    struct channel_extra *ce = (struct channel_extra *)client_data;
     lua_State *L = ce->L;
 
     trace(LOG_LUA, "lua_channel_connect_cb %p %d", c, error);
@@ -647,8 +658,8 @@ static void lua_channel_connect_cb(void * client_data, int error, Channel * c)
 
 static int lua_channel_connect(lua_State *L)
 {
-    struct peer_extra *pse;
-    struct protocol_extra *pe;
+    struct peer_extra *pse = NULL;
+    struct protocol_extra *pe = NULL;
     struct channel_extra *ce;
 
     assert(L == luastate);
@@ -660,7 +671,7 @@ static int lua_channel_connect(lua_State *L)
     }
     trace(LOG_LUA, "lua_channel_connect %p", pse->ps);
     if(pse->ps == NULL) luaL_error(L, "stale peer");
-    ce = lua_newuserdata(L, sizeof *ce);
+    ce = (struct channel_extra *)lua_newuserdata(L, sizeof *ce);
     memset(ce, 0, sizeof *ce);
     lua_pushvalue(L, -1);  /* Prevent GC while connection is active */
     ce->self_refp = luaref_new(L, ce);
@@ -676,7 +687,7 @@ static int lua_channel_connect(lua_State *L)
 
 static void lua_post_event_cb(void * client_data)
 {
-    struct post_event_extra *p = client_data;
+    struct post_event_extra *p = (struct post_event_extra *)client_data;
     lua_State *L = p->L;
 
     assert(p->handler_refp != NULL);
@@ -700,7 +711,7 @@ static int lua_post_event(lua_State *L)
        lua_gettop(L) > 1 && !(lua_isnil(L, 2) || lua_isnumber(L, 2))) {
         luaL_error(L, "wrong number or type of arguments");
     }
-    p = lua_newuserdata(L, sizeof *p);
+    p = (struct post_event_extra *)lua_newuserdata(L, sizeof *p);
     memset(p, 0, sizeof *p);
     p->L = L;
     lua_pushvalue(L, -1);
@@ -734,7 +745,7 @@ static const luaL_Reg tcffuncs[] = {
 
 static int lua_protocol_tostring(lua_State *L)
 {
-    struct protocol_extra *pe;
+    struct protocol_extra *pe = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (pe = lua2protocol(L, 1)) == NULL) {
@@ -747,7 +758,7 @@ static int lua_protocol_tostring(lua_State *L)
 
 static int lua_protocol_gc(lua_State *L)
 {
-    struct protocol_extra *pe;
+    struct protocol_extra *pe = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (pe = lua2protocol(L, 1)) == NULL) {
@@ -762,8 +773,8 @@ static int lua_protocol_gc(lua_State *L)
 }
 
 static void protocol_command_handler(char * token, Channel * c, void * client_data) {
-    struct channel_extra *ce = c->client_data;
-    struct luaref *refp = client_data;
+    struct channel_extra *ce = (struct channel_extra *)c->client_data;
+    struct luaref *refp = (struct luaref *)client_data;
     lua_State *L = ce->L;
     InputStream * inp = &c->inp;
     luaL_Buffer msg;
@@ -785,7 +796,7 @@ static void protocol_command_handler(char * token, Channel * c, void * client_da
 
 static int lua_protocol_command_handler(lua_State *L)
 {
-    struct protocol_extra *pe;
+    struct protocol_extra *pe = NULL;
     struct luaref *refp;
     const char *service;
     const char *name;
@@ -832,7 +843,7 @@ static const char *channel_state_string(Channel * c)
 
 static int lua_channel_tostring(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (ce = lua2channel(L, 1)) == NULL) {
@@ -850,7 +861,7 @@ static int lua_channel_tostring(lua_State *L)
 
 static int lua_channel_state(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (ce = lua2channel(L, 1)) == NULL) {
@@ -863,7 +874,7 @@ static int lua_channel_state(lua_State *L)
 
 static int lua_channel_close(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (ce = lua2channel(L, 1)) == NULL) {
@@ -891,7 +902,7 @@ static void update_callback(lua_State *L, int index, struct luaref **cbrefpp, vo
 
 static int lua_channel_connecting_handler(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 2 || (ce = lua2channel(L, 1)) == NULL) {
@@ -905,7 +916,7 @@ static int lua_channel_connecting_handler(lua_State *L)
 
 static int lua_channel_connected_handler(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 2 || (ce = lua2channel(L, 1)) == NULL) {
@@ -919,7 +930,7 @@ static int lua_channel_connected_handler(lua_State *L)
 
 static int lua_channel_receive_handler(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 2 || (ce = lua2channel(L, 1)) == NULL) {
@@ -933,7 +944,7 @@ static int lua_channel_receive_handler(lua_State *L)
 
 static int lua_channel_disconnected_handler(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 2 || (ce = lua2channel(L, 1)) == NULL) {
@@ -946,8 +957,8 @@ static int lua_channel_disconnected_handler(lua_State *L)
 }
 
 static void channel_event_handler(Channel * c, void * client_data) {
-    struct channel_extra *ce = c->client_data;
-    struct luaref *refp = client_data;
+    struct channel_extra *ce = (struct channel_extra *)c->client_data;
+    struct luaref *refp = (struct luaref *)client_data;
     lua_State *L = ce->L;
     InputStream * inp = &c->inp;
     luaL_Buffer msg;
@@ -968,7 +979,7 @@ static void channel_event_handler(Channel * c, void * client_data) {
 
 static int lua_channel_event_handler(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
     struct luaref *refp;
     const char *service;
     const char *name;
@@ -991,7 +1002,7 @@ static int lua_channel_event_handler(lua_State *L)
 
 static int lua_channel_start(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (ce = lua2channel(L, 1)) == NULL) {
@@ -1005,7 +1016,7 @@ static int lua_channel_start(lua_State *L)
 
 static int lua_channel_send_message(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
     OutputStream *out;
     const char *s;
     size_t l;
@@ -1031,8 +1042,8 @@ static int lua_channel_send_message(lua_State *L)
 
 static void channel_send_command_cb(Channel * c, void * client_data, int error)
 {
-    struct channel_extra *ce = c->client_data;
-    struct command_extra *cmd = client_data;
+    struct channel_extra *ce = (struct channel_extra *)c->client_data;
+    struct command_extra *cmd = (struct command_extra *)client_data;
     lua_State *L = ce->L;
     InputStream * inp = &c->inp;
     luaL_Buffer msg;
@@ -1061,7 +1072,7 @@ static void channel_send_command_cb(Channel * c, void * client_data, int error)
 
 static int lua_channel_send_command(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
     struct command_extra *cmd;
     OutputStream *out;
     const char *s;
@@ -1079,7 +1090,7 @@ static int lua_channel_send_command(lua_State *L)
     if(ce->c == NULL) luaL_error(L, "disconnected channel");
 
     /* Object to track outstanding command */
-    cmd = lua_newuserdata(L, sizeof *cmd);
+    cmd = (struct command_extra *)lua_newuserdata(L, sizeof *cmd);
     memset(cmd, 0, sizeof *cmd);
     luaL_getmetatable(L, "tcf_command");
     lua_setmetatable(L, -2);
@@ -1115,8 +1126,8 @@ static int lua_channel_cancel_command(lua_State *L)
 
 static void channel_redirect_cb(Channel * c, void * client_data, int error)
 {
-    struct channel_extra *ce = c->client_data;
-    struct command_extra *cmd = client_data;
+    struct channel_extra *ce = (struct channel_extra *)c->client_data;
+    struct command_extra *cmd = (struct command_extra *)client_data;
     lua_State *L = ce->L;
 
     lua_rawgeti(L, LUA_REGISTRYINDEX, cmd->result_cbrefp->ref);
@@ -1136,7 +1147,7 @@ static void channel_redirect_cb(Channel * c, void * client_data, int error)
 
 static int lua_channel_redirect(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
     struct command_extra *cmd;
 
     assert(L == luastate);
@@ -1149,7 +1160,7 @@ static int lua_channel_redirect(lua_State *L)
     if(ce->c == NULL) luaL_error(L, "disconnected channel");
 
     /* Object to track outstanding command */
-    cmd = lua_newuserdata(L, sizeof *cmd);
+    cmd = (struct command_extra *)lua_newuserdata(L, sizeof *cmd);
     memset(cmd, 0, sizeof *cmd);
     luaL_getmetatable(L, "tcf_command");
     lua_setmetatable(L, -2);
@@ -1171,7 +1182,7 @@ static int lua_channel_redirect(lua_State *L)
 
 static int lua_channel_get_services(lua_State *L)
 {
-    struct channel_extra *ce;
+    struct channel_extra *ce = NULL;
     int i;
 
     assert(L == luastate);
@@ -1209,7 +1220,7 @@ static const luaL_Reg channelfuncs[] = {
 
 static int lua_peer_tostring(lua_State *L)
 {
-    struct peer_extra *pse;
+    struct peer_extra *pse = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (pse = lua2peer(L, 1)) == NULL) {
@@ -1222,7 +1233,7 @@ static int lua_peer_tostring(lua_State *L)
 
 static int lua_peer_gc(lua_State *L)
 {
-    struct peer_extra *pse;
+    struct peer_extra *pse = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (pse = lua2peer(L, 1)) == NULL) {
@@ -1238,7 +1249,7 @@ static int lua_peer_gc(lua_State *L)
 
 static int lua_peer_getid(lua_State *L)
 {
-    struct peer_extra *pse;
+    struct peer_extra *pse = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (pse = lua2peer(L, 1)) == NULL) {
@@ -1253,7 +1264,7 @@ static int lua_peer_getid(lua_State *L)
 static int lua_peer_getnames(lua_State *L)
 {
     int i;
-    struct peer_extra *pse;
+    struct peer_extra *pse = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (pse = lua2peer(L, 1)) == NULL) {
@@ -1271,7 +1282,7 @@ static int lua_peer_getnames(lua_State *L)
 
 static int lua_peer_getvalue(lua_State *L)
 {
-    struct peer_extra *pse;
+    struct peer_extra *pse = NULL;
     const char *s;
 
     assert(L == luastate);
@@ -1292,7 +1303,7 @@ static int lua_peer_getvalue(lua_State *L)
 
 static int lua_peer_setvalue(lua_State *L)
 {
-    struct peer_extra *pse;
+    struct peer_extra *pse = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 3 || (pse = lua2peer(L, 1)) == NULL ||
@@ -1307,7 +1318,7 @@ static int lua_peer_setvalue(lua_State *L)
 
 static int lua_peer_getflags(lua_State *L)
 {
-    struct peer_extra *pse;
+    struct peer_extra *pse = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (pse = lua2peer(L, 1)) == NULL) {
@@ -1336,7 +1347,7 @@ static int lua_peer_getflags(lua_State *L)
 
 static int lua_peer_setflags(lua_State *L)
 {
-    struct peer_extra *pse;
+    struct peer_extra *pse = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 2 || (pse = lua2peer(L, 1)) == NULL ||
@@ -1388,7 +1399,7 @@ static const luaL_Reg peerfuncs[] = {
 
 static int lua_post_event_tostring(lua_State *L)
 {
-    struct post_event_extra *p;
+    struct post_event_extra *p = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (p = lua2postevent(L, 1)) == NULL) {
@@ -1401,7 +1412,7 @@ static int lua_post_event_tostring(lua_State *L)
 
 static int lua_post_event_cancel(lua_State *L)
 {
-    struct post_event_extra *p;
+    struct post_event_extra *p = NULL;
 
     assert(L == luastate);
     if(lua_gettop(L) != 1 || (p = lua2postevent(L, 1)) == NULL) {
@@ -1442,9 +1453,8 @@ int main(int argc, char ** argv) {
     int ind;
     int error;
     int interactive = 1;
-    char * s;
-    char * log_name = "-";
-    char * script_name = 0;
+    const char * log_name = "-";
+    const char * script_name = NULL;
     char * engine_name;
     lua_State *L;
 
@@ -1469,7 +1479,7 @@ int main(int argc, char ** argv) {
 
     /* Parse arguments */
     for (ind = 1; ind < argc; ind++) {
-        s = argv[ind];
+        const char * s = argv[ind];
         if (*s != '-') {
             break;
         }

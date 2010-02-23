@@ -44,7 +44,7 @@
 
 static LINK pending_list;
 
-char * context_suspend_reason(Context * ctx) {
+const char * context_suspend_reason(Context * ctx) {
     static char reason[128];
 
     if (ctx->stopped_by_bp && ctx->bp_ids != NULL) return "Breakpoint";

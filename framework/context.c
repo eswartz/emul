@@ -61,17 +61,17 @@ char * ctx2id(Context * ctx) {
     return pid2id(ctx->pid, ctx->parent->pid);
 }
 
-pid_t id2pid(char * id, pid_t * parent) {
+pid_t id2pid(const char * id, pid_t * parent) {
     pid_t pid = 0;
     if (parent != NULL) *parent = 0;
     if (id == NULL) return 0;
     if (id[0] != 'P') return 0;
     if (id[1] == 0) return 0;
-    pid = (pid_t)strtol(id + 1, &id, 10);
+    pid = (pid_t)strtol(id + 1, (char **)&id, 10);
     if (id[0] == '.') {
         if (id[1] == 0) return 0;
         if (parent != NULL) *parent = pid;
-        pid = (pid_t)strtol(id + 1, &id, 10);
+        pid = (pid_t)strtol(id + 1, (char **)&id, 10);
     }
     if (id[0] != 0) return 0;
     return pid;
@@ -123,7 +123,7 @@ Context * context_find_from_pid(pid_t pid, int thread) {
     return NULL;
 }
 
-Context * id2ctx(char * id) {
+Context * id2ctx(const char * id) {
     pid_t parent = 0;
     pid_t pid = id2pid(id, &parent);
     if (pid == 0) return NULL;
@@ -153,8 +153,9 @@ Context * create_context(pid_t pid, size_t regs_size) {
     Context * ctx = (Context *)loc_alloc_zero(sizeof(Context));
 
     ctx->pid = pid;
-    ctx->regs_size = regs_size;
-    ctx->regs = (RegisterData *)loc_alloc_zero(regs_size);
+    if ((ctx->regs_size = regs_size) > 0) {
+        ctx->regs = (RegisterData *)loc_alloc_zero(regs_size);
+    }
     list_init(&ctx->children);
     list_init(&ctx->ctxl);
     list_init(&ctx->pidl);
@@ -164,7 +165,7 @@ Context * create_context(pid_t pid, size_t regs_size) {
 
 #endif /* !ENABLE_ContextProxy */
 
-char * context_state_name(Context * ctx) {
+const char * context_state_name(Context * ctx) {
     if (ctx->exited) return "exited";
     if (ctx->intercepted) return "intercepted";
     if (ctx->stopped) return "stopped";

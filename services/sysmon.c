@@ -827,7 +827,7 @@ static void command_get_command_line(char * token, Channel * c) {
     if (err == 0 && upa.CommandLine.Buffer != NULL) {
         SIZE_T cmd_size = upa.CommandLine.Length;
         SIZE_T read_size = 0;
-        cmd = loc_alloc(cmd_size);
+        cmd = (wchar_t *)loc_alloc(cmd_size);
         if (ReadProcessMemory(prs, (LPCVOID)upa.CommandLine.Buffer, cmd, cmd_size, &read_size) == 0) {
             err = set_win32_errno(GetLastError());
         }
@@ -849,7 +849,7 @@ static void command_get_command_line(char * token, Channel * c) {
             write_stream(&c->out, '"');
             while (p < e && *p) {
                 char buf[0x100];
-                int k = 0;
+                unsigned k = 0;
                 while (p < e && *p && k < sizeof(buf) / 4) {
                     if (*p == '"' || *p == '\\' || *p == ' ' || *p == '\t') break;
                     p++;
@@ -957,7 +957,7 @@ static void command_get_environment(char * token, Channel * c) {
         }
 
         if (err == 0) {
-            env = loc_alloc(env_size);
+            env = (wchar_t *)loc_alloc(env_size);
             if (ReadProcessMemory(prs, (LPCVOID)upa.Environment, env, env_size, &buf_len) == 0) {
                 err = set_win32_errno(GetLastError());
             }
@@ -976,7 +976,8 @@ static void command_get_environment(char * token, Channel * c) {
             write_stream(&c->out, '"');
             while (*p) {
                 char buf[0x100];
-                int k = 0, n = 0, i = 0;
+                unsigned k = 0;
+                int n = 0, i = 0;
                 while (*p && k < sizeof(buf) / 4) { p++; k++; }
                 n = WideCharToMultiByte(CP_UTF8, 0, p - k, k, buf, sizeof(buf), NULL, NULL);
                 while (i < n) json_write_char(&c->out, buf[i++]);

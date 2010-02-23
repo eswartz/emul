@@ -145,7 +145,7 @@ static int get_num_prop(ObjectInfo * obj, int at, U8_T * res) {
     return 1;
 }
 
-static int find_in_object_tree(ObjectInfo * list, char * name, Symbol ** sym) {
+static int find_in_object_tree(ObjectInfo * list, const char * name, Symbol ** sym) {
     int found = 0;
     ObjectInfo * obj = list;
     while (obj != NULL) {
@@ -177,7 +177,7 @@ static int find_in_object_tree(ObjectInfo * list, char * name, Symbol ** sym) {
     return found;
 }
 
-static int find_in_dwarf(DWARFCache * cache, char * name, Symbol ** sym) {
+static int find_in_dwarf(DWARFCache * cache, const char * name, Symbol ** sym) {
     unsigned i;
     for (i = 0; i < cache->mCompUnitsCnt; i++) {
         CompUnit * unit = cache->mCompUnits[i];
@@ -276,7 +276,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
                     if (sym_ip != 0) found = find_in_dwarf(cache, name, res);
                     if (!found) found = find_in_sym_table(cache, name, res);
                     if (!found && sym_ip != 0) {
-                        char * s = NULL;
+                        const char * s = NULL;
                         if (strcmp(name, "signed") == 0) s = "int";
                         else if (strcmp(name, "signed int") == 0) s = "int";
                         else if (strcmp(name, "unsigned") == 0) s = "unsigned int";
@@ -406,7 +406,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
     return 0;
 }
 
-char * symbol2id(const Symbol * sym) {
+const char * symbol2id(const Symbol * sym) {
     static char id[256];
 
     assert(sym->magic == SYMBOL_MAGIC);
@@ -433,9 +433,9 @@ char * symbol2id(const Symbol * sym) {
     return id;
 }
 
-static unsigned long read_hex(char ** s) {
+static unsigned long read_hex(const char ** s) {
     unsigned long res = 0;
-    char * p = *s;
+    const char * p = *s;
     for (;;) {
         if (*p >= '0' && *p <= '9') res = (res << 4) | (*p - '0');
         else if (*p >= 'A' && *p <= 'F') res = (res << 4) | (*p - 'A' + 10);
@@ -446,9 +446,9 @@ static unsigned long read_hex(char ** s) {
     return res;
 }
 
-static unsigned long long read_hex_ll(char ** s) {
+static unsigned long long read_hex_ll(const char ** s) {
     unsigned long long res = 0;
-    char * p = *s;
+    const char * p = *s;
     for (;;) {
         if (*p >= '0' && *p <= '9') res = (res << 4) | (*p - '0');
         else if (*p >= 'A' && *p <= 'F') res = (res << 4) | (*p - 'A' + 10);
@@ -459,14 +459,14 @@ static unsigned long long read_hex_ll(char ** s) {
     return res;
 }
 
-int id2symbol(char * id, Symbol ** res) {
+int id2symbol(const char * id, Symbol ** res) {
     Symbol * sym = alloc_symbol();
     dev_t dev = 0;
     ino_t ino = 0;
     unsigned long long obj_index = 0;
     unsigned tbl_index = 0;
     ELF_File * file = NULL;
-    char * p;
+    const char * p;
     Trap trap;
 
     *res = sym;
@@ -505,7 +505,7 @@ int id2symbol(char * id, Symbol ** res) {
             errno = ERR_INV_CONTEXT;
             return -1;
         }
-        if (get_sym_context(sym->ctx, sym->frame ? sym->frame - 4 : STACK_NO_FRAME) < 0) return -1;
+        if (get_sym_context(sym->ctx, sym->frame ? (int)(sym->frame - 4) : STACK_NO_FRAME) < 0) return -1;
         file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
         if (file == NULL) return -1;
         while (file->dev != dev || file->ino != ino) {
@@ -575,7 +575,7 @@ static Elf64_Sym * sym64;
 static int unpack(const Symbol * sym) {
     assert(sym->base == NULL);
     assert(sym->size == 0);
-    if (get_sym_context(sym->ctx, sym->frame ? sym->frame - 4 : STACK_NO_FRAME) < 0) return -1;
+    if (get_sym_context(sym->ctx, sym->frame ? (int)(sym->frame - 4) : STACK_NO_FRAME) < 0) return -1;
     file = NULL;
     cache = NULL;
     obj = sym->obj;

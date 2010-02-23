@@ -37,8 +37,8 @@
 #include "discovery.h"
 #include "errors.h"
 
-static char * progname;
-static char * dest_url = "TCP::1534";
+static const char * progname;
+static const char * dest_url = "TCP::1534";
 
 typedef struct ConnectInfo {
     PeerServer * ps;
@@ -123,9 +123,8 @@ int main(int argc, char ** argv) {
 #endif
     int c;
     int ind;
-    char * s;
-    char * log_name = "-";
-    char * url = "TCP:";
+    const char * log_name = "-";
+    const char * url = "TCP:";
     PeerServer * ps;
     ChannelServer * serv;
 
@@ -147,7 +146,7 @@ int main(int argc, char ** argv) {
 
     /* Parse arguments */
     for (ind = 1; ind < argc; ind++) {
-        s = argv[ind];
+        const char * s = argv[ind];
         if (*s != '-') {
             break;
         }

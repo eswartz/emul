@@ -107,12 +107,12 @@ struct Context {
 extern void ini_contexts(void);
 extern void init_contexts_sys_dep(void);
 
-extern char * signal_name(int signal);
-extern char * signal_description(int signal);
+extern const char * signal_name(int signal);
+extern const char * signal_description(int signal);
 extern unsigned signal_code(int signal);
 
-extern char * context_state_name(Context * ctx);
-extern char * context_suspend_reason(Context * ctx);
+extern const char * context_state_name(Context * ctx);
+extern const char * context_suspend_reason(Context * ctx);
 
 /*
  * Convert PID to TCF Context ID
@@ -127,12 +127,12 @@ extern char * ctx2id(Context * ctx);
 /*
  * Convert TCF Context ID to PID
  */
-extern pid_t id2pid(char * id, pid_t * parent);
+extern pid_t id2pid(const char * id, pid_t * parent);
 
 /*
  * Search Context record by TCF Context ID
  */
-extern Context * id2ctx(char * id);
+extern Context * id2ctx(const char * id);
 
 #if ENABLE_DebugContext
 

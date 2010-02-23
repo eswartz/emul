@@ -7,9 +7,9 @@ SRCDIRS = . system/$(OPSYS) machine/$(MACHINE) framework services main
 BINDIR  = obj/$(OPSYS)/$(MACHINE)/$(CONF)
 
 ifeq ($(CONF),Debug)
-  CFLAGS += -g
+  OPTS += -g
 else
-  CFLAGS += -O -DNDEBUG
+  OPTS += -O -DNDEBUG
 endif
 
 ifeq ($(OPSYS),Windows)
@@ -29,7 +29,7 @@ endif
 
 ifeq ($(OPSYS),Msys)
   CC = gcc
-  CFLAGS += -mwin32
+  OPTS += -mwin32
   LIBS = -lws2_32 -liphlpapi
 endif
 
@@ -39,10 +39,10 @@ ifeq ($(OPSYS),Darwin)
 endif
 
 ifneq ($(OPSYS),Windows)
-  CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE
-  CFLAGS += -Wall -Wno-parentheses
+  OPTS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE
+  OPTS += -Wall -Wno-parentheses
   ifneq ($(CC),g++)
-    CFLAGS += -Wmissing-prototypes
+    OPTS += -Wmissing-prototypes
   endif
 endif
 
@@ -55,7 +55,7 @@ EXPORT_DYNAMIC ?= -rdynamic
 LIBS ?= -lpthread -lssl -lrt
 
 ifdef PATH_Plugins
-  CFLAGS += $(EXPORT_DYNAMIC) -DPATH_Plugins="$(PATH_Plugins)"
+  OPTS += $(EXPORT_DYNAMIC) -DPATH_Plugins="$(PATH_Plugins)"
   LIBS += -ldl
 endif
 
@@ -71,11 +71,13 @@ EXECS  = $(addprefix $(BINDIR)/,agent$(EXTEXE) client$(EXTEXE) tcfreg$(EXTEXE) v
 
 ifdef LUADIR
   EXECS += $(BINDIR)/tcflua
-  CFLAGS += -DPATH_LUA="$(LUADIR)" "-I$(LUADIR)/include"
+  OPTS += -DPATH_LUA="$(LUADIR)" "-I$(LUADIR)/include"
 endif
 
 ifdef SERVICES
-  CFLAGS += $(shell $(TCF_AGENT_DIR)/bin/services-to-cflags $(SERVICES))
+  OPTS += $(shell $(TCF_AGENT_DIR)/bin/services-to-cflags $(SERVICES))
 endif
 
-CFLAGS += $(foreach dir,$(SRCDIRS),-I$(TCF_AGENT_DIR)/$(dir))
+OPTS += $(foreach dir,$(SRCDIRS),-I$(TCF_AGENT_DIR)/$(dir))
+
+override CFLAGS += $(OPTS)

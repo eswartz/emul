@@ -69,7 +69,7 @@ static VX_COUNTING_SEMAPHORE(events_signal_mem);
 static SEM_ID events_signal;
 static pthread_t events_thread;
 
-char * context_suspend_reason(Context * ctx) {
+const char * context_suspend_reason(Context * ctx) {
     if (ctx->stopped_by_bp && ctx->bp_ids != NULL) return "Breakpoint";
     if (ctx->event == TRACE_EVENT_STEP) return "Step";
     return "Suspended";

@@ -92,13 +92,13 @@ static void app_char(char ch) {
     }
 }
 
-static void app_str(char * str) {
+static void app_str(const char * str) {
     while (*str && send_size < (int)sizeof(send_buf)) {
         send_buf[send_size++] = *str++;
     }
 }
 
-static void app_strz(char * str) {
+static void app_strz(const char * str) {
     app_str(str);
     app_char(0);
 }
@@ -173,7 +173,7 @@ static void trigger_recv(void) {
 static int create_server_socket(void) {
     int sock = -1;
     int error = 0;
-    char * reason = NULL;
+    const char * reason = NULL;
     const int i = 1;
     struct addrinfo hints;
     struct addrinfo * reslist = NULL;
@@ -274,7 +274,7 @@ static int create_server_socket(void) {
 
 static int udp_send_peer_info(PeerServer * ps, void * arg) {
     struct sockaddr_in * addr = (struct sockaddr_in *)arg;
-    char * host = NULL;
+    const char * host = NULL;
     struct in_addr peer_addr;
     int n;
 
@@ -329,7 +329,7 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
         app_str("ID=");
         app_strz(ps->id);
         for (i = 0; i < ps->ind; i++) {
-            char * name = ps->list[i].name;
+            const char * name = ps->list[i].name;
             assert(strcmp(name, "ID") != 0);
             app_str(name);
             app_char('=');

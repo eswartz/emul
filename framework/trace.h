@@ -45,7 +45,7 @@ extern int log_mode;
  * Print a trace message into log file.
  * Use macro 'trace' instead of calling this function directly.
  */
-extern int print_trace(int mode, char * fmt, ...);
+extern int print_trace(int mode, const char * fmt, ...);
 
 extern FILE * log_file;
 
@@ -63,6 +63,6 @@ extern FILE * log_file;
 
 extern void ini_trace(void);
 
-extern void open_log_file(char * name);
+extern void open_log_file(const char * name);
 
 #endif /* D_trace */

@@ -71,9 +71,9 @@ void * loc_realloc(void * ptr, size_t size) {
     return p;
 }
 
-void loc_free(void *p) {
+void loc_free(const void * p) {
     trace(LOG_ALLOC, "loc_free %#lx", p);
-    free(p);
+    free((void *)p);
 }
 
 

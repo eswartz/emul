@@ -85,11 +85,7 @@ static void proxy_disconnected(Channel * c) {
     if (proxy[proxy->other].c->state == ChannelStateDisconnected) {
         trace(LOG_PROXY, "Proxy disconnected");
         if (proxy->other == -1) proxy--;
-        assert(proxy[0].c->spg == proxy[1].c->spg);
-        suspend_group_free(c->spg);
         broadcast_group_free(c->bcg);
-        assert(proxy[0].c->spg == NULL);
-        assert(proxy[1].c->spg == NULL);
         assert(proxy[0].c->bcg == NULL);
         assert(proxy[1].c->bcg == NULL);
         proxy[0].c->client_data = NULL;
@@ -114,12 +110,12 @@ static void logchr(char ** pp, int c) {
     *pp = p;
 }
 
-static void logstr(char ** pp, char * s) {
+static void logstr(char ** pp, const char * s) {
     char * p = *pp;
-    int c;
+    char c;
 
     while ((c = *s++) != '\0') {
-        if (p + 2 < logbuf + sizeof logbuf) *p++ = (char)c;
+        if (p + 2 < logbuf + sizeof logbuf) *p++ = c;
     }
     *pp = p;
 }
@@ -127,7 +123,7 @@ static void logstr(char ** pp, char * s) {
 static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
     Proxy * proxy = (Proxy *)c->client_data;
     Channel * otherc = proxy[proxy->other].c;
-    char * p;
+    char * p = logbuf;
     int i = 0;
 
     assert(c == proxy->c);
@@ -152,7 +148,6 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
         i++;
     }
 
-    p = logbuf;
     if (log_mode & LOG_TCFLOG) {
         logstr(&p, (char *)(proxy->other > 0 ? "---> " : "<--- "));
         for (i = 0; i < argc; i++) {
@@ -198,7 +193,6 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
 }
 
 void proxy_create(Channel * c1, Channel * c2) {
-    TCFSuspendGroup * spg = suspend_group_alloc();
     TCFBroadcastGroup * bcg = broadcast_group_alloc();
     Proxy * proxy = (Proxy *)loc_alloc_zero(2 * sizeof *proxy);
     int i;
@@ -247,8 +241,6 @@ void proxy_create(Channel * c1, Channel * c2) {
     c2->protocol = proxy[1].proto;
     set_default_message_handler(proxy[1].proto, proxy_default_message_handler);
 
-    channel_set_suspend_group(c1, spg);
-    channel_set_suspend_group(c2, spg);
     channel_set_broadcast_group(c1, bcg);
     channel_set_broadcast_group(c2, bcg);
     channel_start(c2);

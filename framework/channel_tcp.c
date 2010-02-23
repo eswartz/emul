@@ -58,8 +58,6 @@
 #define CHANNEL_MAGIC 0x27208956
 #define MAX_IFC 10
 
-#define is_suspended(CH) ((CH)->chan.spg && (CH)->chan.spg->suspended)
-
 typedef struct ChannelTCP ChannelTCP;
 
 struct ChannelTCP {
@@ -115,7 +113,7 @@ static void handle_channel_msg(void * x);
 #if ENABLE_SSL
 #define ERR_SSL (STD_ERR_BASE + 200)
 static const char * issuer_name = "TCF";
-static char * tcf_dir = "/etc/tcf";
+static const char * tcf_dir = "/etc/tcf";
 static SSL_CTX * ssl_ctx = NULL;
 static X509 * ssl_cert = NULL;
 static RSA * rsa_key = NULL;
@@ -170,7 +168,6 @@ static void delete_channel(ChannelTCP * c) {
     assert(c->read_pending == 0);
     assert(c->ibuf.handling_msg != HandleMsgTriggered);
     channel_clear_broadcast_group(&c->chan);
-    channel_clear_suspend_group(&c->chan);
     c->magic = 0;
 #if ENABLE_SSL
     if (c->ssl) SSL_free(c->ssl);
@@ -500,20 +497,14 @@ static void handle_channel_msg(void * x) {
     assert(c->ibuf.handling_msg == HandleMsgTriggered);
     assert(c->ibuf.message_count);
 
-    if (is_suspended(c)) {
-        /* Honor suspend before message processing started */
-        c->ibuf.handling_msg = HandleMsgIdle;
-        return;
-    }
     has_msg = ibuf_start_message(&c->ibuf);
     if (has_msg <= 0) {
         if (has_msg < 0 && c->chan.state != ChannelStateDisconnected) {
             trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel %#lx %s", c, c->chan.peer_name);
             channel_close(&c->chan);
         }
-        return;
     }
-    if (set_trap(&trap)) {
+    else if (set_trap(&trap)) {
         if (c->chan.receive) {
             c->chan.receive(&c->chan);
         }
@@ -521,22 +512,21 @@ static void handle_channel_msg(void * x) {
             handle_protocol_message(&c->chan);
         }
         clear_trap(&trap);
+        if (c->ibuf.message_count <= 3) {
+            /* Completed processing of current message and there are no
+             * messages pending - flush output */
+            if (c->chan.bcg) {
+                c->chan.bcg->out.flush(&c->chan.bcg->out);
+            }
+            else {
+                c->chan.out.flush(&c->chan.out);
+            }
+        }
     }
     else {
         trace(LOG_ALWAYS, "Exception in message handler: %d %s",
               trap.error, errno_to_str(trap.error));
         send_eof_and_close(&c->chan, trap.error);
-        return;
-    }
-    if (c->ibuf.message_count <= 3) {
-        /* Completed processing of current message and there are no
-         * messages pending - flush output */
-        if (c->chan.bcg) {
-            c->chan.bcg->out.flush(&c->chan.bcg->out);
-        }
-        else {
-            c->chan.out.flush(&c->chan.out);
-        }
     }
 }
 
@@ -544,8 +534,7 @@ static void channel_check_pending(Channel * channel) {
     ChannelTCP * c = channel2tcp(channel);
 
     assert(is_dispatch_thread());
-    if (c->ibuf.handling_msg == HandleMsgIdle &&
-        c->ibuf.message_count && !is_suspended(c)) {
+    if (c->ibuf.handling_msg == HandleMsgIdle && c->ibuf.message_count) {
         post_event(handle_channel_msg, c);
         c->ibuf.handling_msg = HandleMsgTriggered;
     }
@@ -556,7 +545,7 @@ static void tcp_trigger_message(InputBuf * ibuf) {
 
     assert(is_dispatch_thread());
     assert(c->ibuf.message_count > 0);
-    if (c->ibuf.handling_msg == HandleMsgIdle && !is_suspended(c)) {
+    if (c->ibuf.handling_msg == HandleMsgIdle) {
         post_event(handle_channel_msg, c);
         c->ibuf.handling_msg = HandleMsgTriggered;
     }
@@ -763,7 +752,6 @@ static void refresh_peer_server(int sock, PeerServer * ps) {
 #else
     socklen_t sinlen;
 #endif
-    char * transport;
     char str_port[32];
     char str_host[64];
     char str_id[64];
@@ -778,6 +766,7 @@ static void refresh_peer_server(int sock, PeerServer * ps) {
     }
     ifcind = build_ifclist(sock, MAX_IFC, ifclist);
     while (ifcind-- > 0) {
+        const char * transport;
         if (sin.sin_addr.s_addr != INADDR_ANY &&
             (ifclist[ifcind].addr & ifclist[ifcind].mask) !=
             (sin.sin_addr.s_addr & ifclist[ifcind].mask)) {
@@ -874,13 +863,13 @@ static void set_socket_buffer_sizes(int sock) {
 ChannelServer * channel_tcp_server(PeerServer * ps) {
     int sock;
     int error;
-    char * reason = NULL;
+    const char * reason = NULL;
     struct addrinfo hints;
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;
     ServerTCP * si;
-    char * host = peer_server_getprop(ps, "Host", NULL);
-    char * port = peer_server_getprop(ps, "Port", NULL);
+    const char * host = peer_server_getprop(ps, "Host", NULL);
+    const char * port = peer_server_getprop(ps, "Port", NULL);
     int def_port = 0;
     char port_str[16];
 
@@ -1016,8 +1005,8 @@ static void channel_tcp_connect_done(void * args) {
 
 void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void * callback_args) {
     int error = 0;
-    char * host = peer_server_getprop(ps, "Host", NULL);
-    char * port = peer_server_getprop(ps, "Port", NULL);
+    const char * host = peer_server_getprop(ps, "Host", NULL);
+    const char * port = peer_server_getprop(ps, "Port", NULL);
     struct addrinfo hints;
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;

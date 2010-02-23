@@ -88,7 +88,7 @@
 
 static LINK pending_list;
 
-static char * event_name(int event) {
+static const char * event_name(int event) {
     switch (event) {
     case 0: return "none";
     case PTRACE_EVENT_FORK: return "fork";
@@ -102,7 +102,7 @@ static char * event_name(int event) {
     return "unknown";
 }
 
-char * context_suspend_reason(Context * ctx) {
+const char * context_suspend_reason(Context * ctx) {
     static char reason[128];
 
     if (ctx->stopped_by_bp && ctx->bp_ids != NULL) return "Breakpoint";

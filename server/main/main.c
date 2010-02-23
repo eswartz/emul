@@ -36,7 +36,6 @@ static char * progname;
 static Protocol * proto;
 static ChannelServer * serv;
 static TCFBroadcastGroup * bcg;
-static TCFSuspendGroup * spg;
 
 static void channel_redirected(Channel * host, Channel * target) {
     int i;
@@ -65,7 +64,6 @@ static void channel_new_connection(ChannelServer * serv, Channel * c) {
     protocol_reference(proto);
     c->protocol = proto;
     c->redirected = channel_redirected;
-    channel_set_suspend_group(c, spg);
     channel_set_broadcast_group(c, bcg);
     channel_start(c);
 }
@@ -148,9 +146,8 @@ int main(int argc, char ** argv) {
 #endif
 
     bcg = broadcast_group_alloc();
-    spg = suspend_group_alloc();
     proto = protocol_alloc();
-    ini_services(proto, bcg, spg);
+    ini_services(proto, bcg);
 
     ps = channel_peer_from_url(url);
     if (ps == NULL) {

@@ -45,7 +45,7 @@
 #define PLUGINS_DEF_EXT     "so"        /* Default plugins' extension */
 #endif
 
-typedef void (*InitFunc)(Protocol *, TCFBroadcastGroup *, TCFSuspendGroup *);
+typedef void (*InitFunc)(Protocol *, TCFBroadcastGroup *, void *);
 
 static void ** plugins_handles = NULL;
 static size_t plugins_count = 0;
@@ -76,7 +76,7 @@ static int plugins_ralphasort(const struct dirent ** a, const struct dirent ** b
     return -alphasort(a, b);
 }
 
-int plugins_load(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
+int plugins_load(Protocol * proto, TCFBroadcastGroup * bcg) {
     struct dirent ** files;
     int file_count = -1;
     int ret = 0;
@@ -95,7 +95,7 @@ int plugins_load(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * sp
             ret = -1;
             goto delete_cur_entry;
         }
-        if (plugin_init(cur_plugin_path, proto, bcg, spg)) {
+        if (plugin_init(cur_plugin_path, proto, bcg)) {
             trace(LOG_ALWAYS, "plugins error: unable to start plugin \"%s\"", cur_plugin_path);
             ret = -1;
             /* Continue to load the rest of plugins */
@@ -112,7 +112,7 @@ delete_cur_entry:
     return ret;
 }
 
-int plugin_init(const char * name, Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg) {
+int plugin_init(const char * name, Protocol * proto, TCFBroadcastGroup * bcg) {
     void * handle;
     char * error;
     InitFunc init;
@@ -132,7 +132,7 @@ int plugin_init(const char * name, Protocol * proto, TCFBroadcastGroup * bcg, TC
         return -1;
     }
     trace(LOG_ALWAYS, "initializing plugin \"%s\"", name);
-    init(proto, bcg, spg);
+    init(proto, bcg, NULL);
 
     /* Handles table update: */
     plugins_handles = (void **) loc_realloc(plugins_handles,

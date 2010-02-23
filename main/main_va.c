@@ -39,16 +39,14 @@
 #include "errors.h"
 #include "plugins.h"
 
-static char * progname;
+static const char * progname;
 static Protocol * proto;
 static ChannelServer * serv;
 static TCFBroadcastGroup * bcg;
-static TCFSuspendGroup * spg;
 
 static void channel_new_connection(ChannelServer * serv, Channel * c) {
     protocol_reference(proto);
     c->protocol = proto;
-    channel_set_suspend_group(c, spg);
     channel_set_broadcast_group(c, bcg);
     channel_start(c);
 }
@@ -60,9 +58,8 @@ int main(int argc, char ** argv) {
 #endif
     int c;
     int ind;
-    char * s;
-    char * log_name = 0;
-    char * url = "TCP:";
+    const char * log_name = NULL;
+    const char * url = "TCP:";
     PeerServer * ps;
 
     ini_mdep();
@@ -82,7 +79,7 @@ int main(int argc, char ** argv) {
 
     /* Parse arguments */
     for (ind = 1; ind < argc; ind++) {
-        s = argv[ind];
+        const char * s = argv[ind];
         if (*s != '-') {
             break;
         }
@@ -131,7 +128,6 @@ int main(int argc, char ** argv) {
 #endif
 
     bcg = broadcast_group_alloc();
-    spg = suspend_group_alloc();
     proto = protocol_alloc();
 #if SERVICE_Locator
     ini_locator_service(proto, bcg);
@@ -154,7 +150,7 @@ int main(int argc, char ** argv) {
 #if ENABLE_Plugins
 
     /* Load dynamic libraries */
-    plugins_load(proto, NULL, NULL);
+    plugins_load(proto, NULL);
 #endif
 
     discovery_start();

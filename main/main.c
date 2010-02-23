@@ -31,16 +31,14 @@
 #include "cmdline.h"
 #include "channel_tcp.h"
 
-static char * progname;
+static const char * progname;
 static Protocol * proto;
 static ChannelServer * serv;
 static TCFBroadcastGroup * bcg;
-static TCFSuspendGroup * spg;
 
 static void channel_new_connection(ChannelServer * serv, Channel * c) {
     protocol_reference(proto);
     c->protocol = proto;
-    channel_set_suspend_group(c, spg);
     channel_set_broadcast_group(c, bcg);
     channel_start(c);
 }
@@ -54,9 +52,8 @@ int main(int argc, char ** argv) {
     int ind;
     int daemon = 0;
     int interactive = 0;
-    char * s;
-    char * log_name = 0;
-    char * url = "TCP:";
+    const char * log_name = NULL;
+    const char * url = "TCP:";
     PeerServer * ps = NULL;
 
     ini_mdep();
@@ -75,7 +72,7 @@ int main(int argc, char ** argv) {
 
     /* Parse arguments */
     for (ind = 1; ind < argc; ind++) {
-        s = argv[ind];
+        const char * s = argv[ind];
         if (*s != '-') {
             break;
         }
@@ -147,7 +144,6 @@ int main(int argc, char ** argv) {
     ini_events_queue();
 
     bcg = broadcast_group_alloc();
-    spg = suspend_group_alloc();
     proto = protocol_alloc();
 
     /* The static services must be initialised before the plugins */
@@ -157,7 +153,7 @@ int main(int argc, char ** argv) {
     if (interactive) fprintf(stderr, "Warning: This version does not support interactive mode.\n");
 #endif
 
-    ini_services(proto, bcg, spg);
+    ini_services(proto, bcg);
 
     ps = channel_peer_from_url(url);
     if (ps == NULL) {

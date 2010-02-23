@@ -75,7 +75,7 @@ static void command_echo_fp(char * token, Channel * c) {
 }
 
 static void command_get_test_list(char * token, Channel * c) {
-    char * arr = "[]";
+    const char * arr = "[]";
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);

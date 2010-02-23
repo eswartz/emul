@@ -78,7 +78,7 @@ extern const char * errno_to_str(int no);
  * Persistent error report can be obtained by calling get_error_report().
  * Return new error code that designates both original code and the message.
  */
-extern int set_errno(int no, char * msg);
+extern int set_errno(int no, const char * msg);
 
 /*
  * Set errno to indicate getaddrinfo() error code.
@@ -129,7 +129,7 @@ extern void release_error_report(ErrorReport * report);
 #ifdef NDEBUG
 extern void check_error(int error);
 #else
-extern void check_error_debug(char * file, int line, int error);
+extern void check_error_debug(const char * file, int line, int error);
 #define check_error(error) check_error_debug(__FILE__, __LINE__, error)
 #endif
 

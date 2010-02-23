@@ -76,6 +76,6 @@ extern int suspend_debug_context(TCFBroadcastGroup * bcg, Context * ctx);
 /*
  * Initialize run control service.
  */
-extern void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg, TCFSuspendGroup * spg);
+extern void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg);
 
 #endif /* D_runctrl */

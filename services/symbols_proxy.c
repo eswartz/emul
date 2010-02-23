@@ -470,14 +470,14 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
     return 0;
 }
 
-char * symbol2id(const Symbol * sym) {
+const char * symbol2id(const Symbol * sym) {
     SymInfoCache * s = sym->cache;
     assert(s->magic == SYM_CACHE_MAGIC);
     assert(s->id != NULL);
     return s->id;
 }
 
-int id2symbol(char * id, Symbol ** sym) {
+int id2symbol(const char * id, Symbol ** sym) {
     LINK * l;
     SymInfoCache * s = NULL;
     unsigned h = hash_sym_id(id);

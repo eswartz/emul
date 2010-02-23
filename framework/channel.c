@@ -100,45 +100,6 @@ static int splice_block_all(OutputStream * out, int fd, size_t size, off_t * off
     return rd;
 }
 
-void channels_suspend(TCFSuspendGroup * p) {
-    assert(is_dispatch_thread());
-    assert(!p->suspended);
-    trace(LOG_PROTOCOL, "All channels suspended");
-    p->suspended = 1;
-}
-
-int are_channels_suspended(TCFSuspendGroup * p) {
-    assert(is_dispatch_thread());
-    return p->suspended;
-}
-
-void channels_resume(TCFSuspendGroup * p) {
-    LINK * l = p->channels.next;
-
-    assert(is_dispatch_thread());
-    assert(p->suspended);
-    trace(LOG_PROTOCOL, "All channels resumed");
-    p->suspended = 0;
-    while (l != &p->channels) {
-        Channel * c = susplink2channel(l);
-        c->check_pending(c);
-        l = l->next;
-    }
-}
-
-int channels_get_message_count(TCFSuspendGroup * p) {
-    int cnt = 0;
-    LINK * l = p->channels.next;
-
-    assert(is_dispatch_thread());
-    while (l != &p->channels) {
-        Channel * c = susplink2channel(l);
-        cnt += c->message_count(c);
-        l = l->next;
-    }
-    return cnt;
-}
-
 void add_channel_close_listener(ChannelCloseListener listener) {
     assert(close_listeners_cnt < (int)(sizeof(close_listeners) / sizeof(ChannelCloseListener)));
     close_listeners[close_listeners_cnt++] = listener;
@@ -149,42 +110,6 @@ void notify_channel_closed(Channel * c) {
     for (i = 0; i < close_listeners_cnt; i++) {
         close_listeners[i](c);
     }
-}
-
-TCFSuspendGroup * suspend_group_alloc(void) {
-    TCFSuspendGroup * p = (TCFSuspendGroup *)loc_alloc(sizeof(TCFSuspendGroup));
-
-    list_init(&p->channels);
-    p->suspended = 0;
-    return p;
-}
-
-void suspend_group_free(TCFSuspendGroup * p) {
-    LINK * l = p->channels.next;
-
-    assert(is_dispatch_thread());
-    while (l != &p->channels) {
-        Channel * c = susplink2channel(l);
-        assert(c->spg == p);
-        c->spg = NULL;
-        list_remove(&c->susplink);
-        c->check_pending(c);
-        l = l->next;
-    }
-    assert(list_is_empty(&p->channels));
-    loc_free(p);
-}
-
-void channel_set_suspend_group(Channel * c, TCFSuspendGroup * spg) {
-    if (c->spg != NULL) channel_clear_suspend_group(c);
-    list_add_last(&c->susplink, &spg->channels);
-    c->spg = spg;
-}
-
-void channel_clear_suspend_group(Channel * c) {
-    if (c->spg == NULL) return;
-    list_remove(&c->susplink);
-    c->spg = NULL;
 }
 
 TCFBroadcastGroup * broadcast_group_alloc(void) {
@@ -296,7 +221,7 @@ PeerServer * channel_peer_from_url(const char * url) {
  * Start TCF channel server
  */
 ChannelServer * channel_server(PeerServer * ps) {
-    char * transportname = peer_server_getprop(ps, "TransportName", NULL);
+    const char * transportname = peer_server_getprop(ps, "TransportName", NULL);
 
     if (transportname == NULL || strcmp(transportname, "TCP") == 0 || strcmp(transportname, "SSL") == 0) {
         return channel_tcp_server(ps);
@@ -311,7 +236,7 @@ ChannelServer * channel_server(PeerServer * ps) {
  * Connect to TCF channel server
  */
 void channel_connect(PeerServer * ps, ChannelConnectCallBack callback, void * callback_args) {
-    char * transportname = peer_server_getprop(ps, "TransportName", NULL);
+    const char * transportname = peer_server_getprop(ps, "TransportName", NULL);
 
     if (transportname == NULL || strcmp(transportname, "TCP") == 0 || strcmp(transportname, "SSL") == 0) {
         channel_tcp_connect(ps, callback, callback_args);

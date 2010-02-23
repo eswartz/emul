@@ -78,7 +78,7 @@ static void waitpid_event(void * args) {
 }
 
 static DWORD WINAPI waitpid_thread_func(LPVOID x) {
-    WaitPIDThread * thread = x;
+    WaitPIDThread * thread = (WaitPIDThread *)x;
     check_error_win32(WaitForSingleObject(semaphore, INFINITE) != WAIT_FAILED);
     for (;;) {
         DWORD n = 0;
@@ -109,7 +109,7 @@ void add_waitpid_process(int pid) {
     check_error_win32(WaitForSingleObject(semaphore, INFINITE) != WAIT_FAILED);
     while (thread != NULL && thread->handle_cnt >= MAX_HANDLES) thread = thread->next;
     if (thread == NULL) {
-        thread = loc_alloc_zero(sizeof(WaitPIDThread));
+        thread = (WaitPIDThread *)loc_alloc_zero(sizeof(WaitPIDThread));
         thread->next = threads;
         threads = thread;
         check_error_win32((thread->handles[thread->handle_cnt++] = CreateSemaphore(NULL, 0, 1, NULL)) != NULL);

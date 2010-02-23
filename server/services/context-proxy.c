@@ -818,7 +818,7 @@ static void read_ids_item(InputStream * inp, void * args) {
     str_buf_pos += n;
 }
 
-static int validate_context_cache(Channel * c, void * args, int error) {
+static int validate_registers_cache(Channel * c, void * args, int error) {
     ContextCache * cache = (ContextCache *)args;
 
     assert(cache->peer->target == c);
@@ -827,6 +827,7 @@ static int validate_context_cache(Channel * c, void * args, int error) {
         if (cache->pending_get_regs != NULL) {
             assert(cache->reg_ids == NULL);
             assert(cache->reg_ids_str == NULL);
+            assert(cache->reg_error = NULL);
             cache->pending_get_regs = NULL;
             cache->reg_error = get_error_report(error);
             if (!error) {
@@ -848,13 +849,16 @@ static int validate_context_cache(Channel * c, void * args, int error) {
             context_unlock(cache->ctx);
         }
         else if (cache->reg_ids == NULL && cache->reg_error == 0) {
-            cache->pending_get_regs = protocol_send_command(c, "Registers", "getChildren", validate_context_cache, args);
+            cache->pending_get_regs = protocol_send_command(c, "Registers", "getChildren", validate_registers_cache, args);
             write_stringz(&c->out, ctx2id(cache->ctx));
             write_stream(&c->out, MARKER_EOM);
             flush_stream(&c->out);
             context_lock(cache->ctx);
             return 0;
         }
+
+        /* TODO: read register defs and register values */
+        if (cache->reg_error == NULL) cache->reg_error = get_error_report(ERR_UNSUPPORTED);
     }
 
     return 1;
@@ -862,20 +866,20 @@ static int validate_context_cache(Channel * c, void * args, int error) {
 
 RegisterDefinition * get_reg_definitions(Context * ctx) {
     ContextCache * cache = (ContextCache *)ctx->proxy;
-    if (!validate_context_cache(cache->peer->target, cache, 0)) cache_wait(&cache->regs_cache);
+    if (!validate_registers_cache(cache->peer->target, cache, 0)) cache_wait(&cache->regs_cache);
     return cache->reg_defs;
 }
 
 RegisterDefinition * get_PC_definition(Context * ctx) {
     ContextCache * cache = (ContextCache *)ctx->proxy;
-    if (!validate_context_cache(cache->peer->target, cache, 0)) cache_wait(&cache->regs_cache);
+    if (!validate_registers_cache(cache->peer->target, cache, 0)) cache_wait(&cache->regs_cache);
     return cache->pc_def;
 }
 
 RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned munbering_convention) {
     RegisterDefinition * defs;
     ContextCache * cache = (ContextCache *)ctx->proxy;
-    if (!validate_context_cache(cache->peer->target, cache, 0)) cache_wait(&cache->regs_cache);
+    if (!validate_registers_cache(cache->peer->target, cache, 0)) cache_wait(&cache->regs_cache);
     defs = cache->reg_defs;
     while (defs != NULL && defs->name != NULL) {
         switch (munbering_convention) {

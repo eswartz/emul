@@ -68,14 +68,14 @@ extern int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack 
 /*
  * Get (relatively) permanent symbol ID that can be used across dispatch cycles.
  */
-extern char * symbol2id(const Symbol * sym);
+extern const char * symbol2id(const Symbol * sym);
 
 /*
  * Find symbol by symbol ID.
  * On error, returns -1 and sets errno.
  * On success returns 0.
  */
-extern int id2symbol(char * id, Symbol ** sym);
+extern int id2symbol(const char * id, Symbol ** sym);
 
 
 /*************** Functions for retrieving symbol properties ***************************************/

@@ -736,7 +736,7 @@ static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddre
     return -1;
 }
 
-static int sym_name_cmp(char * x, char * y) {
+static int sym_name_cmp(const char * x, const char * y) {
     while (*x && *x == *y) {
         x++;
         y++;
@@ -747,7 +747,7 @@ static int sym_name_cmp(char * x, char * y) {
     return 1;
 }
 
-static int get_global_symbol_address(Context * ctx, ELF_File * file, char * name, ContextAddress * addr) {
+static int get_global_symbol_address(Context * ctx, ELF_File * file, const char * name, ContextAddress * addr) {
     unsigned i, j;
 
     for (i = 1; i < file->section_cnt; i++) {

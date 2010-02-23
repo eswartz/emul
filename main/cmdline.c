@@ -147,7 +147,7 @@ static int print_peer_flags(PeerServer * ps) {
     int i;
     struct {
         unsigned int flag;
-        char *name;
+        const char * name;
     } flagnames[] = {
         { PS_FLAG_LOCAL, "local" },
         { PS_FLAG_PRIVATE, "private" },
@@ -173,13 +173,9 @@ static int print_peer_flags(PeerServer * ps) {
 }
 
 static int print_peer_summary(PeerServer * ps, void * client_data) {
-    char *s;
-
+    const char * s = peer_server_getprop(ps, "Name", NULL);
     printf("  %s", ps->id);
-    s = peer_server_getprop(ps, "Name", NULL);
-    if (s != NULL) {
-        printf(", %s", s);
-    }
+    if (s != NULL) printf(", %s", s);
     printf("\n");
     return 0;
 }
@@ -332,7 +328,7 @@ static void * interactive_handler(void * x) {
     return NULL;
 }
 
-void open_script_file(char * script_name) {
+void open_script_file(const char * script_name) {
     if (script_name == NULL || (infile = fopen(script_name, "r")) == NULL) {
         if (script_name == NULL) script_name = "<null>";
         fprintf(stderr, "Error: Cannot open script file %s\n", script_name);

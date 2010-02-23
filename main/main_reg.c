@@ -32,7 +32,7 @@
 #include "proxy.h"
 #include "discovery.h"
 
-static char * progname;
+static const char * progname;
 
 #if defined(_WRS_KERNEL)
 int tcf_registry(void) {
@@ -41,8 +41,7 @@ int main(int argc, char **argv) {
 #endif
     int c;
     int ind;
-    char *s;
-    char *log_name = 0;
+    const char * log_name = NULL;
 
     ini_mdep();
     ini_trace();
@@ -61,7 +60,7 @@ int main(int argc, char **argv) {
 
     /* Parse arguments */
     for (ind = 1; ind < argc; ind++) {
-        s = argv[ind];
+        const char * s = argv[ind];
         if (*s != '-') {
             break;
         }

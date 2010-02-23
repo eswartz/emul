@@ -40,12 +40,12 @@ typedef struct RegisterData RegisterData;
 typedef struct RegisterDefinition RegisterDefinition;
 
 struct RegisterDefinition {
-    char *      name;           /* pointer to register name */
-    int         offset;         /* offset to entry in REG_SET */
-    int         size;           /* register size in bytes */
-    int         dwarf_id;       /* ID of the register in DWARF sections */
-    int         eh_frame_id;    /* ID of the register in .eh_frame section */
-    int         traceable;      /* register value can be traced using .eh_frame of .debug_frame */
+    const char * name;           /* pointer to register name */
+    int          offset;         /* offset to entry in REG_SET */
+    int          size;           /* register size in bytes */
+    int          dwarf_id;       /* ID of the register in DWARF sections */
+    int          eh_frame_id;    /* ID of the register in .eh_frame section */
+    int          traceable;      /* register value can be traced using .eh_frame of .debug_frame */
 };
 
 typedef struct StackFrame StackFrame;

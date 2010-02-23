@@ -32,7 +32,7 @@
 #include "cmdline.h"
 #include "plugins.h"
 
-static char * progname;
+static const char * progname;
 static Protocol * proto;
 
 /*
@@ -54,9 +54,8 @@ int main(int argc, char ** argv) {
     int c;
     int ind;
     int interactive = 1;
-    char * s;
-    char * log_name = "-";
-    char * script_name = 0;
+    const char * log_name = "-";
+    const char * script_name = NULL;
 
     log_mode = 0;
 
@@ -76,7 +75,7 @@ int main(int argc, char ** argv) {
 
     /* Parse arguments */
     for (ind = 1; ind < argc; ind++) {
-        s = argv[ind];
+        const char * s = argv[ind];
         if (*s != '-') {
             break;
         }
@@ -137,7 +136,7 @@ int main(int argc, char ** argv) {
 #endif
 
 #if ENABLE_Plugins
-    plugins_load(proto, NULL, NULL);
+    plugins_load(proto, NULL);
 #endif
 
     /* Process events - must run on the initial thread since ptrace()

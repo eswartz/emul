@@ -29,12 +29,12 @@
  * Loads ALL plugins from the directory PATH_Plugins (from `config.h') in
  * alphabetical order.
  */
-int plugins_load(Protocol *, TCFBroadcastGroup *, TCFSuspendGroup *);
+int plugins_load(Protocol *, TCFBroadcastGroup *);
 
 /*
  * Initializes a particular plugin according to its path.
  */
-int plugin_init(const char *, Protocol *, TCFBroadcastGroup *, TCFSuspendGroup *);
+int plugin_init(const char *, Protocol *, TCFBroadcastGroup *);
 
 /*
  * Add a new public plugin function for the other plugins to see.

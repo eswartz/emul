@@ -28,6 +28,6 @@ extern char * loc_strdup(const char * s);
 extern char * loc_strdup2(const char * s1, const char * s2);
 extern char * loc_strndup(const char * s, size_t len);
 
-extern void loc_free(void * p);
+extern void loc_free(const void * p);
 
 #endif /* D_myalloc */
