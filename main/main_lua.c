@@ -1033,7 +1033,7 @@ static int lua_channel_send_message(lua_State *L)
     trace(LOG_LUA, "lua_channel_send_message %p %.*s", ce->c, l, s);
     out = &ce->c->out;
     while(l-- > 0) {
-        write_stream(out, *s++);
+        write_stream(out, (*s++) & 0xff);
     }
     write_stream(out, MARKER_EOM);
     flush_stream(out);
@@ -1110,7 +1110,7 @@ static int lua_channel_send_command(lua_State *L)
     trace(LOG_LUA, "lua_channel_send_command %p %d %.*s", ce->c, cmd->result_cbrefp->ref, l, s);
     out = &ce->c->out;
     while(l-- > 0) {
-        write_stream(out, *s++);
+        write_stream(out, (*s++) & 0xff);
     }
     write_stream(out, MARKER_EOM);
     flush_stream(out);

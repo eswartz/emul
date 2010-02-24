@@ -91,8 +91,10 @@ static void relocate(void * r) {
 
 void drl_relocate(ELF_Section * s, U8_T offset, void * buf, size_t size, ELF_Section ** dst) {
     unsigned i;
+    ELF_Section * d = NULL;
 
-    *dst = NULL;
+    if (dst == NULL) dst = &d;
+    else *dst = NULL;
     if (!s->relocate) return;
 
     section = s;

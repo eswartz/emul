@@ -756,7 +756,7 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
             add_dir(Unit, Name);
         }
 
-        /* Read source sFileLocks info */
+        /* Read source files info */
         for (;;) {
             U4_T dir = 0;
             FileInfo File;
@@ -814,7 +814,7 @@ void load_line_numbers(DWARFCache * Cache, CompUnit * Unit) {
                     {
                         ELF_Section * s = NULL;
                         state.mAddress = (ContextAddress)dio_ReadAddress(&s);
-                        if (s != Unit->mTextSection) str_exception(ERR_INV_DWARF, "Invalid line info relocations");
+                        if (s != Unit->mTextSection) state.mAddress = 0;
                     }
                     break;
                 default:

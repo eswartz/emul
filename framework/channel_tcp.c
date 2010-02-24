@@ -80,8 +80,7 @@ struct ChannelTCP {
     InputBuf ibuf;
 
     /* Output stream state */
-    char obuf[BUF_SIZE];
-    int obuf_inp;
+    unsigned char obuf[BUF_SIZE];
     int out_errno;
 
     /* Async read request */
@@ -208,21 +207,22 @@ static int tcp_is_closed(Channel * channel) {
 }
 
 static void tcp_flush_with_flags(OutputStream * out, int flags) {
-    int cnt = 0;
     ChannelTCP * c = channel2tcp(out2channel(out));
+    unsigned char * p = c->obuf;
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
-    assert(c->obuf_inp >= 0 && c->obuf_inp <= BUF_SIZE);
-    if (c->obuf_inp == 0) return;
+    assert(c->chan.out.end == p + sizeof(c->obuf));
+    if (c->chan.out.cur == p) return;
+    assert(c->chan.out.cur >= p && c->chan.out.cur <= p + sizeof(c->obuf));
     if (c->chan.state == ChannelStateDisconnected || c->out_errno) {
-        c->obuf_inp = 0;
+        c->chan.out.cur = p;
         return;
     }
-    while (cnt < c->obuf_inp) {
+    while (p < c->chan.out.cur) {
         int wr = 0;
         if (c->ssl) {
 #if ENABLE_SSL
-            wr = SSL_write(c->ssl, c->obuf + cnt, c->obuf_inp - cnt);
+            wr = SSL_write(c->ssl, p, c->chan.out.cur - p);
             if (wr <= 0) {
                 int err = SSL_get_error(c->ssl, wr);
                 if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
@@ -243,7 +243,7 @@ static void tcp_flush_with_flags(OutputStream * out, int flags) {
                 trace(LOG_PROTOCOL, "Can't SSL_write() on channel %#lx: %s", c,
                     ERR_error_string(ERR_get_error(), NULL));
                 c->out_errno = EIO;
-                c->obuf_inp = 0;
+                c->chan.out.cur = c->obuf;
                 return;
             }
 #else
@@ -251,19 +251,19 @@ static void tcp_flush_with_flags(OutputStream * out, int flags) {
 #endif
         }
         else {
-            wr = send(c->socket, c->obuf + cnt, c->obuf_inp - cnt, flags);
+            wr = send(c->socket, p, c->chan.out.cur - p, flags);
             if (wr < 0) {
                 int err = errno;
                 trace(LOG_PROTOCOL, "Can't send() on channel %#lx: %d %s", c, err, errno_to_str(err));
                 c->out_errno = err;
-                c->obuf_inp = 0;
+                c->chan.out.cur = c->obuf;
                 return;
             }
         }
-        cnt += wr;
+        p += wr;
     }
-    assert(cnt == c->obuf_inp);
-    c->obuf_inp = 0;
+    assert(p == c->chan.out.cur);
+    c->chan.out.cur = c->obuf;
 }
 
 static void tcp_flush_stream(OutputStream * out) {
@@ -276,8 +276,8 @@ static void tcp_write_stream(OutputStream * out, int byte) {
     assert(c->magic == CHANNEL_MAGIC);
     if (c->chan.state == ChannelStateDisconnected) return;
     if (c->out_errno) return;
-    if (c->obuf_inp == BUF_SIZE) tcp_flush_with_flags(out, MSG_MORE);
-    c->obuf[c->obuf_inp++] = (char)(byte < 0 ? ESC : byte);
+    if (c->chan.out.cur == c->chan.out.end) tcp_flush_with_flags(out, MSG_MORE);
+    *c->chan.out.cur++ = (char)(byte < 0 ? ESC : byte);
     if (byte < 0 || byte == ESC) {
         char esc = 0;
         if (byte == ESC) esc = 0;
@@ -286,8 +286,8 @@ static void tcp_write_stream(OutputStream * out, int byte) {
         else assert(0);
         if (c->chan.state == ChannelStateDisconnected) return;
         if (c->out_errno) return;
-        if (c->obuf_inp == BUF_SIZE) tcp_flush_with_flags(out, MSG_MORE);
-        c->obuf[c->obuf_inp++] = esc;
+        if (c->chan.out.cur == c->chan.out.end) tcp_flush_with_flags(out, MSG_MORE);
+        *c->chan.out.cur++ = esc;
     }
     if (byte == MARKER_EOM) {
         int congestion_level = out2channel(out)->congestion_level;
@@ -304,15 +304,15 @@ static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_
     if (!c->ssl && out->supports_zero_copy && size > 32) {
         /* Send the binary data escape seq */
         size_t n = size;
-        if (c->obuf_inp >= BUF_SIZE - 8) tcp_flush_with_flags(out, MSG_MORE);
-        c->obuf[c->obuf_inp++] = ESC;
-        c->obuf[c->obuf_inp++] = 3;
+        if (c->chan.out.cur >= c->chan.out.end - 8) tcp_flush_with_flags(out, MSG_MORE);
+        *c->chan.out.cur++ = ESC;
+        *c->chan.out.cur++ = 3;
         for (;;) {
             if (n <= 0x7fu) {
-                c->obuf[c->obuf_inp++] = (char)n;
+                *c->chan.out.cur++ = (char)n;
                 break;
             }
-            c->obuf[c->obuf_inp++] = (n & 0x7fu) | 0x80u;
+            *c->chan.out.cur++ = (n & 0x7fu) | 0x80u;
             n = n >> 7;
         }
         /* We need to flush the buffer then send our data */
@@ -707,6 +707,8 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
     c->ssl = ssl;
     c->chan.inp.read = tcp_read_stream;
     c->chan.inp.peek = tcp_peek_stream;
+    c->chan.out.cur = c->obuf;
+    c->chan.out.end = c->obuf + sizeof(c->obuf);
     c->chan.out.write = tcp_write_stream;
     c->chan.out.flush = tcp_flush_stream;
     c->chan.out.write_block = tcp_write_block_stream;

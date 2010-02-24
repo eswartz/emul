@@ -28,10 +28,14 @@
 #define MARKER_EOM  (-1)
 #define MARKER_EOS  (-2)
 
+#define ESC 3
+
 typedef struct OutputStream OutputStream;
 
 struct OutputStream {
     int supports_zero_copy; /* Stream supports block (zero copy) write */
+    unsigned char * cur;
+    unsigned char * end;
     void (*write)(OutputStream * stream, int byte);
     void (*write_block)(OutputStream * stream, const char * bytes, size_t size);
     int (*splice_block)(OutputStream * stream, int fd, size_t size, off_t * offset);
@@ -50,7 +54,8 @@ struct InputStream {
 #define read_stream(inp) (((inp)->cur < (inp)->end) ? *(inp)->cur++ : (inp)->read((inp)))
 #define peek_stream(inp) (((inp)->cur < (inp)->end) ? *(inp)->cur : (inp)->peek((inp)))
 
-#define write_stream(out, b) (out)->write((out), (b))
+#define write_stream(out, b) { OutputStream * _s_ = (out); int _x_ = (b); \
+    if (_x_ > ESC && _s_->cur < _s_->end) *_s_->cur++ = (unsigned char)_x_; else _s_->write(_s_, _x_); }
 #define write_block_stream(out, b, size) (out)->write_block((out), (b), (size))
 #define splice_block_stream(out, fd, size, offset) (out)->splice_block((out), (fd), (size), (offset))
 #define flush_stream(out) (out)->flush((out))

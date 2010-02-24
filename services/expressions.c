@@ -884,7 +884,7 @@ static void primary_expression(int mode, Value * v) {
     else if (text_sy == SY_ID) {
         if (mode != MODE_SKIP) {
             int sym_class = identifier((char *)text_val.value, v);
-            if (sym_class == SYM_CLASS_UNKNOWN) error(ERR_INV_EXPRESSION, "Undefined identifier");
+            if (sym_class == SYM_CLASS_UNKNOWN) error(ERR_SYM_NOT_FOUND, "Undefined identifier");
             if (sym_class == SYM_CLASS_TYPE) error(ERR_INV_EXPRESSION, "Illegal usage of type name");
         }
         next_sy();

@@ -926,7 +926,6 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
     return 0;
 }
 
-
 ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     return 0;
 }

@@ -123,6 +123,8 @@ static void logstr(char ** pp, const char * s) {
 static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
     Proxy * proxy = (Proxy *)c->client_data;
     Channel * otherc = proxy[proxy->other].c;
+    InputStream * inp = &c->inp;
+    OutputStream * out = &otherc->out;
     char * p = logbuf;
     int i = 0;
 
@@ -130,10 +132,10 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
     assert(argc > 0 && strlen(argv[0]) == 1);
     if (proxy[proxy->other].c->state == ChannelStateDisconnected) return;
     if (argv[0][0] == 'C') {
-        write_stringz(&otherc->out, argv[0]);
+        write_stringz(out, argv[0]);
         /* Prefix token with 'R'emote to distinguish from locally
          * generated commands */
-        write_string(&otherc->out, "R");
+        write_string(out, "R");
         i = 1;
     }
     else if (argv[0][0] == 'R' || argv[0][0] == 'P' || argv[0][0] == 'N') {
@@ -144,7 +146,7 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
         argv[1]++;
     }
     while (i < argc) {
-        write_stringz(&otherc->out, argv[i]);
+        write_stringz(out, argv[i]);
         i++;
     }
 
@@ -158,34 +160,40 @@ static void proxy_default_message_handler(Channel * c, char ** argv, int argc) {
 
     /* Copy body of message */
     do {
-        i = read_stream(&c->inp);
-        if (log_mode & LOG_TCFLOG) {
-            if (i > ' ' && i < 127) {
-                /* Printable ASCII  */
-                logchr(&p, i);
-            }
-            else if (i == 0) {
-                logstr(&p, " ");
-            }
-            else if (i > 0) {
-                char buf[40];
-                snprintf(buf, sizeof buf, "\\x%02x", i);
-                logstr(&p, buf);
-            }
-            else if (i == MARKER_EOM) {
-                logstr(&p, "<eom>");
-            }
-            else if (i == MARKER_EOS) {
-                logstr(&p, "<eom>");
-            }
-            else {
-                logstr(&p, "<?>");
-            }
+        if (out->supports_zero_copy && (log_mode & LOG_TCFLOG) == 0 && inp->end - inp->cur >= 0x100) {
+            write_block_stream(out, (char *)inp->cur, inp->end - inp->cur);
+            inp->cur = inp->end;
         }
-        write_stream(&otherc->out, i);
+        else {
+            i = read_stream(inp);
+            if (log_mode & LOG_TCFLOG) {
+                if (i > ' ' && i < 127) {
+                    /* Printable ASCII  */
+                    logchr(&p, i);
+                }
+                else if (i == 0) {
+                    logstr(&p, " ");
+                }
+                else if (i > 0) {
+                    char buf[40];
+                    snprintf(buf, sizeof buf, "\\x%02x", i);
+                    logstr(&p, buf);
+                }
+                else if (i == MARKER_EOM) {
+                    logstr(&p, "<eom>");
+                }
+                else if (i == MARKER_EOS) {
+                    logstr(&p, "<eom>");
+                }
+                else {
+                    logstr(&p, "<?>");
+                }
+            }
+            write_stream(out, i);
+        }
     }
     while (i != MARKER_EOM && i != MARKER_EOS);
-    flush_stream(&otherc->out);
+    flush_stream(out);
     if (log_mode & LOG_TCFLOG) {
         *p = '\0';
         trace(LOG_TCFLOG, "%d: %s", proxy->instance, logbuf);

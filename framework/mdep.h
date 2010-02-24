@@ -35,6 +35,7 @@
 #elif defined(_MSC_VER)
 #  pragma warning(disable:4054) /* 'type cast' : from function pointer '...' to data pointer 'void *' */
 #  pragma warning(disable:4055) /* 'type cast' : from data pointer 'void *' to function pointer '...' */
+#  pragma warning(disable:4127) /* conditional expression is constant */
 #  pragma warning(disable:4152) /* nonstandard extension, function/data pointer conversion in expression */
 #  pragma warning(disable:4100) /* unreferenced formal parameter */
 #  pragma warning(disable:4996) /* 'strcpy': This function or variable may be unsafe */
@@ -290,14 +291,16 @@ extern char * canonicalize_file_name(const char * path);
 #include <wrn/coreip/hostLib.h>
 #if _WRS_VXWORKS_MAJOR > 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR >= 7
 #  include <private/taskLibP.h>
-#  define kernelVersion() vxWorksVersion
 #endif
 
 #define environ taskIdCurrent->ppEnviron
 
 #define closesocket close
 
+#if _WRS_VXWORKS_MAJOR < 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR < 8
 typedef unsigned long uintptr_t;
+#endif
+
 typedef unsigned long useconds_t;
 
 #define FILE_PATH_SIZE PATH_MAX

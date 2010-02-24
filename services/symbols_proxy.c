@@ -730,6 +730,8 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
 /*************************************************************************************************/
 
 ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
+    /* TODO: is_plt_section() in symbols proxy */
+    return 0;
 }
 
 static void channel_close_listener(Channel * c) {

@@ -23,7 +23,6 @@
 #include "config.h"
 #include "streams.h"
 
-#define ESC 3
 #define INPUT_BUF_SIZE 0x1000
 
 typedef struct InputBuf InputBuf;

@@ -21,23 +21,13 @@
 #include "myalloc.h"
 #include "streams.h"
 
-int (read_stream)(InputStream * inp) {
-    if (inp->cur < inp->end) return *inp->cur++;
-    return inp->read(inp);
-}
-
-int (peek_stream)(InputStream * inp) {
-    if (inp->cur < inp->end) return *inp->cur;
-    return inp->peek(inp);
-}
-
 void write_string(OutputStream * out, const char * str) {
-    while (*str) out->write(out, (*str++) & 0xff);
+    while (*str) write_stream(out, (*str++) & 0xff);
 }
 
 void write_stringz(OutputStream * out, const char * str) {
-    while (*str) out->write(out, (*str++) & 0xff);
-    out->write(out, 0);
+    while (*str) write_stream(out, (*str++) & 0xff);
+    write_stream(out, 0);
 }
 
 static void write_byte_array_output_stream(OutputStream * out, int byte) {

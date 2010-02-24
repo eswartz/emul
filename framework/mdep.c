@@ -844,7 +844,11 @@ int getegid(void) {
 
 char * get_os_name(void) {
     static char str[256];
+#if _WRS_VXWORKS_MAJOR > 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR >= 7
+    snprintf(str, sizeof(str), "VxWorks %s", vxWorksVersion);
+#else
     snprintf(str, sizeof(str), "VxWorks %s", kernelVersion());
+#endif
     return str;
 }
 
@@ -854,7 +858,7 @@ char * get_user_home(void) {
 
 void ini_mdep(void) {
     pthread_attr_init(&pthread_create_attr);
-    pthread_attr_setstacksize(&pthread_create_attr, 0x4000);
+    pthread_attr_setstacksize(&pthread_create_attr, 0x8000);
     pthread_attr_setname(&pthread_create_attr, "tTcf");
 }
 

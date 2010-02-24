@@ -684,7 +684,7 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
     }
 }
 
-#if SERVICE_Expressions
+#if SERVICE_Expressions && ENABLE_ELF
 
 static int expression_identifier_callback(Context * ctx, int frame, char * name, Value * v) {
     if (ctx == NULL) return 0;
@@ -764,15 +764,15 @@ static void eventpoint_at_loader(Context * ctx, void * args) {
     ctx->loader_state = state;
 }
 
-#endif /* SERVICE_Expressions */
+#endif /* SERVICE_Expressions && ENABLE_ELF */
 
 void init_contexts_sys_dep(void) {
     list_init(&pending_list);
     add_waitpid_listener(waitpid_listener, NULL);
-#if SERVICE_Expressions
+#if SERVICE_Expressions && ENABLE_ELF
     add_identifier_callback(expression_identifier_callback);
     create_eventpoint("$loader_brk", eventpoint_at_loader, NULL);
-#endif /* SERVICE_Expressions */
+#endif /* SERVICE_Expressions && ENABLE_ELF */
 }
 
 #endif  /* if ENABLE_DebugContext */

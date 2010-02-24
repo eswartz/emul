@@ -50,6 +50,8 @@ void cache_enter(CacheClient * client, Channel * channel, void * args) {
     if (set_trap(&trap)) {
         client(args);
         clear_trap(&trap);
+        assert(cache_miss_cnt == 0);
+        flush_stream(&channel->bcg->out);
     }
     else if (get_error_code(trap.error) != ERR_CACHE_MISS || current_client.client == NULL) {
         trace(LOG_ALWAYS, "Unhandled exception in data cache client: %d %s", trap.error, errno_to_str(trap.error));
