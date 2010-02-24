@@ -348,7 +348,7 @@ public interface IRegisters extends IService {
         /** offset in the context, in bytes */
         public final int offs;
 
-        /** value size in byte */
+        /** value size in bytes */
         public final int size;
 
         public Location(String id, int offs, int size) {
