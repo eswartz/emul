@@ -15,7 +15,7 @@ public class FDRFactory {
 	 * <p>
 	 * This FDR is <b>not validated</b> against the file attributes.
 	 * @param file
-	 * @return new FDR 
+	 * @return FDR or null 
 	 * @throws IOException if cannot read file
 	 */
     public static FDR createFDR(File file) throws IOException {
