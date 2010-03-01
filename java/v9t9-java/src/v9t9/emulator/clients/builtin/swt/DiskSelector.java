@@ -7,20 +7,25 @@ import java.io.File;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
 import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
+import v9t9.emulator.clients.builtin.ISettingDecorator;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.DsrManager;
 
@@ -37,6 +42,22 @@ public class DiskSelector extends Composite {
 		private final Setting setting;
 		public DiskEntry(final Composite parent, Setting setting_) {
 			this.setting = setting_;
+			
+			if (setting instanceof ISettingDecorator) {
+				ImageDescriptor descriptor = ((ISettingDecorator) setting).getIcon();
+				Label icon = new Label(parent, SWT.NONE);
+				final Image iconImage = descriptor.createImage();
+				icon.setImage(iconImage);
+				parent.addDisposeListener(new DisposeListener() {
+					
+					public void widgetDisposed(DisposeEvent e) {
+						iconImage.dispose();
+					}
+				});
+				
+			} else {
+				new Label(parent, SWT.NONE);
+			}
 			
 			Label label = new Label(parent, SWT.NONE);
 			label.setText(setting.getName() + ": ");
@@ -123,16 +144,22 @@ public class DiskSelector extends Composite {
 
 			Composite section = new Composite(this, SWT.NONE);
 			GridDataFactory.fillDefaults().grab(true, true).applyTo(section);
-			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(section);
+			GridLayoutFactory.fillDefaults().applyTo(section);
 			
 			Label label = new Label(section, SWT.NONE);
 			label.setText("Settings for " + handler.getName() + ":");
-			GridDataFactory.fillDefaults().span(3, 1).applyTo(label);
+			GridDataFactory.fillDefaults().span(4, 1).applyTo(label);
+			
+			Group group = new Group(section, SWT.SHADOW_OUT);
+			GridLayoutFactory.fillDefaults().numColumns(4).margins(6, 6).applyTo(group);
+			GridDataFactory.fillDefaults().grab(true, true).applyTo(group);
 			
 			for (Setting setting : handler.getSettings()) {
-				/*DiskEntry diskEntry =*/ new DiskEntry(section, setting);
+				/*DiskEntry diskEntry =*/ new DiskEntry(group, setting);
 			}
 		}
+		
+		this.pack();
 	}
 
 }

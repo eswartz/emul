@@ -13,9 +13,6 @@ import java.io.RandomAccessFile;
 
 import org.ejs.coffee.core.utils.CompatUtils;
 
-import v9t9.emulator.hardware.dsrs.DsrException;
-import v9t9.emulator.hardware.dsrs.PabConstants;
-
 public class NativeTextFile implements NativeFile {
 
     private File file;

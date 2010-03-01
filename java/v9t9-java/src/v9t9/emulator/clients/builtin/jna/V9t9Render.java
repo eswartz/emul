@@ -43,6 +43,10 @@ public interface V9t9Render extends Library {
 			int destWidth, int destHeight, int destrowstride,
 			int width, int height, int fullHeight);
 	
+	void addNoiseRGBAMonitor(int [] target, int[] src, int offset, int end,
+			int destWidth, int destHeight, int destrowstride,
+			int width, int height, int fullHeight);
+	
 	public static class AnalogTVData extends Structure implements Structure.ByReference {
 		public Pointer image = null;
 		public int width = 0, height = 0, bytes_per_line = 0;

@@ -515,7 +515,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 						int[] noisyData = noisyBuffer.getData();
 						
 						try {
-							V9t9Render.INSTANCE.addNoiseRGBA(noisyData, data,
+							V9t9Render.INSTANCE.addNoiseRGBA/*Monitor*/(noisyData, data,
 									destWidth * 4 * physRect.y + 4 * physRect.x,
 									Math.min(noisyData.length, data.length) * 4,
 									physRect.width, physRect.height, destWidth * 4,

@@ -103,6 +103,99 @@ void addNoiseRGBA(unsigned char *dststart, unsigned char *srcstart,
 
 }
 
+#define BRIGHTEN(x) ((x) | ((x << 1)))
+
+static void copy_rgb(unsigned char* dst, unsigned char* src, int count, int mult) {
+	while (count-- >= 3) {
+
+		*dst++ = src[0];
+		*dst++ = src[1];
+		*dst++ = BRIGHTEN(src[2]);
+		*dst++ = src[3];
+		src += 4;
+
+		*dst++ = src[0];
+		*dst++ = BRIGHTEN(src[1]);
+		*dst++ = src[2];
+		*dst++ = src[3];
+		src += 4;
+
+		*dst++ = BRIGHTEN(src[0]);
+		*dst++ = src[1];
+		*dst++ = src[2];
+		*dst++ = src[3];
+		src += 4;
+
+		count -= 2;
+	}
+}
+void addNoiseRGBAMonitor(unsigned char *dststart, unsigned char *srcstart,
+		int offset, int end,
+		int width, int height, int rowstride,
+		int realWidth, int realHeight, int fullHeight) {
+	if (!realHeight || height < realHeight  || width < realWidth)
+		return;
+
+	//int end = (fullHeight * rowstride);
+	if (height == realHeight && width == realWidth) {
+		int r;
+		for (r = 0; r < height && offset < end; r++, offset += rowstride) {
+			memcpy(dststart + offset, srcstart + offset, width * 4);
+		}
+		return;
+	}
+
+
+	int mult = height / realHeight;
+	int mulfac;
+	switch (mult) {
+	case 1:
+		mulfac = 248;
+		break;
+	case 2:
+		mulfac = 240;
+		break;
+	case 3:
+		mulfac = 230;
+		break;
+	case 4:
+	default:
+		mulfac = 220;
+		break;
+	}
+
+
+	int colmulfac = mulfac + (256 - mulfac) / 2;
+	if (colmulfac > 255) colmulfac = 255;
+	int altmulfac = 256 - (256 - mulfac) / 4;
+
+	int r, ro = 0;
+	if (mult > 1)
+		ro = (offset / rowstride) % mult;
+	for (r = 0; r < height && offset < end; r++, offset += rowstride) {
+		if (mult < 3)
+			memcpy(dststart + offset, srcstart + offset, width * 4);
+		else
+			copy_rgb(dststart + offset, srcstart + offset, width, mult);
+
+		//	printf("%d %p-%p %d %d\n", r, dststart + offset, dststart + end, width * 4, realWidth); fflush(stdout);
+		if (ro == 0) {
+			// darken between rows
+			darken_row(dststart + offset, width, rowstride, mulfac, 1);
+
+		}
+		if (mult >= 4 && ro == mult - 1) {
+			darken_row(dststart + offset,
+					width, rowstride, altmulfac, 1);
+		}
+		if (width > realWidth && offset >= 4) {
+			darken_pixels(dststart + offset, width, realWidth, colmulfac);
+		}
+		if (++ro == mult)
+			ro = 0;
+	}
+
+}
 
 #if 0
 #ifdef _WIN32

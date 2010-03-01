@@ -5,10 +5,8 @@ package v9t9.emulator.hardware.dsrs;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -16,6 +14,8 @@ import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
+import v9t9.emulator.clients.builtin.IconSetting;
+import v9t9.emulator.hardware.V9t9;
 import v9t9.emulator.hardware.dsrs.EmuDiskDsr.IFileMapper;
 
 
@@ -30,7 +30,8 @@ public class DiskDirectoryMapper implements IFileMapper {
 	
 
 	public void registerDiskPath(String device, File dskdefault) {
-		Setting diskSetting = new Setting(device, dskdefault.getAbsolutePath());
+		IconSetting diskSetting = new IconSetting(device, dskdefault.getAbsolutePath(),
+				V9t9.getDataFile("icons/disk_directory.png").getAbsolutePath());
 		diskSetting.loadState(EmulatorSettings.getInstance().getApplicationSettings());
 		diskMap.put(device, new File(diskSetting.getString()));
 

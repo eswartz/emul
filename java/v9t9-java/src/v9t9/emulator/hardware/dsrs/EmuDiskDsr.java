@@ -135,27 +135,15 @@ public class EmuDiskDsr implements DsrHandler {
 			/* init disk dsr */
 		case D_INIT:
 		{
-			/*
-			int         x;
-	
-			for (x = 0; x < MAXFILES; x++) {
-				memset((void *)&files[x], 0, sizeof(files[0]));
-			}
-	
-			// Set up timer stuff for catalogs 
-			for (x = 0; x < MAXDRIVE; x++) {
-				DskCatFlag[x] = 1;
-				if (!DskCatTag[x])
-					DskCatTag[x] = TM_UniqueTag();
-			}
-			 */
-	
 			EmuDiskPabHandler.getPabInfoBlock(getCruBase()).reset();
 			
 			// also steal some RAM for the name compare buffer,
 			//  so dependent programs can function 
 			vdpnamebuffer = (short) (xfer.readParamWord(0x70) - 9);
 			xfer.writeParamWord(0x70, (short) (vdpnamebuffer - 1));
+			
+			// ???
+			xfer.writeParamWord(0x6c, (short) 0x404);
 			return false;  // does not bump return
 		}
 	
@@ -170,19 +158,16 @@ public class EmuDiskDsr implements DsrHandler {
 	
 			/* call files(x) */
 		case D_FILES:
-			//xfer.writeParamWord(0x2C, (short) (xfer.readParamWord(0x2C) + 12));
-			//xfer.writeParamByte(0x42, (byte) 0);
-			//xfer.writeParamByte(0x50, (byte) 0);
 			PabInfoBlock block = EmuDiskPabHandler.getPabInfoBlock(getCruBase());
 			
 			int cnt = xfer.readParamWord(0x4c);
 			if (block.openFiles.size() > cnt) {
-				xfer.writeParamByte(0x50, (byte) es_badfuncerr);
+				xfer.writeParamWord(0x50, (short) -1);
 			} else if (cnt < 1 || cnt >= 16) { 
-				xfer.writeParamByte(0x50, (byte) es_badvalerr);
+				xfer.writeParamWord(0x50, (short) -1);
 			} else {
-				xfer.writeParamByte(0x50, (byte) 0);
-				block.maxOpenFiles = cnt;
+				xfer.writeParamWord(0x50, (short) 0);
+				block.maxOpenFileCount = cnt;
 			}
 			return true;
 	
@@ -513,6 +498,8 @@ public class EmuDiskDsr implements DsrHandler {
 				int secpos = (recnum / numrecs) * 256;
 				int pos = secpos + reclen * (recnum % numrecs);
 				seekToPosition(pos);
+			} else {
+				seekToPosition(recnum);
 			}
 		}
 
@@ -537,12 +524,171 @@ public class EmuDiskDsr implements DsrHandler {
 			return nativefile != null && (nativefile.getFDRFlags() & IFDRFlags.ff_protected) != 0;
 		}
 	}
-	
+
+	static private byte drcTrans[][] = new byte[][] { 
+		{0, 1}, {FDR.ff_program, 5},
+		{FDR.ff_internal, 3}, {(byte) FDR.ff_variable, 2},
+		{(byte) (FDR.ff_variable + FDR.ff_internal), 4}
+	};
+
+	private static class DirectoryInfo {
+
+		private File[] entries;
+		private int index;
+		private long totalSectors;
+		private long freeSectors;
+		private int lastEntry;
+		private final IFileMapper mapper;
+		private File dir;
+
+		public DirectoryInfo(File file, IFileMapper mapper) {
+			this.mapper = mapper;
+			this.dir = file;
+			this.entries = file.listFiles();
+			totalSectors = file.getTotalSpace() / 256;
+			freeSectors = file.getFreeSpace() / 256;
+			
+			lastEntry = Math.min(128, entries.length);
+		}
+
+		public void setIndex(int index) {
+			this.index = index;
+		}
+		
+		public int readRecord(ByteMemoryAccess access) throws DsrException {
+			
+			int offset = access.offset;
+			
+			// volume record?
+			if (index == 0) {
+
+				/*  Get volume name from path. */
+				offset = writeName(access, offset, mapper.getDsrFileName(dir.getName()));
+				
+				// zero field
+				offset = writeFloat(access, offset, 0);
+
+				// total space
+				offset = writeFloat(access, offset, Math.min(totalSectors, 360));
+
+				// free space
+				offset = writeFloat(access, offset, Math.min(freeSectors, 360));
+
+				index++;
+				
+				return offset - access.offset;
+			}
+
+			// read file record; restrict it to 127 entries
+			// in case naive programs will die...
+			if (index < 0 || index > lastEntry)
+				throw new DsrException(PabConstants.e_endoffile, "End of directory");
+
+			if (index == lastEntry) {
+				// make an empty record
+				access.memory[offset++] = (byte) 0;
+				offset = writeFloat(access, offset, 0);
+				offset = writeFloat(access, offset, 0);
+				offset = writeFloat(access, offset, 0);
+				index++;
+				return offset - access.offset;
+			}
+			
+			// Get file info
+			File file = entries[index - 1];
+			
+			NativeFile nativefile;
+			try {
+				nativefile = NativeFileFactory.createNativeFile(file);
+			} catch (IOException e) {
+				nativefile = new NativeTextFile(file);
+			}
+			
+			// first field is the string representing the
+			// file or volume name
+			offset = writeName(access, offset, mapper.getDsrFileName(file.getName()));
+
+			// second field is file type
+			int flags = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDRFlags() : FDR.ff_variable;
+			{
+				int         idx;
+
+				for (idx = 0; idx < drcTrans.length; idx++)
+					if (drcTrans[idx][0] ==
+						(flags & (FDR.ff_internal | FDR.ff_program | FDR.ff_variable))) {
+						offset = writeFloat(access, offset, drcTrans[idx][1]);
+						break;
+					}
+				// no match == program
+				if (idx >= drcTrans.length) {
+					offset = writeFloat(access, offset, 1);
+				}
+			}
+
+			// third field is file size, one sector for fdr
+			offset = writeFloat(access, offset, 1 + (nativefile.getFileSize() + 255) / 256);
+
+			// fourth field is record size
+			offset = writeFloat(access, offset, nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDR().getRecordLength() : 80);
+
+			index++;
+			
+			return offset - access.offset;
+		}
+
+		/**
+		 * @param access
+		 * @param offset
+		 * @param dskName2
+		 * @return
+		 */
+		private int writeName(ByteMemoryAccess access, int offset,
+				String name) {
+			int len = name.length();
+			if (len > 10)
+				len = 10;
+			access.memory[offset++] = (byte) len;
+			for (int i = 0; i < len; i++)
+				access.memory[offset++] = (byte) name.charAt(i);
+
+			return offset;
+		}
+
+		/**	Convert and push an integer into a TI floating point record:
+				[8 bytes] [0x40+log num] 9*[sig figs, 0-99]
+				Return pointer past end of float.
+		 */
+		private int writeFloat(ByteMemoryAccess access, int offset, long x) {
+			access.memory[offset++] = (byte) 8; // bytes in length
+			Arrays.fill(access.memory, offset, offset + 8, (byte) 0);
+			if (x == 0)
+				return offset + 8;
+
+			long y = x;
+			int places = 0;
+			while (y > 0) {
+				y /= 100;
+				places++;
+			}
+			access.memory[offset] = (byte) (0x3F + places);
+			while (places > 0) {
+				if (places <= 9)
+					access.memory[offset + places] = (byte) (x % 100);
+				x /= 100;
+				places--;
+			}
+			
+			return offset + 8;
+		}
+		
+	}
 	public static class EmuDiskPabHandler extends PabHandler {
 
 		public static class PabInfoBlock {
 			Map<Short, OpenFile> openFiles = new HashMap<Short, OpenFile>();
-			int maxOpenFiles;
+			Map<Short, DirectoryInfo> openDirectories = new HashMap<Short, DirectoryInfo>();
+			int maxOpenFileCount;
+			int openFileCount;
 			
 			public PabInfoBlock() {
 				reset();
@@ -552,7 +698,8 @@ public class EmuDiskDsr implements DsrHandler {
 			 * 
 			 */
 			public void reset() {
-				maxOpenFiles = 3;
+				maxOpenFileCount = 3;
+				openFileCount = 0;
 				for (OpenFile file : openFiles.values())
 					try {
 						file.close();
@@ -560,6 +707,7 @@ public class EmuDiskDsr implements DsrHandler {
 						e.printStackTrace();
 					}
 				openFiles.clear();
+				openDirectories.clear();
 			}
 
 			protected OpenFile allocOpenFile(short pabaddr, File file, String devName, String fileName) throws DsrException {
@@ -567,8 +715,9 @@ public class EmuDiskDsr implements DsrHandler {
 				if (pabfile != null) {
 					pabfile.close();
 				} else {
-					if (openFiles.size() >= maxOpenFiles)
+					if (openFileCount >= maxOpenFileCount)
 						throw new DsrException(PabConstants.e_outofspace, null, "Too many open files");
+					openFileCount++;
 				}
 				pabfile = new OpenFile(file, devName, fileName);
 				openFiles.put(pabaddr, pabfile);
@@ -584,6 +733,38 @@ public class EmuDiskDsr implements DsrHandler {
 			 */
 			public void removeOpenFile(short pabaddr) {
 				openFiles.remove(pabaddr);
+				openFileCount--;
+			}
+
+			/**
+			 * @param pabaddr
+			 * @param file
+			 * @param dskName 
+			 * @throws DsrException 
+			 */
+			public void openDirectory(short pabaddr, File file, IFileMapper mapper) throws DsrException {
+				if (openFileCount >= maxOpenFileCount) {
+					throw new DsrException(PabConstants.e_outofspace, null, "Too many open files");
+				}
+				DirectoryInfo info = new DirectoryInfo(file, mapper);
+				openDirectories.put(pabaddr, info);
+				openFileCount++;
+			}
+
+			/**
+			 * @param pabaddr
+			 */
+			public void closeDirectory(short pabaddr) {
+				openDirectories.remove(pabaddr);
+				openFileCount--;
+			}
+
+			/**
+			 * @param pabaddr
+			 * @return
+			 */
+			public DirectoryInfo getDirectory(short pabaddr) {
+				return openDirectories.get(pabaddr);
 			}
 
 
@@ -678,15 +859,29 @@ public class EmuDiskDsr implements DsrHandler {
 			if (file == null)
 				throw new DsrException(PabConstants.e_baddevice, null, "Cannot map " + devname + " to host");
 			
+			boolean isCatalog = file.isDirectory();
+			if (isCatalog && pab.opcode > PabConstants.op_read) {
+				throw new DsrException(PabConstants.e_illegal, null, "Unsupported catalog opcode: " + pab.opcode);
+			}
+
 			switch (pab.opcode) {
 			case PabConstants.op_open:
-				DSKOpen(file);
+				if (!isCatalog)
+					DSKOpen(file);
+				else
+					DSKOpenCatalog(file);
 				break;
 			case PabConstants.op_close:
-				DSKClose(file);
+				if (!isCatalog)
+					DSKClose(file);
+				else
+					DSKCloseCatalog(file);
 				break;
 			case PabConstants.op_read:
-				DSKRead(file);
+				if (!isCatalog)
+					DSKRead(file);
+				else
+					DSKReadCatalog(file);
 				break;
 			case PabConstants.op_write:
 				DSKWrite(file);
@@ -844,11 +1039,11 @@ public class EmuDiskDsr implements DsrHandler {
 
 		private void DSKClose(File file) throws DsrException {
 			OpenFile openFile = block.findOpenFile(pab.pabaddr);
-			if (openFile == null)
-				throw new DsrException(PabConstants.e_badfiletype, "File not open: " + file);
-			
-			openFile.close();
-			block.removeOpenFile(pab.pabaddr);
+			// no error closing closed file
+			if (openFile != null) {
+				openFile.close();
+				block.removeOpenFile(pab.pabaddr);
+			}
 			
 		}
 		private void DSKRead(File file) throws DsrException {
@@ -872,22 +1067,66 @@ public class EmuDiskDsr implements DsrHandler {
 			}
 			
 			ByteMemoryAccess access = xfer.getVdpMemory(pab.bufaddr);
+			pab.charcount = openFile.readRecord(access, pab.preclen);
+			xfer.dirtyVdpMemory(pab.bufaddr, pab.charcount);
 			
-			try {
-				pab.charcount = openFile.readRecord(access, pab.preclen);
-				xfer.dirtyVdpMemory(pab.bufaddr, pab.charcount);
-				
-				if (false) {
-					dump(pab.bufaddr, pab.charcount);
-				}
-			} catch (DsrException e) {
-				if (e.getErrorCode() == PabConstants.e_endoffile) {
-					DSKClose(file);
-				}
-				throw e;
+			if (false) {
+				dump(pab.bufaddr, pab.charcount);
 			}
 		}
 		
+		private void DSKOpenCatalog(File file) throws DsrException {
+			
+			// clear error
+			pab.pflags &= ~PabConstants.e_pab_mask;
+			
+			// sanity checks 
+			if ((pab.preclen != 0 && pab.preclen != 38) 
+					|| (pab.pflags & PabConstants.fp_internal + PabConstants.fp_variable) != PabConstants.fp_internal
+					|| (pab.getOpenMode() != PabConstants.m_input)) {
+				throw new DsrException(PabConstants.e_badopenmode, "Bad directory open mode: " + HexUtils.toHex2(pab.pflags) + " reclen " + pab.preclen);
+			}
+			
+			if (pab.preclen == 0)
+				pab.preclen = 38;
+			
+			DirectoryInfo info = block.getDirectory(pab.pabaddr);
+			if (info != null)
+				throw new DsrException(PabConstants.e_badfiletype, "Directory already open: " + file);
+			
+			block.openDirectory(pab.pabaddr, file, mapper);
+			
+			pab.recnum = 0;
+		}
+		
+		private void DSKCloseCatalog(File file) throws DsrException {
+			block.closeDirectory(pab.pabaddr);
+		}
+		
+		private void DSKReadCatalog(File file) throws DsrException {
+			DirectoryInfo info = block.getDirectory(pab.pabaddr);
+			if (info == null)
+				throw new DsrException(PabConstants.e_badfiletype, "Directory not open: " + file);
+			
+			
+			ByteMemoryAccess access = xfer.getVdpMemory(pab.bufaddr);
+			
+			if (pab.isRelative())
+				info.setIndex(pab.recnum);
+
+			/*pab.charcount =*/ info.readRecord(access);
+			pab.charcount = pab.preclen = 38;
+			
+			xfer.dirtyVdpMemory(pab.bufaddr, pab.charcount);
+			
+			pab.recnum++;
+			
+			if (true) {
+				dump(pab.bufaddr, pab.charcount);
+			}
+		}
+		
+
 		private void DSKRestore(File file) throws DsrException {
 			if (!pab.isReading())
 				throw new DsrException(PabConstants.e_illegal, "File not open for reading: " + file);
@@ -932,10 +1171,6 @@ public class EmuDiskDsr implements DsrHandler {
 		
 		private void DSKLoad(File file) throws DsrException {
 			
-			if (file.isDirectory()) {
-				throw new DsrException(PabConstants.e_illegal, null, "Can't load catalog as binary: " + file);
-			}
-			
 			OpenFile openFile = new OpenFile(file, devname, fname);
 			if (openFile.getNativeFile() == null)
 				throw new DsrException(PabConstants.e_badfiletype, "File not found: " + file);
@@ -970,10 +1205,6 @@ public class EmuDiskDsr implements DsrHandler {
 
 		private void DSKDelete(File file) throws DsrException {
 
-			if (file.isDirectory()) {
-				throw new DsrException(PabConstants.e_illegal, null, "Can't delete catalog");
-			}
-			
 			OpenFile openFile = block.findOpenFile(pab.pabaddr);
 			if (openFile != null) {
 				openFile.close();
@@ -992,10 +1223,6 @@ public class EmuDiskDsr implements DsrHandler {
 
 		private void DSKSave(File file) throws DsrException {
 
-			if (file.isDirectory()) {
-				throw new DsrException(PabConstants.e_illegal, null, "Can't save catalog as binary");
-			}
-			
 			OpenFile openFile = new OpenFile(file, devname, fname);
 			if (openFile.getNativeFile() != null) {
 				if (openFile.isProtected()) {

@@ -30,6 +30,8 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -358,6 +360,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 									});
 								}
 							};
+							
 							final ModuleSelector window = new ModuleSelector(shell, machine, moduleRestorer);
 							createToolShell(MODULE_SELECTOR_TOOL_ID, shell, window, "ModuleWindowBounds");
 							shell.setSize(400, 500);
@@ -372,8 +375,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
 						if (!restoreToolShell(DISK_SELECTOR_TOOL_ID)) {
-							final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
-							IFocusRestorer diskRestorer = new IFocusRestorer() {
+							final Shell shell = new Shell(getShell(), SWT.TOOL | SWT.RESIZE);
+							final IFocusRestorer diskRestorer = new IFocusRestorer() {
 								
 								public void restoreFocus() {
 									Display.getDefault().asyncExec(new Runnable() {
@@ -384,6 +387,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 									});
 								}
 							};
+							
 							final DiskSelector window = new DiskSelector(shell, machine.getDsrManager(), diskRestorer);
 							createToolShell(DISK_SELECTOR_TOOL_ID, shell, window, "DiskWindowBounds");
 							shell.setSize(400, 300);
