@@ -17,7 +17,6 @@ import v9t9.emulator.EmulatorSettings;
 import v9t9.emulator.hardware.dsrs.EmuDiskDsr.EmuDiskPabHandler.PabInfoBlock;
 import v9t9.emulator.runtime.Executor;
 import v9t9.engine.files.FDR;
-import v9t9.engine.files.FDRFactory;
 import v9t9.engine.files.IFDRFlags;
 import v9t9.engine.files.InvalidFDRException;
 import v9t9.engine.files.NativeFDRFile;
@@ -137,6 +136,7 @@ public class EmuDiskDsr implements DsrHandler {
 		case D_INIT:
 		{
 			EmuDiskPabHandler.getPabInfoBlock(getCruBase()).reset();
+			DirectDiskHandler.getDiskInfoBlock(getCruBase()).reset();
 			
 			// also steal some RAM for the name compare buffer,
 			//  so dependent programs can function 
@@ -179,7 +179,7 @@ public class EmuDiskDsr implements DsrHandler {
 		case D_DOUTPUT:
 		case D_SECRW:
 		{
-			DirectDiskHandler handler = new DirectDiskHandler(xfer, mapper, code);
+			DirectDiskHandler handler = new DirectDiskHandler(getCruBase(), xfer, mapper, code);
 	
 			if (handler.getDevice() <= MAXDRIVE) {
 				try {
@@ -508,7 +508,7 @@ public class EmuDiskDsr implements DsrHandler {
 		 * @return
 		 */
 		public boolean isProgram() {
-			return nativefile != null && (nativefile.getFDRFlags() & IFDRFlags.ff_program) != 0;
+			return nativefile != null && (nativefile.getFlags() & IFDRFlags.ff_program) != 0;
 		}
 
 		/**
@@ -522,7 +522,7 @@ public class EmuDiskDsr implements DsrHandler {
 		 * @return
 		 */
 		public boolean isProtected() {
-			return nativefile != null && (nativefile.getFDRFlags() & IFDRFlags.ff_protected) != 0;
+			return nativefile != null && (nativefile.getFlags() & IFDRFlags.ff_protected) != 0;
 		}
 	}
 
@@ -534,25 +534,32 @@ public class EmuDiskDsr implements DsrHandler {
 
 	private static class DirectoryInfo {
 
-		private File[] entries;
-		private int index;
-		private long totalSectors;
-		private long freeSectors;
-		private int lastEntry;
-		private final IFileMapper mapper;
-		private File dir;
+		protected File[] entries;
+		protected final IFileMapper mapper;
+		protected File dir;
 
 		public DirectoryInfo(File file, IFileMapper mapper) {
 			this.mapper = mapper;
 			
 			this.dir = file;
-			this.entries = file.listFiles();
+			this.entries = file != null ? file.listFiles() : new File[0];
 			Arrays.sort(entries);
-			
-			totalSectors = file.getTotalSpace() / 256;
-			freeSectors = file.getFreeSpace() / 256;
-			
+		}
+
+	}
+	
+	private static class FileLikeDirectoryInfo extends DirectoryInfo {
+
+		private int index;
+		private long totalSectors;
+		private long freeSectors;
+		private int lastEntry;
+
+		public FileLikeDirectoryInfo(File file, IFileMapper mapper) {
+			super(file, mapper);
 			lastEntry = Math.min(128, entries.length);
+			totalSectors = (file.getTotalSpace() + 255) / 256;
+			freeSectors = (file.getFreeSpace() + 255) / 256;
 		}
 
 		public void setIndex(int index) {
@@ -613,7 +620,7 @@ public class EmuDiskDsr implements DsrHandler {
 			offset = writeName(access, offset, mapper.getDsrFileName(file.getName()));
 
 			// second field is file type
-			int flags = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDRFlags() : FDR.ff_variable;
+			int flags = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFlags() : FDR.ff_variable;
 			{
 				int         idx;
 
@@ -690,7 +697,7 @@ public class EmuDiskDsr implements DsrHandler {
 
 		public static class PabInfoBlock {
 			Map<Short, OpenFile> openFiles = new HashMap<Short, OpenFile>();
-			Map<Short, DirectoryInfo> openDirectories = new HashMap<Short, DirectoryInfo>();
+			Map<Short, FileLikeDirectoryInfo> openDirectories = new HashMap<Short, FileLikeDirectoryInfo>();
 			int maxOpenFileCount;
 			int openFileCount;
 			
@@ -750,7 +757,7 @@ public class EmuDiskDsr implements DsrHandler {
 				if (openFileCount >= maxOpenFileCount) {
 					throw new DsrException(PabConstants.e_outofspace, null, "Too many open files");
 				}
-				DirectoryInfo info = new DirectoryInfo(file, mapper);
+				FileLikeDirectoryInfo info = new FileLikeDirectoryInfo(file, mapper);
 				openDirectories.put(pabaddr, info);
 				openFileCount++;
 			}
@@ -767,7 +774,7 @@ public class EmuDiskDsr implements DsrHandler {
 			 * @param pabaddr
 			 * @return
 			 */
-			public DirectoryInfo getDirectory(short pabaddr) {
+			public FileLikeDirectoryInfo getDirectory(short pabaddr) {
 				return openDirectories.get(pabaddr);
 			}
 
@@ -1108,7 +1115,7 @@ public class EmuDiskDsr implements DsrHandler {
 		}
 		
 		private void DSKReadCatalog(File file) throws DsrException {
-			DirectoryInfo info = block.getDirectory(pab.pabaddr);
+			FileLikeDirectoryInfo info = block.getDirectory(pab.pabaddr);
 			if (info == null)
 				throw new DsrException(PabConstants.e_badfiletype, "Directory not open: " + file);
 			
@@ -1246,8 +1253,16 @@ public class EmuDiskDsr implements DsrHandler {
 			
 			ByteMemoryAccess access = xfer.getVdpMemory(pab.bufaddr);
 			try {
-				int wrote = openFile.getNativeFile().writeContents(access.memory, access.offset, 
-						0, pab.recnum);
+				int towrite = pab.recnum;
+				int wrote = 0;
+				int addr = access.offset;
+				while (towrite > 0) {
+					int chunk = Math.min(access.memory.length - addr, towrite);
+					wrote += openFile.getNativeFile().writeContents(access.memory, addr, 
+						0, chunk);
+					towrite -= chunk;
+					addr -= access.memory.length;
+				}
 				
 				// fill the sector
 				int secfill = 256 - (wrote % 256);
@@ -1298,7 +1313,7 @@ public class EmuDiskDsr implements DsrHandler {
 				}
 				
 				if (nativeFile != null) {
-					int fdrflags = nativeFile.getFDRFlags();
+					int fdrflags = nativeFile.getFlags();
 					if ((fdrflags & IFDRFlags.ff_internal) != 0)
 						status |= PabConstants.st_internal;
 					if ((fdrflags & IFDRFlags.ff_program) != 0)
@@ -1316,18 +1331,225 @@ public class EmuDiskDsr implements DsrHandler {
 		
 	}
 	
+	static class DiskFileRange {
+		int fdrSector;
+		int start;
+		int len;
+		NativeFile file;
+	}
+	
+	static class DiskLikeDirectoryInfo extends DirectoryInfo {
+
+		Map<File, DiskFileRange> sectorRanges = new HashMap<File, DiskFileRange>();
+		private String devname;
+		private int lastSector;
+		
+		public DiskLikeDirectoryInfo(File dir, IFileMapper mapper, String devname) {
+			super(dir, mapper);
+			this.devname = devname;
+			
+			int sec = 2;
+			for (File entry : entries) {
+				if (sec >= 65536)
+					break;
+				
+				DiskFileRange range = new DiskFileRange();
+				try {
+					range.file = NativeFileFactory.createNativeFile(entry);
+					range.fdrSector = sec++;
+					range.start = sec;
+					range.len = range.file.getSectorsUsed();
+					sec += range.len;
+					sectorRanges.put(entry, range);
+				} catch (IOException e) {
+				}
+			}
+			this.lastSector = sec;
+		}
+		
+		/**
+		 * @return the lastSector
+		 */
+		public int getLastSector() {
+			return lastSector;
+		}
+
+		public void synthesizeFDRSector(ByteMemoryAccess access, DiskFileRange range) throws DsrException {
+			int offset = access.offset;
+			
+			Arrays.fill(access.memory, offset, offset + 256, (byte) 0);
+			
+			if (range == null) {
+				return;
+			}
+			
+			String name = mapper.getDsrFileName(range.file.getFile().getName());
+			for (int i = 0; i < 10; i++) {
+				if (i < name.length())
+					access.memory[offset++] = (byte) name.charAt(i);
+				else
+					access.memory[offset++] = (byte) 0x20;
+			}
+			
+			// reserved
+			access.memory[offset++] = (byte) 0x0;
+			access.memory[offset++] = (byte) 0x0;
+			
+			// file type
+			access.memory[offset++] = (byte) range.file.getFlags();
+			access.memory[offset++] = (byte) range.file.getRecordsPerSector();
+			
+			int numsecs = (int) range.file.getSectorsUsed();
+			access.memory[offset++] = (byte) (numsecs / 256);
+			access.memory[offset++] = (byte) (numsecs % 256);
+			
+			access.memory[offset++] = (byte) range.file.getByteOffset();
+			access.memory[offset++] = (byte) range.file.getRecordLength();
+			
+			int numrecs = range.file.getNumberRecords();
+			access.memory[offset++] = (byte) (numrecs % 256);
+			access.memory[offset++] = (byte) (numrecs / 256);
+			
+			while (offset< 0x1C) {
+				access.memory[offset++] = (byte) 0;
+			}
+			
+			// sectors per track
+			access.memory[offset++] = (byte) 18;
+			
+			int left = range.len;
+			int ofs = range.start;
+			while (left > 0) {
+				// >UM >SN >OF == >NUM >OFS
+				int num = Math.min(0xfff, left);
+				access.memory[offset++] = (byte) (num & 0xff);
+				access.memory[offset++] = (byte) (((num >> 8) & 0x0f) | ((ofs & 0xf) << 4));
+				access.memory[offset++] = (byte) ((ofs >> 4) & 0xff);
+				left -= num;
+			}
+			
+		}
+
+		public void synthesizeVolumeSector(ByteMemoryAccess access) throws DsrException {
+			int offset = access.offset;
+			
+			File localFile = mapper.getLocalFile(devname, null);
+			if (localFile == null)
+				throw new DsrException(es_hardware, "No directory for " + devname);
+			
+			String diskname = mapper.getDsrFileName(localFile.getName());
+			for (int i = 0; i < 10; i++) {
+				if (i < diskname.length())
+					access.memory[offset++] = (byte) diskname.charAt(i);
+				else
+					access.memory[offset++] = (byte) 0x20;
+			}
+			
+			// # sectors
+			long numsecs = Math.min(65535, (localFile.getTotalSpace() / 256));
+			access.memory[offset++] = (byte) (numsecs / 256);
+			access.memory[offset++] = (byte) (numsecs % 256);
+			
+			// sectors per track
+			access.memory[offset++] = (byte) 18;
+			
+			// DSR mark
+			access.memory[offset++] = 'D';
+			access.memory[offset++] = 'S';
+			access.memory[offset++] = 'K';
+			
+			// protection
+			access.memory[offset++] = ' ';
+			
+			// # tracks/side
+			access.memory[offset++] = 40;
+
+			// # sides
+			access.memory[offset++] = 2;
+			
+			// density
+			access.memory[offset++] = 2;
+		
+			// reserved
+			while (offset < access.offset + 0x38) {
+				access.memory[offset++] = 0;
+			}
+			
+			// bitmap
+			while (offset < access.offset + 0xec) {
+				access.memory[offset++] = (byte) 0xaa;
+			}
+			
+			// reserved
+			while (offset < access.offset + 0x100) {
+				access.memory[offset++] = (byte) 0xff;
+			}
+		}
+		
+		public void synthesizeIndexSector(ByteMemoryAccess access) {
+			int offset = access.offset;
+			
+			int cnt = 128;
+			for (Map.Entry<File, DiskFileRange> entry : sectorRanges.entrySet()) {
+				int fdrSector = entry.getValue().fdrSector;
+				access.memory[offset++] = (byte) (fdrSector / 256);
+				access.memory[offset++] = (byte) (fdrSector % 256);
+				if (cnt-- == 0)
+					break;
+			}
+			while (cnt-- > 0) {
+				access.memory[offset++] = (byte) 0;
+				access.memory[offset++] = (byte) 0;
+			}
+		}
+
+		public void synthesizeSector(ByteMemoryAccess access, int secnum) throws IOException {
+			for (Map.Entry<File, DiskFileRange> entry : sectorRanges.entrySet()) {
+				DiskFileRange range = entry.getValue();
+				if (secnum == range.fdrSector) {
+					synthesizeFDRSector(access, range);
+					return;
+				} else if (secnum >= range.start && secnum < range.start + range.len) {
+					range.file.readContents(access.memory, access.offset, 
+							(secnum - range.start) * 256, 256);
+					return;
+				}
+			}
+			Arrays.fill(access.memory, access.offset, access.offset + 256, (byte) 0xe5);
+		}
+	}
 	public static class DirectDiskHandler {
+		static class DirectDiskInfo {
+			Map<File, DiskLikeDirectoryInfo> dirInfos = new HashMap<File, DiskLikeDirectoryInfo>();
+
+			public void reset() {
+				dirInfos.clear();
+			}
+			
+		}
 		private final MemoryTransfer xfer;
 		private byte dev;
 		private byte opt;
 		private short addr1;
 		private short addr2;
 		private final short code;
-		private final IFileMapper mapper;
 		private String devname;
-		private Map<String, DirectoryInfo> dirInfos = new HashMap<String, DirectoryInfo>();
+		private final IFileMapper mapper;
 
-		public DirectDiskHandler(MemoryTransfer xfer, IFileMapper mapper, short code) {
+		private static Map<Short, DirectDiskInfo> diskInfoBlocks = new HashMap<Short, DirectDiskInfo>();
+		private final short cru;
+		
+		public static DirectDiskInfo getDiskInfoBlock(short cru) {
+			DirectDiskInfo block = diskInfoBlocks.get(cru);
+			if (block == null) {
+				block = new DirectDiskInfo();
+				diskInfoBlocks.put(cru, block);
+			}
+			return block;
+		}
+		
+		public DirectDiskHandler(short cru, MemoryTransfer xfer, IFileMapper mapper, short code) {
+			this.cru = cru;
 			this.xfer = xfer;
 			this.mapper = mapper;
 			this.code = code;
@@ -1342,7 +1564,7 @@ public class EmuDiskDsr implements DsrHandler {
 			// no error
 			xfer.writeParamByte(0x50, (byte) 0);
 		}
-		
+
 		public byte getDevice() {
 			return dev;
 		}
@@ -1537,172 +1759,45 @@ public class EmuDiskDsr implements DsrHandler {
 			short addr = addr1;
 			int secnum = addr2;
 			
-			if (secnum == 0) {
-				synthesizeVolumeSector(xfer.getVdpMemory(addr));
+			ByteMemoryAccess access = xfer.getVdpMemory(addr);
+			DiskLikeDirectoryInfo info = getDirectory();
+			
+			if (secnum < info.lastSector) {
+				if (secnum == 0) {
+					info.synthesizeVolumeSector(access);
+				}
+				else if (secnum == 1) {
+					info.synthesizeIndexSector(access);
+				}
+				else {
+					try {
+						info.synthesizeSector(access, secnum);
+					} catch (IOException e) {
+						throw new DsrException(es_hardware, e);
+					}
+				}	
+			} else {
+				Arrays.fill(access.memory, access.offset, access.offset + 256, (byte) 0xe5);
 			}
-			else if (secnum == 1) {
-				synthesizeIndexSector(xfer.getVdpMemory(addr));
-			}
-			else if (secnum < 130) {
-				synthesizeDirectorySector(xfer.getVdpMemory(addr), secnum - 2);
-			}			
+			
 			xfer.dirtyVdpMemory(addr, 256);
 		}
 
-		DirectoryInfo getDirectory() {
-			DirectoryInfo info = dirInfos.get(devname);
+		DiskLikeDirectoryInfo getDirectory() {
+			DirectDiskInfo diskInfo = getDiskInfoBlock(cru);
+			
+			File dir = mapper.getLocalFile(devname, null);
+			DiskLikeDirectoryInfo info = diskInfo.dirInfos.get(dir);
 			if (info == null) {
-				info = new DirectoryInfo(mapper.getLocalFile(devname, null), mapper);
-				dirInfos.put(devname, info);
+				info = new DiskLikeDirectoryInfo(dir, mapper, devname);
+				diskInfo.dirInfos.put(dir, info);
 			}
+			
 			return info;
 		}
-		/**
-		 * @param vdpMemory
-		 * @param i
-		 * @throws DsrException 
-		 */
-		private void synthesizeDirectorySector(ByteMemoryAccess access, int index) throws DsrException {
-			int offset = access.offset;
-			
-			Arrays.fill(access.memory, offset, offset + 256, (byte) 0);
-			
-			DirectoryInfo info = getDirectory();
-			
-			if (index >= info.entries.length) {
-				return;
-			}
-			
-			File localFile = info.entries[index];
-			
-			FDR fdr;
-			try {
-				fdr = FDRFactory.createFDR(localFile);
-			} catch (IOException e) {
-				fdr = new V9t9FDR();
-				try {
-					((V9t9FDR)fdr).setFileName(mapper.getDsrFileName(localFile.getName()));
-				} catch (IOException e1) {
-					throw new DsrException(es_hardware, "Cannot read file for index");
-				}
-			}
-			
-			String name = mapper.getDsrFileName(localFile.getName());
-			for (int i = 0; i < 10; i++) {
-				if (i < name.length())
-					access.memory[offset++] = (byte) name.charAt(i);
-				else
-					access.memory[offset++] = (byte) 0x20;
-			}
-			
-			// reserved
-			access.memory[offset++] = (byte) 0x0;
-			access.memory[offset++] = (byte) 0x0;
-			
-			// file type
-			access.memory[offset++] = (byte) (fdr != null ? fdr.getFlags() : FDR.ff_variable);
-			access.memory[offset++] = (byte) (fdr != null ? fdr.getRecordsPerSector() : 3);
-			
-			int numsecs = (int) (fdr != null ? fdr.getSectorsUsed() : Math.min(65535, (localFile.length() + 255) / 256));
-			access.memory[offset++] = (byte) (numsecs / 256);
-			access.memory[offset++] = (byte) (numsecs % 256);
-			
-			access.memory[offset++] = (byte) (fdr != null ? fdr.getByteOffset() : (byte) (localFile.length() % 256));
-			access.memory[offset++] = (byte) (fdr != null ? fdr.getRecordLength() : 80);
-			
-			int numrecs = fdr != null ? fdr.getNumberRecords() : 0;
-			access.memory[offset++] = (byte) (numrecs % 256);
-			access.memory[offset++] = (byte) (numrecs / 256);
-			
-			while (offset< 0x1C) {
-				access.memory[offset++] = (byte) 0;
-			}
-			
-			// sectors per track
-			access.memory[offset++] = (byte) 18;
-			
-			// TODO: clusters
-		}
 
-		private void synthesizeVolumeSector(ByteMemoryAccess access) {
-			int offset = access.offset;
-			
-			File localFile = mapper.getLocalFile(devname, null);
-			String diskname = mapper.getDsrFileName(localFile.getName());
-			for (int i = 0; i < 10; i++) {
-				if (i < diskname.length())
-					access.memory[offset++] = (byte) diskname.charAt(i);
-				else
-					access.memory[offset++] = (byte) 0x20;
-			}
-			
-			// # sectors
-			long numsecs = Math.min(65535, (localFile.getTotalSpace() / 256));
-			access.memory[offset++] = (byte) (numsecs / 256);
-			access.memory[offset++] = (byte) (numsecs % 256);
-			
-			// sectors per track
-			access.memory[offset++] = (byte) 18;
-			
-			// DSR mark
-			access.memory[offset++] = 'D';
-			access.memory[offset++] = 'S';
-			access.memory[offset++] = 'K';
-			
-			// protection
-			access.memory[offset++] = ' ';
-			
-			// # tracks/side
-			access.memory[offset++] = 40;
-
-			// # sides
-			access.memory[offset++] = 2;
-			
-			// density
-			access.memory[offset++] = 2;
-		
-			// reserved
-			while (offset < access.offset + 0x38) {
-				access.memory[offset++] = 0;
-			}
-			
-			// bitmap
-			while (offset < access.offset + 0xec) {
-				access.memory[offset++] = (byte) 0xaa;
-			}
-			
-			// reserved
-			while (offset < access.offset + 0x100) {
-				access.memory[offset++] = (byte) 0xff;
-			}
-		}
-		
-		private void synthesizeIndexSector(ByteMemoryAccess access) {
-			int offset = access.offset;
-			
-			DirectoryInfo info = dirInfos.get(devname);
-			if (info == null) {
-				info = new DirectoryInfo(mapper.getLocalFile(devname, null), mapper);
-				dirInfos.put(devname, info);
-			}
-			
-			int i;
-			for (i = 0; i < info.lastEntry; i++) {
-				access.memory[offset++] = (byte) ((i + 2) / 256);
-				access.memory[offset++] = (byte) ((i + 2) % 256);
-			}
-			while (i < 128) {
-				access.memory[offset++] = (byte) 0;
-				access.memory[offset++] = (byte) 0;
-				i++;
-			}
-		}
 	}
 
-	/**
-	 * @return
-	 * @throws DsrException 
-	 */
 	public static FDR createNewFDR(String dsrFile) throws DsrException {
 		// make a FDR file for it
 		V9t9FDR fdr = new V9t9FDR();

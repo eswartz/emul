@@ -85,10 +85,45 @@ public class NativeTextFile implements NativeFile {
     /* (non-Javadoc)
      * @see v9t9.engine.files.NativeFile#getFDRFlags()
      */
-    public int getFDRFlags() {
+    public int getFlags() {
     	int flags = IFDRFlags.ff_variable;
     	if (!file.canWrite())
     		flags |= IFDRFlags.ff_protected;
     	return flags;
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.files.NativeFile#getSectorsUsed()
+     */
+    public int getSectorsUsed() {
+    	return (getFileSize() + 255) / 256;
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.files.IFDRInfo#getByteOffset()
+     */
+    public int getByteOffset() {
+    	return getFileSize() % 256;
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.files.IFDRInfo#getNumberRecords()
+     */
+    public int getNumberRecords() {
+    	return getSectorsUsed();
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.files.IFDRInfo#getRecordLength()
+     */
+    public int getRecordLength() {
+    	return 80;
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.files.IFDRInfo#getRecordsPerSector()
+     */
+    public int getRecordsPerSector() {
+    	return 3;
     }
 }

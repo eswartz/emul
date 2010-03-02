@@ -13,7 +13,7 @@ import java.io.IOException;
  * This is the interface to a native (TI-99) file
  * @author ejs
  */
-public interface NativeFile {
+public interface NativeFile extends IFDRInfo {
     /** Get the host file */
     public File getFile();
 
@@ -43,12 +43,4 @@ public interface NativeFile {
 	 * Flush to disk.
 	 */
 	void flush() throws IOException;
-
-	/**
-	 * Get the FDR flags
-	 * @return
-	 */
-	public int getFDRFlags();
-	
-	
 }

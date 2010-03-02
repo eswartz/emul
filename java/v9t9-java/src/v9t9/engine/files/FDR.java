@@ -17,7 +17,7 @@ import org.ejs.coffee.core.utils.HexUtils;
  * in the TI Disk Controller.
  * @author ejs
  */
-public abstract class FDR implements IFDRFlags {
+public abstract class FDR implements IFDRFlags, IFDRInfo {
 	/** number of records: 16-bit */
     protected int numrecs;
     /** length of record: 8-bit */

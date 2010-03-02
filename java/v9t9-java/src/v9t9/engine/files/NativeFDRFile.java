@@ -92,10 +92,45 @@ public class NativeFDRFile implements NativeFile {
 	/* (non-Javadoc)
 	 * @see v9t9.engine.files.NativeFile#getFDRFlags()
 	 */
-	public int getFDRFlags() {
+	public int getFlags() {
 		int flags = fdr.getFlags();
 		if (!file.canWrite())
 			flags |= IFDRFlags.ff_protected;
 		return flags;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.files.NativeFile#getSectorsUsed()
+	 */
+	public int getSectorsUsed() {
+		return fdr.secsused;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.files.IFDRInfo#getByteOffset()
+	 */
+	public int getByteOffset() {
+		return fdr.getByteOffset();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.files.IFDRInfo#getNumberRecords()
+	 */
+	public int getNumberRecords() {
+		return fdr.getNumberRecords();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.files.IFDRInfo#getRecordLength()
+	 */
+	public int getRecordLength() {
+		return fdr.getRecordLength();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.files.IFDRInfo#getRecordsPerSector()
+	 */
+	public int getRecordsPerSector() {
+		return fdr.getRecordsPerSector();
 	}
 }

@@ -44,7 +44,7 @@ public class V9t9FDR extends FDR {
     public V9t9FDR() {
     	super(FDRSIZE);
     }
-    public static FDR readFDR(File file) throws IOException, InvalidFDRException {
+    public static V9t9FDR readFDR(File file) throws IOException, InvalidFDRException {
         V9t9FDR fdr = new V9t9FDR();
         FileInputStream stream = new FileInputStream(file);
         try {
@@ -52,10 +52,10 @@ public class V9t9FDR extends FDR {
 	        stream.read(fdr.res10);
 	        fdr.flags = stream.read();
 	        fdr.recspersec = stream.read();
-	        fdr.secsused = stream.read() << 8 | stream.read();
+	        fdr.secsused = (stream.read() << 8) | stream.read();
 	        fdr.byteoffs = stream.read();
 	        fdr.reclen = stream.read();
-	        fdr.numrecs = (stream.read() | stream.read() << 8);
+	        fdr.numrecs = stream.read() | (stream.read() << 8);
 	        stream.read(fdr.rec20);
 	        stream.read(fdr.dcpb);
         } finally { 
@@ -66,6 +66,22 @@ public class V9t9FDR extends FDR {
         return fdr;
     }
     
+    public static V9t9FDR createFDR(byte[] data, int offset) {
+        V9t9FDR fdr = new V9t9FDR();
+        
+    	System.arraycopy(data, offset, fdr.filename, 0, fdr.filename.length);
+    	System.arraycopy(data, offset + 0xA, fdr.res10, 0, fdr.res10.length);
+    	fdr.flags = data[offset + 0xc] & 0xff;
+        fdr.recspersec = data[offset + 0xd] & 0xff;
+        fdr.secsused = ((data[offset + 0xe] & 0xff) << 8) | (data[offset + 0xf] & 0xff);
+        fdr.byteoffs = data[offset + 0x10] & 0xff;
+        fdr.reclen = data[offset + 0x11] & 0xff;
+        fdr.numrecs = (data[offset + 0x12] & 0xff) | ((data[offset + 0x13] & 0xff) << 8);
+        System.arraycopy(data, offset + 0x14, fdr.rec20, 0, fdr.rec20.length);
+        System.arraycopy(data, offset + 0x1C, fdr.dcpb, 0, fdr.dcpb.length);
+        
+        return fdr;
+    }
 
     /**
      * Set the filename
@@ -114,7 +130,7 @@ public class V9t9FDR extends FDR {
     			len = i;
     		builder.append(ch);
     	}
-    	builder.setLength(len);
+    	builder.setLength(len + 1);
 		return builder.toString();
 	}
 }
