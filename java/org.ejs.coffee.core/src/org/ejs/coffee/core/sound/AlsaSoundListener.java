@@ -105,7 +105,7 @@ public class AlsaSoundListener implements ISoundListener {
 				pcmref,
 				device,
 				AlsaLibrary.SND_PCM_STREAM_PLAYBACK,
-				blocking ? 0 : AlsaLibrary.SND_PCM_NONBLOCK);
+				AlsaLibrary.SND_PCM_NONBLOCK);
 		if (err < 0) {
 			System.err.println("Error creating ALSA PCM: " +
 					INSTANCE.snd_strerror(err));
@@ -254,7 +254,7 @@ public class AlsaSoundListener implements ISoundListener {
 	 */
 	public synchronized void played(SoundChunk chunk) {
 		try {
-			if (soundQueue.remainingCapacity() == 0)
+			if (!blocking && soundQueue.remainingCapacity() == 0)
 				soundQueue.remove();
 			// will block if sound is too fast
 			AudioChunk o = new AudioChunk(chunk);
