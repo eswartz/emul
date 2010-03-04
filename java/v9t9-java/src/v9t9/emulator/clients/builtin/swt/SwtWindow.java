@@ -389,8 +389,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 							};
 							
 							final DiskSelector window = new DiskSelector(shell, machine.getDsrManager(), diskRestorer);
+							shell.layout(true);
 							createToolShell(DISK_SELECTOR_TOOL_ID, shell, window, "DiskWindowBounds");
-							shell.setSize(400, 300);
 						}
 					}
 			}

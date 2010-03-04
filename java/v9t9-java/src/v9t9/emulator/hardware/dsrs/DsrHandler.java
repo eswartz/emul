@@ -20,7 +20,7 @@ public interface DsrHandler {
 	/** Get the CRU base */
 	short getCruBase();
 
-	/** Handle the DSR call
+	/** Handle the DSR call (DSR opcode in mapped ROM)
 	 * @param xfer method of moving memory around
 	 * @param code the operand of the Idsr instruction
 	 * @return true if handled the operand, false if the device doesn't match

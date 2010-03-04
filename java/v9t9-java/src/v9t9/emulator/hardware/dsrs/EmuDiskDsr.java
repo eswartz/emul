@@ -5,8 +5,10 @@ package v9t9.emulator.hardware.dsrs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -29,12 +31,15 @@ import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
 
 /**
- * This is a device which allows accessing files on the local filesystem.
+ * This is a device handler which allows accessing files on the local filesystem.
+ * Each directory is a disk.  The DSR instructions in ROM are "enhanced instructions"
+ * that forward to the DSR manager and trigger this code.
  * @author ejs
  *
  */
 public class EmuDiskDsr implements DsrHandler {
-
+	public static final Setting emuDiskDsrEnabled = new Setting("EmuDiskDSREnabled", Boolean.TRUE);
+	
 	/* emudisk.dsr */
 	/* this first group doubles as device codes */
 	public static final int D_DSK = 0; 	// standard file operation on DSK.XXXX.[YYYY]
@@ -106,14 +111,13 @@ public class EmuDiskDsr implements DsrHandler {
 	}
 
 	public boolean handleDSR(MemoryTransfer xfer, short code) {
+		if (!emuDiskDsrEnabled.getBoolean())
+			return false;
+		
 		switch (code) {
+		// PAB file operation on DSKx 
 		case D_DSK:
 			// find disk
-		{
-			
-		
-		}
-			// PAB file operation on DSKx 
 		case D_DSK1:
 		case D_DSK2:
 		case D_DSK3:
@@ -121,6 +125,14 @@ public class EmuDiskDsr implements DsrHandler {
 		case D_DSK5:
 		{
 			EmuDiskPabHandler handler = new EmuDiskPabHandler(getCruBase(), xfer, mapper);
+			
+			if (handler.devname.equals("DSK1")
+					|| handler.devname.equals("DSK2")
+					|| (handler.devname.equals("DSK") && handler.mapper.getLocalFile(handler.devname, handler.fname) == null)) {
+				if (DiskImageDsr.diskImageDsrEnabled.getBoolean())
+					return false;
+			}
+			
 			info(handler.toString());
 			try {
 				handler.run();
@@ -181,6 +193,9 @@ public class EmuDiskDsr implements DsrHandler {
 		{
 			DirectDiskHandler handler = new DirectDiskHandler(getCruBase(), xfer, mapper, code);
 	
+			if (handler.dev <= 2 && DiskImageDsr.diskImageDsrEnabled.getBoolean())
+				return false;
+			
 			if (handler.getDevice() <= MAXDRIVE) {
 				try {
 					handler.run();
@@ -1639,6 +1654,7 @@ public class EmuDiskDsr implements DsrHandler {
 					xfer.writeParamWord(parms + 2, (short) ((size + 255) / 256));
 					xfer.writeParamByte(parms + 6, (byte) (size % 256));
 				}
+				xfer.writeParamByte(0x50, (byte) 0);
 
 			} else {
 				// read sectors
@@ -1654,6 +1670,7 @@ public class EmuDiskDsr implements DsrHandler {
 					xfer.dirtyVdpMemory(vaddr, read);
 					// error will be set if sector read failed
 					xfer.writeParamByte(0x4D, (byte) ((read + 255) >> 8));
+					xfer.writeParamByte(0x50, (byte) 0);
 				} catch (IOException e) {
 					throw new DsrException(es_hardware, e);
 				}
@@ -1700,6 +1717,7 @@ public class EmuDiskDsr implements DsrHandler {
 					}
 					try {
 						fdr.writeFDR(file.getFile());
+						xfer.writeParamByte(0x50, (byte) 0);
 					} catch (IOException e) {
 						throw new DsrException(es_hardware, e, "Failed to write FDR: " + file.getFile());
 					}
@@ -1781,6 +1799,7 @@ public class EmuDiskDsr implements DsrHandler {
 			}
 			
 			xfer.dirtyVdpMemory(addr, 256);
+			xfer.writeParamByte(0x50, (byte) 0);
 		}
 
 		DiskLikeDirectoryInfo getDirectory() {
@@ -1813,14 +1832,19 @@ public class EmuDiskDsr implements DsrHandler {
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getSettings()
 	 */
 	public Setting[] getSettings() {
-		return mapper.getSettings();
+		List<Setting> settings = new ArrayList<Setting>();
+		settings.add(emuDiskDsrEnabled);
+		settings.addAll(Arrays.asList(mapper.getSettings()));
+		return (Setting[]) settings.toArray(new Setting[settings.size()]);
 	}
 	public void saveState(IDialogSettings section) {
+		emuDiskDsrEnabled.saveState(section);
 		mapper.saveState(section.addNewSection("Mappings"));
 	}
 	
 	public void loadState(IDialogSettings section) {
 		if (section == null) return;
-		mapper.loadState(section.addNewSection("Mappings"));
+		emuDiskDsrEnabled.loadState(section);
+		mapper.loadState(section.getSection("Mappings"));
 	}
 }

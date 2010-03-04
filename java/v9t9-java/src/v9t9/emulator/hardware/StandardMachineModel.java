@@ -7,6 +7,7 @@ import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.dsrs.DiskDirectoryMapper;
+import v9t9.emulator.hardware.dsrs.DiskImageDsr;
 import v9t9.emulator.hardware.dsrs.EmuDiskDsr;
 import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.hardware.memory.StandardConsoleMemoryModel;
@@ -47,8 +48,10 @@ public class StandardMachineModel implements MachineModel {
 	public void defineDevices(Machine machine) {
 		machine.getCpu().setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
 		
-		EmuDiskDsr dsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
-		machine.getDsrManager().registerDsr(dsr);
+		EmuDiskDsr emudsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
+		machine.getDsrManager().registerDsr(emudsr);
+		DiskImageDsr diskdsr = new DiskImageDsr(machine.getCruManager());
+		machine.getDsrManager().registerDsr(diskdsr);
 	}
 
 	public SoundProvider createSoundProvider(Machine machine) {

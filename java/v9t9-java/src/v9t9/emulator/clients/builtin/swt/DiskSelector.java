@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.ejs.coffee.core.utils.Setting;
@@ -38,7 +39,7 @@ public class DiskSelector extends Composite {
 
 	private final IFocusRestorer focusRestorer;
 
-	class DiskEntry  {
+	static class DiskEntry  {
 		private final Setting setting;
 		public DiskEntry(final Composite parent, Setting setting_) {
 			this.setting = setting_;
@@ -77,11 +78,12 @@ public class DiskSelector extends Composite {
 				
 				public void modifyText(ModifyEvent e) {
 					File dir = new File(combo.getText());
-					if (dir.exists()) {
+					if (isDiskImage() ? true : dir.exists()) {
 						String path = dir.getAbsolutePath();
 						switchPath(combo, path);
 					}
 				}
+
 			});
 			
 			
@@ -91,16 +93,32 @@ public class DiskSelector extends Composite {
 			browse.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					DirectoryDialog dialog =  new DirectoryDialog(parent.getShell(), SWT.NONE);
-					dialog.setText("Select path for " + setting.getName());
-					dialog.setFilterPath(setting.getString());
-					String dirname = dialog.open();
-					if (dirname != null) {
-						switchPath(combo, dirname);
-						combo.setText(dirname);
+					if (isDiskImage()) {
+						FileDialog dialog =  new FileDialog(parent.getShell(), SWT.OPEN);
+						dialog.setText("Select image for " + setting.getName());
+						dialog.setFilterPath(new File(setting.getString()).getParent());
+						dialog.setFileName(new File(setting.getString()).getName());
+						String filename = dialog.open();
+						if (filename != null) {
+							switchPath(combo, filename);
+							combo.setText(filename);
+						}
+					} else {
+						DirectoryDialog dialog =  new DirectoryDialog(parent.getShell(), SWT.NONE);
+						dialog.setText("Select path for " + setting.getName());
+						dialog.setFilterPath(setting.getString());
+						String dirname = dialog.open();
+						if (dirname != null) {
+							switchPath(combo, dirname);
+							combo.setText(dirname);
+						}
 					}
 				}
 			});
+		}
+		
+		private boolean isDiskImage() {
+			return setting.getName().contains("Image");
 		}
 		/**
 		 * @param combo 
@@ -117,17 +135,77 @@ public class DiskSelector extends Composite {
 			setHistory(combo.getItems());
 		}
 		
+		private String[] getHistory() {
+			String[] history = EmulatorSettings.getInstance().getHistorySettings().getArray("DiskSelector");
+			return history;
+		}
+		private void setHistory(String[] history) {
+			EmulatorSettings.getInstance().getHistorySettings().put("DiskSelector", history);
+			EmulatorSettings.getInstance().save();
+		}
 	};
 
-	private String[] getHistory() {
-		String[] history = EmulatorSettings.getInstance().getHistorySettings().getArray("DiskSelector");
-		return history;
-	}
-	private void setHistory(String[] history) {
-		EmulatorSettings.getInstance().getHistorySettings().put("DiskSelector", history);
-		EmulatorSettings.getInstance().save();
-	}
-	
+
+	static class BooleanEntry  {
+		private final Setting setting;
+		public BooleanEntry(final Composite parent, Setting setting_) {
+			this.setting = setting_;
+			
+			if (setting instanceof ISettingDecorator) {
+				ImageDescriptor descriptor = ((ISettingDecorator) setting).getIcon();
+				Label icon = new Label(parent, SWT.NONE);
+				final Image iconImage = descriptor.createImage();
+				icon.setImage(iconImage);
+				parent.addDisposeListener(new DisposeListener() {
+					
+					public void widgetDisposed(DisposeEvent e) {
+						iconImage.dispose();
+					}
+				});
+				
+			} else {
+				new Label(parent, SWT.NONE);
+			}
+			
+			final Button checkbox = new Button(parent, SWT.CHECK);
+			checkbox.setText(setting.getName() + ": ");
+			GridDataFactory.fillDefaults().grab(true, false).span(3,1).applyTo(checkbox);
+			
+			checkbox.setSelection(setting.getBoolean());
+			
+			checkbox.addSelectionListener(new SelectionAdapter() {
+				public void widgetSelected(SelectionEvent e) {
+					setting.setBoolean(checkbox.getSelection());
+					
+				};
+			});
+			
+		}
+		/**
+		 * @param combo 
+		 * @param absolutePath
+		 */
+		protected void switchPath(Combo combo, String path) {
+			if (path == null)
+				return;
+			setting.setString(path);
+			for (String p : combo.getItems())
+				if (p.equals(path))
+					return;
+			combo.add(path);
+			setHistory(combo.getItems());
+		}
+		
+		private String[] getHistory() {
+			String[] history = EmulatorSettings.getInstance().getHistorySettings().getArray("DiskSelector");
+			return history;
+		}
+		private void setHistory(String[] history) {
+			EmulatorSettings.getInstance().getHistorySettings().put("DiskSelector", history);
+			EmulatorSettings.getInstance().save();
+		}
+	};
+
 	/**
 	 * 
 	 */
@@ -155,7 +233,11 @@ public class DiskSelector extends Composite {
 			GridDataFactory.fillDefaults().grab(true, true).applyTo(group);
 			
 			for (Setting setting : handler.getSettings()) {
-				/*DiskEntry diskEntry =*/ new DiskEntry(group, setting);
+				if (setting.getValue() instanceof String) {
+					/*DiskEntry diskEntry =*/ new DiskEntry(group, setting);
+				} else if (setting.getValue() instanceof Boolean) {
+					new BooleanEntry(group, setting);
+				}
 			}
 		}
 		

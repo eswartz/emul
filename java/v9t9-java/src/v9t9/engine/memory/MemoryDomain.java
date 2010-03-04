@@ -306,6 +306,9 @@ public class MemoryDomain implements MemoryAccess {
 	 * @param memoryEntry
 	 */
 	public void unmapEntry(MemoryEntry memoryEntry) {
+		if (memoryEntry == null)
+			return;
+		
 		// TODO: remove from end?
 		mappedEntries.remove(memoryEntry);
 		

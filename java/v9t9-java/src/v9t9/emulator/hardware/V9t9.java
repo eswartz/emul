@@ -159,6 +159,8 @@ public class V9t9 {
 	    		loadModuleGrom("ExtBasic", "tiextg.bin");
 	    		loadModuleGrom("Music", "musicmg.bin");
 	    		
+	    		loadModuleGrom("Disk Manager", "diskmang.bin");
+	    		
 	    	} else {
 		    	loadModuleRom("Logo", "logoc.bin");
 		    	loadModuleGrom("Logo", "logog.bin");
