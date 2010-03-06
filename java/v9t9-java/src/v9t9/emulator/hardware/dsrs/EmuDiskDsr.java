@@ -1575,9 +1575,6 @@ public class EmuDiskDsr implements DsrHandler {
 			opt = xfer.readParamByte(0x4d);
 			addr1 = xfer.readParamWord(0x4e);
 			addr2 = xfer.readParamWord(0x50);
-			
-			// no error
-			xfer.writeParamByte(0x50, (byte) 0);
 		}
 
 		public byte getDevice() {
