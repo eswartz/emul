@@ -14,6 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.utils.HexUtils;
@@ -21,6 +23,7 @@ import org.ejs.coffee.core.utils.ISettingListener;
 import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
+import v9t9.emulator.Machine;
 import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.CruReader;
@@ -116,6 +119,7 @@ public class DiskImageDsr implements DsrHandler {
 	private static final int fdc_CRCERR		= 0x08;
 	private static final int fdc_LOSTDATA	= 0x04;
 	private static final int fdc_TRACK0		= 0x04;		// for seek home only
+	private static final int fdc_DRQ		= 0x02;
 	private static final int fdc_BUSY		= 0x01;
 
 	private static final int fdc_WTDATA		= 0x5FFE;
@@ -127,46 +131,47 @@ public class DiskImageDsr implements DsrHandler {
 		File		spec;
 		protected RandomAccessFile handle;
 		
-		boolean   		hold;		/* holding for data? */
-		byte   		lastbyte;	/* last byte written to WDDATA when hold off */
-		byte   		buffer[] = new byte[DSKbuffersize];	/* track contents */
-		boolean	 		dirty;			/* is the buffer out of date with disk? */
-		int  		buflen;		/* max length of data expected for a write/read */
-		int  		bufpos;		/* offset into buffer */
+		boolean hold; /* holding for data? */
+		byte lastbyte; /* last byte written to WDDATA when hold off */
+		byte buffer[] = new byte[DSKbuffersize]; /* track contents */
+		boolean dirty; /* is the buffer out of date with disk? */
+		int buflen; /* max length of data expected for a write/read */
+		int bufpos; /* offset into buffer */
 
-		DSKheader 	hdr = new DSKheader();	/* info about disk */
-		
-		boolean	 		fulltrk;		/* full track information used? */
-		boolean			readonly;		/* don't write! */
+		DSKheader hdr = new DSKheader(); /* info about disk */
 
-		int  		trackoffset;		/* current track seek position into disk */
+		boolean fulltrk; /* full track information used? */
+		boolean readonly; /* don't write! */
 
-		int  		trackbyteoffset;	/* offset into track, bytes */
-		int	 		idoffset;		/* offset of ID field (0xfe) in track (for sectors) */
-		int 		dataoffset;	/* offset of data field (0xfb) in track (for sectors) */
+		int trackoffset; /* current track seek position into disk */
 
-		int   		command;	/* command being executed */
-		byte   		flags;		/* flags sent with command being executed */
-		byte			addr;		/* last addr written */
+		int trackbyteoffset; /* offset into track, bytes */
+		int idoffset; /* offset of ID field (0xfe) in track (for sectors) */
+		int dataoffset; /* offset of data field (0xfb) in track (for sectors) */
+
+		int command; /* command being executed */
+		byte flags; /* flags sent with command being executed */
+		byte addr; /* last addr written */
 
 		/* command-specified */
-		byte			seektrack;	/* physically seeked track */
-		byte			track;		/* desired track */
-		byte			side;		/* current side */
-		byte			sector;		/* desired sector */
-		short			crc;		/* current CRC */
+		byte seektrack; /* physically seeked track */
+		byte track; /* desired track */
+		byte side; /* current side */
+		byte sector; /* desired sector */
+		short crc; /* current CRC */
 
 		/* these are the logical values */
-		byte   		trackid;	/* current track */
-		byte   		sideid;	/* current side */
-		byte   		sectorid;	/* current sector */
-		byte	 		sizeid;	/* current sector size (1=128, 2=256, etc.) */
-		short	 		crcid;		/* expected CRC */
+		byte trackid; /* current track */
+		byte sideid; /* current side */
+		byte sectorid; /* current sector */
+		byte sizeid; /* current sector size (1=128, 2=256, etc.) */
+		short crcid; /* expected CRC */
 
-		byte   		status;	/* current status */
-		boolean	 		motor;		/* motor running? */
-		boolean stepout;		/* false: in, true: out */
+		byte status; /* current status */
+		boolean stepout; /* false: in, true: out */
 		
+		protected boolean motorRunning;
+		protected long motorTimeout;
 
 		public DiskInfo(Setting setting) {
 			this.setting = setting;
@@ -468,6 +473,7 @@ public class DiskImageDsr implements DsrHandler {
 			if (onoff) {
 				//info("FDChold on");
 				/* about to read or write */
+				status |= fdc_DRQ;
 			} else {
 				//info("FDChold off");
 				if (hold 
@@ -785,7 +791,13 @@ public class DiskImageDsr implements DsrHandler {
 					//while (cnt > 0 && *ptr == 0xff) NEXT();
 
 					// scan for address field marker (account for broken disks)
-					while (iter.hasNext() && iter.peek() != (byte) 0xfe) iter.next();
+					while (iter.hasNext()) {
+						byte peek = iter.peek();
+						if (peek == (byte) 0xfe) {
+							break;
+						}
+						iter.next();
+					}
 					if (iter.remaining() < 7) break;
 
 					// reset CRC
@@ -822,7 +834,7 @@ public class DiskImageDsr implements DsrHandler {
 							// found one; look somewhere else next time
 							info("FDCfindIDmarker: found marker at offset >{0}",
 										  Integer.toHexString(cur));
-							trackbyteoffset = cur + 1;
+							trackbyteoffset = cur;
 							found = true;
 						}
 					}
@@ -1025,7 +1037,7 @@ public class DiskImageDsr implements DsrHandler {
 			{
 				int tries, origoffs = idoffset;
 
-				for (tries = 0; tries < hdr.tracksize / 8 ; tries++) {
+				for (tries = 0; tries < hdr.tracksize; tries++) {
 					if (!FDCfindIDmarker()) 
 						break;
 					if (trackid == track) 
@@ -1082,6 +1094,9 @@ public class DiskImageDsr implements DsrHandler {
 		 */
 		public void FDCreadsector() throws IOException {
 			info("FDC read sector, T{0} S{1} s{2}", track, sector, side);
+			
+			status &= ~fdc_LOSTDATA;
+			
 			if (handle == null) {
 				//status |= fdc_LOSTDATA;
 				return;
@@ -1109,6 +1124,8 @@ public class DiskImageDsr implements DsrHandler {
 		public void FDCwritesector() throws IOException {
 			info("FDC write sector, T{0} S{1} s{2}", track, sector, side);
 
+			status &= ~fdc_LOSTDATA;
+			
 			if (handle == null) {
 				return;
 			}
@@ -1141,6 +1158,8 @@ public class DiskImageDsr implements DsrHandler {
 
 			//idoffset = 0;
 
+			status &= ~fdc_LOSTDATA;
+			
 			if (!FDCfindIDmarker()) {
 				status |= fdc_LOSTDATA | fdc_CRCERR;
 				return;
@@ -1160,6 +1179,9 @@ public class DiskImageDsr implements DsrHandler {
 			buflen = 6;
 			bufpos = 0;
 
+			// the track is copied into the sector register (!)
+			sector = trackid;
+			
 			info("FDC read ID marker: track={0} sector={1} side={2} size={3}",
 						  trackid, sectorid, sideid, sizeid);
 
@@ -1172,6 +1194,9 @@ public class DiskImageDsr implements DsrHandler {
 		 */
 		public void FDCinterrupt() throws IOException {
 			info("FDC interrupt");
+			
+			status = 0;
+			
 			FDCflush();
 
 			buflen = bufpos = 0;			
@@ -1183,6 +1208,8 @@ public class DiskImageDsr implements DsrHandler {
 		public void FDCwritetrack() {
 			info("FDC write track, #{0}", seektrack);
 
+			status &= ~fdc_LOSTDATA;
+			
 			dirty = true;
 			buflen = fulltrk ? hdr.tracksize : DSKbuffersize;
 			bufpos = 0;
@@ -1196,6 +1223,8 @@ public class DiskImageDsr implements DsrHandler {
 		public void FDCreadtrack() throws IOException {
 			info("FDC read track, #{0}", seektrack);
 
+			status &= ~fdc_LOSTDATA;
+			
 			FDCreadtrackdata();
 
 			buflen = hdr.tracksize;
@@ -1219,28 +1248,30 @@ public class DiskImageDsr implements DsrHandler {
 	}
 	
 	/** currently selected disk */
-	private String currentDisk = getDiskImageSetting(1);
+	private byte selectedDisk = 0;
+
+	/** note: the side is global to all disks, though we propagate it to all DiskInfos */
+	protected byte side;
+	
 
 	private String getDiskImageSetting(int num) {
 		return "DSKImage" + num;
 	}
 	private Map<String, DiskInfo> disks = new LinkedHashMap<String, DiskInfo>();
 	
-	private DiskInfo getDiskInfo() {
-		if (currentDisk == null)
-			currentDisk = getDiskImageSetting(1);
-		DiskInfo info = disks.get(currentDisk);
-		if (info == null) {
-			info = new DiskInfo(diskSettingsMap.get(currentDisk));
-			disks.put(currentDisk, info);
-		}
-		return disks.get(currentDisk);
+	private DiskInfo getSelectedDisk() {
+		if (selectedDisk == 0)
+			return null;
+		return getDiskInfo(selectedDisk);
 	}
+	
+	
 	private DiskInfo getDiskInfo(int num) {
 		String name = getDiskImageSetting(num);
 		DiskInfo info = disks.get(name);
 		if (info == null) {
 			info = new DiskInfo(diskSettingsMap.get(name));
+			info.side = side;
 			disks.put(name, info);
 		}
 		return disks.get(name);
@@ -1249,7 +1280,19 @@ public class DiskImageDsr implements DsrHandler {
 	private CruWriter cruwRealDiskMotor = new CruWriter() {
 		public int write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU Motor %s\n"), data ? "on" : "off");
-			getDiskInfo().motor = data != 0;
+			DiskInfo info = getSelectedDisk();
+			if (info != null) {
+				// strobe the motor (this doesn't turn it off, which happens via timeout)
+				if (data != 0) {
+					if (!info.motorRunning) {
+						info("{0}: motor on", info.setting.getName());
+						info.motorTimeout = System.currentTimeMillis() /*+ 1000*/;
+						info.motorRunning = true;
+					} else {
+						info.motorTimeout = System.currentTimeMillis() + 4230;
+					}
+				}
+			}
 			return 0;
 		}
 	};
@@ -1261,12 +1304,17 @@ public class DiskImageDsr implements DsrHandler {
 		public int write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU hold %s\n"), data ? "on" : "off");
 		
+			DiskInfo info = getSelectedDisk();
 			try {
-				getDiskInfo().FDChold(data != 0);
+				if (info != null)
+					info.FDChold(data != 0);
 			} catch (IOException e) {
 				error(e.getMessage());
 			}
-			getDiskInfo().hold = data != 0;
+		
+			if (info != null)
+				info.hold = data != 0;
+			
 			return 0;
 		}
 	};
@@ -1275,53 +1323,67 @@ public class DiskImageDsr implements DsrHandler {
 		public int write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU Heads %s\n"), data ? "on" : "off");
 	
-			if ((getDiskInfo().command == FDC_seekhome || getDiskInfo().command == FDC_seek) && data != 0) {
-	//			if (FDCreadtrackdata()) {
-	//				FDCfindIDmarker();
-	//				status |= (command == FDC_seekhome && seektrack == 0 ? fdc_TRACK0 : 0);
-	//			}
-			} else {
-				getDiskInfo().status &= ~fdc_TRACK0;
+			DiskInfo info = getSelectedDisk();
+			if (info != null) {
+				if ((info.command == FDC_seekhome || info.command == FDC_seek) && data != 0) {
+		//			if (FDCreadtrackdata()) {
+		//				FDCfindIDmarker();
+		//				status |= (command == FDC_seekhome && seektrack == 0 ? fdc_TRACK0 : 0);
+		//			}
+				} else {
+					info.status &= ~fdc_TRACK0;
+				}
 			}
-	
 			return 0;
 		}
 	};
 	
 	private CruWriter cruwRealDiskSel = new CruWriter() {
 		public int write(int addr, int data, int num) {
-			byte newnum = (byte) ((addr - 0x1106) >> 1);
+			byte newnum = (byte) (((addr - 0x1108) >> 1) + 1);
 	
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU disk select, #%d\n"), newnum);
-	
-			DiskInfo oldDsk = getDiskInfo();
-			DiskInfo newDsk = getDiskInfo(newnum);
 			
 			if (data != 0) {
-				if (oldDsk != newDsk) {
+				DiskInfo oldInfo = getSelectedDisk();
+				
+				selectedDisk = newnum;
+				
+				DiskInfo info = getDiskInfo(newnum);
+				
+				if (oldInfo != info) {
+					if (oldInfo != null) {
+						try {
+							info.FDCclosedisk();
+						} catch (IOException e) {
+							error(e.getMessage());
+						}
+					}
+				}
+				if (info != null && info.handle == null) {
 					try {
-						oldDsk.FDCclosedisk();
+						info.FDCopendisk();
 					} catch (IOException e) {
 						error(e.getMessage());
 					}
 				}
-				currentDisk = newDsk.setting.getName();
-				if (newDsk.handle == null) {
-					try {
-						newDsk.FDCopendisk();
-					} catch (IOException e) {
-						error(e.getMessage());
-					}
-				}
+
 			} else {
-				if (oldDsk == newDsk) {
-					try {
-						oldDsk.FDCclosedisk();
-					} catch (IOException e) {
-						error(e.getMessage());
+				DiskInfo oldInfo = getSelectedDisk();
+				
+				if (selectedDisk == newnum) {
+					selectedDisk = 0;
+				
+					if (oldInfo != null) {
+						try {
+							oldInfo.FDCclosedisk();
+						} catch (IOException e) {
+							error(e.getMessage());
+						}
 					}
 				}
 			}
+			
 			return 0;
 		}
 	};
@@ -1330,7 +1392,12 @@ public class DiskImageDsr implements DsrHandler {
 		public int write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU disk side #%d\n"), data);
 	
-			getDiskInfo().side = (byte) (data & 1);
+			// the side is global to all disks
+			side = (byte) (data & 1);
+			
+			for (DiskInfo info : disks.values()) 
+				info.side = side;
+			
 	//		FDCseektotrack();
 			return 0;
 		}
@@ -1338,15 +1405,49 @@ public class DiskImageDsr implements DsrHandler {
 	
 	private CruReader crurRealDiskPoll = new CruReader() {
 		public int read(int addr, int data, int num) {
-			return 0;
+			byte newnum = (byte) (((addr - 0x1102) >> 1) + 1);
+			return selectedDisk == newnum ? 1 : 0;
 		}
 	};
 
+	private CruReader crurRealDiskMotor = new CruReader() {
+		public int read(int addr, int data, int num) {
+			DiskInfo info = getSelectedDisk();
+			if (info != null)
+				return info.motorRunning ? 1 : 0;
+			else
+				return 0;
+		}
+	};
+	
+	private CruReader crurRealDiskZero = new CruReader() {
+		public int read(int addr, int data, int num) {
+			return 0;
+		}
+	};
+	
+	private CruReader crurRealDiskOne = new CruReader() {
+		public int read(int addr, int data, int num) {
+			return 1;
+		}
+	};
+
+	
+	private CruReader crurRealDiskSide = new CruReader() {
+		public int read(int addr, int data, int num) {
+			return side;
+		}
+	};
+
+	private TimerTask motorTickTask;
+
+	private Timer motorTimer;
+	
 	private static File defaultDiskRootDir;
 
 	
 	
-	public DiskImageDsr(CruManager cruManager) {
+	public DiskImageDsr(Machine machine) {
 		
     	String diskImageRootPath = EmulatorSettings.getInstance().getBaseConfigurationPath() + "disks";
     	defaultDiskRootDir = new File(diskImageRootPath);
@@ -1356,6 +1457,8 @@ public class DiskImageDsr implements DsrHandler {
     		String name = getDiskImageSetting(drive);
 			registerDiskImagePath(name, getDefaultDiskImage(name)); 
     	}
+    	
+    	CruManager cruManager = machine.getCruManager();
     	
 		cruManager.add(0x1102, 1, cruwRealDiskMotor);
 		cruManager.add(0x1104, 1, cruwRealDiskHold);
@@ -1367,6 +1470,40 @@ public class DiskImageDsr implements DsrHandler {
 		cruManager.add(0x1102, 1, crurRealDiskPoll);
 		cruManager.add(0x1104, 1, crurRealDiskPoll);
 		cruManager.add(0x1106, 1, crurRealDiskPoll);
+		cruManager.add(0x1108, 1, crurRealDiskMotor);
+		cruManager.add(0x110A, 1, crurRealDiskZero);
+		cruManager.add(0x110C, 1, crurRealDiskOne);
+		cruManager.add(0x110E, 1, crurRealDiskSide);
+		
+		// add motor timer
+		motorTickTask = new TimerTask() {
+			
+			@Override
+			public void run() {
+				long now = System.currentTimeMillis();
+				for (DiskInfo info : disks.values()) {
+					if (info.motorTimeout != 0) {
+						if (!info.motorRunning) {
+							if (now >= info.motorTimeout) {
+								info.motorTimeout = 0;
+								info.motorRunning = true;
+								info("{0}: motor on", info.setting.getName());
+							}
+						} else {
+							if (now >= info.motorTimeout) {
+								info.motorTimeout = 0;
+								info.motorRunning = false;
+								info("{0}: motor off", info.setting.getName());
+							}
+						}
+					}
+				}
+			}
+		};
+		
+		motorTimer = new Timer();
+		
+		motorTimer.scheduleAtFixedRate(motorTickTask, 0, 100);
 	}
 
 
@@ -1434,54 +1571,58 @@ public class DiskImageDsr implements DsrHandler {
 			if (addr < 0x5ff0)
 				return romMemoryEntry.getArea().flatReadByte(romMemoryEntry, addr);
 			
-			DiskInfo dsk = getDiskInfo();
-			
 			byte ret = 0;
+			
+			DiskInfo dsk = getSelectedDisk();
+			
 			switch ((addr - 0x5ff0) >> 1) {
 			case R_RDSTAT:
-				dsk.FDCgetstatus();
-				ret = dsk.status;
-				info("FDC read status " + HexUtils.toHex2(ret));
-				//module_logger(&realDiskDSR, _L|L_1, _("FDC read status >%04X = >%02X\n"), addr, (u8) ret);
+				if (dsk != null) {
+					dsk.FDCgetstatus();
+					ret = dsk.status;
+					info("FDC read status " + HexUtils.toHex2(ret));
+				}
 				break;
 
 			case R_RTADDR:
-				ret = dsk.track;
-				info("FDC read track " + HexUtils.toHex2(ret));
-				//module_logger(&realDiskDSR, _L|L_1, _("FDC read track addr >%04X = >%02X\n"), addr, (u8) ret);
+				if (dsk != null) {
+					ret = dsk.track;
+					info("FDC read track " + HexUtils.toHex2(ret));
+				}
 				break;
 
 			case R_RSADDR:
-				ret = dsk.sector;
-				info("FDC read sector " + HexUtils.toHex2(ret));
-				//module_logger(&realDiskDSR, _L|L_1, _("FDC read sector addr >%04X = >%02X\n"), addr, (u8) ret);
+				if (dsk != null) {
+					ret = dsk.sector;
+					info("FDC read sector " + HexUtils.toHex2(ret));
+				}
 				break;
 
 			case R_RDDATA:
 				/* read from circular buffer */
 
-				if (dsk.bufpos == 0) {
-					//if (log_level(LOG_REALDISK) > 2) {
-					//	// dump contents
-					//	dump_buffer(DSK.trackbyteoffset, DSK.buflen);
-					//}
-				}
-
-				if (dsk.hold && dsk.buflen != 0) {
-					int offs = (dsk.trackbyteoffset+dsk.bufpos); //%DSK.hdr.tracksize;
-					ret = dsk.buffer[offs];
-					dsk.crc = calc_crc(dsk.crc, ret & 0xff);
-					if (++dsk.bufpos >= dsk.buflen) {
-						dsk.bufpos = 0;
+				if (dsk != null) {
+					
+					if (dsk.bufpos == 0) {
+						//if (log_level(LOG_REALDISK) > 2) {
+						//	// dump contents
+						//	dump_buffer(DSK.trackbyteoffset, DSK.buflen);
+						//}
+						//dsk.dump_buffer(dsk.trackbyteoffset, dsk.buflen);
 					}
-				} else {
-					ret = dsk.lastbyte;
+	
+					if (dsk.hold && dsk.buflen != 0) {
+						int offs = (dsk.trackbyteoffset+dsk.bufpos); //%DSK.hdr.tracksize;
+						ret = dsk.buffer[offs];
+						dsk.crc = calc_crc(dsk.crc, ret & 0xff);
+						if (++dsk.bufpos >= dsk.buflen) {
+							dsk.bufpos = 0;
+							dsk.status &= ~fdc_DRQ;
+						}
+					} else {
+						ret = dsk.lastbyte;
+					}
 				}
-
-				//info("FDC read data (" + getDiskInfo().trackbyteoffset + ") = " + HexUtils.toHex2(ret) + " (" + getDiskInfo().bufpos + ")");
-				//module_logger(&realDiskDSR, _L|L_4, _("FDC read data (%d) >%02X (%d)\n"), 
-				//			  DSK.trackbyteoffset, (u8) ret, DSK.bufpos);
-
 				break;
 
 			case W_WTCMD:
@@ -1507,8 +1648,10 @@ public class DiskImageDsr implements DsrHandler {
 
 			val = (byte) ~val;
 			
-			DiskInfo dsk = getDiskInfo();
-			
+			DiskInfo dsk = getSelectedDisk();
+			if (dsk == null)
+				return;
+
 			try {
 				switch ((addr - 0x5ff0) >> 1) {
 				case R_RDSTAT:
@@ -1596,6 +1739,8 @@ public class DiskImageDsr implements DsrHandler {
 						else if (DSK.addr == W_WSADDR)
 						DSK.sector = val;*/
 					} else {
+						dsk.status |= fdc_DRQ;
+						
 						if (dsk.command == FDC_writesector) {
 							// normal write
 							writeBufferByte(dsk, val);

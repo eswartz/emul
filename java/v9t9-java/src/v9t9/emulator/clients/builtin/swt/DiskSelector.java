@@ -78,8 +78,12 @@ public class DiskSelector extends Composite {
 				
 				public void modifyText(ModifyEvent e) {
 					File dir = new File(combo.getText());
-					if (isDiskImage() ? true : dir.exists()) {
-						String path = dir.getAbsolutePath();
+					String path = dir.getAbsolutePath();
+					// always set for disks 
+					if (isDiskImage())
+						setting.setString(path);
+					// only store history for real places
+					if (dir.exists()) {
 						switchPath(combo, path);
 					}
 				}

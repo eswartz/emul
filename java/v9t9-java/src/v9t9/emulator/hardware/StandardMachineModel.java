@@ -50,7 +50,7 @@ public class StandardMachineModel implements MachineModel {
 		
 		EmuDiskDsr emudsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
 		machine.getDsrManager().registerDsr(emudsr);
-		DiskImageDsr diskdsr = new DiskImageDsr(machine.getCruManager());
+		DiskImageDsr diskdsr = new DiskImageDsr(machine);
 		machine.getDsrManager().registerDsr(diskdsr);
 	}
 
