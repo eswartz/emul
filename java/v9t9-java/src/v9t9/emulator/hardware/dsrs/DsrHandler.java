@@ -17,6 +17,8 @@ import v9t9.engine.memory.MemoryDomain;
  */
 public interface DsrHandler {
 
+	void dispose();
+	
 	/** Get the CRU base */
 	short getCruBase();
 

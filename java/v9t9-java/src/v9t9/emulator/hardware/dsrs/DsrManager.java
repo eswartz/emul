@@ -29,6 +29,12 @@ public class DsrManager {
 		dsrs = new ArrayList<DsrHandler>();
 	}
 	
+	public void dispose() {
+		for (DsrHandler dsr : dsrs) {
+			dsr.dispose();
+		}
+	}
+	
 
 	public void saveState(IDialogSettings section) {
 		for (DsrHandler handler : dsrs) {

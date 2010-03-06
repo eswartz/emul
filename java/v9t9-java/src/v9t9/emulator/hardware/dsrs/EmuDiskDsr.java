@@ -90,6 +90,13 @@ public class EmuDiskDsr implements DsrHandler {
     	}
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#dispose()
+	 */
+	public void dispose() {
+		
+	}
+	
 	public String getName() {
 		return "Emulated Disk DSR";
 				

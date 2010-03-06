@@ -1650,6 +1650,13 @@ public class DiskImageDsr implements DsrHandler {
 	}
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#dispose()
+	 */
+	public void dispose() {
+		motorTimer.cancel();		
+	}
+	
 	private static File getDefaultDiskImage(String name) {
 		return new File(defaultDiskRootDir, name + ".dsk");
 	}

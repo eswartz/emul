@@ -144,13 +144,6 @@ abstract public class Machine {
     }
 
 
-    public void close() {
-        bAlive = false;
-        if (client != null) {
-			client.close();
-		}
-    }
-    
     /* (non-Javadoc)
      * @see java.lang.Object#finalize()
      */
@@ -383,6 +376,7 @@ abstract public class Machine {
 		
 		memory.save();        
         getSound().getSoundHandler().dispose();
+        dsrManager.dispose();
 	}
     
 	public Cpu getCpu() {
