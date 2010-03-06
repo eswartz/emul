@@ -29,6 +29,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
@@ -51,15 +52,16 @@ public class ModuleSelector extends Composite {
 	private Composite buttonBar;
 	private final Machine machine;
 	private Button switchButton;
-	private final IFocusRestorer focusRestorer;
 
 	/**
 	 * 
 	 */
-	public ModuleSelector(Composite parent, Machine machine, IFocusRestorer restorer) {
-		super(parent, SWT.NONE);
+	public ModuleSelector(Shell shell, Machine machine) {
+		super(shell, SWT.NONE);
+		
+		shell.setText("Module Selector");
+		
 		this.machine = machine;
-		this.focusRestorer = restorer;
 		
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
@@ -150,10 +152,9 @@ public class ModuleSelector extends Composite {
 				entry.moduleLoaded = selectedModule;
 			}
 			machine.getCpu().setPin(Cpu.PIN_RESET);
+
+			getShell().dispose();
 			
-			if (focusRestorer != null) {
-				focusRestorer.restoreFocus();
-			}
 		} catch (IOException e) {
 			ErrorDialog.openError(getShell(), "Failed to load", 
 					"Failed to load all the entries from the module",

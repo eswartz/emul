@@ -30,6 +30,7 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Image;
@@ -70,6 +71,10 @@ import v9t9.emulator.runtime.Executor;
  */
 public class SwtWindow extends BaseEmulatorWindow {
 	
+	/**
+	 * 
+	 */
+	private static final String WIDGET_DATA_KEEP_CENTERED = "keepCentered";
 	protected static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 	protected static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
 	protected static final String DEBUGGER_TOOL_ID = "debugger";
@@ -302,11 +307,19 @@ public class SwtWindow extends BaseEmulatorWindow {
 		mainIcons = new Image(getShell().getDisplay(), iconsFile.getAbsolutePath());
 		
 		buttonBar = new ButtonBar(parent, SWT.HORIZONTAL, focusRestorer);
-		GridLayout mainLayout = new GridLayout(1, false);
-		mainLayout.marginHeight = mainLayout.marginWidth = 0;
-		buttonBar.setLayout(mainLayout);
-
+		
 		GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BOTTOM).applyTo(buttonBar);
+		
+		buttonBar.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlMoved(ControlEvent e) {
+				recenterToolShells();
+			}
+			@Override
+			public void controlResized(ControlEvent e) {
+				recenterToolShells();
+			}
+		});
 
 		createButton(buttonBar, 1,
 				"Send a NMI interrupt", new SelectionAdapter() {
@@ -336,7 +349,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 						if (!restoreToolShell(DEBUGGER_TOOL_ID)) {
 							final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
 							final DebuggerWindow window = new DebuggerWindow(shell, SWT.NONE, machine, toolUiTimer);
-							createToolShell(DEBUGGER_TOOL_ID, shell, window, "DebuggerWindowBounds");
+							createToolShell(DEBUGGER_TOOL_ID, shell, window, "DebuggerWindowBounds", false);
 						}
 					}
 			}
@@ -349,20 +362,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 					public void widgetSelected(SelectionEvent e) {
 						if (!restoreToolShell(MODULE_SELECTOR_TOOL_ID)) {
 							final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
-							IFocusRestorer moduleRestorer = new IFocusRestorer() {
-								
-								public void restoreFocus() {
-									Display.getDefault().asyncExec(new Runnable() {
-										public void run() {
-											focusRestorer.restoreFocus();
-											hideShell(shell);
-										}
-									});
-								}
-							};
-							
-							final ModuleSelector window = new ModuleSelector(shell, machine, moduleRestorer);
-							createToolShell(MODULE_SELECTOR_TOOL_ID, shell, window, "ModuleWindowBounds");
+							final ModuleSelector window = new ModuleSelector(shell, machine);
+							createToolShell(MODULE_SELECTOR_TOOL_ID, shell, window, "ModuleWindowBounds", true);
 							shell.setSize(400, 500);
 						}
 					}
@@ -376,21 +377,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 					public void widgetSelected(SelectionEvent e) {
 						if (!restoreToolShell(DISK_SELECTOR_TOOL_ID)) {
 							final Shell shell = new Shell(getShell(), SWT.TOOL | SWT.RESIZE);
-							final IFocusRestorer diskRestorer = new IFocusRestorer() {
-								
-								public void restoreFocus() {
-									Display.getDefault().asyncExec(new Runnable() {
-										public void run() {
-											focusRestorer.restoreFocus();
-											hideShell(shell);
-										}
-									});
-								}
-							};
-							
-							final DiskSelector window = new DiskSelector(shell, machine.getDsrManager(), diskRestorer);
+							final DiskSelector window = new DiskSelector(shell, machine.getDsrManager());
 							shell.layout(true);
-							createToolShell(DISK_SELECTOR_TOOL_ID, shell, window, "DiskWindowBounds");
+							createToolShell(DISK_SELECTOR_TOOL_ID, shell, window, "DiskWindowBounds", true);
 						}
 					}
 			}
@@ -524,7 +513,37 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 	}
 	 */
-	
+
+
+	protected void centerShellOverButtonBar(Shell shell) {
+		if (shell.isDisposed() || buttonBar.isDisposed())
+			return;
+		
+		Rectangle bbounds = buttonBar.getBounds();
+		Rectangle sbounds = shell.getBounds();
+		
+		Point pt = buttonBar.getParent().toDisplay(bbounds.x, bbounds.y);
+		pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
+				pt.y - sbounds.height);
+		
+		if (pt.x != sbounds.x || pt.y != sbounds.y)
+			shell.setLocation(pt);
+	}
+
+	protected void recenterToolShells() {
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				for (Shell shell : toolShells.values()) {
+					if (shell.isDisposed())
+						continue;
+					if (Boolean.TRUE.equals(shell.getData(WIDGET_DATA_KEEP_CENTERED))) {
+						centerShellOverButtonBar(shell);
+					}
+				}	
+			}
+		});
+		
+	}
 	protected void hideShell(final Shell shell) {
 		Thread hider = new Thread() {
 			@Override
@@ -557,7 +576,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 		return false;
 	}
 	
-	protected void createToolShell(final String toolId, final Shell shell, final Composite tool, final String boundsPref) {
+	protected void createToolShell(final String toolId, final Shell shell, final Composite tool, 
+			final String boundsPref, final boolean keepCentered) {
 		shell.setImage(getShell().getImage());
 		shell.setLayout(new GridLayout(1, false));
 		
@@ -567,17 +587,54 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
 				tool.dispose();
+				Display.getDefault().asyncExec(new Runnable() {
+					public void run() {
+						focusRestorer.restoreFocus();
+					}
+				});
 			}
 		});
-		
-		shell.open();
+
 		
 		String boundsStr = EmulatorSettings.getInstance().getApplicationSettings().get(boundsPref);
 		if (boundsStr != null) {
 			Rectangle savedBounds = PrefUtils.readBoundsString(boundsStr);
-			if (savedBounds != null)
-				shell.setBounds(savedBounds);
+			if (savedBounds != null) {
+				if (keepCentered)
+					shell.setSize(savedBounds.width, savedBounds.height);
+				else
+					shell.setBounds(savedBounds);
+			}
 		}
+		
+		if (keepCentered) {
+			shell.setData(WIDGET_DATA_KEEP_CENTERED, true);
+			
+			shell.addControlListener(new ControlAdapter() {
+				@Override
+				public void controlResized(ControlEvent e) {
+					Display.getDefault().asyncExec(new Runnable() {
+						public void run() {
+							centerShellOverButtonBar(shell);
+						}
+					});
+				}
+				/* (non-Javadoc)
+				 * @see org.eclipse.swt.events.ControlAdapter#controlMoved(org.eclipse.swt.events.ControlEvent)
+				 */
+				@Override
+				public void controlMoved(ControlEvent e) {
+					Display.getDefault().asyncExec(new Runnable() {
+						public void run() {
+							centerShellOverButtonBar(shell);
+						}
+					});
+				}
+			});
+		}
+		
+
+		shell.open();
 		
 		shell.addControlListener(new ControlAdapter() {
 			@Override

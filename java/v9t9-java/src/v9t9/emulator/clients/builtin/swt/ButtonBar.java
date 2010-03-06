@@ -10,6 +10,7 @@ import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
@@ -36,8 +37,12 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 		this.focusRestorer = focusRestorer;
 		this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
 		
+		GridLayout mainLayout = new GridLayout(1, false);
+		mainLayout.marginHeight = mainLayout.marginWidth = 0;
+		setLayout(mainLayout);
+
 		//setLayoutData(new GridData(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL, false, false));
-		setLayoutData(new GridData(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL, true, true));
+		setLayoutData(new GridData(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL, isHorizontal, !isHorizontal));
 
 		// the inner composite contains the buttons, tightly packed
 		buttonComposite = new Composite(this, SWT.NO_RADIO_GROUP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
@@ -49,11 +54,13 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 		//layout.marginHeight = layout.marginWidth = 0;
 		//buttonComposite.setLayout(layout);
 		
+		/*
 		buttonComposite.setLayoutData(GridDataFactory.fillDefaults()
 				.align(isHorizontal ? SWT.CENTER : SWT.FILL, isHorizontal ? SWT.FILL : SWT.CENTER)
 				.grab(isHorizontal, !isHorizontal)
 				.create());
-		
+		*/
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(buttonComposite);
 		addPaintListener(new PaintListener() {
 
 			public void paintControl(PaintEvent e) {

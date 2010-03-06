@@ -1664,7 +1664,7 @@ public class DiskImageDsr implements DsrHandler {
 
 	public void registerDiskImagePath(String device, File dskfile) {
 		IconSetting diskSetting = new IconSetting(device, dskfile.getAbsolutePath(),
-				V9t9.getDataFile("icons/disk.png").getAbsolutePath());
+				V9t9.getDataFile("icons/disk_image.png").getAbsolutePath());
 		diskSetting.loadState(EmulatorSettings.getInstance().getApplicationSettings());
 
 		diskSettingsMap.put(device, diskSetting); 

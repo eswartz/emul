@@ -23,6 +23,7 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.ejs.coffee.core.utils.Setting;
 
 import v9t9.emulator.EmulatorSettings;
@@ -36,10 +37,7 @@ import v9t9.emulator.hardware.dsrs.DsrManager;
  *
  */
 public class DiskSelector extends Composite {
-
-	private final IFocusRestorer focusRestorer;
-
-	static class DiskEntry  {
+	class DiskEntry  {
 		private final Setting setting;
 		public DiskEntry(final Composite parent, Setting setting_) {
 			this.setting = setting_;
@@ -67,7 +65,7 @@ public class DiskSelector extends Composite {
 			final Combo combo = new Combo(parent, SWT.BORDER | SWT.DROP_DOWN);
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(combo);
 			
-			String[] history = getHistory();
+			String[] history = getHistory(getHistoryName());
 			if (history != null) {
 				combo.setItems(history);
 			}
@@ -136,21 +134,17 @@ public class DiskSelector extends Composite {
 				if (p.equals(path))
 					return;
 			combo.add(path);
-			setHistory(combo.getItems());
+			setHistory(getHistoryName(), combo.getItems());
+		}
+
+		private String getHistoryName() {
+			return isDiskImage() ? "Images" : "Directories";
 		}
 		
-		private String[] getHistory() {
-			String[] history = EmulatorSettings.getInstance().getHistorySettings().getArray("DiskSelector");
-			return history;
-		}
-		private void setHistory(String[] history) {
-			EmulatorSettings.getInstance().getHistorySettings().put("DiskSelector", history);
-			EmulatorSettings.getInstance().save();
-		}
 	};
 
 
-	static class BooleanEntry  {
+	class BooleanEntry  {
 		private final Setting setting;
 		public BooleanEntry(final Composite parent, Setting setting_) {
 			this.setting = setting_;
@@ -185,40 +179,28 @@ public class DiskSelector extends Composite {
 			});
 			
 		}
-		/**
-		 * @param combo 
-		 * @param absolutePath
-		 */
-		protected void switchPath(Combo combo, String path) {
-			if (path == null)
-				return;
-			setting.setString(path);
-			for (String p : combo.getItems())
-				if (p.equals(path))
-					return;
-			combo.add(path);
-			setHistory(combo.getItems());
-		}
-		
-		private String[] getHistory() {
-			String[] history = EmulatorSettings.getInstance().getHistorySettings().getArray("DiskSelector");
-			return history;
-		}
-		private void setHistory(String[] history) {
-			EmulatorSettings.getInstance().getHistorySettings().put("DiskSelector", history);
-			EmulatorSettings.getInstance().save();
-		}
 	};
 
+
+	private String[] getHistory(String name) {
+		String[] history = EmulatorSettings.getInstance().getHistorySettings().getArray("DiskSelector." + name);
+		return history;
+	}
+	private void setHistory(String name, String[] history) {
+		EmulatorSettings.getInstance().getHistorySettings().put("DiskSelector." + name, history);
+		EmulatorSettings.getInstance().save();
+	}
 	/**
 	 * 
 	 */
-	public DiskSelector(Composite parent, DsrManager dsrManager, IFocusRestorer restorer) {
+	public DiskSelector(Shell shell, DsrManager dsrManager) {
 		
-		super(parent, SWT.NONE);
+		super(shell, SWT.NONE);
+		
+		shell.setText("Disk Selector");
+		
 		
 		System.out.println("Creating DiskSelector");
-		this.focusRestorer = restorer;
 
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		

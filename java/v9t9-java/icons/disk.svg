@@ -92,15 +92,6 @@
        inkscape:vp_y="0 : 1000 : 0"
        inkscape:vp_x="0 : 0.5 : 1"
        sodipodi:type="inkscape:persp3d" />
-    <filter
-       color-interpolation-filters="sRGB"
-       inkscape:collect="always"
-       id="filter22717-5">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="0.62219619"
-         id="feGaussianBlur22719-4" />
-    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -140,7 +131,9 @@
     <g
        id="g3995"
        style="display:inline"
-       transform="matrix(1.1910009,0,0,1.1910009,-5.5665747,-157.89979)">
+       transform="matrix(1.2574446,0,0,1.2500488,-8.2382268,-166.94207)"
+       inkscape:export-xdpi="45"
+       inkscape:export-ydpi="45">
       <path
          style="fill:url(#linearGradient3985);fill-opacity:1;fill-rule:nonzero;stroke:black;stroke-width:1.25944483;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
          d="m 8,328 0,9.15625 c 0.8918052,0.26165 1.53125,1.03066 1.53125,1.9375 3e-7,0.90684 -0.6394448,1.6446 -1.53125,1.90625 l 0,35 20.5,0 c 0.131942,-0.64423 0.691935,-1.125 1.375,-1.125 0.683065,10e-6 1.243058,0.48077 1.375,1.125 l 1.3125,0 c 0.131942,-0.64423 0.691935,-1.125 1.375,-1.125 0.683065,10e-6 1.243058,0.48077 1.375,1.125 L 56,376 56,341 c -0.891806,-0.26165 -1.5625,-0.99941 -1.5625,-1.90625 0,-0.90684 0.670695,-1.67585 1.5625,-1.9375 L 56,328 8,328 z"
