@@ -7,10 +7,13 @@
 package v9t9.emulator.hardware.memory.mmio;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.coffee.core.utils.PrefUtils;
 
 import v9t9.emulator.Machine.ConsoleMmioReader;
 import v9t9.emulator.Machine.ConsoleMmioWriter;
+import v9t9.emulator.runtime.DumpFullReporter;
+import v9t9.emulator.runtime.Executor;
 import v9t9.engine.memory.MemoryDomain;
 
 /** GPL chip entry
@@ -73,6 +76,8 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter {
     	    /* >9800, memory read */
     	    gromaddrflag = false;
     	    ret = memory.readByte(gromaddr);
+    	    if (Executor.settingDumpFullInstructions.getBoolean())
+    			Executor.getDumpfull().println("Read GPL >" + HexUtils.toHex4(gromaddr) + " = >" + HexUtils.toHex2(ret));
     	    gromaddr = getNextAddr(gromaddr);
     	}
     	return ret;
