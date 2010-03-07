@@ -145,7 +145,6 @@ public class DiskImageDsr implements DsrHandler {
 
 		int command; /* command being executed (0xE0 mask) */
 		byte flags; /* flags sent with command being executed (0x1F mask) */
-		byte addr; /* last addr written */
 
 		/* command-specified */
 		byte seektrack; /* physically seeked track */
@@ -190,7 +189,7 @@ public class DiskImageDsr implements DsrHandler {
 		}
 		static class Status {
 			private Map<StatusBit, Boolean> values = new HashMap<StatusBit, Boolean>();
-			public byte markType;
+			//public byte markType;
 			
 			public static final StatusBit[] COMMON_STATUS = {
 				StatusBit.NOT_READY, StatusBit.WRITE_PROTECT, StatusBit.HEAD_LOADED, StatusBit.SEEK_ERROR, 
@@ -707,7 +706,6 @@ public class DiskImageDsr implements DsrHandler {
 						offs = 0;
 					}
 
-				retry1:
 					while (is < buflen && buffer[is++] != (byte) 0xfb) /**/;
 
 					crc = (short) 0xffff;
@@ -1853,7 +1851,6 @@ public class DiskImageDsr implements DsrHandler {
 				case W_WTADDR:
 					dsk.trackReg = val;
 					//DSK.status &= ~fdc_LOSTDATA;
-					dsk.addr = W_WTADDR;
 					info("FDC write track addr " + val + " >" + HexUtils.toHex2(val));
 					//module_logger(&realDiskDSR, _L|L_1, _("FDC write track addr >%04X, >%02X\n"), addr, val);
 					break;
